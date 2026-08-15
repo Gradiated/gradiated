@@ -2,10 +2,10 @@
 
 - status: proposed for review
 - date: 2026-08-15
-- architecture: [ADR-0010](../decisions/0010-direct-inference-and-openrouter.md)
+- architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - launch plan: [Kimi K3 provider launch](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
-This document proposes the complete seed data model for the exact-model product. It is not yet a migration contract. Review comments should be resolved before it replaces the older [physical data model](DATA_MODEL.md).
+This is the canonical seed data model for the exact-model product. It is not yet a migration contract; migrations should be generated from this document after the review is complete.
 
 The proposal removes the old routing, fleet, trace, recommendation, research, alias and third-party-provider models.
 

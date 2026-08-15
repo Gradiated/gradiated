@@ -26,7 +26,7 @@ def main() -> int:
         if result.returncode:
             return result.returncode
 
-    print("agent startup checks passed; continue with the issue and task-claim workflow")
+    print("agent startup checks passed; continue with the GitHub issue workflow")
     return 0
 
 

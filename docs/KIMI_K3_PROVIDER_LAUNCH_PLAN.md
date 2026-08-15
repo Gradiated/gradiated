@@ -2,7 +2,7 @@
 
 - status: current implementation authority
 - date: 2026-08-15
-- decision: [ADR-0010](../decisions/0010-direct-inference-and-openrouter.md)
+- architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 
 ## Outcome
 
@@ -13,17 +13,15 @@ Gradiated will host Kimi K3 on one 8x NVIDIA B300 node with SGLang and sell that
 
 The launch does not include a general model gateway. A request names one exact hosted model. Gradiated does not select another provider, substitute an alias, or fall back to a different model. Adding a model later means adding one explicit model declaration and one SGLang deployment, not adding a routing platform.
 
-## KISS rules
+## Launch scope rules
 
-1. One TypeScript application backend owns PostgreSQL and product workflows.
-2. One Rust data-plane service owns everything on the live inference path.
-3. One SGLang deployment owns one exact model release.
-4. PostgreSQL owns global model metadata, customer pricing and availability; Git owns environment-specific deployment configuration.
-5. Terraform owns cloud resources. Argo CD owns Kubernetes workloads after bootstrap.
-6. Managed services replace services we would otherwise have to operate.
-7. No component is added for a hypothetical second provider, region, or model.
+The durable service boundaries and the trigger for introducing shared routing are
+in [ARCHITECTURE.md](ARCHITECTURE.md). For this launch, they mean one TypeScript
+control application, one Rust inference API, and one SGLang deployment for one
+exact Kimi K3 release. PostgreSQL owns product state, while Git owns
+environment-specific deployment configuration.
 
-Explicit non-goals for the first launch:
+Explicit first-launch non-goals:
 
 - model aliases or quality/price routing;
 - fallback to third-party inference providers;
@@ -71,7 +69,8 @@ OpenRouter channel key ----+--------> public ALB
                                 +------------------------+
 ```
 
-There are two application services, not a set of microservices:
+This is launch topology rather than a separate service specification. There are
+two application services, not a set of microservices:
 
 - `control`: TypeScript/Node application API and background jobs;
 - `inference-api`: Rust public inference data plane.
@@ -165,24 +164,18 @@ Rust does not own customer CRUD, PostgreSQL repositories, Stripe, model purchasi
 
 ### Hot-path state
 
-OpenRouter and direct customer keys use the same Valkey-backed authentication, admission and settlement path. Provision Amazon ElastiCache Serverless for Valkey and publish the initial serving projection before enabling any inference traffic:
-
-- TypeScript remains the PostgreSQL authority and synchronously projects the latest committed serving state before reporting a successful control mutation;
-- a background role in the existing `control` deployment periodically reconciles current keys, organizations, workspaces, models and externally initiated balance changes into Valkey;
-- Rust reads the Valkey projection for authentication, balance and concurrency admission, and settlement;
-- every organization uses expiring per-organization in-flight leases instead of monetary reservations, accepts a bounded negative balance from its final admitted requests and blocks new admission at a nonpositive prepaid balance or invoiced credit exposure;
-- one versioned Valkey Lua script atomically consumes the in-flight lease, applies the actual charge and appends `GenerationSettled` to a dedicated Valkey Stream;
-- one TypeScript consumer-group role writes each event logically one-by-one to ClickHouse using acknowledged asynchronous inserts, recovers abandoned entries with `XAUTOCLAIM`, and acknowledges and trims stream entries only after ClickHouse confirms their flush;
-- a separate TypeScript settlement role pulls eligible global ClickHouse slots in chronological order and posts one idempotent PostgreSQL balance transaction per nonzero organization/slot group;
-- if Valkey is unavailable, every new inference request fails closed.
-
-There is no PostgreSQL projection queue. Ordinary mutations commit PostgreSQL, reload the current row from the primary, update Valkey and return success only after acknowledgement. Restrictive operations first block the affected Valkey scope and leave it blocked on failure; permissive operations commit PostgreSQL first so partial failure withholds access or credit. Reconciliation is idempotent, can rebuild projections from PostgreSQL and never copies a stale PostgreSQL balance over terminal usage not yet posted. A versioned Lua script atomically records each PostgreSQL-originated balance-transaction ID in a per-organization Valkey set and applies its signed amount only when the ID is new. Valkey-originated usage postings do not echo back into Valkey. A rebuild drains usage, restores the PostgreSQL balance and reconstructs the low-volume applied-ID set before admission reopens. Each object has one stable Valkey key.
-
-The ClickHouse consumer derives one global, chronologically sortable five-minute settlement slot from each event's Valkey Stream-ID time bucket. All organizations in the bucket share that slot. The PostgreSQL worker settles only slots older than a fixed delay whose contiguous ClickHouse-ingestion acknowledgement watermark has passed the slot's derived end. Its financial query first collapses exact retries by generation ID, then groups the slot across organizations; insert-deduplication-token retention is only a normal-path optimization. Conflicting rows for one generation ID block the slot and alert rather than selecting a charge. The worker derives each source ID as `<settlement_slot_id>:<organization_id>` and posts every missing nonzero organization in its own short transaction. It does not advance until all such organizations exist in PostgreSQL. On startup it resumes the latest posted slot inclusively, or ClickHouse's earliest eligible slot when none has been posted; a wholly zero-charge slot may be replayed harmlessly. A PostgreSQL session advisory lock elects one worker pod, while `(source_type, source_id)` supplies retry and race idempotency. No checkpoint or manifest table is required.
-
-Valkey is the one justified synchronous internal state dependency for all inference traffic. OpenRouter differs from direct customers only in billing mode: invoiced credit exposure instead of prepaid balance. PostgreSQL and ClickHouse are never queried by an inference request. All internal prices, charges and balances use integer nano-USD while their field names omit unit suffixes. The stream has no TTL; monitor lag and memory and close admission before an unacknowledged backlog threatens capacity. ClickHouse generations also have no TTL at launch; rely on ClickHouse Cloud's managed durability and backups without a separate archival pipeline, and add no projection before measured query demand. ElastiCache Serverless is a managed, replicated Multi-AZ transport, but the launch design accepts rare bounded event loss rather than adding Kafka. Do not add CDC, Kafka, a standalone projector, another queueing system or a second cache beside it.
+The authoritative serving-state, billing, generation and settlement contracts
+are in [DATA_MODEL.md](DATA_MODEL.md). In summary, inference reads Valkey only;
+PostgreSQL and ClickHouse are not on the request path. Launch settlement uses
+Valkey leases and a terminal stream, ClickHouse generations, and global
+five-minute slots reconciled idempotently to PostgreSQL. There is no projection
+queue, Kafka, second cache or monetary reservation system at launch. Prices,
+charges and balances use integer nano-USD values with unitless field names.
 
 ## API contract rule
+
+[ARCHITECTURE.md](ARCHITECTURE.md) owns the durable Zod/OpenAPI contract rule.
+The launch-specific surfaces and conformance requirements are:
 
 Every Gradiated HTTP API is authored from described Zod schemas and a route manifest. The generation chain is:
 
@@ -213,13 +206,13 @@ Initial public surfaces:
 
 ## Exact model registry
 
-PostgreSQL contains one global `models` table with an immutable human-readable `id`, top-level `name` and `status`, and one closed Zod `properties` document based on OpenRouter's structured provider model shape. Properties contain public model-source metadata, modalities, constraints, supported parameters, exact integer pricing, advertised capacity and optional OpenRouter settings. They do not contain exact runtime artifact revisions. The table is seeded in local development and managed through the TypeScript control application. Price and availability changes synchronously mirror the latest committed row into `model:<id>` in Valkey before reporting success; periodic reconciliation repairs partial failures.
-
-Git contains environment-specific `ModelDeploymentManifest` records: required exact `model_path`, `model_revision`, `tokenizer_path` and `tokenizer_revision` fields; SGLang image and launch profile; service secret reference; GPU shape; measured capacity; region; and compliance declarations. Tokenizer fields remain explicit even when they equal the model fields. The served release digest covers these artifact identities and the canonical runtime configuration. Argo CD continues to own the corresponding SGLang deployment.
-
-At runtime Rust resolves the exact requested ID from Valkey and rejects unknown, unavailable or retired models before GPU work. There is no scoring, dynamic discovery, weighted routing, fallback graph or alias resolution.
-
-Adding a second model later requires one global PostgreSQL model row, one deployment manifest, one SGLang Argo application, conformance fixtures, a measured capacity limit and an OpenRouter `/v1/models` entry. The Rust process can serve multiple exact entries without becoming a general gateway.
+The canonical PostgreSQL, Valkey and Git manifest schemas are in
+[DATA_MODEL.md](DATA_MODEL.md). The launch has one global Kimi K3 model row and
+one exact deployment manifest. Rust resolves the requested model ID from
+Valkey and rejects unknown, unavailable or retired models; there is no scoring,
+discovery, routing, fallback or alias resolution. A second model repeats the
+same catalog, manifest, SGLang and conformance workflow without adding a new
+service or database authority.
 
 ## OpenRouter provider contract
 
@@ -343,22 +336,13 @@ First establish a stable unified TP8 baseline. Do not initially enable DSpark sp
 
 Spot is permitted only for setup and benchmarks. Switch to on-demand capacity before OpenRouter production testing. A single node is acceptable for the first launch but is a known availability boundary; add a second same-model node only after traffic or uptime proves the need.
 
-## Minimal data model
+## Data-model boundary
 
-Retain the existing organization/workspace/key/billing requirements, but do not implement research, provider fleet, routing or trace-intelligence tables for this launch.
-
-Required product tables are limited to:
-
-- Better Auth tables;
-- `organizations`, `organization_members`, `invitations`;
-- `workspaces` without workspace-specific membership;
-- `api_keys` with a SHA-256 digest and no stored prefix;
-- one global `models` table; no workspace-model table at launch;
-- `billing_accounts` and immutable `balance_transactions`;
-- ClickHouse `generations` populated from terminal generation events, with canonical JSON properties and a materialized global settlement slot;
-- PostgreSQL usage balance transactions pulled idempotently from eligible ClickHouse slots and grouped per organization.
-
-The OpenRouter-only milestone does not require customer billing tables to be on the serving path. Do not create fleet allocations, cells, routes, canaries, traces, recommendations, experiments or provider-pricebook tables for this plan.
+[DATA_MODEL.md](DATA_MODEL.md) is the canonical source for the launch schema.
+This plan does not repeat its table definitions. The launch needs the existing
+control-plane identity, workspace, key, model and billing state plus ClickHouse
+`generations` and the Valkey serving projection. Do not add fleet, routing,
+trace-intelligence, experiment or provider-pricebook tables for Kimi K3.
 
 ## Delivery phases
 
@@ -374,7 +358,7 @@ Outcome: the repository has one active launch plan and no active general-gateway
 
 Acceptance:
 
-- canonical indexes point here and to ADR-0010;
+- the root README and architecture document point here;
 - no active implementation document instructs an agent to build a general gateway;
 - retained product requirements are linked, not deleted.
 

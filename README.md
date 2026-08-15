@@ -1,24 +1,11 @@
-# Gradiated agent workspace
+# Gradiated
 
-This repository is the durable project state for a startup built with Codex agents. It contains product code, research, prompts, experiments, evidence, tests, and handoffs. Credentials, cookies, browser profiles, and other private runtime state stay outside Git.
+Gradiated hosts exact open-weight models and sells inference through direct customer API keys and OpenRouter. The current architecture is deliberately small and is defined by:
 
-## Start here
+1. [architecture](docs/ARCHITECTURE.md);
+2. [canonical data model](docs/DATA_MODEL.md);
+3. [Kimi K3 provider launch plan](docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md).
 
-```sh
-python3 tools/devex/start.py
-```
+Read [AGENTS.md](AGENTS.md) before making changes. Product and infrastructure entry points are [product/README.md](product/README.md) and [infra/README.md](infra/README.md). Research has its own authority under [research/README.md](research/README.md).
 
-Read [`AGENTS.md`](AGENTS.md) and [`docs/CONTEXT_INDEX.md`](docs/CONTEXT_INDEX.md) before taking work. Claim one GitHub Issue, confirm its Project status and owner, reserve a narrow file/artifact scope, and leave a task packet or durable report another agent can resume.
-
-## Repository map
-
-- [`research/README.md`](research/README.md) — research workstream map and evidence conventions.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — product architecture boundaries and decision-record contract.
-- [`research/sol/`](research/sol/) — Inference Foundry; read its `AGENTS.md`, `README.md`, and current handoff.
-- [`research/fable/`](research/fable/) — Sartor/Fable; read its `CLAUDE.md`, `README.md`, and current report.
-- [`tasks/`](tasks/) — detailed execution packets in `inbox/`, `active/`, and `done/`.
-- [`.agents/skills/`](.agents/skills/) — reusable research, browser, experiment, and product-build procedures.
-- [`tools/github/agent.py`](tools/github/agent.py) — dependency-free Issue, PR, label, and Project helper.
-- [`docs/GITHUB_OPERATING_SYSTEM.md`](docs/GITHUB_OPERATING_SYSTEM.md) — GitHub operating model.
-
-GitHub Issues are the canonical cross-agent work objects and Projects are the execution view. The repository remains the canonical source for implementation and research state.
+There is no product or infrastructure implementation yet. New contracts should be short, reviewed documents tied to the current architecture. Do not use deleted historical blueprints as requirements.

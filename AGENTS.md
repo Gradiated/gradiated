@@ -16,15 +16,14 @@ This repository is the complete project state for the research and product-build
 
 - Put reusable agent procedures in `.agents/skills/`.
 - Use GitHub Issues for canonical cross-agent work tracking and GitHub Projects for the active execution view.
-- Use `tasks/` for detailed local execution packets when an issue needs a reproducible experiment contract or offline handoff; link the issue and do not maintain a second status system.
-- Use `docs/CONTEXT_INDEX.md` and `research/README.md` as the orientation map; update them when adding a workstream or changing the resume contract.
-- Use `docs/ARCHITECTURE.md` and `docs/decisions/` for cross-agent product architecture decisions; do not encode durable interfaces only in chat or issue comments.
+- Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
+- Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
 - Do not make Notion, Drive, Jira, or Slack a required source of truth. GitHub Issues/Projects own work state; the repository owns code, research, prompts, and artifacts.
-- Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue or task packet for each turn.
+- Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue for every internal turn.
 
 ## Agent operating contract
 

@@ -1,6 +1,6 @@
 # Product seed decision — 2026-07-13
 
-> Superseded for implementation planning by [`product/docs/PRODUCT_SPEC.md`](../../../product/docs/PRODUCT_SPEC.md). The revised decision builds a revenue-first owned gateway and an external provider surface on the same Rust data plane while preserving the research claim gates below.
+> Historical research evidence. Superseded for implementation planning by [`docs/ADR-0010-DIRECT-INFERENCE.md`](../../../docs/ADR-0010-DIRECT-INFERENCE.md) and the current top-level launch documents. Preserve the research claim gates below; the gateway/provider-routing architecture described here is no longer current.
 
 ## Question and decision
 

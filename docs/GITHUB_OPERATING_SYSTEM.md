@@ -16,7 +16,7 @@ python3 tools/github/agent.py auth-check
 python3 tools/github/agent.py bootstrap-labels
 ```
 
-The guard above assumes secret-manager injection; it is not a command to paste a token into shell history. The helper never prints token values. Keep `GH_TOKEN` and any `gh` credentials in an external credential store, not in the repository or task packets. If the token is fine-grained, grant repository access only to this repository and use repository write permissions for Contents, Issues, and Pull requests; Actions and Workflows write are optional for CI operations.
+The guard above assumes secret-manager injection; it is not a command to paste a token into shell history. The helper never prints token values. Keep `GH_TOKEN` and any `gh` credentials in an external credential store, not in the repository. If the token is fine-grained, grant repository access only to this repository and use repository write permissions for Contents, Issues, and Pull requests; Actions and Workflows write are optional for CI operations.
 
 Fine-grained tokens cannot currently manage Projects owned by a personal account. Prefer an organization-owned Project if agents need to update the board with a fine-grained token. Otherwise use a separately scoped classic token only for Project operations, or treat the board as a human-managed view.
 
@@ -39,7 +39,7 @@ Keep the built-in `Status` field with these values: `Backlog`, `Ready`, `In Prog
 1. Create or find one issue for the work. Use the feature, bug, or research template.
 2. Set `Lane` and `Priority`, add the issue to `Startup OS`, and set `Status` to `Ready`.
 3. Assign the issue to the agent or human owner. An agent must claim an issue before changing code or starting spend-bearing research.
-4. Move to `In Progress`, link the task packet when one is needed, and work on `main` inside the declared scope.
+4. Move to `In Progress` and work on `main` inside the declared scope.
 5. Run the acceptance checks and have a reviewer agent inspect the owned diff and issue contract when the risk warrants it.
 6. Commit only the owned files and push directly to `main`.
 7. Move the issue to `Done` only after the push, required CI, and artifact handoff pass.
@@ -50,7 +50,7 @@ Use `Blocked` for missing access, failed quality gates, unavailable hardware, or
 
 ```sh
 # Work tracking
-python3 tools/github/agent.py issue-create --title "..." --body-file tasks/body.md --project PROJECT_TITLE
+python3 tools/github/agent.py issue-create --title "..." --body "..." --project PROJECT_TITLE
 python3 tools/github/agent.py issue-start ISSUE_NUMBER --project PROJECT_NUMBER --status "In Progress"
 python3 tools/github/agent.py issue-list --state open
 

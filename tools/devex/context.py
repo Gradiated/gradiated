@@ -52,7 +52,7 @@ def print_pack(workstream: str | None) -> None:
     print(f"repo: {ROOT}")
     print(f"git: {git_summary()}")
     print("\nRead first:")
-    for path in ("AGENTS.md", "docs/CONTEXT_INDEX.md", "docs/AGENT_OPERATING_SYSTEM.md", "tasks/README.md"):
+    for path in ("AGENTS.md", "README.md", "docs/ARCHITECTURE.md", "docs/DATA_MODEL.md"):
         print(f"- {exists(path)}")
 
     selected = [workstream] if workstream else list(WORKSTREAMS)
@@ -68,8 +68,7 @@ def print_pack(workstream: str | None) -> None:
 
     print("\nBefore changing files:")
     print("- claim one GitHub issue; confirm the Project status and owner")
-    print("- create or update one packet under tasks/inbox/ or tasks/active/")
-    print("- reserve directory/artifact scope; do not edit another active agent's files")
+    print("- reserve directory/artifact scope; do not edit another agent's files")
     print("- state the acceptance check, budget/timeout, and artifact paths")
 
 

@@ -1,6 +1,6 @@
 # Proposed product and inference data models
 
-- status: proposed for founder review
+- status: proposed for review
 - date: 2026-08-15
 - architecture: [ADR-0010](../decisions/0010-direct-inference-and-openrouter.md)
 - launch plan: [Kimi K3 provider launch](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
@@ -22,8 +22,8 @@ we can start with no trace retention
 
 - Application IDs are UUIDv7. Exact public model IDs are stable bounded text identifiers.
 - PostgreSQL timestamps are `timestamptz` in UTC; ClickHouse timestamps are `DateTime64` in UTC.
-- Money fields such as `balance`, `amount`, `charge` and `reserved_amount` are signed `bigint` micro-USD unless explicitly constrained nonnegative.
-- Token prices are nonnegative `bigint` nano-USD per token, which supports sub-micro-USD rates.
+- Every internal monetary value and unit price is an integer nano-USD. Money field names omit the unit suffix: use `balance`, `amount`, `balance_after`, `charge`, `unit_price` and `cost` rather than unit-suffixed alternatives.
+- Monetary storage uses signed `bigint`/`Int64` unless explicitly constrained nonnegative. Floating-point arithmetic is forbidden; calculations use checked integer intermediates before conversion to the stored range.
 - Enums are constrained `text`, not PostgreSQL enum types.
 - API keys contain 256 random bits and are stored only as SHA-256 `bytea` digests; raw secrets are shown once and never persisted.
 - Mutable PostgreSQL records have `updated_at`; immutable PostgreSQL and ClickHouse records do not.
@@ -131,19 +131,19 @@ Customer organizations must retain at least one active owner. Distribution-chann
 
 ### 7. `invitations`
 
-| Field                | Type        | Null | Rules                                 |
-| -------------------- | ----------- | ---- | ------------------------------------- |
-| `id`                 | uuid        | no   | Primary key                           |
-| `organization_id`    | uuid        | no   | FK `organizations.id`                 |
-| `email`              | text        | no   | Normalized lowercase                  |
-| `role`               | text        | no   | Offered organization role             |
-| `token_digest`       | bytea       | no   | Unique; raw token never stored        |
-| `expires_at`         | timestamptz | no   | Expiry                                |
-| `accepted_at`        | timestamptz | yes  | Mutually exclusive with `revoked_at`  |
-| `revoked_at`         | timestamptz | yes  | Mutually exclusive with `accepted_at` |
-| `created_by`         | uuid        | no   | FK `users.id`                         |
-| `created_at`         | timestamptz | no   | Creation time                         |
-| `updated_at`         | timestamptz | no   | Last mutation time                    |
+| Field             | Type        | Null | Rules                                 |
+| ----------------- | ----------- | ---- | ------------------------------------- |
+| `id`              | uuid        | no   | Primary key                           |
+| `organization_id` | uuid        | no   | FK `organizations.id`                 |
+| `email`           | text        | no   | Normalized lowercase                  |
+| `role`            | text        | no   | Offered organization role             |
+| `token_digest`    | bytea       | no   | Unique; raw token never stored        |
+| `expires_at`      | timestamptz | no   | Expiry                                |
+| `accepted_at`     | timestamptz | yes  | Mutually exclusive with `revoked_at`  |
+| `revoked_at`      | timestamptz | yes  | Mutually exclusive with `accepted_at` |
+| `created_by`      | uuid        | no   | FK `users.id`                         |
+| `created_at`      | timestamptz | no   | Creation time                         |
+| `updated_at`      | timestamptz | no   | Last mutation time                    |
 
 There is at most one pending invitation per organization and normalized email.
 
@@ -159,6 +159,8 @@ There is at most one pending invitation per organization and normalized email.
 | `created_at`      | timestamptz | no   | Creation time                                           |
 | `updated_at`      | timestamptz | no   | Last mutation time                                      |
 
+In addition to the primary key, `workspaces` has a unique `(organization_id, id)` constraint. `api_keys(organization_id, workspace_id)` references that composite key, so PostgreSQL enforces that an API key and its workspace belong to the same organization rather than relying only on application checks.
+
 A workspace is a policy and cost-attribution boundary, not an authorization boundary. Active organization members can access every workspace in their organization. Each organization is created with one default workspace; the product can hide workspace selection while only that workspace exists.
 
 At launch, workspaces group API keys and usage only. Every unarchived workspace can access every active hosted model, with no workspace spend, rate or concurrency limits. Future model allowlists and per-model limits belong in a workspace-model policy table rather than on API keys. Launch behavior is zero retention for all inference payloads.
@@ -167,18 +169,18 @@ At launch, workspaces group API keys and usage only. Every unarchived workspace 
 
 Used by direct customers and OpenRouter.
 
-| Field                  | Type        | Null | Rules                                           |
-| ---------------------- | ----------- | ---- | ----------------------------------------------- |
-| `id`                   | uuid        | no   | Primary key                                     |
-| `organization_id`      | uuid        | no   | FK `organizations.id`                           |
-| `workspace_id`         | uuid        | no   | FK `workspaces.id`; composite tenant constraint |
-| `name`                 | text        | no   | Bounded display name                            |
-| `digest`               | bytea       | no   | Unique SHA-256 digest of the canonical raw key  |
-| `expires_at`           | timestamptz | yes  | Optional expiry                                 |
-| `revoked_at`           | timestamptz | yes  | Irreversible manual revocation                  |
-| `created_by`           | uuid        | yes  | FK `users.id`; null for system-created channels |
-| `created_at`           | timestamptz | no   | Creation time                                   |
-| `updated_at`           | timestamptz | no   | Last mutation time                              |
+| Field             | Type        | Null | Rules                                           |
+| ----------------- | ----------- | ---- | ----------------------------------------------- |
+| `id`              | uuid        | no   | Primary key                                     |
+| `organization_id` | uuid        | no   | FK `organizations.id`                           |
+| `workspace_id`    | uuid        | no   | With `organization_id`, composite FK to `workspaces(organization_id, id)` |
+| `name`            | text        | no   | Bounded display name                            |
+| `digest`          | bytea       | no   | Unique SHA-256 digest of the canonical raw key  |
+| `expires_at`      | timestamptz | yes  | Optional expiry                                 |
+| `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                  |
+| `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels |
+| `created_at`      | timestamptz | no   | Creation time                                   |
+| `updated_at`      | timestamptz | no   | Last mutation time                              |
 
 The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one.
 
@@ -188,38 +190,35 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `moonshotai/kimi-k3`.
 
-| Field        | Type        | Null | Rules                                         |
-| ------------ | ----------- | ---- | --------------------------------------------- |
-| `id`         | text        | no   | Primary key; exact immutable public model ID  |
-| `name`       | text        | no   | Bounded customer-facing name                  |
-| `status`     | text        | no   | `available`, `unavailable`, `retired`         |
-| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document         |
-| `created_at` | timestamptz | no   | Creation time                                 |
-| `updated_at` | timestamptz | no   | Last mutation time                            |
+| Field        | Type        | Null | Rules                                        |
+| ------------ | ----------- | ---- | -------------------------------------------- |
+| `id`         | text        | no   | Primary key; exact immutable public model ID |
+| `name`       | text        | no   | Bounded customer-facing name                 |
+| `status`     | text        | no   | `available`, `unavailable`, `retired`        |
+| `properties` | jsonb       | no   | Closed Zod `ModelProperties` document        |
+| `created_at` | timestamptz | no   | Creation time                                |
+| `updated_at` | timestamptz | no   | Last mutation time                           |
 
-`ModelProperties` follows the structure of the OpenRouter provider model document where practical, while retaining internal artifact identity and exact integer money:
+`ModelProperties` follows the structure of the OpenRouter provider model document where practical, while retaining public source metadata and exact integer money. Exact deployed model and tokenizer artifacts are Git-owned and are not mutable PostgreSQL properties:
 
-| Property                 | Type                   | Rules                                                        |
-| ------------------------ | ---------------------- | ------------------------------------------------------------ |
-| `description`            | string                 | Bounded customer-facing description                          |
-| `released_at`            | timestamp nullable     | Upstream model release time                                  |
-| `hugging_face_id`        | string nullable        | Upstream repository identity                                 |
-| `artifact_revision`      | string                 | Immutable model commit or digest                             |
-| `tokenizer_id`           | string                 | Tokenizer repository identity                                |
-| `tokenizer_revision`     | string                 | Immutable tokenizer commit or digest                         |
-| `quantization`           | string nullable        | OpenRouter-compatible quantization                           |
-| `tokenizer`              | string nullable        | Tokenizer family exposed to OpenRouter                       |
-| `input_modalities`       | input-modality[]       | Nonempty typed modality documents                            |
-| `output_modalities`      | output-modality[]      | Nonempty typed modality documents                            |
-| `pricing`                | pricing-entry[]        | Request-scoped prices only                                   |
-| `capacity`               | capacity-entry[]       | Advertised request-scoped capacity                           |
-| `passthrough_parameters` | descriptor map         | Closed request-scoped passthrough parameters                 |
-| `deprecation_at`         | timestamp nullable     | Optional scheduled retirement                                |
-| `is_free`                | boolean                | Default false                                                |
-| `discount_to_user`       | decimal                | Below one; default zero                                      |
-| `openrouter`             | object nullable        | Optional canonical `slug` when it differs from this row's ID |
+| Property                 | Type               | Rules                                                        |
+| ------------------------ | ------------------ | ------------------------------------------------------------ |
+| `description`            | string             | Bounded customer-facing description                          |
+| `released_at`            | timestamp nullable | Upstream model release time                                  |
+| `hugging_face_id`        | string nullable    | Upstream repository identity                                 |
+| `quantization`           | string nullable    | OpenRouter-compatible quantization                           |
+| `tokenizer`              | string nullable    | Tokenizer family exposed to OpenRouter                       |
+| `input_modalities`       | input-modality[]   | Nonempty typed modality documents                            |
+| `output_modalities`      | output-modality[]  | Nonempty typed modality documents                            |
+| `pricing`                | pricing-entry[]    | Request-scoped prices only                                   |
+| `capacity`               | capacity-entry[]   | Advertised request-scoped capacity                           |
+| `passthrough_parameters` | descriptor map     | Closed request-scoped passthrough parameters                 |
+| `deprecation_at`         | timestamp nullable | Optional scheduled retirement                                |
+| `is_free`                | boolean            | Default false                                                |
+| `discount_to_user`       | decimal            | Below one; default zero                                      |
+| `openrouter`             | object nullable    | Optional canonical `slug` when it differs from this row's ID |
 
-Each input/output modality owns its typed constraints, supported parameters, modality-scoped pricing and advertised capacity. Capability descriptors use the OpenRouter-compatible range, integer, boolean, enum, array, object or unknown grammar. Internal prices use nonnegative integer `cost_nano_usd`; the provider response converts them to OpenRouter's decimal-string `cost_usd` representation. This is a closed domain document, not arbitrary metadata.
+Each input/output modality owns its typed constraints, supported parameters, modality-scoped pricing and advertised capacity. Capability descriptors use the OpenRouter-compatible range, integer, boolean, enum, array, object or unknown grammar. Internal prices use nonnegative integer `cost` under the global nano-USD convention. The provider response converts these values to OpenRouter's decimal-string USD-per-unit pricing fields. This is a closed domain document, not arbitrary metadata.
 
 The TypeScript control application owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current model snapshot through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
 
@@ -229,16 +228,16 @@ The TypeScript control application owns model changes. After a price or status m
 
 One record per organization.
 
-| Field                | Type        | Null | Rules                                      |
-| -------------------- | ----------- | ---- | ------------------------------------------ |
-| `organization_id`    | uuid        | no   | PK and FK `organizations.id`               |
-| `mode`               | text        | no   | `prepaid`, `invoiced`                      |
-| `stripe_customer_id` | text        | yes  | Unique when present                        |
-| `balance`            | bigint      | no   | Remaining spendable micro-USD              |
-| `created_at`         | timestamptz | no   | Creation time                              |
-| `updated_at`         | timestamptz | no   | Last mutation time                         |
+| Field                | Type        | Null | Rules                         |
+| -------------------- | ----------- | ---- | ----------------------------- |
+| `organization_id`    | uuid        | no   | PK and FK `organizations.id`  |
+| `mode`               | text        | no   | `prepaid`, `invoiced`         |
+| `stripe_customer_id` | text        | yes  | Unique when present           |
+| `balance`            | bigint      | no   | Remaining spendable amount    |
+| `created_at`         | timestamptz | no   | Creation time                 |
+| `updated_at`         | timestamptz | no   | Last mutation time            |
 
-PostgreSQL owns the durable posted balance, while Valkey owns the synchronous available balance including live reservations and settlements not yet posted to PostgreSQL. Direct inference never reads this row. Direct prepaid customers increase balance through Stripe top-ups. OpenRouter uses `invoiced` mode and an approved credit limit; its usage is reconciled separately from customer prepaid balances. A chargeback or adjustment may make the durable balance negative, and the corresponding Valkey update then blocks new direct admission.
+PostgreSQL owns the durable posted balance, while Valkey owns the synchronous balance including terminal usage not yet posted to PostgreSQL. Inference never reads this row. For a prepaid organization, `balance` is its remaining prepaid funds and Stripe top-ups replenish it. For an invoiced organization such as OpenRouter, `balance` is its remaining approved credit exposure and payments or operator credits replenish it. Every organization uses the same admission and settlement path: a nonpositive balance blocks new admission, while final in-flight generations may move the balance slightly below zero. A chargeback or adjustment may also make the durable balance negative, and the corresponding Valkey update blocks new admission.
 
 ### 12. `balance_transactions`
 
@@ -252,16 +251,50 @@ Immutable history of durable balance movements. This is a customer wallet ledger
 | `amount`           | bigint      | no   | Signed, nonzero balance change                                              |
 | `balance_after`    | bigint      | no   | Account balance after this movement                                         |
 | `source_type`      | text        | no   | Closed source allowlist                                                     |
-| `source_id`        | text        | no   | Source object or settlement-batch identity                                  |
+| `source_id`        | text        | no   | Source object or derived `<slot_id>:<organization_id>`                      |
 | `period_start`     | timestamptz | yes  | Aggregated usage only                                                       |
 | `period_end`       | timestamptz | yes  | Aggregated usage only; after `period_start`                                 |
 | `generation_count` | bigint      | yes  | Positive for aggregated usage                                               |
 | `created_by`       | uuid        | yes  | FK `users.id`; manual credits and adjustments only                          |
 | `created_at`       | timestamptz | no   | Movement time                                                               |
 
-`(source_type, source_id)` is unique and is the idempotency boundary. Initial source types are `stripe_checkout_session`, `stripe_refund`, `stripe_dispute`, `generation`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
+`(source_type, source_id)` is unique and is the idempotency boundary. Initial source types are `stripe_checkout_session`, `stripe_refund`, `stripe_dispute`, `generation_settlement_batch`, `openrouter_payment` and `operator`.
 
-A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Before usage aggregation is needed, one generation may produce one `generation` source movement. At high volume, the billing consumer instead posts one `generation_settlement_batch` movement per organization and bounded time window; individual generation charges remain queryable in ClickHouse and must reconcile exactly to the batch amount.
+A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Usage is aggregated from launch: every terminal generation belongs to one global settlement slot derived from its Valkey Stream ID. All organizations share that slot. For each organization with nonzero usage in the slot, the PostgreSQL settlement worker posts one `generation_settlement_batch` movement whose negative amount is the sum of its generation charges and whose `generation_count` counts those charged generations. Individual generations remain queryable in ClickHouse. An organization with only zero-charge generations produces no PostgreSQL balance transaction.
+
+The settlement worker is a logical background role inside the existing TypeScript `control` deployment. One pod holds a PostgreSQL session advisory lock and acts as leader; standby pods periodically retry, and loss of the database session releases the lock automatically. Launch uses five-minute global slots. A slot ID is a fixed-width, chronologically sortable string containing its UTC start, duration and settlement schema version, for example `20260815T123000Z-300s-v1`. The end is derived from the encoded start and duration. The PostgreSQL source ID for one organization's posting is deterministically `<settlement_slot_id>:<organization_id>`.
+
+On startup, the leader reads the greatest `period_start` where `source_type = 'generation_settlement_batch'`, derives that global slot and resumes it inclusively. If none exists, it asks ClickHouse for the earliest eligible slot. For each slot, one ClickHouse query first collapses retries by generation `id`, then groups the materialized `charge` by materialized `organization_id`. The worker derives every nonzero organization's source ID, queries PostgreSQL for the existing IDs, and computes the missing organizations in memory. Each missing organization is handled in its own short transaction: lock its billing account, insert the immutable usage transaction and update `billing_accounts.balance` only if the insert succeeds. The worker verifies that every nonzero organization in the slot exists in PostgreSQL before moving to the next slot.
+
+The financial query is permanently duplicate-safe and does not depend on ClickHouse retaining insert-deduplication tokens:
+
+```sql
+SELECT
+    settlement_slot_id,
+    organization_id,
+    sum(charge) AS total_charge,
+    countIf(charge > 0) AS generation_count,
+    max(financial_variants) AS max_financial_variants
+FROM
+(
+    SELECT
+        id,
+        any(settlement_slot_id) AS settlement_slot_id,
+        any(organization_id) AS organization_id,
+        any(charge) AS charge,
+        uniqExact(tuple(settlement_slot_id, organization_id, charge)) AS financial_variants
+    FROM generations
+    WHERE settlement_slot_id = {slot_id:String}
+    GROUP BY id
+)
+GROUP BY settlement_slot_id, organization_id;
+```
+
+The worker requires `max_financial_variants = 1` for every result before opening any PostgreSQL transaction. Exact retry duplicates have one distinct `(slot, organization, charge)` tuple and collapse to one logical generation. If duplicate rows for one generation ID disagree on any financial value, the worker emits a high-severity metric and blocks the complete slot for operator review rather than choosing a value. Do not create a ClickHouse projection at launch; add one ordered by `(settlement_slot_id, organization_id, id)` only when measured settlement-query cost justifies it.
+
+The unique `(source_type, source_id)` constraint makes the complete process idempotent. A crash before, during or after a slot causes inclusive replay: completed organizations are skipped and missing organizations are posted. Because the worker never posts a later slot until the current one is complete, PostgreSQL's latest settlement slot is a sufficient restart cursor and no checkpoint table is needed. A globally zero-charge slot has no PostgreSQL record and may be revisited after restart; replay is harmless and immediately advances.
+
+A slot becomes eligible only after a conservative fixed settlement delay and after the ClickHouse ingestion consumer's contiguous acknowledged Valkey Stream watermark has passed the slot's derived end. Settlement is therefore eventually current by the ingestion delay, settlement delay and polling interval rather than synchronously current. There is no settlement checkpoint, batch manifest, ClickHouse update, cross-database join, routine 24-hour rescan or Kafka topic. A periodic reconciliation query may audit recent ClickHouse totals against PostgreSQL, but it is not the normal cursor path. If one settlement worker can no longer keep up, page the organizations within a slot; shard settlement leadership only after measurements require it.
 
 Stripe owns pending, failed and abandoned Checkout Sessions. The application creates a server-priced Checkout Session carrying the organization identity. A signed successful-payment webhook inserts a `topup` movement keyed by the Checkout Session ID. The handler returns success only after the PostgreSQL transaction commits; Stripe retries failures, and the source uniqueness constraint makes duplicate delivery harmless. Refund and dispute webhooks use their Stripe object IDs in the same way. There is no local top-up-intent or webhook-inbox table.
 
@@ -271,9 +304,9 @@ There is no projection queue or outbox table. These projections are low-volume, 
 
 Restrictive changes fail closed. API-key revocation, organization suspension, model unavailability or price changes, and negative balance adjustments first block the affected Valkey scope, then commit PostgreSQL, then publish the final state and reopen only when appropriate. A failure leaves that scope blocked. Permissive changes such as key creation, model creation and positive top-ups commit PostgreSQL first, so a projection failure withholds access or credit rather than granting too much.
 
-A background role inside the existing TypeScript `control` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal settlement events, resolve or abandon live reservations, rewrite projections in place and then reopen.
+A background role inside the existing TypeScript `control` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal generation events, wait for or expire in-flight leases, rewrite projections in place and then reopen.
 
-PostgreSQL-originated money changes are reconciled from immutable `balance_transactions` and applied to Valkey idempotently using the transaction ID. The reconciler never overwrites an operational Valkey balance containing live reservations or unposted settlements. Valkey-originated usage postings do not echo back into Valkey.
+PostgreSQL-originated money changes are reconciled from immutable `balance_transactions` and applied to Valkey through a versioned Lua script. The script atomically adds the PostgreSQL transaction ID to `AppliedBalanceTransactionIds` and changes `AccountSnapshot.balance` only when the ID was newly added. A lost acknowledgement and retry therefore cannot apply the same top-up, payment, refund, chargeback or operator adjustment twice. The reconciler never overwrites an operational Valkey balance containing terminal usage not yet posted to PostgreSQL. Valkey-originated `generation_settlement_batch` postings do not echo back into Valkey and are never added to this set because Rust already applied their charges.
 
 The reconciler exports its last-success time, failures and mismatches as metrics. Missing or unavailable required projection state rejects every request. Do not add CDC, Debezium, Kafka, a projection queue or a standalone projector at launch.
 
@@ -285,139 +318,145 @@ Environment-specific infrastructure and runtime configuration is Zod-authored an
 
 Environment-specific serving configuration.
 
-| Field                          | Type    | Rules                                        |
-| ------------------------------ | ------- | -------------------------------------------- |
-| `schema_version`               | string  | Manifest schema version                      |
-| `id`                           | string  | Deployment identity                          |
-| `model_id`                     | string  | Exact ID of the PostgreSQL `models` row       |
-| `environment`                  | string  | `local`, `staging`, `production`             |
-| `provider`                     | string  | Selected GPU provider                        |
-| `provider_region`              | string  | Provider region                              |
-| `country_code`                 | string  | ISO 3166-1 alpha-2                           |
-| `cluster_id`                   | string  | Non-secret cluster identity                  |
-| `namespace`                    | string  | Kubernetes namespace                         |
-| `service_url`                  | string  | Private or restricted SGLang URL             |
-| `auth_secret_ref`              | string  | Secret reference, never secret value         |
-| `sglang_image_digest`          | string  | Immutable OCI digest                         |
-| `gpu_instance_type`            | string  | Initially `b300-8x`                          |
-| `gpu_count`                    | integer | Initially 8                                  |
-| `model_path`                   | string  | Pinned model path                            |
-| `tensor_parallel_size`         | integer | Initially 8                                  |
-| `memory_fraction_static`       | decimal | Greater than zero and below one              |
-| `reasoning_parser`             | string  | Initially `kimi_k3`                          |
-| `tool_call_parser`             | string  | Initially `kimi_k3`                          |
-| `metrics_enabled`              | boolean | Required true in production                  |
-| `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity                |
-| `completion_tokens_per_minute` | integer | Measured nonnegative capacity                |
-| `max_concurrency`              | integer | Measured positive capacity                   |
-| `zdr`                          | boolean | Zero-retention declaration                   |
-| `hipaa`                        | boolean | Initially false                              |
+| Field                          | Type    | Rules                                   |
+| ------------------------------ | ------- | --------------------------------------- |
+| `schema_version`               | string  | Manifest schema version                 |
+| `id`                           | string  | Deployment identity                     |
+| `model_id`                     | string  | Exact ID of the PostgreSQL `models` row |
+| `environment`                  | string  | `local`, `staging`, `production`        |
+| `provider`                     | string  | Selected GPU provider                   |
+| `provider_region`              | string  | Provider region                         |
+| `country_code`                 | string  | ISO 3166-1 alpha-2                      |
+| `cluster_id`                   | string  | Non-secret cluster identity             |
+| `namespace`                    | string  | Kubernetes namespace                    |
+| `service_url`                  | string  | Private or restricted SGLang URL        |
+| `auth_secret_ref`              | string  | Secret reference, never secret value    |
+| `sglang_image_digest`          | string  | Immutable OCI digest                    |
+| `gpu_instance_type`            | string  | Initially `b300-8x`                     |
+| `gpu_count`                    | integer | Initially 8                             |
+| `model_path`                   | string  | Exact model repository or artifact path |
+| `model_revision`               | string  | Immutable model commit or digest       |
+| `tokenizer_path`               | string  | Exact tokenizer repository or path     |
+| `tokenizer_revision`           | string  | Immutable tokenizer commit or digest   |
+| `tensor_parallel_size`         | integer | Initially 8                             |
+| `memory_fraction_static`       | decimal | Greater than zero and below one         |
+| `reasoning_parser`             | string  | Initially `kimi_k3`                     |
+| `tool_call_parser`             | string  | Initially `kimi_k3`                     |
+| `metrics_enabled`              | boolean | Required true in production             |
+| `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity           |
+| `completion_tokens_per_minute` | integer | Measured nonnegative capacity           |
+| `max_concurrency`              | integer | Measured positive capacity              |
+| `zdr`                          | boolean | Zero-retention declaration              |
+| `hipaa`                        | boolean | Initially false                         |
 
-The served release digest covers immutable model artifact identity and canonical deployment runtime configuration. Mutable customer prices and availability are excluded from this digest and are projected separately from PostgreSQL.
+All four artifact fields are required even when the tokenizer path and revision equal the model path and revision; the deployed release never relies on inheritance or a mutable upstream default. The served release digest covers the exact model and tokenizer identities, SGLang image and canonical deployment runtime configuration. Mutable customer prices, public metadata and availability are excluded from this digest and are projected separately from PostgreSQL.
 
 # ClickHouse models
 
-ClickHouse Cloud on AWS stores immutable terminal generation records for customer history, usage analytics, spend analysis and inference performance. It is a replayable query projection, not the authority for balances, credentials, reservations or financial postings.
+ClickHouse Cloud on AWS stores the durable immutable terminal-generation history for customer usage, aggregate PostgreSQL settlement, spend analysis and inference performance. It is not the authority for current balances, credentials, in-flight leases or posted financial movements.
 
 ## 14. `generations`
 
-One row per terminal model invocation. Direct and OpenRouter traffic share this table because both use the same organization, workspace and API-key dimensions.
+One row per terminal model invocation. Direct and OpenRouter traffic share this table. `properties` is the canonical document for all generation facts other than row identity and ingestion time. Keep only `id`, `properties` and `ingested_at` as independently inserted source columns; derive the small set of query-critical dimensions as ClickHouse `MATERIALIZED` columns from JSON paths.
 
-| Field                     | ClickHouse type               | Rules                                               |
-| ------------------------- | ----------------------------- | --------------------------------------------------- |
-| `id`                      | UUID                          | Logical unique generation ID; UUIDv7                |
-| `event_id`                | UUID                          | `GenerationSettled` event identity                  |
-| `event_schema_version`    | UInt16                        | Positive                                            |
-| `external_id`             | Nullable(String)              | OpenRouter or direct-client correlation             |
-| `organization_id`         | UUID                          | PostgreSQL organization identity                    |
-| `workspace_id`            | UUID                          | PostgreSQL workspace identity                       |
-| `api_key_id`              | UUID                          | PostgreSQL API-key identity                         |
-| `model_id`                | LowCardinality(String)        | Exact requested hosted-model ID                     |
-| `served_release_digest`   | String                        | Immutable served release                            |
-| `status`                  | LowCardinality(String)        | `succeeded`, `failed`, `cancelled`, `abandoned`     |
-| `streamed`                | Bool                          | Whether SSE was requested                           |
-| `reserved_amount`         | Int64                         | Nonnegative                                         |
-| `charge`                  | Int64                         | Nonnegative customer charge                         |
-| `input_tokens`            | UInt64                        | Actual nonnegative count                            |
-| `cached_input_tokens`     | UInt64                        | Actual nonnegative count                            |
-| `output_tokens`           | UInt64                        | Actual nonnegative count                            |
-| `reasoning_tokens`        | UInt64                        | Actual nonnegative count                            |
-| `finish_reason`           | LowCardinality(Nullable(String)) | Stable allowlist                                 |
-| `error_code`              | LowCardinality(Nullable(String)) | Stable payload-free code                         |
-| `usable_output_delivered` | Bool                          | Required terminal evidence                          |
-| `cancellation_owner`      | LowCardinality(Nullable(String)) | `client`, `server`, `runtime`                    |
-| `received_at`             | DateTime64(6, 'UTC')          | Accepted request time                               |
-| `started_at`              | Nullable(DateTime64(6, 'UTC')) | Runtime start                                      |
-| `first_token_at`          | Nullable(DateTime64(6, 'UTC')) | First usable output                                |
-| `completed_at`            | DateTime64(6, 'UTC')          | Terminal time and partition timestamp               |
-| `ingested_at`             | DateTime64(6, 'UTC')          | ClickHouse ingestion time                           |
+| Field                     | ClickHouse type        | Storage      | Rules                                           |
+| ------------------------- | ---------------------- | ------------ | ----------------------------------------------- |
+| `id`                      | UUID                   | stored       | Logical unique generation ID; UUIDv7            |
+| `properties`              | JSON                   | stored       | Closed versioned `GenerationProperties`         |
+| `ingested_at`             | DateTime64(6, 'UTC')   | stored       | ClickHouse ingestion time                       |
+| `event_schema_version`    | UInt16                 | materialized | Terminal-event envelope version                 |
+| `organization_id`         | UUID                   | materialized | PostgreSQL organization identity                |
+| `workspace_id`            | UUID                   | materialized | PostgreSQL workspace identity                   |
+| `api_key_id`              | UUID                   | materialized | PostgreSQL API-key identity                     |
+| `model_id`                | LowCardinality(String) | materialized | Exact requested hosted-model ID                 |
+| `settlement_slot_id`      | String                 | materialized | Shared chronological global settlement slot     |
+| `status`                  | LowCardinality(String) | materialized | `succeeded`, `failed`, `cancelled`, `abandoned` |
+| `charge`                  | Int64                  | materialized | `properties.usage.charge`                        |
+| `completed_at`            | DateTime64(6, 'UTC')   | materialized | Terminal time and partition timestamp           |
 
 Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and initially ordered by `(organization_id, workspace_id, completed_at, id)`. UUIDv7 allows a point lookup to derive the likely time partition from the generation ID. Add a projection for another access pattern only after measurements justify it.
 
-The ingestion consumer batches `GenerationSettled` events. Retries use a deterministic insert-deduplication token derived from the source stream partition and offset range, and the consumer advances its durable checkpoint only after ClickHouse acknowledges the batch. Do not use `ReplacingMergeTree`, lifecycle updates or `FINAL` queries for the launch schema.
+`GenerationProperties` is a closed, versioned Zod-authored JSON document:
 
-Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs or attempt arrays. The seed has one exact runtime target and no fallback. Detailed retention and S3 archival are configured by explicit policy; no billing evidence is silently deleted before that policy is approved.
+```text
+{
+  event_schema_version: integer,
+  external_id: string | null,
+  organization_id: uuid,
+  workspace_id: uuid,
+  api_key_id: uuid,
+  model_id: string,
+  served_release_digest: string,
+  status: "succeeded" | "failed" | "cancelled" | "abandoned",
+  streamed: boolean,
+  pricing: {
+    schema_version: integer,
+    components: Array<{
+      unit: string,
+      quantity: integer,
+      unit_price: integer,
+      amount: integer
+    }>
+  },
+  usage: {
+    charge: integer,
+    input_tokens: integer,
+    cached_input_tokens: integer,
+    output_tokens: integer,
+    reasoning_tokens: integer
+  },
+  outcome: {
+    finish_reason: string | null,
+    error_code: string | null,
+    usable_output_delivered: boolean,
+    cancellation_owner: "client" | "server" | "runtime" | null
+  },
+  timing: {
+    received_at: timestamp,
+    started_at: timestamp | null,
+    first_token_at: timestamp | null,
+    completed_at: timestamp
+  },
+  settlement: {
+    slot_id: string
+  }
+}
+```
+
+`pricing` contains every effective price component used for the generation after discounts, including configured zero-quantity or zero-price components. `unit` is a closed schema-versioned value such as `request`, `input_token`, `cached_input_token`, `output_token` or `reasoning_token`. Under the global nano-USD convention, each component's `amount` is exactly `quantity * unit_price`, and all component amounts sum exactly to `usage.charge`; no monetary rounding policy is needed. This preserves the complete billing calculation when the global model price later changes without copying unrelated model descriptions, capabilities, capacity or availability.
+
+The application validates the complete properties document before insertion; it is not arbitrary JSON. New optional properties and new closed schema versions do not require a ClickHouse table migration. The initial materialized columns exist because they define tenant filtering, ordering, common status filtering or PostgreSQL settlement. Add another materialized column from a JSON path only when a measured filtering, grouping or indexing pattern justifies it. The original value remains in `properties`, so a materialization is a query optimization rather than another source of truth.
+
+One TypeScript ClickHouse-ingestion consumer group reads `GenerationSettled` from Valkey. For each event it derives the global `settlement.slot_id` from the Valkey Stream ID's time bucket and settlement schema. Every organization in that time bucket receives the same slot ID; ClickHouse materializes it for chronological reconciliation. The worker issues one logical insert per generation with ClickHouse `async_insert = 1` and `wait_for_async_insert = 1`; ClickHouse combines those inserts server-side. Retries use a generation-ID-based insert deduplication token as a normal-path optimization, but billing correctness never depends on the lifetime of that token. The worker acknowledges a stream entry only after ClickHouse confirms the asynchronous insert was flushed, uses `XAUTOCLAIM` to recover abandoned pending entries, and trims only through the contiguous acknowledged watermark. That watermark is derived from the consumer group's last-delivered ID and oldest pending ID rather than stored in another database table. Do not use `ReplacingMergeTree`, lifecycle updates or `FINAL` queries for the launch schema.
+
+Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs or attempt arrays. The seed has one exact runtime target and no fallback. Generations have no TTL and are retained indefinitely at launch. Rely on ClickHouse Cloud's managed durability and backups initially; do not build a separate archival or export pipeline until retention, regulatory or recovery requirements justify one.
 
 # Inference event contracts
 
-These versioned closed schemas decouple Rust inference from ClickHouse and PostgreSQL. Atomic Valkey reservation and settlement operations append them to a dedicated Valkey Stream; no separate queue is required at launch. ClickHouse and PostgreSQL billing consumers must be independently replayable from that stream and acknowledge entries only after their destination commits.
+This versioned closed schema decouples Rust inference from ClickHouse and PostgreSQL. `GenerationSettled` is an entry in exactly one dedicated Valkey Stream at `generation-settled:{settlement-0}`, not a standalone Valkey key or durable table. It remains available for consumer replay until acknowledged and safely trimmed; ClickHouse becomes the durable per-generation record.
 
-## 15. `GenerationReserved`
+One atomic Valkey finalization consumes the generation's in-flight lease, subtracts its actual charge from the synchronous account balance and appends `GenerationSettled`. The lease is the one-time settlement token: only the finalizer that removes it may charge the account or append the event. There is no reservation event or settled-generation key.
 
-Introduced with Valkey reservations for direct paid traffic.
+One background role inside the existing TypeScript `control` deployment consumes the stream into ClickHouse and acknowledges each entry only after ClickHouse confirms its insert. A separate logical role in the same deployment pulls eligible global settlement slots from ClickHouse into PostgreSQL; it does not consume or acknowledge the Valkey Stream. These are independently supervised roles in the existing service, not new deployed services.
 
-| Field                   | Type      |
-| ----------------------- | --------- |
-| `event_id`              | uuid      |
-| `schema_version`        | integer   |
-| `generation_id`         | uuid      |
-| `request_digest`        | bytes     |
-| `organization_id`       | uuid      |
-| `workspace_id`          | uuid      |
-| `api_key_id`            | uuid      |
-| `model_id`              | string    |
-| `served_release_digest` | string    |
-| `reserved_amount`       | bigint    |
-| `received_at`           | timestamp |
-| `lease_expires_at`      | timestamp |
+The stream has no TTL. Monitor pending-entry age, consumer lag and memory, alert well before capacity pressure, and fail closed on new inference admission if the unacknowledged backlog threatens the cache. Amazon ElastiCache Serverless for Valkey supplies a managed, replicated Multi-AZ transport, but this stream is not treated as a zero-loss financial archive. The accepted launch tradeoff is a rare bounded loss of revenue and telemetry if Valkey loses an unacknowledged event before ClickHouse has it; adding Kafka or another durable broker requires measured evidence that this risk is no longer acceptable.
 
-## 16. `GenerationSettled`
+## 15. `GenerationSettled`
 
-The canonical terminal-generation event. It contains every source field required to insert the ClickHouse generation row except the consumer-generated `ingested_at`.
+The canonical terminal-generation event carries one generation identity and one closed properties document. Its `properties` has the `GenerationProperties` shape except for `settlement`, which cannot be known until Valkey assigns the Stream ID. The ClickHouse consumer derives and adds `settlement`, while ClickHouse supplies `ingested_at` and materializes query columns from the completed JSON document.
 
-| Field                     | Type                                |
-| ------------------------- | ----------------------------------- |
-| `event_id`                | uuid                                |
-| `schema_version`          | integer                             |
-| `generation_id`           | uuid                                |
-| `external_id`             | string nullable                     |
-| `organization_id`         | uuid                                |
-| `workspace_id`            | uuid                                |
-| `api_key_id`              | uuid                                |
-| `model_id`                | string                              |
-| `served_release_digest`   | string                              |
-| `status`                  | `succeeded`, `failed`, `cancelled`, `abandoned` |
-| `streamed`                | boolean                             |
-| `reserved_amount`         | bigint                              |
-| `charge`                  | bigint                              |
-| `input_tokens`            | bigint                              |
-| `cached_input_tokens`     | bigint                              |
-| `output_tokens`           | bigint                              |
-| `reasoning_tokens`        | bigint                              |
-| `finish_reason`           | string nullable                     |
-| `error_code`              | string nullable                     |
-| `usable_output_delivered` | boolean                             |
-| `cancellation_owner`      | `client`, `server`, `runtime`, null |
-| `received_at`             | timestamp                           |
-| `started_at`              | timestamp nullable                  |
-| `first_token_at`          | timestamp nullable                  |
-| `completed_at`            | timestamp                           |
+| Field            | Type                                          |
+| ---------------- | --------------------------------------------- |
+| `generation_id`  | uuid                                          |
+| `properties`     | `GenerationProperties` without `settlement`  |
 
 # Valkey hot-path models
 
-These models exist before any inference traffic is enabled. PostgreSQL projects OpenRouter and direct credentials, organization/workspace state, billing state and serving policy into Valkey. Every request performs authentication, admission, reservation and settlement through atomic Valkey operations. The paths differ only in billing mode: direct customers consume prepaid balance, while OpenRouter consumes invoiced credit exposure.
+These models exist before any inference traffic is enabled. PostgreSQL projects OpenRouter and direct credentials, organization/workspace state, billing state and serving policy into Valkey. OpenRouter is an organization like any other and uses the identical credential, in-flight lease, admission, finalization and `GenerationSettled` path. The only distinction is billing semantics: `prepaid` balances represent deposited funds, while `invoiced` balances represent remaining approved credit exposure.
 
-## 17. `AccountSnapshot`
+## 16. `AccountSnapshot`
+
+Valkey key at seed: `account:{settlement-0}:<organization_id>`.
 
 | Field                 | Type                               |
 | --------------------- | ---------------------------------- |
@@ -427,7 +466,7 @@ These models exist before any inference traffic is enabled. PostgreSQL projects 
 | `billing_mode`        | `prepaid`, `invoiced`              |
 | `balance`             | bigint                             |
 
-## 18. `WorkspaceSnapshot`
+## 17. `WorkspaceSnapshot`
 
 | Field             | Type               |
 | ----------------- | ------------------ |
@@ -435,7 +474,7 @@ These models exist before any inference traffic is enabled. PostgreSQL projects 
 | `workspace_id`    | uuid               |
 | `archived_at`     | timestamp nullable |
 
-## 19. `CredentialSnapshot`
+## 18. `CredentialSnapshot`
 
 Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and is not duplicated in the value.
 
@@ -447,7 +486,7 @@ Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and 
 | `expires_at`      | timestamp nullable |
 | `revoked_at`      | timestamp nullable |
 
-## 20. `ModelSnapshot`
+## 19. `ModelSnapshot`
 
 Valkey key: `model:<id>`.
 
@@ -460,24 +499,36 @@ Valkey key: `model:<id>`.
 
 This directly mirrors the serving-relevant PostgreSQL `models` row. The catalog is small, so retaining one shared model shape is simpler than maintaining a second flattened projection. Rust combines it with the locally loaded `ModelDeploymentManifest`; the deployment manifest supplies the target, measured capacity, datacenter/compliance declarations and served release digest. The model snapshot supplies customer-visible identity, capabilities, advertised capacity, prices and availability.
 
-## 21. `Reservation`
+## 20. `InFlightGenerationLease`
 
-| Field                   | Type                             |
-| ----------------------- | -------------------------------- |
-| `generation_id`         | uuid                             |
-| `request_digest`        | bytes                            |
-| `organization_id`       | uuid                             |
-| `workspace_id`          | uuid                             |
-| `api_key_id`            | uuid                             |
-| `model_id`              | string                           |
-| `served_release_digest` | string                           |
-| `reserved_amount`       | bigint                           |
-| `status`                | `active`, `settled`, `abandoned` |
-| `received_at`           | timestamp                        |
-| `lease_expires_at`      | timestamp                        |
-| `terminal_event_id`     | uuid nullable                    |
-| `charge`                | bigint nullable                  |
-| `updated_at`            | timestamp                        |
+Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorted set, not a row or hash.
+
+| Part   | Value              |
+| ------ | ------------------ |
+| member | `generation_id`    |
+| score  | `lease_expires_at` |
+
+Admission atomically verifies a positive remaining balance and counts unexpired members before adding the new generation with `ZADD NX`. A small fixed concurrency ceiling applies to every organization, with lower balance bands reducing the ceiling to one. These bands are operational deployment configuration, not customer-facing product controls. Because actual cost is charged only at completion, the final admitted generations may create a deliberately accepted small negative balance; subsequent requests are blocked until a top-up, payment or operator credit makes the balance positive.
+
+Rust extends a live generation with `ZADD XX`. Expired members do not count toward concurrency and remain for a short grace period before cleanup so a delayed finalization can still succeed. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `AccountSnapshot.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
+
+The script executes without interleaving, which supplies the required conditional atomicity; `MULTI`/`EXEC` alone cannot branch on whether lease removal succeeded. Valkey scripts are not rollback transactions, so the script validates arguments and key types before its fixed writes and the application exclusively owns those key shapes. Valkey Cluster hashes only the text inside braces, so the shared `{settlement-0}` tag places `account:{settlement-0}:<organization_id>`, `inflight:{settlement-0}:<organization_id>` and `generation-settled:{settlement-0}` in the same cluster hash slot. Credential, workspace and model keys are read outside this script and do not need that tag.
+
+Seed runs one settlement shard. Later horizontal scaling assigns each organization to a stable shard and uses the same tag for all three keys, for example `account:{settlement-7}:<organization_id>`, `inflight:{settlement-7}:<organization_id>` and `generation-settled:{settlement-7}`. Changing shard assignment is an explicit drained migration rather than an implicit modulo change.
+
+The lease intentionally contains no request metadata. Rust carries the authenticated identities, model release, actual usage, admission-time prices and timing through the live request. It uses those captured nano-USD prices to calculate `properties.usage.charge` and emits the exact pricing snapshot and changing terminal details inside `GenerationSettled.properties`. `generation_id` identifies the durable ClickHouse row. The ClickHouse consumer adds the global settlement slot, and the PostgreSQL worker derives the per-organization source ID as `<settlement_slot_id>:<organization_id>`. The Valkey Stream has its own transport entry ID, so there is no separate event UUID. A process loss may leave an unbilled generation that expires without a terminal analytics row. That bounded revenue and observability loss is accepted at launch in exchange for eliminating monetary reservations and durable in-progress request state.
+
+## 21. `AppliedBalanceTransactionIds`
+
+Valkey key at seed: `applied-balance-transactions:{settlement-0}:<organization_id>`. This is a set, not a row or hash.
+
+| Part   | Value                    |
+| ------ | ------------------------ |
+| member | `balance_transaction_id` |
+
+The set contains only PostgreSQL-originated transactions whose signed amount must change the operational Valkey balance: top-ups, payments, refunds, chargebacks, credits and adjustments. It has no TTL because transaction replay must remain idempotent indefinitely; this traffic is low-volume compared with generations. The balance-projection Lua script receives the account key, this set key, transaction ID and signed amount. It validates key types and arguments, calls `SADD`, and applies the amount only when `SADD` returns one. Both keys use the same settlement hash tag and therefore share a Valkey cluster slot.
+
+A complete Valkey rebuild closes admission and drains terminal usage until PostgreSQL and the operational balance agree. It then restores `AccountSnapshot.balance` from PostgreSQL and reconstructs this set from all PostgreSQL-originated balance transactions before reopening admission. Ordinary generation settlement transactions are excluded from reconstruction.
 
 # Explicitly excluded models
 
@@ -524,10 +575,14 @@ The following existed in older plans and are not part of this proposal:
 - [ ] Approve or reject universal zero retention at launch.
 - [ ] Review organization roles and the workspace policy boundary.
 - [ ] Review prepaid versus invoiced billing accounts and balance transactions.
-- [ ] Review nano-USD token pricing and micro-USD totals.
+- [ ] Review the global integer nano-USD convention and concise monetary field names.
+- [ ] Review immutable per-generation pricing snapshots and exact component-sum invariant.
 - [ ] Review the ClickHouse generation schema, ordering key and retention policy.
 - [ ] Review the Valkey Stream generation-event transport and consumer acknowledgement rules.
+- [ ] Review global-slot ClickHouse-to-PostgreSQL settlement, advisory-lock leadership and idempotent replay.
+- [ ] Review generation-ID collapse and conflicting-duplicate detection before financial aggregation.
 - [ ] Confirm generation fields retain no prompts or responses.
 - [ ] Review PostgreSQL-to-Valkey projection, rebuild and propagation-SLO rules.
-- [ ] Review Valkey snapshot and reservation fields.
+- [ ] Review Valkey snapshots, in-flight concurrency leases and bounded-overdraft policy.
+- [ ] Review applied balance-transaction IDs and atomic PostgreSQL-to-Valkey money projection.
 - [ ] Confirm excluded models should remain excluded.

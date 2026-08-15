@@ -87,7 +87,7 @@ Docker Compose is the portable full-stack path:
 ```text
 compose.yaml
   postgres
-  valkey                 serving projection, reservations and event stream
+  valkey                 serving projection, in-flight leases and event stream
   clickhouse             generation analytics projection
   fake-sglang            deterministic OpenAI-compatible model runtime
   control                TypeScript/Hono application
@@ -165,18 +165,22 @@ Rust does not own customer CRUD, PostgreSQL repositories, Stripe, model purchasi
 
 ### Hot-path state
 
-OpenRouter and direct customer keys use the same Valkey-backed authentication, admission, reservation and settlement path. Provision managed Valkey and publish the initial serving projection before enabling any inference traffic:
+OpenRouter and direct customer keys use the same Valkey-backed authentication, admission and settlement path. Provision Amazon ElastiCache Serverless for Valkey and publish the initial serving projection before enabling any inference traffic:
 
 - TypeScript remains the PostgreSQL authority and synchronously projects the latest committed serving state before reporting a successful control mutation;
 - a background role in the existing `control` deployment periodically reconciles current keys, organizations, workspaces, models and externally initiated balance changes into Valkey;
-- Rust reads one atomic Valkey projection for authentication, limits, reservation and settlement;
-- atomic reservation and settlement operations append generation events to a dedicated Valkey Stream;
-- background roles in the existing `control` deployment drain settled usage into PostgreSQL and ClickHouse;
+- Rust reads the Valkey projection for authentication, balance and concurrency admission, and settlement;
+- every organization uses expiring per-organization in-flight leases instead of monetary reservations, accepts a bounded negative balance from its final admitted requests and blocks new admission at a nonpositive prepaid balance or invoiced credit exposure;
+- one versioned Valkey Lua script atomically consumes the in-flight lease, applies the actual charge and appends `GenerationSettled` to a dedicated Valkey Stream;
+- one TypeScript consumer-group role writes each event logically one-by-one to ClickHouse using acknowledged asynchronous inserts, recovers abandoned entries with `XAUTOCLAIM`, and acknowledges and trims stream entries only after ClickHouse confirms their flush;
+- a separate TypeScript settlement role pulls eligible global ClickHouse slots in chronological order and posts one idempotent PostgreSQL balance transaction per nonzero organization/slot group;
 - if Valkey is unavailable, every new inference request fails closed.
 
-There is no PostgreSQL projection queue. Ordinary mutations commit PostgreSQL, reload the current row from the primary, update Valkey and return success only after acknowledgement. Restrictive operations first block the affected Valkey scope and leave it blocked on failure; permissive operations commit PostgreSQL first so partial failure withholds access or credit. Reconciliation is idempotent, can rebuild projections from PostgreSQL and never copies a stale PostgreSQL balance over live reservations or unposted settlements. PostgreSQL-originated money changes are applied from immutable balance transactions using their IDs; Valkey-originated usage postings do not echo back into Valkey. Each object has one stable Valkey key. Rebuilds close admission for all traffic, drain settlement events, resolve reservations, rewrite those keys in place from current PostgreSQL state and then reopen admission.
+There is no PostgreSQL projection queue. Ordinary mutations commit PostgreSQL, reload the current row from the primary, update Valkey and return success only after acknowledgement. Restrictive operations first block the affected Valkey scope and leave it blocked on failure; permissive operations commit PostgreSQL first so partial failure withholds access or credit. Reconciliation is idempotent, can rebuild projections from PostgreSQL and never copies a stale PostgreSQL balance over terminal usage not yet posted. A versioned Lua script atomically records each PostgreSQL-originated balance-transaction ID in a per-organization Valkey set and applies its signed amount only when the ID is new. Valkey-originated usage postings do not echo back into Valkey. A rebuild drains usage, restores the PostgreSQL balance and reconstructs the low-volume applied-ID set before admission reopens. Each object has one stable Valkey key.
 
-Valkey is the one justified synchronous internal state dependency for all inference traffic. OpenRouter differs from direct customers only in billing mode: invoiced credit exposure instead of prepaid balance. PostgreSQL and ClickHouse are never queried by an inference request. Do not add CDC, Kafka, a standalone projector, a queue or a second cache beside it.
+The ClickHouse consumer derives one global, chronologically sortable five-minute settlement slot from each event's Valkey Stream-ID time bucket. All organizations in the bucket share that slot. The PostgreSQL worker settles only slots older than a fixed delay whose contiguous ClickHouse-ingestion acknowledgement watermark has passed the slot's derived end. Its financial query first collapses exact retries by generation ID, then groups the slot across organizations; insert-deduplication-token retention is only a normal-path optimization. Conflicting rows for one generation ID block the slot and alert rather than selecting a charge. The worker derives each source ID as `<settlement_slot_id>:<organization_id>` and posts every missing nonzero organization in its own short transaction. It does not advance until all such organizations exist in PostgreSQL. On startup it resumes the latest posted slot inclusively, or ClickHouse's earliest eligible slot when none has been posted; a wholly zero-charge slot may be replayed harmlessly. A PostgreSQL session advisory lock elects one worker pod, while `(source_type, source_id)` supplies retry and race idempotency. No checkpoint or manifest table is required.
+
+Valkey is the one justified synchronous internal state dependency for all inference traffic. OpenRouter differs from direct customers only in billing mode: invoiced credit exposure instead of prepaid balance. PostgreSQL and ClickHouse are never queried by an inference request. All internal prices, charges and balances use integer nano-USD while their field names omit unit suffixes. The stream has no TTL; monitor lag and memory and close admission before an unacknowledged backlog threatens capacity. ClickHouse generations also have no TTL at launch; rely on ClickHouse Cloud's managed durability and backups without a separate archival pipeline, and add no projection before measured query demand. ElastiCache Serverless is a managed, replicated Multi-AZ transport, but the launch design accepts rare bounded event loss rather than adding Kafka. Do not add CDC, Kafka, a standalone projector, another queueing system or a second cache beside it.
 
 ## API contract rule
 
@@ -209,9 +213,9 @@ Initial public surfaces:
 
 ## Exact model registry
 
-PostgreSQL contains one global `models` table with an immutable human-readable `id`, top-level `name` and `status`, and one closed Zod `properties` document based on OpenRouter's structured provider model shape. Properties contain model source/artifact identity, modalities, constraints, supported parameters, exact integer pricing, advertised capacity and optional OpenRouter settings. The table is seeded in local development and managed through the TypeScript control application. Price and availability changes synchronously mirror the latest committed row into `model:<id>` in Valkey before reporting success; periodic reconciliation repairs partial failures.
+PostgreSQL contains one global `models` table with an immutable human-readable `id`, top-level `name` and `status`, and one closed Zod `properties` document based on OpenRouter's structured provider model shape. Properties contain public model-source metadata, modalities, constraints, supported parameters, exact integer pricing, advertised capacity and optional OpenRouter settings. They do not contain exact runtime artifact revisions. The table is seeded in local development and managed through the TypeScript control application. Price and availability changes synchronously mirror the latest committed row into `model:<id>` in Valkey before reporting success; periodic reconciliation repairs partial failures.
 
-Git contains only environment-specific `ModelDeploymentManifest` records: SGLang image and launch profile, service secret reference, GPU shape, measured capacity, region and compliance declarations. Argo CD continues to own the corresponding SGLang deployment.
+Git contains environment-specific `ModelDeploymentManifest` records: required exact `model_path`, `model_revision`, `tokenizer_path` and `tokenizer_revision` fields; SGLang image and launch profile; service secret reference; GPU shape; measured capacity; region; and compliance declarations. Tokenizer fields remain explicit even when they equal the model fields. The served release digest covers these artifact identities and the canonical runtime configuration. Argo CD continues to own the corresponding SGLang deployment.
 
 At runtime Rust resolves the exact requested ID from Valkey and rejects unknown, unavailable or retired models before GPU work. There is no scoring, dynamic discovery, weighted routing, fallback graph or alias resolution.
 
@@ -284,7 +288,7 @@ Initial AWS resources:
 - Secrets Manager for database, channel and upstream credentials;
 - Route 53, ACM and one public ALB for product and inference hostnames;
 - CloudWatch logs, alarms and AWS budgets;
-- one managed Valkey cluster provisioned before any inference traffic is enabled.
+- one Amazon ElastiCache Serverless cache using Valkey, provisioned before any inference traffic is enabled.
 
 Do not add RDS Proxy, a service mesh, a separate ingress proxy, a data warehouse, or a workflow engine without a measured trigger.
 
@@ -351,7 +355,8 @@ Required product tables are limited to:
 - `api_keys` with a SHA-256 digest and no stored prefix;
 - one global `models` table; no workspace-model table at launch;
 - `billing_accounts` and immutable `balance_transactions`;
-- ClickHouse `generations` populated from terminal generation events.
+- ClickHouse `generations` populated from terminal generation events, with canonical JSON properties and a materialized global settlement slot;
+- PostgreSQL usage balance transactions pulled idempotently from eligible ClickHouse slots and grouped per organization.
 
 The OpenRouter-only milestone does not require customer billing tables to be on the serving path. Do not create fleet allocations, cells, routes, canaries, traces, recommendations, experiments or provider-pricebook tables for this plan.
 
@@ -458,9 +463,10 @@ Outcome: a customer can sign up, fund an account, create a workspace key and cal
 
 - finish Better Auth and organization/workspace flows;
 - add Stripe/prepaid ledger workflows retained from the product specification;
-- provision managed Valkey and publish key/policy/balance snapshots;
+- provision Amazon ElastiCache Serverless for Valkey and publish key/policy/balance snapshots;
 - run synchronous projection plus periodic reconciliation and prove fail-closed, rebuild and propagation behavior;
-- enable Rust atomic admission/reservation/settlement for direct keys;
+- enable Rust atomic balance/concurrency admission and terminal settlement for direct keys;
+- run the ClickHouse ingestion consumer and chronological PostgreSQL settlement worker, and prove crash, replay and multi-pod leadership behavior;
 - expose balance, keys, models and usage in the Vite/shadcn app;
 - run duplicate, cancellation, failure and reconciliation state-machine tests.
 

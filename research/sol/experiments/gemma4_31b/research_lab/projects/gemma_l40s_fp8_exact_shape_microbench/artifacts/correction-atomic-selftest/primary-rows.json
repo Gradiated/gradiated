@@ -1,9 +1,0 @@
-{
-  "linear_cases": [
-    {
-      "name": "synthetic-primary",
-      "pass": true
-    }
-  ],
-  "primary_fp8_pass": true
-}

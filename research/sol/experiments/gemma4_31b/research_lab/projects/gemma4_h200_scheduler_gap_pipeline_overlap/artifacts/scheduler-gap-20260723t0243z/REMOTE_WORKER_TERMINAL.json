@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "metadata_equivalence_test_failed",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T02:43:56.312439Z"
-}

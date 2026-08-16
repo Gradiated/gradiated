@@ -1,3 +1,0 @@
-{"config": "../configs/barge-m4-135m.toml", "measured_output_tok_per_s": 977.0, "note": "135M n256"}
-{"config": "../configs/barge-m4-qwen2.5-0.5b-instruct.toml", "measured_output_tok_per_s": 965.9, "note": "qwen2.5-0.5b-instruct n128 slots72"}
-{"config": "../configs/barge-m4-qwen3-4b-instruct.toml", "measured_output_tok_per_s": 112.5, "note": "qwen3-4b-instruct n48 slots24"}

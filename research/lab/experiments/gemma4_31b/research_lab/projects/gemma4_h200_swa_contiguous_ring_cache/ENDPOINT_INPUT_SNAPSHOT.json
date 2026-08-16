@@ -1,0 +1,76 @@
+{
+  "files": [
+    {
+      "bytes": 4606,
+      "name": "attention_deferred_local_kv.py",
+      "path": "inputs/endpoint_stack/attention_deferred_local_kv.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/attention_deferred_local_kv.py"
+    },
+    {
+      "bytes": 9494,
+      "name": "fp8_qkv_paired_runner.py",
+      "path": "inputs/endpoint_stack/fp8_qkv_paired_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/fp8_qkv_paired_runner.py"
+    },
+    {
+      "bytes": 6024,
+      "name": "host_min_new_tokens_gate.py",
+      "path": "inputs/endpoint_stack/host_min_new_tokens_gate.py",
+      "sha256": "2779aae2c51c63ef3119edff9b57e39f09576975ec6e15fb66928e6069405c2a",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/host_min_new_tokens_gate.py"
+    },
+    {
+      "bytes": 7860,
+      "name": "install_endpoint_patch.py",
+      "path": "inputs/endpoint_stack/install_endpoint_patch.py",
+      "sha256": "b020fbb114d390e8bc10ce0c3c6145d7535b70f7a07d8dcd3ece2a208727d117",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/install_endpoint_patch.py"
+    },
+    {
+      "bytes": 2929,
+      "name": "pinned_async_penalty_tokens.py",
+      "path": "inputs/endpoint_stack/pinned_async_penalty_tokens.py",
+      "sha256": "58f4c65846af62ad21aeb765d7764686c364335d29fff45eac65da86ab296197",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/pinned_async_penalty_tokens.py"
+    },
+    {
+      "bytes": 4653,
+      "name": "producer_fused_swa_translation.py",
+      "path": "inputs/endpoint_stack/producer_fused_swa_translation.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/producer_fused_swa_translation.py"
+    },
+    {
+      "bytes": 6062,
+      "name": "proven_v0513_endpoint_entrypoint.py",
+      "path": "inputs/endpoint_stack/proven_v0513_endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/proven_v0513_endpoint_entrypoint.py"
+    },
+    {
+      "bytes": 26612,
+      "name": "qkv_epilogue_discriminator.py",
+      "path": "inputs/endpoint_stack/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/qkv_epilogue_discriminator.py"
+    },
+    {
+      "bytes": 4653,
+      "name": "residual_intervention.py",
+      "path": "inputs/endpoint_stack/residual_intervention.py",
+      "sha256": "9b5a51284ac313014988f426c35b818ae2590cb7d4a72ec604a6ad80a63336b3",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/inputs/stack/producer_fused_swa_translation.py"
+    },
+    {
+      "bytes": 1618,
+      "name": "CHECKPOINT_SHA256SUMS.txt",
+      "path": "inputs/CHECKPOINT_SHA256SUMS.txt",
+      "sha256": "7ed5b04ef9c115a2cbba771df463ca0cacbfb87cfa298773e8b037d12bcea735",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_window512_codesign/CHECKPOINT_SHA256SUMS.txt"
+    }
+  ],
+  "immutable_after_claim": true,
+  "schema_version": 1
+}

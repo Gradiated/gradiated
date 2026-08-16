@@ -1,7 +1,0 @@
-{
-  "project": "gemma4_h200_fp8_tied_head_fused_greedy_top1",
-  "runtime": "Invalidated pre-science staging release; guest safe, no scientific arm consumed, continuation authorized by unchanged project contract",
-  "candidate_invocation_started": false,
-  "candidate_cuda_started": true,
-  "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_fused_greedy_top1/artifacts/INVALIDATED_PRE_SCIENCE_TERMINAL.json"
-}

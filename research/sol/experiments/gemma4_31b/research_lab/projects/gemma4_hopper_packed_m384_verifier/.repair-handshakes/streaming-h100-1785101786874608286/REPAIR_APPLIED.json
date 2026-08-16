@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-26T21:38:29.022516Z",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785101786874608286/patch_build_ninja_once.py",
-  "patch_sha256": "eb3a3e46e4487f8cc3f37104065dbb61fff909d2a6f85708b3fbdbf0af50f7c6",
-  "repair_id": "streaming-h100-1785101786874608286",
-  "request_sha256": "737ce423a708c0168fafc61fa9dca96210a4841de8a065f330ce3112a5383047",
-  "scope": "run_unsubmitted_cycle",
-  "state": "repair_applied"
-}

@@ -1,7 +1,0 @@
-{"disk_count": 0, "event": "stock_control", "instance_count": 0, "matching_labeled_resources": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T18:33:28.708767Z"}
-{"action": "register-allocation", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T18:34:08.446058Z"}
-{"event": "instance_created", "instance_id": "computeinstance-e00nefk5f29tektq8z", "timestamp": "2026-07-14T18:34:08.446157Z"}
-{"elapsed_seconds": 85.661, "event": "ssh_ready", "timestamp": "2026-07-14T18:34:53.658725Z"}
-{"action": "request-cleanup", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T18:38:18.538139Z"}
-{"action": "mark-cleanup-verified", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T18:39:06.823322Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "final_disk_count": 0, "final_instance_count": 0, "instance_get_not_found": true, "timestamp": "2026-07-14T18:39:06.823796Z"}

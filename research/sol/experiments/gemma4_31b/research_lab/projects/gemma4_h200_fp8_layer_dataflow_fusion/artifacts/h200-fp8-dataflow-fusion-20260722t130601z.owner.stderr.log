@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/run_bench_owner.py", line 376, in <module>
-    raise SystemExit(main())
-                     ~~~~^^
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/run_bench_owner.py", line 309, in main
-    raise RuntimeError(f"typed_scientific_boundary:{worker_terminal.get('message', 'decision_terminal_missing')}")
-RuntimeError: typed_scientific_boundary:component_worker_failed_without_terminal

@@ -1,4 +1,0 @@
-scp: /home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/discriminator/FINAL_TERMINAL.json: No such file or directory
-usage: gpu_pool.py [-h] --lab LAB
-                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
-gpu_pool.py: error: unrecognized arguments: --bench h100-v0515-ngram-e00mfea030cdngg54z

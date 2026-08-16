@@ -1,6 +1,0 @@
-{
-  "project": "shared: gemma4_h200_partitioned_global_attention then gemma4_h200_fp8_layer_dataflow_fusion",
-  "runtime": "Cold v0.5.13 kernel bench; priority claimant next.",
-  "server_state": "No server, container, project workspace, CUDA invocation, or scientific invocation from the orphaned FP8 layer-dataflow claim.",
-  "claim_reconciliation": "Foreign owner inactive; local pre-invocation failures and direct guest absence proof recorded by the priority project."
-}

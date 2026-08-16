@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "decision": "PACKET_READY_FOR_CUDA",
+  "runtime_image": "vllm/vllm-openai:v0.25.1-x86_64-cu129@sha256:94a0aff7a289f23bcefa189d11841e487991405d86da782a63bf6e5f95d0d39a",
+  "upstream_commit": "752a3a504485790a2e8491cacbb35c137339ad34",
+  "geometry": {"page_size": 16, "kv_heads": 1, "cache_width": 576, "value_width": 512, "query_heads": 20, "batches": [1, 8, 32], "contexts": [8193, 9215], "kv_splits": "upstream-selected-32-on-L40S"},
+  "source_identity": {"v0251_triton_mla_sha256": "5e9aa13eca7ce718ce0648f11454bb0e0e98e9f5da40ee22bd8d0b05f4ba1d03", "v0251_reshape_sha256": "fd47641f8e62590516ca9596c52a80f8dab4204f2daf982d15a30a48d5f07d9c", "v0251_decode_sha256": "b9823c65eba22d76abf64dad7d7d16a950f67471c86d6cb5b3e983aaf14381ac", "v0251_gpu_model_runner_sha256": "6c92ded8468f44d6df863a617ce588f132fa6df7031feecc0cc421702a41610e"},
+  "packet_files": {"upstream_onehead_fp8_packet.py": "f2464d737e7441c4b0b0865878ba952f8ae09824f07b28c123e75fa3b68ce56a", "remote_upstream_onehead_packet.sh": "b6cf5534a5494b8f6b645ae115929707d2de0dee2c1b7c1604979c8cf1fe03dc", "test_packet.py": "50ff92c850e7ce4762e6f799bec18d3cc366f4c036a0b99b35c1b13de12c49ff"},
+  "experiment_spec_sha256": "20fce2c7ee8933e8872ea35e7fbe6668f7882d09be1e8cf0d99f3d21a620884c",
+  "artifact_roots": {"remote": "/workspace/campaign-100-mla-microbench", "retrieval": "/workspace/public-mla-microbench/mla-microbench.tar.gz", "result": "campaign-100-mla-microbench/allocation-result.json"},
+  "ssh_public_key_input": "one-line OpenSSH public key, no PEM wrapping",
+  "retention_trigger": "UPSTREAM_ONEHEAD_FP8_COMPONENT_PASS; existing vllm_recover_existing.py path only, same sequential owner/watchdog",
+  "command": ["/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py", "--benchmark-script", "<packet>/upstream_onehead_fp8_packet.py", "--remote-script", "<packet>/remote_upstream_onehead_packet.sh", "--artifact-basename", "mla-microbench", "--experiment-spec-sha256", "20fce2c7ee8933e8872ea35e7fbe6668f7882d09be1e8cf0d99f3d21a620884c", "--ssh-public-key", "<one-line-ssh-ed25519.pub>"]
+}

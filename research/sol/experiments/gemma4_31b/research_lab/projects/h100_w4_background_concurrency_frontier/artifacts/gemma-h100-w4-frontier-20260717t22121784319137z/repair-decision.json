@@ -1,4 +1,0 @@
-{
-  "action": "teardown",
-  "reason": "primary aggregation repaired and sequential actual-head follow-up retrieved successfully"
-}

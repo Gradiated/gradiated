@@ -1,3 +1,0 @@
-Load weight end. elapsed=16.05 s, type=Gemma4ForConditionalGeneration, avail mem=45.21 GB, mem usage=33.26 GB.
-Use sliding window memory pool. full_layer_tokens=97361, swa_layer_tokens=77888
-Capture cuda graph end. elapsed=39.49 s, mem usage=1.06 GB, avail mem=10.63 GB.

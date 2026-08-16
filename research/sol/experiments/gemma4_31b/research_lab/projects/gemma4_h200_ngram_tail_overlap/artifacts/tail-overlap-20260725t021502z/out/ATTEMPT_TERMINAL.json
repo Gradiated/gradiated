@@ -1,5 +1,0 @@
-{
-  "candidate_science_consumed": false,
-  "classification": "recoverable_or_typed_remote_failure",
-  "error": "TypeError(\"unsupported operand type(s) for +: 'int' and 'str'\")"
-}

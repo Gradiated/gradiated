@@ -1,9 +1,0 @@
-{
-  "deadline_utc": "2026-07-23T20:30:00Z",
-  "watchdog": {
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-sync-linear-h200-20260723t1545-watchdog-v4.service",
-    "main_pid": 3724671,
-    "unit": "gemma4-sync-linear-h200-20260723t1545-watchdog-v4.service",
-    "unit_manager": "user"
-  }
-}

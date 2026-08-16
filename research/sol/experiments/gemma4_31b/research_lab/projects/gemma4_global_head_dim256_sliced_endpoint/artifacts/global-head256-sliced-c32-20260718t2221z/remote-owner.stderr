@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/work/workspace/global-head256-sliced/coherence_runner.py", line 62, in <module>
-    raise SystemExit(main())
-                     ^^^^^^
-  File "/work/workspace/global-head256-sliced/coherence_runner.py", line 57, in main
-    temporary.replace(output)
-  File "/usr/lib/python3.12/pathlib.py", line 1378, in replace
-    os.replace(self, target)
-FileNotFoundError: [Errno 2] No such file or directory: '/work/coherence.part' -> '/work/coherence.json'

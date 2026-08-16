@@ -1,9 +1,0 @@
-{
-  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_BINDING.json",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/DIRECTOR_PACKED_MASK_ENDPOINT_WORKLOAD_SCHEMA_REPAIR_BINDING.json",
-  "ready_sha256": "020d69f8cb2a9dfa1e60eb1219b9c15f38a6394fa7f7f48f8e4599468f7ca3e8",
-  "requested_at_utc": "2026-07-25T14:30:01.107621Z",
-  "retry_scope": "replace only the unpersisted workload producer from the bound TRACE_PACKET template and exact_semantic_rows arrivals; then proceed directly to the unchanged endpoint consumer under the retained claim",
-  "schema_version": 1,
-  "state": "repair_requested"
-}

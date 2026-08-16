@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_lossless_fp8_weight_stream_codesign/lossless_fp8_stream_screen.py", line 680, in <module>
-    raise SystemExit(main())
-                     ~~~~^^
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_lossless_fp8_weight_stream_codesign/lossless_fp8_stream_screen.py", line 591, in main
-    raise RuntimeError(f"module map count mismatch: {parameter_count}")
-RuntimeError: module map count mismatch: 29286727680

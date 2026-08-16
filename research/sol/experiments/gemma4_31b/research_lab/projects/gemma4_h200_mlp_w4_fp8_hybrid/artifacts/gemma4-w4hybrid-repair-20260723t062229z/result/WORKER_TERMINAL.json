@@ -1,7 +1,0 @@
-{
-  "classification": "component_reject",
-  "message": "call_weighted_bound_below_three_percent",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T06:30:21.601788Z"
-}

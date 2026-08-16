@@ -1,5 +1,0 @@
-{
-  "path": "REMOTE_EXCEPTION.json",
-  "returncode": 1,
-  "stderr": "scp: /home/glmrunner/gemma4-persistent-grouped-lm-head/artifacts/20260725t193202z/REMOTE_EXCEPTION.json: No such file or directory\n"
-}

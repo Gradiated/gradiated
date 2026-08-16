@@ -1,5 +1,0 @@
-{
-  "candidate_science_consumed": false,
-  "classification": "recoverable_or_typed_remote_failure",
-  "error": "FileNotFoundError(2, 'No such file or directory')"
-}

@@ -1,0 +1,620 @@
+{
+  "classification": "typed_none",
+  "decision": {
+    "direct_hipblaslt_component_source_complete": true,
+    "exact_shape_static_contract_pass": true,
+    "first_decisive_gate": "current_dense_runtime_native_producer_consumer",
+    "interpretation": "Current vLLM recognizes packed MXFP6 weights but forces every dense MXFP6 activation/weight combination through Quark dequantization, activation QDQ emulation, and high-precision F.linear. ROCm's maintained hipBLASLt/RocRoller source has a real E3M2 block-scale consumer, but no bound current vLLM activation packer or dispatch reaches it. The supplied exact-shape runner isolates that later consumer, but its input generation is outside the timed region and no target-MI355X sample exists in scope. Nominal 6-bit bytes therefore cannot be converted into a strict all-in whole-request improvement.",
+    "producer_layout_source_complete": true,
+    "strict_improvement_bound_pass": false,
+    "target_mi355x_validation_pass": false,
+    "typed_none_reason": "native_mxfp6_activation_producer_and_runtime_dispatch_missing_with_no_scope_matched_target_timing",
+    "vllm_no_fallback_pass": false
+  },
+  "evidence": {
+    "geometry_and_economic_assertions": {
+      "fp8_baseline": true,
+      "hidden_size": true,
+      "intermediate_size": true,
+      "layers": true,
+      "mi355x_gfx950": true,
+      "mi355x_hurdle": true,
+      "planning_rate": true,
+      "vocabulary": true
+    },
+    "input_checks": {
+      "/root/workspace/research/factory/data/accelerator_inventory.json": {
+        "expected_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+        "observed_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+        "pass": true
+      },
+      "/root/workspace/research/factory/data/gpu_prices.json": {
+        "expected_sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+        "observed_sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+        "pass": true
+      },
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json": {
+        "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "observed_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "pass": true
+      },
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/MI355X_FP8_RUNTIME_SCREEN.json": {
+        "expected_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "observed_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "pass": true
+      }
+    },
+    "source_checks": {
+      "contract:quark:quark/torch/utils/pack.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "class Pack_mxfp6(PackMethod):",
+          "class Pack_fp6(PackMethod):",
+          "This layout is expected by the mfma_scale_f32_16x16x128_f8f6f4 instruction.",
+          "input_shape[-1] = input_shape[-1] // 4 * 3"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/clients/bench/src/client.cpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "3 = B32E8",
+          "Block scaling only allows F8/F6/F4",
+          "arg.a_type != HIP_R_6F_E2M3",
+          "arg.a_type != HIP_R_6F_E3M2"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/clients/common/include/testing_matmul.hpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "Swizzle MX scale tensor",
+          "K/MX",
+          "MXUseRocroller()"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/clients/common/src/mxDataGen.cpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "DGen::ocp_e3m2_mxfp6",
+          "GPU expects the data are packed",
+          "packData<DT>"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/library/include/hipblaslt/hipblaslt-types.h": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "HIP_R_6F_E3M2_EXT"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/library/src/amd_detail/include/auxiliary.hpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "return \"bf6_r\";",
+          "value == \"bf6_r\"",
+          "HIP_R_6F_E3M2"
+        ]
+      },
+      "contract:rocm_libraries:projects/hipblaslt/library/src/amd_detail/rocblaslt/src/rocroller/rocroller_host.cpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "rocRoller::DataType::BF6",
+          "rocRoller::Operations::ScaleMode::Separate",
+          "blockSize(prob.scaleAType)",
+          "blockSize(prob.scaleBType)"
+        ]
+      },
+      "contract:rocm_libraries:shared/mxdatagenerator/lib/include/mxDataGenerator/ocp_e3m2_mxfp6.hpp": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "ocp_e3m2_mxfp6"
+        ]
+      },
+      "contract:vllm:vllm/model_executor/layers/quantization/quark/quark.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "if isinstance(layer, LinearBase):",
+          "return QuarkLinearMethod(self)"
+        ]
+      },
+      "contract:vllm:vllm/model_executor/layers/quantization/quark/schemes/quark_ocp_mx.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "self.emulate = not current_platform.supports_mx() or (",
+          "self.input_dtype != \"mxfp4\" or self.weight_dtype != \"mxfp4\"",
+          "kernels for input_dtype={self.input_dtype}",
+          "are not yet integrated",
+          "dq_w = self.dequant_func(layer.weight, layer.weight_scale, x.dtype)",
+          "return F.linear(qdq_x, dq_w, bias)"
+        ]
+      },
+      "contract:vllm:vllm/model_executor/layers/quantization/utils/mxfp6_utils.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "fake_quantize_fp4_fp6_per_group_with_scale",
+          "pack_method = create_pack_method(None, dtype=quant_dtype)",
+          "dequantize_fp4_fp6_per_group"
+        ]
+      },
+      "contract:vllm:vllm/model_executor/layers/quantization/utils/ocp_mx_utils.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "OCP_MX_BLOCK_SIZE = 32",
+          "\"mxfp6_e3m2\"",
+          "\"mxfp6_e2m3\""
+        ]
+      },
+      "contract:vllm:vllm/model_executor/models/gemma4.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "self.qkv_proj = QKVParallelLinear(",
+          "self.o_proj = RowParallelLinear(",
+          "self.gate_up_proj = MergedColumnParallelLinear(",
+          "self.down_proj = RowParallelLinear("
+        ]
+      },
+      "quark:commit": {
+        "expected": "1b229f781a1974cc742884e42d8eefc1eebb4f0a",
+        "observed": "1b229f781a1974cc742884e42d8eefc1eebb4f0a",
+        "pass": true
+      },
+      "quark:quark/torch/kernel/hw_emulation/hw_emulation_interface.py": {
+        "expected_sha256": "7ee36882a09d7fbb0cee16696454b4ee74cf9ea6221e47c2e6a550b43a6157b2",
+        "observed_sha256": "7ee36882a09d7fbb0cee16696454b4ee74cf9ea6221e47c2e6a550b43a6157b2",
+        "pass": true
+      },
+      "quark:quark/torch/utils/pack.py": {
+        "expected_sha256": "1c6e49abdb4b9929e4611a4579ebae95611e0b9c22651454673e60134b92499a",
+        "observed_sha256": "1c6e49abdb4b9929e4611a4579ebae95611e0b9c22651454673e60134b92499a",
+        "pass": true
+      },
+      "rocm_libraries:commit": {
+        "expected": "1eb022d06b7e2a1b0031d74e96d85a2e9e150c99",
+        "observed": "1eb022d06b7e2a1b0031d74e96d85a2e9e150c99",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/clients/bench/src/client.cpp": {
+        "expected_sha256": "b7c21947f2c9134f6513ad1a19e1ac71d7bee5acef366309b7b7ade90d26d8ee",
+        "observed_sha256": "b7c21947f2c9134f6513ad1a19e1ac71d7bee5acef366309b7b7ade90d26d8ee",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/clients/common/include/testing_matmul.hpp": {
+        "expected_sha256": "3a6073b87e255019555c65e35d28c820b9dbf9477133aad1c8040da996bcabc4",
+        "observed_sha256": "3a6073b87e255019555c65e35d28c820b9dbf9477133aad1c8040da996bcabc4",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/clients/common/src/mxDataGen.cpp": {
+        "expected_sha256": "ac1c2e39d6afab9116e8fc4d6451456eb3c41861a0f7b45194f9d84342a3995a",
+        "observed_sha256": "ac1c2e39d6afab9116e8fc4d6451456eb3c41861a0f7b45194f9d84342a3995a",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/library/include/hipblaslt/hipblaslt-types.h": {
+        "expected_sha256": "6aa27f00cdbfdd0f8758cce0832d037181ccd36f300ad55d3e29a3c1dd1850a5",
+        "observed_sha256": "6aa27f00cdbfdd0f8758cce0832d037181ccd36f300ad55d3e29a3c1dd1850a5",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/library/src/amd_detail/include/auxiliary.hpp": {
+        "expected_sha256": "02cac45ce5759630fd92dacd1c5e3a8b237c40a61820ae6b35c97de4cd82d656",
+        "observed_sha256": "02cac45ce5759630fd92dacd1c5e3a8b237c40a61820ae6b35c97de4cd82d656",
+        "pass": true
+      },
+      "rocm_libraries:projects/hipblaslt/library/src/amd_detail/rocblaslt/src/rocroller/rocroller_host.cpp": {
+        "expected_sha256": "31593f1b4574591b64638580f3c74d017d5368f7a97457b786c4a9b7e4edfbe9",
+        "observed_sha256": "31593f1b4574591b64638580f3c74d017d5368f7a97457b786c4a9b7e4edfbe9",
+        "pass": true
+      },
+      "rocm_libraries:shared/mxdatagenerator/lib/include/mxDataGenerator/ocp_e3m2_mxfp6.hpp": {
+        "expected_sha256": "f7c5a2a0d674b008996264f01fdff109b7afd2ea2e8e36cbb573f620476ba438",
+        "observed_sha256": "f7c5a2a0d674b008996264f01fdff109b7afd2ea2e8e36cbb573f620476ba438",
+        "pass": true
+      },
+      "rocm_libraries:shared/mxdatagenerator/lib/include/mxDataGenerator/ocp_e3m2_mxfp6_impl.hpp": {
+        "expected_sha256": "b583ebe79da0d8c484f50ed5c13f7f55528292696c16ecca9705f465e908f95a",
+        "observed_sha256": "b583ebe79da0d8c484f50ed5c13f7f55528292696c16ecca9705f465e908f95a",
+        "pass": true
+      },
+      "vllm:commit": {
+        "expected": "0da6e7f3d6ed50fe1262cc2cf44066989a6b4cdd",
+        "observed": "0da6e7f3d6ed50fe1262cc2cf44066989a6b4cdd",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/quark/quark.py": {
+        "expected_sha256": "80099b0b5874264ea51d17422cfcf50633f8698f8bd8e50b4aeef4eb02d5408e",
+        "observed_sha256": "80099b0b5874264ea51d17422cfcf50633f8698f8bd8e50b4aeef4eb02d5408e",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/quark/schemes/quark_ocp_mx.py": {
+        "expected_sha256": "004b6faaab1f6172f5652cc6d40b384848b1896ea1dc399b391e3c4ec7525039",
+        "observed_sha256": "004b6faaab1f6172f5652cc6d40b384848b1896ea1dc399b391e3c4ec7525039",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/utils/mxfp6_utils.py": {
+        "expected_sha256": "ddc710d009a3883315b48c99f86e5667befc40329ba5b46a8eff2f7cd13dbb92",
+        "observed_sha256": "ddc710d009a3883315b48c99f86e5667befc40329ba5b46a8eff2f7cd13dbb92",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/utils/ocp_mx_utils.py": {
+        "expected_sha256": "c242907cbaf2fe3b553b9b033410c90da8c03943f6623462c51ad863ff24aa96",
+        "observed_sha256": "c242907cbaf2fe3b553b9b033410c90da8c03943f6623462c51ad863ff24aa96",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/models/gemma4.py": {
+        "expected_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "observed_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "pass": true
+      }
+    },
+    "source_observed_at_utc": "2026-07-26T13:10:00Z"
+  },
+  "generated_at_utc": "2026-07-26T13:16:18.369564Z",
+  "identity": {
+    "calculator": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_mxfp6_linear_codesign/run_mxfp6_physical_screen.py",
+      "sha256": "612b8a19555aa31ff9e9958a64e1819e886047d84e7a0a708517a3edfd474c38"
+    },
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runner": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_mxfp6_linear_codesign/mi355x_mxfp6_exact_runner.py",
+      "sha256": "0ee20add9a0498fdd4211bb13bf370f4cde15d8ae1d88dd5dcd992abed1dfeef"
+    },
+    "source_bindings": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_mxfp6_linear_codesign/SOURCE_BINDINGS.json",
+      "sha256": "adf8a681a4455346230e6df2b94d56434d4abce93f491d6220a17f38e5a787e7"
+    }
+  },
+  "physical_accounting": {
+    "baseline_fp8_seconds_per_request": 0.6000950932112802,
+    "baseline_transformer_linear_seconds_per_request": 0.363906344068055,
+    "candidate_mxfp6_seconds_per_request": null,
+    "candidate_transformer_linear_seconds_per_request": null,
+    "economic_hurdle_seconds_per_request": 0.625149101968745,
+    "fixed_non_transformer_seconds_per_request": 0.23618874914322519,
+    "reason_candidate_time_is_null": "No target gfx950 timing includes dynamic MXFP6 activation packing, E8M0 scale production/layout, hipBLASLt GEMM, BF16 output, dispatch, and fallback for these exact shapes. Source support and nominal bytes are explicitly inadmissible timing proxies.",
+    "strict_improvement_transformer_budget_seconds_per_request": 0.363906344068055,
+    "transformer_parameters": 29396828160,
+    "weight_representation": {
+      "block_elements": 32,
+      "data_bits_per_element": 6,
+      "data_bytes": 22047621120,
+      "e8m0_scale_bits_per_block": 8,
+      "fp8_baseline_data_bytes": 29396828160,
+      "nominal_byte_reduction_fraction_not_timing_credit": 0.21875,
+      "padding_bytes": 0,
+      "scale_bytes": 918650880,
+      "total_bytes": 22966272000
+    }
+  },
+  "prohibited_actions_respected": [
+    "no checkpoint download",
+    "no GPU or shared-bench claim",
+    "no provider contact or mutation",
+    "no paid API",
+    "zero spend",
+    "preserved MI355X FP8 lifecycle unchanged",
+    "FP8 KV attention unchanged",
+    "BF16 tied head unchanged",
+    "all 60 layers, widths, parameters, tokens, and vocabulary capacity preserved"
+  ],
+  "representation": {
+    "accumulation": "FP32",
+    "activation": "OCP MXFP6 E3M2 with one E8M0 scale per 32 values",
+    "hipblaslt_cli_dtype": "bf6_r",
+    "output": "BF16",
+    "weight": "OCP MXFP6 E3M2 with one E8M0 scale per 32 values"
+  },
+  "schema_version": 1,
+  "shapes": [
+    {
+      "all_capacity_preserved": true,
+      "k": 5376,
+      "k_divisible_by_128": true,
+      "layers": 50,
+      "logical_outputs": {
+        "k": 4096,
+        "q": 8192,
+        "v": 4096
+      },
+      "n": 16384,
+      "n_divisible_by_128": true,
+      "name": "sliding_qkv",
+      "parameters": 4404019200,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 129024,
+            "scale_bytes": 5376,
+            "total_bytes": 134400
+          },
+          "bf16_source_read_bytes": 344064,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 16384 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 1048576,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 1548288,
+            "scale_bytes": 64512,
+            "total_bytes": 1612800
+          },
+          "bf16_source_read_bytes": 4128768,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 16384 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 12582912,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 3303014400,
+        "scale_bytes": 137625600,
+        "total_bytes": 3440640000
+      },
+      "weight_padding_bytes": 0
+    },
+    {
+      "all_capacity_preserved": true,
+      "k": 8192,
+      "k_divisible_by_128": true,
+      "layers": 50,
+      "logical_outputs": {
+        "o": 5376
+      },
+      "n": 5376,
+      "n_divisible_by_128": true,
+      "name": "sliding_o",
+      "parameters": 2202009600,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 196608,
+            "scale_bytes": 8192,
+            "total_bytes": 204800
+          },
+          "bf16_source_read_bytes": 524288,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 5376 -k 8192 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 344064,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 2359296,
+            "scale_bytes": 98304,
+            "total_bytes": 2457600
+          },
+          "bf16_source_read_bytes": 6291456,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 5376 -k 8192 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 4128768,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 1651507200,
+        "scale_bytes": 68812800,
+        "total_bytes": 1720320000
+      },
+      "weight_padding_bytes": 0
+    },
+    {
+      "all_capacity_preserved": true,
+      "k": 5376,
+      "k_divisible_by_128": true,
+      "layers": 10,
+      "logical_outputs": {
+        "k": 2048,
+        "q": 16384,
+        "v": 2048
+      },
+      "n": 20480,
+      "n_divisible_by_128": true,
+      "name": "global_qkv",
+      "parameters": 1101004800,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 129024,
+            "scale_bytes": 5376,
+            "total_bytes": 134400
+          },
+          "bf16_source_read_bytes": 344064,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 20480 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 1310720,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 1548288,
+            "scale_bytes": 64512,
+            "total_bytes": 1612800
+          },
+          "bf16_source_read_bytes": 4128768,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 20480 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 15728640,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 825753600,
+        "scale_bytes": 34406400,
+        "total_bytes": 860160000
+      },
+      "weight_padding_bytes": 0
+    },
+    {
+      "all_capacity_preserved": true,
+      "k": 16384,
+      "k_divisible_by_128": true,
+      "layers": 10,
+      "logical_outputs": {
+        "o": 5376
+      },
+      "n": 5376,
+      "n_divisible_by_128": true,
+      "name": "global_o",
+      "parameters": 880803840,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 393216,
+            "scale_bytes": 16384,
+            "total_bytes": 409600
+          },
+          "bf16_source_read_bytes": 1048576,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 5376 -k 16384 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 344064,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 4718592,
+            "scale_bytes": 196608,
+            "total_bytes": 4915200
+          },
+          "bf16_source_read_bytes": 12582912,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 5376 -k 16384 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 4128768,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 660602880,
+        "scale_bytes": 27525120,
+        "total_bytes": 688128000
+      },
+      "weight_padding_bytes": 0
+    },
+    {
+      "all_capacity_preserved": true,
+      "k": 5376,
+      "k_divisible_by_128": true,
+      "layers": 60,
+      "logical_outputs": {
+        "gate": 21504,
+        "up": 21504
+      },
+      "n": 43008,
+      "n_divisible_by_128": true,
+      "name": "gate_up",
+      "parameters": 13872660480,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 129024,
+            "scale_bytes": 5376,
+            "total_bytes": 134400
+          },
+          "bf16_source_read_bytes": 344064,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 43008 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 2752512,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 1548288,
+            "scale_bytes": 64512,
+            "total_bytes": 1612800
+          },
+          "bf16_source_read_bytes": 4128768,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 43008 -k 5376 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 33030144,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 10404495360,
+        "scale_bytes": 433520640,
+        "total_bytes": 10838016000
+      },
+      "weight_padding_bytes": 0
+    },
+    {
+      "all_capacity_preserved": true,
+      "k": 21504,
+      "k_divisible_by_128": true,
+      "layers": 60,
+      "logical_outputs": {
+        "down": 5376
+      },
+      "n": 5376,
+      "n_divisible_by_128": true,
+      "name": "down",
+      "parameters": 6936330240,
+      "phases": [
+        {
+          "activation": {
+            "data_bytes": 516096,
+            "scale_bytes": 21504,
+            "total_bytes": 537600
+          },
+          "bf16_source_read_bytes": 1376256,
+          "consumer_command": "hipblaslt-bench --function matmul -m 32 -n 5376 -k 21504 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 32,
+          "output_bf16_bytes": 344064,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        },
+        {
+          "activation": {
+            "data_bytes": 6193152,
+            "scale_bytes": 258048,
+            "total_bytes": 6451200
+          },
+          "bf16_source_read_bytes": 16515072,
+          "consumer_command": "hipblaslt-bench --function matmul -m 384 -n 5376 -k 21504 --transA N --transB N --a_type bf6_r --b_type bf6_r --c_type bf16_r --d_type bf16_r --compute_type f32_r --scaleA 3 --scaleB 3 --use_gpu_timer --verify 1",
+          "m": 384,
+          "output_bf16_bytes": 4128768,
+          "packing_padding_bytes": 0,
+          "scale_swizzle_padding_bytes": 0
+        }
+      ],
+      "weight": {
+        "data_bytes": 5202247680,
+        "scale_bytes": 216760320,
+        "total_bytes": 5419008000
+      },
+      "weight_padding_bytes": 0
+    }
+  ],
+  "target_discriminator": {
+    "coverage": "12 exact consumer calls: six fused transformer linears at M32 and M384",
+    "current_execution": "not_run_no_authorized_mi355x_bench",
+    "required_evidence": "finite gfx950 warm timing and numerical result for every shape, plus a timed native dynamic-activation producer and proof of no fallback",
+    "runner": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_mxfp6_linear_codesign/mi355x_mxfp6_exact_runner.py",
+    "runner_limit": "The runner exercises the official hipBLASLt MX data generator and RocRoller consumer, but hipblasLt-bench prepares packed inputs before steady-state timing. It cannot by itself charge production activation packing or prove vLLM dispatch."
+  },
+  "terminal": "typed_none",
+  "typed_none": {
+    "closed_path": "current vLLM dense Quark MXFP6 emulation plus untimed direct hipBLASLt component",
+    "first_missing_evidence": "one native dynamic E3M2 activation producer feeding the maintained hipBLASLt/RocRoller consumer in the current dense runtime, with exact gfx950 all-in timings",
+    "reopen_condition": "current maintained source binds a native packed activation producer and dense dispatch, and a zero-fallback MI355X component sample charges producer, scales, layout, padding, GEMM, output, and dispatch"
+  }
+}

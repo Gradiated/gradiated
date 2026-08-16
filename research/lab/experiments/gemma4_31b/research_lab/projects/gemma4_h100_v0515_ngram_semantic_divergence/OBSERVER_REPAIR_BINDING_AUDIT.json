@@ -1,0 +1,82 @@
+{
+  "binding_sha256": "02732087ffb9e6f96406ac03c11561c0d2774e7f339347b5009c37d458aa12d8",
+  "checks": [
+    {
+      "actual": "b87193c961cf1fa5e27d3237a0e326b735a059daab8b890d07e2b8a81944d72c",
+      "expected": "b87193c961cf1fa5e27d3237a0e326b735a059daab8b890d07e2b8a81944d72c",
+      "group": "prior_invalid_attempt",
+      "name": "binding",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/DIRECTOR_SENTINEL_AA_BINDING.json"
+    },
+    {
+      "actual": "8170696f67186457050044a46f3043cb142835c48813ca8b1347b6364a1028fb",
+      "expected": "8170696f67186457050044a46f3043cb142835c48813ca8b1347b6364a1028fb",
+      "group": "prior_invalid_attempt",
+      "name": "result",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/SENTINEL_AA_RESULT.json"
+    },
+    {
+      "actual": "bc65f93f74835f8d262dbb9cc63097b258438955f0bf9c3799d62cc18b077e3f",
+      "expected": "bc65f93f74835f8d262dbb9cc63097b258438955f0bf9c3799d62cc18b077e3f",
+      "group": "prior_invalid_attempt",
+      "name": "terminal",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/SENTINEL_AA_TERMINAL.json"
+    },
+    {
+      "actual": "6e8baa72f53453fa6d70b36524a984ad80f3692a4d2ad3ff05393b0e220b987e",
+      "expected": "6e8baa72f53453fa6d70b36524a984ad80f3692a4d2ad3ff05393b0e220b987e",
+      "group": "bound_inputs",
+      "name": "owner",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/sentinel_aa_owner.py"
+    },
+    {
+      "actual": "c67a9bfc97ab83ea2842be08af0e1997a6e95d95139fa43369b36acf5c32c054",
+      "expected": "c67a9bfc97ab83ea2842be08af0e1997a6e95d95139fa43369b36acf5c32c054",
+      "group": "bound_inputs",
+      "name": "invalid_instrumented_worker",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/instrumented/ngram_worker.py"
+    },
+    {
+      "actual": "e0e7db3a097899df84751ef875298d1345812e1cababbee8663b99a624c852ff",
+      "expected": "e0e7db3a097899df84751ef875298d1345812e1cababbee8663b99a624c852ff",
+      "group": "bound_inputs",
+      "name": "instrumented_scheduler",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/instrumented/batch_result_processor.py"
+    },
+    {
+      "actual": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+      "group": "project_snapshot",
+      "name": "TRACE_PACKET.json",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/bound/TRACE_PACKET.json"
+    },
+    {
+      "actual": "8349853a7eac9e73211f5d3081c834c05f78e0fd292ddbe5acb921b1824a523d",
+      "group": "project_snapshot",
+      "name": "ngram-launch.json",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/bound/ngram-launch.json"
+    },
+    {
+      "actual": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36",
+      "group": "project_snapshot",
+      "name": "exact_semantic_rows.jsonl",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/bound/exact_semantic_rows.jsonl"
+    },
+    {
+      "actual": "56bcd0aff2e85533f360e0fd58af87edc0bfcc79c1b0f16ed164587f964fabc4",
+      "group": "project_snapshot",
+      "name": "h100_matched_runner.py",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_semantic_divergence/inputs/bound/h100_matched_runner.py"
+    }
+  ],
+  "pass": true
+}

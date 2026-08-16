@@ -1,9 +1,0 @@
-{
-  "caches": "No resident resource: authenticated cleanup verified zero matching instances and disks.",
-  "checkpoint": "Transferred checkpoint was destroyed with the cleaned provider resource.",
-  "image": "No resident image after authenticated cleanup.",
-  "model": "google/gemma-4-31B-it",
-  "runtime": "SGLang v0.5.12 paired-quality session terminated.",
-  "server_state": "No server; cleanup passed.",
-  "terminal": "Quality claim quarantined: direct reference token identity passed, but BF16 control executable Python case failed; FP8 candidate is not production-eligible."
-}

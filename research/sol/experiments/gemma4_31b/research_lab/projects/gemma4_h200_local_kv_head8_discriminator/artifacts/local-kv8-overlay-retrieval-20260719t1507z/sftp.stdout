@@ -1,1 +1,0 @@
-sftp> reget /home/glmrunner/gemma-local-kv8/local-kv8-conversion-20260719t-phase2/distillation/overlay.safetensors /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_local_kv_head8_discriminator/artifacts/local-kv8-conversion-20260719t1402z/.overlay.safetensors.partial

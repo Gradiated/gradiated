@@ -1,9 +1,0 @@
-{"timestamp":"2026-07-13T09:49:45Z","phase":"bootstrap","state":"begin"}
-{"timestamp":"2026-07-13T09:49:45Z","phase":"bootstrap","state":"complete"}
-{"timestamp":"2026-07-13T09:49:45Z","phase":"native_import","state":"begin"}
-{"timestamp":"2026-07-13T09:50:10Z","phase":"native_import","state":"complete"}
-{"timestamp":"2026-07-13T09:50:10Z","phase":"model_download","state":"begin"}
-{"timestamp":"2026-07-13T09:51:52Z","phase":"model_download","state":"complete"}
-{"timestamp":"2026-07-13T09:51:52Z","phase":"model_load","state":"begin"}
-{"timestamp":"2026-07-13T09:52:26Z","phase":"teardown","state":"begin"}
-{"timestamp":"2026-07-13T09:52:26Z","phase":"teardown","state":"complete"}

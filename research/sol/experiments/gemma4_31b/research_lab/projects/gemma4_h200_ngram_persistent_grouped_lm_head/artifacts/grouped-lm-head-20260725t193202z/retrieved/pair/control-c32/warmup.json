@@ -1,1 +1,0 @@
-{"id":"3fdc20e6f1524eb09e1feaf250855022","object":"text_completion","created":1785008154,"model":"google/gemma-4-31B-it","choices":[{"index":0,"text":" la","logprobs":null,"finish_reason":"length","matched_stop":null}],"usage":{"prompt_tokens":4214,"total_tokens":4215,"completion_tokens":1,"prompt_tokens_details":null,"reasoning_tokens":0},"metadata":{"weight_version":"default"}}

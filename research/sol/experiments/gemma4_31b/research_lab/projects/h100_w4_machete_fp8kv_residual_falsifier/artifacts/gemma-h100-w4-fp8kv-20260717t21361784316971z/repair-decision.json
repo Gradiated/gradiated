@@ -1,4 +1,0 @@
-{
-  "action": "teardown",
-  "reason": "M1 BF16 global sentinel remained finite-zero after the source-bound no-segmented-scratch correction; populated physical cache samples rule out an ordinary empty-cache integration error."
-}

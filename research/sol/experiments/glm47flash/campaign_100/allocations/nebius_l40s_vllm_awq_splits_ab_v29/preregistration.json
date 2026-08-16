@@ -1,1 +1,0 @@
-{"experiment_id":"nebius_l40s_vllm_awq_splits_ab_v29","session_spec_sha256":"0a8fc95434c7ac79cedd6ae4e55888a02ad36fe0c2ec70e725a95dc7ddb9550c","order":6,"label":"B3","num_kv_splits":8,"unchanged":["VM","checkpoint","runtime","BF16","65536 token budget","BLOCK_H=16","BLOCK_N=32","warps=4","stages=2","workload","quality","SLO"],"retain_after":true}

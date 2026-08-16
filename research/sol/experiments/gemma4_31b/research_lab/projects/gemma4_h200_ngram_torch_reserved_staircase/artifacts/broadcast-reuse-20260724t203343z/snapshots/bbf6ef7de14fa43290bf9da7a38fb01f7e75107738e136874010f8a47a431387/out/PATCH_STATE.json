@@ -1,6 +1,0 @@
-{
-  "kind": "target_verify_additive_broadcast_workspace_reuse",
-  "owner": "BatchedPenalizerOrchestrator.apply",
-  "removed_temporary": "repeat_interleave(additive, repeat, dim=0)",
-  "semantics": "broadcast the same per-request additive values over repeat"
-}

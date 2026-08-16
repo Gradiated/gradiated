@@ -1,9 +1,0 @@
-{
-  "lease_returncode": 0,
-  "lease_stderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nOK\n",
-  "lease_stdout": "",
-  "pass": true,
-  "returncode": 0,
-  "stderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
-  "stdout": ""
-}

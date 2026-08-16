@@ -1,8 +1,0 @@
-{
-  "project": "gemma4_h200_ngram_speculative_endpoint",
-  "runtime": "Native SGLang v0.5.13 NGRAM exact c32 terminal: 0.5967508053 s/request, 15.02% faster than contemporaneous control and below ceiling.",
-  "checkpoint": "Exact source checkpoint at /home/glmrunner/gemma4-h200-flashinfer-metadata-scalar-elimination/checkpoint passed the director-bound full manifest and is authorized only for read-only bind reuse.",
-  "image": "Pinned SGLang v0.5.13 digest 6113665a retained.",
-  "caches": "Existing CUDA/graph caches retained.",
-  "server_state": "Healthy native-NGRAM server gemma-ngram-pair remains running on port 30000; read-only shared checkpoint and CUDA/Triton/graph caches retained."
-}

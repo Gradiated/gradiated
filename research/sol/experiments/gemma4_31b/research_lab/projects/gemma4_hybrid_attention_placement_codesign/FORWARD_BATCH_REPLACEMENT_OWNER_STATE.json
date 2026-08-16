@@ -1,9 +1,0 @@
-{
-  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/forward-batch-replacement-20260726t0054z",
-  "deadline_utc": "2026-07-26T01:15:00Z",
-  "next": "component submission requires actual dual-bank/proxy implementation",
-  "phase": "preload_proof_complete",
-  "proof": "{\"attached\": true, \"converted_layers\": [11, 23, 35, 47, 59], \"forward_batch_driver\": {\"boundary\": \"ModelRunner.forward(ForwardBatch)\", \"converted_layers\": [11, 23, 35, 47, 59], \"installed\": true, \"one_resident_target_model\": true}, \"one_resident_target_model\": true}\n{\"boundary\": \"ModelRunner.forward(ForwardBatch)\", \"converted_layers\": [11, 23, 35, 47, 59], \"installed\": true, \"one_resident_target_model\": true, \"science_started\": false}\ntrue\n",
-  "remote": "/home/glmrunner/phase-selective-full-model-readmission-20260726",
-  "science_started": false
-}

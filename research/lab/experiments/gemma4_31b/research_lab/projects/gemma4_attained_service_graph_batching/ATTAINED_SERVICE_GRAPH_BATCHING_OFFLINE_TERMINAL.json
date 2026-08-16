@@ -1,0 +1,639 @@
+{
+  "answer": "No. All 32 exact requests are released simultaneously, have equal prompt lengths, begin with zero attained output service, and are forced to exactly 358 output tokens. Least-attained-service order therefore equals FIFO at every distinguishing input; it cannot change the real raw batch-size path, graph padding, or transitions.",
+  "classification": "typed_negative_simultaneous_homogeneous_c32_fifo_parity_no_causal_graph_change",
+  "cost_bounds": {
+    "actual_experiment_spend_usd": 0.0,
+    "candidate_best_case_cost_usd_per_million_total_tokens": 0.13715625,
+    "candidate_cost_reduction_fraction_lower_bound": {
+      "reason": "The candidate removes no GPU work and adds host ordering.",
+      "type": "non_positive_unmeasured_cpu_overhead"
+    },
+    "candidate_cost_reduction_fraction_upper_bound": 0.0,
+    "qualified_90pct_planning_cost_usd_per_million_total_tokens_derived": 0.13715625,
+    "target_reached": false,
+    "target_seconds_per_request": 0.500119281574996,
+    "target_usd_per_million_total_tokens": 0.109725
+  },
+  "decision": {
+    "portfolio_change": "close_observable_attained_service_for_exact_c32",
+    "positive_result": false,
+    "reason": "Queue rearrangement is exactly FIFO and removes no padding, graph transition, scheduler operation, compulsory token work, or cost."
+  },
+  "direct_inputs": {
+    "bound_runner": {
+      "bytes": 9494,
+      "path": "projects/gemma4_c32_graph_gap_elision/inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "campaign": {
+      "bytes": 27592,
+      "path": "CAMPAIGN.md",
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "config": {
+      "bytes": 4621,
+      "path": "projects/gemma4_c32_graph_gap_elision/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "cuda_graph_runner": {
+      "bytes": 53078,
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/srt/model_executor/cuda_graph_runner.py",
+      "sha256": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e"
+    },
+    "decode_terminal": {
+      "bytes": 12894,
+      "path": "projects/gemma4_decode_scheduler_task_graph/DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json",
+      "sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83"
+    },
+    "prefix_runner": {
+      "bytes": 20469,
+      "path": "projects/gemma4_prefix_affinity_batching_economics/run_prefix_affinity_offline.py",
+      "sha256": "6f237a2a7a334ddd11cab220185c8636e0a14a69a1af956199aca837891f557f"
+    },
+    "prefix_terminal": {
+      "bytes": 12166,
+      "path": "projects/gemma4_prefix_affinity_batching_economics/PREFIX_AFFINITY_BATCHING_OFFLINE_TERMINAL.json",
+      "sha256": "9c074b1b482ab55b1c2814fc3d98e86ecbf7efc42bde5323e8144aa3d1f4f9bb"
+    },
+    "project": {
+      "bytes": 4335,
+      "path": "projects/gemma4_attained_service_graph_batching/PROJECT.md",
+      "sha256": "e83258529775fe0e4fbb58d81bbb773bb749984c89a2b326476ddcda5981ee2a"
+    },
+    "qualified_terminal": {
+      "bytes": 22835,
+      "path": "projects/gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/candidate-full-c32/TERMINAL.json",
+      "sha256": "7090c0ebb733f5021c464bc55d82fcd68e2abb52b820408c89724d95c03fd9dd"
+    },
+    "schedule_policy": {
+      "bytes": 44441,
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/srt/managers/schedule_policy.py",
+      "sha256": "9b96b54f6724c23d5853b585457e41a8f62b5e74aeb0a232943cbb4b289f6212"
+    },
+    "scheduler": {
+      "bytes": 173876,
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/srt/managers/scheduler.py",
+      "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+    },
+    "server_args": {
+      "bytes": 359553,
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/srt/server_args.py",
+      "sha256": "cc4f440c0987d7a6ee6868f3e41271809c5c1d3015ddcfbd6f79dc19367d5c8d"
+    },
+    "server_stderr": {
+      "bytes": 47341,
+      "path": "projects/gemma4_h200_ngram_decode_equivalent_verifier/artifacts/h200-verifier-20260724t103131Z/retrieved/artifacts/candidate-full-server.stderr",
+      "sha256": "4be9ec993112241270375b356160ab5410c3ce3868a7a40ba37d1b72cbca296a"
+    },
+    "workload": {
+      "bytes": 2491,
+      "path": "projects/gemma4_causal_parallel_offset_head/inputs/qualified_c32_workload.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  },
+  "exact_runtime_h200_consumer": {
+    "command": null,
+    "reason": "Exact offline symmetry proves zero causal graph-work delta; the project has zero spend authority and explicitly forbids a GPU claim, SSH, provider, or endpoint invocation.",
+    "type": "none"
+  },
+  "exact_trace": {
+    "admission_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "all_arrivals_simultaneous": true,
+    "all_completions_forced_by_length": true,
+    "arrival_ns": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "completion_order_measured": [
+      6,
+      8,
+      1,
+      26,
+      5,
+      16,
+      30,
+      22,
+      25,
+      28,
+      18,
+      29,
+      3,
+      13,
+      7,
+      0,
+      4,
+      10,
+      31,
+      2,
+      12,
+      23,
+      14,
+      21,
+      24,
+      15,
+      27,
+      9,
+      19,
+      17,
+      11,
+      20
+    ],
+    "completion_tokens_per_request": 358,
+    "compulsory_output_row_steps": 11456,
+    "compulsory_prompt_tokens": 134848,
+    "prompt_tokens_per_request": 4214,
+    "queue_delay_seconds": {
+      "candidate": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "fifo": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "requests": 32
+  },
+  "fifo_comparator": {
+    "candidate_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "fifo_order": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31
+    ],
+    "identical_constraints": {
+      "arrivals": true,
+      "deadlines_and_no_added_wait": true,
+      "graph_buckets": true,
+      "kv_capacity_and_page_size": true,
+      "max_running_requests_32": true,
+      "prompt_and_output_tokens": true
+    },
+    "key": [
+      "arrival time ascending",
+      "arrival ordinal ascending",
+      "request ID ascending"
+    ],
+    "name": "stock_fcfs",
+    "parity": true
+  },
+  "graph_work": {
+    "absolute_counter_status": "The qualified terminal lacks per-forward raw_bs telemetry, so absolute padding and transition counts are bounded, not invented. Exact zero candidate-minus-FIFO deltas follow from input symmetry.",
+    "candidate": {
+      "active_output_row_steps": 11456,
+      "graph_bucket_transitions_bound": [
+        0,
+        11455
+      ],
+      "padded_inactive_row_steps_bound": [
+        0,
+        1272
+      ]
+    },
+    "causal_delta": {
+      "active_output_row_steps": 0,
+      "graph_bucket_transitions": 0,
+      "padded_inactive_row_steps": 0,
+      "scheduler_or_graph_operations_removed": 0
+    },
+    "current_runtime_capture_bs": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20,
+      22,
+      24,
+      26,
+      28,
+      30,
+      32
+    ],
+    "fifo": {
+      "active_output_row_steps": 11456,
+      "graph_bucket_transitions_bound": [
+        0,
+        11455
+      ],
+      "padded_inactive_row_steps_bound": [
+        0,
+        1272
+      ]
+    },
+    "maximum_padding_per_decode_graph_step": 1,
+    "raw_bs_to_inactive_padding": {
+      "1": 0,
+      "10": 0,
+      "11": 1,
+      "12": 0,
+      "13": 1,
+      "14": 0,
+      "15": 1,
+      "16": 0,
+      "17": 1,
+      "18": 0,
+      "19": 1,
+      "2": 0,
+      "20": 0,
+      "21": 1,
+      "22": 0,
+      "23": 1,
+      "24": 0,
+      "25": 1,
+      "26": 0,
+      "27": 1,
+      "28": 0,
+      "29": 1,
+      "3": 0,
+      "30": 0,
+      "31": 1,
+      "32": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 0,
+      "9": 1
+    }
+  },
+  "kind": "attained_service_graph_batching_offline_terminal",
+  "latency_bounds": {
+    "candidate_current_runtime_upper_bound": {
+      "reason": "The policy adds a nonnegative host sort and this zero-GPU lane cannot measure its current-runtime wall-time.",
+      "type": "unknown_without_execution"
+    },
+    "candidate_model_and_graph_time_reduction_seconds": 0.0,
+    "candidate_queue_delay_delta_seconds": 0.0,
+    "candidate_service_seconds_per_request_lower_bound": 0.625149101968745,
+    "complete_candidate_minus_fifo_interval_seconds_per_request": {
+      "gpu_and_graph_component_delta": 0.0,
+      "lower": 0.0,
+      "upper": null,
+      "upper_type": "unknown_current_runtime_host_sort"
+    },
+    "dependent_synchronization_counted_as_saved": false,
+    "fifo_end_to_end_seconds": {
+      "max": 19.981904376999864,
+      "p50_nearest_rank": 18.5016300770003,
+      "p95_nearest_rank": 19.92162887900031
+    },
+    "local_scheduler_cpu_diagnostic": {
+      "attained_service": {
+        "iterations": 20000,
+        "max_ns": 5380721,
+        "median_ns": 2273,
+        "p95_ns_nearest_rank": 3375,
+        "single_call_local_tracemalloc_peak_bytes": 328
+      },
+      "evidence_label": "measured on coordinator CPython; diagnostic only, not transferable to H200 scheduler latency",
+      "fifo_exact_comparator": {
+        "iterations": 20000,
+        "max_ns": 24547,
+        "median_ns": 2043,
+        "p95_ns_nearest_rank": 2454,
+        "single_call_local_tracemalloc_peak_bytes": 328
+      }
+    },
+    "qualified_fifo_batch_seconds": 20.00477126299984,
+    "qualified_fifo_service_seconds_per_request": 0.625149101968745
+  },
+  "memory_bounds": {
+    "candidate_additional_device_bytes": 0,
+    "candidate_kv_bytes_upper": 18735063040,
+    "candidate_minus_fifo_kv_bytes": 0,
+    "candidate_persistent_host_bytes_per_request": 0,
+    "candidate_sort_temporary_host_bytes_upper": 4096,
+    "candidate_total_additional_host_bytes_upper_with_trace": 8192,
+    "fifo_kv_bytes_upper": 18735063040,
+    "global_kv_bytes_per_position": 40960,
+    "global_layers": 10,
+    "global_unique_resident_positions_upper": 129719,
+    "kv_cache_dtype": "fp8_e5m2",
+    "local_kv_bytes_per_position": 409600,
+    "local_layers": 50,
+    "local_resident_positions_upper": 32768,
+    "note": "KV upper bound applies the exact 1,024-token local window and one physical 535-token global prefix; FP8 scale metadata and allocator fragmentation are unchanged and therefore zero delta.",
+    "optional_trace_mapping_bytes": 4096,
+    "sort_temporary_entries_upper": 32
+  },
+  "observability_contract": {
+    "available_but_unused": [
+      "prompt length",
+      "request age",
+      "completion events",
+      "current resident batch"
+    ],
+    "forbidden_and_absent": [
+      "future realized output length",
+      "future arrivals",
+      "hidden oracle labels",
+      "synthetic prefixes"
+    ],
+    "graph_trace": {
+      "consumer": "CudaGraphRunner.replay_prepare after bisect_left chooses bs and before buffer_registry.fill_from pads rows",
+      "enabled_only_by_env": "SGLANG_ATTAINED_SERVICE_GRAPH_TRACE=<absolute path>",
+      "fields": [
+        "decode steps",
+        "active row-steps",
+        "padded row-steps",
+        "graph-bucket transitions",
+        "last raw and padded batch sizes"
+      ],
+      "fixed_record_bytes": 64,
+      "observer_validation": {
+        "observed": {
+          "active_row_steps": 30,
+          "decode_steps": 3,
+          "graph_transitions": 1,
+          "last_padded_bs": 12,
+          "padded_bs": 12,
+          "padded_row_steps": 2,
+          "raw_bs": 11
+        },
+        "passed": true
+      }
+    },
+    "policy_reads": [
+      "len(Req.output_ids)",
+      "Req.time_stats.scheduler_recv_time",
+      "Req.rid only as a deterministic final tie-break"
+    ]
+  },
+  "pass": true,
+  "physical_mechanism": {
+    "falsifier_observed": "At the exact decision all 32 requests are ready, capacity is 32, attained service is zero for every request, and all compulsory prompt/output lengths are equal. The candidate has no distinct selection and therefore no physical graph mechanism on this trace.",
+    "hypothesis": "Blind least-attained-service ordering could alter which queued request enters a capacity-limited resident batch, changing later completion clustering and graph buckets without a length oracle."
+  },
+  "policy": {
+    "key": [
+      "tokens_already_generated ascending",
+      "scheduler receive time ascending",
+      "request ID ascending"
+    ],
+    "name": "least_attained_service_stable_fifo_v1",
+    "one_policy_only": true,
+    "selection_boundary": "SchedulePolicy.calc_priority mutates Scheduler.waiting_queue before PrefillAdder selects can_run_list.",
+    "semantics": "Only ready-queue order changes; prompts, sampling, token work, KV ownership, deadlines, completion filtering, and active running requests are unchanged."
+  },
+  "project": "gemma4_attained_service_graph_batching",
+  "reproduce_command": "python3 research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_attained_service_graph_batching/run_attained_service_offline.py",
+  "scheduler_cpu_work": {
+    "candidate_key_evaluations": 32,
+    "candidate_sort_invocations": 1,
+    "candidate_timsort_comparison_bound": [
+      31,
+      160
+    ],
+    "exact_offered_work_decisions": 1,
+    "net_effect": "strictly nonnegative added host work; no device task, graph selection, allocator action, or synchronization is removed",
+    "scheduler_operations_removed": 0,
+    "stock_fifo_sort_invocations": 0
+  },
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_shards_read": false,
+    "gpu_claimed_or_used": false,
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "policy_sweep": false,
+    "runtime": "SGLang v0.5.13",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "ssh_provider_or_endpoint_used": false,
+    "target_gpu": "NVIDIA H200 SXM"
+  },
+  "source_and_consumer_ownership": {
+    "capacity_deadlines_and_kv": "PrefillAdder and existing allocators remain sole owners; the candidate cannot admit a request that stock capacity rejects.",
+    "first_graph_shape_consumer": "CudaGraphRunner.replay_prepare reads ForwardBatch.batch_size as raw_bs and selects the first capture_bs >= raw_bs.",
+    "observer": "The observer records the already-selected raw/padded shape and cannot change graph selection, buffers, synchronization, or KV.",
+    "resident_batch": "ScheduleBatch merge/filter owns membership and completion; active resident requests are never skipped or delayed.",
+    "scheduler_ready_queue": "Scheduler owns arrival and waiting_queue lifetime; the candidate only provides a deterministic stable key.",
+    "source_complete": true,
+    "staged_validation": {
+      "artifact_root": "projects/gemma4_attained_service_graph_batching/artifacts/staged-sglang-e3a4560642b212a2",
+      "claims": {
+        "all_staged_sources_parse": true,
+        "cli_selects_attained_service": true,
+        "graph_consumer_observes_selected_shape": true,
+        "ready_queue_calls_candidate_key": true
+      },
+      "files": {
+        "candidate": {
+          "bytes": 4194,
+          "path": "projects/gemma4_attained_service_graph_batching/artifacts/staged-sglang-e3a4560642b212a2/sglang/srt/managers/attained_service_graph_batching.py",
+          "sha256": "e3a4560642b212a290b142d61794b3e7dca7cced8a4502ceae079450e2e099ea"
+        },
+        "cuda_graph_runner": {
+          "bytes": 53228,
+          "path": "projects/gemma4_attained_service_graph_batching/artifacts/staged-sglang-e3a4560642b212a2/sglang/srt/model_executor/cuda_graph_runner.py",
+          "sha256": "c6dc293230fb3fbd3a5ba8362bdb8e1ecd9934328e9f5f48aa81f52d547dcfda"
+        },
+        "schedule_policy": {
+          "bytes": 44713,
+          "path": "projects/gemma4_attained_service_graph_batching/artifacts/staged-sglang-e3a4560642b212a2/sglang/srt/managers/schedule_policy.py",
+          "sha256": "378872cceda550f06cb9446a235df261ba33b1d4a40d8f114f2ba617df110ce2"
+        },
+        "server_args": {
+          "bytes": 359589,
+          "path": "projects/gemma4_attained_service_graph_batching/artifacts/staged-sglang-e3a4560642b212a2/sglang/srt/server_args.py",
+          "sha256": "7cad6a26dca6e31dfe4135f4ee95580c75b9d970b36c40818cb824f4ca697545"
+        }
+      },
+      "installer_exit_code": 0,
+      "installer_stdout": "{'candidate': 'e3a4560642b212a290b142d61794b3e7dca7cced8a4502ceae079450e2e099ea', 'schedule_policy': '378872cceda550f06cb9446a235df261ba33b1d4a40d8f114f2ba617df110ce2', 'server_args': '7cad6a26dca6e31dfe4135f4ee95580c75b9d970b36c40818cb824f4ca697545', 'cuda_graph_runner': 'c6dc293230fb3fbd3a5ba8362bdb8e1ecd9934328e9f5f48aa81f52d547dcfda'}"
+    }
+  }
+}

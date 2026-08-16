@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "run_graph_repair_owner.py"
+  ],
+  "cwd": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier",
+  "launched_at_utc": "2026-07-26T18:50:57.402442Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/GRAPH_REPAIR_OWNER_CONTROLLER.log",
+  "pid": 1986779,
+  "start_ticks": 120787480,
+  "unit_manager": "pid"
+}

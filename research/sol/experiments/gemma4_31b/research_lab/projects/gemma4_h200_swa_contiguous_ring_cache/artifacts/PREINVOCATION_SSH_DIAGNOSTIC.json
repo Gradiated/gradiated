@@ -1,9 +1,0 @@
-{
-  "claimed_seconds": 0.5406513214111328,
-  "classification": "typed_external_blocker",
-  "provider_cost_usd": 0.00036944506963094075,
-  "reason": "claimed guest unreachable:glmrunner@89.169.122.245: Permission denied (publickey).\n",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T11:14:43.474081Z"
-}

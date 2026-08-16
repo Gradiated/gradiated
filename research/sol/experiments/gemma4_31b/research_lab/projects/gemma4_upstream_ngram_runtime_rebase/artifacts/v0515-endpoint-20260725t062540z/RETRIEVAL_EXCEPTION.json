@@ -1,5 +1,0 @@
-{
-  "at_utc": "2026-07-25T06:35:04.575964+00:00",
-  "detail": "string indices must be integers, not 'str'",
-  "type": "TypeError"
-}

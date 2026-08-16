@@ -1,5 +1,0 @@
-{"event": "instance_created", "instance_id": "computeinstance-e00q4cdcsg3p4091yz", "timestamp": "2026-07-16T07:00:54.231595Z"}
-{"error_type": "PlacementError", "event": "experiment_error", "message": "SSH/cloud-init readiness SLO exceeded", "timestamp": "2026-07-16T07:10:18.192101Z"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-16T07:10:18.192280Z"}
-{"event": "repair_window_expired", "timestamp": "2026-07-16T07:20:18.220059Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-16T07:20:19.340560Z"}

@@ -1,6 +1,0 @@
-{
-  "at": "2026-07-27T07:02:34.678880Z",
-  "classification": "absolute_operation_timeout",
-  "error": "TimeoutExpired(['ssh', '-i', '/root/.config/nebius/glm-campaign/ssh_ed25519', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'UserKnownHostsFile=/root/.config/nebius/glm-campaign/known_hosts', '-o', 'ConnectTimeout=15', 'glmrunner@195.242.10.192', 'bash', '-s'], 521)",
-  "state": "prepare"
-}

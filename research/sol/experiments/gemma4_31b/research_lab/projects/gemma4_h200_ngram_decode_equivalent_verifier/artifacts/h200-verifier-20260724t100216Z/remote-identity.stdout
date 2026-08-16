@@ -1,5 +1,0 @@
-gemma4-ngram-verifier-h200-20260724t0927z
-NVIDIA H200, GPU-c33654e3-fbf9-558e-ec9f-c003590b49e9
-Docker version 29.5.3, build d1c06ef
-Filesystem        1B-blocks         Used    Available Use% Mounted on
-/dev/vda1      258906374144 109310918656 149578678272  43% /

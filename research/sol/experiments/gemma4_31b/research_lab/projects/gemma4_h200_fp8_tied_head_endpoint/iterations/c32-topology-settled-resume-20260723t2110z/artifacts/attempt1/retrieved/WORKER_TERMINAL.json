@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "python3 - \"$artifacts/graph-boundary/STATE.json\" \"$artifacts/graph-boundary/head.jsonl\" \"$artifacts/GRAPH_TOPOLOGY_DECISION.json\" <<'PY'\nimport json,pathlib,sys\nstate=json.load(open(sys.argv[1])); rows=[json.loads(x) for x in pathlib.Path(sys.argv[2]).read_text().splitlines() if x]\nrequired=[1,2,4,8,12,16,24,32]; captured=set(state.get('successful_capture_batch_sizes',[])); heads={int(x['m']) for x in rows if x.get('event')=='e4m3_head' and x.get('stream_capturing') is True}\nout={'schema_version':1,'required_padded_m':required,'captured_padded_m':sorted(captured),'e4m3_capture_m':sorted(heads),'bf16_head_fallback_count':state.get('bf16_head_fallback_count'),'bf16_embedding_preserved':True,'logits_dtype':'torch.bfloat16','sampling_contract':'unchanged_pinned_sampler','pass':set(required).issubset(captured) and set(required).issubset(heads) and state.get('bf16_head_fallback_count')==0}\npathlib.Path(sys.argv[3]).write_text(json.dumps(out,indent=2,sort_keys=True)+'\\n'); raise SystemExit(0 if out['pass'] else 20)\nPY\n",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T21:09:44.614767Z"
-}

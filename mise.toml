@@ -1,0 +1,20 @@
+[tools]
+terraform = "1.14.6"
+terragrunt = "1.1.2"
+
+[tasks.infra-fmt]
+description = "Format Terraform and Terragrunt configuration"
+run = [
+  "terraform fmt -recursive infra",
+  "terragrunt hcl fmt --working-dir infra/live",
+]
+
+[tasks.infra-check]
+description = "Run credential-free infrastructure formatting and HCL checks"
+depends = ["infra-fmt"]
+run = [
+  "terraform fmt -check -recursive infra",
+  "terragrunt hcl fmt --check --working-dir infra/live",
+  "terragrunt hcl validate --working-dir infra/live",
+  "git diff --check",
+]

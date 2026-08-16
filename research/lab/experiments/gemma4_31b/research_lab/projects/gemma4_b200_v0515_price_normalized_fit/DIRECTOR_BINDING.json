@@ -1,0 +1,19 @@
+{
+  "files": {
+    "/root/workspace/research/factory/data/accelerator_inventory.json": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+    "/root/workspace/research/factory/data/gpu_prices.json": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md": "3e50947f77d586e7d0bf6da40a47e879601233f3fdb5ff558abda8461ef89626",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/H100_FIT_HURDLE.json": "0d33de436f1519ae712d3e3caca88923106c8601eab3b16f101757cd0999fead",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/CANDIDATE_RUNTIME.json": "7f9dae66869a7fcfed9a150e84db4f59d6c6e27aec5efc272dd5f453c77705b9",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/SHA256SUMS.json": "2265be26b69d1d2ee1733a71d0a76f804ae088d7d56f23a872aadebdaf9833dc",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/inputs/exact_semantic_rows.jsonl": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/inputs/requests.jsonl": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+  },
+  "identity": {
+    "accelerator": "nvidia-b200-sxm",
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  },
+  "schema_version": 1
+}

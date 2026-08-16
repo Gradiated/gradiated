@@ -1,7 +1,0 @@
-{
-  "bench": "h100-v0515-adaptive-depth-component-e00gbzwff2ty4wznzj",
-  "diagnostic": "gpu_component_failed",
-  "project": "gemma4_h100_v0515_ngram_acceptance_adaptive_depth",
-  "repair_deadline_utc": "2026-07-25T15:40:00Z",
-  "schema_version": 1
-}

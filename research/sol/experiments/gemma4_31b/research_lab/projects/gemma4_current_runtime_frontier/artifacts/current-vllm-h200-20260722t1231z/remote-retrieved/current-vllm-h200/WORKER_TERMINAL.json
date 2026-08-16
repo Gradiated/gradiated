@@ -1,1 +1,0 @@
-{"schema_version":1,"status":"terminal","classification":"source_cuda_incompatibility","message":"vLLM v0.25.1 Gemma4 attention rejects requested --kv-cache-dtype fp8_e5m2 during first GPU profile run: assertion permits only fp8, fp8_e4m3, or nvfp4; candidate_science_started=false."}

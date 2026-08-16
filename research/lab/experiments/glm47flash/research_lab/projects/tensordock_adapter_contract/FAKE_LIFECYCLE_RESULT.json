@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "classification": "zero_provider_tensordock_fake_lifecycle_contract",
+  "provider_mutation": false,
+  "adapter": "tensordock_adapter_contract.py",
+  "systemd_entrypoint": "python3 /root/workspace/research/lab/experiments/glm47flash/research_lab/projects/tensordock_adapter_contract/tensordock_adapter_contract.py child <absolute-terminal-path>",
+  "systemd_user_no_mutation": true,
+  "cases": {
+    "success": "deleted",
+    "missing_id": "create_failed",
+    "changed_host": "create_failed",
+    "duplicate_owner": "create_failed",
+    "provisioning_deadline": "deadline_cleanup",
+    "delete_failure": "delete_failed"
+  },
+  "diagnostics": "bounded stage/type/message records; no credentials or response bodies retained",
+  "pass": true
+}

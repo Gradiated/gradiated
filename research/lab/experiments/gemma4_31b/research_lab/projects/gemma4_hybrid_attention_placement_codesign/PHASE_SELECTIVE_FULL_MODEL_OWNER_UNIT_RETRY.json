@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/phase_selective_full_model_owner.py"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T21:38:38.610499Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/phase-selective-full-model-20260725t2138z/owner-retry.log",
+  "pid": 1246836,
+  "start_ticks": 113153601,
+  "unit_manager": "pid"
+}

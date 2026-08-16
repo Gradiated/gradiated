@@ -1,3 +1,0 @@
-{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101", "model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10", "model_shard_count": 48, "model_weight_bytes": 62444175504, "timestamp": "2026-07-15T14:46:39.074691Z"}
-{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00eqfxzqzjqbvn7de", "reconciled_nonzero_exit": false, "timestamp": "2026-07-15T14:47:25.799716Z"}
-{"elapsed_seconds": 84.596, "event": "ssh_ready", "timestamp": "2026-07-15T14:48:03.442062Z"}

@@ -1,6 +1,0 @@
-{
-  "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-l40s-fp8-20260717t092300z-watchdog.service",
-  "deadline_epoch": 1784286172.7756126,
-  "main_pid": 1964478,
-  "unit": "gemma-l40s-fp8-20260717t092300z-watchdog.service"
-}

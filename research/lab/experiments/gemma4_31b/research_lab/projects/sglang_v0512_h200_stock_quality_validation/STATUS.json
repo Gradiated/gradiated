@@ -1,0 +1,17 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 3.25,
+  "compute_budget": "1.1667 H200-hours cumulative; one H200; 1.5 local CPU-hours",
+  "last_result_classification": "paired_quality_control_runtime_failure_candidate_not_eligible",
+  "next_action": "Complete: quality claim is quarantined; do not promote FP8-KV or infer a candidate regression from the invalid BF16 control.",
+  "priority": 380,
+  "provider_exposure_timeout_seconds": 4200,
+  "provider_mutation": "forbidden_after_authenticated_cleanup",
+  "reconciliation_pending": false,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "storage_budget": "one 250 GiB provider disk, 4 GiB project-local suite/captures, 10 GiB retrieved artifacts",
+  "summary": "Direct reference prompt-token identity passed, but the BF16 control failed the executable Python case; paired quality is a typed control/runtime failure and FP8-E5M2 is not production-eligible. Authenticated cleanup verified zero matching resources.",
+  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/TERMINAL.json",
+  "wall_clock_budget_minutes": 120
+}

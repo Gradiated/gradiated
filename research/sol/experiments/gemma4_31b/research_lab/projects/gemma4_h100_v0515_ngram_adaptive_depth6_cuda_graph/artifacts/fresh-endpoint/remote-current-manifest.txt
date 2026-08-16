@@ -1,6 +1,0 @@
-/home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/fresh-endpoint/arm_control/ARM_RESULT.json 246007
-/home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/fresh-endpoint/arm_control/requests.jsonl 199742
-/home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/fresh-endpoint/arm_control/telemetry.jsonl 192529
-/home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/fresh-endpoint/FRESH_WORKLOAD.json 681
-/home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/fresh-endpoint/FRESH_WORKLOAD.jsonl 22327732
--rw-rw-r-- 1 glmrunner glmrunner 78932 Jul 25 17:02 /home/glmrunner/adaptive_depth6_fresh_endpoint/artifacts/server_control.log

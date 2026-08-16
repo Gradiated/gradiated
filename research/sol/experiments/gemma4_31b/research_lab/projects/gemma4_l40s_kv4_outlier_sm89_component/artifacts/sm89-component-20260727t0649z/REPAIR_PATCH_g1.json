@@ -1,7 +1,0 @@
-{
-  "kind": "sm89_component_repair_patch",
-  "packet_manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_sm89_component/packet/PACKET_MANIFEST.json",
-  "packet_manifest_sha256": "1033df725a5db478df08b3c0c68de1de2a22146bcaa35fe9e35b57687a57a17e",
-  "repair_id": "l40s-kv4-sm89-computeinstance-e00d0a3gmts94zmm63-g1",
-  "amendment": "Resume the same hash-bound, resumable packet staging after the pre-science SSH timeout; no CUDA arm, producer, model server, or output root was created."
-}

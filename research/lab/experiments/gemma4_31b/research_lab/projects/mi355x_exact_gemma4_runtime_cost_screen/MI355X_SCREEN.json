@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "classification": "none",
+  "terminal": "typed_none",
+  "decision_question": "Does one MI355X have a current content-bound runtime and venue for the exact Gemma 4 31B text checkpoint that merits one later matched endpoint measurement?",
+  "scope": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "mode": "text_only_non_reasoning",
+    "representation": "BF16 weights; native runtime KV policy unspecified for this screen",
+    "geometry": "4214 prompt / 358 output primary, 10000 prompt / 358 output single-stream comparator, concurrency ladder preserved for a later endpoint",
+    "topology": "one AMD Instinct MI355X, 288 GB HBM3e, 8 TB/s nominal bandwidth, single-GPU TP=1",
+    "quality_boundary": "exact tokenizer/template and raw serialized outputs must be consumed by the later matched runner; no quality execution occurred"
+  },
+  "evidence": {
+    "official_runtime_support": {
+      "source": "https://docs.vllm.ai/projects/recipes/en/stable/Google/Gemma4.html",
+      "source_revision": "vllm-recipes@ab0e9bb72e02addbe1a556a3db666bdb66b46bc2",
+      "observed": "The official Gemma 4 table lists Gemma 4 31B IT on one MI355X, and the AMD section provides a ROCm vLLM deployment path.",
+      "evidence_type": "official_documentation",
+      "limit": "Support is a model/SKU claim, not exact-image load evidence or a throughput result."
+    },
+    "exact_identity": {
+      "source": "research/lab/experiments/gemma4_31b/research_lab/projects/exact_geometry_runtime_opportunities/GEOMETRY.json",
+      "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "tokenizer_template_evidence": "Bound in sglang_gemma4_exact_precreate_binding/START_PACKET.json; no AMD consumer execution performed",
+      "pinned_cuda_control": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79; vllm@ab0a20d15129b322f911db578b50c6b35b3167e7",
+      "limit": "The pinned control is the NVIDIA image; it does not content-bind the AMD ROCm image."
+    },
+    "venue": {
+      "provider": "TensorWave",
+      "access": "https://go.tensorwave.com/",
+      "access_fact": "request/contact flow; no authenticated self-service allocation evidence in scope",
+      "current_market_listing": "https://gpus.io/en/gpus/mi355x",
+      "on_demand_usd_per_gpu_hour": 2.95,
+      "evidence_type": "independent_market_listing plus provider access page",
+      "limit": "A listing and request form do not establish reserved capacity, API access, topology details, or launchability."
+    },
+    "economics": {
+      "shared_planning_rate_usd_per_gpu_hour": 2.6,
+      "production_range_usd_per_gpu_hour": [2.4, 2.75],
+      "source": "research/factory/data/gpu_prices.json",
+      "normalized_market_hurdle_usd_per_request": [0.000614, 0.000621],
+      "interpretation": "Rate is an input only; no MI355X throughput or cost result is inferred."
+    },
+    "metadata_probe": "artifacts/amd-route-metadata.json"
+  },
+  "blocker": {
+    "type": "content_binding_and_venue_access_missing",
+    "shortest_measured_or_source_backed_statement": "Official vLLM documentation supports Gemma 4 31B on MI355X, but the AMD launch image remains a mutable tag with no resolved digest in the bounded registry probe, and the only current MI355X venue found exposes request-based access rather than self-service allocation. Therefore a later matched packet cannot bind immutable runtime bytes and executable venue access without new external state.",
+    "not_a_hardware_result": true,
+    "not_a_throughput_result": true
+  },
+  "reopen_condition": "A content-addressed AMD ROCm runtime image/source commit demonstrably containing Gemma4ForConditionalGeneration plus confirmed MI355X allocation/API access; then bind the exact checkpoint/tokenizer/template and run one matched vLLM control on the same MI355X topology.",
+  "prohibited_actions_respected": ["no weights downloaded", "no image layers pulled", "no compile", "no accelerator", "no provider mutation", "no quality evaluation", "no external messages"]
+}

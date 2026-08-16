@@ -1,0 +1,42 @@
+{
+  "actual_spend_usd": 2.221139283127255,
+  "artifacts_remote": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/artifacts/candidate-only-repair-20260725t1457z/retrieved",
+  "candidate": "single_packed_cpu_full_mask_staging",
+  "candidate_arm": {
+    "arm": "candidate",
+    "elapsed_seconds": 571.7436951020009,
+    "failures": [],
+    "release_drift_bounded": true,
+    "request_rows_sha256": "0c5d3f21f5b16cf228508fe5f55302789a3f6cd9980df6767969dc614a0f4e46",
+    "rows": 791,
+    "service_seconds_per_request": 0.7228112453881174,
+    "telemetry_samples": 1124,
+    "telemetry_sha256": "28c6010c6f0e263fb9eb265e7aff4379e3d0f0e8e4fda27e773fd3eb9381d3de",
+    "total_tokens": 3616452
+  },
+  "first_semantic_divergence": {
+    "fresh_index": 61671
+  },
+  "fresh_indices": [
+    61000,
+    61790
+  ],
+  "result": "measured_contemporaneous_fresh_packed_mask_endpoint_pair",
+  "schema_version": 1,
+  "semantic_exact": false,
+  "service_time_delta_seconds_per_request": -0.0011444859582793177,
+  "stock": {
+    "arm": "stock",
+    "elapsed_seconds": 572.6489834949998,
+    "failures": [],
+    "release_drift_bounded": true,
+    "request_rows_sha256": "d3b0b813d9ee7f9d49e989682a11673a6234d686a822950b9c85649f85ffab87",
+    "rows": 791,
+    "service_seconds_per_request": 0.7239557313463967,
+    "telemetry_samples": 1126,
+    "telemetry_sha256": "c2e69b8134a6f4d646713b64d5a7dddeaa9fab90f8ca32f62c3212e748d76f63",
+    "total_tokens": 3616452
+  },
+  "workload_byte_sha256": "ce5e922638a3acb04548ae1287f1df65d01c33b487f18a38c9fdbc519011b5df",
+  "workload_marker_sha256": "26d5576712b07bbe67ffb13874ef96028f4e1a16b0e9c1c4ba03f7898d0acd01"
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint",
+  "source_mode": "read_only_shared_snapshot_no_project_local_duplicate",
+  "checkpoint_bytes": 62578655208,
+  "manifest": "CHECKPOINT_MANIFEST.json",
+  "transport": {
+    "protocol": "sftp",
+    "resume_flag": "put -a",
+    "parallel_weight_shards": 2,
+    "remote_partial_template": ".{name}.{sha256}.part",
+    "finalization": "remote_size_sha256_then_atomic_mv_and_chmod_0444"
+  }
+}

@@ -1,6 +1,0 @@
-{
-  "at_utc": "2026-07-24T19:24:46.251463Z",
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"python3\", \"project/production_remote_experiment.py\"], \"cwd\": \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32\", \"launched_at_utc\": \"2026-07-24T19:11:00.707260Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/OWNER.log\", \"pid\": 118236, \"start_ticks\": 3497142, \"unit_manager\": \"pid\"}\nFINAL\n"
-}

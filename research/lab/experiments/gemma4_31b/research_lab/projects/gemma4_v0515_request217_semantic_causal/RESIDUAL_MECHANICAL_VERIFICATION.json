@@ -1,0 +1,170 @@
+{
+  "archive": {
+    "all_members_match_retrieved_bytes": true,
+    "members": {
+      "GUEST_OWNER.json": {
+        "bytes": 570,
+        "sha256": "50470f32159ecdb2d344a9b5a2ec3820810e9e0d7eda91ef8df4ff4ec851519f"
+      },
+      "GUEST_OWNER.log": {
+        "bytes": 28,
+        "sha256": "2b315fa15be7ac8a6ad25bffc506d4510b7d1b0cdb7218dd0688e6bf83b4f3bd"
+      },
+      "out/ACTIVATION_IDENTITY.json": {
+        "bytes": 4093,
+        "sha256": "41bcd9e1d948e65cd09eb1bbab3e3cb60aa3cbed89b9f8e5d942a72bca8adec9"
+      },
+      "out/CONTAINER_ID.txt": {
+        "bytes": 65,
+        "sha256": "cf4fa8ca17d37edbdaf9e896c7bed50107f567e6b729ad7d34525586e2bbe851"
+      },
+      "out/FINAL_TERMINAL.json": {
+        "bytes": 945,
+        "sha256": "ed726a2f0d7af3305365ee9fba78747d7a31271b763f5f18737375ede7d80e12"
+      },
+      "out/INVOCATION_STATE.json": {
+        "bytes": 96,
+        "sha256": "17f6e14ea58959cc928258cbaa5418824b0adc029af0e91940b691debf40eb17"
+      },
+      "out/PRE_RESTART_CONTAINERS.jsonl": {
+        "bytes": 1044,
+        "sha256": "803bc128f809200fc14518f4aa8163c5eb79c3307c552e71c7c20fbbfa3b5d60"
+      },
+      "out/requests.jsonl": {
+        "bytes": 656346,
+        "sha256": "7c33810ca208b92f010fbb203bd4716e5f34dfd54b965b6b75601cde6c20ab2d"
+      },
+      "out/telemetry.jsonl": {
+        "bytes": 53467,
+        "sha256": "a024fe50d92775b136b6edd27b848f16bb14571c779baf84bffee3221d954870"
+      }
+    },
+    "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_request217_semantic_causal/artifacts/request217-decode-20260725t072904z/compact.tar.gz",
+    "sha256": "a33942253f7de429f17fa0e869a0b1c601cb073f5352337f5da8875be4d61343"
+  },
+  "identity": {
+    "decode_attention_backend": "triton",
+    "launch_matches_activation_actual_and_expected_command": true,
+    "prefill_attention_backend": "triton",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "speculative_attention_mode": "decode"
+  },
+  "requests": {
+    "all_first_218_semantics_identical_to_prior_endpoint": true,
+    "complete_rows": 218,
+    "failures": 0,
+    "first_218_semantics_sha256": "6f4c5542e47fdea3c5acace8670fa1cf8c8094fef8b9b39200733e8f26f3eb1d",
+    "max_release_drift_seconds": 0.0026221419975627214,
+    "prior_endpoint_first_218_semantics_sha256": "6f4c5542e47fdea3c5acace8670fa1cf8c8094fef8b9b39200733e8f26f3eb1d",
+    "request_217_output_runs": [
+      {
+        "count": 19,
+        "token": 51935
+      },
+      {
+        "count": 339,
+        "token": 3055
+      }
+    ]
+  },
+  "result": "mechanically_verified",
+  "schema_version": 1,
+  "source_excerpts": {
+    "base_backend_dispatch": {
+      "lines": [
+        158,
+        201
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/base_attn_backend.py",
+      "sha256": "7512975897cb20a3cb0bfdba37bc593bf0e5e518d76ae37beabffb135403474e"
+    },
+    "hybrid_backend_forward_extend": {
+      "lines": [
+        125,
+        138
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/hybrid_attn_backend.py",
+      "sha256": "6e2a4f3d26baa082f49fd2e6c15a356ffc94bc86c5c0d87922958bde52493e94"
+    },
+    "hybrid_backend_select": {
+      "lines": [
+        28,
+        52
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/hybrid_attn_backend.py",
+      "sha256": "73d4e101455aa76cb5effe878fe7313a5f67e1ce414a48d09abd5c9a968d2472"
+    },
+    "model_runner": {
+      "lines": [
+        2531,
+        2567
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/model_executor/model_runner.py",
+      "sha256": "e9dff6ca5ffdccd644030dadffd673a8b0860f27c15ed85d247ec988e0a1003a"
+    },
+    "server_args_backend_resolution": {
+      "lines": [
+        6461,
+        6472
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/server_args.py",
+      "sha256": "325904c3af0e8bc46d75a196096e9912755817da1f448da5698699fffd1c7201"
+    },
+    "server_args_mode": {
+      "lines": [
+        1637,
+        1643
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/server_args.py",
+      "sha256": "06935b0e993fd29262b82886c400223673c60d054d73e9ed6515873d1bfb22b7"
+    },
+    "triton_target_verify_extend": {
+      "lines": [
+        1280,
+        1368
+      ],
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_backend.py",
+      "sha256": "d7132127719e1048fd0f871377fc4f49342d344637a446699e39f32f775ae593"
+    }
+  },
+  "source_files": {
+    "base_backend": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/base_attn_backend.py",
+      "sha256": "d7912f9b66bab506dd51ad9f8a78bcd4de401eaf0bce0da0118bf661418b6e52"
+    },
+    "hybrid_backend": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/hybrid_attn_backend.py",
+      "sha256": "9ed86790c5f00ce6b156aa7eccbe716f03fe49f6eacda805f47f3d277ea4ff04"
+    },
+    "model_runner": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/model_executor/model_runner.py",
+      "sha256": "91fcb5873f26679498eec052c68e1d91102af79cdf7d0486dd5aa9f68e839171"
+    },
+    "server_args": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/server_args.py",
+      "sha256": "555c2555bd93ed1596ccd57984ce4fc17e6ef6ba29c0146566b8d4d887d36e0a"
+    },
+    "triton_backend": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.15-full-checkout/python/sglang/srt/layers/attention/triton_backend.py",
+      "sha256": "c09161c77e4586064c0d70c5dda4f943378510a4facb187590ac31e17b0e6e73"
+    }
+  },
+  "telemetry": {
+    "elapsed_monotonic": true,
+    "max_queue_requests": 10.0,
+    "max_running_requests": 31.0,
+    "max_spec_accept_length": 12.0,
+    "request_217_window_observed_accept_length_12": true,
+    "rows": 301
+  },
+  "terminal": {
+    "decision_recomputed_exactly": true,
+    "first_semantic_divergence": {
+      "first_output_token_mismatch": 19,
+      "request": 217
+    },
+    "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_request217_semantic_causal/artifacts/request217-decode-20260725t072904z/retrieved/out/FINAL_TERMINAL.json",
+    "sha256": "ed726a2f0d7af3305365ee9fba78747d7a31271b763f5f18737375ede7d80e12"
+  }
+}

@@ -1,0 +1,722 @@
+{
+  "classification": "source_complete_mi355x_candidate",
+  "decision": {
+    "base_rate_pass": true,
+    "interpretation": "A content-bound current ROCm route exists and its deliberately conservative, zero-L2, no-NVIDIA-transfer physical screen is below the $2.60/hour hurdle. Preserve it as one bounded later MI355X exact-shape falsifier, not as a deployment or throughput claim.",
+    "memory_fit_pass": true,
+    "result": "source_complete_mi355x_candidate",
+    "source_dispatch_pass": true
+  },
+  "generated_from_observation_utc": "2026-07-26T07:58:00Z",
+  "geometry": {
+    "assertions": {
+      "architecture": true,
+      "global_geometry": true,
+      "heads": true,
+      "hidden": true,
+      "intermediate": true,
+      "layer_pattern": true,
+      "layers": true,
+      "local_geometry": true,
+      "tied_head": true
+    },
+    "executed_transformer_linear_parameters": 29396828160,
+    "global_parameters_per_layer": 544997376,
+    "linear_shapes": [
+      {
+        "decode_m32_n_tiles": 128,
+        "decode_m32_nominal_waves_over_256_cus": 0.5,
+        "k": 5376,
+        "k_divisible_by_128": true,
+        "layers": 50,
+        "meaning": "Q=32x256, K=16x256, V=16x256",
+        "n": 16384,
+        "n_divisible_by_128": true,
+        "name": "sliding_qkv",
+        "parameters_per_layer": 88080384,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 1.5
+      },
+      {
+        "decode_m32_n_tiles": 42,
+        "decode_m32_nominal_waves_over_256_cus": 0.1640625,
+        "k": 8192,
+        "k_divisible_by_128": true,
+        "layers": 50,
+        "meaning": "32x256 attention output to hidden",
+        "n": 5376,
+        "n_divisible_by_128": true,
+        "name": "sliding_o",
+        "parameters_per_layer": 44040192,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 0.4921875
+      },
+      {
+        "decode_m32_n_tiles": 160,
+        "decode_m32_nominal_waves_over_256_cus": 0.625,
+        "k": 5376,
+        "k_divisible_by_128": true,
+        "layers": 10,
+        "meaning": "Q=32x512 plus duplicated K/V=4x512 under attention_k_eq_v",
+        "n": 20480,
+        "n_divisible_by_128": true,
+        "name": "global_qkv",
+        "parameters_per_layer": 110100480,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 1.875
+      },
+      {
+        "decode_m32_n_tiles": 42,
+        "decode_m32_nominal_waves_over_256_cus": 0.1640625,
+        "k": 16384,
+        "k_divisible_by_128": true,
+        "layers": 10,
+        "meaning": "32x512 attention output to hidden",
+        "n": 5376,
+        "n_divisible_by_128": true,
+        "name": "global_o",
+        "parameters_per_layer": 88080384,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 0.4921875
+      },
+      {
+        "decode_m32_n_tiles": 336,
+        "decode_m32_nominal_waves_over_256_cus": 1.3125,
+        "k": 5376,
+        "k_divisible_by_128": true,
+        "layers": 60,
+        "meaning": "packed gate and up projections",
+        "n": 43008,
+        "n_divisible_by_128": true,
+        "name": "gate_up",
+        "parameters_per_layer": 231211008,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 3.9375
+      },
+      {
+        "decode_m32_n_tiles": 42,
+        "decode_m32_nominal_waves_over_256_cus": 0.1640625,
+        "k": 21504,
+        "k_divisible_by_128": true,
+        "layers": 60,
+        "meaning": "MLP down projection",
+        "n": 5376,
+        "n_divisible_by_128": true,
+        "name": "down",
+        "parameters_per_layer": 115605504,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 0.4921875
+      },
+      {
+        "decode_m32_n_tiles": 2048,
+        "decode_m32_nominal_waves_over_256_cus": 8.0,
+        "k": 5376,
+        "k_divisible_by_128": true,
+        "layers": 1,
+        "meaning": "BF16 tied embedding/output projection",
+        "n": 262144,
+        "n_divisible_by_128": true,
+        "name": "tied_lm_head",
+        "parameters_per_layer": 1409286144,
+        "verification_m384_nominal_waves_over_256_cus_at_m_tile_128": 24.0
+      }
+    ],
+    "phases": {
+      "ordinary_decode": {
+        "m": 32,
+        "runtime_consumer": "torch._scaled_mm for FP8 transformer linears; BF16 dispatch_unquantized_gemm for tied head",
+        "steps_conservatively_counted": 358
+      },
+      "prefill": {
+        "fresh_prompt_tokens_per_request": 3678.822,
+        "runtime_m": "chunked aggregate across c32; current FP8 consumer is torch._scaled_mm"
+      },
+      "target_verification": {
+        "guard": "Added on top of all 358 ordinary decode steps, deliberately overcounting target work rather than borrowing NVIDIA acceptance throughput.",
+        "rows_per_request": 12,
+        "semantic_head_shape": "12 independent M32 tied-head calls per target cycle",
+        "target_cycles": 15,
+        "transformer_m": 384
+      }
+    },
+    "sliding_parameters_per_layer": 478937088,
+    "tied_head_parameters": 1409286144,
+    "transformer_flops_per_token": 58793656320
+  },
+  "highest_uncertainty_discriminator": {
+    "execution_type": "executed_local_cpu_source_discriminator",
+    "observations": [
+      "Online BF16 weights are materialized and quantized by scaled_fp8_quant.",
+      "ROCm disables the CUTLASS per-token choice, so online FP8 uses per-tensor activation and weight scales.",
+      "AITER per-token/preshuffled candidates reject that scale contract; ROCmFP8ScaledMMLinearKernel accepts it.",
+      "At M32 and M384 the skinny M<=4 branch is false, so the first decision-bearing GEMM consumer is torch._scaled_mm/hipBLASLt.",
+      "Hybrid attention reaches AITER flash/unified attention with sliding-window, GQA, and FP8 cache source support.",
+      "The tied embedding/head remains BF16 and reaches the unquantized GEMM dispatcher."
+    ],
+    "pass": true,
+    "question": "Does the exact BF16 production checkpoint reach a current gfx950 FP8 GEMM and hybrid-attention consumer with its actual scale/layout contract?",
+    "result": "pass_source_dispatch_with_explicit_aiter_linear_boundary"
+  },
+  "identity": {
+    "accelerator_inventory": {
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "calculator": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/run_mi355x_runtime_screen.py",
+      "sha256": "2b3898c7a54e3daa5ea38d133a9ef8a838e78c528288a6f28c796212918d132a"
+    },
+    "config": {
+      "expected_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "gpu_prices": {
+      "path": "/root/workspace/research/factory/data/gpu_prices.json",
+      "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f"
+    },
+    "hardware_assertions": {
+      "bandwidth": true,
+      "bf16_peak": true,
+      "capacity": true,
+      "compute_units": true,
+      "fp8_peak": true,
+      "l2": true,
+      "planning_price": true,
+      "price_range": true
+    },
+    "source_bindings": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/SOURCE_BINDINGS.json",
+      "sha256": "c7f08b334a36e88009b273535dcbddb64c2c3307dfc7d7cd5a1ee946a04dd1bd"
+    },
+    "source_checks": {
+      "aiter:aiter/ops/triton/_triton_kernels/attention/unified_attention.py": {
+        "expected_sha256": "9ae7871160e24915b04124b0910a43846fea5a0f9f340dc791c77bb68bed10d3",
+        "observed_sha256": "9ae7871160e24915b04124b0910a43846fea5a0f9f340dc791c77bb68bed10d3",
+        "pass": true
+      },
+      "aiter:aiter/ops/triton/attention/unified_attention.py": {
+        "expected_sha256": "993e1e72bc82b9730e9561e8a8f7eeb5d2ffa30b8e3d423158b83f20d38a08ac",
+        "observed_sha256": "993e1e72bc82b9730e9561e8a8f7eeb5d2ffa30b8e3d423158b83f20d38a08ac",
+        "pass": true
+      },
+      "aiter:op_tests/triton_tests/attention/test_unified_attention.py": {
+        "expected_sha256": "5deaeacebc4c047b3249df0472f0011f873d6fb3b6da944805735b0208f78fce",
+        "observed_sha256": "5deaeacebc4c047b3249df0472f0011f873d6fb3b6da944805735b0208f78fce",
+        "pass": true
+      },
+      "aiter_commit": {
+        "expected": "6c48c5fa0e7c299adcf1987c8f4817720ceab311",
+        "observed": "6c48c5fa0e7c299adcf1987c8f4817720ceab311",
+        "pass": true
+      },
+      "source_contract:aiter/ops/triton/_triton_kernels/attention/unified_attention.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "HEAD_SIZE_PADDED",
+          "SLIDING_WINDOW",
+          "acc = tl.zeros([BLOCK_M, HEAD_SIZE_PADDED], dtype=tl.float32)"
+        ]
+      },
+      "source_contract:aiter/ops/triton/attention/unified_attention.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "assert causal, \"Only causal attention is supported\"",
+          "SLIDING_WINDOW = 1 + window_size[0]",
+          "KV_CACHE_DTYPE = \"fp8\"",
+          "num_queries_per_kv = num_query_heads // num_kv_heads"
+        ]
+      },
+      "source_contract:vllm/model_executor/kernels/linear/__init__.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "PlatformEnum.ROCM: [",
+          "AiterPerTokenFp8ScaledMMLinearKernel",
+          "ROCmFP8ScaledMMLinearKernel",
+          "def init_fp8_linear_kernel("
+        ]
+      },
+      "source_contract:vllm/model_executor/kernels/linear/scaled_mm/aiter.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "requires per token activation scales and per channel weight scales.",
+          "AiterPreshuffledPerTokenFp8ScaledMMLinearKernel",
+          "AiterHipbMMPerTokenFp8ScaledMMLinearKernel"
+        ]
+      },
+      "source_contract:vllm/model_executor/kernels/linear/scaled_mm/rocm.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "class ROCmFP8ScaledMMLinearKernel",
+          "requires per tensor activation and weight scales.",
+          "A.shape[0] <= 4",
+          "output = torch._scaled_mm("
+        ]
+      },
+      "source_contract:vllm/model_executor/layers/layernorm.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "class RMSNorm(CustomOp)",
+          "return ir.ops.rms_norm(",
+          "return ir.ops.fused_add_rms_norm.maybe_inplace("
+        ]
+      },
+      "source_contract:vllm/model_executor/layers/quantization/fp8.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "if isinstance(layer, LinearBase):",
+          "Fp8PerTensorOnlineLinearMethod",
+          "elif isinstance(layer, Attention):",
+          "return Fp8KVCacheMethod(self)"
+        ]
+      },
+      "source_contract:vllm/model_executor/layers/quantization/online/fp8.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "class Fp8PerTensorOnlineLinearMethod",
+          "qweight, weight_scale = ops.scaled_fp8_quant(layer.weight, scale=None)",
+          "self.activation_quant_key = kFp8DynamicTensorSym",
+          "return self.fp8_linear.apply_weights(layer, x, bias)"
+        ]
+      },
+      "source_contract:vllm/model_executor/layers/quantization/utils/w8a8_utils.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "def cutlass_fp8_supported()",
+          "if not current_platform.is_cuda():",
+          "return False"
+        ]
+      },
+      "source_contract:vllm/model_executor/layers/vocab_parallel_embedding.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "quant_method = quant_config.get_quant_method(self, prefix=prefix)",
+          "quant_method = UnquantizedEmbeddingMethod()",
+          "return dispatch_unquantized_gemm()(layer, x, layer.weight, bias)",
+          "class ParallelLMHead(VocabParallelEmbedding)"
+        ]
+      },
+      "source_contract:vllm/model_executor/models/gemma4.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "self.qkv_proj = QKVParallelLinear(",
+          "quant_config=quant_config",
+          "yield name.replace(\"k_proj\", \"v_proj\"), weight.clone()",
+          "self.lm_head = ParallelLMHead(",
+          "self.lm_head = self.lm_head.tie_weights(self.model.embed_tokens)"
+        ]
+      },
+      "source_contract:vllm/platforms/rocm.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "def supports_fp8(cls) -> bool:",
+          "return any(gfx in _GCN_ARCH for gfx in [\"gfx95\"])",
+          "return torch.float8_e4m3fn",
+          "AttentionBackendEnum.ROCM_AITER_FA",
+          "AttentionBackendEnum.ROCM_AITER_UNIFIED_ATTN"
+        ]
+      },
+      "source_contract:vllm/v1/attention/backends/rocm_aiter_fa.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "rocm_aiter_ops.flash_attn_varlen_func(",
+          "from aiter.ops.triton.unified_attention import",
+          "unified_attention(",
+          "key_cache = key_cache.view(current_platform.fp8_dtype())"
+        ]
+      },
+      "vllm:tests/compile/passes/test_rocm_aiter_qk_norm_rope_kvcache_fusion.py": {
+        "expected_sha256": "c0a6004edbd4da16966d75d4ab846470c56ab422da0471d7656b6fe51f5e02f5",
+        "observed_sha256": "c0a6004edbd4da16966d75d4ab846470c56ab422da0471d7656b6fe51f5e02f5",
+        "pass": true
+      },
+      "vllm:vllm/_aiter_ops.py": {
+        "expected_sha256": "01e9469cbb3a7a27411bbf50bfe67c74e7e522efca4554c5da7c65d27cdcd4c5",
+        "observed_sha256": "01e9469cbb3a7a27411bbf50bfe67c74e7e522efca4554c5da7c65d27cdcd4c5",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/kernels/linear/__init__.py": {
+        "expected_sha256": "22cb0fb48a24ab4d00d0f05b27f0a4ea7db2abc345559de0b9ca5660f6833031",
+        "observed_sha256": "22cb0fb48a24ab4d00d0f05b27f0a4ea7db2abc345559de0b9ca5660f6833031",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/kernels/linear/scaled_mm/aiter.py": {
+        "expected_sha256": "cf151c1fd75080a8c43854da27b1cf884013e6d075632e06bb02f14631c246bd",
+        "observed_sha256": "cf151c1fd75080a8c43854da27b1cf884013e6d075632e06bb02f14631c246bd",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/kernels/linear/scaled_mm/rocm.py": {
+        "expected_sha256": "38e0ee3137127caea6c2cd0dc8e67506c339b55611060b40a18b3c79bebe9547",
+        "observed_sha256": "38e0ee3137127caea6c2cd0dc8e67506c339b55611060b40a18b3c79bebe9547",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/layernorm.py": {
+        "expected_sha256": "3460eba01758849027bb59b8592626406e33ab25b23d2def729bb0ec42afce67",
+        "observed_sha256": "3460eba01758849027bb59b8592626406e33ab25b23d2def729bb0ec42afce67",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/fp8.py": {
+        "expected_sha256": "26ede801aceeadea1e263b854424ed4fbd0bf5c081bf5beceaf4b877fb1d4fc0",
+        "observed_sha256": "26ede801aceeadea1e263b854424ed4fbd0bf5c081bf5beceaf4b877fb1d4fc0",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/online/fp8.py": {
+        "expected_sha256": "e7bbca668d3ce6134d24110ff3b5070f51d3fee21852a3fd90c1c83d4a04f2fc",
+        "observed_sha256": "e7bbca668d3ce6134d24110ff3b5070f51d3fee21852a3fd90c1c83d4a04f2fc",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/quantization/utils/w8a8_utils.py": {
+        "expected_sha256": "4964277566e9bb2f551d642eaf23073517cbf733ee86f9720b5488c17b2bb5d2",
+        "observed_sha256": "4964277566e9bb2f551d642eaf23073517cbf733ee86f9720b5488c17b2bb5d2",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/layers/vocab_parallel_embedding.py": {
+        "expected_sha256": "60b116e260d5438513c9bb60370306eed5e9b0ce612bfbe0a3885e64fdf0587b",
+        "observed_sha256": "60b116e260d5438513c9bb60370306eed5e9b0ce612bfbe0a3885e64fdf0587b",
+        "pass": true
+      },
+      "vllm:vllm/model_executor/models/gemma4.py": {
+        "expected_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "observed_sha256": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+        "pass": true
+      },
+      "vllm:vllm/platforms/rocm.py": {
+        "expected_sha256": "6e91fb41e9a2943fc79df0ec9815e46862a43bc750c4ff9d009949ed51d639d0",
+        "observed_sha256": "6e91fb41e9a2943fc79df0ec9815e46862a43bc750c4ff9d009949ed51d639d0",
+        "pass": true
+      },
+      "vllm:vllm/v1/attention/backends/rocm_aiter_fa.py": {
+        "expected_sha256": "26f5fbdd423592465abd9cb1a6d365bdd802c9b661974f75d2753f70b63cc4d5",
+        "observed_sha256": "26f5fbdd423592465abd9cb1a6d365bdd802c9b661974f75d2753f70b63cc4d5",
+        "pass": true
+      },
+      "vllm:vllm/v1/attention/backends/rocm_aiter_unified_attn.py": {
+        "expected_sha256": "2f693310e0b7d76bd23cf9a8f1bd1bb26af944e65afbb82f0de8afc0293fde1e",
+        "observed_sha256": "2f693310e0b7d76bd23cf9a8f1bd1bb26af944e65afbb82f0de8afc0293fde1e",
+        "pass": true
+      },
+      "vllm_commit": {
+        "expected": "0164022c907014a27e81c514cd4dff6091904c2b",
+        "observed": "0164022c907014a27e81c514cd4dff6091904c2b",
+        "pass": true
+      }
+    }
+  },
+  "later_exact_shape_falsifier": {
+    "arms": [
+      "Online-quantize BF16 synthetic weights through Fp8PerTensorOnlineLinearMethod and run every exact transformer shape at M32 and M384 through the selected ROCm consumer.",
+      "Run local head256/GQA2/window1024 and global head512/GQA8/context4571 AITER FP8-KV attention at decode M32 and verification M384.",
+      "Run the BF16 [32,5376]x[5376,262144] tied-head baseline, preserving 12 independent calls for each target cycle."
+    ],
+    "current_authorized_provider_spend_usd": 0.0,
+    "hardware": "one MI355X/gfx950 TP1",
+    "maximum_provider_spend_usd_if_later_authorized_at_2_95_per_hour": 0.9833333333333333,
+    "numerical_gate": {
+      "component_seconds_per_request_max": 0.545847226968745,
+      "launch_plus_service_reserve_seconds_per_request": 0.07930187499999997,
+      "whole_request_hurdle_seconds_per_request": 0.625149101968745
+    },
+    "oracle": "BF16 torch reference; finite complete output, argmax identity for head fixtures, relative-L2 <=0.02 and cosine >=0.995 for FP8 linears/attention; no fallback.",
+    "predicted_counter_change": {
+      "decode_weight_stream": ">=30% of 8 TB/s aggregate HBM with zero L2 credit in the model",
+      "global_attention": "head512 FP32 accumulator compiles without decision-bearing spills/fallback; if register/LDS pressure pushes the aggregate over the gate, the route is falsified",
+      "prefill_and_m384": ">=20% dense FP8/BF16 matrix peak on compulsory work"
+    },
+    "source": {
+      "aiter_commit": "6c48c5fa0e7c299adcf1987c8f4817720ceab311",
+      "vllm_commit": "0164022c907014a27e81c514cd4dff6091904c2b"
+    },
+    "status": "ready_but_not_authorized_in_this_zero_spend_project",
+    "strongest_supported_baseline": "Pinned vLLM ROCm per-tensor torch._scaled_mm plus AITER flash/unified attention; no NVIDIA timing baseline.",
+    "timing": "warm profiler-off p50/p95 with compilation excluded; aggregate exact counts from this artifact",
+    "wall_clock_bound_minutes": 20
+  },
+  "memory_and_topology": {
+    "config_architecture": "Gemma4ForConditionalGeneration",
+    "conservative_two_x_runtime_fragmentation_envelope_bytes": 91396365744,
+    "fits_with_two_x_envelope": true,
+    "fp8_resident_kv_c32_bytes": 12234260480,
+    "full_model_bf16_metadata_bytes": 62546177752,
+    "interconnect_required": false,
+    "mi355x_decimal_capacity_bytes": 288000000000,
+    "online_fp8_static_model_bytes_upper_bound": 33369550552,
+    "source_bound_resident_bytes": 45698182872,
+    "target_depth_12_extra_fp8_kv_bytes": 94371840,
+    "topology": "single MI355X TP1; 256 CUs across eight XCDs; no peer or host traffic credited",
+    "two_x_envelope_margin_bytes": 196603634256
+  },
+  "physical_cost_screen": {
+    "assumptions": {
+      "bf16_dense_peak_tflops_vendor_reported": 2500,
+      "bf16_math_efficiency_inferred_conservative": 0.2,
+      "fp8_dense_peak_tflops_vendor_reported": 5000,
+      "fp8_math_efficiency_inferred_conservative": 0.2,
+      "hbm_bandwidth_gb_s_vendor_reported": 8000,
+      "hbm_efficiency_inferred_conservative": 0.3,
+      "l2_credit_bytes": 0,
+      "launch_us_inferred": 3.0,
+      "nvidia_throughput_or_efficiency_transferred": false,
+      "scheduler_service_reserve_s_inferred": 0.04
+    },
+    "component_seconds_per_request": 0.5207932182112802,
+    "conservative_screen_seconds_per_request": 0.6000950932112802,
+    "evidence_boundary": "Analytical/inferred screening envelope. Vendor peaks are denominators only; no NVIDIA throughput, MI355X endpoint, quality, reliability, power, or deployability is claimed.",
+    "hurdles": {
+      "experimental_2_95": {
+        "hurdle_seconds_per_request": 0.5509788695317752,
+        "margin_seconds_per_request": -0.04911622367950497,
+        "pass": false,
+        "screen_seconds_per_request": 0.6000950932112802
+      },
+      "production_base_2_60": {
+        "hurdle_seconds_per_request": 0.625149101968745,
+        "margin_seconds_per_request": 0.025054008757464774,
+        "pass": true,
+        "screen_seconds_per_request": 0.6000950932112802
+      },
+      "production_high_2_75": {
+        "hurdle_seconds_per_request": 0.5910500600431771,
+        "margin_seconds_per_request": -0.009045033168103123,
+        "pass": false,
+        "screen_seconds_per_request": 0.6000950932112802
+      },
+      "production_low_2_40": {
+        "hurdle_seconds_per_request": 0.6772448604661404,
+        "margin_seconds_per_request": 0.07714976725486022,
+        "pass": true,
+        "screen_seconds_per_request": 0.6000950932112802
+      }
+    },
+    "launch_plus_service_reserve_seconds_per_request": 0.07930187499999997,
+    "line_items": [
+      {
+        "name": "prefill_fp8_transformer_linears",
+        "numerator_flops": 216291396330455.03,
+        "resource": "dense_fp8_matrix_core",
+        "rule": "FLOPs / (5 PFLOP/s * 20%); no NVIDIA timing transfer",
+        "seconds_per_request": 0.21629139633045502
+      },
+      {
+        "compulsory_unique_kv_bytes": 1035632640,
+        "name": "prefill_hybrid_attention",
+        "numerator_flops": 11702921508945,
+        "resource": "max_bf16_tensor_or_compulsory_fp8_kv_hbm",
+        "rule": "max(compute, unique K/V HBM); K/V tiles are not charged once per query pair",
+        "seconds_per_request": 0.02340584301789184
+      },
+      {
+        "bytes": 116215458508.8,
+        "name": "prefill_norm_activation_conversion",
+        "resource": "hbm",
+        "rule": "separate unfused bytes at 30% HBM; GEMM weight/input/output traffic is not charged again",
+        "seconds_per_request": 0.048423107712
+      },
+      {
+        "name": "ordinary_decode_fp8_transformer_linears",
+        "resource": "max_fp8_tensor_or_weight_hbm",
+        "rule": "one FP8 weight stream per c32 step, zero L2 credit; 30% HBM absorbs sub-wave N tiles/split scheduling",
+        "seconds_per_request": 0.1370320896,
+        "weight_bytes": 328877015040.0
+      },
+      {
+        "name": "ordinary_decode_bf16_tied_head",
+        "resource": "max_bf16_tensor_or_weight_hbm",
+        "rule": "BF16 tied weight streamed once per c32 step",
+        "seconds_per_request": 0.01313865728,
+        "weight_bytes": 31532777472.0
+      },
+      {
+        "fp8_kv_read_bytes": 139488256000,
+        "name": "ordinary_decode_attention_kv",
+        "numerator_flops": 1631187763200,
+        "resource": "max_bf16_tensor_or_fp8_kv_hbm",
+        "rule": "358 exact context positions, zero L2 credit",
+        "seconds_per_request": 0.058120106666666664
+      },
+      {
+        "bytes": 11309363200,
+        "name": "ordinary_decode_norm_activation_conversion",
+        "resource": "hbm",
+        "rule": "separate non-GEMM bytes",
+        "seconds_per_request": 0.004712234666666666
+      },
+      {
+        "m": 384,
+        "name": "target_verification_m384_transformer",
+        "resource": "max_fp8_tensor_or_weight_hbm",
+        "rule": "15 M384 target passes added after all 358 ordinary decode steps",
+        "seconds_per_request": 0.0105828581376,
+        "target_cycles": 15
+      },
+      {
+        "name": "target_verification_bf16_tied_head",
+        "resource": "max_bf16_tensor_or_repeated_weight_hbm",
+        "rule": "preserve 12 independent M32 semantic head calls per cycle; no grouped-weight reuse credited",
+        "seconds_per_request": 0.0066060288
+      },
+      {
+        "fp8_kv_read_bytes": 5954150400,
+        "name": "target_verification_attention_kv",
+        "numerator_flops": 841206988800,
+        "resource": "max_bf16_tensor_or_fp8_kv_hbm",
+        "rule": "12 query rows share one compulsory K/V read per request/cycle; no L2 credit",
+        "seconds_per_request": 0.002480896
+      },
+      {
+        "launch_count_per_request": 13100.625,
+        "microseconds_per_launch": 3.0,
+        "name": "launch_reserve",
+        "resource": "device_launch_latency",
+        "rule": "18 launches/layer plus target head calls; intentionally does not credit graph launch elision",
+        "seconds_per_request": 0.039301875
+      },
+      {
+        "name": "scheduler_service_reserve",
+        "resource": "host_and_service",
+        "rule": "fixed inferred reserve; must be replaced by endpoint evidence",
+        "seconds_per_request": 0.04
+      }
+    ],
+    "non_gemm_bytes_per_token": 31590400,
+    "prefill_pair_geometry": {
+      "cache_535_weight": 0.822,
+      "cache_536_weight": 0.178,
+      "global_pairs_per_layer": 8737529.592,
+      "sliding_pairs_per_layer": 3647884.592
+    },
+    "stress_thresholds_holding_other_assumptions_fixed": {
+      "minimum_bf16_math_efficiency_to_clear_base": 0.09849975939155198,
+      "minimum_fp8_math_efficiency_to_clear_base": 0.18011020404246023,
+      "minimum_hbm_efficiency_to_clear_base": 0.2745702350583038
+    }
+  },
+  "prohibited_actions_respected": [
+    "no GPU claim",
+    "no accelerator execution",
+    "no provider contact or mutation",
+    "no wait on the H100 owner",
+    "zero provider spend"
+  ],
+  "runtime_operation_bindings": [
+    {
+      "consumer": "Fp8PerTensorOnlineLinearMethod.process_weights_after_loading -> ops.scaled_fp8_quant -> ROCmFP8ScaledMMLinearKernel.apply_scaled_mm -> rocm_per_tensor_float_w8a8_scaled_mm_impl -> torch._scaled_mm",
+      "evidence_type": "source_backed",
+      "layout": "runtime weight KxN at scaled-mm boundary",
+      "operation": "QKV, O, gate/up, and down linears",
+      "phases": [
+        "prefill",
+        "ordinary_decode_m32",
+        "target_verification_m384"
+      ],
+      "producer": "BF16 checkpoint LinearBase weights; online per-tensor scaled_fp8_quant",
+      "representation": "gfx950 OCP E4M3FN weight and activation, scalar FP32 scales, BF16 output",
+      "status": "bound_current_consumer"
+    },
+    {
+      "consumer": "gemm_a8w8_bpreshuffle or hipb_mm",
+      "evidence_type": "source_backed",
+      "operation": "AITER per-token/preshuffled FP8 GEMM",
+      "phases": [
+        "not_selected_by_online_per_tensor_route"
+      ],
+      "producer": "requires per-token activation and per-channel weight scales",
+      "reason": "ROCm makes cutlass_fp8_supported false, so the online producer selects per-tensor activation and weight scales; all AITER per-token candidates reject that contract before ROCmFP8ScaledMMLinearKernel accepts it.",
+      "status": "explicitly_unsupported_for_selected_producer"
+    },
+    {
+      "consumer": "RocmAiterFlashAttentionImpl -> rocm_aiter_ops.flash_attn_varlen_func",
+      "evidence_type": "source_backed",
+      "layout": "paged NHD cache, 50x head256/window1024 and 10x head512/global",
+      "operation": "Hybrid prefill attention",
+      "phases": [
+        "prefill"
+      ],
+      "producer": "Gemma4Attention Q/K/V after Q/K/V RMSNorm and RoPE",
+      "representation": "BF16 Q/K/V with FP8 E4M3FN cache permitted",
+      "status": "bound_current_consumer"
+    },
+    {
+      "consumer": "AITER Triton unified_attention with GQA index, sliding-window pruning, FP32 softmax/output accumulator",
+      "evidence_type": "source_backed",
+      "layout": "[num_blocks, block_size, num_kv_heads, head_size]",
+      "operation": "Hybrid decode and multi-token attention",
+      "phases": [
+        "ordinary_decode_m32",
+        "target_verification_m384"
+      ],
+      "producer": "paged FP8 E4M3FN K/V cache and BF16 query",
+      "status": "bound_current_consumer_source_only"
+    },
+    {
+      "consumer": "RocmAiterFlashAttentionImpl cache view and reshape/cache path",
+      "evidence_type": "source_backed",
+      "operation": "KV conversion/write",
+      "phases": [
+        "prefill",
+        "decode",
+        "target_verification"
+      ],
+      "producer": "normalized K/V",
+      "representation": "gfx950 E4M3FN cache with layer scales",
+      "status": "bound_current_consumer_source_only"
+    },
+    {
+      "consumer": "RMSNorm.forward_native -> ir.ops.rms_norm/fused_add_rms_norm; Gemma GELU-tanh activation",
+      "evidence_type": "source_backed",
+      "operation": "RMSNorm, residual, and activation",
+      "phases": [
+        "all"
+      ],
+      "producer": "BF16 hidden state",
+      "representation": "BF16 I/O with FP32 reduction semantics",
+      "status": "bound_current_consumer"
+    },
+    {
+      "consumer": "UnquantizedEmbeddingMethod.apply -> dispatch_unquantized_gemm",
+      "evidence_type": "source_backed",
+      "operation": "Tied output projection",
+      "phases": [
+        "decode",
+        "target_verification"
+      ],
+      "producer": "BF16 tied VocabParallelEmbedding weight",
+      "representation": "BF16; FP8Config does not provide an embedding method, so the tied head remains unquantized",
+      "status": "bound_current_consumer_bf16_boundary"
+    }
+  ],
+  "schema_version": 1,
+  "scope": {
+    "hardware": "one AMD Instinct MI355X, TP1",
+    "mode": "text_only_non_reasoning",
+    "model": "google/gemma-4-31B-it",
+    "representation": "online per-tensor OCP E4M3FN transformer linears, FP8 E4M3FN KV, BF16 tied embedding/head and normalization outputs",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "workload": {
+      "cache_fraction": 0.127,
+      "concurrency": 32,
+      "fresh_prompt_tokens": 3678.822,
+      "output_tokens": 358,
+      "prompt_tokens": 4214,
+      "target_depth": 12,
+      "target_verification_cycles_conservatively_added": 15
+    }
+  },
+  "terminal": "source_complete_mi355x_candidate",
+  "unsupported_and_unmeasured_boundaries": [
+    "No MI355X kernel or endpoint executed; source completeness is not measurement readiness.",
+    "AITER per-token/preshuffled FP8 linear kernels are not reachable from the selected online per-tensor producer without changing the representation contract.",
+    "The exact global head512 AITER compile/resource behavior is source-supported but unmeasured and is the first GPU tripwire.",
+    "The tied embedding/head remains BF16; this screen does not invent an unsupported FP8 tied-weight embedding path.",
+    "The analytical estimate deliberately counts all 358 ordinary decode steps plus 15 depth-12 target passes, but it does not prove exact vLLM n-gram integration or accepted-token behavior.",
+    "No GPQA-Diamond, TauBench, checkpoint-quality, feature, reliability, power, or production-capacity claim is made.",
+    "The $2.75/hour and $2.95/hour sensitivity hurdles do not clear this conservative screen; only the $2.40 and $2.60 production cases do."
+  ]
+}

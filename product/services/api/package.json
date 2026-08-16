@@ -1,0 +1,28 @@
+{
+  "name": "@gradiated/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "check": "tsc --noEmit && vitest run",
+    "dev": "tsx watch src/server.ts",
+    "openapi:check": "node --import tsx scripts/generate-openapi.ts --check",
+    "openapi:generate": "node --import tsx scripts/generate-openapi.ts",
+    "seed": "node --import tsx scripts/seed.ts",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@gradiated/config": "workspace:*",
+    "@gradiated/contracts": "workspace:*",
+    "@gradiated/control": "workspace:*",
+    "@hono/node-server": "2.1.1",
+    "@hono/zod-openapi": "1.6.0",
+    "@scalar/hono-api-reference": "0.11.14",
+    "better-auth": "1.6.29",
+    "hono": "4.13.2",
+    "redis": "5.8.2",
+    "stripe": "22.5.0",
+    "uuid": "14.0.1"
+  }
+}

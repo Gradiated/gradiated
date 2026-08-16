@@ -1,8 +1,0 @@
-{
-  "attempt": true,
-  "final": false,
-  "owner_live": false,
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"python3\", \"remote_experiment.py\"], \"cwd\": \"/home/glmrunner/gemma4-h200-ngram-high-load-bypass\", \"launched_at_utc\": \"2026-07-24T23:12:53.028432Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-h200-ngram-high-load-bypass/EXPERIMENT_OWNER.log\", \"pid\": 192033, \"start_ticks\": 4948374, \"unit_manager\": \"pid\"}\nATTEMPT_PRESENT\n{\n  \"candidate_cuda_started\": false,\n  \"phase\": \"prefix_through_870\",\n  \"schema_version\": 1,\n  \"scientific_invocation_started\": true\n}\n"
-}

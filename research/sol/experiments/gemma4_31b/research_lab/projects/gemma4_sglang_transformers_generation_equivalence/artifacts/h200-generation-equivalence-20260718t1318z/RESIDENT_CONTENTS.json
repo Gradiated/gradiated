@@ -1,6 +1,0 @@
-{
-  "checkpoint": "Exact bound checkpoint at /home/glmrunner/gemma-generation-equivalence/checkpoint; all eight files content-hash validated.",
-  "image": "Pinned immutable SGLang image remains resident.",
-  "runtime": "SGLang v0.5.12 BF16/BF16-KV remains healthy at the final 5K/1,024-token geometry; direct BF16 Transformers cannot co-reside (typed CUDA OOM).",
-  "server_state": "Final frozen /generate consumer stalled after readiness and was stopped under the terminal rule; server remains ready on port 30000, no teardown requested."
-}

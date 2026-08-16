@@ -1,9 +1,0 @@
-{
-  "artifacts": "artifacts/variable-compaction-20260724t134337Z",
-  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint",
-  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
-  "project": "gemma4_h200_ngram_variable_draft_compaction",
-  "result": "scientific_terminal_retrieved",
-  "runtime": "Pinned SGLang v0.5.13 variable NGRAM compaction packet executed.",
-  "server_state": "No experiment server remains; image, exact checkpoint, JIT and runtime caches retained."
-}

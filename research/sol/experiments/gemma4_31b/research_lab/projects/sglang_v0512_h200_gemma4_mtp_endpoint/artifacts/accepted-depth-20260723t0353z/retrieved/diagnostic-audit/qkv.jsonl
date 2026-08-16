@@ -1,2 +1,0 @@
-{"candidate_symbol": "_qkv_norm_rope_inplace_kernel", "dtype": "torch.bfloat16", "head_dim": 256, "num_kv_heads": 16, "num_q_heads": 32, "num_tokens": 64}
-{"candidate_symbol": "_qkv_norm_rope_inplace_kernel", "dtype": "torch.bfloat16", "head_dim": 512, "num_kv_heads": 4, "num_q_heads": 32, "num_tokens": 64}

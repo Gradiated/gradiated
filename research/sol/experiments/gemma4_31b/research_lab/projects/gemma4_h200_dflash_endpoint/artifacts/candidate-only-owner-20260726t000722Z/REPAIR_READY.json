@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "diagnostic": "ordinary observer integration defect: pinned image ForwardBatch objects lacked rids at tp_worker.py and dflash_worker_v2.py hooks",
-  "invalid_attempt_artifacts": "artifacts/candidate-only-owner-20260726t000722Z",
-  "repair_scope": "observer-only logical RID capture from explicit ScheduleBatch req.rid values; no workload, model, runtime, or AR change",
-  "repair_deadline_utc": "2026-07-26T01:20:00Z",
-  "scientific_sample_consumed": false
-}

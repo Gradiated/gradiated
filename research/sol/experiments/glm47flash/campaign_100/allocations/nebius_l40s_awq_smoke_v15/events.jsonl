@@ -1,7 +1,0 @@
-{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T08:03:57.499247Z"}
-{"event": "instance_created", "instance_id": "computeinstance-e00ej873vzbt8g6zmm", "timestamp": "2026-07-14T08:04:40.423006Z"}
-{"elapsed_seconds": 78.575, "event": "ssh_ready", "timestamp": "2026-07-14T08:05:15.863600Z"}
-{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-14T08:15:32.240391Z"}
-{"elapsed_seconds": 475.464, "event": "verified_local_awq_transferred", "timestamp": "2026-07-14T08:23:27.705022Z"}
-{"error_type": "StockError", "event": "experiment_error", "message": "expected one artifact member ending in /allocation-result.json", "timestamp": "2026-07-14T08:35:19.570019Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-14T08:36:13.202497Z"}

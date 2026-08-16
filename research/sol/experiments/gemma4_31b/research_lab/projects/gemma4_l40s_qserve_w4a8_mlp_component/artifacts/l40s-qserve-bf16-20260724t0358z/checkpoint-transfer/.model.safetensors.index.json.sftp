@@ -1,1 +1,0 @@
-put /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/inputs/checkpoint/model.safetensors.index.json /home/glmrunner/gemma4-qserve-endpoint/checkpoint/.model.safetensors.index.json.d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2.part

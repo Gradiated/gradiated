@@ -1,0 +1,32 @@
+procs:
+  datastores:
+    shell: "docker compose up postgres valkey clickhouse"
+    stop:
+      send-keys: ["<C-c>"]
+  api:
+    shell: >-
+      zsh -lc 'if [[ -f ../.env ]]; then set -a; source ../.env; set +a; fi; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control db:migrate && corepack pnpm --filter @gradiated/api dev'
+    env:
+      DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+      BETTER_AUTH_URL: http://localhost:3000
+      BETTER_AUTH_SECRET: local-only-not-secret-change-in-production-0001
+      BETTER_AUTH_MIN_PASSWORD_LENGTH: "4"
+      TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      NODE_ENV: development
+      PORT: "3001"
+      VALKEY_URL: redis://127.0.0.1:6379
+  console:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/console dev'
+  seed:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/api seed'
+    autostart: false
+    env:
+      DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+      SEED_API_URL: http://127.0.0.1:3001
+      VALKEY_URL: redis://127.0.0.1:6379
+  stripe-listen:
+    shell: "stripe listen --forward-to http://localhost:3001/api/webhooks/stripe"
+    autostart: false
+    stop: SIGINT

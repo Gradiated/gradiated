@@ -1,0 +1,49 @@
+{
+  "status": "closed_operational_null",
+  "priority": 0,
+  "summary": "Closed operational-null: the one corrected external-systemd launch reached Nebius create but was rejected before allocation because the generated cloud-init UserData was invalid YAML; no GPU, model, phase, request, or throughput evidence exists.",
+  "next_action": "Do not retry this one-arm project. Director may repair the shared cloud-init/key binding only if a later project is separately admitted.",
+  "provider_mutation": "revoked_after_terminal_operational_null",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 3300,
+  "target_platform": "gpu-l40s-a/1gpu-16vcpu-64gb",
+  "proven_launcher": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py",
+  "candidate": {
+    "mode": "exit35",
+    "patch_sha256": "eae5a80f77a5029ebc22f33ab21dbb2e80762fcc497cec103fe874b5cef0fdf0",
+    "full_depth_prefill_layers": 47,
+    "decode_layers": 35,
+    "kv_cache_dtype": "auto",
+    "max_num_batched_tokens": 65536,
+    "max_num_seqs": 16,
+    "frontier_concurrencies": [16],
+    "background_arm_envelope_seconds": 300
+  },
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "target_usd_per_million_output_tokens": 0.514,
+    "required_output_tokens_per_second": 594.466,
+    "current_identity_r3_c16_output_tokens_per_second": 552.1710554232396,
+    "required_absolute_uplift_over_r3": 1.076598
+  },
+  "stop_rule": "one candidate-only provider arm; no readiness handoff, adjacent control, retention, or retry",
+  "active_session": null,
+  "terminal_evidence": {
+    "classification": "OPERATIONAL_NULL",
+    "artifact_dir": "artifacts/nebius_l40s_exit35_c16_2026-07-16-r1",
+    "provider_create_returncode": 3,
+    "provider_diagnostic_sha256": "d994a18a0761f4e9a7cb9954f01e0df0d8be76583317c9dc31598b389a769f6a",
+    "events_sha256": "61e57962123306794f69d58351e705bc9fae1c6f3f534ac2c360deeacd3e4a79",
+    "summary_sha256": "35452fba4363519aa42b0d89751f8b6be9bc8db19a7f6b4f762156b456e1571e",
+    "allocation_seconds": 0.916,
+    "derived_spend_usd": 0.000218268,
+    "useful_gpu_seconds": null,
+    "throughput_output_tokens_per_second": null,
+    "phase_evidence": null,
+    "semantic_divergence_evidence": null,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "cleanup_pass": true
+  },
+  "quality_policy": "semantics-changing architecture-cost proxy only; full quality deferred and mandatory before promotion"
+}

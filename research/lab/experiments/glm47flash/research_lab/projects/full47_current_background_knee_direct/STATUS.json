@@ -1,0 +1,176 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "SCHEDULING_CLOSE: stable bracketed c32 controls average 602.157 tok/s, while c24/c28/c30 all regress and fail both promotion thresholds; cleanup is authenticated zero.",
+  "next_action": "Terminal unchanged-stock scheduling close. Adopt no lower concurrency, do not repeat or sweep this lineage, and preserve the archive for exact-model control evidence.",
+  "provider_mutation": "closed_cleanup_authenticated_zero_inventory",
+  "authorized_spend_usd": 0.6,
+  "absolute_timeout_seconds": 2400,
+  "provider_creates": 1,
+  "retries": 0,
+  "post_result_retention": false,
+  "quality_policy": "Unchanged-checkpoint exact-workload performance evidence only; no deployable-quality or sustainable-lifecycle claim.",
+  "economic_gate": {
+    "planning_l40s_usd_per_hour": 1.1,
+    "required_output_tokens_per_second": 594.466,
+    "robust_output_tokens_per_second": 606.355,
+    "background_arm_envelope_seconds": 300
+  },
+  "exact_inputs": {
+    "checkpoint_root": "/root/.cache/glm47flash-awq-ab31d120",
+    "checkpoint_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "model_files_manifest_sha256": "a54799210429cdc73654afc09ba1415d00400061b956bb3e5cb55cf4fc314b58",
+    "runtime_image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+    "launcher": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py",
+    "launcher_sha256": "4b27b16b55d721b1c1a8964740ce7a5064146f2aacae8bb921f84026f2193c95",
+    "batched_runner_sha256": "0db2de2bd749c18bcd2ca45c16e7b3617daf5307665456b1dac039c81f90fa72"
+  },
+  "server": {
+    "max_num_seqs": 32,
+    "max_num_batched_tokens": 65536,
+    "prefix_cache": false,
+    "kv_dtype": "bfloat16",
+    "num_kv_splits": 4
+  },
+  "arms": {
+    "sequence": [32, 24, 28, 30, 32],
+    "waves_per_arm": 2,
+    "input_tokens_per_request": 8192,
+    "output_tokens_per_request": 1024
+  },
+  "acceptance_gate": {
+    "c32_anchor_relative_difference_max": 0.03,
+    "candidate_minimum_output_tokens_per_second": 606.355,
+    "candidate_minimum_ratio_to_c32_anchor_mean": 1.03,
+    "all_requests_complete_within_seconds": 300
+  },
+  "durable_owner": "external_systemd_main_with_INVOCATION_ID_and_SYSTEMD_EXEC_PID_or_equivalent_harness_proof_plus_independent_cleanup_watchdog",
+  "stop_rule": "One terminal BACKGROUND_KNEE_PASS, SCHEDULING_CLOSE, UNSTABLE_CONTROL_CLOSE, typed operational/capacity close, or pre-create close; no retry, retention, follow-up sweep, or successor.",
+  "prior_precreate_null": {
+    "outcome": "PRECREATE_CLOSE_SHARED65_NONZERO_INVENTORY",
+    "authenticated_at_utc": "2026-07-16T14:43:15Z",
+    "evidence": "artifacts/PRECREATE_SHARED65_INVENTORY_2026-07-16T144315Z.json",
+    "useful_gpu_seconds": 0,
+    "scored_gpu_seconds": 0,
+    "provider_creates_used_by_this_project": 0,
+    "interpretation": "The shared65 orphaned instance computeinstance-e00bwz6fs4z3sa3dme and its boot disk remained present and RUNNING/READY. The preregistered dependency was not met, and the contract directs a pre-create close rather than a delayed or overlapping sole-owner launch."
+  },
+  "fresh_director_admission": {
+    "admitted_at_utc": "2026-07-16T14:55:54Z",
+    "dependency_cleanup_authenticated_at_utc": "2026-07-16T14:55:38Z",
+    "prior_create_or_science_consumed": false,
+    "bounded_mutable_checks": [
+      "allow only literal ordered tuple (32,24,28,30,32)",
+      "preserve duplicate controls as c32_pre and c32_post with unique artifact identities",
+      "prove two waves and 2*c complete requests for each arm",
+      "launch cleanup watchdog as a separate persistent user-systemd unit",
+      "record scientific and watchdog unit/main-PID identities before science",
+      "rehash controller, runner, remote wrapper, tests, model manifest, and absolute command"
+    ],
+    "same_turn_rule": "implement, focus-test, freeze, and launch in one researcher turn or close pre-create"
+  },
+  "result": {
+    "decision": "SCHEDULING_CLOSE",
+    "manual_director_adjudication": true,
+    "controller_outcome": "generic background PASS with remote return code 1 from inherited interactive SLO; not used as the project decision",
+    "profiles": {
+      "c32_pre": 608.5829484418432,
+      "c24": 532.5243713773154,
+      "c28": 540.698935485978,
+      "c30": 571.2424065566249,
+      "c32_post": 595.7312930085642
+    },
+    "c32_anchor_mean_output_tokens_per_second": 602.1571207252037,
+    "c32_anchor_relative_difference": 0.021342694,
+    "c32_stability_gate_max": 0.03,
+    "stable_control": true,
+    "best_candidate": "c30",
+    "best_candidate_output_tokens_per_second": 571.2424065566249,
+    "best_candidate_ratio_to_anchor_mean": 0.948660054,
+    "absolute_candidate_gate_output_tokens_per_second": 606.355,
+    "relative_candidate_gate_output_tokens_per_second": 620.2218343469598,
+    "candidate_promoted": false,
+    "planning_l40s_usd_per_hour": 1.1,
+    "best_candidate_planning_usd_per_million_output": 0.534896485,
+    "quality_claim_limit": "paired relative non-regression passes against an absolute-failing BF16 control; no provider-matched, quality-adjusted, or deployable claim",
+    "useful_gpu_seconds": 523.606,
+    "allocation_seconds": 1644.534,
+    "compute_cost_usd_derived": 0.387561758,
+    "disk_cost_usd_derived": 0.004441246,
+    "cost_usd_derived": 0.392003003,
+    "archive": "artifacts/l40s_background_knee_20260716_r1/vllm-awq-batch.tar.gz",
+    "archive_sha256": "94e2f841e3a0aa1b4c166e4a4defa20e2b3c5b0cd2ab23f9acc7877ae4d86dbf",
+    "manifest_file_count": 49,
+    "cleanup_pass": true,
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "cleanup_authenticated_at_utc": "2026-07-16T15:29:12Z"
+  },
+  "director_live_adjudication": {
+    "audited_at_utc": "2026-07-16T15:07:32Z",
+    "live_owner_valid": true,
+    "independent_watchdog_valid": true,
+    "controller_terminal_pass_sufficient": false,
+    "reason": "The controller's generic background PASS does not implement the five-profile identity/count checks, prefix-cache and histogram completeness, 3% c32-anchor stability gate, or the >=606.355 and >=1.03x candidate gates.",
+    "raw_archive_admissibility": [
+      "archive and manifest bind exact checkpoint, runtime image, launcher, runner, remote wrapper, workload, and ordered profile identities",
+      "profiles are exactly c32_pre,c24,c28,c30,c32_post at concurrencies 32,24,28,30,32",
+      "completed row counts are exactly 64,48,56,60,64 and every row proves 8192 input tokens, 1024 output tokens, complete token IDs, and end-to-end completion within 300 seconds",
+      "prefix-cache query and hit deltas are zero and semantic/histogram evidence is complete",
+      "terminal logs prove the requested BF16 KV dtype, resource/telemetry evidence is present, and archive hashes verify",
+      "fresh provider inventory independently authenticates zero instances and disks"
+    ],
+    "manual_decision_rule": "If abs(c32_pre-c32_post)/mean > 0.03 return UNSTABLE_CONTROL_CLOSE. Otherwise return BACKGROUND_KNEE_PASS only for the best c24/c28/c30 arm at >=606.355 tok/s and >=1.03*the c32 mean; else SCHEDULING_CLOSE. Missing required evidence is a typed contract/operational close.",
+    "rolling_wave_caveat": "The runner submits 2*c jobs through c workers as one rolling arm; do not claim two barrier-separated independent repetitions.",
+    "controller_cost_caveat": "Ignore runner planning-cost fields derived from the experimental $0.8581222/h rate; authoritative production planning remains $1.10/h.",
+    "watchdog_caveat": "The watchdog unit RuntimeMax may be shorter than worst-case delete/wait/disk cleanup, so its presence does not replace an independent post-terminal zero-inventory check."
+  },
+  "adjacent_followup": {
+    "preregistered": false,
+    "reason": "No distinct decision-relevant command is already validated on the existing retained-session path and ready within ten minutes. Split-8's prior measured uplift is only about 1.045%, while the current bracket already contains the decision-relevant arms; mutate nothing and clean normally."
+  },
+  "cycle132_live_checkpoint": {
+    "audited_at_utc": "2026-07-16T15:11:27Z",
+    "runtime_bootstrap": "PASS in 402.962 seconds",
+    "cuda_transformers_preflight": "PASS",
+    "tiny_transfer_probe": "PASS",
+    "current_phase": "checkpoint_transfer",
+    "remote_model_bytes_observed": 9082837444,
+    "total_model_weight_bytes": 20170199928,
+    "gpu_state": "idle; 0 percent utilization and 0 MiB allocated",
+    "useful_gpu_seconds": 0,
+    "scored_gpu_seconds": 0,
+    "derived_exposure_seconds": 653.304,
+    "derived_experiment_cost_usd": 0.155726,
+    "deadline_utc": "2026-07-16T15:40:33Z",
+    "decision_effect": "No scientific endpoint or new portfolio trigger; preserve both owners unchanged."
+  },
+  "cycle133_live_checkpoint": {
+    "audited_at_utc": "2026-07-16T15:18:52Z",
+    "checkpoint_transfer": "PASS; 14/14 files and 20193158555 bytes in 347.699 seconds",
+    "model_load": "PASS in 31.10 seconds",
+    "model_resident_memory_mib": 42491,
+    "server_identity": "exact unchanged compressed-tensors AWQ; BF16 KV requested; maxseq32; maxbatched65536; prefix cache disabled",
+    "current_phase": "conditional_semantic_quality_performance_batch",
+    "semantic_quality_evidence": "paired relative non-regression passed; inherited absolute point screen failed catastrophic-category gate",
+    "quality_interpretation": "expected unchanged-checkpoint claim limitation, not a scheduling decision",
+    "timed_profile_artifacts": 0,
+    "useful_scored_throughput_seconds": 0,
+    "derived_exposure_seconds": 1066.174,
+    "derived_experiment_cost_usd": 0.254141,
+    "scientific_deadline_utc": "2026-07-16T15:35:33Z",
+    "watchdog_deadline_utc": "2026-07-16T15:40:33Z",
+    "decision_effect": "The exact model crossed setup into live scientific workload, but no scheduling arm or terminal result exists; preserve unchanged."
+  },
+  "active_session": {
+    "unit": "glm47-background-knee-20260716-r1.service",
+    "unit_manager": "systemd-run --user",
+    "controller_pid": 1598757,
+    "controller_cgroup": "/user.slice/user-0.slice/user@0.service/app.slice/glm47-background-knee-20260716-r1.service",
+    "watchdog": "The launcher starts glm47-background-knee-20260716-r1-watchdog.service immediately after the provider-create subprocess returns; this grouped snapshot captured provider create in progress before that post-create service step.",
+    "resource_identity": "Nebius computeinstance-e00eqzrjfcjrs2v28v; glm47-background-knee-20260716-r1; preemptible gpu-l40s-a / 1gpu-16vcpu-64gb; managed boot disk computedisk-e00qzwhc60svqmwf87.",
+    "deadline_epoch_seconds": 1784216414,
+    "artifact_root": "artifacts/l40s_background_knee_20260716_r1",
+    "forward_progress": "The controller and independent watchdog remain active in separate systemd cgroups. Checkpoint transfer passed at 15:14:31Z, exact model load completed at 15:18:38Z with 42,491 MiB resident, and semantic/paired diagnostics completed. The conditional performance batch is active, but no timed five-arm output or scheduling endpoint exists as of 15:18:52Z."
+  }
+}

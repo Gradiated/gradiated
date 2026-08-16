@@ -1,7 +1,0 @@
-{"event":"retained_arm_control","instance_id":"computeinstance-e00wfcpr1va34g7tvd","parent_experiment_id":"nebius_l40s_vllm_awq_batch_v19","timestamp":"2026-07-14T11:07:10Z"}
-{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "ea1268cb6bdf41c41a790a5e5a01dfe0302a4f173504852c469be0a6342db788", "timestamp": "2026-07-14T11:10:14.626340Z"}
-{"event": "repair_01_inputs_staged", "timestamp": "2026-07-14T11:10:22.054213Z"}
-{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-14T11:10:22.054329Z"}
-{"event": "repair_01_artifact_retrieved", "manifest_files": 39, "outcome": "PASS", "sha256": "001dd8a5eb6f8dc1ec10cd5f54cb57b406d20bd6f80b250ad8e78ef1643d8b30", "timestamp": "2026-07-14T11:17:37.722140Z"}
-{"event": "instance_retained_for_next_preregistered_experiment", "instance_id": "computeinstance-e00wfcpr1va34g7tvd", "timestamp": "2026-07-14T11:17:37.722243Z"}
-{"cleanup_pass": false, "event": "cleanup_verified", "instance_get_not_found": false, "timestamp": "2026-07-14T11:17:38.201222Z"}

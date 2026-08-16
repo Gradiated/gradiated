@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/run_h200_55l5g_endpoint_runtime.py", line 77, in <module>
-    raise SystemExit(main())
-                     ~~~~^^
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/run_h200_55l5g_endpoint_runtime.py", line 72, in main
-    raise RuntimeError("runtime_pair_program_not_yet_retrieved")
-RuntimeError: runtime_pair_program_not_yet_retrieved

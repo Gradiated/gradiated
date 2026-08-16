@@ -1,7 +1,0 @@
-{
-  "project": "gemma4_h200_fp8_tied_head_endpoint",
-  "fp8_tied_head_result": "typed_external_bench_hbm_occupied",
-  "fp8_tied_head_actual_spend_usd": 1.2721954465666665,
-  "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-endpoint-20260723t2045z/artifacts",
-  "maintenance": "gemma-static-c32 holds 122636 MiB and port 30001; no FP8 candidate workload was accepted. Director must disposition the terminal static-c32 server before reactivation."
-}

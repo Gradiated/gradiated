@@ -1,0 +1,427 @@
+{
+  "acceptance": {
+    "complete_output": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9997437779401068,
+      "max_absolute": 0.009815722703933716,
+      "reference_nonfinite": 0,
+      "relative_l2": 0.0229652493617804
+    },
+    "current_e5m2_comparator": {
+      "candidate_nonfinite": 0,
+      "cosine": 0.9997222233100366,
+      "max_absolute": 0.004937618970870972,
+      "reference_nonfinite": 0,
+      "relative_l2": 0.02356864208968842
+    },
+    "memory_margin_improvement_pass": true,
+    "numerical_pass": true,
+    "ownership_and_transition_pass": true,
+    "raw_rows": [
+      {
+        "base_only_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.97433812575286,
+          "max_absolute": 0.15524891391396523,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.3829291420417066
+        },
+        "corrected_vs_current_e5m2": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997128278473585,
+          "max_absolute": 0.00471046706661582,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.023965548996757003
+        },
+        "corrected_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997398462548659,
+          "max_absolute": 0.00942106544971466,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.023082358389998822
+        },
+        "old_tokens": 3191,
+        "output_elements_consumed": 16384,
+        "query_position": 4214,
+        "recent_tokens": 1024,
+        "transitioned_old_tokens": 0
+      },
+      {
+        "base_only_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9724576188436258,
+          "max_absolute": 0.15781613811850548,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.3909114974002398
+        },
+        "corrected_vs_current_e5m2": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997317714180762,
+          "max_absolute": 0.004937618970870972,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.02316399271003029
+        },
+        "corrected_vs_high_precision": {
+          "candidate_nonfinite": 0,
+          "cosine": 0.9997478311278584,
+          "max_absolute": 0.009815722703933716,
+          "reference_nonfinite": 0,
+          "relative_l2": 0.02284725658927566
+        },
+        "old_tokens": 3548,
+        "output_elements_consumed": 16384,
+        "query_position": 4571,
+        "recent_tokens": 1024,
+        "transitioned_old_tokens": 357
+      }
+    ],
+    "thresholds": {
+      "cosine_min": 0.995,
+      "query_positions": [
+        4214,
+        4571
+      ],
+      "relative_l2_max": 0.08
+    }
+  },
+  "actual_spend_usd": 0.0,
+  "classification": "offline_representation_pass_allocator_margin_improved_endpoint_still_does_not_fit",
+  "created_at_utc": "2026-07-27T06:52:02.551105+00:00",
+  "decision": "admit_later_sm89_component",
+  "direct_bindings": {
+    "accelerator_inventory": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "campaign": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "host_prefetch_terminal": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_kv_host_prefetch/L40S_GLOBAL_KV_HOST_PREFETCH_OFFLINE_TERMINAL.json",
+      "sha256": "834bbdcaf57c1762aeac1863e94f25d58bffc7f972e0f1c3e964fabffad8a5f8"
+    },
+    "local_d256_terminal_identity_only": {
+      "evidence": "direct identity/memory binding only; its numerical rows were not transferred",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_local_kv4_outlier_codesign/L40S_LOCAL_KV4_OUTLIER_OFFLINE_TERMINAL.json",
+      "sha256": "c0a732ef5cf42cb5744a19afab0fe2734ad37cbd5d720ebcc4a16e02a856cfc2"
+    },
+    "model_config": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/packet/MODEL_CONFIG.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "project": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_tiered_kv4_outlier/PROJECT.md",
+      "sha256": "6ecc12b46ab93833886bb7350eba837defe5327bcd142e5f2873262413669cdd"
+    },
+    "sglang_source": {
+      "python/sglang/srt/layers/attention/triton_backend.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from clean pinned local git snapshot",
+        "path": "/root/workspace/.agents/runtime/gemma4_global_kv_sglang/python/sglang/srt/layers/attention/triton_backend.py",
+        "sha256": "e2b0fd4a3ec3c783ae7026f4cb8a7292c1203388a6c9ea5b90e604d3a149f3dc"
+      },
+      "python/sglang/srt/mem_cache/memory_pool.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from clean pinned local git snapshot",
+        "path": "/root/workspace/.agents/runtime/gemma4_global_kv_sglang/python/sglang/srt/mem_cache/memory_pool.py",
+        "sha256": "24caf4bf2af6db4f8dc180f65b2ed8153403cdfd87010b70fcac67fe59434a10"
+      },
+      "python/sglang/srt/mem_cache/swa_memory_pool.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from clean pinned local git snapshot",
+        "path": "/root/workspace/.agents/runtime/gemma4_global_kv_sglang/python/sglang/srt/mem_cache/swa_memory_pool.py",
+        "sha256": "d0d8c9ad1a7652978195bfea112611cd281012c6ff9c12dfd05f445c13534724"
+      },
+      "python/sglang/srt/models/gemma4_causal.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from clean pinned local git snapshot",
+        "path": "/root/workspace/.agents/runtime/gemma4_global_kv_sglang/python/sglang/srt/models/gemma4_causal.py",
+        "sha256": "9c5f5f5739cbec30284302f266fec1d797a86fb98fa1273a27c97fb5d869d001"
+      }
+    },
+    "workload": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/packet/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  },
+  "focused_checks": [
+    {
+      "command": "python3 -m py_compile global_tiered_kv4_reference.py offline_experiment.py test_global_tiered_kv4.py sglang_global_tiered_kv4.py run_l40s_component.py",
+      "result": "pass"
+    },
+    {
+      "command": "uv run --with numpy --with torch python -m unittest -v test_global_tiered_kv4.py",
+      "result": "pass",
+      "tests": 7
+    },
+    {
+      "command": "uv run --with numpy python offline_experiment.py --output artifacts/OFFLINE_NUMERICAL.json",
+      "result": "pass"
+    }
+  ],
+  "identities": {
+    "hardware_target": {
+      "architecture": "Ada Lovelace SM89",
+      "memory_bytes": 48305799168,
+      "model": "NVIDIA L40S",
+      "sms": 142
+    },
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "runtime": {
+      "attention_backend": "current official Triton paged attention",
+      "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+      "repository": "https://github.com/sgl-project/sglang"
+    },
+    "workload": {
+      "concurrency": 32,
+      "global_kv_heads": 4,
+      "global_layers": 10,
+      "head_dim": 512,
+      "output_tokens": 358,
+      "page_size": 1,
+      "prompt_tokens": 4214,
+      "query_heads": 32,
+      "shared_prefix_tokens": 535
+    }
+  },
+  "implementation_hashes": {
+    "build_terminal.py": "cd0e30e8d762377fd153c056016ee36ae8dc2ed089f5533348c03878bc7b6fdd",
+    "global_tiered_kv4_bindings.cpp": "7c4ae8539de2126bcc872520215504c1c7b0534765a19e191dbf2b233930e0cd",
+    "global_tiered_kv4_cuda.cu": "42609740a2fe06033bbb56854a1e710da9897d59be5e696f4367f0cc8f36897b",
+    "global_tiered_kv4_reference.py": "effc3f48a5e7a766fac004643b315f48f920dd2a9294b4dde6bd54027e1193d3",
+    "offline_experiment.py": "fb3ae1235f7317e8cc20ef42ca0aef2f10dd3f87eca16f824e707546dedc5d33",
+    "run_l40s_component.py": "414894f7a23ed9afd2e7c16b34c27baaa6e5f359bac200dc87cbd42a8e63a594",
+    "sglang_global_tiered_kv4.py": "0e46017b00515d567a032eaea54672b8add0f7fb1164c5f5451643d277a9893c",
+    "test_global_tiered_kv4.py": "c34aafc63bfce749bfbde4e932105f3afc0f4d1e0bf89185ed19a14d0004df7c"
+  },
+  "kind": "l40s_global_tiered_kv4_outlier_offline_terminal",
+  "later_component": {
+    "candidate": "full producer plus mixed-tier consumer; complete output is consumed before CUDA-event timing",
+    "command": "PYTHONPATH=/root/workspace/.agents/runtime/gemma4_global_kv_sglang/python python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_tiered_kv4_outlier/run_l40s_component.py --source-root /root/workspace/.agents/runtime/gemma4_global_kv_sglang --output /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_tiered_kv4_outlier/artifacts/L40S_GLOBAL_TIERED_KV4_OUTLIER_COMPONENT.json --warmup 2 --repetitions 20",
+    "comparator": "pinned current SGLang decode_attention_fwd over the same exact c32 D512 page-one E5M2 cache",
+    "not_run_reason": "the admitted action explicitly forbids claiming a GPU or running CUDA, and the shared inventory has no benches",
+    "required_evidence": [
+      "first untimed baseline and candidate completion markers",
+      "compiled registers, static shared memory, spills, and source identity",
+      "warm profiler-off latency distributions",
+      "relative L2, cosine, and finite-output checks",
+      "candidate-path proof and exact peak layout"
+    ],
+    "type": "command"
+  },
+  "memory": {
+    "baseline_global_e5m2_bytes": 5312020480,
+    "bytes_saved_exact_before_rounding": 1589350756,
+    "capacities": {
+      "allocated_recent_rows": 34816,
+      "canonical_physical_rows_with_sentinel": 129688,
+      "old_rows": 96919,
+      "peak_live_physical_rows": 129687,
+      "prefill_spill_rows": 2048,
+      "steady_recent_rows": 32768
+    },
+    "complete_fit": false,
+    "complete_required_interval_bytes": {
+      "lower": 50733917648,
+      "upper": 51701421224
+    },
+    "components_bytes": {
+      "allocator_rounding_interval": {
+        "basis": "four contiguous ten-layer payload allocations plus four metadata allocations, each charged a candidate-adverse 2 MiB",
+        "lower": 0,
+        "upper": 16777216
+      },
+      "candidate_exact_semantic_bytes": 3722669724,
+      "old_and_recent_int32_free_stacks": 526940,
+      "old_kv_payload": 2295041920,
+      "recent_e5m2_kv_payload": 1426063360,
+      "two_int32_physical_directories": 1037504
+    },
+    "evidence": "derived exact representation/geometry bytes plus an explicitly one-sided eight-allocation rounding envelope; inherited non-KV interval is direct-bound",
+    "locked_request_implications": {
+      "maximum_live_requests": 32,
+      "overflow": "fail closed before producer submission if >32 live requests, >2048 current extend tokens, or the exact old/recent free stacks are exhausted",
+      "prefill": "the recent arena reserves the frozen chunked-prefill-size=2048 in addition to 32 locked 1024-token tails",
+      "recycling": "a physical id and its compact old/recent locations remain leased until the existing full allocator releases that id; directory generation must be cleared before reuse",
+      "request_rows": "canonical ReqToTokenPool ownership is unchanged; the tier directories are indexed only by canonical full physical ids"
+    },
+    "lower_deficit_reduction_bytes": 1589330276,
+    "lower_deficit_reduction_fraction": 0.39560685711954857,
+    "physical_bytes": 48305799168,
+    "physical_deficit_interval_bytes": {
+      "lower": 2428118480,
+      "upper": 3395622056
+    },
+    "prior_complete_lower_deficit_bytes": 4017448756,
+    "saving_fraction": 0.2991989134800926,
+    "static_allocator_deficit_interval_bytes": {
+      "lower": 2428118480,
+      "upper": 3395622056
+    },
+    "static_allocator_limit_bytes": 41059929292,
+    "static_required_interval_bytes": {
+      "lower": 43488047772,
+      "upper": 44455551348
+    }
+  },
+  "next_action": "Preserve this offline pass for a later zero-question SM89 component comparison when the director admits a compatible shared L40S bench; do not claim fit or endpoint viability until another in-scope allocator/residency mechanism removes the remaining 2.428-3.396 GB interval.",
+  "pass": true,
+  "physical": {
+    "decode_c32_one_global_layer_at_peak": {
+      "arithmetic_intensity_useful_flop_per_unique_kv_byte": {
+        "candidate": 26.355524000313206,
+        "current_e5m2": 18.046157286389537
+      },
+      "cta_issued_kv_load_byte_upper": {
+        "candidate": 3223961600,
+        "current_e5m2": 4793040896,
+        "semantics": "source-level upper assuming every query-head CTA reloads its GQA K/V rows from below L2"
+      },
+      "grid_ctas": 1024,
+      "grid_waves_one_cta_per_sm": 7.211267605633803,
+      "old_tokens_per_request": 3547,
+      "outlier_channel_comparisons_upper": 29754392576,
+      "recent_tokens_per_request": 1024,
+      "sequence_tokens_per_request": 4571,
+      "sm89_sms": 142,
+      "unique_physical_kv_read_bytes": {
+        "candidate": 363721920,
+        "current_e5m2": 531197952,
+        "reduction": 167476032,
+        "reduction_fraction": 0.31527989023572134
+      },
+      "useful_attention_flops": 9586081792
+    },
+    "decode_producer_per_layer_per_forward": {
+      "deterministic_residual_selections_per_retiring_vector": 8,
+      "group64_second_max_reductions_per_retiring_vector": 8,
+      "new_recent_e5m2_write_bytes": 131072,
+      "retiring_old_kv4_write_bytes": 75776,
+      "retiring_recent_e5m2_read_bytes": 131072,
+      "retiring_vectors": 256
+    },
+    "physical_hypothesis": {
+      "falsifier": "the real current-runtime E5M2 comparator is no slower than the full candidate producer plus mixed consumer, or compiler metadata shows decision-bearing spills/resource collapse",
+      "hypothesis": "the one-pass mixed consumer trades nibble/outlier instructions for 29.9% fewer unique peak global K/V read bytes and no dequantized intermediate; the exact D512 grid still supplies 7.21 CTA waves",
+      "prediction": "SM89 DRAM bytes fall materially while integer/conversion instructions rise; producer-plus-consumer wins only if 512-thread register pressure does not force spills that erase the byte reduction"
+    },
+    "source_resource_bounds": {
+      "compiled_registers_spills_occupancy": "unmeasured_until_real_sm89_component",
+      "consumer_static_shared_bytes": 2060,
+      "consumer_threads_per_cta": 512,
+      "producer_static_shared_bytes": 7208,
+      "producer_threads_per_cta": 512,
+      "register_thresholds": {
+        "evidence": "analytical from 65536 32-bit registers/SM and 512 threads/CTA; compiled registers and spills are unmeasured",
+        "one_block_per_sm_if_at_most_registers_per_thread": 128,
+        "three_blocks_per_sm_if_at_most_registers_per_thread": 42,
+        "two_blocks_per_sm_if_at_most_registers_per_thread": 64
+      },
+      "shared_memory_limiting": false,
+      "thread_limit_blocks_per_sm_upper": 3
+    }
+  },
+  "producer_consumer": {
+    "consumer_contract": "one traversal of unchanged canonical kv_indices; cursor-relative tier selection; direct E5M2 or corrected packed-row loads feed one FP32 running-max/running-sum/per-channel online-softmax accumulator; no dequantized cache or output intermediate",
+    "consumer_symbol": "tiered_paged_attention/mixed_tier_paged_attention_kernel",
+    "gqa": "query_head / (query_heads / kv_heads), exact 32Q:4KV",
+    "ownership": "canonical physical ids remain ReqToTokenPool/SWATokenToKVPoolAllocator authority; compact directories add location only",
+    "padded_rows": "negative physical ids no-op before any directory or payload load",
+    "producer_symbols": [
+      "tiered_store_recent/store_recent_kernel",
+      "tiered_pack_old/pack_old_kernel<..., false>",
+      "tiered_retire_recent/pack_old_kernel<float, true>"
+    ],
+    "runtime_limit": "the fixed component layout is locked to c32, chunked-prefill-size 2048, page size one, and the exact peak row counts; production allocator hooks remain a later integration step",
+    "source_complete": true
+  },
+  "prohibitions_observed": {
+    "checkpoint_shards_read": false,
+    "cuda_run": false,
+    "d256_numerical_evidence_transferred": false,
+    "gpu_claimed": false,
+    "ssh_or_provider_used": false,
+    "training_or_parameter_sweep": false
+  },
+  "project": "gemma4_l40s_global_tiered_kv4_outlier",
+  "raw_numerical_evidence": {
+    "evidence": "measured deterministic synthetic CPU and analytical",
+    "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_tiered_kv4_outlier/artifacts/OFFLINE_NUMERICAL.json",
+    "sha256": "183deaceb7396d0f536cd9879a84f8281068c64a834ddaa34089760061f91ac7",
+    "stdout_log": {
+      "evidence": "raw command stdout; empty because the accepted foreground rerun wrote to the terminal stream",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_tiered_kv4_outlier/artifacts/OFFLINE_NUMERICAL.stdout.log",
+      "sha256": "183deaceb7396d0f536cd9879a84f8281068c64a834ddaa34089760061f91ac7"
+    }
+  },
+  "representation": {
+    "old": {
+      "group_size": 64,
+      "groups": 8,
+      "layout_bytes": {
+        "0:256": "256 low-channel-first signed-nibble bytes",
+        "256:272": "eight little-endian BF16 scales",
+        "272:288": "eight little-endian uint16 channel indices in descending residual magnitude with channel-id tie break",
+        "288:296": "eight E5M2 residual bytes in matching order"
+      },
+      "outlier_index_dtype": "uint16",
+      "outliers": 8,
+      "residual_dtype": "finite E5M2",
+      "row_bytes_per_k_or_v": 296,
+      "scale_dtype": "BF16",
+      "scale_statistic": "second-largest absolute source value per group",
+      "signed_int4_range": [
+        -7,
+        7
+      ]
+    },
+    "recent": {
+      "dtype": "finite E5M2 round-to-nearest-even satfinite",
+      "row_bytes_per_k_or_v": 512,
+      "tokens_per_request": 1024
+    },
+    "transition": "initial old prompt rows pack directly from BF16; a row aging past 1024 packs once from its retained E5M2 bytes, while the compact location remains bound to the canonical physical page id"
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "terminal_reasons": [
+    "fresh_d512_full_history_numerics_pass_both_bound_positions",
+    "ownership_padding_and_1023_1024_1025_transitions_pass",
+    "source_complete_one_pass_sm89_component_exists",
+    "global_residency_reduced_by_1589350756_exact_bytes",
+    "complete_l40s_fit_remains_negative_by_at_least_2428118480_bytes",
+    "target_sm89_performance_and_compiler_resources_unmeasured_by_explicit_prohibition"
+  ],
+  "uncertainty": [
+    {
+      "effect": "both numerical positions pass the early discriminator, but GPQA/TauBench remain untested",
+      "item": "Synthetic checkpoint-free D512 K/V are not production quality evidence.",
+      "label": "measured synthetic"
+    },
+    {
+      "effect": "registers, spills, occupancy, numerical parity, and producer-plus-consumer latency remain decision-bearing",
+      "item": "The CUDA source was not compiled or executed on SM89 by prohibition.",
+      "label": "unmeasured target execution"
+    },
+    {
+      "effect": "the upper memory bound charges 16 MiB; even the exact lower bound remains 2.428 GB over physical capacity",
+      "item": "Allocator rounding is unknown before target integration.",
+      "label": "analytical one-sided interval"
+    },
+    {
+      "effect": "global compression removes 1.589 GB and 39.56% of the inherited lower deficit, but another allocator/residency intervention is still required",
+      "item": "No endpoint fit is claimed.",
+      "label": "derived exact lower bound"
+    }
+  ]
+}

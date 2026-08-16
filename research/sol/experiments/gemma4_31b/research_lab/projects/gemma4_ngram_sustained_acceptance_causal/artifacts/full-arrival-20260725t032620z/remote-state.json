@@ -1,5 +1,0 @@
-{
-  "stdout": "{\"command\": [\"env\", \"REQUEST_LOCAL_ROOT=/home/glmrunner/gemma4-request-local-verified-trunk\", \"python3\", \"remote_request_local_endpoint.py\"], \"cwd\": \"/home/glmrunner/gemma4-request-local-verified-trunk\", \"launched_at_utc\": \"2026-07-25T03:26:33.138222Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-request-local-verified-trunk/OWNER.log\", \"pid\": 42402, \"start_ticks\": 1099783, \"unit_manager\": \"remote-shell\"}\nATTEMPT\n",
-  "stderr": "",
-  "at_utc": "2026-07-25T03:27:03.836128+00:00"
-}

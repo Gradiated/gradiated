@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "run_threshold_owner.py"
+  ],
+  "cwd": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass",
+  "launched_at_utc": "2026-07-25T00:52:26.358525Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/FULL_TRAJECTORY_CONTROLLER.log",
+  "pid": 231510,
+  "start_ticks": 105676376,
+  "unit_manager": "pid"
+}

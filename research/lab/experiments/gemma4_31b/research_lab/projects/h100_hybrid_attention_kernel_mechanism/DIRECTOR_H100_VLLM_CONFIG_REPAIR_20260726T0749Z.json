@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "type": "director_h100_pinned_vllm_config_repair",
+  "issued_at_utc": "2026-07-26T07:49:00Z",
+  "project": "h100_hybrid_attention_kernel_mechanism",
+  "decision": "reactivate_same_project_for_one_cached_pre_science_constructor_repair",
+  "classification": {
+    "prior_result": "integration_error",
+    "prior_terminal": "artifacts/h100-paged-fp8-execution-20260726t0724z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "prior_terminal_sha256": "14f4ba3177e974d645b8962eb75f00cefb613521a438c9ea9102562eddadd2d4",
+    "scientific_sample_consumed": false,
+    "candidate_cuda_started": false,
+    "localized_failure": "VllmConfig rejected an explicitly supplied null model_config under the pinned Pydantic validation boundary before registered Attention construction.",
+    "measured_corrected_launch_to_terminal_seconds": 12.559469
+  },
+  "immutable_science": {
+    "contract_path": "paged_fp8_contract.py",
+    "contract_sha256": "bc993832a5e5079bd0f7715b96af28ec1cec26dc5f63aaf07cd3f1303d2695d6",
+    "prior_program_sha256": "fdafc7a2d20abddc4a82a6c7e34c98de9f7a75e7ecccfeab2152485613cc1918",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "runtime": "vLLM 0.19.1.dev6+g6d4a8e6d2",
+    "workload": "Unchanged registered-Attention BF16 versus FP8-E4M3 local1024/global4214-4571 c8/c16/c32 component and existing semantic, counter, and economic gates.",
+    "scientific_replay": false
+  },
+  "repair_scope": {
+    "file": "paged_fp8_execution.py",
+    "required_effect": "Construct a ModelConfig-typed exact-geometry proxy accepted by pinned VllmConfig validation, preserving the existing ExactModelConfig fields and get_num_attention_heads/get_num_kv_heads/get_head_size behavior; pass that object at VllmConfig construction instead of explicitly passing None and assigning it afterward.",
+    "allowed_support_changes": [
+      "Import and carry pinned vllm.config.ModelConfig through Runtime.",
+      "Create the smallest ModelConfig subclass/proxy without invoking the default model download.",
+      "Update only source.files.paged_fp8_execution.py in H100_PAGED_FP8_EXECUTION_READY.json to the repaired program SHA256.",
+      "Persist the preimage, postimage, and readiness SHA256 in H100_PINNED_VLLM_CONFIG_REPAIR.json."
+    ],
+    "forbidden_changes": [
+      "Do not change cases, concurrencies, dtypes, repetitions, warmups, or acceptance/economic gates.",
+      "Do not change the pinned image, runtime identities, source-identity expectations, or paged_fp8_contract.py.",
+      "Do not count any of the four prior pre-science attempts as a scientific sample."
+    ]
+  },
+  "bench": {
+    "id": "h100-paged-fp8-e00vpenjwp83n0nxmr",
+    "accelerator": "nvidia-h100-sxm",
+    "instance_id": "computeinstance-e00vpenjwp83n0nxmr",
+    "state_at_binding": "maintenance_verified_empty",
+    "resident_state": "Pinned image cached; no container, compute application, server, or scientific process remains.",
+    "claim_command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/lab/experiments/gemma4_31b/research_lab claim --project h100_hybrid_attention_kernel_mechanism --bench h100-paged-fp8-e00vpenjwp83n0nxmr --lease-seconds 1500"
+  },
+  "execution": {
+    "profile": "execution",
+    "artifact_root": "artifacts/h100-paged-fp8-vllm-config-repair-20260726t0749z",
+    "launch_command": "python3 run_h100_controller.py --project-root /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism --output-root /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-vllm-config-repair-20260726t0749z --deadline 2026-07-26T08:04:14Z",
+    "required_terminal": "artifacts/h100-paged-fp8-vllm-config-repair-20260726t0749z/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
+    "execution_deadline_utc": "2026-07-26T08:04:14Z",
+    "release_deadline_utc": "2026-07-26T08:09:14Z",
+    "watchdog_deadline_utc": "2026-07-26T08:14:14.550073Z",
+    "disposition": "After the bounded repair, immediately claim the exact ready bench and run the unchanged component. Persist the typed terminal and release by the stated deadline; do not query, create, drain, delete, or retire provider resources."
+  },
+  "independent_lane": {
+    "project": "gemma4_mi355x_fp8_runtime_codesign",
+    "disposition": "preserve active, deep, offline, and zero-spend"
+  }
+}

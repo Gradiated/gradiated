@@ -1,0 +1,435 @@
+{
+  "answer": "Yes for a bounded positive arm, not for the locked target by itself. Fuse the accepted QKV norm+RoPE producer with the E5M2 NHD KV-cache commit. The exact c32 trace exposes 0.322976317 seconds of removable retained-stack work and 19,520 launches. A 50%-realization complete bound predicts 0.6207671441 seconds/request, still above the 0.5001192816 target, so only one exact H200 component consumer is admitted.",
+  "baseline_path": {
+    "global": [
+      "_qkv_norm_rope_inplace_kernel writes BF16 Q/K/V",
+      "two BF16 protective clones",
+      "two in-place scale divides",
+      "two BF16-to-E5M2 casts",
+      "store_kvcache indexed NHD write",
+      "attention consumes the committed cache"
+    ],
+    "local_retained_stack": [
+      "_qkv_norm_rope_inplace_kernel writes BF16 Q/K/V",
+      "attention consumes live BF16 K/V before deferred commit",
+      "two in-place scale divides",
+      "two BF16-to-E5M2 casts",
+      "store_kvcache indexed NHD write"
+    ]
+  },
+  "candidate": {
+    "implementation": {
+      "baseline_comparator": "qkv_norm_rope_inplace(WRITE_CACHE=False)",
+      "cache_resolver": "resolve_cache_destination",
+      "candidate_entry": "qkv_norm_rope_cache_store(WRITE_CACHE=True)",
+      "fallback": "fail closed on source, dtype, layout, scale, or shape mismatch",
+      "kernel": "_qkv_norm_rope_cache_kernel",
+      "new_ctas": 0,
+      "new_intermediate_tensors": 0,
+      "semantic_change": false
+    },
+    "installation": {
+      "action": "The hash-gated installer replaces Gemma4Attention's norm+RoPE span, commits E5M2 cache inside the K/V producer CTAs, and sets the downstream save_kv_cache flag false.",
+      "input_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+      "patched_sha256": "2c81ffe556347f568c1aab8dd8305963096ff72711239860dc0395b3cd4d90f8"
+    },
+    "name": "qkv_norm_rope_e5m2_cache_epilogue",
+    "source_complete": true,
+    "source_manifest": [
+      {
+        "bytes": 10899,
+        "path": "fused_qkv_kv_cache.py",
+        "sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d"
+      },
+      {
+        "bytes": 4623,
+        "path": "install_fused_qkv_cache.py",
+        "sha256": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3"
+      },
+      {
+        "bytes": 11953,
+        "path": "exact_consumer.py",
+        "sha256": "7175968c4be9b95e5d509b328df9424169c2ee499d9da5b2ec42688e4cf8d408"
+      },
+      {
+        "bytes": 8366,
+        "path": "offline_validate.py",
+        "sha256": "5806b04893628b206f854bad653b6b4a11ef6fdcd872ebaac0f7ea6b4ed9f00a"
+      },
+      {
+        "bytes": 17229,
+        "path": "build_terminal.py",
+        "sha256": "97354d3e5e4ab8fc8744e4503e076eabe6763b2601faf74e86779c44754278d1"
+      }
+    ]
+  },
+  "complete_request_bound": {
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "conservative_candidate_seconds_per_request": 0.6207671440689129,
+    "conservative_complete_request_reduction_fraction": 0.007009460440768775,
+    "conservative_realization_fraction": 0.5,
+    "conservative_saving_seconds_per_request": 0.004381957899832043,
+    "crosses_campaign_target": false,
+    "evidence_label": "derived",
+    "profile_measured_removable_fraction": 0.01401892088153755,
+    "profile_zero_added_cost_ceiling_seconds_per_request": 0.01009300990625,
+    "qualified_seconds_per_request": 0.625149101968745
+  },
+  "correctness_contract": {
+    "accepted_producer_prior": {
+      "maximum_observed_candidate_max_abs": 0.015625,
+      "maximum_observed_candidate_nrmse": 1.026862082653679e-05,
+      "note": "Measured on exact local/global c32 decode and M=2048 prefill against the FP32 oracle.",
+      "source_terminal": {
+        "bytes": 17978,
+        "path": "../gemma4_h200_qkv_epilogue_fusion/artifacts/qkv-component-20260720t0026z/TERMINAL.json",
+        "sha256": "be0bdf39e26e1a822e6dfe12561a3487df412e15c21c2150e0172fa1fc372a4f"
+      }
+    },
+    "production_preconditions": [
+      "no KV-shared layer",
+      "NHD uint8-backed torch.float8_e5m2 pool",
+      "explicit positive K/V scale",
+      "integral one-slot-per-token mapping",
+      "BF16 packed QKV with contiguous inner dimension"
+    ],
+    "target_consumer_must_pass": [
+      "candidate QKV versus WRITE_CACHE=False QKV normalized RMSE <= 1e-5",
+      "candidate K cache bytes equal the unfused E5M2 cache consumer",
+      "candidate V cache bytes equal the unfused E5M2 cache consumer",
+      "all local/global M in {32,118,1409,1631,2048} pass",
+      "every cache result is read into the persisted checksum",
+      "every case has positive median component reduction",
+      "candidate source and pinned memory_pool hashes match before CUDA entry"
+    ]
+  },
+  "created_at_utc": "2026-07-27T02:37:07.798088+00:00",
+  "decision": {
+    "admit_endpoint": false,
+    "admit_one_target_gpu_component_consumer": true,
+    "classification": "source_complete_positive_requires_exact_h200_consumer",
+    "stop_rules": [
+      "Stop negative on any correctness, source-hash, spill, or resource gate failure.",
+      "Stop negative if any exact geometry has non-positive median component reduction.",
+      "Only after all component cases pass may a director decide whether to admit one c32 endpoint pair."
+    ],
+    "target_crossed_offline": false
+  },
+  "direct_inputs": {
+    "attribution": {
+      "bytes": 4728,
+      "path": "../gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/ATTRIBUTION.json",
+      "sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+    },
+    "campaign": {
+      "bytes": 27592,
+      "path": "../../CAMPAIGN.md",
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "lossless_entropy_terminal": {
+      "bytes": 12388,
+      "path": "../gemma4_h200_lossless_fp8_entropy_gemm/LOSSLESS_FP8_ENTROPY_GEMM_OFFLINE_TERMINAL.json",
+      "sha256": "e91958907e771184075d76828db5b0f74eb9932e5ad34087108729a6e093b54c"
+    },
+    "measured_qkv_source": {
+      "bytes": 26612,
+      "path": "../gemma4_h200_qkv_epilogue_fusion/qkv_epilogue_discriminator.py",
+      "sha256": "0f9c58b04ec0201e8b0a0dee1e3faab63643e3ded6c01ec7507456ccfb35b86d"
+    },
+    "measured_qkv_terminal": {
+      "bytes": 17978,
+      "path": "../gemma4_h200_qkv_epilogue_fusion/artifacts/qkv-component-20260720t0026z/TERMINAL.json",
+      "sha256": "be0bdf39e26e1a822e6dfe12561a3487df412e15c21c2150e0172fa1fc372a4f"
+    },
+    "memory_pool_source": {
+      "bytes": 95820,
+      "path": "../gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/mem_cache/memory_pool.py",
+      "sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+    },
+    "model_config": {
+      "bytes": 4621,
+      "path": "../gemma4_h200_dense_fp8_linear_schedule/inputs/checkpoint/config.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "pinned_gemma4_causal": {
+      "bytes": 56461,
+      "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma4_causal.py",
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    "profile_sqlite": {
+      "bytes": 32604160,
+      "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/control-profile.sqlite",
+      "sha256": "b81e812e9f1a005b8648c7bc151e19a38fb158f17521ba304d3a656b9f2996f3"
+    },
+    "retained_deferred_local_kv": {
+      "bytes": 4606,
+      "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/intervention/attention_deferred_local_kv.py",
+      "sha256": "4e11a14e2dc149789a4b4350e02de3d3283ad88fc259d6417f05a734fc1451d8"
+    },
+    "runtime_bindings": {
+      "bytes": 3207,
+      "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/BINDINGS.json",
+      "sha256": "cebc435c4eb1e5716c4aa9bd854785a3e7cac4b0665c96ea6a44040b3e96fb62"
+    },
+    "shape_map": {
+      "bytes": 3996,
+      "path": "../gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/FP8_LINEAR_SHAPE_MAP.json",
+      "sha256": "7c09e1e336d25fa89bfe8341af4c054af84175fca7a55365ca6528a9beee09e4"
+    },
+    "swa_memory_pool_source": {
+      "bytes": 10559,
+      "path": "../gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/mem_cache/swa_memory_pool.py",
+      "sha256": "36830cdb84cc344ffb7bac9ff30ba9a41b488d67893a5015ecbba584e95a9858"
+    },
+    "triton_attention_backend": {
+      "bytes": 64753,
+      "path": "../gemma4_h200_ngram_tree_verify_attention/inputs/source/triton_backend.v0.5.13.py",
+      "sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+    }
+  },
+  "exact_geometry": {
+    "common": {
+      "cache_dtype": "torch.float8_e5m2",
+      "cache_layout": "NHD",
+      "cache_slot_dtype": "torch.int64",
+      "cache_storage_dtype": "torch.uint8",
+      "kv_scales": {
+        "key": 1.0,
+        "value": 1.0
+      },
+      "layers": 60,
+      "observed_profile_token_rows": [
+        118,
+        1409,
+        1631,
+        2048
+      ],
+      "q_heads": 32,
+      "qkv_input_dtype": "torch.bfloat16",
+      "required_decode_row": 32,
+      "rms_norm_eps": 1e-06
+    },
+    "global": {
+      "candidate_grid": [
+        "M",
+        40
+      ],
+      "head_dim": 512,
+      "key_value_view_shape": [
+        "M",
+        4,
+        512
+      ],
+      "kv_heads": 4,
+      "layer_count": 10,
+      "layer_rule": "(layer_id + 1) % 6 == 0",
+      "qkv_shape": [
+        "M",
+        20480
+      ],
+      "rope": {
+        "partial_rotary_factor": 0.25,
+        "theta": 1000000.0,
+        "type": "proportional"
+      },
+      "threads_per_cta": 128
+    },
+    "local": {
+      "candidate_grid": [
+        "M",
+        64
+      ],
+      "head_dim": 256,
+      "key_value_view_shape": [
+        "M",
+        16,
+        256
+      ],
+      "kv_heads": 16,
+      "layer_count": 50,
+      "layer_rule": "(layer_id + 1) % 6 != 0",
+      "qkv_shape": [
+        "M",
+        16384
+      ],
+      "rope": {
+        "partial_rotary_factor": 1.0,
+        "theta": 10000.0,
+        "type": "default"
+      },
+      "threads_per_cta": 128
+    }
+  },
+  "limitations": [
+    "No candidate CUDA kernel was compiled or executed in this zero-GPU turn.",
+    "The 50%-realization complete bound is a conservative admission model, not a measurement.",
+    "The candidate cannot independently close the locked campaign target."
+  ],
+  "offline_validation": {
+    "bytes": 3134,
+    "path": "OFFLINE_VALIDATION.json",
+    "sha256": "96d8e5ac8bf699055854bcb489ffa4505972ccdfcbc297ab2c37eecd16acceb3"
+  },
+  "physical_model": {
+    "byte_accounting": {
+      "candidate_compulsory_cache_write_bytes_per_kv_element": 1,
+      "global_avoided_bytes_per_kv_element": 12,
+      "global_current_bytes_per_kv_element": 13,
+      "local_avoided_bytes_per_kv_element": 8,
+      "local_current_bytes_per_kv_element": 9
+    },
+    "bytes": {
+      "avoided_bytes": 459516477440,
+      "avoided_to_compulsory_write_ratio": 8.363636363636363,
+      "compulsory_candidate_write_bytes": 54942187520,
+      "global_kv_elements": 4994744320,
+      "local_kv_elements": 49947443200
+    },
+    "grid": {
+      "candidate_preregistered_resource_gate": {
+        "dynamic_shared_memory_bytes_max": 16,
+        "registers_per_thread_max": 32,
+        "spills": 0
+      },
+      "candidate_qkv_launches": 3660,
+      "eliminated_following_launches": 19520,
+      "measured_dynamic_shared_memory_bytes": 16,
+      "measured_qkv_launches": 3660,
+      "measured_registers_per_thread": {
+        "global": 26,
+        "local": 22
+      }
+    },
+    "label": "derived from exact trace geometry and source semantics",
+    "predicted_counter_movement": {
+      "cuda_kernel_launch_count": -19520,
+      "dram_bytes": -459516477440,
+      "l2_write_bytes": "one compulsory E5M2 K/V cache write remains; clone/div/cast intermediate traffic disappears",
+      "qkv_kernel_count": 0,
+      "qkv_kernel_duration": "increase from E5M2 stores in K/V CTAs; must remain below 50% of the eliminated chain duration for the conservative gate",
+      "registers_per_thread": "expected +0..6; reject above 32 or any spill"
+    },
+    "useful_operations": {
+      "cache_scale_divides_per_token": {
+        "global": 4096,
+        "local": 8192,
+        "note": "These exact K+V element counts move from two standalone BF16 div kernels into the producer epilogue; scale=1.0 is compile-time and may fold to identity."
+      },
+      "producer_per_head": "D squares + (D-1) reductions + rsqrt + D normalization multiplies; Q/K add D weight multiplies and 3D RoPE multiply/add operations. This is unchanged from the accepted producer."
+    }
+  },
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_shards_read_or_copied_this_turn": false,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "provider_or_gpu_used_this_turn": false,
+    "runtime": "SGLang v0.5.13",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "target_gpu": "NVIDIA H200 SXM, SM90, 132 SMs",
+    "workload": {
+      "cached_prompt_tokens": 17120,
+      "completion_tokens_per_request": 358,
+      "concurrency": 32,
+      "fresh_prompt_tokens": 117728,
+      "prefill_chunk_tokens": 2048,
+      "prompt_tokens_per_request": 4214,
+      "requests": 32
+    }
+  },
+  "selected_boundary": {
+    "consumer": {
+      "output": "uint8-backed torch.float8_e5m2 NHD K/V cache",
+      "python_path": "TritonAttnBackend.forward_extend -> SWAKVPool.set_kv_buffer -> MHATokenToKVPool.set_kv_buffer",
+      "symbols": [
+        "Tensor.clone",
+        "Tensor.div_",
+        "Tensor.to(torch.float8_e5m2)",
+        "sglang.jit_kernel.kvcache.store_cache/store_kvcache"
+      ]
+    },
+    "producer": {
+      "measured_symbol": "_qkv_norm_rope_inplace_kernel",
+      "output": "in-place BF16 packed QKV projection",
+      "python_path": "Gemma4Attention.forward"
+    },
+    "selection_evidence": {
+      "cache_chain": {
+        "global": {
+          "bf16_to_e5m2_cast": [
+            1220,
+            0.006055383
+          ],
+          "protective_clone": [
+            1220,
+            0.011685801
+          ],
+          "scale_divide": [
+            1220,
+            0.021509975
+          ],
+          "store_kvcache": [
+            610,
+            0.002455138
+          ]
+        },
+        "local": {
+          "bf16_to_e5m2_cast": [
+            6100,
+            0.054160106
+          ],
+          "protective_clone": [
+            6100,
+            0.120651758
+          ],
+          "scale_divide": [
+            6100,
+            0.204131938
+          ],
+          "store_kvcache": [
+            3050,
+            0.022977976
+          ]
+        }
+      },
+      "label": "measured",
+      "profile_requests": 32,
+      "profile_seconds": 23.038600455,
+      "qkv": {
+        "global": {
+          "count": 610,
+          "registers_per_thread": [
+            26
+          ],
+          "seconds": 0.03946795,
+          "token_layer_rows": 1219420
+        },
+        "local": {
+          "count": 3050,
+          "registers_per_thread": [
+            22
+          ],
+          "seconds": 0.262921104,
+          "token_layer_rows": 6097100
+        }
+      },
+      "retained_stack_eliminated_launches": 19520,
+      "retained_stack_removable_seconds": 0.322976317,
+      "why_local_clones_are_not_double_counted": "The qualified stack already retains the deferred-local-KV patch, so the local protective clone pair is excluded. Global clones and both classes' divide/cast/store chain remain charged.",
+      "why_synchronization_is_not_selected": "Prior trace-to-source evidence binds the apparent scheduler cudaStreamSynchronize wall to dependent model-step completion; it is not an independent producer/consumer boundary."
+    },
+    "single_candidate": true
+  },
+  "status": "complete",
+  "target_gpu_consumer": {
+    "command": "PYTHONPATH=/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/exact_consumer.py --output /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/h200_exact_consumer/TERMINAL.json --expected-source-sha256 4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d --tokens 32 118 1409 1631 2048 --warmups 5 --iterations 31",
+    "expected_terminal": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/h200_exact_consumer/TERMINAL.json",
+    "required_environment": "Pinned SGLang image above with this project mounted at the same absolute path; one director-authorized H200 pool claim is required outside this command.",
+    "type": "command",
+    "working_directory": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor"
+  },
+  "terminal_type": "fixed_floor_crossop_offline_positive"
+}

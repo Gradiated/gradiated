@@ -1,4 +1,0 @@
-scp: dest open "/home/glmrunner/hybrid-ngram-seqlens-cpu-tensor-20260726t0401z/source/exact_consumer_oracle.py": Permission denied
-scp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/exact_consumer_oracle.py to /home/glmrunner/hybrid-ngram-seqlens-cpu-tensor-20260726t0401z/source/
-scp: dest open "/home/glmrunner/hybrid-ngram-seqlens-cpu-tensor-20260726t0401z/source/extend_attention_hybrid_proxy.py": Permission denied
-scp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/extend_attention_hybrid_proxy.py to /home/glmrunner/hybrid-ngram-seqlens-cpu-tensor-20260726t0401z/source/

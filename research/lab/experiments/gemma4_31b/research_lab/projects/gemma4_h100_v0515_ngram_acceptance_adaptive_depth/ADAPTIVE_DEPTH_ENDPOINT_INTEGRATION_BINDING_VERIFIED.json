@@ -1,0 +1,66 @@
+{
+  "all_bound_hashes_match": true,
+  "binding_match": true,
+  "binding_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/DIRECTOR_ADAPTIVE_DEPTH_ENDPOINT_INTEGRATION_BINDING.json",
+  "binding_sha256": "6168e592905625e593e759785e316ade538baa6c9de883c0855d6ad50c7c2a69",
+  "bound_inputs": [
+    {
+      "actual_sha256": "d5461efa6a7d8a455857c5878122b742e2202105e8f0b770afcea5ede102145a",
+      "expected_sha256": "d5461efa6a7d8a455857c5878122b742e2202105e8f0b770afcea5ede102145a",
+      "match": true,
+      "name": "component_result",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_H100_COMPONENT_RESULT.json"
+    },
+    {
+      "actual_sha256": "66a21484252b3c9b93172f7ca6bc75a8802480f937ecbb8347df05de88b2bbcf",
+      "expected_sha256": "66a21484252b3c9b93172f7ca6bc75a8802480f937ecbb8347df05de88b2bbcf",
+      "match": true,
+      "name": "component_terminal",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_H100_COMPONENT_TERMINAL.json"
+    },
+    {
+      "actual_sha256": "86a167b26b4ab759328e9ddf353d949dbabc02bdcca60cae5c77e32213b48635",
+      "expected_sha256": "86a167b26b4ab759328e9ddf353d949dbabc02bdcca60cae5c77e32213b48635",
+      "match": true,
+      "name": "source_result",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_H100_RESULT.json"
+    },
+    {
+      "actual_sha256": "b7b05f78ff034a1c1259c21fc2d28f3d5bdba9d3a8ebdf77f10be26002230aa4",
+      "expected_sha256": "b7b05f78ff034a1c1259c21fc2d28f3d5bdba9d3a8ebdf77f10be26002230aa4",
+      "match": true,
+      "name": "source_plan",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_SOURCE_PLAN.md"
+    },
+    {
+      "actual_sha256": "0813744f923512caa9f040052ed1ef5d1d57d81eda594ce7872a0a28f318ab3e",
+      "expected_sha256": "0813744f923512caa9f040052ed1ef5d1d57d81eda594ce7872a0a28f318ab3e",
+      "match": true,
+      "name": "cpu_fixture_result",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/ADAPTIVE_DEPTH_CPU_FIXTURES.json"
+    },
+    {
+      "actual_sha256": "dc2a6cbf477f72f219a84906e8ec2610f413f910929f77a713e8a9fca4390dca",
+      "expected_sha256": "dc2a6cbf477f72f219a84906e8ec2610f413f910929f77a713e8a9fca4390dca",
+      "match": true,
+      "name": "contract_implementation",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/adaptive_depth_contract.py"
+    },
+    {
+      "actual_sha256": "842e9b7000d22a6673596063c76e22754cca0dfe2cc4e64c597e0c0968439242",
+      "expected_sha256": "842e9b7000d22a6673596063c76e22754cca0dfe2cc4e64c597e0c0968439242",
+      "match": true,
+      "name": "fixture_runner",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/run_adaptive_depth_fixtures.py"
+    },
+    {
+      "actual_sha256": "fecd942e30e968fc02395eddb779dcfefed5533b75043a281162643fd6ce5a26",
+      "expected_sha256": "fecd942e30e968fc02395eddb779dcfefed5533b75043a281162643fd6ce5a26",
+      "match": true,
+      "name": "source_verifier",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_acceptance_adaptive_depth/verify_source_contract.py"
+    }
+  ],
+  "expected_binding_sha256": "6168e592905625e593e759785e316ade538baa6c9de883c0855d6ad50c7c2a69",
+  "schema_version": 1
+}

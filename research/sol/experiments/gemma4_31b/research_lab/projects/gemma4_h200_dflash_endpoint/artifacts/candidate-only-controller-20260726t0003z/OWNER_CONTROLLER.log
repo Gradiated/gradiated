@@ -1,3 +1,0 @@
-usage: gpu_pool.py [-h] --lab LAB
-                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
-gpu_pool.py: error: cannot read JSON object from a file or inline object: [Errno 2] No such file or directory: 'candidate-only dflash-depth4-c32 incomplete or unretrieved; preserve artifacts=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/candidate-only-owner-20260726t000722Z for repair'

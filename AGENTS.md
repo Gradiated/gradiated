@@ -7,22 +7,21 @@ This repository is the complete project state for the research and product-build
 1. Read this file.
 2. Run `python3 tools/devex/start.py` for the context pack and standard DevEx checks.
 3. Read the nearest nested instructions before touching a workstream:
-   - `research/sol/AGENTS.md` for Inference Foundry.
-   - `research/fable/CLAUDE.md` and `research/fable/README.md` for Sartor/Fable.
+   - `research/lab/AGENTS.md` for the current Inference Foundry research lab.
 4. Read the current handoff or report before starting a new experiment.
 5. Check `git status` and preserve existing user work.
 
 ## Repo-native state
 
 - Put reusable agent procedures in `.agents/skills/`.
-- Use GitHub Issues for canonical cross-agent work tracking and GitHub Projects for the active execution view.
+- Use the repository as the canonical source for implementation state, plans, prompts, measurements, reports, and generated decision artifacts.
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
 - Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
 - Put browser automation code and dependency declarations in `tools/browser/`.
 - Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
-- Do not make Notion, Drive, Jira, or Slack a required source of truth. GitHub Issues/Projects own work state; the repository owns code, research, prompts, and artifacts.
+- Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
 - Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue for every internal turn.
 
 ## Agent operating contract
@@ -50,10 +49,8 @@ This repository is the complete project state for the research and product-build
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with durable artifacts and cleanup.
 
-GitHub workflow instructions and the CLI helper live in `docs/GITHUB_OPERATING_SYSTEM.md` and `tools/github/agent.py`.
-
 ## Verification
 
-Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for both workspaces after pushes. For Sol changes, the required Rust checks are documented in `research/sol/AGENTS.md`. For Fable changes, preserve the parity and calibration rules in `research/fable/CLAUDE.md`.
+Run `python3 tools/devex/check.py` first (`make devex-check` is an optional shorthand), then the narrowest relevant checks and workstream checks. GitHub Actions runs the same DevEx checks plus Rust formatting and tests for the current research workspace after pushes. For research changes, the required checks are documented in `research/lab/AGENTS.md`.
 
-Agents commit and push completed changes they own directly to `main` as the default handoff. Do not create a feature branch or pull request unless the user explicitly requests one. Never stage or publish unrelated worktree changes, and always summarize the exact paths included.
+Never stage or publish unrelated worktree changes, and always summarize the exact paths included. Commit, branch, pull-request, and push behavior follows the user's requested workflow; do not publish changes unless requested.

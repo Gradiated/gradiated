@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/home/glmrunner/gemma4-h200-ngram-token-trace/remote_token_trace_validation.py", line 168, in <module>
-    main()
-  File "/home/glmrunner/gemma4-h200-ngram-token-trace/remote_token_trace_validation.py", line 145, in main
-    control_rows = capture("control")
-                   ^^^^^^^^^^^^^^^^^^
-  File "/home/glmrunner/gemma4-h200-ngram-token-trace/remote_token_trace_validation.py", line 97, in capture
-    raise RuntimeError(f"trace_final_rows_missing:{arm}")
-RuntimeError: trace_final_rows_missing:control

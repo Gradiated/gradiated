@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-26T19:53:30Z",
+  "created_at_utc": "2026-07-26T18:55:54.705137Z",
+  "diagnostic": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/artifacts/graph-repair/attempt-1/OWNER_DIAGNOSTIC.json",
+  "failure_kind": "candidate_graph_capture_or_consumer",
+  "repair_deadline_epoch": 1785095610.0,
+  "repair_id": "graph-repair-1-1785092154",
+  "retry_scope": "repair only the graph-capture wrapper, candidate server launcher, or retrieval boundary; control is persisted and candidate request remains unsubmitted",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

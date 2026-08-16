@@ -1,0 +1,7 @@
+{
+  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_sparse_penalty_verify/artifacts/sparse-penalty-20260724t210733z",
+  "at_utc": "2026-07-24T21:23:30.973581Z",
+  "claimed_seconds": 1464.537698,
+  "conservative_provider_spend_usd": 1.0007674269666667,
+  "disposition": "scientific_terminal_released_maintenance"
+}

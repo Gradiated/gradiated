@@ -1,4 +1,0 @@
-{
-  "retry": true,
-  "scope": "Use plain SFTP put only when the named content-addressed partial is absent; use put -a exclusively to resume an existing partial. Preserve the 27,697,259,520-byte first-shard partial and the finalized second shard."
-}

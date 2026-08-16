@@ -1,5 +1,0 @@
-{
-  "baseline": "installed broadcast-reuse BatchedPenalizerOrchestrator.apply",
-  "candidate": "direct sparse min-new-token columns",
-  "consumer": "unchanged torch.argmax in NgramVerifyInput._greedy_verify"
-}

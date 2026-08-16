@@ -1,6 +1,0 @@
-{
-  "archive_manifest_sha256": "a8ac5e72b1de671af1f0b7f0649fb6fa216480f8299d9ee7fdee49ca472236e2",
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"archive\": \"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/artifacts/packet-id-repair/stock_packet_complete.tar\", \"archive_sha256\": \"6481ff8ba2353ab1ffd33d6caf5c1eb92113ae4401fd26a164ec5c404c9d1fe9\", \"file_count\": 10, \"manifest\": \"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_v0515_demand_multiplexing_sustainable/stock_packet/PACKET_ARCHIVE_MANIFEST.json\"}\n"
-}

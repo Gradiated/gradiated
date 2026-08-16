@@ -1,9 +1,0 @@
-{
-  "artifacts": "Retrieved under projects/gemma4_h200_continuous_decode_steps_endpoint/artifacts/continuous-decode-steps-c32-20260718t1954z/.",
-  "checkpoint": "Exact eight-file BF16 checkpoint remains at /home/glmrunner/gemma-attention-endpoint/checkpoint.",
-  "image": "Pinned SGLang v0.5.12 image remains resident.",
-  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
-  "project": "gemma4_h200_continuous_decode_steps_endpoint",
-  "runtime": "SGLang continuous-decode-steps=4 terminal negative",
-  "server_state": "retain healthy step-4 SGLang container for reuse"
-}

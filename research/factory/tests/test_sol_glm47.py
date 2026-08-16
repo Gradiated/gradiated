@@ -11,7 +11,7 @@ from grad_research.sol_glm47 import bootstrap_glm47
 class SolGlm47BootstrapTests(unittest.TestCase):
     def test_bootstrap_follows_final_dense_residual_and_is_idempotent(self):
         workspace = Path(__file__).resolve().parents[3]
-        campaign = workspace / "research/sol/experiments/glm47flash/campaign_100"
+        campaign = workspace / "research/lab/experiments/glm47flash/campaign_100"
         status = json.loads((campaign / "CAMPAIGN_STATUS.json").read_text())
         with tempfile.TemporaryDirectory() as directory:
             first = bootstrap_glm47(directory, campaign)

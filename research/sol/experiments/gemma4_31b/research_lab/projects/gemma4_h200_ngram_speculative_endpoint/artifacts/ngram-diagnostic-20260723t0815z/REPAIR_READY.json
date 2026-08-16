@@ -1,8 +1,0 @@
-{
-  "classification": "pre_scientific_output_directory_collision",
-  "diagnostic": "A directory created by the earlier pre-server OOM attempt made the exact runner fail before it submitted any request.",
-  "candidate_cuda_started": true,
-  "scientific_invocation_started": false,
-  "repair_deadline_utc": "2026-07-23T10:00:00Z",
-  "allowed_repair": "Preserve the stale directory under a timestamped name and invoke the unchanged frozen runner once against the already healthy NGRAM server."
-}

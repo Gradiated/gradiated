@@ -1,0 +1,8 @@
+{
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t1911z-real-c32/REPAIR_READY.owner-plain.json",
+  "ready_sha256": "dc47eebdd9507d2195fb40c83819c73394a243130f9e16514bc7b1eb68b97cf2",
+  "requested_at_utc": "2026-07-24T19:13:40.568577Z",
+  "retry_scope": "component_harness_only",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

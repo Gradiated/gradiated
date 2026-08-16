@@ -1,0 +1,134 @@
+{
+  "classification": "offline_positive_measurement_ready",
+  "complete_timing_contract": {
+    "baseline": "all-E5M2 pack plus unchanged stock decode attention",
+    "candidate": "unchanged KV4 pack plus staged decode plus the same stock decode attention",
+    "request_terms": {
+      "global_s_per_request": "0.111875 * measured_global_complete_margin_ms",
+      "local_s_per_request": "0.559375 * measured_local_complete_margin_ms",
+      "price_normalized_boundary_s_per_request": 1.4776251501079425,
+      "unmeasured_endpoint_overhead": "must remain explicit"
+    }
+  },
+  "created_at_utc": "2026-07-28T09:31:46.915528Z",
+  "direct_hashes": {
+    "binding": {
+      "bytes": 3776,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/DIRECTOR_DUAL_KV4_STAGED_E5M2_CONSUMER_BINDING_20260728T0916Z.json",
+      "sha256": "1b3bd6db6163b6ff36df4fe0decb0292137435961db49ffedf2903865375edda"
+    },
+    "global_tiered_kv4_bindings.cpp": {
+      "bytes": 1267,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/global_tiered_kv4_bindings.cpp",
+      "sha256": "7c4ae8539de2126bcc872520215504c1c7b0534765a19e191dbf2b233930e0cd"
+    },
+    "global_tiered_kv4_cuda.cu": {
+      "bytes": 19192,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/global_tiered_kv4_cuda.cu",
+      "sha256": "274f3f15fbd1495b8260d37a396fc569a67a0386da0201743b4af0b61fffb65a"
+    },
+    "local_kv4_outlier_bindings.cpp": {
+      "bytes": 608,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/local_kv4_outlier_bindings.cpp",
+      "sha256": "903ccfd27fb74e21d498aa5c98ce7c179f20e315c4963ab3be1162983aaaebd6"
+    },
+    "local_kv4_outlier_cuda.cu": {
+      "bytes": 12753,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/local_kv4_outlier_cuda.cu",
+      "sha256": "cbe1e30cc0629e122819be5452c4e18b6d9e4abfcd46d1665f9de8af69e2bbfb"
+    },
+    "owner": {
+      "bytes": 22849,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_staged_e5m2_owner.py",
+      "sha256": "640e45ea35c0b029837fd488fd29179a3671af25e028346a735f4aa26ef194fc"
+    },
+    "predecessor_terminal": {
+      "bytes": 7845,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-g2-20260728t0900z/attempt-2/result__TERMINAL.json",
+      "sha256": "423a170b3584cb0d0e967dcaa1d58539df85a29797e2818f18585197118855cb"
+    },
+    "sm89_staged_e5m2_runner.py": {
+      "bytes": 16379,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/sm89_staged_e5m2_runner.py",
+      "sha256": "2a0fef4367b2137c67bd381ec142169c4bdb3a2bcd6ccaa1d145aa08bae83c31"
+    },
+    "staged_e5m2_decode_bindings.cpp": {
+      "bytes": 423,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/staged_e5m2_decode_bindings.cpp",
+      "sha256": "e7207656e9b8425bcb432b760b501c251179aeab2788c996a30610dddabb8b3d"
+    },
+    "staged_e5m2_decode_cuda.cu": {
+      "bytes": 6540,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/staged_e5m2_decode_cuda.cu",
+      "sha256": "ae9feedb045cceb611979120add0032c0790ec8c1ab65115a9e9af4f4d8f5bb3"
+    }
+  },
+  "exact_later_detached_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0920z/OWNER.json --log /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0920z/OWNER.log -- python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_staged_e5m2_owner.py --bench l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt --artifact-root /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-component-20260728t0920z --deadline-seconds 1500 --release-by-utc 2026-07-28T09:53:30Z",
+  "immutable_science": {
+    "all_e5m2_comparator": "unchanged current-runtime producer plus paged-attention consumer",
+    "global_representation": "10 D512 recent-1024 E5M2 plus old group-64 signed KV4 layers and eight deterministic E5M2 residual outliers",
+    "local_representation": "50 D256 group-64 signed KV4 layers plus four deterministic E5M2 residual outliers",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "predecessor_attempts": [
+      0,
+      1,
+      2
+    ],
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "submission_limit": "one new staged-consumer paired component sample; never replay predecessor attempt 2",
+    "workload": "c32, 4214 prompt tokens, 358 decode steps, page size one"
+  },
+  "kind": "l40s_dual_kv4_staged_e5m2_sm89_ready",
+  "offline_checks": {
+    "owner_self_test": "ordinary compile/missing-terminal classifications fail the release guard; scientific terminal and deadline pass",
+    "python_compile": "runner and owner compile in a fresh coordinator process",
+    "source_trace": [
+      "sglang.srt.layers.attention.triton_ops.decode_attention",
+      "decode_ext.decode_local",
+      "decode_ext.decode_global",
+      "candidate_staged_decode_ms",
+      "candidate_stock_attention_ms",
+      "candidate_vs_high_precision"
+    ],
+    "target_execution": "deferred to the first tiny L40S call inside the retained later claim; no CUDA was invoked offline"
+  },
+  "owner_contract": {
+    "checkpoint_server_endpoint": "none",
+    "claim": "one atomic pool claim with original claimed_at carried to release",
+    "deadline": "2026-07-28T09:53:30Z",
+    "image": "resident immutable image inspection only; no pull",
+    "max_seconds": 1500,
+    "release": "scientific terminal, adopted repaired terminal, unsafe/unreachable guest, or absolute release deadline only",
+    "repair": "missing/uninterpretable terminal is retained under heartbeat; a fresh repair handshake permits only the invalidated consumer/retrieval boundary"
+  },
+  "pass": true,
+  "runner_contract": {
+    "arms": [
+      "local D256 c32 window-1024",
+      "global D512 c32 full-4571"
+    ],
+    "consumer": "imported unchanged sglang.srt.layers.attention.triton_ops.decode_attention.decode_attention_fwd",
+    "consumer_source_sha256": "7833f6d06115dfd54b384d9ce907a012fa2f568083d90fc0f259e9ef24bf5311",
+    "correctness": "complete stock-consumer baseline and candidate outputs are each compared with a float32 online-softmax reference; finite, cosine, max-absolute, relative-L2, and nonzero checksum persist",
+    "decode": "KV4 payload bytes are decoded and rounded once into torch.float8_e5m2 scratch",
+    "fault_attribution": "each arm synchronizes and persists baseline, staged-decode, and stock-consumer first-call markers before timing",
+    "producer": "unchanged fixed local/global KV4 pack functions",
+    "sample_limit": "one new paired staged-consumer component sample; predecessor attempt 2 is only hash-read",
+    "timing": "5 warmups and 31 synchronized rows; pack, staged decode, stock attention, and complete times persist separately"
+  },
+  "schema_version": 1,
+  "scratch_ownership": {
+    "allocation": "caller-owned K/V tensors, allocated once per arm",
+    "dtype": "torch.float8_e5m2",
+    "global_kv_bytes": 18722816,
+    "lifetime": "one arm only; local tensors are deleted before global allocation; decoder retains no pointer",
+    "local_kv_bytes": 8388608,
+    "lower_physical_margin_after_peak_scratch_bytes": 1561152443,
+    "lower_physical_margin_before_scratch_bytes": 1579875259,
+    "peak_bytes": 18722816,
+    "proof": "18,722,816-byte peak is below the 1,579,875,259-byte conservative lower physical margin",
+    "release_reuse": "scratch is reusable after synchronized stock attention and is released before the next arm"
+  },
+  "typed_none": null
+}

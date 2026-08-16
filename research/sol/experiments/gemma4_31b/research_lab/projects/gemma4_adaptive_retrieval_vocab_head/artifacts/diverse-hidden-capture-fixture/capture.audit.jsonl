@@ -1,5 +1,0 @@
-{"active_requests": 3, "capture_index": 0, "depth_count": 4, "event": "target_verify_hidden_rows_committed", "hidden_width": 8, "rows_added": 12, "rows_total": 12, "time_unix_s": 1785047619.2327917}
-{"active_requests": 3, "capture_index": 0, "depth_count": 4, "event": "target_verify_hidden_rows_committed", "hidden_width": 8, "rows_added": 12, "rows_total": 12, "time_unix_s": 1785047643.3082309}
-{"error": "ValueError('hidden_width:8:9')", "event": "capture_observer_error", "time_unix_s": 1785047643.315753}
-{"active_requests": 3, "capture_index": 0, "depth_count": 4, "event": "target_verify_hidden_rows_committed", "hidden_width": 8, "rows_added": 12, "rows_total": 12, "time_unix_s": 1785047843.3557782}
-{"error": "ValueError('hidden_width:8:9')", "event": "capture_observer_error", "time_unix_s": 1785047843.3584929}

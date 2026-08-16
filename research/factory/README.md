@@ -144,7 +144,7 @@ Create an external config containing the repository, lab directory, models, cade
 ```json
 {
   "repo_dir": "/root/workspace",
-  "lab_dir": "/root/workspace/research/sol/experiments/glm47flash/research_lab",
+  "lab_dir": "/root/workspace/research/lab/experiments/glm47flash/research_lab",
   "cycle_interval_seconds": 60,
   "max_parallel_researchers": 5,
   "spend_cap_usd": 100.0,
@@ -159,7 +159,7 @@ Create an external config containing the repository, lab directory, models, cade
   },
   "tools": [
     "/root/workspace/research/factory/tools",
-    "/root/workspace/research/sol/experiments/glm47flash/campaign_100"
+    "/root/workspace/research/lab/experiments/glm47flash/campaign_100"
   ]
 }
 ```

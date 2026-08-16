@@ -1,9 +1,0 @@
-{
-  "watchdog": {
-    "unit": "gemma-local-kv8-h200-202607191254-watchdog.service",
-    "unit_manager": "user",
-    "main_pid": "2779981",
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-local-kv8-h200-202607191254-watchdog.service"
-  },
-  "deadline_utc": "2026-07-19T17:15:00Z"
-}

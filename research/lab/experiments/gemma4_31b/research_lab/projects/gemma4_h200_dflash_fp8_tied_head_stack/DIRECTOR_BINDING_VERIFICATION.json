@@ -1,0 +1,389 @@
+{
+  "check_count": 49,
+  "checks": [
+    {
+      "expected_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+      "label": "director.dflash_inputs.director_binding",
+      "observed_sha256": "9859961141d6168171af9834e3f9600740395ee754b962186b74b248116bf3b5",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_FRESH_H200_BINDING.json"
+    },
+    {
+      "expected_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "label": "director.dflash_inputs.input_archive",
+      "observed_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar"
+    },
+    {
+      "expected_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "label": "director.dflash_inputs.input_manifest",
+      "observed_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_INPUTS.json"
+    },
+    {
+      "expected_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "label": "director.dflash_inputs.launcher",
+      "observed_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/remote_tied_head_adapter.sh"
+    },
+    {
+      "expected_sha256": "167c2de86c6316d836b9dc9cbf486dfcf09dc59274f39b45ff5a9388d68690a5",
+      "label": "director.prior_fp8_head_inputs.positive_terminal",
+      "observed_sha256": "167c2de86c6316d836b9dc9cbf486dfcf09dc59274f39b45ff5a9388d68690a5",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts/FINAL_TERMINAL.json"
+    },
+    {
+      "expected_sha256": "070f740c63da019a73f2e75c8ae803c6e228fe95460d468277d6b7a24a5a4757",
+      "label": "director.prior_fp8_head_inputs.compact_archive",
+      "observed_sha256": "070f740c63da019a73f2e75c8ae803c6e228fe95460d468277d6b7a24a5a4757",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts/attempt1/fp8-graph-endpoint-compact.tar.gz"
+    },
+    {
+      "expected_sha256": "2cfc83ae6741fa257110ea3205d178c269ccc67c4b878d1d4494995bebbe3c69",
+      "label": "director.prior_fp8_head_inputs.graph_topology",
+      "observed_sha256": "2cfc83ae6741fa257110ea3205d178c269ccc67c4b878d1d4494995bebbe3c69",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts/attempt1/retrieved/GRAPH_TOPOLOGY_DECISION.json"
+    },
+    {
+      "expected_sha256": "f13da11c65417f6ac30f50c0be9f3bcb9009ec7f669e4352a10917e3313cef48",
+      "label": "fresh.incorporated_scientific_binding",
+      "observed_sha256": "f13da11c65417f6ac30f50c0be9f3bcb9009ec7f669e4352a10917e3313cef48",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json"
+    },
+    {
+      "expected_sha256": "8424ebf997159e2f6d5c035d7582ede770f60dbb67d2acc42b8339fd6181da87",
+      "label": "fresh.offline_gate",
+      "observed_sha256": "8424ebf997159e2f6d5c035d7582ede770f60dbb67d2acc42b8339fd6181da87",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_RESULT.json"
+    },
+    {
+      "expected_sha256": "7a3d3c35343c2752bb756eab8555bf689e52101f8e02e8340dc4658fca3ab8bd",
+      "label": "fresh.retirement_artifact",
+      "observed_sha256": "7a3d3c35343c2752bb756eab8555bf689e52101f8e02e8340dc4658fca3ab8bd",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/artifacts/director-h200-dflash-retirement-20260724t0340z.json"
+    },
+    {
+      "expected_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "label": "fresh.execution_packet.archive",
+      "observed_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar"
+    },
+    {
+      "expected_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "label": "fresh.execution_packet.manifest",
+      "observed_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_INPUTS.json"
+    },
+    {
+      "expected_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "label": "fresh.execution_packet.launcher",
+      "observed_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/remote_tied_head_adapter.sh"
+    },
+    {
+      "expected_sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e",
+      "label": "reopening.immutable_inputs.runtime_binding",
+      "observed_sha256": "f9845ea6b80a39ba99486842d15e64eabc84713a63daf16470453b395c13c16e",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/DRAFT_RUNTIME_BINDING.json"
+    },
+    {
+      "expected_sha256": "8bc4504cede52d323394664a6876c61d54811ce4bec7ad0f05a6de993b4434de",
+      "label": "reopening.immutable_inputs.capture_binding",
+      "observed_sha256": "8bc4504cede52d323394664a6876c61d54811ce4bec7ad0f05a6de993b4434de",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/CAPTURE_HOOK_BINDING.json"
+    },
+    {
+      "expected_sha256": "cf48f81a56645b9234aca82e11e8beba1fe3c8f920724755c04a6af32c47ad30",
+      "label": "reopening.immutable_inputs.prior_terminal",
+      "observed_sha256": "cf48f81a56645b9234aca82e11e8beba1fe3c8f920724755c04a6af32c47ad30",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/capture-hook-continuation-20260724t0300z/FINAL_TERMINAL.json"
+    },
+    {
+      "expected_sha256": "b662e606515c66ebb5340b61b1ab8039fdef18cf5ab2c85f53979fe88905cfb4",
+      "label": "reopening.immutable_inputs.remote_launcher",
+      "observed_sha256": "b662e606515c66ebb5340b61b1ab8039fdef18cf5ab2c85f53979fe88905cfb4",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/remote_dflash_endpoint.sh"
+    },
+    {
+      "expected_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "label": "reopening.immutable_inputs.runner",
+      "observed_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/dflash_endpoint_runner.py"
+    },
+    {
+      "expected_sha256": "f13da11c65417f6ac30f50c0be9f3bcb9009ec7f669e4352a10917e3313cef48",
+      "label": "offline.reopening_binding",
+      "observed_sha256": "f13da11c65417f6ac30f50c0be9f3bcb9009ec7f669e4352a10917e3313cef48",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/DIRECTOR_TIED_HEAD_ADAPTER_REOPENING.json"
+    },
+    {
+      "expected_sha256": "2ad9f037efb19ba4d108daef1290aa7da6ada45ab5b186c33f3f2898376e7498",
+      "label": "offline.exact_runtime.consumer",
+      "observed_sha256": "2ad9f037efb19ba4d108daef1290aa7da6ada45ab5b186c33f3f2898376e7498",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/speculative/dflash_worker.py"
+    },
+    {
+      "expected_sha256": "014a8df6559d8af35f0b21f8416e5ab2997e715a0687dc4b7b70c461b3e2e28b",
+      "label": "offline.exact_runtime.shard_contract",
+      "observed_sha256": "014a8df6559d8af35f0b21f8416e5ab2997e715a0687dc4b7b70c461b3e2e28b",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/layers/vocab_parallel_embedding.py"
+    },
+    {
+      "expected_sha256": "72d6d7ebe63dfa143b78f6e2fb50969ec59d5469c390a52ae2ca7bdb84c6622b",
+      "label": "offline.exact_runtime.adapted_gemma",
+      "observed_sha256": "72d6d7ebe63dfa143b78f6e2fb50969ec59d5469c390a52ae2ca7bdb84c6622b",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/dflash-stack-trace-20260725/python/sglang/srt/models/gemma4_mm.py"
+    },
+    {
+      "expected_sha256": "083f24a37e31c4ebfd09f9e5d20ea624c735fee2c67d1a05ddd36dc72808a211",
+      "label": "offline.adapter",
+      "observed_sha256": "083f24a37e31c4ebfd09f9e5d20ea624c735fee2c67d1a05ddd36dc72808a211",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/gemma4_dflash_tied_head_adapter.patch"
+    },
+    {
+      "expected_sha256": "1e2648d8a45919b46f0d12f291c28f063cd37cfe29831275856b2b7c00587e42",
+      "label": "offline.measurement.result",
+      "observed_sha256": "1e2648d8a45919b46f0d12f291c28f063cd37cfe29831275856b2b7c00587e42",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-offline-20260725/TIED_HEAD_ADAPTER_FIXTURES.json"
+    },
+    {
+      "expected_sha256": "46f66561017bffea30dabd5d5e6efacd6defedce4229e57dffdc4f537bc318d0",
+      "label": "offline.measurement.runner",
+      "observed_sha256": "46f66561017bffea30dabd5d5e6efacd6defedce4229e57dffdc4f537bc318d0",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/run_tied_head_adapter_fixtures.py"
+    },
+    {
+      "expected_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "label": "offline.execution_packet.archive",
+      "observed_sha256": "00efd6d5055e9bf00099a667d3ed65993e6a2062facd74fa3e0bcfec82147c68",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar"
+    },
+    {
+      "expected_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "label": "offline.execution_packet.manifest",
+      "observed_sha256": "5cf43ecf412645574cd68117d9ac76a5abe90c9cdc412a5c5806271735c72eb7",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_INPUTS.json"
+    },
+    {
+      "expected_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "label": "offline.execution_packet.launcher",
+      "observed_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/remote_tied_head_adapter.sh"
+    },
+    {
+      "expected_sha256": "6b40552b99409cf95cc5f2341786e2732c9d6b7db2d220ecd57fd95441b412ac",
+      "label": "runtime.python_pyproject",
+      "observed_sha256": "6b40552b99409cf95cc5f2341786e2732c9d6b7db2d220ecd57fd95441b412ac",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/pyproject.toml"
+    },
+    {
+      "expected_sha256": "0c2b24482de87f262c6d4a66c4a27b6c216272983ce7db158a8f92ed81bb9d4f",
+      "label": "runtime.dockerfile",
+      "observed_sha256": "0c2b24482de87f262c6d4a66c4a27b6c216272983ce7db158a8f92ed81bb9d4f",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/docker/Dockerfile"
+    },
+    {
+      "expected_sha256": "9152436daac86675173d396bd9310da673f0ab906216119af7059350102599b1",
+      "label": "runtime.dflash_sources.python/sglang/srt/models/dflash.py",
+      "observed_sha256": "9152436daac86675173d396bd9310da673f0ab906216119af7059350102599b1",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/models/dflash.py"
+    },
+    {
+      "expected_sha256": "2ad9f037efb19ba4d108daef1290aa7da6ada45ab5b186c33f3f2898376e7498",
+      "label": "runtime.dflash_sources.python/sglang/srt/speculative/dflash_worker.py",
+      "observed_sha256": "2ad9f037efb19ba4d108daef1290aa7da6ada45ab5b186c33f3f2898376e7498",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/speculative/dflash_worker.py"
+    },
+    {
+      "expected_sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f",
+      "label": "runtime.dflash_sources.python/sglang/srt/speculative/dflash_worker_v2.py",
+      "observed_sha256": "8fbddb39f4b33b4ac55b1919bc58fa846acb60892886199251d3592a5223050f",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/speculative/dflash_worker_v2.py"
+    },
+    {
+      "expected_sha256": "f17c37c1d0047e75f3214ec67cf2b02dd52cfcec35cf0daaaee0407f892a0e53",
+      "label": "runtime.dflash_sources.python/sglang/srt/speculative/dflash_info.py",
+      "observed_sha256": "f17c37c1d0047e75f3214ec67cf2b02dd52cfcec35cf0daaaee0407f892a0e53",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/speculative/dflash_info.py"
+    },
+    {
+      "expected_sha256": "422ffbd00b54913f3d9c14d2596ffd79e51800b6565dc0de78603a36dbd6fd4e",
+      "label": "runtime.dflash_sources.python/sglang/srt/speculative/triton_ops/dflash_accept_bonus.py",
+      "observed_sha256": "422ffbd00b54913f3d9c14d2596ffd79e51800b6565dc0de78603a36dbd6fdce",
+      "pass": false,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/speculative/triton_ops/dflash_accept_bonus.py"
+    },
+    {
+      "expected_sha256": "a34a27e2f5722cc1c7d0ef418a73fc77ad701ead20a99c6471d26f1fb8700a80",
+      "label": "capture.gemma4_mm_base",
+      "observed_sha256": "a34a27e2f5722cc1c7d0ef418a73fc77ad701ead20a99c6471d26f1fb8700a80",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/sglang-588d1f7bc942/python/sglang/srt/models/gemma4_mm.py"
+    },
+    {
+      "expected_sha256": "5734767925504a60e80af7e2d25610e27013d3a8a2ad853a3e7d654e700e9bc6",
+      "label": "capture.gemma4_mm_patched",
+      "observed_sha256": "5734767925504a60e80af7e2d25610e27013d3a8a2ad853a3e7d654e700e9bc6",
+      "pass": true,
+      "path": "/root/workspace/.agents/runtime/dflash-capture-trace-20260725/python/sglang/srt/models/gemma4_mm.py"
+    },
+    {
+      "expected_sha256": "38ffc915233bcf14c46ad26fde920405b41bdaf8e18d40cc96093c9658c37ab5",
+      "label": "capture.patch",
+      "observed_sha256": "38ffc915233bcf14c46ad26fde920405b41bdaf8e18d40cc96093c9658c37ab5",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/gemma4_dflash_capture_hook.patch"
+    },
+    {
+      "expected_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "label": "capture.runner",
+      "observed_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/dflash_endpoint_runner.py"
+    },
+    {
+      "expected_bytes": 845,
+      "expected_sha256": "38ffc915233bcf14c46ad26fde920405b41bdaf8e18d40cc96093c9658c37ab5",
+      "label": "dflash_archive_member.gemma4_dflash_capture_hook.patch",
+      "observed_bytes": 845,
+      "observed_sha256": "38ffc915233bcf14c46ad26fde920405b41bdaf8e18d40cc96093c9658c37ab5",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::gemma4_dflash_capture_hook.patch"
+    },
+    {
+      "expected_bytes": 3282,
+      "expected_sha256": "083f24a37e31c4ebfd09f9e5d20ea624c735fee2c67d1a05ddd36dc72808a211",
+      "label": "dflash_archive_member.gemma4_dflash_tied_head_adapter.patch",
+      "observed_bytes": 3282,
+      "observed_sha256": "083f24a37e31c4ebfd09f9e5d20ea624c735fee2c67d1a05ddd36dc72808a211",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::gemma4_dflash_tied_head_adapter.patch"
+    },
+    {
+      "expected_bytes": 9076,
+      "expected_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "label": "dflash_archive_member.remote_tied_head_adapter.sh",
+      "observed_bytes": 9076,
+      "observed_sha256": "a659ce9cdbdd744739ca853d16e744a5c3ac21f057e4cf61651910bc19bd140a",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::remote_tied_head_adapter.sh"
+    },
+    {
+      "expected_bytes": 6977,
+      "expected_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "label": "dflash_archive_member.dflash_endpoint_runner.py",
+      "observed_bytes": 6977,
+      "observed_sha256": "14245acaa3a7e82deaddab657ab97cd7873841ab9244b3b31d90a4c9c224aa44",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::dflash_endpoint_runner.py"
+    },
+    {
+      "expected_bytes": 3979,
+      "expected_sha256": "93233493ef39ea006e05d960c94925258d1b573b37831897f0ff40a7b66ad4cd",
+      "label": "dflash_archive_member.evaluate_dflash_diagnostic.py",
+      "observed_bytes": 3979,
+      "observed_sha256": "93233493ef39ea006e05d960c94925258d1b573b37831897f0ff40a7b66ad4cd",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::evaluate_dflash_diagnostic.py"
+    },
+    {
+      "expected_bytes": 1799,
+      "expected_sha256": "b85105536aff75b691a3285415ce463ab85867ee7b17203882e9db64f36d65e3",
+      "label": "dflash_archive_member.reconcile_dflash.py",
+      "observed_bytes": 1799,
+      "observed_sha256": "b85105536aff75b691a3285415ce463ab85867ee7b17203882e9db64f36d65e3",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::reconcile_dflash.py"
+    },
+    {
+      "expected_bytes": 84386,
+      "expected_sha256": "fe4f0c7d1010013361c6013087a45f6cdfe4c857b58aba01b7908019e384d8c6",
+      "label": "dflash_archive_member.artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-00.sse",
+      "observed_bytes": 84386,
+      "observed_sha256": "fe4f0c7d1010013361c6013087a45f6cdfe4c857b58aba01b7908019e384d8c6",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-00.sse"
+    },
+    {
+      "expected_bytes": 85525,
+      "expected_sha256": "da2ccdcc2396edf556838e736c7f9e6d06a7baf6d7569ba323eb31b31c666daa",
+      "label": "dflash_archive_member.artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-01.sse",
+      "observed_bytes": 85525,
+      "observed_sha256": "da2ccdcc2396edf556838e736c7f9e6d06a7baf6d7569ba323eb31b31c666daa",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-01.sse"
+    },
+    {
+      "expected_bytes": 84385,
+      "expected_sha256": "5f729fef1c850315d0ecd9ba6fd82a3d78415a7d52555612364c6dc1d7f4dc70",
+      "label": "dflash_archive_member.artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-02.sse",
+      "observed_bytes": 84385,
+      "observed_sha256": "5f729fef1c850315d0ecd9ba6fd82a3d78415a7d52555612364c6dc1d7f4dc70",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-02.sse"
+    },
+    {
+      "expected_bytes": 86534,
+      "expected_sha256": "3d11a893a3e17b86d16e106f6d03dbdfd64310256e431f60da7ae1d24256007c",
+      "label": "dflash_archive_member.artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-03.sse",
+      "observed_bytes": 86534,
+      "observed_sha256": "3d11a893a3e17b86d16e106f6d03dbdfd64310256e431f60da7ae1d24256007c",
+      "pass": true,
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/tied-head-adapter-inputs-20260725.tar::artifacts/dflash-h200-20260723t2343z/retrieved-terminal/ar-diagnostic/response-03.sse"
+    }
+  ],
+  "director_binding": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_fp8_tied_head_stack/DIRECTOR_BINDING.json",
+  "excluded_non_file_digest": {
+    "field": "runtime_source.cuda_base_manifest_sha256",
+    "reason": "OCI manifest identity is declarative and has no bound local file path; no registry or provider access was authorized.",
+    "value": "b172ed3d5f4674217928d95138e891fd2b863360ed3c409745ee9d48ae8c78a1"
+  },
+  "failure_count": 1,
+  "prior_compact_archive_members": [
+    "ENDPOINT_RESULT.json",
+    "GRAPH_TOPOLOGY_DECISION.json",
+    "INVOCATION_STATE.json",
+    "WORKER_TERMINAL.json",
+    "container-inspect.json",
+    "endpoint.runner.stderr",
+    "endpoint.runner.stdout",
+    "gpu-final.csv",
+    "server-final.log"
+  ],
+  "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+  "schema_version": 1,
+  "status": "fail"
+}

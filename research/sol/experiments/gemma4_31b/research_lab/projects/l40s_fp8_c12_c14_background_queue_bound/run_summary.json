@@ -1,7 +1,0 @@
-{
-  "result_type": "background_batching_credible_region",
-  "queue_rows": 12,
-  "service_rows": 240,
-  "manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_fp8_c12_c14_background_queue_bound/SOURCE_MANIFEST.json",
-  "out": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/l40s_fp8_c12_c14_background_queue_bound/QUEUE_BOUND.json"
-}

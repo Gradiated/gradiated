@@ -1,8 +1,0 @@
-{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-15T11:57:14.151309Z"}
-{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00gh8rfjg7nqepfzj", "reconciled_nonzero_exit": false, "timestamp": "2026-07-15T11:57:58.444344Z"}
-{"elapsed_seconds": 90.014, "event": "ssh_ready", "timestamp": "2026-07-15T11:58:43.808624Z"}
-{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-15T12:05:29.948598Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
-{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-15T12:05:37.540508Z"}
-{"elapsed_seconds": 458.887, "event": "verified_local_awq_transferred", "timestamp": "2026-07-15T12:13:16.427620Z"}
-{"event": "artifact_retrieved", "manifest_files": 42, "outcome": "FAIL", "sha256": "ba19a85091ac91b7f1ab4e09b2fc6e1b2adf9e9824d97e5e0d8893caede30e66", "timestamp": "2026-07-15T12:20:46.245616Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-15T12:21:39.415076Z"}

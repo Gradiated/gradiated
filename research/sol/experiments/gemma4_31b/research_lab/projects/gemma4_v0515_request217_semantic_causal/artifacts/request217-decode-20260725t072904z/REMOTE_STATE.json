@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-25T07:33:18.764569Z",
-  "attempt": false,
-  "final": true,
-  "live": false,
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"env\", \"REQUEST217_ROOT=/home/glmrunner/gemma4-v0515-request217-semantic-causal\", \"REQUEST217_OUT=/home/glmrunner/gemma4-v0515-request217-semantic-causal/out\", \"REQUEST217_CONTAINER=gemma4-v0515-request217-decode\", \"./remote_request217_worker.sh\"], \"cwd\": \"/home/glmrunner/gemma4-v0515-request217-semantic-causal\", \"launched_at_utc\": \"2026-07-25T07:29:10.791386Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-v0515-request217-semantic-causal/GUEST_OWNER.log\", \"pid\": 79952, \"start_ticks\": 2555549, \"unit_manager\": \"remote-shell\"}\nFINAL\n{\n  \"phase\": \"candidate_requests_0_through_217\",\n  \"requests\": 218,\n  \"science_started\": true\n}\n"
-}

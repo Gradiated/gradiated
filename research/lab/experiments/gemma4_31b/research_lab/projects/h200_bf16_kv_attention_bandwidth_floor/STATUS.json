@@ -1,0 +1,14 @@
+{
+  "status": "complete",
+  "priority": 165,
+  "summary": "Test whether exact BF16 KV-cache read bytes exceed the residual c16/c32 H200 service budget after measured linears and head.",
+  "next_action": "None; c16 is closed and c32 is preserved for the separate exact endpoint owner.",
+  "provider_mutation": "forbidden_zero_cost_offline",
+  "authorized_spend_usd": 0,
+  "wall_clock_budget_minutes": 30,
+  "compute_budget": "1 local CPU-hour; no GPU",
+  "storage_budget": "256 MiB retained plus 128 MiB temporary; no shared /tmp",
+  "active_session": null,
+  "last_result_classification": "c16_falsified_by_optimistic_kv_floor_c32_preserved_not_proven",
+  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h200_bf16_kv_attention_bandwidth_floor/KV_ATTENTION_FLOOR.json"
+}

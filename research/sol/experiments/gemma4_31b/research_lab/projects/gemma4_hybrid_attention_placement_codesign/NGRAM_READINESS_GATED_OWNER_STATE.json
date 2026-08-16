@@ -1,7 +1,0 @@
-{
-  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readiness-gated-20260726t0343z",
-  "deadline_utc": "2026-07-26T04:10:00Z",
-  "phase": "terminal_retrieved",
-  "terminal_retrieved": true,
-  "worker_returncode": 72
-}

@@ -1,0 +1,302 @@
+{
+  "classification": "offline_scientific_terminal",
+  "completed_at_utc": "2026-07-27T04:13:01.860770+00:00",
+  "identity": {
+    "direct_inputs": [
+      {
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/HYBRID_55L5G_H200_EXECUTION_TERMINAL.json",
+        "role": "settled alternating placement and invariant component measurement",
+        "sha256": "3a705235485720575c7695e184b4a47b6602c360ec49b4752f284e758b62bdfb",
+        "size_bytes": 2701
+      },
+      {
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/config.json",
+        "role": "60-layer architecture and stock layer types",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+        "size_bytes": 4621
+      },
+      {
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/model.safetensors.index.json",
+        "role": "tensor-to-shard mapping",
+        "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+        "size_bytes": 120246
+      },
+      {
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/model-00002-of-00002.safetensors",
+        "role": "exact checkpoint tensor bytes; read in place without copying",
+        "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+        "size_bytes": 12761549884
+      },
+      {
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_layerwise_mixed_kv_endpoint/inputs/pinned_source/models/gemma4_causal.py",
+        "role": "pinned production consumer ordering for causal interpretation",
+        "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+        "size_bytes": 56461
+      }
+    ],
+    "implementation": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_layer_importance_recovery/layer_importance_selector.py",
+      "sha256": "802c223a8263f9244cce4b060d805b354b3bcf706142bf06d7362bab29dacb81"
+    },
+    "preregistration": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_layer_importance_recovery/SIGNAL_PREREGISTRATION.json",
+      "sha256": "c288e4c5f6ca85a966efd0e9bbad1b6f536c9f1ad336a32710a86e36b4778385"
+    },
+    "test": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_layer_importance_recovery/test_layer_importance_selector.py",
+      "sha256": "7045ee709e7b120062b54a23fd022c6007e2a8e1a2d949d9a9de0da79b5cce70"
+    }
+  },
+  "performance_invariant": {
+    "alternating_attention_work_count": {
+      "global_layers": 5,
+      "local_layers": 55,
+      "total_layers": 60
+    },
+    "inherited_component_attention_reduction_fraction": 0.20334496337472074,
+    "inherited_not_remeasured": true,
+    "proof": "Both sets are five unique members of the same ten stock full-attention layers in the same 60-layer checkpoint. Each converts the other five stock globals to local, so both execute exactly 55 local and 5 global attention layers for every token position and batch element; layer identity changes, attention-type work multiplicity does not.",
+    "selector_attention_work_count": {
+      "global_layers": 5,
+      "local_layers": 55,
+      "total_layers": 60
+    }
+  },
+  "placements": {
+    "comparison": {
+      "retained_only_by_alternating": [
+        5,
+        17
+      ],
+      "retained_only_by_selector": [
+        35,
+        59
+      ],
+      "same_placement": false,
+      "selector_signal_sum_fractional_gain": 0.37446067187743415
+    },
+    "exact_alternating_comparator": {
+      "converted_to_local_layers": [
+        11,
+        23,
+        35,
+        47,
+        59
+      ],
+      "retained_global_layers": [
+        5,
+        17,
+        29,
+        41,
+        53
+      ],
+      "retained_signal_sum": 3.51127151744614
+    },
+    "selector": {
+      "converted_to_local_layers": [
+        5,
+        11,
+        17,
+        23,
+        47
+      ],
+      "retained_global_layers": [
+        59,
+        41,
+        35,
+        29,
+        53
+      ],
+      "retained_signal_sum": 4.826104609013119,
+      "rule": "Sort by signal descending, then layer index ascending; retain the first five."
+    }
+  },
+  "project": "gemma4_hybrid_attention_layer_importance_recovery",
+  "quality_recovery": {
+    "causal_argument": "Converting a stock global layer changes its attention branch. The pinned decoder applies the scored learned RMSNorm immediately after attention and before residual addition; retaining the five largest learned branch scales preserves the global modules with the greatest direct residual-injection scale under this signal.",
+    "deployability_authorized": false,
+    "later_consumer": {
+      "kind": "none",
+      "reason": "No existing content-addressed lab input contains representative per-layer attention/residual captures or raw paired quality captures for this selected 55L5G placement, and the available stock paired-quality runner cannot materialize or consume the selected conversion. This turn forbids staging, training, GPU, and endpoint execution."
+    },
+    "quality_estimate": null,
+    "uncertainty": {
+      "quantified_quality_recovery": false,
+      "reason": "Checkpoint scale alone contains no activation, routing, task, or downstream-cancellation observations. The numeric ranking is deterministic, but its GPQA-Diamond, TauBench, long-context, tool-use, multimodal, and endpoint-quality effect is unknown.",
+      "type": "unbounded_epistemic"
+    }
+  },
+  "resource_accounting": {
+    "actual_spend_usd": 0.0,
+    "cpu": {
+      "input_blocks": 0,
+      "measurement_boundary": "immediately before terminal serialization",
+      "peak_rss_kib": 61356,
+      "system_seconds": 2.491067,
+      "user_seconds": 8.085904,
+      "wall_seconds": 10.585346624953672
+    },
+    "gpu_seconds": 0,
+    "network_requests": 0,
+    "provider_mutations": 0,
+    "storage": {
+      "analysis_artifact_bytes_created": 34039,
+      "checkpoint_bytes_copied": 0,
+      "checkpoint_tensor_payload_bytes_read": 107520,
+      "logical_direct_input_bytes_hashed": 12761733913,
+      "terminal_bytes_written": 11996
+    }
+  },
+  "result": "typed_negative_no_executable_quality_recovery_consumer",
+  "schema_version": 1,
+  "scope": {
+    "checkpoint_shards_copied": 0,
+    "gpu_claimed": false,
+    "prior_science_replayed": false,
+    "provider_or_endpoint_used": false,
+    "selector_sweeps": 0,
+    "ssh_used": false,
+    "training_runs": 0
+  },
+  "selector_outcome": "content_addressed_signal_distinguishes_placement",
+  "signal": {
+    "can_predict": "Relative direct residual-injection scale among the ten same-geometry stock global-attention layers.",
+    "cannot_predict": [
+      "attention routing or long-context retrieval behavior",
+      "activation-dependent branch direction",
+      "downstream nonlinear amplification or cancellation",
+      "GPQA-Diamond, TauBench, multimodal, tool-use, or endpoint quality"
+    ],
+    "causal_role": "The pinned Gemma4 decoder applies this learned RMSNorm weight to the attention output immediately before adding that branch to the residual. Its RMS measures the learned coordinate scale of the direct attention-branch injection.",
+    "checkpoint_tensor_rows": [
+      {
+        "dtype": "BF16",
+        "layer": 5,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.2955606858652946,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.5.post_attention_layernorm.weight",
+        "tensor_sha256": "cbb0630cde11e00bf84a1684f197b1ca5204ee46bb344c5fccab455a5dc83fed"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 11,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.4637766075516762,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.11.post_attention_layernorm.weight",
+        "tensor_sha256": "acd3c3e69f1e74ecf3c34c5b031b6f31af0e4d0276cb5855ac3db06cda2cd9b5"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 17,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.5204611466276555,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.17.post_attention_layernorm.weight",
+        "tensor_sha256": "9d3645f7f07820d2a1fef4182be64fbfe1b20492825be350860729335cc8d183"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 23,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.7386545188708489,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.23.post_attention_layernorm.weight",
+        "tensor_sha256": "5b77f5823ace14f240e267c2f145c22d6e8441964e45b94e1303edd21c581b30"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 29,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.891471996358893,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.29.post_attention_layernorm.weight",
+        "tensor_sha256": "abba7f6f719079349c36bd996d5161769234228b81539fcd68560551d4190776"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 35,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.9361668708207745,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.35.post_attention_layernorm.weight",
+        "tensor_sha256": "6b756cc2af44fda8b6ac8e03504c2d00d4ef742909d7110974c734c26cfe4ac5"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 41,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.9993731008472683,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.41.post_attention_layernorm.weight",
+        "tensor_sha256": "839d816c343fcc26902ed448c3c27cc2e88396d1e29cbc936112ff06b27199f7"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 47,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.5706753202807882,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.47.post_attention_layernorm.weight",
+        "tensor_sha256": "8dcf78f4dc9b5528253cd090d74d3380097f306787855bb8159747e1c7a592c7"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 53,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 0.8044045877470287,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.53.post_attention_layernorm.weight",
+        "tensor_sha256": "39579ec7d240a75177c0886f9782bcaca6ec5d6690124b3e70ed855080a6e22d"
+      },
+      {
+        "dtype": "BF16",
+        "layer": 59,
+        "payload_bytes": 10752,
+        "post_attention_residual_scale_rms": 1.1946880532391546,
+        "shape": [
+          5376
+        ],
+        "tensor": "model.language_model.layers.59.post_attention_layernorm.weight",
+        "tensor_sha256": "dcc7a7d6fb4c245122985105ab682689b6188ca60bba9b915f0771be0c379ba8"
+      }
+    ],
+    "fifth_to_sixth_absolute_margin": 0.06575006887617985,
+    "fifth_to_sixth_relative_margin": 0.08901328997037655,
+    "formula": "sqrt(sum(float32(weight_i)^2) / 5376)",
+    "name": "post_attention_residual_scale_rms",
+    "observable_before_broad_quality_evaluation": true,
+    "ranking": [
+      59,
+      41,
+      35,
+      29,
+      53,
+      23,
+      47,
+      17,
+      11,
+      5
+    ],
+    "tensor_template": "model.language_model.layers.{layer}.post_attention_layernorm.weight"
+  }
+}

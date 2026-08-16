@@ -1,3 +1,0 @@
-usage: gpu_pool.py [-h] --lab LAB
-                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...
-gpu_pool.py: error: no available GPU bench matches this project

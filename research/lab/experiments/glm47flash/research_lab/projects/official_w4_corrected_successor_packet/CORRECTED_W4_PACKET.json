@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "result": "CORRECTED_W4_PACKET_READY",
+  "correction": {
+    "remote_invocation_before": "python3 /input/head_shared_w4_bind.py",
+    "remote_invocation_after": "python3 /input/official_head_shared_w4_bind.py",
+    "remote_script_sha256_before": "ae8261b8f7c5478d56d8e31a24ec245dba37f06d55cd2070de278615db62862f",
+    "remote_script_sha256_after": "29766910f0b3252ef0dd2e42051dfb5ab0b6a3fbd3e736187184bb0e7dc1defa",
+    "staged_binder": "official_head_shared_w4_bind.py"
+  },
+  "source_sha256": {
+    "vllm_smoke_control.py": "07f5842b98368ba7da31f10f77131884e864daa8f0811f7c87a28beb8f8e9e9b",
+    "vllm_batched_runner.py": "0db2de2bd749c18bcd2ca45c16e7b3617daf5307665456b1dac039c81f90fa72",
+    "official_head_shared_w4_bind.py": "a0ae6b4b938a1744aeb2dc5180cc58dfeeae0efbd2ee60bc63d68d9bd9c8a7cc",
+    "official_head_shared_w4_cuda_oracle.py": "1a224f8990dafdd821194b8c3292ec7f18cf2598df42804f9d3501aaa56fee1c",
+    "focused_test_file": "c570fdd8aa2470e71cff306d32ee4551b00b6ac4dd29e59825daf43768219e99"
+  },
+  "checks": [
+    "python3 -m unittest research/lab/experiments/glm47flash/campaign_100/tests/test_nebius_vllm_smoke_control.py: PASS (38 tests)",
+    "python3 -m py_compile research/lab/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py: PASS",
+    "bash -n research/lab/experiments/glm47flash/campaign_100/nebius/remote_vllm_awq_smoke.sh: PASS",
+    "git diff --check -- [corrected source and focused test]: PASS"
+  ],
+  "successor_command": [
+    "systemd-run", "--user", "--no-block", "--collect", "--unit=glm47-official-w4-corrected-r1", "--property=RuntimeMaxSec=4500s", "/usr/bin/python3", "/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py", "--output-dir", "/root/workspace/research/lab/experiments/glm47flash/research_lab/projects/full47_official_selective_w4_cuda_endpoint_corrected/artifacts/l40s_official_w4_corrected_20260716_r1", "--name", "glm47-official-w4-corrected-r1", "--ssh-key", "/root/.config/nebius/glm-campaign/ssh_ed25519", "--ssh-public-key", "/root/.config/nebius/glm-campaign/ssh_ed25519.pub", "--local-model-dir", "/root/.cache/glm47flash-awq-full47-official-head-shared-w4-7ab75a5258cc", "--reference-tokenizer-dir", "/root/.cache/glm47flash-awq-ab31d120", "--experiment-spec-sha256", "3ab6ec4b5eee429d5400db32c89abf4c0c5e3e486e37e990e1504821431cbf95", "--num-kv-splits", "4", "--max-num-seqs", "32", "--frontier-concurrencies", "16,32", "--absolute-timeout-seconds", "4500", "--background-arm-envelope-seconds", "300", "--scientific-mode", "awq", "--profile", "l40s-awq", "--head-shared-w4"
+  ],
+  "launch_preconditions": [
+    "current glm47-official-w4-r2 owner is terminal and its instance/disk inventory is zero",
+    "fresh authenticated inventory is zero",
+    "run exactly this one normal-cleanup successor; no retention"
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "status": "complete",
+  "priority": 0,
+  "summary": "ORPHANED_OWNER_PRE_SCIENCE_CLOSE: the foreground controller died after create, zero science ran, and watchdog cleanup is independently authenticated at zero instance/disk inventory.",
+  "next_action": "Terminal operational null. Do not retry, recover, promote a result, or run the invalid frozen packet; the mechanism remains scientifically untested.",
+  "provider_mutation": "closed_cleanup_authenticated_zero_inventory",
+  "authorized_spend_usd": 0.55,
+  "absolute_timeout_seconds": 1800,
+  "external_service_watchdog_seconds": 2100,
+  "provider_creates": 1,
+  "retries": 0,
+  "post_result_retention": false,
+  "proven_launcher": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/mla_microbench_control.py",
+  "base_image": "vllm/vllm-openai:v0.15.0@sha256:97187c9535fd6d6040444d68bb073f17344fd454e9241cc7a4e998141f244543",
+  "quality_policy": "Architecture-cost component only: preserve stock 1.8*normalized-top4 + shared semantics, require B equivalence to A1's identical W4 payload, and report A1/B error against A0 BF16. This cannot qualify deployable quality.",
+  "geometry": {
+    "logical_routed_experts": 64,
+    "routed_top_k": 4,
+    "fused_physical_experts": 65,
+    "routed_scaling_factor": 1.8,
+    "norm_topk_prob": true,
+    "shared_assignment_weight": 1.0,
+    "c16_shared_rows": 16,
+    "c32_shared_rows": 32,
+    "runtime_block_size_m": 8,
+    "c32_shared_padding_rows": 0
+  },
+  "economic_gate": {
+    "robust_output_tokens_per_second": 606.355,
+    "baseline": "exact unchanged-stock c32 endpoint at 609.606365 output tok/s",
+    "summed_kernel_time_transfer_prohibited": true
+  },
+  "stop_rule": "One L40S create and one real A0/A1/B complete-MoE component experiment. Freeze/test then launch in one turn; no fallback, retry, readiness return, repair hold, retained follow-up, or second create; always clean.",
+  "exact_inputs": {
+    "stock_root": "/root/.cache/glm47flash-awq-ab31d120",
+    "stock_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881",
+    "official_shared_w4_root": "/root/.cache/glm47flash-awq-full47-official-head-shared-w4-7ab75a5258cc",
+    "official_shared_w4_manifest": "7ab75a5258cce406351790cefe1f3f8ba2c63aa4ad618f8d94c5ac3a65ec7778",
+    "scope": "one exact layer only; approximately 347 MiB; no full47 transfer/load"
+  },
+  "arms": {
+    "A0": "actual pinned-vLLM auxiliary-stream routed-W4 plus BF16-shared stock wall path",
+    "A1": "actual overlapped routed-W4 plus separate native-WNA16 identical shared-W4 payload",
+    "B": "one E65/topk5 fused WNA16 call with weights [1.8*normalized routed top4, 1.0 shared] and no outer scaling"
+  },
+  "acceptance_gate": {
+    "result": "SHARED65_COMPONENT_PASS",
+    "minimum_component_speedup": 1.63,
+    "primary_ratio": "A0_p50 / B_p50 >= 1.63 on both balanced and skew c32 routes",
+    "tail_gate": "B_p95 <= A0_p95",
+    "mechanism_ratio": "report A1_p50 / B_p50 separately to isolate fusion",
+    "required_evidence": [
+      "actual source-bound two-stream A0 and WNA16 Marlin A1/B execution",
+      "exact 1.8*normalized-top4 routed semantics plus weight-1 shared expert with no outer scale",
+      "official group32 W4 packed/source identity",
+      "fused output agreement against a separate execution of the identical W4 shared payload plus W4-versus-BF16 error",
+      "runtime block_size_m=8 descriptor accounting with zero c32 shared-row padding",
+      "kernel launch and resource identity",
+      "randomized warmed CUDA-event p50 and p95 complete-component wall timing across stream joins"
+    ]
+  },
+  "prior_result": "MECHANISM_CLOSE",
+  "result": {
+    "decision": "ORPHANED_OWNER_PRE_SCIENCE_CLOSE",
+    "scientific_endpoint": "operational_null",
+    "useful_gpu_seconds": 0,
+    "scored_gpu_seconds": 0,
+    "provider_create_timestamp_utc": "2026-07-16T14:24:34.535582Z",
+    "watchdog_deadline_utc": "2026-07-16T14:54:34.362751Z",
+    "derived_exposure_to_watchdog_deadline_seconds": 1799.827168,
+    "derived_vm_plus_disk_rate_usd_per_hour": 0.7589222,
+    "derived_cost_usd": 0.379424665,
+    "cleanup_inventory_authenticated_at_utc": "2026-07-16T14:55:38Z",
+    "final_instance_count": 0,
+    "final_disk_count": 0,
+    "artifact_note": "No controller summary exists; events.jsonl contains only instance_created, so exposure/cost are derived from provider creation time and the cleanup watchdog deadline."
+  },
+  "director_endpoint_audit": {
+    "classification": "ORPHANED_OWNER_PRE_SCIENCE_PENDING_CLEANUP",
+    "scientific_endpoint": "operational_null",
+    "useful_gpu_seconds": 0,
+    "scored_gpu_seconds": 0,
+    "controller_alive": false,
+    "cleanup_watchdog_alive": false,
+    "pass_promotion_allowed": false,
+    "packet_blockers": [
+      "candidate computes silu(gate*up) instead of SwiGLU silu(gate)*up",
+      "A0 includes BF16 CPU-to-CUDA weight copies inside every warm and timed call",
+      "A0 is not the actual pinned SharedFusedMoE comparator",
+      "A0/A1 routed-E64 arms are constructed with global_num_experts=65",
+      "arm order is fixed rather than randomized and duplicate/empty route cases are absent",
+      "no kernel-count, grid, workspace, or resource-profiler evidence is bound"
+    ],
+    "decision_effect": "Reject any hypothetical SHARED65_COMPONENT_PASS and consume the one-create/no-retry stop rule; the intervention remains scientifically untested rather than falsified."
+  },
+  "director_audit_correction": {
+    "retained_shared_signature_fraction": 0.003844168,
+    "evidence_scope": "summed_kernel_duration_not_sequential_wall",
+    "actual_wna16_65_expert_execution": false,
+    "conditional_reopen_baseline_output_tokens_per_second": 604.02,
+    "decision_effect": "historical close superseded only for a direct component measurement because the later scope-compatible stock c32 endpoint clears 604.02 tok/s"
+  },
+  "active_session": {
+    "unit": "glm47-shared65-20260716-r1",
+    "unit_manager": "mla_microbench_control.py",
+    "controller_pid": 1585166,
+    "controller_cgroup": "0::/user.slice/user-0.slice/user@0.service/app.slice/app-gradiated-research-lab.slice/gradiated-research-lab@glm47.service",
+    "watchdog": "placement_control.py watchdog PID 1585284, cgroup inherited from controller, deadline 1784213674.3627505",
+    "resource_identity": "Nebius instance computeinstance-e00bwz6fs4z3sa3dme; preemptible gpu-l40s-a / 1gpu-8vcpu-32gb, name glm47-shared65-20260716-r1",
+    "deadline_epoch_seconds": 1784213674.3627505,
+    "artifact_root": "artifacts/l40s_shared65_20260716_r1",
+    "forward_progress": "instance_created was recorded at 2026-07-16T14:25:09Z, but controller PID 1585166 died before SSH/bootstrap. The GPU remained idle and no image/input/result was staged. Cleanup watchdog PID 1585284 exited after its deadline; independent inventory at 2026-07-16T14:55:38Z found zero instances and zero disks.",
+    "cleanup": {
+      "cleanup_pass": true,
+      "watchdog_pid": 1585284,
+      "instance_get_not_found": true,
+      "final_instance_count": 0,
+      "final_disk_count": 0,
+      "verified_at_utc": "2026-07-16T14:55:38Z"
+    }
+  },
+  "artifacts": {
+    "gate": "artifacts/SHARED_65TH_GATE.json",
+    "gate_sha256": "9616e12ad2af752ccca8950106457d553b5a139afeaf415427bdbfae1d55bf34",
+    "reproducer": "run_gate.py"
+  }
+}

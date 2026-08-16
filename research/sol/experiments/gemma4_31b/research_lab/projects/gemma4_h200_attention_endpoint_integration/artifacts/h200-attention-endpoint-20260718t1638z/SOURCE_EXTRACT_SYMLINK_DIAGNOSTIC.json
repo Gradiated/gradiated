@@ -1,8 +1,0 @@
-{
-  "classification": "integration_owner_failure",
-  "message": "\"${ssh_cmd[@]}\" \"set -e; sudo docker rm -f sglang-source-copy >/dev/null 2>&1 || true; sudo docker create --name sglang-source-copy $image true >/dev/null; rm -rf $remote/source; mkdir -p $remote/source; echo /sgl-workspace/sglang/python/sglang >$remote/sglang_source_path.txt; sudo docker cp sglang-source-copy:/sgl-workspace/sglang/python/sglang $remote/source/sglang; sudo chown -R glmrunner:glmrunner $remote/source; test -f $remote/source/sglang/__init__.py; sudo docker rm sglang-source-copy >/dev/null; cd $remote/source && tar -czf $remote/sglang-source.tar.gz sglang\"",
-  "pass": false,
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp": "2026-07-18T17:06:23.226855Z"
-}

@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_PATCH_GRAPH_CAPTURE_BATCHES.json",
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_PATCH_GRAPH_CAPTURE_BATCHES.json",
+  "ready_sha256": "6692558f11d99efbffcc3439bcf73dd52d35eb0971df1259dbf56c33bf2282a1",
+  "repair_id": "graph-repair-1-1785092154",
+  "requested_at_utc": "2026-07-26T18:58:23.958416Z",
+  "retry_scope": "Retry only CUDA-graph capture/server launch with the bound batch-geometry wrapper patch; preserve archived attempt-1 artifacts, do not replay control/component, and submit the sole candidate c32 request only after graph capture passes.",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

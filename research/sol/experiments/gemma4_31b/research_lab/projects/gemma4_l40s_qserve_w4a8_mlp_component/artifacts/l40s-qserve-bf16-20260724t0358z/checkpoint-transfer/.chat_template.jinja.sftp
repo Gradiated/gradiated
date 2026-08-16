@@ -1,1 +1,0 @@
-put /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/inputs/checkpoint/chat_template.jinja /home/glmrunner/gemma4-qserve-endpoint/checkpoint/.chat_template.jinja.ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4.part

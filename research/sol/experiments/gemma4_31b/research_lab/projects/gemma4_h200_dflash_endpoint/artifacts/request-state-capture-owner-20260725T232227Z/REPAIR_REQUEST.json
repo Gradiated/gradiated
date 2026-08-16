@@ -1,9 +1,0 @@
-{
-  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z/REMOTE_PREFLIGHT_STDOUT_FILTER_REPAIR.json",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request-state-capture-owner-20260725T232227Z/REMOTE_PREFLIGHT_STDOUT_FILTER_REPAIR.json",
-  "ready_sha256": "1c841221e957fcbd3ee1cf7a758fecd00a7536a0f895fd623077eec68c01a011",
-  "requested_at_utc": "2026-07-25T23:24:07.332420Z",
-  "retry_scope": "both",
-  "schema_version": 1,
-  "state": "repair_requested"
-}

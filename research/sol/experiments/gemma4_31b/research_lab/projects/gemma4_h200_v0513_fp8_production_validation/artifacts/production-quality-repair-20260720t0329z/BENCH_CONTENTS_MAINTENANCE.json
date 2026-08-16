@@ -1,9 +1,0 @@
-{
-  "project": "gemma4_h200_v0513_fp8_production_validation",
-  "runtime": "Production-quality owner failed during remote artifact retrieval; scientific invocation state unknown.",
-  "checkpoint": "Exact immutable eight-file checkpoint retained at /home/glmrunner/gemma-kernel-frontier/checkpoint.",
-  "image": "SGLang v0.5.13 image retained.",
-  "caches": "SGLang FP8/QKV/CUDA graph caches retained.",
-  "server_state": "Unknown remote state; director maintenance inspection required.",
-  "artifacts": "Worker failure, empty direct retrieval diagnostics, and typed retrieval terminal retrieved project-locally."
-}

@@ -1,1 +1,0 @@
-worker exited 2 without a retrieved exact 24-row terminal; raw logs and remote output retrieval are retained

@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "kind": "director_l40s_kv4_outlier_live_binding",
+  "project": "gemma4_l40s_kv4_outlier_allocator_rebase_endpoint",
+  "bench": {
+    "id": "l40s-kv4-outlier-computeinstance-e00wyscpm4cm4k42jg",
+    "provider": "nebius",
+    "accelerator": "nvidia-l40s",
+    "hourly_cost_usd": 0.8629833,
+    "instance_id": "computeinstance-e00wyscpm4cm4k42jg",
+    "disk_id": "computedisk-e00b5dnbxf2bsmbm2d",
+    "public_ipv4": "89.169.102.34",
+    "ssh_user": "glmrunner",
+    "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:ORYmTqpsvFF3bjSraj0JAsWKJrYQRszfkkmoh9CPnZ4",
+    "host_boot_id": "3b92c23c-10e7-475b-a2c5-f5e183fdc11e",
+    "gpu": {
+      "count": 1,
+      "name": "NVIDIA L40S",
+      "compute_capability": "8.9",
+      "memory_mib": 46068,
+      "driver_version": "580.159.04",
+      "observed_utilization_percent": 0,
+      "observed_memory_used_mib": 0
+    },
+    "lifecycle_deadline_utc": "2026-07-27T06:35:53.449330Z",
+    "watchdog_unit": "gemma4-kv4-outlier-l40s-20260727t055553z-watchdog.service",
+    "watchdog_main_pid": 2402841
+  },
+  "immutable_science": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "mem_fraction_static": "0.953",
+    "concurrency": 32,
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "shared_prefix_tokens": 535,
+    "scientific_submission_limit": 1,
+    "owner_ready_sha256": "7089601a91a1bf1daf28bc87349840ef0d6c718664e28e5e668d018fd4886a3b"
+  },
+  "checkpoint_snapshot": {
+    "authoritative_source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/inputs/checkpoint",
+    "authoritative_manifest": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/CHECKPOINT_MANIFEST.json",
+    "authoritative_manifest_sha256": "fc4f29088210396bfee28f6c96632ba91d954d8486f8e264da7ceb9c29ed4ee8",
+    "project_local_directory": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/inputs/checkpoint",
+    "project_local_manifest": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/inputs/CHECKPOINT_SNAPSHOT.json",
+    "method": "Create project-local hard links for the authoritative manifest's eight exact files and convert only each row key name to path in the project-local manifest; preserve bytes and sha256 unchanged. Do not copy or rehash the two settled checkpoint shards."
+  },
+  "mutable_launcher_repair": {
+    "reason": "The ready owner requires a fresh 2400-second relative deadline after 2400-second provider creation, which would overrun the already-running watchdog.",
+    "allowed_diff": "Patch l40s_kv4_endpoint_owner.py only so --deadline-seconds accepts the exact bound value 1800 (positive and no greater than 2400); preserve all scientific hashes, checkpoint verification, claim/heartbeat/release, one-sample marker, retained repair handshake, and cleanup behavior.",
+    "pre_repair_owner_sha256": "b70597afab14a83448d61cd7fcf3a19040d63d3e7122baa815512ce73290d208",
+    "required_post_repair_artifact": "L40S_KV4_OUTLIER_LIVE_REPAIR.json"
+  },
+  "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "bounds": {
+    "detached_start_by_utc": "2026-07-27T06:04:30Z",
+    "owner_deadline_seconds": 1800,
+    "release_by_utc": "2026-07-27T06:34:30Z",
+    "watchdog_cleanup_margin_seconds": 83
+  },
+  "detached_owner": {
+    "controller": "/root/workspace/research/factory/tools/detached-owner",
+    "unit_manager": "pid",
+    "state": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-live-owner-20260727t0601z/OWNER.json",
+    "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-live-owner-20260727t0601z/OWNER.log",
+    "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-endpoint-20260727t0601z",
+    "exact_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-live-owner-20260727t0601z/OWNER.json --log /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-live-owner-20260727t0601z/OWNER.log -- python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/l40s_kv4_endpoint_owner.py --bench l40s-kv4-outlier-computeinstance-e00wyscpm4cm4k42jg --ssh-host 89.169.102.34 --ssh-user glmrunner --identity /root/.config/nebius/glm-campaign/ssh_ed25519 --known-hosts /root/.config/nebius/glm-campaign/known_hosts --checkpoint /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/inputs/checkpoint --checkpoint-manifest /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/inputs/CHECKPOINT_SNAPSHOT.json --image docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 --artifact-root /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/artifacts/l40s-kv4-endpoint-20260727t0601z --deadline-seconds 1800"
+  },
+  "next_action": "Within the fixed start bound, create the hardlink snapshot and converted manifest, apply only the authorized owner deadline repair, persist L40S_KV4_OUTLIER_LIVE_REPAIR.json with direct hashes, execute exact_command, record the emitted unit/pid/start_ticks in active_session, and return after one grouped snapshot proves claim generation, owner identity, and heartbeat. Do not perform another offline audit, sweep, or scientific-contract change."
+}

@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "python3 \"$input/ncu_exact_request.py\" > \"$artifacts/exact-request.json\" 2> \"$artifacts/exact-request.stderr\"",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-20T11:30:30.173878Z"
-}

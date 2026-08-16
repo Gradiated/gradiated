@@ -1,4 +1,0 @@
-{
-  "retry": true,
-  "scope": "Create an empty content-addressed remote partial before OpenSSH sftp put -a, then resume the unchanged parallel checkpoint transfer."
-}

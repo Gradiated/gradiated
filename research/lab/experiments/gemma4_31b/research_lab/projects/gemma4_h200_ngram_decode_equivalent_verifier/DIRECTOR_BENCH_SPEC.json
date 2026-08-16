@@ -1,0 +1,32 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "artifacts": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/artifacts",
+    "caches": "Fresh 250-GiB provider disk; retain the pinned image, exact checkpoint, runtime caches, discriminator outputs, and one decode-equivalent verifier intervention for in-place repair and compatible follow-up.",
+    "checkpoint": "Exact 62,578,655,208-byte google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 checkpoint is project-local and hash-bound but not yet staged on the guest.",
+    "expected_first_arms": "One four-row first-divergent-logit discriminator; only an exact pass admits the ten-row token/tool suite and matched c32 control/candidate pair.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "project": "gemma4_h200_ngram_decode_equivalent_verifier",
+    "runtime": "Fresh Nebius ubuntu24.04-cuda13.0 H200 bench for pinned SGLang v0.5.13 and immutable remote_experiment.py SHA-256 239e56eb09059aa1cbb40b9c4bd1dd84cbdb0ca6156aa76771021cec173ef17b.",
+    "server_state": "Provider create accepted; guest readiness, checkpoint staging, image pull, server start, CUDA execution, and scientific invocation were not awaited or started by the director."
+  },
+  "hourly_cost_usd": 2.46,
+  "id": "h200-ngram-verifier-e00kcm9nfhwt7e7gbc",
+  "lifecycle": {
+    "deadline_utc": "2026-07-24T17:00:00Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t1700-watchdog.service",
+      "main_pid": 4051134,
+      "unit": "gemma4-ngram-verifier-h200-20260724t1700-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "disk_id": "computedisk-e00yvdxaa48q0t115t",
+    "disk_name": "gemma4-ngram-verifier-h200-20260724t0927z-boot",
+    "instance_id": "computeinstance-e00kcm9nfhwt7e7gbc",
+    "instance_name": "gemma4-ngram-verifier-h200-20260724t0927z"
+  }
+}

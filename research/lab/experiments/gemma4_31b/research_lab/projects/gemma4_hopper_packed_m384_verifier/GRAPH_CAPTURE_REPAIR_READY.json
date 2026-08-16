@@ -1,0 +1,142 @@
+{
+  "candidate_only_command": {
+    "candidate_request_submissions_remaining": 1,
+    "candidate_resume_sha256": "ab36ffcf2738d2fc4c242cffd23589d8c576d1a4a7143a08af36471b36ac3ce0",
+    "control_request_replay_allowed": false,
+    "expected_terminal": "artifacts/ENDPOINT_TERMINAL.json",
+    "profiler": "off",
+    "remote": [
+      "python3",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/input/candidate_resume.py",
+      "--root",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint",
+      "--manifest",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/input/ENDPOINT_INPUT_MANIFEST.json",
+      "--oracle",
+      "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/input/CONTROL_TOKEN_ORACLE.json",
+      "--absolute-deadline-epoch",
+      "1785095700"
+    ]
+  },
+  "causal_repair": {
+    "failure": "packed_m384_exact_shape_required",
+    "measured_v2_kernel_ast_identity": {
+      "_merge_state_kernel": {
+        "measured_v2_ast_sha256": "6ad763afdf491e5d930dadb305250cee24f8f47ad6f932a18be3cb0118687339",
+        "repaired_endpoint_ast_sha256": "6ad763afdf491e5d930dadb305250cee24f8f47ad6f932a18be3cb0118687339"
+      },
+      "_score_partition_kernel": {
+        "measured_v2_ast_sha256": "39dfe22a86620671a4453bcdcf5046ad96a6983ae2575ee250e3456e8a63ee21",
+        "repaired_endpoint_ast_sha256": "39dfe22a86620671a4453bcdcf5046ad96a6983ae2575ee250e3456e8a63ee21"
+      },
+      "_value_consumer_kernel": {
+        "measured_v2_ast_sha256": "81f30f052a3353f1432c63c8d381847925bb37218642e6fe3ddfb23c62b9cf8a",
+        "repaired_endpoint_ast_sha256": "81f30f052a3353f1432c63c8d381847925bb37218642e6fe3ddfb23c62b9cf8a"
+      }
+    },
+    "pinned_producer": "TritonAttnBackend.forward_extend passes Q/O shaped views and explicitly contiguous K/V tensors",
+    "rejected_assumption": "full_tensor_contiguity",
+    "required_layout": "rank-3 Q/K/V/O with unit feature stride; token and head strides are passed explicitly to the measured kernels",
+    "route_path": "inputs/endpoint/sitecustomize.py",
+    "route_sha256": "5c68c4bdedef67aaa7874fc7d94d3c8c31dd0c6af54519ef5cee1d4a78fabc15",
+    "scientific_geometry_unchanged": {
+      "batch": 32,
+      "block_m": 16,
+      "direct_fp8_paged_kv": true,
+      "global": {
+        "head_dim": 512,
+        "kv_heads": 4,
+        "prefix_capacity": 4608
+      },
+      "local": {
+        "head_dim": 256,
+        "kv_heads": 16,
+        "window": 1024
+      },
+      "partition_n": 512,
+      "query_heads": 32,
+      "query_tokens": 384
+    },
+    "source_path": "inputs/endpoint/packed_m384_endpoint.py",
+    "source_sha256": "385b23e38024a66986990d8e3ec7d53dd19ff1033b581e18cb32f7a214a7fec0"
+  },
+  "decision": "candidate_only_retained_h100_resume_bound",
+  "director_binding": {
+    "path": "DIRECTOR_H100_PACKED_M384_GRAPH_CAPTURE_REPAIR_20260726T1828Z.json",
+    "sha256": "803290e8b934e4c56635f5afca0e3e7677edd5b08b33275a893f1f07c6c1c923"
+  },
+  "director_must_consume_before_claim": true,
+  "gpu_claim_allowed": false,
+  "inputs": {
+    "checkpoint_bytes": 62578655208,
+    "full_manifest": {
+      "path": "inputs/endpoint/ENDPOINT_INPUT_MANIFEST.json",
+      "sha256": "dd38642d954df86c269f18d6d5a916d587670787593a67beb3d75c01a65f3eb6"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "repair_delta_manifest": {
+      "path": "inputs/endpoint/GRAPH_REPAIR_INPUT_MANIFEST.json",
+      "sha256": "f7bdc6c7fea04824b2b3d26bba0bc67ade6bdac12b1e8c7c7e9e4e401307d7f6"
+    },
+    "retained_checkpoint_path": "/home/glmrunner/gemma4_hopper_packed_m384_endpoint/checkpoint"
+  },
+  "offline_validation": {
+    "candidate_cuda_execution_due_after_readmission": true,
+    "commands": [
+      "python3 reconstruct_control_oracle.py --archive artifacts/endpoint/endpoint-repair2-artifacts.tar.gz --output inputs/endpoint/CONTROL_TOKEN_ORACLE.json",
+      "python3 -m unittest -v test_endpoint_integration.py test_graph_capture_repair.py",
+      "python3 -m py_compile run_graph_repair_owner.py inputs/endpoint/candidate_resume.py inputs/endpoint/token_oracle.py"
+    ],
+    "tests_passed": 7
+  },
+  "persisted_control_oracle": {
+    "control_request_replayed": false,
+    "control_service_seconds_per_request": 0.7142265493124995,
+    "emitted_token_ids_per_request": 358,
+    "join": "raw SSE response id -> token-event rid -> ordered scheduler deltas",
+    "path": "inputs/endpoint/CONTROL_TOKEN_ORACLE.json",
+    "request_identities": 32,
+    "sha256": "5ae3ee1ef81641e778a08063d56cd62c4659470b2da695d8d8bc3e27779dbf7b",
+    "source_archive": "artifacts/endpoint/endpoint-repair2-artifacts.tar.gz",
+    "source_archive_sha256": "8391ac82b788fc311797fe0b61f5369f70897a7d1424ca2cdfb94db50101afd5"
+  },
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "required_director_readmission": {
+    "claim_before_readmission": false,
+    "destination": "GRAPH_CAPTURE_REPAIR_READMISSION.json",
+    "required_fields": {
+      "bench.candidate_release_deadline_utc": "2026-07-26T19:55:00Z",
+      "bench.id": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+      "candidate_only_resume": true,
+      "evidence.graph_capture_repair_ready_sha256": "sha256 of this artifact",
+      "project": "gemma4_hopper_packed_m384_verifier"
+    }
+  },
+  "retained_repair_owner": {
+    "candidate_release_deadline_utc": "2026-07-26T19:55:00Z",
+    "exact_start_command": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--unit-manager",
+      "pid",
+      "--state",
+      "GRAPH_REPAIR_OWNER_STATE.json",
+      "--log",
+      "GRAPH_REPAIR_OWNER_CONTROLLER.log",
+      "--cwd",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier",
+      "--",
+      "python3",
+      "run_graph_repair_owner.py"
+    ],
+    "heartbeat_interval_seconds": 30,
+    "log_path": "GRAPH_REPAIR_OWNER_CONTROLLER.log",
+    "path": "run_graph_repair_owner.py",
+    "repair_generation_policy": "fresh generation per recoverable pre-submission exit; unknown or post-submission state never replays",
+    "sha256": "a1437d951d9e93f7e2111c43480e06d54c0535ce15d3d99ad950d38a7400cec2",
+    "state_path": "GRAPH_REPAIR_OWNER_STATE.json",
+    "unit_manager": "pid"
+  },
+  "schema_version": 1,
+  "type": "packed_m384_graph_capture_repair_ready"
+}

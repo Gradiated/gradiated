@@ -1,4 +1,0 @@
-{
-  "at_utc": "2026-07-24T15:09:39.523568Z",
-  "error": "RuntimeError('typed_pool_boundary:release:usage: gpu_pool.py [-h] --lab LAB\\n                   {list,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...\\ngpu_pool.py: error: cannot read JSON object: [Errno 2] No such file or directory: \\'{\"artifacts\": \"artifacts/state-aging-20260724t145451z\", \"checkpoint\": \"/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.\", \"gpu_processes\": \"true\\\\\\\\n58735, 128608\", \"project\": \"gemma4_h200_ngram_state_aging_discriminator\", \"result\": \"measured_ngram_state_aging_candidate\", \"server_state\": \"Candidate container gemma4-ngram-state-aging remains healthy on port 30000 with its exact instrumentation patch.\"}\\'\\n')"
-}

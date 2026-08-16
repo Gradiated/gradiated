@@ -1,3 +1,0 @@
-Traceback (most recent call last):
-  File "<stdin>", line 9, in <module>
-ValueError: not enough values to unpack (expected 2, got 0)

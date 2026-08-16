@@ -1,9 +1,0 @@
-{
-  "caches": "Checkpoint and image resident; no completed quality capture yet.",
-  "checkpoint": "Bound 8-file, 62578655208-byte exact-revision checkpoint staged and remote-validated after in-place transport repair.",
-  "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a; pulled on the retained bench.",
-  "model": "google/gemma-4-31B-it",
-  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
-  "runtime": "SGLang v0.5.12; BF16-KV server launch/readiness in progress.",
-  "server_state": "BF16-KV container was started; owner is awaiting its readiness predicate before paired raw capture."
-}

@@ -1,0 +1,246 @@
+{
+  "classification": "typed_none",
+  "codec": {
+    "codec_family_swept": false,
+    "decode_table_entries_per_module": 4096,
+    "escape_free_256_symbol_coverage": true,
+    "id": "tensor_huffman12_row32_tile16_v1",
+    "maximum_code_length": 12,
+    "preregistered": true,
+    "row_streams_per_tile": 32,
+    "tile_alignment_bytes": 16,
+    "tile_random_access": true,
+    "tile_shape_k_n": [
+      32,
+      128
+    ]
+  },
+  "complete_analytical_bound": {
+    "assumptions": [
+      "All measured FP8-linear time scales linearly with stored bytes.",
+      "Decoder, lookup, synchronization, shared-memory staging, and integration cost zero.",
+      "No regression in GEMM compute, occupancy, launch count, or cache behavior.",
+      "The non-FP8-linear part of the qualified request is unchanged."
+    ],
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "evidence_class": "derived, deliberately optimistic",
+    "fixed_non_fp8_linear_seconds_per_request": 0.45975358056249493,
+    "maximum_admissible_compressed_path_ratio_at_zero_decoder_cost": 0.2440555866887922,
+    "measured_codec_ratio": 0.8357700419336669,
+    "qualified_seconds_per_request": 0.625149101968745,
+    "target_reached": false,
+    "tile_entropy_ratio_without_any_metadata": 0.8100809858411295,
+    "tile_entropy_zero_metadata_complete_seconds_per_request": 0.5937373475969776,
+    "zero_decoder_complete_gain_fraction": 0.04345027363770546,
+    "zero_decoder_complete_seconds_per_request": 0.5979862024238372,
+    "zero_decoder_fp8_linear_seconds_per_request": 0.13823262186134225,
+    "zero_decoder_margin_to_target_seconds": -0.09786692084884119
+  },
+  "completed_at_utc": "2026-07-27T02:02:06.202804+00:00",
+  "decision": "Close tensor_huffman12_row32_tile16_v1 without H200 spend. The format is lossless and materially compresses the full runtime FP8 stream, but even a zero-cost decoder leaves the qualified request above the locked campaign target.",
+  "decoder_thresholds": {
+    "evidence_class": "analytical from measured bytes and H200 trace",
+    "h200_peak_hbm_full_overlap_bound": {
+      "formula": "HBM_peak/compression_ratio",
+      "minimum_raw_decode_bytes_per_second_to_hide_under_compressed_read": 5743206574974.321
+    },
+    "h200_peak_hbm_serial_bound": {
+      "formula": "HBM_peak/(1-compression_ratio)",
+      "minimum_raw_decode_bytes_per_second_to_beat_dense_transfer": 29227310635135.53,
+      "peak_hbm_bytes_per_second": 4800000000000.0
+    },
+    "to_beat_measured_dense_fp8_boundary": {
+      "assumption": "Every non-decoder FP8-linear second scales with encoded bytes; this grants the codec compute and launch savings it has not measured.",
+      "minimum_compressed_input_bytes_per_second": 1695947555003.796,
+      "minimum_raw_output_bytes_per_second": 2029203572647.7969,
+      "optimistic_nonoverlapped_decoder_budget_seconds_per_request": 0.027162899544907738
+    },
+    "to_reach_campaign_target": {
+      "available_decoder_seconds_per_request": -0.09786692084884119,
+      "feasible": false,
+      "minimum_decoder_throughput": "infinite",
+      "reason": "The zero-cost decoder complete bound already misses the target."
+    }
+  },
+  "direct_inputs": {
+    "accelerator_inventory": {
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "campaign": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "checkpoint_shards": {
+      "model-00001-of-00002.safetensors": {
+        "hardlink_count": 3,
+        "inode": 21222523,
+        "mode_octal": "0o444",
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_current_runtime_frontier/inputs/checkpoint/model-00001-of-00002.safetensors",
+        "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+        "sha256_evidence": "consumed bound full-checkpoint result",
+        "size_bytes": 49784788364
+      },
+      "model-00002-of-00002.safetensors": {
+        "hardlink_count": 3,
+        "inode": 21222527,
+        "mode_octal": "0o444",
+        "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_current_runtime_frontier/inputs/checkpoint/model-00002-of-00002.safetensors",
+        "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+        "sha256_evidence": "consumed bound full-checkpoint result",
+        "size_bytes": 12761549884
+      }
+    },
+    "cpu_reference": {
+      "codec_binary_path": "artifacts/full-checkpoint-huffman12/huffman_tile_codec.so",
+      "codec_binary_sha256": "25dd3dbef38cf35685875f028a46ce5dbfd12d0cd4cf18e3808f22b5bca4cfec",
+      "codec_source_path": "huffman_tile_codec.cpp",
+      "codec_source_sha256": "0917dd68e68ff600f58d487c8eeefaec393a809636c5cfce5f4eea391d0bdff5",
+      "runner_path": "run_offline_codec.py",
+      "runner_sha256": "8d994da6c9bf0b9a8e1512dbe5525d6c59ead8bf0e9485d966c3d627416c12d5"
+    },
+    "full_checkpoint_statistics": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_lossless_fp8_weight_stream_codesign/FULL_CHECKPOINT_STREAM_RESULT.json",
+      "sha256": "16950c9160918898b9f74f727335862a84c9a5f6f10ee3edad34fe2c2e6618f5"
+    },
+    "full_codec_measurement": {
+      "path": "FULL_CHECKPOINT_HUFFMAN12_RESULT.json",
+      "sha256": "9575879ee59fc2b1ff38305a1a96bde2ab674b6edd18c0fc91b8f51dbe8badbe"
+    },
+    "h200_attribution": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/ATTRIBUTION.json",
+      "sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48"
+    },
+    "h200_dispatch_source": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dense_fp8_linear_schedule/inputs/sgl-kernel-v0513/csrc/cutlass_extensions/gemm/fp8_gemm_sm90_dispatch.cuh",
+      "sha256": "4fcb4321942f326761ba5b0a968086acbd458fb57c5429d2706653a94b199620"
+    },
+    "h200_shape_map": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/FP8_LINEAR_SHAPE_MAP.json",
+      "sha256": "7c09e1e336d25fa89bfe8341af4c054af84175fca7a55365ca6528a9beee09e4"
+    },
+    "preregistration": {
+      "path": "PREREGISTERED_CODEC.json",
+      "sha256": "4961c67a7aebd3dc1e6aa7a02ef1ec45830168d2f251be66d90d5a9c7dc52b58"
+    },
+    "project": {
+      "path": "PROJECT.md",
+      "sha256": "7c7478b908fe03122dfa8370c103cb5034cb6da2150f2ed7f9d1c59a531ad81d"
+    }
+  },
+  "execution": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_shards_copied": false,
+    "checkpoint_shards_mutated": false,
+    "codec_families_swept": false,
+    "gpu_claimed": false,
+    "lossy_fallback_used": false,
+    "provider_or_endpoint_used": false,
+    "ssh_used": false
+  },
+  "full_checkpoint_measurement": {
+    "bits_per_weight_all_overheads": 6.686160335469335,
+    "bitwise_equal": true,
+    "bytes_avoided": 4827839856,
+    "compression_ratio": 0.8357700419336669,
+    "decoded_bytes": 29396828160,
+    "encoded_bytes_all_overheads": 24568988304,
+    "encoded_module_manifest_sha256": "71b1547823f3b70c70416c39687c8d909cef05453e7c5864758ceafb26350dd5",
+    "evidence_class": "measured",
+    "fallback_bytes": 0,
+    "mismatched_bytes": 0,
+    "overhead_bytes": 314358171,
+    "payload_bits_per_weight_before_row_and_metadata_overheads": 6.5732652749567935,
+    "producer_rows_replayed_after_aggregation_defect": 0,
+    "runtime_fp8_bytes": 29396828160,
+    "runtime_modules": 240,
+    "storage_components": {
+      "code_lengths_bytes": 61440,
+      "decode_table_bytes": 1966080,
+      "directory_bytes": 28708800,
+      "header_bytes": 61440,
+      "row_length_bytes": 229662720,
+      "row_payload_bytes": 24254630133,
+      "segment_alignment_padding_bytes": 60480,
+      "tile_alignment_padding_bytes": 53837211
+    },
+    "tile_count": 7176960
+  },
+  "h200_dense_consumer": {
+    "bound_is_candidate_favorable": "The absolute FP8-linear charge from the slower profile is subtracted from the faster qualified denominator instead of scaling down its share.",
+    "dominant_kernel": {
+      "cluster": [
+        2,
+        1,
+        1
+      ],
+      "dispatch_bucket": "M>128",
+      "dynamic_shared_memory_bytes": 214016,
+      "epilogue": "ScaledEpilogue_bfloat16",
+      "grid": [
+        132,
+        1,
+        1
+      ],
+      "launches": 14400,
+      "registers_per_thread": 168,
+      "schedule": "KernelTmaWarpSpecializedPingpongFP8FastAccum",
+      "seconds": 4.893305692999999,
+      "threads_per_cta": 384,
+      "tile": [
+        128,
+        128,
+        128
+      ]
+    },
+    "encoded_weight_bytes_per_request": 46066853070.0,
+    "evidence_class": "measured and source-bound",
+    "fp8_linear_seconds_per_request_used_for_bound": 0.16539552140625,
+    "full_weight_stream_passes_in_trace": 60.0,
+    "native_compressed_operand_support": false,
+    "nonoverlapping_fp8_linear_trace_seconds": 5.292656685,
+    "profile_control_seconds_per_request": 0.7051819141250064,
+    "profile_requests": 32,
+    "qualified_seconds_per_request": 0.625149101968745,
+    "raw_weight_bytes_per_request": 55119052800.0,
+    "saved_weight_bytes_per_request": 9052199730.0,
+    "support_observation": "The pinned SGLang/CUTLASS dispatch accepts dense E4M3 operands and selects SM90 TMA warp-specialized WGMMA schedules; no Huffman, entropy, or compressed-operand consumer is present."
+  },
+  "next_action": "Preserve this typed none and do not implement or GPU-test this Huffman realization. A future entropy project requires a materially different campaign question or a representation whose all-in ratio is at most 0.2440555866887922 before decoder cost.",
+  "project": "gemma4_h200_lossless_fp8_entropy_gemm",
+  "schema_version": 1,
+  "sm90_consumer_source_or_none": {
+    "classification": "typed_none",
+    "cpu_reference": {
+      "codec": "huffman_tile_codec.cpp",
+      "consumer_boundary": "32 independently decoded K rows reconstruct the exact K32xN128 E4M3 B tile that would feed the first WGMMA.",
+      "runner": "run_offline_codec.py"
+    },
+    "reason": "The preregistered decision rule requires a real SM90 path only if the physically optimistic complete bound can reach the campaign target. It misses by 0.09786692084884119 seconds/request before any decoder or integration cost, so source implementation cannot change this project's terminal decision.",
+    "source_path": null
+  },
+  "sm90_resource_threshold": {
+    "current_dynamic_shared_memory_bytes": 214016,
+    "current_grid_ctas": 132,
+    "current_registers_per_cta": 64512,
+    "current_registers_per_thread": 168,
+    "current_threads_per_cta": 384,
+    "decode_table_bytes": 8192,
+    "decoder_warp_register_ceiling_with_warp_specialized_allocation": 32,
+    "double_buffer_plus_table_bytes": 16384,
+    "double_buffer_tile_bytes": 8192,
+    "evidence_class": "analytical, not compiled or measured",
+    "expected_occupancy": "one CTA per SM; no second block is resource-admissible",
+    "h200_sms": 132,
+    "overlap_requirement": "The producer warp must decode the next K32xN128 tile while the warpgroup consumes the current tile, with a producer-consumer barrier before the first WGMMA. Any nonoverlapped decode must meet the throughput thresholds above.",
+    "register_disposition": "A fifth uniform 168-register warp is illegal. A viable integration must reuse an existing producer warp or use Hopper warp-specialized allocation with at most 32 registers per added decoder thread and no spills.",
+    "register_file_32bit_registers_per_sm": 65536,
+    "register_headroom": 1024,
+    "remaining_shared_headroom_if_all_are_incremental": 2048,
+    "shared_memory_headroom_bytes": 18432,
+    "shared_memory_limit_bytes_per_cta": 232448,
+    "single_k32_n128_fp8_tile_bytes": 4096,
+    "tile_staging_disposition": "Decode one 32x128 B tile per warp, preferably into the existing CUTLASS B stage. Two 4096-byte stages plus the 8192-byte table fit the raw block limit by only 2048 bytes if all are incremental.",
+    "uniform_register_ceiling_if_adding_one_32_thread_warp": 157
+  }
+}

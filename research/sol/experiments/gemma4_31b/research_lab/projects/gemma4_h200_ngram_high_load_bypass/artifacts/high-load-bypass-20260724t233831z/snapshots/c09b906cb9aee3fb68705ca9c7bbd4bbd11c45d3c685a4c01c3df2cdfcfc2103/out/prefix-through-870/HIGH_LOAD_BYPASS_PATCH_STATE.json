@@ -1,8 +1,0 @@
-{
-  "cache_ownership": "high-load path calls stock non-speculative prepare_for_decode and requires one unique target cache slot per request",
-  "high_load": "ordinary_one_token_greedy_target_decode",
-  "kind": "whole_step_load_adaptive_ngram_bypass",
-  "low_load": "unchanged_depth_12_ngram",
-  "match_state": "erase on both threshold transitions; rebuild from authoritative request tokens through stock NgramCorpus.batch_get on re-entry",
-  "threshold_running_requests": 8
-}

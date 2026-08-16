@@ -1,8 +1,0 @@
-{
-  "returncode": 3,
-  "stage": "provider_create",
-  "stderr_sha256": "0a5acb1ec376bd996131b4d83813346e9be1ea68989614617ab75e4bcae92910",
-  "stderr_tail_redacted": "Error: rpc error: code = InvalidArgument desc = UserData is invalid\nrequest = 2e0ac4b1-68ee-41b5-ad20-cb0ee14b27fd\ncaused by service error:\n  Bad Request BadRequest: service compute, violations:\n    UserData: YAML is invalid: yaml: line 10: could not find expected ':'\n\nThis issue may be linked to API request calls. The following information may be helpful while debugging the issue:\n  Trace ID: 811c202ef539b221f94f1a7e201b3809\n",
-  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-  "stdout_tail_redacted": ""
-}

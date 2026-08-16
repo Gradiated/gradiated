@@ -1,7 +1,0 @@
-{
-  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t1911z-real-c32",
-  "at_utc": "2026-07-24T19:12:05.430652Z",
-  "claim_retained": true,
-  "diagnostic": "Remote ordinary integration/consumer defect retrieved; claim retained.",
-  "repair_deadline_utc": "2026-07-24T19:40:00+00:00"
-}

@@ -1,3 +1,0 @@
-MainPID=0
-ControlGroup=
-ActiveState=inactive

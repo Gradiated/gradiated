@@ -17,9 +17,9 @@ The launch does not include a general model gateway. A request names one exact h
 
 The durable service boundaries and the trigger for introducing shared routing are
 in [ARCHITECTURE.md](ARCHITECTURE.md). For this launch, they mean one TypeScript
-control application, one Rust inference API, and one SGLang deployment for one
-exact Kimi K3 release. PostgreSQL owns product state, while Git owns
-environment-specific deployment configuration.
+codebase running `api` and `worker`, one Rust `gateway`, and one external
+SGLang deployment for one exact Kimi K3 release. PostgreSQL owns product state,
+while Git owns environment-specific deployment configuration.
 
 Explicit first-launch non-goals:
 
@@ -36,17 +36,20 @@ Explicit first-launch non-goals:
 
 ```text
                                       +-----------------------------+
-browser ----------------------------> | Vite + React + shadcn/ui     |
+browser ----------------------------> | TypeScript api              |
+                                      | Vite + Hono + Zod + Drizzle |
                                       +--------------+--------------+
                                                      |
                                                      v
+                                      PostgreSQL / Valkey / ClickHouse
+
                                       +-----------------------------+
-                                      | TypeScript control app      |
-                                      | Hono + Zod + Drizzle        |
+                                      | TypeScript worker           |
+                                      | projection/ingest/settle    |
                                       +--------------+--------------+
                                                      |
                                                      v
-                                               RDS PostgreSQL
+                                      PostgreSQL / Valkey / ClickHouse
 
 direct API key client ----+
                           |
@@ -54,7 +57,7 @@ OpenRouter channel key ----+--------> public ALB
                                            |
                                            v
                                 +------------------------+
-                                | Rust inference API     |
+                                | Rust gateway           |
                                 | auth/admission/SSE     |
                                 | exact model dispatch   |
                                 +-----------+------------+
@@ -64,18 +67,22 @@ OpenRouter channel key ----+--------> public ALB
                                             v
                                 +------------------------+
                                 | SGLang: Kimi K3        |
-                                | provider Kubernetes    |
+                                | external provider K8s  |
                                 | one 8x B300 node       |
                                 +------------------------+
 ```
 
 This is launch topology rather than a separate service specification. There are
-two application services, not a set of microservices:
+three Gradiated processes from two codebases, not a set of domain microservices:
 
-- `control`: TypeScript/Node application API and background jobs;
-- `inference-api`: Rust public inference data plane.
+- `api`: TypeScript HTTP API and built Vite assets in EKS;
+- `worker`: PostgreSQL/Valkey reconciliation, generation ingestion and billing
+  settlement in EKS, using the same TypeScript image as `api`;
+- `gateway`: Rust public inference data plane.
 
-The Vite site is static. PostgreSQL and the load balancer are managed services. SGLang is the model runtime, not a Gradiated service to rewrite at launch.
+SGLang runs on the external provider's B300 node, not in EKS. Its private
+Kubernetes Service is only a stable network address for `gateway`. PostgreSQL
+and the load balancer are managed services.
 
 ## Local development contract
 
@@ -89,9 +96,9 @@ compose.yaml
   valkey                 serving projection, in-flight leases and event stream
   clickhouse             generation analytics projection
   fake-sglang            deterministic OpenAI-compatible model runtime
-  control                TypeScript/Hono application
-  inference-api          Rust hot path
-  web                    Vite development server or built static preview
+  api                    TypeScript/Hono API serving built Vite assets
+  worker                 TypeScript background loops
+  gateway                Rust hot path
 ```
 
 Required command:
@@ -105,9 +112,10 @@ That command migrates/seeds a disposable development database, creates synthetic
 `mprocs` is the fast source-development path. A checked-in `mprocs.yaml` starts:
 
 - PostgreSQL, Valkey, ClickHouse and fake SGLang through Docker Compose;
-- the TypeScript control app in watch mode;
+- the TypeScript API service in watch mode;
+- the TypeScript worker in watch mode;
 - the Vite app in watch mode;
-- the Rust inference API with `cargo watch`;
+- the Rust gateway with `cargo watch`;
 - contract generation/drift checks in a visible pane.
 
 Required command:
@@ -143,7 +151,7 @@ The TypeScript application owns:
 - publishing the small serving snapshot consumed by Rust;
 - writing durable product and usage state to PostgreSQL.
 
-The browser never talks to PostgreSQL. It uses only the generated control client.
+The browser never talks to PostgreSQL. It uses only the generated API client.
 
 ### Rust inference data plane
 
@@ -191,7 +199,7 @@ Zod v4 schemas + route metadata
 
 The committed OpenAPI document is generated output. CI must regenerate it and fail on drift, missing descriptions, duplicate operation IDs, undocumented errors, or a breaking change.
 
-The Rust inference API cannot execute Zod, so the TypeScript contracts package is the authoring source and produces checked-in OpenAPI/JSON Schema plus fixtures. Rust validates the same accepted subset and must pass cross-language golden tests. Rust may use handwritten streaming machinery, but it may not invent fields outside the generated contract.
+The Rust gateway cannot execute Zod, so the TypeScript contracts package is the authoring source and produces checked-in OpenAPI/JSON Schema plus fixtures. Rust validates the same accepted subset and must pass cross-language golden tests. Rust may use handwritten streaming machinery, but it may not invent fields outside the generated contract.
 
 Initial public surfaces:
 
@@ -260,14 +268,16 @@ infra/
       edge/
       registry-secrets/
   charts/
-    control/
-    inference-api/
+    api/
+    worker/
+    gateway/
     sglang-model/
   gitops/
     platform/
     environments/prod/
-      control/
-      inference-api/
+      api/
+      worker/
+      gateway/
       models/kimi-k3/
 ```
 
@@ -280,7 +290,7 @@ Initial AWS resources:
 - ECR repositories for the TypeScript and Rust images;
 - Secrets Manager for database, channel and upstream credentials;
 - Route 53, ACM and one public ALB for product and inference hostnames;
-- CloudWatch logs, alarms and AWS budgets;
+- CloudWatch logs, alarms and AWS budgets, plus Argo-managed Prometheus and Grafana inside EKS;
 - one Amazon ElastiCache Serverless cache using Valkey, provisioned before any inference traffic is enabled.
 
 Do not add RDS Proxy, a service mesh, a separate ingress proxy, a data warehouse, or a workflow engine without a measured trigger.
@@ -377,10 +387,10 @@ Outcome: a direct key and an OpenRouter channel key can make streamed and non-st
 Acceptance:
 
 - generated artifacts have no diff after regeneration;
-- official OpenAI clients pass streaming and non-streaming tests against the Rust API;
+- official OpenAI clients pass streaming and non-streaming tests against the Rust gateway;
 - unsupported parameters produce no upstream request;
 - a revoked test key is denied and cross-workspace access properties pass;
-- browser code imports only the generated control client.
+- browser code imports only the generated API client.
 - `docker compose up --build` and `mprocs --config mprocs.yaml` both pass the same local end-to-end smoke.
 
 ### P2 — AWS foundation and GitOps
@@ -389,7 +399,7 @@ Outcome: EKS, RDS, ECR, Secrets Manager, DNS/TLS and Argo CD are online from Ter
 
 - implement bootstrap/state/OIDC and the five shallow production units;
 - deploy Argo CD root app;
-- deploy `control` and `inference-api` with fake SGLang;
+- deploy `api`, `worker` and `gateway` with fake SGLang;
 - run schema migrations as an explicit release job;
 - configure logs, alarms, budgets, backups and restore smoke tests.
 
@@ -403,7 +413,7 @@ Acceptance:
 
 ### P3 — External B300 and Kimi K3
 
-Outcome: one external Kubernetes B300 node serves pinned Kimi K3 through the Rust API.
+Outcome: one external Kubernetes B300 node serves pinned Kimi K3 through the Rust gateway.
 
 - select provider/region and prove networking to the aligned AWS region;
 - provision the external Kubernetes cluster/node pool;
@@ -494,13 +504,13 @@ We will implement this together in small vertical steps:
 
 1. repository toolchain, generated contracts, Compose, mprocs and fake SGLang;
 2. Vite/React/shadcn app shell and the signup/workspace/key/model/usage screens against generated mock handlers;
-3. TypeScript/Hono control application, PostgreSQL schema and generated OpenAPI/client/docs;
-4. Rust inference API against fake SGLang;
+3. TypeScript/Hono API and worker, PostgreSQL schema and generated OpenAPI/client/docs;
+4. Rust gateway against fake SGLang;
 5. AWS/Terragrunt/Argo foundation;
 6. external B300 Kimi K3 deployment and OpenRouter onboarding;
 7. direct paid admission and billing hardening.
 
-The UI is built against the generated contract rather than waiting for the backend. The TypeScript control implementation then replaces mocks route by route. Rust consumes the same fixtures, so data-plane work cannot silently diverge from the API documentation.
+The UI is built against the generated contract rather than waiting for the backend. The TypeScript API service implementation then replaces mocks route by route. Rust consumes the same fixtures, so data-plane work cannot silently diverge from the API documentation.
 
 ## Complexity triggers
 

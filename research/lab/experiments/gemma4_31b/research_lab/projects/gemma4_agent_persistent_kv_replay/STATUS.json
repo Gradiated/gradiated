@@ -1,0 +1,31 @@
+{
+  "accelerator_requirement": "nvidia-h200-sxm",
+  "active_session": null,
+  "actual_spend_usd": 1.188205,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 12.0,
+  "limitations": [
+    "synthetic deterministic tool-result payloads; no GPU endpoint timing",
+    "calibration uses campaign prefill-share anchor and explicit sensitivity range"
+  ],
+  "next_action": "Close route: cache-positive endpoint measurement failed identical token/tool behavior gate; no retry of consumed arms.",
+  "predecessor": {
+    "decision": "plausible_at_16GiB_affinity_only",
+    "ideal_repeated_prefix_tokens": 481820,
+    "request_tokens": 600735,
+    "sessions": 165,
+    "terminal_artifact": "artifacts/CALIBRATED_DECISION.json",
+    "terminal_sha256": "815c25776e45ff37552e6c73e9850f79c4c4328015b52c118862785fbdf64e66",
+    "turns": 905
+  },
+  "priority": 5950,
+  "provider_mutation": "forbidden_researcher_retained_bench_only",
+  "quality_claim_authorized": false,
+  "researcher_profile": "execution",
+  "status": "complete",
+  "summary": "cache_positive_endpoint_nonoverlap_measured_but_behavior_not_identical",
+  "decision_artifact": "PAID_DECISION.json",
+  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_agent_persistent_kv_replay/artifacts/paid-20260724t000941Z/FINAL_TERMINAL.json",
+  "terminal_sha256": "831ba61c53991b2c2068cf553c4fcce4476bfbfd3267bac3843c2fce667c7b4d",
+  "wall_deadline_utc": "2026-07-24T09:45:00Z"
+}

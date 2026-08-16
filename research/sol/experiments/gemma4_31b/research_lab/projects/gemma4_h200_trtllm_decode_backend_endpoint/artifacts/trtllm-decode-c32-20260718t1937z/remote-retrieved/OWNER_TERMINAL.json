@@ -1,8 +1,0 @@
-{
-  "classification": "startup_failure",
-  "message": "server_not_ready",
-  "pass": false,
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp": "2026-07-18T19:45:03.873635Z"
-}

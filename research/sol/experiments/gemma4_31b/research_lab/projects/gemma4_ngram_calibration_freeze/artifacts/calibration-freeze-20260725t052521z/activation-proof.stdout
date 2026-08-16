@@ -1,6 +1,0 @@
-{
-  "overlay": "calibration_freeze_global_ngram",
-  "overlay_sha256": "645f7c5ec3c93daae904efb6d4853d1116dc7557398b519b9a62e24ec17dd525",
-  "read_path": "unchanged_stock_global_bfs_depth_12",
-  "write_path": "stock_requests_0_31_then_fail_closed_noop"
-}

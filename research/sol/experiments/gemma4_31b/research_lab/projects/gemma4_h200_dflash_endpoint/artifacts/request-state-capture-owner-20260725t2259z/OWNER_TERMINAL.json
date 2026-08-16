@@ -1,8 +1,0 @@
-{
-  "actual_spend_usd": 0.0011954366666666666,
-  "claim_seconds": 1.900062,
-  "classification": "owner_nonrecoverable_boundary",
-  "error": "RuntimeError: packet transfer failed",
-  "remote_run": "/home/glmrunner/gemma4-dflash/request-state-capture/runs/request-state-capture-owner-20260725t2259z-c8f8759e499d",
-  "schema_version": 1
-}

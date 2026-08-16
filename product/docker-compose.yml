@@ -1,0 +1,64 @@
+name: gradiated
+
+services:
+  postgres:
+    image: postgres:17.10-alpine3.23
+    environment:
+      POSTGRES_DB: gradiated
+      POSTGRES_USER: gradiated
+      POSTGRES_PASSWORD: gradiated
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gradiated -d gradiated"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  valkey:
+    image: valkey/valkey:8.1.9-alpine3.24
+    command: ["valkey-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - valkey-data:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:26.7.1-alpine
+    environment:
+      CLICKHOUSE_DB: gradiated
+      CLICKHOUSE_USER: gradiated
+      CLICKHOUSE_PASSWORD: gradiated
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: "1"
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "clickhouse-client",
+          "--user",
+          "gradiated",
+          "--password",
+          "gradiated",
+          "--query",
+          "select 1",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  clickhouse-data:
+  postgres-data:
+  valkey-data:

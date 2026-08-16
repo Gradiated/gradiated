@@ -1,6 +1,0 @@
-{"arm": "local", "at_ns": 1785229866282705327, "state": "first_untimed_begin"}
-{"arm": "local", "at_ns": 1785229866371907892, "state": "baseline_first_untimed_complete"}
-{"arm": "local", "at_ns": 1785229866378146171, "state": "candidate_first_untimed_complete"}
-{"arm": "global", "at_ns": 1785229866648215535, "state": "first_untimed_begin"}
-{"arm": "global", "at_ns": 1785229866651061337, "state": "baseline_first_untimed_complete"}
-{"arm": "global", "at_ns": 1785229866685018560, "state": "candidate_first_untimed_complete"}

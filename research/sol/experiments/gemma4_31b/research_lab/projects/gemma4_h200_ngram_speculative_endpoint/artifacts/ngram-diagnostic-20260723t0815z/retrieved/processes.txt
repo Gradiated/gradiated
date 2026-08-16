@@ -1,6 +1,0 @@
-UID          PID    PPID  C STIME TTY          TIME CMD
-root           1       0 29 08:15 ?        00:00:27 python3 /work/input/endpoint_entrypoint.py --model-path /work/checkpoint --tokenizer-path /work/checkpoint --served-model-name google/gemma-4-31B-it --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e5m2 --host 0.0.0.0 --port 30000 --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85 --enable-metrics --skip-server-warmup --enable-dynamic-chunking --chunked-prefill-size 2048 --enable-fused-qk-norm-rope --cuda-graph-max-bs 32 --prefill-attention-backend triton --decode-attention-backend triton --page-size 1 --num-continuous-decode-steps 1 --triton-attention-num-kv-splits 8 --speculative-algorithm NGRAM
-root         114       1 10 08:15 ?        00:00:07 /usr/bin/python3 -c from multiprocessing.resource_tracker import main;main(27)
-root         115       1 50 08:15 ?        00:00:36 sglang::scheduler
-root         116       1 14 08:15 ?        00:00:10 sglang::detokenizer
-root         515       0 50 08:17 ?        00:00:00 ps -ef

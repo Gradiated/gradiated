@@ -1,7 +1,0 @@
-{
-  "pass": true,
-  "prompt_registry_tokens": 18,
-  "response": "READY",
-  "response_bytes": 454,
-  "repair": "SGLANG_EAGER_INPUT_NO_COPY"
-}

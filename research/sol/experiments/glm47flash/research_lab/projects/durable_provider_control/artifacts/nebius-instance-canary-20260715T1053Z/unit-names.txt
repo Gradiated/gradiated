@@ -1,2 +1,0 @@
-durable-nebius-canary-watchdog-1784105530342151499
-durable-nebius-canary-controller-1784105530342151499

@@ -1,7 +1,0 @@
-{
-  "classification": "typed_presemantic_failure",
-  "error_type": "FileNotFoundError",
-  "instance_id": "computeinstance-e00wve7xyw8gn7n9b9",
-  "message": "[Errno 2] No such file or directory: '/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/model-files.sha256'",
-  "stage": "session_staging"
-}

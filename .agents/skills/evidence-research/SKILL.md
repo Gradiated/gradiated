@@ -18,8 +18,7 @@ Turn an open question into an auditable repository artifact.
 
 ## Workstream routing
 
-- For `research/sol`, read `README.md`, `CONTEXT_HANDOFF.md`, and `AGENTS.md`; preserve exact identity and fail-closed claim gates.
-- For `research/fable`, read `README.md`, `docs/REPORT.md`, and `CLAUDE.md`; preserve calibration labels, ratios, uncertainty, and the lab log convention.
+- For `research/lab`, read `README.md`, `CONTEXT_HANDOFF.md`, and `AGENTS.md`; preserve exact identity and fail-closed claim gates.
 - For a new product question, create a dated decision brief or evidence record rather than an untracked note.
 
 Use [evidence-contract.md](references/evidence-contract.md) for the minimum artifact fields. Never put credentials or private data in a source capture.

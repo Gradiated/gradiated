@@ -1,7 +1,0 @@
-{
-  "classification": "endpoint_reject",
-  "epoch": 1784870065.3260114,
-  "message": "exact-checkpoint coherence failed on all three prompts",
-  "schema_version": 1,
-  "scientific_terminal": "ENDPOINT_TERMINAL.json"
-}

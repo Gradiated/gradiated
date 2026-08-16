@@ -14,7 +14,7 @@ from grad_research.util import ValidationError
 class LegacyAndDemoTests(unittest.TestCase):
     def test_glm_campaign_replays_without_promoting_legacy_claims(self):
         workspace = Path(__file__).resolve().parents[3]
-        ledger = workspace / "research/sol/experiments/glm47flash/campaign_100/CAMPAIGN_LEDGER.jsonl"
+        ledger = workspace / "research/lab/experiments/glm47flash/campaign_100/CAMPAIGN_LEDGER.jsonl"
         source_count = sum(1 for line in ledger.read_text().splitlines() if line.strip())
         with tempfile.TemporaryDirectory() as directory:
             store = EventStore(directory, "glm47-legacy")
@@ -35,7 +35,7 @@ class LegacyAndDemoTests(unittest.TestCase):
 
     def test_key_glm_outcomes_and_final_resume_state_are_normalized(self):
         workspace = Path(__file__).resolve().parents[3]
-        campaign = workspace / "research/sol/experiments/glm47flash/campaign_100"
+        campaign = workspace / "research/lab/experiments/glm47flash/campaign_100"
         status = json.loads((campaign / "CAMPAIGN_STATUS.json").read_text())
         rows = [json.loads(line) for line in (campaign / "CAMPAIGN_LEDGER.jsonl").read_text().splitlines()]
         self.assertEqual("operational_failure", classify_legacy_event(rows[61]))

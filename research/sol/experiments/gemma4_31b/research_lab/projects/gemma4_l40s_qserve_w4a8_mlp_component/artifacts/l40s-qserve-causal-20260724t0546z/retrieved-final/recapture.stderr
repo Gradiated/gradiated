@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/consumer/recapture.py", line 98, in <module>
-    raise SystemExit(main())
-                     ^^^^^^
-  File "/consumer/recapture.py", line 93, in main
-    raise RuntimeError("corrected capture request was nondeterministic")
-RuntimeError: corrected capture request was nondeterministic

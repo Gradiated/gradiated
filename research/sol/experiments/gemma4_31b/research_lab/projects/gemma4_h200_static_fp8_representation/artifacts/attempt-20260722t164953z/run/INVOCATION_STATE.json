@@ -1,9 +1,0 @@
-{
-  "candidate_cuda_invocation_started": true,
-  "completed_rows": [
-    32,
-    2048
-  ],
-  "schema_version": 1,
-  "scientific_invocation_started": true
-}

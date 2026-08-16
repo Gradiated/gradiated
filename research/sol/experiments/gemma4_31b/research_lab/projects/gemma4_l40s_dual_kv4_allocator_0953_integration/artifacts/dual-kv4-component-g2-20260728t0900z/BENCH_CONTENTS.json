@@ -1,7 +1,0 @@
-{
-  "checkpoint": "none",
-  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
-  "predecessor": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/dual-kv4-component-20260728t0837z",
-  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
-  "result": "scientific_terminal_retrieved"
-}

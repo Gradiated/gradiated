@@ -1,8 +1,0 @@
-{
-  "candidate_science_started": false,
-  "classification": "typed_resource_boundary",
-  "message": "candidate_model_load_oom_due_to_resident_async_server_memory",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_unix_s": 1784816715.8205225
-}

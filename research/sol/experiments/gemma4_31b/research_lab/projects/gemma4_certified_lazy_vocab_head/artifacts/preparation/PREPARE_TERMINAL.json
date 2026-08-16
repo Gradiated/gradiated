@@ -1,7 +1,0 @@
-{
-  "binding_sha256": "9ee5bdb940433d37286ba5a325ad6e11766d3b3365fb63b72140fab5cebec2c6",
-  "classification": "prepared_without_cuda",
-  "hidden_proposals_contract": "required_at_claim_time",
-  "schema_version": 1,
-  "weight": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_certified_lazy_vocab_head/../gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/model.safetensors.index.json"
-}

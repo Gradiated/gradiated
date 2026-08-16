@@ -1,3 +1,0 @@
-{"event": "instance_created", "instance_id": "computeinstance-e00themch98wdhdy9m", "timestamp": "2026-07-14T12:14:54.728932Z"}
-{"elapsed_seconds": 82.527, "event": "ssh_ready", "timestamp": "2026-07-14T12:15:39.372543Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-14T12:17:05.026445Z"}

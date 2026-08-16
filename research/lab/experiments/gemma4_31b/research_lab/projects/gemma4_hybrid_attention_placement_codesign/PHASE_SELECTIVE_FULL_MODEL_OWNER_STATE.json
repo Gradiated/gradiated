@@ -1,0 +1,6 @@
+{
+  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/phase-selective-full-model-20260725t2138z",
+  "deadline_utc": "2026-07-26T01:10:00Z",
+  "phase": "full_model_invocation",
+  "remote": "/home/glmrunner/phase-selective-full-model-v2"
+}

@@ -1,8 +1,0 @@
-    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 226
-    fitted ASIC: 3 HBM stacks (72GB, 3.6TB/s, $12400/unit) batch 119
-a4' consolidation 64x8192t2 (shared kept lean): $0.074/Mtok = 0.59x vs codesign, 3.87x vs provider
-
-K2 provider-best generic (H800): $0.474/Mtok
-    fitted ASIC: 8 HBM stacks (192GB, 9.6TB/s, $21400/unit) batch 170
-    fitted ASIC: 4 HBM stacks (96GB, 4.8TB/s, $14200/unit) batch 287
-K2 surgery (incl +DSA +MTP retrofit): 2.96x | ASIC vanilla: 4.33x | co-designed: 11.50x | synergy 0.90

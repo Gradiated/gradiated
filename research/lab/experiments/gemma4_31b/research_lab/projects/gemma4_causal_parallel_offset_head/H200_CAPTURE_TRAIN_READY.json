@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "type": "h200_capture_train_holdout_ready",
+  "ready": true,
+  "provider_create_or_claim_authorized_now": false,
+  "required_director_consumption": true,
+  "owner": {
+    "path": "run_h200_capture_train_owner.py",
+    "sha256": "6994565778b997da7c6231eb07cc5661c4efd0c2d199728a8995ffc3eaf6788c",
+    "durable_controller_command": "python3 /root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state <project-artifact-root>/OWNER_STATE.json --log <project-artifact-root>/owner.log --cwd /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head -- python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/run_h200_capture_train_owner.py --bench <director-assigned-h200-bench> --authorization <director-consumption-receipt.json> --checkpoint-source /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_causal_parallel_offset_head/inputs/checkpoint --deadline-epoch <absolute-epoch> --output-dir <project-artifact-root>",
+    "lifecycle": "The outer owner atomically claims and heartbeats one shared H200 bench. Recoverable pre-science staging, launch, API, and health failures enter the live repair-handshake ready/wait path while the owner remains live; only a typed scientific terminal releases the claim. The detached owner state is recorded as active_session.unit with unit_manager=pid after readmission."
+  },
+  "proven_h200_lifecycle": {
+    "path": "../h200_bf16_exact_linear_floor/h200_linear_owner.py",
+    "sha256": "f54a34b2f09b1dfbf6681c26a6b1dc47628656303601b85ec7c594b7db3aa505",
+    "repair_protocol": "../h200_w4_full_endpoint_background_frontier/BINDINGS.json",
+    "repair_protocol_sha256": "caa363f91c1bd2191facb500b26dd5705485b67afe5d362637bc08b079ffe577"
+  },
+  "scientific_identity": {
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "workload": "exact c32 distribution: 32 requests, 4214 input tokens, 358 output tokens",
+    "checkpoint_tied_weight": "<inventory-bound immutable checkpoint>/model-00001-of-00002.safetensors",
+    "capture_timeout_seconds": 1800,
+    "training_and_holdout_timeout_seconds": 7200
+  },
+  "bindings": {
+    "director_admission": {"path": "DIRECTOR_CAUSAL_HEAD_H200_ADMISSION_20260726T1945Z.json", "sha256": "60a6dd57109623572d24c96b884a09ef3b35426a246e4ac1e17f0c048189db2d"},
+    "experiment_contract": {"path": "EXPERIMENT_CONTRACT.json", "sha256": "31b8fc130859d25a9dc138042254edb60457614056e841b1fdcbb24416622c23"},
+    "split": {"path": "IMMUTABLE_SPLIT.json", "sha256": "2386521bbff340bba2569bb6c0328edcc84e22f308b52c0a0191cfd7123400ee", "train_examples": 4096, "holdout_examples": 512, "request_disjoint": true},
+    "cost_model": {"path": "COST_MODEL.json", "sha256": "4ee31dd7c0f6d407e1e61b148b7d41e54f8bda674e7b953d905d8a816a00ab72", "required_mean_accepted_target_tokens_per_verification": 16.054},
+    "source": {"path": "SOURCE_BINDING.json", "sha256": "b8c3c202126020ada4e272869f787190eca4958e9e69a655504048ac57708951"},
+    "mechanism": {"path": "MECHANISM_BINDING.json", "sha256": "b866484dfcfc564956c4b7fa0cbc0dc634513913cc07972ffccf32fd95d62e4d"},
+    "director_ready_repair": {"path": "DIRECTOR_CAUSAL_HEAD_H200_READY_REPAIR_20260726T1956Z.json", "sha256": "81602ebc94220b9f02c49888e2b2fd01c73935b052db003b52b713d082d59c47"},
+    "director_ready_repair2": {"path": "DIRECTOR_CAUSAL_HEAD_H200_READY_REPAIR2_20260726T2003Z.json", "sha256": "b73d0da55aced0ff0b80c47461ed1c5a4e78f8cf0f9027963af1e23f561be293"}
+    ,"director_ready_repair3": {"path": "DIRECTOR_CAUSAL_HEAD_H200_READY_REPAIR3_20260726T2020Z.json", "sha256": "ff9804229384d4c93cb59da4389195ef82a39ee153d7309b5c982b316c7e4fb8"}
+    ,"checkpoint_manifest": {"path": "CHECKPOINT_MANIFEST.json", "sha256": "6ea47a70ea0a3bcf4e764b3fb6f9e6ef061e4063d8b3b1fb66d0d50b6aa7105f", "source": "project-local inputs/checkpoint at readmission"}
+  },
+  "execution_contract": {
+    "cycles_remaining": 1,
+    "command_graph": "Before capture, the retained owner reconciles CHECKPOINT_MANIFEST.json against the project-local checkpoint source and remote cold bench; it preserves matched immutable files, transfers only mismatches to hash-named temporary paths, verifies size/hash, and atomically finalizes read-only remote files. It persists CHECKPOINT_STAGE.json, then retains the repair-2 capture/training stages and final identity retrieval.",
+    "success_gate": "Only a request-disjoint depth-16 HOLDOUT_RESULT.json at or above 16.054 mean accepted target tokens per verification may be presented to a later director.",
+    "endpoint_pairs_remaining": 0,
+    "endpoint_pair_condition": "No endpoint pair is authorized by this artifact. A later director must separately consume a qualifying holdout."
+  },
+  "precreate_gate": {
+    "required_reservation_usd": 14.0,
+    "receipt_schema": {"project": "gemma4_causal_parallel_offset_head", "reserved_usd": 14.0, "ready_consumed": true},
+    "current_state": "the $14 reservation is durable, but this repaired READY generation remains provider-ineligible until director consumption; no provider mutation, bench claim, or scientific sample has occurred"
+  },
+  "validation": {
+    "owner_py_compile_pass": true,
+    "owner_cli_help_pass": true,
+    "execution_seam_static_pass": true,
+    "paid_stage_preservation_static_pass": true,
+    "checkpoint_staging_static_pass": true,
+    "validation_scope": "local syntax and command-graph binding only; the detached-owner pre-claim relaunch also accepts its precreated state/log directory. CUDA, capture, training, and holdout remain unconsumed"
+  }
+}

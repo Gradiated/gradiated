@@ -1,22 +1,33 @@
-# Proposed product and inference data models
+# Data model
 
-- status: proposed for review
+- status: current implementation authority
 - date: 2026-08-15
 - architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
 - launch plan: [Kimi K3 provider launch](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
-This is the canonical seed data model for the exact-model product. It is not yet a migration contract; migrations should be generated from this document after the review is complete.
+This is the canonical seed data model for the exact-model product. Database
+migrations, runtime schemas and API contracts must preserve the authorities,
+invariants and boundaries defined here. A migration may add implementation
+details such as indexes and constraint names, but it must not introduce a new
+domain model or change an accepted invariant without first updating this
+document.
 
-The proposal removes the old routing, fleet, trace, recommendation, research, alias and third-party-provider models.
+The model deliberately excludes the old routing, fleet, trace, recommendation,
+research, alias and third-party-provider concepts.
 
-## Decisions to review first
+## Accepted launch decisions
 
-1. Represent OpenRouter as an internal `distribution_channel` organization with its own workspace and API key, instead of separate channel credential, catalog, balance and usage tables.
-   this makes sense
-2. Keep the global hosted-model catalog, pricing and availability in PostgreSQL. Keep only environment-specific deployment configuration in Git.
-3. Launch with zero prompt/response retention and no trace tables. Add configurable retention only with a later product decision.
-
-we can start with no trace retention
+- OpenRouter is an internal `distribution_channel` organization with its own
+  workspace and API key. It does not need separate channel credential, catalog,
+  balance or usage tables.
+- PostgreSQL owns the global hosted-model catalog, pricing and availability.
+  Git owns only environment-specific deployment configuration.
+- The launch has universal zero prompt/response retention and no trace tables.
+  Configurable retention requires a later explicit product decision.
+- Organization membership is the human authorization boundary. Workspaces are
+  policy and cost-attribution boundaries available to all active members.
+- Prepaid and invoiced organizations share one balance, admission and settlement
+  design. All internal monetary values use integer nano-USD.
 
 ## Global conventions
 
@@ -220,7 +231,7 @@ Global hosted-model catalog. It is not organization-scoped. The primary key is t
 
 Each input/output modality owns its typed constraints, supported parameters, modality-scoped pricing and advertised capacity. Capability descriptors use the OpenRouter-compatible range, integer, boolean, enum, array, object or unknown grammar. Internal prices use nonnegative integer `cost` under the global nano-USD convention. The provider response converts these values to OpenRouter's decimal-string USD-per-unit pricing fields. This is a closed domain document, not arbitrary metadata.
 
-The TypeScript control application owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current model snapshot through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
+The TypeScript API service owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current model snapshot through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
 
 ## Billing
 
@@ -262,7 +273,7 @@ Immutable history of durable balance movements. This is a customer wallet ledger
 
 A balance mutation locks the account row, inserts the immutable movement and updates `billing_accounts.balance` in one PostgreSQL transaction. Positive amounts add funds and negative amounts consume funds. Usage is aggregated from launch: every terminal generation belongs to one global settlement slot derived from its Valkey Stream ID. All organizations share that slot. For each organization with nonzero usage in the slot, the PostgreSQL settlement worker posts one `generation_settlement_batch` movement whose negative amount is the sum of its generation charges and whose `generation_count` counts those charged generations. Individual generations remain queryable in ClickHouse. An organization with only zero-charge generations produces no PostgreSQL balance transaction.
 
-The settlement worker is a logical background role inside the existing TypeScript `control` deployment. One pod holds a PostgreSQL session advisory lock and acts as leader; standby pods periodically retry, and loss of the database session releases the lock automatically. Launch uses five-minute global slots. A slot ID is a fixed-width, chronologically sortable string containing its UTC start, duration and settlement schema version, for example `20260815T123000Z-300s-v1`. The end is derived from the encoded start and duration. The PostgreSQL source ID for one organization's posting is deterministically `<settlement_slot_id>:<organization_id>`.
+The settlement loop runs inside the TypeScript `worker` deployment. One pod holds a PostgreSQL session advisory lock and acts as leader; standby pods periodically retry, and loss of the database session releases the lock automatically. Launch uses five-minute global slots. A slot ID is a fixed-width, chronologically sortable string containing its UTC start, duration and settlement schema version, for example `20260815T123000Z-300s-v1`. The end is derived from the encoded start and duration. The PostgreSQL source ID for one organization's posting is deterministically `<settlement_slot_id>:<organization_id>`.
 
 On startup, the leader reads the greatest `period_start` where `source_type = 'generation_settlement_batch'`, derives that global slot and resumes it inclusively. If none exists, it asks ClickHouse for the earliest eligible slot. For each slot, one ClickHouse query first collapses retries by generation `id`, then groups the materialized `charge` by materialized `organization_id`. The worker derives every nonzero organization's source ID, queries PostgreSQL for the existing IDs, and computes the missing organizations in memory. Each missing organization is handled in its own short transaction: lock its billing account, insert the immutable usage transaction and update `billing_accounts.balance` only if the insert succeeds. The worker verifies that every nonzero organization in the slot exists in PostgreSQL before moving to the next slot.
 
@@ -304,7 +315,7 @@ There is no projection queue or outbox table. These projections are low-volume, 
 
 Restrictive changes fail closed. API-key revocation, organization suspension, model unavailability or price changes, and negative balance adjustments first block the affected Valkey scope, then commit PostgreSQL, then publish the final state and reopen only when appropriate. A failure leaves that scope blocked. Permissive changes such as key creation, model creation and positive top-ups commit PostgreSQL first, so a projection failure withholds access or credit rather than granting too much.
 
-A background role inside the existing TypeScript `control` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal generation events, wait for or expire in-flight leases, rewrite projections in place and then reopen.
+The reconciliation loop inside the TypeScript `worker` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal generation events, wait for or expire in-flight leases, rewrite projections in place and then reopen.
 
 PostgreSQL-originated money changes are reconciled from immutable `balance_transactions` and applied to Valkey through a versioned Lua script. The script atomically adds the PostgreSQL transaction ID to `AppliedBalanceTransactionIds` and changes `AccountSnapshot.balance` only when the ID was newly added. A lost acknowledgement and retry therefore cannot apply the same top-up, payment, refund, chargeback or operator adjustment twice. The reconciler never overwrites an operational Valkey balance containing terminal usage not yet posted to PostgreSQL. Valkey-originated `generation_settlement_batch` postings do not echo back into Valkey and are never added to this set because Rust already applied their charges.
 
@@ -437,7 +448,7 @@ This versioned closed schema decouples Rust inference from ClickHouse and Postgr
 
 One atomic Valkey finalization consumes the generation's in-flight lease, subtracts its actual charge from the synchronous account balance and appends `GenerationSettled`. The lease is the one-time settlement token: only the finalizer that removes it may charge the account or append the event. There is no reservation event or settled-generation key.
 
-One background role inside the existing TypeScript `control` deployment consumes the stream into ClickHouse and acknowledges each entry only after ClickHouse confirms its insert. A separate logical role in the same deployment pulls eligible global settlement slots from ClickHouse into PostgreSQL; it does not consume or acknowledge the Valkey Stream. These are independently supervised roles in the existing service, not new deployed services.
+The generation-ingest loop inside the TypeScript `worker` deployment consumes the stream into ClickHouse and acknowledges each entry only after ClickHouse confirms its insert. A separately supervised loop in the same worker pulls eligible global settlement slots from ClickHouse into PostgreSQL; it does not consume or acknowledge the Valkey Stream. These loops are not separate deployed services.
 
 The stream has no TTL. Monitor pending-entry age, consumer lag and memory, alert well before capacity pressure, and fail closed on new inference admission if the unacknowledged backlog threatens the cache. Amazon ElastiCache Serverless for Valkey supplies a managed, replicated Multi-AZ transport, but this stream is not treated as a zero-loss financial archive. The accepted launch tradeoff is a rare bounded loss of revenue and telemetry if Valkey loses an unacknowledged event before ClickHouse has it; adding Kafka or another durable broker requires measured evidence that this risk is no longer acceptable.
 
@@ -467,6 +478,8 @@ Valkey key at seed: `account:{settlement-0}:<organization_id>`.
 | `balance`             | bigint                             |
 
 ## 17. `WorkspaceSnapshot`
+
+Valkey key: `workspace:<workspace_id>`.
 
 | Field             | Type               |
 | ----------------- | ------------------ |
@@ -532,7 +545,7 @@ A complete Valkey rebuild closes admission and drains terminal usage until Postg
 
 # Explicitly excluded models
 
-The following existed in older plans and are not part of this proposal:
+The following existed in older plans and are not part of the data model:
 
 - `provider_endpoints`
 - `model_definitions`
@@ -567,22 +580,3 @@ The following existed in older plans and are not part of this proposal:
 - `cells`
 - all research program, campaign and experiment tables
 - a PostgreSQL deployment or fleet registry
-
-# Review checklist
-
-- [ ] Approve or reject unified organization treatment for OpenRouter.
-- [ ] Review the PostgreSQL global model catalog and Git-owned deployment boundary.
-- [ ] Approve or reject universal zero retention at launch.
-- [ ] Review organization roles and the workspace policy boundary.
-- [ ] Review prepaid versus invoiced billing accounts and balance transactions.
-- [ ] Review the global integer nano-USD convention and concise monetary field names.
-- [ ] Review immutable per-generation pricing snapshots and exact component-sum invariant.
-- [ ] Review the ClickHouse generation schema, ordering key and retention policy.
-- [ ] Review the Valkey Stream generation-event transport and consumer acknowledgement rules.
-- [ ] Review global-slot ClickHouse-to-PostgreSQL settlement, advisory-lock leadership and idempotent replay.
-- [ ] Review generation-ID collapse and conflicting-duplicate detection before financial aggregation.
-- [ ] Confirm generation fields retain no prompts or responses.
-- [ ] Review PostgreSQL-to-Valkey projection, rebuild and propagation-SLO rules.
-- [ ] Review Valkey snapshots, in-flight concurrency leases and bounded-overdraft policy.
-- [ ] Review applied balance-transaction IDs and atomic PostgreSQL-to-Valkey money projection.
-- [ ] Confirm excluded models should remain excluded.

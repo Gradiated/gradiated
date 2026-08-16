@@ -1,2 +1,0 @@
-{"error_type": "MicrobenchControlError", "event": "experiment_error", "message": "instance create failed with exit 3", "timestamp": "2026-07-17T06:48:49.120100Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "timestamp": "2026-07-17T06:48:49.120503Z"}

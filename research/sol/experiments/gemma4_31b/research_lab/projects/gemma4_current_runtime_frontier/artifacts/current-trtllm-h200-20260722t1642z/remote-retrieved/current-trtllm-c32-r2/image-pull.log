@@ -1,4 +1,0 @@
-nvcr.io/nvidia/tensorrt-llm/release@sha256:7202108ab373557e0562f78ef3c0f65bdc70e18cc0b040c8d6805a5cde897a0d: Pulling from nvidia/tensorrt-llm/release
-Digest: sha256:7202108ab373557e0562f78ef3c0f65bdc70e18cc0b040c8d6805a5cde897a0d
-Status: Image is up to date for nvcr.io/nvidia/tensorrt-llm/release@sha256:7202108ab373557e0562f78ef3c0f65bdc70e18cc0b040c8d6805a5cde897a0d
-nvcr.io/nvidia/tensorrt-llm/release:1.2.0@sha256:7202108ab373557e0562f78ef3c0f65bdc70e18cc0b040c8d6805a5cde897a0d

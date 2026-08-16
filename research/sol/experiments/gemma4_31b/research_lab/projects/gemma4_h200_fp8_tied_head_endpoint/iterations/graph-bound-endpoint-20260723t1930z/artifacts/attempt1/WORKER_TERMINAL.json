@@ -1,7 +1,0 @@
-{
-  "classification": "graph_boundary_reject",
-  "message": "required_post_graph_e4m3_path_not_proven",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T19:43:52.346032Z"
-}

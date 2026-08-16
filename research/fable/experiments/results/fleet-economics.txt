@@ -1,9 +1,0 @@
-demand: mean 93, peak 145 GPU-h/h  (peak/mean 1.56)
-strategy                                     $/GPU-h-work  res util   ok?
-interactive (peak-sized, no deferral)                4.13      56% yes
-batch reserved=1.0x-mean, deadline 12h                2.32      99% yes
-batch reserved=0.9x-mean, deadline 12h                2.31     100% LATE
-batch reserved=0.8x-mean, deadline 24h                2.30     100% LATE
-batch hybrid res=0.7x-mean + spot, dl 12h            1.96      98% yes
-batch hybrid res=0.6x-mean + spot, dl 24h            1.82     100% yes
-batch hybrid res=0.5x-mean + spot, dl 24h            1.75     100% LATE

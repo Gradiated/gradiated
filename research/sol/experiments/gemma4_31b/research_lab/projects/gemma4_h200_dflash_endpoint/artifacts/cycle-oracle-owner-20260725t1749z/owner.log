@@ -1,2 +1,0 @@
-scp: local "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/cycle-oracle-owner-20260725t1749z/packet/." is not a regular file
-scp: failed to upload file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/cycle-oracle-owner-20260725t1749z/packet/. to /home/glmrunner/gemma4-dflash/cycle-project/

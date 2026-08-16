@@ -1,4 +1,0 @@
-{
-  "repair": "Use sudo truncate for the container-owned accepted-depth audit file and add the fused-kernel symbol to the target dispatch audit, with identical model, workload, sampling, and proposal contract.",
-  "requested_at_utc": "2026-07-23T05:10:00Z"
-}

@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "run_id": "glm47-observer-diagnostic-l40s-v15",
-  "failure_class": "operational_failure",
-  "stage": "host_bootstrap_shell_parse_failure_before_checkpoint_transfer",
-  "message": "The tagged L40S instance reached SSH/cloud-init readiness and the pinned runtime capability bootstrap verified the L40S, CUDA, vLLM, Transformers, and Nsight Systems installation through derived-image construction. The host bootstrap then exited with Bash reporting an unexpected EOF while looking for a matching double quote at line 125. No checkpoint transfer, model load, inference request, scored arm, deep profile, or scientific result occurred. The controller skipped an unchanged retry, cleaned the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
-}

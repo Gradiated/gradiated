@@ -1,9 +1,0 @@
-{
-  "packet_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/h100_execution_owner.py",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/h100_execution_owner.py",
-  "ready_sha256": "fc47af9918e2e021bc9b7dbbcfbc3c06f4dd2a6eb519fad1662b577cb0592811",
-  "requested_at_utc": "2026-07-25T06:52:52.529301Z",
-  "retry_scope": "Retry only remote official image/server startup and the unstarted 171-request discriminator; preserve staged checkpoint and packet bytes; endpoint remains conditional.",
-  "schema_version": 1,
-  "state": "repair_requested"
-}

@@ -1,0 +1,632 @@
+{
+  "cheapest_exact_shape_falsifier": {
+    "candidate": "same current vLLM commit, CUTLASS SM100 NVFP4 dynamic activation quantization, fused SiLU*up-to-NVFP4, and NVFP4 weights",
+    "correctness": "finite outputs plus cosine similarity and normalized RMSE against the same BF16 synthetic exact-shape MLP; this is a kernel oracle, not a model-quality qualification",
+    "counters": [
+      "dram__bytes_read.sum",
+      "dram__bytes_write.sum",
+      "sm__cycles_active.avg",
+      "smsp__inst_executed.sum"
+    ],
+    "current_authorized_spend_usd": 0.0,
+    "exact_rows": [
+      {
+        "down_nk": [
+          5376,
+          21504
+        ],
+        "gate_up_nk": [
+          43008,
+          5376
+        ],
+        "m": 32
+      },
+      {
+        "down_nk": [
+          5376,
+          21504
+        ],
+        "gate_up_nk": [
+          43008,
+          5376
+        ],
+        "m": 384
+      }
+    ],
+    "expected_measurement_wall_minutes": 8,
+    "hardware": "one B200 SM100 with at least 4 GiB free HBM",
+    "maximum_provider_exposure_minutes": 12,
+    "maximum_spend_usd_at_5_15_per_hour": 1.03,
+    "predicted_physical_change": "MLP static value+scale bytes fall 43.75% versus dense FP8; dram__bytes_read.sum should fall in the projection regions, while M32 exposes 4x activation-scale row padding and M384 tests saturation.",
+    "reopen_gate": "Do not run merely to test the closed MLP-only route. Reopen only after an exact Gemma all-linear quality recovery or another current supported coverage that preserves at least 30% non-overlapping text-linear bytes.",
+    "runner": "b200_nvfp4_exact_shape_falsifier.py",
+    "runner_sha256": "52705e3e6ec4fee1b54b315ae27ea25c1ac51e0c95fcc8d491a453da1deef470",
+    "runtime_build": "Build vLLM revision d30b1ecd... from its Dockerfile (CUDA 13.0.3) and resolve the resulting image digest before any claim.",
+    "source_identity": {
+      "files": {
+        "csrc/libtorch_stable/quantization/fp4/nvfp4_scaled_mm_kernels.cu": "91a85bfdbdd46d9a6a2d934428af0a25d1f1d3361a42d79fe632f55759fc63e3",
+        "vllm/_custom_ops.py": "63f5af42eb0326f3d0b8ce18f71164f24530a7b2c805da1d3e39838f230e86b4",
+        "vllm/model_executor/kernels/linear/nvfp4/cutlass.py": "a0e5e3c25c19c351aa5c8a25346a6c01f1618745bbb2ace4e2f9d8a9200d7146",
+        "vllm/model_executor/layers/quantization/modelopt.py": "6732d6c46718f9f0a98ca1fd04ed730ac299c4f506b62adfd5029c8112a93207"
+      },
+      "revision": "d30b1ecd1bdf7c3d92f3b444c4538efd8fbb40ac",
+      "url": "https://github.com/vllm-project/vllm"
+    },
+    "status": "implemented_reopen_only_not_authorized",
+    "strongest_supported_baseline": "same current vLLM commit, CUTLASS SM100 FP8 dynamic activation quantization plus static FP8 weights"
+  },
+  "classification": "current_quality_backed_mlp_only_nvfp4_scope_insufficient",
+  "current_producer_consumer_path": {
+    "consumer": {
+      "abi": "cutlass_scaled_fp4_mm(A_fp4, B_fp4, SFA_ue4m3, SFB_ue4m3, alpha_fp32, BF16)",
+      "architecture": "CUTLASS OpClassBlockScaledTensorOp, ArchTag Sm100",
+      "forced_backend": "--linear-backend cutlass",
+      "loader": "ModelOptNvFp4LinearMethod",
+      "m32_tile": {
+        "cluster": [
+          2,
+          1,
+          1
+        ],
+        "per_sm_tile_mnk": [
+          128,
+          128,
+          256
+        ],
+        "scheduler": "non-persistent",
+        "tile_mnk": [
+          256,
+          128,
+          256
+        ]
+      },
+      "m384_tile": {
+        "cluster": [
+          2,
+          1,
+          1
+        ],
+        "per_sm_tile_mnk": [
+          128,
+          256,
+          256
+        ],
+        "scheduler": "PersistentScheduler",
+        "tile_mnk": [
+          256,
+          256,
+          256
+        ]
+      }
+    },
+    "identities": {
+      "cutlass": {
+        "dispatch_policy_sha256": "fcce5fffb3118b15fea5aa59e39bea15ddd18c28c858b434ced889045968117c",
+        "revision": "e64a9136dd929639e5f7c969fe5af3bf7415cd4f",
+        "url": "https://github.com/NVIDIA/cutlass"
+      },
+      "modelopt": {
+        "files": {
+          "modelopt_recipes/configs/numerics/nvfp4.yaml": "cea91c0276a335195b8f515623360d14a2df8458128b2507bf2ffd6488fa1768",
+          "modelopt_recipes/configs/ptq/presets/model/nvfp4.yaml": "d3652a3caaa8613d8400f459e388ae647ab1f7668d96177ad87d5f0ba0f2a8fd",
+          "modelopt_recipes/configs/ptq/units/w4a4_nvfp4_nvfp4.yaml": "2682bc6150b295646f9d3061feb2963680cd62d216b9ff5619eebd3f75a1e0dc"
+        },
+        "revision": "d143276c39a995edea89dd98224bd423bce80867",
+        "url": "https://github.com/NVIDIA/Model-Optimizer"
+      },
+      "nvidia_nvfp4_checkpoint": {
+        "coverage": "MLP projections only; lm_head, vision, and every attention projection are ignored",
+        "group_size": 16,
+        "index_total_size_bytes": 32633255032,
+        "kv_cache": "FP8",
+        "producer": {
+          "name": "modelopt",
+          "version": "0.37.0"
+        },
+        "quant_algo": "NVFP4",
+        "repo": "nvidia/Gemma-4-31B-IT-NVFP4",
+        "retrieved_utc": "2026-07-26T00:20:00Z",
+        "revision": "4135a98a9b728a548947683219633b25682223ac",
+        "url": "https://huggingface.co/nvidia/Gemma-4-31B-IT-NVFP4",
+        "used_storage_bytes": 32665647434
+      },
+      "vllm": {
+        "files": {
+          "csrc/libtorch_stable/quantization/fp4/nvfp4_scaled_mm_kernels.cu": "91a85bfdbdd46d9a6a2d934428af0a25d1f1d3361a42d79fe632f55759fc63e3",
+          "vllm/_custom_ops.py": "63f5af42eb0326f3d0b8ce18f71164f24530a7b2c805da1d3e39838f230e86b4",
+          "vllm/model_executor/kernels/linear/nvfp4/cutlass.py": "a0e5e3c25c19c351aa5c8a25346a6c01f1618745bbb2ace4e2f9d8a9200d7146",
+          "vllm/model_executor/layers/quantization/modelopt.py": "6732d6c46718f9f0a98ca1fd04ed730ac299c4f506b62adfd5029c8112a93207"
+        },
+        "revision": "d30b1ecd1bdf7c3d92f3b444c4538efd8fbb40ac",
+        "url": "https://github.com/vllm-project/vllm"
+      }
+    },
+    "producer": {
+      "adjacent_epilogue": "gate/up GEMM writes BF16; SiLU-and-multiply followed by down-input quantization can fuse as torch.ops._C.silu_and_mul_nvfp4_quant",
+      "offline": "ModelOpt 0.37.0 max PTQ; E2M1 values, one E4M3 scale per 16 values, plus per-tensor FP32 double scales",
+      "runtime_activation": "vllm._custom_ops.scaled_fp4_quant; BF16/FP16 to packed E2M1 plus swizzled UE4M3 block scales"
+    }
+  },
+  "decision": "Do not provision B200 for this current Gemma-specific NVFP4 route. The executable quality-backed path is MLP-only; its BF16 attention exclusions leave only a 4.095% text-linear weight-byte reduction against the retained dense-FP8 comparator. The all-linear NVFP4 counterfactual has useful traffic geometry but no exact Gemma quality recovery.",
+  "exact_geometry": {
+    "affected_exact_tensors": {
+      "count": 180,
+      "index_tensor_count": 1188,
+      "names": [
+        "model.language_model.layers.0.mlp.gate_proj.weight",
+        "model.language_model.layers.0.mlp.up_proj.weight",
+        "model.language_model.layers.0.mlp.down_proj.weight",
+        "model.language_model.layers.1.mlp.gate_proj.weight",
+        "model.language_model.layers.1.mlp.up_proj.weight",
+        "model.language_model.layers.1.mlp.down_proj.weight",
+        "model.language_model.layers.2.mlp.gate_proj.weight",
+        "model.language_model.layers.2.mlp.up_proj.weight",
+        "model.language_model.layers.2.mlp.down_proj.weight",
+        "model.language_model.layers.3.mlp.gate_proj.weight",
+        "model.language_model.layers.3.mlp.up_proj.weight",
+        "model.language_model.layers.3.mlp.down_proj.weight",
+        "model.language_model.layers.4.mlp.gate_proj.weight",
+        "model.language_model.layers.4.mlp.up_proj.weight",
+        "model.language_model.layers.4.mlp.down_proj.weight",
+        "model.language_model.layers.5.mlp.gate_proj.weight",
+        "model.language_model.layers.5.mlp.up_proj.weight",
+        "model.language_model.layers.5.mlp.down_proj.weight",
+        "model.language_model.layers.6.mlp.gate_proj.weight",
+        "model.language_model.layers.6.mlp.up_proj.weight",
+        "model.language_model.layers.6.mlp.down_proj.weight",
+        "model.language_model.layers.7.mlp.gate_proj.weight",
+        "model.language_model.layers.7.mlp.up_proj.weight",
+        "model.language_model.layers.7.mlp.down_proj.weight",
+        "model.language_model.layers.8.mlp.gate_proj.weight",
+        "model.language_model.layers.8.mlp.up_proj.weight",
+        "model.language_model.layers.8.mlp.down_proj.weight",
+        "model.language_model.layers.9.mlp.gate_proj.weight",
+        "model.language_model.layers.9.mlp.up_proj.weight",
+        "model.language_model.layers.9.mlp.down_proj.weight",
+        "model.language_model.layers.10.mlp.gate_proj.weight",
+        "model.language_model.layers.10.mlp.up_proj.weight",
+        "model.language_model.layers.10.mlp.down_proj.weight",
+        "model.language_model.layers.11.mlp.gate_proj.weight",
+        "model.language_model.layers.11.mlp.up_proj.weight",
+        "model.language_model.layers.11.mlp.down_proj.weight",
+        "model.language_model.layers.12.mlp.gate_proj.weight",
+        "model.language_model.layers.12.mlp.up_proj.weight",
+        "model.language_model.layers.12.mlp.down_proj.weight",
+        "model.language_model.layers.13.mlp.gate_proj.weight",
+        "model.language_model.layers.13.mlp.up_proj.weight",
+        "model.language_model.layers.13.mlp.down_proj.weight",
+        "model.language_model.layers.14.mlp.gate_proj.weight",
+        "model.language_model.layers.14.mlp.up_proj.weight",
+        "model.language_model.layers.14.mlp.down_proj.weight",
+        "model.language_model.layers.15.mlp.gate_proj.weight",
+        "model.language_model.layers.15.mlp.up_proj.weight",
+        "model.language_model.layers.15.mlp.down_proj.weight",
+        "model.language_model.layers.16.mlp.gate_proj.weight",
+        "model.language_model.layers.16.mlp.up_proj.weight",
+        "model.language_model.layers.16.mlp.down_proj.weight",
+        "model.language_model.layers.17.mlp.gate_proj.weight",
+        "model.language_model.layers.17.mlp.up_proj.weight",
+        "model.language_model.layers.17.mlp.down_proj.weight",
+        "model.language_model.layers.18.mlp.gate_proj.weight",
+        "model.language_model.layers.18.mlp.up_proj.weight",
+        "model.language_model.layers.18.mlp.down_proj.weight",
+        "model.language_model.layers.19.mlp.gate_proj.weight",
+        "model.language_model.layers.19.mlp.up_proj.weight",
+        "model.language_model.layers.19.mlp.down_proj.weight",
+        "model.language_model.layers.20.mlp.gate_proj.weight",
+        "model.language_model.layers.20.mlp.up_proj.weight",
+        "model.language_model.layers.20.mlp.down_proj.weight",
+        "model.language_model.layers.21.mlp.gate_proj.weight",
+        "model.language_model.layers.21.mlp.up_proj.weight",
+        "model.language_model.layers.21.mlp.down_proj.weight",
+        "model.language_model.layers.22.mlp.gate_proj.weight",
+        "model.language_model.layers.22.mlp.up_proj.weight",
+        "model.language_model.layers.22.mlp.down_proj.weight",
+        "model.language_model.layers.23.mlp.gate_proj.weight",
+        "model.language_model.layers.23.mlp.up_proj.weight",
+        "model.language_model.layers.23.mlp.down_proj.weight",
+        "model.language_model.layers.24.mlp.gate_proj.weight",
+        "model.language_model.layers.24.mlp.up_proj.weight",
+        "model.language_model.layers.24.mlp.down_proj.weight",
+        "model.language_model.layers.25.mlp.gate_proj.weight",
+        "model.language_model.layers.25.mlp.up_proj.weight",
+        "model.language_model.layers.25.mlp.down_proj.weight",
+        "model.language_model.layers.26.mlp.gate_proj.weight",
+        "model.language_model.layers.26.mlp.up_proj.weight",
+        "model.language_model.layers.26.mlp.down_proj.weight",
+        "model.language_model.layers.27.mlp.gate_proj.weight",
+        "model.language_model.layers.27.mlp.up_proj.weight",
+        "model.language_model.layers.27.mlp.down_proj.weight",
+        "model.language_model.layers.28.mlp.gate_proj.weight",
+        "model.language_model.layers.28.mlp.up_proj.weight",
+        "model.language_model.layers.28.mlp.down_proj.weight",
+        "model.language_model.layers.29.mlp.gate_proj.weight",
+        "model.language_model.layers.29.mlp.up_proj.weight",
+        "model.language_model.layers.29.mlp.down_proj.weight",
+        "model.language_model.layers.30.mlp.gate_proj.weight",
+        "model.language_model.layers.30.mlp.up_proj.weight",
+        "model.language_model.layers.30.mlp.down_proj.weight",
+        "model.language_model.layers.31.mlp.gate_proj.weight",
+        "model.language_model.layers.31.mlp.up_proj.weight",
+        "model.language_model.layers.31.mlp.down_proj.weight",
+        "model.language_model.layers.32.mlp.gate_proj.weight",
+        "model.language_model.layers.32.mlp.up_proj.weight",
+        "model.language_model.layers.32.mlp.down_proj.weight",
+        "model.language_model.layers.33.mlp.gate_proj.weight",
+        "model.language_model.layers.33.mlp.up_proj.weight",
+        "model.language_model.layers.33.mlp.down_proj.weight",
+        "model.language_model.layers.34.mlp.gate_proj.weight",
+        "model.language_model.layers.34.mlp.up_proj.weight",
+        "model.language_model.layers.34.mlp.down_proj.weight",
+        "model.language_model.layers.35.mlp.gate_proj.weight",
+        "model.language_model.layers.35.mlp.up_proj.weight",
+        "model.language_model.layers.35.mlp.down_proj.weight",
+        "model.language_model.layers.36.mlp.gate_proj.weight",
+        "model.language_model.layers.36.mlp.up_proj.weight",
+        "model.language_model.layers.36.mlp.down_proj.weight",
+        "model.language_model.layers.37.mlp.gate_proj.weight",
+        "model.language_model.layers.37.mlp.up_proj.weight",
+        "model.language_model.layers.37.mlp.down_proj.weight",
+        "model.language_model.layers.38.mlp.gate_proj.weight",
+        "model.language_model.layers.38.mlp.up_proj.weight",
+        "model.language_model.layers.38.mlp.down_proj.weight",
+        "model.language_model.layers.39.mlp.gate_proj.weight",
+        "model.language_model.layers.39.mlp.up_proj.weight",
+        "model.language_model.layers.39.mlp.down_proj.weight",
+        "model.language_model.layers.40.mlp.gate_proj.weight",
+        "model.language_model.layers.40.mlp.up_proj.weight",
+        "model.language_model.layers.40.mlp.down_proj.weight",
+        "model.language_model.layers.41.mlp.gate_proj.weight",
+        "model.language_model.layers.41.mlp.up_proj.weight",
+        "model.language_model.layers.41.mlp.down_proj.weight",
+        "model.language_model.layers.42.mlp.gate_proj.weight",
+        "model.language_model.layers.42.mlp.up_proj.weight",
+        "model.language_model.layers.42.mlp.down_proj.weight",
+        "model.language_model.layers.43.mlp.gate_proj.weight",
+        "model.language_model.layers.43.mlp.up_proj.weight",
+        "model.language_model.layers.43.mlp.down_proj.weight",
+        "model.language_model.layers.44.mlp.gate_proj.weight",
+        "model.language_model.layers.44.mlp.up_proj.weight",
+        "model.language_model.layers.44.mlp.down_proj.weight",
+        "model.language_model.layers.45.mlp.gate_proj.weight",
+        "model.language_model.layers.45.mlp.up_proj.weight",
+        "model.language_model.layers.45.mlp.down_proj.weight",
+        "model.language_model.layers.46.mlp.gate_proj.weight",
+        "model.language_model.layers.46.mlp.up_proj.weight",
+        "model.language_model.layers.46.mlp.down_proj.weight",
+        "model.language_model.layers.47.mlp.gate_proj.weight",
+        "model.language_model.layers.47.mlp.up_proj.weight",
+        "model.language_model.layers.47.mlp.down_proj.weight",
+        "model.language_model.layers.48.mlp.gate_proj.weight",
+        "model.language_model.layers.48.mlp.up_proj.weight",
+        "model.language_model.layers.48.mlp.down_proj.weight",
+        "model.language_model.layers.49.mlp.gate_proj.weight",
+        "model.language_model.layers.49.mlp.up_proj.weight",
+        "model.language_model.layers.49.mlp.down_proj.weight",
+        "model.language_model.layers.50.mlp.gate_proj.weight",
+        "model.language_model.layers.50.mlp.up_proj.weight",
+        "model.language_model.layers.50.mlp.down_proj.weight",
+        "model.language_model.layers.51.mlp.gate_proj.weight",
+        "model.language_model.layers.51.mlp.up_proj.weight",
+        "model.language_model.layers.51.mlp.down_proj.weight",
+        "model.language_model.layers.52.mlp.gate_proj.weight",
+        "model.language_model.layers.52.mlp.up_proj.weight",
+        "model.language_model.layers.52.mlp.down_proj.weight",
+        "model.language_model.layers.53.mlp.gate_proj.weight",
+        "model.language_model.layers.53.mlp.up_proj.weight",
+        "model.language_model.layers.53.mlp.down_proj.weight",
+        "model.language_model.layers.54.mlp.gate_proj.weight",
+        "model.language_model.layers.54.mlp.up_proj.weight",
+        "model.language_model.layers.54.mlp.down_proj.weight",
+        "model.language_model.layers.55.mlp.gate_proj.weight",
+        "model.language_model.layers.55.mlp.up_proj.weight",
+        "model.language_model.layers.55.mlp.down_proj.weight",
+        "model.language_model.layers.56.mlp.gate_proj.weight",
+        "model.language_model.layers.56.mlp.up_proj.weight",
+        "model.language_model.layers.56.mlp.down_proj.weight",
+        "model.language_model.layers.57.mlp.gate_proj.weight",
+        "model.language_model.layers.57.mlp.up_proj.weight",
+        "model.language_model.layers.57.mlp.down_proj.weight",
+        "model.language_model.layers.58.mlp.gate_proj.weight",
+        "model.language_model.layers.58.mlp.up_proj.weight",
+        "model.language_model.layers.58.mlp.down_proj.weight",
+        "model.language_model.layers.59.mlp.gate_proj.weight",
+        "model.language_model.layers.59.mlp.up_proj.weight",
+        "model.language_model.layers.59.mlp.down_proj.weight"
+      ]
+    },
+    "full_attention_layers": 10,
+    "head_dim": 256,
+    "hidden": 5376,
+    "intermediate": 21504,
+    "kv_heads": 16,
+    "layers": 60,
+    "merged_projection_shapes_mkn": {
+      "ordinary_decode_m32": [
+        [
+          32,
+          43008,
+          5376
+        ],
+        [
+          32,
+          5376,
+          21504
+        ],
+        [
+          32,
+          16384,
+          5376
+        ],
+        [
+          32,
+          5376,
+          8192
+        ]
+      ],
+      "target_verification_proxy_m384": [
+        [
+          384,
+          43008,
+          5376
+        ],
+        [
+          384,
+          5376,
+          21504
+        ],
+        [
+          384,
+          16384,
+          5376
+        ],
+        [
+          384,
+          5376,
+          8192
+        ]
+      ]
+    },
+    "q_heads": 32,
+    "sliding_attention_layers": 50,
+    "sliding_window": 1024,
+    "tied_embeddings": true,
+    "vocab": 262144,
+    "weight_families": [
+      {
+        "bf16_bytes_per_layer": 462422016,
+        "cutlass_alignment": {
+          "k_multiple_32": true,
+          "n_multiple_32": true,
+          "scale_padding_bytes": 0
+        },
+        "dense_fp8_bytes_per_layer": 231211008,
+        "elements_per_layer": 231211008,
+        "k": 5376,
+        "n": 43008,
+        "name": "merged_gate_up",
+        "nvfp4_total_bytes_per_layer_excluding_two_global_scalars": 130056192,
+        "nvfp4_ue4m3_scale_bytes_per_layer": 14450688,
+        "nvfp4_value_bytes_per_layer": 115605504
+      },
+      {
+        "bf16_bytes_per_layer": 231211008,
+        "cutlass_alignment": {
+          "k_multiple_32": true,
+          "n_multiple_32": true,
+          "scale_padding_bytes": 0
+        },
+        "dense_fp8_bytes_per_layer": 115605504,
+        "elements_per_layer": 115605504,
+        "k": 21504,
+        "n": 5376,
+        "name": "down",
+        "nvfp4_total_bytes_per_layer_excluding_two_global_scalars": 65028096,
+        "nvfp4_ue4m3_scale_bytes_per_layer": 7225344,
+        "nvfp4_value_bytes_per_layer": 57802752
+      },
+      {
+        "bf16_bytes_per_layer": 176160768,
+        "cutlass_alignment": {
+          "k_multiple_32": true,
+          "n_multiple_32": true,
+          "scale_padding_bytes": 0
+        },
+        "dense_fp8_bytes_per_layer": 88080384,
+        "elements_per_layer": 88080384,
+        "k": 5376,
+        "n": 16384,
+        "name": "merged_qkv",
+        "nvfp4_total_bytes_per_layer_excluding_two_global_scalars": 49545216,
+        "nvfp4_ue4m3_scale_bytes_per_layer": 5505024,
+        "nvfp4_value_bytes_per_layer": 44040192
+      },
+      {
+        "bf16_bytes_per_layer": 88080384,
+        "cutlass_alignment": {
+          "k_multiple_32": true,
+          "n_multiple_32": true,
+          "scale_padding_bytes": 0
+        },
+        "dense_fp8_bytes_per_layer": 44040192,
+        "elements_per_layer": 44040192,
+        "k": 8192,
+        "n": 5376,
+        "name": "o",
+        "nvfp4_total_bytes_per_layer_excluding_two_global_scalars": 24772608,
+        "nvfp4_ue4m3_scale_bytes_per_layer": 2752512,
+        "nvfp4_value_bytes_per_layer": 22020096
+      }
+    ]
+  },
+  "inputs": {
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_b200_blockscaled_fp4_codesign/b200_blockscaled_fp4_screen.py": "e9f770c74e80c1091c72d94b797a84b0cb8d4ca980cd906aec4426c3d9bbd3e9",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_b200_blockscaled_fp4_codesign/b200_nvfp4_exact_shape_falsifier.py": "52705e3e6ec4fee1b54b315ae27ea25c1ac51e0c95fcc8d491a453da1deef470",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dense_fp8_linear_schedule/inputs/evidence/FP8_LINEAR_SHAPE_MAP.json": "7c09e1e336d25fa89bfe8341af4c054af84175fca7a55365ca6528a9beee09e4",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_mlp_w4_fp8_hybrid/MIXED_W4_FP8_BINDING.json": "939210b7ca17d34eee1d39d08b9e21ac6c353aae57f94e4753caa8718c8e3ef1",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/config.json": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/inputs/bound/model.safetensors.index.json": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+  },
+  "non_overlapping_request_accounting": {
+    "candidate_bucket": "MLP projection weights, scales, activation quantization, SiLU/gate, and MLP outputs only",
+    "contextual_h200_profile": {
+      "limit": "The product is exact-model H200 context only. It is not transferred to B200 and is not the terminal proof.",
+      "measured_fp8_linear_fraction_of_profile_wall": 0.24058942625425167,
+      "measured_mlp_fraction_of_fp8_linear_family": 0.7036797104104405,
+      "product_fraction": 0.16929789779440585,
+      "zero_cost_mlp_contextual_floor_seconds_per_request": 0.5193126731973757
+    },
+    "excluded_unchanged_buckets": [
+      "all attention Q/K/V/O projections (BF16 in the quality-backed checkpoint)",
+      "attention and KV-cache traffic",
+      "prefill scheduling and paged-attention work",
+      "output head and tied embedding",
+      "vision tower",
+      "sampling, scheduler, graph, host, and network residual"
+    ],
+    "target_verification_m384": "A separate exact-shape proxy row for kernel saturation; it is not added to ordinary decode or counted as campaign endpoint work."
+  },
+  "quality_recovery": {
+    "calibration": {
+      "dataset": "cnn_dailymail",
+      "method": "ModelOpt post-training max calibration",
+      "training": false
+    },
+    "evidence_label": "vendor_reported_model_card",
+    "limit": "This establishes a concrete MLP-only recovery recipe and a useful quality prior. It is not the campaign's exact-revision, prompt-distribution, or response-equivalence qualification.",
+    "reported_bf16_vs_nvfp4": {
+      "AIME": [
+        87.92,
+        87.6
+      ],
+      "GPQA_Diamond": [
+        85.8,
+        85.35
+      ],
+      "LiveCodeBench": [
+        82.49,
+        82.27
+      ],
+      "MMLU_Pro": [
+        85.25,
+        84.94
+      ],
+      "SciCode": [
+        33.61,
+        33.18
+      ],
+      "TerminalBench_Hard": [
+        27.08,
+        27.08
+      ]
+    },
+    "source": "https://huggingface.co/nvidia/Gemma-4-31B-IT-NVFP4"
+  },
+  "schema_version": 1,
+  "scope": {
+    "b200_base_case_threshold_seconds_per_request": 0.315609255362861,
+    "comparator": {
+      "qualified_seconds_per_request": 0.625149101968745,
+      "representation": "retained H200 dense FP8 text-linear stack"
+    },
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "required_whole_request_reduction_fraction": 0.49514563106796206,
+    "workload": {
+      "cached_prompt_tokens_per_request": 535,
+      "concurrency": 32,
+      "mode": "text-only non-reasoning",
+      "ordinary_decode_component_rows": 32,
+      "output_tokens_per_request": 358,
+      "prompt_tokens_per_request": 4214,
+      "target_verification_proxy_rows": 384
+    }
+  },
+  "terminal": "typed_none",
+  "traffic_screen": {
+    "all_linear_nvfp4_counterfactual": {
+      "admissible": false,
+      "bytes": 16164128640,
+      "reason": "The current Gemma derivative explicitly ignores all attention projections; no exact-revision, all-linear NVFP4 calibration or quality result is available.",
+      "saved_fraction_vs_dense_fp8": 0.43749993318537905
+    },
+    "all_text_linear_elements": 28736225280,
+    "attention_linear_elements": 7927234560,
+    "candidate_all_text_linear_weight_bytes": 27559527840,
+    "candidate_bf16_attention_linear_weight_bytes": 15854469120,
+    "candidate_nvfp4_mlp_weight_and_scale_bytes": 11705058720,
+    "candidate_quality_backed_coverage": "MLP-only NVFP4 plus BF16 attention",
+    "candidate_saved_bytes_vs_dense_fp8": 1176697440,
+    "candidate_saved_fraction_vs_dense_fp8": 0.04094822575110324,
+    "dense_fp8_all_text_linear_weight_bytes": 28736225280,
+    "evidence_label": "analytical_exact_geometry",
+    "l2_residency": {
+      "b200_l2_bytes_vendor_decimal": 126000000,
+      "conclusion": "The merged gate/up alone exceeds the 126-MB L2 and the full MLP is 195.084 MB; compulsory decode weight streaming remains.",
+      "down_nvfp4_bytes_per_layer": 65028096,
+      "merged_gate_up_nvfp4_bytes_per_layer": 130056192,
+      "whole_mlp_nvfp4_bytes_per_layer": 195084288
+    },
+    "limit": "This ratio is a necessary parameterized gate, not a B200 throughput prediction. Nominal 8-TB/s bandwidth and peak FP4 FLOPS are not used to emit endpoint seconds.",
+    "mlp_elements": 20808990720,
+    "required_realized_bandwidth_ratio_if_everything_were_only_weight_stream": 1.8996602451468565,
+    "runtime_activation_and_output_bytes": {
+      "m32_down": {
+        "bf16_gemm_output_write_bytes": 344064,
+        "bf16_input_read_bytes": 1376256,
+        "k": 21504,
+        "m": 32,
+        "n": 5376,
+        "packed_fp4_write_bytes": 344064,
+        "padded_ue4m3_scale_write_bytes": 172032,
+        "scale_row_padding_factor": 4.0
+      },
+      "m32_gate_up": {
+        "bf16_gemm_output_write_bytes": 2752512,
+        "bf16_input_read_bytes": 344064,
+        "k": 5376,
+        "m": 32,
+        "n": 43008,
+        "packed_fp4_write_bytes": 86016,
+        "padded_ue4m3_scale_write_bytes": 43008,
+        "scale_row_padding_factor": 4.0
+      },
+      "m384_down": {
+        "bf16_gemm_output_write_bytes": 4128768,
+        "bf16_input_read_bytes": 16515072,
+        "k": 21504,
+        "m": 384,
+        "n": 5376,
+        "packed_fp4_write_bytes": 4128768,
+        "padded_ue4m3_scale_write_bytes": 516096,
+        "scale_row_padding_factor": 1.0
+      },
+      "m384_gate_up": {
+        "bf16_gemm_output_write_bytes": 33030144,
+        "bf16_input_read_bytes": 4128768,
+        "k": 5376,
+        "m": 384,
+        "n": 43008,
+        "packed_fp4_write_bytes": 1032192,
+        "padded_ue4m3_scale_write_bytes": 129024,
+        "scale_row_padding_factor": 1.0
+      },
+      "note": "M32 block-scale rows pad 4x to the 128-row scale layout. M384 is row-tile exact. These bytes are reported separately and are not subtracted again from weight savings."
+    }
+  },
+  "typed_negative": {
+    "measured_or_derived_facts": [
+      "Required whole-request reduction: 49.514563107%.",
+      "Current admissible MLP-only route saves 4.094822575% of text-linear weight bytes versus dense FP8.",
+      "The published recovery explicitly excludes all 60 layers' attention projections.",
+      "All-linear NVFP4 would save 43.749993319%, but is quality-unsafe in this exact scope."
+    ],
+    "not_claimed": [
+      "No B200 endpoint throughput was inferred.",
+      "No B200 GPU or provider resource was claimed or created.",
+      "No nominal-bandwidth or peak-FLOP extrapolation was used as a result.",
+      "No vendor-reported quality result was promoted to campaign equivalence."
+    ],
+    "reopen_condition": "A content-addressed Gemma 4 31B checkpoint with attention plus MLP NVFP4/FP6 coverage and concrete calibration/equivalence evidence, or a current consumer that preserves equivalent quality while saving at least 30% of non-overlapping text-linear bytes. Then run the bounded exact-shape falsifier before an endpoint.",
+    "type": "quality_backed_coverage_and_nonoverlapping_reduction_insufficient"
+  }
+}

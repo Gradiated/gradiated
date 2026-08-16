@@ -1,0 +1,17 @@
+{
+  "artifacts": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/artifacts",
+  "blocker": "Resolved in place: the same managed boot disk is verified READY at 150 GiB.",
+  "caches": "Incomplete image pull was removed and 22 GiB recovered; the same provider disk is now 150 GiB and ready for the pinned image, compiled SM89 extension, and retained exact-consumer outputs.",
+  "checkpoint": "No checkpoint required; GPU_INPUT_MANIFEST.json sha256 0b9c1090d51ca63979d7fa086a49a3bbc839e1617c1d6324eb54cfcbcfbe4f1a binds the unchanged checkpoint-free packet.",
+  "classification": "director_repaired_pre_science_environment",
+  "expected_first_arms": "Grow the guest root partition/filesystem to the verified 150-GiB provider disk, then run one immutable profiler-off exact-consumer compile/correctness/timing packet and only its discriminating counters.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 exact decode geometry; no weights staged.",
+  "next_need": "Researcher grows the guest root partition/filesystem, then runs the unchanged immutable packet in one retained claim.",
+  "project": "gemma4_l40s_qserve_w4a8_mlp_component",
+  "provider_disk_gib": 150,
+  "provider_disk_state": "READY",
+  "runtime": "Existing Nebius ubuntu24.04-cuda13.0 L40S bench for QServe revision 02b2925aa6fa3b92b06316a1524b7f38922cd9c8 and the immutable SM89 packet.",
+  "server_state": "No container, candidate CUDA invocation, or scientific arm has started; only guest filesystem growth remains before the unchanged packet.",
+  "status": "ready_for_same_project_claim"
+}

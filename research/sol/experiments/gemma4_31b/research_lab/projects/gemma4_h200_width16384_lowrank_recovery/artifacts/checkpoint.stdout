@@ -1,8 +1,0 @@
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/chat_template.jinja: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/config.json: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/model-00001-of-00002.safetensors: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/model-00002-of-00002.safetensors: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/model.safetensors.index.json: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/processor_config.json: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/tokenizer.json: OK
-/home/glmrunner/gemma4-async-result-pipeline/checkpoint/tokenizer_config.json: OK

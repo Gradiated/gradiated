@@ -1,4 +1,0 @@
-{"event": "control_started", "pid": 1222507, "systemd_exec_pid": "1222507", "time_ns": 1784159386654397328}
-{"event": "control_retained", "instance_id": "computeinstance-proof", "pid": 1222507, "time_ns": 1784159386654611262}
-{"event": "recovery_started", "frontier_concurrencies": "32", "instance_id": "computeinstance-proof", "kv_cache_dtype": "fp8_e4m3fn", "max_num_batched_tokens": "65536", "max_num_seqs": "32", "pid": 1222508, "time_ns": 1784159386712296892}
-{"event": "recovery_cleanup_verified", "pid": 1222508, "time_ns": 1784159386712440659}

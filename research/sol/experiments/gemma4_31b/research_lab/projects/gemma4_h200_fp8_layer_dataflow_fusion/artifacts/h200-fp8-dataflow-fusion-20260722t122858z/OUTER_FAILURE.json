@@ -1,6 +1,0 @@
-{
-  "classification": "typed_remote_boundary",
-  "message": "typed_remote_boundary:ssh_identity_failed",
-  "provider_exposure_seconds": 0.7183117866516113,
-  "schema_version": 1
-}

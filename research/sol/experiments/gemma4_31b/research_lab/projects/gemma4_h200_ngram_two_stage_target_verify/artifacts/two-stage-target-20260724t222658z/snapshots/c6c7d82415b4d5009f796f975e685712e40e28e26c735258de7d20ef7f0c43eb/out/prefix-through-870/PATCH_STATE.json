@@ -1,6 +1,0 @@
-{
-  "consumer": "unchanged greedy argmax and verify_tree_greedy",
-  "kind": "direct_sparse_min_new_token_columns",
-  "representation": "padded stop-token ids, no dense FP32 penalty matrix",
-  "semantics": "set active stop-token logits to negative infinity"
-}

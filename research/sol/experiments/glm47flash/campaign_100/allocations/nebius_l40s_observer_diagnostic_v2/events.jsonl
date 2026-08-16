@@ -1,9 +1,0 @@
-{"disk_count": 0, "event": "stock_control", "instance_count": 0, "matching_labeled_resources": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T17:38:52.430911Z"}
-{"action": "register-allocation", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T17:39:42.259362Z"}
-{"event": "instance_created", "instance_id": "computeinstance-e00s263f3x8jtcdv3z", "timestamp": "2026-07-14T17:39:42.259488Z"}
-{"elapsed_seconds": 95.342, "event": "ssh_ready", "timestamp": "2026-07-14T17:40:27.065126Z"}
-{"error_type": "ObserverDiagnosticError", "event": "experiment_error", "message": "pinned vLLM/Nsight/CUDA capability preflight failed", "timestamp": "2026-07-14T17:48:38.808803Z"}
-{"event": "repair_window_skipped", "reason": "no_tested_action_within_ten_minutes", "timestamp": "2026-07-14T17:48:38.808871Z"}
-{"action": "request-cleanup", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T17:48:38.865650Z"}
-{"action": "mark-cleanup-verified", "event": "factory_lifecycle", "returncode": 0, "timestamp": "2026-07-14T17:49:31.130553Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "final_disk_count": 0, "final_instance_count": 0, "instance_get_not_found": true, "timestamp": "2026-07-14T17:49:31.130823Z"}

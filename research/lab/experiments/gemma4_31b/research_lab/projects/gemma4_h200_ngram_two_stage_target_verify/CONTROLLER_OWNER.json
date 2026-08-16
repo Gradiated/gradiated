@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "run_bench_owner.py"
+  ],
+  "cwd": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify",
+  "launched_at_utc": "2026-07-24T22:26:58.820353Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/CONTROLLER_OWNER.log",
+  "pid": 152784,
+  "start_ticks": 104803622,
+  "unit_manager": "pid"
+}

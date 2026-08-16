@@ -1,9 +1,0 @@
-{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "515b831798895e737cfee5943cb522db95cf71d48bb15dfb3f49a016cab9e101", "model_revision": "33faccf4c2ba82142214d0d4e16232a4e9ccfe10", "model_shard_count": 48, "model_weight_bytes": 62444175504, "timestamp": "2026-07-15T14:00:47.108806Z"}
-{"create_returncode": 0, "event": "instance_created", "instance_id": "computeinstance-e00qeyert0b0crd8ef", "reconciled_nonzero_exit": false, "timestamp": "2026-07-15T14:01:34.795194Z"}
-{"elapsed_seconds": 85.501, "event": "ssh_ready", "timestamp": "2026-07-15T14:02:12.344984Z"}
-{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-15T14:06:17.152929Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
-{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-15T14:06:30.004700Z"}
-{"error_type": "StockError", "event": "experiment_error", "message": "local model transfer exceeded its timeout", "timestamp": "2026-07-15T14:21:30.107945Z"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-15T14:21:30.108095Z"}
-{"action": "teardown", "event": "repair_decision_received", "timestamp": "2026-07-15T14:28:15.128092Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-15T14:29:16.062903Z"}

@@ -1,9 +1,0 @@
-17373944628	/workspace/model-awq
-.gitattributes 1570
-chat_template.jinja 3120
-generation_config.json 181
-model-00001-of-00004.safetensors 5369424480
-model-00002-of-00004.safetensors 5368234096
-model-00003-of-00004.safetensors 5368506008
-model-00004-of-00004.safetensors 1247557632
-tokenizer.json 20217541

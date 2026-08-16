@@ -1,7 +1,0 @@
-{
-  "artifacts": "artifacts/kv4-l40s-pointer-repair-20260724t0710z",
-  "classification": "typed_outer_or_counter_boundary",
-  "diagnostic": "RuntimeError:typed_retrieval_boundary:compact_pack_failed",
-  "project": "gemma4_l40s_qserve_kv4_attention_component",
-  "server_state": "Compact evidence retrieved when available; director disposition required."
-}

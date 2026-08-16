@@ -59,9 +59,7 @@ def main() -> int:
         "tools/devex/context.py",
         "tools/devex/start.py",
         "tools/browser/pyproject.toml",
-        "tools/github/agent.py",
-        "research/sol",
-        "research/fable",
+        "research/lab",
     ):
         path = ROOT / relative
         print(f"  {relative:32} {'present' if path.exists() else 'missing'}")

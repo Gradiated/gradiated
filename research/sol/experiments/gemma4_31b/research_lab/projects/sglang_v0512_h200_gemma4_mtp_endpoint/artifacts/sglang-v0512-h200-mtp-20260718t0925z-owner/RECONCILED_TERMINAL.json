@@ -1,6 +1,0 @@
-{
-  "classification": "sglang_v0512_h200_stock_market_pass_mtp_image_bound_invalid",
-  "stock": {"artifact": "stock-repaired/TERMINAL.json", "complete_requests": 32, "completed_requests_per_second": 2.7525220286295027, "market_pass": true, "service_seconds_per_request": 0.3633031778124973, "token_accounting_pass": true},
-  "mtp": {"artifact": "mtp-failure.log", "classification": "invalid_image_bound_runtime_failure", "reason": "pinned image Transformers does not recognize model_type gemma4_assistant", "performance_claim": false},
-  "provider": {"cleanup_artifact": "cleanup.json", "cleanup_pass": true, "conservative_exposure_usd": 2.31, "instance_id": "computeinstance-e00v1y11h92cdp0y9b"}
-}

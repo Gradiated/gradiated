@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "decision": "replace_expired_start_fence_and_live_bind_staged_e5m2_stock_consumer_on_retained_l40s",
+  "project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+  "predecessor_binding": {
+    "path": "DIRECTOR_DUAL_KV4_STAGED_E5M2_LIVE_BINDING_20260728T0932Z.json",
+    "sha256": "73455f528531ee845d2b5e9ce53987c58d1cddc510769c2817d1f8a3d60eaacc",
+    "disposition": "expired_before_claim_or_owner_launch; scientific sample unconsumed"
+  },
+  "bench": {
+    "id": "l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt",
+    "accelerator": "nvidia-l40s",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00nczqf2p0x2y51wt",
+    "disk_id": "computedisk-e00wjqwz8zdc3ph7sr",
+    "public_ipv4": "89.169.103.129",
+    "ssh_user": "glmrunner",
+    "ssh_ed25519_fingerprint": "SHA256:UW5mNwCUjX/BtvrgnUjnYFMongYlwJCZx8XRdV/aj/Y"
+  },
+  "readiness": {
+    "path": "L40S_DUAL_KV4_STAGED_E5M2_SM89_READY.json",
+    "sha256": "b8adb89da75cc504316a8cfe83952ed3cb5d8c9de7f9ec5268d06f1c9d0f634a",
+    "classification": "offline_positive_measurement_ready",
+    "all_direct_hashes_verified": true,
+    "owner_sha256": "0a759936b9023eaa2ac0d5c97d0882125a7b715ed0f591b8460f3f215d5e5292",
+    "runner_sha256": "9bd2df397af7713fe0e0ae488a5aac627c750af64d1b590b7299b0391fef6f6e",
+    "decode_bindings_sha256": "e7207656e9b8425bcb432b760b501c251179aeab2788c996a30610dddabb8b3d",
+    "decode_cuda_sha256": "ae9feedb045cceb611979120add0032c0790ec8c1ab65115a9e9af4f4d8f5bb3"
+  },
+  "immutable_science": {
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload": "c32, 4214 prompt tokens, 358 decode steps, page size one",
+    "candidate": "unchanged local/global KV4 pack, bounded E5M2 scratch decode, unchanged stock SGLang decode-attention consumer",
+    "comparator": "all-E5M2 pack plus the same unchanged stock consumer",
+    "predecessor_attempts": [
+      0,
+      1,
+      2
+    ],
+    "submission_limit": "one new paired staged-consumer component sample; predecessor attempt 2 is never replayed"
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-28T08:32:02.551113Z",
+    "provider_watchdog_deadline_utc": "2026-07-28T10:02:02.551113Z",
+    "claim_start_by_utc": "2026-07-28T09:39:00Z",
+    "owner_deadline_seconds": 720,
+    "release_by_utc": "2026-07-28T09:53:30Z",
+    "reservation_usd": 1.5,
+    "hourly_rate_usd": 0.8629833,
+    "provider_create_forbidden": true,
+    "feasibility_basis": "At binding, more than 17 minutes remained before release. The closest same-lineage compile/run/retrieve/release claim took 108.143198 seconds; a 720-second owner leaves more than two minutes for terminal persistence and release."
+  },
+  "owner": {
+    "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_staged_e5m2_owner.py",
+    "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-component-20260728t0936z",
+    "state_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0936z/OWNER.json",
+    "unit_manager": "pid",
+    "exact_detached_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0936z/OWNER.json --log /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-owner-20260728t0936z/OWNER.log -- python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/l40s_staged_e5m2_owner.py --bench l40s-dual-kv4-sm89-computeinstance-e00nczqf2p0x2y51wt --artifact-root /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_dual_kv4_allocator_0953_integration/artifacts/staged-e5m2-component-20260728t0936z --deadline-seconds 720 --release-by-utc 2026-07-28T09:53:30Z",
+    "repair_disposition": "Retain the continuous claim across fresh hash-bound pre-science integration or retrieval repair while the remaining absolute window fits. Release only for a decision-bearing scientific terminal, unsafe/unreachable guest, or the absolute lifecycle boundary."
+  },
+  "required_first_snapshot": {
+    "claim_project": "gemma4_l40s_dual_kv4_allocator_0953_integration",
+    "owner_identity": "pid plus start_ticks must match the emitted detached-owner state",
+    "heartbeat": "fresh on the exact claim generation",
+    "forward_progress": "a durable marker must show staged packet transfer, attempt entry, or first exact-runtime call"
+  }
+}

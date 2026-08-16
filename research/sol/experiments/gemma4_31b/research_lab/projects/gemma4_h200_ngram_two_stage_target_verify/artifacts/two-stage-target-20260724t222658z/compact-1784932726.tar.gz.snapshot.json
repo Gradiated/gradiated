@@ -1,5 +1,0 @@
-{
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"archive_sha256\": \"b2224be9c3269884b965e1e8ec1a5cddb6a78edeb6209a3ede826fa33630011a\", \"destination\": \"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_two_stage_target_verify/artifacts/two-stage-target-20260724t222658z/snapshots/b2224be9c3269884b965e1e8ec1a5cddb6a78edeb6209a3ede826fa33630011a\", \"idempotent\": false}\n"
-}

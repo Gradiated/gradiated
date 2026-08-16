@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102049885027398/reclassify_pre_science_dtype_guard.py",
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102049885027398/reclassify_pre_science_dtype_guard.py",
+  "ready_sha256": "01493e237a04d7130165cc03c34833039a3e338399d3ddbb121a18dfe04773c2",
+  "repair_id": "streaming-h100-1785102049885027398",
+  "requested_at_utc": "2026-07-26T21:42:31.481608Z",
+  "retry_scope": "offline_result_construction",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

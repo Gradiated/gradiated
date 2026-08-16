@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_release": "sglang v0.5.13",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "transformers_version": "5.8.1",
+    "weights": "dynamic in-memory fp8_e4m3fn linears from exact BF16 checkpoint",
+    "kv_cache": "fp8_e5m2",
+    "dynamic_chunking": true,
+    "chunked_prefill_size": 2048,
+    "mtp": false,
+    "tensor_parallel": 1
+  },
+  "performance_evidence": {
+    "reconciled_terminal": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/fp8-mtp-v0513-20260720t0215z/RECONCILED_TERMINAL.json",
+    "reconciled_terminal_sha256": "804126d618182bff7e37a4b281969678bb77258cc6c09a6f7c16908f4f7d3711",
+    "raw_control_terminal": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/fp8-mtp-v0513-20260720t0215z/retrieved/control/TERMINAL.json",
+    "raw_control_terminal_sha256": "ab69b55f328180716e637e0b1a3edfcbbf6f20b2a906f15445695663aca0296f",
+    "container_inspect": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/fp8-mtp-v0513-20260720t0215z/retrieved/gemma-fp8-control-v0513.inspect.json",
+    "container_inspect_sha256": "c9ff16a1ef3607494c43b0143ffeefc09b15611670ec3abd0469528a35a454ac",
+    "image_inspect": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/fp8-mtp-v0513-20260720t0215z/retrieved/image-inspect.json",
+    "image_inspect_sha256": "8c116a5e61b60ad7cc5495b55eb01e2d0164e305d7591d400cba980a66a9405b",
+    "support_terminal": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/current-runtime-v0513-20260720t0155z/SUPPORT_TERMINAL.json",
+    "support_terminal_sha256": "4b5bec08f6f7ca4c57fe42bcb4d79089cf49ae8171d7fb1b36a99b94eb769d46",
+    "service_seconds_per_request": 0.6979244359999939,
+    "complete_requests": 32,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728,
+    "fp8_module_rows": 240,
+    "fp8_consumer_rows": 240,
+    "frontier_seconds_per_request": 0.7145910375209391
+  },
+  "control": {
+    "runtime": "same v0.5.13 image and source commit",
+    "checkpoint": "same exact resident eight-file BF16 checkpoint",
+    "weights": "bfloat16 without dynamic FP8 quantization",
+    "kv_cache": "fp8_e5m2",
+    "all_other_server_and_request_fields": "byte-identical to candidate"
+  },
+  "quality_mechanics_prior": {
+    "scope": "capture and scorer mechanics only; old prompts, outputs, scores, policy conclusions, and candidate identity are non-transferable",
+    "runner_interface": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/quality/RUNNER_INTERFACE.md",
+    "runner_interface_sha256": "e8b87d3cf8eba425515a21470ff6208669bd492d8896377a36fb600672f72999",
+    "run_pair_sha256": "0eceb814eed0a6b6b5de65cb6e359e37222abf8b83c7cc06975eaf4935300c52",
+    "score_pair_sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af",
+    "validate_quality_sha256": "7bc213a42d0361861cbc6f3db6849f1da1697daf0703f8e90cfd3315d4a7df50"
+  },
+  "bench": {
+    "id": "h200-kernel-frontier-e00pfvrckjvwn7bhet",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.46,
+    "checkpoint_root": "/home/glmrunner/gemma-kernel-frontier/checkpoint",
+    "provider_creation_authorized": false
+  }
+}

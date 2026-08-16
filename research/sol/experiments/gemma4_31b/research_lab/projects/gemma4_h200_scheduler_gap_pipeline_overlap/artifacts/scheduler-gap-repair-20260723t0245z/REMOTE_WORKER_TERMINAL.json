@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "rm -rf \"$artifacts/trace\" \"$artifacts/trace-audit\"",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T02:45:01.346282Z"
-}

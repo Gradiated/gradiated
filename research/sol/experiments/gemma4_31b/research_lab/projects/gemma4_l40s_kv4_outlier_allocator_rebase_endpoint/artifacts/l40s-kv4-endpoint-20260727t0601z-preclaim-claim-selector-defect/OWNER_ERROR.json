@@ -1,5 +1,0 @@
-{
-  "at": "2026-07-27T06:05:28.566339Z",
-  "error": "RuntimeError('gpu_pool_claim:usage: gpu_pool.py [-h] --lab LAB\\n                   {list,show,register,claim,heartbeat,update,release,drain,reclaim,ready,replace-watchdog,retire} ...\\ngpu_pool.py: error: no available GPU bench matches this project\\n')",
-  "sample_consumed": false
-}

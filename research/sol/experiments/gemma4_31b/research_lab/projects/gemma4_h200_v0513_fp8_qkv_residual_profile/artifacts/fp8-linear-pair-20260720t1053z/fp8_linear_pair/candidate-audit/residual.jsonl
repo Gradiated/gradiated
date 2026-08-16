@@ -1,4 +1,0 @@
-{"candidate_path": "TritonAttnBackend.forward_extend.local_fp8_deferred_cache_commit", "layer_id": 0, "phase": "runtime_invocation", "qk_head_dim": 256, "removed_operations": ["k.clone", "v.clone"], "sliding_window_size": 1024, "v_head_dim": 256}
-{"candidate_path": "fp8_gate_up_exact_shape_64x256x128", "k": 5376, "m": 2048, "n": 43008, "num_stages": 4, "num_warps": 8, "phase": "runtime_invocation", "stock_fallback_for_other_shapes": true, "tile": [64, 256, 128]}
-{"candidate_path": "fp8_gate_up_exact_shape_64x256x128", "k": 5376, "m": 1409, "n": 43008, "num_stages": 4, "num_warps": 8, "phase": "runtime_invocation", "stock_fallback_for_other_shapes": true, "tile": [64, 256, 128]}
-{"candidate_path": "fp8_gate_up_exact_shape_64x256x128", "k": 5376, "m": 1631, "n": 43008, "num_stages": 4, "num_warps": 8, "phase": "runtime_invocation", "stock_fallback_for_other_shapes": true, "tile": [64, 256, 128]}

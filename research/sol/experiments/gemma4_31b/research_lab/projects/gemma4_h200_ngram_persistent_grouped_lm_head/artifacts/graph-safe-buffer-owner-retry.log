@@ -1,8 +1,0 @@
-Traceback (most recent call last):
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/graph_safe_buffer_owner.py", line 107, in <module>
-    if __name__ == "__main__": raise SystemExit(main())
-                                                ~~~~^^
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_persistent_grouped_lm_head/graph_safe_buffer_owner.py", line 61, in main
-    assert status["authorized_spend_usd"] == AUTH and status["actual_spend_usd"] == 0.0
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AssertionError

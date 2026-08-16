@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-26T21:42:32.024577Z",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102049885027398/reclassify_pre_science_dtype_guard.py",
-  "patch_sha256": "1b86d7deda7aa57ade6ebf5cd28fb563f0f1da9f8d03b88db3cd90803e6f24aa",
-  "repair_id": "streaming-h100-1785102049885027398",
-  "request_sha256": "e063c23d64d3501851463d7dba6c6d4246fb03bedaf9bd45ded4aab0905f85cd",
-  "scope": "offline_result_construction",
-  "state": "repair_applied"
-}

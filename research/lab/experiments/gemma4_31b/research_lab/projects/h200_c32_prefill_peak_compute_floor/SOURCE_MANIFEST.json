@@ -1,0 +1,43 @@
+{
+  "bound_extracts": {
+    "decode_kv_floor_seconds_per_request_excluded": "0.05799790933333333",
+    "decode_linears_head_c32_seconds_per_request": "0.22476958992984145",
+    "h200_dense_fp8_tflops_not_used": 1979,
+    "h200_dense_non_sparse_bf16_tflops": 989.5,
+    "h200_id": "nvidia-h200-sxm",
+    "h200_two_to_four_sparse_bf16_tflops_not_used": 1979.0,
+    "lenient_ceiling_seconds_per_request": "0.47751364375858635",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "strict_ceiling_seconds_per_request": "0.47201182295214134",
+    "vllm_version": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "calculator": {
+    "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h200_c32_prefill_peak_compute_floor/calculate_prefill_floor.py",
+    "sha256": "43d1e112b88b681331b460454b8a260647bceac40df695445fffecf265822844"
+  },
+  "schema_version": 1,
+  "sources": {
+    "accelerator_inventory": {
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "economic_gate": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h200_campaign_economic_gate_reconciliation/H200_ECONOMIC_GATE.json",
+      "sha256": "3f4ce08c7e3a6649c18af99f14e0d48dcaf3979ac818462f7cf159cd9dab9afd"
+    },
+    "geometry": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_geometry_runtime_opportunities/GEOMETRY.json",
+      "sha256": "024450cd944c7827db442d8274e1e0cccae114ee3bbb2e0473704f2fbf0e3a72"
+    },
+    "kv_floor_exclusion_guard": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h200_bf16_kv_attention_bandwidth_floor/KV_ATTENTION_FLOOR.json",
+      "sha256": "8d0d1ef6bc39adef386a072947bc0ae820e3193af4d6e8b28c19bc6f59fcb442"
+    },
+    "linears_head_terminal": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h200_bf16_exact_linear_floor/artifacts/RECONCILED_TERMINAL.json",
+      "sha256": "9f12b3ae4c8d82176f0ec9b09845c6e97ab1f278a458bd023adcbe433fd004fe"
+    }
+  }
+}

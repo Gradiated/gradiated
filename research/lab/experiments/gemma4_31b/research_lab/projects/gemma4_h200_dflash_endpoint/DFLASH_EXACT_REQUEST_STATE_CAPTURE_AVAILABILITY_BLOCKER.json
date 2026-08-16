@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "classification": "typed_external_bench_availability_boundary",
+  "created_at_utc": "2026-07-25T23:15:13Z",
+  "decision": "rebind_installed_source_identity_then_run_one_unchanged_exact_c32_capture",
+  "scientific_sample_consumed": false,
+  "cuda_invocation": false,
+  "provider_mutation": false,
+  "actual_spend_usd": 0.110010858903,
+  "completed_offline_gate": {
+    "ready_artifact": "REQUEST_STATE_CAPTURE_READY.json",
+    "ready_sha256": "4e45a2b958f93a0cd2b4d4e769049ddbac618dc8cc420c59ab81ccd09d9b96c7",
+    "packet": "artifacts/request-state-capture-rebinding-20260725t2309z/REQUEST_STATE_CAPTURE_PACKET.tar",
+    "packet_sha256": "221d21660bb0eb9c909beb04bb73c1ea8c4313cb7fb601b8506637b51f97f806",
+    "fixture_tests_passed": 6,
+    "expected_installed_source_sha256": "c853073615874c5b82c66bce935b2951f0e55c5e11e2af22c9050847ced676cc",
+    "materialized_source_bytes_mutated": false
+  },
+  "atomic_claim": {
+    "command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/lab/experiments/gemma4_31b/research_lab claim --project gemma4_h200_dflash_endpoint --bench h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "exit_code": 2,
+    "stderr": "gpu_pool.py: error: no available GPU bench matches this project",
+    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "observed_status": "maintenance",
+    "observed_claim": null,
+    "observed_deadline_utc": "2026-07-26T01:30:00Z",
+    "observed_updated_at": "2026-07-25T23:01:47.128916Z"
+  },
+  "required_external_action": "The lab owner/director must reconcile the maintenance disposition and mark the retained bench available through the GPU-pool lifecycle before this project can make its single admitted atomic claim. The researcher must not bypass maintenance or mutate provider/bench lifecycle state.",
+  "next_action_after_resolution": "Claim the named bench atomically, start the existing durable outer owner with sudo -n docker, run exactly one unchanged AR/DFlash exact-c32 request-state capture, retrieve its typed terminal, and release the claim."
+}

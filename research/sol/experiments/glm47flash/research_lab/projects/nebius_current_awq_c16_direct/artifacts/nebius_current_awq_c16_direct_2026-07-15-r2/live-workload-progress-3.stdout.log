@@ -1,7 +1,0 @@
-{"timestamp":"2026-07-15T12:13:34Z","phase":"allocation_bootstrap","state":"begin"}
-{"timestamp":"2026-07-15T12:13:44Z","phase":"allocation_bootstrap","state":"complete"}
-{"timestamp":"2026-07-15T12:13:44Z","phase":"model_identity","state":"begin"}
-{"timestamp":"2026-07-15T12:15:21Z","phase":"model_identity","state":"complete"}
-{"timestamp":"2026-07-15T12:15:21Z","phase":"model_load","state":"begin"}
-{"timestamp":"2026-07-15T12:17:11Z","phase":"model_load","state":"complete"}
-{"timestamp":"2026-07-15T12:17:11Z","phase":"conditional_semantic_quality_performance_batch","state":"begin"}

@@ -1,5 +1,0 @@
-gemma-local-kv8-h200-202607191220
-NVIDIA H200, GPU-ce135f8b-2848-2772-30bb-3f313fb25e68, 143771 MiB
-sha256:79d577610f5022e66b5bb618d434b23ab7121fc9f96d5dba3ee046d5eecfd4df
-Filesystem        1B-blocks        Used    Available Use% Mounted on
-/dev/vda1      206900281344 52259840000 154623664128  26% /

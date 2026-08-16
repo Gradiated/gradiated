@@ -1,3 +1,0 @@
-{"attached": true, "converted_layers": [11, 23, 35, 47, 59], "forward_batch_driver": {"boundary": "ModelRunner.forward(ForwardBatch)", "converted_layers": [11, 23, 35, 47, 59], "installed": true, "one_resident_target_model": true}, "one_resident_target_model": true}
-{"boundary": "ModelRunner.forward(ForwardBatch)", "converted_layers": [11, 23, 35, 47, 59], "installed": true, "one_resident_target_model": true, "science_started": false}
-true

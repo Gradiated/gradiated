@@ -1,6 +1,0 @@
-{
-  "classification": "typed_scientific_boundary",
-  "message": "typed_scientific_boundary:rm -rf \"$artifacts/component\"",
-  "provider_exposure_seconds": 145.14877462387085,
-  "schema_version": 1
-}

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/gpu_consumer_repair_boundary_owner.sh"
+  ],
+  "cwd": "/root/workspace",
+  "launched_at_utc": "2026-07-25T14:15:26.732560Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_verify_launch_pipeline/artifacts/gpu-consumer-repair-boundary-owner.log",
+  "pid": 783217,
+  "start_ticks": 110494413,
+  "unit_manager": "pid"
+}

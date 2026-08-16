@@ -1,9 +1,0 @@
-{
-  "activation_returncode": 72,
-  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/forward-batch-activation-20260726t0058z",
-  "deadline_utc": "2026-07-26T01:15:00Z",
-  "next": "interpret actual ForwardBatch hook and dual-bank component eligibility",
-  "phase": "activation_retrieved",
-  "retrieval_returncode": 1,
-  "science_started": true
-}

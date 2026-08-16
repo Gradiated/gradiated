@@ -1,4 +1,0 @@
-{"event": "retained_arm_control", "instance_id": "computeinstance-e00d2yj3m27hk4zzya", "parent_experiment_id": "fp8_kv_c32_l40s_2026-07-15-r1", "timestamp": "2026-07-15T16:26:15.612421Z"}
-{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "0a49213197f75d21b29e6e94ec06f771a1659ce8eeeb7f9ad45fca5b942cb1d4", "timestamp": "2026-07-15T16:26:15.863864Z"}
-{"event": "repair_01_error", "message": "repair-01 derived runtime preflight failed", "timestamp": "2026-07-15T16:28:13.532194Z", "type": "RuntimeError"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-15T16:28:13.532309Z"}

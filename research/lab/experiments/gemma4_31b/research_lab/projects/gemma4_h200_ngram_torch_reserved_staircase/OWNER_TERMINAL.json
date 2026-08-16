@@ -1,0 +1,7 @@
+{
+  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_torch_reserved_staircase/artifacts/broadcast-reuse-20260724t203343z",
+  "at_utc": "2026-07-24T20:44:14.069566Z",
+  "claimed_seconds": 2322.246017,
+  "conservative_provider_spend_usd": 1.5868681116166665,
+  "disposition": "scientific_terminal_released_maintenance"
+}

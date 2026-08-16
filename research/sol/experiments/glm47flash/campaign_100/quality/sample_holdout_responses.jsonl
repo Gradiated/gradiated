@@ -1,6 +1,0 @@
-{"case_id":"hold_tool_01","output":"{\"arguments\":{\"path\":\"src/range.py\"},\"name\":\"read_file\"}"}
-{"case_id":"hold_code_01","output":"def exclusive_upper(start, stop):\n    return list(range(start, stop))\n"}
-{"case_id":"hold_retrieval_01","output":"cobalt-comet-29"}
-{"case_id":"hold_continuation_01","output":"start, stop, step"}
-{"case_id":"hold_loss_01","output":{"input_token_logprobs":[{"logprob":-1.5,"token_id":1},{"logprob":-1.5,"token_id":2},{"logprob":-1.5,"token_id":3}],"source":"runtime_teacher_forced_input_token_logprobs","token_sequence_sha256":"25267c7de84c46f3f4cffcb41bed929795ee6120b8cfc6d4e924f3a1faede865"}}
-{"case_id":"hold_serving_01","output":"{\"status\":\"healthy\",\"truncated\":false}"}

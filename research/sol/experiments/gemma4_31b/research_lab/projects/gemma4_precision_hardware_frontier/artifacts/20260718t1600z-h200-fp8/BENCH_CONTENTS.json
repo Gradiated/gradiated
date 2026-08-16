@@ -1,9 +1,0 @@
-{
-  "project": "gemma4_precision_hardware_frontier",
-  "model": "google/gemma-4-31B-it exact critical-path shapes",
-  "checkpoint": "Not required; synthetic exact-shape falsifier.",
-  "image": "Nebius ubuntu24.04-cuda13.0 base with /home/glmrunner/.venvs/gemma-fp8 (Torch 2.13.0+cu130).",
-  "runtime": "One H200 BF16/FP8 _scaled_mm, SDPA, and KV-write falsifier completed; E5M2 index_copy_ is unsupported in Torch 2.13.0+cu130.",
-  "caches": "Torch/CUDA packages resident in /home/glmrunner/.venvs/gemma-fp8; no model checkpoint.",
-  "server_state": "No server; provider allocation only."
-}

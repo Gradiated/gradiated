@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-07-22T22:16:00Z",
+  "command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/lab/experiments/gemma4_31b/research_lab claim --project gemma4_h200_dense_fp8_linear_schedule --accelerator nvidia-h200-sxm",
+  "exit_code": 2,
+  "classification": "typed_pool_boundary_no_compatible_bench",
+  "stderr": "gpu_pool.py: error: no available GPU bench matches this project",
+  "candidate_cuda_started": false,
+  "candidate_science_started": false,
+  "provider_mutation_attempted": false,
+  "required_bench": {
+    "accelerator": "nvidia-h200-sxm",
+    "minimum_device_memory_gb": 141,
+    "resident_state_preference": "SGLang v0.5.13 image digest 6113665, exact 62,578,655,208-byte checkpoint, CUDA/CUTLASS build cache",
+    "allocation_owner": "director"
+  }
+}

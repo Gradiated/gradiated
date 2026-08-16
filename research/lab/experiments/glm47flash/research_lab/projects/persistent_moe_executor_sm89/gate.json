@@ -1,0 +1,56 @@
+{
+  "candidate": {
+    "geometry": {
+      "c16_assignments": 64,
+      "c32_assignments": 128,
+      "experts": 64,
+      "hidden": 2048,
+      "layers": [
+        1,
+        46
+      ],
+      "moe_width": 1536,
+      "top_k": 4
+    },
+    "kind": "one persistent assignment-queue W4 executor",
+    "sm89": {
+      "blocks": 142,
+      "dynamic_shared_bytes": 0,
+      "max_shared_bytes_per_block": 101376,
+      "static_resource_status": "shared-memory legal; register count requires nvcc/PTXAS",
+      "threads_per_block": 256
+    },
+    "source": "/root/workspace/research/lab/experiments/glm47flash/research_lab/projects/persistent_moe_executor_sm89/persistent_moe_executor_sm89.cu",
+    "source_sha256": "a8fd475e83f780d6ffdba922b924a3e2f3ca89bb9868b879caf28b5fd4b9271c",
+    "useful_weight_bytes_per_assignment_ideal": 4718592.0,
+    "useful_work_per_assignment_flops": 18874368
+  },
+  "decision": {
+    "nomination": "none",
+    "reason": "The CPU oracle passes exact scheduling semantics, but no nvcc/CUDA device exists on this host, so no SM89 binary, registers, timing, or component speedup exists. The director floors of 2.349x combined / 3.77x fused-only remain unmet rather than inferred.",
+    "status": "typed_in_scope_compiler_boundary"
+  },
+  "derived_gate": {
+    "combined_share": 0.15551,
+    "floor_source": "director-approved economic gate; reported trace shares are rounded summed-work attribution and not endpoint critical-path proof",
+    "formula": "wall reduction = component_share * (1 - 1 / speedup)",
+    "l40s_fused_moe_share": 0.12374,
+    "l40s_routing_sort_share": 0.03177,
+    "minimum_combined_speedup": 2.349,
+    "minimum_fused_moe_only_speedup": 3.77,
+    "reported_share_recalculation": {
+      "combined": 2.350869236583522,
+      "fused_only": 3.5991855730075617
+    },
+    "required_c16_wall_reduction": 0.08936
+  },
+  "measurement": {
+    "elapsed_ms": null,
+    "p50_ms": null,
+    "p95_ms": null,
+    "reason": "typed_compiler_boundary",
+    "registers_per_thread": null,
+    "status": "not_measured"
+  },
+  "schema_version": 1
+}

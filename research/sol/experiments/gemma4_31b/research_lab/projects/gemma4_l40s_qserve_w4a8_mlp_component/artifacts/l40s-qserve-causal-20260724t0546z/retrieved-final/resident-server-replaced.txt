@@ -1,1 +1,0 @@
-gemma-qserve-bf16-endpoint

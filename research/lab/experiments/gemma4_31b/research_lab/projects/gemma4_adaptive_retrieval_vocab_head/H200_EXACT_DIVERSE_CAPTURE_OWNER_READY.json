@@ -1,0 +1,358 @@
+{
+  "admission_sha256": "084ba33ea1bba659fc9dfac7d3c72208870ef91a52e91f74e3cdfc3cd1d2d2c8",
+  "checkpoint_inventory": [
+    {
+      "bytes": 18683,
+      "name": "chat_template.jinja",
+      "pass": true,
+      "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+    },
+    {
+      "bytes": 4621,
+      "name": "config.json",
+      "pass": true,
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    {
+      "bytes": 49784788364,
+      "name": "model-00001-of-00002.safetensors",
+      "pass": true,
+      "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+    },
+    {
+      "bytes": 12761549884,
+      "name": "model-00002-of-00002.safetensors",
+      "pass": true,
+      "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+    },
+    {
+      "bytes": 120246,
+      "name": "model.safetensors.index.json",
+      "pass": true,
+      "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    {
+      "bytes": 1689,
+      "name": "processor_config.json",
+      "pass": true,
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+    },
+    {
+      "bytes": 32169626,
+      "name": "tokenizer.json",
+      "pass": true,
+      "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+    },
+    {
+      "bytes": 2095,
+      "name": "tokenizer_config.json",
+      "pass": true,
+      "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+    }
+  ],
+  "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+  "checks": {
+    "admission_classification": true,
+    "admission_project": true,
+    "archive_hash": true,
+    "archive_member:capture_bootstrap/sitecustomize.py": true,
+    "archive_member:diverse_hidden_capture_hook.py": true,
+    "archive_member:endpoint_entrypoint.py": true,
+    "archive_member:exact_runner.py": true,
+    "archive_member_names": true,
+    "bench_identity": true,
+    "checkpoint:chat_template.jinja": true,
+    "checkpoint:config.json": true,
+    "checkpoint:model-00001-of-00002.safetensors": true,
+    "checkpoint:model-00002-of-00002.safetensors": true,
+    "checkpoint:model.safetensors.index.json": true,
+    "checkpoint:processor_config.json": true,
+    "checkpoint:tokenizer.json": true,
+    "checkpoint:tokenizer_config.json": true,
+    "checkpoint_manifest_hash": true,
+    "checkpoint_manifest_model": true,
+    "claim_still_gated": true,
+    "detached_owner_tool": true,
+    "manifest_hash": true,
+    "manifest_packet_identity": true,
+    "member:capture_bootstrap/sitecustomize.py": true,
+    "member:diverse_hidden_capture_hook.py": true,
+    "member:endpoint_entrypoint.py": true,
+    "member:exact_runner.py": true,
+    "no_checkpoint_authority": true,
+    "packet_archive_identity": true,
+    "packet_identity": true,
+    "repair_handshake_tool": true,
+    "source_ready_hash": true
+  },
+  "classification": "h200_exact_diverse_capture_owner_lifecycle_pure_ready",
+  "command_graph": {
+    "checkpoint_files": [
+      {
+        "bytes": 18683,
+        "name": "chat_template.jinja",
+        "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"
+      },
+      {
+        "bytes": 4621,
+        "name": "config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      {
+        "bytes": 49784788364,
+        "name": "model-00001-of-00002.safetensors",
+        "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+      },
+      {
+        "bytes": 12761549884,
+        "name": "model-00002-of-00002.safetensors",
+        "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"
+      },
+      {
+        "bytes": 120246,
+        "name": "model.safetensors.index.json",
+        "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+      },
+      {
+        "bytes": 1689,
+        "name": "processor_config.json",
+        "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"
+      },
+      {
+        "bytes": 32169626,
+        "name": "tokenizer.json",
+        "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"
+      },
+      {
+        "bytes": 2095,
+        "name": "tokenizer_config.json",
+        "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"
+      }
+    ],
+    "checkpoint_stage": {
+      "manifest": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/inputs/endpoint/CHECKPOINT_MANIFEST.json",
+      "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "policy": "reuse size-and-sha256 matches; scp only missing/mismatched files to digest .part paths; verify, chmod 0444, then mv",
+      "remote_root": "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/runs/exact-diverse-c32-capture-e606f47a/checkpoint",
+      "source": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/inputs/checkpoint"
+    },
+    "claim": [
+      "/usr/bin/python3",
+      "-m",
+      "grad_research.gpu_pool",
+      "--lab",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab",
+      "claim",
+      "--project",
+      "gemma4_adaptive_retrieval_vocab_head",
+      "--bench",
+      "h200-causal-head-e00b9qw8d6qd7wrjj1"
+    ],
+    "deadline_plan_valid": true,
+    "deadline_rule": "min(claimed_at + 45 minutes, registered bench lifecycle deadline - 10 minutes)",
+    "detached_owner": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.json",
+      "--log",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.log",
+      "--cwd",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head",
+      "--unit-manager",
+      "pid",
+      "--",
+      "/usr/bin/python3",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/run_h200_exact_diverse_capture_owner.py",
+      "--admission",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/DIRECTOR_EXACT_DIVERSE_C32_CAPTURE_OWNER_ADMISSION_20260726T2340Z.json",
+      "--claim-authority",
+      "<later-director-binding>"
+    ],
+    "forbidden": {
+      "provider_create_or_teardown": true,
+      "retrieval_consumer": true,
+      "second_complete_c32_producer": true
+    },
+    "heartbeat": [
+      "/usr/bin/python3",
+      "-m",
+      "grad_research.gpu_pool",
+      "--lab",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab",
+      "heartbeat",
+      "--project",
+      "gemma4_adaptive_retrieval_vocab_head"
+    ],
+    "offline_hypothetical_claimed_at_utc": "2026-07-27T00:47:34.490529Z",
+    "offline_owner_deadline_utc": "2026-07-27T01:22:34.490529Z",
+    "packet_stage": {
+      "archive": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/exact-diverse-c32-capture-packet/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54.tar",
+      "archive_sha256": "92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144",
+      "atomic_finalization": "verify archive then extract to /home/glmrunner/gemma4-adaptive-retrieval-vocab-head/packets/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54.part and mv to /home/glmrunner/gemma4-adaptive-retrieval-vocab-head/packets/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+      "remote_packet_root": "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/packets/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54"
+    },
+    "release_dispositions": {
+      "decision_bearing_capture": "maintenance unless an explicit compatible successor inherits loaded server",
+      "recoverable_integration_or_retrieval": "retain_claim",
+      "unoccupied_healthy": "ready",
+      "unsafe_unreachable_or_deadline": "maintenance_after_compact_diagnostic_and_submission_markers"
+    },
+    "repair": {
+      "disposition": "retain_claim_and_heartbeat; never replay a complete 32-request producer",
+      "generation": "fresh repair-<unix-ns>",
+      "retry_scope": "capture_or_observer_consumer_only",
+      "tool": "/root/workspace/research/factory/tools/repair-handshake"
+    },
+    "request_command": [
+      "python3",
+      "/work/input/exact_runner.py",
+      "--output",
+      "/work/output/c32",
+      "--arm",
+      "exact-diverse-hidden-capture",
+      "--concurrency",
+      "32"
+    ],
+    "retrieval_order": [
+      "EXACT_CAPTURE_TERMINAL.json",
+      "hidden_states.sha256",
+      "hidden_states.manifest.json",
+      "request.stdout",
+      "request.stderr",
+      "science_started.json",
+      "hidden_states.pt"
+    ],
+    "science_marker": "python3 - <<'PY'\nimport json,pathlib,time\np=pathlib.Path('/work/output/science_started.json'); q=p.with_suffix('.part'); q.write_text(json.dumps({'science_started': True, 'stage': 'exact_diverse_c32_request', 'at_unix_s': time.time()})+'\\n'); q.replace(p)\nPY",
+    "server_command": [
+      "sudo",
+      "-n",
+      "docker",
+      "run",
+      "-d",
+      "--name",
+      "gemma4-exact-diverse-c32",
+      "--gpus",
+      "all",
+      "--ipc=host",
+      "--network=host",
+      "-v",
+      "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/packets/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54:/work/input:ro",
+      "-v",
+      "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/runs/exact-diverse-c32-capture-e606f47a:/work/output",
+      "-v",
+      "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/runs/exact-diverse-c32-capture-e606f47a/checkpoint:/work/checkpoint:ro",
+      "-e",
+      "PYTHONPATH=/work/input/capture_bootstrap:/work/input",
+      "-e",
+      "DIVERSE_HIDDEN_CAPTURE_PATH=/work/output/hidden_states.pt",
+      "-e",
+      "DIVERSE_HIDDEN_CAPTURE_AUDIT=/work/output/hidden_states.audit.jsonl",
+      "-e",
+      "DIVERSE_HIDDEN_CAPTURE_MAX_ROWS=1536",
+      "-e",
+      "DIVERSE_HIDDEN_CAPTURE_EXPECTED_WIDTH=5376",
+      "-e",
+      "DIVERSE_HIDDEN_CAPTURE_REQUIRE_EAGER=1",
+      "-e",
+      "FP8_MODULE_AUDIT=/work/output/fp8_module.audit.jsonl",
+      "-e",
+      "FP8_CONSUMER_AUDIT=/work/output/fp8_consumer.audit.jsonl",
+      "-e",
+      "FP8_RUNTIME_AUDIT=/work/output/fp8_runtime.json",
+      "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+      "python3",
+      "/work/input/endpoint_entrypoint.py",
+      "--model-path",
+      "/work/checkpoint",
+      "--tokenizer-path",
+      "/work/checkpoint",
+      "--served-model-name",
+      "google/gemma-4-31B-it",
+      "--dtype",
+      "bfloat16",
+      "--quantization",
+      "fp8",
+      "--tp-size",
+      "1",
+      "--kv-cache-dtype",
+      "fp8_e5m2",
+      "--host",
+      "0.0.0.0",
+      "--context-length",
+      "5000",
+      "--max-running-requests",
+      "32",
+      "--mem-fraction-static",
+      "0.85",
+      "--enable-metrics",
+      "--skip-server-warmup",
+      "--enable-dynamic-chunking",
+      "--chunked-prefill-size",
+      "2048",
+      "--enable-fused-qk-norm-rope",
+      "--prefill-attention-backend",
+      "triton",
+      "--decode-attention-backend",
+      "triton",
+      "--page-size",
+      "1",
+      "--num-continuous-decode-steps",
+      "1",
+      "--triton-attention-num-kv-splits",
+      "8",
+      "--tool-call-parser",
+      "gemma4",
+      "--port",
+      "30000",
+      "--speculative-algorithm",
+      "NGRAM",
+      "--disable-cuda-graph"
+    ]
+  },
+  "detached_owner_sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456",
+  "disposition": "pause_for_later_director_claim_admission",
+  "gpu_inventory_sha256": "c2dd3a2295c1ad978500469b8fa46b97af6889b401f2e44da1e963510a5c381c",
+  "owner_sha256": "5abfb7f094c56a32ba4ea2368ba509d3079f62e8b23df51802c42013fd26a5e3",
+  "packet_archive_sha256": "92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144",
+  "packet_manifest_sha256": "dbb8bec0010e268ea0ffa283fdd6b5b0ccd23f4e79492b98ea77dd6757ad4fd2",
+  "packet_members": [
+    {
+      "bytes": 536,
+      "pass": true,
+      "path": "capture_bootstrap/sitecustomize.py",
+      "sha256": "013014484ba8f248de2e07883631e2736bbb27c2ea6319f02b5af06167b81a42"
+    },
+    {
+      "bytes": 10331,
+      "pass": true,
+      "path": "diverse_hidden_capture_hook.py",
+      "sha256": "74edc518057263816cadc01144a48436014f872e79818dfec980ad0a0a405515"
+    },
+    {
+      "bytes": 6062,
+      "pass": true,
+      "path": "endpoint_entrypoint.py",
+      "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+    },
+    {
+      "bytes": 9494,
+      "pass": true,
+      "path": "exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    }
+  ],
+  "pass": true,
+  "repair_handshake_sha256": "28578be98de8180713601c4ee38fcd29039bc19611497ce3509add993179f2d7",
+  "resource_use": {
+    "actual_spend_usd": 0.0,
+    "checkpoint_bytes_copied": 0,
+    "endpoint_requests": 0,
+    "gpu_claimed": false,
+    "provider_contacted": false,
+    "retrieval_runs": 0,
+    "ssh_used": false
+  },
+  "schema_version": 1,
+  "source_ready_sha256": "e4e9f0c2e89a0d5d14bb57d854b7bac2cf03b0eff272627482b657e893d15c38"
+}

@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-26T22:13:53.340486Z",
-  "patch_artifact": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/construct_streaming_shared_sync_invalid_terminal.py",
-  "patch_sha256": "cb0f3ea8c59121722300ee056ad97d396aa1bb6e51ce2e0b62374096cf07fd7b",
-  "repair_id": "streaming-h100-1785103561963304790",
-  "request_sha256": "d144d0d7836adfa13ca1d4402a209f4bad40d215537b765c767c589c6d6eeac9",
-  "scope": "offline_result_construction",
-  "state": "repair_applied"
-}

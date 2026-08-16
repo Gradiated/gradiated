@@ -1,9 +1,0 @@
-{
-  "attempt": false,
-  "component": true,
-  "final": true,
-  "owner_live": false,
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"python3\", \"remote_experiment.py\"], \"cwd\": \"/home/glmrunner/gemma4-h200-ngram-adaptive-depth\", \"launched_at_utc\": \"2026-07-24T22:00:41.995257Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-h200-ngram-adaptive-depth/EXPERIMENT_OWNER_REPAIR1784930436.log\", \"pid\": 171821, \"start_ticks\": 4515271, \"unit_manager\": \"remote-shell\"}\nFINAL_PRESENT\nCOMPONENT_PRESENT\n{\n  \"phase\": \"high_load_depth_candidate\",\n  \"requests\": 8,\n  \"science_started\": true\n}\n"
-}

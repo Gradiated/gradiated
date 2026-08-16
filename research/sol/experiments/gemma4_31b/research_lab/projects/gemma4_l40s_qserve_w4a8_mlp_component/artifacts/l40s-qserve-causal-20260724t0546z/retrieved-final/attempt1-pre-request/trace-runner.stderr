@@ -1,7 +1,0 @@
-Traceback (most recent call last):
-  File "/trace/trace_runner.py", line 228, in <module>
-    raise SystemExit(main())
-                     ^^^^^^
-  File "/trace/trace_runner.py", line 152, in main
-    raise ValueError("tokenizer did not produce integer token IDs")
-ValueError: tokenizer did not produce integer token IDs

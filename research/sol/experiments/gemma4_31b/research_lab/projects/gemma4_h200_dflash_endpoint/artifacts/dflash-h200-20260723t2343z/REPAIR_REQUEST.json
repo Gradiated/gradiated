@@ -1,4 +1,0 @@
-{
-  "repair": "correct only the host project mount and copy the runner into the already-loaded AR producer; retain the staged immutable target/draft, pinned image/source, workload, decision gates, and claimed bench without replaying model staging or AR model load",
-  "retry": true
-}

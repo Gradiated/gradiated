@@ -1,9 +1,0 @@
-{
-  "derived_service_impact_percent": 0.023040260892846113,
-  "median_ns": 43571.0,
-  "mixed_ratio": "50% transformed / 50% unchanged",
-  "p99_ms": 0.083706,
-  "p99_ns": 83706,
-  "responses": 100000,
-  "service_seconds_per_request": 0.3633031778124973
-}

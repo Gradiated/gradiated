@@ -1,8 +1,0 @@
-{
-  "any_request_row": false,
-  "candidate_audit_events": 0,
-  "candidate_path_present": false,
-  "remote_unit_raw": "success\n0\nactive\nrunning",
-  "remote_unit_state": "success",
-  "row_counts": {}
-}

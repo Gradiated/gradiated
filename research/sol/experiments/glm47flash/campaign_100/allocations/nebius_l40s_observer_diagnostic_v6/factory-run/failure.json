@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "run_id": "glm47-observer-diagnostic-l40s-v6",
-  "failure_class": "operational_failure",
-  "stage": "post_transfer_server_health_before_scored_arms",
-  "message": "The exact target-hardware Nsight preflight passed and the verified 20.17 GB checkpoint transferred once. The model endpoint then remained connection-refused for the bounded health window, so no scored request, observer arm, remote evidence archive, or scientific result was produced. The controller requested factory cleanup, verified direct instance not-found and zero labeled instance/disk inventory, and did not retain an untested repair."
-}

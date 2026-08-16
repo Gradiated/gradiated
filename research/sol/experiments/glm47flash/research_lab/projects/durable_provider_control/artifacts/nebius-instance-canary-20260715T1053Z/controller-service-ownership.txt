@@ -1,3 +1,0 @@
-MainPID=871272
-ControlGroup=/user.slice/user-0.slice/user@0.service/app.slice/durable-nebius-canary-controller-1784105530342151499.service
-ActiveState=active

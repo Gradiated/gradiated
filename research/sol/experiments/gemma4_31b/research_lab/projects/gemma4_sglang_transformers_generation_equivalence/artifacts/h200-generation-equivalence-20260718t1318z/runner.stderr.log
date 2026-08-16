@@ -1,31 +1,0 @@
-[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/1188 [00:00<?, ?it/s]Loading weights:  85%|████████▍ | 1006/1188 [00:00<00:00, 10055.96it/s]Loading weights: 100%|██████████| 1188/1188 [00:00<00:00, 9979.36it/s] 
-Traceback (most recent call last):
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_sglang_transformers_generation_equivalence/generation_equivalence_runner.py", line 218, in <module>
-    main()
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_sglang_transformers_generation_equivalence/generation_equivalence_runner.py", line 214, in main
-    print(canonical(generate(args.checkpoint, args.sglang_base, args.output_dir)))
-                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_sglang_transformers_generation_equivalence/generation_equivalence_runner.py", line 151, in generate
-    model = AutoModelForCausalLM.from_pretrained(checkpoint, torch_dtype=torch.bfloat16).cuda().eval()
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/transformers/modeling_utils.py", line 3559, in cuda
-    return super().cuda(*args, **kwargs)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1097, in cuda
-    return self._apply(lambda t: t.cuda(device))
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 934, in _apply
-    module._apply(fn)
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 934, in _apply
-    module._apply(fn)
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 934, in _apply
-    module._apply(fn)
-  [Previous line repeated 3 more times]
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 965, in _apply
-    param_applied = fn(param)
-                    ^^^^^^^^^
-  File "/usr/local/lib/python3.12/dist-packages/torch/nn/modules/module.py", line 1097, in <lambda>
-    return self._apply(lambda t: t.cuda(device))
-                                 ^^^^^^^^^^^^^^
-torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 222.00 MiB. GPU 0 has a total capacity of 139.80 GiB of which 157.62 MiB is free. Process 1 has 652.00 MiB memory in use. Process 115 has 60.96 GiB memory in use. Process 736 has 59.65 GiB memory in use. Including non-PyTorch memory, this process has 18.37 GiB memory in use. Of the allocated memory 17.75 GiB is allocated by PyTorch, and 117.94 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)

@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "sudo docker exec gemma-ngram python3 /work/input/exact_runner.py --output /work/artifacts/diagnostic --arm native_ngram_diagnostic --concurrency 32 > \"$artifacts/runner.stdout\" 2> \"$artifacts/runner.stderr\"",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": 1784794628.2419372
-}

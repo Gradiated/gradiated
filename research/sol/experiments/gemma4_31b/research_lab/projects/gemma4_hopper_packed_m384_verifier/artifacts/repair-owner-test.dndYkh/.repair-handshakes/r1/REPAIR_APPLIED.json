@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-26T20:56:12.666901Z",
-  "patch_artifact": null,
-  "patch_sha256": null,
-  "repair_id": "r1",
-  "request_sha256": "7a55c5953b0271f7da9df4be0cf2c4477b182b52c1890125562cb58046370557",
-  "scope": "retrieve",
-  "state": "repair_applied"
-}

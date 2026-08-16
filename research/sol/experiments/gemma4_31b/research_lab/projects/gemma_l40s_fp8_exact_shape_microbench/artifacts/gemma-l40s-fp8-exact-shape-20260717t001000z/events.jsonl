@@ -1,6 +1,0 @@
-{"event": "instance_created", "instance_id": "computeinstance-e00d73x58p038y8c48", "timestamp": "2026-07-17T04:07:38.477943Z"}
-{"elapsed_seconds": 70.742, "event": "ssh_ready", "timestamp": "2026-07-17T04:08:10.887155Z"}
-{"error_type": "StopIteration", "event": "experiment_error", "message": "", "timestamp": "2026-07-17T04:17:11.568729Z"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-17T04:17:11.568815Z"}
-{"event": "repair_window_expired", "timestamp": "2026-07-17T04:27:11.596066Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-17T04:27:52.437539Z"}

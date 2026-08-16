@@ -1,5 +1,0 @@
-sitecustomize.py: OK
-coherence_runner.py: OK
-exact_c32_runner.py: OK
-run_endpoint.sh: OK
-verify_endpoint.py: OK

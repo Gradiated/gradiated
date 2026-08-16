@@ -1,8 +1,0 @@
-{"event": "stock_control", "instance_count": 0, "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "timestamp": "2026-07-14T12:43:07.642577Z"}
-{"event": "instance_created", "instance_id": "computeinstance-e00ryn9r7gcjnecedr", "timestamp": "2026-07-14T12:43:52.508961Z"}
-{"elapsed_seconds": 80.219, "event": "ssh_ready", "timestamp": "2026-07-14T12:44:27.616239Z"}
-{"event": "cuda_and_transformers_preflight_passed", "timestamp": "2026-07-14T12:51:14.814953Z", "transformers_revision": "1618d44b9295361607ec74d7be860ba886aac039"}
-{"event": "tiny_transfer_probe_passed", "sha256": "6967780b45a5e9e86c4e5ac54e2595fcf2add1a66cdd63cb8df63017fa8c8d11", "timestamp": "2026-07-14T12:51:23.174876Z"}
-{"elapsed_seconds": 437.885, "event": "verified_local_awq_transferred", "timestamp": "2026-07-14T12:58:41.060480Z"}
-{"error_type": "StockError", "event": "experiment_error", "message": "expected one artifact member ending in /allocation-result.json", "timestamp": "2026-07-14T13:00:39.081242Z"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-14T13:00:39.081323Z"}

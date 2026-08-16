@@ -1,0 +1,10 @@
+{
+  "packet_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102152052403190/FIXTURE_DTYPE_REBIND.json",
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102152052403190/FIXTURE_DTYPE_REBIND.json",
+  "ready_sha256": "95599a2079c266220b1d94205ad73f121c8623f0046ee09debf8ad4b462d9c54",
+  "repair_id": "streaming-h100-1785102152052403190",
+  "requested_at_utc": "2026-07-26T21:51:30.410278Z",
+  "retry_scope": "run_unsubmitted_cycle",
+  "schema_version": 1,
+  "state": "repair_requested"
+}

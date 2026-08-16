@@ -1,0 +1,12 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/ngram_readmission_controller.py"
+  ],
+  "cwd": null,
+  "launched_at_utc": "2026-07-26T04:01:35.447944Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-seqlens-cpu-tensor-20260726t0401z/controller.log",
+  "pid": 1527837,
+  "start_ticks": 115451285,
+  "unit_manager": "pid"
+}

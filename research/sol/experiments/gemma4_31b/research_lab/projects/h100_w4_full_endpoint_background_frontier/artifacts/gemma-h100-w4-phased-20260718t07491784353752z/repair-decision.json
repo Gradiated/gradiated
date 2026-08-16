@@ -1,4 +1,0 @@
-{
-  "action": "teardown",
-  "reason": "same-owner c128 and c96 FP8-KV endpoint rows are structurally valid but both fail the campaign runtime ceiling; end the retained development session and perform authenticated cleanup"
-}

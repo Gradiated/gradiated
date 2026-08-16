@@ -1,5 +1,0 @@
-bash: line 21: warning: here-document at line 1 delimited by end-of-file (wanted `PY')
-  File "<stdin>", line 20
-    PY; rm -rf /home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/.packet.staging; find /home/glmrunner/gemma4-h100-v0515-ngram-price-normalized/packet -type f -printf '%P %s\n' | sort
-                                                                        ^
-SyntaxError: invalid syntax

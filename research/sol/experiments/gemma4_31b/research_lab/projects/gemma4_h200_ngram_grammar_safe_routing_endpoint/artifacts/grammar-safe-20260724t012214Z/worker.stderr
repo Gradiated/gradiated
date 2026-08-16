@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/home/glmrunner/gemma4-h200-ngram-grammar-safe-routing/input/remote_pair.py", line 120, in <module>
-    main()
-  File "/home/glmrunner/gemma4-h200-ngram-grammar-safe-routing/input/remote_pair.py", line 100, in main
-    control_rows = feature_capture("control"); c32("control")
-                                               ^^^^^^^^^^^^^^
-  File "/home/glmrunner/gemma4-h200-ngram-grammar-safe-routing/input/remote_pair.py", line 88, in c32
-    raise RuntimeError(f"c32_runner_failed:{arm}:{result.returncode}")
-RuntimeError: c32_runner_failed:control:2

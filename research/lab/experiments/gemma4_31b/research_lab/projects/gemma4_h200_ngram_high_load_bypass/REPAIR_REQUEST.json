@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "state": "repair_requested",
+  "requested_at_utc": "2026-07-24T23:32:52Z",
+  "ready_snapshot_sha256": "55d4a2bacebf5528b88a33b9900b3be63f75e0183998c7ff152b7de36a4fe50a",
+  "diagnostic": "URLError(ConnectionRefusedError(111, 'Connection refused')) after the request worker, with no PREFIX_PERSISTED.json",
+  "retry_scope": "Archive the zero-row pre-prefix output root atomically; persist candidate rows and telemetry before the post-run metrics observer; record post-run metrics unavailability without changing the frozen comparator, NGRAM-below-eight/ordinary-decode-at-eight-or-more mechanism, threshold, or conditional trajectory; then retry only prefix-through-870.",
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/REPAIR_PACKET.metrics-persistence.tar",
+  "packet_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_high_load_bypass/REPAIR_PACKET.metrics-persistence.tar",
+  "packet_sha256": "4a97181c49d3336687a22eb38299dd1d82834829b200b0d614a8d33fa43a0139"
+}

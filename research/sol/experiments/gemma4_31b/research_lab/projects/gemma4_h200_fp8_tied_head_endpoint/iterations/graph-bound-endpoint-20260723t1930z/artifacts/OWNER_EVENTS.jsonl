@@ -1,6 +1,0 @@
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T19:42:57.042125Z"}
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T19:43:42.044035Z"}
-{"attempt": 1, "event": "retrieval", "name": "WORKER_TERMINAL.json", "success": true, "timestamp_utc": "2026-07-23T19:43:54.084374Z"}
-{"attempt": 1, "event": "retrieval", "name": "INVOCATION_STATE.json", "success": true, "timestamp_utc": "2026-07-23T19:43:54.852526Z"}
-{"attempt": 1, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz", "success": true, "timestamp_utc": "2026-07-23T19:43:55.741934Z"}
-{"attempt": 1, "event": "retrieval", "name": "fp8-graph-endpoint-compact.tar.gz.sha256", "success": true, "timestamp_utc": "2026-07-23T19:43:56.522468Z"}

@@ -1,6 +1,0 @@
-{
-  "project": "gemma4_h200_fp8_compute_endpoint",
-  "runtime": "Online ModelOpt E4M3 producer is explicitly disabled in pinned SGLang after one API repair; c48 stock BF16 weights / FP8-E5M2 KV was restarted without a workload replay.",
-  "server_state": "Stock c48 service restart is performing its normal model/CUDA-graph initialization; no candidate server remains.",
-  "artifacts": "Pinned-online-FP8 unsupported diagnostics retained locally at projects/gemma4_h200_fp8_compute_endpoint/artifacts/20260718t1755z-online-e4m3-c32/."
-}

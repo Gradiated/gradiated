@@ -1,9 +1,0 @@
-{
-  "project": "gemma4_precision_hardware_frontier",
-  "model": "google/gemma-4-31B-it exact critical-path shapes",
-  "checkpoint": "Not required; synthetic exact-shape falsifiers.",
-  "image": "Nebius ubuntu24.04-cuda13.0 base with /home/glmrunner/.venvs/gemma-fp8 (Torch 2.13.0+cu130).",
-  "runtime": "Canonical SDPA discriminator completed: local native-GQA Flash and global repeated-KV Efficient proxy promoted; exact artifacts retrieved.",
-  "caches": "Torch/CUDA packages resident in /home/glmrunner/.venvs/gemma-fp8; no model checkpoint.",
-  "server_state": "No server; provider allocation only."
-}

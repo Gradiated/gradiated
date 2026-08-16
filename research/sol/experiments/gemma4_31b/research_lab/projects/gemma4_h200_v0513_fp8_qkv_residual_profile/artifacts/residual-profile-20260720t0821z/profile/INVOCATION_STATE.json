@@ -1,8 +1,0 @@
-{
-  "candidate_cuda_started": false,
-  "candidate_science_started": false,
-  "control_cuda_started": false,
-  "control_science_started": false,
-  "profile_cuda_started": true,
-  "profile_science_started": true
-}

@@ -1,128 +1,0 @@
-TERMINAL
-{
-  "candidate_workload_started": true,
-  "exit_code": 72,
-  "science_started": true,
-  "stage": "dflash_diagnostic"
-}
-FILES
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/ADAPTER_IMPORT.json 1881
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/GEMMA4_SOURCE.diff 3583
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/GEMMA4_SOURCE.sha256 146
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/IMAGE_ID.txt 72
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/INVOCATION_STATE.json 100
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/REMOTE_TERMINAL.json 119
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/RESULTS.manifest 1216
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/dflash-diagnostic.server-health.log 39879
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/dflash.HEALTH.json 70
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/dflash.container-id 65
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/dflash.models.json 167
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/final-container.inspect.json 18532
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/final-container.log 41795
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/gpu.csv 4121
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/gpu.stderr 0
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/image-build.log 852
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/image-overlay/Dockerfile 117
-/home/glmrunner/gemma4-dflash/work/tied-head-adapter/image-overlay/gemma4_mm.py 47739
-SERVER_LOG_TAIL
-CONTAINER_LOG_TAIL
-    torch.ops.load_library(core_library_path)
-  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
-    raise OSError(f"Could not load this library: {path}") from e
-OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core6.so
-
-FFmpeg version 5:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
-    ctypes.CDLL(path)
-  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
-    self._handle = _dlopen(self._name, mode)
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-OSError: libavutil.so.57: cannot open shared object file: No such file or directory
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
-    torch.ops.load_library(core_library_path)
-  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
-    raise OSError(f"Could not load this library: {path}") from e
-OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core5.so
-
-FFmpeg version 4:
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1503, in load_library
-    ctypes.CDLL(path)
-  File "/usr/lib/python3.12/ctypes/__init__.py", line 379, in __init__
-    self._handle = _dlopen(self._name, mode)
-                   ^^^^^^^^^^^^^^^^^^^^^^^^^
-OSError: libavutil.so.56: cannot open shared object file: No such file or directory
-
-The above exception was the direct cause of the following exception:
-
-Traceback (most recent call last):
-  File "/usr/local/lib/python3.12/dist-packages/torchcodec/_internally_replaced_utils.py", line 93, in load_torchcodec_shared_libraries
-    torch.ops.load_library(core_library_path)
-  File "/usr/local/lib/python3.12/dist-packages/torch/_ops.py", line 1505, in load_library
-    raise OSError(f"Could not load this library: {path}") from e
-OSError: Could not load this library: /usr/local/lib/python3.12/dist-packages/torchcodec/libtorchcodec_core4.so
-[end of libtorchcodec loading traceback].
-[2026-07-25 16:07:38] Hybrid swa model: self.hf_config.architectures=['Gemma4ForConditionalGeneration']
-[2026-07-25 16:07:38] Failed to load generation config for /models/draft: /models/draft does not appear to have a file named generation_config.json. Checkout 'https://huggingface.co//models/draft/tree/eabd648301ce28583cc14757912e5e0f84e152e1' for available files.. Proceeding without generation config.
-[2026-07-25 16:07:38] Init torch distributed begin.
-[2026-07-25 16:07:38] Init torch distributed ends. elapsed=0.22 s, mem usage=0.09 GB
-[2026-07-25 16:07:38] Load weight begin. avail mem=139.13 GB
-Multi-thread loading shards:   0% Completed | 0/2 [00:00<?, ?it/s]Multi-thread loading shards:  50% Completed | 1/2 [00:06<00:06,  6.86s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.35s/it]Multi-thread loading shards: 100% Completed | 2/2 [00:09<00:00,  4.73s/it]
-[2026-07-25 16:07:48] Persistent buffers not in checkpoint (using default init): ['vision_tower.encoder.layers.0.layer_scalar', 'vision_tower.encoder.layers.1.layer_scalar', 'vision_tower.encoder.layers.10.layer_scalar', 'vision_tower.encoder.layers.11.layer_scalar', 'vision_tower.encoder.layers.12.layer_scalar', 'vision_tower.encoder.layers.13.layer_scalar', 'vision_tower.encoder.layers.14.layer_scalar', 'vision_tower.encoder.layers.15.layer_scalar', 'vision_tower.encoder.layers.16.layer_scalar', 'vision_tower.encoder.layers.17.layer_scalar', 'vision_tower.encoder.layers.18.layer_scalar', 'vision_tower.encoder.layers.19.layer_scalar', 'vision_tower.encoder.layers.2.layer_scalar', 'vision_tower.encoder.layers.20.layer_scalar', 'vision_tower.encoder.layers.21.layer_scalar', 'vision_tower.encoder.layers.22.layer_scalar', 'vision_tower.encoder.layers.23.layer_scalar', 'vision_tower.encoder.layers.24.layer_scalar', 'vision_tower.encoder.layers.25.layer_scalar', 'vision_tower.encoder.layers.26.layer_scalar', 'vision_tower.encoder.layers.3.layer_scalar', 'vision_tower.encoder.layers.4.layer_scalar', 'vision_tower.encoder.layers.5.layer_scalar', 'vision_tower.encoder.layers.6.layer_scalar', 'vision_tower.encoder.layers.7.layer_scalar', 'vision_tower.encoder.layers.8.layer_scalar', 'vision_tower.encoder.layers.9.layer_scalar']
-[2026-07-25 16:07:48] Load weight end. elapsed=9.88 s, type=Gemma4ForConditionalGeneration, avail mem=79.52 GB, mem usage=59.61 GB.
-[2026-07-25 16:07:48] Use sliding window memory pool. full_layer_tokens=85396, swa_layer_tokens=68316
-[2026-07-25 16:07:48] Max concurrent requests (per dp worker) from the finalized token capacity: max_num_reqs=32.
-[2026-07-25 16:07:49] KV Cache is allocated. dtype: torch.bfloat16, #tokens: 68316, K size: 26.06 GB, V size: 26.06 GB
-[2026-07-25 16:07:49] KV Cache is allocated. dtype: torch.bfloat16, #tokens: 85396, K size: 3.26 GB, V size: 3.26 GB
-[2026-07-25 16:07:49] SWAKVPool mem usage: 58.64 GB, swa size: 68316, full size: 85396
-[2026-07-25 16:07:49] Memory pool end. avail mem=20.84 GB
-[2026-07-25 16:07:50] Capture cuda graph begin. This can take up to several minutes. avail mem=20.78 GB
-[2026-07-25 16:07:50] Capture cuda graph bs [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]
-  0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=19.90 GB):   0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=19.90 GB):   5%|▌         | 1/20 [00:31<09:56, 31.37s/it]Capturing batches (bs=30 avail_mem=19.45 GB):   5%|▌         | 1/20 [00:31<09:56, 31.37s/it]Capturing batches (bs=30 avail_mem=19.45 GB):  10%|█         | 2/20 [00:31<03:54, 13.00s/it]Capturing batches (bs=28 avail_mem=19.22 GB):  10%|█         | 2/20 [00:31<03:54, 13.00s/it]Capturing batches (bs=28 avail_mem=19.22 GB):  15%|█▌        | 3/20 [00:31<02:01,  7.13s/it]Capturing batches (bs=26 avail_mem=19.22 GB):  15%|█▌        | 3/20 [00:31<02:01,  7.13s/it]Capturing batches (bs=26 avail_mem=19.22 GB):  20%|██        | 4/20 [00:31<01:09,  4.37s/it]Capturing batches (bs=24 avail_mem=19.21 GB):  20%|██        | 4/20 [00:31<01:09,  4.37s/it]Capturing batches (bs=24 avail_mem=19.21 GB):  25%|██▌       | 5/20 [00:31<00:42,  2.84s/it]Capturing batches (bs=22 avail_mem=19.21 GB):  25%|██▌       | 5/20 [00:31<00:42,  2.84s/it]Capturing batches (bs=22 avail_mem=19.21 GB):  30%|███       | 6/20 [00:32<00:26,  1.91s/it]Capturing batches (bs=20 avail_mem=19.21 GB):  30%|███       | 6/20 [00:32<00:26,  1.91s/it]Capturing batches (bs=20 avail_mem=19.21 GB):  35%|███▌      | 7/20 [00:32<00:17,  1.33s/it]Capturing batches (bs=18 avail_mem=19.21 GB):  35%|███▌      | 7/20 [00:32<00:17,  1.33s/it]Capturing batches (bs=18 avail_mem=19.21 GB):  40%|████      | 8/20 [00:32<00:11,  1.06it/s]Capturing batches (bs=16 avail_mem=19.20 GB):  40%|████      | 8/20 [00:32<00:11,  1.06it/s]Capturing batches (bs=16 avail_mem=19.20 GB):  45%|████▌     | 9/20 [00:32<00:08,  1.35it/s]Capturing batches (bs=14 avail_mem=19.20 GB):  45%|████▌     | 9/20 [00:32<00:08,  1.35it/s]Capturing batches (bs=14 avail_mem=19.20 GB):  50%|█████     | 10/20 [00:32<00:05,  1.84it/s]Capturing batches (bs=12 avail_mem=19.19 GB):  50%|█████     | 10/20 [00:32<00:05,  1.84it/s]Capturing batches (bs=12 avail_mem=19.19 GB):  55%|█████▌    | 11/20 [00:32<00:03,  2.45it/s]Capturing batches (bs=10 avail_mem=19.19 GB):  55%|█████▌    | 11/20 [00:32<00:03,  2.45it/s]Capturing batches (bs=8 avail_mem=19.19 GB):  55%|█████▌    | 11/20 [00:32<00:03,  2.45it/s] Capturing batches (bs=8 avail_mem=19.19 GB):  65%|██████▌   | 13/20 [00:32<00:01,  3.77it/s]Capturing batches (bs=7 avail_mem=19.19 GB):  65%|██████▌   | 13/20 [00:32<00:01,  3.77it/s]Capturing batches (bs=7 avail_mem=19.19 GB):  70%|███████   | 14/20 [00:33<00:01,  4.45it/s]Capturing batches (bs=6 avail_mem=19.18 GB):  70%|███████   | 14/20 [00:33<00:01,  4.45it/s]Capturing batches (bs=6 avail_mem=19.18 GB):  75%|███████▌  | 15/20 [00:33<00:00,  5.18it/s]Capturing batches (bs=5 avail_mem=19.17 GB):  75%|███████▌  | 15/20 [00:33<00:00,  5.18it/s]Capturing batches (bs=5 avail_mem=19.17 GB):  80%|████████  | 16/20 [00:33<00:00,  5.91it/s]Capturing batches (bs=4 avail_mem=19.17 GB):  80%|████████  | 16/20 [00:33<00:00,  5.91it/s]Capturing batches (bs=4 avail_mem=19.17 GB):  85%|████████▌ | 17/20 [00:33<00:00,  6.57it/s]Capturing batches (bs=3 avail_mem=19.17 GB):  85%|████████▌ | 17/20 [00:33<00:00,  6.57it/s]Capturing batches (bs=3 avail_mem=19.17 GB):  90%|█████████ | 18/20 [00:33<00:00,  7.20it/s]Capturing batches (bs=2 avail_mem=19.16 GB):  90%|█████████ | 18/20 [00:33<00:00,  7.20it/s]Capturing batches (bs=2 avail_mem=19.16 GB):  95%|█████████▌| 19/20 [00:33<00:00,  7.76it/s]Capturing batches (bs=1 avail_mem=19.16 GB):  95%|█████████▌| 19/20 [00:33<00:00,  7.76it/s]Capturing batches (bs=1 avail_mem=19.16 GB): 100%|██████████| 20/20 [00:33<00:00,  8.21it/s]Capturing batches (bs=1 avail_mem=19.16 GB): 100%|██████████| 20/20 [00:33<00:00,  1.69s/it]
-[2026-07-25 16:08:24] Capture cuda graph end. Time elapsed: 34.35 s. mem usage=1.62 GB. avail mem=19.16 GB.
-[2026-07-25 16:08:24] Disable prefill CUDA graph because cuda_graph_config resolved prefill.backend='disabled' (e.g. via --cuda-graph-backend-prefill=disabled or auto-disable rules).
-[2026-07-25 16:08:26] Init torch distributed begin.
-[2026-07-25 16:08:26] Init torch distributed ends. elapsed=0.00 s, mem usage=0.00 GB
-[2026-07-25 16:08:26] Load weight begin. avail mem=19.16 GB
-Multi-thread loading shards:   0% Completed | 0/1 [00:00<?, ?it/s]Multi-thread loading shards: 100% Completed | 1/1 [00:00<00:00,  2.36it/s]Multi-thread loading shards: 100% Completed | 1/1 [00:00<00:00,  2.36it/s]
-[2026-07-25 16:08:26] Load weight end. elapsed=0.49 s, type=DFlashDraftModel, avail mem=16.15 GB, mem usage=3.01 GB.
-[2026-07-25 16:08:27] KV Cache is allocated. dtype: torch.bfloat16, #tokens: 85396, K size: 0.81 GB, V size: 0.81 GB
-[2026-07-25 16:08:27] Memory pool end. avail mem=14.51 GB
-[2026-07-25 16:08:27] Capture cuda graph begin. This can take up to several minutes. avail mem=14.51 GB
-[2026-07-25 16:08:27] Capture cuda graph bs [1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32]
-  0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=14.01 GB):   0%|          | 0/20 [00:00<?, ?it/s]Capturing batches (bs=32 avail_mem=14.01 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=30 avail_mem=14.41 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=28 avail_mem=14.41 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=26 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=24 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=22 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=20 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=18 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=16 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:18<05:59, 18.91s/it]Capturing batches (bs=14 avail_mem=14.39 GB):   5%|▌         | 1/20 [00:19<05:59, 18.91s/it]Capturing batches (bs=14 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=12 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=10 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=8 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it] Capturing batches (bs=7 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=6 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=5 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=4 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=3 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=2 avail_mem=14.39 GB):  50%|█████     | 10/20 [00:19<00:13,  1.38s/it]Capturing batches (bs=2 avail_mem=14.39 GB):  95%|█████████▌| 19/20 [00:19<00:00,  1.67it/s]Capturing batches (bs=1 avail_mem=14.39 GB):  95%|█████████▌| 19/20 [00:19<00:00,  1.67it/s]Capturing batches (bs=1 avail_mem=14.39 GB): 100%|██████████| 20/20 [00:19<00:00,  1.04it/s]
-[2026-07-25 16:08:47] Capture cuda graph end. Time elapsed: 19.81 s. mem usage=0.12 GB. avail mem=14.39 GB.
-[2026-07-25 16:08:47] Disable prefill CUDA graph because cuda_graph_config resolved prefill.backend='disabled' (e.g. via --cuda-graph-backend-prefill=disabled or auto-disable rules).
-[2026-07-25 16:08:47] Initialized DFLASH draft runner. attention_backend=fa4, model=DFlashDraftModel, block_size=16, draft_window_size=None, compact_cache=False
-[2026-07-25 16:08:47] DFLASH draft runner ready. mask_token=<|MASK|>, mask_token_id=4, mask_token_id_override=4
-[2026-07-25 16:08:47] DFLASH fused KV materialization enabled. n_layers=5, num_kv_heads=8, head_dim=128
-[2026-07-25 16:08:47] max_total_num_tokens=85396, chunked_prefill_size=8192, max_prefill_tokens=16384, max_running_requests=32, context_len=5000, available_gpu_mem=14.18 GB
-[2026-07-25 16:08:47] Tree cache initialized: source=default impl=SWARadixCache hybrid_swa=True hybrid_ssm=False hierarchical=False streaming_wrapped=False
-[2026-07-25 16:08:48] INFO:     Started server process [1]
-[2026-07-25 16:08:48] INFO:     Waiting for application startup.
-[2026-07-25 16:08:48] Using default chat sampling params from model generation config: {'temperature': 1.0, 'top_k': 64, 'top_p': 0.95}
-[2026-07-25 16:08:48] The server is fired up and ready to roll!
-[2026-07-25 16:08:48] INFO:     Application startup complete.
-[2026-07-25 16:08:48] INFO:     Uvicorn running on http://0.0.0.0:30000 (Press CTRL+C to quit)
-/usr/local/lib/python3.12/dist-packages/fastapi/routing.py:142: FastAPIDeprecationWarning: ORJSONResponse is deprecated, FastAPI now serializes data directly to JSON bytes via Pydantic when a return type or response model is set, which is faster and doesn't need a custom response class. Read more in the FastAPI docs: https://fastapi.tiangolo.com/advanced/custom-response/#orjson-or-response-model and https://fastapi.tiangolo.com/tutorial/response-model/
-  response = await f(request)
-[2026-07-25 16:08:48] INFO:     127.0.0.1:57006 - "GET /v1/models HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57008 - "GET /v1/models HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] Cache flushed successfully!
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57018 - "POST /flush_cache HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57032 - "GET /metrics HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57050 - "POST /generate HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57036 - "POST /generate HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57062 - "POST /generate HTTP/1.1" 200 OK
-[2026-07-25 16:08:49] INFO:     127.0.0.1:57074 - "POST /generate HTTP/1.1" 200 OK
-[2026-07-25 16:08:53] Prefill batch, #new-seq: 1, #new-token: 4214, #cached-token: 0, full token usage: 0.15, swa token usage: 0.18, #running-req: 0, #queue-req: 1, #pending-token: 0, cuda graph: False, input throughput (token/s): 654.20
-[2026-07-25 16:08:54] Prefill batch, #new-seq: 2, #new-token: 8192, #cached-token: 0, full token usage: 0.18, swa token usage: 0.22, #running-req: 1, #queue-req: 0, #pending-token: 4450, cuda graph: False, input throughput (token/s): 10697.22
-[2026-07-25 16:08:55] Prefill batch, #new-seq: 2, #new-token: 3915, #cached-token: 535, full token usage: 0.18, swa token usage: 0.23, #running-req: 2, #queue-req: 0, #pending-token: 0, cuda graph: False, input throughput (token/s): 4519.81
-[2026-07-25 16:08:57] Decode batch, #running-req: 4, #full token: 15997, full token usage: 0.19, #swa token: 15997, swa token usage: 0.23, accept len: 4.01, accept rate: 0.20, cuda graph: True, gen throughput (token/s): 66.78, #queue-req: 0
-[2026-07-25 16:08:58] Decode batch, #running-req: 1, #full token: 4474, full token usage: 0.05, #swa token: 3939, swa token usage: 0.06, accept len: 5.53, accept rate: 0.30, cuda graph: True, gen throughput (token/s): 404.87, #queue-req: 0
-[2026-07-25 16:08:59] INFO:     127.0.0.1:58558 - "GET /metrics HTTP/1.1" 200 OK

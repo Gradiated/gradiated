@@ -1,8 +1,0 @@
-{
-  "container": "gemma4-ngram-tail-overlap",
-  "model": "google/gemma-4-31B-it",
-  "model_ids": [
-    "google/gemma-4-31B-it"
-  ],
-  "reused_without_docker_run": true
-}

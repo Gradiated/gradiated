@@ -1,7 +1,0 @@
-{
-  "authority_sha256": "d2ee88e43945476661d76ae4da1230dde417a6c56391f708b7efd7cf43544053",
-  "checkpoint_rehash": false,
-  "checkpoint_transfer_bytes": 0,
-  "owner_sha256": "cd0b9e3e922a86a14dd588b6f3a8df6b8c72dc5d25941a0f78989b5abebd495f",
-  "scorer_sha256": "8238e2ba830120587c0d56417c80d29c39f4958e9e6d2055c39d8a30b7de5207"
-}

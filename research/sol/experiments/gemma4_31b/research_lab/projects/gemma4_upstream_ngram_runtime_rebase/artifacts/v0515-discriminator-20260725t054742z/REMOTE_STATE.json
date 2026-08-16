@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-25T05:54:44.311556Z",
-  "attempt": true,
-  "final": false,
-  "live": false,
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"env\", \"UPSTREAM_REBASE_ROOT=/home/glmrunner/gemma4-upstream-ngram-v0515\", \"./remote_v0515_worker.sh\"], \"cwd\": \"/home/glmrunner/gemma4-upstream-ngram-v0515\", \"launched_at_utc\": \"2026-07-25T05:47:50.251077Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-upstream-ngram-v0515/GUEST_OWNER.log\", \"pid\": 68063, \"start_ticks\": 1947495, \"unit_manager\": \"remote-shell\"}\nATTEMPT\n{\n  \"phase\": \"identity_and_input_verification\",\n  \"science_started\": false\n}\n"
-}

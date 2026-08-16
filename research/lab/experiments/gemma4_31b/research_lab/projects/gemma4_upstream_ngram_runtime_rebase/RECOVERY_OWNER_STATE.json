@@ -1,0 +1,14 @@
+{
+  "command": [
+    "env",
+    "UPSTREAM_REBASE_OWNER_STATE=/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/RECOVERY_OWNER_STATE.json",
+    "python3",
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/run_v0515_outer.py"
+  ],
+  "cwd": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase",
+  "launched_at_utc": "2026-07-25T06:07:39.041019Z",
+  "log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/RECOVERY_OWNER_CONTROLLER.log",
+  "pid": 421828,
+  "start_ticks": 107567644,
+  "unit_manager": "pid"
+}

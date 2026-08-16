@@ -1,7 +1,0 @@
-{
-  "classification": "typed_presemantic_failure",
-  "error_type": "FileNotFoundError",
-  "instance_id": "computeinstance-e00zccekqsk6a32ag1",
-  "message": "[Errno 2] No such file or directory: '/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/checkpoint/model-files.sha256'",
-  "stage": "session_staging"
-}

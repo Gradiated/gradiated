@@ -1,7 +1,0 @@
-{
-  "exit_code": 3,
-  "recorded_at_utc": "2026-07-16T06:57:41.594011Z",
-  "stage": "provider_create_correction",
-  "stderr_tail_redacted": "Error: rpc error: code = InvalidArgument desc = UserData is invalid\nrequest = a54987eb-748b-4755-8882-07e8c99d9e80\ncaused by service error:\n  Bad Request BadRequest: service compute, violations:\n    UserData: YAML is invalid: yaml: line 10: could not find expected ':'\n\nThis issue may be linked to API request calls. The following information may be helpful while debugging the issue:\n  Trace ID: cf6dd38e21a33bf6dafa13622b4b7981\n",
-  "stdout_tail_redacted": ""
-}

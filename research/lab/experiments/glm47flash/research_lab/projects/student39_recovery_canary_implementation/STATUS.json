@@ -1,0 +1,68 @@
+{
+  "status": "parked_per_user_performance_discovery_phase",
+  "priority": 0,
+  "summary": "Parked by user before provider creation. Preserve the staged 65,536-token dataset and partial recovery implementation for a later training/quality phase; current campaign capacity returns to broad performance and near-original-model c32 discovery.",
+  "next_action": "No training, teacher-cache, distillation, quality, H100, or provider work until the user explicitly returns the campaign to recovery. Reuse the staged hashes rather than repeating setup when reactivated.",
+  "provider_mutation": "prohibited_parked_by_user",
+  "authorized_spend_usd": 0.0,
+  "absolute_timeout_seconds": 7900,
+  "active_experiment": null,
+  "proven_launcher": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/nebius/vllm_smoke_control.py",
+  "target_platform": "gpu-h100-sxm/1gpu-16vcpu-200gb",
+  "boot_disk_gib": 250,
+  "actual_experimental_rate_usd_per_hour": 3.8743055,
+  "maximum_provider_seconds_at_cap": 7990,
+  "mapping_sha256": "e501ab11290cd38424fd5ed93f9e9fd55145a7ed98cb6acddcc21b4122accb3a",
+  "maximum_canary_tokens": 131072,
+  "initial_canary_tokens": 65536,
+  "artifact_contract": [
+    "actual_teacher_cache_and_lora_training_code",
+    "source_and_data_manifest.json",
+    "teacher_cache_manifest.json",
+    "training_metrics.jsonl",
+    "adapter_checkpoint_manifest.json",
+    "STUDENT39_RECOVERY_CANARY_RESULT.json",
+    "provider_events_and_cleanup_receipt",
+    "RESEARCH_LOG.md"
+  ],
+  "stop_rule": "remain parked until the user explicitly reopens training and quality work",
+  "quality_gate": {
+    "control_artifact": "../bf16_v2_capture_adjudication/BF16_V2_CONTROL_ADJUDICATION.json",
+    "control_sha256": "393cb6e89cb8c4b8b2b6de4c2f8da98507129805fa898d85c511dbee7d56f49c",
+    "ceilings_artifact": "../bf16_v2_capture_adjudication/BF16_V2_NLL_CEILINGS.json",
+    "ceilings_sha256": "849e057d0dcb6b4d76c6d11093d3e7ce9a6a7e4915b8a6ca3735957889477eff",
+    "decision": "development_control_pass_candidate_and_holdout_unmeasured"
+  },
+  "previous_stale_closure": {
+    "classification": "invalidated_cross_project_dependency_lookup",
+    "preflight_sha256": "6426685238d7e97279d4ad01784c0e88911462f1689f4efa595254b76bc5bb0a",
+    "remaining_implementation_gap": "partial_modes_exist_but_are_not_execution_safe"
+  },
+  "cycle_59_partial_progress": {
+    "entrypoint_sha256": "c23af74c55a3b39605fa0e32b4cb485a6ea02cefe58c7dab126d1b5714faaca2",
+    "token_file": "artifacts/clean_data/token_ids.pt",
+    "token_file_sha256": "dc6e850fb0664c03a6f5673a19ab078740f137c12f43112af597499e7c2f5bbc",
+    "data_manifest_sha256": "7fb471bc73244cf434911b5fc5e74ff4be23289d706d412346de272a247d41eb",
+    "total_tokens": 65536,
+    "train_tokens": 57344,
+    "heldout_tokens": 8192,
+    "documents": 84,
+    "provider_create_attempted": false
+  },
+  "cycle_59_precreate_blockers": [
+    "teacher_cache_1023_targets_are_resliced_to_1022_in_training",
+    "frozen_development_binding_count_is_zero_and_missing_paths_do_not_fail",
+    "dataset_revision_and_tokenizer_mapping_token_cache_hashes_are_not_verified",
+    "exact_mapped_BF16_student_is_not_materialized_or_bound",
+    "gradient_checkpointing_and_measured_memory_admission_are_absent",
+    "checkpoint_bytes_are_loaded_but_model_optimizer_resume_step_is_not_executed",
+    "held_back_KL_finite_descent_and_cache_reproduction_gates_are_absent",
+    "new_materialized_modes_have_no_execution_equivalent_test"
+  ],
+  "full_job_repricing": {
+    "old_26_gpu_hour_estimate_usd": 55.9,
+    "measured_h100_plus_disk_rate_usd_per_hour": 3.8743055,
+    "repriced_26_gpu_hour_estimate_usd": 100.731943,
+    "decision": "not_admitted_without_positive_canary_and_new_stage_gates"
+  }
+}

@@ -1,2 +1,0 @@
-{"batch_size": 32, "block_m": 8, "candidate": "fixed_m384_q12_block_m8", "max_len_extend": 12, "q_rows": 384, "subtype": "local_qk256_v256"}
-{"batch_size": 32, "block_m": 8, "candidate": "fixed_m384_q12_block_m8", "max_len_extend": 12, "q_rows": 384, "subtype": "global_qk512_v512"}

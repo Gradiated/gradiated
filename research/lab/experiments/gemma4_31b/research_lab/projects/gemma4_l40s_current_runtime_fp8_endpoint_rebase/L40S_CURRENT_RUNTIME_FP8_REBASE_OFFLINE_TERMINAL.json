@@ -1,0 +1,470 @@
+{
+  "schema_version": 1,
+  "kind": "l40s_current_runtime_fp8_rebase_offline_terminal",
+  "project": "gemma4_l40s_current_runtime_fp8_endpoint_rebase",
+  "created_at_utc": "2026-07-27T05:11:33Z",
+  "decision": "none",
+  "pass": false,
+  "classification": "offline_structural_negative_exact_c32_single_l40s_memory_fit",
+  "scope": {
+    "mode": "offline_only",
+    "gpu_pool_claimed": false,
+    "ssh_used": false,
+    "provider_api_used": false,
+    "provider_resource_created_or_destroyed": false,
+    "cuda_or_endpoint_invoked": false,
+    "checkpoint_shards_read_or_copied": false,
+    "workload_or_representation_changed": false,
+    "prior_closed_arm_reopened": false,
+    "new_provider_spend_usd": 0.0,
+    "actual_spend_usd": 0.0
+  },
+  "research_question": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "accelerator": "one NVIDIA L40S",
+    "representation": "dynamic E4M3 FP8 transformer linears; BF16 tied embedding/logits; E5M2 K/V; TP1",
+    "workload": {
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "completion_tokens_per_request": 358,
+      "shared_prefix_tokens": 535,
+      "fresh_prompt_tokens_per_request": 3679
+    },
+    "planning_hurdle_seconds_per_request": 1.4776251501079425
+  },
+  "revision_selection": {
+    "retrieved_at_utc": "2026-07-27T04:37:00Z",
+    "official_repository": "https://github.com/sgl-project/sglang",
+    "candidates_inspected": [
+      {
+        "kind": "signed_release_tag",
+        "ref": "v0.5.12.post1",
+        "annotated_tag_object": "d8fcd14f78361039cd9d4e7f16f971e97f2e6f28",
+        "peeled_commit": "5a15cde858ea09b77116212a39356f2fc51b8584",
+        "url": "https://github.com/sgl-project/sglang/tree/v0.5.12.post1",
+        "selected": false,
+        "reason": "Official fallback inspected first; superseded by the current official main revision within the two-revision cap."
+      },
+      {
+        "kind": "current_official_main_commit",
+        "ref": "main",
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "tree": "56e0f15cfee7282d8faadc9b452cdf15cef1df57",
+        "commit_date": "2026-07-27T12:32:40+08:00",
+        "url": "https://github.com/sgl-project/sglang/commit/c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "selected": true,
+        "reason": "Exact current official revision; no third revision was inspected."
+      }
+    ],
+    "selected_revision": {
+      "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+      "tree": "56e0f15cfee7282d8faadc9b452cdf15cef1df57",
+      "source_url": "https://github.com/sgl-project/sglang/commit/c6a6200a1a778a799ba61c395ac292317f01ebc9"
+    },
+    "image_or_build_identity": {
+      "kind": "official_source_build_recipe_not_executed",
+      "dockerfile_sha256": "d4c066f8f9a1354888832c9c8dee1857b110f77758bbf9cdb9db2139c92ab0f2",
+      "target": "runtime",
+      "default_cuda_version": "13.0.1",
+      "required_build_labels": {
+        "org.opencontainers.image.revision": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "ai.sglang.build.commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9"
+      },
+      "image_digest": null,
+      "executed": false,
+      "byte_reproducible_image_admitted": false,
+      "disposition": "No image build or pull is justified after the deterministic memory negative. The owner rejects an image whose embedded revision label differs from the selected commit."
+    }
+  },
+  "direct_source_hashes": {
+    "python/sglang/srt/models/gemma4_causal.py": "9c5f5f5739cbec30284302f266fec1d797a86fb98fa1273a27c97fb5d869d001",
+    "python/sglang/srt/layers/quantization/fp8.py": "194e5c5890c6785facb66bc66d2d0f32f141afbe4adbdaa8c641e997a57a786f",
+    "python/sglang/srt/mem_cache/kv_cache_dtype.py": "1931b22b3e271e0a2fc6b541ba1b3c0b00c01a01c479e6b8034be26ec30c0c41",
+    "python/sglang/srt/mem_cache/memory_pool.py": "24caf4bf2af6db4f8dc180f65b2ed8153403cdfd87010b70fcac67fe59434a10",
+    "python/sglang/srt/mem_cache/swa_memory_pool.py": "d0d8c9ad1a7652978195bfea112611cd281012c6ff9c12dfd05f445c13534724",
+    "python/sglang/srt/layers/radix_attention.py": "293c3cfdecee29ff38b81aa750db05507cba152c105c3ef6b7a2eba2ba160e28",
+    "python/sglang/srt/layers/attention/triton_backend.py": "e2b0fd4a3ec3c783ae7026f4cb8a7292c1203388a6c9ea5b90e604d3a149f3dc",
+    "python/sglang/srt/layers/logits_processor.py": "47e46cace57817a007ca6fa1e521cc5ccfa20941c37f6580c25e74d3cbfec48f",
+    "python/sglang/srt/layers/sampler.py": "0f6936a30eeb4f771aae916693177215f5713d498dd95a78936f52b58dc97f2d",
+    "python/sglang/srt/function_call/gemma4_detector.py": "712146a24e1873fe5d2872253a1688399a8929f7d5c04094e2027428ff767d99",
+    "python/sglang/srt/server_args.py": "c4522fd61ac6bfd4cfe897cece0247fc10c4a2681258f73752a9c8fa695bb3b9",
+    "docker/Dockerfile": "d4c066f8f9a1354888832c9c8dee1857b110f77758bbf9cdb9db2139c92ab0f2"
+  },
+  "bound_inputs": {
+    "project_contract": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/PROJECT.md",
+      "sha256": "2a08f0b177542e3e9cec2a74cfe6b0f8f2d93170d092b2dc97f0112cfc08811b"
+    },
+    "qualified_terminal": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/QUALIFIED_TERMINAL.json",
+      "sha256": "7090c0ebb733f5021c464bc55d82fcd68e2abb52b820408c89724d95c03fd9dd"
+    },
+    "workload": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    },
+    "model_config": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/MODEL_CONFIG.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "launch": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/LAUNCH.json",
+      "sha256": "a48f6910df002c422543089685476fb9af845f957184f326ba0807b58029c1de"
+    },
+    "checkpoint_terminal": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/sglang_h200_matched_endpoint_falsifier/artifacts/checkpoint-owner-20260717T072831Z/CHECKPOINT_TERMINAL.json",
+      "sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481",
+      "checkpoint_index_sha256_from_manifest": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "checkpoint_total_tensor_bytes_from_index_metadata": 62546177752,
+      "shards_accessed_this_cycle": false
+    },
+    "price_inventory": {
+      "path": "research/factory/data/gpu_prices.json",
+      "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+      "refreshed_at_utc": "2026-07-22T21:42:00Z"
+    },
+    "accelerator_inventory": {
+      "path": "research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "prior_l40s_physical_and_component_evidence": [
+      {
+        "path": "research/lab/experiments/gemma4_31b/research_lab/projects/l40s_fp8_single_rank_context_falsifier/artifacts/RECONCILED_TERMINAL.json",
+        "sha256": "662a225318ebf86759a9ac1b59b09948421776b0d295ec840ea11055ea50d074",
+        "evidence_label": "measured_and_reconciled",
+        "usable_fact": "NVIDIA L40S SM89 exposed 46068 MiB",
+        "quarantined_fact": "3.112121484428023 s/request c12 component description",
+        "reason": "Five linear oracles failed; no performance or fit inference is promoted."
+      },
+      {
+        "path": "research/lab/experiments/gemma4_31b/research_lab/projects/l40s_online_fp8_actual_consumer_floor/artifacts/RECONCILED_TERMINAL.json",
+        "sha256": "c9348207441169f6b47cb37d6a4a626c0c44ca385bfdf1b0d6b6d148fe9c51cb",
+        "evidence_label": "measured_and_reconciled",
+        "usable_fact": "zero completed consumer rows",
+        "reason": "The current-vLLM TP context failed; no endpoint performance inference is promoted."
+      },
+      {
+        "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/PROJECT.md",
+        "sha256": "2a08f0b177542e3e9cec2a74cfe6b0f8f2d93170d092b2dc97f0112cfc08811b",
+        "evidence_label": "director_reported_historical_context",
+        "usable_fact": "older c12 raw-component calculation was 2.091299 s/request",
+        "reason": "Not treated as a current endpoint measurement or a transferable lower bound."
+      }
+    ]
+  },
+  "source_path_contract": {
+    "accelerator": {
+      "architecture": "Ada Lovelace SM89",
+      "compute_capability": 89,
+      "fp8_config_minimum_capability": 80,
+      "sm89_supported": true,
+      "interconnect": "PCIe Gen4 x16; no peer GPU or NVLink",
+      "mandatory_multi_gpu_communication": "none; TP1"
+    },
+    "producer_consumer_chain": [
+      {
+        "stage": "checkpoint_to_dynamic_fp8_weights",
+        "producer": "BF16 Gemma checkpoint tensors identified by CHECKPOINT_TERMINAL.json",
+        "consumer": "Fp8Config/Fp8LinearMethod",
+        "contract": "Online non-serialized weights are per-channel E4M3 quantized; activation scheme defaults to dynamic; BF16/FP16 activations are admitted; minimum CUDA capability is SM80."
+      },
+      {
+        "stage": "transformer_linears",
+        "producer": "Gemma4Attention QKV, O and MLP gate/up/down modules",
+        "consumer": "SM89-capable SGLang FP8 linear dispatch",
+        "contract": "Every transformer linear receives the selected quant_config; full-attention checkpoint K is loaded into both fused K and V shards when attention_k_eq_v=true."
+      },
+      {
+        "stage": "hybrid_attention",
+        "producer": "fused Q/K norm plus RoPE and RadixAttention",
+        "consumer": "selected Triton prefill and decode attention backends",
+        "contract": "50 sliding-window layers use 16 KV heads x 256 and window 1024; 10 full layers use 4 KV heads x 512."
+      },
+      {
+        "stage": "e5m2_kv",
+        "producer": "configured torch.float8_e5m2 K and V writes",
+        "consumer": "separate SWA and full KV pools and Triton attention reads",
+        "contract": "Page size one; distinct K and V storage remains required. attention_k_eq_v does not alias the caches because K normalization/RoPE changes K after projection."
+      },
+      {
+        "stage": "graph_or_eager",
+        "producer": "scheduler with dynamic chunking 2048 and CUDA graph max batch 32",
+        "consumer": "one exact c32 endpoint call",
+        "contract": "Decode graph is bounded to c32; eager fallback is observable but cannot repair memory fit."
+      },
+      {
+        "stage": "logits_sampling_parser",
+        "producer": "tied BF16 embed_tokens/lm_head through LogitsProcessor and Sampler",
+        "consumer": "OpenAI completions response and configured Gemma4Detector",
+        "contract": "358 forced non-EOS completion tokens, returned token IDs, finite nonempty text, exact Gemma tool parser, non-reasoning text path."
+      },
+      {
+        "stage": "scientific_consumer",
+        "producer": "32 canonical SSE responses plus before/after metrics",
+        "consumer": "exact_c32_consumer.py terminal",
+        "contract": "The qualified WORKLOAD.json hashes must match regenerated request bodies; a marker is persisted immediately before the single barrier release; raw partial responses precede interpretation."
+      },
+      {
+        "stage": "outer_lifecycle",
+        "producer": "shared detached-owner pid manager invoking l40s_endpoint_owner.py",
+        "consumer": "gpu_pool claim/heartbeat/release and retained repair handshake",
+        "contract": "A positive terminal is mandatory before claim; checkpoint must first be project-local and hash-bound; matched remote immutable files are preserved; compact terminal, raw logs, and science marker are retrieved before expected-claimed-at release."
+      }
+    ],
+    "semantic_ownership": {
+      "immutable": [
+        "model and revision",
+        "qualified request hashes",
+        "c32 concurrency",
+        "4214/358 token lengths",
+        "dynamic FP8 representation",
+        "E5M2 K/V",
+        "TP1 and hybrid geometry",
+        "one scientific c32 submission"
+      ],
+      "narrowly_repairable_same_claim": [
+        "launcher/path/import/API adapter",
+        "numeric guard",
+        "telemetry parser",
+        "retrieval"
+      ],
+      "producer_replay_policy": "A complete interpretable c32 terminal is consumed exactly once. A missing terminal after an ordinary consumer or retrieval defect permits only consumer/retrieval repair under the same claim."
+    }
+  },
+  "memory": {
+    "evidence_label": "analytical lower bound from authoritative config plus measured exposed capacity",
+    "physical_device": {
+      "inventory_marketing_capacity_gb": 48,
+      "measured_exposed_mib": 46068,
+      "measured_exposed_bytes": 48305799168,
+      "measured_exposed_gib": 44.98828125
+    },
+    "geometry": {
+      "hidden_size": 5376,
+      "intermediate_size": 21504,
+      "vocab_size": 262144,
+      "local_layers": 50,
+      "full_layers": 10,
+      "local_q_width": 8192,
+      "local_k_width": 4096,
+      "local_v_width": 4096,
+      "full_q_width": 16384,
+      "full_k_width": 2048,
+      "full_v_width": 2048,
+      "local_linear_elements_per_layer": 478937088,
+      "full_linear_elements_per_layer": 544997376
+    },
+    "optimistic_components_bytes": {
+      "all_transformer_linear_weights_e4m3_one_byte_per_element": 29396828160,
+      "one_tied_embedding_lm_head_bf16": 2818572288,
+      "full_e5m2_k_and_v_at_129687_peak_tokens": 5311979520,
+      "swa_e5m2_k_and_v_at_32768_peak_tokens": 13421772800,
+      "total": 50949152768
+    },
+    "token_derivation": {
+      "full_pool_peak_tokens_lower_bound": "535 + 32 * (3679 + 357) = 129687; before the final sample, 357 generated tokens are already cache inputs and the 535-token prefix is shared once",
+      "swa_pool_peak_tokens_lower_bound": "32 * 1024 = 32768; each request has more than one full window of unique suffix plus generated context",
+      "kv_element_bytes": 1,
+      "k_and_v_factor": 2
+    },
+    "minimum_resident_bytes": 50949152768,
+    "minimum_resident_gib": 47.450096130371094,
+    "headroom_bytes": -2643353600,
+    "headroom_gib": -2.4618148803710938,
+    "fits_single_l40s": false,
+    "strictness": {
+      "ignored_positive_memory_terms": [
+        "FP8 scales",
+        "RMSNorm and other non-linear weights",
+        "vision/audio and multimodal connector weights instantiated by the conditional model",
+        "CUDA context",
+        "CUDA graph input/output and captured allocations",
+        "Triton/CUTLASS workspace",
+        "scheduler/request metadata",
+        "allocator fragmentation and safety headroom"
+      ],
+      "conclusion": "The exact representation exceeds physical exposed memory before every omitted strictly nonnegative term; graphs, setup strategy, and allocator tuning cannot restore fit."
+    }
+  },
+  "source_level_delta": {
+    "identified_current_runtime_changes": [
+      "Official Gemma4 causal model with full-attention K-to-V projection duplication",
+      "online dynamic per-channel FP8 path with an explicit SM80 minimum and SM89 CUTLASS eligibility",
+      "separate full and sliding-window pools",
+      "E5M2 dtype mapping",
+      "fused Q/K norm and RoPE reachability",
+      "complete logits, sampler, metrics, and Gemma tool parser path"
+    ],
+    "performance_reduction_quantified_from_source": false,
+    "memory_reduction_for_exact_representation": false,
+    "reason_old_bound_can_be_overcome": null,
+    "disposition": "These are complete-path reachability changes, not measured speedups. Source presence cannot establish a reduction below the historical c12 component values, and the exact c32 path is structurally memory-infeasible first."
+  },
+  "bounds": {
+    "service_time_seconds_per_request": {
+      "candidate_favorable_lower": 0.0,
+      "candidate_adverse_upper": "infinity",
+      "evidence_label": "universal nonnegative-to-unbounded counterfactual interval",
+      "decision_usable": false,
+      "reason": "No exact endpoint can be resident; neither H200 throughput nor quarantined c12 component timing is transferred."
+    },
+    "exact_endpoint_completion_latency_seconds": {
+      "lower": "infinity",
+      "upper": "infinity",
+      "evidence_label": "derived structural unreachability",
+      "reason": "The exact single-L40S endpoint cannot produce a completion under the fixed representation."
+    },
+    "setup_seconds_within_hypothetical_lifecycle": {
+      "lower": 0,
+      "upper": 2400,
+      "evidence_label": "conservative unmeasured bound",
+      "includes": [
+        "claim",
+        "image pull",
+        "checkpoint reconcile and transfer",
+        "server load",
+        "readiness",
+        "consumer",
+        "retrieval",
+        "release"
+      ],
+      "decision_usable": false
+    },
+    "reliability_probability_of_one_valid_exact_c32_terminal": {
+      "lower": 0.0,
+      "upper": 0.0,
+      "evidence_label": "derived under fixed single-L40S representation",
+      "reason": "Deterministic memory fit fails; ordinary harness repair does not change the representation."
+    },
+    "historical_context_seconds_per_request": {
+      "director_reported_old_c12_raw_component": 2.091299,
+      "quarantined_later_c12_component": 3.112121484428023,
+      "economic_hurdle": 1.4776251501079425,
+      "transfer_to_current_c32": false
+    }
+  },
+  "economics": {
+    "production_planning_rate_usd_per_gpu_hour": 1.1,
+    "production_evidence_range_usd_per_gpu_hour": [
+      1.0,
+      1.25
+    ],
+    "measured_experiment_rate_usd_per_hour": 0.8629833,
+    "authorized_cumulative_project_spend_usd": 0.59,
+    "actual_cumulative_project_spend_usd": 0.0,
+    "hypothetical_40_minute_exposure": {
+      "at_measured_experiment_rate_usd": 0.5753222,
+      "at_planning_rate_usd": 0.7333333333333333,
+      "at_production_evidence_range_usd": [
+        0.6666666666666666,
+        0.8333333333333334
+      ],
+      "reservation_check_at_experiment_rate": true,
+      "provider_authority": false
+    },
+    "price_normalized_usd_per_million_requests": {
+      "h200_qualified_baseline_at_3_25_per_hour": 564.370717055117,
+      "twenty_percent_lower_target": 451.4965736440936,
+      "l40s_hurdle_at_1_10_per_hour": 451.4965736440936,
+      "old_2_091299_component_at_1_10_per_hour": 639.0080277777778,
+      "quarantined_3_112121484428023_component_at_1_10_per_hour": 950.9260091307849,
+      "exact_current_endpoint": "infinity_no_completed_requests"
+    },
+    "rate_sensitivity_usd_per_million_at_hurdle": {
+      "1.00_per_hour": 410.4514305855396,
+      "1.10_per_hour": 451.4965736440936,
+      "1.25_per_hour": 513.0642882319245
+    }
+  },
+  "failure_and_owner_contract": {
+    "owner_kind": "bounded outer controller invoked only through shared detached-owner --unit-manager pid",
+    "absolute_provider_deadline_seconds": 2400,
+    "claim": "atomic gpu_pool claim for nvidia-l40s, model identity, and 2400-second lease",
+    "heartbeat": "30-second loop spanning staging, server, consumer, retrieval, and repair wait",
+    "checkpoint": "owner refuses any checkpoint outside this project; future director must materialize hash-bound immutable bytes before claim",
+    "remote_reconcile": "preserve size-and-hash matches; transfer mismatches to .transfer-part; verify; chmod read-only; atomically replace",
+    "retrieval_before_release": [
+      "TERMINAL.json",
+      "SCIENCE_STARTED.json",
+      "consumer stdout",
+      "consumer stderr",
+      "server log"
+    ],
+    "ordinary_defect": "write REPAIR_READY.json through shared repair-handshake; wait while heartbeating; retry only consumer/retrieval, maximum one repair",
+    "release": "expected-claimed-at generation check; ready only for a retrieved scientific terminal, maintenance for unsafe/deadline/owner failure",
+    "positive_terminal_gate": "l40s_endpoint_owner.py rejects this negative terminal before any claim or external action"
+  },
+  "programs": {
+    "consumer": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/exact_c32_consumer.py",
+      "sha256": "37f6d5be144a909557de6caca6c70c5db1706987a115a6e428fe7acb9e736e6d"
+    },
+    "owner": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/l40s_endpoint_owner.py",
+      "sha256": "8f6310dd631be3c84f1e29a4ea84d34b73f524366ecc1ae3ea4573141bdb675c"
+    },
+    "offline_audit": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/offline_audit.py",
+      "sha256": "49b4c1fa25f5a5b1822c2b26f77760700ecec0fb52a82cc10a80b56e97f0e405"
+    },
+    "focused_tests": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_current_runtime_fp8_endpoint_rebase/test_offline.py",
+      "sha256": "a8e530bf2c832f303ebd94d52880c82cb33dc59f1841694111863534b4f64455"
+    }
+  },
+  "focused_checks": [
+    {
+      "command": "python3 -m py_compile exact_c32_consumer.py l40s_endpoint_owner.py offline_audit.py test_offline.py",
+      "result": "pass"
+    },
+    {
+      "command": "python3 -m unittest -v test_offline.py",
+      "result": "pass",
+      "tests": 3,
+      "assertions": [
+        "all 32 regenerated canonical request hashes equal qualified WORKLOAD.json",
+        "exact c32 and 4214/358/535 generation semantics",
+        "claim/heartbeat/expected-generation release, retrieval, immutable checkpoint, deadline, and repair-source contract"
+      ]
+    },
+    {
+      "command": "python3 offline_audit.py --source <selected-official-source> --json",
+      "result": "pass_structural_negative",
+      "source_gates_passed": 8,
+      "minimum_resident_gib": 47.450096130371094,
+      "exposed_l40s_gib": 44.98828125,
+      "fits": false
+    },
+    {
+      "command": "python3 exact_c32_consumer.py --help && python3 l40s_endpoint_owner.py --help",
+      "result": "pass"
+    }
+  ],
+  "uncertainty": [
+    {
+      "item": "No current commit-matching official image digest was admitted.",
+      "effect": "Prevents a positive executable packet but does not weaken the memory negative."
+    },
+    {
+      "item": "No current-runtime L40S service time was measured.",
+      "effect": "Performance interval remains non-decision-bearing; no H200 or quarantined component result is transferred."
+    },
+    {
+      "item": "Memory calculation deliberately excludes many resident terms.",
+      "effect": "One-sided in the candidate's favor; every omitted term increases the deficit."
+    }
+  ],
+  "terminal_reasons": [
+    "minimum_exact_representation_residency_exceeds_measured_exposed_l40s_memory",
+    "required_graph_workspace_allocator_and_non_linear_terms_are_additional",
+    "no_source_quantified_change_proves_the_old_l40s_component_bound_can_be_overcome",
+    "exact_endpoint_consumer_is_unreachable_so_price_normalized_cost_per_completion_is_infinite"
+  ],
+  "later_lifecycle": {
+    "kind": "none",
+    "command": null,
+    "reason": "A later director must not create, claim, or launch this arm. The deterministic exact-c32 memory lower bound fails before setup or performance measurement."
+  },
+  "next_action": "Close this direct L40S dynamic-FP8/E5M2 c32 lane as a structural negative. Do not spend the reserved $0.59 and do not reopen prior L40S, W4, AWQ, or QServe arms."
+}

@@ -1,8 +1,0 @@
-{
-  "project": "gemma4_h200_fp8_tied_head_endpoint",
-  "fp8_tied_head_result": "endpoint_positive",
-  "fp8_tied_head_actual_spend_usd": 1.3676444565333332,
-  "artifacts": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_tied_head_endpoint/iterations/c32-topology-settled-resume-20260723t2110z/resident-consumer-repair-artifacts",
-  "server_state": "Healthy gemma-fp8-tied-head-topology-settled on port 30001; 122176 MiB resident.",
-  "maintenance": "No compatible successor is currently identified after the tied-head terminal. Director must choose quality evaluation reuse or server removal; do not claim without inheriting this exact server."
-}

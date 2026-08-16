@@ -1,7 +1,0 @@
-{
-  "stage": "triton_static_compile_preflight",
-  "exit_code": 1,
-  "stdout_tail": "",
-  "stderr_tail": "Traceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n  File \"/usr/local/lib/python3.12/dist-packages/triton/runtime/driver.py\", line 28, in active\n    self._active = self.default\n                   ^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/triton/runtime/driver.py\", line 22, in default\n    self._default = _create_driver()\n                    ^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/triton/runtime/driver.py\", line 9, in _create_driver\n    raise RuntimeError(f\"{len(active_drivers)} active drivers ({active_drivers}). There should only be one.\")\nRuntimeError: 0 active drivers ([]). There should only be one.\n",
-  "recorded_at_utc": "2026-07-16T07:43:01.258044+00:00"
-}

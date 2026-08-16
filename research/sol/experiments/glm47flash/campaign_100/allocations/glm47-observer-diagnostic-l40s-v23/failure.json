@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "run_id": "glm47-observer-diagnostic-l40s-v23",
-  "failure_class": "pinned_observer_script_absent_from_host_input",
-  "stage": "host_bootstrap_pinned_vllm_nsys_cuda_capability_preflight_before_checkpoint_transfer",
-  "message": "The tagged L40S instance reached SSH/cloud-init readiness and built the pinned vLLM and Nsight Systems 2026.3.1.157 image. The pre-transfer capability gate then failed closed because /input/remote_observer_diagnostic.sh was absent, so its preregistered SHA-256 and launch/start command contract could not be verified. No checkpoint transfer, model load, inference request, scored arm, deep profile, or scientific result occurred. The controller skipped an untested repair, deleted the instance and disk, verified direct instance not-found, and reconciled zero final instances and disks."
-}

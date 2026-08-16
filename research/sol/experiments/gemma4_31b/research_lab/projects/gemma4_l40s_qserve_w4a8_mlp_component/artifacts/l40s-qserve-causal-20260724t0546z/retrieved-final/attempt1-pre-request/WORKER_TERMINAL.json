@@ -1,6 +1,0 @@
-{
-  "classification": "integration_failure",
-  "epoch": 1784873318.8262084,
-  "message": "causal trace worker exit 1",
-  "schema_version": 1
-}

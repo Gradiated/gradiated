@@ -1,9 +1,0 @@
-{
-  "negative_warning_observed": true,
-  "owner_sha256": "abe5751af8cc40d53c14eb541fb79beb13e29451993829663d6796a10a64e479",
-  "positive_bash_n": 0,
-  "remote_root": "/remote/root",
-  "result": "pass",
-  "schema_version": 1,
-  "terminator_isolated": true
-}

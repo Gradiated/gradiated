@@ -1,0 +1,11 @@
+{
+  "absolute_repair_deadline_utc": "2026-07-26T18:57:00Z",
+  "created_at_utc": "2026-07-26T18:11:16.194733Z",
+  "diagnostic": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/ENDPOINT_RECOVERABLE_DIAGNOSTIC.json",
+  "failure_kind": "integration_or_retrieval",
+  "repair_deadline_epoch": 1785092220.0,
+  "repair_id": "endpoint-1785089476",
+  "retry_scope": "repair only the endpoint launcher, server, observer, or retrieval boundary; preserve staged checkpoint and persisted control stage",
+  "schema_version": 1,
+  "state": "repair_ready"
+}

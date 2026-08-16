@@ -1,6 +1,0 @@
-{
-  "instance_id": "computeinstance-e00zxg0g6arqy4f1bb",
-  "message": "exact-image host bootstrap failed",
-  "stage": "bootstrap",
-  "type": "RuntimeError"
-}

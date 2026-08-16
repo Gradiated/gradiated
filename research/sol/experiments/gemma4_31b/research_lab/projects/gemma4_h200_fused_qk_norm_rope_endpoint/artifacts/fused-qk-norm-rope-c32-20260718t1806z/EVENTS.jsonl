@@ -1,7 +1,0 @@
-{"phase": "resident_preflight", "timestamp": "2026-07-18T18:07:51.989734Z"}
-{"phase": "stock_c48_stop_and_candidate_start", "timestamp": "2026-07-18T18:07:53.743774Z"}
-{"phase":"ordinary_launcher_repair_wait_existing_verified_candidate"}
-{"phase": "candidate_exact_mix_start", "timestamp": "2026-07-18T18:09:16.261419Z"}
-{"phase":"candidate_exact_mix_start"}
-{"phase":"ordinary_launcher_repair_root_owned_partial_output_then_candidate_exact_mix_start"}
-{"phase": "terminal_complete", "timestamp": "2026-07-18T18:10:08.565283Z"}

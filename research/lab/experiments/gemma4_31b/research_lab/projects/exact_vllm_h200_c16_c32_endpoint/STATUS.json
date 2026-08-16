@@ -1,0 +1,74 @@
+{
+  "status": "completed",
+  "priority": 530,
+  "researcher_profile": "execution",
+  "summary": "The sole repaired pinned-vLLM c32 launch reached Gemma 4 GPU profile execution but failed engine initialization: its FP8-E5M2 KV path violates the runtime's own allowed {fp8, fp8_e4m3} assertion. No request was served.",
+  "next_action": "Director should consume the typed c32 startup failure. The project admits no further CLI, precision, settings, or c16 retry.",
+  "authorized_spend_usd": 4.5,
+  "provider_spend_usd": 1.147,
+  "initial_session_previous": {
+    "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/artifacts/vllm-c32-warm-bench-20260718t1912z",
+    "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-c32-warm-bench-20260718t1912z.service",
+    "deadline_utc": "2026-07-18T20:45:00Z",
+    "expected_typed_terminal": "artifacts/vllm-c32-warm-bench-20260718t1912z/TERMINAL.json",
+    "owner_pid": 2577665,
+    "stage": "remote_vllm_start_and_exact_c32",
+    "unit": "gemma-vllm-c32-warm-bench-20260718t1912z.service",
+    "unit_manager": "user"
+  },
+  "active_session_previous": {
+    "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/exact_vllm_h200_c16_c32_endpoint/artifacts/vllm-c32-warm-bench-20260718t1912z",
+    "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-vllm-c32-warm-bench-repair-20260718t1926z.service",
+    "deadline_utc": "2026-07-18T20:45:00Z",
+    "expected_typed_terminal": "artifacts/vllm-c32-warm-bench-20260718t1912z/TERMINAL.json",
+    "owner_pid": 2583042,
+    "stage": "single_repaired_vllm_start_then_exact_c32",
+    "unit": "gemma-vllm-c32-warm-bench-repair-20260718t1926z.service",
+    "unit_manager": "user"
+  },
+  "active_session": null,
+  "bench_id": "h200-attention-endpoint-e00vbbb709tzxscaan",
+  "claim_deadline_utc": "2026-07-18T20:45:00Z",
+  "lifecycle_deadline_utc": "2026-07-18T20:55:00Z",
+  "budgets": {
+    "wall_clock_minutes": 100,
+    "h200_compute_minutes": 80,
+    "temporary_storage_gib": 25,
+    "provider_spend_usd": 4.5,
+    "retrieval_release_reserve_minutes": 10
+  },
+  "comparator": {
+    "runtime": "SGLang v0.5.12",
+    "artifact": "../gemma4_h200_fused_qk_norm_rope_endpoint/artifacts/fused-qk-norm-rope-c32-canonical-20260718t1817z/TERMINAL.json",
+    "sha256": "1a7e778eff080bf2eec27da939ea85a894ea9884036bdebd562af371405e78c3",
+    "service_seconds_per_request": 0.9194573941250042,
+    "promotion_ceiling_seconds_per_request": 0.8734845244187539,
+    "cached_prompt_tokens": 17120,
+    "fresh_prompt_tokens": 117728
+  },
+  "candidate": {
+    "runtime": "vLLM 0.19.1.dev6+g6d4a8e6d2",
+    "image": "vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "configuration": "c32, BF16 weights, supported FP8-E5M2 KV, prefix caching",
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "shared_prefix_tokens": 535,
+    "cache_query_tokens": 134848
+  },
+  "bound_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint": "eight files, 62578655208 bytes, /home/glmrunner/gemma-attention-endpoint/checkpoint",
+    "request_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "vllm_consumer_sha256": "b70a2b7804aad77784a66b9f768bf5d338f9d04f7436d69f3f063909b7529918",
+    "repaired_remote_launch_sha256": "3d2c523ae2365dc735171a87ac4609c9f87ec1e714b41ca0e71521286c077a42"
+  },
+  "watchdog": {
+    "unit": "gemma-modelopt-export-h200-202607181843z-watchdog.service",
+    "deadline_utc": "2026-07-18T20:55:00Z"
+  },
+  "terminal_artifact": "artifacts/vllm-c32-warm-bench-20260718t1912z/TERMINAL.json",
+  "last_result_classification": "pinned_vllm_fp8_e5m2_kv_runtime_assertion_startup_failure"
+}

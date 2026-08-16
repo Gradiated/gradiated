@@ -1,6 +1,0 @@
-{
-  "phase": "candidate_full_arrival_stream",
-  "release_policy": "individual_bound_arrival_s_every_request",
-  "requests": 1036,
-  "science_started": true
-}

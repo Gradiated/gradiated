@@ -1,0 +1,314 @@
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  boolean,
+  check,
+  customType,
+  foreignKey,
+  index,
+  jsonb,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  unique,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+import { users } from "./auth.js";
+
+const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+export const organizations = pgTable(
+  "organizations",
+  {
+    id: uuid("id").primaryKey(),
+    kind: text("kind").notNull(),
+    name: text("name").notNull(),
+    status: text("status").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "organizations_kind_check",
+      sql`${table.kind} in ('customer', 'distribution_channel')`,
+    ),
+    check(
+      "organizations_status_check",
+      sql`${table.status} in ('active', 'suspended')`,
+    ),
+  ],
+);
+
+export const organizationMembers = pgTable(
+  "organization_members",
+  {
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "restrict" }),
+    role: text("role").notNull(),
+    status: text("status").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.organizationId, table.userId] }),
+    check(
+      "organization_members_role_check",
+      sql`${table.role} in ('owner', 'admin', 'billing', 'member')`,
+    ),
+    check(
+      "organization_members_status_check",
+      sql`${table.status} in ('active', 'suspended')`,
+    ),
+    index("organization_members_user_id_index").on(table.userId),
+  ],
+);
+
+export const workspaces = pgTable(
+  "workspaces",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    isDefault: boolean("is_default").notNull(),
+    archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique("workspaces_organization_id_id_unique").on(
+      table.organizationId,
+      table.id,
+    ),
+    uniqueIndex("workspaces_organization_name_lower_unique").on(
+      table.organizationId,
+      sql`lower(${table.name})`,
+    ),
+    uniqueIndex("workspaces_one_default_per_organization")
+      .on(table.organizationId)
+      .where(sql`${table.isDefault} = true`),
+    check(
+      "workspaces_default_not_archived_check",
+      sql`not (${table.isDefault} and ${table.archivedAt} is not null)`,
+    ),
+  ],
+);
+
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id").notNull(),
+    name: text("name").notNull(),
+    digest: bytea("digest").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true, mode: "date" }),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.organizationId, table.workspaceId],
+      foreignColumns: [workspaces.organizationId, workspaces.id],
+      name: "api_keys_workspace_foreign_key",
+    }).onDelete("cascade"),
+    uniqueIndex("api_keys_digest_unique").on(table.digest),
+    index("api_keys_workspace_created_at_index").on(
+      table.organizationId,
+      table.workspaceId,
+      table.createdAt,
+      table.id,
+    ),
+    check(
+      "api_keys_name_length_check",
+      sql`char_length(${table.name}) between 1 and 200`,
+    ),
+    check(
+      "api_keys_expiry_after_creation_check",
+      sql`${table.expiresAt} is null or ${table.expiresAt} > ${table.createdAt}`,
+    ),
+  ],
+);
+
+export const billingAccounts = pgTable(
+  "billing_accounts",
+  {
+    organizationId: uuid("organization_id")
+      .primaryKey()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    mode: text("mode").notNull(),
+    stripeCustomerId: text("stripe_customer_id"),
+    balance: bigint("balance", { mode: "bigint" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("billing_accounts_stripe_customer_id_unique")
+      .on(table.stripeCustomerId)
+      .where(sql`${table.stripeCustomerId} is not null`),
+    check(
+      "billing_accounts_mode_check",
+      sql`${table.mode} in ('prepaid', 'invoiced')`,
+    ),
+  ],
+);
+
+export interface ModelPropertiesRecord {
+  schema_version: number;
+  description: string;
+  released_at: string | null;
+  hugging_face_id: string | null;
+  quantization: string | null;
+  tokenizer: string | null;
+  input_modalities: Array<{ type: "text" }>;
+  output_modalities: Array<{ type: "text" }>;
+  pricing: Array<{
+    unit: "input_token" | "output_token";
+    cost: number;
+  }>;
+  capacity: Array<{
+    metric: "context_tokens" | "max_output_tokens";
+    value: number;
+  }>;
+  passthrough_parameters: Record<
+    string,
+    {
+      type: "boolean" | "integer" | "number" | "string";
+      minimum?: number;
+      maximum?: number;
+    }
+  >;
+  deprecation_at: string | null;
+  is_free: boolean;
+  discount_to_user: number;
+  openrouter: { slug: string } | null;
+}
+
+export const models = pgTable(
+  "models",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    status: text("status").notNull(),
+    properties: jsonb("properties").$type<ModelPropertiesRecord>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    check(
+      "models_id_length_check",
+      sql`char_length(${table.id}) between 1 and 200`,
+    ),
+    check(
+      "models_name_length_check",
+      sql`char_length(${table.name}) between 1 and 200`,
+    ),
+    check(
+      "models_status_check",
+      sql`${table.status} in ('available', 'unavailable', 'retired')`,
+    ),
+  ],
+);
+
+export const balanceTransactions = pgTable(
+  "balance_transactions",
+  {
+    id: uuid("id").primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    balanceAfter: bigint("balance_after", { mode: "bigint" }).notNull(),
+    sourceType: text("source_type").notNull(),
+    sourceId: text("source_id").notNull(),
+    periodStart: timestamp("period_start", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    periodEnd: timestamp("period_end", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    generationCount: bigint("generation_count", { mode: "bigint" }),
+    createdBy: uuid("created_by").references(() => users.id, {
+      onDelete: "restrict",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    unique("balance_transactions_source_unique").on(
+      table.sourceType,
+      table.sourceId,
+    ),
+    index("balance_transactions_organization_created_at_index").on(
+      table.organizationId,
+      table.createdAt,
+      table.id,
+    ),
+    check(
+      "balance_transactions_type_check",
+      sql`${table.type} in ('topup', 'usage', 'refund', 'chargeback', 'credit', 'payment', 'adjustment')`,
+    ),
+    check(
+      "balance_transactions_source_type_check",
+      sql`${table.sourceType} in ('stripe_checkout_session', 'stripe_refund', 'stripe_dispute', 'generation_settlement_batch', 'openrouter_payment', 'operator')`,
+    ),
+    check(
+      "balance_transactions_amount_nonzero_check",
+      sql`${table.amount} <> 0`,
+    ),
+    check(
+      "balance_transactions_period_check",
+      sql`(${table.periodStart} is null and ${table.periodEnd} is null) or (${table.periodStart} is not null and ${table.periodEnd} > ${table.periodStart})`,
+    ),
+    check(
+      "balance_transactions_generation_count_check",
+      sql`${table.generationCount} is null or ${table.generationCount} > 0`,
+    ),
+  ],
+);

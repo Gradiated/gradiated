@@ -1,0 +1,61 @@
+{
+  "additional_provider_spend_usd": 0.0,
+  "allocator": {
+    "path": "forward_batch_dual_cache_driver.py",
+    "sha256": "25240c4d6f30ef033819910d25b58f8951523a00015d4420591d63764a550151"
+  },
+  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-component-command-seam-20260726t0637z",
+  "binding": "DIRECTOR_TARGET_ONLY_COMPONENT_COMMAND_SEAM_20260726T0637Z.json",
+  "binding_sha256": "73815e06bf6753a4867afad1faad3267dcbb27661528874025b3a73732ff96ea",
+  "candidate_cuda_invocation_started": false,
+  "classification": "offline_repair_terminal",
+  "component_runner": {
+    "command": "python3 target_only_proxy_allocator_component_runner.py",
+    "path": "target_only_proxy_allocator_component_runner.py",
+    "sha256": "1ac3ca9eb5c81d53f5ce6093942ce84a646892b5aaf28a409b9d6daa9e93366e"
+  },
+  "created_at_utc": "2026-07-26T06:47:08.889866+00:00",
+  "current_bench_identity_mismatch_rejected_before_claim": true,
+  "failure_kind": null,
+  "gpu_claimed": false,
+  "outer_owner": {
+    "command": "python3 target_only_proxy_allocator_component_owner.py",
+    "path": "target_only_proxy_allocator_component_owner.py",
+    "sha256": "bd99b2fc5c9353c7efcece4b969ea6fc3ec504897815242b6cb03b81d70e42a8"
+  },
+  "provider_contacted": false,
+  "recoverable_or_unclassified": {
+    "gpu_pool_release_calls": 0,
+    "runtime_removal_calls": 0
+  },
+  "required_tests": [
+    "test_fake_transport_reaches_typed_pinned_consumer_boundary",
+    "test_corrupt_retrieval_is_typed_nondecision_bearing",
+    "test_runner_has_no_pool_or_runtime_cleanup_authority",
+    "test_hash_mismatch_rejects_before_claim",
+    "test_owner_hash_mismatch_rejects_before_claim",
+    "test_bench_identity_rejects_before_claim",
+    "test_recoverable_prescience_failure_retains_runtime_and_bench",
+    "test_unclassified_failure_defaults_to_retained_repair",
+    "test_decision_bearing_terminal_persists_before_cleanup_and_release",
+    "test_unsafe_guest_selects_only_safety_cleanup_branch",
+    "test_absolute_deadline_remains_cleanup_and_release_backstop"
+  ],
+  "schema_version": 1,
+  "scientific_component_consumed": false,
+  "ssh_used": false,
+  "synthetic_transport": {
+    "changed_acceptance_inputs": false,
+    "changed_logits": false,
+    "reached_typed_pinned_consumer_boundary": true
+  },
+  "terminal_dispositions_exercised": [
+    "decision_bearing_terminal_cleanup",
+    "safety_terminal_cleanup",
+    "absolute_deadline_cleanup"
+  ],
+  "test_command": "/usr/bin/python3 -m unittest -v test_forward_batch_dual_cache_driver.py test_target_only_proxy_allocator_component_owner.py test_target_only_proxy_allocator_component_runner.py",
+  "test_returncode": 0,
+  "test_stderr": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-component-command-seam-20260726t0637z/bound_tests.stderr.log",
+  "test_stdout": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/target-only-component-command-seam-20260726t0637z/bound_tests.stdout.log"
+}

@@ -1,5 +1,0 @@
-{
-  "candidate_sample_consumed": false,
-  "classification": "recoverable_integration_or_typed_runtime_failure",
-  "error": "worker_failed_at_line_36"
-}

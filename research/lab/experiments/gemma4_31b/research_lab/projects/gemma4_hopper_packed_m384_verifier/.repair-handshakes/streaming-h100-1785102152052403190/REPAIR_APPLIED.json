@@ -1,0 +1,9 @@
+{
+  "at_utc": "2026-07-26T21:51:30.458388Z",
+  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/streaming-h100-1785102152052403190/FIXTURE_DTYPE_REBIND.json",
+  "patch_sha256": "f2528e584dd6f5e69d99d3ba673f0703291d970a1fd9da302b7b8781ab255157",
+  "repair_id": "streaming-h100-1785102152052403190",
+  "request_sha256": "8de31600b6fd82fd5f298b80849a062b6c650bbbdef4837977a1d31fc7d4df6d",
+  "scope": "run_unsubmitted_cycle",
+  "state": "repair_applied"
+}

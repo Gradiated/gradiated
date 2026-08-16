@@ -1,6 +1,0 @@
-{
-  "returncode": 255,
-  "stderr_sha256": "2b01e2eae2c0c685b86396b4c8593dac0e3cb8cf607f317442025382d255cd36",
-  "stderr_tail": "Host key verification failed.\nscp: Connection closed\n",
-  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-}\n

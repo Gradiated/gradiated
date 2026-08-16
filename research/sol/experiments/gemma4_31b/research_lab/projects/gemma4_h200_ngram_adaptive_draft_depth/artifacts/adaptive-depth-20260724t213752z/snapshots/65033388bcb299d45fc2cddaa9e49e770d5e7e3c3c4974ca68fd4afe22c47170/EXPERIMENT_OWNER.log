@@ -1,9 +1,0 @@
-Traceback (most recent call last):
-  File "/home/glmrunner/gemma4-h200-ngram-adaptive-depth/remote_experiment.py", line 497, in <module>
-    main()
-  File "/home/glmrunner/gemma4-h200-ngram-adaptive-depth/remote_experiment.py", line 472, in main
-    capture_installed_sources()
-  File "/home/glmrunner/gemma4-h200-ngram-adaptive-depth/remote_experiment.py", line 80, in capture_installed_sources
-    raise RuntimeError(
-RuntimeError: installed_source_capture_failed:Error response from daemon: No such container: gemma4-ngram-torch-staircase-candidate
-

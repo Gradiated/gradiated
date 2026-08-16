@@ -1,7 +1,0 @@
-{
-  "artifacts": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_layer_dataflow_fusion/artifacts/rmsnorm-fp8-iteration3-20260723t1101z",
-  "checkpoint": "Project-local snapshot may be retained at /home/glmrunner/gemma4-fp8-layer-fusion/checkpoint",
-  "image": "Pinned SGLang v0.5.13 image retained when staged",
-  "project": "gemma4_h200_fp8_layer_dataflow_fusion",
-  "runtime": "Fusion owner ended at a typed boundary; inspect retrieved diagnostics"
-}

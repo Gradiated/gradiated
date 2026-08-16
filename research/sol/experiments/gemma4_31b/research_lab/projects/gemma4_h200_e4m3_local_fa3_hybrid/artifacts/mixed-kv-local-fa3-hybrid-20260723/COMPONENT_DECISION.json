@@ -1,9 +1,0 @@
-{
-  "component_conservative_reduction_fraction": 0.2407769526946808,
-  "conditional_endpoint_admitted": false,
-  "current_frontier_seconds_per_request": 0.6743258590313417,
-  "dependency_comparator_seconds_per_request": 0.7022734024685633,
-  "economic_ceiling_seconds_per_request": 0.6381105231,
-  "projected_hybrid_seconds_per_request": 0.6774124618118479,
-  "schema_version": 1
-}

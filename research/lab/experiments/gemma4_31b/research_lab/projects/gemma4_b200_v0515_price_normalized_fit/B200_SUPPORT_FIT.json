@@ -1,0 +1,171 @@
+{
+  "binding_verified": true,
+  "identity": {
+    "accelerator": "nvidia-b200-sxm",
+    "architecture": "SM100 / compute capability 10.0",
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "runtime_cuda": "12.9.1",
+    "runtime_release": "v0.5.15",
+    "sglang_kernel_version": "0.4.4"
+  },
+  "memory": {
+    "capacity_conservative_gib": "167.6380634307861328125",
+    "capacity_inventory_gb": 180,
+    "checks": {
+      "full_pool_c32": true,
+      "post_graph_headroom_at_least_16_gib": true,
+      "swa_pool_c32": true
+    },
+    "cuda_graph_gib_same_shape_measured_h200": "1.43",
+    "full_context_concurrency_floor": 69,
+    "full_pool_token_floor": 318016,
+    "kv_budget_conservative_gib": "109.182353916168212890625",
+    "model_weight_runtime_gib_same_shape_measured_h200": "33.26",
+    "post_graph_headroom_conservative_gib": "23.715709514617919921875",
+    "pre_pool_non_weight_gib_same_shape_measured_h200": "0.05",
+    "required_full_pool_tokens_for_c32": 146688,
+    "required_swa_pool_tokens_for_c32": 33152,
+    "static_budget_conservative_gib": "142.492353916168212890625",
+    "static_fraction": "0.85",
+    "swa_pool_token_floor": 254412
+  },
+  "official_source_manifest": {
+    "python/sglang/srt/layers/attention/triton_ops/decode_attention.py": {
+      "bytes": 28042,
+      "sha256": "4ecf5d81f06fcc8aa36479541ff3857a1416e2d8def2c5fa818808148febaa75",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/layers/attention/triton_ops/decode_attention.py"
+    },
+    "python/sglang/srt/layers/attention/triton_ops/extend_attention.py": {
+      "bytes": 39456,
+      "sha256": "2f4a934625b38d2e797a92c5966270c4d36ebfce9dc0093fb83bf18b140e9f28",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/layers/attention/triton_ops/extend_attention.py"
+    },
+    "python/sglang/srt/layers/gemma4_fused_ops.py": {
+      "bytes": 15974,
+      "sha256": "f9d8c7c3ea71afc1341c2de02807b8fda94e418248bd9ee404b15b3337463ad3",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/layers/gemma4_fused_ops.py"
+    },
+    "python/sglang/srt/layers/quantization/fp8.py": {
+      "bytes": 93330,
+      "sha256": "15eca3ffb6fc5c9767c1ff0d704d47647dd42383afd84a1f78b65c11fa58e1ec",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/layers/quantization/fp8.py"
+    },
+    "python/sglang/srt/layers/quantization/fp8_utils.py": {
+      "bytes": 69094,
+      "sha256": "bd5b7ddfe86ce5837d2e39a5d62d5aeac348eb4e18a5dd7d5c2518379daf58fc",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/layers/quantization/fp8_utils.py"
+    },
+    "python/sglang/srt/model_executor/model_runner.py": {
+      "bytes": 144369,
+      "sha256": "91fcb5873f26679498eec052c68e1d91102af79cdf7d0486dd5aa9f68e839171",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/model_executor/model_runner.py"
+    },
+    "python/sglang/srt/utils/common.py": {
+      "bytes": 145062,
+      "sha256": "53226d80b87bc737f1b41aadca8ce9d0e171a37fbc2569dc4b281b00fbe190ac",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/python/sglang/srt/utils/common.py"
+    },
+    "sgl-kernel/CMakeLists.txt": {
+      "bytes": 21845,
+      "sha256": "5d91e2ab9af1ae51d313b61b740203a03c9986cfa997b3e54fbd668cd0bc9067",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/sgl-kernel/CMakeLists.txt"
+    },
+    "sgl-kernel/csrc/gemm/fp8_gemm_kernel.cu": {
+      "bytes": 42787,
+      "sha256": "be6f95bb0ef108ebf08b8b84336b6840726beb7fa5bbb90aa6eb4038ce778767",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/sgl-kernel/csrc/gemm/fp8_gemm_kernel.cu"
+    },
+    "sgl-kernel/pyproject.toml": {
+      "bytes": 931,
+      "sha256": "9ebebc2b77811e0b90037198c1f41536c037f85337ccc96434642a51d4eec162",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/sgl-kernel/pyproject.toml"
+    },
+    "sgl-kernel/python/sgl_kernel/load_utils.py": {
+      "bytes": 9358,
+      "sha256": "e7db471562b3fa3748af4793fc1647f23d9dd2142249d6cccd6bbe671a38c5c2",
+      "upstream": "https://github.com/sgl-project/sglang/blob/f63458b5beaceabbd9d749b9fc956370e1b649e6/sgl-kernel/python/sgl_kernel/load_utils.py"
+    }
+  },
+  "physical_screen": {
+    "average_total_tokens_per_request": "4572",
+    "b200_fp8_peak_tflops_inventory": 4500,
+    "dense_flops_lower_bound_per_request": "298847615566464",
+    "evidence_boundary": "Source-backed and analytical only; no B200 execution or transferred H100/H200 throughput.",
+    "interpretation": "Depth-12 c32 target verification produces M=384 and selects the official SM100 M>256 FP8 kernel. Compute physics alone does not reject the placement, but no achieved throughput is claimed and the bound arrival floor independently closes it.",
+    "logical_output_tiles_by_projection": {
+      "down_21504x5376": 84,
+      "full_o_16384x5376": 84,
+      "full_qkv_5376x20480": 320,
+      "gate_up_5376x43008": 672,
+      "local_o_8192x5376": 84,
+      "sliding_qkv_5376x16384": 256
+    },
+    "raw_required_effective_tflops": "667.9135681682539682539682539682539682539",
+    "sm100_default_cluster_shape": [
+      2,
+      2,
+      1
+    ],
+    "sm100_default_m_gt_256_cta_shape": [
+      256,
+      128,
+      64
+    ],
+    "sustainable_required_effective_tflops": "742.1261868536155202821869488536155202822",
+    "sustainable_required_fraction_of_fp8_peak": "0.1649169304119145600627082108563590045072",
+    "target_verify_m_at_c32_depth12": 384
+  },
+  "result": "official_sm100_support_and_safe_analytical_fit",
+  "schema_version": 1,
+  "source_checks": {
+    "dynamic_fp8_online_quantization": true,
+    "dynamic_fp8_sm100_dispatch": true,
+    "fp8_e5m2_kv_dtype": true,
+    "gemma_hybrid_attention": true,
+    "image_accepts_cuda_12_9": true,
+    "native_ngram_depth_12": true,
+    "ngram_cuda_graph_capture": true,
+    "sm100_common_ops_built": true,
+    "sm100_common_ops_loaded": true,
+    "sm100_defined_for_cuda_12_8_or_newer": true,
+    "sm100_fp8_cutlass_kernel": true,
+    "sm100_m384_tile": true,
+    "triton_target_verify": true
+  },
+  "verified_files": {
+    "/root/workspace/research/factory/data/accelerator_inventory.json": {
+      "bytes": 62323,
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "/root/workspace/research/factory/data/gpu_prices.json": {
+      "bytes": 7483,
+      "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md": {
+      "bytes": 21681,
+      "sha256": "3e50947f77d586e7d0bf6da40a47e879601233f3fdb5ff558abda8461ef89626"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h100_v0515_ngram_price_normalized/H100_FIT_HURDLE.json": {
+      "bytes": 8505,
+      "sha256": "0d33de436f1519ae712d3e3caca88923106c8601eab3b16f101757cd0999fead"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/CANDIDATE_RUNTIME.json": {
+      "bytes": 10974,
+      "sha256": "7f9dae66869a7fcfed9a150e84db4f59d6c6e27aec5efc272dd5f453c77705b9"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/SHA256SUMS.json": {
+      "bytes": 3130,
+      "sha256": "2265be26b69d1d2ee1733a71d0a76f804ae088d7d56f23a872aadebdaf9833dc"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/inputs/exact_semantic_rows.jsonl": {
+      "bytes": 3126546,
+      "sha256": "630d05bd860d1dd22c3e35ba2d8f792afc5051f0c68e0a74a9deda8140a02b36"
+    },
+    "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_upstream_ngram_runtime_rebase/artifacts/candidate-v0.5.15/inputs/requests.jsonl": {
+      "bytes": 506544,
+      "sha256": "10e7edacaa194fd0f43b3a3c38f7d91cec0ceba22df8e08e3b5897b174346135"
+    }
+  }
+}

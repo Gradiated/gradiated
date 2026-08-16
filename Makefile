@@ -1,4 +1,4 @@
-.PHONY: doctor validate-skills devex-check start context status browser-sync browser-install sol-check fable-check
+.PHONY: doctor validate-skills devex-check start context status browser-sync browser-install lab-check
 
 doctor:
 	python3 tools/devex/doctor.py
@@ -24,9 +24,6 @@ browser-sync:
 browser-install:
 	uv run --project tools/browser playwright install chromium
 
-sol-check:
-	cargo fmt --manifest-path research/sol/Cargo.toml --all -- --check
-	cargo test --manifest-path research/sol/Cargo.toml --workspace
-
-fable-check:
-	cargo test --manifest-path research/fable/Cargo.toml --workspace
+lab-check:
+	cargo fmt --manifest-path research/lab/Cargo.toml --all -- --check
+	cargo test --manifest-path research/lab/Cargo.toml --workspace

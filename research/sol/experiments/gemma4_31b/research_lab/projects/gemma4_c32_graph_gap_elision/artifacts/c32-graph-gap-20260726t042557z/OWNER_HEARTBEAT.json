@@ -1,6 +1,0 @@
-{
-  "at_utc": "2026-07-26T04:30:28.402444+00:00",
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "260726t0520-watchdog.service\",\n      \"main_pid\": 1531696,\n      \"unit\": \"gemma4-c32-graph-gap-20260726t0520-watchdog.service\",\n      \"unit_manager\": \"user\"\n    }\n  },\n  \"provider\": \"nebius\",\n  \"registered_at\": \"2026-07-25T15:16:31.474656Z\",\n  \"resource\": {\n    \"disk_id\": \"computedisk-e00dryj6tbensjs413\",\n    \"disk_name\": \"gemma4-dflash-h200-adapter-20260725t1512z-boot\",\n    \"instance_id\": \"computeinstance-e00vyqp7gxsr34wrtz\",\n    \"instance_name\": \"gemma4-dflash-h200-adapter-20260725t1512z\",\n    \"known_hosts_namespace\": \"/root/.config/nebius/glm-campaign/known_hosts\",\n    \"public_ipv4\": \"89.169.109.132\",\n    \"ssh_ed25519_fingerprint\": \"SHA256:P5HpIsJH1sRGlNJSXoAiiEX47PwVBg6Er0BcahSg/9g\",\n    \"ssh_user\": \"glmrunner\"\n  },\n  \"status\": \"claimed\",\n  \"updated_at\": \"2026-07-26T04:30:28.383057Z\"\n}\n"
-}

@@ -1,0 +1,20 @@
+{
+  "evidence_class": "measured_local_launcher_failure_and_authenticated_zero_resource_reconciliation",
+  "experiment": "glm47-exit35-l40s-20260715-r1",
+  "stage": "pre_provider_input_validation",
+  "owner": "systemd service glm47-exit35-l40s-20260715-r1.service",
+  "launcher_exit_code": 1,
+  "error": "batched vLLM inputs are incomplete",
+  "missing_path_at_failure": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/research_lab/projects/sequence_early_exit_architecture/exit35_vllm_source_patch.py",
+  "root_cause": "one-directory path error in the newly added shared-launcher staging reference; corrected after capture",
+  "provider_create_attempted": false,
+  "provider_diagnostic": "not_applicable_provider_create_not_reached",
+  "systemd_runtime_seconds": 15.73,
+  "cleanup": {
+    "authenticated_instance_names": [],
+    "authenticated_disk_names": [],
+    "cleanup_required": false
+  },
+  "stop_rule": "second pre-science failure; paid route closed without retry",
+  "spend_usd": 0.0
+}

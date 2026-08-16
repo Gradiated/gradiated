@@ -1,6 +1,0 @@
-{
-  "repair_deadline_epoch": 1784507389.157819,
-  "returncode": 127,
-  "stage": "component-worker",
-  "stderr_tail": "timeout: failed to run command \u2018QKV_COMPONENT_RUN_ID=run-qkv-component-20260720t0019z-attempt-1\u2019: No such file or directory\n"
-}

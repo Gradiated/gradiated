@@ -1,1 +1,0 @@
-{"command": ["python3", "remote_attribution.py"], "cwd": "/home/glmrunner/gemma4-h200-ngram-torch-reserved-staircase", "launched_at_utc": "2026-07-24T20:13:48.802881Z", "live": true, "log": "/home/glmrunner/gemma4-h200-ngram-torch-reserved-staircase/ATTRIBUTION_OWNER.log", "pid": 135504, "start_ticks": 3873951, "unit_manager": "remote-shell"}

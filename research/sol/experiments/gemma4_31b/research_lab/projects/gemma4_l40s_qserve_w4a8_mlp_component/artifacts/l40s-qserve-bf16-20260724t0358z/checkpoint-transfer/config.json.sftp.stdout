@@ -1,1 +1,0 @@
-sftp> put /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_qserve_w4a8_mlp_component/inputs/checkpoint/config.json /home/glmrunner/gemma4-qserve-endpoint/checkpoint/.config.json.e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1.part

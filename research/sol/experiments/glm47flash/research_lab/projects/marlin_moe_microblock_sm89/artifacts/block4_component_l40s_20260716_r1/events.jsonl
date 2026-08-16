@@ -1,6 +1,0 @@
-{"event": "instance_created", "instance_id": "computeinstance-e00yybmbrtrjb4fnsy", "timestamp": "2026-07-16T13:25:54.765942Z"}
-{"elapsed_seconds": 76.621, "event": "ssh_ready", "timestamp": "2026-07-16T13:26:38.952751Z"}
-{"error_type": "MicrobenchControlError", "event": "experiment_error", "message": "host bootstrap failed", "timestamp": "2026-07-16T13:26:42.140481Z"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-16T13:26:42.140570Z"}
-{"event": "repair_window_expired", "timestamp": "2026-07-16T13:36:42.171751Z"}
-{"cleanup_pass": true, "event": "cleanup_verified", "instance_get_not_found": true, "timestamp": "2026-07-16T13:37:16.653102Z"}

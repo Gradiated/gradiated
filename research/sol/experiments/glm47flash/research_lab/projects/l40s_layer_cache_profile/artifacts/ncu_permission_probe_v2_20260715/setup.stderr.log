@@ -1,6 +1,0 @@
-Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
-Executing: /usr/lib/systemd/systemd-sysv-install enable docker
-W: https://download.docker.com/linux/ubuntu/dists/noble/InRelease: Key is stored in legacy trusted.gpg keyring (/etc/apt/trusted.gpg), see the DEPRECATION section in apt-key(8) for details.
-time="2026-07-15T17:39:19Z" level=info msg="Loading config from /etc/docker/daemon.json"
-time="2026-07-15T17:39:19Z" level=info msg="Wrote updated config to /etc/docker/daemon.json"
-time="2026-07-15T17:39:19Z" level=info msg="It is recommended that docker daemon be restarted."

@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "action": "finalize_without_gpu_replay",
-  "reason": "The completed producer/consumer and Nsight report were preserved. The compact CSV parser was repaired offline; COMPONENT_TERMINAL.json now records a scientific component reject.",
-  "component_terminal": "repair1/retrieved/COMPONENT_TERMINAL.json",
-  "gpu_replay_authorized": false
-}

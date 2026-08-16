@@ -1,6 +1,0 @@
-{
-  "at_utc": "2026-07-24T18:59:32.214235Z",
-  "returncode": 0,
-  "stderr": "",
-  "stdout": "{\"command\": [\"python3\", \"project/production_remote_experiment.py\"], \"cwd\": \"/home/glmrunner/gemma4-ngram-qlen-two-stage\", \"launched_at_utc\": \"2026-07-24T18:58:55.171378Z\", \"live\": true, \"log\": \"/home/glmrunner/gemma4-ngram-qlen-two-stage/OWNER.log\", \"pid\": 115183, \"start_ticks\": 3424588, \"unit_manager\": \"pid\"}\nREPAIR\n"
-}

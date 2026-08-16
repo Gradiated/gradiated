@@ -1,1 +1,0 @@
-{"project":"gemma4_h200_qkv_epilogue_fusion","runtime":"FP8+QKV stack worker completed; artifacts retrieved locally.","checkpoint":"retained","image":"pinned retained","caches":"FP8/CUDA graph retained","server_state":"no server guarantee","artifacts":"FP8 stack archive local"}

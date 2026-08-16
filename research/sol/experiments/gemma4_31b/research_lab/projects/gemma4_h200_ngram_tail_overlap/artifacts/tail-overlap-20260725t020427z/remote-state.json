@@ -1,5 +1,0 @@
-{
-  "stdout": "{\"command\": [\"env\", \"TAIL_OVERLAP_ROOT=/home/glmrunner/gemma4-ngram-tail-overlap\", \"python3\", \"remote_tail_overlap.py\"], \"cwd\": \"/home/glmrunner/gemma4-ngram-tail-overlap\", \"launched_at_utc\": \"2026-07-25T02:04:34.800462Z\", \"live\": false, \"log\": \"/home/glmrunner/gemma4-ngram-tail-overlap/OWNER.log\", \"pid\": 27018, \"start_ticks\": 607950, \"unit_manager\": \"remote-shell\"}\nATTEMPT\n",
-  "stderr": "",
-  "at_utc": "2026-07-25T02:06:06.796851+00:00"
-}

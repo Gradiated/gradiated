@@ -1,2 +1,0 @@
-FRONTEND_PROCESS_OK
-{"dimensions": ["B", "M", "N", "K"], "instance": {"B": 1, "K": 2048, "M": 1, "N": 1024}, "shape_name": "FoundryGemmBMNK", "status": "succeeded"}

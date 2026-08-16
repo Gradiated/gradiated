@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "classification": "cold_h200_decode_scheduler_component_owner_ready",
+  "pass": true,
+  "disposition": "await_later_director_live_h200_binding; no_claim_or_remote_action_performed",
+  "direct_hashes": {
+    "director_request_sha256": "da42cc28ba30452e42de0cb87907780efc8a86b493a44c68ab71a8706f9bc800",
+    "offline_terminal_sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83",
+    "owner_sha256": "e4765db06e8f70c8df49563f47332aa7f37bfea16bc767c0ed0b10f5396ca810",
+    "candidate_sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708",
+    "installer_sha256": "6c1cb505a2d9a18de28fc1dbcd11dc0d70959c905cad6654d50544c0bca2ffc4",
+    "consumer_sha256": "e85f2d192eacb6543d1107862416032d7ff8bfbb8a014562e8caf038979391a4",
+    "exact_command_sha256": "21328630b1abfe6dd94e9b3c1a99aba2e0accd0047584463ee27718167956a6c",
+    "detached_owner_sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456",
+    "repair_handshake_sha256": "28578be98de8180713601c4ee38fcd29039bc19611497ce3509add993179f2d7"
+  },
+  "focused_offline_checks": {
+    "python_compile": true,
+    "ast_parse": true,
+    "request_status_hash_binding": true,
+    "all_component_input_hashes": true,
+    "exact_terminal_command_binding": true,
+    "pinned_image_digest": true,
+    "single_component_invocation": true,
+    "checkpoint_required_false": true,
+    "detached_owner_available": true,
+    "repair_handshake_available": true,
+    "claim_heartbeat_release_tokens_present": true,
+    "release_expected_claimed_at_present": true,
+    "typed_terminal_and_invocation_retrieval_present": true
+  },
+  "packet": {
+    "checkpoint_bytes": 0,
+    "members": [
+      {"path": "decode_scheduler_task_graph.py", "bytes": 5630, "sha256": "e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708"},
+      {"path": "install_decode_scheduler_task_graph.py", "bytes": 4877, "sha256": "6c1cb505a2d9a18de28fc1dbcd11dc0d70959c905cad6654d50544c0bca2ffc4"},
+      {"path": "exact_h200_consumer.py", "bytes": 11559, "sha256": "e85f2d192eacb6543d1107862416032d7ff8bfbb8a014562e8caf038979391a4"},
+      {"path": "DECODE_SCHEDULER_TASK_GRAPH_OFFLINE_TERMINAL.json", "bytes": 12894, "sha256": "13cd63fa2937ea1fdd3af741a63ea18c5517bdb0d922a7df786e0d0d8fbafd83"},
+      {"path": "DIRECTOR_DECODE_SCHEDULER_H200_COMPONENT_REQUEST_20260727T0323Z.json", "bytes": 2332, "sha256": "da42cc28ba30452e42de0cb87907780efc8a86b493a44c68ab71a8706f9bc800"}
+    ],
+    "remote_finalization": "verify packet SHA-256, extract to a digest .part directory, write its manifest, then atomically rename; the packet is mounted read-only at the terminal command's required absolute project path"
+  },
+  "command_graph": {
+    "later_binding_required_fields": ["bench_id", "host", "ssh_user", "identity_file", "known_hosts_file", "deadline_utc"],
+    "controller_launch": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state <absolute-artifact-root>/OWNER.json --log <absolute-artifact-root>/OWNER.log --cwd /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph -- python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/run_h200_decode_scheduler_component_owner.py --binding <later-director-binding.json> --owner-state <absolute-artifact-root>/OWNER.json",
+    "claim": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/lab/experiments/gemma4_31b/research_lab claim --project gemma4_decode_scheduler_task_graph --bench <bound-h200> --lease-seconds 300",
+    "heartbeat": "same pool command heartbeat --project gemma4_decode_scheduler_task_graph --bench <bound-h200>, every 45 seconds",
+    "image_pull": "sudo -n docker pull docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "exact_h200_command": "PYTHONPATH=/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph python3 /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/exact_h200_consumer.py --output /root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_decode_scheduler_task_graph/artifacts/h200_exact_consumer/TERMINAL.json --sglang-python /sgl-workspace/sglang/python --expected-candidate-sha256 e5ee42dee9793df30ebe62683231da65efd9e8398fbaf935c026af35c3369708 --warmups 3 --iterations 15",
+    "retrieval_order": ["TERMINAL.json", "INVOCATION_STATE.json", "exact_component.stdout.log", "exact_component.stderr.log"],
+    "release": "gpu_pool release --project gemma4_decode_scheduler_task_graph --bench <bound-h200> --expected-claimed-at <claim.claimed_at> --condition ready|maintenance --contents <artifact/BENCH_CONTENTS.json>"
+  },
+  "repair_contract": {
+    "ordinary_pre_science_defects": "retain the same atomic claim, continue heartbeats, atomically write REPAIR_READY.json through repair-handshake, and await one hash-bound replacement-owner request",
+    "scientific_sample_rule": "a terminal retrieved from the exact consumer is decision-bearing; no terminal or invocation marker is not a consumed sample",
+    "deadline_or_unsafe_boundary": "preserve compact diagnostics and release only to maintenance with the original expected-claimed-at generation"
+  },
+  "resource_use": {
+    "actual_spend_usd": 0.0,
+    "gpu_claimed": false,
+    "provider_contacted": false,
+    "ssh_used": false,
+    "cuda_used": false,
+    "checkpoint_shards_read_or_copied": false
+  }
+}

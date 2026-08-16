@@ -63,7 +63,7 @@
     },
     "glm47_l40s_measured_2026_07_15": {
       "title": "GLM-4.7-Flash current AWQ c16 measured session",
-      "repository_path": "research/sol/experiments/glm47flash/research_lab/projects/nebius_current_awq_c16_direct/artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/summary.json",
+      "repository_path": "research/lab/experiments/glm47flash/research_lab/projects/nebius_current_awq_c16_direct/artifacts/nebius_current_awq_c16_direct_2026-07-15-r2/summary.json",
       "retrieved_at_utc": "2026-07-15T13:00:00Z",
       "evidence_type": "measured",
       "notes": "Records $0.8581222/hour actual L40S VM-plus-disk experiment rate."

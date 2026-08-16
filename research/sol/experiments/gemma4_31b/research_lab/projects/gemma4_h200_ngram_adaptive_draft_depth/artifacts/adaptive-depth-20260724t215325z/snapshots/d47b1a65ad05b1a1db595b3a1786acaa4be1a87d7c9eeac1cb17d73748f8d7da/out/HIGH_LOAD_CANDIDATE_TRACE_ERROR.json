@@ -1,5 +1,0 @@
-{
-  "batch_size": 8,
-  "draft_depth": 6,
-  "error": "TypeError('Object of type array is not JSON serializable')"
-}

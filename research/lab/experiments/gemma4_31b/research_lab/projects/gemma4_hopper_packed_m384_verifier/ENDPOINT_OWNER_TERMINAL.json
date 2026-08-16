@@ -1,0 +1,40 @@
+{
+  "actual_spend_usd": 2.134908377952046,
+  "bench": "h100-paged-fp8-e00mkpyvykfak0bg1m",
+  "claim_cost_usd": 1.794908377952046,
+  "claim_seconds": 2190.396664619446,
+  "claimed_at": "2026-07-26T17:47:45.321968Z",
+  "classification": "repair_deadline_or_handoff",
+  "endpoint_terminal": null,
+  "invocation": null,
+  "project": "gemma4_hopper_packed_m384_verifier",
+  "release_exit": 0,
+  "release_stderr": "",
+  "release_stdout": "ult\": \"repair_deadline_or_handoff\",\n    \"runtime\": \"Pinned SGLang commit 28b095c01005d4a3a2a5b637b7d028b07fba31b2 with unchanged measured V2 local/global M384 kernels and production paged-KV routing.\",\n    \"schema_version\": 1,\n    \"scientific_terminal\": \"component_positive_endpoint_unconsumed\",\n    \"server_state\": \"Candidate container retained if ENDPOINT_TERMINAL.json exists; maintenance disposition required.\"\n  },\n  \"drain_after_release\": false,\n  \"hourly_cost_usd\": 2.95,\n  \"id\": \"h100-paged-fp8-e00mkpyvykfak0bg1m\",\n  \"idle_since\": null,\n  \"lifecycle\": {\n    \"deadline_utc\": \"2026-07-26T19:05:00Z\",\n    \"provider_started_at_utc\": \"2026-07-26T15:37:01.095093Z\",\n    \"watchdog\": {\n      \"control_group\": \"/user.slice/user-0.slice/user@0.service/app.slice/gemma4-h100-packed-m384-endpoint-20260726t1905-watchdog.service\",\n      \"main_pid\": 1941069,\n      \"unit\": \"gemma4-h100-packed-m384-endpoint-20260726t1905-watchdog.service\",\n      \"unit_manager\": \"user\"\n    }\n  },\n  \"provider\": \"nebius\",\n  \"registered_at\": \"2026-07-26T15:43:50.329366Z\",\n  \"resource\": {\n    \"disk_id\": \"computedisk-e00ky3jvm7m53gqwda\",\n    \"disk_name\": \"gemma4-h100-paged-fp8-20260726t1536z-boot\",\n    \"instance_id\": \"computeinstance-e00mkpyvykfak0bg1m\",\n    \"instance_name\": \"gemma4-h100-paged-fp8-20260726t1536z\",\n    \"known_hosts_namespace\": \"/root/.config/nebius/glm-campaign/known_hosts\",\n    \"public_ipv4\": \"89.169.109.0\",\n    \"ssh_ed25519_fingerprint\": \"SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE\",\n    \"ssh_user\": \"glmrunner\"\n  },\n  \"status\": \"maintenance\",\n  \"updated_at\": \"2026-07-26T18:24:15.767982Z\"\n}\n",
+  "released_at_utc": "2026-07-26T18:24:15.718666Z",
+  "repair_id": "endpoint-1785089476",
+  "repair_ready_exit": 0,
+  "repair_ready_stderr": "",
+  "repair_ready_stdout": "{\"handshake_root\": \"/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/endpoint-1785089476\", \"idempotent\": false, \"ready_path\": \"/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/endpoint-1785089476/REPAIR_READY.json\", \"ready_sha256\": \"05c1ffff224fb92a6d36e3dca03335ce30127e278bf5205f8e1c1208fcafa623\", \"state\": \"repair_ready\"}\n",
+  "repair_wait_exit": 0,
+  "repair_wait_stdout": "{\"ready_sha256\": \"05c1ffff224fb92a6d36e3dca03335ce30127e278bf5205f8e1c1208fcafa623\", \"request\": {\"packet_path\": \"research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_TERMINAL.json\", \"patch_artifact\": \"research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/REPAIR_TERMINAL.json\", \"ready_sha256\": \"05c1ffff224fb92a6d36e3dca03335ce30127e278bf5205f8e1c1208fcafa623\", \"repair_id\": \"endpoint-1785089476\", \"requested_at_utc\": \"2026-07-26T18:24:15.066230Z\", \"retry_scope\": \"adopt REPAIR_TERMINAL.json: preserve control producer and classify the candidate CUDA-graph exact-shape failure; do not replay either arm\", \"schema_version\": 1, \"state\": \"repair_requested\"}, \"request_path\": \"/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/.repair-handshakes/endpoint-1785089476/REPAIR_REQUEST.json\", \"state\": \"requested\"}\n",
+  "retrieval": {
+    "artifacts/ENDPOINT_TERMINAL.json": {
+      "exit": 1,
+      "stderr": "scp: /home/glmrunner/gemma4_hopper_packed_m384_endpoint/artifacts/ENDPOINT_TERMINAL.json: No such file or directory\n"
+    },
+    "artifacts/INVOCATION_STATE.json": {
+      "exit": 1,
+      "stderr": "scp: /home/glmrunner/gemma4_hopper_packed_m384_endpoint/artifacts/INVOCATION_STATE.json: No such file or directory\n"
+    },
+    "package_exit": 0,
+    "package_stderr": "",
+    "scp_exit": 0,
+    "scp_stderr": ""
+  },
+  "schema_version": 1,
+  "started_at_utc": "2026-07-26T17:47:45.339877Z",
+  "worker_exit": 1,
+  "worker_stderr": "",
+  "worker_stdout": ""
+}

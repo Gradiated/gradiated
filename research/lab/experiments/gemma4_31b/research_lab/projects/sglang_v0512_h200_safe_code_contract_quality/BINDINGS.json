@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2"
+  },
+  "checkpoint": {
+    "files": 8,
+    "total_bytes": 62578655208,
+    "terminal_sha256": "5f0765fa37f308e21d665571a92c29ba1998b22b5ee67d1edbfac103dafec481"
+  },
+  "runtime": {
+    "release": "v0.5.12",
+    "source_commit": "127b9e3283f7c2a43234b852ff5c9f1796d53624",
+    "image": "docker.io/lmsysorg/sglang@sha256:015f39a45844be5a7b35270c56dc4d9ebcfe9b0c21a3b4f877a4ee22e795bd7a",
+    "image_platform": "linux/amd64",
+    "tensor_parallel": 1
+  },
+  "performance_terminal": {
+    "path": "../sglang_v0512_h200_gemma4_mtp_endpoint/artifacts/sglang-v0512-h200-mtp-20260718t0925z-owner/RECONCILED_TERMINAL.json",
+    "sha256": "d69661f113c13abb9cf1702288ecb4496ee19fa69d808e15f8d83676f6801741",
+    "service_seconds_per_request": 0.3633031778124973,
+    "complete_requests": 32
+  },
+  "failed_quality_terminal": {
+    "path": "../sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/TERMINAL.json",
+    "sha256": "1ad3ce0da422344c4ce0c21acbef29781319abdb9d2523cf47ba5f3e47af271a",
+    "classification": "paired_quality_control_runtime_failure_candidate_not_eligible"
+  },
+  "adapter_terminal": {
+    "path": "../sglang_v0512_h200_output_contract_adapter/artifacts/adapter-terminal/TERMINAL.json",
+    "sha256": "38a7cc10d1532ae5b717034b50e2f7a055d7885c8412769aa6eb03298f50709f",
+    "pass": false,
+    "reason": "observed fenced body calls sorted, forbidden by bound safe-Python policy"
+  },
+  "adapter_source": {
+    "path": "../sglang_v0512_h200_output_contract_adapter/adapter.py",
+    "sha256": "f7fde6c4a5bf90fb63fd8bea77ce9a73f58bab78adb88306ff066e802b54e6e5"
+  },
+  "strict_scorer": {
+    "path": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/quality/score_pair.py",
+    "sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af"
+  },
+  "workload": {
+    "trace_sha256": "ccc559094ee612d5da11e771c2ebf8ac14046ad03b8ec7bd6ae165be25725d68",
+    "prompt_tokens": 4214,
+    "output_tokens": 358,
+    "cache_prompt_fraction": 0.127
+  },
+  "economics": {
+    "strict_service_seconds_per_request": 0.47201182295214134,
+    "experimental_h200_usd_per_hour": 2.46,
+    "authorized_spend_usd": 3.75
+  },
+  "placement": {
+    "accelerator": "nvidia-h200-sxm",
+    "provider": "nebius",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "disk_gib": 250,
+    "provider_create_owner": "director"
+  }
+}

@@ -1,8 +1,0 @@
-{
-  "classification": "safe_code_h200_quality_failure",
-  "instance_id": "computeinstance-e00b98a5fh80nwj2jj",
-  "ip": "89.169.122.202",
-  "message": "bootstrap_failed_100",
-  "timestamp": "2026-07-18T12:20:08.529829Z",
-  "type": "RuntimeError"
-}

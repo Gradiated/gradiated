@@ -1,7 +1,0 @@
-{
-  "classification": "typed_external_bench_hbm_occupied",
-  "message": "gemma-static-c32_retains_122GiB_and_port_30001",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-23T20:45:29.900005Z"
-}

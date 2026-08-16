@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-26T23:40:15Z",
+  "project": "gemma4_adaptive_retrieval_vocab_head",
+  "classification": "offline_h200_exact_diverse_capture_owner_implementation_admission",
+  "decision": "Implement and exercise the missing exact owner entrypoint locally, request a $2.00 project reservation, and remain non-claimable until a later director turn observes both the reservation and owner-ready terminal.",
+  "source_ready": {
+    "path": "EXACT_DIVERSE_C32_CAPTURE_READY.json",
+    "sha256": "e4e9f0c2e89a0d5d14bb57d854b7bac2cf03b0eff272627482b657e893d15c38",
+    "packet_identity_sha256": "e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+    "packet_archive_sha256": "92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144"
+  },
+  "requested_authorized_spend_usd": 2.0,
+  "bench": {
+    "id": "h200-causal-head-e00b9qw8d6qd7wrjj1",
+    "accelerator": "nvidia-h200-sxm",
+    "observed_status": "available",
+    "observed_claim": null,
+    "lifecycle_deadline_utc": "2026-07-27T01:32:34.490529Z",
+    "hourly_cost_usd": 2.4597222,
+    "maximum_claim_minutes": 45,
+    "maximum_claim_exposure_usd": 1.844792,
+    "retain_warm": true
+  },
+  "authority": {
+    "provider_creation_allowed": false,
+    "provider_cleanup_allowed": false,
+    "gpu_claim_allowed": false,
+    "checkpoint_materialization_allowed": false,
+    "ssh_allowed": false,
+    "endpoint_requests_allowed": false,
+    "retrieval_consumer_allowed": false,
+    "claim_gate": "A later director turn must observe the exact $2.00 reservation in the spend-cap snapshot, an unchanged compatible available H200, and a passing H200_EXACT_DIVERSE_CAPTURE_OWNER_READY.json before making this project claimable."
+  },
+  "implementation": {
+    "owner_entrypoint": "run_h200_exact_diverse_capture_owner.py",
+    "owner_ready_terminal": "H200_EXACT_DIVERSE_CAPTURE_OWNER_READY.json",
+    "owner_artifact_root": "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a",
+    "controller_state": "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.json",
+    "controller_log": "artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.log",
+    "checkpoint_source_after_later_claim": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_hopper_packed_m384_verifier/inputs/checkpoint",
+    "requirements": [
+      "Accept this director admission as the only admission argument and fail closed on its project, source-ready hash, packet identity, bench id, and lifecycle deadline.",
+      "At runtime, read the current registered bench connection identity from runtime/gpus.json; do not embed a public IP, SSH fingerprint, or stale endpoint.",
+      "Atomically claim the named H200 only after claim authority is explicitly amended by a later director binding, heartbeat it through all recoverable work, and release according to EXACT_DIVERSE_C32_CAPTURE_READY.json.",
+      "Reconcile the exact eight-file checkpoint by size and hash inside the durable owner, reuse matched resident bytes, and stage only missing or mismatched files.",
+      "Verify the packet archive and every member hash before remote finalization; use only the pinned image digest and direct runtime source hashes.",
+      "Run the single eager c32 producer with the packet's exact server and request commands, persist science_started immediately before request submission, retrieve compact evidence before the bulk capture, and never run the retrieval consumer in this admission.",
+      "Preserve the claim and open a fresh hash-bound repair generation after a recoverable integration failure; never replay a complete 32-request producer."
+    ],
+    "offline_exercise": [
+      "Parse this admission and EXACT_DIVERSE_C32_CAPTURE_READY.json through the exact owner path.",
+      "Verify packet/archive/member identities and the controller-local checkpoint inventory without copying checkpoint bytes.",
+      "Construct and validate the exact detached-owner invocation, claim request, deadline calculation, staging plan, container commands, science-start boundary, retrieval order, repair handshake, and release dispositions without contacting the bench or provider.",
+      "Persist direct hashes for the owner source and every consumed local manifest plus a compact passing/failing diagnostic in H200_EXACT_DIVERSE_CAPTURE_OWNER_READY.json."
+    ],
+    "later_launch_template": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.json",
+      "--log",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.log",
+      "--cwd",
+      "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head",
+      "--unit-manager",
+      "pid",
+      "--",
+      "python3",
+      "run_h200_exact_diverse_capture_owner.py",
+      "--admission",
+      "DIRECTOR_EXACT_DIVERSE_C32_CAPTURE_OWNER_ADMISSION_20260726T2340Z.json"
+    ]
+  },
+  "completion_gate": {
+    "terminal": "H200_EXACT_DIVERSE_CAPTURE_OWNER_READY.json",
+    "required": [
+      "pass is true",
+      "owner entrypoint exists and its sha256 is recorded",
+      "source-ready, packet, archive, member, checkpoint-inventory, detached-owner, and lifecycle identities pass",
+      "gpu_claimed is false",
+      "checkpoint_bytes_copied is zero",
+      "ssh_used is false",
+      "provider_contacted is false",
+      "endpoint_requests is zero",
+      "retrieval_runs is zero"
+    ],
+    "disposition": "Pause for later director claim admission; do not start the durable owner."
+  }
+}

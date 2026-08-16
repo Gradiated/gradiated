@@ -12,18 +12,11 @@ ROOT = Path(__file__).resolve().parents[2]
 
 WORKSTREAMS = {
     "sol": {
-        "instructions": "research/sol/AGENTS.md",
-        "start": "research/sol/README.md",
-        "handoff": "research/sol/CONTEXT_HANDOFF.md",
-        "artifacts": ("research/sol/docs", "research/sol/evidence", "research/sol/experiments"),
-        "checks": "cd research/sol && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
-    },
-    "fable": {
-        "instructions": "research/fable/CLAUDE.md",
-        "start": "research/fable/README.md",
-        "handoff": "research/fable/docs/REPORT.md",
-        "artifacts": ("research/fable/docs", "research/fable/evidence", "research/fable/experiments"),
-        "checks": "read research/fable/CLAUDE.md; run the narrowest relevant Rust/Python checks",
+        "instructions": "research/lab/AGENTS.md",
+        "start": "research/lab/README.md",
+        "handoff": "research/lab/CONTEXT_HANDOFF.md",
+        "artifacts": ("research/lab/docs", "research/lab/evidence", "research/lab/experiments"),
+        "checks": "cd research/lab && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
     },
 }
 
@@ -67,7 +60,7 @@ def print_pack(workstream: str | None) -> None:
         print(f"- checks: {spec['checks']}")
 
     print("\nBefore changing files:")
-    print("- claim one GitHub issue; confirm the Project status and owner")
+    print("- inspect git status and preserve unrelated worktree changes")
     print("- reserve directory/artifact scope; do not edit another agent's files")
     print("- state the acceptance check, budget/timeout, and artifact paths")
 

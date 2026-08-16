@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "status": "offline_packet_complete_director_admission_required",
+  "decision": "pause_before_h200_claim",
+  "scope": "Exact eager NGRAM c32 hidden-state capture producer only; no retrieval, checkpoint materialization, model-quality claim, or performance claim.",
+  "consumes": {
+    "artifact": "DIVERSE_HIDDEN_CAPTURE_HOOK_TERMINAL.json",
+    "sha256": "dbaa9ef8705091f05de4b5843663c65e437b397591cf5940be2c43a6b99cb303"
+  },
+  "packet": {
+    "identity_sha256": "e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+    "identity_scheme": "sha256(canonical_json(files_sorted_by_path))",
+    "root": "inputs/exact-diverse-c32-capture/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+    "manifest": "inputs/exact-diverse-c32-capture/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54/PACKET_MANIFEST.json",
+    "manifest_sha256": "dbb8bec0010e268ea0ffa283fdd6b5b0ccd23f4e79492b98ea77dd6757ad4fd2",
+    "archive": "artifacts/exact-diverse-c32-capture-packet/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54.tar",
+    "archive_sha256": "92f9cfd862da2a275082884c4c0b8fe6a0a14b8dfd4f0844aa29662e144c0144",
+    "archive_members": [
+      "PACKET_MANIFEST.json",
+      "capture_bootstrap/sitecustomize.py",
+      "diverse_hidden_capture_hook.py",
+      "endpoint_entrypoint.py",
+      "exact_runner.py"
+    ],
+    "files": [
+      {
+        "path": "capture_bootstrap/sitecustomize.py",
+        "bytes": 536,
+        "sha256": "013014484ba8f248de2e07883631e2736bbb27c2ea6319f02b5af06167b81a42"
+      },
+      {
+        "path": "diverse_hidden_capture_hook.py",
+        "bytes": 10331,
+        "sha256": "74edc518057263816cadc01144a48436014f872e79818dfec980ad0a0a405515"
+      },
+      {
+        "path": "endpoint_entrypoint.py",
+        "bytes": 6062,
+        "sha256": "b4a43f799499b4624d448ff5a8ef52e88bd4c3544fd0878ee5adcd3a1926d6fc"
+      },
+      {
+        "path": "exact_runner.py",
+        "bytes": 9494,
+        "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+      }
+    ]
+  },
+  "direct_source_identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "gemma4_causal.py": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "logits_processor.py": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "forward_batch_info.py": "c977296f3b90be69fff5312f2b3af7699a17b20af24614b139f69888e5776516",
+    "endpoint_runtime_modules": {
+      "sglang.srt.entrypoints.http_server": "6cc10fd24f81cf0f25bcd023d013af754cf21e2516f60973ab500ea52b62226e",
+      "sglang.srt.layers.quantization.fp8": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a",
+      "sglang.srt.layers.quantization.fp8_utils": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+      "sglang.srt.model_loader.loader": "25d312f7d52a5e54955d8f54e0fc525a20c60c3d17cc4c5ad7386a6d720e2971"
+    }
+  },
+  "workload_identity": {
+    "sha256": "7f66b10e04467f174b9d94782ee906670c0efdb365f6756aeac15f0419f20935",
+    "identity_scheme": "sha256(canonical_json(WORKLOAD.json payload emitted by exact_runner.py))",
+    "request_sha256_list_sha256": "474ade195799249af8bdcc3e800bd532945ccc90da4d1e3127d8ac6bf2b36a23",
+    "prompt_token_ids_sha256": "dad77c4038826ec058d2cc70935a6534b5c69d224f01eaa684d5b496fe16f1fc",
+    "first_request_sha256": "f8558dbfd3cca6d46239961b85967f18960a19c1bace8cb9302cdcbb2edd3c95",
+    "last_request_sha256": "dacbc499ee142b171b05573e842acf6df6873a047423b63db7c64d0259318b58",
+    "request_count": 32,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "shared_prefix_tokens": 535,
+    "temperature": 0,
+    "seed": 20260718,
+    "seed_label": "gemma4-background-exact-mix-c32-20260718"
+  },
+  "bounded_owner_destination": {
+    "controller_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a",
+    "controller_state": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.json",
+    "controller_log": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/OWNER.log",
+    "compact_terminal": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_adaptive_retrieval_vocab_head/artifacts/h200-exact-diverse-c32-capture-owner-e606f47a/EXACT_CAPTURE_TERMINAL.json",
+    "remote_packet_root": "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/packets/e606f47a04c0374692e5aa66ae30821b35f8a79196916582cacc904ed568bc54",
+    "remote_output_root": "/home/glmrunner/gemma4-adaptive-retrieval-vocab-head/runs/exact-diverse-c32-capture-e606f47a",
+    "maximum_new_output_bytes": 268435456,
+    "deadline_rule": "min(claimed_at + 45 minutes, registered bench lifecycle deadline - 10 minutes)"
+  },
+  "container_contract": {
+    "packet_mount": "/work/input:ro",
+    "checkpoint_mount": "/work/checkpoint:ro",
+    "output_mount": "/work/output",
+    "environment": {
+      "PYTHONPATH": "/work/input/capture_bootstrap:/work/input",
+      "DIVERSE_HIDDEN_CAPTURE_PATH": "/work/output/hidden_states.pt",
+      "DIVERSE_HIDDEN_CAPTURE_AUDIT": "/work/output/hidden_states.audit.jsonl",
+      "DIVERSE_HIDDEN_CAPTURE_MAX_ROWS": "1536",
+      "DIVERSE_HIDDEN_CAPTURE_EXPECTED_WIDTH": "5376",
+      "DIVERSE_HIDDEN_CAPTURE_REQUIRE_EAGER": "1",
+      "FP8_MODULE_AUDIT": "/work/output/fp8_module.audit.jsonl",
+      "FP8_CONSUMER_AUDIT": "/work/output/fp8_consumer.audit.jsonl",
+      "FP8_RUNTIME_AUDIT": "/work/output/fp8_runtime.json"
+    },
+    "server_command_source": "packet manifest container_contract.server_command",
+    "request_command_source": "packet manifest container_contract.request_command",
+    "launcher_amendments_from_prior_terminal": [
+      "Translate coordinator-local hook paths to the immutable /work/input container mount.",
+      "Provide the endpoint entrypoint's required FP8_MODULE_AUDIT, FP8_CONSUMER_AUDIT, and FP8_RUNTIME_AUDIT destinations.",
+      "Retain --disable-cuda-graph so the Python observer sees live TARGET_VERIFY rows rather than graph-capture placeholders."
+    ]
+  },
+  "expected_capture_identities": {
+    "payload_schema_version": 1,
+    "layout": "capture_then_request_major_then_depth",
+    "required_rows": 1536,
+    "hidden_shape": [
+      1536,
+      5376
+    ],
+    "hidden_dtype": "torch.bfloat16",
+    "proposal_shape": [
+      1536
+    ],
+    "proposal_dtype": "torch.int32",
+    "position_shape": [
+      1536
+    ],
+    "position_dtype": "torch.int32",
+    "ownership_rows": 1536,
+    "minimum_unique_hidden_rows": 2,
+    "minimum_unique_request_ids": 2,
+    "proposal_id_minimum": 0,
+    "proposal_id_maximum": 262143,
+    "ownership_fields": [
+      "global_row",
+      "capture_index",
+      "capture_row",
+      "request_batch_index",
+      "request_pool_index",
+      "request_id",
+      "request_id_int",
+      "depth_index"
+    ],
+    "workload_terminal_requirements": {
+      "pass": true,
+      "complete_requests": 32,
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "completion_tokens_per_request": 358,
+      "request_sha256_list_sha256": "474ade195799249af8bdcc3e800bd532945ccc90da4d1e3127d8ac6bf2b36a23"
+    },
+    "observer_tripwire": "Any capture_hook_install_error or capture_observer_error makes the attempt an invalid observer result; preserve raw responses and capture bytes, submit no later arm, and repair only capture/consumer handling under the same claim."
+  },
+  "later_h200_claim_contract": {
+    "admission_required": true,
+    "minimum_authority": [
+      "A positive project spend reservation.",
+      "An explicitly compatible nvidia-h200-sxm lab bench released by its predecessor.",
+      "A lifecycle deadline that admits the bounded owner deadline.",
+      "The exact checkpoint revision staged by the future durable owner from a verified project-bound manifest; this packet deliberately contains no checkpoint bytes."
+    ],
+    "claim": "Atomically claim through grad_research.gpu_pool for project gemma4_adaptive_retrieval_vocab_head; never create or tear down a provider resource.",
+    "durability": "Start the controller-host process with research/factory/tools/detached-owner --unit-manager pid and record its emitted pid, start_ticks, owner-state unit path, artifact root, and absolute deadline in STATUS.json.active_session.",
+    "staging": [
+      "Transfer the content-addressed packet archive, verify archive and member hashes, and atomically finalize remote_packet_root.",
+      "Inside the same durable claim owner, reconcile the exact checkpoint size-and-hash manifest, preserve matched files, transfer only missing or mismatched files to temporary paths, verify them, and atomically finalize immutable names.",
+      "Pull or reuse only the pinned image digest and validate the direct runtime source hashes before server launch.",
+      "Do not resolve any sibling project or shared mutable source path after the claim."
+    ],
+    "science_start": "Write science_started only after packet, image, checkpoint, runtime-source, server-health, and workload identities pass and immediately before the single exact_runner.py c32 request submission.",
+    "repair": "A launcher, import, observer, parser, path, API, numeric-guard, archive, or retrieval defect retains the same claim and healthy runtime. Persist a compact diagnostic, open a fresh repair-handshake generation, and retry only the invalidated unconsumed operation.",
+    "producer_consumption": "A complete 32-request c32 workload plus durable raw responses is consumed once. If capture validation or retrieval fails afterward, preserve that producer output and repair only the observer consumer or retrieval; do not replay the c32 producer.",
+    "retrieval_order": "Retrieve the compact terminal, capture hash, manifest, raw stdout/stderr, and science-start marker before the bulk hidden-state payload. Missing retrieval is a recoverable same-claim defect.",
+    "forbidden": [
+      "No retrieval-head experiment or offline retrieval consumer during this capture admission.",
+      "No second c32 producer run after a complete interpretable first producer.",
+      "No provider creation, teardown, or disk lifecycle mutation by the researcher."
+    ]
+  },
+  "later_h200_release_contract": {
+    "success": "After a decision-bearing capture and compact artifact retrieval, update actual_spend_usd from the full continuous claim interval. Keep a healthy exact server resident; absent an explicitly prebound compatible successor, release the bench to maintenance with container name, port, accelerator-memory occupancy, packet/checkpoint/image identities, and capture location.",
+    "recoverable_failure": "Do not release. Keep the claim heartbeating and the healthy server/checkpoint/image/packet resident while the repair handshake is actionable.",
+    "terminal_failure": "Release to maintenance only after retrieving the compact diagnostic and submission markers when the guest is unsafe or unreachable, the absolute deadline requires handoff, or an informative incompatibility is decision-bearing.",
+    "unoccupied_successor_ready": "If the experiment server has already exited and the accelerator is healthy and unoccupied, preserve the image, checkpoint, packet, and caches, update resident contents, and release ready.",
+    "never": "Never retire the bench or invoke provider/disk cleanup; lifecycle disposition belongs to the director."
+  },
+  "resource_use_this_turn": {
+    "checkpoint_materialized": false,
+    "gpu_claimed": false,
+    "ssh_used": false,
+    "provider_contacted": false,
+    "retrieval_run": false,
+    "paid_requests": 0,
+    "actual_spend_usd": 0.0
+  }
+}

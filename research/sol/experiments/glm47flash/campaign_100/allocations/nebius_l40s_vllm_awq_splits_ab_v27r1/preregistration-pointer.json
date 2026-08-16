@@ -1,1 +1,0 @@
-{"experiment_id":"nebius_l40s_vllm_awq_splits_ab_v27r1","session_amendment":"../nebius_l40s_vllm_awq_splits_ab_v25r1/preregistration.json","session_amendment_sha256":"46a870813a6184d67538daeb401f7b83e2376eaca91efbd03de8a0eb69f46405","arm_label":"B2","num_kv_splits":8}

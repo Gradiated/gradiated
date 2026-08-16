@@ -1,8 +1,0 @@
-{
-  "full_waves": 32,
-  "phase": "candidate_tail_overlap",
-  "requests": 1036,
-  "science_started": true,
-  "tail": 12,
-  "tail_planned_release_s": 718.9214672640567
-}

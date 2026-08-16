@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "classification": "ordinary_pre_invocation_runtime_api_repair",
-  "diagnostic": "torch._C._cudart does not expose cudaRuntimeGetVersion in the pinned image; the support discriminator exited before compiling or launching the conditional graph",
-  "candidate_full_body_started": false,
-  "support_scientific_invocation_began": false,
-  "repair": "Read the compiled CUDA version through torch._C._cuda_getCompiledVersion and repeat only the invalidated support discriminator; preserve all intervention, workload, identities, and gates"
-}

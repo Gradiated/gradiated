@@ -1,2 +1,0 @@
-{"deadline_epoch": 1784259117.0, "event": "owner_started", "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79", "model": "google/gemma-4-31B-it", "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "timestamp": "2026-07-17T01:31:57.673618Z"}
-{"error_type": "PlacementError", "event": "owner_error", "message": "provider create returned 3", "timestamp": "2026-07-17T01:31:58.655306Z"}

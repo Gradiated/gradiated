@@ -1,4 +1,0 @@
-===chunks.jsonl
-90 /home/glmrunner/causal-offset-head/artifacts/offset-capture/chunks.jsonl
-===science_started.json
-{"science_started": true, "stage": "first_capture_request", "at_unix_s": 1785107132.7056088}

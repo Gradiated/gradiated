@@ -1,0 +1,13 @@
+{
+  "adapter": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/sglang_v0512_h200_output_contract_adapter/adapter.py",
+  "contract": "\n\nSafe-code output contract: Return exactly one Python function definition and no Markdown or prose. Call only functions defined in your response plus min, max, len, range, list, and tuple. Do not use imports, attributes, sorted, or any other calls.",
+  "max_nll_delta": 0.03,
+  "max_tokens": 128,
+  "minimum_scored_tokens": 128,
+  "model": "google/gemma-4-31B-it",
+  "repetitions": 2,
+  "request_transformer": "safe_code_contract.py",
+  "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "temperature": 0.0,
+  "top_p": 1.0
+}

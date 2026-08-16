@@ -1,9 +1,0 @@
-{
-  "classification": "ordinary_integration_or_consumer_defect",
-  "component_persisted": false,
-  "error": "PermissionError(13, 'Permission denied')",
-  "repair_deadline_utc": "2026-07-24T19:40:00Z",
-  "retry_scope": "component_harness_only",
-  "schema_version": 1,
-  "traceback": "Traceback (most recent call last):\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 246, in entrypoint\n    return main()\n           ^^^^^^\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 193, in main\n    component = run_component()\n                ^^^^^^^^^^^^^^^\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 107, in run_component\n    atomic(\n  File \"/home/glmrunner/gemma4-ngram-qlen-two-stage-qlen-mask-20260724t1911z-real-c32/project/production_remote_experiment.py\", line 22, in atomic\n    temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + \"\\n\")\n  File \"/usr/lib/python3.12/pathlib.py\", line 1049, in write_text\n    with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/lib/python3.12/pathlib.py\", line 1015, in open\n    return io.open(self, mode, buffering, encoding, errors, newline)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nPermissionError: [Errno 13] Permission denied: '/home/glmrunner/gemma4-ngram-qlen-two-stage/artifacts/component/INVOCATION_STATE.json.part'\n"
-}

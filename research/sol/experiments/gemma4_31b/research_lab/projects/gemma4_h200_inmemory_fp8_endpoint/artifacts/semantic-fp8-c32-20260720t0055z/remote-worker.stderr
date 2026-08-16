@@ -1,3 +1,0 @@
-Traceback (most recent call last):
-  File "<stdin>", line 2, in <module>
-FileNotFoundError: [Errno 2] No such file or directory: '/home/glmrunner/gemma-kernel-frontier/artifacts/inmemory-fp8/server-fp8-modules.jsonl'

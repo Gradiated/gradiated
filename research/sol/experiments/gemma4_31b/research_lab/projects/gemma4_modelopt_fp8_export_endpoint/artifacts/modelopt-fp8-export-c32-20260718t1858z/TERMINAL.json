@@ -1,8 +1,0 @@
-{
-  "classification": "producer_failure",
-  "message": "export_config_missing",
-  "pass": false,
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp": "2026-07-18T18:58:41.240593Z"
-}

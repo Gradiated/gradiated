@@ -1,0 +1,26 @@
+{
+  "actual_spend_usd": 1.120169728708556,
+  "archive_sha256": "25d8a3cb20806a11560b372a238b8630c64d8035f51c2eb989a10b2070b438a8",
+  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/artifacts/request25-boundary-owner-20260726T0112Z",
+  "boundary_record": null,
+  "claim_seconds": 7.463872,
+  "classification": "infrastructure_terminal",
+  "endpoint_replayed": false,
+  "in_run_repair": false,
+  "incremental_spend_usd": 0.005078686666666776,
+  "packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+  "recorded_at_utc": "2026-07-26T01:12:32.190317Z",
+  "remote_terminal": {
+    "exit_code": 1,
+    "recorded_at_utc": "2026-07-26T01:12:29.618213Z",
+    "schema_version": 1,
+    "science_started": false,
+    "stage": "source-identity"
+  },
+  "request_index": 25,
+  "request_submission_count": 0,
+  "retrieve_exit_code": 0,
+  "schema_version": 1,
+  "source_binding_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52",
+  "worker_exit_code": 1
+}

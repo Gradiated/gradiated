@@ -1,7 +1,0 @@
-{
-  "cuda_graph_complete_marker": "Capture cuda graph end",
-  "live_container": true,
-  "proof": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/ngram-readiness-gated-20260726t0343z/resume_readiness.stdout.log",
-  "server_ready_marker": "The server is fired up and ready to roll!",
-  "tcp_listener": true
-}

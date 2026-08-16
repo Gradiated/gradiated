@@ -1,5 +1,0 @@
-{
-  "reason": "Initialize the pinned SGLang standalone scheduler context required by get_rope before the first candidate CUDA call; intervention, workload, identities, and gates are unchanged.",
-  "retry": true,
-  "stage": "component-worker"
-}

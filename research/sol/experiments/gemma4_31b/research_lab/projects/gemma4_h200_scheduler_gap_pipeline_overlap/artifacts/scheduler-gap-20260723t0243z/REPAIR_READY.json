@@ -1,6 +1,0 @@
-{
-  "classification": "ordinary_pre_science_launcher_defect",
-  "diagnostic": "metadata_equivalence_test imported residual_intervention as a producer-fused translation interface before either endpoint runner began; it failed on a missing symbol.",
-  "repair": "Use the already-proven iteration2 paired launcher mode, which preserves the stacked producer-fused metadata intervention and bypasses that unrelated preflight.",
-  "scientific_candidate_consumed": false
-}

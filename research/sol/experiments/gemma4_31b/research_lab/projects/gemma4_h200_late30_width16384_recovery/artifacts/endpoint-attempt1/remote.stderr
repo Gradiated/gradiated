@@ -1,3 +1,0 @@
-Traceback (most recent call last):
-  File "<stdin>", line 2, in <module>
-FileNotFoundError: [Errno 2] No such file or directory: '/dev/shm/gemma4-late30-width16384-recovery/endpoint-artifacts/candidate-audit/mlp_width.jsonl'

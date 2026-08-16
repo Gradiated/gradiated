@@ -1,7 +1,0 @@
-{
-  "classification": "integration_failure",
-  "message": "mtp.runner_failed",
-  "schema_version": 1,
-  "status": "terminal",
-  "timestamp_utc": "2026-07-20T02:21:31.763651Z"
-}

@@ -1,0 +1,14 @@
+{
+  "candidate_cuda_invocation_started": false,
+  "candidate_scientific_invocation_started": false,
+  "command": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/lab/experiments/gemma4_31b/research_lab claim --project gemma4_h200_fp8_layer_dataflow_fusion --accelerator nvidia-h200-sxm --model google/gemma-4-31B-it",
+  "exit_code": 2,
+  "message": "no available GPU bench matches this project",
+  "requested_accelerator": "nvidia-h200-sxm",
+  "requested_model": "google/gemma-4-31B-it",
+  "schema_version": 1,
+  "stage": "atomic_pool_claim_after_immutable_local_materialization",
+  "stderr": "gpu_pool.py: error: no available GPU bench matches this project",
+  "timestamp_utc": "2026-07-22T12:18:04Z",
+  "typed_boundary": "shared_h200_unavailable"
+}

@@ -1,7 +1,0 @@
-{
-  "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_wave_batching_sustainable/artifacts/wave-admission-20260724t152911z",
-  "at_utc": "2026-07-24T15:34:36.442376Z",
-  "claim_retained": true,
-  "diagnostic": "Remote worker exited before a scientific terminal; compact terminal retrieved.",
-  "repair_deadline_utc": "2026-07-24T16:40:00Z"
-}

@@ -1,0 +1,13 @@
+{
+  "active_session": null,
+  "authorized_spend_usd": 1.2,
+  "last_result_classification": "closed_invalid_corrected_liveness_before_conditional_sweep",
+  "next_action": null,
+  "priority": 245,
+  "provider_mutation": "forbidden",
+  "reconciliation_pending": false,
+  "researcher_profile": "execution",
+  "status": "closed",
+  "summary": "Closed: exact M8 raw-CUTLASS row passed identity/oracles/timing, but the separate liveness subprocess failed before execution; no sweep or H100 floor claim. Cleanup authenticated empty.",
+  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h100_direct_fp8_linear_telemetry_corrected/artifacts/RECONCILED_TERMINAL.json"
+}

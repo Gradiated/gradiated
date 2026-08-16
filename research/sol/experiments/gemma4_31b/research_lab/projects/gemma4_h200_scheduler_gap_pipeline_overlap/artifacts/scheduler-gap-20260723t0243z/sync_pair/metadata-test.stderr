@@ -1,6 +1,0 @@
-/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
-  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
-Traceback (most recent call last):
-  File "/work/input/metadata_equivalence_test.py", line 11, in <module>
-    from residual_intervention import translate_valid_swa_indices_inplace
-ImportError: cannot import name 'translate_valid_swa_indices_inplace' from 'residual_intervention' (/work/input/residual_intervention.py)

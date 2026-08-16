@@ -1,1 +1,0 @@
-put -a /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/inputs/checkpoint/processor_config.json /home/glmrunner/gemma4-h100-fp8-qkv/checkpoint/.processor_config.json.32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c.part

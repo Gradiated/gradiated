@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "repair_ready_classification": "preinvocation_component_api_defect",
-  "authorized_operation": "repeat only the unconsumed exact component invocation with FlashAttentionBackend.page_size bound to the unchanged page-size-one contract",
-  "candidate_sha256_after_repair": "pending_owner_manifest_refresh",
-  "timestamp_utc": "2026-07-23T10:23:31Z"
-}

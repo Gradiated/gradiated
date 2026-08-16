@@ -1,9 +1,0 @@
-{
-  "absolute_repair_deadline_epoch": 1784880900,
-  "bench": "l40s-qserve-e00a74kcbps8v00fk4",
-  "classification": "conditional_endpoint_required",
-  "diagnostic": "BF16 boundary and production component passed",
-  "remote_output": "/home/glmrunner/gemma4-qserve-bf16/outputs/l40s-qserve-bf16-20260724t0358z",
-  "remote_run": "/home/glmrunner/gemma4-qserve-bf16/runs/8828d463cf965bab69e4eb1890c38a6ab713a6f555a5e4388ec1601472efb08a",
-  "schema_version": 1
-}

@@ -1,0 +1,673 @@
+{
+  "schema_version": 1,
+  "evidence_type": "derived_decision_surface_from_content_addressed_inputs",
+  "inputs": {
+    "market": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/exact_market_venue_decision_surface/MARKET_TARGET.json",
+      "sha256": "5d636809dc25450050c565cdc108bf7e91eaa60ce07c027ca390c8011e3b8e51"
+    },
+    "memory": {
+      "path": "research/lab/experiments/gemma4_31b/research_lab/projects/fp8_l40s_fit_economic_falsifier/MEMORY_ACCOUNTING.json",
+      "sha256": "eaeb0586196cac27d45b32168b41565d701b5a952d64b13c414fcc76e6f9f5be"
+    },
+    "prices": {
+      "path": "research/factory/data/gpu_prices.json",
+      "sha256": "3f403d67a92fc91be85bbd27dede85f5f91c3fd2df25ef8dcef2a344acbd1e01"
+    }
+  },
+  "target_costs_usd_per_request": {
+    "WandB": 0.000614925,
+    "Venice": 0.000618505,
+    "DeepInfra_fp8": 0.000614287,
+    "SiliconFlow_fp8": 0.000621447,
+    "Parasail_fp8": 0.000727134,
+    "AA_7_2_1_blend": 0.00064008
+  },
+  "planning_rate_usd_per_gpu_hour": 1.1,
+  "production_rate_range_usd_per_gpu_hour": [
+    1.0,
+    1.25
+  ],
+  "scenario_factors": {
+    "ideal": {
+      "utilization": 1.0,
+      "replica_headroom": 1.0,
+      "non_gpu": 1.0,
+      "reliability": 1.0,
+      "storage_orchestration": 1.0
+    },
+    "planning_base": {
+      "utilization": 0.85,
+      "replica_headroom": 1.1,
+      "non_gpu": 1.05,
+      "reliability": 1.03,
+      "storage_orchestration": 1.03
+    },
+    "conservative": {
+      "utilization": 0.7,
+      "replica_headroom": 1.25,
+      "non_gpu": 1.15,
+      "reliability": 1.05,
+      "storage_orchestration": 1.08
+    }
+  },
+  "economic_surface": {
+    "ideal": {
+      "WandB": {
+        "required_completed_requests_per_second": {
+          "planning": 0.49689889914307533,
+          "production_range": [
+            0.4517262719482502,
+            0.5646578399353128
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2093.9319609889194,
+          "production_range": [
+            1903.5745099899264,
+            2379.468137487408
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 177.88980589322097,
+          "production_range": [
+            161.71800535747357,
+            202.147506696842
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2271.8217668821403,
+          "production_range": [
+            2065.2925153474,
+            2581.6156441842504
+          ]
+        }
+      },
+      "Venice": {
+        "required_completed_requests_per_second": {
+          "planning": 0.4940227735516376,
+          "production_range": [
+            0.44911161231967045,
+            0.5613895153995881
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2081.8119677466007,
+          "production_range": [
+            1892.5563343150914,
+            2365.6954178938645
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 176.86015293148625,
+          "production_range": [
+            160.78195721044202,
+            200.97744651305257
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2258.672120678087,
+          "production_range": [
+            2053.3382915255334,
+            2566.672864406917
+          ]
+        }
+      },
+      "DeepInfra_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.4974149795707146,
+          "production_range": [
+            0.45219543597337686,
+            0.5652442949667211
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2096.1067239109916,
+          "production_range": [
+            1905.5515671918101,
+            2381.939458989763
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 178.07456268631583,
+          "production_range": [
+            161.88596607846893,
+            202.35745759808617
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2274.1812865973075,
+          "production_range": [
+            2067.437533270279,
+            2584.296916587849
+          ]
+        }
+      },
+      "SiliconFlow_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.49168401417265767,
+          "production_range": [
+            0.44698546742968875,
+            0.5587318342871109
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2071.9564357235795,
+          "production_range": [
+            1883.5967597487083,
+            2354.4959496858855
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 176.02287707381146,
+          "production_range": [
+            160.02079733982856,
+            200.02599667478572
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2247.979312797391,
+          "production_range": [
+            2043.617557088537,
+            2554.5219463606713
+          ]
+        }
+      },
+      "Parasail_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.4202190456718508,
+          "production_range": [
+            0.3820173142471371,
+            0.47752164280892134
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 1770.8030584611793,
+          "production_range": [
+            1609.8209622374357,
+            2012.2762027967945
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 150.4384183505226,
+          "production_range": [
+            136.76219850047508,
+            170.95274812559384
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 1921.241476811702,
+          "production_range": [
+            1746.5831607379107,
+            2183.2289509223883
+          ]
+        }
+      },
+      "AA_7_2_1_blend": {
+        "required_completed_requests_per_second": {
+          "planning": 0.47737088419503126,
+          "production_range": [
+            0.433973531086392,
+            0.54246691385799
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2011.6409059978616,
+          "production_range": [
+            1828.7644599980558,
+            2285.95557499757
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 170.8987765418212,
+          "production_range": [
+            155.36252412892833,
+            194.2031551611604
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2182.539682539683,
+          "production_range": [
+            1984.126984126984,
+            2480.15873015873
+          ]
+        }
+      }
+    },
+    "planning_base": {
+      "WandB": {
+        "required_completed_requests_per_second": {
+          "planning": 0.7163174689723844,
+          "production_range": [
+            0.6511976990658038,
+            0.8139971238322548
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 3018.561814249628,
+          "production_range": [
+            2744.147103863297,
+            3430.1838798291215
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 256.4416538921136,
+          "production_range": [
+            233.12877626555778,
+            291.4109703319472
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 3275.0034681417415,
+          "production_range": [
+            2977.275880128855,
+            3721.5948501610687
+          ]
+        }
+      },
+      "Venice": {
+        "required_completed_requests_per_second": {
+          "planning": 0.7121713156851496,
+          "production_range": [
+            0.6474284688046813,
+            0.8092855860058518
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 3001.0899242972205,
+          "production_range": [
+            2728.263567542927,
+            3410.3294594286594
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 254.95733101528356,
+          "production_range": [
+            231.7793918320759,
+            289.72423979009494
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 3256.0472553125037,
+          "production_range": [
+            2960.0429593750027,
+            3700.0536992187544
+          ]
+        }
+      },
+      "DeepInfra_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.7170614380702235,
+          "production_range": [
+            0.6518740346092939,
+            0.8148425432616175
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 3021.696900027922,
+          "production_range": [
+            2746.9971818435647,
+            3433.746477304456
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 256.70799482914003,
+          "production_range": [
+            233.37090439012724,
+            291.7136304876591
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 3278.4048948570617,
+          "production_range": [
+            2980.368086233692,
+            3725.460107792115
+          ]
+        }
+      },
+      "SiliconFlow_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.7087998165697853,
+          "production_range": [
+            0.6443634696088957,
+            0.8054543370111197
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2986.8824270250752,
+          "production_range": [
+            2715.3476609318864,
+            3394.1845761648583
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 253.75033433198314,
+          "production_range": [
+            230.68212211998465,
+            288.3526526499808
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 3240.6327613570584,
+          "production_range": [
+            2946.029783051871,
+            3682.537228814839
+          ]
+        }
+      },
+      "Parasail_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.6057776415459095,
+          "production_range": [
+            0.5507069468599177,
+            0.6883836835748971
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2552.7469814744627,
+          "production_range": [
+            2320.6790740676934,
+            2900.8488425846162
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 216.8683956734356,
+          "production_range": [
+            197.15308697585056,
+            246.44135871981317
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 2769.6153771478985,
+          "production_range": [
+            2517.8321610435437,
+            3147.2902013044295
+          ]
+        }
+      },
+      "AA_7_2_1_blend": {
+        "required_completed_requests_per_second": {
+          "planning": 0.6881663535930562,
+          "production_range": [
+            0.6256057759936874,
+            0.7820072199921092
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 2899.933014041139,
+          "production_range": [
+            2636.3027400373985,
+            3295.3784250467484
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 246.36355458631414,
+          "production_range": [
+            223.9668678057401,
+            279.9585847571751
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 3146.296568627453,
+          "production_range": [
+            2860.2696078431386,
+            3575.337009803923
+          ]
+        }
+      }
+    },
+    "conservative": {
+      "WandB": {
+        "required_completed_requests_per_second": {
+          "planning": 1.1571533113794368,
+          "production_range": [
+            1.0519575557994878,
+            1.31494694474936
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4876.244054152947,
+          "production_range": [
+            4432.949140139041,
+            5541.186425173803
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 414.26088547383836,
+          "production_range": [
+            376.60080497621664,
+            470.7510062202709
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 5290.504939626785,
+          "production_range": [
+            4809.549945115258,
+            6011.937431394074
+          ]
+        }
+      },
+      "Venice": {
+        "required_completed_requests_per_second": {
+          "planning": 1.1504555339083762,
+          "production_range": [
+            1.0458686671894326,
+            1.307335833986791
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4848.0196198898975,
+          "production_range": [
+            4407.2905635362695,
+            5509.113204420338
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 411.8630811391987,
+          "production_range": [
+            374.4209828538169,
+            468.02622856727123
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 5259.882701029096,
+          "production_range": [
+            4781.7115463900855,
+            5977.139432987609
+          ]
+        }
+      },
+      "DeepInfra_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 1.1583551336753017,
+          "production_range": [
+            1.0530501215230015,
+            1.316312651903752
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4881.3085333077215,
+          "production_range": [
+            4437.553212097928,
+            5546.941515122411
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 414.69113785575803,
+          "production_range": [
+            376.99194350523453,
+            471.2399293815432
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 5295.999671163479,
+          "production_range": [
+            4814.545155603163,
+            6018.1814445039545
+          ]
+        }
+      },
+      "SiliconFlow_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 1.1450091480045768,
+          "production_range": [
+            1.0409174072768879,
+            1.3011467590961097
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4825.0685496912865,
+          "production_range": [
+            4386.425954264805,
+            5483.032442831006
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 409.91327498563845,
+          "production_range": [
+            372.6484318051259,
+            465.81053975640725
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 5234.981824676925,
+          "production_range": [
+            4759.074386069931,
+            5948.842982587414
+          ]
+        }
+      },
+      "Parasail_fp8": {
+        "required_completed_requests_per_second": {
+          "planning": 0.9785851026083227,
+          "production_range": [
+            0.8896228205530206,
+            1.1120285256912756
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4123.757622391472,
+          "production_range": [
+            3748.8705658104286,
+            4686.088207263036
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 350.3334667337795,
+          "production_range": [
+            318.48496975798133,
+            398.1062121974767
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 4474.0910891252515,
+          "production_range": [
+            4067.35553556841,
+            5084.194419460512
+          ]
+        }
+      },
+      "AA_7_2_1_blend": {
+        "required_completed_requests_per_second": {
+          "planning": 1.1116774465691792,
+          "production_range": [
+            1.0106158605174353,
+            1.2632698256467942
+          ]
+        },
+        "required_prompt_tokens_per_second": {
+          "planning": 4684.608759842521,
+          "production_range": [
+            4258.735236220473,
+            5323.419045275591
+          ]
+        },
+        "required_output_tokens_per_second": {
+          "planning": 397.98052587176613,
+          "production_range": [
+            361.80047806524186,
+            452.2505975815523
+          ]
+        },
+        "required_total_tokens_per_second": {
+          "planning": 5082.589285714287,
+          "production_range": [
+            4620.535714285715,
+            5775.669642857143
+          ]
+        }
+      }
+    }
+  },
+  "memory_bound": {
+    "capacity_gib": 44.704,
+    "weights_and_scales_gib": 34.35,
+    "runtime_reservation_gib": 5.0,
+    "primary_kv_gib_by_concurrency": {
+      "c1": 0.712,
+      "c2": 1.424,
+      "c4": 2.848,
+      "c8": 5.696,
+      "c16": 11.392
+    },
+    "surface": {
+      "c1": {
+        "primary_kv_gib": 0.712,
+        "total_gib": 40.062000000000005,
+        "headroom_gib": 4.641999999999996,
+        "guaranteed_fit": true
+      },
+      "c2": {
+        "primary_kv_gib": 1.424,
+        "total_gib": 40.774,
+        "headroom_gib": 3.9299999999999997,
+        "guaranteed_fit": true
+      },
+      "c4": {
+        "primary_kv_gib": 2.848,
+        "total_gib": 42.198,
+        "headroom_gib": 2.5060000000000002,
+        "guaranteed_fit": true
+      },
+      "c8": {
+        "primary_kv_gib": 5.696,
+        "total_gib": 45.046,
+        "headroom_gib": -0.34199999999999875,
+        "guaranteed_fit": false
+      },
+      "c16": {
+        "primary_kv_gib": 11.392,
+        "total_gib": 50.742000000000004,
+        "headroom_gib": -6.038000000000004,
+        "guaranteed_fit": false
+      }
+    },
+    "single_10k_total_gib": 40.504000000000005,
+    "single_10k_headroom_gib": 4.199999999999996
+  },
+  "latency_sensitivity": {
+    "basis": "Little's law, C / required planning-base request rate for DeepInfra hurdle; p50/p95 are sensitivities only",
+    "values": {
+      "c1": {
+        "p50_completion_time_ceiling_seconds": 1.3945806410831811,
+        "p95_completion_time_ceiling_seconds": 1.3945806410831811
+      },
+      "c2": {
+        "p50_completion_time_ceiling_seconds": 2.7891612821663623,
+        "p95_completion_time_ceiling_seconds": 2.7891612821663623
+      },
+      "c4": {
+        "p50_completion_time_ceiling_seconds": 5.5783225643327246,
+        "p95_completion_time_ceiling_seconds": 5.5783225643327246
+      },
+      "c8": {
+        "p50_completion_time_ceiling_seconds": 11.156645128665449,
+        "p95_completion_time_ceiling_seconds": 11.156645128665449
+      },
+      "c16": {
+        "p50_completion_time_ceiling_seconds": 22.313290257330898,
+        "p95_completion_time_ceiling_seconds": 22.313290257330898
+      }
+    }
+  }
+}

@@ -1,8 +1,0 @@
-{"event":"retained_arm_control","instance_id":"computeinstance-e00wfcpr1va34g7tvd","parent_experiment_id":"nebius_l40s_vllm_awq_prefill65k_v21","timestamp":"2026-07-14T11:20:23Z"}
-{"event": "repair_01_begin", "model_manifest_sha256": "e201edca069d0cfd91c81a7407e40a1b09808448704b2fc8c31e99ff6d9d0a86", "model_revision": "ab31d120fbe79988fe2a0259993cf3c222aa8881", "model_shard_count": 4, "model_weight_bytes": 20170199928, "repair_spec_sha256": "361d8e08344093ad3d6a9dbd1b888c6d3242bb6e205f959b41e002b7f1b16f4b", "timestamp": "2026-07-14T11:23:10.268295Z"}
-{"event": "repair_01_inputs_staged", "timestamp": "2026-07-14T11:23:17.964274Z"}
-{"event": "repair_01_reused_verified_runtime_and_checkpoint", "timestamp": "2026-07-14T11:23:17.964411Z"}
-{"event": "repair_01_artifact_retrieved", "manifest_files": 22, "outcome": "SCIENTIFIC_FAIL", "sha256": "576626d43673abadbaccfa07c3a6d213eead310a4c4a24feb3383cc8fc4e16d4", "timestamp": "2026-07-14T11:26:57.753536Z"}
-{"event": "repair_01_error", "message": "typed allocation result contains a harness error", "timestamp": "2026-07-14T11:26:57.753659Z", "type": "RuntimeError"}
-{"event": "repair_window_open", "maximum_seconds": 600.0, "timestamp": "2026-07-14T11:26:57.753726Z"}
-{"event":"repair_owner_handed_off_without_teardown","next_experiment_id":"nebius_l40s_vllm_awq_mla_block64_stage1_v22r1","next_spec_sha256":"da0abf0fe827e842bd16d4ae1786a09b6323fb9df15360e0d2656b9eda8c8e81","timestamp":"2026-07-14T11:29:30Z"}

@@ -1,6 +1,0 @@
-{"attempt": 1, "event": "repair_ready", "kind": "pre_science_component_integration", "timestamp_utc": "2026-07-23T22:02:30.735270Z"}
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T22:02:41.421758Z"}
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T22:03:26.423434Z"}
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T22:04:11.425528Z"}
-{"attempt": 2, "event": "repair_ready", "kind": "pre_science_component_integration", "timestamp_utc": "2026-07-23T22:04:29.860680Z"}
-{"event": "heartbeat", "timestamp_utc": "2026-07-23T22:04:56.427294Z"}

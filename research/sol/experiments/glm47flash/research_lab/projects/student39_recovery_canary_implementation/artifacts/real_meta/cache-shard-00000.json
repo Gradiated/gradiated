@@ -1,1 +1,0 @@
-{"mapping_sha256":"e501ab11290cd38424fd5ed93f9e9fd55145a7ed98cb6acddcc21b4122accb3a","schema":1,"teacher_revision":"33faccf4c2ba82142214d0d4e16232a4e9ccfe10","tensor_names":["bridge_hidden_bf16","top64_logits_bf16","top64_token_ids"]}

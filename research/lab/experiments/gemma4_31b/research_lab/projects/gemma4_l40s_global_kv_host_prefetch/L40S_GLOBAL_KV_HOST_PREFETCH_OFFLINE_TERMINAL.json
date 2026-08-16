@@ -1,0 +1,425 @@
+{
+  "actual_spend_usd": 0.0,
+  "classification": "typed_none_compulsory_decode_h2d_exceeds_boundary",
+  "created_at_utc": "2026-07-27T06:27:04.253743+00:00",
+  "decision": "none",
+  "direct_bindings": {
+    "accelerator_inventory": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8"
+    },
+    "campaign": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+      "sha256": "8029d46b12cdc994b14dbd20dc8b0fd12ac95ca6b8926324820e4c9d5a8d065b"
+    },
+    "gpu_prices": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/factory/data/gpu_prices.json",
+      "sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f"
+    },
+    "launch": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_prefill_cuda_graph_padding_rebase/inputs/workload/LAUNCH.json",
+      "sha256": "a48f6910df002c422543089685476fb9af845f957184f326ba0807b58029c1de"
+    },
+    "local_kv_predecessor_terminal": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_local_kv4_outlier_codesign/L40S_LOCAL_KV4_OUTLIER_OFFLINE_TERMINAL.json",
+      "sha256": "c0a732ef5cf42cb5744a19afab0fe2734ad37cbd5d720ebcc4a16e02a856cfc2"
+    },
+    "model_config": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/packet/MODEL_CONFIG.json",
+      "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+    },
+    "project": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_kv_host_prefetch/PROJECT.md",
+      "sha256": "8d3ebcdcd90343bae95bb7bc5e38520a52de0ee6cf2b2865fb8294f16bfb6d66"
+    },
+    "sglang_source": {
+      "python/sglang/srt/layers/attention/triton_backend.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/layers/attention/triton_backend.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "e2b0fd4a3ec3c783ae7026f4cb8a7292c1203388a6c9ea5b90e604d3a149f3dc"
+      },
+      "python/sglang/srt/layers/radix_attention.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/layers/radix_attention.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "293c3cfdecee29ff38b81aa750db05507cba152c105c3ef6b7a2eba2ba160e28"
+      },
+      "python/sglang/srt/mem_cache/allocator/swa.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/mem_cache/allocator/swa.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "95a8be5d59cc7f48c0fe1c63a891938e8fc84bc310c1a14c4cdd5754d4fb5b91"
+      },
+      "python/sglang/srt/mem_cache/kv_cache_configurator.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/mem_cache/kv_cache_configurator.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "20bd3c9580a1ee38a7d205f28a5dc18572c0dec296980988e12c1d3bb1d3c0d4"
+      },
+      "python/sglang/srt/mem_cache/memory_pool.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/mem_cache/memory_pool.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "24caf4bf2af6db4f8dc180f65b2ed8153403cdfd87010b70fcac67fe59434a10"
+      },
+      "python/sglang/srt/mem_cache/swa_memory_pool.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/mem_cache/swa_memory_pool.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "d0d8c9ad1a7652978195bfea112611cd281012c6ff9c12dfd05f445c13534724"
+      },
+      "python/sglang/srt/model_executor/model_runner_components/layer_setup.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/model_executor/model_runner_components/layer_setup.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "546561837092e800f62211ece5cf1053bc024548d433ac51264334b4293ae698"
+      },
+      "python/sglang/srt/models/gemma4_causal.py": {
+        "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+        "evidence": "direct bytes from the official pinned git commit",
+        "raw_url": "https://raw.githubusercontent.com/sgl-project/sglang/c6a6200a1a778a799ba61c395ac292317f01ebc9/python/sglang/srt/models/gemma4_causal.py",
+        "repository": "https://github.com/sgl-project/sglang",
+        "sha256": "9c5f5f5739cbec30284302f266fec1d797a86fb98fa1273a27c97fb5d869d001"
+      }
+    },
+    "workload": {
+      "evidence": "direct",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_kv4_outlier_allocator_rebase_endpoint/packet/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  },
+  "economics": {
+    "actual_spend_usd": 0.0,
+    "authorized_spend_usd": 0.0,
+    "complete_cost_interval_usd_per_million_at_planning_rate": {
+      "lower": 549.3255997395834,
+      "upper": "infinity"
+    },
+    "decode_h2d_only_floor_usd_per_million_requests": 549.3255997395834,
+    "production_planning_rate_usd_per_gpu_hour": 1.1,
+    "production_rate_range_usd_per_gpu_hour": [
+      1.0,
+      1.25
+    ],
+    "rate_sensitivity_decode_h2d_floor_usd_per_million": {
+      "1.00": 499.3869088541666,
+      "1.10": 549.3255997395834,
+      "1.25": 624.2336360677083
+    },
+    "target_usd_per_million_requests": 451.4965736440936
+  },
+  "focused_checks": [
+    {
+      "command": "python3 -m py_compile global_kv_host_prefetch.py test_global_kv_host_prefetch.py",
+      "result": "pass"
+    },
+    {
+      "command": "python3 -m unittest -v test_global_kv_host_prefetch.py",
+      "result": "pass",
+      "tests": 6
+    },
+    {
+      "command": "python3 global_kv_host_prefetch.py --source-root /root/workspace/.agents/runtime/gemma4_global_kv_sglang",
+      "result": "pass_typed_negative"
+    }
+  ],
+  "geometry": {
+    "concurrency": 32,
+    "decode_forwards": 357,
+    "fresh_prompt_tokens_per_request": 3679,
+    "global_head_dim": 512,
+    "global_kv_heads": 4,
+    "global_layer_ids": [
+      5,
+      11,
+      17,
+      23,
+      29,
+      35,
+      41,
+      47,
+      53,
+      59
+    ],
+    "global_layers": 10,
+    "k_and_v_factor": 2,
+    "kv_element_bytes": 1,
+    "local_layer_ids": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      6,
+      7,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      15,
+      16,
+      18,
+      19,
+      20,
+      21,
+      22,
+      24,
+      25,
+      26,
+      27,
+      28,
+      30,
+      31,
+      32,
+      33,
+      34,
+      36,
+      37,
+      38,
+      39,
+      40,
+      42,
+      43,
+      44,
+      45,
+      46,
+      48,
+      49,
+      50,
+      51,
+      52,
+      54,
+      55,
+      56,
+      57,
+      58
+    ],
+    "local_layers": 50,
+    "output_tokens_per_request": 358,
+    "padded_capacity_rows": 129688,
+    "page_size": 1,
+    "peak_physical_rows": 129687,
+    "prompt_tokens_per_request": 4214,
+    "row_bytes": 4096,
+    "shared_prefix_tokens": 535
+  },
+  "identities": {
+    "hardware": {
+      "architecture": "Ada Lovelace SM89",
+      "host_interconnect": "PCIe Gen4 x16",
+      "model": "NVIDIA L40S",
+      "peer_interconnect": null
+    },
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "runtime": {
+      "attention_backend": "Triton prefill and decode",
+      "commit": "c6a6200a1a778a799ba61c395ac292317f01ebc9",
+      "repository": "https://github.com/sgl-project/sglang"
+    },
+    "workload": {
+      "concurrency": 32,
+      "fresh_prompt_tokens": 3679,
+      "output_tokens": 358,
+      "page_size": 1,
+      "prompt_tokens": 4214,
+      "shared_prefix_tokens": 535,
+      "tp": 1
+    }
+  },
+  "implementation_hashes": {
+    "global_kv_host_prefetch.py": "0e53f9e6a7b01abfce379aa7d6030be6711f1aa83cecb3762b8f0106a41d8080",
+    "test_global_kv_host_prefetch.py": "f80bef0ba85ba43bc7b97b5e4ca8d4eb0057fe2419e41f8773d3abd202694d47"
+  },
+  "kind": "l40s_global_kv_host_prefetch_offline_terminal",
+  "latency": {
+    "all_transfer_stream_seconds_per_batch_lower": 57.697964999999996,
+    "all_transfer_stream_seconds_per_request_amortized_lower": 1.8030614062499999,
+    "boundary_excess_seconds_per_request_lower": 0.3201677217670573,
+    "boundary_ratio_lower": 1.2166772281479297,
+    "complete_service_seconds_per_request": {
+      "lower": 1.7977928718749998,
+      "lower_evidence": "resource-work lower bound using decode H2D only; excludes all compute, D2H, prompt reloads, protocol overhead, and imperfect efficiency",
+      "upper": "infinity"
+    },
+    "decode_h2d_engine_seconds_per_batch_lower": 57.529371899999994,
+    "decode_h2d_seconds_per_request_amortized_lower": 1.7977928718749998,
+    "dependent_overlap": {
+      "credit_seconds": 0.0,
+      "policy": "Every attention consumer waits on its layer H2D event. No dependent transfer/computation overlap is credited.",
+      "stronger_impossibility": "Even granting impossible perfect overlap with all model compute cannot reduce makespan below the serial H2D engine work."
+    },
+    "pcie_payload_ceiling": {
+      "bytes_per_second": 31507692307.69231,
+      "derivation": "16 GT/s/lane * 16 lanes * (128/130) / 8",
+      "evidence": "analytical candidate-favorable ceiling from the inventory's vendor-reported PCIe Gen4 x16 identity; transaction and protocol overhead are ignored"
+    },
+    "price_normalized_boundary_seconds_per_request": 1.4776251501079425
+  },
+  "later_component": {
+    "command": null,
+    "reason": "Decode H2D alone is 1.797792871875 s/request at the physical payload ceiling, above the complete-service boundary before any runtime-dependent term. A component run cannot promote this fixed policy.",
+    "type": "none"
+  },
+  "memory": {
+    "candidate_static_required_interval_bytes": {
+      "lower": 40827782144,
+      "upper": 41783751384
+    },
+    "complete_required_interval_bytes": {
+      "lower": 48073652020,
+      "upper": 49029621260
+    },
+    "conservative_complete_fit": false,
+    "device_bytes_saved_before_new_metadata": 4249616384,
+    "device_resident_global_pool_corrected_bytes": 5312020480,
+    "evidence": "derived from direct model geometry, pinned runtime allocation shapes, and the direct-hashed local-KV predecessor memory interval",
+    "global_padding_bytes": 40960,
+    "global_payload_bytes": 5311979520,
+    "host_pinned_canonical_bytes": 5312020480,
+    "launch_dynamic_allocator_reserve_bytes": 7245869876,
+    "memory_saving_useful": true,
+    "new_device_metadata_and_allocator_rounding_interval_bytes": {
+      "evidence": "inferred conservative envelope for two packed stable allocations, events, descriptors, and allocator rounding",
+      "lower": 0,
+      "upper": 5242880
+    },
+    "one_staging_buffer_bytes": 531202048,
+    "physical_device_bytes": 48305799168,
+    "physical_headroom_interval_bytes": {
+      "lower_case_headroom": 232147148,
+      "upper_case_headroom": -723822092
+    },
+    "prior_padding_correction_bytes": 20480,
+    "prior_terminal_recorded_global_padding_bytes": 20480,
+    "static_allocator_headroom_interval_bytes": {
+      "lower_case_headroom": 232147148,
+      "upper_case_headroom": -723822092
+    },
+    "static_allocator_limit_bytes": 41059929292,
+    "two_staging_buffers_bytes": 1062404096,
+    "unchanged_page_table": {
+      "accounting": "already contained in the inherited launch dynamic reserve",
+      "duplicated": false,
+      "owner": "ReqToTokenPool.req_to_token on device"
+    }
+  },
+  "next_action": "Close host-resident global E5M2 KV for exact c32 as typed none. Do not claim an L40S or build the runtime adapter for this policy.",
+  "pass": false,
+  "physical_hypothesis": {
+    "falsifier": "A semantics-preserving runtime demonstrates fewer H2D bytes than the distinct active E5M2 K/V rows without compression, remapping, additional residency, or changing the workload.",
+    "hypothesis": "Two device buffers remove about 4.25 GB of global KV residency, but full-history decode turns the host link into the limiting serial resource.",
+    "prediction": "H2D bytes rise to the exact trace total and each global consumer observes an event wait; no cache or compute optimization can reduce the compulsory host payload under this policy."
+  },
+  "project": "gemma4_l40s_global_kv_host_prefetch",
+  "runtime_ownership": {
+    "first_consumer": {
+      "contract": "the backend calls get_key_buffer/get_value_buffer and passes the unchanged kv_indptr/kv_indices to the Triton attention kernel; each consumer must wait on its staging H2D event.",
+      "source": "python/sglang/srt/layers/attention/triton_backend.py",
+      "symbol": "TritonAttnBackend.forward_extend/forward_decode"
+    },
+    "fixed_adapter_sketch": [
+      "Replace only full_kv_pool storage with ten pinned-host K/V layer images.",
+      "Keep ReqToTokenPool and SWATokenToKVPoolAllocator full physical ids unchanged.",
+      "Allocate two stable packed device buffers of one padded global layer each.",
+      "At forward entry prefetch global layer 5; after each global consumer prefetch the next global layer into the alternate buffer on one transfer stream.",
+      "Make the compute stream wait on the selected buffer event before the existing Triton consumer receives K/V views.",
+      "Write current K/V into that staged layer at unchanged out_cache_loc and copy only those new rows D2H before buffer reuse.",
+      "Do not duplicate, remap, compress, or change the E5M2 global cache."
+    ],
+    "implementation_reason": "The exact compulsory H2D lower bound is already terminally negative, so production integration cannot change the decision.",
+    "page_table_owner": {
+      "contract": "request rows map logical sequence positions to full-pool physical slot ids; the host policy preserves these ids.",
+      "source": "python/sglang/srt/mem_cache/memory_pool.py",
+      "symbol": "ReqToTokenPool.req_to_token"
+    },
+    "physical_slot_allocator": {
+      "contract": "full slots are allocated independently of SWA slots and remain the canonical indices returned to forward_batch.out_cache_loc.",
+      "source": "python/sglang/srt/mem_cache/allocator/swa.py",
+      "symbol": "SWATokenToKVPoolAllocator.full_attn_allocator"
+    },
+    "pool_owner": {
+      "contract": "global layer ids map to ten MHATokenToKVPool layer indices; current code allocates separate K and V [size+page,4,512] tensors.",
+      "source": "python/sglang/srt/mem_cache/swa_memory_pool.py",
+      "symbol": "SWAKVPool.full_kv_pool"
+    },
+    "producer": {
+      "contract": "QKV projection, fused Q/K/V norm, and RoPE produce distinct global K and V; attention is invoked with save_kv_cache=True.",
+      "source": "python/sglang/srt/models/gemma4_causal.py",
+      "symbol": "Gemma4Attention.forward -> RadixAttention.forward"
+    },
+    "runtime_implemented": false,
+    "source_complete_for_semantics": true,
+    "write_boundary": {
+      "contract": "the producer writes new global rows at out_cache_loc before attention; a host-canonical adapter must D2H those rows before their staging buffer is reused.",
+      "source": "python/sglang/srt/layers/attention/triton_backend.py",
+      "symbol": "TritonAttnBackend._set_kv_buffer -> SWAKVPool.set_kv_buffer"
+    }
+  },
+  "terminal_reasons": [
+    "exact_decode_h2d_resource_floor_exceeds_complete_service_boundary",
+    "price_normalized_decode_h2d_floor_exceeds_campaign_target",
+    "prefill_d2h_compute_protocol_and_efficiency_terms_are_strictly_additional",
+    "conservative_complete_memory_interval_does_not_fit_even_though_the_lower_case_does"
+  ],
+  "traffic": {
+    "all_fixed_policy_transfer_bytes_lower": 1817929728000,
+    "bytes_per_global_token_per_layer": 4096,
+    "decode": {
+      "d2h_bytes_exact_new_rows": 467927040,
+      "first_step_cached_rows_per_layer": 118263,
+      "forwards": 357,
+      "h2d_bytes_amortized_per_request": 56644304640.0,
+      "h2d_bytes_exact": 1812617748480,
+      "last_step_cached_rows_per_layer": 129655
+    },
+    "device_resident_attention_bytes_per_layer_at_peak": 531197952,
+    "prefill": {
+      "chunking_effect": "The launch fixes chunked-prefill-size=2048. Arrival ordering and scheduler grouping are not frozen by WORKLOAD.json; every additional chunk reloads nonnegative prior history. The terminal therefore uses the exact candidate-favorable lower bound and does not need a guessed schedule.",
+      "d2h_bytes_for_exact_fresh_rows": 4822138880,
+      "h2d_bytes_candidate_favorable_lower": 21913600
+    },
+    "raw_trace": {
+      "contents": "one raw phase/step/global-layer record per staging action",
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_l40s_global_kv_host_prefetch/artifacts/L40S_GLOBAL_KV_HOST_PREFETCH_TRACE.json",
+      "rows": 3580,
+      "sha256": "be1bb5687e951817d784628599e9972a9a6c54e2bc0922aacefc0d63e72c9083"
+    }
+  },
+  "uncertainty": [
+    {
+      "direction": "one-sided against the candidate",
+      "effect": "Real protocol and efficiency losses increase latency above the ceiling-based floor.",
+      "item": "Actual PCIe payload bandwidth is unmeasured."
+    },
+    {
+      "direction": "one-sided against the candidate",
+      "effect": "The trace charges only the minimum prefix H2D; chunk reloads add traffic.",
+      "item": "Exact concurrent prefill chunk grouping is not frozen by the arrival manifest."
+    },
+    {
+      "direction": "neutral for the decision",
+      "effect": "Zero overlap credit is used; decode H2D resource work alone exceeds the boundary.",
+      "item": "No layer compute gaps are transferred from another hardware/workload."
+    }
+  ]
+}

@@ -1,6 +1,0 @@
-{
-  "classification": "pre_science_consumer_ownership_defect",
-  "diagnostic": "The diagnostic smoke passed and target-only/assistant stock dispatch was observed, but glmrunner could not truncate the root-owned accepted-depth audit file before accepted-depth execution.",
-  "diagnostic_science_started": false,
-  "repair_deadline_utc": "2026-07-23T05:55:00Z"
-}

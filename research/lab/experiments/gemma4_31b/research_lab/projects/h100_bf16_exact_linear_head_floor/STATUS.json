@@ -1,0 +1,16 @@
+{
+  "status": "closed",
+  "priority": 0,
+  "researcher_profile": "execution",
+  "summary": "Closed at the pre-create wall budget: setup-dominance context remained unresolved; no provider resource or spend.",
+  "next_action": null,
+  "provider_mutation": "forbidden",
+  "authorized_spend_usd": 1.3,
+  "wall_clock_budget_minutes": 28,
+  "provider_exposure_budget_minutes": 20,
+  "compute_budget": "0.34 H100 GPU-hours plus 2 local CPU-hours",
+  "storage_budget": "one 100-GiB provider disk; 1 GiB retained plus 512 MiB temporary",
+  "active_session": null,
+  "last_result_classification": "closed_precreate_wall_budget_exhausted",
+  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/h100_bf16_exact_linear_head_floor/artifacts/BUDGET_TERMINAL.json"
+}

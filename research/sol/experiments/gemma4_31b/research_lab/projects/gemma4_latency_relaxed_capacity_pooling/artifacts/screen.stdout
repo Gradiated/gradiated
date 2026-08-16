@@ -1,9 +1,0 @@
-{
-  "best_possible_gpu_only_usd_per_m_tokens_at_100pct_utilization": 0.09875250000000001,
-  "best_possible_reduction_fraction": 0.09999999999999998,
-  "interpretation": "112.5% utilization is impossible; all-in factors and loss reserve only increase cost.",
-  "required_service_seconds_per_request_at_100pct_utilization": 0.500119281574996,
-  "required_utilization_at_unchanged_service": 1.125,
-  "residual_physical_service_speedup_fraction": 0.2,
-  "target_usd_per_m_tokens": 0.08778000000000001
-}

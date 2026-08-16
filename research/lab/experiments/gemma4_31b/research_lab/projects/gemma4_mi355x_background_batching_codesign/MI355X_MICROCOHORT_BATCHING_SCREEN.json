@@ -1,0 +1,404 @@
+{
+  "charged_cost_categories": {
+    "actual_width_decode": true,
+    "actual_width_prompt": true,
+    "actual_width_target": true,
+    "attention": true,
+    "bootstrap": true,
+    "compaction": true,
+    "compute": true,
+    "drain": true,
+    "fill_and_barrier": true,
+    "idle": true,
+    "kv_read_write_and_capacity": true,
+    "launch": true,
+    "memory": true,
+    "partial_final_fallback": true,
+    "queue": true,
+    "scheduler_and_service": true,
+    "tied_head": true,
+    "weights_fp8_and_bf16": true
+  },
+  "classification": "typed_none",
+  "decision": {
+    "completion_p95_gate_pass": true,
+    "economic_gate_pass": false,
+    "load_at_most_90_percent_capacity_pass": true,
+    "memory_gate_pass": true,
+    "queue_p95_gate_pass": true,
+    "result": "typed_none",
+    "semantic_accounting_pass": true,
+    "source_binding_pass": true,
+    "starvation_gate_pass": true
+  },
+  "finite_stream": {
+    "arrival_interval_seconds": 0.5321611195999412,
+    "bootstrap_boundary_seconds_first_5_percent_arrived": 266.0805597999706,
+    "capacity_requests_per_second": 2.0879223794974027,
+    "capacity_seconds_per_request": 0.4789450076399471,
+    "completion_p50_seconds": 35.29182743610136,
+    "completion_p95_seconds": 39.5313948477185,
+    "completion_seconds_max": 41.793251532542854,
+    "drain_seconds_after_last_arrival": 15.848868993813994,
+    "fallback_request_fraction": 0.0007993605115907274,
+    "final_completion_seconds": 5341.185192830425,
+    "first_full_width_seconds": null,
+    "load_fraction_of_capacity": 0.9,
+    "mean_main_event_scheduled_width": 51.6105004379892,
+    "offered_requests_per_second": 1.8791301415476624,
+    "peak_live_requests": 72,
+    "phase_wall_seconds": {
+      "bootstrap_first_5_percent_arrival_window": 266.0805597999706,
+      "drain_after_last_arrival": 15.848868993813994,
+      "steady_arrival_window": 5059.25576403664,
+      "sum_charged_in_all_request_mean": 5341.185192830425
+    },
+    "queue_p50_seconds": 3.9149426876502105,
+    "queue_p95_seconds": 7.987835043581981,
+    "queue_seconds_max": 8.667703326930777,
+    "requests": 10008,
+    "starved_requests": 0,
+    "total_seconds_per_request_including_bootstrap_and_drain": 0.5336915660302183
+  },
+  "generated_from_observation_utc": "2026-07-26T14:46:26Z",
+  "identity": {
+    "bindings": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/MICROCOHORT_SOURCE_BINDINGS.json",
+      "sha256": "adbbab92f465cf281e40832737e99086ab0176ed5c4f6b7e87ae9b2534272f21"
+    },
+    "calculator": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/run_microcohort_batching_screen.py",
+      "sha256": "797a59ea35aae70fbf72cc31dfad38e13ae50b5f932c056f0d5a113cf52a3fd7"
+    },
+    "campaign": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/CAMPAIGN.md",
+      "sha256": "c20fb10b1c1c12b53a430cf7401e42a1d10c0d1a9d80d1e36a6b8b264d8a8863"
+    },
+    "input_checks": {
+      "accelerator_inventory": {
+        "expected_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+        "observed_sha256": "bcb33ac6814400f6ab79faa7e44c0ced2d6fe2ac5d19dc43f4ee10b12d7ea6b8",
+        "pass": true
+      },
+      "gpu_prices": {
+        "expected_sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+        "observed_sha256": "a6762a032a128e80a5ab655819c9d989949951f1b55032b746b285ed46c9366f",
+        "pass": true
+      },
+      "microcohort_policy": {
+        "expected_sha256": "ee27fedc508022e679a7befdc64f126b22a57a50aeece9d292de8a8be876b7bb",
+        "observed_sha256": "ee27fedc508022e679a7befdc64f126b22a57a50aeece9d292de8a8be876b7bb",
+        "pass": true
+      },
+      "parent_screen": {
+        "expected_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "observed_sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500",
+        "pass": true
+      },
+      "preserved_barrier_terminal": {
+        "expected_sha256": "405dc2cea0ceed9d187a09b90857cab340d0b08ba8e247a9b3c2e162eaeae132",
+        "observed_sha256": "405dc2cea0ceed9d187a09b90857cab340d0b08ba8e247a9b3c2e162eaeae132",
+        "pass": true
+      },
+      "preserved_rolling_bindings": {
+        "expected_sha256": "72e37cd9e154d3d4e4f5a17301caf01cfb2b2186a9201c19129a04dd772cee07",
+        "observed_sha256": "72e37cd9e154d3d4e4f5a17301caf01cfb2b2186a9201c19129a04dd772cee07",
+        "pass": true
+      },
+      "preserved_rolling_runner": {
+        "expected_sha256": "fcd5c1e534390ac26016c5c7e89e1fa5225418ae1a8d0be065f129d93aab3d15",
+        "observed_sha256": "fcd5c1e534390ac26016c5c7e89e1fa5225418ae1a8d0be065f129d93aab3d15",
+        "pass": true
+      },
+      "preserved_rolling_terminal": {
+        "expected_sha256": "c623e0c4f3b430c0c1a9baa32fe9fe9fe12e46b9c8a10a2fb337b46a725d3eb1",
+        "observed_sha256": "c623e0c4f3b430c0c1a9baa32fe9fe9fe12e46b9c8a10a2fb337b46a725d3eb1",
+        "pass": true
+      }
+    },
+    "microcohort_policy": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/phase_aligned_microcohort_policy.py",
+      "sha256": "ee27fedc508022e679a7befdc64f126b22a57a50aeece9d292de8a8be876b7bb"
+    },
+    "parent_screen": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_fp8_runtime_codesign/MI355X_FP8_RUNTIME_SCREEN.json",
+      "sha256": "e1bad18d0d2e0d3e281c3502a3b4a25108d0841ac2da85e5fd0fadebe99cc500"
+    },
+    "preserved_barrier_terminal": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/MI355X_BACKGROUND_BATCHING_SCREEN.json",
+      "sha256": "405dc2cea0ceed9d187a09b90857cab340d0b08ba8e247a9b3c2e162eaeae132"
+    },
+    "preserved_rolling_terminal": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/MI355X_ROLLING_BATCHING_SCREEN.json",
+      "sha256": "c623e0c4f3b430c0c1a9baa32fe9fe9fe12e46b9c8a10a2fb337b46a725d3eb1"
+    },
+    "project": {
+      "path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_mi355x_background_batching_codesign/PROJECT.md",
+      "sha256": "9f7f197130e1bc8104a5422b52e8dbfee8f3e162aeffb9d63b38d98b16a09a8b"
+    },
+    "source_checks": {
+      "contract:vllm/config/compilation.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "[1, 2, 4] + list(range(8, 256, 8))",
+          "Mixed prefill-decode batches are run without cudagraphs."
+        ]
+      },
+      "contract:vllm/config/scheduler.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "policy: SchedulerPolicy = \"fcfs\"",
+          "max_num_seqs: int = Field(",
+          "enable_chunked_prefill: bool = True",
+          "scheduler_cls: str | type[object] | None = None"
+        ]
+      },
+      "contract:vllm/v1/core/sched/scheduler.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "token_budget = self.max_num_scheduled_tokens",
+          "# First, schedule the RUNNING requests.",
+          "# Next, schedule the WAITING requests.",
+          "num_running >= self.max_num_running_reqs",
+          "num_scheduled_tokens[request_id] = num_new_tokens",
+          "request.append_output_token_ids(output_token_id)",
+          "finished = self._handle_stopped_request(request)",
+          "self._free_request_blocks(request)"
+        ]
+      },
+      "contract:vllm/v1/worker/gpu_input_batch.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "new_req_index = self.num_reqs",
+          "def remove_request(self, req_id: str)",
+          "self.block_table.clear_row(req_index)",
+          "def condense(self) -> None:",
+          "self.block_table.move_row(last_req_index, empty_index)",
+          "self.req_id_to_index[req_id] = empty_index",
+          "self.temperature_cpu[empty_index] = self.temperature_cpu[last_req_index]",
+          "self.generators[empty_index] = generator"
+        ]
+      },
+      "contract:vllm/v1/worker/gpu_model_runner.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "for req_id in scheduler_output.finished_req_ids:",
+          "self.input_batch.remove_request(req_id)",
+          "self.input_batch.add_request(request)",
+          "self.input_batch.condense()",
+          "tokens = [scheduler_output.num_scheduled_tokens[i] for i in req_ids]",
+          "def _is_uniform_decode("
+        ]
+      },
+      "contract:vllm/v1/worker/gpu_worker.py": {
+        "missing_fragments": [],
+        "pass": true,
+        "required_fragments": [
+          "if not self.model_config.enforce_eager:",
+          "self.scheduler_config.max_num_seqs",
+          "self.scheduler_config.max_num_batched_tokens"
+        ]
+      },
+      "sha256:vllm/config/compilation.py": {
+        "expected": "4066b6e4871cbfb37c383522b148e278696d50dda72e3461d96663b41f4add32",
+        "observed": "4066b6e4871cbfb37c383522b148e278696d50dda72e3461d96663b41f4add32",
+        "pass": true
+      },
+      "sha256:vllm/config/scheduler.py": {
+        "expected": "3cf5d41a5d662ab0eada6f3128e2538abc0a250d6aef82acab7df7dd84e498bc",
+        "observed": "3cf5d41a5d662ab0eada6f3128e2538abc0a250d6aef82acab7df7dd84e498bc",
+        "pass": true
+      },
+      "sha256:vllm/v1/core/sched/scheduler.py": {
+        "expected": "bc7c7e3d748bd94877b447188e2b2b90994544cfede115b60768edbf0b866906",
+        "observed": "bc7c7e3d748bd94877b447188e2b2b90994544cfede115b60768edbf0b866906",
+        "pass": true
+      },
+      "sha256:vllm/v1/worker/gpu_input_batch.py": {
+        "expected": "0687f0e38bf889cef454a38ee262a5686c1ea459337c42219cb91c900799305f",
+        "observed": "0687f0e38bf889cef454a38ee262a5686c1ea459337c42219cb91c900799305f",
+        "pass": true
+      },
+      "sha256:vllm/v1/worker/gpu_model_runner.py": {
+        "expected": "84022f19e31ffe0901f2bd65c25cfbefc6fa56c61dc10c1e69799f20f0070e39",
+        "observed": "84022f19e31ffe0901f2bd65c25cfbefc6fa56c61dc10c1e69799f20f0070e39",
+        "pass": true
+      },
+      "sha256:vllm/v1/worker/gpu_worker.py": {
+        "expected": "c3625e50cac3ed66245b013964621661d010b6144dc4f5d45ce68cafca4fbad9",
+        "observed": "c3625e50cac3ed66245b013964621661d010b6144dc4f5d45ce68cafca4fbad9",
+        "pass": true
+      },
+      "vllm_commit": {
+        "expected": "0164022c907014a27e81c514cd4dff6091904c2b",
+        "observed": "0164022c907014a27e81c514cd4dff6091904c2b",
+        "pass": true
+      }
+    }
+  },
+  "memory": {
+    "configured_full_context_fp8_kv_bytes": 38110494720,
+    "configured_source_bound_bytes": 71763160792,
+    "configured_target_extra_fp8_kv_bytes": 283115520,
+    "conservative_two_x_runtime_envelope_bytes": 143526321584,
+    "fits": true,
+    "mi355x_decimal_capacity_bytes": 288000000000,
+    "observed_peak_live_requests": 72,
+    "observed_peak_resident_bytes_before_two_x_envelope": 61394054872,
+    "observed_peak_target_due_requests": 16,
+    "two_x_envelope_margin_bytes": 144473678416
+  },
+  "physical_accounting": {
+    "attention_flops": 1.4182213728862208e+17,
+    "attention_kv_read_bytes": 1506373666406400.0,
+    "attention_seconds": 802.4350864012883,
+    "bf16_math_efficiency": 0.2,
+    "compaction_bytes": 447300720.0,
+    "compaction_host_bandwidth_bytes_per_second": 20000000000.0,
+    "compaction_moves": 9920.0,
+    "compaction_seconds": 0.22076503600000177,
+    "compaction_seconds_per_moved_row": 2e-05,
+    "decode_rows": 3572856.0,
+    "enforce_eager": true,
+    "fallback_requests": 8.0,
+    "fill_barrier_request_seconds": 40088.52745358812,
+    "fp8_math_efficiency": 0.2,
+    "full_cohorts_admitted": 625.0,
+    "graph_padding_tokens": 0.0,
+    "hbm_efficiency": 0.3,
+    "head_compute_flops": 1.5176050044567552e+16,
+    "head_seconds": 215.44579366891696,
+    "head_weight_bytes": 517069904805888.0,
+    "idle_seconds": 7.982416793999118,
+    "internal_tile_underfill_rule": "No extra utilization credit; the settled 20% tensor and 30% HBM efficiencies remain fixed for every actual M.",
+    "kv_write_bytes": 10369093140480.0,
+    "launch_count": 86694120.0,
+    "launch_seconds": 260.0823600002707,
+    "main_forward_events": 70778.0,
+    "main_scheduled_width_histogram": {
+      "16": 195,
+      "24": 112,
+      "32": 353,
+      "40": 113,
+      "48": 53009,
+      "56": 113,
+      "64": 16860,
+      "72": 20,
+      "8": 3
+    },
+    "main_token_m_histogram": {
+      "1520": 1,
+      "16": 187,
+      "1648": 1,
+      "1776": 8,
+      "1888": 104,
+      "1894": 5,
+      "1896": 5,
+      "1902": 5,
+      "1904": 495,
+      "24": 112,
+      "32": 345,
+      "40": 113,
+      "48": 52945,
+      "56": 113,
+      "64": 11941,
+      "6936": 1,
+      "72": 16,
+      "8": 3,
+      "8192": 4378
+    },
+    "mixed_prefill_decode_events": 4995.0,
+    "non_gemm_bytes": 1332860514099200.0,
+    "non_gemm_seconds": 555.358547540835,
+    "partial_fallback_cohorts_admitted": 1.0,
+    "prefill_head_rows": 10008.0,
+    "prefill_tokens": 36817652.0,
+    "scheduler_service_seconds_per_request": 0.04,
+    "seconds_per_request_by_critical_path_family": {
+      "attention": 0.08017936514801043,
+      "compaction": 2.2058856514788346e-05,
+      "head": 0.02152735748090697,
+      "idle": 0.0007976035965226936,
+      "launch": 0.025987446043192513,
+      "non_gemm_and_kv_write": 0.05549146158481565,
+      "scheduler_and_service": 0.03999999999999943,
+      "transformer": 0.309686273319915
+    },
+    "service_seconds": 400.3199999999943,
+    "target_cycles": 150120.0,
+    "target_due_width_histogram": {
+      "16": 9375,
+      "8": 15
+    },
+    "target_forward_events": 9390.0,
+    "target_rows": 1801440.0,
+    "transformer_compute_flops": 2.4806188901833114e+18,
+    "transformer_seconds": 3099.340223385709,
+    "transformer_weight_bytes": 2356684919930880.0
+  },
+  "physical_interpretation": {
+    "capacity_required_to_meet_target_at_90_percent_load_requests_per_second": 2.2216922083306905,
+    "capacity_shortfall_fraction": 0.06021078362326271,
+    "observed_mechanism": "Immutable 16-request phases collapse request-relative target cycles into cohort-width forwards and retain independent rolling admission, trading one-cohort fill delay for fewer transformer/head weight streams and launches.",
+    "target_cycles_per_target_forward": 15.987220447284345,
+    "target_forward_events": 9390,
+    "target_head_weight_streams": 112680,
+    "what_would_falsify_this_explanation": "A target MI355X trace of this exact 16/96/8192/eager policy showing different completed-request capacity or target grouping with identical prompt, output, cache, target, and fallback accounting."
+  },
+  "policy": {
+    "admission": "FCFS immutable groups of exactly 16; admit independently when all members are present, capacity and an initial token map are available. Never wait for all 96.",
+    "cache_mix": "Deterministic 1,000-request period: 822 requests cache 535 tokens and 178 cache 536, preserving the parent mean.",
+    "cohort_size": 16,
+    "compaction": "Remove completed cohort rows, fill smallest freed indices, then apply the bound GPUInputBatch.condense move rule.",
+    "fallback": "The terminal 8-request partial cohort executes the identical eager exact-row policy after the arrival stream closes; every token and cost is charged.",
+    "full_cohorts": 625,
+    "graph_mode": "enforce_eager; exact prompt/decode/target rows execute without graph padding, with every launch charged.",
+    "max_live_sequences": 96,
+    "prefill_decode_interleave": "Schedule existing cohorts FCFS before new cohorts. Non-final prefill chunks advance every member equally; the final 535/536-cache-mixed chunk completes all members together.",
+    "prefill_token_budget": 8192,
+    "sampling_and_ownership": "Membership is immutable while token IDs, positions, KV block rows, sampling state, completion, and slot reuse remain per request.",
+    "selected_policy_count": 1,
+    "target_verification_cadence": "All members execute each of 15 depth-12 cycles together after output counts ceil(k*358/15); independently aligned cohorts batch only when due in the same scheduler event."
+  },
+  "probe": {
+    "end_completion": 5000,
+    "end_seconds": 2427.135734894285,
+    "peak_live_requests": 96,
+    "requests": 6000,
+    "saturated_capacity_requests_per_second": 2.0879223794974027,
+    "saturated_seconds_per_request": 0.4789450076399471,
+    "start_completion": 1000,
+    "start_seconds": 511.3557043344969
+  },
+  "scope": {
+    "accelerator": "one AMD Instinct MI355X, TP1",
+    "mode": "text_only_non_reasoning",
+    "model": "google/gemma-4-31B-it",
+    "provider_spend_usd": 0.0,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "tokens_per_request": 4572
+  },
+  "semantic_accounting": {
+    "all_60_layers_preserved": true,
+    "all_checkpoint_parameters_preserved": true,
+    "all_requests_completed": true,
+    "cache_mix_preserved": true,
+    "decode_and_first_sample_rows_expected": 3582864,
+    "decode_and_first_sample_rows_observed": 3582864,
+    "exact_attention_and_kv_ownership": true,
+    "feature_and_sampling_semantics_preserved": true,
+    "fresh_prompt_tokens_expected": 36817652,
+    "fresh_prompt_tokens_observed": 36817652,
+    "microcohort_alignment_checks": 228486,
+    "partial_fallback_requests_expected": 8,
+    "partial_fallback_requests_observed": 8,
+    "target_cycles_expected": 150120,
+    "target_cycles_observed": 150120
+  },
+  "terminal": "typed_none"
+}

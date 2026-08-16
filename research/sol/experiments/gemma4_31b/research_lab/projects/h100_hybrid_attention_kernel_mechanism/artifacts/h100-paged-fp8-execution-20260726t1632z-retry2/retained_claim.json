@@ -1,6 +1,0 @@
-{
-  "type": "h100_controller_retained_claim",
-  "reason": "recoverable_pre_science_integration_error",
-  "terminal": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/h100_hybrid_attention_kernel_mechanism/artifacts/h100-paged-fp8-execution-20260726t1632z-retry2/H100_PAGED_FP8_EXECUTION_TERMINAL.json",
-  "deadline_utc": "2026-07-26T17:32:01.095093Z"
-}

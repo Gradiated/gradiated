@@ -1,1 +1,0 @@
-{"batch_size": 32, "block_size": 512, "candidate_path": "create_flashinfer_kv_indices_triton.producer_fused_swa_mapping", "device_count_proportional": true, "graph_safe": true, "no_capacity_wide_second_pass": true, "no_device_scalar_read": true, "phase": "runtime_invocation"}

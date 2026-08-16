@@ -1,1 +1,0 @@
-StockError: expected one artifact member ending in /allocation-result.json

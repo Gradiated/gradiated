@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.12",
+    "weights": "bfloat16",
+    "kv_cache": "fp8_e5m2",
+    "service_seconds_per_request": 0.3633031778124973
+  },
+  "quality_terminal": {
+    "path": "../sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/TERMINAL.json",
+    "sha256": "1ad3ce0da422344c4ce0c21acbef29781319abdb9d2523cf47ba5f3e47af271a"
+  },
+  "raw_control": {
+    "path": "../sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/control_captures.jsonl",
+    "sha256": "800ca0cb97dd1162ac7b571f3b7f14c178627be8e25e5233555557d1de709038"
+  },
+  "raw_candidate": {
+    "path": "../sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/candidate_captures.jsonl",
+    "sha256": "1cdb311642cbe4f07afb86379f6947a804854346d498ebb89a37f96c403a61d3"
+  },
+  "reference": {
+    "path": "../sglang_v0512_h200_stock_quality_validation/artifacts/gemma-h200-paired-quality-20260718t10321784363555z/REFERENCE_SENTINEL.json",
+    "sha256": "1ea051720ecf9094a3aa0879e6fa781a6a835061886c27cf835b6b94c3f89003",
+    "prompt_token_identity": true,
+    "scored_tokens": 240
+  },
+  "strict_scorer": {
+    "path": "/root/workspace/research/lab/experiments/glm47flash/campaign_100/quality/score_pair.py",
+    "sha256": "080e105e5a43640b3b8d9a91caf872e8491db6524cda1189950f29161e2c41af"
+  },
+  "observed_failure": {
+    "case_id": "python",
+    "control_pass": false,
+    "candidate_pass": false,
+    "control_nll": 0.6548974996976843,
+    "candidate_nll": 0.6548974996976843,
+    "nll_delta": 0.0
+  },
+  "resources": {
+    "provider_spend_usd": 0,
+    "gpu_allowed": false
+  }
+}

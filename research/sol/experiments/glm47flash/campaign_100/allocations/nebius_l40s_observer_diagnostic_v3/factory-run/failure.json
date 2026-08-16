@@ -1,7 +1,0 @@
-{
-  "schema_version": 1,
-  "run_id": "glm47-observer-diagnostic-l40s-v3",
-  "failure_class": "preflight_failure",
-  "stage": "provider_preflight_before_model_transfer",
-  "message": "Nsight Systems 2026.3.1.157 installed and passed process-tree CPU profiling checks, but its target-hardware probe reported that none of the installed L40S GPUs support the GPU Metrics collector; the invalid --gpu-metrics-devices=all option stopped before checkpoint transfer."
-}

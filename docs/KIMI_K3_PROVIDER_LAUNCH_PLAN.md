@@ -18,8 +18,9 @@ The launch does not include a general model gateway. A request names one exact h
 The durable service boundaries and the trigger for introducing shared routing are
 in [ARCHITECTURE.md](ARCHITECTURE.md). For this launch, they mean one TypeScript
 codebase running `api` and `worker`, one Rust `gateway`, and one external
-SGLang deployment for one exact Kimi K3 release. PostgreSQL owns product state,
-while Git owns environment-specific deployment configuration.
+SGLang deployment for one exact Kimi K3 release. PostgreSQL owns product and
+deployment-registry state, while Git owns the infrastructure declaration that
+creates the SGLang workload.
 
 Explicit first-launch non-goals:
 
@@ -99,11 +100,11 @@ checked-in `mprocs.yaml`, normally entered through `pnpm dev`, starts:
 
 On the supported Apple Silicon profile, native SGLang uses Metal/MLX and a
 pinned quantized `mlx-community/Qwen3-0.6B-4bit` release. The local PostgreSQL
-model row, Valkey `GatewayModel` and Git deployment manifest use a separate
+model and deployment rows plus their Valkey projections use a separate
 truthful exact ID such as `mlx-community/qwen3-0.6b-4bit`; they never label Qwen
 as Kimi K3. The gateway connects to SGLang at `http://127.0.0.1:30000`, exercising the
 real SGLang health, Chat Completions, SSE, usage and cancellation boundary. The
-gateway tokenizes locally from the same manifest-pinned tokenizer artifact;
+gateway tokenizes locally from the same deployment-record tokenizer artifact;
 local conformance proves its token IDs and counts match this SGLang release.
 
 Required command:
@@ -210,13 +211,14 @@ Initial public surfaces:
 
 ## Exact model registry
 
-The canonical PostgreSQL, Valkey and Git manifest schemas are in
+The canonical PostgreSQL and Valkey schemas are in
 [DATA_MODEL.md](DATA_MODEL.md). The launch has one global Kimi K3 model row and
-one exact deployment manifest. Rust resolves the requested model ID from
-Valkey and rejects unknown, unavailable or retired models; there is no scoring,
-discovery, routing, fallback or alias resolution. A second model repeats the
-same catalog, manifest, SGLang and conformance workflow without adding a new
-service or database authority.
+one or more available `model_deployments` rows. Rust resolves the requested
+model ID and selects the first available projected deployment. It rejects
+unknown, unavailable, retired, or missing routes; there is no request-path
+scoring, discovery, retry, fallback, or alias resolution. A second model
+repeats the same catalog, deployment-row, SGLang and conformance workflow
+without adding a new service or database authority.
 
 ## OpenRouter provider contract
 
@@ -481,7 +483,7 @@ Acceptance:
 
 Outcome: the architecture proves it can add a model without becoming a gateway platform.
 
-- add one PostgreSQL model row, one deployment manifest and one SGLang deployment;
+- add one PostgreSQL model row, one `model_deployments` row and one SGLang deployment;
 - add exact capability/pricing/capacity fixtures;
 - expose it through the same `/v1/models` and Chat Completions endpoint;
 - retain exact-ID dispatch and independent overload limits.

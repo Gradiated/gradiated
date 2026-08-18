@@ -16,7 +16,10 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
-import type { ModelProperties } from "@gradiated/contracts";
+import type {
+  ModelDeploymentRelease,
+  ModelProperties,
+} from "@gradiated/contracts";
 
 import { users } from "./auth.js";
 
@@ -221,6 +224,46 @@ export const models = pgTable(
     check(
       "models_status_check",
       sql`${table.status} in ('available', 'unavailable', 'retired')`,
+    ),
+  ],
+);
+
+export type ModelDeploymentReleaseRecord = ModelDeploymentRelease;
+
+export const modelDeployments = pgTable(
+  "model_deployments",
+  {
+    id: uuid("id").primaryKey(),
+    modelId: text("model_id")
+      .notNull()
+      .references(() => models.id, { onDelete: "restrict" }),
+    status: text("status").notNull(),
+    serviceUrl: text("service_url").notNull(),
+    release: jsonb("release").$type<ModelDeploymentReleaseRecord>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [
+    index("model_deployments_model_status_index").on(
+      table.modelId,
+      table.status,
+      table.id,
+    ),
+    check(
+      "model_deployments_status_check",
+      sql`${table.status} in ('available', 'unavailable', 'draining')`,
+    ),
+    check(
+      "model_deployments_service_url_length_check",
+      sql`char_length(${table.serviceUrl}) between 1 and 2048`,
+    ),
+    check(
+      "model_deployments_service_url_scheme_check",
+      sql`${table.serviceUrl} ~ '^https?://'`,
     ),
   ],
 );

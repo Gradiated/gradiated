@@ -6,6 +6,7 @@ import type {
 
 interface ValkeyWriter {
   set(key: string, value: string): Promise<unknown>;
+  sAdd(key: string, value: string): Promise<unknown>;
   hSet(key: string, values: Record<string, string>): Promise<unknown>;
   eval(
     script: string,
@@ -29,17 +30,44 @@ end
 return added
 `;
 
+const projectAccountScript = `
+local account_type = redis.call('TYPE', KEYS[1]).ok
+if account_type ~= 'hash' then
+  return redis.error_reply('gateway account is missing or invalid')
+end
+redis.call(
+  'HSET',
+  KEYS[1],
+  'organization_id', ARGV[1],
+  'organization_kind', ARGV[2],
+  'organization_status', ARGV[3],
+  'billing_mode', ARGV[4]
+)
+return 1
+`;
+
 export function createValkeyServingProjector(
   valkey: ValkeyWriter,
 ): ServingProjector {
   return {
-    async projectAccount(account) {
+    async initializeAccount(account) {
       await valkey.hSet(`account:{settlement-0}:${account.organizationId}`, {
         organization_id: account.organizationId,
         organization_kind: account.organizationKind,
         organization_status: account.organizationStatus,
         billing_mode: account.billingMode,
         balance: account.balance.toString(),
+      });
+    },
+    async projectAccount(account) {
+      await valkey.eval(projectAccountScript, {
+        keys: [`account:{settlement-0}:${account.organizationId}`],
+        arguments: [
+          account.organizationId,
+          account.organizationKind,
+          account.organizationStatus,
+          account.billingMode,
+        ],
       });
     },
     async projectWorkspace(workspace) {
@@ -65,15 +93,20 @@ export function createValkeyServingProjector(
       );
     },
     async projectModel(model) {
-      await valkey.set(
-        `model:${model.id}`,
-        JSON.stringify({
-          id: model.id,
-          name: model.name,
-          status: model.status,
-          properties: model.properties,
-        }),
-      );
+      const projected = GatewayModelSchema.parse({
+        id: model.id,
+        name: model.name,
+        status: model.status,
+        properties: model.properties,
+        deployments: model.deployments.map((deployment) => ({
+          id: deployment.id,
+          status: deployment.status,
+          service_url: deployment.serviceUrl,
+          release: deployment.release,
+        })),
+      });
+      await valkey.set(`model:${model.id}`, JSON.stringify(projected));
+      await valkey.sAdd("gateway-model-ids", model.id);
     },
     async applyBalanceTransaction(input) {
       await valkey.eval(applyBalanceTransactionScript, {
@@ -86,3 +119,4 @@ export function createValkeyServingProjector(
     },
   };
 }
+import { GatewayModelSchema } from "@gradiated/contracts";

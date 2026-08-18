@@ -19,16 +19,45 @@ services:
 
   valkey:
     image: valkey/valkey:8.1.9-alpine3.24
-    command: ["valkey-server", "--appendonly", "yes"]
+    command:
+      [
+        "valkey-server",
+        "--appendonly",
+        "yes",
+        "--cluster-enabled",
+        "yes",
+        "--cluster-config-file",
+        "/data/nodes.conf",
+        "--cluster-node-timeout",
+        "5000",
+        "--cluster-announce-ip",
+        "127.0.0.1",
+        "--cluster-announce-port",
+        "6379",
+      ]
     ports:
       - "6379:6379"
     volumes:
       - valkey-data:/data
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test:
+        ["CMD-SHELL", "valkey-cli cluster info | grep -q 'cluster_state:ok'"]
       interval: 2s
       timeout: 3s
       retries: 30
+
+  valkey-cluster-init:
+    image: valkey/valkey:8.1.9-alpine3.24
+    depends_on:
+      valkey:
+        condition: service_started
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "until valkey-cli -h valkey ping >/dev/null 2>&1; do sleep 1; done; if ! valkey-cli -h valkey cluster info | grep -q 'cluster_slots_assigned:16384'; then seq 0 16383 | awk '{ printf \"*3\\r\\n$7\\r\\nCLUSTER\\r\\n$8\\r\\nADDSLOTS\\r\\n$%d\\r\\n%s\\r\\n\", length($1), $1 }' | valkey-cli -h valkey --pipe >/dev/null || true; fi; valkey-cli -h valkey cluster info | grep -q 'cluster_slots_assigned:16384'",
+      ]
+    restart: "no"
 
   clickhouse:
     image: clickhouse/clickhouse-server:26.7.1-alpine

@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { ControlDatabase } from "../db/client.js";
 import {
   apiKeys,
+  type ModelDeploymentReleaseRecord,
   type ModelPropertiesRecord,
   organizationMembers,
   organizations,
@@ -48,6 +49,13 @@ export interface GatewayCredential {
 }
 
 export interface ServingProjector {
+  initializeAccount(account: {
+    organizationId: string;
+    organizationKind: "customer" | "distribution_channel";
+    organizationStatus: "active" | "suspended";
+    billingMode: "prepaid" | "invoiced";
+    balance: bigint;
+  }): Promise<void>;
   projectAccount(account: {
     organizationId: string;
     organizationKind: "customer" | "distribution_channel";
@@ -65,6 +73,12 @@ export interface ServingProjector {
     name: string;
     status: "available" | "unavailable" | "retired";
     properties: ModelPropertiesRecord;
+    deployments: Array<{
+      id: string;
+      status: "available" | "unavailable" | "draining";
+      serviceUrl: string;
+      release: ModelDeploymentReleaseRecord;
+    }>;
   }): Promise<void>;
   applyBalanceTransaction(input: {
     organizationId: string;

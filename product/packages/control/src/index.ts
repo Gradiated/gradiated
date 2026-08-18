@@ -9,6 +9,7 @@ export {
   type BalanceTransactionRecord,
   type BillingAccountRecord,
   type CatalogBillingService,
+  type ModelDeploymentRecord,
   type ModelRecord,
 } from "./catalog-billing/service.js";
 export {

@@ -47,7 +47,7 @@ and the same Valkey-backed authentication, admission and settlement path.
 | `console`        | Static Vite/React deployment at `console.gradiated.com`                              | `api.gradiated.com`                                                                                     | customer product UI and generated API client                                                                                                               | access datastores, hold server secrets, proxy inference                                                                 |
 | `api`            | TypeScript/Node Kubernetes Deployment on EKS CPU nodes                               | RDS PostgreSQL; Valkey for serving-relevant mutations; ClickHouse for usage views; Stripe               | human sessions, organizations, workspaces, invitations, API keys, model catalog, billing operations, usage views and generated API/docs                    | serve inference, serve console assets, run asynchronous settlement loops, authenticate hot-path keys, own Rust behavior |
 | `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                  | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                                | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a network API, write PostgreSQL per generation, retain prompts or completions                                    |
-| `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                     | Valkey; the selected SGLang endpoint; generated contract fixtures; local Git-pinned deployment manifest | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
+| `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                     | Valkey; the selected SGLang endpoint; generated contract fixtures                                        | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
 | `sglang-kimi-k3` | SGLang pod on the external provider's 8x B300 Kubernetes node; never an EKS workload | pinned model/tokenizer artifacts, pinned SGLang image, GPU node and provider networking                 | execute one exact Kimi K3 release and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                     | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api` and `worker` are two commands from one TypeScript application and image,
@@ -64,14 +64,19 @@ idempotent. Do not create separate projection, ingestion or billing services.
 ### PostgreSQL / RDS
 
 RDS PostgreSQL is the durable authority for Better Auth records,
-organizations, workspaces, API keys, the global model catalog, billing account
-balances and immutable balance transactions. Only the TypeScript application
+organizations, workspaces, API keys, the global model catalog, concrete model
+deployments, billing account balances and immutable balance transactions. Only the TypeScript application
 and its background roles use PostgreSQL repositories. Rust has no PostgreSQL
 driver or product repository.
 
 PostgreSQL is not on the inference request path. A successful product mutation
 that affects serving must commit its authoritative row, reload the current row
-from the primary, synchronously update Valkey and only then report success.
+from the primary, synchronously update the corresponding Valkey state and only
+then report success. Credentials, workspaces, models, and nonmonetary account
+fields are replaceable projections. `GatewayAccount.balance` is the exception:
+ordinary operation applies PostgreSQL-originated monetary transactions as
+idempotent deltas and never overwrites the balance with the PostgreSQL row,
+because Valkey also contains finalized usage not yet posted to PostgreSQL.
 Periodic reconciliation repairs partial projection failures. Restrictive
 operations fail closed or leave the affected Valkey scope blocked if projection
 cannot be confirmed.
@@ -89,7 +94,7 @@ contains the serving projection described in [DATA_MODEL.md](DATA_MODEL.md):
 - `GatewayAccount` records, including the operational balance;
 - `GatewayWorkspace` records;
 - `GatewayCredential` records indexed by API-key digest;
-- exact `GatewayModel` records;
+- exact route-ready `GatewayModel` records containing their deployments;
 - per-organization in-flight generation leases;
 - the dedicated `GenerationSettled` stream;
 - applied PostgreSQL balance-transaction IDs.
@@ -129,19 +134,21 @@ slot inclusively and does not need a checkpoint table. ClickHouse retains
 generations indefinitely at launch; ClickHouse Cloud durability and backups
 are sufficient initially.
 
-### Git and deployment manifests
+### Model deployments and GitOps
 
-Git owns environment-specific `ModelDeploymentManifest` configuration:
-exact model and tokenizer paths/revisions, SGLang image/profile, secret
-references, GPU shape, measured capacity, region and compliance declarations.
-The served release digest covers the immutable runtime identities and canonical
-launch configuration.
+PostgreSQL owns both the customer-facing global `models` catalog and the
+durable `model_deployments` registry. Each deployment row names one private
+SGLang URL and one closed exact runtime/model/tokenizer release. The TypeScript
+control plane projects each model and all of its deployments as one complete
+`GatewayModel` document in Valkey; Rust never reads PostgreSQL or a local
+routing manifest.
 
-PostgreSQL owns the customer-facing global `models` catalog: public ID/name,
-properties, pricing, advertised capacity and availability. Rust combines the
-Valkey `GatewayModel` with its locally loaded Git deployment manifest. A
-catalog status change is projected to Valkey; an unavailable or retired model
-is rejected before GPU work.
+Git still owns the Kubernetes/SGLang workload declaration, image digest and
+provider infrastructure that create the endpoint. The deployment workflow
+registers a ready endpoint in PostgreSQL and drains the previous row explicitly.
+This avoids a second Git-owned routing authority while retaining reviewed,
+reproducible infrastructure. Volatile health and free capacity are observations,
+not PostgreSQL model metadata.
 
 ## Application service details
 
@@ -211,19 +218,27 @@ The Rust service exposes the launch inference contract:
 
 For each request it authenticates the API-key digest, resolves the exact model
 record, checks organization/workspace status, applies the operational
-positive-balance rule and an atomic balance-derived concurrency ceiling, and
-rejects parameters not advertised by the exact model before contacting
-SGLang. It renders and tokenizes the qualified request locally on CPU using the
-exact tokenizer revision declared by the Git-owned deployment manifest, then
+prepaid balance/concurrency rule when applicable, and rejects parameters not
+advertised by the exact model before contacting SGLang. Invoiced organizations
+are not gated or concurrency-limited by their accounting balance. It renders
+and tokenizes the qualified request locally on CPU using the
+exact tokenizer revision declared by the selected Valkey deployment record, then
 enforces the model's context bound before admission. The gateway keeps only a
 small typed request envelope; the model's Valkey-projected
 `passthrough_parameters` map qualifies the remaining JSON fields without a
 gateway-wide model schema. Each concurrency slot represents
-a configured amount used only to make concurrency fall proportionally with
-the remaining balance. It is not a reservation or worst-case request-cost
-limit. The gateway forwards only qualified fields to the model runtime,
+a configured amount used only to make prepaid concurrency fall proportionally
+with the remaining balance. It is not a reservation or worst-case request-cost
+limit. Prepaid organizations additionally have a default maximum of 50
+concurrent generations. Invoiced organizations bypass the balance and
+organization-concurrency checks at launch. The gateway forwards only qualified
+fields to the model runtime,
 preserving cancellation, backpressure and streaming semantics.
-Every exact model maps to one SGLang deployment. SGLang owns runtime admission;
+An exact model may have multiple available SGLang deployments. The projected
+deployment array is ordered, and the gateway dispatches to its first available
+entry. The current projector uses a stable creation order; a future availability
+service can publish capacity-aware ordering without adding scheduling logic to
+the request path. SGLang remains authoritative for instantaneous runtime admission;
 the gateway normalizes downstream overload to `429` and does not queue, retry,
 or select another deployment.
 
@@ -251,9 +266,9 @@ checks. It uses explicit B300 placement, large shared memory, persistent local
 model/compile caches, conservative restart behavior and measured capacity
 limits, including bounded `max_running_requests` and `max_queued_requests`.
 It does not implement customer authentication or billing. A second model is a
-second explicit catalog row, manifest and SGLang deployment; it is not a reason
-to introduce a routing layer. This one-deployment-per-exact-model rule applies
-to every hosted model, not only Kimi K3.
+second explicit catalog row, `model_deployments` row and SGLang deployment; it
+is not a reason to introduce a separate routing layer. Additional deployments
+are ordered candidates for the exact model.
 
 ## External services and infrastructure
 
@@ -314,9 +329,11 @@ client/OpenRouter
 
 PostgreSQL and ClickHouse are not contacted by any inference request. Admission
 uses an expiring per-organization in-flight lease and current operational
-Valkey balance. Actual charge is applied only at terminal finalization, allowing
-final in-flight generations to move the balance below zero. Subsequent
-admission remains blocked until the balance becomes positive again.
+Valkey account state. Actual charge is applied only at terminal finalization.
+Final in-flight prepaid generations may move their balance below zero, which
+blocks subsequent prepaid admission. An invoiced balance records the net
+accounting position and does not block admission; organization suspension is
+the explicit serving stop.
 
 ### Settlement path
 
@@ -352,7 +369,7 @@ reproducing production packaging. Docker Compose runs PostgreSQL, Valkey and
 ClickHouse only. `mprocs` runs Vite, `api`, `worker`, `gateway` and SGLang as
 native host processes. On the supported Apple Silicon profile, SGLang uses its
 Metal/MLX backend and a pinned small local model; the local model has its own
-truthful exact catalog ID and deployment manifest rather than masquerading as
+truthful exact PostgreSQL model and deployment rows rather than masquerading as
 Kimi K3. The gateway reaches SGLang over its normal HTTP interface on
 localhost, so Chat Completions, streaming, usage and cancellation cross the
 same runtime boundary as production. Gateway-local tokenizer parity is checked
@@ -375,13 +392,13 @@ protocol integration, not production model equivalence.
   or isolation requirements.
 - Keep exact model dispatch finite and explicit. Do not add routing or provider
   abstractions for hypothetical capacity.
-- Let each model's single SGLang deployment own runtime admission. Normalize
-  overload to `429`; do not queue, retry, or fall back in the gateway.
+- Let the selected SGLang deployment own runtime admission. Normalize overload
+  to `429`; do not queue, retry, or fall back in the gateway.
 - Keep PostgreSQL, Valkey and ClickHouse as separate authorities with no hidden
   cross-store source of truth.
 - Do not add Kafka, CDC, an outbox, a service mesh, Temporal, KEDA, Karpenter,
   RDS Proxy or a custom operator at launch.
-- Add a second model through a catalog row, Git manifest, SGLang deployment,
+- Add a second model through model and deployment rows, an SGLang deployment,
   capacity measurement and conformance fixtures.
 - Introduce a routing/platform layer only after at least two real hosted models
   create a measured shared-routing requirement that cannot be represented by

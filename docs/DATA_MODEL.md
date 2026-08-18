@@ -20,14 +20,17 @@ research, alias and third-party-provider concepts.
 - OpenRouter is an internal `distribution_channel` organization with its own
   workspace and API key. It does not need separate channel credential, catalog,
   balance or usage tables.
-- PostgreSQL owns the global hosted-model catalog, pricing and availability.
-  Git owns only environment-specific deployment configuration.
+- PostgreSQL owns the global hosted-model catalog, pricing, availability and
+  durable model-deployment registry. Git owns the infrastructure declarations
+  that create the corresponding SGLang workloads, not a second routing record.
 - The launch has universal zero prompt/response retention and no trace tables.
   Configurable retention requires a later explicit product decision.
 - Organization membership is the human authorization boundary. Workspaces are
   policy and cost-attribution boundaries available to all active members.
-- Prepaid and invoiced organizations share one balance, admission and settlement
-  design. All internal monetary values use integer nano-USD.
+- Prepaid and invoiced organizations share the same account, lease,
+  finalization, and settlement records. Billing mode changes admission:
+  prepaid balance limits serving, while invoiced balance is accounting-only at
+  launch. All internal monetary values use integer nano-USD.
 
 ## Global conventions
 
@@ -210,7 +213,7 @@ Global hosted-model catalog. It is not organization-scoped. The primary key is t
 | `created_at` | timestamptz | no   | Creation time                                |
 | `updated_at` | timestamptz | no   | Last mutation time                           |
 
-`ModelProperties` follows the structure of the OpenRouter provider model document where practical, while retaining public source metadata and exact integer money. Exact deployed model and tokenizer artifacts are Git-owned and are not mutable PostgreSQL properties:
+`ModelProperties` follows the structure of the OpenRouter provider model document where practical, while retaining public source metadata and exact integer money. Exact deployed model and tokenizer artifacts belong to `model_deployments`, not to this customer-facing document:
 
 | Property                 | Type               | Rules                                                        |
 | ------------------------ | ------------------ | ------------------------------------------------------------ |
@@ -244,11 +247,11 @@ One record per organization.
 | `organization_id`    | uuid        | no   | PK and FK `organizations.id` |
 | `mode`               | text        | no   | `prepaid`, `invoiced`        |
 | `stripe_customer_id` | text        | yes  | Unique when present          |
-| `balance`            | bigint      | no   | Remaining spendable amount   |
+| `balance`            | bigint      | no   | Signed account position      |
 | `created_at`         | timestamptz | no   | Creation time                |
 | `updated_at`         | timestamptz | no   | Last mutation time           |
 
-PostgreSQL owns the durable posted balance, while Valkey owns the synchronous balance including terminal usage not yet posted to PostgreSQL. Inference never reads this row. For a prepaid organization, `balance` is its remaining prepaid funds and Stripe top-ups replenish it. For an invoiced organization such as OpenRouter, `balance` is its remaining approved credit exposure and payments or operator credits replenish it. Every organization uses the same admission and settlement path: a nonpositive balance blocks new admission, while final in-flight generations may move the balance slightly below zero. A chargeback or adjustment may also make the durable balance negative, and the corresponding Valkey update blocks new admission.
+PostgreSQL owns the durable posted balance, while Valkey owns the synchronous balance including terminal usage not yet posted to PostgreSQL. Inference never reads this row. For a prepaid organization, `balance` is its remaining prepaid funds and Stripe top-ups replenish it; a nonpositive value blocks new admission. For an invoiced organization such as OpenRouter, `balance` is its net accounting position: it starts at zero, usage makes it negative, and payments or operator credits move it back toward zero. Invoiced admission ignores this value at launch. Prepaid final in-flight generations may move the balance slightly below zero, and chargebacks or adjustments may also make it negative. An invoiced organization is stopped explicitly with `organizations.status = 'suspended'`, not implicitly through its balance.
 
 ### 12. `balance_transactions`
 
@@ -311,9 +314,22 @@ Stripe owns pending, failed and abandoned Checkout Sessions. The application cre
 
 ## PostgreSQL-to-Valkey synchronization
 
-There is no projection queue or outbox table. These projections are low-volume, level-triggered copies of current PostgreSQL state. After an ordinary control-plane mutation commits, the TypeScript application reloads the latest authoritative row from the PostgreSQL primary, writes its stable Valkey key and reports success only after Valkey acknowledges. If projection fails, the operation returns `503`; retrying projects the already-committed current state.
+There is no projection queue or outbox table. Most serving projections are low-volume, level-triggered copies of current PostgreSQL state. After an ordinary control-plane mutation commits, the TypeScript application reloads the latest authoritative row from the PostgreSQL primary, updates its stable Valkey key and reports success only after Valkey acknowledges. If projection fails, the operation returns `503`; retrying projects the already-committed current state.
 
-Restrictive changes fail closed. API-key revocation, organization suspension, model unavailability or price changes, and negative balance adjustments first block the affected Valkey scope, then commit PostgreSQL, then publish the final state and reopen only when appropriate. A failure leaves that scope blocked. Permissive changes such as key creation, model creation and positive top-ups commit PostgreSQL first, so a projection failure withholds access or credit rather than granting too much.
+Projection behavior is explicit by state:
+
+| Valkey state | Ordinary synchronization rule |
+| ------------ | ----------------------------- |
+| `GatewayCredential` | Replace from the current PostgreSQL API-key row. |
+| `GatewayWorkspace` | Replace from the current PostgreSQL workspace row. |
+| `GatewayModel` | Replace from the current PostgreSQL model row and all of its deployment rows. |
+| `GatewayAccount.organization_id`, `organization_kind`, `organization_status`, `billing_mode` | Replace the selected nonmonetary hash fields from current PostgreSQL state. |
+| `GatewayAccount.balance` | Never overwrite from the current PostgreSQL row during ordinary operation; apply eligible PostgreSQL `balance_transactions` exactly once as deltas. |
+
+This distinction prevents an account metadata update or periodic reconciliation
+from erasing finalized Valkey usage that has not yet reached PostgreSQL.
+
+Restrictive changes fail closed. API-key revocation, organization suspension, model unavailability or price changes, and prepaid negative balance adjustments first block the affected Valkey scope, then commit PostgreSQL, then publish the final state and reopen only when appropriate. A failure leaves that scope blocked. Permissive changes such as key creation, model creation and prepaid positive top-ups commit PostgreSQL first, so a projection failure withholds access or credit rather than granting too much. Invoiced balance movements remain accounting changes and do not change serving admission.
 
 The reconciliation loop inside the TypeScript `worker` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal generation events, wait for or expire in-flight leases, rewrite projections in place and then reopen.
 
@@ -321,47 +337,47 @@ PostgreSQL-originated money changes are reconciled from immutable `balance_trans
 
 The reconciler exports its last-success time, failures and mismatches as metrics. Missing or unavailable required projection state rejects every request. Do not add CDC, Debezium, Kafka, a projection queue or a standalone projector at launch.
 
-# Git-owned deployment configuration
+## 13. `model_deployments`
 
-Environment-specific infrastructure and runtime configuration is Zod-authored and committed to Git. Customer-facing model metadata, prices and availability live in PostgreSQL.
+Durable registry of concrete SGLang deployments for hosted models. One model
+may have multiple rows so releases can overlap during draining and a future
+availability service can manage capacity without changing the model catalog.
+The gateway accepts multiple `available` rows and selects the first available
+child in projection order. The current order is deterministic; a future
+availability service may make that order capacity-aware.
 
-## 13. `ModelDeploymentManifest`
+| Field         | Type        | Null | Rules                                                        |
+| ------------- | ----------- | ---- | ------------------------------------------------------------ |
+| `id`          | uuid        | no   | Primary key; stable deployment identity                      |
+| `model_id`    | text        | no   | FK `models.id`                                               |
+| `status`      | text        | no   | `available`, `unavailable`, `draining`                       |
+| `service_url` | text        | no   | Bounded private or restricted absolute HTTP(S) SGLang URL    |
+| `release`     | jsonb       | no   | Closed Zod `ModelDeploymentRelease` document                 |
+| `created_at`  | timestamptz | no   | Creation time                                                |
+| `updated_at`  | timestamptz | no   | Last routing/status mutation                                 |
 
-Environment-specific serving configuration.
+`ModelDeploymentRelease` contains `schema_version`, initially `1`, plus
+`runtime_revision`, `model_path`, `model_revision`, `tokenizer_path`, and
+`tokenizer_revision`. All identifiers are required and bounded even when the
+tokenizer identity equals the model identity. `runtime_revision` is a native
+SGLang source revision locally and an immutable OCI image digest in production.
+Rust serializes this typed object canonically and hashes only it to produce the
+`served_release_digest` captured by each admitted generation.
 
-| Field                          | Type    | Rules                                    |
-| ------------------------------ | ------- | ---------------------------------------- |
-| `schema_version`               | string  | Manifest schema version                  |
-| `id`                           | string  | Deployment identity                      |
-| `model_id`                     | string  | Exact ID of the PostgreSQL `models` row  |
-| `environment`                  | string  | `local`, `staging`, `production`         |
-| `provider`                     | string  | Selected GPU provider                    |
-| `provider_region`              | string  | Provider region                          |
-| `country_code`                 | string  | ISO 3166-1 alpha-2                       |
-| `cluster_id`                   | string  | Non-secret cluster identity              |
-| `namespace`                    | string  | Kubernetes namespace                     |
-| `service_url`                  | string  | Private or restricted SGLang URL         |
-| `auth_secret_ref`              | string  | Secret reference, never secret value     |
-| `sglang_image_digest`          | string  | Immutable OCI digest                     |
-| `gpu_instance_type`            | string  | Initially `b300-8x`                      |
-| `gpu_count`                    | integer | Initially 8                              |
-| `model_path`                   | string  | Exact model repository or artifact path  |
-| `model_revision`               | string  | Immutable model commit or digest         |
-| `tokenizer_path`               | string  | Exact tokenizer repository or path       |
-| `tokenizer_revision`           | string  | Immutable tokenizer commit or digest     |
-| `tensor_parallel_size`         | integer | Initially 8                              |
-| `memory_fraction_static`       | decimal | Greater than zero and below one          |
-| `reasoning_parser`             | string  | Initially `kimi_k3`                      |
-| `tool_call_parser`             | string  | Initially `kimi_k3`                      |
-| `metrics_enabled`              | boolean | Required true in production              |
-| `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity            |
-| `completion_tokens_per_minute` | integer | Measured nonnegative capacity            |
-| `max_running_requests`         | integer | Measured positive SGLang scheduler limit |
-| `max_queued_requests`          | integer | Measured nonnegative bounded queue       |
-| `zdr`                          | boolean | Zero-retention declaration               |
-| `hipaa`                        | boolean | Initially false                          |
+There is no generic deployment metadata. A field that later affects routing,
+availability, capacity, compliance or cost becomes an explicit column or part
+of another closed versioned document. Provider, region, GPU shape and configured
+capacity are added only when the availability service consumes them. Volatile
+health, queue depth and free capacity remain operational observations rather
+than durable PostgreSQL fields.
 
-All four artifact fields are required even when the tokenizer path and revision equal the model path and revision; the deployed release never relies on inheritance or a mutable upstream default. The served release digest covers the exact model and tokenizer identities, SGLang image and canonical deployment runtime configuration. Mutable customer prices, public metadata and availability are excluded from this digest and are projected separately from PostgreSQL.
+Git continues to own the Kubernetes/SGLang workload declaration that creates a
+deployment. The deployment workflow registers the resulting route and exact
+release in PostgreSQL only after the endpoint is ready, and marks the old row
+`draining` before removal. Secret values and secret-location indirection never
+appear in this table; the gateway reads the optional upstream credential from
+the fixed `SGLANG_API_KEY` process secret. One gateway-wide hard generation
+timeout applies to every model and defaults to 300 seconds at launch.
 
 # ClickHouse models
 
@@ -464,7 +480,7 @@ The canonical terminal-generation event carries one generation identity and one 
 
 # Valkey hot-path models
 
-These models exist before any inference traffic is enabled. PostgreSQL projects OpenRouter and direct credentials, organization/workspace state, billing state and serving policy into Valkey. OpenRouter is an organization like any other and uses the identical credential, in-flight lease, admission, finalization and `GenerationSettled` path. The only distinction is billing semantics: `prepaid` balances represent deposited funds, while `invoiced` balances represent remaining approved credit exposure.
+These models exist before any inference traffic is enabled. PostgreSQL projects OpenRouter and direct credentials, organization/workspace state, billing state and serving policy into Valkey. OpenRouter is an organization like any other and uses the identical credential, in-flight lease, admission, finalization and `GenerationSettled` script path. The billing-mode branch is explicit: `prepaid` balance gates admission and scales concurrency, while `invoiced` balance records the net accounting position and does not gate serving at launch.
 
 ## 16. `GatewayAccount`
 
@@ -510,8 +526,23 @@ Valkey key: `model:<id>`.
 | `name`       | string            |
 | `status`     | model status      |
 | `properties` | `ModelProperties` |
+| `deployments` | `GatewayModelDeployment[]` |
 
-This directly mirrors the serving-relevant PostgreSQL `models` row. The catalog is small, so retaining one shared model shape is simpler than maintaining a second flattened projection. Rust combines it with the locally loaded `ModelDeploymentManifest`; the deployment manifest supplies the target, measured capacity, datacenter/compliance declarations and served release digest. The `GatewayModel` supplies customer-visible identity, capabilities, advertised capacity, prices and availability.
+This is the route-ready projection of one PostgreSQL `models` row and all of
+its `model_deployments` rows. Each `GatewayModelDeployment` contains `id`,
+`status`, `service_url`, and the closed `ModelDeploymentRelease`; `model_id` is
+not duplicated inside each child because the parent key and `GatewayModel.id`
+already fix it. The projector replaces the complete document with one `SET`
+after either the model or one of its deployments changes. `gateway-model-ids`
+is a Valkey set containing projected model IDs; it is an enumeration index for
+readiness and `/v1/models`, not another authority.
+
+An available model is ready for inference when at least one valid child
+deployment has `status = available`. The gateway selects the first such child
+in the projected array. The projector currently orders rows deterministically
+by creation time and ID; a future availability service may publish a
+capacity-aware order. A missing route fails closed as
+`serving_state_unavailable`.
 
 ## 20. `InFlightGenerationLease`
 
@@ -522,9 +553,11 @@ Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorte
 | member | `generation_id`    |
 | score  | `lease_expires_at` |
 
-Admission atomically verifies a positive remaining balance and counts unexpired members before adding the new generation with `ZADD NX`. It derives the organization's current limit as `min(normal_concurrency_ceiling, ceil(balance / balance_per_concurrency_slot))`, so any positive balance funds one request and concurrency falls proportionally as balance is consumed. Both inputs are operational deployment configuration, not customer-facing product controls. `balance_per_concurrency_slot` only converts current balance into a concurrency count; it is not a reservation, request-cost estimate or hard downside bound. Admission does not compare a request's theoretical maximum charge with the current balance or per-slot amount because that would reject ordinary requests whose requested output ceiling is rarely reached. No money is reserved and the lease remains only a generation ID plus expiry. Concurrent generations can move the balance below zero before their terminal charges become visible. Model context/output limits and the normal concurrency ceiling limit this operational risk, and subsequent requests are blocked until a top-up, payment or operator credit makes the balance positive.
+Admission always verifies active organization state, protects settlement backlog, cleans old leases, and adds the new generation with `ZADD NX`. For `prepaid`, it additionally requires a positive remaining balance, counts unexpired members, derives `balance_funded_limit = ceil(balance / balance_per_concurrency_slot)`, and selects `min(prepaid_organization_concurrency_cap, balance_funded_limit)`; the launch-wide prepaid cap defaults to 50. For `invoiced`, it ignores balance and skips the organization concurrency check. SGLang's bounded runtime capacity remains the ultimate ceiling and may reject excess admitted demand with `429`.
 
-Rust extends a live generation with `ZADD XX`. Expired members do not count toward concurrency and remain for a short grace period before cleanup so a delayed finalization can still succeed. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `GatewayAccount.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
+The prepaid inputs are operational deployment configuration, not customer-facing product controls. `balance_per_concurrency_slot` only converts prepaid balance into a concurrency count; it is not a reservation, request-cost estimate or hard downside bound. Admission does not compare a prepaid request's theoretical maximum charge with the current balance or per-slot amount because that would reject ordinary requests whose requested output ceiling is rarely reached. No money is reserved and the lease remains only a generation ID plus expiry. Concurrent prepaid generations can move the balance below zero before their terminal charges become visible, and subsequent prepaid requests are blocked until a top-up or operator credit makes the balance positive. Invoiced usage drives its accounting balance negative without affecting admission; suspension is the explicit stop.
+
+At admission, Rust fixes `lease_expires_at` to the gateway's hard total-generation deadline plus a short finalization margin. It does not renew or extend the lease. Normal success, failure or cancellation finalizes and removes it immediately. If the process disappears, the orphaned lease consumes concurrency until that fixed expiry; expired members then stop counting and remain for a short grace period before cleanup so delayed finalization can still succeed. This accepts slower slot recovery after a process crash in exchange for eliminating a heartbeat and renewal-failure path. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `GatewayAccount.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
 
 The script executes without interleaving, which supplies the required conditional atomicity; `MULTI`/`EXEC` alone cannot branch on whether lease removal succeeded. Valkey scripts are not rollback transactions, so the script validates arguments and key types before its fixed writes and the application exclusively owns those key shapes. Valkey Cluster hashes only the text inside braces, so the shared `{settlement-0}` tag places `account:{settlement-0}:<organization_id>`, `inflight:{settlement-0}:<organization_id>` and `generation-settled:{settlement-0}` in the same cluster hash slot. Credential, workspace and model keys are read outside this script and do not need that tag.
 
@@ -580,4 +613,4 @@ The following existed in older plans and are not part of the data model:
 - `allocation_members`
 - `cells`
 - all research program, campaign and experiment tables
-- a PostgreSQL deployment or fleet registry
+- a generic fleet registry beyond the explicit `model_deployments` rows

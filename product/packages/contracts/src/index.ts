@@ -41,6 +41,25 @@ export {
   type CreateTopUpCheckout,
 } from "./billing.js";
 export {
+  GatewayAccountSchema,
+  GatewayCredentialSchema,
+  GatewayModelSchema,
+  GatewayModelDeploymentSchema,
+  GatewayWorkspaceSchema,
+  GenerationPriceComponentSchema,
+  GenerationPropertiesSchema,
+  GenerationSettledSchema,
+  ModelDeploymentReleaseSchema,
+  type GatewayAccount,
+  type GatewayCredential,
+  type GatewayModel,
+  type GatewayModelDeployment,
+  type GatewayWorkspace,
+  type GenerationProperties,
+  type GenerationSettled,
+  type ModelDeploymentRelease,
+} from "./gateway.js";
+export {
   ApiKeyListSchema,
   ApiKeyPathSchema,
   ApiKeySchema,

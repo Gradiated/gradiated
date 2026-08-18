@@ -1,4 +1,7 @@
 .turbo
+**/.turbo
 **/dist
 node_modules
+**/node_modules
+**/target
 services/api/generated

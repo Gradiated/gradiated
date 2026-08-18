@@ -1,0 +1,14 @@
+{
+  "id": "0198c36f-9b6a-7000-8000-000000000004",
+  "status": "available",
+  "service_url": "http://127.0.0.1:30000",
+  "release": {
+    "schema_version": 1,
+    "runtime_revision": "sglang-local-test-revision",
+    "model_path": "mlx-community/Qwen3-0.6B-4bit",
+    "model_revision": "73e3e38d981303bc594367cd910ea6eb48349da8",
+    "tokenizer_path": "mlx-community/Qwen3-0.6B-4bit",
+    "tokenizer_revision": "73e3e38d981303bc594367cd910ea6eb48349da8"
+  },
+  "unexpected_private_option": true
+}

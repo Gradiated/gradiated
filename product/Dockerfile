@@ -15,7 +15,7 @@ COPY packages ./packages
 COPY services ./services
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm build
+RUN pnpm turbo run build --filter=@gradiated/api...
 
 USER node
 

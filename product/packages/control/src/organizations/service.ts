@@ -122,7 +122,7 @@ export function createOrganizationService(
       });
 
       try {
-        await projector.projectAccount({
+        await projector.initializeAccount({
           organizationId,
           organizationKind: "customer",
           organizationStatus: "active",

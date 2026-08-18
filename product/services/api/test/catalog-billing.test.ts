@@ -67,6 +67,10 @@ const catalogBillingService = (): CatalogBillingService => ({
   upsertModel: async () => {
     throw new Error("not used");
   },
+  upsertModelDeployment: async () => {
+    throw new Error("not used");
+  },
+  initializeCurrentAccount: async () => undefined,
   projectCurrentAccount: async () => undefined,
   applyBalanceTransaction: async () => {
     throw new Error("not used");

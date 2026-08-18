@@ -2,7 +2,9 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
 import {
+  GatewayModelDeploymentSchema,
   ModelPropertiesSchema,
+  type ModelDeploymentRelease,
   type ModelPropertiesInput,
 } from "@gradiated/contracts";
 
@@ -10,6 +12,7 @@ import type { ControlDatabase } from "../db/client.js";
 import {
   balanceTransactions,
   billingAccounts,
+  modelDeployments,
   models,
   organizationMembers,
   organizations,
@@ -25,6 +28,16 @@ export interface ModelRecord {
   name: string;
   status: "available" | "unavailable" | "retired";
   properties: ModelPropertiesRecord;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ModelDeploymentRecord {
+  id: string;
+  modelId: string;
+  status: "available" | "unavailable" | "draining";
+  serviceUrl: string;
+  release: ModelDeploymentRelease;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -82,6 +95,14 @@ export interface CatalogBillingService {
     status: ModelRecord["status"];
     properties: ModelPropertiesInput;
   }): Promise<ModelRecord>;
+  upsertModelDeployment(input: {
+    id: string;
+    modelId: string;
+    status: ModelDeploymentRecord["status"];
+    serviceUrl: string;
+    release: ModelDeploymentRelease;
+  }): Promise<ModelDeploymentRecord>;
+  initializeCurrentAccount(organizationId: string): Promise<void>;
   projectCurrentAccount(organizationId: string): Promise<void>;
   applyBalanceTransaction(input: {
     organizationId: string;
@@ -99,6 +120,37 @@ export const createCatalogBillingService = (
   database: ControlDatabase,
   projector: ServingProjector,
 ): CatalogBillingService => {
+  const deploymentRecord = (
+    row: typeof modelDeployments.$inferSelect,
+  ): ModelDeploymentRecord => ({
+    ...row,
+    status: row.status as ModelDeploymentRecord["status"],
+  });
+
+  const projectModel = async (model: ModelRecord): Promise<void> => {
+    const deployments = await database
+      .select()
+      .from(modelDeployments)
+      .where(eq(modelDeployments.modelId, model.id))
+      .orderBy(modelDeployments.createdAt, modelDeployments.id);
+    await projector.projectModel({
+      ...model,
+      deployments: deployments.map(deploymentRecord),
+    });
+  };
+
+  const loadModel = async (modelId: string): Promise<ModelRecord> => {
+    const [model] = await database
+      .select()
+      .from(models)
+      .where(eq(models.id, modelId))
+      .limit(1);
+    if (!model) {
+      throw new ControlServiceError("not_found", "The model was not found.");
+    }
+    return { ...model, status: model.status as ModelRecord["status"] };
+  };
+
   const requireBillingAccess = async (
     userId: string,
     organizationId: string,
@@ -243,8 +295,50 @@ export const createCatalogBillingService = (
         ...model,
         status: model.status as ModelRecord["status"],
       };
-      await projector.projectModel(record);
+      await projectModel(record);
       return record;
+    },
+
+    async upsertModelDeployment(input) {
+      const validated = GatewayModelDeploymentSchema.parse({
+        id: input.id,
+        status: input.status,
+        service_url: input.serviceUrl,
+        release: input.release,
+      });
+      const now = new Date();
+      const [deployment] = await database
+        .insert(modelDeployments)
+        .values({
+          id: validated.id,
+          modelId: input.modelId,
+          status: validated.status,
+          serviceUrl: validated.service_url,
+          release: validated.release,
+          createdAt: now,
+          updatedAt: now,
+        })
+        .onConflictDoUpdate({
+          target: modelDeployments.id,
+          set: {
+            status: validated.status,
+            serviceUrl: validated.service_url,
+            release: validated.release,
+            updatedAt: now,
+          },
+        })
+        .returning();
+      if (!deployment)
+        throw new Error("The model deployment upsert returned no row.");
+      const record = deploymentRecord(deployment);
+      await projectModel(await loadModel(record.modelId));
+      return record;
+    },
+
+    async initializeCurrentAccount(organizationId) {
+      await projector.initializeAccount(
+        await loadGatewayAccount(organizationId),
+      );
     },
 
     async projectCurrentAccount(organizationId) {

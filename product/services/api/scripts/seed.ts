@@ -108,37 +108,52 @@ try {
     createValkeyServingProjector(valkey),
   );
   await catalogBilling.upsertModel({
-    id: "moonshotai/kimi-k3",
-    name: "Kimi K3",
+    id: "mlx-community/qwen3-0.6b-4bit",
+    name: "Qwen3 0.6B 4-bit",
     status: "available",
     properties: {
       schema_version: 1,
       description:
-        "Moonshot AI's exact Kimi K3 open-weight model, served with zero prompt and response retention.",
+        "Pinned small local-development model served with zero prompt and response retention.",
       released_at: null,
-      hugging_face_id: "moonshotai/Kimi-K3",
-      quantization: null,
-      tokenizer: "Kimi",
+      hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
+      quantization: "4-bit",
+      tokenizer: "Qwen3",
       input_modalities: [{ type: "text" }],
       output_modalities: [{ type: "text" }],
       pricing: [
-        { unit: "input_token", cost: 2_800 },
-        { unit: "output_token", cost: 14_000 },
+        { unit: "input_token", cost: 0 },
+        { unit: "output_token", cost: 0 },
       ],
       capacity: [
-        { metric: "context_tokens", value: 262_144 },
-        { metric: "max_output_tokens", value: 32_768 },
+        { metric: "context_tokens", value: 32_768 },
+        { metric: "max_output_tokens", value: 4_096 },
       ],
       passthrough_parameters: {
-        max_tokens: { type: "integer", minimum: 1, maximum: 32_768 },
+        max_tokens: { type: "integer", minimum: 1, maximum: 4_096 },
         stream: { type: "boolean" },
         temperature: { type: "number", minimum: 0, maximum: 2 },
       },
       deprecation_at: null,
+      is_free: true,
       openrouter: null,
     },
   });
-  await catalogBilling.projectCurrentAccount(organizationId);
+  await catalogBilling.upsertModelDeployment({
+    id: "0198c36f-9b6a-7000-8000-000000000004",
+    modelId: "mlx-community/qwen3-0.6b-4bit",
+    status: "available",
+    serviceUrl: "http://127.0.0.1:30000",
+    release: {
+      schema_version: 1,
+      runtime_revision: "8bb106cee94c1ccb5625cdb78ef0ee3e0cad3918",
+      model_path: "mlx-community/Qwen3-0.6B-4bit",
+      model_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
+      tokenizer_path: "mlx-community/Qwen3-0.6B-4bit",
+      tokenizer_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
+    },
+  });
+  await catalogBilling.initializeCurrentAccount(organizationId);
   await catalogBilling.applyBalanceTransaction({
     organizationId,
     type: "credit",
@@ -148,7 +163,7 @@ try {
     createdBy: currentUser.id,
   });
   console.log(
-    `Seed data ready for ${email}: ${organizationName}, Kimi K3 and $100.00 credit`,
+    `Seed data ready for ${email}: ${organizationName}, local Qwen and $100.00 credit`,
   );
 } finally {
   if (valkey.isOpen) await valkey.quit();

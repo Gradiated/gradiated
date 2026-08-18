@@ -180,18 +180,18 @@ At launch, workspaces group API keys and usage only. Every unarchived workspace 
 
 Used by direct customers and OpenRouter.
 
-| Field             | Type        | Null | Rules                                           |
-| ----------------- | ----------- | ---- | ----------------------------------------------- |
-| `id`              | uuid        | no   | Primary key                                     |
-| `organization_id` | uuid        | no   | FK `organizations.id`                           |
+| Field             | Type        | Null | Rules                                                                     |
+| ----------------- | ----------- | ---- | ------------------------------------------------------------------------- |
+| `id`              | uuid        | no   | Primary key                                                               |
+| `organization_id` | uuid        | no   | FK `organizations.id`                                                     |
 | `workspace_id`    | uuid        | no   | With `organization_id`, composite FK to `workspaces(organization_id, id)` |
-| `name`            | text        | no   | Bounded display name                            |
-| `digest`          | bytea       | no   | Unique SHA-256 digest of the canonical raw key  |
-| `expires_at`      | timestamptz | yes  | Optional expiry                                 |
-| `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                  |
-| `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels |
-| `created_at`      | timestamptz | no   | Creation time                                   |
-| `updated_at`      | timestamptz | no   | Last mutation time                              |
+| `name`            | text        | no   | Bounded display name                                                      |
+| `digest`          | bytea       | no   | Unique SHA-256 digest of the canonical raw key                            |
+| `expires_at`      | timestamptz | yes  | Optional expiry                                                           |
+| `revoked_at`      | timestamptz | yes  | Irreversible manual revocation                                            |
+| `created_by`      | uuid        | yes  | FK `users.id`; null for system-created channels                           |
+| `created_at`      | timestamptz | no   | Creation time                                                             |
+| `updated_at`      | timestamptz | no   | Last mutation time                                                        |
 
 The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication computes SHA-256 over that complete canonical string and looks up the unique digest. High-entropy keys do not need a pepper or pepper rotation. Do not store the raw key, a display prefix, last four characters or `last_used_at`; the key name and creation time identify it in the product, and last use is derived from usage. A key is valid only when `revoked_at IS NULL` and `expires_at` is either null or in the future. Rotation creates a new key and sets `revoked_at` on the old one.
 
@@ -239,14 +239,14 @@ The TypeScript API service owns model changes. After a price or status mutation 
 
 One record per organization.
 
-| Field                | Type        | Null | Rules                         |
-| -------------------- | ----------- | ---- | ----------------------------- |
-| `organization_id`    | uuid        | no   | PK and FK `organizations.id`  |
-| `mode`               | text        | no   | `prepaid`, `invoiced`         |
-| `stripe_customer_id` | text        | yes  | Unique when present           |
-| `balance`            | bigint      | no   | Remaining spendable amount    |
-| `created_at`         | timestamptz | no   | Creation time                 |
-| `updated_at`         | timestamptz | no   | Last mutation time            |
+| Field                | Type        | Null | Rules                        |
+| -------------------- | ----------- | ---- | ---------------------------- |
+| `organization_id`    | uuid        | no   | PK and FK `organizations.id` |
+| `mode`               | text        | no   | `prepaid`, `invoiced`        |
+| `stripe_customer_id` | text        | yes  | Unique when present          |
+| `balance`            | bigint      | no   | Remaining spendable amount   |
+| `created_at`         | timestamptz | no   | Creation time                |
+| `updated_at`         | timestamptz | no   | Last mutation time           |
 
 PostgreSQL owns the durable posted balance, while Valkey owns the synchronous balance including terminal usage not yet posted to PostgreSQL. Inference never reads this row. For a prepaid organization, `balance` is its remaining prepaid funds and Stripe top-ups replenish it. For an invoiced organization such as OpenRouter, `balance` is its remaining approved credit exposure and payments or operator credits replenish it. Every organization uses the same admission and settlement path: a nonpositive balance blocks new admission, while final in-flight generations may move the balance slightly below zero. A chargeback or adjustment may also make the durable balance negative, and the corresponding Valkey update blocks new admission.
 
@@ -329,37 +329,37 @@ Environment-specific infrastructure and runtime configuration is Zod-authored an
 
 Environment-specific serving configuration.
 
-| Field                          | Type    | Rules                                   |
-| ------------------------------ | ------- | --------------------------------------- |
-| `schema_version`               | string  | Manifest schema version                 |
-| `id`                           | string  | Deployment identity                     |
-| `model_id`                     | string  | Exact ID of the PostgreSQL `models` row |
-| `environment`                  | string  | `local`, `staging`, `production`        |
-| `provider`                     | string  | Selected GPU provider                   |
-| `provider_region`              | string  | Provider region                         |
-| `country_code`                 | string  | ISO 3166-1 alpha-2                      |
-| `cluster_id`                   | string  | Non-secret cluster identity             |
-| `namespace`                    | string  | Kubernetes namespace                    |
-| `service_url`                  | string  | Private or restricted SGLang URL        |
-| `auth_secret_ref`              | string  | Secret reference, never secret value    |
-| `sglang_image_digest`          | string  | Immutable OCI digest                    |
-| `gpu_instance_type`            | string  | Initially `b300-8x`                     |
-| `gpu_count`                    | integer | Initially 8                             |
-| `model_path`                   | string  | Exact model repository or artifact path |
-| `model_revision`               | string  | Immutable model commit or digest       |
-| `tokenizer_path`               | string  | Exact tokenizer repository or path     |
-| `tokenizer_revision`           | string  | Immutable tokenizer commit or digest   |
-| `tensor_parallel_size`         | integer | Initially 8                             |
-| `memory_fraction_static`       | decimal | Greater than zero and below one         |
-| `reasoning_parser`             | string  | Initially `kimi_k3`                     |
-| `tool_call_parser`             | string  | Initially `kimi_k3`                     |
-| `metrics_enabled`              | boolean | Required true in production             |
-| `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity           |
-| `completion_tokens_per_minute` | integer | Measured nonnegative capacity           |
+| Field                          | Type    | Rules                                    |
+| ------------------------------ | ------- | ---------------------------------------- |
+| `schema_version`               | string  | Manifest schema version                  |
+| `id`                           | string  | Deployment identity                      |
+| `model_id`                     | string  | Exact ID of the PostgreSQL `models` row  |
+| `environment`                  | string  | `local`, `staging`, `production`         |
+| `provider`                     | string  | Selected GPU provider                    |
+| `provider_region`              | string  | Provider region                          |
+| `country_code`                 | string  | ISO 3166-1 alpha-2                       |
+| `cluster_id`                   | string  | Non-secret cluster identity              |
+| `namespace`                    | string  | Kubernetes namespace                     |
+| `service_url`                  | string  | Private or restricted SGLang URL         |
+| `auth_secret_ref`              | string  | Secret reference, never secret value     |
+| `sglang_image_digest`          | string  | Immutable OCI digest                     |
+| `gpu_instance_type`            | string  | Initially `b300-8x`                      |
+| `gpu_count`                    | integer | Initially 8                              |
+| `model_path`                   | string  | Exact model repository or artifact path  |
+| `model_revision`               | string  | Immutable model commit or digest         |
+| `tokenizer_path`               | string  | Exact tokenizer repository or path       |
+| `tokenizer_revision`           | string  | Immutable tokenizer commit or digest     |
+| `tensor_parallel_size`         | integer | Initially 8                              |
+| `memory_fraction_static`       | decimal | Greater than zero and below one          |
+| `reasoning_parser`             | string  | Initially `kimi_k3`                      |
+| `tool_call_parser`             | string  | Initially `kimi_k3`                      |
+| `metrics_enabled`              | boolean | Required true in production              |
+| `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity            |
+| `completion_tokens_per_minute` | integer | Measured nonnegative capacity            |
 | `max_running_requests`         | integer | Measured positive SGLang scheduler limit |
 | `max_queued_requests`          | integer | Measured nonnegative bounded queue       |
-| `zdr`                          | boolean | Zero-retention declaration              |
-| `hipaa`                        | boolean | Initially false                         |
+| `zdr`                          | boolean | Zero-retention declaration               |
+| `hipaa`                        | boolean | Initially false                          |
 
 All four artifact fields are required even when the tokenizer path and revision equal the model path and revision; the deployed release never relies on inheritance or a mutable upstream default. The served release digest covers the exact model and tokenizer identities, SGLang image and canonical deployment runtime configuration. Mutable customer prices, public metadata and availability are excluded from this digest and are projected separately from PostgreSQL.
 
@@ -371,20 +371,20 @@ ClickHouse Cloud on AWS stores the durable immutable terminal-generation history
 
 One row per terminal model invocation. Direct and OpenRouter traffic share this table. `properties` is the canonical document for all generation facts other than row identity and ingestion time. Keep only `id`, `properties` and `ingested_at` as independently inserted source columns; derive the small set of query-critical dimensions as ClickHouse `MATERIALIZED` columns from JSON paths.
 
-| Field                     | ClickHouse type        | Storage      | Rules                                           |
-| ------------------------- | ---------------------- | ------------ | ----------------------------------------------- |
-| `id`                      | UUID                   | stored       | Logical unique generation ID; UUIDv7            |
-| `properties`              | JSON                   | stored       | Closed versioned `GenerationProperties`         |
-| `ingested_at`             | DateTime64(6, 'UTC')   | stored       | ClickHouse ingestion time                       |
-| `event_schema_version`    | UInt16                 | materialized | Terminal-event envelope version                 |
-| `organization_id`         | UUID                   | materialized | PostgreSQL organization identity                |
-| `workspace_id`            | UUID                   | materialized | PostgreSQL workspace identity                   |
-| `api_key_id`              | UUID                   | materialized | PostgreSQL API-key identity                     |
-| `model_id`                | LowCardinality(String) | materialized | Exact requested hosted-model ID                 |
-| `settlement_slot_id`      | String                 | materialized | Shared chronological global settlement slot     |
-| `status`                  | LowCardinality(String) | materialized | `succeeded`, `failed`, `cancelled`, `abandoned` |
-| `charge`                  | Int64                  | materialized | `properties.usage.charge`                        |
-| `completed_at`            | DateTime64(6, 'UTC')   | materialized | Terminal time and partition timestamp           |
+| Field                  | ClickHouse type        | Storage      | Rules                                           |
+| ---------------------- | ---------------------- | ------------ | ----------------------------------------------- |
+| `id`                   | UUID                   | stored       | Logical unique generation ID; UUIDv7            |
+| `properties`           | JSON                   | stored       | Closed versioned `GenerationProperties`         |
+| `ingested_at`          | DateTime64(6, 'UTC')   | stored       | ClickHouse ingestion time                       |
+| `event_schema_version` | UInt16                 | materialized | Terminal-event envelope version                 |
+| `organization_id`      | UUID                   | materialized | PostgreSQL organization identity                |
+| `workspace_id`         | UUID                   | materialized | PostgreSQL workspace identity                   |
+| `api_key_id`           | UUID                   | materialized | PostgreSQL API-key identity                     |
+| `model_id`             | LowCardinality(String) | materialized | Exact requested hosted-model ID                 |
+| `settlement_slot_id`   | String                 | materialized | Shared chronological global settlement slot     |
+| `status`               | LowCardinality(String) | materialized | `succeeded`, `failed`, `cancelled`, `abandoned` |
+| `charge`               | Int64                  | materialized | `properties.usage.charge`                       |
+| `completed_at`         | DateTime64(6, 'UTC')   | materialized | Terminal time and partition timestamp           |
 
 Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and initially ordered by `(organization_id, workspace_id, completed_at, id)`. UUIDv7 allows a point lookup to derive the likely time partition from the generation ID. Add a projection for another access pattern only after measurements justify it.
 
@@ -457,10 +457,10 @@ The stream has no TTL. Monitor pending-entry age, consumer lag and memory, alert
 
 The canonical terminal-generation event carries one generation identity and one closed properties document. Its `properties` has the `GenerationProperties` shape except for `settlement`, which cannot be known until Valkey assigns the Stream ID. The ClickHouse consumer derives and adds `settlement`, while ClickHouse supplies `ingested_at` and materializes query columns from the completed JSON document.
 
-| Field            | Type                                          |
-| ---------------- | --------------------------------------------- |
-| `generation_id`  | uuid                                          |
-| `properties`     | `GenerationProperties` without `settlement`  |
+| Field           | Type                                        |
+| --------------- | ------------------------------------------- |
+| `generation_id` | uuid                                        |
+| `properties`    | `GenerationProperties` without `settlement` |
 
 # Valkey hot-path models
 
@@ -522,7 +522,7 @@ Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorte
 | member | `generation_id`    |
 | score  | `lease_expires_at` |
 
-Admission atomically verifies a positive remaining balance and counts unexpired members before adding the new generation with `ZADD NX`. It derives the organization's current limit as `min(normal_concurrency_ceiling, ceil(balance / balance_per_concurrency_slot))`, so any positive balance funds one request and concurrency falls proportionally as balance is consumed. Both inputs are operational deployment configuration, not customer-facing product controls. Before admission, Rust conservatively proves that the maximum possible charge for the qualified request is no greater than `balance_per_concurrency_slot`; an unsafe pricing or deployment configuration fails closed. No money is reserved and the lease remains only a generation ID plus expiry. Even if every concurrent generation reaches its maximum charge before another debit is visible, the final admitted generations can therefore move the balance below zero by less than one slot's configured exposure. Subsequent requests are blocked until a top-up, payment or operator credit makes the balance positive.
+Admission atomically verifies a positive remaining balance and counts unexpired members before adding the new generation with `ZADD NX`. It derives the organization's current limit as `min(normal_concurrency_ceiling, ceil(balance / balance_per_concurrency_slot))`, so any positive balance funds one request and concurrency falls proportionally as balance is consumed. Both inputs are operational deployment configuration, not customer-facing product controls. `balance_per_concurrency_slot` only converts current balance into a concurrency count; it is not a reservation, request-cost estimate or hard downside bound. Admission does not compare a request's theoretical maximum charge with the current balance or per-slot amount because that would reject ordinary requests whose requested output ceiling is rarely reached. No money is reserved and the lease remains only a generation ID plus expiry. Concurrent generations can move the balance below zero before their terminal charges become visible. Model context/output limits and the normal concurrency ceiling limit this operational risk, and subsequent requests are blocked until a top-up, payment or operator credit makes the balance positive.
 
 Rust extends a live generation with `ZADD XX`. Expired members do not count toward concurrency and remain for a short grace period before cleanup so a delayed finalization can still succeed. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `GatewayAccount.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
 

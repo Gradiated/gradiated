@@ -102,8 +102,9 @@ pinned quantized `mlx-community/Qwen3-0.6B-4bit` release. The local PostgreSQL
 model row, Valkey `GatewayModel` and Git deployment manifest use a separate
 truthful exact ID such as `mlx-community/qwen3-0.6b-4bit`; they never label Qwen
 as Kimi K3. The gateway connects to SGLang at `http://127.0.0.1:30000`, exercising the
-real SGLang health, tokenization, Chat Completions, SSE, usage and cancellation
-boundary.
+real SGLang health, Chat Completions, SSE, usage and cancellation boundary. The
+gateway tokenizes locally from the same manifest-pinned tokenizer artifact;
+local conformance proves its token IDs and counts match this SGLang release.
 
 Required command:
 
@@ -198,12 +199,12 @@ The Rust gateway cannot execute Zod, so the TypeScript contracts package is the 
 
 Initial public surfaces:
 
-| Surface | Owner | Launch routes |
-| --- | --- | --- |
+| Surface         | Owner      | Launch routes                                                                 |
+| --------------- | ---------- | ----------------------------------------------------------------------------- |
 | product control | TypeScript | `/api/v1/session`, organizations, workspaces, keys, models, usage and billing |
-| generated docs | TypeScript | `/api/openapi.json`, `/api/docs`, `/api/llms.txt` |
-| inference | Rust | `POST /v1/chat/completions`, `GET /v1/models` |
-| operations | Rust | `/health/live`, `/health/ready`, `/metrics` |
+| generated docs  | TypeScript | `/api/openapi.json`, `/api/docs`, `/api/llms.txt`                             |
+| inference       | Rust       | `POST /v1/chat/completions`, `GET /v1/models`                                 |
+| operations      | Rust       | `/health/live`, `/health/ready`, `/metrics`                                   |
 
 `POST /v1/chat/completions` must support streaming and non-streaming responses. The final streaming event and the non-streaming response must contain input, output and total token usage. Unsupported fields fail explicitly; they are never silently dropped.
 
@@ -520,16 +521,16 @@ The UI is built against the generated contract rather than waiting for the backe
 
 Add complexity only when one of these measured conditions occurs:
 
-| Candidate | Trigger |
-| --- | --- |
-| second Kimi K3 node | uptime below target, sustained early 429s, or profitable demand above one node |
-| autoscaler | at least two homogeneous nodes and manual capacity changes miss the response SLO |
-| multi-region | measured customer latency/residency demand and a funded data-replication plan |
-| RDS Proxy | measured connection exhaustion after ordinary pooling is tuned |
-| additional protocol | signed customer/channel demand that Chat Completions cannot serve |
-| distributed cache/PD disaggregation | controlled benchmark shows enough unit-cost gain to repay complexity |
-| analytics store | PostgreSQL usage queries miss their SLO after indexes/rollups are measured |
-| generic provider abstraction | a second selected provider has a real implementation and shared code is demonstrated |
+| Candidate                           | Trigger                                                                              |
+| ----------------------------------- | ------------------------------------------------------------------------------------ |
+| second Kimi K3 node                 | uptime below target, sustained early 429s, or profitable demand above one node       |
+| autoscaler                          | at least two homogeneous nodes and manual capacity changes miss the response SLO     |
+| multi-region                        | measured customer latency/residency demand and a funded data-replication plan        |
+| RDS Proxy                           | measured connection exhaustion after ordinary pooling is tuned                       |
+| additional protocol                 | signed customer/channel demand that Chat Completions cannot serve                    |
+| distributed cache/PD disaggregation | controlled benchmark shows enough unit-cost gain to repay complexity                 |
+| analytics store                     | PostgreSQL usage queries miss their SLO after indexes/rollups are measured           |
+| generic provider abstraction        | a second selected provider has a real implementation and shared code is demonstrated |
 
 ## Current external references
 

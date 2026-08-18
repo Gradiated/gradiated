@@ -213,13 +213,16 @@ For each request it authenticates the API-key digest, resolves the exact model
 record, checks organization/workspace status, applies the operational
 positive-balance rule and an atomic balance-derived concurrency ceiling, and
 rejects parameters not advertised by the exact model before contacting
-SGLang. The gateway keeps only a small typed request envelope; the model's
-Valkey-projected `passthrough_parameters` map qualifies the remaining JSON
-fields without a gateway-wide model schema. Each concurrency slot represents
-a configured balance exposure that upper-bounds one request's maximum charge,
-so concurrency falls proportionally with the remaining balance without
-introducing a reservation ledger. It forwards only qualified fields to the
-model runtime, preserving cancellation, backpressure and streaming semantics.
+SGLang. It renders and tokenizes the qualified request locally on CPU using the
+exact tokenizer revision declared by the Git-owned deployment manifest, then
+enforces the model's context bound before admission. The gateway keeps only a
+small typed request envelope; the model's Valkey-projected
+`passthrough_parameters` map qualifies the remaining JSON fields without a
+gateway-wide model schema. Each concurrency slot represents
+a configured amount used only to make concurrency fall proportionally with
+the remaining balance. It is not a reservation or worst-case request-cost
+limit. The gateway forwards only qualified fields to the model runtime,
+preserving cancellation, backpressure and streaming semantics.
 Every exact model maps to one SGLang deployment. SGLang owns runtime admission;
 the gateway normalizes downstream overload to `429` and does not queue, retry,
 or select another deployment.
@@ -254,20 +257,20 @@ to every hosted model, not only Kimi K3.
 
 ## External services and infrastructure
 
-| Dependency                    | Used by                      | Purpose                                                                | Launch boundary                                                                                        |
-| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| RDS PostgreSQL                | `api`, `worker`              | durable product and financial state                                    | private subnets, Multi-AZ, PITR and deletion protection                                                |
-| ElastiCache Serverless Valkey | `api`, `worker`, `gateway`   | serving projection, leases and generation stream                       | managed Multi-AZ; fail closed when unavailable                                                         |
-| ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention |
-| Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                               |
-| OpenRouter                    | external distribution client | calls the same exact-model endpoint using its channel organization/key | invoiced organization; onboarding/auth contract configured in api/infra                                |
-| external Kubernetes provider  | `sglang-kimi-k3`             | B300 GPU capacity                                                      | provider-owned cluster/node pool; separate from EKS                                                    |
-| ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                           |
-| Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                       |
-| Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and Gateway API path routing on `api.gradiated.com`            | AWS Load Balancer Controller owns one public ALB with IP targets; `/openai/*` to gateway; all other paths to API |
-| S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                  |
-| CloudWatch / AWS Budgets      | platform                     | AWS control-plane logs, alarms and cost limits                         | infrastructure and billing signals remain in AWS                                                       |
-| Prometheus / Grafana          | platform                     | Kubernetes and application metrics, dashboards and alert evaluation    | Argo-managed inside the EKS cluster; private access only at launch                                      |
+| Dependency                    | Used by                      | Purpose                                                                | Launch boundary                                                                                                  |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| RDS PostgreSQL                | `api`, `worker`              | durable product and financial state                                    | private subnets, Multi-AZ, PITR and deletion protection                                                          |
+| ElastiCache Serverless Valkey | `api`, `worker`, `gateway`   | serving projection, leases and generation stream                       | managed Multi-AZ; fail closed when unavailable                                                                   |
+| ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention           |
+| Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                                         |
+| OpenRouter                    | external distribution client | calls the same exact-model endpoint using its channel organization/key | invoiced organization; onboarding/auth contract configured in api/infra                                          |
+| external Kubernetes provider  | `sglang-kimi-k3`             | B300 GPU capacity                                                      | provider-owned cluster/node pool; separate from EKS                                                              |
+| ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                                     |
+| Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                                 |
+| Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and Gateway API path routing on `api.gradiated.com`           | AWS Load Balancer Controller owns one public ALB with IP targets; `/openai/*` to gateway; all other paths to API |
+| S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                            |
+| CloudWatch / AWS Budgets      | platform                     | AWS control-plane logs, alarms and cost limits                         | infrastructure and billing signals remain in AWS                                                                 |
+| Prometheus / Grafana          | platform                     | Kubernetes and application metrics, dashboards and alert evaluation    | Argo-managed inside the EKS cluster; private access only at launch                                               |
 
 Terraform owns foundational AWS resources, IAM, EKS, managed services,
 ACM, the Route 53 zone, controller prerequisites and the minimum Argo
@@ -312,7 +315,8 @@ client/OpenRouter
 PostgreSQL and ClickHouse are not contacted by any inference request. Admission
 uses an expiring per-organization in-flight lease and current operational
 Valkey balance. Actual charge is applied only at terminal finalization, allowing
-a bounded small negative balance from final in-flight generations.
+final in-flight generations to move the balance below zero. Subsequent
+admission remains blocked until the balance becomes positive again.
 
 ### Settlement path
 
@@ -350,8 +354,10 @@ native host processes. On the supported Apple Silicon profile, SGLang uses its
 Metal/MLX backend and a pinned small local model; the local model has its own
 truthful exact catalog ID and deployment manifest rather than masquerading as
 Kimi K3. The gateway reaches SGLang over its normal HTTP interface on
-localhost, so tokenization, streaming, usage and cancellation cross the same
-runtime boundary as production.
+localhost, so Chat Completions, streaming, usage and cancellation cross the
+same runtime boundary as production. Gateway-local tokenizer parity is checked
+against that pinned SGLang release; pre-admission tokenization itself does not
+make an SGLang request.
 
 Deterministic runtime failures that a real model server cannot safely induce
 use the gateway's in-process `ModelRuntime` test double. There is no deployed

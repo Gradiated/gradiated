@@ -95,16 +95,17 @@ development connects that binary to a native SGLang process; it does not add a
 second fake-runtime binary. The process uses a small set of concrete
 components:
 
-| Component               | Kind                        | Responsibility                                                                                                                    |
-| ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `GatewayState`          | concrete struct             | Composition root holding immutable configuration, deployment catalog, Valkey adapter, runtime clients, and telemetry.             |
-| `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                                      |
-| `ValkeyServingState`    | concrete adapter            | Reads gateway records and executes admission, renewal, and finalization Lua scripts.                                              |
-| `DeploymentCatalog`     | immutable struct            | Loads and validates Git-owned manifests, resolves exact model IDs, constructs SGLang clients, and exposes served-release digests. |
-| `SglangClient`          | concrete adapter            | Calls health, tokenization, and Chat Completions on one configured SGLang deployment.                                             |
-| `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                                       |
-| `Telemetry`             | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                                     |
-| contract/domain modules | data and pure functions     | Strict wire types, validation, usage normalization, pricing, manifest hashing, and error mapping.                                 |
+| Component               | Kind                        | Responsibility                                                                                                                                         |
+| ----------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GatewayState`          | concrete struct             | Composition root holding immutable configuration, deployment catalog, Valkey adapter, runtime clients, and telemetry.                                  |
+| `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                                                           |
+| `ValkeyServingState`    | concrete adapter            | Reads gateway records and executes admission, renewal, and finalization Lua scripts.                                                                   |
+| `DeploymentCatalog`     | immutable struct            | Loads and validates Git-owned manifests, resolves exact model IDs, constructs model tokenizers and SGLang clients, and exposes served-release digests. |
+| `ModelTokenizer`        | concrete struct             | Renders chat input and tokenizes it locally from one manifest-pinned tokenizer artifact.                                                               |
+| `SglangClient`          | concrete adapter            | Calls health and Chat Completions on one configured SGLang deployment.                                                                                 |
+| `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                                                            |
+| `Telemetry`             | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                                                          |
+| contract/domain modules | data and pure functions     | Strict wire types, validation, usage normalization, pricing, manifest hashing, and error mapping.                                                      |
 
 Only external boundaries receive traits:
 
@@ -285,28 +286,33 @@ conformance test has passed.
 ### 6. Exact input and context bounds
 
 The gateway must enforce token bounds using the qualified tokenizer rather than
-a character-count estimate.
+a character-count estimate. At startup, `DeploymentCatalog` loads one
+`ModelTokenizer` from each manifest's exact `tokenizer_path` and immutable
+`tokenizer_revision`. The tokenizer artifact supplies the vocabulary,
+special-token configuration, and chat template used by both the gateway and
+that deployment's SGLang OpenAI-compatible server. A chat-template override is
+not an implicit runtime default: adding one later requires an explicit,
+digest-covered manifest field and matching gateway/SGLang conformance.
 
-1. Call the exact model's SGLang tokenization endpoint using a short timeout.
-2. Require a valid authoritative `input_tokens` result.
+1. Render the qualified request with the pinned chat template and the same
+   generation-prompt semantics used by SGLang.
+2. Tokenize the rendered input locally in the gateway process on CPU and
+   require a valid `input_tokens` count.
 3. Read `context_tokens` and `max_output_tokens` from the captured model
    properties.
 4. Require the effective output-token ceiling to be at most
    `max_output_tokens`.
 5. Require `input_tokens + effective_output_tokens <= context_tokens` using
    checked arithmetic.
-6. Compute a conservative maximum possible charge for this request from the
-   captured prices, authoritative input-token count, and requested output
-   ceiling using checked integer arithmetic.
-7. Require that maximum possible charge to be no greater than the configured
-   balance exposure represented by one concurrency slot. A violation means
-   pricing or deployment configuration is unsafe and returns
-   `503 serving_state_unavailable` before admission.
-8. Return `400 context_length_exceeded` when a token bound fails.
+6. Return `400 context_length_exceeded` when a token bound fails.
 
-Tokenization happens only after authentication and model qualification. It may
-contact the selected private runtime, but no generation begins and no lease is
-created until atomic admission succeeds.
+Tokenization happens only after authentication and model qualification. It
+does not call SGLang, use a GPU, or create a lease. The gateway immediately
+discards the rendered prompt and token IDs after retaining the count, so they
+do not remain live while generation runs. Startup fails if a manifest's pinned
+tokenizer or template cannot be loaded. Release conformance compares local
+token IDs and counts with the pinned SGLang deployment for representative
+messages, tools, special tokens, and output-prefix behavior.
 
 ### 7. Atomic paid admission
 
@@ -345,12 +351,15 @@ interleaving:
 
 Admission does not reserve money or store request metadata. If admission fails,
 the gateway makes no Chat Completions request to SGLang.
-`balance_per_concurrency_slot` must upper-bound the charge of any
-single admitted request, as checked before admission. Consequently, even if
-every admitted generation reaches its maximum charge before any debit becomes
-visible, the operational balance can fall below zero by less than one slot's
-configured exposure. This is deliberately a coarse concurrency risk bound,
-not a second balance or reservation ledger.
+`balance_per_concurrency_slot` is only the scale that converts current balance
+into an allowed concurrency count. It is not a request-cost estimate,
+reservation, or hard downside bound. A request is not rejected merely because
+its theoretical maximum charge exceeds the organization's current balance or
+the per-slot amount. Because actual charges are applied only at terminal
+finalization, concurrent generations can move the operational balance below
+zero; model context/output limits and the normal concurrency ceiling limit the
+operational risk, and subsequent requests are blocked until the balance is
+positive again.
 
 Initial operational defaults are:
 
@@ -440,11 +449,10 @@ does not prove that SGLang failed to execute it, so retrying could duplicate GPU
 work and billing.
 
 The gateway waits for SGLang response headers before committing public
-streaming headers. If SGLang rejects either tokenization or generation for
-overload, the gateway normalizes the response to `429 capacity_exceeded`. A
-post-admission overload stops lease renewal and performs normal zero-charge
-terminal finalization before returning the error. It never tries another
-deployment.
+streaming headers. If SGLang rejects the request for runtime overload, the
+gateway normalizes the response to `429 capacity_exceeded`. A post-admission
+overload stops lease renewal and performs normal zero-charge terminal
+finalization before returning the error. It never tries another deployment.
 
 ### 11. Non-streaming response
 
@@ -655,7 +663,8 @@ fields:
 - SGLang image digest;
 - GPU instance type and count;
 - model path and immutable revision;
-- tokenizer path and immutable revision;
+- tokenizer path and immutable revision, including that revision's chat
+  template and special-token configuration;
 - tensor-parallel size;
 - static memory fraction;
 - reasoning and tool-call parser selections.
@@ -773,7 +782,8 @@ exact model identity is an invariant rather than a convenient alias. The local
 profile exercises real SGLang:
 
 - liveness and readiness;
-- tokenization and context-bound enforcement;
+- parity between gateway-local tokenization and the pinned SGLang release;
+- gateway-local context-bound enforcement without an SGLang tokenization call;
 - non-streaming Chat Completions and terminal usage;
 - streaming SSE, final usage, backpressure and cancellation.
 
@@ -834,7 +844,9 @@ proxy.
 - unknown, unavailable, retired, and missing-manifest rejection;
 - gateway-model/manifest ID mismatch;
 - output and context-bound rejection;
-- tokenizer error and timeout;
+- tokenizer/template load failure at startup and caller-caused local
+  tokenization failure;
+- token-ID and token-count parity with the pinned SGLang release;
 - proof that every pre-admission rejection causes zero generation calls.
 
 ### Valkey state-machine tests
@@ -842,8 +854,8 @@ proxy.
 - positive and nonpositive balance admission;
 - balance-derived concurrency boundaries, including proportional reduction as
   balance falls and the normal ceiling;
-- rejection when a request's maximum possible charge exceeds one slot's
-  configured balance exposure;
+- admission does not compare theoretical maximum request cost with balance or
+  the per-slot concurrency scale;
 - early settlement-backlog closure;
 - simultaneous admissions at the same boundary;
 - duplicate generation ID;

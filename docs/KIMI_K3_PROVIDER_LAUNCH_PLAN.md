@@ -99,9 +99,9 @@ checked-in `mprocs.yaml`, normally entered through `pnpm dev`, starts:
 
 On the supported Apple Silicon profile, native SGLang uses Metal/MLX and a
 pinned quantized `mlx-community/Qwen3-0.6B-4bit` release. The local PostgreSQL
-model row, Valkey snapshot and Git deployment manifest use a separate truthful
-exact ID such as `mlx-community/qwen3-0.6b-4bit`; they never label Qwen as Kimi
-K3. The gateway connects to SGLang at `http://127.0.0.1:30000`, exercising the
+model row, Valkey `GatewayModel` and Git deployment manifest use a separate
+truthful exact ID such as `mlx-community/qwen3-0.6b-4bit`; they never label Qwen
+as Kimi K3. The gateway connects to SGLang at `http://127.0.0.1:30000`, exercising the
 real SGLang health, tokenization, Chat Completions, SSE, usage and cancellation
 boundary.
 
@@ -143,7 +143,7 @@ The TypeScript application owns:
 - product model catalog and workspace model access;
 - billing, balance and invoice/top-up workflows;
 - usage views and account administration;
-- publishing the small serving snapshot consumed by Rust;
+- publishing the small gateway record consumed by Rust;
 - writing durable product and usage state to PostgreSQL.
 
 The browser never talks to PostgreSQL. It uses only the generated API client.
@@ -461,7 +461,7 @@ Outcome: a customer can sign up, fund an account, create a workspace key and cal
 
 - finish Better Auth and organization/workspace flows;
 - add Stripe/prepaid ledger workflows retained from the product specification;
-- provision Amazon ElastiCache Serverless for Valkey and publish key/policy/balance snapshots;
+- provision Amazon ElastiCache Serverless for Valkey and publish gateway key, policy, and balance records;
 - run synchronous projection plus periodic reconciliation and prove fail-closed, rebuild and propagation behavior;
 - enable Rust atomic balance/concurrency admission and terminal settlement for direct keys;
 - run the ClickHouse ingestion consumer and chronological PostgreSQL settlement worker, and prove crash, replay and multi-pod leadership behavior;

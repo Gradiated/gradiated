@@ -231,7 +231,7 @@ Global hosted-model catalog. It is not organization-scoped. The primary key is t
 
 Each input/output modality owns its typed constraints, supported parameters, modality-scoped pricing and advertised capacity. Capability descriptors use the OpenRouter-compatible range, integer, boolean, enum, array, object or unknown grammar. `passthrough_parameters` is the exact model's public request allowlist, not a gateway-wide Rust request schema: the gateway validates descriptor-level types and bounds, preserves qualified JSON values, and leaves deep tool, content, structured-output and cross-field semantics to the pinned SGLang/model combination. Unadvertised fields are rejected rather than silently dropped or blindly exposed from SGLang's larger private protocol. Internal prices use nonnegative integer `cost` under the global nano-USD convention. The provider response converts these values to OpenRouter's decimal-string USD-per-unit pricing fields. This is a closed domain document, not arbitrary metadata.
 
-The TypeScript API service owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current model snapshot through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
+The TypeScript API service owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current `GatewayModel` through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
 
 ## Billing
 
@@ -317,7 +317,7 @@ Restrictive changes fail closed. API-key revocation, organization suspension, mo
 
 The reconciliation loop inside the TypeScript `worker` deployment periodically reconciles PostgreSQL with Valkey and performs a complete rebuild at startup or after Valkey loss. It always reloads current rows instead of replaying mutation payloads, so a delayed operation cannot overwrite newer state. Each logical object has one stable Valkey key. Rebuilds close all admission, drain and post terminal generation events, wait for or expire in-flight leases, rewrite projections in place and then reopen.
 
-PostgreSQL-originated money changes are reconciled from immutable `balance_transactions` and applied to Valkey through a versioned Lua script. The script atomically adds the PostgreSQL transaction ID to `AppliedBalanceTransactionIds` and changes `AccountSnapshot.balance` only when the ID was newly added. A lost acknowledgement and retry therefore cannot apply the same top-up, payment, refund, chargeback or operator adjustment twice. The reconciler never overwrites an operational Valkey balance containing terminal usage not yet posted to PostgreSQL. Valkey-originated `generation_settlement_batch` postings do not echo back into Valkey and are never added to this set because Rust already applied their charges.
+PostgreSQL-originated money changes are reconciled from immutable `balance_transactions` and applied to Valkey through a versioned Lua script. The script atomically adds the PostgreSQL transaction ID to `AppliedBalanceTransactionIds` and changes `GatewayAccount.balance` only when the ID was newly added. A lost acknowledgement and retry therefore cannot apply the same top-up, payment, refund, chargeback or operator adjustment twice. The reconciler never overwrites an operational Valkey balance containing terminal usage not yet posted to PostgreSQL. Valkey-originated `generation_settlement_batch` postings do not echo back into Valkey and are never added to this set because Rust already applied their charges.
 
 The reconciler exports its last-success time, failures and mismatches as metrics. Missing or unavailable required projection state rejects every request. Do not add CDC, Debezium, Kafka, a projection queue or a standalone projector at launch.
 
@@ -356,7 +356,8 @@ Environment-specific serving configuration.
 | `metrics_enabled`              | boolean | Required true in production             |
 | `prompt_tokens_per_minute`     | integer | Measured nonnegative capacity           |
 | `completion_tokens_per_minute` | integer | Measured nonnegative capacity           |
-| `max_concurrency`              | integer | Measured positive capacity              |
+| `max_running_requests`         | integer | Measured positive SGLang scheduler limit |
+| `max_queued_requests`          | integer | Measured nonnegative bounded queue       |
 | `zdr`                          | boolean | Zero-retention declaration              |
 | `hipaa`                        | boolean | Initially false                         |
 
@@ -465,7 +466,7 @@ The canonical terminal-generation event carries one generation identity and one 
 
 These models exist before any inference traffic is enabled. PostgreSQL projects OpenRouter and direct credentials, organization/workspace state, billing state and serving policy into Valkey. OpenRouter is an organization like any other and uses the identical credential, in-flight lease, admission, finalization and `GenerationSettled` path. The only distinction is billing semantics: `prepaid` balances represent deposited funds, while `invoiced` balances represent remaining approved credit exposure.
 
-## 16. `AccountSnapshot`
+## 16. `GatewayAccount`
 
 Valkey key at seed: `account:{settlement-0}:<organization_id>`.
 
@@ -477,7 +478,7 @@ Valkey key at seed: `account:{settlement-0}:<organization_id>`.
 | `billing_mode`        | `prepaid`, `invoiced`              |
 | `balance`             | bigint                             |
 
-## 17. `WorkspaceSnapshot`
+## 17. `GatewayWorkspace`
 
 Valkey key: `workspace:<workspace_id>`.
 
@@ -487,7 +488,7 @@ Valkey key: `workspace:<workspace_id>`.
 | `workspace_id`    | uuid               |
 | `archived_at`     | timestamp nullable |
 
-## 18. `CredentialSnapshot`
+## 18. `GatewayCredential`
 
 Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and is not duplicated in the value.
 
@@ -499,7 +500,7 @@ Valkey key: `credential:<hex SHA-256 digest>`. The digest is the lookup key and 
 | `expires_at`      | timestamp nullable |
 | `revoked_at`      | timestamp nullable |
 
-## 19. `ModelSnapshot`
+## 19. `GatewayModel`
 
 Valkey key: `model:<id>`.
 
@@ -510,7 +511,7 @@ Valkey key: `model:<id>`.
 | `status`     | model status      |
 | `properties` | `ModelProperties` |
 
-This directly mirrors the serving-relevant PostgreSQL `models` row. The catalog is small, so retaining one shared model shape is simpler than maintaining a second flattened projection. Rust combines it with the locally loaded `ModelDeploymentManifest`; the deployment manifest supplies the target, measured capacity, datacenter/compliance declarations and served release digest. The model snapshot supplies customer-visible identity, capabilities, advertised capacity, prices and availability.
+This directly mirrors the serving-relevant PostgreSQL `models` row. The catalog is small, so retaining one shared model shape is simpler than maintaining a second flattened projection. Rust combines it with the locally loaded `ModelDeploymentManifest`; the deployment manifest supplies the target, measured capacity, datacenter/compliance declarations and served release digest. The `GatewayModel` supplies customer-visible identity, capabilities, advertised capacity, prices and availability.
 
 ## 20. `InFlightGenerationLease`
 
@@ -523,7 +524,7 @@ Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorte
 
 Admission atomically verifies a positive remaining balance and counts unexpired members before adding the new generation with `ZADD NX`. It derives the organization's current limit as `min(normal_concurrency_ceiling, ceil(balance / balance_per_concurrency_slot))`, so any positive balance funds one request and concurrency falls proportionally as balance is consumed. Both inputs are operational deployment configuration, not customer-facing product controls. Before admission, Rust conservatively proves that the maximum possible charge for the qualified request is no greater than `balance_per_concurrency_slot`; an unsafe pricing or deployment configuration fails closed. No money is reserved and the lease remains only a generation ID plus expiry. Even if every concurrent generation reaches its maximum charge before another debit is visible, the final admitted generations can therefore move the balance below zero by less than one slot's configured exposure. Subsequent requests are blocked until a top-up, payment or operator credit makes the balance positive.
 
-Rust extends a live generation with `ZADD XX`. Expired members do not count toward concurrency and remain for a short grace period before cleanup so a delayed finalization can still succeed. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `AccountSnapshot.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
+Rust extends a live generation with `ZADD XX`. Expired members do not count toward concurrency and remain for a short grace period before cleanup so a delayed finalization can still succeed. Terminal finalization is a versioned server-side Lua script invoked with `EVALSHA`: remove the member, subtract the actual charge from `GatewayAccount.balance`, and append exactly one `GenerationSettled` event. If the member is already absent, the script performs no financial or stream mutation. This makes the lease itself the idempotency boundary even when a successful command response is lost; no `settled:<generation_id>` key is required.
 
 The script executes without interleaving, which supplies the required conditional atomicity; `MULTI`/`EXEC` alone cannot branch on whether lease removal succeeded. Valkey scripts are not rollback transactions, so the script validates arguments and key types before its fixed writes and the application exclusively owns those key shapes. Valkey Cluster hashes only the text inside braces, so the shared `{settlement-0}` tag places `account:{settlement-0}:<organization_id>`, `inflight:{settlement-0}:<organization_id>` and `generation-settled:{settlement-0}` in the same cluster hash slot. Credential, workspace and model keys are read outside this script and do not need that tag.
 
@@ -541,7 +542,7 @@ Valkey key at seed: `applied-balance-transactions:{settlement-0}:<organization_i
 
 The set contains only PostgreSQL-originated transactions whose signed amount must change the operational Valkey balance: top-ups, payments, refunds, chargebacks, credits and adjustments. It has no TTL because transaction replay must remain idempotent indefinitely; this traffic is low-volume compared with generations. The balance-projection Lua script receives the account key, this set key, transaction ID and signed amount. It validates key types and arguments, calls `SADD`, and applies the amount only when `SADD` returns one. Both keys use the same settlement hash tag and therefore share a Valkey cluster slot.
 
-A complete Valkey rebuild closes admission and drains terminal usage until PostgreSQL and the operational balance agree. It then restores `AccountSnapshot.balance` from PostgreSQL and reconstructs this set from all PostgreSQL-originated balance transactions before reopening admission. Ordinary generation settlement transactions are excluded from reconstruction.
+A complete Valkey rebuild closes admission and drains terminal usage until PostgreSQL and the operational balance agree. It then restores `GatewayAccount.balance` from PostgreSQL and reconstructs this set from all PostgreSQL-originated balance transactions before reopening admission. Ordinary generation settlement transactions are excluded from reconstruction.
 
 # Explicitly excluded models
 

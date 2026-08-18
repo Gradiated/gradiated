@@ -140,7 +140,7 @@ export const createCatalogBillingService = (
     }
   };
 
-  const loadAccountSnapshot = async (organizationId: string) => {
+  const loadGatewayAccount = async (organizationId: string) => {
     const [account] = await database
       .select({
         organizationId: organizations.id,
@@ -248,7 +248,7 @@ export const createCatalogBillingService = (
     },
 
     async projectCurrentAccount(organizationId) {
-      await projector.projectAccount(await loadAccountSnapshot(organizationId));
+      await projector.projectAccount(await loadGatewayAccount(organizationId));
     },
 
     async applyBalanceTransaction(input) {

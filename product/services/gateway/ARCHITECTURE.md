@@ -23,7 +23,8 @@ in Valkey. It is not a general-purpose API gateway or a model-routing platform.
 - expose the current provider `GET /v1/models` document for exact configured
   models;
 - authenticate direct and OpenRouter keys through the same Valkey projection;
-- reject invalid, unsupported, unpaid, or saturated requests before generation;
+- reject invalid, unsupported, or unpaid requests before generation and
+  normalize SGLang overload responses;
 - dispatch to the one SGLang endpoint named by the exact model manifest;
 - preserve streaming backpressure and stop upstream work on cancellation;
 - calculate charges from authoritative usage and admission-time prices;
@@ -56,21 +57,21 @@ lifecycle, not independently deployed or independently orchestrated services.
 ### One owner after admission
 
 Once a generation is admitted, exactly one `GenerationTask` owns its runtime
-permit, lease renewal, upstream response, observed usage, terminal outcome, and
+request, lease renewal, upstream response, observed usage, terminal outcome, and
 finalization. This rule prevents two asynchronous code paths from racing to
 classify or settle the same generation.
 
 ### Mutable state always comes from Valkey
 
 Credentials, workspaces, accounts, model catalog state, balances, in-flight
-leases, and terminal events are read or mutated in Valkey. Mutable snapshots
-are not cached inside the gateway. Git-owned deployment manifests and clients
-constructed from them are immutable for the life of one process and may remain
-in memory.
+leases, and terminal events are read or mutated in Valkey. Mutable gateway
+records are not cached inside the gateway. Git-owned deployment manifests and
+clients constructed from them are immutable for the life of one process and
+may remain in memory.
 
 ### Exact identifiers, no routing
 
-The request model ID, `ModelSnapshot.id`, and
+The request model ID, `GatewayModel.id`, and
 `ModelDeploymentManifest.model_id` must match byte-for-byte. The manifest names
 one SGLang service URL. A mismatch or unavailable target is an error, not a
 reason to choose another target.
@@ -94,16 +95,16 @@ development connects that binary to a native SGLang process; it does not add a
 second fake-runtime binary. The process uses a small set of concrete
 components:
 
-| Component               | Kind                        | Responsibility                                                                                                                            |
-| ----------------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| `GatewayState`          | concrete struct             | Composition root holding immutable configuration, deployment catalog, Valkey adapter, runtime clients, capacity semaphore, and telemetry. |
-| `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                                              |
-| `ValkeyServingState`    | concrete adapter            | Reads serving snapshots and executes admission, renewal, and finalization Lua scripts.                                                    |
-| `DeploymentCatalog`     | immutable struct            | Loads and validates Git-owned manifests, resolves exact model IDs, constructs SGLang clients, and exposes served-release digests.         |
-| `SglangClient`          | concrete adapter            | Calls health, tokenization, and Chat Completions on one configured SGLang deployment.                                                     |
-| `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                                               |
-| `Telemetry`             | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                                             |
-| contract/domain modules | data and pure functions     | Strict wire types, validation, usage normalization, pricing, manifest hashing, and error mapping.                                         |
+| Component               | Kind                        | Responsibility                                                                                                                    |
+| ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `GatewayState`          | concrete struct             | Composition root holding immutable configuration, deployment catalog, Valkey adapter, runtime clients, and telemetry.             |
+| `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                                      |
+| `ValkeyServingState`    | concrete adapter            | Reads gateway records and executes admission, renewal, and finalization Lua scripts.                                              |
+| `DeploymentCatalog`     | immutable struct            | Loads and validates Git-owned manifests, resolves exact model IDs, constructs SGLang clients, and exposes served-release digests. |
+| `SglangClient`          | concrete adapter            | Calls health, tokenization, and Chat Completions on one configured SGLang deployment.                                             |
+| `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                                       |
+| `Telemetry`             | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                                     |
+| contract/domain modules | data and pure functions     | Strict wire types, validation, usage normalization, pricing, manifest hashing, and error mapping.                                 |
 
 Only external boundaries receive traits:
 
@@ -191,21 +192,21 @@ request is not a durable generation and does not enter the settlement stream.
 3. Compute the lowercase hexadecimal SHA-256 digest of the raw secret in
    memory.
 4. Read `credential:<digest>` from Valkey.
-5. Strictly deserialize the `CredentialSnapshot`.
-6. Reject a missing snapshot, `revoked_at` value, elapsed `expires_at` value,
+5. Strictly deserialize the `GatewayCredential`.
+6. Reject a missing record, `revoked_at` value, elapsed `expires_at` value,
    malformed timestamp, or malformed UUID.
 7. Discard the raw bearer value as soon as the digest has been calculated.
 
 The resulting caller identity contains only `api_key_id`,
 `organization_id`, and `workspace_id`. Direct customers and OpenRouter use the
-same code and snapshot shape. There is no special channel authentication path;
-two-key rotation is represented as two concurrently valid credential
-snapshots.
+same code and record shape. There is no special channel authentication path;
+two-key rotation is represented as two concurrently valid `GatewayCredential`
+records.
 
 ### 3. Workspace and account access checks
 
 1. Read `workspace:<workspace_id>` from Valkey.
-2. Strictly deserialize the `WorkspaceSnapshot`.
+2. Strictly deserialize the `GatewayWorkspace`.
 3. Require its `workspace_id` and `organization_id` to match the credential.
 4. Reject the workspace when `archived_at` is non-null or malformed.
 5. Read `account:{settlement-0}:<organization_id>`.
@@ -249,8 +250,8 @@ pinned runtime/model defaults.
 ### 5. Exact model and parameter qualification
 
 1. Read `model:<requested_model_id>` directly from Valkey.
-2. Strictly deserialize `ModelSnapshot` and its closed `ModelProperties`.
-3. Require `snapshot.id` to equal the request model exactly.
+2. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
+3. Require `model.id` to equal the request model exactly.
 4. Reject `unavailable` or `retired` models for inference.
 5. Resolve one Git manifest whose `model_id` equals the same exact ID.
 6. Reject a missing, duplicate, invalid, or mismatched manifest.
@@ -286,26 +287,22 @@ conformance test has passed.
 The gateway must enforce token bounds using the qualified tokenizer rather than
 a character-count estimate.
 
-1. Try to acquire the local runtime-capacity permit. This never waits in an
-   internal generation queue.
-2. If no permit is immediately available, return `429 capacity_exceeded`.
-3. Call the selected SGLang tokenization endpoint using a short timeout.
-4. Require a valid authoritative `input_tokens` result.
-5. Read `context_tokens` and `max_output_tokens` from the captured model
+1. Call the exact model's SGLang tokenization endpoint using a short timeout.
+2. Require a valid authoritative `input_tokens` result.
+3. Read `context_tokens` and `max_output_tokens` from the captured model
    properties.
-6. Require the effective output-token ceiling to be at most
+4. Require the effective output-token ceiling to be at most
    `max_output_tokens`.
-7. Require `input_tokens + effective_output_tokens <= context_tokens` using
+5. Require `input_tokens + effective_output_tokens <= context_tokens` using
    checked arithmetic.
-8. Compute a conservative maximum possible charge for this request from the
+6. Compute a conservative maximum possible charge for this request from the
    captured prices, authoritative input-token count, and requested output
    ceiling using checked integer arithmetic.
-9. Require that maximum possible charge to be no greater than the configured
+7. Require that maximum possible charge to be no greater than the configured
    balance exposure represented by one concurrency slot. A violation means
    pricing or deployment configuration is unsafe and returns
    `503 serving_state_unavailable` before admission.
-10. Release the capacity permit and return `400 context_length_exceeded` when a
-    token bound fails.
+8. Return `400 context_length_exceeded` when a token bound fails.
 
 Tokenization happens only after authentication and model qualification. It may
 contact the selected private runtime, but no generation begins and no lease is
@@ -347,8 +344,8 @@ interleaving:
 13. Return a distinct error if the generated ID already exists.
 
 Admission does not reserve money or store request metadata. If admission fails,
-the gateway releases its runtime permit and makes no Chat Completions request
-to SGLang. `balance_per_concurrency_slot` must upper-bound the charge of any
+the gateway makes no Chat Completions request to SGLang.
+`balance_per_concurrency_slot` must upper-bound the charge of any
 single admitted request, as checked before admission. Consequently, even if
 every admitted generation reaches its maximum charge before any debit becomes
 visible, the operational balance can fall below zero by less than one slot's
@@ -367,9 +364,8 @@ Initial operational defaults are:
 | normal organization concurrency |                           4 |
 | balance per concurrency slot    | 1,000,000,000 nano-USD ($1) |
 
-Production validates every value at startup. Settlement backlog and runtime
-capacity ceilings are required production configuration derived from measured
-capacity rather than silently defaulted.
+Production validates every value at startup. The settlement-backlog ceiling is
+required production configuration rather than a silent default.
 
 ### 8. Transfer to `GenerationTask`
 
@@ -390,7 +386,7 @@ content, serialized upstream body, or response content. Those values are not
 needed for settlement or cancellation and must not remain owned by the
 generation while SGLang is running.
 
-It then transfers ownership of the runtime permit and lease to one
+It then transfers ownership of the lease and upstream request to one
 `GenerationTask`. From this point onward, handlers, stream bodies, timeout
 tasks, and renewal tasks communicate with that owner rather than finalizing
 independently.
@@ -406,24 +402,15 @@ independently.
    classifies the cancellation as server-owned.
 6. The renewal loop stops before terminal finalization begins.
 
-The runtime-capacity permit remains held for the full admitted lifetime,
-including finalization. This prevents capacity from being handed to a new
-generation while the previous generation is still consuming upstream or
-terminal resources.
-
 ### 10. SGLang dispatch
 
 The gateway constructs a new qualified upstream request. It does not forward
 the customer's raw JSON object.
 
-The upstream body contains only:
-
-- exact model ID;
-- validated messages;
-- validated streaming flag;
-- validated temperature when supplied;
-- effective bounded `max_tokens`;
-- runtime-required usage options.
+The upstream body contains the gateway-owned envelope, every JSON field
+qualified by the exact model's `passthrough_parameters`, the effective bounded
+output-token ceiling, and runtime-required usage options. Qualified caller
+values are preserved rather than translated or reconstructed field by field.
 
 Request content has a deliberately short in-memory lifetime. The gateway may
 temporarily hold the capped raw JSON bytes, the validated request and the
@@ -451,6 +438,13 @@ timeouts. `started_at` is recorded when the generation is dispatched.
 The gateway never automatically retries an inference request. A lost response
 does not prove that SGLang failed to execute it, so retrying could duplicate GPU
 work and billing.
+
+The gateway waits for SGLang response headers before committing public
+streaming headers. If SGLang rejects either tokenization or generation for
+overload, the gateway normalizes the response to `429 capacity_exceeded`. A
+post-admission overload stops lease renewal and performs normal zero-charge
+terminal finalization before returning the error. It never tries another
+deployment.
 
 ### 11. Non-streaming response
 
@@ -518,7 +512,6 @@ response-body send fails:
    quantities remain zero and are never estimated.
 7. Calculate the corresponding charge.
 8. Execute normal atomic terminal finalization.
-9. Release the runtime permit after terminal processing.
 
 The owner does not try to write another HTTP error to a disconnected client.
 
@@ -602,7 +595,7 @@ The script:
 3. Removes the generation from the in-flight set.
 4. Returns `already_absent` without financial or stream mutation when the lease
    was not present.
-5. Decrements `AccountSnapshot.balance` by the nonnegative actual charge.
+5. Decrements `GatewayAccount.balance` by the nonnegative actual charge.
 6. Appends exactly one stream entry containing `generation_id` and
    `properties`.
 7. Returns `settled` only after both mutations have executed.
@@ -620,25 +613,23 @@ the accepted launch tradeoff documented by the parent data model.
 
 After terminal handling:
 
-1. Release the runtime-capacity permit.
-2. Record terminal metrics and a sanitized structured event.
-3. Drop request-local identity, pricing, and upstream state.
-4. For non-streaming success, return the buffered normalized response.
-5. For streaming success, finish after `[DONE]`.
-6. For a connected streaming client whose request fails mid-stream, emit one
+1. Record terminal metrics and a sanitized structured event.
+2. Drop request-local identity, pricing, and upstream state.
+3. For non-streaming success, return the buffered normalized response.
+4. For streaming success, finish after `[DONE]`.
+5. For a connected streaming client whose request fails mid-stream, emit one
    bounded OpenAI-compatible error event when the wire contract permits it,
    then terminate without `[DONE]`.
 
 ## `GET /v1/models` lifecycle
 
 The models route uses the same bearer authentication and workspace/account
-access checks as Chat Completions but does not acquire capacity or create a
-lease.
+access checks as Chat Completions but does not create a lease.
 
 1. Authenticate the caller and check workspace/account access.
 2. Enumerate exact IDs from the immutable deployment catalog; do not use
    `KEYS` or an unbounded Valkey scan.
-3. Fetch each corresponding `ModelSnapshot`.
+3. Fetch each corresponding `GatewayModel`.
 4. Exclude retired, malformed, missing-manifest, or manifest-mismatched models.
 5. Include available models with `is_ready = true`.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
@@ -677,19 +668,26 @@ Secret references resolve from environment injection or mounted secret files.
 The gateway does not call AWS Secrets Manager directly. A referenced secret's
 value never appears in a manifest, error response, trace, or metric.
 
-## Runtime capacity
+## Runtime overload and exact dispatch
 
-The launch has one exact SGLang deployment and one gateway replica. A Tokio
-semaphore represents the measured runtime concurrency and is acquired with
-`try_acquire`, so the gateway never builds a hidden generation queue.
+Every exact model maps to exactly one SGLang deployment. The gateway sends the
+qualified request directly to that deployment and has no runtime-capacity
+semaphore, internal generation queue, provider choice, retry, or fallback.
+SGLang owns its runtime admission and scheduling. Each manifest pins measured
+`max_running_requests` and bounded `max_queued_requests` settings. Once that
+runtime queue is full, the gateway normalizes SGLang's overload response to
+`429 capacity_exceeded` and returns it to the caller; it does not try another
+endpoint. Release conformance verifies the pinned SGLang version actually
+produces this behavior.
 
-If gateway replicas are increased, deployment configuration must assign each
-replica a conservative static capacity share whose sum does not exceed the
-manifest's measured capacity. Distributed runtime-capacity state is not added
-to Valkey unless measurements and a new data-model decision justify it.
+Per-organization concurrency remains separate and is always enforced by the
+Valkey admission script before generation dispatch. It limits customer
+financial exposure and fairness, not GPU capacity.
 
-Per-organization concurrency remains separate from runtime capacity and is
-always enforced by the Valkey admission script.
+A future availability service may optimize deployments across GPU providers
+and publish routing decisions or alternate capacity. That is a separate
+control-plane design requiring explicit failure, retry, idempotency, and
+settlement semantics. The launch gateway does not prebuild that abstraction.
 
 ## Error mapping
 
@@ -700,7 +698,7 @@ always enforced by the Valkey admission script.
 |       `402` | `insufficient_balance`                                                         | Operational balance is not positive.                     |
 |       `404` | `model_not_found`, `model_unavailable`                                         | Exact requested model cannot currently serve.            |
 |       `413` | `payload_too_large`                                                            | Request exceeded the transport body ceiling.             |
-|       `429` | `capacity_exceeded`, `concurrency_exceeded`, `settlement_backlog`              | Early load or safety rejection; no internal queue.       |
+|       `429` | `capacity_exceeded`, `concurrency_exceeded`, `settlement_backlog`              | SGLang overload or gateway admission rejection.          |
 |       `503` | `serving_state_unavailable`, `runtime_unavailable`, `finalization_unavailable` | Required serving dependency or invariant is unavailable. |
 
 Errors caused by caller input do not mark readiness unhealthy. Valkey
@@ -801,7 +799,7 @@ The TypeScript contracts package authors:
 - accepted and rejected cross-language fixtures.
 
 Generation produces OpenAPI/JSON Schema and fixtures. Rust uses strict
-handwritten Serde types with unknown-field denial for internal snapshots,
+handwritten Serde types with unknown-field denial for internal gateway records,
 manifests, and events. The customer request instead uses a small typed envelope
 over an owned JSON map plus the selected model's descriptor map. Fixtures prove
 the envelope and descriptor behavior across languages, while per-model
@@ -826,7 +824,7 @@ proxy.
 - missing and malformed bearer values;
 - unknown, expired, and revoked credentials;
 - archived workspace and suspended organization;
-- cross-workspace and cross-organization snapshot mismatch;
+- cross-workspace and cross-organization gateway-record mismatch;
 - missing, malformed, and unavailable Valkey state;
 - direct and OpenRouter organizations following the identical path.
 
@@ -834,7 +832,7 @@ proxy.
 
 - exact available model success;
 - unknown, unavailable, retired, and missing-manifest rejection;
-- snapshot/manifest ID mismatch;
+- gateway-model/manifest ID mismatch;
 - output and context-bound rejection;
 - tokenizer error and timeout;
 - proof that every pre-admission rejection causes zero generation calls.
@@ -866,7 +864,9 @@ tests with a fake `ServingState`.
 - slow-token keep-alives;
 - bounded streaming backpressure;
 - client disconnect cancelling the upstream request;
-- runtime timeout, HTTP error, malformed response, and truncated SSE;
+- SGLang overload normalized to `429 capacity_exceeded` with no alternate
+  endpoint attempt;
+- runtime timeout, other HTTP error, malformed response, and truncated SSE;
 - no automatic inference retry.
 
 ### Usage and pricing tests

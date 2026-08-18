@@ -126,7 +126,7 @@ not its raw token; delivery belongs to the application mail integration.
 `createApiKey` returns `{ "api_key": <metadata>, "secret": "grad_..." }` and
 is the only product response containing raw API-key material. Listing and
 revocation never expose a prefix, suffix or digest. Creating a key succeeds only
-after PostgreSQL commits and Valkey acknowledges the new credential snapshot.
+after PostgreSQL commits and Valkey acknowledges the new `GatewayCredential`.
 Revocation first blocks the credential in Valkey and leaves it blocked on any
 partial failure.
 

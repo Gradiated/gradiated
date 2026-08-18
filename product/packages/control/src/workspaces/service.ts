@@ -39,7 +39,7 @@ export interface CreatedApiKey {
   secret: string;
 }
 
-export interface CredentialSnapshot {
+export interface GatewayCredential {
   apiKeyId: string;
   organizationId: string;
   workspaceId: string;
@@ -48,7 +48,7 @@ export interface CredentialSnapshot {
 }
 
 export interface ServingProjector {
-  projectAccount(snapshot: {
+  projectAccount(account: {
     organizationId: string;
     organizationKind: "customer" | "distribution_channel";
     organizationStatus: "active" | "suspended";
@@ -58,7 +58,7 @@ export interface ServingProjector {
   projectWorkspace(workspace: WorkspaceRecord): Promise<void>;
   projectCredential(
     digestHex: string,
-    snapshot: CredentialSnapshot,
+    credential: GatewayCredential,
   ): Promise<void>;
   projectModel(model: {
     id: string;

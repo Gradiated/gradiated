@@ -86,10 +86,10 @@ per-generation PostgreSQL row is created.
 Valkey is the only synchronous internal state dependency for inference. It
 contains the serving projection described in [DATA_MODEL.md](DATA_MODEL.md):
 
-- organization/account snapshots, including the operational balance;
-- workspace snapshots;
-- credential snapshots indexed by API-key digest;
-- exact model snapshots;
+- `GatewayAccount` records, including the operational balance;
+- `GatewayWorkspace` records;
+- `GatewayCredential` records indexed by API-key digest;
+- exact `GatewayModel` records;
 - per-organization in-flight generation leases;
 - the dedicated `GenerationSettled` stream;
 - applied PostgreSQL balance-transaction IDs.
@@ -139,7 +139,7 @@ launch configuration.
 
 PostgreSQL owns the customer-facing global `models` catalog: public ID/name,
 properties, pricing, advertised capacity and availability. Rust combines the
-Valkey `ModelSnapshot` with its locally loaded Git deployment manifest. A
+Valkey `GatewayModel` with its locally loaded Git deployment manifest. A
 catalog status change is projected to Valkey; an unavailable or retired model
 is rejected before GPU work.
 
@@ -182,7 +182,7 @@ fixtures are generated outputs. CI regenerates and rejects drift.
 
 The API service may use Valkey synchronously for serving-sensitive mutations,
 but it does not use Valkey as its general application database. Product reads
-come from PostgreSQL; usage analytics come from ClickHouse; serving snapshots
+come from PostgreSQL; usage analytics come from ClickHouse; gateway records
 are read from Valkey only when validating or repairing serving state.
 
 ### `worker`
@@ -210,7 +210,7 @@ The Rust service exposes the launch inference contract:
 - `/health/live`, `/health/ready` and `/metrics`.
 
 For each request it authenticates the API-key digest, resolves the exact model
-snapshot, checks organization/workspace status, applies the operational
+record, checks organization/workspace status, applies the operational
 positive-balance rule and an atomic balance-derived concurrency ceiling, and
 rejects parameters not advertised by the exact model before contacting
 SGLang. The gateway keeps only a small typed request envelope; the model's
@@ -220,6 +220,9 @@ a configured balance exposure that upper-bounds one request's maximum charge,
 so concurrency falls proportionally with the remaining balance without
 introducing a reservation ledger. It forwards only qualified fields to the
 model runtime, preserving cancellation, backpressure and streaming semantics.
+Every exact model maps to one SGLang deployment. SGLang owns runtime admission;
+the gateway normalizes downstream overload to `429` and does not queue, retry,
+or select another deployment.
 
 The request captures the effective model pricing and served release digest at
 admission. On terminal success, failure, cancellation or abandonment, Rust
@@ -243,9 +246,11 @@ TLS.
 The deployment exposes readiness only after model load and qualified serving
 checks. It uses explicit B300 placement, large shared memory, persistent local
 model/compile caches, conservative restart behavior and measured capacity
-limits. It does not implement customer authentication or billing. A second
-model is a second explicit catalog row, manifest and SGLang deployment; it is
-not a reason to introduce a routing layer.
+limits, including bounded `max_running_requests` and `max_queued_requests`.
+It does not implement customer authentication or billing. A second model is a
+second explicit catalog row, manifest and SGLang deployment; it is not a reason
+to introduce a routing layer. This one-deployment-per-exact-model rule applies
+to every hosted model, not only Kimi K3.
 
 ## External services and infrastructure
 
@@ -364,6 +369,8 @@ protocol integration, not production model equivalence.
   or isolation requirements.
 - Keep exact model dispatch finite and explicit. Do not add routing or provider
   abstractions for hypothetical capacity.
+- Let each model's single SGLang deployment own runtime admission. Normalize
+  overload to `429`; do not queue, retry, or fall back in the gateway.
 - Keep PostgreSQL, Valkey and ClickHouse as separate authorities with no hidden
   cross-store source of truth.
 - Do not add Kafka, CDC, an outbox, a service mesh, Temporal, KEDA, Karpenter,

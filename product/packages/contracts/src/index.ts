@@ -25,6 +25,7 @@ export {
   ModelSchema,
   type Model,
   type ModelProperties,
+  type ModelPropertiesInput,
 } from "./models.js";
 export {
   BalanceTransactionListSchema,

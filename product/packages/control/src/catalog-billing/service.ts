@@ -1,6 +1,11 @@
 import { and, desc, eq, ne } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
+import {
+  ModelPropertiesSchema,
+  type ModelPropertiesInput,
+} from "@gradiated/contracts";
+
 import type { ControlDatabase } from "../db/client.js";
 import {
   balanceTransactions,
@@ -75,7 +80,7 @@ export interface CatalogBillingService {
     id: string;
     name: string;
     status: ModelRecord["status"];
-    properties: ModelPropertiesRecord;
+    properties: ModelPropertiesInput;
   }): Promise<ModelRecord>;
   projectCurrentAccount(organizationId: string): Promise<void>;
   applyBalanceTransaction(input: {
@@ -219,15 +224,16 @@ export const createCatalogBillingService = (
 
     async upsertModel(input) {
       const now = new Date();
+      const properties = ModelPropertiesSchema.parse(input.properties);
       const [model] = await database
         .insert(models)
-        .values({ ...input, createdAt: now, updatedAt: now })
+        .values({ ...input, properties, createdAt: now, updatedAt: now })
         .onConflictDoUpdate({
           target: models.id,
           set: {
             name: input.name,
             status: input.status,
-            properties: input.properties,
+            properties,
             updatedAt: now,
           },
         })

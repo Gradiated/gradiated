@@ -7,8 +7,6 @@ import {
   createValkeyServingProjector,
   createWorkspaceApiKeyService,
 } from "@gradiated/control";
-import { createClient } from "redis";
-
 import { createApp } from "./app.js";
 import { createAuthService } from "./auth.js";
 import {
@@ -16,10 +14,11 @@ import {
   createStripeGateway,
   unavailableBillingPaymentsService,
 } from "./billing/stripe.js";
+import { createValkeyClient } from "./valkey.js";
 
 const environment = parseEnvironment(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
-const valkey = createClient({ url: environment.VALKEY_URL });
+const valkey = createValkeyClient(environment);
 valkey.on("error", (error) => console.error("Valkey client error", error));
 await valkey.connect();
 const servingProjector = createValkeyServingProjector(valkey);

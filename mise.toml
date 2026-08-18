@@ -1,4 +1,9 @@
 [tools]
+aws = "2.36.24"
+helm = "4.2.4"
+kubectl = "1.36.3"
+node = "22.23.2"
+pnpm = "10.34.5"
 terraform = "1.14.6"
 terragrunt = "1.1.2"
 
@@ -6,7 +11,7 @@ terragrunt = "1.1.2"
 description = "Format Terraform and Terragrunt configuration"
 run = [
   "terraform fmt -recursive infra",
-  "terragrunt hcl fmt --working-dir infra/live",
+  "terragrunt hcl fmt --working-dir infra/environments/prod/us-east-1/terraform",
 ]
 
 [tasks.infra-check]
@@ -14,7 +19,7 @@ description = "Run credential-free infrastructure formatting and HCL checks"
 depends = ["infra-fmt"]
 run = [
   "terraform fmt -check -recursive infra",
-  "terragrunt hcl fmt --check --working-dir infra/live",
-  "terragrunt hcl validate --working-dir infra/live",
+  "terragrunt hcl fmt --check --working-dir infra/environments/prod/us-east-1/terraform",
+  "terragrunt hcl validate --working-dir infra/environments/prod/us-east-1/terraform",
   "git diff --check",
 ]

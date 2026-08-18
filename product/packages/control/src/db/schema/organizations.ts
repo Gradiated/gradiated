@@ -16,6 +16,8 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 
+import type { ModelProperties } from "@gradiated/contracts";
+
 import { users } from "./auth.js";
 
 const bytea = customType<{ data: Buffer }>({
@@ -191,36 +193,7 @@ export const billingAccounts = pgTable(
   ],
 );
 
-export interface ModelPropertiesRecord {
-  schema_version: number;
-  description: string;
-  released_at: string | null;
-  hugging_face_id: string | null;
-  quantization: string | null;
-  tokenizer: string | null;
-  input_modalities: Array<{ type: "text" }>;
-  output_modalities: Array<{ type: "text" }>;
-  pricing: Array<{
-    unit: "input_token" | "output_token";
-    cost: number;
-  }>;
-  capacity: Array<{
-    metric: "context_tokens" | "max_output_tokens";
-    value: number;
-  }>;
-  passthrough_parameters: Record<
-    string,
-    {
-      type: "boolean" | "integer" | "number" | "string";
-      minimum?: number;
-      maximum?: number;
-    }
-  >;
-  deprecation_at: string | null;
-  is_free: boolean;
-  discount_to_user: number;
-  openrouter: { slug: string } | null;
-}
+export type ModelPropertiesRecord = ModelProperties;
 
 export const models = pgTable(
   "models",

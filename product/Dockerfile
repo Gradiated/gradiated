@@ -2,6 +2,9 @@ FROM node:22.23.2-bookworm-slim
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
+
+ADD --chmod=0444 https://truststore.pki.rds.amazonaws.com/us-east-1/us-east-1-bundle.pem /etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 
 RUN corepack enable
 
@@ -14,4 +17,6 @@ COPY services ./services
 RUN pnpm install --frozen-lockfile
 RUN pnpm build
 
-CMD ["pnpm", "--filter", "@gradiated/api", "start"]
+USER node
+
+CMD ["node", "services/api/dist/server.js"]

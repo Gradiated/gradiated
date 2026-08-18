@@ -20,6 +20,7 @@
     "db:migrate": "node --import tsx src/db/migrate.ts"
   },
   "dependencies": {
+    "@gradiated/contracts": "workspace:*",
     "drizzle-orm": "0.45.2",
     "pg": "8.23.0",
     "uuid": "14.0.1"

@@ -23,10 +23,10 @@ browser ---> api (TypeScript/Node; also serves built Vite assets)
 
 worker (TypeScript/Node) ---> PostgreSQL / Valkey / ClickHouse
 
-direct API key or OpenRouter key
+direct API key or OpenRouter key (`api.gradiated.com/openai/*`)
   |
   v
-public ALB ---> gateway (Rust, EKS) ---> private/restricted TLS
+public ALB path rule ---> gateway (Rust, EKS) ---> private/restricted TLS
                     |                              |
                     v
                   Valkey
@@ -152,12 +152,13 @@ Tailwind and shadcn/ui. It uses only the generated TypeScript client for the
 API service. It does not share database types directly and never receives
 secret API-key material after the one-time creation response.
 
-Production hosts the console at `console.gradiated.com` and the API at
-`api.gradiated.com`. Local development runs Vite on port 3000 and proxies API
-requests to port 3001. Inference traffic uses the inference hostname and routes
-through the public ALB to Rust; the console does not proxy inference requests
-through the API service. The static host must return `index.html` for console
-routes so browser refreshes preserve client-side routing.
+Production hosts the console at `console.gradiated.com` and all public API
+traffic at `api.gradiated.com`. Local development runs Vite on port 3000 and
+proxies API requests to port 3001. On the public ALB, `/openai/*` routes to the
+Rust gateway and every other path routes to the TypeScript API service. The
+console does not proxy inference requests through the API service. The static
+host must return `index.html` for console routes so browser refreshes preserve
+client-side routing.
 
 ### `api`
 
@@ -210,8 +211,14 @@ The Rust service exposes the launch inference contract:
 
 For each request it authenticates the API-key digest, resolves the exact model
 snapshot, checks organization/workspace status, applies the operational
-concurrency and positive-balance rules, and rejects unsupported parameters
-before contacting SGLang. It forwards only the qualified request subset to the
+positive-balance rule and an atomic balance-derived concurrency ceiling, and
+rejects parameters not advertised by the exact model before contacting
+SGLang. The gateway keeps only a small typed request envelope; the model's
+Valkey-projected `passthrough_parameters` map qualifies the remaining JSON
+fields without a gateway-wide model schema. Each concurrency slot represents
+a configured balance exposure that upper-bounds one request's maximum charge,
+so concurrency falls proportionally with the remaining balance without
+introducing a reservation ledger. It forwards only qualified fields to the
 model runtime, preserving cancellation, backpressure and streaming semantics.
 
 The request captures the effective model pricing and served release digest at
@@ -252,13 +259,18 @@ not a reason to introduce a routing layer.
 | external Kubernetes provider  | `sglang-kimi-k3`             | B300 GPU capacity                                                      | provider-owned cluster/node pool; separate from EKS                                                    |
 | ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                           |
 | Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                       |
-| Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and public API/inference ingress                              | one public ALB; no second ingress proxy                                                                |
+| Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and Gateway API path routing on `api.gradiated.com`            | AWS Load Balancer Controller owns one public ALB with IP targets; `/openai/*` to gateway; all other paths to API |
 | S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                  |
 | CloudWatch / AWS Budgets      | platform                     | AWS control-plane logs, alarms and cost limits                         | infrastructure and billing signals remain in AWS                                                       |
 | Prometheus / Grafana          | platform                     | Kubernetes and application metrics, dashboards and alert evaluation    | Argo-managed inside the EKS cluster; private access only at launch                                      |
 
-Terraform owns AWS, IAM, EKS, managed services and the minimum Argo bootstrap.
-Argo CD owns Kubernetes workloads after bootstrap. The external provider's
+Terraform owns foundational AWS resources, IAM, EKS, managed services,
+ACM, the Route 53 zone, controller prerequisites and the minimum Argo
+bootstrap. Argo CD owns Kubernetes workloads, AWS Load Balancer Controller,
+ExternalDNS and Gateway API desired state after bootstrap. AWS Load Balancer
+Controller owns the ALB, listeners, target groups, security-group
+reconciliation and IP target registration; ExternalDNS owns only selected
+application records derived from Gateway status. The external provider's
 cluster and node-pool resources remain provider/Terraform-owned; Argo owns only
 the namespaced SGLang workload if remote-cluster management is supported
 cleanly.
@@ -326,14 +338,23 @@ The minimum production deployment units are:
 4. one SGLang model Deployment and private Service on the external GPU cluster;
 5. PostgreSQL, Valkey and ClickHouse managed services.
 
-Local Docker Compose mirrors these dependencies with PostgreSQL, Valkey,
-ClickHouse, fake SGLang, `api`, `worker` and `gateway`. `mprocs` runs the same
-processes plus the Vite development server for hot reload. The
-fake SGLang runtime must cover streaming, non-streaming, usage, delay,
-overload, malformed-event and mid-stream-failure fixtures.
+Local development preserves these process and network boundaries without
+reproducing production packaging. Docker Compose runs PostgreSQL, Valkey and
+ClickHouse only. `mprocs` runs Vite, `api`, `worker`, `gateway` and SGLang as
+native host processes. On the supported Apple Silicon profile, SGLang uses its
+Metal/MLX backend and a pinned small local model; the local model has its own
+truthful exact catalog ID and deployment manifest rather than masquerading as
+Kimi K3. The gateway reaches SGLang over its normal HTTP interface on
+localhost, so tokenization, streaming, usage and cancellation cross the same
+runtime boundary as production.
 
-Local development does not require Kubernetes, LocalStack, AWS credentials,
-real GPU capacity, OpenRouter credentials or Stripe credentials.
+Deterministic runtime failures that a real model server cannot safely induce
+use the gateway's in-process `ModelRuntime` test double. There is no deployed
+fake-SGLang process. Local development does not require Kubernetes, LocalStack,
+AWS credentials, NVIDIA capacity, OpenRouter credentials or Stripe
+credentials. Final release conformance still runs against the pinned CUDA
+SGLang and Kimi K3 deployment because MLX and the small local model prove the
+protocol integration, not production model equivalence.
 
 ## Implementation rules and complexity gates
 

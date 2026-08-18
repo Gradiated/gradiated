@@ -275,7 +275,9 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       deprecation_at: string | null;
+      /** @default false */
       is_free: boolean;
+      /** @default 0 */
       discount_to_user: number;
       openrouter: {
         slug: string;

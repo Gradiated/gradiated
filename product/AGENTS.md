@@ -24,7 +24,13 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
 
 ## Local contract
 
-The commands docker compose up --build and mprocs must eventually run the complete local stack without cloud credentials, a GPU or paid services. The fake SGLang runtime is part of that local stack.
+`pnpm dev`/mprocs is the canonical local path. Docker Compose runs only the
+stateful dependencies; the TypeScript services, Rust gateway and SGLang run as
+native host processes for fast feedback and access to host acceleration.
+The supported Apple Silicon inference profile runs a pinned SGLang/MLX build
+and a pinned small local model. Focused gateway tests may replace the runtime
+through the `ModelRuntime` test boundary, but there is no separately deployed
+fake-SGLang service.
 
 There are no detailed product blueprints yet. Author them in small, reviewed documents when implementation starts; do not reconstruct the deleted gateway/distribution plans.
 

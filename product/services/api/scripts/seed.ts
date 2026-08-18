@@ -135,8 +135,6 @@ try {
         temperature: { type: "number", minimum: 0, maximum: 2 },
       },
       deprecation_at: null,
-      is_free: false,
-      discount_to_user: 0,
       openrouter: null,
     },
   });

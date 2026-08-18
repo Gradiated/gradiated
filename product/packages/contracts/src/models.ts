@@ -45,8 +45,8 @@ export const ModelPropertiesSchema = z
       ModelParameterDescriptorSchema,
     ),
     deprecation_at: TimestampSchema.nullable(),
-    is_free: z.boolean(),
-    discount_to_user: z.number().min(0).lt(1),
+    is_free: z.boolean().default(false),
+    discount_to_user: z.number().min(0).lt(1).default(0),
     openrouter: z.strictObject({ slug: z.string().min(1).max(300) }).nullable(),
   })
   .openapi("ModelProperties");
@@ -71,3 +71,4 @@ export const ModelListSchema = z
 
 export type Model = z.infer<typeof ModelSchema>;
 export type ModelProperties = z.infer<typeof ModelPropertiesSchema>;
+export type ModelPropertiesInput = z.input<typeof ModelPropertiesSchema>;

@@ -86,45 +86,40 @@ and the load balancer are managed services.
 
 ## Local development contract
 
-The entire product must run locally without AWS, Kubernetes, a GPU, OpenRouter credentials or paid services.
+The canonical local path follows the repository's existing native-service
+workflow. Docker Compose runs only PostgreSQL, Valkey and ClickHouse. A
+checked-in `mprocs.yaml`, normally entered through `pnpm dev`, starts:
 
-Docker Compose is the portable full-stack path:
-
-```text
-compose.yaml
-  postgres
-  valkey                 serving projection, in-flight leases and event stream
-  clickhouse             generation analytics projection
-  fake-sglang            deterministic OpenAI-compatible model runtime
-  api                    TypeScript/Hono API serving built Vite assets
-  worker                 TypeScript background loops
-  gateway                Rust hot path
-```
-
-Required command:
-
-```sh
-docker compose up --build
-```
-
-That command migrates/seeds a disposable development database, creates synthetic users/keys/model declarations, starts every health-checked service and supports the signup/key/chat smoke test. It must not require real secrets. The fake model must support streaming, non-streaming, usage, delay, overload, malformed-event and mid-stream-failure fixtures.
-
-`mprocs` is the fast source-development path. A checked-in `mprocs.yaml` starts:
-
-- PostgreSQL, Valkey, ClickHouse and fake SGLang through Docker Compose;
-- the TypeScript API service in watch mode;
-- the TypeScript worker in watch mode;
+- PostgreSQL, Valkey and ClickHouse through Docker Compose;
+- the TypeScript API and worker in watch mode;
 - the Vite app in watch mode;
 - the Rust gateway with `cargo watch`;
+- a pinned native SGLang process through a checked-in mise/uv task;
 - contract generation/drift checks in a visible pane.
+
+On the supported Apple Silicon profile, native SGLang uses Metal/MLX and a
+pinned quantized `mlx-community/Qwen3-0.6B-4bit` release. The local PostgreSQL
+model row, Valkey snapshot and Git deployment manifest use a separate truthful
+exact ID such as `mlx-community/qwen3-0.6b-4bit`; they never label Qwen as Kimi
+K3. The gateway connects to SGLang at `http://127.0.0.1:30000`, exercising the
+real SGLang health, tokenization, Chat Completions, SSE, usage and cancellation
+boundary.
 
 Required command:
 
 ```sh
-mprocs --config mprocs.yaml
+pnpm dev
 ```
 
-Both paths use the same `.env.example`, ports, database migrations, seed data and generated contracts. Compose is the reproducible CI/onboarding path; mprocs is a transparent process supervisor, not a second configuration system. Local Kubernetes, LocalStack and a local observability platform are not required.
+The native SGLang source/package revision, model revision and tokenizer
+revision are pinned, while downloaded artifacts live in an ignored local
+cache. Startup migrates and seeds disposable development state and supports a
+signup/key/chat smoke test without cloud credentials or paid services.
+Deterministic HTTP errors, malformed payloads, truncated streams and timeouts
+are covered through the gateway's in-process `ModelRuntime` test double rather
+than a separately deployed fake server. Local Kubernetes, LocalStack and a
+local observability platform are not required. Production conformance remains
+a separate gate against the pinned CUDA SGLang and exact Kimi K3 release.
 
 ## Language and ownership boundaries
 
@@ -254,42 +249,48 @@ infra/
     github-oidc/
   modules/
     network/
+    dns/
     eks/
     postgres/
-    edge/
+    public-ingress/
     registry/
     secrets/
-  live/
-    root.hcl
-    prod/<aws-region>/
-      network/
-      eks/
-      postgres/
-      edge/
-      registry-secrets/
+  environments/
+    prod/us-east-1/
+      terraform/
+        root.hcl
+        network/
+        dns/
+        eks/
+        postgres/
+        cache/
+        public-ingress/
+        registry-secrets/
+        platform-iam/
+        argocd-bootstrap/
+      kubernetes/
+        platform/
+        workloads/
+          api/
+          worker/
+          gateway/
+          models/kimi-k3/
   charts/
     api/
     worker/
     gateway/
     sglang-model/
-  gitops/
-    platform/
-    environments/prod/
-      api/
-      worker/
-      gateway/
-      models/kimi-k3/
 ```
 
 Initial AWS resources:
 
-- one three-AZ VPC with public ingress subnets, private EKS subnets and isolated RDS subnets;
+- one three-AZ VPC with public ingress subnets, private EKS subnets and database subnets with no default route;
 - one EKS cluster;
 - one fixed managed CPU node group across three AZs; no Karpenter or EKS Auto Mode initially;
 - RDS PostgreSQL Multi-AZ with encryption, PITR and deletion protection;
 - ECR repositories for the TypeScript and Rust images;
 - Secrets Manager for database, channel and upstream credentials;
-- Route 53, ACM and one public ALB for product and inference hostnames;
+- a Terraform-owned Route 53 zone and ACM certificate, plus one AWS Load Balancer Controller-owned public ALB for `api.gradiated.com` and static hosting for `console.gradiated.com`;
 - CloudWatch logs, alarms and AWS budgets, plus Argo-managed Prometheus and Grafana inside EKS;
 - one Amazon ElastiCache Serverless cache using Valkey, provisioned before any inference traffic is enabled.
 
@@ -299,7 +300,7 @@ Do not add RDS Proxy, a service mesh, a separate ingress proxy, a data warehouse
 
 Keep Terragrunt because the repository already uses it and the AWS/provider split creates repeated state and identity wiring. Keep it shallow: one unit owns one state object and Terragrunt contains no business logic or hidden hooks.
 
-Terraform owns AWS resources, IAM, EKS and the minimum Argo CD bootstrap. Terraform installs only Argo CD and its root application. Argo CD owns Kubernetes workloads after bootstrap.
+Terraform owns foundational AWS resources, IAM, EKS, ACM, the Route 53 zone, controller prerequisites and the minimum Argo CD bootstrap. Terraform installs only Argo CD and its root application. Argo CD owns Kubernetes workloads, AWS Load Balancer Controller, ExternalDNS and Gateway API objects after bootstrap. AWS Load Balancer Controller owns the physical ALB, listeners, target groups, security-group reconciliation and IP target registration derived from those objects.
 
 GitHub Actions uses OIDC, not AWS access keys:
 
@@ -309,7 +310,7 @@ GitHub Actions uses OIDC, not AWS access keys:
 - application build: test, build one immutable image, scan/sign it and push to ECR;
 - application release: update the GitOps image digest in a reviewed commit; Argo deploys it.
 
-CI does not routinely run `kubectl apply`, and Argo does not create AWS resources.
+CI does not routinely run `kubectl apply`. Argo does not call AWS directly, but its reconciled AWS Load Balancer Controller and ExternalDNS objects deliberately create the ALB resources and selected application DNS records.
 
 ## External B300 Kubernetes plane
 
@@ -372,15 +373,18 @@ Acceptance:
 - no active implementation document instructs an agent to build a general gateway;
 - retained product requirements are linked, not deleted.
 
-### P1 — Contract-first vertical slice with fake SGLang
+### P1 — Contract-first vertical slice with native SGLang
 
-Outcome: a direct key and an OpenRouter channel key can make streamed and non-streamed fake Kimi K3 requests locally.
+Outcome: a direct key and an OpenRouter channel key can make streamed and
+non-streamed requests through the gateway to a real native SGLang process
+locally.
 
 - scaffold the TypeScript monorepo, Rust workspace and generated contracts;
-- add the full Docker Compose stack, fake SGLang and `mprocs.yaml` before feature work;
+- add the datastore Compose stack, native SGLang mise/uv task and `mprocs.yaml` before feature work;
 - define Zod/OpenAPI Chat Completions and provider `/v1/models` profiles;
 - generate the TypeScript client/docs and Rust fixtures;
-- implement Rust auth, exact model lookup, bounds, streaming, cancellation, usage and errors against a deterministic fake SGLang server;
+- implement Rust auth, exact model lookup, bounds, streaming, cancellation and usage against native SGLang;
+- cover deterministic runtime error cases through the `ModelRuntime` test boundary;
 - implement the minimal TypeScript account/key/model routes against local PostgreSQL;
 - build the first Vite/shadcn pages for sign-in, workspace, keys, models and usage.
 
@@ -391,7 +395,7 @@ Acceptance:
 - unsupported parameters produce no upstream request;
 - a revoked test key is denied and cross-workspace access properties pass;
 - browser code imports only the generated API client.
-- `docker compose up --build` and `mprocs --config mprocs.yaml` both pass the same local end-to-end smoke.
+- `pnpm dev` starts the datastore containers and native services, and the local end-to-end smoke passes against real SGLang.
 
 ### P2 — AWS foundation and GitOps
 
@@ -399,7 +403,7 @@ Outcome: EKS, RDS, ECR, Secrets Manager, DNS/TLS and Argo CD are online from Ter
 
 - implement bootstrap/state/OIDC and the five shallow production units;
 - deploy Argo CD root app;
-- deploy `api`, `worker` and `gateway` with fake SGLang;
+- deploy `api`, `worker` and `gateway`; keep public inference closed until the external Kimi K3 runtime is qualified;
 - run schema migrations as an explicit release job;
 - configure logs, alarms, budgets, backups and restore smoke tests.
 
@@ -502,10 +506,10 @@ OpenRouter is the first revenue path, so P4 precedes the full direct billing lau
 
 We will implement this together in small vertical steps:
 
-1. repository toolchain, generated contracts, Compose, mprocs and fake SGLang;
+1. repository toolchain, generated contracts, datastore Compose, mprocs and native SGLang;
 2. Vite/React/shadcn app shell and the signup/workspace/key/model/usage screens against generated mock handlers;
 3. TypeScript/Hono API and worker, PostgreSQL schema and generated OpenAPI/client/docs;
-4. Rust gateway against fake SGLang;
+4. Rust gateway against native local SGLang;
 5. AWS/Terragrunt/Argo foundation;
 6. external B300 Kimi K3 deployment and OpenRouter onboarding;
 7. direct paid admission and billing hardening.

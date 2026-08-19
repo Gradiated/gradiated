@@ -5,6 +5,29 @@ import { ModelPropertiesSchema } from "./models.js";
 
 const BoundedIdentifierSchema = z.string().min(1).max(300);
 
+export const ChatCompletionRequestSchema = z
+  .object({
+    model: z.string().min(1).max(200),
+    messages: z.array(z.unknown()).min(1),
+    stream: z.boolean().default(false),
+    max_completion_tokens: z.number().int().positive().optional(),
+    max_tokens: z.number().int().positive().optional(),
+  })
+  .catchall(z.unknown())
+  .superRefine((request, context) => {
+    if (
+      request.max_completion_tokens !== undefined &&
+      request.max_tokens !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "max_completion_tokens and max_tokens cannot both be provided",
+        path: ["max_completion_tokens"],
+      });
+    }
+  })
+  .openapi("ChatCompletionRequest");
+
 export const GatewayAccountSchema = z
   .strictObject({
     organization_id: UuidSchema,
@@ -126,6 +149,7 @@ export const GenerationSettledSchema = z
   .openapi("GenerationSettled");
 
 export type GatewayAccount = z.infer<typeof GatewayAccountSchema>;
+export type ChatCompletionRequest = z.infer<typeof ChatCompletionRequestSchema>;
 export type GatewayCredential = z.infer<typeof GatewayCredentialSchema>;
 export type GatewayModel = z.infer<typeof GatewayModelSchema>;
 export type GatewayModelDeployment = z.infer<

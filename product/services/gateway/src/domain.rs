@@ -6,6 +6,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::deployment::{DeploymentStatus, GatewayModelDeployment};
+use crate::model::GatewayModelProperties;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -31,7 +32,7 @@ pub struct GatewayModel {
     pub id: String,
     pub name: String,
     pub status: ModelStatus,
-    pub properties: serde_json::Value,
+    pub properties: GatewayModelProperties,
     pub deployments: Vec<GatewayModelDeployment>,
 }
 
@@ -159,7 +160,27 @@ mod tests {
             id: "model".to_owned(),
             name: "Model".to_owned(),
             status: ModelStatus::Available,
-            properties: serde_json::json!({}),
+            properties: serde_json::from_value(serde_json::json!({
+                "schema_version": 1,
+                "description": "Model",
+                "released_at": null,
+                "hugging_face_id": null,
+                "quantization": null,
+                "tokenizer": null,
+                "input_modalities": [{"type": "text"}],
+                "output_modalities": [{"type": "text"}],
+                "pricing": [{"unit": "input_token", "cost": 0}],
+                "capacity": [
+                    {"metric": "context_tokens", "value": 4096},
+                    {"metric": "max_output_tokens", "value": 1024}
+                ],
+                "passthrough_parameters": {},
+                "deprecation_at": null,
+                "is_free": true,
+                "discount_to_user": 0,
+                "openrouter": null
+            }))
+            .unwrap(),
             deployments,
         }
     }

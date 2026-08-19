@@ -41,6 +41,7 @@ export {
   type CreateTopUpCheckout,
 } from "./billing.js";
 export {
+  ChatCompletionRequestSchema,
   GatewayAccountSchema,
   GatewayCredentialSchema,
   GatewayModelSchema,
@@ -50,6 +51,7 @@ export {
   GenerationPropertiesSchema,
   GenerationSettledSchema,
   ModelDeploymentReleaseSchema,
+  type ChatCompletionRequest,
   type GatewayAccount,
   type GatewayCredential,
   type GatewayModel,

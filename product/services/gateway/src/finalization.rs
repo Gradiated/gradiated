@@ -10,8 +10,6 @@ pub enum FinalizationOutcome {
 
 #[derive(Debug, Error)]
 pub enum FinalizationError {
-    #[error("generation properties are invalid: {0}")]
-    InvalidProperties(#[from] crate::GenerationPropertiesError),
     #[error("generation properties organization does not match finalization")]
     OrganizationMismatch,
     #[error("generation properties could not be serialized: {0}")]

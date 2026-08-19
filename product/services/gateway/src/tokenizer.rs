@@ -297,8 +297,9 @@ mod tests {
     use super::*;
     use crate::{
         auth::AuthenticatedIdentity,
-        coordinator::{CapturedPricing, RequestMetadata},
+        coordinator::RequestMetadata,
         deployment::{DeploymentStatus, GatewayModelDeployment},
+        CapturedPricing, InputTokenPrice, OutputTokenPrice, TokenUnit,
     };
 
     fn tokenizer() -> CompiledTokenizer {
@@ -352,10 +353,23 @@ mod tests {
             max_context_tokens: 10,
             max_prompt_tokens: 8,
             effective_output_tokens: max_tokens.unwrap_or(4),
-            pricing: CapturedPricing {
-                input: Vec::new(),
-                output: Vec::new(),
-            },
+            pricing: CapturedPricing::new(
+                &[
+                    InputTokenPrice::Prompt {
+                        unit: TokenUnit::Token,
+                        cost: 0,
+                    },
+                    InputTokenPrice::CachedPrompt {
+                        unit: TokenUnit::Token,
+                        cost: 0,
+                    },
+                ],
+                &[OutputTokenPrice::Completion {
+                    unit: TokenUnit::Token,
+                    cost: 0,
+                }],
+            )
+            .unwrap(),
             request: ChatCompletionRequest {
                 model: "model".to_owned(),
                 messages: vec![serde_json::json!({"role": "user", "content": "hello"})],

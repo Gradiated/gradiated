@@ -17,15 +17,16 @@ pub mod tokenizer;
 
 pub use admission::{AdmissionError, AdmissionLease};
 pub use config::GatewayConfig;
-pub use coordinator::{CapturedPricing, QualifiedRequest, RequestCoordinator, RequestMetadata};
+pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata};
 pub use deployment::{DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease};
 pub use domain::GatewayModel;
 pub use error::GatewayError;
 pub use finalization::{FinalizationError, FinalizationOutcome};
 pub use generation::{
-    CancellationOwner, GenerationOutcome, GenerationPriceComponent, GenerationPriceUnit,
-    GenerationPricing, GenerationProperties, GenerationPropertiesError, GenerationStatus,
-    GenerationTiming, GenerationUsage, NormalizedUsage, PricedUsage, PricingError,
+    CancellationOwner, CapturedPricing, CapturedPricingError, GenerationIdentity,
+    GenerationIdentityError, GenerationProperties, GenerationStatus, GenerationTiming,
+    GenerationTimingError, NormalizedUsage, PricedUsage, PricingError, TerminalOutcome,
+    TerminalOutcomeError, UsageError,
 };
 pub use http::{router, GatewayState};
 pub use model::{

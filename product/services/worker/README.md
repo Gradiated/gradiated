@@ -9,8 +9,15 @@ PostgreSQL. One worker replica holds a PostgreSQL advisory lock. The other
 replica stays ready and takes control if the leader loses its database session.
 The settlement source ID makes each organization and slot idempotent.
 
-The PostgreSQL-to-Valkey reconciliation loop is not implemented yet. The
-worker exposes no HTTP service.
+A third loop reloads current serving projections from PostgreSQL and repairs
+them in Valkey. It replays PostgreSQL-originated balance transactions through
+an atomic Valkey script. The script applies each transaction ID only once.
+Generation settlement transactions are excluded because the gateway already
+applied those charges. Both replicas can run this loop safely.
+
+The worker exposes no HTTP service. A complete rebuild after total Valkey loss
+remains a controlled maintenance operation. Ordinary reconciliation does not
+overwrite an operational Valkey balance from the PostgreSQL balance.
 
 ## Stream contract
 

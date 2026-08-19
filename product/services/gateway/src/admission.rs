@@ -6,10 +6,10 @@ use crate::{GatewayConfig, GatewayError};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AdmissionLease {
-    pub generation_id: Uuid,
-    pub admitted_at: DateTime<Utc>,
-    pub request_deadline: DateTime<Utc>,
-    pub lease_expires_at: DateTime<Utc>,
+    generation_id: Uuid,
+    admitted_at: DateTime<Utc>,
+    request_deadline: DateTime<Utc>,
+    lease_expires_at: DateTime<Utc>,
 }
 
 impl AdmissionLease {
@@ -57,6 +57,22 @@ impl AdmissionLease {
             request_deadline,
             lease_expires_at,
         })
+    }
+
+    pub fn generation_id(&self) -> Uuid {
+        self.generation_id
+    }
+
+    pub fn admitted_at(&self) -> DateTime<Utc> {
+        self.admitted_at
+    }
+
+    pub fn request_deadline(&self) -> DateTime<Utc> {
+        self.request_deadline
+    }
+
+    pub fn lease_expires_at(&self) -> DateTime<Utc> {
+        self.lease_expires_at
     }
 }
 
@@ -164,11 +180,11 @@ mod tests {
         let lease = AdmissionLease::new(Uuid::nil(), received_at, admitted_at, &config).unwrap();
 
         assert_eq!(
-            lease.request_deadline,
+            lease.request_deadline(),
             received_at + TimeDelta::seconds(300)
         );
         assert_eq!(
-            lease.lease_expires_at,
+            lease.lease_expires_at(),
             received_at + TimeDelta::seconds(360)
         );
         assert_eq!(

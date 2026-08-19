@@ -7,21 +7,15 @@ use uuid::Uuid;
 use crate::{
     auth::{authenticate_credential, authorize_access, credential_digest, AuthenticatedIdentity},
     domain::{BillingMode, ModelStatus},
+    generation::CapturedPricing,
     serving_state::ServingState,
-    ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment, InputTokenPrice,
-    OutputTokenPrice,
+    ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RequestMetadata {
     pub generation_id: Uuid,
     pub received_at: DateTime<Utc>,
-}
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct CapturedPricing {
-    pub input: Vec<InputTokenPrice>,
-    pub output: Vec<OutputTokenPrice>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -158,10 +152,8 @@ fn qualify_model_request(
         .served_release_digest()
         .map_err(|_| GatewayError::ServingStateUnavailable)?;
     let input = model.properties.text_input();
-    let pricing = CapturedPricing {
-        input: input.pricing.clone(),
-        output: output.pricing.clone(),
-    };
+    let pricing = CapturedPricing::new(&input.pricing, &output.pricing)
+        .map_err(|_| GatewayError::ServingStateUnavailable)?;
 
     Ok(QualifiedRequest {
         metadata,
@@ -363,8 +355,9 @@ mod tests {
         assert_eq!(request.max_context_tokens, 8_192);
         assert_eq!(request.identity.organization_id, ORGANIZATION_ID);
         assert_eq!(request.request.parameters["temperature"], 0.5);
-        assert_eq!(request.pricing.input.len(), 2);
-        assert_eq!(request.pricing.output.len(), 1);
+        assert_eq!(request.pricing.prompt(), 100);
+        assert_eq!(request.pricing.cached_prompt(), 50);
+        assert_eq!(request.pricing.completion(), 200);
         assert!(request.served_release_digest.starts_with("sha256:"));
         assert_eq!(
             *state.calls.lock().unwrap(),

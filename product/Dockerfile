@@ -23,7 +23,8 @@ RUN pnpm install --frozen-lockfile
 COPY packages ./packages
 COPY services ./services
 
-RUN pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker...
+RUN mkdir -p packages/*/.turbo services/*/.turbo \
+  && pnpm turbo run build --filter=@gradiated/api... --filter=@gradiated/worker...
 RUN pnpm install --prod --offline --force --frozen-lockfile \
   --filter=@gradiated/api... \
   --filter=@gradiated/worker...

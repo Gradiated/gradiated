@@ -25,6 +25,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v4.2.3
+      - name: Install Rust check components
+        run: rustup component add rustfmt clippy
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Run unit tests and static checks

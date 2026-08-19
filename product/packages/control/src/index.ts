@@ -47,6 +47,14 @@ export {
 } from "./organizations/service.js";
 export { createValkeyServingProjector } from "./serving/valkey-projector.js";
 export {
+  createServingReconciliationReader,
+  type BalanceProjectionTransaction,
+  type BalanceTransactionCursor,
+  type CredentialProjection,
+  type ServingProjectionSnapshot,
+  type ServingReconciliationReader,
+} from "./serving/reconciliation-reader.js";
+export {
   ControlServiceError,
   createWorkspaceApiKeyService,
   type ApiKeyRecord,

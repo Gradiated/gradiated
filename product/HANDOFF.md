@@ -39,7 +39,10 @@ Focused tests run the script against the real one-node Valkey
 Cluster, including simultaneous boundary admissions and `CROSSSLOT` behavior.
 The gateway also has the closed Rust `GenerationProperties` contract, pure
 checked nano-USD usage pricing, and a versioned atomic finalization script. The
-script validates all state before writing, consumes the lease, writes the
+request-lifecycle value types keep their fields private and validate usage,
+captured pricing, terminal identity, outcome, timing, and lease invariants when
+they are constructed, so pricing and finalization accept only validated state.
+The script validates all state before writing, consumes the lease, writes the
 updated operational balance, and appends exactly one terminal stream event;
 retrying after success returns `already_absent` without a second charge or
 event. Real-cluster tests cover successful idempotent finalization and

@@ -191,7 +191,7 @@ impl ValkeyServingState {
             .arg(generation_id.to_string())
             .arg(organization_id.to_string())
             .arg(admitted_at.timestamp_millis())
-            .arg(lease.lease_expires_at.timestamp_millis())
+            .arg(lease.lease_expires_at().timestamp_millis())
             .arg(cleanup_cutoff.timestamp_millis())
             .arg(config.prepaid_organization_concurrency_cap)
             .arg(config.balance_per_concurrency_slot_nano_usd)
@@ -232,11 +232,10 @@ impl ValkeyServingState {
         properties: &GenerationProperties,
         keys: &GenerationKeys,
     ) -> Result<FinalizationOutcome, FinalizationError> {
-        properties.validate()?;
-        if properties.organization_id != organization_id {
+        if properties.organization_id() != organization_id {
             return Err(FinalizationError::OrganizationMismatch);
         }
-        let charge = properties.usage.charge;
+        let charge = properties.charge();
         let properties = serde_json::to_string(properties)?;
         let result: i64 = self
             .finalization_script
@@ -342,8 +341,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        GenerationOutcome, GenerationPriceComponent, GenerationPriceUnit, GenerationPricing,
-        GenerationStatus, GenerationTiming, GenerationUsage,
+        CapturedPricing, GenerationIdentity, GenerationStatus, GenerationTiming, InputTokenPrice,
+        NormalizedUsage, OutputTokenPrice, PricedUsage, TerminalOutcome, TokenUnit,
     };
 
     fn config() -> GatewayConfig {
@@ -369,60 +368,50 @@ mod tests {
 
     fn generation_properties(organization_id: Uuid, charge: u64) -> GenerationProperties {
         let completed_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 1).unwrap();
-        GenerationProperties {
-            event_schema_version: 1,
-            external_id: None,
+        let identity = GenerationIdentity::new(
+            None,
             organization_id,
-            workspace_id: Uuid::now_v7(),
-            api_key_id: Uuid::now_v7(),
-            model_id: "model-a".to_owned(),
-            served_release_digest: format!("sha256:{}", "a".repeat(64)),
-            status: GenerationStatus::Succeeded,
-            streamed: false,
-            pricing: GenerationPricing {
-                schema_version: 1,
-                components: vec![
-                    GenerationPriceComponent {
-                        unit: GenerationPriceUnit::InputToken,
-                        quantity: 0,
-                        unit_price: 0,
-                        amount: 0,
-                    },
-                    GenerationPriceComponent {
-                        unit: GenerationPriceUnit::CachedInputToken,
-                        quantity: 0,
-                        unit_price: 0,
-                        amount: 0,
-                    },
-                    GenerationPriceComponent {
-                        unit: GenerationPriceUnit::OutputToken,
-                        quantity: 1,
-                        unit_price: charge,
-                        amount: charge,
-                    },
-                ],
-            },
-            usage: GenerationUsage {
-                charge,
-                input_tokens: 0,
-                cached_input_tokens: 0,
-                cache_write_tokens: 0,
-                output_tokens: 1,
-                reasoning_tokens: 0,
-            },
-            outcome: GenerationOutcome {
-                finish_reason: Some("stop".to_owned()),
-                error_code: None,
-                usable_output_delivered: true,
-                cancellation_owner: None,
-            },
-            timing: GenerationTiming {
-                received_at: completed_at - TimeDelta::seconds(1),
-                started_at: Some(completed_at - TimeDelta::milliseconds(900)),
-                first_token_at: Some(completed_at - TimeDelta::milliseconds(500)),
-                completed_at,
-            },
-        }
+            Uuid::now_v7(),
+            Uuid::now_v7(),
+            "model-a".to_owned(),
+            format!("sha256:{}", "a".repeat(64)),
+        )
+        .unwrap();
+        let prices = CapturedPricing::new(
+            &[
+                InputTokenPrice::Prompt {
+                    unit: TokenUnit::Token,
+                    cost: 0,
+                },
+                InputTokenPrice::CachedPrompt {
+                    unit: TokenUnit::Token,
+                    cost: 0,
+                },
+            ],
+            &[OutputTokenPrice::Completion {
+                unit: TokenUnit::Token,
+                cost: charge,
+            }],
+        )
+        .unwrap();
+        let priced_usage =
+            PricedUsage::calculate(&prices, NormalizedUsage::new(0, 0, 0, 1, 0).unwrap()).unwrap();
+        let terminal = TerminalOutcome::new(
+            GenerationStatus::Succeeded,
+            Some("stop".to_owned()),
+            None,
+            true,
+            None,
+        )
+        .unwrap();
+        let timing = GenerationTiming::new(
+            completed_at - TimeDelta::seconds(1),
+            Some(completed_at - TimeDelta::milliseconds(900)),
+            Some(completed_at - TimeDelta::milliseconds(500)),
+            completed_at,
+        )
+        .unwrap();
+        GenerationProperties::new(identity, false, priced_usage, terminal, timing)
     }
 
     async fn admit(

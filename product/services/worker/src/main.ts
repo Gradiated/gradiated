@@ -4,17 +4,22 @@ import {
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
+  createServingReconciliationReader,
+  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 import { rm, writeFile } from "node:fs/promises";
 import { parseWorkerEnvironment } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
+import { runServingReconciliationLoop } from "./serving-reconciliation-loop.js";
 
 const environment = parseWorkerEnvironment(process.env);
 const abortController = new AbortController();
 const ingestionReadinessPath = "/tmp/gradiated-generation-ingestion-ready";
 const settlementReadinessPath = "/tmp/gradiated-settlement-ready";
+const reconciliationReadinessPath =
+  "/tmp/gradiated-serving-reconciliation-ready";
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => abortController.abort());
@@ -30,8 +35,10 @@ for (const client of [ingestionValkey, settlementValkey]) {
 const clickhouse = createClickHouseRuntimeClient(environment);
 const writer = createGenerationWriter(clickhouse);
 const settlementReader = createGenerationSettlementReader(clickhouse);
-const { pool } = createControlDatabase(environment.DATABASE_URL);
+const { database, pool } = createControlDatabase(environment.DATABASE_URL);
 const settlementStore = createGenerationSettlementStore(pool);
+const reconciliationReader = createServingReconciliationReader(database);
+const reconciliationProjector = createValkeyServingProjector(settlementValkey);
 
 const waitForRetry = async (milliseconds: number): Promise<void> => {
   await new Promise<void>((resolve) => {
@@ -110,11 +117,26 @@ try {
         abortController.signal,
       ),
     ),
+    supervise("Serving reconciliation", reconciliationReadinessPath, () =>
+      runServingReconciliationLoop(
+        reconciliationReader,
+        reconciliationProjector,
+        {
+          balanceTransactionBatchSize:
+            environment.RECONCILIATION_BALANCE_TRANSACTION_BATCH_SIZE,
+          pollMilliseconds: environment.RECONCILIATION_POLL_SECONDS * 1_000,
+          onReady: async () =>
+            writeFile(reconciliationReadinessPath, "ready\n", "utf8"),
+        },
+        abortController.signal,
+      ),
+    ),
   ]);
 } finally {
   await Promise.all([
     rm(ingestionReadinessPath, { force: true }),
     rm(settlementReadinessPath, { force: true }),
+    rm(reconciliationReadinessPath, { force: true }),
   ]);
   await Promise.allSettled([
     clickhouse.close(),

@@ -104,6 +104,12 @@ Run `pnpm check` before committing. Route declarations are the source of truth;
 after changing them, run `pnpm openapi:generate` and commit the
 updated `services/api/generated/openapi.json`.
 
-Run `pnpm --filter @gradiated/console test:e2e` for the page-level Playwright suite.
-It starts the local datastores, applies migrations, starts the API and Vite, and
-seeds the development account before testing Chromium.
+Run `pnpm --filter @gradiated/console test:e2e` for the page-level Playwright
+suite. It builds the API dependencies, starts and waits for the complete local
+datastore stack, applies migrations, and starts the API and Vite. Every browser
+test receives a unique funded user, organization, and workspace through the
+shared fixture, so the spec files remain safe to run in parallel.
+
+GitHub's product-only `tests.yml` workflow runs only for `product/**` changes.
+Its unit, real-datastore integration, and browser E2E jobs have no dependencies
+on one another and therefore run in parallel.

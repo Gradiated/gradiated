@@ -30,6 +30,8 @@ pub struct QualifiedRequest {
     pub identity: AuthenticatedIdentity,
     pub deployment: GatewayModelDeployment,
     pub served_release_digest: String,
+    pub max_context_tokens: u64,
+    pub max_prompt_tokens: u64,
     pub effective_output_tokens: u64,
     pub pricing: CapturedPricing,
     pub request: ChatCompletionRequest,
@@ -155,8 +157,9 @@ fn qualify_model_request(
     let served_release_digest = deployment
         .served_release_digest()
         .map_err(|_| GatewayError::ServingStateUnavailable)?;
+    let input = model.properties.text_input();
     let pricing = CapturedPricing {
-        input: model.properties.text_input().pricing.clone(),
+        input: input.pricing.clone(),
         output: output.pricing.clone(),
     };
 
@@ -165,6 +168,8 @@ fn qualify_model_request(
         identity,
         deployment,
         served_release_digest,
+        max_context_tokens: input.supported_inputs.max_context_length.value,
+        max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
         effective_output_tokens,
         pricing,
         request,
@@ -354,6 +359,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(request.effective_output_tokens, 1_024);
+        assert_eq!(request.max_prompt_tokens, 7_168);
+        assert_eq!(request.max_context_tokens, 8_192);
         assert_eq!(request.identity.organization_id, ORGANIZATION_ID);
         assert_eq!(request.request.parameters["temperature"], 0.5);
         assert_eq!(request.pricing.input.len(), 2);

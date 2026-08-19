@@ -1,17 +1,17 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("account menus create and select organizations and workspaces", async ({
+  account,
   page,
 }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.goto("/api-keys");
   await expect(page).toHaveURL(/\/api-keys$/);
 
   const accountMenu = page.getByRole("button", { name: "Account menu" });
   await accountMenu.click();
   await page.getByRole("menuitem", { name: "Change organization" }).hover();
   await expect(
-    page.getByRole("menuitem", { name: /Local Development/ }),
+    page.getByRole("menuitem", { name: account.organizationName }),
   ).toBeVisible();
 
   const organizationName = `Playwright Org ${Date.now()}`;

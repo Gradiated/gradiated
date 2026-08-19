@@ -17,6 +17,18 @@ export {
   type GenerationWriter,
   type StoredGenerationProperties,
 } from "./clickhouse/generation-ingestion.js";
+export {
+  createGenerationSettlementReader,
+  SettlementFinancialConflictError,
+  type GenerationSettlementReader,
+  type OrganizationSettlement,
+} from "./settlement/clickhouse-reader.js";
+export {
+  createGenerationSettlementStore,
+  type GenerationSettlementStore,
+  type SettlementLeadership,
+  type SettlementPosting,
+} from "./settlement/postgres-store.js";
 export { betterAuthSchema } from "./db/schema/auth.js";
 export {
   createCatalogBillingService,

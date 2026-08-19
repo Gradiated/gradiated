@@ -1,26 +1,37 @@
 import {
   createClickHouseRuntimeClient,
+  createControlDatabase,
+  createGenerationSettlementReader,
+  createGenerationSettlementStore,
   createGenerationWriter,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 import { rm, writeFile } from "node:fs/promises";
 import { parseWorkerEnvironment } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
+import { runGenerationSettlementLoop } from "./settlement-loop.js";
 
 const environment = parseWorkerEnvironment(process.env);
 const abortController = new AbortController();
-const readinessPath = "/tmp/gradiated-generation-ingestion-ready";
+const ingestionReadinessPath = "/tmp/gradiated-generation-ingestion-ready";
+const settlementReadinessPath = "/tmp/gradiated-settlement-ready";
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => abortController.abort());
 }
 
-const valkey = createValkeyClient(environment);
-valkey.on("error", (error) => console.error("Valkey client error", error));
-await valkey.connect();
+const ingestionValkey = createValkeyClient(environment);
+const settlementValkey = createValkeyClient(environment);
+for (const client of [ingestionValkey, settlementValkey]) {
+  client.on("error", (error) => console.error("Valkey client error", error));
+  await client.connect();
+}
 
 const clickhouse = createClickHouseRuntimeClient(environment);
 const writer = createGenerationWriter(clickhouse);
+const settlementReader = createGenerationSettlementReader(clickhouse);
+const { pool } = createControlDatabase(environment.DATABASE_URL);
+const settlementStore = createGenerationSettlementStore(pool);
 
 const waitForRetry = async (milliseconds: number): Promise<void> => {
   await new Promise<void>((resolve) => {
@@ -36,12 +47,38 @@ const waitForRetry = async (milliseconds: number): Promise<void> => {
   });
 };
 
-try {
+const supervise = async (
+  name: string,
+  readinessPath: string,
+  run: () => Promise<void>,
+): Promise<void> => {
   let retryMilliseconds = 1_000;
   while (!abortController.signal.aborted) {
     try {
-      await runGenerationIngestionLoop(
-        valkey,
+      await run();
+      retryMilliseconds = 1_000;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message.slice(0, 500) : "Unknown error";
+      console.error(`${name} loop failed`, { message });
+      await rm(readinessPath, { force: true });
+      await waitForRetry(retryMilliseconds);
+      retryMilliseconds = Math.min(retryMilliseconds * 2, 30_000);
+    }
+  }
+};
+
+const markSettlementReady = async (): Promise<void> => {
+  const result = await clickhouse.ping({ select: true });
+  if (!result.success) throw result.error;
+  await writeFile(settlementReadinessPath, "ready\n", "utf8");
+};
+
+try {
+  await Promise.all([
+    supervise("Generation ingestion", ingestionReadinessPath, () =>
+      runGenerationIngestionLoop(
+        ingestionValkey,
         writer,
         {
           batchSize: environment.GENERATION_BATCH_SIZE,
@@ -50,21 +87,39 @@ try {
           group: environment.GENERATION_CONSUMER_GROUP,
           readBlockMs: environment.GENERATION_READ_BLOCK_MS,
           stream: environment.GENERATION_STREAM_KEY,
-          onReady: async () => writeFile(readinessPath, "ready\n", "utf8"),
+          onReady: async () =>
+            writeFile(ingestionReadinessPath, "ready\n", "utf8"),
         },
         abortController.signal,
-      );
-      retryMilliseconds = 1_000;
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message.slice(0, 500) : "Unknown error";
-      console.error("Generation ingestion loop failed", { message });
-      await rm(readinessPath, { force: true });
-      await waitForRetry(retryMilliseconds);
-      retryMilliseconds = Math.min(retryMilliseconds * 2, 30_000);
-    }
-  }
+      ),
+    ),
+    supervise("Generation settlement", settlementReadinessPath, () =>
+      runGenerationSettlementLoop(
+        settlementReader,
+        settlementStore,
+        settlementValkey,
+        {
+          consumerGroup: environment.GENERATION_CONSUMER_GROUP,
+          maxSlotsPerPass: environment.SETTLEMENT_MAX_SLOTS_PER_PASS,
+          pollMilliseconds: environment.SETTLEMENT_POLL_SECONDS * 1_000,
+          settlementDelayMilliseconds:
+            environment.SETTLEMENT_DELAY_SECONDS * 1_000,
+          stream: environment.GENERATION_STREAM_KEY,
+          onReady: markSettlementReady,
+        },
+        abortController.signal,
+      ),
+    ),
+  ]);
 } finally {
-  await rm(readinessPath, { force: true });
-  await Promise.allSettled([clickhouse.close(), valkey.close()]);
+  await Promise.all([
+    rm(ingestionReadinessPath, { force: true }),
+    rm(settlementReadinessPath, { force: true }),
+  ]);
+  await Promise.allSettled([
+    clickhouse.close(),
+    ingestionValkey.close(),
+    settlementValkey.close(),
+    pool.end(),
+  ]);
 }

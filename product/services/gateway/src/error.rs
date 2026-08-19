@@ -12,6 +12,8 @@ pub enum GatewayError {
     ContextLengthExceeded { param: Option<String> },
     InvalidApiKey,
     InsufficientBalance,
+    ConcurrencyExceeded,
+    SettlementBacklog,
     ModelNotFound,
     ModelUnavailable,
     ServingStateUnavailable,
@@ -43,6 +45,7 @@ impl GatewayError {
             | Self::ContextLengthExceeded { .. } => StatusCode::BAD_REQUEST,
             Self::InvalidApiKey => StatusCode::UNAUTHORIZED,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
+            Self::ConcurrencyExceeded | Self::SettlementBacklog => StatusCode::TOO_MANY_REQUESTS,
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
             Self::ServingStateUnavailable => StatusCode::SERVICE_UNAVAILABLE,
         }
@@ -55,6 +58,8 @@ impl GatewayError {
             Self::ContextLengthExceeded { .. } => "context_length_exceeded",
             Self::InvalidApiKey => "invalid_api_key",
             Self::InsufficientBalance => "insufficient_balance",
+            Self::ConcurrencyExceeded => "concurrency_exceeded",
+            Self::SettlementBacklog => "settlement_backlog",
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
@@ -64,6 +69,7 @@ impl GatewayError {
     fn error_type(&self) -> &'static str {
         match self {
             Self::InvalidApiKey => "authentication_error",
+            Self::ConcurrencyExceeded | Self::SettlementBacklog => "rate_limit_error",
             Self::ServingStateUnavailable => "api_error",
             _ => "invalid_request_error",
         }
@@ -80,6 +86,10 @@ impl GatewayError {
             }
             Self::InvalidApiKey => "The API key is invalid.",
             Self::InsufficientBalance => "The prepaid balance is insufficient.",
+            Self::ConcurrencyExceeded => {
+                "The organization has reached its funded concurrency limit."
+            }
+            Self::SettlementBacklog => "Generation settlement is temporarily backlogged.",
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
             Self::ServingStateUnavailable => "Required serving state is unavailable.",

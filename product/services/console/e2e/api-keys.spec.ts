@@ -1,8 +1,7 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("API-key page creates a secret and revokes the key", async ({ page }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.goto("/api-keys");
   await expect(page).toHaveURL(/\/api-keys$/);
 
   const workspaceMenu = page.getByRole("button", { name: "Workspace menu" });
@@ -26,7 +25,8 @@ test("API-key page creates a secret and revokes the key", async ({ page }) => {
 
   const row = page.getByRole("row").filter({ hasText: keyName });
   await expect(row).toContainText("Active");
+  await row.getByRole("button", { name: `Actions for ${keyName}` }).click();
   page.once("dialog", (dialog) => dialog.accept());
-  await row.getByRole("button", { name: "Revoke" }).click();
+  await page.getByRole("menuitem", { name: "Revoke" }).click();
   await expect(row).toContainText("Revoked");
 });

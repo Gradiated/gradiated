@@ -1,12 +1,15 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("sign-in page validates credentials and opens the product", async ({
+  account,
+  context,
   page,
 }) => {
+  await context.clearCookies();
   await page.goto("/login");
 
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByLabel("Email")).toHaveValue("dev@gradiated.com");
+  await page.getByLabel("Email").fill(account.email);
 
   await page.getByLabel("Password").fill("wrong-password");
   await page.getByRole("button", { name: "Continue" }).click();
@@ -14,7 +17,7 @@ test("sign-in page validates credentials and opens the product", async ({
     "That email and password do not match.",
   );
 
-  await page.getByLabel("Password").fill("1234");
+  await page.getByLabel("Password").fill(account.password);
   await page.getByRole("button", { name: "Continue" }).click();
 
   await expect(page).toHaveURL(/\/api-keys$/);

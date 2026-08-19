@@ -304,21 +304,26 @@ digest-covered release field and matching gateway/SGLang conformance.
    generation-prompt semantics used by SGLang.
 2. Tokenize the rendered input locally in the gateway process on CPU and
    require a valid `input_tokens` count.
-3. Read text input `supported_inputs.max_context_length` and text output
-   `max_length` from the captured model properties.
+3. Read text input `supported_inputs.max_prompt_length` and
+   `max_context_length`, plus text output `max_length`, from the captured model
+   properties.
 4. Require the effective output-token ceiling to be at most
    output `max_length`.
-5. Require `input_tokens + effective_output_tokens <= max_context_length` using
+5. Require `input_tokens <= max_prompt_length`.
+6. Require `input_tokens + effective_output_tokens <= max_context_length` using
    checked arithmetic.
-6. Return `400 context_length_exceeded` when a token bound fails.
+7. Return `400 context_length_exceeded` when a token bound fails.
 
 Tokenization happens only after authentication and model qualification. It
 does not call SGLang, use a GPU, or create a lease. The gateway immediately
 discards the rendered prompt and token IDs after retaining the count, so they
 do not remain live while generation runs. Qualification fails closed if the
-selected release's pinned tokenizer or template cannot be loaded. Release conformance compares local
-token IDs and counts with the pinned SGLang deployment for representative
-messages, tools, special tokens, and output-prefix behavior.
+selected release's pinned tokenizer or template cannot be loaded. `ModelTokenizer`
+resolves artifacts through the Hugging Face local cache and caches a compiled
+tokenizer for each exact `tokenizer_path` plus `tokenizer_revision`. Release
+conformance compares local token IDs and counts with the pinned SGLang deployment
+for representative messages, tools, special tokens, and output-prefix
+behavior.
 
 ### 7. Atomic paid admission
 
@@ -331,10 +336,10 @@ inflight:{settlement-0}:<organization_id>
 generation-settled:{settlement-0}
 ```
 
-The script receives the generation ID, current time, lease expiry, cleanup
-cutoff, prepaid organization concurrency cap, balance per concurrency slot,
-and maximum safe stream backlog. It performs the following operations without
-interleaving:
+The script receives the generation ID, organization ID, current time, lease
+expiry, and cleanup cutoff as Unix epoch milliseconds, followed by the prepaid
+organization concurrency cap, balance per concurrency slot, and maximum safe
+stream backlog. It performs the following operations without interleaving:
 
 1. Validate every numeric argument before writing.
 2. Validate the account is a hash.
@@ -344,8 +349,9 @@ interleaving:
    closed `billing_mode` value.
 6. For `prepaid`, recheck `balance > 0`. For `invoiced`, do not gate admission
    on balance.
-7. Reject when the settlement stream length is above its configured safety
-   ceiling.
+7. Reject when the settlement stream length is at or above its configured
+   safety ceiling, so an admitted request cannot knowingly increase an already
+   full backlog.
 8. Remove only leases older than the configured grace cutoff.
 9. For `prepaid`, count leases with scores later than the current time.
 10. For `prepaid`, derive the balance-funded concurrency ceiling as

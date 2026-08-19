@@ -13,6 +13,10 @@
     "@gradiated/contracts": "workspace:*",
     "@gradiated/control": "workspace:*",
     "@gradiated/valkey": "workspace:*",
+    "luxon": "^3.7.2",
     "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/luxon": "^3.7.4"
   }
 }

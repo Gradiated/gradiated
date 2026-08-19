@@ -1,12 +1,16 @@
 # Worker
 
-This TypeScript deployment runs background control-plane work. The first
-implemented loop reads terminal generation events from Valkey and writes them
-to ClickHouse. It acknowledges each event only after ClickHouse confirms the
-insert.
+This TypeScript deployment runs background control-plane work. One loop reads
+terminal generation events from Valkey and writes them to ClickHouse. It
+acknowledges each event only after ClickHouse confirms the insert.
 
-The PostgreSQL-to-Valkey reconciliation loop and the ClickHouse-to-PostgreSQL
-settlement loop are not implemented yet. The worker exposes no HTTP service.
+A separate loop settles eligible five-minute ClickHouse usage slots into
+PostgreSQL. One worker replica holds a PostgreSQL advisory lock. The other
+replica stays ready and takes control if the leader loses its database session.
+The settlement source ID makes each organization and slot idempotent.
+
+The PostgreSQL-to-Valkey reconciliation loop is not implemented yet. The
+worker exposes no HTTP service.
 
 ## Stream contract
 

@@ -2,8 +2,11 @@ use std::{env, net::SocketAddr};
 
 use serde::Deserialize;
 use thiserror::Error;
+use validator::Validate;
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
+const MAX_LUA_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Validate)]
 pub struct GatewayConfig {
     #[serde(rename = "gateway_bind_address", default = "default_bind_address")]
     pub bind_address: SocketAddr,
@@ -11,7 +14,35 @@ pub struct GatewayConfig {
         rename = "gateway_generation_timeout_seconds",
         default = "default_generation_timeout_seconds"
     )]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
     pub generation_timeout_seconds: u64,
+    #[serde(
+        rename = "gateway_lease_finalization_margin_seconds",
+        default = "default_lease_finalization_margin_seconds"
+    )]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
+    pub lease_finalization_margin_seconds: u64,
+    #[serde(
+        rename = "gateway_expired_lease_cleanup_grace_seconds",
+        default = "default_expired_lease_cleanup_grace_seconds"
+    )]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
+    pub expired_lease_cleanup_grace_seconds: u64,
+    #[serde(
+        rename = "gateway_prepaid_organization_concurrency_cap",
+        default = "default_prepaid_organization_concurrency_cap"
+    )]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
+    pub prepaid_organization_concurrency_cap: u64,
+    #[serde(
+        rename = "gateway_balance_per_concurrency_slot_nano_usd",
+        default = "default_balance_per_concurrency_slot_nano_usd"
+    )]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
+    pub balance_per_concurrency_slot_nano_usd: u64,
+    #[serde(rename = "gateway_settlement_backlog_limit")]
+    #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
+    pub settlement_backlog_limit: u64,
     pub valkey_url: String,
     pub sglang_api_key: Option<String>,
 }
@@ -26,9 +57,7 @@ impl GatewayConfig {
         I: IntoIterator<Item = (String, String)>,
     {
         let mut config: Self = envy::from_iter(variables)?;
-        if config.generation_timeout_seconds == 0 {
-            return Err(ConfigError::ZeroGenerationTimeout);
-        }
+        config.validate()?;
         config.sglang_api_key = config.sglang_api_key.filter(|value| !value.is_empty());
         Ok(config)
     }
@@ -42,12 +71,28 @@ fn default_generation_timeout_seconds() -> u64 {
     300
 }
 
+fn default_lease_finalization_margin_seconds() -> u64 {
+    60
+}
+
+fn default_expired_lease_cleanup_grace_seconds() -> u64 {
+    300
+}
+
+fn default_prepaid_organization_concurrency_cap() -> u64 {
+    50
+}
+
+fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
+    1_000_000_000
+}
+
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("gateway environment is invalid: {0}")]
     Environment(#[from] envy::Error),
-    #[error("GATEWAY_GENERATION_TIMEOUT_SECONDS must be greater than zero")]
-    ZeroGenerationTimeout,
+    #[error("gateway configuration values are invalid: {0}")]
+    Validation(#[from] validator::ValidationErrors),
 }
 
 #[cfg(test)]
@@ -63,15 +108,28 @@ mod tests {
 
     #[test]
     fn environment_uses_typed_defaults() {
-        let config =
-            GatewayConfig::from_variables(variables(&[("VALKEY_URL", "redis://127.0.0.1:6379")]))
-                .expect("minimal environment should parse");
+        let config = GatewayConfig::from_variables(variables(&[
+            ("VALKEY_URL", "redis://127.0.0.1:6379"),
+            ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "100000"),
+        ]))
+        .expect("minimal environment should parse");
 
         assert_eq!(config.bind_address, default_bind_address());
         assert_eq!(
             config.generation_timeout_seconds,
             default_generation_timeout_seconds()
         );
+        assert_eq!(
+            config.lease_finalization_margin_seconds,
+            default_lease_finalization_margin_seconds()
+        );
+        assert_eq!(
+            config.expired_lease_cleanup_grace_seconds,
+            default_expired_lease_cleanup_grace_seconds()
+        );
+        assert_eq!(config.prepaid_organization_concurrency_cap, 50);
+        assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
+        assert_eq!(config.settlement_backlog_limit, 100_000);
         assert_eq!(config.sglang_api_key, None);
     }
 
@@ -80,6 +138,11 @@ mod tests {
         let config = GatewayConfig::from_variables(variables(&[
             ("GATEWAY_BIND_ADDRESS", "0.0.0.0:8080"),
             ("GATEWAY_GENERATION_TIMEOUT_SECONDS", "120"),
+            ("GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS", "30"),
+            ("GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS", "240"),
+            ("GATEWAY_PREPAID_ORGANIZATION_CONCURRENCY_CAP", "25"),
+            ("GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD", "500000000"),
+            ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "50000"),
             ("VALKEY_URL", "rediss://valkey.internal:6379"),
             ("SGLANG_API_KEY", "runtime-secret"),
         ]))
@@ -87,6 +150,11 @@ mod tests {
 
         assert_eq!(config.bind_address, "0.0.0.0:8080".parse().unwrap());
         assert_eq!(config.generation_timeout_seconds, 120);
+        assert_eq!(config.lease_finalization_margin_seconds, 30);
+        assert_eq!(config.expired_lease_cleanup_grace_seconds, 240);
+        assert_eq!(config.prepaid_organization_concurrency_cap, 25);
+        assert_eq!(config.balance_per_concurrency_slot_nano_usd, 500_000_000);
+        assert_eq!(config.settlement_backlog_limit, 50_000);
         assert_eq!(config.sglang_api_key.as_deref(), Some("runtime-secret"));
     }
 
@@ -95,7 +163,13 @@ mod tests {
         assert!(GatewayConfig::from_variables(variables(&[])).is_err());
         assert!(GatewayConfig::from_variables(variables(&[
             ("VALKEY_URL", "redis://127.0.0.1:6379"),
+            ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "100000"),
             ("GATEWAY_GENERATION_TIMEOUT_SECONDS", "0"),
+        ]))
+        .is_err());
+        assert!(GatewayConfig::from_variables(variables(&[
+            ("VALKEY_URL", "redis://127.0.0.1:6379"),
+            ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "0"),
         ]))
         .is_err());
     }

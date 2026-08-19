@@ -2,6 +2,7 @@ import { clickHouseRuntimeEnvironmentSchema } from "@gradiated/control";
 import { z } from "zod";
 
 const environmentSchema = clickHouseRuntimeEnvironmentSchema.extend({
+  DATABASE_URL: z.url(),
   VALKEY_URL: z.url(),
   VALKEY_IAM_CACHE_NAME: z.string().trim().min(1).optional(),
   VALKEY_IAM_REGION: z.string().trim().min(1).optional(),
@@ -28,6 +29,19 @@ const environmentSchema = clickHouseRuntimeEnvironmentSchema.extend({
     .min(1_000)
     .max(3_600_000)
     .default(30_000),
+  SETTLEMENT_DELAY_SECONDS: z.coerce
+    .number()
+    .int()
+    .min(300)
+    .max(86_400)
+    .default(600),
+  SETTLEMENT_MAX_SLOTS_PER_PASS: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(1_000)
+    .default(100),
+  SETTLEMENT_POLL_SECONDS: z.coerce.number().int().min(1).max(300).default(10),
 });
 
 export type WorkerEnvironment = z.infer<typeof environmentSchema>;

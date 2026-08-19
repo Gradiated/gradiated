@@ -1,11 +1,9 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("billing page shows the organization balance and ledger", async ({
   page,
 }) => {
-  await page.goto("/login");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByRole("link", { name: "Billing" }).click();
+  await page.goto("/billing");
 
   await expect(page).toHaveURL(/\/billing$/);
   await expect(
@@ -26,7 +24,7 @@ test("billing page shows the organization balance and ledger", async ({
       await route.fulfill({
         contentType: "application/json",
         body: JSON.stringify({
-          checkout_url: "http://localhost:3000/billing?topup=cancelled",
+          checkout_url: "http://127.0.0.1:3000/billing?topup=cancelled",
         }),
       });
     },

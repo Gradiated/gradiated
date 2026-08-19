@@ -20,6 +20,7 @@ procs:
     env:
       GATEWAY_BIND_ADDRESS: 127.0.0.1:3002
       GATEWAY_GENERATION_TIMEOUT_SECONDS: "300"
+      GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "100000"
       VALKEY_URL: redis://127.0.0.1:6379
   console:
     shell: >-

@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use gradiated_gateway::{
-    router, DependencyReadiness, GatewayConfig, GatewayState, SglangHealthClient,
-    ValkeyServingState,
+    router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState, ModelTokenizer,
+    SglangClient, ValkeyServingState,
 };
 use tracing::info;
 use tracing_subscriber::EnvFilter;
@@ -16,8 +16,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = GatewayConfig::from_environment()?;
     let serving_state = ValkeyServingState::connect(&config.valkey_url).await?;
-    let runtimes = SglangHealthClient::new(config.sglang_api_key)?;
-    let readiness = Arc::new(DependencyReadiness::new(serving_state, runtimes));
+    let runtimes = SglangClient::new(config.sglang_api_key.clone())?;
+    let readiness = Arc::new(DependencyReadiness::new(
+        serving_state.clone(),
+        runtimes.clone(),
+    ));
+    let completions = CompletionService::new(
+        Arc::new(serving_state),
+        Arc::new(runtimes),
+        ModelTokenizer::new()?,
+        Arc::new(config.clone()),
+    );
     let listener = tokio::net::TcpListener::bind(config.bind_address).await?;
 
     info!(
@@ -25,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         generation_timeout_seconds = config.generation_timeout_seconds,
         "gateway listening"
     );
-    axum::serve(listener, router(GatewayState::new(readiness)))
+    axum::serve(listener, router(GatewayState::new(readiness, completions)))
         .with_graceful_shutdown(shutdown_signal())
         .await?;
     Ok(())

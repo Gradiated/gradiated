@@ -1,6 +1,6 @@
 # Gateway architecture
 
-- status: proposed implementation authority; review before gateway code begins
+- status: current implementation authority
 - scope: Rust inference data plane only
 - parent architecture: [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md)
 - canonical data model: [`docs/DATA_MODEL.md`](../../../docs/DATA_MODEL.md)

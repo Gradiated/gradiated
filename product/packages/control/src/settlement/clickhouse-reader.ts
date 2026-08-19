@@ -58,7 +58,7 @@ export const createGenerationSettlementReader = (
     const result = await client.query({
       query: `
         SELECT
-          settlement_slot_id,
+          slot_id AS settlement_slot_id,
           organization_id,
           sum(charge) AS total_charge,
           countIf(charge > 0) AS generation_count,
@@ -67,15 +67,15 @@ export const createGenerationSettlementReader = (
         (
           SELECT
             id,
-            any(settlement_slot_id) AS settlement_slot_id,
-            any(organization_id) AS organization_id,
-            any(charge) AS charge,
-            uniqExact(tuple(settlement_slot_id, organization_id, charge)) AS financial_variants
-          FROM generations
-          WHERE settlement_slot_id = {slot_id:String}
+            any(g.settlement_slot_id) AS slot_id,
+            any(g.organization_id) AS organization_id,
+            any(g.charge) AS charge,
+            uniqExact(tuple(g.settlement_slot_id, g.organization_id, g.charge)) AS financial_variants
+          FROM generations AS g
+          WHERE g.settlement_slot_id = {slot_id:String}
           GROUP BY id
         )
-        GROUP BY settlement_slot_id, organization_id
+        GROUP BY slot_id, organization_id
       `,
       query_params: { slot_id: slotId },
       format: "JSONEachRow",

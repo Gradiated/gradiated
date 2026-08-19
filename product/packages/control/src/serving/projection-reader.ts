@@ -12,7 +12,9 @@ import {
 } from "../db/schema/index.js";
 import type { ServingProjector } from "../workspaces/service.js";
 
-type AccountProjection = Parameters<ServingProjector["projectAccount"]>[0];
+type AccountProjection = Parameters<ServingProjector["projectAccount"]>[0] & {
+  updatedAt: Date;
+};
 type WorkspaceProjection = Parameters<ServingProjector["projectWorkspace"]>[0];
 type ModelProjection = Parameters<ServingProjector["projectModel"]>[0];
 
@@ -66,6 +68,7 @@ export const createServingProjectionReader = (
           organizationStatus: organizations.status,
           billingMode: billingAccounts.mode,
           balance: billingAccounts.balance,
+          updatedAt: billingAccounts.updatedAt,
         })
         .from(organizations)
         .innerJoin(

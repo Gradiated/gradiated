@@ -167,6 +167,26 @@ impl NormalizedUsage {
             reasoning_tokens: 0,
         }
     }
+
+    pub fn input_tokens(self) -> u64 {
+        self.input_tokens
+    }
+
+    pub fn cached_input_tokens(self) -> u64 {
+        self.cached_input_tokens
+    }
+
+    pub fn cache_write_tokens(self) -> u64 {
+        self.cache_write_tokens
+    }
+
+    pub fn output_tokens(self) -> u64 {
+        self.output_tokens
+    }
+
+    pub fn reasoning_tokens(self) -> u64 {
+        self.reasoning_tokens
+    }
 }
 
 #[derive(Debug, Error)]
@@ -258,6 +278,60 @@ impl PricedUsage {
 
     pub fn charge(&self) -> u64 {
         self.usage.charge
+    }
+
+    pub(crate) fn zero(prices: &CapturedPricing) -> Self {
+        let mut components = vec![
+            GenerationPriceComponent {
+                unit: GenerationPriceUnit::Input,
+                quantity: 0,
+                unit_price: prices.prompt(),
+                amount: 0,
+            },
+            GenerationPriceComponent {
+                unit: GenerationPriceUnit::CachedInput,
+                quantity: 0,
+                unit_price: prices.cached_prompt(),
+                amount: 0,
+            },
+        ];
+        if let Some(unit_price) = prices.cache_write() {
+            components.push(GenerationPriceComponent {
+                unit: GenerationPriceUnit::CacheWrite,
+                quantity: 0,
+                unit_price,
+                amount: 0,
+            });
+        }
+        components.push(GenerationPriceComponent {
+            unit: GenerationPriceUnit::Output,
+            quantity: 0,
+            unit_price: prices.completion(),
+            amount: 0,
+        });
+        if let Some(unit_price) = prices.internal_reasoning() {
+            components.push(GenerationPriceComponent {
+                unit: GenerationPriceUnit::Reasoning,
+                quantity: 0,
+                unit_price,
+                amount: 0,
+            });
+        }
+
+        Self {
+            pricing: GenerationPricing {
+                schema_version: 1,
+                components,
+            },
+            usage: GenerationUsage {
+                charge: 0,
+                input_tokens: 0,
+                cached_input_tokens: 0,
+                cache_write_tokens: 0,
+                output_tokens: 0,
+                reasoning_tokens: 0,
+            },
+        }
     }
 }
 
@@ -403,6 +477,18 @@ impl TerminalOutcome {
             },
         })
     }
+
+    pub(crate) fn failed(error_code: &'static str) -> Self {
+        Self {
+            status: GenerationStatus::Failed,
+            outcome: GenerationOutcome {
+                finish_reason: None,
+                error_code: Some(error_code.to_owned()),
+                usable_output_delivered: false,
+                cancellation_owner: None,
+            },
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -462,6 +548,21 @@ impl GenerationTiming {
             first_token_at,
             completed_at,
         })
+    }
+
+    pub(crate) fn completed(
+        received_at: DateTime<Utc>,
+        started_at: DateTime<Utc>,
+        completed_at: DateTime<Utc>,
+    ) -> Self {
+        let started_at = started_at.max(received_at);
+        let completed_at = completed_at.max(started_at);
+        Self {
+            received_at,
+            started_at: Some(started_at),
+            first_token_at: None,
+            completed_at,
+        }
     }
 }
 
@@ -705,6 +806,19 @@ mod tests {
             ]
         );
         assert_eq!(priced.charge(), 1_490);
+    }
+
+    #[test]
+    fn zero_usage_preserves_every_captured_price_component() {
+        let priced = PricedUsage::zero(&prices());
+
+        assert_eq!(priced.charge(), 0);
+        assert_eq!(priced.pricing.components.len(), 5);
+        assert!(priced
+            .pricing
+            .components
+            .iter()
+            .all(|component| component.quantity == 0 && component.amount == 0));
     }
 
     #[test]

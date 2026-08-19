@@ -21,6 +21,9 @@ describe("current user route", () => {
           createForUser: async () => {
             throw new Error("not used");
           },
+          ensurePersonalForUser: async () => {
+            throw new Error("not used");
+          },
           listForUser: async () => [
             {
               id: organizationId,

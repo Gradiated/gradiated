@@ -13,6 +13,7 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
+    "@aws-sdk/client-sesv2": "3.1114.0",
     "@gradiated/config": "workspace:*",
     "@gradiated/contracts": "workspace:*",
     "@gradiated/control": "workspace:*",

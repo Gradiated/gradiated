@@ -1,6 +1,6 @@
 import { expect, test } from "./fixtures";
 
-test("sign-in page validates credentials and opens the product", async ({
+test("sign-in page sends and consumes a magic link", async ({
   account,
   context,
   page,
@@ -10,15 +10,18 @@ test("sign-in page validates credentials and opens the product", async ({
 
   await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
   await page.getByLabel("Email").fill(account.email);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByText("Check your email")).toBeVisible();
 
-  await page.getByLabel("Password").fill("wrong-password");
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page.getByRole("alert")).toContainText(
-    "That email and password do not match.",
+  const captured = await context.request.get(
+    `http://127.0.0.1:3001/api/auth/test/magic-link?email=${encodeURIComponent(account.email)}`,
   );
-
-  await page.getByLabel("Password").fill(account.password);
-  await page.getByRole("button", { name: "Continue" }).click();
+  expect(captured.ok()).toBe(true);
+  const { url } = (await captured.json()) as { url: string };
+  const verification = new URL(url);
+  verification.hostname = "127.0.0.1";
+  verification.port = "3001";
+  await page.goto(verification.toString());
 
   await expect(page).toHaveURL(/\/api-keys$/);
   await expect(

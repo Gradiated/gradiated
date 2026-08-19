@@ -1,5 +1,6 @@
 pub mod admission;
 pub mod auth;
+pub mod completion;
 pub mod config;
 pub mod coordinator;
 pub mod deployment;
@@ -16,6 +17,7 @@ pub mod serving_state;
 pub mod tokenizer;
 
 pub use admission::{AdmissionError, AdmissionLease};
+pub use completion::{CompletionResult, CompletionService};
 pub use config::GatewayConfig;
 pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata};
 pub use deployment::{DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease};
@@ -36,6 +38,9 @@ pub use model::{
 };
 pub use readiness::DependencyReadiness;
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
-pub use runtime::SglangHealthClient;
+pub use runtime::{
+    ModelRuntime, RuntimeClientError, RuntimeCompletion, RuntimeFailure, RuntimeFailureKind,
+    SglangClient,
+};
 pub use serving_state::{ServingState, ValkeyServingState};
 pub use tokenizer::{BoundedRequest, ModelTokenizer, ModelTokenizerError};

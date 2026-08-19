@@ -36,6 +36,7 @@ const snapshot: ServingProjectionSnapshot = {
       organizationId: firstTransaction.organizationId,
       organizationKind: "customer",
       organizationStatus: "active",
+      updatedAt: new Date("2026-08-19T12:00:30.000Z"),
     },
   ],
   credentials: [
@@ -75,10 +76,11 @@ const snapshot: ServingProjectionSnapshot = {
 const projector = (): ServingProjector => ({
   applyBalanceTransaction: vi.fn(async () => undefined),
   initializeAccount: vi.fn(async () => undefined),
-  projectAccount: vi.fn(async () => undefined),
+  projectAccount: vi.fn(async () => false),
   projectCredential: vi.fn(async () => undefined),
   projectModel: vi.fn(async () => undefined),
   projectWorkspace: vi.fn(async () => undefined),
+  markBalanceTransactionApplied: vi.fn(async () => undefined),
 });
 
 describe("serving-state projector", () => {
@@ -92,15 +94,13 @@ describe("serving-state projector", () => {
     };
     const target = projector();
 
-    await expect(projectServingStatePass(reader, target, 2)).resolves.toEqual(
-      {
-        accounts: 1,
-        balanceTransactions: 3,
-        credentials: 1,
-        models: 1,
-        workspaces: 1,
-      },
-    );
+    await expect(projectServingStatePass(reader, target, 2)).resolves.toEqual({
+      accounts: 1,
+      balanceTransactions: 3,
+      credentials: 1,
+      models: 1,
+      workspaces: 1,
+    });
 
     expect(target.projectAccount).toHaveBeenCalledWith(snapshot.accounts[0]);
     expect(target.initializeAccount).not.toHaveBeenCalled();
@@ -128,6 +128,31 @@ describe("serving-state projector", () => {
       transactionId: firstTransaction.id,
     });
     expect(target.applyBalanceTransaction).toHaveBeenCalledTimes(3);
+  });
+
+  it("restores a missing account without applying transactions already in its balance", async () => {
+    const reader: ServingProjectionReader = {
+      getProjectionSnapshot: vi.fn(async () => snapshot),
+      getBalanceTransactions: vi
+        .fn()
+        .mockResolvedValueOnce([firstTransaction, secondTransaction]),
+    };
+    const target = projector();
+    vi.mocked(target.projectAccount).mockResolvedValueOnce(true);
+
+    await projectServingStatePass(reader, target, 100);
+
+    expect(target.markBalanceTransactionApplied).toHaveBeenCalledOnce();
+    expect(target.markBalanceTransactionApplied).toHaveBeenCalledWith({
+      organizationId: firstTransaction.organizationId,
+      transactionId: firstTransaction.id,
+    });
+    expect(target.applyBalanceTransaction).toHaveBeenCalledOnce();
+    expect(target.applyBalanceTransaction).toHaveBeenCalledWith({
+      amount: secondTransaction.amount,
+      organizationId: secondTransaction.organizationId,
+      transactionId: secondTransaction.id,
+    });
   });
 
   it("starts each periodic pass from the first transaction", async () => {

@@ -1,16 +1,20 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { openAPI } from "better-auth/plugins";
+import { magicLink, openAPI } from "better-auth/plugins";
 import { v7 as uuidv7 } from "uuid";
 
 import { betterAuthSchema, type ControlDatabase } from "@gradiated/control";
 
 import type { AuthService } from "./types.js";
+import type { MagicLinkSender } from "./auth-email.js";
 
 export interface AuthConfiguration {
   baseUrl: string;
-  minPasswordLength: number;
+  github?: { clientId: string; clientSecret: string } | undefined;
+  onUserCreated: (user: { id: string; name: string }) => Promise<void>;
   secret: string;
+  sendMagicLink: MagicLinkSender;
+  takeTestMagicLink?: ((email: string) => string | null) | undefined;
   trustedOrigins: string[];
 }
 
@@ -28,20 +32,47 @@ export function createAuthService(
       provider: "pg",
       schema: betterAuthSchema,
     }),
-    emailAndPassword: {
-      enabled: true,
-      minPasswordLength: configuration.minPasswordLength,
+    account: {
+      accountLinking: {
+        enabled: true,
+        allowDifferentEmails: false,
+      },
+    },
+    socialProviders: configuration.github
+      ? {
+          github: {
+            clientId: configuration.github.clientId,
+            clientSecret: configuration.github.clientSecret,
+          },
+        }
+      : {},
+    databaseHooks: {
+      user: {
+        create: {
+          after: configuration.onUserCreated,
+        },
+      },
     },
     advanced: {
       database: {
         generateId: () => uuidv7(),
       },
     },
-    plugins: [openAPI({ disableDefaultReference: true })],
+    plugins: [
+      magicLink({
+        expiresIn: 600,
+        sendMagicLink: configuration.sendMagicLink,
+        storeToken: "hashed",
+      }),
+      openAPI({ disableDefaultReference: true }),
+    ],
   });
 
   return {
     handler: (request) => auth.handler(request),
+    ...(configuration.takeTestMagicLink
+      ? { takeTestMagicLink: configuration.takeTestMagicLink }
+      : {}),
     async resolveSession(headers) {
       const result = await auth.api.getSession({ headers });
       if (!result) return null;

@@ -32,6 +32,18 @@ return added
 
 const projectAccountScript = `
 local account_type = redis.call('TYPE', KEYS[1]).ok
+if account_type == 'none' then
+  redis.call(
+    'HSET',
+    KEYS[1],
+    'organization_id', ARGV[1],
+    'organization_kind', ARGV[2],
+    'organization_status', ARGV[3],
+    'billing_mode', ARGV[4],
+    'balance', ARGV[5]
+  )
+  return 1
+end
 if account_type ~= 'hash' then
   return redis.error_reply('gateway account is missing or invalid')
 end
@@ -43,7 +55,7 @@ redis.call(
   'organization_status', ARGV[3],
   'billing_mode', ARGV[4]
 )
-return 1
+return 0
 `;
 
 export function createValkeyServingProjector(
@@ -60,15 +72,17 @@ export function createValkeyServingProjector(
       });
     },
     async projectAccount(account) {
-      await valkey.eval(projectAccountScript, {
+      const initialized = await valkey.eval(projectAccountScript, {
         keys: [`account:{settlement-0}:${account.organizationId}`],
         arguments: [
           account.organizationId,
           account.organizationKind,
           account.organizationStatus,
           account.billingMode,
+          account.balance.toString(),
         ],
       });
+      return initialized === 1;
     },
     async projectWorkspace(workspace) {
       await valkey.set(
@@ -116,6 +130,12 @@ export function createValkeyServingProjector(
         ],
         arguments: [input.transactionId, input.amount.toString()],
       });
+    },
+    async markBalanceTransactionApplied(input) {
+      await valkey.sAdd(
+        `applied-balance-transactions:{settlement-0}:${input.organizationId}`,
+        input.transactionId,
+      );
     },
   };
 }

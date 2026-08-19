@@ -38,13 +38,17 @@ export interface CreatedOrganization {
 export interface OrganizationService {
   listForUser(userId: string): Promise<UserOrganization[]>;
   createForUser(userId: string, name: string): Promise<CreatedOrganization>;
+  ensurePersonalForUser(
+    userId: string,
+    name?: string | undefined,
+  ): Promise<UserOrganization>;
 }
 
 export function createOrganizationService(
   database: ControlDatabase,
   projector: ServingProjector,
 ): OrganizationService {
-  return {
+  const service: OrganizationService = {
     async listForUser(userId) {
       const rows = await database
         .select({
@@ -158,5 +162,11 @@ export function createOrganizationService(
         updatedAt: now,
       };
     },
+    async ensurePersonalForUser(userId, name = "Personal") {
+      const existing = await service.listForUser(userId);
+      if (existing[0]) return existing[0];
+      return service.createForUser(userId, name);
+    },
   };
+  return service;
 }

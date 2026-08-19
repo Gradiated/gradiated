@@ -10,13 +10,16 @@ pub enum GatewayError {
     InvalidRequest { param: Option<String> },
     UnsupportedParameter { param: Option<String> },
     ContextLengthExceeded { param: Option<String> },
+    PayloadTooLarge,
     InvalidApiKey,
     InsufficientBalance,
     ConcurrencyExceeded,
     SettlementBacklog,
+    CapacityExceeded,
     ModelNotFound,
     ModelUnavailable,
     ServingStateUnavailable,
+    RuntimeUnavailable,
     FinalizationUnavailable,
 }
 
@@ -44,13 +47,16 @@ impl GatewayError {
             Self::InvalidRequest { .. }
             | Self::UnsupportedParameter { .. }
             | Self::ContextLengthExceeded { .. } => StatusCode::BAD_REQUEST,
+            Self::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
             Self::InvalidApiKey => StatusCode::UNAUTHORIZED,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
-            Self::ConcurrencyExceeded | Self::SettlementBacklog => StatusCode::TOO_MANY_REQUESTS,
-            Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
-            Self::ServingStateUnavailable | Self::FinalizationUnavailable => {
-                StatusCode::SERVICE_UNAVAILABLE
+            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
+                StatusCode::TOO_MANY_REQUESTS
             }
+            Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
+            Self::ServingStateUnavailable
+            | Self::RuntimeUnavailable
+            | Self::FinalizationUnavailable => StatusCode::SERVICE_UNAVAILABLE,
         }
     }
 
@@ -59,13 +65,16 @@ impl GatewayError {
             Self::InvalidRequest { .. } => "invalid_request",
             Self::UnsupportedParameter { .. } => "unsupported_parameter",
             Self::ContextLengthExceeded { .. } => "context_length_exceeded",
+            Self::PayloadTooLarge => "payload_too_large",
             Self::InvalidApiKey => "invalid_api_key",
             Self::InsufficientBalance => "insufficient_balance",
             Self::ConcurrencyExceeded => "concurrency_exceeded",
             Self::SettlementBacklog => "settlement_backlog",
+            Self::CapacityExceeded => "capacity_exceeded",
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
+            Self::RuntimeUnavailable => "runtime_unavailable",
             Self::FinalizationUnavailable => "finalization_unavailable",
         }
     }
@@ -73,8 +82,12 @@ impl GatewayError {
     fn error_type(&self) -> &'static str {
         match self {
             Self::InvalidApiKey => "authentication_error",
-            Self::ConcurrencyExceeded | Self::SettlementBacklog => "rate_limit_error",
-            Self::ServingStateUnavailable | Self::FinalizationUnavailable => "api_error",
+            Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
+                "rate_limit_error"
+            }
+            Self::ServingStateUnavailable
+            | Self::RuntimeUnavailable
+            | Self::FinalizationUnavailable => "api_error",
             _ => "invalid_request_error",
         }
     }
@@ -88,15 +101,18 @@ impl GatewayError {
             Self::ContextLengthExceeded { .. } => {
                 "The requested token limit exceeds the model limit."
             }
+            Self::PayloadTooLarge => "The request body exceeds 8 MB.",
             Self::InvalidApiKey => "The API key is invalid.",
             Self::InsufficientBalance => "The prepaid balance is insufficient.",
             Self::ConcurrencyExceeded => {
                 "The organization has reached its funded concurrency limit."
             }
             Self::SettlementBacklog => "Generation settlement is temporarily backlogged.",
+            Self::CapacityExceeded => "The model is temporarily at capacity.",
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
             Self::ServingStateUnavailable => "Required serving state is unavailable.",
+            Self::RuntimeUnavailable => "The model runtime is unavailable.",
             Self::FinalizationUnavailable => "Generation finalization is unavailable.",
         }
     }
@@ -106,6 +122,7 @@ impl GatewayError {
             Self::InvalidRequest { param }
             | Self::UnsupportedParameter { param }
             | Self::ContextLengthExceeded { param } => param.as_deref(),
+            Self::PayloadTooLarge => None,
             Self::ModelNotFound | Self::ModelUnavailable => Some("model"),
             _ => None,
         }

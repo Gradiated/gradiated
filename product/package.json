@@ -14,11 +14,12 @@
   "scripts": {
     "build": "turbo run build",
     "check": "turbo run check && pnpm format:check",
-    "dev": "node scripts/free-dev-ports.mjs 3000 3001 && mprocs",
+    "dev": "node scripts/free-dev-ports.mjs 3000 3001 3002 30000 && mprocs",
     "dev:services": "turbo run dev",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "openapi:generate": "turbo run openapi:generate && turbo run api:generate"
+    "openapi:generate": "turbo run openapi:generate && turbo run api:generate",
+    "smoke:gateway": "node scripts/smoke-gateway-local.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",

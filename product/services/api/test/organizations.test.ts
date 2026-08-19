@@ -17,6 +17,9 @@ describe("organization routes", () => {
       services: {
         organizations: {
           listForUser: async () => [],
+          ensurePersonalForUser: async () => {
+            throw new Error("not used");
+          },
           createForUser: async (userId, name) => {
             received = { userId, name };
             return {

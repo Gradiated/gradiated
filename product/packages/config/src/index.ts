@@ -2,13 +2,12 @@ import { z } from "zod";
 
 const EnvironmentSchema = z
   .object({
+    AUTH_EMAIL_FROM: z.string().trim().min(1).optional(),
+    AUTH_TEST_MODE: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_MIN_PASSWORD_LENGTH: z.coerce
-      .number()
-      .int()
-      .min(4)
-      .max(128)
-      .default(12),
     BETTER_AUTH_URL: z.url(),
     DATABASE_URL: z.url(),
     HOST: z.string().min(1).default("0.0.0.0"),
@@ -17,6 +16,9 @@ const EnvironmentSchema = z
       .default("development"),
     PORT: z.coerce.number().int().min(1).max(65_535).default(3001),
     CONSOLE_URL: z.url().default("http://localhost:3000"),
+    GITHUB_CLIENT_ID: z.string().trim().min(1).optional(),
+    GITHUB_CLIENT_SECRET: z.string().trim().min(1).optional(),
+    SES_REGION: z.string().trim().min(1).optional(),
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     TRUSTED_ORIGINS: z
@@ -29,6 +31,34 @@ const EnvironmentSchema = z
     VALKEY_IAM_USER: z.string().min(1).optional(),
     VALKEY_URL: z.url(),
   })
+  .refine(
+    (value) =>
+      Boolean(value.GITHUB_CLIENT_ID) === Boolean(value.GITHUB_CLIENT_SECRET),
+    {
+      message:
+        "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured together.",
+    },
+  )
+  .refine((value) => value.NODE_ENV !== "production" || !value.AUTH_TEST_MODE, {
+    message: "AUTH_TEST_MODE cannot be enabled in production.",
+    path: ["AUTH_TEST_MODE"],
+  })
+  .refine(
+    (value) =>
+      value.AUTH_TEST_MODE ||
+      Boolean(value.AUTH_EMAIL_FROM && value.SES_REGION),
+    {
+      message:
+        "AUTH_EMAIL_FROM and SES_REGION are required when AUTH_TEST_MODE is disabled.",
+    },
+  )
+  .refine(
+    (value) =>
+      value.NODE_ENV !== "production" || Boolean(value.GITHUB_CLIENT_ID),
+    {
+      message: "GitHub authentication credentials are required in production.",
+    },
+  )
   .refine(
     (value) =>
       Boolean(value.STRIPE_SECRET_KEY) === Boolean(value.STRIPE_WEBHOOK_SECRET),

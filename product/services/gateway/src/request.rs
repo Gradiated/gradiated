@@ -41,6 +41,46 @@ impl ChatCompletionRequest {
             .or_else(|| self.max_tokens.map(OutputTokenLimit::MaxTokens))
     }
 
+    pub(crate) fn into_upstream_body(self, effective_output_tokens: u64) -> Value {
+        let Self {
+            model,
+            messages,
+            stream,
+            max_completion_tokens,
+            max_tokens,
+            mut parameters,
+        } = self;
+
+        parameters.insert("model".to_owned(), Value::String(model));
+        parameters.insert("messages".to_owned(), Value::Array(messages));
+        parameters.insert("stream".to_owned(), Value::Bool(stream));
+        match (max_completion_tokens, max_tokens) {
+            (Some(_), None) => {
+                parameters.insert(
+                    "max_completion_tokens".to_owned(),
+                    Value::from(effective_output_tokens),
+                );
+            }
+            (None, Some(_)) => {
+                parameters.insert(
+                    "max_tokens".to_owned(),
+                    Value::from(effective_output_tokens),
+                );
+            }
+            (None, None) => {
+                parameters.insert(
+                    "max_completion_tokens".to_owned(),
+                    Value::from(effective_output_tokens),
+                );
+            }
+            (Some(_), Some(_)) => {
+                debug_assert!(false, "validated requests contain one output-token field");
+            }
+        }
+
+        Value::Object(parameters)
+    }
+
     fn validate_request(&self) -> Result<(), GatewayError> {
         <Self as Validate>::validate(self).map_err(|_| GatewayError::invalid_request(None))?;
         if self.max_completion_tokens.is_some() && self.max_tokens.is_some() {
@@ -165,5 +205,41 @@ mod tests {
         ] {
             assert!(ChatCompletionRequest::parse(body).is_err());
         }
+    }
+
+    #[test]
+    fn builds_a_new_upstream_body_without_losing_qualified_fields() {
+        let request = ChatCompletionRequest::parse(
+            br#"{
+                "model":"model-a",
+                "messages":[{"role":"user","content":"hello"}],
+                "max_tokens":32,
+                "temperature":0.25,
+                "tools":[{"type":"function","function":{"name":"weather"}}]
+            }"#,
+        )
+        .unwrap();
+
+        let body = request.into_upstream_body(32);
+
+        assert_eq!(body["model"], "model-a");
+        assert_eq!(body["messages"][0]["content"], "hello");
+        assert_eq!(body["stream"], false);
+        assert_eq!(body["max_tokens"], 32);
+        assert!(body.get("max_completion_tokens").is_none());
+        assert_eq!(body["temperature"], 0.25);
+        assert_eq!(body["tools"][0]["function"]["name"], "weather");
+    }
+
+    #[test]
+    fn materializes_the_qualified_default_output_ceiling() {
+        let request = ChatCompletionRequest::parse(
+            br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}]}"#,
+        )
+        .unwrap();
+
+        let body = request.into_upstream_body(1_024);
+
+        assert_eq!(body["max_completion_tokens"], 1_024);
     }
 }

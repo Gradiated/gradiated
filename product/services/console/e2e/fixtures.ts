@@ -6,7 +6,7 @@ import {
   createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
-import { expect, test as base } from "@playwright/test";
+import { expect, test as base, type BrowserContext } from "@playwright/test";
 
 const apiUrl = "http://127.0.0.1:3001";
 const databaseUrl =
@@ -16,7 +16,6 @@ const valkeyUrl = process.env.VALKEY_URL ?? "redis://127.0.0.1:6379";
 
 export interface TestAccount {
   email: string;
-  password: string;
   userName: string;
   organizationName: string;
 }
@@ -32,42 +31,61 @@ const requireOk = async (response: {
   );
 };
 
+const signInWithMagicLink = async (
+  context: BrowserContext,
+  email: string,
+  name: string,
+): Promise<void> => {
+  const requested = await context.request.post(
+    `${apiUrl}/api/auth/sign-in/magic-link`,
+    {
+      headers: { Origin: "http://127.0.0.1:3000" },
+      data: {
+        email,
+        name,
+        callbackURL: "http://127.0.0.1:3000/api-keys",
+        newUserCallbackURL: "http://127.0.0.1:3000/api-keys",
+        errorCallbackURL: "http://127.0.0.1:3000/login",
+      },
+    },
+  );
+  await requireOk(requested);
+
+  const captured = await context.request.get(
+    `${apiUrl}/api/auth/test/magic-link?email=${encodeURIComponent(email)}`,
+  );
+  await requireOk(captured);
+  const { url } = (await captured.json()) as { url: string };
+  const verification = new URL(url);
+  verification.protocol = "http:";
+  verification.hostname = "127.0.0.1";
+  verification.port = "3001";
+  const verified = await context.request.get(verification.toString(), {
+    maxRedirects: 0,
+  });
+  if (![302, 303, 307].includes(verified.status())) await requireOk(verified);
+};
+
 export const test = base.extend<{ account: TestAccount }>({
   account: [
     async ({ context }, use) => {
       const suffix = randomUUID();
       const account: TestAccount = {
         email: `playwright-${suffix}@gradiated.test`,
-        password: "1234",
         userName: `Playwright ${suffix.slice(0, 8)}`,
-        organizationName: `Playwright Org ${suffix.slice(0, 8)}`,
+        organizationName: "Personal",
       };
 
-      const signUp = await context.request.post(
-        `${apiUrl}/api/auth/sign-up/email`,
-        {
-          headers: { Origin: "http://127.0.0.1:3000" },
-          data: {
-            email: account.email,
-            password: account.password,
-            name: account.userName,
-          },
-        },
-      );
-      await requireOk(signUp);
-
-      const organizationResponse = await context.request.post(
-        `${apiUrl}/api/v1/organizations`,
-        { data: { name: account.organizationName } },
-      );
-      await requireOk(organizationResponse);
-      const organization = (await organizationResponse.json()) as {
-        id: string;
-      };
+      await signInWithMagicLink(context, account.email, account.userName);
 
       const meResponse = await context.request.get(`${apiUrl}/api/v1/me`);
       await requireOk(meResponse);
-      const currentUser = (await meResponse.json()) as { id: string };
+      const currentUser = (await meResponse.json()) as {
+        id: string;
+        organizations: Array<{ id: string }>;
+      };
+      const organization = currentUser.organizations[0];
+      if (!organization) throw new Error("Test account has no organization");
 
       const { database, pool } = createControlDatabase(databaseUrl);
       const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });

@@ -260,6 +260,26 @@ mod tests {
             self.record("model");
             Ok(self.model.clone())
         }
+
+        async fn admit(
+            &self,
+            _generation_id: Uuid,
+            _organization_id: Uuid,
+            _received_at: DateTime<Utc>,
+            _admitted_at: DateTime<Utc>,
+            _config: &crate::GatewayConfig,
+        ) -> Result<crate::AdmissionLease, crate::AdmissionError> {
+            unreachable!("coordinator tests never admit")
+        }
+
+        async fn finalize(
+            &self,
+            _generation_id: Uuid,
+            _organization_id: Uuid,
+            _properties: &crate::GenerationProperties,
+        ) -> Result<crate::FinalizationOutcome, crate::FinalizationError> {
+            unreachable!("coordinator tests never finalize")
+        }
     }
 
     fn model(streaming: bool) -> GatewayModel {

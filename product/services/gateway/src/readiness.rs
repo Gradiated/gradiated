@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 
-use crate::{SglangHealthClient, ValkeyServingState};
+use crate::{SglangClient, ValkeyServingState};
 
 const DEPENDENCY_TIMEOUT: Duration = Duration::from_secs(2);
 
@@ -13,11 +13,11 @@ pub trait ReadinessCheck: Send + Sync {
 
 pub struct DependencyReadiness {
     serving_state: ValkeyServingState,
-    runtimes: SglangHealthClient,
+    runtimes: SglangClient,
 }
 
 impl DependencyReadiness {
-    pub fn new(serving_state: ValkeyServingState, runtimes: SglangHealthClient) -> Self {
+    pub fn new(serving_state: ValkeyServingState, runtimes: SglangClient) -> Self {
         Self {
             serving_state,
             runtimes,

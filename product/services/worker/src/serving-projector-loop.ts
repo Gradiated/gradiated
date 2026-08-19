@@ -23,9 +23,12 @@ export const projectServingStatePass = async (
   balanceTransactionBatchSize: number,
 ): Promise<ServingProjectionResult> => {
   const snapshot = await reader.getProjectionSnapshot();
+  const restoredAccountCutoffs = new Map<string, Date>();
 
   for (const account of snapshot.accounts) {
-    await projector.projectAccount(account);
+    if (await projector.projectAccount(account)) {
+      restoredAccountCutoffs.set(account.organizationId, account.updatedAt);
+    }
   }
   for (const workspace of snapshot.workspaces) {
     await projector.projectWorkspace(workspace);
@@ -45,11 +48,21 @@ export const projectServingStatePass = async (
       balanceTransactionBatchSize,
     );
     for (const transaction of transactions) {
-      await projector.applyBalanceTransaction({
-        amount: transaction.amount,
-        organizationId: transaction.organizationId,
-        transactionId: transaction.id,
-      });
+      const restoredCutoff = restoredAccountCutoffs.get(
+        transaction.organizationId,
+      );
+      if (restoredCutoff && transaction.createdAt <= restoredCutoff) {
+        await projector.markBalanceTransactionApplied({
+          organizationId: transaction.organizationId,
+          transactionId: transaction.id,
+        });
+      } else {
+        await projector.applyBalanceTransaction({
+          amount: transaction.amount,
+          organizationId: transaction.organizationId,
+          transactionId: transaction.id,
+        });
+      }
     }
     balanceTransactionCount += transactions.length;
     const last = transactions.at(-1);

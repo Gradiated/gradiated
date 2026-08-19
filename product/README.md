@@ -52,15 +52,40 @@ pnpm install
 pnpm dev
 ```
 
-`pnpm dev` first stops stale listeners on the local console and API ports (3000 and
-3001), then launches mprocs. Prefer it over invoking `mprocs` directly so a
-process left behind by an earlier crash cannot block startup.
+`pnpm dev` first stops stale listeners on the console, API, gateway, and SGLang
+ports (3000, 3001, 3002, and 30000), then launches mprocs. Prefer it over
+invoking `mprocs` directly so a process left behind by an earlier crash cannot
+block startup.
 
-Mprocs starts PostgreSQL, Valkey and ClickHouse through Docker Compose, applies
-PostgreSQL migrations from the host, starts the API with source watching, and
-runs the idempotent seed. Datastores stay containerized; TypeScript services run
-on the host for fast reloads. The checked-in Dockerfile builds the production
-API image but is not part of the normal local loop.
+Mprocs starts PostgreSQL, Valkey and ClickHouse through Docker Compose. It also
+starts the API, worker, console, Rust gateway, and pinned SGLang/MLX runtime as
+native processes. The worker runs generation ingestion, generation settlement,
+and serving-state projection concurrently. Datastores stay containerized.
+Application services run on the host for fast reloads. The first SGLang start
+creates an ignored Python 3.12 environment and downloads the pinned
+`mlx-community/Qwen3-0.6B-4bit` model. Later starts reuse both caches. The
+checked-in Dockerfile builds the production API image but is not part of the
+normal local loop.
+
+The `migrate-postgres` and `migrate-clickhouse` panes do not start
+automatically. Select each pane and press `s` after a new datastore starts or
+after its schema changes. Mprocs does not support sidebar sections, so the
+manual migration, seed, and Stripe processes stay together at the bottom of
+the process list.
+
+After the API is ready, run the idempotent local seed from the `seed` mprocs pane
+or from another terminal, then exercise the complete non-streaming inference
+path:
+
+```sh
+pnpm --filter @gradiated/api seed
+pnpm smoke:gateway
+```
+
+The smoke command creates a temporary API key through the product API, calls the
+gateway on port 3002, verifies UUIDv7 and authoritative usage in the response,
+and revokes the key. A successful response is returned only after the gateway
+has atomically finalized the generation in Valkey.
 
 The console listens on port 3000 and proxies `/api` and `/health`
 to the API process on port 3001. The generated OpenAPI schema is available at
@@ -72,9 +97,9 @@ API at `https://api.gradiated.com`. Set `VITE_API_URL` when building the console
 the console origin. Local development leaves `VITE_API_URL` unset and keeps the
 existing Vite proxy and ports.
 
-The seeded login is `dev@gradiated.com` with password `1234`. These are
-deliberately fixed local-only values, not production defaults. Compose volumes
-preserve local data; use
+The seeded development identity is `dev@gradiated.com`; local test-mode magic
+links are captured by the API rather than delivered. Compose volumes preserve
+local data; use
 `docker compose down --volumes` only when intentionally resetting it.
 
 Stripe is optional locally. To exercise test-mode top-ups, put the following in

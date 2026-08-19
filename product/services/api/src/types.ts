@@ -25,6 +25,7 @@ export interface ApiEnvironment {
 export interface AuthService {
   handler(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
+  takeTestMagicLink?(email: string): string | null;
 }
 
 export interface ApiServices {

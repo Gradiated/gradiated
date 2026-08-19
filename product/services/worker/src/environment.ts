@@ -48,12 +48,7 @@ const environmentSchema = clickHouseRuntimeEnvironmentSchema.extend({
     .min(1)
     .max(10_000)
     .default(500),
-  PROJECTOR_POLL_SECONDS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(3_600)
-    .default(30),
+  PROJECTOR_POLL_SECONDS: z.coerce.number().int().min(1).max(3_600).default(30),
 });
 
 export type WorkerEnvironment = z.infer<typeof environmentSchema>;

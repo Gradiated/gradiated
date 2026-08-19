@@ -11,7 +11,6 @@ const databaseUrl =
   "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated";
 const valkeyUrl = process.env.VALKEY_URL ?? "redis://127.0.0.1:6379";
 const email = process.env.SEED_USER_EMAIL ?? "dev@gradiated.com";
-const password = process.env.SEED_USER_PASSWORD ?? "1234";
 const userName = process.env.SEED_USER_NAME ?? "Local Developer";
 const organizationName =
   process.env.SEED_ORGANIZATION_NAME ?? "Local Development";
@@ -39,32 +38,39 @@ const sessionCookie = (response: Response): string | null => {
 };
 
 const authenticate = async (): Promise<string> => {
-  const signUp = await fetch(`${apiUrl}/api/auth/sign-up/email`, {
+  const requested = await fetch(`${apiUrl}/api/auth/sign-in/magic-link`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Origin: "http://localhost:3000",
     },
-    body: JSON.stringify({ email, password, name: userName }),
+    body: JSON.stringify({
+      email,
+      name: userName,
+      callbackURL: "http://localhost:3000/api-keys",
+      newUserCallbackURL: "http://localhost:3000/api-keys",
+      errorCallbackURL: "http://localhost:3000/login",
+    }),
   });
-  let cookie = sessionCookie(signUp);
+  if (!requested.ok)
+    throw new Error(
+      `Development magic-link request failed with status ${requested.status}`,
+    );
 
-  if (!signUp.ok || !cookie) {
-    const signIn = await fetch(`${apiUrl}/api/auth/sign-in/email`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Origin: "http://localhost:3000",
-      },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!signIn.ok) {
-      throw new Error(
-        `Development user sign-in failed with status ${signIn.status}`,
-      );
-    }
-    cookie = sessionCookie(signIn);
-  }
+  const captured = await fetch(
+    `${apiUrl}/api/auth/test/magic-link?email=${encodeURIComponent(email)}`,
+  );
+  if (!captured.ok)
+    throw new Error(
+      `Development magic-link capture failed with status ${captured.status}`,
+    );
+  const { url } = (await captured.json()) as { url: string };
+  const verificationUrl = new URL(url);
+  const apiOrigin = new URL(apiUrl);
+  verificationUrl.protocol = apiOrigin.protocol;
+  verificationUrl.host = apiOrigin.host;
+  const verified = await fetch(verificationUrl, { redirect: "manual" });
+  const cookie = sessionCookie(verified);
 
   if (!cookie) throw new Error("Better Auth did not return a session cookie");
   return cookie;
@@ -123,7 +129,10 @@ try {
           supported_inputs: {
             max_context_length: { value: 32_768, unit: "token" },
           },
-          pricing: [{ type: "prompt", unit: "token", cost: 0 }],
+          pricing: [
+            { type: "prompt", unit: "token", cost: 100 },
+            { type: "cached_prompt", unit: "token", cost: 50 },
+          ],
         },
       ],
       output_modalities: [
@@ -139,7 +148,7 @@ try {
             },
             temperature: { type: "range", min: 0, max: 2 },
           },
-          pricing: [{ type: "completion", unit: "token", cost: 0 }],
+          pricing: [{ type: "completion", unit: "token", cost: 300 }],
         },
       ],
     },

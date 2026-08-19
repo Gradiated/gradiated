@@ -1,5 +1,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalPassThroughEnv": ["RUSTUP_TOOLCHAIN"],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
-import { LoaderCircle } from "lucide-react";
+import { LoaderCircle, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useState } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth";
@@ -18,27 +18,52 @@ import { Input } from "@/components/ui/input";
 
 const LoginSchema = z.object({
   email: z.email("Enter a valid email address."),
-  password: z.string().min(1, "Enter your password."),
 });
 
 type LoginValues = z.infer<typeof LoginSchema>;
 
 export const LoginPage = () => {
-  const navigate = useNavigate();
+  const callbackError = new URLSearchParams(window.location.search).get(
+    "error",
+  );
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [githubPending, setGithubPending] = useState(false);
   const form = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: { email: "dev@gradiated.com", password: "1234" },
+    defaultValues: { email: "" },
   });
 
   const submit = async (values: LoginValues) => {
-    const result = await authClient.signIn.email(values);
+    const callbackURL = `${window.location.origin}/api-keys`;
+    const result = await authClient.signIn.magicLink({
+      email: values.email,
+      callbackURL,
+      newUserCallbackURL: callbackURL,
+      errorCallbackURL: `${window.location.origin}/login`,
+    });
     if (result.error) {
       form.setError("root", {
-        message: "That email and password do not match.",
+        message: "We could not send the sign-in link. Try again.",
       });
       return;
     }
-    await navigate({ to: "/api-keys" });
+    setSentTo(values.email);
+  };
+
+  const signInWithGitHub = async () => {
+    setGithubPending(true);
+    const result = await authClient.signIn.social({
+      provider: "github",
+      callbackURL: `${window.location.origin}/api-keys`,
+      errorCallbackURL: `${window.location.origin}/login`,
+      newUserCallbackURL: `${window.location.origin}/api-keys`,
+    });
+    if (result?.error) {
+      setGithubPending(false);
+      form.setError("root", {
+        message: "GitHub sign-in could not start. Try again.",
+      });
+    }
   };
 
   return (
@@ -53,46 +78,80 @@ export const LoginPage = () => {
               <FieldGroup>
                 <div className="flex flex-col items-center gap-2 text-center">
                   <h1 className="text-2xl font-bold tracking-tight">Sign in</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Create an account or continue to your workspace.
+                  </p>
                 </div>
-                <Field data-invalid={Boolean(form.formState.errors.email)}>
-                  <FieldLabel htmlFor="email">Email</FieldLabel>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    {...form.register("email")}
-                  />
-                  {form.formState.errors.email ? (
-                    <FieldError errors={[form.formState.errors.email]} />
+                <Button
+                  className="w-full"
+                  disabled={githubPending || form.formState.isSubmitting}
+                  onClick={() => void signInWithGitHub()}
+                  type="button"
+                  variant="outline"
+                >
+                  {githubPending ? (
+                    <LoaderCircle className="size-4 animate-spin" />
                   ) : null}
-                </Field>
-                <Field data-invalid={Boolean(form.formState.errors.password)}>
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    {...form.register("password")}
-                  />
-                  {form.formState.errors.password ? (
-                    <FieldError errors={[form.formState.errors.password]} />
-                  ) : null}
-                </Field>
+                  Continue with GitHub
+                </Button>
+                <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" />
+                  or
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                {sentTo ? (
+                  <div className="rounded-lg border bg-muted/50 p-4 text-center">
+                    <MailCheck className="mx-auto mb-3 size-6" />
+                    <p className="font-medium">Check your email</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      We sent a sign-in link to {sentTo}.
+                    </p>
+                    <Button
+                      className="mt-3"
+                      onClick={() => setSentTo(null)}
+                      type="button"
+                      variant="ghost"
+                    >
+                      Use another email
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Field data-invalid={Boolean(form.formState.errors.email)}>
+                      <FieldLabel htmlFor="email">Email</FieldLabel>
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@company.com"
+                        {...form.register("email")}
+                      />
+                      {form.formState.errors.email ? (
+                        <FieldError errors={[form.formState.errors.email]} />
+                      ) : null}
+                    </Field>
+                    <Field>
+                      <Button
+                        className="w-full"
+                        disabled={form.formState.isSubmitting || githubPending}
+                        type="submit"
+                      >
+                        {form.formState.isSubmitting ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : null}
+                        Email me a sign-in link
+                      </Button>
+                    </Field>
+                  </>
+                )}
                 {form.formState.errors.root?.message ? (
                   <FieldError>{form.formState.errors.root.message}</FieldError>
                 ) : null}
-                <Field>
-                  <Button
-                    className="w-full"
-                    disabled={form.formState.isSubmitting}
-                    type="submit"
-                  >
-                    {form.formState.isSubmitting ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : null}
-                    Continue
-                  </Button>
-                </Field>
+                {callbackError ? (
+                  <FieldError>
+                    This sign-in link is invalid or expired. Request a new link.
+                  </FieldError>
+                ) : null}
               </FieldGroup>
             </form>
             <div className="relative hidden min-h-[520px] overflow-hidden bg-[#181914] text-white md:block">

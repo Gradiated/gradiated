@@ -10,6 +10,10 @@ import {
 import { createApp } from "./app.js";
 import { createAuthService } from "./auth.js";
 import {
+  createSesMagicLinkSender,
+  createTestMagicLinkTransport,
+} from "./auth-email.js";
+import {
   createBillingPaymentsService,
   createStripeGateway,
   unavailableBillingPaymentsService,
@@ -23,10 +27,31 @@ valkey.on("error", (error) => console.error("Valkey client error", error));
 await valkey.connect();
 const servingProjector = createValkeyServingProjector(valkey);
 const catalogBilling = createCatalogBillingService(database, servingProjector);
+const organizations = createOrganizationService(database, servingProjector);
+const testMagicLinks = environment.AUTH_TEST_MODE
+  ? createTestMagicLinkTransport()
+  : undefined;
+const sendMagicLink =
+  testMagicLinks?.send ??
+  createSesMagicLinkSender({
+    from: environment.AUTH_EMAIL_FROM!,
+    region: environment.SES_REGION!,
+  });
 const auth = createAuthService(database, {
   baseUrl: environment.BETTER_AUTH_URL,
-  minPasswordLength: environment.BETTER_AUTH_MIN_PASSWORD_LENGTH,
+  github:
+    environment.GITHUB_CLIENT_ID && environment.GITHUB_CLIENT_SECRET
+      ? {
+          clientId: environment.GITHUB_CLIENT_ID,
+          clientSecret: environment.GITHUB_CLIENT_SECRET,
+        }
+      : undefined,
+  onUserCreated: async (user) => {
+    await organizations.ensurePersonalForUser(user.id);
+  },
   secret: environment.BETTER_AUTH_SECRET,
+  sendMagicLink,
+  takeTestMagicLink: testMagicLinks?.take,
   trustedOrigins: environment.TRUSTED_ORIGINS,
 });
 const app = createApp({
@@ -59,7 +84,7 @@ const app = createApp({
             environment.CONSOLE_URL,
           )
         : unavailableBillingPaymentsService(),
-    organizations: createOrganizationService(database, servingProjector),
+    organizations,
     catalogBilling,
     workspaces: createWorkspaceApiKeyService(database, servingProjector),
   },

@@ -62,7 +62,7 @@ export interface ServingProjector {
     organizationStatus: "active" | "suspended";
     billingMode: "prepaid" | "invoiced";
     balance: bigint;
-  }): Promise<void>;
+  }): Promise<boolean>;
   projectWorkspace(workspace: WorkspaceRecord): Promise<void>;
   projectCredential(
     digestHex: string,
@@ -84,6 +84,10 @@ export interface ServingProjector {
     organizationId: string;
     transactionId: string;
     amount: bigint;
+  }): Promise<void>;
+  markBalanceTransactionApplied(input: {
+    organizationId: string;
+    transactionId: string;
   }): Promise<void>;
 }
 

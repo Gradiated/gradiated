@@ -30,6 +30,20 @@ pub trait ServingState: Send + Sync {
         organization_id: Uuid,
     ) -> Result<Option<GatewayAccount>, ServingStateError>;
     async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError>;
+    async fn admit(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        received_at: DateTime<Utc>,
+        admitted_at: DateTime<Utc>,
+        config: &GatewayConfig,
+    ) -> Result<AdmissionLease, AdmissionError>;
+    async fn finalize(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        properties: &GenerationProperties,
+    ) -> Result<FinalizationOutcome, FinalizationError>;
 }
 
 #[derive(Clone)]
@@ -310,6 +324,34 @@ impl ServingState for ValkeyServingState {
 
     async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
         ValkeyServingState::model(self, model_id).await
+    }
+
+    async fn admit(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        received_at: DateTime<Utc>,
+        admitted_at: DateTime<Utc>,
+        config: &GatewayConfig,
+    ) -> Result<AdmissionLease, AdmissionError> {
+        ValkeyServingState::admit(
+            self,
+            generation_id,
+            organization_id,
+            received_at,
+            admitted_at,
+            config,
+        )
+        .await
+    }
+
+    async fn finalize(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        properties: &GenerationProperties,
+    ) -> Result<FinalizationOutcome, FinalizationError> {
+        ValkeyServingState::finalize(self, generation_id, organization_id, properties).await
     }
 }
 

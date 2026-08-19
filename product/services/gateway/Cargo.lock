@@ -740,6 +740,7 @@ dependencies = [
  "axum",
  "chrono",
  "envy",
+ "futures-util",
  "hf-chat-template",
  "hf-hub",
  "redis",

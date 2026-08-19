@@ -23,9 +23,9 @@ export default defineConfig({
         DATABASE_URL:
           "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated",
         VALKEY_URL: "redis://127.0.0.1:6379",
+        AUTH_TEST_MODE: "true",
         BETTER_AUTH_URL: "http://localhost:3000",
         BETTER_AUTH_SECRET: "local-only-not-secret-change-in-production-0001",
-        BETTER_AUTH_MIN_PASSWORD_LENGTH: "4",
         PORT: "3001",
         TRUSTED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000",
         NODE_ENV: "test",

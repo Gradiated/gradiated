@@ -58,6 +58,9 @@ const defaultDependencies: AppDependencies = {
       createForUser: async () => {
         throw new Error("Organization service is not configured");
       },
+      ensurePersonalForUser: async () => {
+        throw new Error("Organization service is not configured");
+      },
     },
     workspaces: {
       listWorkspaces: async () => [],
@@ -124,6 +127,15 @@ export const createApp = (overrides: AppOverrides = {}) => {
   });
 
   if (dependencies.auth) {
+    if (dependencies.auth.takeTestMagicLink) {
+      app.get("/api/auth/test/magic-link", (context) => {
+        const email = context.req.query("email");
+        if (!email) return context.json({ error: "Email is required." }, 400);
+        const url = dependencies.auth!.takeTestMagicLink!(email);
+        if (!url) return context.json({ error: "Link not found." }, 404);
+        return context.json({ url });
+      });
+    }
     app.on(["GET", "POST"], "/api/auth/*", (context) =>
       dependencies.auth!.handler(context.req.raw),
     );

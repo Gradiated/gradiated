@@ -5,16 +5,29 @@ procs:
       send-keys: ["<C-c>"]
   api:
     shell: >-
-      zsh -lc 'if [[ -f ../.env ]]; then set -a; source ../.env; set +a; fi; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control db:migrate && corepack pnpm --filter @gradiated/api dev'
+      zsh -lc 'set -a; if [[ -f ../.env ]]; then source ../.env; fi; if [[ -f ../.env.local ]]; then source ../.env.local; fi; set +a; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/api dev'
     env:
       DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+      AUTH_TEST_MODE: "true"
       BETTER_AUTH_URL: http://localhost:3000
       BETTER_AUTH_SECRET: local-only-not-secret-change-in-production-0001
-      BETTER_AUTH_MIN_PASSWORD_LENGTH: "4"
       TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       NODE_ENV: development
       PORT: "3001"
       VALKEY_URL: redis://127.0.0.1:6379
+  worker:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/worker dev'
+    env:
+      CLICKHOUSE_DATABASE: gradiated
+      CLICKHOUSE_HOST: 127.0.0.1
+      CLICKHOUSE_PASSWORD: gradiated
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_SECURE: "false"
+      CLICKHOUSE_USERNAME: gradiated
+      DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+      VALKEY_URL: redis://127.0.0.1:6379
+      WORKER_CONSUMER_NAME: local-worker-1
   gateway:
     shell: "mise exec -- cargo run --manifest-path services/gateway/Cargo.toml --locked"
     env:
@@ -22,9 +35,31 @@ procs:
       GATEWAY_GENERATION_TIMEOUT_SECONDS: "300"
       GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "100000"
       VALKEY_URL: redis://127.0.0.1:6379
+  sglang:
+    shell: "mise run sglang-local"
+    stop: SIGINT
   console:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/console dev'
+  migrate-postgres:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control db:migrate'
+    autostart: false
+    env:
+      DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+  migrate-clickhouse:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control clickhouse:migrate'
+    autostart: false
+    env:
+      CLICKHOUSE_ADMIN_PASSWORD: gradiated
+      CLICKHOUSE_ADMIN_USERNAME: gradiated
+      CLICKHOUSE_APPLICATION_PASSWORD: gradiated
+      CLICKHOUSE_APPLICATION_USERNAME: gradiated
+      CLICKHOUSE_DATABASE: gradiated
+      CLICKHOUSE_HOST: 127.0.0.1
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_SECURE: "false"
   seed:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/api seed'

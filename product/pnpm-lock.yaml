@@ -94,6 +94,9 @@ importers:
 
   services/api:
     dependencies:
+      "@aws-sdk/client-sesv2":
+        specifier: 3.1114.0
+        version: 3.1114.0
       "@gradiated/config":
         specifier: workspace:*
         version: link:../../packages/config
@@ -281,6 +284,13 @@ packages:
       }
     peerDependencies:
       zod: ^4.0.0
+
+  "@aws-sdk/client-sesv2@3.1114.0":
+    resolution:
+      {
+        integrity: sha512-tforxunY8RhJzgdI0dcTm1ZwN4C0bcY4oV5FvCCBe+QPNqpwOnMi1x0dDkzwcnZWqrH4MdU7IARV+p7p7JOq2w==,
+      }
+    engines: { node: ">=20.0.0" }
 
   "@aws-sdk/core@3.977.8":
     resolution:
@@ -4089,6 +4099,18 @@ snapshots:
     dependencies:
       openapi3-ts: 4.6.1
       zod: 4.4.3
+
+  "@aws-sdk/client-sesv2@3.1114.0":
+    dependencies:
+      "@aws-sdk/core": 3.977.8
+      "@aws-sdk/credential-provider-node": 3.972.80
+      "@aws-sdk/signature-v4-multi-region": 3.996.45
+      "@aws-sdk/types": 3.974.4
+      "@smithy/core": 3.33.2
+      "@smithy/fetch-http-handler": 5.7.2
+      "@smithy/node-http-handler": 4.11.2
+      "@smithy/types": 4.17.2
+      tslib: 2.8.1
 
   "@aws-sdk/core@3.977.8":
     dependencies:

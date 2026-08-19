@@ -1,15 +1,15 @@
 import type {
   ServingProjector,
-  ServingReconciliationReader,
+  ServingProjectionReader,
 } from "@gradiated/control";
 
-export type ServingReconciliationOptions = {
+export type ServingProjectorOptions = {
   balanceTransactionBatchSize: number;
   onReady?: (() => Promise<void>) | undefined;
   pollMilliseconds: number;
 };
 
-export type ServingReconciliationResult = {
+export type ServingProjectionResult = {
   accounts: number;
   balanceTransactions: number;
   credentials: number;
@@ -17,11 +17,11 @@ export type ServingReconciliationResult = {
   workspaces: number;
 };
 
-export const reconcileServingStatePass = async (
-  reader: ServingReconciliationReader,
+export const projectServingStatePass = async (
+  reader: ServingProjectionReader,
   projector: ServingProjector,
   balanceTransactionBatchSize: number,
-): Promise<ServingReconciliationResult> => {
+): Promise<ServingProjectionResult> => {
   const snapshot = await reader.getProjectionSnapshot();
 
   for (const account of snapshot.accounts) {
@@ -83,14 +83,14 @@ const wait = async (
   });
 };
 
-export const runServingReconciliationLoop = async (
-  reader: ServingReconciliationReader,
+export const runServingProjectorLoop = async (
+  reader: ServingProjectionReader,
   projector: ServingProjector,
-  options: ServingReconciliationOptions,
+  options: ServingProjectorOptions,
   signal: AbortSignal,
 ): Promise<void> => {
   while (!signal.aborted) {
-    await reconcileServingStatePass(
+    await projectServingStatePass(
       reader,
       projector,
       options.balanceTransactionBatchSize,

@@ -4,7 +4,7 @@ import {
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
-  createServingReconciliationReader,
+  createServingProjectionReader,
   createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
@@ -12,14 +12,13 @@ import { rm, writeFile } from "node:fs/promises";
 import { parseWorkerEnvironment } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
-import { runServingReconciliationLoop } from "./serving-reconciliation-loop.js";
+import { runServingProjectorLoop } from "./serving-projector-loop.js";
 
 const environment = parseWorkerEnvironment(process.env);
 const abortController = new AbortController();
 const ingestionReadinessPath = "/tmp/gradiated-generation-ingestion-ready";
 const settlementReadinessPath = "/tmp/gradiated-settlement-ready";
-const reconciliationReadinessPath =
-  "/tmp/gradiated-serving-reconciliation-ready";
+const projectorReadinessPath = "/tmp/gradiated-serving-projector-ready";
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => abortController.abort());
@@ -37,8 +36,8 @@ const writer = createGenerationWriter(clickhouse);
 const settlementReader = createGenerationSettlementReader(clickhouse);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
 const settlementStore = createGenerationSettlementStore(pool);
-const reconciliationReader = createServingReconciliationReader(database);
-const reconciliationProjector = createValkeyServingProjector(settlementValkey);
+const projectionReader = createServingProjectionReader(database);
+const servingProjector = createValkeyServingProjector(settlementValkey);
 
 const waitForRetry = async (milliseconds: number): Promise<void> => {
   await new Promise<void>((resolve) => {
@@ -117,16 +116,16 @@ try {
         abortController.signal,
       ),
     ),
-    supervise("Serving reconciliation", reconciliationReadinessPath, () =>
-      runServingReconciliationLoop(
-        reconciliationReader,
-        reconciliationProjector,
+    supervise("Serving projector", projectorReadinessPath, () =>
+      runServingProjectorLoop(
+        projectionReader,
+        servingProjector,
         {
           balanceTransactionBatchSize:
-            environment.RECONCILIATION_BALANCE_TRANSACTION_BATCH_SIZE,
-          pollMilliseconds: environment.RECONCILIATION_POLL_SECONDS * 1_000,
+            environment.PROJECTOR_BALANCE_TRANSACTION_BATCH_SIZE,
+          pollMilliseconds: environment.PROJECTOR_POLL_SECONDS * 1_000,
           onReady: async () =>
-            writeFile(reconciliationReadinessPath, "ready\n", "utf8"),
+            writeFile(projectorReadinessPath, "ready\n", "utf8"),
         },
         abortController.signal,
       ),
@@ -136,7 +135,7 @@ try {
   await Promise.all([
     rm(ingestionReadinessPath, { force: true }),
     rm(settlementReadinessPath, { force: true }),
-    rm(reconciliationReadinessPath, { force: true }),
+    rm(projectorReadinessPath, { force: true }),
   ]);
   await Promise.allSettled([
     clickhouse.close(),

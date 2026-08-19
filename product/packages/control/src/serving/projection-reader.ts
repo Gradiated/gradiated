@@ -40,7 +40,7 @@ export type ServingProjectionSnapshot = {
   workspaces: WorkspaceProjection[];
 };
 
-export type ServingReconciliationReader = {
+export type ServingProjectionReader = {
   getBalanceTransactions(
     after: BalanceTransactionCursor | undefined,
     limit: number,
@@ -48,9 +48,9 @@ export type ServingReconciliationReader = {
   getProjectionSnapshot(): Promise<ServingProjectionSnapshot>;
 };
 
-export const createServingReconciliationReader = (
+export const createServingProjectionReader = (
   database: ControlDatabase,
-): ServingReconciliationReader => ({
+): ServingProjectionReader => ({
   async getProjectionSnapshot() {
     const [
       accountRows,

@@ -42,13 +42,13 @@ const environmentSchema = clickHouseRuntimeEnvironmentSchema.extend({
     .max(1_000)
     .default(100),
   SETTLEMENT_POLL_SECONDS: z.coerce.number().int().min(1).max(300).default(10),
-  RECONCILIATION_BALANCE_TRANSACTION_BATCH_SIZE: z.coerce
+  PROJECTOR_BALANCE_TRANSACTION_BATCH_SIZE: z.coerce
     .number()
     .int()
     .min(1)
     .max(10_000)
     .default(500),
-  RECONCILIATION_POLL_SECONDS: z.coerce
+  PROJECTOR_POLL_SECONDS: z.coerce
     .number()
     .int()
     .min(1)

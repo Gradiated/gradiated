@@ -47,13 +47,13 @@ export {
 } from "./organizations/service.js";
 export { createValkeyServingProjector } from "./serving/valkey-projector.js";
 export {
-  createServingReconciliationReader,
+  createServingProjectionReader,
   type BalanceProjectionTransaction,
   type BalanceTransactionCursor,
   type CredentialProjection,
   type ServingProjectionSnapshot,
-  type ServingReconciliationReader,
-} from "./serving/reconciliation-reader.js";
+  type ServingProjectionReader,
+} from "./serving/projection-reader.js";
 export {
   ControlServiceError,
   createWorkspaceApiKeyService,

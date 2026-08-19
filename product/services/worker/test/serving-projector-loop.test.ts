@@ -1,13 +1,13 @@
 import type {
   ServingProjector,
   ServingProjectionSnapshot,
-  ServingReconciliationReader,
+  ServingProjectionReader,
 } from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
 import {
-  reconcileServingStatePass,
-  runServingReconciliationLoop,
-} from "../src/serving-reconciliation-loop.js";
+  projectServingStatePass,
+  runServingProjectorLoop,
+} from "../src/serving-projector-loop.js";
 
 const firstTransaction = {
   amount: 100n,
@@ -81,9 +81,9 @@ const projector = (): ServingProjector => ({
   projectWorkspace: vi.fn(async () => undefined),
 });
 
-describe("serving-state reconciliation", () => {
+describe("serving-state projector", () => {
   it("refreshes current projections and pages every eligible balance transaction", async () => {
-    const reader: ServingReconciliationReader = {
+    const reader: ServingProjectionReader = {
       getProjectionSnapshot: vi.fn(async () => snapshot),
       getBalanceTransactions: vi
         .fn()
@@ -92,7 +92,7 @@ describe("serving-state reconciliation", () => {
     };
     const target = projector();
 
-    await expect(reconcileServingStatePass(reader, target, 2)).resolves.toEqual(
+    await expect(projectServingStatePass(reader, target, 2)).resolves.toEqual(
       {
         accounts: 1,
         balanceTransactions: 3,
@@ -132,7 +132,7 @@ describe("serving-state reconciliation", () => {
 
   it("starts each periodic pass from the first transaction", async () => {
     const abortController = new AbortController();
-    const reader: ServingReconciliationReader = {
+    const reader: ServingProjectionReader = {
       getProjectionSnapshot: vi.fn(async () => ({
         accounts: [],
         credentials: [],
@@ -147,7 +147,7 @@ describe("serving-state reconciliation", () => {
       }
     });
 
-    await runServingReconciliationLoop(
+    await runServingProjectorLoop(
       reader,
       projector(),
       {

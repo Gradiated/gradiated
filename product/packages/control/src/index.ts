@@ -3,6 +3,20 @@ export {
   type ControlDatabase,
   type ControlDatabaseClient,
 } from "./db/client.js";
+export {
+  clickHouseRuntimeEnvironmentSchema,
+  createClickHouseRuntimeClient,
+  parseClickHouseRuntimeEnvironment,
+  type ClickHouseRuntimeEnvironment,
+} from "./clickhouse/client.js";
+export {
+  clickHouseGenerationInsertSchema,
+  createGenerationWriter,
+  storedGenerationPropertiesSchema,
+  type ClickHouseGenerationInsert,
+  type GenerationWriter,
+  type StoredGenerationProperties,
+} from "./clickhouse/generation-ingestion.js";
 export { betterAuthSchema } from "./db/schema/auth.js";
 export {
   createCatalogBillingService,

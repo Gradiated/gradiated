@@ -17,13 +17,15 @@ export {
 } from "./organizations.js";
 export { ProblemSchema, problemContent, type Problem } from "./http/problem.js";
 export {
-  ModelCapacityEntrySchema,
   ModelListSchema,
   ModelParameterDescriptorSchema,
   ModelPricingEntrySchema,
+  ModelPropertiesInputSchema,
   ModelPropertiesSchema,
   ModelSchema,
   type Model,
+  type ModelParameterDescriptor,
+  type ModelPricingEntry,
   type ModelProperties,
   type ModelPropertiesInput,
 } from "./models.js";

@@ -247,7 +247,8 @@ export interface components {
       updated_at: string;
     };
     ModelProperties: {
-      schema_version: number;
+      /** @enum {number} */
+      schema_version: 1;
       description: string;
       /**
        * Format: date-time
@@ -255,18 +256,69 @@ export interface components {
        */
       released_at: string | null;
       hugging_face_id: string | null;
-      quantization: string | null;
+      /** @enum {string|null} */
+      quantization:
+        | "int4"
+        | "int8"
+        | "fp4"
+        | "mxfp4"
+        | "nvfp4"
+        | "fp6"
+        | "fp8"
+        | "mxfp8"
+        | "fp16"
+        | "bf16"
+        | "fp32"
+        | null;
       tokenizer: string | null;
       input_modalities: {
         /** @enum {string} */
         type: "text";
+        supported_inputs: {
+          max_context_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+          max_prompt_length: {
+            value: number;
+            /** @enum {string} */
+            unit: "token";
+          };
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "prompt" | "cached_prompt" | "cache_write";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
       }[];
       output_modalities: {
         /** @enum {string} */
         type: "text";
+        max_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        default_length: {
+          value: number;
+          /** @enum {string} */
+          unit: "token";
+        };
+        streaming: boolean;
+        supported_parameters: {
+          [key: string]: components["schemas"]["ModelParameterDescriptor"];
+        };
+        pricing: {
+          /** @enum {string} */
+          type: "completion" | "internal_reasoning";
+          /** @enum {string} */
+          unit: "token";
+          cost: number;
+        }[];
       }[];
-      pricing: components["schemas"]["ModelPricingEntry"][];
-      capacity: components["schemas"]["ModelCapacityEntry"][];
       passthrough_parameters: {
         [key: string]: components["schemas"]["ModelParameterDescriptor"];
       };
@@ -274,31 +326,36 @@ export interface components {
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
        */
-      deprecation_at: string | null;
-      /** @default false */
-      is_free: boolean;
-      /** @default 0 */
-      discount_to_user: number;
-      openrouter: {
-        slug: string;
-      } | null;
+      deprecation_date: string | null;
     };
-    ModelPricingEntry: {
-      /** @enum {string} */
-      unit: "input_token" | "output_token";
-      cost: number;
-    };
-    ModelCapacityEntry: {
-      /** @enum {string} */
-      metric: "context_tokens" | "max_output_tokens";
-      value: number;
-    };
-    ModelParameterDescriptor: {
-      /** @enum {string} */
-      type: "boolean" | "integer" | "number" | "string";
-      minimum?: number;
-      maximum?: number;
-    };
+    ModelParameterDescriptor:
+      | {
+          /** @enum {string} */
+          type: "range";
+          min: number;
+          max: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "integer";
+          min: number;
+          max: number;
+          /** @enum {string} */
+          unit?: "token";
+        }
+      | {
+          /** @enum {string} */
+          type: "boolean";
+        }
+      | {
+          /** @enum {string} */
+          type: "enum";
+          values: (string | number | boolean)[];
+        }
+      | {
+          /** @enum {string} */
+          type: "unknown";
+        };
     BillingAccount: {
       /**
        * Format: uuid

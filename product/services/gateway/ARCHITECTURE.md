@@ -245,10 +245,11 @@ schemas, structured-output formats, or SGLang extensions. It rejects malformed
 JSON, a non-object body, duplicate top-level keys, and invalid gateway-owned
 fields, but it never silently drops or coerces a caller field.
 
-If neither output-token field is present, the gateway uses an operational
-default of 1,024 capped by the model's advertised maximum. This effective
-ceiling is used for bounds and admission; other omitted parameters retain the
-pinned runtime/model defaults.
+If neither output-token field is present, the gateway uses the text output
+modality's projected `default_length`. The control-plane Zod write schema
+materializes 1,024 tokens capped by the model's `max_length`, so Rust never
+invents this catalog default. The effective ceiling is used for bounds and
+admission; other omitted parameters retain the pinned runtime/model defaults.
 
 ### 5. Exact model and parameter qualification
 
@@ -260,9 +261,10 @@ pinned runtime/model defaults.
    `GatewayModel` value.
 6. Select the first valid `available` deployment in projection order; reject a
    missing, malformed, or empty route set.
-7. Read the model's `passthrough_parameters` descriptor map.
-8. Validate every non-envelope top-level field against that model-specific
-   map. Reject fields the selected model does not advertise with
+7. Read the text output modality's `supported_parameters` and the model's
+   request-scoped `passthrough_parameters` maps.
+8. Validate every non-envelope top-level field against those model-specific
+   allowlists. Reject fields the selected model does not advertise with
    `400 unsupported_parameter`.
 9. Apply the descriptor's outer type, range, enum, and size checks without
    recreating every nested OpenAI or SGLang type in Rust.
@@ -302,11 +304,11 @@ digest-covered release field and matching gateway/SGLang conformance.
    generation-prompt semantics used by SGLang.
 2. Tokenize the rendered input locally in the gateway process on CPU and
    require a valid `input_tokens` count.
-3. Read `context_tokens` and `max_output_tokens` from the captured model
-   properties.
+3. Read text input `supported_inputs.max_context_length` and text output
+   `max_length` from the captured model properties.
 4. Require the effective output-token ceiling to be at most
-   `max_output_tokens`.
-5. Require `input_tokens + effective_output_tokens <= context_tokens` using
+   output `max_length`.
+5. Require `input_tokens + effective_output_tokens <= max_context_length` using
    checked arithmetic.
 6. Return `400 context_length_exceeded` when a token bound fails.
 
@@ -376,15 +378,15 @@ stopping an invoiced organization.
 
 Initial operational defaults and requirements are:
 
-| Setting                                  |                       Value |
-| ---------------------------------------- | --------------------------: |
-| request-body ceiling                     |      8 MB (8,000,000 bytes) |
-| default `max_tokens`                     |                       1,024 |
-| total-generation timeout                 |                 300 seconds |
-| lease finalization margin                |                  60 seconds |
-| expired-lease cleanup grace              |                   5 minutes |
-| maximum prepaid organization concurrency |                          50 |
-| balance per concurrency slot             | 1,000,000,000 nano-USD ($1) |
+| Setting                                  |                        Value |
+| ---------------------------------------- | ---------------------------: |
+| request-body ceiling                     |       8 MB (8,000,000 bytes) |
+| normalized output `default_length`       | 1,024 capped by `max_length` |
+| total-generation timeout                 |                  300 seconds |
+| lease finalization margin                |                   60 seconds |
+| expired-lease cleanup grace              |                    5 minutes |
+| maximum prepaid organization concurrency |                           50 |
+| balance per concurrency slot             |  1,000,000,000 nano-USD ($1) |
 
 Production validates every value at startup. The settlement-backlog ceiling is
 required production configuration rather than a silent default.
@@ -440,7 +442,7 @@ The gateway constructs a new qualified upstream request. It does not forward
 the customer's raw JSON object.
 
 The upstream body contains the gateway-owned envelope, every JSON field
-qualified by the exact model's `passthrough_parameters`, the effective bounded
+qualified by the exact model's parameter allowlists, the effective bounded
 output-token ceiling, and runtime-required usage options. For streaming, the
 gateway always sends SGLang `stream_options.include_usage = true` and the
 private extension `stream_options.continuous_usage_stats = true`, regardless
@@ -586,6 +588,7 @@ SGLang usage is normalized into:
 ```text
 input_tokens
 cached_input_tokens
+cache_write_tokens
 output_tokens
 reasoning_tokens
 ```
@@ -597,36 +600,39 @@ total. A mismatch is a runtime-contract failure rather than a value the gateway
 silently repairs.
 
 Until reasoning behavior is qualified and advertised, reasoning-specific
-request fields are rejected and `reasoning_tokens` remains zero. The same rule
-applies to cached-input billing until SGLang supplies authoritative cached
-usage and the catalog contains its price component.
+request fields are rejected and `reasoning_tokens` remains zero. Cached-input
+and cache-write quantities likewise remain zero until SGLang supplies their
+authoritative usage and the exact behavior is qualified.
 
 ### 16. Pricing and charge calculation
 
 During exact-model qualification, before admission or SGLang dispatch, the
-gateway captures the effective unit prices and discount from the validated
-`GatewayModel` value already read from Valkey. Those prices become immutable
-request state in `GenerationContext`. The gateway never refetches model pricing
-after generation.
+gateway captures the effective unit prices from the validated `GatewayModel`
+value already read from Valkey. Those prices become immutable request state in
+`GenerationContext`. The gateway never refetches model pricing after
+generation. It does not supply missing catalog defaults: the control-plane Zod
+write schema has already normalized the PostgreSQL document and its Valkey
+projection.
 
 Pricing at finalization is a pure function over those captured prices and
 normalized usage. It uses checked integer nano-USD arithmetic and emits every
 configured component, including zero-quantity or zero-price components.
 
-| Price unit           | Quantity                                                             |
-| -------------------- | -------------------------------------------------------------------- |
-| `request`            | one                                                                  |
-| `input_token`        | all input tokens, or uncached input when a cached-input price exists |
-| `cached_input_token` | cached input tokens                                                  |
-| `output_token`       | visible output tokens                                                |
-| `reasoning_token`    | separately reported reasoning tokens                                 |
+| Model price type     | Quantity                                                                        |
+| -------------------- | ------------------------------------------------------------------------------- |
+| `prompt`             | all input tokens, or uncached input when `cached_prompt` exists                 |
+| `cached_prompt`      | cached input tokens                                                             |
+| `cache_write`        | cache-write tokens when authoritatively reported                                |
+| `completion`         | all completion tokens, or non-reasoning output when `internal_reasoning` exists |
+| `internal_reasoning` | separately reported reasoning tokens                                            |
 
 For every component, `amount = quantity * unit_price`, and component amounts
-must sum exactly to `usage.charge`. `is_free` produces zero unit prices. A
-catalog discount uses exact decimal arithmetic; if the effective unit price
-cannot be represented as an integer nano-USD value, the model is not ready for
-serving. Overflow or inconsistent pricing is a configuration error, never a
-wrapped, rounded, or silently truncated amount.
+must sum exactly to `usage.charge`. The normalized model projection always
+contains `prompt`, `cached_prompt`, and `completion`; defaulted cached-input
+pricing equals prompt pricing. A separate reasoning component exists whenever
+reasoning is advertised. A free local model uses explicit zero-cost required
+pricing entries. Overflow or inconsistent pricing is a configuration error,
+never a wrapped, rounded, or silently truncated amount.
 
 A catalog price change affects only requests that qualify after the new
 `GatewayModel` has been projected to Valkey. Already admitted requests retain
@@ -853,8 +859,8 @@ pinned production CUDA SGLang image, tokenizer and exact Kimi K3 revision.
 The TypeScript contracts package authors:
 
 - the small gateway-owned Chat Completions envelope;
-- the closed parameter-descriptor grammar used by each model's
-  `passthrough_parameters` map;
+- the closed parameter-descriptor grammar used by each model's supported and
+  pass-through parameter maps;
 - strict Chat Completions response schemas;
 - streaming event schemas;
 - provider `/v1/models` schema version `2.4`;

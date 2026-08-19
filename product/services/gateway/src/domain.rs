@@ -167,18 +167,27 @@ mod tests {
                 "hugging_face_id": null,
                 "quantization": null,
                 "tokenizer": null,
-                "input_modalities": [{"type": "text"}],
-                "output_modalities": [{"type": "text"}],
-                "pricing": [{"unit": "input_token", "cost": 0}],
-                "capacity": [
-                    {"metric": "context_tokens", "value": 4096},
-                    {"metric": "max_output_tokens", "value": 1024}
-                ],
+                "input_modalities": [{
+                    "type": "text",
+                    "supported_inputs": {
+                        "max_context_length": {"value": 4096, "unit": "token"},
+                        "max_prompt_length": {"value": 4096, "unit": "token"}
+                    },
+                    "pricing": [
+                        {"type": "prompt", "unit": "token", "cost": 0},
+                        {"type": "cached_prompt", "unit": "token", "cost": 0}
+                    ]
+                }],
+                "output_modalities": [{
+                    "type": "text",
+                    "max_length": {"value": 1024, "unit": "token"},
+                    "default_length": {"value": 1024, "unit": "token"},
+                    "streaming": true,
+                    "supported_parameters": {},
+                    "pricing": [{"type": "completion", "unit": "token", "cost": 0}]
+                }],
                 "passthrough_parameters": {},
-                "deprecation_at": null,
-                "is_free": true,
-                "discount_to_user": 0,
-                "openrouter": null
+                "deprecation_date": null
             }))
             .unwrap(),
             deployments,

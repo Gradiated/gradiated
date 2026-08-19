@@ -71,7 +71,7 @@ importers:
         specifier: 4.4.3
         version: 4.4.3
 
-  services/api:
+  packages/valkey:
     dependencies:
       "@aws-sdk/credential-provider-node":
         specifier: 3.972.80
@@ -79,24 +79,6 @@ importers:
       "@aws-sdk/util-format-url":
         specifier: 3.972.45
         version: 3.972.45
-      "@gradiated/config":
-        specifier: workspace:*
-        version: link:../../packages/config
-      "@gradiated/contracts":
-        specifier: workspace:*
-        version: link:../../packages/contracts
-      "@gradiated/control":
-        specifier: workspace:*
-        version: link:../../packages/control
-      "@hono/node-server":
-        specifier: 2.1.1
-        version: 2.1.1(hono@4.13.2)
-      "@hono/zod-openapi":
-        specifier: 1.6.0
-        version: 1.6.0(hono@4.13.2)(zod@4.4.3)
-      "@scalar/hono-api-reference":
-        specifier: 0.11.14
-        version: 0.11.14(hono@4.13.2)
       "@smithy/hash-node":
         specifier: 4.5.2
         version: 4.5.2
@@ -106,6 +88,33 @@ importers:
       "@smithy/signature-v4":
         specifier: 5.7.2
         version: 5.7.2
+      redis:
+        specifier: 5.8.2
+        version: 5.8.2
+
+  services/api:
+    dependencies:
+      "@gradiated/config":
+        specifier: workspace:*
+        version: link:../../packages/config
+      "@gradiated/contracts":
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      "@gradiated/control":
+        specifier: workspace:*
+        version: link:../../packages/control
+      "@gradiated/valkey":
+        specifier: workspace:*
+        version: link:../../packages/valkey
+      "@hono/node-server":
+        specifier: 2.1.1
+        version: 2.1.1(hono@4.13.2)
+      "@hono/zod-openapi":
+        specifier: 1.6.0
+        version: 1.6.0(hono@4.13.2)(zod@4.4.3)
+      "@scalar/hono-api-reference":
+        specifier: 0.11.14
+        version: 0.11.14(hono@4.13.2)
       better-auth:
         specifier: 1.6.29
         version: 1.6.29(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@types/pg@8.21.0)(kysely@0.29.5)(pg@8.23.0))(pg@8.23.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.10(@types/node@20.19.43)(vite@8.2.1(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)))
@@ -235,6 +244,21 @@ importers:
         version: 8.2.1(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
   services/gateway: {}
+
+  services/worker:
+    dependencies:
+      "@gradiated/contracts":
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      "@gradiated/control":
+        specifier: workspace:*
+        version: link:../../packages/control
+      "@gradiated/valkey":
+        specifier: workspace:*
+        version: link:../../packages/valkey
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
 packages:
   "@asteasolutions/zod-to-openapi@9.1.0":

@@ -1,10 +1,28 @@
 use std::collections::HashMap;
 
+use async_trait::async_trait;
 use redis::{cluster::ClusterClient, cluster_async::ClusterConnection, FromRedisValue};
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace};
+
+#[async_trait]
+pub trait ServingState: Send + Sync {
+    async fn credential(
+        &self,
+        digest_hex: &str,
+    ) -> Result<Option<GatewayCredential>, ServingStateError>;
+    async fn workspace(
+        &self,
+        workspace_id: Uuid,
+    ) -> Result<Option<GatewayWorkspace>, ServingStateError>;
+    async fn account(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<Option<GatewayAccount>, ServingStateError>;
+    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError>;
+}
 
 #[derive(Clone)]
 pub struct ValkeyServingState {
@@ -92,6 +110,12 @@ impl ValkeyServingState {
                 })
             })
             .transpose()?;
+        if let Some(model) = &model {
+            model
+                .properties
+                .validate_for_serving()
+                .map_err(ServingStateError::InvalidModelProperties)?;
+        }
         if model.as_ref().is_some_and(|model| model.id != model_id) {
             return Err(ServingStateError::MismatchedModelId);
         }
@@ -123,6 +147,34 @@ impl ValkeyServingState {
     }
 }
 
+#[async_trait]
+impl ServingState for ValkeyServingState {
+    async fn credential(
+        &self,
+        digest_hex: &str,
+    ) -> Result<Option<GatewayCredential>, ServingStateError> {
+        ValkeyServingState::credential(self, digest_hex).await
+    }
+
+    async fn workspace(
+        &self,
+        workspace_id: Uuid,
+    ) -> Result<Option<GatewayWorkspace>, ServingStateError> {
+        ValkeyServingState::workspace(self, workspace_id).await
+    }
+
+    async fn account(
+        &self,
+        organization_id: Uuid,
+    ) -> Result<Option<GatewayAccount>, ServingStateError> {
+        ValkeyServingState::account(self, organization_id).await
+    }
+
+    async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
+        ValkeyServingState::model(self, model_id).await
+    }
+}
+
 #[derive(Debug, Error)]
 pub enum ServingStateError {
     #[error("Valkey operation failed: {0}")]
@@ -140,6 +192,8 @@ pub enum ServingStateError {
     MissingIndexedModel,
     #[error("GatewayModel ID does not match its Valkey key")]
     MismatchedModelId,
+    #[error("GatewayModel properties are invalid: {0}")]
+    InvalidModelProperties(#[from] crate::model::ModelPropertiesError),
 }
 
 #[cfg(test)]

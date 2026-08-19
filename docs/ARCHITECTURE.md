@@ -224,8 +224,8 @@ are not gated or concurrency-limited by their accounting balance. It renders
 and tokenizes the qualified request locally on CPU using the
 exact tokenizer revision declared by the selected Valkey deployment record, then
 enforces the model's context bound before admission. The gateway keeps only a
-small typed request envelope; the model's Valkey-projected
-`passthrough_parameters` map qualifies the remaining JSON fields without a
+small typed request envelope; the model's Valkey-projected text-output
+`supported_parameters` and request-scoped `passthrough_parameters` maps qualify the remaining JSON fields without a
 gateway-wide model schema. Each concurrency slot represents
 a configured amount used only to make prepaid concurrency fall proportionally
 with the remaining balance. It is not a reservation or worst-case request-cost

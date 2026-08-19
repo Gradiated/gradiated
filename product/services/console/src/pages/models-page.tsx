@@ -5,11 +5,13 @@ import { listModels, type Model } from "@/api/queries";
 import { AppShell } from "@/components/app-shell";
 import { useProductContext } from "@/hooks/use-product-context";
 
-const pricePerMillion = (
-  model: Model,
-  unit: "input_token" | "output_token",
-) => {
-  const price = model.properties.pricing.find((entry) => entry.unit === unit);
+const pricePerMillion = (model: Model, unit: "prompt" | "completion") => {
+  const modality =
+    unit === "prompt"
+      ? model.properties.input_modalities[0]
+      : model.properties.output_modalities[0];
+  if (!modality) return "—";
+  const price = modality.pricing.find((entry) => entry.type === unit);
   if (!price) return "—";
   return new Intl.NumberFormat(undefined, {
     style: "currency",
@@ -18,11 +20,6 @@ const pricePerMillion = (
     maximumFractionDigits: 2,
   }).format(price.cost / 1_000);
 };
-
-const capacity = (
-  model: Model,
-  metric: "context_tokens" | "max_output_tokens",
-) => model.properties.capacity.find((entry) => entry.metric === metric)?.value;
 
 export const ModelsPage = () => {
   const context = useProductContext();
@@ -95,11 +92,11 @@ export const ModelsPage = () => {
                     <div className="flex gap-6 text-sm">
                       <Price
                         label="Input"
-                        value={pricePerMillion(model, "input_token")}
+                        value={pricePerMillion(model, "prompt")}
                       />
                       <Price
                         label="Output"
-                        value={pricePerMillion(model, "output_token")}
+                        value={pricePerMillion(model, "completion")}
                       />
                     </div>
                   </div>
@@ -110,12 +107,16 @@ export const ModelsPage = () => {
                     <dl className="grid grid-cols-2 gap-x-8 gap-y-2 text-sm">
                       <Metric
                         label="Context"
-                        value={formatTokens(capacity(model, "context_tokens"))}
+                        value={formatTokens(
+                          model.properties.input_modalities[0]?.supported_inputs
+                            .max_context_length.value,
+                        )}
                       />
                       <Metric
                         label="Max output"
                         value={formatTokens(
-                          capacity(model, "max_output_tokens"),
+                          model.properties.output_modalities[0]?.max_length
+                            .value,
                         )}
                       />
                     </dl>

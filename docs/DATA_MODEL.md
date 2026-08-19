@@ -213,26 +213,65 @@ Global hosted-model catalog. It is not organization-scoped. The primary key is t
 | `created_at` | timestamptz | no   | Creation time                                |
 | `updated_at` | timestamptz | no   | Last mutation time                           |
 
-`ModelProperties` follows the structure of the OpenRouter provider model document where practical, while retaining public source metadata and exact integer money. Exact deployed model and tokenizer artifacts belong to `model_deployments`, not to this customer-facing document:
+`ModelProperties` is a closed, versioned Zod document inspired by OpenRouter's
+current provider schema. It keeps model capabilities, limits, and prices in the
+same modality-owned structure used to advertise the model, without storing the
+OpenRouter wire response verbatim. Exact deployed model and tokenizer artifacts
+belong to `model_deployments`, not to this customer-facing document.
 
-| Property                 | Type               | Rules                                                        |
-| ------------------------ | ------------------ | ------------------------------------------------------------ |
-| `description`            | string             | Bounded customer-facing description                          |
-| `released_at`            | timestamp nullable | Upstream model release time                                  |
-| `hugging_face_id`        | string nullable    | Upstream repository identity                                 |
-| `quantization`           | string nullable    | OpenRouter-compatible quantization                           |
-| `tokenizer`              | string nullable    | Tokenizer family exposed to OpenRouter                       |
-| `input_modalities`       | input-modality[]   | Nonempty typed modality documents                            |
-| `output_modalities`      | output-modality[]  | Nonempty typed modality documents                            |
-| `pricing`                | pricing-entry[]    | Request-scoped prices only                                   |
-| `capacity`               | capacity-entry[]   | Advertised request-scoped capacity                           |
-| `passthrough_parameters` | descriptor map     | Closed request-scoped passthrough parameters                 |
-| `deprecation_at`         | timestamp nullable | Optional scheduled retirement                                |
-| `is_free`                | boolean            | Default false                                                |
-| `discount_to_user`       | decimal            | Below one; default zero                                      |
-| `openrouter`             | object nullable    | Optional canonical `slug` when it differs from this row's ID |
+| Property                 | Type                    | Rules                                                        |
+| ------------------------ | ----------------------- | ------------------------------------------------------------ |
+| `schema_version`         | integer                 | Initially `1`                                                |
+| `description`            | string                  | Bounded customer-facing description                          |
+| `released_at`            | timestamp nullable      | Upstream model release time                                  |
+| `hugging_face_id`        | string nullable         | Upstream repository identity                                 |
+| `quantization`           | string nullable         | Closed OpenRouter-compatible quantization                    |
+| `tokenizer`              | string nullable         | Tokenizer family exposed to OpenRouter                       |
+| `input_modalities`       | input-modality[]        | Nonempty typed modality documents                            |
+| `output_modalities`      | output-modality[]       | Nonempty typed modality documents                            |
+| `passthrough_parameters` | capability-descriptor map | Bounded request-scoped extension allowlist                 |
+| `deprecation_date`       | timestamp nullable      | Optional scheduled retirement                                |
 
-Each input/output modality owns its typed constraints, supported parameters, modality-scoped pricing and advertised capacity. Capability descriptors use the OpenRouter-compatible range, integer, boolean, enum, array, object or unknown grammar. `passthrough_parameters` is the exact model's public request allowlist, not a gateway-wide Rust request schema: the gateway validates descriptor-level types and bounds, preserves qualified JSON values, and leaves deep tool, content, structured-output and cross-field semantics to the pinned SGLang/model combination. Unadvertised fields are rejected rather than silently dropped or blindly exposed from SGLang's larger private protocol. Internal prices use nonnegative integer `cost` under the global nano-USD convention. The provider response converts these values to OpenRouter's decimal-string USD-per-unit pricing fields. This is a closed domain document, not arbitrary metadata.
+The launch text input modality contains `supported_inputs.max_context_length`
+and `max_prompt_length`, both expressed as positive token measures. Its pricing
+entries use `prompt`, `cached_prompt`, and optional `cache_write`. The launch
+text output modality contains its positive token `max_length`, positive
+`default_length`, a `streaming` flag, `supported_parameters`, and pricing
+entries for `completion` and optional `internal_reasoning`. `default_length`
+cannot exceed `max_length`. Each pricing entry has `unit = token` and a
+nonnegative integer `cost` in nano-USD. Pricing types are unique within their
+modality; `prompt`, `cached_prompt`, and `completion` are present in every
+stored document.
+
+The Zod write schema is the normalization boundary. Before PostgreSQL is
+written it materializes `schema_version = 1`, nullable catalog metadata,
+`deprecation_date = null`, empty parameter maps, `streaming = true`, and an
+output `default_length` of 1,024 tokens capped by `max_length`. If
+`max_prompt_length` is omitted it becomes `max_context_length`; if
+`cached_prompt` pricing is omitted it becomes the `prompt` price. When the
+model advertises a `reasoning` parameter without a separate
+`internal_reasoning` price, that price becomes the `completion` price. The
+closed stored/read schema then requires this normalized shape. Consequently the
+Valkey projection is complete and the Rust gateway never invents catalog
+defaults or interprets missing fields.
+
+Capability descriptors use the OpenRouter-inspired `range`, `integer`,
+`boolean`, `enum`, or `unknown` grammar. Presence in `supported_parameters` or
+`passthrough_parameters` is the public allowlist. The gateway applies scalar
+bounds when the descriptor directly describes the wire value, preserves
+qualified JSON unchanged, and leaves complex tool, content, structured-output,
+and cross-field semantics to the pinned SGLang/model combination. Unadvertised
+fields are rejected rather than silently dropped or blindly exposed from
+SGLang's larger private protocol.
+
+OpenRouter's `capacity` entries describe measured throughput, not context-window
+or output-length limits. They are omitted at launch until the availability
+service owns measured capacity. The provider response derives `id`, `name`,
+`created`, and `is_ready` from relational model state and converts nano-USD
+prices to exact decimal `cost_usd` strings. Discounts, free variants,
+OpenRouter aliases, datacenter declarations, and compliance declarations are
+not stored until the product implements them. This is a cohesive domain
+document, not arbitrary metadata.
 
 The TypeScript API service owns model changes. After a price or status mutation commits, it reloads the current row from the PostgreSQL primary and synchronously projects it to Valkey before reporting success. A capacity monitor or operator may set `status = 'unavailable'` when qualified GPU capacity is unavailable and restore `available` when service is ready. Rust receives the current `GatewayModel` through Valkey and rejects unavailable, retired or unknown model IDs before GPU work.
 
@@ -430,6 +469,7 @@ Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and init
     charge: integer,
     input_tokens: integer,
     cached_input_tokens: integer,
+    cache_write_tokens: integer,
     output_tokens: integer,
     reasoning_tokens: integer
   },
@@ -451,7 +491,17 @@ Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and init
 }
 ```
 
-`pricing` contains every effective price component used for the generation after discounts, including configured zero-quantity or zero-price components. `unit` is a closed schema-versioned value such as `request`, `input_token`, `cached_input_token`, `output_token` or `reasoning_token`. Under the global nano-USD convention, each component's `amount` is exactly `quantity * unit_price`, and all component amounts sum exactly to `usage.charge`; no monetary rounding policy is needed. This preserves the complete billing calculation when the global model price later changes without copying unrelated model descriptions, capabilities, capacity or availability.
+`pricing` contains every effective price component used for the generation,
+including configured zero-quantity or zero-price components. Terminal generation
+units remain normalized as `input_token`, `cached_input_token`,
+`cache_write_token`, `output_token`, or `reasoning_token`; model-catalog pricing
+types map from `prompt`, `cached_prompt`, `cache_write`, `completion`, and
+`internal_reasoning` respectively. Under the global nano-USD convention, each
+component's `amount` is exactly `quantity * unit_price`, and all component
+amounts sum exactly to `usage.charge`; no monetary rounding policy is needed.
+This preserves the complete billing calculation when the global model price
+later changes without copying unrelated model descriptions, capabilities,
+capacity, or availability.
 
 The application validates the complete properties document before insertion; it is not arbitrary JSON. New optional properties and new closed schema versions do not require a ClickHouse table migration. The initial materialized columns exist because they define tenant filtering, ordering, common status filtering or PostgreSQL settlement. Add another materialized column from a JSON path only when a measured filtering, grouping or indexing pattern justifies it. The original value remains in `properties`, so a materialization is a query optimization rather than another source of truth.
 

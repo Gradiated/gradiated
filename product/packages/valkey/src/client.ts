@@ -5,7 +5,7 @@ import { HttpRequest } from "@smithy/protocol-http";
 import { SignatureV4 } from "@smithy/signature-v4";
 import { createClient, type RedisClientType } from "redis";
 
-type ValkeyEnvironment = {
+export type ValkeyEnvironment = {
   VALKEY_IAM_CACHE_NAME?: string | undefined;
   VALKEY_IAM_REGION?: string | undefined;
   VALKEY_IAM_USER?: string | undefined;

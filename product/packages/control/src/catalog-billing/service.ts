@@ -3,7 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import {
   GatewayModelDeploymentSchema,
-  ModelPropertiesSchema,
+  ModelPropertiesInputSchema,
   type ModelDeploymentRelease,
   type ModelPropertiesInput,
 } from "@gradiated/contracts";
@@ -276,7 +276,7 @@ export const createCatalogBillingService = (
 
     async upsertModel(input) {
       const now = new Date();
-      const properties = ModelPropertiesSchema.parse(input.properties);
+      const properties = ModelPropertiesInputSchema.parse(input.properties);
       const [model] = await database
         .insert(models)
         .values({ ...input, properties, createdAt: now, updatedAt: now })

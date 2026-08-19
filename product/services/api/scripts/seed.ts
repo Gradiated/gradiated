@@ -3,7 +3,7 @@ import {
   createControlDatabase,
   createValkeyServingProjector,
 } from "@gradiated/control";
-import { createClient } from "redis";
+import { createValkeyClient } from "@gradiated/valkey";
 
 const apiUrl = process.env.SEED_API_URL ?? "http://127.0.0.1:3001";
 const databaseUrl =
@@ -100,7 +100,7 @@ if (currentUser.organizations.length === 0) {
 if (!organizationId) throw new Error("Seed organization identity is missing");
 
 const { database, pool } = createControlDatabase(databaseUrl);
-const valkey = createClient({ url: valkeyUrl });
+const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });
 await valkey.connect();
 try {
   const catalogBilling = createCatalogBillingService(
@@ -112,31 +112,36 @@ try {
     name: "Qwen3 0.6B 4-bit",
     status: "available",
     properties: {
-      schema_version: 1,
       description:
         "Pinned small local-development model served with zero prompt and response retention.",
-      released_at: null,
       hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
-      quantization: "4-bit",
+      quantization: "int4",
       tokenizer: "Qwen3",
-      input_modalities: [{ type: "text" }],
-      output_modalities: [{ type: "text" }],
-      pricing: [
-        { unit: "input_token", cost: 0 },
-        { unit: "output_token", cost: 0 },
+      input_modalities: [
+        {
+          type: "text",
+          supported_inputs: {
+            max_context_length: { value: 32_768, unit: "token" },
+          },
+          pricing: [{ type: "prompt", unit: "token", cost: 0 }],
+        },
       ],
-      capacity: [
-        { metric: "context_tokens", value: 32_768 },
-        { metric: "max_output_tokens", value: 4_096 },
+      output_modalities: [
+        {
+          type: "text",
+          max_length: { value: 4_096, unit: "token" },
+          supported_parameters: {
+            max_tokens: {
+              type: "integer",
+              min: 1,
+              max: 4_096,
+              unit: "token",
+            },
+            temperature: { type: "range", min: 0, max: 2 },
+          },
+          pricing: [{ type: "completion", unit: "token", cost: 0 }],
+        },
       ],
-      passthrough_parameters: {
-        max_tokens: { type: "integer", minimum: 1, maximum: 4_096 },
-        stream: { type: "boolean" },
-        temperature: { type: "number", minimum: 0, maximum: 2 },
-      },
-      deprecation_at: null,
-      is_free: true,
-      openrouter: null,
     },
   });
   await catalogBilling.upsertModelDeployment({

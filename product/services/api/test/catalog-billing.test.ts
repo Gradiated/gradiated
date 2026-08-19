@@ -1,32 +1,53 @@
 import { describe, expect, it } from "vitest";
 
+import type { ModelProperties } from "@gradiated/contracts";
 import type { CatalogBillingService } from "@gradiated/control";
 
 import { createApp } from "../src/app.js";
 import { authenticated, now, organizationId, user } from "./support.js";
 
-const modelProperties = {
+const modelProperties: ModelProperties = {
   schema_version: 1,
   description: "Exact Kimi K3 inference.",
   released_at: null,
   hugging_face_id: "moonshotai/Kimi-K3",
   quantization: null,
   tokenizer: "Kimi",
-  input_modalities: [{ type: "text" as const }],
-  output_modalities: [{ type: "text" as const }],
-  pricing: [
-    { unit: "input_token" as const, cost: 2_800 },
-    { unit: "output_token" as const, cost: 14_000 },
+  input_modalities: [
+    {
+      type: "text" as const,
+      supported_inputs: {
+        max_context_length: { value: 262_144, unit: "token" as const },
+        max_prompt_length: { value: 262_144, unit: "token" as const },
+      },
+      pricing: [
+        { type: "prompt" as const, unit: "token" as const, cost: 2_800 },
+        {
+          type: "cached_prompt" as const,
+          unit: "token" as const,
+          cost: 2_800,
+        },
+      ],
+    },
   ],
-  capacity: [
-    { metric: "context_tokens" as const, value: 262_144 },
-    { metric: "max_output_tokens" as const, value: 32_768 },
+  output_modalities: [
+    {
+      type: "text" as const,
+      max_length: { value: 32_768, unit: "token" as const },
+      default_length: { value: 1_024, unit: "token" as const },
+      streaming: true,
+      supported_parameters: {},
+      pricing: [
+        {
+          type: "completion" as const,
+          unit: "token" as const,
+          cost: 14_000,
+        },
+      ],
+    },
   ],
-  passthrough_parameters: { stream: { type: "boolean" as const } },
-  deprecation_at: null,
-  is_free: false,
-  discount_to_user: 0,
-  openrouter: null,
+  passthrough_parameters: {},
+  deprecation_date: null,
 };
 
 const catalogBillingService = (): CatalogBillingService => ({
@@ -91,7 +112,10 @@ describe("catalog and billing routes", () => {
         {
           id: "moonshotai/kimi-k3",
           status: "available",
-          properties: { pricing: [{ cost: 2_800 }, { cost: 14_000 }] },
+          properties: {
+            input_modalities: [{ pricing: [{ cost: 2_800 }, { cost: 2_800 }] }],
+            output_modalities: [{ pricing: [{ cost: 14_000 }] }],
+          },
         },
       ],
     });

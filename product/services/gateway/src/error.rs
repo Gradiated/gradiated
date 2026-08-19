@@ -9,6 +9,7 @@ use serde::Serialize;
 pub enum GatewayError {
     InvalidRequest { param: Option<String> },
     UnsupportedParameter { param: Option<String> },
+    ContextLengthExceeded { param: Option<String> },
     InvalidApiKey,
     InsufficientBalance,
     ModelNotFound,
@@ -29,11 +30,17 @@ impl GatewayError {
         }
     }
 
+    pub fn context_length_exceeded(param: &str) -> Self {
+        Self::ContextLengthExceeded {
+            param: bounded_param(Some(param)),
+        }
+    }
+
     pub fn status(&self) -> StatusCode {
         match self {
-            Self::InvalidRequest { .. } | Self::UnsupportedParameter { .. } => {
-                StatusCode::BAD_REQUEST
-            }
+            Self::InvalidRequest { .. }
+            | Self::UnsupportedParameter { .. }
+            | Self::ContextLengthExceeded { .. } => StatusCode::BAD_REQUEST,
             Self::InvalidApiKey => StatusCode::UNAUTHORIZED,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
@@ -45,6 +52,7 @@ impl GatewayError {
         match self {
             Self::InvalidRequest { .. } => "invalid_request",
             Self::UnsupportedParameter { .. } => "unsupported_parameter",
+            Self::ContextLengthExceeded { .. } => "context_length_exceeded",
             Self::InvalidApiKey => "invalid_api_key",
             Self::InsufficientBalance => "insufficient_balance",
             Self::ModelNotFound => "model_not_found",
@@ -67,6 +75,9 @@ impl GatewayError {
             Self::UnsupportedParameter { .. } => {
                 "The requested model does not support this parameter."
             }
+            Self::ContextLengthExceeded { .. } => {
+                "The requested token limit exceeds the model limit."
+            }
             Self::InvalidApiKey => "The API key is invalid.",
             Self::InsufficientBalance => "The prepaid balance is insufficient.",
             Self::ModelNotFound => "The requested model was not found.",
@@ -77,9 +88,9 @@ impl GatewayError {
 
     fn param(&self) -> Option<&str> {
         match self {
-            Self::InvalidRequest { param } | Self::UnsupportedParameter { param } => {
-                param.as_deref()
-            }
+            Self::InvalidRequest { param }
+            | Self::UnsupportedParameter { param }
+            | Self::ContextLengthExceeded { param } => param.as_deref(),
             Self::ModelNotFound | Self::ModelUnavailable => Some("model"),
             _ => None,
         }

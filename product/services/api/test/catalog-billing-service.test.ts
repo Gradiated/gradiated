@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { ModelPropertiesInputSchema } from "@gradiated/contracts";
 import {
   createCatalogBillingService,
   createValkeyServingProjector,
@@ -8,6 +9,44 @@ import {
 } from "@gradiated/control";
 
 describe("catalog billing service", () => {
+  it("caps the normalized output default at a small model's maximum", () => {
+    const properties = ModelPropertiesInputSchema.parse({
+      description: "Small model.",
+      input_modalities: [
+        {
+          type: "text",
+          supported_inputs: {
+            max_context_length: { value: 512, unit: "token" },
+          },
+          pricing: [{ type: "prompt", unit: "token", cost: 0 }],
+        },
+      ],
+      output_modalities: [
+        {
+          type: "text",
+          max_length: { value: 512, unit: "token" },
+          pricing: [{ type: "completion", unit: "token", cost: 0 }],
+        },
+      ],
+    });
+
+    expect(properties.output_modalities[0]?.default_length).toEqual({
+      value: 512,
+      unit: "token",
+    });
+    expect(() =>
+      ModelPropertiesInputSchema.parse({
+        ...properties,
+        output_modalities: [
+          {
+            ...properties.output_modalities[0],
+            default_length: { value: 513, unit: "token" },
+          },
+        ],
+      }),
+    ).toThrow();
+  });
+
   it("persists and projects model-property defaults", async () => {
     const now = new Date("2026-08-18T12:00:00.000Z");
     let inserted: Record<string, unknown> | undefined;
@@ -50,42 +89,62 @@ describe("catalog billing service", () => {
       name: "Kimi K3",
       status: "available",
       properties: {
-        schema_version: 1,
         description: "Exact Kimi K3 inference.",
-        released_at: null,
         hugging_face_id: "moonshotai/Kimi-K3",
-        quantization: null,
         tokenizer: "Kimi",
-        input_modalities: [{ type: "text" }],
-        output_modalities: [{ type: "text" }],
-        pricing: [
-          { unit: "input_token", cost: 2_800 },
-          { unit: "output_token", cost: 14_000 },
+        input_modalities: [
+          {
+            type: "text",
+            supported_inputs: {
+              max_context_length: { value: 262_144, unit: "token" },
+            },
+            pricing: [{ type: "prompt", unit: "token", cost: 2_800 }],
+          },
         ],
-        capacity: [
-          { metric: "context_tokens", value: 262_144 },
-          { metric: "max_output_tokens", value: 32_768 },
+        output_modalities: [
+          {
+            type: "text",
+            max_length: { value: 32_768, unit: "token" },
+            supported_parameters: {
+              reasoning: { type: "boolean" },
+            },
+            pricing: [{ type: "completion", unit: "token", cost: 14_000 }],
+          },
         ],
-        passthrough_parameters: {
-          stream: { type: "boolean" },
-        },
-        deprecation_at: null,
-        openrouter: null,
       },
     });
 
-    expect(inserted?.properties).toMatchObject({
-      is_free: false,
-      discount_to_user: 0,
-    });
-    expect(model.properties).toMatchObject({
-      is_free: false,
-      discount_to_user: 0,
-    });
-    expect(projected?.properties).toMatchObject({
-      is_free: false,
-      discount_to_user: 0,
-    });
+    const normalizedProperties = {
+      schema_version: 1,
+      released_at: null,
+      quantization: null,
+      passthrough_parameters: {},
+      deprecation_date: null,
+      input_modalities: [
+        {
+          supported_inputs: {
+            max_prompt_length: { value: 262_144, unit: "token" },
+          },
+          pricing: [
+            { type: "prompt", cost: 2_800 },
+            { type: "cached_prompt", cost: 2_800 },
+          ],
+        },
+      ],
+      output_modalities: [
+        {
+          default_length: { value: 1_024, unit: "token" },
+          streaming: true,
+          pricing: [
+            { type: "completion", cost: 14_000 },
+            { type: "internal_reasoning", cost: 14_000 },
+          ],
+        },
+      ],
+    };
+    expect(inserted?.properties).toMatchObject(normalizedProperties);
+    expect(model.properties).toMatchObject(normalizedProperties);
+    expect(projected?.properties).toMatchObject(normalizedProperties);
     expect(projected?.deployments).toEqual([]);
   });
 
@@ -108,23 +167,33 @@ describe("catalog billing service", () => {
         description: "Local model.",
         released_at: null,
         hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
-        quantization: "4-bit",
+        quantization: "int4",
         tokenizer: "Qwen3",
-        input_modalities: [{ type: "text" }],
-        output_modalities: [{ type: "text" }],
-        pricing: [
-          { unit: "input_token", cost: 0 },
-          { unit: "output_token", cost: 0 },
+        input_modalities: [
+          {
+            type: "text",
+            supported_inputs: {
+              max_context_length: { value: 32_768, unit: "token" },
+              max_prompt_length: { value: 32_768, unit: "token" },
+            },
+            pricing: [
+              { type: "prompt", unit: "token", cost: 0 },
+              { type: "cached_prompt", unit: "token", cost: 0 },
+            ],
+          },
         ],
-        capacity: [
-          { metric: "context_tokens", value: 32_768 },
-          { metric: "max_output_tokens", value: 4_096 },
+        output_modalities: [
+          {
+            type: "text",
+            max_length: { value: 4_096, unit: "token" },
+            default_length: { value: 1_024, unit: "token" },
+            streaming: true,
+            supported_parameters: {},
+            pricing: [{ type: "completion", unit: "token", cost: 0 }],
+          },
         ],
         passthrough_parameters: {},
-        deprecation_at: null,
-        is_free: true,
-        discount_to_user: 0,
-        openrouter: null,
+        deprecation_date: null,
       },
       deployments: [
         {

@@ -14,7 +14,7 @@ import {
   createStripeGateway,
   unavailableBillingPaymentsService,
 } from "./billing/stripe.js";
-import { createValkeyClient } from "./valkey.js";
+import { createValkeyClient } from "@gradiated/valkey";
 
 const environment = parseEnvironment(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);

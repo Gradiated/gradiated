@@ -16,12 +16,16 @@ The runnable service currently provides:
 - an 8 MB request-body ceiling;
 - structured JSON startup logging and graceful shutdown;
 - one atomic Valkey admission script with funded prepaid concurrency,
-  uncapped invoiced admission, settlement-backlog protection, and fixed leases.
+  uncapped invoiced admission, settlement-backlog protection, and fixed leases;
+- closed terminal generation properties, checked nano-USD pricing, and one
+  atomic finalization script that consumes a lease, debits the balance once,
+  and appends the terminal stream event.
 
 The request coordinator and tokenizer components currently cover Chat
 Completions qualification, model selection, and local token bounds. Connecting
-those components to admission, SGLang dispatch, streaming, and settlement are
-the next implementation slices. No fake inference endpoint is used.
+those components to admission and the finalization boundary, then adding SGLang
+dispatch and streaming, are the next implementation slices. No fake inference
+endpoint is used.
 
 ## Run locally
 

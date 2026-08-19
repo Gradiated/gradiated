@@ -17,6 +17,7 @@ pub enum GatewayError {
     ModelNotFound,
     ModelUnavailable,
     ServingStateUnavailable,
+    FinalizationUnavailable,
 }
 
 impl GatewayError {
@@ -47,7 +48,9 @@ impl GatewayError {
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
             Self::ConcurrencyExceeded | Self::SettlementBacklog => StatusCode::TOO_MANY_REQUESTS,
             Self::ModelNotFound | Self::ModelUnavailable => StatusCode::NOT_FOUND,
-            Self::ServingStateUnavailable => StatusCode::SERVICE_UNAVAILABLE,
+            Self::ServingStateUnavailable | Self::FinalizationUnavailable => {
+                StatusCode::SERVICE_UNAVAILABLE
+            }
         }
     }
 
@@ -63,6 +66,7 @@ impl GatewayError {
             Self::ModelNotFound => "model_not_found",
             Self::ModelUnavailable => "model_unavailable",
             Self::ServingStateUnavailable => "serving_state_unavailable",
+            Self::FinalizationUnavailable => "finalization_unavailable",
         }
     }
 
@@ -70,7 +74,7 @@ impl GatewayError {
         match self {
             Self::InvalidApiKey => "authentication_error",
             Self::ConcurrencyExceeded | Self::SettlementBacklog => "rate_limit_error",
-            Self::ServingStateUnavailable => "api_error",
+            Self::ServingStateUnavailable | Self::FinalizationUnavailable => "api_error",
             _ => "invalid_request_error",
         }
     }
@@ -93,6 +97,7 @@ impl GatewayError {
             Self::ModelNotFound => "The requested model was not found.",
             Self::ModelUnavailable => "The requested model is unavailable.",
             Self::ServingStateUnavailable => "Required serving state is unavailable.",
+            Self::FinalizationUnavailable => "Generation finalization is unavailable.",
         }
     }
 

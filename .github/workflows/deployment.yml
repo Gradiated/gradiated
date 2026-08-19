@@ -1,0 +1,400 @@
+name: Production deployment
+
+on:
+  workflow_run:
+    workflows: [Product tests]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Commit to deploy. Leave empty to deploy the selected ref.
+        required: false
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+  id-token: write
+
+concurrency:
+  group: production-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  AWS_REGION: us-east-1
+  AWS_DEPLOY_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
+  CONSOLE_BUCKET: gradiated-prod-console-${{ vars.AWS_ACCOUNT_ID }}
+  CONSOLE_DOMAIN: console.gradiated.com
+  PRODUCT_REPOSITORY: gradiated/prod/product
+  GATEWAY_REPOSITORY: gradiated/prod/gateway
+
+jobs:
+  resolve:
+    name: Resolve source release
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      source_sha: ${{ steps.source.outputs.source_sha }}
+    steps:
+      - id: source
+        name: Select source commit
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_SHA: ${{ github.event.workflow_run.head_sha }}
+          DISPATCH_SHA: ${{ inputs.source_sha }}
+          SELECTED_REF_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          if [[ "${EVENT_NAME}" == "workflow_run" ]]; then
+            source_sha="${WORKFLOW_RUN_SHA}"
+          elif [[ -n "${DISPATCH_SHA}" ]]; then
+            source_sha="${DISPATCH_SHA}"
+          else
+            source_sha="${SELECTED_REF_SHA}"
+          fi
+          if [[ ! "${source_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "The source SHA must contain 40 lowercase hexadecimal characters." >&2
+            exit 1
+          fi
+          echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+
+  build-product:
+    name: Build product image
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    outputs:
+      digest: ${{ steps.resolve-image.outputs.digest }}
+    env:
+      IMAGE_TAG: git-${{ needs.resolve.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.source_sha }}
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: deploy-product-${{ github.run_id }}
+          retry-max-attempts: 20
+          action-timeout-s: 900
+      - id: existing
+        name: Find existing immutable image
+        shell: bash
+        run: |
+          if aws ecr describe-images \
+            --repository-name "${PRODUCT_REPOSITORY}" \
+            --image-ids imageTag="${IMAGE_TAG}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text >/dev/null 2>&1; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+      - if: steps.existing.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v3
+      - if: steps.existing.outputs.exists != 'true'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - if: steps.existing.outputs.exists != 'true'
+        name: Build and push product image
+        uses: docker/build-push-action@v6
+        with:
+          context: product
+          file: product/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.PRODUCT_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=production-product
+          cache-to: type=gha,mode=max,scope=production-product
+      - id: resolve-image
+        name: Resolve product digest
+        shell: bash
+        run: |
+          digest="$(aws ecr describe-images \
+            --repository-name "${PRODUCT_REPOSITORY}" \
+            --image-ids imageTag="${IMAGE_TAG}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text)"
+          if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "ECR returned an invalid product digest." >&2
+            exit 1
+          fi
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+
+  build-gateway:
+    name: Build gateway image
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 45
+    outputs:
+      digest: ${{ steps.resolve-image.outputs.digest }}
+    env:
+      IMAGE_TAG: git-${{ needs.resolve.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.source_sha }}
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: deploy-gateway-${{ github.run_id }}
+          retry-max-attempts: 20
+          action-timeout-s: 900
+      - id: existing
+        name: Find existing immutable image
+        shell: bash
+        run: |
+          if aws ecr describe-images \
+            --repository-name "${GATEWAY_REPOSITORY}" \
+            --image-ids imageTag="${IMAGE_TAG}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text >/dev/null 2>&1; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+          fi
+      - if: steps.existing.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v3
+      - if: steps.existing.outputs.exists != 'true'
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - if: steps.existing.outputs.exists != 'true'
+        name: Build and push gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: product/services/gateway
+          file: product/services/gateway/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/${{ env.GATEWAY_REPOSITORY }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha,scope=production-gateway
+          cache-to: type=gha,mode=max,scope=production-gateway
+      - id: resolve-image
+        name: Resolve gateway digest
+        shell: bash
+        run: |
+          digest="$(aws ecr describe-images \
+            --repository-name "${GATEWAY_REPOSITORY}" \
+            --image-ids imageTag="${IMAGE_TAG}" \
+            --query 'imageDetails[0].imageDigest' \
+            --output text)"
+          if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "ECR returned an invalid gateway digest." >&2
+            exit 1
+          fi
+          echo "digest=${digest}" >> "${GITHUB_OUTPUT}"
+
+  build-console:
+    name: Build and stage console
+    needs: resolve
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.resolve.outputs.source_sha }}
+      - uses: jdx/mise-action@v4.2.3
+      - name: Install product dependencies
+        working-directory: product
+        run: pnpm install --frozen-lockfile
+      - name: Build production console
+        working-directory: product
+        env:
+          VITE_API_URL: https://api.gradiated.com
+        run: pnpm --filter @gradiated/console build
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: deploy-console-stage-${{ github.run_id }}
+          retry-max-attempts: 20
+          action-timeout-s: 900
+      - name: Stage non-entry console files
+        env:
+          SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+        shell: bash
+        run: |
+          distribution="product/services/console/dist"
+          test -f "${distribution}/index.html"
+          if [[ -d "${distribution}/assets" ]]; then
+            aws s3 sync "${distribution}/assets" "s3://${CONSOLE_BUCKET}/assets" \
+              --cache-control 'public,max-age=31536000,immutable' \
+              --only-show-errors
+          fi
+          while IFS= read -r -d '' file; do
+            key="${file#"${distribution}/"}"
+            aws s3 cp "${file}" "s3://${CONSOLE_BUCKET}/${key}" \
+              --cache-control 'no-cache,max-age=0,must-revalidate' \
+              --only-show-errors
+          done < <(find "${distribution}" -maxdepth 1 -type f ! -name index.html -print0)
+          aws s3 cp "${distribution}/index.html" \
+            "s3://${CONSOLE_BUCKET}/releases/${SOURCE_SHA}/index.html" \
+            --cache-control 'no-cache,max-age=0,must-revalidate' \
+            --content-type text/html \
+            --only-show-errors
+      - name: Store console release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-${{ needs.resolve.outputs.source_sha }}
+          path: product/services/console/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  record-release:
+    name: Record immutable release
+    needs: [resolve, build-product, build-gateway, build-console]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      release_commit: ${{ steps.commit.outputs.release_commit }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Update release state
+        env:
+          SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+          PRODUCT_DIGEST: ${{ needs.build-product.outputs.digest }}
+          GATEWAY_DIGEST: ${{ needs.build-gateway.outputs.digest }}
+        run: |
+          git pull --ff-only origin main
+          node tools/deployment/update-release.mjs \
+            --source-sha "${SOURCE_SHA}" \
+            --product-digest "${PRODUCT_DIGEST}" \
+            --gateway-digest "${GATEWAY_DIGEST}"
+          kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
+      - id: commit
+        name: Commit one production release record
+        env:
+          SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+        shell: bash
+        run: |
+          release_paths=(
+            infra/environments/prod/us-east-1/kubernetes/workloads/kustomization.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml
+          )
+          if git diff --quiet -- "${release_paths[@]}"; then
+            echo "Release state already matches ${SOURCE_SHA}."
+          else
+            git config user.name github-actions[bot]
+            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+            git add -- "${release_paths[@]}"
+            git commit -m "deploy(prod): release ${SOURCE_SHA:0:12} [skip ci]"
+            git push origin HEAD:main
+          fi
+          echo "release_commit=$(git rev-parse HEAD)" >> "${GITHUB_OUTPUT}"
+
+  wait-for-argo:
+    name: Wait for Argo rollout
+    needs: [resolve, build-product, build-gateway, record-release]
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 25
+    steps:
+      - uses: jdx/mise-action@v4.2.3
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: deploy-wait-${{ github.run_id }}
+      - name: Connect to production cluster
+        run: aws eks update-kubeconfig --name gradiated-prod --region "${AWS_REGION}"
+      - name: Wait for the recorded release
+        env:
+          SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
+          PRODUCT_DIGEST: ${{ needs.build-product.outputs.digest }}
+          GATEWAY_DIGEST: ${{ needs.build-gateway.outputs.digest }}
+        shell: bash
+        run: |
+          product_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PRODUCT_REPOSITORY}@${PRODUCT_DIGEST}"
+          gateway_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${GATEWAY_REPOSITORY}@${GATEWAY_DIGEST}"
+          deadline=$((SECONDS + 900))
+          while (( SECONDS < deadline )); do
+            api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
+            worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
+            source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
+            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
+              break
+            fi
+            sleep 10
+          done
+          if (( SECONDS >= deadline )); then
+            echo "Argo did not apply the expected release within 15 minutes." >&2
+            exit 1
+          fi
+          kubectl -n gradiated rollout status deployment/api --timeout=10m
+          kubectl -n gradiated rollout status deployment/worker --timeout=10m
+          if kubectl -n gradiated get deployment gateway >/dev/null 2>&1; then
+            deployed_gateway_image="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}')"
+            if [[ "${deployed_gateway_image}" != "${gateway_image}" ]]; then
+              echo "The gateway Deployment does not use the recorded digest." >&2
+              exit 1
+            fi
+            kubectl -n gradiated rollout status deployment/gateway --timeout=10m
+          else
+            echo "The gateway image is recorded but the gateway Deployment is not enabled yet."
+          fi
+
+  publish-console:
+    name: Publish console and verify production
+    needs: [resolve, wait-for-argo]
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: Download console release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: console-${{ needs.resolve.outputs.source_sha }}
+          path: console-dist
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
+          role-session-name: deploy-console-publish-${{ github.run_id }}
+      - name: Publish console entry point
+        id: publish
+        shell: bash
+        run: |
+          distribution_id="$(aws cloudfront list-distributions --output json | jq -r \
+            '.DistributionList.Items[] | select(.Aliases.Items[]? == "console.gradiated.com") | .Id' | head -n 1)"
+          if [[ -z "${distribution_id}" || "${distribution_id}" == "null" ]]; then
+            echo "Could not find the console CloudFront distribution." >&2
+            exit 1
+          fi
+          aws s3 cp console-dist/index.html "s3://${CONSOLE_BUCKET}/index.html" \
+            --cache-control 'no-cache,max-age=0,must-revalidate' \
+            --content-type text/html \
+            --only-show-errors
+          invalidation_id="$(aws cloudfront create-invalidation \
+            --distribution-id "${distribution_id}" \
+            --paths '/*' \
+            --query 'Invalidation.Id' \
+            --output text)"
+          aws cloudfront wait invalidation-completed \
+            --distribution-id "${distribution_id}" \
+            --id "${invalidation_id}"
+      - name: Smoke test production release
+        shell: bash
+        run: |
+          curl --fail --show-error --silent --retry 12 --retry-all-errors --retry-delay 5 \
+            "https://${CONSOLE_DOMAIN}/" --output /tmp/console-index.html
+          cmp console-dist/index.html /tmp/console-index.html
+          curl --fail --show-error --silent --retry 12 --retry-all-errors --retry-delay 5 \
+            "https://${CONSOLE_DOMAIN}/login" --output /tmp/console-login.html
+          cmp console-dist/index.html /tmp/console-login.html
+          curl --fail --show-error --silent --retry 12 --retry-all-errors --retry-delay 5 \
+            https://api.gradiated.com/health/ready

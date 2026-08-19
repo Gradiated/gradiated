@@ -1,16 +1,19 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use redis::{cluster::ClusterClient, cluster_async::ClusterConnection, FromRedisValue, Script};
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    admission::{AdmissionAttempt, AdmissionError, AdmissionLease},
+    admission::{cleanup_cutoff, AdmissionError, AdmissionLease},
     domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace},
+    FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties,
 };
 
 const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
+const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
 
 #[async_trait]
 pub trait ServingState: Send + Sync {
@@ -33,6 +36,7 @@ pub trait ServingState: Send + Sync {
 pub struct ValkeyServingState {
     connection: ClusterConnection,
     admission_script: Script,
+    finalization_script: Script,
 }
 
 impl ValkeyServingState {
@@ -43,6 +47,7 @@ impl ValkeyServingState {
         let state = Self {
             connection,
             admission_script: Script::new(ADMIT_GENERATION_V1),
+            finalization_script: Script::new(FINALIZE_GENERATION_V1),
         };
         state.ping().await?;
         Ok(state)
@@ -150,36 +155,105 @@ impl ValkeyServingState {
 
     pub async fn admit(
         &self,
-        attempt: &AdmissionAttempt,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        received_at: DateTime<Utc>,
+        admitted_at: DateTime<Utc>,
+        config: &GatewayConfig,
     ) -> Result<AdmissionLease, AdmissionError> {
-        self.admit_with_keys(attempt, &AdmissionKeys::settlement(attempt.organization_id))
-            .await
+        self.admit_with_keys(
+            generation_id,
+            organization_id,
+            received_at,
+            admitted_at,
+            config,
+            &GenerationKeys::settlement(organization_id),
+        )
+        .await
     }
 
     async fn admit_with_keys(
         &self,
-        attempt: &AdmissionAttempt,
-        keys: &AdmissionKeys,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        received_at: DateTime<Utc>,
+        admitted_at: DateTime<Utc>,
+        config: &GatewayConfig,
+        keys: &GenerationKeys,
     ) -> Result<AdmissionLease, AdmissionError> {
+        let lease = AdmissionLease::new(generation_id, received_at, admitted_at, config)?;
+        let cleanup_cutoff = cleanup_cutoff(admitted_at, config)?;
         let mut invocation = self.admission_script.prepare_invoke();
         invocation
             .key(&keys.account)
             .key(&keys.inflight)
-            .key(&keys.settlement_stream);
-        for argument in attempt.script_arguments() {
-            invocation.arg(argument);
-        }
+            .key(&keys.settlement_stream)
+            .arg(generation_id.to_string())
+            .arg(organization_id.to_string())
+            .arg(admitted_at.timestamp_millis())
+            .arg(lease.lease_expires_at.timestamp_millis())
+            .arg(cleanup_cutoff.timestamp_millis())
+            .arg(config.prepaid_organization_concurrency_cap)
+            .arg(config.balance_per_concurrency_slot_nano_usd)
+            .arg(config.settlement_backlog_limit);
 
         let result: i64 = invocation
             .invoke_async(&mut self.connection.clone())
             .await?;
         match result {
-            1 => Ok(attempt.lease()),
+            1 => Ok(lease),
             2 => Err(AdmissionError::InsufficientBalance),
             3 => Err(AdmissionError::SettlementBacklog),
             4 => Err(AdmissionError::ConcurrencyExceeded),
             5 => Err(AdmissionError::DuplicateGeneration),
             result => Err(AdmissionError::UnknownScriptResult(result)),
+        }
+    }
+
+    pub async fn finalize(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        properties: &GenerationProperties,
+    ) -> Result<FinalizationOutcome, FinalizationError> {
+        self.finalize_with_keys(
+            generation_id,
+            organization_id,
+            properties,
+            &GenerationKeys::settlement(organization_id),
+        )
+        .await
+    }
+
+    async fn finalize_with_keys(
+        &self,
+        generation_id: Uuid,
+        organization_id: Uuid,
+        properties: &GenerationProperties,
+        keys: &GenerationKeys,
+    ) -> Result<FinalizationOutcome, FinalizationError> {
+        properties.validate()?;
+        if properties.organization_id != organization_id {
+            return Err(FinalizationError::OrganizationMismatch);
+        }
+        let charge = properties.usage.charge;
+        let properties = serde_json::to_string(properties)?;
+        let result: i64 = self
+            .finalization_script
+            .prepare_invoke()
+            .key(&keys.account)
+            .key(&keys.inflight)
+            .key(&keys.settlement_stream)
+            .arg(generation_id.to_string())
+            .arg(organization_id.to_string())
+            .arg(charge)
+            .arg(properties)
+            .invoke_async(&mut self.connection.clone())
+            .await?;
+        match result {
+            1 => Ok(FinalizationOutcome::Settled),
+            2 => Ok(FinalizationOutcome::AlreadyAbsent),
+            result => Err(FinalizationError::UnknownScriptResult(result)),
         }
     }
 
@@ -192,13 +266,13 @@ impl ValkeyServingState {
 }
 
 #[derive(Clone, Debug)]
-struct AdmissionKeys {
+struct GenerationKeys {
     account: String,
     inflight: String,
     settlement_stream: String,
 }
 
-impl AdmissionKeys {
+impl GenerationKeys {
     fn settlement(organization_id: Uuid) -> Self {
         Self::with_hash_tag(organization_id, "settlement-0")
     }
@@ -264,9 +338,13 @@ pub enum ServingStateError {
 #[cfg(test)]
 mod tests {
     use chrono::{TimeDelta, TimeZone, Utc};
+    use redis::streams::StreamRangeReply;
 
     use super::*;
-    use crate::{admission::AdmissionAttempt, GatewayConfig};
+    use crate::{
+        GenerationOutcome, GenerationPriceComponent, GenerationPriceUnit, GenerationPricing,
+        GenerationStatus, GenerationTiming, GenerationUsage,
+    };
 
     fn config() -> GatewayConfig {
         GatewayConfig {
@@ -282,32 +360,94 @@ mod tests {
         }
     }
 
-    fn test_keys(organization_id: Uuid) -> AdmissionKeys {
-        AdmissionKeys::with_hash_tag(
+    fn test_keys(organization_id: Uuid) -> GenerationKeys {
+        GenerationKeys::with_hash_tag(
             organization_id,
-            &format!("admission-test-{}", Uuid::now_v7()),
+            &format!("generation-test-{}", Uuid::now_v7()),
         )
     }
 
-    fn attempt(
+    fn generation_properties(organization_id: Uuid, charge: u64) -> GenerationProperties {
+        let completed_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 1).unwrap();
+        GenerationProperties {
+            event_schema_version: 1,
+            external_id: None,
+            organization_id,
+            workspace_id: Uuid::now_v7(),
+            api_key_id: Uuid::now_v7(),
+            model_id: "model-a".to_owned(),
+            served_release_digest: format!("sha256:{}", "a".repeat(64)),
+            status: GenerationStatus::Succeeded,
+            streamed: false,
+            pricing: GenerationPricing {
+                schema_version: 1,
+                components: vec![
+                    GenerationPriceComponent {
+                        unit: GenerationPriceUnit::InputToken,
+                        quantity: 0,
+                        unit_price: 0,
+                        amount: 0,
+                    },
+                    GenerationPriceComponent {
+                        unit: GenerationPriceUnit::CachedInputToken,
+                        quantity: 0,
+                        unit_price: 0,
+                        amount: 0,
+                    },
+                    GenerationPriceComponent {
+                        unit: GenerationPriceUnit::OutputToken,
+                        quantity: 1,
+                        unit_price: charge,
+                        amount: charge,
+                    },
+                ],
+            },
+            usage: GenerationUsage {
+                charge,
+                input_tokens: 0,
+                cached_input_tokens: 0,
+                cache_write_tokens: 0,
+                output_tokens: 1,
+                reasoning_tokens: 0,
+            },
+            outcome: GenerationOutcome {
+                finish_reason: Some("stop".to_owned()),
+                error_code: None,
+                usable_output_delivered: true,
+                cancellation_owner: None,
+            },
+            timing: GenerationTiming {
+                received_at: completed_at - TimeDelta::seconds(1),
+                started_at: Some(completed_at - TimeDelta::milliseconds(900)),
+                first_token_at: Some(completed_at - TimeDelta::milliseconds(500)),
+                completed_at,
+            },
+        }
+    }
+
+    async fn admit(
+        state: &ValkeyServingState,
+        keys: &GenerationKeys,
         generation_id: Uuid,
         organization_id: Uuid,
         admitted_at: chrono::DateTime<Utc>,
         config: &GatewayConfig,
-    ) -> AdmissionAttempt {
-        AdmissionAttempt::new(
-            generation_id,
-            organization_id,
-            admitted_at - TimeDelta::seconds(1),
-            admitted_at,
-            config,
-        )
-        .unwrap()
+    ) -> Result<AdmissionLease, AdmissionError> {
+        state
+            .admit_with_keys(
+                generation_id,
+                organization_id,
+                admitted_at - TimeDelta::seconds(1),
+                admitted_at,
+                config,
+                keys,
+            )
+            .await
     }
 
     async fn seed_account(
         state: &ValkeyServingState,
-        keys: &AdmissionKeys,
+        keys: &GenerationKeys,
         organization_id: Uuid,
         billing_mode: &str,
         balance: i64,
@@ -331,7 +471,7 @@ mod tests {
             .unwrap();
     }
 
-    async fn delete_test_keys(state: &ValkeyServingState, keys: &AdmissionKeys) {
+    async fn delete_test_keys(state: &ValkeyServingState, keys: &GenerationKeys) {
         let _: i64 = state
             .query(
                 redis::cmd("DEL")
@@ -390,11 +530,28 @@ mod tests {
         let admitted_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap();
         seed_account(&state, &keys, organization_id, "prepaid", 1).await;
 
-        let first = attempt(Uuid::now_v7(), organization_id, admitted_at, &config);
-        state.admit_with_keys(&first, &keys).await.unwrap();
-        let second = attempt(Uuid::now_v7(), organization_id, admitted_at, &config);
+        let first_generation_id = Uuid::now_v7();
+        admit(
+            &state,
+            &keys,
+            first_generation_id,
+            organization_id,
+            admitted_at,
+            &config,
+        )
+        .await
+        .unwrap();
+        let second_generation_id = Uuid::now_v7();
         assert!(matches!(
-            state.admit_with_keys(&second, &keys).await,
+            admit(
+                &state,
+                &keys,
+                second_generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::ConcurrencyExceeded)
         ));
 
@@ -403,14 +560,39 @@ mod tests {
             .await
             .unwrap();
         assert!(matches!(
-            state.admit_with_keys(&second, &keys).await,
+            admit(
+                &state,
+                &keys,
+                second_generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::InsufficientBalance)
         ));
 
         seed_account(&state, &keys, organization_id, "invoiced", -1).await;
-        state.admit_with_keys(&second, &keys).await.unwrap();
+        admit(
+            &state,
+            &keys,
+            second_generation_id,
+            organization_id,
+            admitted_at,
+            &config,
+        )
+        .await
+        .unwrap();
         assert!(matches!(
-            state.admit_with_keys(&first, &keys).await,
+            admit(
+                &state,
+                &keys,
+                first_generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::DuplicateGeneration)
         ));
         let count: i64 = state
@@ -445,9 +627,17 @@ mod tests {
             .await
             .unwrap();
 
-        let current = attempt(Uuid::now_v7(), organization_id, admitted_at, &config);
+        let generation_id = Uuid::now_v7();
         assert!(matches!(
-            state.admit_with_keys(&current, &keys).await,
+            admit(
+                &state,
+                &keys,
+                generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::SettlementBacklog)
         ));
         let _: i64 = state
@@ -470,14 +660,23 @@ mod tests {
             .await
             .unwrap();
 
-        state.admit_with_keys(&current, &keys).await.unwrap();
+        admit(
+            &state,
+            &keys,
+            generation_id,
+            organization_id,
+            admitted_at,
+            &config,
+        )
+        .await
+        .unwrap();
         let generations: Vec<String> = state
             .query(redis::cmd("ZRANGE").arg(&keys.inflight).arg(0).arg(-1))
             .await
             .unwrap();
         assert!(!generations.contains(&old_generation.to_string()));
         assert!(generations.contains(&recent_generation.to_string()));
-        assert!(generations.contains(&current.generation_id.to_string()));
+        assert!(generations.contains(&generation_id.to_string()));
 
         delete_test_keys(&state, &keys).await;
     }
@@ -492,7 +691,7 @@ mod tests {
         let keys = test_keys(organization_id);
         let config = config();
         let admitted_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap();
-        let current = attempt(Uuid::now_v7(), organization_id, admitted_at, &config);
+        let generation_id = Uuid::now_v7();
         seed_account(&state, &keys, organization_id, "prepaid", 1_000_000_000).await;
 
         let _: () = state
@@ -505,7 +704,15 @@ mod tests {
             .await
             .unwrap();
         assert!(matches!(
-            state.admit_with_keys(&current, &keys).await,
+            admit(
+                &state,
+                &keys,
+                generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::Redis(_))
         ));
 
@@ -527,7 +734,15 @@ mod tests {
             .await
             .unwrap();
         assert!(matches!(
-            state.admit_with_keys(&current, &keys).await,
+            admit(
+                &state,
+                &keys,
+                generation_id,
+                organization_id,
+                admitted_at,
+                &config,
+            )
+            .await,
             Err(AdmissionError::Redis(_))
         ));
 
@@ -555,8 +770,18 @@ mod tests {
         for _ in 0..10 {
             let state = state.clone();
             let keys = keys.clone();
-            let attempt = attempt(Uuid::now_v7(), organization_id, admitted_at, &config);
-            tasks.spawn(async move { state.admit_with_keys(&attempt, &keys).await });
+            let config = config.clone();
+            tasks.spawn(async move {
+                admit(
+                    &state,
+                    &keys,
+                    Uuid::now_v7(),
+                    organization_id,
+                    admitted_at,
+                    &config,
+                )
+                .await
+            });
         }
 
         let mut admitted = 0;
@@ -575,6 +800,140 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(count, 2);
+
+        delete_test_keys(&state, &keys).await;
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn finalization_consumes_the_lease_debits_once_and_appends_one_event() {
+        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
+            .await
+            .unwrap();
+        let organization_id = Uuid::now_v7();
+        let generation_id = Uuid::now_v7();
+        let keys = test_keys(organization_id);
+        let properties = generation_properties(organization_id, 250);
+        seed_account(
+            &state,
+            &keys,
+            organization_id,
+            "prepaid",
+            9_007_199_254_740_991,
+        )
+        .await;
+        let _: i64 = state
+            .query(
+                redis::cmd("ZADD")
+                    .arg(&keys.inflight)
+                    .arg(Utc::now().timestamp_millis() + 60_000)
+                    .arg(generation_id.to_string()),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(
+            state
+                .finalize_with_keys(generation_id, organization_id, &properties, &keys)
+                .await
+                .unwrap(),
+            FinalizationOutcome::Settled
+        );
+        assert_eq!(
+            state
+                .finalize_with_keys(generation_id, organization_id, &properties, &keys)
+                .await
+                .unwrap(),
+            FinalizationOutcome::AlreadyAbsent
+        );
+
+        let balance: i64 = state
+            .query(redis::cmd("HGET").arg(&keys.account).arg("balance"))
+            .await
+            .unwrap();
+        assert_eq!(balance, 9_007_199_254_740_741);
+        let lease_score: Option<i64> = state
+            .query(
+                redis::cmd("ZSCORE")
+                    .arg(&keys.inflight)
+                    .arg(generation_id.to_string()),
+            )
+            .await
+            .unwrap();
+        assert_eq!(lease_score, None);
+
+        let stream: StreamRangeReply = state
+            .query(
+                redis::cmd("XRANGE")
+                    .arg(&keys.settlement_stream)
+                    .arg("-")
+                    .arg("+"),
+            )
+            .await
+            .unwrap();
+        assert_eq!(stream.ids.len(), 1);
+        assert_eq!(stream.ids[0].len(), 2);
+        assert_eq!(
+            stream.ids[0].get::<String>("generation_id"),
+            Some(generation_id.to_string())
+        );
+        assert_eq!(
+            stream.ids[0].get::<String>("properties"),
+            Some(serde_json::to_string(&properties).unwrap())
+        );
+
+        delete_test_keys(&state, &keys).await;
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local one-node Valkey cluster"]
+    async fn finalization_validates_all_state_before_consuming_the_lease() {
+        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
+            .await
+            .unwrap();
+        let organization_id = Uuid::now_v7();
+        let generation_id = Uuid::now_v7();
+        let keys = test_keys(organization_id);
+        let properties = generation_properties(organization_id, 250);
+        seed_account(&state, &keys, organization_id, "prepaid", 1_000).await;
+        let _: i64 = state
+            .query(
+                redis::cmd("ZADD")
+                    .arg(&keys.inflight)
+                    .arg(Utc::now().timestamp_millis() + 60_000)
+                    .arg(generation_id.to_string()),
+            )
+            .await
+            .unwrap();
+        let _: () = state
+            .query(
+                redis::cmd("SET")
+                    .arg(&keys.settlement_stream)
+                    .arg("wrong-type"),
+            )
+            .await
+            .unwrap();
+
+        assert!(matches!(
+            state
+                .finalize_with_keys(generation_id, organization_id, &properties, &keys)
+                .await,
+            Err(FinalizationError::Redis(_))
+        ));
+        let balance: i64 = state
+            .query(redis::cmd("HGET").arg(&keys.account).arg("balance"))
+            .await
+            .unwrap();
+        assert_eq!(balance, 1_000);
+        let lease_score: Option<i64> = state
+            .query(
+                redis::cmd("ZSCORE")
+                    .arg(&keys.inflight)
+                    .arg(generation_id.to_string()),
+            )
+            .await
+            .unwrap();
+        assert!(lease_score.is_some());
 
         delete_test_keys(&state, &keys).await;
     }

@@ -284,6 +284,13 @@ are ordered candidates for the exact model.
 | Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                                 |
 | Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and Gateway API path routing on `api.gradiated.com`           | AWS Load Balancer Controller owns one public ALB with IP targets; `/openai/*` to gateway; all other paths to API |
 | S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                            |
+
+Production delivery follows [DEPLOYMENT.md](DEPLOYMENT.md). GitHub Actions
+builds the product image, gateway image and console from one source revision.
+It stages hashed console assets, records immutable image digests in one
+automated release commit, and waits for Argo CD. It publishes the console entry
+point only after the backend is healthy. Argo CD does not build images or write
+console files.
 | CloudWatch / AWS Budgets      | platform                     | AWS control-plane logs, alarms and cost limits                         | infrastructure and billing signals remain in AWS                                                                 |
 | Prometheus / Grafana          | platform                     | Kubernetes and application metrics, dashboards and alert evaluation    | Argo-managed inside the EKS cluster; private access only at launch                                               |
 

@@ -32,8 +32,18 @@ the complete mutable serving state before writing, applies balance-funded
 prepaid concurrency with the default cap of 50, leaves invoiced concurrency
 uncapped even at negative balance, applies settlement backlog pressure, removes
 only leases beyond the cleanup grace period, and creates the fixed lease with
-`ZADD NX`. Focused tests run the script against the real one-node Valkey
+`ZADD NX`. Request identity and timestamps are passed directly to admission,
+configuration is read only while constructing the Lua invocation, and the
+method returns the small lease needed by the remaining request lifecycle.
+Focused tests run the script against the real one-node Valkey
 Cluster, including simultaneous boundary admissions and `CROSSSLOT` behavior.
+The gateway also has the closed Rust `GenerationProperties` contract, pure
+checked nano-USD usage pricing, and a versioned atomic finalization script. The
+script validates all state before writing, consumes the lease, writes the
+updated operational balance, and appends exactly one terminal stream event;
+retrying after success returns `already_absent` without a second charge or
+event. Real-cluster tests cover successful idempotent finalization and
+failure-before-mutation behavior.
 The product-only `tests.yml` workflow has independent unit, integration, and
 end-to-end jobs so all three run in parallel. Its integration job starts the
 complete product Docker Compose dependency stack, waits for Valkey cluster
@@ -41,14 +51,16 @@ initialization and service health, and runs this ignored real-cluster suite.
 The workflow runs on pull requests and main pushes only when `product/**`
 changes. The E2E suite uses an automatic per-test fixture that creates and funds
 a unique user, organization, and workspace, allowing its spec files to execute
-concurrently without shared account state. The adapter exists, but the public
-HTTP request path does not yet invoke it and no runtime is called.
+concurrently without shared account state. The admission and finalization
+adapters exist, but the public HTTP request path does not yet invoke them and no
+runtime is called.
 
 ## Next product work
 
-Connect qualification and local tokenization to the admission adapter in the
-request lifecycle, then wire non-streaming SGLang dispatch and atomic terminal
-settlement. The public Chat Completions route must not dispatch work until
-admission is present.
+Implement `CompletionService` and `GenerationTask` to connect qualification,
+local tokenization, admission, SGLang dispatch, and the finalization adapter.
+Start with non-streaming execution and authoritative usage normalization. The
+public Chat Completions route must not dispatch work until admission is present
+and must not admit until every post-admission exit can reach finalization.
 
 Do not add a second or general gateway, provider router, alias system, generalized fleet service or speculative product surface without a new decision record.

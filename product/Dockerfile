@@ -33,7 +33,13 @@ FROM node:22.23.2-bookworm-slim
 
 ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 
+RUN mkdir -p /etc/ssl/certs \
+  && chmod 0755 /etc/ssl /etc/ssl/certs
+
 ADD --chmod=0444 https://truststore.pki.rds.amazonaws.com/us-east-1/us-east-1-bundle.pem /etc/ssl/certs/aws-rds-us-east-1-bundle.pem
+
+RUN chmod 0755 /etc/ssl /etc/ssl/certs \
+  && chmod 0444 /etc/ssl/certs/aws-rds-us-east-1-bundle.pem
 
 WORKDIR /app
 

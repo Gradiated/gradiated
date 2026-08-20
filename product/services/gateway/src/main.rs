@@ -13,6 +13,10 @@ const HTTP_DRAIN_TIMEOUT: Duration = Duration::from_secs(5);
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("AWS-LC must be the gateway's only installed Rustls crypto provider");
+
     tracing_subscriber::fmt()
         .json()
         .with_env_filter(EnvFilter::from_default_env())

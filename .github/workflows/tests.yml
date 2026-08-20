@@ -12,12 +12,23 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: product-tests-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  stage-production-images:
+    name: Stage immutable production images
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/stage-production-images.yml
+    with:
+      source_sha: ${{ github.sha }}
+    permissions:
+      contents: read
+      id-token: write
+
   unit:
     name: Unit tests
     runs-on: ubuntu-latest
@@ -27,6 +38,16 @@ jobs:
       - uses: jdx/mise-action@v4.2.3
       - name: Install Rust check components
         run: rustup component add rustfmt clippy
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Run unit tests and static checks
@@ -42,6 +63,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v4.2.3
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+          key: ${{ runner.os }}-gateway-integration-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gateway-integration-
       - name: Start product dependency stack
         working-directory: product
         run: |

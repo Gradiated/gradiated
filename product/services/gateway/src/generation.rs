@@ -477,18 +477,6 @@ impl TerminalOutcome {
             },
         })
     }
-
-    pub(crate) fn failed(error_code: &'static str) -> Self {
-        Self {
-            status: GenerationStatus::Failed,
-            outcome: GenerationOutcome {
-                finish_reason: None,
-                error_code: Some(error_code.to_owned()),
-                usable_output_delivered: false,
-                cancellation_owner: None,
-            },
-        }
-    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
@@ -548,21 +536,6 @@ impl GenerationTiming {
             first_token_at,
             completed_at,
         })
-    }
-
-    pub(crate) fn completed(
-        received_at: DateTime<Utc>,
-        started_at: DateTime<Utc>,
-        completed_at: DateTime<Utc>,
-    ) -> Self {
-        let started_at = started_at.max(received_at);
-        let completed_at = completed_at.max(started_at);
-        Self {
-            received_at,
-            started_at: Some(started_at),
-            first_token_at: None,
-            completed_at,
-        }
     }
 }
 

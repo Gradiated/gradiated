@@ -324,8 +324,9 @@ jobs:
           while (( SECONDS < deadline )); do
             api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
             worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
+            gateway_image_actual="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
             source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
-            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
+            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
               break
             fi
             sleep 10
@@ -336,16 +337,7 @@ jobs:
           fi
           kubectl -n gradiated rollout status deployment/api --timeout=10m
           kubectl -n gradiated rollout status deployment/worker --timeout=10m
-          if kubectl -n gradiated get deployment gateway >/dev/null 2>&1; then
-            deployed_gateway_image="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}')"
-            if [[ "${deployed_gateway_image}" != "${gateway_image}" ]]; then
-              echo "The gateway Deployment does not use the recorded digest." >&2
-              exit 1
-            fi
-            kubectl -n gradiated rollout status deployment/gateway --timeout=10m
-          else
-            echo "The gateway image is recorded but the gateway Deployment is not enabled yet."
-          fi
+          kubectl -n gradiated rollout status deployment/gateway --timeout=10m
 
   publish-console:
     name: Publish console and verify production

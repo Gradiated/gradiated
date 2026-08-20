@@ -1,10 +1,13 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, State},
-    http::{HeaderMap, HeaderName, HeaderValue, StatusCode},
-    response::{IntoResponse, Response},
+    http::{header::CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue, StatusCode},
+    response::{
+        sse::{KeepAlive, Sse},
+        IntoResponse, Response,
+    },
     routing::{get, post},
     Json, Router,
 };
@@ -12,22 +15,35 @@ use chrono::Utc;
 use serde::Serialize;
 use uuid::Uuid;
 
-use crate::{readiness::ReadinessCheck, CompletionService, GatewayError, RequestMetadata};
+use crate::{
+    readiness::ReadinessCheck, CompletionResponse, CompletionService, GatewayError, GatewayMetrics,
+    ModelCatalogResponse, RequestCoordinator, RequestMetadata,
+};
 
 const MAX_REQUEST_BYTES: usize = 8_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
+const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 
 #[derive(Clone)]
 pub struct GatewayState {
     readiness: Arc<dyn ReadinessCheck>,
     completions: CompletionService,
+    coordinator: RequestCoordinator,
+    metrics: GatewayMetrics,
 }
 
 impl GatewayState {
-    pub fn new(readiness: Arc<dyn ReadinessCheck>, completions: CompletionService) -> Self {
+    pub fn new(
+        readiness: Arc<dyn ReadinessCheck>,
+        completions: CompletionService,
+        coordinator: RequestCoordinator,
+    ) -> Self {
+        let metrics = completions.metrics();
         Self {
             readiness,
             completions,
+            coordinator,
+            metrics,
         }
     }
 }
@@ -40,10 +56,29 @@ struct HealthResponse {
 pub fn router(state: GatewayState) -> Router {
     Router::new()
         .route("/v1/chat/completions", post(chat_completions))
+        .route("/v1/models", get(models))
         .route("/health/live", get(live))
         .route("/health/ready", get(ready))
+        .route("/metrics", get(metrics))
         .layer(DefaultBodyLimit::max(MAX_REQUEST_BYTES))
         .with_state(state)
+}
+
+async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Response {
+    let result = state.coordinator.list_models(&headers, Utc::now()).await;
+    let error = result
+        .as_ref()
+        .err()
+        .map(GatewayError::code)
+        .unwrap_or("none");
+    let response = match result {
+        Ok(models) => Json(ModelCatalogResponse::from_models(&models)).into_response(),
+        Err(error) => error.into_response(),
+    };
+    state
+        .metrics
+        .record_http("models", response.status().as_u16(), error);
+    response
 }
 
 async fn chat_completions(
@@ -59,15 +94,41 @@ async fn chat_completions(
     let result = match body {
         Ok(body) => state
             .completions
-            .complete_non_streaming(metadata, &headers, body)
+            .complete(metadata, &headers, body)
             .await
-            .map(|result| Json(result.into_response()).into_response()),
+            .map(|result| match result {
+                CompletionResponse::NonStreaming(result) => {
+                    Json(result.into_response()).into_response()
+                }
+                CompletionResponse::Streaming(result) => {
+                    let mut response = Sse::new(result.into_stream())
+                        .keep_alive(
+                            KeepAlive::new()
+                                .interval(STREAM_KEEP_ALIVE)
+                                .text("keep-alive"),
+                        )
+                        .into_response();
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-accel-buffering"),
+                        HeaderValue::from_static("no"),
+                    );
+                    response
+                }
+            }),
         Err(rejection) if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE => {
             Err(GatewayError::PayloadTooLarge)
         }
         Err(_) => Err(GatewayError::invalid_request(None)),
     };
+    let error = result
+        .as_ref()
+        .err()
+        .map(GatewayError::code)
+        .unwrap_or("none");
     let mut response = result.unwrap_or_else(IntoResponse::into_response);
+    state
+        .metrics
+        .record_http("chat_completions", response.status().as_u16(), error);
     response.headers_mut().insert(
         GENERATION_ID_HEADER,
         HeaderValue::from_str(&generation_id.to_string())
@@ -81,7 +142,9 @@ async fn live() -> Json<HealthResponse> {
 }
 
 async fn ready(State(state): State<GatewayState>) -> (StatusCode, Json<HealthResponse>) {
-    if !state.readiness.is_ready().await {
+    let ready = !state.completions.is_draining() && state.readiness.is_ready().await;
+    state.metrics.set_dependency_ready("gateway", ready);
+    if !ready {
         (
             StatusCode::SERVICE_UNAVAILABLE,
             Json(HealthResponse {
@@ -91,6 +154,17 @@ async fn ready(State(state): State<GatewayState>) -> (StatusCode, Json<HealthRes
     } else {
         (StatusCode::OK, Json(HealthResponse { status: "ready" }))
     }
+}
+
+async fn metrics(State(state): State<GatewayState>) -> Response {
+    (
+        [(
+            CONTENT_TYPE,
+            "application/openmetrics-text; version=1.0.0; charset=utf-8",
+        )],
+        state.metrics.encode(),
+    )
+        .into_response()
 }
 
 #[cfg(test)]
@@ -152,6 +226,10 @@ mod tests {
             Ok(None)
         }
 
+        async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+            Ok(Vec::new())
+        }
+
         async fn admit(
             &self,
             _generation_id: Uuid,
@@ -189,6 +267,13 @@ mod tests {
     }
 
     fn application(ready: bool, credential_lookups: Arc<AtomicUsize>) -> Router {
+        application_with_completions(ready, credential_lookups).0
+    }
+
+    fn application_with_completions(
+        ready: bool,
+        credential_lookups: Arc<AtomicUsize>,
+    ) -> (Router, CompletionService) {
         let config = Arc::new(GatewayConfig {
             bind_address: "127.0.0.1:3002".parse().unwrap(),
             generation_timeout_seconds: 300,
@@ -198,19 +283,27 @@ mod tests {
             balance_per_concurrency_slot_nano_usd: 1_000_000_000,
             settlement_backlog_limit: 100_000,
             valkey_url: "redis://127.0.0.1:6379".to_owned(),
+            valkey_iam_cache_name: None,
+            valkey_iam_region: None,
+            valkey_iam_user: None,
             sglang_api_key: None,
         });
         let serving_state = Arc::new(MissingServingState { credential_lookups });
         let completions = CompletionService::new(
-            serving_state,
+            serving_state.clone(),
             Arc::new(UnusedRuntime),
             ModelTokenizer::new().unwrap(),
             config,
         );
-        router(GatewayState::new(
-            Arc::new(FixedReadiness(ready)),
+        let coordinator = RequestCoordinator::new(serving_state);
+        (
+            router(GatewayState::new(
+                Arc::new(FixedReadiness(ready)),
+                completions.clone(),
+                coordinator,
+            )),
             completions,
-        ))
+        )
     }
 
     #[tokio::test]
@@ -241,6 +334,50 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn readiness_fails_as_soon_as_draining_begins() {
+        let (application, completions) =
+            application_with_completions(true, Arc::new(AtomicUsize::new(0)));
+        completions.begin_draining();
+
+        let response = application
+            .oneshot(
+                Request::builder()
+                    .uri("/health/ready")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
+    }
+
+    #[tokio::test]
+    async fn metrics_are_available_without_customer_authentication() {
+        let response = application(true, Arc::new(AtomicUsize::new(0)))
+            .oneshot(
+                Request::builder()
+                    .uri("/metrics")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK);
+        assert!(response
+            .headers()
+            .get(CONTENT_TYPE)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .starts_with("application/openmetrics-text"));
+        let body = to_bytes(response.into_body(), 100_000).await.unwrap();
+        let body = std::str::from_utf8(&body).unwrap();
+        assert!(body.ends_with("# EOF\n"));
     }
 
     #[tokio::test]

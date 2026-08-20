@@ -104,7 +104,7 @@ impl TextInputModality {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Validate)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 #[serde(deny_unknown_fields)]
 pub struct SupportedTextInputs {
     #[validate(nested)]
@@ -160,7 +160,7 @@ impl TextOutputModality {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Validate)]
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 #[serde(deny_unknown_fields)]
 pub struct TokenMeasure {
     #[validate(range(min = 1))]
@@ -174,7 +174,7 @@ pub enum TokenUnit {
     Token,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TextModalityKind {
     Text,
@@ -259,7 +259,7 @@ fn require_unique_prices<T: Copy + Eq + std::hash::Hash, const N: usize>(
     Ok(())
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ModelParameterDescriptor {
     Range {
@@ -311,7 +311,7 @@ impl ModelParameterDescriptor {
     }
 }
 
-#[derive(Clone, Debug, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(untagged)]
 pub enum ParameterValue {
     String(String),

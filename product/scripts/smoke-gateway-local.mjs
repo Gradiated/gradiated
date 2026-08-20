@@ -13,6 +13,41 @@ const sessionCookie = (response) => {
   return cookies.map((cookie) => cookie.split(";", 1)[0]).join("; ");
 };
 
+const generationId = (response) => {
+  const value = response.headers.get("x-generation-id");
+  if (
+    !value ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      value,
+    )
+  ) {
+    throw new Error("Gateway response has no UUIDv7 generation ID");
+  }
+  return value;
+};
+
+const authoritativeUsage = (usage) => {
+  if (
+    !Number.isSafeInteger(usage?.prompt_tokens) ||
+    usage.prompt_tokens < 1 ||
+    !Number.isSafeInteger(usage?.completion_tokens) ||
+    usage.completion_tokens < 1 ||
+    usage.total_tokens !== usage.prompt_tokens + usage.completion_tokens
+  ) {
+    throw new Error("Gateway response has inconsistent authoritative usage");
+  }
+  return usage;
+};
+
+const completionBody = (stream) =>
+  JSON.stringify({
+    model: "mlx-community/qwen3-0.6b-4bit",
+    messages: [{ role: "user", content: "Reply with exactly: gateway-ready" }],
+    max_tokens: 32,
+    temperature: 0,
+    stream,
+  });
+
 await requireOk(
   await fetch(`${apiUrl}/api/auth/sign-in/magic-link`, {
     method: "POST",
@@ -72,6 +107,25 @@ const created = await requireOk(
 ).then((response) => response.json());
 
 try {
+  const catalog = await requireOk(
+    await fetch(`${gatewayUrl}/v1/models`, {
+      headers: { Authorization: `Bearer ${created.secret}` },
+    }),
+    "Gateway model catalog",
+  ).then((response) => response.json());
+  const advertisedModel = catalog.data?.find(
+    (model) => model.id === "mlx-community/qwen3-0.6b-4bit",
+  );
+  if (!advertisedModel || advertisedModel.schema_version !== "2.4") {
+    throw new Error("Gateway model catalog does not advertise the local model");
+  }
+  if (
+    advertisedModel.is_ready !== true ||
+    JSON.stringify(advertisedModel).includes("service_url")
+  ) {
+    throw new Error("Gateway model catalog exposes invalid operational state");
+  }
+
   const response = await requireOk(
     await fetch(`${gatewayUrl}/v1/chat/completions`, {
       method: "POST",
@@ -79,46 +133,65 @@ try {
         Authorization: `Bearer ${created.secret}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "mlx-community/qwen3-0.6b-4bit",
-        messages: [
-          { role: "user", content: "Reply with exactly: gateway-ready" },
-        ],
-        max_tokens: 32,
-        temperature: 0,
-      }),
+      body: completionBody(false),
     }),
     "Gateway completion",
   );
-  const generationId = response.headers.get("x-generation-id");
-  if (
-    !generationId ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-      generationId,
-    )
-  ) {
-    throw new Error("Gateway response has no UUIDv7 generation ID");
-  }
+  const nonStreamingGenerationId = generationId(response);
   const completion = await response.json();
-  const usage = completion.usage;
+  const nonStreamingUsage = authoritativeUsage(completion.usage);
+
+  const streamResponse = await requireOk(
+    await fetch(`${gatewayUrl}/v1/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${created.secret}`,
+        "Content-Type": "application/json",
+      },
+      body: completionBody(true),
+    }),
+    "Gateway streaming completion",
+  );
+  const streamingGenerationId = generationId(streamResponse);
   if (
-    !Number.isSafeInteger(usage?.prompt_tokens) ||
-    usage.prompt_tokens < 1 ||
-    !Number.isSafeInteger(usage?.completion_tokens) ||
-    usage.completion_tokens < 1 ||
-    usage.total_tokens !== usage.prompt_tokens + usage.completion_tokens
+    !streamResponse.headers.get("content-type")?.startsWith("text/event-stream")
   ) {
-    throw new Error("Gateway response has inconsistent authoritative usage");
+    throw new Error("Gateway streaming response is not SSE");
   }
+  const streamEvents = (await streamResponse.text())
+    .split(/\r?\n\r?\n/)
+    .map((frame) => frame.trim())
+    .filter(Boolean)
+    .map((frame) => frame.replace(/^data: ?/, ""));
+  if (streamEvents.at(-1) !== "[DONE]") {
+    throw new Error("Gateway streaming response did not end with [DONE]");
+  }
+  const chunks = streamEvents.slice(0, -1).map((event) => JSON.parse(event));
+  const usageChunks = chunks.filter((chunk) => chunk.usage !== undefined);
+  if (usageChunks.length !== 1 || usageChunks[0].choices?.length !== 0) {
+    throw new Error("Gateway did not expose exactly one terminal usage chunk");
+  }
+  const streamingUsage = authoritativeUsage(usageChunks[0].usage);
 
   console.log(
     JSON.stringify(
       {
         status: "passed",
-        generation_id: generationId,
         model: completion.model,
-        finish_reason: completion.choices?.[0]?.finish_reason,
-        usage,
+        catalog_model: {
+          id: advertisedModel.id,
+          schema_version: advertisedModel.schema_version,
+          is_ready: advertisedModel.is_ready,
+        },
+        non_streaming: {
+          generation_id: nonStreamingGenerationId,
+          finish_reason: completion.choices?.[0]?.finish_reason,
+          usage: nonStreamingUsage,
+        },
+        streaming: {
+          generation_id: streamingGenerationId,
+          usage: streamingUsage,
+        },
       },
       null,
       2,

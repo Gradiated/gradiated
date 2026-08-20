@@ -1,6 +1,6 @@
 use axum::{
     http::StatusCode,
-    response::{IntoResponse, Response},
+    response::{sse::Event, IntoResponse, Response},
     Json,
 };
 use serde::Serialize;
@@ -127,19 +127,29 @@ impl GatewayError {
             _ => None,
         }
     }
-}
 
-impl IntoResponse for GatewayError {
-    fn into_response(self) -> Response {
-        let status = self.status();
-        let response = ErrorEnvelope {
+    pub(crate) fn sse_event(&self) -> Event {
+        Event::default()
+            .json_data(self.envelope())
+            .expect("the bounded public error envelope always serializes")
+    }
+
+    fn envelope(&self) -> ErrorEnvelope<'_> {
+        ErrorEnvelope {
             error: ErrorBody {
                 message: self.message(),
                 error_type: self.error_type(),
                 param: self.param(),
                 code: self.code(),
             },
-        };
+        }
+    }
+}
+
+impl IntoResponse for GatewayError {
+    fn into_response(self) -> Response {
+        let status = self.status();
+        let response = self.envelope();
         (status, Json(response)).into_response()
     }
 }

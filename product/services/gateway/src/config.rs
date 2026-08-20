@@ -44,6 +44,9 @@ pub struct GatewayConfig {
     #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
     pub settlement_backlog_limit: u64,
     pub valkey_url: String,
+    pub valkey_iam_cache_name: Option<String>,
+    pub valkey_iam_region: Option<String>,
+    pub valkey_iam_user: Option<String>,
     pub sglang_api_key: Option<String>,
 }
 
@@ -58,9 +61,48 @@ impl GatewayConfig {
     {
         let mut config: Self = envy::from_iter(variables)?;
         config.validate()?;
+        config.validate_valkey_auth()?;
         config.sglang_api_key = config.sglang_api_key.filter(|value| !value.is_empty());
         Ok(config)
     }
+
+    pub fn valkey_iam(&self) -> Option<ValkeyIamConfig> {
+        match (
+            &self.valkey_iam_cache_name,
+            &self.valkey_iam_region,
+            &self.valkey_iam_user,
+        ) {
+            (Some(cache_name), Some(region), Some(user)) => Some(ValkeyIamConfig {
+                cache_name: cache_name.clone(),
+                region: region.clone(),
+                user: user.clone(),
+            }),
+            _ => None,
+        }
+    }
+
+    fn validate_valkey_auth(&self) -> Result<(), ConfigError> {
+        let values = [
+            self.valkey_iam_cache_name.as_deref(),
+            self.valkey_iam_region.as_deref(),
+            self.valkey_iam_user.as_deref(),
+        ];
+        let configured = values.iter().filter(|value| value.is_some()).count();
+        if configured != 0 && configured != values.len() {
+            return Err(ConfigError::IncompleteValkeyIam);
+        }
+        if values.into_iter().flatten().any(str::is_empty) {
+            return Err(ConfigError::EmptyValkeyIam);
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ValkeyIamConfig {
+    pub cache_name: String,
+    pub region: String,
+    pub user: String,
 }
 
 fn default_bind_address() -> SocketAddr {
@@ -93,6 +135,12 @@ pub enum ConfigError {
     Environment(#[from] envy::Error),
     #[error("gateway configuration values are invalid: {0}")]
     Validation(#[from] validator::ValidationErrors),
+    #[error(
+        "VALKEY_IAM_CACHE_NAME, VALKEY_IAM_REGION and VALKEY_IAM_USER must be configured together"
+    )]
+    IncompleteValkeyIam,
+    #[error("Valkey IAM configuration values must not be empty")]
+    EmptyValkeyIam,
 }
 
 #[cfg(test)]
@@ -130,6 +178,7 @@ mod tests {
         assert_eq!(config.prepaid_organization_concurrency_cap, 50);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);
+        assert_eq!(config.valkey_iam(), None);
         assert_eq!(config.sglang_api_key, None);
     }
 
@@ -144,6 +193,9 @@ mod tests {
             ("GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD", "500000000"),
             ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "50000"),
             ("VALKEY_URL", "rediss://valkey.internal:6379"),
+            ("VALKEY_IAM_CACHE_NAME", "gradiated-prod"),
+            ("VALKEY_IAM_REGION", "us-east-1"),
+            ("VALKEY_IAM_USER", "gradiated-prod-gateway"),
             ("SGLANG_API_KEY", "runtime-secret"),
         ]))
         .expect("complete environment should parse");
@@ -155,6 +207,14 @@ mod tests {
         assert_eq!(config.prepaid_organization_concurrency_cap, 25);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 500_000_000);
         assert_eq!(config.settlement_backlog_limit, 50_000);
+        assert_eq!(
+            config.valkey_iam(),
+            Some(ValkeyIamConfig {
+                cache_name: "gradiated-prod".to_owned(),
+                region: "us-east-1".to_owned(),
+                user: "gradiated-prod-gateway".to_owned(),
+            })
+        );
         assert_eq!(config.sglang_api_key.as_deref(), Some("runtime-secret"));
     }
 
@@ -170,6 +230,12 @@ mod tests {
         assert!(GatewayConfig::from_variables(variables(&[
             ("VALKEY_URL", "redis://127.0.0.1:6379"),
             ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "0"),
+        ]))
+        .is_err());
+        assert!(GatewayConfig::from_variables(variables(&[
+            ("VALKEY_URL", "redis://127.0.0.1:6379"),
+            ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "100000"),
+            ("VALKEY_IAM_USER", "gradiated-prod-gateway"),
         ]))
         .is_err());
     }

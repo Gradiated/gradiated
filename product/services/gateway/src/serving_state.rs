@@ -2,7 +2,11 @@ use std::collections::HashMap;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use redis::{cluster::ClusterClient, cluster_async::ClusterConnection, FromRedisValue, Script};
+use redis::{
+    cluster::{ClusterClient, ClusterClientBuilder},
+    cluster_async::ClusterConnection,
+    FromRedisValue, Script,
+};
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -11,6 +15,7 @@ use crate::{
     domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace},
     FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties,
 };
+use crate::{valkey_auth::ValkeyIamCredentials, ValkeyIamConfig};
 
 const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
 const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
@@ -30,6 +35,7 @@ pub trait ServingState: Send + Sync {
         organization_id: Uuid,
     ) -> Result<Option<GatewayAccount>, ServingStateError>;
     async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError>;
+    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError>;
     async fn admit(
         &self,
         generation_id: Uuid,
@@ -56,6 +62,23 @@ pub struct ValkeyServingState {
 impl ValkeyServingState {
     pub async fn connect(url: &str) -> Result<Self, ServingStateError> {
         let client = ClusterClient::new(vec![url])?;
+        Self::connect_client(client).await
+    }
+
+    pub async fn connect_with_iam(
+        url: &str,
+        config: ValkeyIamConfig,
+    ) -> Result<Self, ServingStateError> {
+        let credentials = ValkeyIamCredentials::start(config)
+            .await
+            .map_err(|error| ServingStateError::Iam(error.to_string()))?;
+        let client = ClusterClientBuilder::new(vec![url])
+            .set_credentials_provider(credentials)
+            .build()?;
+        Self::connect_client(client).await
+    }
+
+    async fn connect_client(client: ClusterClient) -> Result<Self, ServingStateError> {
         let connection = client.get_async_connection().await?;
 
         let state = Self {
@@ -158,11 +181,14 @@ impl ValkeyServingState {
 
         let mut models = Vec::with_capacity(model_ids.len());
         for model_id in model_ids {
-            models.push(
-                self.model(&model_id)
-                    .await?
-                    .ok_or(ServingStateError::MissingIndexedModel)?,
-            );
+            match self.model(&model_id).await {
+                Ok(Some(model)) => models.push(model),
+                Ok(None)
+                | Err(ServingStateError::MalformedRecord { .. })
+                | Err(ServingStateError::MismatchedModelId)
+                | Err(ServingStateError::InvalidModelProperties(_)) => {}
+                Err(error) => return Err(error),
+            }
         }
         Ok(models)
     }
@@ -326,6 +352,10 @@ impl ServingState for ValkeyServingState {
         ValkeyServingState::model(self, model_id).await
     }
 
+    async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+        ValkeyServingState::models(self).await
+    }
+
     async fn admit(
         &self,
         generation_id: Uuid,
@@ -368,12 +398,12 @@ pub enum ServingStateError {
     },
     #[error("GatewayAccount serving record is malformed: {source}")]
     MalformedAccount { source: crate::domain::RecordError },
-    #[error("gateway-model-ids contains an ID without a corresponding model record")]
-    MissingIndexedModel,
     #[error("GatewayModel ID does not match its Valkey key")]
     MismatchedModelId,
     #[error("GatewayModel properties are invalid: {0}")]
     InvalidModelProperties(#[from] crate::model::ModelPropertiesError),
+    #[error("Valkey IAM authentication failed: {0}")]
+    Iam(String),
 }
 
 #[cfg(test)]
@@ -397,6 +427,9 @@ mod tests {
             balance_per_concurrency_slot_nano_usd: 1_000_000_000,
             settlement_backlog_limit: 100_000,
             valkey_url: "redis://127.0.0.1:6379".to_owned(),
+            valkey_iam_cache_name: None,
+            valkey_iam_region: None,
+            valkey_iam_user: None,
             sglang_api_key: None,
         }
     }

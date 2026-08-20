@@ -1,8 +1,9 @@
-use std::{convert::Infallible, sync::Arc, time::Duration};
+use std::{convert::Infallible, pin::Pin, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use futures_util::stream;
+use eventsource_stream::{Event, EventStreamError, Eventsource};
+use futures_util::{stream, Stream, StreamExt};
 use reqwest::{header, redirect::Policy, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
@@ -13,6 +14,7 @@ use crate::{ChatCompletionRequest, GatewayError, GatewayModelDeployment, Normali
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const RESPONSE_IDLE_TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_RESPONSE_BYTES: usize = 8_000_000;
+const MAX_STREAM_EVENT_BYTES: usize = 1_000_000;
 const MAX_RESPONSE_TEXT_CHARS: usize = 300;
 const MAX_JSON_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
@@ -25,6 +27,75 @@ pub trait ModelRuntime: Send + Sync {
         effective_output_tokens: u64,
         request_deadline: DateTime<Utc>,
     ) -> Result<RuntimeCompletion, RuntimeFailure>;
+
+    async fn stream(
+        &self,
+        _deployment: &GatewayModelDeployment,
+        _request: ChatCompletionRequest,
+        _effective_output_tokens: u64,
+        _request_deadline: DateTime<Utc>,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))
+    }
+}
+
+#[async_trait]
+pub trait RuntimeEventStream: Send {
+    async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure>;
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum RuntimeStreamEvent {
+    Chunk(RuntimeStreamChunk),
+    Done,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct RuntimeStreamChunk {
+    response: Value,
+    usage: Option<NormalizedUsage>,
+    finish_reason: Option<String>,
+    usable_output: bool,
+    terminal_usage: bool,
+}
+
+impl RuntimeStreamChunk {
+    #[cfg(test)]
+    pub(crate) fn from_normalized_parts(
+        response: Value,
+        usage: Option<NormalizedUsage>,
+        finish_reason: Option<String>,
+        usable_output: bool,
+        terminal_usage: bool,
+    ) -> Self {
+        Self {
+            response,
+            usage,
+            finish_reason,
+            usable_output,
+            terminal_usage,
+        }
+    }
+
+    pub fn into_response(self) -> Value {
+        self.response
+    }
+
+    pub fn usage(&self) -> Option<NormalizedUsage> {
+        self.usage
+    }
+
+    pub fn finish_reason(&self) -> Option<&str> {
+        self.finish_reason.as_deref()
+    }
+
+    pub fn has_usable_output(&self) -> bool {
+        self.usable_output
+    }
+
+    pub fn is_terminal_usage(&self) -> bool {
+        self.terminal_usage
+    }
 }
 
 #[derive(Clone)]
@@ -111,6 +182,80 @@ impl SglangClient {
         let body = read_bounded_body(response).await?;
         normalize_completion(&body, &requested_model)
     }
+
+    async fn execute_streaming(
+        &self,
+        deployment: &GatewayModelDeployment,
+        request: ChatCompletionRequest,
+        effective_output_tokens: u64,
+        response_header_timeout: Duration,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        if !request.stream || effective_output_tokens == 0 {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+
+        let requested_model = request.model.clone();
+        let body = serde_json::to_vec(&request.into_upstream_body(effective_output_tokens))
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let mut upstream = self
+            .client
+            .post(endpoint(&deployment.service_url, "v1/chat/completions"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::ACCEPT, "text/event-stream")
+            .body(one_shot_body(body));
+        if let Some(api_key) = &self.api_key {
+            upstream = upstream.bearer_auth(api_key);
+        }
+
+        let response = tokio::time::timeout(response_header_timeout, upstream.send())
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+        let status = response.status();
+        if !status.is_success() {
+            let kind = match status {
+                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
+                    RuntimeFailureKind::InvalidRequest
+                }
+                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
+                _ => RuntimeFailureKind::Unavailable,
+            };
+            let usage = match read_bounded_body(response).await {
+                Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
+                Err(_) => NormalizedUsage::zero(),
+            };
+            return Err(RuntimeFailure { kind, usage });
+        }
+        if response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .is_none_or(|value| !value.starts_with("text/event-stream"))
+        {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+
+        let bytes = response
+            .bytes_stream()
+            .map(|result| result.map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable)))
+            .scan(0_usize, |total, result| {
+                let result = result.and_then(|bytes| {
+                    *total = total
+                        .checked_add(bytes.len())
+                        .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge))?;
+                    if *total > MAX_RESPONSE_BYTES {
+                        return Err(RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge));
+                    }
+                    Ok(bytes)
+                });
+                std::future::ready(Some(result))
+            })
+            .eventsource();
+        Ok(Box::new(SglangEventStream::new(
+            Box::pin(bytes),
+            requested_model,
+        )))
+    }
 }
 
 #[async_trait]
@@ -133,6 +278,21 @@ impl ModelRuntime for SglangClient {
         })
         .await
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+    }
+
+    async fn stream(
+        &self,
+        deployment: &GatewayModelDeployment,
+        request: ChatCompletionRequest,
+        effective_output_tokens: u64,
+        request_deadline: DateTime<Utc>,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        let remaining = request_deadline
+            .signed_duration_since(Utc::now())
+            .to_std()
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?;
+        self.execute_streaming(deployment, request, effective_output_tokens, remaining)
+            .await
     }
 }
 
@@ -180,6 +340,68 @@ async fn read_bounded_body(mut response: reqwest::Response) -> Result<Vec<u8>, R
     Ok(body)
 }
 
+struct SglangEventStream {
+    events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
+    requested_model: String,
+    response_id: Option<String>,
+    created: Option<u64>,
+    done: bool,
+}
+
+impl SglangEventStream {
+    fn new(
+        events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
+        requested_model: String,
+    ) -> Self {
+        Self {
+            events,
+            requested_model,
+            response_id: None,
+            created: None,
+            done: false,
+        }
+    }
+}
+
+#[async_trait]
+impl RuntimeEventStream for SglangEventStream {
+    async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
+        if self.done {
+            return Ok(None);
+        }
+        let event = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, self.events.next())
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?;
+        let Some(event) = event else {
+            return Ok(None);
+        };
+        let event = event.map_err(|error| match error {
+            EventStreamError::Transport(failure) => failure,
+            EventStreamError::Utf8(_) | EventStreamError::Parser(_) => {
+                RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation)
+            }
+        })?;
+        if event.event != "message"
+            || !event.id.is_empty()
+            || event.retry.is_some()
+            || event.data.len() > MAX_STREAM_EVENT_BYTES
+        {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+        if event.data == "[DONE]" {
+            self.done = true;
+            return Ok(Some(RuntimeStreamEvent::Done));
+        }
+        let chunk = normalize_stream_chunk(
+            event.data.as_bytes(),
+            &self.requested_model,
+            &mut self.response_id,
+            &mut self.created,
+        )?;
+        Ok(Some(RuntimeStreamEvent::Chunk(chunk)))
+    }
+}
+
 fn normalize_completion(
     body: &[u8],
     requested_model: &str,
@@ -219,6 +441,63 @@ fn normalize_completion(
     })
 }
 
+fn normalize_stream_chunk(
+    body: &[u8],
+    requested_model: &str,
+    response_id: &mut Option<String>,
+    created: &mut Option<u64>,
+) -> Result<RuntimeStreamChunk, RuntimeFailure> {
+    let chunk: UpstreamStreamChunk = serde_json::from_slice(body)
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+    if chunk.object != "chat.completion.chunk"
+        || chunk.id.is_empty()
+        || chunk.id.chars().count() > MAX_RESPONSE_TEXT_CHARS
+        || chunk.model != requested_model
+        || chunk.choices.iter().any(UpstreamStreamChoice::is_invalid)
+        || response_id.as_ref().is_some_and(|id| id != &chunk.id)
+        || created.is_some_and(|value| value != chunk.created)
+    {
+        return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+    }
+    response_id.get_or_insert_with(|| chunk.id.clone());
+    created.get_or_insert(chunk.created);
+
+    let usage = chunk.usage.map(UpstreamUsage::normalize).transpose()?;
+    let terminal_usage = chunk.choices.is_empty();
+    if terminal_usage && usage.is_none() {
+        return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+    }
+    let finish_reason = chunk
+        .choices
+        .iter()
+        .find_map(|choice| choice.finish_reason.clone());
+    let usable_output = chunk
+        .choices
+        .iter()
+        .any(UpstreamStreamChoice::has_usable_output);
+    let response = NormalizedStreamResponse {
+        id: chunk.id,
+        object: chunk.object,
+        created: chunk.created,
+        model: chunk.model,
+        choices: chunk
+            .choices
+            .into_iter()
+            .map(NormalizedStreamChoice::from)
+            .collect(),
+        usage: terminal_usage.then(|| PublicUsage::from(usage.expect("validated usage"))),
+    };
+    let response = serde_json::to_value(response)
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+    Ok(RuntimeStreamChunk {
+        response,
+        usage,
+        finish_reason,
+        usable_output,
+        terminal_usage,
+    })
+}
+
 fn optional_usage(body: &[u8]) -> Option<NormalizedUsage> {
     #[derive(Deserialize)]
     struct UsageEnvelope {
@@ -240,6 +519,59 @@ struct UpstreamCompletion {
     model: String,
     choices: Vec<UpstreamChoice>,
     usage: UpstreamUsage,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpstreamStreamChunk {
+    id: String,
+    object: String,
+    created: u64,
+    model: String,
+    #[serde(default)]
+    choices: Vec<UpstreamStreamChoice>,
+    #[serde(default)]
+    usage: Option<UpstreamUsage>,
+}
+
+#[derive(Debug, Deserialize)]
+struct UpstreamStreamChoice {
+    index: u64,
+    delta: Map<String, Value>,
+    #[serde(default)]
+    logprobs: Option<Value>,
+    #[serde(default)]
+    finish_reason: Option<String>,
+}
+
+impl UpstreamStreamChoice {
+    fn is_invalid(&self) -> bool {
+        self.index > MAX_JSON_SAFE_INTEGER
+            || self
+                .finish_reason
+                .as_ref()
+                .is_some_and(|reason| reason.is_empty() || reason.chars().count() > 100)
+    }
+
+    fn has_usable_output(&self) -> bool {
+        self.delta
+            .get("content")
+            .and_then(Value::as_str)
+            .is_some_and(|content| !content.is_empty())
+            || self
+                .delta
+                .get("reasoning_content")
+                .and_then(Value::as_str)
+                .is_some_and(|content| !content.is_empty())
+            || self
+                .delta
+                .get("tool_calls")
+                .and_then(Value::as_array)
+                .is_some_and(|calls| !calls.is_empty())
+            || self
+                .delta
+                .get("function_call")
+                .is_some_and(|value| !value.is_null())
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -307,6 +639,36 @@ struct NormalizedCompletionResponse {
     model: String,
     choices: Vec<NormalizedChoice>,
     usage: PublicUsage,
+}
+
+#[derive(Serialize)]
+struct NormalizedStreamResponse {
+    id: String,
+    object: String,
+    created: u64,
+    model: String,
+    choices: Vec<NormalizedStreamChoice>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    usage: Option<PublicUsage>,
+}
+
+#[derive(Serialize)]
+struct NormalizedStreamChoice {
+    index: u64,
+    delta: Map<String, Value>,
+    logprobs: Option<Value>,
+    finish_reason: Option<String>,
+}
+
+impl From<UpstreamStreamChoice> for NormalizedStreamChoice {
+    fn from(choice: UpstreamStreamChoice) -> Self {
+        Self {
+            index: choice.index,
+            delta: choice.delta,
+            logprobs: choice.logprobs,
+            finish_reason: choice.finish_reason,
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -472,10 +834,10 @@ mod tests {
     };
 
     use axum::{
-        body::Bytes,
+        body::{Body, Bytes},
         extract::State,
         http::{header::LOCATION, HeaderMap, StatusCode},
-        response::IntoResponse,
+        response::{IntoResponse, Response},
         routing::post,
         Router,
     };
@@ -560,6 +922,17 @@ mod tests {
         .unwrap()
     }
 
+    fn streaming_request() -> ChatCompletionRequest {
+        ChatCompletionRequest::parse(
+            br#"{
+                "model":"model-a",
+                "messages":[{"role":"user","content":"hello"}],
+                "stream":true
+            }"#,
+        )
+        .unwrap()
+    }
+
     fn successful_response() -> Value {
         json!({
             "id": "chatcmpl-1",
@@ -627,6 +1000,82 @@ mod tests {
         assert!(completion.response()["choices"][0]
             .get("matched_stop")
             .is_none());
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn parses_and_normalizes_sglang_streaming_events() {
+        let recorded = Arc::new(Mutex::new(Vec::new()));
+        let captured = recorded.clone();
+        let application = Router::new().route(
+            "/v1/chat/completions",
+            post(move |headers: HeaderMap, body: Bytes| {
+                let captured = captured.clone();
+                async move {
+                    captured.lock().unwrap().push(RecordedRequest {
+                        headers,
+                        body: serde_json::from_slice(&body).unwrap(),
+                    });
+                    Response::builder()
+                        .header("content-type", "text/event-stream")
+                        .body(Body::from(concat!(
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
+                            "data: [DONE]\n\n"
+                        )))
+                        .unwrap()
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move {
+            axum::serve(listener, application).await.unwrap();
+        });
+        let runtime = SglangClient::new(None).unwrap();
+        let mut response = runtime
+            .stream(
+                &deployment(format!("http://{address}")),
+                streaming_request(),
+                32,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .unwrap();
+
+        let first = response.next_event().await.unwrap().unwrap();
+        let RuntimeStreamEvent::Chunk(first) = first else {
+            panic!("first event must be a chunk");
+        };
+        assert!(first.has_usable_output());
+        assert_eq!(first.usage().unwrap().output_tokens(), 1);
+        assert!(first.clone().into_response().get("usage").is_none());
+
+        let finish = response.next_event().await.unwrap().unwrap();
+        let RuntimeStreamEvent::Chunk(finish) = finish else {
+            panic!("second event must be a chunk");
+        };
+        assert_eq!(finish.finish_reason(), Some("stop"));
+
+        let usage = response.next_event().await.unwrap().unwrap();
+        let RuntimeStreamEvent::Chunk(usage) = usage else {
+            panic!("third event must be a chunk");
+        };
+        assert!(usage.is_terminal_usage());
+        assert_eq!(usage.into_response()["usage"]["total_tokens"], 11);
+        assert_eq!(
+            response.next_event().await.unwrap(),
+            Some(RuntimeStreamEvent::Done)
+        );
+
+        let requests = recorded.lock().unwrap();
+        assert_eq!(requests[0].body["stream"], true);
+        assert_eq!(requests[0].body["stream_options"]["include_usage"], true);
+        assert_eq!(
+            requests[0].body["stream_options"]["continuous_usage_stats"],
+            true
+        );
         task.abort();
     }
 

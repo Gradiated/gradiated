@@ -54,6 +54,19 @@ impl RequestCoordinator {
         qualify_model_request(metadata, identity, request, model)
     }
 
+    pub async fn list_models(
+        &self,
+        headers: &HeaderMap,
+        requested_at: DateTime<Utc>,
+    ) -> Result<Vec<GatewayModel>, GatewayError> {
+        let identity = self.authenticate(headers, requested_at).await?;
+        self.authorize(identity).await?;
+        self.serving_state
+            .models()
+            .await
+            .map_err(|_| GatewayError::ServingStateUnavailable)
+    }
+
     async fn authenticate(
         &self,
         headers: &HeaderMap,
@@ -261,6 +274,11 @@ mod tests {
             Ok(self.model.clone())
         }
 
+        async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
+            self.record("models");
+            Ok(self.model.clone().into_iter().collect())
+        }
+
         async fn admit(
             &self,
             _generation_id: Uuid,
@@ -382,6 +400,22 @@ mod tests {
         assert_eq!(
             *state.calls.lock().unwrap(),
             ["credential", "workspace", "account", "model"]
+        );
+    }
+
+    #[tokio::test]
+    async fn model_listing_reuses_the_complete_access_pipeline_without_admission() {
+        let state = Arc::new(FakeServingState::ready());
+        let models = RequestCoordinator::new(state.clone())
+            .list_models(&headers(), metadata().received_at)
+            .await
+            .unwrap();
+
+        assert_eq!(models.len(), 1);
+        assert_eq!(models[0].id, "model-a");
+        assert_eq!(
+            *state.calls.lock().unwrap(),
+            ["credential", "workspace", "account", "models"]
         );
     }
 

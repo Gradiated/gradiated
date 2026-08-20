@@ -168,6 +168,9 @@ mod tests {
             balance_per_concurrency_slot_nano_usd: 1_000_000_000,
             settlement_backlog_limit: 100_000,
             valkey_url: "redis://127.0.0.1:6379".to_owned(),
+            valkey_iam_cache_name: None,
+            valkey_iam_region: None,
+            valkey_iam_user: None,
             sglang_api_key: None,
         }
     }

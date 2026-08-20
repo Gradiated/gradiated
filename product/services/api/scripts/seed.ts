@@ -120,6 +120,7 @@ try {
     properties: {
       description:
         "Pinned small local-development model served with zero prompt and response retention.",
+      released_at: "2025-04-29T00:00:00.000Z",
       hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
       quantization: "int4",
       tokenizer: "Qwen3",

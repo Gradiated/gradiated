@@ -784,8 +784,12 @@ running. It performs no dependency calls.
   deployment and its SGLang endpoint is healthy;
 - no recent finalization failure has opened the local readiness circuit.
 
-Unavailable models staged with `is_ready = false` do not make the process
-unready. Readiness recovers after dependencies pass consecutive probes and the
+An empty catalog is valid while no GPU deployments are configured. The gateway
+remains ready and exact inference requests return `model_not_found` until a
+model is projected. Unavailable models staged with `is_ready = false` also do
+not make the process unready.
+
+Readiness recovers after dependencies pass consecutive probes and the
 finalization circuit's bounded recovery condition is satisfied.
 
 ## Telemetry and privacy
@@ -816,20 +820,34 @@ They must not contain:
 
 Initial Prometheus instruments cover:
 
-- request totals by route, exact model, HTTP status, and bounded error class;
-- active admitted generations;
-- admission rejections by bounded reason;
-- runtime saturation;
-- time to first token and total duration;
-- normalized token and charge totals;
-- expired orphaned-lease cleanup;
+- request totals by route, HTTP status, and bounded error class;
+- admissions, active generations, and terminal outcomes by exact model,
+  deployment ID, and streaming mode;
+- admission rejections by the same serving labels and a bounded reason;
+- gateway-receipt-to-dispatch latency, runtime latency, and end-to-end
+  generation latency;
+- TTFT from gateway receipt and from runtime dispatch for streamed responses;
+- TPOT after the first delivered token and output-token throughput over the
+  complete runtime interval;
+- authoritative token totals and per-generation input/output distributions;
+- calculated terminal charge totals in integer nano-USD;
 - finalization attempts, retries, no-ops, and failures;
-- Valkey and SGLang readiness.
+- gateway, Valkey, catalog, and SGLang readiness.
 
-Metric labels use closed enums or the small configured model set. Organization,
-workspace, API-key, user, and generation IDs, free-form messages, and upstream
-status text are never metric labels even when an ID is present in structured
-logs.
+TTFT and TPOT are emitted only when the gateway observes streamed token
+delivery. Non-streaming responses do not invent a first-token timestamp. TPOT
+is `(terminal_time - first_token_time) / (output_tokens - 1)` when at least two
+authoritative output tokens exist. Output throughput is authoritative output
+tokens divided by the full runtime interval, including TTFT. Calculated charge
+is operational telemetry, not the billing ledger; ClickHouse settlement state
+remains authoritative for billed revenue.
+
+Metric labels use closed enums or the bounded configured model and deployment
+sets. Deployment IDs are allowed because they identify the small serving fleet
+and are required to compare runtimes. Organization, workspace, API-key, user,
+and generation IDs, free-form messages, served-release digests, private URLs,
+and upstream status text are never metric labels even when an ID is present in
+structured logs.
 
 ## Local native SGLang
 
@@ -969,8 +987,13 @@ tests with a fake `ServingState`.
 - readiness transitions for Valkey, available models, and finalization failure;
 - bounded metric label cardinality;
 - assertions that logs and metrics contain no secret or request content;
-- clean shutdown cancelling or finalizing owned generation tasks within a
-  bounded drain period.
+- shutdown immediately closes readiness and admission while allowing owned
+  generations to finish naturally for the configured 300-second request
+  window; only generations still active after that bounded drain are cancelled
+  and finalized as server-owned cancellations;
+- rolling deployment conformance with two replicas, zero unavailable pods, a
+  360-second ALB deregistration delay, a short pre-stop propagation pause, and
+  a 360-second Kubernetes termination grace period.
 
 ### End-to-end checks
 

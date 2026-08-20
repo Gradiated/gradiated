@@ -54,6 +54,15 @@ impl ChatCompletionRequest {
         parameters.insert("model".to_owned(), Value::String(model));
         parameters.insert("messages".to_owned(), Value::Array(messages));
         parameters.insert("stream".to_owned(), Value::Bool(stream));
+        if stream {
+            parameters.insert(
+                "stream_options".to_owned(),
+                serde_json::json!({
+                    "include_usage": true,
+                    "continuous_usage_stats": true
+                }),
+            );
+        }
         match (max_completion_tokens, max_tokens) {
             (Some(_), None) => {
                 parameters.insert(
@@ -241,5 +250,22 @@ mod tests {
         let body = request.into_upstream_body(1_024);
 
         assert_eq!(body["max_completion_tokens"], 1_024);
+    }
+
+    #[test]
+    fn streaming_always_requests_continuous_authoritative_usage() {
+        let request = ChatCompletionRequest::parse(
+            br#"{
+                "model":"model-a",
+                "messages":[{"role":"user","content":"hello"}],
+                "stream":true
+            }"#,
+        )
+        .unwrap();
+
+        let body = request.into_upstream_body(128);
+
+        assert_eq!(body["stream_options"]["include_usage"], true);
+        assert_eq!(body["stream_options"]["continuous_usage_stats"], true);
     }
 }

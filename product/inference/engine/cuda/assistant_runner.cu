@@ -100,7 +100,8 @@ struct Gemma4AssistantRunner::Implementation {
   void run_layer(int layer, const void* input, void* output, int active,
                  const int* context_positions, const int* query_positions, const int* slots,
                  int maximum_slots, const void* keys, const void* values, int cache_capacity,
-                 int maximum_context_length) {
+                 int maximum_context_length, int global_split,
+                 int first_global_context_length) {
     const bool global = layer == 3;
     const int head_dimension = global ? 512 : 256;
     const int kv_heads = global ? 4 : 16;
@@ -113,9 +114,23 @@ struct Gemma4AssistantRunner::Implementation {
                assistant_hidden, query_width, nullptr);
     qkv.run_query_ragged(projected_queries.get(), weights.at(prefix + "q_norm"), queries.get(),
                          query_positions, active, 32, head_dimension, global, epsilon, nullptr);
-    attention.run_ragged(queries.get(), keys, values, attention_output.get(), context_positions,
-                         slots, active, maximum_slots, kv_heads, query_group,
-                         maximum_context_length, head_dimension, nullptr, cache_capacity);
+    if (global && global_split > 0 && global_split < active) {
+      attention.run_ragged(queries.get(), keys, values, attention_output.get(), context_positions,
+                           slots, global_split, maximum_slots, kv_heads, query_group,
+                           first_global_context_length, head_dimension, nullptr, cache_capacity);
+      const std::size_t row_bytes = 2ULL * query_width;
+      attention.run_ragged(
+          static_cast<const unsigned char*>(queries.get()) + row_bytes * global_split,
+          keys, values,
+          static_cast<unsigned char*>(attention_output.get()) + row_bytes * global_split,
+          context_positions + global_split, slots + global_split, active - global_split,
+          maximum_slots, kv_heads, query_group, maximum_context_length, head_dimension, nullptr,
+          cache_capacity);
+    } else {
+      attention.run_ragged(queries.get(), keys, values, attention_output.get(), context_positions,
+                           slots, active, maximum_slots, kv_heads, query_group,
+                           maximum_context_length, head_dimension, nullptr, cache_capacity);
+    }
     linear.run(attention_output.get(), weights.at(prefix + "o"), projected_attention.get(),
                active, query_width, assistant_hidden, nullptr);
     rms_norm_add_and_norm_bf16(
@@ -170,6 +185,13 @@ std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
     maximum_global_context = std::max(
         maximum_global_context, context_positions[static_cast<std::size_t>(row)] + 1);
   }
+  int global_split = 0;
+  int first_global_context = maximum_global_context;
+  if (active >= 4 && std::is_sorted(context_positions.begin(), context_positions.end()) &&
+      context_positions.back() - context_positions.front() > 512) {
+    global_split = (active + 1) / 2;
+    first_global_context = context_positions[static_cast<std::size_t>(global_split - 1)] + 1;
+  }
   check(cudaMemcpy(state.device_tokens.get(), last_tokens.data(), active * sizeof(int),
                    cudaMemcpyHostToDevice), "copy assistant input tokens");
   check(cudaMemcpy(state.device_context_positions.get(), context_positions.data(),
@@ -212,7 +234,8 @@ std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
                       global ? global_keys : sliding_keys,
                       global ? global_values : sliding_values,
                       global ? global_capacity : sliding_capacity,
-                      global ? maximum_global_context : sliding_capacity);
+                      global ? maximum_global_context : sliding_capacity,
+                      global_split, first_global_context);
       std::swap(input, output);
     }
     rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), active,

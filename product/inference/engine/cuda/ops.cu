@@ -166,14 +166,6 @@ __global__ void scale_kernel(__nv_bfloat16* values, const __nv_bfloat16* scalar,
   }
 }
 
-__global__ void scale_constant_kernel(__nv_bfloat16* values, float scalar,
-                                      std::size_t elements) {
-  const std::size_t index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
-  if (index < elements) {
-    values[index] = __float2bfloat16_rn(__bfloat162float(values[index]) * scalar);
-  }
-}
-
 __device__ float gelu_tanh(float value) {
   constexpr float coefficient = 0.7978845608028654F;
   return 0.5F * value * (1.0F + tanhf(coefficient * (value + 0.044715F * value * value * value)));
@@ -565,16 +557,6 @@ void scale_bf16(void* values, const void* scalar, std::size_t elements, cudaStre
   scale_kernel<<<blocks, threads, 0, stream>>>(static_cast<__nv_bfloat16*>(values),
       static_cast<const __nv_bfloat16*>(scalar), elements);
   check(cudaPeekAtLastError(), "launch scale_kernel");
-}
-
-void scale_constant_bf16(void* values, float scalar, std::size_t elements,
-                         cudaStream_t stream) {
-  if (values == nullptr || elements == 0) return;
-  constexpr unsigned threads = 256;
-  const auto blocks = static_cast<unsigned>((elements + threads - 1U) / threads);
-  scale_constant_kernel<<<blocks, threads, 0, stream>>>(
-      static_cast<__nv_bfloat16*>(values), scalar, elements);
-  check(cudaPeekAtLastError(), "launch constant scale kernel");
 }
 
 void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,

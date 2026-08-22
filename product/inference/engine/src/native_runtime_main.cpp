@@ -470,6 +470,23 @@ class ContinuousScheduler {
     if (indices.empty()) return false;
     if (runner_.has_assistant()) {
       try {
+        // Keep ragged contexts monotonic so the target verifier can split the cohort into
+        // narrower global-attention GEMMs instead of padding every request to the longest one.
+        std::vector<std::size_t> order(indices.size());
+        for (std::size_t row = 0; row < order.size(); ++row) order[row] = row;
+        std::stable_sort(order.begin(), order.end(), [&](std::size_t left, std::size_t right) {
+          return runner_.slot_position(slots[left]) < runner_.slot_position(slots[right]);
+        });
+        std::vector<int> sorted_indices;
+        std::vector<int> sorted_slots;
+        sorted_indices.reserve(indices.size());
+        sorted_slots.reserve(slots.size());
+        for (const std::size_t row : order) {
+          sorted_indices.push_back(indices[row]);
+          sorted_slots.push_back(slots[row]);
+        }
+        indices = std::move(sorted_indices);
+        slots = std::move(sorted_slots);
         std::vector<int> last_tokens;
         std::vector<int> target_first;
         std::vector<int> acceptance_caps;

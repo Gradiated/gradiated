@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
             prompt[static_cast<std::size_t>(index) % prompt.size()];
       }
       const std::vector<int> prefix(long_prompt.begin(), long_prompt.begin() + cached_prefix);
-      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 2, context);
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 2, context + 2);
       static_cast<void>(runner.prefill_slot(0, prefix, 1024));
       const auto reuse_begin = std::chrono::steady_clock::now();
       const int reuse_prediction =
@@ -101,12 +101,27 @@ int main(int argc, char** argv) {
       if (reuse_prediction != fresh_prediction) {
         throw std::runtime_error("90% prefix reuse changed the greedy prediction");
       }
+      runner.reset_slot(1);
+      const auto clone_begin = std::chrono::steady_clock::now();
+      const std::uint64_t clone_bytes = runner.clone_slot(0, 1);
+      if (cudaDeviceSynchronize() != cudaSuccess) {
+        throw std::runtime_error("cache clone synchronization failed");
+      }
+      const double clone_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - clone_begin).count();
+      const auto cloned_prediction =
+          runner.append_ragged({reuse_prediction, reuse_prediction}, {0, 1});
+      if (cloned_prediction[0] != cloned_prediction[1]) {
+        throw std::runtime_error("wrapped sliding-cache clone changed decode output");
+      }
       std::cout << "prefix_parity=true\n"
                 << "prompt_tokens=" << context << '\n'
                 << "cached_prefix_tokens=" << cached_prefix << '\n'
                 << "suffix_tokens=" << (context - cached_prefix) << '\n'
                 << "fresh_prefill_seconds=" << fresh_seconds << '\n'
                 << "reuse_prefill_seconds=" << reuse_seconds << '\n'
+                << "clone_bytes=" << clone_bytes << '\n'
+                << "clone_seconds=" << clone_seconds << '\n'
                 << "ttft_speedup=" << (fresh_seconds / reuse_seconds) << '\n'
                 << "prefill_compute_avoided_fraction="
                 << (1.0 - reuse_seconds / fresh_seconds) << '\n';

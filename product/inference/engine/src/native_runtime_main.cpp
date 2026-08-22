@@ -110,6 +110,8 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> prefix_cache_hits{0};
   std::atomic<std::uint64_t> prefix_tokens_reused{0};
   std::atomic<std::uint64_t> prefill_tokens_computed{0};
+  std::atomic<std::uint64_t> kv_cache_clones{0};
+  std::atomic<std::uint64_t> kv_cache_clone_bytes{0};
 };
 
 struct CompletionResult {
@@ -202,36 +204,52 @@ class ContinuousScheduler {
     std::chrono::steady_clock::time_point last_token_at;
   };
 
+  struct Placement {
+    int destination{-1};
+    int source{-1};
+    std::size_t prefix_tokens{0};
+  };
+
   static bool starts_with(const std::vector<int>& input, const std::vector<int>& prefix) {
-    return prefix.size() < input.size() &&
+    return !prefix.empty() && prefix.size() <= input.size() &&
            std::equal(prefix.begin(), prefix.end(), input.begin());
   }
 
-  int select_slot(const CompletionJob& job) const {
-    int selected = -1;
+  Placement select_slot(const CompletionJob& job) const {
+    Placement placement;
     std::size_t longest_prefix = 0;
     for (int index = 0; index < maximum_slots; ++index) {
       const auto& slot = slots_[static_cast<std::size_t>(index)];
-      if (slot.job || !starts_with(job.input_ids, slot.cached_tokens)) continue;
-      if (slot.cached_tokens.size() > longest_prefix) {
-        selected = index;
+      if (!starts_with(job.input_ids, slot.cached_tokens)) continue;
+      if (slot.cached_tokens.size() > longest_prefix ||
+          (slot.cached_tokens.size() == longest_prefix && placement.source >= 0 &&
+           slots_[static_cast<std::size_t>(placement.source)].job && !slot.job)) {
+        placement.source = index;
         longest_prefix = slot.cached_tokens.size();
       }
     }
-    if (selected >= 0) return selected;
+    placement.prefix_tokens = longest_prefix;
+    if (placement.source >= 0 &&
+        !slots_[static_cast<std::size_t>(placement.source)].job) {
+      placement.destination = placement.source;
+      return placement;
+    }
     for (int index = 0; index < maximum_slots; ++index) {
       const auto& slot = slots_[static_cast<std::size_t>(index)];
-      if (!slot.job && slot.cached_tokens.empty()) return index;
+      if (!slot.job && slot.cached_tokens.empty()) {
+        placement.destination = index;
+        return placement;
+      }
     }
     std::uint64_t oldest = std::numeric_limits<std::uint64_t>::max();
     for (int index = 0; index < maximum_slots; ++index) {
       const auto& slot = slots_[static_cast<std::size_t>(index)];
       if (!slot.job && slot.age < oldest) {
         oldest = slot.age;
-        selected = index;
+        placement.destination = index;
       }
     }
-    return selected;
+    return placement;
   }
 
   void complete_slot(int index, const char* finish_reason) {
@@ -244,7 +262,7 @@ class ContinuousScheduler {
     result.decode_microseconds = slot.decode_microseconds;
     result.maximum_tpot_microseconds = slot.maximum_tpot_microseconds;
     result.total_microseconds = static_cast<std::uint64_t>(
-        std::chrono::duration_cast<std::chrono::microseconds>(now - slot.inference_begin).count());
+        std::chrono::duration_cast<std::chrono::microseconds>(now - slot.job->queued_at).count());
     result.finish_reason = finish_reason;
     metrics_.input_tokens.fetch_add(slot.job->input_ids.size());
     metrics_.output_tokens.fetch_add(result.output_ids.size());
@@ -282,17 +300,18 @@ class ContinuousScheduler {
 
   bool admit_one() {
     std::shared_ptr<CompletionJob> job;
-    int index = -1;
+    Placement placement;
     {
       std::lock_guard lock(mutex_);
       if (pending_.empty()) return false;
-      index = select_slot(*pending_.front());
-      if (index < 0) return false;
+      placement = select_slot(*pending_.front());
+      if (placement.destination < 0) return false;
       job = std::move(pending_.front());
       pending_.pop_front();
       metrics_.queued.fetch_sub(1);
-      slots_[static_cast<std::size_t>(index)].job = job;
+      slots_[static_cast<std::size_t>(placement.destination)].job = job;
     }
+    const int index = placement.destination;
     auto& slot = slots_[static_cast<std::size_t>(index)];
     slot.output_ids.clear();
     slot.decode_ready = false;
@@ -304,16 +323,46 @@ class ContinuousScheduler {
     slot.decode_microseconds = 0;
     slot.maximum_tpot_microseconds = 0;
     slot.admission_order = ++admission_order_;
-    const int prefix = starts_with(job->input_ids, slot.cached_tokens)
-        ? static_cast<int>(slot.cached_tokens.size()) : 0;
-    if (prefix == 0) {
-      runner_.reset_slot(index);
-      slot.cached_tokens.clear();
-    } else {
-      metrics_.prefix_cache_hits.fetch_add(1);
-      metrics_.prefix_tokens_reused.fetch_add(static_cast<std::uint64_t>(prefix));
-    }
     metrics_.active.fetch_add(1);
+    try {
+      int cached_prediction = 0;
+      if (placement.source >= 0) {
+        cached_prediction = slots_[static_cast<std::size_t>(placement.source)].token_to_append;
+      }
+      if (placement.source >= 0 && placement.source != index) {
+        const auto& source = slots_[static_cast<std::size_t>(placement.source)];
+        const std::uint64_t copied_bytes = runner_.clone_slot(placement.source, index);
+        slot.cached_tokens = source.cached_tokens;
+        metrics_.kv_cache_clones.fetch_add(1);
+        metrics_.kv_cache_clone_bytes.fetch_add(copied_bytes);
+      } else if (placement.source < 0) {
+        runner_.reset_slot(index);
+        slot.cached_tokens.clear();
+      }
+      if (placement.source >= 0) {
+        metrics_.prefix_cache_hits.fetch_add(1);
+        metrics_.prefix_tokens_reused.fetch_add(
+            static_cast<std::uint64_t>(placement.prefix_tokens));
+      }
+      if (placement.prefix_tokens == job->input_ids.size()) {
+        const auto token_time = std::chrono::steady_clock::now();
+        slot.token_to_append = cached_prediction;
+        slot.output_ids.push_back(cached_prediction);
+        slot.decode_ready = true;
+        slot.ttft_microseconds = static_cast<std::uint64_t>(
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                token_time - job->queued_at).count());
+        slot.last_token_at = token_time;
+        metrics_.decoding.fetch_add(1);
+        if (job->stop_ids.contains(cached_prediction)) {
+          complete_slot(index, "stop");
+        } else if (job->max_tokens == 1) {
+          complete_slot(index, "length");
+        }
+      }
+    } catch (const std::exception& error) {
+      fail_slot(index, error.what());
+    }
     return true;
   }
 
@@ -348,7 +397,7 @@ class ContinuousScheduler {
       slot.output_ids.push_back(*prediction);
       slot.decode_ready = true;
       slot.ttft_microseconds = static_cast<std::uint64_t>(
-          std::chrono::duration_cast<std::chrono::microseconds>(end - slot.inference_begin).count());
+          std::chrono::duration_cast<std::chrono::microseconds>(end - slot.job->queued_at).count());
       slot.last_token_at = end;
       metrics_.decoding.fetch_add(1);
       if (slot.job->stop_ids.contains(*prediction)) {
@@ -481,7 +530,10 @@ int main(int argc, char** argv) {
              << "gradiated_native_prefix_tokens_reused_total "
              << metrics.prefix_tokens_reused.load() << '\n'
              << "gradiated_native_prefill_tokens_computed_total "
-             << metrics.prefill_tokens_computed.load() << '\n';
+             << metrics.prefill_tokens_computed.load() << '\n'
+             << "gradiated_native_kv_cache_clones_total " << metrics.kv_cache_clones.load() << '\n'
+             << "gradiated_native_kv_cache_clone_bytes_total "
+             << metrics.kv_cache_clone_bytes.load() << '\n';
         return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", body.str()};
       }
       if (request.method != "POST" || request.path != "/v1/token-completions") {

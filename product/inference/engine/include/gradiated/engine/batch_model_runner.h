@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -25,6 +26,8 @@ class Gemma4BatchModelRunner {
   // the complete prompt is resident, allowing a scheduler to bound interruption of active decode.
   std::optional<int> prefill_slot_chunk(int slot, const std::vector<int>& token_ids,
                                         int chunk_tokens);
+  // Copies the exact hybrid KV state and logical position between stable slots on device.
+  std::uint64_t clone_slot(int source_slot, int destination_slot);
   // Decodes compact active rows while retaining each request's stable cache slot.
   std::vector<int> append_ragged(const std::vector<int>& token_ids,
                                  const std::vector<int>& slots);

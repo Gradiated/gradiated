@@ -231,6 +231,36 @@ std::optional<int> Gemma4BatchModelRunner::prefill_slot_chunk(
   return prediction;
 }
 
+std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destination_slot) {
+  auto& state = *implementation_;
+  if (source_slot < 0 || source_slot >= state.batch_size || destination_slot < 0 ||
+      destination_slot >= state.batch_size || source_slot == destination_slot) {
+    throw std::runtime_error("invalid cache slot clone");
+  }
+  const int position = state.slot_positions.at(static_cast<std::size_t>(source_slot));
+  if (position <= 0 || position >= state.maximum_context) {
+    throw std::runtime_error("source cache slot is empty or full");
+  }
+  std::uint64_t copied_bytes = 0;
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    const auto& cache = state.caches[layer];
+    const int resident_tokens = std::min(position, cache.capacity);
+    const std::size_t bytes = 2ULL * static_cast<std::size_t>(resident_tokens) *
+                              state.config.layers[layer].kv_width();
+    check(cudaMemcpyAsync(state.slot_key_cache(layer, destination_slot),
+                          state.slot_key_cache(layer, source_slot), bytes,
+                          cudaMemcpyDeviceToDevice, nullptr),
+          "clone slot key cache");
+    check(cudaMemcpyAsync(state.slot_value_cache(layer, destination_slot),
+                          state.slot_value_cache(layer, source_slot), bytes,
+                          cudaMemcpyDeviceToDevice, nullptr),
+          "clone slot value cache");
+    copied_bytes += 2ULL * bytes;
+  }
+  state.slot_positions.at(static_cast<std::size_t>(destination_slot)) = position;
+  return copied_bytes;
+}
+
 std::vector<int> Gemma4BatchModelRunner::append_ragged(
     const std::vector<int>& token_ids, const std::vector<int>& slots) {
   auto& state = *implementation_;

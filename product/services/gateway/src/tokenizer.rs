@@ -7,7 +7,7 @@ use std::{
 
 use hf_chat_template::{ChatTemplate, Error as ChatTemplateError, RenderInput, TokenizerConfig};
 use hf_hub::{
-    api::tokio::{Api, ApiError},
+    api::tokio::{Api, ApiBuilder, ApiError},
     Repo, RepoType,
 };
 use serde_json::{Map, Value};
@@ -38,7 +38,7 @@ pub struct ModelTokenizer {
 impl ModelTokenizer {
     pub fn new() -> Result<Self, ModelTokenizerError> {
         Ok(Self {
-            hub: Api::new()?,
+            hub: ApiBuilder::from_env().with_progress(false).build()?,
             loaded: Arc::new(RwLock::new(HashMap::new())),
         })
     }

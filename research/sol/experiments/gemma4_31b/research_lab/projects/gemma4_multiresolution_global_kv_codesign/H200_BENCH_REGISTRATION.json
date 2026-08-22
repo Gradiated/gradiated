@@ -1,0 +1,50 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "artifacts": "projects/gemma4_multiresolution_global_kv_codesign/{H200_EXECUTION_READY.json,h200_component_runner.py,h200_endpoint_owner.sh,multiresolution_global_kv.py}",
+    "caches": "No model, image, or compilation cache.",
+    "checkpoint": "Fresh 250 GiB provider disk; exact checkpoint is not staged.",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is bound but not pulled.",
+    "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Director must verify strict SSH identity and one-H200 telemetry before making this bench claimable.",
+    "project": "gemma4_multiresolution_global_kv_codesign",
+    "runtime": "Identity verification pending for one H200 SXM; target-runtime component remains unconsumed.",
+    "schema_version": 1,
+    "scientific_terminal": "One real component compile/invocation, one stock/candidate component pair, then a conditional exact c32 endpoint pair.",
+    "server_state": "No SSH setup, container, CUDA call, component, endpoint, or scientific sample.",
+    "state": "maintenance pending identity verification"
+  },
+  "hourly_cost_usd": 2.46,
+  "id": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "lifecycle": {
+    "deadline_utc": "2026-07-28T14:32:10.882252Z",
+    "provider_started_at_utc": "2026-07-28T12:02:10.882252Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-global-kv-h200-20260728t1204z-watchdog.service",
+      "deadline_epoch": 1785249130.8822525,
+      "main_pid": 3058984,
+      "unit": "gemma4-global-kv-h200-20260728t1204z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "allocation_type": "preemptible",
+    "disk_id": "computedisk-e00ywd3j5beypye022",
+    "disk_name": "gemma4-global-kv-h200-20260728t1204z-boot",
+    "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "instance_id": "computeinstance-e00f01gpfve0e49wb3",
+    "instance_name": "gemma4-global-kv-h200-20260728t1204z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "public_ipv4": "89.169.102.70",
+    "region": "eu-north1",
+    "ssh_ed25519_fingerprint": "SHA256:CG1BmLhfmnAtzZyC51R5ea0wA3pgbaLFMGxiXF6pZpQ",
+    "ssh_user": "glmrunner",
+    "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f",
+    "zone": "fabric-7"
+  },
+  "schema_version": 1
+}

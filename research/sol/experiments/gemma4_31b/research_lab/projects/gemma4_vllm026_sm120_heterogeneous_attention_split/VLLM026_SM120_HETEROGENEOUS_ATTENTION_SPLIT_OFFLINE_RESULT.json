@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "classification": "exact_layer_aware_dispatch_implemented_offline_pending_sm120_oracle",
+  "created_at_utc": "2026-07-29T07:11:17Z",
+  "spend": {
+    "authorized_spend_usd": 0.0,
+    "actual_spend_usd": 0.0,
+    "gpu_used": false,
+    "gpu_pool_called": false,
+    "ssh_called": false,
+    "provider_api_called": false
+  },
+  "bound_identity": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "vllm_version": "0.26.0+cu129",
+    "vllm_git_revision": "568afb3a13806beb53bb2e6bd518269357b237c0",
+    "vllm_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "torch_version": "2.11.0+cu130",
+    "target_device_capability": [
+      12,
+      0
+    ],
+    "activation_dtype": "bfloat16",
+    "kv_cache_dtype": "auto/bfloat16"
+  },
+  "dispatch": {
+    "attention_config": {
+      "backend_per_kind": {
+        "sliding_window": "TRITON_ATTN",
+        "full_attention": "FLEX_ATTENTION"
+      }
+    },
+    "cli_fragment": "--attention-config '{\"backend_per_kind\":{\"sliding_window\":\"TRITON_ATTN\",\"full_attention\":\"FLEX_ATTENTION\"}}'",
+    "implementation": "heterogeneous_attention_split.py",
+    "implementation_sha256": "3924b3be58e603e8c8475c26fca386f1c40a5b003441e75d2223fe4051906e0f",
+    "native_runtime_patch_required": false,
+    "reason": "vLLM 0.26.0 already dispatches backend_per_kind before Attention construction and the model runner creates distinct backend/spec/head metadata groups."
+  },
+  "exact_consumer_binding": {
+    "prefill": {
+      "production_batch": "c32 with 4,214 prompt tokens/request; 134,848 aggregate prompt tokens are chunked by max_num_batched_tokens=65,536",
+      "scheduler_tensor_extent": "T <= 65,536 new tokens per scheduler step",
+      "sliding_q": "[T,32,256] BF16",
+      "sliding_k_v": "[T,16,256] BF16 each",
+      "sliding_output": "[T,32,256] BF16 then flattened to [T,8192] for o_proj",
+      "full_q": "[T,32,512] BF16",
+      "full_k_v": "[T,4,512] BF16 each; attention_k_eq_v makes the producer values equal while retaining separate packed K/V slots",
+      "full_output": "[T,32,512] BF16 then flattened to [T,16384] for o_proj"
+    },
+    "decode": {
+      "production_batch": "T=32 new tokens per c32 decode step",
+      "sliding_context": "at most 1,024 logical KV positions per request",
+      "full_context": "up to 4,572 positions for the 4,214+358 exact request mix, bounded by max_model_len=5,000",
+      "slot_ownership": "the scheduler slot_mapping writes K/V for each layer; num_kv_shared_layers=0, so every one of the 60 layers owns its own cache",
+      "gqa": "local 32Q:16KV (2 queries/KV head); global 32Q:4KV (8 queries/KV head)"
+    },
+    "mask_semantics": {
+      "sliding_window": "(causal OR same multimodal-prefix block) AND 1,024-token window; retained on Triton because it consumes mm_prefix_clamp_sliding_window",
+      "full_attention": "causal OR same multimodal-prefix block; FlexAttention implements this exact global-layer mask with no window term",
+      "invalid_split_rejected": "FLEX_ATTENTION was not assigned to sliding layers because vLLM 0.26.0 composes its generic prefix term outside the sliding-window AND and does not consume Gemma4's clamp flag"
+    },
+    "kv_layout": {
+      "logical": "[num_blocks,num_kv_heads,block_size,2*head_dim]",
+      "physical": "[num_blocks,block_size,num_kv_heads,2*head_dim]",
+      "stride_layout": "NHD",
+      "compatibility": "TritonAttentionBackend and FlexAttentionBackend both expose layered stride order (1,0,3,2,4), so the split does not relayout or transfer KV"
+    }
+  },
+  "backend_support_falsification": {
+    "FLASH_ATTN": {
+      "classification": "typed_none_for_either_exact_variant_on_sm120",
+      "evidence": "Gemma4 sets use_mm_prefix for all decoder layers. vLLM requires FA4 for that contract; its selector only prefers FA4 for capability major 10, and the FA4 Blackwell TMEM guard falls back above head_size 128 except 192. Local 256 and global 512 therefore cannot be exact FA4 consumers on sm_120."
+    },
+    "FLASHINFER": {
+      "classification": "typed_none_for_exact_gemma4_prefix_semantics",
+      "evidence": "The backend supports head sizes 256/512 and capability through 12.1 but does not advertise supports_mm_prefix, so startup validation rejects it."
+    },
+    "FLEX_ATTENTION_sliding": {
+      "classification": "typed_none_without_additional_mask_patch",
+      "evidence": "Its v0.26.0 generic mask composes (causal AND sliding_window) OR mm_prefix, whereas Gemma4 sliding layers require (causal OR mm_prefix) AND sliding_window."
+    },
+    "FLEX_ATTENTION_full": {
+      "classification": "admitted_exact_official_consumer",
+      "evidence": "The full layers have no sliding term, attn_logit_softcapping is null, num_kv_shared_layers is zero, BF16 KV is supported, GQA is enabled, and the multimodal prefix is ORed with the causal mask."
+    }
+  },
+  "physical_hypothesis": {
+    "evidence_label": "inferred_from_source_pending_measurement",
+    "causal_change": "Move ten 512-wide full-attention layers from Triton's unified attention implementation to the FlexAttention block-mask consumer while retaining all fifty local layers and their exact clamp semantics on Triton.",
+    "predicted_change": "The global group no longer allocates or enters Triton's 16-segment softmax scratch/reduction family; the decisive future metric is lower non-overlapping full-layer attention kernel time at c32. No KV-byte reduction or endpoint gain is claimed offline.",
+    "falsifier": "Reject the split if the exact sm_120 oracle differs in any prompt/output token row or if profiler-off median full-layer attention time is not lower than the all-Triton control outside run noise."
+  },
+  "offline_evidence": {
+    "audit_artifact": "OFFLINE_DISPATCH_AUDIT.json",
+    "audit_artifact_sha256": "cccdd75442465b734357de7311428d0d8cf15200f98cbaa888fdc91c5c67025d",
+    "tests": {
+      "command": "python3 -m unittest -v test_heterogeneous_attention_split.py",
+      "result": "3 passed",
+      "coverage": [
+        "exact pinned geometry admits the split",
+        "KV-sharing mutation returns typed none",
+        "logit-softcap mutation returns typed none"
+      ],
+      "test_source_sha256": "a27e15bae777d2afd44ddf0ad3c9b66d5e92b5488622fe264fbe0f4231f8c4c1"
+    },
+    "source_hashes": {
+      "vllm/model_executor/layers/attention/attention.py": "04fa9a1acb71217c7b9815e193198f6b69f12019c84a8a989b8d7e87544f8bda",
+      "vllm/model_executor/models/gemma4.py": "f13cb41ed9208a5549d466fe9745378d9b3d7b747a52a1927d542c1e97d4cdc8",
+      "vllm/v1/attention/backends/flex_attention.py": "6a6298bd913dc0fab66282cc3cd9469f390dcbe7a54ff6429aac5bfd6ee5d449",
+      "vllm/v1/attention/backends/triton_attn.py": "20b4dd5f8c15cd2d6f9598268368f5fc572f2c980eb75327c5992100c49ff3ed",
+      "vllm/v1/attention/selector.py": "1752ef70633f643688df7e072b1374522a0cdc4c6fdcebfcca44a8a6566db6cd",
+      "vllm/v1/kv_cache_interface.py": "73b5967f23ff2d4526b984cf90c1203e550575e5f329650c8899269b8f78edcf",
+      "vllm/v1/worker/gpu_model_runner.py": "81b7627fbe81f7aaa2f77b4bf085faa353c69d03662ebfe369536a9773bb70d0"
+    }
+  },
+  "future_sm120_oracle": {
+    "script": "future_sm120_oracle.py",
+    "script_sha256": "b41ef19d7d8b0b6f0522634ea9c5c0753fff48d6b02ac33dea7b002575601842",
+    "build": {
+      "required": false,
+      "reason": "The candidate uses the stock vLLM 0.26.0 backend_per_kind contract and official backend implementations; no runtime source bytes change."
+    },
+    "run_command": "python3 future_sm120_oracle.py --wheel /workspace/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_31_x86_64.whl --model /workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4 --output /workspace/gemma4-attention-split-oracle",
+    "oracle_contract": "Two fresh model processes run all-Triton control and layer-aware candidate on sm_120, hash-bind the wheel, assert exact vLLM/Torch/device identities, require startup-log proof for both candidate backends, and compare prompt IDs plus greedy output IDs/text exactly for two text requests and one deterministic multimodal-prefix request.",
+    "measurement_after_oracle": "Only after the norm-FP8 itinerary resolves and the director grants a future bench handoff, add the cli_fragment to the otherwise identical c32 endpoint and compare profiler-off request time plus non-overlapping full-layer attention kernel time.",
+    "status": "not_run_by_offline_contract"
+  },
+  "portfolio_decision": {
+    "decision": "retain_as_future_component_candidate",
+    "claim_allowed": false,
+    "blocked_by": [
+      "norm_fp8_component_has_serial_warm_bench_priority",
+      "explicit_director_handoff_required"
+    ],
+    "norm_fp8_itinerary_altered": false
+  }
+}

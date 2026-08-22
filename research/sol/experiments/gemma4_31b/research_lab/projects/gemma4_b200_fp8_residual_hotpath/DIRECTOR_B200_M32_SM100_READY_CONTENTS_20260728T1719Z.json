@@ -1,0 +1,14 @@
+{
+  "artifacts": "DIRECTOR_B200_M32_SM100_EXECUTION_20260728T1719Z.json binds the satisfied $8 reservation, typed broad-build timeout, retained-state SM100-only minimum-extension continuation, and exact lifecycle.",
+  "caches": "Preserve the provider disk, derived b200-m32-recovery5 image, patched vllm-recovery5 source, 273 settled CUDA objects, build dependencies, checkpoint, and runtime caches; rejected native-NVFP4 shards remain forbidden.",
+  "checkpoint": "Retained exact checkpoint at /home/glmrunner/b200-nvfp4-gemma4-endpoint-v2-20260728t1323z/bf16-source; do not restage.",
+  "image": "Use retained derived b200-m32-recovery5:20260728t1623z only; do not rebuild the image.",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; decode runtime-dynamic-FP8 M32 hot path.",
+  "next": "Only gemma4_b200_fp8_residual_hotpath may claim by 2026-07-28T17:27:00Z. Bind and launch one durable SM100-only minimum-extension owner, consume the still-unsubmitted stock/patched six-shape pair, release negative or incomplete by 2026-07-28T18:00:00Z, or retain a positive claim for director promotion. Watchdog ends 2026-07-28T18:10:00Z.",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "runtime": "Identity-verified NVIDIA B200; stock and genuinely patched SM100 Cutlass scaled-MM consumers must use distinct execution bytes.",
+  "schema_version": 1,
+  "scientific_terminal": "One valid stock plus one valid genuinely patched exact-consumer component sample over six weighted M32 decode shapes; no endpoint replay. Positive retains claim for promotion; negative or incomplete releases by 2026-07-28T18:00:00Z.",
+  "server_state": "No M32 science has started. The prior broad build timed out pre-science; the prior owner is dead. Reuse retained build state, bind CUDA architecture SM100 only, and build only the minimum production extension required by the exact consumer.",
+  "state": "funded retained B200 ready for one SM100-only minimum-extension M32 continuation"
+}

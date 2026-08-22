@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "classification": "director_gated_activation_fp8_offline_component_materialization",
+  "created_at_utc": "2026-07-29T15:22:00Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "question": "Can the source-complete gated-activation to dynamic-E4M3 candidate be made immediately executable after the streamed-global-KV handoff by materializing its one exact real-weight component locally?",
+  "evidence": {
+    "result": {
+      "path": "GATED_ACTIVATION_FP8_HOTBLOCK_RESULT.json",
+      "sha256": "9f5949438669051d227fc772613d1b08aee32b3d526a0e4d84895c47fc9cb2a1",
+      "classification": "source_complete_decode_gated_activation_fp8_candidate",
+      "decision": "survives_for_one_later_exact_h200_component_run"
+    },
+    "runner_contract": {
+      "path": "H200_RUNNER_CONTRACT.json",
+      "sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba"
+    },
+    "runner": {
+      "path": "h200_runner.py",
+      "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb"
+    }
+  },
+  "source": {
+    "checkpoint_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+    "checkpoint_manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "index": "model.safetensors.index.json",
+    "tensor_key": "model.language_model.layers.0.mlp.down_proj.weight",
+    "source_shard": "model-00001-of-00002.safetensors",
+    "source_shard_bytes": 49784788364,
+    "source_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "tensor_dtype": "bfloat16",
+    "tensor_shape": [
+      5376,
+      21504
+    ],
+    "tensor_payload_bytes": 231211008
+  },
+  "output": {
+    "component": "inputs/gemma4-layer0-down-proj-component.safetensors",
+    "manifest": "GATED_ACTIVATION_FP8_COMPONENT_MANIFEST.json",
+    "ready_artifact": "GATED_ACTIVATION_FP8_COMPONENT_READY.json",
+    "only_tensor": "model.language_model.layers.0.mlp.down_proj.weight",
+    "atomic_finalization_required": true,
+    "post_finalize_source_value_equality_required": true,
+    "runner_describe_required": true
+  },
+  "budget": {
+    "wall_clock_minutes": 30,
+    "gpu_seconds": 0,
+    "spend_usd": 0.0,
+    "new_storage_bytes": 536870912
+  },
+  "execution": {
+    "extract_only_the_bound_tensor": true,
+    "verify_index_to_shard_mapping": true,
+    "write_temporary_then_rename": true,
+    "reopen_final_component_and_compare_exact_values_dtype_shape_and_key": true,
+    "run": "python3 h200_runner.py --describe",
+    "publish_ready_and_status_last": true
+  },
+  "terminal_contract": {
+    "success": "The project-local component contains only the bound layer-0 down-projection tensor, the final bytes and manifest are hash-bound, exact source-to-component values/dtype/shape/key pass after atomic finalization, and h200_runner.py --describe parses the unchanged contract.",
+    "negative": "A typed local extraction, identity, storage, or exact-value incompatibility with compact evidence and no GPU/provider mutation.",
+    "next": "On success, set status paused and non-claimable pending a director-authorized H200 component run; do not claim the streaming bench."
+  },
+  "must_not": [
+    "Do not call gpu_pool, SSH, provider APIs, Docker, or CUDA.",
+    "Do not touch the claimed streamed-global-KV H200 or its project.",
+    "Do not read or copy any checkpoint tensor other than the bound layer-0 down-projection weight.",
+    "Do not mutate candidate source, runtime adapter, runner, checkpoint source, or shared manifests.",
+    "Do not publish a paid-run binding or claim permission."
+  ]
+}

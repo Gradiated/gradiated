@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "project": "b200_nvfp4_gemma4_endpoint",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; c32 campaign workload and AA 10K view.",
+  "checkpoint": "Fresh 300 GiB managed boot disk; exact checkpoint is not staged.",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79 bound, not pulled.",
+  "runtime": "Strict ED25519 SHA256:DQDeaVGu5zUdbx6tzaeU8rBoNzh1d6wzZ8wjQR6rAHE verified; one idle NVIDIA B200, 183359 MiB, MIG disabled, driver 580.159.04.",
+  "caches": "Fresh provider disk; none verified.",
+  "server_state": "Strict SSH and idle GPU telemetry only; no image pull, checkpoint transfer, container, CUDA invocation, endpoint, or scientific sample.",
+  "artifacts": "Controller-local hash-locked producer_v2 bundle, immutable native-NVFP4 packet, exact checkpoint source, and mutable endpoint_owner.sh.",
+  "scientific_terminal": "One exact-checkpoint BF16-control then native-NVFP4 c32 endpoint pair remains unconsumed.",
+  "next": "Only b200_nvfp4_gemma4_endpoint may claim. Patch the mutable cold-start/repair seams named in DIRECTOR_B200_NVFP4_EXECUTION_20260728T1323Z.json, then launch the bound retained owner by 2026-07-28T13:27:00Z and release by 2026-07-28T16:10:00Z.",
+  "state": "identity-verified cold B200 ready for the native-NVFP4 retained-claim implementation plus endpoint pair"
+}

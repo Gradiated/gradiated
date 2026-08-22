@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "role": "streaming_global_kv_candidate_endpoint",
+  "state": "maintenance_after_pre_science_v8_owner_loss",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 for one U=8 streamed-candidate c32 endpoint.",
+  "checkpoint": "The exact 62,578,655,208-byte checkpoint remains content-addressed on the controller under manifest 6202e8f8...; the guest checkpoint is incomplete and contains only verified chat_template.jinja. No large checkpoint shard is represented as remotely staged.",
+  "image": "Pinned docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 is resident.",
+  "runtime": "Strict SSH/cloud-init identity verified; one NVIDIA H200 UUID GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a, 143771 MiB, driver 580.159.04.",
+  "caches": "Retain the pulled image, controller-local immutable checkpoint view, project inputs, and any safe provider caches for the v9 continuation.",
+  "server_state": "Container gemma4-streaming-global-kv-v8 exited pre-science with ModuleNotFoundError; zero GPU memory is used and no compute application is live.",
+  "scientific_terminal": "No candidate request was submitted. CUDA producer 0f7c32bb... remains preserved and must not be replayed.",
+  "artifacts": "OWNER_V8_PRE_SCIENCE_FAILURE.json SHA-256 0156b881aa6b097b55b2c10c63b3da673d3adb35d3712c72b730590b2b03420b; DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_OFFLINE_OWNER_REPAIR_20260729T1343Z.json SHA-256 7bf5f634a626a208815a7654208ecd1d2d238938c9fae735c4fe5c71d5654aa6; original claim generation 2026-07-29T13:33:24.414360Z.",
+  "next": "Keep maintenance and unclaimed while one zero-GPU researcher prepares v9 and the harness raises the cumulative reservation from 8 USD to 11 USD. A later director may extend the watchdog and mark ready only after both are durable."
+}

@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T01:54:00Z",
+  "decision": "repair_packet_preparation_idempotence_under_the_retained_h200_claim",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "predecessor_execution_binding": {
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_EXECUTION_20260729T0047Z.json",
+    "sha256": "39734c5dbbbfdd1663df6e6a351fa51b71639d202350733bbd57363a15baecbc"
+  },
+  "predecessor_stock_health_repair_binding": {
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_HEALTH_REPAIR_20260729T0128Z.json",
+    "sha256": "724988a491475257d0619915cbe9d3bd99b7c09ada1dd0c42b87883246059677"
+  },
+  "predecessor_start_extension": {
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_HEALTH_REPAIR_START_EXTENSION_20260729T0139Z.json",
+    "sha256": "d27fc8af2c67d4cac84c18dd87e323e0ab98ab09b54eb0fc037c2b1c04244eef"
+  },
+  "immutable_scientific_contract": {
+    "packet_manifest_path": "inputs/h200_55l5g_endpoint_packet/MANIFEST.json",
+    "packet_manifest_sha256": "b0a2fad6522eaf6cb47d4915616071d7ecc56caf1289fb1ed8670edd486576e5",
+    "candidate_source_path": "extend_attention_hybrid_proxy.py",
+    "candidate_source_sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "checkpoint_bytes": 62546338248,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "concurrency": 32,
+    "stock_then_candidate": true,
+    "maximum_valid_pair_invocations": 1,
+    "quality_preservation_claimed": false
+  },
+  "failed_replacement_evidence": {
+    "controller_state": "artifacts/h200-55l5g-endpoint-stock-health-repair-20260729t0128z-controller/OWNER_STATE.json",
+    "controller_pid": 3806401,
+    "controller_start_ticks": 140586500,
+    "controller_live_at_director_observation": false,
+    "owner_exception": "artifacts/h200-55l5g-endpoint-stock-health-repair-20260729t0128z/OWNER_EXCEPTION.json",
+    "owner_exception_sha256": "f6f0cd26f2eee89953f559c5dd228b06cb46015c5e2ba539932e5586208d9558",
+    "reported_exception": "RuntimeError('packet_copy_failed:qualified_c32_workload.json')",
+    "actual_cause": "the immutable workload and candidate packet files were already resident and read-only; unconditional scp attempted to overwrite the exact resident workload after the writable pair driver copied successfully",
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "campaign_endpoint_requests_submitted": 0
+  },
+  "verified_resident_state": {
+    "observed_at_utc": "2026-07-29T01:54:00Z",
+    "remote_root": "/home/glmrunner/hybrid-55l5g/current-20260729t0047z",
+    "remote_packet_directory": "/home/glmrunner/hybrid-55l5g/current-20260729t0047z/packet",
+    "remote_packet_files": [
+      {
+        "path": "run_h200_55l5g_endpoint_pair.py",
+        "sha256": "02aaabd93c8d3a9e9e5da683608ad47a4cd19929430a0770ad387bae807b0eb3"
+      },
+      {
+        "path": "qualified_c32_workload.json",
+        "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+      },
+      {
+        "path": "extend_attention_hybrid_proxy.py",
+        "sha256": "33d6bec04ab04e006b5e96d95dce56444edb59c519f242a0b6690a5f6e5bcfed"
+      }
+    ],
+    "checkpoint_finalized": true,
+    "container": "hybrid-55l5g",
+    "container_running": true,
+    "container_pid": 6404,
+    "container_oom_killed": false,
+    "stock_model_loaded": true,
+    "health_endpoint_passed": true,
+    "free_disk_bytes": 149378158592
+  },
+  "live_claim": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "project": "gemma4_hybrid_attention_placement_codesign",
+    "last_heartbeat_at_director_observation": "2026-07-29T01:50:47.743988Z",
+    "claim_stale": false,
+    "durable_owner_present": false,
+    "new_claim_allowed": false,
+    "release_reclaim_allowed": false,
+    "clear_drain_after_release_allowed": false,
+    "drain_after_release": true,
+    "provider_lifecycle_mutation_allowed": false,
+    "required_resource": {
+      "instance_id": "computeinstance-e00kwncr0knnykhe48",
+      "disk_id": "computedisk-e00n8m6xbb9cfdkam8",
+      "ssh_ed25519_fingerprint": "SHA256:qjLIE6aRkPYKSbMcENEkhlAhDzjzydZJea4lcxc1WqY"
+    }
+  },
+  "mutable_repair": {
+    "source_owner": "run_h200_55l5g_retained_stock_server_owner.py",
+    "source_owner_sha256": "2f9921f2387072aa0da7c5b2c0c0beaa657bbca17e85e5eab129da5040ff0831",
+    "required_replacement_owner": "run_h200_55l5g_retained_packet_ready_owner.py",
+    "required_runtime_manifest": "H200_55L5G_RETAINED_PACKET_IDEMPOTENCE_REPAIR_RUNTIME_MANIFEST.json",
+    "required_ready_record": "H200_55L5G_RETAINED_PACKET_IDEMPOTENCE_REPAIR_READY.json",
+    "artifact_root": "artifacts/h200-55l5g-endpoint-packet-idempotence-repair-20260729t0154z",
+    "allowed_changes": [
+      "preserve the DETACHED_OWNER_STATE fallback already present in the source owner",
+      "heartbeat the original claim before any remote work without invoking gpu_pool claim",
+      "parse only the exact Docker State.Running boolean and require the existing stock health endpoint",
+      "prepare each bound packet file idempotently by accepting a resident file only when its SHA-256 equals the bound local SHA-256",
+      "copy only a missing packet file through a temporary destination, atomically install it, and verify its bound SHA-256",
+      "fail before science on any resident packet hash mismatch rather than overwriting immutable bytes",
+      "persist packet-preparation commands, return codes, stderr, and local and remote hashes",
+      "reuse the finalized checkpoint, pinned image, exact packet, and currently healthy loaded stock container",
+      "persist the stock request-start marker immediately before the first campaign request and the stock result before replacing only the server for the candidate arm",
+      "launch the candidate server with the bound source mount and finish the sole contemporaneous pair",
+      "retain and heartbeat the claim through a fresh hash-bound repair-handshake generation for any further recoverable pre-science defect",
+      "persist terminal retrieval and generation-fenced pool release evidence"
+    ],
+    "forbidden_changes": [
+      "checkpoint staging, image pull, or stock model reload while the verified resident state remains healthy",
+      "scientific packet bytes, candidate source, converted layer set, workload, stock comparator, pair order, request timing, or oracle",
+      "pair invocation limit",
+      "positive component, TARGET_VERIFY, DFlash, or prior endpoint replay",
+      "quality-preservation claims",
+      "provider lifecycle or future-release drain fence"
+    ]
+  },
+  "owner_transition": {
+    "publish_ready_as_final_prelaunch_mutation": true,
+    "recheck_absent_pid_3806401_original_claim_generation_container_health_and_remote_packet_hashes_once": true,
+    "launch_replacement_through_detached_owner_unit_manager_pid": true,
+    "heartbeat_original_claim_before_remote_work": true,
+    "exactly_one_live_endpoint_executor": true,
+    "do_not_reuse_failed_artifact_root": true
+  },
+  "lifecycle": {
+    "replacement_owner_start_by_utc": "2026-07-29T02:03:00Z",
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z"
+  },
+  "budget": {
+    "cumulative_authorized_usd": 22.0,
+    "prior_actual_usd": 9.960954252113235,
+    "maximum_cumulative_usd": 17.340120852113234,
+    "additional_provider_create_allowed": false
+  }
+}

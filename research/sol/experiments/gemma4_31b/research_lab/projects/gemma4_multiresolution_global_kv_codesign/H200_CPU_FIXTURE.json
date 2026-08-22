@@ -1,0 +1,39 @@
+{
+  "candidate_sha256": "ab5d951d338b3c404606efce2dbcb2f9235d016a8943ee6c01d601ee2f289f20",
+  "classification": "cpu_source_fixture_only",
+  "fixture": {
+    "all_positions_once": true,
+    "compact_tokens": 16,
+    "consumer_execution": "unavailable_without_torch_on_coordinator",
+    "exact_entries": 13,
+    "finite": null,
+    "multiplicity_sum": 1057,
+    "output_shape": null,
+    "summary_entries": 3
+  },
+  "measurement_ready": false,
+  "phases": {
+    "decode": {
+      "compact_entries": 26,
+      "query_count": 1,
+      "query_start": 4572,
+      "represented_positions": 4573
+    },
+    "prefill": {
+      "compact_entries": 57,
+      "query_count": 32,
+      "query_start": 4192,
+      "represented_positions": 4224
+    },
+    "target_verify": {
+      "compact_entries": 37,
+      "query_count": 12,
+      "query_start": 4214,
+      "represented_positions": 4226
+    }
+  },
+  "runner_sha256": "3014ebf6beb96ecbd8a58cac0953bb4d3667dcd06c03251206068a91c4229d54",
+  "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+  "schema_version": 1,
+  "target_runtime_checked": false
+}

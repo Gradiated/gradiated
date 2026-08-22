@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "director_handoff_sha256": "7072b2f1f9b20291868dfecb0ecec62abf8f63e3faf2e52640f7b2ff50c09a23",
+  "predecessor_claimed_at": "2026-07-30T04:55:56.475891Z",
+  "control_terminal_sha256": "6bc155f1b3639614cdb0c30c78a5a8f091834f44de4a5a5521a2b26eb1a2859f",
+  "files": {
+    "fixed_floor_crossop_endpoint_token_observer.py": "da870a0ef374ff4ebf8cc3f32aae2e95718ab78990be9721fca04dd7950ca203",
+    "run_fixed_floor_crossop_endpoint_candidate_only.py": "e7c380bf0284bfa24215503a42c919cc0afdf41ca0439a0421b9a381727234ec",
+    "run_fixed_floor_crossop_endpoint_owner_r3.py": "5e4fc3a63638c72c6a4415ded82b5c98ce20468cb798afaee77be6c28f1d7dbf"
+  },
+  "dispatch": {"implemented_scopes": ["candidate_only", "retrieval_only"], "control_replay_allowed": false}
+}

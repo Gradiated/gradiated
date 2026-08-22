@@ -1,0 +1,126 @@
+{
+  "schema_version": 1,
+  "classification": "gated_activation_fp8_exact_rounding_source_ready",
+  "created_at_utc": "2026-07-29T16:42:00Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "director_binding": {
+    "path": "DIRECTOR_GATED_ACTIVATION_FP8_EXACT_ROUNDING_SOURCE_REPAIR_20260729T1634Z.json",
+    "sha256": "2199c142b14eb89f82ddad963b9cb9bd7814b5a6790308bccacfb0d3d4804886"
+  },
+  "causal_hypothesis": {
+    "observation": "The consumed candidate used the intended CUDA path, matched row scales closely, passed M=1, and failed the real consumer at M=16 and M=32.",
+    "first_source_divergence": "The pinned stock GELU cubic is left-associated as ((alpha * gate) * gate) * gate; the closed candidate precomputed (gate * gate) * gate and then multiplied by alpha.",
+    "stock_bf16_boundary": "Pinned stock computes apply_activation_f32(gate) * up in FP32 and then casts the product once to the BF16 output tensor. The revised fused kernel performs the same single BF16 materialization into shared memory before scale reduction and E4M3 quantization.",
+    "revision": "Copy the stock v0.5.13 GELU expression and its operation ordering verbatim while retaining the no-global-intermediate fused reduction and quantization structure.",
+    "falsifier": "A fresh H200 component result that still exceeds the unchanged numerical gates closes this exact association repair; its timing must be measured anew and cannot inherit the closed candidate's 29.0% result."
+  },
+  "source_trace": {
+    "runtime": "sglang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "stock_python_dispatch": {
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/activation.py",
+      "sha256": "e0bfddf2c5ad0ba62df2c68b5682518f11f0592c8a51f144a363ea5ddcc772ca"
+    },
+    "stock_activation_cuda": {
+      "path": ".agents/runtime/sglang-v0.5.13-source/python/sglang/jit_kernel/csrc/elementwise/activation.cuh",
+      "sha256": "8654de9cd6e2655427f95bf1d95dc20c953ef28b0cfee631ce2a71a01aaa0d61"
+    },
+    "closed_candidate_python_sha256": "7f5aaa9467fca4fe979470d32a21fa7038236ff760d08690c505fa4ab6506e38",
+    "closed_candidate_cuda_sha256": "2b5c9d0e799c64690a002e3d05a2d744135bf4b17494601154585faf882e6458",
+    "closed_terminal_sha256": "7c265c8d7a5cff5bebef23c8d85ebaa75dff83199d51f03be41d419aa5979a63"
+  },
+  "changed_files": {
+    "gated_activation_fp8_exact_rounding.py": "8b02cea617eea89606cf022e8cefb8243499490dd9d46e5840cf3f82b4f4c11a",
+    "gated_activation_fp8_exact_rounding.cu": "19f5309b1d3639c4942f8148c33ddd3dde76af2dbb001622d5a45e37ad1fd41f",
+    "h200_exact_rounding_runner.py": "b38bfd1a6fc1e9124ccc22170b045358a74ea71c3707e688b5f7c52c2784b643",
+    "validate_exact_rounding_source.py": "7f0d6b75c3a1fb5d2d1215e54ba0b5863f3baf7e5943a3262c3ec64bb3aa5586"
+  },
+  "deterministic_local_evidence": {
+    "path": "EXACT_ROUNDING_CPU_STATIC_RESULT.json",
+    "sha256": "e236593cac28353dbea4b6660e7a6ca0bce89e5a9a192e2681f9b44963dadb2e",
+    "classification": "deterministic_cpu_static_pass",
+    "m_rows": [
+      1,
+      16,
+      32
+    ],
+    "first_boundary_differences": [
+      1315,
+      20252,
+      41526
+    ],
+    "revised_vs_stock_boundary_differences": [
+      0,
+      0,
+      0
+    ],
+    "limitation": "Synthetic CPU float32/tanh and BF16 rounding localized the source boundary but did not reproduce a post-BF16 difference; this is not CUDA, H200, real-consumer, or timing evidence."
+  },
+  "future_exact_invocation": {
+    "runner": {
+      "path": "h200_exact_rounding_runner.py",
+      "sha256": "b38bfd1a6fc1e9124ccc22170b045358a74ea71c3707e688b5f7c52c2784b643"
+    },
+    "base_runner": {
+      "path": "h200_runner.py",
+      "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb"
+    },
+    "component": {
+      "path": "inputs/gemma4-layer0-down-proj-component.safetensors",
+      "sha256": "d6622163e9de350e75c7e07f51b486be92cfc0e130271c8de30518445034bac9"
+    },
+    "component_manifest": {
+      "path": "GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json",
+      "sha256": "b179e2556f8d85681c6dcb47f98174d7206f838488afb3a1cf7f04a9fe17630d"
+    },
+    "command": "python3 h200_exact_rounding_runner.py --component-safetensors inputs/gemma4-layer0-down-proj-component.safetensors --component-manifest GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json --output ARTIFACT_ROOT --repetitions 100",
+    "rows": [
+      1,
+      16,
+      32
+    ],
+    "repetitions": 100,
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "runner_numerical_gates": {
+      "activation_relative_l2_max": 0.001,
+      "consumer_relative_l2_max": 0.001,
+      "consumer_cosine_min": 0.999999,
+      "nonfinite_count": 0
+    },
+    "director_consumer_ceiling_retained": 0.002,
+    "hardware": "NVIDIA H200 SXM / sm_90a"
+  },
+  "experiment_contract": {
+    "stock_control": "GeluAndMul(approximate='tanh') plus sglang_per_token_quant_fp8",
+    "candidate_change": "Only the GELU cubic association is changed to the exact pinned stock expression.",
+    "quality_gate": "Unchanged real activation and fp8_scaled_mm consumer oracles; no threshold weakening.",
+    "slo": "Correctness first; revised performance is unknown until fresh target-H200 measurement.",
+    "maximum_cumulative_provider_spend_usd": 2.0,
+    "prior_actual_spend_usd": 0.33,
+    "new_provider_spend_usd": 0.0,
+    "source_turn_timeout": "2026-07-29T16:45:00Z",
+    "cleanup": "No provider or bench state was touched."
+  },
+  "opportunity": {
+    "evidence_scope": "Exact pinned stock source plus deterministic CPU/static arithmetic discriminator.",
+    "competing_explanations": [
+      "CUDA compiler contraction or libdevice tanhf differences remain possible.",
+      "The closed discrepancy may persist after the association repair on target hardware."
+    ],
+    "modifiable_fraction": "One source expression inside the fused producer; performance magnitude unknown.",
+    "next_measurement": "One later director-bound fresh M=1/16/32 real-weight H200 component run.",
+    "expected_information_per_dollar": "High because resident state avoids cold setup and the fresh run directly falsifies the localized boundary."
+  },
+  "closed_predecessor": {
+    "classification": "component_negative_numerical_equivalence",
+    "target_sample_consumed": true,
+    "replay_allowed": false,
+    "timing_transfer_allowed": false
+  },
+  "gpu_used": false,
+  "cuda_executed": false,
+  "provider_or_pool_called": false,
+  "scientific_sample_consumed": false,
+  "claim_allowed": false,
+  "endpoint_science_allowed": false,
+  "source_ready": true
+}

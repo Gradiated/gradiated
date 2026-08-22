@@ -6996,3 +6996,5594 @@ durable owner exits. Expected effect: long checkpoint transfers and model
 loads proceed without repeated status-only researcher/director turns, while a
 genuinely new integration failure still receives the fast same-claim repair
 dispatch.
+
+## 2026-07-28T11:44Z — retain the warm B200 for conversion dependency repair
+
+**GPU safety audit and mismatch.** One grouped authenticated Nebius listing
+returned RUNNING instance `computeinstance-i00hfh66qbsqy4mx7x` and its READY
+attached disk `computedisk-i00svcmxdjhpm7bkez`, exactly matching the sole
+non-retired inventory record. The controller-host user watchdog remains
+active/running as PID `2964618` in its recorded control group through
+`12:31:59.335947Z`, and the claim last heartbeated at `11:43:02.922089Z`.
+However, recorded PID owner `2973170` is absent after exiting at
+`11:43:09Z`; this is an objective owner-loss condition. Reasserted
+`drain_after_release=true` for bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x`. Exact director
+disposition IDs are instance `computeinstance-i00hfh66qbsqy4mx7x`, disk
+`computedisk-i00svcmxdjhpm7bkez`, and project
+`project-i00hfrkjpr00wmz2kzj3qm`. No claim reclaim, provider cleanup, or
+inventory retirement was performed.
+
+**Objective evidence and expected effect.** The complete exact-checkpoint
+B200 BF16-control versus native-NVFP4 c32 endpoint remains unconsumed.
+Repair-2 successfully preserved the original claim, staged all checkpoint
+bytes, staged the packet, and pulled the pinned image before conversion
+failed pre-science with
+`conversion_dependency_missing: ModuleNotFoundError("No module named
+'llmcompressor'")`. The new durable repair
+`b200-nvfp4-20260728T114309Z` is scoped to the stage/consumer path through
+`12:27:00Z`. Preserve the claimed mutable bench and resident checkpoint/image
+for an in-place dependency patch and replacement owner; do not cold-restart
+or tear down after this recoverable integration error. The drain fence keeps
+the ownerless claim from returning to the shared pool after release, while
+same-claim repair avoids repeating roughly 36 minutes of checkpoint transfer
+and image setup. No new shared-tool change was warranted because the existing
+repair handshake correctly exposed this new failure.
+
+## 2026-07-28T12:04Z — preserve the warm B200 after incompatible dependency overlay
+
+**GPU safety audit and mismatch.** The single grouped authenticated Nebius
+snapshot taken at the start of this turn returned RUNNING B200 instance
+`computeinstance-i00hfh66qbsqy4mx7x` and attached READY disk
+`computedisk-i00svcmxdjhpm7bkez`, matching the registered B200 bench. Its
+controller-host user watchdog is active/running as PID `3044153` through
+`12:40:00Z`; the claim heartbeated at `12:00:00.777336Z`, and
+`drain_after_release=true` remains set. Recorded PID-managed repair-4 owner
+`3053128` with start ticks `135583787` is now absent, while the project still
+named it in `active_session`; durable repair generation
+`b200-nvfp4-20260728T120034Z` correctly records the new pre-science failure.
+Exact director disposition IDs remain instance
+`computeinstance-i00hfh66qbsqy4mx7x`, disk
+`computedisk-i00svcmxdjhpm7bkez`, and project
+`project-i00hfrkjpr00wmz2kzj3qm`. The director concurrently created and
+registered H200 bench
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3` after the grouped
+snapshot; inventory records its controller-host user watchdog PID `3058984`
+active/running through `14:32:10.882252Z`. It is in maintenance for the
+compatible global-KV lane and had been live for under a minute, so its idle
+cost is justified. Per the one-snapshot rule, no provider re-query was made.
+No provider cleanup, inventory retirement, claim reclaim, or experiment
+interruption was performed.
+
+**Objective evidence and expected effect.** Repair-4 reused the finalized
+62,578,655,208-byte BF16 source, resident packet, pulled image, and original
+claim; it reached `stage_project_snapshot_reused` at `11:57:54Z`. It then
+spent about 160 seconds resolving and downloading an unconstrained
+`llmcompressor==0.12.0` overlay, including replacement Torch/CUDA packages,
+before import failed at `12:00:34Z`. The diagnostic records incompatible
+Torch, Transformers, NumPy, compressed-tensors, torchvision, and CUDA
+bindings; no conversion CUDA, endpoint, control, candidate, or scientific
+sample ran. This rejects only that dependency-overlay recipe, not native
+NVFP4 or the endpoint hypothesis. Preserve the claimed mutable bench and
+consume repair `b200-nvfp4-20260728T120034Z` in place with a producer that
+keeps the pinned serving runtime's core dependency graph intact. Expected
+effect: avoid another multi-gigabyte resolver/download cycle and resume at
+conversion without repeating checkpoint staging or image setup. No shared
+tool change was made while the director is actively reconciling this repair
+and the independent H200 registration; the existing repair handshake and
+drain fence behaved correctly.
+
+## 2026-07-28T12:18Z — retain the warm B200 for the converter adapter repair
+
+**GPU safety audit and mismatch.** One grouped authenticated Nebius snapshot
+covered both configured projects. It returned only RUNNING H200 instance
+`computeinstance-e00f01gpfve0e49wb3` with READY disk
+`computedisk-e00ywd3j5beypye022`, and RUNNING B200 instance
+`computeinstance-i00hfh66qbsqy4mx7x` with READY disk
+`computedisk-i00svcmxdjhpm7bkez`; all four resources match inventory and
+there are no provider-only or inventory-only live resources. Both
+controller-host user watchdogs are active/running in their recorded control
+groups. The H200 claim is current and PID-managed owner `3070398` has matching
+start ticks `135696058` while it pulls the bound image for the first
+target-runtime component call. B200 repair-5 owner `3070070` with recorded
+start ticks `135693645` is absent after exiting at `12:16:26Z`; the claim
+heartbeated at `12:16:04Z`, remains leased and watchdog-protected through
+`12:40:00Z`, and bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x` is already fenced
+with `drain_after_release=true`. Exact director disposition IDs are instance
+`computeinstance-i00hfh66qbsqy4mx7x`, disk
+`computedisk-i00svcmxdjhpm7bkez`, and project
+`project-i00hfrkjpr00wmz2kzj3qm`. No provider cleanup, inventory retirement,
+claim reclaim, or live-owner interruption was performed.
+
+**Objective evidence and expected effect.** Repair-5 reused the finalized
+checkpoint, resident packet, pulled serving image, and manifested isolated
+`llmcompressor==0.12.0` producer. It reached
+`stage_project_snapshot_reused` at `12:16:12Z` and conversion at `12:16:16Z`,
+roughly 67 seconds after owner launch, then failed pre-science because the
+packet invoked nonexistent module entrypoint `python -m llmcompressor`.
+No conversion CUDA, BF16 control, native-NVFP4 candidate, endpoint request,
+or scientific sample ran. This rejects only the converter command adapter,
+not the endpoint mechanism. The durable
+`b200-nvfp4-20260728T121626Z` repair and active researcher/director traces
+already localize the installed callable interface for one same-claim retry.
+Expected effect: a project-local adapter resumes at conversion without
+another dependency install, checkpoint transfer, image pull, or allocation.
+No shared-tool or harness change is warranted because the repair handshake,
+warm-state reuse, heartbeat, watchdog, and drain fence all behaved correctly.
+
+## 2026-07-28T12:32Z — resolve director-owned seams on claimed paid benches
+
+**GPU safety audit.** One grouped authenticated Nebius listing for the sole
+non-retired provider project returned RUNNING H200 instance
+`computeinstance-e00f01gpfve0e49wb3` and READY attached disk
+`computedisk-e00ywd3j5beypye022`, exactly matching registered bench
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3`; there were no
+provider-only or inventory-only live resources. The recorded controller-host
+user watchdog
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` is active/running as
+PID `3058984` in its recorded control group through
+`2026-07-28T14:32:10.882252Z`. PID-managed owner `3070398` is live with
+matching start ticks `135696058`, the claim heartbeated continuously through
+`12:30:44.684149Z`, its lease is current, and the project release fence
+`13:20:00Z` has not passed. The retired B200 resources were not re-queried.
+No bench is ownerless, stale, past deadline, or unsafe; no draining,
+provider cleanup, claim mutation, or experiment interruption was performed.
+
+**Objective and cadence evidence.** The repaired H200 component produced
+decision-bearing target-GPU evidence at `12:26:24Z`: finite outputs,
+request-ownership pass, no fallback, and candidate prefill/verify/decode
+times `2.091168/1.095317/1.214158 ms` versus stock
+`85.556476/0.648035/2.897647 ms`. This mixed component result is not the
+campaign objective: the fixed qualified denominator remains
+`0.625149101968745 s/request`, the H200 target is
+`0.500119281574996 s/request`, and no exact c32 endpoint or sustainable cost
+result has run. The paid claim is instead blocked on a director-owned
+`H200_ENDPOINT_COMMAND` and exact checkpoint-backed c32 packet; the fresh disk
+still lacks the checkpoint. After the result, the harness launched
+45.788-second and 21.052-second researcher turns from the valid repair-ready
+marker. They could only restate the blocker, and the second emitted
+`researcher_no_progress`. The concurrent director inspected the same live
+owner and missing seam, then returned after reporting it unbound. This is the
+real wall-clock and idle-cost bottleneck: authority is stranded between roles
+while a `$2.46/hour` bench has a finite release window.
+
+**Process change and expected effect.** Narrowly amended
+`.agents/skills/research-director/SKILL.md`: when a claimed paid bench awaits
+a director-owned command, packet, input binding, or lifecycle decision, the
+director must in that turn persist a hash-bound same-project repair or
+explicit delegation with an owner and deadline, or make the evidence-backed
+release/reuse/drain decision. Merely restating the seam while researchers
+rediscover it is no longer a portfolio decision. The rule preserves the
+director/researcher boundary and does not authorize the director to run the
+science. Expected effect: convert the next director wake into either the
+localized endpoint execution path or a timely lifecycle disposition, remove
+status-only researcher churn, and prevent the remaining warm H200 window from
+being spent on an ownership deadlock.
+
+## 2026-07-28T12:45Z — obey the newest bound owner-transition authority
+
+**GPU safety audit.** One grouped Nebius listing for the only active
+authenticated provider project returned RUNNING H200 instance
+`computeinstance-e00f01gpfve0e49wb3` and READY disk
+`computedisk-e00ywd3j5beypye022`, exactly matching registered bench
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3`; there were no
+provider-only or inventory-only live resources. The controller-host user
+watchdog
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` was active/running as
+PID `3058984` in its recorded control group through
+`2026-07-28T14:32:10.882252Z`. The continuous claim was current and
+heartbeating through `12:43:30Z`; predecessor owner PID `3070398` matched
+start ticks `135696058` and remained live while `OWNER_STATE_ENDPOINT.json`
+had not yet been created. No bench was ownerless, stale, past deadline, or
+unsafe, so no drain, provider cleanup, inventory retirement, claim mutation,
+or experiment interruption was performed.
+
+**Objective and cadence evidence.** The valid H200 component result remains
+useful but insufficient: the fixed qualified denominator is
+`0.625149101968745 s/request`, the campaign target is
+`0.500119281574996 s/request`, and the exact endpoint result is still
+unconsumed. The director's hash-bound
+`DIRECTOR_H200_GLOBAL_KV_ENDPOINT_INTEGRATION_20260728T1233Z.json`, reissued
+at `12:35Z`, explicitly authorized a same-claim endpoint owner after a
+PID/start-ticks-checked transition from `3070398/135696058`, with a
+`12:45Z` launch fence. The first endpoint researcher instead spent
+`455.186 s` re-auditing whether replacement was allowed because an older
+project artifact prohibited it, then returned at `12:42:10Z` with no
+replacement owner—only `209 s` before the launch fence. Its dynamic audit
+did usefully confirm the retained owner accepted only component retry scope,
+but the newest director binding had already resolved that exact authority
+question. A researcher dispatched at `12:42:11Z` correctly recognized the
+new binding and began the prescribed transition; that active work was left
+untouched. This precedence failure, not generic activity or project count,
+was the immediate bottleneck to obtaining objective-relevant endpoint
+evidence from the warm paid bench.
+
+**Process change and expected effect.** Narrowly amended
+`.agents/skills/researcher/SKILL.md` so the newest applicable hash-bound
+director binding supersedes stale predecessor prose and repair restrictions.
+When that binding explicitly authorizes a same-claim transition with exact
+PID/start ticks, the researcher must prepare and hash-bind the replacement,
+check the named predecessor and lifecycle fence once, and execute; only a
+current live-state contradiction returns the binding to the director. The
+rule preserves campaign, safety, and scientific identities and does not
+authorize provider changes. Expected effect: avoid another multi-minute
+controller archaeology loop, make owner handoffs consume the existing warm
+claim promptly, and preserve endpoint runway without adding validation,
+projects, teardown, or cold restart.
+
+## 2026-07-28T12:54Z — use the shared bench lookup in durable owners
+
+**GPU safety audit.** One grouped Nebius snapshot covered both configured
+projects. Project `project-e00h1vhmpr00vbmfd5k7pg` returned exactly RUNNING
+instance `computeinstance-e00f01gpfve0e49wb3` and its READY attached disk
+`computedisk-e00ywd3j5beypye022`; retired-project
+`project-i00hfrkjpr00wmz2kzj3qm` returned no instances or disks. This exactly
+matched the sole non-retired inventory record,
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3`; there were no
+provider-only or inventory-only live resources. The recorded controller-host
+user watchdog
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` was active/running as
+PID `3058984` in its recorded control group through
+`2026-07-28T14:32:10.882252Z`. The continuous claim remained current and
+heartbeating through `12:53:52Z`. Corrected PID-managed endpoint owner
+`3109321` matched start ticks `135911495`, was live, and retained a
+`14:25Z` project release fence. No owner/watchdog loss, stale claim, passed
+authoritative deadline, unsafe bench, or unjustified available-idle bench was
+found; no drain, provider cleanup, inventory retirement, claim mutation, or
+experiment interruption was performed.
+
+**Objective, timing, and reuse evidence.** The campaign still requires the
+exact c32 endpoint and sustainable-cost result against the fixed
+`0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target; the positive mixed component result
+alone does not qualify. The preceding supervisor change worked: the
+researcher obeyed the newest director transition, stopped only the
+PID/start-ticks-matched predecessor, adopted
+`COMPONENT_RESULT_REPAIR3.json` without replay, and began resumable staging
+of the exact `62,578,655,208`-byte checkpoint. GPU events show one continuous
+claim from `12:15:43Z` with 45-second heartbeats and no release, teardown, or
+cold restart. The first endpoint owner nevertheless died at `12:50:46Z`
+before science because its newly authored controller iterated the
+mapping-shaped `inventory["benches"]` as though it were a list. The same
+project's first H200 owner had already suffered a raw-inventory parser defect
+at `12:15Z`. The researcher correctly localized, preserved, and patched the
+latest failure, launching the same-claim retry at `12:51:37Z`; the direct
+cost was about 51 seconds and no scientific arm was consumed. Repeating the
+same schema mistake in two durable owners is the actionable setup bottleneck,
+while the live retry's normal checkpoint staging is not.
+
+**Process change and expected effect.** Narrowly amended
+`.agents/skills/researcher/SKILL.md` to require owner/controller code to
+obtain the current JSON bench row through the already-supported
+`grad_research.gpu_pool ... show --bench` interface instead of
+reimplementing the raw inventory collection schema. This is runtime state
+retrieval, not another static readiness gate, and it leaves the active owner
+unchanged. Expected effect: prevent recurring dead-on-start inventory-parser
+failures, remove an avoidable repair generation from future paid owners, and
+preserve warm-claim runway for objective-relevant GPU execution without more
+projects, teardown, or checkpoint restaging.
+
+## 2026-07-28T13:03Z — suppress superseded repair wakes during live staging
+
+**GPU safety audit.** One grouped Nebius snapshot covered both configured
+projects. Project `project-e00h1vhmpr00vbmfd5k7pg` returned exactly RUNNING
+instance `computeinstance-e00f01gpfve0e49wb3` and READY attached disk
+`computedisk-e00ywd3j5beypye022`; retired-project
+`project-i00hfrkjpr00wmz2kzj3qm` returned no instances or disks. This exactly
+matched the sole non-retired inventory record,
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3`. The recorded
+controller-host user watchdog
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` was active/running as
+PID `3058984` in its recorded control group through
+`2026-07-28T14:32:10.882252Z`. PID-managed endpoint owner `3109321` matched
+start ticks `135911495`, remained live, and heartbeated the continuous claim
+through `12:59:53Z`; project release remains `14:25Z`. Its controller process
+tree showed an active `scp`/SSH child transferring
+`model-00001-of-00002.safetensors` into a temporary content-addressed path,
+so the unchanged two-file staging marker was large-file work rather than a
+dead heartbeat loop. No resource mismatch, owner/watchdog loss, stale claim,
+passed authoritative deadline, unsafe bench, or available-idle cost problem
+was found. No drain, provider cleanup, inventory retirement, claim mutation,
+or experiment interruption was performed.
+
+**Objective and cadence evidence.** The campaign still lacks the exact c32
+endpoint and sustainable-cost result against the fixed
+`0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. Component adoption is valid and staging
+is direct prerequisite work, but the harness repeatedly misclassified an old
+artifact-root `REPAIR_READY.json` as current while the replacement owner
+transferred the checkpoint. That marker describes the superseded component
+owner, predates PID `3109321`, and remains open only because its legacy
+record omits `created_at_utc` and has an absolute deadline of `13:20Z`.
+Active-session metadata records `repair_generation: 3`, not `repair_id`, so
+the existing older-than-replacement guard did not run. From `12:53Z` through
+`12:59Z`, this produced four high-reasoning researcher turns lasting
+`28.814`, `41.157`, `43.482`, and `21.589` seconds (about 135 seconds total),
+all returning `researcher_no_progress`, plus repeated director wakes. None
+could advance the actively transferring owner. GPU events meanwhile show one
+continuous claim from `12:15:43Z`, regular heartbeats, no release, and no
+cold restart. The stale repair wake—not normal checkpoint transfer—was the
+actionable throughput defect.
+
+**Process change and expected effect.** Narrowly changed
+`research/factory/src/grad_research/lab_harness.py`: for PID-managed
+replacement sessions that declare either `repair_id` or `repair_generation`,
+the durable-repair detector now compares owner launch time with the ready
+record's `created_at_utc`, falling back to the ready file's durable mtime when
+legacy JSON omits creation time. An older marker is consumed; a marker written
+after owner launch still wakes immediately. Added both regression directions
+to `research/factory/tests/test_lab_harness.py`; all 73 harness tests, Python
+compilation, DevEx checks, and diff checks pass. The live owner and project
+files were not changed.
+
+Expected effect: future harness processes defer the researcher while this
+kind of replacement owner performs normal staging, reclaiming high-reasoning
+capacity without weakening genuine repair responsiveness. The already-running
+harness cannot hot-reload this code; for the current session, the director
+can stop the stale in-memory wake safely by recording canonical
+`repair_ready_sha256`
+`ae183733632c2e13d69acab4bfc105fd192d4f2853c2e74c513e47707e4d20de`
+on the existing `active_session`, without signaling owner `3109321`, changing
+the claim, or touching the transfer. This should keep attention on the first
+objective-relevant endpoint terminal rather than minute-scale no-progress
+turns.
+
+## 2026-07-28T13:27Z — recognize arm-specific repair markers on warm claims
+
+**GPU safety audit.** One grouped Nebius snapshot covered both configured
+projects. Project `project-e00h1vhmpr00vbmfd5k7pg` returned exactly RUNNING
+H200 instance `computeinstance-e00f01gpfve0e49wb3` and READY disk
+`computedisk-e00ywd3j5beypye022`; project
+`project-i00hfrkjpr00wmz2kzj3qm` returned exactly RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. These exactly matched the two non-retired
+inventory records. Both controller-host user watchdogs were active/running
+in their recorded control groups:
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` (PID `3058984`,
+deadline `14:32:10Z`) and
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` (PID `3142360`,
+deadline `16:19:08Z`). H200 claim heartbeats remained current through
+`13:26:10Z`; after strict identity verification, the B200 became ready and
+was claimed by its compatible endpoint project at `13:26:29Z`. There was no
+provider/inventory mismatch, lost owner/watchdog, stale claim, passed
+deadline, unsafe bench, or unjustified available-idle cost. No drain,
+provider cleanup, inventory retirement, claim mutation, or experiment
+interruption was performed.
+
+**Objective and warm-reuse evidence.** The campaign still lacks the exact
+c32 endpoint and sustainable-cost result against the fixed
+`0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. On the H200, exact checkpoint staging
+and the stock endpoint arm completed, but candidate readiness timed out
+before candidate science began. The owner correctly classified this as a
+recoverable endpoint integration defect, retained the claim and resident
+state, and wrote
+`REPAIR_READY_ENDPOINT2.json` at `13:16:04Z` with a `14:25Z` repair fence.
+GPU events show uninterrupted 45-second H200 heartbeats and no release,
+teardown, or cold restart. The harness nevertheless continued to report
+`durable_session_active` through `13:26:38Z` and never woke the researcher:
+its repair detector recognized only canonical `REPAIR_READY.json` names.
+This left a paid, fully staged warm bench waiting for more than ten minutes
+after a recoverable candidate-arm integration failure.
+
+**Process change and expected effect.** Narrowly changed
+`research/factory/src/grad_research/lab_harness.py` to discover
+`REPAIR_READY_*.json` only in the active session's declared artifact root,
+return the exact marker to the prompt, recognize a suffix-matched request
+name, and direct the researcher to preserve the claim, checkpoint, healthy
+server state, and completed arms. Canonical and shared-tool handshakes retain
+their existing behavior. Added regressions for discovery and marker-accurate
+same-warm-environment guidance; all 75 harness tests and Python compilation
+pass.
+
+Expected effect: arm-specific recoverable failures wake a researcher
+immediately, so the candidate readiness path can be patched and rerun on the
+resident H200 without replaying stock/component science or paying a cold
+restart. The live harness correctly deferred source reload while the
+PID-managed H200 session exists, so this handoff gives the director the exact
+marker and resource IDs for the current repair; the code change applies on
+the next safe harness reload. Active owners and both benches were left
+untouched.
+
+## 2026-07-28T13:36Z — bridge the live harness generation before the H200 repair fence
+
+**GPU safety audit.** One grouped authenticated Nebius listing covered both
+configured projects. It returned exactly RUNNING H200 instance
+`computeinstance-e00f01gpfve0e49wb3` with READY disk
+`computedisk-e00ywd3j5beypye022`, and RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` with READY disk
+`computedisk-i00ky31am65pmpzh8z`; these exactly match the two non-retired
+inventory records. Controller-host user watchdogs
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` (PID `3058984`,
+deadline `14:32:10Z`) and
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` (PID `3142360`,
+deadline `16:19:08Z`) are active/running in their recorded cgroups. Both
+PID-managed owners match their recorded start ticks, and claim heartbeats are
+current through `13:32:10Z`/`13:32:33Z`. No mismatch, stale claim, passed
+deadline, lost lifecycle process, unsafe bench, or idle-cost drain case was
+found. No lifecycle, claim, provider, inventory, or experiment mutation was
+performed.
+
+**Objective and timing evidence.** The campaign still needs a complete
+endpoint and sustainable-cost result against the fixed
+`0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. B200 repair-1 is usefully advancing:
+after its packet repair it entered checkpoint reconciliation at `13:28:55Z`
+and currently has an active `scp` of the first exact weight shard under the
+same claim. H200 stock c32 is measured at
+`0.7010773845312315 s/request`; candidate science remains unconsumed after
+the recoverable health-poll timeout. The director correctly bound a
+candidate-only same-claim replacement at `13:29Z`, with launch by `13:44Z`
+and release by `14:25Z`, preserving component, checkpoint, and stock.
+
+The remaining bottleneck is live-generation scheduling, not scientific
+direction or GPU setup. The running harness recorded
+`harness_reload_deferred` at `13:26:38Z` because both detached PID owners are
+still in the harness service cgroup, so a service restart would kill them.
+It therefore still runs the pre-fix repair detector. Even after the director
+bound repair-2, the event loop emitted only `durable_session_active` for H200
+through `13:32:28Z`; no researcher wake or
+`OWNER_STATE_ENDPOINT_REPAIR2.json` exists. Another source change cannot help
+this live process and would consume the remaining launch runway.
+
+**Required handoff and expected effect.** Before the `13:44Z` start fence,
+the director should make one live-generation-compatible scheduling
+transition using the existing canonical shared repair-handshake namespace,
+bound to `REPAIR_READY_ENDPOINT2.json` SHA-256
+`7e6bbfeca17164b08436284c9199272151a05d0feed7a76e35a66032c0686a50`
+and the already-authored
+`DIRECTOR_H200_ENDPOINT_REPAIR2_20260728T1329Z.json`. It must wake exactly one
+researcher for the authorized candidate-only same-bench replacement, not
+signal the request-blind predecessor, replay stock/component, release the
+claim, restart the harness service, or touch the B200 transfer. The source
+fix already covers future harness generations; no additional process code or
+static validation was added this turn.
+
+Expected effect: convert the remaining H200 watchdog runway into the one
+unconsumed candidate endpoint measurement while preserving both warm claims.
+If the director cannot safely bridge the old generation before `13:44Z`, it
+should record that scheduling loss explicitly and avoid disguising it as a
+candidate or mechanism result.
+
+## 2026-07-28T13:48Z — spend the invalid observer, not the mechanism
+
+**GPU safety audit.** One grouped authenticated Nebius listing per configured
+project returned exactly the two non-retired inventory resources: RUNNING H200
+instance `computeinstance-e00f01gpfve0e49wb3` with READY disk
+`computedisk-e00ywd3j5beypye022`, and RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` with READY disk
+`computedisk-i00ky31am65pmpzh8z`. Both controller-host user watchdogs remain
+active/running in their recorded cgroups:
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` (PID `3058984`,
+deadline `14:32:10Z`) and
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` (PID `3142360`,
+deadline `16:19:08Z`). B200 remains continuously claimed with a current
+`13:48:19Z` heartbeat by `b200_nvfp4_gemma4_endpoint`; its retained owner is
+advancing checkpoint reconciliation and must not be disturbed. H200 released
+to maintenance at `13:41:15Z` with its 62,578,655,208-byte checkpoint and
+pinned image resident. It has no stale claim, lost watchdog, passed deadline,
+or unsafe state, so it was not marked draining. Its maintenance record has
+`idle_since: null`, an inventory-accounting mismatch; use the release event as
+the idle boundary. At `$2.46/hour`, immediate same-project reuse is justified
+only for the bounded activation repair below; otherwise the director should
+drain it before the watchdog deadline. No provider, lifecycle, inventory,
+claim, or experiment mutation was performed.
+
+**Objective and close-decision evidence.** The campaign target remains
+`0.500119281574996 s/request` against the fixed
+`0.625149101968745 s/request` denominator. Stock c32 measured
+`0.7010773845312315 s/request`; candidate c32 completed 32/32 requests at
+`0.8379872799375221 s/request`. However, the required global-KV rows, phase
+rows, compact-entry observations, and hook diagnostic were all absent, so the
+raw slowdown is not attributable to the intervention. This consumes the
+request workload but not a valid mechanism discriminator. The distinction
+matters because the exact component result was strongly positive and
+decision-bearing: prefill `85.556476 -> 2.091168 ms`, target verify
+`0.648035 -> 1.095317 ms`, and decode `2.897647 -> 1.214158 ms`, with finite
+outputs, ownership checks, no fallback, and compact entries observed. The
+project's `typed_inconclusive_consumed_candidate_telemetry_missing`
+classification is therefore correctly inconclusive but its unconditional
+“do not replay” close is too broad: evidence rejects the endpoint observer /
+activation path, not the mechanism.
+
+**Warm-reuse handoff and expected effect.** The director concurrently
+localized the boundary to the implicit `sitecustomize.py` hook import and is
+binding one fail-fast, same-project warm repair: a single real probe must emit
+global-KV telemetry before any corrected candidate c32 is admitted; if it
+does not, release immediately. Preserve the valid stock and component
+artifacts and the resident checkpoint/image; do not cold-stage, replay settled
+arms, add another static-validation project, or touch the B200 owner. This is
+the smallest discriminating repair and fits the remaining H200 runway.
+
+Expected effect: convert an observer-invalid close into either one attributable
+endpoint measurement or a narrow activation-path terminal, while avoiding
+roughly the prior 21-minute checkpoint transfer and repeated setup. Existing
+researcher/director/supervisor skills already explicitly require retained
+same-bench repair and forbid treating absent observations as physical
+evidence, so another process rule would be redundant; no skill or harness
+change was made during the active director transition.
+
+## 2026-07-28T14:18Z — fence the ownerless B200 claim; preserve the warm repair
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot per configured
+project exactly matched the two non-retired inventory allocations: RUNNING H200
+instance `computeinstance-e00f01gpfve0e49wb3` with READY disk
+`computedisk-e00ywd3j5beypye022`, and RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` with READY disk
+`computedisk-i00ky31am65pmpzh8z`. Their controller-host user watchdogs were
+active/running in the recorded cgroups:
+`gemma4-global-kv-h200-20260728t1204z-watchdog.service` (PID `3058984`,
+deadline `14:32:10Z`) and
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` (PID `3142360`,
+deadline `16:19:08Z`). No provider-only resource, missing provider resource,
+passed deadline, or dead watchdog was found.
+
+H200 concurrently released to maintenance at `14:16:05Z` after adopting the
+consumed c32 terminal: the activation probe produced 6,086 rows and 26 compact
+entries without fallback, but the live c32 hook OOMed at global layer 35
+before metrics. There is no server or compatible queued execution, and
+`idle_since` remains null despite the release. At `$2.46/hour`, the director
+should drain instance `computeinstance-e00f01gpfve0e49wb3` / disk
+`computedisk-e00ywd3j5beypye022` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; no reuse or inventory mutation is justified
+by the terminal adoption.
+
+**Actionable B200 mismatch and safety action.** Inventory still named repair-2
+PID `3188699` / start ticks `136376016` as the active lifecycle owner, but that
+PID no longer exists. Its last claim heartbeat was `14:15:48Z`; the watchdog
+is healthy but is not an experiment owner. The owner did preserve a canonical
+repair marker at
+`.repair-handshakes/b200-nvfp4-v2-20260728T141551Z/REPAIR_READY.json`
+(SHA-256 `41b459d3260803f24082aa40b5e36883bfeaee31a02c1765f864f630712bb5ae`,
+created `14:15:51Z`, `failure_kind: producer_install`,
+`retry_scope: stage_or_consumer`). Its diagnostic is a pre-science offline
+bundle defect: `pip==26.1.2` is required but absent. The checkpoint
+reconciliation, pinned image, packet, and claim generation remain reusable.
+
+I marked registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` drain-after-release at
+`14:17:45Z`. Exact provider resources are instance
+`computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, project
+`project-i00hfrkjpr00wmz2kzj3qm`. This only set
+`drain_after_release: true`; it did not clear the claim, stop the watchdog,
+clean up provider resources, or retire the inventory record. The director
+should either bind one smallest same-claim producer-install repair to the
+retained marker, or release the claim and perform its normal drain/cleanup.
+
+**Expected effect.** The fence prevents an ownerless paid bench from silently
+returning to an available pool while retaining the valuable warm repair
+option. Repairing the missing offline wheel in place avoids another checkpoint
+reconciliation, image pull, or cold setup and preserves the unconsumed BF16
+control/native-NVFP4 endpoint pair. The existing repair handshake exposed the
+failure precisely, so no skill, shared-tool, harness, static-validation, or
+new-project change was warranted this turn.
+
+## 2026-07-28T14:37Z — keep the B200 fence while the producer adapter converges
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+known project namespaces exactly matched inventory. The retired H200 instance
+`computeinstance-e00f01gpfve0e49wb3` and disk
+`computedisk-e00ywd3j5beypye022` are absent from the provider. The sole live
+allocation is RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` with READY disk
+`computedisk-i00ky31am65pmpzh8z` in
+`project-i00hfrkjpr00wmz2kzj3qm`. Its controller-host user watchdog
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` is active/running with
+PID `3142360` in the recorded cgroup and has not passed its `16:19:08Z`
+deadline.
+
+The latest recorded experiment owner, repair-4 PID `3217276` / start ticks
+`136530774`, exited at `14:35:07Z`; project status briefly still called it
+live. Its last heartbeat was `14:34:50Z`. The registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` remains claimed and already
+has `drain_after_release: true`, so no second pool mutation, provider cleanup,
+claim clearing, or inventory retirement was needed. The director began a
+reconciliation turn at `14:35:43Z` with these same resource identities.
+
+**Objective bottleneck and expected effect.** This is still a pre-science
+producer-adapter constraint, not a B200 or native-NVFP4 result. Repair-3
+successfully fixed the offline bootstrap and installed the closed producer
+environment. Repair-4 preserved that environment, checkpoint, image, packet,
+and calibration, loaded all 1,188 model tensors, and then failed while
+tokenizing the one-row calibration dataset with
+`OverflowError: int too big to convert`. No BF16-control or native-NVFP4
+endpoint request was consumed. The canonical retained repair marker is
+`b200-nvfp4-v2-20260728T143507Z`, SHA-256
+`b3b9c7e6685e61d1a2f90c3227c3431187ff52b4fcf4802a4f74460f179738fc`.
+
+The director should allow only one localized same-claim tokenizer-boundary
+correction if the diagnostic supports it; otherwise release and let the
+existing drain fence take effect. Do not reinstall, restage, cold-start,
+replay an endpoint arm, or answer this integration failure with another
+static-validation project. Expected effect: either reach the first unchanged
+BF16-control/native-NVFP4 endpoint pair from resident state, or terminate the
+producer route without another warm-state rebuild. The repair handshake,
+owner wakeup, and director dispatch all operated correctly, so no skill,
+shared-tool, or harness change was warranted during the active recovery.
+
+## 2026-07-28T14:55Z — remove duplicate checkpoint-copy delay from warm handoffs
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces found no resources in
+`project-e00h1vhmpr00vbmfd5k7pg` and exactly one RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` with READY disk
+`computedisk-i00ky31am65pmpzh8z` in
+`project-i00hfrkjpr00wmz2kzj3qm`. This exactly matches the sole non-retired
+inventory bench `b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`, which is
+unclaimed and protected in `draining`. Its controller-host user watchdog
+`gemma4-b200-nvfp4-v2-20260728t1319z-watchdog.service` is active/running with
+PID `3142360` in the recorded cgroup, and the `16:19:08Z` deadline has not
+passed. The successor's `$8` reservation is durable and the director is
+converting the fence into a single-project warm handoff, so reuse—not cleanup—
+is justified; no pool or provider mutation was made.
+
+**Measured bottleneck.** The scientific transition is sound: the prior
+terminal rejects only the `llmcompressor 0.12.0` native-NVFP4 representation,
+and the materially different runtime dynamic-FP8 endpoint pair plus the
+independent streaming-global-KV lane are active. The avoidable delay is
+controller input materialization. At `14:54Z`, the dynamic-FP8 researcher had
+two live `cp --preserve=mode,timestamps` processes writing the same
+`model-00001-of-00002.safetensors` destination after an unsupported reflink;
+the immutable source is `49,784,788,364` bytes, is on the same filesystem,
+already has multiple hard-linked campaign views, and the destination was
+being checksummed while still growing. This duplicates I/O on an 86%-used
+controller filesystem and delays use of the paid warm B200.
+
+**Change and expected effect.** I amended `.agents/skills/researcher/SKILL.md`
+to require a verified read-only hard-linked view before byte copy for
+same-filesystem immutable inputs, temporary-name plus atomic rename for a
+necessary copy, and exactly one writer per destination with an explicit wait
+before retry or checksum. I did not stop or alter the active copy processes or
+experiment. Expected effect: future project handoffs bind an already verified
+checkpoint in seconds instead of copying roughly 62.6 GB, avoid concurrent
+artifact corruption/write amplification, and move the retained B200 directly
+from durable reservation to the BF16/dynamic-FP8 endpoint measurement.
+
+## 2026-07-28T15:13Z — make claimed-session state atomic and parse-valid
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: no resources remain
+in `project-e00h1vhmpr00vbmfd5k7pg`, while
+`project-i00hfrkjpr00wmz2kzj3qm` has RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The same warm bench is now claimed by
+`gemma4_b200_dynamic_fp8_endpoint` from `15:10:30Z`; heartbeats were current
+through `15:12:01Z`. Controller-host user watchdog
+`gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service` is active/running
+with PID `3247804` in the recorded cgroup through `16:45Z`. The experiment
+owner is live as PID `3254267` / start ticks `136744835`. No provider-only
+resource, missing inventory resource, stale claim, passed deadline, or
+owner/watchdog loss was found, and no pool or provider mutation was made.
+
+**Measured bottleneck.** Warm reuse succeeded, but the researcher claimed and
+launched while its durable `projects/gemma4_b200_dynamic_fp8_endpoint/STATUS.json`
+was invalid JSON: line 35's `next_action` value is immediately followed by
+`prior_preclaim_blocker` without a comma. The file already contains the
+correct live controller PID, start ticks, state path, deadline, and artifact
+root, but normal `jq` parsing fails. This can blind later harness, director,
+and repair turns while paid work remains live. The endpoint worker's current
+`name: unbound variable` failure is a separate recoverable pre-science
+launcher defect; the outer owner correctly retained the claim, emitted repair
+generation `b200-dynamic-fp8-20260728T151036Z`, and did not cold-start or
+consume an endpoint arm.
+
+**Change and expected effect.** I amended `.agents/skills/researcher/SKILL.md`
+to require sibling-temporary, full-parse, atomic replacement for structured
+project state, a parse-valid complete `STATUS.json` immediately before paid
+claim/launch, and in-place structured-state repair when an already-live owner
+is safe. I did not edit the active project's malformed status, stop its owner,
+or alter the claim. Expected effect: future warm launches remain visible to
+the harness and repair loop, eliminate malformed-status reconciliation turns,
+and spend the retained B200 window on the BF16/dynamic-FP8 endpoint pair
+rather than reconstructing controller ownership.
+
+## 2026-07-28T15:34Z — serialize same-claim repair execution
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured projects exactly matched inventory: no resources exist in
+`project-e00h1vhmpr00vbmfd5k7pg`, while
+`project-i00hfrkjpr00wmz2kzj3qm` has RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The controller-host user watchdog
+`gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service` is active/running
+with PID `3247804` in the recorded cgroup through `16:45Z`. The B200 claim
+remained continuous from `15:10:30Z` through its `15:30:00Z` maintenance
+release; no cold restart or teardown occurred. The healthy dynamic-FP8 server
+is resident on port 30001 while the director is actively selecting its
+disposition. Preserve it for a compatible immediate reuse decision; if the
+director admits no B200 work that can use this state, drain the registered
+bench by exact IDs above rather than pay `$3.95/hour` idle. No pool or provider
+mutation was made.
+
+**Measured bottleneck.** The absolute candidate result is decision-bearing:
+runtime dynamic FP8 consumed `CutlassFP8ScaledMMLinearKernel` and measured
+`0.633995593312477 s/request`, which misses the fixed
+`0.625149101968745` denominator by 1.4151% and the price-normalized target by
+26.7689%. Its paired improvement is not decision-bearing. During repair, the
+researcher left foreground command `item_7` running the full remote
+`run_endpoint_pair.sh`, then separately submitted the BF16 driver and FP8
+sequence into the same mutable artifact root. `item_16` observed the first
+BF16 terminal at `0.7342280295312662 s/request`; the still-live full script
+later exited 70 after overwriting that terminal with
+`1.3482894382499921 s/request`. Consequently the committed
+`FINAL_TERMINAL.json` computes a 52.9778% reduction, while `STATUS.json`,
+`STATUS.md`, inventory contents, and the researcher handoff report 13.65%.
+This is an execution-concurrency/terminal-overwrite defect, not evidence
+against or for the FP8 mechanism beyond its valid absolute target comparison.
+
+**Change and expected effect.** I amended `.agents/skills/researcher/SKILL.md`
+to require exactly one live executor per repaired producer, endpoint arm, or
+retrieval scope; reconcile foreground sessions and owner retry paths before
+executing outside the owner; give replacements fresh output generations; and
+fail closed on paired/delta interpretation whenever duplicate submission
+cannot be excluded. I did not edit the completed project artifacts, stop the
+resident server, or race the active director turn. Expected effect: future
+warm repairs preserve one valid control/candidate lineage, prevent terminal
+overwrites and GPU contention, and eliminate ambiguous close decisions without
+adding a static validation phase or forcing a cold restart.
+
+## 2026-07-28T15:42Z — census every cross-host execution namespace
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: no resources exist in
+`project-e00h1vhmpr00vbmfd5k7pg`, while
+`project-i00hfrkjpr00wmz2kzj3qm` has RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The registered bench is unclaimed in
+`maintenance`; controller-host user watchdog
+`gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service` is active/running
+with PID `3247804` in the recorded cgroup through `16:45Z`. There is no
+provider-only or missing resource, stale claim, passed deadline, or
+owner/watchdog loss. The `$3.95/hour` warm state is justified for the immediate
+compatible c64 successor: the resident runtime-FP8 server and exact checkpoint
+are retained, the project is funded, and the bench remains fail-closed until
+its packet is admissible. No pool, provider, server, or active-project mutation
+was made.
+
+**Measured bottleneck.** The prior supervisor rule prevented another submitted
+overlap, and the director excluded the corrupted BF16 pair from both new lanes.
+The direct c64 successor nevertheless spent another offline handoff correcting
+its executor fence: its owner enumerated controller `/proc`, but did not census
+remote guest processes capable of submitting to the resident endpoint. At
+`15:42Z` the director therefore kept `claim_allowed: false` and requested only
+a fail-closed remote-executor census by `15:48Z`. This is the remaining seam
+from the observed duplicate-executor failure; it is not scientific uncertainty
+and does not warrant a cold restart, another project, or more static
+validation.
+
+**Change and expected effect.** I tightened the existing single-executor rule
+in `.agents/skills/researcher/SKILL.md`: cross-host submissions must census
+both controller sessions and remote guest processes that can execute the same
+scope before science. Expected effect: repaired warm-bench owners establish
+exclusive submission authority in the namespace where work actually runs,
+avoid another overwritten endpoint terminal, and move directly from a valid
+offline packet to one claimed c64 arm without disturbing resident state.
+
+## 2026-07-28T16:37Z — make retained-claim repair paths re-enterable
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: the only live
+resources are RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The registered bench remains claimed by
+`gemma4_b200_fp8_residual_hotpath`; heartbeats advanced through `16:36:26Z`.
+Controller-host user watchdog
+`gemma4-b200-m32-repair2-20260728t1621z-watchdog.service` is active/running
+with PID `3327197` in the recorded cgroup through `17:27Z`. Recovery-5 owner
+PID `3337978` matched recorded start ticks `137237894`. There is no
+provider/inventory mismatch, stale claim, passed deadline, or owner/watchdog
+loss, and no drain action is warranted.
+
+**Measured bottleneck.** Six earlier same-claim owners exited on typed
+pre-science source-build defects. Recovery 5 correctly retained the warm bench
+and derived a git/CMake/Ninja-capable image, then reached a new pre-science
+`CUDA_nvrtc_LIBRARY` build defect. Its owner published
+`recovery5-patched_build` repair-ready and kept heartbeating, but the
+`repair_wait` branch only slept until the absolute deadline; it could not
+consume a shared repair request or re-enter `patched_build`. The live
+researcher had to identify this retry-entrypoint defect before applying the
+localized build repair. No CUDA arm or scientific sample had started.
+
+**Change and expected effect.** I amended the existing repair-in-place rule in
+`.agents/skills/researcher/SKILL.md` so a retained-claim repair path must keep
+heartbeating, wait for and hash-bind the shared request, consume its patch
+artifact, and re-enter only the named invalidated stage (or follow an
+explicitly bound replacement-owner handoff). A sleep-only repair-ready path is
+now explicitly non-repair-capable. Expected effect: the next ordinary build or
+launcher defect is patched and resumed by the durable owner without another
+blind owner generation, cold restart, or replay of settled setup and
+unconsumed science.
+
+## 2026-07-28T16:52Z — bind single-target source builds to the claimed chip
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: the old namespace is
+empty, while `project-i00hfrkjpr00wmz2kzj3qm` contains only RUNNING B200
+instance `computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The registered bench remains claimed by
+`gemma4_b200_fp8_residual_hotpath`; its heartbeat advanced through
+`16:49:58Z`. Controller-host user watchdog
+`gemma4-b200-m32-repair2-20260728t1621z-watchdog.service` is active/running
+with PID `3327197` through `17:27Z`, and owner PID `3337978` still matches
+recorded start ticks `137237894`. There is no provider/inventory mismatch,
+stale claim, passed lifecycle deadline, or owner/watchdog loss, so no drain or
+provider action is warranted.
+
+**Measured bottleneck.** The localized NVRTC repair correctly reuses the
+claimed bench, derived image, and patched source, but its B200-only vLLM build
+has remained pre-science for more than 13 minutes. The live compiler command
+shows `nvcc` generating code for `sm_75`, `sm_80`, `sm_89`, `sm_90`,
+`sm_100`, and additional supported targets while Ninja builds the broad vLLM
+extension set. This is unnecessary architecture fanout for an exact SM100
+component and is now the dominant time-to-evidence cost; the GPU claim began
+at `16:11:49Z`, yet neither component arm has started. The independent
+cross-operator lane continues bench-free, so portfolio concurrency is not the
+constraint. I did not interrupt or mutate the healthy active compile.
+
+**Change and expected effect.** I amended
+`.agents/skills/researcher/SKILL.md` to require single-target source builds on
+a known claimed accelerator to bind the exact architecture set and inspect the
+first compiler command for unintended fanout. An all-supported-architecture
+default is now a pre-science build defect to narrow on the next same-claim
+build, not a reason to cold restart or interrupt a nearly complete build.
+Expected effect: future B200 runtime patches spend the retained warm window
+compiling SM100 artifacts needed by the experiment, reach correctness and
+component timing materially sooner, and reduce paid claim time without adding
+static validation or changing the scientific contract.
+
+## 2026-07-28T17:20Z — fail closed on the ownerless M32 claim
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: the old namespace is
+empty, and `project-i00hfrkjpr00wmz2kzj3qm` contains only RUNNING B200
+instance `computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The controller-host user watchdog
+`gemma4-b200-m32-repair2-20260728t1621z-watchdog.service` remains
+active/running with PID `3327197` in its recorded cgroup through `17:27Z`.
+However, recovery-5 owner PID `3337978` / start ticks `137237894` is terminal,
+the project cleared `active_session`, the last claim heartbeat is
+`17:17:00Z`, and the bound negative/incomplete release deadline was
+`17:17:00Z`. Inventory still recorded the bench as claimed with no active
+owner and no scientific sample.
+
+**Action and expected effect.** I atomically requested drain for registered
+bench `b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`, setting
+`drain_after_release=true` without releasing the claim, stopping the watchdog,
+cleaning Nebius resources, or retiring inventory. Exact director cleanup/reuse
+IDs are project `project-i00hfrkjpr00wmz2kzj3qm`, instance
+`computeinstance-i00rqcq5yzr6xc991j`, and disk
+`computedisk-i00ky31am65pmpzh8z`. This makes the ownerless claim fail closed:
+the director may explicitly install a fresh funded owner and reuse the
+retained SM100 state, or release and clean the draining resource, but the stale
+claim cannot silently return to the available pool. The concurrent director
+then explicitly reconciled it: at `17:20:14Z` it installed fresh controller
+watchdog `gemma4-b200-m32-sm100-20260728t1719z-watchdog.service` through
+`18:10Z`; at `17:20:54Z` it released the ownerless claim into `draining` and
+explicitly re-readied the same retained bench for the funded SM100-only
+continuation. The measured research bottleneck remains the already-addressed
+broad multi-architecture build: the claim ran from `16:11:49Z`, produced 273
+CUDA objects, and consumed no stock/patched component sample. The existing
+SM100-only minimum-extension rule is the warranted remedy; no additional
+skill, harness, or static-validation change was added.
+
+## 2026-07-28T17:34Z — make pool release notes non-blocking
+
+**GPU safety audit.** One grouped authenticated Nebius snapshot across both
+configured project namespaces exactly matched inventory: the old namespace is
+empty, and `project-i00hfrkjpr00wmz2kzj3qm` contains only RUNNING B200
+instance `computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. Controller-host user watchdog
+`gemma4-b200-m32-sm100-20260728t1719z-watchdog.service` is active/running with
+PID `3405493` in its recorded cgroup through `18:10Z`. The funded continuation
+claimed at `17:23:04Z`; owner `3415613/137591766` launched before its `17:32Z`
+fence but terminalized pre-science five seconds later. Its release failed, so
+inventory remained claimed with no live owner. I atomically requested drain
+for registered bench `b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`,
+setting `drain_after_release=true` without releasing the claim, stopping the
+watchdog, cleaning provider resources, or retiring inventory. Exact director
+IDs are project `project-i00hfrkjpr00wmz2kzj3qm`, instance
+`computeinstance-i00rqcq5yzr6xc991j`, and disk
+`computedisk-i00ky31am65pmpzh8z`.
+
+**Measured bottleneck.** The SM100 owner correctly reused the retained image,
+source, dependencies, and objects, but its first minimum build failed before
+CUDA because cleanup tried to remove bind-mounted `/work/build` and
+`/work/install`. Its fail-closed release then passed a human sentence to
+`gpu_pool release --contents`; the shared CLI interpreted every non-inline
+JSON value as a filename and rejected it. This exact release-interface defect
+has appeared in prior project artifacts and multiple owner scripts. It turns
+an ordinary pre-science integration result into an ownerless paid claim. The
+live researcher is repairing only these two boundaries under the same claim;
+no cold restart, setup replay, or scientific sample occurred.
+
+**Change and expected effect.** I changed
+`research/factory/src/grad_research/gpu_pool.py` so only the release path
+accepts a plain `--contents` note and stores it as `{"summary": ...}`. Existing
+inline JSON and JSON-file behavior remains unchanged, and register, update,
+and ready stay strict. Added a regression test proving that a plain pre-science
+release note clears the claim and preserves the summary; all 20 focused GPU
+pool tests pass. Expected effect: metadata formatting can no longer strand a
+claim after an owner terminal, while the researcher remains free to patch and
+rerun recoverable build defects against retained mutable state. The immediate
+repair owner validated the change at `17:33:42Z`: its plain release metadata
+was preserved, the claim was cleared, and the registered bench entered
+`draining`. That repair exposed one further typed pre-science CMake input
+defect (`VLLM_PYTHON_EXECUTABLE` was unset) before any compiler command, CUDA
+marker, or component arm. This is a localized future same-state repair
+handoff, not M32 mechanism evidence or authority for another claim.
+
+## 2026-07-28T17:59Z — keep recoverable kernel integration inside the claim
+
+**GPU safety audit.** The single grouped authenticated Nebius snapshot at
+`17:55:56Z` exactly matched inventory across both configured project
+namespaces: `project-e00h1vhmpr00vbmfd5k7pg` was empty, while
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The recorded controller-host user watchdog
+`gemma4-b200-m32-sm100-20260728t1719z-watchdog.service` is active/running
+with PID `3405493` in its exact cgroup through `18:10Z`. The bench has no
+passed deadline, stale claim, provider mismatch, or unjustified idle period:
+the same compatible M32 researcher reclaimed it at `17:56:00Z` and
+`17:58:09Z`, with no provider teardown, checkpoint transfer, image pull, or
+build replay. No drain is warranted while that same-state repair remains
+active.
+
+**Measured bottleneck.** Repair2 completed all 71 Ninja steps and installed
+the required patched `_C` extension with SHA-256 `66fb9013…`, but its owner
+released pre-science at `17:52:16Z` solely because unused build objects also
+contained `sm100f` and `sm89` code. Direct adoption then proved the installed
+extension hash without rebuilding, but an ordinary output-directory contract
+error before the stock arm caused the generic `incomplete()` handler to
+release the claim at `17:57:05Z`; its first localized retry repeated a
+pre-science stock-boundary failure and released again at `17:58:34Z`. No
+stock or patched sample was consumed. Extra unreachable architecture objects
+are a packaging/compile-efficiency defect once loaded target identity and
+dispatch can be proved, and recoverable integration exits should be patched
+inside the claimed mutable session rather than mapped immediately to release.
+
+**Change and expected effect.** I updated
+`.agents/skills/kernel-research/SKILL.md` to classify architecture fanout by
+the loaded execution path and to require owner failure handlers to distinguish
+recoverable compile/API/layout/integration exits from scientific, unsafe, or
+lifecycle terminals. It now directs the researcher to adopt the installed
+target artifact, run the tiny correctness smoke, and patch/rerun before the
+deadline instead of releasing or cold-rebuilding because of unused objects or
+every nonzero exit. The skill validator and `git diff --check` pass. Expected
+effect: future exact-kernel repairs preserve mutation ownership and resident
+state through ordinary integration fixes, converting completed builds into
+correctness/timing evidence sooner without adding validation stages or taking
+over scientific selection.
+
+**Final reconciliation.** At `17:59:21Z`, the third direct-adoption owner also
+released pre-science from `stock_arm`, this time on the ordinary input-layout
+error `Expected b.stride(0) == 1`. Recorded PID `3447762` / start ticks
+`137756759` is absent, while project `STATUS.json` still reports that session
+as live; inventory is safely unclaimed `maintenance`, and the lifecycle
+watchdog remains active. This is an actionable status mismatch, not an unsafe
+ownerless claim, so I did not mark the registered bench draining. The director
+should immediately reuse the resident extension for a bounded stock-layout
+repair if it can still meet the existing envelope, or drain and clean by the
+`18:10Z` deadline. Exact IDs are project
+`project-i00hfrkjpr00wmz2kzj3qm`, instance
+`computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, and bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`.
+
+## 2026-07-28T18:08Z — do not consume an invalid producer call as science
+
+**GPU safety audit.** The one grouped authenticated Nebius listing at
+`18:05:28Z` exactly matched inventory in both configured namespaces:
+`project-e00h1vhmpr00vbmfd5k7pg` was empty, while
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING B200 instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The registered bench is safely unclaimed
+`maintenance`; there is no unregistered provider resource, missing provider
+resource, stale claim, or inactive owner. At `18:08:01Z`, controller-host user
+watchdog `gemma4-b200-m32-sm100-20260728t1719z-watchdog.service` remained
+active/running with PID `3405493` in its exact recorded cgroup through
+`18:10Z`. The director explicitly retained this short maintenance window for
+an immediate compatible attention handoff, so its remaining maximum idle
+exposure was under `$0.14` at `$3.95/h`; no early drain was warranted. If no
+durable handoff exists at the lifecycle deadline, the director should drain
+and clean exact bench `b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`,
+instance `computeinstance-i00rqcq5yzr6xc991j`, and disk
+`computedisk-i00ky31am65pmpzh8z`. I did not perform provider cleanup or retire
+inventory.
+
+**Measured decision bottleneck.** The completed 71-step SM100 build and
+installed extension SHA `66fb9013…` reached the stock consumer, but
+`b200_m32_dispatch_component.py` persisted
+`candidate_science_started=true` immediately before calling the consumer.
+That call then rejected `b.stride(0) != 1` without returning a stock output,
+oracle, or timing. The terminal itself records
+`valid_component_sample=false` and `mechanism_evaluated=false`, yet the
+director closed the M32 component solely because the attempted-call marker was
+treated as consuming the one-sample contract. This is an invalid
+producer/control-layout attempt, not an interpretable canonical sample. It
+does not prove that a corrected M32 attempt outranks the newly requested
+global-K=V attention lane, but it must remain eligible for that portfolio
+comparison rather than being erased by a marker written before input
+acceptance.
+
+**Change and expected effect.** I amended
+`.agents/skills/research-director/SKILL.md` to make `science_started` an
+attribution boundary rather than sufficient proof of sample consumption. A
+consumer rejection before the minimum decision-bearing output, oracle, or
+timing is now classified as an invalid attempt; successful costly stages are
+preserved, and the director ranks a corrected-input attempt against other
+work under the existing budget and deadline instead of silently replaying or
+automatically promoting it. Expected effect: future one-shot projects will
+not convert ordinary producer-layout defects into false scientific closes,
+and completed builds or resident state can reach real decision evidence
+without adding static gates, opening another project, or taking portfolio
+selection away from the director.
+
+## 2026-07-28T18:30Z — make off-owner same-claim outcomes adoptable
+
+**GPU safety audit.** One grouped authenticated Nebius listing at `18:26Z`
+matched the registered live provider resources exactly. Namespace
+`project-e00h1vhmpr00vbmfd5k7pg` was empty; namespace
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`, matching bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`. During the audit, its
+continuous claim ran from `18:13:10Z` through `18:29:08Z` with roughly
+20-second heartbeats and no release/reclaim, teardown, checkpoint transfer,
+image pull, or repeated setup. The recorded controller-host user watchdog
+`gemma4-b200-global-kv-20260728t1807z-watchdog.service` remains
+active/running with PID `3460127` in the exact recorded cgroup through
+`18:36Z`. The researcher released the claim safely to maintenance before its
+`18:32Z` disposition deadline. A compatible, narrower d512 first-consumer
+repair is now explicitly queued against the retained capture, so warm reuse
+through the remaining lifecycle window is justified; its maximum post-release
+exposure is about `$0.45` at `$3.95/h`. If that repair is not durably bound,
+the director should let the watchdog drain the exact bench, instance, and disk
+above by `18:36Z`. I did not perform provider cleanup or retire inventory.
+
+One non-safety lifecycle mismatch remains actionable for the director:
+released predecessor owner PID `3468020`, Linux start ticks `137854710`, is
+still live even though the pool claim and project `active_session` are clear.
+It is a heartbeat/wait controller rather than a current claimant, and the
+watchdog is healthy, so I did not mark the bench draining or disrupt the
+director's active handoff. Any d512 replacement should stop only that exact
+PID/start-ticks identity before assuming mutation ownership.
+
+**Model-specific bottleneck.** The global-K=V lane preserved and hash-bound
+the exact production M32 BF16 hidden capture
+`cd84ccd1dab17b32b5028d81e0d4f3bd7599a00759b9ead4a6a56fda09e776a3`.
+Same-claim repairs then progressed through checkpoint-name ambiguity, CUTLASS
+B layout, standalone RMSNorm/RoPE context, and BF16 cache selection. The first
+unchanged attention consumer finally produced a typed incompatibility:
+Blackwell FA4 does not support Gemma's global `head_dim=512`, falls back to
+FA2, and FA2 rejects head dimensions above 256. No interpretable stock versus
+candidate pair exists and no scientific sample was consumed. The shortest
+route to campaign evidence is therefore the exact d512 FlashInfer consumer
+using the retained capture—not recapture, cold restart, static validation, or
+another project.
+
+**Change and expected effect.** The repair executions occurred outside the
+waiting durable owner, but the shared handshake could atomically bind only
+ready and request records; it had no owner-visible terminal/adoption record.
+I added `repair-handshake terminal`, which records exit status,
+classification, CUDA/science-start markers, evidence paths, and an optional
+result path in `REPAIR_TERMINAL.json` bound to both ready and request digests.
+`status` and `wait` now validate and return that state so the owner can adopt
+it without rerunning the repaired scope. I documented the command and updated
+the researcher skill to use it. End-to-end ready/request/terminal/status/wait
+testing, idempotent terminal replay, Python compilation, `git diff --check`,
+the eight-skill validator, and the repository DevEx check pass. Expected
+effect: future warm-bench consumer repairs executed outside a waiting owner
+will have one durable, attributable terminal that cannot be overwritten by
+the predecessor error, reducing duplicate execution and ambiguous release
+decisions without adding a validation ladder or changing scientific scope.
+
+## 2026-07-28T18:45Z — terminal evidence must close claim ownership
+
+**GPU safety audit.** The one grouped authenticated Nebius census at
+`18:41Z` exactly matched inventory across both configured namespaces:
+`project-e00h1vhmpr00vbmfd5k7pg` was empty, while
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`, matching registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`. The controller-host user
+watchdog
+`gemma4-b200-global-kv-d512-20260728t1832z-watchdog.service` was
+active/running with PID `3482725` in its exact recorded cgroup through
+`19:05Z`; no provider resource was unregistered or missing and no lifecycle
+deadline had passed.
+
+The claimed experiment owner was not healthy, however. Recorded PID
+`3493229` / Linux start ticks `137987693` wrote its terminal at `18:38:05Z`
+and then exited; `/proc/3493229/stat` was absent at `18:42Z`, while the pool
+still carried the `18:35:37Z` claim and project `STATUS.json.active_session`
+still named that dead identity. The director concurrently released the claim
+to maintenance at `18:42:40Z`; the supervisor's required drain landed at
+`18:43:33Z`. Final state is therefore safely unclaimed `draining`, with the
+provider instance and disk intact. Do not reclaim it while draining. The
+director owns provider cleanup or inventory retirement for exact project
+`project-i00hfrkjpr00wmz2kzj3qm`, instance
+`computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, and bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`.
+
+**Model-specific evidence and cadence.** Warm reuse worked: the retained bench
+left its preceding claim at `18:29:08Z`, received the replacement watchdog at
+`18:33:17Z`, was ready at `18:33:34Z`, was claimed at `18:35:37Z`, and
+produced the d512 terminal at `18:38:05Z`. It reused the resident exact M32
+capture and runtime state without recapture, model load, image setup, build,
+teardown, or cold restart. The exact FlashInfer first consumer matched stock
+bitwise through normalization, RoPE, K=V aliasing, attention output, and final
+projection. Forty samples per arm measured stock p50 `36.960000 us` and
+candidate p50 `36.495999 us`, a `0.464002 us` projection-call improvement.
+Across the ten global layers this is only an approximately `4.64 us/request`
+bound, about `0.000742%` of the project's fixed `625149.102 us` denominator.
+This is valid stackable component evidence, but it does not materially move
+the campaign's sustainable-cost objective; opening more validation or another
+project for this mechanism would be the wrong response.
+
+**Change and expected effect.** The owner script's terminal branch stopped
+after writing the result, so its heartbeat died before claim disposition and
+left a roughly four-and-a-half-minute ownerless interval. I updated
+`.agents/skills/researcher/SKILL.md` to require every durable owner—positive
+or negative—to atomically release with terminal/resident metadata or hand off
+to a verified live replacement before exiting. Expected effect: future
+decision-bearing terminals close evidence and lifecycle ownership together,
+eliminating stale claimed benches and delayed director recovery without
+adding static checks, replaying science, or changing portfolio selection.
+
+## 2026-07-28T18:55Z — separate incomplete repair from negative release
+
+**GPU safety audit.** The single correctly scoped grouped Nebius census
+matched inventory across both configured projects:
+`project-e00h1vhmpr00vbmfd5k7pg` was empty, while
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY attached disk
+`computedisk-i00ky31am65pmpzh8z`. Controller-host user watchdog
+`gemma4-b200-global-kv-d512-20260728t1832z-watchdog.service` was
+active/running with PID `3482725` in its exact recorded cgroup through
+`19:05Z`. There was no unregistered or missing provider resource and no
+passed lifecycle deadline.
+
+The first new valid-layout owner, PID `3517677` / start ticks `138066268`,
+exited at `stock_arm` while the pool and project still briefly named its
+`18:50:45Z` claim/session. Its release completed at `18:50:55Z`. The
+researcher then cleared the supervisor drain with `gpu_pool ready`, reclaimed
+at `18:51:42Z`, and launched replacement PID `3518754` / start ticks
+`138071967`; that owner also exited and released at `18:51:53Z`. I restored
+the registered bench to `draining` at `18:52:54Z`. Current durable state is
+unclaimed, project `active_session: null`, and no GPU owner is running. The
+director owns any reuse or provider cleanup for exact project
+`project-i00hfrkjpr00wmz2kzj3qm`, instance
+`computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, and bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`; do not reclaim it while
+draining.
+
+**Measured bottleneck.** Warm-state reuse remained good—both repairs adopted
+the completed `_C` extension, resident image, source, capture, and caches
+without rebuild, checkpoint transfer, model load, endpoint start, teardown,
+or cold restart—but claim ownership churn replaced useful in-claim repair.
+The three M32 claims lasted only about `51`, `11`, and `11` seconds, each
+ending before a stock/candidate timing pair. Repair1 found that
+`scaled_fp8_quant` requires a contiguous last dimension. Repair2 corrected
+that production layout, then its stock arm tripped the BF16 numeric guard for
+`sliding_qkv` (`cosine=0.9992967844`,
+`normalized_rmse=0.0374981239`, `max_abs=0.0050048828`) before the patched
+arm or any timing. This is a stock/oracle calibration or compatibility
+observation, not evidence for or against the M32 dispatcher. The independent
+local-attention source lane remains active, so raw portfolio occupancy is not
+the constraint.
+
+**Change and expected effect.** The director binding repeatedly combined
+“negative or incomplete” into one release deadline even though its own skill
+requires recoverable pre-science failures to remain inside the mutable claim.
+I amended `.agents/skills/research-director/SKILL.md` to require separate
+decision-bearing-negative and incomplete-repair dispositions in every owner
+binding. I amended `.agents/skills/researcher/SKILL.md` to forbid researchers
+from using `gpu_pool ready` to reverse `maintenance` or `draining`; after an
+erroneous recoverable release, the director must inspect and authorize reuse.
+Expected effect: ordinary layout, oracle, and harness defects stay within one
+heartbeating claim, while supervisor drains remain effective safety fences.
+This removes release/reclaim races without another validation ladder, another
+project, or a change to scientific selection.
+
+## 2026-07-28T19:14Z — wake same-claim repairs from owner deadline markers
+
+**GPU safety audit.** One grouped Nebius census matched inventory across both
+configured projects: `project-e00h1vhmpr00vbmfd5k7pg` was empty, and
+`project-i00hfrkjpr00wmz2kzj3qm` contained only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` plus READY disk
+`computedisk-i00ky31am65pmpzh8z`. Registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` remained claimed by
+`gemma4_b200_fp8_residual_hotpath`, heartbeating through `19:25Z`. Its recorded
+controller-host user watchdog
+`gemma4-b200-m32-paired-oracle-20260728t1857z-watchdog.service` was
+active/running with PID `3524763`, and owner PID `3530991` matched recorded
+start ticks `138143588`. No resource mismatch, stale claim, passed deadline,
+or drain condition existed.
+
+**Measured bottleneck.** The paired-FP8 owner localized a recoverable
+pre-science serializer defect: its stock arm attempted direct NumPy conversion
+of `torch.float8_e4m3fn`. It correctly retained the warm claim and published
+`REPAIR_READY.json`, but used the owner-local deadline field `deadline_utc`.
+The harness accepted `repair_deadline_utc` and other absolute aliases, not
+that field, so every scheduler interval from `19:08:37Z` through `19:13:37Z`
+emitted `researcher_deferred: durable_session_active`. The director's
+replacement-owner fence passed at `19:11Z` with no replacement artifact even
+though the cached restart was measured at four seconds. This was scheduler
+schema mismatch, not scientific uncertainty or GPU scarcity.
+
+**Change and expected effect.** I made
+`research/factory/src/grad_research/lab_harness.py` accept `deadline_utc` as a
+backward-compatible repair deadline, added a focused unit test, and normalized
+the live marker with the equivalent canonical `repair_deadline_utc` field.
+Both targeted repair tests passed. At the next scheduler interval,
+`researcher_woken: durable_repair_ready` and `researcher_slot_filled` appeared
+at `19:14:37Z` while the harness explicitly preserved the PID-managed owner.
+Expected effect: ordinary owner-generated repair handoffs wake a researcher
+inside the existing mutable claim instead of idling until a deadline or
+forcing release/reclaim, without adding validation, another project, or
+provider mutation.
+
+## 2026-07-28T19:38Z — bind execution after a newly durable reservation
+
+**GPU safety audit.** The one grouped Nebius census was only partially
+decisive: `project-e00h1vhmpr00vbmfd5k7pg` returned no instances or disks,
+while the authenticated call for `project-i00hfrkjpr00wmz2kzj3qm` reached its
+API deadline before returning a listing. I did not poll it again, so provider
+existence for that project is unverified by this supervisor census rather
+than falsely classified as a mismatch. The registered controller-host
+watchdog was objectively healthy: after the director's lifecycle binding,
+`gemma4-b200-local-paged-gqa-correctness-20260728t1935z-watchdog.service`
+was active/running with PID `3568294` in its recorded user cgroup through
+`20:25Z`. Bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` was unclaimed and available
+from `19:37:57Z`, with immediate compatible work in
+`gemma4_b200_fp8_local_attention_fusion`; reuse is justified. No stale claim,
+passed deadline, lost owner, or drain condition was observed. Exact resources
+remain instance `computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, and project
+`project-i00hfrkjpr00wmz2kzj3qm`.
+
+**Measured bottleneck.** The preceding M32 patched-only run reused the warm
+claim and terminalized correctly, but was scientifically negative: stock
+quant-plus-GEMM was `14.331200 ms` versus patched `14.837440 ms`, a
+`-3.5324%` component gain and `-5.663567 ms/request` projected saving. The
+director therefore admitted a materially distinct, correctness-only B200
+local paged-GQA lane and explicitly wrote a two-phase gate: first make its
+`$4` reservation durable, then wake the director to revalidate the retained
+bench and bind an execution owner. The harness wrote `spend_reserved` at
+`19:32:43.873Z` but launched a high-reasoning researcher only `14 ms` later.
+That researcher could not claim or execute and spent `159.387 s` recording the
+missing post-reservation binding. The director was not woken until the
+60-second fallback at `19:33:43.766Z`; it subsequently replaced the watchdog
+and readied the warm B200 at `19:37:57Z`. This was scheduler ordering waste,
+not GPU scarcity or an absence of admissible science.
+
+**Change and expected effect.** I updated
+`research/factory/src/grad_research/lab_harness.py` so the explicit structured
+state `reservation_required: true` remains researcher-ineligible after a new
+reservation and queues an immediate `spend_reserved` director wake. The
+researcher becomes eligible only after the director changes that state;
+ordinary paid projects are unchanged. A focused regression plus the existing
+spend-cap overcommit test both pass. Expected effect: future two-phase paid
+gates preserve the warm lifecycle while the director binds it, avoiding one
+non-executable deep researcher turn and the fallback delay without adding a
+validator, project, provider operation, or scientific policy.
+
+## 2026-07-28T19:52Z — coalesce project wakes already consumed by the director
+
+**GPU safety audit.** One grouped Nebius census reconciled both configured
+projects exactly: `project-e00h1vhmpr00vbmfd5k7pg` had no instances or disks,
+and `project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` plus READY disk
+`computedisk-i00ky31am65pmpzh8z`. Registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` released its correctness
+claim at `19:46:33Z`, was made available at `19:50:39Z`, and had immediate
+compatible split-KV work. Its controller-host user watchdog
+`gemma4-b200-local-paged-gqa-correctness-20260728t1935z-watchdog.service`
+was active/running with PID `3568294` in the recorded cgroup through
+`20:25Z`. The roughly one-minute observed idle interval cost about `$0.066`
+and remained well inside the reuse window; no stale claim, missing resource,
+passed deadline, owner loss, or drain condition existed.
+
+**Measured bottleneck.** Warm repair and release were efficient. The project
+repaired the tar-over-SSH defect in the same claim, rejected only the
+single-CTA ownership implementation when the exact planner selected split-KV,
+and consumed no timing, endpoint request, model load, or invalid scientific
+arm. The director running from `19:46:10Z` to `19:51:34Z` consumed that
+terminal, changed the same project to the materially distinct split-KV-safe
+successor, and readied the retained B200. However, the
+`researcher_completed` wake queued at `19:48:09Z` while that director was
+running remained pending. Immediately after the director bound the successor
+and the harness launched its researcher, the stale wake was dispatched with
+`oldest_wake_delay_seconds: 205.35023`, starting another high-reasoning
+director beside the new researcher. The second turn cannot improve latency to
+the already-bound experiment and may race its mutable status.
+
+**Change and expected effect.** I updated
+`research/factory/src/grad_research/lab_harness.py` to attach a project
+observation to completion/no-progress wakes and, when a director completes,
+coalesce only queued wakes whose same project has since changed. Wakes for
+unchanged projects and unrelated queued work remain pending. A focused
+partition test, the existing admitted-work-before-queued-wake event-loop
+test, and the reservation-gate regression all pass, as do DevEx checks.
+Expected effect: one director decision produces one execution handoff instead
+of an immediate duplicate high-reasoning turn, while preserving genuine
+late-arriving results from other projects and avoiding any scientific or GPU
+policy change.
+
+## 2026-07-28T20:08Z — preserve the direct-GPU floor at a bench-free transition
+
+**GPU safety audit.** One grouped Nebius census reconciled both configured
+projects exactly: `project-e00h1vhmpr00vbmfd5k7pg` had no instances or disks,
+and `project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` plus READY disk
+`computedisk-i00ky31am65pmpzh8z`. Registered bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j` was available and unclaimed
+from `19:57:14Z`. Its recorded controller-host user watchdog
+`gemma4-b200-local-paged-gqa-correctness-20260728t1935z-watchdog.service`
+was active/running with PID `3568294` in the exact recorded cgroup through
+`20:25Z`. No provider mismatch, stale claim, lost owner/watchdog, passed
+deadline, or unsafe condition exists. Roughly eleven observed idle minutes
+cost about `$0.72`; retaining the source/build/image/dependency/checkpoint
+caches is still cheaper than the measured multi-hour cold setup while
+compatible source work is active. Do not drain on this audit.
+
+**Model-specific evidence and bottleneck.** Warm execution itself is healthy.
+The split-KV candidate claimed at `19:51:57.882867Z`, released ready at
+`19:57:14.449764Z`, and used `316.566897 s` / `$0.347344` without model load,
+cold restart, repeated setup, or teardown. It proved unique tail ownership but
+returned an interpretable correctness negative: output cosine
+`0.9983367324`, max absolute error `3.203125`, mean absolute error
+`0.0034074`, and failed bitwise cache equality. The project correctly moved
+to bench-free source localization of GQA cache ownership and final
+split-reducer insertion. The real bottleneck is portfolio admission: this is
+the third serial local-attention generation, it is now the only active lane,
+and no active/ready experiment directly uses target GPU despite
+`$70.88248138597135` remaining campaign authority. An existing paused,
+hash-bound B200 lane,
+`gemma4_b200_fp8_cross_operator_executor`, already offers a materially
+independent exact consumer with a stated `>=0.002 s/request` component
+discriminator. That is an opportunity class for director ranking, not a
+supervisor selection or a reason to create another project.
+
+**Change and expected effect.** I amended
+`.agents/skills/research-director/SKILL.md` at the reusable-bench
+empty-portfolio fast path: when the retained bench's only active successor
+becomes bench-free source work, the director must either select an existing
+compatible direct experiment for reuse or record the concrete blocker and
+next lifecycle decision. It explicitly forbids creating work merely to occupy
+hardware or displacing the source lane. Expected effect: the next normal
+`supervisor_changed` wake restores the campaign's requested direct-GPU plus
+independent mix while the current researcher continues undisturbed, or makes
+an explicit reuse/drain decision before the watchdog; scientific selection,
+provider cleanup, inventory retirement, and claim ownership remain with the
+director.
+
+## 2026-07-28T20:57Z — normalize batch-level kernel projections per request
+
+**GPU safety audit.** The single grouped authenticated Nebius census exactly
+matched inventory across both configured projects:
+`project-e00h1vhmpr00vbmfd5k7pg` had no instances or disks, while
+`project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. The single authenticated RunPod census
+returned no pods, matching the absence of a registered RunPod bench. The
+controller-host user watchdog
+`gemma4-b200-cross-operator-20260728t2013z-watchdog.service` was
+active/running with PID `3591155` in its exact recorded cgroup through
+`21:10Z`. The B200 released warm at `20:49:41Z` and was claimed for the
+compatible stock decomposition at `20:56:23Z`; the intervening approximately
+`402 s` cost about `$0.44`, avoided cold setup, and was justified. No stale
+claim, missing or unregistered resource, passed deadline, lost owner/watchdog,
+or drain condition exists.
+
+**Measured bottleneck.** The split-reducer timing is a valid physical negative,
+but its endpoint projection has a factor-32 unit error. The runner's one timed
+invocation processes the full B32 batch, and the `17,900` local-attention calls
+are calls per endpoint batch. It recorded
+`-0.025551997 ms * 17,900 / 1000 = -0.457380749 s` and labeled that batch
+total seconds/request. Normalizing by the 32 completed requests gives
+`-0.014293148 s/request`; likewise the stock and candidate component
+contributions are `0.060698900` and `0.074446096 s/request`, not `1.942365`
+and `2.382275 s/request`. The sign and decision to close this implementation
+do not change, but the inflated magnitude can mis-rank the next mechanism.
+The already-launched stock decomposition repeats the same projection wording,
+so consume its physical timings without interruption and normalize its
+batch-total projections by 32 before any portfolio decision.
+
+**Change and expected effect.** I amended
+`.agents/skills/kernel-research/SKILL.md` to require every timed invocation to
+state whether it covers a request, token, or concurrent batch, and to retain
+both the batch-total and request-normalized bounds. Batch-level projections
+must divide by completed request count before being labeled seconds/request.
+Expected effect: component timing remains useful while preventing factor-N
+promotion and opportunity-ranking errors; no candidate, active claim,
+provider lifecycle, or scientific portfolio was changed.
+
+## 2026-07-28T21:12Z — retain recoverable pre-science failures under a live owner
+
+**GPU safety audit.** One grouped authenticated Nebius census reconciled both
+configured projects exactly: `project-e00h1vhmpr00vbmfd5k7pg` had no
+instances or disks, and `project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING
+instance `computeinstance-i00rqcq5yzr6xc991j` plus READY disk
+`computedisk-i00ky31am65pmpzh8z`. One grouped authenticated RunPod census
+returned no pods, matching inventory. The controller-host user watchdog
+`gemma4-b200-runtime-screen-20260728t2056z-watchdog.service` was
+active/running with PID `3619635` in the exact recorded cgroup through
+`21:33Z`. There was no missing or unregistered provider resource, stale
+claim, passed deadline, lost lifecycle owner, or unsafe bench. The first
+runtime claim released ready at `21:05:27.955811Z`; the director re-readied
+and the same project reclaimed the warm bench at `21:11:18.816962Z`. The
+approximately `351 s` warm interval cost about `$0.39` and was justified by
+the compatible retry and preserved image/source/build/dependency state. Do
+not drain or clean up provider resources on this audit.
+
+**Measured bottleneck.** The `21:03:30.767399Z` runtime claim lasted about
+`117 s` and reached the real B200/SM100 plus FlashInfer 0.6.6 environment,
+but cuBLASLt rejected a row-major FP8 B operand before warmups or a timing
+sample. This is an ordinary mutable integration defect, not a scientific
+negative. The attempt nevertheless released the safe claim, forcing a
+release/re-ready/reclaim cycle. Inspection also found that the staged runner
+used proxy consumers and omitted the bound M3679/M384 linear rows, so no
+result yet discriminates the campaign's exact vLLM CUTLASS plus FlashInfer
+TRTLLM-generation runtime opportunity against the `0.625149102 s/request`
+qualified denominator. The director correctly kept one same-project repair,
+the researcher corrected the column-major layout, and the warm B200 is now
+claimed for the actual pinned consumers rather than a cold restart or a new
+project.
+
+**Change and expected effect.** I tightened
+`.agents/skills/researcher/SKILL.md` at the retained-claim owner contract:
+publishing repair-ready and then exiting is explicitly not retention. The
+original owner must remain live and heartbeating through the repair wait, or
+verify an already-live replacement before exiting; a dead owner with a
+claimed pool row is owner loss. Expected effect: the next recoverable
+pre-science launcher or consumer defect stays on the mutable warm bench,
+avoiding both unconditional release/re-ready waste and a claimed-but-ownerless
+gap. This adds no static validation, project, provider mutation, or change to
+the active retry.
+
+## 2026-07-28T21:25Z — checkpoint completed consumer families before the next one
+
+**GPU safety audit.** One grouped authenticated Nebius census exactly matched
+inventory: `project-e00h1vhmpr00vbmfd5k7pg` had no instances or disks, while
+`project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. One grouped authenticated RunPod census
+returned no pods. The controller-host user watchdog
+`gemma4-b200-runtime-screen-20260728t2056z-watchdog.service` was
+active/running with PID `3619635` in its exact recorded cgroup through
+`21:33Z`. The B200 released healthy and available at `21:20:09.593601Z`;
+about `226 s` of idle time at the census cost roughly `$0.25`. That retention
+is justified: the same project received its durable `$6` Triton-fallback
+reservation at `21:24:00Z`, and the director is actively rebinding the
+compatible warm bench. There is no provider mismatch, stale claim, passed
+deadline, lost owner/watchdog, unsafe condition, or drain recommendation.
+
+**Measured bottleneck.** The continuous runtime claim from
+`21:11:18.816962Z` to `21:20:09.593601Z` lasted about `531 s`. The repaired
+program reached and timed all eighteen exact vLLM CUTLASS linear rows at
+M32/M3679/M384 before the later exact FlashInfer context consumer rejected
+the required d256/page16 geometry. However, both the retrieved worker terminal
+and the final typed terminal preserve only `18` first-call markers and zero
+linear timing rows (`linear: 0`). The timings existed only in the process-local
+`linear` list and were written to the result object after all attention arms,
+so the later exception erased otherwise reusable measurements. The typed
+FlashInfer incompatibility remains valid, but it says nothing against the
+dynamic-E4M3 linears or the materially distinct Triton FP8-KV fallback. The
+fallback is correctly staying in the same project; it should not lose its
+completed linears again if a later consumer fails.
+
+**Change and expected effect.** I amended
+`.agents/skills/kernel-research/SKILL.md` so a sequential multi-consumer
+program atomically checkpoints each completed family's timing and oracle rows
+before entering the next family. A later exception may invalidate only its
+failed family; first-call markers no longer substitute for completed
+measurements. Expected effect: the forthcoming CUTLASS-plus-Triton generation
+can preserve valid linear evidence across an attention repair or negative,
+avoiding another full-family replay while adding no static validation,
+project, provider mutation, or change to the director's scientific choice.
+
+## 2026-07-28T21:43Z — require contract-complete stage checkpoints
+
+**GPU safety audit.** One grouped authenticated Nebius census exactly matched
+inventory: `project-e00h1vhmpr00vbmfd5k7pg` had no instances or disks, while
+`project-i00hfrkjpr00wmz2kzj3qm` had only RUNNING instance
+`computeinstance-i00rqcq5yzr6xc991j` and READY disk
+`computedisk-i00ky31am65pmpzh8z`. One grouped authenticated RunPod census
+returned no pods. The recorded controller-host user watchdog
+`gemma4-b200-triton-fp8kv-20260728t2125z-watchdog.service` was active/running
+with PID `3636385` in its exact cgroup through `22:20Z`. The B200 was healthy,
+unoccupied, and available from `21:39:06.958139Z`; its roughly `212 s` idle
+interval at the census cost about `$0.23` and was justified by the same
+project's already-bound exact linear-pair continuation. The director re-readied
+that continuation at `21:43:16Z` with a `21:46Z` claim fence. There was no
+provider-only or missing resource, stale claim, passed deadline, lost owner or
+watchdog, unsafe condition, or drain recommendation.
+
+**Measured bottleneck.** The retained repair claim ran from
+`21:37:19.542079Z` to `21:39:06.958139Z` and produced a decision-bearing
+native Triton FP8-KV negative: local E4M3 saved `0.009600 ms` per B32
+invocation, while global E4M3 regressed by `0.182464 ms` and failed the
+finite/nonzero output guard, yielding a derived `0.015043 s/request`
+regression. However, the same terminal classified the overall generation as
+`interpretable_exact_triton_fp8_kv_generation` even though its required
+linear stage contained only six unpaired M32 candidate timings. It omitted
+the BF16 controls, M3679 and M384 rows, and numerical comparisons required by
+the binding. Atomic persistence therefore worked, but stage existence was
+mistaken for stage completeness, forcing a release/re-ready cycle for evidence
+that should have remained an incomplete family on the same claim.
+
+**Change and expected effect.** Tightened
+`.agents/skills/kernel-research/SKILL.md` so every sequential stage checkpoint
+must carry an expected-row ledger and prove all required baseline, candidate,
+shape, unit, and numerical-oracle fields before the overall generation can be
+called interpretable. A missing field now keeps only that family repairable;
+unpaired timings and first-call markers remain diagnostic evidence. Expected
+effect: multi-consumer runners will preserve valid attention conclusions while
+repairing an incomplete linear family inside the live mutable claim, avoiding
+another release/re-ready gap and duplicate GPU invocation. This is a dynamic
+result-completeness rule, not a static preflight, new project, provider
+mutation, or change to the director's scientific portfolio.
+
+## 2026-07-28T21:59Z — recognize root-level scientific handoffs as progress
+
+**GPU safety audit.** One grouped authenticated Nebius census found no
+instances or disks in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one
+RUNNING instance plus its READY attached disk in
+`project-i00hfrkjpr00wmz2kzj3qm`, matching non-retired inventory resource IDs
+`computeinstance-i00rqcq5yzr6xc991j` and
+`computedisk-i00ky31am65pmpzh8z`. The single authenticated RunPod request
+returned an empty top-level collection. The recorded controller-host user
+watchdog `gemma4-b200-triton-fp8kv-20260728t2125z-watchdog.service` was
+active/running with PID `3636385` in its exact recorded cgroup through
+`22:20Z`; the pool claim was released and no deadline had passed. At the
+audit, the healthy B200 had been available for about `206 s`, costing roughly
+`$0.23` at `$3.95/h`. Retention is justified: the director has now bound the
+same warm bench to the materially distinct exact block-scaled CUTLASS pair
+with a `22:00:30Z` claim fence. There is no provider-only or missing
+non-retired resource, stale claim, lost lifecycle owner/watchdog, unsafe
+condition, or drain recommendation.
+
+**Measured bottleneck.** The production dynamic-token claim ran from
+`21:49:33.217082Z` to `21:52:09.936053Z`. Its first program failed before a
+row on a localized Python name-shadowing defect, and the researcher correctly
+patched and reran in the same continuous claim. The repaired terminal is
+contract-complete: all `18` same-input BF16/CUTLASS rows are present with
+one FP32 activation scale per token, static-tensor weight scales, and
+M32/M3679/M384 coverage. Every row still fails the preregistered numerical
+gate at NRMSE `0.037559-0.037709`, so this is a decision-bearing
+representation negative rather than an integration failure. Despite that
+new root-level `B200_FP8_LINEAR_TOKEN_PAIR_TERMINAL.json` and the release,
+the harness emitted `researcher_no_progress` at `21:52:14Z` because its
+project observation watched only `STATUS.json` and an active-session artifact
+root. The same false label followed material turns at `21:33Z`, `21:39Z`, and
+`21:45Z`, repeatedly making the director rediscover new GPU evidence during
+the short paid warm window.
+
+**Change and expected effect.** I changed
+`research/factory/src/grad_research/lab_harness.py` so project observation also
+tracks the narrow canonical-artifact handoff surface at the project root:
+`*TERMINAL*.json` and `*RESULT*.json`. A regression test proves that a new
+canonical terminal changes project observation even when `STATUS.json` was
+not updated. Expected effect: decision-bearing GPU terminals are classified
+as `researcher_completed` and handed directly to the director instead of
+entering the no-progress cooldown/rediscovery path, without weakening the
+unchanged-turn throttle or changing experiment, portfolio, claim, or provider
+lifecycle semantics.
+
+## 2026-07-28T22:09Z — gate warm-bench release on terminal disposition
+
+**GPU safety audit.** One grouped authenticated Nebius census found no
+instances or disks in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one
+RUNNING instance plus its READY attached disk in
+`project-i00hfrkjpr00wmz2kzj3qm`, matching non-retired inventory resource IDs
+`computeinstance-i00rqcq5yzr6xc991j` and
+`computedisk-i00ky31am65pmpzh8z`. The one authenticated RunPod listing was
+empty. In the recorded controller-host user namespace,
+`gemma4-b200-triton-fp8kv-20260728t2125z-watchdog.service` was active/running
+with PID `3636385` in its exact recorded cgroup through the `22:20Z`
+deadline. There was no provider-only or missing non-retired resource, stale
+claim, passed deadline, lost lifecycle owner/watchdog, or unsafe condition,
+so no drain is warranted.
+
+The same project reused the warm B200 after an approximately `699 s` idle
+interval (about `$0.77` at `$3.95/h`) without cold setup. Its claim ran from
+`22:03:48.481545Z` to `22:06:45.190420Z`, approximately `177 s`. The bench is
+now healthy, unoccupied, and `available`, with the pinned image and block-pair
+packet still resident. Because `gemma4_b200_fp8_runtime_codesign` is the
+compatible unfinished consumer, reuse is justified; the director should
+reuse it before the watchdog deadline rather than drain it for idle cost. No
+provider teardown or cleanup was performed.
+
+**Measured bottleneck.** Two ordinary consumer-ABI defects consumed the claim
+but produced zero timing rows. The first owner called nonexistent
+`torch.ops._C.cutlass_scaled_mm`; the foreground researcher correctly retained
+the same claim, found `vllm._custom_ops.cutlass_scaled_mm`, and launched the
+repair against resident state. The repair then used the consumer's positional
+arguments incorrectly and hit its `out_dtype` assertion. Both terminals
+classified `consumer_runtime_defect` with empty row ledgers. The second
+program caught the exception and exited `0`, and its owner treated that exit
+code plus terminal-file existence as sufficient to release the bench
+`ready`. This broke the continuous mutable claim after a recoverable
+integration error even though no scientific result or safety boundary had
+been reached.
+
+**Change and expected effect.** I tightened
+`.agents/skills/researcher/SKILL.md`: exit status `0` plus a terminal file is
+not a release disposition. A healthy-bench owner must parse the terminal
+classification and verify the director-bound row ledger and numerical
+oracles; unknown, recoverable, and incomplete outcomes remain under a live
+same-claim repair owner. Expected effect: caught consumer exceptions will be
+patched and rerun against resident state without release/reclaim gaps or cold
+restart risk. This is a runtime terminal-disposition rule, not added static
+validation, a new project, or a change to the scientific portfolio.
+
+## 2026-07-28T22:23Z — release gates must cover the binding, not self-declared interpretability
+
+**GPU safety audit.** One grouped Nebius census found no instances or disks
+in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one RUNNING instance plus
+its READY disk in `project-i00hfrkjpr00wmz2kzj3qm`, matching registered
+resource IDs `computeinstance-i00rqcq5yzr6xc991j` and
+`computedisk-i00ky31am65pmpzh8z`. The single RunPod pod listing returned HTTP
+403, so RunPod absence is unverified; there are no non-retired RunPod records
+to reconcile and the request was not retried. In the recorded controller-host
+user namespace,
+`gemma4-b200-block-official-fp8-20260728t2215z-watchdog.service` was
+active/running with PID `3671476` in its exact cgroup through `22:27Z`.
+There was no missing Nebius resource, stale claim, passed deadline, lost
+watchdog, or unsafe condition.
+
+The same project reused the warm B200 after about `346 s` idle (roughly
+`$0.38` at `$3.95/h`) without cold setup. Its official-producer claim ran
+from `22:19:48.991611Z` to `22:21:53.366290Z`, about `124 s`, then released
+the healthy unoccupied bench ready. The remaining project authority is only
+about `$0.023`; unless the director can prove a contract-complete adoption
+fits the existing envelope, the idle-cost recommendation is to let the
+independent watchdog drain at `22:27Z`, not extend or cold-restart. No provider
+cleanup, inventory retirement, or lifecycle mutation was performed.
+
+**Measured bottleneck.** The director binding explicitly required installed
+activation-producer identity and output layout plus execution-equivalent
+production block-weight values/scales, including shapes, strides, storage
+offsets, orientation, reciprocal convention, and exact consumer arguments.
+The runner invoked installed `QuantFP8` for activations but still hand-authored
+block weights in `wq()`. Its terminal contains 18 timings and numerical
+fields, but no producer digest, official-output identity/equality result,
+weight-scale layout, storage offsets, orientation, reciprocal ledger, or
+expected-row ledger. Despite this, the owner released on only
+`classification=="interpretable_official_block_linear_pair"` and
+`rows==18`. The worker therefore self-certified interpretability and broke
+the continuous claim before the binding's evidence contract was complete.
+The measured NRMSE and latency table is useful implementation evidence, but
+it cannot yet close the official representation.
+
+**Change and expected effect.** Tightened
+`.agents/skills/researcher/SKILL.md` so an owner must derive its release
+predicate from every required binding field, not a worker-authored
+classification and row count. Missing producer provenance,
+execution-equivalence, or tensor-layout evidence remains incomplete even
+after a full timing table and a numerical negative. Expected effect:
+canonical GPU evidence will either release once genuinely decision-bearing or
+stay on the live same-claim adoption/repair path, avoiding repeated
+release/re-ready cycles and false mechanism rejection. This is a dynamic
+terminal-completeness rule, not another static validation ladder or a new
+scientific project.
+
+## 2026-07-28T22:53Z — READY bytes must be immutable before director provisioning
+
+**GPU safety audit.** One grouped Nebius census found zero instances and
+disks in both configured projects, matching zero non-retired records in
+`runtime/gpus.json`. The single RunPod listing again returned HTTP 403, so
+RunPod absence is unverified; there are no non-retired RunPod records and the
+request was not retried. No claim, lifecycle owner/watchdog, deadline,
+idle-cost exposure, unregistered Nebius resource, or missing registered
+resource existed at the snapshot, so no drain or provider action was
+warranted. `runtime/gpu_events.jsonl` has no event after the prior B200 was
+retired at `22:25:05Z`.
+
+**Measured bottleneck.** The live M32 researcher published
+`B200_FP8_M32_NEXT_MECHANISM.json` and project status as executable READY with
+SHA-256 `06247000a5fae70e...`. The harness dispatched the director at
+`22:50:15Z`; its first grouped read captured that exact digest and began the
+B200 create/register transaction. While both turns remained live, the
+researcher rewrote the advertised mechanism at `22:51:43Z` and the project
+status now binds SHA-256 `ad3c01d535a7d044...`. The scientific mechanism is
+productive, but durable READY state was treated as mutable working state,
+allowing paid lifecycle work to start against superseded bytes.
+
+**Change and expected effect.** Tightened
+`.agents/skills/researcher/SKILL.md`: finish and validate every bound source,
+runner, owner, and manifest before atomically publishing READY as the final
+mutation. Any later byte change must first revoke readiness and
+`claim_allowed`, invalidate the old digest for provisioning/execution, and
+publish the replacement only after revalidation. Expected effect: directors
+can safely consume READY while a researcher process is still finishing
+non-bound work, without cold-provisioning against a moving hash or paying for
+a preclaim mismatch. `python3 tools/devex/check.py` validated all eight
+repo-local skills. No active project file, provider resource, or lifecycle
+was modified by the supervisor.
+
+## 2026-07-28T23:37Z — repair requests cannot broaden the owner's retry scope
+
+**GPU safety audit.** One grouped Nebius census found no instances or disks
+in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one RUNNING instance plus its
+READY boot disk in `project-i00hfrkjpr00wmz2kzj3qm`. Those resources exactly
+match the only non-retired inventory record:
+`computeinstance-i00z1c1rm2yatraaed`,
+`computedisk-i00ch1ec97jas3szz2`, and bench
+`b200-m32-static-computeinstance-i00z1c1rm2yatraaed`. The single RunPod
+listing returned HTTP 403, so RunPod absence is unverified; there are no
+non-retired RunPod records and the request was not retried. In the recorded
+controller-host user namespace,
+`gemma4-b200-m32-static-20260728t2254z-watchdog.service` is active/running
+with PID `3687800` in its exact recorded cgroup. The claim owner PID
+`3692757` has matching start ticks `139562695`, the claim heartbeat remained
+current, and the owner, `23:45Z` decision-release target, `23:50Z` deadline,
+and `00:09:07Z` lifecycle deadline had not expired. There is no provider-only
+or missing non-retired Nebius resource, stale claim, lost owner/watchdog,
+unsafe condition, available idle bench, or drain recommendation.
+
+**Measured bottleneck.** The continuous warm claim began at
+`23:00:09.503575Z` and remained live without release, reclaim, teardown, or
+cold restart. Build generation 4 completed and reached the real consumer at
+`23:26:34.981836Z`, which advertised the exact retry scope
+`consumer:resume` after a pre-invocation numeric-UID/TorchInductor cache
+failure. The repair request instead changed the scope to `source_stage`.
+That replayed source reconciliation and a complete two-command SM100
+extension build: generation 5 ran from `23:29:34.639414Z` until its consumer
+at `23:31:44.276767Z`, about `130 s`. The replacement Dockerfile was not
+consumed because the fixed derived-image tag already existed, so generation
+5 repeated the identical zero-row `getpwuid(1001)` failure. A later exact
+`consumer:resume` request reused build 5 and crossed into actual stock and
+candidate CUDA at `23:35:56.576355Z`; it then emitted a fresh
+`consumer:sliding_qkv` diagnostic (`invalid configuration argument`) before
+any valid timing row. That newest kernel outcome belongs to the active
+researcher; the supervisor did not alter its candidate or disposition.
+
+**Change and expected effect.** I tightened the shared
+`research/factory/tools/repair-handshake`: a request now inherits the
+hash-bound ready record's retry scope, and an optional `--retry-scope` may
+only restate the same value. A regression test proves that
+`consumer:resume -> source_stage` is rejected without publishing a request;
+the tools README records the contract. All nine focused repair-handshake
+tests pass. Expected effect: a recoverable late-consumer failure stays on the
+claimed mutable bench and reuses resident producer/build state, eliminating
+the observed approximately `130 s` redundant rebuild and preventing an
+unapplied upstream patch from masquerading as a repaired consumer. This does
+not add static validation, choose a scientific repair, mutate the live owner,
+or change provider lifecycle.
+
+## 2026-07-29T00:08Z — prepare local execution bytes before opening a short claim fence
+
+**GPU safety audit.** One grouped Nebius census found no instances or disks
+in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one RUNNING instance plus its
+READY boot disk in `project-i00hfrkjpr00wmz2kzj3qm`. Those resources exactly
+match the only non-retired inventory record:
+`computeinstance-i00z1c1rm2yatraaed`,
+`computedisk-i00ch1ec97jas3szz2`, and bench
+`b200-m32-static-computeinstance-i00z1c1rm2yatraaed`. The single RunPod
+listing returned HTTP 403, so RunPod absence is unverified; there are no
+non-retired RunPod records and the request was not retried. The B200 remained
+available and unclaimed from `00:00:05Z`; its controller-host user watchdog
+`gemma4-b200-m32-geometric-rebind-20260728t2350z-watchdog.service` was
+active/running with PID `3725242` in the recorded cgroup through
+`00:24:07Z`. No resource mismatch, lost owner/watchdog, stale claim, passed
+deadline, unsafe condition, or drain action existed.
+
+**Measured bottleneck.** The execution researcher started at `00:00:39Z`,
+but the director's binding required local owner, runtime-manifest, and
+preclaim-packet adaptation before a `00:03:30Z` claim fence. The hash-bound
+packet completed at `00:03:52Z`, 22 seconds after that fence, so the
+researcher correctly refused to claim or launch stale authority. No CUDA or
+scientific sample was consumed, but the warm B200 accrued about 7.2 minutes
+of available-idle time (`~$0.48` at `$3.95/hour`) and the director had to
+issue a replacement lifecycle. This was preparation-window sizing, not a
+failure of the `sm_count` geometric correction.
+
+**Change and expected effect.** Tightened
+`.agents/skills/research-director/SKILL.md`: required local owner, manifest,
+packet, and preclaim mutations must be complete and hash-validated before a
+short warm-bench claim fence opens. If preparation genuinely shares the
+execution turn, the fence must use the nearest measured preparation duration
+plus the existing 120-second scheduling runway while preserving absolute
+release/watchdog margin. Expected effect: claim windows cover atomic claim
+and detached launch rather than code authoring, avoiding expired-binding
+round trips and converting retained build/image state into a first GPU call
+before paid idle time consumes the watchdog window. The change does not relax
+claim, spend, release, or lifecycle safety and does not touch the active
+project or provider.
+
+## 2026-07-29T00:16Z — legacy release labels cannot invalidate successful owners
+
+**GPU safety audit.** One grouped Nebius census found no instances or disks
+in `project-e00h1vhmpr00vbmfd5k7pg` and exactly one RUNNING instance plus its
+READY boot disk in `project-i00hfrkjpr00wmz2kzj3qm`. Those resources exactly
+match the only non-retired inventory record:
+`computeinstance-i00z1c1rm2yatraaed`,
+`computedisk-i00ch1ec97jas3szz2`, and bench
+`b200-m32-static-computeinstance-i00z1c1rm2yatraaed`. The single RunPod
+listing returned HTTP 403, so RunPod absence is unverified; there are no
+non-retired RunPod records and the request was not retried. The B200 is
+unclaimed in maintenance after its bounded owner released it at
+`00:11:51.835470Z`; its controller-host user watchdog
+`gemma4-b200-m32-geometric-rebind-20260728t2350z-watchdog.service` remains
+active/running with PID `3725242` in the recorded cgroup through
+`00:24:07.243681Z`. No resource mismatch, stale claim, lost owner/watchdog,
+passed deadline, unsafe condition, available-idle cost, or drain action
+exists.
+
+**Measured bottleneck.** Warm-bench reuse succeeded: the replacement claimed
+at `00:09:14.426622Z`, used the resident image and sources, completed its
+approximately 130-second build, and released after about 157 seconds without
+teardown or cold restart. Its durable terminal contains all six bound
+component rows; every BF16 output is bitwise equal, every family improves,
+the weighted quant-plus-GEMM gain is 10.30%, and the projected endpoint
+saving is `0.013539558696793392 s/request`. This is valid decision-bearing
+component evidence, not campaign completion. After that successful science,
+the owner invoked `gpu_pool release --condition available`; the CLI rejected
+the inventory status word because it accepted only `ready` and `maintenance`.
+The fallback safely released to maintenance but wrote `OWNER_INCOMPLETE`
+instead of `OWNER_TERMINAL`, creating a false lifecycle failure and blocking
+immediate warm reuse despite a valid terminal.
+
+**Change and expected effect.** The shared GPU-pool release boundary now
+accepts legacy `available` as an alias for canonical condition `ready`. It
+normalizes before validation and event emission, so inventory status remains
+`available` while `gpu_events.jsonl` continues to record `condition: ready`.
+A focused CLI regression test proves the claim is cleared, the bench is
+available, and the event is canonical; all 21 GPU-pool tests pass. Expected
+effect: older bounded owners finish with `OWNER_TERMINAL` and publish a
+reusable warm bench after valid science instead of forcing a director
+maintenance round trip. This does not relax deadlines, drain behavior,
+claim-generation fencing, or failure cleanup, and the supervisor did not
+mutate the completed project, inventory, or provider resources.
+
+## 2026-07-29T00:39Z — atomically hold recoverable owner failures for warm repair
+
+**GPU safety audit.** One grouped authenticated census found one RUNNING B200
+instance and READY boot disk in Nebius project
+`project-i00hfrkjpr00wmz2kzj3qm`, one RUNNING H200 instance and READY boot
+disk in `project-e00h1vhmpr00vbmfd5k7pg`, and no RunPod pods. The exact B200
+resources `computeinstance-i00z1c1rm2yatraaed` /
+`computedisk-i00ch1ec97jas3szz2` match registered maintenance bench
+`b200-m32-static-computeinstance-i00z1c1rm2yatraaed`. The H200 resources
+`computeinstance-e00kwncr0knnykhe48` /
+`computedisk-e00n8m6xbb9cfdkam8` appeared provider-side during the active
+director's create-to-register transaction and were then registered as
+maintenance bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48` at
+`00:34:29.704638Z`. In the recorded controller-host user namespace, the B200
+watchdog is active/running with PID `3742417` in its exact cgroup through
+`02:24:07Z`; the H200 watchdog is active/running with PID `3749746` in its
+exact cgroup through `03:32:14.286493Z`. Both benches are unclaimed,
+non-claimable maintenance resources with compatible bound endpoint work and
+active director handoff, so neither is unjustified available-idle capacity.
+There is no current provider-only or missing non-retired resource, stale
+claim, lost owner/watchdog, passed deadline, unsafe condition, or drain
+action. The transient H200 mismatch required no supervisor mutation.
+
+**Measured bottleneck.** The fixed campaign objective remains the exact
+quality-qualified `0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. The positive B200 static-scheduler
+component projects only `0.0135395587 s/request` (about `2.17%` of the
+denominator), so progress requires the bound endpoint pair rather than more
+component or process work. Its owner claimed the warm B200 at
+`00:31:09.510969Z`, entered checkpoint staging, and hit controller-side
+`FileNotFoundError(2, 'No such file or directory')` because `rsync` was
+absent. No checkpoint byte, server, CUDA call, endpoint request, or scientific
+arm was consumed. Nevertheless, the generic exception branch released the
+claim to maintenance at `00:31:10.952080Z`, only `1.441111 s` later. The
+researcher repaired staging to use resumable manifest-bound SSH byte ranges,
+but the release revoked mutable-claim continuity and requires director
+re-readiness and rebinding. This is a recoverable integration failure and
+warm-claim lifecycle defect, not B200 scientific evidence.
+
+**Change and expected effect.** Added `hold` to the shared
+`research/factory/tools/repair-handshake`. A durable owner can now atomically
+create or verify `REPAIR_READY.json` and block in the same process until a
+hash-bound request, repair terminal, project terminal, or the persisted
+deadline, while its existing heartbeat thread retains the claim. The README
+documents the exception-path contract, and a regression test proves `hold`
+publishes the marker, remains blocked, and returns the scope-bound request;
+all 10 focused handshake tests pass. Expected effect: future pre-science
+launcher, staging, retrieval, or consumer exceptions have a one-call
+retained-claim path instead of falling through a generic release branch,
+preserving resident checkpoint/image/build state and avoiding the observed
+director rebind round trip. The tool does not own heartbeats, choose a repair,
+authorize scientific replay, mutate an active project, or touch provider
+lifecycle.
+
+## 2026-07-29T01:06Z — fence the ownerless retained H200 claim for director disposition
+
+**GPU safety audit.** One grouped authenticated census found exactly the two
+non-retired inventory resources in Nebius: RUNNING B200
+`computeinstance-i00z1c1rm2yatraaed` with READY disk
+`computedisk-i00ch1ec97jas3szz2` in
+`project-i00hfrkjpr00wmz2kzj3qm`, and RUNNING H200
+`computeinstance-e00kwncr0knnykhe48` with READY disk
+`computedisk-e00n8m6xbb9cfdkam8` in
+`project-e00h1vhmpr00vbmfd5k7pg`. The single RunPod listing returned HTTP
+200 with no pods. Both recorded controller-host user watchdogs are
+active/running in their exact cgroups: B200 PID `3742417` through
+`02:24:07Z`, and H200 PID `3749746` through `03:32:14.286493Z`. The B200
+owner PID `3761421` is live with matching start ticks `140194293`; its
+continuous claim still heartbeats and is staging the endpoint checkpoint.
+There is no provider-only or missing resource, passed deadline, stale B200
+claim, or available-idle bench.
+
+The H200 claim is the actionable mismatch. Replacement owner PID `3769609`
+exited after its last heartbeat at `01:02:46.413451Z`, its `/proc` identity is
+absent, and `detached-owner status` reports `live:false`. The harness correctly
+woke the researcher at `01:04:04Z`; that turn retrieved the typed pre-science
+failure and cleared `STATUS.json.active_session` at `01:04:46Z`, then completed
+without starting another executor. Thus the claim generation
+`2026-07-29T00:54:46.997840Z` remains valid but objectively has no durable
+owner. The exact director handoff is bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Measured bottleneck.** The campaign still needs direct endpoint evidence
+against the fixed quality-qualified `0.625149101968745 s/request` denominator
+and `0.500119281574996 s/request` target. The H200 owner retained the warm
+claim for about eight minutes and completed the pinned SGLang image pull, but
+the checkpoint stage then invoked deprecated `huggingface-cli`; the pinned
+container requires `hf`. `PRE_SCIENCE_FAILURE.json` confirms no checkpoint,
+CUDA, server, request, or endpoint pair was consumed. This is another
+recoverable integration boundary, not evidence against the positive 55L/5G
+attention mechanism. The researcher procedure already requires one immediate
+same-turn retry for a localized first failure and deliberate recovery after a
+corrected retry also fails; the harness detected the dead PID within one
+minute. No additional skill, static validation, harness rule, or project is
+warranted.
+
+**Change and expected effect.** I issued the shared pool `drain` action for
+the registered H200. Because the bench remains claimed, the pool atomically
+set `drain_after_release:true` without clearing the claim, touching the
+provider, stopping the watchdog, or disrupting resident state. Expected
+effect: the director can inspect and deliberately reclaim/reuse the resident
+image under a live replacement owner if that remains the fastest route, while
+any eventual release is fenced into `draining` instead of silently advertising
+an ownerless bench as reusable. Provider cleanup and inventory retirement
+remain director-owned.
+
+## 2026-07-29T01:32Z — suppress unchanged durable-repair redispatch after no progress
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+matched the inventory exactly. Nebius reports RUNNING B200 instance
+`computeinstance-i00z1c1rm2yatraaed` with READY disk
+`computedisk-i00ch1ec97jas3szz2` in
+`project-i00hfrkjpr00wmz2kzj3qm`, and RUNNING H200 instance
+`computeinstance-e00kwncr0knnykhe48` with READY disk
+`computedisk-e00n8m6xbb9cfdkam8` in
+`project-e00h1vhmpr00vbmfd5k7pg`; RunPod returned HTTP 200 with no pods. In
+the recorded controller-host user namespace, the B200 watchdog is
+active/running as PID `3742417` through `02:24:07Z` and the H200 watchdog is
+active/running as PID `3749746` through `03:32:14.286493Z`. Both claimed
+batch owners are live with matching PID start identities: B200 PID `3761421`
+and H200 PID `3779089`. Both claims continued heartbeating through this audit,
+neither deadline has passed, and there is no available-idle bench. The H200
+retains its earlier `drain_after_release:true` fence but now has a live
+replacement owner; no new provider-only resource, missing inventory resource,
+stale claim, lost lifecycle owner/watchdog, unsafe condition, drain action, or
+director lifecycle handoff exists.
+
+**Measured bottleneck.** Progress still means direct endpoint evidence against
+the fixed quality-qualified `0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. The B200 owner staged the checkpoint
+bytes but failed pre-science at `01:22:32Z`: its finalization command expected
+an unstaged `model-files.sha256` and compared the wrong digest. No CUDA,
+server, endpoint request, or scientific sample was consumed. The first repair
+turn patched the owner source but correctly observed that the live Python
+process had already loaded the old method. A second turn nevertheless sent a
+request to that process, reproducing the identical failure as repair
+generation 2. The next turns correctly refused a third identical request, but
+the harness continued treating the unchanged unconsumed `REPAIR_READY` as
+runnable: researchers started at `01:26:52Z`, `01:27:32Z`, `01:28:52Z`, and
+`01:30:52Z`; the `01:27:32Z` and `01:28:52Z` turns recorded no progress, with
+the latter lasting only `5.536 s`. This is scheduler redispatch waste after a
+recoverable integration boundary, not scientific uncertainty. The owner,
+claim, staged checkpoint, and second independent H200 lane remained warm and
+were not released or restarted.
+
+**Change and expected effect.** The shared lab harness now tags a dispatch that
+began from a durable repair marker. If that turn leaves the project observation
+unchanged, its cooldown waits for a status or repair-artifact observation
+change instead of expiring every generic cycle; ordinary no-progress projects
+keep their existing timed retry. A regression test holds the unchanged marker
+beyond the old cooldown and proves there is no redispatch, then changes the
+marker and proves dispatch resumes immediately. That test plus the existing
+ordinary cooldown and concurrent director/repair tests pass (`3` tests,
+`2.258 s`); the complete harness module also passes (`80` tests, `11.130 s`),
+and `tools/devex/check.py` passes. Expected effect: an integration repair that
+needs an owner transition or director decision consumes one diagnostic turn
+rather than one researcher per minute while remaining immediately responsive
+to a new repair generation, request, terminal, or status decision. The active
+harness has correctly deferred source reload while the two PID-managed sessions
+are live, so this change does not interrupt either experiment and takes effect
+at the next safe harness reload.
+
+## 2026-07-29T01:41Z — discover direct-child durable repair handshakes
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+again matches the two non-retired inventory records exactly. Nebius reports
+RUNNING B200 `computeinstance-i00z1c1rm2yatraaed` with READY disk
+`computedisk-i00ch1ec97jas3szz2`, and RUNNING H200
+`computeinstance-e00kwncr0knnykhe48` with READY disk
+`computedisk-e00n8m6xbb9cfdkam8`; RunPod returned HTTP 200 with no pods. The
+recorded controller-host user watchdogs are active/running in their exact
+cgroups as PIDs `3742417` and `3749746`, with deadlines `02:24:07Z` and
+`03:32:14.286493Z`. The retained B200 replacement owner PID `3793460` and H200
+owner PID `3779089` are live with matching start ticks, and both original
+claims heartbeat through the audit. There is no provider-only or missing
+resource, stale claim, passed deadline, owner/watchdog loss, available-idle
+bench, unsafe condition, or new drain action.
+
+**Measured bottleneck.** Campaign progress remains direct endpoint evidence
+against the fixed quality-qualified `0.625149101968745 s/request` denominator
+and `0.500119281574996 s/request` target. The director correctly preserved both
+warm lanes. The B200 replacement reused every staged checkpoint shard and
+reached its production build; its current researcher is patching a localized
+pre-science missing-`cusparse.h` build environment defect under the same claim.
+Independently, the H200 has a finalized exact checkpoint and healthy loaded
+stock server, but PID `3779089` entered repair wait after its parser
+substring-matched unrelated `false` Docker state fields. The durable marker
+has existed since `01:22:09Z` at
+`artifact_root/repair-stage-0106/REPAIR_READY.json`, and the director bound an
+in-place stock-health owner replacement at `01:31Z`. Nevertheless, subsequent
+harness cycles logged only `durable_session_active` deferrals for H200 and
+never `durable_repair_ready`: marker discovery supported the artifact root,
+named root markers, and `.repair-handshakes`, but not a direct child repair
+directory. Thus one independent direct endpoint lane was scheduler-invisible
+despite free researcher capacity and reusable loaded server state.
+
+**Change and expected effect.** The shared harness now includes
+`artifact_root/*/REPAIR_READY.json` in durable marker discovery. All existing
+artifact-root binding, deadline, matching request, terminal, and
+replacement-owner-generation filters still apply. The focused regression
+proves a `repair-stage-1/REPAIR_READY.json` marker is returned exactly, the
+real H200 status now resolves to `repair-stage-0106/REPAIR_READY.json`, and the
+complete harness module passes (`81` tests, `11.096 s`); the turn's DevEx check
+also passes. Expected effect: retained owners using the lab's established
+direct-child handshake layout wake one in-place researcher instead of leaving
+a warm endpoint lane indefinitely deferred, while consumed or stale repairs
+remain suppressed. Source reload remains deferred while PID-managed sessions
+are live, so the change does not interrupt either experiment; this handoff also
+gives the director the exact currently invisible H200 marker for immediate
+same-claim disposition.
+
+## 2026-07-29T01:53Z — H200 replacement died pre-science; retain and repair the claim
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+matches the inventory: Nebius reports RUNNING B200
+`computeinstance-i00z1c1rm2yatraaed` with READY disk
+`computedisk-i00ch1ec97jas3szz2`, and RUNNING H200
+`computeinstance-e00kwncr0knnykhe48` with READY disk
+`computedisk-e00n8m6xbb9cfdkam8`; RunPod returned HTTP 200 with no pods. Both
+controller-host user watchdogs are active/running in their recorded cgroups as
+PIDs `3742417` and `3749746`, with future deadlines `02:24:07Z` and
+`03:32:14.286493Z`. There is no provider-only or missing resource, passed
+deadline, available-idle bench, or watchdog loss. The B200 owner PID `3793460`
+is live with matching start ticks and its claim heartbeats through the audit.
+
+The H200 replacement is, however, objectively ownerless: recorded PID
+`3806401` (start ticks `140586500`) and predecessor PID `3779089` are absent
+from the controller host, while the original `00:54:46.997840Z` claim remains
+registered and its last heartbeat is the replacement launch-time heartbeat,
+`01:50:47.743988Z`. The replacement `OWNER.log` shows an immediate
+`KeyError: 'DETACHED_OWNER_STATE'`; its typed exception separately classifies
+`packet_copy_failed:qualified_c32_workload.json` as recoverable,
+`science_consumed:false`. Thus this is a pre-science integration failure, not
+an endpoint result. The registered bench already has
+`drain_after_release:true`, so it is marked to drain and cannot become
+available after release; no redundant pool mutation was made. Exact resources
+for director disposition are bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Bottleneck and expected effect.** Campaign progress is still direct endpoint
+evidence against the fixed quality-qualified `0.625149101968745 s/request`
+denominator and `0.500119281574996 s/request` target. The H200 already holds
+the exact checkpoint and healthy loaded stock server; teardown or cold restart
+after this controller error would discard the independent lane's warm state
+without learning about the objective. The director wake is already pending.
+It should patch the replacement launch/controller packet, adopt the existing
+claim once, and rerun only the unconsumed stock-then-candidate pair before the
+current lifecycle deadline; it should not release/reclaim, replay checkpoint
+setup, clear the drain fence, or clean up provider resources. No shared-tool or
+harness change is warranted in this turn: the existing PID liveness and typed
+terminal paths exposed the failure immediately, and adding more static
+validation would not advance the endpoint measurement. Expected effect:
+restore the warm H200 lane with one localized retry while preserving the sole
+scientific pair and avoiding repeated setup or teardown waste.
+
+## 2026-07-29T02:15Z — H200 remains ownerless after command-boundary failures
+
+**GPU safety audit.** The one grouped authenticated census per configured
+provider exactly matches non-retired inventory. Nebius project
+`project-i00hfrkjpr00wmz2kzj3qm` and RunPod are empty; the B200 endpoint
+finished before exact instance `computeinstance-i00z1c1rm2yatraaed` and disk
+`computedisk-i00ch1ec97jas3szz2` were deleted and the record was retired with
+cleanup verified at `02:11:31Z`. Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg` contains only RUNNING H200 instance
+`computeinstance-e00kwncr0knnykhe48` and READY disk
+`computedisk-e00n8m6xbb9cfdkam8`. Its controller-host user watchdog is
+active/running as PID `3749746` in the recorded cgroup through
+`03:32:14.286493Z`; there is no provider-only or missing resource, passed
+deadline, or available-idle bench.
+
+The H200's original `00:54:46.997840Z` claim is current through
+`02:02:24.163480Z`, but both recent command-owner PIDs are absent and project
+status has `active_session:null`. The registered bench is therefore
+objectively ownerless while a replacement is prepared. It already has
+`drain_after_release:true`, so the required drain fence is in place and no
+redundant pool mutation was made. Exact resources for director disposition
+remain bench `h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`,
+instance `computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Bottleneck and expected effect.** Campaign progress remains measured against
+the fixed quality-qualified `0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target. B200 produced decision-bearing endpoint
+evidence before cleanup: stock was `0.681605069 s/request`, the candidate was
+`0.681981931 s/request` (0.0553% slower), and one of 32 response token hashes
+diverged; its current work is appropriately zero-GPU first-divergence
+localization rather than replay. H200 remains the sole direct GPU lane. Its
+checkpoint and healthy stock server have been retained, but two controller
+commands exited before any campaign POST because shell-quoted inline Python
+did not become a valid container argv. Exact server logs prove the early
+request markers recorded intent rather than submission, so the sole pair
+remains unconsumed. The scheduler has already dispatched one researcher to
+replace only that boundary with a hash-bound argv-safe `/work` adapter under
+the existing claim and `02:22Z` start fence. No shared-tool, harness, extra
+project, static-validation, teardown, or cold-restart change is warranted.
+Expected effect: one in-place owner relaunch reaches the actual request
+boundary while preserving resident model state and unambiguous arm accounting.
+
+## 2026-07-29T02:27Z — H200 warm handoff failed its no-HTTP smoke; drain fence reasserted
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+matches inventory exactly: the B200 Nebius project and RunPod are empty, while
+the H200 Nebius project contains only RUNNING instance
+`computeinstance-e00kwncr0knnykhe48` and READY disk
+`computedisk-e00n8m6xbb9cfdkam8`. The H200 controller-host user watchdog is
+active/running as PID `3749746` in its recorded cgroup, its
+`03:32:14.286493Z` lifecycle deadline has not passed, and the original claim
+is current through heartbeat `02:26:57.126174Z`. There is no provider-only or
+missing resource, stale claim, passed deadline, or available-idle bench.
+
+The authorized same-claim handoff did create replacement PID `3831070`, but
+both it and predecessor PID `3825247` are now absent. The replacement stopped
+at a no-HTTP smoke because its container adapter referenced the uncopied
+identity path
+`/work/inputs/h200_55l5g_endpoint_packet/qualified_c32_workload.json`.
+`REPAIR_READY.json` classifies this as `recoverable_pre_science` with
+`science_consumed:false`; no request or endpoint terminal was emitted. The
+registered claim is therefore objectively ownerless. I reasserted its drain
+fence at `02:27:41.817571Z` (`bench_drain_requested`), preserving the current
+claim but preventing reuse after release. Exact resources for director
+disposition are bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, and Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Bottleneck and expected effect.** The campaign still lacks the sole
+stock/permanent-55L5G c32 endpoint pair needed to test the fixed
+quality-qualified `0.625149101968745 s/request` denominator against the
+`0.500119281574996 s/request` target. This is another recoverable integration
+boundary, not evidence about that objective: the exact checkpoint and healthy
+stock server remain resident. The active researcher has already localized the
+missing identity argument and is patching the adapter and replacement owner
+in place. No shared-tool, harness, static-validation, extra-project, teardown,
+release/reclaim, or cold-restart change is warranted. Expected effect: a
+single localized same-claim relaunch will preserve warm state and consume the
+still-unstarted endpoint pair, while the drain fence contains any subsequent
+owner failure.
+
+## 2026-07-29T02:36Z — H200 stock was consumed; retrieval failure must not authorize replay
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+matches inventory: the B200 Nebius project and RunPod are empty, and the H200
+Nebius project contains only RUNNING instance
+`computeinstance-e00kwncr0knnykhe48` with READY disk
+`computedisk-e00n8m6xbb9cfdkam8`. The controller-host user watchdog remains
+active/running as PID `3749746` in its recorded cgroup through
+`03:32:14.286493Z`; no provider resource is unregistered or missing, and no
+claim or lifecycle deadline has passed.
+
+Replacement owner PID `3831643` / start ticks `140811678` is now absent while
+project status still names it and the original claim's last heartbeat is
+`02:32:24.888728Z`. I reasserted the registered drain fence at
+`02:35:08.965411Z` without releasing, reclaiming, or touching provider
+resources. Exact resources for director disposition are bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, and Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Measured bottleneck.** This is no longer a pre-science repair. The stock
+command returned `0`, emitted 32/32 complete responses with zero failures,
+and reported `7.70807582774998 s/request`. Only its following retrieval
+failed: execution wrote generation `materialized-stock-0221-r1`, but the
+owner tried to read the obsolete
+`materialized-stock-0221/STOCK_ARM.json` path. The resulting
+`REPAIR_READY.json` incorrectly declares `science_consumed:false`. Preserve
+the command capture and resident result; stock is consumed and must not be
+replayed. Candidate evidence has not appeared.
+
+The immutable pair also does not produce the campaign's claimed c32 service
+geometry: `run_arm` loops over the 32 bodies sequentially and labels mean
+per-request latency as `service_seconds_per_request`. Therefore the reported
+`7.70807582774998` is not scope-matched to the fixed concurrent service-time
+denominator `0.625149101968745` or target `0.500119281574996`. It is evidence
+that stock executed, not a sustainable-cost endpoint result. The active
+director is already reconciling this changed state; it owns whether the
+unstarted candidate has any remaining diagnostic value.
+
+**Change and expected effect.** I moved and strengthened the existing
+retrieval-accounting rule near the front of `.agents/skills/researcher`:
+successful execution or captured complete output consumes the arm, and a
+later `cat`, copy, archive, permission, or terminal-path failure cannot reset
+that state. Such failures permit only retrieval or terminal adoption, never
+scientific replay. Skill validation, repository DevEx checks, and diff checks
+pass. Expected effect: the next researcher preserves this stock result and
+repairs only its retrieval/terminal state, while future endpoint work reaches
+the objective with an actual concurrent schedule (the shared
+`lab-endpoint-pair` instrument already supports one) instead of spending warm
+GPU time on another serial driver mislabeled c32.
+
+## 2026-07-29T02:47Z — supervisor correction raced stale researcher admission
+
+**GPU safety audit.** The single grouped authenticated census per configured
+provider matches non-retired inventory: the Nebius B200 project and RunPod are
+empty, while Nebius project `project-e00h1vhmpr00vbmfd5k7pg` contains only
+RUNNING H200 instance `computeinstance-e00kwncr0knnykhe48` and READY disk
+`computedisk-e00n8m6xbb9cfdkam8`. Its controller-host user watchdog is
+active/running as PID `3749746` in the recorded cgroup through
+`03:32:14.286493Z`. There is no provider-only or missing resource, passed
+deadline, or available-idle bench.
+
+Candidate-transition PID `3839810` disappeared after its `02:40:30Z`
+heartbeat, so I reasserted the registered drain fence at
+`02:42:15.646466Z`. Replacement PID `3841529` then adopted the same claim and
+heartbeated through `02:43:14.610910Z`, but it is also now absent and project
+status has `active_session:null`; the claim is objectively ownerless again
+while the director prepares terminal adoption and release. The bench remains
+`claimed` with `drain_after_release:true`; I did not release/reclaim it or
+touch provider lifecycle. Exact resources for director disposition are bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, and project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+**Measured bottleneck.** The director correctly revoked candidate scope and
+classified the consumed serial stock as incomparable with the campaign's
+concurrent-c32 denominator and target. No candidate request was submitted:
+`CANDIDATE_CENSUS_AFTER_CANCELLATION.txt` records absence, and no candidate
+submission or arm terminal exists. The candidate server was nevertheless
+launched before that correction landed. Runtime ordering explains why: a
+`supervisor_changed` wake was already pending at `02:37:21Z`; when the
+previous director finished at `02:38:31Z`, the harness admitted the H200
+researcher before dispatching the corrective director. The researcher read
+only the superseded `aea1d6c2...` candidate-transition binding, launched the
+candidate server at `02:40:35Z`, and later started a same-claim replacement
+owner. The concurrent director then issued the serial-stock terminal-adoption
+binding. The replacement was stopped without a candidate POST, so this race
+wasted a warm server transition but did not consume another arm.
+
+**Change and expected effect.** I narrowed researcher admission in
+`research/factory/src/grad_research/lab_harness.py`: while a
+`supervisor_changed` director wake is pending or its corrective director turn
+is active, no new researcher is admitted. Existing researcher turns remain
+untouched, and durable repair admission still overlaps unrelated director
+turns. A focused regression test reproduces the stale-authority ordering and
+requires the corrected director to start first; the full 82-test harness suite
+passes. At `02:46:31Z` the running harness requested a
+`drain_active_agent_turns_then_reload`; no experiment owner PID was live, so
+this does not interrupt provider work. Expected effect: supervisor evidence
+that changes scientific authority reaches the director before a fresh GPU
+turn can act on the superseded binding, while ordinary warm-repair concurrency
+and resident-state reuse remain intact.
+
+## 2026-07-29T02:58Z — blank-subject census hid a consumed candidate arm
+
+**GPU safety audit.** One grouped authenticated listing per configured
+provider exactly matched non-retired inventory: RunPod and Nebius project
+`project-i00hfrkjpr00wmz2kzj3qm` were empty, while Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg` contained only RUNNING instance
+`computeinstance-e00kwncr0knnykhe48` and READY disk
+`computedisk-e00n8m6xbb9cfdkam8`. The registered controller-host user
+watchdog `gemma4-hybrid-55l5g-endpoint-20260729t0032z-watchdog.service`
+was active/running as PID `3749746` in its recorded cgroup; its
+`03:32:14.286493Z` deadline had not passed. At audit time the original claim
+was current through heartbeat `02:51:40.890690Z` but objectively ownerless:
+project `STATUS.json` had `active_session:null`. Its existing
+`drain_after_release:true` fence already satisfied the safety action, so I did
+not mutate the pool or provider. Exact resources for director disposition
+were bench `h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48`, instance
+`computeinstance-e00kwncr0knnykhe48`, disk
+`computedisk-e00n8m6xbb9cfdkam8`, and project
+`project-e00h1vhmpr00vbmfd5k7pg`.
+
+While this review was in progress, the director issued truthful both-arm
+terminal binding `d57d5afa...`; its researcher adopted the evidence without
+HTTP or replay and released the claim at `02:57:25.231425Z`. The registered
+bench is now `draining`, with the same watchdog and exact resource IDs left
+for director-owned provider cleanup. No available idle bench remains.
+
+**Objective and cadence evidence.** The prior supervisor entry's statement
+that no candidate request was submitted was wrong. The later terminal adopter
+retrieved candidate submission `cb8031d5...` (`science_started:true`) and
+candidate result `6b372bfa...`: 32/32 requests, zero failures, and
+`7.706803681500077 s/request`. Stock `1f2092ff...` is likewise consumed
+32/32 at `7.70807582774998 s/request`. Both results came from immutable driver
+`02aaabd9...`, which awaited each request before sending the next. They are
+serial execution records, not the concurrent-c32 measurement required to
+compare with the fixed `0.625149101968745 s/request` denominator or
+`0.500119281574996 s/request` target; no objective-valid endpoint delta was
+produced.
+
+`runtime/gpu_events.jsonl` shows one continuous warm claim from
+`00:54:46.997840Z` to `02:57:25.231425Z`, 126 claim heartbeats, four drain
+requests, and one terminal release. The lab retained the same resident bench
+through multiple localized integration repairs and did not cold-restart or
+tear it down after a recoverable defect. The waste was instead evidence and
+executor control: the cancellation artifact
+`CANDIDATE_CENSUS_AFTER_CANCELLATION.txt` contained only two blank
+`ABSENT:` rows. Trace evidence shows nested local/remote shell quoting expanded
+the loop variable in the wrong shell, erasing both paths. Those blank rows
+were accepted as proof of absence while an already-launched remote executor
+remained capable of submitting and completing the candidate.
+
+**Change and expected effect.** I strengthened the existing cross-namespace
+executor-census rule in `.agents/skills/researcher/SKILL.md`. Fixed census
+subjects must be passed as arguments or positional parameters rather than
+interpolated through nested shells, every result row must echo the exact
+nonempty subject it tested, and a blank or missing identity such as `ABSENT:`
+is explicitly unknown—not proof of absence, cancellation, or an unconsumed
+arm. Repository skill validation, DevEx checks, and diff checks pass. Expected
+effect: cancellation and replacement decisions fail closed when their census
+lost its subject identity, preventing an orphaned remote executor from being
+mistaken for an unsubmitted arm and preserving scarce warm-bench time for an
+objective-matched concurrent measurement.
+
+## 2026-07-29T04:00Z — stop readiness waits when the supervised server is already dead
+
+**Bottleneck and evidence.** Provider and lifecycle state are safe: RunPod pod
+`f4nbtoufbwf66f` exactly matches claimed bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`, claim heartbeats are current, detached
+owner PID `3877838` matches start ticks `141285314`, and controller watchdog
+PID `3860556` is active through `08:13:34Z`. The same claim correctly retained
+the newly staged and hash-verified 62.5-GB checkpoint through PEP 668 repair.
+After the repaired install, however, the server exited immediately before
+science: `server-health-probe.log` records the fatal `sgl_kernel` import
+traceback caused by missing `libnvrtc.so.13`. The owner remains live and
+heartbeating but has no child process while its readiness loop continues toward
+the 900-second upper bound. This violates the existing researcher-skill rule
+that a dead child or fatal traceback must enter retained repair immediately;
+PID liveness alone is not forward progress.
+
+**Change and expected effect.** Do not release, reclaim, restage, or mutate the
+currently loaded owner or its hash-bound manifest. At the next same-claim
+server-only repair generation, amend the owner health loop to persist the
+server exit/log and enter `repair-handshake` immediately when the recorded
+server PID is dead or its live log contains a fatal traceback. This is dynamic
+failure detection on the execution path, not another preflight. Expected
+effect: remove up to roughly 900 seconds of paid heartbeat-only delay per
+startup defect while preserving the staged checkpoint, original claim, and
+unconsumed concurrent-c32 sample.
+
+## 2026-07-29T04:25Z — fence predecessor VRAM before retained endpoint replacement
+
+**GPU audit.** One grouped census per authenticated provider found no Nebius
+instances or disks in either configured project and exactly one RunPod
+resource: running pod `f4nbtoufbwf66f` on machine `rb51k15hqqsh`. It exactly
+matches claimed bench `rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`. The original
+claim from `03:41:40Z` has current heartbeats and a lease through `05:23:46Z`;
+controller-host watchdog PID `3860556` is active in its recorded user-systemd
+unit through the `08:13:34Z` deadline. The active repair owner PID `3895570`
+matches start ticks `141496386`. There is compatible queued repair work, so no
+drain, release, or provider cleanup is warranted.
+
+**Bottleneck and evidence.** Repair 4 correctly reused the same claim, staged
+62.5-GB checkpoint, and runtime after adding the official
+`--disable-cuda-graph` launch option. It nevertheless failed before science:
+the predecessor remote SGLang process PID `8020` still held about 60.34 GiB
+when the replacement loaded another copy. The replacement then failed its FP8
+weight allocation with only about 206 MiB free. No `SCIENCE_STARTED.json` or
+endpoint terminal exists. This is a cross-namespace replacement defect, not
+evidence that the admitted RTX PRO 6000 placement cannot fit. The harness
+correctly kept the warm claim and opened repair generation
+`repair-1785298969`; it did not tear down, cold-start, or restage.
+
+**Change and expected effect.** I strengthened the existing sole-executor rule
+in `.agents/skills/researcher/SKILL.md`: before an endpoint or model-server
+replacement launches, the exact recorded predecessor remote server tree must
+be absent and accelerator allocations must have returned to the expected
+quiescent baseline. Otherwise the owner must remain in retained repair and
+reconcile that predecessor rather than overlap model loads. Skill validation,
+DevEx checks, and diff checks pass. Expected effect: prevent false placement
+OOMs and avoid one redundant full-model load per process-start repair, while
+preserving the mutable warm bench for the objective-valid concurrent-c32
+sample.
+
+## 2026-07-29T05:12Z — reject explicit application errors in 2xx endpoint streams
+
+**GPU safety audit.** One grouped census per authenticated provider found no
+Nebius instances or disks in either configured project and exactly one RunPod
+resource: running pod `f4nbtoufbwf66f` on machine `rb51k15hqqsh`. It exactly
+matches claimed bench `rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`. The original
+claim from `03:41:40Z`, owner PID `3898656` with start ticks `141536887`, and
+controller-host user-systemd watchdog PID `3860556` are current through the
+`08:13:34Z` lifecycle deadline. The resident server remains loaded while
+repair `repair-1785301292` retries only the endpoint consumer. There is no
+missing or unregistered resource, stale claim, passed deadline, lost owner,
+or idle-cost reason to drain.
+
+**Bottleneck and evidence.** Warm in-place repairs carried the same checkpoint
+and server through the sm_120 RoPE, activation, and clamp-position boundaries
+without teardown. The first endpoint transport produced zero rows; the tunnel
+repair then reached the server, but the shared `lab-endpoint-pair` classifier
+marked all 32 HTTP-2xx SSE responses successful even though each parsed body
+contained the explicit pre-generation schema error `input_ids required`, with
+no token IDs or usage. The researcher caught the false positive before
+signaling the waiting owner, so no canonical endpoint terminal or scientific
+conclusion was emitted. This is an evidence-classification defect: transport
+and protocol completion alone cannot make an explicit application error a
+successful request.
+
+**Change and expected effect.** I amended
+`research/factory/src/grad_research/science_tools/endpoint_pair.py` to detect
+top-level application errors and `error`, `response.failed`, or
+`response.incomplete` events in parsed JSON/SSE responses. Such responses
+remain complete preserved artifacts but are now `successful:false` with an
+`application` error. A focused 2xx-SSE regression test was added to
+`research/factory/tests/test_science_endpoint_pair.py`; all 9 endpoint-pair
+tests, Python compilation, and diff checks pass. Expected effect: prevent
+schema and serving errors from becoming false endpoint successes or premature
+bench-release decisions, while allowing the active same-claim adapter repair
+to continue against the resident server.
+
+**Post-terminal lifecycle note.** The corrected OpenAI-completions consumer
+subsequently completed 32/32 requests with 358 generated tokens each in about
+71.5 seconds, and the owner wrote the canonical scientific terminal before
+releasing the continuous claim at `05:12:46Z`. This is approximately
+`2.23 s/request`, materially slower than the RTX PRO 6000 economic ceiling
+`1.048637203302411 s/request`; the result advances the objective by falsifying
+this current placement/runtime stack, not by meeting the 20% target.
+
+The bench is now unclaimed `maintenance`, its controller watchdog remains
+active, and the provider pod is still live. Release metadata correctly says to
+leave the healthy endpoint resident for a director-selected compatible
+successor, but other inventory fields are stale: they still say the checkpoint
+was not staged and the sample remains unconsumed. Exact identifiers are bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`, pod `f4nbtoufbwf66f`, and machine
+`rb51k15hqqsh`. Recommend immediate reuse during the next director selection
+cycle because one short idle interval at `$1.89/hour` is much cheaper than the
+measured staging/runtime-repair path. If no compatible successor is selected,
+the director should drain and clean up rather than let maintenance idle toward
+the `08:13:34Z` watchdog deadline. Expected effect: preserve the valuable warm
+endpoint only while it can shorten a decision-bearing successor, while making
+the stale inventory metadata and idle-cost decision explicit.
+
+## 2026-07-29T05:21Z — stop an archived-error replay of the valid RTX PRO sample
+
+**GPU safety audit.** The single grouped census from each configured,
+authenticated provider found no Nebius instances or disks and exactly one
+RunPod resource: running pod `f4nbtoufbwf66f` on machine `rb51k15hqqsh`.
+It matches registered bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`; the controller-host user-systemd
+watchdog PID `3860556` remains active through `08:13:34Z`. The bench is
+unclaimed and was changed from maintenance to ready at `05:19:24Z`; there is
+no missing resource, stale claim, lost owner, or passed deadline. It should
+not be reclaimed for the currently bound retry: that retry is unsupported by
+the exact terminal evidence. Recommend the director accept the completed
+negative, mark the bench draining, and clean up pod `f4nbtoufbwf66f` unless a
+different compatible successor is selected promptly. No provider cleanup or
+inventory retirement was performed here.
+
+**Bottleneck and evidence.** The director's resident-server reclaim binding
+states that terminal SHA-256
+`c79a2f6067cf85b9e073d2bf9bc39a1906d84dfe3626887427dcf0c1f16ab9f8`
+contains 32 schema errors with no generated tokens. That description belongs
+to the archived `endpoint-pair-repair-1785301292-ssh-tunnel-generate-schema-error`
+attempt, not the run referenced by the terminal. The terminal binds
+`endpoint-pair/run.json` SHA-256
+`47d62e6556387695c57158eb6d71a396e535c1ecd87e98ffc04a3696a008a9a0`,
+and the file matches that hash. Its 32 exact request artifacts are all
+successful, all have nonempty generated choices, and all report 4,214 prompt
+plus 358 completion tokens; none contains `input_ids required` or an
+application error. The measured 2.23382165625 seconds/request is therefore a
+valid negative against the 1.048637203302411-second RTX PRO ceiling. Reopening
+the same corrected-input sample would duplicate science rather than repair an
+invalid attempt.
+
+**Change and expected effect.** I strengthened
+`.agents/skills/research-supervisor/SKILL.md` so a terminal may be accepted or
+overturned only after resolving its exact hash-bound run and auditing that
+run's response bodies; evidence from archived predecessor attempts may not be
+transferred forward. Expected effect: prevent false rejection of valid
+terminals, duplicate paid samples, and unnecessary warm-bench claims while
+preserving legitimate in-place retry after a truly invalid current attempt.
+
+## 2026-07-29T06:05Z — deliver concurrent repairs through the live handshake
+
+**GPU safety audit.** One grouped census from each configured authenticated
+provider found no Nebius instances or disks and exactly one RunPod resource:
+running pod `f4nbtoufbwf66f` on machine `rb51k15hqqsh` at `$1.89/hour`. It
+matches maintenance bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`; the controller-host user-systemd
+watchdog PID `3860556` is active through `08:13:34Z`. The bench is unclaimed,
+has no stale claim or expired deadline, and is economically justified through
+the director's `06:30Z` native-vLLM decision because the exact checkpoint and
+CUDA caches remain resident. No drain or provider mutation was performed.
+
+**Bottleneck and evidence.** The current-vLLM attempt correctly preserved the
+provider resource and consumed no science, but coordination released the
+mutable claim before a recoverable delivery repair reached the researcher.
+The director wrote retained native-runtime repair `5c375f30…` at `05:58:00Z`
+for live repair `repair-1785304633`; the researcher independently requested a
+self-patch at `05:58:21Z` and released to maintenance at `05:58:31Z`, only
+then discovering the director binding. The director consequently revoked the
+stale same-claim repair and issued offline replacement `66459b14…`. This
+created a revoke/reclaim cycle and paid maintenance gap even though the guest,
+checkpoint, claim heartbeat, and absolute watchdog were still safe.
+
+**Change and expected effect.** I updated
+`.agents/skills/research-director/SKILL.md` so a director repair for a live
+`repair-handshake` is not considered delivered by writing a side binding. The
+director must publish the patch, reconcile the exact claim generation and
+repair ID once, and submit it through `repair-handshake request`; a conflicting
+terminal, release, repair, or generation is handled as changed durable state.
+Expected effect: future pre-science integration repairs reach the current
+owner before terminal release, preserving the claim and resident state while
+removing unnecessary revocation, idle exposure, and cold/reclaim latency.
+
+## 2026-07-29T07:23Z — share claim-lifetime ownership after two controller repairs
+
+**GPU safety audit.** One grouped census from each configured authenticated
+provider found zero Nebius instances and disks in both projects and exactly
+one RunPod resource: running pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh` at `$1.89/hour`. It exactly matches maintenance bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`. The inventory claim is null, its
+`08:13:34.346354Z` deadline has not passed, and controller-host user-systemd
+watchdog `gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog.service` is active with
+PID `3860556`. There is no provider/inventory mismatch, stale claim, lost
+owner, unsafe state, or reason to mark the bench draining. At the census the
+maintenance interval since the valid endpoint's `06:55:06Z` release was about
+1,297 seconds, approximately `$0.68`; retaining it is justified by the
+director-bound norm-FP8 successor and its `07:30Z` zero-GPU repair fence.
+
+**Objective bottleneck and evidence.** Warm-bench reuse itself worked: the
+native-vLLM owner held one generation from `06:16:29Z` through repeated
+integration repairs and the valid 32/32 endpoint result, then released once
+with the healthy server and checkpoint resident. The current blocker is
+repeated bespoke lifecycle wiring before the next objective-relevant
+component can run. The first norm-FP8 owner-preparation turn took 401.586
+seconds but assumed an existing claim and required an unknowable future
+`claimed_at`. Its 182.942-second repair moved atomic acquisition into the
+owner, after which director inspection found a second control defect: the
+positive path could stop its only heartbeat without release, and an early
+exception could fail while constructing release evidence before entering the
+repair handshake. Both turns used zero GPU and consumed no science. The
+independent 904.369-second attention lane did produce a distinct typed
+fallback, so adding projects is not the remedy; shared claim-lifetime control
+is the narrow process gap.
+
+**Change and expected effect.** I added optional
+`grad_research.gpu_claim_session.GpuClaimSession` under
+`research/factory/src`. It composes the existing atomic pool operations into
+one exact-bench context: claim first, derive the generation from the returned
+`claimed_at`, heartbeat in one owned thread, and generation-fenced release to
+maintenance on every outer exit unless explicitly released earlier.
+Recoverable integration repair stays inside the context, so it does not imply
+teardown or a cold restart. Four focused tests cover heartbeat and maintenance
+release, exception-path release, exact-bench mismatch, and generation fencing;
+the focused suite and `tools/devex/check.py` pass. The helper is documented in
+the shared tool shelf but was not wired into the active project or used to
+claim the bench. Expected effect: future component owners reuse one tested
+lifecycle primitive instead of spending successive research/director turns on
+atomic-claim and heartbeat/release control defects, shortening time to the
+campaign's `0.500119281574996 s/request` objective while preserving mutable
+warm-bench repair.
+
+## 2026-07-29T07:39Z — drain after release for a claimed bench whose recorded owner exited
+
+**GPU safety audit.** One grouped census from each configured authenticated
+provider found zero Nebius instances and disks in both projects and exactly
+one RunPod resource: running pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh` at `$1.89/hour`. It matches claimed bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`; the claim generation remains
+`2026-07-29T07:33:28.165904Z`, is not stale, and continues to receive
+heartbeats. The controller-host user-systemd watchdog
+`gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog.service`, PID `3860556`, is active
+through `08:13:34.346354Z`. The actionable mismatch is the claim owner:
+controller PID/start-time pairs `3988692/142642548`,
+`3990533/142658599`, and latest recorded `3990817/142664358` no longer exist,
+while `STATUS.json.active_session` and `OWNER_STATE.json` still identify the
+last pair as the lifecycle owner. I therefore requested drain on the
+registered claimed bench. This preserves the current claim and in-flight
+director recovery but sets `drain_after_release: true`; no provider cleanup,
+claim reclaim/release, inventory retirement, endpoint teardown, or guest
+systemd inference was performed. The director owns cleanup of exact provider
+resource pod `f4nbtoufbwf66f` / machine `rb51k15hqqsh` after the claim ends.
+
+**Objective bottleneck and evidence.** Warm state was reused correctly: the
+bench moved from maintenance to ready at `07:32:21Z`, was atomically claimed
+once at `07:33:28Z`, and has not been released, reclaimed, or cold-started.
+The first seven-row component oracle failed before science with a shell
+quoting error and published the bounded `framework_oracle_only` repair at
+`07:34:55Z`. Two replacement launches then exited on controller integration:
+one treated the existing request as an error
+(`repair_request_already_exists`), and another rejected adoption of the
+already-valid generation after the original claim-start fence
+(`claim_start_fence_expired`). The researcher patched the latter idempotent
+claim path, but its newly recorded detached owner also exited without a new
+terminal; the original oracle remains unconsumed. This is the real bottleneck
+to the campaign's `0.500119281574996 s/request` objective: the bespoke owner
+cannot yet adopt the live repair generation long enough to execute the
+production-bound discriminator, not GPU availability, project count, or
+static validation.
+
+**Expected effect.** Drain-on-release prevents an orphaned generation from
+silently returning this paid bench to the available pool while leaving the
+director's already-active, same-generation adoption repair undisturbed. The
+director should allow only that exact bounded repair to re-establish a
+controller owner and consume the still-unspent oracle; if it cannot, release
+generation-fenced and clean up the exact RunPod IDs above instead of
+tearing down and cold-restarting after this recoverable integration failure.
+No additional shared-tool change is warranted in this turn: the tested
+`GpuClaimSession` added at `07:23Z` already provides the missing idempotent
+claim-lifetime behavior, and rewriting the active owner around it now would
+disrupt the live repair.
+
+## 2026-07-29T08:00Z — make the retained same-claim repair schedulable
+
+**GPU safety audit.** One grouped authenticated census per configured
+provider found zero instances and zero disks in both configured Nebius
+projects, and exactly one RunPod resource: running pod `f4nbtoufbwf66f` on
+machine `rb51k15hqqsh` at `$1.89/hour`. It matches claimed bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`; there are no provider-only resources,
+missing inventory resources, stale claims, passed deadlines, or unjustified
+idle available benches. Claim generation
+`2026-07-29T07:33:28.165904Z` is continuously heartbeating and controller PID
+`3990817` / start ticks `142664358` is live. During this review the director
+atomically replaced the controller-host user watchdog with
+`gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog-r2.service`, PID `3998506`, extended
+the lifecycle to `09:15Z`, updated inventory, and verified the old watchdog
+inactive. `drain_after_release` remains false. No provider cleanup, claim
+transition, inventory retirement, guest-systemd inference, or drain was
+performed.
+
+**Objective bottleneck and evidence.** The warm bench has been reused
+correctly: `runtime/gpu_events.jsonl` shows one continuous claim since
+`07:33:28Z`, regular roughly 25-second heartbeats, no release/reclaim/cold
+restart, and the watchdog replacement in place. The campaign-relevant
+seven-row norm-to-online-FP8 oracle remains unconsumed with zero rows. The
+live owner repeatedly re-enters the already-consumed repair generation after
+two installed-source patch rejects, while the harness emitted
+`researcher_deferred: durable_session_active` for this project at
+`07:51:32Z` (twice) and `07:52:32Z`. The director's new hash-bound
+same-claim repair `0c7e8018...` authorizes exact-owner replacement by
+`08:10Z`, but the updated `STATUS.json.active_session` still had the default
+batch mode. That made the authorized repair unschedulable even though the
+shared harness already supports attaching a researcher to a retained mutable
+development session. GPU availability, project count, and static validation
+are not the limiting factors.
+
+**Change and expected effect.** I added only
+`active_session.mode: "development"` to the fusion project's coordination
+metadata. This does not stop or overlap the owner, change the claim,
+intervention, oracle, hashes, budget, or lifecycle. It selects the harness's
+existing retained-development path, so the next researcher slot can inspect
+the full installed-source diagnostic, prepare the final replacement bytes,
+and perform the director-bound exact PID/start-ticks transition on the same
+warm bench instead of being deferred until the deadline. The paused,
+already-prepared attention successor remains non-claimable, so this does not
+add a project or take over portfolio ordering. Verified effect:
+`runtime/events.jsonl` records the fusion researcher starting at
+`08:00:46.612969Z` immediately after the director completed, while the same
+owner, claim generation, and replacement watchdog remained live.
+
+## 2026-07-29T08:19Z — fence an ownerless warm claim and honor no-replacement bindings
+
+**GPU safety audit.** One grouped authenticated listing per configured
+provider found no instances or disks in either configured Nebius project and
+exactly one RunPod resource: running pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh` at `$1.89/hour`. It matches bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`. The controller-host user-systemd
+watchdog `gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog-r2.service`, PID
+`3998506`, is active through `09:15Z`; there are no provider-only or
+inventory-only live resources. The claim generation
+`2026-07-29T07:33:28.165904Z` remained non-stale, but both recorded component
+owners were dead after the second owner's `08:18Z` repair deadline. The pool
+was still claimed, with its last heartbeat at `08:17:48.095926Z`, so I marked
+the registered bench draining (`drain_after_release: true`). No claim
+release/reclaim, process termination, provider cleanup, inventory retirement,
+or guest-systemd probe was performed. The director owns disposition of exact
+provider resource pod `f4nbtoufbwf66f` / machine `rb51k15hqqsh`.
+
+**Objective bottleneck and evidence.** Warm state was preserved correctly:
+`runtime/gpu_events.jsonl` shows one continuous claim since `07:33:28Z`,
+regular heartbeats, and no teardown, release/reclaim, model reload, or cold
+restart. Yet the campaign-relevant seven-row norm-to-online-FP8 discriminator
+still produced zero rows after about 45 minutes of claim time. The first
+installed-source replacement failed at vLLM current-config construction; the
+next reached the stock `CutlassFP8ScaledMMLinearKernel` consumer but exited
+from `cutlass_scaled_mm` before any stock/candidate row. More importantly, the
+hash-bound `08:13Z` repair said `replacement_owner_allowed: false` and
+required existing PID `4008130` alone to consume `repair-handshake request`.
+The researcher instead killed that owner and launched PID `4010231` under a
+fresh repair generation. This is a coordination defect at the live repair
+boundary, not evidence against the fusion mechanism and not a reason to
+cold-start another bench or add another project.
+
+**Change and expected effect.** I added one hard-fence rule to
+`.agents/skills/researcher/SKILL.md`: when the newest binding forbids a new or
+replacement owner or names the existing owner alone, generic immediate-retry
+guidance cannot authorize killing or relaunching it; the researcher must
+deliver the named repair request, or persist the exact conflict for director
+rebinding. The skill validates with `quick_validate.py`. This should prevent
+future hash-bound handoffs from being converted into unbound owner chains,
+preserve the owner that can consume in-place repair bytes, and shorten time
+from a recoverable integration traceback to the decision-bearing GPU row
+ledger while retaining warm endpoint and cache state.
+
+## 2026-07-29T08:34Z — separate durable owner identity from mutable progress
+
+**GPU safety audit.** One grouped authenticated listing per configured
+provider found no instances or disks in either configured Nebius project and
+exactly one RunPod resource: running pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh` at `$1.89/hour`. It matches claimed bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f`; there are no provider-only or
+inventory-only live resources. The controller-host user-systemd watchdog
+`gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog-r2.service`, PID `3998506`, is
+active through `09:15Z`. Attention owner PID `4018491` / start ticks
+`142981221` is live and heartbeating claim generation
+`2026-07-29T08:29:54.858364Z`, whose lease was current. No deadline has
+passed, the claim is not stale, and no drain, release/reclaim, process
+termination, provider cleanup, inventory retirement, or guest-systemd probe
+was performed.
+
+**Objective bottleneck and evidence.** The serial RTX lane reused the warm
+runtime correctly: the fusion claim released at `08:22:21Z`, the preserved
+endpoint/checkpoint became ready at `08:24:44Z`, and the attention successor
+claimed at `08:29:54Z` without provider teardown, checkpoint transfer, or
+cold model setup. Its one all-TRITON versus 50-TRITON/10-FLEX oracle remains
+unconsumed. Before any remote submission, the owner tried to persist the
+predecessor-fence capture beneath an uncreated local generation directory and
+raised `FileNotFoundError`. It then used the same `OWNER_STATE.json` path for
+mutable progress that `detached-owner` had used for the authoritative
+PID/start-ticks record. The researcher had to reconstruct and restore that
+identity while preserving the claim. The live repair is retrieval/adoption
+only and cannot resume this pre-submission defect, so the researcher correctly
+withheld a mismatched request and left same-claim rebinding to the director.
+This controller-state collision delayed the target-hardware discriminator; it
+is not evidence about the campaign's `0.500119281574996 s/request` objective.
+
+**Change and expected effect.** I changed only the shared researcher prompt
+in `research/factory/src/grad_research/lab_harness.py`: a
+`detached-owner --state` path is now reserved exclusively for immutable
+process identity, and managed programs must persist phase, progress, repair,
+and terminal records to separate files. A focused harness regression assertion
+passes. The harness emitted `harness_reload_deferred` with
+`preserve_pid_managed_sessions` for the live attention owner, confirming that
+the change did not affect the current process or project bytes. Future owners
+should remain objectively auditable through integration failures without
+manual PID-record reconstruction, reducing retained-claim time between a
+recoverable controller traceback and a safe in-place repair or director
+rebind.
+
+## 2026-07-29T09:11Z — keep grouped claims across repair exceptions
+
+**GPU safety audit.** One grouped authenticated listing per configured
+provider found the two running Nebius H200 instances
+`computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe`, their exact registered boot disks
+`computedisk-e00tzmcqnvsb4fse0r` and
+`computedisk-e00agrb82g4xhgrfwe`, and RunPod pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh`. All match the three non-retired inventory records. Their
+controller-host user-systemd watchdogs are active through `12:10Z` for the
+H200s and `09:50Z` for RunPod. No deadline passed, stale claim remains, or
+provider-only/inventory-only resource exists, so I did not drain, reclaim,
+clean up, retire, or probe a guest systemd manager.
+
+**Objective bottleneck and evidence.** The trained-MTP owner claimed both
+H200s at `09:07:47Z` and heartbeated them, but released both to maintenance at
+`09:08:49Z` after two controller-only failures and before staging, CUDA, a
+request, or a scientific sample. The first packet-stage SSH program was split
+by quoting; the retained repair command then lacked
+`TRAINED_MTP_ABSOLUTE_DEADLINE_UTC`. That exception escaped the repair loop,
+and the owner claim context's unconditional exception exit released the
+atomic two-bench group. This converted a recoverable integration traceback
+into another director re-ready/rebind cycle after only 61 seconds of claimed
+time. The providers and watchdogs stayed warm, but mutation ownership was
+lost. The RTX attention lane independently remains warm in maintenance after
+its zero-output version-guard attempt, with its corrected zero-GPU owner
+result already published.
+
+**Change and expected effect.** I added one runtime-control-flow rule to
+`.agents/skills/researcher/SKILL.md`: a repair-capable one- or multi-bench
+owner must not use a claim context whose exception exit automatically
+releases; exception exit preserves grouped ownership and heartbeats, and only
+an explicit decision-bearing/unsafe/deadline terminal may release. This is
+not another static preflight. It should keep future packet, launcher, and
+repair-dispatch fixes inside the same mutable claim, eliminating the
+release/re-ready/rebind latency that is currently delaying the first
+trained-MTP GPU invocation toward the campaign's
+`0.500119281574996 s/request` objective.
+
+## 2026-07-29T09:21Z — size claim fences for the director's measured tail
+
+**GPU safety audit.** One grouped listing from each already-authenticated
+provider scope was sufficient. Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg` returned exactly RUNNING instances
+`computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe` with READY disks
+`computedisk-e00tzmcqnvsb4fse0r` and
+`computedisk-e00agrb82g4xhgrfwe`; configured project
+`project-i00hfrkjpr00wmz2kzj3qm` was empty. RunPod returned exactly pod
+`f4nbtoufbwf66f` on machine `rb51k15hqqsh`. These resources match the three
+non-retired inventory benches. The controller-host user watchdogs for the H200
+target, H200 trainer, and RTX bench remain active as recorded PIDs `4022836`,
+`4023292`, and `4027098`, with deadlines `12:10Z`, `12:10Z`, and `09:50Z`.
+There is no stale claim, missing provider resource, unregistered provider
+resource, passed deadline, lost owner, or unsafe bench, so no drain or
+inventory mutation is warranted.
+
+Retention is still economically justified by compatible bound work. Both
+H200s have been idle and available only since `09:14:13Z` for the corrected
+trained-MTP owner, and the RTX bench is deliberately non-claimable while its
+already-stopped-predecessor repair is due by `09:23Z`. The earlier H200 claim
+lasted only about 61 seconds and released after a pre-science controller
+failure; no staging or CUDA work began. Keeping the exact benches warm avoided
+another provision/setup cycle. The RTX parent oracle likewise remains
+unconsumed, so teardown and cold restart would destroy useful resident state
+rather than advance the campaign objective.
+
+**Objective bottleneck and evidence.** The corrected MTP binding was durable
+at `09:13:41Z`, both benches were re-readied by `09:14:13Z`, and the project
+was runnable by `09:14:39Z` with `claim_start_by_utc=09:19Z`. The director
+that began at `09:08:23Z` remained active past `09:20:34Z`; while it was
+active, the harness admitted no new unclaimed researcher, and both H200 claims
+remained null after the fence. This repeats the same scheduling shape already
+seen at `09:03Z` and `09:12Z`: a scientifically ready warm lane loses time to
+lifecycle rebinding because its latest-start fence is shorter than the
+director's actual tail. Recent completed director turns took `441.934` and
+`469.964` seconds, while this turn had already exceeded 731 seconds. The real
+bottleneck is therefore launch-envelope sizing and handoff latency, not a
+missing experiment, static check, GPU, or scientific hypothesis.
+
+**Process change and expected effect.** Narrowly strengthened
+`$research-director` at the existing claim-fence rule. When the harness cannot
+admit a new unclaimed owner before the director returns, a binding published
+before other work must retain the longest of the last three completed director
+durations plus the existing 120-second worker-start runway; alternatively the
+director must defer publication until its final mutation. This changes no
+candidate, portfolio choice, provider resource, claim, or active experiment.
+Expected effect: a runnable warm owner can start immediately after the
+director exits even when the same turn finishes an independent portfolio
+handoff, eliminating repeated lifecycle-only rebind turns and paid H200 idle
+time without weakening the absolute release/watchdog safety fences.
+
+## 2026-07-29T09:52Z — keep metadata out of remote archive streams
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+found exactly Nebius instances `computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe` with READY disks
+`computedisk-e00tzmcqnvsb4fse0r` and
+`computedisk-e00agrb82g4xhgrfwe`; the second configured Nebius project is
+empty. RunPod returned exactly pod `f4nbtoufbwf66f` on machine
+`rb51k15hqqsh`. These match the three non-retired inventory records. The
+controller-host user-systemd watchdogs are active as recorded PIDs `4022836`,
+`4023292`, and `4056443`; exact PID owners `4050908` and `4059482` are live,
+claims are heartbeating, and all deadlines remain in the future. No provider
+or inventory mismatch, stale claim, lost owner, unsafe bench, idle unclaimed
+cost, or drain action exists.
+
+**Objective bottleneck and evidence.** Warm retention is working. The two-H200
+owner has held both claims since `09:25:43Z` through seven localized setup
+repairs and resumed the pipeline at `09:48:57Z` without checkpoint restaging,
+release, or cold restart. The RTX output-root repair likewise preserved its
+claim and consumed one real control/candidate parent. Its durable terminal
+shows both arms failed before rows/path proof; the FLEX candidate reached the
+SM120 compiler and failed its Triton resource limit (`156672` required versus
+`101376` available), so this is not progress toward the required complete
+endpoint and sustainable-cost result. Retrieval then spent three packaging
+attempts: the first expected nonexistent per-arm JSON, and the next mixed
+remote hashes into the tar stdout stream before the final archive retrieved
+with matching hashes. Science was correctly not replayed, but avoidable
+retrieval latency extended a `$1.89/hour` claim after the GPU work ended.
+
+**Change and expected effect.** I added one narrow transport rule to
+`.agents/skills/researcher/SKILL.md`: archive bytes must be the only stdout
+payload, hashes/manifests/status must travel separately, the local archive is
+verified before extraction, and `artifact-snapshot` provides the immutable
+snapshot. This changes no active owner, project byte, candidate, claim, or
+director decision. Expected effect: terminal retrieval should succeed in one
+pass after completed GPU work, shortening retained-claim tail time without
+encouraging replay, cold restart, or additional validation stages.
+
+## 2026-07-29T10:33Z — make remote-parent completion observable before release
+
+**GPU safety audit.** One grouped authenticated census per configured provider
+returned exactly Nebius instances `computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe` with READY disks
+`computedisk-e00tzmcqnvsb4fse0r` and
+`computedisk-e00agrb82g4xhgrfwe`; configured project
+`project-i00hfrkjpr00wmz2kzj3qm` remains empty. RunPod returned exactly pod
+`f4nbtoufbwf66f` on machine `rb51k15hqqsh`. These match the three active
+inventory records. Controller-user watchdogs `4022836`, `4023292`, and
+`4056443` and owners `4050908` and `4059482` are live; claims are current and
+deadlines have not passed. No provider mismatch, stale claim, unsafe resource,
+or drain action exists.
+
+**Objective bottleneck and evidence.** MTP is progressing correctly in place:
+g9 reached a healthy target engine and g10 is now running the response-
+regeneration dependency repair under the original two H200 claims. The RTX
+attention lane instead has an unobserved completion boundary. Its last durable
+project update and remote PID `38078` inspection are from `10:10Z`; no local
+terminal or later artifact exists. At `10:33Z`, owner PID `4059482` has only
+child PID `4059532`, `repair-handshake wait`, ending at the `10:37Z` release
+fence. No controller process monitors the remote PID or retrieves its terminal.
+Thus a completed or failed corrected parent cannot wake the paused project
+before the owner exits and the `10:45Z` watchdog, risking loss of the sole
+corrected run and a wasteful cold restart.
+
+**Change and expected effect.** I added one narrow dynamic-observation rule to
+`.agents/skills/researcher/SKILL.md`: a project may not pause on a guest-side
+scientific parent unless a durable controller owner or watcher monitors that
+exact PID/output generation, retrieves and hash-binds its compact terminal, and
+writes the repair/adoption boundary before release. A heartbeat-only handshake
+waiter does not qualify. This changes no active candidate, owner, claim, or
+remote process. Expected effect: the director can attach bounded retrieval to
+the existing RTX claim now, and future long remote parents will produce
+decision-bearing evidence without agent polling, replay, or cold restart.
+
+## 2026-07-29T10:47Z — drain the completed RTX retrieval bench
+
+**GPU safety audit.** The single grouped authenticated census at `10:45:50Z`
+found exactly Nebius instances `computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe` with READY disks
+`computedisk-e00tzmcqnvsb4fse0r` and
+`computedisk-e00agrb82g4xhgrfwe`; configured project
+`project-i00hfrkjpr00wmz2kzj3qm` is empty. RunPod returned exactly pod
+`f4nbtoufbwf66f` on machine `rb51k15hqqsh`. These match the three non-retired
+inventory records. Controller-user watchdog PIDs `4022836`, `4023292`, and
+`4103500` are active, both H200 claims are current, and no deadline has passed.
+
+**Actionable idle-cost mismatch and recommendation.** The RTX retrieval claim
+ran from `10:43:16Z` to `10:43:19Z` and safely released; terminal
+`cb7efaf5...` adopted the complete remote bytes without replay. Its project
+disposition now forbids replay absent a new binding, while the director is
+advancing an independent H200 streaming-global-KV discriminator rather than an
+RTX-compatible successor. Nevertheless the `$1.89/hour` pod remains
+`available` with stale retrieval-only contents until watchdog r5 at `10:54Z`.
+The director should drain provider resource `pod=f4nbtoufbwf66f`,
+`machine=rb51k15hqqsh` now rather than retain it for already-completed work.
+This is an economic recommendation, not evidence of an unsafe or ownerless
+bench, so the supervisor did not mark it draining or call provider cleanup.
+Expected effect: avoid the remaining idle tail while preserving the retrieved
+scientific terminal and leaving active MTP and H200-discriminator work
+untouched.
+
+## 2026-07-29T11:09Z — recover the streaming discriminator in its live claim
+
+**GPU safety audit.** The single grouped authenticated census at `11:08:05Z`
+found exactly the two claimed MTP H200 instances
+`computeinstance-e00gtebbbazkara13v` and
+`computeinstance-e00c6522ejxkg0jsbe`, plus claimed streaming H200
+`computeinstance-e01q3jffxt2vtafkhp`; their registered disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x` are READY. The other configured Nebius
+project and RunPod are empty. All three controller-user watchdogs are active,
+all claims are heartbeating, and no deadline has passed.
+
+**Process bottleneck and required recovery.** Streaming owner PID `4124919`
+used the original claim and made the bound C=26 discriminator its first CUDA
+call, but Triton failed pre-sample because the unprivileged container tried to
+create `/.triton`. The intended retained repair then failed before
+`repair-handshake ready`: line 34 expands `${scope}` inside the same `local`
+command that assigns `scope` under `set -u`. Its EXIT trap sets a parent-shell
+`stop` variable that cannot stop the background heartbeat subshell and waits
+forever for PID `4124960`. Consequently there is no `REPAIR_READY.json` or
+`TERMINAL.json`; the main PID remains live only while waiting for its heartbeat
+child, so ordinary durable-session deferral hides the recoverable integration
+boundary.
+
+The director should preserve claim generation
+`2026-07-29T11:03:00.114761Z`, replace the wedged owner without overlap, set a
+writable Triton cache inside the container, declare positional locals before
+deriving the repair ID, and terminate the heartbeat child with kill-and-wait.
+Retry only the still-unconsumed CUDA discriminator; do not release, restage,
+create another bench, or open another project. This bad heartbeat pattern is
+isolated to this owner—the other inspected shell owners already use explicit
+kill-and-wait—so no shared skill or harness rule was added. Expected effect:
+turn the current live H200 claim into decision-bearing CUDA evidence without a
+cold restart or duplicate scientific sample.
+
+## 2026-07-29T11:25Z — deduplicate unchanged durable-repair generations
+
+**GPU safety audit.** The single grouped authenticated census at `11:21:24Z`
+found exactly Nebius instances `computeinstance-e00gtebbbazkara13v`,
+`computeinstance-e00c6522ejxkg0jsbe`, and
+`computeinstance-e01q3jffxt2vtafkhp` with registered READY disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x`; the other configured Nebius project and
+RunPod are empty. Controller-user watchdog PIDs `4022836`, `4023292`, and
+`4115321` are active in their recorded control groups. The MTP claims are
+current. The streaming claim generation
+`2026-07-29T11:03:00.114761Z` remains safely leased through `12:18:50Z`
+while replacement owner PID `4139342` heartbeats it. No provider mismatch,
+stale claim, passed deadline, unsafe resource, or idle bench requiring drain
+exists; the second MTP H200 remains the compatible queued trainer for the
+response generation now running on its target peer.
+
+**Objective bottleneck and evidence.** Same-claim R1 correctly avoided cold
+setup, fixed the writable Triton cache, and advanced the CUDA discriminator
+past its C=26 gate. It then exposed `compact_tile_overflow` in the C=64 fixture
+and wrote repair generation
+`.repair-handshakes/streaming-global-kv-r1-cuda_discriminator/REPAIR_READY.json`.
+The retained owner is safely waiting, so the scientific next move is an
+in-project fixture repair on this mutable bench. The process failure is that
+the unchanged marker immediately launched researchers at `11:21:41Z`,
+`11:22:26Z`, and again after each harmless `STATUS.json` rewrite. The second
+turn correctly refused to submit a request because the current owner would
+exit rather than re-enter the discriminator, but its status wording changed;
+the harness treated that cosmetic project observation as a new repair
+generation and woke the same work again.
+
+**Change and expected effect.** In
+`research/factory/src/grad_research/lab_harness.py`, durable-repair scheduling
+now records the exact ready path plus canonical payload hash. On researcher
+completion, an unchanged repair generation enters the existing no-progress
+cooldown even if `STATUS.json` changed; a consumed request or genuinely new
+ready generation still wakes work normally. The focused regression mutates
+status during a stalled repair and proves no duplicate call occurs before the
+ready generation changes. All 82 `test_lab_harness.py` tests pass. This does
+not modify the live owner, claim, experiment source, or portfolio. Expected
+effect: stop agent-turn storms around retained repair owners, leave slots
+available for the independent SM120 endpoint preparation, and let the
+director bind one safe same-claim fixture repair without teardown or duplicate
+CUDA work.
+
+## 2026-07-29T11:32Z — return the live R2 repair before cold SM120 creation
+
+**GPU safety audit.** The single grouped authenticated census at `11:30:49Z`
+found exactly Nebius instances `computeinstance-e00gtebbbazkara13v`,
+`computeinstance-e00c6522ejxkg0jsbe`, and
+`computeinstance-e01q3jffxt2vtafkhp` with registered READY disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x`; the other configured Nebius project and
+RunPod are empty. Controller-user watchdog PIDs `4022836`, `4023292`, and
+`4115321` are active in their recorded control groups. All three claims are
+current and heartbeating; no deadline has passed and no mismatch, unsafe
+resource, idle-cost drain, or lifecycle action is warranted.
+
+**Objective bottleneck and evidence.** The 11:25 repair-wake change worked:
+after one already-admitted `6.524s` researcher at `11:25:24Z`, the unchanged
+streaming repair generation produced `researcher_no_progress` and no further
+wake storm. The director then correctly bound
+`DIRECTOR_STREAMING_GLOBAL_KV_H200_R2_FIXTURE_AND_OWNER_REPAIR_20260729T1125Z.json`
+to correct only the invalid C=64 fixture under the original streaming claim,
+with an R2 launch-by fence of `11:35Z`. However, at `11:27Z` the same director
+explicitly switched to preparing a new cold SM120 RunPod create. At `11:31Z`
+the R2 runner, owner, patch, and request were still absent; R1 PID `4139342`
+was waiting safely, and the director was still inspecting an old provider
+creation script. This serializes the near-deadline repair of an already-paid,
+warm H200 behind a disjoint cold lifecycle and risks losing the fastest path
+to decision-bearing evidence.
+
+**Required process correction and expected effect.** Return the director turn
+immediately so the harness can schedule the already-bound R2 researcher.
+Preserve the independent hash-bound SM120 owner-ready packet and its durable
+reservation, but defer provider creation until the streaming replacement has
+launched or the existing claim is safely dispositioned. If a RunPod resource
+was created concurrently after this audit, register and protect it normally;
+do not abandon or duplicate it, but do not let its cold setup preempt R2.
+The existing research-director skill already mandates immediate return for a
+near-term runnable binding, so no redundant skill or harness rule was added.
+Expected effect: use the live H200 claim before its fence, avoid another cold
+restart or expired handoff, and then advance the independent SM120 endpoint
+without losing its prepared work.
+
+## 2026-07-29T11:47Z — make handoff absence probes read-only
+
+**GPU safety audit.** The single grouped authenticated census at `11:43:48Z`
+exactly matches inventory: Nebius instances
+`computeinstance-e00gtebbbazkara13v`,
+`computeinstance-e00c6522ejxkg0jsbe`, and
+`computeinstance-e01q3jffxt2vtafkhp` are RUNNING with registered READY disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x`; RunPod pod `3u5oyb8eazps50` on machine
+`a555wlecipbb` is RUNNING and registered in maintenance. All four
+controller-user watchdogs are active, all three H200 claims are fresh, and no
+lifecycle deadline has passed. The RunPod bench has compatible hash-bound
+SM120 work pending identity verification, so retain/reuse is still justified.
+
+**Actionable owner loss.** The R2 researcher correctly produced hash-bound
+fixture bytes and measured exactly `26/64/64` compact entries. Its handoff
+precondition then evaluated
+`open(TERMINAL.json, "a+")` inside an absence assertion. That read-like probe
+created a zero-byte `TERMINAL.json` and necessarily failed. The shared
+`repair-handshake wait` treats any project-terminal pathname as terminal
+without parsing it, so live R1 PID `4139342` exited before a repair request or
+R2 owner existed. This is invalid observer/integration evidence, not a
+scientific terminal. The still-claimed registered bench
+`h200-streaming-global-kv-e01q3jffxt2vtafkhp` was therefore marked
+drain-after-release; exact provider resources are instance
+`computeinstance-e01q3jffxt2vtafkhp` and disk
+`computedisk-e01txvq13vg63j7x2x`. No claim, watchdog, provider resource, or
+active researcher was stopped. During this audit the active researcher
+preserved the invalid zero-byte artifact separately, published the real
+hash-bound request, and launched R2 PID `4161363` at `11:46:49Z`, before its
+`11:47Z` fence. The original claim is warm and owned again; the drain flag
+remains an explicit director disposition after release rather than an
+experiment interruption.
+
+**Small process change and expected effect.** The `$experiment-run` workflow
+now requires precondition and absence probes to use read-only metadata or
+`Path.exists()` and forbids opening result, terminal, request, or owner-state
+paths in write/append/create mode merely to test existence. This directly
+prevents observer checks from manufacturing lifecycle signals while preserving
+same-claim mutable repair. Expected effect: future handoffs either leave the
+owner intact or transition it through a real hash-bound request, avoiding
+ownerless warm claims and false terminals without adding another validation
+stage.
+
+## 2026-07-29T11:56Z — activate the endpoint-only repair before more unchanged wakes
+
+**GPU safety audit.** The single grouped authenticated census at `11:52:57Z`
+exactly matches inventory. Nebius instances
+`computeinstance-e00gtebbbazkara13v`,
+`computeinstance-e00c6522ejxkg0jsbe`, and
+`computeinstance-e01q3jffxt2vtafkhp` are RUNNING with registered READY disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x`; RunPod pod `3u5oyb8eazps50` on machine
+`a555wlecipbb` is RUNNING and registered. The recorded controller-user
+watchdogs are active, all three H200 claims are fresh, and no lifecycle
+deadline has passed. The RunPod bench has now passed strict RTX PRO 6000
+Blackwell identity and idle-GPU checks and the director is actively binding
+compatible SM120 work, so reuse remains justified. Streaming R2 PID `4161363`
+owns the original claim and is safely waiting through `12:16Z`; its existing
+drain-after-release flag remains the correct eventual disposition for exact
+provider resources `computeinstance-e01q3jffxt2vtafkhp` and
+`computedisk-e01txvq13vg63j7x2x`, but no new drain or lifecycle mutation is
+warranted.
+
+**Objective bottleneck and evidence.** R2 passed the CUDA discriminator with
+the corrected `26/64/64` fixtures. Its conditional endpoint then failed before
+any request with `candidate_server_activation_proof_missing` and published
+repair generation
+`.repair-handshakes/streaming-global-kv-r2-endpoint-0/REPAIR_READY.json` with
+`retry_scope=endpoint_only`. The retained owner cannot consume that request
+without exiting its heartbeat path, so a same-claim repair-capable binding is
+the shortest remaining route from the completed producer to evidence against
+the fixed `0.500119281574996 s/request` target. Instead, the unchanged marker
+started eight researcher turns from `11:48:29Z` through `11:55:29Z`; none
+wrote a request or advanced the endpoint. The on-disk durable-repair
+generation deduplication is not yet live: the running harness still has source
+digest `38b653...`, while digest `9ec5d8...` is deferred to preserve the PID
+owner. Thus the earlier claim that this change had stopped repeated wakes was
+premature.
+
+**Process correction and expected effect.** After completing the current
+atomic SM120 lifecycle/binding transaction, the director should bind one
+replacement that can consume the existing hash-bound endpoint-only repair
+under the original streaming claim, then return so it can patch and rerun
+against resident state. Do not launch another no-binding researcher, replay
+the passed CUDA producer, release the H200, or cold-start a replacement. The
+`$research-supervisor` workflow now requires checking the running harness
+source digest before crediting a harness change; safely deferred changes must
+be reported as pending and live cadence judged against the loaded version.
+This preserves active PID owners while preventing future process reviews from
+mistaking tested-on-disk behavior for deployed behavior. Expected effect:
+convert the warm R2 artifact into decision-bearing endpoint evidence before
+its repair deadline, stop the current agent-turn storm through a real repair
+transition, and let the deduplication fix activate normally when durable PID
+sessions drain.
+
+## 2026-07-29T12:06Z — drain the deadline-escaped two-H200 owner
+
+**GPU safety audit.** The single grouped authenticated census at `12:02:58Z`
+exactly matched inventory. Nebius instances
+`computeinstance-e00gtebbbazkara13v`,
+`computeinstance-e00c6522ejxkg0jsbe`, and
+`computeinstance-e01q3jffxt2vtafkhp` were RUNNING with registered READY disks
+`computedisk-e00tzmcqnvsb4fse0r`, `computedisk-e00agrb82g4xhgrfwe`, and
+`computedisk-e01txvq13vg63j7x2x`; the other configured Nebius project was
+empty. RunPod pod `3u5oyb8eazps50` on machine `a555wlecipbb` was RUNNING and
+registered. All four controller-user watchdogs were active in their recorded
+control groups. The streaming claim was fresh and its same-claim endpoint-only
+repair is now being bound by the active director. The available RunPod bench
+has a strict-identity execution binding and a compatible claim-by `12:12Z`, so
+its idle cost remains justified.
+
+**Actionable deadline escape.** The paired MTP claims were fresh, but their
+durable owner deadline was `12:05:00Z` and both registered lifecycle/watchdog
+deadlines are `12:10:00Z`. At `12:05:21Z`, owner PID `4050908`, repair
+pipeline PID `4103564`, and its SSH child PID `4103565` were still live and
+heartbeating both claims. The cause is exact: normal pipeline execution uses a
+timeout derived from the absolute deadline, while
+`consume_repair_request()` invokes the g11 repair command with
+`subprocess.run(...)` and no timeout. Setting
+`TRAINED_MTP_ABSOLUTE_DEADLINE_UTC=2026-07-29T12:05:00Z` cannot interrupt that
+already-running response regeneration. This leaves less than five minutes
+before independent provider watchdog cleanup and makes the registered benches
+unsafe for reuse even though their lifecycle owners remain active.
+
+Both benches are therefore marked drain-after-release without stopping the
+owner, claims, watchdogs, SSH child, or provider resources. Exact director
+cleanup IDs are target instance `computeinstance-e00gtebbbazkara13v` with disk
+`computedisk-e00tzmcqnvsb4fse0r`, and trainer instance
+`computeinstance-e00c6522ejxkg0jsbe` with disk
+`computedisk-e00agrb82g4xhgrfwe`. The director owns terminal preservation,
+claim disposition, provider cleanup, and inventory retirement.
+
+**Small process change and expected effect.** The `$experiment-run` workflow
+now requires every pipeline, repair callback, remote command, and child
+process to receive an actual timeout derived from the same absolute
+experiment deadline; exporting or documenting the deadline alone is not
+enforcement. Expected effect: retained same-claim repairs still reuse warm
+state, but a stalled callback returns control with enough cleanup margin for
+artifact retrieval and generation-fenced release instead of running into an
+independent provider watchdog.
+
+## 2026-07-29T12:16Z — admit bound work beside the startup director
+
+**GPU safety audit.** The single grouped authenticated census at `12:12:55Z`
+matched inventory. The prior MTP target/trainer instances and disks were
+absent from Nebius and already retired after verified director cleanup.
+Streaming instance `computeinstance-e01q3jffxt2vtafkhp` and disk
+`computedisk-e01txvq13vg63j7x2x` were still present with their registered
+controller-user watchdog active; the claim's last heartbeat was
+`12:07:51Z`, R2 was absent, and the bench was already drain-after-release.
+The concurrently active director then verified that the expired R3 could not
+fit the remaining release window, preserved CUDA producer `0f7c32bb...`,
+deleted the ownerless instance and disk, and retired the record. RunPod pod
+`3u5oyb8eazps50` on machine `a555wlecipbb` remains provider-present,
+registered available, strict-identity verified, and protected by active
+controller-user watchdog PID `4170010` through `13:11Z`. Its prior claim fence
+expired while the startup director was running; retain/reuse is justified only
+for the replacement SM120 binding the director is currently completing.
+
+**Objective bottleneck and evidence.** The on-disk durable-repair
+deduplication did activate: the harness restarted from source digest
+`38b653...` to `9ec5d8...` at `12:08:12Z`. That restart exposed a separate
+event-loop serialization. `run_forever()` immediately queued and dispatched a
+startup director, then called researcher admission with
+`durable_repairs_only=true` for the duration of that turn. Consequently the
+already-authorized independent streaming R3 and SM120 execution packets did
+not receive a worker. Their `12:11:30Z` and `12:12Z` launch fences expired
+while the startup director performed MTP cleanup, so the campaign lost the
+warm streaming endpoint opportunity and continued paying for an unclaimed
+RunPod despite having executable work. This is not low slot occupancy: it is
+a restart-specific admission barrier on two bound direct-GPU lanes.
+
+**Small harness change and expected effect.** `run_forever()` now fills the
+existing active/ready project snapshot once before dispatching its startup
+director, matching the established one-cycle harness behavior. Subsequent
+supervisor corrections, pending director wakes, durable owners, shared-bench
+claims, spend reservations, and cooldowns keep their existing gates. A new
+behavioral regression blocks the startup director and proves an already-bound
+researcher begins concurrently; it failed before the change, and the complete
+83-test `test_lab_harness.py` suite passes afterward. The running harness has
+not yet loaded this change: at `12:15:28Z` it requested a safe reload from
+digest `9ec5d8...` to `69afdf...` after the current director and supervisor
+drain. Expected effect after that verified restart: repository-bound execution
+work starts immediately instead of losing short GPU handoff fences behind an
+unrelated startup reconciliation, while the director continues lifecycle and
+portfolio work concurrently.
+
+## 2026-07-29T12:54Z — reserve paused warm-bench continuations without launching them
+
+**GPU safety audit.** The single grouped authenticated census at
+`12:41:41Z` matched inventory exactly. Nebius projects
+`project-e00h1vhmpr00vbmfd5k7pg`,
+`project-e01eak24pr00bq47a1mqcp`, and
+`project-i00hfrkjpr00wmz2kzj3qm` were empty. RunPod contained only RUNNING
+pod `3u5oyb8eazps50` on machine `a555wlecipbb`, matching registered bench
+`rtxpro6000-sm120-attention-c32-3u5oyb8eazps50`. Its recorded
+controller-host user watchdog PID `4170010` was active in the exact recorded
+control group through `13:11Z`; the bench was maintenance, unclaimed, and had
+no passed deadline or stale owner. At the census it had been idle about
+7.5 minutes, costing about `$0.24`, but retained
+`12,364,095,488` verified partial checkpoint bytes and had compatible
+continuation work. Reuse rather than drain was justified. No census mismatch,
+unsafe record, or supervisor drain existed.
+
+**Objective bottleneck and measured cadence.** The SM120 researcher held one
+mutable claim from `12:20:53Z` to `12:34:12Z` and correctly repaired both the
+artifact-root mismatch and missing controller `rsync` in that same claim. It
+then measured only about `15.47 MB/s` end-to-end transfer, retained the partial
+checkpoint, stopped only the transfer owner, verified zero server/GPU compute
+applications, and released to maintenance before science. The director
+correctly requested an 80-minute same-pod continuation and raised the project
+ceiling from `$6` to `$8`, but left the project paused with no top-level
+`reservation_required` gate. The harness considered only active/ready rows,
+so `runtime/spend_cap.json` stayed at `$6` and the `12:41:31Z` fallback
+deferred as unchanged. The expensive retained state was therefore waiting on
+a reservation handoff, not GPU execution or a missing research idea.
+
+**Small harness correction and live effect.** I first used the existing
+two-phase gate to make only the reservation transition live: the project was
+temporarily scheduler-active with `reservation_required: true`, remained
+non-claimable, and could not launch a researcher. At `12:50:55Z` the harness
+durably raised the reservation to `$8`, emitted
+`reservation_gate_pending_director`, and dispatched the `spend_reserved`
+director wake in `0.136 s`; the project was immediately restored to paused.
+The director replaced the exact bench's controller-user watchdog with active
+PID `6661` and extended the registered deadline to `14:10Z` without claiming,
+restarting, or discarding the partial checkpoint.
+
+For the durable fix,
+`research/factory/src/grad_research/lab_harness.py` now admits an explicit
+paused `reservation_required: true` row to spend reservation even when zero
+researcher slots are available, while continuing before researcher selection
+so it cannot become runnable. A focused regression failed before the change;
+the new paused-gate test, the existing active two-phase test, both spend-cap
+tests, JSON validation, Python compilation, the complete 84-test harness
+suite, and the repository DevEx check pass. The running harness has requested
+a safe reload from source digest `69afdf...` to `afa719...`; the change is
+tested on disk but not yet loaded while the active director and this supervisor
+drain. Expected effect after that verified reload: future
+director-paused warm-bench lifecycle extensions reserve and wake immediately,
+preserving resident mutable state without temporary status changes, cold
+restart, another project, or weaker spend/claim gates.
+
+## 2026-07-29T13:59Z — fenced ownerless SM120 claim after completed warm transfer
+
+**GPU safety audit.** One grouped listing per already-authenticated provider
+matched the non-retired inventory exactly. Nebius contained RUNNING instance
+`computeinstance-e00n8vffvr4jkmm33f` with READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its two other configured projects were
+empty. RunPod contained only RUNNING pod `3u5oyb8eazps50` on machine
+`a555wlecipbb`. Both recorded controller-host user watchdogs were active with
+matching PIDs and control groups. The H200 bench was freshly available for
+the bound v9 endpoint execution from `13:57:27Z`, so its roughly 40 seconds
+of paid idle time had compatible queued work and did not justify drain.
+
+The SM120 record, however, still held claim generation
+`2026-07-29T13:07:58.262563Z` through its `14:10Z` lease while the exact
+durable detached owner PID `15764` with start ticks `144666417` no longer
+existed. Its last inventory heartbeat was `13:56:11Z`. This is an objective
+controller-owner loss, not a guest-systemd inference. I marked registered
+bench `rtxpro6000-sm120-attention-c32-3u5oyb8eazps50` draining; because it is
+still claimed, the resulting state is `drain_after_release: true`. I did not
+release the claim, stop watchdog PID `6661`, clean up provider resources, or
+retire the inventory record. Exact provider resources for director
+disposition are RunPod pod `3u5oyb8eazps50` and machine
+`a555wlecipbb`.
+
+**Objective bottleneck and expected effect.** The second same-pod claim
+correctly reused resident state and completed/hash-verified the full
+`62,546,338,248`-byte, eight-file checkpoint. The owner then crashed before
+runtime bootstrap, endpoint launch, or science on a local Python f-string
+formatting error at `run_sm120_attention_split_c32_owner.py:440`. This was a
+recoverable post-transfer integration error, not evidence about the attention
+intervention. The drain fence prevents an ownerless generation from being
+treated as healthy or automatically reused while preserving the live
+watchdog and resident checkpoint for a director-controlled, generation-fenced
+same-pod repair if the remaining window is objectively safe. If it is not,
+release and provider cleanup remain director actions. No new project, static
+validation layer, cold restart, or shared-tool change is warranted from this
+single failure; the direct process correction is to patch and rerun in
+resident mutable state when safely reclaimable.
+
+## 2026-07-29T14:32Z — fenced ownerless H200 claim while preserving resumable staging
+
+**GPU safety audit.** The single grouped listing from each already-authenticated
+provider matched the non-retired inventory exactly. Nebius contained RUNNING
+instance `computeinstance-e00n8vffvr4jkmm33f` and READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects were empty.
+RunPod was empty. The H200's recorded controller-host user watchdog PID `35168`
+was active/running in the exact recorded control group, and its `15:50Z`
+lifecycle deadline had not passed.
+
+The claimed lifecycle owner was nevertheless objectively gone: detached owner
+PID `52969`, start ticks `145055323`, no longer existed while claim generation
+`2026-07-29T14:02:13.215196Z` remained registered with its last heartbeat at
+`14:26:52Z`. I marked registered bench
+`h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f`
+draining. Because the claim remains held, inventory now records
+`drain_after_release: true`. I did not release the claim, stop the watchdog,
+alter the guest, clean up Nebius resources, or retire the inventory record.
+Exact provider resources for director disposition are instance
+`computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`.
+
+**Objective bottleneck and expected effect.** V10 died before checkpoint
+integrity, server activation, endpoint submission, or GPU science because its
+one-line Bash `retain()` declaration expanded `scope` while that local was
+still unset under `set -u`. This repeats the v8 controller failure mode and is
+integration waste, not evidence about the streamed global-KV intervention.
+The guest still holds the small checkpoint files and a
+`34,307,773,440`-byte partial first shard; no container or GPU process is
+running. Only `28,270,858,464` bytes remain, analytically about `30.5 minutes`
+at the measured transfer rate, so the warm state still justifies a
+director-authorized same-claim replacement if its revised lifecycle envelope
+fits. The drain fence prevents this ownerless generation from becoming
+available automatically after release while preserving the claim, watchdog,
+and resident partial for that mutable continuation. A cold restart would
+discard the highest-value state. I did not edit the hash-bound dead owner or
+add another static validator: either would invalidate its binding or repeat
+the process mistake. The direct correction is for the director's replacement
+owner to split dependent Bash local assignments and resume hash-reconciled
+staging against the resident partial; release and provider cleanup remain
+director actions if that path cannot be bounded safely.
+
+## 2026-07-29T14:41Z — allow durable repairs through a supervisor correction
+
+**GPU safety audit.** One grouped listing per already-authenticated provider
+matched non-retired inventory exactly. Nebius contained RUNNING instance
+`computeinstance-e00n8vffvr4jkmm33f` and READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its two other configured projects and RunPod
+were empty. The H200's controller-host user watchdog PID `35168` was
+loaded/active/running in the exact recorded control group through `15:50Z`.
+The claim generation remained
+`2026-07-29T14:02:13.215196Z`, with no new owner after dead v10 PID `52969`.
+It was already safely fenced as `drain_after_release: true`, so I did not
+repeat the drain, release the claim, stop the watchdog, alter Nebius, or retire
+the record. Exact director-owned provider resources remain instance
+`computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`.
+
+**Measured bottleneck.** The director durably authorized the verified-prefix
+v11 warm continuation at `14:33Z` but continued its turn through an independent
+FP8 portfolio action and did not return until `14:37:02Z`. The harness then
+started v11 at `14:37:02.676Z`, only 57.3 seconds before its `14:38Z` launch
+fence. The researcher correctly preserved the same claim and resident
+`34,307,773,440`-byte prefix, but its owner mutation and zero-SSH fixture
+completed at `14:38:39Z`; it refused the stale launch and returned at
+`14:39:25Z`. Thus another paid warm interval produced no checkpoint integrity,
+server, endpoint, or scientific sample. This was not researcher orientation
+alone: the event loop's `supervisor_changed` director wake set
+`director_blocks_researcher_admission`, which overrode the existing
+`durable_repairs_only` exception for the entire 195.7-second director turn.
+
+**Small harness change and expected effect.**
+`research/factory/src/grad_research/lab_harness.py` now keeps ordinary new
+admissions blocked until a supervisor correction is reconciled, but permits an
+already-durable repair through that block while the director runs, matching
+the event loop's existing durable-repair exception. A behavioral regression
+reproduced the prior block and failed before the change. It and the adjacent
+ordinary-admission and concurrent-durable-repair tests pass afterward; the
+complete 85-test `test_lab_harness.py` suite and repository DevEx check also
+pass. The source on disk is digest
+`e74f1afc4283ca014c90dee8322fca2fd3e0c1e77f01197dc935fc10502fe16f`;
+at `14:41:02Z` the running harness requested a safe reload from
+`afa7193d...` to that digest. It has not yet confirmed loading it, so this
+effect is pending around the active director and offline researcher.
+Expected effect after reload: urgent same-claim repairs can patch and resume
+resident state during a supervisor-triggered reconciliation instead of losing
+their launch window behind unrelated director work, while all non-repair
+authority corrections retain the original admission barrier.
+
+## 2026-07-29T14:52Z — warm H200 repair retained, but v11 cannot consume its patch
+
+**GPU safety audit.** One grouped listing from each already-authenticated
+provider still matched non-retired inventory exactly. Nebius contained RUNNING
+instance `computeinstance-e00n8vffvr4jkmm33f` with READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects and RunPod
+were empty. The replacement controller-host user watchdog
+`gemma4-streaming-global-kv-fresh-20260729t1610z-watchdog-r4.service` was
+loaded/active/running with matching PID `72624` and control group through
+`16:10Z`. V11 launched at `14:47:41Z` under the unchanged claim generation
+`2026-07-29T14:02:13.215196Z`; detached owner PID `74239`, start ticks
+`145247903`, remained live and heartbeats were fresh through `14:50:42Z`.
+The existing `drain_after_release: true` fence remains appropriate, so I did
+not repeat the drain, release the claim, stop the watchdog, alter Nebius, or
+retire the inventory record. Exact director-owned provider resources remain
+instance `computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`.
+
+**Objective bottleneck and expected effect.** The safely reloaded harness
+admitted the durable continuation while preserving the warm claim, resident
+`34,307,773,440`-byte checkpoint prefix, and revised lifecycle envelope.
+Before checkpoint integrity, server launch, endpoint submission, CUDA, or a
+candidate sample, v11's controller-side `part_state()` emitted a malformed
+remote heredoc and entered repair generation
+`streaming-global-kv-v11-staging_failure-0` at `14:48:57Z`. This is a
+recoverable staging defect, not evidence about the streamed global-KV
+intervention. The repair owner remains live, but its parsed `retain()` only
+waits for a request and then reruns the same in-memory function; it neither
+applies `patch_artifact` nor adopts an externally executed repair terminal.
+The researcher correctly refused a no-op request and recorded the conflict,
+and the harness woke the already-running director.
+
+The actionable path is a director-bound same-claim replacement that corrects
+`part_state()` while preserving the exact claim, owner handoff, partial
+checkpoint, image/cache state, immutable scientific inputs, and `16:00Z`
+release fence. That should convert the paid retained interval directly into
+checkpoint integrity and the one unconsumed U=8 endpoint instead of a cold
+restart or replay. I did not change the shared repair tool or add static
+validation: the shared protocol and researcher skill already require an
+executable post-request path, and changing their semantics cannot repair the
+currently parsed owner safely during an active experiment.
+
+## 2026-07-29T15:04Z — fenced ownerless H200 after a short repair-wait cap
+
+**GPU safety audit.** One grouped listing per already-authenticated provider
+matched non-retired inventory exactly. Nebius contained RUNNING instance
+`computeinstance-e00n8vffvr4jkmm33f` with READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects and RunPod
+were empty. Controller-host user watchdog
+`gemma4-streaming-global-kv-fresh-20260729t1615z-watchdog-r5.service` remained
+loaded/active/running with matching PID `80269` and control group through
+`16:15Z`. The registered claim generation
+`2026-07-29T14:02:13.215196Z` is now objectively ownerless: PID `74239`, start
+ticks `145247903`, is absent, and the final heartbeat was `14:58:13Z`. The
+bench is already fenced as `drain_after_release: true`, so I did not repeat
+the drain, release the claim, stop the watchdog, alter Nebius, or retire the
+record. Exact director-owned resources remain instance
+`computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`.
+
+**Measured bottleneck and small process change.** V11 wrote repair-ready at
+`14:48:57Z` with an absolute `16:00Z` deadline, but its `retain()` wrapped the
+shared deadline-aware wait in `bounded ... 600`. The empty wait capture, last
+heartbeat at `14:58:13Z`, and process loss at the ten-minute boundary support
+the inference that this shorter outer cap killed the sole heartbeat owner
+while the authorized v12 patch was still being prepared. V12 source
+`21a5364a…` and patch `a7dcafae…` are durable and their absent/present fixture
+passed; no server, CUDA replay, candidate request, or scientific sample
+occurred. The execution researcher correctly refused to exceed its
+live-predecessor binding, preserving the resident `34,307,773,440`-byte
+checkpoint prefix for director-bound owner-loss recovery.
+
+`.agents/skills/researcher/SKILL.md` now explicitly forbids wrapping
+`repair-handshake wait` or `hold` in a generic timeout shorter than the
+persisted absolute repair deadline; any outer wrapper must derive from that
+deadline or enter a bound replacement handoff first. This is execution-path
+guidance, not another static validator. Expected effect: future mutable repairs
+keep their sole heartbeat owner alive for the authority they advertise,
+preventing patch-preparation latency from turning a recoverable integration
+error into an ownerless paid interval. The active director is separately
+handling the current same-claim recovery and lifecycle authority; I did not
+mutate that binding or the experiment.
+
+## 2026-07-29T15:14Z — rotate a stale researcher thread after no progress
+
+**GPU safety audit.** One grouped listing from each already-authenticated
+provider still matched non-retired inventory exactly. Nebius contained RUNNING
+instance `computeinstance-e00n8vffvr4jkmm33f` with READY disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects and RunPod
+were empty. The registered claim generation
+`2026-07-29T14:02:13.215196Z` remains ownerless, but is already marked
+`drain_after_release: true`. Controller-host user watchdog
+`gemma4-streaming-global-kv-fresh-20260729t1640z-watchdog-r6.service` was
+loaded/active/running with matching PID `91168` and control group through
+`16:40Z`; I did not infer lifecycle state from the guest. The director has
+bound one same-claim v12 recovery launch by `15:17Z`, integrity by `15:53Z`,
+server by `16:10Z`, and release by `16:35Z`. I did not repeat the drain,
+release the claim, stop the watchdog, alter Nebius, or retire inventory.
+Exact director-owned resources remain instance
+`computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`.
+
+**Measured bottleneck and small harness change.** The harness admitted the
+bound owner-loss execution researcher at `15:09:48.968542Z`, but it returned
+after only `8.039` seconds without changing the project. Trace
+`runtime/traces/20260729T150948Z-1785337788969279709-researcher-gemma4_streaming_global_kv_memory_schedule.jsonl`
+resumed thread `019fad66-0288-7931-8182-f6329d102c7e` and declined the work
+because it believed another researcher owned the v12 recovery. That belief
+came from the reused thread's earlier exclusive-critical-section context; the
+new director binding made this turn itself the bound execution researcher.
+This stale conversational authority, not model inference or another scientific
+question, blocked the only path from the retained verified
+`34,307,773,440`-byte prefix to the required complete U=8 endpoint.
+
+`research/factory/src/grad_research/lab_harness.py` now clears a project's
+researcher thread after a no-durable-progress turn and records
+`researcher_thread_reset` before preserving the existing cooldown and director
+reconciliation. The existing durable-repair observation-change regression now
+asserts that the next eligible turn starts with a fresh thread. The focused
+test and all 85 harness tests pass; `tools/devex/check.py` and
+`git diff --check` also pass. Source digest `58ef997c...` is queued by
+`harness_reload_requested` and will load only after active agent turns,
+including this supervisor, drain. Expected effect: when durable repo authority
+changes after a refusal or no-op, the next researcher reads that authority
+fresh and can patch or resume the warm bench instead of repeating an anchored
+refusal. This changes scheduler context only; it does not alter the scientific
+portfolio, project binding, claim, experiment, or lifecycle policy.
+
+## 2026-07-29T15:42Z — retain queued-successor spend reservations
+
+**GPU safety audit.** One grouped census from each already-authenticated
+provider again matched the non-retired inventory exactly: Nebius has RUNNING
+instance `computeinstance-e00n8vffvr4jkmm33f` and its READY attached disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects and RunPod
+are empty. The controller-host user watchdog remains loaded/active/running as
+PID `91168` in its recorded control group through `16:40Z`. Detached owner PID
+`102131` and claim generation `2026-07-29T14:02:13.215196Z` are live with a
+fresh lease. The same repaired owner advanced from the retained
+34,307,773,440-byte first-shard prefix to streaming checkpoint shard 2; no
+science, terminal, idle interval, teardown, or cold restart exists. No drain or
+provider/inventory action is warranted.
+
+**Measured bottleneck and change.** Two source-complete H200 successors were
+paused behind that exclusive claim. Between `15:33:38Z` and `15:42Z`, the
+harness repeatedly emitted `spend_reserved`,
+`reservation_gate_pending_director`, `spend_settled` at zero actual spend, and
+another director wake. Director turns completed in 79.248, 45.705, 122.422,
+40.818, and 37.745 seconds without being able to launch either serial
+successor. The cause was `_settle_terminal_reservations`: it treated a paused
+queued project with `actual_spend_usd: 0` as terminal, deleted the just-granted
+reservation, and forced the next cycle to recreate it.
+
+`research/factory/src/grad_research/lab_harness.py` now keeps reservations for
+paused projects, including after a director clears `reservation_required`,
+while preserving settlement on a true terminal transition. The regression
+covers reservation-required paused, reservation-satisfied paused, and terminal
+release; all 85 harness tests, Python compilation, and `git diff --check` pass.
+The running harness still has source digest `58ef997c...`; patched digest
+`83c44c38...` is pending its safe reload boundary because the PID-managed
+staging owner is live. Expected effect after reload: one reservation and one
+director handoff per queued paid successor, durable budget through the warm
+bench wait, and prompt execution after release instead of minute-scale
+reservation churn. No project status, claim, guest, owner, experiment, or
+provider lifecycle was changed.
+
+## 2026-07-29T16:57Z — separate terminal completeness from scientific success
+
+**GPU safety audit.** One grouped listing from each already-authenticated
+provider matched the non-retired inventory exactly. Nebius project
+`project-e00h1vhmpr00vbmfd5k7pg` contained RUNNING H200 instance
+`computeinstance-e00n8vffvr4jkmm33f` and READY boot disk
+`computedisk-e00hnsmjxp85zq27ge`; its other two configured projects and RunPod
+were empty. Controller-host user watchdog
+`gemma4-streaming-global-kv-fresh-20260729t1708z-watchdog-r8.service` was
+active/running as PID `163443` in its recorded control group through
+`17:08Z`. The exact-rounding claim ran from `16:50:26Z` to a
+generation-fenced release at `16:55:16Z`. Its first launch failed before
+science on a container UID/passwd lookup; the researcher retained the same
+claim and resident image/checkpoint, applied a launcher-only root-container
+repair, completed the fresh ledger, verified zero GPU memory, and released
+without teardown or cold restart.
+
+The bench is now available and idle at `$2.45/hour`. The consuming project is
+complete and `claim_allowed: false`; the only other active successor visible
+at release is the zero-GPU `gemma4_lossless_output_head_branch_bound`, so no
+compatible paid work currently justifies retention. Director: either bind an
+already-ready compatible reuse immediately or drain instance
+`computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge` before watchdog expiry. I did not mark the
+healthy bench draining, call provider cleanup, or retire inventory.
+At `16:58:22Z` the harness reserved `$3.00` for the newly active
+`gemma4_h200_qkv_norm_rope_fp8_epilogue`, but that project remains
+non-claimable, has no decision artifact, and requests up to 45 minutes against
+the current `17:08Z` lifecycle. It becomes a reuse justification only after
+the director publishes a safe execution/lifecycle binding; otherwise the
+drain recommendation stands.
+
+**Measured bottleneck and small harness change.** Both the prior fused run and
+the exact-rounding revision produced all three M=1/16/32 rows, passing
+candidate-path invocation and CUDA-graph evidence, but the project runner
+reported `invalid_incomplete` solely because M=16/M=32 missed the numerical
+gate. The latest terminal has three rows, 640 candidate invocations,
+`science_consumed: true`, and a passing CUDA graph; its valid scientific
+classification is `component_negative_numerical_equivalence` (M32 component
+time improved 28.18%, while consumer relative-L2 remained `0.0027664`).
+Conflating completeness with success forces manual reinterpretation and risks
+an unnecessary repair or replay instead of closing a measured negative.
+
+`projects/gemma4_h200_current_gated_activation_fp8_hotblock/h200_runner.py`
+now computes ledger completeness independently of numerical and timing gates.
+Future complete failures emit
+`component_negative_numerical_equivalence` or
+`component_negative_timing`, retain `row_ledger_complete: true`, and expose a
+separate `numerical_pass` field; only structurally incomplete evidence emits
+`invalid_incomplete`. Python compilation and `git diff --check` pass. The
+consumed terminal, scientific inputs, and current project disposition were
+not changed; any future execution must bind the new runner hash
+`47af22f9...`. Expected effect: valid negatives close in one director handoff,
+without spending another warm-bench interval diagnosing a false integration
+failure.
+
+## 2026-07-29T17:49Z — retain warm benches while same-project reservation increases settle
+
+**GPU audit.** One grouped Nebius census found no instances or disks in the
+three configured projects, matching `runtime/gpus.json`: all 48 benches are
+retired, with no claim, owner, watchdog, deadline, or paid-idle mismatch.
+RunPod was not retried after the immediately preceding authenticated `403`;
+Scaleway and Gcore have no available authenticated interface.
+
+**Bottleneck and evidence.** The QKV direct-layout mechanism remains only a
+component positive (`26.7%` local and `18.6%` global), not progress against the
+qualified `0.625149101968745 s/request` endpoint denominator. Its on-time
+`ENDPOINT_READY.json` omitted the project-local worker packet required by
+`endpoint_owner.py`, so endpoint science remained unconsumed. This was a
+recoverable pre-science integration omission, yet the healthy resident H200
+was marked draining at `17:39:59Z`, deleted at `17:40:52Z`, and retired at
+`17:41:33Z` despite watchdog r10 through `18:10Z` and about `$70.88` of
+campaign headroom. The same project's cumulative reservation increased from
+`$3` to `$10` at `17:42:45Z`, only 166 seconds after drain began. The later
+cold-reentry packet turn therefore converts a repairable handoff defect into
+another provider setup and model/cache load.
+
+**Small process change.** The director skill now requires a healthy warm bench
+blocked only by a same-project pre-science omission to remain protected and
+unclaimable while a justified cumulative reservation increase settles. After
+reservation, the director extends the watchdog if needed and repairs against
+resident state; deletion before requesting a cold replacement is disallowed
+unless reservation, measured lifecycle fit, compatibility, or safety actually
+requires drain. This is a lifecycle decision change, not another readiness
+gate or scientific project.
+
+**Expected effect.** Future endpoint adapters with ordinary packet, launcher,
+or owner defects should patch and run on resident state instead of paying for
+another cold H200 lifecycle. The currently running director loaded the prior
+skill text, so this change is pending for the next director invocation; it
+does not alter or interrupt the active QKV packet materialization or B200
+placement work.
+
+## 2026-07-29T18:13Z — clear satisfied reservation gates
+
+**GPU safety audit.** One grouped Nebius census matched the sole non-retired
+inventory record exactly: RUNNING instance
+`computeinstance-i00gfqs16jywacph24` and READY disk
+`computedisk-i00fqdnhb926r3yj3a` exist only in project
+`project-i00hfrkjpr00wmz2kzj3qm`; the other two configured projects are empty.
+The controller-host user watchdog
+`gemma4-b200-qkv-placement-20260729t175259z-watchdog.service` is
+loaded/active/running as PID `197342` in its recorded control group through
+`19:02:59Z`. The B200 claim began at `18:06:30Z`, heartbeats remain current,
+and detached owner PID `206050` has a live child SSH process inside the bounded
+cold-image preparation. Science has not started, but this is forward-owned
+setup rather than an ownerless, stale, idle, or unsafe bench. No drain,
+provider cleanup, or inventory action is warranted. RunPod was not retried
+after its immediately preceding authenticated `403`; Scaleway and Gcore still
+have no available authenticated interface.
+
+**Objective bottleneck and evidence.** The accepted H200 QKV mechanism remains
+only a component result (`26.7%` local and `18.6%` global); the missing offline
+endpoint worker packet still blocks the campaign's qualified complete-endpoint
+objective. The exact cumulative `$10` reservation has been durable since
+`17:42:45Z`, and the director explicitly confirmed it at `17:48Z`, but
+`gemma4_h200_qkv_norm_rope_fp8_epilogue/STATUS.json` still says
+`reservation_required: true`. The harness consequently emitted
+`reservation_gate_pending_director` repeatedly from `18:05:08Z` through
+`18:11:14Z`; four intervening director completions preserved the lane without
+clearing the flag, so no packet researcher or `active_session` started.
+
+**Small process change.** The director skill now requires that after an exact
+reservation is visible and its post-reservation binding or disposition is
+persisted, the director clear `STATUS.json.reservation_required` in the same
+turn. The harness's intentional two-phase spend gate is unchanged; this only
+prevents a satisfied gate from remaining latched and serializing zero-GPU
+source work behind repeated director wakes. The current harness/director turns
+loaded the prior skill text, so the change is pending the next director
+invocation and is not credited with live behavior yet.
+
+**Expected effect.** The next director can clear the already-satisfied gate,
+allowing the harness to schedule the missing endpoint packet immediately and
+move the positive mechanism toward the required endpoint measurement while
+the independent B200 owner continues undisturbed. This should eliminate
+minute-scale preservation turns caused solely by stale reservation metadata.
+
+## 2026-07-29T18:20Z — do not dispatch repairs to non-dispatching owners
+
+**GPU safety audit.** One grouped Nebius census matched the sole non-retired
+bench exactly: RUNNING instance `computeinstance-i00gfqs16jywacph24` and
+READY disk `computedisk-i00fqdnhb926r3yj3a` exist in
+`project-i00hfrkjpr00wmz2kzj3qm`; the other two configured projects are
+empty. The controller-host user watchdog
+`gemma4-b200-qkv-placement-20260729t175259z-watchdog.service` is
+loaded/active/running as PID `197342` in its recorded control group through
+`19:02:59Z`. RunPod was not retried after the immediately preceding
+authenticated `403`; Scaleway and Gcore have no available authenticated
+interface.
+
+The B200 claim generation `2026-07-29T18:06:30.154094Z` remained fresh through
+`18:18:30Z`. Its first container invocation failed before
+`SCIENTIFIC_STARTED`, CUDA rows, or a decision-bearing result:
+Docker materialized the bind target `/output`, while the unchanged runner
+requires creating its output directory with `exist_ok=False`. This is a
+localized launcher defect. The resident image and staged runner remain useful;
+no provider teardown or cold restart is justified.
+
+**Repair-coordination bottleneck and evidence.** The repair researcher
+correctly persisted `OWNER_REPAIR_ENTRYPOINT_CONFLICT.json` at `18:18:23Z`:
+owner PID `206050` called `repair-handshake hold`, but after that call returned
+its `run()` unconditionally released the claim to maintenance and had no
+request-dispatch or retry branch. It therefore explicitly withheld
+`REPAIR_REQUEST.json` and requested a director replacement-owner rebind. The
+director nevertheless wrote the request at `18:19:38Z`; one second later the
+owner released the bench to maintenance and exited. The watchdog remains
+healthy and the bench is safe, but the claimed mutable repair was converted
+into an unnecessary owner/claim handoff. I did not mark it draining, mutate
+the guest, clean provider resources, or retire inventory.
+
+**Small process change.** The director skill now requires proving that the
+current live owner can consume a repair request and re-enter only the
+invalidated stage before dispatch. A wait that returns into unconditional
+release is explicitly non-dispatching. In that case the director must not
+write the request; it must bind an exact replacement-owner handoff while the
+original owner still heartbeats, then replace only that matching PID under the
+same claim. The shared handshake protocol and scientific contract are
+unchanged.
+
+**Expected effect.** Recoverable pre-science launcher errors should resume on
+the resident image and claim instead of paying an avoidable release/reclaim
+transition or risking a later cold restart. The next director invocation must
+load the new skill text before this behavior is credited. Separately, the
+prior reservation-gate change was observed working: the director cleared the
+H200 endpoint-packet project's satisfied flag at `18:15Z`, leaving that
+objective-critical zero-GPU packet lane runnable.
+
+## 2026-07-29T19:41Z — pin retrieval-only repairs to their science origin
+
+**GPU safety audit.** One grouped Nebius census across the three configured
+projects matched the sole non-retired inventory record exactly:
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and its attached managed disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two projects are empty. The
+controller-host user watchdog
+`gemma4-qkv-endpoint-20260729t1903z-watchdog-r2.service` is
+active/running as recorded PID `243612` in its exact control group, through
+`20:52:40Z`. Detached owner PID `246419` still has recorded start ticks
+`146794106`, and the claim has heartbeaten every 30 seconds through
+`19:39:58Z`; neither its `20:49:40Z` release deadline nor lifecycle deadline
+has passed. The bench is claimed, not idle, and remains the justified mutable
+home of the resident checkpoint/image evidence. No drain, provider cleanup,
+or inventory action is warranted. RunPod was not retried after the immediately
+preceding authenticated `403`.
+
+**Objective evidence and real bottleneck.** The one authorized endpoint
+submission completed all 32 requests in `22.154181769` seconds:
+`0.6923181802812479 s/request`, 10.74% slower than the fixed qualified H200
+denominator `0.625149101968745` and 38.43% above the campaign target
+`0.500119281574996`. All responses are finite/nonempty, have 358 completion
+tokens, and have distinct response hashes, but the endpoint returned no token
+ID vectors, so this is a scoped performance negative rather than a token-exact
+promotion result. The immutable compact archive
+`419ef4a07420c703b34b309eff560d53677148c1e292973b438780b4836c0ef9`
+contains the complete response ledger and one-submission marker. The owner
+correctly preserved the same claim and quiescent resident bench after the
+post-science retrieval defect, avoiding teardown or cold restart.
+
+Terminal adoption then consumed six retrieval-only attempts. The first repair
+had the complete attempt-1 archive, but `endpoint_owner.py` advanced
+`prior_artifact` to each newly failed repair directory. Attempts 3–6 therefore
+repeatedly lost the science-origin archive or its path proof and required
+project-local adapters to rediscover attempt 1. This is the current throughput
+bottleneck: not GPU science or project selection, but an owner lineage pointer
+that turns a recoverable integration error into repeated claimed-bench repair
+work.
+
+**Small harness change.** `endpoint_owner.py` now pins the first
+`retrieval_or_terminal_adoption_no_endpoint_replay` attempt as
+`retrieval_origin` and passes that same immutable origin to every subsequent
+repair in the lineage; pre-science repairs still use the immediately preceding
+attempt. The source compiles, its focused source invariant passes, and its new
+SHA-256 is
+`180991088effc56f32ff67dc153d4232e5b06a792a6f97d12a0a2b2cc3ae7770`.
+The already-running owner loaded the old code, so this change does not mutate
+or interrupt its active repair.
+
+**Expected effect.** Future post-submission repairs retain one stable evidence
+origin, eliminating chained empty-attempt failures and allowing terminal
+adoption to complete in one bounded mutable-bench repair. This should reduce
+claim duration and paid idle repair time without adding static gates,
+replaying endpoint science, or creating another project.
+
+## 2026-07-29T21:01Z — conditional H200 hold resolved to director drain
+
+**GPU safety audit.** One grouped Nebius census across the three configured
+projects matched inventory exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING with managed disk
+`computedisk-e00pb91rav4c5ksdbx` READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two projects are empty. The
+authenticated RunPod listing is empty. The sole registered bench remains
+unclaimed in `maintenance`, and controller-host user watchdog
+`gemma4-qkv-endpoint-20260729t2000z-watchdog-r3.service` is active/running
+under recorded PID `273856` and its exact control group through `21:40Z`.
+There is no missing provider resource, unregistered live resource, stale
+claim, passed deadline, or unsafe lifecycle state, so I did not mark it
+draining or mutate provider state.
+
+**Actionable idle-cost mismatch.** The only bounded compatible consumer has
+now disappeared. PQ-MIPS attempt 4 ran the exact corrected binding for 3,900
+seconds and exited `124` at `20:58Z`, still before frozen-index persistence or
+held-out scoring. Terminal
+`e823868270c28a9622d58a9cf1dc1b46c3194dcb6425b0b650d110f3898cdc29`
+records zero scientific samples and no promote/close result; diagnostic
+`b63bf8e1f3573c9ed33c1f8c104ff22ec5ac9a1c10fa8b9014bf5a7fa7aa71eb`
+binds the timeout. The H200 was retained solely for a positive PQ exact
+consumer, so its `$2.45/hour` idle cost is no longer justified by compatible
+queued work. Recommend that the active director drain and clean exact instance
+`computeinstance-e00qxw871hz1r79fjt` and disk
+`computedisk-e00pb91rav4c5ksdbx`, verify provider absence, stop watchdog r3,
+and retire the inventory record before the `21:40Z` fence. Provider cleanup
+and retirement remain director-owned.
+
+**Expected effect.** Ending the resolved conditional hold prevents additional
+idle spend without interrupting science or forcing a cold restart after a
+recoverable integration error. The PQ hypothesis remains scientifically
+unconsumed; its CPU producer/runtime bottleneck is a separate director
+disposition and does not justify extending this H200 lifecycle.
+
+## 2026-07-29T22:14Z — consume each repair request before retry execution
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+project namespaces matched inventory exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two namespaces are empty. The
+single authenticated RunPod response was an empty top-level pod array. The
+sole registered H200 is claimed by
+`gemma4_h200_decode_taskgraph_hotblock`, heartbeating every 30 seconds.
+Controller-host user watchdog
+`gemma4-pq-mips-20260729t2107z-watchdog-r4.service` is active/running with
+recorded PID `299583` and exact control group. Owner PID `338568` is live and
+its `/proc` start ticks match recorded value `147850150`. Neither the
+`23:48Z` owner fence nor the `23:55Z` lifecycle deadline has passed. There is
+no unregistered resource, missing registered resource, stale claim, unsafe
+owner, or unjustified available-bench idle cost; no drain or provider action
+is warranted.
+
+**Objective evidence and bottleneck.** The fixed objective remains
+`0.500119281574996 s/request` from the qualified
+`0.625149101968745 s/request` denominator. The warm H200 has been reused
+without teardown across the QKV endpoint, PQ-MIPS consumer, and current
+dynamic-FP8 prologue. In the current continuous claim, attempt 6 persisted the
+stock correctness checksum `297.00628662109375`; attempt 7 adopted it without
+replay and persisted candidate checksum `297.2925109863281`, then failed only
+in post-candidate FP8 telemetry before a comparator. Attempt 8 is a
+candidate/comparator continuation under the same owner and claim. These are
+integration repairs, not a scientific negative.
+
+The project owner's repair loop observed canonical `REPAIR_REQUEST.json` but
+did not rename or remove it before launching. When attempt 2 failed, the same
+still-visible request immediately launched attempts 3–5 with unchanged bytes.
+This duplicated invalid GPU/container work and is a reusable repair-owner
+contract defect; more static validation would not address it.
+
+**Small skill change.** `.agents/skills/researcher/SKILL.md` now requires an
+owner to atomically rename the canonical repair request to a
+content-addressed consumed path and load that immutable copy before
+incrementing the attempt or launching repaired work. It explicitly forbids
+leaving the canonical request visible during execution or relying on the
+requester to retire it after observing progress. `git diff --check` passes.
+The live owner was not changed or restarted, so its current experiment remains
+undisturbed.
+
+**Expected effect.** Future durable repair owners execute each hash-bound
+request at most once. A failed retry returns to a fresh repair generation
+instead of silently relaunching the same invalid operation, reducing warm-claim
+duration and GPU/container waste while preserving mutable same-claim repair.
+
+**Completion and idle-cost follow-up.** The unchanged live owner completed at
+`22:13:40Z` and generation-fenced the bench back to `available` after
+`747.381` claim-seconds and `$0.508634` exposure. The exact component is a
+scoped correctness negative: scale semantics matched, but the candidate's
+full-output relative L2 was `0.0374193` with `0.113344` max absolute error, so
+no timing arm or whole-request projection was consumed. This closes only the
+tested prologue implementation.
+
+The warm H200 has been idle for under two minutes and retains the verified
+checkpoint, pinned image, and compilation caches. Compatible queued work is
+plausible within the cold-setup break-even window:
+`gemma4_h200_fixed_floor_crossop_executor` is source-complete and explicitly
+awaiting a compatible H200 binding, while the independent exact-target draft
+lane promoted one DFlash target-GPU component contract. Recommend immediate
+director reuse selection rather than drain; if neither path receives a
+durable reservation and bounded owner, the director should drain before the
+`23:55Z` watchdog fence.
+
+## 2026-07-29T22:22Z — enforce live-owner supersession before interpretation
+
+**GPU safety audit.** One grouped Nebius census across the three configured
+project namespaces again matched inventory exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two namespaces are empty. The one
+authenticated RunPod listing returned no pods. Controller-host user watchdog
+`gemma4-pq-mips-20260729t2107z-watchdog-r4.service` is active/running with
+recorded PID `299583` and its exact control group. The H200 is available with
+no claim, has been idle since `22:13:40Z`, and remains before its `23:55Z`
+deadline. There is no provider/inventory mismatch, stale claim, lost lifecycle
+owner, passed deadline, or unsafe bench.
+
+At seven idle minutes, retaining the `$2.45/hour` H200 is justified: the
+director has durably reserved the resident exact target checkpoint, pinned
+image, and caches for compatible
+`gemma4_dflash_exact_target_h200_component` work. Claim authority remains
+scheduler-gated on its executable source packet. That is a bounded warm-reuse
+hold well inside the campaign's measured cold-setup break-even window, so no
+drain or provider action is warranted.
+
+**Decision-integrity correction.** The fixed campaign objective remains
+`0.500119281574996 s/request` against the qualified
+`0.625149101968745 s/request` denominator. The preceding `22:14Z` follow-up
+called the taskgraph FP8 prologue result a scoped correctness negative. That
+scientific interpretation is retracted. Authoritative replacement binding
+`DIRECTOR_FP8_PROLOGUE_LAYOUT_REPLACEMENT_OWNER_20260729T2208Z.json`
+(`7c8339d4a659bc2ab49292d5e72051c21dace355e624cf93543f706807b0bfc6`)
+required replacing predecessor PID `338568` and prohibited another repair
+dispatch to it, but predecessor attempts 6--8 and provisional terminal
+`TASKGRAPH_FP8_PROLOGUE_H200_TERMINAL.json`
+(`0bf4e812774ef28ef325ba726c7f2f986585c88e22cb67a58eb4704868d0c191`)
+were persisted afterward. The binding was durable but was not delivered
+through an owner-observable fence or completed handoff. Current project status
+correctly records `blocked_posthoc_binding_supersession_conflict`.
+
+The numerical comparator rows remain useful provisional implementation
+evidence, but they do not scientifically close this intervention and must not
+support endpoint projection or portfolio selection. This audit does not
+authorize a replay or a new claim; the director retains that scientific
+decision, and the independently prepared DFlash lane remains undisturbed.
+
+**Small skill change.** `.agents/skills/research-director/SKILL.md` now states
+that a durable replacement or superseding binding is not itself an execution
+fence for a live owner. Revocation requires an acknowledged hash-bound fence
+or the exact-PID handoff in the same turn; otherwise the binding must remain a
+pending handoff and the predecessor's last consumed authority stays in force.
+It also forbids interpreting post-binding output as both unauthorized and
+scientific terminal evidence.
+
+**Expected effect.** Future mutable-claim ownership changes become effective
+before execution diverges, so every result has one unambiguous authority
+lineage. This prevents false scientific closes and post-hoc adjudication while
+preserving warm-bench patch-and-rerun behavior after recoverable integration
+errors.
+
+## 2026-07-29T22:51Z — generation-fence live claim heartbeats
+
+**GPU safety audit.** One grouped Nebius census across the three configured
+project namespaces matched inventory exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two namespaces are empty. RunPod
+was not retried after its immediately preceding authenticated-interface
+`403`. Controller-host user watchdog
+`gemma4-dflash-20260729t2223z-watchdog-r5.service` is loaded/active/running
+with recorded PID `353024` and exact control group through `00:35Z`.
+
+The exact H200 is claimed once by
+`gemma4_dflash_exact_target_h200_component` at generation
+`2026-07-29T22:47:36.830795Z`. Detached owner PID `362641` has matching start
+ticks `148132006` and remains live under its `00:27Z` release fence. There is
+no provider/inventory mismatch, lost owner, passed deadline, unsafe bench, or
+idle-cost drain decision.
+
+**Objective bottleneck and evidence.** The hash-bound DFlash packet moved onto
+the retained H200 105 seconds after readiness. Attempt 0 reached the guest,
+then retrieval alone failed when `tar` reported `.: file changed as we read
+it`. The owner correctly classified this as a retrieval-scope integration
+repair, kept the claim, and published its generation-scoped repair-ready
+record; no teardown or cold restart occurred.
+
+However, each 30-second heartbeat subprocess returned code `2` because the
+owner supplied `--expected-claimed-at` while the shared `gpu_pool heartbeat`
+CLI did not accept that generation fence. A 6,000-second lease prevented an
+immediate stale claim, but a long repair wait would have left a live owner
+without durable heartbeat evidence and created reclaim ambiguity.
+
+**Small shared-tool change.** `GpuPool.heartbeat` and its CLI now accept
+`expected_claimed_at` / `--expected-claimed-at`, reject a changed generation
+with the same fail-closed error used by release, and only refresh the matching
+claim. The focused GPU-pool suite passes all 23 tests, Python compilation and
+`git diff --check` pass. The active owner was not restarted: because it invokes
+the CLI in a fresh subprocess, its `22:51:23Z` heartbeat loaded the change,
+returned `0`, matched the original generation, and refreshed the claim lease.
+
+**Expected effect.** Durable owners can keep a mutable warm claim visibly live
+through retrieval and other recoverable integration repairs without weakening
+generation fencing. This removes stale-claim/reclaim ambiguity and avoids a
+cold H200 restart while preserving exclusive ownership and the scientific
+no-replay boundary.
+
+## 2026-07-29T23:15Z — delegate bounded same-claim repair completion
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+project namespaces again matched inventory exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY; the other namespaces are empty.
+RunPod was not retried after its recent authenticated-interface `403`.
+Controller-host user watchdog
+`gemma4-dflash-20260729t2223z-watchdog-r5.service` is loaded/active/running
+with recorded PID `353024` and exact control group. Claim generation
+`2026-07-29T22:47:36.830795Z` has a fresh `23:14:19Z` heartbeat and replacement
+owner PID `371839` has matching start ticks `148248595`; no drain condition or
+provider/inventory mismatch exists.
+
+**Objective bottleneck and evidence.** The first remote DFlash attempt ran for
+about 64 seconds and stopped at a recoverable pre-science server-startup and
+retrieval boundary. The warm claim was correctly retained, but more than 22
+minutes elapsed from that failure at `22:49:33Z` to the hash-complete
+classification repair at `23:11:46Z`. The path required an offline replacement
+packet, a later exact-PID director handoff, one retrieval/adoption pass, another
+offline marker-proven classification artifact, and now another director turn
+before the waiting owner may consume the bounded request. No scientific arm
+was replayed, but serial authorization turns—not GPU work—became the measured
+constraint.
+
+**Small skill change.** `.agents/skills/research-director/SKILL.md` now requires
+a repair delegation to include conditional same-turn request authority when
+the binding already fixes the success predicate, immutable science identities,
+retry scope, owner identity, claim generation, and repair ID. The researcher
+may publish and deliver the hash-bound request only after proving the predicate
+and re-reading those identities. Owner replacement, unresolved consumption,
+science-scope changes, lifecycle or claim mutation, spend/deadline changes, and
+other safety judgments still require the director. The current owner and
+repair binding were not changed. Skill validation, repository DevEx checks,
+and `git diff --check` pass.
+
+**Expected effect.** Future source-exact pre-science repairs can move directly
+from the requested proof into the waiting same-claim owner instead of paying a
+second harness/director scheduling cycle. This should recover several minutes
+of warm-GPU time per localized integration defect without weakening
+single-consumption, exact-owner, generation, spend, or lifecycle fences. The
+change is pending observation on a later director invocation; it is not
+credited with the current live behavior.
+
+## 2026-07-29T23:22Z — bind owners to the repair-wait response contract
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+project namespaces matched inventory: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other namespaces are empty. RunPod was
+not retried after its recent authenticated-interface `403`. The registered H200
+is unclaimed in `maintenance`, but controller-host user watchdog
+`gemma4-dflash-20260729t2223z-watchdog-r5.service` is loaded/active/running
+with recorded PID `353024`, its exact control group, and a `00:35Z` lifecycle
+deadline. The provider resource still exists, no stale claim or passed
+deadline exists, and the same compatible DFlash project has a bound direct
+continuation-owner repair due at `23:36Z`; reuse is justified at `$2.45/hour`.
+There is no drain condition.
+
+**Objective bottleneck and evidence.** The corrected retrieval adoption proved
+AR, DFlash, and NGRAM all unconsumed and published `REPAIR_READY.json` at
+`23:16:38.578665Z` with absolute repair deadline `00:27Z`. Its hash-bound
+`REPAIR_REQUEST.json` arrived at `23:17:41.361Z`, yet the owner released the
+warm claim to maintenance at `23:17:43.678Z`. This was not scheduling expiry:
+the shared `repair-handshake wait` command returns successful requests as
+`state: "requested"`, while this owner's helper accepted only
+`state: "repair_requested"` (the label stored inside the request artifact).
+It therefore converted a valid, on-time continuation request into `None` and
+took its deadline-release path. The 64-second remote attempt had already been
+followed by roughly 28 minutes of claim-bound repair handling, so this
+response-contract mismatch—not GPU execution or the scientific portfolio—is
+the immediate objective bottleneck.
+
+**Small skill change.** `.agents/skills/researcher/SKILL.md` now states the
+action-specific shared-handshake contract explicitly: `wait`/`hold` return
+`requested` or `repair_terminal`, the durable request artifact records
+`repair_requested`, and a label mismatch is a recoverable controller defect
+that cannot authorize release. Only expiry at the persisted absolute deadline
+may take the deadline disposition. The active project code and its offline
+direct-continuation repair were not touched.
+
+**Expected effect.** Newly authored repair owners will consume valid hash-bound
+requests instead of releasing a live mutable bench because two adjacent
+interfaces use different state labels. This should eliminate an entire
+release/reclaim and replacement-owner cycle after localized integration
+repairs while preserving the absolute deadline, claim generation, single
+consumption, and scientific no-replay fences.
+
+## 2026-07-29T23:41Z — consume no-progress conflicts before redispatch
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+project namespaces matched inventory: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other namespaces are empty. RunPod was
+not retried after its recent authenticated-interface `403`. The registered H200
+is available and unclaimed, while controller-host user watchdog
+`gemma4-dflash-20260729t2223z-watchdog-r5.service` is
+loaded/active/running with recorded PID `353024`, exact control group, and a
+`00:35Z` lifecycle deadline. The compatible DFlash claim window remains open,
+so reuse is justified and there is no drain condition.
+
+**Objective bottleneck and evidence.** The first fresh-launch researcher ran
+from `23:36:59.556Z` to `23:38:49.021Z` (109.435 seconds) and correctly refused
+to claim. Conflict artifact `de2d50f6…` proves that execution binding
+`042e50b2…` requires repaired base-owner hash `2acf8f2d…`, while its bound
+component-ready manifest still requires predecessor hash `eaec2de1…`; the
+direct owner invokes that manifest validator and would fail before safely
+retaining the claim. The ensuing director wake completed in 53.908 seconds but
+checked only that the unchanged authority's declared hashes still matched,
+preserved `042e50b2…`, and redispatched the same project at `23:40:03.829Z`.
+This repeated an unexecutable launch against the `23:45Z` claim fence instead
+of moving the exact Gemma/DFlash intervention toward GPU evidence.
+
+**Small skill change.** `.agents/skills/research-director/SKILL.md` now requires
+a `researcher_no_progress` wake to consume the newest researcher artifact or
+final trace message before redispatching the same project. A hash-bound
+binding, manifest, owner, identity, or deadline conflict must be resolved or
+superseded in that director decision; preserving unchanged authority is not a
+resolution. The live project, bench, and current researcher were not modified.
+
+**Expected effect.** A typed preclaim contradiction should cost one researcher
+turn rather than a loop of identical orientation and refusal turns. The next
+director wake can amend the exact stale manifest binding while retaining the
+warm H200, recovering the remaining launch runway without weakening immutable
+science, ownership, spend, or lifecycle fences.
+
+## 2026-07-29T23:59Z — fence ownerless H200 after repair-binding rejection
+
+**GPU safety audit.** One grouped Nebius census across the three configured
+project namespaces found only instance
+`computeinstance-e00qxw871hz1r79fjt` RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other namespaces are empty. RunPod was
+not retried after its recent authenticated-interface `403`. Controller-host
+user watchdog `gemma4-dflash-20260729t2223z-watchdog-r5.service` remains
+loaded/active/running as PID `353024` in its recorded control group through
+`00:35Z`. The H200 claim, however, has objectively lost owner PID `397943` /
+start ticks `148497102`: the PID is absent, `STATUS.json.active_session` is
+null, and project decision
+`owner_lost_after_repair_request_binding_mismatch` records the exit. The last
+owner heartbeat was `23:56:44Z`. The pool drain command therefore set
+`drain_after_release: true` on bench
+`h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt`; provider cleanup and
+inventory retirement remain director-owned.
+
+**Objective bottleneck and evidence.** The continuous claim reached the real
+pinned server and exposed `sglang-kernel 0.4.3` below the source-required
+`0.4.4`, with AR, DFlash, and NGRAM still unstarted. A researcher built the
+localized `0.4.4 --no-deps` patch, but the owner consumed direct repair
+request `2aff4c39…` and exited on
+`continuation_authority_boundary:adoption_sha256_mismatch` instead of exposing
+another retained repair generation. This left the paid warm H200 claimed but
+ownerless before any request could test progress toward
+`0.500119281574996 s/request`.
+
+**Small skill change.** `.agents/skills/researcher/SKILL.md` now treats a
+consumed repair request rejected for diagnostic, adoption, request, or patch
+digest mismatch as the next recoverable same-claim diagnostic. The owner must
+publish a fresh repair generation with observed hashes and keep heartbeating;
+if replacement authority is required, it may exit only after the successor is
+verified live. This is dynamic retained-owner recovery, not another static
+validation gate, and the active project bytes were not changed.
+
+**Expected effect.** A localized request-binding mistake should cost one repair
+generation rather than abandoning the mutable claim, forcing a director
+rebind, and risking cold setup. Exact digest and authority fences remain
+fail-closed while resident checkpoint, image, source, and compact snapshots
+stay reusable.
+
+## 2026-07-30T00:16Z — stop serial one-shot recovery-owner chains
+
+**GPU safety audit.** One grouped Nebius census again matches inventory:
+instance `computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY in
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two namespaces are empty. RunPod
+was not retried after its authenticated-interface `403`. Controller-host user
+watchdog `gemma4-dflash-20260730t0002z-watchdog-r6.service` is
+loaded/active/running as PID `406893` through `00:45Z`. Bench
+`h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt` retains
+`drain_after_release: true`. Recovery owner `412747` / start ticks
+`148628701` is now absent, `STATUS.json.active_session` is null, and its last
+heartbeat was `00:13:10Z`; the already-draining claim is objectively ownerless
+again. No additional pool, provider-cleanup, or retirement action was taken.
+
+**Objective bottleneck and evidence.** The replacement owner launched at
+`00:11:09Z` under the original `23:49:13Z` claim, reused the retained
+checkpoint/image/source/snapshots, and reached worker generation 2 without a
+cold restart. It then published recovery-3, accepted generation-specific
+patch request `12f45574…`, and exited because its one-shot entrypoint returns
+after `repair_wait`. The recovery researcher took 123.944 seconds and the
+preceding owner source/rebind path took 129.468 plus 68.201 seconds, but no
+server request or AR, DFlash, or NGRAM arm started. Repeated controller-owner
+construction—not GPU execution or the DFlash mechanism—is consuming the
+remaining path toward `0.500119281574996 s/request`.
+
+**Small skill change.** `.agents/skills/research-director/SKILL.md` now forbids
+admitting a wrapper as a retained recovery owner when its executable control
+flow returns after the worker, after publishing the next repair-ready record,
+or after consuming a request. A one-shot worker must run beneath an already
+live dispatcher, or the bound owner loop must consume and invoke the next
+retry scope before returning. This corrects the dynamic execution path rather
+than adding a static validation project; no active project or scientific bytes
+were changed.
+
+**Expected effect.** One mutable claim should retain one dispatcher across
+localized integration defects, eliminating the repeated
+source-task/director/relaunch cycle and its ownerless gaps. The same immutable
+science, digest, request-consumption, drain, spend, and absolute-watchdog
+fences remain intact while repaired workers can reach the first real request
+sooner.
+
+## 2026-07-30T00:29Z — warm dispatcher launch exposed one recoverable field-path defect
+
+**GPU safety audit.** One grouped Nebius census matched the sole nonretired
+inventory bench: instance `computeinstance-e00qxw871hz1r79fjt` and disk
+`computedisk-e00pb91rav4c5ksdbx` remain present in provider project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. On the controller host, user unit
+`gemma4-dflash-20260730t0002z-watchdog-r6.service` is
+loaded/active/running as PID `406893` with the recorded control group and
+`00:45Z` deadline. The original `23:49:13Z` claim remains non-stale and
+`drain_after_release: true`; no provider cleanup, inventory retirement, or
+cold restart was performed.
+
+**Actionable mismatch and evidence.** The director correctly reused the
+resident bench and launched the repaired worker-3 dispatcher as PID `423603`
+at `00:28:07Z`, but it exited before heartbeat, SSH, container, CUDA, or
+science with `KeyError: 'remote_run'`. The owner had returned only the
+`consumed_repair` block from `verify_local()` and then read
+`boundary["remote_run"]`; the durable remote-run path instead remains in the
+retrieved adoption receipt. AR, DFlash, and NGRAM therefore remain unstarted
+and unconsumed, and the same drain-fenced claim is briefly ownerless again.
+The active director observed the exit immediately and is resolving this as an
+in-place same-claim integration repair; exact resource IDs above are the
+director's cleanup handoff if that bounded recovery fails.
+
+**Expected effect.** Correcting the field path and relaunching the same
+dispatcher under the retained claim preserves the warm checkpoint, image,
+source, snapshots, and repair packet while avoiding another setup lifecycle.
+The existing dispatcher rule is already producing the intended behavior:
+the same director is patching and rerunning the recoverable launch defect
+instead of creating another project, adding static validation work, or
+tearing down the bench. No additional skill or shared-tool change was made in
+this audit.
+
+## 2026-07-30T00:35Z — fail immediate detached-owner exits inside launch
+
+**GPU safety audit.** One grouped Nebius census found no instances or disks in
+any of the three configured projects. This matches the inventory: bench
+`h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt` is retired with no
+claim after verified deletion of instance
+`computeinstance-e00qxw871hz1r79fjt` and disk
+`computedisk-e00pb91rav4c5ksdbx` in provider project
+`project-e00h1vhmpr00vbmfd5k7pg`. Controller-host user watchdog
+`gemma4-dflash-20260730t0002z-watchdog-r6.service` is now absent/inactive as
+expected after cleanup. RunPod was not retried after its recent
+authenticated-interface `403`. There are no nonretired benches, stale
+claims, passed live deadlines, ownerless paid resources, or idle-cost
+decisions in this audit.
+
+**Objective bottleneck and evidence.** The DFlash lifecycle consumed
+20,426.892 provider seconds and `$13.90163507425` from allocation through
+verified cleanup but never started or consumed AR, DFlash, or NGRAM science.
+Repeated controller-owner integration failures, rather than the mechanism or
+GPU execution, exhausted the warm recovery window. The last launch made the
+failure especially concrete: `detached-owner start` reported PID `423603` as
+`live: true`, then the first status read found the process already dead on
+`KeyError: 'remote_run'`. Cleanup and retirement were correct once the
+measured safe-fit window closed. The project row is still `active` despite
+the retired, non-claimable bench and expired `00:31:30Z` repair handoff; the
+director should terminalize or explicitly re-admit it rather than dispatching
+the stale source task.
+
+**Small shared-tool change.** `research/factory/tools/detached-owner start`
+now holds the launch transaction through a 250 ms PID/start-tick stabilization
+window. A child that exits in that window returns nonzero with
+`owner_exited_during_stabilization` while preserving its immutable state
+record and log. This is a dynamic liveness check at the existing launch
+boundary, not another static-validation stage. A focused regression covers an
+immediate nonzero exit; all three detached-owner tests and
+`python3 tools/devex/check.py` pass.
+
+**Expected effect.** Immediate import, binding, and entrypoint failures become
+failed launches in the invoking director turn instead of false durable-owner
+handoffs that require another status cycle and leave claim state described as
+live. Researchers can patch and rerun on the same mutable bench sooner, while
+long-running owners retain the same PID/start-time identity, log, heartbeat,
+watchdog, and cleanup contracts.
+
+## 2026-07-30T00:42Z — stop deleting warm state before same-lineage refunding
+
+**GPU safety audit.** One grouped Nebius census matched inventory exactly.
+Provider project `project-e00h1vhmpr00vbmfd5k7pg` has running instance
+`computeinstance-e00t5s028ts52zp215` and ready disk
+`computedisk-e00vsj169nacjazg4k`; the other two configured projects are
+empty. Registered bench
+`h200-dflash-r3-computeinstance-e00t5s028ts52zp215` is safely unclaimed in
+maintenance, non-draining, and identity-pending. Its controller-host user
+watchdog `gemma4-dflash-r3-20260730t0036z-watchdog.service` is
+loaded/active/running as PID `427838` with the recorded control group through
+`03:36:56Z`. RunPod was not retried after its recent authenticated-interface
+`403`. No resource is unregistered, missing, stale-claimed, ownerless while
+claimed, past deadline, or unsafe. Because compatible DFlash work is already
+queued and cold staging has not begun, recommend immediate identity
+verification and reuse; do not drain this healthy bench.
+
+**Objective bottleneck and evidence.** The prior compatible H200 was retired
+with verified cleanup at `00:33:07Z`; this replacement provider lifecycle
+started at `00:36:56Z`, only 228.591 seconds later. It is explicitly recorded
+as a cold same-project worker-3 recovery with no checkpoint, image, source,
+compilation, server, or cache identity resident. The old lifecycle had spent
+20,426.892 seconds and `$13.90163507425` without starting AR, DFlash, or
+NGRAM. Deleting the warm state because the short owner fence no longer fit,
+then reserving `$14` and recreating the same H200 lineage minutes later, is
+the dominant avoidable delay toward `0.500119281574996 s/request`.
+
+**Small skill change.** The existing warm-retention paragraph in
+`.agents/skills/research-director/SKILL.md` now distinguishes an expiring
+owner/claim-release fence from the provider lifecycle: release the claim
+generation to maintenance while the watchdog remains safe. It also makes the
+director's decision to fund a same-hardware, same-lineage replacement explicit
+evidence that compatible reuse is likely, requiring return after the
+reservation request so the next wake can extend and reuse the existing bench.
+This tightens the observed ambiguous decision without adding a project or
+static validation step. The skill passes `quick_validate.py`, the repository
+DevEx check passes, and no active experiment or provider state was mutated.
+The current director turn started at `00:41:03Z` before this edit, so the
+change is pending its next skill load; current lifecycle behavior is judged
+against the previously loaded version.
+
+**Expected effect.** Future pre-science integration repairs keep downloaded
+weights, images, source, compiled artifacts, and remote-run state across a
+reservation or owner-fence transition. The director should spend the next
+wake extending/reclaiming the warm bench instead of paying another cold setup,
+while the unchanged scientific, claim-generation, spend, watchdog, and
+cleanup boundaries remain intact.
+
+## 2026-07-30T00:55Z — fence the cold DFlash claim after another recoverable owner exit
+
+**GPU safety audit.** The single grouped Nebius census for this supervisor
+cycle matched the registered provider objects: RUNNING instance
+`computeinstance-e00t5s028ts52zp215` and READY disk
+`computedisk-e00vsj169nacjazg4k` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other configured Nebius projects were
+empty. RunPod was not retried after its recent authenticated-interface `403`.
+The controller-host user watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service` remains
+loaded/active/running as PID `427838` in its recorded control group through
+`2026-07-30T03:36:56.187924Z`. The actionable mismatch is inside the claimed
+bench: claim `2026-07-30T00:49:46.346350Z` never advanced its pool heartbeat,
+latest owner PID `436345` / start ticks `148884471` is dead, and project
+`STATUS.json` now has `active_session: null` with no target bytes, worker,
+CUDA call, or scientific request started.
+
+**Bottleneck and action.** Cold staging failed successively on a malformed
+controller path, absent controller checkpoint bytes, absent guest
+`huggingface-cli`, and finally absent guest `pip`. These are recoverable
+integration errors, not DFlash evidence, and repeatedly exiting the only
+heartbeat owner is the immediate throughput bottleneck toward the fixed
+`0.500119281574996 s/request` target. I atomically set
+`drain_after_release=true` on registered bench
+`h200-dflash-r3-computeinstance-e00t5s028ts52zp215`; I did not release or
+reclaim its claim, touch the guest, stop the watchdog, clean provider
+resources, or retire inventory. Exact director lifecycle IDs are instance
+`computeinstance-e00t5s028ts52zp215`, disk
+`computedisk-e00vsj169nacjazg4k`, provider project
+`project-e00h1vhmpr00vbmfd5k7pg`, and watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service`.
+
+**Expected effect.** The fence prevents a dead-owner claim from becoming
+silently reusable. The director should inspect and explicitly reclaim this
+claim to maintenance only if it can bind a repair-capable replacement owner
+that keeps heartbeats live while installing a viable downloader and resumes
+on this same mutable bench. Otherwise it should perform its normal exact-ID
+cleanup before the watchdog deadline. No additional skill, static validation,
+or new project is warranted: the shared researcher/director rules already
+require retained-claim repair for precisely this failure, and the next useful
+measurement is whether a live replacement patches and reaches worker 3
+without another cold allocation.
+
+## 2026-07-30T01:58Z — fence post-restart GPU identity before cold-stage resume
+
+**GPU safety audit.** One grouped Nebius census matched all registered provider
+objects: RUNNING instance `computeinstance-e00t5s028ts52zp215`, READY boot disk
+`computedisk-e00vsj169nacjazg4k`, and READY managed staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured projects were
+empty. RunPod was not retried after its recent authenticated-interface `403`.
+Claim `2026-07-30T00:49:46.346350Z` heartbeats remain fresh, detached owner
+`446635` / start ticks `148998370` is live, and controller-host user watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service` is
+loaded/active/running as PID `427838` in the recorded control group through
+`03:36:56Z`. No resource is missing, unregistered, stale-claimed, past
+deadline, or idle.
+
+**Actionable identity mismatch and containment.** The bounded stop/start fixed
+the recoverable storage boundary: `/` is now about 259 GB with 162 GB free,
+and `/dev/disk/by-id/virtio-dflash-stage` maps to the exact 100-GiB staging
+device. It also reassigned the guest H200 from inventory/binding UUID
+`GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a` to observed UUID
+`GPU-4a6a3b47-4f80-e015-a013-f13d5c364648`. The strict execution binding is
+therefore invalid until superseded. The existing `drain_after_release=true`
+fence remains set, no CUDA process or scientific request exists, and the
+director is actively localizing an exact same-claim hardware rebind. I did not
+edit the director-owned binding or inventory identity, release or reclaim the
+bench, call provider lifecycle, or dispatch more work.
+
+**Expected effect.** The next cold-stage request can proceed on the retained
+mutable bench only after the director atomically records the new verified H200
+identity in the inventory and a superseding hash-bound repair contract. This
+preserves the verified first shard, resident image, live owner, claim, and
+watchdog while preventing science under a stale hardware identity. No skill,
+harness, static validation, or additional project change is warranted at this
+boundary.
+
+## 2026-07-30T02:24Z — fence ownerless complete-checkpoint claim during R5 handoff
+
+**GPU safety audit.** The cycle's single grouped Nebius census matched the
+registered live resources exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215`, READY boot disk
+`computedisk-e00vsj169nacjazg4k`, and READY staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+were empty. The controller-host user watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service` is active/running as PID
+`427838` through `2026-07-30T03:36:56.187924Z`. The claim is not stale and its
+generation remains `2026-07-30T00:49:46.346350Z`, but it became objectively
+ownerless when R4 PID `469053` / start ticks `149297134` exited at
+`2026-07-30T02:18:17Z`.
+
+**Bottleneck and action.** R4 completed and finalized the exact target
+checkpoint, then exited before worker 3 at
+`r4_packet_boundary:digest` because it selected mutable packet
+`bcccec58…` instead of the already verified immutable packet `e3f0bd4f…`.
+This is another recoverable pre-science integration boundary, not DFlash
+evidence against the fixed `0.500119281574996 s/request` H200 objective. I
+atomically requested drain on registered bench
+`h200-dflash-r3-computeinstance-e00t5s028ts52zp215`; because it is claimed,
+the pool preserved the claim and set only `drain_after_release=true`. I did
+not reclaim or release the claim, touch the guest, call provider lifecycle,
+or retire inventory. Exact director lifecycle IDs are instance
+`computeinstance-e00t5s028ts52zp215`, boot disk
+`computedisk-e00vsj169nacjazg4k`, staging disk
+`computedisk-e00rwewnz08e4fgt41`, provider project
+`project-e00h1vhmpr00vbmfd5k7pg`, and watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service`.
+
+**Expected effect.** The post-release fence prevents an ownerless claimed
+bench from silently becoming reusable while preserving the completed
+checkpoint, image/cache state, and existing claim for the director's already
+bound R5 handoff `f8ea81aa…`. A researcher began that same-claim handoff at
+`02:22:32Z` and is required to use immutable packet `e3f0bd4f…`, enter worker
+3 only, and launch by `02:36Z`. No shared-tool or harness edit is warranted
+during this active handoff: the next decision-bearing evidence is whether R5
+crosses packet preflight and reaches the first scientific worker without a
+cold allocation or replay.
+
+## 2026-07-30T02:30Z — retain drain fence after R5 pre-science owner loss
+
+**GPU safety audit.** The cycle's only grouped Nebius census again matched
+inventory exactly: RUNNING instance `computeinstance-e00t5s028ts52zp215`,
+READY boot disk `computedisk-e00vsj169nacjazg4k`, and READY staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other configured Nebius projects were
+empty. Controller-host user watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service` remains active/running as
+PID `427838` through `2026-07-30T03:36:56.187924Z`. The registered claim
+generation `2026-07-30T00:49:46.346350Z` remains ownerless and already has
+`drain_after_release=true`, so no second pool mutation, reclaim, release, or
+provider action was needed.
+
+**Bottleneck and evidence.** R5 `479602` / start ticks `149434293` reused the
+complete target and immutable packet `e3f0bd4f…`, crossed packet preflight,
+and entered worker 3. It then failed before model load, CUDA, server, request,
+or scientific sample because unprivileged `os.link` received `EPERM` while
+constructing the run-local immutable target view. The owner subsequently
+exited on `different_repair_ready_already_exists` because it reused a completed
+repair namespace. `R5_RETAINED_REPAIR_BOUNDARY.json` (`25a6c67b…`) and the
+empty retrieved run prove this is another recoverable integration boundary,
+not evidence against the fixed `0.500119281574996 s/request` H200 target.
+
+**Expected effect.** The active director is binding one same-claim successor
+that changes only target-view materialization to a reflink or verified
+temporary-copy fallback and allocates a fresh repair namespace. Keeping the
+existing drain fence preserves the complete checkpoint, image/cache state,
+and continuous claim while preventing silent reuse if that successor also
+loses ownership. No shared-tool, harness, static-validation, cold-allocation,
+or additional-project change is warranted while this exact repair is being
+bound; the next useful evidence is worker 3 reaching model execution or a new
+typed retained boundary.
+
+## 2026-07-30T04:05Z — repair the component owner instead of cold-restarting
+
+**GPU safety audit.** This cycle's single grouped Nebius census matched the
+registered live resources exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215`, READY boot disk
+`computedisk-e00vsj169nacjazg4k`, and READY staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. The controller-host user watchdog
+`gemma4-dflash-r3-20260730t0323z-watchdog.service` is active/running as PID
+`506236` through `2026-07-30T04:51:56.187924Z`. The exact warm bench is
+quiescent and now `available`; its idle cost is justified by the compatible
+active component project with a `04:16Z` claim fence.
+
+**Bottleneck and small harness correction.** The first component owner held
+the bench for only `0.012735` seconds (`$0.000008666875`) before a
+controller-local SSH command-name collision raised `Value after * must be an
+iterable, not function`. No SSH staging, container, CUDA call, or scientific
+sample started, but the generic exception path still released the bench to
+`maintenance`. The director has now issued the same-project R2 repair binding
+`DIRECTOR_FIXED_FLOOR_CROSSOP_H200_OWNER_REPAIR_20260730T0402Z.json` and
+re-readied the same registered bench. It requires a re-enterable owner
+operation scope, a live claim heartbeat and repair handshake for recoverable
+pre-science failures, and forbids generic-exception release; the unchanged
+ten-case scientific contract remains the only authorized call. No skill or
+static-validation edit is warranted because the researcher skill already
+states this exact retained-claim rule.
+
+**Expected effect.** The R2 owner can patch and re-enter on this mutable warm
+H200 without another claim loss, model/cache teardown, cold allocation, or new
+project. Success is the next owner crossing the corrected local SSH boundary
+while heartbeating the same claim, then either producing the bounded component
+terminal or releasing only on an unsafe guest or the `04:36Z` deadline.
+
+## 2026-07-30T04:24Z — retain the warm claim across compiler-metadata repair
+
+**GPU safety audit.** This cycle's single grouped Nebius census matched
+inventory exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215`, READY boot disk
+`computedisk-e00vsj169nacjazg4k`, and READY staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. Controller-host user watchdog
+`gemma4-dflash-r3-20260730t0323z-watchdog.service` remains active/running as
+PID `506236` through `2026-07-30T04:51:56.187924Z`. The exact H200 bench is
+`available`, unclaimed, and idle only since `04:19:05Z`; keeping it warm is
+justified by the compatible metadata-repair binding with a `04:31Z` claim
+fence. No inventory/provider mismatch, unsafe state, passed deadline, drain,
+provider cleanup, or retirement action was found.
+
+**Bottleneck and bounded harness correction.** The positive component run
+already passed all ten exact local/global cases and reduced component medians
+by `23.7%` to `67.5%`, but promotion still lacks the director-required
+registers/thread and spill counts. The first no-launch recovery held the warm
+bench for only `10.013132` seconds and failed on the nonexistent
+`CompiledKernel.n_regs` attribute. It published recoverable repair handshake
+`resource-1`, then its owner unconditionally released the bench instead of
+waiting for a patch on the same claim. This repeated the prior generic-release
+failure and produced no decision-bearing resource evidence. The active
+director has therefore issued the same-project metadata-only repair binding
+`DIRECTOR_FIXED_FLOOR_CROSSOP_H200_RESOURCE_METADATA_REPAIR_20260730T0421Z.json`
+(`eb706cee…`). It requires an authoritative exact-runtime metadata or target
+object path plus a true retained dispatcher that heartbeats and waits after a
+recoverable extraction mismatch. Candidate launch, timing replay, endpoint
+work, new projects, and provider lifecycle are forbidden. I did not edit the
+bound owner or shared skills while that repair is active.
+
+**Expected effect.** The next recoverable compiler-metadata mismatch remains
+inside one mutable warm claim, so the researcher can patch and re-enter without
+another release/reclaim loop or cold setup. The bounded attempt should either
+produce the missing registers/thread and zero-spill decision evidence by its
+`04:40Z` resource terminal or preserve a typed same-claim repair boundary,
+then release by `04:44Z`.
+
+## 2026-07-30T04:31Z — keep incomplete worker output out of the terminal path
+
+**GPU safety audit.** This cycle's single grouped Nebius census matched
+inventory exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215`, READY boot disk
+`computedisk-e00vsj169nacjazg4k`, and READY staging disk
+`computedisk-e00rwewnz08e4fgt41` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. The recorded controller-host user watchdog
+`gemma4-dflash-r3-20260730t0323z-watchdog.service` is active/running as PID
+`506236` through `2026-07-30T04:51:56.187924Z`. The H200 is `available`,
+unclaimed, and idle since `04:26:25Z`. Its short idle cost is justified while
+the active director classifies the already-retrieved exact CUBINs offline and
+decides whether the gate merits one compatible endpoint before the watchdog;
+no mismatch, unsafe state, passed deadline, drain, provider cleanup, or
+inventory retirement was warranted.
+
+**Bottleneck and evidence.** Metadata R2 compiled both exact local/global
+specializations without launching the candidate, replaying timing, or calling
+an endpoint, but Triton exposed `maxnreg: null` and no authoritative spill
+counts. The owner retrieved that incomplete result directly to canonical
+`TERMINAL.json`, treated any parsed dictionary as terminal, and released after
+only `10.117141` claim seconds. This bypassed its repair branch entirely:
+`repair-handshake` correctly returns `terminal` when canonical
+`TERMINAL.json` exists, so even a later handshake could not retain this
+generation. The three short failed attempts have therefore spent only about
+`20.14` claimed seconds but crossed three release/reclaim boundaries while the
+promotion gate remains unresolved. The R2 artifact nevertheless contains both
+exact CUDA ELF/CUBIN payloads, so the director correctly stopped another GPU
+retry and moved extraction offline from those immutable bytes.
+
+**Small process correction.** I amended `.agents/skills/researcher/SKILL.md`
+at the repair-disposition rule: worker output must first land at a noncanonical
+candidate path, be classified, and only then be atomically promoted to project
+`TERMINAL.json`. Missing required fields or an explicitly recoverable result
+must remain diagnostic evidence and enter `repair-handshake hold`. This is a
+future-turn skill change only; I did not reload the running harness, edit the
+active project owner, or claim that live behavior has changed.
+
+**Expected effect.** A future owner cannot accidentally make a recoverable
+worker result terminate its own repair waiter. The same claim can remain
+heartbeating while a narrow patch arrives, avoiding another ten-second
+claim/release cycle. For this already-released generation, offline CUBIN
+classification should decide the register/spill gate without another GPU
+claim; only a passing gate should consume the still-warm bench for the
+director's scope-matched endpoint decision.
+
+## 2026-07-30T05:03Z — preserve completed endpoint arms across repair
+
+**GPU safety audit.** One grouped Nebius census matched the live inventory
+exactly: RUNNING instance `computeinstance-e00t5s028ts52zp215` and READY disks
+`computedisk-e00vsj169nacjazg4k` and
+`computedisk-e00rwewnz08e4fgt41`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. The controller-host user watchdog
+`gemma4-fixed-floor-endpoint-20260730t0438z-watchdog.service` is
+active/running as PID `546249` through `2026-07-30T05:51:56.187924Z`.
+Bench `h200-dflash-r3-computeinstance-e00t5s028ts52zp215` remains claimed by
+`gemma4_h200_fixed_floor_crossop_executor`, heartbeating at `05:02:37Z`, with
+lease through `05:39:37Z`. No provider/inventory mismatch, stale claim,
+owner/watchdog failure, passed deadline, unsafe state, drain, or idle-cost
+action was found.
+
+**Bottleneck and evidence.** Retained owner R2 repaired its missing remote
+stage root in place and generation 1 completed the stock c32 arm (`32/32`,
+`1.006774868593709 s/request`). That stock artifact cannot certify response
+exactness because every token vector is empty and its typed `pass` is false.
+The candidate then failed before readiness or any request with a
+`torch.Size([256])` into `torch.Size([512])` weight-loader assertion. The
+researcher preserved the completed stock artifact and archived the failed
+candidate root, but R2 exposes only `stage_and_pair`, `pair_runner_only`, and
+`retrieval_only`: every executable repair replays stock, while retrieval
+requires an absent pair terminal. The typed
+`REPAIR_ENTRYPOINT_CONFLICT-g1.json` therefore correctly holds the warm claim
+for a director rebind instead of replaying or releasing.
+
+**Small process correction.** I amended
+`.agents/skills/researcher/SKILL.md` so sequential multi-arm owners persist
+each completed arm outside mutable server state and expose arm-aware repair
+scopes. A pre-request candidate failure after a completed control must patch
+and rerun only the candidate under the same claim; an owner lacking that path
+must keep heartbeating and request a hash-bound replacement that adopts the
+completed arm. I did not edit or reload the active owner, mutate provider
+lifecycle, or submit another endpoint request.
+
+**Expected effect.** Future endpoint integration defects preserve already-paid
+control evidence while a researcher patches the failed arm against resident
+checkpoint, image, and caches. This removes the forced choice between
+scientific replay and release/cold restart, and should shorten the next
+decision-bearing pair by one full control load/run without weakening arm
+identity or quality evidence.
+
+## 2026-07-30T05:24Z — gate replacement ownership on runtime readiness
+
+**GPU safety audit.** This cycle's single grouped Nebius census matched the
+live inventory exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215` and READY disks
+`computedisk-e00vsj169nacjazg4k` and
+`computedisk-e00rwewnz08e4fgt41`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. Bench `h200-dflash-r3-computeinstance-e00t5s028ts52zp215` is claimed
+continuously from `04:55:56.475891Z` by
+`gemma4_h200_fixed_floor_crossop_executor`, heartbeating at `05:23:27Z`, with
+lease and lifecycle deadline `05:51:56.187924Z`. Its replacement
+controller-host owner PID `570159`, start ticks `150495435`, is live and in a
+typed `repair_wait`; the recorded controller-user watchdog
+`gemma4-fixed-floor-endpoint-20260730t0438z-watchdog.service` is
+active/running as PID `546249`. There is compatible queued repair work on the
+resident candidate path. No provider/inventory mismatch, stale claim,
+owner/watchdog loss, passed deadline, unsafe state, drain, provider cleanup,
+or inventory retirement is warranted.
+
+**Bottleneck and evidence.** The campaign still needs an endpoint result
+against the fixed `0.625149101968745 s/request` denominator and
+`0.500119281574996 s/request` target; the positive QKV-to-E5M2-cache component
+ledger and its conservative `0.620767144... s/request` prediction do not meet
+that objective. R4 correctly preserved the completed control and attempted
+only the candidate, but three controller handoff defects occurred before
+candidate execution: a cwd-relative command duplication, a missing remote
+stage parent, and a missing `control_terminal_sha256` binding field. The third
+owner survived the requested two-second PID stabilization, was advertised in
+`STATUS.json`, and then exited immediately on the missing field. The repaired
+PID `570159` reached candidate-only execution; its candidate server exited
+before readiness and consumed zero requests, so the owner persisted
+`RECOVERABLE_DIAGNOSTIC-g0.json`, kept the original claim heartbeating, and
+entered repair generation `endpoint-r4-0-1785388994`. This is recoverable
+integration evidence, not a scientific endpoint outcome or a reason to
+cold-start.
+
+**Small process correction.** I extended shared
+`research/factory/tools/detached-owner` with an optional generation-specific
+`--ready-file` gate. A launch now succeeds only after the live process creates
+that fresh runtime artifact; a still-live process that misses the bounded gate
+remains recorded for reconciliation but returns nonzero, and a pre-existing
+ready path is rejected. I documented the gate and amended the researcher skill
+so replacement owners are not copied into `STATUS.json.active_session` on PID
+stabilization alone. This is dynamic execution-path evidence, not another
+static validation ladder. The five narrow launcher tests and
+`python3 tools/devex/check.py` pass. I did not restart the harness, modify the
+active R4 owner, replay control, release the claim, or touch provider
+resources.
+
+**Expected effect.** Future owner replacements will become authoritative only
+after reaching their first real staging/execution boundary, preventing a
+short-lived setup exception from creating a false live handoff and stale claim
+metadata. The current owner can continue the intended patch-and-rerun loop
+against the resident checkpoint and candidate state; the next useful event is
+candidate readiness and request consumption, or a typed same-claim repair
+diagnostic before the existing deadline.
+
+## 2026-07-30T05:45Z — do not consume request-contract rejections as endpoint science
+
+**GPU safety audit.** This cycle's single grouped Nebius census matched the
+registered live inventory exactly: RUNNING instance
+`computeinstance-e00t5s028ts52zp215` and READY disks
+`computedisk-e00vsj169nacjazg4k` and
+`computedisk-e00rwewnz08e4fgt41`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. Bench `h200-dflash-r3-computeinstance-e00t5s028ts52zp215` is safe,
+unclaimed, quiescent, and idle since `05:39:19Z`. During this audit the
+director replaced the prior watchdog with controller-host user unit
+`gemma4-fixed-floor-http-correction-20260730t0542z-watchdog.service`; it is
+active/running as PID `580054` through `06:20Z`. The superseded unit being
+inactive is therefore not owner loss. Warm image, checkpoint, compiled
+artifacts, and caches remain resident, so the small idle cost is justified by
+the compatible request-boundary correction; recommend reuse rather than
+drain. Exact lifecycle IDs are bench
+`h200-dflash-r3-computeinstance-e00t5s028ts52zp215`, instance
+`computeinstance-e00t5s028ts52zp215`, boot disk
+`computedisk-e00vsj169nacjazg4k`, and staging disk
+`computedisk-e00rwewnz08e4fgt41`. I did not claim, drain, release, clean up,
+or retire any provider resource.
+
+**Bottleneck and evidence.** Generation 5 finally reached server readiness
+after five same-claim startup repairs, but runner `b9fb00d…` sent
+completion-shaped bodies containing `prompt` to `/v1/chat/completions`; the
+frozen control used `/v1/completions`. All 32 calls returned HTTP 400 in about
+5–26 ms with zero SSE events, zero usage, zero output chunks, and no complete
+candidate row. Its broad exception handler retained only the exception string
+and discarded every HTTP response body. Terminal `2835f52e…` nevertheless
+marked this `science_consumed:true`, promoted it to the canonical project
+terminal, removed the candidate container, and released the continuous claim
+after `2,583` seconds. This is a recoverable request-contract integration
+failure, not evidence toward the fixed `0.500119281574996 s/request` objective
+and not a reason to replay the settled control/component or cold-start the
+bench.
+
+**Small process correction.** I amended `.agents/skills/researcher/SKILL.md`
+so endpoint submission alone cannot establish scientific consumption. An
+endpoint runner must dynamically persist status and the bounded HTTP error
+body plus relevant server diagnostics; a 4xx with no protocol events, usage,
+or model output stays at the request-contract/observability boundary unless
+evidence proves model execution. A proven route/schema/payload mismatch must
+patch and rerun only the invalidated arm against resident state under the same
+claim. The existing shared `lab-endpoint-pair` tool already preserves
+`HTTPError` bodies and has a regression test, so no duplicate harness or
+static-validation change was made. `git diff --check` and
+`python3 tools/devex/check.py` pass.
+
+**Expected effect.** Future application-level endpoint rejections remain
+repairable diagnostics instead of consuming a scientific arm and triggering a
+release/reclaim cycle. The immediate director decision should inspect or
+recapture the 400 body, correct only the candidate request route/schema, and
+reuse the protected warm H200 before `06:20Z`; only a response that actually
+enters model execution should determine the endpoint result.
+
+## 2026-07-30T05:57Z — restore an independent lane beside the serial R5 repair
+
+**GPU safety audit.** This cycle's single grouped Nebius census exactly
+matched inventory: RUNNING instance `computeinstance-e00t5s028ts52zp215` and
+READY disks `computedisk-e00vsj169nacjazg4k` and
+`computedisk-e00rwewnz08e4fgt41`; the other two configured Nebius projects
+were empty. RunPod was not retried after its recent authenticated-interface
+`403`. The H200 is safe, quiescent, available, and unclaimed under the recorded
+controller-user watchdog
+`gemma4-fixed-floor-http-correction-20260730t0542z-watchdog.service`, which is
+active/running as PID `580054` through `06:20Z`. Its idle interval since
+`05:39:19Z` remains justified: resident checkpoints, image, sources, compiled
+artifacts, and caches are immediately compatible with the selected R5
+candidate-only correction. No stale claim, owner loss, passed deadline,
+provider/inventory mismatch, drain, cleanup, or retirement action was found or
+performed.
+
+**Bottleneck and evidence.** The R5 researcher completed all four offline
+execution artifacts in `262.555` seconds and preserved `/v1/completions`,
+unchanged frozen request bodies, bounded HTTP-error evidence, and an
+unconsumed candidate arm. The director then correctly caught before claim that
+the custom owner could exit at its absolute deadline or after an unrepaired
+invalid result without generation-fenced release, stranding a claimed bench
+without a heartbeat owner. That is a bounded same-project owner repair, not a
+reason for more static validation, a new project, or a cold allocation.
+
+The independent throughput gap is separate: `STATUS.md` shows no runnable
+scientific project besides paused R5, and the current director explicitly
+entered an `empty-portfolio fast path` focused only on that serial lineage.
+The campaign remains open, the scheduler exposes five researcher slots, and
+current state reports about `$13.701988` available beyond the two existing
+reservations. This violates the campaign's requested direct-endpoint plus
+independent-deep-lane mix and risks returning to an empty portfolio when R5
+terminates.
+
+**Action and expected effect.** I left the R5 bytes, claim gate, bench, and
+scientific portfolio unchanged and used this durable supervisor handoff to
+wake the director with only the missing opportunity class. Keep the corrected
+endpoint owner repair in the same project, while admitting at least one
+materially independent telemetry-derived source, kernel, simulation,
+representation, or hardware-analysis lane that does not share the R5 claim,
+bench, or artifacts. The director—not the supervisor—selects that hypothesis.
+This should use otherwise idle agent capacity to produce objective-relevant
+evidence while the urgent warm-H200 lane is repaired, without delaying R5,
+adding validation ritual, or answering its integration defect with another
+project.
+
+## 2026-07-30T06:23Z — decide warm retention before provider deletion starts
+
+**GPU safety audit.** This cycle's single grouped Nebius census found only
+instance `computeinstance-e00t5s028ts52zp215`, now `DELETING`, with attached
+READY disks `computedisk-e00vsj169nacjazg4k` and
+`computedisk-e00rwewnz08e4fgt41`; the other two configured Nebius projects
+were empty. Inventory already marks
+`h200-dflash-r3-computeinstance-e00t5s028ts52zp215` draining and unclaimed,
+with its `06:20Z` lifecycle expiry durably recorded. In the recorded
+controller-user namespace, exact-ID watchdog
+`gemma4-fixed-floor-http-correction-20260730t0542z-watchdog.service` remains
+active/running as PID `580054` while deleting that instance and then those two
+disks. RunPod was not retried after its recent authenticated `403`; no other
+configured provider had a usable authenticated interface. There is no stale
+claim, missing provider resource, lost owner/watchdog, or supervisor cleanup
+action: provider state and inventory consistently describe safe in-progress
+cleanup, which I did not interrupt or retire.
+
+**Bottleneck and evidence.** R5 claimed the warm H200 at `06:14:06Z` and
+released it at `06:18:30Z` after three same-claim generations. G0 and G1 were
+recoverable pre-readiness custom-model integration failures; by G2 only a
+one-second SSH timeout fit before the execution deadline. Its terminal is
+therefore `repair_deadline_boundary` with `science_consumed:false`: no
+candidate request or objective-relevant endpoint result exists. The director
+woke at `06:18:45Z` to decide reuse versus cleanup, but the already armed
+watchdog entered deletion at `06:20Z` before that decision could protect the
+compatible resident state. The claim itself lasted about 264 seconds after
+roughly 35 minutes of paid warm idle, while the closest measured offline
+repair had taken 532 seconds. The real miss is lifecycle scheduling: a
+recoverable, unconsumed integration repair was admitted too near the
+irreversible cleanup boundary, so any continuation now pays a cold restart.
+
+**Small process correction and expected effect.** I amended the shared
+`research-director` skill so the cleanup watchdog's command start is the
+retain-or-clean decision boundary. A compatible unconsumed repair must now
+receive a started and verified replacement watchdog before the old one can
+enter provider deletion; otherwise the director records the positive drain
+reason and lets cleanup finish. A paid claim must also leave room for the
+closest measured restart, one retained repair, terminal/release, and watchdog
+handoff. This future-facing rule does not alter the active cleanup or choose
+the next scientific experiment. It should prevent another post-deadline reuse
+decision from converting a recoverable same-bench integration miss into
+avoidable cold setup, without adding validation gates or projects.
+
+## 2026-07-30T07:00Z — bind acquisition sources before declaring a cold owner ready
+
+**GPU safety audit.** One grouped Nebius census found exact agreement with
+inventory: instance `computeinstance-e00aehxdq8mpd68epd` is `RUNNING`, disk
+`computedisk-e00bqr4tbj817e02wx` is `READY`, and the other configured Nebius
+projects are empty. Bench
+`h200-r5-computeinstance-e00aehxdq8mpd68epd` is available and unclaimed. Its
+recorded controller-user watchdog
+`gemma4-r5-cold-20260730t0631z-watchdog.service` is active/running as PID
+`607919` in the exact recorded control group through `09:01:39Z`. There is no
+provider mismatch, stale claim, lost owner, passed deadline, or drain action.
+
+**Bottleneck and evidence.** The replacement H200 has been paid and idle since
+`06:44:00Z`. R5 packet closure took 257 seconds and the cold-owner seam took
+220 seconds, but `R5_COLD_BOOTSTRAP_READY.json` omitted concrete target/draft
+acquisition sources and the controller has no exact snapshots to transfer.
+The director correctly kept claim disabled and, at `06:58:48Z`, dispatched a
+third same-project offline closure for those manifests. The owner is
+resumable after bytes exist, yet was not executable from a blank cold host;
+declaring it ready created another serial handoff and about 16 minutes of
+paid idle instead of advancing the unchanged candidate-only endpoint.
+
+**Small process correction and expected effect.** I amended the shared
+`researcher` skill's existing cold-readiness rule: every immutable asset must
+bind a concrete reachable acquisition source or authenticated command,
+revision, complete file list, sizes/digests, and destination, and the owner
+must materialize its first missing file from only those declarations in a
+blank local fake root. This tightens the existing owner implementation
+contract rather than adding a separate validation project or touching the
+active R5 artifacts. Future cold-owner handoffs should arrive claimable in one
+turn and continue staging, repair, and science under one durable claim,
+eliminating this acquisition-manifest rediscovery and shortening paid idle.
+
+## 2026-07-30T07:38Z — hash completed producer bytes at claim opening
+
+**GPU safety audit.** This cycle's single grouped Nebius census exactly
+matched inventory: instance `computeinstance-e00aehxdq8mpd68epd` is
+`RUNNING`, disk `computedisk-e00bqr4tbj817e02wx` is `READY`, and the other
+two configured Nebius projects are empty. Bench
+`h200-r5-computeinstance-e00aehxdq8mpd68epd` remains available, unclaimed,
+and quiescent under controller-user watchdog
+`gemma4-r5-cold-20260730t0631z-watchdog.service`, active/running as PID
+`607919` in its recorded control group through `09:01:39Z`. RunPod was not
+retried after its recent authenticated-interface `403`. There is no provider
+mismatch, stale claim, owner loss, passed deadline, unsafe state, or drain
+action. Continued short retention is justified by the selected 176 MB
+component falsifier and the materially higher measured cold-restart cost.
+
+**Bottleneck and evidence.** The corrected norm candidate is the current
+objective-relevant H200 lane: its 147-row exact-byte corpus and exact-image
+sm90a compile are complete, while the independent mainloop-fusion lane remains
+active offline. The H200 execution researcher implemented the two delegated
+owner files in 184 seconds, but correctly failed closed before claim because
+the execution binding names `MECHANISM_REPAIR_TERMINAL.json` as
+`02cf61cca0...` while its current bytes are `b1d8254ee3...`. The reservation
+had frozen `02cf...` while the producing researcher was still active; that
+researcher finalized the terminal before completing at `07:26:34Z`, and the
+later claimable execution binding copied the provisional digest instead of
+hashing the completed bytes. No GPU claim or scientific sample was consumed,
+and the director has been woken on the exact repairable conflict.
+
+**Small process correction and expected effect.** I amended the shared
+`research-director` skill's existing concurrency reconciliation: artifacts
+owned by an active researcher remain mutable even when named terminal; spend
+may be requested provisionally, but claim stays disabled until the producer
+completes, and the claim-opening mutation must hash all current local bytes in
+one grouped command rather than inherit reservation digests. This does not
+alter the candidate, binding, active researcher, bench, or portfolio, and it
+adds no separate validation project. It should remove this stale-hash
+director/researcher round trip and let future retained benches move directly
+from completed source evidence into the same mutable claim and GPU run.
+
+## 2026-07-30T08:09Z — preserve the failed worker phase in repair scope
+
+**GPU safety audit.** One grouped Nebius census exactly matched inventory:
+instance `computeinstance-e00aehxdq8mpd68epd` is `RUNNING`, disk
+`computedisk-e00bqr4tbj817e02wx` is `READY`, and the other two configured
+Nebius projects are empty. The H200 claim remains owned by
+`gemma4_h200_current_norm_fp8_hotblock` with current 30-second heartbeats.
+Controller PID owner `665822` matches recorded start ticks, and controller-user
+watchdog `gemma4-r5-cold-20260730t0631z-watchdog.service` is active/running as
+PID `607919` in its recorded control group through `09:01:39Z`. RunPod was not
+retried after its recent authenticated-interface `403`. There is no provider
+mismatch, stale claim, owner loss, passed deadline, unsafe state, or drain
+action.
+
+**Bottleneck and evidence.** The corrected norm component is still the direct
+objective-relevant lane, with the down-projection mechanism progressing
+independently offline. At `08:02:14Z` its retained owner attempted the bound
+worker, which returned nonzero with `../worker.stdout: Permission denied`
+before an invocation-state file, CUDA marker, output row, or terminal existed.
+The owner nevertheless advanced to terminal retrieval and published
+`retry_scope: terminal_retrieval`. The first repair request was consumed at
+`08:04:15Z`, repeated only the impossible retrieval, and produced the same
+missing-terminal diagnostic at `08:04:16Z`. That wasted one repair generation
+and required a director-bound same-claim owner transition; no scientific
+sample was consumed and the live claim was correctly retained.
+
+**Small process correction and expected effect.** I amended the shared
+`researcher` skill at the existing repair-owner contract: an owner may advance
+only after the current phase's success predicate passes, and a nonzero worker
+exit must publish repair-ready at the worker or launcher phase before
+retrieval. A downstream missing terminal may not narrow the retry entrypoint
+past that known failure. This is a future-facing owner behavior correction,
+not another static validation gate or project, and it does not modify the live
+owner or the director's in-progress standby-first same-claim handoff. Future
+permission, command, and launcher defects should resume directly under the
+same owner without spending a retrieval-only generation or coordinator turn.
+
+## 2026-07-30T08:16Z — fence the ownerless retained H200 claim
+
+**GPU safety audit.** One grouped Nebius census exactly matched inventory:
+instance `computeinstance-e00aehxdq8mpd68epd` is `RUNNING`, disk
+`computedisk-e00bqr4tbj817e02wx` is `READY`, and the other two configured
+Nebius projects are empty. The controller-user provider watchdog
+`gemma4-r5-cold-20260730t0631z-watchdog.service` remains active/running as PID
+`607919` in its recorded control group through `09:01:39Z`. RunPod was not
+retried after its recent authenticated-interface `403`. Provider reality is
+otherwise exact and no provider cleanup was attempted.
+
+**Actionable owner mismatch and evidence.** Inventory still named PID
+`665822`/start ticks `151424737` as the claim owner, but that controller PID no
+longer exists. Its last pool heartbeat was `08:13:11Z`. The authorized R2
+standby PID `675961` started at `08:13:19Z`, wrote readiness before its dynamic
+executor census, then exited at `08:13:22Z` with
+`competing_remote_executor`; it is not live. The remaining PID `669786` is
+only the predecessor's orphaned `repair-handshake wait` child and does not
+own heartbeats, terminal retrieval, or release. At the audit snapshot, the
+active researcher had another foreground transition attempt in progress but
+no replacement controller owner was durably live. The claim was therefore
+objectively ownerless even though its long lease had not yet become
+time-stale, and `STATUS.json.active_session` still pointed to the dead
+predecessor.
+
+**Safety action and expected effect.** Per the supervisor safety rule I marked
+bench `h200-r5-computeinstance-e00aehxdq8mpd68epd` draining via the pool. This
+sets `drain_after_release:true` without releasing the existing claim, stopping
+the active transition, or touching provider resources. The director must
+reconcile exact Nebius resource IDs
+`computeinstance-e00aehxdq8mpd68epd` and
+`computedisk-e00bqr4tbj817e02wx`: if a standby-first replacement becomes
+durably live it may finish the already-bound same-claim component before the
+hard fence; otherwise release and perform provider cleanup. The fence prevents
+an ownerless lease from silently returning to availability or being reused
+without lifecycle reconciliation. No additional skill change was made because
+the shared researcher contract already requires replacement readiness to
+prove the first dynamic execution boundary before predecessor shutdown; the
+live implementation failed that existing rule.
+
+## 2026-07-30T08:29Z — restore research runway after verified H200 cleanup
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+projects returned zero instances and zero disks. Inventory now has zero
+non-retired benches: `h200-r5-computeinstance-e00aehxdq8mpd68epd` was released
+at `08:21:55Z` and retired with cleanup verified at `08:25:56Z`; exact provider
+IDs `computeinstance-e00aehxdq8mpd68epd` and
+`computedisk-e00bqr4tbj817e02wx` are absent. The controller-host watchdog PID
+`607919` is gone after cleanup, there is no claim or deadline left to police,
+and measured provider exposure is 6,856.703 seconds / `$4.6663674508`.
+RunPod was not retried after its recent authenticated-interface `403`. There
+is no provider/inventory mismatch, stale registered claim, unsafe bench, or
+remaining drain action.
+
+**Actionable portfolio mismatch and evidence.** The cleanup director correctly
+paused `gemma4_h200_current_norm_fp8_hotblock` as scientifically unconsumed and
+returned after the lifecycle terminal. That left zero active researchers and
+no direct or independent lane, while `CAMPAIGN.md` remains open and the live
+spend ledger exposes `$70.882481386` available. This is not objective progress:
+the norm run consumed a 24-minute claim and cold lifecycle without an
+interpretable component result. Meanwhile the already-completed independent
+`gemma4_h200_fp8_downproj_residual_norm_fusion` terminal provides a concrete
+source candidate and an unfunded exact M=1/16/32 H200 consumer contract for
+director adjudication; no additional readiness or static-validation project
+is needed.
+
+**Expected effect.** The next director turn should perform the existing
+empty-portfolio rebalance before returning: select the best current
+objective-relevant path, make at least one lane durably runnable or record a
+genuine external blocker, and avoid converting the recoverable-integration
+failure into another chain of preparation projects. This supervisor does not
+choose or execute the scientific successor. No skill or harness edit was made
+because `research-director/SKILL.md` already explicitly requires replacement
+in the same turn before closing the final active project; the missing action
+is compliance with that existing contract.
+
+## 2026-07-30T08:39Z — settle closed reservations before post-director refill
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+projects returned zero instances and zero disks, exactly matching the zero
+non-retired benches in `runtime/gpus.json`. There is no registered claim,
+owner, watchdog, passed deadline, or idle paid bench. RunPod was not retried
+after its recent authenticated-interface `403`. No drain or provider action
+was required.
+
+**Bottleneck and evidence.** The `08:31Z` director rebalance restored the
+source-complete H200 down-projection component and the independent zero-GPU
+cross-tick scheduler lane. The scheduler lane started at `08:36:30Z`, so the
+portfolio is no longer empty. The H200 lane was nevertheless deferred once
+per scheduler pass because three bench-free, non-runnable projects still held
+`$26.50` of reservation ceiling. The director correctly changed those
+dispositions to completed/blocked at `08:36:29Z`, but the event loop did not
+settle them after director completion: it emitted another
+`spend_cap_exceeded` at `08:36:30Z`, waited for the fallback, settled at
+`08:37:29Z`, and reserved the selected `$3.00` lane at `08:37:30Z`. This cost
+one minute and another director wake despite all decision-bearing state being
+durable.
+
+**Small harness correction and expected effect.** I added a post-director
+call to the existing guarded reservation settlement before status render and
+researcher refill. It passes the actual active-researcher labels and retains
+the existing live-GPU and active/ready/paused protections, so it cannot settle
+authority still owned by running work or a provider resource. A regression
+test proves that a completed old reservation is settled before a newly
+admitted successor reserves, with no intermediate cap deferral; all 86 harness
+tests pass. The running harness has not loaded this behavior: it reported
+loaded digest `83c44c38…`, current digest `2c9655d8…`, and
+`harness_reload_requested` with disposition
+`drain_active_agent_turns_then_reload`. Reload is therefore pending until the
+current zero-GPU researcher and director turns finish. Future close-and-admit
+transitions should reserve immediately after the director decision instead of
+waiting a fallback interval and consuming an extra reconciliation turn.
+
+## 2026-07-30T09:28Z — route pre-science owner terminals back to warm repair
+
+**GPU safety audit.** One grouped Nebius census across all three configured
+projects exactly matched inventory: instance
+`computeinstance-e00qft1sf416qp6knw` is `RUNNING`, managed boot disk
+`computedisk-e00qh5cnm6kk3sa8fe` is `READY`, and the other two projects are
+empty. The recorded controller-user watchdog
+`gemma4-downproj-h200-20260730t0902z-watchdog.service` is active/running as PID
+`698227` in its exact control group through `10:12:54Z`. At the census
+snapshot the claim heartbeat was current; the owner subsequently released the
+bench to maintenance at `09:24:55Z`, before its deadline. The director's
+single guest check at `09:27:18Z` found zero compute processes, zero
+containers, and the pinned SGLang image resident. The bench is safe and its
+roughly 10-minute image pull is reusable, so recommend immediate same-bench
+repair rather than drain or cold replacement. No provider cleanup or
+inventory retirement was performed.
+
+**Measured bottleneck.** The claim lasted `683.632` seconds. Nearly all useful
+wall time went to pulling the pinned image; the first extension build then
+failed in 11 seconds because pinned Torch lacks
+`at::cuda::getDefaultCUDAStream`. Exact terminal
+`H200_COMPONENT_TERMINAL.json` says
+`classification: recoverable_integration_defect`, `state: pre_science`,
+`science_started: false`, `candidate_cuda_started: false`, and zero rows.
+Nevertheless `h200_component_owner.py` explicitly released the healthy claim
+instead of entering its retained repair path. The old harness recovery
+detector understood only the archived
+`RECONCILED_TERMINAL.json`/`REMOTE_WORKER_TERMINAL.json` schema, so the
+immediate researcher received generic reconciliation guidance and marked the
+project blocked at `09:27:04Z` rather than preparing the narrow stream-API
+patch for resident-state reuse.
+
+**Small harness correction and expected effect.** I extended
+`LabHarness._terminal_durable_repair` to recognize an artifact-root
+`remote_terminal.json` only when it explicitly carries the above
+recoverable/pre-science/no-science predicate. The researcher prompt now calls
+that evidence invalid integration rather than a project close, directs a
+local patch while preserving the image/build cache, and gives the director
+the exact maintenance bench to re-ready before reclaim. A regression test for
+this live schema and the existing archived-schema test both pass via
+`python3 -m unittest`. This does not add validation or a successor project; it
+shortens recovery from a typed compile/API defect to the unstarted GPU
+operation on the same paid bench. The running harness still has digest
+`2c9655d8…`; source digest `f4fe5dfc…` is pending the already-requested
+drain-active-turns reload, so the current director recovery must be judged
+against the old routing.
+
+## 2026-07-30T10:03Z — consume generation-matched repair requests once
+
+**GPU safety audit.** One grouped authenticated census across all three
+configured Nebius projects and RunPod exactly matched inventory: instance
+`computeinstance-e00qft1sf416qp6knw` is `RUNNING`, disk
+`computedisk-e00qh5cnm6kk3sa8fe` is `READY`, the other projects and RunPod are
+empty, and the sole H200 claim has a current heartbeat. The recorded
+controller-user watchdog
+`gemma4-m384-attention-h200-20260730t0948z-watchdog.service` is
+active/running as PID `722446` in its exact control group through `10:53Z`.
+No drain, cleanup, or inventory retirement was performed.
+
+**Measured bottleneck.** The retained M384 owner reached a typed
+pre-CUDA/pre-science producer-capture boundary while keeping the warm claim
+alive. `REPAIR_READY.json` names generation `m384-producer-capture-1`, and
+the researcher wrote `REPAIR_REQUEST.json` for that same `repair_id`, but the
+owner has no executable retry entrypoint and requires director rebind.
+`LabHarness._pending_durable_repair_ready` considered a request consumed only
+when it carried `ready_sha256`; it therefore treated the already-requested
+generation as perpetually new. The harness launched a second researcher turn,
+which ended `no_progress` after `100.419` seconds, and then launched a third
+against the unchanged request while the director was already preparing a
+standby-first same-claim recovery.
+
+**Small harness correction and expected effect.** A matching nonempty
+`repair_id` now consumes the corresponding ready generation just as an exact
+`ready_sha256` does; a changed ready generation without either match still
+wakes normally. The new regression and the existing new-generation test pass
+via `python3 -m unittest` (2 tests). This removes duplicate researcher turns
+after a generation-specific repair has already been requested, leaving the
+live claim and director-owned same-claim amendment undisturbed. The running
+harness still has source digest `f4fe5dfc…`; patched digest `ad6f5b96…` is
+correctly deferred because the M384 PID-managed owner is live. Judge the
+current R2 recovery against the old routing and expect the effect only after
+that owner ends and the harness safely reloads.
+
+## 2026-07-30T10:15Z — discover named repair markers in child generations
+
+**GPU safety audit.** One grouped authenticated Nebius/RunPod census again
+exactly matched inventory: the sole instance
+`computeinstance-e00qft1sf416qp6knw` is `RUNNING`, disk
+`computedisk-e00qh5cnm6kk3sa8fe` is `READY`, and every other configured
+project and RunPod are empty. Controller-user watchdog PID `722446` is
+active/running in its exact control group through `10:53Z`. The original
+claim remains current, and its standby-first transition succeeded without a
+release/reclaim: R2 PID `738926` matches recorded start ticks `152238109`.
+No provider or inventory lifecycle was mutated.
+
+**Measured bottleneck.** R2 preserved the warm claim and failed before CUDA
+or science because `M384_MODEL_PATH` was not supplied. Its dispatcher
+correctly persisted the next bounded repair at
+`r2/REPAIR_READY_R2.json`. After the preceding generation-matching fix,
+`LabHarness._pending_durable_repair_ready` would consume the stale root
+generation-1 request, but its scan covered named markers only at the declared
+artifact root and plain `REPAIR_READY.json` one directory below. The live
+named child marker was therefore invisible to the corrected routing.
+
+**Small harness correction and expected effect.** The existing bounded scan
+now also includes one-level child `REPAIR_READY_*.json` markers. A regression
+for the exact R2 layout plus the generation-consumption and changed-generation
+tests pass via `python3 -m unittest` (3 tests); applying the helper to the
+live project selects exactly `r2/REPAIR_READY_R2.json`. This lets a
+dispatcher-capable retained owner request its next in-place repair without
+falling back to a stale predecessor marker or another project. The running
+harness still has digest `f4fe5dfc…`; patched digest `9a243cf8…` remains
+pending a safe reload after the live PID-managed R2 ends, so the current
+`M384_MODEL_PATH` repair must still be judged against old routing.
+
+## 2026-07-30T10:38Z — retain a recoverable bench through active acquisition
+
+**GPU safety audit.** One grouped authenticated census found all three
+configured Nebius projects and RunPod empty, exactly matching the absence of
+non-retired inventory records. There is no live owner, watchdog, claim,
+deadline, idle bench, provider mismatch, or lifecycle action for the
+supervisor to fence.
+
+**Measured bottleneck.** The M384 H200 was provider-cleaned at
+`10:22:31Z` after an unconsumed pre-Docker/pre-CUDA acquisition failure even
+though the director simultaneously kept the same scientific line active for
+bounded offline selective-weight recovery. That recovery produced a
+revision-pinned official-module contract over only `642,714,624` bytes at
+`10:28Z`, roughly six minutes after cleanup. The director has now durably
+reserved the same project to cumulative `$5.25` for a new 80-minute H200
+lifecycle. The deleted bench was safe under its controller-user watchdog
+through `10:53Z`; its six-minute idle exposure at `$2.45/hour` would have been
+about `$0.245`. The same bench's measured cold interval from provider start
+at `09:02:54Z` to first ready at `09:31:48Z` was `1,734.312` seconds and
+about `$1.1803`, so retention had an approximately 23-minute / `$0.935`
+break-even advantage before even counting repeated provider creation. This is
+a cold restart after a recoverable integration error, not a scientific
+portfolio change.
+
+**Small process correction and expected effect.** The shared
+`research-director` skill now states the existing warm-reuse rule as a
+top-level lifecycle invariant: while a bounded same-lineage repair or
+acquisition is active and idle cost is below measured cold restart, release
+to maintenance if needed, request the cumulative reservation increase under
+the live watchdog, and defer deletion until the repair returns. The explicit
+exceptions remain unsafe or incompatible state, a lifecycle that cannot be
+extended safely, or unavailable spend authority. This should keep the next
+recoverable pre-science failure on its mutable bench and remove one provider
+create plus the avoidable cold interval without constraining the director's
+scientific choice or touching the currently funded execution.
+
+## 2026-07-30T10:45Z — fence duplicate registrations of one H200 resource
+
+**GPU safety audit.** The cycle's one grouped authenticated census found
+Nebius instance `computeinstance-e00x8kg5j0ndhvw2qt` `RUNNING` and disk
+`computedisk-e00nge39xwr92ms8vc` `READY` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two Nebius projects and RunPod
+were empty. Provider reality therefore contains one H200 allocation, but
+inventory registered it twice as
+`h200-m384-selective-gemma4-m384-selective-h200-20260730t1040z` at
+`10:41:36Z` and
+`h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt` at `10:43:01Z`.
+Both records were unclaimed in maintenance and name the same instance, disk,
+IP, and project.
+
+**Actionable lifecycle mismatch and safety action.** The duplicate records
+also carried two live controller-user watchdogs:
+`gemma4-m384-selective-h200-20260730t1040z-watchdog.service` PID `753972`
+and
+`gemma4-m384-selective-h200-20260730t1040z-final-watchdog.service` PID
+`754193`, each active/running in its recorded control group through about
+`12:00Z`. One provider resource cannot safely have two claimable inventory
+identities and two cleanup owners. I marked both registered bench IDs
+draining before identity probing or claim, without stopping either watchdog,
+touching the guest, or performing provider cleanup. The director must
+reconcile the two records and watchdogs against exact instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and disk
+`computedisk-e00nge39xwr92ms8vc`; cleanup and inventory retirement remain
+director-owned.
+
+**Small shared-tool correction and expected effect.** `GpuPool.register`
+now rejects a new non-retired bench when the same provider already has the
+same `instance_id` or `pod_id` registered under another bench ID. The new
+regression recreates this exact maintenance-registration collision, verifies
+the second registration fails with the owning bench identity, and confirms
+only one record remains. All 24 `test_gpu_pool` tests pass. Future provider
+create retries or reconciliation turns should fail before publishing a
+second claim surface or watchdog owner, while registration after verified
+cleanup and retirement remains allowed.
+
+## 2026-07-30T11:12Z — let repair-capable claim sessions retain on exceptions
+
+**GPU safety audit.** The cycle's successful grouped authenticated census at
+`11:08:39Z` found exactly RUNNING Nebius H200 instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and READY disk
+`computedisk-e00nge39xwr92ms8vc` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+and RunPod were empty. This matches the sole non-retired inventory record.
+Its controller-host user watchdog
+`gemma4-m384-selective-h200-20260730t1040z-final-watchdog.service` is
+active/running as recorded PID `754193` in the exact recorded control group
+through `12:00:20Z`. The bench is safe and the compatible same-lineage warm
+recovery is already admitted, so its `$2.45/hour` idle interval is justified;
+no drain, provider cleanup, or inventory retirement was performed.
+
+**Measured bottleneck.** The exact M384 owner held the claim from
+`10:55:18Z` through `11:05:22Z`, pulled the pinned SGLang image, and completed
+the revision-pinned `642,714,624`-byte selective stage. It then failed before
+CUDA because the runner opened an unproduced
+`/work/stage/producer_packet.json`. Although the failure was typed
+recoverable and no scientific sample was consumed, the owner's exception
+path and `GpuClaimSession.__exit__` released the healthy claim to maintenance.
+The director correctly re-readied the same retained image/stage at
+`11:10:37Z` under warm-recovery binding `9990297d…`, avoiding provider
+teardown, but the release still added a maintenance/re-admission detour to an
+otherwise patchable resident-state failure.
+
+**Small shared-tool correction and expected effect.** `GpuClaimSession` now
+accepts explicit `release_on_exception=False`. In that opt-in mode an
+exception may propagate to the repair-capable owner's outer handler while the
+same generation-fenced session continues heartbeating; the owner must later
+release explicitly after repair or a terminal fence. The existing default
+remains release-on-exception, so owners without an executable repair loop do
+not leave ownerless claims. The researcher skill now names the exact opt-in
+for repair-capable owners. A regression proves the claim remains claimed,
+advances its heartbeat after the exception, and releases available after the
+repair; all five `test_gpu_claim_session` tests and the repository DevEx check
+pass. Future owners using this mode can patch and rerun only the invalidated
+consumer against resident state without the maintenance/re-admission gap,
+while the active warm recovery remains untouched.
+
+## 2026-07-30T11:25Z — reject a non-conforming offline repair terminal
+
+**GPU safety audit.** The cycle's one grouped authenticated census at
+`11:23:37Z` found exactly RUNNING Nebius instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and READY disk
+`computedisk-e00nge39xwr92ms8vc` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+and RunPod were empty. This exactly matches the sole non-retired inventory
+record. The bench is unclaimed in maintenance, its controller-host user
+watchdog
+`gemma4-m384-selective-h200-20260730t1040z-final-watchdog.service` remains
+active/running at recorded PID `754193` in the exact recorded control group,
+and its `12:00:20Z` deadline has not passed. There is no missing or
+unregistered provider resource, stale claim, lost lifecycle owner, or safety
+reason to drain. Retention at `$2.45/hour` remains justified for the
+compatible same-lineage source repair and possible warm reuse: the repair
+returned in about five minutes, well inside the previously measured
+approximately 23-minute cold-restart break-even.
+
+**Actionable execution-contract mismatch.** The bounded offline repair
+correctly avoided claiming, SSH, CUDA, teardown, and cold restart, and it
+changed only the three director-authorized project files. However, its
+published `STOCK_ADAPTER_OFFLINE_REPAIR_TERMINAL.json` is not the bound
+success terminal. Binding `1169c9dd…` requires classification
+`stock_adapter_and_repair_owner_source_complete` and the top-level fields
+`pinned_runtime_commit`, `stock_symbol`, `runner_sha256`, `owner_sha256`,
+`dynamic_offline_checks`,
+`source_complete_from_retained_stage_through_ledger`,
+`repair_dispatcher_executable`, and `claim_allowed`. The artifact instead
+uses classification `offline_stock_adapter_and_repair_owner_complete`, omits
+those fields, and reports only `python3 -m py_compile` plus AST/path
+assertions even though the binding explicitly says static source checks are
+insufficient. It therefore does not authorize another H200 claim or
+re-ready, irrespective of the apparent source edits.
+
+**Expected effect.** The active director is already auditing the completed
+repair and should keep the exact bench in maintenance until it either obtains
+the prescribed dynamic, schema-conforming offline terminal or binds a
+different safe execution decision. If it does re-admit the component, the
+new owner must use the already-added `release_on_exception=False` retained
+repair path so an integration defect is patched against resident state
+instead of causing another maintenance release or cold restart. No new
+validation layer, project, provider action, or active-experiment mutation was
+added in this supervisor turn.
+
+## 2026-07-30T11:40Z — generation-fence retained-claim replacement owners
+
+**GPU safety audit.** The cycle's one grouped authenticated census at
+`11:36:37Z` found exactly RUNNING Nebius instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and READY disk
+`computedisk-e00nge39xwr92ms8vc` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+and RunPod were empty. This exactly matched the sole non-retired inventory
+record. Its controller-host user watchdog
+`gemma4-m384-selective-h200-20260730t1040z-final-watchdog.service` remained
+active/running at PID `754193` in the recorded control group, with its
+`12:00:20Z` deadline unpassed. No provider resource is missing or
+unregistered, and no lifecycle drain or provider action is warranted.
+
+**Measured bottleneck.** The final warm owner claimed the retained H200 at
+`11:32:35Z` and kept it heartbeating, but its first worker and its in-owner
+repair retry both failed before `science_started.json` on an installed
+Transformers RoPE API mismatch. The repair handler then threw, so PID
+`781472` exited while the claim remained. A researcher correctly patched the
+resident path and started replacement PID `786440` on the original
+`claimed_at=2026-07-30T11:32:35.937944Z` generation rather than releasing or
+cold-starting. That replacement heartbeated at `11:38:10Z` and `11:38:30Z`,
+but a further pre-science RoPE mismatch reached the already-used repair ID;
+`repair-handshake hold` returned `repair_request_already_exists`, and the
+owner released the still-healthy bench to maintenance at `11:38:46Z`. No
+science marker, CUDA sample, or component terminal exists. This is an
+avoidable claim-owner/re-admission gap after a recoverable integration error,
+not a scientific result. The active director owns any remaining warm reuse
+decision before the existing watchdog fence.
+
+**Small shared-tool correction and expected effect.** `GpuClaimSession` now
+accepts `expected_claimed_at` for a replacement process. In that mode it
+attaches only to the exact existing project, bench, and claim generation
+without creating a new claim; a mismatched generation is rejected before a
+heartbeat or experiment mutation. All heartbeat calls are now also
+generation-fenced at the pool operation. The researcher skill requires this
+argument for replacement-owner handoffs instead of relying on project
+identity alone. Two regressions prove exact-generation attachment and
+mismatch rejection without altering the retained claim; all seven
+claim-session tests pass. The replacement PID had already loaded the prior
+module before this patch, so the observed release must be judged against the
+old behavior and the correction applies to subsequent replacement
+handoffs. This makes continued repair on resident state safe without adding
+static validation, another project, or any provider lifecycle mutation.
+
+## 2026-07-30T11:48Z — commit warm launch bindings once
+
+**GPU safety audit.** The cycle's one grouped authenticated census at
+`11:45:20Z` found exactly RUNNING Nebius instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and READY disk
+`computedisk-e00nge39xwr92ms8vc` in project
+`project-e00h1vhmpr00vbmfd5k7pg`; the other two configured Nebius projects
+and RunPod were empty. This exactly matches the sole non-retired inventory
+record. The bench is available and unclaimed, and its controller-host user
+watchdog
+`gemma4-m384-selective-h200-20260730t1040z-final-watchdog.service` is
+active/running at recorded PID `754193` in the exact recorded control group
+through `12:00:20Z`. No provider resource is missing or unregistered, no
+claim or lifecycle deadline is stale, and no drain or provider action is
+warranted. The compatible same-project RoPE repair is now the explicit sole
+claimant by `11:49Z`, so the short `$2.45/hour` idle handoff remains justified.
+
+**Measured bottleneck.** The previous claim ran from
+`11:32:35.937944Z` to `11:38:46.620998Z` and released to maintenance after
+the already-used repair ID rejected a second localized pre-science RoPE
+defect. The director correctly retained and re-readied the same quiescent H200
+instead of deleting it, but its `11:38:05Z` turn spent about nine minutes
+publishing and rehashing the same warm-repair decision. The trace records
+binding digests `cf7ffc49…`, `9bafd1de…`, `257fa82e…`, and finally
+`235b6d37…`, with successive `bench_ready` writes at `11:43:45Z`,
+`11:45:16Z`, and `11:46:07Z`, because each final check narrowly missed the
+120-second scheduling runway. The final check passed at `11:46:58Z` with
+121.884 seconds remaining to claim and only six minutes to the hard release.
+At `11:47:09Z`, a previously queued `supervisor_changed` safety wake
+dispatched another director before the researcher could be admitted. Its
+attempted `11:52Z` amendment again missed the runway check at `11:50Z`, so it
+correctly revoked the now-infeasible unstarted claim path for watchdog cleanup;
+the scientific arm remained unconsumed. The repeated
+binding/status/inventory churn therefore consumed the warm execution window
+without producing model evidence.
+
+**Small skill correction and expected effect.** The research-director timing
+contract now requires one buffered final fence computation followed by one
+linked binding/status/log/inventory mutation and immediate return. It forbids
+minute-by-minute rewrites merely to chase the 120-second floor; after one
+failed final check the director may publish one newly computed feasible fence
+and verify it once, or keep the project offline. This does not alter the
+current binding, provider lifecycle, scientific scope, or active experiment.
+Future warm repairs should reach the harness several minutes earlier with one
+stable digest, leaving more of the absolute release window for decision-bearing
+GPU execution.
+
+## 2026-07-30T17:46Z — surface recent non-active project handoffs
+
+**GPU safety audit.** One grouped authenticated census at `17:42:58Z` found
+all three configured Nebius projects and RunPod empty. The inventory contains
+54 retired benches and no non-retired record, claim, lifecycle owner, deadline,
+or idle exposure. No GPU event has occurred since the final retirement at
+`12:03:00Z`; no drain or provider action is warranted.
+
+**Measured bottleneck.** A new zero-GPU result landed in the paused
+`gemma4_trained_mtp_assistant_finetune` project: the 46,450-parameter CPU
+decoder trained in 3.90 seconds but accepted only 3.005 draft tokens versus
+3.934 for the existing in-request n-gram control, so it correctly does not
+promote. `STATUS.json` was finalized at `17:41:29.895Z`, 77 ms before a
+director started at `17:41:29.972Z`. The director prompt exposed only the
+active portfolio and old director/supervisor log tails, so the turn took the
+stale no-change path and did not consume this measured negative. This is a
+handoff-visibility defect, not evidence for another project or GPU allocation;
+exhausted paid authority remains the campaign-level constraint.
+
+**Small harness change and expected effect.** The director prompt now includes
+the three most recently modified non-active `STATUS.json` handoffs, with only
+project ID, state, summary, next action, and timestamp. This makes a newly
+completed or paused result visible even when it arrives outside a harness
+researcher-completion wake, without scanning full logs or reopening its
+science. `py_compile` and an isolated prompt-ordering check passed. Source
+SHA-256 is `5b22fb52ca81a1cbf239005779404881abe3a722c0c926863db2164d1663d60f`;
+the running harness recorded `harness_reload_requested` at `17:45:57Z`, so the
+change is pending its safe post-supervisor reload and live behavior must still
+be judged against the previously loaded source until then. Expected effect:
+the next director decision sees fresh terminal/paused evidence instead of
+silently treating it as an unchanged empty portfolio.
+
+## 2026-08-16 — controller filesystem exhaustion
+
+**GPU safety audit.** One grouped authenticated census found all configured Nebius projects and RunPod empty, exactly matching 54 retired inventory records. There are no claims, lifecycle owners, deadlines, idle benches, or new GPU events, so no drain or provider action is warranted.
+
+**Operational bottleneck.** The controller root filesystem is still at 100% usage with zero reported free space, and `runtime/events.jsonl` records `scheduler_failed` at `2026-08-13T13:58:13.582553Z` with `OSError: [Errno 28] No space left on device`. No project log, researcher/director trace, timing result, GPU outcome, campaign objective, or spend state changed; the remaining `$0.102955` still cannot fund the measured cold GPU lifecycle. The lab runtime is about 1.4 GB, so deleting scientific traces would not materially repair a full 2 TB filesystem and was not attempted.
+
+**Expected effect.** The director or controller operator should free or expand controller-host storage outside the research evidence tree before relying on durable scheduling. Restoring write headroom prevents trace/event loss and scheduler startup failure while preserving all experiment evidence. No harness, project, provider, or active-experiment mutation was made because storage reclamation is host-level lifecycle work, not a safe lab-local change.
+
+## 2026-08-16 — controller storage blocker recurred
+
+**Evidence.** The grouped GPU census remains empty and consistent with all 54 retired records, with no claims or new GPU events. The controller filesystem still reports 100% usage and zero free space. After the prior storage handoff, `runtime/events.jsonl` recorded another `scheduler_failed` at `2026-08-16T12:21:30.795593Z` with `OSError: [Errno 28] No space left on device`. No project, trace outcome, timing result, spend state, or scientific evidence changed.
+
+**Expected effect.** Treat controller-host storage reclamation or expansion as required external recovery rather than an advisory cleanup. Do not delete the lab's scientific traces: its runtime remains immaterial relative to the full 2 TB filesystem. Restoring durable write headroom should stop repeated scheduler loss; the campaign still requires additional spend authority before any admissible GPU experiment can resume. No lab-local harness or provider mutation was safe while the filesystem had zero free space.

@@ -410,7 +410,7 @@ if triton is not None:
             other=0.0,
         )
         k_offsets = (
-            keys[None, :] * GLOBAL_KV_HEADS * BLOCK_D
+            keys[None, :] * 4 * BLOCK_D
             + kv_head * BLOCK_D
             + dimensions[:, None]
         )
@@ -439,7 +439,7 @@ if triton is not None:
         probabilities /= tl.sum(probabilities, axis=1)[:, None]
 
         v_offsets = (
-            keys[:, None] * GLOBAL_KV_HEADS * BLOCK_D
+            keys[:, None] * 4 * BLOCK_D
             + kv_head * BLOCK_D
             + dimensions[None, :]
         )

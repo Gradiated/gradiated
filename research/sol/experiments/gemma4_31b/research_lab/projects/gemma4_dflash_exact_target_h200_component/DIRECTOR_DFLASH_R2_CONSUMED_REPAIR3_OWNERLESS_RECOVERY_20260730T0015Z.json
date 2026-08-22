@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T00:14:58Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "prepare_ownerless_same_claim_consumed_repair3_recovery",
+  "supersedes_binding": "DIRECTOR_DFLASH_R2_PARTIAL_ARCHIVE_REPLACEMENT_REPAIR_20260730T0012Z.json",
+  "supersedes_binding_sha256": "b81c04f3c5bbeda5db745b6bd9babb4d2dd82110af4c6e4ae9279ffd1cd68fd1",
+  "reason_for_supersession": "Owner 412747 consumed recovery-3 request and exited before the replacement handoff could become effective.",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "wall_clock_deadline_utc": "2026-07-30T00:21:00Z",
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claimed_at": "2026-07-29T23:49:13.529071Z",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "lost_owner": {
+    "pid": 412747,
+    "start_ticks": 148628701,
+    "confirmed_absent": true,
+    "state_path": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/RECOVERY_OWNER_STATE.json"
+  },
+  "consumed_repair": {
+    "repair_id": "dflash-h200-r2-recovery-20260730t0010z-recovery-3",
+    "repair_ready_sha256": "ed8c5b035df47c982b9953de526746a4b8d3dbcb402ab00983f60b3b8a5044bf",
+    "consumed_request": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/recovery-run/.repair-handshakes/dflash-h200-r2-recovery-20260730t0010z-recovery-3/REPAIR_REQUEST.12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433.consumed.json",
+    "consumed_request_sha256": "12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433",
+    "patch": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/RECOVERY_REPAIR3_PATCH.json",
+    "patch_sha256": "03aa2b4da6d01f9316ea513a72d95eff30b94ea38feb0bf61c3d2a117109ac12",
+    "packet_archive": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/dflash-component-repair3-generation-output-packet.tar",
+    "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "adoption": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/recovery-run/RECOVERY_ADOPTION_2_POST.json",
+    "adoption_sha256": "103355400df0f565d0a8f4ae88b36a79ed7b9996685beecd5c391a9df067fc35",
+    "snapshot_manifest_sha256": "c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4",
+    "retry_scope": "all",
+    "next_worker_generation": 3
+  },
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "historical_request_25_replay_allowed": false,
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "required_result": {
+    "artifact": "DFLASH_H200_R2_CONSUMED_REPAIR3_RECOVERY_READY.json",
+    "owner_source": "dflash_component_direct_recovery_owner_r2.py",
+    "requirements": [
+      "Verify the exact claim generation and all consumed_repair hashes before heartbeat, SSH, staging, CUDA, model load, or worker execution.",
+      "Retrieve and classify the existing remote run outside its live tree; require snapshot manifest c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4 and all three arms unstarted/unconsumed.",
+      "Adopt consumed repair 3 and packet e3f0bd4f... exactly once, then enter only worker generation 3. Never recreate the consumed request or replay workers 0, 1, or 2.",
+      "After every worker, retrieve and classify before any continuation. A recoverable result must enter a real repair-dispatch loop that consumes one hash-bound request and re-enters only its named invalidated scope.",
+      "On request-boundary rejection, publish a fresh diagnostic generation and keep the owner heartbeating rather than exiting ownerless.",
+      "Release only on a validated scientific terminal or typed deadline/incomplete disposition, always generation-fenced.",
+      "Publish exact detached-owner argv and offline validation without contacting the bench."
+    ]
+  },
+  "execution_fences": {
+    "owner_launch_authorized": false,
+    "new_claim_or_release_authorized": false,
+    "repair_request_authorized": false,
+    "ssh_docker_cuda_authorized": false,
+    "provider_lifecycle_authorized": false,
+    "worker_0_1_2_replay_allowed": false,
+    "latest_owner_release_utc": "2026-07-30T00:37:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T00:45:00Z",
+    "later_director_action": "Verify readiness and the exact ownerless claim once, publish a claim-generation-specific execution binding, and launch one detached owner."
+  }
+}

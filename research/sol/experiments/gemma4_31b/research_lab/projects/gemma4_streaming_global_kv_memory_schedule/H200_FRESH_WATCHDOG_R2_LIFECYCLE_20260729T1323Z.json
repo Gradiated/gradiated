@@ -1,0 +1,10 @@
+{
+  "provider_started_at_utc": "2026-07-29T12:47:49.361123Z",
+  "deadline_utc": "2026-07-29T14:38:00Z",
+  "watchdog": {
+    "unit": "gemma4-streaming-global-kv-fresh-20260729t1438z-watchdog-r2.service",
+    "unit_manager": "user",
+    "main_pid": 22052,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-streaming-global-kv-fresh-20260729t1438z-watchdog-r2.service"
+  }
+}

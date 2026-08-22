@@ -184,6 +184,53 @@ class RepairHandshakeTests(unittest.TestCase):
             self.assertEqual(changed.returncode, 2)
             self.assertIn("different_repair_ready_already_exists", changed.stderr)
 
+    def test_request_cannot_broaden_ready_scope(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            deadline = (
+                datetime.datetime.now(datetime.UTC) + datetime.timedelta(minutes=5)
+            ).isoformat()
+            marked = run(
+                "ready",
+                "--root",
+                str(root),
+                "--deadline",
+                deadline,
+                "--failure-kind",
+                "consumer",
+                "--diagnostic",
+                "failure.json",
+                "--retry-scope",
+                "consumer:resume",
+            )
+            self.assertEqual(marked.returncode, 0, marked.stderr)
+
+            broadened = run(
+                "request",
+                "--root",
+                str(root),
+                "--patch-artifact",
+                "patches/fix.json",
+                "--retry-scope",
+                "source_stage",
+            )
+            self.assertEqual(broadened.returncode, 2)
+            self.assertIn("repair_request_scope_mismatch", broadened.stderr)
+            self.assertFalse((root / "REPAIR_REQUEST.json").exists())
+
+            exact = run(
+                "request",
+                "--root",
+                str(root),
+                "--patch-artifact",
+                "patches/fix.json",
+                "--retry-scope",
+                "consumer:resume",
+            )
+            self.assertEqual(exact.returncode, 0, exact.stderr)
+            request = json.loads((root / "REPAIR_REQUEST.json").read_text())
+            self.assertEqual(request["retry_scope"], "consumer:resume")
+
     def test_wait_keeps_owner_blocked_until_hash_bound_request(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)
@@ -298,6 +345,58 @@ class RepairHandshakeTests(unittest.TestCase):
             )
             self.assertEqual(waited.returncode, 3, waited.stderr)
             self.assertEqual(json.loads(waited.stdout)["state"], "expired")
+
+    def test_hold_publishes_ready_and_blocks_until_request(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            deadline = (
+                datetime.datetime.now(datetime.UTC) + datetime.timedelta(seconds=5)
+            ).isoformat()
+            holder = subprocess.Popen(
+                [
+                    sys.executable,
+                    str(TOOL),
+                    "hold",
+                    "--root",
+                    str(root),
+                    "--deadline",
+                    deadline,
+                    "--failure-kind",
+                    "integration",
+                    "--diagnostic",
+                    "diagnostics/missing-command.json",
+                    "--retry-scope",
+                    "checkpoint stage only",
+                    "--poll-seconds",
+                    "0.01",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            ready = root / "REPAIR_READY.json"
+            for _ in range(100):
+                if ready.exists():
+                    break
+                time.sleep(0.01)
+            self.assertTrue(ready.exists())
+            self.assertIsNone(holder.poll())
+
+            requested = run(
+                "request",
+                "--root",
+                str(root),
+                "--patch-artifact",
+                "patches/checkpoint-stage.diff",
+            )
+            self.assertEqual(requested.returncode, 0, requested.stderr)
+            stdout, stderr = holder.communicate(timeout=2)
+            self.assertEqual(holder.returncode, 0, stderr)
+            result = json.loads(stdout)
+            self.assertEqual(result["state"], "requested")
+            self.assertEqual(
+                result["request"]["retry_scope"], "checkpoint stage only"
+            )
 
 
 if __name__ == "__main__":

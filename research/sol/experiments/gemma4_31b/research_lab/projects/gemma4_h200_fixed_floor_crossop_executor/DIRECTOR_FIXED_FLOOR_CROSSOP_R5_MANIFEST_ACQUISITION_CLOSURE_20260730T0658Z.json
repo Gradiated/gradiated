@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T06:58:00Z",
+  "classification": "cold_owner_manifest_acquisition_closure_preclaim",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "decision": "Keep the replacement H200 available and unclaimed. The concurrent cold-bootstrap ready handoff binds owner source bytes but not a concrete target/draft acquisition manifest, so it is not runnable. Close that exact missing execution input offline before issuing a fresh claim clock.",
+  "researcher_profile": "execution",
+  "claim_allowed": false,
+  "ssh_allowed": false,
+  "cuda_allowed": false,
+  "checkpoint_transfer_allowed": false,
+  "image_pull_allowed": false,
+  "endpoint_request_allowed": false,
+  "provider_lifecycle_mutation_allowed": false,
+  "bench": {
+    "id": "h200-r5-computeinstance-e00aehxdq8mpd68epd",
+    "status_at_binding": "available",
+    "claim_at_binding": null,
+    "gpu_uuid": "GPU-e26e853a-ce3b-8874-bd3e-6db51a22f8b3",
+    "ssh_ed25519_fingerprint": "SHA256:32koaBpMbzfJBvGXPskHGu08cWYWrH62e/JULW+4BlQ",
+    "watchdog_main_pid": 607919,
+    "watchdog_cleanup_utc": "2026-07-30T09:01:39.329754Z"
+  },
+  "durable_inputs": {
+    "cold_bootstrap_handoff": "DIRECTOR_FIXED_FLOOR_CROSSOP_R5_COLD_BOOTSTRAP_HANDOFF_20260730T0645Z.json",
+    "cold_bootstrap_handoff_sha256": "73c0ead5a05b5a8ddbed6bfca5c3350645c09748330130438aaf786802774975",
+    "cold_bootstrap_ready": "R5_COLD_BOOTSTRAP_READY.json",
+    "cold_bootstrap_ready_sha256": "da063c6ecefa21d930035336273d0faf85bbf299a703bd4c2b1bd8151ccdb3e9",
+    "cold_owner": "run_fixed_floor_crossop_endpoint_cold_owner_r5.py",
+    "cold_owner_sha256": "76ae253df745567d04209833ff38f949291a8ed4c26711bd363e13a1d59b7573",
+    "cold_launcher": "run_fixed_floor_crossop_endpoint_cold_claim_launch_r5.py",
+    "cold_launcher_sha256": "5f754e54ccdd28276b786a13ba971131479fc36933837aee21ca2d18bcaf9830",
+    "cold_owner_validation": "R5_COLD_BOOTSTRAP_OWNER_VALIDATION.json",
+    "cold_owner_validation_sha256": "c5b163b5ebd695ff83351b2304b010f40496eb529bb3a68adb3a8ac1d1805c04",
+    "packet": "ENDPOINT_INTEGRATION_PACKET_R5.json",
+    "packet_sha256": "846bd42a2e41e64b392af1b2abaca5d8cccd3e177aaab9c7fa900f63eda57527",
+    "candidate_runner": "run_fixed_floor_crossop_endpoint_candidate_only_r5.py",
+    "candidate_runner_sha256": "42f12828e1d6db2154c22464cef578cc03da331b185008b8ee4d041dbb6d5fa0"
+  },
+  "finding": {
+    "ready_manifest_bound": false,
+    "validation_manifest_bound": false,
+    "owner_behavior": "The owner unconditionally indexes immutable_manifests.files and copies each declared local source. It contains no target/draft discovery or acquisition path.",
+    "controller_snapshot_finding": "No exact target or draft revision directory exists under the checked controller Hugging Face cache, lab runtime, or Gemma experiment roots.",
+    "failure_if_claimed_now": "The director cannot construct a truthful execution spec containing existing local sources for the exact target and draft; a claim would fail before cold staging or model startup.",
+    "science_consumed": false
+  },
+  "immutable_science": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "endpoint": "/v1/completions",
+    "candidate_requests_authorized": 32,
+    "candidate_requests_consumed": 0,
+    "control_requests_consumed": 32,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "fixed_qualified_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996
+  },
+  "required_implementation": {
+    "manifest_destination": "R5_COLD_EXECUTION_MANIFEST.json",
+    "validation_destination": "R5_COLD_MANIFEST_VALIDATION.json",
+    "ready_destination": "R5_COLD_MANIFEST_READY.json",
+    "requirements": [
+      "Bind a concrete resumable acquisition route for every exact target and draft checkpoint file. It may use a pinned remote snapshot acquisition or a durable local/object source, but it must not pretend absent controller bytes are transferable.",
+      "Bind every project source, packet, workload, and immutable control-oracle source and destination with its exact SHA-256. The execution spec must be mechanically constructible from this manifest without hand-entered paths or digests.",
+      "For a pinned remote snapshot route, verify the resolved commit and a complete file manifest before atomically finalizing the checkpoint directory. Credentials, if required, must remain in the existing external credential mechanism and may not be copied into project artifacts.",
+      "Preserve resumability across interruption and repair generations: reuse verified files, write missing bytes to temporary names, verify, then atomically finalize. A repeated stage must retain all checkpoint and project bytes.",
+      "Rebind the cold owner and launcher only as required to consume the concrete manifest. Preserve one continuous heartbeating claim from acquisition through the unchanged candidate-only consumer.",
+      "Validate the manifest and repeated-stage behavior in a fresh local fake root. Do not claim or access the live guest during this closure.",
+      "Publish R5_COLD_MANIFEST_READY.json last with claim_allowed false. If no exact acquisition route is available without new credentials or authority, publish R5_CHECKPOINT_ROUTE_BLOCKED.json with the missing external requirement instead of a false ready terminal."
+    ],
+    "must_not_change": [
+      "candidate runner or request bodies",
+      "emitted-chunk oracle",
+      "stock or component replay prohibition",
+      "exact model, draft, image, workload, or endpoint identities",
+      "bench, GPU, SSH, and watchdog identities"
+    ]
+  },
+  "budget": {
+    "wall_clock_minutes": 45,
+    "gpu_seconds": 0,
+    "provider_spend_usd": 0.0,
+    "new_storage_gibibytes": 1
+  },
+  "next_director_decision": "After R5_COLD_MANIFEST_READY.json is durable, verify its exact sources and the live bench/watchdog once. Open a fresh claim clock only if the remaining lifecycle still covers acquisition, one retained repair, candidate endpoint, terminal, release, and watchdog handoff."
+}

@@ -1,0 +1,10 @@
+{
+  "deadline_utc": "2026-07-29T09:50:00Z",
+  "provider_started_at_utc": "2026-07-29T03:13:34.346354Z",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog-r3.service",
+    "main_pid": 4027098,
+    "unit": "gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog-r3.service",
+    "unit_manager": "user"
+  }
+}

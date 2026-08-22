@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fp8_downproj_residual_norm_fusion",
+  "registered_at_utc": "2026-07-30T07:58:09Z",
+  "opportunities": [
+    {
+      "id": "epilogue_tree_partials",
+      "observation": "The pinned small-M down GEMM has 84 hidden-width CTAs and materializes BF16 [M,5376] before a row reduction.",
+      "evidence_scope": "SGLang v0.5.13, Gemma 4 31B, TP=1, M in {1,16,32}, H200 sm_90a",
+      "phase": "decode inter-GEMM boundary",
+      "resource_signature": "84 producer CTAs (0.636 H200 waves), one FP32 partial per row/CTA, one row finalizer CTA",
+      "uncertainty": 0.45,
+      "competing_explanations": [
+        "The partials save finalizer arithmetic but add traffic and epilogue instructions.",
+        "A different partial tree may fail pinned RMSNorm rounding parity."
+      ],
+      "mechanism": "Cast each down output to BF16, persist it, and emit aligned 64-leaf FP32 sum-of-squares partials for a bounded finalizer.",
+      "modifiable_fraction": "Only the post-down materialization/normalization/quantization boundary; both GEMMs remain.",
+      "upper_bound": "At most all measured post-FF residual, one next-layer input RMSNorm, and QKV dynamic-quant producer time.",
+      "falsifier": "Dominated if the same legal finalizer preserves the control tree without partial traffic, or if partial-tree bytes/rounding erase the bound.",
+      "next_measurement": "CPU tree parity and exact byte accounting.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.65,
+      "discrimination_power": 0.9,
+      "readiness": 0.7,
+      "transfer_penalty": 0.45
+    },
+    {
+      "id": "cluster_dsm_hidden_strip",
+      "observation": "SM90a DSM can synchronize at most a bounded CTA cluster while the row spans 84 64-column output tiles.",
+      "evidence_scope": "SGLang v0.5.13 small-M swapped-AB CUTLASS dispatch, H200 sm_90a",
+      "phase": "down GEMM epilogue",
+      "resource_signature": "At least 11 eight-CTA clusters per row-width group; no portable cross-cluster barrier or DSM address space",
+      "uncertainty": 0.2,
+      "competing_explanations": [
+        "A cooperative-grid kernel could add a device-wide barrier but changes launch/graph constraints.",
+        "Serializing all strips in one cluster avoids the barrier but sacrifices producer parallelism."
+      ],
+      "mechanism": "Use an eight-CTA cluster to retain hidden strips and reduce row statistics in DSM.",
+      "modifiable_fraction": "Cluster-local strips only; exact two-stage row normalization still needs global coordination.",
+      "upper_bound": "Cannot remove the BF16 down materialization without cross-cluster retention or producer serialization.",
+      "falsifier": "Reject if 5376 columns exceed one legal cluster's simultaneous ownership and every repair is dominated by the materialized or two-phase control.",
+      "next_measurement": "Analytical cluster coverage and waves.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.8,
+      "discrimination_power": 0.95,
+      "readiness": 0.8,
+      "transfer_penalty": 0.3
+    },
+    {
+      "id": "row_owned_two_phase_finalizer",
+      "observation": "After the down result is materialized, all remaining dependencies are row-local and two BF16 rows plus deterministic reduction scratch fit comfortably in one H200 CTA.",
+      "evidence_scope": "Pinned dense Gemma4 layer transition, TP=1, M in {1,16,32}",
+      "phase": "post-down finalization and next QKV activation production",
+      "resource_signature": "One 256-thread CTA per row, about 43 KiB shared memory, 1/16/32-CTA finalizer grids",
+      "uncertainty": 0.35,
+      "competing_explanations": [
+        "The three stock row kernels may already be launch-latency dominated enough that one larger finalizer wins.",
+        "Extra barriers and shared-memory traffic may offset some launch/DRAM savings."
+      ],
+      "mechanism": "Keep the stock down GEMM, then perform post-FF RMSNorm, residual/scalar, next RMSNorm, and E4M3 production in one row-owned finalizer while persisting only the residual and quantized QKV input.",
+      "modifiable_fraction": "Removes two launches and eight hidden-width bytes per element from the materialized boundary.",
+      "upper_bound": "All measured post-FF residual plus one next-input RMSNorm plus QKV dynamic-quant producer time; actual gain must be measured.",
+      "falsifier": "Reject if complete reference bytes differ, shared memory exceeds H200 legality, compulsory bytes do not fall, or target-H200 paired component timing is non-positive.",
+      "next_measurement": "CPU/reference complete-byte oracle, then exact-consumer H200 A/B if admitted.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.95,
+      "discrimination_power": 0.9,
+      "readiness": 0.85,
+      "transfer_penalty": 0.25
+    },
+    {
+      "id": "materialized_control",
+      "observation": "The pinned runtime materializes down BF16, layer output BF16, and next-normalized BF16 across three post-down producer launches.",
+      "evidence_scope": "Pinned SGLang v0.5.13 exact c32 stack",
+      "phase": "stock decode inter-GEMM boundary",
+      "resource_signature": "Down GEMM plus three row kernels plus QKV GEMM",
+      "uncertainty": 0.05,
+      "competing_explanations": [
+        "Cache residency can make byte conservation overstate HBM savings."
+      ],
+      "mechanism": "Negative control; no change.",
+      "modifiable_fraction": "None.",
+      "upper_bound": "Zero improvement.",
+      "falsifier": "Any candidate must beat its exact bytes/launches without changing complete reference output.",
+      "next_measurement": "Use as oracle and later H200 timing control.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.5,
+      "discrimination_power": 1.0,
+      "readiness": 1.0,
+      "transfer_penalty": 0.0
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T10:27:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "decision": "authorize_reservation_and_prepare_exact_h200_owner_only",
+  "campaign_objective": {
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "campaign c32"
+  },
+  "bound_evidence": {
+    "discriminator": {
+      "path": "MEMORY_SCHEDULE_DISCRIMINATOR.json",
+      "sha256": "1ea35e007bb7f8317d8e90d3109b20d29fba0141cdd23fd8b7fe2cef1a3102e5"
+    },
+    "candidate": {
+      "path": "streaming_global_kv_schedule.py",
+      "sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a"
+    },
+    "memory_model": {
+      "path": "memory_schedule_model.py",
+      "sha256": "df81c3b9ddbedaaa63376e4dda9c490145094d8ce3d3713aa0028f1c8cfebdb9"
+    },
+    "test": {
+      "path": "test_streaming_global_kv_schedule.py",
+      "sha256": "870845fad253292662343d0d311ce90e22a1a99abdf6026ad8f6858414ae3679"
+    },
+    "cpu_oracle": {
+      "path": "artifacts/CPU_ORACLE_REPAIR_20260729T1024Z.json",
+      "sha256": "79d03ffa76f18568b529ad6da3895baed3072bbd3e38d70cd19745b07e17c0b3",
+      "result": "3 passed"
+    },
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "activated_source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880"
+  },
+  "budget": {
+    "authorized_spend_usd": 4.0,
+    "actual_spend_usd": 0.0,
+    "accelerator": "nvidia-h200-sxm",
+    "provider": "nebius",
+    "hourly_cost_usd": 2.45,
+    "maximum_provider_lifecycle_minutes": 90,
+    "conservative_lifecycle_exposure_usd": 3.675,
+    "maximum_scientific_gpu_minutes": 45,
+    "cleanup_margin_minutes": 10
+  },
+  "reservation_gate": {
+    "reservation_visible_in_current_snapshot": false,
+    "provider_create_authorized_now": false,
+    "gpu_claim_authorized_now": false,
+    "next_director_action": "After the exact $4 reservation is durable and the owner-ready terminal passes, select Nebius placement, create/register one protected H200 bench, verify identity, and open a launch binding."
+  },
+  "owner_preparation": {
+    "researcher_profile": "execution",
+    "finish_by_utc": "2026-07-29T10:50:00Z",
+    "terminal_path": "STREAMING_GLOBAL_KV_H200_OWNER_READY.json",
+    "requirements": [
+      "Hash-bind one project-local runner and one controller-host durable owner that use the shared gpu_pool claim/release contract and detached-owner pid manager.",
+      "Carry the exact cold-start path from a future registered H200 through runtime bootstrap, immutable model reconciliation, the first tiny CUDA call, boundary calls, component pair, conditional new candidate c32 endpoint, typed retrieval, retained repair, and generation-fenced release.",
+      "Make the first exact-runtime CUDA call the discovery audit; preserve mutable integration repair without changing the scientific identities or replaying the consumed materializing c32 arm.",
+      "Persist per-layer peak telemetry and layer-35 passage before any later endpoint failure can erase the memory discriminator.",
+      "Publish the owner-ready terminal and matching STATUS.json only after all bound source bytes are final."
+    ]
+  },
+  "scientific_sequence": [
+    "C=26,Q=1 BF16 activated-versus-streamed correctness with finite output, max_abs<=0.00390625, and candidate-path proof.",
+    "C=64 boundary calls at Q=1 and Q=32 with allocated/reserved deltas and largest candidate allocation <=65536 bytes.",
+    "Profiler-off warm activated-versus-streamed component pair with median and p95.",
+    "Only if those pass, one new streamed-candidate c32 endpoint against the fixed qualified denominator."
+  ],
+  "hard_fences": [
+    "Do not call gpu_pool, SSH, provider APIs, or spend funds during owner preparation.",
+    "Do not claim either H200 currently owned by gemma4_trained_mtp_assistant_finetune or the independent RTX bench.",
+    "Do not replay the consumed materializing c32 arm.",
+    "Do not alter the U=8 schedule, numerical tolerance, model revision, activated source, campaign workload, or endpoint target.",
+    "Provider creation requires a later director turn with the exact reservation visible."
+  ]
+}

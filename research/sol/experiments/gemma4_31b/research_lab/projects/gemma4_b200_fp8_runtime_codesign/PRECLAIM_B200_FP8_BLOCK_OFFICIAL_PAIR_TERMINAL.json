@@ -1,0 +1,1 @@
+{"schema_version":1,"classification":"official_quantfp8_block_packet","binding":"DIRECTOR_B200_FP8_BLOCK_OFFICIAL_PRODUCER_EXECUTION_20260728T2216Z.json","scientific_sample_consumed":false,"activation_producer":"QuantFP8(static=False,GroupShape(1,128),use_ue8m0=False,column_major_scales=True)"}

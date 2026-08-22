@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "classification": "component_positive_released",
+  "status": "terminal",
+  "science_consumed": true,
+  "endpoint_submissions": 0,
+  "binding_sha256": "e39d077587c16891c490f63fff6f91133d548df39fbf8e315bee24a9dbd08abd",
+  "accepted_generation": "artifacts/attempt4",
+  "component_result": {
+    "candidate": "Direct normalized/rotated Q consumer layout plus direct normalized/rotated E5M2 K/V paged-cache row writes in _qkv_norm_rope_direct_fp8_cache_kernel.",
+    "first_consumer": "Pinned SGLang decode_attention_fwd",
+    "correctness": {
+      "local_consumer_relative_l2": 0.0,
+      "global_consumer_relative_l2": 0.0,
+      "threshold": 0.002,
+      "finite": true,
+      "pass": true
+    },
+    "local_decode_c32": {
+      "geometry": "Q32/KV16/d256/window1024/full RoPE/BF16 QKV/E5M2 cache",
+      "stock_median_ms": 0.3105280101299286,
+      "candidate_median_ms": 0.22755199670791626,
+      "median_reduction_fraction": 0.2672094326927036,
+      "paired_mean_delta_95ci_ms": [
+        0.07764266729354859,
+        0.09270400106906891
+      ]
+    },
+    "global_decode_c32": {
+      "geometry": "Q32/KV4/d512/context4570/proportional factor0.25 cross-half RoPE/BF16 QKV/E5M2 cache",
+      "stock_median_ms": 0.511135995388031,
+      "candidate_median_ms": 0.41603198647499084,
+      "median_reduction_fraction": 0.1860640020878231,
+      "paired_mean_delta_95ci_ms": [
+        0.09271679321924846,
+        0.1059669295946757
+      ]
+    },
+    "physical_prediction": {
+      "analytical_pre_attention_launch_reduction": 4,
+      "local_compulsory_byte_reduction_per_c32_call": 2621440,
+      "global_compulsory_byte_reduction_per_c32_call": 2883584,
+      "observed_direction_matches": true
+    },
+    "derived_decode_bound": {
+      "evidence_class": "analytical occurrence projection from exact component measurements",
+      "unnormalized_batch_total_s": 1.8206431514024735,
+      "normalized_s_per_request": 0.056895098481327296,
+      "paired_mean_bootstrap_95ci_s_per_request": [
+        0.05433944422006606,
+        0.06272132831811905
+      ],
+      "qualified_denominator_fraction": 0.09101044583148395,
+      "transfer_limit": "No endpoint claim; integration and full-request interactions remain unmeasured."
+    }
+  },
+  "artifacts": {
+    "scientific_terminal": "SCIENTIFIC_TERMINAL.json",
+    "scientific_terminal_sha256": "6aa40802441a36184129bcef9486180acf0b5eba432b68715085d9f7c58d55a2",
+    "accepted_result": "artifacts/attempt4/RESULT.json",
+    "accepted_result_sha256": "ad4192d8cb86c56791f2470e5b4bd0586a4e445d033e03cda76326677a938caf",
+    "program": "qkv_direct_consumer_bench.py",
+    "program_sha256": "10d2538ce6d35a4fbedf4b8db946d8e93d7004690fa1a0c6f0cae3c6427e63ff",
+    "release_evidence": "RELEASE_EVIDENCE.json"
+  },
+  "lifecycle": {
+    "claimed_at_utc": "2026-07-29T17:05:16.151288Z",
+    "released_at_utc": "2026-07-29T17:20:09.276488Z",
+    "claim_seconds": 893.1252,
+    "generation_fence": "2026-07-29T17:05:16.151288Z",
+    "bench_status": "available",
+    "bench_claim": null,
+    "gpu_memory_mib": 0,
+    "compute_process_count": 0,
+    "release_before_deadline": true
+  },
+  "actual_spend_usd": 2.53,
+  "spend_breakdown": {
+    "continuous_claim_exposure_usd": 0.6078213166666667,
+    "settled_project_exposure_usd": 2.53,
+    "settlement_basis": "Director-assigned conservative reservation-through-watchdog exposure.",
+    "authorized_ceiling_usd": 3.0
+  },
+  "next": "A new director binding may integrate the positive component into a scope-matched endpoint; this binding authorized no endpoint traffic."
+}

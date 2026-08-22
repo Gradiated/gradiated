@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "state": "funded_retained_b200_ready_for_m32_paired_oracle",
+  "stage": "paired_fp8_oracle_component",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; c32 decode runtime-dynamic-FP8 M32 residual path.",
+  "runtime": "Identity-verified NVIDIA B200 SM100; distinct stock and patched cutlass_scaled_mm execution bytes required.",
+  "image": "Reuse retained b200-m32-recovery5:20260728t1623z and pinned stock image; do not rebuild.",
+  "checkpoint": "Retain the resident checkpoint but do not load or restage it for this component.",
+  "caches": "Preserve derived image, patched source, completed extension/build outputs, dependencies, capture, checkpoint, and runtime caches.",
+  "remote": "/home/glmrunner/b200-m32-dispatch-20260728t1623z",
+  "candidate_extension": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/sm100-install-20260728t1734z-repair2/vllm/_C.abi3.so",
+  "candidate_extension_sha256": "66fb9013b67832d6939c59f21395aeafc59a8e1b52abc3636132819e38cc5be2",
+  "artifacts": "DIRECTOR_B200_M32_PAIRED_ORACLE_EXECUTION_20260728T1858Z.json binds the paired FP8 oracle, distinct consumers, unchanged shapes, and separate repair/negative dispositions.",
+  "server_state": "GPU is unoccupied; no endpoint or resident model server exists.",
+  "science_consumed": false,
+  "scientific_terminal": "One stock/patched exact-consumer component generation over identical deterministic FP8 operands and the unchanged six weighted M32 shapes; zero endpoint requests.",
+  "next": "Only gemma4_b200_fp8_residual_hotpath may claim by 2026-07-28T19:03:00Z and launch b200_m32_dispatch_owner_paired_oracle.sh through detached-owner by 2026-07-28T19:07:00Z. Decision-bearing negative releases by 2026-07-28T19:18:00Z; incomplete retains the claim for bounded repair until that deadline; watchdog ends 2026-07-28T19:25:00Z."
+}

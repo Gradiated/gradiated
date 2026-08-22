@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-29T17:11:18Z",
+  "absolute_deadline_utc": "2026-07-29T17:56:18Z",
+  "question": "Can a conservative hierarchical full-vector centroid/radius index certify the pinned greedy sampler while avoiding more than 5% of physical output-head weight traffic across the same 32 real decode rows?",
+  "causal_hypothesis": "A balanced random-projection tree can place nearby tied-head rows into a permuted contiguous layout. Full-vector BF16 centroids and conservative L2 radii at 4096-, 256-, and 32-row levels may reject whole subtrees before member weights are read. The expected falsifier is high-dimensional concentration: even proximity-sorted 32-row leaves retain radii large enough that the 32-query physical survivor union approaches the full vocabulary.",
+  "stock_control": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [262144, 5376],
+    "weight_dtype": "bfloat16",
+    "projection": "hidden_states.to(lm_head.weight.dtype) @ lm_head.weight.T",
+    "softcap": "30 * tanh(logit / 30), strictly monotone",
+    "workload_sampler": "The pinned exact-c32 request bodies set temperature=0, min_tokens=max_tokens, ignore_eos=true, and do not request logprobs. Pinned SGLang v0.5.13 commit 28b095c01005d4a3a2a5b637b7d028b07fba31b2 normalizes temperature zero to top_k=1, sets SamplingBatchInfo.is_all_greedy, applies the min-new-token stop mask before sampling, and returns torch.argmax(logits, -1). The required candidate set is every possible non-stop stock argmax under the conservative numeric envelope."
+  },
+  "candidate": {
+    "name": "balanced random-projection hierarchy with full-vector centroid/radius bounds",
+    "seed": 240729,
+    "projection_dimensions": 13,
+    "levels_rows": [4096, 256, 32],
+    "layout": "Rows are recursively median-partitioned by deterministic random full-vector projections, yielding a permuted contiguous leaf layout.",
+    "bound": "dot(hidden, BF16 centroid) plus a guarded FP32 centroid-dot error, hidden L2 norm times a guarded full-vector cluster radius, and the inherited conservative stock BF16 matmul/output-rounding envelope.",
+    "traversal": "Evaluate all top-level centroids, then only child-centroid metadata beneath surviving parents, then exact-rescore every member of surviving 32-row leaves.",
+    "incumbents": [
+      "implementable full-rescore lower bound of the maximum random-projection-tree centroid seed row",
+      "optimistic maximum dense-reference stock lower bound"
+    ]
+  },
+  "inputs": {
+    "capture_rows": 1536,
+    "capture_requests": 32,
+    "sample_rows": 32,
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "logits_processor_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14",
+    "exact_c32_runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+    "sampler_sha256": "85541951e1cf50d10c54978178e403ff9d4aa6f223e629ea91965735ba882a8f",
+    "sampling_params_sha256": "69b4aa9d6456f571796275db62606be1bcb573427dd56ec8d7e204ab8d52d52f",
+    "sampling_batch_info_sha256": "e7903417a4cab05294975d069555987e2720557dd9fd0b8d79a6f934f3fbb0db",
+    "min_new_tokens_penalizer_sha256": "bd63f0aab997da6e5a90ad27c4daaa6aadbac69d325bc9ae0510297103c0d276",
+    "openai_protocol_sha256": "ce495699286c9ca75a3eef5734d65f93bbcb5128c363d1b196e2cca068c2d58a",
+    "tokenizer_sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+    "tokenizer_config_sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+    "predecessor_terminal_sha256": "29db51b948b479b1309149808ef463dfdde839a2fadb4aaf031a64d2f412c7cb"
+  },
+  "workload": {
+    "rows": "one deterministic hidden row from each of 32 exact c32 requests, identical to the predecessor selection",
+    "physical_scope": "union of centroid metadata and 32-row leaf member weights touched by any of the 32 queries",
+    "baseline_dense_weight_bytes": 2818572288
+  },
+  "correctness_gate": {
+    "semantics": "lossless certification of the pinned temperature-zero greedy sampler",
+    "required": [
+      "all bound inputs and source identities match",
+      "every pruned subtree has a conservative stock upper bound below a feasible stock lower bound",
+      "every dense-reference possible winner remains in the final survivor set",
+      "all 262144 token rows remain reachable through the permutation"
+    ]
+  },
+  "decision_gate": {
+    "promote": "gross physical member-weight union avoidance exceeds 5%, optimistic net bytes after all traversed centroid/radius metadata are positive, and the exact stock greedy candidate set is certified",
+    "falsify": "gross physical member-weight union avoidance is at most 5%, optimistic net byte/time bound is non-positive, or stock certification fails",
+    "transfer_limit": "CPU/reference pruning and analytical bytes only; a positive result promotes only an H200 exact-consumer component."
+  },
+  "slo": {
+    "campaign_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "inherited_output_consumer_interval_fraction": 0.056147579963225835
+  },
+  "budget": {
+    "provider_spend_usd_max": 0.0,
+    "gpu_calls_max": 0,
+    "additional_storage_gib_max": 4,
+    "wall_clock_minutes_max": 45
+  },
+  "artifact_contract": {
+    "runner": "run_cluster_mips.py",
+    "raw_output": "artifacts/reference_run.json",
+    "index_cache": "artifacts/hierarchy.pt",
+    "failure_log": "artifacts/reference_run.stderr.log",
+    "terminal": "LOSSLESS_CLUSTER_MIPS_TERMINAL.json",
+    "teardown": "foreground CPU process exits; immutable hard-linked inputs remain read-only; no provider or GPU state exists"
+  }
+}

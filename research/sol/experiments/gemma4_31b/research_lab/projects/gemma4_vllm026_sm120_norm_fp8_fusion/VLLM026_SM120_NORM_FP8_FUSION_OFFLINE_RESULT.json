@@ -1,0 +1,177 @@
+{
+  "schema_version": 1,
+  "classification": "concrete_production_bound_offline_candidate",
+  "decision": "candidate",
+  "typed_none": false,
+  "completed_at_utc": "2026-07-29T06:48:29Z",
+  "scope": {
+    "gpu_invocations": 0,
+    "gpu_pool_calls": 0,
+    "ssh_calls": 0,
+    "provider_mutations": 0,
+    "actual_spend_usd": 0.0,
+    "evidence_limit": "Source/contract validation is measured locally; target latency and numerical rows remain future sm_120 measurements."
+  },
+  "identities": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "model_config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "vllm_repository": "https://github.com/vllm-project/vllm",
+    "vllm_tag": "v0.26.0",
+    "vllm_commit": "568afb3a13806beb53bb2e6bd518269357b237c0",
+    "runtime_version": "0.26.0+cu129",
+    "runtime_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "torch_version": "2.11.0+cu130",
+    "torch_cuda": "13.0",
+    "target_device_capability": [
+      12,
+      0
+    ],
+    "measured_runtime_boundary_artifact": "DIRECTOR_VLLM026_RUNTIME_BOUNDARY_EVIDENCE_20260729T0633Z.json"
+  },
+  "upstream_source_sha256": {
+    "vllm/model_executor/models/gemma4.py": "3d63af0ad265d56e09e3244a08102767efb6579a553db2c8213aa8912660b093",
+    "vllm/model_executor/layers/quantization/online/fp8.py": "e7bbca668d3ce6134d24110ff3b5070f51d3fee21852a3fd90c1c83d4a04f2fc",
+    "vllm/model_executor/kernels/linear/scaled_mm/cutlass.py": "d01b6fe09e3c3fa3991045f6ac7b469a58a550c56426ffd8900badbbe7e5355b",
+    "vllm/model_executor/layers/fusion/quant_activation.py": "0b206185e76fc5b793b55bc21806b66d90ede201914de0a8104e4b9cdc91b63f",
+    "csrc/libtorch_stable/quantization/fused_kernels/fused_layernorm_dynamic_per_token_quant.cu": "f2df61fc5808b795297d79f9b4eda6e1c2d6a76eb1d09f4d8cc9bd281afcb714"
+  },
+  "implementation": {
+    "patch": "implementation/vllm026_sm120_norm_fp8_fusion.patch",
+    "patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+    "patched_source_sha256": {
+      "vllm/model_executor/models/gemma4.py": "f13cb41ed9208a5549d466fe9745378d9b3d7b747a52a1927d542c1e97d4cdc8",
+      "vllm/model_executor/layers/quantization/online/fp8.py": "2982a787296dd49f73dff6a49e63dfacbe64dfb107e16f0dde1954827a00dff8",
+      "vllm/model_executor/kernels/linear/scaled_mm/cutlass.py": "19373d599f5eb0c6d32798dd06b2bc67dce1debe8d5a89745e554271fa6cfa39",
+      "vllm/model_executor/layers/fusion/quant_activation.py": "371fe41fa01125184afedcc83f4dbc86b25b20a5740888b813abc0a54fde3914"
+    },
+    "mechanism": [
+      "CutlassFP8ScaledMMLinearKernel advertises kFp8DynamicTokenSym as an externally consumable activation contract.",
+      "Fp8PerTensorOnlineLinearMethod exposes the selected kernel contract on the concrete QKVParallelLinear layer.",
+      "Gemma4DecoderLayer routes input_layernorm(residual) directly through rms_norm_dynamic_per_token_quant when self_attn.qkv_proj advertises that contract.",
+      "The resulting QuantizedActivation is consumed by the existing FP8ScaledMMLinearKernel.apply_weights path; CutlassFP8ScaledMMLinearKernel.apply_scaled_mm and ops.cutlass_scaled_mm are unchanged.",
+      "Non-CUTLASS, mismatched dtype/layout, variance override, and VLLM_BATCH_INVARIANT paths retain the stock BF16 RMSNorm fallback."
+    ]
+  },
+  "exact_boundary": {
+    "recurrence": "Once per text decoder layer, 60 times per model forward.",
+    "producer": "vllm.model_executor.models.gemma4.Gemma4DecoderLayer.input_layernorm",
+    "model_callsite": "Gemma4DecoderLayer.forward: input_layernorm(residual) -> self_attn(hidden_states)",
+    "first_linear": "Gemma4Attention.qkv_proj (QKVParallelLinear)",
+    "quant_method": "Fp8PerTensorOnlineLinearMethod",
+    "stock_quantizer": "FP8ScaledMMLinearKernel.quant_fp8 -> QuantFP8.forward_cuda -> ops.scaled_fp8_quant(use_per_token_if_dynamic=True)",
+    "candidate_producer": "ops.rms_norm_dynamic_per_token_quant",
+    "unchanged_consumer": "CutlassFP8ScaledMMLinearKernel.apply_scaled_mm -> ops.cutlass_scaled_mm",
+    "phase": "The same boundary runs in prefill and decode; M is the flattened active-token row count.",
+    "c32_decode_geometry": {
+      "m": 32,
+      "k": 5376,
+      "sliding_layer_n_tp1": 16384,
+      "full_layer_n_tp1": 20480,
+      "sliding_layers": 50,
+      "full_layers": 10
+    },
+    "prefill_geometry": {
+      "m": "1..65536 scheduled active tokens; future oracle uses 2048 as the production chunk discriminator",
+      "k": 5376,
+      "n": [
+        16384,
+        20480
+      ]
+    },
+    "layout_and_scale": {
+      "input": "BF16 row-major logical [M,5376], stride(-1)=1",
+      "norm_weight": "BF16 [5376], epsilon=1e-6, standard RMSNorm weight semantics",
+      "activation": "OCP E4M3 FP8 row-major [M,5376]",
+      "activation_scale": "FP32 dynamic per-token [M,1], direct dequantization scale",
+      "weight": "OCP E4M3 FP8 CUTLASS column-major logical [K,N], one static FP32 per-tensor scale for online-FP8",
+      "accumulation_and_output": "Stock CUTLASS scaled GEMM accumulation, BF16 output"
+    }
+  },
+  "existing_fusion_boundary": {
+    "why_disabled": "The measured runtime used optimization level O0 semantics: pass_config.fuse_norm_quant=false and fuse_act_quant=false, so RMSNormQuantFusionPass was not installed. At O1+ official vLLM can pattern-match RMSNorm followed by visible QuantFP8, but the live O0 path materializes BF16.",
+    "why_manual_bridge_was_inapplicable": "Official v0.26.0 contains QuantizedActivation plumbing, but Fp8PerTensorOnlineLinearMethod never calls expose_input_quant_key and CutlassFP8ScaledMMLinearKernel accepts external prequantization only for static per-tensor activation. Therefore the dynamic per-token online-FP8 QKV consumer cannot receive the shipped fused norm output.",
+    "source_history": "The QuantizedActivation contract was introduced by official commit c90650088dafc8ad5fc372b412b67170c5ad3f4a (#44260); this patch extends that proven contract rather than creating a parallel GEMM."
+  },
+  "physical_prediction": {
+    "stock_launch_sequence": [
+      "rms_norm",
+      "dynamic_per_token_scaled_fp8_quant",
+      "cutlass_scaled_mm"
+    ],
+    "candidate_launch_sequence": [
+      "rms_norm_dynamic_per_token_quant",
+      "cutlass_scaled_mm"
+    ],
+    "saved_launches_per_boundary": 1,
+    "saved_launches_per_60_layer_forward": 60,
+    "saved_bytes_formula": "BF16 norm output write plus quantizer read = 2 * M * K * sizeof(BF16) = 4*M*K bytes; FP8 output, FP32 scale, norm input/weight, and GEMM traffic are common.",
+    "decode_c32": {
+      "saved_bytes_per_boundary": 688128,
+      "saved_mib_per_boundary": 0.65625,
+      "saved_bytes_per_60_layer_batched_step": 41287680,
+      "saved_mib_per_60_layer_batched_step": 39.375
+    },
+    "prefill_m2048": {
+      "saved_bytes_per_boundary": 44040192,
+      "saved_mib_per_boundary": 42.0,
+      "saved_bytes_per_60_layer_forward": 2642411520,
+      "saved_gib_per_60_layer_forward": 2.4609375
+    },
+    "maximum_scheduled_m65536_analytical_upper_bound": {
+      "saved_bytes_per_boundary": 1409286144,
+      "saved_gib_per_boundary": 1.3125,
+      "saved_bytes_per_60_layer_forward": 84557168640,
+      "saved_gib_per_60_layer_forward": 78.75
+    },
+    "label": "analytical compulsory-byte and launch-count prediction; cache residency and endpoint transfer remain unmeasured"
+  },
+  "framework_oracle": {
+    "path": "sm120_framework_oracle.py",
+    "sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5",
+    "rows": [
+      "M=1,K=5376,N=16384 and 20480",
+      "M=32,K=5376,N=16384 and 20480",
+      "M=33,K=5376,N=16384 and 20480",
+      "M=2048,K=5376,N=16384"
+    ],
+    "stock_path": "RMSNorm -> CutlassFP8ScaledMMLinearKernel.apply_weights, which invokes its stock QuantFP8 producer and unchanged CUTLASS GEMM.",
+    "candidate_path": "rms_norm_to_fp8_linear -> QuantizedActivation -> the same CutlassFP8ScaledMMLinearKernel.apply_weights and unchanged CUTLASS GEMM.",
+    "consumption": "Every timed output is fully reduced after the CUDA end event; first untimed stock and candidate outputs are synchronized and compared before timing.",
+    "gates": {
+      "activation_scale": "torch.allclose rtol=1e-5 atol=1e-8",
+      "dequantized_activation": "torch.allclose rtol=5e-2 atol=5e-2",
+      "bf16_gemm_output": "torch.allclose rtol=5e-2 atol=5e-2",
+      "nonfinite_count": 0,
+      "identity": "device capability (12,0), vLLM version prefix 0.26.0, and Torch exactly 2.11.0+cu130"
+    }
+  },
+  "future_sm120_build_and_run": {
+    "required_project_local_wheel": {
+      "path": "/workspace/gemma4_vllm026_sm120_norm_fp8_fusion/inputs/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+      "url": "https://github.com/vllm-project/vllm/releases/download/v0.26.0/vllm-0.26.0%2Bcu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+      "sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+      "note": "Materialize and verify this immutable wheel under the project before any future bench claim."
+    },
+    "command": "set -euo pipefail\nPROJECT=/workspace/gemma4_vllm026_sm120_norm_fp8_fusion\nSRC=/workspace/vllm-v0.26.0-norm-fp8\nPY=/workspace/vllm-sm120-norm-fp8/bin/python\nWHEEL=\"$PROJECT/inputs/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl\"\ntest \"$(sha256sum \"$WHEEL\" | cut -d' ' -f1)\" = 6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b\ngit clone --filter=blob:none https://github.com/vllm-project/vllm.git \"$SRC\"\ngit -C \"$SRC\" checkout --detach 568afb3a13806beb53bb2e6bd518269357b237c0\ntest \"$(git -C \"$SRC\" rev-parse HEAD)\" = 568afb3a13806beb53bb2e6bd518269357b237c0\ntest \"$(sha256sum \"$PROJECT/implementation/vllm026_sm120_norm_fp8_fusion.patch\" | cut -d' ' -f1)\" = 79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f\ngit -C \"$SRC\" apply --check --unidiff-zero \"$PROJECT/implementation/vllm026_sm120_norm_fp8_fusion.patch\"\ngit -C \"$SRC\" apply --unidiff-zero \"$PROJECT/implementation/vllm026_sm120_norm_fp8_fusion.patch\"\nuv venv /workspace/vllm-sm120-norm-fp8 --python 3.12\nVLLM_PRECOMPILED_WHEEL_LOCATION=\"$WHEEL\" VLLM_SKIP_PRECOMPILED_VERSION_SUFFIX=1 uv pip install --python \"$PY\" --editable \"$SRC\" --no-build-isolation --torch-backend=auto\nCUDA_VISIBLE_DEVICES=0 \"$PY\" \"$PROJECT/sm120_framework_oracle.py\" --rows 1,32,33,2048 --warmup 10 --repeats 50 --output \"$PROJECT/artifacts/SM120_FRAMEWORK_ORACLE.json\"",
+    "profile_command": "nsys profile --force-overwrite=true --trace=cuda,nvtx --output=/workspace/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-c32 /workspace/vllm-sm120-norm-fp8/bin/python /workspace/gemma4_vllm026_sm120_norm_fp8_fusion/sm120_framework_oracle.py --rows 32 --warmup 3 --repeats 10 --output /workspace/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/SM120_FRAMEWORK_ORACLE_PROFILED.json",
+    "required_path_proof": "The candidate trace must contain rms_norm_dynamic_per_token_quant followed by the same cutlass_scaled_mm consumer; the stock range must contain separate RMSNorm and dynamic per-token FP8 quant launches."
+  },
+  "offline_validation": {
+    "path": "artifacts/OFFLINE_VALIDATION.json",
+    "sha256": "9a1241baf3681b13e1c9c7ad429dcf1bad29eae08e3107c41cd7da228c73c6c9",
+    "classification": "offline_source_and_contract_validation",
+    "passed": true
+  },
+  "promotion": {
+    "current_state": "measurement_ready_after_explicit_director_sm120_handoff",
+    "not_claimed": [
+      "No target-GPU correctness result",
+      "No warm component latency",
+      "No CUDA compiler resource or profiler counters",
+      "No c32 endpoint effect",
+      "No quality or feature gate"
+    ],
+    "next_decision": "If all oracle rows pass and the median component delta is positive, integrate the patch into the exact c32 server and measure the endpoint. Otherwise preserve the numerical/path rows as a typed target-GPU negative and do not claim the analytical byte bound as endpoint gain."
+  }
+}

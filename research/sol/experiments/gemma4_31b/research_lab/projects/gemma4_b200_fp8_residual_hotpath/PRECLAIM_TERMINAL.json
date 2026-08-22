@@ -1,0 +1,116 @@
+{
+  "bench_gate": {
+    "accelerator": "nvidia-b200-sxm",
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claim_allowed": true,
+    "claim_prerequisites": [
+      "durable $5 project reservation",
+      "c96 terminal or safe maintenance handoff",
+      "fresh director ready envelope"
+    ],
+    "current_turn_action": "claimed_exact_bench_repair_and_measure",
+    "programming_target": "sm_100"
+  },
+  "classification": "execution_bound_m32_dispatch_packet_repair6",
+  "discriminator_sha256": "59a91ecd82e55c388f02b3a948c6650d8f260c0d1d92202513059441d9c32415",
+  "identities": {
+    "endpoint_terminal_sha256": "4930d9666167e20096f0343736db6d0ed721ea30fad68f5fc4010ccfeeee9acf",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+  },
+  "measurement": {
+    "arms": [
+      "stock pinned source and binary",
+      "same pinned source rebuilt with M32_DISPATCH.patch"
+    ],
+    "batch": 32,
+    "correctness": {
+      "cosine_min": 0.99999,
+      "finite": true,
+      "max_abs_max": 0.01,
+      "normalized_rmse_max": 0.005
+    },
+    "execution_equivalence": {
+      "patched": "same pinned image with vllm commit source rebuilt after M32_DISPATCH.patch",
+      "required_distinct_identity": "stock and patched loaded _C extension SHA-256 values must differ",
+      "stock": "pinned image installed vllm._custom_ops extension"
+    },
+    "path_proof": "persist source/shared-object hashes and selected M32 kernel marker before timing",
+    "producer_consumer": "ops.scaled_fp8_quant dynamic per-token E4M3 -> vllm._custom_ops.cutlass_scaled_mm -> BF16 output",
+    "production_decode_steps": 358,
+    "timing": "profiler-off warm CUDA events; p50; quant+GEMM and GEMM-only; deterministic same-seed tensors"
+  },
+  "owner_sha256": "21b52770081aeb7cf55543d5576e55f23fb5d3ed83dd137157eaccb6447e1d09",
+  "patch_sha256": "7de10b2f32ab39e5ced3e7aac2e9abc771744be9971b3b70eb1c5c6db9d1a01b",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "repair": {
+    "cause": "git safe.directory required for root-owned /work/vllm bind mount",
+    "predecessor_attempt": "ATTEMPT_6_PRESCIENCE.json",
+    "repair_id": "b200-m32-dispatch-20260728t1606z-repair6",
+    "science_consumed": false
+  },
+  "runner_sha256": "bbd4505a6b2c034f7a2a018e9cb35bbc1bd6093a4b4588fdcab418ef8e349c86",
+  "schema_version": 1,
+  "scientific_scope": {
+    "actual_spend_usd": 0.0,
+    "gpu_claimed": true,
+    "provider_operations": false,
+    "scientific_sample_consumed": false
+  },
+  "shapes": [
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity_per_decode_step": 50,
+      "n": 16384,
+      "name": "sliding_qkv"
+    },
+    {
+      "k": 8192,
+      "m": 32,
+      "multiplicity_per_decode_step": 50,
+      "n": 5376,
+      "name": "sliding_o"
+    },
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity_per_decode_step": 10,
+      "n": 20480,
+      "name": "global_qkv_k_eq_v_materialized"
+    },
+    {
+      "k": 16384,
+      "m": 32,
+      "multiplicity_per_decode_step": 10,
+      "n": 5376,
+      "name": "global_o"
+    },
+    {
+      "k": 5376,
+      "m": 32,
+      "multiplicity_per_decode_step": 60,
+      "n": 43008,
+      "name": "gate_up"
+    },
+    {
+      "k": 21504,
+      "m": 32,
+      "multiplicity_per_decode_step": 60,
+      "n": 5376,
+      "name": "down"
+    }
+  ],
+  "stop_conditions": {
+    "endpoint_formula": "delta_batch_s = 358 * sum_shape(multiplicity * (stock_p50_s - patched_p50_s)); delta_service_s = delta_batch_s / 32",
+    "endpoint_target_seconds_per_request": 0.500119281574996,
+    "promote_condition": "only if all four rejection conditions are false; then exactly one matched c32 endpoint arm; never replay a valid component sample",
+    "reject_without_endpoint_replay": [
+      "correctness failure",
+      "any high-multiplicity shape regresses >5%",
+      "weighted quant+GEMM p50 gain <10%",
+      "projected service saving <0.005 s/request"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "deadline_utc": "2026-07-30T06:20:00Z",
+  "provider_started_at_utc": "2026-07-30T00:36:56.187924Z",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-fixed-floor-http-correction-20260730t0542z-watchdog.service",
+    "main_pid": 580054,
+    "unit": "gemma4-fixed-floor-http-correction-20260730t0542z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+  "geometry": {
+    "activation_dtype": "float8_e4m3fn",
+    "activation_scale": [
+      32,
+      1
+    ],
+    "activation_scale_dtype": "float32",
+    "input": [
+      32,
+      5376
+    ],
+    "input_dtype": "bfloat16",
+    "input_stride": [
+      5376,
+      1
+    ],
+    "qkv_weight_k_n": [
+      5376,
+      16384
+    ]
+  },
+  "hardware": "NVIDIA H200 SXM / sm_90a",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "producer_candidate": "gemma4_decode_rmsnorm_quant_e4m3_exact_order",
+  "producer_control": "sgl_kernel.rmsnorm + sglang_per_token_quant_fp8",
+  "correctness_gate": {
+    "activation_bytes": "exact",
+    "scale_bytes": "exact",
+    "consumer_output_bytes": "exact"
+  },
+  "row_ledger": {
+    "expected_rows": 3,
+    "required_fields": [
+      "baseline_producer",
+      "candidate_producer",
+      "baseline_component",
+      "candidate_component",
+      "numerical",
+      "candidate_path"
+    ],
+    "shapes": [
+      1,
+      16,
+      32
+    ]
+  },
+  "runtime": "sglang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+  "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "schema_version": 1
+}

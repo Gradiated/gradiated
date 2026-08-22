@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T21:21:00Z",
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "decision": "Continue the same cross-operator task-graph question by redirecting from the closed dual-RMSNorm seam to one exact host-synchronization producer-to-consumer dependency.",
+  "predecessor": {
+    "terminal": "TASKGRAPH_HOTBLOCK_DISCRIMINATOR.json",
+    "terminal_sha256": "59025eb7ed6d7d1adacc245b89fce88f4b648063be1f578509c55d319d043f7e",
+    "classification": "localized_hotblock_negative_with_typed_redirect",
+    "closed_scope": "post_attention_layernorm -> residual-add/pre_feedforward_layernorm at c32 in pinned SGLang v0.5.13",
+    "impossible_zero_cost_fraction_of_fixed_qualified_request": 0.005793245531874099
+  },
+  "hypothesis": "A specific host synchronization edge in the exact c32 decode graph serializes a device producer and downstream consumer; replacing that one edge with device-ordered dependency handling can remove non-overlapping host-wait wall time without changing model semantics.",
+  "stock_control": "Pinned SGLang v0.5.13 exact Gemma 4 dynamic-FP8 c32 path and the existing scope-matched H200 trace.",
+  "required_discriminator": {
+    "artifact": "TASKGRAPH_HOST_SYNC_DISCRIMINATOR.json",
+    "wall_clock_budget_minutes": 45,
+    "required_fields": [
+      "exact blocking host symbol and pinned source identity",
+      "device producer symbol, stream/event ownership, and produced tensor or state",
+      "first downstream consumer symbol and dependency",
+      "one non-overlapping wait interval or an explicit unknown bound",
+      "competing explanations and falsifier",
+      "device-ordered replacement source patch plus lifecycle-pure correctness runner, or a localized source/trace falsifier",
+      "immutable hashes and typed promote_or_redirect decision"
+    ],
+    "promotion_gate": "Promote only when the exact edge is source-localized, the replacement preserves required ordering and semantics, and its non-overlapping bound can affect the campaign target enough to justify target-H200 execution."
+  },
+  "scope": {
+    "profile": "deep",
+    "authorized_spend_usd": 0.0,
+    "gpu_claim_allowed": false,
+    "allowed_inputs": [
+      "TASKGRAPH_HOTBLOCK_DISCRIMINATOR.json",
+      "OPPORTUNITY_REGISTER.json",
+      "the named existing H200 trace CSV",
+      "the pinned SGLang v0.5.13 source tree"
+    ],
+    "prohibitions": [
+      "Do not claim or ready the shared H200.",
+      "Do not call gpu_pool, SSH, Docker, CUDA, endpoint traffic, or provider APIs.",
+      "Do not infer removable wall time from summed cudaStreamSynchronize API duration.",
+      "Do not reopen the closed dual-RMSNorm seam or reconstruct QKV PATH_PROOF.jsonl.",
+      "Do not mutate another project."
+    ]
+  },
+  "campaign_comparator": {
+    "fixed_qualified_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996
+  }
+}

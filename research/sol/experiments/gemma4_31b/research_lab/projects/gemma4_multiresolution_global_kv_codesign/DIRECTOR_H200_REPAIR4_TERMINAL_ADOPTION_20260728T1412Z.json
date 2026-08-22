@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "decision": "candidate_c32_consumed_reconstruct_terminal_without_replay",
+  "project": "gemma4_multiresolution_global_kv_codesign",
+  "researcher_profile": "execution",
+  "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "claim": {
+    "claimed_at_utc": "2026-07-28T14:02:56.070680Z",
+    "claim_generation": "claim-20260728T140256Z",
+    "predecessor_pid": 3183625,
+    "predecessor_start_ticks": 136340115,
+    "replacement_owner_start_by_utc": "2026-07-28T14:18:00Z",
+    "release_to_maintenance_by_utc": "2026-07-28T14:24:00Z",
+    "absolute_project_release_utc": "2026-07-28T14:25:00Z",
+    "watchdog_deadline_utc": "2026-07-28T14:32:10.882252Z"
+  },
+  "authoritative_inputs": {
+    "repair4_archive": "artifacts/h200-global-kv-20260728t1210z/endpoint-repair4-compact.tar.gz",
+    "repair4_archive_sha256": "3e0bae8f52a637ca664d01b3857c0e1bd19c4ed6b5b4a72300ade26a105a109c",
+    "retained_repair_marker": "artifacts/h200-global-kv-20260728t1210z/REPAIR_READY_ENDPOINT2.json",
+    "retained_repair_marker_sha256": "7e6bbfeca17164b08436284c9199272151a05d0feed7a76e35a66032c0686a50",
+    "preserved_stock_terminal_sha256": "90e389320a2faf0730d9a4916de3a12df1c593c141bb2f8382810914852ec3bc",
+    "repair4_binding": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_ACTIVATION_REPAIR4_BINDING.json"
+  },
+  "observed_evidence": {
+    "activation_probe_pass": true,
+    "activation_probe_telemetry_rows": 6086,
+    "activation_probe_compact_entries": 26,
+    "activation_probe_fallback": false,
+    "candidate_science_started": true,
+    "candidate_request_files": 32,
+    "candidate_response_files": 32,
+    "live_hook_exception": "OutOfMemoryError at global layer 35 while attempting a 2.00 MiB allocation",
+    "post_run_metrics_retrieval": "connection_refused_after_server_exit",
+    "candidate_terminal_present": false
+  },
+  "scientific_disposition": {
+    "candidate_c32_consumed": true,
+    "fresh_candidate_request_allowed": false,
+    "interpretation": "Repair-4 proves explicit global-KV activation at c1, but this exact implementation is not c32-feasible on the H200 because the live hook exhausted device memory. The missing derived terminal is a post-consumption construction defect, not permission to rerun.",
+    "scope_of_negative": "this exact global-KV endpoint implementation and c32 memory geometry",
+    "mechanism_closed_globally": false,
+    "latency_claim_allowed_without_reconstruction": false
+  },
+  "delegation": {
+    "mutable_entrypoint": "h200_terminal_adoption_owner.sh",
+    "replacement_state": "artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_TERMINAL_ADOPTION_REPAIR5.json",
+    "replacement_log": "artifacts/h200-global-kv-20260728t1210z/owner-endpoint-terminal-adoption-repair5.log",
+    "launch_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_TERMINAL_ADOPTION_REPAIR5.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z/owner-endpoint-terminal-adoption-repair5.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign -- bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/h200_terminal_adoption_owner.sh",
+    "instructions": [
+      "Prepare and hash-bind the adoption owner before touching predecessor 3183625/136340115.",
+      "Stream only the named compact archive; do not unpack it broadly and do not contact the endpoint.",
+      "Adopt the c1 activation proof, candidate science marker, all 32 immutable requests and responses, hook OOM diagnostic, server exit, and preserved stock terminal.",
+      "Construct a typed terminal that records unavailable candidate latency unless it is exactly reconstructible from persisted evidence; never infer it from archive mtimes.",
+      "Do not launch or restart a server, issue a probe or c32 request, replay the component or stock, or restage the checkpoint.",
+      "After the replacement is durable, stop only matching predecessor 3183625/136340115 and record the transition.",
+      "Release the original claim to maintenance with the resident checkpoint and image, no server, and the exact terminal path by 2026-07-28T14:24:00Z."
+    ]
+  },
+  "expected_terminal": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_REPAIR4_TERMINAL_ADOPTION.json"
+}

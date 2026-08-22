@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "kind": "zero_gpu_live_binding_repair",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "scope": "one_quality_unsafe_stock_permanent_55l5g_c32_pair",
+  "created_utc": "2026-07-29T00:35:00Z",
+  "provider_operations_performed": false,
+  "ssh_performed": false,
+  "gpu_claim_performed": false,
+  "scientific_packet": {
+    "path": "inputs/h200_55l5g_endpoint_packet/MANIFEST.json",
+    "sha256": "b0a2fad6522eaf6cb47d4915616071d7ecc56caf1289fb1ed8670edd486576e5",
+    "quality_preservation_claimed": false,
+    "pair_contract": {
+      "concurrency": 32,
+      "maximum_valid_pair_invocations": 1,
+      "output_tokens": 358,
+      "prompt_tokens": 4214,
+      "stock_then_candidate": true,
+      "workload_path": "inputs/h200_55l5g_endpoint_packet/qualified_c32_workload.json"
+    },
+    "immutable_files": [
+      {"bytes": 4621, "path": "inputs/h200_55l5g_endpoint_packet/model_inputs/config.json", "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"},
+      {"bytes": 32169626, "path": "inputs/h200_55l5g_endpoint_packet/model_inputs/tokenizer.json", "sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"},
+      {"bytes": 2095, "path": "inputs/h200_55l5g_endpoint_packet/model_inputs/tokenizer_config.json", "sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"},
+      {"bytes": 1689, "path": "inputs/h200_55l5g_endpoint_packet/model_inputs/processor_config.json", "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"},
+      {"bytes": 18683, "path": "inputs/h200_55l5g_endpoint_packet/model_inputs/chat_template.jinja", "sha256": "ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"},
+      {"bytes": 10196, "path": "run_h200_55l5g_endpoint_owner.py", "sha256": "2407c3f763271a00e2e5b16cb3490763ea2830443d1d14898517d4907ee85e6f"},
+      {"bytes": 6212, "path": "run_h200_55l5g_endpoint_pair.py", "sha256": "02aaabd93c8d3a9e9e5da683608ad47a4cd19929430a0770ad387bae807b0eb3"},
+      {"bytes": 7039, "path": "run_h200_55l5g_endpoint_runtime.py", "sha256": "ed27fc0fc435c54083fc5a41fdb7d2245ffbb8982b1449ef2519cc036ac8a499"},
+      {"bytes": 1585, "path": "endpoint_readiness_guard.py", "sha256": "7dbcc9d4e7855592a81b947f0ee987f212bbab09e0be38681569f6ae9d67d91a"},
+      {"bytes": 2491, "path": "inputs/h200_55l5g_endpoint_packet/qualified_c32_workload.json", "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"}
+    ]
+  },
+  "replacement_owner": {
+    "path": "run_h200_55l5g_live_binding_owner.py",
+    "sha256": "56ca78cd0e707402e637b38ed853b2483d6e4b92cb6b733f36eeb68edafb113a",
+    "operation": "validation_only_until_later_exact_execution_binding"
+  },
+  "provider_create_binding": {
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_PROVIDER_CREATE_20260729T0032Z.json",
+    "sha256": "d5c9663ee6ee1162b8b39342afc65e40dc01db77992f6887339d845dd332d4ee"
+  },
+  "current_maintenance_bench": {
+    "id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "pool_row_canonical_sha256": "3866b18d89d91b1a3b087763bd4e51621cde86069cee9861c2aee3103f07afbf",
+    "status": "maintenance",
+    "claim": null,
+    "identity": {
+      "provider": "nebius",
+      "accelerator": "nvidia-h200-sxm",
+      "instance_id": "computeinstance-e00kwncr0knnykhe48",
+      "disk_id": "computedisk-e00n8m6xbb9cfdkam8",
+      "public_ipv4": "89.169.111.63",
+      "ssh_user": "glmrunner",
+      "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts"
+    },
+    "watchdog": {
+      "unit": "gemma4-hybrid-55l5g-endpoint-20260729t0032z-watchdog.service",
+      "unit_manager": "user",
+      "main_pid": 3749746,
+      "deadline_utc": "2026-07-29T03:32:14.286493Z"
+    }
+  },
+  "budget": {
+    "cumulative_authorized_usd": 22.0,
+    "prior_actual_usd": 9.960954252113235,
+    "provider_create_maximum_lifecycle_usd": 7.3791666,
+    "maximum_cumulative_usd": 17.340120852113234
+  },
+  "future_execution_binding_requirements": {
+    "must_be_separately_named": true,
+    "packet_manifest_sha256": "b0a2fad6522eaf6cb47d4915616071d7ecc56caf1289fb1ed8670edd486576e5",
+    "must_repeat_exact_immutable_scientific_files": true,
+    "must_bind_cumulative_authorized_usd": 22.0,
+    "must_bind_prior_actual_usd": 9.960954252113235,
+    "must_derive_from_current_live_pool_record": [
+      "bench id", "provider and accelerator", "resource identity including verified SSH fingerprint",
+      "checkpoint destination", "image", "claim generation", "watchdog", "release bound"
+    ],
+    "must_verify_before_claim": ["strict SSH identity", "H200 telemetry", "available status", "no active claim", "active watchdog"],
+    "must_not_replay": ["positive component", "TARGET_VERIFY", "DFlash", "phase-selective HTTP-500 consumer", "prior endpoint"],
+    "pair_limit": 1
+  },
+  "typed_current_state": "maintenance_identity_and_h200_telemetry_pending_no_execution_authority"
+}

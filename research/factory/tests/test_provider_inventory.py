@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 from grad_research.provider_inventory import ProviderInventoryError, load_provider_inventory
 from grad_research.gcore_inventory import load_cached_gcore_inventory, load_or_refresh_gcore_inventory
+from grad_research.runpod_inventory import load_runpod_inventory
 
 
 INVENTORY = Path(__file__).parents[1] / "data" / "providers.json"
@@ -34,6 +35,66 @@ class ProviderInventoryTests(unittest.TestCase):
             path.write_text(json.dumps(value))
             with self.assertRaisesRegex(ProviderInventoryError, "credential"):
                 load_provider_inventory(path)
+
+    def test_runpod_inventory_exposes_live_mi300x_as_default_amd_route(self) -> None:
+        def fake_graphql(_: str) -> dict:
+            return {
+                "data": {
+                    "gpuTypes": [
+                        {
+                            "id": "AMD Instinct MI300X OAM",
+                            "displayName": "MI300X",
+                            "memoryInGb": 192,
+                            "s1": {
+                                "stockStatus": "Low",
+                                "uninterruptablePrice": 2.39,
+                                "minimumBidPrice": 1.99,
+                                "availableGpuCounts": None,
+                            },
+                            "s2": None,
+                            "s4": None,
+                            "s8": None,
+                            "c1": None,
+                        },
+                        {
+                            "id": "NVIDIA H100 80GB HBM3",
+                            "displayName": "H100 SXM",
+                            "memoryInGb": 80,
+                            "s1": {
+                                "stockStatus": "High",
+                                "uninterruptablePrice": 2.99,
+                                "minimumBidPrice": 2.99,
+                                "availableGpuCounts": None,
+                            },
+                            "s2": {
+                                "stockStatus": "High",
+                                "uninterruptablePrice": 5.98,
+                                "minimumBidPrice": 5.98,
+                                "availableGpuCounts": None,
+                            },
+                            "s4": None,
+                            "s8": None,
+                            "c1": None,
+                        },
+                    ]
+                }
+            }
+
+        report = load_runpod_inventory(
+            "test-only-secret",
+            now=datetime(2026, 7, 28, 14, 28, 24, tzinfo=timezone.utc),
+            request_graphql=fake_graphql,
+        )
+
+        self.assertEqual("measured_authenticated_provider_api", report["evidence_type"])
+        self.assertEqual("2026-07-28T14:28:24Z", report["retrieved_at_utc"])
+        route = report["default_amd_experiment_route"]
+        self.assertTrue(route["available"])
+        self.assertEqual("AMD Instinct MI300X OAM", route["accelerator_id"])
+        self.assertEqual("Low", route["stock_status"])
+        self.assertEqual(2.39, route["on_demand_usd_per_gpu_hour"])
+        self.assertEqual([1], route["available_secure_gpu_counts"])
+        self.assertNotIn("test-only-secret", json.dumps(report))
 
     def test_gcore_markdown_snapshot_refreshes_once_per_day(self) -> None:
         class FakeGcore:

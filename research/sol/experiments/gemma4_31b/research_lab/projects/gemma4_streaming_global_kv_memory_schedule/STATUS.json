@@ -1,0 +1,409 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 3.4856876241250005,
+  "authorized_spend_usd": 13.0,
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "claim_allowed": false,
+    "conservative_lifecycle_exposure_usd": 9.480573680180553,
+    "gpu_count": 1,
+    "maximum_provider_lifecycle_minutes": 232.17731461666665,
+    "maximum_scientific_gpu_minutes": 45,
+    "preferred_bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "provider": "nebius",
+    "purpose": "Launch the already hash-bound v12 directly into the ownerless retained claim, resume the verified 34.31-GB prefix, and submit only the unconsumed U=8 candidate c32 endpoint."
+  },
+  "claim_gate": {
+    "absolute_release_deadline_utc": "2026-07-29T16:35:00Z",
+    "binding": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V12_OWNER_LOSS_START_REBIND_20260729T1510Z.json",
+    "binding_sha256": "10b93e52042aa1235d1fa5dcdefe802e0d2edd68e646ffd2a9c90e0e5e8e1343",
+    "blocked_by": [],
+    "claim_allowed": false,
+    "claim_start_by_utc": "2026-07-29T15:17:00Z",
+    "disposition": "No new claim is authorized. Binding 10b93e52... supersedes the unlaunched sub-runway fence and authorizes exactly one v12 owner to adopt ownerless retained claim generation 2026-07-29T14:02:13.215196Z by 15:17Z.",
+    "prior_claimed_at_utc": "2026-07-29T13:33:24.414360Z"
+  },
+  "compute_budget": "The retained H200 claim may run one v12 continuation: checkpoint integrity by 15:58Z, candidate server by 16:15Z, one U=8 c32 endpoint, and generation-fenced release by 16:35Z under watchdog PID 91168 through 16:40Z.",
+  "decision_artifact": "MEMORY_SCHEDULE_DISCRIMINATOR.json",
+  "decision_artifact_sha256": "1ea35e007bb7f8317d8e90d3109b20d29fba0141cdd23fd8b7fe2cef1a3102e5",
+  "director_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V12_INVALID_ENDPOINT_REPAIR_FENCE_REBIND_20260729T1550Z.json",
+    "sha256": "ae52eefc80fe65f8d4d2274a4013e58fd366a7ea1edc37567239b577684495ee"
+  },
+  "fresh_endpoint_owner": {
+    "classification": "fresh_h200_streamed_endpoint_owner_v9_ready",
+    "endpoint": {
+      "path": "streaming_global_kv_endpoint_r3.py",
+      "sha256": "e41e3b79d10cd884b6670f32a77752ecb5c01c01cb24f7a3583b90cf8bfa2ae0"
+    },
+    "execution_binding": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_EXECUTION_20260729T1356Z.json",
+    "future_execution_binding_required": false,
+    "hook": {
+      "path": "streaming_global_kv_sglang_hook.py",
+      "sha256": "8423326774d7bf6da9dd7e163889a5b5b444f40fc7a4f5748e33b5dcd0426523"
+    },
+    "owner": {
+      "path": "run_streaming_global_kv_h200_owner_v9.sh",
+      "sha256": "6bbb0122d1ec88c122bb28c98232a566b06bb5dfe0093a42464d04085a67223c"
+    },
+    "prepared_without_gpu": true,
+    "ready_artifact": {
+      "path": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V9_READY.json",
+      "sha256": "b49eb9540ac4995284dc8303c3b778d63fdf6187fa029820e85cb468c1caca49"
+    }
+  },
+  "gpu_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "claim_allowed": false,
+    "maximum_wall_minutes": 120,
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "preferred_bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "requires_positive_spend_authorization": true
+  },
+  "handoff_anomaly": {
+    "classification": "malformed_empty_preflight_terminal_archived",
+    "effect": "R1 observed the malformed terminal and exited before the bound request; its request was then atomically written and R2 launched without overlap.",
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/TERMINAL_INVALID_PREHANDOFF_EMPTY_20260729T1144Z.json"
+  },
+  "identity_verification": {
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "driver_version": "580.159.04",
+    "gpu_memory_mib": 143771,
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "idle_gpu": true,
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "path": "H200_FRESH_IDENTITY_VERIFICATION_20260729T1309Z.json",
+    "sha256": "ebf04ad0a64ba060222b718349f7878e5eeb954cc2fa685b715a0a939a7f1127",
+    "ssh_ed25519_fingerprint": "SHA256:iVGEkfHux6Tcjib28bS/hIaNU9SUYz2r1F9p20A/fzU"
+  },
+  "implementation": {
+    "base_source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "cpu_oracles": {
+      "artifact_path": "artifacts/CPU_ORACLE_REPAIR_20260729T1024Z.json",
+      "artifact_sha256": "79d03ffa76f18568b529ad6da3895baed3072bbd3e38d70cd19745b07e17c0b3",
+      "cuda_executed": false,
+      "result": "3 passed"
+    },
+    "cuda_executed": true,
+    "memory_model": {
+      "path": "memory_schedule_model.py",
+      "sha256": "df81c3b9ddbedaaa63376e4dda9c490145094d8ce3d3713aa0028f1c8cfebdb9"
+    },
+    "path": "streaming_global_kv_schedule.py",
+    "sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a"
+  },
+  "next_action": "No further execution. The exact streamed-global-KV U=8 representation is closed as geometry-incompatible; attempt 0 is invalid attribution evidence, no corrected endpoint was submitted, and claim generation 2026-07-29T14:02:13.215196Z was released generation-fenced after zero-GPU cleanup.",
+  "owner_loss": {
+    "candidate_sample_consumed": false,
+    "claim_generation": "2026-07-29T13:33:24.414360Z",
+    "classification": "recoverable_owner_controller_defect_owner_lost",
+    "diagnostic_path": "artifacts/streaming-global-kv-fresh-h200-20260729t1324z/OWNER_V8_PRE_SCIENCE_FAILURE.json",
+    "release_performed": true
+  },
+  "owner_loss_v10": {
+    "bound_full_transfer_minutes": 67.4,
+    "candidate_sample_consumed": false,
+    "claim_generation": "2026-07-29T14:02:13.215196Z",
+    "classification": "recoverable_pre_science_owner_controller_defect_deadline_infeasible",
+    "cuda_producer_replayed": false,
+    "diagnostic_path": "artifacts/streaming-global-kv-fresh-h200-v10-20260729t1410z/OWNER_V10_PRE_SCIENCE_FAILURE.json",
+    "release_performed": false,
+    "remaining_to_integrity_minutes": 53
+  },
+  "owner_ready_artifact": {
+    "path": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V9_READY.json",
+    "sha256": "b49eb9540ac4995284dc8303c3b778d63fdf6187fa029820e85cb468c1caca49"
+  },
+  "owner_v7_repair": {
+    "gpu_budget": 0,
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_OWNER_V7_REPAIR_20260729T1312Z.json",
+    "provider_spend_usd": 0,
+    "required_terminal": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V7_READY.json",
+    "result_required_by_utc": "2026-07-29T13:21:00Z",
+    "sha256": "253d41347944d0cb8554f1a6ddc9e79a5334e24cfe20c4d9594a81b07fb7bf37"
+  },
+  "prior_active_session": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-20260729t1324z",
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_generation": "2026-07-29T13:33:24.414360Z",
+    "claimed_at_utc": "2026-07-29T13:33:24.414360Z",
+    "deadline_utc": "2026-07-29T14:28:00Z",
+    "phase": "owner_lost_pre_science",
+    "pid": 26048,
+    "start_ticks": 144794786,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-20260729t1324z/DETACHED_OWNER.json",
+    "unit_manager": "pid"
+  },
+  "prior_active_session_v10_owner_lost": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v10-20260729t1410z",
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_generation": "2026-07-29T14:02:13.215196Z",
+    "claimed_at_utc": "2026-07-29T14:02:13.215196Z",
+    "deadline_utc": "2026-07-29T15:48:00Z",
+    "expected_terminal": "TERMINAL.json",
+    "phase": "claimed_v10_same_claim_hash_reconciled_staging",
+    "pid": 52969,
+    "start_ticks": 145055323,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v10-20260729t1410z/DETACHED_OWNER.json",
+    "unit_manager": "pid"
+  },
+  "prior_active_session_v11_rebound": null,
+  "prior_active_session_v12_pre_science_launcher_defect": {
+    "classification": "controller_local_wrong_path_pre_science",
+    "diagnostic": "detached-owner launch used a duplicated local path and exited before owner startup; corrected immediately with the binding-exact command.",
+    "pid": 101843,
+    "record_path": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/DETACHED_OWNER.json",
+    "science_consumed": false,
+    "start_ticks": 145437378
+  },
+  "prior_active_session_v9_replaced": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v9-20260729t1356z",
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "deadline_utc": "2026-07-29T15:48:00Z",
+    "expected_terminal": "TERMINAL.json",
+    "phase": "claimed_v10_same_claim_replacement_bound",
+    "pid": 43683,
+    "start_ticks": 144967588,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v9-20260729t1356z/DETACHED_OWNER.json",
+    "unit_manager": "pid"
+  },
+  "priority": 0,
+  "provider_binding": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "condition": "ready",
+    "deadline_utc": "2026-07-29T15:50:00Z",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "owner_ready_required": false,
+    "prior_bench_id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+    "prior_resource_retired": true,
+    "provider_create": {
+      "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_PROVIDER_CREATE_20260729T1248Z.json",
+      "sha256": "485443f0aa5be27f9dee8c8a928feeaa2045a2170f51e850b8f41400a7f0e69a"
+    },
+    "provider_started_at_utc": "2026-07-29T12:47:49.361123Z",
+    "strict_identity_verified": true,
+    "watchdog_main_pid": 35168
+  },
+  "r2_cuda_discriminator": {
+    "classification": "completed_passing_producer",
+    "compact_entries": {
+      "c26_q1": 26,
+      "c64_q1": 64,
+      "c64_q32": 64
+    },
+    "component_median_ns": {
+      "activated": 1156154,
+      "streamed": 1519664
+    },
+    "gates_pass": true,
+    "max_abs_error": 0.00048828125,
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/CUDA_DISCRIMINATOR_R2_attempt0.json",
+    "sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e"
+  },
+  "r2_execution": {
+    "fixture_entries": {
+      "c26_q1": 26,
+      "c64_q1": 64,
+      "c64_q32": 64
+    },
+    "owner": {
+      "path": "run_streaming_global_kv_h200_owner_v4.sh",
+      "sha256": "0e9c0b97bab86cb492c03b42794705e2f06f18adfd92df3e763e2ccfa5e0da53"
+    },
+    "patch": {
+      "path": "STREAMING_GLOBAL_KV_R2_PATCH.json",
+      "sha256": "14a5c4b6a2b824daf213061f41b5b1762b3b125bbee1a875390f9dd11cab66e9"
+    },
+    "release_by_utc": "2026-07-29T12:16:00Z",
+    "runner": {
+      "path": "streaming_global_kv_h200_runner_r2.py",
+      "sha256": "1b276a8f8bf29462ae3a1b7446802a059a8357101d2cb612d3b0dc58a3859e58"
+    }
+  },
+  "r2_lifecycle_amendment": {
+    "claim_generation": "2026-07-29T11:03:00.114761Z",
+    "launch_by_utc": "2026-07-29T11:47:00Z",
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_H200_R2_LIFECYCLE_AMENDMENT_20260729T1138Z.json",
+    "release_by_utc": "2026-07-29T12:16:00Z",
+    "sha256": "cb3ac55b17ace4b4761f16af4b5b3f9605aa29a8b4f7decf820b0e88e4374fa8",
+    "watchdog_deadline_utc": "2026-07-29T12:26:00Z",
+    "watchdog_main_pid": 4153986
+  },
+  "r2_same_claim_repair_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_H200_R2_FIXTURE_AND_OWNER_REPAIR_20260729T1125Z.json",
+    "sha256": "5e1b3f42a12ee6e552b673c414eb58efa7886ab8c6108c5cd4d07a63dacf1e7a"
+  },
+  "readiness_blocker": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_allowed": false,
+    "classification": "ready_for_v11_rebound_same_claim_execution",
+    "gpu_authorization_blocked": false,
+    "maximum_cumulative_exposure_usd": 11.741261304305555,
+    "maximum_new_provider_exposure_usd": 8.255573680180554,
+    "prior_actual_spend_usd": 3.4856876241250005,
+    "provider_create_authorized_and_consumed": true,
+    "requested_cumulative_reservation_usd": 12.0,
+    "strict_identity_verification_required": false
+  },
+  "repair_blocker": {
+    "classification": "live_r2_endpoint_retry_path_cannot_consume_request",
+    "completed_producer": "CUDA_DISCRIMINATOR_R2_attempt0.json",
+    "diagnostic": "endpoint made zero requests and failed pre-root with candidate_server_activation_proof_missing; R2 wait returns into exit 1, which kills the only heartbeat.",
+    "repair_id": "streaming-global-kv-r2-endpoint-0",
+    "required_director_action": "Authorize a same-claim endpoint-only repair-capable handoff that preserves the completed R2 CUDA producer and resumes only the endpoint with candidate-server activation."
+  },
+  "repair_dispatch_conflict_v11": {
+    "artifact_path": "artifacts/streaming-global-kv-fresh-h200-v11-rebound-20260729t1445z/V11_PART_STATE_REPAIR_DISPATCH_CONFLICT.json",
+    "candidate_sample_consumed": false,
+    "diagnostic": "part_state_failed",
+    "reason": "Live parsed owner resumes staging but does not consume patch artifacts; request would replay malformed part_state.",
+    "repair_id": "streaming-global-kv-v11-staging_failure-0"
+  },
+  "researcher_profile": "execution",
+  "reservation_required": false,
+  "same_claim_repair_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_H200_SAME_CLAIM_OWNER_REPAIR_20260729T1117Z.json",
+    "sha256": "c5d439da6f7ed3cd5c2533d79f6fe04d5e5a294472a9b68a4f3d785a313e2287"
+  },
+  "schema_version": 1,
+  "status": "terminal",
+  "storage_budget": "Preserve the exact checkpoint, attempt-0 capture, repair diagnosis, and terminal artifacts; no further provider or guest mutation is authorized.",
+  "summary": "The admitted streamed-global-KV endpoint is incompatible with the exact KV16/head-dim256 runtime geometry. Attempt 0 is invalid attribution evidence, the no-replay guard prevented attempt 1, and the exact claim was released after zero-GPU cleanup for the reserved norm-FP8 successor.",
+  "classification": "invalid_endpoint_hook_geometry_contract_incompatible",
+  "completed_at_utc": "2026-07-29T15:57:00Z",
+  "terminal_artifact": "STREAMING_GLOBAL_KV_V12_INVALID_GEOMETRY_TERMINAL.json",
+  "terminal_artifact_sha256": "1e3075bd9cb9418336ea369b7eb9126d49480e039b3576ad82a41c06f9f55fb1",
+  "terminal_repair_artifact": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_INVALID_ENDPOINT_REPAIR_PATCH.json",
+  "terminal_repair_sha256": "d5b13382b7b20eecce8469a7a47f18c51bfa3d62496cd652493b1b0df6ffc421",
+  "candidate_submission_count": 1,
+  "candidate_evidence_valid": false,
+  "candidate_promoted": false,
+  "claim_released_generation_fenced": "2026-07-29T14:02:13.215196Z",
+  "successor_project": "gemma4_h200_current_norm_fp8_hotblock",
+  "v10_same_claim_patch": {
+    "owner_path": "run_streaming_global_kv_h200_owner_v10.sh",
+    "owner_sha256": "833c92c7d4b86426a319e3016249c05332b5d8d6e903ba63544bee3e74163be0",
+    "path": "STREAMING_GLOBAL_KV_FRESH_H200_V10_SAME_CLAIM_PATCH.json",
+    "predecessor_pid": 43683,
+    "predecessor_start_ticks": 144967588,
+    "predecessor_verified_absent": true,
+    "sha256": "fa4615e8ea97ca62b17bb66f44f1bb39a8bda1e195b50ddab3ebec3506ac8be5"
+  },
+  "v10_same_claim_replacement": {
+    "checkpoint_integrity_by_utc": "2026-07-29T15:20:00Z",
+    "expected_claimed_at_utc": "2026-07-29T14:02:13.215196Z",
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V10_SAME_CLAIM_REPLACEMENT_20260729T1410Z.json",
+    "release_by_utc": "2026-07-29T15:48:00Z",
+    "repair_id": "streaming-global-kv-v9-staging_failure-1",
+    "replacement_launch_by_utc": "2026-07-29T14:18:00Z",
+    "server_ready_by_utc": "2026-07-29T15:35:00Z",
+    "sha256": "bd0d211a0e15d3777fedbbac666cf26a07aca399fa84822cc0dc24e0f81cd710",
+    "source_owner_sha256": "6bbb0122d1ec88c122bb28c98232a566b06bb5dfe0093a42464d04085a67223c",
+    "source_pid": 43683,
+    "source_start_ticks": 144967588,
+    "watchdog_deadline_utc": "2026-07-29T15:50:00Z"
+  },
+  "v11_resumable_patch": {
+    "launch_started": false,
+    "owner_path": "run_streaming_global_kv_h200_owner_v11.sh",
+    "owner_sha256": "3dae02dc962758cd7410db8f3ce139c530b02064fb2f12c77236f9708a224eeb",
+    "path": "STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_PATCH.json",
+    "sha256": "0a0a7ddab0b24a44aa4e985ed4f3731475f239b91f6bc1f06b2e8d34fd17e2e8"
+  },
+  "v11_resumable_same_claim_repair": {
+    "checkpoint_integrity_by_utc": "2026-07-29T15:14:00Z",
+    "expected_claimed_at_utc": "2026-07-29T14:02:13.215196Z",
+    "launch_by_utc": "2026-07-29T14:38:00Z",
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_SAME_CLAIM_20260729T1431Z.json",
+    "release_by_utc": "2026-07-29T15:48:00Z",
+    "remaining_checkpoint_bytes": 28270858464,
+    "retained_partial_bytes": 34307773440,
+    "retained_partial_file": "model-00001-of-00002.safetensors.part",
+    "server_ready_by_utc": "2026-07-29T15:31:00Z",
+    "sha256": "28e4050d59db900d0289fcefdb1e0f49010099989bde81b6307a8e14a573fd9c",
+    "source_owner_sha256": "833c92c7d4b86426a319e3016249c05332b5d8d6e903ba63544bee3e74163be0",
+    "source_pid": 52969,
+    "source_start_ticks": 145055323,
+    "watchdog_deadline_utc": "2026-07-29T15:50:00Z"
+  },
+  "v12_prestop_owner_loss_conflict": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_PRESTOP_OWNER_LOSS_CONFLICT.json",
+    "sha256": "fc3a704cb44f92cdfb51989e19d9f4130090a49b44eaa62a150daf1d8856a1bd"
+  },
+  "v12_invalid_endpoint_repair": {
+    "claim_generation": "2026-07-29T14:02:13.215196Z",
+    "endpoint_guard_sha256": "7f116f4195c7a31f9df243a317d3905433f38405a87092408ff4c1ecc6b57e8c",
+    "patch_artifact": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_INVALID_ENDPOINT_REPAIR_PATCH.json",
+    "patch_artifact_sha256": "d5b13382b7b20eecce8469a7a47f18c51bfa3d62496cd652493b1b0df6ffc421",
+    "repair_ready_sha256": "7fafb09be0bcc2fc936e6773f298d504e8e61f3f23e17728f9c39d6332146408",
+    "request_written": false,
+    "typed_boundary": "hook_only_geometry_contract_incompatible"
+  },
+  "v12_repair_owner_loss": {
+    "path": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_REPAIR_OWNER_LOSS_AFTER_GUARD.json",
+    "pid": 102131,
+    "sha256": "102bd0683cf5f716815723937a6aaf354ea839144e787312fe3d8bf1acfdbc5b",
+    "start_ticks": 145439383,
+    "typed_boundary": "replacement_owner_not_authorized_by_current_binding"
+  },
+  "v8_implementation_and_execution": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_start_by_utc": "2026-07-29T13:38:00Z",
+    "destination_owner": "run_streaming_global_kv_h200_owner_v8.sh",
+    "final_owner_sha256": "620be2bd084f28dda5cbbc1a17a51b900f1192a6c34ce8c700000156ba56d539",
+    "patch_artifact": "STREAMING_GLOBAL_KV_FRESH_H200_V8_PATCH.json",
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V8_IMPLEMENT_AND_EXECUTE_20260729T1324Z.json",
+    "release_by_utc": "2026-07-29T14:28:00Z",
+    "server_ready_by_utc": "2026-07-29T14:12:00Z",
+    "sha256": "d69c2d5f8f29e40268d11e339468e5650174134ade1e7565d99aa83589e720d0",
+    "source_owner_sha256": "7db91f0e0340de46947bc12c4543835bbc8b47039b0ea0b1b05fd8699af4a308",
+    "staging_complete_by_utc": "2026-07-29T13:57:00Z",
+    "watchdog_deadline_utc": "2026-07-29T14:38:00Z",
+    "watchdog_main_pid": 22052
+  },
+  "v9_claim_fence_amendment": {
+    "claim_start_by_utc": "2026-07-29T14:07:00Z",
+    "operative": false,
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_CLAIM_FENCE_AMENDMENT_20260729T1404Z.json",
+    "reason": "The original owner launched at 14:00:58Z and atomically claimed at 14:02:13Z before this amendment was published.",
+    "sha256": "9486a8ff0ed3fb026db58c666e788dbee21fb204c699f634024e5c5f4593b2a5",
+    "unchanged_release_by_utc": "2026-07-29T15:40:00Z"
+  },
+  "v9_execution": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_start_by_utc": "2026-07-29T14:05:00Z",
+    "owner_sha256": "6bbb0122d1ec88c122bb28c98232a566b06bb5dfe0093a42464d04085a67223c",
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_EXECUTION_20260729T1356Z.json",
+    "ready_artifact_sha256": "b49eb9540ac4995284dc8303c3b778d63fdf6187fa029820e85cb468c1caca49",
+    "release_by_utc": "2026-07-29T15:40:00Z",
+    "server_ready_by_utc": "2026-07-29T15:29:00Z",
+    "sha256": "3bcb123297c08dc51363a569dbcc39ee8949d1e3fa8d8c65ec733a0ac3d9d76e",
+    "staging_complete_by_utc": "2026-07-29T15:14:00Z",
+    "watchdog_deadline_utc": "2026-07-29T15:50:00Z"
+  },
+  "v9_offline_owner_repair": {
+    "final_owner": "run_streaming_global_kv_h200_owner_v9.sh",
+    "final_owner_sha256": "6bbb0122d1ec88c122bb28c98232a566b06bb5dfe0093a42464d04085a67223c",
+    "gpu_budget": 0,
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_OFFLINE_OWNER_REPAIR_20260729T1343Z.json",
+    "provider_spend_usd": 0,
+    "ready_artifact_sha256": "b49eb9540ac4995284dc8303c3b778d63fdf6187fa029820e85cb468c1caca49",
+    "ready_published_utc": "2026-07-29T13:53:26Z",
+    "required_ready_artifact": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V9_READY.json",
+    "result_required_by_utc": "2026-07-29T13:55:00Z",
+    "sha256": "7bf5f634a626a208815a7654208ecd1d2d238938c9fae735c4fe5c71d5654aa6",
+    "source_failure_sha256": "0156b881aa6b097b55b2c10c63b3da673d3adb35d3712c72b730590b2b03420b",
+    "source_owner_sha256": "620be2bd084f28dda5cbbc1a17a51b900f1192a6c34ce8c700000156ba56d539",
+    "validation": "bash syntax plus zero-GPU static contract passed; no claim, SSH, provider API, checkpoint transfer, CUDA, or endpoint work occurred."
+  },
+  "wall_clock_budget_minutes": 98,
+  "watchdog_r3_lifecycle": {
+    "deadline_utc": "2026-07-29T15:50:00Z",
+    "maximum_cumulative_exposure_usd": 10.924594637638888,
+    "path": "H200_FRESH_WATCHDOG_R3_LIFECYCLE_20260729T1348Z.json",
+    "prior_watchdog_inactive_verified": true,
+    "prior_watchdog_main_pid": 22052,
+    "watchdog_main_pid": 35168
+  }
+}

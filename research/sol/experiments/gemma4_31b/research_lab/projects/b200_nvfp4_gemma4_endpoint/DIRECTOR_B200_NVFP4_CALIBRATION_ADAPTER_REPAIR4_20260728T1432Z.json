@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-28T14:32:08Z",
+  "decision_id": "b200-nvfp4-calibration-adapter-repair4-20260728t1432z",
+  "project": "b200_nvfp4_gemma4_endpoint",
+  "researcher_profile": "execution",
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "retained_claim": {
+    "claim_generation": "2026-07-28T13:26:29.336626Z",
+    "predecessor_pid": 3205966,
+    "predecessor_start_ticks": 136499939,
+    "replacement_owner_start_by_utc": "2026-07-28T14:37:00Z",
+    "release_by_utc": "2026-07-28T16:10:00Z",
+    "watchdog_deadline_utc": "2026-07-28T16:19:08.005929Z"
+  },
+  "repair_handshake": {
+    "repair_id": "b200-nvfp4-v2-20260728T143110Z",
+    "ready": "artifacts/b200-nvfp4-endpoint-v2-20260728t1323z/.repair-handshakes/b200-nvfp4-v2-20260728T143110Z/REPAIR_READY.json",
+    "ready_sha256": "4ba35a60beb0534d0215ce91f89294b1520abfcf91a5ab72af4efb68918bf4de",
+    "failure_kind": "conversion",
+    "science_consumed": false
+  },
+  "localized_cause": {
+    "classification": "pre_science_calibration_dataset_registry_adapter",
+    "adapter": "producer_v2/llmcompressor_cli_adapter.py",
+    "adapter_sha256": "e1e24129e176cdea649260798dcdcf659bc3fa1dadfaef058a4e0e34fd8945f4",
+    "evidence": "llmcompressor 0.12.0 treats a string dataset argument as a registry identifier. The adapter passes the absolute calibration.jsonl path as that string, producing a registry KeyError even though the staged JSONL contains a valid text row."
+  },
+  "repair_contract": {
+    "mutable_boundaries": [
+      "producer_v2/llmcompressor_cli_adapter.py",
+      "endpoint_owner.sh"
+    ],
+    "required_change": "In the adapter, load the bound JSONL path through the installed datasets JSON loader into an in-memory Dataset with its train split, then pass that Dataset object to oneshot. Preserve the exact calibration bytes and record their existing identity; do not substitute, expand, or regenerate calibration data.",
+    "prohibited_changes": [
+      "Do not change the checkpoint, recipe, native-NVFP4 producer semantics, serving image, workload, arm order, or endpoint timing boundary.",
+      "Do not reinstall the already-working producer environment or regenerate the derived runtime lock.",
+      "Do not restage the resident image, reconciled checkpoint, packet, calibration, or verified producer wheel bundle.",
+      "Do not submit or replay BF16 control or native-NVFP4 candidate science outside the unchanged ordered contract."
+    ],
+    "continuation": "Hash-bind the amended adapter and owner, then write REPAIR_REQUEST.json only in the exact repair handshake. Replace only matching exited predecessor 3205966/136499939 inside the continuous claim, resume at conversion, and launch one durable repair-4 owner."
+  },
+  "owner_launch": {
+    "state": "artifacts/b200-nvfp4-endpoint-v2-20260728t1323z/OWNER_STATE_PRODUCER_V2_REPAIR4.json",
+    "log": "artifacts/b200-nvfp4-endpoint-v2-20260728t1323z/OWNER_PRODUCER_V2_REPAIR4.log",
+    "command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_gemma4_endpoint/artifacts/b200-nvfp4-endpoint-v2-20260728t1323z/OWNER_STATE_PRODUCER_V2_REPAIR4.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_gemma4_endpoint/artifacts/b200-nvfp4-endpoint-v2-20260728t1323z/OWNER_PRODUCER_V2_REPAIR4.log --cwd /root/workspace -- bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_gemma4_endpoint/endpoint_owner.sh"
+  },
+  "expected_terminal": "Validated BF16 CONTROL_TERMINAL.json followed by native-NVFP4 CANDIDATE_TERMINAL.json, or a fresh hash-bound retained-claim repair marker before the absolute release fence."
+}

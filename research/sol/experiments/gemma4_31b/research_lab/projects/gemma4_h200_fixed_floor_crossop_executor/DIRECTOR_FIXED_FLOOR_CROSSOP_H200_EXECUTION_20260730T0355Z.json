@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T03:55:00Z",
+  "classification": "director_fixed_floor_crossop_exact_h200_component_execution",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "researcher_profile": "execution",
+  "decision": "Use the durably reserved warm H200 for one exact-consumer component ledger of the source-complete QKV norm+RoPE to E5M2 NHD KV-cache epilogue.",
+  "causal_hypothesis": "Committing E5M2 K/V cache bytes from the live QKV norm+RoPE producer removes the downstream clone, divide, cast, and store path without adding CTAs; every exact local/global geometry should preserve QKV and cache semantics and have lower median component time.",
+  "immutable_scientific_identities": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "phase": "exact_shape_component",
+    "cache_dtype": "torch.float8_e5m2",
+    "cache_layout": "NHD",
+    "qkv_dtype": "torch.bfloat16",
+    "page_size": 1,
+    "local_geometry": {
+      "q_heads": 32,
+      "kv_heads": 16,
+      "head_dim": 256
+    },
+    "global_geometry": {
+      "q_heads": 32,
+      "kv_heads": 4,
+      "head_dim": 512
+    },
+    "token_rows": [32, 118, 1409, 1631, 2048]
+  },
+  "bound_inputs": {
+    "offline_terminal": {
+      "path": "FIXED_FLOOR_CROSSOP_OFFLINE_TERMINAL.json",
+      "sha256": "33f88a6cf747a1545a55bf712d999bf8f2a55d3b1aab97e7a16ecafa20c17b7a"
+    },
+    "offline_validation": {
+      "path": "OFFLINE_VALIDATION.json",
+      "sha256": "96d8e5ac8bf699055854bcb489ffa4505972ccdfcbc297ab2c37eecd16acceb3"
+    },
+    "candidate": {
+      "path": "fused_qkv_kv_cache.py",
+      "sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d"
+    },
+    "installer": {
+      "path": "install_fused_qkv_cache.py",
+      "sha256": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3"
+    },
+    "consumer": {
+      "path": "exact_consumer.py",
+      "sha256": "7175968c4be9b95e5d509b328df9424169c2ee499d9da5b2ec42688e4cf8d408"
+    },
+    "pinned_memory_pool_sha256": "37f9915a2945c7bb389212eed65eb770cb9e3fa6976d0778b6831d2ac29d7bdd"
+  },
+  "stock_control": "For each exact row and attention class, qkv_norm_rope_inplace followed by the pinned MHATokenToKVPool E5M2 NHD set_kv_buffer path in the same fresh process.",
+  "candidate": "For each identical input, qkv_norm_rope_cache_store commits the E5M2 NHD cache directly from the producer CTAs with no new CTA or intermediate tensor.",
+  "quality_and_performance_contract": {
+    "cases": 10,
+    "warmups_per_arm": 5,
+    "timed_iterations_per_arm": 31,
+    "qkv_normalized_rmse_max": 1e-5,
+    "cache_key_bytewise_equal": true,
+    "cache_value_bytewise_equal": true,
+    "all_outputs_consumed": true,
+    "all_outputs_finite": true,
+    "registers_per_thread_max": 32,
+    "spills_max": 0,
+    "performance_gate": "Every one of the ten exact cases must have positive candidate median reduction. Persist distributions and the unnormalized per-call delta; do not infer an endpoint result.",
+    "scientific_submission_count": 1,
+    "endpoint_submission_count": 0
+  },
+  "local_preclaim_owner_contract": {
+    "destination": "run_fixed_floor_crossop_h200_owner.py",
+    "derived_execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200.json",
+    "artifact_root": "artifacts/fixed-floor-crossop-h200-20260730t0355z",
+    "required_behavior": [
+      "Hash-bind this director binding, the final owner source, and every bound input in the derived execution binding before claim.",
+      "Use the shared gpu_pool CLI for one atomic exact-bench claim with lease_seconds=1200, 30-second heartbeats, generation-fenced release, and current bench-derived SSH identity.",
+      "Stage only the five small bound project files to /home/glmrunner/fixed-floor-crossop-executor using temporary names, SHA-256 verification, and atomic rename.",
+      "Use sudo -n docker from the first Nebius Docker command and the pinned image digest.",
+      "Mount the staged directory at the exact project absolute path expected by exact_consumer.py, run the bound command once, and retrieve the invocation state, terminal, stdout, stderr, and compact GPU identity.",
+      "A recoverable pre-science path, import, permission, container, or runtime API defect must retain the claim through a fresh repair-handshake generation while the corrected run and release still fit.",
+      "Release only after a complete positive or negative ten-case terminal, unsafe or unreachable guest, or the absolute claim deadline."
+    ],
+    "exact_detached_start_template": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0355z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0355z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/run_fixed_floor_crossop_h200_owner.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0355z/run"
+  },
+  "remote_scientific_command": "PYTHONPATH=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/exact_consumer.py --output /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/h200_exact_consumer/TERMINAL.json --expected-source-sha256 4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d --tokens 32 118 1409 1631 2048 --warmups 5 --iterations 31",
+  "lifecycle": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "required_state": "available",
+    "required_claim": null,
+    "claim_start_by_utc": "2026-07-30T04:08:00Z",
+    "scientific_launch_by_utc": "2026-07-30T04:12:00Z",
+    "scientific_complete_by_utc": "2026-07-30T04:24:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T04:30:00Z",
+    "watchdog_unit": "gemma4-dflash-r3-20260730t0323z-watchdog.service",
+    "watchdog_main_pid": 506236,
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z",
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_fixed_floor_crossop_executor --bench h200-dflash-r3-computeinstance-e00t5s028ts52zp215 --lease-seconds 1200"
+  },
+  "budgets": {
+    "authorized_spend_usd": 1.0,
+    "actual_spend_usd_before_execution": 0.0,
+    "maximum_claim_wall_minutes": 20,
+    "maximum_claim_exposure_usd_at_2_45_per_hour": 0.8166666666666667,
+    "maximum_scientific_gpu_minutes": 5,
+    "maximum_additional_storage_gibibytes": 2
+  },
+  "artifact_contract": [
+    "Derived execution binding, final owner hash, exact claim generation, controller PID/start ticks, and phase timestamps.",
+    "GPU identity, installed memory_pool identity, staged-file manifest, invocation state, raw stdout/stderr, and every ten-case terminal row.",
+    "Per-case stock/candidate distributions, QKV error, bytewise cache equality, consumed checksum, and candidate-path identity.",
+    "Useful GPU seconds, complete claim exposure, typed terminal, and generation-fenced release evidence."
+  ],
+  "must": [
+    "Use $researcher with execution profile, $kernel-research, and $experiment-run.",
+    "Prepare and hash-bind the narrow owner before claim, then re-read this exact bench once and claim by 04:08Z.",
+    "Publish STATUS.json.active_session only after the detached owner is proven live, heartbeating, and beyond claim or first execution-equivalent boundary; return immediately after one grouped snapshot.",
+    "If owner preparation cannot finish before the claim fence, leave the bench unclaimed and persist the exact blocker for the director."
+  ],
+  "must_not": [
+    "Do not run an endpoint, DFlash, NGRAM, another kernel decomposition, or another scientific submission.",
+    "Do not mutate the checkpoint, provider resources, watchdog, runtime image, model geometry, scales, oracle, or timing contract.",
+    "Do not claim another bench or call provider lifecycle.",
+    "Do not release for an ordinary recoverable pre-science defect while a corrected execution plus terminal and release still fit; do not retain the claim after the absolute release deadline."
+  ]
+}

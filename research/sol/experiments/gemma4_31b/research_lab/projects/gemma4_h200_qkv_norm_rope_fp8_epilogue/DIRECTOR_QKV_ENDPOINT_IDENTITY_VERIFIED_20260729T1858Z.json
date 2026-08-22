@@ -1,0 +1,43 @@
+{
+  "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+  "cloud_init_ready_at_utc": "2026-07-29T18:54:03Z",
+  "decision": "strict_provider_ssh_cloud_init_single_h200_identity_verified",
+  "disk": {
+    "id": "computedisk-e00pb91rav4c5ksdbx",
+    "state": "READY"
+  },
+  "execution_or_science_performed": false,
+  "gpu": {
+    "compute_processes": 0,
+    "driver_version": "580.159.04",
+    "memory_mib": 143771,
+    "memory_used_mib": 0,
+    "name": "NVIDIA H200",
+    "utilization_percent": 0,
+    "uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "instance": {
+    "id": "computeinstance-e00qxw871hz1r79fjt",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "public_ipv4": "89.169.115.101",
+    "state": "RUNNING"
+  },
+  "project": "gemma4_h200_qkv_norm_rope_fp8_epilogue",
+  "schema_version": 1,
+  "ssh": {
+    "fingerprint": "SHA256:3hDhNCJKQQo68DtW7LV5dperdxrj4cJJ39CVq0w1ZRM",
+    "identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "strict_host_key_checking": true,
+    "user": "glmrunner"
+  },
+  "verified_at_utc": "2026-07-29T18:58:38Z",
+  "watchdog": {
+    "active_state": "active",
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-qkv-endpoint-20260729t185240z-watchdog.service",
+    "deadline_utc": "2026-07-29T20:37:40.704315Z",
+    "main_pid": 235890,
+    "sub_state": "running",
+    "unit": "gemma4-qkv-endpoint-20260729t185240z-watchdog.service"
+  }
+}

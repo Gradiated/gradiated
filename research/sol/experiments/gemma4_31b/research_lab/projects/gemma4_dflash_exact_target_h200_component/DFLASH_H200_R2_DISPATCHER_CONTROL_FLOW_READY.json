@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "ready_for_later_director_same_claim_dispatcher_recovery_r2",
+  "created_at_utc": "2026-07-30T00:25:00Z",
+  "control_flow_binding": "DIRECTOR_DFLASH_R2_DISPATCHER_CONTROL_FLOW_REPAIR_20260730T0022Z.json",
+  "control_flow_binding_sha256": "a4df85b2a43da4936e9a0646f843a29dbe9e677f49155d81a809df4c7c3ec588",
+  "supersedes": {
+    "artifact": "DFLASH_H200_R2_CONSUMED_REPAIR3_RECOVERY_READY.json",
+    "sha256": "baac24623a75750e5f6bddedf6765e080e744f55883da67b753ced12be362468",
+    "reason": "rejected-request and repair-terminal fallthrough corrected before launch"
+  },
+  "owner_source": "dflash_component_direct_recovery_owner_r2.py",
+  "owner_source_sha256": "0b36f3476008046ee039149d709aadc5267e8daae454104fc0ef985d579704df",
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claim_generation": "2026-07-29T23:49:13.529071Z",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "consumed_repair": {
+    "repair_id": "dflash-h200-r2-recovery-20260730t0010z-recovery-3",
+    "consumed_request_sha256": "12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433",
+    "patch_sha256": "03aa2b4da6d01f9316ea513a72d95eff30b94ea38feb0bf61c3d2a117109ac12",
+    "adoption_sha256": "103355400df0f565d0a8f4ae88b36a79ed7b9996685beecd5c391a9df067fc35",
+    "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "snapshot_manifest_sha256": "c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4"
+  },
+  "execution_fence": {
+    "initial_worker_generation": 3,
+    "forbidden_replay_generations": [0, 1, 2],
+    "science_started": {"ar": false, "dflash": false, "ngram": false},
+    "science_consumed": {"ar": false, "dflash": false, "ngram": false}
+  },
+  "dispatcher_contract": {
+    "valid_request": "only a newly atomically consumed request whose patch validates against the current diagnostic, claim generation, and retry scope may advance to another worker",
+    "rejected_request": "persist fresh diagnostic and remain in the inner repair-wait loop without incrementing generation or executing a worker",
+    "repair_terminal": "persist terminal and release generation-fenced to maintenance without replay",
+    "missing_request": "only absolute deadline may reach maintenance disposition"
+  },
+  "offline_validation": {
+    "py_compile": true,
+    "local_contract_hashes": true,
+    "dispatcher_branches": ["valid", "rejected_then_valid", "repair_terminal", "deadline"],
+    "external_actions": false
+  },
+  "launch_authority": "later_director_only"
+}

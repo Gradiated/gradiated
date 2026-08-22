@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "classification": "director_terminal_acceptance",
+  "accepted_at_utc": "2026-07-29T06:58:00Z",
+  "project": "gemma4_rtxpro6000_vllm_current_fp8_endpoint",
+  "terminal": {
+    "path": "artifacts/vllm-sm120-native-endpoint-20260729t0601z/VLLM_SM120_FP8_ENDPOINT_TERMINAL.json",
+    "sha256": "5cc293642429d179352fecb94c2cf6f010cf6f0273d38cfea201402a5f575c46",
+    "classification": "scientific_terminal",
+    "successful_requests": 32,
+    "total_requests": 32
+  },
+  "run": {
+    "path": "artifacts/vllm-sm120-native-endpoint-20260729t0601z/endpoint-pair-repair-1785308064/run.json",
+    "sha256": "7356439272381f75839698051ac8327706d4cdda04eaaa05b88d275973e8d70d",
+    "created_at_utc": "2026-07-29T06:54:24.731404Z",
+    "updated_at_utc": "2026-07-29T06:55:05.933643Z",
+    "wall_seconds": 41.202239,
+    "seconds_per_request": 1.28756996875,
+    "derivation": "run.updated_at minus run.created_at, divided by 32 completed concurrent requests"
+  },
+  "decision": {
+    "classification": "valid_measured_negative",
+    "rtx_target_seconds_per_request": 1.048637203302411,
+    "percent_above_rtx_target": 22.785074255913496,
+    "sglang_seconds_per_request": 2.23382165625,
+    "percent_faster_than_sglang": 42.36021639652774,
+    "science_consumed": true,
+    "replay_allowed": false
+  },
+  "spend": {
+    "metered_usd_per_hour": 1.89,
+    "charged_from_utc": "2026-07-29T05:31:08.686589Z",
+    "charged_through_utc": "2026-07-29T06:55:05.933643Z",
+    "derived_usd": 2.64455470335,
+    "status_actual_spend_usd": 2.65,
+    "label": "conservative shared-bench itinerary exposure"
+  }
+}

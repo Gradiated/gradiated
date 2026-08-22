@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "requested_at_utc": "2026-07-24T17:27:10Z",
+  "diagnostic_sha256": "0355cf3a364392838bda64f60da6e0c6f4ce2aef11f46f23a8b0c64aeeb72b5d",
+  "retry_scope": "component only; endpoint remains unstarted and conditional",
+  "causal_amendment": "Bypass the candidate during component CUDA-graph capture, then enable the unchanged candidate immediately before the live exact NGRAM runner.",
+  "files": [
+    {
+      "path": "m384_probe.py",
+      "remote": "project/m384_probe.py",
+      "sha256": "5ea3cf81ab8b351bb2ac03d4933048dbdc84f1530f04c4511b139cd4caf0e246"
+    },
+    {
+      "path": "remote_experiment.py",
+      "remote": "project/remote_experiment.py",
+      "sha256": "0bc047c96cb6b64097ef8bddaa5c241d4765a8f18f013080a6c6e32dde266a98"
+    }
+  ]
+}

@@ -1,0 +1,400 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "status": "paused",
+  "priority": 9400,
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 8.0,
+  "actual_spend_usd": 7.815453394075,
+  "reservation_required": false,
+  "allocation_limit": 1,
+  "active_session": null,
+  "bench_need": {
+    "provider": "runpod",
+    "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+    "gpu_count": 1,
+    "preferred_bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+    "claim_allowed": false,
+    "purpose": "Maintenance after the owner reached a typed pre-science bootstrap harness defect at the absolute release fence; preserve the verified checkpoint and await a fresh director repair/execution binding."
+  },
+  "claim_gate": {
+    "claim_allowed": false,
+    "blocked_by": [
+      "owner exited before official-wheel bootstrap from a local f-string harness defect",
+      "absolute release fence 2026-07-29T14:00:00Z passed",
+      "bench released to maintenance; fresh repair/execution binding required"
+    ],
+    "binding": "DIRECTOR_SM120_ATTENTION_C32_RETAINED_CHECKPOINT_EXECUTION_20260729T1304Z.json",
+    "binding_sha256": "7f35bab3f55f3b7b0a4d252c311e5eb71c0fdbc3b4fff03735cae9f30c5ec784",
+    "claim_start_by_utc": "2026-07-29T13:10:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T14:00:00Z",
+    "disposition": "The ownerless claim cleared to draining after the 14:00Z fence. Exact pod 3u5oyb8eazps50 was deleted, verified absent, and its bench retired at 14:02Z; no reclaim is possible."
+  },
+  "summary": "The checkpoint transfer completed, but the owner exited before official-wheel bootstrap on an ordinary local f-string defect. No server, CUDA, or endpoint arm started. After the release fence passed, exact RunPod pod 3u5oyb8eazps50 was deleted, verified absent, and the bench retired; this is incomplete integration evidence, not an attention negative.",
+  "result": {
+    "classification": "oracle_pass_offline_reconstructed",
+    "artifact": "SM120_ATTENTION_PATH_PROOF_CAUSAL_DISPOSITION.json",
+    "artifact_sha256": "bc322c955bedf867e77e64ae3b315350d26eefd2544acd448ed22b3b366cef63",
+    "attention_config": {
+      "backend_per_kind": {
+        "sliding_window": "TRITON_ATTN",
+        "full_attention": "FLEX_ATTENTION"
+      },
+      "flex_attn_block_m": 16,
+      "flex_attn_block_n": 16,
+      "flex_attn_q_block_size": 16,
+      "flex_attn_kv_block_size": 16
+    },
+    "control_exit_code": 0,
+    "candidate_exit_code": 0,
+    "control_rows": 3,
+    "candidate_rows": 3,
+    "semantic_rows_equal": true,
+    "path_proof": {
+      "control_triton": true,
+      "candidate_triton": true,
+      "candidate_flex": true
+    },
+    "gpu_used": true,
+    "science_sample_consumed": true,
+    "scientific_replay_authorized": false,
+    "component_timing_measured": false,
+    "endpoint_measured": false,
+    "campaign_target_s_per_request": 0.500119281574996,
+    "campaign_target_satisfied": false
+  },
+  "prior_offline_result": {
+    "classification": "exact_layer_aware_dispatch_implemented_offline_pending_sm120_oracle",
+    "artifact": "VLLM026_SM120_HETEROGENEOUS_ATTENTION_SPLIT_OFFLINE_RESULT.json",
+    "artifact_sha256": "584c01af6fcf6d1f5bbefaee6e4002d7a069df892839a94cd88bf0b0a78e7ae0",
+    "offline_tests_passed": 3,
+    "gpu_used": false,
+    "science_sample_consumed": false
+  },
+  "owner_preparation": {
+    "binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_COMPONENT_OWNER_PREPARATION_20260729T0740Z.json",
+    "binding_sha256": "ccb11ff3f32a4a3eb489b0ada65ea6aa6e5a8d866432599600ee98c37bf66a9c",
+    "required_result": "VLLM026_SM120_ATTENTION_SPLIT_COMPONENT_OWNER_OFFLINE_RESULT.json",
+    "result_required_by_utc": "2026-07-29T08:05:00Z",
+        "gpu_budget": 0,
+        "owner": "run_sm120_attention_split_component_owner.py",
+        "owner_sha256": "5aeb53b3fefae6576e6fa7fd65d319935efd5afba0f0a84dba39b22c18726f12",
+        "offline_validation": {
+            "py_compile": "passed",
+            "dispatch_tests": "3 passed",
+            "preparation_binding_rejection": "passed before GpuPool construction"
+        }
+  },
+  "component_owner_result": {
+    "path": "VLLM026_SM120_ATTENTION_SPLIT_COMPONENT_OWNER_OFFLINE_RESULT.json",
+    "sha256": "36431ba9cd7086dbb88676c4e64490cf230f7636a92c30c4fe644ef1bf6efe3d",
+    "owner_sha256": "5aeb53b3fefae6576e6fa7fd65d319935efd5afba0f0a84dba39b22c18726f12",
+    "oracle_sha256": "b41ef19d7d8b0b6f0522634ea9c5c0753fff48d6b02ac33dea7b002575601842",
+    "preparation_only": true,
+    "gpu_used": false,
+    "later_binding_required": true
+  },
+  "warm_handoff": {
+    "path": "DIRECTOR_VLLM026_SM120_WARM_HANDOFF_20260729T0822Z.json",
+    "sha256": "3035626c223eeaa88a1166f943ade057a92938f57eb6c7a23ef2428aee0c8625"
+  },
+  "execution_binding": {
+    "absolute_release_deadline_utc": "2026-07-29T10:37:00Z",
+    "claim_start_by_utc": "2026-07-29T09:50:00Z",
+    "path": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_STOPPED_PREDECESSOR_EXECUTION_20260729T0933Z.json",
+    "sha256": "dae923b7ae3c05abf62265ecbdf8fd002f116ae12fc049ab100d821f9c1a19d9",
+    "watchdog_deadline_utc": "2026-07-29T10:45:00Z"
+  },
+  "repair_conflict": {
+        "owner_pid": 4018491,
+        "owner_start_ticks": 142981221,
+        "claim_claimed_at": "2026-07-29T08:29:54.858364Z",
+        "repair_id": "attention-owner-2026-07-29T082954.858364Z-r2",
+        "repair_ready": "artifacts/sm120-attention-split-component-20260729t0827z/.repair-handshakes/attention-owner-2026-07-29T082954.858364Z-r2/REPAIR_READY.json",
+        "failure": "FileNotFoundError after the exact predecessor stop/fence command returned to the controller but before its stdout/stderr could be persisted: local generation directory was not created before predecessor_stop artifact persistence. No scientific parent oracle submission occurred.",
+        "controller_observability_defect": "owner wrote progress JSON to OWNER_STATE.json, overwriting detached-owner PID/start-tick record; process identity is preserved here from launch evidence and /proc census.",
+        "binding_conflict": "REPAIR_READY retry_scope=retrieve_or_adopt_existing_attention_oracle_terminal, but no oracle artifact exists and the bound owner exits after wait rather than consuming a request into pre-submission retry. A request cannot repair the named scope.",
+        "retry_entrypoint_audit": "Verified at 2026-07-29T08:33:13Z: lines 186-196 create/wait only the retrieval scope; lines 255-261 return from wait, write typed_owner_deadline_or_unrepaired_boundary, and raise. The live process cannot resume stage_oracle_after_claim from a REPAIR_REQUEST.",
+        "repair_request_disposition": "withheld: a retrieval-only request would wake the owner into terminal/release control flow without an oracle artifact, contradicting retained-claim and no-release instructions.",
+        "science_sample_consumed": false,
+        "remote_oracle_submitted": false,
+        "checkpoint_restaged": false,
+    "required_director_action": "Issue a same-claim repair/replacement binding that names this original claim generation, repairs local artifact-root creation and detached state separation, and explicitly authorizes a replacement only after the live owner handoff is safe."
+  },
+  "same_claim_adopter_repair": {
+    "path": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_SAME_CLAIM_ADOPTER_REPAIR_20260729T0846Z.json",
+    "original_claimed_at": "2026-07-29T08:29:54.858364Z",
+    "replacement_owner_allowed": true,
+    "new_claim_allowed": false,
+    "publish_by_utc": "2026-07-29T08:54:00Z",
+    "launch_by_utc": "2026-07-29T08:58:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T09:42:00Z",
+    "watchdog_deadline_utc": "2026-07-29T09:50:00Z"
+  },
+  "stopped_predecessor_fence_repair": {
+    "binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_STOPPED_PREDECESSOR_FENCE_REPAIR_20260729T0915Z.json",
+    "binding_sha256": "5e74e9bbe1663cc976b4d60475dd100f4d753549cc74f36cb7e950519b8caf4c",
+    "result": "VLLM026_SM120_ATTENTION_SPLIT_STOPPED_PREDECESSOR_FENCE_REPAIR_RESULT.json",
+    "result_sha256": "d1384ea6a5c01213e59ef2d52fbf2e04ab1a91ef9d15ca504b5a674b98d97f20",
+    "owner_sha256": "f675826fea0e63c414c6c06680b33d4e2a53e6226c89486b297e453a0dc8ce44",
+    "oracle_sha256": "adb4f590988387fd32518b8955bef0c495fa6321235d13299f58dc230ad9e46b",
+    "input_result_sha256": "c5f4e1e17c163c797b88ff7f9a1c812b84d4395ea8cbe468848976ad29d8b1fe",
+    "science_sample_consumed": false,
+    "gpu_used": false
+  },
+  "live_repair_conflict": {
+    "repair_id": "attention-oracle-2026-07-29T093650.649263Z-r1",
+    "repair_ready": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/.repair-handshakes/attention-oracle-2026-07-29T093650.649263Z-r1/REPAIR_READY.json",
+    "retry_scope": "retrieve_or_adopt_existing_attention_oracle_terminal",
+    "diagnostic": "FileExistsError: owner created the exclusive run output directory before the unchanged oracle parent; parent_exit=1, retrieved=[], no control/candidate artifact.",
+    "post_claim_census": "passed: zero accelerator allocations and zero forbidden driver processes; no predecessor signal sent",
+    "science_sample_consumed": false,
+    "repair_request_disposition": "withheld: retrieval/adoption cannot repair a pre-submission output-path defect and would not resume at the invalidated operation",
+    "director_action_required": "satisfied_by_same_claim_output_root_repair_binding",
+    "director_binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_OUTPUT_ROOT_SAME_CLAIM_REPAIR_20260729T0939Z.json",
+    "director_binding_sha256": "8c19dc0555f3df85cad454c95f62c30f84051c36937052f97bdd3940f0ebc79e"
+  },
+  "prior_invalid_corrected_parent_attempt": {
+    "binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_OUTPUT_ROOT_SAME_CLAIM_REPAIR_20260729T0939Z.json",
+    "binding_sha256": "8c19dc0555f3df85cad454c95f62c30f84051c36937052f97bdd3940f0ebc79e",
+    "claim_generation": "2026-07-29T09:36:50.649263Z",
+    "repair_id": "attention-oracle-2026-07-29T093650.649263Z-r1",
+    "evidence_root": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/repairs/output-root-r1",
+    "state": "invalid_zero_output_runtime_terminal",
+    "observed_remote_parent_pid": 35593,
+    "observed_remote_control_pid": 35596,
+    "control_path_proof": "Exact vLLM 0.26.0 constructed with AttentionBackendEnum.TRITON_ATTN and began loading the exact two-shard checkpoint.",
+    "terminal_present": true,
+    "repair_request_present": false,
+    "parent_replay_allowed": false
+  },
+  "terminal_retrieval_inspection": {
+    "binding_sha256": "8c19dc0555f3df85cad454c95f62c30f84051c36937052f97bdd3940f0ebc79e",
+    "ready_sha256": "c9d3a510c79c6299a9c6cdb6125c53468ba8facf3462838e0e49b86631862e27",
+    "remote_terminal_sha256": "f7f8950ed35399c8ccf8e4d8e148cc68018af2b18fb0f09f6ba3379988e577d8",
+    "terminal_classification": "oracle_failed",
+    "complete_terminal": false,
+    "control_exit_code": 1,
+    "candidate_exit_code": 1,
+    "candidate_failure": "InductorError: no valid FLEX-attention Triton configuration on SM120; required resource 156672 exceeds hardware limit 101376.",
+    "r1_request_sent": false,
+    "science_sample_consumed": false,
+    "evidence_root": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/repairs/output-root-r1"
+  },
+  "sm120_runtime_dual_failure_repair": {
+    "binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_SM120_RUNTIME_DUAL_FAILURE_REPAIR_20260729T0955Z.json",
+    "binding_sha256": "9c219ead2c7eed0940f7c740c842811674794ba794392dc858a81986b6c12168",
+    "invalid_terminal_sha256": "f7f8950ed35399c8ccf8e4d8e148cc68018af2b18fb0f09f6ba3379988e577d8",
+    "control_failure": "FlashInfer sampler architecture detection rejected the exact SM120 GPU after successful all-TRITON model construction and checkpoint load.",
+    "candidate_failure": "FLEX attention Triton lowering found no legal SM120 configuration because required resources 156672 exceeded the 101376 hardware limit.",
+    "additional_corrected_parent_submissions": 1,
+    "corrected_parent_remote_pid": 38078,
+    "corrected_source_sha256": "ec3a1b92b9b30e93c99d4d05177d912a0046ca12d76ba7e1d06d74a483137d52",
+    "corrected_parent_state": "live_no_terminal",
+    "r1_request_sent": false,
+    "patch_and_launch_by_utc": "2026-07-29T10:10:00Z",
+    "result_required_by_utc": "2026-07-29T10:30:00Z"
+  },
+  "prior_sm120_runtime_dual_failure_parent_state": {
+    "state": "running_terminal_not_yet_present",
+    "source_sha256": "ec3a1b92b9b30e93c99d4d05177d912a0046ca12d76ba7e1d06d74a483137d52",
+    "remote_parent_pid": 38078,
+    "remote_generation": "/workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z",
+    "invalid_run_archive": "run.invalid-f7f8950ed35399c8ccf8e4d8e148cc68018af2b18fb0f09f6ba3379988e577d8",
+    "sampler": "native_topk_topp via VLLM_USE_FLASHINFER_SAMPLER=0",
+    "candidate_flex_tiles": "BLOCK_M=16, BLOCK_N=16, q_block_size=16, kv_block_size=16",
+    "parent_replay_allowed": false,
+    "terminal_inspection": {
+      "owner_live": true,
+      "repair_ready_sha256": "c9d3a510c79c6299a9c6cdb6125c53468ba8facf3462838e0e49b86631862e27",
+      "repair_request_present": false,
+      "remote_parent_pid": 38078,
+      "remote_parent_state": "S",
+      "remote_terminal_present": false,
+      "remote_engine": "VLLM::EngineCore",
+      "remote_engine_memory_mib": 12346
+    }
+  },
+  "prior_corrected_terminal_retrieval": {
+    "binding_sha256": "302f644f3f6fb33f775f2f8f1741fae7185e2b0d328f2557f18d6a40333773a6",
+    "retriever_sha256": "01064a60c4126f5950a6f0fb8386120588c96f7193a902d5e4c7b43b88f8f7e0",
+    "terminal": "artifacts/sm120-attention-corrected-terminal-retrieval-20260729t1038z/TERMINAL.json",
+    "terminal_sha256": "cb7efaf55f26056c511ff30b6eb1657fe40372b54c88911c5f6beba06ca6142b",
+    "remote_terminal_sha256": "b6f891f04ca00823c28831818e580b795af853096b94bfa3d48f379b14926627",
+    "control_sha256": "8ef31c46eab2276269447e2b9451231aa564da64b5d0bc334e5eb86fd7528d96",
+    "candidate_sha256": "d372cc2850736e3276ae105b486c7ed679b14ce82335de801ecf7291d71b2fe0",
+    "classification": "oracle_failed",
+    "adoption_disposition": "incomplete_path_proof",
+    "rows_complete": true,
+    "path_proof_complete": false,
+    "claim_generation": "2026-07-29T10:43:16.207893Z",
+    "claim_released_condition": "maintenance",
+    "scientific_replay": false
+  },
+  "causal_disposition": {
+    "classification": "offline_reconstructable_proof_from_immutable_captures",
+    "path": "SM120_ATTENTION_PATH_PROOF_CAUSAL_DISPOSITION.json",
+    "sha256": "bc322c955bedf867e77e64ae3b315350d26eefd2544acd448ed22b3b366cef63",
+    "observer_root_cause": "The oracle preserved stdout and stderr separately but searched only stderr_text; vLLM INFO backend-resolution records were in stdout.",
+    "reconstructed_path_proof": {
+      "control_triton": true,
+      "candidate_triton": true,
+      "candidate_flex": true
+    },
+    "science_sample_consumed": true,
+    "scientific_replay_authorized": false,
+    "gpu_pool_called_this_turn": false,
+    "ssh_called_this_turn": false,
+    "provider_api_called_this_turn": false,
+    "new_spend_usd": 0.0,
+    "parent_submitted_this_turn": false
+  },
+  "endpoint_preparation": {
+    "binding": "DIRECTOR_SM120_ATTENTION_C32_ENDPOINT_PREPARATION_20260729T1110Z.json",
+    "binding_sha256": "71656729f4d5de5c641126dc20aa47dc59dc0876a8dedd547273fa8baad2ceb4",
+    "required_terminal": "SM120_ATTENTION_C32_ENDPOINT_OWNER_READY.json",
+    "requested_authorized_spend_usd": 6.0,
+    "actual_spend_usd": 2.83,
+    "future_conservative_exposure_usd": 2.835,
+    "future_total_exposure_usd": 5.665,
+    "gpu_claim_allowed": false,
+    "provider_create_allowed": false,
+    "provider_create": {
+      "artifact": "DIRECTOR_SM120_ATTENTION_C32_PROVIDER_CREATE_20260729T1130Z.json",
+      "bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+      "classification": "provider_created_registered_maintenance",
+      "conservative_cumulative_usd": 5.665,
+      "deadline_utc": "2026-07-29T13:01:43.898297Z",
+      "hourly_cost_usd": 1.89,
+      "pod_id": "3u5oyb8eazps50",
+      "science_or_setup_ran": false,
+      "watchdog_main_pid": 4150574
+    },
+    "ready_artifact": "SM120_ATTENTION_C32_ENDPOINT_OWNER_READY.json",
+    "ready_artifact_sha256": "a33638d3f322b731591f810f38a3f7932fedd33127e2efa38ca9efe57071bb78",
+    "owner": {
+      "path": "run_sm120_attention_split_c32_owner.py",
+      "sha256": "7ec8c32502038ef4b243ed8a97a3d5a27725e13ae9027e4bd557cd543efc7074",
+      "prior_sha256": "afdf1773cdf99d9ad95e01cae4b9eddf2b40a7585f93a3560c98d051e61fae1f"
+    },
+    "endpoint_consumer": {
+      "path": "sm120_attention_split_c32_endpoint.py",
+      "sha256": "1c73091f418c78ab396b441e6bc16503e2564b637ebe9f2f6e8efad2d0e06f0a"
+    },
+    "offline_validation": {
+      "py_compile": "passed",
+      "workload_preflight": "passed: 32 rows, exact 4214/358 geometry",
+      "owner_preclaim": "passed before GpuPool construction",
+      "consumer_smoke": "passed: 32/32 rows against local fake OpenAI-compatible server"
+    },
+    "science_sample_consumed": false,
+    "endpoint_measured": false
+  },
+  "endpoint_execution": {
+    "binding": "DIRECTOR_SM120_ATTENTION_C32_EXECUTION_20260729T1155Z.json",
+    "binding_sha256": "b2ffff20d56fb994612c38d23205ddcc4c4d820cba6a92a0b13849e33be7d123",
+    "bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+    "identity_verification": "SM120_ATTENTION_C32_IDENTITY_VERIFICATION_20260729T1150Z.json",
+    "identity_verification_sha256": "f5a27f6129bec6c9ae4229578001c8d8e0ba52e73e7d475215962ed6c8cd4fb2",
+    "claim_start_by_utc": "2026-07-29T12:25:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T13:01:00Z",
+    "watchdog_deadline_utc": "2026-07-29T13:11:00Z",
+    "watchdog_main_pid": 4170010,
+    "maximum_cumulative_project_exposure_usd": 5.956953394037485,
+    "science_sample_consumed": false
+  },
+  "cold_bootstrap_attempt": {
+    "binding_sha256": "b2ffff20d56fb994612c38d23205ddcc4c4d820cba6a92a0b13849e33be7d123",
+    "patch_artifact": "SM120_ATTENTION_C32_COLD_BOOTSTRAP_PATCH.json",
+    "owner_final_sha256": "7ec8c32502038ef4b243ed8a97a3d5a27725e13ae9027e4bd557cd543efc7074",
+    "artifact_root": "artifacts/sm120-attention-c32-endpoint-20260729t1212z",
+    "classification": "typed_external_cold_bootstrap_throughput_blocker",
+    "science_started": false,
+    "science_consumed": false,
+    "partial_checkpoint_bytes": 12364095488,
+    "release_condition": "maintenance",
+    "released_at_utc": "2026-07-29T12:34:12.652902Z"
+  },
+  "retained_checkpoint_lifecycle_r3": {
+    "path": "DIRECTOR_SM120_ATTENTION_C32_WATCHDOG_R3_LIFECYCLE_20260729T1253Z.json",
+    "sha256": "800f20a77c2df2b87d8d5d1df36b46bb000da5984dee001ed974e0a525cbcf66",
+    "bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+    "watchdog_deadline_utc": "2026-07-29T14:10:00Z",
+    "watchdog_main_pid": 6661,
+    "maximum_cumulative_exposure_usd": 7.815453394075,
+    "old_watchdog_inactive": true
+  },
+  "parallel_staging_preparation": {
+    "path": "DIRECTOR_SM120_ATTENTION_C32_PARALLEL_STAGING_PREPARATION_20260729T1254Z.json",
+    "sha256": "be6700a83b61ef6dba8fc8e016aeefe4b580d823d243ab29f28469068b318994",
+    "gpu_budget": 0,
+    "provider_spend_usd": 0,
+    "result_required_by_utc": "2026-07-29T13:03:00Z",
+    "required_terminal": "SM120_ATTENTION_C32_PARALLEL_STAGING_PATCH.json",
+    "required_terminal_sha256": "cbcb4e1bb2196d6f5d2260faf636356651acae0f57f54bf103a7ec32e6a875c0",
+    "owner": "run_sm120_attention_split_c32_owner.py",
+    "owner_sha256": "456850bebb99284395a54e9f85cc8f59512aca3a42e98ce60fe0a389b519a42d",
+    "max_concurrent_incomplete_large_files": 2,
+    "transport": "distinct AES-GCM SSH append streams",
+    "offsets": "all large-file offsets are probed and persisted before worker start",
+    "failure_boundary": "per-child absolute-deadline timeout with kill-and-wait sibling cleanup",
+    "integrity_boundary": "remote SHA-256 verification followed by atomic part-to-final rename",
+    "validation": {
+      "py_compile": "pass",
+      "lifecycle_pure_parallel_fixture": "pass",
+      "preclaim_fixture": "pass",
+      "gpu_pool_called": false,
+      "ssh_called": false,
+      "provider_api_called": false,
+      "checkpoint_bytes_staged": false,
+      "cuda_called": false,
+      "science_sample_consumed": false
+    },
+    "claim_allowed": false,
+    "next_director_action": "Issue a fresh claim-allowed execution binding only after verifying this patch hash; do not infer authorization from this preparation artifact."
+  },
+  "retained_checkpoint_execution": {
+    "path": "DIRECTOR_SM120_ATTENTION_C32_RETAINED_CHECKPOINT_EXECUTION_20260729T1304Z.json",
+    "sha256": "7f35bab3f55f3b7b0a4d252c311e5eb71c0fdbc3b4fff03735cae9f30c5ec784",
+    "parallel_staging_patch_sha256": "cbcb4e1bb2196d6f5d2260faf636356651acae0f57f54bf103a7ec32e6a875c0",
+    "owner_sha256": "456850bebb99284395a54e9f85cc8f59512aca3a42e98ce60fe0a389b519a42d",
+    "bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+    "claim_start_by_utc": "2026-07-29T13:10:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T14:00:00Z",
+    "watchdog_deadline_utc": "2026-07-29T14:10:00Z",
+    "watchdog_main_pid": 6661,
+    "claim_generation": "2026-07-29T13:07:58.262563Z",
+    "owner_pid": 15764,
+    "owner_start_ticks": 144666417,
+    "owner_unit_manager": "pid",
+    "owner_state": "artifacts/sm120-attention-c32-resume-20260729t1304z/DETACHED_OWNER.json",
+    "owner_artifact_root": "artifacts/sm120-attention-c32-resume-20260729t1304z",
+    "launcher_defect_archives": [
+      "artifacts/sm120-attention-c32-resume-20260729t1304z-launcher-defects"
+    ],
+    "science_started": false,
+    "science_consumed": false,
+    "attempt_terminal": "artifacts/sm120-attention-c32-resume-20260729t1304z/EXECUTION_ATTEMPT_TERMINAL.json",
+    "attempt_classification": "typed_pre_science_owner_harness_defect_at_absolute_deadline",
+    "checkpoint_transfer_complete": true,
+    "official_wheel_bootstrap_complete": false,
+    "released_at_utc": "2026-07-29T14:01:17.941475Z",
+    "release_condition": "maintenance",
+    "bench_claim_released": true,
+    "actual_spend_usd_settlement": 7.815453394075
+  },
+  "execution_attempt_terminal": {
+    "path": "artifacts/sm120-attention-c32-resume-20260729t1304z/EXECUTION_ATTEMPT_TERMINAL.json",
+    "classification": "typed_pre_science_owner_harness_defect_at_absolute_deadline",
+    "science_started": false,
+    "science_consumed": false,
+    "checkpoint_transfer_complete": true,
+    "official_wheel_command_started": false,
+    "server_started": false,
+    "cuda_called": false,
+    "release_condition": "maintenance",
+    "released_at_utc": "2026-07-29T14:01:17.941475Z",
+    "conservative_cumulative_exposure_usd": 7.815453394075
+  },
+  "next_action": "Paused after deadline-bounded provider cleanup. Preserve SM120_OWNER_LOSS_PROVIDER_CLEANUP_20260729T1402Z.json as incomplete pre-science integration evidence. Do not claim or provision; a later director may re-rank a fresh cold execution only under new lifecycle authority and against the remaining portfolio."
+}

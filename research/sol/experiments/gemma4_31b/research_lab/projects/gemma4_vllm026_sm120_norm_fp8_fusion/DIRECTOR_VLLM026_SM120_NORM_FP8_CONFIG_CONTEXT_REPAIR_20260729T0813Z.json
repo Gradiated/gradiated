@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "classification": "director_live_framework_oracle_context_repair",
+  "created_at_utc": "2026-07-29T08:13:00Z",
+  "project": "gemma4_vllm026_sm120_norm_fp8_fusion",
+  "new_claim_allowed": false,
+  "replacement_owner_allowed": false,
+  "claim": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "project": "gemma4_vllm026_sm120_norm_fp8_fusion",
+    "claimed_at": "2026-07-29T07:33:28.165904Z"
+  },
+  "owner": {
+    "pid": 4008130,
+    "start_ticks": 142855921,
+    "artifact_root": "artifacts/sm120-norm-fp8-installed-source-20260729t0756z",
+    "repair_id": "sm120-norm-fp8-installed-source-20260729T0756Z",
+    "state": "live_repair_ready"
+  },
+  "evidence": {
+    "terminal_path": "artifacts/sm120-norm-fp8-installed-source-20260729t0756z/OWNER_TERMINAL.json",
+    "terminal_sha256": "5765c7e6bfc2ae8623a0d8b32645b5079ec0c45579d0221bb191b26e0b4dc53f",
+    "repair_ready_path": "artifacts/sm120-norm-fp8-installed-source-20260729t0756z/.repair-handshakes/sm120-norm-fp8-installed-source-20260729T0756Z/REPAIR_READY.json",
+    "repair_ready_sha256": "fcd7d96266cc2bf1293abe20b2c04146a4ce9ce3d1845d4e03c1786d89898825",
+    "failure": "RMSNorm construction called get_current_vllm_config() outside a set_current_vllm_config context.",
+    "stock_candidate_rows": 0,
+    "oracle_complete": false,
+    "canonical_sample_consumed": false,
+    "classification_reason": "The durable science boundary preceded the first case, but the consumer failed while constructing RMSNorm before any stock or candidate row. This is an invalid discovery attempt, not a decision-bearing component sample."
+  },
+  "repair_contract": {
+    "profile": "execution",
+    "retry_scope": "framework_oracle_only",
+    "required_action": [
+      "Inspect only the installed official vLLM 0.26.0+cu129 config-context API needed by the traceback.",
+      "Patch sm120_framework_oracle.py so RMSNorm construction and the unchanged stock/candidate cases execute inside the supported current-vLLM-config context. Do not change shapes, dtypes, scales, warmup, repeats, timing boundaries, producer, consumer, numerical oracle, or row ledger.",
+      "Hash the final oracle and a compact zero-GPU import/context validation. Reconcile the exact live owner, original claim generation, current repair ID, ready digest, absent result, and zero rows once.",
+      "Submit the final hash-bound repair through repair-handshake request for repair ID sm120-norm-fp8-installed-source-20260729T0756Z. Do not leave this binding as an undelivered side artifact.",
+      "The existing owner alone reruns framework_oracle_only. Do not stop, replace, overlap, reclaim, or relaunch it."
+    ],
+    "immutable_science": {
+      "source_result_sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f",
+      "installed_overlay_patch_sha256": "251aede8cf2c349cf583f268b8697c846eca82ec7916a79ed729e60ed5d80043",
+      "original_patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+      "oracle_pre_repair_sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5",
+      "runtime_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+      "scientific_submission_limit": 1
+    }
+  },
+  "lifecycle": {
+    "repair_request_required_by_utc": "2026-07-29T08:16:30Z",
+    "repair_handshake_deadline_utc": "2026-07-29T08:18:00Z",
+    "release_by_utc": "2026-07-29T08:20:00Z",
+    "provider_watchdog_deadline_utc": "2026-07-29T09:15:00Z",
+    "incomplete_disposition": "If the repaired bytes cannot be finalized and requested by 08:16:30Z, send no request and allow the owner to persist the unconsumed terminal and generation-fenced maintenance release by 08:20Z.",
+    "complete_disposition": "A complete positive or complete non-positive seven-row terminal releases generation-fenced by 08:20Z."
+  }
+}

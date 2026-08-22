@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T04:21:00Z",
+  "classification": "director_no_launch_compiler_metadata_repair",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "researcher_profile": "execution",
+  "decision": "Repair only the compiled-resource metadata extraction for the already-consumed positive ten-case component, using one bounded new claim after the prior owner incorrectly released. Do not launch the candidate, replay timing, or run an endpoint.",
+  "accepted_component_evidence": {
+    "terminal": "artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/run/TERMINAL.json",
+    "terminal_sha256": "8a4fba273e0923fac4ac55f552ff8d1e247473a1f15b9aa614f91bf963c46a71",
+    "complete_cases": 10,
+    "all_qkv_nrmse_zero": true,
+    "all_cache_bytes_exact": true,
+    "minimum_median_reduction_fraction": 0.2373121946165545,
+    "maximum_median_reduction_fraction": 0.6747318469341507,
+    "science_consumed": true,
+    "timing_replay_allowed": false
+  },
+  "invalid_resource_attempt": {
+    "director_binding": "DIRECTOR_FIXED_FLOOR_CROSSOP_H200_RESOURCE_RECOVERY_20260730T0414Z.json",
+    "director_binding_sha256": "a603bb323f90b1e1b8f4e6f74790fd74c3bbabcd1cbf599a7b5d76ec7ae41f83",
+    "execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_RESOURCES.json",
+    "execution_binding_sha256": "49a68a59effc941739ad8d599487fcb93d7531502e513c75073598f8c85d668b",
+    "collector_sha256": "beddeaa5b806c4063673ed6a5bf819f8e384db279dbe181a82a1ae09176088ae",
+    "owner_sha256": "84f3ed651498e3b0ee33a66194dc64c641b09defd41f5bd39628ead74a217cd0",
+    "diagnostic": "artifacts/fixed-floor-crossop-h200-resources-20260730t0414z/run/RECOVERABLE_DIAGNOSTIC.json",
+    "diagnostic_sha256": "f08b75253e7af42eaa344db86751e31ec33b1aa80e28ce4b70b88c6680404e50",
+    "release": "artifacts/fixed-floor-crossop-h200-resources-20260730t0414z/run/RELEASE.json",
+    "release_sha256": "d455fa270f27fd649235f682cfa877a69f5e7cd92dc4edf412f6127a00d7081f",
+    "claim_generation": "2026-07-30T04:18:54.964414Z",
+    "claim_seconds": 10.013132,
+    "actual_spend_usd_after_attempt": 0.12213597559722224,
+    "failure": "The exact Triton warmup completed, but the collector assumed CompiledKernel.n_regs; that attribute is absent in the pinned runtime. No candidate kernel, timing loop, component case, or endpoint was launched.",
+    "lifecycle_defect": "The owner published repair readiness and then unconditionally released instead of dispatching an extraction-only repair under the live claim."
+  },
+  "immutable_science": {
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate": "fused_qkv_kv_cache.py",
+    "candidate_sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d",
+    "kernel_symbol": "_qkv_norm_rope_cache_kernel",
+    "write_cache": true,
+    "num_q_heads": 32,
+    "num_warps": 4,
+    "specializations": [
+      {
+        "class": "local",
+        "num_kv_heads": 16,
+        "head_dim": 256,
+        "half_dim": 128,
+        "block_half": 128
+      },
+      {
+        "class": "global",
+        "num_kv_heads": 4,
+        "head_dim": 512,
+        "half_dim": 256,
+        "block_half": 256
+      }
+    ]
+  },
+  "repair_contract": {
+    "required_collector_destination": "collect_fixed_floor_crossop_h200_resources_r2.py",
+    "required_owner_destination": "run_fixed_floor_crossop_h200_resource_owner_r2.py",
+    "required_execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_RESOURCES_R2.json",
+    "artifact_root": "artifacts/fixed-floor-crossop-h200-resources-r2-20260730t0421z",
+    "allowed_operation": "Recover the already compiled exact specializations or perform compilation-only warmup, then obtain registers/thread and spill loads/stores from an authoritative pinned-runtime compiler metadata, ptxas, or target-object resource path. Candidate kernel launch is forbidden.",
+    "required_causal_diff": [
+      "Replace only the nonexistent CompiledKernel.n_regs and assumed n_spills access with a proved exact-runtime metadata or target-object extraction path.",
+      "Persist the authoritative raw metadata or tool output used for each specialization and bind its digest into the terminal.",
+      "Replace the unconditional generic-exception release with a true dispatcher loop that can consume and re-enter an extraction-only repair under the same claim."
+    ],
+    "required_evidence": [
+      "Exact candidate source hash, H200 UUID, image digest, Triton version, CUDA target, specialization constexprs, num_warps, compiled object identity, and compiler or target-object identity.",
+      "Registers per thread for both exact WRITE_CACHE=True specializations.",
+      "Spill stores and spill loads for both specializations from authoritative raw evidence.",
+      "Durable proof that no candidate kernel launch, timing loop, component case, checkpoint load, or endpoint request was submitted."
+    ],
+    "acceptance": {
+      "maximum_registers_per_thread": 32,
+      "maximum_spill_store_bytes": 0,
+      "maximum_spill_load_bytes": 0,
+      "all_specializations_required": true
+    },
+    "conditional_same_claim_repair_authority": "If extraction alone fails before a typed resource terminal, the owner must retain and heartbeat the exact claim, publish a hash-bound diagnostic and repair ID, consume at most one causally narrow extraction-only patch, and re-enter compilation/resource extraction. Do not release on an ordinary metadata API, parser, path, or tool-output mismatch.",
+    "disposition": {
+      "pass": "Persist a typed promotion-complete component terminal and release the quiescent bench ready. A later director decides endpoint admission.",
+      "fail": "Persist a typed resource-gate negative and release the quiescent bench ready. Preserve the positive component timings as descriptive evidence only.",
+      "recoverable_integration": "Retain the exact claim under the dispatcher and apply only a hash-bound extraction repair while the measured restart plus terminal and release fit the absolute deadline.",
+      "unsafe_or_deadline": "Release to maintenance with the exact diagnostic."
+    }
+  },
+  "lifecycle": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "required_initial_status": "available",
+    "required_initial_claim": null,
+    "claim_start_by_utc": "2026-07-30T04:31:00Z",
+    "owner_launch_by_utc": "2026-07-30T04:34:00Z",
+    "resource_terminal_by_utc": "2026-07-30T04:40:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T04:44:00Z",
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z",
+    "claim_lease_seconds": 780,
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_fixed_floor_crossop_executor --bench h200-dflash-r3-computeinstance-e00t5s028ts52zp215 --lease-seconds 780",
+    "detached_start_template": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-r2-20260730t0421z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-r2-20260730t0421z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/run_fixed_floor_crossop_h200_resource_owner_r2.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_RESOURCES_R2.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-r2-20260730t0421z/run"
+  },
+  "bench_identity": {
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_main_pid": 506236
+  },
+  "budgets": {
+    "authorized_spend_usd": 1.0,
+    "actual_spend_usd_before_repair": 0.12213597559722224,
+    "maximum_claim_wall_minutes": 13,
+    "maximum_claim_exposure_usd": 0.5308333333333334,
+    "maximum_cumulative_project_spend_usd": 0.6529693089305556,
+    "maximum_additional_storage_gibibytes": 1
+  },
+  "must": [
+    "Use $researcher with execution profile, $kernel-research, and $experiment-run.",
+    "Read this binding once, then prepare and hash-bind the no-launch collector, true-dispatcher owner, and derived execution binding before claim.",
+    "Re-read the available exact bench, provider identity, watchdog, and cumulative $1 reservation immediately before claim.",
+    "Release by 04:44Z only after a typed resource terminal, an unsafe guest, or the absolute deadline."
+  ],
+  "must_not": [
+    "Do not invoke the candidate kernel or replay any consumed component case or timing.",
+    "Do not run an endpoint, load the Gemma checkpoint, change candidate source, alter geometry, or weaken acceptance.",
+    "Do not create another project, claim another bench, or call provider lifecycle.",
+    "Do not release on another ordinary recoverable metadata extraction failure."
+  ]
+}

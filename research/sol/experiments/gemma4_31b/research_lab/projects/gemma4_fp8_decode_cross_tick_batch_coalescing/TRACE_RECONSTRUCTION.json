@@ -1,0 +1,582 @@
+{
+  "artifact_type": "fp8_decode_cross_tick_trace_reconstruction",
+  "input_sha256": {
+    "accelerator_inventory": "a6e8d109f69efcc0feb6a123b316015d4e359f4c745c262a71a4a51bd09ae981",
+    "config": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "ngram_consumers": "66f68804fed6e62ab2b91bdc621e37cb37f3493f8625a72149250bfa900f9985",
+    "ngram_events": "3ef46770c2e880f36930a53808326ed6d4f35cc6639d79072e3d1880cbd96d28",
+    "ngram_server_log": "8cba9557ad8724677ee80221f08caf5ceae4239b671379ebe3ca5cb858bad7fb",
+    "ngram_terminal": "dbc49d847f87246f86c9cac987160d22e40242491cfae7869b4ffbd3f7f34247",
+    "non_spec_attribution": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48",
+    "non_spec_consumers": "67ad0fcaee2e90fb22ee701a45a63d914c54eb1cca63e00c8453a127c855b520",
+    "non_spec_terminal": "44bcbded4dee418b09c1ba3257f15010291257aa5434eb29a34e0b9ba24f4301"
+  },
+  "instrument_sha256": {
+    "experiment_spec": "b053b75f1c74d555ddd9ee0064ed0ef959215df08842bd236ace44d2c26206b2",
+    "falsifier": "9812059b9724cfbfc65a2eb0362d2e07447de5315e734550bd7bc32962ec3acc"
+  },
+  "model_config": {
+    "hidden_size": 5376,
+    "intermediate_size": 21504,
+    "layers": 60,
+    "path": "../gemma4_c32_graph_gap_elision/inputs/bound/config.json",
+    "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+  },
+  "non_spec_c32": {
+    "all_dense_linear_fp8_weight_bytes_per_tick": 29396828160,
+    "completion_time_span_seconds": 0.020340318999842566,
+    "completion_tokens_per_request": 358,
+    "concurrency": 32,
+    "consumer_summary": {
+      "consumer_symbols": [
+        "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm"
+      ],
+      "families": {
+        "down_proj": {
+          "bf16_output_bytes_per_tick": 20643840,
+          "fp8_activation_bytes_per_tick": 41287680,
+          "fp8_weight_bytes_per_tick": 6936330240,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 60,
+              "k": 21504,
+              "n": 5376
+            }
+          ]
+        },
+        "gate_up_proj": {
+          "bf16_output_bytes_per_tick": 165150720,
+          "fp8_activation_bytes_per_tick": 10321920,
+          "fp8_weight_bytes_per_tick": 13872660480,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 60,
+              "k": 5376,
+              "n": 43008
+            }
+          ]
+        },
+        "o_proj": {
+          "bf16_output_bytes_per_tick": 20643840,
+          "fp8_activation_bytes_per_tick": 18350080,
+          "fp8_weight_bytes_per_tick": 3082813440,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 50,
+              "k": 8192,
+              "n": 5376
+            },
+            {
+              "count": 10,
+              "k": 16384,
+              "n": 5376
+            }
+          ]
+        },
+        "qkv_proj": {
+          "bf16_output_bytes_per_tick": 65536000,
+          "fp8_activation_bytes_per_tick": 10321920,
+          "fp8_weight_bytes_per_tick": 5505024000,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 50,
+              "k": 5376,
+              "n": 16384
+            },
+            {
+              "count": 10,
+              "k": 5376,
+              "n": 20480
+            }
+          ]
+        }
+      },
+      "layers": 60,
+      "m_values": [
+        32
+      ],
+      "path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/profile/profile-audit/consumers.jsonl",
+      "rows": 240,
+      "sha256": "67ad0fcaee2e90fb22ee701a45a63d914c54eb1cca63e00c8453a127c855b520"
+    },
+    "derivation": "Pinned scheduling prioritizes all admitted prefills. Each prefill produces the first output token; prepare_for_decode allocates one token per request, and non-spec sampling appends exactly one token per active request. With 32 complete length-358 rows ending within the recorded completion span, the post-prefill steady wave is 357 M32 decode ticks.",
+    "first_token_time_span_seconds": 12.282579066999915,
+    "first_tokens_produced_during_prefill": 32,
+    "source_derived_rows_per_tick": 32,
+    "source_derived_steady_decode_ticks": 357,
+    "source_derived_total_steady_decode_rows": 11424,
+    "steady_decode_end_proxy_monotonic_s": 2439.2764135765,
+    "steady_decode_start_proxy_monotonic_s": 2429.772790449,
+    "steady_tick_interval_proxy_seconds": 0.026620793074230546,
+    "target_family_fp8_weight_bytes_per_tick": 26314014720,
+    "terminal_path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/profile/profile/TERMINAL.json",
+    "terminal_sha256": "44bcbded4dee418b09c1ba3257f15010291257aa5434eb29a34e0b9ba24f4301"
+  },
+  "physical_bounds": {
+    "all_dense_linear_fp8_weight_gb_per_tick": 29.39682816,
+    "all_dense_linear_single_stream_hbm_floor_seconds_per_tick": 0.0061243392,
+    "attribution_path": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json",
+    "attribution_sha256": "f841db590dbe6f2e6b4fb91048e8132c3807f0321310e1e0b70a3957ac99ab48",
+    "grouping_cases": [
+      {
+        "all_dense_linear_bandwidth_floor_fraction_of_steady_tick_proxy": 0.115029240168064,
+        "all_dense_linear_bandwidth_floor_saved_seconds_per_completed_token": 0.0030621696,
+        "coalesced_m": 64,
+        "ideal_target_weight_byte_reduction_fraction": 0.5,
+        "ideal_target_weight_bytes_saved_per_completed_token": 13157007360.0,
+        "measured_decode_fp8_zero_overhead_whole_capture_upper_fraction": 0.055912607213969755,
+        "oldest_row_hold_delay_proxy_seconds": 0.026620793074230546,
+        "target_weight_bandwidth_floor_fraction_of_steady_tick_proxy": 0.10296624868976514,
+        "target_weight_bandwidth_floor_saved_seconds_per_completed_token": 0.0027410432,
+        "ticks": 2
+      },
+      {
+        "all_dense_linear_bandwidth_floor_fraction_of_steady_tick_proxy": 0.1533723202240853,
+        "all_dense_linear_bandwidth_floor_saved_seconds_per_completed_token": 0.0040828928,
+        "coalesced_m": 96,
+        "ideal_target_weight_byte_reduction_fraction": 0.6666666666666666,
+        "ideal_target_weight_bytes_saved_per_completed_token": 17542676480.0,
+        "measured_decode_fp8_zero_overhead_whole_capture_upper_fraction": 0.07455014295195966,
+        "oldest_row_hold_delay_proxy_seconds": 0.05324158614846109,
+        "target_weight_bandwidth_floor_fraction_of_steady_tick_proxy": 0.1372883315863535,
+        "target_weight_bandwidth_floor_saved_seconds_per_completed_token": 0.0036547242666666664,
+        "ticks": 3
+      }
+    ],
+    "h200": {
+      "compute_units": 132,
+      "evidence_class": "vendor-reported shared inventory prior",
+      "fp8_peak_tflops": 1979,
+      "hbm_bandwidth_gb_s": 4800,
+      "id": "nvidia-h200-sxm",
+      "inventory_path": "/root/workspace/research/factory/data/accelerator_inventory.json",
+      "inventory_sha256": "a6e8d109f69efcc0feb6a123b316015d4e359f4c745c262a71a4a51bd09ae981",
+      "l2_mb": 50
+    },
+    "measured_decode_fp8_fraction_of_whole_capture": 0.11182521442793951,
+    "measured_nonoverlapping_decode_fp8_seconds": 2.576296436,
+    "measured_total_capture_seconds": 23.038600455,
+    "target_family_fp8_weight_gb_per_tick": 26.31401472,
+    "target_family_single_stream_hbm_floor_seconds_per_tick": 0.0054820864,
+    "transfer_limits": [
+      "The bandwidth calculation is an analytical single-stream floor, not a measured kernel timing.",
+      "The July 20 non-spec trace is scope-matched to pinned c32 M32 decode but predates the qualified NGRAM denominator.",
+      "The measured whole-capture bound generously treats all decode FP8 time as proportional to repeatable weights; real quantization, activation, epilogue, and launch costs do not disappear in full."
+    ]
+  },
+  "qualified_ngram_c32": {
+    "active_request_group_histogram": {
+      "1": 40,
+      "14": 1,
+      "2": 1,
+      "24": 1,
+      "32": 32,
+      "4": 15,
+      "6": 1,
+      "7": 1,
+      "9": 1
+    },
+    "complete_requests": 32,
+    "completion_tokens_per_request": 358,
+    "consumer_summary": {
+      "consumer_symbols": [
+        "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm"
+      ],
+      "families": {
+        "down_proj": {
+          "bf16_output_bytes_per_tick": 247726080,
+          "fp8_activation_bytes_per_tick": 495452160,
+          "fp8_weight_bytes_per_tick": 6936330240,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 60,
+              "k": 21504,
+              "n": 5376
+            }
+          ]
+        },
+        "gate_up_proj": {
+          "bf16_output_bytes_per_tick": 1981808640,
+          "fp8_activation_bytes_per_tick": 123863040,
+          "fp8_weight_bytes_per_tick": 13872660480,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 60,
+              "k": 5376,
+              "n": 43008
+            }
+          ]
+        },
+        "o_proj": {
+          "bf16_output_bytes_per_tick": 247726080,
+          "fp8_activation_bytes_per_tick": 220200960,
+          "fp8_weight_bytes_per_tick": 3082813440,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 50,
+              "k": 8192,
+              "n": 5376
+            },
+            {
+              "count": 10,
+              "k": 16384,
+              "n": 5376
+            }
+          ]
+        },
+        "qkv_proj": {
+          "bf16_output_bytes_per_tick": 786432000,
+          "fp8_activation_bytes_per_tick": 123863040,
+          "fp8_weight_bytes_per_tick": 5505024000,
+          "module_count": 60,
+          "shape_counts_k_n": [
+            {
+              "count": 50,
+              "k": 5376,
+              "n": 16384
+            },
+            {
+              "count": 10,
+              "k": 5376,
+              "n": 20480
+            }
+          ]
+        }
+      },
+      "layers": 60,
+      "m_values": [
+        384
+      ],
+      "path": "../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-fp8-consumers.jsonl",
+      "rows": 240,
+      "sha256": "66f68804fed6e62ab2b91bdc621e37cb37f3493f8625a72149250bfa900f9985"
+    },
+    "emitted_tokens": 11456,
+    "event_path": "../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-token-events.jsonl",
+    "event_sha256": "3ef46770c2e880f36930a53808326ed6d4f35cc6639d79072e3d1880cbd96d28",
+    "full_c32_wave_groups": 32,
+    "full_wave_target_verify_rows": 384,
+    "interpretation": "The qualified NGRAM control already exposes 12 target-verification rows per active request. A full c32 wave is M384, exactly matching every bound FP8 consumer row; M64/M96 cross-tick decode geometry is absent.",
+    "largest_within_tick_gap_seconds": 0.010459220000484493,
+    "reconstructed_tick_groups": 93,
+    "representative_tick_rows": [
+      {
+        "active_requests": 1,
+        "emitted_tokens": 1,
+        "end_monotonic_s": 47667.76138858,
+        "start_monotonic_s": 47667.76138858,
+        "tick_index": 0
+      },
+      {
+        "active_requests": 1,
+        "emitted_tokens": 1,
+        "end_monotonic_s": 47668.193093196,
+        "start_monotonic_s": 47668.193093196,
+        "tick_index": 1
+      },
+      {
+        "active_requests": 1,
+        "emitted_tokens": 1,
+        "end_monotonic_s": 47668.63936897,
+        "start_monotonic_s": 47668.63936897,
+        "tick_index": 2
+      },
+      {
+        "active_requests": 32,
+        "emitted_tokens": 32,
+        "end_monotonic_s": 47680.841048468,
+        "start_monotonic_s": 47680.798091889,
+        "tick_index": 32
+      },
+      {
+        "active_requests": 32,
+        "emitted_tokens": 75,
+        "end_monotonic_s": 47680.987458264,
+        "start_monotonic_s": 47680.951405566,
+        "tick_index": 33
+      },
+      {
+        "active_requests": 32,
+        "emitted_tokens": 148,
+        "end_monotonic_s": 47681.146102668,
+        "start_monotonic_s": 47681.104414831,
+        "tick_index": 34
+      },
+      {
+        "active_requests": 1,
+        "emitted_tokens": 5,
+        "end_monotonic_s": 47687.01755143,
+        "start_monotonic_s": 47687.01755143,
+        "tick_index": 90
+      },
+      {
+        "active_requests": 1,
+        "emitted_tokens": 5,
+        "end_monotonic_s": 47687.051767096,
+        "start_monotonic_s": 47687.051767096,
+        "tick_index": 91
+      },
+      {
+        "active_requests": 1,
+        "emitted_tokens": 1,
+        "end_monotonic_s": 47687.08628497,
+        "start_monotonic_s": 47687.08628497,
+        "tick_index": 92
+      }
+    ],
+    "scheduler_events": 1186,
+    "server_log_path": "../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-server.stderr",
+    "server_log_sha256": "8cba9557ad8724677ee80221f08caf5ceae4239b671379ebe3ca5cb858bad7fb",
+    "smallest_between_tick_gap_seconds": 0.029429966998577584,
+    "terminal_path": "../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-c32/TERMINAL.json",
+    "terminal_sha256": "dbc49d847f87246f86c9cac987160d22e40242491cfae7869b4ffbd3f7f34247",
+    "tick_group_threshold_seconds": 0.02
+  },
+  "schema_version": 1,
+  "source_trace": {
+    "anchors": [
+      {
+        "anchor": "result = self.run_batch(batch)",
+        "file": "python/sglang/srt/managers/scheduler.py",
+        "line": 1436,
+        "symbol": "Scheduler.event_loop_normal"
+      },
+      {
+        "anchor": "self.process_batch_result(batch, result)",
+        "file": "python/sglang/srt/managers/scheduler.py",
+        "line": 1437,
+        "symbol": "Scheduler.event_loop_normal"
+      },
+      {
+        "anchor": "# Run prefill first if possible",
+        "file": "python/sglang/srt/managers/scheduler.py",
+        "line": 2514,
+        "symbol": "Scheduler.get_next_batch_to_run"
+      },
+      {
+        "anchor": "self.out_cache_loc = alloc_for_decode(self, token_per_req=1)",
+        "file": "python/sglang/srt/managers/schedule_batch.py",
+        "line": 2546,
+        "symbol": "ScheduleBatch.prepare_for_decode"
+      },
+      {
+        "anchor": "req.kv_committed_len += 1",
+        "file": "python/sglang/srt/managers/schedule_batch.py",
+        "line": 2551,
+        "symbol": "ScheduleBatch.prepare_for_decode"
+      },
+      {
+        "anchor": "out = self.model_runner.forward(",
+        "file": "python/sglang/srt/managers/tp_worker.py",
+        "line": 472,
+        "symbol": "TpModelWorker.forward_batch_generation"
+      },
+      {
+        "anchor": "batch_result.next_token_ids = self.model_runner.sample(",
+        "file": "python/sglang/srt/managers/tp_worker.py",
+        "line": 496,
+        "symbol": "TpModelWorker.forward_batch_generation"
+      },
+      {
+        "anchor": "batch.req_pool_indices, batch_result.next_token_ids",
+        "file": "python/sglang/srt/managers/scheduler.py",
+        "line": 3078,
+        "symbol": "Scheduler.run_batch"
+      },
+      {
+        "anchor": "req.output_ids.append(next_token_id)",
+        "file": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+        "line": 227,
+        "symbol": "BatchResultProcessor.process_batch_result_decode"
+      },
+      {
+        "anchor": "return self.model.forward(",
+        "file": "python/sglang/srt/model_executor/model_runner.py",
+        "line": 3237,
+        "symbol": "ModelRunner.forward_decode"
+      },
+      {
+        "anchor": "for layer_idx in range(self.start_layer, self.end_layer):",
+        "file": "python/sglang/srt/models/gemma4_causal.py",
+        "line": 978,
+        "symbol": "Gemma4TextModel.forward"
+      },
+      {
+        "anchor": "qkv, _ = self.qkv_proj(hidden_states)",
+        "file": "python/sglang/srt/models/gemma4_causal.py",
+        "line": 414,
+        "symbol": "Gemma4Attention.forward"
+      },
+      {
+        "anchor": "gate_up, _ = self.gate_up_proj(x)",
+        "file": "python/sglang/srt/models/gemma3_causal.py",
+        "line": 111,
+        "symbol": "Gemma3MLP.forward"
+      },
+      {
+        "anchor": "x, _ = self.down_proj(x)",
+        "file": "python/sglang/srt/models/gemma3_causal.py",
+        "line": 113,
+        "symbol": "Gemma3MLP.forward"
+      },
+      {
+        "anchor": "output = self.quant_method.apply(self, x, bias)",
+        "file": "python/sglang/srt/layers/linear.py",
+        "line": 281,
+        "symbol": "LinearBase.forward"
+      },
+      {
+        "anchor": "return apply_fp8_linear(",
+        "file": "python/sglang/srt/layers/quantization/fp8.py",
+        "line": 822,
+        "symbol": "Fp8LinearMethod.apply"
+      },
+      {
+        "anchor": "output = fp8_scaled_mm(",
+        "file": "python/sglang/srt/layers/quantization/fp8_utils.py",
+        "line": 1561,
+        "symbol": "apply_fp8_linear"
+      }
+    ],
+    "causal_edges": [
+      {
+        "from": "Scheduler.run_batch(batch)",
+        "id": "scheduler_tick_is_run_then_process",
+        "proved": true,
+        "source": [
+          {
+            "file": "python/sglang/srt/managers/scheduler.py",
+            "line": 1436,
+            "symbol": "Scheduler.event_loop_normal"
+          },
+          {
+            "file": "python/sglang/srt/managers/scheduler.py",
+            "line": 1437,
+            "symbol": "Scheduler.event_loop_normal"
+          }
+        ],
+        "to": "Scheduler.process_batch_result(batch, result)"
+      },
+      {
+        "from": "ScheduleBatch.prepare_for_decode",
+        "id": "one_kv_slot_per_request_per_decode",
+        "proved": true,
+        "source": [
+          {
+            "file": "python/sglang/srt/managers/schedule_batch.py",
+            "line": 2546,
+            "symbol": "ScheduleBatch.prepare_for_decode"
+          },
+          {
+            "file": "python/sglang/srt/managers/schedule_batch.py",
+            "line": 2551,
+            "symbol": "ScheduleBatch.prepare_for_decode"
+          }
+        ],
+        "to": "one committed KV position per active request"
+      },
+      {
+        "from": "ModelRunner.forward -> Gemma4 60-layer model",
+        "id": "current_batch_full_model_before_sample",
+        "proved": true,
+        "source": [
+          {
+            "file": "python/sglang/srt/managers/tp_worker.py",
+            "line": 472,
+            "symbol": "TpModelWorker.forward_batch_generation"
+          },
+          {
+            "file": "python/sglang/srt/models/gemma4_causal.py",
+            "line": 978,
+            "symbol": "Gemma4TextModel.forward"
+          },
+          {
+            "file": "python/sglang/srt/managers/tp_worker.py",
+            "line": 496,
+            "symbol": "TpModelWorker.forward_batch_generation"
+          }
+        ],
+        "to": "TpModelWorker.sample"
+      },
+      {
+        "from": "sampled next_token_ids",
+        "id": "sample_before_next_tick_input",
+        "proved": true,
+        "source": [
+          {
+            "file": "python/sglang/srt/managers/scheduler.py",
+            "line": 3078,
+            "symbol": "Scheduler.run_batch"
+          },
+          {
+            "file": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+            "line": 227,
+            "symbol": "BatchResultProcessor.process_batch_result_decode"
+          }
+        ],
+        "to": "future_map / output_ids consumed by the next scheduler tick"
+      },
+      {
+        "from": "Gemma4 qkv/gate-up/down projection call sites",
+        "id": "model_to_fp8_linear",
+        "proved": true,
+        "source": [
+          {
+            "file": "python/sglang/srt/models/gemma4_causal.py",
+            "line": 414,
+            "symbol": "Gemma4Attention.forward"
+          },
+          {
+            "file": "python/sglang/srt/models/gemma3_causal.py",
+            "line": 111,
+            "symbol": "Gemma3MLP.forward"
+          },
+          {
+            "file": "python/sglang/srt/models/gemma3_causal.py",
+            "line": 113,
+            "symbol": "Gemma3MLP.forward"
+          },
+          {
+            "file": "python/sglang/srt/layers/linear.py",
+            "line": 281,
+            "symbol": "LinearBase.forward"
+          },
+          {
+            "file": "python/sglang/srt/layers/quantization/fp8.py",
+            "line": 822,
+            "symbol": "Fp8LinearMethod.apply"
+          },
+          {
+            "file": "python/sglang/srt/layers/quantization/fp8_utils.py",
+            "line": 1561,
+            "symbol": "apply_fp8_linear"
+          }
+        ],
+        "to": "sgl_kernel.fp8_scaled_mm"
+      }
+    ],
+    "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "source_root": "/root/workspace/.agents/runtime/sglang-v0.5.13-source",
+    "source_sha256": {
+      "python/sglang/srt/layers/linear.py": "092d1a6f945651afa01dbd3a252a2d65eec8483f30faff3d138d69055fdbba00",
+      "python/sglang/srt/layers/quantization/fp8.py": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a",
+      "python/sglang/srt/layers/quantization/fp8_utils.py": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9",
+      "python/sglang/srt/managers/schedule_batch.py": "eea77dac02f593da24e953f0a0ea03237f2874d0ef27522044e8fd6397fcb874",
+      "python/sglang/srt/managers/scheduler.py": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4",
+      "python/sglang/srt/managers/scheduler_components/batch_result_processor.py": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de",
+      "python/sglang/srt/managers/tp_worker.py": "f2e00ea7d53b7250231d44b9d52415c6f6b5f936b0e7c6af4a13f5aff6c1e509",
+      "python/sglang/srt/model_executor/cuda_graph_runner.py": "7d1898247e80ff6a446eb42e4968d2eea0df30b109ee2d089a9ad78791bc079e",
+      "python/sglang/srt/model_executor/model_runner.py": "f4dad073eb9f89afd4cda0439b97dee63f8de131d0ed10078b817dba1f978f59",
+      "python/sglang/srt/models/gemma3_causal.py": "a9827bde583c5b8b0abfeaced097c4e9d060fb99ec2961b4f9c66173d3027282",
+      "python/sglang/srt/models/gemma4_causal.py": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    "tree": "ed4e68454edee9b97272386af2fd8f989484f270"
+  }
+}

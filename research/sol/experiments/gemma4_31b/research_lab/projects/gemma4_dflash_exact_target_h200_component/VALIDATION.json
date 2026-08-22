@@ -1,0 +1,59 @@
+{
+  "commands": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "py_compile",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/build_readiness.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/component_observer.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_owner.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_worker.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/run_bound_c32.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/sitecustomize.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/summarize_component.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/test_component_packet.py"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "python3",
+        "-m",
+        "unittest",
+        "-v",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/test_component_packet.py"
+      ],
+      "returncode": 0,
+      "stderr": "test_contract_excludes_consumed_request_25 (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_contract_excludes_consumed_request_25) ... ok\ntest_interval_union (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_interval_union) ... ok\ntest_observer_uses_fixture_validated_mapping (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_observer_uses_fixture_validated_mapping) ... ok\ntest_owner_uses_pool_show_and_generation_fenced_release (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_owner_uses_pool_show_and_generation_fenced_release) ... ok\ntest_python_files_parse (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_python_files_parse) ... ok\ntest_server_commands_preserve_block_and_controls (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_server_commands_preserve_block_and_controls) ... ok\ntest_summarizer_consumes_complete_matched_fixture (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_summarizer_consumes_complete_matched_fixture) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.075s\n\nOK\n",
+      "stdout": ""
+    },
+    {
+      "command": [
+        "python3",
+        "/root/workspace/.agents/skills/experiment-run/scripts/opportunity_register.py",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/OPPORTUNITY_REGISTER.json"
+      ],
+      "returncode": 0,
+      "stderr": "",
+      "stdout": "{\n  \"opportunities\": [\n    {\n      \"competing_explanations\": [\n        \"Exact public checkpoint revision drift collapses acceptance.\",\n        \"Target verification cost exceeds saved AR calls.\",\n        \"KV ownership or pending-bonus relay is wrong.\",\n        \"NGRAM supplies similar accepted work without draft weights.\"\n      ],\n      \"cost_usd\": 6.0,\n      \"decision_impact\": 1.0,\n      \"decision_resolution_per_dollar\": 0.10666666666666669,\n      \"discrimination_power\": 1.0,\n      \"evidence_scope\": \"Exact target/draft/runtime identities; source-backed and CPU-fixture semantics only before this packet.\",\n      \"expected_information_per_dollar\": \"High: one session resolves exact load, semantics, acceptance, controls, and component economics.\",\n      \"falsifier\": \"Fresh matched AR/DFLASH/NGRAM c32 component run with exact token and KV audits.\",\n      \"id\": \"dflash_one_forward_c32\",\n      \"mechanism\": \"Amortize one shallow learned forward across 15 target-verified proposals.\",\n      \"modifiable_fraction\": \"Unknown until CUDA interval-union measurement.\",\n      \"next_measurement\": \"Run the hash-bound durable H200 packet once after director claim authorization.\",\n      \"observation\": \"Source-complete DFlash produces 15 simultaneous proposals from one five-layer draft forward, but exact-revision H200 acceptance and economics are unmeasured.\",\n      \"phase\": \"decode component\",\n      \"readiness\": 1.0,\n      \"resource_signature\": \"One learned draft forward plus a target [B*16,262144] verification surface at c32.\",\n      \"transfer_penalty\": 0.2,\n      \"uncertainty\": 0.8,\n      \"upper_bound\": \"At most 16 committed target tokens per round, including bonus.\"\n    }\n  ],\n  \"ranking_method\": {\n    \"claim_limit\": \"triage heuristic only; inputs are judgments and score is not a performance prediction\",\n    \"formula\": \"impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd\",\n    \"name\": \"heuristic_decision_resolution_per_dollar_v1\"\n  },\n  \"schema_version\": 1\n}\n"
+    }
+  ],
+  "endpoint_traffic_sent": false,
+  "gpu_used": false,
+  "identities": {
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "ownership_fixture_sha256": "2b94b14f0d0df94df03830ee91aa884fba53fa3b3888d420648c4510479809bc",
+    "ownership_patch_sha256": "a8bb7d77c99ee80e9dd9cb1ab5cb89797bab07e90dc2f1e22c9c6d44ee2aebbd",
+    "request25_boundary_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+    "runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+    "source_archive_sha256": "3b7c1c8a43a179c10020be8621465be9b7d07ff9353164054c77fd7791f3b8c1",
+    "source_terminal_sha256": "738567dce0eee75ef4578b2e968919c533c7add11947cf585c0e2237374a046a"
+  },
+  "pass": true,
+  "provider_accessed": false,
+  "schema_version": 1,
+  "validated_at_utc": "2026-07-29T22:44:38.881447Z"
+}

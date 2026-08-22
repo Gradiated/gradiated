@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "classification": "reservation_gate_before_provider_lifecycle_or_gpu_claim",
+  "project": "gemma4_b200_fp8_local_attention_fusion",
+  "requested_total_authorization_usd": 4.0,
+  "reservation_visible_in_snapshot": false,
+  "provider_operations_authorized": false,
+  "gpu_claim_authorized": false,
+  "required_accelerator": "nvidia-b200-sxm",
+  "preferred_retained_bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "retained_bench_condition": "maintenance",
+  "retained_watchdog_deadline_utc": "2026-07-28T19:40:00Z",
+  "authoritative_discriminator": {
+    "path": "B200_FP8_LOCAL_PAGED_GQA_REPLACEMENT_DISCRIMINATOR.json",
+    "sha256": "e302468b7d85b1465a309388cd40b5f70e3bac9dfd0103737887a104f3202d2d"
+  },
+  "source_bundle_manifest_sha256": "377b2e7226cbdb99271783cbeb2df547084d804a756374f8d6f02dcd9aa08144",
+  "candidate_runner": {
+    "path": "candidate/check_correctness_b200.py",
+    "sha256": "7876d35727b4f526b2277c32934895745599d6352c52e43ab9464e881b28731c"
+  },
+  "candidate_source": {
+    "path": "candidate/local_paged_gqa_fused.py",
+    "sha256": "c164e89fd43721118e0b8a8499e577461b80cdf9a593ae98214e166b87c5bc4f"
+  },
+  "scientific_contract": {
+    "question": "Can one source-complete native FlashInfer paged-GQA CTA preserve the exact Gemma 4 local-attention output and persistent HND BF16 cache while owning fresh K/V append, slot mapping, the 1024-token sliding window, and attention in one device path?",
+    "arms": [
+      "pinned reshape_and_cache_flash plus exact TRT-LLM Gen SM100f cubin",
+      "source-complete fused native paged-GQA candidate"
+    ],
+    "geometry": "B32, QH32, KVH16, BF16, head_dim=256, page_size=16, HND cache, seq_lens 4214..4571, window_left=1023",
+    "correctness_only": true,
+    "endpoint_or_model_load": false,
+    "timing_authorized": false,
+    "scientific_sample_limit": 1
+  },
+  "budgets_after_reservation": {
+    "gpu_wall_clock_minutes": 45,
+    "storage_gib": 4,
+    "maximum_spend_usd": 4.0
+  },
+  "next_director_action_after_reservation": "Revalidate the exact retained B200 and watchdog. If it remains intact, transfer lifecycle contents to this project, extend the watchdog within the $4 ceiling, and bind one execution-profile correctness owner. If it has cleaned, provision an exact replacement only when the same reservation still covers the conservative lifecycle.",
+  "forbidden_before_durable_reservation": [
+    "run $researcher",
+    "claim or ready the maintenance bench",
+    "extend or replace the watchdog",
+    "create provider resources",
+    "compile or run CUDA",
+    "time the candidate",
+    "replay an endpoint"
+  ]
+}

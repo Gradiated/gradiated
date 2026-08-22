@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T23:29:00Z",
+  "decision": "fresh_claim_direct_classified_unconsumed_continuation_owner_ready",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "repair_binding": {
+    "path": "DIRECTOR_DFLASH_DIRECT_CONTINUATION_OWNER_REPAIR_20260729T2319Z.json",
+    "sha256": "8590cac182f32067dcd6bb5ea2de29b72b60953be6de50b9e944379ce2dee8bb",
+    "source_deadline_utc": "2026-07-29T23:36:00Z"
+  },
+  "owner": {
+    "path": "dflash_component_direct_continuation_owner.py",
+    "sha256": "37b3f467d89293a1a5b0244e078bca24e70e90ac2f05ef48214f997b3f69875d",
+    "argv_template": [
+      "python3",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_direct_continuation_owner.py",
+      "--execution-binding", "<future-fresh-claim-execution-binding>",
+      "--direct-authority", "<future-hash-bound-direct-continuation-authority>",
+      "--artifact-root", "<future-project-owned-artifact-root>"
+    ]
+  },
+  "pre_worker_sequence": [
+    "validate the future fresh claim, deadline, immutable ready packet, and direct authority file",
+    "retrieve the retained remote run through the existing outside-tree retriever",
+    "classify and atomically persist DIRECT_CONTINUATION_ADOPTION_0.json",
+    "require the exact snapshot manifest and exclusive-marker-derived all-false consumption predicate",
+    "consume the direct authority without repair_wait",
+    "stage only the unchanged hash-bound packet, then invoke retry_scope=all"
+  ],
+  "bound_evidence": {
+    "corrected_adoption_path": "artifacts/dflash-h200-classification-r3-20260729t2315z/run/RETRIEVAL_ADOPTION_0.json",
+    "corrected_adoption_sha256": "283375f25b465eab43ab4d5b812ee05d7d2d242db9226c7d752e9632f8ae1b96",
+    "snapshot_archive_sha256": "8cf9af7a63b644a47029244c3c89baf85744dae485ecc51ae5f2d3e5ea5051a6",
+    "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+    "exclusive_marker_predicate": {
+      "science_started": {"ar": false, "dflash": false, "ngram": false},
+      "science_consumed": {"ar": false, "dflash": false, "ngram": false},
+      "consumption_evidence": "exclusive_pre_request_markers_absent",
+      "classification": "classified_persisted_attempt",
+      "retry_scope": "all"
+    },
+    "unconsumed_direct_authority_sha256": "5f792d35b2124addc42e537b9cace8aaf253434ffa59355ed3020b6fbdf06405"
+  },
+  "future_direct_authority_contract": {
+    "required_fields": {
+      "schema_version": 1,
+      "decision": "direct_classified_unconsumed_continuation",
+      "project": "gemma4_dflash_exact_target_h200_component",
+      "direct_continuation_authorized": true,
+      "prior_corrected_adoption_sha256": "283375f25b465eab43ab4d5b812ee05d7d2d242db9226c7d752e9632f8ae1b96",
+      "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+      "unconsumed_request_sha256": "5f792d35b2124addc42e537b9cace8aaf253434ffa59355ed3020b6fbdf06405",
+      "fresh_adoption_classification": "classified_persisted_attempt",
+      "retry_scope": "all",
+      "packet_archive_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+      "historical_request_25_replay_allowed": false
+    },
+    "fresh_claim_binding": "claim_generation must exactly equal the future execution binding claimed_at; remote_run and immutable_science are required and checked before packet staging."
+  },
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "packet_archive_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "block_size": 16,
+    "control_order": ["AR", "DFLASH", "NGRAM"],
+    "historical_request_25_replay_allowed": false
+  },
+  "fail_closed_before_worker": [
+    "changed or missing remote snapshot", "snapshot manifest mismatch", "scientific terminal", "present marker", "ambiguous ledger", "changed immutable science", "packet mismatch", "missing or mismatched direct authority", "missing future fresh claim"
+  ],
+  "offline_validation": {
+    "method": "Executed classify_exact_unconsumed and validate_direct_authority against the complete corrected snapshot; two mutations (manifest and fresh classification) each raised direct_authority_boundary.",
+    "result": "pass"
+  },
+  "performed_actions": {
+    "gpu_pool": false, "claim_or_release": false, "ssh": false, "docker": false,
+    "cuda": false, "provider_api": false, "repair_request": false, "arm": false
+  }
+}

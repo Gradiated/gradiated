@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "type": "director_offline_producer_acquisition_recovery",
+  "created_at_utc": "2026-07-30T10:18:29Z",
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "decision": "End the invalid R2 execution lineage without consuming science, clean the incompatible paid bench, and repair the exact producer/acquisition contract offline before any future GPU request.",
+  "evidence": {
+    "original_claimed_at": "2026-07-30T09:57:05.800998Z",
+    "r2_owner_pid": 738926,
+    "r2_owner_start_ticks": 152238109,
+    "r2_worker_capture": {
+      "path": "artifacts/h200-m384-attention-20260730t0951z/r2/R2_WORKER_CAPTURE.json",
+      "sha256": "22f969a3848461c5a15a0a4178ff30c820739644ffedb816a2538a9852b9836b",
+      "exit_code": 127,
+      "stderr": "bash: line 1: M384_MODEL_PATH: M384_MODEL_PATH_required"
+    },
+    "producer_source": {
+      "path": "m384_attention_producer_capture.py",
+      "sha256": "6f095e82c3908ae86cd5bc065017509591ad09381ab5bfbcd607dfb94a30761f",
+      "defect": "It calls AutoModelForCausalLM.from_pretrained with local_files_only=True and therefore requires a complete local model tree, but neither the controller nor the checkpoint-free 100-GiB guest contains that pinned checkpoint."
+    },
+    "r2_owner_source": {
+      "path": "m384_attention_h200_owner_r2.py",
+      "sha256": "54100879be29b9090d2a7b93f7f4011d6810ecaf38422e6cd62d9d22c4cd67af",
+      "defect": "After publishing REPAIR_READY_R2.json it only heartbeats until the deadline; it does not consume a request or re-enter a failed stage, contrary to the bound dispatcher contract."
+    },
+    "scientific_consumption": {
+      "cuda_invocation_started": false,
+      "scientific_sample_consumed": false,
+      "component_ledger_rows": 0
+    },
+    "provider_cleanup": {
+      "bench": "h200-downproj-computeinstance-e00qft1sf416qp6knw",
+      "instance_id": "computeinstance-e00qft1sf416qp6knw",
+      "disk_id": "computedisk-e00qh5cnm6kk3sa8fe",
+      "delete_operation_id": "computeoperation-e00m3gc9sqznetmgrb",
+      "state_at_binding": "DELETING"
+    }
+  },
+  "immutable_science": {
+    "mechanism_terminal_sha256": "1f2b98bbadf2cb05afad46fdd466fe89ee1adb09b4344825b81777d8b550695b",
+    "cpu_oracle_sha256": "bc1cc0e2737b89ec49f7754b28fa3dbe4921b51053f66134a3260567826a546c",
+    "h200_discriminator_sha256": "686b1e1a728ae168d62bce096ebd40f09984f08b795ad10fe0dc206e5477c123",
+    "geometry": "Qualified c32 NGRAM M=384 target verification, TP1, 32 requests x 12 rows; exact local d256/GQA2/window1024 and global d512/GQA8 consumers.",
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "delegated_result": {
+    "path": "PRODUCER_ACQUISITION_TERMINAL.json",
+    "success": "Produce one reachable, content-addressed acquisition contract for the exact pinned revision and a compact official-module producer that materializes the required local and global qkv_proj, gemma_qkv_rmsnorm, rotary_emb, embedding, and o_proj weights without requiring a complete AutoModelForCausalLM checkpoint. Bind exact source commands, file names, sizes, hashes, destinations, production module identities, deterministic hidden-state construction, and an executable consumer-facing packet contract.",
+    "execution_equivalence": "Exercise the acquisition and module-construction boundary in a blank project-local fake root through the first missing immutable file and run the complete non-CUDA packet/provenance consumer. CUDA-only correctness remains the first call of a later explicitly funded claim.",
+    "negative": "If the exact revision is credential-gated, the required minimal tensors cannot be isolated from official shards, or production module semantics require the full checkpoint, publish that typed external/source blocker with exact evidence instead of another READY artifact."
+  },
+  "authority": {
+    "researcher_profile": "execution",
+    "gpu_claim_allowed": false,
+    "cuda_allowed": false,
+    "spend_reservation_allowed": false,
+    "provider_lifecycle_mutation_allowed": false,
+    "owner_replacement_allowed": false
+  },
+  "prohibitions": [
+    "Do not replay generation 1 or R2, create an R3 owner, reuse the deleted guest path, or describe the current placeholder kernel as measured.",
+    "Do not synthesize Q/K/V, weaken producer provenance, approximate model weights, or download a complete checkpoint merely to satisfy AutoModelForCausalLM.",
+    "Do not inspect closed execution lineages or create a separate readiness, audit, or repair project."
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "state": "funded retained B200 ready for exact global K=V component",
+  "project": "gemma4_b200_fp8_hybrid_attention_dataflow",
+  "stage": "global_k_eq_v_component",
+  "artifacts": "DIRECTOR_B200_GLOBAL_KV_EXECUTION_20260728T1807Z.json binds the durable reservation, exact source-complete candidate, production hidden capture, and lifecycle.",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; c32 decode M32 global layer-5 attention input.",
+  "image": "Pinned docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79.",
+  "checkpoint": "Reuse /home/glmrunner/b200-nvfp4-gemma4-endpoint-v2-20260728t1323z/bf16-source; do not restage.",
+  "runtime": "Identity-verified NVIDIA B200 SM100; TP=1 global QKV projection and unchanged FlashAttention first consumer.",
+  "caches": "Preserve retained checkpoint, pinned images, source trees, dependencies, and runtime caches; obsolete M32 patched extension is historical and not part of this candidate.",
+  "server_state": "No resident endpoint is required. GPU is unoccupied and safe; materialize one exact production M32 hidden capture inside the claim.",
+  "scientific_terminal": "One stock/candidate global K=V exact-consumer component generation; zero endpoint requests.",
+  "next": "Only gemma4_b200_fp8_hybrid_attention_dataflow may claim by 2026-07-28T18:15:00Z and launch b200_k_eq_v_owner.sh through detached-owner by 2026-07-28T18:18:00Z. Release negative or incomplete by 2026-07-28T18:32:00Z; retain positive; watchdog ends 2026-07-28T18:36:00Z."
+}

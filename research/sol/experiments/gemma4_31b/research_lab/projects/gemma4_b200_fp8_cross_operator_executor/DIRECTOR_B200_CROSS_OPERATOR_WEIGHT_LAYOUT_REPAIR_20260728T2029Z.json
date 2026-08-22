@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "classification": "same_claim_pre_science_fp8_weight_layout_repair",
+  "project": "gemma4_b200_fp8_cross_operator_executor",
+  "researcher_profile": "execution",
+  "required_skills": [
+    "$researcher",
+    "$kernel-research"
+  ],
+  "scientific_binding": "DIRECTOR_B200_CROSS_OPERATOR_EXECUTION_20260728T2016Z.json",
+  "repair_evidence": {
+    "repair_id": "cross-operator-component_execution-20260728T202849Z",
+    "repair_ready": "artifacts/b200-cross-operator-component-20260728t2016z/.repair-handshakes/cross-operator-component_execution-20260728T202849Z/REPAIR_READY.json",
+    "repair_ready_sha256": "b6d361c071787ca9ba509d0257bd18eb0d9e67210c965e8f40b37a1b92ec7f2d",
+    "diagnostic": "artifacts/b200-cross-operator-component-20260728t2016z/REPAIR_component_execution.json",
+    "diagnostic_sha256": "888bdeaa05c3df03ee489b4350987779d711304ed749a0aa2cab1d620a8c9597",
+    "classification": "invalid_uninterpretable_integration_attempt",
+    "science_consumed": false,
+    "failure": "The official scaled_fp8_quant producer rejected weight_bf16.t() because its last dimension was not contiguous.",
+    "causal_repair": "Materialize weight_bf16.t().contiguous() before the unchanged scaled_fp8_quant call, yielding the already-bound [K,N] E4M3 gate-up weight layout.",
+    "prior_repairs_preserved": "The root-safe pinned-container invocation and default VllmConfig context have crossed their former failure boundaries. Preserve them unchanged."
+  },
+  "continuous_claim": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claimed_at_utc": "2026-07-28T20:20:37.322321Z",
+    "project": "gemma4_b200_fp8_cross_operator_executor",
+    "predecessor_pid": 3600510,
+    "predecessor_start_ticks": 138653025,
+    "predecessor_unit_manager": "pid",
+    "predecessor_state": "artifacts/b200-cross-operator-component-20260728t2016z/OWNER_STATE.json",
+    "replacement_launch_by_utc": "2026-07-28T20:36:00Z",
+    "decision_negative_release_by_utc": "2026-07-28T20:58:00Z",
+    "incomplete_repair_disposition_by_utc": "2026-07-28T20:58:00Z",
+    "watchdog_deadline_utc": "2026-07-28T21:10:00Z"
+  },
+  "fit": {
+    "measured_recent_restart_seconds_upper_bound": 20,
+    "remaining_execution_window_at_binding_minutes": 28,
+    "terminal_and_release_margin_minutes": 12,
+    "decision": "One exact layout repair and paired component remain feasible without lifecycle extension."
+  },
+  "immutable_scientific_contract": {
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "consumer_path": "b200_cross_operator_consumer.py",
+    "pre_repair_consumer_sha256": "1777dd3c6a7ffe674991c526e2ad8a1838a687bc7576a7e06ba4628d6df563a2",
+    "owner_path": "b200_cross_operator_owner.sh",
+    "pre_repair_owner_sha256": "49e2caf0b860810723ef943293b927a186e2f3f034f1ab23f90ddb604e26340b",
+    "preclaim_path": "PRECLAIM_B200_CROSS_OPERATOR_TERMINAL.json",
+    "pre_repair_preclaim_sha256": "5264dd431f3d78aa88a51578e7c11cf649250254c86c7d0ad0cc59f0337b36f3",
+    "geometry": "M32, K5376, N43008",
+    "weight_layout_after_producer": "contiguous [5376,43008]",
+    "warmups": 8,
+    "samples_per_arm": 40,
+    "promotion_threshold_seconds_per_request": 0.002,
+    "model_or_checkpoint_load": false,
+    "endpoint_requests": 0,
+    "dispatcher_modified": false
+  },
+  "repair_scope": {
+    "fresh_remote_output": "/home/glmrunner/b200-cross-operator-20260728t2016z/output-5",
+    "permitted_amendment": "Change only ops.scaled_fp8_quant(weight_bf16.t()) to ops.scaled_fp8_quant(weight_bf16.t().contiguous()).",
+    "requirements": [
+      "Hash-bind the one-line layout amendment, replacement owner, repaired preclaim terminal, this binding, and the exact repair-ready marker.",
+      "Preserve the root-safe pinned-container invocation, default VllmConfig context, operands, shapes, seeds, scale convention, consumer, correctness guards, timing counts, projection, and threshold.",
+      "Use fresh output-5; preserve output-0 through output-4 as invalid pre-science generations.",
+      "Prepare one replacement while 3600510/138653025 remains the exact live repair owner; wait for that exact predecessor to exit before remote mutation.",
+      "Submit the matching repair request for cross-operator-component_execution-20260728T202849Z, resume at component_execution, and proceed directly through the unchanged pair.",
+      "If this corrected attempt returns another pre-science failure, retain the claim and typed diagnostic for director recovery; do not automatically launch another replacement chain."
+    ],
+    "forbidden": [
+      "release or reclaim before a decision-bearing result, unsafe guest, or absolute disposition",
+      "provider or watchdog mutation",
+      "image rebuild or runtime substitution",
+      "changes beyond the one-line contiguity adapter and required hash/output-root glue",
+      "reuse, deletion, or overwrite of output-0 through output-4",
+      "model or checkpoint load",
+      "endpoint replay",
+      "M32 dispatcher modification",
+      "scientific contract changes"
+    ]
+  },
+  "terminal_dispositions": {
+    "positive": "Retain the claim and wake the director under the original execution binding.",
+    "decision_bearing_negative": "Persist the paired result and release the unoccupied bench available by 2026-07-28T20:58:00Z.",
+    "incomplete_or_uninterpretable": "Retain the continuous claim with the newest typed diagnostic for deliberate director recovery while terminal and safe disposition still fit.",
+    "deadline_or_unsafe": "Persist the diagnostic and release to maintenance for director handling."
+  }
+}

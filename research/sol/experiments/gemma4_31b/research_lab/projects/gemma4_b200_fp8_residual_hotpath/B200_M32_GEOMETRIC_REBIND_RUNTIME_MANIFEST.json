@@ -1,0 +1,373 @@
+{
+  "artifact_hashes": {
+    "build_script_sha256": "fe40a6393808112cbd05769dfc71d3d0307ae2f7a2831c93f3cd6c6315ba95af",
+    "candidate_source_sha256": "1d1f5aba004d9e33e14a0c548eca2ea8c0e5f326fc60b1dac2334e482b30e425",
+    "dockerfile_sha256": "2b1acd1d1257d4e1f9ac81c1929cdd572a6eecfe3a74a9ade90c6b2b01661896",
+    "owner_sha256": "8b530e9bd7079a80f606cef6ddea152aa19ad3457e48539305c541102bffdd76",
+    "runner_sha256": "6d6438f723836b53c4a0bc1cc505c4175fda4e9bc8e255b17500c13be2ce6091"
+  },
+  "authoritative_identities": {
+    "consumed_m16_terminal": "artifacts/b200-m32-dispatch-patched-cuda13-repair-20260728t1922z/SM100_TERMINAL.json",
+    "consumed_m16_terminal_sha256": "5497ed5b0c669c525077334cbb5d6610b77de02582321acf2bf4e032f6328a8b",
+    "cutlass_revision": "v4.2.1",
+    "cutlass_scheduler_source": "include/cutlass/gemm/kernel/tile_scheduler.hpp",
+    "cutlass_scheduler_source_sha256": "ae25f8ab4b75b895a8419f055dbcf1712b1bef9e4d9b5f64eba176901f2672a1",
+    "cutlass_source_url": "https://github.com/NVIDIA/cutlass/blob/v4.2.1/include/cutlass/gemm/kernel/tile_scheduler.hpp",
+    "pinned_dispatcher": "csrc/quantization/w8a8/cutlass/c3x/scaled_mm_sm100_fp8_dispatch.cuh",
+    "pinned_dispatcher_sha256": "492ab8232db9f04605e5cd50417ee00902b4476181540f3c223f470d1ced14cf",
+    "qualified_endpoint_terminal_sha256": "4930d9666167e20096f0343736db6d0ed721ea30fad68f5fc4010ccfeeee9acf",
+    "residual_discriminator_sha256": "59a91ecd82e55c388f02b3a948c6650d8f260c0d1d92202513059441d9c32415",
+    "vllm_base_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "vllm_version": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "causal_limiter": {
+    "chain": [
+      "Pinned vLLM selects sm100_fp8_config_M64_swap_ab for all six M32 K>=4096 families.",
+      "Its GemmUniversal fourth template argument is void; CUTLASS 4.2.1 resolves void on Sm100 to PersistentTileSchedulerSm100, the dynamic Cluster Launch Control scheduler.",
+      "Each family is a uniform dense GEMM with fixed K and 42-336 output tiles before cluster padding; there is no routing, sparsity, or variable per-tile work for dynamic assignment to balance.",
+      "Warm stock family medians are only 0.0375-0.0838 ms, so CLC query/response and dynamic work bookkeeping can be a measurable part of one invocation even though compulsory FP8 weight traffic remains dominant.",
+      "StaticPersistentTileScheduler100 removes dynamic work acquisition while retaining exactly the stock tile, cluster, K reduction, mainloop, epilogue, and SwapAB orientation."
+    ],
+    "evidence_class": "source_backed_hypothesis_unmeasured_on_target",
+    "physical_model": {
+      "dynamic_balance_value": "low: all CTAs within a family have the same K and dense work; only edge predicates differ",
+      "falsifier": "Static scheduling is flat/slower while dynamic-scheduler activity is not on the critical path, or loss of dynamic load balance offsets removed CLC bookkeeping.",
+      "unchanged_costs": [
+        "useful tensor-core FLOPs",
+        "tile and K-stage counts",
+        "compulsory activation, weight, scale, and output bytes",
+        "workspace and output layout",
+        "activation quantization kernel"
+      ],
+      "weighted_cluster_padding_fraction": 0.007228915662650603,
+      "weighted_cluster_padding_tiles_per_decode_step": 240,
+      "weighted_output_tiles_per_decode_step": 33200
+    }
+  },
+  "classification": "offline_hash_bound_executable_sm100_m32_candidate_unmeasured",
+  "consumed_m16_evidence": {
+    "classification": "component_negative_stop",
+    "interpretation": "The exact-output M16 128x32x128 SwapAB cutoff regressed five families and is consumed. This candidate does not select, instantiate, rebuild, or replay that config.",
+    "projected_endpoint_saving_seconds_per_request": -0.005663566866423934,
+    "weighted_gain_fraction": -0.0353243711512401,
+    "weighted_m16_quant_and_gemm_p50_ms": 14.837440215051174,
+    "weighted_stock_quant_and_gemm_p50_ms": 14.33119960129261
+  },
+  "generated_at_utc": "2026-07-28T22:51:43.438484+00:00",
+  "lifecycle": {
+    "authorized_cumulative_spend_usd": 16.0,
+    "claim_allowed_now": false,
+    "current_actual_spend_usd": 9.73,
+    "detached_launch": {
+      "command_template": "research/factory/tools/detached-owner start --unit-manager pid --state <absolute-owner-state> --log <absolute-owner-log> --cwd /root/workspace -- python3 <project>/b200_m32_static_scheduler_owner.py --repo-root /root/workspace --project-root <project> --mechanism <project>/B200_FP8_M32_NEXT_MECHANISM.json --execution-binding <director-binding> --lab <lab> --output <artifact-root> --ssh-key <provider-identity> --known-hosts <inventory-known-hosts>",
+      "record_in_status_active_session": [
+        "absolute owner state path as unit",
+        "pid",
+        "start_ticks",
+        "unit_manager=pid",
+        "deadline_utc",
+        "artifact_root"
+      ],
+      "require_status_live_snapshot": true,
+      "tool": "research/factory/tools/detached-owner",
+      "unit_manager": "pid"
+    },
+    "director_gate": "A later director must provision/revalidate an exact B200, register it in the shared pool, and issue a hash-bound execution binding with claim_allowed=true.",
+    "maximum_claim_owner_minutes": 42,
+    "maximum_provider_lifecycle_minutes_at_7p15_usd_per_hour": 52.61538461538461,
+    "maximum_remaining_exposure_usd": 6.27,
+    "owner": "b200_m32_static_scheduler_owner.py",
+    "provider_setup_cleanup_reserve_minutes": 10.615384615384613,
+    "release_predicate": "owner independently validates exactness-stop evidence or all six row identities, layout/provenance, numerical oracles, source/module hashes, timing fields, and terminal class",
+    "repair_contract": {
+      "completed_family_rows_are_never_replayed": true,
+      "deadline_disposition": "retrieve diagnostics and release maintenance only at the absolute deadline or an unsafe/unreachable guest",
+      "fresh_repair_id_per_generation": true,
+      "retains_claim_and_heartbeat": true,
+      "supported_retry_scopes": [
+        "source_stage",
+        "build",
+        "consumer:<incomplete-family>",
+        "retrieve"
+      ],
+      "tool": "research/factory/tools/repair-handshake"
+    },
+    "required_execution_binding": [
+      "mechanism_sha256",
+      "bench",
+      "claim_start_by_utc",
+      "deadline_utc",
+      "release_by_utc",
+      "remote_root",
+      "claim_allowed=true"
+    ],
+    "terminal_release": "available with derived image, immutable source, CUTLASS, compiled module, and artifacts resident; no server occupies the accelerator"
+  },
+  "local_validation": {
+    "cuda_required_for_scientific_acceptance": true,
+    "offline_validation_is_not_a_scientific_sample": true,
+    "owner_command": "python3 b200_m32_static_scheduler_owner.py --repo-root /root/workspace --project-root . --mechanism B200_FP8_M32_NEXT_MECHANISM.json --validate-only artifacts/m32-next-local/owner.json",
+    "runner_command": "python3 b200_m32_static_scheduler_component.py --validate-only artifacts/m32-next-local/runner.json"
+  },
+  "measurement": {
+    "endpoint_projection": "saving_s_per_request = 358 * weighted_saved_ms_per_step / 1000 / 32",
+    "method": "alternating stock/candidate order, profiler off, CUDA events, one event synchronization per call; every output consumed outside its event interval",
+    "paired_repetitions": 31,
+    "primary_figure_of_merit": "multiplicity-weighted quant+GEMM median saved ms/decode step",
+    "stage_checkpointing": "each complete family writes ROW_<family>.json atomically; --resume skips complete rows and retries only the incomplete family",
+    "unit": "milliseconds per one M32 family invocation",
+    "warmup": 5
+  },
+  "mechanism": {
+    "candidate_scheduler_resolves_to": "cutlass::gemm::StaticPersistentTileScheduler100",
+    "candidate_scheduler_tag": "cutlass::gemm::StaticPersistentScheduler",
+    "candidate_source": "m32_static_persistent_geometric_rebind_extension.cu",
+    "candidate_symbol": "M32StaticPersistentGeometricRebindGemm::GemmKernel",
+    "epilogue_identity_enforced_at_runtime": true,
+    "mainloop_identity_enforced_at_runtime": true,
+    "material_distinction_from_m16": "scheduler decomposition only; no M<=32 cutoff, no 128x32x128 instantiation, and no M16 symbol",
+    "name": "m32_static_persistent_runtime_sm_count_geometric_rebind",
+    "stock_and_candidate_accumulator": "FP32",
+    "stock_and_candidate_cluster_mnk": [
+      4,
+      1,
+      1
+    ],
+    "stock_and_candidate_epilogue": "c3x::ScaledEpilogue",
+    "stock_and_candidate_output": "BF16",
+    "stock_and_candidate_swap_ab": true,
+    "stock_and_candidate_tile_mnk": [
+      128,
+      64,
+      256
+    ],
+    "stock_scheduler_resolves_to": "cutlass::gemm::PersistentTileSchedulerSm100",
+    "stock_scheduler_tag": "void"
+  },
+  "oracle": {
+    "activation_producer": "QuantFP8.forward_cuda -> ops.scaled_fp8_quant(scale=None,use_per_token_if_dynamic=True)",
+    "activation_scale_layout": "FP32 [M,1] or [M], one per token",
+    "candidate_consumer": "m32_static_scheduler_ext.m32_static_persistent",
+    "expected_families": [
+      "sliding_qkv",
+      "sliding_o",
+      "global_qkv_k_eq_v_materialized",
+      "global_o",
+      "gate_up",
+      "down"
+    ],
+    "expected_rows": 6,
+    "fault_attribution": "stock and candidate first calls synchronize separately and atomically update INVOCATION_STATE.json",
+    "identity": "Stock and candidate receive the same in-process FP8 tensor objects and scale tensor objects; hashes, shapes, strides, storage offsets, dtypes, orientation, and producer symbols are persisted in every row.",
+    "numerical_gate": "finite and bitwise-identical BF16 stock/candidate output for every family before that family's timing",
+    "runner": "b200_m32_static_scheduler_component.py",
+    "scale_convention": "forward scales; quantizer multiplies by reciprocal, scaled-MM epilogue multiplies activation and weight scales",
+    "stock_consumer": "vllm._custom_ops.cutlass_scaled_mm",
+    "weight_producer": "Fp8OnlineLinearMethod.process_weights_after_loading -> ops.scaled_fp8_quant(weight_NK,scale=None).t()",
+    "weight_scale_layout": "FP32 scalar, one per tensor",
+    "weight_storage_orientation": "KxN column-major view, stride(0)=1, storage_offset=0"
+  },
+  "predicted_effect": {
+    "component_latency_gain_interval_fraction": [
+      0.0,
+      0.05
+    ],
+    "counter_predictions": {
+      "dram__bytes_read.sum": "within +/-2% of stock",
+      "dynamic_clc_work_acquisition": "removed from candidate SASS/scheduler path",
+      "registers_shared_storage_and_spills": "same compiler resource footprint except scheduler state; no new spills",
+      "sm__cycles_elapsed.avg": "1-5% lower for positive families; unchanged tensor work",
+      "tensor_instruction_count": "identical within measurement error"
+    },
+    "evidence_class": "inferred_before_target_execution",
+    "projected_candidate_service_seconds_per_request_interval": [
+      0.629995593312477,
+      0.633995593312477
+    ],
+    "projected_endpoint_saving_seconds_per_request_interval": [
+      0.0,
+      0.004
+    ],
+    "request_interpretation": "This narrow scheduler cannot close the 0.133876 s/request campaign gap alone; a reproducible positive result is still stackable and identifies CLC overhead as a live residual."
+  },
+  "production_geometry": {
+    "all_k_and_n_multiple_of_128": true,
+    "concurrency": 32,
+    "decode_steps": 358,
+    "families": [
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.125124561702044,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 0,
+        "compulsory_bytes_lower_bound": 89301124,
+        "compulsory_weight_bytes": 88080384,
+        "k": 5376,
+        "m": 32,
+        "multiplicity_per_decode_step": 50,
+        "n": 16384,
+        "name": "sliding_qkv",
+        "stock_and_candidate_cluster_padded_tiles": 128,
+        "stock_and_candidate_output_tiles": 128,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 5637144576
+      },
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.13082252390846,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 2,
+        "compulsory_bytes_lower_bound": 44646532,
+        "compulsory_weight_bytes": 44040192,
+        "k": 8192,
+        "m": 32,
+        "multiplicity_per_decode_step": 50,
+        "n": 5376,
+        "name": "sliding_o",
+        "stock_and_candidate_cluster_padded_tiles": 44,
+        "stock_and_candidate_output_tiles": 42,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 2818572288
+      },
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.149473787149844,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 0,
+        "compulsory_bytes_lower_bound": 111583364,
+        "compulsory_weight_bytes": 110100480,
+        "k": 5376,
+        "m": 32,
+        "multiplicity_per_decode_step": 10,
+        "n": 20480,
+        "name": "global_qkv_k_eq_v_materialized",
+        "stock_and_candidate_cluster_padded_tiles": 160,
+        "stock_and_candidate_output_tiles": 160,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 7046430720
+      },
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.37511317176066,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 2,
+        "compulsory_bytes_lower_bound": 88948868,
+        "compulsory_weight_bytes": 88080384,
+        "k": 16384,
+        "m": 32,
+        "multiplicity_per_decode_step": 10,
+        "n": 5376,
+        "name": "global_o",
+        "stock_and_candidate_cluster_padded_tiles": 44,
+        "stock_and_candidate_output_tiles": 42,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 5637144576
+      },
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.2005521721328,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 0,
+        "compulsory_bytes_lower_bound": 234135684,
+        "compulsory_weight_bytes": 231211008,
+        "k": 5376,
+        "m": 32,
+        "multiplicity_per_decode_step": 60,
+        "n": 43008,
+        "name": "gate_up",
+        "stock_and_candidate_cluster_padded_tiles": 336,
+        "stock_and_candidate_output_tiles": 336,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 14797504512
+      },
+      {
+        "arithmetic_intensity_flop_per_compulsory_byte": 63.43355653021934,
+        "cluster_mnk_after_swap_ab": [
+          4,
+          1,
+          1
+        ],
+        "cluster_padding_tiles": 2,
+        "compulsory_bytes_lower_bound": 116637828,
+        "compulsory_weight_bytes": 115605504,
+        "k": 21504,
+        "m": 32,
+        "multiplicity_per_decode_step": 60,
+        "n": 5376,
+        "name": "down",
+        "stock_and_candidate_cluster_padded_tiles": 44,
+        "stock_and_candidate_output_tiles": 42,
+        "tile_mnk_after_swap_ab": [
+          128,
+          64,
+          256
+        ],
+        "useful_flops": 7398752256
+      }
+    ],
+    "fp8_gemms_over_completion": 85920,
+    "fp8_gemms_per_decode_step": 240,
+    "m": 32
+  },
+  "question": "Does replacing only CUTLASS 4.2.1 SM100 dynamic persistent CLC work acquisition with the static persistent scheduler reduce the exact Gemma 4 M32 FP8 path while preserving every operand, tile, cluster, mainloop, epilogue, and output bit?",
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_this_phase_usd": 0.0,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "endpoint_service_seconds_per_request": 0.633995593312477,
+    "gpu_claimed": false,
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "provider_lifecycle_mutated": false,
+    "semantic_class": "semantics_preserving_scheduler_only",
+    "target_accelerator": "NVIDIA B200 SXM, sm_100f"
+  },
+  "stop_rule": {
+    "exactness": "stop before timing on first nonfinite or non-bitwise family; persist that family and do not run later families",
+    "forbidden": [
+      "M16 SwapAB rebuild or replay",
+      "M<=32 cutoff change",
+      "block-E4M3 or any operand/scale representation change",
+      "provider create before a later director execution binding"
+    ],
+    "negative": "stop after the six-family component with no endpoint if any family regresses >5%, weighted quant+GEMM saving is <=0, or projected saving is <0.001 s/request",
+    "no_replay": "complete family rows and any decision-bearing exactness or six-family terminal are consumed; repair only missing build, retrieval, or the incomplete family",
+    "positive": "return to director for endpoint disposition only if all six families are bitwise equal, none regresses >5%, weighted quant+GEMM saving is positive, and projected saving is at least 0.001 s/request"
+  }
+}

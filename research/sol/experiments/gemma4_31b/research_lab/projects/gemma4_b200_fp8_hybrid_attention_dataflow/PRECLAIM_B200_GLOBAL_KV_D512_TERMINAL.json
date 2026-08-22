@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "classification": "preclaim_d512_flashinfer_component",
+  "claim_allowed": true,
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "owner_sha256": "a569be2b87c73ee1d5de983a8cbb21b4e3fd8fba14f2a1d8e08f9311112640b6",
+  "adapter_runner_sha256": "164bfa7f575267f9bd39a392b601ac91300f31ece30d264b3da7a044309bf3d8",
+  "capture_sha256": "cd84ccd1dab17b32b5028d81e0d4f3bd7599a00759b9ead4a6a56fda09e776a3",
+  "capture_shape": [32, 5376],
+  "capture_dtype": "torch.bfloat16",
+  "release_by_utc": "2026-07-28T18:59:00Z"
+}

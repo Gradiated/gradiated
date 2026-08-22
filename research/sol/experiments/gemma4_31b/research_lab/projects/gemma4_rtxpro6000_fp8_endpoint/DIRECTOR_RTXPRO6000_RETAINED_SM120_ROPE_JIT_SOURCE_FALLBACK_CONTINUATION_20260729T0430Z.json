@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T04:30:00Z",
+  "project": "gemma4_rtxpro6000_fp8_endpoint",
+  "decision": "continue_exact_sm120_rope_jit_source_fallback_after_nvcc_wheel_dead_end",
+  "base_repair_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_ARCH_REPAIR_20260729T0427Z.json",
+    "sha256": "faa3fc62812d33dffb755aa381434cb639b24d283aff402a10f11382c12e6ad4",
+    "rule": "All immutable identities, exact RoPE correctness requirements, dispositions, and prohibitions remain in force except the current owner, repair generation, artifact name, and repair clock below."
+  },
+  "retained_claim": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "claimed_at_utc": "2026-07-29T03:41:40.785795Z",
+    "project": "gemma4_rtxpro6000_fp8_endpoint",
+    "current_owner_pid": 3898656,
+    "current_owner_start_ticks": 141536887,
+    "artifact_root": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z"
+  },
+  "consumed_narrow_attempt": {
+    "artifact": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/SM120_CUDA13_NVCC_ROPE_JIT_REPAIR.json",
+    "artifact_sha256": "cb85dba0143f10a964462be369046fe70e41fa410d5440d711402d830db48bc9",
+    "classification": "recoverable_pre_science_official_compiler_scope_defect",
+    "science_started": false,
+    "science_consumed": false,
+    "installed_package": "nvidia-cuda-nvcc==13.0.88",
+    "stdout_sha256": "3418f0da767f79317d41bcb03c8e11fe4096a0a08f43ce8fe08ea2b17011f28f",
+    "stderr_sha256": "53c5630e58f5531b4b45831cfa56f6301125acb36ed0257d207f122154e3aafc",
+    "terminal_error": "expected_one_cuda13_nvcc:[]",
+    "interpretation": "The official wheel exposes no usable NVCC binary through its installed-file manifest. Do not repeat package installation or another NVCC-path discovery round."
+  },
+  "current_implementation": {
+    "owner": "run_rtxpro6000_fp8_endpoint_owner.py",
+    "owner_sha256": "d986d363d35693ad9cf41f0a59ecf6e1c89dca8fd0783f36d2a5734f78ec6388",
+    "runtime_manifest": "RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_RUNTIME_MANIFEST.json",
+    "runtime_manifest_sha256": "978f7f9815d18cbd7971d4c5468fc47460ef1041d1973c293457f62bfd178206",
+    "server_options": [
+      "--disable-cuda-graph",
+      "--mem-fraction-static=0.70"
+    ],
+    "rule": "Do not edit or replace the controller owner. The next fresh remote server process must consume only the remote installed-source fallback or architecture repair."
+  },
+  "repair_generation": {
+    "repair_id": "repair-1785299364",
+    "ready": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/.repair-handshakes/repair-1785299364/REPAIR_READY.json",
+    "ready_sha256": "4f7b56d5840df5969761164722a5466ace21bd45d75af0c0354d308e3cb4323e",
+    "retry_scope": "server_launch_or_health_only"
+  },
+  "continuation_contract": {
+    "researcher_profile": "deep",
+    "required_skills": [
+      "$researcher",
+      "$kernel-research"
+    ],
+    "repair_artifact": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/SM120_ROPE_JIT_SOURCE_FALLBACK.json",
+    "requirements": [
+      "Verify the live owner PID/start ticks, original claim generation, fresh repair-ready identity, and absence of SCIENCE_STARTED and the endpoint terminal once.",
+      "Do not reinstall nvidia-cuda-nvcc, search another wheel for an executable, or change CUDA package versions. Treat the current compiler-package attempt as consumed support evidence.",
+      "Inspect the exact installed SGLang fused-RoPE JIT source, tvm_ffi compile flags, Torch architecture derivation, and the existing /usr/local/cuda/bin/nvcc supported target list.",
+      "Prefer an official non-JIT or Triton/Torch RoPE fallback preserving the production producer/consumer contract. Otherwise patch only the installed architecture mapping to an existing compiler target justified by the generated kernel's instructions.",
+      "Persist pre/post installed-source hashes, the causal diff, selected fallback or target, exact compiler command, and package/compiler identities in the repair artifact.",
+      "Run one no-HTTP target-GPU production-shape BF16 RoPE call through the patched SGLang consumer. Require finite q/k, exact shapes and strides, and agreement with the framework reference under a justified BF16 numerical envelope.",
+      "Publish the scope-matched REPAIR_REQUEST.json for repair-1785299364 with the repair artifact as its hash-bound patch artifact. Do not replace outer owner PID 3898656.",
+      "Let the live owner retry a fresh remote server process and continue directly through health into the sole concurrent-c32 endpoint sample.",
+      "If the exact patched RoPE call fails its oracle or requires a semantic change, retain the claim and return typed incompatibility without endpoint submission."
+    ],
+    "source_and_exact_rope_evidence_by_utc": "2026-07-29T04:48:00Z",
+    "repair_request_by_utc": "2026-07-29T04:52:00Z",
+    "release_evidence_by_utc": "2026-07-29T07:55:00Z",
+    "owner_deadline_utc": "2026-07-29T08:05:00Z",
+    "provider_cleanup_deadline_utc": "2026-07-29T08:13:34.346354Z"
+  },
+  "prohibitions": [
+    "Do not call gpu_pool claim, release, or reclaim.",
+    "Do not replace the controller owner or launch another endpoint owner.",
+    "Do not restage, rehash checkpoint shards, broadly reinstall runtime packages, or mutate provider lifecycle.",
+    "Do not alter checkpoint, tokenizer, requests, payloads, concurrency, sampling, timing, oracle, dynamic-FP8 representation, or model RoPE semantics.",
+    "Do not emit SCIENCE_STARTED or submit HTTP during the source/JIT repair.",
+    "Do not run the canonical endpoint sample more than once."
+  ]
+}

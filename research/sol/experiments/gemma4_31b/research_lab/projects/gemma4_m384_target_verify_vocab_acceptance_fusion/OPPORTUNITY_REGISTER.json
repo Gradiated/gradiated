@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "opportunities": [
+    {
+      "id": "vocab_tiled_fused_greedy_acceptance",
+      "observation": "The qualified M384 branch is greedy and the first downstream consumer needs only 384 post-softcap lowest-ID argmax values before request-owned tree acceptance.",
+      "evidence_scope": "Gemma 4 31B pinned SGLang v0.5.13, TP1, c32 NGRAM, 12 target rows/request, M384, temperature zero, H200 SM90a",
+      "phase": "target verification output head through first KV commit",
+      "resource_signature": "1.082331758592 TFLOP, 2.625 GiB tied weight, 192 MiB BF16 output, 384 MiB FP32 logits",
+      "competing_explanations": [
+        "The stock GEMM/softcap/argmax intermediates may remain in cache and cost little.",
+        "Fused epilogue register/shared-memory pressure may slow the output head.",
+        "The second-stage reduction may cost more than avoided stores.",
+        "The boundary may be too small end to end despite a positive component."
+      ],
+      "mechanism": "BM64xBN256 BF16 output-head tiles emit only per-row post-softcap (value,id) partials; 32 request reducers finish argmax and tree greedy acceptance.",
+      "modifiable_fraction": "All full-logit interface traffic; none of the 1.082331758592 TFLOP output-head compute.",
+      "upper_bound": "2,006,971,392 logical bytes and three source-visible operations per full M384 wave; 0.41811904 ms peak-HBM zero-cache time scale.",
+      "falsifier": "Any selected-token/acceptance/KV mismatch, illegal resource use, spills, nonpositive component latency, or no L2/DRAM reduction.",
+      "next_measurement": "Alternating exact H200 stock/candidate M384 producer-to-acceptance component with bitwise state oracle and minimal counters.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.65,
+      "uncertainty": 0.8,
+      "discrimination_power": 0.95,
+      "readiness": 0.55,
+      "transfer_penalty": 0.35,
+      "expected_information_per_dollar": "High only if piggybacked on an already-authorized retained H200; no spend is authorized here."
+    },
+    {
+      "id": "request_row_slab_materialization_r32",
+      "observation": "One-request slabs bound FP32 logits to 32 MiB while retaining exact stock consumers.",
+      "evidence_scope": "Same M384 geometry and pinned runtime",
+      "phase": "output head",
+      "resource_signature": "12 full vocabulary GEMMs and 33,822,867,456 logical weight bytes",
+      "competing_explanations": [
+        "A persistent-weight kernel might retain some head tiles across slabs."
+      ],
+      "mechanism": "Materialize one request's 12 rows, run stock acceptance, and repeat.",
+      "falsifier": "The compulsory weight reread exceeds the removed logit traffic even at ideal HBM.",
+      "next_measurement": "None; closed analytically unless a future persistent head proves cross-slab weight residency.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.15,
+      "uncertainty": 0.05,
+      "discrimination_power": 1.0,
+      "readiness": 0.0,
+      "transfer_penalty": 1.0
+    },
+    {
+      "id": "general_streaming_sampled_consumer",
+      "observation": "Sampled target verification constructs full target_probs and draft_probs, but acceptance reads sparse draft probabilities plus one final row.",
+      "evidence_scope": "Non-greedy NGRAM target verification and optional runtime features",
+      "phase": "logits processing and sampler",
+      "resource_signature": "Global top-p ordering, arbitrary custom row processors, and potentially unbounded top-logprob output",
+      "competing_explanations": [
+        "Finite top-k could admit a bounded heap fast path.",
+        "A multi-pass external-memory sort could reduce peak workspace but not global semantic dependence."
+      ],
+      "mechanism": "Stream probabilities and retain only acceptance scalars/final-row state.",
+      "falsifier": "Exact top-p/custom/top-logprob behavior cannot be represented by bounded constant row state for all legal inputs.",
+      "next_measurement": "None for the qualified greedy endpoint; keep exact materialized fallback. A separately scoped finite-top-k-only endpoint could reopen.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.3,
+      "uncertainty": 0.1,
+      "discrimination_power": 1.0,
+      "readiness": 0.0,
+      "transfer_penalty": 1.0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T10:52:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "decision": "reserved_h200_created_protected_and_registered_maintenance",
+  "authorization": {
+    "authorized_spend_usd": 4.0,
+    "prior_actual_spend_usd": 0.0,
+    "maximum_lifecycle_minutes": 90,
+    "maximum_lifecycle_exposure_usd": 3.675,
+    "inequality": "0.0 + 3.675 <= 4.0"
+  },
+  "placement": {
+    "provider": "nebius",
+    "profile": "glm-campaign",
+    "region": "eu-west1",
+    "project_id": "project-e01eak24pr00bq47a1mqcp",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "allocation_type": "preemptible",
+    "availability_level": "AVAILABILITY_LEVEL_HIGH",
+    "available_gpus_at_selection": 8,
+    "subnet_id": "vpcsubnet-e01yj9skpawfxm6f9n"
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+    "condition": "maintenance",
+    "instance_id": "computeinstance-e01q3jffxt2vtafkhp",
+    "instance_name": "gemma4-streaming-global-kv-20260729t1050z",
+    "disk_id": "computedisk-e01txvq13vg63j7x2x",
+    "disk_name": "gemma4-streaming-global-kv-20260729t1050z-boot",
+    "public_ipv4": "66.201.5.180",
+    "hourly_cost_usd": 2.45,
+    "bench_spec": "DIRECTOR_STREAMING_GLOBAL_KV_H200_BENCH_SPEC_20260729T1050Z.json",
+    "bench_spec_sha256": "4a8df3e65f11df466668f216bd05410f003731d8c7be0a05df7da3cd90152950"
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-29T10:48:50Z",
+    "deadline_utc": "2026-07-29T12:18:50Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-20260729t121850z-watchdog.service",
+    "watchdog_pid": 4115321,
+    "watchdog_verified": true
+  },
+  "execution_state": {
+    "owner_ready_sha256": "533c2e70948ac8bac7ef3c33babb889cadd47e62c8293095d43487805b07be82",
+    "provider_instance_state": "RUNNING",
+    "claim_allowed": false,
+    "ssh_attempted": false,
+    "cloud_init_verified": false,
+    "accelerator_identity_verified": false,
+    "runtime_setup_started": false,
+    "cuda_executed": false,
+    "science_started": false
+  },
+  "next_director_action": "After a material provider wake, reconcile the current maintenance record and exact instance once, verify cloud-init plus strict SSH host identity and one H200, persist the fingerprint/GPU identity, then bind the pinned runtime image and mutable endpoint command. Mark ready only after those checks; do not replay the consumed materializing c32 arm."
+}

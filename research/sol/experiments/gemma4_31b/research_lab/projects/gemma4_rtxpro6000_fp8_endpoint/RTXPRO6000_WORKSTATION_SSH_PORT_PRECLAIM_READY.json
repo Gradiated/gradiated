@@ -1,0 +1,15 @@
+{
+  "claim_allowed": false,
+  "classification": "preclaim_ready_fresh_execution_binding_required",
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint --unit-manager pid -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/run_rtxpro6000_fp8_endpoint_owner.py --execution-packet /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/RTXPRO6000_FP8_EXECUTION_PACKET.json --runtime-manifest /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_RUNTIME_MANIFEST.json --execution-binding <fresh-director-workstation-execution-binding.json> --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>",
+  "owner_sha256": "a705cbc3c037410751cdf37c0a09692d7d360c7b7108279c5e739814226762b6",
+  "packet_sha256": "f7c932bb6684ceaed67092123a2737ba14234c89dcf23aa878683fac080fc1b1",
+  "provider_operation_attempted": false,
+  "repair_binding": "DIRECTOR_RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_REPAIR_20260729T0328Z.json",
+  "repair_binding_sha256": "2890137a098f21dd6685d5787ddadb23d11d5689ecbe29afbfed027eb3b6f7f2",
+  "runtime_manifest_sha256": "ef30a188affd0242c920a9c2428e051ce2a99f5b47b2f6d6efe838ab9e438ab3",
+  "schema_version": 1,
+  "science_consumed": false,
+  "status_sha256": "affdc7893f61a313ac5a54bc7cfd8a46acf5531b16ff88dff239e02fc8f2308a",
+  "terminal_sha256": "08d4493e20c92790f06cb7568a27fd665ba2f79f15b602c1f56ba97e2483cf6c"
+}

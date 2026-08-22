@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-07-30T07:42:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "state": "available_claim_disabled_owner_and_identity_repair",
+  "classification": "preclaim_owner_control_and_final_identity_repair",
+  "actual_spend_usd": 0.6423333333333333,
+  "component": "Controller-local 176172392-byte layer-0 input remains unstaged at dfa05dcf...",
+  "image": "Pinned SGLang image remains unstaged.",
+  "runtime": "Strict SSH and exact H200 identity remain verified; no GPU work is authorized.",
+  "caches": "No image or compilation cache assumed.",
+  "checkpoint": "Full target and draft checkpoints remain absent and unnecessary.",
+  "server_state": "Available and unclaimed; last verified quiescent with zero containers and zero GPU compute processes.",
+  "scientific_terminal": "corrected_norm_fp8_component_unconsumed",
+  "summary": "One offline repair now combines retained-owner control-flow correction with replacement of provisional mechanism-terminal digest 02cf61cc... by completed digest b1d8254e....",
+  "next": "Only DIRECTOR_NORM_FP8_OWNER_CONTROL_REPAIR_AMENDMENT_20260730T0742Z.json is active. Publish a claim-disabled typed owner terminal; a later director must hash those final bytes and issue a fresh execution clock."
+}

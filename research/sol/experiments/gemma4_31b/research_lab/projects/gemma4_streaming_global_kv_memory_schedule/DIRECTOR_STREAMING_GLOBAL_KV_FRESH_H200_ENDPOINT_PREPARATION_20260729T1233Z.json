@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "classification": "director_fresh_h200_streamed_endpoint_owner_preparation",
+  "created_at_utc": "2026-07-29T12:33:15Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "campaign_objective": {
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "c32, 4214 prompt tokens, 358 output tokens, 535 shared-prefix tokens, temperature zero"
+  },
+  "evidence": {
+    "cleanup_disposition": {
+      "path": "DIRECTOR_STREAMING_GLOBAL_KV_DEADLINE_CLEANUP_20260729T1214Z.json",
+      "classification": "passing_cuda_producer_preserved_endpoint_unconsumed_provider_cleanup_verified"
+    },
+    "completed_cuda_producer": {
+      "path": "artifacts/streaming-global-kv-h200-20260729t1058z/CUDA_DISCRIMINATOR_R2_attempt0.json",
+      "sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+      "gates_pass": true,
+      "use": "Preserve as exact H200 component correctness and memory evidence; do not replay it."
+    },
+    "prior_endpoint_binding": {
+      "path": "DIRECTOR_STREAMING_GLOBAL_KV_H200_R3_ENDPOINT_ONLY_REPAIR_20260729T1206Z.json",
+      "use": "Reuse the immutable endpoint identities and candidate-only execution contract, not its retired claim or lifecycle."
+    },
+    "endpoint": {
+      "complete_requests": 0,
+      "measured": false,
+      "science_consumed": false
+    }
+  },
+  "immutable_endpoint_contract": {
+    "activated_source": {
+      "path": "inputs/activated_multiresolution_global_kv.py",
+      "sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880"
+    },
+    "candidate_source": {
+      "path": "streaming_global_kv_schedule.py",
+      "sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a"
+    },
+    "checkpoint": {
+      "local_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+      "manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+      "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "total_bytes": 62578655208
+    },
+    "exact_runner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "candidate": "U=8 streamed global-KV at production global-attention layers",
+    "control": "No new stock arm; compare the single candidate endpoint with the fixed qualified denominator."
+  },
+  "preparation_contract": {
+    "researcher_profile": "execution",
+    "skills": [
+      "researcher",
+      "experiment-run"
+    ],
+    "gpu_budget": 0,
+    "spend_usd": 0,
+    "wall_clock_minutes": 25,
+    "result_required_by_utc": "2026-07-29T12:58:00Z",
+    "mutable_files": [
+      "run_streaming_global_kv_h200_owner_v6.sh",
+      "streaming_global_kv_endpoint_r3.py",
+      "streaming_global_kv_sglang_hook.py",
+      "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_READY.json"
+    ],
+    "immediate_action": [
+      "Read this binding, the cleanup disposition, and the prior R3 endpoint-only binding once.",
+      "Implement and hash-bind a cold-start, repair-capable v6 owner that atomically claims only a later director-bound fresh H200 bench, resumably stages the exact checkpoint and exact runner, pulls the pinned image, activates only the hash-bound U=8 streamed candidate, submits exactly one c32 endpoint, retrieves typed evidence, and releases generation-fenced.",
+      "Carry the existing endpoint and hook bytes forward only after verifying their hashes. Adapt retired-claim and same-claim assumptions into explicit parameters supplied by a future execution binding; do not embed or accept the retired bench, instance, disk, claim generation, SSH endpoint, or deadlines.",
+      "Require candidate activation from a healthy server plus immutable launch capture before the one scientific request. Do not issue an activation-probe generation request.",
+      "Publish STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_READY.json and matching STATUS.json last. The ready artifact must bind the final owner, endpoint, hook, checkpoint manifest, runner, image, workload, release predicate, repair flow, and preclaim fixture."
+    ]
+  },
+  "future_paid_envelope": {
+    "accelerator": "nvidia-h200-sxm",
+    "provider": "nebius",
+    "cumulative_authorized_spend_usd": 8.0,
+    "prior_actual_spend_usd": 3.4856876241250005,
+    "maximum_new_provider_lifecycle_minutes": 100,
+    "hourly_rate_usd": 2.45,
+    "maximum_new_provider_exposure_usd": 4.083333333333333,
+    "maximum_cumulative_exposure_usd": 7.569020957458334,
+    "reservation_required_before_create": true,
+    "owner_ready_required_before_create": true,
+    "provider_create_authorized_now": false,
+    "claim_authorized_now": false
+  },
+  "terminal_contract": {
+    "required_artifact": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_READY.json",
+    "classification": "fresh_h200_streamed_endpoint_owner_ready",
+    "claim_allowed": false,
+    "later_director_execution_binding_required": true
+  },
+  "must_not": [
+    "Do not call gpu_pool, SSH, provider APIs, or spend funds in this preparation.",
+    "Do not create, register, claim, release, drain, or retire a bench.",
+    "Do not replay the passed CUDA producer or the consumed materializing c32 arm.",
+    "Do not run a stock endpoint or submit an activation-probe generation request.",
+    "Do not change U=8, compact order, masking, FP32 reduction, tolerance, checkpoint, tokenizer, image, workload, concurrency, sampling, denominator, or target.",
+    "Do not touch the live SM120 project or its RTX bench."
+  ]
+}

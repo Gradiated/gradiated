@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T23:37:08Z",
+  "classification": "repairable_binding_metadata_defect_preclaim",
+  "decision": "fail_closed_do_not_claim_or_launch",
+  "binding": {
+    "path": "DIRECTOR_DFLASH_FRESH_CLAIM_DIRECT_EXECUTION_20260729T2333Z.json",
+    "sha256": "042e50b2eb64e2b903a816cd0684fc9d5be36a3bfff9087f9aa72fffa437c5d4"
+  },
+  "conflict": {
+    "binding_base_owner_sha256": "2acf8f2d0871528c1255d16187aff16ccb80e24e4c52015056d53487f7c02950",
+    "component_ready_base_owner_sha256": "eaec2de1e57024a5407f6c4804454a000d6a70bb320614341ee537f103bd8a3d",
+    "component_ready_sha256": "ca18a8ecc1949fa2cc751a992d9c8af5adfc04e66b886e25e51fb45d8b639bc7",
+    "direct_owner_sha256": "21801ca73e588bcdb534b8d02039fc33656852a05e95a444ccc38103f65fc834",
+    "causal_path": "The bound direct owner calls dflash_component_owner.validate_ready(), which verifies every immutable file in DFLASH_H200_COMPONENT_READY.json. That manifest names the old base-owner digest, so the repaired bound base-owner bytes trigger typed_packet_boundary before a durable retained repair path is established."
+  },
+  "preserved_identities": {
+    "packet_archive_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "corrected_adoption_sha256": "283375f25b465eab43ab4d5b812ee05d7d2d242db9226c7d752e9632f8ae1b96",
+    "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6"
+  },
+  "required_director_rebind": "Publish a new hash-bound component-ready/execution binding that admits the repaired base-owner bytes, or bind an owner implementation whose ready validator does not require the superseded base-owner digest. Do not claim until that corrected immutable contract is verified.",
+  "performed_actions": {
+    "claim": false, "detached_owner_start": false, "ssh": false, "docker": false,
+    "cuda": false, "provider_lifecycle": false, "arm": false
+  }
+}

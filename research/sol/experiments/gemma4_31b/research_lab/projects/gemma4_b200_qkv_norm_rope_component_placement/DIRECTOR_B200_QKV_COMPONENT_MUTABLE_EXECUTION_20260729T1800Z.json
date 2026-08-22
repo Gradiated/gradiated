@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "published_at_utc": "2026-07-29T18:00:00Z",
+  "project": "gemma4_b200_qkv_norm_rope_component_placement",
+  "decision": "authorize_one_mutable_b200_exact_consumer_component",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "kernel-research",
+    "experiment-run"
+  ],
+  "question": "Does the accepted direct-Q/direct-E5M2-KV decode-c32 component preserve the exact installed SGLang consumer on B200 and beat the H200 component at actual experiment rates?",
+  "execution_authority": {
+    "claim_allowed": true,
+    "scientific_submissions": 1,
+    "endpoint_submissions": 0,
+    "profiler_enabled": false,
+    "mutable_discovery_claim": true
+  },
+  "spend": {
+    "authorized_usd": 5.0,
+    "actual_spend_usd_at_binding": 0.0,
+    "provider_started_at_utc": "2026-07-29T17:52:59.427439Z",
+    "hourly_cost_usd": 3.95,
+    "absolute_provider_deadline_utc": "2026-07-29T19:02:59.427439Z"
+  },
+  "bench": {
+    "id": "b200-qkv-placement-computeinstance-i00gfqs16jywacph24",
+    "provider": "nebius",
+    "instance_id": "computeinstance-i00gfqs16jywacph24",
+    "disk_id": "computedisk-i00fqdnhb926r3yj3a",
+    "public_ipv4": "46.243.145.46",
+    "ssh_user": "glmrunner",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:ybovFC/TYNM8ZRvq8ZwqGRu1I+B/BFkiko//Jp4yDbg",
+    "accelerator": "NVIDIA B200",
+    "gpu_uuid": "GPU-8a44802e-3490-9b4f-ee3e-3ef7fa4da0e5",
+    "gpu_memory_mib": "183359",
+    "driver_version": "580.159.04",
+    "identity_verified_at_utc": "2026-07-29T17:58:00Z",
+    "quiescent_at_identity_check": true
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-29T18:12:00Z",
+    "scientific_terminal_by_utc": "2026-07-29T18:53:00Z",
+    "generation_fenced_release_by_utc": "2026-07-29T18:57:00Z",
+    "watchdog_deadline_utc": "2026-07-29T19:02:59.427439Z",
+    "watchdog_unit": "gemma4-b200-qkv-placement-20260729t175259z-watchdog.service",
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_b200_qkv_norm_rope_component_placement --bench b200-qkv-placement-computeinstance-i00gfqs16jywacph24 --lease-seconds 3300",
+    "release_requires_expected_claimed_at": true
+  },
+  "immutable_science": {
+    "runner": {
+      "path": "inputs/bound/qkv_direct_consumer_bench.py",
+      "sha256": "10d2538ce6d35a4fbedf4b8db946d8e93d7004690fa1a0c6f0cae3c6427e63ff"
+    },
+    "h200_result": {
+      "path": "inputs/bound/H200_RESULT.json",
+      "sha256": "ad4192d8cb86c56791f2470e5b4bd0586a4e445d033e03cda76326677a938caf"
+    },
+    "h200_terminal": {
+      "path": "inputs/bound/H200_SCIENTIFIC_TERMINAL.json",
+      "sha256": "6aa40802441a36184129bcef9486180acf0b5eba432b68715085d9f7c58d55a2"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "phase": "decode",
+    "batch": 32,
+    "local_geometry": "Q32/KV16/d256/window1024/full RoPE, BF16 QKV, E5M2 K/V cache",
+    "global_geometry": "Q32/KV4/d512/context4570/partial RoPE 0.25, BF16 QKV, E5M2 K/V cache",
+    "consumer": "sglang.srt.layers.attention.triton_ops.decode_attention.decode_attention_fwd",
+    "scientific_started_boundary": "The bound runner writes SCIENTIFIC_STARTED immediately before constructing and submitting the two exact consumer cases."
+  },
+  "mutable_integration": {
+    "allowed": [
+      "project-local controller owner and launcher composition",
+      "atomic runner staging and retrieval",
+      "Docker pull and invocation glue",
+      "paths, permissions, container user, entrypoint, and runtime API adapters",
+      "typed terminal construction and actual-rate normalization"
+    ],
+    "owner_destination": "b200_execution_owner.py",
+    "owner_requirements": [
+      "Own the atomic claim, heartbeats, remote staging, one scientific submission, retrieval, classification, and generation-fenced release.",
+      "Persist every phase timestamp and derive all command timeouts from the absolute release fence.",
+      "On a recoverable pre-science defect, retain the same claim and use repair-handshake; do not release or consume the scientific submission.",
+      "Release only after a decision-bearing complete terminal, unsafe or unreachable guest, or the absolute release fence."
+    ],
+    "owner_start_command": "research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_qkv_norm_rope_component_placement/artifacts/b200-qkv-component-controller-owner.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_qkv_norm_rope_component_placement/artifacts/b200-qkv-component-controller-owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_qkv_norm_rope_component_placement -- python3 b200_execution_owner.py --binding DIRECTOR_B200_QKV_COMPONENT_MUTABLE_EXECUTION_20260729T1800Z.json",
+    "remote_root": "/home/glmrunner/gemma4-b200-qkv-component-1800z",
+    "container_requirement": "Use sudo -n docker from the first Docker command, verify the pinned image digest, and invoke the runner once against a fresh output directory with RUNTIME_IMAGE_IDENTITY and BOUND_GPU_UUID set to the bound values."
+  },
+  "evidence_contract": {
+    "required_artifacts": [
+      "IDENTITY.json",
+      "SCIENTIFIC_STARTED",
+      "local_decode_c32.json",
+      "global_decode_c32.json",
+      "RESULT.json",
+      "TERMINAL.json",
+      "provider_and_phase_timing.json",
+      "B200_PLACEMENT_TERMINAL.json"
+    ],
+    "correctness_gate": "Each exact consumer row must be finite and candidate_vs_stock_relative_l2 <= max(0.002, 2 * stock A/A), with the required path proof and non-null profiler-off timing.",
+    "h200_local_candidate_median_ms": 0.22755199670791626,
+    "h200_global_candidate_median_ms": 0.41603198647499084,
+    "h200_rate_usd_per_hour": 2.45,
+    "b200_rate_usd_per_hour": 3.95,
+    "equal_cost_latency_ratio": 0.620253164556962,
+    "equal_cost_local_b200_ceiling_ms": 0.14113984605934046,
+    "equal_cost_global_b200_ceiling_ms": 0.2580451561680323,
+    "placement_positive": "Both rows pass correctness and path gates, and both B200 candidate median milliseconds times 3.95 are lower than their H200 candidate median milliseconds times 2.45.",
+    "placement_negative": "A complete exact-consumer ledger misses either actual-rate-normalized H200 cost ceiling or the numerical/path gate.",
+    "scope_limit": "This is component and hardware-placement evidence only. It cannot promote an endpoint or satisfy the campaign objective."
+  },
+  "forbidden": [
+    "changing scientific runner bytes or geometry",
+    "changing numerical or cost gates",
+    "replaying H200 science",
+    "more than one B200 scientific submission",
+    "endpoint traffic",
+    "provider lifecycle calls",
+    "mutating another project"
+  ]
+}

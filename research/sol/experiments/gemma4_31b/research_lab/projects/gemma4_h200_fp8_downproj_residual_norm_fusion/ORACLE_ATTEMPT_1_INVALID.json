@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_local_oracle_attempt",
+  "scientific_sample_consumed": false,
+  "stage": "cpu_reference_oracle_import",
+  "command": "python3 fragment_oracle.py --output FRAGMENT_ORACLE_RESULT.json",
+  "exit_code": 1,
+  "diagnostic": "ModuleNotFoundError: No module named 'numpy'",
+  "result_artifact_persisted": false,
+  "causal_amendment": "Replace NumPy/PyTorch-only BF16 and E4M3 helpers with a dependency-free IEEE-754, BF16 round-to-nearest-even, and E4M3FN reference. Preserve the seed, M shapes, patterns, reduction tree, consumer columns, and all decision gates.",
+  "retry_disposition": "The amended operation completed once and is recorded in FRAGMENT_ORACLE_RESULT.json; this invalid attempt is not an independent sample."
+}

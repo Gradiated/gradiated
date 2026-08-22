@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T00:02:03Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "prepare_exact_same_claim_lost_owner_recovery",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "wall_clock_deadline_utc": "2026-07-30T00:12:00Z",
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claimed_at": "2026-07-29T23:49:13.529071Z",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "lost_owner": {
+    "pid": 397943,
+    "start_ticks": 148497102,
+    "confirmed_absent": true,
+    "owner_log": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/OWNER.log",
+    "diagnostic": "continuation_authority_boundary:adoption_sha256_mismatch"
+  },
+  "recovery_boundary": {
+    "artifact_root": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z",
+    "remote_run": "/home/glmrunner/dflash-component/runs/2026-07-29T224736830795Z-bcccec58b0f5",
+    "execution_binding": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/EXECUTION_BINDING.json",
+    "direct_authority": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/DIRECT_AUTHORITY.json",
+    "adoption": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run/DIRECT_CONTINUATION_ADOPTION_2.json",
+    "adoption_sha256": "1f1a226c4e5dc277e6413d681ea9bb610c46f64461dc01118fd9a95ef75f00ea",
+    "snapshot_manifest_sha256": "c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4",
+    "repair_ready": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run/.repair-handshakes/dflash-h200-direct-r2-20260729t2344z-direct-2/REPAIR_READY.json",
+    "repair_ready_sha256": "0a07b03299bcdb7f84397923cceec2720ed24309845c808a7681a5abc9b0b34d",
+    "consumed_request": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run/.repair-handshakes/dflash-h200-direct-r2-20260729t2344z-direct-2/REPAIR_REQUEST.2aff4c3945996b3c34379f41904323107f63e57f4fa57bca2a69840315828b03.consumed.json",
+    "consumed_request_sha256": "2aff4c3945996b3c34379f41904323107f63e57f4fa57bca2a69840315828b03",
+    "patch": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/REPAIR2_PATCH.json",
+    "patch_sha256": "f893a8f338deeaedce5cbf68337e31c490c20036d48f7812cc688b87ebc65631",
+    "packet_archive_sha256": "3e59bcdda57f18f30ed8db6279808d6e7cc544d297197566ee3c45b98754aed2",
+    "retry_scope": "all",
+    "next_worker_generation": 2
+  },
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "historical_request_25_replay_allowed": false,
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "required_result": {
+    "artifact": "DFLASH_H200_R2_LOST_OWNER_RECOVERY_READY.json",
+    "owner_source": "dflash_component_direct_recovery_owner.py",
+    "requirements": [
+      "Before heartbeat, SSH, packet staging, CUDA, model load, or worker execution, verify the exact live claim generation and every hash in recovery_boundary.",
+      "Retrieve the existing remote run through an outside-tree archive and persist a fresh classified-unconsumed adoption whose file manifest equals c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4.",
+      "Adopt the already-consumed direct-2 request and hash-bound REPAIR2_PATCH exactly once; do not create, wait for, or consume another request before worker generation 2.",
+      "Start only the repaired packet at worker generation 2. Never replay worker 0 or worker 1, and never reconstruct or overwrite prior output.",
+      "After every worker, retrieve outside the remote tree, persist the typed adoption, then either validate the scientific terminal or enter a generation-scoped repair handshake.",
+      "Heartbeat the unchanged claim generation and generation-fenced release ready only after a scientific terminal, or maintenance after a typed incomplete/deadline disposition.",
+      "Prove the entrypoint and detached-owner argv offline without contacting the bench."
+    ]
+  },
+  "execution_fences": {
+    "owner_launch_authorized": false,
+    "claim_or_release_authorized": false,
+    "provider_lifecycle_authorized": false,
+    "ssh_docker_cuda_authorized": false,
+    "repair_request_authorized": false,
+    "latest_owner_release_utc": "2026-07-30T00:37:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T00:45:00Z",
+    "later_director_action": "Verify the readiness artifact and exact claim once, then publish the claim-generation-specific recovery execution binding and launch one detached owner."
+  }
+}

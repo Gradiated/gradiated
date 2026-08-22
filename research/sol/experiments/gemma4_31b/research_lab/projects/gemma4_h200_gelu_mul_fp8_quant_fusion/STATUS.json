@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "gemma4_h200_gelu_mul_fp8_quant_fusion",
+  "status": "completed",
+  "priority": 9250,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "reservation_required": false,
+  "claim_allowed": false,
+  "bench_need": {
+    "accelerator": "NVIDIA H200 SXM / SM90",
+    "state": "future only; requires a new positive spend authorization and a director-assigned shared bench",
+    "purpose": "one exact-consumer corrected component falsifier"
+  },
+  "active_session": null,
+  "candidate": "corrected_one_round_gelu_mul_to_dynamic_e4m3_m_le_128",
+  "classification": "source_complete_candidate_pending_exact_h200_falsification",
+  "terminal_artifact": "MECHANISM_TERMINAL.json",
+  "summary": "Zero-GPU mechanism complete. The exact v0.5.13 c32 path is source-bound through GeluAndMul -> per-token E4M3 -> fp8_scaled_mm. A corrected one-rounding source fusion, source-identity-guarded runtime integration, CPU oracle, typed register, H200 bound, and exact-consumer GPU contract are durable. CPU outputs are exact; the candidate removes 4,128,768 logical global-memory bytes, at least 2,752,512 compulsory interface bytes, and one launch per c32 layer call, but corrected target-GPU performance is unmeasured and the absolute endpoint ceiling is 2.00015%.",
+  "next_action": "Do not claim or run under this zero-spend project. Before any future claim, materialize the admitted checkpoint index and down-weight shard as a hash-bound project-local inputs/ snapshot. If the director later grants positive spend and assigns an H200 bench, execute exact_consumer_gpu_contract.py once at M=1,7,31,32,33,118. Promote to one matched fixed-denominator endpoint only on bit-identical exact-consumer outputs and positive corrected component timing; otherwise close the corrected decomposition without replay."
+}

@@ -1,0 +1,153 @@
+{
+  "binding": {
+    "path": "DIRECTOR_QKV_NORM_ROPE_ENDPOINT_PACKET_REENTRY_20260729T1742Z.json",
+    "sha256": "4bc569c1d9412e315251879f5e929d48994ce629e7a40656fcc13141ffcbd5b6"
+  },
+  "classification": "source_complete_cold_endpoint_packet_ready",
+  "cold_lifecycle": {
+    "claim_to_release_minimum_minutes": 90,
+    "conservative_total_minutes": 105,
+    "future_binding_requirements": [
+      "exact available nvidia-h200-sxm bench and claim fence",
+      "strict SSH identity, host-key namespace, GPU UUID, watchdog, and hourly rate",
+      "absolute release deadline at least 90 minutes after owner start",
+      "packet, manifest, readiness, model, checkpoint, image, and runtime hashes",
+      "conservative cumulative project exposure no greater than 10.00 USD"
+    ],
+    "maximum_hourly_rate_at_105_minutes_usd": 4.034285714285715,
+    "phase_minutes": {
+      "allocation_cloud_init_registration_before_owner": 15,
+      "checkpoint_reconciliation_and_missing_byte_staging": 30,
+      "compact_retrieval_zero_gpu_and_generation_fenced_release": 15,
+      "model_load_and_bounded_health": 25,
+      "one_warmup_and_one_c32_submission": 5,
+      "strict_identity_and_image_reconciliation": 15
+    },
+    "projected_cumulative_exposure_at_2_45_per_hour_usd": 7.2275,
+    "projected_incremental_exposure_at_2_45_per_hour_usd": 4.2875
+  },
+  "execution_authority": {
+    "claim_allowed": false,
+    "endpoint_submission_limit": 1,
+    "future_binding_path": "DIRECTOR_QKV_NORM_ROPE_ENDPOINT_EXECUTION.json",
+    "message": "This source terminal does not authorize allocation, claim, SSH, Docker, CUDA, or endpoint traffic.",
+    "owner_start_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue/artifacts/cold-endpoint-owner/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue/artifacts/cold-endpoint-owner/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue/endpoint_owner.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue/DIRECTOR_QKV_NORM_ROPE_ENDPOINT_EXECUTION.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_qkv_norm_rope_fp8_epilogue/artifacts/cold-endpoint-owner/run"
+  },
+  "frozen_identity": {
+    "accelerator": "nvidia-h200-sxm",
+    "checkpoint_bytes": 62578655208,
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "concurrency": 32,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_baseline_seconds_per_request": 0.625149101968745,
+    "sglang_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "target_seconds_per_request": 0.500119281574996
+  },
+  "input_identity": {
+    "checkpoint_manifest": {
+      "path": "inputs/endpoint_packet/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    "launch": {
+      "path": "inputs/endpoint_packet/LAUNCH.json",
+      "sha256": "a48f6910df002c422543089685476fb9af845f957184f326ba0807b58029c1de"
+    },
+    "qualified_terminal": {
+      "path": "inputs/endpoint_packet/QUALIFIED_TERMINAL.json",
+      "sha256": "7090c0ebb733f5021c464bc55d82fcd68e2abb52b820408c89724d95c03fd9dd"
+    },
+    "workload": {
+      "path": "inputs/endpoint_packet/WORKLOAD.json",
+      "sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+    }
+  },
+  "lifecycle_proof": {
+    "ambiguous_worker_state": "retrieve marker, terminal, raw streams, logs, and cleanup under the retained claim; never replay",
+    "complete_release_gate": "interpretable endpoint_positive or endpoint_negative, exact 32-request/token accounting, local/global candidate path proof, 32 raw responses, and zero compute PIDs plus zero GPU memory",
+    "durable_owner": "claim, 30-second heartbeat, repair handshake, terminal adoption, and generation-fenced release remain in endpoint_owner.py",
+    "pre_science_repair": "only evidence-proven pre-driver or marker-absent failure can execute a hash-bound replacement packet",
+    "server_worker_supervision": "the bounded remote driver loop checks the named container remains running and persists server-exit evidence before terminating the worker",
+    "staging": "all 17 admitted paths resolve under inputs/endpoint_packet; matched remote hashes are retained, mismatches use verified .part files and atomic finalization"
+  },
+  "offline_validation": {
+    "behavior": {
+      "checks_passed": 15,
+      "path": "artifacts/OFFLINE_PACKET_BEHAVIOR_VALIDATION.json",
+      "sha256": "df6ef29006a8a464bf9f81b69d8af1bbc567ada9a56e993d9bffcc47f34246bd"
+    },
+    "deep_checkpoint": {
+      "network_or_accelerator_actions": 0,
+      "path": "artifacts/offline-packet-validation-deep-20260729t1833z/OFFLINE_VALIDATION.json",
+      "sha256": "221384eabf558717155e75d6ac32c2b6257d83e7f7fa6fe63fa8c6cb59c34383"
+    },
+    "frozen_fast": {
+      "network_or_accelerator_actions": 0,
+      "path": "artifacts/offline-packet-validation-frozen-20260729t1847z/OFFLINE_VALIDATION.json",
+      "sha256": "140fe4121ed9b4799945cd74542b4e4382fb6ac268eb4a9cd46cdd2df6b76998"
+    },
+    "python_compile": true,
+    "repository_devex_check": true
+  },
+  "packet": {
+    "bytes": 39186,
+    "path": "endpoint_execution_packet.py",
+    "sha256": "fb53c2618817a9f3707febbbd90fcb6a57cc74c432e4e7dbff8b51301917ebe7"
+  },
+  "packet_manifest": {
+    "admitted_file_count": 17,
+    "checkpoint_additional_allocated_bytes": 0,
+    "checkpoint_total_logical_bytes": 62578655208,
+    "path": "inputs/endpoint_packet/PACKET_MANIFEST.json",
+    "post_claim_cross_project_resolution_allowed": false,
+    "sha256": "a7fc5afbe3c3b2923603fd6a62baca76a89e26602494ffe4f5f3f86e65b2bd3b"
+  },
+  "previous_readiness": {
+    "path": "ENDPOINT_READY.json",
+    "sha256": "7b4d217a6e1f98a4fe369153cf0eab08c516d819da00681d87b0eb801987a8a2"
+  },
+  "project": "gemma4_h200_qkv_norm_rope_fp8_epilogue",
+  "provider_exposure": {
+    "actual_spend_usd": 2.94,
+    "authorized_spend_usd": 10.0,
+    "reservation_durable": true
+  },
+  "published_at_utc": "2026-07-29T18:46:01Z",
+  "runtime_sources": {
+    "endpoint_driver": {
+      "path": "inputs/endpoint_packet/endpoint_driver.py",
+      "sha256": "11bd143d8df27a8666602d96e4661b930093f492a9776c27c713688db8377b40"
+    },
+    "endpoint_entrypoint": {
+      "path": "endpoint_entrypoint.py",
+      "sha256": "b9063a55071c18acd9cf5da1236a69df384bbb42e3c6574cd3aaf7e06facc1b9"
+    },
+    "endpoint_owner": {
+      "bytes": 20129,
+      "path": "endpoint_owner.py",
+      "sha256": "bc8d8ddfd0bc00281f41d55abc3343b48ec1443f23a11c52c37eb6a254488370"
+    },
+    "qkv_direct_endpoint_patch": {
+      "path": "qkv_direct_endpoint_patch.py",
+      "sha256": "1d888ed073353effb7818cc2246f07847d5b9455bb1ce690a9515157cc8ab045"
+    }
+  },
+  "schema_version": 1,
+  "science": {
+    "component_science_consumed": true,
+    "endpoint_science_consumed": false,
+    "endpoint_submission_count": 0,
+    "message": "Offline source and lifecycle validation only; no endpoint sample was attempted."
+  },
+  "source_to_consumer_proof": {
+    "candidate_symbol": "_qkv_norm_rope_direct_fp8_cache_kernel",
+    "first_consumer": "RadixAttention -> TritonAttnBackend.forward_decode -> decode_attention_fwd",
+    "gemma4_source_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "global_cache_location": "forward_batch.out_cache_loc",
+    "local_cache_location": "forward_metadata.swa_out_cache_loc",
+    "producer": "Gemma4Attention.qkv_proj/QKVParallelLinear",
+    "radix_attention_source_sha256": "9b1ef7de85b9f0fe9720954edbf94c2b4abd7a57fef7e4dac2500ff3dcdf7be9",
+    "stock_fallback": "unchanged stock Gemma4Attention path",
+    "triton_backend_source_sha256": "7bc3ae9ef1be59ec07734df442c077a07fb54c28007747f53a552bb81e8e8e2d"
+  }
+}

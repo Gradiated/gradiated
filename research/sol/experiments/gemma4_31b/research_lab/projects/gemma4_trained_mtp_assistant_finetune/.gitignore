@@ -1,0 +1,5 @@
+/materialized/assistant/
+/artifacts/
+/__pycache__/
+/.cpu-venv/
+!/cpu_speculative_decoder/model.pt

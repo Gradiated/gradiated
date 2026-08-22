@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_root": "../gemma4_h200_dense_fp8_linear_schedule/inputs/checkpoint",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "weight_shard": "model-00001-of-00002.safetensors",
+    "weight_shard_bytes": 49784788364,
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_tensor_raw_bf16_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d"
+  },
+  "capture": {
+    "project_local_path": "inputs/hidden_states.pt",
+    "source_path": "../gemma4_exact_block_bound_vocab_head/inputs/hidden_states.pt",
+    "bytes": 16600643,
+    "sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "rows": 1536,
+    "hidden": 5376,
+    "dtype": "torch.bfloat16",
+    "requests": 32,
+    "note": "The project-local runtime materialization is intentionally ignored by the repository's global **/*.pt rule; reproduce it by copying the hash-bound source."
+  },
+  "runtime_source": {
+    "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma4_causal.py",
+    "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "relevant_contract": "Gemma4ForCausalLM ties lm_head to model.embed_tokens at TP/PP=1 and passes final hidden_states with that head to LogitsProcessor."
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_fp8_decode_cross_tick_batch_coalescing",
+  "causal_hypothesis": "If two or three adjacent c32 decode ticks expose independent layer-consistent rows before the oldest tick completes, a semantics-preserving scheduler could issue M64 or M96 FP8 linears once per layer and amortize repeated FP8 weight reads and launches.",
+  "expected_direction": {
+    "weight_bytes_per_completed_token": "decrease",
+    "fp8_linear_launches_per_completed_token": "decrease",
+    "oldest_row_queue_delay": "increase by one or two stock decode tick intervals before execution"
+  },
+  "stock_control": "Pinned SGLang v0.5.13 non-spec c32 scheduler executes one token per active request per decode tick; the current qualified NGRAM control is analyzed separately and must not inherit the non-spec M32 geometry.",
+  "candidate_change": "Hold compatible decode rows across two or three scheduler ticks and concatenate them only if source and trace evidence proves all rows are independently available with unchanged request, token, position, and KV ownership.",
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "runtime_tree": "ed4e68454edee9b97272386af2fd8f989484f270",
+    "hardware_scope": "NVIDIA H200 SXM analytical inventory only",
+    "workload": "32 simultaneous requests, 4214 prompt tokens and 358 completion tokens per request"
+  },
+  "workload_geometry": {
+    "non_spec_decode": "M32 exact consumer audit plus source-derived one-token ticks",
+    "qualified_ngram": "32 requests, 12 target-verification rows per active request, exact event reconstruction"
+  },
+  "gates": {
+    "correctness": [
+      "Target token semantics unchanged",
+      "Request and KV ownership unchanged",
+      "Token order and positions unchanged",
+      "Complete outputs unchanged"
+    ],
+    "mechanism": "At least 64 independent compatible rows must be available at one layer before completing the oldest source tick; merely increasing resident concurrency or using already-present speculative rows does not pass.",
+    "performance": "Report completed-token service time, launch count, target weight bytes, queue delay, and whole-request upper bound; batch size alone is insufficient.",
+    "economic_slo": {
+      "fixed_qualified_seconds_per_request": 0.625149101968745,
+      "target_seconds_per_request": 0.500119281574996,
+      "required_reduction_fraction": 0.2
+    }
+  },
+  "budget": {
+    "authorized_spend_usd": 0.0,
+    "actual_spend_usd": 0.0,
+    "gpu_claim_allowed": false,
+    "cuda_allowed": false,
+    "provider_mutation_allowed": false,
+    "wall_clock_minutes": 100,
+    "storage_gib": 2
+  },
+  "timeout": {
+    "command_seconds": 120,
+    "turn_deadline": "bounded by the 100-minute project wall-clock contract"
+  },
+  "opportunity_register": [
+    {
+      "id": "same_request_adjacent_tick_merge",
+      "observation": "Non-spec c32 executes M32 FP8 consumers.",
+      "evidence_scope": "Pinned non-spec exact c32 decode.",
+      "competing_explanations": [
+        "Adjacent token rows are independently available.",
+        "Autoregressive sampling creates a full-forward dependency."
+      ],
+      "mechanism": "Merge the same requests' rows from two or three token positions.",
+      "modifiable_fraction": "At most repeated target-family weight reads and launches.",
+      "upper_bound": "Computed from exact weight shapes, H200 bandwidth, and measured non-overlapping FP8 decode attribution.",
+      "falsifier": "The next token input is produced only after the current full model forward and sampling.",
+      "next_measurement": "Deterministic source dependency trace.",
+      "cost_usd": 0.0,
+      "expected_information_per_dollar": "decisive at zero cost"
+    },
+    {
+      "id": "independent_request_cohort_merge",
+      "observation": "The exact workload has a c32 resident cap and 32 simultaneous requests.",
+      "evidence_scope": "Pinned scheduler and exact endpoint rows.",
+      "competing_explanations": [
+        "A second independent cohort waits outside the active batch.",
+        "All admitted requests are already included in the c32 decode batch."
+      ],
+      "mechanism": "Pipeline a second request cohort to the same layer.",
+      "modifiable_fraction": "Potentially the same weight-stream fraction as a two-tick merge.",
+      "upper_bound": "Requires more than 32 independent resident rows or a split pipeline; c48/c64 transfer is excluded.",
+      "falsifier": "No additional compatible rows exist without changing resident concurrency or delaying rows already in the same batch.",
+      "next_measurement": "Reconstruct active-row trajectory from exact events and endpoint completion times.",
+      "cost_usd": 0.0,
+      "expected_information_per_dollar": "high at zero cost"
+    },
+    {
+      "id": "qualified_ngram_cross_tick_merge",
+      "observation": "The qualified control uses NGRAM with 12 draft rows per request.",
+      "evidence_scope": "Pinned qualified c32 control.",
+      "competing_explanations": [
+        "Qualified FP8 linears still execute at M<=32.",
+        "Target verification already groups a full c32 wave as M384."
+      ],
+      "mechanism": "Apply M64/M96 adjacent-tick batching to the current production denominator.",
+      "modifiable_fraction": "Unknown until exact target-verification geometry is bound.",
+      "upper_bound": "No transfer from the non-spec path is allowed.",
+      "falsifier": "Exact FP8 consumer rows are M384 for all 60 layers and four dense projection families.",
+      "next_measurement": "Parse the exact qualified FP8 consumer audit and token events.",
+      "cost_usd": 0.0,
+      "expected_information_per_dollar": "decisive at zero cost"
+    }
+  ],
+  "artifact_contract": [
+    "EXPERIMENT_SPEC.json",
+    "cross_tick_coalescing_falsifier.py",
+    "TRACE_RECONSTRUCTION.json",
+    "MECHANISM_TERMINAL.json",
+    "RESEARCH_LOG.md",
+    "STATUS.json"
+  ],
+  "execution_command": "python3 cross_tick_coalescing_falsifier.py --experiment-spec EXPERIMENT_SPEC.json --source-root /root/workspace/.agents/runtime/sglang-v0.5.13-source --config ../gemma4_c32_graph_gap_elision/inputs/bound/config.json --non-spec-consumers ../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/profile/profile-audit/consumers.jsonl --non-spec-terminal ../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/profile/profile/TERMINAL.json --non-spec-attribution ../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/ATTRIBUTION.json --ngram-consumers ../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-fp8-consumers.jsonl --ngram-events ../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-token-events.jsonl --ngram-terminal ../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-c32/TERMINAL.json --ngram-server-log ../gemma4_c32_graph_gap_elision/artifacts/c32-graph-gap-20260726t042557z/raw/pair/control-server.stderr --accelerator-inventory /root/workspace/research/factory/data/accelerator_inventory.json --trace-output TRACE_RECONSTRUCTION.json --terminal-output MECHANISM_TERMINAL.json"
+}

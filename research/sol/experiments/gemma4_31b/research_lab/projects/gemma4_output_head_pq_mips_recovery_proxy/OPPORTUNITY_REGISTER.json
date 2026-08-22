@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "opportunities": [
+    {
+      "id": "pairwise_cartesian_pq_exact_rescore",
+      "observation": "Three conservative lossless index families were physically dense, while the output head remains 5.61% of the qualified endpoint. Approximate full-vocabulary ranking can trade universal losslessness for a compact scan followed by exact rescoring.",
+      "evidence_scope": "Exact tied Gemma 4 BF16 output weights and two preregistered disjoint c32 batches from the recovered 1536-row capture; CPU/reference ranking and analytical physical traffic.",
+      "phase": "output_head_candidate_retrieval",
+      "resource_signature": "Dense control reads 2818572288 BF16 weight bytes per c32 batch. Frozen pairwise PQ reads 704643072 code bytes; worst-case 4096-row-per-query exact union is at most 131072 rows.",
+      "uncertainty": 0.65,
+      "competing_explanations": [
+        "Four-bit scalar resolution preserves output-weight direction well enough for a 4096-row shortlist.",
+        "Small stock logit margins cause independent coordinate error to eject at least one possible stock candidate."
+      ],
+      "mechanism": "Pair adjacent dimensions, encode the Cartesian product of two trained 16-level scalar codebooks as one uint8 code, scan asymmetric query-to-codebook lookup scores, then exactly rescore the shortlist.",
+      "modifiable_fraction": "The full 262144x5376 output-head weight read; exact member-row traffic remains proportional to each c32 union.",
+      "upper_bound": "The output-head interval is 0.03510060919172893 s/request. Byte-proportional savings cannot exceed this interval and are not an H200 latency measurement.",
+      "falsifier": "All shortlists miss a possible stock candidate or fail exact greedy agreement; physical traffic is separately required positive for each batch.",
+      "next_measurement": "Build one frozen weight-only PQ index and evaluate nested exact-rescore shortlists 256, 1024, and 4096 on the two fixed c32 batches.",
+      "expected_information_per_dollar": "High: zero provider spend directly separates approximate-ranking quality from the already-falsified conservative certificate families.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "discrimination_power": 0.95,
+      "readiness": 1.0,
+      "transfer_penalty": 0.7
+    }
+  ]
+}

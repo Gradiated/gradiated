@@ -1,0 +1,93 @@
+{
+  "schema_version": 1,
+  "decision": "classify_r4_as_invalid_api_invocation_and_run_one_corrected_candidate_only_r5",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "created_at_utc": "2026-07-30T05:44:00Z",
+  "evidence": {
+    "r4_pair_terminal": "artifacts/fixed-floor-crossop-endpoint-r4-candidate-only-20260730t0512z/PAIR_TERMINAL.json",
+    "r4_pair_terminal_sha256": "2835f52e35d659f80b769da2fbe5d796ff386b4e82979633321a619b5f7369da",
+    "r4_candidate_runner": "run_fixed_floor_crossop_endpoint_candidate_only_r4.py",
+    "r4_candidate_runner_sha256": "b9fb00d885403b78e63ae65b3dbeae4b5ba1204cff3ff113ea8341f9fba3570d",
+    "frozen_stock_complete_requests": 32,
+    "frozen_stock_seconds_per_request": 1.006774868593709,
+    "r4_http_submissions": 32,
+    "r4_complete_candidate_responses": 0,
+    "r4_sse_events": 0,
+    "r4_interpretable_candidate_samples": 0,
+    "measured_root_cause": "The R4 runner sent the unchanged completion-shaped body containing prompt to /v1/chat/completions. The frozen stock runner sent the same workload to /v1/completions. All R4 calls returned HTTP 400 in 5-26 ms and emitted no SSE event.",
+    "classification": "invalid_request_endpoint_pre_inference",
+    "canonical_candidate_sample_consumed": false
+  },
+  "scientific_contract": {
+    "scope": "candidate_only_corrected_invocation",
+    "candidate_requests_authorized": 32,
+    "candidate_complete_requests_consumed": 0,
+    "control_requests_consumed": 32,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "corrected_endpoint": "/v1/completions",
+    "body_contract": "Use the exact frozen completion-shaped c32 request bodies without normalization, decode/re-encode, prompt mutation, or sampling mutation.",
+    "quality_oracle": "Exact byte-for-byte equality of each matched request's ordered emitted choice.text chunks, finish fields, SSE-event count, and usage accounting against the immutable 32-request stock oracle; ignore only transport-volatile IDs and timestamps.",
+    "timing_denominators_seconds_per_request": {
+      "frozen_stock": 1.006774868593709,
+      "fixed_qualified": 0.625149101968745,
+      "campaign_target": 0.500119281574996
+    },
+    "decision_rule": "Report the corrected candidate median seconds/request and exact emitted-chunk equality. Promotion requires exact equality and <=0.500119281574996 seconds/request; a valid result above target is a measured negative endpoint result."
+  },
+  "delegation": {
+    "profile": "execution",
+    "skills": [
+      "$researcher",
+      "$kernel-research",
+      "$experiment-run"
+    ],
+    "required_outputs_before_claim": [
+      "run_fixed_floor_crossop_endpoint_candidate_only_r5.py",
+      "run_fixed_floor_crossop_endpoint_owner_r5.py",
+      "ENDPOINT_INTEGRATION_PACKET_R5.json",
+      "ENDPOINT_R5_EXECUTION_BINDING.json"
+    ],
+    "runner_delta": "Start from the accepted R4 candidate-only runner and change only the request path from /v1/chat/completions to /v1/completions, plus preserve the HTTP status and bounded response body when an HTTPError occurs.",
+    "owner_contract": "Use one bounded durable true dispatcher. Candidate-only is the sole scientific scope. Worker output must land at a noncanonical candidate path, be classified, and be atomically promoted only when all 32 complete responses and the required oracle fields exist.",
+    "claim_condition": "Claim the exact warm H200 only after all four outputs are durable, hash-consistent with this binding and one another, and offline validation proves the corrected path, exact workload/oracle, candidate-only scope, release path, and repair disposition.",
+    "invalid_response_disposition": "Any HTTP error, zero-event response, missing required oracle field, or pre-request integration failure is diagnostic rather than decision-bearing. Persist the response status/body and retain the claim for a bounded same-owner repair only when terminal and release margin remains.",
+    "terminal_disposition": "Persist exactly one canonical R5 PAIR_TERMINAL.json after 32 complete candidate responses, then release. No second corrected arm is authorized."
+  },
+  "identity": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "watchdog_main_pid": 580054,
+    "watchdog_deadline_utc": "2026-07-30T06:20:00Z"
+  },
+  "budget": {
+    "authorized_cumulative_usd": 4.0,
+    "measured_cumulative_usd_before_r5": 1.887,
+    "hourly_cost_usd": 2.45,
+    "conservative_cumulative_usd_at_watchdog": 3.5203333333333333,
+    "reservation_margin_usd": 0.4796666666666667
+  },
+  "fences": {
+    "claim_by_utc": "2026-07-30T05:54:00Z",
+    "scientific_launch_by_utc": "2026-07-30T05:57:00Z",
+    "pair_terminal_by_utc": "2026-07-30T06:10:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T06:12:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T06:20:00Z",
+    "provider_lifecycle_mutation_allowed": false
+  },
+  "forbidden": [
+    "stock replay",
+    "component replay",
+    "more than 32 corrected candidate requests",
+    "chat-completions endpoint",
+    "request-body mutation",
+    "decode/re-encode or output normalization",
+    "weakened emitted-chunk equality",
+    "replacement provider resource",
+    "provider lifecycle mutation"
+  ]
+}

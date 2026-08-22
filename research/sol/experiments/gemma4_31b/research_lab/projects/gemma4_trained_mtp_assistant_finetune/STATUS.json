@@ -1,0 +1,81 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 17.68888331875,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 20.0,
+  "bench_need": {
+    "accelerator": "nvidia-h200-sxm",
+    "bench_ids": [
+      "h200-mtp-target-e00gtebbbazkara13v",
+      "h200-mtp-trainer-e00c6522ejxkg0jsbe"
+    ],
+    "claim_allowed": false,
+    "gpu_count": 2,
+    "lifecycle_deadline_utc": "2026-07-29T12:10:00Z",
+    "provider": "nebius",
+    "purpose": "Preserve both exact live H200 claims under owner PID 4050908 while generation g11 repairs only the invalid response-regeneration package boundary.",
+    "topology": "two independent 1x H200 benches: one target response/hidden-state server and one trainer"
+  },
+  "claim_gate": {
+    "binding": "DIRECTOR_TRAINED_MTP_EXECUTION_BINDING.json",
+    "binding_sha256": "0f99468743841006623571cd394fa2543bd8736828ccac1ac584405320a07666",
+    "blocked_by": [
+      "both_exact_claims_already_owned_by_pid_4050908",
+      "generation_g11_repair_ready"
+    ],
+    "claim_allowed": false,
+    "disposition": "Preserve owner PID 4050908 and both original claim generations. Repair only the response-regeneration package boundary through handshake 20260729T092543.433434Z-g11; do not launch or replace the owner.",
+    "release_by_utc": "2026-07-29T12:05:00Z",
+    "satisfied": [
+      "twenty_dollar_reservation_durable",
+      "training_owner_offline_result_durable",
+      "target_and_stock_assistant_identities_mechanically_verified",
+      "supported_speculators_cli_and_vllm_mtp_path_bound",
+      "two_exact_h200_benches_registered",
+      "independent_provider_watchdogs_active",
+      "strict_ssh_cloud_init_and_h200_identity_verified",
+      "production_pipeline_runner_hash_bound",
+      "pre_science_ssh_quoting_and_repair_deadline_dispatch_corrected",
+      "strict_post_release_zero_gpu_census_passed",
+      "fresh_controller_artifact_root_bound",
+      "director_execution_binding_validated",
+      "cumulative_spend_and_cleanup_margin_fit"
+    ]
+  },
+  "id": "gemma4_trained_mtp_assistant_finetune",
+  "next_action": "Do not run an endpoint arm for the CPU copy decoder: it lost to the existing in-request n-gram control. Re-admit assistant fine-tuning only after a normal target run captures realistic request-disjoint token sequences and target hidden states; train the small assistant or adapter on CPU before requesting endpoint GPU time.",
+  "cpu_speculative_decoder": {
+    "checkpoint": "cpu_speculative_decoder/model.pt",
+    "decision": "do_not_promote_learned_decoder_over_in_request_ngram",
+    "gpu_spend_usd": 0.0,
+    "mean_accepted_draft_tokens": 3.0051622418879056,
+    "ngram_control_mean_accepted_draft_tokens": 3.933628318584071,
+    "result": "CPU_SPECULATIVE_DECODER_RESULT.json",
+    "training_seconds": 3.8964071350637823
+  },
+  "offline_owner_result": {
+    "fallback": "RedHatAI/gemma-4-31B-it-speculator.eagle3@28a1c8b4bb64dbaee883ba35341841138bdf1fe3",
+    "path": "TRAINED_MTP_OWNER_OFFLINE_RESULT.json",
+    "ready": true,
+    "sha256": "a092139ed378490035cb86236a533fa3c328ce15212ce023be18fe01b5443f93"
+  },
+  "priority": 9800,
+  "repair": {
+    "repair_id": "20260729T092543.433434Z-g11",
+    "ready": "artifacts/trained-mtp-controller-r2/.repair-handshakes/20260729T092543.433434Z-g11/REPAIR_READY.json",
+    "ready_sha256": "40b48d27809de872b13e3c77f47e26d325498dea883a9f78a036b750fff4b09d",
+    "diagnostic": "artifacts/trained-mtp-controller-r2/repair-11.json",
+    "diagnostic_sha256": "d13b5c5fc8b24607cea436b5adfaedff96607c35cf238ab2c54e510a284e4eea",
+        "failure": "The g10 continuation installed datasets and advanced the same invalidated response-regeneration stage, but the installed Speculators checkout left hs_connectors as an uninstalled namespace package; importing FileTransfer failed before response generation.",
+    "retry_scope": "pipeline-defined invalidated stage only",
+        "request_sent": true,
+        "request_sha256": "023d47b7826723b1da1da9c66b967091fd2f6f4d41bfe141b1be688bbf7b0dd3",
+        "patch": "artifacts/trained-mtp-controller-r2/regeneration-local-hs-connectors-repair-g11.json",
+        "patch_sha256": "709e4fe790a0b78f05a1dbe27a97abdffa1ac678d6fdaff4d1dd5be063682f98",
+    "absolute_repair_deadline_utc": "2026-07-29T12:05:00Z"
+  },
+  "researcher_profile": "execution",
+  "schema_version": 1,
+  "status": "paused",
+  "summary": "The earlier H200 attempt remains operationally inconclusive, but a corrected zero-GPU pilot trained a 46,450-parameter copy/vocabulary decoder on raw target token traces in 3.90 seconds. It accepted 3.005 draft tokens on four request-disjoint responses versus 3.934 for deterministic in-request n-gram, so it is not promoted. The pilot also found that the old offset-head labels were largely duplicated-current-token windows rather than valid future-token supervision."
+}

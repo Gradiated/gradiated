@@ -1,0 +1,20 @@
+{
+  "actual_spend_usd": 0.0,
+  "candidate_cuda_invocation_started": false,
+  "classification": "offline_preparation_terminal",
+  "detached_owner_command_template": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint --unit-manager pid -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/run_rtxpro6000_fp8_endpoint_owner.py --execution-packet /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/RTXPRO6000_FP8_EXECUTION_PACKET.json --execution-binding <director-registered-runpod-sm120-binding.json> --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-<claim>",
+  "next_director_action": "After the $14 reservation is durable, register one RunPod RTX PRO 6000 sm_120 bench and issue a fresh lifecycle binding; then launch the exact command above.",
+  "owner": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/run_rtxpro6000_fp8_endpoint_owner.py",
+    "sha256": "13baa4f85fe6eaae23e7609f051e87056ab4f5b8352b0033e8217a160e88659f"
+  },
+  "packet": {
+    "archive": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-preclaim/RTXPRO6000_FP8_EXECUTION_PACKET.tar",
+    "archive_sha256": "8b854788f4006264a7b21be0409c886205776bdf5ee90ca34a9393d70a83d443",
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/RTXPRO6000_FP8_EXECUTION_PACKET.json",
+    "sha256": "f7c932bb6684ceaed67092123a2737ba14234c89dcf23aa878683fac080fc1b1"
+  },
+  "provider_create_or_claim_attempted": false,
+  "schema_version": 1,
+  "science_consumed": false
+}

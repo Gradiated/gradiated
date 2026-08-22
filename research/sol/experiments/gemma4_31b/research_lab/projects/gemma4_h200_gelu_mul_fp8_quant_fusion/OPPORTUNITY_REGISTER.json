@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "opportunities": [
+    {
+      "id": "corrected_c32_one_cta_fusion",
+      "observation": "Pinned Gemma4MLP has a single-consumer contiguous GeluAndMul -> dynamic per-token E4M3 -> fp8_scaled_mm boundary. The exact c32 stock boundary launches two partial grids and moves 7,569,536 bytes before the GEMM.",
+      "evidence_scope": "Source-backed v0.5.13 commit 28b095c, exact Gemma 4 width 21504, c32 decode, H200 SM90; prior flawed-candidate timing is descriptive only.",
+      "competing_explanations": [
+        "Launch latency dominates the stock boundary.",
+        "The 2,752,512 compulsory interface bytes or 4,128,768 logical global-memory bytes dominate.",
+        "Shared-memory/reduction serialization consumes the benefit."
+      ],
+      "mechanism": "Evaluate GELU(tanh)*up with one BF16 rounding, retain the 43,008-byte BF16 row in shared memory, reduce amax, and emit contiguous E4M3 plus [M,1] FP32 scales directly.",
+      "falsifier": "Any exact-consumer BF16 output mismatch, nonfinite output, illegal resource usage, or component median not below stock at an admitted M.",
+      "next_measurement": "On an authorized claimed H200, run exact_consumer_gpu_contract.py at M=1,7,31,32,33,118 with the real layer-0 down weight.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.55,
+      "uncertainty": 0.45,
+      "discrimination_power": 1.0,
+      "readiness": 0.9,
+      "transfer_penalty": 0.35,
+      "measurements": {
+        "logical_global_bytes_removed_per_c32_call": {"value": 4128768, "unit": "bytes"},
+        "compulsory_interface_bytes_removed_per_c32_call": {"value": 2752512, "unit": "bytes"},
+        "launches_removed_per_call": {"value": 1, "unit": "launch"},
+        "prior_invalid_candidate_boundary_delta": {"value": 20.32000198960304, "unit": "microseconds"},
+        "whole_request_absolute_upper_bound": {"value": 0.020001520524259103, "unit": "fraction_of_fixed_denominator"}
+      },
+      "promotion_rule": "Promote to one matched endpoint only after exact-consumer bit identity and positive component timing at every admitted row count.",
+      "kill_rule": "Kill this decomposition if corrected M32 is not component-positive; do not tune the down GEMM in this project.",
+      "residual_bottleneck_rule": "Measure the unchanged down GEMM and full endpoint; do not attribute the analytical boundary bound as realized endpoint gain."
+    },
+    {
+      "id": "rejected_two_round_fusion_negative_control",
+      "observation": "The prior H200 candidate produced 1.50-1.56% relative-L2 exact-consumer error after rounding GELU to BF16 before multiplying by up.",
+      "evidence_scope": "Measured H200 M32 and M2048 against the real down weight; independently reproduced by the CPU bit-level oracle.",
+      "competing_explanations": [
+        "Activation intermediate rounding changes q codes.",
+        "Scale convention is wrong.",
+        "Down-weight orientation is wrong."
+      ],
+      "mechanism": "Negative control retains the forbidden extra BF16 rounding between GELU and multiplication.",
+      "falsifier": "If it matches stock activation, E4M3 codes, and all consumer probes on the exact-width CPU case, the rounding diagnosis is wrong.",
+      "next_measurement": "None; the CPU oracle and consumed H200 output both reject it.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.35,
+      "uncertainty": 0.05,
+      "discrimination_power": 0.95,
+      "readiness": 1.0,
+      "transfer_penalty": 0.0,
+      "measurements": {
+        "exact_width_activation_mismatches": {"value": 4142, "unit": "elements_per_21504"},
+        "exact_width_e4m3_code_mismatches": {"value": 203, "unit": "elements_per_21504"},
+        "prior_h200_output_relative_l2_m32": {"value": 0.015616449527442455, "unit": "fraction"}
+      },
+      "promotion_rule": "Never promote.",
+      "kill_rule": "Closed as a semantics violation.",
+      "residual_bottleneck_rule": "Use only as harness sign discrimination and causal evidence for the corrected source."
+    },
+    {
+      "id": "large_m_multi_token_decomposition",
+      "observation": "A one-CTA-per-row fused candidate regressed boundary time at M2048 from 0.138880 ms to 0.213088 ms, while stock quantization switches to eight tokens per CTA.",
+      "evidence_scope": "Measured H200 M2048 prior candidate plus pinned quantizer dispatch; numerical result was invalid but grid/decomposition evidence is usable.",
+      "competing_explanations": [
+        "Excess candidate grid waves dominate.",
+        "GELU compute dominates.",
+        "Shared-memory capacity prevents a multi-token CTA."
+      ],
+      "mechanism": "A distinct prefill kernel would assign several rows per CTA without retaining all rows simultaneously, using tiled recomputation or a cooperative two-stage reduction.",
+      "falsifier": "A physical schedule cannot reduce waves without restoring BF16 HBM traffic or exceeding SM90 shared/register limits.",
+      "next_measurement": "Analytically enumerate legal multi-token/tiled schedules before any source work; outside the admitted c32 candidate.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.2,
+      "uncertainty": 0.8,
+      "discrimination_power": 0.7,
+      "readiness": 0.15,
+      "transfer_penalty": 0.55,
+      "measurements": {
+        "stock_boundary_m2048": {"value": 0.13887999951839447, "unit": "milliseconds"},
+        "one_cta_candidate_boundary_m2048": {"value": 0.2130880057811737, "unit": "milliseconds"},
+        "candidate_regression": {"value": 0.534331451327908, "unit": "fraction"}
+      },
+      "promotion_rule": "Open only if a legal schedule preserves the exact one-rounding and q/scale contract with fewer or equal waves than stock.",
+      "kill_rule": "Keep stock fallback above M128 for this project.",
+      "residual_bottleneck_rule": "Large-M prefill remains unfused and is not included in the c32 candidate gain."
+    }
+  ]
+}

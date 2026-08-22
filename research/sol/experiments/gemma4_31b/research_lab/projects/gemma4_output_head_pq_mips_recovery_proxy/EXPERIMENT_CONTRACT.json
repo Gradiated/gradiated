@@ -1,0 +1,137 @@
+{
+  "absolute_deadline_utc": "2026-07-29T21:05:00Z",
+  "amendments": [
+    {
+      "causal_change": "Replace only the stale low-rank-terminal digest with the SHA-256 of the current named terminal bytes.",
+      "classification": "pre_science_binding_metadata_defect",
+      "failed_attempt_stderr": "artifacts/attempt1_binding_metadata.stderr.log",
+      "observed_lowrank_terminal_sha256": "b3aecc3d68302ac11faf1c4fc9c278257ce85510143e579ded20eda18691b52a",
+      "preregistered_at_utc": "2026-07-29T19:03:17Z",
+      "science_started": false,
+      "unchanged": "All PQ geometry, codebooks, selected rows, shortlist sizes, correctness gates, traffic accounting, and deadline."
+    },
+    {
+      "causal_change": "Replace single-core chunked float64 moment accumulation and 15-way broadcast threshold assignment with a whole-tensor parallel population var/mean reduction and batched binary search against the identical per-coordinate BF16 codebook midpoints.",
+      "classification": "pre_science_producer_efficiency_defect",
+      "failed_attempt_stderr": "artifacts/attempt2_slow_producer.stderr.log",
+      "observed": "After 26 minutes the foreground process remained in the unpersisted pre-index producer with one CPU saturated, constant 330532 KiB RSS, no frozen index, and no held-out evaluation.",
+      "preregistered_at_utc": "2026-07-29T19:30:00Z",
+      "science_started": false,
+      "unchanged": "Weight-only training population, BF16 codebook bytes, nearest-centroid assignment, PQ geometry, selected rows, shortlist sizes, correctness gates, traffic accounting, and absolute deadline."
+    },
+    {
+      "causal_change": "Rebind only the expired CPU/reference wall-clock envelope after dynamically verifying the corrected contiguous-tensor provenance hash path.",
+      "classification": "director_reentry_after_pre_science_wall_clock_exhaustion",
+      "observed": "The corrected helper hashes the exact 10752-byte selected row in 0.0001628459431231022 seconds and matches the reference digest; no index or held-out scientific sample was consumed.",
+      "preregistered_at_utc": "2026-07-29T19:49:00Z",
+      "science_started": false,
+      "unchanged": "All input identities, PQ geometry, codebooks, selected rows, shortlist sizes, correctness gates, traffic accounting, single-shot rule, and promotion/close thresholds."
+    }
+  ],
+  "artifact_contract": {
+    "failure_log": "artifacts/pq_mips.stderr.log",
+    "frozen_index": "artifacts/frozen_pq_index.pt",
+    "raw_output": "artifacts/pq_mips_result.json",
+    "runner": "run_pq_mips_proxy.py",
+    "terminal": "OUTPUT_HEAD_PQ_MIPS_PROXY_TERMINAL.json",
+    "teardown": "Foreground CPU/reference process exits; exact predecessor inputs remain read-only; no provider, GPU, endpoint, or external state exists."
+  },
+  "baseline_measurement": {
+    "attribution": "Dense control charges one full physical BF16 read of all 262144 tied rows per c32 batch. Each PQ operating point charges the full packed-code scan, expanded BF16 codebooks, per-batch FP32 asymmetric lookup tables and score buffers, BF16 query input, candidate IDs, the physical union of exact BF16 member rows, and exact FP32 logits.",
+    "critical_path_scope": "Analytical byte-proportional output-head upper bound only; CPU construction and scoring time are diagnostics and cannot transfer to H200 endpoint latency.",
+    "residual_bottleneck": "If 4-bit-per-scalar PQ ranking error pushes any possible stock candidate below the 4096-row shortlist, the fixed proxy fails quality even though its worst-case physical traffic remains positive."
+  },
+  "budget": {
+    "additional_storage_gib_max": 4,
+    "gpu_calls_max": 0,
+    "provider_spend_usd_max": 0.0,
+    "wall_clock_minutes_max": 65
+  },
+  "candidate": {
+    "code_bits_per_subspace": 8,
+    "codebook_construction": "For each original coordinate, fit mean and population standard deviation from all 262144 output-weight rows only. Apply one fixed 16-level standard-normal Lloyd-Max solution; each 2-D subspace codebook is the Cartesian product of its two fitted scalar codebooks.",
+    "codebook_dtype": "bfloat16",
+    "codebook_rows": 256,
+    "dimensions_per_subspace": 2,
+    "frozen_before_hidden_scoring": true,
+    "geometry_selected_from": "Analytical traffic ceiling and a Gaussian weight prior only; no capture hidden row or held-out result is used.",
+    "index_name": "pairwise_cartesian_gaussian_lloyd_max_pq",
+    "pq_codes_dtype": "uint8",
+    "shortlist_sizes": [
+      256,
+      1024,
+      4096
+    ],
+    "subspaces": 2688,
+    "tie_break": "Descending approximate inner product, then ascending original token ID.",
+    "tuning_after_evaluation": "Forbidden"
+  },
+  "causal_hypothesis": "A fixed 4-bit-per-weight scalar product code retains enough output-weight direction to place every possible stock greedy candidate inside an exact-rescore shortlist, while its packed full-vocabulary scan and the physical union of exact member rows use less traffic than one dense BF16 output-head read. The competing explanation is that small logit margins amplify independent scalar quantization error enough to eject conservative stock candidates even at 4096.",
+  "correctness_gate": {
+    "required": [
+      "Exact capture, checkpoint metadata, shard, tied tensor digest, model geometry, and BF16 dtypes match immutable predecessor identities.",
+      "The two selected c32 batches are mutually disjoint and disjoint from both preceding low-rank sets by storage index, global row, ownership tuple, and BF16 row hash.",
+      "The index is persisted and hash-frozen before any selected hidden row is scored.",
+      "Every possible non-stop stock argmax under the inherited conservative numeric envelope is inside the reported shortlist.",
+      "Exact BF16-weight rescoring of each shortlist returns the same greedy token as the dense reference."
+    ],
+    "semantics": "Capture-scoped containment of the complete pinned stock candidate set plus exact greedy agreement, not top-1 approximate agreement alone."
+  },
+  "decision_gate": {
+    "close": "Close this fixed PQ retrieval proxy if no preregistered shortlist has complete stock-candidate recall, exact-rescore agreement, and strictly positive fully charged physical traffic in each c32 batch.",
+    "promote": "Promote the smallest preregistered shortlist with complete stock-candidate recall, exact-rescore agreement, and strictly positive fully charged physical traffic independently in both c32 batches.",
+    "single_shot": "One deterministic index build and one evaluation of the three preregistered nested shortlists. No codebook geometry, rows, levels, shortlist, or reported operating point may change after held-out scoring.",
+    "transfer_limit": "CPU/reference retrieval correctness and analytical traffic on these 64 exact capture rows only; a pass requires a later target-H200 exact-consumer component and GPQA-Diamond/TauBench recovery."
+  },
+  "inputs": {
+    "capture_path": "../gemma4_lossless_output_head_lowrank_residual_disjoint_query/inputs/hidden_states.pt",
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_terminal_path": "../gemma4_lossless_output_head_cluster_mips/inputs/EXACT_CAPTURE_TERMINAL.json",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "checkpoint_index_path": "../gemma4_lossless_output_head_lowrank_residual_disjoint_query/inputs/model.safetensors.index.json",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "config_path": "../gemma4_lossless_output_head_lowrank_residual_disjoint_query/inputs/config.json",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "lowrank_terminal_path": "../gemma4_lossless_output_head_lowrank_residual_disjoint_query/LOSSLESS_LOWRANK_RESIDUAL_DISJOINT_TERMINAL.json",
+    "lowrank_terminal_sha256": "b3aecc3d68302ac11faf1c4fc9c278257ce85510143e579ded20eda18691b52a",
+    "tied_weight_tensor_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+    "weight_shard_path": "../gemma4_lossless_output_head_lowrank_residual_disjoint_query/inputs/model-00001-of-00002.safetensors",
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "opportunity_register": "OPPORTUNITY_REGISTER.json",
+  "question": "Can one frozen pairwise product-quantized asymmetric-MIPS index retrieve every possible stock Gemma 4 greedy candidate on two disjoint c32 batches while exact rescoring remains net traffic-positive?",
+  "recorded_at_utc": "2026-07-29T18:58:29Z",
+  "seed": "No stochastic operations. Request order is first-seen capture order; evaluation uses the third and fourth capture-order rows per request.",
+  "slo": {
+    "campaign_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "inherited_output_consumer_seconds_per_request": 0.03510060919172893
+  },
+  "stock_control": {
+    "conservatively_excluded_from_incumbents": [
+      1,
+      106
+    ],
+    "final_logit_softcap": 30.0,
+    "masked_stop_token_ids": [
+      1
+    ],
+    "model": "google/gemma-4-31B-it",
+    "requests_per_batch": 32,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weight_dtype": "bfloat16",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [
+      262144,
+      5376
+    ]
+  },
+  "workload": {
+    "batch_selection": [
+      "third capture-order row for every request in first-seen request order",
+      "fourth capture-order row for every request in first-seen request order"
+    ],
+    "geometry": "Two 32-row batches by 262144 token rows by hidden width 5376",
+    "physical_scope": "Independent c32 physical unions of original tied-weight rows read for exact rescoring"
+  }
+}

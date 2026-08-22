@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "classification": "r5_packet_closure_ready_fresh_lifecycle_required",
+  "director_packet_closure_binding_sha256": "696c9795f19a784e906df161af367889081c50450b7c881b471eb0b37183f6e7",
+  "packet_sha256": "846bd42a2e41e64b392af1b2abaca5d8cccd3e177aaab9c7fa900f63eda57527",
+  "closure_validation_sha256": "d7f17ff88728675e04ab5e5a9e612e4aec28e4b534b64994bc0a97a3cb8c9ca2",
+  "owner_validation_sha256": "04e2738958e3b2d5670214510fb9ec997281f615238fd0baff3368f1f671bdde",
+  "owner_sha256": "2a631efb580dc0b505b3ab03973c4729437e8a019b8ffa5d09b5e01c5c109348",
+  "launcher_sha256": "1c97d6961eb28cc5d7d0ec18a7fc0e53e74e7fc812e76063c27fbcadda56af4a",
+  "candidate_runner_sha256": "42f12828e1d6db2154c22464cef578cc03da331b185008b8ee4d041dbb6d5fa0",
+  "claim_allowed": false,
+  "fences": {
+    "ssh_allowed": false,
+    "cuda_allowed": false,
+    "checkpoint_load_allowed": false,
+    "endpoint_request_allowed": false,
+    "provider_lifecycle_mutation_allowed": false
+  },
+  "science": {
+    "candidate_requests_submitted": 0,
+    "stock_replayed": false,
+    "component_replayed": false
+  },
+  "expected_fresh_lifecycle_inputs": {
+    "reservation_cumulative_usd_at_least": 13.5,
+    "bench_id": "h200-r5-computeinstance-e00aehxdq8mpd68epd",
+    "accelerator": "nvidia-h200-sxm",
+    "required_handoff": [
+      "director-owned strict SSH and host-key reconciliation",
+      "exact H200 identity and quiescent runtime proof",
+      "cold bootstrap and resumable immutable-manifest staging under a durable claim owner",
+      "fresh time-bounded candidate-only execution binding"
+    ],
+    "workload_contract": "one /v1/completions candidate-only arm, at most 32 unchanged requests, frozen stock and component never replayed"
+  }
+}

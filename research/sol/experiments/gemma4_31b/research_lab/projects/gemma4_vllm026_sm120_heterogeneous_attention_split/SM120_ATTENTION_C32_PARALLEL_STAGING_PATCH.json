@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "classification": "sm120_attention_c32_parallel_staging_patch",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "published_at_utc": "2026-07-29T13:00:30Z",
+  "preparation_binding": "DIRECTOR_SM120_ATTENTION_C32_PARALLEL_STAGING_PREPARATION_20260729T1254Z.json",
+  "preparation_binding_sha256": "be6700a83b61ef6dba8fc8e016aeefe4b580d823d243ab29f28469068b318994",
+  "owner": {
+    "path": "run_sm120_attention_split_c32_owner.py",
+    "previous_sha256": "7ec8c32502038ef4b243ed8a97a3d5a27725e13ae9027e4bd557cd543efc7074",
+    "sha256": "456850bebb99284395a54e9f85cc8f59512aca3a42e98ce60fe0a389b519a42d"
+  },
+  "scope": {
+    "gpu_budget": 0,
+    "provider_spend_usd": 0,
+    "claim_allowed": false,
+    "ssh_called": false,
+    "gpu_pool_called": false,
+    "provider_api_called": false,
+    "checkpoint_bytes_staged": false,
+    "cuda_called": false,
+    "component_parent_replayed": false,
+    "h200_touched": false
+  },
+  "transfer_contract": {
+    "max_concurrent_incomplete_large_files": 2,
+    "large_files": [
+      "model-00001-of-00002.safetensors",
+      "model-00002-of-00002.safetensors"
+    ],
+    "stream_transport": "distinct SSH append streams pinned to aes128-gcm@openssh.com",
+    "offset_protocol": "read-only stat probes for every large destination complete before any worker starts; offsets are persisted in a generation-specific ledger",
+    "source_and_destination_binding": "each job binds one manifest filename, immutable source path, resident .part path, final path, expected size, expected SHA-256, and offset",
+    "child_timeout": "each child derives its communicate timeout from the absolute release deadline and stops at the deadline",
+    "failure_cleanup": "on any child failure or deadline, set the shared abort fence, kill and wait for every live sibling and reap the executor",
+    "captures": "append, probe, and verify stdout/stderr names include the unique parallel staging generation and filename",
+    "verification_and_finalization": "each destination is SHA-256 verified remotely before atomic .part-to-final rename; a full-size partial is verified and finalized without replaying bytes",
+    "serial_work": "small checkpoint metadata and model-files.sha256 remain serial; official wheel bootstrap and scientific workload identities are unchanged"
+  },
+  "immutable_scientific_identity": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "transfer_manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1",
+    "checkpoint_expected_bytes": 62546338248,
+    "resident_checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "official_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "runtime_image": "docker.io/vllm/vllm-openai:nightly@sha256:494f9c118fb6684bcdd26bb37c687b16163278c0e18f5c157c9185c2584598b7",
+    "workload_sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "attention_mapping": {
+      "control_backend": "TRITON_ATTN",
+      "candidate_sliding_window": "TRITON_ATTN",
+      "candidate_full_attention": "FLEX_ATTENTION",
+      "candidate_triton_kinds": 50,
+      "candidate_flex_kinds": 10
+    },
+    "arm_order": ["control_all_triton", "candidate_50_triton_10_flex"]
+  },
+  "retained_state": {
+    "bench_id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+    "bench_status": "maintenance",
+    "partial_file": "model-00001-of-00002.safetensors.part",
+    "partial_bytes": 12364095488,
+    "science_consumed": false,
+    "future_execution_release_by_utc": "2026-07-29T14:00:00Z",
+    "watchdog_deadline_utc": "2026-07-29T14:10:00Z"
+  },
+  "validation": {
+    "py_compile": "pass",
+    "lifecycle_pure_parallel_fixture": "pass",
+    "preclaim_fixture": "pass",
+    "preclaim_owner_sha256": "456850bebb99284395a54e9f85cc8f59512aca3a42e98ce60fe0a389b519a42d",
+    "preclaim_endpoint_sha256": "1c73091f418c78ab396b441e6bc16503e2564b637ebe9f2f6e8efad2d0e06f0a",
+    "preclaim_workload_sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "preclaim_checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "evidence_class": "offline implementation and fixture validation; no scientific sample"
+  },
+  "next_gate": "A later director must issue a fresh claim-allowed execution binding after inspecting this hash-bound patch; this artifact does not authorize claim, transfer, bootstrap, CUDA, or readiness."
+}

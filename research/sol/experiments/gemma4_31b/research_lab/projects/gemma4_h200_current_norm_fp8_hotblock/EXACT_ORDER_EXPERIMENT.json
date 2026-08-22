@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "classification": "bounded_zero_gpu_exact_order_experiment",
+  "causal_hypothesis": "The rejected candidate first diverges because it replaces the pinned 672-thread contiguous-vec8 XOR RMSNorm reduction with a 256-thread scalar-strided down-shuffle reduction. Preserving the pinned RMSNorm mapping/tree, BF16 store boundary, and 256-thread vec16 quantizer inside one CTA should restore exact activation and scale bytes while retaining one-launch and global-intermediate elimination.",
+  "stock_control": "flashinfer RMSNormKernel<8,bfloat16> followed by sgl_kernel per_token_quant_fp8_small_batch_kernel<bfloat16,e4m3,16>",
+  "candidate_change": "One M<=32 CTA with the exact stock 672-thread RMSNorm order, a BF16 shared-memory intermediate, and the exact stock 256-thread quantization order.",
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "sglang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "hardware_scope": "NVIDIA H200 SXM sm_90a, 132 SMs",
+    "input": "contiguous BF16 [M,5376], M in {1,16,32}",
+    "weight": "layer-0 input RMSNorm BF16 [5376], bytes sha256 87f1eacc388fa1fefebe8a1f00e47a46fffc2a6e055d1e6225262b6f89cef2c0",
+    "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm with FP8 E4M3 activation [M,5376] and FP32 scale [M,1]"
+  },
+  "pinned_source_hashes": {
+    "sglang_layernorm_py": "e31523f8090d41e642761617b7253b5a2833676dfd35dad86ae9c18e69144c3b",
+    "flashinfer_norm_cuh": "f32e86ca9e3a9caf0163ac619464f784f26cddaa8f19ef47a706ca7a602b0987",
+    "flashinfer_math_cuh": "d8a5bc796dfe4f3b3593163ab0a078c63554d73b1c05886983eec8ae36640051",
+    "sgl_per_token_quant_fp8_cu": "c8a3e755dc165cecfa09232bed58e8b36010061f050acf2f82722b75c3c1edb8",
+    "sgl_utils_h": "442a8e60bed72f78886ad23ea478b00bd0e0a21421c845bec8b035b24c6caf1c",
+    "fp8_kernel_py": "95882e4fed8ac449240ffc8e62b13176bb5057db6c77a06cdfcfffa5f5d89a06",
+    "fp8_utils_py": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9"
+  },
+  "quality_gate": {
+    "activation_bytes": "exact for every corpus element",
+    "scale_bytes": "exact FP32 bytes for every row",
+    "fp8_encoder": "exact against pinned torch.float8_e4m3fn conversion probes",
+    "fallback": "stock for M>32, non-BF16, non-2D, or hidden size !=5376"
+  },
+  "performance_slo": {
+    "mechanism": "remove one producer launch and the normalized BF16 global write/read",
+    "target_hardware_gate": "later same-session M=1/16/32 real-QKV component median must beat contemporaneous stock with complete exact-byte and CUDA-graph proof",
+    "timing_claim_this_cycle": false
+  },
+  "opportunity_register": {
+    "id": "exact_rmsnorm_order_repair",
+    "observation": "Measured rejected candidate lowered real-QKV component median by 13.0% at M=16 and 14.9% at M=32 but mismatched activation bytes.",
+    "evidence_scope": "pinned Gemma 4 layer-0 RMSNorm to dynamic-E4M3 QKV, H200 decode M<=32",
+    "competing_explanations": [
+      "RMSNorm reduction order",
+      "BF16 conversion point",
+      "amax or scale arithmetic",
+      "E4M3 conversion semantics"
+    ],
+    "mechanism": "restore exact stock RMSNorm and quantizer operation order inside the fused CTA",
+    "modifiable_fraction": "one launch plus 2*M*5376 BF16 logical global bytes",
+    "upper_bound": "rejected-source timing is mechanism evidence only and does not transfer",
+    "falsifier": "any activation or FP32 scale byte mismatch, resource-illegal launch, graph mismatch, or non-positive contemporaneous real-consumer median",
+    "next_measurement": "one director-nominated H200 exact-consumer component run",
+    "cost_usd": 0.0,
+    "decision_impact": 0.8,
+    "uncertainty": 0.45,
+    "discrimination_power": 0.95,
+    "readiness": 0.9,
+    "transfer_penalty": 0.45
+  },
+  "budget": {
+    "provider_spend_usd": 0.0,
+    "gpu_seconds": 0,
+    "wall_clock_minutes": 75,
+    "new_storage_gibibytes": 2,
+    "cleanup": "No provider, bench, claim, SSH, or CUDA kernel invocation."
+  },
+  "artifact_contract": {
+    "source": "norm_fp8_decode_exact_order.cu",
+    "loader": "norm_fp8_decode_exact_order.py",
+    "oracle": "exact_order_oracle.py",
+    "oracle_result": "EXACT_ORDER_CPU_RESULT.json",
+    "build_log": "exact-order-build.final.stdout",
+    "physical_falsifier": "EXACT_ORDER_PHYSICAL_FALSIFIER.json",
+    "runner": "h200_runner.py",
+    "terminal": "MECHANISM_REPAIR_TERMINAL.json"
+  }
+}

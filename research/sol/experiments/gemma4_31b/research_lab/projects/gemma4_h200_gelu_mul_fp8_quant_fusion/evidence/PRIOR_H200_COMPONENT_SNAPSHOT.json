@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "evidence_class": "measured_h200_component_from_prior_independent_project",
+  "scope_warning": "The candidate was numerically invalid because it rounded GELU to BF16 before multiplying by up. Timings are descriptive mechanism evidence only and do not transfer to the corrected candidate.",
+  "source_archive": {
+    "path": "../gemma4_h200_fp8_layer_dataflow_fusion/artifacts/persisted-real-down-v2-repair-20260722t141230z/fusion-stack-compact.tar.gz",
+    "sha256": "e8b73fea8ee0f1c5c756877573c49bc077961cd19cdb6ea7825826e908b64ce2",
+    "member": "./component-v2/TERMINAL.json"
+  },
+  "profile_bound": {
+    "source_path": "../gemma4_h200_fp8_layer_dataflow_fusion/ADJACENCY.json",
+    "source_sha256": "9678bd659729601ec5cde81b3380d81aa23d0941174889fd64d86f3f0a1a561e",
+    "requests": 32,
+    "gelu_and_mul_launches": 3660,
+    "gelu_and_mul_seconds": 0.214656804,
+    "down_quant_launches": 3660,
+    "down_quant_seconds": 0.185469039,
+    "all_eligible_boundary_seconds": 0.400125843,
+    "scope": "Measured profile total; an impossible-delete Amdahl ceiling, not candidate performance"
+  },
+  "candidate_source": {
+    "path": "../gemma4_h200_fp8_layer_dataflow_fusion/fused_gelu_quant.cu",
+    "defect": "activated_gate = BF16(gate * cdf), then value = BF16(activated_gate * up); stock has only the final BF16 rounding"
+  },
+  "consumer": {
+    "symbol": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "down_weight_shape": [21504, 5376],
+    "down_weight_stride": [1, 21504],
+    "down_weight_dtype": "float8_e4m3fn",
+    "weight_scale_shape": [5376],
+    "weight_scale_dtype": "float32"
+  },
+  "rows": [
+    {
+      "tokens": 32,
+      "control_boundary_ms": 0.05628800019621849,
+      "invalid_candidate_boundary_ms": 0.03596799820661545,
+      "control_component_ms": 0.05129599943757057,
+      "invalid_candidate_component_ms": 0.04412800073623657,
+      "output_relative_l2_error": 0.015616449527442455,
+      "output_cosine_similarity": 0.9998781085014343,
+      "timing_pass": true,
+      "numerical_pass": false
+    },
+    {
+      "tokens": 2048,
+      "control_boundary_ms": 0.13887999951839447,
+      "invalid_candidate_boundary_ms": 0.2130880057811737,
+      "control_component_ms": 0.37833601236343384,
+      "invalid_candidate_component_ms": 0.3744960129261017,
+      "output_relative_l2_error": 0.015053298324346542,
+      "output_cosine_similarity": 0.9998867511749268,
+      "timing_pass": false,
+      "numerical_pass": false
+    }
+  ],
+  "interpretation": {
+    "c32": "One-CTA-per-row fusion showed the predicted timing direction despite invalid numerics.",
+    "prefill": "The same one-CTA-per-row decomposition regressed at M=2048, so the corrected candidate must fall back to stock above M=128.",
+    "scientific_consumption": "The prior flawed candidate rows are complete consumed samples and are not replayed or relabeled."
+  }
+}

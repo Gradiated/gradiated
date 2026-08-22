@@ -1,0 +1,30 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 0.0,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 0.0,
+  "bench_need": null,
+  "claim_allowed": false,
+  "compute_budget": "CPU/reference and source analysis only; consumed one exact hierarchy producer and one repaired consumer continuation.",
+  "gpu_need": null,
+  "next_action": "Do not claim or schedule H200 work for this centroid/radius hierarchy. Preserve the negative; revisit only with a materially stronger non-ball exact bound or a separately admitted learned/quality-recovered head.",
+  "priority": 7800,
+  "researcher_profile": "deep",
+  "reservation_required": false,
+  "result": {
+    "classification": "typed_falsification_hierarchical_cluster_radius_physical_union_and_net_negative",
+    "implementable_gross_physical_avoided_fraction": 0.0,
+    "oracle_gross_physical_avoided_fraction": 0.0047607421875,
+    "oracle_net_physical_avoided_fraction": -0.04375344231015155,
+    "oracle_physical_union_survivor_rows": 260896,
+    "promote_to_h200_component": false,
+    "stock_candidate_set_certified": true,
+    "terminal": "LOSSLESS_CLUSTER_MIPS_TERMINAL.json",
+    "terminal_sha256": "3cb888dda3fd1a3f1258bf8cb79b157689d46ed0d160d449a473a4d2404c1a24"
+  },
+  "schema_version": 1,
+  "status": "complete",
+  "storage_budget": "4 GiB additional; immutable weights/capture used through hard-linked read-only views.",
+  "summary": "Typed negative: the exact stock greedy candidate set was certified, but the implementable hierarchy read every row; even the oracle incumbent avoided only 0.4761% gross physical member bytes and added 4.3753% net traffic after metadata and survivor traffic.",
+  "wall_clock_budget_minutes": 45
+}

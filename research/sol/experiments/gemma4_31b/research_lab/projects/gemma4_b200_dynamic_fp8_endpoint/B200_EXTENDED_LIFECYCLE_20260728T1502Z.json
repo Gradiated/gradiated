@@ -1,0 +1,11 @@
+{
+  "provider_started_at_utc": "2026-07-28T13:19:08.005929Z",
+  "deadline_utc": "2026-07-28T16:45:00Z",
+  "watchdog": {
+    "unit": "gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service",
+    "unit_manager": "user",
+    "main_pid": 3247804,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service",
+    "deadline_epoch": 1785257100.0
+  }
+}

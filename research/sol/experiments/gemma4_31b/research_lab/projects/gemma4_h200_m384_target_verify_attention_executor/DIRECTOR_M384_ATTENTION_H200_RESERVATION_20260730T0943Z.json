@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "type": "director_h200_m384_attention_implementation_and_discriminator_reservation",
+  "created_at_utc": "2026-07-30T09:43:00Z",
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "decision": "request_warm_h200_implementation_component_and_conditional_endpoint_authority",
+  "authority": {
+    "requested_cumulative_spend_usd": 3.0,
+    "authorized_spend_usd_in_current_snapshot": 0.0,
+    "reservation_durable": false,
+    "reservation_required": true,
+    "claim_allowed": false,
+    "hourly_cost_usd": 2.45,
+    "maximum_additional_provider_seconds": 4200,
+    "maximum_additional_provider_spend_usd": 2.8583333333333334
+  },
+  "warm_bench": {
+    "id": "h200-downproj-computeinstance-e00qft1sf416qp6knw",
+    "status": "maintenance",
+    "claim": null,
+    "drain_after_release": false,
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507",
+    "instance_id": "computeinstance-e00qft1sf416qp6knw",
+    "disk_id": "computedisk-e00qh5cnm6kk3sa8fe",
+    "pinned_image_resident": true,
+    "current_watchdog_pid": 698227,
+    "current_watchdog_deadline_utc": "2026-07-30T10:12:54.159999Z",
+    "handoff_at_utc": "2026-07-30T09:43:00Z",
+    "required_later_director_action": "After the exact reservation is durable and before the current watchdog enters cleanup, replace and verify the watchdog for the bounded successor lifecycle, then make this project the sole claimant."
+  },
+  "completed_source_evidence": {
+    "mechanism_terminal": {
+      "path": "MECHANISM_TERMINAL.json",
+      "sha256": "1f2b98bbadf2cb05afad46fdd466fe89ee1adb09b4344825b81777d8b550695b"
+    },
+    "semantic_candidate": {
+      "path": "m384_attention_executor.py",
+      "sha256": "c414f13f6b23eaafc485c65b9355d1ecf1683f31389ffe53e78f5a41c82fad3e"
+    },
+    "cpu_oracle": {
+      "path": "CPU_ORACLE_RESULT.json",
+      "sha256": "bc1cc0e2737b89ec49f7754b28fa3dbe4921b51053f66134a3260567826a546c"
+    },
+    "h200_discriminator": {
+      "path": "H200_DISCRIMINATOR_CONTRACT.json",
+      "sha256": "686b1e1a728ae168d62bce096ebd40f09984f08b795ad10fe0dc206e5477c123"
+    },
+    "physical_model": {
+      "path": "PHYSICAL_MODEL.json",
+      "sha256": "c92497028401720e31feacac844a181bcaf06440f4e6969e7bde07ed805f2c0c"
+    },
+    "source_trace": {
+      "path": "SOURCE_TRACE.json",
+      "sha256": "dffeb6979410ad099acfe261e9dc7de6caf03417fe7c83058e8d4c90c9c16e0e"
+    },
+    "opportunity_register": {
+      "path": "OPPORTUNITY_REGISTER.ranked.json",
+      "sha256": "11f1ea891bb7a02858c44176b23c8b9811b3842d0b774da64bfba173b3dab7ec"
+    }
+  },
+  "paid_scope": {
+    "phase": "qualified c32 NGRAM target verification",
+    "geometry": "M=384, TP1, 32 requests x 12 target rows; 50 local d256/GQA2/window1024 layers and 10 global d512/GQA8 layers",
+    "implementation_state": "The exact semantic schedule and CPU oracle exist, but candidate_cuda_source_published is false. Implementing the narrow SM90a grouped-head kernel is part of the admitted mutable H200 claim, not a completed readiness claim.",
+    "control": "The strongest production stock local/global paged-attention path reached by the pinned SGLang endpoint.",
+    "candidate": "Request/KV-head grouped local/global attention with fused future-KV store, preserving exact per-row key traversal and online-softmax order.",
+    "first_gpu_gate": "Compile on the exact H200, consume pinned producer Q/K/V and noncontiguous page-size-1 NHD BF16 KV, then require bitwise-identical attention, o_proj, and stored K/V bytes before timing.",
+    "measurement": "One alternating exact M384 stock/candidate component ledger with compiler resource metadata and traffic/launch evidence.",
+    "conditional_endpoint": "Only a correct positive component may continue in the same retained lifecycle to one qualified c32 NGRAM endpoint A/B with identical target logits, tokens, acceptance, completion order, and KV ownership.",
+    "terminal": "H200_ATTENTION_TERMINAL.json"
+  },
+  "prohibitions": [
+    "Do not claim, SSH, invoke CUDA, extend the watchdog, or mutate provider lifecycle until a later spend snapshot contains this exact cumulative reservation.",
+    "Do not call the Python semantic schedule a CUDA implementation or measurement-ready kernel.",
+    "Do not change target logits, masks, BF16 paged-KV representation, request ownership, target-verification geometry, o_proj consumer, or exact bitwise gate.",
+    "Do not run a generic attention sweep, cross-tick grouping, FP8 KV proxy, or more than one canonical component and conditional endpoint pair."
+  ]
+}

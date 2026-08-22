@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "classification": "funded_retained_b200_split_reducer_timing_execution",
+  "project": "gemma4_b200_fp8_local_attention_fusion",
+  "researcher_profile": "execution",
+  "required_skills": [
+    "$researcher",
+    "$kernel-research"
+  ],
+  "execution_authorized": true,
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "decision": "promote_correct_split_reducer_to_exact_component_timing",
+  "correctness_evidence": {
+    "path": "artifacts/b200-local-paged-gqa-split-reducer-correctness-20260728t2036z/CORRECTNESS_TERMINAL.json",
+    "sha256": "2fcf2d76dc0eb487a50ae46877d2ef69807e912eaed0c7e0633d47c4d54e6573",
+    "terminal": "correct",
+    "cache_bitwise_equal": true,
+    "output_finite": true,
+    "output_allclose_rtol_0_05_atol_0_03": true,
+    "output_cosine": 0.9999980926513672,
+    "output_max_abs": 0.015625,
+    "split_kv": true,
+    "padded_batch_size": 64,
+    "owners_per_request": 16,
+    "fresh_merge_count": "one reducer merge per (request, qo_head)"
+  },
+  "reservation": {
+    "authorized_total_usd": 4.0,
+    "reserved_at_utc": "2026-07-28T20:34:10.425222Z",
+    "durable_in_director_snapshot": true,
+    "cumulative_project_spend_before_binding_usd": 1.438386,
+    "remaining_project_ceiling_usd": 2.561614,
+    "conservative_additional_exposure_from_correctness_release_through_watchdog_usd": 1.917583,
+    "conservative_cumulative_exposure_through_watchdog_usd": 3.355969
+  },
+  "lifecycle": {
+    "provider": "nebius",
+    "provider_project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+    "instance_id": "computeinstance-i00rqcq5yzr6xc991j",
+    "disk_id": "computedisk-i00ky31am65pmpzh8z",
+    "accelerator": "nvidia-b200-sxm",
+    "claim_start_by_utc": "2026-07-28T20:50:00Z",
+    "owner_launch_by_utc": "2026-07-28T20:56:00Z",
+    "decision_negative_release_by_utc": "2026-07-28T21:02:00Z",
+    "incomplete_repair_disposition_by_utc": "2026-07-28T21:02:00Z",
+    "watchdog_deadline_utc": "2026-07-28T21:10:00Z",
+    "watchdog_unit": "gemma4-b200-cross-operator-20260728t2013z-watchdog.service",
+    "watchdog_main_pid": 3591155,
+    "watchdog_control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-b200-cross-operator-20260728t2013z-watchdog.service"
+  },
+  "immutable_scientific_contract": {
+    "phase": "decode",
+    "workload": "c32/4214/358 text-only non-reasoning",
+    "geometry": "B32, 32 Q heads, 16 KV heads, head_dim 256, page size 16, HND BF16 cache, window_left 1023, split-KV true, padded batch 64",
+    "stock": "vLLM reshape_and_cache_flash through the corrected NHD-ordered view of shared HND storage followed by the exact pinned TRT-LLM Gen consumer",
+    "candidate": "the correctness-proven FlashInfer split reducer that preserves native split (V,LSE), masks the stale final cache row, merges fresh K/V once in the final reducer, and assigns one cache owner per GQA2 pair",
+    "source_hashes": {
+      "candidate/local_paged_gqa_split_reducer_fused.py": "aa7ac8a245365797d80c8ff89f2f27db7b1b4b02bf0f1b03cc7ee61116bc8baf",
+      "candidate/split_reducer_src/batch_decode_kernel.cu": "3ca34c6d455d9776ca33b1fffa55fd4b8646d88bea7269c27b5d353187a7910c",
+      "candidate/split_reducer_src/batch_decode_config.inc": "7bf27db776052bec0a13a7a76d0cdcd0b326138d596a5450a8f783f6ba14cbfc",
+      "candidate/check_split_reducer_correctness_b200.py": "be1a9ec88bb31da1636b869f2e88b0126d43fd32309f809a15f30910ca9edb98",
+      "inputs/pinned/flashinfer-0.6.6/split-reducer-source/MANIFEST.sha256": "e3bf5e617be297529619788171fdba55822d0d859a3ec0cbbf9c5efd14b24067"
+    },
+    "stock_cubin_sha256": "a5ae26d06e8463baf3e1dac3251633b70ece90ca612a10afa6b09925578fd9be",
+    "warmups_per_arm": 8,
+    "timed_samples_per_arm": 40,
+    "sample_order": "deterministic alternating pairs with 20 stock-first and 20 candidate-first pairs",
+    "timed_region": "CUDA events around only the complete stock append-plus-consumer or candidate fused consumer; exclude JIT, allocation, tensor construction, planning, serialization, and artifact I/O",
+    "synchronization": "synchronize before the first sample and after each recorded CUDA event pair",
+    "output_consumption": "consume complete final outputs and mutated cache state after timing",
+    "correctness_guards": "retain finite output, full-cache bitwise equality, rtol 0.05, atol 0.03, cosine >=0.999, exact split plan, one KV owner, and one fresh merge",
+    "whole_request_projection": "multiply stock-minus-candidate milliseconds per B32 local-attention call by 17,900 local-layer decode calls and divide by 1000",
+    "endpoint_requests": 0,
+    "model_or_checkpoint_load": false
+  },
+  "timing_decision": {
+    "primary": "paired median stock-minus-candidate component milliseconds",
+    "report": [
+      "stock and candidate p10, p50, p90 milliseconds",
+      "paired delta distribution and deterministic bootstrap 95% interval",
+      "projected seconds saved per request over 17,900 local-attention calls",
+      "all correctness guards and source identities"
+    ],
+    "positive": "paired median delta is positive, its deterministic bootstrap 95% lower bound is above zero, and every correctness and structural guard passes",
+    "negative": "candidate median is no faster or a finite structurally valid timing result fails the promotion rule",
+    "incomplete": "build, import, runtime, nonfinite, structural, or artifact failure before an interpretable paired timing terminal"
+  },
+  "mutable_execution_scope": {
+    "timing_runner_destination": "candidate/time_split_reducer_b200.py",
+    "owner_destination": "b200_local_paged_gqa_split_reducer_timing_owner.sh",
+    "preclaim_terminal_destination": "PRECLAIM_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_TIMING_TERMINAL.json",
+    "artifact_root": "artifacts/b200-local-paged-gqa-split-reducer-timing-20260728t2044z",
+    "remote_root": "/home/glmrunner/b200-local-paged-gqa-split-reducer-timing-20260728t2044z",
+    "required_before_owner_launch": "hash-bind the timing runner, owner, preclaim terminal, correctness terminal, repaired candidate sources, and pinned identities",
+    "permitted_repairs": [
+      "ordinary timing harness, CUDA-event, import, path, permission, container, serialization, retrieval, and launcher defects",
+      "hash-bound project-local repair tar under the continuous claim"
+    ],
+    "forbidden": [
+      "change to geometry, producer, consumer, cache semantics, reducer algebra, split plan, correctness gates, or source implementation",
+      "include planning, allocation, JIT, serialization, or I/O in either timed region",
+      "replay the consumed correctness-only pair or the failed tail-output candidate",
+      "load or restage the checkpoint",
+      "run an endpoint",
+      "modify provider lifecycle or the M32 dispatcher"
+    ]
+  },
+  "researcher_execution": {
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_b200_fp8_local_attention_fusion --bench b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j --lease-seconds 3600",
+    "owner_start_command": "OWNER_DEADLINE_UTC=2026-07-28T21:02:00Z OWNER_ARTIFACT_ROOT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_local_attention_fusion/artifacts/b200-local-paged-gqa-split-reducer-timing-20260728t2044z OWNER_REMOTE_ROOT=/home/glmrunner/b200-local-paged-gqa-split-reducer-timing-20260728t2044z OWNER_EXECUTION_BINDING=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_local_attention_fusion/DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_TIMING_EXECUTION_20260728T2044Z.json /root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_local_attention_fusion/artifacts/b200-local-paged-gqa-split-reducer-timing-20260728t2044z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_local_attention_fusion/artifacts/b200-local-paged-gqa-split-reducer-timing-20260728t2044z/OWNER_PROGRESS.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_local_attention_fusion --unit-manager pid -- ./b200_local_paged_gqa_split_reducer_timing_owner.sh",
+    "launch_sequence": "Claim by 20:50Z, implement and hash-bind the three named timing artifacts inside the continuous claim, then launch the repair-capable owner by 20:56Z.",
+    "durable_owner": "Atomically record PID, start ticks, state path, artifact root, bench, phase, expected terminal, and 2026-07-28T21:02:00Z deadline in STATUS.json.active_session."
+  },
+  "terminal_dispositions": {
+    "positive": "Persist the interpretable timing terminal, release the unoccupied bench available, and wake the director for endpoint-integration selection.",
+    "decision_bearing_negative": "Persist the interpretable paired timing terminal and release the unoccupied bench available by 2026-07-28T21:02:00Z.",
+    "incomplete_or_uninterpretable": "Retain the continuous claim for bounded same-claim repair only while repair, terminal, and safe disposition still fit before 2026-07-28T21:02:00Z.",
+    "deadline_or_unsafe": "At the absolute disposition fence, or if the guest is unsafe or unreachable, persist the diagnostic and release to maintenance for director handling."
+  }
+}

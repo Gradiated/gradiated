@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fp8_downproj_residual_norm_fusion",
+  "registered_at_utc": "2026-07-30T07:58:09Z",
+  "absolute_deadline_utc": "2026-07-30T09:13:09Z",
+  "causal_hypothesis": "A single row-owned finalizer after the unchanged FP8 down-projection can retain the two BF16 rounding boundaries in shared memory, persist only the next-layer residual, and emit the next layer's exact dynamic-E4M3 input and scale. This removes two launches and the normalized-BF16 global store/read/re-read path without duplicating the down GEMM.",
+  "expected_direction": "Lower boundary traffic and launch count than the materialized control; identical reference residual, E4M3 bytes, scale bits, and sampled first-consumer BF16 fragments.",
+  "stock_control": "Pinned SGLang v0.5.13 FP8 down GEMM -> gemma_rmsnorm_residual_scalar -> next RMSNorm -> per_token_quant_fp8_small_batch_kernel -> unchanged QKV fp8_scaled_mm.",
+  "candidate_change": "Keep the stock down GEMM and fuse only post-FF RMSNorm, residual/scalar, next input RMSNorm, and dynamic E4M3 production into one row-owned SM90a finalizer.",
+  "scope": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "hardware_contract": "NVIDIA H200 SXM, sm_90a, 132 SMs",
+    "m": [
+      1,
+      16,
+      32
+    ],
+    "down_k": 21504,
+    "hidden_n": 5376,
+    "qkv_n": 16384,
+    "tensor_parallel_size": 1,
+    "dtype_contract": "dynamic per-token E4M3FN activations and per-channel E4M3FN weights; FP32 scales; BF16 down, residual, normalized boundary, and QKV output"
+  },
+  "quality_and_correctness_gates": [
+    "Control and candidate required residual BF16 bytes are identical.",
+    "Control and candidate next-normalized BF16 bytes are identical under the registered deterministic reduction tree.",
+    "Control and candidate FP32 scale bits and complete E4M3 bytes are identical, including all-zero and signed-zero rows.",
+    "Eight Q/K/V-spanning sampled first-consumer BF16 columns are identical.",
+    "No down-projection FLOP duplication and no precision, scale-granularity, tensor-parallel, or CUDA-graph semantic change."
+  ],
+  "slo": {
+    "component": "Candidate compulsory boundary bytes must be lower than control and launch count must fall from three post-down producer launches to one.",
+    "whole_request": "Report a source/telemetry-bounded ceiling against 0.625149101968745 seconds/request; do not claim measured endpoint or component latency."
+  },
+  "budget": {
+    "maximum_spend_usd": 0.0,
+    "gpu_or_cuda_invocations": 0,
+    "wall_clock_minutes": 75,
+    "storage_gib": 2,
+    "cleanup": "No external resources or background processes; retain only project-local source and compact JSON/stdout artifacts."
+  },
+  "execution": {
+    "seed": 20260730,
+    "oracle_command": "python3 fragment_oracle.py --output FRAGMENT_ORACLE_RESULT.json",
+    "analysis_command": "python3 mechanism_analysis.py --oracle FRAGMENT_ORACLE_RESULT.json --output MECHANISM_ANALYSIS.json --consumer-contract H200_EXACT_CONSUMER_CONTRACT.json",
+    "artifacts": [
+      "FRAGMENT_ORACLE_RESULT.json",
+      "MECHANISM_ANALYSIS.json",
+      "H200_EXACT_CONSUMER_CONTRACT.json",
+      "MECHANISM_TERMINAL.json"
+    ]
+  },
+  "baseline_and_attribution": {
+    "telemetry": "../gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/control-profile.sqlite",
+    "method": "Read-only kernel totals and source-derived exact invocation geometry; count only non-overlapping post-down launches in the candidate boundary.",
+    "residual_bottleneck": "Both the stock down GEMM and next QKV GEMM remain unchanged; candidate scope is only the inter-GEMM row dataflow."
+  },
+  "proxy_fidelity": {
+    "class": "deterministic CPU/reference fragment oracle plus analytical SM90a resource/traffic model",
+    "transfer_limit": "No target-hardware latency, compiler resource, CUTLASS FastAccum-order, or endpoint claim. Promotion requires the separately emitted exact-consumer H200 contract."
+  }
+}

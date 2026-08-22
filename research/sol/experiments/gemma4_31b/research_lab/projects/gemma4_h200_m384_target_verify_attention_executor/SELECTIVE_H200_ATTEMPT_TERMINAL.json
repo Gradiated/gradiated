@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "classification": "recoverable_pre_cuda_producer_packet_launcher_defect",
+  "scientific_sample_consumed": false,
+  "cuda_invocation_started": false,
+  "candidate_submission_started": false,
+  "bench": "h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt",
+  "claim": {"claimed_at_utc": "2026-07-30T10:55:18.604210Z", "released_at_utc": "2026-07-30T11:05:22.225471Z", "release_condition": "maintenance"},
+  "producer_stage": {"state": "completed_and_retrieved", "manifest": "artifacts/h200-m384-selective-20260730t1044z/REMOTE_SELECTIVE_ACQUISITION_MANIFEST.json", "manifest_sha256": "7356b64c48602d8078b36c60baab3cb69848939944dbf97aa3174497ab42679a", "official_module_exercise": "artifacts/h200-m384-selective-20260730t1044z/REMOTE_OFFICIAL_MODULE_EXERCISE.json", "exercise_sha256": "9a2c2af76051cd14396b6159ada867212f09069f73254e8ec37378438be6eba4"},
+  "failure": {"stage": "runner_packet_open", "error": "FileNotFoundError: /work/stage/producer_packet.json", "remote_stderr_sha256": "36129ff37f3885c4c8fe9651e71e3f648011e6299ce1423f2c90de84b57aeb71", "owner_failure_sha256": "6c3c80f36bc02670f799e20766fca6ed92b2f2bb3dc183219efdca7beff1f773"},
+  "disposition": "The staged selective producer is durable. A future director-approved repair must retain or re-admit a bench and repair only the runner's actual producer-packet construction/installed-SGLang consumer boundary; it must not rerun a scientific component arm or infer any component result from this attempt.",
+  "actual_spend_usd_conservative_through_watchdog_cleanup": 4.880629836541667
+}

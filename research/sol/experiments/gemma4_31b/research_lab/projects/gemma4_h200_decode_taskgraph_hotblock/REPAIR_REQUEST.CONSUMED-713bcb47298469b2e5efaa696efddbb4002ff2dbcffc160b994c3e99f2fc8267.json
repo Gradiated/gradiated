@@ -1,0 +1,41 @@
+{
+  "boundary_smoke": {
+    "result": {
+      "checksum": 257.79296875,
+      "finite": true,
+      "pass": true,
+      "w_shape": [
+        16,
+        32
+      ],
+      "w_stride": [
+        1,
+        16
+      ],
+      "y_shape": [
+        1,
+        32
+      ]
+    },
+    "stderr": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-2.stderr",
+    "stderr_sha256": "a487e736c17ade3b22d2566839ce303d026fb18c9928e9bb07ca99872e34f726",
+    "stdout": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-2.stdout",
+    "stdout_sha256": "8659fd3a4a934a410428808a1c8f2c2c2da83098e9e2e40d18ff7041b6b36acc"
+  },
+  "causal_amendment": "Quantize real [N,K] q_proj per output row and pass transpose view [K,N] with stride (1,K) to stock fp8_scaled_mm; candidate reads the identical physical column-major layout.",
+  "invalid_duplicate_attempts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "predecessor_repair_id": "fp8-prologue-r1",
+  "prior_science_consumed": false,
+  "ready_sha256": "dc1bb084edea97450c85314f720d462a03ab118ac907cacceab329b925b189c3",
+  "repair_id": "fp8-prologue-r5",
+  "retry_scope": "worker_only",
+  "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+  "runner_sha256": "0e22bcbb3068fe06368bb6ddb57212cf91af64c6aad19a84b771289416d3c7e6",
+  "schema_version": 1,
+  "unchanged_scientific_contract": true
+}

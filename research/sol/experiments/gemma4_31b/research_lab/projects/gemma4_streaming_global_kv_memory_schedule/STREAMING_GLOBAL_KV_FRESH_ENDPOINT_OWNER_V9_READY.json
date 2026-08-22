@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "classification": "fresh_h200_streamed_endpoint_owner_v9_ready",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "publication": {
+    "gpu_budget": 0,
+    "provider_spend_usd": 0,
+    "claim_allowed": false,
+    "later_director_execution_binding_required": true,
+    "bench_disposition": "maintenance_unclaimed"
+  },
+  "repair_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V9_OFFLINE_OWNER_REPAIR_20260729T1343Z.json",
+    "sha256": "7bf5f634a626a208815a7654208ecd1d2d238938c9fae735c4fe5c71d5654aa6"
+  },
+  "source_failure": {
+    "path": "artifacts/streaming-global-kv-fresh-h200-20260729t1324z/OWNER_V8_PRE_SCIENCE_FAILURE.json",
+    "sha256": "0156b881aa6b097b55b2c10c63b3da673d3adb35d3712c72b730590b2b03420b",
+    "candidate_sample_consumed": false
+  },
+  "owner": {
+    "path": "run_streaming_global_kv_h200_owner_v9.sh",
+    "sha256": "6bbb0122d1ec88c122bb28c98232a566b06bb5dfe0093a42464d04085a67223c",
+    "derived_only_from": {
+      "path": "run_streaming_global_kv_h200_owner_v8.sh",
+      "sha256": "620be2bd084f28dda5cbbc1a17a51b900f1192a6c34ce8c700000156ba56d539"
+    },
+    "claim_generation": "Captured only from the future atomic claim response and used for heartbeat and generation-fenced release.",
+    "repair_flow": "Fresh repair IDs use the v9 namespace; recoverable staging, server, and endpoint failures retain the claim and wait for a hash-bound request.",
+    "bounded_children": "Pool, SSH, SCP, Docker, repair, endpoint, retrieval, and release children are bounded by release_by_utc."
+  },
+  "v9_repairs": {
+    "retain_local_assignment": "scope, diagnostic, and repair ID are assigned in separate local statements under set -u.",
+    "manifest_stdin_isolation": "Every SCP invocation redirects stdin from /dev/null so it cannot consume the checkpoint-manifest loop.",
+    "import_correct_module_staging": "inputs/activated_multiresolution_global_kv.py is staged as guest input multiresolution_global_kv.py, matching the hook import.",
+    "guest_checkpoint_integrity": "Before image pull or server launch, guest Python streams SHA-256 for every manifest row and atomically writes CHECKPOINT_INTEGRITY.json containing all eight verified rows and the manifest digest."
+  },
+  "validation": {
+    "bash_syntax": "passed",
+    "static_contract": "passed",
+    "gpu_or_provider_work_performed": false,
+    "checkpoint_transfer_or_hash_execution_performed": false
+  },
+  "immutable_science": {
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "endpoint_sha256": "e41e3b79d10cd884b6670f32a77752ecb5c01c01cb24f7a3583b90cf8bfa2ae0",
+    "hook_sha256": "8423326774d7bf6da9dd7e163889a5b5b444f40fc7a4f5748e33b5dcd0426523",
+    "candidate_source_sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a",
+    "activated_source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "candidate_submission_limit": 1,
+    "stock_arm_forbidden": true,
+    "materializing_arm_replay_forbidden": true,
+    "cuda_producer_replay_forbidden": true
+  }
+}

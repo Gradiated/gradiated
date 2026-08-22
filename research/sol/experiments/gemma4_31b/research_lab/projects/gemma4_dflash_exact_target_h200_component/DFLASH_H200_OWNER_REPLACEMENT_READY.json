@@ -1,0 +1,152 @@
+{
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claimed_at": "2026-07-29T22:47:36.830795Z",
+    "new_claim_allowed": false,
+    "project": "gemma4_dflash_exact_target_h200_component"
+  },
+  "created_at_utc": "2026-07-29T23:01:12Z",
+  "decision": "retrieval_only_replacement_owner_ready_pending_director_handoff",
+  "detached_owner": {
+    "argv": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-replacement-r2-20260729t2301z/OWNER_STATE.json",
+      "--log",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-replacement-r2-20260729t2301z/OWNER.log",
+      "--cwd",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component",
+      "--unit-manager",
+      "pid",
+      "--",
+      "python3",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_replacement_owner.py",
+      "--execution-binding",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_H200_COMPONENT_EXECUTION_20260729T2247Z.json",
+      "--replacement-ready",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_OWNER_REPLACEMENT_READY.json",
+      "--handoff-binding",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_REPLACEMENT_OWNER_HANDOFF.json",
+      "--artifact-root",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/run",
+      "--predecessor-pid",
+      "362641",
+      "--predecessor-start-ticks",
+      "148132006"
+    ],
+    "start_authorized": false,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-replacement-r2-20260729t2301z/OWNER_STATE.json",
+    "unit_manager": "pid"
+  },
+  "execution_contract": {
+    "absolute_deadline_utc": "2026-07-30T00:27:00Z",
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/run",
+    "existing_heartbeat_implementation_reused_unchanged": true,
+    "fail_closed_on_unclassified_consumption": true,
+    "first_remote_operation": "package the quiescent existing remote run into an outside temporary path, content-address it there, retrieve it, and classify the persisted output generation",
+    "historical_request_25_replay_allowed": false,
+    "remote_archive_inside_source_tree_allowed": false,
+    "worker_cuda_model_load_or_arm_before_adoption_allowed": false
+  },
+  "handoff_binding_contract": {
+    "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_REPLACEMENT_OWNER_HANDOFF.json",
+    "required_fields": {
+      "claim_generation": "2026-07-29T22:47:36.830795Z",
+      "decision": "launch_retrieval_first_replacement_owner",
+      "execution_binding_sha256": "ee13044f2341c95b09d7d4baf0b8fb1a481c6ab24bd82cd7029f162f2da1b095",
+      "predecessor_pid": 362641,
+      "predecessor_start_ticks": 148132006,
+      "project": "gemma4_dflash_exact_target_h200_component",
+      "replacement_owner_sha256": "6a1ce229214431d242f6fffa9e4ab8473452431f7ee6ff42561b1044eb959a35",
+      "replacement_ready_sha256": "DIRECTOR_MUST_BIND_PUBLISHED_READY_SHA256",
+      "schema_version": 1
+    }
+  },
+  "immutable_files": [
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_replacement_owner.py",
+      "sha256": "6a1ce229214431d242f6fffa9e4ab8473452431f7ee6ff42561b1044eb959a35"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_owner.py",
+      "sha256": "eaec2de1e57024a5407f6c4804454a000d6a70bb320614341ee537f103bd8a3d"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_H200_COMPONENT_EXECUTION_20260729T2247Z.json",
+      "sha256": "ee13044f2341c95b09d7d4baf0b8fb1a481c6ab24bd82cd7029f162f2da1b095"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_RETRIEVAL_ONLY_REPLACEMENT_REPAIR_R2_20260729T2253Z.json",
+      "sha256": "f98717bb15de7e517d633752b6d7f53f92d2e01233fb9a2f3cab459852be82e3"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_COMPONENT_READY.json",
+      "sha256": "ca18a8ecc1949fa2cc751a992d9c8af5adfc04e66b886e25e51fb45d8b639bc7"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_COMPONENT_PACKET.tar",
+      "sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/OWNER_STATE.json",
+      "sha256": "d7ace584460117aeb7d2f4eab208d428e48cd7d5deed6457c5eb42f2c1c77ab8"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/run/retrieval-0.json",
+      "sha256": "5ce523ea31f9c3f23434b16256d2e1f33ea43623581b1d6752918aae2a991326"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/run/.repair-handshakes/dflash-h200-20260729t224736z-repair-0/REPAIR_READY.json",
+      "sha256": "a3275bd3e034ab23016b6ad42dce8352e5eaf997694914eb047d1bc039fc0b0c"
+    },
+    {
+      "absolute_path": "/root/workspace/research/factory/tools/detached-owner",
+      "sha256": "a2c7b59af7de411cf465288d106b75a940fa3668461b98b6a74dfa1c4973a456"
+    },
+    {
+      "absolute_path": "/root/workspace/research/factory/tools/repair-handshake",
+      "sha256": "af064009112adeab889062a7b7306ceff21962c2be891eb56e77654c4114ae65"
+    },
+    {
+      "absolute_path": "/root/workspace/research/factory/src/grad_research/gpu_pool.py",
+      "sha256": "f722fd9248bf88257a3074942389bdc60d1b4806534e1b51252a9f6f11a502c6"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_OWNER_REPLACEMENT_VALIDATION.json",
+      "sha256": "62e45d7b4dcb862e5a94a2e85d228b059fac0bf984b801c608644597857b32b0"
+    }
+  ],
+  "immutable_science": {
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "packet_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "predecessor": {
+    "concurrent_owner_allowed": false,
+    "owner_state_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-owner-20260729t2247z/OWNER_STATE.json",
+    "pid": 362641,
+    "start_ticks": 148132006,
+    "stop_authorized_by_this_artifact": false
+  },
+  "provider_actions_performed": {
+    "claim": false,
+    "docker": false,
+    "endpoint_traffic": false,
+    "lifecycle": false,
+    "ssh": false
+  },
+  "schema_version": 1,
+  "validation": {
+    "path": "DFLASH_H200_OWNER_REPLACEMENT_VALIDATION.json",
+    "result": "pass",
+    "sha256": "62e45d7b4dcb862e5a94a2e85d228b059fac0bf984b801c608644597857b32b0"
+  }
+}

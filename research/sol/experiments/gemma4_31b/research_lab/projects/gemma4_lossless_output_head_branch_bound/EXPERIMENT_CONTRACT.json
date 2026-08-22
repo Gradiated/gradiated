@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-29T16:55:15Z",
+  "absolute_deadline_utc": "2026-07-29T17:40:15Z",
+  "question": "Can a certified partial-dot plus residual-Cauchy search preserve the stock Gemma 4 top logit while avoiding a material fraction of the tied output-head weight reads?",
+  "causal_hypothesis": "The 262144 x 5376 BF16 tied head is weight-streaming compulsory work. A common low-dimensional coordinate index could read selected coordinates for every vocabulary row, use an L2 residual bound to reject rows, and read the remaining coordinates only for survivors. The expected falsifier is that high-dimensional residual energy leaves nearly every row active until the selected-coordinate read already approaches the dense head.",
+  "stock_control": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [262144, 5376],
+    "weight_dtype": "bfloat16",
+    "consumer": "SGLang LogitsProcessor._compute_lm_head: hidden_states converted to lm_head.weight dtype, dense matmul against tied lm_head.weight.T, then final_logit_softcapping=30",
+    "topology": "TP1/PP1 tied ParallelLMHead or embed_tokens path"
+  },
+  "candidate": {
+    "name": "fixed-coordinate partial-dot residual-Cauchy certificate",
+    "coordinate_order": "descending capture RMS times tied-weight column RMS; one common ordering for the complete M-row consumer",
+    "bound": "partial_dot + ||hidden_residual||_2 * ||weight_row_residual||_2, with conservative FP32 reduction and BF16 stock-matmul error envelopes",
+    "incumbents": [
+      "implementable exact rescore of the row with highest partial score",
+      "oracle best-stock lower bound to report the strongest possible pruning ceiling"
+    ],
+    "traffic_accounting": "selected coordinates for every row plus residual coordinates for the union of surviving rows across the batch; index construction excluded from steady state but index bytes reported"
+  },
+  "inputs": {
+    "capture_rows": 1536,
+    "capture_requests": 32,
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "prior_extracted_tied_weight_safetensors_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "runtime_gemma4_source_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "runtime_logits_processor_sha256": "e5d0d3a8781e74c1c7fe7508eb89d2eb198cc42bcd5e2fa4258217c756fdaf14"
+  },
+  "workload": {
+    "primary_rows": "one deterministic row per each of 32 real c32 requests",
+    "sensitivity_rows": "up to four deterministic depths per request if the primary pass fits the deadline",
+    "selected_dimensions": [256, 512, 1024, 2048, 3072, 4096, 4864],
+    "seed": 240729
+  },
+  "correctness_gate": {
+    "semantics": "lossless top-1 certification against all 262144 rows under a conservative stock BF16 matmul envelope; tanh softcap is monotone and cannot improve pruning",
+    "required": [
+      "all inputs finite and exact geometry/hash identities match",
+      "every skipped row has an upper bound below the incumbent lower bound",
+      "the reference winner remains inside every survivor set",
+      "all 262144 vocabulary rows remain reachable"
+    ]
+  },
+  "decision_gate": {
+    "promote": "at least one common-dimension operating point certifies exact top-1 and avoids at least 20% of tied-weight bytes for the physical 32-row survivor union before index/dispatch overhead",
+    "falsify": "the optimistic oracle-incumbent ceiling avoids less than 20% of tied-weight bytes, or stock-rounding certification cannot exclude material rows",
+    "transfer_limit": "CPU/reference pruning and analytical bytes only; no target-H200 latency or endpoint claim"
+  },
+  "slo": {
+    "campaign_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "component_result_does_not_satisfy_endpoint_target": true
+  },
+  "budget": {
+    "provider_spend_usd_max": 0.0,
+    "gpu_calls_max": 0,
+    "additional_storage_gib_max": 2,
+    "wall_clock_minutes_max": 45
+  },
+  "artifact_contract": {
+    "runner": "run_lossless_branch_bound.py",
+    "terminal": "LOSSLESS_BRANCH_BOUND_TERMINAL.json",
+    "raw_output": "artifacts/reference_run.json",
+    "failure_log": "artifacts/reference_run.stderr.log",
+    "teardown": "foreground CPU process exits; no provider or GPU state exists"
+  }
+}

@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "classification": "source_complete_decode_gated_activation_fp8_candidate",
+  "created_at_utc": "2026-07-29T15:03:20Z",
+  "decision": "survives_for_one_later_exact_h200_component_run",
+  "evidence_scope": {
+    "gpu_used_this_turn": false,
+    "cuda_executed_this_turn": false,
+    "provider_or_pool_called": false,
+    "paid_spend_usd": 0.0,
+    "target_hardware_result": "unexecuted_by_contract",
+    "new_candidate_and_evidence_bytes_excluding_this_result": 44407,
+    "storage_budget_bytes": 2147483648
+  },
+  "authoritative_identities": {
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "checkpoint_bytes": 62578655208,
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "hidden_size": 5376,
+      "intermediate_size": 21504,
+      "num_hidden_layers": 60,
+      "hidden_activation": "gelu_pytorch_tanh",
+      "tensor_parallel": 1
+    },
+    "runtime": {
+      "release": "sglang v0.5.13",
+      "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+      "model_dtype": "bfloat16",
+      "quantization": "fp8",
+      "maximum_running_requests": 32,
+      "cuda_graph_max_batch_size": 32
+    },
+    "workload": {
+      "declared_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+      "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+      "concurrency": 32,
+      "requests": 32,
+      "completion_tokens_per_request": 358
+    },
+    "target": {
+      "accelerator": "NVIDIA H200 SXM",
+      "architecture": "sm_90a",
+      "sms": 132,
+      "l2_mib": 50,
+      "hbm3e_bandwidth_gb_s": 4800.0,
+      "qualified_denominator_seconds_per_request": 0.625149101968745,
+      "target_seconds_per_request": 0.500119281574996
+    }
+  },
+  "production_boundary": {
+    "phase": "decode_M_1_to_32",
+    "path": [
+      "Gemma4DecoderLayer.mlp is the Gemma3MLP class alias",
+      "Gemma3MLP.gate_up_proj returns contiguous BF16 [M,43008]",
+      "GeluAndMul invokes gelu_tanh_and_mul on the two [M,21504] halves",
+      "RowParallelLinear.down_proj invokes Fp8LinearMethod.apply",
+      "apply_fp8_linear invokes sglang_per_token_quant_fp8",
+      "fp8_scaled_mm consumes FP8 [M,21504], FP32 [M,1], FP8 [21504,5376], and FP32 [5376]"
+    ],
+    "ownership_and_reuse": {
+      "gate_up": "The merged gate/up output has one consumer, GeluAndMul.",
+      "activated_bf16": "The activated BF16 tensor has one consumer, down_proj; Fp8LinearMethod quantizes it immediately and no residual or observer reuses it.",
+      "down_projection": "The unchanged RowParallelLinear consumer retains its bias, reduction, output dtype, and TP behavior. Candidate dispatch is restricted to TP=1."
+    },
+    "exact_geometry": {
+      "gate_up_shape_m32": [
+        32,
+        43008
+      ],
+      "gate_up_stride_m32": [
+        43008,
+        1
+      ],
+      "gate_up_dtype": "bfloat16",
+      "gate_half": "columns [0,21504)",
+      "up_half": "columns [21504,43008)",
+      "activation": "GELU tanh approximation on gate in FP32, multiply by up in FP32, single round-to-nearest-even store to BF16",
+      "activated_shape_m32": [
+        32,
+        21504
+      ],
+      "quantized_activation_shape_m32": [
+        32,
+        21504
+      ],
+      "quantized_activation_dtype": "float8_e4m3fn",
+      "activation_scale_shape_m32": [
+        32,
+        1
+      ],
+      "activation_scale_dtype": "float32",
+      "scale_convention": "per-token dequantization multiplier max(abs(BF16 activated row))/448; zero row emits scale 0 and FP8 zeros",
+      "raw_checkpoint_down_weight_shape_n_k": [
+        5376,
+        21504
+      ],
+      "consumer_down_weight_shape_k_n": [
+        21504,
+        5376
+      ],
+      "consumer_down_weight_stride": [
+        1,
+        21504
+      ],
+      "weight_scale_shape": [
+        5376
+      ],
+      "consumer_output_shape_m32": [
+        32,
+        5376
+      ],
+      "consumer_output_dtype": "bfloat16"
+    },
+    "execution": {
+      "stream": "Candidate uses at::cuda::getCurrentCUDAStream for the gate_up device, matching both pinned producers and the unchanged consumer.",
+      "cuda_graph": "Extension compilation is outside capture. The runner captures and replays both complete baseline and candidate down-projection components at M=32.",
+      "fallback": "M>32, non-BF16, non-2D, non-43008, non-CUDA, and TP>1 inputs retain the original GeluAndMul then Fp8LinearMethod path."
+    },
+    "pinned_source": [
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma4_causal.py",
+        "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/gemma3_causal.py",
+        "sha256": "a9827bde583c5b8b0abfeaced097c4e9d060fb99ec2961b4f9c66173d3027282"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/activation.cu",
+        "sha256": "dffb5a9cbbb4d26a75e7e8aea0c0acfa2e68c64158466854fd6d54262103a7d6"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/fp8.py",
+        "sha256": "c7368db317513e5823283eb5567d15fdb742c3b01a98bfc483cb500291b4285a"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/fp8_kernel.py",
+        "sha256": "95882e4fed8ac449240ffc8e62b13176bb5057db6c77a06cdfcfffa5f5d89a06"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/fp8_utils.py",
+        "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9"
+      },
+      {
+        "path": "../gemma4_h200_fp8_layer_dataflow_fusion/inputs/source/per_token_quant_fp8.cu",
+        "sha256": "c8a3e755dc165cecfa09232bed58e8b36010061f050acf2f82722b75c3c1edb8"
+      }
+    ]
+  },
+  "candidate": {
+    "mechanism": "Fuse only GeluAndMul's BF16 producer and the adjacent per-token dynamic-E4M3 quantizer. Preserve the exact single BF16 activation rounding in 43,008 bytes of per-CTA shared memory, then feed the FP8 activation and FP32 scale to unchanged fp8_scaled_mm.",
+    "semantics": "Semantics-preserving for the pinned finite decode contract; model weights, gate/up projection, down projection, residuals, attention, FP8 convention, and output dtype are unchanged.",
+    "files": [
+      {
+        "path": "gated_activation_fp8_decode.cu",
+        "sha256": "2b5c9d0e799c64690a002e3d05a2d744135bf4b17494601154585faf882e6458",
+        "role": "exact sm90a fused producer"
+      },
+      {
+        "path": "gated_activation_fp8_decode.py",
+        "sha256": "7f5aaa9467fca4fe979470d32a21fa7038236ff760d08690c505fa4ab6506e38",
+        "role": "single-architecture extension loader"
+      },
+      {
+        "path": "runtime_adapter.py",
+        "sha256": "16d5f3eaf7a6061e724624e532a709c9190c855368127524a8c67e6390f9b476",
+        "role": "Gemma4DecoderLayer-local MLP and prequantized down-projection adapter with stock fallback"
+      },
+      {
+        "path": "cpu_oracle.py",
+        "sha256": "1b77e6d7d3eadb1bab7467ff716050f63b8ab7d65ba99e007ba6c06f237252f6",
+        "role": "pure-CPU BF16, GELU(tanh), E4M3, zero, and counterfactual oracle"
+      },
+      {
+        "path": "h200_runner.py",
+        "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb",
+        "role": "project-local real layer-0 down-weight H200 consumer, M=1/16/32 timing, numerical ledger, path proof, and dual-arm CUDA graph runner"
+      }
+    ]
+  },
+  "correctness_evidence": {
+    "cpu_oracle": {
+      "path": "CPU_ORACLE_RESULT.json",
+      "sha256": "47c42ed598bad31dc756b4b93b2ebbb1235cf0d760e6e43326f16940bca38d2c",
+      "classification": "cpu_oracle_pass",
+      "cases": [
+        "random with outliers M=1",
+        "random with outliers M=16",
+        "random with outliers M=32",
+        "zero M=1",
+        "tiny M=1",
+        "extreme M=1"
+      ],
+      "candidate_activated_value_match_fraction": 1.0,
+      "candidate_quantized_value_match_fraction": 1.0,
+      "candidate_scale_max_abs_error": 0.0,
+      "candidate_dequantized_max_abs_error": 0.0,
+      "candidate_nonfinite_count": 0,
+      "m32_two_round_counterfactual": {
+        "activated_value_match_fraction": 0.7254217238653273,
+        "quantized_value_match_fraction": 0.9832589285714286,
+        "dequantized_relative_l2_error": 0.008011841319275018
+      },
+      "evidence_label": "analytical pure-CPU execution of pinned finite arithmetic and representation; target CUDA execution remains required"
+    },
+    "target_runner": {
+      "contract_path": "H200_RUNNER_CONTRACT.json",
+      "contract_sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba",
+      "status": "source_complete_and_locally_parsed; target CUDA intentionally unexecuted",
+      "required_shapes": [
+        1,
+        16,
+        32
+      ],
+      "required_primary": "M=32 real layer-0 down-projection fp8_scaled_mm with complete output consumption and baseline/candidate CUDA-graph replay",
+      "immutable_input_rule": "Before a future claim, materialize a single-tensor safetensors and manifest under this project. The runner rejects a shared-path component or a SHA/checkpoint/key mismatch."
+    },
+    "offline_validation": {
+      "python_ast_and_bytecode": "pass",
+      "runtime_dispatch_boundaries": "pass",
+      "runner_contract_parse": "pass",
+      "result_json_parse": "pass",
+      "devex_check": "pass"
+    }
+  },
+  "physical_hypothesis": {
+    "regime": "launch-sensitive, underfilled-grid elementwise producer adjacent to an unchanged weight-dominated FP8 GEMM",
+    "causal_change": "Replace separate one-round BF16 GeluAndMul and two-pass dynamic-E4M3 quantization launches with one fused launch and a shared-memory BF16 handoff.",
+    "geometry_m32": {
+      "candidate_grid_ctas": 32,
+      "threads_per_cta": 1024,
+      "warps_per_cta": 32,
+      "grid_waves_on_132_sms": 0.24242424242424243,
+      "dynamic_shared_memory_bytes_per_cta": 43008,
+      "activated_elements": 688128,
+      "activated_bf16_bytes": 1376256
+    },
+    "per_layer_m32": {
+      "baseline_launches_activation_through_down_projection": 3,
+      "candidate_launches_activation_through_down_projection": 2,
+      "standalone_launches_removed": 1,
+      "contractual_logical_intermediate_bytes_removed": 2752512,
+      "contractual_derivation": "one 1,376,256-byte BF16 activation write plus one compulsory consumer read",
+      "source_level_global_load_store_bytes_removed": 4128768,
+      "source_level_derivation": "the pinned small-batch quantizer reads the BF16 activation once for amax and again for conversion, in addition to the producer write",
+      "unchanged_fp8_output_bytes": 688128,
+      "unchanged_scale_bytes": 128,
+      "hbm_only_transfer_time_floor_microseconds_contractual_at_4_8_tb_s": 0.57344,
+      "hbm_only_transfer_time_floor_microseconds_source_level_at_4_8_tb_s": 0.86016,
+      "dram_byte_prediction": "0 to 4,128,768 fewer DRAM bytes; the 1.3125-MiB activated tensor fits in 50-MiB L2, so removed launch count and L2/global sectors are the stronger causal discriminators"
+    },
+    "per_c32_decode_step_60_layers": {
+      "standalone_launches_removed": 60,
+      "contractual_logical_intermediate_bytes_removed": 165150720,
+      "source_level_global_load_store_bytes_removed": 247726080
+    },
+    "exact_workload_projection_358_decode_steps": {
+      "standalone_launches_removed_batch_total": 21480,
+      "standalone_launches_removed_per_completed_request": 671.25,
+      "contractual_logical_intermediate_bytes_removed_batch_total": 59123957760,
+      "contractual_logical_intermediate_bytes_removed_per_request": 1847623680.0,
+      "source_level_global_load_store_bytes_removed_batch_total": 88685936640,
+      "source_level_global_load_store_bytes_removed_per_request": 2771435520.0,
+      "launch_latency_sensitivity": [
+        {
+          "assumed_microseconds_per_removed_launch": 3.0,
+          "projected_seconds_saved_per_request": 0.00201375,
+          "projected_fraction_of_qualified_denominator": 0.003221231532858668
+        },
+        {
+          "assumed_microseconds_per_removed_launch": 4.0,
+          "projected_seconds_saved_per_request": 0.002685,
+          "projected_fraction_of_qualified_denominator": 0.00429497537714489
+        },
+        {
+          "assumed_microseconds_per_removed_launch": 5.0,
+          "projected_seconds_saved_per_request": 0.00335625,
+          "projected_fraction_of_qualified_denominator": 0.005368719221431113
+        }
+      ],
+      "evidence_label": "byte and launch counts are source-derived; launch latency sensitivity is inferred and must not be treated as a measured endpoint gain"
+    },
+    "target_falsifier": "Reject if any required row or graph arm is incomplete, candidate-path proof is absent, finite numerical tolerances fail, the candidate does not remove exactly one producer launch, or the M=32 candidate component median is not below its contemporaneous stock control."
+  },
+  "closed_mechanisms": [
+    {
+      "mechanism": "round GELU to BF16 before multiplying by the BF16 up half",
+      "classification": "typed_semantic_falsification",
+      "cause": "Pinned FlashInfer multiplies FP32 GELU by FP32-converted up and rounds only the product. The two-round counterfactual changes 27.46% of M=32 BF16 activation values and yields 0.801% dequantized relative-L2 error."
+    },
+    {
+      "mechanism": "apply the candidate outside decode M<=32 or at TP>1",
+      "classification": "out_of_scope_fallback",
+      "cause": "The project contract freezes decode c32 and TP=1; runtime adapter dispatches every other geometry to stock."
+    }
+  ],
+  "next_action": "If the director authorizes one later exact-H200 component, first materialize the hash-bound single layer-0 down-projection BF16 tensor and its manifest under this project, then run h200_runner.py once in the pinned image. Promote only a complete component_positive terminal; do not replay target CUDA after an interpretable result."
+}

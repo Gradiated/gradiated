@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T01:39:00Z",
+  "decision": "repair_only_the_retained_b200_production_build_environment",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "predecessor_scientific_binding": {
+    "path": "DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_EXECUTION_20260729T0022Z.json",
+    "sha256": "5c3c06b109470e1d27f395973a41a1c9849c775d144c93307b2b02536ff7e1c3"
+  },
+  "predecessor_retained_claim_binding": {
+    "path": "DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_RETAINED_CLAIM_MANIFEST_RELOAD_20260729T0128Z.json",
+    "sha256": "336b14df5db0016c824442bfab38b41fd834b579e520a3fffbbf420308975ff0"
+  },
+  "immutable_scientific_contract": {
+    "candidate_source_sha256": "1d1f5aba004d9e33e14a0c548eca2ea8c0e5f326fc60b1dac2334e482b30e425",
+    "checkpoint_manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1",
+    "component_replay_forbidden": true,
+    "endpoint_pair_maximum_valid_submissions": 1,
+    "fp8_producer_scales_kernel_geometry_workload_oracle_timing_unchanged": true,
+    "stock_then_candidate": true
+  },
+  "observed_pre_science_failure": {
+    "classification": "recoverable_pinned_image_cuda_development_header_visibility_defect",
+    "diagnostic": "artifacts/b200-static-scheduler-endpoint-manifest-reload-20260729t0128z/REPAIR_DIAGNOSTIC_endpoint-pre-science-1785288862-1.json",
+    "diagnostic_sha256": "db4718c43a13c6a8a4533a87132270d83e353c7dfb48edfce16c7444f5ea66d7",
+    "repair_ready": "artifacts/b200-static-scheduler-endpoint-manifest-reload-20260729t0128z/.repair-handshakes/endpoint-pre-science-1785288862-1/REPAIR_READY.json",
+    "repair_ready_sha256": "ae65c53c566e594070978c10ac88c71601a20d78385bdba28a29d0f3176a6736",
+    "first_failure": "the pinned vLLM image supplied nvcc but not cusparse.h to the extension compilation",
+    "first_smoke_followup": "staging the host CUDA include tree exposed a second build-wrapper-only error: the generated compatibility header included cutlass_extensions/common.hpp from a path not visible in the pinned source mount",
+    "first_smoke_ninja_stdout": "artifacts/b200-static-scheduler-endpoint-manifest-reload-20260729t0128z/repair-build-smoke-ninja.stdout",
+    "first_smoke_ninja_stdout_sha256": "69792243fcc9fbab00fc0336387515377d9e4f137ef34cc0a94ec14cfbcc14c4",
+    "checkpoint_finalized": true,
+    "science_started": false,
+    "candidate_cuda_invocation_started": false,
+    "endpoint_requests_submitted": 0
+  },
+  "live_claim": {
+    "bench_id": "b200-m32-static-computeinstance-i00z1c1rm2yatraaed",
+    "expected_claimed_at_utc": "2026-07-29T00:43:20.343760Z",
+    "project": "gemma4_b200_fp8_residual_hotpath",
+    "owner_pid": 3793460,
+    "owner_start_ticks": 140480999,
+    "repair_id": "endpoint-pre-science-1785288862-1",
+    "new_claim_allowed": false,
+    "release_reclaim_allowed": false,
+    "replacement_owner_allowed": false,
+    "provider_lifecycle_mutation_allowed": false
+  },
+  "mutable_repair": {
+    "artifact_root": "artifacts/b200-static-scheduler-endpoint-manifest-reload-20260729t0128z",
+    "allowed_changes": [
+      "make the exact retained host CUDA development headers visible read-only to the pinned build container",
+      "correct only the build wrapper compatibility-header include against the pinned vLLM source tree",
+      "remove only the failed pre-science build-1 directory after proving it has no BUILD_MANIFEST.json",
+      "stage the hash-bound corrected build wrapper into the existing packet",
+      "run one non-scientific exact-container compile smoke and require BUILD_MANIFEST.json with only sm_100f before issuing the repair request",
+      "hash-bind a scope-matched REPAIR_REQUEST.json and repair terminal for endpoint-pre-science-1785288862-1",
+      "let the existing heartbeating owner resume checkpoint verification, production build, and the sole endpoint pair"
+    ],
+    "forbidden_changes": [
+      "candidate CUDA source or its SHA-256",
+      "vLLM or CUTLASS source revision",
+      "checkpoint bytes, revision, image identity, FP8 producer, scales, kernel geometry, endpoint runner, workload, comparator, pair order, timing, or oracle",
+      "component replay or endpoint request before the production build terminal",
+      "a second live owner, claim release, reclaim, or provider lifecycle mutation"
+    ]
+  },
+  "gates": {
+    "repair_request_by_utc": "2026-07-29T01:50:00Z",
+    "exact_owner_identity_rechecked_once_before_request": true,
+    "exact_claim_generation_rechecked_once_before_request": true,
+    "failed_build_directory_has_no_valid_manifest": true,
+    "non_scientific_smoke_must_pass_before_request": true,
+    "publish_repair_request_as_final_mutation": true
+  },
+  "lifecycle": {
+    "release_by_utc": "2026-07-29T02:12:00Z",
+    "owner_deadline_utc": "2026-07-29T02:17:00Z",
+    "provider_cleanup_utc": "2026-07-29T02:24:07Z"
+  },
+  "fit": {
+    "nearest_measured_build_seconds": 130,
+    "checkpoint_bulk_transfer_and_manifest_finalize_complete": true,
+    "remaining_work": "build-environment repair, production build, one contemporaneous endpoint pair, terminal retrieval, release",
+    "repair_fits_release_window": true
+  },
+  "budget": {
+    "cumulative_authorized_usd": 28.0,
+    "prior_actual_usd": 15.655,
+    "additional_provider_create_allowed": false
+  }
+}

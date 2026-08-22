@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "classification": "invalid_endpoint_hook_geometry_contract_incompatible",
+  "created_at_utc": "2026-07-29T15:57:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "decision": "Close the exact streamed-global-KV U=8 representation without promotion or replay. The admitted hook and streamed consumer are KV4/head-dim512-specific, while the exact Gemma 4 checkpoint and live SGLang attention geometry are KV16/head-dim256.",
+  "candidate_submission_count": 1,
+  "candidate_evidence_valid": false,
+  "candidate_promoted": false,
+  "attempt_0": {
+    "terminal_sha256": "5a7bee8caef90a4a166ab0274a78b797adc6b6a30d60270ce55e92abc36718e9",
+    "request_count": 32,
+    "disposition": "invalid_attribution_evidence",
+    "reason": "Telemetry contained only hook installation and no layer invocation."
+  },
+  "repair": {
+    "artifact": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_INVALID_ENDPOINT_REPAIR_PATCH.json",
+    "sha256": "d5b13382b7b20eecce8469a7a47f18c51bfa3d62496cd652493b1b0df6ffc421",
+    "no_replay_guard_installed": true,
+    "corrected_endpoint_semantics_preserving": false,
+    "additional_endpoint_submitted": false
+  },
+  "lifecycle": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "released_claim_generation": "2026-07-29T14:02:13.215196Z",
+    "former_owner_pid": 102131,
+    "former_owner_start_ticks": 145439383,
+    "former_owner_absent_before_release": true,
+    "removed_container": "gemma4-streaming-global-kv-v11",
+    "removed_container_id_prefix": "b5b65d7d78d2",
+    "gpu_memory_mib_after_cleanup": 0,
+    "compute_processes_after_cleanup": 0,
+    "release_generation_fenced": true,
+    "warm_bench_reopened_for_successor": "gemma4_h200_current_norm_fp8_hotblock",
+    "watchdog_preserved": {
+      "main_pid": 91168,
+      "deadline_utc": "2026-07-29T16:40:00Z"
+    }
+  },
+  "scientific_conclusion": "This result falsifies the admitted streamed consumer representation for the exact runtime geometry. It does not establish a latency result for a newly designed KV16/head-dim256 streaming intervention."
+}

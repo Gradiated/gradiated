@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "classification": "lifecycle_pure_component_owner_prepared",
+  "completed_at_utc": "2026-07-29T07:25:00Z",
+  "scope": {"gpu_invocations": 0, "gpu_pool_calls": 0, "ssh_calls": 0, "provider_mutations": 0, "actual_spend_usd": 0.0},
+  "admission": {
+    "source_result_sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f",
+    "preparation_sha256": "9709dbd0ad78a7f5e42a7d7b8974734fb8b5aa26ebdb7d181c92e75edce350ef",
+    "claim_allowed": false,
+    "blocked_by": ["later_director_execution_binding_absent"]
+  },
+  "implementation": {
+    "owner": "run_sm120_norm_fp8_component_owner.py",
+    "owner_sha256": "70458b97114fa0116c9145dc92f366f5ae79fc44ca98e66b54a15508668a24c2",
+    "owner_validator": "validate_component_owner.py",
+    "owner_validator_sha256": "b80ae7893c18031046b21151e486d5fa004636426740d593fe42a845a399e431",
+    "offline_validation": "artifacts/COMPONENT_OWNER_OFFLINE_VALIDATION.json",
+    "offline_validation_sha256": "4edaf0402d2b8f85d4b408aada7522d0c0c00b50c49d9d8fd9d4962e3d1fd0a5",
+    "patch": "implementation/vllm026_sm120_norm_fp8_fusion.patch",
+    "patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+    "oracle": "sm120_framework_oracle.py",
+    "oracle_sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5"
+  },
+  "future_execution_contract": {
+    "atomic_claim": "after a later binding sets claim_allowed=true, atomically claim only its exact bench before heartbeat, SSH, staging, overlay creation, or component invocation; derive claimed_at only from the successful claim response",
+    "postclaim_stage": "materialize the hash-bound patch and oracle atomically under a fresh per-claim remote component root; no shared project path is resolved before the claim",
+    "runtime": "reuse and verify the resident official vLLM 0.26.0+cu129 interpreter, immutable wheel, Torch 2.11.0+cu130, and sm_120 identity",
+    "endpoint": "require director-bound health and driver-census commands; do not stop, reload, or send endpoint traffic",
+    "submission": "one fully consumed framework-oracle submission over M=1,32,33,2048, K=5376, N=16384/20480 (seven rows)",
+    "evidence": "retrieve exact correctness, stock/candidate timing, and candidate-path rows before classification",
+    "repair": "ordinary incomplete integration retains the heartbeat claim through the hash-bound framework_oracle_only repair handshake; every repair ID and every release are fenced with the returned claim generation; a positive result retains the bench and a valid non-positive result releases it to maintenance",
+    "runtime_patch": "resolve the installed vLLM package from the resident interpreter, verify admitted base-file hashes, copy it into a disposable process-local overlay, patch only that copy, and remove the overlay in the process trap; the already-loaded endpoint remains untouched"
+  },
+  "detached_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component/OWNER.log -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/run_sm120_norm_fp8_component_owner.py --binding <future-director-execution-binding.json> --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component",
+  "next_action": "A later director execution binding must set claim_allowed=true and bind the exact bench, an absolute claim_start_by_utc fence, resident runtime/wheel, endpoint health/census commands, and remote shell. It must not supply or guess claimed_at or a source checkout."
+}

@@ -1,0 +1,33 @@
+{
+  "boundary_smoke": {
+    "result": {
+      "checksum": 0.0,
+      "finite": true,
+      "pass": true,
+      "scale0": 2.2321429389771845e-15,
+      "shape": [
+        32,
+        8192
+      ]
+    },
+    "stderr": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-3.stderr",
+    "stderr_sha256": "a487e736c17ade3b22d2566839ce303d026fb18c9928e9bb07ca99872e34f726",
+    "stdout": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-3.stdout",
+    "stdout_sha256": "6f3e234a32f59e85b515492a60671223c144c19f7260b0cccc2c69c6afdaed09"
+  },
+  "causal_amendment": "Pass FP8 maximum as Triton constexpr; auto-adopt attempt-6 STOCK_SMOKE_COMPLETE without replay; run candidate correctness against full high-precision real-weight oracle plus preserved stock checksum, then enter unconsumed timing only on pass.",
+  "consumed_stage": {
+    "attempt": 6,
+    "checksum": 297.00628662109375,
+    "stage": "stock_correctness_smoke"
+  },
+  "predecessor_repair_id": "fp8-prologue-r5",
+  "ready_sha256": "9564a7ce0fade3c4a1fc19a60edf1642c8d047326f5f431e7b723e9a24752e7f",
+  "repair_id": "fp8-prologue-r6",
+  "retry_scope": "worker_only",
+  "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+  "runner_sha256": "e11fb6422c43c751f2499211cb053cac71bf7b3cb1d2ef5e80c8b80925adf634",
+  "schema_version": 1,
+  "stock_replay_forbidden": true,
+  "unchanged_scientific_contract": true
+}

@@ -1,0 +1,68 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "corrected 672-thread resource geometry erases the prior gain",
+        "activation remains hot in L2 for fp8_scaled_mm"
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "decision_resolution_per_dollar": 21.2625,
+      "discrimination_power": 0.9,
+      "evidence_scope": "source-complete corrected exact-order producer; target H200 timing intentionally belongs to its funded project",
+      "falsifier": "the funded exact-order target-H200 component is non-positive",
+      "id": "materialized_exact_producer",
+      "mechanism": "one exact producer copy and a global E4M3/FP32 interface",
+      "next_measurement": "consume the separately funded exact-order component result",
+      "observation": "The standalone corrected producer already removes one launch and the normalized-BF16 global intermediate.",
+      "readiness": 1.0,
+      "transfer_penalty": 0.25,
+      "uncertainty": 0.35
+    },
+    {
+      "competing_explanations": [
+        "one persistent cluster can serialize enough N tiles",
+        "multiple clusters can duplicate the producer cheaply",
+        "the materialized activation is already L2-resident"
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.75,
+      "decision_resolution_per_dollar": 1.0687499999999999,
+      "discrimination_power": 0.95,
+      "evidence_scope": "Gemma 4 layer-0 decode M=1/16/32, K=5376, N=16384, SGLang v0.5.13 SM90 CUTLASS consumer on H200",
+      "falsifier": "one exact H200 M=32 full-output component beats the corrected materialized control with 16x8 cluster geometry",
+      "id": "cluster_dsm_exact_qkv_handoff",
+      "mechanism": "publish exact E4M3 rows and FP32 scales in cluster DSM and copy fragments into each CTA's WGMMA staging storage",
+      "next_measurement": "Only after a new source implementation exists: one M=32 real layer-0 QKV corrected-materialized versus 16-cluster x 8-CTA DSM comparison",
+      "observation": "The pinned M<=32 QKV path launches 256 cluster-1 CTAs; DSM visibility ends at the cluster boundary.",
+      "readiness": 0.15,
+      "transfer_penalty": 0.6,
+      "uncertainty": 0.25
+    },
+    {
+      "competing_explanations": [
+        "scalar normalization can hide under weight TMA",
+        "larger persistent groups can amortize production"
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.7,
+      "decision_resolution_per_dollar": 0.0,
+      "discrimination_power": 0.9,
+      "evidence_scope": "same exact consumer; tile groups limited to the portable eight-CTA cluster",
+      "falsifier": "a group size <=8 with complete exact bytes has lower component latency than the materialized control",
+      "id": "bounded_n_tile_recomputation",
+      "mechanism": "recompute the exact row producer per N-tile group",
+      "next_measurement": "none; dominated analytically by cluster scope",
+      "observation": "Each original output-N tile consumes every activation row and all 5376 K elements.",
+      "readiness": 0.0,
+      "transfer_penalty": 0.7,
+      "uncertainty": 0.1
+    }
+  ],
+  "ranking_method": {
+    "claim_limit": "triage heuristic only; inputs are judgments and score is not a performance prediction",
+    "formula": "impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd",
+    "name": "heuristic_decision_resolution_per_dollar_v1"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,61 @@
+{
+  "status": "closed",
+  "priority": 9860,
+  "researcher_profile": "deep",
+  "authorized_spend_usd": 0.0,
+  "actual_spend_usd": 0.0,
+  "wall_clock_budget_minutes": 60,
+  "compute_budget": "CPU-only; no provider API, GPU claim, or paid allocation",
+  "storage_budget": "At most 20 GiB of derived indexes and evidence; exact checkpoint remains read-only",
+  "summary": "The materially tighter rank-384 anisotropic certificate preserves exact greedy top-1 on 32/32 c32 requests and reduces mean verification to 78.0518%, but its exact 828 MB index raises mean streamed traffic to 107.4323% of dense; p50 verification is 97.6562% and p90 is 100%. Close the broader certified-index line without target-GPU work.",
+  "decision": "close_broader_certified_index_line",
+  "result": "working_exact_cpu_discriminator_negative",
+  "scientific_sample_consumed": true,
+  "semantics": "Certified greedy/top-1 only; no full-softmax, sampling, quality, target-hardware, or endpoint performance claim.",
+  "prior_result": {
+    "decision": "reject_centroid_l2_block_mechanism",
+    "result": "working_exact_cpu_discriminator_negative",
+    "scientific_sample_consumed": true,
+    "summary": "The exact centroid-L2 block discriminator preserved guarded greedy top-1 on 32/32 c32 requests but evaluated 98.4619% of the vocabulary; mean analytical work was 99.2437% and mean byte traffic was 100.0616% of dense.",
+    "terminal": "artifacts/CENTROID_BLOCK_DISCRIMINATOR_RESULT.json",
+    "terminal_sha256": "5a7db872acc7fc2a303afbd8b22c4a7f08b085c8dcece937a59c07e5a9af1141"
+  },
+  "metrics": {
+    "request_representative_rows_evaluated": 32,
+    "dense_top1_agreement": 1.0,
+    "all_skips_certified": true,
+    "heldout_query_residual_norm_fraction_mean": 0.13198378163028307,
+    "evaluated_vocabulary_fraction_mean": 0.780517578125,
+    "evaluated_vocabulary_fraction_p50": 0.9765625,
+    "evaluated_vocabulary_fraction_p90": 1.0,
+    "evaluated_vocabulary_fraction_minimum": 0.0078125,
+    "evaluated_vocabulary_fraction_maximum": 1.0,
+    "full_vocabulary_rows": 16,
+    "index_bytes": 828112896,
+    "index_construction_seconds": 27.00421332474798,
+    "bound_equivalent_dense_fraction": 0.0751953125,
+    "total_analytical_head_work_fraction_mean": 0.855712890625,
+    "total_analytical_head_work_fraction_max": 1.0751953125,
+    "total_streamed_byte_fraction_mean": 1.0743233816964286,
+    "total_streamed_byte_fraction_max": 1.2938058035714286,
+    "ideal_fp32_index_median_streamed_byte_fraction": 1.1234654017857142,
+    "candidate_traversal_over_dense_cpu_p50_lower_bound": 1.1035575040309624,
+    "conservative_worst_request_saving_fraction": 0.0
+  },
+  "identity": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+    "weight_tensor_raw_bf16_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54"
+  },
+  "artifacts": {
+    "experiment_spec": "ANISOTROPIC_EXPERIMENT_SPEC.json",
+    "implementation": "lowrank_anisotropic_discriminator.py",
+    "terminal": "artifacts/LOWRANK_ANISOTROPIC_DISCRIMINATOR_RESULT.json",
+    "terminal_sha256": "0ca156b4fca9dca10942d204488130ee0207bd709b093f3c78362046fcf4faf5"
+  },
+  "next_action": "No target-GPU component and no further exact certified-index iteration on these weights and captures. Reopen only if the scientific contract changes materially.",
+  "active_session": null
+}

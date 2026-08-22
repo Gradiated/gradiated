@@ -1,0 +1,17 @@
+{
+  "artifact_type": "m384_attention_r2_execution_ready",
+  "binding": {
+    "path": "DIRECTOR_M384_ATTENTION_SAME_CLAIM_IMPLEMENTATION_RECOVERY_20260730T1000Z.json",
+    "sha256": "7a4ea4de37f69ebac45ee84f7890f05b56668a43877d696adc384a8e5ed723df"
+  },
+  "files": {
+    "m384_attention_producer_capture.py": "6f095e82c3908ae86cd5bc065017509591ad09381ab5bfbcd607dfb94a30761f",
+    "m384_grouped_attention_sm90a.cu": "98d8a71d2b7f03332526d509d1b7d6c74f122fdd6dab1bd0b7c795ffdf81a34f",
+    "m384_attention_h200_runner.py": "5bd470b99363e482eb4c798b611c0fbe39e335ef93fdf305b715e7f82207a647",
+    "m384_attention_h200_owner_r2.py": "54100879be29b9090d2a7b93f7f4011d6810ecaf38422e6cd62d9d22c4cd67af",
+    "m384_attention_owner_r2_transition.py": "f0ed5b9d85eab417eb8229d713633fec877fbfd42b823a04ca942cf27240f620"
+  },
+  "contract": "R2 starts as a detached controller standby, verifies strict SSH and zero generation-1 guest workers, then rechecks the original claim and exact predecessor identity before activation. It stages only the pinned producer/candidate/runner bytes and enters producer then exact component consumer without replaying generation 1.",
+  "ready_at_utc": "2026-07-30T10:12:27Z",
+  "schema_version": 1
+}

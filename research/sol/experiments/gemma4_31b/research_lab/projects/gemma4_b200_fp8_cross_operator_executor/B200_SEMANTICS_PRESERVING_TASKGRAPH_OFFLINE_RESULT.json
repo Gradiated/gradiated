@@ -1,0 +1,261 @@
+{
+  "artifact": "B200_SEMANTICS_PRESERVING_TASKGRAPH_OFFLINE_RESULT.json",
+  "classification": "typed_none_no_non_overlapping_runtime_boundary",
+  "decision": {
+    "classification": "typed_none_no_non_overlapping_runtime_boundary",
+    "promote": false,
+    "reason": "the exact graph is a valid standalone oracle/discriminator but not a non-generic integration boundary for the bound endpoint"
+  },
+  "derived": {
+    "activation_bytes_per_call": 172032,
+    "calls_per_endpoint_batch": 21480,
+    "calls_per_request": 671.25,
+    "gate_up_output_bytes_per_call": 2752512,
+    "gate_up_useful_flops_per_call": 14797504512,
+    "gate_up_weight_bytes_per_call": 231211008,
+    "label": "derived_from_exact_geometry_and_pinned_source",
+    "net_bound_endpoint_bytes_removed": 0,
+    "net_bound_endpoint_launches_removed": 0,
+    "net_bound_endpoint_synchronizations_removed": 0,
+    "residual_bytes_per_call": 344064,
+    "scale_bytes_per_call": 128
+  },
+  "entrypoint": {
+    "offline": [
+      "b200_semantics_preserving_taskgraph.py --describe",
+      "b200_semantics_preserving_taskgraph.py --export <path>"
+    ],
+    "target_cuda": "b200_semantics_preserving_taskgraph.py --run <fresh-output>",
+    "target_cuda_status": "implemented_not_run_zero_gpu_contract"
+  },
+  "identities": {
+    "bound_input_hashes": {
+      "B200_FP8_CROSS_OPERATOR_DISCRIMINATOR.json": "777e1e54f10a2a26a6b4dcf08518a2a994bce35edb8988d2906d992fba592506",
+      "artifacts/b200-cross-operator-component-20260728t2016z/FINAL_TERMINAL.json": "3d9285b7399d1f8e716c65cc195075404701d5db7a6aa063b5aba1f52f9cda17"
+    },
+    "source_hashes": {
+      "vllm._custom_ops": "8990c0c4de5dadbb2d1ff57f02d6a7f9133df29bb9070179ada3363461b40093",
+      "vllm.compilation.cuda_graph": "0f98ae0ea90424eb697e9ea0bdc0bcbbbecdc8637f4a89bfbfcc2ba28b40476d",
+      "vllm.config.compilation": "ac12008b54dcf778db658786502d160a70a6a1120533584da1e4976c9756ce38",
+      "vllm.config.vllm": "58aebc9654b3d62c9707be62df47ac43254b52218d9ea38c43d3026485ff9e01",
+      "vllm.model_executor.kernels.linear.scaled_mm.ScaledMMLinearKernel": "8618ebb23f1b7e14a4ad2534a4c19c32adf52b30b925b8453a18085a174d4471",
+      "vllm.model_executor.kernels.linear.scaled_mm.cutlass": "e212907776b61fd6618e6b812cee9a471ca83140a4710ca447bc6c11cc1d8488",
+      "vllm.model_executor.layers.layernorm": "8b4e0b93d1d76f0394bb28f40528bdfb250e16f22a83add184d3c2651f915623",
+      "vllm.model_executor.layers.quantization.fp8": "f2612966aaefa1dd4596a50da361628f64cd590eb3e6bbf6e1b4cfa488334d7e",
+      "vllm.model_executor.layers.quantization.input_quant_fp8": "6d09f1b7f8191303c4ebcc454cbf2bfb6319fbec1cb12c9842720e2f8ef75a18",
+      "vllm.model_executor.models.gemma4": "e16b28577c7cdca4876d26636564ed411fc7ce4a25b724456ee906d8129eed20",
+      "vllm.v1.worker.gpu_model_runner": "3afc290d3df1be3df1b89b9b35942695f5896c7729f608d6c44580899212c301"
+    },
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "vllm_version": "0.19.1.dev6+g6d4a8e6d2"
+  },
+  "implementation": {
+    "path": "b200_semantics_preserving_taskgraph.py",
+    "sha256": "0549efb7699b881f18597cf8ab8e733fa9e4e77bbb696f00bde7060a52dbe1e4",
+    "source_complete_through_first_consumer": true,
+    "target_execution": "not_run_scope_has_zero_gpu_seconds"
+  },
+  "inferred": {
+    "bound_endpoint_service_delta_seconds_per_request": 0.0,
+    "label": "inferred_not_measured",
+    "reason": "the only implemented semantics-preserving aggregation is strictly contained by the already-active full decode graph",
+    "risk_if_forced": [
+      "illegal nested CUDA capture during full-model capture",
+      "fixed-address private buffers add copies or aliasing constraints",
+      "child-graph indirection without removing stock kernel nodes"
+    ]
+  },
+  "measured": {
+    "bound_endpoint_launcher": {
+      "compilation_config_override_present": false,
+      "enforce_eager_flag_present": false,
+      "optimization_level_override_present": false,
+      "path": "../gemma4_b200_dynamic_fp8_endpoint/run_endpoint_pair.sh",
+      "sha256": "ffb96e2e027b4724a0280df7925013fac3191243fd8f1c943b5f134719769faa"
+    },
+    "bound_input_hashes_verified_once": {
+      "B200_FP8_CROSS_OPERATOR_DISCRIMINATOR.json": "777e1e54f10a2a26a6b4dcf08518a2a994bce35edb8988d2906d992fba592506",
+      "artifacts/b200-cross-operator-component-20260728t2016z/FINAL_TERMINAL.json": "3d9285b7399d1f8e716c65cc195075404701d5db7a6aa063b5aba1f52f9cda17"
+    },
+    "endpoint_requests_this_continuation": 0,
+    "gpu_claimed_this_continuation": false,
+    "label": "measured_offline_or_retained_exact_component",
+    "official_pinned_source_hashes_verified": {
+      "all_match": true,
+      "commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+      "files": 11
+    },
+    "offline_describe_pass": true,
+    "offline_export_pass": true,
+    "prior_component_candidate_delta_us_per_call": 35.392001271247864,
+    "prior_component_candidate_p50_ms": 0.0658240020275116,
+    "prior_component_numeric_pass": false,
+    "prior_stock_compiled_generated_kernel_count": 1,
+    "prior_stock_p50_ms": 0.10121600329875946,
+    "provider_operations_this_continuation": 0
+  },
+  "oracle": {
+    "cases": [
+      "production_random",
+      "zero_residual",
+      "zero_post_attention",
+      "tiny_finite",
+      "high_amplitude_finite"
+    ],
+    "comparison": "torch.equal over every element",
+    "failure": "write typed bitwise mismatch and do not time",
+    "fields": [
+      "activation_e4m3",
+      "scale_fp32",
+      "residual_out_bf16",
+      "gate_up_consumer_bf16"
+    ],
+    "required_before_timing": true
+  },
+  "physical_hypothesis": {
+    "bound_endpoint": "no movement because its full decode CUDAGraphWrapper already performs that submission aggregation",
+    "falsifier": "a bound endpoint trace showing M32 decode in CUDAGraphMode.NONE or showing the selected stock nodes outside every piecewise/full graph",
+    "standalone_component": "one cudaGraphLaunch replaces Python/CUDA API submission of the stock compiled boundary and stock scaled-MM while retaining both device kernel nodes"
+  },
+  "predicted_counter_movement": {
+    "bound_endpoint": {
+      "cuda_graph_launches_per_decode_step_delta": 0,
+      "cuda_kernel_nodes_per_selected_call_delta": 0,
+      "dram_bytes_delta": 0,
+      "explicit_synchronizations_per_selected_call_delta": 0,
+      "host_cuda_api_calls_per_selected_call_delta": 0,
+      "l2_bytes_delta": 0,
+      "stock_activation_scale_residual_consumer_bytes_changed": false,
+      "tensor_core_instructions_delta": 0
+    },
+    "standalone_only_not_transferable": {
+      "device_kernel_nodes": "unchanged",
+      "explicit_synchronizations": "unchanged at zero within hot block",
+      "host_submission_boundary": "two stock calls to one graph replay"
+    }
+  },
+  "runtime_integration": {
+    "candidate_insertion_point": "Gemma4DecoderLayer.forward immediately before self.mlp.gate_up_proj",
+    "insertion_disposition": "forbidden_as_redundant under the bound O2 decode path; nested capture is not a legal replay boundary and a child graph cannot remove work already submitted by the outer full-model graph",
+    "outer_owner": [
+      "GPUModelRunner.load_model",
+      "CUDAGraphWrapper(runtime_mode=CUDAGraphMode.FULL)",
+      "CUDAGraphWrapper.__call__"
+    ],
+    "stock_consumer": [
+      "CutlassFP8ScaledMMLinearKernel.apply_scaled_mm",
+      "vllm._custom_ops.cutlass_scaled_mm"
+    ],
+    "stock_producer": [
+      "Fp8OnlineLinearMethod.apply",
+      "FP8ScaledMMLinearKernel.apply_weights",
+      "QuantFP8.forward_native"
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "actual_spend_usd_cumulative": 3.7782,
+    "consumed_component_replayed": false,
+    "dispatcher_modified": false,
+    "new_spend_usd": 0.0,
+    "scientific_sample_consumed_this_continuation": false
+  },
+  "smallest_later_b200_discriminator": {
+    "authorization": "none_recommended_for_current_endpoint",
+    "decision_rule": "stop before timing on one unequal byte; measure only if the runtime-overlap guard is independently falsified",
+    "reopen_condition": "first prove from an exact endpoint trace that M32 decode is not inside FULL or PIECEWISE CUDA graph capture",
+    "required_rows": [
+      "five bitwise activation/scale/residual/BF16-consumer oracle rows",
+      "direct stock device and synchronized-wall timings",
+      "task-graph device and synchronized-wall timings",
+      "observed source and extension hashes"
+    ],
+    "then_command": "python3 b200_semantics_preserving_taskgraph.py --run <fresh-project-local-output> --warmup 8 --repeats 40"
+  },
+  "source_trace": [
+    {
+      "boundary": "post-attention BF16 output is normalized, added to the BF16 layer residual, materialized as residual_out, normalized again, and passed to gate_up_proj",
+      "order": 1,
+      "symbols": [
+        "vllm.model_executor.models.gemma4.Gemma4DecoderLayer.forward",
+        "post_attention_layernorm",
+        "Tensor.__add__",
+        "pre_feedforward_layernorm",
+        "Gemma4MLP.forward"
+      ]
+    },
+    {
+      "boundary": "stock dynamic per-token QuantFP8 emits E4M3 [32,5376] plus FP32 [32,1] scales; unchanged Cutlass scaled-MM emits BF16 [32,43008]",
+      "order": 2,
+      "symbols": [
+        "vllm.model_executor.layers.quantization.fp8.Fp8OnlineLinearMethod.apply",
+        "FP8ScaledMMLinearKernel.apply_weights",
+        "QuantFP8.forward_native",
+        "CutlassFP8ScaledMMLinearKernel.apply_scaled_mm",
+        "vllm._custom_ops.cutlass_scaled_mm"
+      ]
+    },
+    {
+      "boundary": "O2 selects FULL_AND_PIECEWISE; decode uses the FULL wrapper around the whole model and therefore already submits this hot block as nodes of one outer CUDA graph",
+      "order": 3,
+      "symbols": [
+        "vllm.config.vllm.OPTIMIZATION_LEVEL_02",
+        "vllm.v1.worker.gpu_model_runner.GPUModelRunner.load_model",
+        "vllm.compilation.cuda_graph.CUDAGraphWrapper.__call__"
+      ]
+    }
+  ],
+  "task_graph": {
+    "calls_per_decode_step": 60,
+    "calls_per_endpoint_batch": 21480,
+    "name": "gemma4_m32_stock_rms_quant_gate_up_cuda_graph",
+    "nodes": [
+      {
+        "id": "stock_boundary",
+        "implementation": "torch.compile(fullgraph=True,dynamic=False) of BF16 add, RMSNorm.forward_static, and QuantFP8.forward_native",
+        "measured_prior_generated_kernel_count": 1,
+        "outputs": [
+          "activation_e4m3[32,5376]",
+          "scale_fp32[32,1]",
+          "residual_out_bf16[32,5376]"
+        ]
+      },
+      {
+        "depends_on": [
+          "stock_boundary"
+        ],
+        "id": "stock_gate_up",
+        "implementation": "vllm._custom_ops.cutlass_scaled_mm",
+        "outputs": [
+          "gate_up_bf16[32,43008]"
+        ]
+      }
+    ],
+    "phase": "decode",
+    "schema_version": 1,
+    "semantic_class": "bitwise_stock_only",
+    "shape": {
+      "k": 5376,
+      "m": 32,
+      "n": 43008
+    },
+    "storage": {
+      "capture_inputs": "fixed-address project-local tensors; copies are outside the captured graph and outside timing",
+      "capture_outputs": "fixed-address graph-private tensors",
+      "weight_lifetime": "read-only for graph lifetime"
+    },
+    "stream": {
+      "capture": "current torch CUDA stream after warm compilation",
+      "inter_node_synchronization": "none",
+      "oracle_synchronization": "one after each first direct and graph arm",
+      "replay": "same current stream"
+    },
+    "unchanged_boundaries": [
+      "post_attention_plus_residual FP32 promotion and BF16 residual cast",
+      "RMSNorm FP32 variance reduction, rsqrt, BF16 cast, and BF16 weight multiply",
+      "QuantFP8 per-token FP32 amax, minimum-scale clamp, reciprocal, saturation, and E4M3 cast",
+      "FP32 activation scale tensor [32,1]",
+      "Cutlass scaled-MM FP8 inputs/scales, accumulation, and BF16 output cast"
+    ]
+  }
+}

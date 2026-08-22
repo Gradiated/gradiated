@@ -1,0 +1,31 @@
+{
+  "claim_allowed": false,
+  "classification": "r5_packet_clean_stage_closure_pass",
+  "container_pythonpath_order": [
+    "/work/project",
+    "/sgl-workspace/sglang/python"
+  ],
+  "cuda_allowed": false,
+  "endpoint_request_allowed": false,
+  "packet_sha256": "846bd42a2e41e64b392af1b2abaca5d8cccd3e177aaab9c7fa900f63eda57527",
+  "required_transitive_sources": [
+    "endpoint_candidate_gemma4_causal.py",
+    "fixed_floor_crossop_endpoint_adapter.py",
+    "fused_qkv_kv_cache.py",
+    "install_fused_qkv_cache.py"
+  ],
+  "schema_version": 1,
+  "ssh_allowed": false,
+  "stages": [
+    {
+      "generation": 0,
+      "installer_sha256": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3",
+      "member_count": 9
+    },
+    {
+      "generation": 1,
+      "installer_sha256": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3",
+      "member_count": 9
+    }
+  ]
+}

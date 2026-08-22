@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T03:03:41Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "repair only the existing fallback target-view reentry invariant, then let the live r6 dispatcher run the still-unconsumed NGRAM arm under the unchanged claim",
+  "campaign_target": {
+    "service_time_seconds_per_request": 0.500119281574996,
+    "qualified_denominator_seconds_per_request": 0.625149101968745
+  },
+  "claim": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "claimed_at": "2026-07-30T00:49:46.346350Z",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "drain_after_release": true,
+    "watchdog_pid": 427838,
+    "watchdog_deadline_utc": "2026-07-30T03:36:56.187924Z"
+  },
+  "live_owner": {
+    "pid": 485251,
+    "start_ticks": 149505876,
+    "owner_state": "artifacts/dflash-h200-r3-cold-worker3/OWNER_STATE_R6.json",
+    "owner_source": "dflash_component_direct_recovery_owner_r6.py",
+    "owner_source_sha256": "db891af143b2cd70ae173ceef7094fd3e70e5e5028687077bc821267b95da9f0",
+    "execution_binding": "artifacts/dflash-h200-r3-cold-worker3/EXECUTION_BINDING_R6.json",
+    "execution_binding_sha256": "2282b93e15a0b6bd9b6322f4d2e5023b927c49e41f92a97a9bb0debbc3a272e7",
+    "repair_dispatcher": "The worker loop consumes an exact request, validates a continuation patch, increments the worker generation, and invokes the returned packet and retry scope before waiting again."
+  },
+  "repair_boundary": {
+    "repair_id": "dflash-h200-r3-cold-worker3-20260730t0045z-r6-target-view-worker-4-repair-0",
+    "ready": "artifacts/dflash-h200-r3-cold-worker3/run/.repair-handshakes/dflash-h200-r3-cold-worker3-20260730t0045z-r6-target-view-worker-4-repair-0/REPAIR_READY.json",
+    "ready_sha256": "60dd9aec19f92fe52c4421d8789cd14152c2b0139b1ef228bc950c9876d3ce12",
+    "diagnostic": "artifacts/dflash-h200-r3-cold-worker3/run/RECOVERY_R2_ADOPTION_4.json",
+    "diagnostic_sha256": "ba6e2df7603733ce2d7abfbc5db1e34d5f73312e21ab437b6a9ca249a23f303e",
+    "retry_scope": "classify",
+    "state_at_binding": "waiting",
+    "absolute_repair_deadline_utc": "2026-07-30T03:20:00Z",
+    "worker_generation": 4,
+    "worker_returncode": 76,
+    "failure": "typed_target_boundary:view_not_same_inode:chat_template.jinja"
+  },
+  "scientific_state": {
+    "ar": {
+      "science_started": true,
+      "complete_requests": 32,
+      "disposition": "frozen; never replay"
+    },
+    "dflash": {
+      "science_started": true,
+      "complete_requests": 32,
+      "disposition": "frozen; never replay"
+    },
+    "ngram": {
+      "science_started": false,
+      "request_rows": 0,
+      "disposition": "the only arm authorized for a fresh invocation"
+    },
+    "evidence": "artifacts/dflash-h200-r3-cold-worker3/run/R6_CLASSIFY_NGRAM_REPAIR_CHECK.json",
+    "classification": "recoverable pre-NGRAM target-view reentry defect; not a DFlash result"
+  },
+  "base_repair": {
+    "packet_archive": "artifacts/dflash-h200-r6-classify-ngram-repair-packet/dflash-component-classify-ngram-repair-packet.tar",
+    "packet_archive_sha256": "e3d8527f15bcddc5247110b28009d66b3ceb42b9ef76f0cb204e10530edc55fe",
+    "worker_source": "artifacts/dflash-h200-r6-classify-ngram-repair-packet/dflash_component_worker.py",
+    "prior_patch": "artifacts/dflash-h200-r3-cold-worker3/run/R6_CLASSIFY_NGRAM_REPAIR_PATCH.json",
+    "prior_patch_sha256": "505ba3496788153790d0e6c4e81b49954b823c91acdcaf5b2b9ad27e26033483",
+    "cause": "hardlink_target_view resets materialization mode to hardlink on every entry. When a verified reflink or copy destination already exists from worker 3, worker 4 skips creation but still requires inode equality and fails before NGRAM science."
+  },
+  "repair_contract": {
+    "patched_packet": "artifacts/dflash-h200-r6-existing-view-reentry-repair/dflash-component-existing-view-reentry-repair-packet.tar",
+    "continuation_patch": "artifacts/dflash-h200-r3-cold-worker3/run/R6_EXISTING_VIEW_REENTRY_REPAIR_PATCH.json",
+    "patch_scope": [
+      "Change only dflash_component_worker.py and the packet manifest identity needed to bind it.",
+      "For a destination row that already exists, verify its size and SHA-256 against the exact checkpoint manifest before reuse. Record it as a verified existing fallback row unless inode equality proves it is a hard link.",
+      "Require inode equality only for a row actually materialized or classified as a hard link. Preserve the existing read-only reflink or verified-copy fallback and fail closed on missing, altered, ambiguous, writable, or unverifiable rows.",
+      "Do not delete, recreate, move, or rehash unchanged source checkpoint rows. Do not touch frozen AR or DFlash outputs, and preserve the archived zero-request NGRAM partial."
+    ],
+    "required_patch_fields": {
+      "schema_version": 1,
+      "continuation_authorized": true,
+      "claim_generation": "2026-07-30T00:49:46.346350Z",
+      "adoption_sha256": "ba6e2df7603733ce2d7abfbc5db1e34d5f73312e21ab437b6a9ca249a23f303e",
+      "retry_scope": "classify"
+    },
+    "success_predicate": "The new packet passes target-view materialization using the already verified destination rows, maps classify scope to a fresh NGRAM-only invocation, and never selects AR or DFlash.",
+    "request_command": "/root/workspace/research/factory/tools/repair-handshake request --root artifacts/dflash-h200-r3-cold-worker3/run --repair-id dflash-h200-r3-cold-worker3-20260730t0045z-r6-target-view-worker-4-repair-0 --patch-artifact artifacts/dflash-h200-r3-cold-worker3/run/R6_EXISTING_VIEW_REENTRY_REPAIR_PATCH.json --retry-scope classify"
+  },
+  "delegation": {
+    "researcher_profile": "execution",
+    "skills": [
+      "$researcher",
+      "$experiment-run"
+    ],
+    "start_by_utc": "2026-07-30T03:11:00Z",
+    "owner_deadline_utc": "2026-07-30T03:20:00Z",
+    "requirements": [
+      "Read this binding once. Verify its digest, live owner PID/start ticks, exact claim generation, repair-ready digest and waiting state, diagnostic digest, rebound GPU identity, and watchdog.",
+      "Derive the patched packet from base_repair.packet_archive. Make only repair_contract.patch_scope changes, rebuild the packet manifest, and hash-bind the new archive.",
+      "Write repair_contract.continuation_patch with every required_patch_fields value plus the absolute patched packet path and its SHA-256.",
+      "Immediately before requesting, re-read the same owner PID/start ticks, claim generation, repair ID, ready digest, waiting state, and owner deadline. If any changed, do not request and report the new durable state.",
+      "Run request_command once. Return after the request is accepted or rejected; do not follow NGRAM execution.",
+      "Persist active_session phase as r6_existing_target_view_reentry_repair_requested only after the exact request is durable."
+    ]
+  },
+  "prohibitions": [
+    "Do not launch or replace an owner, re-claim or release the bench, or call provider lifecycle.",
+    "Do not replay AR, DFlash, workers 0-2, or historical request 25.",
+    "Do not change target, draft, image, runtime, workload, oracle, arm order, request count, attribution boundary, or scientific semantics.",
+    "Do not run the patched packet as a pre-request test against the resident target; the first full resident-bound invocation belongs to the live owner.",
+    "Do not mutate the base packet, source checkpoint, managed disks, frozen results, or archived partial evidence."
+  ],
+  "dispositions": {
+    "accepted": "The live r6 owner alone resumes classify into NGRAM and either publishes a decision-bearing terminal or a fresh namespaced repair boundary.",
+    "changed_identity_or_rejected": "Persist the exact conflict and return without a second request.",
+    "deadline": "Do not submit new science at or after 03:20Z; let the owner perform its bound generation-fenced release for director lifecycle handling."
+  }
+}

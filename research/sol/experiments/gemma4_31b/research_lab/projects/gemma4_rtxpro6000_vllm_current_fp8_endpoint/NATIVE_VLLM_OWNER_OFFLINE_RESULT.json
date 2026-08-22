@@ -1,0 +1,59 @@
+{
+  "artifact_contract": {
+    "controller_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller",
+    "science_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z",
+    "separate_roots": true
+  },
+  "classification": "supported_offline_native_runtime_prebinding",
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller/owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint --unit-manager pid -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/run_vllm_sm120_fp8_endpoint_owner.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/DIRECTOR_RTXPRO6000_VLLM_NATIVE_RUNTIME_EXECUTION_BINDING.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z",
+  "detached_owner_command_sha256": "2c84f17bd68f989d0590162f0d5360532315e57297fc4b59e9f010fe1752d148",
+  "director_repair": {
+    "path": "DIRECTOR_RTXPRO6000_VLLM_NATIVE_RUNTIME_OWNER_OFFLINE_REPAIR_20260729T0601Z.json",
+    "sha256": "66459b145a297a44f5bd22996f83eaf684e2ad4bfe13db14365140e080ce3cf2"
+  },
+  "distribution": {
+    "asset_filename": "vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+    "official_release_api": "https://api.github.com/repos/vllm-project/vllm/releases/latest",
+    "official_release_tag": "v0.26.0",
+    "published_at_utc": "2026-07-27T01:06:58Z",
+    "python_abi": "cp38-abi3",
+    "resolution": "GitHub official vLLM latest-release asset metadata, including published SHA-256.",
+    "runtime_root": "/workspace/vllm-sm120-native-runtime",
+    "target": "manylinux_2_28_x86_64+cu129",
+    "version": "0.26.0",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "wheel_url": "https://github.com/vllm-project/vllm/releases/download/v0.26.0/vllm-0.26.0%2Bcu129-cp38-abi3-manylinux_2_28_x86_64.whl"
+  },
+  "guest_compatibility": {
+    "guest_python": "3.12.3",
+    "guest_uv": "/usr/bin/uv",
+    "linux_amd64": true,
+    "reason": "The ABI3 wheel supports the guest Python 3.12 and manylinux_2_28 is compatible with Ubuntu 24.04; the director-recorded CUDA 13 driver path admits the CUDA 12.9 wheel.",
+    "sm": "sm_120"
+  },
+  "immutable_scientific_contract": {
+    "activation_dtype": "bfloat16",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "maximum_canonical_samples": 1,
+    "model": "google/gemma-4-31B-it",
+    "quantization": "official_vllm_online_dynamic_fp8",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "rtx_pro_6000_ceiling_seconds_per_request": 1.048637203302411
+  },
+  "owner": {
+    "path": "run_vllm_sm120_fp8_endpoint_owner.py",
+    "sha256": "117577e970bac68307da7e97891623978738fd908e2e2c176942938b3647ef7a"
+  },
+  "preclaim_behavior": "Validates this result's owner/distribution identities and the exact project-local workload path, size, and SHA-256 without calling gpu_pool.",
+  "schema_version": 1,
+  "science_consumed": false,
+  "science_started": false,
+  "workload": {
+    "path": "inputs/c32_requests.jsonl",
+    "payload_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c",
+    "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "size_bytes": 893666
+  }
+}

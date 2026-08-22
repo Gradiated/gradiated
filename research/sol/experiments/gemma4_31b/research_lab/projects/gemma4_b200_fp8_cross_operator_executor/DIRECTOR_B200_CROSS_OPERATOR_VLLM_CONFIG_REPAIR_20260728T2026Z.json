@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "classification": "same_claim_pre_science_vllm_config_context_repair",
+  "project": "gemma4_b200_fp8_cross_operator_executor",
+  "researcher_profile": "execution",
+  "required_skills": [
+    "$researcher",
+    "$kernel-research"
+  ],
+  "scientific_binding": "DIRECTOR_B200_CROSS_OPERATOR_EXECUTION_20260728T2016Z.json",
+  "repair_evidence": {
+    "repair_id": "cross-operator-component_execution-20260728T202448Z",
+    "repair_ready": "artifacts/b200-cross-operator-component-20260728t2016z/.repair-handshakes/cross-operator-component_execution-20260728T202448Z/REPAIR_READY.json",
+    "repair_ready_sha256": "353968f36fcd2a437d262d46656051edff2b413e6beb2889ab083d67aa50053e",
+    "diagnostic": "artifacts/b200-cross-operator-component-20260728t2016z/REPAIR_component_execution.json",
+    "diagnostic_sha256": "888bdeaa05c3df03ee489b4350987779d711304ed749a0aa2cab1d620a8c9597",
+    "classification": "invalid_uninterpretable_integration_attempt",
+    "science_consumed": false,
+    "failure": "Pinned vLLM imported successfully, then standalone QuantFP8 construction called get_current_vllm_config() outside a current VllmConfig context.",
+    "preserved_precursors": [
+      "The original stage-shell defect produced no science and is superseded.",
+      "The output-0/output-1 generation collision was repaired under repair ID cross-operator-remote_stage-20260728T202142Z.",
+      "The numeric-UID passwd/cache import failure was repaired under repair ID cross-operator-component_execution-20260728T202305Z by the root-safe pinned-container invocation.",
+      "Preserve output-0 through output-3 as invalid pre-science generations; do not reuse, delete, or overwrite them."
+    ]
+  },
+  "continuous_claim": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claimed_at_utc": "2026-07-28T20:20:37.322321Z",
+    "project": "gemma4_b200_fp8_cross_operator_executor",
+    "predecessor_pid": 3597829,
+    "predecessor_start_ticks": 138628912,
+    "predecessor_unit_manager": "pid",
+    "predecessor_state": "artifacts/b200-cross-operator-component-20260728t2016z/OWNER_STATE.json",
+    "replacement_launch_by_utc": "2026-07-28T20:33:00Z",
+    "decision_negative_release_by_utc": "2026-07-28T20:58:00Z",
+    "incomplete_repair_disposition_by_utc": "2026-07-28T20:58:00Z",
+    "watchdog_deadline_utc": "2026-07-28T21:10:00Z"
+  },
+  "immutable_scientific_contract": {
+    "runtime_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "consumer_path": "b200_cross_operator_consumer.py",
+    "current_repair_candidate_sha256": "444caa5ba1f150dd6dda60c8a6e29e4ed2c242673f7212bb9329034f5626fa71",
+    "owner_path": "b200_cross_operator_owner.sh",
+    "current_owner_sha256": "29000f0a4c6c70a76c0e30a6f0873c1907300ff79ab7838ac6a92e3904f785c1",
+    "preclaim_path": "PRECLAIM_B200_CROSS_OPERATOR_TERMINAL.json",
+    "current_preclaim_sha256": "374962b2c5cb2de0b15033c15d72fa28a704abe5d779f86a77fc13aca35f79cd",
+    "geometry": "M32, K5376, N43008",
+    "warmups": 8,
+    "samples_per_arm": 40,
+    "promotion_threshold_seconds_per_request": 0.002,
+    "model_or_checkpoint_load": false,
+    "endpoint_requests": 0,
+    "dispatcher_modified": false
+  },
+  "repair_scope": {
+    "fresh_remote_output": "/home/glmrunner/b200-cross-operator-20260728t2016z/output-4",
+    "permitted_amendment": "Enter one default VllmConfig context before constructing QuantFP8 and keep it current through all exact stock and candidate calls. This is a standalone harness adapter only; it may not change the VllmConfig defaults, compile mode, custom-op dispatch, operands, or consumer.",
+    "requirements": [
+      "Hash-bind the current VllmConfig-context consumer amendment, owner, and preclaim terminal to this director artifact and exact repair-ready marker.",
+      "Keep the already-successful root-safe pinned-container invocation and restore remote artifact ownership after execution.",
+      "Use fresh output-4 and preserve output-0 through output-3 as invalid pre-science diagnostics.",
+      "Prepare one replacement while predecessor 3597829/138628912 remains the exact repair owner; the replacement must wait for that exact predecessor to exit before remote mutation.",
+      "Submit the matching repair request for cross-operator-component_execution-20260728T202448Z, supersede only that predecessor, resume at component_execution, and proceed directly through the unchanged pair."
+    ],
+    "forbidden": [
+      "release or reclaim",
+      "provider or watchdog mutation",
+      "image rebuild or runtime substitution",
+      "change to VllmConfig defaults or compilation semantics",
+      "reuse, deletion, or overwrite of output-0 through output-3",
+      "model or checkpoint load",
+      "endpoint replay",
+      "M32 dispatcher modification",
+      "scientific contract changes"
+    ]
+  },
+  "terminal_dispositions": {
+    "positive": "Retain the claim and wake the director under the original execution binding.",
+    "decision_bearing_negative": "Persist the paired result and release the unoccupied bench available by 2026-07-28T20:58:00Z.",
+    "incomplete_or_uninterpretable": "Retain the continuous claim only while another bounded same-claim repair, terminal, and safe disposition still fit before 2026-07-28T20:58:00Z.",
+    "deadline_or_unsafe": "Persist the diagnostic and release to maintenance for director handling."
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "state": "available_r5_cold_bootstrap_only",
+  "classification": "strict_identity_verified_ready_for_claim_bounded_cold_bootstrap",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "role": "cold_h200_r5_resumable_bootstrap_and_candidate_endpoint",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "checkpoint": "Cold bench; target and draft checkpoints are not staged. The future durable claim owner must reconcile content-addressed manifests resumably and atomically finalize verified bytes.",
+  "caches": "None assumed; fresh 250-GiB boot disk with 224.5 GiB available.",
+  "runtime": "Fresh Nebius Ubuntu 24.04 CUDA 13 image; cloud-init, strict SSH, NVIDIA H200 identity, driver 580.159.04, Docker availability, storage, and quiescence verified.",
+  "server_state": "Available and quiescent: zero GPU compute processes and zero containers.",
+  "connection_state": "strict_ssh_h200_quiescence_verified",
+  "gpu_uuid": "GPU-e26e853a-ce3b-8874-bd3e-6db51a22f8b3",
+  "ssh_ed25519_fingerprint": "SHA256:32koaBpMbzfJBvGXPskHGu08cWYWrH62e/JULW+4BlQ",
+  "cloud_init_ready_at_utc": "2026-07-30T06:33:03Z",
+  "actual_spend_usd": 6.273359945,
+  "artifacts": "Director identity 3374bb7c...; packet closure 13582f0b...; packet 846bd42a...; endpoint candidate remains unconsumed.",
+  "complete_requests": {
+    "control_frozen": 32,
+    "candidate_interpretable": 0
+  },
+  "scientific_terminal": "r5_unconsumed",
+  "summary": "The exact replacement H200 is identity-verified and safe for only the R5 cold-bootstrap lineage; checkpoint/image staging and endpoint science have not started.",
+  "next": "Keep R5 claim-disabled until its durable cold-bootstrap owner and launcher are hash-bound. That owner must claim atomically, stage immutable inputs resumably, retain repair ownership, and continue directly into the unchanged candidate-only endpoint."
+}

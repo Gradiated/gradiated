@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "state": "ready_to_adopt_existing_claim_without_pool_claim",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "repair_binding": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_CLAIM_STAGE_REPAIR_20260729T0106Z.json",
+  "repair_binding_sha256": "e78e87685aea396fb5b763a9d7f85d162c11945f372687d5cebff7de27c54272",
+  "runtime_manifest": "H200_55L5G_RETAINED_CLAIM_STAGE_REPAIR_RUNTIME_MANIFEST.json",
+  "runtime_manifest_sha256": "2185141f40c622d6cfcfd2e6ffc59a520a3155dfd3e8adb79d392b767f7b7c5c",
+  "owner": "run_h200_55l5g_retained_claim_endpoint_owner.py",
+  "owner_sha256": "2ba5b6e898c931c25fec676fec261dc6237215e52ca0fce72ba7ec4ca247beca",
+  "claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+  "stage_change": "hf download",
+  "science_consumed": false,
+  "quality_preservation_claimed": false,
+  "maximum_valid_pair_invocations": 1
+}

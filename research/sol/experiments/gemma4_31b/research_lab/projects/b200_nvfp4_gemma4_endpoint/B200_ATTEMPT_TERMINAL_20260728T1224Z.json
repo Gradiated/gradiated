@@ -1,0 +1,29 @@
+{
+  "classification": "pre_science_attempt_closed_at_authorized_lifecycle_boundary",
+  "decision_at_utc": "2026-07-28T12:24:20.577074Z",
+  "evidence": {
+    "final_failure": "The corrected CLI reached llmcompressor oneshot, then Gemma4Processor initialization failed because the isolated producer lacked torchvision.",
+    "native_nvfp4_mechanism_rejected": false,
+    "scientific_submission_consumed": false,
+    "typed_failures_preserved": true
+  },
+  "interpretation": "The provider attempt is operationally inconclusive. Another dependency repair plus conversion, BF16 control, native-NVFP4 candidate, terminal retrieval, and safe release could not fit the remaining fixed $8 lifecycle; no endpoint or physical NVFP4 conclusion is supported.",
+  "provider_cleanup": {
+    "disk_absent": true,
+    "disk_id": "computedisk-i00svcmxdjhpm7bkez",
+    "instance_absent": true,
+    "instance_id": "computeinstance-i00hfh66qbsqy4mx7x",
+    "inventory_retired": true,
+    "project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+    "watchdog_inactive": true
+  },
+  "provider_exposure": {
+    "basis": "provider_start_to_cleanup_verification",
+    "cleanup_verified_at_utc": "2026-07-28T12:24:20.577074Z",
+    "cost_usd": 6.7383062365694455,
+    "covers_pre_registration": true,
+    "seconds": 6141.241127,
+    "started_at_utc": "2026-07-28T10:41:59.335947Z"
+  },
+  "schema_version": 1
+}

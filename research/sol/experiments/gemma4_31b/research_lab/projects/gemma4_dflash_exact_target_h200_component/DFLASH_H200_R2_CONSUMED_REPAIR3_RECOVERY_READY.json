@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "ready_for_later_director_same_claim_recovery_r2",
+  "created_at_utc": "2026-07-30T00:19:00Z",
+  "director_binding": "DIRECTOR_DFLASH_R2_CONSUMED_REPAIR3_OWNERLESS_RECOVERY_20260730T0015Z.json",
+  "director_binding_sha256": "1deadd1b9f313a3984a467954b791b0269c513648520eb9b309d4c5d80a02d19",
+  "owner_source": "dflash_component_direct_recovery_owner_r2.py",
+  "owner_source_sha256": "c46fd8765df2378c1beeb6005fe378dfed4ad9a3a7faee37cfa5250565e727a1",
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claim_generation": "2026-07-29T23:49:13.529071Z",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "consumed_repair": {
+    "repair_id": "dflash-h200-r2-recovery-20260730t0010z-recovery-3",
+    "consumed_request_sha256": "12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433",
+    "patch_sha256": "03aa2b4da6d01f9316ea513a72d95eff30b94ea38feb0bf61c3d2a117109ac12",
+    "adoption_sha256": "103355400df0f565d0a8f4ae88b36a79ed7b9996685beecd5c391a9df067fc35",
+    "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "snapshot_manifest_sha256": "c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4"
+  },
+  "execution_fence": {
+    "initial_worker_generation": 3,
+    "forbidden_replay_generations": [0, 1, 2],
+    "science_started": {"ar": false, "dflash": false, "ngram": false},
+    "science_consumed": {"ar": false, "dflash": false, "ngram": false}
+  },
+  "dispatcher": {
+    "initial_consumed_repair_adopted_once": true,
+    "post_worker_retrieval_required": true,
+    "repair_requests_atomically_consumed": true,
+    "invalid_request_publishes_fresh_diagnostic_and_continues_heartbeat": true
+  },
+  "launch_authority": "later_director_only",
+  "offline_validation": {"py_compile": true, "local_contract_hashes": true, "external_actions": false}
+}

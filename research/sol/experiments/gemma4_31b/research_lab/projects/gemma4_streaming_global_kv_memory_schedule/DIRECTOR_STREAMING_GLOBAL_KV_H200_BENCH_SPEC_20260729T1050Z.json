@@ -1,0 +1,44 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "artifacts": "STREAMING_GLOBAL_KV_H200_OWNER_READY.json; MEMORY_SCHEDULE_DISCRIMINATOR.json SHA-256 1ea35e007bb7f8317d8e90d3109b20d29fba0141cdd23fd8b7fe2cef1a3102e5",
+    "caches": "Fresh 250-GiB provider disk; retain CUDA compilation, exact checkpoint, runtime image, component telemetry, and conditional endpoint artifacts for compatible repair or follow-up.",
+    "checkpoint": "Exact google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4 is bound but not staged.",
+    "image": "Nebius ubuntu24.04-cuda13.0 image family; the launch binding must pin the scientific runtime image before claim.",
+    "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 for the U=8 streaming global-KV discriminator.",
+    "next": "Director must complete strict SSH/cloud-init/H200 identity verification, bind the runtime image and endpoint command, then mark ready for gemma4_streaming_global_kv_memory_schedule only.",
+    "project": "gemma4_streaming_global_kv_memory_schedule",
+    "runtime": "Fresh preemptible 1x H200 SXM in eu-west1; no setup, source staging, CUDA call, or science has run.",
+    "server_state": "Provider instance is RUNNING and protected, but connection identity and accelerator identity are not yet verified.",
+    "state": "maintenance_pending_strict_identity_and_launch_binding"
+  },
+  "hourly_cost_usd": 2.45,
+  "id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+  "lifecycle": {
+    "deadline_utc": "2026-07-29T12:18:50Z",
+    "provider_started_at_utc": "2026-07-29T10:48:50Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-streaming-global-kv-20260729t121850z-watchdog.service",
+      "main_pid": 4115321,
+      "unit": "gemma4-streaming-global-kv-20260729t121850z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "allocation_type": "preemptible",
+    "connection_state": "pending_strict_ssh_cloud_init_h200_identity",
+    "disk_id": "computedisk-e01txvq13vg63j7x2x",
+    "disk_name": "gemma4-streaming-global-kv-20260729t1050z-boot",
+    "instance_id": "computeinstance-e01q3jffxt2vtafkhp",
+    "instance_name": "gemma4-streaming-global-kv-20260729t1050z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "project_id": "project-e01eak24pr00bq47a1mqcp",
+    "public_ipv4": "66.201.5.180",
+    "region": "eu-west1",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ssh_user": "glmrunner"
+  }
+}

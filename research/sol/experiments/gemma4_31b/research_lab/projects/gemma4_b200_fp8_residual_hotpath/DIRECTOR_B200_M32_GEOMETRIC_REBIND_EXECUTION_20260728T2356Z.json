@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "classification": "director_hash_bound_b200_m32_geometric_rebind_execution",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "claim_allowed": true,
+  "bench": "b200-m32-static-computeinstance-i00z1c1rm2yatraaed",
+  "mechanism": {
+    "artifact": "B200_FP8_M32_GEOMETRIC_REBIND_CANDIDATE.json",
+    "artifact_sha256": "add989a37128c2b517a6d176e1ca572d0ae3c71faf694a616dc23fb6f6f951ec",
+    "candidate_source": "m32_static_persistent_geometric_rebind_extension.cu",
+    "candidate_source_sha256": "1d1f5aba004d9e33e14a0c548eca2ea8c0e5f326fc60b1dac2334e482b30e425",
+    "revokes_mechanism_sha256": "ad3c01d535a7d044b3848efc7b2c34d5a256950bae1696b3730b60a9c82e7442",
+    "semantic_change": "Populate CUTLASS KernelHardwareInfo.sm_count from the live CUDA device properties; preserve max_active_clusters=0 and every device-kernel template identity."
+  },
+  "immutable_scientific_contract": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "accelerator": "NVIDIA B200 SXM, sm_100f",
+    "m": 32,
+    "families": [
+      "sliding_qkv",
+      "sliding_o",
+      "global_qkv_k_eq_v_materialized",
+      "global_o",
+      "gate_up",
+      "down"
+    ],
+    "operands": "The unchanged official per-token activation and per-tensor weight E4M3FN quantizers feed identical in-process tensors and scales to stock and candidate.",
+    "tile_mnk_after_swap_ab": [128, 64, 256],
+    "cluster_mnk_after_swap_ab": [4, 1, 1],
+    "scheduler": "cutlass::gemm::StaticPersistentScheduler",
+    "mainloop": "identical to the pinned stock SwapAB collective",
+    "epilogue": "identical to the pinned stock SwapAB collective",
+    "accumulator": "FP32",
+    "output": "BF16",
+    "comparator": "Synchronized stock first call, synchronized candidate first call, finite full output, then bitwise-equal full BF16 output before timing.",
+    "warmups": 5,
+    "paired_repetitions": 31
+  },
+  "mutable_integration": {
+    "existing_owner_entrypoint": {
+      "path": "b200_m32_static_scheduler_owner.py",
+      "current_sha256": "52b028180848b1357a524296a3dea004de076f627075f3cd83d1af12df7eaf2a"
+    },
+    "existing_runner_entrypoint": {
+      "path": "b200_m32_static_scheduler_component.py",
+      "sha256": "6d6438f723836b53c4a0bc1cc505c4175fda4e9bc8e255b17500c13be2ce6091"
+    },
+    "allowed_owner_adapter": "Smallest source-name, runtime-manifest, new-output-root, and resident vLLM/CUTLASS source-reuse adaptation in the existing owner entrypoint. It may not change scientific tensors, quantizers, family geometry, CUDA consumer, oracle, timing, or stop rules.",
+    "required_preclaim_terminal": "PRECLAIM_B200_FP8_M32_GEOMETRIC_REBIND_TERMINAL.json",
+    "required_preclaim_fields": [
+      "mechanism_artifact_sha256",
+      "candidate_source_sha256",
+      "owner_sha256",
+      "runner_sha256",
+      "build_script_sha256",
+      "dockerfile_sha256",
+      "runtime_manifest_sha256",
+      "resident_source_reuse_from",
+      "new_remote_root",
+      "exact_detached_launch_command"
+    ],
+    "resident_source_reuse_from": "/home/glmrunner/gemma4-b200-m32-static-20260728t2258z",
+    "new_remote_root": "/home/glmrunner/gemma4-b200-m32-geometric-rebind-20260728t2356z",
+    "derived_image": "gemma4-m32-static-scheduler:20260729",
+    "repair_policy": "Retain the same claim and heartbeat through ordinary source staging, build, import, UID, path, API, retrieval, and incomplete-family repairs while the closest measured restart plus terminal/release margin fits."
+  },
+  "staged_execution": {
+    "stage_1": {
+      "family": "sliding_qkv",
+      "submission": "One stock first call and one candidate first call on identical operands.",
+      "continue_gate": [
+        "runtime sm_count is positive and at least 4",
+        "candidate grid extents are nonzero",
+        "grid.x is divisible by cluster.x=4",
+        "shared storage 210944 bytes is within the live opt-in limit",
+        "candidate launch completes",
+        "candidate output is finite",
+        "candidate output is bitwise equal to stock"
+      ]
+    },
+    "stage_2": {
+      "condition": "Only after every stage_1 gate passes.",
+      "submission": "Continue the unchanged runner through the remaining five families, without replaying sliding_qkv.",
+      "terminal_rows": 6
+    }
+  },
+  "lifecycle": {
+    "preclaim_packet_by_utc": "2026-07-29T00:02:00Z",
+    "claim_start_by_utc": "2026-07-29T00:03:30Z",
+    "owner_launch_by_utc": "2026-07-29T00:04:30Z",
+    "stage_1_release_or_continue_by_utc": "2026-07-29T00:10:00Z",
+    "decision_release_by_utc": "2026-07-29T00:16:00Z",
+    "owner_deadline_utc": "2026-07-29T00:18:00Z",
+    "provider_cleanup_deadline_utc": "2026-07-29T00:24:07.243681Z",
+    "remote_root": "/home/glmrunner/gemma4-b200-m32-geometric-rebind-20260728t2356z"
+  },
+  "spend": {
+    "authorized_cumulative_usd": 16.0,
+    "actual_spend_usd": 9.73,
+    "provider_rate_usd_per_hour": 3.95,
+    "conservative_cumulative_compute_exposure_usd": 15.655,
+    "remaining_ceiling_after_compute_usd": 0.345
+  },
+  "release_predicates": {
+    "decision_bearing": "Release available only after a complete bitwise-equality stop or six-row terminal whose identities, layouts, source/module hashes, timing fields, and ledgers satisfy this binding.",
+    "geometric_falsification": "A positive bound sm_count and legal nonzero grid followed by cudaErrorInvalidConfiguration rejects this source correction as insufficient; persist the launch ledger and release maintenance without replay.",
+    "incomplete": "Build, import, staging, retrieval, or missing minimum stock/candidate output is not a scientific negative. Retain for bounded same-claim repair until measured fit or the owner deadline requires maintenance release.",
+    "unsafe": "Release maintenance immediately for an unsafe or unreachable guest."
+  },
+  "stop_rule": {
+    "stage_1": "Stop without later families on any illegal launch metadata, CUDA launch failure, nonfinite output, or non-bitwise output.",
+    "stage_2": "After six bitwise-equal rows, stop without endpoint if any family regresses over 5%, multiplicity-weighted quant-plus-GEMM saving is nonpositive, or projected saving is below 0.001 s/request.",
+    "forbidden": [
+      "reuse mechanism ad3c01d535a7d044b3848efc7b2c34d5a256950bae1696b3730b60a9c82e7442",
+      "submit repair id m32-static-6",
+      "replay M16 or the failed zero-grid candidate",
+      "change operands, scales, tile, cluster, mainloop, epilogue, accumulator, output, comparator, warmups, or repetitions",
+      "load the model or run an endpoint",
+      "extend provider lifecycle again"
+    ]
+  }
+}

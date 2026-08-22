@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T23:38:00Z",
+  "decision": "direct_continuation_owner_terminal_release_contract_ready",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "binding": {
+    "path": "DIRECTOR_DFLASH_DIRECT_OWNER_TERMINAL_RELEASE_REPAIR_20260729T2329Z.json",
+    "sha256": "34060cc752398845dbfc6f979a8c741c366b6435b806affea5779dca37abab63",
+    "source_deadline_utc": "2026-07-29T23:44:00Z"
+  },
+  "supersedes": {
+    "direct_owner_sha256": "37b3f467d89293a1a5b0244e078bca24e70e90ac2f05ef48214f997b3f69875d",
+    "reason": "Adds post-worker retrieval, terminal/repair interpretation, and generation-fenced release."
+  },
+  "repaired_owner": {
+    "path": "dflash_component_direct_continuation_owner.py",
+    "sha256": "21801ca73e588bcdb534b8d02039fc33656852a05e95a444ccc38103f65fc834",
+    "post_worker_contract": [
+      "outside-tree retrieve and classify after every worker return before interpreting its return code",
+      "publish and validate a complete scientific terminal before ready release",
+      "for a recoverable nonterminal, use corrected repair_wait and consume the request exactly once before staging",
+      "on repair_terminal, persist typed adoption and retrieve again without treating it as a request",
+      "at deadline or absent request, publish typed incomplete handoff then generation-fenced maintenance release"
+    ]
+  },
+  "supporting_wait_repair": {
+    "base_owner_sha256": "2acf8f2d0871528c1255d16187aff16ccb80e24e4c52015056d53487f7c02950",
+    "replacement_owner_sha256": "377cf58bebef8db605652b7b482b57a56ba97db8961cc9a6e212ea35b11a2bae",
+    "requested": "shared status requested is accepted only after request-path, repair-ID, retry-scope, and ready-digest binding; canonical request is atomically renamed before continuation",
+    "repair_terminal": "typed separately and re-enters retrieval",
+    "unexpected": "fails closed before staging or worker entry"
+  },
+  "immutable_science": {
+    "corrected_adoption_sha256": "283375f25b465eab43ab4d5b812ee05d7d2d242db9226c7d752e9632f8ae1b96",
+    "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+    "unconsumed_request_sha256": "5f792d35b2124addc42e537b9cace8aaf253434ffa59355ed3020b6fbdf06405",
+    "packet_archive_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": ["AR", "DFLASH", "NGRAM"],
+    "historical_request_25_replay_allowed": false
+  },
+  "offline_validation": {
+    "actual_shared_helper_fixture": "pass: requested was consumed once by content-addressed rename; repair_terminal remained distinct",
+    "source_compile": "pass",
+    "fresh_adoption_gate": "pass against the complete corrected snapshot"
+  },
+  "performed_actions": {
+    "gpu_pool": false, "claim_or_release": false, "ssh": false, "docker": false,
+    "cuda": false, "provider_api": false, "live_repair_request": false, "arm": false
+  }
+}

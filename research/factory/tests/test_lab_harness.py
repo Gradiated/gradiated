@@ -381,6 +381,72 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertNotEqual(before, after)
             harness.close()
 
+    def test_director_completion_coalesces_only_changed_project_wakes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            for name in ("consumed", "unchanged"):
+                project = config.lab_dir / "projects" / name
+                project.mkdir()
+                (project / "PROJECT.md").write_text(f"# {name}\n")
+                (project / "STATUS.json").write_text(
+                    json.dumps({"status": "active", "summary": "terminal"})
+                )
+            observations = {
+                row["id"]: harness._project_observation_sha256(row)
+                for row in harness._project_rows()
+            }
+            wakes = [
+                {
+                    "reason": "researcher_completed",
+                    "label": name,
+                    "project_observation_sha256": observations[name],
+                }
+                for name in ("consumed", "unchanged")
+            ]
+            consumed_status = (
+                config.lab_dir / "projects" / "consumed" / "STATUS.json"
+            )
+            consumed_status.write_text(
+                json.dumps({"status": "active", "summary": "successor bound"})
+            )
+
+            retained, superseded = (
+                harness._partition_superseded_project_wakes(wakes)
+            )
+
+            self.assertEqual(["unchanged"], [wake["label"] for wake in retained])
+            self.assertEqual(["consumed"], [wake["label"] for wake in superseded])
+            harness.close()
+
+    def test_project_terminal_counts_as_progress_without_status_update(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            project = config.lab_dir / "projects" / "kernel"
+            project.mkdir()
+            (project / "PROJECT.md").write_text("# kernel\n")
+            (project / "STATUS.json").write_text(
+                json.dumps({"status": "active", "summary": "running"})
+            )
+            row = next(
+                row
+                for row in harness._project_rows()
+                if row["id"] == "kernel"
+            )
+            before = harness._project_observation_sha256(row)
+
+            (project / "KERNEL_TERMINAL.json").write_text(
+                json.dumps({"classification": "measured_negative"})
+            )
+
+            after = harness._project_observation_sha256(row)
+
+            self.assertNotEqual(before, after)
+            harness.close()
+
     def test_deep_profile_routes_causal_work_to_sol(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1079,6 +1145,50 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertIn("same compatible warm bench", prompt)
             harness.close()
 
+    def test_researcher_prompt_routes_pre_science_remote_terminal_to_warm_repair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            project = config.lab_dir / "projects" / "retained"
+            artifacts = project / "artifacts" / "run"
+            artifacts.mkdir(parents=True)
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "next_action": "Reconcile the component terminal.",
+                        "active_session": {
+                            "artifact_root": "artifacts/run",
+                            "bench_id": "h200-warm-1",
+                            "unit": str(artifacts / "OWNER.json"),
+                            "unit_manager": "pid",
+                        },
+                    }
+                )
+            )
+            (artifacts / "remote_terminal.json").write_text(
+                json.dumps(
+                    {
+                        "classification": "recoverable_integration_defect",
+                        "state": "pre_science",
+                        "science_started": False,
+                        "candidate_cuda_started": False,
+                        "error": "CUDA extension compile failed",
+                    }
+                )
+            )
+
+            prompt = harness._researcher_prompt(project)
+
+            self.assertIn(
+                "Previous durable owner terminal after an integration failure", prompt
+            )
+            self.assertIn('"classification": "recoverable_integration_defect"', prompt)
+            self.assertIn('"science_started": false', prompt)
+            self.assertIn("invalid integration evidence, not a project close", prompt)
+            self.assertIn("exact bench ID to re-ready", prompt)
+            harness.close()
+
     def test_researcher_prompt_hands_off_a_new_durable_owner_immediately(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -1098,6 +1208,8 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertIn("If you start a durable local computation", prompt)
             self.assertIn("STATUS.json.active_session", prompt)
             self.assertIn("canonical `unit` and `unit_manager` keys", prompt)
+            self.assertIn("immutable PID identity", prompt)
+            self.assertIn("must write phase, progress, repair, and terminal state to different files", prompt)
             self.assertIn("claimed GPU bench remains lab-owned", prompt)
             self.assertIn("director supplies a lab bench", prompt)
             harness.close()
@@ -1372,6 +1484,26 @@ class SimpleLabHarnessTests(unittest.TestCase):
 
             self.assertEqual(project, repair_root)
 
+    def test_pending_durable_repair_accepts_owner_utc_deadline(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            (project / "REPAIR_READY.json").write_text(
+                json.dumps(
+                    {
+                        "deadline_utc": (
+                            datetime.now(timezone.utc) + timedelta(minutes=10)
+                        ).isoformat()
+                    }
+                )
+            )
+
+            repair_root = LabHarness._pending_durable_repair(
+                project,
+                {"artifact_root": "."},
+            )
+
+            self.assertEqual(project, repair_root)
+
     def test_pending_durable_repair_finds_namespaced_shared_tool_handshake(self):
         with tempfile.TemporaryDirectory() as directory:
             project = Path(directory)
@@ -1393,6 +1525,115 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(repair_root, pending_root)
+
+    def test_pending_durable_repair_finds_direct_child_handshake(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifact_root = project / "artifacts" / "run"
+            repair_root = artifact_root / "repair-stage-1"
+            repair_root.mkdir(parents=True)
+            ready = repair_root / "REPAIR_READY.json"
+            ready.write_text(
+                json.dumps({"repair_deadline_epoch": time.time() + 600})
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {"artifact_root": "artifacts/run"},
+            )
+            pending_ready = LabHarness._pending_durable_repair_ready(
+                project,
+                {"artifact_root": "artifacts/run"},
+            )
+
+            self.assertEqual(repair_root, pending_root)
+            self.assertEqual(ready, pending_ready)
+
+    def test_pending_durable_repair_finds_named_direct_child_handshake(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifact_root = project / "artifacts" / "run"
+            repair_root = artifact_root / "r2"
+            repair_root.mkdir(parents=True)
+            ready = repair_root / "REPAIR_READY_R2.json"
+            ready.write_text(
+                json.dumps(
+                    {
+                        "deadline_utc": (
+                            datetime.now(timezone.utc) + timedelta(minutes=10)
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_ready = LabHarness._pending_durable_repair_ready(
+                project,
+                {"artifact_root": "artifacts/run"},
+            )
+
+            self.assertEqual(ready, pending_ready)
+
+    def test_pending_durable_repair_finds_named_marker_in_active_artifact_root(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifact_root = project / "artifacts" / "run"
+            artifact_root.mkdir(parents=True)
+            (artifact_root / "REPAIR_READY_ENDPOINT2.json").write_text(
+                json.dumps(
+                    {
+                        "absolute_repair_deadline_utc": (
+                            datetime.now(timezone.utc) + timedelta(minutes=10)
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {"artifact_root": "artifacts/run"},
+            )
+            pending_ready = LabHarness._pending_durable_repair_ready(
+                project,
+                {"artifact_root": "artifacts/run"},
+            )
+
+            self.assertEqual(artifact_root, pending_root)
+            self.assertEqual(
+                artifact_root / "REPAIR_READY_ENDPOINT2.json",
+                pending_ready,
+            )
+
+    def test_researcher_prompt_names_exact_named_repair_protocol(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = self._config(root)
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            project = config.lab_dir / "projects" / "named-repair"
+            artifact_root = project / "artifacts" / "run"
+            artifact_root.mkdir(parents=True)
+            ready = artifact_root / "REPAIR_READY_ENDPOINT2.json"
+            ready.write_text(
+                json.dumps({"repair_deadline_epoch": time.time() + 600})
+            )
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "active",
+                        "active_session": {
+                            "mode": "batch",
+                            "artifact_root": "artifacts/run",
+                        },
+                    }
+                )
+            )
+
+            prompt = harness._researcher_prompt(project)
+
+            self.assertIn(str(ready), prompt)
+            self.assertIn("REPAIR_REQUEST_ENDPOINT2.json", prompt)
+            self.assertIn("same warm environment", prompt)
+            self.assertIn("never a concurrent mutator", prompt)
+            harness.close()
 
     def test_pending_durable_repair_wakes_for_new_ready_generation(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1424,6 +1665,36 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
 
             self.assertEqual(project, repair_root)
+
+    def test_pending_durable_repair_accepts_matching_repair_id_request(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            deadline = (
+                datetime.now(timezone.utc) + timedelta(minutes=10)
+            ).isoformat()
+            (project / "REPAIR_READY.json").write_text(
+                json.dumps(
+                    {
+                        "repair_deadline_utc": deadline,
+                        "repair_id": "producer-capture-1",
+                    }
+                )
+            )
+            (project / "REPAIR_REQUEST.json").write_text(
+                json.dumps(
+                    {
+                        "repair_id": "producer-capture-1",
+                        "state": "repair_requested",
+                    }
+                )
+            )
+
+            repair_root = LabHarness._pending_durable_repair(
+                project,
+                {"artifact_root": "."},
+            )
+
+            self.assertIsNone(repair_root)
 
     def test_pending_durable_repair_ignores_ready_older_than_replacement_owner(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -1463,6 +1734,74 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
 
             self.assertIsNone(pending_root)
+
+    def test_pending_durable_repair_uses_mtime_for_generation_without_created_at(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifacts = project / "artifacts" / "run"
+            artifacts.mkdir(parents=True)
+            ready = artifacts / "REPAIR_READY.json"
+            ready.write_text(
+                json.dumps({"repair_deadline_epoch": time.time() + 600})
+            )
+            ready_at = time.time() - 5
+            os.utime(ready, (ready_at, ready_at))
+            owner_state = artifacts / "OWNER_STATE_REPAIR.json"
+            owner_state.write_text(
+                json.dumps(
+                    {
+                        "launched_at_utc": datetime.fromtimestamp(
+                            ready_at + 1, timezone.utc
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {
+                    "artifact_root": "artifacts/run",
+                    "unit": str(owner_state),
+                    "unit_manager": "pid",
+                    "repair_generation": 3,
+                },
+            )
+
+            self.assertIsNone(pending_root)
+
+    def test_pending_durable_repair_keeps_mtime_newer_than_replacement_owner(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            artifacts = project / "artifacts" / "run"
+            artifacts.mkdir(parents=True)
+            ready = artifacts / "REPAIR_READY.json"
+            ready.write_text(
+                json.dumps({"repair_deadline_epoch": time.time() + 600})
+            )
+            ready_at = time.time()
+            os.utime(ready, (ready_at, ready_at))
+            owner_state = artifacts / "OWNER_STATE_REPAIR.json"
+            owner_state.write_text(
+                json.dumps(
+                    {
+                        "launched_at_utc": datetime.fromtimestamp(
+                            ready_at - 1, timezone.utc
+                        ).isoformat()
+                    }
+                )
+            )
+
+            pending_root = LabHarness._pending_durable_repair(
+                project,
+                {
+                    "artifact_root": "artifacts/run",
+                    "unit": str(owner_state),
+                    "unit_manager": "pid",
+                    "repair_generation": 3,
+                },
+            )
+
+            self.assertEqual(artifacts, pending_root)
 
     def test_pending_durable_repair_keeps_ready_newer_than_replacement_owner(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -2384,6 +2723,122 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
             harness.close()
 
+    def test_new_reservation_gate_waits_for_post_reservation_director_binding(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "spend_cap_usd": 10.0,
+                    "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+                }
+            )
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            project = config.lab_dir / "projects" / "two-phase-paid"
+            project.mkdir()
+            (project / "PROJECT.md").write_text("# two-phase paid\n")
+            status_path = project / "STATUS.json"
+            status = {
+                "status": "active",
+                "priority": 10,
+                "authorized_spend_usd": 4.0,
+                "reservation_required": True,
+            }
+            status_path.write_text(json.dumps(status))
+
+            self.assertEqual([], harness._researcher_assignments())
+            self.assertEqual(
+                {"two-phase-paid"},
+                set(harness._spend_cap_snapshot()["reservations"]),
+            )
+            self.assertEqual(
+                {"two-phase-paid"},
+                harness._pending_reservation_director_wakes,
+            )
+            events = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    event.get("event") == "researcher_deferred"
+                    and event.get("label") == "two-phase-paid"
+                    and event.get("reason") == "reservation_gate_pending_director"
+                    for event in events
+                )
+            )
+
+            status["reservation_required"] = False
+            status_path.write_text(json.dumps(status))
+            assignments = harness._researcher_assignments()
+
+            self.assertEqual(
+                ["two-phase-paid"],
+                [row["id"] for row, _route in assignments],
+            )
+            harness.close()
+
+    def test_paused_reservation_gate_reserves_without_a_researcher_slot(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "spend_cap_usd": 10.0,
+                    "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+                }
+            )
+            harness = LabHarness(config, runner=FakeRunner(config.lab_dir))
+            project = config.lab_dir / "projects" / "paused-two-phase-paid"
+            project.mkdir()
+            (project / "PROJECT.md").write_text("# paused two-phase paid\n")
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "paused",
+                        "priority": 10,
+                        "authorized_spend_usd": 4.0,
+                        "actual_spend_usd": 0.0,
+                        "reservation_required": True,
+                    }
+                )
+            )
+
+            self.assertEqual([], harness._researcher_assignments(limit=0))
+            self.assertEqual(
+                {"paused-two-phase-paid"},
+                set(harness._spend_cap_snapshot()["reservations"]),
+            )
+            self.assertEqual(
+                {"paused-two-phase-paid"},
+                harness._pending_reservation_director_wakes,
+            )
+
+            harness._settle_terminal_reservations()
+            self.assertEqual(
+                {"paused-two-phase-paid"},
+                set(harness._spend_cap_snapshot()["reservations"]),
+            )
+
+            status = json.loads((project / "STATUS.json").read_text())
+            status["reservation_required"] = False
+            (project / "STATUS.json").write_text(json.dumps(status))
+            harness._settle_terminal_reservations()
+            self.assertEqual(
+                {"paused-two-phase-paid"},
+                set(harness._spend_cap_snapshot()["reservations"]),
+            )
+
+            status["status"] = "terminal"
+            (project / "STATUS.json").write_text(json.dumps(status))
+            harness._settle_terminal_reservations()
+            self.assertEqual(
+                set(), set(harness._spend_cap_snapshot()["reservations"])
+            )
+            harness.close()
+
     def test_campaign_spend_cap_cannot_be_reset_implicitly(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -2953,6 +3408,202 @@ class SimpleLabHarnessTests(unittest.TestCase):
             self.assertLess(admitted_slot, queued_wake)
             harness.close()
 
+    def test_director_completion_settles_reservations_before_refill(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "cycle_interval_seconds": 10,
+                    "max_parallel_researchers": 1,
+                    "spend_cap_usd": 5.0,
+                    "spend_cap_starts_at": "2026-07-17T21:59:00Z",
+                    "supervisor_every_cycles": 100,
+                }
+            )
+            old = config.lab_dir / "projects" / "old"
+            old.mkdir(parents=True)
+            (old / "PROJECT.md").write_text("# old\n")
+            (old / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "paused",
+                        "priority": 0,
+                        "authorized_spend_usd": 4.0,
+                        "actual_spend_usd": 1.0,
+                        "reservation_required": False,
+                    }
+                )
+            )
+            stop = threading.Event()
+
+            class ReservationRunner(FakeRunner):
+                def __init__(self, lab_dir: Path):
+                    super().__init__(lab_dir)
+                    self.director_calls = 0
+
+                def run(
+                    self,
+                    prompt,
+                    *,
+                    role,
+                    route,
+                    thread_id,
+                    timeout_seconds,
+                    label,
+                ):
+                    if role == "director":
+                        self.director_calls += 1
+                        if self.director_calls == 1:
+                            (old / "STATUS.json").write_text(
+                                json.dumps(
+                                    {
+                                        "status": "complete",
+                                        "priority": 0,
+                                        "authorized_spend_usd": 4.0,
+                                        "actual_spend_usd": 1.0,
+                                        "reservation_required": False,
+                                    }
+                                )
+                            )
+                            successor = self.lab_dir / "projects" / "successor"
+                            successor.mkdir(parents=True)
+                            (successor / "PROJECT.md").write_text("# successor\n")
+                            (successor / "STATUS.json").write_text(
+                                json.dumps(
+                                    {
+                                        "status": "active",
+                                        "priority": 10,
+                                        "authorized_spend_usd": 3.0,
+                                        "actual_spend_usd": 0.0,
+                                        "reservation_required": True,
+                                    }
+                                )
+                            )
+                        else:
+                            stop.set()
+                    return {
+                        "thread_id": thread_id or f"thread-{role}-{label}",
+                        "returncode": 0,
+                        "timed_out": False,
+                        "duration_seconds": 0.01,
+                        "model": route.model,
+                        "reasoning_effort": route.reasoning_effort,
+                    }
+
+            runner = ReservationRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            self.assertTrue(
+                harness._reserve_project_spend(
+                    {
+                        "id": "old",
+                        "authorized_spend_usd": 4.0,
+                        "reservation_required": False,
+                    }
+                )
+            )
+            harness.run_forever(stop_event=stop)
+
+            events = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            settled = next(
+                index
+                for index, event in enumerate(events)
+                if event.get("event") == "spend_settled"
+                and event.get("label") == "old"
+            )
+            reserved = next(
+                index
+                for index, event in enumerate(events)
+                if event.get("event") == "spend_reserved"
+                and event.get("label") == "successor"
+            )
+            self.assertLess(settled, reserved)
+            self.assertFalse(
+                any(
+                    event.get("event") == "researcher_deferred"
+                    and event.get("label") == "successor"
+                    and event.get("reason") == "spend_cap_exceeded"
+                    for event in events
+                )
+            )
+            harness.close()
+
+    def test_event_loop_admits_existing_ready_project_with_startup_director(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "cycle_interval_seconds": 10,
+                    "max_parallel_researchers": 1,
+                    "supervisor_every_cycles": 100,
+                }
+            )
+            project = config.lab_dir / "projects" / "bound"
+            project.mkdir(parents=True)
+            (project / "PROJECT.md").write_text("# bound\n")
+            (project / "STATUS.json").write_text(
+                json.dumps(
+                    {
+                        "status": "active",
+                        "priority": 10,
+                        "summary": "execution is already bound",
+                        "next_action": "launch before the recorded fence",
+                    }
+                )
+            )
+            stop = threading.Event()
+            researcher_started = threading.Event()
+            director_finished = threading.Event()
+
+            class StartupRunner(FakeRunner):
+                def __init__(self, lab_dir: Path):
+                    super().__init__(lab_dir)
+                    self.researcher_started_before_director_finished = False
+
+                def run(
+                    self,
+                    prompt,
+                    *,
+                    role,
+                    route,
+                    thread_id,
+                    timeout_seconds,
+                    label,
+                ):
+                    if role == "director":
+                        researcher_started.wait(0.5)
+                        director_finished.set()
+                    elif role == "researcher":
+                        self.researcher_started_before_director_finished = (
+                            not director_finished.is_set()
+                        )
+                        researcher_started.set()
+                        stop.set()
+                    return {
+                        "thread_id": thread_id or f"thread-{role}-{label}",
+                        "returncode": 0,
+                        "timed_out": False,
+                        "duration_seconds": 0.01,
+                        "model": route.model,
+                        "reasoning_effort": route.reasoning_effort,
+                    }
+
+            runner = StartupRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            harness.run_forever(stop_event=stop)
+
+            self.assertTrue(researcher_started.is_set())
+            self.assertTrue(
+                runner.researcher_started_before_director_finished
+            )
+            harness.close()
+
     def test_event_loop_wakes_durable_repair_while_director_is_running(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -3412,6 +4063,346 @@ class SimpleLabHarnessTests(unittest.TestCase):
             )
             self.assertFalse(
                 any(event.get("event") == "scheduler_failed" for event in events)
+            )
+            harness.close()
+
+    def test_supervisor_correction_precedes_new_researcher_admission(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "cycle_interval_seconds": 1,
+                    "max_parallel_researchers": 1,
+                    "supervisor_every_cycles": 1,
+                }
+            )
+            stop = threading.Event()
+            first_director_started = threading.Event()
+            supervisor_finished = threading.Event()
+
+            class CorrectedAuthorityRunner(FakeRunner):
+                def __init__(self, lab_dir: Path):
+                    super().__init__(lab_dir)
+                    self.director_calls = 0
+                    self.researcher_saw_current_authority = False
+
+                def run(
+                    self,
+                    prompt,
+                    *,
+                    role,
+                    route,
+                    thread_id,
+                    timeout_seconds,
+                    label,
+                ):
+                    project = self.lab_dir / "projects" / "corrected"
+                    if role == "director":
+                        self.director_calls += 1
+                        if self.director_calls == 1:
+                            first_director_started.set()
+                            supervisor_finished.wait(5)
+                            project.mkdir(parents=True)
+                            (project / "PROJECT.md").write_text("# corrected\n")
+                            (project / "STATUS.json").write_text(
+                                json.dumps(
+                                    {
+                                        "status": "active",
+                                        "priority": 1,
+                                        "next_action": "use current authority",
+                                    }
+                                )
+                            )
+                        else:
+                            (project / "DIRECTOR_CURRENT.json").write_text("{}")
+                    elif role == "supervisor":
+                        first_director_started.wait(5)
+                        (self.lab_dir / "SUPERVISOR_LOG.md").write_text(
+                            "correct stale authority before admission\n"
+                        )
+                        supervisor_finished.set()
+                    elif role == "researcher":
+                        self.researcher_saw_current_authority = (
+                            project / "DIRECTOR_CURRENT.json"
+                        ).is_file()
+                        stop.set()
+                    return {
+                        "thread_id": thread_id or f"thread-{role}-{label}",
+                        "returncode": 0,
+                        "timed_out": False,
+                        "duration_seconds": 0.01,
+                        "model": route.model,
+                        "reasoning_effort": route.reasoning_effort,
+                    }
+
+            runner = CorrectedAuthorityRunner(config.lab_dir)
+            harness = LabHarness(config, runner=runner)
+            harness.run_forever(stop_event=stop)
+
+            self.assertGreaterEqual(runner.director_calls, 2)
+            self.assertTrue(runner.researcher_saw_current_authority)
+            events = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            corrected_director = next(
+                index
+                for index, event in enumerate(events)
+                if event.get("event") == "agent_started"
+                and event.get("role") == "director"
+                and index
+                > next(
+                    first
+                    for first, candidate in enumerate(events)
+                    if candidate.get("event") == "director_wake_requested"
+                    and candidate.get("reason") == "supervisor_changed"
+                )
+            )
+            researcher = next(
+                index
+                for index, event in enumerate(events)
+                if event.get("event") == "agent_started"
+                and event.get("role") == "researcher"
+            )
+            self.assertLess(corrected_director, researcher)
+            harness.close()
+
+    def test_supervisor_correction_allows_durable_repair_during_director(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "cycle_interval_seconds": 1,
+                    "max_parallel_researchers": 1,
+                    "supervisor_every_cycles": 1,
+                }
+            )
+            stop = threading.Event()
+            first_director_started = threading.Event()
+            supervisor_finished = threading.Event()
+            corrected_director_started = threading.Event()
+            repair_started = threading.Event()
+
+            class DurableCorrectionRunner(FakeRunner):
+                def __init__(self, lab_dir: Path):
+                    super().__init__(lab_dir)
+                    self.director_calls = 0
+                    self.repair_started_while_director = False
+
+                def run(
+                    self,
+                    prompt,
+                    *,
+                    role,
+                    route,
+                    thread_id,
+                    timeout_seconds,
+                    label,
+                ):
+                    project = self.lab_dir / "projects" / "repair"
+                    if role == "director":
+                        self.director_calls += 1
+                        if self.director_calls == 1:
+                            first_director_started.set()
+                            supervisor_finished.wait(5)
+                            artifacts = project / "artifacts" / "run"
+                            artifacts.mkdir(parents=True)
+                            (project / "PROJECT.md").write_text("# repair\n")
+                            (artifacts / "REPAIR_READY.json").write_text(
+                                json.dumps(
+                                    {
+                                        "repair_deadline_epoch": (
+                                            time.time() + 600
+                                        )
+                                    }
+                                )
+                            )
+                            (project / "STATUS.json").write_text(
+                                json.dumps(
+                                    {
+                                        "status": "active",
+                                        "priority": 1,
+                                        "active_session": {
+                                            "unit": "repair.service",
+                                            "unit_manager": "user",
+                                            "artifact_root": "artifacts/run",
+                                        },
+                                    }
+                                )
+                            )
+                        else:
+                            corrected_director_started.set()
+                            repair_started.wait(1)
+                            stop.set()
+                    elif role == "supervisor":
+                        first_director_started.wait(5)
+                        (self.lab_dir / "SUPERVISOR_LOG.md").write_text(
+                            "correct stale authority without delaying repair\n"
+                        )
+                        supervisor_finished.set()
+                    elif role == "researcher":
+                        self.repair_started_while_director = (
+                            corrected_director_started.is_set()
+                            and not stop.is_set()
+                        )
+                        repair_started.set()
+                    return {
+                        "thread_id": thread_id or f"thread-{role}-{label}",
+                        "returncode": 0,
+                        "timed_out": False,
+                        "duration_seconds": 0.01,
+                        "model": route.model,
+                        "reasoning_effort": route.reasoning_effort,
+                    }
+
+            runner = DurableCorrectionRunner(config.lab_dir)
+            harness = LabHarness(
+                config,
+                runner=runner,
+                unit_is_active=lambda unit, manager: (
+                    unit == "repair.service" and manager == "user"
+                ),
+            )
+            harness.run_forever(stop_event=stop)
+
+            self.assertGreaterEqual(runner.director_calls, 2)
+            self.assertTrue(runner.repair_started_while_director)
+            harness.close()
+
+    def test_event_loop_stalled_durable_repair_waits_for_observation_change(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            base = self._config(root)
+            config = LabConfig(
+                **{
+                    **base.__dict__,
+                    "cycle_interval_seconds": 1,
+                    "max_parallel_researchers": 1,
+                    "supervisor_every_cycles": 100,
+                }
+            )
+            stop = threading.Event()
+            second_repair_started = threading.Event()
+
+            class StalledRepairRunner(FakeRunner):
+                def __init__(self, lab_dir: Path):
+                    super().__init__(lab_dir)
+                    self.director_calls = 0
+                    self.researcher_calls = 0
+                    self.calls_before_change = 0
+                    self.researcher_thread_ids = []
+
+                def run(
+                    self,
+                    prompt,
+                    *,
+                    role,
+                    route,
+                    thread_id,
+                    timeout_seconds,
+                    label,
+                ):
+                    if role == "director":
+                        self.director_calls += 1
+                        if self.director_calls == 1:
+                            project = self.lab_dir / "projects" / "repair"
+                            artifacts = project / "artifacts" / "run"
+                            artifacts.mkdir(parents=True)
+                            (project / "PROJECT.md").write_text("# repair\n")
+                            (project / "STATUS.json").write_text(
+                                json.dumps(
+                                    {
+                                        "status": "active",
+                                        "priority": 1,
+                                        "active_session": {
+                                            "unit": "repair.service",
+                                            "unit_manager": "user",
+                                            "artifact_root": "artifacts/run",
+                                        },
+                                    }
+                                )
+                            )
+                            (artifacts / "REPAIR_READY.json").write_text(
+                                json.dumps(
+                                    {
+                                        "generation": 1,
+                                        "repair_deadline_epoch": time.time() + 600,
+                                    }
+                                )
+                            )
+                        else:
+                            time.sleep(1.25)
+                            self.calls_before_change = self.researcher_calls
+                            repair_ready = (
+                                self.lab_dir
+                                / "projects"
+                                / "repair"
+                                / "artifacts"
+                                / "run"
+                                / "REPAIR_READY.json"
+                            )
+                            repair_ready.write_text(
+                                json.dumps(
+                                    {
+                                        "generation": 2,
+                                        "repair_deadline_epoch": time.time() + 600,
+                                    }
+                                )
+                            )
+                            second_repair_started.wait(5)
+                            stop.set()
+                    elif role == "researcher":
+                        self.researcher_calls += 1
+                        self.researcher_thread_ids.append(thread_id)
+                        status = (
+                            self.lab_dir
+                            / "projects"
+                            / "repair"
+                            / "STATUS.json"
+                        )
+                        value = json.loads(status.read_text())
+                        value["summary"] = f"repair turn {self.researcher_calls}"
+                        status.write_text(json.dumps(value))
+                        if self.researcher_calls == 2:
+                            second_repair_started.set()
+                    return {
+                        "thread_id": thread_id or f"thread-{role}-{label}",
+                        "returncode": 0,
+                        "timed_out": False,
+                        "duration_seconds": 0.01,
+                        "model": route.model,
+                        "reasoning_effort": route.reasoning_effort,
+                    }
+
+            runner = StalledRepairRunner(config.lab_dir)
+            harness = LabHarness(
+                config,
+                runner=runner,
+                unit_is_active=lambda unit, manager: (
+                    unit == "repair.service" and manager == "user"
+                ),
+            )
+            harness.run_forever(stop_event=stop)
+
+            self.assertEqual(1, runner.calls_before_change)
+            self.assertEqual(2, runner.researcher_calls)
+            self.assertEqual([None, None], runner.researcher_thread_ids)
+            events = [
+                json.loads(line)
+                for line in harness.events_path.read_text().splitlines()
+            ]
+            self.assertTrue(
+                any(
+                    event.get("event") == "researcher_no_progress"
+                    and event.get("label") == "repair"
+                    and event.get("retry_condition")
+                    == "project_observation_changed"
+                    for event in events
+                )
             )
             harness.close()
 

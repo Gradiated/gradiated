@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-28T16:40:07Z",
+  "decision": "replace_sleep_only_recovery5_with_nvrtc_reentry_owner",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "continuous_claim": {
+    "claimed_at": "2026-07-28T16:11:49.594164Z",
+    "must_remain_continuous": true
+  },
+  "predecessor_owner": {
+    "pid": 3337978,
+    "start_ticks": 137237894,
+    "repair_id": "recovery5",
+    "classification": "live_heartbeat_owner_with_sleep_only_repair_wait"
+  },
+  "repair_input": {
+    "failure_stage": "patched_build",
+    "failure_classification": "invalid_pre_science_integration_attempt",
+    "failure_diagnostic": "artifacts/b200-m32-dispatch-recovery5-20260728t1623z/REPAIR_patched_build.json",
+    "failure_diagnostic_sha256": "867dbd38af1712a303eea5db30b064658304534ccc3db46322d3892a7f16b7bf",
+    "repair_ready": "artifacts/b200-m32-dispatch-recovery5-20260728t1623z/.repair-handshakes/recovery5-patched_build/REPAIR_READY.json",
+    "repair_ready_sha256": "d916b2317c1073e758e2196291e5bc7fe043482f3ab69f643674bcab78b4bc41",
+    "repair_request": "artifacts/b200-m32-dispatch-recovery5-20260728t1623z/.repair-handshakes/recovery5-patched_build/REPAIR_REQUEST.json",
+    "repair_request_sha256": "648e1f29c55a2fc04eb2e16fc8fb2be5457fed88b493ee362d4c83877526f511",
+    "patch_artifact": "recovery5_patched_build_retry.sh",
+    "patch_artifact_sha256": "807b403d246440feab7b2e5e9182ce8eb48576c193dcdd187eab4f0b2f2ca9ef",
+    "causal_defect": "CMake generated with CUDA_nvrtc_LIBRARY=NOTFOUND while the host CUDA toolkit was not mounted and explicitly bound into the transient build container",
+    "science_consumed": false
+  },
+  "immutable_scientific_contract": {
+    "runner": "b200_m32_dispatch_component.py",
+    "runner_sha256": "bbd4505a6b2c034f7a2a018e9cb35bbc1bd6093a4b4588fdcab418ef8e349c86",
+    "patch": "M32_DISPATCH.patch",
+    "patch_sha256": "7de10b2f32ab39e5ced3e7aac2e9abc771744be9971b3b70eb1c5c6db9d1a01b",
+    "predecessor_preclaim": "PRECLAIM_RECOVERY5_TERMINAL.json",
+    "predecessor_preclaim_sha256": "fe9efdb82a7978ea24730c501c0eff3737a4287eb81b4009819683aba7518c7e",
+    "submission": "one stock arm followed by one genuinely patched arm over the same six weighted M32 decode shapes",
+    "promotion": "retain a correct positive component for endpoint promotion; release a negative component",
+    "scientific_sample_consumed": false
+  },
+  "resident_state_to_reuse": {
+    "derived_image": "b200-m32-recovery5:20260728t1623z",
+    "patched_source": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/vllm-recovery5",
+    "source_post_sha256": "2662238503d1a233fe7c6b85c209076ef5657c789b2ae21b52b708aed9f15cef",
+    "remote_output_generation": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/output-recovery6",
+    "controller_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-m32-dispatch-recovery6-20260728t1640z"
+  },
+  "mutable_destinations": {
+    "owner": "b200_m32_dispatch_owner_recovery6.sh",
+    "preclaim": "PRECLAIM_RECOVERY6_TERMINAL.json"
+  },
+  "required_owner_behavior": [
+    "hash-bind this envelope, repair-ready, repair-request, patch artifact, runner, patch, final owner, and final preclaim",
+    "recheck predecessor PID 3337978 and start ticks 137237894 immediately before transition; stop only that exact process after replacement bytes are durable",
+    "preserve the original pool claimed_at timestamp and heartbeat the existing claim",
+    "do not clone source or rebuild the derived image; execute the bound patched_build retry against the retained patched source",
+    "verify the patched extension execution identity before any scientific marker",
+    "use the fresh remote output-recovery6 generation and persist per-arm first-call completion markers",
+    "after patched_build succeeds, continue directly into the still-unconsumed stock and patched component arms",
+    "on another pre-science defect, publish and consume a re-enterable repair handshake or exit promptly for an explicitly bound replacement"
+  ],
+  "forbidden": [
+    "provider mutation",
+    "claim release or reclaim during replacement",
+    "another source clone or derived-image rebuild",
+    "changing the six shapes, dispatcher patch, oracle, timing boundary, or promotion rule",
+    "starting a second stock or patched executor",
+    "c32, c64, c96, BF16, or endpoint replay"
+  ],
+  "lifecycle": {
+    "replacement_owner_start_by_utc": "2026-07-28T16:45:00Z",
+    "negative_component_release_by_utc": "2026-07-28T17:17:00Z",
+    "watchdog_deadline_utc": "2026-07-28T17:27:00Z",
+    "watchdog_unit": "gemma4-b200-m32-repair2-20260728t1621z-watchdog.service"
+  },
+  "detached_owner_command": [
+    "/root/workspace/research/factory/tools/detached-owner",
+    "start",
+    "--state",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-m32-dispatch-recovery6-20260728t1640z/OWNER_STATE.json",
+    "--log",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-m32-dispatch-recovery6-20260728t1640z/OWNER.log",
+    "--cwd",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath",
+    "--unit-manager",
+    "pid",
+    "--",
+    "env",
+    "B200_M32_BENCH=b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "B200_M32_OUTPUT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-m32-dispatch-recovery6-20260728t1640z",
+    "B200_M32_RELEASE_BY_UTC=2026-07-28T17:17:00Z",
+    "bash",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/b200_m32_dispatch_owner_recovery6.sh"
+  ]
+}

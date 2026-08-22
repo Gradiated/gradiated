@@ -1,0 +1,197 @@
+{
+  "artifact_type": "fp8_prologue_h200_owner_ready",
+  "bench": {
+    "claim_start_by_utc": "2026-07-29T22:25:00Z",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8",
+    "id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "owner_deadline_utc": "2026-07-29T23:48:00Z",
+    "required_status": "available",
+    "ssh_ed25519_fingerprint": "SHA256:3hDhNCJKQQo68DtW7LV5dperdxrj4cJJ39CVq0w1ZRM",
+    "watchdog_pid": 299583,
+    "watchdog_unit": "gemma4-pq-mips-20260729t2107z-watchdog-r4.service"
+  },
+  "binding": {
+    "path": "DIRECTOR_TASKGRAPH_FP8_PROLOGUE_H200_EXECUTION_20260729T2148Z.json",
+    "sha256": "82da8037e760b7fb07a01bd161ea2ce7ba6d07454670367f568d8da76c1db289"
+  },
+  "commands": {
+    "claim": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_decode_taskgraph_hotblock --bench h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "container": "sudo -n docker run --rm --gpus all --ipc=host -v REMOTE_ROOT:/work -v REMOTE_CHECKPOINT:/checkpoint:ro docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 python3 /work/RUNNER --checkpoint-root /checkpoint --output-root /work/out-N",
+    "owner": "research/factory/tools/detached-owner start --unit-manager pid --state ABS_OWNER_STATE --log ABS_OWNER_LOG --cwd ABS_PROJECT -- python3 ABS_OWNER --bench h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt --claimed-at CLAIMED_AT --owner-state ABS_OWNER_STATE --artifact-root ABS_ARTIFACT_ROOT"
+  },
+  "component": {
+    "activation_quantization": {
+      "amax_divisor": 448.0,
+      "dtype": "float8_e4m3fn",
+      "scale": "one float32 scale per input row [32]",
+      "zero_guard": "max(amax,1e-12)"
+    },
+    "candidate": "row_scale_kernel then fused_quant_gemm_kernel with E4M3 conversion on tile load",
+    "candidate_preserves_scale_barrier": true,
+    "candidate_removes_global_quantized_activation": true,
+    "checkpoint_shape": [
+      8192,
+      5376
+    ],
+    "consumer_shape": {
+      "K": 5376,
+      "M": 32,
+      "N": 8192
+    },
+    "input": {
+      "dtype": "bfloat16",
+      "shape": [
+        32,
+        5376
+      ]
+    },
+    "projection": "model.language_model.layers.0.self_attn.q_proj.weight",
+    "stock": "sgl_per_token_quant_fp8 then unchanged fp8_scaled_mm",
+    "weight": {
+      "consumer_dtype": "float8_e4m3fn",
+      "identity": "real layer-0 q_proj checkpoint tensor",
+      "index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "resident_path": "/home/glmrunner/qkv-direct-a7fc5afbe3c3b292/checkpoint",
+      "scale": "one float32 scale per output column [8192]",
+      "shard": "model-00001-of-00002.safetensors",
+      "shard_bytes": 49784788364,
+      "shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "source_dtype": "bfloat16"
+    }
+  },
+  "created_at_utc": "2026-07-29T22:00:41.887196Z",
+  "decision": "ready_for_one_bound_mutable_h200_owner",
+  "experiment": {
+    "correctness_gate": {
+      "cosine_min": 0.999,
+      "finite": true,
+      "negative_control": "rolled weight-scale vector must diverge",
+      "relative_l2_max": 0.02,
+      "scale_relative_error_max": 2e-05
+    },
+    "hypothesis": "Eliminating global qactivation write/read can outweigh on-tile conversion despite preserving the row-scale barrier.",
+    "output_contract": [
+      "IDENTITY.json",
+      "SCIENCE_STARTED.json",
+      "STOCK_SMOKE_COMPLETE.json",
+      "CANDIDATE_SMOKE_COMPLETE.json",
+      "CORRECTNESS.json",
+      "TIMING_ROWS.json when correctness passes",
+      "TERMINAL.json"
+    ],
+    "timing": {
+      "full_output_consumed": true,
+      "inner": 20,
+      "order": [
+        "stock",
+        "candidate",
+        "stock",
+        "candidate",
+        "stock",
+        "candidate",
+        "stock"
+      ],
+      "profiler": "off",
+      "unit": "ns per complete producer-plus-consumer interval",
+      "warmup": 8
+    },
+    "whole_request_transfer": "forbidden without endpoint A/B or scope-matched critical-path attribution"
+  },
+  "fixture": {
+    "path": "fp8_prologue_cpu_fixture.py",
+    "result": {
+      "columns": 5,
+      "negative_control_wrong_row_scale_diverged": true,
+      "pass": true,
+      "rows": 3,
+      "saturation": 448.0,
+      "scales": [
+        2.232142857142857e-15,
+        1.1160714285714285e-10,
+        0.011160714285714286
+      ],
+      "zero_guard": true
+    },
+    "sha256": "354ee916879accfdd1528a0e5be3c49b3f5dca2f604201f1b84e526485099730"
+  },
+  "immutable_files": [
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_owner.py",
+      "bytes": 22537,
+      "sha256": "4de2688f717fd3b857443361a4609494cb3d6b673cdf1020627a250b46636acc"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+      "bytes": 12008,
+      "sha256": "d772c6d4bc1bd2fb4569c510e35d9bd0129f1ee69ddc90c4fa3eaf4d5407831e"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_cpu_fixture.py",
+      "bytes": 1393,
+      "sha256": "354ee916879accfdd1528a0e5be3c49b3f5dca2f604201f1b84e526485099730"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/build_fp8_prologue_ready.py",
+      "bytes": 8706,
+      "sha256": "2bf1823d7c777006f07e45c5d19a6d4a0145ac4b546cd602eb3512dfef027aea"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/DIRECTOR_TASKGRAPH_FP8_PROLOGUE_H200_EXECUTION_20260729T2148Z.json",
+      "bytes": 9024,
+      "sha256": "82da8037e760b7fb07a01bd161ea2ce7ba6d07454670367f568d8da76c1db289"
+    },
+    {
+      "absolute_path": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/quantization/fp8_utils.py",
+      "bytes": 62279,
+      "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/pair/nsys-stats.csv",
+      "bytes": 20937,
+      "sha256": "2c23d30660675e39185344b2d44b7b951d7bcd700704c4fd73028efa19eff487"
+    }
+  ],
+  "owner": {
+    "controller": "/root/workspace/research/factory/tools/detached-owner",
+    "heartbeat": true,
+    "path": "fp8_prologue_h200_owner.py",
+    "release": "generation-fenced with expected claimed_at; available on quiescent terminal, maintenance only on nonrecoverable/deadline boundary",
+    "repair_dispatch": "hash-bound project-local runner replacement, worker-only retry, same claim",
+    "sha256": "4de2688f717fd3b857443361a4609494cb3d6b673cdf1020627a250b46636acc",
+    "unit_manager": "pid"
+  },
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "reservation": {
+    "actual_spend_usd_before_claim": 0.0,
+    "authorized_cumulative_usd": 6.0,
+    "hourly_rate_usd": 2.45,
+    "reserved_at_utc": "2026-07-29T21:44:08.760922Z"
+  },
+  "runner": {
+    "path": "fp8_prologue_h200_runner.py",
+    "sha256": "d772c6d4bc1bd2fb4569c510e35d9bd0129f1ee69ddc90c4fa3eaf4d5407831e"
+  },
+  "schema_version": 1,
+  "validation": {
+    "cpu_fixture": {
+      "columns": 5,
+      "negative_control_wrong_row_scale_diverged": true,
+      "pass": true,
+      "rows": 3,
+      "saturation": 448.0,
+      "scales": [
+        2.232142857142857e-15,
+        1.1160714285714285e-10,
+        0.011160714285714286
+      ],
+      "zero_guard": true
+    },
+    "python_compile": true,
+    "source_symbols": [
+      "qinput, x_scale = sglang_per_token_quant_fp8(input_2d)",
+      "output = fp8_scaled_mm(",
+      "out_dtype=input.dtype"
+    ],
+    "trace_row": "2.4,323396400,14640,22089.9,10080.0,2208,54336,17546.9,\"void per_token_quant_fp8_small_batch_kernel<__nv_bfloat16, __nv_fp8_e4m3, (int)16>(const T1 *, T2 *, float *, long, long)\""
+  }
+}

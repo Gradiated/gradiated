@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fp8_downproj_residual_norm_fusion",
+  "role": "strict_h200_downproj_residual_norm_exact_consumer_component",
+  "state": "ready_exact_component_sole_claimant",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "checkpoint": "No full checkpoint required; exact-shape component inputs remain unstaged.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6; not yet pulled.",
+  "runtime": "Strict SSH verified Nebius ubuntu24.04-cuda13.0 base; NVIDIA H200 GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507, driver 580.159.04, Docker 29.5.3.",
+  "caches": "None assumed.",
+  "server_state": "Quiescent with zero GPU compute processes and zero containers.",
+  "connection_identity": {
+    "hostname": "gemma4-downproj-h200-20260730t0902z",
+    "public_ipv4": "89.169.99.32",
+    "ssh_user": "glmrunner",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:+fo6Q6AVSvofE9W05UTRF0dOakm7NHGfgkWl7zGdM2Q",
+    "connection_state": "strict_ssh_h200_quiescence_verified"
+  },
+  "accelerator_identity": {
+    "gpu_count": 1,
+    "gpu_uuid": "GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507",
+    "gpu_name": "NVIDIA H200",
+    "gpu_memory_mib": 143771,
+    "driver_version": "580.159.04",
+    "compute_process_count": 0
+  },
+  "identity_artifact": "H200_STRICT_IDENTITY_VERIFICATION_20260730T0909Z.json",
+  "scientific_terminal": "Exact M=1/16/32 down-to-QKV component unconsumed.",
+  "summary": "The protected cold H200 is identity-verified, quiescent, and ready only for the preregistered down-projection exact-consumer component.",
+  "next": "Only gemma4_h200_fp8_downproj_residual_norm_fusion may claim under DIRECTOR_DOWNPROJ_RESIDUAL_NORM_H200_EXECUTION_20260730T0909Z.json and must release no later than 10:05:00Z."
+}

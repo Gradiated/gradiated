@@ -1,0 +1,330 @@
+{
+  "artifact_type": "dflash_h200_component_ready",
+  "claim_allowed": false,
+  "claim_gate": "A later director must bind this exact readiness digest, remaining reservation, current compatible bench, claim generation, immutable resident target path, and a fresh owner deadline before claiming.",
+  "commands": {
+    "active_session_contract": "Record detached-owner absolute state path as unit plus emitted pid, start_ticks, unit_manager=pid, deadline, artifact_root, and generation.",
+    "claim": "PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_dflash_exact_target_h200_component --bench DIRECTOR_BOUND_BENCH",
+    "owner": "research/factory/tools/detached-owner start --unit-manager pid --state ABS_OWNER_STATE --log ABS_OWNER_LOG --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_owner.py --execution-binding ABS_DIRECTOR_EXECUTION_BINDING --artifact-root ABS_ARTIFACT_ROOT"
+  },
+  "created_at_utc": "2026-07-29T22:44:39.438840Z",
+  "decision": "ready_for_later_director_claim_binding",
+  "historical_request_25": {
+    "replayed": false,
+    "reusable_mapping_only": true,
+    "single_consumption_preserved": true,
+    "terminal_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+    "used_as_evidence": false
+  },
+  "identities": {
+    "draft": {
+      "config_sha256": "325f2a18894994b19f916e551b6f13a6904e961ae59a818d2b1dec18458e97f8",
+      "repo": "z-lab/gemma-4-31B-it-DFlash",
+      "revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+      "weight_bytes": 3071941240,
+      "weight_sha256": "b3f28580103d6e8a0a1d9389646957b9309df5982558afd754b9810357f425b7"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+    "runtime_commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "source_archive_sha256": "3b7c1c8a43a179c10020be8621465be9b7d07ff9353164054c77fd7791f3b8c1",
+    "target": {
+      "bytes": 62578655208,
+      "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "repo": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "tokenizer_json_sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "weight_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    "workload": {
+      "block_size_including_current": 16,
+      "concurrency": 32,
+      "output_tokens_per_request": 358,
+      "prompt_tokens_per_request": 4214,
+      "seed": 20260718,
+      "temperature": 0
+    }
+  },
+  "immutable_files": [
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/PROJECT.md",
+      "bytes": 2142,
+      "path": "PROJECT.md",
+      "sha256": "4ed15ee5e417633588f6389c39bbc897d2271fe12697ecc2dad92f1a42219418"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_H200_COMPONENT_SOURCE_GATE_20260729T2215Z.json",
+      "bytes": 5513,
+      "path": "DIRECTOR_DFLASH_H200_COMPONENT_SOURCE_GATE_20260729T2215Z.json",
+      "sha256": "e26504a771e646cfb4970e657a8bf1ad2e0690d66877aad32e181856db092338"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_H200_WATCHDOG_R5_20260729T2223Z.json",
+      "bytes": 2056,
+      "path": "DIRECTOR_DFLASH_H200_WATCHDOG_R5_20260729T2223Z.json",
+      "sha256": "e87bbad3c5b505da50768c30f6a0e98684694decf9eaa0f57a7f7b761ece7147"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/EXPERIMENT_CONTRACT.json",
+      "bytes": 5562,
+      "path": "EXPERIMENT_CONTRACT.json",
+      "sha256": "9d4b56ba5ae72b43afe2f913cbe52f0e8ec4a4998d6478a396806ba764ef6ca3"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/OPPORTUNITY_REGISTER.json",
+      "bytes": 1648,
+      "path": "OPPORTUNITY_REGISTER.json",
+      "sha256": "d8e28de48097b391afb5084b8e9fdedee198ba0415584cc14e37cfae0936acfc"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/EXECUTION_BINDING_TEMPLATE.json",
+      "bytes": 984,
+      "path": "EXECUTION_BINDING_TEMPLATE.json",
+      "sha256": "c453904f12f44bd5ddf23fbf150f5eb30f4db1f74054c1c65abfb70222e68ddb"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/component_observer.py",
+      "bytes": 19934,
+      "path": "component_observer.py",
+      "sha256": "38b6b00ca6f02a26ead61d434ad8738092bb3e7d8bdd18bf2f21d1d21488de9c"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/sitecustomize.py",
+      "bytes": 131,
+      "path": "sitecustomize.py",
+      "sha256": "6c0550e60b616254aba0ca42e78e701bebcdba9c0126494060b1944534be4b70"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/run_bound_c32.py",
+      "bytes": 2253,
+      "path": "run_bound_c32.py",
+      "sha256": "93497eaf46078f4e110c14fcfe916df67d3cbc12209a23e712c18f8887bd02ee"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/summarize_component.py",
+      "bytes": 12067,
+      "path": "summarize_component.py",
+      "sha256": "7da93cfb976c08dbae9183526d346ef0931bd9fb9cdb2efc4a08a5025eb3a5c9"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_worker.py",
+      "bytes": 22825,
+      "path": "dflash_component_worker.py",
+      "sha256": "af88c1f53a433a201971da8c224631086b7a1d009695ca17d32e8b1406f4cb1d"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_owner.py",
+      "bytes": 33082,
+      "path": "dflash_component_owner.py",
+      "sha256": "2acf8f2d0871528c1255d16187aff16ccb80e24e4c52015056d53487f7c02950"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/test_component_packet.py",
+      "bytes": 8042,
+      "path": "test_component_packet.py",
+      "sha256": "82d7a7e22ee641ec9aceff3ef1022756422a0590aafad1fbf927d10e8bf90842"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/build_readiness.py",
+      "bytes": 16837,
+      "path": "build_readiness.py",
+      "sha256": "f2ca61eb1f069d240f21f1e6c44b9d011d208aa9d43edaa38875d6dc92af5d4b"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/VALIDATION.json",
+      "bytes": 6734,
+      "path": "VALIDATION.json",
+      "sha256": "30592887aa8a7b91b7c85c8c0a2accfb9b4ea4527ce2a9f9b4456c77a0c8ebc0"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/CHECKPOINT_MANIFEST.json",
+      "bytes": 1577,
+      "path": "inputs/CHECKPOINT_MANIFEST.json",
+      "sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/exact_c32_runner.py",
+      "bytes": 12189,
+      "path": "inputs/exact_c32_runner.py",
+      "sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/server_args.f63458b5.py",
+      "bytes": 324327,
+      "path": "inputs/server_args.f63458b5.py",
+      "sha256": "555c2555bd93ed1596ccd57984ce4fc17e6ef6ba29c0146566b8d4d887d36e0a"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/sglang-f63458b5.tar",
+      "bytes": 92610560,
+      "path": "inputs/sglang-f63458b5.tar",
+      "sha256": "3b7c1c8a43a179c10020be8621465be9b7d07ff9353164054c77fd7791f3b8c1"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/EXACT_TARGET_PARALLEL_DRAFT_COMPATIBILITY.json",
+      "bytes": 31483,
+      "path": "inputs/EXACT_TARGET_PARALLEL_DRAFT_COMPATIBILITY.json",
+      "sha256": "738567dce0eee75ef4578b2e968919c533c7add11947cf585c0e2237374a046a"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json",
+      "bytes": 6921,
+      "path": "inputs/DFLASH_REQUEST25_OFFLINE_BOUNDARY_RESULT.json",
+      "sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/REQUEST_POOL_OWNERSHIP_FIXTURE_RESULT.json",
+      "bytes": 941,
+      "path": "inputs/REQUEST_POOL_OWNERSHIP_FIXTURE_RESULT.json",
+      "sha256": "2b94b14f0d0df94df03830ee91aa884fba53fa3b3888d420648c4510479809bc"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/REQUEST_POOL_OWNER_REPAIR.patch",
+      "bytes": 781,
+      "path": "inputs/REQUEST_POOL_OWNER_REPAIR.patch",
+      "sha256": "a8bb7d77c99ee80e9dd9cb1ab5cb89797bab07e90dc2f1e22c9c6d44ee2aebbd"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/PACKET_MANIFEST.json",
+      "bytes": 3907,
+      "path": "PACKET_MANIFEST.json",
+      "sha256": "be880d2ed0c0548223dbb05798e5cefe1e1344d25595931c3524c3dfa620b10d"
+    },
+    {
+      "absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_COMPONENT_PACKET.tar",
+      "bytes": 93153280,
+      "path": "DFLASH_H200_COMPONENT_PACKET.tar",
+      "sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04"
+    }
+  ],
+  "limitations": [
+    "No GPU, provider, SSH, Docker, CUDA, or endpoint operation occurred while publishing readiness.",
+    "Readiness is not a load, acceptance, timing, semantic, endpoint, or quality result.",
+    "A later director must recheck lifecycle runway and reservation before claim."
+  ],
+  "measurement": {
+    "arms": [
+      "ar",
+      "dflash",
+      "ngram"
+    ],
+    "cuda_event_interval_union_phases": [
+      "draft",
+      "target_verify",
+      "acceptance",
+      "kv_commit"
+    ],
+    "economics": "c32 accepted target tokens per component second and committed-rate USD per million target tokens",
+    "endpoint_claim": false,
+    "fresh_generation_each": true,
+    "greedy_output_token_equality": true,
+    "next_round_kv_bonus_audits": [
+      "zero",
+      "partial",
+      "full"
+    ],
+    "order": [
+      "ar",
+      "dflash",
+      "ngram"
+    ],
+    "single_consumption_markers": true
+  },
+  "owner": {
+    "controller": "/root/workspace/research/factory/tools/detached-owner",
+    "heartbeat": true,
+    "path": "dflash_component_owner.py",
+    "release": "generation-fenced with expected claimed_at",
+    "repair": "generation-scoped hash-bound same-claim repair",
+    "sha256": "2acf8f2d0871528c1255d16187aff16ccb80e24e4c52015056d53487f7c02950",
+    "unit_manager": "pid"
+  },
+  "ownership_mapping": {
+    "fixture_sha256": "2b94b14f0d0df94df03830ee91aa884fba53fa3b3888d420648c4510479809bc",
+    "logical": "ForwardBatch.rids[row]",
+    "patch_sha256": "a8bb7d77c99ee80e9dd9cb1ab5cb89797bab07e90dc2f1e22c9c6d44ee2aebbd",
+    "physical": "ForwardBatch.req_pool_indices[row]",
+    "pool": "target_worker.model_runner.req_to_token_pool.req_to_token"
+  },
+  "packet": {
+    "archive": "DFLASH_H200_COMPONENT_PACKET.tar",
+    "archive_bytes": 93153280,
+    "archive_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "file_count": 24,
+    "manifest": "PACKET_MANIFEST.json",
+    "manifest_sha256": "be880d2ed0c0548223dbb05798e5cefe1e1344d25595931c3524c3dfa620b10d"
+  },
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "reservation": {
+    "actual_spend_usd_before_claim": 0.0,
+    "authorized_cumulative_usd": 6.0,
+    "hourly_rate_usd": 2.45,
+    "reserved_at_utc": "2026-07-29T22:19:47.529405Z"
+  },
+  "schema_version": 1,
+  "validation": {
+    "commands": [
+      {
+        "command": [
+          "python3",
+          "-m",
+          "py_compile",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/build_readiness.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/component_observer.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_owner.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_worker.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/run_bound_c32.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/sitecustomize.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/summarize_component.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/test_component_packet.py"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      {
+        "command": [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/test_component_packet.py"
+        ],
+        "returncode": 0,
+        "stderr": "test_contract_excludes_consumed_request_25 (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_contract_excludes_consumed_request_25) ... ok\ntest_interval_union (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_interval_union) ... ok\ntest_observer_uses_fixture_validated_mapping (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_observer_uses_fixture_validated_mapping) ... ok\ntest_owner_uses_pool_show_and_generation_fenced_release (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_owner_uses_pool_show_and_generation_fenced_release) ... ok\ntest_python_files_parse (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_python_files_parse) ... ok\ntest_server_commands_preserve_block_and_controls (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_server_commands_preserve_block_and_controls) ... ok\ntest_summarizer_consumes_complete_matched_fixture (research.sol.experiments.gemma4_31b.research_lab.projects.gemma4_dflash_exact_target_h200_component.test_component_packet.PacketTest.test_summarizer_consumes_complete_matched_fixture) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.075s\n\nOK\n",
+        "stdout": ""
+      },
+      {
+        "command": [
+          "python3",
+          "/root/workspace/.agents/skills/experiment-run/scripts/opportunity_register.py",
+          "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/OPPORTUNITY_REGISTER.json"
+        ],
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "{\n  \"opportunities\": [\n    {\n      \"competing_explanations\": [\n        \"Exact public checkpoint revision drift collapses acceptance.\",\n        \"Target verification cost exceeds saved AR calls.\",\n        \"KV ownership or pending-bonus relay is wrong.\",\n        \"NGRAM supplies similar accepted work without draft weights.\"\n      ],\n      \"cost_usd\": 6.0,\n      \"decision_impact\": 1.0,\n      \"decision_resolution_per_dollar\": 0.10666666666666669,\n      \"discrimination_power\": 1.0,\n      \"evidence_scope\": \"Exact target/draft/runtime identities; source-backed and CPU-fixture semantics only before this packet.\",\n      \"expected_information_per_dollar\": \"High: one session resolves exact load, semantics, acceptance, controls, and component economics.\",\n      \"falsifier\": \"Fresh matched AR/DFLASH/NGRAM c32 component run with exact token and KV audits.\",\n      \"id\": \"dflash_one_forward_c32\",\n      \"mechanism\": \"Amortize one shallow learned forward across 15 target-verified proposals.\",\n      \"modifiable_fraction\": \"Unknown until CUDA interval-union measurement.\",\n      \"next_measurement\": \"Run the hash-bound durable H200 packet once after director claim authorization.\",\n      \"observation\": \"Source-complete DFlash produces 15 simultaneous proposals from one five-layer draft forward, but exact-revision H200 acceptance and economics are unmeasured.\",\n      \"phase\": \"decode component\",\n      \"readiness\": 1.0,\n      \"resource_signature\": \"One learned draft forward plus a target [B*16,262144] verification surface at c32.\",\n      \"transfer_penalty\": 0.2,\n      \"uncertainty\": 0.8,\n      \"upper_bound\": \"At most 16 committed target tokens per round, including bonus.\"\n    }\n  ],\n  \"ranking_method\": {\n    \"claim_limit\": \"triage heuristic only; inputs are judgments and score is not a performance prediction\",\n    \"formula\": \"impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd\",\n    \"name\": \"heuristic_decision_resolution_per_dollar_v1\"\n  },\n  \"schema_version\": 1\n}\n"
+      }
+    ],
+    "endpoint_traffic_sent": false,
+    "gpu_used": false,
+    "identities": {
+      "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "ownership_fixture_sha256": "2b94b14f0d0df94df03830ee91aa884fba53fa3b3888d420648c4510479809bc",
+      "ownership_patch_sha256": "a8bb7d77c99ee80e9dd9cb1ab5cb89797bab07e90dc2f1e22c9c6d44ee2aebbd",
+      "request25_boundary_sha256": "dfca865f1e4c66b1698c92921d65dec3999c351aa83be64d9987a264d61bf711",
+      "runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+      "source_archive_sha256": "3b7c1c8a43a179c10020be8621465be9b7d07ff9353164054c77fd7791f3b8c1",
+      "source_terminal_sha256": "738567dce0eee75ef4578b2e968919c533c7add11947cf585c0e2237374a046a"
+    },
+    "pass": true,
+    "provider_accessed": false,
+    "schema_version": 1,
+    "validated_at_utc": "2026-07-29T22:44:38.881447Z"
+  },
+  "worker": {
+    "path": "dflash_component_worker.py",
+    "pre_science": "Exact target/source/draft/image/runner/block identities and health before fresh submission.",
+    "producer_consumption": "Each arm has an exclusive SCIENCE_STARTED marker; completed arms are never replayed by later-scope repair.",
+    "sha256": "af88c1f53a433a201971da8c224631086b7a1d009695ca17d32e8b1406f4cb1d"
+  }
+}

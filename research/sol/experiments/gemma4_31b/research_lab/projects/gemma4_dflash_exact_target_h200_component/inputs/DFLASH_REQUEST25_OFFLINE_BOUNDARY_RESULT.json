@@ -1,0 +1,109 @@
+{
+  "artifact_root": "artifacts/request25-offline-boundary-20260726",
+  "classification": "unrecoverable_missing_decision_evidence",
+  "consumed_request": {
+    "boundary_record": null,
+    "endpoint_replayed": false,
+    "observer_error": {
+      "message": "'ForwardBatch' object has no attribute 'req_to_token_pool'",
+      "phase": "dflash_worker_v2.py:528",
+      "schema_version": 1,
+      "type": "AttributeError"
+    },
+    "response_http_200_observed": true,
+    "submission_count": 1
+  },
+  "decision": {
+    "boundary": "The stale ForwardBatch consumer is locally repairable and its ownership mapping is fixture-validated, but the already-consumed request-25 scientific boundary is unrecoverable from persisted evidence.",
+    "future_instrumentation": "A future independently authorized experiment may use the repaired pool owner lookup; this offline result does not authorize endpoint contact.",
+    "request25_disposition": "Do not classify the DFlash verifier behavior from this invocation and do not replay it. Preserve it as a consumed, uninterpretable sample."
+  },
+  "decision_bearing_boundary": false,
+  "immutable_response_inspection": {
+    "driver_retains_raw_bytes": false,
+    "driver_sha256": "ac1f26ed379cf83313ce34421ec3f7993095f00875842e05d976c0b2aac4257d",
+    "driver_source": "request25_single_request.py",
+    "file_bytes": 423,
+    "file_sha256": "75a2a93e21ec6198d6b7882de4c027a071a57e56c09bc54d71b7e55e91e71ebb",
+    "path": "artifacts/request25-duplicate-safe-owner-20260726T0135Z/retrieved/REQUEST25_RESPONSE.json",
+    "proof": "The driver accumulates the HTTP stream in a process-local bytearray, then serializes only len(raw) and sha256(raw). The 423-byte JSON is a manifest, not the reported 228,550-byte stream; no file of the reported size exists under the immutable consumed-run artifact.",
+    "raw_response_bytes_persisted": false,
+    "reported_raw_response_bytes": 228550,
+    "reported_raw_response_sha256": "82855c7959f02213647e2efd8e68ad61b3b784b84667fb5cd72a99a1278ac741",
+    "same_size_files_under_consumed_run": []
+  },
+  "input_hash_manifest": "artifacts/request25-offline-boundary-20260726/INPUTS.sha256",
+  "input_hash_manifest_sha256": "a197b67c22c4e00baab97d76f53eae3558f750edf1dd9fa227ef78bbfd45aa29",
+  "ownership_mapping": {
+    "fixture_passed": true,
+    "fixture_result": "artifacts/request25-offline-boundary-20260726/REQUEST_POOL_OWNERSHIP_FIXTURE_RESULT.json",
+    "fixture_sha256": "2b94b14f0d0df94df03830ee91aa884fba53fa3b3888d420648c4510479809bc",
+    "logical_identity": "ForwardBatch.rids[row] identifies the logical request. The observer's SLOT_TO_RID fallback preserves this identity when rids is unavailable.",
+    "physical_identity": "ForwardBatch.req_pool_indices[row] is the current physical row in target_worker.model_runner.req_to_token_pool.req_to_token.",
+    "repair_patch": "artifacts/request25-offline-boundary-20260726/REQUEST_POOL_OWNER_REPAIR.patch",
+    "repair_patch_sha256": "a8bb7d77c99ee80e9dd9cb1ab5cb89797bab07e90dc2f1e22c9c6d44ee2aebbd",
+    "repaired_consumer": "worker.target_worker.model_runner.req_to_token_pool.req_to_token",
+    "repaired_observer": "artifacts/request25-offline-boundary-20260726/sitecustomize.request_pool_owner_repaired.py",
+    "repaired_observer_sha256": "aec60db0b5affa0ba6f8abcd7ecbaf8682d4a39713850ba9c40ba332515ca1f9",
+    "selection": "Find the unique row whose RID is request 25, obtain slot = req_pool_indices[row], then read req_to_token[slot, :seq_len].",
+    "stale_consumer": "forward.req_to_token_pool.req_to_token"
+  },
+  "pinned_runtime_source": {
+    "forward_batch_evidence": {
+      "from_schedule_batch_assigns_req_pool_indices": true,
+      "from_schedule_batch_assigns_rids": true,
+      "has_req_pool_indices": true,
+      "has_req_to_token_pool": false,
+      "has_rids": true
+    },
+    "packet_identity_sha256": "4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b",
+    "required_hash_matches": {
+      "binding_declared_identity": true,
+      "dflash_worker_v2.py": true,
+      "forward_batch_info.py": true,
+      "memory_pool.py": true,
+      "observer_helper": true,
+      "observer_sitecustomize": true,
+      "request_driver": true,
+      "response_manifest": true
+    },
+    "runtime_commit": "588d1f7bc9424201f89957e145f9d5af633a3eb8",
+    "runtime_image_lineage": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "source_binding_file_sha256": "30b84c0b15d127ecd46f34ed900029671c23aeb25748636e82133ec51faec6c6",
+    "source_binding_identity_sha256": "cc49aa4192e737c90ddd5871c59efd4fc854c6a0ca094c557a0e78545bdb8c52",
+    "source_binding_path": "artifacts/request25-boundary-probe-preparation-20260726/packet/4ae9a81bfe3cfcc45a5302662be380e70c2753ef336547445b85aa7ed28f7f4b/SOURCE_BINDING.json"
+  },
+  "recorded_at_utc": "2026-07-26T05:48:13.193911Z",
+  "request_index": 25,
+  "schema_version": 1,
+  "scientific_sample_interpretable": false,
+  "scope": {
+    "cumulative_provider_spend_usd": 1.2563342402918893,
+    "endpoint_contacted": false,
+    "gpu_used": false,
+    "incremental_provider_spend_usd": 0.0,
+    "offline_only": true,
+    "request_replayed": false
+  },
+  "unrecoverability_proof": {
+    "aggregate_telemetry": [
+      "[2026-07-26 01:38:55] Decode batch, #running-req: 1, #full token: 4335, full token usage: 0.05, #swa token: 4335, swa token usage: 0.06, accept len: 2.92, accept rate: 0.64, cuda graph: True, gen throughput (token/s): 8.75, #queue-req: 0",
+      "[2026-07-26 01:38:56] Decode batch, #running-req: 1, #full token: 4494, full token usage: 0.05, #swa token: 4494, swa token usage: 0.07, accept len: 3.98, accept rate: 0.99, cuda graph: True, gen throughput (token/s): 108.02, #queue-req: 0"
+    ],
+    "aggregate_telemetry_limit": "The two server lines are time-window aggregates and do not identify request-25 verifier top-1, accepted prefix, bonus token, or commit length.",
+    "missing_decision_fields": [
+      "raw_first_position_top1",
+      "post_adjustment_first_position_top1",
+      "accepted_prefix_tokens",
+      "accepted_prefix_length",
+      "bonus_token",
+      "commit_length",
+      "pre_forward_request_to_token_prefix",
+      "pre_forward_kv_digest",
+      "raw_http_response_bytes_or_emitted_token_ids"
+    ],
+    "nontransfer_rule": "Other c32 responses came from a different batch, request ordering, and mutable request/KV state; they cannot classify this consumed single-request sample.",
+    "observer_failure_order": "The trace called _capture_pre at pinned dflash_worker_v2.py:528, failed while resolving ForwardBatch.req_to_token_pool before the target forward call, wrote the error, and set CAPTURED=True. Therefore the raw-logit and post-adjustment trace points never captured.",
+    "response_absence": "Only the response byte count and SHA-256 remain. A digest cannot recover the response bytes or emitted token IDs."
+  }
+}

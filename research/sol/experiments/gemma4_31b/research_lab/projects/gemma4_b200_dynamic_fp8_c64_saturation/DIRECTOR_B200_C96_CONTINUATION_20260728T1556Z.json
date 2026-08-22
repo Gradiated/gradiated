@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "decision": "continue_saturation_with_one_warm_b200_c96_arm",
+  "project": "gemma4_b200_dynamic_fp8_c64_saturation",
+  "created_at_utc": "2026-07-28T15:56:13Z",
+  "researcher_profile": "execution",
+  "evidence": {
+    "c64_terminal": "artifacts/b200-fp8-c64-20260728t1546z-repair2/FINAL_TERMINAL.json",
+    "c64_terminal_sha256": "8826f1dbf4b61bf7587641772e64f8d9cf426fb9a4df6742c90d21be52f01159",
+    "c64_service_seconds_per_request": 0.5842848010624948,
+    "c64_batch_seconds": 37.39422726799967,
+    "c64_vs_c32_fraction": -0.07840873465737364,
+    "c64_vs_target_fraction": 0.168290890969933,
+    "fp8_consumption": "CutlassFP8ScaledMMLinearKernel"
+  },
+  "reservation": {
+    "authorized_usd": 5.0,
+    "reserved_at": "2026-07-28T15:45:31.354064Z",
+    "durable": true,
+    "maximum_project_exposure_usd": 5.0
+  },
+  "scientific_contract": {
+    "arm": "dynamic_fp8_c96_saturation",
+    "requests": 96,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "runtime_quantization": "runtime_dynamic_fp8_weights",
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "required_request_prefix": "the first 64 canonical request hashes must exactly equal the measured c64 terminal rows in index order",
+    "c64_comparator_seconds_per_request": 0.5842848010624948,
+    "fixed_qualified_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "campaign_target_batch_seconds": 48.01145103119962,
+    "classification": {
+      "target_met": "service_seconds_per_request <= 0.500119281574996",
+      "positive_but_short": "0.500119281574996 < service_seconds_per_request < 0.5842848010624948",
+      "saturated_negative": "service_seconds_per_request >= 0.5842848010624948"
+    },
+    "submission_limit": "exactly one c96 arm after a fresh SCIENCE_STARTED.json; no c32, c64, BF16, or sweep replay"
+  },
+  "mutable_implementation": {
+    "driver_destination": "b200_fp8_c96_driver.py",
+    "owner_destination": "b200_fp8_c96_saturation_owner.sh",
+    "preclaim_destination": "PRECLAIM_C96_TERMINAL.json",
+    "source_basis": [
+      "b200_fp8_c64_driver.py",
+      "b200_fp8_c64_saturation_owner.sh"
+    ],
+    "required_changes": [
+      "change only concurrency, workload labels, request-count validation, fresh output generation, and terminal classification from c64 to c96",
+      "preserve model, checkpoint, runtime-FP8 representation, resident server, request construction, cross-host executor censuses, timing boundary, and release mechanics",
+      "hash-bind the final driver and owner bytes plus this director envelope and the authoritative c64 terminal"
+    ]
+  },
+  "lifecycle": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claim_start_by_utc": "2026-07-28T16:08:00Z",
+    "claim_lease_seconds": 1800,
+    "owner_deadline_utc": "2026-07-28T16:30:00Z",
+    "release_by_utc": "2026-07-28T16:30:00Z",
+    "watchdog_deadline_utc": "2026-07-28T16:45:00Z",
+    "success_release_condition": "maintenance",
+    "preserve_server": true
+  },
+  "launch": {
+    "run_id": "b200-fp8-c96-20260728t1556z",
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c96-20260728t1556z",
+    "claim_command": [
+      "python3",
+      "-m",
+      "grad_research.gpu_pool",
+      "--lab",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab",
+      "claim",
+      "--project",
+      "gemma4_b200_dynamic_fp8_c64_saturation",
+      "--bench",
+      "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+      "--lease-seconds",
+      "1800"
+    ],
+    "detached_owner_command": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c96-20260728t1556z/OWNER_STATE.json",
+      "--log",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c96-20260728t1556z/OWNER.log",
+      "--cwd",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation",
+      "--unit-manager",
+      "pid",
+      "--",
+      "env",
+      "C96_DEADLINE_UTC=2026-07-28T16:30:00Z",
+      "C96_RUN_ID=b200-fp8-c96-20260728t1556z",
+      "bash",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/b200_fp8_c96_saturation_owner.sh"
+    ]
+  },
+  "repair_policy": "Retain the claim for hash-bound pre-science adapter repair while the c96 arm remains unsubmitted and measured restart plus terminal/release margin fits. Never replay after SCIENCE_STARTED.json.",
+  "next_action": "Read this envelope once. Implement and hash-bind the three named mutable packet files, claim the exact ready bench by claim_start_by_utc, launch the exact detached owner, atomically record active_session, and return after one liveness/forward-progress snapshot."
+}

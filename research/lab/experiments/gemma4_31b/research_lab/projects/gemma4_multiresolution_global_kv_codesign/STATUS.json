@@ -1,20 +1,161 @@
 {
-  "active_session": null,
-  "actual_spend_usd": 0.0,
-  "authorized_spend_usd": 0.0,
-  "decision": "source_complete_physical_candidate",
-  "last_researcher_run": {
-    "completed_at_utc": "2026-07-26T10:22:41Z",
-    "profile": "deep",
-    "result": "source_complete_physical_candidate",
-    "target_margin_seconds_per_request": 0.00016116118928138912
+  "prior_active_session": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z",
+    "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+    "claim_generation": "claim-20260728T121543Z",
+    "claimed_at_utc": "2026-07-28T12:15:43.326500Z",
+    "deadline_utc": "2026-07-28T14:25:00Z",
+    "forward_progress": "Candidate-only repair owner reused the live candidate server and persisted candidate-science-started.json; no checkpoint, component, or stock endpoint stage was replayed.",
+    "pid": 3162265,
+    "start_ticks": 136204677,
+    "repair_generation": 4,
+    "replacement_binding": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_REPAIR2_BINDING.json",
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_REPAIR2.json",
+    "unit_manager": "pid"
   },
-  "next_action": "Director disposition: the zero-spend screen is complete. If later admitted to a shared H200 bench with positive spend authority, compile and execution-check the fused one-tile consumer against the pinned producer/backend, then measure profiler-off component and exact c32 endpoint timing. Fail closed on more than 64 compact entries, fallback above 0.0012873226748728159, or service time above 0.500119281574996 s/request; do not stack prompt-state savings.",
-  "priority": 8760,
+  "prior_activation_session": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z",
+    "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+    "claim_generation": "claim-20260728T135048Z",
+    "deadline_utc": "2026-07-28T14:25:00Z",
+    "forward_progress": "Activation probe completed with zero telemetry rows; terminal intervention_not_activated was persisted before release.",
+    "pid": 3172882,
+    "start_ticks": 136277541,
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_ACTIVATION_REPAIR3.json",
+    "unit_manager": "pid"
+  },
+  "prior_terminal_adoption_predecessor": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z",
+    "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+    "claim_generation": "claim-20260728T140256Z",
+    "deadline_utc": "2026-07-28T14:25:00Z",
+    "forward_progress": "Repair-4 proved global-KV activation at c1, then consumed candidate c32 and persisted all 32 request/response files before the live hook OOMed at global layer 35 and the server exited before metrics retrieval.",
+    "pid": 3183625,
+    "start_ticks": 136340115,
+    "repair_generation": 5,
+    "pending_terminal_adoption": {
+      "directive": "DIRECTOR_H200_REPAIR4_TERMINAL_ADOPTION_20260728T1412Z.json",
+      "directive_sha256": "daa15189d3e8e707d4f4638051cd7d0c4d7eaf3c37c23a7272862b1988af4650",
+      "archive_sha256": "3e0bae8f52a637ca664d01b3857c0e1bd19c4ed6b5b4a72300ade26a105a109c",
+      "replacement_owner_start_by_utc": "2026-07-28T14:18:00Z",
+      "release_to_maintenance_by_utc": "2026-07-28T14:24:00Z",
+      "fresh_request_allowed": false
+    },
+    "unit": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_ACTIVATION_REPAIR4.json",
+    "unit_manager": "pid"
+  },
+  "actual_spend_usd": 5.6468836549666666,
+  "authorized_spend_usd": 8.0,
+  "compute_budget": "45 CPU-only minutes for execution integration, then at most 130 continuous claimed H200 minutes after director-owned provisioning",
+  "decision": "candidate_c32_consumed_oom_infeasible_terminal_adopted",
+  "execution_binding": "DIRECTOR_H200_REPAIR4_TERMINAL_ADOPTION_20260728T1412Z.json",
+  "immutable_identities": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "physical_screen_sha256": "1d7d59a96a50f95b8cbadbb763ee072b5a4c462e1bb03f039dccda3905c84a30",
+    "runtime_commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "trace_sha256": "37e2c73a57e8e63bd7ec0a3465cc1edded8b9dc63507d97e85a767306a97a48b",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+  },
+  "binding_metadata_repair": {
+    "field": "candidate_sha256",
+    "prior_director_bound_sha256": "ab5d951d338b3c404606efce2dbcb2f9235d016a8943ee6c01d601ee2f289f20",
+    "observed_repaired_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "kind": "same_project_triton_compile_boundary_repair",
+    "scientific_contract_changed": false,
+    "endpoint_eligibility": "director_rebound_for_one_stock_then_candidate_c32_pair"
+  },
+  "last_researcher_run": {
+    "completed_at_utc": "2026-07-28T12:52:00Z",
+    "profile": "deep",
+    "result": "endpoint_owner_checkpoint_staging_active",
+    "target_margin_seconds_per_request": 0.00016116118928138912,
+    "endpoint_started": false,
+    "owner_replaced_or_signaled": true
+  },
+  "next_action": "No replay: c32 is consumed and terminal adopted. Provider instance computeinstance-e00f01gpfve0e49wb3 and disk computedisk-e00ywd3j5beypye022 were verified absent, and the bench was retired.",
+  "priority": 9900,
   "researcher_profile": "execution",
+  "result": "candidate_c32_consumed_oom_infeasible",
   "schema_version": 1,
-  "status": "complete",
-  "summary": "Zero-spend discriminator completed: exact trace joining separates 750 local calls (997,521.149 us) from 150 global calls (490,684.609 us). The source-complete 512-summary/8-recent/8-protected one-tile path preserves every token/layer/width and exact local windows and derives 0.4999581203857146 s/request after charged overhead, only 0.00016116118928138912 below target. It is uncompiled, unmeasured, quality-unqualified, and invalid if a second tile or >0.128732% fallback is required.",
-  "terminal_artifact": "MULTIRESOLUTION_GLOBAL_KV_PHYSICAL_SCREEN.json",
-  "terminal_artifact_sha256": "1d7d59a96a50f95b8cbadbb763ee072b5a4c462e1bb03f039dccda3905c84a30"
+  "status": "completed",
+  "storage_budget": "At most 6 GiB of new non-checkpoint artifacts; immutable checkpoint remains read-only",
+  "summary": "Repair-4 activated global-KV at c1 (6,086 telemetry rows; compact_entries=26; fallback=false). The consumed c32 candidate persisted 32 requests and 32 responses, then OOMed at global layer 35; latency and post-run metrics are unavailable after server exit. The exact implementation is c32 memory-infeasible and was not replayed. Its H200 lifecycle was deleted, verified absent, and retired at $5.6468836549666666 measured exposure.",
+  "endpoint_activation_evidence": {
+    "artifact": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_PAIR_TERMINAL.json",
+    "artifact_sha256": "1c48455bd29364a480edde0251d44a32a0f2732feeaaddd548e679b7c15b04fb",
+    "stock_service_seconds_per_request": 0.7010773845312315,
+    "candidate_raw_service_seconds_per_request": 0.8379872799375221,
+    "candidate_telemetry_rows": 0,
+    "classification": "consumed_invalid_intervention_activation",
+    "mechanism_inference_allowed": false
+  },
+  "component_evidence": {
+    "artifact": "artifacts/h200-global-kv-20260728t1210z/COMPONENT_RESULT_REPAIR3.json",
+    "artifact_sha256": "c4374f2b6e24a5d20438fd39548c00a307ac7d98d859a66fa7171f8a2211407d",
+    "classification": "component_result",
+    "candidate_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "runner_sha256": "a9c9164d36ebab265397a6bb233a64b657aac18695883f86e0f5db785a3716ff",
+    "runtime": "NVIDIA H200 / SGLang 0.5.13 / bound image",
+    "compact_entries": {"prefill": 57, "target_verify": 37, "decode": 26},
+    "fallback": false,
+    "correctness": "finite_outputs_and_request_ownership_pass",
+    "endpoint_started": false,
+    "timing_boundary": "warmup_compile_excluded_then_one_stock_candidate_pair"
+  },
+  "prior_endpoint_blocker": {
+    "kind": "typed_retained_owner_retry_scope_incompatible",
+    "audit_artifact": "artifacts/h200-global-kv-20260728t1210z/REPAIR_ENTRYPOINT_AUDIT_20260728T1240Z.json",
+    "endpoint_command_bound": false,
+    "endpoint_started": false,
+    "live_owner_pid": 3070398,
+    "live_owner_start_ticks": 135696058,
+    "next_required_action": "execute the explicit endpoint-only owner transition in DIRECTOR_H200_ENDPOINT_OWNER_TRANSITION_20260728T1243Z.json; component scope remains forbidden"
+  },
+  "endpoint_execution": {
+    "binding_artifact": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_OWNER_BINDING.json",
+    "component_adoption_artifact": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_COMPONENT_ADOPTION.json",
+    "controller_state": "artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_REPAIR2.json",
+    "integration_hashes": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_INTEGRATION_SHA256SUMS.txt",
+    "checkpoint_staging_progress": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_STAGING_PROGRESS.json",
+    "endpoint_started": true,
+    "terminal": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_TERMINAL_ADOPTION.json",
+    "raw_terminal": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_PAIR_TERMINAL.json",
+    "candidate_submission_consumed": true
+  },
+  "activation_repair3": {
+    "terminal": "artifacts/h200-global-kv-20260728t1210z/INTERVENTION_NOT_ACTIVATED_REPAIR3.json",
+    "probe_complete_requests": 1,
+    "probe_telemetry_rows": 0,
+    "corrected_candidate_c32_submitted": false,
+    "bench_released_condition": "maintenance"
+  },
+  "activation_repair4": {
+    "causal_boundary": "global_kv_sglang_hook.install RadixAttention predicate",
+    "observed_predicate": "q32_kv16_d256",
+    "required_predicate": "q32_kv4_d512",
+    "prior_probe_replay": false,
+    "corrected_candidate_c32_submitted": false,
+    "binding": "DIRECTOR_H200_GLOBAL_GEOMETRY_ACTIVATION_REPAIR4_20260728T1359Z.json"
+  },
+  "bound_bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "provider_started_at_utc": "2026-07-28T12:02:10.882252Z",
+  "provider_watchdog_deadline_utc": "2026-07-28T14:32:10.882252Z",
+  "provider_create_artifact": "H200_PROVIDER_CREATE.json",
+  "provider_registration_artifact": "H200_BENCH_REGISTRATION.json",
+  "placement_artifact": "H200_PLACEMENT_20260728T1200Z.json",
+  "terminal_artifact": "H200_EXECUTION_READY.json",
+  "terminal_artifact_sha256": "769e0f6a7348a7f80dc97bc379250189b45e218a5875b7ea7fd22ff1e544ea96",
+  "wall_clock_budget": {
+    "claimed_h200_minutes": 130,
+    "offline_integration_minutes": 45,
+    "provider_lifecycle_minutes": 150
+  },
+  "claim_start_by_utc": "2026-07-28T12:18:00Z",
+  "replacement_owner_start_by_utc": "2026-07-28T12:58:00Z",
+  "release_by_utc": "2026-07-28T14:25:00Z",
+  "identity_verification_artifact": "H200_IDENTITY_VERIFICATION_20260728T1208Z.json",
+  "ssh_ed25519_fingerprint": "SHA256:CG1BmLhfmnAtzZyC51R5ea0wA3pgbaLFMGxiXF6pZpQ"
 }

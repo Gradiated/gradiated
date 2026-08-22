@@ -1,0 +1,75 @@
+{
+  "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "claim_generation": "claim-20260728T121543Z",
+  "classification": "component_positive_endpoint_integration_authorized",
+  "component_evidence": {
+    "artifact": "artifacts/h200-global-kv-20260728t1210z/COMPONENT_RESULT_REPAIR3.json",
+    "artifact_sha256": "c4374f2b6e24a5d20438fd39548c00a307ac7d98d859a66fa7171f8a2211407d",
+    "candidate_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "compact_entries": {
+      "decode": 26,
+      "prefill": 57,
+      "target_verify": 37
+    },
+    "correctness": "finite_outputs_and_request_ownership_pass",
+    "fallback": false,
+    "runner_sha256": "a9c9164d36ebab265397a6bb233a64b657aac18695883f86e0f5db785a3716ff",
+    "scientific_disposition": "The component arm is consumed and must not be replayed. It is positive target-runtime evidence, not endpoint performance."
+  },
+  "endpoint_packet": {
+    "checkpoint_local_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+    "checkpoint_manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "checkpoint_total_bytes": 62578655208,
+    "exact_runner": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/bound/exact_runner.py",
+    "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_control_terminal": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/LATEST_TERMINAL.json",
+    "qualified_control_terminal_sha256": "b02d02c2283f5a018384cacf6522e123ce8e603ad0cfa2cd2c61ed6cb9eda363",
+    "qualified_service_seconds_per_request": 0.625149101968745,
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "target_service_seconds_per_request": 0.500119281574996,
+    "workload": "c32, 4214 prompt tokens, 358 output tokens, 535 shared-prefix tokens, temperature zero",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+  },
+  "lifecycle": {
+    "conservative_provider_exposure_usd": 6.15,
+    "endpoint_owner_start_by_utc": "2026-07-28T12:45:00Z",
+    "hourly_cost_usd": 2.46,
+    "provider_started_at_utc": "2026-07-28T12:02:10.882252Z",
+    "release_by_utc": "2026-07-28T14:25:00Z",
+    "watchdog_deadline_utc": "2026-07-28T14:32:10.882252Z"
+  },
+  "owner_transition": {
+    "current_owner_pid": 3070398,
+    "current_owner_start_ticks": 135696058,
+    "current_owner_state": "artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_REPAIR1.json",
+    "new_owner_state": "artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT.json",
+    "policy": "Prepare and hash-bind the endpoint-only owner first. Then stop only the matching PID/start_ticks predecessor and immediately launch the replacement through research/factory/tools/detached-owner --unit-manager pid inside the existing claim."
+  },
+  "required_action": {
+    "allowed_changes": [
+      "Implement the production SGLang v0.5.13 integration in this project from post-RoPE global KV writes through incremental summary state, request ownership, positions, and the actual global-attention consumer for prefill, TARGET_VERIFY, and decode.",
+      "Leave all five sliding-window layers in every six-layer cycle on the stock exact consumer. Route only global-attention layers through the accepted multi-resolution candidate.",
+      "Create an endpoint-only path in h200_endpoint_owner.sh that adopts the settled component result and never replays it.",
+      "Mechanically stage the exact checkpoint from the bound local root by the bound manifest, transferring only missing or mismatched files to temporary names before hash verification and atomic finalization.",
+      "Reuse the already pulled runtime image and current claim. Stage the exact runner and the smallest project-local endpoint hook/owner bytes, then launch stock before candidate.",
+      "Persist and retrieve the complete stock terminal before starting candidate. Persist complete requests, request hashes, token and cache accounting, service time, p95, failures, compact-entry/fallback/request-ownership telemetry, and the candidate terminal before release.",
+      "Repair ordinary pre-science staging, import, API, hook, server-health, or retrieval defects in this same claim while the absolute release window still fits."
+    ],
+    "must_not": [
+      "rerun the settled component arm",
+      "modify the historical qualified-control project or its artifacts",
+      "change checkpoint, tokenizer, runtime image, workload, concurrency, sampling, local-attention semantics, layer count, hidden width, comparison order, or scientific submission count",
+      "credit the component timing as endpoint performance",
+      "release and reclaim the bench",
+      "use provider APIs or create, delete, or replace a provider resource"
+    ]
+  },
+  "scientific_contract": {
+    "candidate_semantics": "Quality-unsafe proxy: every token and full-width layer remains, local windows remain exact, and only older state presented to global attention is summarized.",
+    "endpoint_eligibility": "Run one stock-then-candidate exact c32 pair because the accepted component passes the compact-entry, fallback, finiteness, and request-ownership gates.",
+    "promotion": "Only a complete candidate endpoint at or below 0.500119281574996 seconds/request can satisfy the latency portion of the campaign objective; quality and sustainable-cost qualification remain separate."
+  },
+  "schema_version": 1
+}

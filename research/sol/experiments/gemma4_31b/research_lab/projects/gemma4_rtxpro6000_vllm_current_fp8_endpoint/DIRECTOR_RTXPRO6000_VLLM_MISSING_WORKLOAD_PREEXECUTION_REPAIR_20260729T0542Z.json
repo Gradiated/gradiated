@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T05:42:12Z",
+  "project": "gemma4_rtxpro6000_vllm_current_fp8_endpoint",
+  "decision": "block_claim_and_repair_missing_frozen_workload_input",
+  "offline_result": {
+    "path": "VLLM_SM120_FP8_ENDPOINT_OFFLINE_RESULT.json",
+    "sha256": "7e410a6db26e15fa971e30600d026f8e3dc1d4b648c09a47d8e6c0950519970e",
+    "classification": "supported_offline_pending_director_execution_binding",
+    "vllm_source_commit": "6f00a1ae3bd4b86168667bce673998218f461c0f"
+  },
+  "resolved_execution_identities": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+    "sm": "sm_120",
+    "vllm_image": "docker.io/vllm/vllm-openai:nightly@sha256:494f9c118fb6684bcdd26bb37c687b16163278c0e18f5c157c9185c2584598b7",
+    "vllm_image_index_digest": "sha256:adf39421281d0874b5ac8d1665ea0e32ae6650a5615b29a99bd97d2aca23ae40",
+    "vllm_image_platform": "linux/amd64",
+    "image_resolved_at_utc": "2026-07-29T05:39:10Z",
+    "resident_checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "stage_terminal_sha256": "d0a64c9dc5d04aa1888aed53662f532d9a15d748cb065dcb99e0a172ae525ded",
+    "resident_sglang": {
+      "pid": 16036,
+      "start_ticks": 183853635,
+      "port": 19123,
+      "health_status": 200,
+      "gpu_process_pid": 16233,
+      "gpu_memory_mib": 71118,
+      "observed_at_utc": "2026-07-29T05:40:52Z"
+    },
+    "provider_watchdog_deadline_utc": "2026-07-29T08:13:34.346354Z",
+    "metered_usd_per_hour": 1.89
+  },
+  "blocking_defect": {
+    "classification": "offline_owner_not_execution_ready",
+    "owner_path": "run_vllm_sm120_fp8_endpoint_owner.py",
+    "owner_sha256": "26c57a7d277a89c58962194a1d4a32622dd44887a046522bcd7123094dcb1757",
+    "missing_path": "inputs/c32_requests.jsonl",
+    "consumer_reference": "ROOT / \"inputs\" / \"c32_requests.jsonl\"",
+    "preclaim_false_positive": "The --preclaim-only path returned pass without checking the workload file consumed after server launch.",
+    "risk": "Launching would claim the bench, stop the healthy resident SGLang server, load vLLM, emit SCIENCE_STARTED, and then fail before any request because the frozen workload path is absent."
+  },
+  "authoritative_workload": {
+    "source_path": "../gemma4_rtxpro6000_fp8_endpoint/inputs/c32_requests.jsonl",
+    "absolute_source_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/inputs/c32_requests.jsonl",
+    "sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "bytes": 893666,
+    "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "payload_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c"
+  },
+  "repair_contract": {
+    "researcher_profile": "execution",
+    "required_skill": "$researcher",
+    "offline_deadline_utc": "2026-07-29T06:00:00Z",
+    "claim_allowed": false,
+    "requirements": [
+      "Read this artifact once and adopt the resolved image, checkpoint, resident-server, workload, and lifecycle identities without SSH or provider inspection.",
+      "Patch only the lifecycle-pure owner and its offline result so the endpoint consumer reads the exact authoritative c32_requests.jsonl bytes. Prefer a read-only hard-linked project-local view; direct immutable reuse is acceptable if the exact path and digest are bound.",
+      "Make --preclaim-only require that the final workload path exists and has SHA-256 357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c before returning pass.",
+      "Persist the concrete resident checkpoint path and immutable linux/amd64 vLLM image digest in the repaired offline result.",
+      "Persist one exact detached-owner command whose controller state/log root is distinct from the science artifact root that the owner creates with exist_ok=false.",
+      "Recompute the final owner and offline-result hashes and publish the repaired offline result plus STATUS.json as the final mutations."
+    ],
+    "prohibitions": [
+      "Do not call gpu_pool, SSH, Docker, or the provider.",
+      "Do not claim or ready the bench, stop SGLang, pull the vLLM image, stage or rehash checkpoint shards, or submit an HTTP request.",
+      "Do not change model, revision, FP8/BF16 semantics, token IDs, output length, concurrency, request or payload identity, timing boundary, or the one-sample limit."
+    ]
+  },
+  "future_execution_envelope": {
+    "controller_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-fp8-endpoint-20260729t0542z-controller",
+    "science_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-fp8-endpoint-20260729t0542z",
+    "private_vllm_port": 19124,
+    "controller_tunnel_port": 29124,
+    "remote_root": "/workspace/vllm-sm120-fp8-endpoint-20260729t0542z",
+    "release_by_utc": "2026-07-29T07:55:00Z",
+    "owner_deadline_utc": "2026-07-29T08:05:00Z",
+    "provider_watchdog_deadline_utc": "2026-07-29T08:13:34.346354Z"
+  }
+}

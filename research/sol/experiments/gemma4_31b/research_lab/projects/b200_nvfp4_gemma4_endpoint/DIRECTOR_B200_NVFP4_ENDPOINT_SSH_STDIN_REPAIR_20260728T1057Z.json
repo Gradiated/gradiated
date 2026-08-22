@@ -1,0 +1,45 @@
+{
+  "bench": "b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x",
+  "claim_generation": "2026-07-28T10:52:53.539508Z",
+  "classification": "recoverable_pre_science_checkpoint_staging_integration_failure",
+  "diagnostic": {
+    "failure": "stage_project_snapshot could not find inputs/bf16-source/model.safetensors.index.json",
+    "mechanism": "The ssh command used inside the manifest-reading while loop lacks -n, so its stdin consumes the remaining model-files.sha256 rows after the first row. The later support-file loop explains why config and tokenizer support existed while the index and two weight shards did not.",
+    "original_owner": {
+      "pid": 2968993,
+      "start_ticks": 135206972
+    },
+    "repair_owner": {
+      "pid": 2970327,
+      "start_ticks": 135211973
+    },
+    "scientific_submission_consumed": false
+  },
+  "immutable": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "packet_sha256": "707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116",
+    "representation": "symmetric float4 tensor-group-16 W4A4 compressed-tensors",
+    "workload": "same-B200 BF16 control then native-NVFP4 c32 4214/358 endpoint comparison"
+  },
+  "repair_ready": {
+    "path": "artifacts/b200-nvfp4-endpoint-20260728t1052z/.repair-handshakes/b200-nvfp4-20260728T105522Z/REPAIR_READY.json",
+    "sha256": "dec90e2444bc88a4bc4582665eb2fcf90bb3a73976968f5f4afd8e9418b52097"
+  },
+  "required_action": {
+    "allowed_changes": [
+      "Add -n to the shared ssh command in endpoint_owner.sh so remote probes cannot consume the manifest loop stdin.",
+      "Before staging, remove or reconcile only the incomplete remote bf16-source.tmp left by the failed pre-science copy; preserve verified finalized files and all immutable inputs.",
+      "Hash the final endpoint_owner.sh bytes and launch one replacement detached owner directly inside the existing claim generation."
+    ],
+    "endpoint_owner_pre_repair_sha256": "9513c809739bbc44426754587416a310d7b945c04fe262bff5b1f7ef7986d57a",
+    "must_not": [
+      "reclaim or submit a second claim",
+      "change checkpoint, image, representation, workload, comparison order, endpoint consumer, or scientific submission count",
+      "create or delete a provider resource"
+    ]
+  },
+  "release_by_utc": "2026-07-28T12:27:00Z",
+  "schema_version": 1,
+  "watchdog_deadline_utc": "2026-07-28T12:31:59.335947Z"
+}

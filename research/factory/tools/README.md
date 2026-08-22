@@ -28,6 +28,20 @@ claim heartbeat, repair handshake, terminal retrieval, or final release. Copy
 the emitted PID and start time into `STATUS.json.active_session`, set `unit`
 to the absolute owner-state path, and set `unit_manager` to `pid`. A detached
 guest process does not make a foreground claim controller durable.
+For a replacement-owner handoff, also pass `--ready-file FRESH_PATH` and a
+bounded `--stabilize-seconds`: launch succeeds only after the live owner creates
+that runtime artifact. A still-live process that misses the readiness deadline
+remains recorded for explicit reconciliation, but the command returns nonzero
+and must not be advertised as a ready executor.
+
+`grad_research.gpu_claim_session.GpuClaimSession` is the optional lifecycle
+primitive for that controller-host owner. It atomically claims one exact bench,
+heartbeats it, binds release to the returned `claimed_at` generation, and
+releases to maintenance if the owner exits without an explicit release.
+Catch recoverable integration errors and complete the repair handshake inside
+the context so the same claim remains live; leaving the context is the final
+lifecycle boundary. The helper does not detach the owner, choose experiments,
+or interpret failures.
 
 `./repair-handshake` provides the atomic coordination files used by the
 harness when a durable outer owner encounters an ordinary integration or
@@ -36,11 +50,27 @@ consumer defect. While the owner keeps heartbeating the existing claim, run
 --diagnostic PATH --retry-scope TEXT`. The harness wakes the same researcher,
 who patches the resident environment and runs `request --root ARTIFACT_ROOT
 --patch-artifact PATH`; the request is hash-bound to the exact ready record.
+For an exception path that must not return between publishing the marker and
+waiting for repair, use the same arguments with `hold` instead of `ready`.
+`hold` atomically creates or verifies the ready record, then blocks until a
+hash-bound request, repair terminal, project terminal, or the persisted
+deadline. The owner's existing heartbeat thread must remain active.
+The request inherits the ready record's retry scope. An optional
+`--retry-scope` may restate that exact value, but cannot broaden a
+later-consumer repair into upstream staging or rebuilding.
 Requests expose the path as canonical `patch_artifact` and the identical
 backward-compatible `packet_path` alias so an older durable owner does not
 release a warm claim at this repair boundary.
+If the researcher must execute the requested scope outside the waiting owner,
+record the outcome atomically with `terminal --root ARTIFACT_ROOT --exit-code
+N --classification TEXT --cuda-started true|false|unknown --science-started
+true|false|unknown --evidence PATH [--evidence PATH ...] [--result PATH]`.
+The record is bound to both the ready and request digests. `status` and `wait`
+then return `state: repair_terminal` plus the record so the durable owner can
+adopt it without rerunning the repaired scope; this command does not create or
+replace the project's own `TERMINAL.json`.
 The owner can use `status --root ARTIFACT_ROOT` to distinguish waiting,
-requested, expired, and terminal states. After `ready`, use
+requested, repair-terminal, expired, and project-terminal states. After `ready`, use
 `wait --root ARTIFACT_ROOT [--deadline RFC3339]` inside the durable outer owner
 to block until a hash-bound request, terminal, or absolute deadline. When
 supplied, the wait deadline must match the persisted ready deadline. Keep the

@@ -1,0 +1,4 @@
+{
+  "artifacts": "DIRECTOR_B200_DYNAMIC_FP8_RUNNABLE_OWNER_20260728T1502Z.json binds the missing dynamic-FP8 owner/driver destinations and exact detached launch command.",
+  "next": "Only gemma4_b200_dynamic_fp8_endpoint may claim after valid snapshot terminal plus hash-bound b200_dynamic_fp8_owner.sh and dynamic_fp8_endpoint_driver.py, by 2026-07-28T15:28:00Z; release by 2026-07-28T16:35:00Z."
+}

@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "retrieval_date": "2026-08-16",
+  "sources": [
+    {
+      "title": "MoonshotAI/Kimi-K3 release repository and model summary",
+      "url": "https://github.com/MoonshotAI/Kimi-K3",
+      "revision": "3cb39dfd32e51c3328e2e4b4af21341247d06c43",
+      "publication_date": "2026-07-27",
+      "evidence_type": "vendor_reported_primary"
+    },
+    {
+      "title": "Kimi K3 released checkpoint configuration",
+      "url": "https://huggingface.co/moonshotai/Kimi-K3/blob/9f62e4e9fffbd0a83ddd60e1c209d828994b3569/config.json",
+      "revision": "9f62e4e9fffbd0a83ddd60e1c209d828994b3569",
+      "publication_date": "2026-07-27",
+      "evidence_type": "released_artifact_primary"
+    },
+    {
+      "title": "Kimi K3 released model implementation",
+      "url": "https://huggingface.co/moonshotai/Kimi-K3/blob/9f62e4e9fffbd0a83ddd60e1c209d828994b3569/modeling_kimi_linear.py",
+      "revision": "9f62e4e9fffbd0a83ddd60e1c209d828994b3569",
+      "publication_date": "2026-07-27",
+      "evidence_type": "released_source_primary"
+    },
+    {
+      "title": "Kimi K3 Is Here: Efficient Day-0 Support on vLLM",
+      "url": "https://vllm.ai/blog/2026-07-27-k3",
+      "revision": "page retrieved 2026-08-16",
+      "publication_date": "2026-07-27",
+      "evidence_type": "measured_open_source_runtime_report"
+    },
+    {
+      "title": "NVIDIA DGX B300 system introduction and specifications",
+      "url": "https://docs.nvidia.com/dgx/dgxb300-user-guide/introduction-to-dgxb300.html",
+      "revision": "page retrieved 2026-08-16",
+      "publication_date": "2026",
+      "evidence_type": "vendor_reported_primary"
+    },
+    {
+      "title": "Graphcore IPU hardware overview",
+      "url": "https://docs.graphcore.ai/projects/ipu-programmers-guide/en/latest/about_ipu.html",
+      "revision": "page retrieved 2026-08-16",
+      "publication_date": "living documentation",
+      "evidence_type": "vendor_documentation_primary"
+    },
+    {
+      "title": "RunPod B300 rental pricing",
+      "url": "https://www.runpod.io/gpu-models/b300",
+      "revision": "page retrieved 2026-08-16",
+      "publication_date": "2026-07",
+      "evidence_type": "observed_current_vendor_market_price"
+    },
+    {
+      "title": "OpenRouter Kimi K3 traffic and revenue per Rubin rack",
+      "url": "research/sol/docs/OPENROUTER_KIMI_K3_RACK_REVENUE_2026-07-28.md",
+      "revision": "repository artifact retrieved 2026-08-16",
+      "publication_date": "2026-07-28",
+      "evidence_type": "measured_public_telemetry_and_derived_local"
+    }
+  ]
+}

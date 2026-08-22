@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T05:23:30Z",
+  "project": "gemma4_rtxpro6000_fp8_endpoint",
+  "decision": "revoke_duplicate_corrected_input_reclaim_and_accept_exact_hash_bound_negative",
+  "supersedes": {
+    "artifact": "DIRECTOR_RTXPRO6000_RESIDENT_SERVER_CORRECTED_INPUT_ENDPOINT_RECLAIM_20260729T0517Z.json",
+    "sha256": "c59a2c914fa75b53e369cf3408b3310f503a3d1754caf6a28f83fd4cef4c9423",
+    "reason": "The predecessor binding transferred application-error evidence from an archived attempt onto a different exact run."
+  },
+  "accepted_terminal": {
+    "path": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/RTXPRO6000_FP8_ENDPOINT_TERMINAL.json",
+    "sha256": "c79a2f6067cf85b9e073d2bf9bc39a1906d84dfe3626887427dcf0c1f16ab9f8",
+    "pair_run": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/endpoint-pair/run.json",
+    "pair_run_sha256": "47d62e6556387695c57158eb6d71a396e535c1ecd87e98ffc04a3696a008a9a0",
+    "response_audit": {
+      "complete_requests": 32,
+      "successful_requests": 32,
+      "responses_with_nonempty_choices": 32,
+      "responses_with_application_errors": 0,
+      "responses_with_4214_prompt_tokens": 32,
+      "responses_with_358_completion_tokens": 32,
+      "all_finish_reasons": "length"
+    },
+    "classification": "measured_price_normalized_negative",
+    "science_consumed": true,
+    "wall_seconds": 71.482293,
+    "service_time_seconds_per_request": 2.23382165625,
+    "target_seconds_per_request": 1.048637203302411,
+    "above_target_percent": 113.02140046292064,
+    "production_cost_usd_per_million_total_tokens_at_90_percent_utilization": 0.2337378060218601
+  },
+  "revocation_contract": {
+    "claim_allowed": false,
+    "scientific_submission_allowed": false,
+    "requirements": [
+      "Do not create CORRECTED_INPUT_SCIENCE_STARTED.json, start lab-endpoint-pair, submit HTTP, or construct another endpoint terminal.",
+      "If no endpoint consumer or durable owner started, release the exact claim generation 2026-07-29T05:22:44.337347Z to maintenance without stopping the healthy resident server.",
+      "If a consumer or owner already started, cancel it before any submission, persist an exact nonempty cross-namespace census, then release only that same claim generation.",
+      "Preserve the accepted terminal, pair run, 32 response bodies, checkpoint, runtime, kernel repairs, and healthy resident server."
+    ],
+    "terminal_rule": "This exact Workstation Edition, SGLang 0.5.16, stock dynamic-FP8 placement is closed as measured negative. No replay is authorized."
+  }
+}

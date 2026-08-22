@@ -1,0 +1,54 @@
+diff --git a/src/speculators/data_generation/configs.py b/src/speculators/data_generation/configs.py
+index 6b7a876..5e24a44 100644
+--- a/src/speculators/data_generation/configs.py
++++ b/src/speculators/data_generation/configs.py
+@@ -127,6 +127,12 @@ DATASET_CONFIGS: dict[str, DatasetConfig] = {
+         normalize_fn=_normalize_gsm8k,
+         prompt_field="question",
+     ),
++    "magicoder": DatasetConfig(
++        name="magicoder",
++        hf_path="ise-uiuc/Magicoder-Evol-Instruct-110K",
++        split="train",
++        prompt_field="instruction",
++    ),
+     "magpie": DatasetConfig(
+         name="magpie",
+         hf_path="Magpie-Align/Magpie-Llama-3.1-Pro-300K-Filtered",
+diff --git a/scripts/response_regeneration/script.py b/scripts/response_regeneration/script.py
+index 0524348..117cfab 100644
+--- a/scripts/response_regeneration/script.py
++++ b/scripts/response_regeneration/script.py
+@@ -76,6 +76,11 @@ def parse_args():
+             "(auto-detected from dataset config if not specified)"
+         ),
+     )
++    parser.add_argument(
++        "--dataset-revision",
++        required=True,
++        help="Immutable Hugging Face dataset commit used by streaming load_dataset",
++    )
+     parser.add_argument("--limit", type=int, default=None, help="Stop after N rows")
+     parser.add_argument(
+         "--concurrency",
+@@ -769,6 +774,7 @@ async def main():
+
+     print(f"Using dataset: {dataset_id}")
++    print(f"Dataset revision: {args.dataset_revision}")
+     print(f"Split: {split}")
+     print(f"Prompt field: {dataset_config.prompt_field}")
+     print(f"Output file: {args.outfile}")
+@@ -777,7 +783,14 @@ async def main():
+     print()
+
+     seen_ids = load_seen(args.outfile) if args.resume else set()
+-    dataset = load_dataset(dataset_id, name=subset, split=split, streaming=True)
++    dataset = load_dataset(
++        dataset_id,
++        name=subset,
++        split=split,
++        streaming=True,
++        revision=args.dataset_revision,
++    )
+
+     queue: asyncio.Queue = asyncio.Queue(maxsize=args.concurrency * 4)

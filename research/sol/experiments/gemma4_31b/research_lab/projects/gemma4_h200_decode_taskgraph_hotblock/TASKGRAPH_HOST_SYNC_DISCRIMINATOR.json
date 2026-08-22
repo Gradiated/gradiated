@@ -1,0 +1,309 @@
+{
+  "schema_version": 1,
+  "artifact_type": "taskgraph_host_sync_discriminator",
+  "created_at_utc": "2026-07-29T21:29:00Z",
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "profile": "deep",
+  "execution_contract": {
+    "mode": "cpu_only_source_trace_falsification",
+    "gpu_claimed": false,
+    "gpu_pool_called": false,
+    "ssh_used": false,
+    "docker_used": false,
+    "cuda_invoked": false,
+    "endpoint_traffic": false,
+    "provider_api_used": false,
+    "provider_mutation": false,
+    "other_project_mutated": false,
+    "actual_spend_usd": 0.0,
+    "scientific_sample_consumed": false
+  },
+  "binding": {
+    "director_packet": {
+      "path": "DIRECTOR_TASKGRAPH_HOST_SYNC_REDIRECT_20260729T2121Z.json",
+      "sha256": "8d9789208c0ba81b5ccef7b16279a4faa0cfcb38e9a1ba641ecb13c05b53505e"
+    },
+    "prior_discriminator": {
+      "path": "TASKGRAPH_HOTBLOCK_DISCRIMINATOR.json",
+      "sha256": "59025eb7ed6d7d1adacc245b89fce88f4b648063be1f578509c55d319d043f7e"
+    },
+    "source": {
+      "repository": "sgl-project/sglang",
+      "version": "v0.5.13",
+      "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "git_tree": "ed4e68454edee9b97272386af2fd8f989484f270",
+      "files": [
+        {
+          "path": "python/sglang/srt/managers/utils.py",
+          "sha256": "b4b36fb9f649fc6306cf0e94ff364ee9c639e31eb7ee6f0a7c66b8e3a0a2d08a"
+        },
+        {
+          "path": "python/sglang/srt/managers/scheduler.py",
+          "sha256": "3a26deea85f43d61c27b94013288ad95d6ee75111fe40134893541777c9c8cd4"
+        },
+        {
+          "path": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+          "sha256": "9c764afffb106e966fde110851de73bb6a3d0f2415343a574a255e91f86851de"
+        }
+      ]
+    },
+    "trace": {
+      "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/pair/nsys-stats.csv",
+      "sha256": "2c23d30660675e39185344b2d44b7b951d7bcd700704c4fd73028efa19eff487",
+      "bytes": 20937,
+      "capture_window_s": 23.038600455,
+      "workload_request_count": 32
+    },
+    "fixed_comparator": {
+      "qualified_denominator_s_per_request": 0.625149101968745,
+      "target_s_per_request": 0.500119281574996,
+      "required_gap_s_per_request": 0.125029820393749,
+      "required_reduction_percent": 20.0
+    }
+  },
+  "opportunity_register": {
+    "selection_method": "source_reachability_then_ownership_then_conservative_trace_envelope",
+    "candidates": [
+      {
+        "id": "decode_result_copy_done_host_handoff",
+        "kind": "host_event_wait",
+        "recurrence_signal": {
+          "evidence": "measured_aggregate_runtime_class",
+          "api": "cudaEventSynchronize",
+          "instances": 420,
+          "callsite_attribution": "unknown"
+        },
+        "source_reachability": "stock overlap decode path",
+        "selected": true,
+        "reason": "It has an exact asynchronous D2H producer, event, host wait, and first CPU consumer."
+      },
+      {
+        "id": "schedule_forward_war_wait_stream",
+        "kind": "device_stream_wait",
+        "source_symbol": "Scheduler.event_loop_overlap: schedule_stream.wait_stream(forward_stream)",
+        "selected": false,
+        "reason": "This is device-side ordering and does not block the host at the call boundary."
+      },
+      {
+        "id": "cuda_graph_capture_device_synchronize",
+        "kind": "host_device_wait",
+        "source_symbol": "CudaGraphRunner capture/setup synchronization",
+        "selected": false,
+        "reason": "Setup/capture lifecycle, not the recurring steady decode ownership handoff."
+      },
+      {
+        "id": "spec_or_pp_result_events",
+        "kind": "host_event_wait",
+        "selected": false,
+        "reason": "Speculative and pipeline-parallel result paths are outside the bound TP1 non-spec workload."
+      }
+    ]
+  },
+  "selected_edge": {
+    "id": "decode_result_copy_done_host_handoff",
+    "blocking_host_symbol": {
+      "python_symbol": "BatchResultProcessor.process_batch_result_decode",
+      "source": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "line": 596,
+      "expression": "result.copy_done.synchronize()",
+      "framework_symbol": "torch.cuda.Event.synchronize",
+      "runtime_symbol": "cudaEventSynchronize",
+      "host_thread": "scheduler event-loop thread"
+    },
+    "device_producer": {
+      "python_symbol": "GenerationBatchResult.copy_to_cpu",
+      "source": "python/sglang/srt/managers/utils.py",
+      "lines": {
+        "async_copy": 108,
+        "completion_record": 122
+      },
+      "operation": "next_token_ids.to(\"cpu\", non_blocking=True)",
+      "semantic_producer": "Sampler.forward produces the device-resident next_token_ids tensor",
+      "device_operation": "asynchronous device-to-host copy of sampled token IDs",
+      "completion": "copy_done.record() after the copy enqueue"
+    },
+    "first_consumer": {
+      "python_symbol": "BatchResultProcessor._normalize_decode_outputs",
+      "source": "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "line": 719,
+      "expression": "next_token_ids.tolist()",
+      "consumer_kind": "first host read of copied tensor bytes",
+      "first_state_mutation_after_read": {
+        "symbol": "Req.output_ids.append",
+        "line": 660
+      }
+    },
+    "stream_event_ownership": {
+      "producer_stream": {
+        "owner": "Scheduler.forward_stream",
+        "context": "Scheduler.run_batch executes the overlap generation branch inside forward_stream_ctx",
+        "incoming_order": "forward_stream.wait_stream(schedule_stream)"
+      },
+      "event": {
+        "field": "GenerationBatchResult.copy_done",
+        "field_source_line": 44,
+        "type": "torch.cuda.Event",
+        "allocation_source": "python/sglang/srt/managers/scheduler.py",
+        "allocation_line": 3052,
+        "record_stream": "Scheduler.forward_stream",
+        "record_position": "after all GenerationBatchResult.copy_to_cpu non-blocking D2H enqueues"
+      },
+      "result_state": {
+        "owner": "GenerationBatchResult",
+        "queue_owner": "Scheduler.result_queue",
+        "queue_source_line": 1483,
+        "lifetime": "retained across one overlap-loop iteration until pop_and_process"
+      },
+      "tensor": {
+        "field": "GenerationBatchResult.next_token_ids",
+        "device_shape": "[B]",
+        "host_shape": "[B]",
+        "shape_symbol": "B = dynamic decode batch size",
+        "source_dtype_contract": [
+          "torch.int64 for stock torch.argmax/torch.multinomial paths",
+          "torch.int32 for AITER or explicit-int32 sampling paths"
+        ],
+        "trace_realized_dtype": "unknown_from_admitted_csv",
+        "ownership_transition": "device tensor is replaced by an asynchronously populated host tensor in the result object"
+      },
+      "consumer": {
+        "execution_owner": "scheduler host thread",
+        "required_visibility": "D2H completion must be observed before Tensor.tolist reads the host allocation"
+      }
+    },
+    "existing_overlap": {
+      "source": "python/sglang/srt/managers/scheduler.py",
+      "control_flow": [
+        {
+          "line": 1482,
+          "action": "launch current batch"
+        },
+        {
+          "line": 1483,
+          "action": "enqueue current result"
+        },
+        {
+          "line": 1490,
+          "action": "pop and process previous result"
+        }
+      ],
+      "conclusion": "The stock scheduler already defers the previous result's host wait until after launching independent work for the current batch."
+    }
+  },
+  "wait_bound": {
+    "selected_edge_non_overlapping_wait_s_per_request": null,
+    "type": "explicit_unknown",
+    "why_unknown": [
+      "The admitted nsys-stats.csv is an aggregate API summary without call stacks, callsite labels, correlation IDs, or per-thread intervals.",
+      "It cannot attribute any of the 420 cudaEventSynchronize instances to the selected source call.",
+      "It cannot separate the residual host-exposed tail from device-copy work already hidden by event_loop_overlap."
+    ],
+    "forbidden_inference_not_made": "No performance gain or modifiable wall time is inferred from summed API duration.",
+    "all_event_sync_conservation_envelope": {
+      "classification": "analytical_upper_envelope_not_gain_estimate",
+      "measured_aggregate": {
+        "api": "cudaEventSynchronize",
+        "instances": 420,
+        "total_ns": 33121853,
+        "average_ns": 78861.6,
+        "median_ns": 7418.0,
+        "minimum_ns": 6384,
+        "maximum_ns": 18493110
+      },
+      "counterfactual": "Impossible zero-cost deletion of every cudaEventSynchronize API duration in the entire capture",
+      "total_s": 0.033121853,
+      "s_per_request_at_n32": 0.00103505790625,
+      "percent_of_fixed_denominator": 0.16556976615504262,
+      "percent_of_required_gap": 0.8278488307752131,
+      "use": "Only to prove that the selected subset cannot economically justify an H200 experiment; not used as a wall-time prediction."
+    }
+  },
+  "competing_explanations": [
+    {
+      "id": "required_host_ownership_handoff",
+      "status": "source_supported",
+      "prediction": "Removing the host completion observation permits stale or partially copied token IDs at Tensor.tolist.",
+      "discriminator": "The first consumer is the host, so a CUDA stream wait cannot establish host memory visibility."
+    },
+    {
+      "id": "wait_is_exposed_but_copy_tail_not_api_overhead",
+      "status": "plausible_unmeasured",
+      "prediction": "Some Event.synchronize calls block on unfinished D2H or prior stream work.",
+      "discriminator": "Needs callsite-correlated CPU intervals and event/copy correlation; absent from the admitted CSV."
+    },
+    {
+      "id": "wait_already_hidden_by_overlap",
+      "status": "source_supported",
+      "prediction": "The next batch launch precedes processing of the prior result, leaving only a residual readiness tail.",
+      "discriminator": "Scheduler.event_loop_overlap source order is launch, queue, then pop_and_process."
+    },
+    {
+      "id": "aggregate_calls_belong_to_other_event_callsites",
+      "status": "unresolved",
+      "prediction": "A material fraction of 420 calls originates in unrelated metrics, speculative, embedding, or pipeline paths.",
+      "discriminator": "The admitted aggregate CSV has no callsite attribution."
+    },
+    {
+      "id": "apparent_stall_is_upstream_device_or_queue_depletion",
+      "status": "unresolved",
+      "prediction": "Long event waits reflect producer latency or lack of independent batches, not removable synchronization overhead.",
+      "discriminator": "Requires correlated event-loop, CUDA-copy, and kernel intervals not present in the admitted artifact."
+    }
+  ],
+  "localized_falsifier": {
+    "script": {
+      "path": "host_sync_edge_falsifier.py",
+      "sha256": "a8588c5201f382d9a2dc38477c92434d8fcff29af13a8ca77c99b9fe0db8e16f"
+    },
+    "result": {
+      "path": "HOST_SYNC_EDGE_FALSIFIER.json",
+      "sha256": "6f6c37c93b050c190a12dac2e3ef8039ceae486188b73d8bd73c48a22b2849e8"
+    },
+    "checks": [
+      "pins source commit, tree, and all inspected source-file hashes",
+      "pins admitted trace hash",
+      "asserts producer copy precedes event record",
+      "asserts host event wait precedes first host tensor read",
+      "models unsafe deletion and safe deferred-wait lifecycles",
+      "parses the exact cudaEventSynchronize aggregate row",
+      "computes only the labeled all-calls conservation envelope"
+    ],
+    "correctness_result": {
+      "delete_host_wait": "unsafe",
+      "replace_with_device_wait": "unsafe_for_host_consumer",
+      "defer_host_wait_until_first_read": "correct_but_already_stock"
+    },
+    "attempts": [
+      {
+        "attempt": 1,
+        "status": "invalid_harness_attempt",
+        "science_started": false,
+        "diagnostic": "The source-anchor validator expected one copy_done field but matched generation and embedding result dataclasses.",
+        "causal_amendment": "Scope the field lookup after class GenerationBatchResult.",
+        "sample_consumed": false
+      },
+      {
+        "attempt": 2,
+        "status": "valid_cpu_falsifier",
+        "sample_consumed": false
+      }
+    ]
+  },
+  "typed_decision": {
+    "type": "redirect",
+    "selected_edge": "decode_result_copy_done_host_handoff",
+    "disposition": "close_exact_edge_as_correctness_required_and_economically_immaterial",
+    "promotion_gate": "failed",
+    "reasons": [
+      "A device-ordered replacement cannot satisfy a host Tensor.tolist consumer.",
+      "The lifecycle-pure safe transformation is already present: wait is deferred until after the next batch launch and immediately before the first host read.",
+      "The selected non-overlapping wall bound is unknown, and even the impossible all-event-sync envelope is only 0.827849% of the required gap."
+    ],
+    "source_patch": "none_correct_patch_would_only_move_or_recreate_the_same_host_handoff",
+    "h200_action": "do_not_claim_or_measure",
+    "redirect": {
+      "scope": "director",
+      "recommendation": "Retire this exact event edge. Revisit host synchronization only with a callsite-correlated trace that identifies a different wait with a material non-overlapping bound."
+    }
+  }
+}

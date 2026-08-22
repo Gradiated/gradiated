@@ -1,0 +1,123 @@
+{
+  "classification": "localized_source_trace_falsifier",
+  "correctness": {
+    "candidate_full_output_sha256": "aa609125c19f3005f27ee3b1bc1a4933b330e882845721f56689c321dc941eca",
+    "candidate_output_bfloat16_mismatches": 0,
+    "candidate_residual_bfloat16_mismatches": 0,
+    "elements_per_output": 172032,
+    "finite": true,
+    "negative_control": {
+      "change": "omit the stock bfloat16 round after post-attention RMSNorm",
+      "discriminates_rounding_contract": true,
+      "full_output_sha256": "a4fd25ee7b2137291c011d6e1b3bb56f686fb2a515073352215918c9fca2fd0f",
+      "output_bfloat16_mismatches": 48392,
+      "residual_bfloat16_mismatches": 51944
+    },
+    "nonzero_output_elements": 171816,
+    "pass": true,
+    "semantics": "preserve both stock bfloat16 rounding boundaries",
+    "stock_full_output_sha256": "aa609125c19f3005f27ee3b1bc1a4933b330e882845721f56689c321dc941eca",
+    "transfer_limit": "CPU oracle proves the exact-shape rounding/dataflow contract only; it does not establish H200 timing, launch legality, or reduction-order identity."
+  },
+  "decision": {
+    "explanation": "Even deleting the entire selected two-kernel block would save less than one percent of the fixed qualified request and close only a small fraction of the 20% campaign gap; real fusion must still execute both reductions and therefore has a materially smaller ceiling.",
+    "reason_code": "impossible_zero_cost_upper_bound_below_component_admission_value",
+    "result": "redirect_selected_hotblock",
+    "selected_block_promote_to_h200": false
+  },
+  "execution": {
+    "cuda_invoked": false,
+    "endpoint_traffic": false,
+    "environment": "coordinator_cpu_only",
+    "gpu_claimed": false,
+    "provider_mutation": false,
+    "seed_contract": "index-hash-v1 salts 11,17,23,29"
+  },
+  "physical_bound": {
+    "intermediate_bfloat16_write_read_bytes_removed_per_call": 688128,
+    "intermediate_bfloat16_write_read_bytes_removed_per_capture": 2518548480,
+    "interpretation": "This credits both required RMSNorm computations and the residual add as free, so it is an intentionally impossible upper bound on launch/materialization savings.",
+    "launches_removed_per_capture": 3660,
+    "loose_all_norm_family_zero_cost_upper_seconds_per_capture": 0.158001921,
+    "maximum_fraction_of_target_gap_closed": 0.028966227659370496,
+    "selected_block_zero_cost_upper_fraction_of_capture": 0.005030364234229574,
+    "selected_block_zero_cost_upper_fraction_of_fixed_qualified_request": 0.005793245531874099,
+    "selected_block_zero_cost_upper_seconds_per_capture": 0.1158925517355372,
+    "selected_block_zero_cost_upper_seconds_per_request": 0.0036216422417355374,
+    "target_gap_seconds_per_request": 0.125029820393749
+  },
+  "schema_version": 1,
+  "scope": {
+    "consumer": "Gemma4DecoderLayer.pre_feedforward_layernorm(hidden_states, residual)",
+    "epsilon": 1e-06,
+    "forward_batches_in_capture": 61,
+    "input_dtype": "bfloat16",
+    "layers": 60,
+    "output_dtype": "bfloat16",
+    "phase": "c32 mixed prefill/decode model forwards in exact endpoint capture",
+    "producer": "Gemma4DecoderLayer.post_attention_layernorm",
+    "selected_calls": 3660,
+    "shape": [
+      32,
+      5376
+    ],
+    "strides": [
+      5376,
+      1
+    ],
+    "weight_dtype": "bfloat16"
+  },
+  "source_bindings": {
+    "gemma4_causal.py": {
+      "bytes": 56461,
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/models/gemma4_causal.py",
+      "required_fragment_lines": {
+        "hidden_states = self.post_attention_layernorm(hidden_states)": [
+          668
+        ],
+        "hidden_states, residual = self.pre_feedforward_layernorm(": [
+          673,
+          718
+        ]
+      },
+      "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+    },
+    "layernorm.py": {
+      "bytes": 36059,
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/layernorm.py",
+      "required_fragment_lines": {
+        "fused_add_rmsnorm(x, residual, self.weight.data, self.variance_epsilon)": [
+          324,
+          440,
+          540
+        ]
+      },
+      "sha256": "e31523f8090d41e642761617b7253b5a2833676dfd35dad86ae9c18e69144c3b"
+    }
+  },
+  "trace_evidence": {
+    "attributed_post_attention_rmsnorm_seconds": 0.04141905173553719,
+    "attribution_method": "source-count apportionment: 3,660 selected post-attention calls out of 7,381 same-symbol RMSNorm family calls",
+    "capture_window_seconds": 23.038600455,
+    "fused_add_rmsnorm": {
+      "average_ns": 20348.0,
+      "instances": 3660,
+      "median_ns": 20192.0,
+      "symbol": "kernel_cutlass_kernel_flashinfernormkernelsfused_add_rmsnormFusedAddRMSNormKernel_object_at__tensorptrbf16gmemalign128o537653761_tensorptrbf16gmemalign128o537653761_tensorptrbf16gmemalign_0",
+      "total_time_ns": 74473500
+    },
+    "rmsnorm_family": {
+      "average_ns": 11316.7,
+      "instances": 7381,
+      "median_ns": 11488.0,
+      "symbol": "kernel_cutlass_kernel_flashinfernormkernelsrmsnormRMSNormKernel_object_at__tensorptrbf16gmemalign128o537653761_tensorptrbf16gmemalign16o53761_tensorptrbf16gmemalign128o537653761___True_2__0",
+      "total_time_ns": 83528421
+    },
+    "trace_csv": {
+      "bytes": 20937,
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/pair/nsys-stats.csv",
+      "sha256": "2c23d30660675e39185344b2d44b7b951d7bcd700704c4fd73028efa19eff487"
+    },
+    "uncertainty": "The trace summary does not label individual RMSNorm call sites; the source-count apportionment assumes equal mean duration for equal [M,5376] sites."
+  }
+}

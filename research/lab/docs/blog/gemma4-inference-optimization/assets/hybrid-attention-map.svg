@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="860" viewBox="0 0 1400 860" role="img" aria-labelledby="title desc">
+  <title id="title">Gemma 4 hybrid-attention execution map</title>
+  <desc id="desc">The 60-layer text model repeats five local sliding-window layers and one global layer ten times, with different cache and kernel optimization strategies.</desc>
+  <defs>
+    <linearGradient id="bg2" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#081321"/><stop offset="1" stop-color="#17122d"/></linearGradient>
+    <linearGradient id="local" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1cc8a0"/><stop offset="1" stop-color="#1689a8"/></linearGradient>
+    <linearGradient id="global" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8c6cff"/><stop offset="1" stop-color="#d25bd2"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.35"/></filter>
+  </defs>
+  <rect width="1400" height="860" rx="28" fill="url(#bg2)"/>
+  <text x="72" y="76" fill="#f6f7ff" font-family="Inter,system-ui,sans-serif" font-size="36" font-weight="700">One checkpoint, three execution regimes</text>
+  <text x="72" y="116" fill="#a4afc9" font-family="Inter,system-ui,sans-serif" font-size="20">Gemma 4 31B text stack · 60 layers · repeating 5 local + 1 global pattern</text>
+
+  <g transform="translate(72 166)" filter="url(#shadow)">
+    <rect width="1256" height="170" rx="22" fill="#111e33" stroke="#293853"/>
+    <text x="32" y="42" fill="#dce4f9" font-family="Inter,system-ui,sans-serif" font-size="18" font-weight="700">REPEATED TEN TIMES</text>
+    <g transform="translate(32 64)" font-family="Inter,system-ui,sans-serif" font-size="17" font-weight="700" fill="#06151b">
+      <rect width="170" height="72" rx="16" fill="url(#local)"/><text x="85" y="43" text-anchor="middle">LOCAL 1</text>
+      <rect x="186" width="170" height="72" rx="16" fill="url(#local)"/><text x="271" y="43" text-anchor="middle">LOCAL 2</text>
+      <rect x="372" width="170" height="72" rx="16" fill="url(#local)"/><text x="457" y="43" text-anchor="middle">LOCAL 3</text>
+      <rect x="558" width="170" height="72" rx="16" fill="url(#local)"/><text x="643" y="43" text-anchor="middle">LOCAL 4</text>
+      <rect x="744" width="170" height="72" rx="16" fill="url(#local)"/><text x="829" y="43" text-anchor="middle">LOCAL 5</text>
+      <rect x="930" width="262" height="72" rx="16" fill="url(#global)"/><text x="1061" y="43" text-anchor="middle" fill="#fff">GLOBAL</text>
+    </g>
+  </g>
+
+  <path d="M330 354 C330 405 340 414 340 452" fill="none" stroke="#25c5a6" stroke-width="4"/>
+  <path d="M1130 354 C1130 405 1060 414 1060 452" fill="none" stroke="#a978ff" stroke-width="4"/>
+
+  <g transform="translate(72 452)" font-family="Inter,system-ui,sans-serif">
+    <rect width="596" height="300" rx="24" fill="#0f2231" stroke="#1c9e8b" stroke-width="2"/>
+    <text x="32" y="52" fill="#58dfc4" font-size="25" font-weight="700">50 sliding-window layers</text>
+    <text x="32" y="88" fill="#dce4f9" font-size="18">1,024-token live horizon · head dim 256</text>
+    <g transform="translate(32 122)">
+      <rect width="532" height="78" rx="18" fill="#081921" stroke="#2dbfa4"/>
+      <g fill="#34d1b1"><rect x="22" y="20" width="76" height="38" rx="8"/><rect x="110" y="20" width="76" height="38" rx="8"/><rect x="198" y="20" width="76" height="38" rx="8"/><rect x="286" y="20" width="76" height="38" rx="8"/><rect x="374" y="20" width="76" height="38" rx="8"/></g>
+      <path d="M462 39 h44 m-16 -16 l16 16 -16 16" stroke="#9ef3e2" stroke-width="4" fill="none"/>
+    </g>
+    <text x="32" y="238" fill="#f6f7ff" font-size="20" font-weight="700">Specialize the physical contract</text>
+    <text x="32" y="271" fill="#9fafc7" font-size="17">Contiguous ring cache · deferred KV commit</text>
+  </g>
+
+  <g transform="translate(732 452)" font-family="Inter,system-ui,sans-serif">
+    <rect width="596" height="300" rx="24" fill="#1c1733" stroke="#9a73ff" stroke-width="2"/>
+    <text x="32" y="52" fill="#b99cff" font-size="25" font-weight="700">10 full-context layers</text>
+    <text x="32" y="88" fill="#e6e0fb" font-size="18">Up to 256K context · head dim 512</text>
+    <g transform="translate(32 122)">
+      <rect width="532" height="78" rx="18" fill="#120e25" stroke="#8d66ed"/>
+      <g stroke="#be9fff" stroke-width="3" opacity="0.85"><line x1="30" y1="58" x2="110" y2="20"/><line x1="30" y1="58" x2="210" y2="20"/><line x1="30" y1="58" x2="310" y2="20"/><line x1="30" y1="58" x2="410" y2="20"/><line x1="30" y1="58" x2="502" y2="20"/></g>
+      <g fill="#c8b2ff"><circle cx="30" cy="58" r="9"/><circle cx="110" cy="20" r="8"/><circle cx="210" cy="20" r="8"/><circle cx="310" cy="20" r="8"/><circle cx="410" cy="20" r="8"/><circle cx="502" cy="20" r="8"/></g>
+    </g>
+    <text x="32" y="238" fill="#f6f7ff" font-size="20" font-weight="700">Optimize wide-head execution</text>
+    <text x="32" y="271" fill="#aaa0c6" font-size="17">Register pressure · occupancy · full-history reads</text>
+  </g>
+
+  <g transform="translate(72 790)" font-family="Inter,system-ui,sans-serif">
+    <rect width="1256" height="1" fill="#2d3550"/>
+    <text y="38" fill="#8d98b2" font-size="16">After all 60 layers: tied 262,144-row vocabulary projection → a third, bandwidth-heavy execution regime.</text>
+  </g>
+</svg>

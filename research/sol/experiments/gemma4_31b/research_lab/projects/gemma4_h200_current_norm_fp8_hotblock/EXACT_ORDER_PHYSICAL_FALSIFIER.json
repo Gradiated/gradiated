@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "classification": "source_complete_h200_physical_falsifier",
+  "timing_claim": false,
+  "candidate": "gemma4_decode_rmsnorm_quant_e4m3_exact_order",
+  "producer_geometry": {
+    "rows": [1, 16, 32],
+    "hidden": 5376,
+    "ctas_per_row": 1,
+    "threads_per_cta": 672,
+    "warps_per_cta": 21,
+    "grid_ctas_m32": 32,
+    "grid_waves_on_132_sms_m32": 0.24242424242424243
+  },
+  "compiled_resources": {
+    "target": "sm_90a",
+    "registers_per_thread": 32,
+    "registers_per_cta": 21504,
+    "static_shared_memory_bytes": 10880,
+    "stack_frame_bytes": 0,
+    "spill_store_bytes": 0,
+    "spill_load_bytes": 0,
+    "launch_feasibility": "672 threads is below the 1024-thread block limit; 21,504 registers permits at least one CTA under a 65,536-register block/SM budget; shared memory is not limiting."
+  },
+  "operation_order": {
+    "rmsnorm": "672 threads, contiguous vec8, one local round, XOR 16/8/4/2/1 within each of 21 warps, then XOR across 21 warp sums",
+    "rounding_boundary": "FP32 x*rsqrt*weight stored as BF16 in 10,752-byte shared intermediate",
+    "quantization": "first 256 threads, vec16 mapping, finite absmax XOR across 8 warps, FP32 scale=amax/448, FP32 reciprocal, clamp, E4M3FN conversion",
+    "zero_row": "stock behavior: FP32 +0 scale and E4M3 +448 bytes after 0*infinity enters fminf/fmaxf"
+  },
+  "physical_change": {
+    "stock_launches_through_qkv": 3,
+    "candidate_launches_through_qkv": 2,
+    "launches_removed_per_layer_decode": 1,
+    "normalized_bf16_global_write_bytes_removed_m32": 344064,
+    "normalized_bf16_global_read_bytes_removed_m32": 344064,
+    "logical_global_bytes_removed_m32": 688128,
+    "logical_global_mib_removed_m32": 0.65625,
+    "hbm_floor_microseconds_at_4_8_tb_s": 0.14336,
+    "primary_prediction": "launch elimination; DRAM reduction may be below the logical bound because the stock intermediate can remain in L2"
+  },
+  "unchanged_consumer": {
+    "symbol": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+    "activation": "E4M3FN contiguous [M,5376]",
+    "activation_scale": "FP32 [M,1]",
+    "weight": "E4M3FN column-major [5376,16384]",
+    "weight_scale": "FP32 per output channel",
+    "output": "BF16 [M,16384]"
+  },
+  "target_hardware_falsifier": {
+    "required_shapes": [1, 16, 32],
+    "correctness": "exact activation, FP32 scale, and real-consumer output bytes for every shape",
+    "graph": "M32 candidate plus unchanged consumer capture/replay output exact",
+    "path": "loaded symbol and audit must name exact-order producer and unchanged fp8_scaled_mm consumer",
+    "performance": "profiler-off candidate real-QKV component median below contemporaneous stock at M32; retain M1/M16 descriptively",
+    "resource": "loaded object must report sm_90a and no launch-resource failure",
+    "reject_on": "any missing ledger row, byte mismatch, graph mismatch, path mismatch, launch failure, or non-positive M32 median"
+  },
+  "non_transfer": "The rejected source's 13.0% M16 and 14.9% M32 component reductions are mechanism evidence only. No latency magnitude is claimed for this corrected 672-thread source."
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "requested_at_utc": "2026-07-24T17:37:20Z",
+  "retry_scope": "consumer-only finalization of the persisted component rows; no GPU or endpoint invocation",
+  "files": [
+    {
+      "path": "finalize_component.py",
+      "remote": "project/finalize_component.py",
+      "sha256": "416f838e2fd4f67fb00b8dbe71c38a8c3f838f4bd6427d4bbb94407938e64bed"
+    },
+    {
+      "path": "remote_experiment.py",
+      "remote": "project/remote_experiment.py",
+      "sha256": "fe97eaf2a067b90b437de71a6d11329ccd55286da7714cddfcbaf1f422e61bcc"
+    }
+  ]
+}

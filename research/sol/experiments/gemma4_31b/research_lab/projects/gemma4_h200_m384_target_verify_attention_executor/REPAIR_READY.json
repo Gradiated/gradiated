@@ -1,0 +1,8 @@
+{
+  "classification": "recoverable_producer_capture_missing",
+  "deadline_utc": "2026-07-30T10:49:00Z",
+  "repair_id": "m384-producer-capture-1",
+  "retry_scope": "stage_provenance_bound_producer_capture_and_rerun_component_only",
+  "schema_version": 1,
+  "worker_capture_sha256": "e2d0233040bbc4e2de5d5dd6af9d005589404a993270131fc5f8dc8fa1a05ec4"
+}

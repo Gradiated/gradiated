@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T07:50:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "decision": "Request a cumulative $3.00 reservation before opening the corrected component claim.",
+  "owner_control_ready": {
+    "path": "NORM_FP8_OWNER_CONTROL_READY.json",
+    "sha256": "2bac2d50bebbed1ccd4144ce98ecd9bb7e60e3fbb14d734a353403676851791e"
+  },
+  "owner_sha256": "99153d9f2a161601acd83ab751ebecc4cbe4f603c9307c22eb463afdbeafdf65",
+  "claim_launcher_sha256": "ed7e805fe7957794fdf9254d1614a17f1abef199fbbae85ed9813a3ddf637ad1",
+  "prior_authorized_cumulative_usd": 2.0,
+  "requested_authorized_cumulative_usd": 3.0,
+  "actual_spend_usd_through_2026_07_30T07_50_00Z": 0.969,
+  "incremental_reservation_requested_usd": 1.0,
+  "experiment_rate_usd_per_hour": 2.45,
+  "reason": "The old $2 ceiling reaches its attributable release boundary at 08:15:15Z. The closest execution plan requires cold image pull, exact M=1/16/32 component execution, one retained integration repair, terminal retrieval, and generation-fenced release. A cumulative $3 ceiling extends the conservative project boundary to approximately 08:39:44Z while remaining before the provider watchdog.",
+  "bench": {
+    "id": "h200-r5-computeinstance-e00aehxdq8mpd68epd",
+    "gpu_uuid": "GPU-e26e853a-ce3b-8874-bd3e-6db51a22f8b3",
+    "watchdog_pid": 607919,
+    "watchdog_deadline_utc": "2026-07-30T09:01:39.329754Z",
+    "state": "available_unclaimed"
+  },
+  "execution_gate": {
+    "reservation_required": true,
+    "claim_allowed": false,
+    "note": "A later director must observe the cumulative $3.00 reservation, clear reservation_required, hash current final bytes once, and issue a fresh claim/start/release clock."
+  },
+  "provider_mutation_allowed": false
+}

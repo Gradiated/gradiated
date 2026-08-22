@@ -24,7 +24,7 @@ class DetachedOwnerTests(unittest.TestCase):
                 "-c",
                 (
                     "import pathlib,time;"
-                    "time.sleep(0.2);"
+                    "time.sleep(0.6);"
                     f"pathlib.Path({str(done)!r}).write_text('done')"
                 ),
             ]
@@ -102,6 +102,120 @@ class DetachedOwnerTests(unittest.TestCase):
             finally:
                 if pathlib.Path(f"/proc/{process['pid']}").exists():
                     os.killpg(process["pid"], signal.SIGTERM)
+
+    def test_immediate_exit_fails_launch_transaction(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            state = root / "owner.json"
+            log = root / "owner.log"
+            launched = subprocess.run(
+                [
+                    sys.executable,
+                    str(TOOL),
+                    "start",
+                    "--state",
+                    str(state),
+                    "--log",
+                    str(log),
+                    "--",
+                    sys.executable,
+                    "-c",
+                    "raise SystemExit(7)",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(launched.returncode, 1)
+            owner = json.loads(launched.stdout)
+            self.assertFalse(owner["live"])
+            self.assertEqual(
+                owner["reason"], "owner_exited_during_stabilization"
+            )
+            self.assertTrue(state.exists())
+
+    def test_runtime_ready_file_gates_successful_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            state = root / "owner.json"
+            log = root / "owner.log"
+            ready = root / "ready.json"
+            launched = subprocess.run(
+                [
+                    sys.executable,
+                    str(TOOL),
+                    "start",
+                    "--state",
+                    str(state),
+                    "--log",
+                    str(log),
+                    "--stabilize-seconds",
+                    "1",
+                    "--ready-file",
+                    str(ready),
+                    "--",
+                    sys.executable,
+                    "-c",
+                    (
+                        "import pathlib,time;"
+                        "time.sleep(0.1);"
+                        f"pathlib.Path({str(ready)!r}).write_text('ready');"
+                        "time.sleep(2)"
+                    ),
+                ],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            owner = json.loads(launched.stdout)
+            self.assertTrue(owner["live"])
+            self.assertTrue(owner["ready"])
+            self.assertEqual(owner["ready_file"], str(ready))
+            try:
+                self.assertTrue(ready.exists())
+            finally:
+                os.killpg(owner["pid"], signal.SIGTERM)
+
+    def test_live_owner_without_runtime_ready_file_fails_handoff(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            state = root / "owner.json"
+            log = root / "owner.log"
+            ready = root / "ready.json"
+            launched = subprocess.run(
+                [
+                    sys.executable,
+                    str(TOOL),
+                    "start",
+                    "--state",
+                    str(state),
+                    "--log",
+                    str(log),
+                    "--stabilize-seconds",
+                    "0.1",
+                    "--ready-file",
+                    str(ready),
+                    "--",
+                    sys.executable,
+                    "-c",
+                    "import time; time.sleep(2)",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            owner = json.loads(launched.stdout)
+            self.assertEqual(launched.returncode, 1)
+            self.assertTrue(owner["live"])
+            self.assertFalse(owner["ready"])
+            self.assertEqual(
+                owner["reason"], "owner_not_ready_during_stabilization"
+            )
+            try:
+                self.assertTrue(state.exists())
+            finally:
+                os.killpg(owner["pid"], signal.SIGTERM)
 
 
 if __name__ == "__main__":

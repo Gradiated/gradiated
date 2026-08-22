@@ -1,0 +1,49 @@
+{
+  "bench": "b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x",
+  "claim_generation": "2026-07-28T10:52:53.539508Z",
+  "classification": "recoverable_pre_science_llmcompressor_cli_entrypoint_defect",
+  "diagnostic": {
+    "failure": "The isolated llmcompressor==0.12.0 producer imported and its dependency manifest persisted, but convert_native_nvfp4.py invoked python -m llmcompressor. Version 0.12.0 has no llmcompressor.__main__, so the converter exited before conversion.",
+    "resident_state": "The finalized BF16 checkpoint, packet, pinned serving image, isolated producer venv, and producer dependency manifest remain resident.",
+    "scientific_submission_consumed": false
+  },
+  "immutable": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "comparison_order": "BF16 control before native-NVFP4 candidate",
+    "packet_sha256": "707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116",
+    "representation": "symmetric float4 tensor-group-16 W4A4 compressed-tensors",
+    "scientific_submission_count": "one control and one candidate, still unconsumed",
+    "serving_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "workload": "same-B200 BF16 control then native-NVFP4 c32 4214/358 endpoint comparison"
+  },
+  "measured_feasibility": {
+    "closest_repair_elapsed_seconds": 67,
+    "reason": "Repair-5 completed the isolated producer setup and failed immediately at the deterministic CLI dispatch. Reusing that resident producer and changing only the project-local adapter avoids dependency installation and leaves fifteen minutes after the start fence for conversion, persisted stage evidence, both endpoints when they fit, and release.",
+    "stop_rule": "Do not start a conditional arm whose conservative remaining duration plus terminal retrieval cannot fit the 12:40:00Z release bound."
+  },
+  "repair_ready": {
+    "path": "artifacts/b200-nvfp4-endpoint-20260728t1052z/.repair-handshakes/b200-nvfp4-20260728T121626Z/REPAIR_READY.json",
+    "repair_id": "b200-nvfp4-20260728T121626Z",
+    "sha256": "238d06451c79b13798b0aa37d5f09a5945a414752c635c7e922f832480aae0ca"
+  },
+  "required_action": {
+    "allowed_changes": [
+      "Create one project-local copy of convert_native_nvfp4.py whose only semantic diff replaces python -m llmcompressor with the installed producer venv's console entrypoint derived from sys.executable, and patch endpoint_owner.sh to stage and invoke that adapter.",
+      "Before detaching, execute only the console entrypoint's non-scientific help/version boundary against the resident producer and persist its exit plus exact path. Do not run conversion from the coordinator turn.",
+      "Reuse the existing isolated llmcompressor==0.12.0 venv and DEPENDENCY_MANIFEST.json without another pip install or resolver.",
+      "Hash the adapter and final owner bytes, consume the named ready generation, and launch one replacement PID owner directly inside the existing claim.",
+      "Continue from conversion into BF16 control then native-NVFP4 candidate when each remaining arm fits the unchanged scientific and time bounds."
+    ],
+    "must_not": [
+      "reclaim or submit another claim",
+      "modify the immutable packet in place",
+      "rerun dependency installation or checkpoint/image staging",
+      "change checkpoint, representation, workload, comparison order, endpoint consumer, or scientific submission count",
+      "create, delete, or replace a provider resource"
+    ]
+  },
+  "replacement_owner_start_by_utc": "2026-07-28T12:25:00Z",
+  "release_by_utc": "2026-07-28T12:40:00Z",
+  "schema_version": 1,
+  "watchdog_deadline_utc": "2026-07-28T12:43:00Z"
+}

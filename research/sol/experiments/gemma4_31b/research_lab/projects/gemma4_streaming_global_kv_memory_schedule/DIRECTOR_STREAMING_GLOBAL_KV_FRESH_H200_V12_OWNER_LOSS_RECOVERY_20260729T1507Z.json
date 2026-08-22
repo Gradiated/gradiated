@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "classification": "director_streaming_global_kv_v12_owner_loss_same_claim_execution",
+  "created_at_utc": "2026-07-29T15:07:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+  "expected_claimed_at_utc": "2026-07-29T14:02:13.215196Z",
+  "source_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V10_SAME_CLAIM_REPLACEMENT_20260729T1410Z.json",
+    "sha256": "bd0d211a0e15d3777fedbbac666cf26a07aca399fa84822cc0dc24e0f81cd710",
+    "reason": "The unchanged v12 owner consumes this provenance interface to recover the original v9 execution contract."
+  },
+  "source_owner": {
+    "path": "run_streaming_global_kv_h200_owner_v12.sh",
+    "sha256": "21a5364a9a428b47ec0e0ad6af89678a8185d31b0832dc6f620759ef870af03e",
+    "patch_artifact": "STREAMING_GLOBAL_KV_FRESH_H200_V12_PART_STATE_PATCH.json",
+    "patch_sha256": "a7dcafae61a051bdcb58a81a9fdbb13f9eac0a42a70eede0674de4a6a895a97f",
+    "fixture_passed": true
+  },
+  "owner_loss_recovery": {
+    "conflict_artifact": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/V12_PRESTOP_OWNER_LOSS_CONFLICT.json",
+    "conflict_sha256": "fc3a704cb44f92cdfb51989e19d9f4130090a49b44eaa62a150daf1d8856a1bd",
+    "predecessor_pid": 74239,
+    "predecessor_start_ticks": 145247903,
+    "predecessor_required_absent": true,
+    "detached_owner_record_required_absent": "artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/DETACHED_OWNER.json",
+    "candidate_requests_submitted": 0,
+    "cuda_producer_replayed": false,
+    "scientific_terminal_present": false,
+    "verified_partial_bytes": 34307773440,
+    "disposition": "Adopt the ownerless retained claim directly; do not stop a predecessor and do not create a new claim generation."
+  },
+  "lifecycle": {
+    "reservation_usd": 13.0,
+    "maximum_cumulative_exposure_usd": 12.966261,
+    "watchdog_deadline_utc": "2026-07-29T16:40:00Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1640z-watchdog-r6.service",
+    "watchdog_main_pid": 91168,
+    "prior_watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1615z-watchdog-r5.service",
+    "prior_watchdog_verified_inactive": true
+  },
+  "execution": {
+    "new_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z",
+    "launch_start_by_utc": "2026-07-29T15:12:00Z",
+    "checkpoint_integrity_by_utc": "2026-07-29T15:48:00Z",
+    "candidate_server_ready_by_utc": "2026-07-29T16:05:00Z",
+    "release_by_utc": "2026-07-29T16:35:00Z",
+    "watchdog_deadline_utc": "2026-07-29T16:40:00Z",
+    "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/DETACHED_OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule -- /usr/bin/env STREAMING_GLOBAL_KV_EXECUTION_BINDING=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V12_OWNER_LOSS_RECOVERY_20260729T1507Z.json STREAMING_GLOBAL_KV_ARTIFACT_ROOT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v12-20260729t1455z STREAMING_GLOBAL_KV_EXPECTED_CLAIMED_AT=2026-07-29T14:02:13.215196Z bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/run_streaming_global_kv_h200_owner_v12.sh",
+    "publish_active_session_last": true,
+    "return_after_grouped_live_owner_and_resumed_offset_snapshot": true
+  },
+  "measured_fit": {
+    "remaining_transfer_minutes": 30.46,
+    "server_and_model_load_minutes": 17,
+    "endpoint_terminal_release_minutes": 17,
+    "total_continuation_minutes": 64.46,
+    "available_minutes_at_latest_launch": 83,
+    "disposition": "Launch by 15:12Z leaves 18.54 minutes beyond the closest measured continuation before release at 16:35Z and five minutes for watchdog cleanup."
+  },
+  "immutable_science": {
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate": "U=8 streamed global-KV at production global-attention layers",
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "candidate_submission_limit": 1,
+    "stock_arm_forbidden": true,
+    "materializing_arm_replay_forbidden": true,
+    "cuda_producer_replay_forbidden": true
+  },
+  "terminal_contract": {
+    "success": "One candidate endpoint with 32 complete requests, valid exact-runner result, layer-35 u8_streamed nonfallback telemetry, service-time and cost inputs, followed by generation-fenced release.",
+    "decision_bearing_negative": "A complete typed candidate result after the scientific boundary, followed by generation-fenced release.",
+    "incomplete_pre_science": "Retain through bounded mutable repair only while the closest measured restart plus terminal/release margin fits; otherwise persist typed incomplete evidence and release generation-fenced by 16:35Z.",
+    "deadline": "Stop only the project server/container and release claim generation 2026-07-29T14:02:13.215196Z by 16:35Z."
+  },
+  "must_not": [
+    "Do not stop or signal predecessor PID 74239; it is required absent.",
+    "Do not call gpu_pool claim, create another claim generation, or clear the drain fence.",
+    "Do not restart the full checkpoint or discard a verified remote prefix.",
+    "Do not replay stock, materializing, CUDA producer 0f7c32bb..., or an already-submitted candidate request.",
+    "Do not alter checkpoint, image, runner, hook, U=8 geometry, workload, timing boundary, denominator, target, or submission count.",
+    "Do not call provider lifecycle or touch any retired SM120 resource."
+  ]
+}

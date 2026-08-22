@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T12:48:37.287620Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "decision": "fresh_h200_created_protected_and_registered_maintenance",
+  "authorization": {
+    "authorized_cumulative_usd": 8.0,
+    "prior_actual_spend_usd": 3.4856876241250005,
+    "maximum_lifecycle_minutes": 100,
+    "maximum_lifecycle_exposure_usd": 4.083333333333333,
+    "maximum_cumulative_exposure_usd": 7.569020957458334,
+    "inequality": "3.4856876241250005 + 4.083333333333333 <= 8.0"
+  },
+  "placement": {
+    "provider": "nebius",
+    "profile": "glm-campaign",
+    "region": "eu-north1",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "allocation_type": "preemptible",
+    "availability_level": "AVAILABILITY_LEVEL_HIGH",
+    "available_gpus_at_selection": 8,
+    "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f",
+    "provider_create_returncode": 0
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "condition": "maintenance",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "instance_name": "gemma4-streaming-global-kv-fresh-20260729t1247z",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "disk_name": "gemma4-streaming-global-kv-fresh-20260729t1247z-boot",
+    "public_ipv4": "89.169.96.163",
+    "hourly_cost_usd": 2.45,
+    "bench_spec": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_BENCH_SPEC_20260729T1248Z.json",
+    "bench_spec_sha256": "8b87e7f6ba2a2acfecdc01c807e996a144aeed90bb311d4194b2735c44c9c0b0"
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-29T12:47:49.361123Z",
+    "deadline_utc": "2026-07-29T14:27:49.361123Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1247z-watchdog.service",
+    "watchdog_pid": 4733,
+    "watchdog_control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-streaming-global-kv-fresh-20260729t1247z-watchdog.service",
+    "watchdog_unit_manager": "user",
+    "watchdog_verified": true
+  },
+  "execution_state": {
+    "preparation_sha256": "3babc923ff004ebccb505d5b9f1b1ff9f1bdc5fd6a82424e9412623d30e7e667",
+    "owner_ready_sha256": "2802b21355a920710535bfce71b2734277d84bbee50269b988f2b96d4f8303be",
+    "owner_sha256": "429b359bc18cbe1d07ec05094470c8a24f1a51236254fc00f109ab62c6923bcf",
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "claim_allowed": false,
+    "ssh_attempted": false,
+    "cloud_init_verified": false,
+    "accelerator_identity_verified": false,
+    "runtime_setup_started": false,
+    "checkpoint_staging_started": false,
+    "cuda_executed": false,
+    "science_started": false
+  },
+  "next_director_action": "Reconcile the exact maintenance record and provider resource once, verify cloud-init plus strict SSH host identity, one idle H200, UUID, memory, and driver, persist those identities, publish the fresh-H200 candidate-only execution binding, and mark ready. Do not replay CUDA producer 0f7c32bb or the materializing c32 arm."
+}

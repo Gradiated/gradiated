@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "classification": "director_hash_bound_b200_m32_static_persistent_execution",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "claim_allowed": true,
+  "bench": "b200-m32-static-computeinstance-i00z1c1rm2yatraaed",
+  "mechanism": "B200_FP8_M32_NEXT_MECHANISM.json",
+  "mechanism_sha256": "ad3c01d535a7d044b3848efc7b2c34d5a256950bae1696b3730b60a9c82e7442",
+  "artifact_hashes": {
+    "candidate_source_sha256": "515ac1430e76307889f69aabbbcd8b47ad16fd036798854fa8d483a5b5379ac1",
+    "build_script_sha256": "0719ec969281cf607bb033421d03ac05c7bcfc46f61a99c397fd1aff7b122c7b",
+    "dockerfile_sha256": "fd233c013092096b4fa938bc0e6d5278599003c87ae38f4ef268878f08d7aafc",
+    "runner_sha256": "6d6438f723836b53c4a0bc1cc505c4175fda4e9bc8e255b17500c13be2ce6091",
+    "owner_sha256": "52b028180848b1357a524296a3dea004de076f627075f3cd83d1af12df7eaf2a"
+  },
+  "provider": {
+    "instance_id": "computeinstance-i00z1c1rm2yatraaed",
+    "disk_id": "computedisk-i00ch1ec97jas3szz2",
+    "accelerator": "nvidia-b200-sxm",
+    "compute_capability": "10.0",
+    "ssh_ed25519_fingerprint": "SHA256:B1VhUo66g68u4tX12PZpv3sDNO3fxb1aGRzhWoOzrA8",
+    "verified_idle_at_utc": "2026-07-28T22:56:24Z",
+    "provider_started_at_utc": "2026-07-28T22:54:07.243681Z",
+    "watchdog_deadline_utc": "2026-07-29T00:09:07.243681Z"
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-28T23:03:00Z",
+    "owner_launch_by_utc": "2026-07-28T23:03:00Z",
+    "release_by_utc": "2026-07-28T23:45:00Z",
+    "deadline_utc": "2026-07-28T23:50:00Z",
+    "provider_cleanup_deadline_utc": "2026-07-29T00:09:07.243681Z",
+    "maximum_claim_owner_minutes": 42,
+    "remote_root": "/home/glmrunner/gemma4-b200-m32-static-20260728t2258z"
+  },
+  "remote_root": "/home/glmrunner/gemma4-b200-m32-static-20260728t2258z",
+  "spend": {
+    "authorized_cumulative_usd": 16.0,
+    "actual_before_create_usd": 9.73,
+    "maximum_remaining_exposure_usd": 6.27,
+    "provider_rate_usd_per_hour": 3.95,
+    "provider_lifecycle_minutes": 75,
+    "conservative_compute_exposure_usd": 4.9375,
+    "conservative_cumulative_compute_exposure_usd": 14.6675
+  },
+  "scientific_contract": {
+    "question": "Does replacing only SM100 dynamic persistent CLC work acquisition with CUTLASS StaticPersistentScheduler reduce the exact six-family Gemma M32 dynamic-FP8 path?",
+    "arms": "One stock-versus-static-persistent paired component over the six exact M32 Gemma families.",
+    "operands": "Official per-token activation and per-tensor weight quantizers; identical in-process FP8 operands and scales for both consumers.",
+    "oracle": "Finite and bitwise-identical BF16 output before timing each family.",
+    "warmups": 5,
+    "paired_repetitions": 31,
+    "forbidden": [
+      "rebuild or replay the consumed M16 SwapAB candidate",
+      "change the M<=32 cutoff",
+      "change operands, scales, tile, cluster, mainloop, epilogue, or output representation",
+      "load the model or run an endpoint"
+    ]
+  },
+  "release_predicate": "The detached owner must independently validate exactness-stop evidence or all six complete row identities, provenance/layout ledgers, numerical oracles, source/module hashes, timing fields, and terminal classification before release.",
+  "repair_contract": {
+    "retain_claim_and_heartbeat": true,
+    "completed_family_rows_are_never_replayed": true,
+    "supported_retry_scopes": [
+      "source_stage",
+      "build",
+      "consumer:<incomplete-family>",
+      "retrieve"
+    ],
+    "tool": "research/factory/tools/repair-handshake"
+  },
+  "stop_rule": {
+    "exactness": "Stop before timing on the first nonfinite or non-bitwise family.",
+    "negative": "Stop after the six-family component with no endpoint if any family regresses over 5%, weighted saving is nonpositive, or projected saving is below 0.001 s/request.",
+    "positive": "Return to the director only if all six families are bitwise equal, none regresses over 5%, weighted saving is positive, and projected saving is at least 0.001 s/request."
+  }
+}

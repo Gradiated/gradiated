@@ -1,0 +1,6 @@
+{
+  "diagnostic": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-static-scheduler-endpoint-20260729t0022z/OWNER_INCOMPLETE.json",
+  "next": "Only gemma4_b200_fp8_residual_hotpath may replace the revoked endpoint owner bytes, atomically publish new hash-bound READY bytes, claim by 2026-07-29T01:10:00Z, launch by 01:12:00Z, and resume the unconsumed endpoint through the 02:12:00Z release. Provider cleanup remains 02:24:07Z.",
+  "server_state": "Strict-SSH verified idle B200 with zero compute applications and no containers. The failed endpoint remote root does not exist and no checkpoint byte or scientific request was consumed.",
+  "state": "funded_warm_b200_ready_for_pre_science_owner_repair_and_endpoint_resume"
+}

@@ -667,3 +667,114 @@ named `STAGING.json` digest (`…8fa88fb23df83e0a`). This is repairable binding
 metadata, not a model or endpoint result. The controller and runtime logs are
 preserved under `artifacts/h200-55l5g-adopt{,-owner}-20260727t0255z/`; no CUDA
 or requests were submitted and no staging was replayed.
+
+## 2026-07-29 — zero-GPU endpoint packet repaired
+
+Materialized a project-local immutable packet at
+`inputs/h200_55l5g_endpoint_packet/`: pinned `config.json`, tokenizer,
+tokenizer/processor configuration, chat template, and the exact c32 workload.
+The packet manifest (`b0a2fad6…486576e5`) binds the existing endpoint owner
+(`2407c3f7…ee85e6f`), pair consumer (`02aaabd9…807b0eb3`), runtime, and a
+liveness-aware readiness guard. The guard's local dead-child exercise fails
+immediately; a future owner must also reject a non-running container or fatal
+log before it can submit a request. Future connection, checkpoint, image,
+claim, and lifecycle fields must be resolved from a live bench record, not
+from retired H200 history. This is an executable quality-unsafe packet only:
+no GPU/provider/SSH work, endpoint submission, component replay, or quality
+claim occurred.
+
+## 2026-07-29 — maintenance gate reconfirmed
+
+One read-only pool snapshot confirms
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48` is still unclaimed in
+`maintenance`, with no staged checkpoint, container, endpoint, model load, or
+scientific invocation. This is a director-owned strict-SSH/H200-telemetry and
+execution-binding gate; no project GPU, provider, or pair action was taken.
+
+## 2026-07-29 — retained H200 owner reached typed pre-science repair
+
+The bound owner retained the original `00:54:46Z` claim and completed no
+scientific action. Its first host-CLI repair established that the pinned image
+contains `hf`, not the deprecated `huggingface-cli`; the durable owner then
+exited after recording `PRE_SCIENCE_FAILURE.json`. No checkpoint, CUDA,
+server, request, or endpoint pair was consumed. The claim remains live under
+the watchdog; per the current director boundary, no replacement or release
+was made in this turn.
+
+## 2026-07-29 — driver-command repair found an unbound request payload gap
+
+The argv-safe adapter was copied atomically after exact resident packet hashes,
+and its no-HTTP import/argv smoke failed before `urllib`: the immutable
+`qualified_c32_workload.json` is a metadata object containing 32 request
+hashes, whereas the immutable pair driver requires the actual 32 payload
+objects. The stock container remains `State.Running`, healthy, and has no
+campaign POST from this attempt; no stock result, candidate CUDA, or endpoint
+arm exists. `REPAIR_READY.json` under
+`artifacts/h200-55l5g-endpoint-stock-driver-command-repair-20260729t0207z/`
+records the typed pre-science gap. PID `3825247` retains and heartbeats the
+original `00:54:46Z` claim while awaiting a hash-bound payload repair; the
+future-release drain fence and provider lifecycle were untouched.
+
+## 2026-07-29 — retained repair protocol audit
+
+Recovered the exact deterministic c32 payload generator from the bound request
+hashes and ran the patched adapter's import/argv smoke successfully with no
+HTTP. The loaded owner cannot consume a repair request: its request branch
+only breaks its heartbeat loop and exits, rather than re-entering the
+driver-only stage. To avoid the prohibited ownerless claim gap, no
+`REPAIR_REQUEST.json` was written. The precise protocol conflict and the
+patched adapter hash are in `RETRY_ENTRYPOINT_AUDIT.json`; the live owner and
+healthy stock server remain retained with no campaign POST.
+
+## 2026-07-29 — workload-materialization owner ownership snapshot
+
+The materialized-workload replacement owner is live as PID `3831643` (start
+ticks `140811678`) under its PID-managed state file and renewed the original
+`00:54:46.997840Z` claim at `02:30:04Z`. The retained H200 is still claimed,
+non-stale, and drain-fenced. The only visible `REPAIR_READY.json` is the prior
+zero-request smoke failure; no stock submission/result or candidate artifact
+has appeared. No mutation was made while this durable owner continues.
+
+## 2026-07-29 — stock recovered; candidate-only continuation live
+
+The retained remote `STOCK_ARM.json` is decision-bearing: its bound SHA-256 is
+`b7ac86fa…`, with 32/32 complete requests, zero failures, and
+`7.70807582774998 s/request`. Stock is therefore consumed and was not replayed.
+The first candidate owner proved the bound source mount and a running container
+but observed a connection reset during immediate health probing, before any
+candidate submission marker. Its sole localized readiness defect was patched
+to retain the already-started candidate container and use bounded health
+rechecks. Replacement PID `3841529` (start ticks `140897680`) now owns that
+candidate-only continuation under the original claim; no candidate POST or
+candidate terminal exists at this snapshot.
+
+## 2026-07-29 — serial-stock adoption binding conflict
+
+The proposed retrieval-only release artifact declares SHA-256 `f135382c…`,
+but its bytes hash to `6c567248…`; it also names the already-dead first
+candidate owner rather than the live replacement. The replacement was stopped
+before any candidate submission and a remote census found no candidate result.
+The stock terminal remains consumed and preserved. Release was withheld pending
+a director rebind that identifies the observed bytes and the canceled owner.
+
+## 2026-07-29 — candidate-consumption conflict after cancellation
+
+The retrieval-only adoption census found a live remote
+`CANDIDATE_SUBMISSION.json` and `CANDIDATE_ARM.json`, contrary to the corrected
+binding's “candidate unsubmitted” premise. The retrieved arm has 32/32
+complete requests, zero failures, and `7.706803681500077 s/request`; its
+in-adapter marker proves candidate submission. Both stock and candidate are
+therefore consumed serial arms, still not comparable with the concurrent-c32
+denominator. The binding's unsubmitted-candidate terminal cannot be truthfully
+written or used for release; the exact conflict is preserved for rebind.
+
+## 2026-07-29 — both serial endpoint arms closed without a comparator
+
+The corrected terminal binding adopted stock and candidate as consumed absolute
+serial records (each 32/32, zero failures) and explicitly disallowed a delta.
+`HYBRID_55L5G_CURRENT_H200_ENDPOINT_TERMINAL.json` is
+`invalid_scope_serial_stock_and_candidate_consumed`: neither result transfers
+to the concurrent-c32 denominator or target, and no quality claim is made.
+The original claim was released to draining maintenance with its fence intact;
+the conservative cumulative exposure is `$17.340120852113234`, including the
+director-authorized H200 lifecycle through cleanup.

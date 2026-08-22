@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "classification": "funded_retained_b200_exact_runtime_falsifier",
+  "project": "gemma4_b200_fp8_runtime_codesign",
+  "reservation": {
+    "authorized_total_usd": 2.5,
+    "actual_spend_usd": 0.0,
+    "reserved_at_utc": "2026-07-28T20:56:12.521157Z",
+    "conservative_exposure_through_watchdog_usd": 2.422094841625,
+    "covered": true
+  },
+  "bench": {
+    "id": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "accelerator": "nvidia-b200-sxm",
+    "instance_id": "computeinstance-i00rqcq5yzr6xc991j",
+    "disk_id": "computedisk-i00ky31am65pmpzh8z",
+    "project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "lifecycle_path": "DIRECTOR_B200_FP8_RUNTIME_LIFECYCLE_20260728T2058Z.json",
+    "lifecycle_sha256": "1350559117138599fc32dde11489d59aeaf51c2418d5b6fec0cdc5f5922009d0",
+    "deadline_utc": "2026-07-28T21:33:00Z"
+  },
+  "source_screen": {
+    "path": "B200_FP8_RUNTIME_SCREEN.json",
+    "sha256": "b6623bf5f4a81002fda5fbd9e34ac7f52af32083c32e8ff657c005850ccc4862",
+    "derived_seconds_per_request": 0.2995608884905333,
+    "production_hurdle_seconds_per_request": 0.31560925536286155
+  },
+  "execution": {
+    "researcher_profile": "execution",
+    "required_skills": [
+      "$researcher",
+      "$kernel-research"
+    ],
+    "claim_by_utc": "2026-07-28T21:05:00Z",
+    "owner_launch_by_utc": "2026-07-28T21:08:00Z",
+    "decision_release_by_utc": "2026-07-28T21:30:00Z",
+    "remote_root": "/home/glmrunner/b200-fp8-runtime-falsifier-20260728t2059z",
+    "runner_path": "candidate/run_b200_fp8_runtime_falsifier.py",
+    "owner_path": "b200_fp8_runtime_falsifier_owner.sh",
+    "preclaim_terminal_path": "PRECLAIM_B200_FP8_RUNTIME_FALSIFIER_TERMINAL.json",
+    "terminal_path": "B200_FP8_RUNTIME_FALSIFIER_TERMINAL.json",
+    "owner_launcher": "/root/workspace/research/factory/tools/detached-owner",
+    "warmups_per_arm": 8,
+    "samples_per_arm": 40,
+    "scientific_generations_max": 1
+  },
+  "exact_scope": {
+    "baseline": "same-B200 BF16 linears and BF16 KV on the same vLLM and FlashInfer paths from identical BF16 inputs",
+    "candidate": "current vLLM dynamic-E4M3 CUTLASS SM100 linear plus FlashInfer TRTLLM-generation E4M3-KV attention",
+    "linear_rows": "all six exact Gemma linear families at M32 and M3679, with M384 consumer binding",
+    "attention_rows": [
+      "local q32 kv16 d256 context1024 at c32",
+      "global q32 kv4 d512 context4393 at c32"
+    ],
+    "aggregate_gate_seconds_per_request_max": 0.31560925536286155,
+    "launch_seconds_per_request_max": 0.01795828125,
+    "streaming_hbm_fraction_min": 0.75,
+    "numerical_gate": {
+      "reference": "FP32 reference over identical exact tensors",
+      "cosine_similarity_min": 0.999,
+      "normalized_rmse_max": 0.03,
+      "finite_and_nonzero": true
+    },
+    "required_path_evidence": [
+      "dynamic E4M3 SM100 linear dispatch and TCGen05 activity",
+      "TRTLLM-generation FP8-KV consumer for both d256 and d512",
+      "no material fallback or local-memory spill on d512",
+      "DRAM bytes, L2 behavior, registers, local-memory spills, occupancy, kernel symbols, and launch interval-union time"
+    ]
+  },
+  "disposition": {
+    "positive": "All numerical, path, counter, launch, HBM, and aggregate gates pass. Release the bench available and retain the terminal for director integration selection.",
+    "negative": "Persist every valid timing and counter plus the first rejecting gate, then release the bench by 21:30Z.",
+    "incomplete": "Retain the claim only while one bounded same-claim integration or telemetry repair plus typed terminal and safe release fit before 21:30Z.",
+    "pre_science_failure": "Repair source/image/cubin identity, import, path, permission, profiler, or runtime-context defects in place before consuming the single scientific generation."
+  },
+  "forbidden": [
+    "load or stage the Gemma checkpoint",
+    "start or replay an endpoint",
+    "replay any local-attention candidate or terminal",
+    "change exact geometry, multiplicities, baselines, or promotion gates",
+    "run a second interpretable scientific generation",
+    "extend or mutate provider lifecycle"
+  ]
+}

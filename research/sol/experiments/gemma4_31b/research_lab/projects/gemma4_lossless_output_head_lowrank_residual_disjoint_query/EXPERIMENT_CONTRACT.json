@@ -1,0 +1,105 @@
+{
+  "absolute_deadline_utc": "2026-07-29T19:24:47Z",
+  "artifact_contract": {
+    "failure_log": "artifacts/disjoint_query.stderr.log",
+    "raw_output": "artifacts/disjoint_query_result.json",
+    "runner": "run_disjoint_query.py",
+    "terminal": "LOSSLESS_LOWRANK_RESIDUAL_DISJOINT_TERMINAL.json",
+    "teardown": "Foreground CPU process exits; immutable hard-linked inputs remain; no provider, GPU, endpoint, or external state exists."
+  },
+  "baseline_measurement": {
+    "attribution": "Dense control is one full physical read of all 262144 tied BF16 rows. Candidate traffic is the 32-query physical union plus every declared fixed-index, metadata, score, bound, survivor, and exact-verification byte.",
+    "critical_path_scope": "Analytical output-head memory traffic only; CPU runtime is diagnostic and cannot transfer to H200 latency.",
+    "residual_bottleneck": "A disjoint query may have a large residual outside the frozen training span, widening every row certificate and making the physical survivor union dense."
+  },
+  "budget": {
+    "additional_storage_gib_max": 2,
+    "gpu_calls_max": 0,
+    "provider_spend_usd_max": 0.0,
+    "wall_clock_minutes_max": 45
+  },
+  "candidate": {
+    "frozen_change": "Reuse predecessor persisted rank-32 basis, projected weight coefficients, and per-row residual upper bounds without changing any byte, rank, threshold, or guard.",
+    "held_out_global_rows": [
+      1, 13, 25, 37, 49, 61, 73, 85,
+      97, 109, 121, 133, 145, 157, 169, 181,
+      193, 205, 217, 229, 241, 253, 265, 277,
+      289, 301, 313, 325, 337, 349, 361, 373
+    ],
+    "held_out_selection": "For each request in first-seen request order, select its second capture-order row. This metadata-only rule is fixed before scoring.",
+    "name": "frozen rank-32 low-rank residual index on disjoint exact queries",
+    "tuning_after_holdout": "Forbidden"
+  },
+  "causal_hypothesis": "If the predecessor's 32-dimensional query span captures reusable output-head query structure rather than memorizing its fit/evaluation rows, the frozen residual certificates will preserve every possible stock candidate while keeping the 32-query physical exact-weight union small enough that fully charged net traffic remains below dense. The competing explanation is in-sample collapse: disjoint query residuals widen bounds until survivor traffic is nonpositive.",
+  "correctness_gate": {
+    "required": [
+      "All frozen file hashes, tensor geometry, dtypes, and tied-weight tensor digest match.",
+      "The 32 held-out rows are disjoint from all 32 predecessor fit/evaluation rows by capture storage index, global row, ownership tuple, and BF16 row hash.",
+      "Every possible non-stop stock argmax under the inherited conservative numeric envelope remains in every reported survivor set.",
+      "Every dense reference winner remains and exact candidate winners match dense reference winners.",
+      "All original token rows remain reachable in original token-ID order."
+    ],
+    "semantics": "Lossless containment of the complete pinned stock candidate set, not top-1 agreement alone."
+  },
+  "decision_gate": {
+    "falsify": "Exact stock-set containment fails or fully charged net physical traffic is nonpositive.",
+    "promote": "Exact stock-set containment holds and fully charged net physical bytes avoided is strictly positive.",
+    "single_shot": "One deterministic held-out invocation only. No parameter, basis, rank, threshold, guard, or row-selection tuning after result observation.",
+    "transfer_limit": "CPU/reference correctness and analytical physical bytes for these 32 exact held-out rows only."
+  },
+  "inputs": {
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "frozen_index_sha256": "27f8778b24474922439e9aa0b17cd8e4f022e872d18bb61d8c1c39d8c8194945",
+    "predecessor_terminal_sha256": "ac5c408857fb634ed4b4372f316e581b82c825adf821269803ca2508f0c6d5ea",
+    "tied_weight_tensor_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "opportunity_register": "OPPORTUNITY_REGISTER.json",
+  "question": "Does the frozen predecessor rank-32 residual index preserve the exact stock candidate set and reduce fully charged net physical output-head traffic on 32 exact-capture hidden rows disjoint from every fit/evaluation row?",
+  "recorded_at_utc": "2026-07-29T18:40:00Z",
+  "schema_version": 1,
+  "seed": "No stochastic operations. Selection is the preregistered second-row-per-request rule.",
+  "slo": {
+    "campaign_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "inherited_output_consumer_seconds_per_request": 0.03510060919172893
+  },
+  "stock_control": {
+    "model": "google/gemma-4-31B-it",
+    "predecessor_fit_evaluation_global_rows": [
+      0, 12, 24, 36, 48, 60, 72, 84,
+      96, 108, 120, 132, 144, 156, 168, 180,
+      192, 204, 216, 228, 240, 252, 264, 276,
+      288, 300, 312, 324, 336, 348, 360, 372
+    ],
+    "requests": 32,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "stock_consumer": {
+      "candidate_set_requirement": "Every possible non-stop argmax under the inherited conservative FP32-reference, BF16-accumulation, and BF16-output-rounding envelope remains in the survivor set.",
+      "classification": "pinned_temperature_zero_greedy_with_min_token_stop_mask",
+      "conservatively_excluded_from_incumbents": [1, 106],
+      "masked_stop_token_ids": [1],
+      "softcap": "30 * tanh(pre_softcap_logit / 30), monotone"
+    },
+    "weight_dtype": "bfloat16",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [262144, 5376]
+  },
+  "workload": {
+    "geometry": "32 preregistered held-out hidden rows by 262144 token rows by hidden width 5376",
+    "physical_scope": "32-query union of original tied-weight rows read for exact verification",
+    "traffic_charges": [
+      "projected-weight index",
+      "basis and selected hidden rows",
+      "residual-norm metadata",
+      "projected-score output",
+      "unfused residual-bound read and write",
+      "survivor mask and token IDs",
+      "exact verification logits",
+      "full original BF16 rows in the physical survivor union"
+    ]
+  }
+}

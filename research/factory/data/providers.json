@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "reviewed_at_utc": "2026-07-28T10:20:00Z",
+  "reviewed_at_utc": "2026-07-28T14:28:24Z",
   "scope": "Candidate infrastructure for repeatable model-serving experiments and bare-metal GPU profiling. This registry records interfaces and verified capability, not prices or credentials.",
   "providers": [
     {
@@ -29,13 +29,22 @@
       "name": "RunPod",
       "interfaces": ["api", "graphql"],
       "access_profiles": ["gpu_pod", "secure_cloud", "community_cloud"],
+      "roles": ["default_amd_experiment_route", "opportunistic_nvidia_capacity"],
       "credentials": [
         {"env": "RUNPOD_API_KEY", "purpose": "API authentication", "required": true}
       ],
       "inventory": {
+        "command": "research/factory/tools/grad-profile providers --provider runpod",
         "public_pricing_url": "https://www.runpod.io/pricing",
-        "reviewed_at_utc": "2026-07-28T10:20:00Z",
-        "current_capacity_summary": "Public Pod and cluster catalogs were refreshed. Reserved cluster rates remain quote-only; no reliable authenticated capacity snapshot was obtained during this refresh.",
+        "snapshot_path": "research/sol/docs/RUNPOD_LIVE_INVENTORY_2026-07-28.md",
+        "reviewed_at_utc": "2026-07-28T14:28:24Z",
+        "current_capacity_summary": "Last observed authenticated capacity was a low-stock secure-cloud 1x MI300X at $2.39/GPU-hour on-demand with a $1.99 minimum bid at 2026-07-28T14:28:24Z; the same offer was absent at 2026-07-28T14:35:56Z. No multi-GPU MI300X was exposed. RunPod remains the first ordinary AMD route, but the live command is authoritative and placement failure should trigger fallback rather than repeated polling.",
+        "default_amd_experiment_route": {
+          "accelerator_id": "AMD Instinct MI300X OAM",
+          "gpu_count": 1,
+          "scope": "ordinary AMD runtime, kernel, quantization, serving, and throughput experiments",
+          "excludes": ["verified bare metal", "host firmware or BIOS control", "MI325X", "MI350X", "MI355X"]
+        },
         "provisioning": "campaign-owned"
       },
       "profiling": {

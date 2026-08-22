@@ -1,0 +1,121 @@
+{
+  "schema_version": 1,
+  "classification": "director_streaming_global_kv_v11_resumable_same_claim_repair",
+  "created_at_utc": "2026-07-29T14:31:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+  "expected_claimed_at_utc": "2026-07-29T14:02:13.215196Z",
+  "source_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V10_SAME_CLAIM_REPLACEMENT_20260729T1410Z.json",
+    "sha256": "bd0d211a0e15d3777fedbbac666cf26a07aca399fa84822cc0dc24e0f81cd710"
+  },
+  "source_owner": {
+    "path": "run_streaming_global_kv_h200_owner_v10.sh",
+    "sha256": "833c92c7d4b86426a319e3016249c05332b5d8d6e903ba63544bee3e74163be0",
+    "pid": 52969,
+    "start_ticks": 145055323,
+    "live": false,
+    "failure_artifact": "artifacts/streaming-global-kv-fresh-h200-v10-20260729t1410z/OWNER_V10_PRE_SCIENCE_FAILURE.json"
+  },
+  "failure": {
+    "classification": "recoverable_pre_science_owner_controller_defect",
+    "root_cause": "retain() declared scope, why, and id in one local statement; nounset expanded scope while constructing id before scope received $1.",
+    "science_started": false,
+    "server_started": false,
+    "candidate_request_submitted": false,
+    "candidate_sample_consumed": false,
+    "cuda_producer_replayed": false
+  },
+  "commit_time_guest_state": {
+    "verified_at_utc": "2026-07-29T14:30:00Z",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "gpu_memory_used_mib": 0,
+    "compute_applications": 0,
+    "live_containers": 0,
+    "remote_root": "/home/glmrunner/streaming-global-kv-v9",
+    "checkpoint_complete_files": {
+      "chat_template.jinja": 18683,
+      "config.json": 4621
+    },
+    "checkpoint_partial_files": {
+      "model-00001-of-00002.safetensors.part": 34307773440
+    },
+    "input_files_present": [
+      "CHECKPOINT_MANIFEST.json",
+      "exact_runner.py",
+      "multiresolution_global_kv.py",
+      "streaming_global_kv_endpoint_r3.py",
+      "streaming_global_kv_schedule.py",
+      "streaming_global_kv_sglang_hook.py"
+    ],
+    "checkpoint_total_bytes": 62578655208,
+    "remaining_checkpoint_bytes_upper_bound": 28270858464
+  },
+  "implementation": {
+    "source": "run_streaming_global_kv_h200_owner_v10.sh",
+    "destination": "run_streaming_global_kv_h200_owner_v11.sh",
+    "required_patch_artifact": "STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_PATCH.json",
+    "required_changes": [
+      "Split retain() locals into ordered declarations: assign scope and why before constructing the fresh repair id.",
+      "Preserve v10 same-claim validation, SSH stdin isolation, immutable identities, heartbeat, server, endpoint, terminal, and expected-generation release.",
+      "Make checkpoint staging resumable by destination .part offset. Accept a partial only when its size is no larger than the manifest row and its full remote hash equals the hash of the same-length local source prefix.",
+      "For a verified partial prefix, append only bytes after that offset through one bounded stdin-isolated SSH stream; for a mismatched prefix, atomically archive or remove only that .part and restart that file.",
+      "After transfer, verify the complete remote hash before chmod and atomic rename; then verify all eight manifest rows and atomically write CHECKPOINT_INTEGRITY.json.",
+      "Reuse every matching complete remote checkpoint/input file and the resident pinned image."
+    ],
+    "validation": [
+      "bash -n run_streaming_global_kv_h200_owner_v11.sh",
+      "A lifecycle-pure fixture must cover ordered retain locals, matching-prefix resume, mismatched-prefix restart, exact offset append, complete hash before rename, same-claim heartbeat, and expected-generation release."
+    ]
+  },
+  "execution": {
+    "new_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v11-20260729t1431z",
+    "launch_by_utc": "2026-07-29T14:38:00Z",
+    "checkpoint_integrity_by_utc": "2026-07-29T15:14:00Z",
+    "candidate_server_ready_by_utc": "2026-07-29T15:31:00Z",
+    "release_by_utc": "2026-07-29T15:48:00Z",
+    "watchdog_deadline_utc": "2026-07-29T15:50:00Z",
+    "detached_owner_command_template": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v11-20260729t1431z/DETACHED_OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v11-20260729t1431z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule -- /usr/bin/env STREAMING_GLOBAL_KV_EXECUTION_BINDING=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_SAME_CLAIM_20260729T1431Z.json STREAMING_GLOBAL_KV_ARTIFACT_ROOT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-fresh-h200-v11-20260729t1431z STREAMING_GLOBAL_KV_EXPECTED_CLAIMED_AT=2026-07-29T14:02:13.215196Z bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/run_streaming_global_kv_h200_owner_v11.sh",
+    "publish_active_session_last": true,
+    "return_after_grouped_live_owner_and_resumed_offset_snapshot": true
+  },
+  "measured_fit": {
+    "remaining_checkpoint_bytes": 28270858464,
+    "nearest_measured_transfer_mbytes_per_second": 15.47,
+    "remaining_transfer_minutes": 30.46,
+    "server_and_model_load_minutes": 17,
+    "endpoint_terminal_release_minutes": 17,
+    "disposition": "The resumable continuation fits the unchanged release/watchdog envelope. A full 62.58-GB restart does not fit and is forbidden."
+  },
+  "immutable_science": {
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate": "U=8 streamed global-KV at production global-attention layers",
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "candidate_submission_limit": 1,
+    "stock_arm_forbidden": true,
+    "materializing_arm_replay_forbidden": true,
+    "cuda_producer_replay_forbidden": true
+  },
+  "terminal_contract": {
+    "success": "One candidate endpoint with 32 complete requests, valid exact-runner result, layer-35 u8_streamed nonfallback telemetry, service-time and cost inputs, followed by generation-fenced release.",
+    "decision_bearing_negative": "A complete typed candidate result after the scientific boundary, followed by generation-fenced release.",
+    "incomplete_pre_science": "Retain only while a bounded mutable repair still fits; otherwise persist typed incomplete evidence and release the captured generation by 15:48Z.",
+    "deadline": "Persist typed incomplete evidence, stop only the project server/container, and release claim generation 2026-07-29T14:02:13.215196Z by 15:48Z."
+  },
+  "must_not": [
+    "Do not call gpu_pool claim or create a second claim generation.",
+    "Do not clear the supervisor drain fence.",
+    "Do not restart the 62.58-GB checkpoint transfer from byte zero when a verified partial prefix is present.",
+    "Do not replay stock, the materializing arm, CUDA producer 0f7c32bb..., or any candidate request already marked science_started.",
+    "Do not alter checkpoint, image, runner, hook, U=8 geometry, workload, timing boundary, denominator, target, or submission count.",
+    "Do not call provider lifecycle, extend the watchdog, or touch retired SM120."
+  ]
+}

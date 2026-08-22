@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "classification": "director_gated_activation_fp8_h200_component_manifest_repair_execution",
+  "created_at_utc": "2026-07-29T16:23:00Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Resume the still-unconsumed gated-activation component using a derived execution manifest that adds tensor_key as an exact alias of the source manifest's only_tensor. This repairs only the runner/manifest metadata seam; every scientific byte and contract remains unchanged.",
+  "supersedes": {
+    "binding": "DIRECTOR_GATED_ACTIVATION_FP8_H200_COMPONENT_EXECUTION_20260729T1613Z.json",
+    "binding_sha256": "8a5bd494fde2111c7865129742d6b2c62f8dc3fb017006e10651e0433931e377",
+    "attempt_artifact": "GATED_ACTIVATION_FP8_H200_COMPONENT_ATTEMPT.json",
+    "attempt_sha256": "31862968d4b314b52f65461ca99dba9131fa4533357934ce34fa912b68a62ac7",
+    "science_consumed": false,
+    "cuda_executed": false,
+    "rows_completed": 0
+  },
+  "reservation": {
+    "authorized_cumulative_usd": 2.0,
+    "actual_project_exposure_usd": 0.18,
+    "durable_reserved_at_utc": "2026-07-29T16:12:13.777388Z",
+    "maximum_additional_exposure_usd": 0.6,
+    "metered_hourly_rate_usd": 2.45
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_state": "available",
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "claim_start_by_utc": "2026-07-29T16:28:00Z",
+    "execution_complete_by_utc": "2026-07-29T16:33:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T16:35:00Z",
+    "watchdog": {
+      "main_pid": 91168,
+      "deadline_utc": "2026-07-29T16:40:00Z"
+    },
+    "maintenance_evidence": "The prior owner released after two pre-science integration failures and verified 0 MiB, 0% utilization, no runner process, no CUDA sample, and no scientific row."
+  },
+  "immutable_scientific_inputs": {
+    "component": {
+      "path": "inputs/gemma4-layer0-down-proj-component.safetensors",
+      "sha256": "d6622163e9de350e75c7e07f51b486be92cfc0e130271c8de30518445034bac9",
+      "bytes": 231211144,
+      "tensor_key": "model.language_model.layers.0.mlp.down_proj.weight",
+      "dtype": "bfloat16",
+      "shape": [
+        5376,
+        21504
+      ]
+    },
+    "source_manifest": {
+      "path": "GATED_ACTIVATION_FP8_COMPONENT_MANIFEST.json",
+      "sha256": "3a9ee1473e591795117d3c7ba2fbd60d473ddbb1c18e80cd5887c9bc021d7541"
+    },
+    "runner": {
+      "path": "h200_runner.py",
+      "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb"
+    },
+    "candidate_python": {
+      "path": "gated_activation_fp8_decode.py",
+      "sha256": "7f5aaa9467fca4fe979470d32a21fa7038236ff760d08690c505fa4ab6506e38"
+    },
+    "candidate_cuda": {
+      "path": "gated_activation_fp8_decode.cu",
+      "sha256": "2b5c9d0e799c64690a002e3d05a2d744135bf4b17494601154585faf882e6458"
+    },
+    "runner_contract": {
+      "path": "H200_RUNNER_CONTRACT.json",
+      "sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba"
+    },
+    "cpu_oracle": {
+      "path": "CPU_ORACLE_RESULT.json",
+      "sha256": "47c42ed598bad31dc756b4b93b2ebbb1235cf0d760e6e43326f16940bca38d2c"
+    },
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "mutable_integration_repair": {
+    "execution_manifest": {
+      "path": "GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json",
+      "sha256": "b179e2556f8d85681c6dcb47f98174d7206f838488afb3a1cf7f04a9fe17630d",
+      "derivation": "tensor_key equals the immutable source manifest's only_tensor; component and checkpoint hashes are copied exactly.",
+      "scientific_bytes_changed": false
+    },
+    "component_guest_path": "/workspace/inputs/gemma4-layer0-down-proj-component.safetensors",
+    "retry_scope": "manifest_consumer_only",
+    "new_output_generation": "artifacts/gated-activation-fp8-h200-component-repair-20260729t1623z"
+  },
+  "execution": {
+    "project_entrypoint": "h200_runner.py",
+    "artifact_root": "artifacts/gated-activation-fp8-h200-component-repair-20260729t1623z",
+    "maximum_wall_minutes": 7,
+    "maximum_scientific_gpu_minutes": 4,
+    "repetitions": 100,
+    "rows": [
+      1,
+      16,
+      32
+    ],
+    "primary_row": 32,
+    "required_runner_invocation": "python3 h200_runner.py --component-safetensors inputs/gemma4-layer0-down-proj-component.safetensors --component-manifest GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json --output artifacts/gated-activation-fp8-h200-component-repair-20260729t1623z --repetitions 100",
+    "single_start_helper": "Claim with PYTHONPATH=research/factory/src python3 -m grad_research.gpu_pool claim for this project and exact bench, atomically stage the already-hash-bound files at their required paths, then run required_runner_invocation exactly once inside the pinned resident image."
+  },
+  "scientific_contract": {
+    "question": "Does fusing Gemma 4 gated activation with per-token dynamic E4M3 quantization reduce exact layer-0 down-projection component time at M=32 on H200 while preserving the bound numerical oracle?",
+    "baseline": "GeluAndMul(approximate='tanh') plus sglang_per_token_quant_fp8 feeding fp8_scaled_mm",
+    "candidate": "gemma4_gated_activation_quant_e4m3_kernel feeding the same fp8_scaled_mm consumer",
+    "required_rows": [
+      "ROW_M1.json",
+      "ROW_M16.json",
+      "ROW_M32.json"
+    ],
+    "required_terminal": "TERMINAL.json",
+    "success": "All three numerical rows, candidate-path invocations, and CUDA graph arms pass, and the M=32 candidate component median is below contemporaneous baseline.",
+    "negative": "A complete interpretable ledger rejects numerical equivalence, candidate execution, CUDA graph replay, or M=32 timing.",
+    "endpoint_promotion": "A positive component may be queued for a later endpoint measurement; this binding authorizes no endpoint."
+  },
+  "failure_disposition": {
+    "decision_bearing_terminal": "Retrieve and hash the complete ledger, update STATUS.json, and release with the exact claim generation by 16:35Z.",
+    "recoverable_pre_science": "Repair only mutable Docker, path, permission, import, or runtime-adapter glue inside the same claim if the corrected run can still finish by 16:33Z. Do not change scientific bytes or count it as a sample.",
+    "cannot_fit_or_unsafe": "Preserve the compact diagnostic and science-start state, release generation-fenced to maintenance by 16:35Z, and do not submit a late arm."
+  },
+  "must": [
+    "Use $experiment-run and the execution profile.",
+    "Read this repair binding once and verify its hash, the compatibility manifest hash and alias derivation, every immutable input hash, the exact reservation, available zero-GPU bench, and watchdog before claiming.",
+    "Claim only this bench for only this project by 16:28Z.",
+    "Use the fresh output generation and run exactly one valid scientific invocation.",
+    "Release using the returned exact claim generation by 16:35Z on every terminal path."
+  ],
+  "must_not": [
+    "Do not modify the component, source manifest, runner, candidate, numerical thresholds, repetition count, shapes, consumer, or runtime image.",
+    "Do not replay either pre-science attempt as evidence or reuse its output directory.",
+    "Do not run endpoint science, call provider lifecycle, create a bench, extend the watchdog, or mutate another project.",
+    "Do not claim after 16:28Z or retain a claim after 16:35Z."
+  ]
+}

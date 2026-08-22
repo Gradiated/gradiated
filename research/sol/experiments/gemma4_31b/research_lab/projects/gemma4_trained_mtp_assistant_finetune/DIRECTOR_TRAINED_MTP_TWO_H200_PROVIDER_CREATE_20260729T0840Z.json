@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T08:40:11Z",
+  "project": "gemma4_trained_mtp_assistant_finetune",
+  "decision": "two_h200s_created_registered_identity_verified_and_held_nonclaimable",
+  "reservation": {
+    "authorized_usd": 20.0,
+    "prior_actual_usd": 0.0,
+    "cleanup_reserve_usd": 0.5
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-29T12:10:00Z",
+    "combined_hourly_cost_usd": 4.9,
+    "maximum_compute_cost_usd": 17.542778,
+    "maximum_total_with_cleanup_reserve_usd": 18.042778
+  },
+  "benches": {
+    "target": {
+      "id": "h200-mtp-target-e00gtebbbazkara13v",
+      "provider_started_at_utc": "2026-07-29T08:34:28Z",
+      "instance_id": "computeinstance-e00gtebbbazkara13v",
+      "disk_id": "computedisk-e00tzmcqnvsb4fse0r",
+      "public_ipv4": "89.169.122.19",
+      "ssh_ed25519_fingerprint": "SHA256:dh5l08KT8r+6tlwYMdX9fxUN63Hevb+BOm8PKdLb1Jo",
+      "gpu_uuid": "GPU-b899ef63-3dce-2a69-0ed2-47c221455b3b",
+      "gpu_name": "NVIDIA H200",
+      "memory_mib": 143771,
+      "driver_version": "580.159.04",
+      "watchdog_unit": "gemma4-mtp-target-20260729t1210z-watchdog.service",
+      "watchdog_pid": 4022836,
+      "bench_spec": "DIRECTOR_MTP_TARGET_H200_BENCH_SPEC_20260729T0835Z.json",
+      "bench_spec_sha256": "9f95b01a464884852797754bb78e2e798d9423dc51d6b0f8100886a35f4f4f64"
+    },
+    "trainer": {
+      "id": "h200-mtp-trainer-e00c6522ejxkg0jsbe",
+      "provider_started_at_utc": "2026-07-29T08:36:00Z",
+      "instance_id": "computeinstance-e00c6522ejxkg0jsbe",
+      "disk_id": "computedisk-e00agrb82g4xhgrfwe",
+      "public_ipv4": "89.169.102.183",
+      "ssh_ed25519_fingerprint": "SHA256:/ab241dFapXKxGsw70Hkp4opalmroBFWHkNwv0WFwsM",
+      "gpu_uuid": "GPU-26c50cf8-4bc8-0b32-c9e4-ce46e0763eff",
+      "gpu_name": "NVIDIA H200",
+      "memory_mib": 143771,
+      "driver_version": "580.159.04",
+      "watchdog_unit": "gemma4-mtp-trainer-20260729t1210z-watchdog.service",
+      "watchdog_pid": 4023292,
+      "bench_spec": "DIRECTOR_MTP_TRAINER_H200_BENCH_SPEC_20260729T0836Z.json",
+      "bench_spec_sha256": "13b26799b69772044625ecf307c89f61742e63325731760aedf5d2a668c277e6"
+    }
+  },
+  "identity_gate": {
+    "strict_ssh": "pass",
+    "cloud_init_marker": "pass",
+    "exact_gpu_count_each": 1,
+    "inventory_condition": "available",
+    "claim_allowed": false
+  },
+  "owner_readiness_discovery": {
+    "offline_result_sha256": "ff49f337da412cfcb6ca6e4c01f9c3072d96639c3cf7b52e118a2108fc52b838",
+    "owner_sha256": "8d76dd5a94f9bf6d837324eeb999126a7bc6a634cc9ee889e1b138ecafd3deb0",
+    "classification": "lifecycle_owner_valid_but_production_pipeline_runner_unbound",
+    "evidence": "run_two_bench_owner.py requires binding.pipeline.command and binding.pipeline.repair_command, while TRAINED_MTP_OWNER_OFFLINE_RESULT.json contains no hash-bound production pipeline runner or concrete pipeline argv.",
+    "science_consumed": false,
+    "gpu_mutation_performed": false
+  },
+  "next": "Keep both benches available and unclaimed. One execution-profile same-project repair must implement and hash-bind the resumable production pipeline runner and republish the owner result; a later director binding may then authorize the exact two-bench claim."
+}

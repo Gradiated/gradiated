@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "classification": "provider_running_connection_identity_pending",
+  "observed_at_utc": "2026-07-29T03:15:55Z",
+  "project": "gemma4_rtxpro6000_fp8_endpoint",
+  "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+  "provider": {
+    "name": "runpod",
+    "pod_id": "f4nbtoufbwf66f",
+    "machine_id": "rb51k15hqqsh",
+    "desired_status": "RUNNING",
+    "cost_per_hour_usd": 1.89,
+    "gpu_count": 1,
+    "image": "runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404",
+    "requested_ports": [
+      "22/tcp"
+    ],
+    "public_ip": "213.192.6.70",
+    "runtime_port_mapping_present": false
+  },
+  "connection_probes": [
+    {
+      "endpoint": "f4nbtoufbwf66f@ssh.runpod.io",
+      "identity": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+      "result": "permission_denied_publickey"
+    },
+    {
+      "endpoint": "root@213.192.6.70:22",
+      "identity": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+      "result": "connect_timeout"
+    }
+  ],
+  "watchdog": {
+    "unit": "gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog.service",
+    "active_state": "active",
+    "sub_state": "running",
+    "deadline_utc": "2026-07-29T08:13:34.346354Z"
+  },
+  "bench_status": "maintenance",
+  "claim_allowed": false,
+  "setup_started": false,
+  "science_consumed": false,
+  "next_director_action": "On a later material provider observation, resolve the pod's runtime SSH port or configured proxy identity, reconcile the strict host key, and prove the exact sm_120 hardware plus empty accelerator state before marking the bench ready. Do not create another pod or assign a researcher while this connection identity remains pending."
+}

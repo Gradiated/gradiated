@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "type": "director_m384_attention_same_claim_implementation_completion_and_owner_r2_transition",
+  "created_at_utc": "2026-07-30T10:00:00Z",
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "decision": "complete_the_admitted_producer_to_consumer_path_and_replace_the_nondispatching_owner_under_the_original_claim",
+  "base_execution": {
+    "path": "DIRECTOR_M384_ATTENTION_H200_EXECUTION_20260730T0951Z.json",
+    "sha256": "0233c50ce6483fc7ce4783405b450f1f7d832ac8542ccb3a8c676168870c8c84"
+  },
+  "claim": {
+    "bench": "h200-downproj-computeinstance-e00qft1sf416qp6knw",
+    "project": "gemma4_h200_m384_target_verify_attention_executor",
+    "claimed_at": "2026-07-30T09:57:05.800998Z",
+    "new_claim_allowed": false,
+    "reclaim_allowed": false,
+    "replacement_owner_allowed": true,
+    "provider_lifecycle_mutation_allowed": false
+  },
+  "predecessor_owner": {
+    "pid": 726791,
+    "start_ticks": 152144312,
+    "state_path": "artifacts/h200-m384-attention-20260730t0951z/CONTROLLER_OWNER.json",
+    "progress_path": "artifacts/h200-m384-attention-20260730t0951z/OWNER_PROGRESS.json",
+    "observed_phase": "retained_repair",
+    "observed_classification": "recoverable_producer_capture_missing",
+    "dispatcher_capable": false,
+    "dispatcher_conflict": "REPAIR_REQUEST.json already exists. The executable branch only writes repair_request_requires_director_rebind and returns to the heartbeat loop; it never consumes the request or re-enters the failed worker stage.",
+    "supersession": "The existing request's owner_entrypoint_conflict forbids replacement under the base execution binding. This director recovery binding supersedes only that replacement prohibition after the complete R2 standby predicate passes; the request does not authorize the old owner to execute or R2 to replay generation 1.",
+    "stop_authority": "Only after R2 standby readiness is durable and the exact claim, PID, and start ticks are re-read unchanged may the transition launcher terminate PID 726791. It must not stop any other PID or release the claim."
+  },
+  "unconsumed_attempt_evidence": {
+    "remote_terminal": {
+      "path": "artifacts/h200-m384-attention-20260730t0951z/REMOTE_TERMINAL.json",
+      "sha256": "300bc44ffc290111ed958af065f3a93e9231b80eea5cd9cf29064c4f8debf85a",
+      "classification": "recoverable_producer_capture_missing",
+      "cuda_invocation_started": false,
+      "science_consumed": false
+    },
+    "worker_capture": {
+      "path": "artifacts/h200-m384-attention-20260730t0951z/REMOTE_WORKER_CAPTURE.json",
+      "sha256": "e2d0233040bbc4e2de5d5dd6af9d005589404a993270131fc5f8dc8fa1a05ec4",
+      "exit_code": 20
+    },
+    "repair_ready": {
+      "path": "REPAIR_READY.json",
+      "sha256": "11163c4f726da00c024f71bd7b1abd363748ddeb649f9bb7429470f960d5ddd7",
+      "repair_id": "m384-producer-capture-1"
+    },
+    "repair_request": {
+      "path": "REPAIR_REQUEST.json",
+      "sha256": "47e6f82ef620f7402d79cfbd38d8f16c829b0a78523265fcdc5a6edadaa44420",
+      "state": "repair_requested",
+      "disposition": "Acknowledged as the durable owner-entrypoint conflict. Do not overwrite, reuse, or deliver another request to generation 1."
+    }
+  },
+  "incomplete_bytes": {
+    "owner": {
+      "path": "m384_attention_h200_owner.py",
+      "sha256": "e5318808d904adf308e908cf7fd3fb2d06136f2c74b60c812368ce4627665987",
+      "defect": "The owner never stages or creates producer_packet.json and cannot dispatch its own repair."
+    },
+    "runner": {
+      "path": "m384_attention_h200_runner.py",
+      "sha256": "656001dc55f49daff770f26b44d216bf7e7faa893016154e676bd131ae78633f",
+      "defect": "After validating a packet it only compiles an object, then deliberately emits recoverable_exact_consumer_adapter_required without loading or timing stock and candidate consumers."
+    },
+    "candidate": {
+      "path": "m384_grouped_attention_sm90a.cu",
+      "sha256": "b2c6926e322d8d907eb3d511031250ceb1aa6a0ab7834d455202b9605dcab9f7",
+      "defect": "The kernel body is a layout smoke placeholder computing q+k+v for one grouped head, not the admitted grouped local/global online-softmax attention mechanism."
+    }
+  },
+  "immutable_science": {
+    "mechanism_terminal_sha256": "1f2b98bbadf2cb05afad46fdd466fe89ee1adb09b4344825b81777d8b550695b",
+    "cpu_oracle_sha256": "bc1cc0e2737b89ec49f7754b28fa3dbe4921b51053f66134a3260567826a546c",
+    "h200_discriminator_sha256": "686b1e1a728ae168d62bce096ebd40f09984f08b795ad10fe0dc206e5477c123",
+    "physical_model_sha256": "c92497028401720e31feacac844a181bcaf06440f4e6969e7bde07ed805f2c0c",
+    "source_trace_sha256": "dffeb6979410ad099acfe261e9dc7de6caf03417fe7c83058e8d4c90c9c16e0e",
+    "geometry": "Qualified c32 NGRAM M=384 target verification, TP1, 32 requests x 12 rows; 50 local d256/GQA2/window1024 and 10 global d512/GQA8 layers.",
+    "correctness": "Preserve the base binding's exact masks, page-size-1 NHD BF16 paged-KV, request ownership, per-row traversal, unchanged o_proj consumer, and complete local/global oracle.",
+    "measurement": "One and only one alternating stock/candidate/stock/candidate/stock/candidate component ledger per local and global family.",
+    "endpoint": "Prohibited on this checkpoint-free guest."
+  },
+  "authorized_mutable_files": [
+    "m384_attention_producer_capture.py",
+    "m384_grouped_attention_sm90a.cu",
+    "m384_attention_h200_runner.py",
+    "m384_attention_h200_owner_r2.py",
+    "m384_attention_owner_r2_transition.py",
+    "M384_ATTENTION_R2_READY.json"
+  ],
+  "implementation_contract": {
+    "producer_capture": "Invoke the pinned installed Gemma4 producer path qkv_proj -> gemma_qkv_rmsnorm -> rotary_emb with deterministic bound hidden states and layer weights, then invoke the production stock local/global paged-attention consumer and unchanged o_proj on the same bytes. Serialize Q/K/V, noncontiguous page-size-1 NHD BF16 KV, page indices, request IDs, masks, stock attention output, and stock o_proj output with their shapes, strides, storage offsets, dtypes, hashes, runtime commit, model revision, and executed module/symbol identities. Do not hand-author Q/K/V or self-certify provenance.",
+    "candidate": "Replace the q+k+v placeholder with the source-complete request/KV-head grouped local/global attention schedule, preserving exact per-output-row key traversal and online-softmax order plus fused future-KV store. A stock wrapper, metadata-only program, compile-only object, or unconsumed kernel output is not the intervention.",
+    "runner": "Build for sm_90a only, load and invoke both stock and candidate symbols from the same capture, synchronize and persist separate first-call markers, consume outputs through the unchanged o_proj, validate the complete oracle before timing, and atomically checkpoint each local/global family's complete expected-row ledger before entering the next family.",
+    "repair": "R2 must implement a real generation-specific repair dispatcher: after a recoverable pre-decision defect it keeps heartbeats, consumes and archives the matching request, and re-enters only the named failed producer, build, invocation, family, retrieval, or terminal-adoption stage. It must not merely acknowledge and loop."
+  },
+  "r2_ready_contract": {
+    "path": "M384_ATTENTION_R2_READY.json",
+    "required_hashes": "Hash all five final mutable executable files together with this recovery binding.",
+    "standby_predicate": "Before predecessor shutdown, R2 must re-read the exact original claim, verify PID 726791/start_ticks 152144312 is live, verify the new hashes, verify strict SSH identity, and prove no remote container or worker from generation 1 remains. Its OWNER_R2_STANDBY_READY marker must be fresh and include those identities.",
+    "transition_predicate": "The transition launcher must re-read the original claim and predecessor identity once after R2 standby. If either changed, it must fail closed without stopping anything. Otherwise it may terminate only the matching predecessor, verify it is absent, then let R2 adopt heartbeats and enter the producer stage.",
+    "conditional_same_turn_authority": true
+  },
+  "clock": {
+    "r2_standby_target_utc": "2026-07-30T10:18:00Z",
+    "science_target_utc": "2026-07-30T10:30:00Z",
+    "terminal_target_utc": "2026-07-30T10:43:00Z",
+    "release_target_utc": "2026-07-30T10:48:00Z",
+    "hard_release_utc": "2026-07-30T10:49:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T10:53:00Z"
+  },
+  "required_transition_command": "/usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_m384_target_verify_attention_executor/m384_attention_owner_r2_transition.py --binding DIRECTOR_M384_ATTENTION_SAME_CLAIM_IMPLEMENTATION_RECOVERY_20260730T1000Z.json --artifact-root artifacts/h200-m384-attention-20260730t0951z --claimed-at 2026-07-30T09:57:05.800998Z --predecessor-pid 726791 --predecessor-start-ticks 152144312",
+  "fallback": "If the complete implementation and R2 standby predicate cannot be reached by 10:18Z, do not stop the predecessor, issue a repair request, run a partial worker, or release the claim. Publish R2_IMPLEMENTATION_INCOMPLETE.json with final hashes and the exact remaining boundary; the existing owner remains responsible for heartbeats and its absolute-deadline maintenance release.",
+  "prohibitions": [
+    "Do not treat the generation-1 missing packet or compile-only placeholder as a scientific result.",
+    "Do not stage only a manifest, create synthetic Q/K/V, or rerun the unchanged generation-1 worker.",
+    "Do not create or reacquire a claim, change scientific geometry, run endpoint science, inspect another project, or mutate provider lifecycle.",
+    "Do not write another request to generation 1, stop PID 726791 before verified R2 standby, or advertise R2 as active_session until its dynamic standby marker and exact-PID transition succeed."
+  ]
+}

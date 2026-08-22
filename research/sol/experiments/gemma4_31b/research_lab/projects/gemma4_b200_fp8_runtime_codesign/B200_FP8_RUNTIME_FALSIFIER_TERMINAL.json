@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "classification": "consumer_runtime_defect",
+  "science_started": true,
+  "warmups_per_arm": 8,
+  "samples_per_arm": 40,
+  "hardware": "NVIDIA B200",
+  "vllm_consumer": "vllm.model_executor.layers.quantization.utils.fp8_utils.cutlass_scaled_mm -> ops.cutlass_scaled_mm",
+  "flashinfer": "0.6.6",
+  "arm_markers": [
+    {
+      "arm": "linear:32:local_qkv",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:32:local_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:32:global_qkv_materialized",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:32:global_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:32:gate_up",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:32:down",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:local_qkv",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:local_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:global_qkv_materialized",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:global_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:gate_up",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:3679:down",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:local_qkv",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:local_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:global_qkv_materialized",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:global_o",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:gate_up",
+      "first_call_complete": true
+    },
+    {
+      "arm": "linear:384:down",
+      "first_call_complete": true
+    },
+    {
+      "arm": "decode:local",
+      "first_call_complete": true
+    }
+  ],
+  "error": "RuntimeError(\"Error in function 'trtllm_paged_attention_launcher' at /workspace/csrc/trtllm_fmha_kernel_launcher.cu:199: Missing TRTLLM-GEN kernel (context): qkvLayout=2, maskType=1, kernelType=0, tileScheduler=1, multiCtasKvMode=0, headDimPerCtaV=256, headDimQk=256, headDimV=256, tileSizeQ=128, tileSizeKv=128, numTokensPerPage=16, reuseSmemKForV=0, uses2CtaMma=0, sparseMla=0, skipsSoftmax=0\")",
+  "traceback": "Traceback (most recent call last):\n  File \"/work/run_b200_fp8_runtime_falsifier.py\", line 48, in main\n    ctxout=ctxfn();torch.cuda.synchronize();r['arm_markers'].append({'arm':f'context:{tag}','first_call_complete':True});_,ct=timeit(ctxfn)\n           ^^^^^^^\n  File \"/work/run_b200_fp8_runtime_falsifier.py\", line 47, in <lambda>\n    ctxfn=lambda:flashinfer.prefill.trtllm_batch_context_with_kv_cache(cq,ccache,ws,ctables,clens,32,ctx,scale,1.0,cc,cumq,cumkv,out_dtype=torch.bfloat16,kv_layout='HND')\n                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.12/dist-packages/flashinfer/prefill.py\", line 3785, in trtllm_batch_context_with_kv_cache\n    run_func(\n  File \"python/tvm_ffi/cython/function.pxi\", line 929, in tvm_ffi.core.Function.__call__\nRuntimeError: Error in function 'trtllm_paged_attention_launcher' at /workspace/csrc/trtllm_fmha_kernel_launcher.cu:199: Missing TRTLLM-GEN kernel (context): qkvLayout=2, maskType=1, kernelType=0, tileScheduler=1, multiCtasKvMode=0, headDimPerCtaV=256, headDimQk=256, headDimV=256, tileSizeQ=128, tileSizeKv=128, numTokensPerPage=16, reuseSmemKForV=0, uses2CtaMma=0, sparseMla=0, skipsSoftmax=0\n"
+}

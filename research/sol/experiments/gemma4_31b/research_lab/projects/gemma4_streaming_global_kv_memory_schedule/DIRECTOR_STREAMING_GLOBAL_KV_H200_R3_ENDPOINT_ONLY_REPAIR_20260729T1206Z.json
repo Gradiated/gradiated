@@ -1,0 +1,105 @@
+{
+  "authorization": {
+    "authorized_spend_usd": 4.0,
+    "claim_generation": "2026-07-29T11:03:00.114761Z",
+    "conservative_provider_exposure_usd": 3.967638889,
+    "new_claim_allowed": false,
+    "provider_lifecycle_change": false,
+    "reservation_durable": true
+  },
+  "bench": {
+    "bench_id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+    "replacement_launch_by_utc": "2026-07-29T12:11:30Z",
+    "release_by_utc": "2026-07-29T12:20:00Z",
+    "watchdog_deadline_utc": "2026-07-29T12:26:00Z",
+    "watchdog_main_pid": 4153986
+  },
+  "classification": "same_claim_endpoint_only_replacement_owner_repair",
+  "completed_producer": {
+    "adopt_without_replay": true,
+    "compact_entries": {
+      "c26_q1": 26,
+      "c64_q1": 64,
+      "c64_q32": 64
+    },
+    "gates_pass": true,
+    "path": "artifacts/streaming-global-kv-h200-20260729t1058z/CUDA_DISCRIMINATOR_R2_attempt0.json",
+    "sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e"
+  },
+  "endpoint_contract": {
+    "activated_source": {
+      "path": "inputs/activated_multiresolution_global_kv.py",
+      "sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880"
+    },
+    "candidate_source": {
+      "path": "streaming_global_kv_schedule.py",
+      "sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a"
+    },
+    "checkpoint": {
+      "local_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+      "manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+      "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+      "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "total_bytes": 62578655208
+    },
+    "exact_runner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/bound/exact_runner.py",
+      "sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"
+    },
+    "historical_launch_structure_only": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_multiresolution_global_kv_codesign/h200_endpoint_pair.py",
+      "sha256": "0ccdbc524f3a91dc3ee74cd2782e9aa024e36e3b7e1c06a50698fbcf68fccab4",
+      "use": "Reuse its pinned-image container supervision, health, capture, and cleanup structure only. Do not reuse its settled materializing intervention or run its stock arm."
+    },
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "c32, 4214 prompt tokens, 358 output tokens, 535 shared-prefix tokens, temperature zero",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+  },
+  "execution_contract": {
+    "artifact_root": "artifacts/streaming-global-kv-h200-20260729t1058z",
+    "entrypoint": "run_streaming_global_kv_h200_owner_v5.sh",
+    "immediate_action": [
+      "Use the execution profile and experiment-run. Read this binding once.",
+      "Before touching the repair request, implement and hash-bind only run_streaming_global_kv_h200_owner_v5.sh, streaming_global_kv_endpoint_r3.py, streaming_global_kv_sglang_hook.py, and STREAMING_GLOBAL_KV_R3_PATCH.json. The owner must be persistent, same-claim repair-capable, and endpoint-only.",
+      "The R3 owner must revalidate the exact original claim generation, adopt the completed CUDA producer by its bound hash, and never call gpu_pool claim or replay any CUDA discriminator.",
+      "Resume-stage the exact checkpoint and exact runner by their bound manifests and hashes. Adapt only the proven SGLang launch/supervision seam to activate the hash-bound U=8 streaming candidate at the production global-attention layers. Start no stock server and submit no activation-probe generation request.",
+      "Require a healthy candidate server plus immutable launch capture before setting candidate activation. Run the exact new streamed-candidate c32 endpoint once, require 32 complete requests and LAYER35_PASSAGE.json with layer_id=35, candidate_path=u8_streamed, non-fallback telemetry, then capture server logs, endpoint terminal, hashes, service time, p95, failures, tokens, cache accounting, and sustainable-cost inputs.",
+      "Ordinary transfer, import, container, health, API, observer, and retrieval defects remain mutable inside this owner only while the closest restart plus generation-fenced release fits. On the absolute release fence, publish a typed deadline-bounded terminal, stop the candidate server, and release the original generation.",
+      "Revalidate R2 PID 4161363/start ticks 144162739 and the original claim once. Consume the already-delivered endpoint-only request, verify R2 exits without overlap, launch exactly one PID-managed R3 owner with the command below, publish active_session last, and return."
+    ],
+    "launch_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/DETACHED_OWNER_R3.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/OWNER_R3.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule -- /usr/bin/env STREAMING_GLOBAL_KV_ARTIFACT_ROOT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z STREAMING_GLOBAL_KV_BENCH=h200-streaming-global-kv-e01q3jffxt2vtafkhp STREAMING_GLOBAL_KV_EXPECTED_CLAIMED_AT=2026-07-29T11:03:00.114761Z STREAMING_GLOBAL_KV_RELEASE_BY_UTC=2026-07-29T12:20:00Z STREAMING_GLOBAL_KV_IMAGE=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/run_streaming_global_kv_h200_owner_v5.sh",
+    "mutable_files": [
+      "run_streaming_global_kv_h200_owner_v5.sh",
+      "streaming_global_kv_endpoint_r3.py",
+      "streaming_global_kv_sglang_hook.py",
+      "STREAMING_GLOBAL_KV_R3_PATCH.json"
+    ]
+  },
+  "must_not": [
+    "Do not call gpu_pool claim, change claim generation, create a provider resource, or extend the existing watchdog.",
+    "Do not replay the passed CUDA producer or the consumed materializing c32 arm.",
+    "Do not run a stock endpoint or submit an activation-probe generation request.",
+    "Do not change U=8, compact order, causal masking, FP32 reduction, tolerance, checkpoint, tokenizer, image, workload, concurrency, sampling, denominator, or target.",
+    "Do not touch either MTP H200 or the independent SM120 bench."
+  ],
+  "predecessor": {
+    "pid": 4161363,
+    "repair_id": "streaming-global-kv-r2-endpoint-0",
+    "repair_ready_path": "artifacts/streaming-global-kv-h200-20260729t1058z/.repair-handshakes/streaming-global-kv-r2-endpoint-0/REPAIR_READY.json",
+    "repair_ready_sha256": "00bf860e6200025812553d56e01bb91956bdc50b056c31c02251e6056edbc980",
+    "retry_scope": "endpoint_only",
+    "start_ticks": 144162739
+  },
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "schema_version": 1,
+  "terminal_contract": {
+    "accepted_classifications": [
+      "streamed_c32_memory_feasible_endpoint_measured",
+      "streamed_endpoint_activation_or_runtime_incompatibility",
+      "deadline_bounded_incomplete_released"
+    ],
+    "release": "Generation-fenced release by 2026-07-29T12:20:00Z under the already-authorized watchdog through 12:26:00Z."
+  }
+}

@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "decision_at_utc": "2026-07-30T05:03:30Z",
+  "decision": "Replace only the live R2 owner under its exact claim after a hash-bound candidate-only and immutable-control token-observer repair is ready; never replay the settled stock arm.",
+  "predecessor": {
+    "pid": 554215,
+    "start_ticks": 150337380,
+    "owner_path": "run_fixed_floor_crossop_endpoint_owner_r2.py",
+    "owner_sha256": "d4ebedf2aaa37b7190ee008a558cb7365c9f1d13869e27d733f5ab6d6d8c11cb",
+    "claim_generation": "2026-07-30T04:55:56.475891Z",
+    "repair_id": "endpoint-r2-1-1785387560",
+    "repair_ready_sha256": "2c1b36c5d891eacc7235db79679c479eacc7fdc4d6cdbdfeb7d8e6a5f8c1d8e6",
+    "entrypoint_conflict_path": "artifacts/fixed-floor-crossop-endpoint-r2-20260730t0451z/run/REPAIR_ENTRYPOINT_CONFLICT-g1.json",
+    "entrypoint_conflict_sha256": "0c9e4a3a81169e701235d2f34f6cd56691ea200ae02e52dc51362f4ea3c62c10",
+    "recoverable_diagnostic_sha256": "03e40eb47f0ca44c0c63b466286280c853f9997b2454b70bded4a8b2440a6c38",
+    "dispatcher_disposition": "Do not write a repair request. R2 implements only stage_and_pair, pair_runner_only, and retrieval_only; both executable pair scopes replay stock and retrieval_only has no pair terminal."
+  },
+  "settled_control": {
+    "remote_root": "/home/glmrunner/fixed-floor-crossop-endpoint-r2/artifacts/run-g1/control",
+    "retrieved_terminal_path": "artifacts/fixed-floor-crossop-endpoint-r2-20260730t0451z/run/g1-retrieved/control-TERMINAL.json",
+    "terminal_sha256": "6bc155f1b3639614cdb0c30c78a5a8f091834f44de4a5a5521a2b26eb1a2859f",
+    "complete_requests": 32,
+    "service_seconds_per_request": 1.006774868593709,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "request_count_replay_allowed": 0,
+    "known_observer_gap": "The persisted terminal contains zero token IDs because the OpenAI SSE choice did not expose choice.token_ids. Its 32 immutable response-*.sse files remain the only authorized control observer input."
+  },
+  "unconsumed_candidate": {
+    "requests_submitted": 0,
+    "endpoint_sample_consumed": false,
+    "candidate_launch_sha256": "cb1430a52522f0d60733e2164a690feeecd91b14af177f1d63306fd3da71a222",
+    "candidate_server_stderr_sha256": "2124f19e7c45655768379fd44a366cf920d4e5a1814c633a94c20fa740ad3792",
+    "startup_failure": "Pinned-runtime weight loading attempted torch.Size([256]) into the candidate parameter torch.Size([512]) before readiness or any request.",
+    "repair_scope": "A causal load-only or parameter-layout adapter correction that preserves the accepted QKV-norm-RoPE-to-E5M2-cache operation, exact local/global geometry, outputs, workload, image, checkpoint, and timing boundary."
+  },
+  "required_repair_outputs": {
+    "candidate_only_runner": "run_fixed_floor_crossop_endpoint_candidate_only.py",
+    "token_observer": "fixed_floor_crossop_endpoint_token_observer.py",
+    "owner_r3": "run_fixed_floor_crossop_endpoint_owner_r3.py",
+    "packet_r3": "ENDPOINT_INTEGRATION_PACKET_R3.json",
+    "execution_binding_r3": "ENDPOINT_R3_EXECUTION_BINDING.json",
+    "requirements": [
+      "Hash-bind every new or amended byte, the predecessor evidence above, the exact claim generation, GPU identity, SSH fingerprint, watchdog, immutable control root, checkpoint, image, workload, and accepted component/resource evidence.",
+      "The token observer may read only the 32 immutable control response SSE files and pinned tokenizer/runtime bytes. It must persist per-row provenance and fail closed unless it proves exactly 358 control token IDs for every row without a new control request.",
+      "Do not replace exact-token comparison with text similarity, whitespace equality, usage-only equality, or an unproved decode/re-encode assumption.",
+      "Repair the candidate startup mismatch only through a narrow, source-explained load or parameter-layout correction; do not change the fused operation, model geometry, precision, scheduler, workload, or candidate timing boundary.",
+      "The candidate-only runner must never create, start, query, delete, or overwrite a control server or control output root. It may submit exactly 32 candidate requests only after the control observer terminal passes.",
+      "The candidate terminal must contain 32 complete requests, exact request accounting, exact observed token-ID equality to the frozen control, finite timing, and both local and global candidate invocation proof.",
+      "Owner R3 must be a true multi-generation retained dispatcher with candidate_only and retrieval_only scopes. Recoverable pre-request or incomplete-result failures retain and heartbeat the same claim; decision-bearing pair, unsafe guest, or the absolute deadline may release.",
+      "Write worker output to a noncanonical candidate path and promote only a complete classified result to PAIR_TERMINAL.json."
+    ]
+  },
+  "same_claim_handoff": {
+    "prepare_before_predecessor_transition": true,
+    "procedure": [
+      "Finish and hash-validate all R3 outputs before touching the predecessor.",
+      "Re-read PID 554215 start_ticks 150337380, the exact claim generation, repair_id, repair-ready hash, and absence of a predecessor terminal once.",
+      "If any identity changed, do not signal or launch; persist the new durable state for director reconciliation.",
+      "If all identities match, generation-fenced terminate only PID 554215 and verify that exact process is absent without releasing or re-claiming the bench.",
+      "Immediately launch owner R3 detached against the existing claim, record its PID/start_ticks/artifact root/deadline in STATUS.json.active_session, and prove one heartbeat plus candidate-only forward progress or a typed retained boundary."
+    ],
+    "new_artifact_root": "artifacts/fixed-floor-crossop-endpoint-r3-candidate-only-20260730t0503z",
+    "replacement_owner_by_utc": "2026-07-30T05:18:00Z",
+    "candidate_entry_by_utc": "2026-07-30T05:23:00Z"
+  },
+  "scientific_contract": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "shared_prefix_tokens": 535,
+    "output_tokens_per_request": 358,
+    "seed": 20260730,
+    "qualified_comparator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "component_replay_allowed": false,
+    "control_endpoint_replay_allowed": false,
+    "candidate_endpoint_submission_count": 1
+  },
+  "bench": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_main_pid": 546249,
+    "watchdog_deadline_utc": "2026-07-30T05:51:56.187924Z",
+    "checkpoint_path": "/home/glmrunner/dflash-component/r3-target/b9ea41a2887d8607f594846523f94c6cc75ac8a4-20260730T004946346350Z"
+  },
+  "lifecycle": {
+    "pair_terminal_by_utc": "2026-07-30T05:40:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T05:44:00Z",
+    "watchdog_deadline_utc": "2026-07-30T05:51:56.187924Z",
+    "provider_lifecycle_mutation_allowed": false
+  },
+  "execution_delegation": {
+    "researcher_profile": "execution",
+    "skills": [
+      "researcher",
+      "kernel-research",
+      "experiment-run"
+    ],
+    "conditional_exact_pid_handoff_authority": true,
+    "provider_lifecycle_allowed": false
+  }
+}

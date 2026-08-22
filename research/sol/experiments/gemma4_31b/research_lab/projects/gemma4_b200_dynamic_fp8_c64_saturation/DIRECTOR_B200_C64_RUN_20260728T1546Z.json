@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "decision": "run_one_warm_b200_dynamic_fp8_c64_arm",
+  "project": "gemma4_b200_dynamic_fp8_c64_saturation",
+  "created_at_utc": "2026-07-28T15:46:00Z",
+  "researcher_profile": "execution",
+  "reservation": {
+    "authorized_usd": 5.0,
+    "reserved_at": "2026-07-28T15:45:31.354064Z",
+    "durable": true
+  },
+  "packet": {
+    "preclaim_terminal": "PRECLAIM_TERMINAL.json",
+    "preclaim_terminal_sha256": "00aed9680c0e06afdf665d747a6aca02d3546b0c1ccaf92045e296035f7073cf",
+    "driver": "b200_fp8_c64_driver.py",
+    "driver_sha256": "02174535d10add2a04bb0d97b32df918b18712117f578b7b211e59b956964538",
+    "owner": "b200_fp8_c64_saturation_owner.sh",
+    "owner_sha256": "4174faf01620739d548473afc33c32ce330276023b0ad30bbe57a260f68ab554",
+    "authoritative_c32_terminal_sha256": "4930d9666167e20096f0343736db6d0ed721ea30fad68f5fc4010ccfeeee9acf"
+  },
+  "scientific_contract": {
+    "arm": "dynamic_fp8_c64_saturation",
+    "requests": 64,
+    "prompt_tokens_per_request": 4214,
+    "completion_tokens_per_request": 358,
+    "runtime_quantization": "runtime_dynamic_fp8_weights",
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "absolute_c32_comparator_seconds_per_request": 0.633995593312477,
+    "fixed_qualified_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "paired_bf16_delta_valid": false,
+    "submission_limit": "exactly one c64 arm after the bound SCIENCE_STARTED.json boundary; no c32 replay, BF16 control, or sweep"
+  },
+  "lifecycle": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claim_start_by_utc": "2026-07-28T15:52:00Z",
+    "claim_lease_seconds": 2700,
+    "owner_deadline_utc": "2026-07-28T16:30:00Z",
+    "release_by_utc": "2026-07-28T16:30:00Z",
+    "watchdog_deadline_utc": "2026-07-28T16:45:00Z",
+    "success_release_condition": "maintenance",
+    "preserve_server": true
+  },
+  "launch": {
+    "run_id": "b200-fp8-c64-20260728t1546z",
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c64-20260728t1546z",
+    "claim_command": [
+      "python3",
+      "-m",
+      "grad_research.gpu_pool",
+      "--lab",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab",
+      "claim",
+      "--project",
+      "gemma4_b200_dynamic_fp8_c64_saturation",
+      "--bench",
+      "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+      "--lease-seconds",
+      "2700"
+    ],
+    "detached_owner_command": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c64-20260728t1546z/OWNER_STATE.json",
+      "--log",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/artifacts/b200-fp8-c64-20260728t1546z/OWNER.log",
+      "--cwd",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation",
+      "--unit-manager",
+      "pid",
+      "--",
+      "env",
+      "C64_DEADLINE_UTC=2026-07-28T16:30:00Z",
+      "C64_RUN_ID=b200-fp8-c64-20260728t1546z",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_c64_saturation/b200_fp8_c64_saturation_owner.sh"
+    ]
+  },
+  "repair_policy": "Retain the continuous claim and healthy server for any pre-science integration defect. Amend only mutable launcher, census, request, retrieval, or terminal-construction code through a fresh hash-bound repair generation while the remaining deadline still fits. Never replay after SCIENCE_STARTED.json.",
+  "next_action": "Claim the exact ready bench by claim_start_by_utc, create the artifact root, launch the exact detached owner, atomically record its PID/start_ticks/unit in STATUS.json.active_session, and return after one liveness/forward-progress snapshot."
+}

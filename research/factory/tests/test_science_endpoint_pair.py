@@ -65,6 +65,20 @@ class EndpointHandler(http.server.BaseHTTPRequestHandler):
                 self.wfile.write(part)
                 self.wfile.flush()
             return
+        if case == "stream_error":
+            parts = [
+                b'data: {"error":{"message":"input_ids required"}}\n\n',
+                b"data: [DONE]\n\n",
+            ]
+            response = b"".join(parts)
+            self.send_response(200)
+            self.send_header("Content-Type", "text/event-stream")
+            self.send_header("Content-Length", str(len(response)))
+            self.end_headers()
+            for part in parts:
+                self.wfile.write(part)
+                self.wfile.flush()
+            return
         delay = payload.get("delay", 0)
         if delay:
             time.sleep(delay)
@@ -247,6 +261,39 @@ class EndpointPairTests(unittest.TestCase):
                 b"candidate failed",
                 pathlib.Path(candidate["response"]["path"]).read_bytes(),
             )
+
+    def test_stream_application_errors_are_not_successful(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary, LocalEndpoint() as endpoint:
+            root = pathlib.Path(temporary)
+            workload = root / "workload.jsonl"
+            write_workload(
+                workload,
+                [
+                    {
+                        "request_id": "stream-error-1",
+                        "payload": {"case": "stream_error", "stream": True},
+                    }
+                ],
+            )
+            run_dir = root / "run"
+
+            result = run_endpoint_pair(
+                workload_path=workload,
+                output_dir=run_dir,
+                control_url=f"{endpoint.root}/control",
+                candidate_url=f"{endpoint.root}/candidate",
+                timeout_seconds=2,
+            )
+
+            self.assertTrue(result["complete"])
+            self.assertFalse(result["all_requests_successful"])
+            metadata = request_metadata(run_dir, "control", 0)
+            self.assertTrue(metadata["transport_complete"])
+            self.assertTrue(metadata["protocol_complete"])
+            self.assertTrue(metadata["complete"])
+            self.assertFalse(metadata["successful"])
+            self.assertEqual(metadata["error"]["kind"], "application")
+            self.assertEqual(metadata["error"]["message"], "input_ids required")
 
     def test_resume_skips_complete_requests_and_retries_only_incomplete_one(self) -> None:
         with tempfile.TemporaryDirectory() as temporary, LocalEndpoint() as endpoint:

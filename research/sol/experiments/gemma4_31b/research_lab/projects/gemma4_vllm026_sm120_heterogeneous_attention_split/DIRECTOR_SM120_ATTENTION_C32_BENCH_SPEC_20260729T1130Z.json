@@ -1,0 +1,43 @@
+{
+  "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+  "contents": {
+    "artifacts": "DIRECTOR_SM120_ATTENTION_C32_PROVIDER_CREATE_20260729T1130Z.json; SM120_ATTENTION_C32_ENDPOINT_OWNER_READY.json SHA-256 a33638d3f322b731591f810f38a3f7932fedd33127e2efa38ca9efe57071bb78",
+    "caches": "None; cold pod and 160-GiB persistent volume.",
+    "checkpoint": "Not staged; bind manifest SHA-256 864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f and 62,546,338,248 bytes.",
+    "image": "Fresh provider base runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404; the later launch binding must preserve scientific image docker.io/vllm/vllm-openai:nightly@sha256:494f9c118fb6684bcdd26bb37c687b16163278c0e18f5c157c9185c2584598b7 and the official vLLM 0.26.0+cu129 wheel.",
+    "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 for the matched SM120 all-TRITON versus 50-TRITON/10-FLEX c32 endpoint pair.",
+    "next": "Director verifies provider runtime ports, strict SSH identity, exact sm_120 hardware, and zero accelerator allocations once, then publishes the execution binding and marks this bench ready only for gemma4_vllm026_sm120_heterogeneous_attention_split.",
+    "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+    "runtime": "Fresh RunPod secure 1x RTX PRO 6000 Blackwell Workstation Edition; strict SSH, sm_120, and idle-GPU identity are not yet verified.",
+    "schema_version": 1,
+    "scientific_terminal": "The matched all-TRITON versus 50-TRITON/10-FLEX concurrent-c32 endpoint pair remains unconsumed.",
+    "server_state": "No endpoint, model load, checkpoint staging, setup, CUDA call, or scientific request has started.",
+    "state": "provider_created_maintenance_pending_identity_probe"
+  },
+  "hourly_cost_usd": 1.89,
+  "id": "rtxpro6000-sm120-attention-c32-3u5oyb8eazps50",
+  "lifecycle": {
+    "deadline_utc": "2026-07-29T13:01:43.898297Z",
+    "provider_started_at_utc": "2026-07-29T11:31:43.898297Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-sm120-attention-c32-3u5oyb8eazps50-watchdog.service",
+      "main_pid": 4150574,
+      "unit": "gemma4-sm120-attention-c32-3u5oyb8eazps50-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "runpod",
+  "resource": {
+    "cloud_type": "secure",
+    "connection_state": "pending_runtime_ports_and_strict_identity_probe",
+    "gpu_type_id": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+    "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "identity_public_key": "/root/.config/nebius/glm-campaign/ssh_ed25519.pub",
+    "known_hosts_namespace": "/root/.config/runpod/gemma4/known_hosts",
+    "machine_id": "a555wlecipbb",
+    "pod_id": "3u5oyb8eazps50",
+    "pod_name": "gemma4-sm120-attention-c32-endpoint-20260729t1130z",
+    "ssh_proxy_host": "ssh.runpod.io",
+    "ssh_proxy_user": "3u5oyb8eazps50"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "deadline_utc": "2026-07-29T00:24:07.243681Z",
+  "provider_started_at_utc": "2026-07-28T22:54:07.243681Z",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-b200-m32-geometric-rebind-20260728t2350z-watchdog.service",
+    "deadline_epoch": 1785284647.243681,
+    "main_pid": 3725242,
+    "unit": "gemma4-b200-m32-geometric-rebind-20260728t2350z-watchdog.service",
+    "unit_manager": "user"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "classification": "claimed_b200_exact_component_packet_bound",
+  "binding_sha256": "ec9ae3dc74038b6b0bfbb7d1d5612f47ed5917d0e2137f9da73bafce94ef8843",
+  "runner_sha256": "e75ea516437eaf053cc66a80ab1bf393640f7b9036935bd19cfbe541bce3c8ea",
+  "owner_sha256": "3445bb8f5ab4a28b4fd07543057aa3b80b35e726575688a8ec71f7964ef2615c",
+  "finite_negative_timing_amendment": true,
+  "amendment": "Finite structurally valid outputs outside cosine, relative-L2, or max-absolute tolerance persist a numerical negative and continue with the unchanged eight-warmup, forty-sample paired timing. Nonfinite or structural failure persists a terminal and stops before timing.",
+  "scientific_contract": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "model_load": false,
+    "endpoint_requests": 0,
+    "dispatcher_modified": false,
+    "warmups": 8,
+    "samples_per_arm": 40
+  }
+}

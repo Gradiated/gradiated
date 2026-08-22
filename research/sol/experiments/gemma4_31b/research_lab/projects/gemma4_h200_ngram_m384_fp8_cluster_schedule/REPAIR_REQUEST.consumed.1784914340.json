@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "retry": true,
+  "requested_at_utc": "2026-07-24T17:31:00Z",
+  "retry_scope": "invalidated component operation only; endpoint remains unstarted",
+  "causal_amendment": "Preserve the completed stock-graph request, then rerun the component eager so the live M384 call reaches the unchanged Python consumer and candidate comparator. Do not alter or begin endpoint mode unless the component admits it.",
+  "files": [
+    {
+      "path": "remote_experiment.py",
+      "remote": "project/remote_experiment.py",
+      "sha256": "9b204c68565bf35431f2f8d2dce6e39a7c1406642968d2a3153aedbd9a8b3e3c"
+    }
+  ]
+}

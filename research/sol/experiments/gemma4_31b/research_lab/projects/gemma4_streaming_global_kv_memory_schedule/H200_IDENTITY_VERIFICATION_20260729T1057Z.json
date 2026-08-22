@@ -1,0 +1,29 @@
+{
+  "bench_id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+  "cloud_init": "finished",
+  "created_at_utc": "2026-07-29T10:57:38Z",
+  "gpu": {
+    "driver_version": "580.159.04",
+    "memory_mib": 143771,
+    "name": "NVIDIA H200",
+    "processes": [],
+    "uuid": "GPU-59d1b1b6-ee64-b58d-9071-7636bca4ef5b"
+  },
+  "host": {
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "66.201.5.180",
+    "ssh_ed25519_fingerprint": "SHA256:xV+LZyQVxGnWAYMYMgZKsXRkCZE4zfq2JvoEPYhTUks",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ssh_user": "glmrunner",
+    "strict_host_key_checking": true
+  },
+  "provider_reconciliation": {
+    "boot_disk_id": "computedisk-e01txvq13vg63j7x2x",
+    "instance_id": "computeinstance-e01q3jffxt2vtafkhp",
+    "instance_name": "gemma4-streaming-global-kv-20260729t1050z",
+    "provider_state": "RUNNING",
+    "public_ipv4": "66.201.5.180"
+  },
+  "schema_version": 1,
+  "verification": "strict_ssh_cloud_init_single_idle_h200_verified"
+}

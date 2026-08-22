@@ -1,0 +1,54 @@
+{
+  "checks": {
+    "closed_preassociated_cube_present": true,
+    "fixed_geometry_present": true,
+    "revised_bf16_materialization_before_reduction": true,
+    "revised_expression_present": true,
+    "stock_expression_present": true
+  },
+  "classification": "deterministic_cpu_static_pass",
+  "cuda_executed": false,
+  "gpu_used": false,
+  "rows": [
+    {
+      "closed_vs_stock_bf16_different_elements": 0,
+      "closed_vs_stock_max_abs": 0.0,
+      "closed_vs_stock_relative_l2": 0.0,
+      "first_weighted_cubic_boundary_different_elements": 1315,
+      "input_fixture": "seeded_bf16_uniform_minus8_plus8",
+      "m": 1,
+      "revised_vs_stock_bf16_different_elements": 0,
+      "sampled_columns_per_row": 4096
+    },
+    {
+      "closed_vs_stock_bf16_different_elements": 0,
+      "closed_vs_stock_max_abs": 0.0,
+      "closed_vs_stock_relative_l2": 0.0,
+      "first_weighted_cubic_boundary_different_elements": 20252,
+      "input_fixture": "seeded_bf16_uniform_minus8_plus8",
+      "m": 16,
+      "revised_vs_stock_bf16_different_elements": 0,
+      "sampled_columns_per_row": 4096
+    },
+    {
+      "closed_vs_stock_bf16_different_elements": 0,
+      "closed_vs_stock_max_abs": 0.0,
+      "closed_vs_stock_relative_l2": 0.0,
+      "first_weighted_cubic_boundary_different_elements": 41526,
+      "input_fixture": "seeded_bf16_uniform_minus8_plus8",
+      "m": 32,
+      "revised_vs_stock_bf16_different_elements": 0,
+      "sampled_columns_per_row": 4096
+    }
+  ],
+  "schema_version": 1,
+  "scientific_sample_consumed": false,
+  "seed": 20260729,
+  "source_hashes": {
+    "closed_candidate_cuda": "2b5c9d0e799c64690a002e3d05a2d744135bf4b17494601154585faf882e6458",
+    "future_runner": "b38bfd1a6fc1e9124ccc22170b045358a74ea71c3707e688b5f7c52c2784b643",
+    "revised_candidate_cuda": "19f5309b1d3639c4942f8148c33ddd3dde76af2dbb001622d5a45e37ad1fd41f",
+    "revised_candidate_python": "8b02cea617eea89606cf022e8cefb8243499490dd9d46e5840cf3f82b4f4c11a",
+    "stock_activation_cuh": "8654de9cd6e2655427f95bf1d95dc20c953ef28b0cfee631ce2a71a01aaa0d61"
+  }
+}

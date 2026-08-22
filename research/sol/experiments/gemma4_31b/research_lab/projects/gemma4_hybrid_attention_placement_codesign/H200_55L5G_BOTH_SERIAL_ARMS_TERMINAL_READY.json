@@ -1,0 +1,9 @@
+{
+  "binding_sha256": "d57d5afa4d982d8e05b9813b6c1805983b5abce543d0dc15767e23c1f2f6c671",
+  "manifest": "H200_55L5G_BOTH_SERIAL_ARMS_TERMINAL_RUNTIME_MANIFEST.json",
+  "no_http": true,
+  "owner": "run_h200_55l5g_both_serial_arms_terminal_owner.py",
+  "owner_sha256": "2327f6a337ecddfd5cb020b688f0c73cace997225ea46b80d094e39835e83f20",
+  "ready_is_final_prelaunch_mutation": true,
+  "release_condition": "maintenance"
+}

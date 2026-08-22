@@ -1,0 +1,38 @@
+{
+  "classification": "passing_cuda_producer_preserved_endpoint_unconsumed_provider_cleanup_verified",
+  "cleanup_verified_at_utc": "2026-07-29T12:14:11.826713Z",
+  "completed_producer": {
+    "gates_pass": true,
+    "path": "artifacts/streaming-global-kv-h200-20260729t1058z/CUDA_DISCRIMINATOR_R2_attempt0.json",
+    "sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e"
+  },
+  "endpoint": {
+    "complete_requests": 0,
+    "measured": false,
+    "science_consumed": false
+  },
+  "owner_census": {
+    "r2_pid": 4161363,
+    "r2_present": false,
+    "r3_owner_state_present": false,
+    "terminal_present": false
+  },
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "provider_exposure": {
+    "actual_spend_usd": 3.4856876241250005,
+    "cleanup_verified_at_utc": "2026-07-29T12:14:11.826713Z",
+    "hourly_rate_usd": 2.45,
+    "provider_started_at_utc": "2026-07-29T10:48:50Z",
+    "seconds": 5121.826713
+  },
+  "resource": {
+    "bench_id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+    "disk_id": "computedisk-e01txvq13vg63j7x2x",
+    "instance_id": "computeinstance-e01q3jffxt2vtafkhp",
+    "inventory_status": "retired",
+    "provider_absence_verified": true,
+    "watchdog_inactive": true
+  },
+  "schema_version": 1,
+  "scientific_disposition": "The corrected CUDA discriminator remains positive correctness and memory evidence. The expired owner transition could not fit checkpoint staging, server activation, endpoint execution, terminal persistence, and release; no endpoint claim is made."
+}

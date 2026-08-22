@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "classification": "director_live_same_claim_replacement_adoption",
+  "created_at_utc": "2026-07-29T08:10:00Z",
+  "project": "gemma4_vllm026_sm120_norm_fp8_fusion",
+  "new_claim_allowed": false,
+  "replacement_launch_allowed": false,
+  "supersedes": {
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_DEVELOPMENT_REPAIR_EXTENSION_20260729T0805Z.json",
+    "sha256": "f11c592aff07228d6b8a9376d2b1d6ea7a86e9434241b24012f651a7fc09c053",
+    "scope": "The replacement launch has been consumed by a live owner. This adoption narrows the active repair and release fences to the command actually launched; all scientific identities remain unchanged."
+  },
+  "claim": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "project": "gemma4_vllm026_sm120_norm_fp8_fusion",
+    "claimed_at": "2026-07-29T07:33:28.165904Z",
+    "heartbeat_at_utc": "2026-07-29T08:09:26.974752Z",
+    "stale": false,
+    "drain_after_release": false
+  },
+  "replacement": {
+    "binding_path": "INSTALLED_SOURCE_REPAIR_REPLACEMENT_BINDING_20260729T0756Z.json",
+    "binding_sha256": "7d27f82c760961336987fa28c94810e28f47d6baa97ea6c26d37b7bf8be10bce",
+    "owner_path": "run_sm120_norm_fp8_component_owner.py",
+    "owner_sha256": "f82f41ad1f998c820a3abf097a0306cedab822295da6c63290aeb798025b1765",
+    "installed_overlay_patch_path": "implementation/installed_source_overlay_patch.py",
+    "installed_overlay_patch_sha256": "251aede8cf2c349cf583f268b8697c846eca82ec7916a79ed729e60ed5d80043",
+    "repair_id": "sm120-norm-fp8-installed-source-20260729T0756Z",
+    "pid": 4008130,
+    "start_ticks": 142855921,
+    "launched_at_utc": "2026-07-29T08:09:01.814617Z",
+    "artifact_root": "artifacts/sm120-norm-fp8-installed-source-20260729t0756z",
+    "owner_state": "artifacts/sm120-norm-fp8-installed-source-20260729t0756z/OWNER_STATE.json",
+    "state": "live_and_heartbeating"
+  },
+  "observation": {
+    "observed_at_utc": "2026-07-29T08:09:47Z",
+    "predecessor_pid": 3990817,
+    "predecessor_absent": true,
+    "science_started": false,
+    "oracle_result_present": false,
+    "owner_terminal_present": false,
+    "repair_generation_present": true,
+    "overlap_observed": false
+  },
+  "lifecycle": {
+    "repair_handshake_deadline_utc": "2026-07-29T08:18:00Z",
+    "release_by_utc": "2026-07-29T08:20:00Z",
+    "provider_watchdog_deadline_utc": "2026-07-29T09:15:00Z",
+    "disposition": [
+      "Protect PID 4008130/start ticks 142855921 as the sole lifecycle and scientific owner.",
+      "Do not stop, replace, overlap, reclaim, or relaunch this owner.",
+      "A complete positive or complete non-positive seven-row terminal releases generation-fenced by 08:20Z.",
+      "An incomplete pre-science outcome may retain repair ownership only through 08:18Z; the owner then persists an unconsumed terminal and releases generation-fenced by 08:20Z.",
+      "Do not replay endpoint science, restage the checkpoint, or mutate provider lifecycle."
+    ]
+  },
+  "immutable_science": {
+    "source_result_sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f",
+    "oracle_sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5",
+    "original_patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+    "runtime_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "scientific_submission_limit": 1
+  },
+  "independent_lane": {
+    "project": "gemma4_trained_mtp_assistant_finetune",
+    "reservation_durable": true,
+    "authorized_spend_usd": 20.0,
+    "owner_result_present": false,
+    "provider_create_allowed": false
+  }
+}

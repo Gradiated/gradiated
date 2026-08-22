@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T00:22:00Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "repair_rejected_recovery_r2_dispatcher_control_flow_before_launch",
+  "supersedes_readiness": "DFLASH_H200_R2_CONSUMED_REPAIR3_RECOVERY_READY.json",
+  "supersedes_readiness_sha256": "baac24623a75750e5f6bddedf6765e080e744f55883da67b753ced12be362468",
+  "rejected_owner_source": "dflash_component_direct_recovery_owner_r2.py",
+  "rejected_owner_source_sha256": "c46fd8765df2378c1beeb6005fe378dfed4ad9a3a7faee37cfa5250565e727a1",
+  "reason": [
+    "After a request-boundary rejection, the executable except branch increments the worker number and falls through to the outer worker loop with the unchanged archive and scope. That submits another worker without a newly validated request.",
+    "After repair-handshake wait returns _repair_terminal, the executable branch persists the terminal and continues to the outer worker loop, replaying the same worker rather than taking a typed disposition."
+  ],
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "wall_clock_deadline_utc": "2026-07-30T00:27:00Z",
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "claimed_at": "2026-07-29T23:49:13.529071Z",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8"
+  },
+  "immutable_consumed_repair": {
+    "repair_id": "dflash-h200-r2-recovery-20260730t0010z-recovery-3",
+    "consumed_request_sha256": "12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433",
+    "patch_sha256": "03aa2b4da6d01f9316ea513a72d95eff30b94ea38feb0bf61c3d2a117109ac12",
+    "adoption_sha256": "103355400df0f565d0a8f4ae88b36a79ed7b9996685beecd5c391a9df067fc35",
+    "snapshot_manifest_sha256": "c80b0ea18ecc2aa145e64c3adba8105be56714e2c798b713356c912e399b74a4",
+    "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "initial_worker_generation": 3,
+    "forbidden_replay_generations": [
+      0,
+      1,
+      2
+    ]
+  },
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "required_result": {
+    "artifact": "DFLASH_H200_R2_DISPATCHER_CONTROL_FLOW_READY.json",
+    "owner_source": "dflash_component_direct_recovery_owner_r2.py",
+    "requirements": [
+      "Preserve the verified local hashes, exact claim, initial consumed-repair adoption, worker-3 entry, post-worker retrieval, and scientific identities.",
+      "Use an inner request-dispatch loop after every recoverable worker result. A new worker may start only after one request is atomically consumed and its patch is validated against the current diagnostic, claim generation, and retry scope.",
+      "On a rejected request, persist a fresh hash-bound diagnostic and continue heartbeating inside the request-dispatch loop. Do not increment the worker generation, change archive or scope, or execute a worker until a later valid request is consumed.",
+      "Interpret repair_terminal as a typed disposition and do not execute another worker from it. Release generation-fenced to maintenance unless the terminal proves a validated scientific terminal already handled by the scientific-terminal branch.",
+      "A missing request may reach only the absolute deadline disposition and generation-fenced maintenance release.",
+      "Offline-validate the executable branch after repair-handshake wait for valid request, rejected request, repair_terminal, and deadline responses."
+    ]
+  },
+  "execution_fences": {
+    "owner_launch_authorized": false,
+    "new_claim_or_release_authorized": false,
+    "repair_request_authorized": false,
+    "ssh_docker_cuda_authorized": false,
+    "provider_lifecycle_authorized": false,
+    "latest_owner_release_utc": "2026-07-30T00:37:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T00:45:00Z",
+    "later_director_action": "Verify corrected readiness and the exact ownerless claim, then publish a claim-generation-specific execution binding and launch one detached owner only if the remaining measured execution and release window still fits."
+  }
+}

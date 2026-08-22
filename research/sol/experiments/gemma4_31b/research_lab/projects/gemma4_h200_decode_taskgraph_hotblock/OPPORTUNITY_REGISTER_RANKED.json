@@ -1,0 +1,205 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "The boundary is launch/materialization limited and a one-CTA-per-row fused lifecycle can retain the first normalized vector.",
+        "Both full-width reductions and BF16 rounding dominate, so eliminating one launch and one intermediate write/read is negligible.",
+        "The intermediate remains L2-resident, making the compulsory-HBM byte estimate an overstatement."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "decision_resolution_per_dollar": 16.200000000000003,
+      "discrimination_power": 1.0,
+      "evidence_scope": "Measured exact H200 c32 capture plus pinned source; selected call-site time uses source-count apportionment within the same [M,5376] RMSNorm family.",
+      "falsifier": "Credit the complete two-kernel block as zero-cost; kill target-H200 admission if even that impossible bound is below 1% of the fixed qualified request.",
+      "id": "post_attn_norm_to_fused_add_pre_ff_norm",
+      "intuition": "Two adjacent row reductions look attractive to a task graph, but their full-block wall share is small enough that a zero-cost bound can decide before implementation.",
+      "kill_rule": "Kill the selected seam when the zero-cost upper bound is below 1% or the exact rounding contract cannot be preserved.",
+      "measurements": {
+        "fixed_request_zero_cost_upper": {
+          "unit": "percent",
+          "value": 0.5793245531874099
+        },
+        "intermediate_write_read_removed_per_call": {
+          "unit": "bytes",
+          "value": 688128
+        },
+        "selected_block_zero_cost_upper": {
+          "unit": "seconds/capture",
+          "value": 0.1158925517355372
+        },
+        "selected_calls_per_capture": {
+          "unit": "calls",
+          "value": 3660
+        },
+        "shape_elements": {
+          "unit": "bfloat16 elements",
+          "value": [
+            32,
+            5376
+          ]
+        }
+      },
+      "mechanism": "Fuse the two rowwise reductions and residual add into one lifecycle while preserving the BF16 round after the first RMSNorm and the BF16 residual update.",
+      "next_measurement": "None for this selected seam: the localized source/trace falsifier is decisive. Redirect to a boundary with measured non-GEMM removable wall share above 1%.",
+      "observation": "Pinned Gemma4DecoderLayer.forward calls post_attention_layernorm and immediately passes its BF16 output into pre_feedforward_layernorm(hidden_states, residual); the exact trace has 3660 fused-add RMSNorm calls and 7381 same-shape RMSNorm-family calls.",
+      "promotion_rule": "Promote only if a corrected attribution raises the impossible zero-cost upper bound to at least 1% of the fixed request and preserves both BF16 rounding points.",
+      "readiness": 1.0,
+      "residual_bottleneck_rule": "FP8 GEMMs, attention, and synchronization remain outside this seam and dominate after any hypothetical fusion.",
+      "transfer_penalty": 0.1,
+      "uncertainty": 0.2
+    },
+    {
+      "competing_explanations": [
+        "Quantization launches and activation write/read are removable by a GEMM prologue or persistent task.",
+        "The GEMM requires global per-row scales before consuming tiles, creating a cross-CTA reduction barrier.",
+        "Prior fused RMSNorm-to-FP8 and SwiGLU-to-FP8 paths show dominant shapes can regress even when launches disappear."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.65,
+      "decision_resolution_per_dollar": 2.9250000000000007,
+      "discrimination_power": 0.8,
+      "evidence_scope": "Measured exact H200 c32 capture; producer symbols and unchanged fp8_scaled_mm consumer are pinned in fp8_utils.py.",
+      "falsifier": "Exact-shape H200 component pair with real weights and unchanged fp8_scaled_mm output oracle; require positive warm interval after full output consumption.",
+      "id": "dynamic_fp8_quant_to_fp8_gemm_prologue",
+      "intuition": "The larger measured standalone producer family is real, but a scale reduction before GEMM limits a simple task-graph fusion.",
+      "kill_rule": "Kill any prologue that changes per-token scale identity, requires a global synchronization equivalent to the stock launch, or regresses M=32.",
+      "measurements": {
+        "quantization_total": {
+          "unit": "seconds/capture",
+          "value": 0.3233964
+        },
+        "zero_cost_upper_fraction": {
+          "unit": "percent of capture",
+          "value": 1.403709
+        }
+      },
+      "mechanism": "Move per-row amax/scale and E4M3 conversion into a consumer-compatible FP8 GEMM prologue without changing per-token scale semantics.",
+      "next_measurement": "Only after a consumer implementation exists: one M=32,K=5376 QKV or gate/up prologue discriminator with row-scale identity and compiled resource evidence.",
+      "observation": "The exact H200 capture records 14640 per-token dynamic-E4M3 quantization launches totaling 0.323396400 seconds before four FP8 GEMM families.",
+      "promotion_rule": "Promote a specific projection only after correct real-consumer timing is positive and compiled resources do not erase the saved producer.",
+      "readiness": 0.25,
+      "residual_bottleneck_rule": "Weight-streaming FP8 GEMMs and attention remain dominant.",
+      "transfer_penalty": 0.7,
+      "uncertainty": 0.75
+    },
+    {
+      "competing_explanations": [
+        "Host-visible synchronizations serialize otherwise overlap-capable work.",
+        "The host is waiting on genuine accelerator critical-path work, so removing the API call cannot remove wall time.",
+        "Profiler API durations overlap request work and cannot be summed into a task-graph gain."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "decision_resolution_per_dollar": 0.7053750000000002,
+      "discrimination_power": 0.55,
+      "evidence_scope": "Measured exact H200 endpoint capture, but not localized to one producer-consumer block.",
+      "falsifier": "Dependency-aware interval trace showing the consumer cannot start earlier or a no-sync implementation with unchanged endpoint wall time.",
+      "id": "host_sync_graph_gap",
+      "intuition": "This is the largest graph-level signal, but it is not yet an actual recurring tensor boundary and therefore cannot be selected by this contract.",
+      "kill_rule": "Kill any claim based only on summed CPU API duration.",
+      "measurements": {
+        "nonoverlapping_sync_attribution": {
+          "unit": "percent of capture",
+          "value": 36.5787
+        },
+        "summed_cuda_stream_synchronize": {
+          "unit": "seconds",
+          "value": 17.379911354
+        }
+      },
+      "mechanism": "Localize one synchronization to a producer/consumer dependency and replace host blocking with stream-ordered device work.",
+      "next_measurement": "Source-localize one sync call and collect one paired endpoint dependency timeline; do not infer gain from summed API time.",
+      "observation": "The exact profile reports 17.379911354 seconds of summed cudaStreamSynchronize API time and a non-overlapping synchronization attribution of 36.5787% of the 23.038600455-second capture.",
+      "promotion_rule": "Promote only after one exact source symbol and dependency edge is named and a device-ordered replacement exists.",
+      "readiness": 0.1,
+      "residual_bottleneck_rule": "Attention and FP8 GEMMs remain the likely work behind most waits.",
+      "transfer_penalty": 0.85,
+      "uncertainty": 0.95
+    },
+    {
+      "competing_explanations": [
+        "Direct QKV-to-cache consumption can remove norm/RoPE materialization and cache-write launches.",
+        "The endpoint ran only the fallback or a partial path despite a successful request batch.",
+        "Attention/KV layout and graph-lifetime constraints force materialization."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.6,
+      "decision_resolution_per_dollar": 0.0,
+      "discrimination_power": 0.4,
+      "evidence_scope": "Measured exact H200 trace and immutable QKV attempt-1 metadata; no QKV path-proof reconstruction or endpoint replay is admissible here.",
+      "falsifier": "A future independently authorized dynamic path proof plus paired endpoint result; forbidden in this project.",
+      "id": "qkv_norm_rope_to_attention",
+      "intuition": "The boundary is physically adjacent but not independently interpretable from the consumed endpoint archive.",
+      "kill_rule": "Fail closed without dynamic producer-to-consumer identity.",
+      "measurements": {
+        "attempt1_service_time": {
+          "unit": "seconds/request",
+          "value": 0.6923181802812479
+        },
+        "qkv_norm_rope_total": {
+          "unit": "seconds/capture",
+          "value": 0.302389054
+        }
+      },
+      "mechanism": "Consume normalized/rotated QKV directly in the attention/cache path.",
+      "next_measurement": "Director-owned QKV disposition only; do not reconstruct PATH_PROOF.jsonl in this lane.",
+      "observation": "The exact trace measures 3660 fused QKV norm/RoPE launches totaling 0.302389054 seconds before attention, but the latest one-shot QKV endpoint archive lacks the required dynamic path proof.",
+      "promotion_rule": "No promotion from this project.",
+      "readiness": 0.0,
+      "residual_bottleneck_rule": "Treat the QKV lineage as independent and preserve this task-graph discriminator unchanged.",
+      "transfer_penalty": 1.0,
+      "uncertainty": 0.9
+    },
+    {
+      "competing_explanations": [
+        "A persistent task can keep the 21504-wide activation on chip through quantization.",
+        "The two FP8 GEMMs own 92.2941% of the block and cannot be removed.",
+        "One-CTA-per-row fusion raises live state and loses parallelism."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.4,
+      "decision_resolution_per_dollar": 0.0,
+      "discrimination_power": 1.0,
+      "evidence_scope": "Prior measured exact-shape H200 trace and correctness-bearing CPU semantic fixture; target-verification scope only.",
+      "falsifier": "Already falsified at this mechanism scope by the 0.753589% zero-cost seam bound.",
+      "id": "swiglu_to_down_fp8_consumer",
+      "intuition": "Large intermediate bytes are visually compelling, but compulsory GEMM time dominates.",
+      "kill_rule": "Do not replay the same producer-consumer seam.",
+      "measurements": {
+        "full_mlp_block": {
+          "unit": "percent of target-verification window",
+          "value": 14.23063926352223
+        },
+        "removable_seam_upper": {
+          "unit": "percent of target-verification window",
+          "value": 0.753588771793263
+        }
+      },
+      "mechanism": "Fuse GELU-tanh multiply and dynamic E4M3 production for the unchanged down-projection consumer.",
+      "next_measurement": "None; do not replay. A materially different GEMM schedule or representation belongs to another project.",
+      "observation": "A prior exact target-verification analysis measured the full MLP block at 14.2306% of its window, but the removable SwiGLU/materialization/quant seam at only 0.753589% even when credited as zero-cost.",
+      "promotion_rule": "Closed for this implementation.",
+      "readiness": 0.0,
+      "residual_bottleneck_rule": "The two FP8 GEMMs remain the MLP bottleneck.",
+      "transfer_penalty": 0.2,
+      "uncertainty": 0.15
+    }
+  ],
+  "ranking_method": {
+    "claim_limit": "triage heuristic only; inputs are judgments and score is not a performance prediction",
+    "formula": "impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd",
+    "name": "heuristic_decision_resolution_per_dollar_v1"
+  },
+  "schema_version": 1,
+  "scope": {
+    "capture_window_seconds": 23.038600455,
+    "fixed_qualified_seconds_per_request": 0.625149101968745,
+    "hardware": "NVIDIA H200 SXM",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "32 requests x 4214 prompt + 358 output tokens, dynamic chunking 2048, TP1, dynamic E4M3 linears, E5M2 KV"
+  },
+  "selected_opportunity_id": "post_attn_norm_to_fused_add_pre_ff_norm"
+}

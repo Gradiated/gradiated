@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-07-30T03:55:00Z",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "state": "ready_fixed_floor_crossop_exact_component_claim",
+  "role": "exact_h200_qkv_norm_rope_e5m2_cache_component_execution",
+  "summary": "The exact $1 reservation is durable. One execution-profile owner may claim this quiescent H200 under the 03:55Z director binding, run only the ten-case QKV-to-E5M2-cache component ledger, and release by 04:30Z.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 source; strict H200 identity; zero containers and zero GPU compute processes.",
+  "checkpoint": "Exact target checkpoint remains resident but is not required or mutable for this checkpoint-free component.",
+  "caches": "Preserve pinned image/source, exact target, Hugging Face cache, compilation cache, and frozen DFlash evidence.",
+  "artifacts": "Execution binding DIRECTOR_FIXED_FLOOR_CROSSOP_H200_EXECUTION_20260730T0355Z.json; offline terminal 33f88a6c...; candidate 4b697f3c...; consumer 7175968c....",
+  "server_state": "Available and quiescent; no owner, claim, server, container, or CUDA process is active.",
+  "scientific_terminal": "No component terminal yet. One ten-case exact consumer submission is authorized; endpoint submissions are forbidden.",
+  "classification": "durably_reserved_runnable_exact_h200_component",
+  "next": "Only gemma4_h200_fixed_floor_crossop_executor may claim by 04:08Z, launch by 04:12Z, and release by 04:30Z. Watchdog cleanup remains 04:51:56Z."
+}

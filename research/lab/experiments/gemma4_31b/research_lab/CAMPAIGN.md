@@ -75,7 +75,7 @@ Use text-only, non-reasoning traffic for initial cost discovery. Vision/video an
 
 ## Autonomy, spend, and stopping
 
-Experiment spend from `2026-07-17T21:59:00Z` onward has a hard cumulative authorization cap of `$400`: the original `$100`, an additional `$100` on `2026-07-19`, an additional `$50` on `2026-07-24`, an additional `$50` authorized by the user on `2026-07-25`, an additional `$50` authorized on `2026-07-26`, and an additional `$50` authorized on `2026-07-28`. The harness durably reserves each paid project's full authorized maximum before scheduling it, never releases that reservation implicitly, and refuses projects whose combined reservations would exceed the cap. There is no separate concurrency cap on paid GPU experiments: the director may run independent allocations concurrently up to the harness's five-researcher limit while staying within the shared `$400` authority. Each allocation needs its own owner, declared deadline, actual metered rate, durable telemetry, and reliable cleanup. A failed placement or runtime route is one branch result: switch hardware, provider, runtime, representation, or experiment geometry rather than spending cycles polishing the same failure.
+Experiment spend from `2026-07-17T21:59:00Z` onward has a hard cumulative authorization cap of `$500`: the original `$100`, an additional `$100` on `2026-07-19`, an additional `$50` on `2026-07-24`, an additional `$50` authorized by the user on `2026-07-25`, an additional `$50` authorized on `2026-07-26`, an additional `$50` authorized on `2026-07-28`, and an additional `$100` authorized later on `2026-07-28`. The harness durably reserves each paid project's full authorized maximum before scheduling it, never releases that reservation implicitly, and refuses projects whose combined reservations would exceed the cap. There is no separate concurrency cap on paid GPU experiments: the director may run independent allocations concurrently up to the harness's five-researcher limit while staying within the shared `$500` authority. Each allocation needs its own owner, declared deadline, actual metered rate, durable telemetry, and reliable cleanup. A failed placement or runtime route is one branch result: switch hardware, provider, runtime, representation, or experiment geometry rather than spending cycles polishing the same failure.
 
 The director should keep a small portfolio of independent, falsifiable projects and retire weak lines quickly. Researchers use their judgment, record concise decision-relevant evidence, and continue until the project decision is supported or its stated budget expires. The supervisor improves research cadence only when traces show a real bottleneck; it must not add ritual or deterministic gates.
 
@@ -116,6 +116,12 @@ a compact portfolio of independent high-upside work:
    existing drafter cannot produce enough accepted work, design a small
    Gemma-specific causal one-forward parallel draft head as the next
    intervention rather than extending verifier plumbing indefinitely.
+   Prefer a current vLLM B200 c64 discriminator over the rejected old SGLang
+   cost geometry: benchmark the public exact-target DFlash, EAGLE-3, and Google
+   Gemma assistant/MTP checkpoints before training from scratch. If adaptation
+   is needed, freeze the target and fine-tune the strongest parallel drafter on
+   on-policy campaign traffic; optimize accepted target tokens per measured
+   verifier GPU-second, not acceptance rate or single-request latency alone.
 3. **Packed Hopper-native target verification.** Use `$kernel-research` to
    build an exact-consumer M384 verifier/attention kernel for Gemma's local
    d256/window-1024 and global d512 geometry. Explore packed heterogeneous

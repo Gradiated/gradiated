@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T22:05:00Z",
+  "decision": "dispatch_same_owner_worker_only_stock_api_repair",
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "parent_binding": {
+    "path": "DIRECTOR_TASKGRAPH_FP8_PROLOGUE_H200_EXECUTION_20260729T2148Z.json",
+    "sha256": "82da8037e760b7fb07a01bd161ea2ce7ba6d07454670367f568d8da76c1db289"
+  },
+  "live_owner": {
+    "pid": 338568,
+    "start_ticks": 147850150,
+    "claim_generation": "2026-07-29T22:01:12.915393Z",
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "owner_state": "artifacts/fp8-prologue-owner-20260729t220112z/OWNER.json",
+    "progress": "artifacts/fp8-prologue-owner-20260729t220112z/OWNER_PROGRESS.json",
+    "repair_dispatch_proof": "The durable owner watches project REPAIR_REQUEST.json, verifies a project-local runner hash, increments the attempt generation, and re-enters run_attempt with a fresh out-N root while retaining the original claim and heartbeat."
+  },
+  "repair_ready": {
+    "path": "REPAIR_READY.json",
+    "sha256": "2468fcfc902777bb0bf263c80093eec7247a5aa02f56cc2fa3ba72a6e03c7e12",
+    "repair_id": "fp8-prologue-r1",
+    "retry_scope": "worker_only",
+    "repair_deadline_utc": "2026-07-29T23:43:00Z",
+    "claim_retained": true
+  },
+  "observed_failure": {
+    "classification": "recoverable_missing_terminal",
+    "stage": "stock_smoke_before_first_stock_result",
+    "exception": "TypeError: sgl_per_token_quant_fp8() missing 2 required positional arguments: 'output_q' and 'output_s'",
+    "causal_scope": "The staged attempt imported or called the raw SGL kernel using the allocating wrapper's one-argument interface.",
+    "remote_evidence": [
+      "out-1/IDENTITY.json exists and binds NVIDIA H200 UUID GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8, shape [32,5376,8192], and the real layer-0 q_proj tensor.",
+      "out-1/SCIENCE_STARTED.json names next_arm stock_smoke.",
+      "No STOCK_SMOKE_COMPLETE.json, CANDIDATE_SMOKE_COMPLETE.json, CORRECTNESS.json, TIMING_ROWS.json, or TERMINAL.json exists.",
+      "The Python exception occurred before the raw producer could submit its required output-buffer CUDA call."
+    ],
+    "science_started_marker": true,
+    "minimum_interpretable_result_exists": false,
+    "science_consumed": false,
+    "scientific_interpretation": "Invalid integration attempt; neither the stock control nor candidate mechanism is measured."
+  },
+  "repair_artifact": {
+    "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+    "runner_sha256": "034eff6bc0ce2e69728db927449bccef3b1d4e10c71f5089c1c5a8b45be568e6",
+    "ready_path": "FP8_PROLOGUE_H200_OWNER_READY.json",
+    "ready_sha256": "cdb3ddbb23a94498c0219606e133e7166e0d3c04e0656a2c3f2826b41f79efdb",
+    "mechanical_validation": {
+      "python_compile": true,
+      "stock_import": "from sglang.srt.layers.quantization.fp8_kernel import sglang_per_token_quant_fp8",
+      "stock_call": "sglang_per_token_quant_fp8(x)",
+      "source_contract": "The pinned wrapper allocates x_q and x_s, calls raw sgl_per_token_quant_fp8(x, x_q, x_s), and returns both tensors."
+    }
+  },
+  "immutable_science": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "projection": "model.language_model.layers.0.self_attn.q_proj.weight",
+    "shape": [
+      32,
+      5376,
+      8192
+    ],
+    "stock": "allocating SGLang per-token E4M3 wrapper followed by unchanged fp8_scaled_mm",
+    "candidate": "row_scale_kernel followed by fused_quant_gemm_kernel with tile-load E4M3 conversion",
+    "correctness_gates": {
+      "finite": true,
+      "relative_l2_max": 0.02,
+      "cosine_min": 0.999,
+      "scale_relative_error_max": 0.00002,
+      "negative_control": "rolled weight-scale vector must diverge"
+    },
+    "timing_order": [
+      "stock",
+      "candidate",
+      "stock",
+      "candidate",
+      "stock",
+      "candidate",
+      "stock"
+    ],
+    "seed": 20260729
+  },
+  "dispatch": {
+    "request_path": "REPAIR_REQUEST.json",
+    "request_fields": {
+      "repair_id": "fp8-prologue-r1",
+      "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+      "runner_sha256": "034eff6bc0ce2e69728db927449bccef3b1d4e10c71f5089c1c5a8b45be568e6"
+    },
+    "expected_next_attempt": 2,
+    "expected_remote_output_root": "fresh out-2 under the existing claim-scoped remote root",
+    "replacement_owner_allowed": false,
+    "new_claim_allowed": false
+  },
+  "lifecycle": {
+    "owner_deadline_utc": "2026-07-29T23:48:00Z",
+    "watchdog_deadline_utc": "2026-07-29T23:55:00Z",
+    "repair_fit": "Attempt 1 localized the failure in under two minutes, leaving more than 95 minutes for the corrected smoke, component A/B, terminal packaging, and generation-fenced release.",
+    "disposition": "Preserve the live owner and original claim. A corrected minimum result may proceed once. A further ordinary integration defect remains eligible for another fresh repair generation while measured fit and absolute deadlines permit."
+  },
+  "prohibitions": [
+    "Do not start a replacement owner, create a new claim, release the current claim, or mutate provider lifecycle.",
+    "Do not change candidate source, projection, shapes, weights, gates, timing order, seed, or endpoint scope.",
+    "Do not treat SCIENCE_STARTED.json alone as a consumed or decision-bearing sample.",
+    "Do not replay any complete stock or candidate result if attempt 2 persists one before a later failure."
+  ]
+}

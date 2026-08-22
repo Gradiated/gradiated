@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "state": "retained_claim_ready_for_patched_cuda13_runtime_repair",
+  "stage": "patched_arm_only",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; c32 decode runtime-dynamic-FP8 M32 residual path.",
+  "runtime": "Identity-verified NVIDIA B200 SM100; patched extension needs only the host's exact libcudart.so.13 mounted into the retained derived image.",
+  "candidate_extension": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/sm100-install-20260728t1734z-repair2/vllm/_C.abi3.so",
+  "candidate_extension_sha256": "66fb9013b67832d6939c59f21395aeafc59a8e1b52abc3636132819e38cc5be2",
+  "stock_terminal": "projects/gemma4_b200_fp8_residual_hotpath/artifacts/b200-m32-dispatch-paired-oracle-hash-repair-20260728t1906z/stock/TERMINAL.json",
+  "stock_terminal_sha256": "da9166976f2dc840c44e2953607ac7a2912ab4d1f701bcded76f1e7848610a62",
+  "stock_oracle_remote": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/output-sm100-paired-oracle-hash-repair-20260728t1906z/stock",
+  "science_consumed": false,
+  "scientific_terminal": "Stock is complete and immutable; patched is unsubmitted. Run one patched-only six-shape arm and finalize the pair; zero endpoint requests.",
+  "artifacts": "DIRECTOR_B200_M32_PATCHED_CUDA13_RUNTIME_REPAIR_20260728T1922Z.json",
+  "image": "Reuse b200-m32-recovery5:20260728t1623z; mount only /usr/local/cuda-13.0/targets/x86_64-linux/lib/libcudart.so.13.0.96 as /usr/local/lib/libcudart.so.13.",
+  "checkpoint": "Retain the checkpoint and capture; do not load, restage, or use them for this component.",
+  "caches": "Preserve derived image, patched source, completed extension, build outputs, dependencies, stock outputs, checkpoint, capture, and runtime caches.",
+  "server_state": "GPU is unoccupied; the prior owner exited and no endpoint or model server exists. The original project claim remains continuous.",
+  "next": "Launch the patched-only owner by 2026-07-28T19:27:00Z. Release a decision-bearing negative by 2026-07-28T19:34:00Z; retain incomplete only while bounded repair fits; watchdog ends 2026-07-28T19:40:00Z."
+}

@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-28T17:13:00Z",
+  "classification": "request_additional_reservation_for_sm100_only_continuation",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "evidence": {
+    "repair_terminal": "artifacts/b200-m32-dispatch-recovery5-20260728t1623z/REPAIR_RETRY_TERMINAL.json",
+    "repair_terminal_sha256": "a3783fb7562aa89e73b2bc21b314a250fea79cb02ea41239ab9ec45bed2311e7",
+    "classification": "invalid_pre_science_repair_timeout",
+    "science_consumed": false,
+    "cuda_objects_observed_before_interrupt": 273,
+    "failure_scope": "broad editable vLLM build compiled multiple unsupported-for-this-experiment architecture and extension targets"
+  },
+  "scientific_contract": {
+    "unchanged": true,
+    "component_pair": "one stock and one genuinely patched exact-consumer sample over the six bound weighted M32 decode shapes",
+    "stock_and_candidate_execution_bytes_must_be_distinct": true,
+    "endpoint_replay_allowed": false
+  },
+  "reservation": {
+    "current_durable_authorized_usd": 5.0,
+    "requested_total_authorized_usd": 8.0,
+    "additional_requested_usd": 3.0,
+    "current_snapshot_satisfies_request": false
+  },
+  "current_lifecycle": {
+    "claim_started_at_utc": "2026-07-28T16:11:49.594164Z",
+    "watchdog_deadline_utc": "2026-07-28T17:27:00Z",
+    "owner": {
+      "pid": 3337978,
+      "start_ticks": 137237894
+    }
+  },
+  "continuation_after_durable_reservation": {
+    "requires_fresh_director_ready_envelope": true,
+    "proposed_watchdog_deadline_utc": "2026-07-28T18:10:00Z",
+    "proposed_negative_release_by_utc": "2026-07-28T18:00:00Z",
+    "conservative_claim_exposure_usd_at_proposed_watchdog": 7.79,
+    "required_reuse": [
+      "b200-m32-recovery5:20260728t1623z derived image",
+      "/home/glmrunner/b200-m32-dispatch-20260728t1623z/vllm-recovery5 patched source",
+      "existing build objects and dependency downloads",
+      "M32_DISPATCH.patch and the six-shape exact consumer"
+    ],
+    "required_build_narrowing": [
+      "bind CUDA architecture to SM100 only",
+      "build only the minimum production extension target needed by the exact scaled-MM consumer",
+      "inspect the first compiler command and fail pre-science on architecture fanout"
+    ],
+    "forbidden": [
+      "another broad editable vLLM build",
+      "a fresh source clone",
+      "a derived-image rebuild",
+      "a component submission before a distinct patched production consumer is proven"
+    ]
+  },
+  "current_gate": {
+    "researcher_allowed": false,
+    "owner_replacement_allowed": false,
+    "build_allowed": false,
+    "watchdog_extension_allowed": false,
+    "provider_mutation_allowed": false,
+    "next_event": "durable $8 reservation or current watchdog cleanup"
+  }
+}

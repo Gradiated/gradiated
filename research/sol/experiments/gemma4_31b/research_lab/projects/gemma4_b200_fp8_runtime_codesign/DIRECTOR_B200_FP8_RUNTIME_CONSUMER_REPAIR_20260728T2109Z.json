@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "classification": "funded_retained_b200_same_project_consumer_repair",
+  "project": "gemma4_b200_fp8_runtime_codesign",
+  "failed_attempt": {
+    "terminal_path": "B200_FP8_RUNTIME_FALSIFIER_TERMINAL.json",
+    "terminal_sha256": "967cbe1be73ce2a4e434fabc9659211a051109abcbb76454cda468f7e8ace332",
+    "classification": "invalid_pre_science_integration_attempt",
+    "error": "cuBLASLt rejected a row-major FP8 B operand before the first warmup completed",
+    "interpretable_sample_consumed": false,
+    "scientific_conclusion_allowed": false,
+    "bench_release_was_incorrect_but_guest_is_safe": true
+  },
+  "immutable_science": {
+    "source_screen_path": "B200_FP8_RUNTIME_SCREEN.json",
+    "source_screen_sha256": "b6623bf5f4a81002fda5fbd9e34ac7f52af32083c32e8ff657c005850ccc4862",
+    "unit_amendment_path": "DIRECTOR_B200_FP8_RUNTIME_UNIT_AMENDMENT_20260728T2104Z.json",
+    "unit_amendment_sha256": "ad429ff886fe2bb3f0baccafe710c4e87a1712091810a4bd46190a30bfa17ff7",
+    "baseline": "same-B200 BF16 linears and BF16 KV from identical BF16 inputs",
+    "candidate": "vLLM CutlassFP8ScaledMMLinearKernel dynamic-E4M3 path plus FlashInfer TRTLLM-generation E4M3-KV attention",
+    "linear_geometry": "six exact Gemma linear families at M32 and M3679, with M384 path binding",
+    "attention_geometry": [
+      "local q32 kv16 d256 context1024 at c32",
+      "global q32 kv4 d512 context4393 at c32"
+    ],
+    "warmups_per_arm": 8,
+    "samples_per_arm": 40,
+    "interpretable_scientific_generations_max": 1
+  },
+  "mutable_implementation_repair": {
+    "runner_destination": "candidate/run_b200_fp8_runtime_falsifier.py",
+    "owner_destination": "b200_fp8_runtime_falsifier_owner.sh",
+    "preclaim_terminal_destination": "PRECLAIM_B200_FP8_RUNTIME_FALSIFIER_REPAIR_TERMINAL.json",
+    "requirements": [
+      "Use the required column-major [N,K] FP8 weight view; do not retry the rejected row-major cuBLASLt operand.",
+      "Replace torch._scaled_mm with the pinned vLLM ops.cutlass_scaled_mm or CutlassFP8ScaledMMLinearKernel consumer and prove the loaded SM100 cutlass_gemm_sm100_fp8_dispatch path.",
+      "Execute all six linear families at M32 and M3679; execute M384 for path binding but exclude it from the ordinary non-speculative aggregate.",
+      "Replace the SDPA dequantization proxy with flashinfer.prefill.trtllm_batch_context_with_kv_cache and flashinfer.decode.trtllm_batch_decode_with_kv_cache using the exact pinned vLLM/test ABI. SDPA may be used only as the FP32 correctness oracle outside candidate timing.",
+      "Persist per-arm first-call synchronization/completion markers before the timed sweep.",
+      "Persist invocation scope, completed request cardinality, raw per-invocation timing, batch-total contribution, and request-normalized contribution exactly as required by the unit amendment.",
+      "Collect only the shortest counters needed for dispatch, HBM fraction, launch interval, TCGen05 activity, registers, local-memory spills, and d512 fallback rejection."
+    ],
+    "current_bytes_are_not_execution_ready": {
+      "runner_sha256": "cf43dde4b405c46079183083b2ffb664dc5372cf6f0ed5ea1c355c713fe75c37",
+      "reason": "The B-layout patch is present, but the runner still uses cuBLASLt torch._scaled_mm, covers only M32 linears, and substitutes SDPA for the bound TRTLLM-generation attention consumers."
+    }
+  },
+  "bench": {
+    "id": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "remote_root": "/home/glmrunner/b200-fp8-runtime-falsifier-repair-20260728t2109z",
+    "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+    "claim_start_by_utc": "2026-07-28T21:14:00Z",
+    "owner_launch_by_utc": "2026-07-28T21:19:00Z",
+    "decision_release_by_utc": "2026-07-28T21:30:00Z",
+    "watchdog_deadline_utc": "2026-07-28T21:33:00Z",
+    "owner_launcher": "/root/workspace/research/factory/tools/detached-owner",
+    "provider_lifecycle_mutation": false
+  },
+  "spend": {
+    "authorized_total_usd": 2.5,
+    "actual_spend_usd": 2.422094841625,
+    "additional_lifecycle_exposure_usd": 0.0,
+    "covered_by_existing_watchdog": true
+  },
+  "disposition": {
+    "decision_bearing_negative": "Persist valid component timings/counters and the first rejecting scientific gate, then release available by 21:30Z.",
+    "positive": "Persist all gates and release available for director integration selection.",
+    "incomplete_or_pre_science": "Retain the claim for bounded repair only while another measured restart plus terminal and release fit before 21:30Z. Otherwise release maintenance with the exact diagnostic because the absolute lifecycle deadline requires handoff.",
+    "unsafe_or_unreachable": "Release maintenance with the typed guest diagnostic."
+  },
+  "forbidden": [
+    "classify the prior cuBLASLt layout error as a scientific negative",
+    "time torch._scaled_mm as a substitute for the bound vLLM CUTLASS consumer",
+    "time SDPA dequantization as a substitute for TRTLLM-generation FP8-KV attention",
+    "replay an interpretable generation",
+    "load the checkpoint or run an endpoint",
+    "extend or mutate provider lifecycle"
+  ]
+}

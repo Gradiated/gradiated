@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "classification": "director_gated_activation_fp8_reservation_rebind",
+  "created_at_utc": "2026-07-29T16:11:00Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Select the source-complete gated-activation FP8 component as the next compatible warm-H200 discriminator, but keep it non-claimable until its exact $2 cumulative reservation is durably present.",
+  "predecessor_result": {
+    "project": "gemma4_h200_current_norm_fp8_hotblock",
+    "terminal": "artifacts/norm-fp8-h200-component-20260729t1557z/TERMINAL.json",
+    "terminal_sha256": "42cdb4854b0710a0afc3a92d6eb52c6209cd28b6fca48ef3cc732f1b37a5c10b",
+    "classification": "component_negative",
+    "reason": "The complete M=1/16/32 ledger and CUDA graph proof passed, but the preregistered numerical gate failed at M=16 and M=32. Do not rerun or promote that exact candidate."
+  },
+  "ready": {
+    "artifact": "GATED_ACTIVATION_FP8_COMPONENT_READY.json",
+    "sha256": "8e13ff797898e3755bde6897a67e512b05765e1ba93433f415a6ee6918243592",
+    "component": "inputs/gemma4-layer0-down-proj-component.safetensors",
+    "component_sha256": "d6622163e9de350e75c7e07f51b486be92cfc0e130271c8de30518445034bac9",
+    "component_bytes": 231211144,
+    "runner": "h200_runner.py",
+    "runner_sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb",
+    "contract": "H200_RUNNER_CONTRACT.json",
+    "contract_sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba"
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "state": "available",
+    "gpu_memory_used_mib": 0,
+    "claim": null,
+    "watchdog_main_pid": 91168,
+    "watchdog_deadline_utc": "2026-07-29T16:40:00Z",
+    "retention_decision": "Keep the warm bench available through the existing watchdog while the harness reconciles the reservation. Do not extend lifecycle or claim under this binding."
+  },
+  "reservation": {
+    "authoritative_snapshot_contains_project": false,
+    "requested_cumulative_usd": 2.0,
+    "maximum_scientific_gpu_minutes": 20,
+    "maximum_wall_minutes": 25,
+    "conservative_lifecycle_exposure_usd": 1.5,
+    "reservation_required": true
+  },
+  "next_director_gate": [
+    "Observe the exact project reservation durably in the spend-cap snapshot.",
+    "Re-read the warm bench and watchdog once.",
+    "Publish a fresh hash-bound claim and execution binding only if the exact three-row run plus terminal and release margin still fit.",
+    "If the reservation arrives too late for the existing watchdog, keep the project offline and make the explicit extend-or-clean lifecycle decision."
+  ],
+  "must_not": [
+    "Do not claim the H200, run CUDA, SSH, or invoke Docker under this reservation binding.",
+    "Do not treat the stale project-status reservation assertion as spend authority.",
+    "Do not modify the ready component, manifest, runner, candidate, numerical gates, or runtime image.",
+    "Do not rerun the completed norm-FP8 component."
+  ]
+}

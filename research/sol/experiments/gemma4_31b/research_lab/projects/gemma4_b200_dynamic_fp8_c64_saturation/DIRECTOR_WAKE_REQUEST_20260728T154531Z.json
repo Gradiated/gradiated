@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "classification": "director_revalidation_requested",
+  "project": "gemma4_b200_dynamic_fp8_c64_saturation",
+  "reason": "The project reservation is now durable; the current maintenance bench remains protected until director revalidation and a fresh lifecycle envelope.",
+  "reservation": {
+    "authorized_usd": 5.0,
+    "reserved_at": "2026-07-28T15:45:31.354064Z",
+    "updated_at": "2026-07-28T15:45:31.354073Z",
+    "durable": true
+  },
+  "packet": {
+    "preclaim_terminal": "PRECLAIM_TERMINAL.json",
+    "preclaim_terminal_sha256": "00aed9680c0e06afdf665d747a6aca02d3546b0c1ccaf92045e296035f7073cf",
+    "science_consumed": false
+  },
+  "bench": {
+    "id": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "required_condition": "maintenance",
+    "claim_allowed": false
+  },
+  "requested_director_action": "Revalidate the packet and exact bench once; if the remaining watchdog window supports at least 120 seconds of claim-start runway, issue a fresh claim/release envelope and mark only this bench ready."
+}

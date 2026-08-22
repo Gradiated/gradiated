@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "classification": "preclaim_b200_local_paged_gqa_correctness",
+  "claim_allowed": true,
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "claim_started_at_utc": "2026-07-28T19:41:53Z",
+  "deadline_utc": "2026-07-28T20:17:00Z",
+  "owner": "b200_local_paged_gqa_correctness_owner.sh",
+  "owner_sha256": "587894319a01577b7f1d9b84cd41af9490851daa6bcd181ca90909c95988630f",
+  "candidate_runner_sha256": "7876d35727b4f526b2277c32934895745599d6352c52e43ab9464e881b28731c",
+  "candidate_source_sha256": "c164e89fd43721118e0b8a8499e577461b80cdf9a593ae98214e166b87c5bc4f",
+  "source_bundle_manifest_sha256": "377b2e7226cbdb99271783cbeb2df547084d804a756374f8d6f02dcd9aa08144",
+  "director_binding_sha256": "52d394227ca9abaadf107a5b312ba387fd0d98fb2b84402855a6cc4c08d7472b",
+  "scientific_contract": "one correctness-only stock append-plus-TRT-LLM-Gen cubin versus fused native paged-GQA candidate; zero timing, endpoint replay, or model load"
+}

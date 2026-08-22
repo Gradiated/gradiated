@@ -1,0 +1,11 @@
+{
+  "artifacts": "Endpoint owner-R2 execution binding ee2d6d5f...; packet R1 50323ff8...; adapter d8838c09...; pair runner b1df2636...; rejected owner R1 cff32c43....",
+  "at_utc": "2026-07-30T04:51:15Z",
+  "classification": "conditional_warm_endpoint_execution_after_retained_dispatch_owner_repair",
+  "next": "Only gemma4_h200_fixed_floor_crossop_executor may claim after owner R2, packet R2, and the derived execution binding are final and hash-consistent. Claim by 05:07Z, launch by 05:10Z, and release by 05:44Z.",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "role": "warm_h200_fixed_floor_exact_c32_endpoint_pair",
+  "server_state": "Available and quiescent before the conditional claim; endpoint science is unconsumed.",
+  "state": "available_conditional_endpoint_owner_r2_claim",
+  "summary": "The adapter and matched pair are ready, but owner R1 has a one-generation repair escape. Binding ee2d6d5f... requires the narrow owner R2 correction before one authorized stock/candidate endpoint pair."
+}

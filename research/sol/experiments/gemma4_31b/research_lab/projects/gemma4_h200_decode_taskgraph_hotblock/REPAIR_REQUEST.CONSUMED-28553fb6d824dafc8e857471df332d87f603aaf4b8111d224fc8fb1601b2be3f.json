@@ -1,0 +1,31 @@
+{
+  "boundary_smoke": {
+    "result": {
+      "pass": true,
+      "saturation_fraction": 0.6666666865348816
+    },
+    "stderr": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-4.stderr",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-4.stdout",
+    "stdout_sha256": "fe1724473eb755abd41fd022afac3f7145cf9294692634f05160805e8abb1423"
+  },
+  "causal_amendment": "Cast E4M3 weight to float32 before saturation abs telemetry. Retry candidate/comparator as continuation because attempt 7 persisted no decision-bearing comparator; adopt stock marker without replay.",
+  "consumed_stage": {
+    "attempt": 6,
+    "checksum": 297.00628662109375,
+    "stage": "stock_correctness_smoke"
+  },
+  "invalid_candidate_continuation": {
+    "attempt": 7,
+    "candidate_checksum": 297.2925109863281,
+    "decision_bearing": false
+  },
+  "predecessor_repair_id": "fp8-prologue-r6",
+  "ready_sha256": "705ec75af92771d114df0b33296052101dba41ab43ca9a57fcd670ee08daf8f6",
+  "repair_id": "fp8-prologue-r7",
+  "retry_scope": "worker_only",
+  "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+  "runner_sha256": "9cd58bd697cf7d7ba28175e309a659336fe5ec553878284b5a7eb9631e900213",
+  "schema_version": 1,
+  "unchanged_scientific_contract": true
+}

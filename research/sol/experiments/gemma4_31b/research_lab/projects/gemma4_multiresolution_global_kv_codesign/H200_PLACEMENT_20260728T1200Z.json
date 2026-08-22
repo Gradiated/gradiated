@@ -1,0 +1,272 @@
+{
+  "choice": {
+    "allocation_type": "preemptible",
+    "availability_level": "AVAILABILITY_LEVEL_HIGH",
+    "available_gpus": 8,
+    "compute_create_flags": [
+      "--parent-id",
+      "project-e00h1vhmpr00vbmfd5k7pg",
+      "--resources-platform",
+      "gpu-h200-sxm",
+      "--resources-preset",
+      "1gpu-16vcpu-200gb",
+      "--preemptible-on-preemption",
+      "STOP",
+      "--preemptible-priority",
+      "0"
+    ],
+    "effective_at": "2026-07-28T11:34:35.260Z",
+    "fabric": "fabric-7",
+    "gpu_count": 1,
+    "gpu_memory_gb": 141,
+    "network_id": "vpcnetwork-e00gtz3ffbsfdxnvjt",
+    "network_interface": {
+      "ip_address": {},
+      "name": "default-subnet",
+      "public_ip_address": {
+        "static": false
+      },
+      "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f"
+    },
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "project_name": "default-project-eu-north1",
+    "quota_limit_gpus": 8,
+    "region": "eu-north1",
+    "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f",
+    "subnet_name": "default-subnet-vcitqlcl"
+  },
+  "profile": "glm-campaign",
+  "provider": "nebius",
+  "provider_mutation_performed": false,
+  "ranked_candidates": [
+    {
+      "allocation_type": "preemptible",
+      "availability_level": "AVAILABILITY_LEVEL_HIGH",
+      "available_gpus": 8,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb",
+        "--preemptible-on-preemption",
+        "STOP",
+        "--preemptible-priority",
+        "0"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "fabric-7",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-e00gtz3ffbsfdxnvjt",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+      "project_name": "default-project-eu-north1",
+      "quota_limit_gpus": 8,
+      "region": "eu-north1",
+      "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f",
+      "subnet_name": "default-subnet-vcitqlcl"
+    },
+    {
+      "allocation_type": "preemptible",
+      "availability_level": "AVAILABILITY_LEVEL_HIGH",
+      "available_gpus": 8,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-e01eak24pr00bq47a1mqcp",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb",
+        "--preemptible-on-preemption",
+        "STOP",
+        "--preemptible-priority",
+        "0"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "fabric-5",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-e01psqbat84r15gdzs",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-e01yj9skpawfxm6f9n"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-e01eak24pr00bq47a1mqcp",
+      "project_name": "default-project-eu-west1",
+      "quota_limit_gpus": 8,
+      "region": "eu-west1",
+      "subnet_id": "vpcsubnet-e01yj9skpawfxm6f9n",
+      "subnet_name": "default-subnet-0gwlslp6"
+    },
+    {
+      "allocation_type": "preemptible",
+      "availability_level": "AVAILABILITY_LEVEL_HIGH",
+      "available_gpus": 8,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-u00jmqkxpr00fk11y77rdf",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb",
+        "--preemptible-on-preemption",
+        "STOP",
+        "--preemptible-priority",
+        "0"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "us-central1-a",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-u00f76584n1ka7v5vx",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-u00dqd3rn8pj653zvt"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-u00jmqkxpr00fk11y77rdf",
+      "project_name": "default-project-us-central1",
+      "quota_limit_gpus": 8,
+      "region": "us-central1",
+      "subnet_id": "vpcsubnet-u00dqd3rn8pj653zvt",
+      "subnet_name": "default-subnet-x5mtpzsu"
+    },
+    {
+      "allocation_type": "on-demand",
+      "availability_level": "AVAILABILITY_LEVEL_MEDIUM",
+      "available_gpus": 25,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-e01eak24pr00bq47a1mqcp",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "fabric-5",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-e01psqbat84r15gdzs",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-e01yj9skpawfxm6f9n"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-e01eak24pr00bq47a1mqcp",
+      "project_name": "default-project-eu-west1",
+      "quota_limit_gpus": 32,
+      "region": "eu-west1",
+      "subnet_id": "vpcsubnet-e01yj9skpawfxm6f9n",
+      "subnet_name": "default-subnet-0gwlslp6"
+    },
+    {
+      "allocation_type": "on-demand",
+      "availability_level": "AVAILABILITY_LEVEL_MEDIUM",
+      "available_gpus": 13,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-u00jmqkxpr00fk11y77rdf",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "us-central1-a",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-u00f76584n1ka7v5vx",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-u00dqd3rn8pj653zvt"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-u00jmqkxpr00fk11y77rdf",
+      "project_name": "default-project-us-central1",
+      "quota_limit_gpus": 32,
+      "region": "us-central1",
+      "subnet_id": "vpcsubnet-u00dqd3rn8pj653zvt",
+      "subnet_name": "default-subnet-x5mtpzsu"
+    },
+    {
+      "allocation_type": "on-demand",
+      "availability_level": "AVAILABILITY_LEVEL_LOW",
+      "available_gpus": 1,
+      "compute_create_flags": [
+        "--parent-id",
+        "project-e00h1vhmpr00vbmfd5k7pg",
+        "--resources-platform",
+        "gpu-h200-sxm",
+        "--resources-preset",
+        "1gpu-16vcpu-200gb"
+      ],
+      "effective_at": "2026-07-28T11:34:35.260Z",
+      "fabric": "fabric-7",
+      "gpu_count": 1,
+      "gpu_memory_gb": 141,
+      "network_id": "vpcnetwork-e00gtz3ffbsfdxnvjt",
+      "network_interface": {
+        "ip_address": {},
+        "name": "default-subnet",
+        "public_ip_address": {
+          "static": false
+        },
+        "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f"
+      },
+      "platform": "gpu-h200-sxm",
+      "preset": "1gpu-16vcpu-200gb",
+      "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+      "project_name": "default-project-eu-north1",
+      "quota_limit_gpus": 32,
+      "region": "eu-north1",
+      "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f",
+      "subnet_name": "default-subnet-vcitqlcl"
+    }
+  ],
+  "request": {
+    "accelerator": "h200",
+    "allocation": "auto",
+    "gpu_count": 1,
+    "platform": null,
+    "preset": null,
+    "regions": []
+  },
+  "schema_version": 1,
+  "selection_policy": "fresh capacity and ready subnet; preemptible first; regional price; availability level; available GPUs",
+  "tenant_id": "tenant-e00q6qkagqjr7vx294"
+}

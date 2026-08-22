@@ -1,0 +1,14 @@
+{
+  "artifacts": "projects/b200_nvfp4_gemma4_endpoint/{artifacts/native-nvfp4-endpoint-packet-v1/PACKET_MANIFEST.json,DIRECTOR_B200_NVFP4_ENDPOINT_BENCH_SPEC_20260728T1041Z.json,DIRECTOR_B200_NVFP4_ENDPOINT_LIFECYCLE_20260728T1050Z.json}",
+  "caches": "Fresh provider disk; no checkpoint, image, or model cache yet.",
+  "checkpoint": "Exact 62,578,655,208-byte eight-file BF16 source is hash-bound but not staged; one project-local copy and native-NVFP4 conversion remain unconsumed.",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79 bound, not yet pulled.",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; c32 campaign workload and AA 10K view.",
+  "next": "Sole claimant b200_nvfp4_gemma4_endpoint must atomically claim this exact bench, launch one controller-local PID owner with research/factory/tools/detached-owner, consume packet 707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116, and release by 2026-07-28T12:27:00Z. Keep ordinary pre-science integration repairs inside the retained claim.",
+  "project": "b200_nvfp4_gemma4_endpoint",
+  "runtime": "Verified strict ED25519 SHA256:2peC4sW97iaa9iiga4afSGxEhtP1etNZ4ItF80ru27E; one idle NVIDIA B200 SM100 compute capability 10.0, 183359 MiB, driver 580.159.04.",
+  "schema_version": 1,
+  "scientific_terminal": "One exact-checkpoint same-B200 BF16-control then native-NVFP4 c32 endpoint comparison remains unconsumed.",
+  "server_state": "No image pull, checkpoint transfer, container, CUDA invocation, endpoint, or scientific sample; strict SSH and idle GPU telemetry only.",
+  "state": "ready only for the exact-checkpoint native-NVFP4 endpoint project under the 2026-07-28T12:31:59.335947Z cleanup watchdog"
+}

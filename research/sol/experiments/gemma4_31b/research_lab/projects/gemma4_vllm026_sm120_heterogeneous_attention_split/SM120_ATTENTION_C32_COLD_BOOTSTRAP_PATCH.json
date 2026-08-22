@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "classification": "cold_bootstrap_owner_patch_validated",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "execution_binding": {
+    "path": "DIRECTOR_SM120_ATTENTION_C32_EXECUTION_20260729T1155Z.json",
+    "sha256": "b2ffff20d56fb994612c38d23205ddcc4c4d820cba6a92a0b13849e33be7d123"
+  },
+  "claim_fence_amendment": {
+    "path": "DIRECTOR_SM120_ATTENTION_C32_CLAIM_FENCE_AMENDMENT_20260729T1215Z.json",
+    "replacement_claim_start_by_utc": "2026-07-29T12:25:00Z"
+  },
+  "owner": {
+    "path": "run_sm120_attention_split_c32_owner.py",
+    "old_sha256": "afdf1773cdf99d9ad95e01cae4b9eddf2b40a7585f93a3560c98d051e61fae1f",
+    "final_sha256": "7ec8c32502038ef4b243ed8a97a3d5a27725e13ae9027e4bd557cd543efc7074",
+    "prior_repair_sha256": "743e384e447e233110c4c4e1d29175e405ae0ad802633eb44732c2f0fbc4e348",
+    "repair_amendment": "detached-owner pre-created the artifact root; owner now admits that controller-only directory while retaining the immutable PID state; coordinator has no rsync, so transfer falls back to resumable SSH append into the same .part path; AES-GCM is bound for the same SSH identity to improve pre-science transfer throughput",
+    "patch_scope": [
+      "resumable eight-file checkpoint transfer",
+      "remote SHA-256 verification and atomic finalization",
+      "official vLLM wheel download/verification",
+      "vLLM 0.26.0 installation and compute capability (12,0) proof"
+    ]
+  },
+  "checkpoint_transfer": {
+    "source_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view",
+    "manifest_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/exact_h200_vllm_baseline_shared_runner/artifacts/corrected-transfer-view/model-files.sha256",
+    "manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1",
+    "file_count": 8,
+    "resident_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "expected_bytes": 62546338248,
+    "transfer_mode": "rsync partial append-verify to .part, remote sha256sum, atomic rename"
+  },
+  "official_wheel": {
+    "url": "https://github.com/vllm-project/vllm/releases/download/v0.26.0/vllm-0.26.0%2Bcu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+    "sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "version": "0.26.0+cu129",
+    "runtime_image": "docker.io/vllm/vllm-openai:nightly@sha256:494f9c118fb6684bcdd26bb37c687b16163278c0e18f5c157c9185c2584598b7"
+  },
+  "unchanged_scientific_identities": {
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "workload_sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "component_source_sha256": "ec3a1b92b9b30e93c99d4d05177d912a0046ca12d76ba7e1d06d74a483137d52",
+    "endpoint_consumer_sha256": "1c73091f418c78ab396b441e6bc16503e2564b637ebe9f2f6e8efad2d0e06f0a",
+    "candidate_split": "50 TRITON_ATTN sliding-window plus 10 FLEX_ATTENTION full-attention",
+    "flex_tiles": {"block_m":16,"block_n":16,"q_block_size":16,"kv_block_size":16}
+  },
+  "validation": {
+    "py_compile": "passed",
+    "execution_binding_preclaim": "passed",
+    "gpu_pool_called": false,
+    "ssh_called": false,
+    "provider_api_called": false,
+    "science_sample_consumed": false
+  }
+}

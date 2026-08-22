@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "state": "ready_for_exact_bound_detached_owner_command",
+  "project": "gemma4_hybrid_attention_placement_codesign",
+  "quality_preservation_claimed": false,
+  "science_consumed": false,
+  "execution_binding": "DIRECTOR_H200_55L5G_ENDPOINT_EXECUTION_20260729T0047Z.json",
+  "execution_binding_sha256": "39734c5dbbbfdd1663df6e6a351fa51b71639d202350733bbd57363a15baecbc",
+  "runtime_manifest": "H200_55L5G_BOUND_ENDPOINT_RUNTIME_MANIFEST.json",
+  "runtime_manifest_sha256": "c78036ebebf3ffcf55aaeb24d517358f0e69a83fa6233b37eb0a856f9fe58086",
+  "preclaim_terminal": "PRECLAIM_H200_55L5G_ENDPOINT_TERMINAL.json",
+  "preclaim_terminal_sha256": "727333e84e837f3563544241405b6fd9d7242f99c8df49967a40aa8a5a6f5007",
+  "owner": "run_h200_55l5g_bound_endpoint_owner.py",
+  "owner_sha256": "ba222d3b316840a7612bd6bd90d00a680151d28746c1695b7daf7de8628d9e7f",
+  "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+  "claim_start_by_utc": "2026-07-29T01:08:00Z",
+  "owner_start_by_utc": "2026-07-29T01:10:00Z",
+  "release_by_utc": "2026-07-29T03:20:00Z",
+  "exact_command_source": "DIRECTOR_H200_55L5G_ENDPOINT_EXECUTION_20260729T0047Z.json"
+}

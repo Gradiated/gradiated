@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "classification": "director_norm_fp8_hotblock_offline_component_materialization",
+  "created_at_utc": "2026-07-29T14:36:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "source_result": {
+    "path": "NORM_FP8_HOTBLOCK_RESULT.json",
+    "sha256": "d2f529f7b427d85955999c2ccbceb7df356adb76bd94572c4811625a29e40acb",
+    "classification": "source_complete_decode_only_norm_fp8_candidate"
+  },
+  "decision": "Prepare the exact component offline while the higher-priority streamed-global-KV v11 owner uses the H200. This binding does not authorize a claim or CUDA execution.",
+  "input": {
+    "checkpoint_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "index": "model.safetensors.index.json",
+    "required_tensors": [
+      "model.language_model.layers.0.input_layernorm.weight",
+      "model.language_model.layers.0.self_attn.q_proj.weight",
+      "model.language_model.layers.0.self_attn.k_proj.weight",
+      "model.language_model.layers.0.self_attn.v_proj.weight"
+    ],
+    "source_shard": "model-00001-of-00002.safetensors"
+  },
+  "implementation": {
+    "output": "inputs/gemma4-layer0-norm-qkv-component.safetensors",
+    "terminal": "NORM_FP8_COMPONENT_READY.json",
+    "requirements": [
+      "Extract only the four named tensors through safetensors safe_open without copying or rewriting the full checkpoint.",
+      "Preserve exact source tensor names, dtypes, shapes, values, and metadata needed by h200_runner.py.",
+      "Write to a temporary file, reopen and verify all four tensors against their source hashes and bytewise values, then atomically rename.",
+      "Publish output bytes, SHA-256, per-tensor dtype/shape/source-shard/value hash, checkpoint/index identity, and all source/candidate hashes in NORM_FP8_COMPONENT_READY.json.",
+      "Run h200_runner.py --describe and Python parsing checks only; do not import or execute CUDA."
+    ],
+    "wall_clock_budget_minutes": 30,
+    "storage_budget_bytes": 536870912,
+    "paid_spend_usd": 0.0
+  },
+  "future_h200_gate": {
+    "claim_allowed": false,
+    "component_run_authorized": false,
+    "required_future_director_binding": true,
+    "required_terminal": "NORM_FP8_COMPONENT_READY.json",
+    "scientific_contract": "One later pinned-image H200 component run at M=1/16/32; require a complete numerical, path, launch, CUDA-graph, and timing ledger before promotion."
+  },
+  "must_not": [
+    "Do not call gpu_pool, SSH, provider APIs, or touch the claimed H200.",
+    "Do not run CUDA, compile on H200, launch the component, or change the streaming project.",
+    "Do not reopen residual-fed or prefill fusion and do not broaden the candidate."
+  ]
+}

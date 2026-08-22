@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "causal_hypothesis": "For the qualified temperature-zero M384 NGRAM verifier, folding BF16 rounding, FP32 softcap, tile-local processors, lowest-ID argmax, and tree acceptance into a vocabulary-tiled output-head consumer removes the global logits interface without changing selected tokens, accepted prefix, completion, or KV ownership.",
+  "expected_direction": "Lower producer-to-first-KV-commit latency and lower L2/DRAM write traffic on H200; unchanged output-head FLOPs.",
+  "stock_control": "Pinned SGLang v0.5.13 Gemma4ForCausalLM -> LogitsProcessor materialized FP32 logits -> NgramVerifyInput greedy verify -> fill/free cache.",
+  "candidate_change": "BM64xBN256 vocabulary tiles emit only per-row post-processor partial argmax state; one request-owned reducer finishes argmax and VerifyTreeGreedy.",
+  "inputs": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "workload": "32 requests x 12 target rows, M384, TP1, temperature zero",
+    "hardware": "No hardware used in this experiment; future discriminator is H200 SM90a."
+  },
+  "quality_gate": "Exact target IDs, tree acceptance, completion, accepted hidden rows, KV slot ownership, committed lengths, and fallback behavior.",
+  "slo": "CPU oracle must have zero mismatches. Future H200 component must be correctness-passing and positive; no endpoint gain is claimed.",
+  "maximum_spend_usd": 0.0,
+  "timeout_minutes": 110,
+  "storage_budget_bytes": 2147483648,
+  "cleanup": "No provider or GPU state is created or mutated. CPU compiler output is confined to a project-local TemporaryDirectory and removed on exit.",
+  "commands": [
+    "python3 run_cpu_oracle.py CPU_ORACLE_RESULT.json",
+    "python3 -m py_compile m384_vocab_acceptance.py run_cpu_oracle.py"
+  ],
+  "seed": 20260730,
+  "artifact_contract": [
+    "m384_vocab_acceptance.py",
+    "exact_geometry_oracle.c",
+    "run_cpu_oracle.py",
+    "CPU_ORACLE_RESULT.json",
+    "SOURCE_TRACE.json",
+    "PHYSICAL_MODEL.json",
+    "OPPORTUNITY_REGISTER.json",
+    "H200_DISCRIMINATOR_CONTRACT.json",
+    "MECHANISM_TERMINAL.json"
+  ],
+  "fidelity": "Pinned source trace -> conservation/traffic model -> reduced exact producer CPU oracle -> exact M384x262144 selection geometry CPU oracle. H200 arithmetic, compilation, counters, and latency remain unmeasured.",
+  "transfer_limits": "CPU results prove semantics and indexing only. They do not prove H200 BF16 GEMM arithmetic, CUDA graph integration, resources, traffic, timing, or endpoint impact.",
+  "failure_handling": "Source/semantic mismatches are scientific negatives. Compiler, path, parser, or artifact defects are invalid attempts to patch locally. No GPU repair path applies because GPU use is forbidden."
+}

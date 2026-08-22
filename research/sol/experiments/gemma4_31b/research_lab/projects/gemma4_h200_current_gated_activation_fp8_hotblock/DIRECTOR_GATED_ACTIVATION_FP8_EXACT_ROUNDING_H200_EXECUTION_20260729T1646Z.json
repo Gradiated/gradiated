@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "classification": "director_gated_activation_fp8_exact_rounding_h200_execution",
+  "created_at_utc": "2026-07-29T16:46:00Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Run one fresh target-H200 M=1/16/32 real-weight component ledger for the materially revised exact-rounding candidate. The prior candidate is closed and its timing cannot transfer.",
+  "source_ready": {
+    "path": "GATED_ACTIVATION_FP8_EXACT_ROUNDING_SOURCE_READY.json",
+    "sha256": "21c7942707b960fbe6d474d83441214b82c5c1e008b4927a035adcdae3258936",
+    "published_at_utc": "2026-07-29T16:42:56Z",
+    "gpu_used": false,
+    "scientific_sample_consumed": false
+  },
+  "reservation": {
+    "authorized_cumulative_usd": 2.0,
+    "prior_actual_spend_usd": 0.33,
+    "metered_hourly_rate_usd": 2.45,
+    "conservative_total_exposure_through_watchdog_usd": 1.6,
+    "durable_reserved_at_utc": "2026-07-29T16:12:13.777388Z"
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_state": "available",
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "claim_start_by_utc": "2026-07-29T16:49:00Z",
+    "execution_complete_by_utc": "2026-07-29T16:56:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T16:58:00Z",
+    "watchdog": {
+      "unit": "gemma4-streaming-global-kv-fresh-20260729t1700z-watchdog-r7.service",
+      "main_pid": 150669,
+      "deadline_utc": "2026-07-29T17:00:00Z"
+    },
+    "measured_fit": "The closest manifest-repair component claimed at 16:26:10Z and released at 16:29:42Z. This binding allows seven minutes from latest claim to execution completion, two minutes for terminal/release, and two minutes before watchdog cleanup."
+  },
+  "immutable_inputs": {
+    "component": {
+      "path": "inputs/gemma4-layer0-down-proj-component.safetensors",
+      "sha256": "d6622163e9de350e75c7e07f51b486be92cfc0e130271c8de30518445034bac9"
+    },
+    "component_manifest": {
+      "path": "GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json",
+      "sha256": "b179e2556f8d85681c6dcb47f98174d7206f838488afb3a1cf7f04a9fe17630d"
+    },
+    "base_runner": {
+      "path": "h200_runner.py",
+      "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb"
+    },
+    "candidate_python": {
+      "path": "gated_activation_fp8_exact_rounding.py",
+      "sha256": "8b02cea617eea89606cf022e8cefb8243499490dd9d46e5840cf3f82b4f4c11a"
+    },
+    "candidate_cuda": {
+      "path": "gated_activation_fp8_exact_rounding.cu",
+      "sha256": "19f5309b1d3639c4942f8148c33ddd3dde76af2dbb001622d5a45e37ad1fd41f"
+    },
+    "runner": {
+      "path": "h200_exact_rounding_runner.py",
+      "sha256": "b38bfd1a6fc1e9124ccc22170b045358a74ea71c3707e688b5f7c52c2784b643"
+    },
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "execution": {
+    "artifact_root": "artifacts/gated-activation-fp8-exact-rounding-h200-20260729t1646z",
+    "maximum_wall_minutes": 12,
+    "maximum_scientific_gpu_minutes": 5,
+    "repetitions": 100,
+    "rows": [
+      1,
+      16,
+      32
+    ],
+    "primary_row": 32,
+    "required_runner_invocation": "python3 h200_exact_rounding_runner.py --component-safetensors inputs/gemma4-layer0-down-proj-component.safetensors --component-manifest GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json --output artifacts/gated-activation-fp8-exact-rounding-h200-20260729t1646z --repetitions 100",
+    "start_helper": "Claim the exact named bench atomically with gpu_pool for this project, stage the hash-bound files at their project-relative paths, and invoke required_runner_invocation exactly once in the pinned resident image."
+  },
+  "scientific_contract": {
+    "question": "Does reproducing the exact pinned stock GELU association and single BF16 activation materialization make the fused producer numerically safe while retaining a positive M=32 component result?",
+    "baseline": "Pinned stock GeluAndMul(approximate='tanh') plus sglang_per_token_quant_fp8 feeding the real fp8_scaled_mm consumer.",
+    "candidate": "Exact-rounding fused activation plus per-token E4M3 quantization feeding the same consumer.",
+    "required_rows": [
+      "ROW_M1.json",
+      "ROW_M16.json",
+      "ROW_M32.json"
+    ],
+    "success": "All three strict runner numerical rows, candidate-path invocations, and CUDA graph arms pass, and M=32 candidate component median is below contemporaneous baseline.",
+    "negative": "A complete interpretable ledger rejects numerical equivalence, candidate execution, CUDA graph replay, or M=32 timing.",
+    "endpoint_promotion": "A positive component may be considered later; this binding authorizes no endpoint."
+  },
+  "failure_disposition": {
+    "decision_bearing_terminal": "Retrieve and hash the complete ledger, update STATUS.json, and release generation-fenced by 16:58Z.",
+    "recoverable_pre_science": "Retain the exact claim and repair only mutable path, import, Docker, constructor, or retrieval glue when the closest measured restart plus terminal/release margin still fits. Candidate, component, consumer, gates, rows, and repetitions remain immutable.",
+    "cannot_fit_or_unsafe": "Preserve the compact diagnostic and science-start state, verify quiescence, and release generation-fenced to maintenance by 16:58Z without submitting a late arm."
+  },
+  "must": [
+    "Use $researcher with execution profile, $kernel-research, and $experiment-run.",
+    "Read this binding once and verify its hash, every immutable input hash, exact reservation, available zero-GPU bench, and watchdog before claim.",
+    "Claim only the named bench by 16:49Z and run the fresh output generation once.",
+    "Release with the exact returned claim generation by 16:58Z on every terminal path."
+  ],
+  "must_not": [
+    "Do not replay or transfer timing from the closed candidate.",
+    "Do not modify scientific bytes, gates, shapes, consumer, repetitions, workload, or runtime image.",
+    "Do not run endpoint science, create or drain a bench, replace the watchdog, or mutate another project.",
+    "Do not claim after 16:49Z or retain a claim after 16:58Z."
+  ]
+}

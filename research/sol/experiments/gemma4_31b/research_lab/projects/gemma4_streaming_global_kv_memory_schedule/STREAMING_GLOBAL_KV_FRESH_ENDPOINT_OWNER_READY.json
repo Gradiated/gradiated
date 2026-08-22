@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "classification": "fresh_h200_streamed_endpoint_owner_ready",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "preparation": {
+    "gpu_budget": 0,
+    "spend_usd": 0,
+    "claim_allowed": false,
+    "later_director_execution_binding_required": true,
+    "owner_launch": "Use detached-owner --unit-manager pid with an absolute future execution binding; this ready artifact is not an authorization to launch."
+  },
+  "preserved_producer": {
+    "path": "artifacts/streaming-global-kv-h200-20260729t1058z/CUDA_DISCRIMINATOR_R2_attempt0.json",
+    "sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "gates_pass": true,
+    "replay_forbidden": true
+  },
+  "owner": {
+    "path": "run_streaming_global_kv_h200_owner_v6.sh",
+    "sha256": "429b359bc18cbe1d07ec05094470c8a24f1a51236254fc00f109ab62c6923bcf",
+    "mode": "cold_start_candidate_only_repair_capable",
+    "future_binding_required_fields": ["bench_id", "claim_generation", "release_by_utc", "runtime_image", "checkpoint", "exact_runner", "candidate_server_command", "reservation"],
+    "preclaim_fixture": "Creates a verified immutable project-local hard-link-or-copy view of the checkpoint manifest, checkpoint files, and exact runner before the atomic fresh-bench claim; post-claim staging uses only that view.",
+    "release_predicate": "Only after a retrieved candidate terminal with 32 complete requests and layer-35 U=8 nonfallback telemetry, or a typed deadline/unsafe terminal; the pool claim must still match the future binding generation.",
+    "repair_flow": "On a recoverable endpoint integration failure, retain heartbeat and the healthy candidate server, publish repair-ready, hash-bind a request restricted to endpoint_only, archive each failed fresh output root by generation, and retry only the endpoint."
+  },
+  "endpoint": {
+    "path": "streaming_global_kv_endpoint_r3.py",
+    "sha256": "e41e3b79d10cd884b6670f32a77752ecb5c01c01cb24f7a3583b90cf8bfa2ae0",
+    "arm": "streamed-candidate",
+    "concurrency": 32,
+    "complete_requests_required": 32,
+    "activation_probe_forbidden": true,
+    "layer35_proof": {"layer_id": 35, "candidate_path": "u8_streamed", "fallback": false}
+  },
+  "hook": {
+    "path": "streaming_global_kv_sglang_hook.py",
+    "sha256": "8423326774d7bf6da9dd7e163889a5b5b444f40fc7a4f5748e33b5dcd0426523",
+    "seam": "sglang.srt.layers.radix_attention.RadixAttention.forward",
+    "candidate_path": "u8_streamed",
+    "activation_capture_required_before_request": true
+  },
+  "immutable_inputs": {
+    "activated_source": {"path": "inputs/activated_multiresolution_global_kv.py", "sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880"},
+    "candidate_source": {"path": "streaming_global_kv_schedule.py", "sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a"},
+    "checkpoint_manifest": {"sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6", "total_bytes": 62578655208},
+    "exact_runner": {"sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7"},
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+  },
+  "economic_envelope": {
+    "authorized_cumulative_usd": 8.0,
+    "prior_actual_spend_usd": 3.4856876241250005,
+    "maximum_new_lifecycle_usd": 4.083333333333333,
+    "maximum_cumulative_exposure_usd": 7.569020957458334
+  },
+  "scientific_contract": {
+    "stock_arm_forbidden": true,
+    "materializing_c32_replay_forbidden": true,
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "c32, 4214 prompt tokens, 358 output tokens, 535 shared-prefix tokens, temperature zero"
+  }
+}

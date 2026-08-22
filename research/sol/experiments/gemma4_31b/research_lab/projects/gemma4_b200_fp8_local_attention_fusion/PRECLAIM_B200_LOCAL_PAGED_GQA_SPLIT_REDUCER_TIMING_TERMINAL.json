@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "terminal": "preclaim_timing_packet",
+  "scientific_sample_consumed": false,
+  "contract": "one B32 paired timing generation; 8 warmups and 40 samples per arm"
+}

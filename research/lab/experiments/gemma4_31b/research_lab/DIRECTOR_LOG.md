@@ -10631,6 +10631,20 @@ immediate claimant. The harness should launch the exact detached-owner command
 now; do not add a competing claimant, replay control or the component, or
 mutate provider lifecycle.
 
+## 2026-07-30T04:14Z — recover compiler resources without replay
+
+R2 completed all ten exact local/global cases with zero QKV NRMSE, byte-exact
+E5M2 cache writes, and 23.7–67.5% median component reductions. The terminal is
+acceptance-incomplete only because it omitted the required compiled
+registers/thread and spill fields; the component science is consumed.
+
+Binding `a603bb32…` activates one no-launch H200 resource inspection under the
+existing `$1` ceiling. Compile or recover only the exact WRITE_CACHE=True
+local/global specializations, persist registers and spill loads/stores, and
+release by `04:39Z`. Do not replay timing, launch the candidate, load the
+checkpoint, or run an endpoint. Endpoint promotion waits for this resource
+gate.
+
 ## 2026-07-26T18:54Z — preserve the live replacement repair owner
 
 Commit-time reconciliation finds replacement PID `1987809` live with start
@@ -13309,3 +13323,7713 @@ narrow wrapper change runs the unchanged sweep before optional profiling and
 must release on terminal or by `10:34:30Z` beneath the unchanged `10:35:00Z`
 watchdog. Keep `drain_after_release=true`; no provider, spend, profile,
 scientific-contract, or submission-count mutation occurs.
+
+## 2026-07-28T10:35Z — promote native NVFP4 to endpoint integration
+
+Consume g6 terminal
+`0838a2262bffd0d2e800bbdd0cf857c28115ae0fc6e9677b50433c7a9ff8ecb1`.
+All 24 exact Gemma linear rows passed the real vLLM NVFP4 consumers and
+oracles; the c32 linear floor is `0.268294541296782 s/request`, below the
+price-normalized component ceiling `0.29792828121450465`. This is positive
+component evidence, not an endpoint claim.
+
+No checkpoint-bearing endpoint successor could fit before the `10:35:00Z`
+watchdog. Exact instance `computeinstance-i00jxp168hnbx08c86` and disk
+`computedisk-i00vn6qwf963gvwqx3` were deleted and verified absent; retire the
+bench with `3156.416961` seconds / `$2.542669219` provider exposure.
+
+Admit `b200_nvfp4_gemma4_endpoint` (`9970/execution/$8.00`) to implement the
+exact-checkpoint native-NVFP4 endpoint and wait for a durable reservation
+before director provisioning. In parallel admit zero-GPU
+`gemma4_lossless_parallel_draft_discriminator` (`9860/deep/$0`) for one exact
+target-token/KV-commit discriminator and accepted-work hurdle. No new provider
+resource or scientific submission occurs.
+
+## 2026-07-28T10:43Z — provision the reserved B200 endpoint bench
+
+The endpoint project's `$8.00` reservation is durable. Fresh authenticated
+placement selects preemptible 1xB200 SXM in `me-west1-a` at
+`$3.95/GPU-hour`; a 90-minute compute ceiling is `$5.925`, leaving reservation
+margin for the 300-GiB disk and public address.
+
+Create exact instance `computeinstance-i00hfh66qbsqy4mx7x` and disk
+`computedisk-i00svcmxdjhpm7bkez`. Independent watchdog PID `2957637`
+protects both through `2026-07-28T12:11:59.335947Z`; register bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x` immediately in
+non-claimable maintenance. The endpoint researcher continues its offline
+native-NVFP4 loader/launcher implementation while a later director verifies
+provider address, strict SSH identity, and one idle B200/SM100. Preserve the
+independent lossless-drafting lane unchanged. No SSH, image pull, checkpoint
+transfer, CUDA invocation, endpoint, or scientific sample occurs.
+
+## 2026-07-28T10:52Z — identity-verify and release the endpoint bench to its sole claimant
+
+Authenticated provider reconciliation maps exact RUNNING instance
+`computeinstance-i00hfh66qbsqy4mx7x` and READY 300-GiB disk
+`computedisk-i00svcmxdjhpm7bkez` to `46.243.145.75`. Strict SSH binds
+ED25519 `SHA256:2peC4sW97iaa9iiga4afSGxEhtP1etNZ4ItF80ru27E`; the exact
+guest has one idle NVIDIA B200, SM100 compute capability `10.0`, `183359 MiB`,
+driver `580.159.04`, zero observed utilization/memory, and no compute process.
+
+The original cleanup deadline left less than the packet's requested
+90-minute owner window. Start and verify replacement watchdog PID `2964618`
+through `12:31:59.335947Z`, atomically replace the inventory lifecycle, then
+stop and verify old PID `2957637` dead. Maximum compute exposure is 110
+minutes / `$7.241666667`, within the unchanged `$8.00` ceiling with remaining
+disk/address margin.
+
+Mark only bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x` ready for
+`b200_nvfp4_gemma4_endpoint`. The researcher must atomically claim it, launch
+one controller-local PID owner with the shared detached-owner, consume packet
+`707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116`,
+and release by `12:27:00Z`, retaining ordinary pre-science repair inside the
+claim. No image pull, checkpoint transfer, CUDA invocation, endpoint, or
+scientific sample occurred.
+
+## 2026-07-28T10:53Z — preserve the timely endpoint claim
+
+Commit-time reconciliation supersedes the available-bench snapshot. The sole
+intended project `b200_nvfp4_gemma4_endpoint` atomically claimed exact bench
+`b200-nvfp4-endpoint-computeinstance-i00hfh66qbsqy4mx7x` at
+`10:52:53.539508Z`; its claim generation is fresh and the verified cleanup
+watchdog remains active as PID `2964618` through `12:31:59.335947Z`.
+
+Preserve that claim, packet
+`707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116`,
+the 90-minute retained-owner contract, `12:27:00Z` release bound, and `$8.00`
+authority unchanged. Do not issue a duplicate claim, launch, ready action, or
+provider mutation while the execution researcher persists its controller-local
+PID owner identity. No scientific or lifecycle mutation occurs this turn.
+
+## 2026-07-28T10:57Z — retain the claim for the manifest-stdin repair
+
+The original detached owner PID `2968993` and repair owner PID `2970327` are
+both absent. Both stopped before science at `stage_project_snapshot`: the
+remote input had config/tokenizer support but lacked
+`model.safetensors.index.json` and the two weight shards. The cause is narrow
+and source-proven: `ssh` inside the `model-files.sha256` reading loop lacks
+`-n`, consumes the loop's remaining stdin after its first row, and therefore
+prevents the remaining checkpoint rows from being copied. No image pull,
+conversion, CUDA call, endpoint, or scientific submission occurred.
+
+Preserve exact claim generation `10:52:53.539508Z`, packet
+`707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116`,
+watchdog `12:31:59.335947Z`, and release bound `12:27:00Z`. Bind
+`DIRECTOR_B200_NVFP4_ENDPOINT_SSH_STDIN_REPAIR_20260728T1057Z.json`: add only
+`ssh -n`, reconcile only the incomplete remote `bf16-source.tmp`, hash the
+final owner, and launch one replacement directly inside the existing claim.
+Do not reclaim, claim again, change science, or mutate the provider. The bench
+remains fenced `drain_after_release=true` if the retained repair cannot
+produce a terminal before release.
+
+## 2026-07-28T10:58Z — preserve the runnable staging repair
+
+The exact claim generation `10:52:53.539508Z` remains fresh, the cleanup
+watchdog is active as PID `2964618`, and no replacement owner has yet been
+persisted. Keep
+`DIRECTOR_B200_NVFP4_ENDPOINT_SSH_STDIN_REPAIR_20260728T1057Z.json` as the
+sole runnable action: add `ssh -n`, reconcile only the incomplete staging
+directory, hash the final owner, and relaunch directly inside the existing
+claim. Do not reclaim, submit a duplicate claim, clear the drain fence, change
+science, or mutate provider lifecycle. Return immediately so the execution
+researcher can consume the repair.
+
+## 2026-07-28T10:59Z — preserve the live checkpoint-transfer repair
+
+Repair-2 owner PID `2973170`, start ticks `135234099`, is live and matches
+hash-bound owner `5413e7c3b09a1868e9420b8bc4e3d1dd3500ceb803c328d6b972762518d45b30`.
+It is inside unchanged claim generation `10:52:53.539508Z`; the claim
+heartbeat is fresh at `10:59:28.700335Z`, the owner has entered
+`checkpoint_reconcile`, and watchdog PID `2964618` remains active through
+`12:31:59.335947Z`.
+
+Preserve the owner, claim, packet, `12:27:00Z` release bound, and drain fence.
+Do not launch a duplicate, reclaim, clear the fence, mutate provider
+lifecycle, or change the scientific contract while the repaired owner
+continues the exact checkpoint transfer and endpoint sequence.
+
+## 2026-07-28T11:00Z — keep the exact checkpoint transfer in flight
+
+Repair-2 owner PID `2973170` remains live with matching start ticks
+`135234099` and hash-bound owner
+`5413e7c3b09a1868e9420b8bc4e3d1dd3500ceb803c328d6b972762518d45b30`.
+The unchanged claim generation `10:52:53.539508Z` heartbeated at
+`11:00:13.770298Z`; watchdog PID `2964618` remains active through
+`12:31:59.335947Z`. The durable owner is still in `checkpoint_reconcile`,
+consistent with transferring the exact 62,578,655,208-byte source.
+
+Preserve this owner, claim, packet, `12:27:00Z` release bound, and drain
+fence. Do not duplicate the owner, reclaim, clear the fence, mutate provider
+lifecycle, or change the checkpoint, representation, workload, comparison
+order, endpoint consumer, or scientific submission count.
+
+## 2026-07-28T11:02Z — preserve the endpoint transfer and restore a deep lane
+
+Repair-2 owner PID `2973170`, start ticks `135234099`, remains live inside
+claim generation `10:52:53.539508Z`; its heartbeat is fresh at
+`11:02:28.999452Z`, the owner remains in `checkpoint_reconcile`, and watchdog
+PID `2964618` is active through `12:31:59.335947Z`. Preserve that owner,
+packet, `12:27:00Z` release bound, and drain fence without lifecycle or
+scientific mutation.
+
+The long endpoint integration left the campaign below its explicit two-lane
+floor. Admit `gemma4_exact_sublinear_head_discriminator`
+(`9860/deep/$0`) as an independent CPU-only lane. It must implement one
+certified exact-head pruning discriminator for the exact 262,144-way Gemma
+output head and measure agreement, candidate fraction, index cost, and
+whole-request relevance within 60 minutes. It may not claim or mutate the live
+B200 and cannot report component evidence as endpoint performance.
+
+## 2026-07-28T11:04Z — hold the restored two-lane allocation
+
+Repair-2 owner PID `2973170`, start ticks `135234099`, remains live inside
+claim generation `10:52:53.539508Z`; the claim heartbeated at
+`11:04:44.242918Z` and watchdog PID `2964618` remains bound through
+`12:31:59.335947Z`. Preserve its packet, `12:27:00Z` release bound, and drain
+fence without another owner, claim, lifecycle, or scientific mutation.
+
+Keep `gemma4_exact_sublinear_head_discriminator` active at
+`9860/deep/$0`. Its CPU-only next action cannot contend for the B200 and
+restores the campaign's direct-endpoint plus independent-mechanism floor.
+Make no further portfolio change before the harness dispatches that delegated
+research.
+
+## 2026-07-28T11:05Z — return the two runnable lanes to the harness
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live in claim
+generation `10:52:53.539508Z`; the claim heartbeated at
+`11:05:29.309828Z` and remains protected through `12:31:59.335947Z`.
+Preserve its packet, release bound, and drain fence unchanged.
+
+The independent `gemma4_exact_sublinear_head_discriminator` remains
+`active/deep/$0` with no session and cannot claim the B200. Keep both project
+contracts unchanged and return immediately so the harness can dispatch the
+deep lane while the endpoint owner continues.
+
+## 2026-07-28T11:06Z — preserve transfer after stale-wake suppression
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live inside unchanged
+claim generation `10:52:53.539508Z`; the claim heartbeated at
+`11:06:14.365048Z` and remains protected through `12:31:59.335947Z`.
+The supervisor confirmed the repaired owner is transferring the first exact
+weight shard and removed only stale repair-generation wakes.
+
+Preserve the endpoint owner, packet, release bound, and drain fence. Keep
+`gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`.
+Make no provider, claim, scientific, or portfolio mutation and return so the
+healthy transfer and independent delegated lane can proceed.
+
+## 2026-07-28T11:09Z — preserve live scheduling state through the transfer
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live in unchanged
+claim generation `10:52:53.539508Z`; the claim heartbeated at
+`11:08:29.599621Z` and remains protected through `12:31:59.335947Z`.
+The supervisor's stale-generation correction is sufficient; do not pause the
+endpoint project or rewrite its active session while the durable owner may
+still emit a legitimate terminal or new repair.
+
+Keep the endpoint owner, packet, release bound, and drain fence unchanged.
+Keep `gemma4_exact_sublinear_head_discriminator` active at
+`9860/deep/$0`. Make no provider, claim, scientific, profile, or portfolio
+mutation and return immediately.
+
+## 2026-07-28T11:10Z — do not hide the live owner to force a reload
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live in claim
+generation `10:52:53.539508Z`; the claim heartbeated at
+`11:09:59.781238Z` and remains protected through `12:31:59.335947Z`.
+Pausing the endpoint would also remove its PID-managed session from harness
+owner protection and legitimate repair dispatch, so the transient stale wake
+does not justify that risk.
+
+Preserve the endpoint project, owner, packet, release bound, and drain fence.
+Keep `gemma4_exact_sublinear_head_discriminator` active at
+`9860/deep/$0`. Make no lifecycle, claim, scientific, profile, or portfolio
+mutation and return.
+
+## 2026-07-28T11:13Z — preserve ownership until the scheduler fix can reload
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live in claim
+generation `10:52:53.539508Z`; the claim heartbeated at
+`11:13:00.069755Z`, remains leased through `12:13:00.069755Z`, and is
+protected by watchdog PID `2964618` through `12:31:59.335947Z`.
+
+The stale-ready suppression is present in the harness source, but its safe
+reload is deferred while this PID-managed owner is live. Do not move repair
+evidence, pause the endpoint, rewrite its active session, or otherwise trade
+legitimate owner/repair protection for fewer transient wakes. Preserve the
+endpoint packet, `12:27:00Z` release bound, and drain fence; keep
+`gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`.
+No provider, claim, scientific, profile, or portfolio mutation occurs.
+
+## 2026-07-28T11:14Z — hold the direct endpoint and exact-head lanes
+
+Repair-2 PID `2973170`, start ticks `135234099`, is still live; exact claim
+generation `10:52:53.539508Z` heartbeated at `11:14:30.258247Z` and remains
+protected through `12:31:59.335947Z`. Preserve its packet, `12:27:00Z`
+release bound, and drain fence without another owner, claim, or lifecycle
+mutation. Keep `gemma4_exact_sublinear_head_discriminator` active at
+`9860/deep/$0`; no scientific or portfolio contract changes.
+
+## 2026-07-28T11:15Z — preserve the live endpoint generation
+
+Repair-2 PID `2973170`, start ticks `135234099`, remains live in exact claim
+generation `10:52:53.539508Z`; the claim heartbeated at
+`11:15:15.340571Z` and watchdog PID `2964618` remains bound through
+`12:31:59.335947Z`. Preserve its packet, `12:27:00Z` release bound, drain
+fence, and repair lineage without a duplicate or retrospective handshake.
+Keep `gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`.
+No provider, claim, lifecycle, scientific, profile, or portfolio mutation.
+
+## 2026-07-28T11:19Z — replace the rejected centroid bound in place
+
+Consume exact-head terminal
+`5a7db872acc7fc2a303afbd8b22c4a7f08b085c8dcece937a59c07e5a9af1141`:
+the single-centroid/scalar-radius index was exact on 32/32 rows but evaluated
+98.4619% of the vocabulary and raised mean byte traffic above dense. It
+rejects that representation, not the broader certified sublinear-head line.
+
+Reactivate `gemma4_exact_sublinear_head_discriminator` at `9860/deep/$0`
+for one materially tighter hierarchical multi-prototype or
+low-rank/anisotropic certified discriminator using the already-bound exact
+weights and c32 captures. It must close the broader line if total work or
+traffic remains at dense and may not claim the B200. Preserve live endpoint
+owner PID `2973170`, claim generation `10:52:53.539508Z`, packet,
+`12:27:00Z` release bound, watchdog, and drain fence unchanged. No provider
+or lifecycle mutation occurs.
+
+## 2026-07-28T11:17Z — do not backfill the consumed repair handshake
+
+The old repair generation has `REPAIR_READY.json` but no request artifact;
+repair-2 was instead launched directly at `10:58:43.588448Z` from the bound
+director correction. Retrospectively creating that request would violate the
+handshake ordering contract. PID `2973170` remains live with matching start
+ticks, and claim generation `10:52:53.539508Z` heartbeated at
+`11:16:45.579571Z`.
+
+Preserve the endpoint owner, packet, `12:27:00Z` release bound, watchdog,
+and drain fence until the tested scheduler fix can safely reload. Keep
+`gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`.
+No provider, claim, lifecycle, scientific, profile, or portfolio mutation.
+
+## 2026-07-28T11:22Z — return the restored two-lane portfolio
+
+Endpoint repair-2 PID `2973170` remains live with matching start ticks
+`135234099`; exact claim generation `10:52:53.539508Z` heartbeated at
+`11:22:01.085352Z` and remains protected through `12:31:59.335947Z`.
+Preserve its packet, `12:27:00Z` release bound, watchdog, and drain fence.
+
+Keep `gemma4_exact_sublinear_head_discriminator` active at
+`9860/deep/$0` for its materially tighter certified discriminator. It is
+independent of and prohibited from claiming the B200. Make no provider,
+claim, lifecycle, scientific, profile, or portfolio mutation; return so the
+harness can dispatch the deep lane while the endpoint owner continues.
+
+## 2026-07-28T11:23Z — preserve the two decision-bearing lanes
+
+Repair-2 PID `2973170` remains live with matching start ticks; claim generation
+`10:52:53.539508Z` heartbeated at `11:23:31.224307Z` and remains protected
+through `12:31:59.335947Z`. Preserve its packet, `12:27:00Z` release bound,
+watchdog, and drain fence.
+
+Keep `gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`
+for the pending materially tighter certified discriminator. It remains
+independent of and prohibited from claiming the B200. Make no provider,
+claim, lifecycle, scientific, profile, or portfolio mutation; return to the
+harness.
+
+## 2026-07-28T11:27Z — bind the consumed repair generation explicitly
+
+The live endpoint session omitted the supported
+`repair_ready_sha256` marker, so the old in-memory harness kept waking the
+endpoint for an already-consumed ready generation. Bind canonical ready hash
+`dec90e2444bc88a4bc4582665eb2fcf90bb3a73976968f5f4afd8e9418b52097`
+to repair-2 active-session metadata. The ready marker predates owner launch
+by 201 seconds, and the harness now resolves no pending durable repair.
+
+Preserve PID `2973170`, claim generation `10:52:53.539508Z`, packet,
+`12:27:00Z` release bound, watchdog, drain fence, and scientific contract.
+Keep `gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`;
+the removed stale wake lets the harness dispatch that independent cycle.
+No provider, claim, lifecycle, profile, or scientific mutation occurs.
+
+## 2026-07-28T11:28Z — consume the final pre-marker wake
+
+The endpoint run that triggered this director turn ended before the explicit
+ready-consumption marker was durable. The marker now resolves the old
+generation to no pending repair; PID `2973170`, claim generation
+`10:52:53.539508Z`, watchdog, release bound, and drain fence remain valid.
+
+Keep `gemma4_exact_sublinear_head_discriminator` active at `9860/deep/$0`
+and return immediately for normal harness dispatch. No provider, claim,
+lifecycle, scientific, profile, or portfolio mutation occurs.
+
+## 2026-07-28T11:31Z — hold both occupied decision-bearing lanes
+
+Repair-2 PID `2973170` remains live with exact start ticks `135234099`;
+claim generation `10:52:53.539508Z` heartbeated at `11:31:01.933060Z` and
+is protected through `12:31:59.335947Z`. Preserve its packet,
+`12:27:00Z` release bound, watchdog, drain fence, and consumed-repair marker.
+
+The harness registry confirms
+`gemma4_exact_sublinear_head_discriminator` has been running since
+`11:23:09.674844Z` on its independent `deep/$0` cycle. Keep both scientific
+contracts unchanged. No provider, claim, lifecycle, profile, scientific, or
+portfolio mutation occurs; return immediately.
+
+## 2026-07-28T11:32Z — preserve both live research lanes
+
+Endpoint repair-2 PID `2973170` remains live with exact start ticks
+`135234099`; claim generation `10:52:53.539508Z` heartbeated at
+`11:31:46.987717Z` and remains protected through `12:31:59.335947Z`.
+Preserve its packet, release bound, watchdog, drain fence, and consumed-repair
+marker.
+
+The independent `gemma4_exact_sublinear_head_discriminator` deep cycle is
+still running from `11:23:09.674844Z`. Keep both contracts unchanged. No
+provider, claim, lifecycle, profile, scientific, or portfolio mutation occurs.
+
+## 2026-07-28T11:39Z — replace the closed exact-head lane with global-KV execution
+
+The rank-384 anisotropic exact-head discriminator closed its broader certified
+index contract: 32/32 top-1 agreement still required 78.0518% mean vocabulary
+evaluation, 97.6562% p50, 100% p90, and 107.4323% mean dense byte traffic.
+Do not spend target-GPU time on that line.
+
+Reactivate the existing `gemma4_multiresolution_global_kv_codesign` project at
+`9900/execution/$8`. Its source-complete one-tile physical screen derives
+`0.4999581203857146 s/request`, only `0.00016116118928138912` below the
+locked target, so the immediate result is an exact H200 runner followed by a
+real component and conditional c32 endpoint—not another analytical screen.
+The harness reservation is not yet durable; perform only the bound 45-minute
+offline runner/owner implementation now. Do not create a provider resource or
+touch the live B200 until a later director turn sees the exact reservation.
+
+Endpoint repair-2 remains the direct GPU lane. Preserve its owner, claim,
+packet, release bound, watchdog, drain fence, and scientific contract.
+
+## 2026-07-28T11:40Z — reserve H200 authority but keep creation gated
+
+The `$8.00` reservation for `gemma4_multiresolution_global_kv_codesign` is
+durable, and its execution researcher started at `11:39:56.794188Z`.
+`h200_component_runner.py`, `h200_endpoint_owner.sh`, and the typed
+`H200_EXECUTION_READY.json` do not yet exist. Let that bounded offline
+implementation finish; do not create an H200 until the typed terminal binds a
+real component runner and lifecycle owner.
+
+Endpoint repair-2 PID `2973170` and watchdog PID `2964618` remain live; its
+claim heartbeated at `11:40:02.654682Z`. Preserve the B200 owner, packet,
+release bound, drain fence, and scientific contract. No provider, claim,
+lifecycle, profile, or scientific mutation occurs.
+
+## 2026-07-28T11:51Z — retain the warm B200 for the conversion dependency repair
+
+Repair-2 staged the complete exact checkpoint and packet and pulled the pinned
+serving image before exiting pre-science on missing `llmcompressor`. Bind
+repair generation `b200-nvfp4-20260728T114309Z` to one same-claim replacement
+owner. It may change only the reproducibly versioned conversion dependency
+boundary, must reuse resident state, and must preserve the BF16-control then
+native-NVFP4 endpoint contract.
+
+Replace the cleanup watchdog without a protection gap: inventory now records
+watchdog PID `3044153` through `12:40:00Z`, and the superseded watchdog is
+stopped. This bounds conservative exposure from the fixed provider start to
+118 minutes and 0.664 seconds, or `$7.77` at `$3.95/hour`, within the existing `$8`
+authority. Launch by `11:58:00Z`, release by `12:35:00Z`, and retain the drain
+fence. Do not reclaim, create a provider resource, restage the checkpoint, or
+consume an extra scientific submission.
+
+## 2026-07-28T11:58Z — preserve B200 repair-4 and restore the H200 direct lane
+
+The B200 endpoint has advanced to a new same-claim repair-4 owner while the
+replacement watchdog and drain fence remain valid. Preserve that in-flight
+scientific contract without lifecycle or session mutation.
+
+Reactivate `gemma4_multiresolution_global_kv_codesign` at
+`9900/execution/$8` solely to obtain its missing durable reservation. Its
+hash-bound H200 runner, owner, and one-tile candidate are complete; the next
+evidence must be the tiny real target-runtime call, then one component pair
+and a conditional c32 endpoint pair. The current spend snapshot lacks the
+exact reservation, so create no H200 this turn. The researcher must not run
+another offline preparation cycle or touch provider APIs while the bench is
+absent.
+
+## 2026-07-28T12:05Z — create and protect the global-KV H200 in maintenance
+
+The exact `$8` reservation is durable. The regional selector chose
+high-availability preemptible H200 capacity in Nebius `eu-north1`; create
+instance `computeinstance-e00f01gpfve0e49wb3` and disk
+`computedisk-e00ywd3j5beypye022` once. Watchdog PID `3058984` protects the
+allocation through `14:32:10.882252Z`; the 150-minute maximum is `$6.15` at
+`$2.46/hour`. Register bench
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3` in maintenance before
+SSH or setup.
+
+Pause `gemma4_multiresolution_global_kv_codesign` behind the director SSH/GPU
+identity gate; no claim, image pull, CUDA call, component, endpoint, or sample
+occurred. B200 repair-4 exited concurrently before this commit-time check, but
+its claim remains cleanup-protected; do not rewrite that separate repair
+lineage in this lifecycle decision.
+
+## 2026-07-28T12:10Z — open the verified H200 lane and narrow the warm B200 repair
+
+Strict SSH verified ED25519
+`SHA256:CG1BmLhfmnAtzZyC51R5ea0wA3pgbaLFMGxiXF6pZpQ` and one idle
+143,771-MiB NVIDIA H200 with MIG disabled. Mark
+`h200-global-kv-computeinstance-e00f01gpfve0e49wb3` ready and reactivate
+`gemma4_multiresolution_global_kv_codesign` at `9900/execution/$8`. Launch
+its bound PID owner by `12:18:00Z`; the first real component is the compile
+check, ordinary endpoint binding repair stays inside the claim, and release
+is due by `13:20:00Z`.
+
+Repair-4 on the B200 failed before conversion because its unconstrained
+`llmcompressor` overlay replaced the serving runtime's core dependency graph.
+Bind repair `b200-nvfp4-20260728T120034Z` to one no-resolver compatible
+producer repair in the existing claim. Reuse the staged checkpoint, packet,
+and image; launch by `12:17:00Z`, preserve BF16-control then native-NVFP4
+science, and release by `12:35:00Z`. No provider creation, reclaim, cold
+restart, or scientific submission occurs in this decision.
+
+## 2026-07-28T12:19Z — spend the final B200 minutes on the resident CLI adapter
+
+B200 repair-5 completed the isolated `llmcompressor==0.12.0` producer and
+dependency manifest, then exited pre-conversion because the packet invoked
+the package as `python -m llmcompressor`, but that release has no
+`llmcompressor.__main__`. Preserve the original claim and all resident state.
+Bind repair `b200-nvfp4-20260728T121626Z` to one project-local converter
+adapter that invokes the installed console entrypoint; do not reinstall,
+restage, or mutate the packet.
+
+Replace the B200 cleanup watchdog without a protection gap. The new watchdog
+PID `3075854` protects through `12:43:00Z`, bounding fixed-start exposure to
+about `$7.97` within the existing `$8` authority. Launch the replacement by
+`12:25:00Z`, release by `12:40:00Z`, and start only arms that fit. Preserve
+the concurrently live H200 global-KV owner and its unchanged contract.
+
+## 2026-07-28T12:25Z — close the B200 attempt and repair the live H200 component
+
+B200 repair-6 reached the corrected `llmcompressor` oneshot path, then failed
+pre-conversion because Gemma4Processor required missing `torchvision`. A
+further dependency repair plus conversion and both endpoints cannot fit the
+remaining fixed `$8` lifecycle. Release exact claim generation
+`10:52:53.539508Z`, delete instance
+`computeinstance-i00hfh66qbsqy4mx7x` and disk
+`computedisk-i00svcmxdjhpm7bkez`, verify both absent, stop the watchdog, and
+retire the bench. Settled exposure is 6,141.241127 seconds or `$6.738306`;
+the attempt is operationally inconclusive and does not reject native NVFP4.
+
+Keep the H200 global-KV claim. Its pinned image pulled and the real component
+command began, but SGLang import failed before CUDA because the container ran
+as unmapped UID 1001. Bind one owner-only repair: use the image-default user,
+normalize only output ownership after exit, replace the heartbeat-only owner
+by `12:31:00Z`, and continue into the unchanged component and conditional
+endpoint contract. No new provider, claim, or scientific submission occurs.
+
+## 2026-07-28T12:33Z — promote the H200 component into production endpoint integration
+
+The retained H200 produced a valid real component pair after localized UID and
+Triton-constexpr repairs. Prefill/verify/decode use 57/37/26 compact entries,
+all outputs are finite, request ownership passes, and fallback is absent.
+This consumes the component arm but is not endpoint performance.
+
+Bind the exact 62,578,655,208-byte checkpoint manifest and c32 runner from the
+qualified H200 packet. The next deep cycle must implement the candidate from
+post-RoPE global-KV writes through the production SGLang global-attention
+consumer, preserve every local layer on the stock path, adopt the settled
+component without replay, and launch an endpoint-only owner by `12:45:00Z`.
+Run one stock-then-candidate c32 pair and release by `14:25:00Z`.
+
+The existing watchdog already protects the provider through
+`14:32:10.882252Z`; its fixed 150-minute exposure is `$6.15` at `$2.46/hour`,
+within the durable `$8` authority. Preserve PID `3070398` until the replacement
+owner is hash-bound. No provider, claim, component replay, profile, or
+scientific submission occurs in this director decision.
+
+## 2026-07-28T12:35Z — dispatch the bound H200 endpoint integration
+
+The endpoint binding remains runnable: PID `3070398` matches start ticks
+`135696058`, the original claim is current, no endpoint owner or terminal has
+appeared, and the `12:45:00Z` replacement fence has sufficient harness
+runway. Preserve the deep production-hook contract, `14:25:00Z` release,
+`14:32:10.882252Z` watchdog, and `$8` authority unchanged. Return immediately
+for harness dispatch; defer optional portfolio expansion until the warm
+endpoint owner is launched. No provider, claim, lifecycle, profile, source,
+scientific, or submission-count mutation occurs.
+
+## 2026-07-28T12:43Z — authorize the endpoint-only H200 owner transition
+
+The live predecessor cannot adopt endpoint work: its only accepted repair
+scope replays the consumed component, while endpoint scope exits unsupported.
+Bind an explicit same-claim transition instead. The researcher must prepare
+and hash the production integration and endpoint-only owner, send no repair
+request, stop only PID `3070398` with start ticks `135696058`, and immediately
+launch the exact replacement command by `12:58:00Z`.
+
+Adopt component result `c4374f2b...` without replay, stage the exact checkpoint
+resumably, run one stock-then-candidate c32 endpoint pair, and release by
+`14:25:00Z`. The existing claim, `$8` authority, and watchdog through
+`14:32:10.882252Z` remain unchanged; no provider or scientific mutation
+occurs in this decision.
+
+## 2026-07-28T12:46Z — hold the occupied endpoint-transition lane
+
+The harness has run the deep global-KV researcher since `12:42:11.035427Z`
+against the endpoint-only transition binding. At commit time the predecessor
+PID `3070398` still matches start ticks `135696058`, no endpoint replacement
+or terminal exists, and the `12:58:00Z` launch fence retains 719 seconds of
+runway. Preserve the in-flight implementation and its existing claim,
+`14:25:00Z` release, and `14:32:10.882252Z` watchdog. No provider, lifecycle,
+session, source, scientific, profile, or portfolio mutation occurs.
+
+## 2026-07-28T12:52Z — preserve the corrected endpoint owner
+
+The first endpoint-only owner exited pre-science on a localized inventory
+schema parser defect. The active researcher made the permitted immediate
+same-turn correction: retry PID `3109321` matches start ticks `135911495`,
+has crossed the repaired boundary, adopted the settled component without
+replay, and is staging the exact checkpoint under the continuous original
+claim. Preserve this owner, deep contract, `14:25:00Z` release, and
+`14:32:10.882252Z` watchdog. No provider, lifecycle, scientific, profile, or
+portfolio mutation occurs.
+
+## 2026-07-28T12:58Z — preserve H200 execution and reopen B200 producer completion
+
+H200 endpoint retry PID `3109321` still matches start ticks `135911495`; its
+claim is current, no endpoint terminal or repair exists, and resumable
+checkpoint staging remains the direct lane. Preserve it unchanged through the
+`14:25:00Z` release and `14:32:10.882252Z` watchdog.
+
+Restore the independent native-NVFP4 B200 line in the same scientific project
+at `9800/execution`. Its prior `$6.738306` attempt ended pre-science at the
+Gemma4Processor/torchvision boundary, so bind one 90-minute, zero-GPU producer
+completion cycle. It must produce a closed dependency bundle and final owner
+or a typed negative, then pause. Raise the cumulative project ceiling to
+`$19`; create no provider until the harness exposes that reservation and the
+ready artifact is durable. A later 180-minute B200 lifecycle is at most
+`$11.85`, keeping cumulative project exposure below the new ceiling.
+
+## 2026-07-28T13:05Z — consume the superseded H200 repair wake
+
+The root `REPAIR_READY.json` hash `ae183733...` predates endpoint owner
+`3109321/135911495` by about 31 minutes and belongs to the superseded component
+owner. Record that digest on the live active session so the current harness
+stops scheduling no-progress repair turns while the endpoint owner transfers
+the checkpoint. The owner, claim, transfer, scientific contract, release,
+watchdog, and independent B200 lane remain unchanged.
+
+## 2026-07-28T13:13Z — advance the closed B200 producer to reservation
+
+The H200 endpoint owner remains live and staging, with no terminal or new
+repair. Independently, the native-NVFP4 producer emitted a hash-matching ready
+artifact: the isolated Gemma4Processor boundary passes, the dependency bundle
+and owner are locked, and science remains unconsumed. Reactivate that project
+only to obtain its durable `$19` cumulative reservation. Its prior
+`$6.738306` spend plus a maximum 180-minute B200 lifecycle at `$3.95/hour` is
+`$18.588306`; no provider resource may be created until the reservation is
+visible in a later snapshot.
+
+## 2026-07-28T13:23Z — provision the independent B200 execution lane
+
+The durable `$19` reservation covers prior spend plus at most 180 new B200
+minutes. Region-agnostic placement selected high-availability preemptible
+`gpu-b200-sxm-a` at `$3.95/hour`; create and registration produced instance
+`computeinstance-i00rqcq5yzr6xc991j`, disk
+`computedisk-i00ky31am65pmpzh8z`, and maintenance bench
+`b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j`, protected through
+`16:19:08Z`. Strict SSH and one idle 183,359-MiB B200 passed.
+
+The locked owner still embeds the retired lifecycle and assumes packet and
+calibration bytes are resident. Bind that localized mutable repair inside the
+first retained claim—plus continuous repair ownership and terminal release—
+then run the unchanged BF16-control/native-NVFP4 c32 pair. Claim by `13:27Z`
+and release by `16:10Z`. Preserve the concurrent H200 endpoint owner.
+
+## 2026-07-28T13:29Z — resume only the unconsumed H200 candidate
+
+The H200 stock c32 endpoint passed at `0.7010773845312315 s/request`.
+Candidate launch then succeeded, but one uncaught 15-second health-curl
+timeout aborted the worker before `candidate-science-started.json`; the
+checkpoint, stock terminal, claim, and watchdog remain valid.
+
+Bind a same-claim candidate-only owner replacement at `execution`: catch
+health-poll timeouts, reuse the exact candidate container when safe, never
+replay component, checkpoint staging, or stock, and launch by `13:44Z` for
+release by `14:25Z`. Preserve the independent live B200 owner unchanged.
+
+## 2026-07-28T13:32Z — hold both occupied endpoint lanes
+
+H200 predecessor `3109321/135911495` and B200 repair-1
+`3150356/136134516` remain live with matching process identities. The H200
+candidate-only replacement retains more than eleven minutes of launch runway;
+B200 is already staging under its retained claim. Preserve both bindings and
+their execution profiles with no provider, lifecycle, scientific, or
+portfolio mutation.
+
+## 2026-07-28T13:37Z — bridge the live harness to H200 repair-2
+
+The running harness generation cannot discover the endpoint-suffixed repair
+marker and cannot reload without killing both durable owners. Preserve the
+superseded component ready/request pair under non-discoverable names and
+publish canonical shared-handshake marker `1d49125d...`, bound to
+`REPAIR_READY_ENDPOINT2.json` hash `7e6bbfec...` and the existing
+candidate-only director directive.
+
+This marker wakes exactly one execution researcher; it is scheduling-only and
+must not signal the request-blind predecessor. Preserve both claims, the B200
+transfer, the H200 stock/component/checkpoint evidence, and all lifecycle
+deadlines.
+
+## 2026-07-28T13:48Z — reuse warm H200 for fail-fast activation repair
+
+Consume `ENDPOINT_PAIR_TERMINAL.json` as an invalid-activation attempt, not a
+global-KV mechanism result: stock passed at `0.7010773845312315 s/request`,
+but the slower `0.8379872799375221` candidate persisted zero intervention
+telemetry rows and no phases. Preserve both raw timings and prohibit inference
+from the candidate label.
+
+Keep the released H200 warm because its exact 62.6-GB checkpoint and pinned
+image are resident. Admit one `execution` repair of explicit hook
+registration: a real probe must emit fresh owned telemetry with non-null
+compact entries and `fallback=false` before at most one corrected candidate
+c32 arm; otherwise return `intervention_not_activated` and release
+immediately. Claim by `13:52Z`, release by `14:25Z`, and preserve the live
+B200 owner unchanged. The maximum `$1.517` incremental H200 exposure remains
+inside the existing `$8` reservation.
+
+## 2026-07-28T13:51Z — preserve the timely H200 activation claim
+
+The warm activation repair atomically claimed the exact H200 at
+`13:50:48.206984Z`, before its `13:52Z` fence. The claim is current and the
+resident checkpoint/image plus `14:25Z` release and `14:32:10Z` watchdog
+remain unchanged. Preserve the researcher's claim-to-owner transition; do not
+extend the consumed start fence, reclaim, release, or alter the fail-fast
+telemetry-first contract.
+
+The independent B200 repair-1 owner remains continuously claimed and staging.
+No provider, lifecycle, scientific, profile, or portfolio mutation occurs.
+
+## 2026-07-28T13:54Z — preserve both live endpoint owners
+
+H200 activation-repair owner `3172882/136277541` launched durably at
+`13:52:38Z` under the timely warm claim. It retains the resident checkpoint
+and image and is entering the explicit hook-import probe before any corrected
+c32 submission; the `14:25Z` release and telemetry-first stop rule still fit.
+
+B200 repair-1 owner `3150356/136134516` also remains live under its independent
+claim while reconciling the exact checkpoint. Preserve both execution
+profiles and scientific contracts. No provider, lifecycle, allocation, or
+portfolio mutation occurs.
+
+## 2026-07-28T13:59Z — correct the H200 global-layer activation predicate
+
+Repair-3 completed one real probe but correctly prohibited c32 after zero
+telemetry. The cause is now source-localized: the hook predicate selects
+`q32/kv16/d256` local-attention geometry, while the measured global component
+is `q32/kv4/d512`. This terminal rejects activation plumbing, not the
+global-KV mechanism; corrected candidate c32 remains unsubmitted.
+
+Reactivate the same project at `execution` for one warm repair-4. Hash-bind
+only the global predicate and one-shot install/match diagnostics, replace only
+the healthy wrong-predicate candidate container, and require a fresh c1
+telemetry proof before at most one corrected candidate c32. Claim by `14:05Z`
+and release by `14:25Z`; the measured 272-second startup/probe cycle fits.
+Preserve B200 owner `3150356/136134516` unchanged.
+
+## 2026-07-28T14:04Z — preserve the timely repair-4 owner
+
+The warm H200 was claimed at `14:02:56.070680Z`, before its original
+`14:05Z` fence, and repair-4 owner `3183625/136340115` is now durable under
+that claim. Preserve the original 1200-second lease, `14:25Z` release,
+`14:32:10Z` watchdog, telemetry-first gate, resident checkpoint/image, and
+no-replay contract without another scheduling or lifecycle mutation.
+
+Preserve live B200 owner `3150356/136134516` and its independent claim
+unchanged.
+
+## 2026-07-28T14:06Z — preserve both progressing GPU lanes
+
+H200 repair-4 owner `3183625/136340115` remains live under the timely claim.
+It adopted the exact component without replay and reused the verified
+62,578,655,208-byte checkpoint; its active SSH child is now crossing the
+corrected server/probe boundary. No repair-4 terminal or repair marker exists,
+and the `14:25Z` release still leaves ample room for the gated c1 and
+conditional c32.
+
+B200 repair-1 owner `3150356/136134516` also remains live and heartbeating
+while an active `scp`/SSH child reconciles the exact checkpoint. Preserve both
+execution profiles, claims, immutable scientific contracts, and watchdogs.
+No provider, lifecycle, allocation, or portfolio mutation is warranted.
+
+## 2026-07-28T14:14Z — adopt the consumed H200 c32 without replay
+
+Repair-4 proved explicit global-KV activation on a real c1 request: 6,086
+telemetry rows, compact entries `26`, and `fallback=false`. Candidate c32 then
+crossed its science marker and persisted all 32 request/response files, but
+the live hook OOMed at global layer 35 and the server exited before the driver
+could retrieve post-run metrics. This closes the exact implementation's c32
+memory feasibility, not global-KV as a mechanism; the missing derived terminal
+does not authorize another request.
+
+Bind one execution-profile, same-claim terminal-adoption replacement by
+`14:18Z`. It may only reconstruct a typed result from
+`endpoint-repair4-compact.tar.gz`, preserve unavailable latency honestly, and
+release to maintenance by `14:24Z`. A canonical scheduling bridge wakes the
+live harness without signaling predecessor `3183625/136340115`. Preserve B200
+repair-2 `3188699/136376016` and its independent checkpoint continuation.
+
+## 2026-07-28T14:26Z — retire terminal H200 and bind retained B200 repair-3
+
+Commit-time reconciliation found H200 terminal adoption complete. Repair-4
+proved activation at c1, but its consumed c32 OOMed at global layer 35 after
+persisting all 32 requests and responses; this closes only the exact
+implementation's c32 memory feasibility. With no compatible experiment able
+to fit the remaining watchdog, delete and verify absent instance
+`computeinstance-e00f01gpfve0e49wb3` and disk
+`computedisk-e00ywd3j5beypye022`, then retire the bench. Measured exposure is
+`$5.6468836549666666`.
+
+B200 repair-2 exited before science because its offline wheelhouse cannot
+satisfy bootstrap pin `pip==26.1.2`. Retain the warm claim and bind one
+execution repair-3 by `14:30Z`: derive a runtime lock omitting only that exact
+bootstrap line, use the venv's bundled pip, preserve image/checkpoint/packet,
+and continue the unchanged BF16-control then native-NVFP4 c32 pair. Release
+by `16:10Z`; the supervisor's drain-after-release fence remains in force.
+
+## 2026-07-28T14:33Z — resume B200 conversion through the JSONL adapter
+
+Repair-3 cleared the offline pip bootstrap defect and reached native-NVFP4
+conversion without consuming either endpoint arm. Conversion then failed
+because `llmcompressor 0.12.0` interprets the absolute calibration JSONL
+string as a dataset registry name.
+
+Retain the warm B200 claim and bind execution repair-4 by `14:37Z`. Load the
+same calibration bytes through the installed JSON dataset loader into a
+Dataset object, change no producer or scientific semantics, resume at
+conversion, and preserve the BF16-control then native-NVFP4 c32 order.
+Release by `16:10Z`; drain-after-release remains set.
+
+## 2026-07-28T14:34Z — preserve the runnable B200 repair-4
+
+Repair-3 is absent after durably exposing the pre-science calibration-registry
+failure; no endpoint arm was consumed. The continuous B200 claim, resident
+image/checkpoint/producer environment, watchdog, and canonical repair-4 bridge
+remain valid. Preserve the execution repair exactly as bound for launch by
+`14:37Z`, with release by `16:10Z` and drain-after-release unchanged. Do not
+restage inputs, widen the adapter change, or admit competing work during this
+near-term warm handoff.
+
+## 2026-07-28T14:38Z — bound finite tokenizer length for B200 repair-5
+
+Repair-4 loaded the exact one-row calibration JSONL and reached tokenization,
+but Gemma's unbounded `model_max_length` sentinel overflowed the tokenizers
+truncation API before calibration or quantization. Both endpoint arms remain
+unconsumed.
+
+Retain the B200 claim and bind execution repair-5 by `14:42Z`: pass
+`max_seq_length=512` to the existing Dataset-based adapter, preserving the
+short calibration row and every immutable scientific identity. Resume at
+conversion, retain the BF16-control/native-NVFP4 order, and release by
+`16:10Z` with drain-after-release unchanged.
+
+## 2026-07-28T14:40Z — preserve live B200 repair-5 conversion
+
+Commit-time reconciliation found repair-5 owner `3221455/136548263` durably
+live and already across `calibration_length_resume` into conversion. The
+amended adapter uses finite length `4096` rather than the proposed `512`; the
+single bound calibration row is shorter than either cap, so no calibration
+bytes or truncation semantics changed. Preserve the live conversion, exact
+claim, ordered endpoint arms, `16:10Z` release, and drain-after-release fence
+without another repair or portfolio mutation.
+
+With the live direct-GPU lane safe, admit independent zero-GPU deep project
+`gemma4_streaming_global_kv_memory_schedule`. It must turn the measured
+layer-35 c32 OOM into a complete allocation-lifetime model and one concrete
+semantics-preserving streamed/layer-local implementation or typed rejection;
+it cannot claim the B200 or delay repair-5.
+
+## 2026-07-28T14:43Z — hold conversion and independent memory analysis
+
+B200 repair-5 owner `3221455/136548263` remains live after
+`calibration_length_resume`; its claim heartbeat is current through
+`14:42:15Z`, conversion is the latest durable phase, and neither endpoint
+terminal nor a newer repair exists. Preserve the exact claim, ordered
+BF16-control/native-NVFP4 c32 contract, `16:10Z` release, and
+drain-after-release fence without mutation.
+
+`gemma4_streaming_global_kv_memory_schedule` remains the independent zero-GPU
+deep lane. Its discriminator is not yet durable, so preserve its active
+mechanism-level assignment and do not add another support or competing B200
+project this cycle.
+
+## 2026-07-28T14:44Z — preserve the two-lane portfolio
+
+Repair-5 owner `3221455/136548263` remains live and heartbeating after the
+finite-tokenization repair, with conversion still the latest durable phase
+and no endpoint terminal or newer repair. Preserve the B200 claim, science
+order, release deadline, and drain fence unchanged.
+
+The independent streaming-memory deep lane still owes its discriminator.
+Keep it active and bench-free; the direct GPU plus causal-analysis pair
+already satisfies the current campaign lane requirement, so no additional
+project or lifecycle action is admitted.
+
+## 2026-07-28T14:44:51Z — no rebalance before a material result
+
+Commit-time state is unchanged: repair-5 `3221455/136548263` is live with a
+current B200 claim and conversion remains the latest durable phase; no
+endpoint terminal or replacement repair exists. The streaming-memory deep
+lane still owes its discriminator. Preserve both contracts and the existing
+drain-after-release fence; make no provider or portfolio mutation until one
+lane produces decision-bearing evidence.
+
+## 2026-07-28T14:51Z — replace native NVFP4 with B200 runtime FP8
+
+The retained producer terminal is conclusive only for its exact route:
+`llmcompressor 0.12.0` wrote BF16 shards without the required symmetric
+float4 W4A4 group-16 configuration. Neither endpoint arm was submitted.
+Close that representation attempt and admit independent execution project
+`gemma4_b200_dynamic_fp8_endpoint` for one exact c32 BF16-control/runtime-FP8
+pair against the fixed denominator and price-normalized target.
+
+The released B200 exactly matches this successor, so keep it protected in
+`draining` rather than deleting and later recreating the same accelerator.
+Its prior project has only about `$0.412` authority remaining: do not return
+the bench to ready or allow a claim until the new `$8` reservation is durable.
+Preserve the zero-GPU streaming-memory deep lane unchanged.
+
+## 2026-07-28T14:54Z — fund and ready retained B200 for runtime FP8
+
+The successor reservation is now durable at `$8`. One exact provider check
+found retained instance `computeinstance-i00rqcq5yzr6xc991j` RUNNING, disk
+`computedisk-i00ky31am65pmpzh8z` READY, and the recorded watchdog active
+through `16:19:08Z`. Cancel the drain fence and return the same B200 to ready
+for only `gemma4_b200_dynamic_fp8_endpoint`; recreating an identical cold B200
+would lose time and checkpoint/image reuse without changing the question.
+
+Bind execution by `14:59Z` under
+`DIRECTOR_B200_DYNAMIC_FP8_EXECUTION_20260728T1454Z.json`: preserve the exact
+checkpoint, workload, and pinned image; run BF16 control before a
+probe-gated runtime dynamic-FP8 c32 candidate; reject all prior NVFP4 shards;
+and release by `16:10Z`. The remaining lifecycle narrows compute authority to
+75 claimed minutes while staying within the `$8` reservation. Preserve the
+independent zero-GPU streaming-memory deep lane unchanged.
+
+## 2026-07-28T14:58Z — replace only the B200 launch fence
+
+Commit-time reconciliation found the B200 safe, available, and unclaimed, but
+the original `14:59Z` fence no longer has scheduling runway. Durable local
+materializer `3242485/136660289` is still active through a `15:15Z` terminal
+deadline while an older copy graph finishes the other shard; neither process
+is GPU science, and neither is safe to interrupt or duplicate from this turn.
+
+Supersede only the launch envelope with
+`DIRECTOR_B200_DYNAMIC_FP8_LAUNCH_ENVELOPE_20260728T1458Z.json`. Require the
+exact materializer's valid terminal, prohibit any new copy or retry, then
+claim by `15:18Z` and release by `16:10Z`. The shortened 52-minute B200 window
+still fits the retained-image BF16-control/dynamic-FP8 pair; checkpoint,
+workload, precision gate, denominator, reservation, and the independent
+streaming-memory deep lane remain unchanged.
+
+## 2026-07-28T15:02Z — bind the missing B200 owner and extend its watchdog
+
+The snapshot owner is still live and only shard 1 has passed manifest
+verification. More importantly, the project has no dynamic-FP8 owner or
+driver adaptation, so the `15:18Z` claim fence cannot produce GPU science.
+Preserve the materializer without another copy, and bind the only remaining
+offline seam to `b200_dynamic_fp8_owner.sh` and
+`dynamic_fp8_endpoint_driver.py` with an exact detached-owner invocation.
+
+The `$8` reservation covers retained exposure through `16:45Z`. Start and
+verify replacement watchdog
+`gemma4-b200-dynamic-fp8-20260728t1502z-watchdog.service`, atomically replace
+the inventory lifecycle, then stop the old watchdog without an unprotected
+interval. Under
+`DIRECTOR_B200_DYNAMIC_FP8_RUNNABLE_OWNER_20260728T1502Z.json`, claim only
+after the snapshot terminal and owner hashes exist, by `15:28Z`; release by
+`16:35Z`. The BF16-control/FP8-probe/dynamic-FP8 c32 contract is unchanged.
+
+## 2026-07-28T15:07Z — adopt verified snapshot and restore the direct lane
+
+The portfolio emptied because snapshot owner `3242485/136660289` exited after
+its `sha256sum -c` consumer recorded all eight required files `OK`, but before
+the later JSON constructor wrote `SNAPSHOT_TERMINAL.json`. This is a
+result-construction failure, not missing checkpoint evidence.
+
+Reactivate `gemma4_b200_dynamic_fp8_endpoint` under
+`DIRECTOR_B200_DYNAMIC_FP8_TERMINAL_ADOPTION_AND_LAUNCH_20260728T1507Z.json`.
+Adopt a terminal from the bound verification-log and manifest hashes plus
+shard stat sizes without shard I/O, then implement the already-named owner and
+driver and claim by `15:32Z`. Preserve the `16:35Z` release, `16:45Z`
+watchdog, `$8` ceiling, and unchanged BF16-control/FP8-probe/dynamic-FP8 c32
+contract. Defer broader portfolio refill until this warm claim handoff is
+durable.
+
+## 2026-07-28T15:12Z — retain B200 claim for endpoint repair-1
+
+The adopted snapshot, owner, and driver are durable; the B200 was claimed at
+`15:10:30Z` and owner `3254267/136744835` is live and heartbeating. Its first
+remote worker failed before a server or science marker because
+`run_endpoint_pair.sh` constructs `out/container` from `name` inside the same
+`local` declaration that assigns `name`, which is invalid under `set -u`.
+
+Bind `DIRECTOR_B200_DYNAMIC_FP8_ENDPOINT_REPAIR1_20260728T1512Z.json`. Split
+only that declaration, hash-bind a replacement owner, write the existing
+repair generation's request, then stop only the exact predecessor and start
+repair-1 by `15:18Z` under the continuous claim. Do not repeat checkpoint or
+snapshot work, release, or change the BF16-control/FP8-probe/dynamic-FP8 c32
+contract; release remains `16:35Z`.
+
+## 2026-07-28T15:19Z — preserve the converging same-claim B200 repair
+
+Commit-time reconciliation found repair-2 owner `3260799/136787441` live
+under the continuous claim with a current `15:18:22Z` heartbeat. Its latest
+endpoint worker again returned before any BF16 request and emitted repair
+generation `b200-dynamic-fp8-20260728T151757Z`; concurrently bound launcher
+bytes are still changing, so another director patch or replacement contract
+would race the active execution repair.
+
+Preserve the exact B200 claim, repair owner, unconsumed
+BF16-control/FP8-probe/dynamic-FP8 c32 order, `16:35Z` release, and `16:45Z`
+watchdog. `STATUS.json` is now parse-valid and records the live repair-2
+session. Do not add a competing project or perform lifecycle work before the
+current repair produces a durable discriminator or terminal.
+
+## 2026-07-28T15:20Z — retrieve the retained B200 start failure before repair-3
+
+Repair-2 owner `3260799/136787441` remains live under the continuous claim,
+but its corrected worker returned through the code-70 container-exit path
+before any BF16 request. Controller stdout, stderr, and repair diagnostic are
+empty; the worker deliberately persisted the causal error only in retained
+remote `bf16_control/server.log`. Another guessed launcher patch is therefore
+not decision-bearing.
+
+Bind one execution-profile remote discriminator under
+`DIRECTOR_B200_DYNAMIC_FP8_ENDPOINT_REMOTE_DISCRIMINATOR_REPAIR3_20260728T1520Z.json`.
+It retrieves only retained start evidence, then admits repair-3 by `15:30Z`
+only for one proven narrow adapter defect; an unsupported route or unsafe
+environment instead terminalizes and releases. Preserve the unconsumed
+BF16-control/FP8-probe/dynamic-FP8 c32 order, `16:35Z` release, and `16:45Z`
+watchdog.
+
+## 2026-07-28T15:31Z — retain B200 for one c64 falsifier and reopen deep analysis
+
+The completed B200 endpoint proves real runtime FP8 and a 52.98% reduction
+from its matched BF16 control, but `0.633995593312477 s/request` remains 26.8%
+above the fixed campaign target. The healthy FP8 server is resident in
+maintenance, so deleting it before selecting the next experiment would throw
+away the cheapest compatible evidence path.
+
+Admit `gemma4_b200_dynamic_fp8_c64_saturation` with a `$5` ceiling. It first
+hash-binds a minimal owner/driver offline and cannot claim until its
+reservation is durable and the director marks this exact bench ready; the
+eventual science is one c64 arm, not a sweep or replay. In parallel admit
+zero-GPU deep project `gemma4_b200_fp8_residual_hotpath` to trace the measured
+FP8 consumer through exact Gemma geometry and B200 behavior into one
+source-level intervention or typed rejection. Retain the bench in maintenance
+under its existing `16:45Z` watchdog; no provider lifecycle mutation is
+warranted this turn.
+
+## 2026-07-28T15:35Z — fund c64 preparation while protecting the loaded B200
+
+The c64 successor's `$5` reservation is now durable, but its required
+`b200_fp8_c64_driver.py`, `b200_fp8_c64_saturation_owner.sh`, and
+`PRECLAIM_TERMINAL.json` do not yet exist. The exact bench remains safely in
+maintenance with the healthy runtime-FP8 server loaded through the `16:45Z`
+watchdog.
+
+Keep c64 preparation active and bench-free; remove only the satisfied
+reservation prerequisite. It must pause once the owner/driver terminal is
+durable, after which a director turn can atomically mark this exact bench
+ready with a fresh claim fence. Preserve the independent deep hot-path lane.
+No provider or server mutation is warranted before executable bytes exist.
+
+## 2026-07-28T15:40Z — reject the first c64 preclaim packet and rebind absolute evidence
+
+The c64 files now exist, but the packet cannot safely unlock the retained
+B200. Its recorded owner and driver hashes no longer match the current bytes,
+it binds the aggregate endpoint terminal whose BF16 and paired-delta fields
+were invalidated by duplicate execution, and the owner lacks the required
+fail-closed census for competing request executors.
+
+Bind one offline execution repair under
+`DIRECTOR_B200_C64_PRECLAIM_REBIND_20260728T1540Z.json`. It must bind only the
+32/32 absolute FP8 terminal at `0.633995593312477 s/request`, add the executor
+fence and fresh output generation, then hash the final owner/driver bytes and
+atomically replace the preclaim terminal by `15:48Z`. Keep the healthy server
+and exact B200 in maintenance; do not claim or mutate it this turn. The
+zero-GPU deep lane is narrowed to the same absolute FP8 evidence and may not
+reason from the corrupted paired result.
+
+Commit-time concurrent preparation repaired the absolute-terminal and final
+hash bindings. Its executor fence is controller-local, however, and does not
+exclude an orphan remote request driver. The rebind therefore remains active
+only for that remote census plus the resulting final owner rehash.
+
+## 2026-07-28T15:44Z — restore c64 only to the reservation gate
+
+The c64 packet now binds the valid absolute FP8 terminal, final owner/driver
+hashes, fresh output generation, and both controller and remote-guest executor
+censuses. It is runnable, but the current authoritative spend snapshot no
+longer contains the project's prior `$5` reservation.
+
+Reactivate `gemma4_b200_dynamic_fp8_c64_saturation` only so the harness can
+reserve its `$5` ceiling. Keep the healthy loaded B200 unclaimed in
+maintenance and forbid researcher, server, claim, and provider mutation until
+that exact reservation is durable. On the next director wake, revalidate the
+packet and bench once, then either issue a fresh claim envelope that fits the
+`16:45Z` watchdog or drain if no safe execution window remains. Preserve the
+independent zero-GPU residual-hotpath project unchanged.
+
+## 2026-07-28T15:46Z — run the serialized warm B200 c64 arm
+
+The c64 project's `$5` reservation is durable. Commit-time reconciliation
+matched the final preclaim, owner, and driver hashes; the packet binds both
+controller and remote-guest executor censuses, and the exact B200 remained
+unclaimed with its healthy runtime-FP8 server resident.
+
+Mark only `gemma4_b200_dynamic_fp8_c64_saturation` ready under
+`DIRECTOR_B200_C64_RUN_20260728T1546Z.json`. Claim by `15:52Z`, launch the
+exact detached owner, submit one c64 arm with no c32 or BF16 replay, and
+release to maintenance by `16:30Z`, leaving 15 minutes before the `16:45Z`
+watchdog. Preserve the independent residual-hotpath deep lane unchanged.
+
+## 2026-07-28T15:48Z — preserve the runnable c64 handoff
+
+Commit-time state still matches the `15:46Z` binding: the exact B200 is
+available and unclaimed, the c64 project is active with durable reservation,
+and `15:52Z` retains more than one scheduler interval of launch runway.
+Preserve the exact owner, one-arm contract, `16:30Z` release, and `16:45Z`
+watchdog without rebinding or lifecycle mutation. Keep the independent
+residual-hotpath deep lane bench-free.
+
+## 2026-07-28T15:52Z — preserve c64 repair-2 through terminal retrieval
+
+The first claimed owner stopped before science on an overly strict resident
+container-status check even though a retained probe then returned HTTP 200.
+The concurrent localized repair corrected only that parser. Its first detached
+invocation never entered the owner because the shell file was not executable;
+repair-2 now invokes the same hash-bound owner through Bash under the
+continuous claim.
+
+Repair-2 owner `3299613/136990854` crossed both executor censuses, resident
+health, packet staging, endpoint execution, and terminal retrieval. At the
+decision snapshot it had emitted neither a controller terminal nor a new
+repair handoff, and no competing c64 executor existed. Preserve this sole
+generation, the one-arm contract, maintenance release by `16:30Z`, and the
+`16:45Z` watchdog. Do not launch another owner or mutate provider lifecycle;
+keep the independent residual-hotpath deep lane unchanged and bench-free.
+
+## 2026-07-28T15:59Z — continue saturation at c96, queue M32 dispatch
+
+The serialized c64 arm completed 64/64 requests at
+`0.5842848010624948 s/request`, improving the authoritative c32 result by
+7.84% while remaining 16.83% above the fixed campaign target. The owner
+released safely to maintenance with the healthy runtime-FP8 server resident.
+
+Continue the same saturation project under
+`DIRECTOR_B200_C96_CONTINUATION_20260728T1556Z.json`: adapt only the bound
+owner/driver packet, claim the exact ready B200 by `16:08Z`, submit one c96
+arm, and release by `16:30Z`. Target crossing requires a c96 batch no slower
+than `48.01145103119962` seconds. In parallel reactivate the independent M32
+SM100-dispatch project with a `$5` ceiling only to prepare its exact-shape
+stock-versus-patched packet; it cannot claim until reservation, c96 handoff,
+and a fresh director envelope are durable.
+
+## 2026-07-28T16:00Z — fund M32 packet preparation behind c96
+
+The M32 project's `$5` reservation is now durable. Remove only that satisfied
+offline prerequisite and keep its B200 claim forbidden until the exact-shape
+runner/owner packet, c96 handoff, and a fresh director ready envelope exist.
+
+The higher-priority c96 packet is still being prepared under its existing
+`16:08Z` claim fence. Preserve its sole-claimant binding and the loaded B200
+server unchanged; do not perform provider or lifecycle mutation this turn.
+
+## 2026-07-28T16:02Z — preserve live c96 execution and offline M32 progress
+
+C96 owner `3309070/137052612` is live under the timely continuous claim with
+a current heartbeat. It crossed the controller and remote executor fence,
+resident health, packet staging, and entered the single bound endpoint
+execution. No c96 terminal or repair handoff exists, so preserve the owner,
+one-arm contract, `16:30Z` maintenance release, and `16:45Z` watchdog.
+
+The independent M32 lane has produced its exact-shape component runner while
+its owner and preclaim terminal remain in progress. Keep it active and
+bench-free; do not alter the c96 claim or perform provider lifecycle work.
+
+## 2026-07-28T16:11Z — reject label-only M32 packet and admit real execution
+
+C96 completed 96/96 requests at `0.6164568277083428 s/request`, 5.51% slower
+than c64 and 23.26% above the fixed target, closing higher-concurrency
+saturation. Its owner released the exact B200 safely to maintenance.
+
+The prepared M32 packet is not execution-equivalent: both named arms import
+the same installed `cutlass_scaled_mm` binary, and the candidate changes only
+labels. Under `DIRECTOR_B200_M32_EXECUTION_20260728T1606Z.json`, move the
+funded M32 project directly onto the retained B200 for mutable implementation
+plus one valid stock/patched six-shape component pair. A positive result keeps
+the claim for endpoint promotion; a negative result releases by `17:08Z`.
+Replacement watchdog
+`gemma4-b200-m32-dispatch-20260728t1606z-watchdog.service` is active through
+`17:18Z`, the old watchdog is stopped, and the exact bench is ready for the
+sole M32 claimant by `16:18Z`.
+
+## 2026-07-28T16:12Z — preserve the timely M32 implementation claim
+
+Commit-time reconciliation found the exact B200 claimed at `16:11:49Z` by
+`gemma4_b200_fp8_residual_hotpath`, before its `16:18Z` fence, with the full
+lease through the `17:18Z` watchdog. The execution researcher is inside the
+bound mutable implementation window and has not yet atomically published an
+owner session; no conflicting claimant or lifecycle defect exists.
+
+Treat the claim fence as consumed and preserve the claimed bench, real
+stock-versus-patched production-consumer contract, `16:32Z` owner-start
+deadline, and conditional `17:08Z` release. Do not replace the envelope,
+reopen offline preparation, or mutate provider lifecycle while the timely
+claim is being converted into its durable owner. Defer broader portfolio
+refill until that handoff is durable.
+
+## 2026-07-28T16:23Z — stop M32 owner churn and bind git-capable recovery
+
+The M32 claim remains continuous and no component arm started, but repeated
+owner generations exited at source build. The repairs successively exposed
+missing git for version metadata, a dirty patched tree, metadata override
+handling, and finally CMake FetchContent's need for git while cloning CUTLASS.
+These are pre-science build-integration failures, not M32-dispatch evidence.
+
+Bind `DIRECTOR_B200_M32_GIT_BUILD_RECOVERY5_20260728T1623Z.json`. It forbids
+another blind relaunch, requires a fresh pinned source tree and fresh outputs,
+and permits one git-capable transient build environment derived from the exact
+pinned image. The new owner must retain a repair handshake, then proceed
+directly to the unconsumed stock/patched six-shape pair.
+
+The project's `$5` ceiling covers protected exposure through `17:27Z`.
+Replacement watchdog
+`gemma4-b200-m32-repair2-20260728t1621z-watchdog.service` is active, inventory
+was atomically updated, and the old watchdog was stopped. Start recovery5 by
+`16:35Z`; release a negative result by `17:17Z` or retain a positive claim for
+endpoint promotion.
+
+## 2026-07-28T16:28Z — preserve recovery-5 launch runway
+
+Recovery-5 has not yet published its preclaim terminal or owner state, but the
+continuous B200 claim is current, no scientific sample has been consumed, and
+the git-capable fresh-source handoff retains more than one scheduler interval
+before its `16:35Z` owner-start fence. Keep the project active under the bound
+execution-profile recovery; do not relaunch an earlier owner, release/reclaim
+the bench, or change the stock/patched six-shape contract.
+
+The replacement watchdog remains active through `17:27Z`, within the project's
+`$5` ceiling. Inventory contents now name recovery-5 and its current deadlines
+instead of the superseded original M32 launch envelope. Defer portfolio refill
+until the durable recovery owner handoff exists.
+
+## 2026-07-28T16:36Z — preserve recovery-5 and open cross-operator analysis
+
+Recovery-5 owner `3337978/137237894` launched before its fence, is live under
+the continuous B200 claim, and reached fresh-source patch/build with no
+scientific sample consumed. Preserve that owner, its stock/patched six-shape
+contract, `17:17Z` negative release, and `17:27Z` watchdog without lifecycle
+mutation.
+
+The durable owner handoff clears the prior refill gate. Admit independent deep
+project `gemma4_b200_fp8_cross_operator_executor` at zero GPU spend to bind one
+recurring RMSNorm/FP8-quantize/scaled-MM/epilogue hot block from exact source
+and Gemma geometry into a working exact-consumer implementation or typed
+rejection. It may not change the M32 dispatcher, claim the B200, or replay an
+endpoint.
+
+## 2026-07-28T16:38Z — preserve live M32 build and independent deep lane
+
+Recovery-5 owner `3337978/137237894` remains live and heartbeating under the
+continuous B200 claim. Its durable progress crossed the fresh-source patch and
+build boundary; no science marker, component terminal, or repair request
+exists. Preserve the sole owner, unconsumed stock/patched six-shape pair,
+`17:17Z` negative release, and `17:27Z` watchdog.
+
+Keep `gemma4_b200_fp8_cross_operator_executor` active and bench-free on its
+non-overlapping deep source/geometry discriminator. Do not add another B200
+claimant, relaunch the build, or mutate provider lifecycle this turn.
+
+## 2026-07-28T16:40Z — replace sleep-only recovery with NVRTC re-entry
+
+Recovery-5 durably classified its patched build as pre-science invalid:
+CMake found `CUDA_nvrtc_LIBRARY=NOTFOUND`. Its hash-bound repair request points
+to a narrow retry that mounts the host toolkit and supplies the NVRTC library,
+but owner `3337978/137237894` cannot consume that request or re-enter the
+failed stage; it only heartbeats until deadline.
+
+Bind `DIRECTOR_B200_M32_RECOVERY6_NVRTC_REENTRY_20260728T1640Z.json`.
+Prepare the final replacement owner and preclaim, then stop only the exact
+sleep-only predecessor and launch recovery-6 by `16:45Z` under the continuous
+claim. Reuse the derived image and patched source, execute only the bound build
+repair, then continue directly into the still-unconsumed stock/patched
+six-shape pair. Preserve the `17:17Z` negative release, `17:27Z` watchdog, and
+independent bench-free cross-operator lane.
+## 2026-07-28T16:56Z — preserve the live NVRTC build and adopt its output
+
+Recovery-6 was never materialized, but the previously hash-bound NVRTC repair
+is live as controller process `3345441/137266281` under the continuous M32
+claim. It is making compiler progress against the retained derived image and
+patched source; no science marker or component arm exists. The build
+accidentally fans out across multiple CUDA architectures, but interrupting it
+now would discard more than 18 minutes of settled compilation without evidence
+that a fresh SM100-only build can finish sooner inside the fixed funded
+lifecycle.
+
+Supersede the expired recovery-6 start fence with
+`DIRECTOR_B200_M32_INFLIGHT_BUILD_ADOPTION_20260728T1656Z.json`. Do not start a
+parallel owner or build. If this build succeeds, hash its boundary and
+production extension and launch one direct-to-component owner that skips every
+build stage before consuming the still-unsubmitted stock/patched six-shape
+pair. If it fails, persist a typed pre-science terminal and require any future
+rebuild to target only SM100 and the minimum exact-consumer extension. Preserve
+the `17:17Z` negative/incomplete release and `17:27Z` watchdog; no provider
+lifecycle mutation is warranted.
+## 2026-07-28T16:59Z — preserve M32 compilation and open hybrid-attention dataflow
+
+The M32 owner, authorized NVRTC retry, claim, and watchdog still match the
+`16:56Z` adoption binding; no build boundary or science marker exists. Preserve
+that paid lane unchanged and do not start a parallel owner, build, or B200
+claimant.
+
+Use the free independent slot for
+`gemma4_b200_fp8_hybrid_attention_dataflow`, a zero-GPU deep source/geometry
+lane over the exact five-local/one-global decode attention and KV path. It must
+produce non-overlapping launch/byte/source accounting and one hash-bound
+production-input-to-first-consumer implementation or a typed rejection. The
+lane excludes the active M32 dispatcher, the already-owned RMSNorm/FP8 fusion,
+endpoint replay, and provider operations.
+## 2026-07-28T17:13Z — request one funded SM100-only M32 continuation
+
+The bound NVRTC repair ended as
+`invalid_pre_science_repair_timeout`. It reached real Ninja compilation and
+left 273 CUDA objects, but accidental architecture/extension fanout prevented
+completion; no stock or patched component arm started. This rejects the broad
+build recipe, not the M32 dispatcher mechanism.
+
+Raise `gemma4_b200_fp8_residual_hotpath` from a `$5` to an `$8` total ceiling
+so the harness can reserve one retained-state continuation. Until that larger
+reservation is durable, preserve exact owner `3337978/137237894`, the current
+claim, and the `17:27Z` watchdog without researcher or provider mutation. A
+later director turn may extend the watchdog only after the reservation is
+visible, then bind an SM100-only minimum-extension build that reuses the
+derived image, patched source, existing objects, and still-unconsumed
+six-shape pair. Keep the independent hybrid-attention deep lane active and
+bench-free.
+
+## 2026-07-28T17:21Z — fund and ready the SM100-only M32 continuation
+
+The requested `$8` total reservation is durable. Reconciliation found recovery
+owner `3337978/137237894` dead after its typed pre-science timeout while the
+original claim remained recorded; no component arm was consumed. I replaced
+the provider watchdog through `18:10Z`, stopped the superseded watchdog,
+released the exact ownerless claim after `$4.548077` conservative exposure,
+and returned the same retained B200 to ready state. Total exposure through the
+new deadline is bounded at `$7.779751`, inside the authorization.
+
+Run one execution-profile continuation under
+`DIRECTOR_B200_M32_SM100_EXECUTION_20260728T1719Z.json`: claim by `17:27Z`,
+reuse the derived image, patched source, dependencies, and valid objects, bind
+SM100 only, and build only the minimum exact-consumer extension. Then consume
+the still-unsubmitted stock/patched six-shape pair. Release negative or
+incomplete by `18:00Z`; retain a positive claim for promotion. Keep the
+hybrid-attention deep lane active and bench-free.
+
+## 2026-07-28T17:23Z — preserve the runnable SM100 claim envelope
+
+The `$8` reservation is durable, no M32 science was consumed, and the
+replacement watchdog remains bound through `18:10Z`. During final
+reconciliation the harness claimed the exact B200 at `17:23:04Z`, before the
+`17:27Z` fence, for `gemma4_b200_fp8_residual_hotpath`. Treat that claim fence
+as consumed and preserve `DIRECTOR_B200_M32_SM100_EXECUTION_20260728T1719Z.json`
+unchanged through its `17:32Z` owner-launch deadline. Do not add another owner,
+build, claimant, or lifecycle mutation. Keep the hybrid-attention deep lane
+active and bench-free.
+
+## 2026-07-28T17:27Z — preserve the claimed SM100 implementation window
+
+The exact B200 claim remains the timely `17:23:04Z` generation under the
+`18:10Z` watchdog. The execution researcher has not yet published
+`b200_m32_dispatch_owner_sm100.sh`, `PRECLAIM_SM100_TERMINAL.json`, or an
+active owner session, but the bound `17:32Z` owner-launch deadline has not
+passed. Preserve the claimed bench and the mutable in-claim implementation
+turn unchanged; do not launch a competing owner, release/reclaim the bench, or
+mutate provider lifecycle. Defer portfolio refill until the durable owner
+handoff or a typed launch failure exists.
+
+## 2026-07-28T17:36Z — bind one localized SM100 CMake repair
+
+The first SM100 owner exited before compilation because it tried to remove
+live Docker mountpoints. Repair1 fixed that seam and its release serializer,
+then exited pre-science when CMake required an explicit
+`VLLM_PYTHON_EXECUTABLE`. Both owners are dead, both typed terminals record
+zero science, and repair1 released the bench to draining.
+
+Under `DIRECTOR_B200_M32_SM100_REPAIR2_20260728T1734Z.json`, re-ready the same
+retained B200 for one final localized generation: add only the Python
+executable binding, use fresh repair2 build/install/output roots, and make all
+terminal releases JSON-safe. Claim by `17:40Z`, launch by `17:42Z`, and
+continue directly into the unconsumed stock/patched pair. Release negative or
+incomplete by `18:04Z`, leaving six minutes before the `18:10Z` watchdog.
+Defer broader refill until this near-term handoff is consumed.
+
+## 2026-07-28T17:37Z — preserve runnable repair2
+
+Commit-time state still matches the localized repair binding: the exact B200
+is available, repair2 owner/preclaim bytes have not yet been produced, no
+science was consumed, and the `18:10Z` watchdog is unchanged. The `17:40Z`
+claim fence retains one scheduler interval. Preserve
+`DIRECTOR_B200_M32_SM100_REPAIR2_20260728T1734Z.json` unchanged and return for
+immediate scheduling; do not add another owner, claimant, or lifecycle
+mutation.
+
+## 2026-07-28T17:40Z — preserve the claimed repair2 launch handoff
+
+The exact B200 was claimed at `17:38:30Z`, before the repair2 claim fence, and
+the hash-bound repair2 owner and preclaim bytes became durable. Owner
+`3430160/137646671` then launched before `17:42Z`, crossed binding, claim,
+predecessor, and retained-state fences, and entered the localized SM100 build.
+No science marker or terminal exists. Preserve this sole owner and unconsumed
+stock/patched pair through the `18:04Z` release disposition and `18:10Z`
+watchdog; do not launch a competitor or mutate provider lifecycle.
+
+## 2026-07-28T17:44Z — preserve M32 repair2 and reopen local-KV analysis
+
+Repair2 owner `3430160/137646671` remains live and heartbeating under the
+continuous B200 claim, has crossed the repaired CMake command into the
+SM100-only minimum build, and has produced no science marker or terminal.
+Preserve its unconsumed stock/patched pair and existing lifecycle unchanged.
+
+Use the free independent slot to continue
+`gemma4_b200_fp8_hybrid_attention_dataflow` at the source-identified local
+window page-traversal/KV-append boundary. The zero-GPU deep lane binds the
+exact 50-layer HND BF16 paged-KV consumer and may produce one hash-bound
+implementation or typed rejection; it cannot claim the B200, replay the prior
+contiguous-KV candidate, or overlap the M32 dispatcher.
+
+## 2026-07-28T17:55Z — adopt the completed extension instead of rebuilding
+
+Repair2 completed all 71 Ninja steps and installed patched `_C` bytes with
+SHA-256 `66fb9013…`, then released pre-science solely because unused `_C`
+objects included sm80/sm89/sm100f code. That fanout rejects the build recipe's
+efficiency, but not an execution-path discriminator: the required SM100
+patched object exists, no arm was submitted, and loaded extension identity
+plus correctness remains directly testable.
+
+Bind `DIRECTOR_B200_M32_BUILT_EXTENSION_ADOPTION_20260728T1754Z.json` and
+re-ready the retained B200. The sole M32 continuation must claim by `17:58Z`,
+launch a direct-to-component owner by `17:59:30Z`, verify and adopt the
+completed extension, skip every build stage, and consume the unsubmitted
+stock/patched pair. Release negative or incomplete by `18:04Z`; retain
+positive for promotion. Keep the independent local-KV deep lane bench-free.
+
+## 2026-07-28T18:01Z — close invalid M32 sample and pivot to attention
+
+The repaired adoption owner reached the exact stock CUDA consumer, whose first
+call rejected the generated B layout (`b.stride(0) != 1`). The remote
+invocation marker records `candidate_science_started=true`, so the one-pair
+contract is consumed and cannot be replayed. Close M32 as invalid component
+input evidence, not dispatcher evidence.
+
+Request `$2` for the retained, hash-bound global K=V projection-elision
+component in `gemma4_b200_fp8_hybrid_attention_dataflow`; it remains
+non-claimable until the reservation and a fresh director lifecycle handoff are
+durable. In parallel admit zero-GPU deep project
+`gemma4_b200_fp8_local_attention_fusion` at the next materially distinct
+internal local-attention boundary. Keep the released B200 in maintenance under
+its existing `18:10Z` watchdog for this immediate reservation handoff; do not
+extend or ready it without durable authority.
+
+## 2026-07-28T18:12Z — fund global K=V on the retained B200
+
+The hybrid-attention project's `$2` reservation is now durable, and one
+authenticated provider census still matches the registered RUNNING B200 and
+READY disk. Replace the old M32 watchdog with
+`gemma4-b200-global-kv-20260728t1807z-watchdog.service` through `18:36Z`;
+the conservative retained lifecycle costs under `$1.90`, so warm reuse is
+cheaper and faster than restaging the exact checkpoint and images.
+
+Bind `DIRECTOR_B200_GLOBAL_KV_EXECUTION_20260728T1807Z.json` and make the
+retained bench available only to
+`gemma4_b200_fp8_hybrid_attention_dataflow`. Claim by `18:15Z`, launch one
+repair-capable durable owner by `18:18Z`, materialize one hash-bound production
+M32 hidden capture, and run the unchanged global K=V stock/candidate
+exact-consumer component. Release negative or incomplete by `18:32Z` or retain
+positive. Keep the independent local-attention fusion lane bench-free.
+
+## 2026-07-28T18:13Z — preserve the claimed global K=V implementation window
+
+The exact retained B200 was claimed by
+`gemma4_b200_fp8_hybrid_attention_dataflow` at `18:13:10Z`, before its
+`18:15Z` fence. The funded `18:36Z` watchdog is active, no owner or scientific
+submission exists yet, and the bound `18:18Z` durable-owner launch window
+remains open. Preserve the in-claim implementation turn, exact hidden-capture
+and component contract, and `18:32Z` release disposition without lifecycle or
+portfolio mutation.
+
+The supervisor correctly reclassifies the prior M32 stride rejection as an
+invalid attempt rather than a canonical sample. Keep that corrected-layout
+attempt eligible behind this active serial claim; it does not displace the
+already-funded global K=V component or race for the bench.
+
+## 2026-07-28T18:19Z — preserve the same-claim global-capture repair
+
+Owner `3468020/137854710` remains live and the exact B200 claim heartbeats
+under the funded `18:36Z` watchdog. The first production hidden capture failed
+before science because its hook assumed a positional attention input while
+the pinned Transformers call supplied that input by keyword. The retained
+checkpoint smoke now produces the required BF16 `[32,5376]` tensor, but no
+hash-bound repair request, component terminal, or scientific submission
+exists yet.
+
+Preserve the continuous claim and the existing repair-capable handoff through
+the `18:32Z` disposition. Let the execution researcher bind the localized
+capture-hook patch and re-enter only capture before the unchanged global K=V
+component; do not replace the owner prematurely, rerun staging, launch a
+competing claimant, or mutate provider lifecycle. Keep the independent
+local-attention fusion lane active and bench-free.
+
+## 2026-07-28T18:21Z — bind the capture-only owner transition
+
+The continuous claim remains healthy, but owner `3468020/137854710` cannot
+re-enter capture in process: it waits for a repair request and then exits.
+The smoke-proven keyword-aware hook is decision-ready, while no component
+submission or terminal exists.
+
+Bind `DIRECTOR_B200_GLOBAL_KV_CAPTURE_REPAIR_20260728T1820Z.json`. By
+`18:24:30Z`, prepare and durably start one replacement owner that waits behind
+the exact predecessor, record it, then issue the hash-bound capture request.
+It may re-enter only the failed hidden capture with a fresh output generation
+and continue directly into the unchanged global K=V component. Preserve the
+original claim timestamp, `18:32Z` release disposition, and `18:36Z` watchdog;
+do not release/reclaim, restage, or mutate provider lifecycle.
+
+## 2026-07-28T18:30Z — reserve the d512 FlashInfer consumer repair
+
+The exact BF16 `[32,5376]` production hidden is now durable with SHA-256
+`cd84ccd1…776a3`; do not recapture it. The repaired component reached its real
+first consumer, where pinned vLLM FlashAttention rejected global
+`head_dim=512` because that entrypoint supports at most 256. No interpretable
+stock/candidate pair exists, so this is backend integration evidence rather
+than a global K=V result.
+
+Raise `gemma4_b200_fp8_hybrid_attention_dataflow` from a `$2` to a `$4` total
+ceiling under
+`DIRECTOR_B200_GLOBAL_KV_D512_RESERVATION_GATE_20260728T1830Z.json`. Until the
+larger reservation is durable, keep the project non-claimable and the B200 in
+maintenance only through its existing `18:36Z` watchdog. A later funded turn
+may bind one retained-capture d512 FlashInfer first-consumer repair and proceed
+directly to the unsubmitted component; no researcher, recapture, reclaim, or
+lifecycle extension is authorized now.
+
+## 2026-07-28T18:34Z — fund and ready the retained-capture d512 repair
+
+The `$4` total reservation is durable. Replace the expiring watchdog with
+`gemma4-b200-global-kv-d512-20260728t1832z-watchdog.service` through `19:05Z`;
+the resulting `$3.809584` maximum cumulative exposure fits the authorization.
+The released predecessor `3468020/137854710` is absent, and the exact retained
+B200 is available without a claim or resident endpoint.
+
+Run one execution-profile owner under
+`DIRECTOR_B200_GLOBAL_KV_D512_EXECUTION_20260728T1832Z.json`: claim by
+`18:38Z`, reuse capture `cd84ccd1…776a3` without loading the model or
+recapturing, implement the smallest exact d512 FlashInfer first consumer, and
+continue directly into the unsubmitted stock/candidate pair. Release negative
+or incomplete by `18:59Z`; retain positive for promotion. No other project may
+claim this bench in the window.
+
+## 2026-07-28T18:37Z — preserve the claimed d512 implementation window
+
+The exact retained B200 was claimed by
+`gemma4_b200_fp8_hybrid_attention_dataflow` at `18:35:37Z`, before the
+`18:38Z` fence. The funded watchdog is active through `19:05Z`; no owner,
+preclaim, component submission, or terminal exists yet, and the bound
+`18:41Z` durable-owner launch window remains open.
+
+Preserve the sole in-claim execution turn and the retained capture
+`cd84ccd1…776a3` unchanged. Do not release/reclaim, start a competing owner,
+load the model, recapture, or mutate provider lifecycle. The next material
+handoff is the hash-bound d512 owner launch or a typed launch failure.
+
+## 2026-07-28T18:44Z — retain the K=V microgain and move to higher-value mechanisms
+
+The exact d512 FlashInfer component is correct and positive: stock p50
+`36.960000 us` versus candidate p50 `36.495999 us`, with exact first-consumer
+outputs. Its `0.464002 us` per-global-layer gain bounds only about `4.64 us`
+across ten global layers, approximately `0.00074%` of the fixed
+`625.149102 ms` request denominator. Preserve it as stackable evidence, but do
+not spend an endpoint allocation trying to resolve an immaterial standalone
+effect.
+
+Release the terminalized hybrid-attention claim and close that project. Reopen
+`gemma4_b200_fp8_residual_hotpath` behind a durable `$8` total reservation for
+the still-unmeasured corrected-B-layout six-shape pair; the prior stride
+rejection occurred before any output, oracle, or timing and therefore did not
+consume a canonical sample. A concurrent lifecycle update placed the
+unclaimed B200 in `draining`, so do not reverse or race cleanup before the
+reservation is durable. In parallel reopen the zero-GPU deep
+`gemma4_b200_fp8_local_attention_fusion` lane at a source-complete SM100
+paged-GQA replacement boundary, explicitly excluding the rejected host
+wrapper.
+
+## 2026-07-28T18:49Z — fund and re-ready the corrected-layout M32 sample
+
+The `$8` M32 reservation is durable. The exact registered B200 remains RUNNING
+with its attached disk READY, and its cleanup watchdog is healthy through
+`19:05Z`; no cleanup has started. Conservative exposure from the reservation
+through that deadline is `$1.311443`, for `$7.685673` cumulative project
+exposure, inside the ceiling.
+
+Re-ready the retained bench under
+`DIRECTOR_B200_M32_VALID_LAYOUT_EXECUTION_20260728T1846Z.json`. Claim by
+`18:51Z`, adopt completed extension `66fb9013…`, correct only the production B
+layout so `stride(0) == 1`, and run the unchanged stock/patched six-shape pair
+without rebuilding, restaging, or loading an endpoint. Launch the durable
+owner by `18:54Z`; release negative or incomplete by `18:59Z` or retain
+positive. Keep the independent source-complete local paged-GQA analysis
+bench-free.
+
+## 2026-07-28T18:49Z — preserve the claimed M32 implementation window
+
+`gemma4_b200_fp8_residual_hotpath` claimed the exact retained B200 at
+`18:49:08Z`, before the `18:51Z` fence. The funded watchdog remains active
+through `19:05Z`; no valid-layout owner, preclaim, component submission, or
+terminal exists yet, and the `18:54Z` durable-owner launch window remains
+open.
+
+Preserve the sole in-claim implementation turn and unchanged six-shape
+contract. Do not release/reclaim, start a competing owner, rebuild, restage,
+or mutate provider lifecycle. The next material handoff is the hash-bound
+valid-layout owner launch or a typed launch failure. Keep the independent
+local paged-GQA lane bench-free.
+
+## 2026-07-28T18:51Z — preserve the newer claim for the fresh-output repair
+
+The first valid-layout owner reached `stock_arm` and failed pre-science because
+the reused stock output directory already existed and contained a root-owned
+invocation marker. It produced no output, oracle, timing, or scientific
+submission, then released at `18:49:59Z`. The harness established a newer
+same-project claim at `18:50:45Z`, before the claim fence; the stale recorded
+owner `3513558/138061198` is absent.
+
+Treat only the output-root generation and permissions as mutable. Preserve the
+newer claim for one fresh-output repair and the unchanged six-shape pair
+within the existing `18:54Z` launch, `18:59Z` disposition, and `19:05Z`
+watchdog windows. Do not release the newer claim using the inspected old
+generation, start a competing owner, rebuild, restage, or mutate provider
+lifecycle. Keep the independent local paged-GQA lane bench-free.
+
+## 2026-07-28T18:54Z — replace the invalid BF16 gate with a paired FP8 oracle
+
+The fresh-output repair reached the stock production consumer and returned a
+finite output, but its pre-timing gate compared intentionally FP8-quantized
+activations and weights against an unquantized BF16 matmul. The resulting
+`0.9992968` cosine and `0.03750` normalized RMSE measure quantization loss;
+they cannot evaluate the dispatcher patch. No patched output or timing exists,
+so the M32 mechanism remains unmeasured.
+
+Bind
+`DIRECTOR_B200_M32_QUANTIZED_ORACLE_RESERVATION_GATE_20260728T1854Z.json`
+and request a `$12` total ceiling. A later exact-B200 generation must compare
+stock and patched outputs on identical deterministic FP8 operands, retain the
+BF16 delta only as a quality diagnostic, and record the unchanged six-shape
+pair even if finite numerical variance is outside the revised envelope. The
+prior bench is now `draining`; do not reverse or claim it. Its verified
+instance and disk remain protected by the `19:05Z` cleanup watchdog. Keep the
+independent local paged-GQA lane active and bench-free.
+
+## 2026-07-28T18:58Z — fund and ready the paired-FP8 M32 discriminator
+
+The `$12` total reservation is durable. One authenticated census still finds
+only the registered RUNNING B200 and attached READY disk, with the completed
+patched extension and source state intact. Replace the `19:05Z` watchdog with
+`gemma4-b200-m32-paired-oracle-20260728t1857z-watchdog.service` through
+`19:25Z`; maximum cumulative project exposure remains below `$8.74`, inside
+the ceiling.
+
+Bind `DIRECTOR_B200_M32_PAIRED_ORACLE_EXECUTION_20260728T1858Z.json` and make
+the bench available only to `gemma4_b200_fp8_residual_hotpath`. Claim by
+`19:03Z`, launch one repair-capable owner by `19:07Z`, compare stock and
+patched outputs on identical deterministic FP8 operands, and time all six
+unchanged weighted shapes for finite structurally valid outputs. BF16 error is
+diagnostic only. A decision-bearing negative releases by `19:18Z`; an
+incomplete result retains the claim for bounded mutable repair until that
+deadline. Keep the independent local paged-GQA lane active and bench-free.
+
+## 2026-07-28T19:00Z — preserve the claimed paired-FP8 implementation window
+
+`gemma4_b200_fp8_residual_hotpath` claimed the exact retained B200 at
+`19:00:03Z`, before the `19:03Z` fence. The funded watchdog remains active
+through `19:25Z`; project state records no durable owner or scientific
+submission yet, and the bound `19:07Z` owner-launch window remains open.
+
+Preserve this sole claim and the paired-FP8 oracle contract unchanged. Do not
+release/reclaim, start a competing owner, rebuild, load the checkpoint, or
+mutate provider lifecycle. The next material handoff is the hash-bound
+repair-capable owner launch or a typed launch failure. Keep the independent
+local paged-GQA lane active and bench-free.
+
+## 2026-07-28T19:04Z — preserve the live paired-FP8 owner
+
+The hash-bound owner launched at `19:03:38Z`, before the `19:07Z` fence.
+Recorded PID `3530991` still has Linux start ticks `138143588`; the exact
+project claim heartbeats through the funded `19:25Z` watchdog. It has passed
+binding validation, claim reconciliation, extension adoption, and packet
+staging, and has entered `stock_arm`.
+
+Preserve this continuous claim and unchanged paired-FP8 oracle contract
+through its terminal. Do not release/reclaim, replace the owner, rebuild,
+load the checkpoint, or mutate provider lifecycle. A decision-bearing
+negative releases by `19:18Z`; an incomplete result retains the claim for its
+bounded repair until that deadline.
+
+## 2026-07-28T19:07Z — bind the paired-FP8 raw-byte hash repair
+
+The stock arm failed before its consumer because `tensor_hash` attempted to
+convert `torch.float8_e4m3fn` directly to NumPy. No output, oracle, timing, or
+scientific submission exists. Owner `3530991/138143588` and the original
+claim remain live under the funded `19:25Z` watchdog.
+
+Bind `DIRECTOR_B200_M32_PAIRED_ORACLE_HASH_REPAIR_20260728T1906Z.json`.
+Prepare and record one replacement owner by `19:10Z`, then stop only the exact
+predecessor. The replacement hashes raw FP8 storage through a `uint8` view,
+uses a fresh root-safe output generation, and re-enters only `stock_arm`
+before the unchanged patched arm. Do not release/reclaim or mutate lifecycle;
+the measured four-second restart path fits the `19:18Z` repair deadline.
+
+## 2026-07-28T19:08Z — preserve the hash-repair handoff with safe runway
+
+No replacement artifact exists yet, while predecessor `3530991/138143588`
+and the original `19:00:03Z` claim remain live and heartbeating. Extend only
+the replacement-owner launch fence from `19:10Z` to `19:11Z` so the harness
+retains a full scheduling interval. Preserve the `19:18Z` repair disposition,
+`19:25Z` watchdog, original claim, and unchanged paired-FP8 science.
+
+## 2026-07-28T19:16Z — absorb the scheduler wake delay in the claim envelope
+
+The harness schema repair woke a researcher at `19:14:37Z`, but no
+replacement owner is durable yet. Predecessor `3530991/138143588`, the
+original `19:00:03Z` claim, and the `19:25Z` watchdog remain healthy.
+
+Extend only the replacement launch fence to `19:19Z` and the paired-result or
+incomplete-repair disposition to `19:22Z`. This preserves more than one
+scheduler interval and a three-minute watchdog margin; the measured restart
+is four seconds. Do not release/reclaim, mutate provider lifecycle, or change
+the paired-FP8 science.
+
+## 2026-07-28T19:18Z — preserve the replacement through the patched arm
+
+Replacement owner `3548624/138223231` launched at `19:16:54Z`. The exact
+predecessor is absent; the replacement reconciled the original claim, adopted
+the retained extension, staged the repaired packet, crossed the repaired
+`stock_arm`, and entered `patched_arm` at `19:18:13Z`.
+
+Preserve this owner and continuous claim through its paired terminal. Do not
+replace it, release/reclaim, rebuild, load the checkpoint, or mutate provider
+lifecycle. The already-bound decision disposition is `19:22Z`, with the
+watchdog unchanged at `19:25Z`.
+
+## 2026-07-28T19:23Z — preserve stock and bind the patched CUDA-13 runtime
+
+The stock arm is complete across all six shapes under terminal SHA-256
+`da916697…`, with weighted GEMM p50 `8.579840 ms` and weighted
+quantize-plus-GEMM p50 `14.331200 ms`. The patched arm never imported: the
+CUDA-12.9 derived image could not resolve the retained extension's
+`libcudart.so.13`. No patched output or timing exists.
+
+Replace the cleanup watchdog with
+`gemma4-b200-m32-patched-runtime-20260728t1920z-watchdog.service` through
+`19:40Z`; maximum cumulative exposure remains below `$9.73`, within the `$12`
+ceiling. Bind
+`DIRECTOR_B200_M32_PATCHED_CUDA13_RUNTIME_REPAIR_20260728T1922Z.json`.
+Launch a patched-only owner by `19:27Z`, mount only the host's exact
+`libcudart.so.13.0.96`, and finalize against the preserved remote stock
+oracle. Do not replay stock, rebuild, broaden the CUDA mount, or release and
+reclaim. Decision-bearing negative releases by `19:34Z`; incomplete retains
+only while repair and safe disposition still fit that deadline.
+
+## 2026-07-28T19:30Z — close M16 SwapAB and reserve the fused local-attention discriminator
+
+The paired FP8 component is complete and correct, but the exact M16 SwapAB
+dispatcher regresses weighted quantize-plus-GEMM p50 from `14.331200 ms` to
+`14.837440 ms` (`-3.5324%` gain). Five of six weighted shapes regress and the
+fixed projection is `-5.663567 ms/request`; close this candidate without an
+endpoint replay. Owner `3561496/138280394` is absent and its decision-bearing
+negative released the original claim to maintenance.
+
+Reopen `gemma4_b200_fp8_local_attention_fusion` behind
+`DIRECTOR_B200_LOCAL_PAGED_GQA_CORRECTNESS_RESERVATION_GATE_20260728T1930Z.json`
+and request a `$4` total ceiling for one exact-B200 correctness-only pair. The
+source-complete candidate owns fresh K/V append, slot mapping, persistent HND
+cache mutation, the exact 1024-token mask, and paged GQA in one native CTA.
+Retain the compatible maintenance B200 under its existing `19:40Z` watchdog,
+but do not ready, claim, or extend it until the reservation is durable. If the
+reservation lands in time, revalidate and transfer the warm lifecycle; if
+not, let the watchdog clean it and provision later only under durable
+authority.
+
+## 2026-07-28T19:36Z — fund and ready fused local-attention correctness
+
+The `$4` reservation is durable. One authenticated census still finds only
+the registered RUNNING B200 and its READY attached disk; the other configured
+namespace is empty. Replace the `19:40Z` cleanup watchdog with
+`gemma4-b200-local-paged-gqa-correctness-20260728t1935z-watchdog.service`
+through `20:25Z`. Conservative exposure from reservation time is at most
+`$3.442`, inside the project ceiling.
+
+Bind
+`DIRECTOR_B200_LOCAL_PAGED_GQA_CORRECTNESS_EXECUTION_20260728T1935Z.json`
+and make the warm bench available only to
+`gemma4_b200_fp8_local_attention_fusion`. Claim by `19:43Z`, launch one
+repair-capable execution owner by `19:48Z`, and run exactly one correctness
+pair over the pinned append-plus-TRT-LLM-Gen stock path and source-complete
+fused native paged-GQA candidate. Do not time, load the model, or replay an
+endpoint. Release a decision-bearing incorrect result by `20:17Z`; retain an
+incomplete result only while bounded same-claim repair fits before that
+deadline, and retain a positive for the director to bind timing.
+
+## 2026-07-28T19:41Z — preserve the unclaimed correctness launch runway
+
+The funded B200 remains available and unclaimed, and its replacement watchdog
+is healthy through `20:25Z`. No owner, CUDA invocation, or scientific sample
+exists. Extend only the unconsumed claim and owner-launch fences to `19:45Z`
+and `19:50Z` so another harness interval has safe startup runway. Preserve the
+exact correctness pair, `20:17Z` decision disposition, `$4` ceiling, and
+`20:25Z` lifecycle unchanged.
+
+## 2026-07-28T19:43Z — preserve the claimed correctness implementation window
+
+`gemma4_b200_fp8_local_attention_fusion` claimed the exact retained B200 at
+`19:41:53Z`, before the `19:45Z` fence. The claim is current and the funded
+watchdog remains active through `20:25Z`. The bound owner script now exists,
+but no preclaim terminal, durable owner state, CUDA invocation, or scientific
+sample exists yet; the `19:50Z` owner-launch window remains open.
+
+Preserve this sole claim and the correctness-only contract unchanged. Do not
+release/reclaim, start a competing owner, run the delegated build, or mutate
+provider lifecycle. The next material handoff is the hash-bound durable owner
+launch or a typed launch failure.
+
+## 2026-07-28T19:51Z — close single-CTA ownership and bind a split-KV-safe successor
+
+The exact B32/H256/page16/window1024 planner selected split-KV before either
+correctness arm ran. This is decision-bearing against the submitted
+single-CTA append owner, not against fused local attention generally. Close
+that implementation under terminal SHA-256 `f83e46ea…`; it consumed no
+scientific sample, timing, endpoint request, or model load.
+
+Bind `DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_KV_EXECUTION_20260728T1948Z.json`.
+The materially distinct candidate makes the final-KV-partition CTA persist
+the new cache row and consume fresh K/V directly for its partial, so other
+split CTAs depend only on settled prefix state and no grid-wide cache
+visibility. Re-ready the retained B200 under the existing `$4` reservation
+and `20:25Z` watchdog. Claim by `19:55Z`, launch the implementation-plus-
+correctness owner by `20:00Z`, and run at most one correctness pair after the
+tiny exact split-plan call. Timing, model load, and endpoint replay remain
+forbidden. A decision-bearing negative releases by `20:17Z`; incomplete work
+retains only while bounded repair and safe disposition still fit.
+
+## 2026-07-28T19:52Z — preserve the claimed split-KV implementation window
+
+`gemma4_b200_fp8_local_attention_fusion` claimed the retained B200 at
+`19:51:57Z`, before the `19:55Z` fence. The claim is current and its watchdog
+remains active through `20:25Z`. No split-KV owner, preclaim terminal, CUDA
+invocation, or scientific sample exists yet, while the `20:00Z` owner-launch
+window remains open. Preserve this sole claim and the bound implementation-
+plus-correctness contract unchanged: do not release/reclaim, extend lifecycle,
+start a competing owner, or mutate the science. The next material handoff is
+the durable owner launch or a typed launch failure.
+
+## 2026-07-28T20:04Z — close tail-output insertion and move to the split reducer
+
+The split-KV correctness pair is consumed and decision-bearing. Unique tail
+ownership and the absence of a cross-CTA visibility dependency passed, but
+the candidate failed full-cache equality and output correctness
+(`cosine=0.9983367`, `max_abs=3.203125`). Close only the submitted
+tail-partial output-transform implementation under terminal SHA-256
+`646a3e0f…`; do not replay or time it.
+
+Reactivate `gemma4_b200_fp8_local_attention_fusion` bench-free under
+`DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_SOURCE_20260728T2002Z.json`.
+The next candidate must mechanically map GQA Q-head work to one KV-head cache
+owner, preserve native split partials, and add fresh K/V exactly once in the
+final split-state reducer. Produce a source-complete discriminator or typed
+mechanism rejection before another GPU claim. Retain the unoccupied warm B200
+only under its existing `20:25Z` watchdog because its measured cold setup
+dominates this short source interval; do not extend or claim it until the new
+source is durable. The absence of a source-complete corrected consumer is the
+concrete blocker to a safe direct-GPU lane in this turn.
+
+## 2026-07-28T20:10Z — reserve the independent residual-prologue discriminator
+
+Keep the local-attention split-reducer source lane active and bench-free.
+Admit the existing `gemma4_b200_fp8_cross_operator_executor` as the independent
+direct-B200 floor: its hash-bound exact consumer isolates only the
+post-attention residual-add prologue, is non-overlapping with the M32
+dispatcher and local attention, and promotes only if its paired component
+projection reaches `0.002 s/request` with all numerical guards passing.
+
+Request a project-specific `$4` total ceiling under
+`DIRECTOR_B200_CROSS_OPERATOR_RESERVATION_GATE_20260728T2010Z.json`. The
+current local-attention reservation is not authority for this project, so do
+not claim or reassign the warm B200, extend its `20:25Z` watchdog, run CUDA,
+or perform provider operations yet. If this reservation becomes durable
+before cleanup, revalidate and transfer the retained bench; otherwise let the
+existing watchdog clean it and provision an exact replacement only on a later
+director turn under durable authority.
+
+## 2026-07-28T20:17Z — fund and bind the residual-prologue component
+
+The cross-operator `$4` reservation is durable. One authenticated census and
+strict SSH probe reverified the sole RUNNING B200, READY disk, NVIDIA device,
+and cached pinned image; the other provider namespace remains empty. Replace
+the `20:25Z` watchdog with
+`gemma4-b200-cross-operator-20260728t2013z-watchdog.service` through `21:10Z`.
+Conservative exposure from the reservation epoch is `$3.7782`, inside the
+project ceiling.
+
+Bind `DIRECTOR_B200_CROSS_OPERATOR_EXECUTION_20260728T2016Z.json` and make the
+bench available only to `gemma4_b200_fp8_cross_operator_executor`. Claim by
+`20:24Z`, launch one repair-capable execution owner by `20:31Z`, and run one
+paired exact-consumer component generation. Preserve paired timing for finite,
+structurally valid numerical negatives; nonfinite or structural failure may
+stop. Release a decision-bearing negative by `20:58Z`, retain incomplete work
+only while bounded same-claim repair fits, and retain a positive for promotion.
+Keep the independent local-attention split-reducer source lane active,
+bench-free, and scientifically unchanged.
+
+## 2026-07-28T20:20Z — queue the corrected split reducer behind the direct run
+
+The local-attention source lane completed
+`B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_PLAN.json` (`2a121e45…`). It corrects the
+HND-to-NHD stock comparator, preserves native split `(V,LSE)` partials, adds
+fresh state exactly once in the final reducer, and assigns one cache owner per
+GQA2 pair; offline reducer algebra agrees with direct softmax to `1.11e-16`.
+
+Pause only this project's scheduler status because its offline work is
+complete and the higher-priority cross-operator component claimed the
+exclusive B200 at `20:20:37Z`. Preserve its execution profile, `$4`
+reservation, `$1.260` cumulative spend, plan hash, and correctness-only
+contract. Do not alter the live cross-operator claim or science. After that
+terminal and release, reactivate the split reducer only if its measured
+`316.567 s` closest run plus compile, terminal, and safe release fit the
+remaining watchdog; otherwise bind it to an exact replacement lifecycle under
+its existing reservation.
+
+## 2026-07-28T20:26Z — bind the standalone vLLM config-context repair
+
+Same-claim repairs have crossed packet staging and pinned-vLLM import without
+a scientific sample. The newest exact failure is narrower: standalone
+`QuantFP8` construction called `get_current_vllm_config()` outside a current
+config context. The source-complete amendment already enters the default
+`VllmConfig` before constructing the custom op; this is harness context, not
+a mechanism change.
+
+Bind `DIRECTOR_B200_CROSS_OPERATOR_VLLM_CONFIG_REPAIR_20260728T2026Z.json`.
+Preserve the original `20:20:37Z` claim, root-safe pinned-container
+invocation, and exact paired science. One replacement may use fresh
+`output-4`, hash-bind the current amendment, wait for exact predecessor
+`3597829/138628912`, and resume at `component_execution` by `20:33Z`. Do not
+release/reclaim, change config defaults, or mutate provider lifecycle. The
+`20:58Z` result/repair disposition and `21:10Z` watchdog remain unchanged.
+
+## 2026-07-28T20:29Z — bind one deliberate FP8 weight-layout repair
+
+The root-safe container and default `VllmConfig` repairs crossed their former
+boundaries. The latest invocation is still pre-science: pinned
+`scaled_fp8_quant` rejected `weight_bf16.t()` because its last dimension was
+not contiguous. This is the official producer's layout contract, not evidence
+against the residual-prologue mechanism.
+
+Bind `DIRECTOR_B200_CROSS_OPERATOR_WEIGHT_LAYOUT_REPAIR_20260728T2029Z.json`.
+One replacement may materialize only `weight_bf16.t().contiguous()`, use fresh
+`output-5`, wait for exact predecessor `3600510/138653025`, and resume the
+unchanged pair by `20:36Z`. Preserve the continuous claim, prior adapters,
+`20:58Z` disposition, and `21:10Z` watchdog. If this corrected attempt fails
+pre-science again, retain its typed diagnostic for deliberate recovery rather
+than automatically chaining another owner.
+
+## 2026-07-28T20:31Z — close the residual prologue and reserve split-reducer correctness
+
+The repaired cross-operator component completed and released the warm B200.
+Candidate p50 was `0.065824 ms` versus stock `0.101216 ms`, projecting
+`0.0237569 s/request`, but every finite correctness case missed the bound
+envelope (`gate_up cosine 0.999856-0.999895`, relative L2
+`0.01449-0.016996`, max absolute error up to `0.140625`). Close only this
+submitted residual-aware QuantFP8 implementation; do not promote or replay it.
+
+Reactivate the materially distinct local-attention split reducer behind
+`DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_RESERVATION_GATE_20260728T2031Z.json`.
+Its immutable plan remains `2a121e45…d7633b`, but its prior reservation is
+absent from the current spend snapshot. Request a fresh `$4` total ceiling.
+Keep the B200 available under the existing `21:10Z` watchdog and do not claim,
+compile, extend lifecycle, or mutate provider state until the reservation is
+durable and the director rebinds execution.
+
+## 2026-07-28T20:36Z — fund the corrected split-reducer correctness pair
+
+The local-attention `$4` total reservation is durable. Its prior spend is
+`$1.260`; conservative exposure through the existing `21:10Z` watchdog raises
+the total only to `$3.619`. Strict SSH revalidated the unoccupied B200 SM100,
+cached pinned image, and active watchdog.
+
+Bind `DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_EXECUTION_20260728T2036Z.json`
+without extending lifecycle. Claim by `20:41Z`, launch the existing
+repair-capable owner by `20:47Z`, compile only SM100a, and run the exact B32
+split plan followed by one correctness-only pair. Decision-bearing incorrect
+releases by `21:02Z`; incomplete retains only while bounded repair fits, and
+correct releases available for director timing selection. Do not time, load
+the model, replay an endpoint, or replay the consumed tail-output candidate.
+
+## 2026-07-28T20:44Z — promote the correct split reducer to paired timing
+
+The same-claim linkage repair completed before commit-time reconciliation.
+The exact B32 split-KV terminal is correct: the full HND cache is bitwise
+equal, output cosine is `0.9999981`, max absolute error is `0.015625`, and the
+one-owner/one-fresh-merge structural guards pass. The owner exited and released
+the unoccupied warm B200 available at `20:40:52Z`.
+
+Bind
+`DIRECTOR_B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_TIMING_EXECUTION_20260728T2044Z.json`.
+Claim by `20:50Z`, launch one repair-capable timing owner by `20:56Z`, and run
+the exact stock append-plus-consumer versus fused split-reducer component with
+8 warmups and 40 paired samples per arm. Exclude setup/JIT/planning/allocation,
+retain all correctness guards, and project the paired delta over 17,900 local
+decode calls. The unchanged `$4` ceiling and `21:10Z` watchdog conservatively
+cap cumulative exposure at `$3.355969`. Release an interpretable negative by
+`21:02Z`; retain incomplete work only while bounded same-claim repair fits, and
+release a positive available for endpoint-integration selection.
+
+## 2026-07-28T20:49Z — preserve the claimed timing implementation window
+
+`gemma4_b200_fp8_local_attention_fusion` claimed the exact retained B200 at
+`20:47:38Z`, before the `20:50Z` fence. The timing runner, preclaim terminal,
+and repair-capable owner entrypoint now exist, while durable owner state is not
+yet published; no timing sample has been consumed.
+
+Preserve this sole claim and the exact paired timing contract through its
+`20:56Z` owner-launch window. Do not release/reclaim, start a competing owner,
+alter the producer, consumer, timing boundary, or correctness guards, extend
+the `21:10Z` watchdog, or mutate provider lifecycle. The next material handoff
+is the durable timing-owner launch or a typed launch failure.
+
+## 2026-07-28T20:52Z — close the custom reducer and measure the stock boundary
+
+The exact paired terminal is correct but decisively negative: stock
+append-plus-TRT-LLM Gen p50 is `0.108512 ms` versus `0.133088 ms` for the
+custom split reducer. The paired `-0.025552 ms` delta projects to
+`-0.457381 s/request`. Close only this submitted custom consumer.
+
+Reuse the released B200 under
+`DIRECTOR_B200_LOCAL_PAGED_GQA_STOCK_DECOMPOSITION_EXECUTION_20260728T2052Z.json`.
+Claim by `20:59Z`, launch by `21:02Z`, and time stock append-only,
+consumer-only, and composite scopes with 8 warmups and 40 samples each. This
+measures the remaining append-specialization ceiling without replaying the
+candidate. Release an interpretable result by `21:05Z`; the unchanged
+watchdog ends at `21:10Z`.
+
+In parallel, reopen `gemma4_b200_fp8_runtime_codesign` behind
+`DIRECTOR_B200_FP8_RUNTIME_RESERVATION_GATE_20260728T2052Z.json` for a `$2.5`
+total reservation. It remains non-claimable until that authority is durable
+and the director rebinds its independent dynamic-E4M3 linear plus FP8-KV
+falsifier.
+
+## 2026-07-28T20:59Z — close append specialization and fund the runtime falsifier
+
+The stock decomposition is interpretable: append-only p50 is `0.006112 ms`,
+consumer-only is `0.102432 ms`, and composite is `0.108512 ms`. Append is
+only `5.63%` of this component; perfect elimination projects
+`0.109405 s/request`, still `0.015625 s/request` short of the campaign gap.
+Complete `gemma4_b200_fp8_local_attention_fusion`; do not replay its consumed
+custom reducer or decomposition.
+
+The independent runtime reservation is durable. Start
+`gemma4-b200-runtime-screen-20260728t2056z-watchdog.service` through `21:33Z`,
+replace the `21:10Z` watchdog atomically, and stop the predecessor only after
+inventory reconciliation. Conservative exposure from reservation time is
+`$2.422095`, inside the `$2.5` ceiling.
+
+Bind `DIRECTOR_B200_FP8_RUNTIME_EXECUTION_20260728T2059Z.json` and ready the
+released B200 only for `gemma4_b200_fp8_runtime_codesign`. Claim by `21:05Z`,
+launch one repair-capable execution owner by `21:08Z`, and consume at most one
+exact BF16-versus-dynamic-E4M3 linear plus BF16-KV-versus-FP8-KV
+timing/counter generation. Release a decision-bearing negative by `21:30Z`;
+retain a positive for director integration selection. The watchdog ends at
+`21:33Z`.
+
+## 2026-07-28T21:05Z — preserve the runtime claim and correct batch units
+
+The runtime project claimed the exact B200 at `21:03:30Z` and launched its
+durable owner at `21:05:19Z`; preserve that live claim, scientific contract,
+`21:30Z` disposition, and `21:33Z` watchdog. Do not release, reclaim, replace
+the owner, or mutate provider lifecycle.
+
+Bind `DIRECTOR_B200_FP8_RUNTIME_UNIT_AMENDMENT_20260728T2104Z.json` only as a
+measurement-semantics correction. Every M32 timing is one concurrent B32
+invocation: retain raw latency and batch-total contribution, then divide by
+32 completed requests before labeling or aggregating seconds/request. M3679
+prefill is per request unless the executed consumer proves a larger
+cardinality; M384 remains uncharged to the ordinary c32 aggregate. Ambiguous
+units are incomplete and repairable, not a physical negative.
+
+Correct the settled local-attention projections without changing their close
+decision. Append elimination is `0.109405 s` per endpoint batch but only
+`0.003419 s/request`; the custom reducer penalty is `-0.014293 s/request`.
+The append ceiling is therefore even farther below the `0.125030 s/request`
+campaign gap than previously recorded.
+
+## 2026-07-28T21:10Z — re-ready the B200 for the actual runtime consumers
+
+The first runtime attempt is invalid pre-science. FlashInfer loaded, but
+cuBLASLt rejected the row-major FP8 B operand before any warmup or timing
+sample; no scientific conclusion exists. The owner mistakenly released an
+otherwise safe, unoccupied bench.
+
+Inspection found a broader mutable implementation gap: the staged runner uses
+`torch._scaled_mm` rather than the bound vLLM CUTLASS consumer, covers only
+M32 linears, and substitutes SDPA dequantization for the required FlashInfer
+TRTLLM-generation d256/d512 consumers. Bind
+`DIRECTOR_B200_FP8_RUNTIME_CONSUMER_REPAIR_20260728T2109Z.json` and explicitly
+re-ready the same B200. Claim by `21:14Z`, implement and hash-bind the actual
+pinned consumers inside the claim, launch the repair-capable owner by
+`21:19Z`, and release a decision-bearing result by `21:30Z`. The scientific
+scope, `$2.5` ceiling, and `21:33Z` watchdog are unchanged; proxy timings are
+forbidden.
+
+## 2026-07-28T21:13Z — preserve the claimed actual-consumer repair window
+
+`gemma4_b200_fp8_runtime_codesign` reclaimed the exact retained B200 at
+`21:11:18Z`, before the `21:14Z` fence. The claim is current and non-stale,
+the lifecycle watchdog is active through `21:33Z`, and no replacement owner
+state or new scientific sample exists yet.
+
+Preserve this sole claim and
+`DIRECTOR_B200_FP8_RUNTIME_CONSUMER_REPAIR_20260728T2109Z.json` unchanged
+through the `21:19Z` owner-launch window. Do not release or reclaim the bench,
+start a competing owner, substitute proxy consumers, alter the scientific
+contract, or mutate provider lifecycle. The next material handoff is the
+durable exact-consumer owner launch or a typed launch failure.
+
+## 2026-07-28T21:14Z — keep the claimed repair implementation uninterrupted
+
+The timely `21:11:18Z` claim remains current under the healthy `21:33Z`
+watchdog. The repaired runner and owner entrypoint are being updated inside
+that claim, but no durable owner state or scientific submission exists yet;
+the independent `21:19Z` owner-launch fence remains viable.
+
+Keep `gemma4_b200_fp8_runtime_codesign` as the sole claimant and preserve its
+exact vLLM CUTLASS plus FlashInfer TRTLLM-generation contract. Do not release,
+reclaim, hash-freeze the researcher's in-flight bytes, admit a competing bench
+consumer, or mutate lifecycle. The next decision consumes the durable owner
+launch, typed launch failure, or later scientific terminal.
+
+## 2026-07-28T21:18Z — retain the live owner for exact-prefill repair
+
+Replacement owner `3632199/138944882` is live under the original
+`21:11:18Z` claim and healthy `21:33Z` watchdog. It completed first calls for
+all eighteen bound vLLM CUTLASS linear rows and the local d256 FlashInfer
+decode consumer, then failed at the local context call because the staged
+runner supplied only one query token per request and selected a missing
+TRTLLM-GEN context cubin.
+
+This is not evidence against the bound M3679 prefill consumer: the attempted
+query geometry was not that production row, and the runner persisted no
+interpretable timing rows before the exception. Retain the claim and live
+repair-ready owner. The bounded repair may correct only the exact prefill
+query geometry and incremental stage persistence, then continue with the same
+vLLM CUTLASS and FlashInfer TRTLLM-generation contract. Do not substitute
+SDPA or Triton, release the bench, or classify the mechanism negative. The
+`21:30Z` result/disposition and `21:33Z` watchdog remain unchanged.
+
+## 2026-07-28T21:23Z — close pinned FlashInfer context and reserve Triton FP8-KV
+
+The retained repair established a typed runtime incompatibility: all eighteen
+vLLM CUTLASS linear first calls and local d256 decode reached the B200, but the
+pinned FlashInfer 0.6.6 image has no TRTLLM-generation d256 context cubin for
+the required page16 geometry. The owner released the safe, unoccupied B200
+with terminal SHA-256 `47a35b7c…`. Close only this FlashInfer context
+consumer; do not replay it or generalize the result to dynamic E4M3 or FP8 KV.
+
+Keep `gemma4_b200_fp8_runtime_codesign` active behind
+`DIRECTOR_B200_FP8_TRITON_FALLBACK_RESERVATION_GATE_20260728T2122Z.json`.
+The materially distinct successor retains exact vLLM CUTLASS linears and
+switches attention to vLLM's native Triton FP8 paged-KV backend, with no SDPA
+or dequantization proxy. Request a `$6` total ceiling (`$3.5` incremental over
+the current reservation). Until it is durable, do not claim the available
+B200, extend its `21:33Z` watchdog, run CUDA, or mutate provider lifecycle.
+After reservation, the director must revalidate the retained bench or bind an
+exact replacement before execution.
+
+## 2026-07-28T21:32Z — preserve the timely Triton fallback claim
+
+`gemma4_b200_fp8_runtime_codesign` claimed the exact retained B200 at
+`21:31:11Z`, before the `21:35Z` fence. The claim is current and non-stale,
+the bound native Triton FP8-KV component remains unconsumed, and the verified
+watchdog protects the bench through `22:20Z`.
+
+Preserve this sole claim and
+`DIRECTOR_B200_FP8_TRITON_EXECUTION_20260728T2129Z.json` unchanged through its
+`21:43Z` owner-launch window. Do not release or reclaim the bench, hash-freeze
+the researcher's in-flight implementation, start a competing owner, replay
+FlashInfer, substitute a proxy consumer, or mutate provider lifecycle. The
+next material handoff is the durable exact-consumer owner launch or a typed
+launch failure.
+
+## 2026-07-28T21:37Z — re-ready the unconsumed Triton API repair
+
+The first Triton fallback owner released after an invalid API attempt:
+`TritonAttentionImpl.forward` rejected the `out` keyword before returning an
+attention output, and the terminal contains zero completed stage rows. The
+packet also omitted the bound CUTLASS linear measurements and used an
+unconditional release path. This is implementation evidence, not a physical
+negative or a consumed canonical generation.
+
+Bind `DIRECTOR_B200_FP8_TRITON_API_REPAIR_20260728T2135Z.json` and re-ready the
+safe, unoccupied B200 without changing its `$6` ceiling or `22:20Z` watchdog.
+Claim by `21:40Z`, launch by `21:47Z`, restore exact BF16-versus-dynamic-E4M3
+linears, construct cache/metadata through the installed Triton backend, and
+persist each linear/local/global family atomically. Decision-bearing results
+release by `22:08Z`; incomplete work must retain a live same-claim repair
+owner while another measured repair fits.
+
+## 2026-07-28T21:39Z — preserve the claimed Triton repair window
+
+`gemma4_b200_fp8_runtime_codesign` claimed the exact retained B200 at
+`21:37:19Z`, before the `21:40Z` fence. The claim is current and non-stale,
+the repaired component remains unconsumed, and the existing watchdog protects
+the bench through `22:20Z`.
+
+Keep this project as the sole claimant and preserve
+`DIRECTOR_B200_FP8_TRITON_API_REPAIR_20260728T2135Z.json` unchanged through
+its `21:47Z` owner-launch window. Do not release or reclaim the bench,
+hash-freeze the researcher's in-flight runner/owner work, start a competing
+executor, or mutate provider lifecycle. The next material handoff is the
+durable repair-capable owner launch or a typed launch failure.
+## 2026-07-28T21:41Z — close Triton FP8-KV and isolate exact CUTLASS linears
+
+The repaired native Triton result is decision-bearing for attention. Local
+E4M3 improves `0.245504` to `0.235904 ms` per B32 invocation, but global
+E4M3 regresses `0.501056` to `0.683520 ms` and fails the finite/nonzero
+output guard. Across 17,900 local and 3,580 global calls, the physical delta
+is a `0.481382 s` endpoint-batch regression, or `0.015043 s/request`. Close
+only this submitted native Triton FP8-KV producer/consumer.
+
+The terminal does not decide dynamic-E4M3 linears: it contains only six
+unpaired M32 candidate rows and omits BF16 baselines, all M3679/M384 rows,
+and numerical comparisons. Bind
+`DIRECTOR_B200_FP8_LINEAR_PAIR_EXECUTION_20260728T2141Z.json` on the
+revalidated warm B200. Claim by `21:46Z`, launch by `21:52Z`, and measure all
+eighteen exact same-input BF16-versus-vLLM-CUTLASS rows with 8 warmups and 40
+samples per arm. Release a decision-bearing result by `22:08Z`; do not replay
+either attention path or extend the `22:20Z` watchdog.
+
+## 2026-07-28T21:45Z — preserve the timely exact-linear claim
+
+`gemma4_b200_fp8_runtime_codesign` claimed the retained B200 at
+`21:43:40Z`, before the `21:46Z` fence. The linear runner, repair-capable
+owner, and preclaim terminal are now being composed inside that claim, while
+no durable owner state or scientific row exists yet.
+
+Preserve the sole claim and
+`DIRECTOR_B200_FP8_LINEAR_PAIR_EXECUTION_20260728T2141Z.json` unchanged
+through its `21:52Z` owner-launch window. Do not release or reclaim the bench,
+freeze the in-flight implementation, admit a competing executor, replay
+attention, or mutate the `22:20Z` lifecycle. The next material handoff is the
+durable paired-linear owner launch or a typed launch failure.
+
+## 2026-07-28T21:47Z — reject the scale proxy and run production dynamic-token FP8
+
+The 18-row pair is physically promising but does not implement the bound
+representation. It uses one activation scale for the full `[M,K]` tensor,
+where pinned vLLM selects `kFp8DynamicTokenSym` on the CUTLASS path. The
+proxy projects `0.064477 s/request` of linear savings, but every row misses
+the `NRMSE <= 0.03` gate at `0.037601-0.037883`. Close only tensor-wide
+activation scaling.
+
+Bind
+`DIRECTOR_B200_FP8_LINEAR_TOKEN_SCALE_EXECUTION_20260728T2147Z.json` on the
+released, revalidated B200. Keep static-tensor weight scaling and change only
+activation scaling to the installed one-scale-per-token producer. Claim by
+`21:52Z`, launch by `21:57Z`, and persist one contract-complete 18-row pair
+by `22:08Z`. Do not replay the proxy or attention, and do not extend the
+`22:20Z` watchdog.
+
+## 2026-07-28T21:54Z — close tensor-scale E4M3 and test the native block path
+
+The repaired dynamic-token pair is contract-complete but still numerically
+negative: all 18 rows pass cosine `>=0.999` yet miss `NRMSE <=0.03` at
+`0.037559-0.037709`. Its corrected physical speed prior is
+`0.056486 s/request`. Close only dynamic-token activation plus static-tensor
+weight E4M3.
+
+Pinned vLLM exposes a materially distinct SM100 CUTLASS path with `1x128`
+activation groups and `128x128` weight groups, and every bound Gemma K/N
+dimension is exactly divisible by 128. Bind
+`DIRECTOR_B200_FP8_BLOCK_SCALE_EXECUTION_20260728T2154Z.json` on the released
+warm B200. Claim by `22:02:30Z`, launch by `22:07:30Z`, and persist one complete
+18-row BF16-versus-block-E4M3 pair by `22:14Z`. Keep the `22:20Z` watchdog;
+do not replay tensor-scale E4M3 or attention.
+
+## 2026-07-28T22:01Z — refresh only the unconsumed block-scale launch fence
+
+The exact block-scaled CUTLASS arm remains unclaimed and has no runner,
+owner, preclaim terminal, or scientific terminal. Its original `22:02:30Z`
+claim fence no longer provides one harness interval of runway, while the
+measured `43.975 s` paired generation still fits the unchanged release and
+watchdog windows.
+
+Preserve the scientific contract and warm B200. Move only the claim fence to
+`22:04:30Z` and owner-launch fence to `22:09:00Z`; keep decision release at
+`22:14Z`, watchdog cleanup at `22:20Z`, and cumulative exposure at
+`$5.516262` under the existing `$6` reservation.
+
+## 2026-07-28T22:04Z — preserve the timely block-scale implementation claim
+
+`gemma4_b200_fp8_runtime_codesign` claimed the exact retained B200 at
+`22:03:48Z`, before the refreshed `22:04:30Z` fence. The claim is current and
+non-stale, while no block runner, preclaim terminal, durable owner, or
+scientific terminal exists yet.
+
+Preserve this sole claim and
+`DIRECTOR_B200_FP8_BLOCK_SCALE_EXECUTION_20260728T2154Z.json` unchanged
+through its `22:09Z` owner-launch window. Do not release or reclaim the bench,
+freeze the in-flight implementation, admit a competing executor, or mutate
+the `22:20Z` lifecycle. The next material handoff is the durable block-scale
+owner launch or a typed launch failure.
+
+## 2026-07-28T22:12Z — preserve the timely block API-repair claim
+
+`gemma4_b200_fp8_runtime_codesign` claimed the explicitly re-readied B200 at
+`22:11:43Z`, before the `22:13Z` fence. The claim is current and non-stale;
+the corrected runner, preclaim terminal, durable owner, and scientific
+terminal do not yet exist.
+
+Preserve this sole claim and
+`DIRECTOR_B200_FP8_BLOCK_API_REPAIR_20260728T2208Z.json` unchanged through its
+`22:14:30Z` owner-launch window. Do not release or reclaim the bench, freeze
+the in-flight API/layout implementation, start a competing executor, or
+mutate the `$6` ceiling or `22:20Z` lifecycle. The next material handoff is
+the repair-capable exact-consumer owner launch or a typed launch failure.
+
+## 2026-07-28T22:18Z — reject the manual scale adapter and bind official QuantFP8
+
+The replacement owner produced 18 BF16/CUTLASS rows, but the runner never
+invoked installed `QuantFP8(column_major_scales=True)` and did not prove its
+plain activation or weight scale tensors execution-equivalent before science.
+The resulting `0.192218-0.203493` NRMSE and broad latency regression reject
+only that manual adapter; they do not decide the bound official vLLM block
+representation.
+
+Bind
+`DIRECTOR_B200_FP8_BLOCK_OFFICIAL_PRODUCER_EXECUTION_20260728T2216Z.json`.
+The director transactionally replaced the watchdog through `22:27Z`; total
+conservative exposure is `$5.977095` under the `$6` ceiling. Claim the
+re-readied B200 by `22:22Z`, launch the installed-producer owner by `22:23Z`,
+and release one decision-bearing 18-row result by `22:25:30Z`. Do not replay
+or promote the manual table, substitute another hand-authored activation
+scale layout, or extend the lifecycle again.
+
+## 2026-07-28T22:25Z — close block E4M3, retire B200, reopen M32 execution
+
+The official installed-`QuantFP8` generation is contract-complete and
+negative. All 18 rows pass cosine but fail NRMSE at `0.036876-0.037155`;
+only 3/18 are faster, and the charged M32/M3679 aggregate regresses by
+`0.396351 s/request`. Close the exact 1x128-activation/128x128-weight block
+representation and complete `gemma4_b200_fp8_runtime_codesign`.
+
+No compatible run fits the remaining `$0.022905` authority or lifecycle.
+The director drained the released bench, deleted exact instance
+`computeinstance-i00rqcq5yzr6xc991j` and disk
+`computedisk-i00ky31am65pmpzh8z`, verified both absent, and retired the pool
+record. Reopen `gemma4_b200_fp8_residual_hotpath` only for a materially
+distinct SM100 M32 schedule on the qualified dynamic-FP8 representation.
+Offline deep source work may proceed; request a `$16` total ceiling, but do
+not create or claim a paid B200 until that reservation is durable.
+
+## 2026-07-28T22:32Z — narrow block evidence and fund M32 source work
+
+The supervisor completeness finding is confirmed: the 18-row runner used
+installed `QuantFP8` only for activations, while `wq()` hand-authored block
+weights and omitted the bound execution-equivalence, scale-layout, storage,
+orientation, reciprocal, and expected-row ledgers. Reclassify its
+`0.036876-0.037155` NRMSE and `0.396351 s/request` regression as mixed-adapter
+implementation evidence, not an official block-E4M3 representation negative.
+Keep `gemma4_b200_fp8_runtime_codesign` paused and non-claimable under its
+exhausted `$6` ceiling; the verified provider cleanup remains valid.
+
+The `$16` reservation for `gemma4_b200_fp8_residual_hotpath` is durable.
+Continue one `$0` deep `$kernel-research` turn to produce an executable,
+hash-bound, materially distinct SM100 M32 consumer and repair-capable owner.
+Do not create a cold B200 while that artifact is absent: the remaining
+`$6.27` must fund target execution rather than mechanism design. A later
+director turn provisions only after `B200_FP8_M32_NEXT_MECHANISM.json`
+exists.
+
+## 2026-07-28T22:58Z — provision B200 and bind the final M32 scheduler bytes
+
+The executable READY handoff raced its researcher finalization: SHA
+`06247000…` was superseded before provisioning by the final hash-consistent
+mechanism SHA `ad3c01d5…`. All five bound source/runner/owner/build/image
+bytes now match that final manifest and both offline contract validators pass.
+Bind only `ad3c01d5…`; the earlier digest is revoked and must not execute.
+
+The durable `$16` reservation covers a 75-minute preemptible B200 lifecycle:
+conservative compute exposure is `$4.9375`, taking cumulative compute
+exposure from `$9.73` to `$14.6675` before minor storage/network charges.
+Nebius placement selected `me-west1-a` at `$3.95/hour`. The director created
+instance `computeinstance-i00z1c1rm2yatraaed` and disk
+`computedisk-i00ch1ec97jas3szz2`, registered bench
+`b200-m32-static-computeinstance-i00z1c1rm2yatraaed`, and installed an
+independent verified cleanup watchdog through `2026-07-29T00:09:07Z`.
+Strict SSH binds host fingerprint `SHA256:B1VhUo66…`; the guest reports one
+idle NVIDIA B200, compute capability 10.0, zero memory used, and no compute
+applications.
+
+Issue `DIRECTOR_B200_M32_STATIC_EXECUTION_20260728T2258Z.json`. Claim by
+`23:03Z`, release decision-bearing evidence by `23:45Z`, and keep the
+repair-capable owner bounded by `23:50Z`. Run only the exact six-family
+stock-versus-static-persistent M32 dynamic-FP8 component. Do not replay M16,
+change operands or the stock tile/mainloop/epilogue, load the model, run an
+endpoint, or mutate provider lifecycle.
+
+## 2026-07-28T23:00Z — preserve the runnable M32 static-persistent lane
+
+The final mechanism remains byte-identical at SHA `ad3c01d5…`, the exact B200
+is available and unclaimed, and its independent cleanup watchdog is
+active/running through `00:09:07Z`. The `23:03Z` claim fence retains more than
+one harness scheduling interval, while the unchanged 42-minute owner window,
+`23:45Z` decision release, and `$14.6675` conservative cumulative compute
+exposure remain inside the binding and `$16` ceiling.
+
+Preserve `DIRECTOR_B200_M32_STATIC_EXECUTION_20260728T2258Z.json` unchanged
+and schedule only `gemma4_b200_fp8_residual_hotpath`. Do not spend this
+near-term admission window on another project, lifecycle mutation, M16 replay,
+or optional validation. The next material handoff is the durable detached
+owner launch or a typed claim/launch failure.
+
+## 2026-07-28T23:01Z — preserve the live M32 static-persistent owner
+
+The detached owner is durably launched with PID `3692757` and matching start
+ticks `139562695`. Its immutable mechanism still hashes to `ad3c01d5…`; the
+progress ledger records timely claim, packet staging, and cold-source
+reconciliation. The exact B200 claim is current with a `23:01:39Z` heartbeat,
+and the independent provider watchdog remains active/running through
+`00:09:07Z`.
+
+Preserve the owner, claim, execution binding, and lifecycle unchanged. Do not
+start another executor, rewrite the in-flight scientific contract, reclaim
+the bench, or mutate provider lifecycle. The next material handoff is a
+decision-bearing terminal or a typed repair/disposition request from this
+same owner.
+
+## 2026-07-28T23:17Z — keep the M32 claim for generation-2 build repair
+
+The durable owner remains live with PID `3692757`, the exact claim heartbeat
+is current, mechanism SHA `ad3c01d5…` is unchanged, and the provider watchdog
+is active through `00:09:07Z`. Generation 1 repaired the missing CUDA
+development environment and re-entered the build. Generation 2 reached NVCC
+but failed before science on localized CUDA driver/header symbol and vLLM
+source-trait defects; `m32-static-2` is durably repair-ready through
+`23:35:47Z`.
+
+Preserve the original claim and owner. Schedule one execution-profile
+`$kernel-research` turn to submit the smallest hash-bound build-scope repair
+to generation 2, then let this owner continue directly into the unconsumed
+six-family component. Do not replace the owner, release/reclaim the bench,
+change the scheduler-only scientific contract, or mutate provider lifecycle.
+
+## 2026-07-28T23:24Z — preserve the live generation-4 M32 build
+
+The concurrent researcher localized generation 3 to compatibility-header
+pollution, submitted hash-bound repair `m32-static-3`, and the existing owner
+crossed that repaired boundary into `candidate_build` generation 4 at
+`23:24:25Z`. PID/start ticks, original claim, `ad3c01d5…` mechanism, heartbeat,
+and watchdog all remain current; no scientific sample or terminal exists.
+
+Preserve the owner, claim, repair lineage, execution binding, and lifecycle
+unchanged while generation 4 runs. Do not start another executor, submit a
+second repair, rewrite the candidate, release/reclaim the bench, or mutate
+provider lifecycle. The next material handoff is its scientific terminal or
+a fresh typed repair request.
+
+## 2026-07-28T23:25Z — continue the in-flight generation-4 build
+
+Generation 4 remains inside the existing owner's `candidate_build` boundary.
+PID/start ticks, the original claim heartbeat, mechanism SHA `ad3c01d5…`, and
+the independent watchdog are current; there is no terminal or newer repair
+handoff. Preserve the owner, claim, binding, and lifecycle unchanged. The next
+decision waits for this build to emit a scientific terminal or a fresh typed
+repair request.
+
+## 2026-07-28T23:30Z — preserve the resumed generation-5 M32 lane
+
+Generation 4 completed its build and reached the real component consumer at
+`23:26:34Z`. Its typed consumer repair was accepted as `m32-static-4`, and the
+same durable owner crossed that amended boundary into build generation 5 at
+`23:29:34Z`. The original claim, PID/start ticks, mechanism SHA
+`ad3c01d5…`, heartbeat, and watchdog remain current; no scientific terminal
+exists.
+
+Preserve the owner, claim, repair lineage, binding, and lifecycle unchanged
+while generation 5 runs. Do not start another executor, submit an overlapping
+repair, release/reclaim the bench, or mutate provider lifecycle. The next
+material handoff is its scientific terminal or a fresh typed repair request.
+
+## 2026-07-28T23:33Z — repair the actual generation-5 component identity
+
+Generation 5 built successfully and reached the real component consumer at
+`23:31:44Z`, but vLLM import again failed before component CUDA because the
+numeric-UID process had no resolvable user identity. The prior image-only
+`TORCHINDUCTOR_CACHE_DIR` repair therefore did not reach or satisfy the actual
+launch context. No scientific sample was consumed.
+
+Preserve PID `3692757`, the original claim, mechanism SHA `ad3c01d5…`, and
+the `00:09:07Z` watchdog. Schedule one execution-profile repair of
+`m32-static-5`: prove the live launch environment, submit the smallest
+hash-bound runtime-context correction by `23:38:30Z`, and let the same owner
+resume the component before its `23:47Z` repair deadline. Do not repeat the
+ineffective image-only patch, replace the owner, or mutate provider lifecycle.
+
+## 2026-07-28T23:39Z — decline an unsafe in-window M32 source rebind
+
+The retained consumer reached the B200: stock `sliding_qkv` completed, then
+candidate source SHA `515ac143…` failed its first cluster launch with
+`cudaErrorInvalidConfiguration`. No comparator output or complete family row
+exists, so this is a scope-matched invalid implementation attempt—not a
+paired performance or exactness result.
+
+Do not replay the unchanged call or rebind candidate source inside this owner
+window. The closest source-repair path took about `304 s` to return to the
+consumer; at `23:39Z` that leaves no safe margin before the bound `23:45Z`
+release for six-family measurement, terminal persistence, and release.
+Preserve PID `3692757`, the original claim, `ad3c01d5…` binding, evidence, and
+watchdog through the owner's typed deadline disposition. Rank a geometrically
+legal source revision against other warm-B200 work only after that handoff.
+
+## 2026-07-28T23:41Z — corrected build timing does not reopen the owner window
+
+The supervisor correctly isolates the redundant generation-5 rebuild at about
+`130 s`; the earlier `304 s` figure covered repair handoff plus rebuild through
+consumer re-entry. This correction does not change the disposition. At
+`23:40:43Z`, only about `257 s` remained before the bound `23:45Z` release.
+Subtracting the measured build leaves about `127 s` for causal source
+localization, a new hash-bound mechanism, six-family measurement, terminal
+persistence, and release, which cannot fit safely.
+
+Keep `m32-static-6` unrequested and preserve the live owner, original claim,
+evidence, and watchdog through typed deadline disposition. Do not replay the
+failing launch, replace the owner, or mutate provider lifecycle.
+
+## 2026-07-28T23:42Z — pause dispatch, not the live owner
+
+No terminal or safety change has appeared, and no researcher action can fit
+the binding. Set `gemma4_b200_fp8_residual_hotpath` to `paused` solely to stop
+repeated no-op researcher wakes while PID `3692757` remains the durable owner.
+The original claim, `m32-static-6` evidence, and watchdog remain unchanged.
+
+Reactivate after the owner's typed terminal/release handoff, then rank a
+geometrically legal static-persistent revision against other warm-B200 work.
+Do not submit the pending retry or mutate provider lifecycle.
+
+## 2026-07-28T23:44Z — use free capacity for an offline geometric correction
+
+The portfolio became empty only because researcher dispatch was paused; the
+M32 scientific question remains open and the current owner needs no action.
+Reactivate `gemma4_b200_fp8_residual_hotpath` with `deep` routing for one
+zero-GPU causal turn while PID `3692757` reaches typed disposition unchanged.
+
+By `00:04:30Z`, derive a separately named, hash-bound static-persistent source
+candidate that explains the SM100 invalid launch and proves grid, cluster, and
+shared-memory legality across all six M32 families while preserving operands,
+scales, tile, mainloop, epilogue, and comparator semantics. Do not overwrite
+the current mechanism/binding, submit `m32-static-6`, claim a GPU, launch a
+replacement owner, or mutate provider lifecycle. A later director will rank
+the executable rebind candidate against other warm-B200 work.
+
+## 2026-07-28T23:50Z — retain the maintenance B200 for the geometric rebind
+
+The prior owner released the exact B200 to maintenance with no valid paired
+row, while build 5, the derived image, and the failed invocation remain
+resident. Strict SSH verifies an idle B200 with zero memory use, no compute
+applications, and no containers. The offline geometric candidate is due at
+`00:04:30Z`; cold reprovisioning would cost more time and money than this
+short reuse window.
+
+Transactionally replace the cleanup watchdog and retain the bench in
+maintenance through `00:24:07Z`. The 15-minute extension costs at most
+`$0.9875`, taking conservative project compute exposure to `$15.655` under
+the durable `$16` reservation. The new watchdog is active as PID `3725242`
+and the old watchdog was stopped only after the pool record was updated.
+Keep the bench non-claimable until a later director validates and binds the
+separately named geometric candidate; otherwise the new watchdog performs
+exact instance-and-disk cleanup at its deadline.
+
+## 2026-07-29T00:00Z — execute the geometric rebind as a staged discriminator
+
+The offline candidate hash-binds the failed launch to zero-valued CUTLASS
+hardware metadata and corrects only runtime `sm_count`; its derived grids are
+nonzero, cluster-divisible, and within the measured B200 shared-memory limit.
+This is enough information to justify a cheap target call, not a GPU result.
+
+Bind
+`DIRECTOR_B200_M32_GEOMETRIC_REBIND_EXECUTION_20260728T2356Z.json` and mark
+the retained B200 ready for this project alone. Route the project to
+`execution`: first adapt only the existing owner's packet/source-reuse seam,
+then claim by `00:03:30Z` and launch by `00:04:30Z`. Submit only
+`sliding_qkv` stock/candidate first calls initially. Continue to the other
+five families only after legal launch, finite output, and bitwise equality;
+release decision evidence by `00:16Z`. The lifecycle and conservative
+`$15.655` exposure remain unchanged.
+
+## 2026-07-29T00:08Z — replace the elapsed claim fence, not the experiment
+
+The byte-complete preclaim packet landed at `00:03:52Z`, 22 seconds after the
+first binding's claim fence. It records no claim, GPU invocation, or consumed
+science. The adapted owner, runtime manifest, candidate, and runner are now
+hash-bound, and the closest measured rebuild is about 130 seconds.
+
+Revoke only the stale 2356Z launch and bind
+`DIRECTOR_B200_M32_GEOMETRIC_REBIND_EXECUTION_REPLACEMENT_20260729T0006Z.json`.
+Keep the existing lifecycle and `$15.655` conservative exposure unchanged.
+Claim by `00:10:30Z`, launch by `00:11Z`, gate the other five families on a
+legal and bitwise-equal `sliding_qkv`, and release by `00:18:30Z`.
+
+## 2026-07-29T00:10Z — preserve the live geometric-rebind owner
+
+The replacement owner launched at `00:09:14Z` with PID `3735178` and matching
+start ticks `139977188`. Its original claim is current, the heartbeat advanced
+to `00:09:44Z`, and the durable progress ledger crossed packet staging and
+resident-source reconciliation into candidate build generation 1.
+
+Preserve this owner, claim, staged `sliding_qkv` gate, repair contract, and
+`00:24:07Z` watchdog unchanged. Do not launch another executor, alter the
+scientific contract, release/reclaim the bench, or mutate provider lifecycle.
+The next material handoff is the staged scientific terminal or a typed repair
+request from this owner.
+
+## 2026-07-29T00:11Z — continue the generation-1 geometric-rebind build
+
+The same owner remains live with PID `3735178` and matching start ticks
+`139977188`. Its exact claim heartbeat advanced to `00:11:14Z`; the pool
+record is non-stale and the watchdog remains bound through `00:24:07Z`.
+Generation 1 is still inside `candidate_build`, with no terminal, incomplete
+disposition, or typed repair request.
+
+Preserve the owner, claim, staged `sliding_qkv` discriminator, binding, and
+lifecycle unchanged. Do not dispatch another executor, alter the scientific
+contract, release/reclaim the bench, or mutate provider lifecycle. The next
+material handoff remains a staged scientific terminal or a typed repair
+request from this owner.
+
+## 2026-07-29T00:18Z — promote the positive scheduler and restore two endpoint lanes
+
+The geometric-rebind terminal is decision-bearing: all six exact M32 families
+are bitwise equal, weighted quantization-plus-GEMM time improves `10.2979%`,
+and the bound projection saves `0.0135395587 s/request`, about `2.17%` of the
+fixed qualified denominator. Promote this mechanism inside
+`gemma4_b200_fp8_residual_hotpath` to one matched B200 dynamic-FP8 c32 endpoint
+pair. Request a `$28` cumulative ceiling; the project remains non-claimable
+until that reservation is durable and a later director binds a protected B200
+lifecycle.
+
+Reactivate `gemma4_hybrid_attention_placement_codesign` as the independent
+lane. Its permanent 55-local/5-global component already reduced exact H200
+attention time `20.3345%`, while its matched endpoint is unconsumed. First run
+one bounded `$0` owner repair, then request a `$22` cumulative ceiling for the
+quality-unsafe stock/candidate endpoint proxy. Keep prior TARGET_VERIFY,
+DFlash, and consumed endpoint attempts closed.
+
+The released B200 remains unclaimed in maintenance under its verified
+`00:24:07Z` watchdog. No provider lifecycle mutation is authorized from the
+current `$16` reservation; retain it for a possible reservation handoff and
+otherwise let the independent watchdog clean it at deadline.
+
+## 2026-07-29T00:25Z — fund and protect the B200 endpoint promotion
+
+Both requested cumulative reservations are now durable. Strict SSH verifies
+the retained B200 is idle with zero memory use and no containers; its disk has
+`96.28 GB` free, enough for the bound `62.58 GB` checkpoint. Extend the exact
+bench through `02:24:07Z` with a replacement cleanup watchdog. The additional
+two hours cost at most `$7.90`, taking conservative project exposure to
+`$23.555` under the `$28` ceiling. Watchdog PID `3742417` is active; the pool
+record was replaced before the old watchdog was stopped and verified inactive.
+
+Bind
+`DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_EXECUTION_20260729T0022Z.json`
+(SHA-256 `5c3c06b1…`) and make this bench available only to
+`gemma4_b200_fp8_residual_hotpath`. The execution researcher must finalize and
+hash-bind the endpoint owner/runner by `01:10Z`, then claim and launch through
+`detached-owner` by `01:12Z`. Stage the verified checkpoint inside that claim,
+repair mutable integration in place, and submit exactly one contemporaneous
+32-request stock/candidate c32 pair by `02:12Z`.
+
+Keep `gemma4_hybrid_attention_placement_codesign` active in parallel for its
+bounded `$0` owner repair. Its `$22` reservation is durable, but it remains
+non-claimable until the endpoint packet is executable and a later director
+binds an H200 lifecycle.
+
+## 2026-07-29T00:35Z — provision the independent H200 endpoint lane
+
+The completed zero-GPU packet preserves the sole unconsumed quality-unsafe
+stock/permanent-55L5G c32 pair, and authenticated placement reports high
+preemptible H200 availability. Prior measured project exposure is
+`$9.9609542521`; a three-hour lifecycle costs at most `$7.3791666`, keeping
+conservative exposure at `$17.3401208521` under the durable `$22` ceiling.
+
+Create instance `computeinstance-e00kwncr0knnykhe48` and managed disk
+`computedisk-e00n8m6xbb9cfdkam8`, start the independent cleanup watchdog
+through `03:32:14Z`, and register bench
+`h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48` in maintenance before
+any SSH or setup. Keep it non-claimable. The packet's scientific bytes are
+bound, but its owner still asserts the retired `$10` lifecycle; delegate only
+that zero-GPU live-binding correction, then let a later director verify host
+identity/H200 telemetry and issue the execution binding.
+
+While this lifecycle transaction ran, the independent B200 moved to an
+unclaimed typed-incomplete maintenance state. Do not alter it from this stale
+turn; its active watchdog remains the safety owner and the next director wake
+must inspect its named diagnostic.
+
+## 2026-07-29T00:38Z — re-open the B200 after a zero-byte owner failure
+
+The B200 owner claimed at `00:31:09Z`, entered `checkpoint_stage`, and raised
+`FileNotFoundError` before its first remote command created the endpoint root.
+Strict SSH now proves that root is absent, no checkpoint byte or container is
+present, and the B200 has no compute application. This is a recoverable
+controller executable-path defect; the component and endpoint pair remain
+unconsumed.
+
+Revoke the old owner hash and re-open the same warm B200 for one execution
+continuation under the unchanged `5c3c06b1…` scientific binding. Require
+absolute controller `ssh`/`scp`/`tail` paths, compact traceback evidence, and
+a live repair-handshake path instead of the old unconditional maintenance
+release. Re-hash all owner packets before claim, resume checkpoint staging,
+and continue directly to the sole stock/candidate c32 pair by the existing
+`02:12Z` release and `02:24:07Z` watchdog. Preserve the independent H200
+maintenance lifecycle and its offline owner repair unchanged.
+
+## 2026-07-29T00:49Z — open the verified H200 endpoint lane
+
+Authenticated Nebius identity still maps instance
+`computeinstance-e00kwncr0knnykhe48` to `89.169.111.63`. Strict SSH binds
+ED25519 fingerprint `SHA256:qjLIE6aR…`; the guest reports one idle H200,
+zero GPU memory use, no compute applications, and no containers. Persist the
+fingerprint and make the protected bench available.
+
+Bind `DIRECTOR_H200_55L5G_ENDPOINT_EXECUTION_20260729T0047Z.json` at SHA-256
+`39734c5d…`. Its validator passes against the live row and preserves the sole
+quality-unsafe stock/permanent-55L5G c32 pair. Because the repaired artifact
+is only a validator, authorize the smallest separately named cold-staging and
+lifecycle owner adaptation as mutable integration in the same execution turn:
+finalize its hash-bound READY bytes, claim by `01:08Z`, launch by `01:10Z`,
+and release decision evidence by `03:20Z`. Retain the claim through bounded
+pre-science repairs; provider cleanup remains `03:32:14Z`. The B200 repair
+lane and lifecycle remain unchanged.
+
+## 2026-07-29T00:51Z — preserve both endpoint lanes
+
+The B200 replacement owner is live as PID `3761421` with matching durable
+state. It adopted the original `00:43:20Z` claim after repair generation
+`endpoint-pre-science-1`, re-entered `checkpoint_stage` at `00:45:25Z`, and
+continues to heartbeat. No scientific request, typed repair, or terminal has
+appeared.
+
+Preserve that owner, claim, immutable scheduler endpoint contract, repair
+lineage, and `02:24:07Z` watchdog unchanged. In parallel, keep the verified
+H200 available under binding `39734c5d…`; its `01:08Z` claim fence retains
+ample scheduling runway and its one quality-unsafe c32 pair remains
+unconsumed. Do not dispatch a second B200 executor, alter either scientific
+contract, release/reclaim either bench, or mutate provider lifecycle.
+
+## 2026-07-29T00:59Z — preserve both live endpoint owners
+
+The H200 lane claimed its exact bench at `00:54:46Z`. Two pre-science owner
+starts exited without a request: the first lacked `DETACHED_OWNER_STATE`, and
+the second incorrectly required an available bench after the claim already
+existed. The in-flight researcher corrected those mutable lifecycle seams and
+launched a third owner as PID `3769609`, start ticks `140270310`. It adopted
+the original claim and is now inside the bound strict-SSH image/checkpoint
+stage; no scientific request or pair invocation has been consumed.
+
+Preserve that H200 owner, original claim, immutable packet `b0a2fad6…`,
+binding `39734c5d…`, one-pair limit, and `03:32:14Z` watchdog unchanged. The
+B200 owner remains live as PID `3761421` with matching start ticks and a
+current claim heartbeat while its checkpoint stage continues. Do not
+dispatch replacement executors, release/reclaim either bench, alter either
+endpoint contract, or mutate provider lifecycle. The next material handoff
+is a typed repair or scientific terminal from either durable owner.
+
+## 2026-07-29T01:08Z — repair the ownerless H200 claim in place
+
+The third H200 owner exited before science after the pinned SGLang image
+rejected deprecated `huggingface-cli` and advertised its installed `hf`
+command. The original `00:54:46Z` claim remains intact, the failure artifact
+records zero endpoint requests and no candidate CUDA invocation, and the
+`03:32:14Z` watchdog remains the provider safety owner. The pulled image and
+remaining two-hour execution window make a localized restart preferable to
+release/reclaim or cold setup.
+
+Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_CLAIM_STAGE_REPAIR_20260729T0106Z.json`
+at SHA-256 `e78e8768…`. By `01:15Z`, replace only the in-image download
+command with `hf download`, hash-bind a separately named owner, adopt and
+heartbeat the existing claim without calling `gpu_pool claim`, reuse resident
+image/checkpoint state, and continue directly to the still-unconsumed
+stock/permanent-55L5G c32 pair. Preserve binding `39734c5d…`, packet
+`b0a2fad6…`, the one-pair limit, release at `03:20Z`, and cleanup at
+`03:32:14Z`. The healthy B200 owner, claim, repair lineage, and lifecycle
+remain unchanged.
+
+## 2026-07-29T01:09Z — keep the H200 repair runnable behind the drain fence
+
+The supervisor's H200 `drain_after_release` action fenced only a future
+release; it preserved the original `00:54:46Z` claim, resident image, exact
+resource, and `03:32:14Z` watchdog. No replacement READY or owner exists yet,
+so the `e78e8768…` retained-claim repair remains the sole runnable H200 action.
+
+Keep the project active for its `hf download` owner correction and adoption by
+`01:15Z`. Do not clear the drain fence, release/reclaim the bench, start a
+different H200 executor, or alter the one-pair scientific contract. The B200
+owner remains live with matching identity and a current heartbeat; preserve
+its endpoint staging and lifecycle unchanged.
+
+## 2026-07-29T01:14Z — preserve both endpoint owners through staging
+
+The H200 retained-claim repair published hash-bound READY bytes and launched
+before its `01:15Z` fence as PID `3779089`, start ticks `140362169`. It adopted
+the original `00:54:46Z` claim, heartbeats successfully, and its live strict-SSH
+child is executing the corrected pinned-image `hf download` checkpoint stage.
+No repair request, endpoint invocation, or scientific terminal exists.
+
+Preserve this owner, original claim, binding `39734c5d…`, packet `b0a2fad6…`,
+one-pair limit, and future-release drain fence unchanged. The B200 owner PID
+`3761421` also remains live with a current claim heartbeat in checkpoint
+staging and no typed handoff. Do not dispatch another executor, release or
+reclaim either bench, alter either scientific contract, or mutate provider
+lifecycle. The next decision point is a typed repair or scientific terminal
+from either owner.
+
+## 2026-07-29T01:31Z — replace both repair-wait owners without releasing claims
+
+Both endpoint lanes reached localized pre-science defects with their original
+claims and watchdogs intact. The B200 completed every manifest-listed
+checkpoint file but omitted `model-files.sha256`; source SHA-256 `433e265f…`
+fixes that final copy, while the live interpreter cannot reload it. Bind
+`DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_RETAINED_CLAIM_MANIFEST_RELOAD_20260729T0128Z.json`
+(SHA-256 `336b14df…`) and atomically replace only PID `3761421` by `01:36Z`.
+Reuse all staged shards and continue through the unchanged build and sole
+endpoint pair.
+
+The H200 finalized its exact checkpoint and loaded a healthy stock server.
+Its owner incorrectly found `false` anywhere in Docker State JSON and treated
+`Paused:false` as `Running:false`; no campaign request was submitted. Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_HEALTH_REPAIR_20260729T0128Z.json`
+(SHA-256 `724988a4…`) and replace only PID `3779089` by `01:40Z`. Parse the
+exact running boolean, inherit the loaded stock server, and continue directly
+to the unchanged one-pair driver. Preserve the original claims, H200
+future-release drain fence, scientific identities, release bounds, and both
+provider lifecycles.
+
+## 2026-07-29T01:34Z — preserve the live B200 replacement and H200 repair runway
+
+The B200 replacement published hash-bound READY bytes and launched at
+`01:33:12Z` as PID `3793460`, start ticks `140480999`. It adopted the original
+`00:43:20Z` claim and entered checkpoint staging under the patched manifest
+owner; the predecessor PID is gone, the claim heartbeat is current, and no
+repair or scientific terminal exists. Preserve this owner and the unchanged
+endpoint contract.
+
+The H200 predecessor remains live and heartbeating behind its repair handshake.
+Its bound stock-health replacement has not published READY yet, but the
+`01:40Z` start fence retains scheduling runway and the healthy loaded server
+remains the intended continuation. Keep that binding runnable without
+redispatching the stale stage repair. Do not release/reclaim either bench,
+clear the H200 drain fence, dispatch another B200 executor, or mutate provider
+lifecycle.
+
+## 2026-07-29T01:39Z — repair the B200 build environment and extend only the H200 start clock
+
+The B200 replacement finalized the exact checkpoint and reached the production
+build before emitting repair `endpoint-pre-science-1785288862-1`. The pinned
+image has `nvcc` but did not expose `cusparse.h`; a first exact-container smoke
+with the retained host CUDA headers then exposed only an incorrect
+`cutlass_extensions/common.hpp` compatibility include. No CUDA invocation,
+server, or endpoint request occurred. Bind
+`DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_RETAINED_BUILD_ENV_REPAIR_20260729T0139Z.json`
+(SHA-256 `2a605469…`):
+keep PID `3793460` and the original claim, validate only the header visibility
+and build-wrapper include, remove only the manifest-less failed build, and
+publish a scope-matched repair request by `01:50Z`. Preserve every scientific
+byte and the `02:12Z` release bound.
+
+The H200 stock-health replacement still had no READY bytes when its `01:40Z`
+fence lost safe handoff runway. Supersede only that start clock with
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_HEALTH_REPAIR_START_EXTENSION_20260729T0139Z.json`
+(SHA-256 `d27fc8af…`) and launch by `01:50Z`. The healthy loaded stock server, predecessor PID
+`3779089`, original claim, one-pair contract, `03:20Z` release, and future
+release drain fence remain unchanged. Do not release/reclaim either bench or
+mutate provider lifecycle.
+
+## 2026-07-29T01:44Z — expose the bound H200 repair to the active scheduler
+
+The H200 owner remains live and heartbeating behind direct-child marker
+`repair-stage-0106/REPAIR_READY.json`, but the running harness cannot reload
+the supervisor's direct-child discovery change while PID-managed sessions are
+live. Publish scheduler bridge
+`REPAIR_READY_STOCK_HEALTH_REPLACEMENT.json`, bound to the original marker,
+stock-health replacement `724988a4…`, and lifecycle extension `d27fc8af…`.
+The bridge is SHA-256 `1a94c716…` and wakes one researcher through the
+harness's existing named-marker path
+without altering the owner, claim, loaded stock server, one-pair contract, or
+future-release drain fence. The replacement remains due by `01:50Z`.
+
+Meanwhile B200 consumed its first build-environment request and created fresh
+generation `endpoint-pre-science-1785289295-2` after a redundant manifest copy
+hit the deliberately write-protected finalized checkpoint directory. A
+concurrent researcher is already exercising that permission/idempotence-only
+boundary under the live original claim, so preserve it without another
+director binding or state rewrite. No provider lifecycle mutation is required.
+
+## 2026-07-29T01:55Z — recover the ownerless H200 claim with hash-idempotent packet preparation
+
+The H200 stock-health replacement crossed its repaired health check but exited
+pre-science while unconditionally copying `qualified_c32_workload.json` over
+the exact read-only resident file. PID `3806401` is absent, no request-start
+or arm artifact exists, and strict SSH verifies the stock container remains
+healthy and all three packet files already match their bound hashes. Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_PACKET_IDEMPOTENCE_REPAIR_20260729T0154Z.json`
+(SHA-256 `52ab37b0…`): accept exact resident bytes, atomically copy only missing
+bytes, fail on mismatch, and launch one durable replacement by `02:03Z` under
+the original claim. Preserve the finalized checkpoint, loaded stock server,
+one-pair contract, `03:20Z` release, and future-release drain fence.
+
+The B200 repair request arrived at `01:50:35Z`, was accepted by its live owner,
+and crossed into `production_dispatch_build` at `01:51:56Z` with its original
+claim current. Preserve that build and endpoint contract. Do not release or
+reclaim either bench, dispatch a second B200 executor, or mutate provider
+lifecycle.
+
+## 2026-07-29T01:59Z — preserve the B200 pair boundary and H200 repair runway
+
+The B200 owner PID `3793460` remains live and heartbeating under the original
+claim. It completed the repaired production build and entered
+`endpoint_pair_submission` at `01:54:06Z`; its durable marker still records
+`science_started:false`, with no repair or scientific terminal. Preserve this
+sole executor and unchanged stock/candidate contract through its current
+submission.
+
+The H200 hash-idempotence repair `52ab37b0…` remains the only runnable recovery
+for the ownerless original claim. Its `02:03Z` start fence retains scheduler
+runway, while the exact packet, finalized checkpoint, and healthy loaded stock
+server remain protected by the `03:32:14Z` watchdog and future-release drain
+fence. Keep it active without another binding. Do not release/reclaim either
+bench, dispatch a competing endpoint owner, or mutate provider lifecycle.
+
+## 2026-07-29T02:09Z — reject the B200 endpoint and repair H200 at the true submission boundary
+
+The B200 pair terminal `afe8b547…` is complete but invalid. Both arms returned
+32 requests; stock measured `0.681605069 s/request`, candidate measured
+`0.681981931 s/request` (0.0553% slower), and request 10 alone has unequal
+semantic token IDs. Do not replay or promote the static scheduler. Redirect the
+same project to deep offline first-divergence localization over retrieved raw
+responses. With no prepared compatible B200 successor, the director drained
+the released bench and submitted deletion of exact instance
+`computeinstance-i00z1c1rm2yatraaed` and its managed disk under operation
+`computeoperation-i00p16zxfv79vn1dk5`. Both are reconciling; retain the
+watchdog and retire only after an absence verification on a later material
+provider observation.
+
+The H200 packet owner exited twice after emitting an early intent marker.
+Strict server evidence through `02:06:36Z` shows three health GETs, zero
+chat-completion POSTs after either attempt, no request-driver process, and a
+healthy loaded stock server. Thus the canonical stock arm remains unsubmitted.
+Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_DRIVER_COMMAND_REPAIR_20260729T0207Z.json`
+(SHA-256 `52d9f292…`): preserve claim `00:54:46Z`, packet `b0a2fad6…`,
+binding `39734c5d…`, and the one-pair limit; replace only the controller
+invocation with an argv-safe, command-diagnostic owner by `02:14Z`. Emit the
+next marker inside the adapter immediately before its first request, persist
+stock before candidate, and fail closed against any discovered prior POST.
+Keep the H200 drain fence, `03:20Z` release, and `03:32:14Z` cleanup unchanged.
+
+## 2026-07-29T02:13Z — retire the deleted B200 and extend only H200 preparation runway
+
+Nebius now returns NotFound for exact B200 instance
+`computeinstance-i00z1c1rm2yatraaed` and managed disk
+`computedisk-i00ch1ec97jas3szz2`. Its watchdog is inactive and the pool record
+is retired with cleanup verified at `02:11:31Z`. The final lifecycle cost
+`$12.995837` raises conservatively reconciled project exposure to
+`$28.650837`; keep the remaining first-divergence work zero-GPU and prohibit
+another paid claim under that project reservation.
+
+The H200 command-repair owner, runtime manifest, and READY bytes were still
+absent at `02:11Z`, so the `02:14Z` start fence no longer covered the measured
+`295.623 s` preparation plus one scheduling interval. Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_DRIVER_COMMAND_REPAIR_START_EXTENSION_20260729T0211Z.json`
+(SHA-256 `bcd89b9d…`) and extend only replacement-owner start to `02:22Z`.
+The original claim, healthy loaded stock server, zero campaign POST evidence,
+one-pair contract, `03:20Z` release, `03:25Z` owner deadline, `03:32:14Z`
+cleanup, and future-release drain fence remain unchanged.
+
+## 2026-07-29T02:21Z — materialize the exact H200 workload before the unconsumed pair
+
+The argv-safe H200 owner reached its no-HTTP smoke and proved the bound
+`qualified_c32_workload.json` is the 32-request identity manifest rather than
+the payload list expected by the pair driver. It failed before its submission
+marker or any urllib call, then retained claim `00:54:46Z` as live PID
+`3825247`, start ticks `140765749`, with a current heartbeat and healthy loaded
+stock server. Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_WORKLOAD_MATERIALIZATION_REPAIR_20260729T0221Z.json`
+(SHA-256 `36b5b4a4…`): reconstruct the exact deterministic bodies from
+`exact_runner.py` `f1795d57…`, require all ordered hashes to match the
+`7a05fa62…` manifest, and restore its streaming `/v1/completions` transport in
+the mutable adapter. Publish the repair request by `02:29Z` and reload by
+`02:32Z`; preserve the original claim, packet, candidate, one-pair limit,
+`03:20Z` release, and future-release drain fence. B200 remains retired and its
+first-divergence work remains zero-GPU.
+
+## 2026-07-29T02:24Z — accept the B200 scoped negative and preserve the H200 repair fence
+
+The B200 offline terminal localizes its sole semantic difference to completion
+token 21 of request 10: stock token `1788` became candidate token `236814`,
+while the other 357 tokens, all 32 request identities, and 31 complete
+token-hash rows match. Raw SSE reconstruction rules out a terminal parser
+artifact, but absent A/A or logits cannot separate near-tie numerical
+nondeterminism from scheduler causality. Because the candidate was also
+`0.0553%` slower, keep it rejected, complete the zero-GPU project, and do not
+replay or reopen paid B200 authority.
+
+The H200 owner PID `3825247`, start ticks `140765749`, remains live and
+heartbeating in its hash-bound workload-materialization repair wait. No repair
+request, submission marker, or scientific terminal exists yet. Preserve
+binding `36b5b4a4…`, its `02:29Z` request fence, `02:32Z` relaunch fence,
+original claim, healthy stock server, one-pair contract, and drain fence
+unchanged. Return immediately so the harness can schedule that near-term
+repair; admit a materially distinct independent deep lane at the next material
+wake rather than consuming this launch window.
+
+## 2026-07-29T02:28Z — relaunch the corrected H200 workload owner under the existing fence
+
+The first workload-materialization owner PID `3831070` exited pre-science
+because its loaded smoke command omitted the already-resident identity-manifest
+argument. It staged the derived payloads and adapter but submitted no request.
+The durable bytes now bind owner `9e42ebd2…`, adapter `f79b9342…`, payloads
+`60630a80…`, runtime manifest `6a18eec9…`, and READY `9cdb17e5…`; the local
+no-HTTP smoke verifies the immutable pair plus all 32 ordered request hashes.
+Preserve claim `00:54:46Z`, the healthy stock server, one-pair contract,
+`03:20Z` release, and drain fence, and relaunch these corrected bytes through
+the existing `02:32Z` start fence. Do not issue a new director binding,
+release/reclaim the bench, or mutate provider lifecycle.
+
+## 2026-07-29T02:36Z — recover consumed H200 stock without replay and reopen a semantic task-graph lane
+
+H200 PID `3831643`, start ticks `140811678`, passed the corrected no-HTTP
+smoke and completed the stock adapter. Exact retained result
+`b7ac86fa…` proves 32/32 requests, zero failures, and
+`7.70807582774998 s/request`. The owner then exited because it looked for a
+different host result path; its generic pre-science marker is false and
+revoked. Bind `DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_RECOVERY_CANDIDATE_TRANSITION_20260729T0235Z.json`
+(`aea1d6c2…`): retrieve and persist that exact stock result without any
+request, replace only the server, and run the still-unsubmitted bound candidate
+once. Publish READY by `02:43Z`, launch by `02:46Z`, release by `03:20Z`, and
+preserve the original claim and drain fence. Do not replay stock, release or
+reclaim, or mutate provider lifecycle.
+
+The earlier B200 cross-operator sample rejected only the residual-aware fused
+RMSNorm/quant primitive: it saved `35.392 us/call` but violated the dynamic-FP8
+numerical envelope. Reopen that same project, not a repair successor, as a
+deep zero-GPU semantics-preserving task-graph continuation. It must implement
+one exact M32 hot-block entrypoint that retains the stock quantization,
+scales, residual, cast, rounding, and downstream consumer bytes while changing
+only launch/host-dispatch/synchronization structure. The consumed component
+cannot be replayed and no paid claim is authorized.
+
+## 2026-07-29T02:41Z — cancel the unmatched H200 candidate and adopt the serial stock terminal
+
+The immutable pair driver `02aaabd9…` awaits each of its 32 requests in a
+Python loop and reports their mean wall time. The consumed stock result
+`b7ac86fa…` is therefore a valid execution record but not the bound concurrent
+c32 comparator: `7.70807582774998 s/request` cannot be compared with the fixed
+`0.625149101968745` denominator or `0.500119281574996` target. A candidate-only
+run would have no scope-matched control and adds little beyond the already
+positive exact attention component.
+
+Supersede candidate-transition binding `aea1d6c2…` with terminal-adoption
+`DIRECTOR_H200_55L5G_ENDPOINT_SERIAL_STOCK_TERMINAL_ADOPTION_RELEASE_20260729T0240Z.json`
+(`8c46dbb8…`). Candidate-transition PIDs `3839810` and `3841529` both stopped
+before submission; local stock `1f2092ff…` is already adopted, and cancellation
+census `6e956fda…` proves no candidate submission or arm. Validate and persist
+that exact local stock result without a request, classify only this endpoint
+realization invalid, and release the original claim by `02:58Z` with its drain
+fence intact. Do not replay either arm, launch or activate the candidate, clear
+the fence, or mutate provider lifecycle. The independent B200
+semantics-preserving task-graph project remains active and zero-GPU.
+
+## 2026-07-29T02:49Z — extend only the H200 terminal-adoption clock
+
+The original claim remains current and ownerless with its drain fence and
+`03:32:14Z` watchdog intact. No new terminal-adoption bytes exist, and the
+prior `02:50Z` launch fence had only 78 seconds of runway—less than one
+scheduling interval. Bind lifecycle-only extension
+`DIRECTOR_H200_55L5G_ENDPOINT_SERIAL_STOCK_TERMINAL_ADOPTION_RELEASE_START_EXTENSION_20260729T0248Z.json`
+(`02ca059e…`): publish READY by `02:53Z`, launch by `02:56Z`, release by
+`03:08Z`, and finish by `03:10Z`. Preserve stock consumption, candidate
+cancellation, the exact original claim, and the drain fence; issue no request
+and perform no provider mutation.
+
+## 2026-07-29T02:54Z — acknowledge both serial H200 arms and release without replay
+
+The stock-only adoption premise is invalidated. Retrieved submission
+`cb8031d5…` and candidate arm `6b372bfa…` prove that an already-launched remote
+executor crossed the cancellation census and completed candidate 32/32 with
+zero failures at `7.706803681500077 s/request`. Stock `1f2092ff…` is likewise
+consumed 32/32 at `7.70807582774998 s/request`. Neither arm is the required
+concurrent-c32 schedule, and the completion crossed revoked authority, so
+preserve the absolute serial evidence but report no comparator delta.
+
+Bind
+`DIRECTOR_H200_55L5G_ENDPOINT_BOTH_SERIAL_ARMS_TERMINAL_RELEASE_20260729T0254Z.json`
+(`d57d5afa…`). Validate only the retrieved artifacts, persist an
+`invalid_scope_serial_stock_and_candidate_consumed` terminal, and release the
+exact original claim by `03:13Z` with its drain fence intact. Issue no HTTP,
+restart no server, replay neither arm, and leave provider cleanup to the next
+director lifecycle turn.
+
+## 2026-07-29T02:59Z — clean the invalid H200 realization and reopen direct placement plus SM120 task-graph work
+
+The both-arms terminal is durable and the claim released with its drain fence.
+No prepared compatible successor fits the remaining H200 lifecycle, and its
+resident container is the quality-unsafe serial realization rather than a
+scope-matched control. An authenticated Nebius census confirmed exact RUNNING
+instance `computeinstance-e00kwncr0knnykhe48` and READY managed disk
+`computedisk-e00n8m6xbb9cfdkam8`; submit instance deletion as operation
+`computeoperation-e00b4rpww96q9v59xg`. Keep the bench draining and watchdog
+live until a later observation verifies both resources absent, then retire and
+settle exposure.
+
+Restore the empty portfolio with two independent lanes. Admit
+`gemma4_rtxpro6000_fp8_endpoint` at `$14`: authenticated RunPod inventory shows
+high-stock 1x RTX PRO 6000 Blackwell at `$1.99/hour`, while the committed
+planning rate `$1.55/hour` makes `1.048637203302411 s/request` the
+price-normalized equivalent of the fixed H200 target. Prepare an exact stock
+dynamic-FP8 owner using a real concurrent-c32 `lab-endpoint-pair`; provider
+creation remains gated on the durable reservation. In parallel admit
+`gemma4_sm120_fp8_hotblock_taskgraph` at `$4` with deep profile: implement a
+working semantics-preserving M32 RMSNorm/FP8/GEMM/residual task-graph boundary
+offline, with no GPU claim until the direct endpoint releases and the director
+assigns the bench.
+
+## 2026-07-29T03:05Z — verify H200 deletion and retire the final provider record
+
+One authenticated exact-resource check now returns NotFound for H200 instance
+`computeinstance-e00kwncr0knnykhe48` and managed disk
+`computedisk-e00n8m6xbb9cfdkam8`. The lifecycle watchdog is inactive/dead, so
+retire bench `h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48` with
+cleanup verified. Artifact
+`H200_55L5G_PROVIDER_CLEANUP_VERIFIED_20260729T0304Z.json` is SHA-256
+`b9c54fa3…`; measured provider exposure is `$6.258045275491748` over
+`9159.149351` seconds, making final project exposure
+`$16.218999527604982` against its `$22` ceiling.
+
+Keep `gemma4_rtxpro6000_fp8_endpoint` and
+`gemma4_sm120_fp8_hotblock_taskgraph` active in their offline preparation
+lanes. Neither reservation is yet durable in the supplied spend snapshot, so
+create no paid RTX PRO 6000 resource and authorize no GPU claim this turn.
+
+## 2026-07-29T03:14Z — allocate the RTX PRO 6000 fallback and protect it in maintenance
+
+Both new reservations are durable. The direct endpoint's preparation also
+completed concurrently: PRECLAIM terminal `ff540fc1…` binds owner
+`13baa4f8…`, packet `f7c932bb…`, and one true concurrent-c32 sample.
+RunPod's reported High-stock server edition did not allocate: two invalid
+image attempts created no resource, the valid image reached a machine-capacity
+failure, and GraphQL placement also returned no pod. Preserve the redacted
+provider event log `6f80bce5…` and pivot the same direct question to the
+96-GiB Workstation Edition rather than spending another turn on the unavailable
+SKU.
+
+RunPod allocated exact pod `f4nbtoufbwf66f`, machine `rb51k15hqqsh`, at
+`$1.89/hour`. Register bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` in maintenance immediately and protect
+it with active watchdog
+`gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog.service` through
+`08:13:34.346354Z`; maximum GPU exposure is `$9.45` before bounded storage.
+Pause only the direct project until one later provider observation resolves
+runtime SSH identity and proves the exact Workstation `sm_120` device plus
+empty accelerator state. Do not claim, start setup, or create another pod in
+this turn. Keep the independent SM120 task-graph project active and zero-GPU.
+The immediate provider GET reports desired `RUNNING` and public IP
+`213.192.6.70`, but no runtime port mapping; proxy SSH rejects the project key
+and direct port 22 times out. Persist that initial identity probe and keep the
+bench non-claimable rather than spending a researcher turn on a known
+maintenance boundary.
+
+## 2026-07-29T03:30Z — verify the Workstation bench and repair only its preclaim SSH contract
+
+RunPod's runtime view now exposes direct SSH `213.192.6.70:40070`. Strict host
+identity passes with ED25519 fingerprint `SHA256:yofIRQ/J654JgIzbWdB+4sM19iE/aepnrmJrYzIfCTg`;
+the read-only census measures an RTX PRO 6000 Blackwell Workstation Edition,
+compute capability `12.0`, `97,887 MiB`, driver `610.43.03`, zero compute
+applications, `0%` utilization, and `2 MiB` used. Bind identity artifact
+`DIRECTOR_RTXPRO6000_RUNTIME_IDENTITY_VERIFIED_20260729T0328Z.json`
+(`3d8cc44e…`), update the exact provider resource, and mark bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` available under its existing watchdog.
+No setup or science started.
+
+The prepared owner `13baa4f8…` still hard-codes the unavailable Server
+accelerator and cannot express a nondefault SSH port. Activate only
+`gemma4_rtxpro6000_fp8_endpoint` under lifecycle-pure repair binding
+`DIRECTOR_RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_REPAIR_20260729T0328Z.json`
+(`2890137a…`): accept the verified Workstation identity, emit `-p 40070` as
+separate argv, and republish hash-bound PRECLAIM bytes by `03:45Z`. Do not
+claim, SSH, stage, load, or submit a request until a later director execution
+binding. Keep the independent SM120 task-graph paused at its source-complete
+typed none; it has no non-overlapping production boundary and no claim
+authority.
+
+## 2026-07-29T03:31Z — preserve scheduler runway for the RTX preclaim repair
+
+The Workstation/SSH-port PRECLAIM terminal, runtime manifest, and READY bytes
+are not yet present; this is an unstarted scheduler handoff, not a repair
+failure. At `03:31:29Z`, binding `2890137a…` retains more than 13 minutes
+before its `03:45Z` offline deadline, exceeding the nearest measured
+`430.203 s` preparation plus a 120-second scheduling interval. The exact
+Workstation bench remains unclaimed and available with its watchdog active
+through `08:13:34Z`.
+
+Preserve the sole execution-profile repair assignment unchanged and let the
+harness schedule it. Do not issue a replacement binding, claim the bench,
+start setup, or admit a competing user of this serial lane. Reconsider the
+broader independent portfolio after the PRECLAIM result or a material
+lifecycle change.
+
+## 2026-07-29T03:39Z — bind Workstation execution and close the remaining owner seam in-turn
+
+PRECLAIM terminal `08d4493e…`, runtime manifest `ef30a188…`, and READY
+`37752c6d…` correctly bind the Workstation identity, SSH port `40070`, owner
+`a705cbc3…`, and immutable packet `f7c932bb…`. Inspection also finds one
+known executable gap: the owner still delegates
+`checkpoint_reconcile_command` and `server_launch_command`, so launching it
+unchanged would intentionally fail before setup. The concrete controller
+checkpoint is already verified by `model-files.sha256` `e9da34db…`; do not
+rehash its 62.5 GB of settled bytes.
+
+Bind
+`DIRECTOR_RTXPRO6000_WORKSTATION_ENDPOINT_EXECUTION_20260729T0338Z.json`
+(`d8e1c6e2…`). In one execution turn, finish only the mutable owner path for
+resumable controller-to-guest staging and a direct in-pod pinned runtime on
+private port `19123`, regenerate its runtime-manifest hash, then claim the
+exact bench by `03:52Z` and launch by `03:55Z`. Do not return another
+PRECLAIM artifact or assume nested Docker. Preserve the one true
+concurrent-c32 sample, retain recoverable pre-science repairs under the claim,
+release evidence by `07:55Z`, and keep the `08:13:34Z` watchdog unchanged.
+
+## 2026-07-29T03:46Z — repair the retained RTX remote-command boundary
+
+The initial owner and its first same-claim replacement both stopped before
+checkpoint staging or science. The binding contains the concrete nonempty
+destination `/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4`,
+but `remote()` supplied `bash`, `-lc`, and the script as separate SSH remote
+argv; SSH concatenation caused Bash to execute bare `mkdir`, producing
+`mkdir: missing operand`. No `SCIENCE_STARTED`, stage terminal, or endpoint
+terminal exists.
+
+Bind
+`DIRECTOR_RTXPRO6000_RETAINED_CLAIM_REMOTE_ARGV_REPAIR_20260729T0345Z.json`
+(`69d61914…`). PID `3874933`, start ticks `141262326`, remains live and
+heartbeats the original `03:41:40Z` claim while repair
+`repair-1785296606` is READY. Patch only the remote command boundary, prove it
+with an offline argv fixture and one no-HTTP strict-SSH smoke, regenerate the
+runtime-manifest owner hash, and submit the repair request by `03:58Z` for
+reload by `04:02Z`. Preserve the execution packet, resumable staging,
+scientific sample, `07:55Z` release, `08:05Z` owner deadline, and
+`08:13:34Z` provider watchdog; do not release/reclaim or mutate lifecycle.
+
+Commit-time reconciliation observed request `77df9cde…` already accepted and
+replacement PID `3877838` / start ticks `141285314` live with owner
+`cbf3ac4c…` and runtime manifest `e59d63f3…`. Its corrected remote boundary is
+resumably transferring the first shard; no scientific request has been
+submitted. Preserve this owner and return.
+
+## 2026-07-29T03:56Z — preserve the staged RTX claim through PEP 668 repair
+
+Checkpoint staging is complete: terminal `d0a64c9d…` binds all transferred
+files to controller manifest `e9da34db…`. Direct server launch then stopped
+before science because system pip enforced PEP 668. The pod's existing root
+login environment exports `PIP_BREAK_SYSTEM_PACKAGES=1`; no-science dry-run
+artifact `03e02d9c…` proves dependency resolution succeeds through that exact
+path.
+
+Accept already-durable repair request `45c5f444…` for
+`repair-1785297152` under execution binding `d8e1c6e2…`; do not issue another
+director gate. Preserve live PID `3877838`, the original claim, staged
+checkpoint, immutable sample, `07:55Z` release, and `08:13:34Z` watchdog while
+the durable controller reloads. No provider mutation or competing RTX
+claimant is authorized.
+
+## 2026-07-29T04:05Z — bind the CUDA 13 NVRTC server repair and eliminate dead-child waits
+
+The PEP 668 correction completed a current SGLang 0.5.16/CUDA 13 install, but
+the supervised server exited before science. Exact health log `d412cee7…`
+localizes the failure to `sgl_kernel` being unable to resolve
+`libnvrtc.so.13`, even though installed package evidence includes
+`nvidia-cuda-nvrtc 13.0.88`. The owner remains alive only in its readiness
+loop; the server PID is dead. The staged checkpoint terminal `d0a64c9d…`
+remains complete and must not be replayed.
+
+Bind
+`DIRECTOR_RTXPRO6000_RETAINED_CUDA13_NVRTC_SERVER_REPAIR_20260729T0403Z.json`
+(`d48193c2…`). Under the original claim, discover the installed NVRTC library
+directory, export it for the server, require no-HTTP `sgl_kernel` and FP8
+imports, and repair only a separately exposed SM120 kernel-wheel defect if
+necessary. Skip checkpoint staging and broad package reinstall. Patch the
+health loop to enter retained repair immediately on a dead child, then reload
+by `04:18Z` and continue to the still-unsubmitted concurrent-c32 sample.
+Preserve the `07:55Z` release and `08:13:34Z` provider watchdog.
+
+## 2026-07-29T04:06Z — preserve the runnable NVRTC repair window
+
+Binding `d48193c2…` remains scope-matched: PID `3877838` still owns the
+original claim, stage terminal `d0a64c9d…` remains complete, and neither
+`SCIENCE_STARTED.json` nor the endpoint terminal exists. At `04:06Z`, the
+`04:14Z` repair-ready and `04:18Z` replacement-start fences retain more than
+one scheduling interval, while the claim heartbeat and `08:13:34Z` watchdog
+are current.
+
+Keep the existing execution-profile assignment unchanged and let the harness
+schedule it. Do not issue another binding, release or reclaim the bench,
+restage the checkpoint, or mutate provider lifecycle.
+
+## 2026-07-29T04:14Z — preserve repair-3 through the live RTX model load
+
+Replacement PID `3888049`, start ticks `141442695`, now retains the original
+claim. Runtime terminal `4f857701…` proves CUDA 13 NVRTC resolution and both
+required target-GPU imports on sm_120. Its supervised server child is alive
+and began loading the exact two staged checkpoint shards; neither
+`SCIENCE_STARTED.json` nor the endpoint terminal exists.
+
+Protect this owner and let it continue directly through health and the sole
+concurrent-c32 sample. Issue no new binding or competing researcher, and do
+not release, reclaim, restage, or mutate provider lifecycle.
+
+## 2026-07-29T04:19Z — reload the RTX server with CUDA graphs disabled
+
+Repair-3 loaded the exact weights but failed before science because SGLang
+CUDA-graph capture JIT passed unsupported `compute_120f` to NVCC. Fresh
+repair-ready `52fa46bb…` retains the original claim. Prepared owner
+`ee8ee282…` and runtime manifest `6cbb4e29…` add only the official
+`--disable-cuda-graph` launch option; the staged checkpoint and NVRTC import
+terminal remain valid.
+
+Bind
+`DIRECTOR_RTXPRO6000_RETAINED_SM120_CUDAGRAPH_DISABLE_RELOAD_20260729T0417Z.json`
+(`e6402f2e…`). Request repair-4 by `04:23Z`, replace only matching PID
+`3888049`, and launch by `04:27Z` under the same claim. Continue directly to
+the sole concurrent-c32 sample; do not restage, reinstall broadly,
+release/reclaim, or mutate provider lifecycle.
+
+## 2026-07-29T04:31Z — take the sm_120 RoPE repair to installed source
+
+Repair-5 resolved memory fit and reached fused RoPE, where SGLang emitted
+unsupported `compute_120f`. A concurrent narrow repair then installed
+`nvidia-cuda-nvcc==13.0.88`, but artifact `cb85dba0…` proves that distribution
+exposes no usable compiler binary. Science remains unsubmitted; live outer
+owner PID `3898656` retains the original claim, and fresh repair-ready
+`4f7b56d5…` names generation `repair-1785299364`.
+
+Continue base binding `faa3fc62…` under
+`DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_SOURCE_FALLBACK_CONTINUATION_20260729T0430Z.json`
+(`fa2f98b9…`). Do not repeat compiler-package installation or path discovery.
+Select an official installed-source RoPE fallback or a justified architecture
+mapping, prove the exact production-shape BF16 result against its framework
+reference, and request the retained repair by `04:52Z`. Preserve the outer
+owner, staged checkpoint, immutable sample, and provider lifecycle.
+
+## 2026-07-29T04:36Z — extend only the sm_120 source-repair clock
+
+The exact source-fallback binding remains scientifically and operationally
+matched, but its `04:48Z` evidence fence retained only about 15 seconds beyond
+the nearest measured `626.826 s` researcher run plus one 120-second scheduling
+interval. Live PID `3898656` still owns the original claim; science, endpoint
+terminal, and repair request remain absent.
+
+Bind
+`DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_SOURCE_FALLBACK_CLOCK_EXTENSION_20260729T0435Z.json`
+(`d67fbfbf…`). Extend only exact-RoPE evidence to `04:58Z` and the
+`repair-1785299364` request to `05:02Z`. Preserve deep `$kernel-research`,
+the installed-source repair contract, outer owner, staged checkpoint,
+scientific identities, `07:55Z` release, and `08:13:34Z` provider watchdog.
+
+## 2026-07-29T04:48Z — bind the CUDA 13 activation-header repair
+
+The installed `forward_native` sm_120 RoPE fallback passed the exact
+8,192-token BF16 q/k oracle and the unchanged owner launched server PID
+`12087`. Startup then reached the next real Gemma consumer,
+`sglang.jit_kernel.activation.gelu_tanh_and_mul`, where NVCC failed before
+science because `cuda_runtime.h` was outside its include search path. Fresh
+repair-ready `c60e68d2…` retains the original claim under live PID `3898656`.
+
+Bind
+`DIRECTOR_RTXPRO6000_RETAINED_CUDA13_RUNTIME_HEADERS_ACTIVATION_JIT_REPAIR_20260729T0446Z.json`
+(`5ff4e8d8…`) with execution profile plus `$kernel-research`. Expose the exact
+installed CUDA 13 header root—or install only the matching official header
+package if absent—then prove the exact BF16 activation consumer against its
+framework reference and request `repair-1785300331` by `05:07Z`. Preserve the
+outer owner, settled RoPE result, checkpoint, scientific sample, and provider
+lifecycle.
+
+## 2026-07-29T05:19Z — invalidate the error terminal and re-open one corrected-input attempt
+
+Terminal `c79a2f6…` is not a performance result. All 32 preserved HTTP-2xx
+SSE responses contain explicit `invalid_request_error` events, no generated
+token IDs or usage, and therefore measure only error-service time. The patched
+shared endpoint classifier (`631bbf53…`) now rejects this exact evidence.
+
+The released owner is absent. One strict resident census found healthy exact
+model server PID `16036`, one expected scheduler GPU process using 71,118 MiB,
+and no endpoint driver. Mark bench
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` ready without restarting it. Bind
+`DIRECTOR_RTXPRO6000_RESIDENT_SERVER_CORRECTED_INPUT_ENDPOINT_RECLAIM_20260729T0517Z.json`
+(`c59a2c91…`): claim by `05:33Z`, translate only the frozen token-ID field to
+native SGLang `input_ids` plus its installed sampling schema, and run exactly
+one fresh true concurrent-c32 attempt. Require 32 generated-token-bearing
+successes under the corrected classifier and release by `06:25Z`; preserve
+all checkpoint, runtime, kernel, server, and provider state.
+
+## 2026-07-29T05:21Z — preserve the corrected-input claim runway
+
+Binding `c59a2c91…` remains runnable and unambiguous. The exact resident RTX
+PRO 6000 bench is available and unclaimed, project state is active with the
+execution profile, and the `05:33Z` claim fence retains more than one harness
+scheduling interval. Keep this sole warm-bench assignment unchanged so the
+harness can launch the endpoint-only corrected-input owner. Do not drain,
+restart the server, add a competing claimant, or broaden the portfolio before
+this near-term handoff resolves.
+
+## 2026-07-29T05:27Z — revoke the duplicate RTX replay and pivot runtime plus FP8 dispatch
+
+The supervisor correction is exact: terminal `c79a2f6…` binds run
+`47d62e65…`, whose 32 response bodies all contain generated choices, exact
+4,214/358 token accounting, and no application errors. Accept the measured
+`2.23382165625 s/request` negative. Revoke retry binding `c59a2c91…` under
+revocation `ad329242…`; the fresh `05:22:44Z` claim had no active session,
+consumer, or corrected-input marker, so release that exact generation to
+maintenance without stopping the healthy server.
+
+Retain the staged checkpoint and warm runtime for one short successor
+selection interval. Admit `gemma4_rtxpro6000_vllm_current_fp8_endpoint` at a
+requested `$7`: prepare a current official vLLM exact-model owner offline,
+with claim blocked until its reservation, owner hash, and director lifecycle
+handoff are durable. In parallel admit zero-GPU deep project
+`gemma4_sm120_fp8_linear_persistent_dispatch`: implement one concrete
+production-bound persistent/grouped FP8 linear dispatch and future exact
+sm_120 consumer oracle. The direct vLLM lane has sole future bench priority;
+neither new project may claim this turn.
+
+## 2026-07-29T05:31Z — retain the warm RTX bench through both offline starts
+
+Neither successor has run or produced its typed offline result. The vLLM lane
+is correctly non-claimable: its `$7` reservation is not yet durable, its owner
+is not hash-bound, and no execution binding exists. The persistent-dispatch
+lane is independently runnable as zero-GPU deep work and remains explicitly
+behind vLLM for future access to the serial RTX bench.
+
+Preserve both assignments unchanged and let the harness schedule them. Keep
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` in maintenance under its existing
+`08:13:34Z` watchdog: at `$1.89/hour`, the vLLM project's 35-minute offline
+budget risks about `$1.10` of idle exposure, far below the measured checkpoint,
+runtime, kernel-repair, and model-load rebuild path. Do not ready, claim,
+restart, drain, or mutate the provider this turn. Reconsider lifecycle after
+the vLLM offline terminal and durable reservation, or on a material safety or
+deadline change.
+
+## 2026-07-29T05:33Z — accept the vLLM reservation without opening the claim
+
+The harness has durably reserved `$7` for
+`gemma4_rtxpro6000_vllm_current_fp8_endpoint`; remove that stale blocker from
+its scheduler state. No offline result, owner, or detached command exists yet,
+so the remaining owner, execution-binding, and maintenance gates still
+correctly prohibit a claim.
+
+Keep both active assignments unchanged: schedule the execution-profile vLLM
+owner preparation and the independent deep `$kernel-research` implementation
+in parallel. Retain the RTX bench in maintenance under the existing
+`08:13:34Z` watchdog and make no provider mutation. On the vLLM typed offline
+result, either bind and ready this exact warm bench promptly or drain it if the
+official exact runtime path is unsupported; the deep lane remains
+non-claimable behind that decision.
+
+## 2026-07-29T05:43Z — block vLLM execution on its missing frozen workload
+
+The vLLM source conclusion is supported and the director resolved the exact
+linux/amd64 nightly image `494f9c11…`, staged checkpoint path, and healthy
+resident SGLang generation PID `16036` / start ticks `183853635`. The
+hash-bound owner is nevertheless not runnable: it references
+`inputs/c32_requests.jsonl`, which is absent, and its preclaim returns pass
+without checking that post-server-launch consumer input. Claiming it would
+stop the useful resident server before a deterministic local failure.
+
+Bind offline repair `4d780ab5…`: materialize or directly bind the exact
+`357f22f3…` workload, add its digest to preclaim, and republish final owner
+bytes plus a detached command with separate controller/science roots by
+`06:00Z`. Keep the vLLM project active but non-claimable and leave the RTX
+bench in maintenance; issue no execution binding or provider mutation until
+that repair is durable. The independent deep FP8 dispatch lane remains
+unchanged and zero-GPU.
+
+## 2026-07-29T05:50Z — bind current vLLM and open the retained RTX bench
+
+Offline repair now hash-binds owner `60162597…`, the project-local exact c32
+workload `357f22f3…`, current-vLLM image `494f9c11…`, and distinct controller
+and science roots. A strict live census matched healthy resident SGLang PID
+`16036` / start ticks `183853635`, exact model identity, staged checkpoint,
+71,118 MiB scheduler allocation, no endpoint driver, and the active
+`08:13:34Z` watchdog.
+
+Bind execution `04ea98ff…` and make the warm bench ready solely for
+`gemma4_rtxpro6000_vllm_current_fp8_endpoint`. Launch its exact detached owner
+by `06:05Z`; it must claim before stopping SGLang, fence VRAM, retain ordinary
+pre-science repairs, and submit one application-error-aware concurrent-c32
+sample before the `07:55Z` release fence. The independent deep FP8 dispatch
+lane remains active, zero-GPU, and non-claimable.
+
+## 2026-07-29T06:01Z — convert the vLLM image failure to one native-runtime repair
+
+The exact claim started on time, stopped SGLang, and reached no vLLM, CUDA,
+HTTP, or scientific invocation. Terminal `7577367b…` proves the unchanged pod
+has neither an OCI consumer nor an installed vLLM distribution; this rejects
+only the image delivery path. The researcher released safely to maintenance
+after 298 seconds with the checkpoint intact.
+
+Revoke stale same-claim repair `5c375f30…` and bind offline native-owner
+repair `66459b14…`. Resolve and hash-bind one official current-vLLM
+distribution, install it only after a future claim into an isolated `uv`
+environment, and supervise the native server without Docker. Keep the RTX
+bench in maintenance through `06:30Z`: the sub-dollar idle exposure is far
+below the measured checkpoint rebuild cost. On the typed result, ready this
+exact bench immediately if supported; otherwise drain and clean it.
+
+## 2026-07-29T06:08Z — preserve the native-owner preparation window
+
+`NATIVE_VLLM_OWNER_OFFLINE_RESULT.json` is still absent, while binding
+`66459b14…` retains about 14 minutes to its `06:22Z` deadline. That exceeds
+the closest 443.779-second researcher run plus one scheduling interval. Keep
+the execution-profile assignment active and non-claimable, and retain the
+unclaimed RTX bench in maintenance through the existing `06:30Z` lifecycle
+decision. Do not ready, claim, restart, drain, or mutate the provider before
+the typed result or a material safety/deadline change.
+
+## 2026-07-29T06:15Z — bind native vLLM and open the quiescent RTX bench
+
+Offline result `b80703d5…` hash-binds owner `117577e9…`, workload
+`357f22f3…`, and the official vLLM 0.26.0 CUDA 12.9 ABI3 wheel
+`6ce4ca30…`. The owner contract and no-GPU preclaim pass. A strict live census
+found the exact checkpoint present, prior SGLang PID `16036` absent, ports
+`19123` and `19124` unbound, zero compute applications, 2 MiB GPU memory used,
+and watchdog PID `3860556` active through `08:13:34Z`.
+
+Bind native execution `d838dbff…` and make
+`rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` ready solely for the execution-profile
+vLLM project. Launch the exact detached owner by `06:25Z`; it must claim,
+repeat the quiescent census, install the bound wheel resumably, retain ordinary
+pre-science repairs, and submit the sole application-error-aware concurrent-c32
+sample before the unchanged `07:55Z` release fence. Do not restage, replay
+SGLang science, or mutate provider lifecycle.
+
+## 2026-07-29T06:20Z — preserve the repaired native-vLLM owner
+
+The first claimed owner died before any remote runtime or science because two
+embedded Python dictionaries were interpreted as f-string format specifiers.
+The concurrent researcher preserved the original `06:16:29Z` claim, recorded
+the unconsumed diagnostic, patched only that controller construction boundary,
+and launched replacement PID `3951652` / start ticks `142189862`.
+
+The replacement is live and heartbeating, and a single execution snapshot
+proves forward progress beyond the repair: the exact 518,935,080-byte vLLM
+wheel is finalized, the isolated environment exists, and `uv pip install` is
+active while GPU memory remains at 2 MiB. Protect this owner through native
+import, server health, and the sole c32 sample. Issue no competing owner,
+release/reclaim, restage, or provider mutation.
+
+## 2026-07-29T06:35Z — preserve native model load and open an independent fusion lane
+
+The same retained owner PID `3951652` remains live and heartbeating under the
+original `06:16:29Z` claim. Repair `repair-1785306576` has advanced beyond the
+NVRTC failure: official vLLM `0.26.0+cu129` and exact Gemma4/FP8 imports are
+durable, server PID `20490` and engine PID `20963` are alive, and the engine
+has entered the exact two-shard checkpoint load with 16,388 MiB allocated.
+Neither science nor the endpoint terminal exists. Protect this owner; issue no
+competing claim, server, release/reclaim, restage, or provider mutation.
+
+Use free researcher capacity for independent zero-GPU deep project
+`gemma4_vllm026_sm120_norm_fp8_fusion`. The live runtime selected
+`CutlassFP8ScaledMMLinearKernel` while norm/activation quantization fusion is
+disabled. Trace and implement one exact production Gemma 4
+norm/activation-to-online-FP8 boundary with a future sm_120 consumer oracle.
+This lane cannot SSH or claim the RTX bench and must not alter the in-flight
+endpoint contract.
+
+## 2026-07-29T06:44Z — preserve the FlashInfer fallback retry and fusion lane
+
+Repair `repair-1785307027` was delivered through the live handshake at
+`06:40:38Z`. The unchanged owner PID `3951652` remains live and heartbeating
+under the original `06:16:29Z` claim. One scope-matched execution snapshot
+shows the repaired server PID `23342` and engine PID `23809` alive: official
+vLLM `0.26.0` resolves exact `Gemma4ForConditionalGeneration`, selects
+`CutlassFP8ScaledMMLinearKernel` for online FP8, disables the unsupported
+FlashInfer sampler through its official runtime control, and has entered the
+58.25-GiB two-shard checkpoint load with 20,764 MiB allocated. Port `19124`
+is not yet listening, and no science marker or endpoint terminal exists.
+
+Protect this forward-progressing owner through health and the sole c32
+sample. Do not replace it, reclaim or release its bench, replay SGLang,
+restage, or mutate provider lifecycle. Keep the independent zero-GPU deep
+`gemma4_vllm026_sm120_norm_fp8_fusion` assignment active and non-claimable;
+its typed offline result remains absent. Do not add another speculative lane
+before the current endpoint exposes decision-bearing telemetry or the fusion
+lane localizes its exact boundary.
+
+## 2026-07-29T06:58Z — accept native-vLLM negative and pivot the warm itinerary
+
+The consumer-only continuation resolved the stale chat route without
+reloading the healthy server. Terminal `5cc29364…` binds exact run
+`73564392…`: 32/32 application-error-aware completions finished in
+41.202239 seconds, or `1.28756996875 s/request`. This is 42.36% faster than
+the matched SGLang placement, but remains 22.79% above the RTX ceiling
+`1.048637203302411 s/request`; accept it as a valid measured negative and
+forbid replay. The owner released the continuous claim safely to maintenance
+with native vLLM and the checkpoint resident.
+
+Promote completed norm-to-online-FP8 candidate `4e7312e2…` to execution
+preparation under binding `9709dbd0…`, request a `$3` reservation, and keep
+its claim blocked until a lifecycle-pure component owner plus a later director
+execution binding are durable. Retain the RTX bench in maintenance under the
+existing `08:13:34Z` watchdog; do not drain or ready it this turn. In parallel,
+admit zero-GPU deep `$kernel-research` project
+`gemma4_vllm026_sm120_heterogeneous_attention_split` to replace the
+whole-model `TRITON_ATTN` fallback with one exact layer-aware local/global
+dispatch or return typed none. The fusion component has sole future warm-bench
+priority.
+
+## 2026-07-29T07:03Z — accept fusion reservation and preserve owner preparation
+
+The `$3` reservation for `gemma4_vllm026_sm120_norm_fp8_fusion` is now
+durable. Its required lifecycle-pure component-owner result remains absent,
+so remove only the stale reservation blocker and keep the claim closed behind
+owner hash-binding plus a later director execution binding. The nearest
+researcher duration was 1,225.796 seconds and the offline-result fence remains
+`07:23Z`; the current window still fits one scheduled execution-preparation
+turn.
+
+Keep `rtxpro6000-gemma4-fp8-f4nbtoufbwf66f` in maintenance with its healthy
+native-vLLM endpoint and checkpoint resident under the `08:13:34Z` watchdog.
+Do not ready, claim, drain, or mutate the provider yet. Preserve the
+independent deep heterogeneous-attention assignment unchanged; its typed
+result is also absent and it cannot claim the serial bench.
+
+## 2026-07-29T07:10Z — block fusion execution on a missing atomic claim
+
+The component science, `$3` reservation, patch `79b97e9d…`, oracle
+`49cf6420…`, and offline owner bytes are durable, but owner `b8a43064…` is
+not lifecycle-runnable. It starts heartbeating and invokes the remote component
+against an already-existing claim, requires `claim_started_at_utc` in its
+pre-claim binding, and later uses that guessed value for generation-fenced
+release. No pre-claim director binding can know the exact timestamp returned
+by the future atomic claim.
+
+Bind zero-GPU execution-profile repair
+`DIRECTOR_VLLM026_SM120_NORM_FP8_ATOMIC_CLAIM_OWNER_REPAIR_20260729T0710Z.json`
+(`070d4945…`):
+the owner must claim the exact bench before heartbeat or SSH, derive
+`claimed_at` from that successful response, and use the same generation for
+release. Keep the RTX bench unclaimed in maintenance with its healthy endpoint
+through the `07:23Z` repair fence; do not ready or mutate it. The independent
+deep heterogeneous-attention lane remains active, zero-GPU, and non-claimable.
+
+## 2026-07-29T07:20Z — accept atomic claiming but keep the component bench closed
+
+The republished owner now correctly claims before heartbeat or SSH and carries
+the returned `claimed_at` generation through release. A strict retained-server
+census nevertheless found a known execution and ownership gap: the healthy
+vLLM endpoint serves the exact model on `19124`, but the guest has no source
+checkout or staged component bytes; owner `1493d1e6…` assumes both. Its
+complete-positive branch also stops the only heartbeat without release or a
+replacement owner, while its early-exception release can require an absent
+terminal.
+
+Bind one final zero-GPU execution-profile owner correction under
+`DIRECTOR_VLLM026_SM120_NORM_FP8_REMOTE_STAGE_AND_TERMINAL_OWNERSHIP_REPAIR_20260729T0720Z.json`
+(`3d898125…`).
+Preserve the accepted atomic claim and scientific bytes, stage only after the
+future claim, retain incomplete failures through the repair handshake, and
+release generation-fenced after any complete decision-bearing component
+terminal. Keep the RTX bench unclaimed in maintenance through the `07:30Z`
+repair fence. The completed heterogeneous-attention candidate `584c01af…`
+remains the serial fallback and is not claimable.
+
+## 2026-07-29T07:22Z — preserve the final owner-repair runway
+
+The required final readiness publication is still absent:
+`VLLM026_SM120_NORM_FP8_COMPONENT_OWNER_OFFLINE_RESULT.json` continues to bind
+owner `1493d1e6…`, before remote staging and terminal-ownership correction.
+Binding `3d898125…` retains eight minutes to its `07:30Z` fence, comfortably
+above the closest 182.942-second repair turn plus one scheduling interval.
+
+Keep the execution-profile repair active and non-claimable. The exact RTX
+bench remains unclaimed in maintenance under its `08:13:34Z` watchdog; do not
+ready, drain, stop the healthy endpoint, or admit a competing claimant before
+the final owner result or a material lifecycle change.
+
+## 2026-07-29T07:24Z — preserve the in-flight repair and adopt shared ownership next
+
+The final owner is changing but is not durably ready: current bytes add remote
+staging, while the published result still binds `1493d1e6…` and current
+positive/early-exception branches have not yet established terminal-safe
+release. Do not ready or claim from these partial bytes.
+
+Keep repair `3d898125…` active and non-claimable through `07:30Z`. The
+supervisor's tested `GpuClaimSession` is the preferred claim-lifetime primitive
+for the final publication or any subsequent owner, but do not interrupt the
+concurrent repair merely to rewrite it. The RTX bench remains unclaimed in
+maintenance under the active `08:13:34Z` watchdog; no provider mutation or
+competing claimant is justified.
+
+## 2026-07-29T07:31Z — bind the norm-to-online-FP8 component and open the warm bench
+
+Final result `84805077…` now hash-binds lifecycle owner `70458b97…`, patch
+`79b97e9d…`, oracle `49cf6420…`, post-claim staging, disposable installed-package
+overlay, atomic generation ownership, and terminal-safe release. The owner
+binding contract passes without a GPU call.
+
+A strict live census matched the healthy exact-model endpoint at `19124`,
+server PID `23342` / start ticks `184468586`, engine PID `23809`, official
+vLLM `0.26.0`, wheel `6ce4ca30…`, sm_120, staged checkpoint, zero competing
+component drivers, and the active `08:13:34Z` watchdog. Bind execution
+`bae1868c…` and make the RTX PRO 6000 bench ready solely for the fusion
+project. Launch its exact detached owner by `07:36Z`; preserve the endpoint,
+consume the one seven-row framework oracle, retain incomplete integration
+through the bounded handshake, and release generation-fenced by `08:03Z`.
+
+## 2026-07-29T07:40Z — protect the live fusion repair and prepare its attention fallback
+
+Commit-time reconciliation found a recoverable pre-science shell-quoting
+failure and stale detached-owner metadata, but not owner loss: the original
+`07:33:28Z` claim remains continuously heartbeating, current executor PID
+`3990817` is copying the disposable vLLM overlay, the endpoint remains healthy,
+and neither `SCIENCE_STARTED.json` nor an oracle result exists. Do not launch a
+competing owner, release, reclaim, or mutate the fusion contract.
+
+Use free zero-GPU capacity to reactivate the completed heterogeneous-attention
+candidate under preparation binding `ccb11ff3…`. Build one lifecycle-pure
+owner around exact result `584c01af…` and oracle `b41ef19d…`, using the shared
+claim session and the actual resident manylinux_2_28 wheel path. Request `$3`,
+but keep the attention lane non-claimable behind the live fusion terminal,
+durable reservation, typed owner result, and a later director execution
+binding.
+
+## 2026-07-29T07:49Z — retain the claim and repair the installed-source boundary
+
+The supervisor's owner-loss premise is no longer true: detached owner PID
+`3990817` / start ticks `142664358` is live with one SSH child and continues
+heartbeating the original `07:33:28Z` claim. The exact endpoint remains
+healthy, only engine PID `23809` occupies the GPU, and both the science marker
+and oracle result are absent. Clear `drain_after_release`; the prepared
+heterogeneous-attention successor can reuse this exact warm runtime and remains
+strictly non-claimable.
+
+The live fusion owner is nevertheless stuck before science: terminal
+`6a133ebe…` records zero rows and one rejected hunk each in installed
+`cutlass.py` and `gemma4.py`, then recopies the unchanged overlay. Bind
+same-claim execution repair `f7c6c2e4…`: adapt only the patch representation
+to official vLLM `0.26.0+cu129`, preserve the producer/consumer semantics and
+oracle, replace the exact owner without overlap under a fresh repair ID, and
+launch by `07:56Z`. If that bounded repair cannot start, persist an unconsumed
+terminal and generation-fenced maintenance release by `08:03Z`; do not replay,
+reclaim, or mutate provider lifecycle.
+
+## 2026-07-29T07:57Z — extend the warm itinerary instead of forcing the repair
+
+The fusion owner PID `3990817` / start ticks `142664358` and original
+`07:33:28Z` claim remain live and heartbeating; terminal `7ea4861c…` still
+has zero rows, no science marker, and the same two installed-source patch
+rejects. The elapsed `07:56Z` transition could no longer fit the measured
+281-second researcher turn plus terminal/release margin.
+
+Both the fusion and heterogeneous-attention projects now have durable `$3`
+reservations and reuse the exact resident vLLM runtime. Start and verify
+replacement watchdog PID `3998506`, atomically extend the bench lifecycle to
+`09:15Z`, then stop and verify the old watchdog. Binding `0c7e8018…`
+supersedes only the fusion repair envelope: launch the same-claim installed-
+source replacement by `08:10Z`, retain incomplete work through `08:18Z`, and
+release by `08:20Z`; all science identities remain unchanged.
+
+Commit-time reconciliation then found attention owner result `36431ba9…`
+durably published with owner `5aeb53b3…` and oracle `b41ef19d…`. Its `$3`
+reservation is also durable, so pause this serial successor: it remains
+non-claimable until the fusion release and a later execution binding, with no
+further preparation turn scheduled.
+
+## 2026-07-29T08:07Z — preserve the schedulable fusion repair and gate MTP provisioning
+
+The retained fusion owner PID `3990817` / start ticks `142664358` and original
+`07:33:28Z` claim remain live and heartbeating under watchdog PID `3998506`
+through `09:15Z`. The seven-row oracle is still unconsumed: no science marker,
+no result, and zero rows. The prior `08:10Z` replacement fence no longer fit
+the measured 281.606-second repair turn plus scheduling runway.
+
+Bind development repair extension `f11c592a…`, changing only the installed-
+source replacement envelope: publish by `08:15Z`, launch without overlap by
+`08:18Z`, retain incomplete work through `08:35Z`, and generation-fenced
+release by `08:38Z`. Keep the exact claim, endpoint, intervention, oracle, and
+one-submission limit unchanged; no new claim or provider mutation is allowed.
+
+The trained-MTP lane's `$20` reservation is now durable, but
+`TRAINED_MTP_OWNER_OFFLINE_RESULT.json` is absent. Remove the stale reservation
+blocker and keep its deep, zero-GPU owner preparation active. Create no H200s
+until that typed two-bench owner result and a later execution binding are
+durable.
+
+## 2026-07-29T08:16Z — protect the live config-context repair
+
+The installed-source replacement reached the real oracle but returned zero
+rows because official vLLM `0.26.0+cu129` requires `RMSNorm` construction
+inside a current-config context. Terminal `5765c7e6…` is an invalid discovery
+attempt, not a component negative: it failed before any stock or candidate
+row, so the canonical seven-row sample remains unconsumed.
+
+Bind the localized context repair as `ee958c69…`. Concurrent execution
+completed the process-start-only patch and launched sole owner PID `4010231` /
+start ticks `142890998` under fresh repair ID
+`sm120-norm-fp8-installed-source-config-20260729T0814Z`, the original
+`07:33:28Z` claim, and the unchanged science contract. Protect that owner;
+issue no further replacement, overlap, reclaim, replay, or provider mutation.
+It must release generation-fenced after a complete terminal or by `08:20Z`.
+
+`TRAINED_MTP_OWNER_OFFLINE_RESULT.json` remains absent. Keep the reserved deep
+MTP preparation active and create no H200s this turn.
+
+## 2026-07-29T08:22Z — release the zero-row fusion attempt and select attention
+
+The config-context repair reached the unchanged production consumer but
+returned no decision-bearing row: terminal `e895cc0c…` fails inside stock
+`CutlassFP8ScaledMMLinearKernel` at `scaled_mm_entry.cu:209`. Its repair
+deadline elapsed, owner PID `4010231` exited, and the live handshake could no
+longer accept a patch. Classify this as an invalid exact-consumer attempt, not
+a component negative; the seven-row sample remains unconsumed.
+
+Release original claim generation `07:33:28.165904Z` at `08:22:21Z` with
+conservative claim exposure `$1.540152`. A strict post-release census found
+the exact healthy endpoint and engine resident with no component driver.
+After a strict census, clear the stale drain request and preserve the RTX
+bench warm and available under the `09:15Z` watchdog. Select prepared
+heterogeneous-attention owner `36431ba9…` as its compatible successor under
+handoff `3035626c…`. The current spend snapshot no longer contains that
+project's `$3` reservation, so reactivate it only to obtain the reservation;
+no claim or execution binding is allowed yet.
+
+The trained-MTP owner result is still absent. Keep its reserved deep
+preparation active and create no H200s.
+
+## 2026-07-29T08:29Z — bind the warm heterogeneous-attention discriminator
+
+The attention project's `$3` reservation is now durable. Result `36431ba9…`
+still binds lifecycle owner `5aeb53b3…` and oracle `b41ef19d…`. A strict
+warm-bench census matched official vLLM `0.26.0+cu129`, the exact checkpoint,
+healthy server PID `23342` / start ticks `184468586`, engine PID `23809`, and
+zero component drivers.
+
+Execution binding `b6ebe2a4…` opens only this claim through `08:33Z`. After
+claim, the owner may stop that exact predecessor and submit one parent
+all-TRITON control followed by the 50-TRITON/10-FLEX candidate. Retain
+ordinary incomplete integration through its live repair handshake and release
+generation-fenced by `09:10Z`, leaving five minutes before the `09:15Z`
+watchdog. Maximum claim exposure is `$1.1655`, within the reservation.
+
+The trained-MTP owner is being republished after removing an untracked helper.
+Keep H200 creation blocked until its final owner result and status hashes
+match; no MTP provider action is authorized this turn.
+
+## 2026-07-29T08:40Z — provision two H200s but keep MTP claiming closed
+
+The durable `$20` reservation and authenticated Nebius placement support two
+independent preemptible 1x H200 SXM benches at `$2.45/hour`. Create target
+instance `computeinstance-e00gtebbbazkara13v` and trainer instance
+`computeinstance-e00c6522ejxkg0jsbe`, attach independent cleanup watchdogs
+through `12:10Z`, register both in maintenance before SSH, then pass strict
+host identity, cloud-init, and one-H200 telemetry gates. Both benches are now
+available and unclaimed; maximum compute exposure is `$17.542778`, leaving the
+required cleanup reserve inside the project ceiling. The live RTX attention
+owner remains untouched.
+
+Final owner inspection found one execution blocker hidden by the offline-ready
+label: lifecycle owner `8d76dd5a…` requires a bound `pipeline.command` and
+`repair_command`, while result `ff49f337…` contains no hash-bound production
+pipeline runner or concrete argv. Do not open the two-bench claim around an
+unbound command. Bind zero-GPU execution repair
+`DIRECTOR_TRAINED_MTP_PIPELINE_OWNER_REPAIR_20260729T0840Z.json`: implement the
+single resumable runner over the already-settled commands and identities,
+republish the result by `09:10Z`, and then issue the execution binding if the
+remaining spend and watchdog window still fit.
+
+## 2026-07-29T08:47Z — extend RTX lifecycle and bind same-claim attention adoption
+
+The attention owner remains live on original claim
+`2026-07-29T08:29:54.858364Z`, but its retrieval-only r2 waiter cannot consume
+the localized pre-submission controller repair: any request would leave
+through automatic maintenance release. No oracle submission or result exists.
+Replace the provider watchdog atomically with verified r3 PID `4027098`
+through `09:50Z`; the old r2 watchdog is inactive. Maximum attention-claim
+exposure through the new `09:42Z` release fence is `$2.270625`, inside its
+durable `$3` reservation.
+
+Binding
+`DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_SAME_CLAIM_ADOPTER_REPAIR_20260729T0846Z.json`
+authorizes one development-mode execution repair: implement an adopter that
+heartbeats the exact existing generation without calling `gpu_pool claim`,
+separates immutable detached identity from progress, creates the missing local
+generation root, and publishes adoption before stopping only original waiter
+PID `4018491` / start ticks `142981221`. It may then consume the unchanged
+all-TRITON versus 50-TRITON/10-FLEX parent oracle once. Publish by `08:54Z`,
+launch by `08:58Z`, retain incomplete repair through `09:38Z`, and release by
+`09:42Z`. Keep the two independent H200 benches available while their MTP
+pipeline owner repair continues offline.
+
+## 2026-07-29T08:58Z — open the bound two-H200 trained-MTP execution
+
+Final result `a092139e…` hash-binds lifecycle owner `8d76dd5a…` and resumable
+production runner `45ba2705…`; both validate against the exact target,
+assistant, EAGLE-3 warm start, dataset split, and terminal contract. The target
+and trainer H200 records remain separately available, identity-verified, and
+protected by live watchdogs through `12:10Z`.
+
+Execution binding `cf1bfc23…` opens only those two exact claims through
+`09:03Z`. Conservative provider exposure through binding is `$1.644670`;
+`$17.855330` remains after the `$0.50` cleanup reserve, so the `12:05Z`
+generation-fenced release fits below the `$20` project ceiling and both
+watchdogs. The harness should launch the unchanged detached owner immediately;
+ordinary integration failures retain both claims through its resumable repair
+path. The independent live RTX attention adoption remains untouched.
+
+## 2026-07-29T09:07Z — preserve MTP runway and repair the invalid attention guard
+
+The H200 owner had not launched before its original fence left one scheduling
+interval. Revalidated binding `4ade4132…` extends only claim start to `09:12Z`,
+updates conservative provider exposure to `$2.458529`, and preserves the exact
+owner, runner, science, `12:05Z` release, and independent `12:10Z` watchdogs.
+
+The RTX attention adopter released after both arm processes failed at the
+package-version guard: wheel identity remained exact, but `vllm.__version__`
+reported `0.26.0` rather than the wheel filename suffix `0.26.0+cu129`.
+Neither arm constructed an LLM, reached CUDA/backend path proof, or returned
+rows, so this is an invalid integration attempt rather than a component
+negative. Binding `80507119…` keeps the warm RTX bench in maintenance and
+assigns one zero-GPU same-project repair to make the exact wheel digest
+authoritative and to reject zero-output/path-proof terminals as incomplete.
+Claiming stays closed until its final hashes and a later execution binding.
+
+## 2026-07-29T09:17Z — reopen corrected MTP and finish the stopped-predecessor fence offline
+
+The first H200 owner exited safely after a fully pre-science controller
+failure: packet-stage remote-shell quoting failed, then repair dispatch omitted
+its required absolute-deadline environment. Both claim generations released to
+maintenance at `09:08:49Z`; no staging, CUDA work, remote scientific request,
+or sample began. A strict census found both exact H200s idle and identity-clean
+under live `12:10Z` watchdogs. Corrected owner `e60309bc…` and runner
+`4a63a277…` validate under fresh binding `df97da83…`. Re-ready both exact
+benches and launch one fresh owner by `09:23Z`; conservative cumulative
+exposure is `$3.53`, leaving the `12:05Z` release inside the durable `$20`
+ceiling and cleanup reserve.
+
+Attention repair result `c5f4e1e1…` correctly binds oracle `adb4f590…` and
+owner `50e49a64…`, but that owner still requires a live predecessor PID while
+the invalid prior attempt already stopped the exact server. Do not claim into
+that deterministic failure. Binding `5e74e9bb…` assigns one final zero-GPU
+owner-only repair: preserve exact live-PID fencing, add a hash-bound
+already-stopped path that sends no signal and requires a post-claim quiescent
+census, and publish by `09:23Z`. Keep the RTX bench maintenance and
+non-claimable pending a later execution binding.
+
+## 2026-07-29T09:24Z — size the MTP launch fence to the measured director tail
+
+Both exact H200s remain available, idle, and protected through `12:10Z`; no
+owner or claim began before the elapsed short fence. Binding `0f994687…`
+changes only the launch envelope and conservative accounting: it provides
+900 seconds through `09:38Z`, exceeding the observed 731-second director tail
+plus 120 seconds of worker startup. Corrected owner `e60309bc…`, runner
+`4a63a277…`, science, `12:05Z` release, and watchdogs are unchanged.
+Conservative cumulative exposure is `$3.91`, leaving the execution and cleanup
+fences inside the durable `$20` ceiling. Launch immediately after this return;
+defer the independent RTX repair reconciliation to the next material wake.
+
+## 2026-07-29T09:35Z — preserve live MTP repair and open the stopped-predecessor attention oracle
+
+MTP owner PID `4050908` / start ticks `143316077` is live and heartbeating
+both exact H200 claims. It durably completed packet staging and the pinned
+Speculators checkout; concurrent execution consumed repair generation `g3`
+and entered the next resumable pipeline attempt. Preserve that owner, both
+claim generations, the `12:05Z` release fence, and the independent `12:10Z`
+watchdogs without replacement or provider mutation.
+
+Attention repair result `d1384ea6…` binds owner `f675826f…`, oracle
+`adb4f590…`, exact wheel identity, and the already-stopped predecessor
+evidence. A strict warm-bench census found 2 MiB used, zero accelerator
+allocations, and no resident science driver. Replace watchdog r3 atomically
+with verified r4 PID `4056443` through `10:45Z`; r3 is inactive. Binding
+`dae923b7…` opens only this exact ready RTX bench through `09:50Z`. The owner
+must repeat the quiescent census after claim, send no signal, submit the
+unchanged parent control/candidate oracle once, and release by `10:37Z`.
+Maximum cumulative claim exposure is `$2.281017`, within the durable `$3`
+reservation.
+
+## 2026-07-29T09:41Z — retain both claims and bind the attention output-root repair
+
+The attention owner PID `4059482` / start ticks `143382800` claimed the exact
+RTX bench and passed its mandatory already-stopped predecessor census without
+signaling. Its parent exited at `output.mkdir(exist_ok=false)` because the
+controller had pre-created the empty `run` directory. It constructed neither
+arm, reached no CUDA work, returned no row, and wrote no remote result; this is
+an invalid pre-science attempt, not an oracle negative or consumed sample.
+
+Binding `8c19dc05…` preserves the original claim and owner and authorizes one
+development repair: remove only the revalidated empty output root, execute the
+unchanged parent once without precreation, then send the existing retrieval
+request only after a complete remote oracle terminal exists. A failed
+corrected parent must remain retained without request or replay. Keep the
+`10:37Z` release and r4 `10:45Z` watchdog unchanged. The independent MTP owner
+and both H200 claims remain live and untouched in their resumable pipeline.
+
+## 2026-07-29T09:48Z — protect the live corrected attention parent
+
+The output-root repair has now submitted the unchanged parent exactly once.
+Its control arm constructed exact vLLM `0.26.0`, selected all-TRITON, and
+entered the exact two-shard checkpoint load under remote parent PID `35593`
+and control PID `35596`. No oracle terminal or r1 repair request exists, so
+this is live scientific execution rather than another integration failure.
+
+Do not replay the parent. Assign one execution-profile terminal/retrieval
+inspection only: adopt through existing r1 iff the complete remote terminal is
+durable; otherwise record one census, pause the project, and preserve owner
+PID `4059482`, claim generation `2026-07-29T09:36:50.649263Z`, the `10:37Z`
+release fence, and r4 through `10:45Z`. The independent MTP owner remains live
+on both H200s; concurrent repair advanced beyond g6, so no director mutation
+or replacement is warranted.
+
+## 2026-07-29T09:50Z — preserve both authorized terminal transitions
+
+The one-shot attention parent has finished remotely: the retrieval inspection
+found `SM120_ATTENTION_SPLIT_ORACLE.json` plus both arm captures and no parent
+process. Its local terminal bundle is currently being materialized by the
+already-scheduled retrieval worker, so it is not yet safe to interpret,
+publish another request, or change the claim. Preserve owner PID `4059482`,
+claim generation `2026-07-29T09:36:50.649263Z`, and the existing r1 adoption
+path until that worker validates and delivers the terminal.
+
+The trained-MTP researcher delivered g7's hidden-state-relay health repair;
+owner PID `4050908` consumed it and re-entered the resumable pipeline with both
+H200 claim generations current. Preserve that owner and its `12:05Z` release
+fence. No new project, binding, replay, provider operation, or owner
+replacement is warranted while these two independent direct lanes are making
+forward progress.
+
+## 2026-07-29T09:59Z — bind one SM120 runtime repair, not an attention negative
+
+The retrieved attention terminal `f7f8950e…` is complete as failure evidence
+but scientifically invalid: neither arm returned a row or path proof. The
+all-TRITON control loaded the exact model, then FlashInfer sampler architecture
+detection rejected SM120. The 50-TRITON/10-FLEX candidate reached exact FLEX
+compilation, where its selected Triton configuration required `156672`
+resources against the `101376` hardware limit. These independent runtime
+failures do not measure the heterogeneous-attention hypothesis.
+
+Binding `9c219ead…` retains owner PID `4059482`, the original RTX claim, and
+the existing r1 retrieval path. Assign one deep same-project repair: choose a
+supported non-FlashInfer sampler and an SM120-legal FLEX lowering configuration
+without changing model, workload, semantics, or the 50/10 split, then execute
+exactly one fresh parent by `10:10Z`. Only a complete terminal may trigger r1;
+otherwise preserve the owner without request or replay. The measured prior
+parent runtime fits before the unchanged `10:37Z` release and `10:45Z`
+watchdog. The independent MTP owner and both H200 claims remain untouched.
+
+## 2026-07-29T10:02Z — redirect the live MTP owner to generation g8
+
+The MTP owner PID `4050908` remains live and heartbeating both original H200
+claims, but its g7 continuation exited without a pipeline terminal. Generation
+g8 is repair-ready at `b2a0651c…`; the newest boundary is target-runtime
+startup, with an unavailable `vllm==0.26.0+cu129` package selection followed
+by a 600-second health timeout. This is an execution integration defect, not
+trained-assistant evidence, and no owner replacement or claim transition is
+warranted.
+
+Redirect the MTP researcher to inspect only the resident venv/server identity
+and latest target-stage failure, publish one hash-bound g8 patch, and deliver
+it through the existing handshake so the owner resumes only the invalidated
+stage. Preserve the exact checkpoint, assistant, data, training geometry,
+`12:05Z` release, and both `12:10Z` watchdogs. The independent deep attention
+repair remains runnable under binding `9c219ead…` and must launch its sole
+corrected parent by `10:10Z`; no provider lifecycle action is needed.
+
+## 2026-07-29T10:07Z — yield the worker slot after delivering MTP g8
+
+MTP request `1ebb6849…` now hash-delivers target-runtime patch `eaf7bcf4…`
+through the live g8 handshake. Owner PID `4050908` remains the sole executor
+and both original H200 claims are current. Pause researcher scheduling for
+this project until the owner emits a new repair generation or pipeline
+terminal; do not resend g8 or replace the owner.
+
+Keep the attention project active and unchanged as the immediate worker lane.
+Its deep SM120 runtime repair remains bound by `9c219ead…`, with exactly one
+corrected parent allowed by `10:10Z` and the original RTX claim protected
+through the `10:37Z` release fence. No provider lifecycle action is warranted.
+
+## 2026-07-29T10:11Z — pause inspection while the corrected SM120 parent runs
+
+The sole authorized runtime-repair parent launched before its fence as remote
+PID `38078`, using source `ec3a1b92…`. The control selects vLLM's pinned native
+sampler and the candidate lowers FLEX attention with legal 16x16 tiles while
+preserving the exact all-TRITON versus 50-TRITON/10-FLEX contract. A bounded
+inspection at `10:09Z` found that parent live with 12,346 MiB allocated, no
+terminal, and no r1 request.
+
+Pause further researcher inspection until a material parent-exit or terminal
+wake. Preserve owner PID `4059482`, claim generation
+`2026-07-29T09:36:50.649263Z`, the one-submission fence, `10:37Z` release, and
+`10:45Z` watchdog. The next retrieval/adoption step is routine execution work,
+so route it with the execution profile. Do not replay, request r1 early, or
+perform provider lifecycle work.
+
+## 2026-07-29T10:14Z — reactivate MTP at generation g9
+
+The empty portfolio now has one actionable durable boundary. MTP g8 reached
+the pinned vLLM target server but exited before a pipeline terminal when the
+engine core failed initialization. Generation g9 is repair-ready at
+`6cc9807b…`; owner PID `4050908` is live and both original H200 claims remain
+current. The closest repair attempt took about 406 seconds, leaving ample
+runway before the unchanged `12:05Z` release and `12:10Z` watchdogs.
+
+Reactivate only the MTP project with the execution profile. Localize the root
+error from the resident target-server log and exact runtime identities,
+hash-bind one g9 patch, and deliver it through the existing handshake so the
+owner retries only the invalidated stage. Keep the corrected SM120 attention
+parent paused until its already-submitted process exits or writes a terminal;
+do not inspect or replay it. No provider lifecycle action is warranted.
+
+## 2026-07-29T10:22Z — yield MTP g9 and repair the next H200 packet identity
+
+MTP request `877ab479…` now delivers the missing-ninja repair `b587ffbc…`
+through the live g9 handshake. Owner PID `4050908` and both original H200
+claims remain current, so pause researcher scheduling until that owner emits a
+new repair generation or pipeline terminal. The attention file
+`f7f8950e…` is the already-settled invalid predecessor terminal, not a wake
+from corrected parent PID `38078`; preserve its owner and claim without replay
+or early r1 adoption.
+
+Use the free worker slot for the independent streaming global-KV schedule.
+Its U=8 candidate and test hashes still match, but the published discriminator
+binds `memory_schedule_model.py` as `c68555b5…` while the current byte identity
+is `9e23f631…`. Revoke GPU readiness and assign one execution-profile,
+zero-GPU same-project repair to classify that exact mismatch, rerun the three
+existing CPU oracles, and atomically republish final hashes. Do not reserve or
+create an H200 until the corrected packet is durable; no provider lifecycle
+action is warranted this turn.
+
+## 2026-07-29T10:28Z — request the streaming global-KV reservation and owner
+
+The repaired discriminator `1ea35e00…` now binds candidate `636cc6e6…`,
+memory model `df81c3b9…`, unchanged test `870845fa…`, and the passing CPU
+oracle `79d03ffa…`. This clears the identity defect and makes the next useful
+result a target-H200 correctness, memory, and component discriminator rather
+than another analytical pass.
+
+Authorize a `$4.00` project ceiling, covering a conservative 90-minute H200
+lifecycle at `$2.45/hour` (`$3.675`) with at most 45 scientific GPU minutes.
+The reservation is absent from the current spend snapshot, so provider create
+and claim remain closed. Binding `a1bfd994…` assigns one zero-GPU execution
+turn to hash-bind the exact runner and durable owner through the first CUDA
+call, boundary/component arms, conditional new streamed-candidate c32
+endpoint, retained repair, retrieval, and release. After both the reservation
+and owner terminal are durable, the next director turn may create/register one
+protected H200. The MTP and attention owners remain preserved; no provider
+lifecycle action occurs now.
+
+Commit-time reconciliation also found new MTP generation g10
+`86bafc6b…`. The g9 repair fixed target-engine startup and advanced to
+response regeneration; that stage now fails pre-science only because the
+resident venv lacks `datasets`. Reactivate MTP concurrently with the
+execution profile for one hash-bound dependency patch through the existing
+g10 handshake. Preserve the live owner, both original claims, the working
+target engine, and all scientific identities.
+
+Before return, g10 request `4354efa9…` delivered dependency patch
+`5071169b…` and the owner advanced immediately to repair generation g11
+`40b48d27…`. The same response-regeneration stage now imports the installed
+`speculators` package but fails because `hs_connectors` does not expose
+`FileTransfer`. Supersede the stale g10 scheduling text with one
+execution-profile package-identity repair through g11; preserve the datasets
+fix, live owner, both claims, and working target engine. The corrected SM120
+parent remains paused without a material terminal wake or replay.
+
+## 2026-07-29T10:40Z — preserve and retrieve the completed corrected SM120 parent
+
+The heartbeat-only attention owner could not observe corrected remote parent
+PID `38078`, and its loaded `10:37Z` fence left no safe worker-start runway.
+Replace watchdog r4 atomically with verified r5 PID `4103500` through
+`10:54Z`; r4 is inactive.
+
+At release, one exact lifecycle census found PID `38078` absent, zero
+accelerator allocations, and a complete terminal `b6f891f0…` with control
+`8ef31c46…` and candidate `d372cc28…`. The old claim released to maintenance;
+mark the quiescent bench ready only for binding `302f644f…`: one fresh
+four-minute retrieval/adoption claim by `10:47Z`, release by `10:51Z`, and no
+model request or scientific replay. Preserve MTP g11 and the streaming
+owner-preparation lane unchanged.
+
+## 2026-07-29T10:42Z — give the corrected-terminal retrieval the worker slot
+
+Attention binding `302f644f…` remains runnable on the exact available RTX
+bench, with more than 120 seconds before its `10:47Z` claim fence and r5
+active through `10:54Z`. Return immediately so one execution researcher can
+implement the bound minimal retriever, claim, adopt terminal `b6f891f0…`, and
+release without replay.
+
+MTP g11 request `023d47b…` is already delivered to live owner PID `4050908`;
+there is no g12 or pipeline terminal. Pause only researcher scheduling for
+that project until its owner emits a material boundary. Keep the independently
+reserved streaming owner-preparation lane active and do not provision its
+H200 until its owner-ready terminal is durable.
+
+## 2026-07-29T10:45Z — restore the retrieval-only RTX ready state
+
+The departed attention owner wrote a late maintenance release after the prior
+director marked the bench ready. Exact reconciliation found owner PID
+`4059482` absent, retriever source `01064a60…` durable, claim null, and
+watchdog r5 still PID `4103500` through `10:54Z`. Restore the same quiescent
+RTX bench to available under unchanged binding `302f644f…` and return
+immediately for the execution researcher to claim by `10:47Z`, retrieve and
+adopt terminal `b6f891f0…`, and release by `10:51Z`. No replay, provider
+lifecycle, H200 mutation, or portfolio-contract change is authorized.
+
+## 2026-07-29T10:52Z — provision the streaming discriminator and retire RTX
+
+The U=8 streaming owner terminal is durable and its `$4.00` reservation covers
+the conservative 90-minute H200 exposure (`$3.675`). Region-wide placement
+selected preemptible eu-west1 H200 instance
+`computeinstance-e01q3jffxt2vtafkhp`; protect it with watchdog PID `4115321`
+through `12:18:50Z` and register bench
+`h200-streaming-global-kv-e01q3jffxt2vtafkhp` in maintenance. No SSH, setup,
+CUDA, or science ran. Pause the project until strict identity and the runtime/
+endpoint launch binding are director-complete.
+
+The corrected SM120 run has equal semantic rows but no backend path proof, so
+classify it as incomplete observer evidence rather than an attention negative.
+Activate one deep zero-GPU localization without replay. No compatible RTX work
+fits the expired warm itinerary: delete pod `f4nbtoufbwf66f`, verify provider
+404, stop r5, and retire the bench. MTP's independent H200 owner remains
+untouched.
+
+## 2026-07-29T11:01Z — open the verified streaming H200 execution lane
+
+One authenticated provider reconciliation and strict SSH probe verified
+instance `computeinstance-e01q3jffxt2vtafkhp`, host fingerprint
+`SHA256:xV+L…`, cloud-init completion, and one idle H200
+`GPU-59d1…` with 143,771 MiB and driver `580.159.04`. The registered bench is
+now ready under execution binding `089e1d37…`; no setup, CUDA, or science ran.
+
+Activate the streaming project with the execution profile. In the same worker
+run, hash-bind only the localized repair-capable owner and endpoint controller,
+claim this exact bench by `11:10Z`, and launch one PID-managed owner. Its first
+target-runtime call is the exact C=26 CUDA discriminator; only passing CUDA,
+memory, and component gates may trigger one new streamed-candidate c32 endpoint
+against the fixed qualified denominator. Preserve mutable same-claim repair and
+release generation-fenced by `12:08:50Z` under the `12:18:50Z` watchdog. Do
+not replay the consumed materializing arm or run a stock endpoint. The
+independent deep SM120 observer analysis and MTP owner remain untouched.
+
+## 2026-07-29T11:04Z — yield the streaming lane to its durable owner
+
+Owner PID `4124919`/start ticks `143899745` is live, the original claim
+generation `2026-07-29T11:03:00.114761Z` is current and heartbeating, and
+`OWNER_PROGRESS.json` records entry into `cuda_discriminator`. No repair or
+terminal exists.
+
+Pause researcher scheduling for this project until the exact owner writes a
+repair-ready or terminal boundary, exits unexpectedly, or changes claim
+generation. Do not duplicate launch or inspect progress again. Keep the
+independent deep SM120 observer analysis active; no provider lifecycle action
+is warranted.
+
+## 2026-07-29T11:12Z — promote the valid SM120 component to endpoint preparation
+
+The deep disposition `bc322c95…` reconstructs all missing path proof from
+immutable stdout: control used TRITON, the candidate used the intended
+50-TRITON/10-FLEX split, both arms exited zero, and all three semantic rows
+match. The observer searched only stderr; no component replay is needed.
+
+Reopen the same project with the execution profile under preparation binding
+`71656729…`. Prepare one cold-start durable owner for a future matched
+all-TRITON versus 50/10 concurrent-c32 endpoint pair, using the exact
+checkpoint, official vLLM wheel, workload, path proof, retained repair, and
+typed release contract. Raise the requested cumulative project ceiling from
+`$3.00` to `$6.00`: measured prior spend is `$2.83`, and one conservative
+90-minute RTX exposure is `$2.835`, for `$5.665` total. The current spend
+snapshot still reserves only `$3.00`, so no provider create, claim, SSH, or GPU
+work is authorized this turn. The streaming H200 owner remains untouched.
+
+## 2026-07-29T11:17Z — replace the wedged streaming owner in the retained claim
+
+The first C=26 call reached the pinned H200 runtime but failed before a sample
+because the unprivileged container targeted `/.triton`. The owner's intended
+repair boundary then failed under `set -u`, and its EXIT trap waited forever
+for a heartbeat subshell. No CUDA result, repair-ready record, or terminal
+exists; claim generation `2026-07-29T11:03:00.114761Z` remains current.
+
+Bind one execution-profile controller repair under the same claim: writable
+Triton/XDG caches, separately assigned repair locals, explicit heartbeat
+kill-and-wait, and generation-specific retry captures. Retire only predecessor
+PID `4124919` and child `4124960`, then launch one replacement by `11:30Z`
+without claiming, restaging, or changing science. Retry only the unconsumed
+CUDA discriminator and preserve release by `12:08:50Z`; the SM120 endpoint
+preparation and both MTP H200s remain untouched.
+
+## 2026-07-29T11:25Z — correct the streaming fixture before one R2 retry
+
+R1 fixed the writable Triton boundary and reached the CUDA runner, but the
+C=64 fixture ignored protected, recent, and query-row entries when choosing
+its start position. It therefore raised `compact_tile_overflow` before any
+CUDA result was atomically persisted. This is invalid harness evidence, not a
+memory or mechanism negative.
+
+Binding `5e1b3f42…` authorizes one execution-profile R2 handoff under the
+original claim. Prepare the corrected 26/64/64-entry fixture and persistent
+owner first, then acknowledge repair ID
+`streaming-global-kv-r1-cuda_discriminator`, verify R1 exits, and launch R2 by
+`11:35Z` without overlap, claim, restage, or scientific change. The SM120
+reservation is now `$6`, but provider creation remains closed until its
+owner-ready artifact is durable.
+
+## 2026-07-29T11:33Z — provision the matched SM120 c32 endpoint bench
+
+The SM120 c32 owner terminal `a33638d3…` is durable, and the exact `$6.00`
+reservation covers prior measured spend `$2.83` plus a conservative 90-minute
+RTX exposure `$2.835` (`$5.665` cumulative). Create secure RunPod pod
+`3u5oyb8eazps50` at `$1.89/hour`, protect it with watchdog PID `4150574`
+through `13:01:43Z`, and register maintenance bench
+`rtxpro6000-sm120-attention-c32-3u5oyb8eazps50`.
+
+No SSH, setup, claim, CUDA call, replay, or scientific request ran. Pause the
+project until a later director verifies strict connection identity, exact
+sm_120 hardware, and zero accelerator allocations, then publishes the
+execution binding and marks this exact bench ready. Preserve the streaming R1
+claim and its independently scheduled R2 same-claim repair unchanged.
+
+## 2026-07-29T11:38Z — restore safe runway for the retained streaming R2 repair
+
+The original `11:35Z` R2 launch fence expired with R1 PID `4139342` still
+live, repair-ready `cc3a273c…` unconsumed, claim generation
+`2026-07-29T11:03:00.114761Z` current, and no CUDA result or terminal. Extend
+the protected H200 lifecycle within the existing `$4.00` ceiling: watchdog
+PID `4153986` now owns cleanup through `12:26Z`, the prior watchdog is
+inactive, and worst-case provider exposure is `$3.967639`.
+
+Amendment `cb3ac55b…` changes only the R2 launch/release fences to `11:47Z`
+and `12:16Z`. Return immediately for one execution researcher to prepare the
+26/64/64-entry fixture, deliver the existing repair handshake, and launch R2
+without overlap. Keep the registered RTX bench in maintenance and leave both
+MTP H200s untouched.
+
+## 2026-07-29T11:59Z — open the strict-identity SM120 c32 execution lane
+
+One authenticated RunPod reconciliation and strict SSH probe verified pod
+`3u5oyb8eazps50`, host fingerprint `SHA256:V2ow…`, exact sm_120 RTX PRO 6000
+UUID `GPU-5dd0…`, 97,887 MiB, driver `580.159.04`, 2 MiB used, and zero
+compute applications. Extend only its cleanup watchdog to r2 PID `4170010`
+through `13:11Z`; worst-case cumulative project exposure is `$5.956953`,
+inside the durable `$6.00` ceiling.
+
+Mark the bench ready under execution binding `b2ffff20…`. One execution
+researcher now finalizes only the missing cold-bootstrap owner path against
+the bound eight-file transfer manifest and official wheel, claims by
+`12:12Z`, and launches the exact PID-managed owner. The owner runs one matched
+all-TRITON control then 50-TRITON/10-FLEX candidate, retains ordinary
+same-claim repair, and releases by `13:01Z`. Streaming R2 PID `4161363`
+continues independently; do not inspect, replace, or redirect it.
+## 2026-07-29T12:06Z — bind the retained streaming endpoint-only replacement
+
+R2 passed the corrected `26/64/64` CUDA discriminator (`0f7c32bb…`) and the
+conditional endpoint submitted zero requests; its only failure is missing
+candidate-server activation. Binding
+`DIRECTOR_STREAMING_GLOBAL_KV_H200_R3_ENDPOINT_ONLY_REPAIR_20260729T1206Z.json`
+authorizes one execution-profile R3 owner under original claim generation
+`2026-07-29T11:03:00.114761Z`. It adopts the completed producer, resume-stages
+the exact checkpoint, activates only the hash-bound U=8 streamed hook through
+the proven SGLang launch seam, runs one new c32 endpoint, and releases by
+`12:20Z` under the unchanged `$4` watchdog through `12:26Z`. No stock,
+activation-probe generation request, CUDA replay, new claim, provider action,
+or MTP/SM120 mutation is authorized.
+## 2026-07-29T12:15Z — retire three expired H200 resources and preserve SM120
+
+The paired MTP owner escaped its `12:05Z` deadline inside an unbounded g11
+repair callback. At commit time its owner, pipeline, and SSH child were absent
+and no pipeline terminal existed. Delete and verify absence for both exact
+instances/disks, stop their watchdogs, release the inspected claim generations,
+and retire both benches; measured combined exposure is `$17.688883`. This is
+deadline-bounded incomplete integration evidence, not an MTP negative.
+
+The mandatory cleanup consumed the streaming R3 launch window. R2 was absent,
+no R3 owner or terminal existed, and the measured replacement setup could not
+fit the remaining release margin. Preserve passing CUDA producer `0f7c32bb…`,
+delete and retire its exact H200 resource at `$3.485688`, and leave its
+endpoint explicitly unmeasured. Keep the independent strict-identity SM120
+bench ready; amendment
+`DIRECTOR_SM120_ATTENTION_C32_CLAIM_FENCE_AMENDMENT_20260729T1215Z.json`
+moves only its claim fence to `12:25Z`, retaining the `13:01Z` release and
+`13:11Z` watchdog.
+
+## 2026-07-29T12:18Z — yield the amended SM120 lane to execution
+
+The strict-identity RTX PRO 6000 bench remains available and unclaimed under
+the durable `$6.00` reservation, execution binding `b2ffff20…`, and claim-fence
+amendment `bc5997c2…`. Give the next worker slot to the already-bound execution
+researcher, which must finalize only the cold-bootstrap owner integration,
+claim by `12:25Z`, and launch the durable matched c32 pair for release by
+`13:01Z`.
+
+Return immediately so the pending safe harness reload can admit this worker
+before the amended fence. Do not add another project, inspect the bench again,
+extend the scientific contract, or perform provider lifecycle work.
+
+## 2026-07-29T12:23Z — preserve the SM120 claim through the localized bootstrap retry
+
+The claimed RTX bench is safe, but both recorded controller owners exited
+before checkpoint staging or science. The first rejected the controller-owned
+artifact root; the replacement then failed because controller-local `rsync`
+was absent. These are pre-science integration failures, not attention or
+endpoint evidence.
+
+Preserve claim generation `2026-07-29T12:20:53.348576Z` and the protected
+bench. The in-flight execution researcher has already amended only the
+resumable transfer path with an SSH-stream fallback; let it make the bounded
+same-turn owner retry, update `active_session` atomically, and continue the
+unchanged control/candidate contract by `13:01Z`. Do not release, create a
+second binding, perform provider lifecycle, or admit optional work before that
+handoff is durable.
+
+## 2026-07-29T12:33Z — restore the independent streamed-global-KV endpoint lane
+
+The repaired SM120 owner is live, heartbeating, and advancing through its
+resumable checkpoint transfer, so preserve it unchanged as the direct GPU
+lane. Reopen `gemma4_streaming_global_kv_memory_schedule` independently under
+zero-GPU preparation binding `3babc923…`: its exact `26/64/64` H200 CUDA
+producer `0f7c32bb…` passed, while the candidate c32 endpoint remains
+unconsumed.
+
+Prepare one cold-start, repair-capable candidate-only owner without replaying
+the producer or materializing arm. Raise the requested cumulative project
+ceiling to `$8.00`; prior spend `$3.485688` plus a conservative 100-minute
+H200 lifecycle `$4.083333` totals `$7.569021`. The current spend snapshot has
+no reservation for this project, so no provider create, claim, SSH, or GPU
+work is authorized until both the `$8.00` reservation and owner-ready artifact
+are durable.
+
+## 2026-07-29T12:38Z — retain the partial SM120 checkpoint and request lifecycle authority
+
+The SM120 owner released safely to maintenance before science with
+`12,364,095,488` verified partial checkpoint bytes, zero server processes, and
+zero GPU compute applications. At the observed transfer rate, the remaining
+bytes need about 54 minutes; a conservative transfer, bootstrap, model-load,
+paired-endpoint, terminal, and release envelope is 80 minutes. The current
+`13:11Z` watchdog cannot fit that work.
+
+Pause the project and raise its requested cumulative ceiling from `$6.00` to
+`$8.00` under binding `64868991…`. The exact retained pod can then be
+protected through `14:10Z` and released by `14:00Z`; prior spend plus maximum
+provider exposure is `$7.815453`. The current snapshot still reserves only
+`$6.00`, so preserve the maintenance bench but do not extend its watchdog,
+mark it ready, claim it, or schedule a researcher until the `$8.00`
+reservation is durable. The independent streamed-global-KV owner preparation
+continues unchanged.
+
+## 2026-07-29T12:49Z — provision the fresh streamed-global-KV H200
+
+The candidate-only v6 owner is durable (`2802b213…`), and the streaming
+project's exact `$8.00` reservation covers prior spend `$3.485688` plus the
+bounded 100-minute preemptible H200 exposure `$4.083333` (`$7.569021`
+cumulative). Region-agnostic placement selected eu-north1 with eight available
+H200s.
+
+Create Nebius instance `computeinstance-e00n8vffvr4jkmm33f` and disk
+`computedisk-e00hnsmjxp85zq27ge`, protect them with watchdog PID `4733`
+through `14:27:49Z`, and register maintenance bench
+`h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f`. No SSH,
+setup, staging, claim, CUDA call, or science ran. Pause the project until a
+later director verifies strict connection/H200/idle-GPU identity, publishes
+the candidate-only execution binding, and marks this exact bench ready. Leave
+the SM120 maintenance pod and its pending `$8` lifecycle request unchanged.
+
+## 2026-07-29T12:54Z — protect SM120 and parallelize only its cold staging
+
+The SM120 `$8.00` reservation is now durable. Reconcile exact RunPod pod
+`3u5oyb8eazps50` as RUNNING on the recorded machine/IP/SSH port at
+`$1.89/hour`, replace its cleanup watchdog atomically with r3 PID `6661`
+through `14:10Z`, and verify r2 inactive. Maximum cumulative project exposure
+is `$7.815453`.
+
+Do not claim yet. The observed serial SSH fallback needs about 54 minutes for
+the remaining checkpoint, so it no longer fits the release envelope plus
+bootstrap/model-load/science margin. Binding `be6700a8…` assigns one
+execution-profile, zero-GPU in-project patch: transfer at most the two
+incomplete large safetensor destinations concurrently while preserving
+offsets, hashes, atomic finalization, official wheel, exact workload, attention
+mapping, and arm order. The bench remains maintenance and the independent
+fresh H200 remains untouched; a later director opens the SM120 claim only
+after the patch terminal is durable and still fits release by `14:00Z`.
+
+## 2026-07-29T13:06Z — open the retained-checkpoint SM120 execution lane
+
+The lifecycle-pure two-stream patch is durable (`cbcb4e1b…`) and binds owner
+`456850be…`. Reconciliation found exact RunPod pod `3u5oyb8eazps50` still
+RUNNING on recorded machine `a555wlecipbb`, IP `213.173.111.94`, SSH port
+`26761`, and `$1.89/hour`; watchdog r3 PID `6661` is active through `14:10Z`.
+
+Binding `7f35bab3…` marks only this bench ready. One execution researcher may
+claim by `13:10Z`, resume the retained 12.36-GB checkpoint state with at most
+two concurrent large-file streams, bootstrap the exact official wheel, and run
+one all-TRITON control followed by one 50-TRITON/10-FLEX candidate. Release is
+generation-fenced by `14:00Z`. Do not replay the component parent, touch the
+fresh H200, mutate provider lifecycle, or change any scientific identity.
+
+## 2026-07-29T13:13Z — verify the fresh H200 and repair its owner before claim
+
+The fresh Nebius resource is coherent and strict identity passed: instance
+`computeinstance-e00n8vffvr4jkmm33f` is RUNNING with attached READY disk
+`computedisk-e00hnsmjxp85zq27ge`; SSH fingerprint is `SHA256:iVGE…`; the
+guest has one idle H200 (`GPU-4877…`, 143,771 MiB, driver `580.159.04`) and
+watchdog PID `4733` remains active through `14:27:49Z`.
+
+Do not mark the bench ready yet. The prepared v6 owner requires an unknowable
+pre-claim generation, lacks an expected-generation release, enters repair on
+the first normal model-load health miss, and leaves blocking children outside
+the absolute release timeout. Binding `253d4134…` activates one zero-GPU
+execution researcher to produce a hash-bound v7 owner by `13:21Z`. Preserve
+the claimed SM120 lane and all streaming science; no H200 setup, staging,
+container, CUDA, or endpoint request ran.
+
+## 2026-07-29T13:28Z — open one localized v8 implement-and-execute H200 lane
+
+V7 fixed atomic claim-generation capture and bounded children, but inspection
+found two pre-science lifecycle defects: its quoted remote checksum probes
+expand on the controller, and post-claim staging errors can exit without a
+retained repair owner. Extend only the fresh H200 watchdog to r2 PID `22052`
+through `14:38Z` and verify the prior watchdog inactive. Prior spend plus
+maximum provider exposure is `$7.984595`, inside the durable `$8.00` ceiling.
+
+Binding `d69c2d5f…` marks the exact strict-identity H200 ready. One execution
+researcher patches and hash-binds only v8 before claim, claims by `13:38Z`,
+stages by `13:57Z`, proves the candidate server ready by `14:12Z`, submits
+only the unconsumed U=8 candidate c32 endpoint, and releases generation-fenced
+by `14:28Z`. Preserve CUDA producer `0f7c32bb…`; do not replay stock,
+materializing, or CUDA work. The independent claimed SM120 owner is unchanged.
+
+## 2026-07-29T13:34Z — preserve both sole owners through their active transitions
+
+The localized v8 patch is durable (`620be2bd…`). PID `26048` at start ticks
+`144794786` is the sole live streaming owner and materialized nearly all bound
+checkpoint bytes before atomically claiming the exact H200 at
+`13:33:24.414360Z`. The claim is heartbeating under watchdog PID `22052`.
+Preserve this owner through staging, candidate activation, the single
+unconsumed U=8 c32 endpoint, and generation-fenced release by `14:28Z`.
+
+Do not admit an overlapping streaming worker or mutate either scientific
+contract. The independent SM120 PID `15764` continues checkpoint staging
+under its existing claim and `14:00Z` release fence. No provider lifecycle or
+portfolio expansion is warranted during these two short, decision-bearing
+in-flight transitions.
+
+## 2026-07-29T13:46Z — move lost v8 claim to maintenance and bind v9 offline
+
+V8 failed pre-science at the retained-repair transition: `retain()` expanded
+an unset local `scope`. Inspection also found that `scp` consumed the
+checkpoint-manifest loop after its first 18-KiB row and the activated hook was
+staged under the wrong import basename. The pinned image is resident, the
+failed container is stopped, the H200 is idle, and neither CUDA producer
+`0f7c32bb…` nor the candidate endpoint was replayed or consumed.
+
+The missing 62.56 GB needs about 67 minutes at the nearest measured
+15.47 MB/s rate, so replacement plus model load, endpoint, terminal, and
+release cannot fit the old `14:28Z` fence. Generation-fenced release claim
+`2026-07-29T13:33:24.414360Z` to maintenance without teardown. Binding
+`7bf5f634…` activates one execution-profile, zero-GPU v9 repair through
+`13:55Z`; the project requests an `$11.00` cumulative ceiling. Keep the bench
+non-claimable until v9 readiness and that reservation are durable, then a
+later director may protect it through `15:50Z` and open a fresh claim. SM120
+continues unchanged.
+
+## 2026-07-29T13:49Z — protect the retained H200 under the durable $11 ceiling
+
+The streaming reservation is now durably `$11.00`. Strict SSH revalidation
+matched the recorded H200 UUID `GPU-4877…`, driver `580.159.04`, 143,771 MiB,
+and zero used GPU memory. Replace the maintenance bench's cleanup watchdog
+atomically with r3 PID `35168` through `15:50Z`, then stop and verify the prior
+r2 PID `22052` inactive. Maximum cumulative project exposure is `$10.924595`,
+inside the reservation.
+
+Keep the exact H200 maintenance and unclaimed. The offline v9 owner repair
+remains the only preparation lane; a later director must hash-bind v9 and open
+a fresh execution claim. Preserve CUDA producer `0f7c32bb…` and the resident
+image. Do not alter the independently claimed SM120 owner or its scientific
+contract.
+
+## 2026-07-29T13:59Z — open the v9 streamed-global-KV endpoint claim
+
+V9 readiness is durable: owner `6bbb0122…` and ready artifact `b49eb954…`
+bind the unchanged checkpoint, exact runner, activated hook, and single
+unconsumed U=8 candidate request. Commit-time reconciliation found the exact
+H200 unclaimed, zero-memory idle, and protected by watchdog PID `35168`
+through `15:50Z`.
+
+Binding `3bcb1232…` marks only this bench ready. One execution researcher may
+claim by `14:05Z`, finish all-eight-row guest integrity by `15:14Z`, prove the
+candidate server by `15:29Z`, submit the candidate c32 endpoint once, and
+release generation-fenced by `15:40Z`. Preserve CUDA producer `0f7c32bb…`;
+do not run stock or materializing arms. The independent SM120 owner and
+contract remain unchanged.
+
+## 2026-07-29T14:04Z — retire expired SM120 and preserve the H200 launch
+
+The SM120 owner was absent after completing the full checkpoint transfer and
+then failing before runtime bootstrap on a local f-string defect. Its claim
+had already cleared to draining at commit time, and the `14:00Z` release fence
+had passed. Delete exact RunPod pod `3u5oyb8eazps50`, verify HTTP 404, stop
+watchdog PID `6661`, and retire the bench. This is incomplete pre-science
+integration evidence, not an attention negative.
+
+Commit-time reconciliation then found that the H200 owner had already launched
+at `14:00:58Z` and atomically claimed at `14:02:13Z`, inside the original
+fence. Amendment `9486a8ff…` is therefore explicitly non-operative. Preserve
+sole live PID `43683`, binding `3bcb1232…`, watchdog PID `35168`, and the
+single unconsumed U=8 candidate contract through release by `15:40Z`.
+## 2026-07-29T14:10Z — replace v9 inside the retained H200 claim
+
+V9 remains the sole live owner under claim generation
+`2026-07-29T14:02:13.215196Z`, but its first remote hash probe inherited the
+checkpoint-manifest stdin and consumed the remaining rows. The delivered
+repair cannot take effect because the running shell already parsed
+`remote_run` and resumes at integrity rather than staging. No server, CUDA
+producer replay, candidate request, or scientific sample occurred.
+
+Binding `bd0d211a…` authorizes one execution researcher to hash-bind v10,
+revalidate the exact claim/PID/repair generation, stop only PID `43683` after
+the patch is durable, and launch a non-overlapping same-claim replacement by
+`14:18Z`. V10 resumes hash-reconciled eight-row staging with SSH stdin
+isolated, then runs only the unconsumed U=8 endpoint. Use the existing
+watchdog envelope: integrity by `15:20Z`, server by `15:35Z`, and
+generation-fenced release by `15:48Z`. No new claim or provider lifecycle is
+authorized; defer optional portfolio expansion until this urgent handoff is
+scheduled.
+
+## 2026-07-29T14:17Z — add an independent current-runtime FP8 hot block
+
+V10 PID `52969` replaced v9 without overlap and is live inside the retained
+H200 claim, so preserve its streamed-global-KV contract unchanged through the
+single U=8 endpoint and `15:48Z` release. The long hash-reconciled staging
+interval leaves independent researcher capacity.
+
+Activate `gemma4_h200_current_norm_fp8_hotblock` with deep routing, zero GPU,
+zero spend, and a 50-minute wall limit. It must trace one exact pinned
+residual/RMSNorm-to-dynamic-FP8 consumer boundary and produce working
+exact-shape source, CPU oracle, target-H200 runner, and a byte/launch
+prediction—or a typed causal falsification. It may not touch the claimed H200
+or become another readiness/planning lane.
+
+## 2026-07-29T14:33Z — resume the retained H200 partial with v11
+
+V10 died pre-science because `retain()` expanded `scope` inside the same
+`local` declaration that assigned it. The guest is safe and idle: zero GPU
+memory, no compute applications or containers, all input files resident, and
+`34,307,773,440` bytes retained in the first checkpoint shard `.part`.
+Consequently only `28,270,858,464` checkpoint bytes remain, about 30.5
+minutes at the measured transfer rate; the prior full-transfer infeasibility
+assessment does not apply to a verified-prefix resume.
+
+Binding `28e4050d…` authorizes one v11 execution researcher to fix the local
+declaration, hash-bind offset-resumable staging, and launch inside the same
+claim by `14:38Z`. It must validate the remote partial against the matching
+local prefix, append only the missing suffix, reach integrity by `15:14Z`,
+run only the unconsumed U=8 endpoint, and release generation-fenced by
+`15:48Z`. Do not clear the drain fence, create a new claim, restart verified
+bytes, or mutate provider lifecycle. The independent deep FP8 hot-block lane
+continues unchanged.
+
+## 2026-07-29T14:36Z — materialize the surviving FP8 component offline
+
+The independent deep lane is source-complete. Its CPU oracle passes at exact
+M=32 geometry, the candidate removes one launch and 688,128 logical
+intermediate bytes per layer call, and the retained identical-stack component
+evidence projects a conservative `0.005424 s/request` gain. This merits one
+later exact-H200 component run, but not interference with the urgent v11
+streaming continuation.
+
+Binding `DIRECTOR_NORM_FP8_HOTBLOCK_OFFLINE_COMPONENT_20260729T1436Z.json`
+routes one execution researcher to materialize and hash-verify only the four
+layer-0 norm/Q/K/V tensors within 30 minutes, zero GPU and zero spend. V11
+keeps exclusive H200 authority and its `14:38Z` launch fence. A later director
+may bind the component only after its typed ready artifact is durable and a
+separate positive spend reservation exists.
+
+## 2026-07-29T14:40Z — reserve lifecycle margin before reopening v11
+
+V11 source `3dae02dc…` and resumable patch `0a0a7dda…` are durable, but no
+owner launched before the `14:38Z` fence. At commit time the exact claim
+generation remained registered, the v11 owner record was absent, and watchdog
+PID `35168` was active through `15:50Z`. A fresh 120-second scheduler runway
+plus the measured 64.46-minute continuation leaves no safe terminal margin
+inside that lifecycle.
+
+Pause streaming behind `reservation_required: true` and request a `$12.00`
+cumulative ceiling. Binding `fc5d9b19…` plans release by `16:00Z` and watchdog
+cleanup at `16:10Z`; maximum cumulative exposure is `$11.741262`. It is not
+execution or lifecycle authority. After reservation becomes durable, a later
+director revalidates the exact claim/guest, extends the watchdog, and only
+then publishes a fresh v11 start fence. The offline FP8 component lane remains
+active and bench-free.
+
+## 2026-07-29T14:46Z — extend the retained H200 and reopen v11
+
+The `$12.00` reservation is durable. Exact provider and guest reconciliation
+matched the recorded RUNNING instance, attached disk, strict H200 identity,
+zero GPU memory/apps/containers, immutable inputs, and the
+`34,307,773,440`-byte first-shard partial. Start watchdog r4 PID `72624`
+through `16:10Z`, atomically replace the inventory lifecycle, stop r3, and
+verify r3 inactive. Maximum cumulative exposure remains `$11.741262`.
+
+Binding `d66eddf1…` opens exactly one v11 owner inside retained claim
+`2026-07-29T14:02:13.215196Z` by `14:50Z`. Resume only the verified suffix,
+reach integrity by `15:26Z`, prove the candidate server by `15:43Z`, submit
+the single unconsumed U=8 c32 endpoint, and release generation-fenced by
+`16:00Z`. No new claim, code preparation, CUDA-producer replay, or optional
+portfolio work precedes this launch.
+
+## 2026-07-29T14:50Z — queue norm/FP8 and open gated-activation fusion
+
+The rebound v11 owner PID `74239` is live and heartbeating inside the retained
+claim; preserve it unchanged. The independent norm/FP8 lane completed exact
+offline materialization: ready artifact `86fc46ee…` binds a verified
+176,172,392-byte four-tensor component. Pause it behind the streaming handoff
+and request a `$2.00` cumulative reservation for one later 30-minute H200
+component run. It remains non-claimable and cannot race v11.
+
+Use the free deep slot for materially distinct current-runtime work:
+`gemma4_h200_current_gated_activation_fp8_hotblock` traces and implements or
+falsifies the decode gated-activation→dynamic-E4M3 boundary feeding the down
+projection. At M=32 its analytical ceiling is one removed launch and
+2,752,512 logical intermediate bytes per layer call. The lane is zero GPU,
+zero spend, and must produce source-complete code, CPU oracle, real-weight
+H200 runner, and a physical prediction—or a typed causal falsification.
+
+## 2026-07-29T14:56Z — bind a non-overlapping v12 part-state replacement
+
+V11 PID `74239` is live at repair ID
+`streaming-global-kv-v11-staging_failure-0`, but its parsed `part_state`
+contains a quote-stripped nested remote heredoc and `retain()` cannot ingest a
+source patch. No server, candidate request, CUDA replay, or scientific sample
+occurred. A repair request would only replay the known failure.
+
+Extend cleanup five minutes with watchdog r5 PID `80269` through `16:15Z`,
+atomically replace r4, and verify r4 inactive. Maximum cumulative exposure is
+`$11.945428`, inside the durable `$12.00` ceiling. Binding `f907f41b…`
+authorizes one execution researcher to hash-bind v12, stop only exact v11
+after the patch is durable, launch without overlap by `15:02Z`, resume the
+verified 34.31-GB prefix, and run only the unconsumed U=8 endpoint before
+generation-fenced release at `16:10Z`. The independent gated-activation lane
+continues unchanged.
+
+## 2026-07-29T14:58Z — preserve the runnable v12 handoff
+
+Commit-time reconciliation found binding `f907f41b…` unchanged, v12 source
+and patch not yet published, and exact v11 PID `74239` still live and
+heartbeating at repair generation
+`streaming-global-kv-v11-staging_failure-0`. No server, CUDA replay,
+candidate request, or scientific sample occurred. The `15:02Z` replacement
+fence still has scheduler runway and fits the measured continuation inside
+release at `16:10Z` and watchdog r5 cleanup at `16:15Z`.
+
+Preserve the v12 execution binding without another lifecycle or portfolio
+mutation and return immediately so the harness can admit it. The independent
+gated-activation lane remains unchanged.
+
+## 2026-07-29T14:59Z — preserve the in-flight v12 transition
+
+The authorized researcher is actively crossing the non-overlapping handoff:
+v12 owner source `21a5364a…` and patch `a7dcafae…` are durable with the
+absent/present fixture passing, exact v11 PID `74239` is now absent, and the
+v12 detached-owner record has not yet been published. No science or CUDA
+producer replay occurred.
+
+Do not race this critical section with another owner or mutate its contract.
+The `15:02Z` fence still has launch runway inside release at `16:10Z` and
+watchdog cleanup at `16:15Z`; return immediately so the same researcher can
+finish the exact bound launch. The independent gated-activation lane remains
+unchanged.
+
+## 2026-07-29T15:00Z — keep the admitted v12 critical section exclusive
+
+The already-admitted replacement researcher has durably published v12 source
+and patch and stopped exact v11, but has not yet published the detached-owner
+record. The retained claim, drain fence, and watchdog r5 are unchanged; no
+scientific submission or CUDA-producer replay is recorded.
+
+Treat the original launch runway as consumed by the researcher already
+executing the bound transition. Do not publish a competing amendment, launch
+another owner, or alter lifecycle state during its non-overlapping critical
+section. Return immediately; the independent gated-activation lane continues
+unchanged.
+
+## 2026-07-29T15:04Z — reserve terminal margin before owner-loss recovery
+
+V12 source `21a5364a…`, patch `a7dcafae…`, and the absent/present fixture are
+durable. Conflict `fc3a704c…` proves predecessor PID `74239` absent, no v12
+owner record, zero candidate submissions or CUDA replay, and the verified
+`34,307,773,440`-byte prefix intact. The retained claim remains fenced and
+watchdog r5 remains the only lifecycle owner through `16:15Z`.
+
+After validating the v12 provenance interface, less than one minute remained
+before a safe start fence. Do not issue a zero-margin execution binding.
+Pause streaming behind `reservation_required: true` and request a `$13.00`
+cumulative ceiling. That can bound cleanup by `16:40Z` (maximum exposure
+about `$12.9663`). Only after reservation is durable may a later director
+revalidate the claim/guest, extend the watchdog, and publish one fresh
+owner-loss v12 launch. The independent gated-activation lane is unchanged.
+
+## 2026-07-29T15:08Z — extend the retained H200 and bind ownerless v12
+
+The `$13.00` reservation is durable. Exact provider and guest reconciliation
+matched the RUNNING instance, READY disk, strict H200 identity, zero GPU
+memory/apps/containers/endpoints, absent predecessor and v12 owner record, and
+the retained `34,307,773,440`-byte prefix. Start watchdog r6 PID `91168`
+through `16:40Z`, atomically replace inventory lifecycle, stop r5, and verify
+r5 inactive. Maximum cumulative exposure is `$12.966261`.
+
+Binding `e1fc29b4…` opens one execution researcher to launch the already-bound
+v12 owner directly inside retained claim
+`2026-07-29T14:02:13.215196Z` by `15:12Z`. It resumes only the verified
+suffix, reaches integrity by `15:48Z`, proves the candidate server by
+`16:05Z`, submits the single unconsumed U=8 endpoint, and releases
+generation-fenced by `16:35Z`. No new claim, source preparation, CUDA replay,
+or drain clearing is authorized. The independent gated-activation lane
+continues unchanged.
+
+## 2026-07-29T15:09Z — preserve the runnable ownerless-v12 handoff
+
+Commit-time reconciliation found binding `e1fc29b4…` unchanged, the v12
+detached-owner record still absent, and the exact retained claim protected by
+watchdog r6 through `16:40Z`. The `15:12Z` launch fence retains more than one
+worker-start interval, while the measured continuation still fits release at
+`16:35Z`.
+
+Make no competing portfolio or lifecycle mutation. Return immediately so the
+harness can admit the bound execution researcher. The independent
+gated-activation lane remains scientifically unchanged.
+
+## 2026-07-29T15:11Z — replace only the unconsumed v12 start fence
+
+No v12 owner launched before the original binding fell below the required
+120-second scheduler runway. The retained claim and watchdog r6 are unchanged,
+and the closest measured 64.46-minute continuation still fits release at
+`16:35Z`.
+
+Binding `10b93e52…` supersedes only the unlaunched start envelope: launch by
+`15:17Z`, integrity by `15:53Z`, server by `16:10Z`, and generation-fenced
+release by `16:35Z`. All checkpoint, runtime, U=8 intervention, producer,
+submission-count, spend, and watchdog identities remain unchanged. Return
+immediately for harness admission.
+
+## 2026-07-29T15:16Z — rebind v12 for the reset researcher thread
+
+The prior admission made no durable progress because its reused researcher
+thread carried stale exclusive-owner context. Supervisor evidence confirms
+that thread is now reset; commit-time inspection still found no v12 owner
+record, while the retained claim and watchdog r6 remain unchanged.
+
+Binding `9e1fc33d…` replaces only the consumed start envelope: launch by
+`15:22Z`, integrity by `15:58Z`, server by `16:15Z`, and generation-fenced
+release by `16:35Z`. This leaves 73 minutes from latest launch to release,
+8.54 minutes beyond the measured continuation. No provider lifecycle or
+scientific contract changed; return immediately for fresh-thread admission.
+
+## 2026-07-29T15:19Z — preserve the fresh-thread v12 admission
+
+Commit-time reconciliation found binding `9e1fc33d…` unchanged, the v12 owner
+record absent, and the exact retained claim still protected by watchdog r6
+through `16:40Z`. At `15:18:37Z`, the `15:22Z` launch fence retained 203
+seconds of runway and the measured continuation still fit release at
+`16:35Z`.
+
+Make no competing portfolio or lifecycle mutation. Return immediately so the
+reloaded harness can admit the fresh execution thread; defer independent
+portfolio expansion until this near-term owner launch is scheduled.
+
+## 2026-07-29T15:21Z — preserve the in-turn v12 launch recovery
+
+The first detached record from `15:19:16Z` names a dead wrapper, but the
+admitted researcher recovered inside the same launch turn. Controller process
+PID `102131` with start ticks `145439383` is live under user systemd, its
+child is validating the retained inputs, and the same-claim heartbeat advanced
+to `15:20:21Z`. No scientific marker or candidate submission exists.
+
+Do not race this non-overlapping critical section with another owner, binding,
+or lifecycle mutation. Preserve watchdog r6 and let the execution researcher
+publish the corrected durable owner identity and `active_session` as its final
+state transition.
+
+## 2026-07-29T15:22Z — materialize the gated-activation component offline
+
+V12 PID `102131` is durably live and heartbeating through resumable staging,
+so preserve its H200 contract unchanged. The independent gated-activation
+lane produced a source-complete exact decode candidate with a passing CPU
+oracle, but its real-weight H200 runner still needs one project-local tensor.
+
+Binding `ae436ca8…` activates a 30-minute execution turn with zero GPU and zero
+spend. It extracts only the exact layer-0 BF16 down-projection weight into a
+hash-bound project-local component, proves source-value equality after atomic
+finalization, and runs the runner's describe path. On success it pauses
+non-claimable for a later director-bound H200 component; it cannot race v12.
+
+## 2026-07-29T15:24Z — preserve the two independent lanes
+
+V12 PID `102131` remains live with the same start ticks and a fresh
+`15:24:07Z` claim heartbeat. The gated-activation binding `ae436ca8…` is
+unchanged, and neither its component nor ready artifact has yet been
+published.
+
+Keep both contracts unchanged: streamed-global-KV continues as the sole H200
+consumer, while gated-activation remains zero-GPU and non-claimable. This
+satisfies the campaign's direct-measurement and independent-mechanism lanes;
+make no lifecycle or additional portfolio mutation before either changes
+durably.
+
+## 2026-07-29T15:25Z — retain the active execution pair
+
+V12 PID `102131` remains live at start ticks `145439383`; the claim heartbeat
+advanced to `15:25:37Z` under watchdog r6. The gated-activation component,
+manifest, and ready artifact remain absent.
+
+Preserve both contracts unchanged. Streamed-global-KV remains the sole H200
+consumer, and gated-activation remains a zero-GPU offline lane. Do not add a
+portfolio or lifecycle mutation until either lane produces a durable change.
+
+## 2026-07-29T15:33Z — preserve repaired staging and queue the warm successor
+
+V12 repair generation `staging_failure-1` consumed the hash-bound compatibility
+adapter and crossed into the suffix transfer under live PID `102131`; the
+verified `34,307,773,440`-byte prefix and zero-science boundary remain intact.
+Keep that owner, claim, drain fence, and watchdog r6 unchanged.
+
+The gated-activation lane completed exact source-equal component materialization
+and runner binding. Queue it paused and non-claimable behind streaming under
+binding `c9127d67…`, and request a `$2.00` cumulative reservation for one later
+M=1/16/32 H200 component run. Do not claim, clear drain, or mutate provider
+lifecycle until the reservation and streamed-global-KV release are durable.
+
+## 2026-07-29T15:34Z — keep the repaired transfer on course
+
+V12 PID `102131` is live and heartbeating. A single local I/O snapshot found
+the repaired suffix pipe at byte `47,616,308,224`: about `13.31` GB advanced
+in `252` seconds, leaving about `14.96` GB. At that observed rate the transfer
+fits its remaining 1,200-second cap and the `15:58Z` integrity fence.
+
+Preserve the owner, claim, drain fence, and watchdog r6 unchanged. Keep the
+gated-activation successor paused and non-claimable under binding `c9127d67…`;
+its requested `$2.00` reservation is not yet durable, so no claim or lifecycle
+handoff is authorized.
+
+## 2026-07-29T15:35Z — advance v12 into integrity
+
+V12 PID `102131` crossed the repaired suffix-transfer boundary and is now
+hashing the completed first-shard partial against immutable digest
+`eeef8791…`. The prior duplicate-target append process is absent, the claim
+remains generation `2026-07-29T14:02:13.215196Z`, and science remains
+unconsumed.
+
+Preserve the owner, claim, drain fence, and watchdog r6 unchanged through
+integrity and server startup. Keep gated activation paused and non-claimable;
+its requested `$2.00` reservation is still not durable, so no successor claim
+or provider lifecycle action is authorized.
+
+## 2026-07-29T15:37Z — preserve v12 through second-shard staging
+
+V12 PID `102131` remains live at start ticks `145439383`, with claim heartbeat
+`15:36:53Z`. Its repaired pipeline has advanced from first-shard hashing to an
+active second-shard transfer; one process-I/O snapshot showed about `3.03` GB
+read from the immutable second-shard source. No terminal or scientific marker
+exists.
+
+Keep the owner, exact claim, drain fence, and watchdog r6 unchanged. The
+gated-activation successor remains paused and non-claimable because its
+requested `$2.00` reservation is not durable; do not mutate provider
+lifecycle or hand off the bench before a durable release.
+
+## 2026-07-29T15:40Z — satisfy the successor reservation gate
+
+The gated-activation project's `$2.00` cumulative reservation became durable
+at `15:37:47Z`. V12 PID `102131` remains live under the exact retained claim;
+its second-shard source read advanced to about `7.79` GB, its heartbeat reached
+`15:38:23Z`, and no terminal or science marker exists.
+
+Mark gated activation reservation-satisfied but keep it paused and
+non-claimable behind streamed-global-KV. Preserve the current owner, claim,
+drain fence, and watchdog r6; only after a generation-fenced predecessor
+release may a later director reconcile the warm lifecycle and publish the
+three-row component execution binding.
+
+## 2026-07-29T15:41Z — preserve full checkpoint integrity verification
+
+V12 PID `102131` remains live at start ticks `145439383` and has completed
+both repaired shard transfers. It is now verifying every checkpoint row
+against manifest `6202e8f8…` before atomically publishing the guest integrity
+marker. The exact claim heartbeat reached `15:39:54Z`; no terminal or science
+marker exists.
+
+Preserve the owner, claim, drain fence, and watchdog r6 through integrity and
+server startup. Keep the reservation-satisfied gated-activation successor
+paused and non-claimable until the predecessor releases generation-fenced;
+make no provider lifecycle mutation.
+
+## 2026-07-29T15:42Z — hold the integrity critical section
+
+V12 PID `102131` remains live at start ticks `145439383`, and the manifest-wide
+checkpoint verifier is still active under the exact claim. No repair, terminal,
+or scientific marker has appeared.
+
+Keep the portfolio and lifecycle unchanged: v12 retains exclusive H200 use,
+while the reserved gated-activation successor remains paused and
+non-claimable pending a generation-fenced release.
+
+## 2026-07-29T15:43Z — preserve candidate server startup
+
+V12 PID `102131` crossed the manifest-integrity gate, confirmed the pinned
+SGLang image, and launched container `b5b65d7d…`. The owner is now making
+bounded readiness probes on port `30000`; initial connection refusals are
+startup observations, with no repair, terminal, or science marker present.
+
+Preserve the owner, exact claim, drain fence, and watchdog r6 through model
+load and readiness. Keep the reserved gated-activation successor paused and
+non-claimable until the predecessor releases generation-fenced; make no
+provider lifecycle mutation.
+
+## 2026-07-29T15:49Z — repair the invalid attributed endpoint in place
+
+Attempt 0 returned a passing 32-request terminal, but its telemetry contains
+only the hook-install row and no layer invocation. It is therefore an invalid
+candidate attempt, not U=8 evidence; the live owner's unconditional retry
+would also duplicate the request before the attribution defect is repaired.
+
+Binding `ef4002b2…` activates one urgent execution repair: guard the endpoint
+against replay by `15:52Z`, localize and patch only the hook/adoption seam, and
+allow one corrected attributed endpoint before release at `16:35Z`. Preserve
+the exact claim, loaded server, drain fence, watchdog r6, and queued
+gated-activation successor; make no provider lifecycle mutation.
+
+## 2026-07-29T15:50Z — preserve the urgent no-replay admission
+
+Commit-time reconciliation found PID `102131` live at the same start ticks,
+the exact claim heartbeating, and repair generation `endpoint_only-2` still
+ready with no request delivered. Binding `ef4002b2…` retains sufficient
+worker-start runway to guard the invalid attempt before the owner can retry.
+
+Make no competing portfolio or lifecycle mutation. Return immediately so the
+execution researcher can install the no-replay guard and continue the bounded
+same-claim attribution repair.
+
+## 2026-07-29T15:51Z — rebind only the no-replay fence
+
+The original `15:52Z` guard fence became sub-runway while PID `102131` remained
+inside the repair wait with no request delivered. Rebind `ae52eefc…` moves
+only that guard to `15:53Z`, still before the wait can fall through into an
+unsafe attempt 1.
+
+Keep the source repair contract, claim generation, loaded server, release,
+drain, watchdog, and successor queue unchanged. Return immediately for the
+execution repair; make no provider lifecycle mutation.
+
+## 2026-07-29T16:01Z — close incompatible streaming geometry and hand off warm H200
+
+Repair artifact `d5b13382…` proves the admitted KV4/head-dim512 streamed
+consumer cannot preserve semantics for the exact KV16/head-dim256 Gemma
+runtime. Attempt 0 remains invalid attribution evidence; the fail-closed guest
+guard prevented attempt 1, and owner PID `102131` exited without replay.
+
+Remove only container `b5b65d7d…`, verify zero GPU memory and compute
+processes, release claim generation `2026-07-29T14:02:13.215196Z`, and reopen
+the same H200 with its resident image, checkpoint, and caches. Binding
+`d16a8791…` activates the durably reserved norm-FP8 successor for exactly one
+M=1/16/32 component ledger: claim by `16:05Z`, complete by `16:30Z`, and
+release generation-fenced by `16:35Z` under watchdog r6 through `16:40Z`.
+
+## 2026-07-29T16:03Z — preserve norm-FP8 with a safe launch runway
+
+The exact bench remains available, zero-GPU, and reserved solely for the
+norm-FP8 component, but the original claim fence became sub-runway before a
+worker could be scheduled. Rebind only the lifecycle envelope as
+`d8ee5c2d…`: claim by `16:08Z`, use at most 22 minutes, complete by `16:30Z`,
+and release by `16:35Z` under the unchanged watchdog at `16:40Z`. The
+M=1/16/32 scientific invocation, hashes, repetition count, and gates are
+unchanged; return immediately for execution.
+
+## 2026-07-29T16:12Z — close norm-FP8 and reserve gated activation
+
+Norm-FP8 produced a complete three-row ledger and a 14.9% positive M=32
+component delta, but failed its preregistered numerical gate at M=16 and M=32
+(`0.00225–0.00232` consumer relative-L2 versus `0.002`). Close only that exact
+candidate without endpoint promotion or replay.
+
+Select the source-complete gated-activation FP8 component as the compatible
+warm successor. Binding `afd99a36…` corrects the stale reservation assertion:
+request its exact `$2.00` reservation while keeping it non-claimable. Preserve
+the available zero-GPU H200, resident image/checkpoint/caches, and watchdog
+through `16:40Z`; publish execution authority only after the reservation is
+durable and the remaining terminal/release window is revalidated.
+
+## 2026-07-29T16:15Z — execute the reserved gated-activation component
+
+The exact `$2.00` reservation is durable, the H200 remains available with zero
+GPU use, and the source-complete runner is bound to the same resident stack.
+The closest predecessor completed claim-to-release in 5m43s, so binding
+`8a5bd494…` authorizes exactly one M=1/16/32 gated-activation component ledger:
+claim by `16:20Z`, complete by `16:32Z`, and release generation-fenced by
+`16:35Z` under watchdog r6 through `16:40Z`.
+
+Keep norm-FP8 closed as an exact numerical negative. Do not run endpoint
+science, mutate inputs, or change provider lifecycle; return immediately for
+execution.
+
+## 2026-07-29T16:17Z — preserve the timely gated-activation claim
+
+The gated-activation researcher claimed the exact warm H200 at
+`16:16:39.695252Z`, inside binding `8a5bd494…` and its `16:20Z` start fence.
+The lease is current, the project and bench identities match, and no competing
+claim or terminal exists.
+
+Preserve this exclusive claim through the one bound M=1/16/32 ledger and its
+generation-fenced release by `16:35Z`. Make no portfolio, scientific, or
+provider-lifecycle mutation while the execution researcher is in flight.
+
+## 2026-07-29T16:25Z — rebind the pre-science manifest seam
+
+Both gated-activation attempts stopped before CUDA or any scientific row. The
+remaining defect is exact and non-scientific: the source manifest identifies
+the sole tensor as `only_tensor`, while the runner consumes the same identity
+as `tensor_key`.
+
+Compatibility manifest `b179e255…` adds only that exact alias; component,
+runner, kernel, oracle, consumer, shapes, rows, and repetitions remain frozen.
+Binding `d4b76ab4…` reopens the verified zero-GPU H200 for one fresh-output
+M=1/16/32 invocation: claim by `16:28Z`, complete by `16:33Z`, and release by
+`16:35Z` under the unchanged `16:40Z` watchdog. The prior attempts remain
+integration evidence, not scientific samples.
+
+## 2026-07-29T16:27Z — preserve the corrected gated-activation claim
+
+The execution researcher claimed the exact H200 at `16:26:10.643806Z`, inside
+repair binding `d4b76ab4…` and its `16:28Z` fence. The binding hash, project,
+bench, lease, and watchdog agree; no corrected-output terminal or competing
+claim exists.
+
+Preserve this exclusive claim through the one bound fresh-output M=1/16/32
+invocation and generation-fenced release by `16:35Z`. Make no portfolio,
+scientific, or provider-lifecycle mutation while the corrected run is in
+flight.
+
+## 2026-07-29T16:35Z — close current fusion and retain for exact-rounding revision
+
+The corrected ledger proves the current fused bytes are fast but unsafe:
+M=32 component time falls `29.0%`, while consumer relative-L2 is `0.002766`
+against the fixed `0.002` gate (M=16 also fails). Close this implementation
+without replay or endpoint promotion.
+
+Binding `2199c142…` activates one deep, GPU-fenced same-project source
+revision to localize the row-count divergence and preserve the stock BF16
+activation rounding boundary before FP8 quantization. Keep the released,
+zero-GPU H200 warm and unclaimable under replacement watchdog r7 through
+`17:00Z`; source readiness is due by `16:45Z`, after which only a later
+director may authorize a fresh component run if release margin remains.
+
+## 2026-07-29T16:49Z — execute exact-rounding revision and restore independent runway
+
+Source-ready artifact `21c79427…` localizes the first divergence to GELU cubic
+association and binds a revised producer with stock BF16 materialization.
+Rebind `4d0517f0…` opens the warm H200 for one fresh M=1/16/32 ledger: claim
+by `16:52Z`, complete by `16:57Z`, and release by `16:58Z` under r7 at
+`17:00Z`. The closed candidate is not replayed and its timing does not transfer.
+
+Restore an independent zero-GPU deep lane,
+`gemma4_lossless_output_head_branch_bound`, to test exact pruning of the
+262,144-way output head while the component executes. It cannot claim or
+mutate the warm bench.
+
+## 2026-07-29T16:51Z — preserve the timely exact-rounding claim
+
+The exact project claimed the named H200 at `16:50:26.560836Z`, inside rebind
+`4d0517f0…`; its lease and r7 watchdog are current. No terminal, repair
+handshake, or conflicting claimant exists. Preserve the claim through the
+single fresh M=1/16/32 ledger and generation-fenced release by `16:58Z`.
+
+Keep the lossless output-head project active and GPU-fenced in parallel. Make
+no scientific, portfolio, claim, or provider-lifecycle mutation while the
+execution researcher starts.
+
+## 2026-07-29T16:59Z — close exact rounding and reserve the QKV epilogue boundary
+
+The recovered exact-rounding run completed all M=1/16/32 rows and CUDA-graph
+proof before releasing generation-fenced at `16:55:16Z`. It is a typed
+numerical negative: M=32 is `28.18%` faster, but consumer relative-L2 remains
+`0.0027664` and M=16 also fails the fixed `0.002` gate. Close this lineage
+without replay or endpoint promotion; terminal `3ff1f93e…` supersedes the
+undelivered owner-loss repair binding.
+
+Select `gemma4_h200_qkv_norm_rope_fp8_epilogue` as the materially independent
+direct successor and request its exact `$3.00` reservation while keeping it
+non-claimable. Retain the released zero-GPU H200, pinned stack, and caches
+under watchdog r8 through `17:08Z`; only a later director may bind execution
+after durable reservation and lifecycle revalidation. Keep the lossless
+output-head branch-and-bound project active as the independent deep lane.
+
+## 2026-07-29T17:03Z — open the reserved QKV epilogue discovery claim
+
+The exact `$3.00` reservation is durable and the retained H200 remains
+available and quiescent. Replace watchdog r8 with verified r9 through
+`18:00Z`; conservative exposure from reservation through cleanup is `$2.53`,
+inside the project ceiling.
+
+Binding `e39d0775…` opens one deep mutable claim for the exact decode-c32 QKV
+projection through Q/K normalization, RoPE, layout, and first attention
+consumer. Claim by `17:09Z`, implement and measure one source-justified
+producer-to-consumer decomposition by `17:52Z`, and release generation-fenced
+by `17:55Z`. Keep the output-head branch-and-bound lane active and GPU-fenced;
+no endpoint traffic or provider lifecycle mutation is delegated.
+
+## 2026-07-29T17:06Z — preserve QKV claim and strengthen exact head indexing
+
+The QKV project claimed the exact H200 at `17:05:16Z`, inside binding
+`e39d0775…`; preserve its scientific contract, claim, and r9 lifecycle.
+
+The independent fixed-coordinate residual-Cauchy lane completed losslessly but
+falsified its physical value: only `3.7458%` of 32-row union weight bytes were
+avoidable, and an oracle incumbent reached just `4.4325%`. Close only that
+bound. Activate `gemma4_lossless_output_head_cluster_mips` as a zero-GPU deep
+successor: test conservative full-vector hierarchical cluster bounds against
+the same real capture, the actual stock sampler set, and physical union traffic.
+It cannot claim or mutate the warm H200.
+
+## 2026-07-29T17:07Z — hold the two independent deep lanes
+
+The QKV project retains the exact claim generation from `17:05:16Z`, with a
+current heartbeat and watchdog r9 active through `18:00Z`. Preserve its
+mutable exact-consumer implementation and measurement contract unchanged.
+
+Keep `gemma4_lossless_output_head_cluster_mips` active and GPU-fenced in
+parallel. No new allocation, lifecycle mutation, scientific rewrite, or
+additional project is warranted before either lane produces decision-bearing
+evidence.
+
+## 2026-07-29T17:29Z — promote QKV to endpoint integration and replace the exact-head bound
+
+The released QKV component is a correct positive: direct Q plus direct E5M2
+K/V rows cut the exact local/global decode-c32 boundary by `26.7%`/`18.6%`,
+with a non-transferable `0.0568951 s/request` analytical bound. Do not close
+it at component scope. Binding `e5dda239…` reopens the same project for the
+smallest source-identity-checked runtime adapter and durable endpoint owner,
+offline and non-claimable through `17:40Z`; only a later director may authorize
+one exact c32 endpoint. Replace r9 with verified r10 through `18:10Z`;
+conservative cumulative project exposure is `$2.94/$3.00`. If readiness cannot
+leave load, terminal, and release margin, drain before r10.
+
+The cluster/radius head index is also closed: it avoided zero physical union
+weight bytes, and its oracle regressed net traffic. Activate the independent
+zero-GPU deep `gemma4_lossless_output_head_lowrank_residual_index` lane for one
+query-asymmetric low-rank residual certificate against the same exact weights,
+32 rows, stock sampler, and net physical traffic; stop before implementation
+if the oracle cannot avoid 10% gross union bytes.
+
+## 2026-07-29T17:30Z — preserve both offline contracts
+
+Commit-time reconciliation found no QKV `ENDPOINT_READY.json` yet, still
+inside its `17:40Z` source deadline. The H200 remains available, quiescent, and
+protected by r10 through `18:10Z`; QKV remains explicitly non-claimable.
+Preserve that exact integration contract and the independent low-rank
+residual-index lane unchanged. Make no claim, scientific, or provider
+lifecycle mutation before either project produces decision-bearing evidence.
+
+## 2026-07-29T17:42Z — reject incomplete endpoint materialization and retire r10
+
+`ENDPOINT_READY.json` arrived on time and its published hashes match, but it
+does not contain the project-local worker packet that `endpoint_owner.py`
+requires before claim; the fixed execution binding path is consequently
+absent. With the `$3` lifecycle already conservatively committed through r10,
+do not authorize a claim or endpoint submission.
+
+Drain the quiescent H200. Nebius completed instance deletion at `17:40:52Z`;
+the managed disk was already absent, a single grouped provider census returned
+no instances or disks, watchdog r10 is inactive, and the bench is retired.
+Endpoint science remains unconsumed.
+
+Keep the exact-consumer positive in the same project. Binding
+`DIRECTOR_QKV_NORM_ROPE_ENDPOINT_PACKET_REENTRY_20260729T1742Z.json` requires
+one deep, zero-GPU materialization of the missing hash-bound worker packet and
+all inputs. Request a cumulative `$10` reservation for a later cold lifecycle;
+no provider create is allowed until both source readiness and that exact
+reservation are durable. The independent low-rank output-head lane remains
+unchanged.
+
+## 2026-07-29T17:48Z — preserve QKV offline and reserve a B200 transfer discriminator
+
+The QKV cumulative `$10` reservation is durable, but its missing worker packet
+still blocks a safe cold endpoint claim. Its remaining `$7.06` authority is
+only 2.88 H200-hours, below the measured cold-path risk, so do not provision or
+weaken the packet gate.
+
+Restore the direct-GPU floor with
+`gemma4_b200_qkv_norm_rope_component_placement`, a materially distinct
+hardware-transfer question. Freeze the accepted H200 runner and raw comparator
+bytes, and request `$5` for one checkpoint-free B200 local/global decode-c32
+ledger. The current authenticated selector reports high preemptible B200
+availability in `me-west1` at `$3.95/hour`; no provider mutation is authorized
+until that exact reservation is durable. The B200 result must preserve the
+unchanged decode-attention consumer and report actual-rate-normalized component
+cost; it cannot promote an endpoint by itself.
+
+## 2026-07-29T17:54Z — create and protect the reserved B200
+
+The exact `$5.00` reservation is durable and the region-agnostic selector again
+chose high-availability preemptible B200 capacity in `me-west1` at
+`$3.95/hour`. Create instance `computeinstance-i00gfqs16jywacph24` with disk
+`computedisk-i00fqdnhb926r3yj3a`, register it immediately as maintenance, and
+protect it with a controller watchdog through `19:02:59Z`. The conservative
+70-minute compute exposure is `$4.6083`, inside the project ceiling.
+
+The single non-polling bootstrap probe found no SSH transport yet. Keep the
+bench non-claimable and preserve the frozen runner; a later director must
+verify strict SSH/cloud-init and exact single-B200 identity before publishing
+execution authority. No Docker, CUDA, endpoint, or scientific work was run,
+and the H200 endpoint-packet lane remains unchanged.
+
+## 2026-07-29T18:01Z — open the verified B200 component claim
+
+The fresh provider check binds the registered instance and public IP, watchdog
+is active, strict SSH fingerprint is persisted, and the quiescent guest
+reports one `NVIDIA B200` with 183,359 MiB. Mark the bench available.
+
+Binding `38fae679…` authorizes one mutable, checkpoint-free execution of the
+frozen local/global decode-c32 exact-consumer runner. Claim by `18:12Z`,
+publish the actual-rate-normalized terminal by `18:53Z`, and release
+generation-fenced by `18:57Z` under the unchanged `19:02:59Z` watchdog.
+H200 endpoint-packet work remains independent and GPU-fenced.
+
+## 2026-07-29T18:03Z — preserve the runnable B200 lane
+
+Binding `38fae679…` remains current and the exact verified B200 is available,
+unclaimed, and protected through `19:02:59Z`. Its `18:12Z` claim fence still
+has a full harness-start runway, so preserve the component contract unchanged
+for immediate execution. Keep the independent H200 endpoint-packet
+materialization active and GPU-fenced; make no provider or portfolio mutation.
+
+## 2026-07-29T18:08Z — preserve the timely B200 claim
+
+The B200 project claimed the exact bench at `18:06:30.154094Z`, inside binding
+`38fae679…`; its heartbeat is current and its lease now reaches the
+`19:02:59Z` watchdog. Preserve the one frozen local/global decode-c32 component
+ledger through its typed terminal and generation-fenced release by `18:57Z`.
+Keep the independent H200 endpoint-packet materialization active and
+GPU-fenced; make no scientific, claim, portfolio, or provider-lifecycle
+mutation while the execution researcher runs.
+
+## 2026-07-29T18:09Z — preserve the durable B200 owner
+
+Controller owner PID `206050` is live under claim generation
+`18:06:30.154094Z`; binding validation, atomic claim, and strict SSH identity
+are durably recorded, science remains unsubmitted, and the claim heartbeat
+advanced to `18:08:45Z`. Preserve the owner through the frozen local/global
+component ledger and bound release. Keep the H200 endpoint-packet lane active
+and GPU-fenced; no repair, claim, portfolio, or provider mutation is warranted.
+
+## 2026-07-29T18:10Z — retain through cold B200 bootstrap
+
+The same controller owner and claim remain live with a current heartbeat and
+no heartbeat error, repair request, terminal, or scientific submission. Its
+durable phase remains strict SSH verification inside the bounded cold
+image/bootstrap interval. Preserve binding `38fae679…` and the claim unchanged;
+keep the independent H200 packet lane active and GPU-fenced, with no provider
+or portfolio mutation.
+
+## 2026-07-29T18:12Z — preserve active B200 staging
+
+Claim generation `18:06:30.154094Z` remains live and heartbeating through the
+watchdog. The durable controller is actively executing its bound `scp` staging
+child; no repair-ready record, terminal, or scientific submission exists.
+Preserve the owner and binding `38fae679…` unchanged through component
+execution and release. Keep the H200 endpoint-packet lane active and
+GPU-fenced; make no provider, claim, or portfolio mutation.
+
+## 2026-07-29T18:15Z — clear the satisfied H200 reservation gate
+
+The H200 endpoint-packet project has a durable cumulative `$10.00` reservation,
+but live scheduler state still had `reservation_required: true`, preventing
+its zero-GPU deep researcher from starting. Clear only that satisfied flag.
+Keep the project active, `claim_allowed: false`, and bound to offline packet
+materialization; no H200 create or endpoint execution is authorized. Preserve
+the independently owned B200 staging claim unchanged.
+
+## 2026-07-29T18:21Z — repair the unconsumed B200 output path
+
+The B200 owner reached the pinned image and frozen runner but failed before
+`SCIENTIFIC_STARTED`: the Docker bind mount precreated `/output`, violating
+the runner's fresh-directory contract. Deliver repair `0bd04a21…`; the old
+owner released generation-fenced, and strict SSH then verified the exact B200
+at zero memory/utilization with no process or container. Mark the warm bench
+available for one owner-only parent/child output-path correction and the
+unchanged, still-unconsumed ledger by `18:57Z`. Keep the unblocked H200 packet
+lane active, offline, and GPU-fenced.
+
+## 2026-07-29T18:22Z — preserve the runnable B200 repair
+
+Binding `0bd04a21…` remains current, the exact B200 is available and
+quiescent, and no scientific submission has been consumed. Its `18:26Z`
+claim fence still covers the measured owner-edit duration plus harness startup,
+so preserve the owner-only output-path repair and unchanged component ledger
+for immediate execution. Keep the independent H200 packet lane active,
+offline, and GPU-fenced; make no provider or scientific mutation.
+
+## 2026-07-29T18:25Z — preserve the timely B200 repair owner
+
+The replacement owner claimed the exact B200 at `18:23:46Z`, inside binding
+`0bd04a21…`; PID `219824` is live, the claim is heartbeating without error,
+and durable progress reached the corrected pre-science container invocation.
+Preserve the unchanged local/global ledger through its typed terminal and
+generation-fenced release by `18:57Z`. Keep the independent H200 packet lane
+active, offline, and GPU-fenced; make no repair, provider, or scientific
+mutation while the owner runs.
+
+## 2026-07-29T18:29Z — close B200 placement and drain the bench
+
+The complete exact-consumer ledger is a placement negative: B200 was only
+`1.8%`/`4.5%` faster locally/globally but cost `1.583×`/`1.540×` as much at
+actual experiment rates. No checkpoint-free B200 follow-up can change the
+endpoint decision, and the remaining watchdog window cannot safely cold-stage
+the exact model for a new scope. Delete instance
+`computeinstance-i00gfqs16jywacph24`; its managed disk was deleted with it, a
+grouped census is empty, the watchdog is inactive, and the bench is retired.
+Full provider exposure was `$2.394973`. Keep the H200 packet lane active; a
+new paid direct lane is blocked until that executable packet is durable because
+the remaining H200 authority is below the previously measured cold-path risk.
+
+## 2026-07-29T18:35Z — add a held-out lossless output-head discriminator
+
+The H200 QKV endpoint remains the direct objective, but its required
+`ENDPOINT_EXECUTION_PACKET_READY.json` is still absent; do not provision a cold
+H200 or weaken that source gate. Add
+`gemma4_lossless_output_head_lowrank_residual_disjoint_query` as an independent
+zero-GPU deep lane. Freeze the predecessor's rank-32 index and use 32 rows
+disjoint from its fit/evaluation set within the existing 1,536-row exact
+capture. Promote only if the full stock candidate set is preserved and fully
+charged net physical traffic remains positive. The B200 placement negative
+stays closed and no provider lifecycle action is warranted.
+
+## 2026-07-29T18:48Z — replace failed lossless bounds with a PQ-MIPS proxy
+
+The held-out frozen rank-32 index preserved exact stock semantics but retained
+262,143 of 262,144 rows and increased fully charged traffic by 13.53%. Close
+that transfer representation. Add
+`gemma4_output_head_pq_mips_recovery_proxy` as an independent zero-GPU deep
+lane: freeze one compact product-quantized full-vocabulary index, test
+predeclared 256/1,024/4,096 exact-rescore shortlists on two disjoint c32
+batches, and charge every compressed-scan and survivor byte. This is a
+quality-recovery proxy, not a production claim. The QKV endpoint packet remains
+absent and its `$7.06` remaining project authority is below the measured cold
+H200 path, so keep it offline and make no provider mutation.
+
+## 2026-07-29T18:54Z — create and protect the source-complete H200
+
+Commit-time reconciliation found
+`ENDPOINT_EXECUTION_PACKET_READY.json` durably published at `18:46Z`. Its
+105-minute cold lifecycle is `$4.2875` incremental and `$7.2275` cumulative at
+the selected `$2.45/hour`, inside the exact `$10` reservation. The fresh
+region-agnostic selector chose high-availability preemptible H200 capacity in
+`eu-north1`. Create instance `computeinstance-e00qxw871hz1r79fjt` with disk
+`computedisk-e00pb91rav4c5ksdbx`, register it immediately in maintenance, and
+protect it through `20:37:40Z` with the controller watchdog. No SSH, Docker,
+CUDA, claim, or endpoint science ran. A later director must verify strict
+connection and exact single-H200 identity before publishing execution
+authority. Preserve the independent PQ-MIPS proxy unchanged.
+
+## 2026-07-29T19:01Z — open the verified H200 endpoint claim
+
+The named provider instance and managed disk remain RUNNING/READY. Strict SSH
+persisted fingerprint `3hDhNCJK…`;
+cloud-init is complete and the quiescent guest reports exactly one NVIDIA H200
+(`GPU-81ca…`, 143,771 MiB) with zero memory, utilization, compute processes,
+or containers. Mark the bench available. The first final clock check left only
+118 seconds of launch runway, so replace the cleanup watchdog with verified r2
+through `20:52:40Z`; full exposure remains `$7.84` inside the `$10` ceiling.
+Binding `113e53a3…` authorizes one source-complete QKV-direct c32 endpoint
+submission: claim by `19:08:00Z` and release generation-fenced by `20:49:40Z`.
+Preserve the independent PQ-MIPS proxy unchanged.
+
+## 2026-07-29T19:07Z — preserve the timely H200 endpoint owner
+
+The first shell invocation treated the bound owner command as one quoted
+executable and failed before claim or science. The corrected tokenized launch
+then started durable controller owner PID `246419` and claimed the exact H200
+at `19:05:23.880021Z`, inside binding `113e53a3…`. The claim heartbeat is
+current, worker attempt 1 is reconciling the frozen packet and checkpoint, and
+endpoint submission count remains zero. Preserve this owner through its typed
+terminal, repair dispatcher, and generation-fenced release; keep the
+independent PQ-MIPS proxy active and make no provider or scientific mutation.
+
+## 2026-07-29T19:08Z — retain the staging endpoint execution
+
+One grouped snapshot confirms owner PID `246419` live, claim generation
+`19:05:23.880021Z` fresh, and successful heartbeats through `19:06:54Z`.
+The worker remains in expected resumable first-shard staging with no terminal,
+repair-ready record, or endpoint submission. Preserve the owner and the
+independent PQ-MIPS lane unchanged; make no provider or portfolio mutation.
+
+## 2026-07-29T19:47Z — stop unreconstructable endpoint retrieval repair
+
+The one authorized QKV endpoint submission is preserved in immutable archive
+`419ef4a0…`, but both that archive and the retained remote root lack the
+required dynamic `PATH_PROOF.jsonl`. Its measured `0.6923181802812479
+s/request` is slower than the fixed qualified denominator, yet the missing
+path observation makes the sample objective-ineligible rather than a valid
+endpoint negative. Do not dispatch an eighth retrieval repair or replay
+science. Preserve owner PID `246419` through its already-bound `19:56:47Z`
+deadline disposition and generation-fenced release to maintenance. Keep the
+independent PQ-MIPS lane active; select warm-H200 reuse or drain only after the
+release is durable.
+
+## 2026-07-29T19:50Z — rebind the unconsumed PQ-MIPS discriminator
+
+The PQ proxy expired before index construction because its provenance helper
+walked inherited tensor storage byte-by-byte; no held-out sample was consumed.
+The corrected runner hashes the exact contiguous row in `0.0001628` seconds
+with the reference digest. Binding `47b9b194…` reactivates the unchanged
+single-shot CPU experiment through `21:05Z`, preserving all geometry, rows,
+shortlists, and traffic gates. Keep the claimed H200 owner untouched through
+its `19:56:47Z` maintenance disposition; no provider action or endpoint replay
+is authorized.
+
+## 2026-07-29T19:51Z — preserve the two bounded lanes
+
+Owner PID `246419` remains live under claim generation `19:05:23.880021Z`,
+heartbeating without an endpoint-7 request toward its `19:56:47Z` maintenance
+disposition. The independent corrected PQ-MIPS binding `47b9b194…` is active
+through `21:05Z` with no GPU authority. Preserve both unchanged. Make no
+provider, repair, scientific, or portfolio mutation before either durable
+state changes.
+
+## 2026-07-29T20:00Z — retain the released H200 for the conditional PQ successor
+
+The QKV owner released generation-fenced to maintenance at `19:56:48Z`.
+Preserve its reconciled 62.6-GB checkpoint and staged image while the frozen
+PQ-MIPS discriminator runs through `21:05Z`: a positive proxy has a
+scope-matched H200 exact-consumer successor, and the warm hold is cheaper and
+faster than another cold lifecycle. Replace watchdog r2 with verified r3
+through `21:40Z`; the added maximum exposure is `$1.932298` and conservative
+cumulative QKV exposure is `$9.772298`, inside its exact `$10` authority.
+Keep the bench in maintenance and non-claimable. A later director must bind a
+separately reserved exact consumer after a PQ promotion, or drain and clean
+the instance and disk on close/block/no justified terminal. Never replay the
+consumed QKV endpoint arm.
+
+## 2026-07-29T20:06Z — pause the director-only QKV dependency lane
+
+The retained H200 remains safe, unclaimed, and non-claimable under active
+watchdog r3 through `21:40Z`, but leaving the QKV project `active` caused a
+54.9-second researcher wake that could only rediscover the pending PQ
+dependency. Pause QKV in scheduler state while preserving its exact `$10`
+reservation; the harness explicitly holds reservations for `paused` projects
+and live GPU exposure. Keep the corrected CPU-only PQ binding `47b9b194…`
+active through `21:05Z`. The missing direct-GPU lane is concretely gated on
+that frozen discriminator and a separate exact-consumer reservation; do not
+claim the maintenance H200 or replay QKV before a typed PQ terminal.
+
+## 2026-07-29T21:02Z — move the unconsumed PQ producer to H200
+
+The corrected frozen PQ proxy exhausted a second CPU envelope after 3,900
+seconds in the weight-only producer, still before index persistence or
+held-out scoring. This is not PQ evidence, but another serial CPU retry has
+poor information per hour. Reactivate the same project under binding
+`d2ebe06c…`, request a separate cumulative `$6` reservation, and preserve all
+geometry, rows, shortlists, exact-rescore semantics, and traffic gates while
+moving only the producer implementation to a deterministic vectorized H200
+path. Keep the retained H200 in maintenance until that reservation is durable
+and its watchdog is extended; no claim is open now.
+
+Restore independent runway with
+`gemma4_h200_decode_taskgraph_hotblock`, a `$0` deep lane that must implement
+or falsify one production-shaped cross-operator decode block within 45
+minutes. It cannot claim the shared bench. The QKV endpoint remains closed
+and paused without replay.
+
+## 2026-07-29T21:08Z — transfer the warm-H200 fence to the reserved PQ rescue
+
+The PQ project's exact `$6` reservation became durable at `21:04:41Z`, so the
+supervisor's earlier no-compatible-consumer drain premise is superseded.
+One fresh provider census matches the sole bench exactly: instance
+`computeinstance-e00qxw871hz1r79fjt` is RUNNING and disk
+`computedisk-e00pb91rav4c5ksdbx` is READY. Replace watchdog r3 with verified
+r4 through `23:55Z`; the `$5.5125` maximum post-`21:40Z` exposure fits the
+reservation. Keep the H200 in maintenance and non-claimable while the deep PQ
+lane materializes a hash-bound vectorized producer and durable owner packet
+within 45 minutes. Open no claim until `PQ_MIPS_H200_PRODUCER_READY.json`
+passes; preserve the independent task-graph discriminator unchanged.
+
+## 2026-07-29T21:10Z — preserve the two independent source lanes
+
+Neither `PQ_MIPS_H200_PRODUCER_READY.json` nor
+`TASKGRAPH_HOTBLOCK_DISCRIMINATOR.json` is durable yet. Watchdog r4 remains
+active through `23:55Z`, and the reserved H200 remains unclaimed in
+maintenance. Preserve both deep lanes unchanged. The direct-GPU floor is
+temporarily and concretely blocked only on the PQ producer/owner packet; once
+that packet is durable, the next director must recheck remaining lifecycle
+runway and either open the exact reserved claim or drain by the fence. Do not
+claim early, add another preparation lane, or replay the closed QKV arm.
+
+## 2026-07-29T21:22Z — redirect task-graph work to one exact host wait
+
+The dual-RMSNorm/residual seam is a scoped negative: even impossible deletion
+is bounded to `0.003621642 s/request`, only `0.579325%` of the fixed qualified
+denominator. Do not spend H200 time on it. Reactivate the same task-graph
+project under binding `8d978920…` to localize one source-exact host
+synchronization producer/consumer edge, establish a non-overlapping wait bound,
+and implement or falsify a device-ordered replacement within 45 CPU-only
+minutes. Keep the separately reserved PQ source-packet lane and its
+maintenance H200 unchanged.
+
+## 2026-07-29T21:31Z — open the verified PQ H200 claim
+
+`PQ_MIPS_H200_PRODUCER_READY.json` is durable at `d8ee6fcd…`; every declared
+packet member, manifest, archive, owner, worker, and 2.82-GB tied-weight
+snapshot matches its bound hash. The exact `$6` reservation remains durable,
+watchdog r4 is active through `23:55Z`, and the named H200 is unclaimed and
+identity-matched. Mark the bench available and publish authority `448f21be…`
+for one owner claim by `21:38Z`, with a `23:48Z` terminal/maintenance deadline.
+Run the frozen vectorized producer and two-batch, three-shortlist exact
+consumer under one repair-capable durable owner. Preserve the independent
+host-sync task-graph lane unchanged.
+
+## 2026-07-29T21:32Z — preserve the open PQ launch binding
+
+Commit-time reconciliation finds the named H200 still available and unclaimed,
+with watchdog r4 unchanged through `23:55Z`. Authority `448f21be…` retains
+more than five minutes of launch runway before `21:38Z`; the project has no
+active owner yet. Preserve the exact binding without mutation and return
+immediately for harness dispatch. Do not start a second owner, alter frozen
+science, or perform provider lifecycle work.
+
+## 2026-07-29T21:34Z — preserve the timely PQ H200 owner
+
+Controller PID `317709` matches its recorded start ticks and claimed the exact
+H200 at `21:32:36Z` under authority `448f21be…`. The claim heartbeat is fresh,
+and owner-local artifacts show packet finalization, extraction, tied-weight
+reconciliation, and continuing immutable staging rather than heartbeat-only
+idling. Preserve this single owner through its bounded repair-capable
+producer/consumer execution and generation-fenced release by `23:48Z`. Make no
+provider, scientific, or portfolio mutation.
+
+## 2026-07-29T21:38Z — bind no-replay adoption of the PQ output tree
+
+Attempt 0 reached the privileged worker but every producer, science, and
+terminal marker is unreadable to `glmrunner`; consumption is unknown, not
+false. Owner PID `317709` is live, heartbeating on the original claim, and its
+repair loop can consume repair ID `pq-mips-0-1785360890972006687`. Binding
+`69080d2a…` delegates one narrow worker patch: normalize the existing output
+tree inside the container, adopt complete persisted stages, and fail closed
+without held-out replay if science already started. Keep the claim and owner;
+do not dispatch until the patch is hash-complete, and do not perform provider
+lifecycle work.
+
+## 2026-07-29T21:45Z — close fixed PQ and redirect the warm H200
+
+The owner recovered and released a complete terminal before any repair request.
+Fixed Cartesian PQ-MIPS is negative: shortlist 4096 still missed 168 stock
+candidates across 64 rows, exact greedy agreement failed, and its `0.477915 s`
+code scan was far slower than the `0.003961 s` dense reference. Close it
+without replay. Reactivate the task-graph project at the materially different
+dynamic-FP8 quantization-to-GEMM prologue boundary and request an exact `$6`
+reservation under binding `6dc1ed8b…`; keep the warm H200 available but
+scheduler-gated until reservation and a runnable owner are durable. In
+parallel, add a `$0` deep exact-target parallel-draft compatibility lane. The
+prior dual-RMSNorm and result-copy host-wait edges remain closed.
+
+## 2026-07-29T21:48Z — open the reserved dynamic-FP8 prologue path
+
+The task-graph project's exact `$6` reservation is durable. The retained H200
+is available and identity-matched, and watchdog r4 is active through
+`23:55Z`. Binding `82da8037…` opens one conditional deep mutable path: hash
+the owner and exact M=32,K=5376 real-weight producer/consumer runner locally,
+then claim by `22:25Z` and continue under that owner through the first H200
+correctness call and bracketed component A/B. Release or enter maintenance by
+`23:48Z`. Preserve the independent exact-target draft compatibility lane.
+
+## 2026-07-29T22:10Z — preserve the advancing same-claim FP8 repair
+
+Commit-time reconciliation superseded two unexecuted provisional side
+bindings before either request was dispatched. The live owner advanced through
+the stock API and weight-layout defects, and attempt 6 durably consumed the
+first stock correctness smoke (`297.00628662109375`) before the candidate hit
+a localized Triton constexpr compile error. The in-flight researcher has
+already hash-completed runner `e11fb642…`, which adopts that stock marker
+without replay, passes `448.0` as a constexpr, and retains the real-weight
+candidate plus a high-precision oracle. Preserve PID `338568`, the original
+claim generation, and repair generation `r6`; make no replacement-owner,
+provider, portfolio, or independent-draft-lane mutation.
+
+## 2026-07-29T22:15Z — close the FP8 prologue and stage exact DFlash
+
+The retained owner completed and released before repair dispatch. The
+dynamic-FP8 prologue is a correctness negative: cosine passed, but real-weight
+relative L2 was `0.0374193` against the fixed `0.02` gate, so timing was
+correctly not consumed. Close this exact seam without replay.
+
+The independent source lane promotes the materially different exact-target
+DFlash component: all greedy block-16 acceptance and KV-boundary tests pass,
+but no revision load or accelerator economics have been measured. Admit
+`gemma4_dflash_exact_target_h200_component` under source gate `e26504a7…`,
+request an exact cumulative `$6` reservation, and prepare a hash-bound durable
+owner packet by `22:55Z`, adopting the fixture-proved request-pool ownership
+repair without replaying consumed request 25. Keep the compatible warm H200 available but
+scheduler-gated through its existing `23:55Z` fence; no DFlash claim or
+lifecycle extension is authorized before both reservation and readiness are
+durable.
+
+## 2026-07-29T22:20Z — clear the durable DFlash reservation gate
+
+The exact DFlash `$6` reservation became durable at `22:19:47Z`; clear
+`reservation_required` so the deep source/owner turn can run. The warm H200 is
+healthy, available, and protected through `23:55Z`, but
+`DFLASH_H200_COMPONENT_READY.json` is still absent, so keep `claim_allowed`
+false and do not open a launch clock. Preserve DFlash as the selected warm
+successor: the source-complete fixed-floor cross-operator fallback has no
+reservation and only a `0.700946%` conservative request reduction, so it does
+not displace this higher-upside exact-target discriminator.
+Return immediately for harness dispatch of the formerly deferred source turn;
+broader independent-lane admission follows the next material wake rather than
+spending the finite warm window on another scouting pass.
+
+## 2026-07-29T22:24Z — extend the protected DFlash warm window
+
+The DFlash source/owner turn remains queued and no readiness artifact or claim
+exists. Replace watchdog r4 with verified r5 through `00:35Z`, then stop r4
+only after the inventory points to r5. Conservative DFlash-attributed exposure
+from the warm handoff through that fence is `$5.581925`, inside its exact `$6`
+authority. Keep the bench available but non-claimable; the later director must
+verify the source packet and remaining runway before opening one owner, with
+release by `00:27Z`.
+
+## 2026-07-29T22:27Z — retract the FP8 close and preserve reserved DFlash
+
+Retract only the `22:15Z` scientific close of the dynamic-FP8 prologue. Binding
+`7c8339d4…` required replacing PID `338568`, but no acknowledged revocation
+fence or exact-PID handoff made that replacement effective before predecessor
+attempts 6–8 produced terminal `0bf4e812…`. Retain those numerical rows as
+provisional implementation evidence; they cannot close the intervention or
+support endpoint projection. Do not replay or open a new FP8 claim.
+
+This lineage correction does not change the independently selected DFlash
+discriminator. Its exact `$6` reservation remains durable,
+`DFLASH_H200_COMPONENT_READY.json` remains absent, and the H200 remains
+available but non-claimable under watchdog r5 through `00:35Z`. Correct the
+shared bench description accordingly and return for the queued DFlash source
+turn.
+
+## 2026-07-29T22:49Z — launch the reserved exact DFlash component
+
+`DFLASH_H200_COMPONENT_READY.json` is durable at `ca18a8ec…`; all 25 declared
+files and packet `bcccec58…` verify. The Nebius instance is RUNNING, its disk
+is READY, the H200 UUID is exact, and the resident target index/tokenizer at
+`/home/glmrunner/qkv-direct-a7fc5afbe3c3b292/checkpoint` match the bound
+identities. Claim the warm bench once at generation
+`2026-07-29T22:47:36.830795Z` and launch execution binding `ee13044f…` through
+detached owner PID `362641`/start ticks `148132006`.
+
+Preserve this owner through the fresh matched AR/DFLASH/NGRAM component,
+same-claim repair handshake, typed terminal, and generation-fenced release by
+`00:27Z`; watchdog r5 remains the cleanup fence at `00:35Z`. Conservative
+project-attributed exposure through the owner deadline is `$5.255258`, inside
+the exact `$6` reservation. Do not start another owner, replay historical
+request 25, or send endpoint traffic.
+
+## 2026-07-29T22:51Z — retain the DFlash claim for retrieval-first owner repair
+
+The first worker returned `75`, but result packaging failed because the owner
+created its tarball inside the directory being archived; science consumption
+is therefore unknown. Its heartbeat also passes an unsupported generation
+argument, although the original 6,000-second lease remains valid through the
+owner deadline. PID `362641` is live in repair wait on the unchanged claim.
+
+Binding `6a04597c…` delegates one CPU-only replacement-owner repair by
+`23:10Z`: package outside the live tree, generation-check before the supported
+heartbeat call, and adopt the existing remote run before any worker or CUDA
+continuation. Keep the predecessor and claim intact. A later director must
+perform the exact-PID same-claim handoff after readiness; no request, replay,
+second owner, release, or provider mutation is authorized now.
+
+## 2026-07-29T22:54Z — narrow DFlash repair to retrieval adoption
+
+The shared GPU-pool fix made PID `362641`'s existing heartbeat
+generation-fenced and fresh at `22:53:23Z`; no owner restart is needed for
+claim safety. `DFLASH_H200_OWNER_REPLACEMENT_READY.json` is still absent, so
+no exact-PID handoff is legal.
+
+Binding `f98717bb…` supersedes only the offline repair instructions: prepare a
+replacement that archives outside the live remote tree and adopts that
+existing output generation before any worker, CUDA, model load, or arm
+continuation. Preserve the live owner and claim, leave science consumption
+unknown, and return immediately for the bounded execution-profile source turn
+through `23:10Z`.
+
+## 2026-07-29T23:08Z — complete the retrieval-first DFlash owner handoff
+
+Replacement readiness `bcead7c0…` and all declared hashes pass. Binding
+`76b08e5d…` exact-PID fenced predecessor `362641`/`148132006`, then launched
+replacement owner `371839`/`148248595` under the unchanged claim generation
+and `00:27Z` deadline. The owner retrieved the existing remote run through an
+outside-tree archive and persisted adoption `f1fe8a23…` without invoking a
+worker, CUDA, model load, or arm.
+
+Adoption finds `server_startup_defect` with all three `science_started`
+markers false, but the missing `science_consumed` object keeps consumption
+fail-closed as unknown. Preserve the live replacement and claim. Delegate one
+15-minute source-exact classification repair; do not send a request or replace
+the owner until a later director verifies its hash-bound result.
+
+## 2026-07-29T23:21Z — prove DFlash unconsumed and retain maintenance
+
+Classification readiness `30b32766…` proves the complete recovered snapshot
+never crossed any exclusive pre-request marker. Handoff `ec343f31…` installed
+the exact predicate and owner `377329` persisted corrected adoption
+`283375f2…`: AR, DFlash, and NGRAM are all unconsumed.
+
+The owner generation-fenced the claim to maintenance before consuming the
+bound continuation request `5f792d35…`; this is a request-wait race, not a
+scientific result or deadline exhaustion. Retain the warm H200 under watchdog
+r5 and the remaining exact `$6` authority. The bound repair delegates one
+15-minute offline direct-continuation owner repair that re-retrieves and
+classifies before any worker, then consumes a future start-bound authority
+without the failed wait seam. Keep the bench non-claimable until readiness is
+durable; no provider lifecycle action is warranted.
+
+## 2026-07-29T23:23Z — preserve the queued DFlash owner repair
+
+`DFLASH_H200_DIRECT_CONTINUATION_OWNER_READY.json` is not durable yet, and no
+researcher has consumed binding `8590cac1…`. The H200 remains claim-free in
+maintenance, watchdog r5 is active through `00:35Z`, and the source task keeps
+more than twelve minutes of its `23:36Z` runway. Preserve the exact binding
+without another portfolio or lifecycle mutation and return immediately for
+harness dispatch.
+
+## 2026-07-29T23:29Z — complete the DFlash owner exit contract before claim
+
+Concurrent readiness `5ab9e078…` validates the outside-tree retrieval,
+classified-unconsumed adoption, direct authority, and unchanged worker path.
+Its owner `37b3f467…`, however, returns immediately after the remote worker:
+it has no post-worker retrieval, typed terminal/repair handoff, or
+generation-fenced release. Opening a claim would therefore strand ownership
+on the first success or recoverable failure.
+
+Keep the H200 non-claimable in maintenance. Binding `34060cc7…` delegates one
+15-minute execution-profile source repair through `23:44Z`: complete every
+owner exit path and accept the shared wait states `requested` and
+`repair_terminal`, consuming a verified request exactly once before retry.
+Preserve the proven-unconsumed science and watchdog r5 through `00:35Z`; make
+no claim or provider mutation.
+
+## 2026-07-29T23:30Z — preserve the queued DFlash owner-lifecycle repair
+
+`DFLASH_H200_DIRECT_OWNER_TERMINAL_RELEASE_READY.json` is not durable yet.
+Binding `34060cc7…` is only one minute old and retains nearly fourteen minutes
+of its offline source window. The H200 is claim-free in maintenance under
+watchdog r5 through `00:35Z`; preserve the binding without claim, lifecycle,
+science, or portfolio mutation and return immediately for harness dispatch.
+
+## 2026-07-29T23:33Z — open the repaired DFlash continuation claim
+
+Readiness `5141545d…` and owner `21801ca7…` verify against the unchanged
+component packet, corrected adoption, and exact target/draft/runtime
+identities. The owner now retrieves after every worker, distinguishes terminal
+from repair state, consumes `requested` exactly once, and generation-fenced
+releases on terminal or deadline.
+
+Authority `042e50b2…` opens the warm H200 for one fresh claim by `23:45Z`,
+with owner release by `00:27Z` and watchdog r5 through `00:35Z`.
+Conservative DFlash exposure remains `$5.581925` under its exact `$6`
+reservation. The execution researcher must atomically bind the resulting
+claim generation, launch the named detached owner, and return after one
+identity/heartbeat/progress snapshot; no provider lifecycle work is needed.
+
+## 2026-07-29T23:39Z — preserve the open DFlash launch authority
+
+Binding `042e50b2…`, readiness `5141545d…`, and owner `21801ca7…` remain
+unchanged. The exact H200 is still available and unclaimed with watchdog r5
+active through `00:35Z`; the `23:45Z` claim fence retains more than five
+minutes of runway. Preserve the runnable lane without lifecycle, science, or
+portfolio mutation and return immediately for harness dispatch.
+
+## 2026-07-29T23:47Z — consume the DFlash no-progress conflict and rebind
+
+The first owner `393511` exited before heartbeat, SSH, CUDA, or science:
+component-ready still bound predecessor base-owner `eaec2de1…`, while the
+validated terminal/release path requires repaired bytes `2acf8f2d…`. The
+researcher generation-fenced the claim back to maintenance, so no live-owner
+handoff or replay decision remains.
+
+Correct the sole stale row; all 25 component-ready immutable files now verify
+under manifest `6969f5d4…`. Binding `32c8f91d…` supersedes `042e50b2…`,
+marks the warm H200 ready, and opens one fresh r2 owner claim by `23:52Z`,
+still releasing by `00:27Z` under watchdog r5 through `00:35Z`. Preserve the
+exact packet, classified-unconsumed AR/DFLASH/NGRAM arms, and `$6` ceiling.
+
+## 2026-07-29T23:48Z — preserve the corrected DFlash launch
+
+Binding `32c8f91d…` remains executable, the H200 is available and unclaimed,
+and no r2 owner artifact exists. Preserve the sole corrected-manifest claim
+authority through `23:52Z` and return for immediate harness dispatch; make no
+science, portfolio, or provider-lifecycle mutation.
+
+## 2026-07-29T23:50Z — retain the live r2 claim after real startup evidence
+
+Owner `397943`/`148497102` is live with a fresh generation-fenced heartbeat
+and has crossed the corrected manifest, retrieval, adoption, packet staging,
+worker, and post-worker retrieval seams. Worker 0 returned `1`; adoption
+classifies the result as a recoverable `server_startup_defect` with AR,
+DFlash, and NGRAM all unstarted and unconsumed under snapshot `499c50ed…`.
+
+Preserve the exact claim generation `2026-07-29T23:49:13.529071Z` and durable
+owner through its bounded repair path. Do not release, replay an arm, replace
+the owner, or mutate provider lifecycle; return for the harness to consume
+the typed repair transition.
+
+## 2026-07-29T23:53Z — delegate the live r2 startup repair in place
+
+Repair-ready `e9fee994…` is live under owner `397943` and claim generation
+`2026-07-29T23:49:13.529071Z`. The r2 retry exposed two localized mutable
+defects before science: it reused the retained `ar/` output directory, and the
+f634 runtime source requires `sglang-kernel>=0.4.4` while the image has
+`0.4.3`.
+
+Binding `b216d7cc…` delegates one packet-only execution repair through
+`00:01Z`, with conditional authority to deliver the hash-bound request to the
+existing dispatch-capable owner in the same turn. Preserve all prior output,
+the exact target/draft/runtime science, and the unconsumed AR/DFLASH/NGRAM
+ledger; prohibit replacement owner, new claim, release, or provider action.
+
+## 2026-07-30T00:04Z — recover the lost r2 owner from the consumed patch
+
+Owner `397943` exited before remote continuation because the path-bound
+direct-2 patch reached its final adoption hash after the request was consumed.
+The durable patch now matches adoption `1f1a226c…`; AR, DFlash, and NGRAM
+remain unstarted and unconsumed. Preserve the exact claim and remote run.
+
+Binding `fb90255d…` activates one ten-minute execution-profile source task:
+prepare a recovery owner that verifies the retained snapshot, adopts consumed
+request `2aff4c39…` and patch `f893a8f3…` exactly once, and enters only worker
+generation 2. No launch or remote action is authorized before a later director
+verifies readiness. Watchdog r6 safely replaces r5 through `00:45Z`; release
+is due by `00:37Z`, and maximum attributed exposure is `$5.990258`, within the
+exact `$6` authority.
+
+## 2026-07-30T00:06Z — preserve the queued r2 recovery source turn
+
+`DFLASH_H200_R2_LOST_OWNER_RECOVERY_READY.json` is not durable yet and no
+replacement owner is authorized. Binding `fb90255d…` remains unchanged with
+source completion due `00:12Z`. The exact claim is still non-stale and
+watchdog r6 is active through `00:45Z`; preserve the runnable offline lane and
+return immediately for harness dispatch without claim, science, or lifecycle
+mutation.
+
+## 2026-07-30T00:13Z — launch r2 recovery and bind its next pre-science repair
+
+Readiness `fb77305d…` and all adoption/request/patch/packet hashes passed.
+Binding `e4703bf4…` launched same-claim owner `412747`/`148628701`, which
+heartbeats through watchdog r6 and entered only worker generation 2.
+
+Worker 2 failed before science on
+`repair_output_boundary:partial_archive_exists`; post-adoption still proves
+AR, DFlash, and NGRAM unstarted and unconsumed. The live owner published
+repair-ready `ed8c5b03…`, but its one-shot wait cannot dispatch a retry.
+Binding `b81c04f3…` delegates one offline replacement owner and new
+content-addressed packet through `00:19Z`: verify the retained zero-request
+archive, use a fresh output generation, and enter only worker 3. Preserve the
+current PID and claim until a later exact-PID handoff; no request, release, or
+provider action is authorized now.
+
+## 2026-07-30T00:15Z — supersede the stale live-owner handoff
+
+A concurrent repair request reached owner `412747` before binding
+`b81c04f3…` became effective. It consumed request `12f45574…` and exited
+through the known one-shot wait seam. Packet `e3f0bd4f…` now contains the
+generation-specific output repair, while adoption `10335540…` still proves
+all arms unstarted and unconsumed.
+
+Binding `1deadd1b…` removes only the stale live-PID premise and activates a
+six-minute offline owner task through `00:21Z`. The new owner must adopt
+consumed repair 3 exactly once, enter only worker 3, and retain a real dynamic
+repair dispatcher. Preserve the exact ownerless claim; a later director owns
+the single launch, and no request, release, or provider mutation is authorized
+now.
+
+## 2026-07-30T00:19Z — preserve the dispatcher recovery source turn
+
+`DFLASH_H200_R2_CONSUMED_REPAIR3_RECOVERY_READY.json` is not durable yet.
+Binding `1deadd1b…` remains exact and retains just over two minutes of its
+offline source window through `00:21Z`. The original claim is non-stale,
+ownerless, and already marked to drain after release; watchdog r6 is
+active/running as PID `406893` through `00:45Z`.
+
+Preserve the single dispatcher-capable recovery task without launching another
+owner, issuing a request, releasing the claim, or mutating provider lifecycle.
+Return immediately for harness dispatch; a later director may launch worker 3
+only after hash-complete readiness verifies.
+
+## 2026-07-30T00:23Z — reject stale-authority dispatcher fallthrough
+
+Readiness `baac2462…` and owner `c46fd876…` verify locally, but the executable
+branches are not dispatcher-safe. A rejected request increments the worker
+generation and falls through with the old packet, while `repair_terminal`
+also continues into the same worker. Either path can replay work without new
+validated authority, so no owner launch is legal.
+
+Binding `a4df85b2…` delegates one narrow execution-profile correction through
+`00:27Z`: keep worker 3 as the sole initial entry, wait inside an inner
+dispatcher after recoverable output, and advance only after validating a new
+consumed request. Rejection must stay in repair wait; `repair_terminal` must
+take a typed maintenance disposition. Preserve the exact ownerless claim,
+drain fence, unconsumed science, `00:37Z` release, and r6 watchdog; no remote
+or provider action is authorized.
+
+## 2026-07-30T00:29Z — bind the missing remote-run identity after failed launch
+
+Corrected readiness `70310fa9…` and dispatcher source `0b36f347…` passed, so
+execution binding `dd9f1283…` launched owner `423603`/`148730450`. Its first
+status read found it exited before retrieval, worker, or science:
+`consumed_repair` has no `remote_run`, but the owner indexed that missing
+field. The exact path is already durable in the hash-verified adoption
+`10335540…`; no remote action or worker generation was consumed.
+
+Binding `f88dec46…` delegates only that missing path plumbing through
+`00:31:30Z`: derive and exact-match `receipt.remote_run` from the verified
+adoption before heartbeat or remote work, and preserve the corrected
+dispatcher and worker-3 entry. The ownerless claim, drain fence, `00:37Z`
+release, and r6 watchdog remain unchanged. A later director may relaunch only
+if the measured execution and safe release still fit.
+
+## 2026-07-30T00:33Z — retire the expired recovery lifecycle
+
+The remote-run readiness was still absent at `00:30:40Z`. Its last source
+turn took 162 seconds; adding the closest two-minute worker plus director,
+terminal, and generation-fenced release could no longer fit the fixed
+`00:37Z` owner fence. The exact claim was released to its existing drain
+disposition. Nebius instance `computeinstance-e00qxw871hz1r79fjt` and disk
+`computedisk-e00pb91rav4c5ksdbx` are absent, watchdog r6 is inactive/not-found,
+and the bench retired with verified cleanup at `00:33:07Z`.
+
+No AR, DFlash, or NGRAM science started or was consumed; this closes only the
+expired integration lifecycle. Binding `86ef2004…` requests a cumulative
+`$14` DFlash ceiling (`+$8`) before any replacement create. The expired
+same-claim source task is superseded; after the reservation is durable, create
+one bounded H200 and repair the claim-specific remote-run path inside its
+mutable execution claim before continuing directly to worker 3.
+
+## 2026-07-30T00:40Z — create the reserved replacement H200 in maintenance
+
+The cumulative `$14` DFlash reservation is durable. After confirming the GPU
+inventory was empty, placement selected a high-availability preemptible H200
+in the same authenticated Nebius project. Instance
+`computeinstance-e00t5s028ts52zp215` and disk
+`computedisk-e00vsj169nacjazg4k` were created and immediately registered as
+bench `h200-dflash-r3-computeinstance-e00t5s028ts52zp215` in maintenance.
+
+Binding `b96d9a72…` records the exact resource, a three-hour absolute lifecycle
+through `03:36:56Z`, and controller-host watchdog
+`gemma4-dflash-r3-20260730t0036z-watchdog.service` as PID `427838`. Maximum
+new H200 exposure is `$7.35`; combined with prior DFlash-attributed spend,
+conservative exposure is `$13.340258`, below the exact `$14` ceiling.
+
+Do not claim or run science yet. A later director wake must verify cloud-init,
+strict SSH identity, exact H200 UUID/driver, and watchdog runway, then may
+open one mutable execution claim. Its durable owner must perform resumable
+cold staging, bind the new claim-specific `remote_run` inside that claim, and
+continue only to worker 3. AR, DFlash, and NGRAM remain unstarted and
+unconsumed.
+
+## 2026-07-30T00:47Z — open one identity-verified cold DFlash claim
+
+The replacement instance is RUNNING at `89.169.122.95`. Cloud-init completed
+at `00:38:22Z`; strict SSH bound fingerprint `SHA256:FyyWs3v…`, and the guest
+reports exact H200 UUID `GPU-487785b9…`, driver `580.159.04`, 143771 MiB,
+disabled MIG, and zero compute processes. Watchdog PID `427838` remains
+active through `03:36:56Z`.
+
+Binding `70cad04a…` makes the bench available for one claim by `01:00Z`, with
+owner release by `03:20Z`. The execution researcher must create the named
+claim-specific r3 owner and binding, derive new remote paths from the fresh
+claim generation, launch through `detached-owner`, and return after durable
+owner/heartbeat/cold-stage progress. The owner stages the exact checkpoint
+resumably, preserves the validated dynamic repair dispatcher, and enters only
+worker 3. Workers 0–2, request 25, and all settled scientific identities
+remain fenced; no provider mutation is delegated.
+
+## 2026-07-30T00:49Z — preserve the runnable r3 cold claim
+
+Binding `70cad04a…` is unchanged, the exact identity-verified H200 remains
+available and unclaimed, and watchdog PID `427838` is active through
+`03:36:56Z`. At the commit-time check, the `01:00Z` claim fence retained more
+than eleven minutes of runway and the `03:20Z` owner release still fit the
+absolute lifecycle and cumulative `$14` authority.
+
+Preserve the sole worker-3 execution lane without lifecycle, science, source,
+or portfolio mutation and return immediately for harness dispatch.
+
+## 2026-07-30T00:51Z — preserve the timely claimed r3 launch
+
+The exact bench was claimed on time at `00:49:46.346350Z` under binding
+`70cad04a…`; its lease runs through `03:19:46Z` and watchdog PID `427838`
+remains active through `03:36:56Z`. The claim-specific r3 owner source is now
+being materialized, while `active_session` is not yet durable.
+
+Preserve the in-flight execution turn and exact claim generation. Do not
+release, replace the owner, inspect mutable source as final, or change provider
+lifecycle; return for the researcher to complete the detached owner handoff.
+
+## 2026-07-30T00:54Z — retain the claim through the concurrent cold-stage repair
+
+The commit-time owner check consumed the newest launch evidence rather than
+accepting the stale handoff. Corrected owner `436345`/`148884471` exited before
+worker or science because the cold guest has neither `huggingface-cli` nor
+system `pip`; the exact claim remains non-stale, and watchdog PID `427838` is
+active through `03:36:56Z`. During this director turn the in-flight execution
+researcher already superseded the earlier controller-path and local-file
+attempts under the same mutable claim.
+
+Preserve claim generation `2026-07-30T00:49:46.346350Z`, the resumable remote
+staging state, and all unconsumed AR/DFLASH/NGRAM identities. Do not race the
+concurrent source/owner repair, release the claim, or mutate provider
+lifecycle; return for the harness to consume the execution turn's final
+owner-or-repair state.
+
+## 2026-07-30T00:59Z — bind the retained r3 downloader owner
+
+The completed execution turn confirms owner `436345` exited before any target
+row, worker, CUDA, or science because the cold guest has neither
+`huggingface-cli` nor system `pip`. Claim
+`2026-07-30T00:49:46.346350Z` remains exact and non-stale; watchdog PID
+`427838` is active through `03:36:56Z`, leaving ample staging, execution, and
+release runway under the cumulative `$14` ceiling.
+
+Binding `618d8056…` delegates one in-place execution repair through `01:12Z`.
+Use the pinned SGLang image as the claim-owned downloader, with a non-global
+guest venv fallback; preserve verified partial rows and retain a heartbeating
+repair dispatcher across further pre-science staging defects. Conditional
+same-turn authority launches exactly one replacement owner after hash-binding
+the repair to the unchanged claim. Enter only worker 3; do not release,
+re-claim, replay settled work, expose credentials, or mutate provider
+lifecycle.
+
+## 2026-07-30T01:00Z — preserve the runnable downloader repair
+
+Binding `618d8056…` verifies against the exact non-stale claim
+`2026-07-30T00:49:46.346350Z`; predecessor `436345`/`148884471` remains
+absent, and watchdog PID `427838` is active through `03:36:56Z`. The `01:12Z`
+replacement-owner fence retains more than twelve minutes of launch runway.
+
+Preserve the sole same-claim repair lane for immediate execution-profile
+dispatch. Do not reclaim or release the claim, change science, or mutate
+provider lifecycle.
+
+## 2026-07-30T01:04Z — retain the live r3 downloader owner
+
+Repaired binding `eccda1be…` hash-binds owner source `df32e138…` to claim
+`2026-07-30T00:49:46.346350Z`. Owner `441959`/`148936887` is live; the pool
+heartbeat advanced to `01:03:01Z`, and the owner crossed target reconciliation
+into the claim-owned pinned-image downloader path with an active SSH child.
+Watchdog PID `427838` remains active through `03:36:56Z`.
+
+Preserve this durable owner through resumable staging and its retained repair
+dispatcher. Do not release or replace it, replay workers 0–2, alter science,
+or mutate provider lifecycle; return for the harness to consume its next
+terminal or repair boundary.
+
+## 2026-07-30T01:05Z — preserve active pinned-image bootstrap
+
+Owner `441959`/`148936887` remains live with the same downloader SSH child;
+the exact claim heartbeat advanced to `01:05:01Z`, and watchdog PID `427838`
+remains active. No typed repair or terminal exists.
+
+Preserve the owner and claim unchanged. Do not monitor the pull, replace the
+owner, release, replay settled work, or mutate provider lifecycle.
+
+## 2026-07-30T01:14Z — retain the shard-downloading r3 owner
+
+Binding `2ad42cce…` and owner `446635`/`148998370` verify exactly. The owner is
+live, `config.json` is verified, target state is `transferring` at
+`model-00001-of-00002.safetensors`, and the exact claim heartbeat advanced to
+`01:14:16Z`. Watchdog PID `427838` remains active/running through `03:36:56Z`.
+
+Preserve this owner, claim generation, resumable staging, and retained repair
+dispatcher unchanged. Do not replace or release it, replay workers 0–2 or
+request 25, alter science, or mutate provider lifecycle; return for the next
+typed repair boundary or terminal.
+
+## 2026-07-30T01:20Z — preserve the exact r3 transfer
+
+Owner `446635`/`148998370` remains live under binding `2ad42cce…`; target state
+is still `transferring` after verified `config.json`, and claim heartbeat
+advanced to `01:19:47Z`. Preserve the owner, claim, retained dispatcher, drain
+fence, and watchdog unchanged.
+
+No second lane is activated in this snapshot: the source-complete fixed-floor
+cross-operator successor requires this same exclusive H200, while the targeted
+packed-verifier, hybrid-placement, and prior FP8 schedule realizations are
+terminal. Reactivating any of them now would create a conflicting claim or
+duplicate settled evidence. Return for the transfer's typed repair boundary or
+terminal without release, replay, science, or lifecycle mutation.
+
+## 2026-07-30T01:43Z — attach managed staging capacity for the live r3 repair
+
+Shard 1 is exact and durable, but shard 2 failed pre-science because the
+100-GiB root exposed only `6,324,117,504` free bytes. Owner
+`446635`/`148998370` remains live at repair `b11608d3…`; the claim heartbeat
+advanced to `01:42:49Z`, and watchdog PID `427838` remains active.
+
+The managed boot-disk spec was expanded to 250 GiB for the next reboot, and
+managed 100-GiB staging SSD `computedisk-e00rwewnz08e4fgt41` was attached to
+the running instance without owner or claim interruption. Binding `984cff08…`
+delegates one bounded storage-migration owner through `02:05Z`: verify and move
+only the claim-specific partial, bind-mount it with at least 30 GiB free, then
+deliver one exact `cold_stage` repair request. Do not release, re-claim, replay
+workers 0–2 or request 25, alter science, or call provider lifecycle from the
+researcher.
+
+## 2026-07-30T01:50Z — preserve the runnable storage-migration repair
+
+Binding `984cff08…` and repair-ready record `b11608d3…` verify exactly.
+Owner `446635`/`148998370` is live, the exact claim heartbeat advanced to
+`01:49:20Z`, and watchdog PID `427838` remains active/running. The provider
+reports instance `computeinstance-e00t5s028ts52zp215` RUNNING with managed
+staging disk `computedisk-e00rwewnz08e4fgt41` attached; the `02:05Z`
+delegation retains more than fifteen minutes of launch runway.
+
+Preserve the live dispatcher, claim generation, verified shard 1, drain
+fence, and storage-repair binding unchanged and return immediately for
+execution-profile dispatch. Do not perform the migration in the director
+turn, re-claim or release the bench, replay settled work, alter science, or
+mutate provider lifecycle.
+
+## 2026-07-30T01:54Z — restart the claimed guest to reconcile managed storage
+
+The consumed migration attempt established a provider/guest mismatch:
+Nebius reported managed disk `computedisk-e00rwewnz08e4fgt41` attached, but
+strict SSH showed its hot-plug guest device at zero bytes with no stable
+`by-id` identity. Migration, repair-request creation, workers, CUDA, and all
+science remained unstarted. Owner `446635`/`148998370` was live and claim
+`2026-07-30T00:49:46.346350Z` non-stale at the commit-time check.
+
+The director stopped and started the same instance once. It returned RUNNING
+at the same public IP with the original boot disk and managed staging disk
+attached; this also activates the already-recorded 250-GiB boot-disk spec.
+Preserve the live owner, exact claim, verified shard 1, drain fence, and
+watchdog. A later director must verify post-restart strict SSH/H200 identity,
+disk capacity/mapping, and owner/claim continuity before issuing a superseding
+same-claim migration binding. No researcher dispatch or science is authorized
+until that check.
+
+## 2026-07-30T01:59Z — rebind the post-restart H200 and skip migration
+
+Post-restart verification passed for the unchanged strict SSH fingerprint,
+driver `580.159.04`, 143771 MiB H200, disabled MIG, zero compute processes,
+expanded 258906374144-byte root filesystem with 162328178688 bytes free, and
+exact 107374182400-byte `virtio-dflash-stage` device. The provider reassigned
+the physical GPU UUID from `GPU-487785…` to `GPU-4a6a3b…`; therefore the live
+r3 process remains a safe heartbeating predecessor but cannot legally resume
+remote work under its process-loaded hardware binding.
+
+Binding `72f7b677…` delegates one execution-profile exact-PID handoff through
+`02:15Z`: hash-bind an r4 owner and execution binding to the new UUID, stop
+only predecessor `446635`/`148998370`, and resume the exact verified partial
+on the expanded root under the unchanged claim. The consumed migration side
+binding is superseded; leave the blank managed staging disk untouched. Enter
+only worker 3 after exact staging. Do not deliver a request to the predecessor,
+re-claim or release, replay settled work, alter science, or call provider
+lifecycle.
+
+## 2026-07-30T02:00Z — preserve the runnable post-restart owner handoff
+
+Binding `72f7b677…` and repair-ready record `b11608d3…` remain exact.
+Predecessor `446635`/`148998370` is live, no repair request exists, claim
+`2026-07-30T00:49:46.346350Z` is fresh against rebound H200 UUID
+`GPU-4a6a3b…`, and watchdog PID `427838` is active through `03:36:56Z`.
+The `02:15Z` handoff fence retains more than fourteen minutes of runway.
+
+Preserve the exact-PID r4 handoff unchanged and return immediately for harness
+dispatch. Do not perform the researcher-owned source/binding mutation in the
+director turn, deliver a predecessor request, release or re-claim, replay
+settled work, alter science, or mutate provider lifecycle.
+
+## 2026-07-30T02:05Z — retain the live r4 cold-stage owner
+
+R4 execution binding `bf99c294…` hash-binds owner source `b5ea59ff…` to the
+rebound H200 UUID and unchanged claim. Owner `469053`/`149297134` is live,
+predecessor `446635`/`148998370` is absent, the claim heartbeat advanced to
+`02:04:34Z`, and watchdog PID `427838` remains active through `03:36:56Z`.
+The durable phase is `cold_stage_resumed_expanded_root`; reconciliation has
+verified `config.json` at the exact retained target path.
+
+Preserve r4, the claim, verified partial, expanded root, blank staging disk,
+drain fence, and retained dispatcher unchanged. Return for its next typed
+repair boundary or terminal without monitoring the transfer, replacing the
+owner, releasing or re-claiming, replaying workers 0–2/request 25, altering
+science, or mutating provider lifecycle.
+
+## 2026-07-30T02:22Z — rebind the completed target to the immutable packet
+
+The corrected cold-stage request completed exact target manifest `6202e8f8…`,
+then r4 `469053`/`149297134` exited before worker, CUDA, or science at
+`r4_packet_boundary:digest`. The guard selected mutable project-root packet
+`bcccec58…`; the already-consumed repair contract instead binds exact repair3
+packet `e3f0bd4f…`. The claim remains non-stale and watchdog PID `427838`
+remains active through `03:36:56Z`.
+
+Binding `f8ea81aa…` delegates one execution-profile r5 owner through `02:36Z`.
+Reuse the complete target, bind only the immutable repair3 packet, and enter
+worker 3 or a retained typed pre-science repair boundary. Do not re-claim or
+release, replay settled work, alter science, touch disks, or mutate provider
+lifecycle.
+
+## 2026-07-30T02:27Z — preserve the concurrent r5 immediate repair
+
+R5 `479602`/`149434293` verified packet `e3f0bd4f…` and reached worker 3, but
+the worker exited before science because unprivileged `os.link` could not
+hard-link a root-owned target file. Retrieval proved an empty remote run.
+R5 then exited when its repair publisher collided with the completed prior
+repair generation; the claim remains fenced and watchdog PID `427838` active.
+
+Preserve the execution researcher already handling this launch for one
+same-turn, same-claim correction of the localized hard-link/repair-generation
+path. Do not race it with another owner or binding, release or re-claim,
+replay settled work, change science, or mutate provider lifecycle. Return for
+its final live-owner or typed repair handoff.
+
+## 2026-07-30T02:32Z — bind the r6 target-view repair
+
+R5 `479602`/`149434293` is absent after exact worker 3 failed before runtime,
+CUDA, request, or science: unprivileged `os.link` returned `EPERM` while
+materializing the root-owned complete target. Compact retrieval found an empty
+remote run. The exact claim and target manifest `6202e8f8…` remain intact,
+and watchdog PID `427838` is active through `03:36:56Z`.
+
+Binding `36b6fae1…` delegates one execution-profile r6 owner through `02:44Z`.
+Derive a packet from immutable `e3f0bd4f…` that changes only target-view
+materialization to hard-link plus verified reflink/temporary-copy fallback,
+and use a fresh retained-dispatcher repair namespace. Enter only unconsumed
+worker 3. Do not release or re-claim, replay settled work, alter science, or
+mutate provider lifecycle.
+
+## 2026-07-30T02:34Z — preserve the runnable r6 repair
+
+No r6 owner, execution binding, or owner state exists yet. Director binding
+`36b6fae1…` remains exact and runnable through `02:44Z`; the unchanged claim
+is non-stale, drain-fenced, and protected by watchdog PID `427838` through
+`03:36:56Z`.
+
+Preserve the sole same-claim execution repair unchanged for immediate harness
+dispatch. Do not add a competing owner or project, release or re-claim, replay
+settled work, alter science, or mutate provider lifecycle.
+
+## 2026-07-30T02:38Z — retain the live r6 owner
+
+R6 binding `2282b93e…` hash-binds owner source `db891af1…` and repaired packet
+`052d2ce0…` to the unchanged claim, completed target manifest, rebound H200,
+and fresh repair namespace. Owner `485251`/`149505876` is live; the claim
+heartbeat advanced to `02:38:21Z`, and watchdog PID `427838` remains active
+through `03:36:56Z`.
+
+Preserve this owner through repaired target-view materialization and worker 3,
+or its next typed retained boundary. Do not replace it, release or re-claim,
+replay settled work, alter science, or mutate provider lifecycle.
+
+## 2026-07-30T02:39Z — retain r6 through worker-3 dispatch
+
+Owner `485251`/`149505876` remains live under binding `2282b93e…`. Durable
+phase `worker_3_packet_verified_dispatching` binds repaired packet
+`052d2ce0…` to the exact claim, and the claim heartbeat advanced to
+`02:39:21Z`. No r6 scientific terminal, science-start marker, or fresh
+namespaced repair boundary is durable; watchdog PID `427838` remains active.
+
+Preserve r6 through worker 3 and its terminal or retained repair boundary.
+Do not replace the owner, release or re-claim, replay settled work, alter
+science, or mutate provider lifecycle.
+
+## 2026-07-30T02:41Z — preserve the sole live r6 dispatch
+
+Owner `485251`/`149505876` remains live under execution binding `2282b93e…`;
+durable phase is still `worker_3_packet_verified_dispatching`, and the exact
+claim heartbeat advanced to `02:41:21Z`. No r6 scientific terminal,
+science-start marker, or fresh namespaced repair boundary is durable.
+Watchdog PID `427838` remains active/running through `03:36:56Z`.
+
+Preserve r6, its claim, completed target, repaired packet, drain fence, and
+watchdog unchanged. Do not launch a competing owner, release or re-claim,
+replay settled work, alter science, or mutate provider lifecycle.
+
+## 2026-07-30T03:04Z — repair existing target-view reentry for NGRAM only
+
+Worker 4 consumed the classify-to-NGRAM packet, then stopped before NGRAM
+science at `view_not_same_inode:chat_template.jinja`: the worker reset an
+already verified reflink/copy row to hard-link mode on reentry. AR and DFlash
+each have 32 complete requests; NGRAM has zero requests. Owner
+`485251`/`149505876`, the exact claim, and repair
+`…worker-4-repair-0` remain live through the `03:20Z` owner deadline.
+
+Binding `2c04ab76…` delegates one execution-profile packet-only correction by
+`03:11Z`: verify and reuse existing fallback rows by manifest identity, require
+inode equality only for actual hard links, then deliver one exact `classify`
+request to the live dispatcher. Preserve AR and DFlash and enter only NGRAM.
+Do not launch another owner, release or re-claim, alter science, or mutate
+provider lifecycle.
+
+## 2026-07-30T03:10Z — retain r6 after repair consumption
+
+R6 atomically consumed request `07b00110…` at `03:08:28Z` and accepted packet
+`d4d558e0…`, which changes only target-view reentry and its packet manifest.
+Owner `485251`/`149505876` remains live with a fresh exact-claim heartbeat.
+No worker-5 terminal or new repair boundary is durable.
+
+Preserve the sole owner through its NGRAM-only continuation, terminal, or next
+fresh repair boundary. AR and DFlash remain frozen at 32 complete requests
+each. Do not dispatch another researcher or owner, release or re-claim, replay
+settled work, alter science, or mutate provider lifecycle.
+
+## 2026-07-30T03:15Z — prepare NGRAM backend repair offline and fund warm reuse
+
+Worker 5 passed target-view reentry but the pinned runtime rejected NGRAM
+before science: top-k 10 with page size 16 requires FlashInfer rather than the
+packet's Triton decode backend. AR and DFlash remain frozen at 32 complete
+requests each; NGRAM has zero requests. Repair `…worker-5-repair-0` is ready,
+and owner `485251`/`149505876` remains live through `03:20Z`.
+
+The measured 234.8-second repair preparation plus scheduling, NGRAM execution,
+retrieval, and release cannot safely fit the remaining owner window. Binding
+`15b9b30b…` therefore delegates the NGRAM-only FlashInfer packet offline and
+prohibits another live request. Let r6 perform its deadline release. Request a
+cumulative `$18` project ceiling; only after it is durable may a later
+director extend the watchdog through `04:51:56Z` and reuse the warm bench. No
+provider lifecycle mutation was made.
+
+## 2026-07-30T03:20Z — accept the offline FlashInfer packet and hold lifecycle
+
+Offline readiness `dc2a2f5c…` verifies packet `0131a839…`: its manifest
+validated, seven tests passed, AR and DFlash command construction is
+byte-equivalent to the accepted base, and only NGRAM selects FlashInfer while
+retaining page/block size 16 and implicit top-k 10. No live request or GPU
+operation occurred.
+
+R6 `485251`/`149505876` completed its generation-fenced release at the fixed
+boundary: the process is absent, the exact claim is cleared, and the bench is
+unclaimed/draining. Watchdog PID `427838` remains active. The durable spend
+snapshot still grants only `$14`, so pause the project and do not extend the
+watchdog or re-claim the bench. A later director may protect warm reuse and
+bind NGRAM only if the cumulative `$18` reservation becomes durable before
+exact-ID watchdog cleanup.
+
+## 2026-07-30T03:26Z — fund and activate the warm NGRAM-only execution
+
+The cumulative `$18` reservation is now durable. R6 release evidence records
+`$12.648691452930557` actual spend; conservative exposure through
+`04:51:56Z` is `$16.402758079555556`. Provider verification matched the
+RUNNING instance and both exact READY managed disks. Replacement watchdog
+`gemma4-dflash-r3-20260730t0323z-watchdog.service` is active as PID `506236`;
+inventory was atomically rebound before old watchdog `427838` was stopped.
+
+Binding `19f07e29…` activates one execution-profile R7 lane on the retained
+H200. It must derive and hash-bind the narrow owner offline, claim by
+`03:38Z`, launch by `03:42Z`, and run only unconsumed NGRAM with validated
+FlashInfer packet `0131a839…`. AR and DFlash stay frozen at 32 requests each.
+The owner releases by `04:35Z`; provider lifecycle remains director-only.
+
+## 2026-07-30T03:31Z — retain the live R7 NGRAM dispatch
+
+R7 claimed at `03:29:46Z` and launched before both binding fences. Owner
+`508978`/`149821384` is live under execution binding `686268b4…`; its fresh
+claim heartbeat advanced to `03:30:56Z`. Durable phase
+`ngram_only_worker_7_dispatching` binds owner source `e811c813…`, validated
+FlashInfer packet `0131a839…`, and only the unconsumed NGRAM arm.
+
+Preserve this sole owner through NGRAM, a scientific terminal, or its typed
+retained repair boundary. AR and DFlash remain frozen at 32 requests each.
+Do not launch a competing owner, release or re-claim, replay settled work,
+alter science, or mutate provider lifecycle.
+
+## 2026-07-30T03:38Z — bind the R8 Gemma4/NGRAM backend compatibility handoff
+
+R7 stopped before model load or NGRAM science because exact SGLang rejects
+`prefill=triton, decode=flashinfer` for Gemma4. The NGRAM arm still has zero
+requests, while AR and DFlash remain frozen at 32 each. R7
+`508978`/`149821384` is live at repair wait, but its control flow returns after
+validating one request and cannot re-enter worker 7.
+
+Binding `37e1dd1b…` delegates a deep exact-source compatibility decision and
+one same-claim R8 handoff by `03:50Z`. Prefer FlashInfer only with direct proof
+for Gemma4 hybrid attention; otherwise use another exact-supported
+NGRAM/page-16 backend, or persist a typed no-go and release by `04:05Z`.
+Do not blindly bypass the guard, replay settled work, alter NGRAM geometry,
+re-claim, or mutate provider lifecycle.
+
+## 2026-07-30T03:51Z — close pinned DFlash and admit fixed-floor component
+
+The exact component result is negative for DFlash: 32-request AR measured
+`1.16516421446876 s/request`, while DFlash measured
+`1.1711883113125054 s/request` (0.517% slower). NGRAM remained unconsumed
+because pinned SGLang has no Gemma4-hybrid, FP8-KV, page-16, top-k-10 backend
+intersection. Accept the typed no-go and keep that lineage closed.
+
+Activate `gemma4_h200_fixed_floor_crossop_executor` as the next materially
+distinct direct-H200 lane. Its source-complete QKV norm+RoPE to E5M2 cache
+epilogue gets one exact component ledger only; no endpoint. Request a
+cumulative `$1` reservation. That reservation is not yet durable, so retain
+the available quiescent H200 through the existing `04:51:56Z` watchdog but do
+not claim it. A later director may bind the 20-minute execution only after the
+exact reservation appears in the spend snapshot.
+
+## 2026-07-30T03:55Z — activate the reserved fixed-floor H200 component
+
+The exact cumulative `$1` reservation is now durable. The retained H200 is
+available, quiescent, identity-bound, and protected by watchdog PID `506236`
+through `04:51:56Z`.
+
+Binding `DIRECTOR_FIXED_FLOOR_CROSSOP_H200_EXECUTION_20260730T0355Z.json`
+opens one execution-profile lane: hash-bind the narrow lifecycle owner, claim
+by `04:08Z`, and run only the ten local/global
+`M={32,118,1409,1631,2048}` component cases. Require QKV NRMSE `<=1e-5`,
+byte-exact E5M2 cache outputs, zero spills, at most 32 registers/thread, and
+positive median reduction in every case. No endpoint or replay is authorized;
+release within 20 claim minutes and no later than `04:30Z`.
+
+## 2026-07-30T04:02Z — re-ready and bind the pre-science owner repair
+
+R1 claimed for `0.012735` seconds, then failed locally before SSH, staging,
+container, or CUDA because it star-expanded a function. No scientific sample
+was consumed. Strict SSH census found the exact H200 at 0 MiB with no compute
+process or container, so maintenance is safe to re-ready.
+
+Binding `DIRECTOR_FIXED_FLOOR_CROSSOP_H200_OWNER_REPAIR_20260730T0402Z.json`
+delegates one R2 owner. Keep the corrected distinct SSH command/function names
+and add a real retained repair dispatcher so a generic recoverable pre-science
+error cannot release again. Preserve all science bytes and ten cases; claim by
+`04:16Z`, launch by `04:20Z`, and release by `04:36Z`. No endpoint or provider
+lifecycle mutation is authorized.
+
+## 2026-07-30T04:06Z — preserve the runnable R2 lane
+
+The exact H200 remains available and unclaimed under watchdog PID `506236`.
+No R2 owner or execution binding exists yet, as expected before researcher
+dispatch. Binding `0a80f726…` retains sufficient runway and remains the sole
+claim authority: prepare and hash-bind the repair-capable owner, claim by
+`04:16Z`, launch by `04:20Z`, and run only the unchanged ten component cases.
+Do not add another project, claim, lifecycle mutation, or endpoint.
+
+## 2026-07-30T04:10Z — retain R2 after the in-claim runtime-context repair
+
+R2 crossed the corrected SSH boundary and entered the exact consumer, but the
+first invalid attempt returned before any complete case because standalone
+`get_rope` lacked SGLang global scheduler args. Owner `527955`/`150047722`
+remained live and heartbeating claim `2026-07-30T04:07:39.956228Z`.
+
+Repair `r2-1-1785384490` hash-bound the minimal scheduler-context
+`sitecustomize` adapter, was consumed by the live dispatcher, and re-entered
+`scientific_launch` at `04:09:43Z`. Preserve this sole owner through the
+unchanged ten-case terminal or its next retained repair boundary. Do not
+replace it, replay a complete case, add an endpoint, release the claim, or
+mutate provider lifecycle.
+
+## 2026-07-30T04:21Z — rebind the no-launch compiler metadata repair
+
+The first resource-only claim compiled both exact specializations without a
+candidate launch, but the collector assumed nonexistent
+`CompiledKernel.n_regs`. Owner `535215` then violated its repair disposition
+and released claim `2026-07-30T04:18:54.964414Z` after only `10.013132`
+seconds. The H200 is again available under watchdog PID `506236`; cumulative
+project spend is `$0.12213597559722224`.
+
+Binding `eb706cee…` authorizes one bounded execution-profile repair. Replace
+only resource extraction with an authoritative pinned-runtime metadata,
+`ptxas`, or target-object path, and use a true same-claim repair dispatcher.
+Claim by `04:31Z`, launch by `04:34Z`, and release by `04:44Z` after a typed
+resource terminal. Do not launch the candidate, replay the consumed timings,
+load the checkpoint, run an endpoint, or mutate provider lifecycle.
+
+## 2026-07-30T04:25Z — preserve the in-flight metadata-repair preparation
+
+The R2 no-launch collector now exists as `e9c5891f…`; its true-dispatcher
+owner and derived execution binding are not yet published. The exact H200
+remains available and unclaimed under watchdog PID `506236`, with sufficient
+runway to the `04:31Z` claim and `04:44Z` release fences.
+
+Preserve binding `eb706cee…` as the sole authority and let the current
+execution researcher finish its hash-bound owner and binding. Do not dispatch
+a competitor, claim early, change the consumed science, run an endpoint, or
+mutate provider lifecycle.
+
+## 2026-07-30T04:32Z — accept the resource gate and prepare endpoint promotion
+
+Immutable target-object recovery `32d1765d…` supersedes the incomplete
+metadata view: the exact local/global specializations use 26/30 registers per
+thread with zero frame, stack, spill-load, or spill-store allocation. Accept
+the ten-case component and original resource gate; do not replay either.
+
+Binding `71b73736…` activates same-project offline endpoint integration
+preparation against the fixed `0.625149101968745 s/request` comparator. Request
+a cumulative `$4` ceiling for one later warm-H200 matched endpoint pair. The
+durable snapshot still grants only `$1`, so no claim or watchdog extension is
+authorized now; keep the available H200 protected by watchdog PID `506236`
+while the harness reserves or until exact-ID cleanup at `04:51:56Z`.
+
+## 2026-07-30T04:35Z — preserve the reservation-gated endpoint preparation
+
+None of the four endpoint packet artifacts bound by `71b73736…` is durable
+yet. The project remains an offline-only execution lane, and the exact H200 is
+still available and unclaimed under watchdog PID `506236`.
+
+Keep that binding as the sole next action. The durable spend snapshot grants
+only the existing cumulative `$1`, not the requested `$4`, so do not claim,
+extend the watchdog, run the endpoint, or mutate provider lifecycle. The
+concrete direct-GPU blocker is the conjunction of unpublished endpoint bytes
+and missing spend authority; let the harness schedule the offline preparation
+and exact-ID cleanup remain the lifecycle fallback at `04:51:56Z`.
+
+## 2026-07-30T04:39Z — fund the endpoint lane and protect warm reuse
+
+The cumulative `$4` reservation is now durable. Exact provider verification
+found the registered instance RUNNING and both managed disks READY. Replacement
+watchdog `gemma4-fixed-floor-endpoint-20260730t0438z-watchdog.service` is active
+as PID `546249` through `05:51:56Z`; inventory was rebound before old watchdog
+`506236` was stopped.
+
+Binding `b62b46af…` clears the reservation gate but keeps the project
+offline-only: none of the adapter, pair runner, durable owner, or integration
+packet is durable yet. Finish and hash-bind those four bytes under the existing
+execution profile. Do not claim or run the endpoint until a later director
+observes executable readiness and binds the matched c32 pair.
+
+## 2026-07-30T04:51Z — repair the dispatcher, then run one matched endpoint pair
+
+Packet `50323ff8…` correctly binds the accepted adapter and sequential c32 pair,
+but owner `cff32c43…` is not a true retained dispatcher: its controller/staging
+scope is unconsumable, and a failure after the first repair request escapes
+instead of publishing a fresh generation. No claim or endpoint arm was
+consumed.
+
+Binding `ee2d6d5f…` authorizes one execution-profile continuation. Before
+claim, publish owner R2 and packet R2 with a multi-generation repair loop; then
+claim the exact available H200 by `05:07Z`, launch by `05:10Z`, and run exactly
+one stock/candidate c32 pair. Release by `05:44Z`; component replay and provider
+lifecycle mutation remain forbidden.
+
+## 2026-07-30T04:57Z — preserve the live R2 endpoint pair
+
+Owner `554215`/`150337380` is live under the exact claim
+`2026-07-30T04:55:56.475891Z`; its heartbeat advanced to `04:57:16Z`.
+Generation 0 failed before CUDA or either endpoint arm because the remote stage
+root did not exist. The retained dispatcher consumed repair
+`endpoint-r2-0-1785387357`, created that root, and re-entered generation 1 at
+the unchanged `scientific_pair` scope.
+
+Preserve this sole owner through the one sequential stock/candidate c32 pair,
+a typed retained repair boundary, or the `05:44Z` release fence. Do not launch
+a competitor, release or re-claim, replay the component, add endpoint samples,
+or mutate provider lifecycle; watchdog PID `546249` remains active through
+`05:51:56Z`.
+
+## 2026-07-30T04:59Z — keep generation 1 in flight
+
+Owner `554215`/`150337380` and claim
+`2026-07-30T04:55:56.475891Z` remain exact and live. The owner heartbeat and
+claim heartbeat advanced to `04:58:36Z`; generation 1 remains at
+`scientific_pair`, with no pair terminal or new repair boundary.
+
+Keep the current claim, owner, and watchdog unchanged through the authorized
+pair or a typed boundary. Do not dispatch another researcher, release or
+re-claim, replay settled work, or mutate provider lifecycle.
+
+## 2026-07-30T05:06Z — bind a candidate-only same-claim handoff
+
+Generation 1 consumed the stock arm: 32 complete requests measured
+`1.006774868593709 s/request`, but the OpenAI SSE observer recorded no token
+IDs. Candidate startup then failed before readiness or any request when its
+load path attempted a 256-element weight into a 512-element parameter. R2
+`554215`/`150337380` remains live at repair
+`endpoint-r2-1-1785387560`, but every implemented retry scope either replays
+stock or retrieves an absent pair terminal.
+
+Binding `7072b2f1…` delegates one execution-profile R3 handoff. Recover exact
+stock token IDs only from its immutable response artifacts, repair the
+candidate load path without changing the accepted operation, and hash-bind a
+candidate-only true dispatcher. Once ready, generation-fenced replace only
+the exact R2 PID under claim `2026-07-30T04:55:56.475891Z`, enter candidate
+only by `05:23Z`, and release by `05:44Z`. If exact control IDs cannot be
+proved without new requests, persist a typed no-go and release. Do not send an
+R2 repair request, replay stock or the component, re-claim, weaken the oracle,
+or mutate provider lifecycle.
+
+## 2026-07-30T05:07Z — preserve the R3 preparation lane
+
+Binding `7072b2f1…` remains exact. R2 `554215`/`150337380` is still live and
+heartbeating the original claim at repair wait; no R2 terminal exists. None of
+the candidate-only runner, token observer, owner R3, packet R3, or derived
+execution binding is durable yet.
+
+Keep R2 and the claim untouched while the execution researcher publishes all
+five hash-bound outputs. Do not write an R2 request, replace the owner early,
+dispatch a competitor, replay an arm, or mutate provider lifecycle.
+
+## 2026-07-30T05:14Z — replace the unavailable token-ID gate with emitted chunks
+
+Measured observer `0caccbbd…` binds all 32 immutable stock SSE files: every
+request has 358 ordered `choice.text` chunks, one exact usage event, and zero
+token IDs. This closes the optional token-ID observer, not the
+semantics-preserving kernel mechanism. The five R3 files are incomplete
+observer/placeholder bytes and are not execution authority.
+
+Binding `6e94de48…` requires an actual candidate-only R4 runner and exact
+byte-for-byte equality of each matched request's ordered 358 emitted chunks,
+finish fields, and accounting, ignoring only transport-volatile IDs and
+timestamps. It also requires the narrow 256-to-512 candidate load repair and
+reports timing against both frozen stock `1.006774868593709 s/request` and the
+fixed qualified `0.625149101968745` denominator. Prepare all R4 bytes before
+generation-fenced replacement of only R2 `554215`/`150337380`; enter candidate
+by `05:29Z` and release by `05:44Z`. Do not replay stock or the component,
+write an R2 request, normalize or decode/re-encode output, re-claim, or mutate
+provider lifecycle.
+
+## 2026-07-30T05:27Z — bind the live R4 numeric-scale repair
+
+R4 `570159`/`150495435` safely replaced R2 under the original claim and its
+first in-place repair reached CUDA graph capture, but generation 1 still
+failed before server readiness or any candidate request: the endpoint passed
+non-numeric KV-scale objects into Triton constexpr division. The frozen stock
+and component remain un-replayed; the exact claim and watchdog PID `546249`
+are live.
+
+Binding `ab2441f6…` delegates one narrow execution-profile repair on the same
+dispatcher. Convert both live KV scales to finite positive Python numeric
+scalars, hash-bind and atomically stage only the changed source bytes, then
+request repair `endpoint-r4-1-1785389143` by `05:32Z` and re-enter
+candidate-only by `05:34Z`. The prior repaired startup took about 55 seconds,
+so one retry plus 32 requests, terminal persistence, and release still fits
+the `05:44Z` fence. Do not replace the owner, replay stock or the component,
+weaken emitted-chunk equality, re-claim, or mutate provider lifecycle.
+
+## 2026-07-30T05:29Z — preserve the runnable R4 scale-repair lane
+
+Owner `570159`/`150495435` remains live and heartbeating the original claim at
+repair `endpoint-r4-1-1785389143`. Binding `ab2441f6…` is durable, no repair
+request or terminal has appeared, and watchdog PID `546249` remains active
+through `05:51:56Z`.
+
+Keep this as the sole execution lane and let the harness dispatch its narrow
+numeric-scale patch by `05:32Z`. Do not add a competitor, replace the owner,
+release or re-claim, replay stock or the component, or mutate provider
+lifecycle.
+
+## 2026-07-30T05:46Z — correct the invalid R4 endpoint path on the warm H200
+
+R4 terminal `2835f52e…` is an invalid invocation, not candidate evidence: its
+completion-shaped `prompt` bodies were sent to `/v1/chat/completions`, and all
+32 calls returned HTTP 400 in 5–26 ms with zero SSE events or complete
+responses. The frozen stock used `/v1/completions`; therefore no interpretable
+candidate sample was consumed.
+
+Binding `cf214244…` delegates one execution-profile R5 that changes only the
+request path, preserves bounded HTTP-error bodies, and runs exactly one
+corrected 32-request candidate-only arm. Prepare and hash-bind the R5 runner,
+true dispatcher, packet, and derived binding before claiming by `05:54Z`;
+launch by `05:57Z` and release by `06:12Z`. Stock and component replay remain
+forbidden.
+
+The exact H200 is available and quiescent. Inventory now records replacement
+watchdog PID `580054` through `06:20Z`; old PID `546249` was stopped only
+after the rebind. Conservative cumulative exposure is `$3.5203`, within the
+durable `$4` reservation.
+
+## 2026-07-30T05:49Z — move R5 preparation behind a fresh execution clock
+
+All four R5 execution artifacts were absent at `05:46:46Z`. The closest
+endpoint preparation took 469 seconds, so the old `05:54Z` claim fence could
+not also provide the required 120-second scheduler runway. Binding
+`5f529b64…` supersedes only the runnable fences in `cf214244…`; the corrected
+`/v1/completions` candidate-only science and frozen oracle remain unchanged.
+
+Keep the project active for offline preparation of the runner, true
+dispatcher, packet, and derived binding, with claim/SSH/CUDA/endpoint access
+disabled. Publish readiness last and pause. A later director will issue a
+fresh claim clock after those exact bytes are durable. The H200 remains safe,
+available, and unclaimed under watchdog PID `580054` through `06:20Z`.
+
+## 2026-07-30T05:57Z — repair R5 ownership before opening the warm claim
+
+The corrected runner `42f12828…`, packet `3238107c…`, and offline validation
+are durable, but owner `a9f7fa5e…` is not safely runnable. An ordinary outer
+exception or deadline terminal can stop its heartbeat without publishing an
+executable repair or generation-fenced release, and no exact project-relative
+claim/derive/detached-launch entrypoint exists.
+
+Binding `2803248d…` reactivates the same project for one offline
+execution-profile repair. Preserve the scientific runner and oracle; repair
+the multi-generation owner, add the exact claim-launch seam, rebind the packet
+and offline envelope, and publish the paused claim-disallowed validation last.
+The H200 remains available and unclaimed under watchdog PID `580054`; if
+repaired bytes are not ready with measured execution margin, exact-ID cleanup
+at `06:20Z` is the lifecycle fallback.
+
+## 2026-07-30T06:00Z — add an independent packed-verifier deep lane
+
+Preserve the R5 owner-retention repair under binding `2803248d…` as the sole
+warm-H200 lane; it remains offline, claim-disallowed, and scientifically
+unchanged.
+
+Admit `gemma4_h200_packed_m384_target_verifier` as an independent deep,
+zero-spend, zero-GPU project. Its first result must bind the exact pinned
+Gemma hybrid-attention producer/consumer and falsify three legal packed H200
+decompositions plus a negative control with wave, register, shared-memory,
+traffic, and whole-request bounds. It may promote one exact-shape GPU contract
+only after a concrete source decomposition and CPU/reference oracle survive;
+otherwise it must publish a typed analytical negative.
+
+The new lane cannot read or share the R5 project, claim, bench, or artifacts,
+so it uses free researcher capacity without racing the urgent endpoint repair.
+No provider lifecycle mutation is warranted; watchdog PID `580054` remains
+the exact cleanup authority through `06:20Z`.
+
+## 2026-07-30T06:10Z — open the repaired R5 candidate-only execution
+
+Owner-repair validation now binds the corrected `/v1/completions` runner, a
+multi-generation retained dispatcher, generation-fenced release, and one
+project-relative ready-gated claim/launch seam. The exact H200 is available,
+unclaimed, quiescent, and protected by watchdog PID `580054`.
+
+Authorize only `gemma4_h200_fixed_floor_crossop_executor` to claim by
+`06:15:30Z`, enter the candidate-only arm by `06:16:45Z`, persist its terminal
+by `06:17:45Z`, and release by `06:18:30Z`. Run exactly 32 corrected candidate
+requests against the frozen emitted-chunk oracle; do not replay stock or the
+component. The closest measured startup plus request and terminal margin fits
+before watchdog cleanup at `06:20Z`, and conservative exposure remains inside
+the durable cumulative `$4` reservation.
+
+Keep `gemma4_h200_packed_m384_target_verifier` active as the independent deep,
+zero-GPU lane; it remains structurally unable to race this claim. No provider
+lifecycle mutation is required.
+
+## 2026-07-30T06:17Z — repair the live R5 packet omission in place
+
+R5 owner `594894`/`150806388` reached the exact candidate startup, made zero
+requests, and retained claim `2026-07-30T06:14:06.380138Z` at repair
+`endpoint-r5-0-1785392088`. Remote stderr proves the staged packet omitted
+`install_fused_qkv_cache.py`; the bound model module therefore failed import,
+SGLang fell back to the incompatible Transformers loader, and that fallback
+reproduced the 256-to-512 weight mismatch before readiness.
+
+Binding `bed8f8c9…` stages only the missing source byte
+`8602b00e…` into the existing remote R5 project. Its exact remote hash was
+verified, then request `f9810d20…` was delivered to the live multi-generation
+dispatcher after rechecking the owner, repair-ready record, and original claim
+generation. Preserve this owner through its candidate-only retry or the
+`06:18:30Z` release fence. Do not replace the owner, replay stock/component,
+submit competing traffic, or mutate provider lifecycle.
+
+## 2026-07-30T06:22Z — repair R5 packet closure before a fresh lifecycle
+
+R5 terminal `18826018…` closed at the release fence with
+`science_consumed:false`. Generation 1 reproduced the missing
+`install_fused_qkv_cache` import because the owner re-materialized packet
+`2fa08d7e…` before retry and overwrote the ad hoc remote copy. This is a
+deterministic packet-closure defect; no candidate request, stock replay, or
+component replay occurred.
+
+Binding `696c9795…` keeps the same R5 science active for one zero-GPU,
+execution-profile closure repair. Add installer `8602b00e…` and every
+transitive runtime source to the hash-bound packet, prove clean-stage import
+and repeated-stage retention, then pause with claim disabled. Request a
+cumulative `$10` reservation for one later cold H200 lifecycle; the current
+`$4` snapshot is not create authority.
+
+The exact prior instance was verified `DELETING` at `06:20:24Z`; both managed
+disks remained attached/READY while reconciliation ran, and inventory is
+`draining`. Do not interrupt or reuse it. A later director must verify all
+three provider IDs absent once and retire the bench before any replacement
+create. Keep the independent packed-M384 deep lane active.
+
+## 2026-07-30T06:27Z — retire the old H200 and fund a bounded cold restart
+
+The exact prior instance and both disks now return provider `NotFound`; the
+cleanup watchdog exited successfully, so the draining bench was retired.
+Full shared exposure was `$14.22433`, but R5's apportioned interval from its
+`03:51:39Z` reservation through verified cleanup is `$6.27336`.
+
+Binding `74e3883…` requests a cumulative `$13.5` R5 reservation. This covers
+recorded R5 exposure plus a conservative 150-minute replacement-H200
+lifecycle and storage margin. The currently durable `$10` reservation is
+insufficient, so no provider create or claim is authorized; packet closure
+`696c9795…` remains the immediate execution-profile work.
+
+The packed-M384 project closed its three prescribed decompositions with a
+typed analytical negative: stock already spans eight H200 waves and legal
+slices add work or traffic. Replace that independent lane with
+`gemma4_h200_gelu_mul_fp8_quant_fusion`, a zero-GPU deep project that binds the
+exact c32 GeluMul producer and dynamic-E4M3/down-projection consumer. It must
+produce a source-level fusion plus CPU oracle and H200 falsifier, or a typed
+negative. No R5 artifact, bench, or provider dependency is shared.
+
+## 2026-07-30T06:33Z — protect a cold replacement H200 before R5 packet closure
+
+The cumulative `$13.5` reservation is now durable. Recorded R5 exposure
+`$6.273359945` plus a 150-minute preemptible H200 at `$2.45/hour` and the
+declared storage/rounding margin totals `$12.648359945`, so binding
+`cd036ec1…` provisions the authorized replacement.
+
+Nebius instance `computeinstance-e00aehxdq8mpd68epd` and managed boot disk
+`computedisk-e00bqr4tbj817e02wx` are registered once as maintenance bench
+`h200-r5-computeinstance-e00aehxdq8mpd68epd`. Exact-ID watchdog PID `607919`
+is active through `09:01:39Z`. No SSH, accelerator probe, bootstrap,
+checkpoint staging, claim, CUDA work, or endpoint request occurred.
+
+Keep R5 active for packet closure `696c9795…` with claim disabled. A later
+director lifecycle handoff must reconcile the registered host key, verify the
+exact H200 identity and quiescent runtime, and persist bootstrap state before
+making this bench ready. Keep the independent GeluMul-to-dynamic-E4M3 fusion
+deep lane unchanged.
+
+## 2026-07-30T06:45Z — verify the replacement H200 and bind the final cold-owner seam
+
+Packet closure `13582f0b…` binds packet `846bd42a…`, both clean-stage import
+passes, the retained owner, launcher, and unchanged candidate runner. Provider
+state for instance `computeinstance-e00aehxdq8mpd68epd` is `RUNNING` with the
+registered managed disk and IP. Strict SSH reconciled a new ED25519 key
+`SHA256:32koaBpM…`; cloud-init is complete, and the guest exposes exactly one
+H200 `GPU-e26e853a…`, driver `580.159.04`, zero GPU compute processes, zero
+containers, and 224.5 GiB free. Binding `3374bb7c…` records the identity, and
+the bench is now available under watchdog PID `607919` through `09:01:39Z`.
+
+The validated warm owner still assumes the retired checkpoint path, so it is
+not a cold-bench launcher. Binding `73c0ead5…` delegates one final
+execution-profile amendment in the same project: a durable claim owner and
+exact launcher that reconcile target, draft, image, workload, packet, and
+oracle manifests resumably, retain repair ownership, and continue directly
+into the unconsumed R5 candidate arm. Claim remains disabled until those exact
+bytes are hash-bound; no SSH staging, CUDA, image pull, checkpoint transfer,
+or endpoint request was delegated in this turn. The independent GeluMul FP8
+fusion lane remains active and unchanged.
+
+## 2026-07-30T06:58Z — close the concrete R5 manifest seam and restore deep work
+
+Concurrent ready artifact `da063c6e…` binds the new cold owner and launcher,
+but not a concrete target/draft acquisition manifest. The owner requires local
+sources in `immutable_manifests.files`, while the exact snapshots are absent
+from the checked controller caches and lab roots. Claiming now would fail
+before staging or model startup. Binding `8461cdf3…`
+keeps R5 claim-disabled for one narrow execution-profile closure: bind a real
+resumable acquisition route and full immutable manifest, or publish the exact
+credential/authority blocker. Candidate science and replay prohibitions do
+not change.
+
+The replacement H200 remains available, unclaimed, and quiescent under
+watchdog PID `607919`; no lifecycle mutation is warranted. In parallel,
+reopen `gemma4_h200_current_norm_fp8_hotblock` in place under
+`DIRECTOR_NORM_FP8_EXACT_ORDER_REOPEN_20260730T0651Z.json`. Its rejected source
+lowered the real-QKV component median by `13.0%` at M=16 and `14.9%` at M=32
+but failed exact bytes. The zero-GPU deep cycle must reproduce the pinned
+reduction/rounding/quantization order exactly or publish a typed negative, and
+cannot read or race the R5 project or bench.
+
+## 2026-07-30T07:00Z — preserve the two runnable offline lanes
+
+Neither `R5_COLD_MANIFEST_READY.json`, `R5_CHECKPOINT_ROUTE_BLOCKED.json`, nor
+`MECHANISM_REPAIR_TERMINAL.json` exists yet. Keep the execution-profile R5
+manifest-acquisition closure and the independent deep norm-to-FP8 exact-order
+cycle active without changing either contract.
+
+The replacement H200 remains available and unclaimed; watchdog PID `607919`
+is active through `09:01:39Z`. No claim, competitor, provider mutation, or
+additional project is warranted before these already-runnable workers return.
+
+## 2026-07-30T07:01Z — preserve after the provider safety audit
+
+The supervisor verified exact provider/inventory agreement and watchdog PID
+`607919`; the R5 manifest ready/blocker and norm-to-FP8 mechanism terminal are
+still absent. Preserve both active offline contracts unchanged and return for
+scheduler admission. No claim or lifecycle mutation is warranted.
+
+## 2026-07-30T07:05Z — pause credential-blocked R5 and retain through the deep result
+
+`R5_CHECKPOINT_ROUTE_BLOCKED.json` is a typed external-authority terminal:
+the exact target/draft routes and files are known, but the controller has no
+Hugging Face client credential, standard token environment variable, token
+file, or director-bound immutable object source. Pause R5 with claim disabled;
+do not redispatch manifest acquisition or touch the cold guest.
+
+Keep `gemma4_h200_current_norm_fp8_hotblock` active under its existing deep
+exact-order contract. Retain the available, unclaimed H200 under watchdog PID
+`607919` through that next result: its closest cycle took about eight minutes,
+so a source-correct exact-H200 component follow-up is plausible well inside
+the idle-versus-cold-start break-even. At that terminal, select and reserve
+the compatible follow-up before deciding whether to drain. No provider
+lifecycle mutation is warranted now.
+
+## 2026-07-30T07:24Z — fund the exact-order component and open a mainloop lane
+
+The norm exact-order terminal is source-complete: 147/147 CPU rows preserve
+activation, scale, normalized-BF16, and reduction bytes; the sm90a build uses
+32 registers, 10,880 B shared memory, and no spills. Reopen
+`gemma4_h200_current_norm_fp8_hotblock` in execution profile and request a
+cumulative `$2.00` reservation for exactly one M=1/16/32 real-QKV component
+falsifier. Its prior `$0.234` plus at most 40 minutes at `$2.45/hour` fits.
+Keep claim disabled until the reservation is durable.
+
+Retain the available H200 under watchdog PID `607919`; its local 176 MB
+component snapshot makes this successor independent of the blocked R5
+checkpoint route. In parallel admit
+`gemma4_h200_rmsnorm_fp8_qkv_mainloop_fusion` as a zero-GPU deep lane. It must
+either produce a concrete SM90a producer/consumer handoff that avoids global
+FP8 activation materialization, with an exact fragment oracle, or prove the
+QKV fan-out and synchronization physically negative. R5 remains paused. No
+provider lifecycle mutation is warranted in this reservation turn.
+
+## 2026-07-30T07:27Z — correct the norm reservation field
+
+The spend snapshot still has no norm reservation because the harness reserves
+from `STATUS.json.authorized_spend_usd`; the prior handoff left that field at
+`0.0` and wrote `$2.00` only to descriptive
+`requested_cumulative_spend_usd`. Set `authorized_spend_usd: 2.0` while
+preserving `reservation_required: true` and `claim_allowed: false`. The next
+harness cycle may reserve the exact cumulative ceiling and must wake the
+director before execution.
+
+Keep the independent mainloop-fusion deep lane active and the H200 available,
+unclaimed, and protected by watchdog PID `607919`. No claim, provider
+lifecycle mutation, or scientific-contract change is authorized in this
+correction turn.
+
+## 2026-07-30T07:30Z — open the corrected norm component on the retained H200
+
+The cumulative `$2.00` norm reservation is durable. Bind the exact local
+176 MB layer-0 snapshot, corrected source `fba1452c…`, runner `99656cd8…`,
+pinned image, and H200 `GPU-e26e853a…` for one M=1/16/32 real-QKV component
+ledger. Claim by `07:42Z`, enter science by `07:54Z`, target a terminal by
+`08:14Z`, and release by the earlier of claim plus 2,400 seconds or `08:22Z`.
+Ordinary pre-decision launcher, container, build, or retrieval defects remain
+repairable under one durable heartbeating owner; immutable science does not
+change.
+
+Reassign the available bench from credential-blocked R5 to the norm component.
+Attribute replacement-bench exposure conservatively through `07:32Z` to R5,
+raising its cumulative actual spend to `$8.7374271958`; subsequent selected exposure
+belongs to the norm project. Keep the mainloop-fusion project active as the
+independent zero-GPU deep lane. No provider create, delete, watchdog change,
+or endpoint work is authorized.
+
+## 2026-07-30T07:39Z — repair the norm retained-owner seam before claim
+
+The execution worker produced owner `447fd5c7…` and launcher `fe469059…` but
+did not claim or consume science. Inspection found three preclaim control-flow
+defects: a repair request returns directly to maintenance release without
+running another generation, a pre-adoption launcher failure has no
+generation-fenced fallback release, and owner readiness follows the long
+176 MB staging step despite a 30-second detached-launch wait.
+
+Binding `06afcde8…` supersedes the `07:30Z` claim clock and delegates one
+offline execution-profile repair of only those two files. Require fast durable
+owner adoption, exact-generation release on every path, a real same-claim
+retry generation, and five deterministic fault injections; publish
+`NORM_FP8_OWNER_CONTROL_READY.json` last with claim disabled. Attributed norm
+exposure is `$0.5198333333` through `07:39Z`; without more reservation, a
+later execution must release by `08:15:15Z`. Keep the H200 available and
+unclaimed under watchdog PID `607919`, and keep the independent mainloop
+fusion deep lane unchanged. No provider lifecycle or scientific mutation is
+authorized.
+
+## 2026-07-30T07:42Z — fold the completed producer identity into the owner repair
+
+Grouped current-byte hashes confirm the supervisor's conflict:
+`MECHANISM_REPAIR_TERMINAL.json` finalized as `b1d8254e…`, while the stale
+execution packet and generated owner bind provisional `02cf61cc…`. No claim
+or scientific sample occurred. Amendment `be1adf1f…` supersedes `06afcde8…`
+before researcher admission and combines that exact metadata correction with
+the already-delegated two-file owner-control repair. The same
+`NORM_FP8_OWNER_CONTROL_READY.json` terminal must bind all current science
+bytes, pass the five deterministic owner fault injections, and remain
+claim-disabled.
+
+Attributed norm exposure is `$0.6423333333` through `07:42Z`; the unchanged
+`$2` reservation still implies release by `08:15:15Z` unless increased. Keep
+the H200 available and unclaimed under watchdog PID `607919`, and preserve the
+independent mainloop-fusion deep lane. No GPU, SSH, science, or provider
+lifecycle action is authorized.
+
+## 2026-07-30T07:50Z — fund the repaired norm run and replace the closed deep lane
+
+The final norm owner terminal `2bac2d50…` now binds owner `99153d9f…`,
+launcher `ed7e805f…`, completed mechanism `b1d8254e…`, and five passing fault
+injections; no claim or science occurred. Attributed exposure is `$0.969`
+through `07:50Z`. The old `$2` ceiling leaves only until `08:15:15Z`, shorter
+than cold image pull, component execution, one retained repair, terminal, and
+release. Request cumulative `$3.00` under binding `521eaa9e…`; keep claim
+disabled until that reservation is durable. This extends the conservative
+project boundary to about `08:39:44Z`, before watchdog PID `607919` begins
+cleanup at `09:01:39Z`.
+
+The independent mainloop project closed fixed-c32 cluster handoff and bounded
+N-tile recomputation: the real QKV consumer's 256 output tiles force
+serialization or producer duplication. Replace it with
+`gemma4_h200_fp8_downproj_residual_norm_fusion`, a zero-GPU deep lane over the
+different down-projection → residual → next-normalization boundary. It must
+produce a source-level exact-consumer decomposition with a CPU fragment oracle
+or a typed physical negative for three legal SM90a dataflows. No GPU, SSH,
+science, or provider lifecycle action occurred.
+
+## 2026-07-30T08:18Z — classify R2 before one deliberate recovery
+
+R2 first exited on its executor census, then the corrected retry reached
+takeover and launched the unchanged worker at `08:15:54Z`. That worker
+returned `1` four seconds later; redirected remote stdout/stderr were not
+retrieved, `out-r2/TERMINAL.json` was absent, and no local internal
+science/CUDA marker or interpretable row exists. Both R2 controller PIDs are
+now absent while the original `07:57:09.853771Z` claim remains recorded.
+
+Binding `f7a668f3…` requires immediate retrieval and consumption
+classification of that exact attempt. Only a proven localized pre-science
+launcher/output defect may continue once under a generation-specific durable
+owner from resident inputs/image and fresh `out-r3`; otherwise release the
+exact generation to maintenance with the diagnostic. Target diagnostic by
+`08:22Z`, science by `08:25:30Z`, terminal by `08:33Z`, and release by
+`08:36:30Z`, never after `08:37:09Z`. No new claim, blind replay, restaging,
+image pull, R5/endpoint work, or provider mutation is authorized.
+
+## 2026-07-30T08:13Z — preserve R2 and restore scheduler runway
+
+R2 readiness is still absent, while predecessor PID `665822` with start ticks
+`151424737` remains live and the original `07:57:09.853771Z` claim is healthy.
+The `08:14Z` standby fence fell below the required scheduler runway before
+admission; this is a lifecycle-clock issue, not new component evidence.
+
+Amendment `5ca9beeb…` extends only R2 standby and scientific start to
+`08:20:30Z` and `08:22:30Z`. Binding `92092f28…`, resident inputs and image,
+the unchanged component, `08:33Z` terminal target, `08:36:30Z` release target,
+and hard `08:37:09Z` claim deadline remain fixed. No new claim, restaging,
+image pull, science, provider mutation, or competitor is authorized.
+
+## 2026-07-30T08:07Z — authorize one standby-first same-claim owner transition
+
+The retained owner reached the pinned image and attempted the component, but
+the container shell failed before its internal invocation marker because
+`../worker.stdout` resolved to an unwritable host path. No output ledger, CUDA
+marker, or scientific sample exists. Generation 0 then consumed a
+retrieval-only repair, and generation 1 reproduced the missing-terminal
+diagnostic because owner PID `665822` can re-enter only `terminal_retrieval`.
+Conflict `16e01c7a…` is therefore a concrete dispatcher-entrypoint defect, not
+a component result.
+
+Binding `92092f28…` authorizes one standby-first R2 transition under the
+unchanged claim `07:57:09.853771Z`. R2 must reuse all verified resident inputs
+and the pulled image, move output capture to the writable host shell, use
+fresh `out-r2`, and continue directly into the unchanged M=1/16/32 consumer.
+It may stop only matching PID `665822`/start ticks `151424737` after R2 is
+durably live in standby. Target standby by `08:14Z`, science by `08:18Z`,
+terminal by `08:33Z`, and release by `08:36:30Z`, never later than the
+claim-derived `08:37:09Z` fence. No new claim, restaging, image pull,
+reservation, provider mutation, or replay is allowed. Keep the independent
+down-projection/residual/norm deep lane unchanged.
+
+## 2026-07-30T07:58Z — preserve the live norm component and deep lane
+
+The exact norm claim opened at `07:57:09.853771Z`. Controller owner PID
+`665822` is live with matching start ticks, the pool heartbeat advanced to
+`07:57:40Z`, and generation 0 has verified the final bound
+`runtime_adapter.py`, completing immutable staging. No terminal or repair
+boundary exists, so leave the owner, claim, `$3` ceiling, `08:39Z` release
+fence, and watchdog PID `607919` unchanged.
+
+Keep `gemma4_h200_fp8_downproj_residual_norm_fusion` active in its independent
+zero-GPU deep profile. Do not rewrite the in-flight component contract, add a
+bench competitor, poll the owner, or mutate provider lifecycle before a typed
+terminal or repair handoff wakes the director.
+
+## 2026-07-30T07:54Z — open the repaired exact-order norm component
+
+The cumulative `$3.00` reservation is durable. One grouped current-byte
+snapshot binds owner-control terminal `2bac2d50…`, owner `99153d9f…`,
+launcher `ed7e805f…`, completed mechanism `b1d8254e…`, runner `99656cd8…`,
+corrected source `fba1452c…`, and the 176 MB component `dfa05dcf…`.
+Binding `0b2ee270…` clears the reservation gate and opens exactly one
+M=1/16/32 real-QKV H200 component ledger: claim by `07:59Z`, science by
+`08:11Z`, terminal target `08:32Z`, and generation-fenced release by the
+earlier of claim plus 2,400 seconds or `08:39Z`.
+
+Attributed norm exposure is `$1.1323333333` through `07:54Z`; the complete
+window remains below the cumulative ceiling and precedes watchdog PID
+`607919` cleanup at `09:01:39Z`. Recoverable pre-decision defects remain
+inside the same retained claim, while rejected-source, endpoint, R5, replay,
+and provider-lifecycle work remain prohibited. Keep the independent
+down-projection → residual → next-normalization deep lane active and
+bench-free.
+
+## 2026-07-30T08:26Z — retire the ownerless H200 lineage
+
+R2 exited before an interpretable component result and left neither a durable
+controller nor the required diagnostic/recovery terminal. The supervisor's
+drain fence is therefore decisive: generation-fence and release claim
+`07:57:09.853771Z` to maintenance instead of authorizing a blind R3 replay.
+One pre-cleanup provider census verified exact instance
+`computeinstance-e00aehxdq8mpd68epd` RUNNING and disk
+`computedisk-e00bqr4tbj817e02wx` READY; deletion operation
+`computeoperation-e00ysgsrgdhb5psnzv` was then submitted. The post-cleanup
+census is empty for both instances and disks, and the pool retired the bench
+at `08:25:56Z`.
+
+Pause `gemma4_h200_current_norm_fp8_hotblock`. Its corrected source remains
+scientifically unconsumed; no R2 sample or rejected-source timing transfers.
+Lifecycle terminal `3536e00a…` records the cleanup and a conservative
+`$2.436` cumulative project exposure. The remaining `$0.564` of current
+authority cannot cover a new cold lifecycle, so a later director may reopen
+only after fresh cumulative funding and a preclaim owner whose readiness
+reaches the first dynamic worker boundary. No provider resource remains.
+
+## 2026-07-30T08:31Z — restore the direct component and an independent scheduler lane
+
+The portfolio was empty while the campaign remains open. Reactivate
+`gemma4_h200_fp8_downproj_residual_norm_fusion` as the direct measurement
+lane: terminal `27532506…`, exact-consumer contract `b32217ae…`, candidate
+source `8e9e45de…`, and oracle `af6a4832…` support one complete
+M=1/16/32 H200 down-to-QKV falsifier without another readiness project.
+Request a cumulative `$3.00` reservation under binding `6c6c0193…`, covering
+at most 70 minutes at `$2.45/hour`. The supplied spend snapshot has only
+`$1.201988` free and no matching reservation, so provider creation and claim
+remain disabled until a later director observes durable authority.
+
+In parallel admit `gemma4_fp8_decode_cross_tick_batch_coalescing` as a
+zero-GPU deep lane. It must determine whether bounded, layer-consistent
+coalescing across scheduler ticks can turn recurring `M<=32` FP8 decode
+linears into larger GEMMs with fewer weight bytes and launches while
+preserving exact request/KV semantics and usable completion time. It must
+publish a minimal source/simulation candidate plus an exact H200 discriminator
+or a typed physical negative. No provider lifecycle mutation occurred.
+
+## 2026-07-30T08:36Z — settle bench-free reservations before provisioning
+
+The pending `$3.00` component reservation is blocked by three `paused`
+projects retaining `$26.50` despite null sessions and zero provider inventory.
+Convert only their scheduler dispositions so the harness can settle actual
+spend: the verified-cleanup norm attempt is completed at `$2.436`, R5 is
+blocked on its typed external checkpoint credential at `$8.73742719575`, and
+the consumed objective-ineligible QKV endpoint is completed at `$9.772298`.
+Their scientific classifications, non-replay rules, and external blocker are
+unchanged.
+
+Keep the direct down-to-QKV component and independent cross-tick batching
+lanes unchanged. Normal settlement on the next harness cycle should release
+the unused old ceilings and make the requested `$3.00` reservation admissible;
+provider creation still waits for a later spend snapshot that contains that
+exact reservation. No provider lifecycle mutation occurred.
+
+## 2026-07-30T08:39Z — keep the now-affordable component behind the durable reservation gate
+
+Settlement restored `$6.990263` of campaign headroom, enough for the direct
+down-to-QKV project's requested cumulative `$3.00` ceiling. The exact project
+reservation is still absent from the supplied spend snapshot, so keep
+`reservation_required: true` and `claim_allowed: false`; do not create or
+register a provider bench in this turn. The harness can now reserve the
+request and wake a later director for authenticated Nebius H200 placement.
+
+Keep the independent cross-tick batching project active in deep profile while
+the paid lane waits. Its next result remains bench-free and materially
+independent. No provider lifecycle mutation or scientific-contract change
+occurred.
+
+## 2026-07-30T09:05Z — provision the reserved down-to-QKV H200 in maintenance
+
+The exact cumulative `$3.00` reservation is durable. Region-wide placement
+selected high-availability preemptible H200 capacity in Nebius `eu-north1`.
+Create instance `computeinstance-e00qft1sf416qp6knw` with 100-GiB managed disk
+`computedisk-e00qh5cnm6kk3sa8fe`, start watchdog PID `698227` through
+`10:12:54Z`, and register bench
+`h200-downproj-computeinstance-e00qft1sf416qp6knw` in maintenance before SSH.
+The 70-minute compute ceiling is `$2.858333`, within project authority.
+
+The provider reports the instance RUNNING and disk READY, but the first strict
+SSH attempt was refused before cloud-init, accelerator, or quiescence
+verification. Keep the bench protected in maintenance and pause the direct
+project with claim disabled; a later director may perform one exact-identity
+probe and make only this project claimable if it passes. No CUDA, input
+staging, image pull, or scientific invocation occurred.
+
+## 2026-07-30T09:11Z — open the strict H200 exact-consumer claim
+
+The exact maintenance probe now passes: strict ED25519 fingerprint
+`+fo6Q6…`, H200 `GPU-c83b9102…`, driver `580.159.04`, Docker `29.5.3`,
+85.0 GB free, zero compute processes, and zero containers. Mark
+`h200-downproj-computeinstance-e00qft1sf416qp6knw` ready and reactivate only
+`gemma4_h200_fp8_downproj_residual_norm_fusion`.
+
+Binding `DIRECTOR_DOWNPROJ_RESIDUAL_NORM_H200_EXECUTION_20260730T0909Z.json`
+rehashes the completed source, oracle, mechanism, and exact-consumer contract
+for one mutable-claim M=1/16/32 ledger. Claim by `09:18Z`, target science by
+`09:42Z`, terminal by `10:00Z`, and generation-fenced maintenance release by
+`10:04Z` with a hard `10:05Z` fence before watchdog cleanup at `10:12:54Z`.
+No CUDA or scientific invocation occurred in this director turn.
+
+## 2026-07-30T09:16Z — restore an independent M384 target-verification lane
+
+The direct down-projection component claimed the strict H200 at `09:13:31Z`
+under its unchanged `$3.00` authority and remains the sole bench mutator.
+Preserve that in-flight execution. The completed cross-tick project proves
+that future rows cannot be legally coalesced and that the qualified NGRAM c32
+endpoint already exposes full `M=384` target-verification waves.
+
+Replace that closed scheduler lane with
+`gemma4_h200_m384_target_verify_attention_executor`, a zero-GPU deep project
+over the within-tick local/global attention path. It must trace the production
+Q/K/V and paged-KV consumer, quantify compulsory traffic and launch/grid
+geometry, and produce a concrete source candidate plus exact CPU/H200
+contracts or a typed physical negative. No GPU, science, spend, claim, or
+provider lifecycle mutation occurred in this rebalance.
+
+## 2026-07-30T09:20Z — preserve the live down-to-QKV owner
+
+Controller owner PID `703939` matches its recorded start ticks, is live, and
+has advanced through staging to durable phase `remote_science`. The original
+`09:13:31.913396Z` claim is heartbeating, the bench is not draining, and
+watchdog PID `698227` remains active through `10:12:54Z`. There is no terminal,
+repair request, or lifecycle conflict to adjudicate.
+
+Keep the in-flight down-projection component scientifically unchanged and keep
+the independent zero-GPU M384 attention lane active. No project, claim, spend,
+science, or provider lifecycle mutation is authorized in this preservation
+turn.
+
+## 2026-07-30T09:29Z — repair the warm down-to-QKV wrapper in place
+
+Terminal `d983c4a3…` proves the first component attempt failed before CUDA,
+science, or any ledger row because its mutable extension wrapper called the
+unavailable `at::cuda::getDefaultCUDAStream` API. The immutable candidate,
+oracle, mechanism, and exact-consumer contract remain unconsumed. A compact
+strict-host check finds zero GPU processes, zero containers, the pinned image
+resident, 56.1 GB free, and watchdog PID `698227` active.
+
+Re-ready the same H200 for one generation-specific warm repair under the
+unchanged cumulative `$3.00` authority and original lifecycle. Binding
+`DIRECTOR_DOWNPROJ_RESIDUAL_NORM_H200_COMPILE_REPAIR_20260730T0929Z.json`
+allows changes only to the runner's pinned-header stream API and the owner's
+pre-science retention path, then continues directly into the unchanged
+M=1/16/32 component. Claim by `09:38Z`, target science by `09:47Z`, terminal
+by `10:00Z`, and release by `10:03Z` with the original `10:05Z` hard fence.
+Keep the independent M384 attention project active and bench-free.
+
+## 2026-07-30T09:37Z — restore worker-start runway on the warm repair
+
+The repair researcher had not been admitted by `09:36:59Z`, leaving less than
+the required 120-second startup runway on the `09:38Z` claim fence. The H200
+remains available, unclaimed, not draining, and protected by watchdog PID
+`698227`; `H200_COMPILE_REPAIR_READY.json` is absent.
+
+Amend only claim admission to `09:43:30Z` and the science target to `09:49Z`.
+The resident image, immutable science, two-file repair scope, cumulative
+`$3.00` authority, `10:00Z` terminal target, `10:03Z` release target,
+`10:05Z` hard release, and `10:12:54Z` watchdog remain unchanged. The warm
+11-second compile boundary and 1,290-second latest-claim execution window
+still fit. Return immediately so the harness can schedule the execution lane.
+
+## 2026-07-30T09:43Z — close the down-projection finalizer and fund M384 attention
+
+The repaired component produced a complete 15-row exact H200 ledger. Every
+residual, scale, E4M3, QKV, symbol, and zero-semantics gate passes, but the
+candidate is slower than the materialized control by `0.197%`, `0.311%`, and
+`0.176%` at M=1/16/32. Close only the row-owned down-projection finalizer and
+do not spend on an endpoint transfer. Attribute provider exposure through this
+handoff as `$1.6373078084`.
+
+Reactivate `gemma4_h200_m384_target_verify_attention_executor` as the next
+direct lane. Its semantic schedule, CPU oracle, physical model, and exact
+H200 contract are durable, while its SM90a kernel remains honestly
+unimplemented. Request a cumulative `$3.00` reservation for implementation,
+one component ledger, and one conditional endpoint pair on the retained H200.
+Keep the bench in maintenance until a later snapshot contains that exact
+reservation; that director must replace the watchdog before its `10:12:54Z`
+cleanup boundary.
+
+In parallel admit
+`gemma4_m384_target_verify_vocab_acceptance_fusion`, a zero-GPU deep lane over
+the independent 262,144-way output-head → sampler → acceptance boundary. It
+must prove an exact tiled consumer with a CPU oracle and H200 contract or a
+typed semantic/physical negative. No new claim, CUDA call, provider mutation,
+or endpoint run occurred in this rebalance.
+
+## 2026-07-30T09:53Z — open the retained M384 attention component
+
+The exact cumulative `$3.00` reservation is durable. One authenticated
+provider census matches the retained lineage: instance
+`computeinstance-e00qft1sf416qp6knw` is RUNNING and disk
+`computedisk-e00qh5cnm6kk3sa8fe` is READY. Replacement watchdog PID `722446`
+now protects the same resources through `10:53Z`; inventory was switched
+before old PID `698227` was stopped and verified inactive. Attribution from
+the `09:43Z` handoff through that deadline is at most 4,200 seconds /
+`$2.8583333333`, below project authority.
+
+Binding `0233c50c…` rehashes all completed mechanism, semantic, oracle,
+physical, source, and discriminator bytes and opens one sole-claim mutable
+SM90a implementation plus exact local/global M384 component ledger. Claim by
+`10:12Z`, target science by `10:26Z`, terminal by `10:43Z`, and release by
+`10:48Z` with a hard `10:49Z` fence. The pinned image is resident. Because the
+100-GiB guest has no full checkpoint, endpoint science is excluded here; a
+correct positive component may request a separately budgeted endpoint.
+Preserve the independent vocabulary-acceptance deep lane unchanged.
+
+## 2026-07-30T09:57Z — restore M384 implementation admission runway
+
+No owner, claim, or execution-ready artifact existed at `09:55:09Z`. The
+original `10:12Z` claim fence no longer covered the closest measured
+1,154-second preparation plus the required worker-start margin. Amendment
+`2633f981…` moves only claim admission to `10:17Z` and the science target to
+`10:30Z`; the immutable mechanism, sole claimant, `$3.00` ceiling, `10:43Z`
+terminal, `10:49Z` hard release, and watchdog PID `722446` through `10:53Z`
+remain unchanged. The bench is available and unclaimed with the amended
+contents. Keep the independent vocabulary-acceptance lane active and
+bench-free.
+
+## 2026-07-30T10:03Z — complete M384 implementation under a standby-first R2 owner
+
+Generation 1 is live and heartbeating on the original
+`09:57:05.800998Z` claim, but its first worker returned before CUDA or science:
+`producer_packet.json` was never created. Inspection also proves the staged
+runner only compiles and stops, while the CUDA body is a `q+k+v` layout
+placeholder rather than grouped local/global attention. The existing repair
+request is durable, but owner PID `726791` cannot consume it or re-enter the
+worker.
+
+Binding `7a4ea4de…` authorizes completion of the already-admitted pinned
+producer → stock/candidate exact-consumer path and one standby-first,
+dispatcher-capable R2 transition under the same claim. R2 must be ready by
+`10:18Z`, target science by `10:30Z`, terminal by `10:43Z`, and release by
+`10:48Z` with the `10:49Z` hard fence. It may stop only PID `726791` with
+start ticks `152144312` after re-reading the unchanged claim and proving R2
+standby. No replay, new claim, synthetic Q/K/V, endpoint, or provider mutation
+is authorized. Preserve the vocabulary-acceptance deep lane unchanged.
+
+## 2026-07-30T10:07Z — preserve the runnable R2 recovery
+
+Binding `7a4ea4de…` remains the only runnable action. At commit time its R2
+readiness marker was absent, predecessor PID `726791` still matched start
+ticks `152144312`, and the original `09:57:05.800998Z` claim was current with
+a `10:06:31Z` heartbeat. Watchdog PID `722446` still protects the exact bench
+through `10:53Z`; the bench is not draining.
+
+Keep the standby-first R2 transition, immutable component, and all existing
+`10:18Z`/`10:30Z`/`10:43Z`/`10:48Z`/`10:49Z` fences unchanged. Do not add a
+project, release or reacquire the claim, or mutate provider lifecycle before
+the bound execution researcher consumes this recovery.
+
+## 2026-07-30T10:08Z — consume the stale replacement conflict
+
+The latest researcher handoff only restates that generation 1 cannot replace
+its owner under the old binding. Recovery binding `7a4ea4de…` already
+supersedes exactly that prohibition after R2 standby, so no further rebind is
+needed. At commit time R2 readiness was absent, PID `726791` still matched
+start ticks `152144312`, and the original claim heartbeated at `10:08:11Z`.
+
+Preserve the existing R2 implementation/transition action and all absolute
+fences unchanged. No claim, science, spend, project, or provider lifecycle
+mutation is authorized in this reconciliation.
+
+## 2026-07-30T10:18Z — end the invalid R2 lineage and restore offline runway
+
+R2 transitioned correctly but failed before Docker or CUDA because its
+producer requires an unbound `M384_MODEL_PATH`; neither controller nor the
+checkpoint-free guest contains the pinned model. Its owner also violates the
+bound dispatcher contract by heartbeating without consuming a repair request.
+Stop only PID `738926`/start ticks `152238109`, release the original claim to
+maintenance, mark the bench draining, and submit exact managed-instance
+deletion operation `computeoperation-e00m3gc9sqznetmgrb`. The provider reports
+the instance `DELETING`; keep inventory unretired until absence is verified.
+
+Keep the attention mechanism scientifically unconsumed and active only for
+offline exact selective-weight producer acquisition under the new binding.
+In parallel admit `gemma4_target_verify_crossop_persistent_executor` as a
+zero-GPU deep lane over the independent request-owned target-verification
+hot-block boundary. No new claim, CUDA invocation, reservation, or provider
+create is authorized.
+
+## 2026-07-30T10:22Z — verify H200 cleanup and retire the bench
+
+One exact authenticated census confirms instance
+`computeinstance-e00qft1sf416qp6knw` and disk
+`computedisk-e00qh5cnm6kk3sa8fe` are both absent after deletion operation
+`computeoperation-e00m3gc9sqznetmgrb`. Watchdog PID `722446` is gone and its
+unit is inactive; retire bench
+`h200-downproj-computeinstance-e00qft1sf416qp6knw` with cleanup verified.
+Attribute 2,371.537719 seconds / `$1.613963169875` to the M384 attention
+project from its `09:43Z` handoff through cleanup.
+
+Keep both active lanes offline and unchanged: exact selective-weight producer
+acquisition for the scientifically unconsumed attention component, and the
+independent cross-operator persistent-executor mechanism study. No provider
+resource, claim, watchdog, or non-retired bench remains.
+
+## 2026-07-30T10:33Z — fund the selective M384 attention component
+
+`PRODUCER_ACQUISITION_TERMINAL.json` proves a reachable revision-pinned
+HTTP-range contract and official local/global Gemma4 producer from only
+642,714,624 selective bytes. Promote the scientifically unconsumed attention
+line directly to one H200 mutable implementation-plus-component attempt; do
+not add another offline readiness seam. The current runner is not yet a
+decision-bearing ledger because it lacks the installed SGLang stock consumer
+and alternating local/global timings, so those remain mutable paid-scope work.
+
+Request a cumulative `$5.25` reservation under binding `f7c6bbe9…`. Prior attribution is
+`$1.613963169875`; an 80-minute H200 lifecycle adds at most `$3.2666666667`,
+plus a `$0.3266666667` ancillary-rate reserve, keeping the conservative total
+at `$5.2072965032`. The incremental `$2.25` fits current campaign headroom, but the exact
+reservation is not yet durable, so no provider creation, claim, SSH, or CUDA
+is authorized. Keep the independent cross-operator persistent-executor lane
+active and unchanged.
+
+## 2026-07-30T10:49Z — open the selective M384 attention H200 claim
+
+The exact cumulative `$5.25` reservation is durable. Region-wide placement
+selected high-availability preemptible H200 capacity in Nebius `eu-north1`;
+create instance `computeinstance-e00x8kg5j0ndhvw2qt` with managed disk
+`computedisk-e00nge39xwr92ms8vc` and protect it through `12:00:20Z` with
+watchdog PID `754193`. A duplicate local registration of those same provider
+IDs triggered the safety drain; remove only the stale row after switching to
+and verifying the final watchdog, leaving one protected provider resource and
+one inventory row.
+
+Strict SSH verifies ED25519 fingerprint `SHA256:gGhpQM…`, H200
+`GPU-c83b9102…`, driver `580.159.04`, Docker `29.5.3`, 85.0 GB free, zero
+compute processes, and zero containers. Make bench
+`h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt` available only to
+`gemma4_h200_m384_target_verify_attention_executor`. Binding `9e2cc151…`
+opens one selective-manifest mutable implementation plus exact alternating
+local/global component ledger: claim by `11:00Z`, target science by `11:30Z`,
+terminal by `11:48Z`, and release by `11:54Z` with a hard `11:55Z` fence. No
+setup, image pull, CUDA invocation, or scientific execution occurred.
+
+## 2026-07-30T10:53Z — restore selective-attention launch runway
+
+The strict H200 remains singular, available, unclaimed, and protected by
+watchdog PID `754193`; the execution-ready artifact and owner are still
+absent. The remaining original `11:00Z` admission window no longer covers the
+nearest 684.189-second preparation plus the required 120-second scheduling
+margin. Amendment `174bbcb0…` moves only initial claim admission to `11:06Z`.
+
+Keep the installed-SGLang selective M384 component, sole claimant, `$5.25`
+ceiling, `11:30Z` science target, `11:48Z` terminal target, `11:55Z` hard
+release, and `12:00:20Z` watchdog cleanup unchanged. No claim, setup, CUDA,
+science, spend change, or provider lifecycle mutation occurred.
+
+## 2026-07-30T10:56Z — preserve the live selective-attention owner
+
+Execution readiness is final and owner PID `760847` matches start ticks
+`152493595`. It adopted the exact `10:55:18.604210Z` claim, heartbeats are
+current, and `OWNER_DYNAMIC_READY.json` proves the owner crossed into
+selective staging. Watchdog PID `754193` remains active through `12:00:20Z`;
+there is no repair, terminal, or lifecycle conflict to adjudicate.
+
+Preserve the in-flight M384 attention component and every existing absolute
+fence unchanged. No project, claim, spend, science, or provider lifecycle
+mutation is authorized in this turn.
+
+## 2026-07-30T10:57Z — preserve staging after researcher return
+
+The execution researcher returned, but durable owner PID `760847` still
+matches start ticks `152493595`, heartbeats the original claim, and remains at
+the bound selective-staging boundary. No repair request, component terminal,
+or lifecycle conflict exists; watchdog PID `754193` is active. Preserve the
+owner and all absolute fences unchanged. No portfolio or provider mutation
+occurred.
+
+## 2026-07-30T11:10Z — re-ready the retained selective producer boundary
+
+Terminal `098d80ac…` proves the first selective owner completed and retained
+the exact manifest and official-module exercise, then failed before CUDA
+because the runner opened an unproduced `producer_packet.json`. The arm and
+component ledger remain unconsumed. Strict guest inspection finds zero GPU
+processes, zero containers, the pinned image resident, both retained hashes
+exact, and 55.5 GB free.
+
+Binding `9990297d…` re-readies the same H200 for one warm same-project repair:
+construct the real installed-SGLang producer/stock-consumer boundary from the
+retained stage and continue directly into the unchanged local/global ledger.
+Claim by `11:22Z`, target science by `11:38Z`, terminal by `11:49Z`, release
+by `11:53Z`, and hard release by `11:55Z` before watchdog cleanup at
+`12:00:20Z`. The existing cumulative `$5.25` authority and provider lifecycle
+are unchanged; no CUDA or scientific sample was run in this director turn.
+
+## 2026-07-30T11:17Z — invalidate the adapter-only READY and finish source offline
+
+Concurrent marker `5dd68a8a…` was not executable readiness: its bound runner
+imports `extend_attention_fwd` but intentionally returns
+`recoverable_stock_adapter_required` before candidate execution or any ledger
+row, and its owner releases every result or exception rather than dispatching
+retained repair. The resulting 21.55-second claim produced terminal
+`e0db8025…`, zero CUDA, and zero science, then safely released to maintenance.
+
+Binding `1169c9dd…` makes the next action bench-free: implement the exact
+pinned SGLang stock signature through candidate and complete local/global
+ledger, and make the owner use `release_on_exception=False` with an executable
+generation-specific repair loop. The old READY is invalid, `claim_allowed` is
+false, and the H200 remains maintenance-fenced under watchdog PID `754193`.
+Target source completion by `11:26Z`; a later director will re-ready only if
+the remaining `11:55Z` release window still fits. No provider or scientific
+mutation occurred in this decision.
+
+## 2026-07-30T11:28Z — open the final warm installed-SGLang component
+
+Offline terminal `6aa6e736…` now contains the pinned SGLang
+`set_kv_buffer`/`extend_attention_fwd` path, candidate correctness and complete
+local/global ledger code, plus a retained-repair owner. Its terminal metadata
+does not independently prove execution readiness, so binding `6b8d5cd8…`
+keeps the science unconsumed and admits only the remaining mutable corrections:
+write the pre-CUDA science marker, resolve the current bench identity, and
+publish dynamic owner readiness before executing that code.
+
+Strict guest evidence at `11:25:28Z` found zero GPU processes, zero
+containers, the pinned image and selective stage resident, and 55.5 GB free.
+Re-ready the same H200 for this sole claimant: claim by `11:34Z`, target
+science by `11:43Z`, terminal by `11:50Z`, release target `11:53Z`, and hard
+release `11:55Z` before watchdog cleanup at `12:00:20Z`. The cumulative
+`$5.25` authority and provider lifecycle are unchanged; no CUDA or scientific
+sample ran in this director turn.
+
+## 2026-07-30T11:30Z — preserve the final warm execution binding
+
+The supervisor's schema objection does not revoke binding `6b8d5cd8…`: that
+binding explicitly treats terminal `6aa6e736…` as incomplete static evidence
+and requires the missing science-start, current-identity, dynamic-ready, and
+exact-runtime checks inside the mutable claim. The final READY and owner are
+still absent, the H200 is available and unclaimed, and the old root
+producer-capture repair pair belongs to the expired generation-1 lineage.
+
+Keep the sole-claim final warm action and all `11:34Z`/`11:43Z`/`11:50Z`/
+`11:53Z`/`11:55Z` fences unchanged. No new gate, claim, science, spend, or
+provider lifecycle mutation is authorized in this reconciliation.
+
+## 2026-07-30T11:34Z — preserve the live final-warm owner
+
+Owner PID `781472` matches start ticks `152717329`, the exact
+`11:32:35.937944Z` claim is current, and dynamic-ready artifact `8346caa9…`
+proves entry into the retained selective-stage → installed-SGLang
+stock/candidate worker boundary. Readiness `38260474…` binds the final runner,
+owner, candidate, retained state, and director binding; no repair or terminal
+exists to adjudicate.
+
+Preserve the live owner, scientific contract, and existing `11:43Z` science,
+`11:50Z` terminal, `11:53Z` release-target, and `11:55Z` hard-release fences.
+No project, claim, spend, or provider lifecycle mutation is authorized.
+
+## 2026-07-30T11:35Z — preserve the owner after researcher return
+
+The execution researcher returned while owner PID `781472` remained live on
+the original `11:32:35.937944Z` claim. Its heartbeat is current and no new
+repair, science-start, or terminal artifact exists, so the durable owner—not
+another researcher turn—continues the exact component.
+
+Keep the existing science, terminal, release, and watchdog fences unchanged.
+No duplicate execution, portfolio mutation, or provider action is authorized.
+
+## 2026-07-30T11:44Z — re-ready one fresh-generation RoPE repair
+
+The first hash-bound CUDA compile repair succeeded, then repair owner
+`786440` failed before `science_started.json`: the pinned Gemma4 helper
+requires `cos` and `sin` as separate arguments, but the runner passed one
+tuple. Its attempt to reuse the completed repair generation was rejected, and
+the owner safely released the claim. The H200 is now verified quiescent with
+the exact image, selective stage, and repaired candidate retained.
+
+Binding `235b6d37…` admits one narrow runner/owner correction under a fresh
+claim and otherwise preserves the installed-SGLang stock/candidate component.
+Claim by `11:49Z`, target science by `11:49Z`, terminal by `11:52Z`, release
+target `11:54Z`, and hard release `11:55Z`. No provider, spend, model,
+geometry, endpoint, or scientific-sample mutation is authorized.
+
+## 2026-07-30T11:48Z — restore RoPE-repair scheduling runway
+
+The repair READY and owner remain absent while the H200 is available,
+unclaimed, quiescent, and watchdog-protected. Amendment `dae39094…` moves only claim
+admission to `11:52Z`, science target to `11:52:30Z`, and terminal target to
+`11:53:30Z`; hard release remains `11:55Z`. Preserve the
+base repair, spend, science, and provider lifecycle unchanged.
+
+## 2026-07-30T11:50Z — revoke the unstarted warm claim
+
+No repair2 READY, owner, claim, science marker, or component terminal became
+durable. Restoring the mandatory scheduling runway now leaves insufficient
+measured execution plus terminal/release margin before the unchanged
+`11:55Z` hard fence. Revoke the unstarted RoPE binding, mark the quiescent
+bench draining, and let watchdog PID `754193` perform exact-ID cleanup at
+`12:00:20Z`. The attention mechanism remains scientifically unconsumed.
+
+## 2026-07-30T11:52Z — restore the independent FP8-ABI lane
+
+No direct GPU claim can be admitted: only `$0.102955` campaign headroom
+remains and the sole H200 is already draining under watchdog PID `754193`.
+Reactivate `gemma4_target_verify_crossop_persistent_executor` at zero spend
+to bind the pinned production dynamic-FP8 scale/consumer ABI to its existing
+working exact-shape source candidate. Require an execution-equivalent
+CPU/reference adapter and updated H200 discriminator or typed negative; do
+not reopen target-head acceptance or the failed attention-owner lineage.
+
+## 2026-07-30T12:01Z — verify H200 cleanup and retire inventory
+
+One authenticated exact-ID Nebius census found instance
+`computeinstance-e00x8kg5j0ndhvw2qt` and disk
+`computedisk-e00nge39xwr92ms8vc` both absent after watchdog cleanup. Retire
+the bench with cleanup verified. Attribute 4,860 seconds / `$3.3075` to this
+lifecycle, bringing conservative cumulative attention-project spend to
+`$4.921463169875`. Keep the active zero-spend FP8-ABI lane unchanged.
+
+## 2026-07-30T12:08Z — stop at exhausted paid authority
+
+`FP8_ABI_TERMINAL.json` (`9447acb1…`) source-binds the pinned SGLang
+per-token E4M3FN producer through the real Gemma `qkv_proj` consumer and its
+exact-shape CPU adapter passes without code, scale, or output mismatches. Its
+only decision-bearing successor is the specified local/global H200
+producer-plus-consumer discriminator; another offline readiness seam or
+target-head/acceptance expansion is not warranted.
+
+No provider bench remains. The campaign has only `$0.102955` unreserved and
+the attention reservation has at most `$0.328536830125` above attributed
+spend, neither of which covers the measured 4,860-second / `$3.3075` cold
+H200 lifecycle. Treat paid authority as exhausted for any admissible
+experiment and leave the portfolio empty under the campaign stop rule. The
+20% endpoint objective remains unmet; no project, reservation, or provider
+lifecycle mutation is authorized.
+
+## 2026-07-30T12:08:55Z — preserve the authority stop
+
+The portfolio, spend snapshot, and empty bench inventory are unchanged.
+`FP8_ABI_TERMINAL.json` remains source-complete but explicitly requires a
+future H200 session for its first decision-bearing result. The remaining
+authority still cannot fund the measured cold lifecycle, and another
+zero-cost readiness or acceptance expansion has no immediate evidence path.
+Keep every project non-active and make no reservation or provider mutation.
+
+## 2026-07-30T17:47Z — consume the CPU assistant negative
+
+`CPU_SPECULATIVE_DECODER_RESULT.json` (`a9500810…`) measures the corrected
+46,450-parameter decoder at 3.005 accepted draft tokens versus 3.934 for the
+in-request n-gram control on four request-disjoint traces; its CPU draft time
+is also 311.0 us median versus 2.79 us. Do not promote this decoder or spend
+on an endpoint arm. Keep `gemma4_trained_mtp_assistant_finetune` paused until
+a separately authorized normal target run can capture realistic
+request-disjoint tokens and target hidden states for a materially different
+assistant.
+
+The spend snapshot and empty provider inventory are unchanged, so preserve
+the campaign-wide authority stop. No project, reservation, claim, or provider
+lifecycle mutation is authorized.

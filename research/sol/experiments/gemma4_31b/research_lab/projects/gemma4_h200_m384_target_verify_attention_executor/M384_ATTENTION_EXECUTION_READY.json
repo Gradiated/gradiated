@@ -1,0 +1,18 @@
+{
+  "artifact_type": "m384_attention_execution_ready",
+  "binding": {
+    "path": "DIRECTOR_M384_ATTENTION_H200_EXECUTION_20260730T0951Z.json",
+    "sha256": "0233c50ce6483fc7ce4783405b450f1f7d832ac8542ccb3a8c676168870c8c84"
+  },
+  "files": {
+    "m384_attention_h200_owner.py": "e5318808d904adf308e908cf7fd3fb2d06136f2c74b60c812368ce4627665987",
+    "m384_attention_h200_runner.py": "656001dc55f49daff770f26b44d216bf7e7faa893016154e676bd131ae78633f",
+    "m384_grouped_attention_sm90a.cu": "b2c6926e322d8d907eb3d511031250ceb1aa6a0ab7834d455202b9605dcab9f7"
+  },
+  "input_policy": "runner accepts only a provenance-bound capture emitted by pinned Gemma4 qkv_proj -> fused RMSNorm -> RoPE; it never generates synthetic Q/K/V",
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-30T10:12:00Z",
+    "hard_release_utc": "2026-07-30T10:49:00Z"
+  },
+  "schema_version": 1
+}

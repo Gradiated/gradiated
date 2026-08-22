@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "experiment_id": "gemma4_target_verify_crossop_cpu_reference_v1",
+  "created_at_utc": "2026-07-30T10:23:00Z",
+  "causal_hypothesis": "A request-owned task executor can preserve BF16 and dynamic-E4M3 cutpoints while eliminating producer-consumer materializations at normalization-to-FP8 and QK-normalization-to-RoPE boundaries; provisional KV state can remain request-owned until an acceptance result commits a prefix. The target-head-to-acceptance seam is legal only if the pinned scorer, RNG, and acceptance contract admit streaming consumption.",
+  "stock_control": "Stage-separated CPU reference that materializes every BF16 boundary and all provisional KV rows.",
+  "candidate_change": "Request-major executor that performs each admitted producer-consumer chain in one task while explicitly reproducing BF16 rounding, dynamic FP8 scale/data, row ownership, and accepted-prefix commit.",
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "source_trace_sha256": "dffeb6979410ad099acfe261e9dc7de6caf03417fe7c83058e8d4c90c9c16e0e",
+    "physical_model_sha256": "c92497028401720e31feacac844a181bcaf06440f4e6969e7bde07ed805f2c0c",
+    "hardware_scope": "CPU/reference only; H200 discriminator specified but not executed"
+  },
+  "workload": {
+    "rows": 384,
+    "requests": 32,
+    "rows_per_request": 12,
+    "tp": 1,
+    "local_qkv_shape": [384, 16384],
+    "global_qkv_shape": [384, 20480],
+    "fp8_boundary_shape": [384, 8192]
+  },
+  "quality_gate": {
+    "required": "zero mismatched FP8 codes/scales, zero mismatched Q/K/V outputs, identical accepted-prefix commit mask, and no visibility of rejected provisional slots",
+    "precision_contract": "explicit round-to-nearest-even BF16 cutpoints; finite E4M3FN lookup with per-row dynamic scale"
+  },
+  "slo": "Complete the exact-shape CPU/reference consumer within 90 minutes and less than 2 GiB.",
+  "maximum_spend_usd": 0.0,
+  "timeout_seconds": 1800,
+  "cleanup": "No external resources. Remove only compiler output after result capture.",
+  "command": "rustc -O crossop_hotblock.rs -o artifacts/crossop_hotblock && timeout 1800s artifacts/crossop_hotblock > artifacts/CPU_REFERENCE_RESULT.json",
+  "seed": 20260730,
+  "artifact_contract": {
+    "source": "crossop_hotblock.rs",
+    "result": "artifacts/CPU_REFERENCE_RESULT.json",
+    "terminal": "MECHANISM_TERMINAL.json"
+  },
+  "baseline_measurement": "Profiler-off monotonic CPU elapsed time is descriptive only; correctness and byte/launch accounting are decision-bearing.",
+  "critical_path_attribution": "No component time transfers to H200. Only source-derived compulsory intermediate byte counts and launch counts are projected.",
+  "opportunity_register": [
+    {
+      "id": "norm_fp8_request_task",
+      "observation": "Dynamic FP8 requires scale and codes but not a globally visible normalized BF16 tensor when the exact rounding point is reproduced.",
+      "evidence_scope": "synthetic exact-shape CPU oracle at M=384, width=8192; scale convention requires target-source confirmation",
+      "competing_explanations": ["Pinned runtime uses a different activation scale granularity", "Library GEMM requires a separately materialized input"],
+      "mechanism": "Fuse row RMSNorm and dynamic E4M3 quantization in a request-owned producer task.",
+      "falsifier": "Any code/scale mismatch against the independently staged oracle or target consumer rejection.",
+      "next_measurement": "Exact H200 stock-versus-candidate boundary microbenchmark with runtime consumer.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.7,
+      "uncertainty": 0.55,
+      "discrimination_power": 0.8,
+      "readiness": 0.6,
+      "transfer_penalty": 0.55
+    },
+    {
+      "id": "qk_norm_rope_request_task",
+      "observation": "The bound source has consecutive Q/K RMSNorm and RoPE before attention, with request-owned metadata.",
+      "evidence_scope": "source-bound local/global exact shapes and synthetic exact-shape CPU oracle",
+      "competing_explanations": ["Stock fusion already removes the materialization", "Fused live state reduces H200 occupancy"],
+      "mechanism": "Fuse Q/K head normalization, BF16 cutpoint, RoPE, and provisional KV ownership in request-major tasks.",
+      "falsifier": "Numerical mismatch, provenance mismatch, or candidate H200 latency not below stock.",
+      "next_measurement": "H200 exact-shape discriminator with loaded-symbol and output-consumer proof.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.8,
+      "uncertainty": 0.45,
+      "discrimination_power": 0.9,
+      "readiness": 0.7,
+      "transfer_penalty": 0.4
+    },
+    {
+      "id": "target_head_accept_stream",
+      "observation": "A request-owned executor could avoid full-logit materialization only if the exact scorer/RNG/acceptance consumer admits an equivalent streaming form.",
+      "evidence_scope": "unbound by the two admitted artifacts",
+      "competing_explanations": ["Greedy acceptance admits streaming argmax", "Sampling requires exact logits, normalization, RNG order, and processor state"],
+      "mechanism": "Stream target-head tiles into acceptance and commit only the accepted KV prefix.",
+      "falsifier": "Absent exact acceptance contract or any change in token/RNG/logit-processor semantics.",
+      "next_measurement": "Source binding for the exact target scorer and first acceptance consumer; no H200 execution before that binding.",
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "uncertainty": 0.9,
+      "discrimination_power": 1.0,
+      "readiness": 0.1,
+      "transfer_penalty": 0.9
+    }
+  ],
+  "transfer_limit": "This CPU result proves state-machine and numerical equivalence only for the declared fixture and cutpoints. It does not prove CUDA legality, H200 latency, runtime scale convention, target-head semantics, endpoint gain, or quality."
+}

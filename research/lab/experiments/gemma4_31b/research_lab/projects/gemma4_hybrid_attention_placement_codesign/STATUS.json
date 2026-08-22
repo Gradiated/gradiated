@@ -1,25 +1,25 @@
 {
   "active_session": null,
-  "actual_spend_usd": 9.960954252113235,
+  "actual_spend_usd": 16.218999527604982,
   "allocation_limit": 1,
-  "authorized_spend_usd": 10.0,
+  "authorized_spend_usd": 22.0,
   "bench_need": {
     "accelerator": "nvidia-h200-sxm",
-    "claim_allowed": true,
-    "preferred_bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
-    "purpose": "Retained-claim live producer/consumer join repair followed immediately by the unchanged TARGET_VERIFY component."
+    "claim_allowed": false,
+    "preferred_bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "purpose": "One matched quality-unsafe stock/permanent-55L5G c32 endpoint pair under the verified live H200 binding."
   },
   "claim_gate": {
     "admission_satisfied": true,
-    "admission_satisfied_at_utc": "2026-07-26T06:53:00Z",
-    "bench_id": "h200-dflash-adapter-e00vyqp7gxsr34wrtz",
+    "admission_satisfied_at_utc": "2026-07-29T00:47:35Z",
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
     "blocked_by": [],
-    "claim_allowed_now": true,
-    "claim_not_after_utc": "2026-07-26T06:57:00Z",
-    "disposition": "immediate_retained_claim_patch_then_target_verify",
-    "release_not_after_utc": "2026-07-26T07:24:00Z"
+    "claim_allowed_now": false,
+    "claim_not_after_utc": "2026-07-29T01:08:00Z",
+    "disposition": "adopt_existing_claim_only_under_current_retained_claim_stage_repair",
+    "release_not_after_utc": "2026-07-29T03:20:00Z"
   },
-  "compute_budget": "At most 1860 claimed H200 seconds at $2.45/hour, capped at $1.2658333333 incremental provider spend. The first invocation is a deliberate pre-science retained-claim bootstrap; the same owner then runs one unchanged TARGET_VERIFY component after the localized live evidence join is repaired.",
+  "compute_budget": "The $22 cumulative ceiling is durable. Final reconciled exposure is $16.218999527604982: $9.960954252113235 prior actual plus $6.258045275491748 for the verified final H200 lifecycle.",
   "conditional_endpoint_artifact": "PHASE_SELECTIVE_FULL_MODEL_H200_ENDPOINT_TERMINAL.json",
   "current_binding": {
     "claim_not_after_utc": "2026-07-26T06:57:00Z",
@@ -39,6 +39,117 @@
     "seam_terminal_sha256": "ff0a71044f868889b9ca356f26eec15dd5776dc177c88799035a48825a9cea6b",
     "sha256": "3ed7f4dfa4fef467af4c6806ce59347778f22e8390570689777b9f826c35fbc3",
     "watchdog_deadline_utc": "2026-07-26T07:30:00Z"
+  },
+  "current_h200_55l5g_both_serial_arms_terminal_release": {
+    "arm_replay_allowed": false,
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "candidate_science_consumed": true,
+    "claim_release_by_utc": "2026-07-29T03:13:00Z",
+    "comparator_delta_allowed": false,
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:15:00Z",
+    "owner_start_by_utc": "2026-07-29T03:01:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_BOTH_SERIAL_ARMS_TERMINAL_RELEASE_20260729T0254Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "ready_by_utc": "2026-07-29T02:58:00Z",
+    "sha256": "d57d5afa4d982d8e05b9813b6c1805983b5abce543d0dc15767e23c1f2f6c671",
+    "stock_science_consumed": true
+  },
+  "current_h200_55l5g_provider_cleanup": {
+    "artifact": "artifacts/h200-55l5g-both-serial-arms-terminal-20260729t0254z/H200_55L5G_PROVIDER_CLEANUP_VERIFIED_20260729T0304Z.json",
+    "artifact_sha256": "b9c54fa395e379d564dd37936775266d918c8a44de4bd462a592db1673f7bda7",
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "cleanup_verified_at_utc": "2026-07-29T03:04:53.435844Z",
+    "disk_id": "computedisk-e00n8m6xbb9cfdkam8",
+    "final_project_actual_spend_usd": 16.218999527604982,
+    "instance_id": "computeinstance-e00kwncr0knnykhe48",
+    "pool_status": "retired",
+    "provider_exposure_usd": 6.258045275491748
+  },
+  "current_h200_55l5g_endpoint_execution": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "claim_generation": "available_updated_at_2026-07-29T00:45:47.124131Z",
+    "claim_start_by_utc": "2026-07-29T01:08:00Z",
+    "maximum_valid_pair_invocations": 1,
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "owner_start_by_utc": "2026-07-29T01:10:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_EXECUTION_20260729T0047Z.json",
+    "quality_preservation_claimed": false,
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "sha256": "39734c5dbbbfdd1663df6e6a351fa51b71639d202350733bbd57363a15baecbc",
+    "ssh_ed25519_fingerprint": "SHA256:qjLIE6aRkPYKSbMcENEkhlAhDzjzydZJea4lcxc1WqY",
+    "watchdog_deadline_utc": "2026-07-29T03:32:14.286493Z"
+  },
+  "current_h200_55l5g_retained_claim_stage_repair": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_CLAIM_STAGE_REPAIR_20260729T0106Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "replacement_owner_start_by_utc": "2026-07-29T01:15:00Z",
+    "sha256": "e78e87685aea396fb5b763a9d7f85d162c11945f372687d5cebff7de27c54272"
+  },
+  "current_h200_55l5g_retained_packet_idempotence_repair": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "maximum_valid_pair_invocations": 1,
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_PACKET_IDEMPOTENCE_REPAIR_20260729T0154Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "replacement_owner_start_by_utc": "2026-07-29T02:03:00Z",
+    "sha256": "52ab37b07a2d51c47ce4b535d2f4e3fe2aa2b7512757808ba7666dec617419f0"
+  },
+  "current_h200_55l5g_retained_workload_materialization_repair": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "maximum_valid_pair_invocations": 1,
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_WORKLOAD_MATERIALIZATION_REPAIR_20260729T0221Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "repair_request_by_utc": "2026-07-29T02:29:00Z",
+    "replacement_owner_start_by_utc": "2026-07-29T02:32:00Z",
+    "sha256": "36b5b4a4359702f838b2fd2d4ebea52686076daf97de8e6cac48a9d239b40344"
+  },
+  "current_h200_55l5g_serial_stock_terminal_adoption_release": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "candidate_submission_allowed": false,
+    "claim_release_by_utc": "2026-07-29T02:58:00Z",
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:00:00Z",
+    "owner_start_by_utc": "2026-07-29T02:50:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_SERIAL_STOCK_TERMINAL_ADOPTION_RELEASE_20260729T0240Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "ready_by_utc": "2026-07-29T02:47:00Z",
+    "sha256": "8c46dbb8857cf41f77f1f6a011f07d63c668f5bb4959f80e8017ab04ea269562",
+    "stock_remote_sha256": "b7ac86fac23d5eb373c8e751266a77f6c901a9b1c0e45320621dd4a189241e42",
+    "stock_replay_allowed": false,
+    "stock_science_consumed": true
+  },
+  "current_h200_55l5g_serial_stock_terminal_adoption_release_start_extension": {
+    "base_binding_path": "DIRECTOR_H200_55L5G_ENDPOINT_SERIAL_STOCK_TERMINAL_ADOPTION_RELEASE_20260729T0240Z.json",
+    "base_binding_sha256": "8c46dbb8857cf41f77f1f6a011f07d63c668f5bb4959f80e8017ab04ea269562",
+    "claim_release_by_utc": "2026-07-29T03:08:00Z",
+    "owner_deadline_utc": "2026-07-29T03:10:00Z",
+    "owner_start_by_utc": "2026-07-29T02:56:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_SERIAL_STOCK_TERMINAL_ADOPTION_RELEASE_START_EXTENSION_20260729T0248Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "ready_by_utc": "2026-07-29T02:53:00Z",
+    "sha256": "02ca059e1d321574e7559cbebd0b5c93217c50d25cbf2a588eca87cc884a4762"
+  },
+  "current_h200_terminal_disposition": {
+    "candidate_science_consumed": true,
+    "conflict_artifact": "artifacts/h200-55l5g-serial-stock-terminal-adoption-20260729t0240z/CANDIDATE_CONSUMPTION_CONFLICT.json",
+    "release_withheld": true,
+    "status": "director_rebind_required_for_truthful_serial_two_arm_terminal_and_release",
+    "stock_science_consumed": true
   },
   "current_hybrid_endpoint_binding": {
     "authorized_spend_usd": 10.0,
@@ -61,6 +172,17 @@
     "science_started": false,
     "sha256": "f864a5370f823b178a8143b5686b9ea4851c27029ecab4631c46c24036c45338",
     "watchdog_deadline_utc": "2026-07-27T03:10:00Z"
+  },
+  "current_owner_failure": {
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/artifacts/h200-55l5g-endpoint-20260729t0047z",
+    "candidate_cuda_invocation_started": false,
+    "cause": "pinned image deprecates huggingface-cli and requires hf download",
+    "claim_generation": "2026-07-29T00:54:46.997840Z",
+    "classification": "recoverable_pre_science_container_cli_defect",
+    "diagnostic": "PRE_SCIENCE_FAILURE.json",
+    "disposition": "claim retained; director authorizes one hash-bound retained-claim stage repair without release or reclaim",
+    "owner_pid": 3769609,
+    "science_consumed": false
   },
   "current_retained_claim_adoption": {
     "adoption_not_after_utc": "2026-07-27T03:02:00Z",
@@ -111,7 +233,7 @@
     "pair": "run_h200_55l5g_endpoint_pair.py",
     "pair_sha256": "02aaabd93c8d3a9e9e5da683608ad47a4cd19929430a0770ad387bae807b0eb3"
   },
-  "decision": "pause_unconsumed_55l5g_endpoint_after_verified_pre_science_cleanup",
+  "decision": "execute_unconsumed_55l5g_endpoint_proxy_on_verified_h200_with_mutable_in_claim_integration",
   "director_corrected_allocator_readmission": {
     "claim_not_after_utc": "2026-07-26T06:15:00Z",
     "endpoint_authorized": false,
@@ -214,6 +336,30 @@
     "superseded_accounting_by": "DIRECTOR_DISCOVERY_INVOCATION_ACCOUNTING_AMENDMENT_20260726T0400Z.json",
     "watchdog_deadline_utc": "2026-07-26T04:30:00Z"
   },
+  "endpoint_packet": {
+    "gpu_claimed": false,
+    "model_inputs": [
+      "config.json",
+      "tokenizer.json",
+      "tokenizer_config.json",
+      "processor_config.json",
+      "chat_template.jinja"
+    ],
+    "owner_sha256": "2407c3f763271a00e2e5b16cb3490763ea2830443d1d14898517d4907ee85e6f",
+    "pair_sha256": "02aaabd93c8d3a9e9e5da683608ad47a4cd19929430a0770ad387bae807b0eb3",
+    "path": "inputs/h200_55l5g_endpoint_packet/MANIFEST.json",
+    "provider_spend_usd": 0.0,
+    "quality_preservation_claimed": false,
+    "readiness_guard_sha256": "7dbcc9d4e7855592a81b947f0ee987f212bbab09e0be38681569f6ae9d67d91a",
+    "runtime_sha256": "ed27fc0fc435c54083fc5a41fdb7d2245ffbb8982b1449ef2519cc036ac8a499",
+    "sha256": "b0a2fad6522eaf6cb47d4915616071d7ecc56caf1289fb1ed8670edd486576e5",
+    "validated": [
+      "python_compile",
+      "manifest_json",
+      "dead_child_fails_readiness_immediately"
+    ],
+    "workload_materialized_project_local": true
+  },
   "extended_claim_launch_attempt": {
     "at_utc": "2026-07-27T02:22:30.942341Z",
     "binding": "DIRECTOR_HYBRID_55L5G_EXTENDED_H200_CLAIM_20260727T0218Z.json",
@@ -281,7 +427,24 @@
     "trace": "runtime/traces/20260725T213045Z-1785015045067769743-researcher-gemma4_hybrid_attention_placement_codesign.jsonl",
     "trace_sha256": "33ad591aacdb257c0c9198d3fb57d487e193236eabd28d5a360a8f82f51c92f7"
   },
-  "next_action": "Remain paused. The matched stock/candidate c32 pair is still unconsumed, but no further H200 work is authorized under the exhausted cumulative $10.00 ceiling. A later director may reconsider only after an offline source-complete repair stages the pinned model configuration and tokenizer inputs, makes readiness fail immediately on child/container death, and receives new conservative lifecycle authority. Do not replay the settled component, phase-selective HTTP-500 consumer, DFlash, or any prior endpoint.",
+  "live_binding_repair": {
+    "additional_provider_spend_usd": 0.0,
+    "last_pool_snapshot": {
+      "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+      "claim": null,
+      "observed_at_utc": "2026-07-29T00:40:05Z",
+      "server_state": "no checkpoint staging, container, endpoint, model load, or scientific invocation",
+      "status": "maintenance",
+      "typed_disposition": "director_owned_identity_and_telemetry_gate"
+    },
+    "manifest": "H200_55L5G_LIVE_BINDING_REPAIR_MANIFEST_20260729T0035Z.json",
+    "manifest_sha256": "f384310ff233e3521a846f364da3aae2e09bbb8ae53d884ec184747a1b32b57f",
+    "owner": "run_h200_55l5g_live_binding_owner.py",
+    "owner_sha256": "56ca78cd0e707402e637b38ed853b2483d6e4b92cb6b733f36eeb68edafb113a",
+    "result": "fail_closed_current_maintenance_binding_requires_later_verified_identity_and_execution_binding",
+    "scientific_sample_consumed": false
+  },
+  "next_action": "Terminal. Both invalid-scope serial arms are preserved without replay, the original claim is released, exact Nebius instance and managed disk absence is verified, the watchdog is inactive, and the pool record is retired. No further provider or scientific work is authorized in this project.",
   "offline_allocator_distinctness_terminal": {
     "additional_provider_spend_usd": 0.0,
     "classification": "offline_logical_slot_representation_contract_pass",
@@ -425,6 +588,7 @@
     "sha256": "710405914ab3f6ceac8bc64fc609a9cbac1a1b909595fe2e24ee15a48766edbe"
   },
   "researcher_profile": "execution",
+  "reservation_required": false,
   "retained_claim_adoption_failure": {
     "artifact": "artifacts/h200-55l5g-extended-20260727t0218z/STAGING.json",
     "authority": "DIRECTOR_HYBRID_55L5G_RETAINED_CLAIM_ADOPTION_20260727T0255Z.json",
@@ -487,7 +651,7 @@
     "path": "PHASE_SELECTIVE_HYBRID_RESULT.json",
     "sha256": "125f2411ea951e2958d373910713829a13e0a571e469738412772d38d62a0cca"
   },
-  "status": "paused",
+  "status": "terminal",
   "stop_rules": [
     "Start the bound detached outer owner before the claim-not-after deadline; do not open another offline command-seam, owner-composition, or synthetic transport iteration.",
     "The deliberate first server_launch_failed outcome is pre-science and must retain the claim. Repair the live producer/consumer and retrieval joins inside that claim, persist their source identity, then signal the same owner to continue.",
@@ -498,7 +662,23 @@
     "Do not release on an ordinary pre-science integration defect while a restart plus six-minute terminal/release margin fits; at 2026-07-26T07:24:00Z the outer owner must clean and release before the watchdog."
   ],
   "storage_budget": "At most 2 GiB of new non-checkpoint artifacts.",
-  "summary": "The permanent 55-local/5-global proxy has a settled positive exact H200 attention component (20.3345% weighted attention reduction), while its matched c32 endpoint was never started because the old claim gate expired by 35 seconds. Reactivate only this unconsumed quality-unsafe endpoint; the repeatedly failing phase-selective TARGET_VERIFY continuation remains closed.",
+  "summary": "Both serial endpoint arms are consumed but invalid for the concurrent-c32 objective. Stock completed 32/32 at 7.70807582774998 s/request and candidate completed 32/32 at 7.706803681500077 s/request; no comparator delta or quality claim is allowed. The claim was released without replay, exact instance and disk cleanup is verified, the watchdog is inactive, the pool record is retired, and final reconciled project exposure is $16.218999527604982.",
+  "superseded_h200_55l5g_stock_recovery_candidate_transition": {
+    "bench_id": "h200-hybrid-55l5g-computeinstance-e00kwncr0knnykhe48",
+    "candidate_submission_consumed": false,
+    "expected_claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+    "new_claim_allowed": false,
+    "owner_deadline_utc": "2026-07-29T03:25:00Z",
+    "path": "DIRECTOR_H200_55L5G_ENDPOINT_RETAINED_STOCK_RECOVERY_CANDIDATE_TRANSITION_20260729T0235Z.json",
+    "provider_cleanup_utc": "2026-07-29T03:32:14.286493Z",
+    "release_by_utc": "2026-07-29T03:20:00Z",
+    "repair_ready_by_utc": "2026-07-29T02:43:00Z",
+    "replacement_owner_start_by_utc": "2026-07-29T02:46:00Z",
+    "sha256": "aea1d6c24718a6490c015b2dc0d21b7dee56852bb0515f992f0b6bf2f8d215ff",
+    "stock_remote_sha256": "b7ac86fac23d5eb373c8e751266a77f6c901a9b1c0e45320621dd4a189241e42",
+    "stock_replay_allowed": false,
+    "stock_science_consumed": true
+  },
   "target_only_component_command_seam_terminal": {
     "additional_provider_spend_usd": 0.0,
     "candidate_cuda_invocation_started": false,
@@ -536,5 +716,6 @@
     "terminal_sha256": "feb638b0cb2ad345b960bf0df281bd16c65e3b804d15d56d2088a66755b5c748"
   },
   "terminal_artifact": "TARGET_ONLY_PROXY_ALLOCATOR_COMPONENT_TERMINAL.json",
-  "wall_clock_budget": "Claim before 2026-07-26T06:57:00Z; terminal and release no later than 2026-07-26T07:24:00Z, leaving six minutes before the lab watchdog."
+  "terminal_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_hybrid_attention_placement_codesign/HYBRID_55L5G_CURRENT_H200_ENDPOINT_TERMINAL.json",
+  "wall_clock_budget": "Finalize the separately named bound owner and claim by 2026-07-29T01:08:00Z; launch by 01:10:00Z; persist decision evidence and release by 03:20:00Z; owner deadline 03:25:00Z; provider watchdog cleanup 03:32:14.286493Z."
 }

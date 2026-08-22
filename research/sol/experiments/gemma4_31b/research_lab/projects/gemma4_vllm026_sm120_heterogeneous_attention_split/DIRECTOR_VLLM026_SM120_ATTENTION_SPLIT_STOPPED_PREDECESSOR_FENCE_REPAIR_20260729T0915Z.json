@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "classification": "director_sm120_attention_split_stopped_predecessor_fence_repair",
+  "created_at_utc": "2026-07-29T09:15:00Z",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "decision": "preserve_the_ready_version_repair_and_adapt_only_the_already_stopped_predecessor_boundary",
+  "claim_allowed": false,
+  "provider_lifecycle_allowed": false,
+  "input_result": {
+    "path": "VLLM026_SM120_ATTENTION_SPLIT_VERSION_IDENTITY_AND_TERMINAL_REPAIR_RESULT.json",
+    "sha256": "c5f4e1e17c163c797b88ff7f9a1c812b84d4395ea8cbe468848976ad29d8b1fe",
+    "oracle_sha256": "adb4f590988387fd32518b8955bef0c495fa6321235d13299f58dc230ad9e46b",
+    "owner_sha256": "50e49a643b86a4ee899ae08989fc0923c81156e83b32ce18a7322d5a5cab56f1"
+  },
+  "environment_transition": {
+    "original_predecessor": {
+      "server_pid": 23342,
+      "start_ticks": 184468586,
+      "engine_pid": 23809,
+      "endpoint": "127.0.0.1:19124"
+    },
+    "stopped_by_claim_generation": "2026-07-29T08:29:54.858364Z",
+    "invalid_attempt_terminal": "artifacts/sm120-attention-adopter-20260729t0846z/TERMINAL.json",
+    "invalid_attempt_terminal_sha256": "f3cc379d0cd130e030b9a5ee1cef4af1d4f74aecf1e3a774ae58ab2502bfbd26",
+    "current_inventory_state": "maintenance_with_runtime_checkpoint_and_caches_retained_and_predecessor_stopped",
+    "scientific_submission_consumed": false
+  },
+  "immutable_science": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "oracle_sha256": "adb4f590988387fd32518b8955bef0c495fa6321235d13299f58dc230ad9e46b",
+    "control": "all 60 layers use TRITON_ATTN",
+    "candidate": "50 sliding-window layers use TRITON_ATTN and 10 full-attention layers use FLEX_ATTENTION",
+    "submission_limit": "one fresh parent control/candidate oracle"
+  },
+  "mutable_repair": {
+    "owner_path": "run_sm120_attention_split_component_owner.py",
+    "required_changes": [
+      "Preserve the existing exact PID/start-ticks stop-and-fence path for a future binding whose predecessor state is live_exact.",
+      "Accept predecessor state already_stopped only when a later director execution binding hash-binds the original PID/start ticks, prior claim generation, invalid-attempt terminal SHA-256, and a fresh post-claim quiescent GPU/process census requirement.",
+      "For already_stopped, send no signal and do not restart the endpoint. After claim, prove zero accelerator allocations and zero vLLM, attention-oracle, or norm-FP8 driver processes, and persist that census as the new generation fence before staging or submission.",
+      "Fail closed for any other predecessor state or missing evidence.",
+      "Keep immutable detached identity separate from mutable progress and preserve the repaired version identity and incomplete-terminal handshake."
+    ],
+    "behavioral_validation": [
+      "live_exact still requires the exact PID/start-ticks match before signaling.",
+      "already_stopped with all bound evidence performs no signal and requires a quiescent post-claim census.",
+      "already_stopped with changed or missing evidence fails before staging or scientific submission.",
+      "the four version-identity and terminal-completeness cases from result c5f4e1e1... still pass."
+    ]
+  },
+  "repair_result_due_utc": "2026-07-29T09:23:00Z",
+  "required_result": {
+    "path": "VLLM026_SM120_ATTENTION_SPLIT_STOPPED_PREDECESSOR_FENCE_REPAIR_RESULT.json",
+    "must_be_last_project_mutation": true,
+    "required_fields": [
+      "classification",
+      "owner_sha256",
+      "oracle_sha256",
+      "input_result_sha256",
+      "behavioral_validation",
+      "fresh_artifact_root",
+      "detached_owner_command"
+    ]
+  },
+  "next": "Use an execution-profile researcher for this zero-GPU same-project repair. Do not call gpu_pool, SSH, or provider APIs and do not launch. A later director must re-census the maintenance bench, bind the stopped-predecessor evidence and remaining watchdog/spend window, and explicitly open the claim."
+}

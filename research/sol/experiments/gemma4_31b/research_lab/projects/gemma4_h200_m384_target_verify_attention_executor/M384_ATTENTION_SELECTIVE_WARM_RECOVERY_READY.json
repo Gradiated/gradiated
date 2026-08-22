@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "binding": {"path":"DIRECTOR_M384_ATTENTION_SELECTIVE_H200_WARM_RECOVERY_20260730T1108Z.json","sha256":"9990297d93741dbf3cc347aa61b61ec94caf2fdd359d8d77584846653ebc485c"},
+  "predecessors": {"base_binding_sha256":"9e2cc151ad5b497903d01d46080df17bb4225f2d1e672ff8208c9fb9eab350aa","amendment_sha256":"174bbcb0a798681c9102a9d7fb03ff5a751fea12dd3b312077fa746aa01c3ec0","attempt_terminal_sha256":"098d80aacba834df87a8ce6068c16474cd03fc77d64cb1e1b526d11263e5042e"},
+  "retained_stage": {"manifest_sha256":"7356b64c48602d8078b36c60baab3cb69848939944dbf97aa3174497ab42679a","official_module_exercise_sha256":"9a2c2af76051cd14396b6159ada867212f09069f73254e8ec37378438be6eba4","remote_root":"/home/glmrunner/m384-selective/stage"},
+  "mutable_bytes": {"m384_grouped_attention_sm90a.cu":"98d8a71d2b7f03332526d509d1b7d6c74f122fdd6dab1bd0b7c795ffdf81a34f","m384_attention_h200_runner.py":"a1a5b73641dbb614f37951e3df9610963aa54fd4d74249fd4438c436acf45456","m384_attention_selective_owner.py":"206e151b3e6f610d3342ae2e4aeccd0767fd2f1e88082977cdf0de0455cc2c76"},
+  "claim_start_by_utc":"2026-07-30T11:22:00Z","hard_release_utc":"2026-07-30T11:55:00Z","publish_last":true
+}

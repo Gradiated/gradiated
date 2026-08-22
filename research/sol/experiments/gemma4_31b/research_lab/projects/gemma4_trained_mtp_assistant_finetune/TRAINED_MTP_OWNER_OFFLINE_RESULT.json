@@ -1,0 +1,65 @@
+{
+  "schema_version": 2,
+  "created_at_utc": "2026-07-29T08:17:36Z",
+  "republished_at_utc": "2026-07-29T08:5x:00Z",
+  "classification": "two_h200_owner_production_pipeline_ready_eagle3_fallback_bound",
+  "ready": true,
+  "gpu_claimed": false,
+  "provider_called": false,
+  "large_weights_downloaded": false,
+  "provider_spend_usd": 0.0,
+  "scientific_samples_consumed": 0,
+  "decision": {
+    "requested_separate_assistant_mtp_route": "not admitted to paid execution",
+    "fallback": "Fine-tune RedHatAI/gemma-4-31B-it-speculator.eagle3@28a1c8b4bb64dbaee883ba35341841138bdf1fe3 through the supported Speculators online-training CLI; retain the official assistant as stock MTP control.",
+    "compatibility_artifact": {
+      "path": "SPECULATORS_GEMMA4_ASSISTANT_COMPATIBILITY.json",
+      "sha256": "e54f8d69592669f4afdb98d85bc5ab4dc9a311705edbee074af7f6462be6657b"
+    }
+  },
+  "identities": {
+    "target": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "stock_assistant": "google/gemma-4-31B-it-assistant@627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "stock_assistant_model_sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da",
+    "warm_start": "RedHatAI/gemma-4-31B-it-speculator.eagle3@28a1c8b4bb64dbaee883ba35341841138bdf1fe3",
+    "speculators_commit": "aee3cc9b4ed151ae9ec79befee851757c62b3be9",
+    "vllm": "official vLLM 0.26.0+cu129",
+    "seed": 20260729,
+    "training_examples": 5000,
+    "holdout_examples": 512
+  },
+  "hypothesis_and_gates": {
+    "hypothesis": "One on-policy workload-stratified warm-start fine-tune improves accepted target tokens per combined draft-plus-verifier CUDA second without changing the target verifier.",
+    "stock_controls": ["autoregressive target", "unchanged official Gemma assistant through vLLM MTP"],
+    "quality_gate": "unchanged target is acceptance authority; measured rows must be complete, finite, and pass runtime equivalence policy",
+    "promotion_gate": "trained EAGLE-3 improves request-disjoint holdout efficiency and has a positive whole-request bound before matched c32 arms",
+    "maximum_cumulative_provider_spend_usd": 20.0,
+    "watchdog_deadline_utc": "2026-07-29T12:10:00Z"
+  },
+  "production_pipeline": {
+    "path": "run_trained_mtp_pipeline.py",
+    "sha256": "45ba27059078b6e004ea6064d8e97ed2ee3c144b1ed4cdfce73d6eda53c13436",
+    "argv": ["/usr/bin/env", "PYTHONPATH=/root/workspace/research/factory/src", "python3", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/run_trained_mtp_pipeline.py", "--binding", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/DIRECTOR_TRAINED_MTP_EXECUTION_BINDING.json", "--artifact-root", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/pipeline", "--terminal", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/pipeline/TERMINAL.json"],
+    "repair_argv": ["/usr/bin/env", "PYTHONPATH=/root/workspace/research/factory/src", "python3", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/run_trained_mtp_pipeline.py", "--binding", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/DIRECTOR_TRAINED_MTP_EXECUTION_BINDING.json", "--artifact-root", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/pipeline", "--terminal", "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/pipeline/TERMINAL.json", "--repair-patch", "{patch_artifact}"],
+    "resumption": "A repair patch names one stage; only that stage marker is removed. Completed producer markers remain immutable and are never replayed for a later consumer repair.",
+    "connection_rule": "After both exact claims, the runner reads SSH host, user, identity, and known-hosts paths from current gpu_pool records; it embeds no director endpoint."
+  },
+  "terminal_contract": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/pipeline/TERMINAL.json",
+    "classifications": ["trained_checkpoint_and_holdout_terminal", "bounded_training_negative_terminal", "informative_runtime_incompatibility_terminal"],
+    "required_fields": ["decision_bearing", "required_artifact_hashes", "resident_release.target", "resident_release.trainer"],
+    "required_stage_markers": ["packet_stage", "speculators_checkout", "target_stage", "regenerate_shards", "split", "hidden_state_relay", "prepare_data", "train", "holdout", "endpoint_arms"],
+    "release_rule": "The lifecycle owner releases only after a decision-bearing terminal and director-bound required artifact hashes validate; unknown or ordinary integration outcomes stay on the retained repair path."
+  },
+  "owner": {
+    "path": "run_two_bench_owner.py",
+    "sha256": "8d76dd5a94f9bf6d837324eeb999126a7bc6a634cc9ee889e1b138ecafd3deb0",
+    "unchanged_detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/DETACHED_OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune -- /usr/bin/env PYTHONPATH=/root/workspace/research/factory/src python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/run_two_bench_owner.py --binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/DIRECTOR_TRAINED_MTP_EXECUTION_BINDING.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller --owner-state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/OWNER_STATE.json --detached-state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/artifacts/trained-mtp-controller/DETACHED_OWNER.json"
+  },
+  "verification": {
+    "python_compile_pass": true,
+    "runner_validate_only_pass": true,
+    "deterministic_split_and_two_claim_lifecycle_tests_pass": true,
+    "zero_gpu_repair": true
+  }
+}

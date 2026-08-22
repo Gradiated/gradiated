@@ -1,0 +1,8 @@
+{
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "state": "ready_for_corrected_terminal_retrieval_only",
+  "artifacts": "DIRECTOR_SM120_CORRECTED_TERMINAL_RETRIEVAL_20260729T1038Z.json; corrected terminal b6f891f0...; control 8ef31c46...; candidate d372cc28...",
+  "scientific_terminal": "The sole corrected all-TRITON versus 50-TRITON/10-FLEX parent is complete remotely and must be retrieved exactly once without replay.",
+  "server_state": "Lifecycle census at 2026-07-29T10:37Z found corrected parent PID 38078 absent, zero accelerator allocations, and complete remote terminal plus both arm captures.",
+  "next": "Only gemma4_vllm026_sm120_heterogeneous_attention_split may claim by 10:47Z for retrieval/adoption only, release by 10:51Z, under watchdog r5 through 10:54Z."
+}

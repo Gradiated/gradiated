@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "classification": "same_claim_adopter_repair_ready",
+  "binding": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_SAME_CLAIM_ADOPTER_REPAIR_20260729T0846Z.json",
+  "unchanged_execution_binding_sha256": "b6ebe2a4f4b3dd6c2e5ac7edab83fc40046e354275a3fa0e1bb35fe8253f0fd3",
+  "unchanged_oracle_sha256": "b41ef19d7d8b0b6f0522634ea9c5c0753fff48d6b02ac33dea7b002575601842",
+  "replacement_owner": "run_sm120_attention_split_claim_adopter.py",
+  "replacement_owner_sha256": "f72f4296d33ac7230449f8173c076f672b2c7ae308fd6d92012c321ced93a307",
+  "behavioral_validation": "py_compile passed; static behavior check passed: no gpu_pool claim, heartbeat/adoption before exact original stop, local generation mkdir before SUBMISSION.",
+  "adoption_paths": {
+    "detached_state": "artifacts/sm120-attention-adopter-20260729t0846z/DETACHED_OWNER_ADOPTER.json",
+    "progress": "artifacts/sm120-attention-adopter-20260729t0846z/PROGRESS.json",
+    "adoption": "artifacts/sm120-attention-adopter-20260729t0846z/CLAIM_ADOPTED.json",
+    "terminal": "artifacts/sm120-attention-adopter-20260729t0846z/TERMINAL.json"
+  },
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/artifacts/sm120-attention-adopter-20260729t0846z/DETACHED_OWNER_ADOPTER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/artifacts/sm120-attention-adopter-20260729t0846z/ADOPTER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/run_sm120_attention_split_claim_adopter.py --repair-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_SAME_CLAIM_ADOPTER_REPAIR_20260729T0846Z.json --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_EXECUTION_20260729T0827Z.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/artifacts/sm120-attention-adopter-20260729t0846z"
+}

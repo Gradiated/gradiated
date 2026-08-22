@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T04:03:00Z",
+  "project": "gemma4_rtxpro6000_fp8_endpoint",
+  "decision": "repair_cuda13_nvrtc_resolution_and_dead_server_detection_under_retained_claim",
+  "execution_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_WORKSTATION_ENDPOINT_EXECUTION_20260729T0338Z.json",
+    "sha256": "d8e1c6e230917cab315f664aa950facae714a6655e071ff182df1e573814b1c8"
+  },
+  "retained_claim": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "claimed_at_utc": "2026-07-29T03:41:40.785795Z",
+    "project": "gemma4_rtxpro6000_fp8_endpoint",
+    "current_owner_pid": 3877838,
+    "current_owner_start_ticks": 141285314,
+    "artifact_root": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z"
+  },
+  "settled_stage": {
+    "terminal": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/STAGE_TERMINAL.json",
+    "terminal_sha256": "d0a64c9dc5d04aa1888aed53662f532d9a15d748cb065dcb99e0a172ae525ded",
+    "destination": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "controller_model_files_manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1",
+    "science_consumed": false,
+    "rule": "Adopt this completed producer on every replacement. Do not transfer, hash, or verify checkpoint shards again."
+  },
+  "measured_failure": {
+    "classification": "recoverable_pre_science_server_runtime_defect",
+    "science_started": false,
+    "science_consumed": false,
+    "server_child_alive": false,
+    "server_health_probe_sha256": "d412cee7ac9588ef5d4c41540b62bedd2cb53d159e9848842532d1fcf9bd6ba7",
+    "server_launch_stdout_sha256": "224d009ccde27c8c45c0a1ccb2591c4e83f8edacfe071df8ea1e0c95ce8e275a",
+    "server_launch_stderr_sha256": "abd6f7249a473f07f501069dde0fe2436ada294e0816606ef6d35309752ff944",
+    "fatal_import": "sgl_kernel common_ops could not load because libnvrtc.so.13 was not resolvable",
+    "installed_runtime": {
+      "sglang": "0.5.16",
+      "sglang_kernel": "0.4.5",
+      "torch": "2.11.0",
+      "nvidia_cuda_nvrtc": "13.0.88",
+      "reported_cuda_version": "13.0",
+      "reported_compute_capability": "12.0"
+    }
+  },
+  "immutable_scientific_identity": {
+    "execution_packet_sha256": "f7c932bb6684ceaed67092123a2737ba14234c89dcf23aa878683fac080fc1b1",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "payloads_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c",
+    "concurrency": 32,
+    "maximum_canonical_samples": 1,
+    "rtxpro6000_equivalent_target_seconds_per_request": 1.048637203302411
+  },
+  "repair_contract": {
+    "researcher_profile": "execution",
+    "required_skill": "$researcher",
+    "source": "run_rtxpro6000_fp8_endpoint_owner.py",
+    "current_source_sha256": "cbf3ac4c7e1c248d1e07e27ba67f8e45c44a90055068acfc147838f8a6f1830d",
+    "runtime_manifest": "RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_RUNTIME_MANIFEST.json",
+    "current_runtime_manifest_sha256": "e59d63f35478b1d7fce3807d3c8b0a2cd78a0db2d60c0acdaeb811d97e33e88b",
+    "requirements": [
+      "On resume, validate and adopt the exact settled STAGE_TERMINAL instead of calling stage_checkpoint or hashing remote shards.",
+      "Discover the installed nvidia-cuda-nvrtc distribution's unique libnvrtc.so.13 directory from importlib.metadata or its installed file manifest; do not guess a path.",
+      "Launch the existing installed runtime with that directory prepended to LD_LIBRARY_PATH and persist the exact path, package versions, and no-HTTP import diagnostics.",
+      "Before server launch, require one no-HTTP target-GPU import of sgl_kernel and the SGLang FP8 kernel module. If the library path exposes a separate SM120 wheel/ABI defect, repair only the SGLang kernel package or its official source build and bind the resulting package/source identity within this same server-runtime repair.",
+      "Do not rerun the broad sglang[all] installation when the bound runtime packages are already installed. Persist a runtime terminal only after the exact imports pass.",
+      "During server health, test the recorded child PID after every failed probe. If it is dead, persist its exit/log diagnostics and enter retained repair immediately rather than waiting for the 900-second upper bound.",
+      "Regenerate the runtime manifest with the final owner hash, then use the next repair-ready generation after repair-1785297152 to reload the same detached command with --resume-claimed."
+    ],
+    "replacement_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-20260729t0338z-controller/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/artifacts/rtxpro6000-fp8-endpoint-20260729t0338z-controller/OWNER_REPAIR3.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint --unit-manager pid -- python3 run_rtxpro6000_fp8_endpoint_owner.py --execution-packet RTXPRO6000_FP8_EXECUTION_PACKET.json --runtime-manifest RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_RUNTIME_MANIFEST.json --execution-binding DIRECTOR_RTXPRO6000_WORKSTATION_ENDPOINT_EXECUTION_20260729T0338Z.json --artifact-root artifacts/rtxpro6000-fp8-endpoint-20260729t0338z --resume-claimed",
+    "source_and_runtime_manifest_ready_by_utc": "2026-07-29T04:14:00Z",
+    "replacement_owner_start_by_utc": "2026-07-29T04:18:00Z",
+    "release_evidence_by_utc": "2026-07-29T07:55:00Z",
+    "owner_deadline_utc": "2026-07-29T08:05:00Z",
+    "provider_cleanup_deadline_utc": "2026-07-29T08:13:34.346354Z"
+  },
+  "dispositions": {
+    "recoverable_pre_science": "Retain the claim and staged checkpoint; use the bounded repair handshake while another server restart plus terminal and release fits.",
+    "decision_bearing_scientific_terminal": "Persist the terminal and release the exact claim to maintenance with its original claimed_at generation.",
+    "unsafe_guest_or_deadline": "Persist exact submission state, release or fence the claim safely, and wake the director for provider lifecycle."
+  },
+  "prohibitions": [
+    "Do not release, reclaim, restage, rehash checkpoint shards, or mutate provider lifecycle.",
+    "Do not alter checkpoint, tokenizer, request, payload, scheduler, sampling, timing, oracle, or endpoint scientific bytes.",
+    "Do not emit SCIENCE_STARTED or submit HTTP during import and runtime repair.",
+    "Do not publish another PRECLAIM terminal or create a repair project.",
+    "Do not run the scientific sample more than once."
+  ]
+}

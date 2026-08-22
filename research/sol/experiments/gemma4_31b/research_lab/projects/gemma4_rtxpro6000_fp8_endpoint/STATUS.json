@@ -1,0 +1,188 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 9.45,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 14.0,
+  "bench_need": {
+    "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+    "claim_allowed": false,
+    "gpu_count": 1,
+    "preferred_bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "provider": "runpod",
+    "purpose": "Exact stock Gemma 4 31B dynamic-FP8 concurrent-c32 endpoint and price-normalized placement measurement."
+  },
+  "claim_gate": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "blocked_by": [
+      "exact_hash_bound_canonical_sample_already_consumed"
+    ],
+    "claim_allowed": false,
+    "disposition": "duplicate_corrected_input_reclaim_revoked"
+  },
+  "director_corrected_input_reclaim_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RESIDENT_SERVER_CORRECTED_INPUT_ENDPOINT_RECLAIM_20260729T0517Z.json",
+    "claim_allowed": false,
+    "revoked_by": "DIRECTOR_RTXPRO6000_CORRECTED_INPUT_RECLAIM_REVOKED_20260729T0523Z.json",
+    "sha256": "c59a2c914fa75b53e369cf3408b3310f503a3d1754caf6a28f83fd4cef4c9423"
+  },
+  "director_corrected_input_reclaim_revocation": {
+    "artifact": "DIRECTOR_RTXPRO6000_CORRECTED_INPUT_RECLAIM_REVOKED_20260729T0523Z.json",
+    "claim_allowed": false,
+    "scientific_submission_allowed": false,
+    "sha256": "ad329242864a6120a7253c539a8bb193867d3d7de3284bb180285981d8db8d86"
+  },
+  "director_cuda13_runtime_headers_activation_jit_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_CUDA13_RUNTIME_HEADERS_ACTIVATION_JIT_REPAIR_20260729T0446Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785300331",
+    "sha256": "5ff4e8d889eb3cc26cf28b93840b8b4737bcff7e7653c1f006a9c0fc2ca8e60b"
+  },
+  "director_cudagraph_reload_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_SM120_CUDAGRAPH_DISABLE_RELOAD_20260729T0417Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785298520",
+    "sha256": "e6402f2ed953120ea5242d14e01f866a59f90d4e17bdbf305dad682264711fac"
+  },
+  "director_execution_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_WORKSTATION_ENDPOINT_EXECUTION_20260729T0338Z.json",
+    "claim_allowed": true,
+    "sha256": "d8e1c6e230917cab315f664aa950facae714a6655e071ff182df1e573814b1c8"
+  },
+  "director_repair_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_CLAIM_REMOTE_ARGV_REPAIR_20260729T0345Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785296606",
+    "sha256": "69d619140fa8d68d67461a491ff89570d8a1fcafcadcd199b8b055af8d954e21"
+  },
+  "director_runtime_repair_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_CUDA13_NVRTC_SERVER_REPAIR_20260729T0403Z.json",
+    "claim_allowed": true,
+    "sha256": "d48193c267e8882f4f3caa7661144ff709a3868e89bafe87ac789283c84e3dd9"
+  },
+  "director_sm120_rope_jit_binding": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_ARCH_REPAIR_20260729T0427Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785299175",
+    "sha256": "faa3fc62812d33dffb755aa381434cb639b24d283aff402a10f11382c12e6ad4"
+  },
+  "director_sm120_rope_source_clock_extension": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_SOURCE_FALLBACK_CLOCK_EXTENSION_20260729T0435Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785299364",
+    "sha256": "d67fbfbfe297eb0409156e78f40d43f946a1d7019650bcc47774590894042451"
+  },
+  "director_sm120_rope_source_continuation": {
+    "artifact": "DIRECTOR_RTXPRO6000_RETAINED_SM120_ROPE_JIT_SOURCE_FALLBACK_CONTINUATION_20260729T0430Z.json",
+    "claim_allowed": true,
+    "repair_id": "repair-1785299364",
+    "sha256": "fa2f98b9dc44496b0707d342f4b798b97950846a32cf416504cc29c2a90987fb"
+  },
+  "endpoint_result": {
+    "above_target_percent": 113.02140046292064,
+    "artifact": "RTXPRO6000_FP8_ENDPOINT_RESULT.json",
+    "artifact_sha256": "05935649a4d34f5a30cf7c0e3a885a1f4deafc8cf4146e9bb08cbf36f2e069fa",
+    "classification": "measured_price_normalized_negative",
+    "complete_requests": 32,
+    "pair_run_sha256": "47d62e6556387695c57158eb6d71a396e535c1ecd87e98ffc04a3696a008a9a0",
+    "response_audit": {
+      "application_errors": 0,
+      "nonempty_choices": 32,
+      "usage_completion_358": 32,
+      "usage_prompt_4214": 32
+    },
+    "science_consumed": true,
+    "service_time_seconds_per_request": 2.23382165625,
+    "successful_requests": 32,
+    "target_seconds_per_request": 1.048637203302411,
+    "terminal": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/RTXPRO6000_FP8_ENDPOINT_TERMINAL.json",
+    "terminal_sha256": "c79a2f6067cf85b9e073d2bf9bc39a1906d84dfe3626887427dcf0c1f16ab9f8"
+  },
+  "id": "gemma4_rtxpro6000_fp8_endpoint",
+  "next_action": "Closed: do not replay the stock RTX PRO 6000 SGLang 0.5.16 endpoint. Preserve accepted terminal c79a2f6\u2026 and await a materially distinct director successor.",
+  "offline_preparation": {
+    "claim_allowed": false,
+    "owner_sha256": "cbf3ac4c7e1c248d1e07e27ba67f8e45c44a90055068acfc147838f8a6f1830d",
+    "packet": "RTXPRO6000_FP8_EXECUTION_PACKET.json",
+    "packet_sha256": "f7c932bb6684ceaed67092123a2737ba14234c89dcf23aa878683fac080fc1b1",
+    "runtime_manifest": "RTXPRO6000_WORKSTATION_SSH_PORT_PRECLAIM_RUNTIME_MANIFEST.json",
+    "runtime_manifest_sha256": "e59d63f35478b1d7fce3807d3c8b0a2cd78a0db2d60c0acdaeb811d97e33e88b",
+    "terminal": "PRECLAIM_RTXPRO6000_WORKSTATION_SSH_PORT_REPAIR_TERMINAL.json"
+  },
+  "priority": 9900,
+  "provider_lifecycle": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "binding": "DIRECTOR_RTXPRO6000_WORKSTATION_PROVIDER_BINDING_20260729T0314Z.json",
+    "binding_sha256": "ea01db3bad5a30bf9e9120880e426b605376f7d8be116de7d0c114c22b4dba0d",
+    "deadline_utc": "2026-07-29T08:13:34.346354Z",
+    "hourly_cost_usd": 1.89,
+    "initial_identity_probe": "DIRECTOR_RTXPRO6000_INITIAL_IDENTITY_PROBE_20260729T0316Z.json",
+    "initial_identity_probe_sha256": "d10d8cea324c7f0c6de8b97d7cb121f5b661e7130bfcdec0bb644a0fb7d64a95",
+    "maximum_gpu_exposure_usd": 9.45,
+    "pod_id": "f4nbtoufbwf66f",
+    "provider_started_at_utc": "2026-07-29T03:13:34.346354Z",
+    "status": "duplicate_claim_released_to_maintenance_watchdog_active",
+    "watchdog_unit": "gemma4-rtxpro6000-f4nbtoufbwf66f-watchdog.service"
+  },
+  "researcher_profile": "execution",
+  "reservation_gate": {
+    "durable_reservation_observed": true,
+    "next_director_action": "No further provider create is authorized; execute the bound exact Workstation bench and preserve it through mutable same-claim repairs.",
+    "provider_create_allowed": false,
+    "required_authorized_usd": 14.0,
+    "reserved_at_utc": "2026-07-29T03:06:53.353851Z"
+  },
+  "retained_server_launch_repair": {
+    "diagnostic_sha256": "d90e7f26597e89b97e36d38e4f26a41225d1d5083407e10e516de6bcf74fa398",
+    "repair_artifact": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/PIP668_SERVER_LAUNCH_REPAIR.json",
+    "repair_artifact_sha256": "03e02d9ce61c0701fb398cb9f4f1a6691511b5a75fd968fcd40895f7f05791f3",
+    "repair_id": "repair-1785297152",
+    "repair_ready_sha256": "a43d493b01798e6fd8940b640a6f36c36d6792355037b5f2ccb59086949b5d47",
+    "repair_request_sha256": "45c5f4443116a7a134c7d1f680337d17dd661eebe5cb23cccbf1373904d9d9e6",
+    "stage_terminal_sha256": "d0a64c9dc5d04aa1888aed53662f532d9a15d748cb065dcb99e0a172ae525ded",
+    "state": "requested_under_existing_execution_binding"
+  },
+  "schema_version": 1,
+  "scientific_contract": {
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "concurrency": 32,
+    "fixed_h200_denominator_seconds_per_request": 0.625149101968745,
+    "fixed_h200_target_seconds_per_request": 0.500119281574996,
+    "maximum_canonical_samples": 1,
+    "output_tokens": 358,
+    "payloads_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c",
+    "prompt_tokens": 4214,
+    "quality_preservation_claimed_before_endpoint": false,
+    "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "rtxpro6000_equivalent_target_seconds_per_request": 1.048637203302411
+  },
+  "sm120_rope_source_fallback_repair": {
+    "artifact": "artifacts/rtxpro6000-fp8-endpoint-20260729t0338z/SM120_ROPE_JIT_SOURCE_FALLBACK.json",
+    "artifact_sha256": "d3acb55b46cf301ec366c3e0e92dd5b9481f85379bfd072d02b6ba0672cdd5af",
+    "classification": "exact_installed_source_sm120_rope_fallback_pass",
+    "mechanism": "official_sglang_rotary_embedding_forward_native_on_sm120",
+    "owner_retry_boundary": "exact_unchanged_owner_cuda13_guard_pass",
+    "production_shape": {
+      "dtype": "bfloat16",
+      "key_shape": [
+        8192,
+        4096
+      ],
+      "max_abs_error": 0.0,
+      "query_shape": [
+        8192,
+        8192
+      ],
+      "relative_l2_error": 0.0,
+      "tokens": 8192
+    },
+    "remote_server_pid": 12087,
+    "repair_id": "repair-1785299364",
+    "repair_request_sha256": "7277977eb3304b67669a1988ec5a390f4cc8774559c7ec7cd52ede70240a3cf4",
+    "science_consumed": false,
+    "science_started": false
+  },
+  "status": "complete",
+  "summary": "Director revocation ad329242\u2026 supersedes corrected-input binding. A late local owner was cancelled; its partial run is preserved only as REVOKED_LATE_OWNER_CANCELLATION.json, not a project terminal. The accepted c79a2f6\u2026 measured negative is authoritative.",
+  "updated_at_utc": "2026-07-29T05:27:00Z"
+}

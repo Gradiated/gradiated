@@ -1,0 +1,17 @@
+{
+  "artifacts": "DIRECTOR_STREAMING_GLOBAL_KV_H200_EXECUTION_20260729T1058Z.json; H200_IDENTITY_VERIFICATION_20260729T1057Z.json; STREAMING_GLOBAL_KV_H200_OWNER_READY.json SHA-256 533c2e70948ac8bac7ef3c33babb889cadd47e62c8293095d43487805b07be82; MEMORY_SCHEDULE_DISCRIMINATOR.json SHA-256 1ea35e007bb7f8317d8e90d3109b20d29fba0141cdd23fd8b7fe2cef1a3102e5",
+  "caches": "Fresh 250-GiB provider disk; retain CUDA compilation, exact checkpoint, pinned image, component telemetry, and conditional endpoint artifacts through bounded repair.",
+  "checkpoint": "Exact google/gemma-4-31B-it revision b9ea41a2887d8607f594846523f94c6cc75ac8a4 is bound and must be resume-staged only after the CUDA discriminator passes.",
+  "driver_version": "580.159.04",
+  "gpu_memory_mib": 143771,
+  "gpu_name": "NVIDIA H200",
+  "image": "Pinned scientific runtime docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6.",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 for the U=8 streaming global-KV discriminator.",
+  "next": "Only gemma4_streaming_global_kv_memory_schedule may claim by 2026-07-29T11:10:00Z under DIRECTOR_STREAMING_GLOBAL_KV_H200_EXECUTION_20260729T1058Z.json and release generation-fenced by 12:08:50Z.",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "role": "streaming_global_kv_discriminator",
+  "runtime": "Fresh preemptible 1x H200 SXM in eu-west1; strict provider, SSH, cloud-init, idle-H200, UUID, memory, and driver identity verified.",
+  "schema_version": 1,
+  "server_state": "Zero accelerator allocations and no GPU processes at the strict 2026-07-29T10:57Z identity census; no setup, source staging, CUDA call, or science has run.",
+  "state": "ready_for_bound_streaming_global_kv_execution"
+}

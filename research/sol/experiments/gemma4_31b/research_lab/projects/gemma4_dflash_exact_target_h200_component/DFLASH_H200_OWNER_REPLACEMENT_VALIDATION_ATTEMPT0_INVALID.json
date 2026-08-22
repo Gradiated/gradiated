@@ -1,0 +1,36 @@
+{
+  "amendments": [
+    {
+      "attempt": 0,
+      "classification": "offline_fixture_harness_defect",
+      "decision_bearing": false,
+      "diagnostic": "The fake retrieval destination parent did not exist.",
+      "repair": "Create the bounded local artifact root inside package_and_retrieve_outside_tree before retrieval.",
+      "retried_operation": "offline_retrieval_fixture_only"
+    }
+  ],
+  "checks": [
+    "python3_py_compile",
+    "archive_temporary_and_final_paths_are_outside_remote_run_tree",
+    "retrieved_archive_sha256_matches_remote_receipt",
+    "snapshot_manifest_is_content_addressed",
+    "persisted_attempt_classification_precedes_continuation",
+    "gpu_pool_show_precedes_every_heartbeat",
+    "heartbeat_uses_project_and_bench_without_expected_claimed_at",
+    "predecessor_pid_must_be_absent_before_replacement_start"
+  ],
+  "created_at_utc": "2026-07-29T22:57:10Z",
+  "evidence_type": "measured_offline_fixture",
+  "heartbeat_interface_observation": {
+    "evidence": "gpu_pool heartbeat --help currently advertises --expected-claimed-at",
+    "impact": "The replacement nevertheless uses the director-required supported project-plus-bench invocation without that option and generation-verifies with show immediately before every heartbeat.",
+    "label": "measured_local_cli"
+  },
+  "network_or_provider_actions": false,
+  "invalidated_by": "DIRECTOR_DFLASH_RETRIEVAL_ONLY_REPLACEMENT_REPAIR_R2_20260729T2253Z.json",
+  "invalidated_reason": "The R2 binding proves the shared heartbeat repair was already adopted and forbids replacement heartbeat changes.",
+  "result": "invalidated_before_launch",
+  "schema_version": 1,
+  "science_consumed": false,
+  "source_sha256": "2b569a9858b1ab93a7c4ed602c836f309bbedcd3d76e4d651b4590a9a4a6484a"
+}

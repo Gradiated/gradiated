@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "decision": "Advance only if guarded centroid-radius blocks preserve greedy top-1 on every measured request and total analytical head work is below 80% of dense on every row; otherwise reject this exact mechanism.",
+  "hypothesis": "A compact centroid plus exact residual-radius index can certify enough Gemma 4 vocabulary blocks as irrelevant to remove material tied-head work.",
+  "scope": {
+    "checkpoint": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "capture": "inputs/hidden_states.pt",
+    "rows": "One final-depth row from each of 32 requests in exact c32 capture index 3",
+    "semantics": "Greedy/top-1 equivalence only; no full-softmax or sampling claim",
+    "hardware": "CPU-only coordinator diagnostic"
+  },
+  "quality_gate": "32/32 dense top-1 agreement and every skipped block certified under guarded FP32 reductions.",
+  "slo": "Finish one executable discriminator and terminal in 60 wall-clock minutes.",
+  "budget": {
+    "provider_spend_usd": 0.0,
+    "gpu_claims": 0,
+    "derived_storage_gib_max": 20
+  },
+  "timeout_seconds": 2400,
+  "artifact_contract": {
+    "terminal": "artifacts/CENTROID_BLOCK_DISCRIMINATOR_RESULT.json",
+    "required_metrics": [
+      "dense agreement",
+      "evaluated vocabulary fraction",
+      "index bytes and build time",
+      "bound and verification overhead",
+      "conservative whole-request relevance"
+    ]
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "classification": "split_reducer_correctness_reservation_gate",
+  "project": "gemma4_b200_fp8_local_attention_fusion",
+  "researcher_profile": "execution",
+  "reservation_required": true,
+  "execution_authorized": false,
+  "provider_operations_authorized": false,
+  "scientific_plan": {
+    "path": "B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_PLAN.json",
+    "sha256": "2a121e45fe9f813dc10165bfbae99f9842b79517f0be941a54dc5674e0d7633b",
+    "classification": "source_complete_b200_split_reducer_correctness_plan"
+  },
+  "predecessor_terminal": {
+    "project": "gemma4_b200_fp8_cross_operator_executor",
+    "path": "../gemma4_b200_fp8_cross_operator_executor/artifacts/b200-cross-operator-component-20260728t2016z/FINAL_TERMINAL.json",
+    "sha256": "3d9285b7399d1f8e716c65cc195075404701d5db7a6aa063b5aba1f52f9cda17",
+    "classification": "component_decision_bearing_negative",
+    "bench_released": true
+  },
+  "reservation": {
+    "requested_total_authorized_usd": 4.0,
+    "cumulative_project_spend_usd": 1.26,
+    "remaining_project_ceiling_usd": 2.74,
+    "durable_reservation_visible_in_director_snapshot": false,
+    "campaign_available_usd_in_director_snapshot": 120.048447,
+    "rule": "Do not claim, compile CUDA, extend lifecycle, or perform provider operations until a durable project-specific $4 total reservation appears in the harness spend snapshot."
+  },
+  "retained_bench": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "accelerator": "nvidia-b200-sxm",
+    "status_at_gate": "available",
+    "claim": null,
+    "hourly_cost_usd": 3.95,
+    "watchdog_deadline_utc": "2026-07-28T21:10:00Z",
+    "maximum_additional_exposure_from_2026_07_28T20_31_44Z_usd": 2.5187,
+    "maximum_cumulative_project_exposure_if_transferred_immediately_usd": 3.7787,
+    "fit": "The measured 316.567-second closest correctness run plus SM100a compile, terminal, and release fit the remaining lifecycle if reservation and director execution binding land promptly.",
+    "fallback": "If the durable reservation or execution binding cannot leave a safe measured run and release window, do not claim or extend implicitly; let the existing watchdog clean and bind an exact replacement lifecycle later under the same total ceiling."
+  },
+  "next_director_action": "When the exact reservation becomes durable, revalidate this retained bench once. If the measured run still fits, bind one execution-profile correctness-only owner against the immutable plan and transfer the warm lifecycle. Otherwise provision an exact replacement only under durable authority.",
+  "forbidden": [
+    "researcher launch before a new director execution binding",
+    "claim or CUDA compilation before the reservation is durable",
+    "timing either local-attention arm",
+    "model or checkpoint load",
+    "endpoint replay",
+    "replay of the consumed tail-output-transform candidate",
+    "provider create, cleanup, or watchdog extension in this reservation-gate turn"
+  ]
+}

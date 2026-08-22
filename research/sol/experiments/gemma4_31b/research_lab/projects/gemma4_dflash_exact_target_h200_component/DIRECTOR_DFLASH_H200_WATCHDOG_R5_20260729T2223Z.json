@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T22:23:00Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "extend_protected_warm_h200_for_source_plus_execution_itinerary",
+  "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+  "resource": {
+    "instance_id": "computeinstance-e00qxw871hz1r79fjt",
+    "disk_id": "computedisk-e00pb91rav4c5ksdbx",
+    "disk_name": "gemma4-qkv-endpoint-20260729t185240z-boot",
+    "provider": "nebius"
+  },
+  "replaced_watchdog": {
+    "unit": "gemma4-pq-mips-20260729t2107z-watchdog-r4.service",
+    "main_pid": 299583,
+    "deadline_utc": "2026-07-29T23:55:00Z"
+  },
+  "replacement_watchdog": {
+    "unit": "gemma4-dflash-20260729t2223z-watchdog-r5.service",
+    "main_pid": 353024,
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-20260729t2223z-watchdog-r5.service",
+    "deadline_utc": "2026-07-30T00:35:00Z",
+    "deadline_epoch": 1785371700,
+    "runtime_max_seconds": 10800,
+    "verified_active": true
+  },
+  "economics": {
+    "reservation_authorized_usd": 6.0,
+    "reservation_started_at_utc": "2026-07-29T22:19:47.529405Z",
+    "conservative_attribution_start_utc": "2026-07-29T22:18:17.988128Z",
+    "hourly_rate_usd": 2.45,
+    "maximum_attributed_seconds": 8202.011872,
+    "maximum_attributed_exposure_usd": 5.581924746222222,
+    "fits_project_ceiling": true
+  },
+  "execution_fences": {
+    "source_packet_deadline_utc": "2026-07-29T22:55:00Z",
+    "claim_allowed": false,
+    "claim_condition": "A later director must verify DFLASH_H200_COMPONENT_READY.json, exact remaining reservation, and lifecycle runway before publishing a claim.",
+    "latest_owner_release_utc": "2026-07-30T00:27:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T00:35:00Z"
+  },
+  "replacement_transaction": {
+    "inventory_replaced": true,
+    "old_watchdog_stopped_after_inventory_replace": true,
+    "old_watchdog_final_state": "inactive/dead",
+    "new_watchdog_final_state": "active/running"
+  },
+  "scientific_contract_changed": false
+}

@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-07-30T03:51:00Z",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "state": "available_warm_pending_exact_project_reservation",
+  "role": "shared_h200_exact_component_next_selection_hold",
+  "summary": "The pinned DFlash lineage is closed after DFlash measured slightly slower than AR and exact NGRAM backend compatibility was a typed no-go. Preserve the quiescent warm H200 for one source-complete fixed-floor QKV-to-E5M2-cache component after its exact $1 reservation becomes durable.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Pinned SGLang v0.5.13 source; strict H200 identity; zero containers and zero GPU compute processes.",
+  "checkpoint": "Exact target manifest 6202e8f8... remains resident at the retained claim-specific root and project view.",
+  "caches": "Preserve pinned image/source, exact target, Hugging Face cache, compilation cache, and frozen DFlash evidence. The next component is checkpoint-light and must not mutate the retained model.",
+  "artifacts": "Cross-operator admission DIRECTOR_FIXED_FLOOR_CROSSOP_H200_ADMISSION_20260730T0351Z.json; offline terminal 33f88a6c...; DFlash backend no-go and frozen AR/DFlash results remain preserved.",
+  "server_state": "Available and quiescent; no owner, claim, server, container, or CUDA process is active.",
+  "scientific_terminal": "DFlash exact pinned-runtime lineage closed: AR 1.16516421446876 s/request, DFlash 1.1711883113125054 s/request, NGRAM zero requests with typed backend no-go.",
+  "classification": "warm_reuse_selected_reservation_not_yet_authority",
+  "next": "Do not claim yet. After the exact gemma4_h200_fixed_floor_crossop_executor cumulative $1 reservation is durable, a later director may bind one 20-minute component-only claim. Current watchdog cleanup remains 2026-07-30T04:51:56.187924Z."
+}

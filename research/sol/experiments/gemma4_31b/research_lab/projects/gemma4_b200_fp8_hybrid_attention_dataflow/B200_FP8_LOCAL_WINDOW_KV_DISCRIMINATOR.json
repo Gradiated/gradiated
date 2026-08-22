@@ -1,0 +1,306 @@
+{
+  "authoritative_identities": {
+    "hardware": {
+      "executed": false,
+      "id": "nvidia-b200-sxm",
+      "programming_target": "sm_100"
+    },
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "runtime": {
+      "flashinfer_version": "0.6.6",
+      "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "inspected_pinned_source_hashes": {
+        "flashinfer-0.6.6/flashinfer/decode.py": "882c71a2d5515b98ffb41e488b1e93b033f7ce92790493e63ad079b4dbb3402e",
+        "vllm/model_executor/layers/attention/attention.py": "2e45ac35100a1396bd03f9fe8d7f3e4dd41f3dc0a78b3bc7e5e118b536a0fe3c",
+        "vllm/utils/flashinfer.py": "6fcb18fbe2487a3fcbc2a4a4a09b2df96be9719dd752681cf2f08ba6113fa93d"
+      },
+      "local_source_hashes": {
+        "inputs/pinned_runtime/v1/attention/backends/flashinfer.py": "e22db5ddadbd550083438946c4452b3227d98020c6c34285dd4b6917b39e2aae",
+        "inputs/pinned_runtime/v1/worker/gpu_model_runner.py": "3afc290d3df1be3df1b89b9b35942695f5896c7729f608d6c44580899212c301"
+      },
+      "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+    },
+    "workload": {
+      "concurrency": 32,
+      "decode_steps": 358,
+      "identity": "c32/4214/358/text-only/non-reasoning",
+      "prompt_tokens_per_request": 4214,
+      "sequence_lengths_inclusive": [
+        4214,
+        4571
+      ],
+      "tensor_parallel_size": 1
+    }
+  },
+  "classification": "typed_rejection_external_local_window_page_table_compaction",
+  "correctness_oracle": {
+    "interpretation": "Slicing at floor((seq_len-1024)/16) and subtracting the same whole-page offset from seq_len preserves every visible (physical_page_id, token_offset). Zero-length padded requests remain empty, and negative append slots remain unchanged.",
+    "path": "local_window_kv_oracle.py",
+    "result": {
+      "boundary_cases": [
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 0,
+          "seq_len": 0,
+          "valid_pages": 0,
+          "visible_tokens": 0
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 1,
+          "seq_len": 1,
+          "valid_pages": 1,
+          "visible_tokens": 1
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 15,
+          "seq_len": 15,
+          "valid_pages": 1,
+          "visible_tokens": 15
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 16,
+          "seq_len": 16,
+          "valid_pages": 1,
+          "visible_tokens": 16
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 1023,
+          "seq_len": 1023,
+          "valid_pages": 64,
+          "visible_tokens": 1023
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 1024,
+          "seq_len": 1024,
+          "valid_pages": 64,
+          "visible_tokens": 1024
+        },
+        {
+          "first_page": 0,
+          "mapping_equal": true,
+          "rebased_seq_len": 1025,
+          "seq_len": 1025,
+          "valid_pages": 65,
+          "visible_tokens": 1024
+        },
+        {
+          "first_page": 199,
+          "mapping_equal": true,
+          "rebased_seq_len": 1030,
+          "seq_len": 4214,
+          "valid_pages": 65,
+          "visible_tokens": 1024
+        },
+        {
+          "first_page": 200,
+          "mapping_equal": true,
+          "rebased_seq_len": 1024,
+          "seq_len": 4224,
+          "valid_pages": 64,
+          "visible_tokens": 1024
+        },
+        {
+          "first_page": 221,
+          "mapping_equal": true,
+          "rebased_seq_len": 1035,
+          "seq_len": 4571,
+          "valid_pages": 65,
+          "visible_tokens": 1024
+        }
+      ],
+      "cuda_graph_padding": {
+        "all_page_ids_negative": true,
+        "append_slot_mapping_contract": "unchanged_negative_slot_no_op",
+        "rebased_seq_len": 0,
+        "seq_len": 0,
+        "valid_pages": 0
+      },
+      "max_window_pages": 65,
+      "page_size": 16,
+      "production": {
+        "all_mappings_equal": true,
+        "max_pages": 65,
+        "min_pages": 64,
+        "page_count_64": 22,
+        "page_count_65": 336,
+        "steps": 358,
+        "sum_pages": 23248
+      },
+      "schema_version": 1,
+      "semantic_class": "page_table_rebase_preserves_visible_absolute_kv_slots",
+      "window_tokens": 1024
+    },
+    "sha256": "f9faf67fac71dcca2f7196160063e304d6d3432647f96c1dee180632dc45d152"
+  },
+  "decision": "Reject external 64-65-page table materialization as the next B200 component. It preserves visible-token addressing but removes no mandatory BF16 KV bytes or attention/append submissions, while the SM100-preferred TRT-LLM route already receives window_left=1023 and would pay 1,790 new compaction launches.",
+  "exact_local_geometry": {
+    "attention": {
+      "gqa_queries_per_kv_head": 2,
+      "head_dim": 256,
+      "key_value_shape_each_per_append_call": [
+        32,
+        16,
+        256
+      ],
+      "kv_heads": 16,
+      "query_heads": 32,
+      "query_shape_per_decode_call": [
+        32,
+        32,
+        256
+      ],
+      "sliding_window_tokens": 1024,
+      "window_left": 1023
+    },
+    "calls_over_completion": {
+      "local_attention_first_consumer": 17900,
+      "local_group_metadata_builds": 1790,
+      "local_kv_append": 17900
+    },
+    "layers": {
+      "layers_per_group": 10,
+      "local": 50,
+      "local_groups": 5
+    },
+    "paged_kv": {
+      "block_tokens": 16,
+      "bytes_per_page_per_layer": 262144,
+      "bytes_per_token_per_layer_k_plus_v": 16384,
+      "consumer_element_strides": [
+        131072,
+        65536,
+        256,
+        4096,
+        1
+      ],
+      "consumer_layout": "HND",
+      "consumer_shape_per_layer": [
+        "num_blocks",
+        2,
+        16,
+        16,
+        256
+      ],
+      "dtype": "bfloat16",
+      "element_bytes": 2,
+      "full_pages_per_request_per_step": {
+        "max": 286,
+        "min": 264,
+        "sum": 98450
+      },
+      "valid_window_page_references_five_groups_c32": 3719680,
+      "window_intersecting_pages_per_request_per_step": {
+        "count_64": 22,
+        "count_65": 336,
+        "max": 65,
+        "min": 64,
+        "sum": 23248
+      }
+    }
+  },
+  "generated_at_utc": "2026-07-28T17:53:09Z",
+  "generator": {
+    "path": "build_local_window_discriminator.py",
+    "sha256": "cc98a0a2fc9620ccfa679f745c6da539850de8f20da1085f0a373c1ae57151a1"
+  },
+  "next_materially_distinct_boundary": {
+    "name": "local_attention_kernel_internal_window_start",
+    "requirement": "Only reconsider page traversal with hash-bound FlashInfer TRT-LLM cubin/source evidence or target counters proving that old pages are actually traversed. Otherwise move to a distinct local-attention computation/fusion boundary."
+  },
+  "non_overlapping_byte_accounting": {
+    "exclusions": {
+      "M32_dispatch_or_RMSNorm_FP8_bytes": "not counted",
+      "global_attention_or_kv_bytes": "not counted",
+      "prior_global_k_eq_v_bytes": "not counted",
+      "query_projection_bytes": "not counted"
+    },
+    "mandatory_bf16_kv": {
+      "candidate_delta_read_bytes": 0,
+      "candidate_delta_write_bytes": 0,
+      "local_append_write_bytes": 9384755200,
+      "local_attention_read_bytes": 9609989324800
+    },
+    "page_id_metadata": {
+      "consumer_page_id_reference_upper_bound": {
+        "baseline": 157520000,
+        "compacted": 37196800,
+        "removed_bytes_if_every_addressable_id_were_read": 481292800,
+        "removed_references": 120323200,
+        "upper_bound_fraction_of_mandatory_kv_reads": 5.0082553032390234e-05,
+        "warning": "The SM100 cubin already receives window_left and may skip old page IDs internally; this is not a measured or source-proven DRAM reduction."
+      },
+      "full_table_addressable_references_five_groups_c32": 15752000,
+      "native_page_list_copy_bytes_baseline": 63008000,
+      "native_page_list_copy_bytes_compacted": 14878720,
+      "native_page_list_copy_bytes_removed": 48129280,
+      "rejected_trtllm_materialization_traffic_bytes": 30229760,
+      "window_valid_references_five_groups_c32": 3719680
+    }
+  },
+  "non_overlapping_launch_accounting": {
+    "baseline": {
+      "append_op_submissions": 17900,
+      "attention_consumer_submissions": 17900,
+      "local_group_metadata_builds": 1790,
+      "native_flashinfer_page_index_copy_launches_if_fallback": 1790,
+      "trtllm_external_compaction_launches": 0
+    },
+    "evidence_class": "exact_source_invocations_not_measured_internal_kernels",
+    "opaque_internal_kernel_launches": "not claimed without CUDA execution; one Python consumer call is not asserted to equal one device kernel",
+    "rejected_external_compaction_delta": {
+      "append_op_submissions": 0,
+      "attention_consumer_submissions": 0,
+      "native_flashinfer_compaction_launches": 0,
+      "trtllm_compaction_launches": 1790
+    }
+  },
+  "production_dataflow": {
+    "append": "Attention.forward -> unified_kv_cache_update -> FlashInferImpl.do_kv_cache_update -> torch.ops._C_cache_ops.reshape_and_cache_flash",
+    "consumer_contract": "HND BF16 cache, full block table, absolute seq_lens, and window_left=1023",
+    "first_consumer": "FlashInferImpl.forward -> flashinfer.decode.trtllm_batch_decode_with_kv_cache -> trtllm_paged_attention_decode",
+    "metadata_producer": "FlashInferMetadataBuilder.build -> TRTLLMDecode(block_tables, seq_lens, max_seq_len)",
+    "ordering": "kv_cache_dummy_dep orders the append before attention; the absolute slot_mapping is not rebased",
+    "slot_producer": "GPUModelRunner._prepare_inputs -> BlockTable.compute_slot_mapping",
+    "sm100_route": "vLLM prefers TRT-LLM decode when SM100 support and NVIDIA artifactory cubins are available; native FlashInfer remains the source fallback"
+  },
+  "schema_version": 1,
+  "scope_compliance": {
+    "cuda_executed": false,
+    "endpoint_requests": 0,
+    "global_k_eq_v_patch_modified": false,
+    "gpu_claimed": false,
+    "m32_dispatch_modified": false,
+    "prior_contiguous_local_kv_candidate_replayed": false,
+    "provider_operations": false,
+    "provider_spend_usd": 0.0,
+    "rmsnorm_fp8_fusion_modified": false
+  },
+  "typed_rejection": {
+    "b200_component_recommendation": "do_not_reserve_for_this_mechanism",
+    "code": "adds_recurring_launch_without_proven_consumer_work_removal",
+    "mechanism": "materialize a contiguous last-65-page table and rebase seq_lens before the unchanged local attention consumer",
+    "physical_status": "rejected",
+    "reasons": [
+      "The unchanged consumer already receives window_left=1023, so external truncation removes no mandatory score/KV work.",
+      "The SM100-preferred TRT-LLM path passes the block table directly and requires a new contiguous materialization; a column slice alone violates its strict-contiguity guard.",
+      "One compaction per five local groups per step adds 1,790 launches and 30,229,760 explicit metadata bytes.",
+      "The most generous 481,292,800-byte page-ID upper bound is only 0.0050083% of mandatory local KV reads and is not a source-proven consumer DRAM reduction.",
+      "The native fallback can shrink its existing page-list copy without another launch, but that does not establish an exact SM100 production win and removes no attention or append call."
+    ],
+    "semantic_status": "preserving_by_oracle"
+  }
+}

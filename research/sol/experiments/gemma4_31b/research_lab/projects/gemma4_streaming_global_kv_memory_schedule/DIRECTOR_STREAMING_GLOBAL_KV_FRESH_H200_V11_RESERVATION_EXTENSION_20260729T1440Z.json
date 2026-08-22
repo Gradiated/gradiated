@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "classification": "director_streaming_global_kv_v11_paused_reservation_extension",
+  "created_at_utc": "2026-07-29T14:40:00Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "researcher_profile": "execution",
+  "status": "paused",
+  "decision": "Do not relaunch v11 under the expired start fence or the nearly exhausted terminal margin. Preserve the ownerless claim and resumable guest state while the harness raises the cumulative reservation from 11 USD to 12 USD.",
+  "source": {
+    "execution_binding": {
+      "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_SAME_CLAIM_20260729T1431Z.json",
+      "sha256": "28e4050d59db900d0289fcefdb1e0f49010099989bde81b6307a8e14a573fd9c"
+    },
+    "patch": {
+      "path": "STREAMING_GLOBAL_KV_FRESH_H200_V11_RESUMABLE_PATCH.json",
+      "sha256": "0a0a7ddab0b24a44aa4e985ed4f3731475f239b91f6bc1f06b2e8d34fd17e2e8"
+    },
+    "owner": {
+      "path": "run_streaming_global_kv_h200_owner_v11.sh",
+      "sha256": "3dae02dc962758cd7410db8f3ce139c530b02064fb2f12c77236f9708a224eeb"
+    },
+    "launch_fence_utc": "2026-07-29T14:38:00Z",
+    "observed_expired_at_utc": "2026-07-29T14:38:39Z",
+    "owner_started": false
+  },
+  "retained_state": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_generation": "2026-07-29T14:02:13.215196Z",
+    "drain_after_release": true,
+    "checkpoint_partial_file": "model-00001-of-00002.safetensors.part",
+    "checkpoint_partial_bytes": 34307773440,
+    "remaining_checkpoint_bytes_upper_bound": 28270858464,
+    "pinned_image_resident": true,
+    "gpu_memory_used_mib_at_last_safe_probe": 0,
+    "candidate_sample_consumed": false,
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e"
+  },
+  "measured_fit": {
+    "nearest_transfer_rate_mbytes_per_second": 15.47,
+    "remaining_transfer_minutes": 30.46,
+    "server_and_model_load_minutes": 17,
+    "endpoint_terminal_release_minutes": 17,
+    "total_continuation_minutes": 64.46,
+    "current_release_by_utc": "2026-07-29T15:48:00Z",
+    "current_watchdog_deadline_utc": "2026-07-29T15:50:00Z",
+    "current_disposition": "A fresh 120-second scheduling runway plus 64.46 measured continuation minutes leaves no safe terminal margin under the current lifecycle."
+  },
+  "reservation": {
+    "current_cumulative_usd": 11.0,
+    "requested_cumulative_usd": 12.0,
+    "actual_spend_usd": 3.4856876241250005,
+    "current_maximum_provider_exposure_usd": 7.438907013513888,
+    "planned_additional_lifecycle_minutes": 20,
+    "planned_additional_exposure_usd": 0.8166666666666667,
+    "planned_maximum_provider_exposure_usd": 8.255573680180554,
+    "planned_maximum_cumulative_exposure_usd": 11.741261304305554,
+    "planned_release_by_utc": "2026-07-29T16:00:00Z",
+    "planned_watchdog_deadline_utc": "2026-07-29T16:10:00Z"
+  },
+  "later_director_action": [
+    "Proceed only after the spend-cap snapshot durably records 12 USD for this exact project.",
+    "Reconcile the exact Nebius instance, disk, claim generation, guest safety, retained partial offset, and current watchdog once.",
+    "If the original claim generation remains safely retainable, replace the watchdog atomically through 16:10Z and verify the prior watchdog inactive.",
+    "Then publish a fresh v11 same-claim execution binding with at least 120 seconds of start runway and release by 16:00Z; if the claim generation changed or the guest is unsafe, recompute rather than launching this stale lineage."
+  ],
+  "must_not": [
+    "This artifact is not execution, claim, provider-lifecycle, or watchdog-extension authority.",
+    "Do not launch the stale v11 command, create a new claim, clear the drain fence, restart verified checkpoint bytes, replay stock/materializing/CUDA producer work, or submit the endpoint.",
+    "Do not touch the independent offline FP8 component project."
+  ]
+}

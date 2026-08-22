@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T00:10:24Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "run_r2_lost_owner_recovery",
+  "generation": "dflash-h200-r2-recovery-20260730t0010z",
+  "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+  "claimed_at": "2026-07-29T23:49:13.529071Z",
+  "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8",
+  "owner_deadline_utc": "2026-07-30T00:37:00Z",
+  "watchdog_cleanup_utc": "2026-07-30T00:45:00Z",
+  "attribution_start_utc": "2026-07-29T22:18:17.988128Z",
+  "prior_actual_spend_usd": 0.0,
+  "maximum_total_spend_usd": 6.0,
+  "remote_target_path": "/home/glmrunner/qkv-direct-a7fc5afbe3c3b292/checkpoint",
+  "worker_generation": 2,
+  "recovery_binding": "DIRECTOR_DFLASH_R2_LOST_OWNER_RECOVERY_20260730T0002Z.json",
+  "recovery_binding_sha256": "fb90255d790fa88f854b5c4ef5442d2de3364a2011bf4fa586d3d2bcb83dfe39",
+  "recovery_readiness": "DFLASH_H200_R2_LOST_OWNER_RECOVERY_READY.json",
+  "recovery_readiness_sha256": "fb77305d407f526e00eb37665e11e053c1b7dc7294cd72a7c61be87af9b1eecd",
+  "owner_source": "dflash_component_direct_recovery_owner.py",
+  "owner_source_sha256": "1a3db9509dd72f476e3f4c024edafd6bf854e6a452786ad836fffaf6d93df87a",
+  "adoption_sha256": "1f1a226c4e5dc277e6413d681ea9bb610c46f64461dc01118fd9a95ef75f00ea",
+  "consumed_request_sha256": "2aff4c3945996b3c34379f41904323107f63e57f4fa57bca2a69840315828b03",
+  "patch_sha256": "f893a8f338deeaedce5cbf68337e31c490c20036d48f7812cc688b87ebc65631",
+  "packet_archive_sha256": "3e59bcdda57f18f30ed8db6279808d6e7cc544d297197566ee3c45b98754aed2",
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "historical_request_25_replay_allowed": false,
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "owner_start_command": [
+    "/usr/bin/python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_direct_recovery_owner.py",
+    "--recovery-execution-binding",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_R2_RECOVERY_EXECUTION_20260730T0010Z.json",
+    "--artifact-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-direct-owner-r2-20260729t2344z/recovery-run"
+  ],
+  "execution_fences": {
+    "new_claim_allowed": false,
+    "replacement_owner_count": 1,
+    "worker_0_or_1_replay_allowed": false,
+    "repair_request_allowed_before_worker_2": false,
+    "provider_lifecycle_changed": false,
+    "release_requires": "validated scientific terminal or typed deadline/incomplete disposition"
+  }
+}

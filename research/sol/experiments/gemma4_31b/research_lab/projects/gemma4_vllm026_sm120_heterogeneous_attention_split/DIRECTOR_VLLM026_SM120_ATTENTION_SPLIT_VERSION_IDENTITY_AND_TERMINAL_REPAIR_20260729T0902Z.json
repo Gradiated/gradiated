@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T09:02:00Z",
+  "classification": "director_sm120_attention_split_version_identity_and_terminal_repair",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "decision": "classify_released_attempt_as_invalid_and_prepare_one_fresh_claim_owner",
+  "claim_allowed": false,
+  "new_claim_allowed": false,
+  "provider_lifecycle_allowed": false,
+  "repair_result_due_utc": "2026-07-29T09:10:00Z",
+  "bench": {
+    "id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "condition": "maintenance",
+    "watchdog_deadline_utc": "2026-07-29T09:50:00Z",
+    "resident_state": "Exact checkpoint, official vLLM runtime, wheel, and CUDA/JIT caches remain resident; predecessor server and component drivers are stopped."
+  },
+  "invalid_attempt": {
+    "claimed_at": "2026-07-29T08:29:54.858364Z",
+    "released_at_utc": "2026-07-29T08:55:19.652673Z",
+    "claim_seconds": 1524.794309,
+    "claim_exposure_usd": 0.800517,
+    "terminal_path": "artifacts/sm120-attention-adopter-20260729t0846z/TERMINAL.json",
+    "terminal_sha256": "f3cc379d0cd130e030b9a5ee1cef4af1d4f74aecf1e3a774ae58ab2502bfbd26",
+    "control_stderr_sha256": "e6235055110ccc9ab131809efcc90129ed099f00d388dd0ee3dbea6206d8a31c",
+    "candidate_stderr_sha256": "e6235055110ccc9ab131809efcc90129ed099f00d388dd0ee3dbea6206d8a31c",
+    "observed_failure": "Both arm processes exited before LLM construction, attention backend selection, CUDA model work, path proof, or output rows because package __version__ reported 0.26.0 while the guard required the wheel filename suffix 0.26.0+cu129.",
+    "science_consumed": false,
+    "decision_bearing": false
+  },
+  "immutable_science": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "torch_version": "2.11.0+cu130",
+    "device_capability": [
+      12,
+      0
+    ],
+    "control": "all 60 layers use TRITON_ATTN",
+    "candidate": "50 sliding-window layers use TRITON_ATTN and 10 full-attention layers use FLEX_ATTENTION",
+    "semantic_oracle": "Exact prompt and generated token IDs/text for two text requests plus one deterministic multimodal-prefix request",
+    "submission_limit": "one fresh parent control/candidate oracle; the invalid metadata-guard attempt consumed no scientific arm"
+  },
+  "mutable_repair": {
+    "oracle_path": "future_sm120_oracle.py",
+    "old_oracle_sha256": "b41ef19d7d8b0b6f0522634ea9c5c0753fff48d6b02ac33dea7b002575601842",
+    "owner_path": "run_sm120_attention_split_component_owner.py",
+    "old_owner_sha256": "5aeb53b3fefae6576e6fa7fd65d319935efd5afba0f0a84dba39b22c18726f12",
+    "required_changes": [
+      "Treat package vllm.__version__ == 0.26.0 as compatible only when the already-bound wheel SHA-256 remains exact; keep the immutable wheel digest as the package-build identity.",
+      "Make owner terminal completeness require successful control and candidate outputs plus all required path-proof booleans, not merely an oracle_failed label and arm dictionaries.",
+      "Route any future zero-output, missing-path-proof, or ordinary integration failure through a live executable repair handshake instead of maintenance release.",
+      "Use a fresh artifact generation and preserve the existing checkpoint/runtime/caches without replaying norm-FP8 or c32."
+    ],
+    "behavioral_validation": [
+      "A fixture with exact wheel digest and vllm.__version__ 0.26.0 passes the identity boundary.",
+      "A changed wheel digest or other package version fails closed.",
+      "The observed zero-output terminal is rejected as incomplete and selects retained repair.",
+      "A complete decision-bearing positive or non-positive parent terminal selects generation-fenced release."
+    ]
+  },
+  "required_result": {
+    "path": "VLLM026_SM120_ATTENTION_SPLIT_VERSION_IDENTITY_AND_TERMINAL_REPAIR_RESULT.json",
+    "must_be_last_project_mutation": true,
+    "required_fields": [
+      "classification",
+      "oracle_sha256",
+      "owner_sha256",
+      "behavioral_validation",
+      "detached_owner_command",
+      "fresh_artifact_root",
+      "unchanged_science_hashes"
+    ]
+  },
+  "next": "Use an execution-profile researcher for this zero-GPU same-project repair. Do not claim, SSH, call provider APIs, alter the scientific contract, or launch until a later director execution binding rechecks the maintenance bench and remaining watchdog/spend window."
+}

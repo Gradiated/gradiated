@@ -1,0 +1,281 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-29T21:17:29Z",
+  "classification": "localized_hotblock_negative_with_typed_redirect",
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "experiment_contract": {
+    "causal_hypothesis": "A lifecycle-pure fusion of the post-attention RMSNorm output into the immediately following residual-add/pre-FF RMSNorm can remove one launch and one BF16 intermediate write/read per layer while preserving both stock BF16 rounding points.",
+    "expected_direction": "lower launch count and lower intermediate traffic",
+    "stock_control": "Pinned Gemma4DecoderLayer.forward calling post_attention_layernorm, followed by RMSNorm.forward_cuda with residual through FlashInfer fused_add_rmsnorm.",
+    "candidate_change": "One row-lifecycle computes both reductions and the residual add, retaining the first normalized row internally but explicitly rounding it to BF16 before the residual update.",
+    "correctness_gate": "Complete [32,5376] normalized output and residual must be BF16 bit-identical to the stock two-kernel oracle; an invalid no-intermediate-round control must diverge.",
+    "performance_gate": "Do not admit H200 work when the impossible zero-cost bound for the complete selected block is below 1% of the fixed qualified request.",
+    "slo_and_economic_target": {
+      "fixed_qualified_seconds_per_request": 0.625149101968745,
+      "target_seconds_per_request": 0.500119281574996,
+      "required_reduction_fraction": 0.2,
+      "derived_target_cost_usd_per_million_total_tokens_at_90pct": 0.109725
+    },
+    "budget": {
+      "authorized_spend_usd": 0.0,
+      "actual_spend_usd": 0.0,
+      "wall_clock_minutes": 45,
+      "storage_limit_gib": 2,
+      "gpu_claim_allowed": false
+    },
+    "execution": {
+      "command": "python3 dual_rmsnorm_residual_falsifier.py --source-root /root/workspace/.agents/runtime/sglang-v0.5.13-source --trace-csv /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/pair/nsys-stats.csv --output DUAL_RMSNORM_RESIDUAL_FALSIFIER.json",
+      "seed_contract": "index-hash-v1 salts 11,17,23,29",
+      "environment": "coordinator CPU only",
+      "gpu_claimed": false,
+      "gpu_pool_called": false,
+      "ssh_called": false,
+      "docker_called": false,
+      "cuda_called": false,
+      "endpoint_traffic": false,
+      "provider_api_called": false,
+      "other_project_mutated": false
+    },
+    "artifact_contract": [
+      "OPPORTUNITY_REGISTER.json",
+      "OPPORTUNITY_REGISTER_RANKED.json",
+      "dual_rmsnorm_residual_falsifier.py",
+      "DUAL_RMSNORM_RESIDUAL_FALSIFIER.json",
+      "TASKGRAPH_HOTBLOCK_DISCRIMINATOR.json"
+    ]
+  },
+  "identities": {
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "checkpoint_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+    },
+    "runtime": {
+      "release": "SGLang v0.5.13",
+      "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "git_tree": "ed4e68454edee9b97272386af2fd8f989484f270",
+      "image_linux_amd64": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+    },
+    "hardware_scope": {
+      "accelerator": "NVIDIA H200 SXM",
+      "evidence_transfer": "Prior exact-stack H200 trace only; no target GPU invocation in this project."
+    },
+    "workload": {
+      "concurrency": 32,
+      "requests": 32,
+      "prompt_tokens_per_request": 4214,
+      "completion_tokens_per_request": 358,
+      "cached_prompt_tokens_total": 17120,
+      "fresh_prompt_tokens_total": 117728,
+      "dynamic_chunking": true,
+      "chunked_prefill_size": 2048,
+      "tensor_parallel": 1,
+      "weight_representation": "dynamic in-memory FP8 E4M3 linears",
+      "kv_cache_dtype": "FP8 E5M2"
+    }
+  },
+  "selected_hotblock": {
+    "opportunity_id": "post_attn_norm_to_fused_add_pre_ff_norm",
+    "phase": "recurring model forwards inside the exact c32 mixed prefill/decode capture",
+    "source_callsite": {
+      "module": "sglang.srt.models.gemma4_causal.Gemma4DecoderLayer.forward",
+      "producer_expression": "hidden_states = self.post_attention_layernorm(hidden_states)",
+      "consumer_expression": "hidden_states, residual = self.pre_feedforward_layernorm(hidden_states, residual)",
+      "source_lines": {
+        "producer": 668,
+        "consumer_dense_branch": 718
+      }
+    },
+    "producer": {
+      "symbol": "sglang.srt.layers.layernorm.RMSNorm.forward_cuda -> rmsnorm",
+      "operation": "post-attention RMSNorm",
+      "input_shape": [32, 5376],
+      "input_strides": [5376, 1],
+      "input_dtype": "bfloat16",
+      "weight_shape": [5376],
+      "weight_dtype": "bfloat16",
+      "output_shape": [32, 5376],
+      "output_strides": [5376, 1],
+      "output_dtype": "bfloat16",
+      "epsilon": 1e-6
+    },
+    "consumer": {
+      "symbol": "sglang.srt.layers.layernorm.RMSNorm.forward_cuda -> flashinfer fused_add_rmsnorm",
+      "operation": "BF16 residual update followed by pre-feedforward RMSNorm",
+      "normalized_input_shape": [32, 5376],
+      "residual_shape": [32, 5376],
+      "input_dtype": "bfloat16",
+      "weight_shape": [5376],
+      "weight_dtype": "bfloat16",
+      "normalized_output_shape": [32, 5376],
+      "residual_output_shape": [32, 5376],
+      "output_dtype": "bfloat16",
+      "epsilon": 1e-6
+    },
+    "recurrence": {
+      "layers_per_forward": 60,
+      "forward_batches_in_capture": 61,
+      "selected_calls": 3660
+    },
+    "lifecycle_pure_candidate_contract": {
+      "runner_symbol": "lifecycle_pure_candidate",
+      "external_state": "none",
+      "required_intermediate_round": "BF16 after post-attention RMSNorm before residual add",
+      "required_residual_round": "BF16 after residual add before pre-FF RMSNorm",
+      "forbidden_semantic_shortcut": "retaining unrounded FP32 first-norm values across the residual add"
+    }
+  },
+  "evidence": {
+    "classes": {
+      "source_adjacency": "source-backed",
+      "kernel_family_times": "measured exact H200 capture",
+      "selected_callsite_time": "derived by source-count apportionment",
+      "materialization_bytes": "analytical",
+      "correctness": "synthetic exact-shape CPU oracle",
+      "wall_bound": "derived impossible zero-cost upper bound",
+      "endpoint_effect": "not measured and not claimed"
+    },
+    "trace": {
+      "capture_window_seconds": 23.038600455,
+      "rmsnorm_family": {
+        "instances": 7381,
+        "total_seconds": 0.083528421,
+        "median_microseconds": 11.488
+      },
+      "fused_add_rmsnorm": {
+        "instances": 3660,
+        "total_seconds": 0.0744735,
+        "median_microseconds": 20.192
+      },
+      "attributed_selected_post_attention_rmsnorm_seconds": 0.04141905173553719,
+      "attribution_uncertainty": "The Nsight kernel summary does not label individual RMSNorm call sites; source-count apportionment assumes equal mean duration for the equal [M,5376] call sites.",
+      "loose_all_norm_family_zero_cost_upper_seconds_per_capture": 0.158001921
+    },
+    "correctness_oracle": {
+      "shape": [32, 5376],
+      "elements_per_output": 172032,
+      "candidate_output_bfloat16_mismatches": 0,
+      "candidate_residual_bfloat16_mismatches": 0,
+      "stock_full_output_sha256": "aa609125c19f3005f27ee3b1bc1a4933b330e882845721f56689c321dc941eca",
+      "candidate_full_output_sha256": "aa609125c19f3005f27ee3b1bc1a4933b330e882845721f56689c321dc941eca",
+      "finite": true,
+      "nonzero_output_elements": 171816,
+      "negative_control": {
+        "change": "omit intermediate BF16 rounding",
+        "output_bfloat16_mismatches": 48392,
+        "residual_bfloat16_mismatches": 51944,
+        "discriminates_rounding_contract": true
+      },
+      "transfer_limit": "The CPU oracle proves dataflow and rounding semantics, not H200 reduction-order identity or timing."
+    },
+    "modifiable_wall_bound": {
+      "intermediate_bfloat16_write_read_bytes_removed_per_call": 688128,
+      "intermediate_bfloat16_write_read_bytes_removed_per_capture": 2518548480,
+      "launches_removed_per_capture": 3660,
+      "selected_block_zero_cost_upper_seconds_per_capture": 0.1158925517355372,
+      "selected_block_zero_cost_upper_fraction_of_capture": 0.005030364234229574,
+      "selected_block_zero_cost_upper_seconds_per_request": 0.0036216422417355374,
+      "selected_block_zero_cost_upper_fraction_of_fixed_qualified_request": 0.005793245531874099,
+      "maximum_fraction_of_campaign_target_gap_closed": 0.028966227659370496,
+      "bound_strength": "This credits both required RMSNorm reductions and the residual add as zero-cost; realizable launch/materialization savings must be smaller."
+    },
+    "competing_explanations": [
+      {
+        "id": "launch_and_materialization_limited",
+        "prediction": "A fused lifecycle removes 3660 launches and 2.518548480 GB of intermediate write/read traffic from the capture.",
+        "falsifier": "H200 component timing shows no positive movement or L2 residency makes global traffic unchanged."
+      },
+      {
+        "id": "required_reductions_dominate",
+        "prediction": "The fused kernel remains close to the sum or maximum of the two stock reduction costs because both 5376-wide norms still execute.",
+        "falsifier": "A correct H200 kernel approaches a single RMSNorm latency without occupancy or spill regression."
+      },
+      {
+        "id": "intermediate_is_cache_resident",
+        "prediction": "The 344064-byte per-call BF16 intermediate is served predominantly by L2, so an HBM-byte roofline overstates savings.",
+        "falsifier": "Scope-matched H200 counters show corresponding DRAM write/read reduction."
+      }
+    ],
+    "qkv_archive_context": {
+      "use": "Workload and immutable attempt identity only; no PATH_PROOF.jsonl was read or reconstructed.",
+      "endpoint_execution_packet_ready_sha256": "e7bd69846c90f57349016a844be28e3b256a7ac5ec23fca95c91bf8ed2460fc4",
+      "attempt1_compact_archive_sha256": "419ef4a07420c703b34b309eff560d53677148c1e292973b438780b4836c0ef9",
+      "attempt1_compact_archive_bytes": 44710,
+      "attempt1_worker_terminal_sha256": "6e92e75707e9a2e883c2a26c11dd1f25609004137c2dd336352835b836a0e6d4",
+      "attempt1_service_seconds_per_request": 0.6923181802812479,
+      "dynamic_path_proof_available": false,
+      "scientific_disposition": "Consumed QKV endpoint is not used as eligible performance evidence for this task-graph decision."
+    }
+  },
+  "opportunity_register": {
+    "source_path": "OPPORTUNITY_REGISTER.json",
+    "ranked_path": "OPPORTUNITY_REGISTER_RANKED.json",
+    "selected_opportunity_id": "post_attn_norm_to_fused_add_pre_ff_norm",
+    "residual_opportunity_ids": [
+      "dynamic_fp8_quant_to_fp8_gemm_prologue",
+      "qkv_norm_rope_to_attention",
+      "swiglu_to_down_fp8_consumer",
+      "host_sync_graph_gap"
+    ],
+    "selection_reason": "This was the highest-information actual recurring producer-to-consumer block with a complete $0 correctness oracle and a decisive measured/source-backed zero-cost wall bound."
+  },
+  "decision": {
+    "type": "redirect",
+    "result": "redirect_selected_hotblock",
+    "reason_code": "impossible_zero_cost_upper_bound_below_component_admission_value",
+    "selected_block_promote_to_h200_component": false,
+    "scientific_interpretation": "The selected dual-RMSNorm/residual seam is semantically fusible only when both BF16 rounding points remain explicit, but its complete block is too small: even impossible deletion saves at most 0.579324553% of the fixed qualified request and 2.896622766% of the campaign gap.",
+    "closed_scope": "Only post_attention_layernorm -> residual-add/pre_feedforward_layernorm at c32 in the pinned SGLang v0.5.13 stack.",
+    "not_closed": "Cross-operator execution, exact dynamic-FP8 GEMM prologues, and a source-localized host synchronization dependency remain open.",
+    "typed_redirect": {
+      "next_boundary": "source-localized host synchronization producer-to-consumer edge",
+      "why": "It is the largest measured graph-level residual, but must be reduced from aggregate API time to one exact dependency before implementation or GPU admission.",
+      "required_next_evidence": "Exact blocking source symbol, producer and consumer tensors/events, non-overlapping wait interval, device-ordered replacement, and a correctness-bearing same-session endpoint pair.",
+      "do_not_do": [
+        "Do not promote this selected dual-RMSNorm seam to H200.",
+        "Do not infer removable wall time from summed cudaStreamSynchronize API duration.",
+        "Do not replay or reconstruct the QKV path-proof lineage in this project."
+      ]
+    }
+  },
+  "immutable_artifacts": {
+    "dual_rmsnorm_residual_falsifier.py": {
+      "bytes": 16440,
+      "sha256": "a2e3f2d2d046ebd26d45f4807d3f45d5b2fd0ad42995a846a41618842c7be1d2"
+    },
+    "DUAL_RMSNORM_RESIDUAL_FALSIFIER.json": {
+      "bytes": 5746,
+      "sha256": "a5cc8ba65fc6afd30b3b775f76fb1b3626335c2b5c39ab100f1d43991fb6a449",
+      "deterministic_reproduction": true
+    },
+    "OPPORTUNITY_REGISTER.json": {
+      "bytes": 11719,
+      "sha256": "50b335d130304d336326a522d1e2e242cbda7f00e2da19dd6a030e67da8664bc"
+    },
+    "OPPORTUNITY_REGISTER_RANKED.json": {
+      "bytes": 12310,
+      "sha256": "478e058335a44673fd701eefaf16a049545c6f71afe8dd47c3aec0275aaa6fec"
+    },
+    "pinned_sources": {
+      "gemma4_causal.py": {
+        "bytes": 56461,
+        "sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989"
+      },
+      "layernorm.py": {
+        "bytes": 36059,
+        "sha256": "e31523f8090d41e642761617b7253b5a2833676dfd35dad86ae9c18e69144c3b"
+      },
+      "fp8_utils.py": {
+        "bytes": 62279,
+        "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9"
+      }
+    },
+    "trace_csv": {
+      "bytes": 20937,
+      "sha256": "2c23d30660675e39185344b2d44b7b951d7bcd700704c4fd73028efa19eff487"
+    },
+    "prior_swiglu_falsifier": {
+      "sha256": "5036f2157c76c868562c80cbba06bd89ef115be2a4101251fcb2d9ef1f22b983"
+    }
+  }
+}

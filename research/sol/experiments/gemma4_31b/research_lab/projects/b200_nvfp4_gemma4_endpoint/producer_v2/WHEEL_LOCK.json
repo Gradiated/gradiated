@@ -1,0 +1,439 @@
+{
+  "python": "3.12",
+  "roots": [
+    "llmcompressor==0.12.0",
+    "torchvision==0.27.0"
+  ],
+  "wheels": [
+    {
+      "bytes": 383744,
+      "path": "wheels/accelerate-1.13.0-py3-none-any.whl",
+      "sha256": "cf1a3efb96c18f7b152eb0fa7490f3710b19c3f395699358f08decca2b8b62e0"
+    },
+    {
+      "bytes": 15038,
+      "path": "wheels/aiohappyeyeballs-2.7.1-py3-none-any.whl",
+      "sha256": "9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472"
+    },
+    {
+      "bytes": 1792122,
+      "path": "wheels/aiohttp-3.14.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "543906c127fb1d929b95076db19b83fa2d46751006ff1e23b093aa5ac4d8db42"
+    },
+    {
+      "bytes": 7490,
+      "path": "wheels/aiosignal-1.4.0-py3-none-any.whl",
+      "sha256": "053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e"
+    },
+    {
+      "bytes": 5303,
+      "path": "wheels/annotated_doc-0.0.4-py3-none-any.whl",
+      "sha256": "571ac1dc6991c450b25a9c2d84a3705e2ae7a53467b5d111c24fa8baabbed320"
+    },
+    {
+      "bytes": 13427,
+      "path": "wheels/annotated_types-0.8.0-py3-none-any.whl",
+      "sha256": "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+    },
+    {
+      "bytes": 125813,
+      "path": "wheels/anyio-4.14.2-py3-none-any.whl",
+      "sha256": "9f505dda5ac9f0c8309b5e8bd445a8c2bf7246f3ce950121e45ea15bc41d1494"
+    },
+    {
+      "bytes": 67548,
+      "path": "wheels/attrs-26.1.0-py3-none-any.whl",
+      "sha256": "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+    },
+    {
+      "bytes": 1065039,
+      "path": "wheels/auto_round-0.13.0-py3-none-any.whl",
+      "sha256": "90403090ee2b69098457504e102939c4e3cca152c4cae004570c991625d6d9f7"
+    },
+    {
+      "bytes": 136983,
+      "path": "wheels/certifi-2026.7.22-py3-none-any.whl",
+      "sha256": "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+    },
+    {
+      "bytes": 224256,
+      "path": "wheels/charset_normalizer-3.4.9-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "5e226f6218febc71f6c1fc2fafb91c226f75bdc1d8fb12d66823716e891608fd"
+    },
+    {
+      "bytes": 119243,
+      "path": "wheels/click-8.4.2-py3-none-any.whl",
+      "sha256": "e6f9f66136c816745b9d65817da91d61d957fb16e02e4dcd0552553c5a197b76"
+    },
+    {
+      "bytes": 211886,
+      "path": "wheels/compressed_tensors-0.17.1-py3-none-any.whl",
+      "sha256": "c6a9e96361564d1b66bde9ae236a7176c139675a8f863d8f26274cbda4932db7"
+    },
+    {
+      "bytes": 6657965,
+      "path": "wheels/cuda_bindings-13.3.1-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "e32d08f71ebcdf00f0f41eab2eb37e8da94c8ed411cc9f7f7a019ce6b34abe3a"
+    },
+    {
+      "bytes": 54591,
+      "path": "wheels/cuda_pathfinder-1.6.0-py3-none-any.whl",
+      "sha256": "1503af579d8379c24bdd65528379bc57039b0455be9f5f9686cf8e473a1fce51"
+    },
+    {
+      "bytes": 2364,
+      "path": "wheels/cuda_toolkit-13.0.2-py2.py3-none-any.whl",
+      "sha256": "b198824cf2f54003f50d64ada3a0f184b42ca0846c1c94192fa269ecd97a66eb"
+    },
+    {
+      "bytes": 555084,
+      "path": "wheels/datasets-5.0.0-py3-none-any.whl",
+      "sha256": "7dd34927a0fd7046e98aad5cb9430e699c373238a15befa7b9bf22b991a7fee6"
+    },
+    {
+      "bytes": 120019,
+      "path": "wheels/dill-0.4.1-py3-none-any.whl",
+      "sha256": "1e1ce33e978ae97fcfcff5638477032b801c46c7c65cf717f95fbc2248f79a9d"
+    },
+    {
+      "bytes": 97732,
+      "path": "wheels/filelock-3.32.0-py3-none-any.whl",
+      "sha256": "d396bea984af47333ef05e50eae7eff88c84256de6112aea0ec48a233c064fe3"
+    },
+    {
+      "bytes": 242411,
+      "path": "wheels/frozenlist-1.8.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl",
+      "sha256": "494a5952b1c597ba44e0e78113a7266e656b9794eec897b19ead706bd7074383"
+    },
+    {
+      "bytes": 203402,
+      "path": "wheels/fsspec-2026.4.0-py3-none-any.whl",
+      "sha256": "11ef7bb35dab8a394fde6e608221d5cf3e8499401c249bebaeaad760a1a8dec2"
+    },
+    {
+      "bytes": 37515,
+      "path": "wheels/h11-0.16.0-py3-none-any.whl",
+      "sha256": "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
+    },
+    {
+      "bytes": 4428006,
+      "path": "wheels/hf_xet-1.5.2-cp38-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "db78c39c83d6279daddc98e2238f373ab8980685556d42472b4ec51abcf03e8c"
+    },
+    {
+      "bytes": 78784,
+      "path": "wheels/httpcore-1.0.9-py3-none-any.whl",
+      "sha256": "2d400746a40668fc9dec9810239072b40b4484b640a8c38fd654a024c7a1bf55"
+    },
+    {
+      "bytes": 73517,
+      "path": "wheels/httpx-0.28.1-py3-none-any.whl",
+      "sha256": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad"
+    },
+    {
+      "bytes": 774909,
+      "path": "wheels/huggingface_hub-1.25.1-py3-none-any.whl",
+      "sha256": "004d4e70350517e24c68a7dbb7dc5e40b2b6aefef8f94bf7a85f6f9835102ea5"
+    },
+    {
+      "bytes": 65455,
+      "path": "wheels/idna-3.18-py3-none-any.whl",
+      "sha256": "7f952cbe720b688055e3f87de14f5c3e5fdaa8bc3928985c4077ca689de849a2"
+    },
+    {
+      "bytes": 134899,
+      "path": "wheels/jinja2-3.1.6-py3-none-any.whl",
+      "sha256": "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+    },
+    {
+      "bytes": 298199,
+      "path": "wheels/llmcompressor-0.12.0-py3-none-any.whl",
+      "sha256": "e17675737f41861391ee833265e3b96785feace4b96cf099df61119829a00f4d"
+    },
+    {
+      "bytes": 61595,
+      "path": "wheels/loguru-0.7.3-py3-none-any.whl",
+      "sha256": "31a33c10c8e1e10422bfd431aeb5d351c7cf7fa671e3c4df004162264b28220c"
+    },
+    {
+      "bytes": 91687,
+      "path": "wheels/markdown_it_py-4.2.0-py3-none-any.whl",
+      "sha256": "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+    },
+    {
+      "bytes": 22947,
+      "path": "wheels/markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "d6dd0be5b5b189d31db7cda48b91d7e0a9795f31430b7f271219ab30f1d3ac9d"
+    },
+    {
+      "bytes": 9979,
+      "path": "wheels/mdurl-0.1.2-py3-none-any.whl",
+      "sha256": "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+    },
+    {
+      "bytes": 536198,
+      "path": "wheels/mpmath-1.3.0-py3-none-any.whl",
+      "sha256": "a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c"
+    },
+    {
+      "bytes": 256322,
+      "path": "wheels/multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "bfde23ef6ed9db7eaee6c37dcec08524cb43903c60b285b172b6c094711b3961"
+    },
+    {
+      "bytes": 150281,
+      "path": "wheels/multiprocess-0.70.19-py312-none-any.whl",
+      "sha256": "3a56c0e85dd5025161bac5ce138dcac1e49174c7d8e74596537e729fd5c53c28"
+    },
+    {
+      "bytes": 2068504,
+      "path": "wheels/networkx-3.6.1-py3-none-any.whl",
+      "sha256": "d47fbf302e7d9cbbb9e2555a0d267983d2aa476bac30e90dfbe5669bd57f3762"
+    },
+    {
+      "bytes": 16645538,
+      "path": "wheels/numpy-2.4.6-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "90f9849678c75fe7afa2d348ac842c168b0a4d3d61919687216dfc547976d853"
+    },
+    {
+      "bytes": 423138758,
+      "path": "wheels/nvidia_cublas-13.1.1.3-py3-none-manylinux_2_27_x86_64.whl",
+      "sha256": "37936a16db8fe4ac1f065c2139360608a543a09275cb1a1af612e08cfa065436"
+    },
+    {
+      "bytes": 10715597,
+      "path": "wheels/nvidia_cuda_cupti-13.0.85-py3-none-manylinux_2_25_x86_64.whl",
+      "sha256": "4eb01c08e859bf924d222250d2e8f8b8ff6d3db4721288cf35d14252a4d933c8"
+    },
+    {
+      "bytes": 90215200,
+      "path": "wheels/nvidia_cuda_nvrtc-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl",
+      "sha256": "ad9b6d2ead2435f11cbb6868809d2adeeee302e9bb94bcf0539c7a40d80e8575"
+    },
+    {
+      "bytes": 2243632,
+      "path": "wheels/nvidia_cuda_runtime-13.0.96-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "7f82250d7782aa23b6cfe765ecc7db554bd3c2870c43f3d1821f1d18aebf0548"
+    },
+    {
+      "bytes": 366173588,
+      "path": "wheels/nvidia_cudnn_cu13-9.20.0.48-py3-none-manylinux_2_27_x86_64.whl",
+      "sha256": "0c45dd8eeb50b603f07995b1b300c62ffe6a1980482b82b3bcf94a4ca9d49304"
+    },
+    {
+      "bytes": 214085489,
+      "path": "wheels/nvidia_cufft-12.0.0.61-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "6c44f692dce8fd5ffd3e3df134b6cdb9c2f72d99cf40b62c32dde45eea9ddad3"
+    },
+    {
+      "bytes": 1223672,
+      "path": "wheels/nvidia_cufile-1.15.1.6-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "08a3ecefae5a01c7f5117351c64f17c7c62efa5fffdbe24fc7d298da19cd0b44"
+    },
+    {
+      "bytes": 59544258,
+      "path": "wheels/nvidia_curand-10.4.0.35-py3-none-manylinux_2_27_x86_64.whl",
+      "sha256": "1aee33a5da6e1db083fe2b90082def8915f30f3248d5896bcec36a579d941bfc"
+    },
+    {
+      "bytes": 200941980,
+      "path": "wheels/nvidia_cusolver-12.0.4.66-py3-none-manylinux_2_27_x86_64.whl",
+      "sha256": "0a759da5dea5c0ea10fd307de75cdeb59e7ea4fcb8add0924859b944babf1112"
+    },
+    {
+      "bytes": 145942937,
+      "path": "wheels/nvidia_cusparse-12.6.3.3-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "2b3c89c88d01ee0e477cb7f82ef60a11a4bcd57b6b87c33f789350b59759360b"
+    },
+    {
+      "bytes": 170148586,
+      "path": "wheels/nvidia_cusparselt_cu13-0.8.1-py3-none-manylinux2014_x86_64.whl",
+      "sha256": "786ce87568c303fadb5afcc7102d454cd3040d75f6f8626f5db460d1871f4dd0"
+    },
+    {
+      "bytes": 53163,
+      "path": "wheels/nvidia_ml_py-13.610.43-py3-none-any.whl",
+      "sha256": "f13c72698edef492f985cc225f14faafe68ae065a2e407f45bdf6f4b9b43fde8"
+    },
+    {
+      "bytes": 205976000,
+      "path": "wheels/nvidia_nccl_cu13-2.29.7-py3-none-manylinux_2_18_x86_64.whl",
+      "sha256": "edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d"
+    },
+    {
+      "bytes": 40713933,
+      "path": "wheels/nvidia_nvjitlink-13.0.88-py3-none-manylinux2010_x86_64.manylinux_2_12_x86_64.whl",
+      "sha256": "13a74f429e23b921c1109976abefacc69835f2f433ebd323d3946e11d804e47b"
+    },
+    {
+      "bytes": 60412546,
+      "path": "wheels/nvidia_nvshmem_cu13-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+      "sha256": "290f0a2ee94c9f3687a02502f3b9299a9f9fe826e6d0287ee18482e78d495b80"
+    },
+    {
+      "bytes": 148047,
+      "path": "wheels/nvidia_nvtx-13.0.85-py3-none-manylinux1_x86_64.manylinux_2_5_x86_64.whl",
+      "sha256": "4936d1d6780fbe68db454f5e72a42ff64d1fd6397df9f363ae786930fd5c1cd4"
+    },
+    {
+      "bytes": 100195,
+      "path": "wheels/packaging-26.2-py3-none-any.whl",
+      "sha256": "5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e"
+    },
+    {
+      "bytes": 10998091,
+      "path": "wheels/pandas-3.0.5-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "d373ce03ffd84010ed9839fa73672a9c8256990532e158440c0085db7d914b34"
+    },
+    {
+      "bytes": 7087215,
+      "path": "wheels/pillow-12.2.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "62f5409336adb0663b7caa0da5c7d9e7bdbaae9ce761d34669420c2a801b2780"
+    },
+    {
+      "bytes": 61639,
+      "path": "wheels/propcache-0.5.2-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "6f328175a2cde1f0ff2c4ed8ce968b9dcfb55f3a7153f39e2957ed994da13476"
+    },
+    {
+      "bytes": 155560,
+      "path": "wheels/psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "076a2d2f923fd4821644f5ba89f059523da90dc9014e85f8e45a5774ca5bc6f9"
+    },
+    {
+      "bytes": 22335,
+      "path": "wheels/py_cpuinfo-9.0.0-py3-none-any.whl",
+      "sha256": "859625bc251f64e21f077d099d4162689c762b5d6a4c3c97553d56241c9674d5"
+    },
+    {
+      "bytes": 50088993,
+      "path": "wheels/pyarrow-25.0.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "sha256": "5d1dbf24e151042f2fa3c129563f65d66674128868496fb008c4272b16bdf778"
+    },
+    {
+      "bytes": 472262,
+      "path": "wheels/pydantic-2.13.4-py3-none-any.whl",
+      "sha256": "45a282cde31d808236fd7ea9d919b128653c8b38b393d1c4ab335c62924d9aba"
+    },
+    {
+      "bytes": 2094516,
+      "path": "wheels/pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "926c9541b14b12b1681dca8a0b75feb510b06c6341b70a8e500c2fdcff837cce"
+    },
+    {
+      "bytes": 1231151,
+      "path": "wheels/pygments-2.20.0-py3-none-any.whl",
+      "sha256": "81a9e26dd42fd28a23a2d169d86d7ac03b46e2f8b59ed4698fb4785f946d0176"
+    },
+    {
+      "bytes": 229892,
+      "path": "wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl",
+      "sha256": "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+    },
+    {
+      "bytes": 807870,
+      "path": "wheels/pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "ba1cc08a7ccde2d2ec775841541641e4548226580ab850948cbfda66a1befcdc"
+    },
+    {
+      "bytes": 801798,
+      "path": "wheels/regex-2026.7.19-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "9dce8ec9695f531a1b8a6f314fd4b393adcccf2ea861db480cdf97a301d01a68"
+    },
+    {
+      "bytes": 73075,
+      "path": "wheels/requests-2.34.2-py3-none-any.whl",
+      "sha256": "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+    },
+    {
+      "bytes": 310654,
+      "path": "wheels/rich-15.0.0-py3-none-any.whl",
+      "sha256": "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+    },
+    {
+      "bytes": 516040,
+      "path": "wheels/safetensors-0.8.0-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "fd6f3f93c9a0a7cc2788ee63fb763353d4bd2e89b0751bc78fcf7dda00bea774"
+    },
+    {
+      "bytes": 1062021,
+      "path": "wheels/setuptools-81.0.0-py3-none-any.whl",
+      "sha256": "fdd925d5c5d9f62e4b74b30d6dd7828ce236fd6ed998a08d81de62ce5a6310d6"
+    },
+    {
+      "bytes": 9755,
+      "path": "wheels/shellingham-1.5.4-py2.py3-none-any.whl",
+      "sha256": "7ecfff8f2fd72616f7481040475a65b2bf8af90a56c89140852d1120324e8686"
+    },
+    {
+      "bytes": 11050,
+      "path": "wheels/six-1.17.0-py2.py3-none-any.whl",
+      "sha256": "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+    },
+    {
+      "bytes": 6299353,
+      "path": "wheels/sympy-1.14.0-py3-none-any.whl",
+      "sha256": "e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5"
+    },
+    {
+      "bytes": 3274982,
+      "path": "wheels/tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "sha256": "369cc9fc8cc10cb24143873a0d95438bb8ee257bb80c71989e3ee290e8d72c67"
+    },
+    {
+      "bytes": 532261691,
+      "path": "wheels/torch-2.12.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "sha256": "4b4f64c2c2b11f7510d93dd6412b87025ff6eddd6bb61c3b5a3d892ea20c4756"
+    },
+    {
+      "bytes": 7579774,
+      "path": "wheels/torchvision-0.27.0-cp312-cp312-manylinux_2_28_x86_64.whl",
+      "sha256": "7a9966a088d06b4cf6c610e03be62de469efa6f2cd2e7c7eed8e925ed6af59ac"
+    },
+    {
+      "bytes": 78578,
+      "path": "wheels/tqdm-4.68.2-py3-none-any.whl",
+      "sha256": "d4240441fb5353290b87d6a85968c9decc131a99b8c7faa28269d829de669ede"
+    },
+    {
+      "bytes": 11003770,
+      "path": "wheels/transformers-5.10.1-py3-none-any.whl",
+      "sha256": "ccb919ea1b77338b44d0d45d23f7472081906b1bb6ed8e5f5cf4d692d1da03d4"
+    },
+    {
+      "bytes": 201457567,
+      "path": "wheels/triton-3.7.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "8f111161d49bf903c0eaedde3962353a3d841c08a836839b7cc1025b8426efcf"
+    },
+    {
+      "bytes": 122716,
+      "path": "wheels/typer-0.27.0-py3-none-any.whl",
+      "sha256": "6f4b27631e47f077871b7dc30e933ec0131c1390fbe0e387ea5574b5bac9ccf1"
+    },
+    {
+      "bytes": 45571,
+      "path": "wheels/typing_extensions-4.16.0-py3-none-any.whl",
+      "sha256": "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+    },
+    {
+      "bytes": 14611,
+      "path": "wheels/typing_inspection-0.4.2-py3-none-any.whl",
+      "sha256": "4ed1cacbdc298c220f1bd249ed5287caa16f34d44ef4e9c3d0cbad5b521545e7"
+    },
+    {
+      "bytes": 131087,
+      "path": "wheels/urllib3-2.7.0-py3-none-any.whl",
+      "sha256": "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"
+    },
+    {
+      "bytes": 220469,
+      "path": "wheels/xxhash-3.8.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "82c0cedd280eab2e8291270e6c04894dbc096f8159a39dcf1807429f026ca3cc"
+    },
+    {
+      "bytes": 109835,
+      "path": "wheels/yarl-1.24.5-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "f08c7513ecef5aad65687bfdf6bc601ae9fccd04a42904501f8f7141abad9eb9"
+    }
+  ]
+}

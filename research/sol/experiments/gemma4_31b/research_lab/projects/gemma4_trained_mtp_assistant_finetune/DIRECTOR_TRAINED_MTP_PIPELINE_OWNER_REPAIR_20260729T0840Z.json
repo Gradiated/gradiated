@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T08:40:11Z",
+  "project": "gemma4_trained_mtp_assistant_finetune",
+  "classification": "zero_gpu_production_pipeline_owner_repair_required",
+  "consumes": {
+    "offline_result": "TRAINED_MTP_OWNER_OFFLINE_RESULT.json",
+    "offline_result_sha256": "ff49f337da412cfcb6ca6e4c01f9c3072d96639c3cf7b52e118a2108fc52b838",
+    "lifecycle_owner": "run_two_bench_owner.py",
+    "lifecycle_owner_sha256": "8d76dd5a94f9bf6d837324eeb999126a7bc6a634cc9ee889e1b138ecafd3deb0",
+    "provider_create": "DIRECTOR_TRAINED_MTP_TWO_H200_PROVIDER_CREATE_20260729T0840Z.json"
+  },
+  "repair_scope": {
+    "required_output": "run_trained_mtp_pipeline.py",
+    "required_behavior": [
+      "Consume only the exact target, stock-assistant, EAGLE-3 warm-start, Speculators commit, vLLM runtime, four dataset revisions, deterministic split, and commands already bound in the offline result.",
+      "Read both SSH endpoints and identities from the exact claimed gpu_pool records; never embed an endpoint from this director artifact.",
+      "Stage the project packet and immutable local assistant bytes after both claims, then resumably execute source checkout, target staging/server, four target-response regeneration shards, deterministic split, hidden-state relay, data preparation, training, disjoint holdout, and only the conditionally admitted matched endpoint arms.",
+      "Persist stage completion markers and content hashes so a repair reruns only the invalidated stage.",
+      "Emit exactly one project-local typed terminal accepted by run_two_bench_owner.py, with required artifact hashes and explicit resident_release state for both benches.",
+      "Provide a pipeline repair command that consumes only a director hash-bound repair artifact and resumes the invalidated stage."
+    ],
+    "forbidden": [
+      "Do not claim either H200, call SSH, call provider APIs, download weights, or start the detached owner during this repair.",
+      "Do not change the scientific identities, 5000/512 split, target verifier, EAGLE-3 fallback, promotion gate, endpoint arms, spend ceiling, or watchdog deadline.",
+      "Do not build a custom trainer or add another preparation project."
+    ],
+    "publication": "Republish TRAINED_MTP_OWNER_OFFLINE_RESULT.json last with the final pipeline runner SHA-256, concrete pipeline argv, repair argv, terminal path, required artifact contract, and unchanged detached owner command."
+  },
+  "deadline_utc": "2026-07-29T09:10:00Z",
+  "claim_allowed": false,
+  "next_director_action": "After the repaired result is durable, inspect only its final hashes and the two current bench records, then issue the exact execution binding if the remaining cumulative spend and watchdog window still fit."
+}

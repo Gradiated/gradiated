@@ -1,0 +1,52 @@
+{
+  "accelerator": "nvidia-h200-sxm",
+  "contents": {
+    "artifacts": "Controller-side packet e3f0bd4f..., adoption 10335540..., dispatcher readiness 70310fa9..., and remote-run defect evidence remain preserved. The replacement claim must bind its own remote_run before worker 3.",
+    "caches": "Cold replacement bench; no checkpoint, image, source, compilation, or server cache identity is established yet.",
+    "checkpoint": "Not staged. The exact target is google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 with manifest 6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6.",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "image": "Not staged. Required image is docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6.",
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "next": "Keep non-claimable until a later director verifies cloud-init, strict SSH identity, exact H200 UUID/driver, watchdog runway, and remaining cumulative $14 authority. Then open one mutable execution claim whose durable owner bootstraps and stages resumably, binds the new claim-specific remote_run inside the claim, and continues directly to unconsumed worker 3.",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "role": "cold_exact_target_dflash_worker3_recovery",
+    "runtime": "Nebius preemptible H200 provider resource created; cloud-init, strict SSH, accelerator identity, driver, and runtime are pending verification.",
+    "schema_version": 1,
+    "scientific_terminal": "No scientific terminal. AR, DFlash, and NGRAM remain unstarted and unconsumed; the retired lifecycle consumed only integration work.",
+    "server_state": "No owner, claim, container, CUDA process, or model server is authorized while the bench is in maintenance.",
+    "state": "maintenance_provider_created_identity_pending",
+    "summary": "Cold replacement H200 registered in maintenance under a three-hour absolute lifecycle and controller-host cleanup watchdog; identity and claim remain gated."
+  },
+  "drain_after_release": false,
+  "hourly_cost_usd": 2.45,
+  "id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+  "lifecycle": {
+    "deadline_utc": "2026-07-30T03:36:56.187924Z",
+    "provider_started_at_utc": "2026-07-30T00:36:56.187924Z",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-dflash-r3-20260730t0036z-watchdog.service",
+      "main_pid": 427838,
+      "unit": "gemma4-dflash-r3-20260730t0036z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "provider": "nebius",
+  "resource": {
+    "allocation_type": "preemptible",
+    "connection_state": "provider_created_identity_pending",
+    "disk_id": "computedisk-e00vsj169nacjazg4k",
+    "disk_name": "gemma4-dflash-r3-20260730t0036z-boot",
+    "fabric": "fabric-7",
+    "instance_id": "computeinstance-e00t5s028ts52zp215",
+    "instance_name": "gemma4-dflash-r3-20260730t0036z",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "region": "eu-north1",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ssh_user": "glmrunner",
+    "subnet_id": "vpcsubnet-e00gr2f2ydymwjmr4f"
+  },
+  "schema_version": 1
+}

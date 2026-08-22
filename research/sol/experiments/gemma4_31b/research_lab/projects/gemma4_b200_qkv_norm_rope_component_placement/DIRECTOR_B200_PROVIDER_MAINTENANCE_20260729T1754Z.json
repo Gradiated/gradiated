@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T17:54:36Z",
+  "project": "gemma4_b200_qkv_norm_rope_component_placement",
+  "decision": "provider_created_registered_maintenance_identity_pending",
+  "execution_authority": false,
+  "science_consumed": false,
+  "spend_authority": {
+    "authorized_usd": 5.0,
+    "actual_spend_usd_at_create": 0.0,
+    "conservative_compute_usd": 4.608333,
+    "hourly_cost_usd": 3.95,
+    "lifecycle_seconds": 4200,
+    "reservation_durable": true
+  },
+  "placement": {
+    "evidence_path": "B200_PLACEMENT_20260729T1749Z.json",
+    "evidence_sha256": "186f3ab8838c890aabb757950f3e1ae1d8f5af4e1497148b25418a0fcd727d30",
+    "allocation_type": "preemptible",
+    "availability_level": "AVAILABILITY_LEVEL_HIGH",
+    "available_gpus": 8,
+    "region": "me-west1",
+    "fabric": "me-west1-a",
+    "project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+    "platform": "gpu-b200-sxm-a",
+    "preset": "1gpu-20vcpu-224gb"
+  },
+  "bench": {
+    "id": "b200-qkv-placement-computeinstance-i00gfqs16jywacph24",
+    "condition": "maintenance",
+    "provider": "nebius",
+    "instance_id": "computeinstance-i00gfqs16jywacph24",
+    "instance_name": "gemma4-b200-qkv-placement-20260729t175259z",
+    "disk_id": "computedisk-i00fqdnhb926r3yj3a",
+    "disk_name": "gemma4-b200-qkv-placement-20260729t175259z-boot",
+    "public_ipv4": "46.243.145.46",
+    "provider_started_at_utc": "2026-07-29T17:52:59.427439Z",
+    "deadline_utc": "2026-07-29T19:02:59.427439Z",
+    "watchdog": {
+      "unit": "gemma4-b200-qkv-placement-20260729t175259z-watchdog.service",
+      "main_pid": 197342,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-b200-qkv-placement-20260729t175259z-watchdog.service",
+      "unit_manager": "user"
+    }
+  },
+  "bootstrap_probe": {
+    "attempted_once": true,
+    "cloud_init_ready": false,
+    "ssh_returncode": 255,
+    "host_key_fingerprint": null,
+    "interpretation": "The first non-polling strict-identity bootstrap probe found no SSH transport yet. The registered bench remains protected in maintenance and non-claimable."
+  },
+  "frozen_scientific_input": {
+    "path": "inputs/bound/qkv_direct_consumer_bench.py",
+    "sha256": "10d2538ce6d35a4fbedf4b8db946d8e93d7004690fa1a0c6f0cae3c6427e63ff"
+  },
+  "next_gate": {
+    "owner": "director",
+    "action": "Perform one fresh strict SSH/cloud-init and exact single-B200 identity check. Only after it passes may the director mark the bench available and publish a fresh mutable execution binding with claim, terminal, and generation-fenced release margins before the absolute deadline.",
+    "forbidden_until_pass": [
+      "researcher_claim",
+      "docker_or_cuda_execution",
+      "scientific_sample",
+      "endpoint_traffic"
+    ]
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T00:27:31Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "run_same_claim_dispatcher_recovery_r2",
+  "generation": "dflash-h200-r2-dispatcher-recovery-20260730t0027z",
+  "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+  "claimed_at": "2026-07-29T23:49:13.529071Z",
+  "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8",
+  "owner_deadline_utc": "2026-07-30T00:37:00Z",
+  "watchdog_cleanup_utc": "2026-07-30T00:45:00Z",
+  "attribution_start_utc": "2026-07-29T22:18:17.988128Z",
+  "prior_actual_spend_usd": 0.0,
+  "maximum_total_spend_usd": 6.0,
+  "remote_target_path": "/home/glmrunner/qkv-direct-a7fc5afbe3c3b292/checkpoint",
+  "worker_generation": 3,
+  "recovery_binding": "DIRECTOR_DFLASH_R2_CONSUMED_REPAIR3_OWNERLESS_RECOVERY_20260730T0015Z.json",
+  "recovery_binding_sha256": "1deadd1b9f313a3984a467954b791b0269c513648520eb9b309d4c5d80a02d19",
+  "control_flow_binding": "DIRECTOR_DFLASH_R2_DISPATCHER_CONTROL_FLOW_REPAIR_20260730T0022Z.json",
+  "control_flow_binding_sha256": "a4df85b2a43da4936e9a0646f843a29dbe9e677f49155d81a809df4c7c3ec588",
+  "recovery_readiness": "DFLASH_H200_R2_DISPATCHER_CONTROL_FLOW_READY.json",
+  "recovery_readiness_sha256": "70310fa9699d8fa117d0426edcbe6a384cd18f09219fb1259755fa161309c6f7",
+  "owner_source": "dflash_component_direct_recovery_owner_r2.py",
+  "owner_source_sha256": "0b36f3476008046ee039149d709aadc5267e8daae454104fc0ef985d579704df",
+  "adoption_sha256": "103355400df0f565d0a8f4ae88b36a79ed7b9996685beecd5c391a9df067fc35",
+  "consumed_request_sha256": "12f45574e58b1e55ad1df290d748f7090782107560f9b64684b7f9e673987433",
+  "patch_sha256": "03aa2b4da6d01f9316ea513a72d95eff30b94ea38feb0bf61c3d2a117109ac12",
+  "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "historical_request_25_replay_allowed": false,
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "owner_start_command": [
+    "/usr/bin/python3",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/dflash_component_direct_recovery_owner_r2.py",
+    "--recovery-execution-binding",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DIRECTOR_DFLASH_R2_DISPATCHER_RECOVERY_EXECUTION_20260730T0027Z.json",
+    "--artifact-root",
+    "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-direct-owner-r2-20260729t2344z/recovery-r2-dispatcher-run"
+  ],
+  "execution_fences": {
+    "new_claim_allowed": false,
+    "initial_worker_generation": 3,
+    "worker_0_1_2_replay_allowed": false,
+    "advance_requires_new_validated_consumed_request": true,
+    "rejected_request_executes_worker": false,
+    "repair_terminal_executes_worker": false,
+    "provider_lifecycle_changed": false,
+    "release_requires": "validated scientific terminal, repair_terminal maintenance disposition, or typed deadline/incomplete disposition"
+  }
+}

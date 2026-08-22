@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "classification": "preclaim_c96_packet_ready",
+  "science_consumed": false,
+  "actual_spend_usd": 0.0,
+  "director_envelope": "DIRECTOR_B200_C96_CONTINUATION_20260728T1556Z.json",
+  "director_envelope_sha256": "5171e366bd9e826bdc038920a5d9d0e1329d0d0486ca45f115049a90cb6a236c",
+  "c64_terminal": "artifacts/b200-fp8-c64-20260728t1546z-repair2/FINAL_TERMINAL.json",
+  "c64_terminal_sha256": "8826f1dbf4b61bf7587641772e64f8d9cf426fb9a4df6742c90d21be52f01159",
+  "c64_service_seconds_per_request": 0.5842848010624948,
+  "campaign_target_seconds_per_request": 0.500119281574996,
+  "campaign_target_batch_seconds": 48.01145103119962,
+  "immutable_identities": {
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_quantization": "runtime_dynamic_fp8_weights",
+    "model": "google/gemma-4-31B-it",
+    "workload": "c96/4214/358/text-only/non-reasoning"
+  },
+  "driver": "b200_fp8_c96_driver.py",
+  "driver_sha256": "3462feac1c9f3604815ecace24a6e2cd40e1b5d5c75563f5d6797e7e1657f09e",
+  "owner": "b200_fp8_c96_saturation_owner.sh",
+  "owner_sha256": "d666cc22a6431515c3862d61fe85fa9442548640f271a3e3dc9bd23ec8cbceb1",
+  "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+  "submission_limit": "exactly one c96 arm after SCIENCE_STARTED.json"
+}

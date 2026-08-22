@@ -405,6 +405,7 @@ class LabHarness:
             config.repo_dir, self.runtime_dir / "traces"
         )
         self._mutex = threading.RLock()
+        self._pending_reservation_director_wakes: set[str] = set()
         self._lock_handle = (self.runtime_dir / "harness.lock").open("w")
         try:
             fcntl.flock(self._lock_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -674,6 +675,9 @@ class LabHarness:
             authorized_spend_usd=requested,
             cap_usd=value["cap_usd"],
         )
+        if row.get("reservation_required") is True:
+            with self._mutex:
+                self._pending_reservation_director_wakes.add(row["id"])
         return True
 
     def _projects_with_live_gpu_exposure(self) -> set[str]:
@@ -740,6 +744,7 @@ class LabHarness:
                 authorized_spend_usd=remaining,
                 reason="non_retired_gpu_exposure",
             )
+        reservation_holding_statuses = {"active", "ready", "paused"}
         settled = []
         for project, reservation in reservations.items():
             row = rows.get(project)
@@ -747,7 +752,7 @@ class LabHarness:
                 row is None
                 or project in active_projects
                 or project in live_gpu_projects
-                or row.get("status") in {"active", "ready"}
+                or row.get("status") in reservation_holding_statuses
             ):
                 continue
             actual = row.get("actual_spend_usd")
@@ -775,12 +780,11 @@ class LabHarness:
                 incremental_actual_spend_usd=incremental,
                 authorized_spend_usd=reservation["authorized_usd"],
             )
-        active_statuses = {"active", "ready"}
         for project, row in rows.items():
             if (
                 project in active_projects
                 or project in live_gpu_projects
-                or row.get("status") in active_statuses
+                or row.get("status") in reservation_holding_statuses
             ):
                 continue
             actual = row.get("actual_spend_usd")
@@ -891,6 +895,30 @@ class LabHarness:
         ]
         return json.dumps(rows, indent=2, sort_keys=True)
 
+    def _recent_project_handoffs_context(self, limit: int = 3) -> str:
+        rows = []
+        for row in self._project_rows():
+            if row["status"] in {"active", "ready"}:
+                continue
+            status_path = Path(row["path"]) / "STATUS.json"
+            try:
+                modified = status_path.stat().st_mtime
+            except OSError:
+                continue
+            rows.append(
+                {
+                    "id": row["id"],
+                    "status": row["status"],
+                    "summary": row["summary"],
+                    "next_action": row["next_action"],
+                    "status_modified_at": datetime.fromtimestamp(
+                        modified, timezone.utc
+                    ).isoformat(),
+                }
+            )
+        rows.sort(key=lambda row: row["status_modified_at"], reverse=True)
+        return json.dumps(rows[:limit], indent=2, sort_keys=True)
+
     def _spend_cap_context(self) -> str:
         snapshot = self._spend_cap_snapshot()
         if snapshot is None:
@@ -908,6 +936,9 @@ Read `CAMPAIGN.md`. Use the compact active portfolio and latest handoffs below a
 
 Current active portfolio:
 {self._active_portfolio_context()}
+
+Most recently updated non-active project handoffs:
+{self._recent_project_handoffs_context()}
 
 Latest director decision:
 {self._latest_director_decision()}
@@ -972,12 +1003,24 @@ Mutable retained development session from `STATUS.json`: {json.dumps(active_sess
 This project still owns this allocation or session. Do not create a replacement resource for it. Other projects may own independent GPU sessions concurrently. Inspect current progress once. If setup is progressing normally, preserve it and return. If a recoverable integration error is visible, attach to the existing exact environment, inspect the full diagnostic, patch the local or remote program, and rerun in place. Keep the image, checkpoint, model, and caches when valid. End the session only for a scientific decision, required hardware/image change, unsafe or unintelligible state, budget/deadline, or a judgment that another route is better.
 """
             else:
-                repair_root = self._pending_durable_repair(project, active_session)
-                if repair_root is not None:
-                    session_guidance = f"""
+                repair_ready = self._pending_durable_repair_ready(
+                    project, active_session
+                )
+                if repair_ready is not None:
+                    if repair_ready.name == "REPAIR_READY.json":
+                        session_guidance = f"""
 Durable repair handshake from `STATUS.json`: {json.dumps(active_session, sort_keys=True)}
-The independent owner is still active and retains the claim, but `{repair_root / 'REPAIR_READY.json'}` requests bounded in-place repair. Inspect the decision-bearing failure diagnostic once, patch only the recoverable integration defect in the existing environment, and write the owner's documented `REPAIR_REQUEST.json` before its recorded deadline. Do not stop, replace, release, or cold-restart the owner, and do not replay a consumed scientific stage.
+The independent owner is still active and retains the claim, but `{repair_ready}` requests bounded in-place repair. Inspect the decision-bearing failure diagnostic once, patch only the recoverable integration defect in the existing environment, and write the owner's documented `REPAIR_REQUEST.json` before its recorded deadline. Do not stop, replace, release, or cold-restart the owner, and do not replay a consumed scientific stage.
 Before signaling the owner, inspect its retry entrypoint: a repair request must resume at the invalidated operation, not blindly rerun a monolithic worker that reloads the model or replays passing setup, smoke, or path stages. Reuse a still-healthy server. If a failed pre-request consumer left a zero-request partial output root, atomically archive that partial root and give the unchanged retry a fresh output path; preserve its hashes and never delete or overwrite decision-bearing rows.
+"""
+                    else:
+                        request_name = repair_ready.name.replace(
+                            "REPAIR_READY", "REPAIR_REQUEST", 1
+                        )
+                        session_guidance = f"""
+Durable named repair marker from `STATUS.json`: {json.dumps(active_session, sort_keys=True)}
+The retained claim has a live recoverable-integration marker at `{repair_ready}`. Inspect that exact marker, the persisted per-arm terminals, and the owner's retry entrypoint once. Patch and resume only the invalidated operation in the same warm environment; preserve the checkpoint, image, healthy server state, and every completed scientific arm.
+Use the marker's documented request protocol (the matching request name is `{request_name}` when supported). If the owner has no request path, use only its documented same-bench replacement-owner boundary, never a concurrent mutator. Do not release or cold-restart the bench, replay settled setup or scientific arms, or overwrite decision-bearing rows.
 """
                 else:
                     terminal_repair = self._terminal_durable_repair(
@@ -987,6 +1030,7 @@ Before signaling the owner, inspect its retry entrypoint: a repair request must 
                         session_guidance = f"""
 Previous durable owner terminal after an integration failure: {json.dumps(terminal_repair, sort_keys=True)}
 Before following the possibly stale scheduled action, inspect the persisted stage terminals and failure diagnostic. Preserve every completed stage listed above with a passing terminal; repair only the invalidated validator, consumer, or ordinary integration operation, then execute only stages that the invocation state and artifacts prove unstarted. Do not replay the whole scheduled pair merely because `STATUS.json.next_action` still names it. Reclaim and reuse the same compatible warm bench when available. If the diagnostic instead proves a scientific incompatibility or no safe in-scope repair exists, reconcile that terminal without replay.
+An explicitly recoverable pre-science terminal is invalid integration evidence, not a project close. If its owner mistakenly released the claim to maintenance, patch the diagnosed source or launcher now, preserve the resident image and build cache, and give the director the exact bench ID to re-ready; reclaim that same bench as soon as authorized instead of terminalizing the project or starting a cold allocation.
 """
                     else:
                         session_guidance = f"""
@@ -1019,7 +1063,7 @@ During discovery, an ordinary launcher, path, CLI/API, parser, numeric-guard, te
 Judge consumption from evidence, not intent markers. A complete interpretable candidate result is a sample and must not be silently replayed. A crash, corrupt observer, missing comparator, or partial request with no decision-bearing result is an invalid attempt that may be amended and retried, even when some candidate bytes executed. Preserve the failed artifact and do not count the retry as another independent sample. A project no-retry rule protects valid measurements and completed costly stages; it does not convert harness defects into scientific conclusions.
 In a multi-stage experiment, a completed and persisted producer stage remains consumed exactly once. If a later consumer fails from an ordinary configuration, import, path, API, numeric-guard, or harness defect, preserve that producer artifact and patch only the consumer on the same retained bench; do not rerun training, conversion, calibration, or another scientific producer invocation. Treat the consumer defect as decision-bearing only when the project preregisters that exact incompatibility or the resident state is unsafe. When the large producer artifact is already content-addressed and durable on the protected bench, retrieve its compact terminal, hash, and manifest first; repair and consume the remote artifact in place, then copy the bulk bytes after the final terminal or concurrently only when that transfer does not delay GPU progress.
 For a mutable GPU session, keep claim, heartbeat, and final release in one bounded outer controller that spans those repair attempts. Per-attempt workers must not unconditionally release the bench on a recoverable pre-invocation exit. Release when the scientific terminal or a nonrecoverable typed boundary is recorded, or when the absolute deadline requires director disposition.
-If that outer controller can outlive this turn, the controller itself must be durable; detaching only its guest worker is insufficient because claim heartbeats and terminal retrieval stop when the foreground controller exits. Launch the controller-host process through shared `detached-owner --unit-manager pid`, then record its absolute owner-state path as `unit` plus the emitted `pid`, `start_ticks`, and `unit_manager: pid` in `STATUS.json.active_session`. Do not label a foreground process as a durable controller.
+If that outer controller can outlive this turn, the controller itself must be durable; detaching only its guest worker is insufficient because claim heartbeats and terminal retrieval stop when the foreground controller exits. Launch the controller-host process through shared `detached-owner --unit-manager pid`, then record its absolute owner-state path as `unit` plus the emitted `pid`, `start_ticks`, and `unit_manager: pid` in `STATUS.json.active_session`. Reserve that detached-owner state path exclusively for the tool's immutable PID identity; the managed program must write phase, progress, repair, and terminal state to different files. Do not label a foreground process as a durable controller.
 If a remote worker fails while its bench is claimed, retrieve its remote compact terminal, raw stdout/stderr, and a marker showing whether the candidate CUDA or scientific invocation began before releasing the claim. Treat missing retrieval as a recoverable retrieval defect and repair that retrieval under the same claim. Release to maintenance without those artifacts only when the guest is unsafe or unreachable, or the absolute deadline requires director handoff. Never release first and later guess whether the arm was consumed.
 If that evidence proves an ordinary integration or consumer defect, do not promote the attempt terminal to the project's scientific terminal or release the warm bench. The bounded outer owner should write `REPAIR_READY.json` with the diagnostic and an absolute repair deadline, keep the claim heartbeating, and wait for `REPAIR_REQUEST.json`; patch and repeat only the invalidated operation under the same owner. Finalize and release after a scientific result, a genuinely informative incompatibility, an unsafe or unreachable guest, or the absolute deadline. The handshake does not authorize a silent change to the scientific question.
 When checkpoint or other large immutable staging can outlive the turn, start it inside that durable claim owner before copying bytes. Reconcile the remote size-and-hash manifest first, preserve matched files, transfer only missing or mismatched files to temporary paths, verify them, and atomically finalize their immutable names; never retry an all-files overwrite against already-matched read-only files.
@@ -1101,6 +1145,7 @@ Shared tools:
                     "bench_id": status.get("bench_id"),
                     "authorized_spend_usd": authorized_spend_usd,
                     "actual_spend_usd": actual_spend_usd,
+                    "reservation_required": status.get("reservation_required") is True,
                 }
             )
         return sorted(rows, key=lambda row: (-row["priority"], row["id"]))
@@ -1167,18 +1212,22 @@ Shared tools:
         project: Path,
         active_session: dict[str, Any],
         repair: dict[str, Any],
+        ready_path: Path,
     ) -> bool:
         ready_sha256 = canonical_json_sha256(repair)
         if active_session.get("repair_ready_sha256") == ready_sha256:
             return True
         if (
             active_session.get("unit_manager") != "pid"
-            or not active_session.get("repair_id")
+            or not (
+                active_session.get("repair_id")
+                or active_session.get("repair_generation")
+            )
         ):
             return False
         unit = active_session.get("unit")
         created_at = repair.get("created_at_utc")
-        if not isinstance(unit, str) or not unit or not isinstance(created_at, str):
+        if not isinstance(unit, str) or not unit:
             return False
         state_path = Path(unit)
         if not state_path.is_absolute():
@@ -1188,9 +1237,15 @@ Shared tools:
             launched_at = owner_state["launched_at_utc"]
             if not isinstance(launched_at, str):
                 return False
+            if isinstance(created_at, str):
+                ready_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            else:
+                ready_at = datetime.fromtimestamp(
+                    ready_path.stat().st_mtime, timezone.utc
+                )
             return datetime.fromisoformat(
                 launched_at.replace("Z", "+00:00")
-            ) >= datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+            ) >= ready_at
         except (
             OSError,
             KeyError,
@@ -1201,7 +1256,9 @@ Shared tools:
             return False
 
     @staticmethod
-    def _pending_durable_repair(project: Path, active_session: object) -> Path | None:
+    def _pending_durable_repair_ready(
+        project: Path, active_session: object
+    ) -> Path | None:
         if not isinstance(active_session, dict):
             return None
         artifact_root = active_session.get("artifact_root")
@@ -1213,6 +1270,10 @@ Shared tools:
         roots = (declared_root,) if declared_root == project else (declared_root, project)
         for root in roots:
             ready_paths = [root / "REPAIR_READY.json"]
+            if root == declared_root:
+                ready_paths.extend(sorted(root.glob("REPAIR_READY_*.json")))
+                ready_paths.extend(sorted(root.glob("*/REPAIR_READY.json")))
+                ready_paths.extend(sorted(root.glob("*/REPAIR_READY_*.json")))
             ready_paths.extend(
                 sorted((root / ".repair-handshakes").glob("*/REPAIR_READY.json"))
             )
@@ -1229,14 +1290,24 @@ Shared tools:
                 try:
                     repair = json.loads(ready.read_text())
                     if LabHarness._repair_ready_consumed_by_replacement_owner(
-                        project, active_session, repair
+                        project, active_session, repair, ready
                     ):
                         continue
-                    request_path = ready.with_name("REPAIR_REQUEST.json")
+                    request_path = ready.with_name(
+                        ready.name.replace("REPAIR_READY", "REPAIR_REQUEST", 1)
+                    )
                     if request_path.is_file():
                         request = json.loads(request_path.read_text())
-                        if request.get("ready_sha256") == canonical_json_sha256(
-                            repair
+                        repair_id = repair.get("repair_id")
+                        request_matches_generation = (
+                            isinstance(repair_id, str)
+                            and bool(repair_id)
+                            and request.get("repair_id") == repair_id
+                        )
+                        if (
+                            request.get("ready_sha256")
+                            == canonical_json_sha256(repair)
+                            or request_matches_generation
                         ):
                             continue
                     repair_artifact_root = repair.get("artifact_root")
@@ -1251,6 +1322,7 @@ Shared tools:
                         deadline_utc = (
                             repair.get("repair_deadline_utc")
                             or repair.get("absolute_repair_deadline_utc")
+                            or repair.get("deadline_utc")
                             or repair["absolute_deadline_utc"]
                         )
                         if not isinstance(deadline_utc, str):
@@ -1269,8 +1341,34 @@ Shared tools:
                 ):
                     continue
                 if deadline > time.time():
-                    return ready.parent
+                    return ready
         return None
+
+    @staticmethod
+    def _pending_durable_repair(project: Path, active_session: object) -> Path | None:
+        ready = LabHarness._pending_durable_repair_ready(project, active_session)
+        return ready.parent if ready is not None else None
+
+    @staticmethod
+    def _durable_repair_observation(row: dict[str, Any]) -> str | None:
+        try:
+            project = Path(row["path"])
+            ready = LabHarness._pending_durable_repair_ready(
+                project, row.get("active_session")
+            )
+            if ready is None:
+                return None
+            repair = json.loads(ready.read_text())
+            return json.dumps(
+                {
+                    "path": str(ready.resolve()),
+                    "sha256": canonical_json_sha256(repair),
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        except (KeyError, OSError, ValueError, TypeError, json.JSONDecodeError):
+            return None
 
     @staticmethod
     def _terminal_durable_repair(
@@ -1300,6 +1398,29 @@ Shared tools:
             root / "REMOTE_WORKER_TERMINAL.json",
             root / "retrieved" / "WORKER_TERMINAL.json",
         )
+        if worker is None:
+            worker = read_json(root / "remote_terminal.json")
+            if (
+                isinstance(worker, dict)
+                and worker.get("classification") == "recoverable_integration_defect"
+                and worker.get("state") == "pre_science"
+                and worker.get("science_started") is False
+            ):
+                return {
+                    "artifact_root": str(root),
+                    "completed_passing_stages": [],
+                    "invocation_state": {
+                        "candidate_cuda_started": worker.get(
+                            "candidate_cuda_started"
+                        ),
+                        "science_started": False,
+                        "state": "pre_science",
+                    },
+                    "worker_failure": {
+                        "classification": worker.get("classification"),
+                        "message": worker.get("error"),
+                    },
+                }
         if (
             not isinstance(reconciled, dict)
             or reconciled.get("status") != "terminal"
@@ -1469,11 +1590,32 @@ Shared tools:
                         {"size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
                     )
                 artifacts.append(artifact)
+        handoff_artifacts = []
+        project_path = row.get("path")
+        if isinstance(project_path, str) and project_path:
+            project = Path(project_path)
+            paths = sorted(project.glob("*TERMINAL*.json"))
+            paths.extend(sorted(project.glob("*RESULT*.json")))
+            for path in paths:
+                if not path.is_file():
+                    continue
+                try:
+                    stat = path.stat()
+                except OSError:
+                    continue
+                handoff_artifacts.append(
+                    {
+                        "path": path.name,
+                        "size": stat.st_size,
+                        "mtime_ns": stat.st_mtime_ns,
+                    }
+                )
         encoded = json.dumps(
             {
                 "active_session": stable_session,
                 "next_action": row.get("next_action", ""),
                 "artifacts": artifacts,
+                "handoff_artifacts": handoff_artifacts,
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -1497,6 +1639,37 @@ Shared tools:
             separators=(",", ":"),
         )
         return hashlib.sha256(encoded.encode()).hexdigest()
+
+    def _project_observation_for_label(self, label: str) -> str:
+        row = next(
+            (row for row in self._project_rows() if row["id"] == label),
+            None,
+        )
+        return (
+            self._project_observation_sha256(row)
+            if row is not None
+            else "project-removed"
+        )
+
+    def _partition_superseded_project_wakes(
+        self, wakes: list[dict[str, Any]]
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        retained = []
+        superseded = []
+        project_reasons = {"researcher_completed", "researcher_no_progress"}
+        for wake in wakes:
+            label = wake.get("label")
+            observation = wake.get("project_observation_sha256")
+            if (
+                wake.get("reason") in project_reasons
+                and isinstance(label, str)
+                and isinstance(observation, str)
+                and self._project_observation_for_label(label) != observation
+            ):
+                superseded.append(wake)
+            else:
+                retained.append(wake)
+        return retained, superseded
 
     def _director_observation_sha256(self) -> str:
         observations = []
@@ -1735,12 +1908,16 @@ Shared tools:
             self.config.max_parallel_researchers,
             self.config.max_parallel_researchers if limit is None else max(0, limit),
         )
-        if selection_limit == 0:
-            return []
         rows = [
             row
             for row in self._project_rows()
-            if row["status"] in {"active", "ready"}
+            if (
+                row["status"] in {"active", "ready"}
+                or (
+                    row["status"] == "paused"
+                    and row.get("reservation_required") is True
+                )
+            )
             and row["id"] not in excluded_labels
         ]
         benches = self.gpu_pool.snapshot()["benches"]
@@ -1751,6 +1928,25 @@ Shared tools:
         }
         active = []
         for row in rows:
+            if row.get("reservation_required") is True:
+                if not self._reserve_project_spend(row):
+                    self._record(
+                        "researcher_deferred",
+                        label=row["id"],
+                        reason="spend_cap_exceeded",
+                        authorized_spend_usd=row["authorized_spend_usd"],
+                        spend_cap=self._spend_cap_snapshot(),
+                    )
+                    continue
+                self._record(
+                    "researcher_deferred",
+                    label=row["id"],
+                    reason="reservation_gate_pending_director",
+                    authorized_spend_usd=row["authorized_spend_usd"],
+                )
+                continue
+            if selection_limit == 0:
+                continue
             shared_owner = self._fresh_shared_bench_owner(row, benches)
             if shared_owner is not None:
                 owner_project, bench = shared_owner
@@ -2139,6 +2335,7 @@ Shared tools:
         researcher_futures: dict[Future, dict[str, Any]] = {}
         researcher_cooldowns: dict[str, dict[str, Any]] = {}
         director_future: Future | None = None
+        director_blocks_researcher_admission = False
         supervisor_future: Future | None = None
         supervisor_observation_sha256: str | None = None
         agent_service_backoff_until = 0.0
@@ -2170,14 +2367,20 @@ Shared tools:
                 for wake in pending_director_wakes
             ):
                 return
-            pending_director_wakes.append(
-                {
-                    "reason": reason,
-                    "label": label,
-                    "requested_at": utc_now(),
-                    "requested_monotonic": time.monotonic(),
-                }
-            )
+            wake = {
+                "reason": reason,
+                "label": label,
+                "requested_at": utc_now(),
+                "requested_monotonic": time.monotonic(),
+            }
+            if (
+                reason in {"researcher_completed", "researcher_no_progress"}
+                and label is not None
+            ):
+                wake["project_observation_sha256"] = (
+                    self._project_observation_for_label(label)
+                )
+            pending_director_wakes.append(wake)
             self._record(
                 "director_wake_requested",
                 reason=reason,
@@ -2196,9 +2399,18 @@ Shared tools:
             allow_pending_director_wakes: bool = False,
             durable_repairs_only: bool = False,
         ) -> None:
+            supervisor_correction_pending = any(
+                wake["reason"] == "supervisor_changed"
+                for wake in pending_director_wakes
+            )
             if (
                 reload_requested
                 or stop_event.is_set()
+                or (
+                    director_blocks_researcher_admission
+                    and not durable_repairs_only
+                )
+                or supervisor_correction_pending
                 or (director_future is not None and not durable_repairs_only)
                 or (
                     pending_director_wakes
@@ -2226,11 +2438,19 @@ Shared tools:
                     researcher_cooldowns.pop(label, None)
             excluded_labels = active_labels | set(researcher_cooldowns)
             slots = self.config.max_parallel_researchers - len(active_labels)
-            for row, route in self._researcher_assignments(
+            assignments = self._researcher_assignments(
                 excluded_labels=excluded_labels,
                 limit=slots,
                 durable_repairs_only=durable_repairs_only,
-            ):
+            )
+            with self._mutex:
+                reservation_wakes = sorted(
+                    self._pending_reservation_director_wakes
+                )
+                self._pending_reservation_director_wakes.clear()
+            for label in reservation_wakes:
+                request_director("spend_reserved", label)
+            for row, route in assignments:
                 future = self._submit_researcher(
                     researcher_executor, row, route
                 )
@@ -2239,6 +2459,12 @@ Shared tools:
                     "route": route,
                     "initial_remote_session": self._remote_shell_session_identity(
                         row.get("active_session")
+                    ),
+                    "initial_durable_repair": (
+                        self._durable_session_needs_repair(row)
+                    ),
+                    "initial_durable_repair_observation": (
+                        self._durable_repair_observation(row)
                     ),
                     "initial_project_observation": (
                         self._project_observation_sha256(row)
@@ -2328,6 +2554,7 @@ Shared tools:
             ) as supervisor_executor,
         ):
             try:
+                fill_researcher_slots(allow_pending_director_wakes=True)
                 while True:
                     now = time.monotonic()
                     stopping = stop_event.is_set() or reload_requested
@@ -2461,6 +2688,9 @@ Shared tools:
                                 route=self.config.director,
                                 thread_id=self.state["threads"]["director"],
                                 timeout_seconds=self.config.director_timeout_seconds,
+                            )
+                            director_blocks_researcher_admission = (
+                                "supervisor_changed" in reasons
                             )
 
                     if not stopping:
@@ -2600,22 +2830,74 @@ Shared tools:
                             if row is not None
                             else "project-removed"
                         )
+                        initial_repair_observation = metadata.get(
+                            "initial_durable_repair_observation"
+                        )
+                        current_repair_observation = (
+                            self._durable_repair_observation(row)
+                            if row is not None
+                            else None
+                        )
+                        same_repair_generation = (
+                            initial_repair_observation is not None
+                            and current_repair_observation
+                            == initial_repair_observation
+                        )
+                        repair_generation_advanced = (
+                            initial_repair_observation is not None
+                            and current_repair_observation
+                            != initial_repair_observation
+                        )
                         if (
-                            current_observation
-                            == metadata.get("initial_project_observation")
+                            same_repair_generation
+                            or (
+                                current_observation
+                                == metadata.get("initial_project_observation")
+                                and not repair_generation_advanced
+                            )
                         ):
+                            durable_repair_stalled = bool(
+                                same_repair_generation
+                                or metadata.get("initial_durable_repair")
+                            )
                             researcher_cooldowns[label] = {
                                 "until_monotonic": (
-                                    time.monotonic() + fallback_interval
+                                    float("inf")
+                                    if durable_repair_stalled
+                                    else time.monotonic() + fallback_interval
                                 ),
                                 "project_observation_sha256": (
                                     current_observation
                                 ),
                             }
+                            no_progress_fields: dict[str, Any] = {
+                                "label": label,
+                                "retry_condition": (
+                                    "project_observation_changed"
+                                    if durable_repair_stalled
+                                    else "cooldown_elapsed_or_project_observation_changed"
+                                ),
+                            }
+                            if not durable_repair_stalled:
+                                no_progress_fields["retry_after_seconds"] = (
+                                    fallback_interval
+                                )
+                            with self._mutex:
+                                previous_thread_id = self.state["threads"][
+                                    "projects"
+                                ].get(label)
+                                self.state["threads"]["projects"][label] = None
+                                self._save_state()
+                            if previous_thread_id is not None:
+                                self._record(
+                                    "researcher_thread_reset",
+                                    label=label,
+                                    reason="no_progress",
+                                    previous_thread_id=previous_thread_id,
+                                )
                             self._record(
                                 "researcher_no_progress",
-                                label=label,
-                                retry_after_seconds=fallback_interval,
+                                **no_progress_fields,
                             )
                             request_director(
                                 "researcher_no_progress", label
@@ -2649,7 +2931,28 @@ Shared tools:
                             run, role="director", label="director"
                         )
                         director_future = None
+                        director_blocks_researcher_admission = False
                         next_fallback = time.monotonic() + fallback_interval
+                        (
+                            pending_director_wakes,
+                            superseded_wakes,
+                        ) = self._partition_superseded_project_wakes(
+                            pending_director_wakes
+                        )
+                        if superseded_wakes:
+                            self._record(
+                                "director_wakes_superseded",
+                                wakes=[
+                                    {
+                                        "reason": wake["reason"],
+                                        "label": wake.get("label"),
+                                    }
+                                    for wake in superseded_wakes
+                                ],
+                                disposition=(
+                                    "completed_director_changed_same_project"
+                                ),
+                            )
                         current_observation_sha256 = (
                             self._director_observation_sha256()
                             if not pending_director_wakes
@@ -2665,6 +2968,9 @@ Shared tools:
                             self._save_state()
                         self._record(
                             "cycle_completed", cycle_count=next_cycle
+                        )
+                        self._settle_terminal_reservations(
+                            active_researcher_labels()
                         )
                         self.render_status()
                         if not stopping:

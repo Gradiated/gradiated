@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "decision": "supersede_r5_runnable_fence_with_offline_preparation_only",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "created_at_utc": "2026-07-30T05:48:00Z",
+  "supersedes_execution_fences_only": {
+    "binding": "DIRECTOR_FIXED_FLOOR_CROSSOP_ENDPOINT_HTTP_PATH_R5_20260730T0544Z.json",
+    "sha256": "cf21424416351f455658ec0d4ef87a5c74fbebe7fd96c062d25d5b6922f90cc0",
+    "reason": "At 05:46:46Z none of the four required R5 execution artifacts existed. The closest endpoint preparation took 469 seconds, so the 05:54 claim fence could not preserve both that measured duration and the required 120-second scheduling runway."
+  },
+  "scientific_contract_preserved": {
+    "scope": "candidate_only_corrected_invocation",
+    "corrected_endpoint": "/v1/completions",
+    "candidate_requests_authorized_after_later_execution_binding": 32,
+    "candidate_complete_requests_consumed": 0,
+    "control_requests_consumed": 32,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "quality_oracle": "Exact byte-for-byte equality of ordered emitted choice.text chunks, finish fields, SSE-event count, and usage accounting against the immutable stock oracle, ignoring only transport-volatile IDs and timestamps.",
+    "fixed_qualified_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996
+  },
+  "delegation": {
+    "profile": "execution",
+    "skills": [
+      "$researcher",
+      "$kernel-research",
+      "$experiment-run"
+    ],
+    "mode": "offline_only",
+    "required_outputs": [
+      "run_fixed_floor_crossop_endpoint_candidate_only_r5.py",
+      "run_fixed_floor_crossop_endpoint_owner_r5.py",
+      "ENDPOINT_INTEGRATION_PACKET_R5.json",
+      "ENDPOINT_R5_EXECUTION_BINDING.json"
+    ],
+    "runner_delta": "Start from R4 runner b9fb00d885403b78e63ae65b3dbeae4b5ba1204cff3ff113ea8341f9fba3570d. Change only /v1/chat/completions to /v1/completions and preserve bounded HTTPError response status/body plus relevant server diagnostics.",
+    "owner_contract": "Prepare one bounded true dispatcher with separate decision-bearing release and recoverable retained-claim repair paths. Worker output must first land at a noncanonical candidate path and may be promoted only after all 32 complete responses and required oracle fields exist.",
+    "publication_order": "Finish and validate runner, owner, packet, and execution binding first; compute final hashes; publish those readiness bytes and the matching STATUS handoff as the final mutations.",
+    "completion_handoff": "Set the project to paused with claim_allowed false after all four files are durable and hash-consistent. A later director must inspect those exact bytes and publish a fresh runnable clock before any claim."
+  },
+  "identity": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_main_pid": 580054,
+    "watchdog_deadline_utc": "2026-07-30T06:20:00Z"
+  },
+  "budget": {
+    "authorized_cumulative_usd": 4.0,
+    "measured_cumulative_usd": 1.887,
+    "provider_mutation_authorized": false
+  },
+  "fences": {
+    "claim_allowed": false,
+    "ssh_allowed": false,
+    "cuda_allowed": false,
+    "endpoint_request_allowed": false,
+    "provider_lifecycle_mutation_allowed": false,
+    "offline_preparation_target_utc": "2026-07-30T05:58:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T06:20:00Z"
+  },
+  "forbidden": [
+    "GPU claim",
+    "SSH",
+    "CUDA invocation",
+    "checkpoint load",
+    "endpoint request",
+    "stock replay",
+    "component replay",
+    "request-body mutation",
+    "chat-completions endpoint",
+    "oracle weakening",
+    "provider lifecycle mutation"
+  ]
+}

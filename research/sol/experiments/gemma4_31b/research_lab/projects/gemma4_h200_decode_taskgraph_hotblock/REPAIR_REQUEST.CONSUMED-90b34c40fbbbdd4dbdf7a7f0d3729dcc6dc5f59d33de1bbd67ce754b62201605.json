@@ -1,0 +1,32 @@
+{
+  "boundary_smoke": {
+    "result": {
+      "pass": true,
+      "q_dtype": "torch.float8_e4m3fn",
+      "q_shape": [
+        1,
+        16
+      ],
+      "s_dtype": "torch.float32",
+      "s_shape": [
+        1,
+        1
+      ],
+      "scale": 0.0022321429569274187
+    },
+    "stderr": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-1.stderr",
+    "stderr_sha256": "a487e736c17ade3b22d2566839ce303d026fb18c9928e9bb07ca99872e34f726",
+    "stdout": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/artifacts/fp8-prologue-owner-20260729t220112z/repair-boundary-smoke-1.stdout",
+    "stdout_sha256": "ae9b6658c3daab822fe73e706f4828b30eca97a32da914a95dc7b6718a37ca0d"
+  },
+  "causal_amendment": "Use pinned SGLang allocating sglang_per_token_quant_fp8 wrapper instead of raw sgl_kernel output-buffer API.",
+  "predecessor_repair_id": null,
+  "prior_science_consumed": false,
+  "ready_sha256": "cdb3ddbb23a94498c0219606e133e7166e0d3c04e0656a2c3f2826b41f79efdb",
+  "repair_id": "fp8-prologue-r1",
+  "retry_scope": "worker_only",
+  "runner_absolute_path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_decode_taskgraph_hotblock/fp8_prologue_h200_runner.py",
+  "runner_sha256": "034eff6bc0ce2e69728db927449bccef3b1d4e10c71f5089c1c5a8b45be568e6",
+  "schema_version": 1,
+  "unchanged_scientific_contract": true
+}

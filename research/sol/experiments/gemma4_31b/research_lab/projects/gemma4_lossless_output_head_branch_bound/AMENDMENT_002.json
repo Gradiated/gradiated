@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-29T17:01:10Z",
+  "parent_amendment": "AMENDMENT_001.json",
+  "failed_attempt": {
+    "classification": "invalid_post_compute_packaging_defect",
+    "stderr": "artifacts/attempt1_packaging.stderr.log",
+    "science_consumed": false,
+    "coordinate_sweep_completed_in_memory": true,
+    "decision_bearing_result_persisted": false
+  },
+  "cause": "The terminal serializer requested ownership.position, but the immutable capture stores positions in a sibling tensor indexed by ownership.global_row.",
+  "causal_change": "Read the provenance-only position from payload.positions[global_row]. No bound, input, coordinate, row, threshold, or decision logic changes.",
+  "retry_scope": "continuation of the same unpersisted CPU sample; do not count as an independent repetition"
+}

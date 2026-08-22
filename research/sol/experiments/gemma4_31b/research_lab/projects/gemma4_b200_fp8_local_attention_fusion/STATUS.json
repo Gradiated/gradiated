@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "completed",
+  "priority": 9760,
+  "decision": "append_specialization_ceiling_insufficient_and_custom_consumer_negative",
+  "researcher_profile": "execution",
+  "authorized_spend_usd": 4.0,
+  "actual_spend_usd": 1.691622,
+  "reservation_required": false,
+  "provider_operations": false,
+  "gpu_claimed": false,
+  "active_session": null,
+  "bench_gate": "closed_no_gpu_claim",
+  "scientific_sample_consumed": true,
+  "compute_budget": {
+    "gpu_seconds": 1620,
+    "cpu_seconds": 900
+  },
+  "storage_budget": "2 GiB additional",
+  "wall_clock_budget_minutes": 30,
+  "prior_terminal_artifact": {
+    "path": "B200_FP8_LOCAL_PAGED_GQA_REPLACEMENT_DISCRIMINATOR.json",
+    "sha256": "e302468b7d85b1465a309388cd40b5f70e3bac9dfd0103737887a104f3202d2d"
+  },
+  "source_packet": {
+    "path": "inputs/pinned",
+    "bytes": 4837029,
+    "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da",
+    "flashinfer_version": "0.6.6"
+  },
+  "next_action": "No further work. Do not replay the consumed custom reducer or stock decomposition; a future consumer mechanism would require a materially distinct project and new director decision.",
+  "summary": "Complete. The correctness-proven custom split reducer was slower than stock. Stock decomposition found append p50 0.006112 ms versus consumer p50 0.102432 ms and composite p50 0.108512 ms per B32 invocation. Correctly normalized, perfect append elimination projects only 0.003419 s/request, far below the 0.125030 s/request campaign gap.",
+  "required_artifact": "DIRECTOR_B200_LOCAL_PAGED_GQA_UNIT_CORRECTION_20260728T2105Z.json",
+  "required_artifact_sha256": "02401aaaf4804b0322e2ce820a67c562814ce13e6de79c5713f6f3e16de1e059",
+  "completed_at_utc": "2026-07-28T20:59:00Z",
+  "split_reducer_sample_consumed": true,
+  "split_reducer_timing_consumed": true,
+  "timing_terminal": {
+    "path": "artifacts/b200-local-paged-gqa-split-reducer-timing-20260728t2044z/TIMING_TERMINAL.json",
+    "sha256": "97ca5c7d00cd5fdf0e8c0d2809ace4c0dd8b34e169ce75a2731469c04ab01e52",
+    "terminal": "negative"
+  },
+  "reservation_check": {
+    "checked_at_utc": "2026-07-28T19:33:29Z",
+    "gate": "DIRECTOR_B200_LOCAL_PAGED_GQA_CORRECTNESS_RESERVATION_GATE_20260728T1930Z.json",
+    "durable_reservation_visible": true,
+    "durable_total_authorized_usd": 4.0,
+    "required_total_authorized_usd": 4.0,
+    "gate_was_written_before_reservation": true,
+    "gate_gpu_claim_authorized": false
+  },
+  "terminal_artifact": {
+    "path": "artifacts/b200-local-paged-gqa-stock-decomposition-20260728t2052z/STOCK_DECOMPOSITION_TERMINAL.json",
+    "sha256": "6a33bbeee3dcad361b4546b350d68babfb2adca73c8091902b798bcd389a1b2a",
+    "terminal": "interpretable"
+  },
+  "source_discriminator": {
+    "path": "B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_DISCRIMINATOR.json",
+    "sha256": "f4c72322126e3c3049c656c0b7e3ad10e4683ec8af0f54b96743d2c9e688d60a",
+    "classification": "source_complete_materially_distinct_split_reducer_candidate"
+  },
+  "target_b200_plan": {
+    "path": "B200_LOCAL_PAGED_GQA_SPLIT_REDUCER_PLAN.json",
+    "sha256": "2a121e45fe9f813dc10165bfbae99f9842b79517f0be941a54dc5674e0d7633b",
+    "execution_authorized": false
+  },
+  "prior_decision_bearing_negative": {
+    "path": "artifacts/b200-local-paged-gqa-correctness-20260728t1935z/FINAL_TERMINAL.json",
+    "sha256": "f83e46ead75f8136f17e322e9d3dac040734fd6e92c0dcb488f1e8f8a578caaf"
+  },
+  "typed_boundary": {
+    "type": "target_b200_execution_binding_required_for_source_complete_split_reducer",
+    "observed_at_utc": "2026-07-28T20:19:48Z",
+    "candidate_cuda_submission": false,
+    "source_complete": true,
+    "offline_reducer_algebra_max_abs": 1.1102230246251565e-16,
+    "cache_owners_per_kv_head": 1,
+    "fresh_merges_per_q_head": 1,
+    "effect": "The corrected consumer is durable and hash-bound, but target compilation and correctness are intentionally unconsumed until a new director lifecycle binding."
+  },
+  "provider_exposure": {
+    "prior_project_spend_usd": 0.912,
+    "generation_claimed_at_utc": "2026-07-28T20:56:23.553362Z",
+    "generation_released_at_utc": "2026-07-28T20:58:11.700695Z",
+    "generation_claim_seconds": 108.147333,
+    "generation_spend_usd": 0.118662,
+    "cumulative_project_spend_usd": 1.691622,
+    "hourly_cost_usd": 3.95,
+    "prior_cumulative_project_spend_usd": 1.57296
+  },
+  "repair_history": [
+    {
+      "repair_id": "split-reducer-repair-0",
+      "classification": "pre_science_jit_linkage_defect",
+      "candidate_science_started": false,
+      "patch_tar_sha256": "915aac53940b9736458eacfc9e3adde4d1756bd681ba93ff56247c1aafe249f6",
+      "amendment": "exact GQA2 dispatch specialization plus fresh JIT cache URI",
+      "result": "attempt_1_correct"
+    }
+  ]
+}

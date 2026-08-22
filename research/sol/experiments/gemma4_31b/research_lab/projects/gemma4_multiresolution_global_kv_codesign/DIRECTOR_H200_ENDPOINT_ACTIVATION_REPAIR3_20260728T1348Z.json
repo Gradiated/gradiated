@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "classification": "warm_candidate_intervention_activation_repair",
+  "decided_at_utc": "2026-07-28T13:48:00Z",
+  "project": "gemma4_multiresolution_global_kv_codesign",
+  "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "evidence": {
+    "endpoint_terminal": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_PAIR_TERMINAL.json",
+    "endpoint_terminal_sha256": "1c48455bd29364a480edde0251d44a32a0f2732feeaaddd548e679b7c15b04fb",
+    "stock_pass": true,
+    "stock_service_seconds_per_request": 0.7010773845312315,
+    "candidate_pass": true,
+    "candidate_service_seconds_per_request": 0.8379872799375221,
+    "candidate_telemetry_rows": 0,
+    "candidate_phases": [],
+    "candidate_max_compact_entries": null,
+    "candidate_fallback": false,
+    "candidate_server_forward_hooks": null,
+    "classification": "candidate_requests_executed_without_required_intervention_activation_evidence",
+    "interpretation": "The raw candidate timing is preserved as an invalid-activation attempt. It is not attributable to global-KV and is neither a mechanism pass nor a mechanism negative."
+  },
+  "resident_state": {
+    "checkpoint": "/home/glmrunner/gemma4-multiresolution-global-kv/checkpoint",
+    "checkpoint_bytes": 62578655208,
+    "checkpoint_verified": true,
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "image_resident": true,
+    "server_state": "no server",
+    "prior_claim_released": true
+  },
+  "scientific_contract": {
+    "immutable": [
+      "exact google/gemma-4-31B-it checkpoint and resident staged bytes",
+      "pinned SGLang image and endpoint workload",
+      "global-KV geometry, oracle, fallback semantics, and timing boundary",
+      "COMPONENT_RESULT_REPAIR3.json",
+      "the measured stock c32 terminal"
+    ],
+    "mutable": [
+      "candidate hook registration and explicit import boundary",
+      "activation diagnostics and fail-fast owner glue",
+      "fresh candidate-only output root"
+    ],
+    "component_replay": false,
+    "checkpoint_restage": false,
+    "stock_replay": false,
+    "prior_candidate_classification": "consumed_invalid_intervention_activation",
+    "corrected_candidate_c32_submission_limit": 1
+  },
+  "required_action": [
+    "Read this directive once and use $researcher with execution profile.",
+    "Claim only the named warm H200 bench by the absolute start fence. Do not touch the live B200 project or its bench.",
+    "Inspect and repair only the hook activation boundary. Do not assume implicit sitecustomize loading: make global_kv_sglang_hook registration explicit in the candidate server process while preserving the intervention implementation and hashes.",
+    "Use a fresh activation-repair output root. Before any c32 measurement, run one real probe request and require a fresh hook diagnostic plus at least one fresh candidate-global-kv telemetry row with a recognized phase, non-null compact_entries, request ownership, finite outputs, and fallback=false.",
+    "If the activation proof is absent or malformed, emit a typed intervention_not_activated terminal and release immediately. Do not submit c32.",
+    "If and only if activation passes, run exactly one corrected candidate c32 arm. Compare it with the preserved stock terminal as a cross-claim discriminator, validate telemetry and correctness, then release.",
+    "Archive or mark consumed all superseded repair handshakes before launching the new owner so they cannot wake another repair."
+  ],
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-28T13:52:00Z",
+    "release_by_utc": "2026-07-28T14:25:00Z",
+    "watchdog_deadline_utc": "2026-07-28T14:32:10.882252Z",
+    "maximum_new_claim_seconds": 2220,
+    "remaining_authorized_spend_usd": 1.85,
+    "maximum_incremental_spend_usd": 1.517,
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_multiresolution_global_kv_codesign --bench h200-global-kv-computeinstance-e00f01gpfve0e49wb3 --lease-seconds 2220"
+  },
+  "owner_contract": {
+    "unit_manager": "pid",
+    "entry_scope": "endpoint_activation_repair3",
+    "controller_state": "artifacts/h200-global-kv-20260728t1210z/OWNER_STATE_ENDPOINT_ACTIVATION_REPAIR3.json",
+    "owner_log": "artifacts/h200-global-kv-20260728t1210z/owner-endpoint-activation-repair3.log",
+    "terminal_success": "artifacts/h200-global-kv-20260728t1210z/ENDPOINT_ACTIVATION_REPAIR3_TERMINAL.json",
+    "terminal_negative": "artifacts/h200-global-kv-20260728t1210z/INTERVENTION_NOT_ACTIVATED_REPAIR3.json",
+    "durability": "Launch one bounded detached owner in the retained project after the claim. Persist PID/start_ticks and claim generation immediately; the owner must heartbeat and release by the absolute fence."
+  },
+  "portfolio": {
+    "b200_lane": "Preserve PID 3150356/start_ticks 136134516 and its claim unchanged.",
+    "provider_create": false,
+    "provider_teardown": false,
+    "warm_reuse_reason": "The exact 62.6-GB checkpoint and pinned image are resident, the localized activation proof can fail fast, and the maximum incremental H200 cost remains inside the existing $8 reservation."
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T07:48:25Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "classification": "owner_control_ready",
+  "claim_allowed": false,
+  "science_unchanged": true,
+  "science_consumed": false,
+  "claim_observed": false,
+  "provider_mutated": false,
+  "actual_spend_usd": 0.6423333333333333,
+  "director_binding": {
+    "path": "DIRECTOR_NORM_FP8_OWNER_CONTROL_REPAIR_AMENDMENT_20260730T0742Z.json",
+    "sha256": "be1adf1f2c8e85e5f56bb89feb6de10398c008e92e9a28c1ac9eb10a1a34e6bf"
+  },
+  "final_current_identities": {
+    "mechanism_terminal": {
+      "path": "MECHANISM_REPAIR_TERMINAL.json",
+      "sha256": "b1d8254ee3cc78eb3e09e28064baa1ac666746c789f9f74d01fc65d5a82fc199"
+    },
+    "component": {
+      "path": "inputs/gemma4-layer0-norm-qkv-component.safetensors",
+      "sha256": "dfa05dcf1f3f9ad6dd40f5318cf6c2c6d55eb93beebf0239f205e7fa88b85829",
+      "bytes": 176172392
+    },
+    "runner": {
+      "path": "h200_runner.py",
+      "sha256": "99656cd8d13139421a7fe8c7ab878f3efb00d8cb5904614af07222f591823b80"
+    },
+    "candidate_source": {
+      "path": "norm_fp8_decode_exact_order.cu",
+      "sha256": "fba1452c2cf460a92d229f9944b8fc14f77b10ce7490269e6c9307feb772c792"
+    },
+    "candidate_loader": {
+      "path": "norm_fp8_decode_exact_order.py",
+      "sha256": "f18dfe570ee7bc2d7863d8982205f028d4f617ce9784be7f943a14a363f3956d"
+    },
+    "runtime_adapter": {
+      "path": "runtime_adapter.py",
+      "sha256": "adbd48db4599b05920026fdd070b893ee885ae08d63e5b6235cee0cd8d379471"
+    }
+  },
+  "owner_control": {
+    "owner": {
+      "path": "run_norm_fp8_exact_order_component_owner.py",
+      "sha256": "99153d9f2a161601acd83ab751ebecc4cbe4f603c9307c22eb463afdbeafdf65"
+    },
+    "claim_launcher": {
+      "path": "run_norm_fp8_exact_order_component_claim_launch.py",
+      "sha256": "ed7e805fe7957794fdf9254d1614a17f1abef199fbbae85ed9813a3ddf637ad1"
+    },
+    "fault_injections": {
+      "path": "OWNER_CONTROL_FAULT_INJECTIONS.json",
+      "sha256": "2d2acc972523ed2585abd993f213db25a1086ba1007c15b4136f38621f37c8b4",
+      "all_passed": true,
+      "count": 5
+    },
+    "contract": [
+      "owner adoption and heartbeat precede immutable staging",
+      "pre-adoption launcher failures exact-generation release",
+      "matching repair requests are consumed and re-enter only the failed phase",
+      "deadline and heartbeat loss release maintenance once",
+      "complete typed terminal releases ready once"
+    ]
+  },
+  "next_action": "A later director must hash this terminal and issue a fresh execution clock before any claim or H200 action."
+}

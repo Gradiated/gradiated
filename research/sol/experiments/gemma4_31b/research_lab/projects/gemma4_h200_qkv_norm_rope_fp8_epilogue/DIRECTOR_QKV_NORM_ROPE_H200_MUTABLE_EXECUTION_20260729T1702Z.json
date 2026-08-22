@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "classification": "director_qkv_norm_rope_h200_mutable_implementation_and_component_execution",
+  "created_at_utc": "2026-07-29T17:02:30Z",
+  "project": "gemma4_h200_qkv_norm_rope_fp8_epilogue",
+  "researcher_profile": "deep",
+  "decision": "Use the durably reserved retained H200 for one mutable discovery claim that implements and measures a materially independent QKV projection to Q/K normalization, RoPE, layout, and first-attention-consumer boundary.",
+  "causal_hypothesis": "At exact decode concurrency 32, materialized Q/K intermediates plus normalization, RoPE, layout conversion, and their launches form avoidable data movement and synchronization after the QKV projection. A source-matched epilogue or dataflow boundary can preserve the pinned consumer while reducing launches or materialized bytes.",
+  "immutable_scientific_identities": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "runtime": "SGLang v0.5.13",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "phase": "decode",
+    "concurrency": 32,
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a"
+  },
+  "stock_control": "The installed pinned-runtime QKV projection followed by its exact Q/K normalization, RoPE, layout, and first attention consumer at mechanically extracted local/global Gemma geometry.",
+  "mutable_intervention_scope": {
+    "allowed": [
+      "Project-local discovery runner, CUDA or Triton source, build files, launcher glue, runtime API adapters, instrumentation, and artifact retrieval.",
+      "The smallest source-justified epilogue, fusion, or dataflow change spanning the QKV projection output through the same first attention consumer.",
+      "In-place repair of ordinary compile, import, path, permission, runtime API, layout, and telemetry defects under the same claim."
+    ],
+    "frozen": [
+      "Model and checkpoint identities, runtime and image identities, decode-c32 workload, producer and consumer semantics, stock control, numerical gate, timing boundary, and one decision-bearing candidate decomposition.",
+      "No endpoint submission, checkpoint mutation, architecture deletion, quality proxy, or reuse of gated-activation timing as evidence."
+    ]
+  },
+  "experiment_contract": {
+    "first_call": "After claiming, inspect the installed pinned producer/consumer source and exact model config, record symbols, shapes, strides, dtypes, head geometry, scale and RoPE conventions, then make the smallest real H200 producer-to-consumer call. This is the execution-equivalent discovery smoke test.",
+    "quality_gate": {
+      "required": "Exact tensor identities and geometry; finite outputs; stock and candidate reach the same first attention consumer; consumer-output relative-L2 <= max(0.002, 2x the measured same-process stock A/A envelope).",
+      "structural_failures": "Any nonfinite output, wrong shape/stride/ownership, missing candidate-path proof, or different consumer is invalid rather than a performance result."
+    },
+    "performance_gate": "Correctness before timing. Measure profiler-off alternating warm stock/candidate repetitions at the exact shape, report distributions and uncertainty when practical, and retain any reproducible gain with a credible whole-request bound; no arbitrary minimum percentage applies.",
+    "physical_prediction": "Before timing, state one falsifiable prediction for launches, materialized bytes, L2/HBM traffic, or synchronization and report the observed counter or exact analytical bound.",
+    "scientific_submission_count": 1,
+    "endpoint_submission_count": 0
+  },
+  "lifecycle": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_state": "available",
+    "claim_start_by_utc": "2026-07-29T17:09:00Z",
+    "execution_complete_by_utc": "2026-07-29T17:52:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T17:55:00Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1800z-watchdog-r9.service",
+    "watchdog_main_pid": 167936,
+    "watchdog_deadline_utc": "2026-07-29T18:00:00Z",
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_qkv_norm_rope_fp8_epilogue --bench h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f --lease-seconds 3600",
+    "release_condition": "Release generation-fenced only after a complete positive or negative component terminal, an unsafe or unreachable guest, or the absolute release deadline. Recoverable pre-science defects retain the claim for bounded in-place repair."
+  },
+  "budgets": {
+    "authorized_spend_usd": 3.0,
+    "actual_spend_usd_before_execution": 0.0,
+    "conservative_exposure_through_watchdog_usd": 2.53,
+    "maximum_claim_wall_minutes": 45,
+    "maximum_additional_storage_gib": 2
+  },
+  "artifact_contract": [
+    "A compact typed observation-to-opportunity register with uncertainty, competing explanation, modifiable fraction, falsifier, and expected information per dollar.",
+    "Exact extracted geometry and installed producer/consumer symbols plus immutable identity evidence.",
+    "Every discovery attempt with pre-science/science attribution, source hashes, stdout/stderr, and repair lineage.",
+    "One terminal containing stock/candidate consumed-output correctness, candidate-path proof, warm timing rows, physical prediction versus observation, useful GPU seconds, full claim exposure, and generation-fenced release evidence."
+  ],
+  "must": [
+    "Read this binding once, verify its SHA-256, the exact durable $3 reservation, available bench, strict SSH identity, and active r9 watchdog, then execute the claim command by 17:09Z.",
+    "Use sudo -n docker for Nebius Docker commands, reuse the pinned image/checkpoint/caches, and keep mutable implementation and repairs inside this project and claim.",
+    "Publish active_session last if a durable controller owner must outlive the researcher turn; otherwise keep the foreground claim through terminal and release."
+  ],
+  "must_not": [
+    "Do not call provider lifecycle, replace or stop the watchdog, claim another bench, mutate another project, replay gated-activation science, or run endpoint traffic.",
+    "Do not release for an ordinary pre-science integration failure while safe repair time remains, and do not retain the claim after 17:55Z."
+  ]
+}

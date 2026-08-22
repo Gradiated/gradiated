@@ -52,6 +52,24 @@ def atomic_write(path: pathlib.Path, record: dict[str, object]) -> None:
 
 
 def start(args: argparse.Namespace) -> int:
+    if args.stabilize_seconds < 0:
+        print("--stabilize-seconds must be nonnegative", file=sys.stderr)
+        return 2
+
+    ready_path = pathlib.Path(args.ready_file).resolve() if args.ready_file else None
+    if ready_path is not None and ready_path.exists():
+        print(
+            json.dumps(
+                {
+                    "error": "ready_file_already_exists",
+                    "ready_file": str(ready_path),
+                },
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
+        return 2
+
     state_path = pathlib.Path(args.state)
     state_path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = state_path.with_name(f"{state_path.name}.lock")
@@ -108,8 +126,61 @@ def start(args: argparse.Namespace) -> int:
             "start_ticks": identity[1],
             "unit_manager": args.unit_manager,
         }
+        if ready_path is not None:
+            record["ready_file"] = str(ready_path)
         atomic_write(state_path, record)
-    print(json.dumps({"live": is_live(record), **record}, sort_keys=True))
+
+        deadline = time.monotonic() + args.stabilize_seconds
+        while time.monotonic() < deadline:
+            if not is_live(record):
+                print(
+                    json.dumps(
+                        {
+                            "live": False,
+                            "reason": "owner_exited_during_stabilization",
+                            **record,
+                        },
+                        sort_keys=True,
+                    )
+                )
+                return 1
+            if ready_path is not None and ready_path.exists():
+                print(
+                    json.dumps(
+                        {"live": True, "ready": True, **record},
+                        sort_keys=True,
+                    )
+                )
+                return 0
+            time.sleep(min(0.01, max(0.0, deadline - time.monotonic())))
+
+        live = is_live(record)
+        if not live:
+            print(
+                json.dumps(
+                    {
+                        "live": False,
+                        "reason": "owner_exited_during_stabilization",
+                        **record,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 1
+        if ready_path is not None and not ready_path.exists():
+            print(
+                json.dumps(
+                    {
+                        "live": True,
+                        "ready": False,
+                        "reason": "owner_not_ready_during_stabilization",
+                        **record,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 1
+    print(json.dumps({"live": live, **record}, sort_keys=True))
     return 0
 
 
@@ -134,6 +205,19 @@ def parser() -> argparse.ArgumentParser:
     launch.add_argument("--state", required=True)
     launch.add_argument("--log", required=True)
     launch.add_argument("--cwd")
+    launch.add_argument(
+        "--stabilize-seconds",
+        type=float,
+        default=0.25,
+        help="require the detached process to remain live for this many seconds",
+    )
+    launch.add_argument(
+        "--ready-file",
+        help=(
+            "require this newly created runtime-readiness artifact before the "
+            "stabilization deadline"
+        ),
+    )
     launch.add_argument(
         "--unit-manager",
         choices=("remote-shell", "pid"),

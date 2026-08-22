@@ -212,3 +212,24 @@ The scientific endpoint contract is unchanged. A future owner must resolve all
 connection, checkpoint, image, claim-generation, and lifecycle fields from a
 later live bench record; the retired bench identity and remote checkpoint path
 are historical evidence and are not launch authority.
+
+## 2026-07-29 endpoint-proxy reactivation
+
+Reactivate only the unconsumed permanent 55-local/5-global c32 endpoint proxy.
+Its exact H200 component reduced weighted attention time by `20.3345%`; the
+phase-selective TARGET_VERIFY continuation and every previously consumed arm
+remain closed.
+
+First complete the localized bench-free owner repair already identified in
+project state: stage the pinned model configuration and tokenizer inputs,
+resolve every connection and checkpoint field from a future live inventory
+record, and make readiness fail immediately on child or container death.
+Then stop with a hash-bound execution packet. Do not claim a GPU or operate a
+provider during this preparation.
+
+The project requests a `$22` cumulative ceiling. A later director may
+provision one H200 lifecycle only after that exact reservation is durable and
+the packet is executable. Run one contemporaneous stock/permanent-55L5G c32
+pair with the original quality-unsafe label, fixed checkpoint/workload, and
+matching request/token accounting. This is a performance proxy, not a
+deployable or quality-qualified model result.

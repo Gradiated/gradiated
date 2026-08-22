@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "classification": "supported_offline_pending_director_execution_binding",
+  "science_consumed": false,
+  "provider_mutation": false,
+  "gpu_pool_called": false,
+  "ssh_called": false,
+  "director_repair_sha256": "4d780ab57899e46cef3e2dcba8e73d2f0555b0bcd3518bfe45d95fd57e0c0a31",
+  "exact_model": {
+    "id": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "architecture": "Gemma4ForConditionalGeneration",
+    "hybrid_attention": "50 sliding_attention plus 10 full_attention layers; 1024 sliding window",
+    "activation_dtype": "bfloat16"
+  },
+  "official_vllm": {
+    "repository": "https://github.com/vllm-project/vllm",
+    "source_commit": "6f00a1ae3bd4b86168667bce673998218f461c0f",
+    "source_ref": "main as inspected 2026-07-29",
+    "support_conclusion": "supported: Gemma4 conditional checkpoint text-stack mapper plus stock quantization=fp8 selects online dynamic FP8 linear/MoE methods; Fp8Config allows bfloat16 activations and CUDA supports FP8 at capability >= 8.9, including sm_120.",
+    "source_hashes": {
+      "vllm/model_executor/models/gemma4.py": "f101ae257cfe4c71e90ced922da04228468dbb84c01af00a0b48fa681f873a0f",
+      "vllm/model_executor/layers/quantization/fp8.py": "48710c5925581b157b4dd9df9c961772908405210247353cc8f3a085aa9fbea6",
+      "vllm/platforms/cuda.py": "ea6cade0bc560dcafea09bef8d30249b949e322ed8696ff02c6d20fa250640d2"
+    }
+  },
+  "owner": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/run_vllm_sm120_fp8_endpoint_owner.py",
+    "sha256": "60162597d58d2ca1bd0821a1036fe1af3c4bc9fb79993d7435cc177c1f9338dc",
+    "lifecycle": "future atomic claim only; preclaim and endpoint invocation both hash-verify the project-local hard-linked c32 workload before any claim or SCIENCE_STARTED marker; then validate the exact recorded SGLang PID/start_ticks and command line, fence VRAM, run private vLLM, and retain ordinary repairs."
+  },
+  "runtime_arguments": [
+    "vllm serve <resident_checkpoint_path>",
+    "--served-model-name google/gemma-4-31B-it",
+    "--dtype bfloat16",
+    "--quantization fp8",
+    "--max-model-len 5000",
+    "--max-num-seqs 32",
+    "--max-num-batched-tokens 65536",
+    "--host 127.0.0.1",
+    "--port 19124"
+  ],
+  "resident_checkpoint": {
+    "path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "reuse_policy": "read-only reuse of the staged verified resident path; no controller-to-guest checkpoint transfer",
+    "expected_bytes": 62546338248
+  },
+  "expected_memory_geometry": {
+    "accelerator": "NVIDIA RTX PRO 6000 Blackwell Workstation, sm_120",
+    "checkpoint_disk_bytes": 62546338248,
+    "weight_mode": "stock online dynamic FP8 from the exact resident checkpoint",
+    "capacity_note": "Runtime peak and KV-cache allocation remain a first target-GPU launch observation; owner retains the claim for an ordinary pre-science capacity/configuration repair rather than declaring support from source alone."
+  },
+  "measurement_contract": {
+    "tool": "research/factory/tools/lab-endpoint-pair",
+    "application_error_aware": true,
+    "maximum_canonical_samples": 1,
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "payload_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c"
+  },
+  "workload": {
+    "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/inputs/c32_requests.jsonl",
+    "source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_fp8_endpoint/inputs/c32_requests.jsonl",
+    "materialization": "read-only hard-linked project-local view",
+    "sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+    "bytes": 893666,
+    "preclaim_guard": "require_workload verifies path, size, and SHA-256 before returning pass; execution repeats the verification before claim and before lab-endpoint-pair."
+  },
+  "vllm_image": {
+    "reference": "docker.io/vllm/vllm-openai:nightly@sha256:494f9c118fb6684bcdd26bb37c687b16163278c0e18f5c157c9185c2584598b7",
+    "platform": "linux/amd64",
+    "manifest_index_digest": "sha256:adf39421281d0874b5ac8d1665ea0e32ae6650a5615b29a99bd97d2aca23ae40",
+    "resolved_at_utc": "2026-07-29T05:39:10Z"
+  },
+  "resolved_resident_sglang": {
+    "pid": 16036,
+    "start_ticks": 183853635,
+    "port": 19123,
+    "observed_gpu_memory_mib": 71118
+  },
+  "future_binding_requirements": [
+    "claim_allowed true for rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "immutable vLLM image digest in bench.vllm_image",
+    "exact staged checkpoint path and manifest",
+    "resident SGLang pid, start_ticks, and private port",
+    "absolute owner deadline and controller artifact root"
+  ],
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-fp8-endpoint-20260729t0542z-controller/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-fp8-endpoint-20260729t0542z-controller/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint --unit-manager pid -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/run_vllm_sm120_fp8_endpoint_owner.py --execution-binding <fresh-director-binding.json> --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-fp8-endpoint-20260729t0542z",
+  "target_endpoint_command": "private remote vLLM HTTP endpoint at 127.0.0.1:19124, exposed only via a controller-local SSH tunnel at 127.0.0.1:29124"
+}

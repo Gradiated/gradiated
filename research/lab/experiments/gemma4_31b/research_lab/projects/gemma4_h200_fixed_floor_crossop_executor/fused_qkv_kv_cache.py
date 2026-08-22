@@ -108,25 +108,24 @@ def _qkv_norm_rope_cache_kernel(
         slot = tl.load(cache_slots + token)
         slot_valid = (slot >= 0) & (slot < cache_slots_count)
         cache_base = slot * cache_stride_token + head * cache_stride_head
-        scale = tl.where(is_k, K_SCALE, V_SCALE)
         tl.store(
             k_cache + cache_base + half_offsets,
-            output0 / scale,
+            output0 / K_SCALE,
             mask=half_mask & slot_valid & is_k,
         )
         tl.store(
             k_cache + cache_base + HALF_DIM + half_offsets,
-            output1 / scale,
+            output1 / K_SCALE,
             mask=half_mask & slot_valid & is_k,
         )
         tl.store(
             v_cache + cache_base + half_offsets,
-            output0 / scale,
+            output0 / V_SCALE,
             mask=half_mask & slot_valid & is_v,
         )
         tl.store(
             v_cache + cache_base + HALF_DIM + half_offsets,
-            output1 / scale,
+            output1 / V_SCALE,
             mask=half_mask & slot_valid & is_v,
         )
 

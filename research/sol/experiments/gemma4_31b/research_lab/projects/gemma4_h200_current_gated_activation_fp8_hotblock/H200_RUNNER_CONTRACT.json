@@ -1,0 +1,82 @@
+{
+  "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+  "component_input": {
+    "manifest_required_fields": [
+      "component_sha256",
+      "checkpoint_manifest_sha256",
+      "tensor_key"
+    ],
+    "only_tensor": "model.language_model.layers.0.mlp.down_proj.weight",
+    "placement": "project-local immutable safetensors",
+    "raw_dtype": "bfloat16",
+    "raw_shape": [
+      5376,
+      21504
+    ]
+  },
+  "consumer": "sglang.srt.layers.quantization.fp8_utils.fp8_scaled_mm",
+  "cuda_graph": {
+    "arms": [
+      "baseline_component",
+      "candidate_component"
+    ],
+    "required_shape": [
+      32,
+      43008
+    ]
+  },
+  "geometry": {
+    "activated": [
+      32,
+      21504
+    ],
+    "activation_dtype": "float8_e4m3fn",
+    "activation_scale": [
+      32,
+      1
+    ],
+    "activation_scale_dtype": "float32",
+    "down_weight_k_n": [
+      21504,
+      5376
+    ],
+    "gate_up": [
+      32,
+      43008
+    ],
+    "gate_up_dtype": "bfloat16",
+    "gate_up_stride": [
+      43008,
+      1
+    ],
+    "output": [
+      32,
+      5376
+    ],
+    "output_dtype": "bfloat16"
+  },
+  "hardware": "NVIDIA H200 SXM / sm_90a",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "producer_candidate": "gemma4_gated_activation_quant_e4m3_kernel",
+  "producer_control": "GeluAndMul(approximate='tanh') + sglang_per_token_quant_fp8",
+  "real_weight_key": "model.language_model.layers.0.mlp.down_proj.weight",
+  "row_ledger": {
+    "expected_rows": 3,
+    "required_fields": [
+      "baseline_producer",
+      "candidate_producer",
+      "baseline_component",
+      "candidate_component",
+      "numerical",
+      "candidate_path"
+    ],
+    "shapes": [
+      1,
+      16,
+      32
+    ]
+  },
+  "runtime": "sglang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+  "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "schema_version": 1
+}

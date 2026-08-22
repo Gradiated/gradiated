@@ -1,0 +1,120 @@
+{
+  "active_session": null,
+  "actual_spend_usd": 1.540152,
+  "allocation_limit": 1,
+  "authorized_spend_usd": 3.0,
+  "bench_need": {
+    "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+    "claim_allowed": false,
+    "gpu_count": 1,
+    "preferred_bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "provider": "runpod",
+    "purpose": "Paused after a zero-row exact Cutlass consumer failure; the compatible warm bench is handed to the prepared heterogeneous-attention successor."
+  },
+  "claim_gate": {
+    "blocked_by": [
+      "project_paused_after_zero_row_invalid_attempt",
+      "selected_warm_successor_is_heterogeneous_attention_split"
+    ],
+    "claim_allowed": false,
+    "disposition": "paused_unmeasured_exact_consumer_integration"
+  },
+  "component_owner": {
+    "atomic_claim_behavior_validated": true,
+    "execution_ready": true,
+    "framework_oracle_context_wrapper_sha256": "ec02a3b57476a8cf1cf974e5281b4583bc71cf294b01fd48d5236a28f343e277",
+    "gpu_invocations": 0,
+    "installed_overlay_patch_sha256": "251aede8cf2c349cf583f268b8697c846eca82ec7916a79ed729e60ed5d80043",
+    "offline_validation_passed": true,
+    "oracle_sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5",
+    "owner": "run_sm120_norm_fp8_component_owner.py",
+    "owner_sha256": "c15fdbf7aa66052a1b71883a61f76299017faae6c574e7fd3e93a49a3408583b",
+    "patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+    "path": "VLLM026_SM120_NORM_FP8_COMPONENT_OWNER_OFFLINE_RESULT.json",
+    "remote_stage_and_terminal_ownership_validated": true,
+    "replacement_binding": "INSTALLED_SOURCE_REPAIR_REPLACEMENT_BINDING_20260729T0756Z.json",
+    "science_consumed": false
+  },
+  "execution_binding": {
+    "claim_start_by_utc": "2026-07-29T07:36:00Z",
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_COMPONENT_EXECUTION_20260729T0730Z.json",
+    "release_by_utc": "2026-07-29T08:03:00Z",
+    "scientific_submission_limit": 1,
+    "sha256": "bae1868c599cff97177db4fcf8af59b3b14eff5e1069bb5c235e4470bddd6482",
+    "watchdog_deadline_utc": "2026-07-29T08:13:34.346354Z"
+  },
+  "id": "gemma4_vllm026_sm120_norm_fp8_fusion",
+  "live_config_context_repair": {
+    "canonical_sample_consumed": false,
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_CONFIG_CONTEXT_REPAIR_20260729T0813Z.json",
+    "release_by_utc": "2026-07-29T08:20:00Z",
+    "repair_handshake_deadline_utc": "2026-07-29T08:18:00Z",
+    "repair_id": "sm120-norm-fp8-installed-source-20260729T0756Z",
+    "repair_request_required_by_utc": "2026-07-29T08:16:30Z",
+    "retry_scope": "framework_oracle_only",
+    "sha256": "ee958c6986185a6e5bcf869da6754b05df7d661a8c21d41c35d11e2ef0596a1c",
+    "stock_candidate_rows": 0
+  },
+  "live_replacement_adoption": {
+    "claim_generation": "2026-07-29T07:33:28.165904Z",
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_LIVE_REPLACEMENT_ADOPTION_20260729T0810Z.json",
+    "pid": 4008130,
+    "sha256": "7dffe155b2ab416df776e54359ac2dab2bb714ae4f31039bea76d3451f160192",
+    "start_ticks": 142855921
+  },
+  "next_action": "Remain paused. Terminal e895cc0c... returned zero rows at the stock Cutlass scaled-mm consumer, so it is an invalid attempt rather than a component negative. Reopen only with an exact installed-vLLM Cutlass shape/scale support diagnosis that outranks the prepared heterogeneous-attention discriminator; do not replay this oracle or claim the warm bench.",
+  "prior_repair_binding": {
+    "gpu_budget": 0,
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_ATOMIC_CLAIM_OWNER_REPAIR_20260729T0710Z.json",
+    "profile": "execution",
+    "result_required_by_utc": "2026-07-29T07:23:00Z",
+    "sha256": "070d4945af4beb8fad0d0938783e440f5da78156a48ae84c5086f1cd659aca41"
+  },
+  "prior_same_claim_source_repair": {
+    "claim_generation": "2026-07-29T07:33:28.165904Z",
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_INSTALLED_SOURCE_REPAIR_20260729T0747Z.json",
+    "profile": "execution",
+    "release_by_utc": "2026-07-29T08:03:00Z",
+    "replacement_launch_by_utc": "2026-07-29T07:56:00Z",
+    "sha256": "f7c6c2e4c75e1611ce2350a227ac1156dd2e3323125d5729e43816144f8c9231"
+  },
+  "priority": 9500,
+  "repair_binding": {
+    "gpu_budget": 0,
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_REMOTE_STAGE_AND_TERMINAL_OWNERSHIP_REPAIR_20260729T0720Z.json",
+    "profile": "execution",
+    "result_required_by_utc": "2026-07-29T07:30:00Z",
+    "sha256": "3d898125c79237c28ba9d077cd74cb8af14c3df2588b22738c697196da082ccd"
+  },
+  "researcher_profile": "execution",
+  "result": {
+    "classification": "concrete_production_bound_offline_candidate",
+    "gpu_invocations": 0,
+    "offline_validation_passed": true,
+    "patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+    "path": "VLLM026_SM120_NORM_FP8_FUSION_OFFLINE_RESULT.json",
+    "science_consumed": false,
+    "sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f"
+  },
+  "same_claim_source_repair": {
+    "claim_generation": "2026-07-29T07:33:28.165904Z",
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_DEVELOPMENT_REPAIR_EXTENSION_20260729T0805Z.json",
+    "profile": "execution",
+    "release_by_utc": "2026-07-29T08:38:00Z",
+    "repair_handshake_deadline_utc": "2026-07-29T08:35:00Z",
+    "replacement_launch_by_utc": "2026-07-29T08:18:00Z",
+    "sha256": "f11c592aff07228d6b8a9376d2b1d6ea7a86e9434241b24012f651a7fc09c053",
+    "watchdog_deadline_utc": "2026-07-29T09:15:00Z"
+  },
+  "schema_version": 1,
+  "status": "paused",
+  "summary": "The config-context repair reached the production stock CutlassFP8ScaledMMLinearKernel but failed at scaled_mm_entry.cu:209 before returning any stock or candidate row. The canonical seven-row discriminator remains unconsumed. The dead owner generation was released safely after $1.540152 conservative claim exposure, and the unresolved mechanism is paused behind the prepared heterogeneous-attention successor.",
+  "terminal": {
+    "artifact_root": "artifacts/sm120-norm-fp8-installed-source-config-20260729t0814z",
+    "classification": "invalid_zero_row_exact_consumer_attempt",
+    "path": "artifacts/sm120-norm-fp8-installed-source-config-20260729t0814z/OWNER_TERMINAL.json",
+    "released_at_utc": "2026-07-29T08:22:21.788632Z",
+    "sha256": "e895cc0c83d4c7afd45de510c18f243137eccf69783498fbfbca36c20e93f1c5",
+    "stock_candidate_rows": 0
+  }
+}

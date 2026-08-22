@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "classification": "component_positive",
+  "science_consumed": true,
+  "endpoint_submissions": 0,
+  "binding_sha256": "e39d077587c16891c490f63fff6f91133d548df39fbf8e315bee24a9dbd08abd",
+  "accepted_generation": "artifacts/attempt4",
+  "accepted_result_sha256": "ad4192d8cb86c56791f2470e5b4bd0586a4e445d033e03cda76326677a938caf",
+  "program_sha256": "10d2538ce6d35a4fbedf4b8db946d8e93d7004690fa1a0c6f0cae3c6427e63ff",
+  "claim": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claimed_at_utc": "2026-07-29T17:05:16.151288Z",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "release_state": "pending_generation_fenced_release"
+  },
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime": "SGLang v0.5.13@28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "installed_symbols": {
+      "producer": "QKVParallelLinear",
+      "stock_epilogue": [
+        "gemma_qkv_rmsnorm",
+        "RotaryEmbedding.forward_cuda",
+        "separate FP8 K/V cache row writes"
+      ],
+      "candidate": "_qkv_norm_rope_direct_fp8_cache_kernel",
+      "first_consumer": "sglang.srt.layers.attention.triton_ops.decode_attention.decode_attention_fwd"
+    }
+  },
+  "correctness": {
+    "quality_gate": "consumer relative-L2 <= max(0.002, 2x stock A/A)",
+    "local_consumer_relative_l2": 0.0,
+    "global_consumer_relative_l2": 0.0,
+    "stock_aa_relative_l2": 0.0,
+    "local_q_relative_l2": 0.0,
+    "global_q_relative_l2": 0.000003814713181782281,
+    "local_kv_cache_relative_l2": 0.0,
+    "global_kv_cache_relative_l2": 0.0,
+    "finite": true,
+    "pass": true
+  },
+  "performance": {
+    "profiler_enabled": false,
+    "alternating_repetitions_per_geometry": 15,
+    "local_decode_c32": {
+      "geometry": "Q32/KV16/d256/window1024/full RoPE, BF16 QKV output, E5M2 K/V cache",
+      "stock_median_ms": 0.3105280101299286,
+      "candidate_median_ms": 0.22755199670791626,
+      "median_delta_ms": 0.08297601342201233,
+      "candidate_to_stock_ratio": 0.7327905673072964,
+      "paired_mean_delta_95ci_ms": [
+        0.07764266729354859,
+        0.09270400106906891
+      ]
+    },
+    "global_decode_c32": {
+      "geometry": "Q32/KV4/d512/context4570/proportional factor 0.25 with 64 active cross-half angles, BF16 QKV output, E5M2 K/V cache",
+      "stock_median_ms": 0.511135995388031,
+      "candidate_median_ms": 0.41603198647499084,
+      "median_delta_ms": 0.09510400891304016,
+      "candidate_to_stock_ratio": 0.8139359979121769,
+      "paired_mean_delta_95ci_ms": [
+        0.09271679321924846,
+        0.1059669295946757
+      ]
+    }
+  },
+  "physical_prediction": {
+    "basis": "Exact source/dataflow accounting; profiler remained off for the contracted comparison.",
+    "stock_pre_attention_launches": 5,
+    "candidate_pre_attention_launches": 1,
+    "analytical_launch_reduction": 4,
+    "local_compulsory_epilogue_byte_reduction_per_c32_call": 2621440,
+    "global_compulsory_epilogue_byte_reduction_per_c32_call": 2883584,
+    "observed_direction_matches": true
+  },
+  "derived_request_bound": {
+    "evidence_class": "analytical occurrence projection from measured exact-shape component deltas",
+    "local_layers": 50,
+    "global_layers": 10,
+    "decode_invocations": 357,
+    "batch_cardinality": 32,
+    "unnormalized_batch_total_s": 1.8206431514024735,
+    "normalized_s_per_request": 0.056895098481327296,
+    "paired_mean_bootstrap_95ci_s_per_request": [
+      0.05433944422006606,
+      0.06272132831811905
+    ],
+    "fraction_of_qualified_0_625149101968745_s_denominator": 0.09101044583148395,
+    "transfer_limit": "Not an endpoint result; excludes integration, CUDA-graph, scheduler, and full-request interaction effects."
+  },
+  "attempt_lineage": [
+    {
+      "generation": "attempt1",
+      "classification": "pre_science_launcher_defect",
+      "science_consumed": false
+    },
+    {
+      "generation": "attempt2",
+      "classification": "stock_cache_write_api_defect_before_candidate_or_consumer_result",
+      "science_consumed": false
+    },
+    {
+      "generation": "attempt3",
+      "classification": "incorrect Gemma4 proportional RoPE layout; no timing rows",
+      "science_consumed": false
+    },
+    {
+      "generation": "attempt4",
+      "classification": "component_positive",
+      "science_consumed": true
+    }
+  ],
+  "useful_gpu_seconds": 0.9064657688140869,
+  "actual_spend_usd": 2.53,
+  "spend_basis": "Director-assigned conservative exposure from the durable reservation through watchdog r9; below the exact $3.00 project ceiling."
+}

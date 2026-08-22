@@ -1,0 +1,112 @@
+{
+  "claim_scope": {
+    "model": "google/gemma-4-31B-it",
+    "question": "How many tokens can a DFlash-style speculator propose and usefully accept per target verification for Gemma 4 31B?",
+    "workloads": [
+      "public reasoning, code, and chat benchmarks",
+      "the lab's synthetic c32 endpoint workload"
+    ]
+  },
+  "decision": "Use the released 2B Gemma 4 DFlash drafter as the next serious speculation baseline. Test 8, 12, and 16-token blocks on the current runtime and hardware, and select by matched whole-request cost rather than acceptance alone. Do not extrapolate the 46k-parameter CPU copy-decoder negative to DFlash.",
+  "evidence": {
+    "local_measured": {
+      "cpu_copy_decoder_depth4_accepted_draft_tokens": 3.0051622418879056,
+      "cpu_copy_decoder_result": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_trained_mtp_assistant_finetune/CPU_SPECULATIVE_DECODER_RESULT.json",
+      "old_h200_dflash_depth_cost_result": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_dflash_endpoint/DFLASH_C32_DEPTH_COST_TERMINAL.json",
+      "old_h200_dflash_runtime_decision": "Depth 4 had the lowest summed draft-plus-verifier CUDA-event cost in the older SGLang H200 c32 sweep; the request consumer for the depth sweep was invalid, so this is not acceptance evidence.",
+      "synthetic_c32_in_request_ngram_depth16_accepted_draft_tokens": 15.711009174311927,
+      "synthetic_c32_interpretation": "The synthetic completions are highly repetitive. This is an offline workload ceiling and not a realistic traffic estimate."
+    },
+    "vendor_reported": {
+      "released_drafter": {
+        "block_size": 16,
+        "model": "z-lab/gemma-4-31B-it-DFlash",
+        "parameters": "2B",
+        "precision": "BF16"
+      },
+      "z_lab_b300_acceptance_length": {
+        "GSM8K": 7.53,
+        "HumanEval": 8.0,
+        "MBPP": 6.13,
+        "MT-Bench": 4.23,
+        "Math500": 8.59,
+        "metric_definition": "Acceptance length follows the standard total committed tokens per verification convention and includes the target bonus token. Approximate accepted draft tokens equal acceptance length minus one.",
+        "note": "Single B300, vLLM, greedy, thinking enabled, maximum 4096 output tokens; reported acceptance length is nearly invariant from c1 to c32."
+      },
+      "modal_custom_training": {
+        "claim": "Application-specific fine-tuning has increased acceptance length from about 3 to over 9.",
+        "data_scale": "tens of thousands to hundreds of thousands of application tokens"
+      },
+      "red_hat_broader_task_acceptance_length": {
+        "HumanEval": 4.91,
+        "math_reasoning": 5.17,
+        "qa": 2.63,
+        "question": 3.32,
+        "rag": 3.43,
+        "summarization": 2.53,
+        "tool_call": 2.99,
+        "translation": 3.17,
+        "writing": 3.33
+      }
+    },
+    "third_party_measured": {
+      "jarvis_h100_speedbench": {
+        "Gemma_4_31B_DFlash_c1_speedup": 3.03,
+        "Gemma_4_31B_DFlash_c16_speedup": 1.93,
+        "Gemma_4_31B_MTP_c1_speedup": 3.11,
+        "Gemma_4_31B_MTP_c16_speedup": 2.54,
+        "hardware": "1x H100 80GB",
+        "workload": "SPEED-Bench qualitative, 880 prompts, 11 categories"
+      }
+    }
+  },
+  "estimate": {
+    "application_tuned_possible_accepted_length_including_bonus": "9+ on a narrow stable domain, vendor-reported",
+    "generic_code_math_reasoning_accepted_draft_tokens": "5-8, corresponding to acceptance length 6-9 including the bonus token",
+    "generic_mixed_chat_accepted_draft_tokens": "2-4, corresponding to acceptance length 3-5 including the bonus token",
+    "proposed_tokens_per_cycle": "15-16",
+    "recommended_planning_blend_before_measurement": "4-6 accepted draft tokens, or 5-7 total committed tokens including the target bonus, per verification on a mixed reasoning/code-heavy serving workload"
+  },
+  "falsification_rule": "Reject the planning estimate if a request-disjoint workload-matched run on the target hardware produces less than 4 mean accepted tokens or if whole-request output-token cost fails to improve despite higher acceptance.",
+  "limitations": [
+    "Acceptance length is workload-, generation-position-, model-, runtime-, hardware-, concurrency-, and sampling-dependent.",
+    "Acceptance length is not speedup: draft latency, target verification geometry, scheduler overhead, and batch saturation determine whole-request cost.",
+    "The Z Lab B300 model-card result is vendor-reported and not yet reproduced by this lab.",
+    "The older lab H200 depth sweep used an earlier SGLang integration and did not have a valid response consumer for acceptance measurement."
+  ],
+  "next_action": "Run the released Gemma 4 DFlash checkpoint without training first on a realistic request-disjoint mix, using the newest supported vLLM PR or SGLang Spec V2. Measure acceptance by position, draft and verifier wall time, whole-request throughput, and price-normalized output-token cost at c1, c8, and c32. Fine-tune only after this stock baseline.",
+  "retrieved_utc": "2026-07-30",
+  "schema_version": 1,
+  "sources": [
+    {
+      "evidence_type": "vendor-reported model card",
+      "publication_date": "2026-05",
+      "title": "z-lab/gemma-4-31B-it-DFlash",
+      "url": "https://huggingface.co/z-lab/gemma-4-31B-it-DFlash"
+    },
+    {
+      "evidence_type": "vendor-reported engineering article",
+      "publication_date": "2026-06-19",
+      "title": "Speculation Is All You Need",
+      "url": "https://modal.com/blog/spec-is-all-u-need"
+    },
+    {
+      "evidence_type": "joint vendor/open-source engineering article",
+      "publication_date": "2026-06-15",
+      "title": "The next generation of speculative decoding: DFlash and Spec V2",
+      "url": "https://www.lmsys.org/blog/2026-06-15-next-generation-speculative-decoding-dflash-v2/"
+    },
+    {
+      "evidence_type": "vendor-reported training and evaluation article",
+      "publication_date": "2026-06-04",
+      "title": "Speculators v0.5.0: DFlash support and online training",
+      "url": "https://developers.redhat.com/articles/2026/06/04/speculators-v050-dflash-support-and-online-training"
+    },
+    {
+      "evidence_type": "third-party measured reproducible benchmark",
+      "publication_date": "2026-05",
+      "title": "Benchmarking Gemma 4 MTP vs DFlash on a Single H100",
+      "url": "https://jarvislabs.ai/blog/gemma-4-mtp-vs-dflash-benchmark"
+    }
+  ]
+}

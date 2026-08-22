@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "type": "director_m384_attention_selective_h200_mutable_implementation_component_execution",
+  "created_at_utc": "2026-07-30T10:44:24Z",
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "decision": "Open one sole-claim H200 development session that stages the completed selective producer, finishes the installed-SGLang stock/candidate path, and proceeds directly to the unconsumed local/global component ledger.",
+  "reservation": {
+    "authorized_cumulative_usd": 5.25,
+    "actual_prior_spend_usd": 1.613963169875,
+    "reservation_observed_durable_at_utc": "2026-07-30T10:37:28.728613Z",
+    "reservation_binding": {
+      "path": "DIRECTOR_M384_ATTENTION_SELECTIVE_COMPONENT_RESERVATION_20260730T1033Z.json",
+      "sha256": "f7c6bbe9d6bb3ee34ea9c5216fb3fbc5c819c4279974e32fb9e9b4ac01267cc1"
+    }
+  },
+  "bench": {
+    "id": "h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt",
+    "provider": "nebius",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "region": "eu-north1",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb",
+    "allocation_type": "preemptible",
+    "hourly_cost_usd": 2.45,
+    "instance_id": "computeinstance-e00x8kg5j0ndhvw2qt",
+    "disk_id": "computedisk-e00nge39xwr92ms8vc",
+    "public_ipv4": "89.169.103.204",
+    "provider_started_at_utc": "2026-07-30T10:40:20Z",
+    "watchdog_cleanup_utc": "2026-07-30T12:00:20Z",
+    "placement": {
+      "path": "H200_PLACEMENT_20260730T1040Z.json",
+      "sha256": "5b0c8248603993a00117e1c4e5f58ce17152e65d049a7afe73a1b66565828410"
+    },
+    "registration_spec": {
+      "path": "H200_BENCH_SPEC_20260730T1040Z.json",
+      "sha256": "688351479cffb3798d30bc85984891185410093dd5041d7c2c1c9e455e3cef06"
+    },
+    "identity": {
+      "path": "H200_STRICT_IDENTITY_20260730T1043Z.json",
+      "ssh_ed25519_fingerprint": "SHA256:gGhpQMSToj3fFGTbJS+tMK8/jcAVOcfyKvlttt3++fA",
+      "gpu_uuid": "GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507",
+      "driver_version": "580.159.04",
+      "docker_version": "29.5.3",
+      "quiescent": true
+    }
+  },
+  "immutable_science": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "geometry": "Qualified c32 NGRAM M=384 target verification, TP1, 32 requests x 12 rows; local d256/GQA2/window1024 and global d512/GQA8.",
+    "producer_acquisition_terminal": {
+      "path": "PRODUCER_ACQUISITION_TERMINAL.json",
+      "sha256": "eb10510a8f98f906dfee1f187421f1685343389e19184321f380ecdaf3f25d68"
+    },
+    "selective_manifest": {
+      "path": "producer_acquisition/blank_root_validation/SELECTIVE_ACQUISITION_MANIFEST.json",
+      "sha256": "7356b64c48602d8078b36c60baab3cb69848939944dbf97aa3174497ab42679a",
+      "bytes": 642714624
+    },
+    "official_selective_producer": {
+      "path": "producer_acquisition/official_selective_producer.py",
+      "sha256": "4ac05847eaa888218826468be1b593cc33a72428354b62304ab9f4acd7eba36b"
+    },
+    "mechanism_terminal_sha256": "1f2b98bbadf2cb05afad46fdd466fe89ee1adb09b4344825b81777d8b550695b",
+    "cpu_oracle_sha256": "bc1cc0e2737b89ec49f7754b28fa3dbe4921b51053f66134a3260567826a546c",
+    "h200_discriminator_sha256": "686b1e1a728ae168d62bce096ebd40f09984f08b795ad10fe0dc206e5477c123",
+    "physical_model_sha256": "c92497028401720e31feacac844a181bcaf06440f4e6969e7bde07ed805f2c0c",
+    "source_trace_sha256": "dffeb6979410ad099acfe261e9dc7de6caf03417fe7c83058e8d4c90c9c16e0e",
+    "scientific_sample_consumed": false
+  },
+  "mutable_files": [
+    "m384_grouped_attention_sm90a.cu",
+    "m384_attention_h200_runner.py",
+    "m384_attention_selective_owner.py",
+    "M384_ATTENTION_SELECTIVE_EXECUTION_READY.json"
+  ],
+  "implementation_contract": {
+    "producer": "Stage only the revision-pinned 642,714,624-byte HTTP-range manifest through official_selective_producer.py. Move its exact local/global q/k/v projections, norms, RoPE, and o_proj tensors to H200 and bind the installed pinned SGLang producer identities without AutoModelForCausalLM or a full checkpoint.",
+    "stock_control": "Use the installed pinned SGLang set_kv_buffer plus extend_attention_fwd path over exact noncontiguous page-size-1 NHD BF16 KV, request IDs, page indices, masks, and request ownership. The current Python recurrence is an oracle aid, not the timed stock baseline.",
+    "candidate": "Complete or repair the grouped local/global online-softmax SM90a source without changing the bound traversal, GQA mapping, future-KV store, masks, layout, or exact o_proj consumer.",
+    "runner": "Synchronize and persist separate first-call completion markers, consume every output through unchanged o_proj, require the discriminator's attention/o_proj/future-KV gates, then atomically persist complete A/B/A/B/A/B local and global timing ledgers with raw samples and paired uncertainty.",
+    "physical_evidence": "Record loaded candidate symbol/object identity, compiled registers/shared memory/spills, grid CTAs/waves, and the smallest available HBM/L2 evidence needed to test the predicted launch and traffic reduction. Missing counters may leave the memory diagnosis unproven but do not invalidate correct paired timing.",
+    "owner": "Use GpuClaimSession for the exact bench and one durable controller-host owner. It must heartbeat, stage and execute directly, retain the claim on recoverable pre-decision defects, consume a hash-bound repair request, and re-enter only the failed stage. Release only after a complete decision-bearing ledger, unsafe/unreachable state, or the hard release fence."
+  },
+  "execution_ready_contract": {
+    "path": "M384_ATTENTION_SELECTIVE_EXECUTION_READY.json",
+    "publish_last": true,
+    "required_hashes": "Hash this binding and the final candidate, runner, and owner bytes together.",
+    "conditional_launch_authority": "After readiness publication, re-read this exact ready bench, unchanged reservation, and watchdog once, then immediately run required_launch_command.",
+    "dynamic_ready": "The owner writes OWNER_DYNAMIC_READY.json only after the atomic claim succeeds, exact claim generation is recorded, strict connection identity still matches, and selective staging or its first exact missing-file boundary has begun."
+  },
+  "clock": {
+    "claim_start_by_utc": "2026-07-30T11:00:00Z",
+    "science_target_utc": "2026-07-30T11:30:00Z",
+    "terminal_target_utc": "2026-07-30T11:48:00Z",
+    "release_target_utc": "2026-07-30T11:54:00Z",
+    "hard_release_utc": "2026-07-30T11:55:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T12:00:20Z"
+  },
+  "required_launch_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_m384_target_verify_attention_executor/artifacts/h200-m384-selective-20260730t1044z/CONTROLLER_OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_m384_target_verify_attention_executor/artifacts/h200-m384-selective-20260730t1044z/controller.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_m384_target_verify_attention_executor --stabilize-seconds 8 --ready-file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_m384_target_verify_attention_executor/artifacts/h200-m384-selective-20260730t1044z/OWNER_DYNAMIC_READY.json --unit-manager pid -- /usr/bin/python3 m384_attention_selective_owner.py --binding DIRECTOR_M384_ATTENTION_SELECTIVE_H200_EXECUTION_20260730T1044Z.json --bench h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt --artifact-root artifacts/h200-m384-selective-20260730t1044z",
+  "authority": {
+    "researcher_profile": "execution",
+    "gpu_claim_allowed": true,
+    "provider_lifecycle_mutation_allowed": false,
+    "endpoint_allowed": false,
+    "ordinary_same_claim_repairs_allowed": true,
+    "container_replacement_after_hash_bound_pre_science_repair_allowed": true
+  },
+  "prohibitions": [
+    "Do not run another offline readiness or audit turn, use synthetic Q/K/V, use AutoModelForCausalLM, or stage a complete checkpoint.",
+    "Do not time the Python recurrence as stock, accept a compile-only result, broaden the geometry, run endpoint science, replay generation 1/R2, or submit a second local/global ledger.",
+    "Do not release on a recoverable compile, installed-symbol, launcher, staging, layout, or retrieval defect while one bounded repair still fits.",
+    "Do not create, delete, replace, or otherwise mutate provider resources or watchdogs."
+  ]
+}

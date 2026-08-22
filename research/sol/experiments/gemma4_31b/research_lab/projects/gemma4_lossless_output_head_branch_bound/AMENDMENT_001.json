@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-29T17:00:05Z",
+  "parent_contract": "EXPERIMENT_CONTRACT.json",
+  "failed_attempt": {
+    "classification": "invalid_pre_science_binding_metadata_defect",
+    "stderr": "artifacts/attempt0_binding_metadata.stderr.log",
+    "science_consumed": false,
+    "coordinate_sweep_started": false,
+    "result_persisted": false
+  },
+  "cause": "The runner compared a SHA-256 over raw contiguous BF16 tensor bytes with the admitted SHA-256 of a standalone safetensors artifact. The latter includes a safetensors header, so the two byte domains cannot share a digest.",
+  "causal_change": "Verify the pinned checkpoint index digest and its exact weight-key-to-shard mapping, retain the prior standalone artifact digest as provenance, and record the raw tensor-byte digest produced by this runner without comparing unlike byte domains.",
+  "unchanged": [
+    "checkpoint revision",
+    "weight tensor",
+    "hidden-state capture",
+    "sample rows",
+    "bound",
+    "dimension sweep",
+    "correctness gates",
+    "decision gate",
+    "zero-spend budget"
+  ],
+  "retry_scope": "same foreground CPU reference operation; no prior scientific sample exists"
+}

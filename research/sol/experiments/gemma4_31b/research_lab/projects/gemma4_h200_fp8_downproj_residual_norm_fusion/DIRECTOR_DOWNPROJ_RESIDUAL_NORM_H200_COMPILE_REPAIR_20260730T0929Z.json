@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "type": "director_h200_pre_science_compile_repair_execution_binding",
+  "created_at_utc": "2026-07-30T09:29:00Z",
+  "project": "gemma4_h200_fp8_downproj_residual_norm_fusion",
+  "decision": "repair_the_pinned_torch_cuda_stream_wrapper_and_run_the_still_unconsumed_exact_component",
+  "bench": {
+    "id": "h200-downproj-computeinstance-e00qft1sf416qp6knw",
+    "provider": "nebius",
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-c83b9102-d2ad-c61d-6cdb-a89ce2dc8507",
+    "instance_id": "computeinstance-e00qft1sf416qp6knw",
+    "disk_id": "computedisk-e00qh5cnm6kk3sa8fe",
+    "watchdog_pid": 698227,
+    "watchdog_deadline_utc": "2026-07-30T10:12:54.159999Z",
+    "verified_at_utc": "2026-07-30T09:28:34Z",
+    "verified_state": {
+      "hostname": "gemma4-downproj-h200-20260730t0902z",
+      "compute_process_count": 0,
+      "container_count": 0,
+      "pinned_image_present": true,
+      "root_disk_available_bytes": 56139886592,
+      "watchdog_active": true
+    }
+  },
+  "authority": {
+    "authorized_cumulative_spend_usd": 3.0,
+    "maximum_registered_lifecycle_spend_usd": 2.8583333333333334,
+    "hourly_cost_usd": 2.45,
+    "reservation_durable": true,
+    "reservation_required": false,
+    "claim_allowed": true,
+    "sole_claimant": "gemma4_h200_fp8_downproj_residual_norm_fusion",
+    "claim_start_by_utc": "2026-07-30T09:38:00Z",
+    "lease_seconds": 1800,
+    "science_target_utc": "2026-07-30T09:47:00Z",
+    "terminal_target_utc": "2026-07-30T10:00:00Z",
+    "release_target_utc": "2026-07-30T10:03:00Z",
+    "hard_release_utc": "2026-07-30T10:05:00Z",
+    "provider_lifecycle_extension_allowed": false
+  },
+  "invalid_attempt": {
+    "classification": "recoverable_integration_defect",
+    "state": "pre_science",
+    "terminal": {
+      "path": "H200_COMPONENT_TERMINAL.json",
+      "sha256": "d983c4a3dbd064a963002af573300c82f788f908f4cc08ecfc57ccdc23b3f2df"
+    },
+    "remote_terminal": {
+      "path": "artifacts/h200-downproj-20260730t0913z/remote_terminal.json",
+      "sha256": "d983c4a3dbd064a963002af573300c82f788f908f4cc08ecfc57ccdc23b3f2df"
+    },
+    "candidate_cuda_started": false,
+    "science_started": false,
+    "scientific_sample_consumed": false,
+    "ledger_rows": 0,
+    "error": "The generated extension wrapper calls at::cuda::getDefaultCUDAStream, which is absent from the pinned torch API."
+  },
+  "immutable_science": {
+    "mechanism_terminal": {
+      "path": "MECHANISM_TERMINAL.json",
+      "sha256": "27532506c512b1f94edf94f6d41945bcbf9b9b68a0665c9b9264ffe734254f02"
+    },
+    "exact_consumer_contract": {
+      "path": "H200_EXACT_CONSUMER_CONTRACT.json",
+      "sha256": "b32217ae8f4f3c5879e17c716c73907bb8bc178d3d9960d266c3dc3d5c2f93ef"
+    },
+    "candidate_source": {
+      "path": "sm90a_two_phase_finalizer.cu",
+      "sha256": "8e9e45de6532d7f238a2c2d221681faa1e976ed7d03dbe57b5d71d6c7a0d6a1f"
+    },
+    "fragment_oracle_result": {
+      "path": "FRAGMENT_ORACLE_RESULT.json",
+      "sha256": "af6a4832aa4d9e1b86efa5ed69c04f0359a0bfa1bab3c66ebdd7dd54879eb608"
+    },
+    "fragment_oracle_source": {
+      "path": "fragment_oracle.py",
+      "sha256": "ad65ec0d194178329898c03c3bb493c6a00d26d44f503513a23c7a1b8363f712"
+    },
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "tensor_parallel_size": 1,
+    "m": [
+      1,
+      16,
+      32
+    ],
+    "scientific_submission_limit": "The invalid compile consumed no sample. Permit the original untimed M=1 discovery call followed by exactly one alternating M=1/16/32 control/candidate ledger after every correctness gate passes."
+  },
+  "mutable_repair": {
+    "files": [
+      {
+        "path": "h200_component_runner.py",
+        "prior_sha256": "88a67277a8a49b5440882c69485ca3ee5c82fb04960b51df72e95f05557cd877",
+        "required_change": "Use the CUDA stream interface exported by the pinned torch headers, expected as c10::cuda::getDefaultCUDAStream with its c10 CUDA stream header; do not change the candidate kernel, shapes, semantics, gates, or ledger."
+      },
+      {
+        "path": "h200_component_owner.py",
+        "prior_sha256": "a6e5034e4f41bda47448984c2711961bf03e936aa36552550195b57e72549adc",
+        "required_change": "Use the fresh generation-specific artifact and remote output roots. Release only after a decision-bearing terminal, unsafe state, or deadline. A recoverable pre-science terminal must keep a live heartbeat owner and publish a phase-accurate repair request instead of unconditionally releasing."
+      }
+    ],
+    "ready_terminal": "H200_COMPILE_REPAIR_READY.json",
+    "ready_requirements": [
+      "Hash both final mutable files plus every immutable science artifact in one grouped command.",
+      "Prove the runner contains the pinned-header stream API repair and the owner uses a fresh out-r2 path.",
+      "Prove the owner retains the claim on recoverable pre-science terminal classes and generation-fences every release.",
+      "Publish H200_COMPILE_REPAIR_READY.json atomically before launch with claim_allowed true only while the claim-start and hard-release clocks still fit."
+    ],
+    "conditional_same_turn_execution": true
+  },
+  "required_launch": {
+    "working_directory": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion",
+    "artifact_root": "artifacts/h200-downproj-compile-repair-20260730t0929z",
+    "remote_output_root": "/home/glmrunner/downproj_20260730t0913z/out-r2",
+    "command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion/artifacts/h200-downproj-compile-repair-20260730t0929z/CONTROLLER_OWNER.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion/artifacts/h200-downproj-compile-repair-20260730t0929z/CONTROLLER_OWNER.log --ready-file /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion/artifacts/h200-downproj-compile-repair-20260730t0929z/OWNER_READY --stabilize-seconds 5 --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fp8_downproj_residual_norm_fusion/h200_component_owner.py",
+    "owner_contract": "The owner itself must claim through GpuClaimSession, persist exact claimed_at, heartbeat every 30 seconds, and record PID/start_ticks/state/deadline in STATUS.json.active_session before returning control."
+  },
+  "terminal_contract": {
+    "path": "H200_COMPONENT_TERMINAL.json",
+    "minimum": [
+      "Complete numerical/path/resource gate for M=1,16,32.",
+      "Paired raw control/candidate event samples and medians.",
+      "Candidate symbol, launch geometry, register/shared/spill metadata, and shortest traffic-direction evidence.",
+      "Typed decision-bearing positive or negative, or a phase-accurate recoverable pre-science repair request retained by a live owner only while another measured restart fits."
+    ],
+    "release_condition": "Release generation-fenced to maintenance after a decision-bearing terminal, unsafe state, or the hard release fence. Do not mutate provider lifecycle."
+  },
+  "prohibitions": [
+    "Do not modify the immutable candidate source, oracle, mechanism terminal, exact-consumer contract, stock producer, two BF16 boundaries, scale convention, shapes, QKV consumer, or timing boundary.",
+    "Do not run endpoint science, TP!=1, the paused norm lineage, R5, a broad sweep, or a second canonical component ledger.",
+    "Do not restage immutable inputs that verify on the resident guest, repull the resident pinned image, create a second provider, or extend the existing watchdog.",
+    "Do not create, delete, resize, stop, or otherwise mutate provider lifecycle.",
+    "Do not leave a claim without a live heartbeat owner or generation-fenced maintenance release."
+  ]
+}

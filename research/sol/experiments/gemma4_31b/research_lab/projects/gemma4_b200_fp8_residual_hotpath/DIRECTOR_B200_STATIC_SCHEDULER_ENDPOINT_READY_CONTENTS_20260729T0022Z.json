@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "state": "funded_warm_b200_reserved_for_static_scheduler_endpoint_preparation_and_execution",
+  "stage": "b200_dynamic_fp8_static_scheduler_endpoint",
+  "model": "Exact google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4 dynamic-FP8 c32 endpoint; checkpoint stages inside the durable claim.",
+  "checkpoint": "Controller-local 62,578,655,922-byte verified checkpoint is bound by model-files.sha256 SHA-256 e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1; not yet staged on this bench.",
+  "image": "Resident docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79-derived build environment.",
+  "runtime": "Strict-SSH verified NVIDIA B200 sm_100f, pinned vLLM 6d4a8e6d204a9b2827544003b26321fff62923da and CUTLASS v4.2.1 sources.",
+  "caches": "Preserve measured M32 static-persistent build-1 and prior build-5; 96,277,143,552 bytes were free on the 150-GiB disk before checkpoint staging.",
+  "server_state": "GPU idle with zero memory use, no compute applications, containers, endpoint, or model server.",
+  "artifacts": "DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_EXECUTION_20260729T0022Z.json SHA-256 5c3c06b109470e1d27f395973a41a1c9849c775d144c93307b2b02536ff7e1c3 binds source 1d1f5aba004d9e33e14a0c548eca2ea8c0e5f326fc60b1dac2334e482b30e425 and positive component terminal 0ae7045789efd8dd33093aff7c0c72ea0ba7995c66a6c89a2e445d71f87775cf.",
+  "scientific_terminal": "One contemporaneous 32-request stock/candidate B200 dynamic-FP8 c32 endpoint pair remains unconsumed.",
+  "next": "Only gemma4_b200_fp8_residual_hotpath may prepare final endpoint bytes, claim by 2026-07-29T01:10:00Z, launch through detached-owner by 01:12:00Z, release decision evidence by 02:12:00Z, and finish by 02:17:00Z. Provider cleanup remains 02:24:07Z.",
+  "terminal": null
+}

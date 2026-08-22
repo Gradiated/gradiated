@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "classification": "executable_readiness_for_later_director_bound_matched_exact_c32_pair",
+  "director_binding": {
+    "path": "DIRECTOR_FIXED_FLOOR_CROSSOP_ENDPOINT_RESERVED_OFFLINE_20260730T0439Z.json",
+    "sha256": "b62b46afeed6f878c92b753510a97680c22a674eeb087ccd7fe236650a19d60f",
+    "predecessor_sha256": "71b737360b81752218e3141160c919d220b258fb5e3f329bf2ce6180ca220bcc"
+  },
+  "identities": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_pid": 546249,
+    "watchdog_deadline_utc": "2026-07-30T05:51:56.187924Z"
+  },
+  "accepted_predecessors": {
+    "component_terminal_sha256": "8a4fba273e0923fac4ac55f552ff8d1e247473a1f15b9aa614f91bf963c46a71",
+    "resource_recovery_sha256": "32d1765d6f6a2f569dfe97410f318c1f96165a62bf27c32e63f0634d5f12d216",
+    "candidate_sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d",
+    "local_global_registers_per_thread": [26, 30],
+    "spill_loads": 0,
+    "spill_stores": 0
+  },
+  "workload": {
+    "phase": "exact campaign c32 mixed prefill/decode endpoint",
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "shared_prefix_tokens": 535,
+    "output_tokens_per_request": 358,
+    "seed": 20260730,
+    "control_then_candidate": true,
+    "qualified_comparator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996
+  },
+  "files": {
+    "fixed_floor_crossop_endpoint_adapter.py": "d8838c09048ec7fd20ffbe8ddc4a259467000f1a5ed0a8d8063622812ad908ae",
+    "run_fixed_floor_crossop_endpoint_pair.py": "b1df2636b4399eeca9939a46c65906d66e5964747ee1d1a545a6ab90501b48d3",
+    "run_fixed_floor_crossop_endpoint_owner.py": "cff32c438cac3ae851d592ebf1f88829422648d666cb5d0773a64ab952667568",
+    "endpoint_candidate_gemma4_causal.py": "3f429439ce1def9e882055e1e49b7a26e2fd2b13da2685b25ff5aa4ecdb1d1c9",
+    "ENDPOINT_ADAPTER_BINDING.json": "cfe1fb2d05bdc6bba4b4b9bbf8c49359234385f5a0d34d71ba6ab3258d7df7d6",
+    "inputs/pinned_source/gemma4_causal.py": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
+    "fused_qkv_kv_cache.py": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d",
+    "install_fused_qkv_cache.py": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3"
+  },
+  "execution_contract": {
+    "control": "Pinned image/runtime with no source override.",
+    "candidate": "Mount only the hash-bound Gemma4 causal adapter plus project-local fused source; the adapter emits local/global cache-commit JSONL proof.",
+    "correctness_before_timing": "Require 32/32 complete requests per arm, exact emitted token IDs, exact request accounting, finite candidate audit, and both local/global invocation classes.",
+    "timing": "One sequential stock then candidate c32 pair, immutable per-arm output roots, profiler disabled.",
+    "repair": "The detached controller owns claim heartbeats. Recoverable staging, runner, or retrieval faults publish a hash-bound repair handshake and resume only pair_runner_only or retrieval_only under the same claim."
+  },
+  "authorization": {
+    "reservation_authorized_usd": 4.0,
+    "prior_actual_spend_usd": 0.12902125211111112,
+    "claim_allowed": false,
+    "ssh_allowed": false,
+    "cuda_allowed": false,
+    "checkpoint_load_allowed": false,
+    "endpoint_execution_allowed": false,
+    "component_replay_allowed": false,
+    "provider_lifecycle_allowed": false,
+    "next_gate": "A later director must bind one matched c32 execution pair after rechecking this packet and the exact available bench."
+  }
+}

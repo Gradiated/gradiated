@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T06:44:50Z",
+  "classification": "final_preclaim_cold_bootstrap_owner_implementation",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "decision": "Bind the exact replacement H200 identity and require one durable cold-bootstrap owner seam before opening a claim. The unchanged R5 candidate-only science remains selected and unconsumed.",
+  "claim_allowed": false,
+  "ssh_allowed": false,
+  "cuda_allowed": false,
+  "checkpoint_stage_allowed": false,
+  "endpoint_request_allowed": false,
+  "provider_lifecycle_mutation_allowed": false,
+  "bench": {
+    "id": "h200-r5-computeinstance-e00aehxdq8mpd68epd",
+    "status_at_binding": "available",
+    "claim_at_binding": null,
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00aehxdq8mpd68epd",
+    "disk_id": "computedisk-e00bqr4tbj817e02wx",
+    "public_ipv4": "89.169.122.174",
+    "gpu_uuid": "GPU-e26e853a-ce3b-8874-bd3e-6db51a22f8b3",
+    "gpu_name": "NVIDIA H200",
+    "gpu_memory_mib": 143771,
+    "driver_version": "580.159.04",
+    "ssh_ed25519_fingerprint": "SHA256:32koaBpMbzfJBvGXPskHGu08cWYWrH62e/JULW+4BlQ",
+    "watchdog_main_pid": 607919,
+    "watchdog_cleanup_utc": "2026-07-30T09:01:39.329754Z"
+  },
+  "durable_inputs": {
+    "director_identity": "DIRECTOR_FIXED_FLOOR_CROSSOP_R5_H200_IDENTITY_20260730T0643Z.json",
+    "director_identity_sha256": "3374bb7c9b7cdd5d12361ed46fdc74533611aea878a8fe10cd4b86160791d3f1",
+    "ready_contents": "R5_H200_READY_CONTENTS_20260730T0644Z.json",
+    "ready_contents_sha256": "552e768f61d1e3abea3531d581903bb7c91e548f1bf040d15f13da7320e3dd66",
+    "packet_closure_ready": "PACKET_CLOSURE_READY.json",
+    "packet_closure_ready_sha256": "13582f0bc24e69c3c16f14b0e74452bcaa376d53812a245d6deaf95b5fe7a5ea",
+    "packet": "ENDPOINT_INTEGRATION_PACKET_R5.json",
+    "packet_sha256": "846bd42a2e41e64b392af1b2abaca5d8cccd3e177aaab9c7fa900f63eda57527",
+    "packet_closure_validation": "R5_PACKET_CLOSURE_VALIDATION.json",
+    "packet_closure_validation_sha256": "d7f17ff88728675e04ab5e5a9e612e4aec28e4b534b64994bc0a97a3cb8c9ca2",
+    "packet_owner_validation": "R5_PACKET_CLOSURE_OWNER_VALIDATION.json",
+    "packet_owner_validation_sha256": "04e2738958e3b2d5670214510fb9ec997281f615238fd0baff3368f1f671bdde",
+    "candidate_runner": "run_fixed_floor_crossop_endpoint_candidate_only_r5.py",
+    "candidate_runner_sha256": "42f12828e1d6db2154c22464cef578cc03da331b185008b8ee4d041dbb6d5fa0",
+    "existing_retained_owner": "run_fixed_floor_crossop_endpoint_owner_r5.py",
+    "existing_retained_owner_sha256": "2a631efb580dc0b505b3ab03973c4729437e8a019b8ffa5d09b5e01c5c109348",
+    "existing_launcher": "run_fixed_floor_crossop_endpoint_claim_launch_r5.py",
+    "existing_launcher_sha256": "1c97d6961eb28cc5d7d0ec18a7fc0e53e74e7fc812e76063c27fbcadda56af4a"
+  },
+  "immutable_science": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "endpoint": "/v1/completions",
+    "candidate_requests_authorized": 32,
+    "candidate_requests_consumed": 0,
+    "control_requests_consumed": 32,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "fixed_qualified_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "quality_oracle": "Exact byte-for-byte equality of each matched request's ordered emitted choice.text chunks, finish fields, SSE-event count, and usage accounting against the immutable stock oracle; ignore only transport-volatile IDs and timestamps."
+  },
+  "required_implementation": {
+    "owner_destination": "run_fixed_floor_crossop_endpoint_cold_owner_r5.py",
+    "launcher_destination": "run_fixed_floor_crossop_endpoint_cold_claim_launch_r5.py",
+    "validation_destination": "R5_COLD_BOOTSTRAP_OWNER_VALIDATION.json",
+    "ready_destination": "R5_COLD_BOOTSTRAP_READY.json",
+    "requirements": [
+      "The launcher must consume the exact current bench record, atomically claim only that bench, derive a claim-generation-bound execution envelope, and start a controller-host detached owner with a fresh runtime ready-file.",
+      "The outer owner must heartbeat the continuous claim across cold bootstrap, endpoint execution, repair generations, terminal retrieval, and generation-fenced release.",
+      "The owner must reconcile the exact target, draft, runtime image, packet, oracle, and workload by content-addressed manifest. Transfer only missing or mismatched immutable files to temporary names, verify them, and atomically finalize them.",
+      "The owner must use the registered resource host, user, identity path, and known-hosts namespace, and the verified H200 UUID and SSH fingerprint from the current bench contents. It must fail closed on any identity change.",
+      "After immutable staging is durable, the same owner must continue directly into the existing R5 candidate-only runner. A staging-only terminal or release is forbidden.",
+      "Recoverable import, path, permission, Docker, runtime API, model-load, server-readiness, request-contract, retrieval, or classification defects must remain inside the same heartbeating multi-generation dispatcher while a measured restart still fits.",
+      "A decision-bearing exact endpoint terminal may release ready; an unsafe or unreachable guest or the absolute deadline releases maintenance. Unknown, incomplete, or pre-science results retain repair ownership.",
+      "The implementation may reuse shared lab workspace, endpoint, repair-handshake, detached-owner, and manifest tooling. It must not invent provider lifecycle control."
+    ]
+  },
+  "validation_contract": {
+    "scope": "local deterministic controller and manifest behavior only",
+    "must_prove": [
+      "fresh-stage and repeated-stage manifest retention",
+      "temporary-name plus verify plus atomic-finalize semantics",
+      "claim exception paths preserve heartbeat ownership",
+      "decision-bearing versus recoverable release predicates",
+      "exact project-relative launcher invocation and ready-file contract",
+      "all final source, packet, validation, and launcher hashes are bound"
+    ],
+    "must_not_do": [
+      "claim the bench",
+      "open SSH",
+      "invoke CUDA",
+      "load or transfer a checkpoint",
+      "pull or launch the runtime image",
+      "submit an endpoint request",
+      "replay control or component work"
+    ]
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-30T06:31:39.329754Z",
+    "watchdog_cleanup_utc": "2026-07-30T09:01:39.329754Z",
+    "future_execution_release_no_later_than_utc": "2026-07-30T08:45:00Z",
+    "future_execution_requires_fresh_director_clock": true,
+    "reason": "The remaining lifecycle must cover resumable cold staging, model startup, one retained integration repair, at most 32 candidate requests, terminal/release, and watchdog handoff margin."
+  },
+  "budget": {
+    "authorized_cumulative_usd": 13.5,
+    "recorded_actual_spend_usd": 6.273359945,
+    "maximum_replacement_lifecycle_usd": 6.125,
+    "storage_and_rounding_margin_usd": 0.25,
+    "conservative_cumulative_ceiling_usd": 12.648359945
+  },
+  "publication_order": [
+    "Finish and validate the cold owner, launcher, manifest contract, and any packet rebind.",
+    "Compute final hashes and atomically publish R5_COLD_BOOTSTRAP_OWNER_VALIDATION.json.",
+    "Publish R5_COLD_BOOTSTRAP_READY.json last with claim_allowed false.",
+    "Atomically update STATUS.json to a paused claim-disallowed director handoff; do not edit bound bytes afterward."
+  ],
+  "next_director_decision": "After R5_COLD_BOOTSTRAP_READY.json is durable, re-read the exact bench, watchdog, and remaining lifecycle once. Open a fresh claim clock only if the cold staging, one retained repair, endpoint, terminal, release, and watchdog handoff still fit."
+}

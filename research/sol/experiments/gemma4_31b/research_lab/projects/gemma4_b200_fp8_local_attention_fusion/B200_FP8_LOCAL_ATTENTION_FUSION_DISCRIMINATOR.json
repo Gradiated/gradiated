@@ -1,0 +1,330 @@
+{
+  "authoritative_identities": {
+    "hardware": {
+      "executed": false,
+      "id": "nvidia-b200-sxm",
+      "programming_target": "sm_100"
+    },
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "named_predecessor": {
+      "consumed_once": true,
+      "path": "../gemma4_b200_fp8_hybrid_attention_dataflow/B200_FP8_LOCAL_WINDOW_KV_DISCRIMINATOR.json",
+      "sha256": "39cf154a24e8bf13d654f11d0a200952b1fc666384a7fe404761fea06d084c43"
+    },
+    "runtime": {
+      "flashinfer_version": "0.6.6",
+      "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "source_bindings": {
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/csrc/trtllm_fmha_kernel_launcher.cu": {
+          "bytes": 30777,
+          "sha256": "56627ee688c8cde526add0a4922fa2b5c044ad4e63066133197d16fb3f5839ca"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/include/flashinfer/trtllm/fmha/fmhaKernels.cuh": {
+          "bytes": 42899,
+          "sha256": "8bf3350bef0ed070e6102c6dceb4760aa8114d2ca5328f22c5027cf5587e50f9"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/include/flashinfer/trtllm/fmha/fmhaRunner.cuh": {
+          "bytes": 2511,
+          "sha256": "e3bfbcad53e4c9b39bc820e17eb5e3896121591cd28618775c310725124e4b90"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/include/flashinfer/trtllm/fmha/fmhaRunnerParams.h": {
+          "bytes": 13730,
+          "sha256": "e05b0f40e73d87b97d74dfdb2c18775f6f72b44e487296be6a61a46c34b63495"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/include/flashinfer/trtllm/fmha/kernelParams.h": {
+          "bytes": 37214,
+          "sha256": "df7ec06f707309404bf6670a63de76c24dd5df253913ce74aba811ba895659db"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/decode.py": {
+          "bytes": 106802,
+          "sha256": "882c71a2d5515b98ffb41e488b1e93b033f7ce92790493e63ad079b4dbb3402e"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/csrc/cache.h": {
+          "bytes": 4290,
+          "sha256": "60cfc5e366b524b74843792c9b539497fb77a397f94d78e14fcf55d8b1e74192"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/csrc/cache_kernels.cu": {
+          "bytes": 62752,
+          "sha256": "129d20f62f0b97d4bcc27830ebf527950750bed9ddf557f7b3f989b4152a94fa"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/vllm/model_executor/layers/attention/attention.py": {
+          "bytes": 29060,
+          "sha256": "2e45ac35100a1396bd03f9fe8d7f3e4dd41f3dc0a78b3bc7e5e118b536a0fe3c"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/vllm/v1/attention/backends/flashinfer.py": {
+          "bytes": 71784,
+          "sha256": "e22db5ddadbd550083438946c4452b3227d98020c6c34285dd4b6917b39e2aae"
+        }
+      },
+      "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+    },
+    "workload": {
+      "concurrency": 32,
+      "decode_steps": 358,
+      "identity": "c32/4214/358/text-only/non-reasoning",
+      "prompt_tokens_per_request": 4214,
+      "sequence_lengths_inclusive": [
+        4214,
+        4571
+      ],
+      "tensor_parallel_size": 1
+    }
+  },
+  "classification": "typed_rejection_production_trtllm_local_append_decode_fusion",
+  "decision": "Reject a wrapper- or launcher-only append+decode fusion for the exact SM100 production path. The only intervention that removes the source-proven append launch must add fresh K/V and slot mapping to the TRT-LLM device kernel itself or replace that kernel. FlashInfer 0.6.6 loads the selected implementation as a hash-checked external cubin, so the pinned source packet contains no editable device implementation to bind or validate.",
+  "exact_production_input_to_first_consumer": {
+    "first_consumer": {
+      "device_source_present_in_pinned_packet": false,
+      "inputs_absent": [
+        "fresh key",
+        "fresh value",
+        "slot_mapping"
+      ],
+      "inputs_present": [
+        "query",
+        "paged key cache",
+        "paged value cache",
+        "block tables",
+        "sequence lengths",
+        "window_left"
+      ],
+      "symbol": "TRT-LLM Gen FMHA cubin selected by TllmGenFmhaKernel"
+    },
+    "inputs_per_call": {
+      "attention_logit_soft_cap": null,
+      "attention_scale": 1.0,
+      "block_tables": {
+        "dtype": "int32",
+        "shape": [
+          32,
+          "max_blocks_per_sequence"
+        ],
+        "visible_pages_per_request": [
+          64,
+          65
+        ]
+      },
+      "fresh_key": {
+        "dtype": "bfloat16",
+        "layout": "contiguous",
+        "shape": [
+          32,
+          16,
+          256
+        ]
+      },
+      "fresh_value": {
+        "dtype": "bfloat16",
+        "layout": "contiguous",
+        "shape": [
+          32,
+          16,
+          256
+        ]
+      },
+      "paged_kv_cache": {
+        "dtype": "bfloat16",
+        "element_strides": [
+          131072,
+          65536,
+          256,
+          4096,
+          1
+        ],
+        "layout_contract": "HND logical view over interleaved allocation",
+        "logical_shape": [
+          "num_blocks",
+          2,
+          16,
+          16,
+          256
+        ]
+      },
+      "query": {
+        "dtype": "bfloat16",
+        "layout": "contiguous",
+        "shape": [
+          32,
+          32,
+          256
+        ]
+      },
+      "seq_lens": {
+        "dtype": "int32",
+        "range_inclusive": [
+          4214,
+          4571
+        ],
+        "shape": [
+          32
+        ]
+      },
+      "slot_mapping": {
+        "dtype": "int64",
+        "negative_value_semantics": "padded token is a no-op",
+        "shape": [
+          32
+        ]
+      },
+      "window_left": 1023
+    },
+    "multiplicity": {
+      "decode_steps": 358,
+      "local_attention_calls": 17900,
+      "local_layers": 50
+    },
+    "phase": "decode",
+    "source_proven_order": [
+      {
+        "effect": "passes fresh K/V and the layer slot mapping to FlashInferImpl.do_kv_cache_update",
+        "ordinal": 1,
+        "symbol": "vllm.unified_kv_cache_update"
+      },
+      {
+        "effect": "one explicit CUDA launch with grid.x=num_actual_tokens; reads slot_mapping and writes fresh K/V into paged cache",
+        "launch_geometry": {
+          "block_x": 512,
+          "grid_x": 32
+        },
+        "ordinal": 2,
+        "symbol": "vllm::reshape_and_cache_flash_kernel"
+      },
+      {
+        "effect": "orders cache mutation before attention",
+        "ordinal": 3,
+        "symbol": "kv_cache_dummy_dep"
+      },
+      {
+        "effect": "passes Q, paged K/V, block tables, seq_lens, and window_left=1023 to the SM100 TRT-LLM runner",
+        "ordinal": 4,
+        "symbol": "flashinfer.decode.trtllm_batch_decode_with_kv_cache"
+      },
+      {
+        "effect": "loads the selected hash-checked external cubin and launches the first decision-bearing local-attention consumer",
+        "ordinal": 5,
+        "symbol": "TllmGenFmhaKernel::loadKernel"
+      }
+    ]
+  },
+  "generated_at_utc": "2026-07-28T18:16:50Z",
+  "generator": {
+    "path": "build_fusion_discriminator.py",
+    "sha256": "2f662c0b06d7bccd7a05ff80164c985cc8cd2349891f609c9810b40b2c056606"
+  },
+  "mechanism_examined": {
+    "host_only_merge_is_not_the_intervention": "Combining both calls under one Python/custom-op wrapper still launches reshape_and_cache_flash_kernel followed by the opaque FMHA cubin and removes no device work.",
+    "name": "fuse fresh-KV append into local TRT-LLM decode",
+    "required_device_behavior": [
+      "For each nonnegative slot, write fresh BF16 K/V to its exact physical cache slot for future layers/steps.",
+      "For both GQA query heads sharing a KV head, consume the fresh K/V directly for the current position instead of rereading it from the just-written cache.",
+      "Consume exactly the preceding 1,023 tokens plus the current token and preserve online-softmax FP32 state and BF16 output."
+    ],
+    "semantic_change": false
+  },
+  "non_overlapping_byte_accounting": {
+    "baseline": {
+      "attention_output_writes": 9384755200,
+      "fresh_kv_cache_writes": 9384755200,
+      "fresh_kv_source_reads_for_append": 9384755200,
+      "query_reads": 9384755200,
+      "seq_len_reads_upper_bound_once_per_call": 2291200,
+      "slot_mapping_reads": 4582400,
+      "total_kv_path_bytes": 9628758835200,
+      "window_kv_cache_reads": 9609989324800
+    },
+    "counterfactual_delta": {
+      "compulsory_kv_bytes": -9384755200,
+      "fraction_of_baseline_kv_path": -0.0009746588693957114,
+      "historical_window_cache_read_bytes": 0,
+      "mandatory_cache_write_bytes": 0,
+      "metadata_bytes": 0,
+      "query_or_output_bytes": 0
+    },
+    "exclusions": {
+      "M32_or_residual_hotpath": "not counted",
+      "global_attention_or_global_k_eq_v": "not counted",
+      "opaque_attention_workspace_or_reduction_traffic": "not claimed without target execution",
+      "page_table_compaction": "not replayed and no bytes credited"
+    },
+    "per_token": {
+      "fresh_or_cached_k_plus_v_bytes": 16384,
+      "query_or_output_bytes": 16384
+    },
+    "scope": "BF16 local K/V path from fresh K/V producer through the first attention consumer; query/output and metadata are reported separately and are unchanged",
+    "true_device_fusion_counterfactual": {
+      "attention_output_writes": 9384755200,
+      "fresh_kv_cache_writes": 9384755200,
+      "fresh_kv_source_reads_for_compute_and_store": 9384755200,
+      "historical_1023_token_kv_cache_reads": 9600604569600,
+      "query_reads": 9384755200,
+      "seq_len_reads_upper_bound_once_per_call": 2291200,
+      "slot_mapping_reads": 4582400,
+      "total_kv_path_bytes": 9619374080000
+    }
+  },
+  "non_overlapping_launch_accounting": {
+    "baseline": {
+      "attention_consumer_submissions": 17900,
+      "local_append_op_submissions": 17900,
+      "opaque_attention_internal_launches": "not claimed",
+      "source_proven_standalone_append_kernel_launches": 17900
+    },
+    "evidence_class": "source-proven_host_submissions_and_append_kernel_launch",
+    "true_device_fusion_counterfactual": {
+      "attention_consumer_submissions": 17900,
+      "local_append_op_submissions": 0,
+      "opaque_or_replacement_attention_internal_launches": "must be measured on SM100",
+      "source_proven_standalone_launch_delta": -17900,
+      "standalone_append_kernel_launches": 0
+    },
+    "wrapper_only_candidate": {
+      "reason": "it cannot change the two device entrypoints",
+      "source_proven_standalone_launch_delta": 0
+    }
+  },
+  "physical_hypothesis": {
+    "causal_change": "Move the source-proven cache store into the first attention consumer and bypass the current-token cache reread.",
+    "falsifier": "A target trace showing the append is already absorbed into the same cubin, or a fused implementation whose output/cache oracle passes but whose total attention region does not fall beyond run-to-run noise.",
+    "predicted_sm100_counter_change_if_implemented": {
+      "attention_math_flops": 0,
+      "cache_write_bytes": 0,
+      "compulsory_local_kv_bytes": -9384755200,
+      "compulsory_local_kv_fraction": -0.0009746588693957114,
+      "expected_direction": {
+        "dram__bytes": "decrease by at most the current-token cache reread",
+        "gpu__time_duration": "decrease by removed append-kernel time",
+        "sm__throughput": "no guaranteed direction; historical 1,023-token attention work remains dominant"
+      },
+      "separate_append_kernel_launches": -17900
+    }
+  },
+  "schema_version": 1,
+  "scope_compliance": {
+    "cuda_executed": false,
+    "endpoint_requests": 0,
+    "external_page_compaction_replayed": false,
+    "global_k_eq_v_modified": false,
+    "gpu_claimed": false,
+    "m32_modified": false,
+    "provider_operations": false,
+    "provider_spend_usd": 0.0
+  },
+  "typed_rejection": {
+    "b200_component_recommendation": "do_not_reserve_for_wrapper_fusion",
+    "code": "opaque_device_consumer_abi_excludes_fresh_kv_and_slot_mapping",
+    "implementation_status": "rejected_for_exact_pinned_production_consumer",
+    "mechanism": "append plus TRT-LLM Gen paged decode fusion",
+    "reasons": [
+      "The exact vLLM backend declares forward_includes_kv_cache_update=false and invokes reshape_and_cache_flash before attention.",
+      "The exact append implementation is one explicit CUDA kernel launch.",
+      "The FlashInfer decode API and TllmGenFmhaRunnerParams expose cache pointers but no fresh-K/V or slot-mapping inputs.",
+      "The SM100 runner selects and loads a hash-checked external cubin; the pinned source packet contains launcher/parameter code, not the device kernel needed to perform the fusion.",
+      "A wrapper-only patch leaves both device launches intact, while a new replacement attention kernel would be a different unimplemented mechanism and cannot be called production-input-to-first-consumer ready without an exact SM100 correctness run."
+    ],
+    "reopen_condition": "Provide the exact hash-bound TRT-LLM Gen SM100 device source/cubin build path with an ABI that accepts fresh K/V plus slot mapping, or implement and target-execute a replacement paged GQA decode kernel that writes the cache and consumes every output.",
+    "semantic_status": "well-defined_but_not_implemented"
+  }
+}

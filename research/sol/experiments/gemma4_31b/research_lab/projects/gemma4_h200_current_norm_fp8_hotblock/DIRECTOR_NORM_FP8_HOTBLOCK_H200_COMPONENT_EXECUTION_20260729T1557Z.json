@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "classification": "director_norm_fp8_hotblock_h200_component_execution",
+  "created_at_utc": "2026-07-29T15:57:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Claim the just-released warm H200 and execute exactly one M=1/16/32 norm-to-dynamic-E4M3 QKV component ledger. This is the highest-priority source-complete reserved successor and reuses the resident image and caches without a provider restart.",
+  "reservation": {
+    "authorized_cumulative_usd": 2.0,
+    "durable_reserved_at_utc": "2026-07-29T15:52:18.768877Z",
+    "maximum_component_exposure_usd": 1.225,
+    "metered_hourly_rate_usd": 2.45
+  },
+  "bench": {
+    "id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_state": "available",
+    "accelerator": "nvidia-h200-sxm",
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "claim_start_by_utc": "2026-07-29T16:08:00Z",
+    "execution_complete_by_utc": "2026-07-29T16:30:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T16:35:00Z",
+    "watchdog": {
+      "main_pid": 91168,
+      "deadline_utc": "2026-07-29T16:40:00Z"
+    },
+    "initial_server_state": "Zero GPU memory and zero compute processes verified after removal of the predecessor's exact container.",
+    "retained_state": "Pinned SGLang image, exact checkpoint, CUDA/JIT caches, and typed predecessor evidence."
+  },
+  "inputs": {
+    "ready": {
+      "path": "NORM_FP8_COMPONENT_READY.json",
+      "sha256": "86fc46eea425adb955bf9ded71a234a54801e40f7b6120de6efe9cada5f50c23"
+    },
+    "component": {
+      "path": "inputs/gemma4-layer0-norm-qkv-component.safetensors",
+      "sha256": "dfa05dcf1f3f9ad6dd40f5318cf6c2c6d55eb93beebf0239f205e7fa88b85829",
+      "bytes": 176172392,
+      "tensor_count": 4
+    },
+    "runner": {
+      "path": "h200_runner.py",
+      "sha256": "2fd9a339a887011b0db590ae74711ab32d688b26386d556a8e7c76167355b111"
+    },
+    "candidate_python": {
+      "path": "norm_fp8_decode.py",
+      "sha256": "e52f4a04c6289561b56b5dcb4bc6cdb1763f3fb33096e273f99fc48d7ff6b1ba"
+    },
+    "candidate_cuda": {
+      "path": "norm_fp8_decode.cu",
+      "sha256": "c24c5a90c98ffd94f96cbbb0b1828b123f61d2027daae67f8238ef16538f92fa"
+    },
+    "runner_contract": {
+      "path": "H200_RUNNER_CONTRACT.json",
+      "sha256": "a7ec35ca0afd3ae340f5c70fa9463d44bd05d0e3557950a2f02785db03df9082"
+    },
+    "cpu_oracle": {
+      "path": "CPU_ORACLE_RESULT.json",
+      "sha256": "5f53deb5de460acbf9d8e34bda5763de3a9225b99696ed45469ff9ceeca5019c"
+    },
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6"
+  },
+  "execution": {
+    "artifact_root": "artifacts/norm-fp8-h200-component-20260729t1557z",
+    "maximum_wall_minutes": 22,
+    "repetitions": 100,
+    "rows": [
+      1,
+      16,
+      32
+    ],
+    "primary_row": 32,
+    "required_runner_invocation": "python3 h200_runner.py --component-safetensors inputs/gemma4-layer0-norm-qkv-component.safetensors --output artifacts/norm-fp8-h200-component-20260729t1557z --repetitions 100",
+    "staging": "Copy only the four hash-bound input files into one guest work directory using temporary-file atomic finalization; reopen and verify every hash before CUDA.",
+    "container": "Run the hash-bound invocation once in the pinned resident image with the single exact H200 exposed. Preserve the output directory and retrieve it atomically.",
+    "active_session_contract": "After a generation-fenced claim, publish bench id, claim generation, artifact root, deadline, and one bounded owner identity. Publish active_session last."
+  },
+  "quality_gates": {
+    "required_terminal": "TERMINAL.json",
+    "required_rows": [
+      "ROW_M1.json",
+      "ROW_M16.json",
+      "ROW_M32.json"
+    ],
+    "required_support": [
+      "CONTRACT.json",
+      "IDENTITY.json",
+      "CUDA_GRAPH_PROOF.json",
+      "INVOCATION_STATE.json"
+    ],
+    "success": "All numerical and CUDA-graph gates pass, the three-row ledger is complete, and M=32 candidate component median is below the contemporaneous baseline.",
+    "negative": "A complete interpretable terminal rejects numerical equivalence, graph replay, candidate-path identity, or M=32 timing.",
+    "infrastructure_failure": "Preserve partial typed evidence, do not relaunch the scientific runner, and release generation-fenced."
+  },
+  "must": [
+    "Use $experiment-run and the execution profile.",
+    "Read this binding once and verify every bound hash, the durable reservation, available bench state, zero-GPU starting state, and watchdog before claiming.",
+    "Claim through gpu_pool for only this project by 16:08Z and release with the returned exact claim generation by 16:35Z on every terminal path.",
+    "Run exactly one scientific invocation and retrieve the complete typed ledger.",
+    "Set STATUS.json last."
+  ],
+  "must_not": [
+    "Do not run the invalid streamed-global-KV endpoint or restart its removed server.",
+    "Do not execute any row, warmup, or candidate path outside the bound runner.",
+    "Do not alter candidate, runner, component, repetition count, shapes, tolerances, or runtime image.",
+    "Do not call provider lifecycle, clear or extend the watchdog, create a bench, or mutate another project.",
+    "Do not claim after 16:08Z or retain the claim after 16:35Z."
+  ]
+}

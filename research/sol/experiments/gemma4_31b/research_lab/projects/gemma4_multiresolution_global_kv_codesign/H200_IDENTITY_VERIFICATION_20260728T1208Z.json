@@ -1,0 +1,31 @@
+{
+  "bench": "h200-global-kv-computeinstance-e00f01gpfve0e49wb3",
+  "classification": "strict_identity_and_idle_h200_verified",
+  "connection": {
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "public_ipv4": "89.169.102.70",
+    "ssh_ed25519_fingerprint": "SHA256:CG1BmLhfmnAtzZyC51R5ea0wA3pgbaLFMGxiXF6pZpQ",
+    "ssh_user": "glmrunner",
+    "strict_host_key_checking": true
+  },
+  "gpu": {
+    "driver_version": "580.159.04",
+    "gpu_count": 1,
+    "memory_mib": 143771,
+    "memory_used_mib": 0.0,
+    "mig_mode": "Disabled",
+    "name": "NVIDIA H200",
+    "power_draw_w": 75.71,
+    "utilization_gpu_percent": 0.0
+  },
+  "observed_at_utc": "2026-07-28T12:08:56.430641Z",
+  "provider": {
+    "disk_id": "computedisk-e00ywd3j5beypye022",
+    "instance_id": "computeinstance-e00f01gpfve0e49wb3",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "region": "eu-north1",
+    "zone": "fabric-7"
+  },
+  "schema_version": 1,
+  "scientific_work_consumed": false
+}

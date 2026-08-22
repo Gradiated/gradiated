@@ -1,0 +1,458 @@
+{
+  "artifacts": {
+    "amendment": "AMENDMENT_001.json",
+    "amendment_sha256": "1e916b1512a2ced30af47b6835e941ef7f5c2ff8bdd3c9f085e543e40a65cee9",
+    "contract": "EXPERIMENT_CONTRACT.json",
+    "contract_sha256": "12b5f6ed59595e578726c5fd4c93ea0b8b3e328cbbe17382cd75a9621d801055",
+    "index": "artifacts/lowrank_index.pt",
+    "index_sha256": "27f8778b24474922439e9aa0b17cd8e4f022e872d18bb61d8c1c39d8c8194945",
+    "opportunity_register": "OPPORTUNITY_REGISTER.json",
+    "opportunity_register_sha256": "d9794f4faa288557b997daf3265deec2e556adf6722aa26048b064ed1fcfe327",
+    "persisted_consumer": "artifacts/persisted_index_consumer.json",
+    "persisted_consumer_runner": "validate_persisted_index.py",
+    "persisted_consumer_runner_sha256": "ba95a266e163bff5e33dc1903ee69ca7f4a5ba9d4fe75bd2bae8522d905a37d7",
+    "persisted_consumer_sha256": "f19472531dbc4dacfdbbaaac252038f85e9ce7284e97cba3c9c9f1c73e7b4a11",
+    "raw_result": "artifacts/reference_run.json",
+    "raw_result_sha256": "c66602d39fd4633221d7b9265bef27262b3103587571e97ffae577703ab842bb",
+    "runner": "run_lowrank_residual.py",
+    "runner_sha256": "4f9bebd55c2c269f153fe7c551c0171687d198b3ec7bba6ba7ca853cc47a6bc4",
+    "spectrum_oracle": "artifacts/spectrum_oracle.json",
+    "spectrum_oracle_sha256": "1a3b6f52ee4e7dfce2e29f9e7a0d118c1936b7dff546e84b41a1395617087d5f"
+  },
+  "classification": "typed_reference_positive_exact_stock_set_and_net_physical_traffic_in_sample",
+  "completed_at_utc": "2026-07-29T17:42:31.366048Z",
+  "correctness": {
+    "all_inputs_finite": true,
+    "basis_gram_spectral_error": 8.61747429364371e-15,
+    "canonical_logical_survivor_rows": 129,
+    "canonical_physical_union_survivor_rows": 103,
+    "dense_reference_ids_sha256": "b5f7b5591b1e1007542fb3e194b4a926c646432d768cf8f9928793ba551c0a8a",
+    "oracle_incumbent_ids_sha256": "f1dd66c6819675ac4b1ae743e44348f465e7b944a889415526d4942552fc31ea",
+    "persisted_index_fresh_process_valid": true,
+    "possible_stock_candidate_rows_max": 15,
+    "possible_stock_candidate_rows_mean": 3.03125,
+    "query_residual_norm_max": 7.941265053284477e-10,
+    "runtime_weight_norm_is_conservative_by_triangle_inequality": true,
+    "seed_incumbent_ids_sha256": "b5f7b5591b1e1007542fb3e194b4a926c646432d768cf8f9928793ba551c0a8a",
+    "stock_candidate_set_inside_all_reported_survivor_sets": true
+  },
+  "decision": {
+    "in_scope_representation_pass": true,
+    "promote_to_disjoint_query_reference": true,
+    "promote_to_h200_component": false,
+    "reason": "The persisted rank-32 consumer retained the exact stock candidate set while its 32-query exact-weight union was 103 of 262144 rows. After charging all declared index, metadata, score-buffer, survivor, and verification traffic, it avoided 90.003495% of dense physical bytes. The basis was trained on these same rows, so held-out transfer is unmeasured."
+  },
+  "economics": {
+    "analytical_net_seconds_saved_upper_bound": 0.03159177488565308,
+    "analytical_service_seconds_per_request_lower_bound": 0.5935573270830918,
+    "campaign_denominator_seconds_per_request": 0.625149101968745,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "inherited_output_consumer_interval_fraction": 0.056147579963225835,
+    "inherited_output_consumer_seconds_per_request": 0.03510060919172893,
+    "interpretation": "The byte-proportional value is an analytical upper bound for the persisted CPU/reference consumer. It does not transfer through the same-row basis to held-out queries or H200 latency."
+  },
+  "geometry": {
+    "capture_dtype": "torch.bfloat16",
+    "capture_shape": [
+      1536,
+      5376
+    ],
+    "model": "google/gemma-4-31B-it",
+    "requests": 32,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "sample_rows": 32,
+    "selected_capture_rows": [
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 0,
+        "position": 4215,
+        "request_id": "6b1f246fc0474045b1dca018e5819e22"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 12,
+        "position": 4215,
+        "request_id": "9399e6cf862143ba82ecb26ddb1ca518"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 24,
+        "position": 4215,
+        "request_id": "9d416563b3004b1eafedfb19cb0d2d5b"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 36,
+        "position": 4215,
+        "request_id": "e552bebb9223410cb934665e6b3eb305"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 48,
+        "position": 4215,
+        "request_id": "89511159c6b34f2e83aebb518818fee8"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 60,
+        "position": 4215,
+        "request_id": "b3a4ee1c0ffe49cf93fe21a59ed36c4e"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 72,
+        "position": 4215,
+        "request_id": "4f288b59b8604a13a27a9addb82c20e7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 84,
+        "position": 4215,
+        "request_id": "e0e3895b5ba64fd2b1cb40bce412a769"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 96,
+        "position": 4215,
+        "request_id": "40945e3893b343a5bcbfc9a482fc0ce7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 108,
+        "position": 4215,
+        "request_id": "9e642dec6d104778826266911efead92"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 120,
+        "position": 4215,
+        "request_id": "fbfa99bc2d3e4ee99364f2ec124feddd"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 132,
+        "position": 4215,
+        "request_id": "d4a388fc46114f6198da02962a5f8920"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 144,
+        "position": 4215,
+        "request_id": "a35783f8f9d34f0381998f2b12bace12"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 156,
+        "position": 4215,
+        "request_id": "1d9db594e0374cb9bc48200472bd0c8c"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 168,
+        "position": 4215,
+        "request_id": "d46dd988da4946429593257c95b22e42"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 180,
+        "position": 4215,
+        "request_id": "eab627f514b04e0a8925e0a37cfed9ca"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 192,
+        "position": 4215,
+        "request_id": "466bfe6deb524b42a3d33933933e8477"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 204,
+        "position": 4215,
+        "request_id": "4eaceaacef7d43f49e25d6bbd1e2194f"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 216,
+        "position": 4215,
+        "request_id": "13c58002ef8e4d868499f753d147f426"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 228,
+        "position": 4215,
+        "request_id": "93cd1a98b3564b268ceda031bd68d667"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 240,
+        "position": 4215,
+        "request_id": "b150896017d84a26974220f3aa3193b8"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 252,
+        "position": 4215,
+        "request_id": "5af6e8d4cf8b4e4290c2aef8359021b7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 264,
+        "position": 4215,
+        "request_id": "d1d1d20fd304494286c1003cfda6b442"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 276,
+        "position": 4215,
+        "request_id": "2c0b27cee4ca48aa997f054c57f42249"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 288,
+        "position": 4215,
+        "request_id": "d29cafc958cc45cc80bce4fd1e135b39"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 300,
+        "position": 4215,
+        "request_id": "3f84b395e118469e9acb0af910e4a700"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 312,
+        "position": 4215,
+        "request_id": "5d5798f8197d42a7aef277f1a23f3930"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 324,
+        "position": 4215,
+        "request_id": "1697b989ed4c4c6a8c054546c98eef81"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 336,
+        "position": 4215,
+        "request_id": "77fda0c8e4ab4b5597ce692c9cef35ec"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 348,
+        "position": 4215,
+        "request_id": "402394850a97473b97935fa83201611d"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 360,
+        "position": 4215,
+        "request_id": "db5c9aa50e3d4a67a54d843cb8ce6ed1"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 372,
+        "position": 4215,
+        "request_id": "e9c3d9fd09fe4b8baa8ff707cf1fd2a0"
+      }
+    ],
+    "weight_dtype": "torch.bfloat16",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [
+      262144,
+      5376
+    ]
+  },
+  "mechanism": {
+    "all_vocabulary_rows_reachable": true,
+    "basis_dtype": "torch.float64",
+    "basis_training": "same 32 exact evaluation hidden rows",
+    "bound": "projected dot + guarded query-residual times guarded row-residual norm + basis-idempotence defect + stock envelope",
+    "coefficient_dtype": "torch.float64",
+    "layout": "original token-ID order; no tied-weight permutation or duplication",
+    "name": "fixed_query_span_lowrank_residual_index",
+    "rank": 32,
+    "rank_fraction_of_hidden": 0.005952380952380952
+  },
+  "physical_result": {
+    "canonical_persisted_consumer": {
+      "amendment": "AMENDMENT_001.json",
+      "basis_gram_spectral_error": 8.61747429364371e-15,
+      "classification": "persisted_lowrank_index_consumer_valid",
+      "conservative_superset_count_check": true,
+      "dense_reference_winner_inside_survivors": true,
+      "gross_physical_member_weight_bytes_avoided_fraction": 0.9996070861816406,
+      "index_sha256": "27f8778b24474922439e9aa0b17cd8e4f022e872d18bb61d8c1c39d8c8194945",
+      "logical_survivor_rows": 129,
+      "net_physical_bytes_avoided_fraction": 0.9000349456355685,
+      "physical_union_survivor_rows": 103,
+      "producer_artifact_reused": true,
+      "producer_containment_basis": "The repaired upper error is no smaller and its seed lower error is no smaller; survivor membership is therefore monotone.",
+      "producer_survivor_set_contained_by_repaired_set": true,
+      "rank": 32,
+      "runtime_weight_norm_derivation": "coefficient_norm*basis_operator_norm + residual_norm_upper",
+      "runtime_weight_norm_is_conservative_by_triangle_inequality": true,
+      "schema_version": 1,
+      "science_replayed": false,
+      "seed_incumbent_ids_sha256": "b5f7b5591b1e1007542fb3e194b4a926c646432d768cf8f9928793ba551c0a8a",
+      "stock_candidate_set_inside_survivors": true,
+      "traffic": {
+        "basis_bytes": 1376256,
+        "candidate_total_bytes": 281758732,
+        "dense_weight_bytes": 2818572288,
+        "exact_logit_bytes": 1032,
+        "member_weight_bytes": 1107456,
+        "net_bytes_saved": 2536813556,
+        "projected_score_output_bytes": 67108864,
+        "projected_weight_index_bytes": 67108864,
+        "query_coefficient_bytes": 8192,
+        "query_input_bytes": 344064,
+        "residual_bound_read_write_bytes": 134217728,
+        "residual_norm_metadata_bytes": 2097152,
+        "survivor_mask_bytes": 8388608,
+        "survivor_token_id_bytes": 516
+      }
+    },
+    "causal_result": "The full 32-row query span reduced the query residual to a guarded maximum of 7.95e-10. Projected scoring therefore isolated a 103-row physical union after the persisted consumer used the triangle-derived runtime weight-norm guard. The score-buffer and index traffic, not exact tied-weight verification, dominate the remaining 281,758,732 bytes.",
+    "producer_in_memory_result": {
+      "dense_reference_winner_inside_survivors": true,
+      "gross_physical_member_weight_bytes_avoided_fraction": 0.9996910095214844,
+      "logical_survivor_fraction": 1.239776611328125e-05,
+      "logical_survivor_rows": 104,
+      "name": "implementable_projected_seed_incumbent",
+      "net_physical_bytes_avoided_fraction": 0.9001189754122779,
+      "physical_union_survivor_fraction": 0.000308990478515625,
+      "physical_union_survivor_rows": 81,
+      "stock_candidate_set_inside_survivors": true,
+      "traffic": {
+        "basis_bytes": 1376256,
+        "candidate_total_bytes": 281521888,
+        "dense_weight_bytes": 2818572288,
+        "exact_logit_bytes": 832,
+        "member_weight_bytes": 870912,
+        "net_bytes_saved": 2537050400,
+        "projected_score_output_bytes": 67108864,
+        "projected_weight_index_bytes": 67108864,
+        "query_coefficient_bytes": 8192,
+        "query_input_bytes": 344064,
+        "residual_bound_read_write_bytes": 134217728,
+        "residual_norm_metadata_bytes": 2097152,
+        "survivor_mask_bytes": 8388608,
+        "survivor_token_id_bytes": 416
+      }
+    }
+  },
+  "question": "Can a query-asymmetric low-rank projection plus conservative per-row residual certificates preserve the exact pinned stock set and reduce physical output-head traffic on the same 32 exact rows?",
+  "resource_use": {
+    "actual_spend_usd": 0.0,
+    "gpu_claimed": false,
+    "gpu_invocations": 0,
+    "provider_mutation": false,
+    "provider_spend_usd": 0.0,
+    "shared_inputs_read_only": true
+  },
+  "schema_version": 1,
+  "scope_and_limits": {
+    "closed": "The strongest admitted rank-32 query-span possibility bound does not fail the 10% gross-union gate; the same-row representation is a typed positive.",
+    "not_claimed": "No held-out-query pruning, H200 timing, endpoint speed, quality, or production economics is claimed.",
+    "open": "A disjoint-query reference must establish whether a fixed basis learned from prior traffic retains selectivity before any H200 component is admissible."
+  },
+  "spectrum_oracle_discriminator": {
+    "basis_gram_spectral_error": 8.61747429364371e-15,
+    "classification": "lowrank_oracle_gross_union_gate_pass",
+    "gate": {
+      "passed": true,
+      "required_gross_union_avoidance_fraction": 0.1
+    },
+    "oracle": {
+      "dense_reference_winner_inside_survivors": true,
+      "gross_physical_member_weight_bytes_avoided_fraction": 0.9997138977050781,
+      "logical_survivor_fraction": 1.1563301086425781e-05,
+      "logical_survivor_rows": 97,
+      "name": "optimistic_oracle_incumbent",
+      "net_physical_bytes_avoided_fraction": 0.9001418933981941,
+      "physical_union_survivor_fraction": 0.000286102294921875,
+      "physical_union_survivor_rows": 75,
+      "stock_candidate_set_inside_survivors": true,
+      "traffic": {
+        "basis_bytes": 1376256,
+        "candidate_total_bytes": 281457292,
+        "dense_weight_bytes": 2818572288,
+        "exact_logit_bytes": 776,
+        "member_weight_bytes": 806400,
+        "net_bytes_saved": 2537114996,
+        "projected_score_output_bytes": 67108864,
+        "projected_weight_index_bytes": 67108864,
+        "query_coefficient_bytes": 8192,
+        "query_input_bytes": 344064,
+        "residual_bound_read_write_bytes": 134217728,
+        "residual_norm_metadata_bytes": 2097152,
+        "survivor_mask_bytes": 8388608,
+        "survivor_token_id_bytes": 388
+      }
+    },
+    "query_residual_norm_max": 7.941265053284477e-10,
+    "rank": 32,
+    "rank_fraction_of_hidden": 0.005952380952380952
+  },
+  "stock_consumer": {
+    "candidate_set_requirement": "Every possible non-stop argmax under the inherited conservative numeric envelope remains in the survivor set.",
+    "classification": "pinned_temperature_zero_greedy_with_min_token_stop_mask",
+    "conservatively_excluded_from_incumbents": [
+      1,
+      106
+    ],
+    "masked_stop_token_ids": [
+      1
+    ],
+    "softcap": "30 * tanh(pre_softcap_logit / 30), monotone",
+    "stock_rounding_scope": "Guarded CPU FP32 reference error plus stock BF16 accumulation and BF16 output-rounding envelopes."
+  },
+  "storage": {
+    "basis_bytes": 1376256,
+    "index_build_is_offline": true,
+    "index_file_bytes": 70584754,
+    "projected_weight_index_bytes": 67108864,
+    "residual_norm_metadata_bytes": 2097152,
+    "tied_output_weight_storage_duplicated": false,
+    "total_additional_runtime_storage_bytes": 70582272
+  },
+  "timing": {
+    "cpu_threads": 16,
+    "performance_scope": "diagnostic CPU build and traversal only",
+    "spectrum_seconds": 0.04772069794125855,
+    "total_cpu_reference_seconds": 13.989242928102612,
+    "weight_scan_and_bound_seconds": 13.59452473395504
+  }
+}

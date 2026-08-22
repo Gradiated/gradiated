@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "director_binding_sha256": "ee2d6d5f1cf2aee677735b7a04f4ab6274b340e1a94ad8613a335e5a741bf0ab",
+  "packet_sha256": "5aa5a03ae5d043927a419a37efffc55b2c1f957f1b5d2bc25999b6eca9b5fc58",
+  "owner_sha256": "d4ebedf2aaa37b7190ee008a558cb7365c9f1d13869e27d733f5ab6d6d8c11cb",
+  "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+  "remote_root": "/home/glmrunner/fixed-floor-crossop-endpoint-r2",
+  "checkpoint_path": "/home/glmrunner/dflash-component/r3-target/b9ea41a2887d8607f594846523f94c6cc75ac8a4-20260730T004946346350Z",
+  "endpoint_execution_allowed": true,
+  "claim_start_by_utc": "2026-07-30T05:07:00Z",
+  "absolute_release_deadline_utc": "2026-07-30T05:44:00Z"
+}

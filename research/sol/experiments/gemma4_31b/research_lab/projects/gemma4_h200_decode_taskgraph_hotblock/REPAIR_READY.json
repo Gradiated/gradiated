@@ -1,0 +1,10 @@
+{
+  "claim_retained": true,
+  "classification": "recoverable_missing_terminal",
+  "diagnostic": "SCIENCE_STARTED\nCONTAINER_RC=1\n",
+  "repair_deadline_utc": "2026-07-29T23:43:00Z",
+  "repair_id": "fp8-prologue-r7",
+  "retry_scope": "worker_only",
+  "schema_version": 1,
+  "science_consumed": false
+}

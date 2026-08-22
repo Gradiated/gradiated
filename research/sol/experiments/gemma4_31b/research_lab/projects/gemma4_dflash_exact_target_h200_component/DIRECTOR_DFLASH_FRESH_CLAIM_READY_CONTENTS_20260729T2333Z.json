@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "role": "exact_target_dflash_fresh_direct_continuation",
+  "state": "ready_for_one_hash_bound_dflash_direct_owner",
+  "summary": "Warm exact-target H200 opened for one fresh DFlash direct-continuation owner after terminal/release readiness passed.",
+  "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+  "draft": "z-lab/gemma-4-31B-it-DFlash@eabd648301ce28583cc14757912e5e0f84e152e1",
+  "checkpoint": "Exact target manifest 6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6 remains resident at /home/glmrunner/qkv-direct-a7fc5afbe3c3b292/checkpoint.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "runtime": "Strict SSH/cloud-init and exact NVIDIA H200 UUID GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8 verified; pinned SGLang f63458b5 source and DFlash packet are staged.",
+  "caches": "Preserve target, draft, image, source packet, remote unconsumed run, and compilation caches through same-claim repair.",
+  "server_state": "No server, container, owner, or claim is active; accelerator is expected unoccupied.",
+  "artifacts": "Terminal/release readiness 5141545d...; owner 21801ca7...; execution authority DIRECTOR_DFLASH_FRESH_CLAIM_DIRECT_EXECUTION_20260729T2333Z.json.",
+  "scientific_terminal": "No scientific terminal. Snapshot manifest 499c50ed... and exclusive pre-request markers prove AR, DFlash, and NGRAM unconsumed.",
+  "next": "Only gemma4_dflash_exact_target_h200_component may claim under the fresh execution authority by 23:45Z, launch the named detached owner, and release ready or maintenance by 00:27Z before watchdog cleanup at 00:35Z."
+}

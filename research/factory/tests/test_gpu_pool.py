@@ -92,6 +92,26 @@ class GpuPoolTests(unittest.TestCase):
             with self.assertRaisesRegex(GpuPoolError, "no available GPU bench"):
                 GpuPool(lab).claim("mtp", bench_id="gemma-h200-1")
 
+    def test_register_rejects_duplicate_nonretired_provider_resource(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec(), condition="maintenance")
+            duplicate = bench_spec()
+            duplicate["id"] = "gemma-h200-duplicate"
+            duplicate["lifecycle"]["watchdog"]["unit"] = (
+                "gemma-h200-duplicate-watchdog.service"
+            )
+
+            with self.assertRaisesRegex(
+                GpuPoolError,
+                "provider resource already registered by gemma-h200-1: "
+                "instance_id=instance-1",
+            ):
+                pool.register(duplicate, condition="maintenance")
+
+            self.assertEqual(1, len(pool.snapshot()["benches"]))
+
     def test_cli_show_reads_one_bench_from_keyed_inventory(self):
         with tempfile.TemporaryDirectory() as directory:
             lab = Path(directory)
@@ -144,7 +164,7 @@ class GpuPoolTests(unittest.TestCase):
             lab = Path(directory)
             pool = GpuPool(lab)
             pool.register(bench_spec())
-            pool.claim("mtp", bench_id="gemma-h200-1")
+            claimed = pool.claim("mtp", bench_id="gemma-h200-1")
 
             with redirect_stdout(io.StringIO()):
                 gpu_pool_main(
@@ -156,6 +176,8 @@ class GpuPoolTests(unittest.TestCase):
                         "mtp",
                         "--bench",
                         "gemma-h200-1",
+                        "--expected-claimed-at",
+                        claimed["claim"]["claimed_at"],
                     ]
                 )
                 gpu_pool_main(
@@ -176,6 +198,71 @@ class GpuPoolTests(unittest.TestCase):
             self.assertEqual("available", bench["status"])
             self.assertIsNone(bench["claim"])
 
+    def test_cli_release_accepts_legacy_available_condition_as_ready(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec())
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with redirect_stdout(io.StringIO()):
+                result = gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "release",
+                        "--project",
+                        "mtp",
+                        "--bench",
+                        "gemma-h200-1",
+                        "--condition",
+                        "available",
+                    ]
+                )
+
+            self.assertEqual(0, result)
+            bench = GpuPool(lab).snapshot()["benches"][0]
+            self.assertEqual("available", bench["status"])
+            self.assertIsNone(bench["claim"])
+            event = json.loads(
+                (lab / "runtime" / "gpu_events.jsonl").read_text().splitlines()[-1]
+            )
+            self.assertEqual("ready", event["condition"])
+            self.assertEqual("available", event["resulting_status"])
+
+    def test_cli_release_accepts_a_plain_summary_without_stranding_claim(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            pool.register(bench_spec())
+            pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with redirect_stdout(io.StringIO()):
+                result = gpu_pool_main(
+                    [
+                        "--lab",
+                        str(lab),
+                        "release",
+                        "--project",
+                        "mtp",
+                        "--bench",
+                        "gemma-h200-1",
+                        "--condition",
+                        "maintenance",
+                        "--contents",
+                        "pre-science build incomplete; retained state preserved",
+                    ]
+                )
+
+            self.assertEqual(0, result)
+            bench = GpuPool(lab).snapshot()["benches"][0]
+            self.assertEqual("maintenance", bench["status"])
+            self.assertIsNone(bench["claim"])
+            self.assertEqual(
+                "pre-science build incomplete; retained state preserved",
+                bench["contents"]["summary"],
+            )
+
     def test_claim_bench_identity_rejects_a_mismatch(self):
         with tempfile.TemporaryDirectory() as directory:
             lab = Path(directory)
@@ -185,6 +272,31 @@ class GpuPoolTests(unittest.TestCase):
 
             with self.assertRaisesRegex(GpuPoolError, "owns gemma-h200-1"):
                 pool.heartbeat("mtp", bench_id="other-bench")
+
+    def test_heartbeat_can_compare_the_claim_generation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            current = ["2026-07-18T11:00:00Z"]
+            pool = GpuPool(lab, now=lambda: current[0])
+            pool.register(bench_spec())
+            first = pool.claim("mtp", bench_id="gemma-h200-1")
+            first_claimed_at = first["claim"]["claimed_at"]
+            pool.release("mtp", expected_claimed_at=first_claimed_at)
+            current[0] = "2026-07-18T11:01:00Z"
+            second = pool.claim("mtp", bench_id="gemma-h200-1")
+
+            with self.assertRaisesRegex(
+                GpuPoolError, "GPU claim generation changed"
+            ):
+                pool.heartbeat(
+                    "mtp",
+                    expected_claimed_at=first_claimed_at,
+                )
+
+            self.assertEqual(
+                second["claim"]["heartbeat_at"],
+                pool.snapshot()["benches"][0]["claim"]["heartbeat_at"],
+            )
 
     def test_release_can_compare_the_claim_generation(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -234,6 +346,34 @@ class GpuPoolTests(unittest.TestCase):
             )
             next_claim = pool.claim("kernel", bench_id="gemma-h200-1")
             self.assertEqual("kernel", next_claim["claim"]["project"])
+
+    def test_one_project_can_claim_two_exact_benches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lab = Path(directory)
+            pool = GpuPool(lab)
+            first_spec = bench_spec()
+            second_spec = bench_spec()
+            second_spec["id"] = "gemma-h200-2"
+            second_spec["resource"] = {
+                "instance_id": "instance-2",
+                "disk_id": "disk-2",
+            }
+            pool.register(first_spec)
+            pool.register(second_spec)
+
+            first = pool.claim("mtp", bench_id="gemma-h200-1")
+            second = pool.claim("mtp", bench_id="gemma-h200-2")
+
+            self.assertEqual("gemma-h200-1", first["id"])
+            self.assertEqual("gemma-h200-2", second["id"])
+            self.assertEqual(
+                "gemma-h200-1",
+                pool.heartbeat("mtp", bench_id="gemma-h200-1")["id"],
+            )
+            self.assertEqual(
+                "gemma-h200-2",
+                pool.heartbeat("mtp", bench_id="gemma-h200-2")["id"],
+            )
 
     def test_concurrent_claims_admit_only_one_project(self):
         with tempfile.TemporaryDirectory() as directory:

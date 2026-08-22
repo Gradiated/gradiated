@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "at_utc": "2026-07-30T07:32:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "role": "cold_h200_exact_order_norm_fp8_real_qkv_component",
+  "state": "available_norm_fp8_exact_order_component",
+  "classification": "durably_reserved_exact_component_selected",
+  "summary": "The exact H200 is selected for one corrected M=1/16/32 norm-to-dynamic-E4M3 real-QKV component falsifier. Target/draft checkpoints remain absent and are not required.",
+  "next": "Only gemma4_h200_current_norm_fp8_hotblock may claim under DIRECTOR_NORM_FP8_EXACT_ORDER_H200_COMPONENT_EXECUTION_20260730T0730Z.json by 07:42Z, run for at most 2400 claim seconds, and release by 08:22Z.",
+  "actual_spend_usd": 0.234,
+  "prior_bench_project": "gemma4_h200_fixed_floor_crossop_executor",
+  "prior_project_actual_spend_usd_through_handoff": 8.737427195750001,
+  "prior_project_attributed_through_utc": "2026-07-30T07:32:00Z",
+  "accelerator": "NVIDIA H200 GPU-e26e853a-ce3b-8874-bd3e-6db51a22f8b3",
+  "component": "Controller-local inputs/gemma4-layer0-norm-qkv-component.safetensors@dfa05dcf...; not yet staged.",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6; not assumed resident.",
+  "runtime": "Fresh Nebius Ubuntu 24.04 CUDA 13 guest; strict SSH and H200 identity verified; pinned container image will be pulled inside the claim.",
+  "checkpoint": "Full target and draft checkpoints are absent and unnecessary for this exact layer-0 component.",
+  "caches": "No image or compilation cache assumed.",
+  "server_state": "Quiescent with zero containers and zero GPU compute processes.",
+  "scientific_terminal": "corrected_norm_fp8_component_unconsumed"
+}

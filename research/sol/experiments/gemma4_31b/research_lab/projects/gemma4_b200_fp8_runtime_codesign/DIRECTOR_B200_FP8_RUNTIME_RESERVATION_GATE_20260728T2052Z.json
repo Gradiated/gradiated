@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "classification": "b200_fp8_runtime_falsifier_reservation_gate",
+  "project": "gemma4_b200_fp8_runtime_codesign",
+  "source_screen": {
+    "path": "B200_FP8_RUNTIME_SCREEN.json",
+    "sha256": "b6623bf5f4a81002fda5fbd9e34ac7f52af32083c32e8ff657c005850ccc4862",
+    "classification": "source_complete_b200_candidate",
+    "derived_seconds_per_request": 0.2995608884905333,
+    "production_hurdle_seconds_per_request": 0.31560925536286155
+  },
+  "reservation": {
+    "requested_total_usd": 2.5,
+    "actual_spend_usd": 0.0,
+    "durable_in_current_snapshot": false
+  },
+  "execution_authorized": false,
+  "provider_operations_authorized": false,
+  "bench_claim_authorized": false,
+  "next_director_action_after_reservation": "Revalidate the retained B200 if it survives the 21:10Z watchdog and extend only within the $2.5 ceiling, otherwise provision an exact replacement. Bind one execution-profile exact-shape dynamic-E4M3 linear plus d256/d512 FP8-KV attention falsifier from B200_FP8_RUNTIME_SCREEN.json.",
+  "forbidden_until_rebound": [
+    "run $researcher",
+    "claim or ready the shared B200",
+    "extend its watchdog",
+    "run CUDA",
+    "perform provider operations"
+  ]
+}

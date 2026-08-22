@@ -1,0 +1,104 @@
+{
+  "schema_version": 1,
+  "classification": "director_fresh_h200_streamed_endpoint_owner_v7_repair",
+  "created_at_utc": "2026-07-29T13:12:40Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "researcher_profile": "execution",
+  "skills": [
+    "researcher",
+    "experiment-run"
+  ],
+  "premise": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "bench_condition": "maintenance",
+    "bench_claimed": false,
+    "identity_verification": "H200_FRESH_IDENTITY_VERIFICATION_20260729T1309Z.json",
+    "identity_verification_sha256": "ebf04ad0a64ba060222b718349f7878e5eeb954cc2fa685b715a0a939a7f1127",
+    "prior_owner_ready": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_READY.json",
+    "prior_owner_ready_sha256": "2802b21355a920710535bfce71b2734277d84bbee50269b988f2b96d4f8303be",
+    "invalid_owner": "run_streaming_global_kv_h200_owner_v6.sh",
+    "invalid_owner_sha256": "429b359bc18cbe1d07ec05094470c8a24f1a51236254fc00f109ab62c6923bcf"
+  },
+  "causal_defects": [
+    {
+      "field": "claim_generation",
+      "evidence": "v6 requires a future binding to name claim_generation before its own atomic gpu_pool claim, then rejects the newly generated claimed_at unless it equals that unknowable value.",
+      "repair": "derive and persist the generation from the successful atomic claim result; future bindings must use an explicit from_atomic_claim mode rather than a timestamp value."
+    },
+    {
+      "field": "release_generation_fence",
+      "evidence": "v6 inspects generation before release but invokes gpu_pool release without --bench and --expected-claimed-at.",
+      "repair": "release the exact bench with --expected-claimed-at set to the generation captured from the atomic claim."
+    },
+    {
+      "field": "candidate_server_readiness",
+      "evidence": "v6 publishes repair-ready after the first expected health miss immediately after container launch, instead of supervising normal model load.",
+      "repair": "wait within a bounded readiness envelope while the exact container remains live; fail early on container exit or fatal log, and publish a fresh-generation repair only on observed failure or readiness deadline."
+    },
+    {
+      "field": "absolute_timeout_enforcement",
+      "evidence": "v6 SSH, SCP, Docker, repair, and endpoint child calls are not all bounded by the same absolute release deadline.",
+      "repair": "derive every blocking operation timeout from the smaller of its operation budget and remaining release time; include transfer, remote command, server readiness, repair callback, endpoint, retrieval, and release."
+    },
+    {
+      "field": "repair_generation",
+      "evidence": "v6 reuses the fixed fresh-server repair ID after a completed request.",
+      "repair": "allocate a distinct monotonically increasing repair ID for each server or endpoint repair generation and retain predecessor identity."
+    }
+  ],
+  "scope": {
+    "gpu_budget": 0,
+    "provider_spend_usd": 0,
+    "wall_clock_minutes": 8,
+    "result_required_by_utc": "2026-07-29T13:21:00Z",
+    "mutable_files": [
+      "run_streaming_global_kv_h200_owner_v7.sh",
+      "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V7_READY.json",
+      "STATUS.json"
+    ],
+    "required_validation": [
+      "shell syntax passes",
+      "lifecycle-pure fixture proves no gpu_pool, SSH, provider, Docker, CUDA, or science call before the future execution binding and preclaim contract pass",
+      "atomic-claim fixture proves the generated claimed_at is persisted and used by heartbeat and expected-claimed-at release",
+      "server-readiness fixture proves a live loading container does not enter repair after the first failed health probe and a dead container does",
+      "timeout fixture proves every blocking child is bounded by remaining release time",
+      "second server repair uses a fresh repair ID"
+    ]
+  },
+  "immutable_science": {
+    "preserved_cuda_producer_sha256": "0f7c32bb13f2d61b16ed2ae5778c4185fa9dc826894b2800fc5099414327a72e",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "exact_runner_sha256": "143709fd6a248e907c33724ee37be8d93e4710f9c3d3c675171d3a7016d184d7",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "endpoint_sha256": "e41e3b79d10cd884b6670f32a77752ecb5c01c01cb24f7a3583b90cf8bfa2ae0",
+    "hook_sha256": "8423326774d7bf6da9dd7e163889a5b5b444f40fc7a4f5748e33b5dcd0426523",
+    "candidate_source_sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a",
+    "activated_source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+    "candidate": "U=8 streamed global-KV at production global-attention layers",
+    "complete_requests": 32,
+    "stock_arm_forbidden": true,
+    "materializing_arm_replay_forbidden": true,
+    "activation_probe_generation_request_forbidden": true
+  },
+  "future_execution": {
+    "authorized_cumulative_usd": 8.0,
+    "absolute_watchdog_deadline_utc": "2026-07-29T14:27:49.361123Z",
+    "claim_allowed_now": false,
+    "later_director_binding_required": true,
+    "later_director_must_recheck_measured_fit": true,
+    "later_director_must_persist_verified_connection_identity_in_live_bench_record": true
+  },
+  "terminal_contract": {
+    "required_artifact": "STREAMING_GLOBAL_KV_FRESH_ENDPOINT_OWNER_V7_READY.json",
+    "classification": "fresh_h200_streamed_endpoint_owner_v7_ready",
+    "publish_status_last": true
+  },
+  "must_not": [
+    "Do not call gpu_pool, SSH, provider APIs, Docker, CUDA, or stage checkpoint bytes.",
+    "Do not claim, mark ready, release, drain, or retire either bench.",
+    "Do not edit v6 or any immutable scientific input.",
+    "Do not touch the claimed SM120 project or its RTX bench.",
+    "Do not publish claim_allowed true or an execution start fence."
+  ]
+}

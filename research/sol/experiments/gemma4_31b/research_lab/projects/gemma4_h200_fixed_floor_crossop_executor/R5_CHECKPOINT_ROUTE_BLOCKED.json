@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "classification": "external_huggingface_credential_authority_required",
+  "claim_allowed": false,
+  "ssh_allowed": false,
+  "cuda_allowed": false,
+  "checkpoint_transfer_allowed": false,
+  "image_pull_allowed": false,
+  "endpoint_request_allowed": false,
+  "provider_lifecycle_allowed": false,
+  "science_consumed": false,
+  "director_binding": "DIRECTOR_FIXED_FLOOR_CROSSOP_R5_MANIFEST_ACQUISITION_CLOSURE_20260730T0658Z.json",
+  "director_binding_sha256": "8461cdf33ce6f62c6f251c2f1c8610b95e113712447cca2bca08e9bd708e9ccb",
+  "blocker": {
+    "kind": "missing_external_authenticated_acquisition_authority",
+    "required_authority": "A guest-safe Hugging Face credential with access to the gated exact target, or a director-bound durable immutable object source containing the hashes below.",
+    "controller_evidence": {
+      "huggingface_hub_import": "ModuleNotFoundError",
+      "default_token_file": "absent",
+      "HF_or_HUGGINGFACE_environment_credential": "absent"
+    },
+    "why_not_ready": "The cold owner can only truthfully acquire absent checkpoint bytes after the external authority is bound. No credential value is stored or inspected in this project."
+  },
+  "acquisition_route_when_authorized": {
+    "method": "huggingface_hub.snapshot_download",
+    "resumption": "Download each pinned file into a claim-owned <destination>.part directory, verify every declared size and sha256, then atomically rename the complete directory; on repeat, retain an already complete matching directory.",
+    "credential_chain": "HF_TOKEN or the guest's Hugging Face credential store, supplied outside this project."
+  },
+  "checkpoint_manifests": {
+    "target": {
+      "repo": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "destination": "/home/glmrunner/fixed-floor-r5/immutable/target-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "files": [
+        {"path":"chat_template.jinja","bytes":18683,"sha256":"ae53464bf3be25802b3a5b37def7fd89667067d7577049b3b2d74c4d8de4c6d4"},
+        {"path":"config.json","bytes":4621,"sha256":"e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"},
+        {"path":"model-00001-of-00002.safetensors","bytes":49784788364,"sha256":"eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"},
+        {"path":"model-00002-of-00002.safetensors","bytes":12761549884,"sha256":"018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10"},
+        {"path":"model.safetensors.index.json","bytes":120246,"sha256":"d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"},
+        {"path":"processor_config.json","bytes":1689,"sha256":"32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c"},
+        {"path":"tokenizer.json","bytes":32169626,"sha256":"cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f"},
+        {"path":"tokenizer_config.json","bytes":2095,"sha256":"90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df"}
+      ]
+    },
+    "draft": {
+      "repo": "z-lab/gemma-4-31B-it-DFlash",
+      "revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+      "destination": "/home/glmrunner/fixed-floor-r5/immutable/draft-eabd648301ce28583cc14757912e5e0f84e152e1",
+      "files": [
+        {"path":"config.json","sha256":"325f2a18894994b19f916e551b6f13a6904e961ae59a818d2b1dec18458e97f8"},
+        {"path":"model.safetensors","bytes":3071941240,"sha256":"b3f28580103d6e8a0a1d9389646957b9309df5982558afd754b9810357f425b7"}
+      ]
+    }
+  },
+  "controller_local_manifest": {
+    "packet": {"source":"ENDPOINT_INTEGRATION_PACKET_R5.json","destination":"/home/glmrunner/fixed-floor-r5/project/ENDPOINT_INTEGRATION_PACKET_R5.json","sha256":"846bd42a2e41e64b392af1b2abaca5d8cccd3e177aaab9c7fa900f63eda57527"},
+    "workload": {"source":"/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/inputs/exact_c32_runner.py","destination":"/home/glmrunner/fixed-floor-r5/project/exact_c32_runner.py","sha256":"8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03"},
+    "emitted_chunk_oracle": {"source":"artifacts/fixed-floor-crossop-endpoint-r5-candidate-only-20260730t0610z/CONTROL_EMITTED_CHUNK_ORACLE.json","destination":"/home/glmrunner/fixed-floor-r5/immutable/CONTROL_EMITTED_CHUNK_ORACLE.json","sha256":"6ebf9cdba8d0b04774a6780a4cd8b34629bbac8e2a012efdfb93656b32e0aa37"},
+    "packet_runtime_sources": {
+      "endpoint_candidate_gemma4_causal.py":"7e535161c09dcc3594f72be0d8737f46cb7d7585f4fc51926666edbc05705bb9",
+      "fixed_floor_crossop_control_chunk_oracle.py":"bcbdeb78b25708ac5392fc9c48cc9b4f34734be776b8d410a7fd6c2e50c10c88",
+      "fixed_floor_crossop_endpoint_adapter.py":"a92d57a941f9dda8f22ba0b7c313da131664bb76173000907f15c4ca27af3b2b",
+      "fused_qkv_kv_cache.py":"7ee1a18dd8a4a69df68e769f238a583348cfda1232cae6656b0facf621ba0c8",
+      "install_fused_qkv_cache.py":"8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3",
+      "run_fixed_floor_crossop_endpoint_candidate_only_r5.py":"42f12828e1d6db2154c22464cef578cc03da331b185008b8ee4d041dbb6d5fa0",
+      "run_fixed_floor_crossop_endpoint_claim_launch_r5.py":"1c97d6961eb28cc5d7d0ec18a7fc0e53e74e7fc812e76063c27fbcadda56af4a",
+      "run_fixed_floor_crossop_endpoint_owner_r5.py":"2a631efb580dc0b505b3ab03973c4729437e8a019b8ffa5d09b5e01c5c109348",
+      "run_fixed_floor_crossop_endpoint_pair.py":"b1df2636b4399eeca9939a46c65906d66e5964747ee1d1a545a6ab90501b48d3"
+    }
+  },
+  "unchanged_identities": {"candidate_requests":32,"endpoint":"/v1/completions","control_replay_allowed":false,"component_replay_allowed":false,"actual_spend_usd":6.273359945}
+}

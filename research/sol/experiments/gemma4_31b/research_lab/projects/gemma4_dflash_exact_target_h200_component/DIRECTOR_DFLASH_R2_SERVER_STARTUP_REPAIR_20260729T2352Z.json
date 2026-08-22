@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T23:52:35Z",
+  "decision": "delegate_same_claim_packet_repair_with_conditional_request_delivery",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "live_owner": {
+    "pid": 397943,
+    "start_ticks": 148497102,
+    "claim_generation": "2026-07-29T23:49:13.529071Z",
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run",
+    "owner_deadline_utc": "2026-07-30T00:27:00Z",
+    "replacement_owner_allowed": false,
+    "new_claim_allowed": false
+  },
+  "repair_handshake": {
+    "repair_id": "dflash-h200-direct-r2-20260729t2344z-direct-1",
+    "ready_path": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run/.repair-handshakes/dflash-h200-direct-r2-20260729t2344z-direct-1/REPAIR_READY.json",
+    "ready_sha256": "e9fee9947d992d2a391c92640af089de4146a28afc92e4ab880e409a23cf3ca1",
+    "retry_scope": "all",
+    "absolute_deadline_utc": "2026-07-30T00:27:00Z",
+    "owner_dispatch_verified": true,
+    "owner_dispatch": "After a requested response the live owner validates the patch against adoption, stages its content-addressed packet, and re-enters only the worker path."
+  },
+  "evidence": {
+    "adoption_path": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run/DIRECT_CONTINUATION_ADOPTION_1.json",
+    "adoption_sha256": "dde4bf95b50b9f2ae789b471244b2b4c73259a44cc2e5da23c5e927be8a6d25c",
+    "worker_stderr_sha256": "2cd8a2b7f8ad51850e02764022fef1c825e9992b1731edf3c614b7bc99d726e0",
+    "server_log_sha256": "010cac926eb575f495a46b7ffeaeee932e926101ab81e0e54c32e55c5256e543",
+    "classification": "recoverable_pre_science_server_startup_defect",
+    "science_started": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    }
+  },
+  "localized_causes": [
+    {
+      "kind": "remote_output_generation_reuse",
+      "observed": "The r2 worker attempted mkdir(exist_ok=false) on the retained remote ar/ directory and exited with FileExistsError before launching a new server.",
+      "required_repair": "Before the retry creates arm outputs, atomically preserve the prior arm directory under a distinct content-addressed history generation or select a distinct mutable output generation. Never overwrite or delete the retrieved predecessor evidence."
+    },
+    {
+      "kind": "pinned_runtime_kernel_package_mismatch",
+      "observed": "The retrieved server log shows SGLang source f63458b5 requires sglang-kernel >=0.4.4, while the pinned image contains 0.4.3.",
+      "required_repair": "Make the packet's server startup use a source-compatible sglang-kernel >=0.4.4 through the smallest reproducible runtime adapter. Preserve the pinned image and SGLang source identity; do not bypass a true executable/source incompatibility without proving the resulting import and server startup."
+    }
+  ],
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "block_size": 16,
+    "control_order": [
+      "AR",
+      "DFLASH",
+      "NGRAM"
+    ],
+    "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+    "historical_request_25_replay_allowed": false
+  },
+  "repair_task": {
+    "profile": "execution",
+    "skill": "$experiment-run",
+    "deliver_by_utc": "2026-07-30T00:01:00Z",
+    "scope": "Create one new content-addressed packet archive containing only the mutable integration repair. Do not modify the live owner, direct authority, corrected component-ready manifest, existing packet, snapshot, target, draft, observer semantics, timing boundary, or arm ledger.",
+    "validation": [
+      "Parse and compile the amended packet files and run the narrow packet tests that do not require CUDA.",
+      "Prove the amended output-generation path preserves the existing arm evidence and selects an empty generation for the retry.",
+      "Bind the exact dependency mechanism used to satisfy sglang-kernel >=0.4.4. The first owner-executed target-runtime server start is the execution-equivalent check; do not add another offline readiness ladder."
+    ]
+  },
+  "patch_artifact_contract": {
+    "path": "DFLASH_H200_R2_SERVER_STARTUP_PATCH.json",
+    "required_fields": {
+      "schema_version": 1,
+      "continuation_authorized": true,
+      "claim_generation": "2026-07-29T23:49:13.529071Z",
+      "adoption_sha256": "dde4bf95b50b9f2ae789b471244b2b4c73259a44cc2e5da23c5e927be8a6d25c",
+      "retry_scope": "all",
+      "packet_archive": "ABSOLUTE_CONTENT_ADDRESSED_PACKET_PATH",
+      "packet_archive_sha256": "EXACT_PACKET_SHA256"
+    }
+  },
+  "conditional_same_turn_request_authority": {
+    "allowed": true,
+    "conditions": [
+      "The patch artifact and packet satisfy every field and validation above.",
+      "Immediately before delivery, owner PID 397943 has start_ticks 148497102 and remains live.",
+      "The pool claim still matches generation 2026-07-29T23:49:13.529071Z.",
+      "The repair ID remains ready with no existing request or terminal.",
+      "Current UTC is before 2026-07-30T00:01:00Z and the owner deadline remains 2026-07-30T00:27:00Z."
+    ],
+    "delivery": [
+      "/root/workspace/research/factory/tools/repair-handshake",
+      "request",
+      "--root",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/artifacts/dflash-h200-direct-owner-r2-20260729t2344z/run",
+      "--repair-id",
+      "dflash-h200-direct-r2-20260729t2344z-direct-1",
+      "--patch-artifact",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component/DFLASH_H200_R2_SERVER_STARTUP_PATCH.json"
+    ]
+  },
+  "prohibitions": [
+    "Do not stop or replace PID 397943.",
+    "Do not claim, release, ready, or mutate provider lifecycle.",
+    "Do not invoke SSH, Docker, CUDA, a server, or an arm outside the waiting owner.",
+    "Do not replay request 25 or change target, draft, runtime source, workload, observer, acceptance, KV, timing, or economics semantics.",
+    "Do not delete, overwrite, or reinterpret the predecessor remote arm evidence."
+  ]
+}

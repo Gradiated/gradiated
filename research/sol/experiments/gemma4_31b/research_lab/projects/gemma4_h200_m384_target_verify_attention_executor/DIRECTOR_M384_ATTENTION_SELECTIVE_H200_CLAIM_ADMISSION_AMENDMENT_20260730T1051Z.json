@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "type": "director_claim_admission_amendment",
+  "created_at_utc": "2026-07-30T10:51:44Z",
+  "project": "gemma4_h200_m384_target_verify_attention_executor",
+  "base_binding": {
+    "path": "DIRECTOR_M384_ATTENTION_SELECTIVE_H200_EXECUTION_20260730T1044Z.json",
+    "sha256": "9e2cc151ad5b497903d01d46080df17bb4225f2d1e672ff8208c9fb9eab350aa"
+  },
+  "bench": {
+    "id": "h200-m384-selective-computeinstance-e00x8kg5j0ndhvw2qt",
+    "instance_id": "computeinstance-e00x8kg5j0ndhvw2qt",
+    "disk_id": "computedisk-e00nge39xwr92ms8vc",
+    "watchdog_pid": 754193
+  },
+  "decision": "Extend only the unconsumed initial claim-admission fence because the execution-ready artifact and owner are absent and the remaining original runway is shorter than the nearest 684.189-second preparation plus the required 120-second worker-start margin.",
+  "clock_override": {
+    "claim_start_by_utc": "2026-07-30T11:06:00Z"
+  },
+  "unchanged_clock": {
+    "science_target_utc": "2026-07-30T11:30:00Z",
+    "terminal_target_utc": "2026-07-30T11:48:00Z",
+    "release_target_utc": "2026-07-30T11:54:00Z",
+    "hard_release_utc": "2026-07-30T11:55:00Z",
+    "watchdog_cleanup_utc": "2026-07-30T12:00:20Z"
+  },
+  "authority": {
+    "gpu_claim_allowed": true,
+    "provider_lifecycle_mutation_allowed": false,
+    "scientific_scope_change_allowed": false,
+    "required_ready_hashes": [
+      "DIRECTOR_M384_ATTENTION_SELECTIVE_H200_EXECUTION_20260730T1044Z.json",
+      "DIRECTOR_M384_ATTENTION_SELECTIVE_H200_CLAIM_ADMISSION_AMENDMENT_20260730T1051Z.json",
+      "m384_grouped_attention_sm90a.cu",
+      "m384_attention_h200_runner.py",
+      "m384_attention_selective_owner.py"
+    ]
+  },
+  "prohibitions": [
+    "Do not move any absolute release or watchdog fence.",
+    "Do not change immutable science, the sole claimant, spend authority, endpoint prohibition, or mutable implementation scope.",
+    "Do not claim after 2026-07-30T11:06:00Z when no matching owner or claim began before that time."
+  ]
+}

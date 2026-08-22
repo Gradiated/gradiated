@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T02:31:01Z",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "decision": "replace the exited r5 owner with one same-claim r6 owner whose packet uses a verified reflink-or-temporary-copy target view and whose retained dispatcher has a fresh repair namespace",
+  "campaign_target": {
+    "service_time_seconds_per_request": 0.500119281574996,
+    "scientific_state": "AR, DFlash, and NGRAM remain unstarted and unconsumed"
+  },
+  "claim": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "claimed_at": "2026-07-30T00:49:46.346350Z",
+    "project": "gemma4_dflash_exact_target_h200_component",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_pid": 427838,
+    "watchdog_deadline_utc": "2026-07-30T03:36:56.187924Z",
+    "drain_after_release": true
+  },
+  "completed_target": {
+    "path": "/home/glmrunner/dflash-component/r3-target/b9ea41a2887d8607f594846523f94c6cc75ac8a4-20260730T004946346350Z",
+    "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "terminal": "artifacts/dflash-h200-r3-cold-worker3/run/COLD_STAGE.json",
+    "state": "complete",
+    "disposition": "Reuse the finalized target in place. Do not download, move, delete, or rehash its unchanged source rows."
+  },
+  "predecessor": {
+    "pid": 479602,
+    "start_ticks": 149434293,
+    "owner_state": "artifacts/dflash-h200-r3-cold-worker3/OWNER_STATE_R5.json",
+    "owner_source": "dflash_component_direct_recovery_owner_r5.py",
+    "owner_source_sha256": "843aef627382539808e7729402f818139a57518e64ce72aa6d986ba7fa1a8baf",
+    "execution_binding": "artifacts/dflash-h200-r3-cold-worker3/EXECUTION_BINDING_R5.json",
+    "execution_binding_sha256": "2525fb058252e39ba88a34375b1a09d1a56091a117a9135295e5397d79b7a184",
+    "state": "absent after worker 3 returned pre-science and repair publication collided with a completed inherited repair generation"
+  },
+  "pre_science_failure": {
+    "artifact": "artifacts/dflash-h200-r3-cold-worker3/run/R5_RETAINED_REPAIR_BOUNDARY.json",
+    "classification": "recoverable_pre_science_target_view_hardlink_permission",
+    "worker_generation": 3,
+    "packet_archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "remote_snapshot_file_count": 0,
+    "science_started": false,
+    "science_consumed": false,
+    "invalidated_operation": "hardlink_target_view",
+    "cause": "unprivileged os.link from the root-owned completed target returned EPERM before runtime, model, server, CUDA, or request entry"
+  },
+  "base_packet": {
+    "archive": "artifacts/dflash-h200-direct-owner-r2-20260729t2344z/dflash-component-repair3-generation-output-packet.tar",
+    "archive_sha256": "e3f0bd4f187ac688112238a1886ab63c5d4090fb8c0c46884bb279cf018cd93a",
+    "bytes": 93153280,
+    "retry_scope": "all",
+    "initial_worker_generation": 3
+  },
+  "repair_contract": {
+    "patched_packet": "artifacts/dflash-h200-r6-target-view-repair/dflash-component-target-view-repair-packet.tar",
+    "patch_scope": [
+      "In dflash_component_worker.py only, replace the hard-link-only target-view materializer with hard-link first and a read-only reflink-or-verified-temporary-copy fallback for EPERM, EACCES, or EXDEV.",
+      "Create every fallback row at a temporary sibling path, verify the destination size and SHA-256 against the already-bound target manifest row, chmod it read-only, and atomically rename it into the immutable target view. Clean only stale temporary siblings owned by this repair.",
+      "Retain same-inode verification for hard-linked rows. Record the actual materialization mode for each row and stop closed on any missing, altered, ambiguous, or unverifiable row.",
+      "Update only the packet manifest fields required to bind the patched worker bytes. Preserve every scientific input, runtime source, consumer, oracle, workload, block size, arm order, submission count, and science-marker boundary."
+    ],
+    "remote_run": "/home/glmrunner/dflash-component/r3-runs/20260730T004946346350Z",
+    "remote_run_disposition": "Reuse the existing run root only after confirming its compact retrieval is empty and its immutable target view has no committed row. Archive any conflicting mutable row rather than deleting scientific evidence.",
+    "repair_namespace": "dflash-h200-r3-cold-worker3-20260730t0045z-r6-target-view",
+    "completed_inherited_repair_ids": [
+      "dflash-h200-r3-cold-worker3-20260730t0045z-recovery-r2-3-dispatch-0",
+      "dflash-h200-r3-cold-worker3-20260730t0045z-recovery-r2-3-dispatch-1"
+    ],
+    "dispatcher_requirement": "The r6 owner must remain live across a recoverable pre-science worker failure, publish a fresh repair ID under repair_namespace, consume an exact hash-bound request, and loop back into worker 3. A wrapper that exits after publishing or consuming one request is not authorized."
+  },
+  "delegation": {
+    "researcher_profile": "execution",
+    "skills": [
+      "$researcher",
+      "$experiment-run"
+    ],
+    "start_by_utc": "2026-07-30T02:44:00Z",
+    "owner_deadline_utc": "2026-07-30T03:20:00Z",
+    "replacement_owner_source": "dflash_component_direct_recovery_owner_r6.py",
+    "replacement_execution_binding": "artifacts/dflash-h200-r3-cold-worker3/EXECUTION_BINDING_R6.json",
+    "replacement_owner_state": "artifacts/dflash-h200-r3-cold-worker3/OWNER_STATE_R6.json",
+    "replacement_owner_log": "artifacts/dflash-h200-r3-cold-worker3/OWNER_R6.log",
+    "artifact_root": "artifacts/dflash-h200-r3-cold-worker3/run",
+    "launch_command": "/root/workspace/research/factory/tools/detached-owner start --state artifacts/dflash-h200-r3-cold-worker3/OWNER_STATE_R6.json --log artifacts/dflash-h200-r3-cold-worker3/OWNER_R6.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component --unit-manager pid -- /usr/bin/python3 dflash_component_direct_recovery_owner_r6.py --execution-binding artifacts/dflash-h200-r3-cold-worker3/EXECUTION_BINDING_R6.json --artifact-root artifacts/dflash-h200-r3-cold-worker3/run",
+    "requirements": [
+      "Read this binding once. Verify the exact claim generation, rebound H200 UUID, strict SSH fingerprint, watchdog PID, absent r5 PID/start ticks, complete target terminal and manifest, immutable base packet bytes/digest, R5 retained repair boundary, and absence of worker, CUDA, request, or science consumption.",
+      "Derive the patched packet from base_packet.archive into repair_contract.patched_packet. Make only the target-view materialization and corresponding packet-manifest identity changes described by repair_contract.patch_scope; hash-bind the resulting archive.",
+      "Create dflash_component_direct_recovery_owner_r6.py as the narrowest copy of r5. Bind it to this director contract, the patched packet, the complete target, worker 3 only, the unchanged remote run, and repair_contract.repair_namespace.",
+      "Make r6 a real retained dispatcher: after any typed recoverable pre-science return, it must publish a fresh namespaced repair ID, wait for and consume one exact request, invoke only worker 3 again, and continue the loop. It must not collide with either completed inherited repair ID or release merely because a mutable integration step failed.",
+      "Create EXECUTION_BINDING_R6.json from the exact r5 binding, changing only director identity, owner source identity, patched packet path/digest, and fresh repair namespace. Preserve claim generation, rebound GPU UUID, remote_run, remote_target_path, target manifest, initial worker 3, attribution start, and 03:20 owner deadline.",
+      "Hash-verify the r6 source, patched packet, and execution binding. Confirm predecessor 479602/149434293 remains absent, then launch r6 exactly once with launch_command. Do not stop any unrelated process.",
+      "Reuse the complete exact target. Enter only worker 3 with the repaired packet, or remain live at a typed retained pre-science repair boundary.",
+      "Persist active_session with r6 PID/start ticks, r6 binding digest, unchanged claim generation, and the first durable phase beyond repaired-packet preflight. Return after one grouped snapshot proves a fresh claim heartbeat and that progress; do not follow the worker."
+    ]
+  },
+  "prohibitions": [
+    "Do not re-claim or release the bench.",
+    "Do not replay workers 0-2, historical request 25, or any AR/DFLASH/NGRAM scientific arm.",
+    "Do not mutate the base packet or use the mutable project-root DFLASH_H200_COMPONENT_PACKET.tar.",
+    "Do not change target, draft, image, runtime, block size, workload, oracle, adoption semantics, or scientific submission counts.",
+    "Do not re-download, move, delete, mount, format, resize, attach, detach, or rehash unchanged source checkpoint files or either managed disk.",
+    "Do not call provider APIs or gpu_pool except read-only exact-claim verification and the replacement owner's heartbeat path.",
+    "Do not expose, copy, log, or persist Hugging Face credentials."
+  ],
+  "dispositions": {
+    "decision_bearing_terminal": "Persist the typed scientific terminal and release the exact claim generation by 03:20Z; provider lifecycle remains director-owned.",
+    "recoverable_pre_science_failure": "Retain the same claim in the live r6 dispatcher and request only a hash-bound mutable integration repair while it still fits the absolute owner and watchdog windows.",
+    "unsafe_or_deadline": "Persist exact evidence and release the claim generation for director cleanup before the watchdog deadline; never submit science past the owner deadline."
+  }
+}

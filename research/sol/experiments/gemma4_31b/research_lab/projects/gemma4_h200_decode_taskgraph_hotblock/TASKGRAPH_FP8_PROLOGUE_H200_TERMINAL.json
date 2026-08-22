@@ -1,0 +1,283 @@
+{
+  "artifact_type": "taskgraph_fp8_prologue_h200_terminal",
+  "bench": {
+    "claimed_at": "2026-07-29T22:01:12.915393Z",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8",
+    "id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "ssh_fingerprint": "SHA256:3hDhNCJKQQo68DtW7LV5dperdxrj4cJJ39CVq0w1ZRM",
+    "watchdog": {
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-pq-mips-20260729t2107z-watchdog-r4.service",
+      "main_pid": 299583,
+      "unit": "gemma4-pq-mips-20260729t2107z-watchdog-r4.service",
+      "unit_manager": "user"
+    }
+  },
+  "binding": {
+    "path": "DIRECTOR_TASKGRAPH_FP8_PROLOGUE_H200_EXECUTION_20260729T2148Z.json",
+    "sha256": "82da8037e760b7fb07a01bd161ea2ce7ba6d07454670367f568d8da76c1db289"
+  },
+  "binding_chain": [
+    {
+      "path": "DIRECTOR_TASKGRAPH_FP8_PROLOGUE_H200_EXECUTION_20260729T2148Z.json",
+      "role": "parent_execution",
+      "sha256": "82da8037e760b7fb07a01bd161ea2ce7ba6d07454670367f568d8da76c1db289"
+    },
+    {
+      "path": "DIRECTOR_FP8_PROLOGUE_STOCK_API_REPAIR_20260729T2205Z.json",
+      "role": "superseded_side_binding",
+      "sha256": "3d942d699037f0cf5bfbdf0064e93c691f4aeaa5ae5a12682ac7f71cc3651592"
+    },
+    {
+      "path": "DIRECTOR_FP8_PROLOGUE_LAYOUT_REPLACEMENT_OWNER_20260729T2208Z.json",
+      "role": "newest_authoritative_replacement_binding",
+      "sha256": "7c8339d4a659bc2ab49292d5e72051c21dace355e624cf93543f706807b0bfc6"
+    }
+  ],
+  "binding_supersession_conflict": {
+    "current_precondition_conflicts": [
+      "A scientific terminal now exists.",
+      "Stock and candidate completion markers now exist.",
+      "The original claim has been generation-fenced released and new_claim_allowed is false."
+    ],
+    "discovered_at_utc": "2026-07-29T22:18:05.309227Z",
+    "disposition": "Do not execute the stale replacement sequence and do not reclaim. Preserve measured bytes as provisional noncanonical evidence for director adjudication.",
+    "latest_binding_created_at_utc": "2026-07-29T22:08:00Z",
+    "observed_deviation": "The predecessor remained live and consumed later worker-only requests, producing attempts 6-8 and releasing before this binding was inspected.",
+    "requirements": [
+      "Replace predecessor owner PID 338568/start_ticks 147850150 before further science.",
+      "Do not write another request for predecessor repair generation r5.",
+      "No new claim is allowed."
+    ]
+  },
+  "candidate_change": "Preserve a separate row-scale reduction, then convert BF16 activation tiles to E4M3 inside a Triton GEMM, avoiding global qactivation materialization.",
+  "candidate_path_proof": {
+    "candidate_checksum": 297.2925109863281,
+    "candidate_completion_marker": "artifacts/fp8-prologue-owner-20260729t220112z/attempt-8/out-8/CANDIDATE_SMOKE_COMPLETE.json",
+    "candidate_completion_marker_sha256": "846ed1667ec48c83e1b1f94969a482dcc597367132999f666327bdc3fe9c2a2e",
+    "exact_shape_executed": true,
+    "global_quantized_activation_materialized_by_candidate": false,
+    "negative_control_wrong_weight_scale_relative_l2": 0.22561593353748322,
+    "real_weight_identity": true,
+    "row_scale_max_relative_error": 0.0,
+    "stock_checksum": 297.00628662109375,
+    "stock_marker_adopted_without_replay": true
+  },
+  "canonical_admissibility": {
+    "accepted": false,
+    "reason": "Attempts 6-8 ran under the superseded predecessor owner after the authoritative replacement binding forbade further r5 repair dispatch.",
+    "scientific_bytes_preserved": true
+  },
+  "component_terminal": {
+    "classification": "scientific_correctness_negative",
+    "correctness": {
+      "adopted_stock_checksum": 297.00628662109375,
+      "candidate_checksum_relative_to_stock": 0.0009636980027952277,
+      "candidate_zero_row_scale": 2.2321429389771845e-15,
+      "cosine": 0.9992997646331787,
+      "finite": true,
+      "full_output_elements_consumed": 262144,
+      "max_abs": 0.11334359645843506,
+      "negative_control_wrong_weight_scale_relative_l2": 0.22561593353748322,
+      "oracle_kind": "high_precision_real_weight_matmul_with_adopted_stock_checksum",
+      "pass": false,
+      "relative_l2": 0.03741930425167084,
+      "saturation_fraction": 0.00029593423823826015,
+      "scale_max_relative_error_nonzero_rows": 0.0,
+      "stock_zero_row_scale": "not_replayed"
+    },
+    "science_consumed": true,
+    "timing_consumed": false
+  },
+  "component_terminal_path": "artifacts/fp8-prologue-owner-20260729t220112z/attempt-8/out-8/TERMINAL.json",
+  "component_terminal_sha256": "bfbda98d6056b4558739ac4c7f410b88369ce00bb5264d6844aafd68869bf155",
+  "correctness_gate": {
+    "decision": "fail_relative_l2",
+    "failed_field": "relative_l2",
+    "margin": 0.017419304251670837,
+    "observed": {
+      "adopted_stock_checksum": 297.00628662109375,
+      "candidate_checksum_relative_to_stock": 0.0009636980027952277,
+      "candidate_zero_row_scale": 2.2321429389771845e-15,
+      "cosine": 0.9992997646331787,
+      "finite": true,
+      "full_output_elements_consumed": 262144,
+      "max_abs": 0.11334359645843506,
+      "negative_control_wrong_weight_scale_relative_l2": 0.22561593353748322,
+      "oracle_kind": "high_precision_real_weight_matmul_with_adopted_stock_checksum",
+      "pass": false,
+      "relative_l2": 0.03741930425167084,
+      "saturation_fraction": 0.00029593423823826015,
+      "scale_max_relative_error_nonzero_rows": 0.0,
+      "stock_zero_row_scale": "not_replayed"
+    },
+    "required": {
+      "cosine_min": 0.999,
+      "finite": true,
+      "negative_control_diverges": true,
+      "relative_l2_max": 0.02,
+      "scale_relative_error_max": 2e-05
+    }
+  },
+  "created_at_utc": "2026-07-29T22:13:39.742494Z",
+  "execution": {
+    "actual_spend_usd": 0.5086344286402067,
+    "claim_seconds": 747.3812012672424,
+    "endpoint_invoked": false,
+    "gpu_invocation": true,
+    "provider_mutation": false,
+    "release": {
+      "condition": "available",
+      "evidence_path": "artifacts/fp8-prologue-owner-20260729t220112z/RELEASE_EVIDENCE.json",
+      "evidence_sha256": "6c65a6194b0081832f35a069dbaacab0c93453336c81c3266074ad0229ecc091",
+      "generation_fenced": true,
+      "zero_gpu_verified": true
+    },
+    "scientific_sample_consumed": true,
+    "useful_gpu_seconds": {
+      "decision_interval_lower_bound_s": 0.1786952018737793,
+      "reason": "Pre-marker real-weight transfer/quantization was not phase-timed; do not invent an exact total.",
+      "value": null
+    }
+  },
+  "final_repaired_ready": {
+    "path": "FP8_PROLOGUE_H200_OWNER_READY.json",
+    "sha256": "705ec75af92771d114df0b33296052101dba41ab43ca9a57fcd670ee08daf8f6"
+  },
+  "finalized_at_utc": "2026-07-29T22:15:54.233895Z",
+  "geometry": {
+    "K": 5376,
+    "M": 32,
+    "N": 8192,
+    "activation": {
+      "dtype": "bfloat16",
+      "shape": [
+        32,
+        5376
+      ]
+    },
+    "activation_scale": {
+      "dtype": "float32",
+      "semantics": "per-token row amax / 448 with zero guard",
+      "shape": [
+        32
+      ]
+    },
+    "output": {
+      "dtype": "bfloat16",
+      "elements_consumed": 262144,
+      "shape": [
+        32,
+        8192
+      ]
+    },
+    "phase": "c32_decode_component",
+    "projection": "layer-0 q_proj",
+    "weight_consumer": {
+      "dtype": "float8_e4m3fn",
+      "scale": "float32 per output column [8192]",
+      "shape": [
+        5376,
+        8192
+      ],
+      "strides": [
+        1,
+        5376
+      ]
+    }
+  },
+  "immutable_inputs": {
+    "owner": {
+      "path": "fp8_prologue_h200_owner.py",
+      "sha256": "4de2688f717fd3b857443361a4609494cb3d6b673cdf1020627a250b46636acc"
+    },
+    "pinned_fp8_utils": {
+      "path": "/root/workspace/.agents/runtime/sglang-v0.5.13-source/python/sglang/srt/layers/quantization/fp8_utils.py",
+      "sha256": "a3a130f40974047084e3daff2bd0efbbfe69e197d4c9a5ba3fbc5304dd4e43d9"
+    },
+    "runner": {
+      "path": "fp8_prologue_h200_runner.py",
+      "sha256": "9cd58bd697cf7d7ba28175e309a659336fe5ec553878284b5a7eb9631e900213"
+    },
+    "trace": {
+      "path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_v0513_fp8_qkv_residual_profile/artifacts/residual-profile-20260720t0821z/pair/nsys-stats.csv",
+      "sha256": "2c23d30660675e39185344b2d44b7b951d7bcd700704c4fd73028efa19eff487"
+    },
+    "weight": {
+      "checkpoint_shape": [
+        8192,
+        5376
+      ],
+      "name": "model.language_model.layers.0.self_attn.q_proj.weight",
+      "shard": "model-00001-of-00002.safetensors",
+      "shard_bytes": 49784788364,
+      "shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+      "source_dtype": "bfloat16",
+      "source_tensor_sha256": "a72f855baace3939c705fa3fac32709b401fb4499b50006748e24258e56579df"
+    }
+  },
+  "owner_start_ready_sha256": "0980ac5afd77ac3437fd9337f44cb76e051567e725423564de602d8704a00dad",
+  "project": "gemma4_h200_decode_taskgraph_hotblock",
+  "repair_lineage": [
+    {
+      "attempt": 1,
+      "classification": "invalid_pre_arm_api_defect",
+      "consumed": false,
+      "diagnostic_sha256": "d78e936db470ff4f686852c42810e7b1dc48ed1a28aaed360ae845ba1bce451e"
+    },
+    {
+      "attempts": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "classification": "one_invalid_stock_layout_repair_lineage_with_duplicate_request_race",
+      "diagnostic_sha256": "fa7f89523552c5b8f79b419e80df00b566da9f7a1b9d575d809df5c5bc5988d3",
+      "gemm_output_persisted": false,
+      "independent_samples": 0,
+      "stock_quantizer_executed": true
+    },
+    {
+      "attempt": 6,
+      "classification": "stock_correctness_stage_consumed_then_candidate_compile_defect",
+      "diagnostic_sha256": "a635d640316b37ba9036c6b383457aa0af26e9aabb1242c6f4833da4a58913e5",
+      "stock_checksum": 297.00628662109375,
+      "stock_replayed_later": false
+    },
+    {
+      "attempt": 7,
+      "candidate_checksum": 297.2925109863281,
+      "classification": "invalid_missing_comparator_after_candidate_completion",
+      "diagnostic_sha256": "c3066207b13bd9c7c461972adc2c1d5add3bb785d7e19e79bfb4fd02b18ba2d6",
+      "independent_samples": 0
+    },
+    {
+      "attempt": 8,
+      "candidate_continuation": true,
+      "classification": "decision_bearing_correctness_negative",
+      "component_terminal_sha256": "bfbda98d6056b4558739ac4c7f410b88369ce00bb5264d6844aafd68869bf155",
+      "stock_adopted": true
+    }
+  ],
+  "schema_version": 2,
+  "stock_control": "Pinned SGLang sglang_per_token_quant_fp8 followed by unchanged sgl_kernel.fp8_scaled_mm.",
+  "timing": {
+    "bracket_rows": 0,
+    "component_gain": null,
+    "status": "not_started_by_preregistered_correctness_stop",
+    "timing_consumed": false
+  },
+  "typed_decision": {
+    "next": "Director must adjudicate or issue a new binding. No claim, replacement owner, replay, or endpoint inference is authorized.",
+    "promotion": false,
+    "provisional_measurement": "Current on-tile candidate failed the numerical gate, but this cannot canonically close the candidate under the authoritative lifecycle binding.",
+    "scientific_closure": false,
+    "scope": "posthoc_binding_supersession_conflict",
+    "type": "blocked"
+  },
+  "whole_request_bound": {
+    "seconds_per_request": null,
+    "summed_trace_inference_used": false,
+    "type": "unknown_no_component_timing_or_endpoint_ab"
+  }
+}

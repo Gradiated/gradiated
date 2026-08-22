@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "bound_at_utc": "2026-07-28T11:58:00Z",
+  "project": "gemma4_multiresolution_global_kv_codesign",
+  "decision": "reactivate_for_exact_reservation_then_director_owned_h200_provisioning",
+  "priority": 9900,
+  "researcher_profile": "execution",
+  "campaign": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_service_seconds_per_request": 0.625149101968745,
+    "target_service_seconds_per_request": 0.500119281574996,
+    "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
+  },
+  "execution_packet": {
+    "terminal": "H200_EXECUTION_READY.json",
+    "terminal_sha256": "769e0f6a7348a7f80dc97bc379250189b45e218a5875b7ea7fd22ff1e544ea96",
+    "classification": "offline_runner_owner_bound_not_target_runtime_ready",
+    "runner": "h200_component_runner.py",
+    "runner_sha256": "3014ebf6beb96ecbd8a58cac0953bb4d3667dcd06c03251206068a91c4229d54",
+    "owner": "h200_endpoint_owner.sh",
+    "owner_sha256": "f73a0d7b56ca6e90a59a31f2da4520d5cc4f27c159b16fd43259f43589a8eb8e",
+    "candidate": "multiresolution_global_kv.py",
+    "candidate_sha256": "ab5d951d338b3c404606efce2dbcb2f9235d016a8943ee6c01d601ee2f289f20"
+  },
+  "provider_gate": {
+    "required_accelerator": "nvidia-h200-sxm",
+    "provider_controller": "authenticated Nebius controller with prior registered H200 lifecycle evidence",
+    "authorized_spend_usd": 8.0,
+    "actual_spend_usd": 0.0,
+    "reservation_visible_in_current_snapshot": false,
+    "maximum_provider_lifecycle_minutes": 150,
+    "reference_experiment_rate_usd_per_hour": 2.46,
+    "maximum_reference_lifecycle_exposure_usd": 6.15,
+    "director_create_only_after_exact_reservation_is_visible": true
+  },
+  "immediate_action": {
+    "harness": "Durably reserve the project's exact $8.00 authority.",
+    "director": "On a later turn, after observing that reservation, run the read-only regional capacity selector, create and register one bounded H200 bench, verify identity and watchdog, then make the project claimable.",
+    "researcher": "Do not use provider APIs, claim a GPU, or run another offline preparation cycle while no director-registered H200 exists."
+  },
+  "later_science": {
+    "first_call": "Use the tiny pinned-image target-runtime component invocation as the compile and integration check.",
+    "component": "Run one profiler-off stock/candidate component pair after the tiny call passes.",
+    "conditional_endpoint": "Run one stock-then-candidate exact c32 endpoint pair only under the bound compact-entry, fallback, correctness, and target gates.",
+    "compact_entry_ceiling": 64,
+    "fallback_rate_ceiling": 0.0012873226748728159,
+    "maximum_service_seconds_per_request": 0.500119281574996,
+    "quality_label": "quality_unsafe_model_semantics_proxy"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "binding_sha256": "aea1d6c24718a6490c015b2dc0d21b7dee56852bb0515f992f0b6bf2f8d215ff",
+  "candidate_only": true,
+  "claim_started_at_utc": "2026-07-29T00:54:46.997840Z",
+  "manifest": "H200_55L5G_RETAINED_STOCK_RECOVERY_CANDIDATE_TRANSITION_RUNTIME_MANIFEST.json",
+  "owner": "run_h200_55l5g_retained_candidate_transition_owner.py",
+  "owner_sha256": "047d8b19ac810d31ffef8adf7747e88b0c8caab1743ae57f35fbb873b4527465",
+  "ready_is_final_prelaunch_mutation": true,
+  "stock_replay_forbidden": true
+}

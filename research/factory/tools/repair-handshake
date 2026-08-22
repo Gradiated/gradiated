@@ -125,34 +125,36 @@ def ready(args: argparse.Namespace) -> int:
             "repair_id",
         )
         if all(existing.get(field) == value.get(field) for field in stable_fields):
-            print(
-                json.dumps(
-                    {
-                        "state": "repair_ready",
-                        "ready_path": str(ready_path),
-                        "handshake_root": str(root),
-                        "ready_sha256": digest(existing),
-                        "idempotent": True,
-                    },
-                    sort_keys=True,
+            if not getattr(args, "quiet", False):
+                print(
+                    json.dumps(
+                        {
+                            "state": "repair_ready",
+                            "ready_path": str(ready_path),
+                            "handshake_root": str(root),
+                            "ready_sha256": digest(existing),
+                            "idempotent": True,
+                        },
+                        sort_keys=True,
+                    )
                 )
-            )
             return 0
         return fail("different_repair_ready_already_exists")
 
     atomic_write(ready_path, value)
-    print(
-        json.dumps(
-            {
-                "state": "repair_ready",
-                "ready_path": str(ready_path),
-                "handshake_root": str(root),
-                "ready_sha256": digest(value),
-                "idempotent": False,
-            },
-            sort_keys=True,
+    if not getattr(args, "quiet", False):
+        print(
+            json.dumps(
+                {
+                    "state": "repair_ready",
+                    "ready_path": str(ready_path),
+                    "handshake_root": str(root),
+                    "ready_sha256": digest(value),
+                    "idempotent": False,
+                },
+                sort_keys=True,
+            )
         )
-    )
     return 0
 
 
@@ -171,13 +173,16 @@ def request(args: argparse.Namespace) -> int:
         return fail(f"invalid_repair_ready_deadline:{error}")
     if deadline <= datetime.datetime.now(datetime.UTC):
         return fail("repair_deadline_passed")
+    ready_scope = ready_value.get("retry_scope")
+    if args.retry_scope is not None and args.retry_scope != ready_scope:
+        return fail("repair_request_scope_mismatch")
 
     value: dict[str, object] = {
         "schema_version": 1,
         "state": "repair_requested",
         "requested_at_utc": utc_now(),
         "ready_sha256": digest(ready_value),
-        "retry_scope": args.retry_scope or ready_value.get("retry_scope"),
+        "retry_scope": ready_scope,
         "patch_artifact": args.patch_artifact,
         # Older durable owners used packet_path before the shared helper
         # standardized on patch_artifact. Keep the alias identical so those
@@ -200,8 +205,109 @@ def request(args: argparse.Namespace) -> int:
     return 0
 
 
+def marker(value: str) -> bool | None:
+    if value == "true":
+        return True
+    if value == "false":
+        return False
+    return None
+
+
+def repair_terminal(args: argparse.Namespace) -> int:
+    base, root, ready_path, request_path = paths(args.root, args.repair_id)
+    terminal_path = root / "REPAIR_TERMINAL.json"
+    if (base / "TERMINAL.json").exists():
+        return fail("terminal_already_exists")
+    if not ready_path.exists():
+        return fail("repair_ready_missing")
+    if not request_path.exists():
+        return fail("repair_request_missing")
+
+    ready_value = load(ready_path)
+    request_value = load(request_path)
+    ready_sha256 = digest(ready_value)
+    if request_value.get("ready_sha256") != ready_sha256:
+        return fail("repair_request_binding_mismatch")
+
+    value: dict[str, object] = {
+        "schema_version": 1,
+        "state": "repair_terminal",
+        "created_at_utc": utc_now(),
+        "ready_sha256": ready_sha256,
+        "request_sha256": digest(request_value),
+        "retry_scope": request_value.get("retry_scope"),
+        "exit_code": args.exit_code,
+        "classification": args.classification,
+        "cuda_started": marker(args.cuda_started),
+        "science_started": marker(args.science_started),
+        "raw_evidence_paths": args.evidence,
+        "result_path": args.result,
+    }
+    if args.repair_id is not None:
+        value["repair_id"] = args.repair_id
+
+    if terminal_path.exists():
+        existing = load(terminal_path)
+        stable_fields = (
+            "ready_sha256",
+            "request_sha256",
+            "retry_scope",
+            "exit_code",
+            "classification",
+            "cuda_started",
+            "science_started",
+            "raw_evidence_paths",
+            "result_path",
+            "repair_id",
+        )
+        if all(existing.get(field) == value.get(field) for field in stable_fields):
+            print(
+                json.dumps(
+                    {
+                        "state": "repair_terminal",
+                        "repair_terminal_path": str(terminal_path),
+                        "repair_terminal_sha256": digest(existing),
+                        "idempotent": True,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
+        return fail("different_repair_terminal_already_exists")
+
+    atomic_write(terminal_path, value)
+    print(
+        json.dumps(
+            {
+                "state": "repair_terminal",
+                "repair_terminal_path": str(terminal_path),
+                "repair_terminal_sha256": digest(value),
+                "idempotent": False,
+            },
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def load_bound_repair_terminal(
+    root: pathlib.Path,
+    ready_value: dict[str, object],
+    request_value: dict[str, object],
+) -> tuple[pathlib.Path, dict[str, object]] | None:
+    terminal_path = root / "REPAIR_TERMINAL.json"
+    if not terminal_path.exists():
+        return None
+    terminal_value = load(terminal_path)
+    if terminal_value.get("ready_sha256") != digest(ready_value):
+        raise ValueError("repair_terminal_ready_binding_mismatch")
+    if terminal_value.get("request_sha256") != digest(request_value):
+        raise ValueError("repair_terminal_request_binding_mismatch")
+    return terminal_path, terminal_value
+
+
 def status(args: argparse.Namespace) -> int:
-    base, _, ready_path, request_path = paths(args.root, args.repair_id)
+    base, root, ready_path, request_path = paths(args.root, args.repair_id)
     if (base / "TERMINAL.json").exists():
         print(json.dumps({"state": "terminal"}, sort_keys=True))
         return 0
@@ -224,6 +330,25 @@ def status(args: argparse.Namespace) -> int:
         request_value = load(request_path)
         if request_value.get("ready_sha256") != ready_sha256:
             return fail("repair_request_binding_mismatch")
+        try:
+            terminal = load_bound_repair_terminal(
+                root, ready_value, request_value
+            )
+        except ValueError as error:
+            return fail(str(error))
+        if terminal is not None:
+            terminal_path, terminal_value = terminal
+            print(
+                json.dumps(
+                    {
+                        "state": "repair_terminal",
+                        "repair_terminal_path": str(terminal_path),
+                        "repair_terminal": terminal_value,
+                    },
+                    sort_keys=True,
+                )
+            )
+            return 0
         result.update(
             {
                 "state": "requested",
@@ -263,6 +388,25 @@ def wait(args: argparse.Namespace) -> int:
                 request_value = load(request_path)
                 if request_value.get("ready_sha256") != ready_sha256:
                     return fail("repair_request_binding_mismatch")
+                try:
+                    terminal = load_bound_repair_terminal(
+                        root, ready_value, request_value
+                    )
+                except ValueError as error:
+                    return fail(str(error))
+                if terminal is not None:
+                    terminal_path, terminal_value = terminal
+                    print(
+                        json.dumps(
+                            {
+                                "state": "repair_terminal",
+                                "repair_terminal_path": str(terminal_path),
+                                "repair_terminal": terminal_value,
+                            },
+                            sort_keys=True,
+                        )
+                    )
+                    return 0
                 print(
                     json.dumps(
                         {
@@ -294,6 +438,19 @@ def wait(args: argparse.Namespace) -> int:
         time.sleep(min(args.poll_seconds, remaining))
 
 
+def hold(args: argparse.Namespace) -> int:
+    """Publish a repair boundary and wait without an owner-side release gap."""
+    _, root, _, _ = paths(args.root, args.repair_id)
+    root.mkdir(parents=True, exist_ok=True)
+    with (root / ".repair-handshake.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        args.quiet = True
+        result = ready(args)
+    if result:
+        return result
+    return wait(args)
+
+
 def parser() -> argparse.ArgumentParser:
     root = argparse.ArgumentParser(
         description=(
@@ -319,6 +476,25 @@ def parser() -> argparse.ArgumentParser:
     ask.add_argument("--retry-scope")
     ask.set_defaults(run=under_root_lock(request))
 
+    complete = commands.add_parser("terminal")
+    complete.add_argument("--root", required=True)
+    complete.add_argument("--repair-id", type=parse_repair_id)
+    complete.add_argument("--exit-code", required=True, type=int)
+    complete.add_argument("--classification", required=True)
+    complete.add_argument(
+        "--cuda-started",
+        choices=("true", "false", "unknown"),
+        default="unknown",
+    )
+    complete.add_argument(
+        "--science-started",
+        choices=("true", "false", "unknown"),
+        default="unknown",
+    )
+    complete.add_argument("--evidence", action="append", required=True)
+    complete.add_argument("--result")
+    complete.set_defaults(run=under_root_lock(repair_terminal))
+
     inspect = commands.add_parser("status")
     inspect.add_argument("--root", required=True)
     inspect.add_argument("--repair-id", type=parse_repair_id)
@@ -330,6 +506,16 @@ def parser() -> argparse.ArgumentParser:
     block.add_argument("--deadline", type=parse_deadline)
     block.add_argument("--poll-seconds", type=float, default=1.0)
     block.set_defaults(run=wait)
+
+    retain = commands.add_parser("hold")
+    retain.add_argument("--root", required=True)
+    retain.add_argument("--repair-id", type=parse_repair_id)
+    retain.add_argument("--deadline", required=True, type=parse_deadline)
+    retain.add_argument("--failure-kind", required=True)
+    retain.add_argument("--diagnostic", required=True)
+    retain.add_argument("--retry-scope", required=True)
+    retain.add_argument("--poll-seconds", type=float, default=1.0)
+    retain.set_defaults(run=hold)
     return root
 
 

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "classification": "derived_fixed_floor_crossop_execution_binding",
+  "director_binding_sha256": "02207541818e7ffcfaa97607f949a5d0c0c314c28bdfb2958ba9428883d8a03d",
+  "owner_sha256": "3c3242f5df3bb6d104a94f9f404f49d696a7fcb679f56171a0d151c21ca4b202",
+  "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+  "ssh_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+  "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+  "claim_start_by_utc": "2026-07-30T04:08:00Z",
+  "scientific_launch_by_utc": "2026-07-30T04:12:00Z",
+  "absolute_release_deadline_utc": "2026-07-30T04:30:00Z",
+  "remote_command": "PYTHONPATH=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/exact_consumer.py --output /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/h200_exact_consumer/TERMINAL.json --expected-source-sha256 4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d --tokens 32 118 1409 1631 2048 --warmups 5 --iterations 31",
+  "bound_files": [
+    {"path": "FIXED_FLOOR_CROSSOP_OFFLINE_TERMINAL.json", "sha256": "33f88a6cf747a1545a55bf712d999bf8f2a55d3b1aab97e7a16ecafa20c17b7a"},
+    {"path": "OFFLINE_VALIDATION.json", "sha256": "96d8e5ac8bf699055854bcb489ffa4505972ccdfcbc297ab2c37eecd16acceb3"},
+    {"path": "fused_qkv_kv_cache.py", "sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d"},
+    {"path": "install_fused_qkv_cache.py", "sha256": "8602b00e8cafb7988b1f5e473a91431d3baf686e5b7405398c038069f7a39bd3"},
+    {"path": "exact_consumer.py", "sha256": "7175968c4be9b95e5d509b328df9424169c2ee499d9da5b2ec42688e4cf8d408"}
+  ]
+}

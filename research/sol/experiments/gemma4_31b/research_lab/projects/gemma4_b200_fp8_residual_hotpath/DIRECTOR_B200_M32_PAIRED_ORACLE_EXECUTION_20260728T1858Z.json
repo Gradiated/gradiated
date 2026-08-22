@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "decision": "execute_m32_stock_patched_pair_with_quantized_oracle",
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "reservation": {
+    "authorized_total_usd": 12.0,
+    "durable": true,
+    "reserved_at": "2026-07-28T18:45:04.761133Z",
+    "updated_at": "2026-07-28T18:56:25.341586Z",
+    "prior_actual_spend_usd": 6.554859014902778,
+    "maximum_cumulative_exposure_usd": 8.735,
+    "within_authority": true
+  },
+  "bench": {
+    "id": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "accelerator": "nvidia-b200-sxm",
+    "project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+    "instance_id": "computeinstance-i00rqcq5yzr6xc991j",
+    "disk_id": "computedisk-i00ky31am65pmpzh8z",
+    "public_ipv4": "46.243.147.55",
+    "ssh_user": "glmrunner",
+    "identity_file": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:DQDeaVGu5zUdbx6tzaeU8rBoNzh1d6wzZ8wjQR6rAHE",
+    "condition_at_binding": "draining_before_director_ready",
+    "provider_identity_reverified_at_utc": "2026-07-28T18:57:07Z"
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-28T19:03:00Z",
+    "owner_launch_by_utc": "2026-07-28T19:07:00Z",
+    "decision_bearing_negative_release_by_utc": "2026-07-28T19:18:00Z",
+    "incomplete_repair_deadline_utc": "2026-07-28T19:18:00Z",
+    "watchdog_deadline_utc": "2026-07-28T19:25:00Z",
+    "watchdog_unit": "gemma4-b200-m32-paired-oracle-20260728t1857z-watchdog.service",
+    "watchdog_main_pid": 3524763,
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_b200_fp8_residual_hotpath --bench b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j --lease-seconds 1800"
+  },
+  "implementation": {
+    "runner_destination": "b200_m32_dispatch_component_paired_oracle.py",
+    "owner_destination": "b200_m32_dispatch_owner_paired_oracle.sh",
+    "preclaim_destination": "PRECLAIM_M32_PAIRED_ORACLE_TERMINAL.json",
+    "owner_start_helper": "/root/workspace/research/factory/tools/detached-owner --unit-manager pid --state-file <absolute-artifact-root>/OWNER_STATE.json --log-file <absolute-artifact-root>/OWNER.log -- bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_residual_hotpath/b200_m32_dispatch_owner_paired_oracle.sh",
+    "mutable_scope": [
+      "paired output persistence and comparison",
+      "A/A observation",
+      "numerical classification",
+      "fresh output generations",
+      "repair-handshake control flow",
+      "launcher paths and retrieval"
+    ],
+    "immutable_scope": [
+      "M32_DISPATCH.patch",
+      "six production shapes and multiplicities",
+      "FP8 producer semantics and scale convention",
+      "stock and genuinely patched cutlass_scaled_mm consumers",
+      "profiler-off warm CUDA-event timing boundary",
+      "endpoint projection formula",
+      "zero endpoint requests"
+    ]
+  },
+  "science": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "phase": "c32 steady decode",
+    "m": 32,
+    "workload": "the unchanged six weighted shapes in B200_FP8_RESIDUAL_DISCRIMINATOR.json",
+    "candidate_extension_remote": "/home/glmrunner/b200-m32-dispatch-20260728t1623z/sm100-install-20260728t1734z-repair2/vllm/_C.abi3.so",
+    "candidate_extension_sha256": "66fb9013b67832d6939c59f21395aeafc59a8e1b52abc3636132819e38cc5be2",
+    "pair_contract": "For each shape, generate identical deterministic BF16 tensors and their FP8 quantized operands once per arm identity, persist the stock and patched BF16 consumer outputs, synchronize each first call separately, and compare patched directly against stock.",
+    "stock_aa": "Run one untimed stock repeat on the first shape and record its output delta to detect nondeterminism or input mismatch.",
+    "paired_correctness": {
+      "finite_required": true,
+      "cosine_min": 0.99999,
+      "normalized_rmse_max": 0.005,
+      "max_abs_max": 0.01,
+      "reference": "stock output on identical FP8 operands"
+    },
+    "quality_diagnostic": "Record each stock and patched output versus the unquantized BF16 matmul, but do not use that quantization delta as the stock-versus-patched pre-timing gate.",
+    "timing_rule": "If outputs are finite and structurally valid, collect the paired six-shape timings even when the paired numerical tolerance fails; classify such a result quality-unsafe and ineligible for endpoint promotion.",
+    "gross_stop": "Nonfinite output, shape/dtype mismatch, accelerator unsafety, or inability to prove distinct loaded stock and patched execution identities."
+  },
+  "disposition": {
+    "positive": "Retain the claim for director endpoint-promotion disposition only when paired correctness passes and the measured whole-request bound is credible.",
+    "decision_bearing_negative": "Persist the complete paired outputs, numerical metrics, timings, and loaded identities, then atomically release by 2026-07-28T19:18:00Z.",
+    "incomplete_or_uninterpretable": "Do not release. Publish a fresh repair-handshake generation, keep the claim heartbeating, and repair only the invalidated mutable boundary while measured restart plus terminal and release still fit the 2026-07-28T19:18:00Z repair deadline. Release to maintenance only if the guest is unsafe or unreachable or the absolute repair deadline is reached."
+  },
+  "forbidden": [
+    "checkpoint load or restage",
+    "endpoint replay",
+    "extension rebuild while the retained candidate hash is present",
+    "changing the dispatcher patch",
+    "changing the six-shape workload",
+    "using BF16 quantization error as dispatcher rejection",
+    "combining decision-bearing negative and incomplete repair into one release branch",
+    "researcher provider lifecycle operations"
+  ]
+}

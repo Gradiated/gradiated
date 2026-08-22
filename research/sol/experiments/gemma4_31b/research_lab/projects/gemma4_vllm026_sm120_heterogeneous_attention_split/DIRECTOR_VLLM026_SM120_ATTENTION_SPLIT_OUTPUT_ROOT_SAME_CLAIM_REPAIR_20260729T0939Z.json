@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "classification": "director_sm120_attention_split_same_claim_output_root_repair",
+  "created_at_utc": "2026-07-29T09:39:30Z",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "decision": "execute_the_unconsumed_parent_once_without_precreating_its_exclusive_output_directory_then_wake_the_existing_retrieval_owner",
+  "claim": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "claimed_at": "2026-07-29T09:36:50.649263Z",
+    "owner_pid": 4059482,
+    "owner_start_ticks": 143382800,
+    "owner_state": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/DETACHED_OWNER.json",
+    "replacement_owner_allowed": false,
+    "new_claim_allowed": false,
+    "absolute_release_deadline_utc": "2026-07-29T10:37:00Z",
+    "watchdog_deadline_utc": "2026-07-29T10:45:00Z"
+  },
+  "repair_handshake": {
+    "root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_heterogeneous_attention_split/artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z",
+    "repair_id": "attention-oracle-2026-07-29T093650.649263Z-r1",
+    "ready_sha256": "c9d3a510c79c6299a9c6cdb6125c53468ba8facf3462838e0e49b86631862e27",
+    "retry_scope": "retrieve_or_adopt_existing_attention_oracle_terminal",
+    "request_must_follow_complete_remote_terminal": true
+  },
+  "invalid_attempt": {
+    "submission_sha256": "8d27ba7d19f1437a99d5157596eceb2394ea383995dfb1027e0fa14d3dc8880e",
+    "parent_stderr_sha256": "1d9c221e9e846a33cf73bd1304f7760f684b21131e4d3d7e8275720d12ac9f8f",
+    "repair_diagnostic_sha256": "77fdf74c65455812c5171e3efdcefc59d21be200a957754569afee9db9349fd1",
+    "exit_code": 1,
+    "failure": "The owner created the remote run directory before invoking an oracle whose parent requires output.mkdir(exist_ok=false). The parent raised FileExistsError before constructing either arm, loading an LLM, reaching CUDA, producing a row, or writing a remote file.",
+    "classification": "invalid_pre_science_output_root_ownership_attempt",
+    "science_consumed": false,
+    "cuda_started": false,
+    "parent_oracle_consumed": false
+  },
+  "immutable_science": {
+    "execution_binding_sha256": "dae923b7ae3c05abf62265ecbdf8fd002f116ae12fc049ab100d821f9c1a19d9",
+    "oracle_sha256": "adb4f590988387fd32518b8955bef0c495fa6321235d13299f58dc230ad9e46b",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "control": "all 60 layers use TRITON_ATTN",
+    "candidate": "50 sliding-window layers use TRITON_ATTN and 10 full-attention layers use FLEX_ATTENTION",
+    "submission_limit": "one corrected parent submission after the invalid pre-science attempt",
+    "endpoint_c32_authorized": false
+  },
+  "remote": {
+    "generation_root": "/workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z",
+    "output_root": "/workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z/run",
+    "oracle_path": "/workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z/future_sm120_oracle.py",
+    "runtime_python": "/workspace/vllm-sm120-native-runtime/venv/bin/python",
+    "runtime_wheel": "/workspace/vllm-sm120-native-runtime/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+    "checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "required_precondition": "The exact output_root exists, is empty, and contains no science marker, arm output, terminal, or other file. Fail closed otherwise.",
+    "repair_operation": "Remove only that verified empty output_root, then invoke the unchanged oracle once with --output equal to that now-absent path. Do not precreate it.",
+    "scientific_command": "/workspace/vllm-sm120-native-runtime/venv/bin/python /workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z/future_sm120_oracle.py --wheel /workspace/vllm-sm120-native-runtime/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl --model /workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4 --output /workspace/gemma4-vllm026-sm120-attention-split/generations/2026-07-29T093650.649263Z/run"
+  },
+  "researcher_contract": {
+    "profile": "execution",
+    "deadline_utc": "2026-07-29T10:00:00Z",
+    "actions": [
+      "Read this binding and the r1 REPAIR_READY.json once. Revalidate the exact claim generation, owner PID/start ticks, waiting handshake, and empty remote output_root once.",
+      "Keep owner PID 4059482 live and heartbeating. Do not stop, replace, or overlap it and do not call gpu_pool claim.",
+      "Capture the corrected parent stdout/stderr and remote terminal identity under artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/repairs/output-root-r1.",
+      "Execute exactly the bound empty-directory removal plus unchanged scientific_command once. Do not change source, checkpoint, wheel, prompts, backend mapping, or output generation.",
+      "Only after a complete remote SM120_ATTENTION_SPLIT_ORACLE.json exists, publish a hash-bound patch artifact recording the execution evidence and send repair-handshake request for the exact r1 ready record. The waiting owner alone retrieves, validates, writes the final terminal, and releases.",
+      "If the corrected parent does not produce a complete terminal, do not send a mismatched retrieval request and do not replay it. Persist the exact diagnostic while preserving the live owner and claim for director recovery."
+    ],
+    "forbidden": [
+      "No new claim, replacement owner, provider lifecycle call, norm-FP8 replay, checkpoint restage or rehash, c32 endpoint, source mutation, or second parent submission.",
+      "Do not write REPAIR_REQUEST.json before the corrected remote terminal is complete.",
+      "Do not release the claim outside the waiting owner's terminal path."
+    ]
+  }
+}

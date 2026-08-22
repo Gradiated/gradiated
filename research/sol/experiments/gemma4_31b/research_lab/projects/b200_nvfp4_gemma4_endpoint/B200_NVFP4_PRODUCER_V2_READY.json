@@ -1,0 +1,60 @@
+{
+  "bundle": {
+    "adapter": "producer_v2/llmcompressor_cli_adapter.py",
+    "adapter_sha256": "e1e24129e176cdea649260798dcdcf659bc3fa1dadfaef058a4e0e34fd8945f4",
+    "requirements_lock": "producer_v2/requirements.lock",
+    "requirements_lock_sha256": "c8037adc3229d1318a7cdae63c04541fb85b361ae758436b4abd8fac318e40f4",
+    "wheel_lock": "producer_v2/WHEEL_LOCK.json",
+    "wheel_lock_sha256": "aaf4275032d8a78f11fcf76d5c08ef05b65c3676461a6253a47a6d6560d2399e",
+    "wheelhouse_bytes": 2868247297,
+    "wheelhouse_python": "3.12",
+    "roots": [
+      "llmcompressor==0.12.0",
+      "torchvision==0.27.0"
+    ]
+  },
+  "decision_id": "b200-nvfp4-offline-producer-v2-20260728t1258z",
+  "future_owner": {
+    "detached_owner_invocation": "research/factory/tools/detached-owner start --state <artifact-root>/OWNER_STATE_PRODUCER_V2.json --log <artifact-root>/OWNER_PRODUCER_V2.log --cwd /root/workspace --unit-manager pid -- bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/b200_nvfp4_gemma4_endpoint/endpoint_owner.sh",
+    "owner_path": "endpoint_owner.sh",
+    "owner_sha256": "8c2bf95b03f34c57ae92a73247fc7c33478d586228a2a312cfd41b3b22b12b2a"
+  },
+  "fresh_environment_smoke": {
+    "adapter_help_sha256": "4baab0b7b9091cd78a0741dfae83d9b4484c807761e40c34a4292ba01243c999",
+    "processor_smoke": "producer_v2/processor_smoke_fresh.stdout",
+    "processor_smoke_sha256": "e06730a976ae7cdf2c45614800567c710e91fde84d38397609413d2343df2109",
+    "result": {
+      "config_model_type": "gemma4",
+      "processor_class": "Gemma4Processor",
+      "processor_symbol": "Gemma4Processor",
+      "weights_loaded": false
+    }
+  },
+  "immutable_science": {
+    "packet_manifest_sha256": "707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "science_consumed": false,
+    "serving_image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79"
+  },
+  "serving_dependency_isolation": {
+    "proof": "The future owner transfers only wheels, locks, and adapter/install scripts; it creates producer-v2/venv and invokes pip only with --no-index --find-links producer-v2/wheels --requirement producer-v2/requirements.lock. It never installs into the pinned serving interpreter.",
+    "serving_core_unchanged": [
+      "torch",
+      "cuda",
+      "transformers",
+      "numpy",
+      "compressed-tensors",
+      "torchvision"
+    ]
+  },
+  "setup_estimate_seconds": {
+    "producer_bundle_copy_and_offline_install": 300,
+    "exact_checkpoint_reconcile_and_stage": 2700,
+    "conversion": 3000,
+    "bf16_control": 1500,
+    "native_nvfp4_candidate": 1500,
+    "terminal_persistence_and_release": 600,
+    "total": 9600
+  },
+  "status": "ready_for_later_director_provision_only"
+}

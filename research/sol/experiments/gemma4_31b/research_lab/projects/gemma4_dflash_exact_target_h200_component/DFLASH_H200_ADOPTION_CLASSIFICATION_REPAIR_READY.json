@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T23:11:46Z",
+  "decision": "safe_adopt_as_unconsumed_with_marker_provenance",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "classification": {
+    "current": "unclassified_consumption",
+    "corrected": "classified_persisted_attempt",
+    "science_consumed": {
+      "ar": false,
+      "dflash": false,
+      "ngram": false
+    },
+    "retry_scope": "all",
+    "continuation_allowed_after_corrected_classification": true
+  },
+  "proof": {
+    "not_inferred_from_missing_science_consumed": true,
+    "persisted_attempt_predicate": {
+      "classification": "server_startup_defect",
+      "scientific_terminal": false,
+      "science_started": {
+        "ar": false,
+        "dflash": false,
+        "ngram": false
+      }
+    },
+    "marker_semantics": "The immutable wrapper writes each exclusive SCIENCE_STARTED marker only after runner-digest validation and output-path freshness checks, immediately before os.execv of the immutable request runner; the marker therefore proves first-request submission boundary entry rather than mere server startup.",
+    "snapshot_evidence": {
+      "retrieval_adoption_path": "artifacts/dflash-h200-owner-20260729t2247z/run/RETRIEVAL_ADOPTION_0.json",
+      "retrieval_adoption_sha256": "f1fe8a236a823ddb108faed0189fe8472672d4b8c3bb73353184074f73d7b674",
+      "snapshot_archive_sha256": "8cf9af7a63b644a47029244c3c89baf85744dae485ecc51ae5f2d3e5ea5051a6",
+      "snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+      "marker_files_present_in_complete_snapshot": false,
+      "ar_server_submitted_sha256": "4b39480f9663e10bb4f7a42b4c54dcda55185c327454536b9bda1c0476aa5595"
+    },
+    "source_evidence": {
+      "marker_writer": "run_bound_c32.py",
+      "marker_writer_sha256": "93497eaf46078f4e110c14fcfe916df67d3cbc12209a23e712c18f8887bd02ee",
+      "current_classifier": "dflash_component_replacement_owner.py",
+      "current_classifier_sha256": "6a1ce229214431d242f6fffa9e4ab8473452431f7ee6ff42561b1044eb959a35"
+    }
+  },
+  "smallest_deferred_repair": {
+    "kind": "retrieval_adoption_classification_only",
+    "patch": "dflash_adoption_classification_repair.patch",
+    "patch_sha256": "cee0f707d211949cb182d28bd3deb1aba2d602d76ab6520db5dedc7b39a19d8d",
+    "base_classifier_sha256": "6a1ce229214431d242f6fffa9e4ab8473452431f7ee6ff42561b1044eb959a35",
+    "predicate": "Only a nonterminal server_startup_defect whose archived complete snapshot has all three exclusive pre-request markers false may synthesize an all-false science_consumed ledger; missing science_consumed alone remains unknown.",
+    "dynamic_fixture": {
+      "input_snapshot_manifest_sha256": "499c50ed75257df865652559b5508fae56cc297aef3855287f8f9d6879174405",
+      "result": "pass",
+      "expected_classification": "classified_persisted_attempt",
+      "expected_retry_scope": "all",
+      "expected_science_consumed": {
+        "ar": false,
+        "dflash": false,
+        "ngram": false
+      }
+    },
+    "pre_classification_execution_fence": {
+      "invoke_worker": false,
+      "cuda": false,
+      "model_load": false,
+      "arms": false,
+      "ssh": false,
+      "docker": false,
+      "provider_lifecycle": false,
+      "new_claim": false
+    },
+    "authority": "This is a deferred source-hash-pinned repair specification only. A later director must bind any exact-PID handoff and may send the documented repair request only after verifying this artifact."
+  },
+  "live_owner_binding": {
+    "pid": 371839,
+    "start_ticks": 148248595,
+    "claim_generation": "2026-07-29T22:47:36.830795Z",
+    "owner_deadline_utc": "2026-07-30T00:27:00Z",
+    "handoff_binding_sha256": "76b08e5dc9b33661408336c7fc0e1143cedf81ea8389a8d193a3ab03a42040bb",
+    "unit": "artifacts/dflash-h200-replacement-r2-20260729t2301z/OWNER_STATE.json",
+    "unit_manager": "pid"
+  },
+  "immutable_science": {
+    "target_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "runtime_revision": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+    "packet_sha256": "bcccec58b0f5ced606f8c7e3584f8500fa99546a97db2af67afbad4347451c04",
+    "ready_sha256": "ca18a8ecc1949fa2cc751a992d9c8af5adfc04e66b886e25e51fb45d8b639bc7",
+    "runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+    "block_size": 16,
+    "control_order": ["AR", "DFLASH", "NGRAM"],
+    "workload": {
+      "requests": 32,
+      "prompt_tokens_each": 4214,
+      "output_tokens_each": 358,
+      "temperature": 0,
+      "seed": 20260718
+    },
+    "historical_request_25_replay_allowed": false
+  },
+  "performed_actions": {
+    "repair_request": false,
+    "owner_stop_or_replace": false,
+    "ssh": false,
+    "docker": false,
+    "cuda": false,
+    "model_load": false,
+    "arm": false,
+    "claim_or_release": false,
+    "provider_lifecycle": false
+  }
+}

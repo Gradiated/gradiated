@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-29T21:36:44Z",
+  "decision": "delegate_same_claim_no_replay_permission_and_adoption_repair",
+  "project": "gemma4_output_head_pq_mips_recovery_proxy",
+  "predecessor_execution": {
+    "path": "DIRECTOR_PQ_MIPS_H200_EXECUTION_20260729T2130Z.json",
+    "sha256": "448f21be6eedad53c801c63c146b37eb31f17b995562d463df6e068cc0024508"
+  },
+  "claim": {
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "expected_claimed_at_utc": "2026-07-29T21:32:36.707592Z",
+    "project": "gemma4_output_head_pq_mips_recovery_proxy",
+    "owner_pid": 317709,
+    "owner_start_ticks": 147677148,
+    "owner_deadline_utc": "2026-07-29T23:48:00Z",
+    "watchdog_deadline_utc": "2026-07-29T23:55:00Z",
+    "new_claim_allowed": false,
+    "replacement_owner_allowed": false
+  },
+  "repair_ready": {
+    "path": "artifacts/pq-mips-h200-owner-20260729t2130z/run/.repair-handshakes/pq-mips-0-1785360890972006687/REPAIR_READY.json",
+    "sha256": "ff4c1d746b70382153dcf39ce8bd900fab1feef210f1138ae2e0cb9906c8dcdb",
+    "repair_id": "pq-mips-0-1785360890972006687",
+    "retry_scope_reported": "unconsumed_vectorized_producer",
+    "absolute_repair_deadline_utc": "2026-07-29T23:48:00Z"
+  },
+  "diagnosis": {
+    "classification": "recoverable_privileged_output_permission_and_adoption_defect",
+    "compact_artifact": "artifacts/pq-mips-h200-owner-20260729t2130z/run/attempt-0.compact",
+    "compact_tree_sha256": "9c19713caca32d8563511cc51e6df4885910fcfd842ae9af5e214313a4916279",
+    "observed": [
+      "The privileged container created the bind-mounted output tree unreadable to glmrunner.",
+      "Retrieval of PRODUCER_STARTED.json, PRODUCER_TERMINAL.json, SCIENCE_STARTED.json, and OUTPUT_HEAD_PQ_MIPS_H200_TERMINAL.json all failed with permission denied.",
+      "The worker emitted only a torch.searchsorted non-contiguous-input warning to retrievable stderr.",
+      "Producer completion and held-out science consumption are therefore unknown, not false."
+    ]
+  },
+  "dispatcher": {
+    "owner_path": "pq_mips_h200_owner.py",
+    "owner_sha256": "c2351cf69274f6000ae05916f7534bda663dd37266010bbf9c1c44a43e453d58",
+    "dispatch_proven": true,
+    "behavior": "The live owner waits for this repair_id, verifies a requested patch artifact exists, stages and extracts it over the packet, increments generation, and re-enters the worker."
+  },
+  "immutable_science": {
+    "packet_identity_sha256": "bdc14325287c483b395662b80b44d89d2ee007e06a214f02be7653d16997b677",
+    "source_ready_sha256": "d8ee6fcd72323a850b203543e947c8bd1d1db270722a62053057beb8f217239b",
+    "frozen_geometry_rows_shortlists_exact_rescore_and_traffic": true,
+    "producer_may_resume_only_when_no_complete_producer_marker_exists": true,
+    "held_out_consumer_may_start_only_when_no_science_started_marker_exists": true,
+    "settled_producer_or_held_out_work_must_not_be_replayed": true
+  },
+  "mutable_repair": {
+    "base_worker_path": "pq_mips_h200_worker.py",
+    "base_worker_sha256": "1a08af103520e55075516e2e979bbf93a202631eefb5bec09c95b2ee314c9b68",
+    "patch_member": "pq_mips_h200_worker.py",
+    "required_behavior": [
+      "Before any producer or held-out operation, inspect the existing /work/output markers from inside the privileged container and normalize only that output tree to be readable by glmrunner.",
+      "If a complete producer and complete decision terminal already exist, perform terminal adoption only and exit without CUDA or scientific replay.",
+      "If SCIENCE_STARTED.json exists without a complete decision terminal, fail closed after permission normalization and preserve all existing bytes for retrieval-only reconstruction; do not invoke producer or held-out science.",
+      "If a complete producer exists and science has not started, reuse the persisted producer and run only the unchanged held-out consumer once.",
+      "If neither producer completion nor science start exists, rerun only the incomplete producer and then continue through the unchanged bound consumer.",
+      "Normalize output readability again before every exit."
+    ],
+    "offline_validation": "Exercise every marker-state branch against a local fixture without CUDA, held-out scoring, provider access, or mutation of the live output tree.",
+    "patch_archive": "artifacts/repairs/pq-mips-0-1785360890972006687/PATCH.tar",
+    "ready_artifact": "PQ_MIPS_H200_PERMISSION_ADOPTION_REPAIR_READY.json",
+    "dispatch": {
+      "tool": "/root/workspace/research/factory/tools/repair-handshake",
+      "command": [
+        "/root/workspace/research/factory/tools/repair-handshake",
+        "request",
+        "--root",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_output_head_pq_mips_recovery_proxy/artifacts/pq-mips-h200-owner-20260729t2130z/run",
+        "--repair-id",
+        "pq-mips-0-1785360890972006687",
+        "--patch-artifact",
+        "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_output_head_pq_mips_recovery_proxy/artifacts/repairs/pq-mips-0-1785360890972006687/PATCH.tar"
+      ]
+    }
+  },
+  "researcher_contract": {
+    "profile": "execution",
+    "wall_clock_minutes": 25,
+    "action": "Implement and validate the narrow patch, publish its hash-complete ready artifact, re-read the exact claim generation and repair-ready record once, then deliver the request to the existing owner and return after one grouped snapshot proves request adoption and fresh owner heartbeat.",
+    "do_not_execute_science_from_controller": true
+  },
+  "prohibitions": [
+    "Do not start or replace an owner.",
+    "Do not create or release a claim.",
+    "Do not call provider lifecycle.",
+    "Do not change frozen PQ geometry, rows, shortlists, exact-rescore semantics, traffic accounting, or inputs.",
+    "Do not infer producer or science non-consumption from the unreadable markers.",
+    "Do not replay held-out science when SCIENCE_STARTED.json exists."
+  ]
+}

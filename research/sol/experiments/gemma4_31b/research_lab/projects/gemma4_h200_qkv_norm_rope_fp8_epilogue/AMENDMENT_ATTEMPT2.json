@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "parent_contract": "EXPERIMENT_CONTRACT.json",
+  "invalid_attempt": "artifacts/attempt1",
+  "classification": "pre_science_launcher_defect",
+  "evidence": {
+    "science_marker_present": false,
+    "candidate_cuda_started": false,
+    "gpu_memory_after_mib": 0,
+    "root_cause": "Container ran as host UID 1001, absent from the pinned image passwd database; torch import failed in getpass.getuser()."
+  },
+  "causal_change": "Run the same immutable program as the image's default root user and capture its exit status without set -e suppressing the exit sidecar.",
+  "unchanged": [
+    "scientific question",
+    "program bytes",
+    "stock and candidate",
+    "geometry",
+    "numerical gate",
+    "timing plan",
+    "bench and image identities",
+    "absolute deadlines"
+  ],
+  "retry_output_generation": "attempt2",
+  "science_submission_count_after_amendment": 0
+}

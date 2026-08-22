@@ -1,0 +1,95 @@
+{
+  "authorization": {
+    "authorized_spend_usd": 4.0,
+    "claim_generation_must_remain": "2026-07-29T11:03:00.114761Z",
+    "new_claim_authorized": false,
+    "provider_lifecycle_authorized": false,
+    "reservation_durable": true
+  },
+  "bench": {
+    "bench_id": "h200-streaming-global-kv-e01q3jffxt2vtafkhp",
+    "replacement_launch_by_utc": "2026-07-29T11:35:00Z",
+    "release_by_utc": "2026-07-29T12:08:50Z",
+    "watchdog_deadline_utc": "2026-07-29T12:18:50Z",
+    "watchdog_pid": 4115321
+  },
+  "classification": "same_claim_r2_fixture_and_persistent_owner_repair_authorized",
+  "failure_evidence": {
+    "cuda_result_present": false,
+    "cuda_stderr_path": "artifacts/streaming-global-kv-h200-20260729t1058z/cuda-r1.stderr",
+    "cuda_stderr_sha256": "88f95faf6e3f129f79a38a8e92b21d869887f8ea80d19ab79e119d0451cfe630",
+    "cuda_stdout_path": "artifacts/streaming-global-kv-h200-20260729t1058z/cuda-r1.stdout",
+    "cuda_stdout_sha256": "b7221fb009281dae2bd5321a3a051dfa3028c5c228ef173061940deeb9a33367",
+    "failure": "The writable Triton cache repair succeeded, but the C=64 fixture chose a start position that constructs more than the fixed 64 compact entries and raised compact_tile_overflow before the runner atomically persisted any result.",
+    "interpretation": "This is a deterministic harness-geometry defect, not a physical memory, numerical, or mechanism result. The CUDA discriminator remains invalid and may be retried once after correcting only its fixture geometry.",
+    "science_consumed": false,
+    "terminal_present": false
+  },
+  "immutable_science": {
+    "activated_source_sha256": "47c1dd902dd287cab2403cb06790095a3e041df434e48ffe22832dfdad4d4880",
+    "candidate_source_sha256": "636cc6e683d04f8950ce288f567ed5411a8d3cbb667b92329827c9bc6d35a23a",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "discriminator_sha256": "1ea35e007bb7f8317d8e90d3109b20d29fba0141cdd23fd8b7fe2cef1a3102e5",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "qualified_denominator_seconds_per_request": 0.625149101968745,
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "target_seconds_per_request": 0.500119281574996,
+    "workload": "c32, 4214 prompt tokens, 358 output tokens, 535 shared-prefix tokens, temperature zero"
+  },
+  "owner_handoff": {
+    "current_owner": {
+      "pid": 4139342,
+      "repair_id": "streaming-global-kv-r1-cuda_discriminator",
+      "repair_ready_path": "artifacts/streaming-global-kv-h200-20260729t1058z/.repair-handshakes/streaming-global-kv-r1-cuda_discriminator/REPAIR_READY.json",
+      "repair_ready_sha256": "cc3a273c8e9dc5b42402a44dd02abaee35673f66aed61fd4b027f818ddf6916a",
+      "source_path": "run_streaming_global_kv_h200_owner_v3.sh",
+      "source_sha256": "d9baeb514ded5c24fd4cb07b709b51b4b80c17c528d5f42be15d031dd02a2f3b",
+      "start_ticks": 144010220,
+      "state_path": "artifacts/streaming-global-kv-h200-20260729t1058z/DETACHED_OWNER_R1.json"
+    },
+    "patch_manifest_path": "STREAMING_GLOBAL_KV_R2_PATCH.json",
+    "request_command": "/root/workspace/research/factory/tools/repair-handshake request --root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z --repair-id streaming-global-kv-r1-cuda_discriminator --patch-artifact /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/STREAMING_GLOBAL_KV_R2_PATCH.json",
+    "replacement": {
+      "launch_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/DETACHED_OWNER_R2.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z/OWNER_R2.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule -- /usr/bin/env STREAMING_GLOBAL_KV_ARTIFACT_ROOT=/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/artifacts/streaming-global-kv-h200-20260729t1058z STREAMING_GLOBAL_KV_BENCH=h200-streaming-global-kv-e01q3jffxt2vtafkhp STREAMING_GLOBAL_KV_EXPECTED_CLAIMED_AT=2026-07-29T11:03:00.114761Z STREAMING_GLOBAL_KV_RELEASE_BY_UTC=2026-07-29T12:08:50Z STREAMING_GLOBAL_KV_IMAGE=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6 STREAMING_GLOBAL_KV_ENDPOINT_COMMAND='python3 /home/glmrunner/streaming-global-kv/input/streaming_global_kv_endpoint.py' bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_streaming_global_kv_memory_schedule/run_streaming_global_kv_h200_owner_v4.sh",
+      "log_path": "artifacts/streaming-global-kv-h200-20260729t1058z/OWNER_R2.log",
+      "owner_source_path": "run_streaming_global_kv_h200_owner_v4.sh",
+      "runner_source_path": "streaming_global_kv_h200_runner_r2.py",
+      "state_path": "artifacts/streaming-global-kv-h200-20260729t1058z/DETACHED_OWNER_R2.json"
+    },
+    "transition_sequence": [
+      "Revalidate the exact live R1 owner, original claim generation, repair ID, no terminal, and no CUDA result.",
+      "Implement and hash-bind the R2 runner, persistent owner, and patch manifest before acknowledging R1.",
+      "Deliver the exact repair request. R1 is expected to exit because its current control flow cannot re-enter the discriminator.",
+      "Verify only PID 4139342/start ticks 144010220 exited, the original claim remains current, and no competing executor exists.",
+      "Launch exactly one R2 PID-managed owner and atomically publish its active_session."
+    ]
+  },
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "repair_contract": {
+    "mutable_files": [
+      "streaming_global_kv_h200_runner_r2.py",
+      "run_streaming_global_kv_h200_owner_v4.sh",
+      "STREAMING_GLOBAL_KV_R2_PATCH.json"
+    ],
+    "required_changes": [
+      "Preserve C=26,Q=1, C=64,Q=1, and C=64,Q=32 as the exact discriminator calls.",
+      "For each fixture, derive query_start from the fixed compact target after accounting for protected positions, RECENT_EXACT_TOKENS, query rows, and SUMMARY_BLOCK_TOKENS; assert the resulting production plan contains exactly compact_target entries before allocating tensors.",
+      "Do not change U=8, tile capacity 64, production planner, candidate schedule, tolerance, or measurement geometry to make the fixture pass.",
+      "Stage the R2 runner content-addressed beside the settled remote inputs and use generation-specific output/capture paths.",
+      "The R2 owner must adopt and heartbeat the original claim without calling gpu_pool claim.",
+      "The R2 owner must keep a real repair loop: after each fresh repair request, hash-bind the patch and re-enter only the named invalidated stage instead of unconditionally exiting.",
+      "Retry the invalid CUDA discriminator once. Only a complete passing discriminator may trigger the unchanged new streamed-candidate endpoint.",
+      "Persist each completed discriminator section before the endpoint, retain ordinary integration repairs, and release generation-fenced by 2026-07-29T12:08:50Z."
+    ],
+    "runner_predecessor_path": "streaming_global_kv_h200_runner.py",
+    "runner_predecessor_sha256": "01c1b8201af49b4582ab3f6990beb1bb79b53f003df401c62ac54681e17a090d"
+  },
+  "schema_version": 1,
+  "must_not": [
+    "Do not call gpu_pool claim, release the retained claim before a terminal path, or invoke provider lifecycle.",
+    "Do not replay the consumed materializing c32 arm or run a stock endpoint.",
+    "Do not modify the production activated source, candidate source, U=8 schedule, tile capacity, tolerance, checkpoint, image, workload, or target.",
+    "Do not overlap R1 and R2 execution or start another replacement if the corrected R2 attempt also fails.",
+    "Do not touch either MTP H200 or the independent SM120 project."
+  ]
+}

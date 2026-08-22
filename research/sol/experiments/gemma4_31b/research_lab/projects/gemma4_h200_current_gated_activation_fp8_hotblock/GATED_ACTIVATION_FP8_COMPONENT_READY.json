@@ -1,0 +1,62 @@
+{
+  "binding": {
+    "path": "DIRECTOR_GATED_ACTIVATION_FP8_OFFLINE_COMPONENT_20260729T1522Z.json",
+    "sha256": "ae436ca80c86e6b1411d781374e17c9d48b6808145392c643daeaf156ba63481"
+  },
+  "checkpoint": {
+    "index": "model.safetensors.index.json",
+    "index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+    "index_to_shard_verified": true,
+    "manifest": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/CHECKPOINT_MANIFEST.json",
+    "manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_decode_equivalent_verifier/inputs/checkpoint",
+    "source_shard": "model-00001-of-00002.safetensors",
+    "source_shard_bytes": 49784788364,
+    "source_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "classification": "offline_exact_component_materialization_ready",
+  "component": {
+    "bytes": 231211144,
+    "dtype": "bfloat16",
+    "exact_source_value_equality_after_atomic_finalize": true,
+    "only_tensor": "model.language_model.layers.0.mlp.down_proj.weight",
+    "path": "inputs/gemma4-layer0-down-proj-component.safetensors",
+    "payload_bytes": 231211008,
+    "sha256": "d6622163e9de350e75c7e07f51b486be92cfc0e130271c8de30518445034bac9",
+    "shape": [
+      5376,
+      21504
+    ],
+    "value_sha256": "ffd213f9ef26dd8f8287d9afc4a5888da4db5adb31937d6b5e96718e8a93b709"
+  },
+  "component_manifest": {
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "path": "GATED_ACTIVATION_FP8_COMPONENT_MANIFEST.json",
+    "sha256": "3a9ee1473e591795117d3c7ba2fbd60d473ddbb1c18e80cd5887c9bc021d7541"
+  },
+  "decision": "positive_prerequisite_ready_for_later_director_authorized_h200_component_run",
+  "kind": "gemma4_gated_activation_fp8_h200_component_ready",
+  "next_action": "Director may later authorize one exact H200 component run; this project is paused and non-claimable until then.",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "runner": {
+    "contract_path": "H200_RUNNER_CONTRACT.json",
+    "contract_sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba",
+    "describe_command": "python3 h200_runner.py --describe",
+    "describe_output_sha256": "ada59890d9328ca5c322547c8bcf783a52604dbc1561c9a4e13bb831cb89d4ba",
+    "describe_parse_pass": true,
+    "path": "h200_runner.py",
+    "sha256": "177233e2c6d7c1d8d464d01732e07dbd75ec96b14ab27444a40620b108a14ccb"
+  },
+  "schema_version": 1,
+  "scope": {
+    "candidate_runner_bytes_modified": false,
+    "cuda_executed": false,
+    "docker_used": false,
+    "gpu_pool_called": false,
+    "gpu_used": false,
+    "provider_api_used": false,
+    "scientific_sample_consumed": false,
+    "spend_usd": 0.0,
+    "ssh_used": false
+  }
+}

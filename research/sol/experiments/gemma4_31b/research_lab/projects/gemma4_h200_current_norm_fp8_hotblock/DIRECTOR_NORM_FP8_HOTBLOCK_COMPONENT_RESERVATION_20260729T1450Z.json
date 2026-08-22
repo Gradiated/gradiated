@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "classification": "director_norm_fp8_hotblock_component_reservation_queue",
+  "created_at_utc": "2026-07-29T14:50:00Z",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Queue one exact H200 component run behind the live streamed-global-KV owner. Keep the project paused and non-claimable until its reservation is durable and the director observes a safe bench handoff.",
+  "ready_artifact": {
+    "path": "NORM_FP8_COMPONENT_READY.json",
+    "sha256": "86fc46eea425adb955bf9ded71a234a54801e40f7b6120de6efe9cada5f50c23"
+  },
+  "component": {
+    "path": "inputs/gemma4-layer0-norm-qkv-component.safetensors",
+    "sha256": "dfa05dcf1f3f9ad6dd40f5318cf6c2c6d55eb93beebf0239f205e7fa88b85829",
+    "bytes": 176172392,
+    "tensor_count": 4,
+    "exact_values_verified": true
+  },
+  "runner": {
+    "path": "h200_runner.py",
+    "sha256": "2fd9a339a887011b0db590ae74711ab32d688b26386d556a8e7c76167355b111",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "rows": [
+      1,
+      16,
+      32
+    ],
+    "primary_row": 32
+  },
+  "reservation": {
+    "requested_cumulative_usd": 2.0,
+    "maximum_component_lifecycle_minutes": 30,
+    "metered_hourly_rate_usd": 2.45,
+    "maximum_component_exposure_usd": 1.225
+  },
+  "dependency": {
+    "predecessor_project": "gemma4_streaming_global_kv_memory_schedule",
+    "preferred_bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_predecessor_state": "decision-bearing terminal and generation-fenced release, or an explicit director handoff",
+    "future_director_binding_required": true
+  },
+  "scientific_contract": {
+    "question": "Does decode-only pre-attention RMSNorm plus per-token E4M3 quantization reduce the exact layer-0 QKV consumer component at M=32 on H200?",
+    "required_evidence": "Complete M=1/16/32 numerical, candidate-path, launch, CUDA-graph, and timing ledger with M=32 contemporaneous stock/candidate comparison.",
+    "success": "All correctness and graph gates pass and the M=32 candidate component median is below contemporaneous stock.",
+    "negative": "A complete interpretable row ledger rejects correctness, execution equivalence, graph replay, or M=32 timing."
+  },
+  "must_not": [
+    "Do not claim or touch the H200 while streamed-global-KV owns it.",
+    "Do not clear the supervisor drain fence or mutate provider lifecycle before a later director handoff.",
+    "Do not run CUDA or treat this reservation artifact as execution authority.",
+    "Do not reopen the falsified residual-fed or prefill mechanisms."
+  ]
+}

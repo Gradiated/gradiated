@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "decision": "repair_live_r4_candidate_only_scale_binding_in_place",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "created_at_utc": "2026-07-30T05:26:50Z",
+  "scientific_contract": {
+    "scope": "candidate_only",
+    "candidate_requests_authorized": 32,
+    "candidate_requests_consumed": 0,
+    "control_requests_consumed": 32,
+    "control_replay_allowed": false,
+    "component_replay_allowed": false,
+    "quality_oracle": "Exact ordered emitted chunks, finish fields, SSE-event count, and usage accounting against the immutable 32-request stock oracle; ignore only transport-volatile IDs and timestamps.",
+    "timing_denominators_seconds_per_request": {
+      "frozen_stock": 1.006774868593709,
+      "fixed_qualified": 0.625149101968745,
+      "campaign_target": 0.500119281574996
+    }
+  },
+  "live_owner": {
+    "pid": 570159,
+    "start_ticks": 150495435,
+    "artifact_root": "artifacts/fixed-floor-crossop-endpoint-r4-candidate-only-20260730t0512z",
+    "claim_generation": "2026-07-30T04:55:56.475891Z",
+    "repair_id": "endpoint-r4-1-1785389143",
+    "repair_ready_sha256": "cc0845d8f8d3108805ed3e878b45630cb27cfc8de720581f56963ccffb3f71b3",
+    "diagnostic_sha256": "1a39d49db09d5ccc50b9a5822f3b4bceca9aa8aca46698f4627498b63a9980d8"
+  },
+  "observed_failure": {
+    "classification": "recoverable_pre_request_triton_scale_binding_defect",
+    "generation": 1,
+    "candidate_server_ready": false,
+    "candidate_requests_submitted": 0,
+    "evidence": "The exact R4 kernel reached CUDA graph capture after the generation-0 cache-store repair, then Triton rejected output0 / K_SCALE because the endpoint supplied a builtin_function_or_method rather than a numeric scalar constexpr."
+  },
+  "repair": {
+    "profile": "execution",
+    "skills": [
+      "$researcher",
+      "$kernel-research",
+      "$experiment-run"
+    ],
+    "allowed_files": [
+      "endpoint_candidate_gemma4_causal.py",
+      "fixed_floor_crossop_endpoint_adapter.py",
+      "fused_qkv_kv_cache.py"
+    ],
+    "required_result": "Hash-bind the smallest pinned-runtime adapter change that converts both live attention KV-scale values to finite positive Python numeric scalars before the Triton launch, without changing QKV/rope/cache semantics, launch geometry, output dtype, or the emitted-chunk oracle.",
+    "current_candidate_model_sha256": "3f429439ce1def9e882055e1e49b7a26e2fd2b13da2685b25ff5aa4ecdb1d1c9",
+    "current_kernel_sha256": "7ee1a18ddc8a4a69df68e769f238a583348cfda1232cae6656b0facf621ba0c8",
+    "remote_project_root": "/home/glmrunner/fixed-floor-crossop-endpoint-r4/project",
+    "delivery": "Stage only the hash-bound changed source file or files through strict SSH to .part paths, verify remote hashes, atomically replace their matching project paths, then re-read the exact owner PID/start ticks, claim generation, repair ID, watchdog PID, and absence of a terminal. If unchanged, submit exactly one repair-handshake request for endpoint-r4-1-1785389143 with this repair packet as patch artifact. The live dispatcher then re-enters candidate_only as generation 2.",
+    "dispatcher_capability": "Owner R4 loops after consuming a request and re-enters candidate_only. Remote patch staging must complete before the request because the owner does not apply patch bytes itself."
+  },
+  "identity": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_main_pid": 546249,
+    "watchdog_deadline_utc": "2026-07-30T05:51:56.187924Z"
+  },
+  "fences": {
+    "patch_and_request_by_utc": "2026-07-30T05:32:00Z",
+    "candidate_reentry_by_utc": "2026-07-30T05:34:00Z",
+    "pair_terminal_by_utc": "2026-07-30T05:41:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T05:44:00Z",
+    "provider_lifecycle_mutation_allowed": false,
+    "release_and_reclaim_allowed": false
+  },
+  "forbidden": [
+    "stock replay",
+    "component replay",
+    "candidate request before the repaired server is ready",
+    "decode/re-encode or output normalization",
+    "weakened emitted-chunk equality",
+    "new claim",
+    "owner replacement",
+    "provider lifecycle mutation"
+  ],
+  "terminal_disposition": {
+    "decision_bearing_pair": "Persist PAIR_TERMINAL.json and release the claim by 05:44Z.",
+    "recoverable_pre_request_failure": "Keep the same owner and claim at a fresh typed repair boundary only when another measured restart plus terminal and release margin still fits 05:44Z.",
+    "deadline_or_unsafe_guest": "Persist a typed boundary and release by 05:44Z."
+  }
+}

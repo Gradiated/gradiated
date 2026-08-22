@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "classification": "strict_provider_ssh_cloud_init_idle_h200_identity_verified",
+  "verified_at_utc": "2026-07-29T13:09:52Z",
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+  "provider": {
+    "name": "nebius",
+    "profile": "glm-campaign",
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "instance_name": "gemma4-streaming-global-kv-fresh-20260729t1247z",
+    "instance_state": "RUNNING",
+    "public_ipv4": "89.169.96.163",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "disk_name": "gemma4-streaming-global-kv-fresh-20260729t1247z-boot",
+    "disk_state": "READY",
+    "disk_attached_to": "computeinstance-e00n8vffvr4jkmm33f",
+    "platform": "gpu-h200-sxm",
+    "preset": "1gpu-16vcpu-200gb"
+  },
+  "connection": {
+    "ssh_user": "glmrunner",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_ed25519_fingerprint": "SHA256:iVGEkfHux6Tcjib28bS/hIaNU9SUYz2r1F9p20A/fzU",
+    "strict_host_key_persisted": true,
+    "batch_ssh_passed": true
+  },
+  "guest": {
+    "cloud_init_ready_at_utc": "2026-07-29T12:49:12Z",
+    "gpu_count": 1,
+    "gpu_uuid": "GPU-487785b9-6b6d-8c2f-f7b4-cff9e6a8b66a",
+    "gpu_name": "NVIDIA H200",
+    "gpu_memory_mib": 143771,
+    "gpu_memory_used_mib": 0,
+    "driver_version": "580.159.04",
+    "compute_capability": "9.0",
+    "compute_applications": [],
+    "running_containers": []
+  },
+  "lifecycle": {
+    "deadline_utc": "2026-07-29T14:27:49.361123Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1247z-watchdog.service",
+    "watchdog_main_pid": 4733,
+    "watchdog_active": true
+  },
+  "operations": {
+    "provider_reads": 2,
+    "strict_ssh_probes": 1,
+    "setup_started": false,
+    "checkpoint_staging_started": false,
+    "container_started": false,
+    "cuda_called": false,
+    "science_started": false
+  }
+}

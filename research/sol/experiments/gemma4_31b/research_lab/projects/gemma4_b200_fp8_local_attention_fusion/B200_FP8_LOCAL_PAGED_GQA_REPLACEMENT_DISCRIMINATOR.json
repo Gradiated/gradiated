@@ -1,0 +1,430 @@
+{
+  "analytical_accounting": {
+    "full_workload": {
+      "calls": 17900,
+      "fresh_kv_cache_write_bytes_preserved": 9384755200,
+      "separate_append_launches_removed_if_correct": 17900
+    },
+    "label": "derived_not_measured",
+    "per_call": {
+      "candidate_max_page_rounded_kv_read_bytes": 544735232,
+      "candidate_max_page_rounding_overread_bytes": 7864320,
+      "candidate_max_page_rounding_overread_fraction": 0.0146484375,
+      "fresh_kv_cache_write_bytes": 524288,
+      "separate_append_launch_removed_if_correct": 1,
+      "stock_exact_window_kv_read_bytes": 536870912
+    },
+    "warning": "The source-complete CUDA-core path is not assumed faster than the opaque Blackwell tensor-core cubin. This accounting only proves the semantic boundary and bounds page-rounding traffic."
+  },
+  "authoritative_identity": {
+    "hardware": {
+      "cuda_executed": false,
+      "gpu_claimed": false,
+      "required": "nvidia-b200-sxm",
+      "target": "sm_100"
+    },
+    "model": {
+      "id": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+    },
+    "runtime": {
+      "flashinfer_tag_commit": "70b142b75b46aa56e7f675a8e6ec1a977352c91f",
+      "flashinfer_version": "0.6.6",
+      "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
+      "vllm_commit": "6d4a8e6d204a9b2827544003b26321fff62923da"
+    },
+    "workload": {
+      "concurrency": 32,
+      "decode_steps": 358,
+      "identity": "c32/4214/358/text-only/non-reasoning",
+      "local_attention_calls": 17900,
+      "local_layers": 50,
+      "seq_lens_range_inclusive": [
+        4214,
+        4571
+      ]
+    }
+  },
+  "builder": {
+    "path": "build_paged_gqa_replacement_discriminator.py",
+    "sha256": "d382113901c0968d9ea2dc9851162771920e7f4a4f8f926818baa9f44e63c30d"
+  },
+  "candidate": {
+    "cache_write": {
+      "barrier": "CTA sync before paged cache loads",
+      "negative_slot": "no write, then same existing-cache attention semantics",
+      "vector": "8 BF16 elements / 16 bytes per x thread",
+      "writers": "threadIdx.y==0 && threadIdx.z==0"
+    },
+    "first_consumer_ownership": [
+      "query",
+      "fresh key",
+      "fresh value",
+      "slot mapping",
+      "paged cache mutation",
+      "page indices and lengths",
+      "window mask",
+      "softmax and value reduction",
+      "BF16 output"
+    ],
+    "harness": "candidate/check_correctness_b200.py",
+    "intervention_boundary": "inside the source-complete native paged-decode device CTA, before the first cache load",
+    "launch_ownership": {
+      "block": [
+        "x=32",
+        "y=2",
+        "z=2"
+      ],
+      "blocks": 512,
+      "grid": [
+        "batch=32",
+        "kv_heads=16"
+      ],
+      "one_owner_per": [
+        "request",
+        "kv_head"
+      ],
+      "split_kv": "forbidden and asserted false before invocation",
+      "threads_per_block": 128
+    },
+    "name": "Gemma4LocalFusedAppendDecode",
+    "page_metadata_adapter": {
+      "additional_device_kernel": false,
+      "mask_selects_exactly": 1024,
+      "max_tokens_loaded_per_request": 1039,
+      "operation": "slice the final min(65, logical_page_count) block-table indices per request; do not move or rewrite cache bytes"
+    },
+    "source": "candidate/local_paged_gqa_fused.py",
+    "status": {
+      "compiled": false,
+      "correctness_measured": false,
+      "executed": false,
+      "performance_measured": false,
+      "production_integrated": false,
+      "source_complete": true
+    }
+  },
+  "classification": "source_complete_uncompiled_unexecuted_sm100_local_paged_gqa_replacement",
+  "decision": "Admit one source-complete correctness candidate, not a benchmark-ready optimization. It replaces the opaque TRT-LLM Gen first consumer with FlashInfer v0.6.6 native paged-GQA CUDA source and performs the fresh K/V slot write inside the owning no-split decode CTA. The adapter passes only the final 65 page indices per request, so the native loop reads at most 1039 tokens and its sliding mask selects exactly the final 1024. Compilation, target-GPU correctness, and performance remain unmeasured.",
+  "economic_relevance": {
+    "absolute_gap_seconds": 0.125029820393749,
+    "campaign_target_seconds": 0.500119281574996,
+    "fixed_qualified_request_seconds": 0.625149101968745,
+    "promotion_rule": "correctness is necessary but insufficient; later target-GPU component timing must show a material request-level bound before any integration"
+  },
+  "exact_pinned_first_consumer": {
+    "abi_excludes": [
+      "fresh key",
+      "fresh value",
+      "slot mapping"
+    ],
+    "abi_inputs": [
+      "query",
+      "paged key cache",
+      "paged value cache",
+      "workspace",
+      "block tables",
+      "sequence lengths",
+      "window_left",
+      "output"
+    ],
+    "artifact_checksums_sha256": "10a54e8c3175099481aed2739ae30fa0f782368c40f9ad1b423ed8353315d65b",
+    "cubin_bytes": 154568,
+    "cubin_file": "fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP16MultiCtasKvVarSeqQ8Kv128StaticSwapsAbForGen.cubin",
+    "cubin_sha256": "a5ae26d06e8463baf3e1dac3251633b70ece90ca612a10afa6b09925578fd9be",
+    "device_source_available": false,
+    "dynamic_shared_memory_bytes": 144992,
+    "flashinfer_artifact_root": "f1ed60e5666a7620683a8c34a41c850a25029b35/fmha/trtllm-gen/",
+    "function_name": "fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP16MultiCtasKvVarSeqQ8Kv128StaticSwapsAbForGen",
+    "metainfo_sha256": "c31ed20605e8e7caad4d8301fedccf681520275813126c4660f8f933954cd78b",
+    "selector_derivation": {
+      "gqa_group_size": 2,
+      "groups_heads_q": true,
+      "groups_tokens_heads_q": true,
+      "head_dim_per_cta_v": 256,
+      "head_dim_qk": 256,
+      "head_dim_v": 256,
+      "kernel_type": "SwapsMmaAbForGeneration",
+      "mask": "SlidingOrChunkedCausal",
+      "max_q_len": 1,
+      "multi_ctas_kv": true,
+      "page_size": 16,
+      "q_kv_o_dtype": [
+        "bfloat16",
+        "bfloat16",
+        "bfloat16"
+      ],
+      "qkv_layout": "PagedKv",
+      "sm_compatibility": "SM100f admitted on B200 SM100",
+      "step_kv": 256,
+      "step_q": 8,
+      "tile_scheduler": "Static",
+      "tile_size_kv": 128,
+      "tile_size_q": 8
+    },
+    "threads_per_cta": 512
+  },
+  "generated_at_utc": "2026-07-28T19:06:28Z",
+  "limits": [
+    "No GPU was claimed and no CUDA was run.",
+    "No benchmark result is claimed.",
+    "No endpoint was replayed.",
+    "No global K=V or M32 path was modified.",
+    "No provider operation or paid mutation occurred.",
+    "The candidate is source-complete against exact pinned upstream bytes but uncompiled."
+  ],
+  "production_contract": {
+    "attention": {
+      "attention_scale": 1.0,
+      "gqa_group_size": 2,
+      "head_dim": 256,
+      "kv_heads": 16,
+      "logits_soft_cap": null,
+      "position_encoding_inside_consumer": "none",
+      "q_heads": 32,
+      "visible_tokens": 1024,
+      "window_left": 1023
+    },
+    "cache": {
+      "block_tables": {
+        "dtype": "int32",
+        "shape": [
+          32,
+          "max_blocks_per_request"
+        ]
+      },
+      "dtype": "bfloat16",
+      "element_strides": [
+        131072,
+        65536,
+        256,
+        4096,
+        1
+      ],
+      "logical_layout": "HND",
+      "logical_shape": [
+        "num_pages",
+        2,
+        16,
+        16,
+        256
+      ],
+      "page_size": 16,
+      "physical_allocation": "interleaved NHD allocation exposed through an HND logical view",
+      "seq_lens": {
+        "dtype": "int32",
+        "range_inclusive": [
+          4214,
+          4571
+        ],
+        "shape": [
+          32
+        ]
+      }
+    },
+    "output": {
+      "dtype": "bfloat16",
+      "first_downstream_consumer": "local attention output projection",
+      "layout": "contiguous",
+      "shape": [
+        32,
+        32,
+        256
+      ]
+    },
+    "persistent_side_effect": "the exact fresh BF16 K/V vectors occupy their physical slots for all later decode steps",
+    "producer": {
+      "fresh_key": {
+        "dtype": "bfloat16",
+        "shape": [
+          32,
+          16,
+          256
+        ],
+        "strides": [
+          4096,
+          256,
+          1
+        ]
+      },
+      "fresh_value": {
+        "dtype": "bfloat16",
+        "shape": [
+          32,
+          16,
+          256
+        ],
+        "strides": [
+          4096,
+          256,
+          1
+        ]
+      },
+      "ownership": "one current decode token per request after the local layer QKV projection",
+      "query": {
+        "dtype": "bfloat16",
+        "position_transform": "already applied upstream",
+        "shape": [
+          32,
+          32,
+          256
+        ],
+        "strides": [
+          8192,
+          256,
+          1
+        ]
+      }
+    },
+    "slot_map": {
+      "dtype": "int64",
+      "negative_semantics": "no cache mutation",
+      "physical_slot_formula": "physical_page * page_size + entry_in_page",
+      "required_consistency": "nonnegative slot resolves to the request's final block-table page and (seq_len-1)%16",
+      "shape": [
+        32
+      ]
+    }
+  },
+  "schema_version": 1,
+  "smallest_target_gpu_correctness_plan": {
+    "after_correctness_only": "a distinct preregistered component timing pair may compare stock append+cubin against candidate; no endpoint replay is authorized here",
+    "arms": [
+      {
+        "name": "stock",
+        "operation": "pinned vLLM reshape_and_cache_flash, then the exact fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP16MultiCtasKvVarSeqQ8Kv128StaticSwapsAbForGen cubin"
+      },
+      {
+        "name": "candidate",
+        "operation": "one JIT-built source-complete native decode invocation that performs cache append and attention"
+      }
+    ],
+    "attempt_semantics": {
+      "candidate_output_or_cache_mismatch": "scientific incorrect terminal",
+      "compile_import_path_parser_or_comparator_failure": "invalid attempt; preserve artifact and repair only invalidated stage",
+      "complete_comparison": "one consumed scientific sample"
+    },
+    "bench_claim_now": false,
+    "bundle_manifest_sha256": "377b2e7226cbdb99271783cbeb2df547084d804a756374f8d6f02dcd9aa08144",
+    "decision_gates": {
+      "candidate_finite": true,
+      "entire_cache_bitwise_equal": true,
+      "output_allclose": {
+        "atol": 0.03,
+        "rtol": 0.05
+      },
+      "output_cosine_min": 0.999,
+      "split_kv": false
+    },
+    "endpoint_or_model_load": false,
+    "geometry": {
+      "batch": 32,
+      "cache_strides": [
+        131072,
+        65536,
+        256,
+        4096,
+        1
+      ],
+      "dtype": "bfloat16",
+      "head_dim": 256,
+      "kv_heads": 16,
+      "page_size": 16,
+      "page_tables": "old prefix pages alias one sentinel; every final 65-page tail is unique and observable",
+      "q_heads": 32,
+      "seq_lens": "32 monotonic values spanning the exact inclusive 4214..4571 range",
+      "window_left": 1023
+    },
+    "provider_operation_now": false,
+    "shared_inputs": "bitwise-identical initial cache, Q, fresh K/V, slot map, block tables, sequence lengths, and scale",
+    "source_bundle": {
+      "flashinfer_tag": "v0.6.6",
+      "flashinfer_tag_commit": "70b142b75b46aa56e7f675a8e6ec1a977352c91f",
+      "project_files": {
+        "candidate/check_correctness_b200.py": {
+          "bytes": 12570,
+          "sha256": "7876d35727b4f526b2277c32934895745599d6352c52e43ab9464e881b28731c"
+        },
+        "candidate/local_paged_gqa_fused.py": {
+          "bytes": 7496,
+          "sha256": "c164e89fd43721118e0b8a8499e577461b80cdf9a593ae98214e166b87c5bc4f"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/csrc/trtllm_fmha_kernel_launcher.cu": {
+          "bytes": 30777,
+          "sha256": "56627ee688c8cde526add0a4922fa2b5c044ad4e63066133197d16fb3f5839ca"
+        },
+        "inputs/pinned/flashinfer-0.6.6/flashinfer/data/include/flashinfer/trtllm/fmha/fmhaKernels.cuh": {
+          "bytes": 42899,
+          "sha256": "8bf3350bef0ed070e6102c6dceb4760aa8114d2ca5328f22c5027cf5587e50f9"
+        },
+        "inputs/pinned/flashinfer-0.6.6/trtllm-gen-artifact/checksums.txt": {
+          "bytes": 1405031,
+          "sha256": "10a54e8c3175099481aed2739ae30fa0f782368c40f9ad1b423ed8353315d65b"
+        },
+        "inputs/pinned/flashinfer-0.6.6/trtllm-gen-artifact/fmhaSm100fKernel_QkvBfloat16OBfloat16H256PagedKvSlidingOrChunkedCausalP16MultiCtasKvVarSeqQ8Kv128StaticSwapsAbForGen.cubin": {
+          "bytes": 154568,
+          "sha256": "a5ae26d06e8463baf3e1dac3251633b70ece90ca612a10afa6b09925578fd9be"
+        },
+        "inputs/pinned/flashinfer-0.6.6/trtllm-gen-artifact/include/flashInferMetaInfo.h": {
+          "bytes": 2875611,
+          "sha256": "c31ed20605e8e7caad4d8301fedccf681520275813126c4660f8f933954cd78b"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/csrc/cache_kernels.cu": {
+          "bytes": 62752,
+          "sha256": "129d20f62f0b97d4bcc27830ebf527950750bed9ddf557f7b3f989b4152a94fa"
+        },
+        "inputs/pinned/vllm-6d4a8e6d/vllm/v1/attention/backends/flashinfer.py": {
+          "bytes": 71784,
+          "sha256": "e22db5ddadbd550083438946c4452b3227d98020c6c34285dd4b6917b39e2aae"
+        }
+      },
+      "upstream_source_hashes": {
+        "csrc/batch_decode.cu": "9b0aa3da779d922af75d57f22d8c8bceb7722c2e4ded94637074b6baf567cd30",
+        "csrc/batch_decode_customize_config.jinja": "61c776b646b1351498f5cad2f7ff6256d0946fd88ed5ce5ce1e490a3d9d8f414",
+        "csrc/batch_decode_jit_binding.cu": "fe1bad13e1ed242aa6b0e290bdb5a47388b2869a4305cfcbc952d5ec4b9def0a",
+        "flashinfer/decode.py": "882c71a2d5515b98ffb41e488b1e93b033f7ce92790493e63ad079b4dbb3402e",
+        "flashinfer/jit/attention/modules.py": "dad408690a09545fe9d71e73ca59ad0b5b94de2f5f95caa10a96cfa7877ec0af",
+        "include/flashinfer/attention/decode.cuh": "019d673aa848a938798a2c58b34b9b5813a3f137962cbbd90ef7bd71f636f373",
+        "include/flashinfer/attention/default_decode_params.cuh": "92388eb0b2c19cc01eb937d1dc7d45a46e512d25ac64e03cce91677f8cda6c4c",
+        "include/flashinfer/attention/scheduler.cuh": "3fdc85c6b42d9c27fd688c614fef162bb523f3a95f095ba40dc53e3c52712c3b",
+        "include/flashinfer/attention/variants.cuh": "90a228dd71b3ce8030d663e2b16f67f840fe4a3e99912f8b47774d3fd905a080",
+        "include/flashinfer/page.cuh": "6ad25f50ed08ea74495d8a8d172baf57266e53ce0d42b14dc9e979c1073c0468"
+      }
+    },
+    "target": "one identity-verified NVIDIA B200 SM100",
+    "terminal_artifact": "CORRECTNESS_TERMINAL.json",
+    "type": "one_hash_bound_component_pair_not_a_benchmark"
+  },
+  "source_complete_upstream_discrimination": [
+    {
+      "amendment": "custom AttentionVariant writes fresh K/V before the native paged-GQA loop; page metadata is limited to the final 65 pages",
+      "custom_cache_strides": true,
+      "disposition": "selected_as_candidate_base",
+      "fresh_kv_slot_side_effect": false,
+      "head_dim_256": true,
+      "implementation": "FlashInfer v0.6.6 native BatchDecodeWithPagedKVCache",
+      "paged_standard_gqa": true,
+      "sliding_mask": true,
+      "sm100_compilable_cuda_source": true,
+      "source_complete": true
+    },
+    {
+      "disposition": "typed_mechanism_rejection",
+      "implementation": "FlashInfer v0.6.6 CUTLASS SM100 FMHA",
+      "reason": "standard entry accepts contiguous ragged K/V only and dispatches head dimensions 64, 128, or QK192/VO128; it has neither standard paged GQA d256 nor the cache side-effect ABI",
+      "source_complete": true
+    },
+    {
+      "disposition": "typed_mechanism_rejection",
+      "implementation": "FlashInfer v0.6.6 Blackwell paged MLA",
+      "reason": "paged SM100 source is the latent/rope MLA mechanism, not 16-head BF16 standard GQA with d256 K and V",
+      "source_complete": true
+    },
+    {
+      "disposition": "typed_mechanism_rejection",
+      "implementation": "FlashInfer/TensorRT-LLM fmha_v2 paged KV source",
+      "reason": "source describes paged GQA and sliding masks but is not the selected SM100 Gen implementation and exposes no fresh-KV slot ABI",
+      "source_complete": true
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "bench": "b200-m32-static-computeinstance-i00z1c1rm2yatraaed",
+  "binding": {
+    "path": "DIRECTOR_B200_STATIC_SCHEDULER_ENDPOINT_EXECUTION_20260729T0022Z.json",
+    "scientific_contract_unchanged": true,
+    "sha256": "5c3c06b109470e1d27f395973a41a1c9849c775d144c93307b2b02536ff7e1c3"
+  },
+  "decision": "repair_and_resume_unconsumed_endpoint_inside_retained_warm_b200",
+  "evidence": {
+    "candidate_cuda_invocation_started": false,
+    "checkpoint_bytes_staged": 0,
+    "containers_present": false,
+    "controller_error": "FileNotFoundError(2, 'No such file or directory')",
+    "gpu_compute_applications_present": false,
+    "remote_root_present": false,
+    "science_consumed": false,
+    "strict_ssh_snapshot_at_utc": "2026-07-29T00:36:00Z"
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-29T01:10:00Z",
+    "owner_deadline_utc": "2026-07-29T02:17:00Z",
+    "owner_launch_by_utc": "2026-07-29T01:12:00Z",
+    "provider_watchdog_deadline_utc": "2026-07-29T02:24:07Z",
+    "release_by_utc": "2026-07-29T02:12:00Z"
+  },
+  "mutable_owner_repair": {
+    "artifact_root": "artifacts/b200-static-scheduler-endpoint-repair-20260729t0038z",
+    "requirements": [
+      "Use absolute controller executable paths for ssh, scp, and tail and fail preclaim if any is absent.",
+      "Preserve resumable single-writer checkpoint staging and the existing remote root.",
+      "Persist the failing command/executable and traceback in a compact diagnostic.",
+      "Route every recoverable pre-science staging, build, import, server, retrieval, or endpoint-launch defect through a live heartbeat plus fresh repair-handshake generation; do not release to maintenance from a generic exception path.",
+      "Release only after the binding's complete stock/candidate endpoint ledger, unsafe or unreachable guest, or absolute deadline.",
+      "Re-emit the runtime manifest, preclaim packet, and READY artifact with final owner hashes; publish READY as the final mutation."
+    ],
+    "retry_scope": "checkpoint_stage_then_production_endpoint",
+    "suspected_first_missing_executable": "ssh"
+  },
+  "project": "gemma4_b200_fp8_residual_hotpath",
+  "schema_version": 1,
+  "scientific_invariants": {
+    "candidate_source_sha256": "1d1f5aba004d9e33e14a0c548eca2ea8c0e5f326fc60b1dac2334e482b30e425",
+    "checkpoint_manifest_sha256": "e9da34db5ed8e7dce27e242088733cbf09ad489de451f8634b4afbe671a8f8b1",
+    "component_replay_forbidden": true,
+    "endpoint_pair_maximum_valid_submissions": 1,
+    "fp8_producer_scales_geometry_workload_oracle_timing_unchanged": true
+  }
+}

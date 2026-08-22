@@ -1,0 +1,519 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-29T22:01:57Z",
+  "project": "gemma4_exact_target_parallel_draft_compatibility",
+  "question": "Which public draft path can create decision-bearing accepted target tokens for the exact pinned Gemma 4 31B instruction target without changing greedy target semantics?",
+  "scope": {
+    "evidence_fidelity": "public immutable model/config and runtime source plus an executed synthetic CPU acceptance/KV consumer",
+    "campaign_mode": "text-only, non-reasoning, greedy c32",
+    "spend_usd": 0.0,
+    "gpu_used": false,
+    "provider_accessed": false,
+    "endpoint_traffic_sent": false,
+    "training_performed": false,
+    "claims_excluded": [
+      "No public drafter was loaded with model weights in this project.",
+      "No c32 acceptance length, verifier time, service time, speedup, or quality result was measured.",
+      "A registered upstream test is source-backed load intent, not a measured result from this project.",
+      "The CPU fixture proves consumer semantics and shape rejection, not draft quality or target-GPU execution."
+    ]
+  },
+  "immutable_identities": {
+    "target_model": {
+      "repo": "google/gemma-4-31B-it",
+      "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "source_url": "https://huggingface.co/google/gemma-4-31B-it/tree/b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+      "weight_index_sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2",
+      "weight_lfs_objects": [
+        {
+          "path": "model-00001-of-00002.safetensors",
+          "sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa",
+          "bytes": 49784788364
+        },
+        {
+          "path": "model-00002-of-00002.safetensors",
+          "sha256": "018912220f559f7025d60333e0996183cd538aa77ad6f4988a89ce47be681f10",
+          "bytes": 12761549884
+        }
+      ],
+      "architecture": "Gemma4ForConditionalGeneration",
+      "text_geometry": {
+        "hidden_size": 5376,
+        "num_hidden_layers": 60,
+        "layer_pattern": "five sliding_attention then one full_attention, repeated ten times",
+        "num_attention_heads": 32,
+        "num_key_value_heads": 16,
+        "num_global_key_value_heads": 4,
+        "local_head_dim": 256,
+        "global_head_dim": 512,
+        "sliding_window_tokens_inclusive": 1024,
+        "max_position_embeddings": 262144,
+        "vocab_size": 262144,
+        "tie_word_embeddings": true
+      }
+    },
+    "target_tokenizer": {
+      "repo_revision": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+      "tokenizer_json_lfs_sha256": "cc8d3a0ce36466ccc1278bf987df5f71db1719b9ca6b4118264f45cb627bfe0f",
+      "tokenizer_json_bytes": 32169626,
+      "tokenizer_config_sha256": "90c3a3ba5bf53818383a58e1a776cbcacd2a038d4812eaa373e1522f2d06f3df",
+      "required_runtime_rule": "Tokenize requests with this target tokenizer only. Draft repositories without tokenizers inherit target token IDs; an assistant tokenizer must not replace this artifact."
+    },
+    "pinned_runtime": {
+      "name": "SGLang v0.5.13",
+      "tag_object": "cba18f4d8090d23e9273e663db2a0b3b2e39f117",
+      "commit": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+      "source_url": "https://github.com/sgl-project/sglang/tree/28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+      "source_sha256": {
+        "python/sglang/srt/models/dflash.py": "9152436daac86675173d396bd9310da673f0ab906216119af7059350102599b1",
+        "python/sglang/srt/models/gemma4_mtp.py": "3c2025089f6c62738770a45bbf64df5bc615c2f378cdb1753f4febc055aff138",
+        "python/sglang/srt/models/llama_eagle3.py": "b4586b9b0f90fd8b8b979f4bf3faeb98d705e08e7a04ff096f8060eddd5ee44b",
+        "python/sglang/srt/speculative/dflash_info.py": "c27a2e022440150d2a2c216cf4f1033bb5e234b7e533c9a282a3c7a3c0354296",
+        "python/sglang/srt/speculative/dflash_worker.py": "a0e7df73120406ed6b5336c43fe9d750f8c6e56861a84810ff958584ba489c83",
+        "python/sglang/srt/speculative/eagle_utils.py": "d81c5c0113088c8cdeb3da8ff52961a5284a9313288b7fe0d416bdcf58479f3d",
+        "python/sglang/srt/speculative/eagle_worker_v2.py": "9c9c072343c84605a698b4c02d634a42332df0d98bd4a5ea41df5bddf8114126",
+        "python/sglang/srt/speculative/frozen_kv_mtp_worker_v2.py": "169be78399ff817e78f70b52e981ea492e26efad3d4e531e2a4a2ad3fbea8d54",
+        "python/sglang/srt/speculative/ngram_worker.py": "27721b777cae08657ec9854ec0137a0db50afd49d84809503312fa43e399b554",
+        "python/sglang/srt/speculative/spec_utils.py": "7f1d2f6527763a1471f7fd317810ef57605670af860f21d839e7834f82227cdd"
+      }
+    },
+    "current_runtime": {
+      "name": "SGLang v0.5.15",
+      "tag_object": "d80c135a4f961a5118959de022934fc2dc598c21",
+      "commit": "f63458b5beaceabbd9d749b9fc956370e1b649e6",
+      "source_url": "https://github.com/sgl-project/sglang/tree/f63458b5beaceabbd9d749b9fc956370e1b649e6",
+      "source_sha256": {
+        "python/sglang/srt/models/dflash.py": "ddbcf49c4e8d93673509d2627d28184c158d47202dc63ef070ae90ec3423829d",
+        "python/sglang/srt/models/gemma4_mtp.py": "3c2025089f6c62738770a45bbf64df5bc615c2f378cdb1753f4febc055aff138",
+        "python/sglang/srt/models/llama_eagle3.py": "9b28ad9029faefb7ec81bb871b278b85b73ea05929b992a548b0bde488f615f1",
+        "python/sglang/srt/speculative/dflash_info.py": "5f65c04014f3ef19605900f14afb555a1dd4286c967f4c54289e2f501a961bed",
+        "python/sglang/srt/speculative/dflash_worker_v2.py": "bc3574717734f7c98261e4d1567fae04f3388b45e8e328a49142ae5f4721520d",
+        "python/sglang/srt/speculative/eagle_utils.py": "ee10d53d6bb583fbed6400ae36697fc6b80a58a11ec7db7a3306f36d035ea4ff",
+        "python/sglang/srt/speculative/eagle_worker_v2.py": "c898f2ce6bc30b5b67f62a263316712a4551414935aef328ee903542e06beff7",
+        "python/sglang/srt/speculative/frozen_kv_mtp_worker_v2.py": "1e257cc4f772bd5a637d2c48bf2dd7cf7d43c98a8a4c4ad781e6ca43aefd32b7",
+        "python/sglang/srt/speculative/ngram_worker.py": "63b79c73c7615b07f61a4c21f3483a6542ffa5a2bbfb7f891a366294a4a9214e",
+        "python/sglang/srt/speculative/spec_utils.py": "017b0a92a3f66382a1bf7212b96fc073d1f8748714764ca6090cd4e46b19e3cc"
+      },
+      "registered_source_contracts": {
+        "dflash_exact_model_names": "test/registered/spec/test_gemma4_dflash_31b_extra.py binds google/gemma-4-31B-it plus z-lab/gemma-4-31B-it-DFlash, TP2, block 16, Triton target attention, FlashInfer draft attention, GSM8K score floor 0.75, and mean accept-length floor 5.4.",
+        "mtp_exact_model_names": "test/registered/spec/test_gemma4_mtp_31b_extra.py binds google/gemma-4-31B-it plus google/gemma-4-31B-it-assistant, NEXTN alias, five recurrent steps, top-k 1 or 3, draft budget 6 or 12, GSM8K score floor 0.75, and mean accept-length floor 1.5.",
+        "evidence_label": "source-backed upstream test definitions; not executed or measured in this project"
+      }
+    },
+    "c32_workload": {
+      "runner_path": "research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_current_runtime_frontier/inputs/current-sglang/exact_c32_runner.py",
+      "runner_sha256": "8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03",
+      "concurrency": 32,
+      "prompt_tokens_per_request": 4214,
+      "forced_output_tokens_per_request": 358,
+      "shared_prefix_tokens": 535,
+      "temperature": 0,
+      "seed": 20260718,
+      "request_generator_seed": "gemma4-background-exact-mix-c32-20260718"
+    }
+  },
+  "candidate_paths": [
+    {
+      "id": "dflash_one_forward_block",
+      "candidate_model": {
+        "repo": "z-lab/gemma-4-31B-it-DFlash",
+        "revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+        "source_url": "https://huggingface.co/z-lab/gemma-4-31B-it-DFlash/tree/eabd648301ce28583cc14757912e5e0f84e152e1",
+        "config_sha256": "325f2a18894994b19f916e551b6f13a6904e961ae59a818d2b1dec18458e97f8",
+        "weight_lfs_sha256": "b3f28580103d6e8a0a1d9389646957b9309df5982558afd754b9810357f425b7",
+        "weight_bytes": 3071941240,
+        "architecture": "DFlashDraftModel",
+        "geometry": {
+          "block_size_including_current_token": 16,
+          "parallel_next_token_proposals": 15,
+          "hidden_size": 5376,
+          "draft_layers": 5,
+          "target_layers": 60,
+          "target_layer_ids": [
+            1,
+            12,
+            23,
+            35,
+            46,
+            57
+          ],
+          "target_context_features": 6,
+          "projected_target_feature_shape": "[N,32256] -> [N,5376]",
+          "vocab_size": 262144,
+          "draft_attention_heads": 64,
+          "draft_kv_heads": 8,
+          "draft_head_dim": 128,
+          "draft_sliding_window": 2048
+        },
+        "tokenizer": "No tokenizer is shipped; target tokenizer is mandatory."
+      },
+      "mechanism_class": "learned_true_one_forward_parallel_draft",
+      "producer": {
+        "symbols": [
+          "sglang.srt.models.dflash.DFlashDraftModel.project_target_hidden",
+          "sglang.srt.models.dflash.DFlashDraftModel.forward",
+          "sglang.srt.speculative.dflash_worker_v2.DFlashWorkerV2.forward_batch_generation"
+        ],
+        "shapes": {
+          "block_ids": "[B,16] int64; column 0 is current target bonus and columns 1:16 begin as mask id 4",
+          "draft_input_embeds": "[B*16,5376]",
+          "draft_hidden": "[B,16,5376]",
+          "draft_next": "[B,15] int64 from the target LM head",
+          "draft_tokens": "[B,16] int64 = current token plus 15 simultaneous proposals"
+        },
+        "source_observation": "v0.5.15 creates one [B*16] draft forward, then applies the shared target LM head to hidden[:,1:,:]; there is no per-position Python draft-forward loop."
+      },
+      "verifier": {
+        "symbols": [
+          "sglang.srt.speculative.dflash_info.DFlashVerifyInput.prepare_for_verify",
+          "TpModelWorker.forward_batch_generation(batch=None, forward_batch=verify_forward_batch, is_verify=True)"
+        ],
+        "shapes": {
+          "verify_input_ids": "[B*16] int64",
+          "positions": "[B*16] int64",
+          "verify_out_cache_loc": "[B*16] int64 with 2D view [B,16]",
+          "target_logits": "[B*16,262144]",
+          "target_hidden": "[B,16,6*5376] logical captured-feature contract before draft projection"
+        },
+        "mask": "Standard causal mask over the linear block; target checkpoint supplies every decision."
+      },
+      "acceptance": {
+        "symbols": [
+          "sglang.srt.speculative.dflash_utils.compute_dflash_correct_drafts_and_bonus",
+          "sglang.srt.speculative.triton_ops.dflash._compute_dflash_accept_bonus_triton_unchecked"
+        ],
+        "shapes": {
+          "candidates": "[B,16]",
+          "target_top1": "[B,16]",
+          "matches": "[B,15]",
+          "accepted_drafts": "[B] int32 in [0,15]",
+          "commit_lens": "[B] int32 = accepted_drafts + 1",
+          "bonus": "[B] int64",
+          "out_tokens": "[B,16] with only the first commit_lens entries valid per row"
+        },
+        "greedy_rule": "accepted_drafts = sum(cumprod(candidates[:,1:] == target_top1[:,:-1])); bonus = target_top1[row,accepted_drafts]"
+      },
+      "kv_commit": {
+        "symbols": [
+          "DFlashWorkerV2._append_target_hidden_to_draft_kv_by_loc",
+          "GenerationBatchResult.new_seq_lens",
+          "ScheduleBatch/Req kv_committed_len and overallocated-KV reclamation",
+          "pinned v0.5.13 DFlashVerifyInput.verify"
+        ],
+        "logical_contract": "For accepted count a, target verify-input KV for candidates[0:a+1] is logically committed; candidates[a+1:16] are not part of the sequence. Output emits candidates[1:a+1] then target_top1[a]. The target bonus remains pending for the next decode forward.",
+        "shapes": {
+          "committed_verify_inputs": "[B,accepted_drafts+1]",
+          "new_seq_lens": "[B] = prefix_lens + commit_lens",
+          "draft_hidden_materialization": "[B,16,*] filtered by commit_lens into draft KV",
+          "uncommitted_suffix": "[B,16-commit_lens] reclaimed/ignored by committed-length boundary"
+        }
+      },
+      "current_load_support": {
+        "pinned_v0_5_13": "Source contains DFlashDraftModel, DFlashWorker, target verification, explicit accepted-prefix KV handling, and matching config parser. Exact public checkpoint execution is not re-measured here.",
+        "current_v0_5_15": "Source contains DFlashDraftModel and DFlashWorkerV2, and an upstream registered exact-model test contract uses this target/draft pair.",
+        "exact_target_revision_status": "geometry-compatible and source-admitted; actual load of target revision b9ea41... with draft revision eabd648... remains the first target-GPU gate",
+        "unsupported_or_risky_features": [
+          "pipeline parallelism",
+          "DP attention",
+          "return_logprob",
+          "grammar-constrained decoding",
+          "overlap plus returned hidden states"
+        ]
+      },
+      "typed_decision": "promote_target_gpu_component"
+    },
+    {
+      "id": "eagle3_public_gemma4_head",
+      "candidate_model": {
+        "repo": "thoughtworks/Gemma-4-31B-Eagle3",
+        "revision": "05db845f6ba394c3aedda7f5f90032d734299f23",
+        "source_url": "https://huggingface.co/thoughtworks/Gemma-4-31B-Eagle3/tree/05db845f6ba394c3aedda7f5f90032d734299f23",
+        "config_sha256": "9b09f0d07e89ccfed918bd558799f67d0c2286f3af63ec41f194b1b55114391b",
+        "weight_lfs_sha256": "fff0c01d917611706321a74418b3000333d0e756fbcd2b47a00cee2c25030000",
+        "weight_bytes": 1296995832,
+        "architecture": "LlamaForCausalLMEagle3",
+        "trained_target": "google/gemma-4-31B base, not the exact instruction revision",
+        "geometry": {
+          "target_hidden_size": 5376,
+          "draft_hidden_size": 5376,
+          "draft_layers": 1,
+          "aux_target_layer_ids": [
+            2,
+            29,
+            56
+          ],
+          "vocab_size": 262144,
+          "draft_vocab_size": 32000,
+          "draft_attention_heads": 42,
+          "draft_kv_heads": 14,
+          "head_dim": 128
+        }
+      },
+      "mechanism_class": "learned_recurrent_tree_draft_not_one_forward_parallel",
+      "producer": {
+        "symbols": [
+          "sglang.srt.models.llama_eagle3.LlamaForCausalLMEagle3",
+          "sglang.srt.speculative.eagle_worker_v2.EagleDraftWorker.draft_forward",
+          "sglang.srt.speculative.eagle_utils.build_tree_kernel_efficient"
+        ],
+        "shapes": {
+          "per_step_topk": "[B,k]",
+          "tree_tokens": "[B,M]",
+          "tree_mask": "[B,M,M] logical",
+          "recurrent_calls": "speculative_num_steps - 1 draft forwards after the seed"
+        }
+      },
+      "verifier_acceptance_kv": {
+        "verifier": "EagleVerifyInput -> target TARGET_VERIFY forward with [B*M,262144] logits",
+        "acceptance": "eagle_sample -> verify_tree_greedy_func, accept_index [B,steps+1], accepted token count [B]",
+        "kv": "move_accept_tokens_to_target_kvcache maps accepted verify indices to target sequence slots and frees non-path tree KV"
+      },
+      "current_load_support": {
+        "pinned_and_current_source": "Both source tags contain LlamaForCausalLMEagle3 and the common EAGLE target verifier.",
+        "exact_target_revision_status": "not source-tested; public checkpoint is trained against the base model, and its card's historical fork requirement is superseded only at source-class level",
+        "token_mapping": "The checkpoint must carry its reduced-vocabulary d2t mapping; source reads model.hot_token_id."
+      },
+      "typed_decision": "close_for_one_forward_parallel_draft",
+      "close_reason": "The implemented producer advances through a recurrent Python loop and therefore does not meet the project's one-forward parallel-draft mechanism. Exact target verification could preserve semantics, but acceptance and economics transfer from the base-trained head are unproven."
+    },
+    {
+      "id": "google_gemma4_assistant_frozen_kv_mtp",
+      "candidate_model": {
+        "repo": "google/gemma-4-31B-it-assistant",
+        "revision": "627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+        "source_url": "https://huggingface.co/google/gemma-4-31B-it-assistant/tree/627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+        "config_sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a",
+        "weight_lfs_sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da",
+        "weight_bytes": 939042560,
+        "architecture": "Gemma4AssistantForCausalLM",
+        "geometry": {
+          "backbone_hidden_size": 5376,
+          "assistant_hidden_size": 1024,
+          "assistant_layers": 4,
+          "assistant_layer_types": [
+            "sliding_attention",
+            "sliding_attention",
+            "sliding_attention",
+            "full_attention"
+          ],
+          "assistant_kv_shared_layers": 4,
+          "vocab_size": 262144,
+          "local_head_dim": 256,
+          "global_head_dim": 512,
+          "sliding_window": 1024
+        },
+        "assistant_tokenizer_lfs_sha256": "75a6583c1a418e2bbd79c60d95d28e0f5bf549ad3f2990b5bdb5238c6c2bf70c",
+        "assistant_tokenizer_differs_from_pinned_target": true
+      },
+      "mechanism_class": "official_recurrent_frozen_target_kv_mtp_not_one_forward_parallel",
+      "producer": {
+        "symbols": [
+          "sglang.srt.models.gemma4_mtp.Gemma4AssistantForCausalLM.forward",
+          "sglang.srt.speculative.frozen_kv_mtp_worker_v2.FrozenKVMTPDraftWorker.draft_forward"
+        ],
+        "shapes": {
+          "seed_bonus_tokens": "[B] or [B*k]",
+          "seed_target_hidden": "[B,5376] or [B*k,5376]",
+          "pre_projection": "[N,10752] -> [N,1024]",
+          "post_projection_recurrent_hidden": "[N,1024] -> [N,5376]",
+          "per_step_topk": "[B,k]",
+          "tree_tokens": "[B,M]"
+        },
+        "source_observation": "The worker performs one seed assistant forward and then a recurrent assistant forward for every speculative step except the last."
+      },
+      "verifier_acceptance_kv": {
+        "verifier": "FrozenKVMTPVerifyInput reuses EagleVerifyInput and the exact target verifier.",
+        "acceptance": "eagle_sample selects only target-approved paths and a target bonus.",
+        "kv": "The assistant writes no draft KV; it reads a mapped frozen view of target KV. Accepted target verify KV uses the common accepted-index mover."
+      },
+      "current_load_support": {
+        "pinned_and_current_source": "Both source tags contain Gemma4AssistantForCausalLM and FrozenKVMTPWorkerV2.",
+        "current_alias": "NEXTN or EAGLE plus this architecture resolves to FROZEN_KV_MTP; EAGLE3 is rejected.",
+        "upstream_exact_model_test_contract": "v0.5.15 defines an exact target/assistant load-and-acceptance test for top-k 1 and 3.",
+        "tokenizer_rule": "The target tokenizer must remain authoritative; the assistant tokenizer blob is not byte-identical to the pinned target tokenizer."
+      },
+      "typed_decision": "close_for_one_forward_parallel_draft",
+      "close_reason": "The available runtime implementation is recurrent across speculative steps. It remains a viable exact speculative baseline, but it does not satisfy the selected one-forward parallel mechanism."
+    },
+    {
+      "id": "sglang_ngram_target_only",
+      "candidate_model": null,
+      "mechanism_class": "distinct_nonlearned_cpu_corpus_parallel_target_verify",
+      "producer": {
+        "symbols": [
+          "sglang.srt.speculative.cpp_ngram.ngram_corpus.NgramCorpus",
+          "sglang.srt.speculative.ngram_worker.NGRAMWorker._prepare_draft_tokens",
+          "sglang.srt.speculative.ngram_worker.NGRAMWorker._prepare_for_speculative_decoding"
+        ],
+        "shapes": {
+          "cpu_req_drafts": "[B,M]",
+          "draft_tokens": "[B*M] int64 on target device",
+          "tree_mask": "[B,M,M] logical",
+          "retrieve_index": "[B,M]",
+          "verify_out_cache_loc": "[B*M]"
+        }
+      },
+      "verifier_acceptance_kv": {
+        "verifier": "The exact target runs TARGET_VERIFY once over the corpus-produced tree.",
+        "acceptance": "eagle_sample applies target-only greedy tree acceptance.",
+        "kv": "move_accept_tokens_to_target_kvcache commits the accepted path plus target bonus and leaves no draft-model KV."
+      },
+      "current_load_support": {
+        "pinned_v0_5_13": "Present as NGRAMWorker and SpeculativeAlgorithm.NGRAM.",
+        "current_v0_5_15": "Present with CPU corpus, irregular-tree verification, target KV mover, and no draft weights.",
+        "exact_target_revision_status": "model-agnostic at producer level and compatible with the target tokenizer/token IDs; c32 usefulness depends on repeated continuations"
+      },
+      "typed_decision": "retain_as_exact_target_control",
+      "close_reason": null
+    }
+  ],
+  "target_semantic_invariants": [
+    {
+      "id": "frozen_target_identity",
+      "rule": "The verifier is exactly google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4; no target weights, layer geometry, tokenizer, logits, or sampling parameters may be replaced by the drafter."
+    },
+    {
+      "id": "target_tokenizer_authority",
+      "rule": "All requests and returned IDs use target tokenizer cc8d3a0c...; assistant tokenizer 75a6583c... cannot become the serving tokenizer."
+    },
+    {
+      "id": "causal_path_validity",
+      "rule": "Each accepted proposal must equal the target decision evaluated on the same already-accepted prefix. Linear DFlash uses a causal block; tree producers use their ancestor mask and retrieval indices."
+    },
+    {
+      "id": "longest_prefix_acceptance",
+      "rule": "Stop at the first mismatch on a chain. Never accept a later matching token after a rejected ancestor."
+    },
+    {
+      "id": "target_bonus",
+      "rule": "Every speculative round emits one target-selected bonus at the first rejected location or after the fully accepted prefix."
+    },
+    {
+      "id": "kv_path_commit",
+      "rule": "Only target KV belonging to the current token plus accepted draft path becomes logically committed. All rejected branches/suffix slots are freed or excluded by committed length."
+    },
+    {
+      "id": "bonus_pending",
+      "rule": "The emitted target bonus has not yet been consumed as a target input; it remains pending for the next forward and must not be falsely treated as materialized KV."
+    },
+    {
+      "id": "greedy_scope",
+      "rule": "This project's executable oracle covers temperature=0 greedy c32. Non-greedy rejection sampling needs a separate execution-equivalent consumer before a semantics claim."
+    }
+  ],
+  "cpu_source_consumer": {
+    "classification": "source_complete_from_proposal_and_target_top1_through_acceptance_output_and_kv_commit",
+    "adapter": {
+      "path": "exact_target_parallel_draft_adapter.py",
+      "sha256": "98c40600f18747d527f024f2ba8c8e14b51616b892414794ec5df834df6a136e"
+    },
+    "tests": {
+      "path": "test_exact_target_parallel_draft_adapter.py",
+      "sha256": "7cca7b9a5356a67f3498462931dd1e281e841b105022ffcf43de065a58a5ed12",
+      "passed": 9,
+      "failed": 0,
+      "coverage": [
+        "all 16 possible block-16 acceptance boundaries",
+        "first-token rejection",
+        "full acceptance",
+        "unaccepted-suffix noninterference",
+        "current-token identity mutation",
+        "shape mutation",
+        "vocabulary-bound mutation",
+        "KV-slot alias mutation",
+        "atomic JSON consumer boundary"
+      ],
+      "stdout_path": "artifacts/CPU_SOURCE_CONSUMER_TESTS.txt",
+      "stdout_sha256": "d539da26e450d1ce2e2f6d194a218ccd733b80fbc302422437c1f4eac65838f5"
+    },
+    "fixture": {
+      "path": "fixtures/dflash_chain_fixture.json",
+      "sha256": "97e9814beddc24053931c425ffda8a972206065c3f7a5d7de61d5b8be64136d9",
+      "evidence_label": "synthetic shape-exact block-16 acceptance/KV fixture",
+      "batch_size": 4,
+      "accepted_drafts": [
+        15,
+        0,
+        2,
+        7
+      ]
+    },
+    "result": {
+      "path": "artifacts/CPU_SOURCE_CONSUMER_RESULT.json",
+      "sha256": "ad31f2e203cb46ed25bd00d8a54e102cac0c1af5996a5deac48a76239414cafe",
+      "all_checks_pass": true
+    },
+    "invalid_attempt": {
+      "path": "artifacts/INVALID_ATTEMPT_1.json",
+      "sha256": "13e19e850c32c4dba6cebafa133277d3aa1910c5168da946cdbbe1738dc1f1bd",
+      "classification": "observer serialization mismatch; proposal, target, acceptance, and KV computation unchanged for corrected run"
+    }
+  },
+  "competing_explanations": [
+    {
+      "id": "checkpoint_revision_drift",
+      "explanation": "The public DFlash repo names google/gemma-4-31B-it but does not bind target revision b9ea41...; identical geometry can load while proposal acceptance collapses.",
+      "discriminator": "Load both immutable revisions and report c32 accepted-draft histogram and first-mismatch positions."
+    },
+    {
+      "id": "verification_economics",
+      "explanation": "At c32, a [512,262144] target-logit verification surface plus draft work may cost more than saved autoregressive forwards even with useful acceptance.",
+      "discriminator": "CUDA-event union for draft, target verify, acceptance, and KV commit; report accepted target tokens per verifier second and per combined draft+verify second."
+    },
+    {
+      "id": "registered_test_is_not_execution",
+      "explanation": "The v0.5.15 registered DFlash and MTP tests prove maintained source intent and exact model names, not that the pinned revisions load in this campaign environment.",
+      "discriminator": "First tiny exact-revision target-GPU call followed immediately by the component run."
+    },
+    {
+      "id": "kv_commit_or_hidden_relay_bug",
+      "explanation": "A runtime can compute correct acceptance while committing a rejected suffix or relaying the wrong target hidden state into the next draft round.",
+      "discriminator": "For selected rounds, compare committed sequence positions, target KV slot identities, pending bonus, first next-round logits, and AR control."
+    },
+    {
+      "id": "ngram_is_sufficient",
+      "explanation": "Campaign outputs may repeat enough that the no-weight NGRAM producer delivers similar accepted work without a 3.07 GB draft model.",
+      "discriminator": "Run NGRAM as the same target-verifier control and compare accepted target tokens per verifier second plus combined producer+verifier second."
+    },
+    {
+      "id": "recurrent_draft_still_wins",
+      "explanation": "EAGLE-3 or frozen-KV MTP can remain economical despite failing the one-forward mechanism criterion because each small recurrent call is cheap and acceptance is higher.",
+      "discriminator": "Outside this project's selected mechanism, compare combined draft+verify target-token throughput only if DFlash fails its component gate."
+    }
+  ],
+  "decision": {
+    "type": "promote",
+    "candidate": "dflash_one_forward_block",
+    "promotion_scope": "one exact target-GPU component and c32 acceptance/economics discriminator; not endpoint or production promotion",
+    "reason": "DFlash is the only compared public learned path whose current source creates all 15 next-token proposals in one draft forward. Its public config exactly matches target hidden width, vocabulary, and 60-layer tap contract. The executed CPU consumer proves the target-prefix, target-bonus, rejected-suffix, and pending-bonus KV semantics for every block-16 acceptance boundary. Actual exact-revision loading and c32 economics remain unmeasured and are the next gate.",
+    "close_or_retain": {
+      "eagle3_public_gemma4_head": "close for this one-forward parallel-draft objective; recurrent producer and base-trained target",
+      "google_gemma4_assistant_frozen_kv_mtp": "close for this one-forward parallel-draft objective; recurrent producer",
+      "sglang_ngram_target_only": "retain as the distinct exact-target, no-draft-model control"
+    },
+    "next_target_gpu_component": {
+      "required_staged_identities": [
+        "target model and tokenizer exactly as bound above",
+        "DFlash model exactly eabd648301ce28583cc14757912e5e0f84e152e1 with weight SHA256 b3f28580...",
+        "SGLang source exactly f63458b5beaceabbd9d749b9fc956370e1b649e6",
+        "exact c32 runner SHA256 8672802c..."
+      ],
+      "server_command": "PYTHONPATH=/workspace/sglang-f63458b5beaceabbd9d749b9fc956370e1b649e6/python python3 -m sglang.launch_server --model-path /workspace/gemma4-31B-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4 --tokenizer-path /workspace/gemma4-31B-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4 --served-model-name google/gemma-4-31B-it --dtype bfloat16 --quantization fp8 --tp-size 1 --kv-cache-dtype fp8_e5m2 --context-length 5000 --max-running-requests 32 --mem-fraction-static 0.85 --enable-metrics --skip-server-warmup --enable-dynamic-chunking --chunked-prefill-size 2048 --enable-fused-qk-norm-rope --cuda-graph-max-bs 32 --prefill-attention-backend triton --decode-attention-backend triton --page-size 1 --speculative-algorithm DFLASH --speculative-draft-model-path /workspace/gemma-4-31B-it-DFlash-eabd648301ce28583cc14757912e5e0f84e152e1 --speculative-num-draft-tokens 16 --speculative-draft-attention-backend flashinfer --host 0.0.0.0 --port 30000",
+      "workload_command": "python3 /workspace/exact_c32_runner-8672802c73137910c28e3c73be7b7f1c6152acc5899279cd8d36e3fd82783c03.py --output /workspace/results/dflash-exact-c32 --arm dflash_exact_target_parallel_component",
+      "required_evidence": [
+        "successful exact-revision model, tokenizer, runtime, and draft weight identity checks before science",
+        "per-round proposed drafts, accepted drafts, accept length including bonus, and first mismatch",
+        "CUDA-event interval union for DFlash producer, target verifier, acceptance, and KV commit",
+        "accepted_target_tokens_per_verifier_second = sum(commit_lens) / target-verifier CUDA interval union",
+        "effective_target_tokens_per_draft_plus_verify_second = sum(commit_lens) / union(draft, verify, acceptance, KV commit)",
+        "NGRAM target-only comparator under identical target, c32 requests, and verifier instrumentation",
+        "first next-round target logits and KV position/slot audit for zero, partial, and full acceptance examples",
+        "32 complete requests with exactly 4214 prompt and 358 output tokens, nonempty outputs, and no request errors"
+      ],
+      "component_promote_rule": "Promote to a matched endpoint only if exact semantics and KV audits pass, mean accepted drafts is positive, DFlash accepted-target-tokens per combined draft+verify second exceeds both AR and NGRAM controls, and the measured margin is large enough to make a 20% endpoint reduction plausible. Record any smaller positive gain as stackable evidence rather than silently discarding it.",
+      "component_close_rule": "Close this DFlash revision if immutable exact revisions cannot load for a model/shape reason, target semantics or KV path fails after localized runtime defects are repaired, or combined producer+verifier throughput is no better than both exact controls. Low c32 acceptance closes this checkpoint revision, not parallel drafting generally."
+    }
+  }
+}

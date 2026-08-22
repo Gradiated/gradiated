@@ -1,0 +1,11 @@
+{
+  "artifacts": "Reserved-offline binding b62b46af...; endpoint-preparation predecessor 71b73736...; component terminal 8a4fba27...; resource recovery 32d1765d....",
+  "at_utc": "2026-07-30T04:39:25Z",
+  "classification": "reserved_endpoint_preparation_offline",
+  "next": "Complete and hash-bind the four endpoint integration artifacts offline. Do not claim until a later director observes executable readiness and binds the matched c32 endpoint pair.",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "role": "warm_h200_reserved_for_fixed_floor_endpoint_after_offline_packet",
+  "server_state": "Available and quiescent; no owner, claim, server, container, or CUDA process is authorized by the current binding.",
+  "state": "available_warm_endpoint_packet_pending",
+  "summary": "The cumulative $4 reservation is durable and the warm H200 is protected through 05:51:56Z. Endpoint execution remains fenced until the adapter, pair runner, durable owner, and integration packet are all hash-bound."
+}

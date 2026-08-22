@@ -1,0 +1,142 @@
+{
+  "schema_version": 1,
+  "classification": "director_component_execution_binding",
+  "created_at_utc": "2026-07-29T07:30:00Z",
+  "project": "gemma4_vllm026_sm120_norm_fp8_fusion",
+  "claim_allowed": true,
+  "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+  "claim_start_by_utc": "2026-07-29T07:36:00Z",
+  "deadline_utc": "2026-07-29T08:03:00Z",
+  "repair_deadline_utc": "2026-07-29T07:55:00Z",
+  "release_by_utc": "2026-07-29T08:03:00Z",
+  "provider_watchdog_deadline_utc": "2026-07-29T08:13:34.346354Z",
+  "scientific_submission_limit": 1,
+  "source_result": {
+    "path": "VLLM026_SM120_NORM_FP8_FUSION_OFFLINE_RESULT.json",
+    "sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f"
+  },
+  "source_result_sha256": "4e7312e233034c4ad3b208ac1a1298003602999bb2592d23756b935bab3b463f",
+  "preparation": {
+    "path": "DIRECTOR_VLLM026_SM120_NORM_FP8_COMPONENT_PREPARATION_20260729T0658Z.json",
+    "sha256": "9709dbd0ad78a7f5e42a7d7b8974734fb8b5aa26ebdb7d181c92e75edce350ef"
+  },
+  "preparation_sha256": "9709dbd0ad78a7f5e42a7d7b8974734fb8b5aa26ebdb7d181c92e75edce350ef",
+  "component_owner": {
+    "offline_result": "VLLM026_SM120_NORM_FP8_COMPONENT_OWNER_OFFLINE_RESULT.json",
+    "offline_result_sha256": "84805077c1a9355223400b17148031859e7b605284859b04b080573e13cf3a8b",
+    "path": "run_sm120_norm_fp8_component_owner.py",
+    "sha256": "70458b97114fa0116c9145dc92f366f5ae79fc44ca98e66b54a15508668a24c2",
+    "validator": "validate_component_owner.py",
+    "validator_sha256": "b80ae7893c18031046b21151e486d5fa004636426740d593fe42a845a399e431",
+    "offline_validation": "artifacts/COMPONENT_OWNER_OFFLINE_VALIDATION.json",
+    "offline_validation_sha256": "4edaf0402d2b8f85d4b408aada7522d0c0c00b50c49d9d8fd9d4962e3d1fd0a5"
+  },
+  "patch_sha256": "79b97e9d86442721ddd9925e9c103817b35374e1a30c5354cc4eb9568c8cc63f",
+  "oracle_sha256": "49cf642031f9669abad17af5f4954c4455080a332033bd816ea088c6bf39d0c5",
+  "scientific_identity": {
+    "model": "google/gemma-4-31B-it",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "rows": [
+      {
+        "M": 1,
+        "K": 5376,
+        "N": 16384
+      },
+      {
+        "M": 1,
+        "K": 5376,
+        "N": 20480
+      },
+      {
+        "M": 32,
+        "K": 5376,
+        "N": 16384
+      },
+      {
+        "M": 32,
+        "K": 5376,
+        "N": 20480
+      },
+      {
+        "M": 33,
+        "K": 5376,
+        "N": 16384
+      },
+      {
+        "M": 33,
+        "K": 5376,
+        "N": 20480
+      },
+      {
+        "M": 2048,
+        "K": 5376,
+        "N": 16384
+      }
+    ],
+    "activation_input": "BF16",
+    "activation_output": "BF16",
+    "quantization": "dynamic per-token E4M3",
+    "stock_consumer": "CutlassFP8ScaledMMLinearKernel.apply_weights -> ops.cutlass_scaled_mm",
+    "candidate_producer": "ops.rms_norm_dynamic_per_token_quant via rms_norm_to_fp8_linear",
+    "warmup": 10,
+    "repeats": 50
+  },
+  "runtime_python": "/workspace/vllm-sm120-native-runtime/venv/bin/python",
+  "runtime_wheel": "/workspace/vllm-sm120-native-runtime/vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+  "runtime_identity": {
+    "vllm_version": "0.26.0",
+    "torch_version": "2.11.0+cu130",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "cuda_capability": "sm_120"
+  },
+  "resident_endpoint": {
+    "port": 19124,
+    "server_pid": 23342,
+    "server_start_ticks": 184468586,
+    "engine_pid": 23809,
+    "engine_start_ticks": 184471980,
+    "gpu_memory_mib": 93622,
+    "health_observed_at_utc": "2026-07-29T07:28:00Z",
+    "health_http_status": 200,
+    "model_id": "google/gemma-4-31B-it",
+    "policy": "preserve the loaded endpoint; do not stop, reload, or send it scientific traffic"
+  },
+  "endpoint_health_command": "test \"$(awk '{print $22}' /proc/23342/stat)\" = 184468586 && curl -fsS --max-time 10 http://127.0.0.1:19124/health >/dev/null && curl -fsS --max-time 10 http://127.0.0.1:19124/v1/models | $PY -c 'import json,sys; d=json.load(sys.stdin); assert d[\"data\"][0][\"id\"] == \"google/gemma-4-31B-it\"'",
+  "endpoint_driver_census_command": "test -z \"$(pgrep -af '[s]m120_framework_oracle.py|[c]omponent-[^ ]+/overlay' || true)\"",
+  "remote_shell": [
+    "ssh",
+    "-i",
+    "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "-p",
+    "40070",
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "StrictHostKeyChecking=yes",
+    "-o",
+    "UserKnownHostsFile=/root/.config/runpod/gemma4/known_hosts",
+    "root@213.192.6.70"
+  ],
+  "remote_project": "/workspace/gemma4-vllm026-sm120-norm-fp8-fusion",
+  "mutable_repair": {
+    "retry_scope": "framework_oracle_only",
+    "incomplete_disposition": "retain the same heartbeat claim through repair-handshake until repair_deadline_utc",
+    "complete_positive_disposition": "persist the complete seven-row terminal and generation-fenced release to maintenance",
+    "complete_nonpositive_disposition": "persist the complete seven-row terminal and generation-fenced release to maintenance",
+    "immutable_during_repair": [
+      "model and checkpoint identity",
+      "patch and oracle bytes",
+      "seven row geometry",
+      "stock and candidate consumer semantics",
+      "one-submission limit"
+    ]
+  },
+  "budget": {
+    "authorized_spend_usd": 3.0,
+    "hourly_cost_usd": 1.89,
+    "maximum_additional_exposure_usd_through_watchdog": 1.37
+  },
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component-20260729t0730z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component-20260729t0730z/OWNER.log -- python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/run_sm120_norm_fp8_component_owner.py --binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/DIRECTOR_VLLM026_SM120_NORM_FP8_COMPONENT_EXECUTION_20260729T0730Z.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_vllm026_sm120_norm_fp8_fusion/artifacts/sm120-norm-fp8-component-20260729t0730z"
+}

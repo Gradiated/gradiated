@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "decision": "retain_released_h200_in_maintenance_for_conditional_pq_exact_consumer",
+  "decided_at_utc": "2026-07-29T20:00:00Z",
+  "project": "gemma4_h200_qkv_norm_rope_fp8_epilogue",
+  "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+  "provider_resource": {
+    "project_id": "project-e00h1vhmpr00vbmfd5k7pg",
+    "instance_id": "computeinstance-e00qxw871hz1r79fjt",
+    "disk_id": "computedisk-e00pb91rav4c5ksdbx",
+    "accelerator": "nvidia-h200-sxm",
+    "hourly_cost_usd": 2.45
+  },
+  "resident_state": {
+    "model": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "endpoint_archive_sha256": "419ef4a07420c703b34b309eff560d53677148c1e292973b438780b4836c0ef9",
+    "condition": "maintenance",
+    "claim_allowed": false
+  },
+  "successor": {
+    "project": "gemma4_output_head_pq_mips_recovery_proxy",
+    "binding": "DIRECTOR_PQ_MIPS_PROXY_REENTRY_20260729T1949Z.json",
+    "binding_sha256": "47b9b1941c72caea37c68b1967e72a9948e7abf19825f875c9dd446da0fbd4c8",
+    "cpu_terminal_deadline_utc": "2026-07-29T21:05:00Z",
+    "conditional_use": "If and only if the frozen PQ proxy promotes, a later director may bind a distinct exact-consumer H200 experiment after its own durable reservation and source-readiness checks. This hold grants no claim or science authority."
+  },
+  "lifecycle": {
+    "provider_started_at_utc": "2026-07-29T18:52:40.704315Z",
+    "previous_deadline_utc": "2026-07-29T20:52:40.704315Z",
+    "deadline_utc": "2026-07-29T21:40:00Z",
+    "watchdog": {
+      "unit": "gemma4-qkv-endpoint-20260729t2000z-watchdog-r3.service",
+      "unit_manager": "user",
+      "main_pid": 273856,
+      "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-qkv-endpoint-20260729t2000z-watchdog-r3.service"
+    }
+  },
+  "economics": {
+    "authorized_cumulative_usd": 10.0,
+    "previous_conservative_cumulative_exposure_usd": 7.84,
+    "additional_maximum_exposure_usd": 1.932298,
+    "conservative_cumulative_exposure_usd": 9.772298,
+    "remaining_margin_usd": 0.227702
+  },
+  "terminal_disposition": {
+    "pq_promote": "Keep maintenance until a later director verifies a source-complete exact-consumer binding and durable project reservation; transfer or claim only then.",
+    "pq_close_or_block": "Drain, externally delete the instance and managed disk, verify provider absence, stop the watchdog, and retire the bench.",
+    "no_terminal_by_2026-07-29T21:08:00Z": "Drain and clean unless a later director documents a still-runnable bounded CPU owner whose completion plus exact-consumer setup fits before this watchdog.",
+    "absolute_cleanup_fence_utc": "2026-07-29T21:40:00Z"
+  },
+  "prohibitions": [
+    "Do not replay the consumed QKV endpoint arm.",
+    "Do not reconstruct or infer the missing PATH_PROOF.jsonl.",
+    "Do not claim this maintenance bench under the expired QKV endpoint binding.",
+    "Do not run GPU, endpoint, SSH, Docker, or provider work from the PQ CPU researcher.",
+    "Do not extend beyond the exact cumulative $10 authority."
+  ]
+}

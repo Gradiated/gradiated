@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "decision": "same_claim_remote_start_discriminator_then_conditional_repair",
+  "project": "gemma4_b200_dynamic_fp8_endpoint",
+  "researcher_profile": "execution",
+  "created_at_utc": "2026-07-28T15:20:00Z",
+  "claim": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "claimed_at": "2026-07-28T15:10:30.900613Z",
+    "continuous": true,
+    "release_by_utc": "2026-07-28T16:35:00Z",
+    "watchdog_deadline_utc": "2026-07-28T16:45:00Z"
+  },
+  "owner": {
+    "pid": 3260799,
+    "start_ticks": 136787441,
+    "artifact_root": "artifacts/b200-dynamic-fp8-repair2-20260728t1517z",
+    "state": "artifacts/b200-dynamic-fp8-repair2-20260728t1517z/OWNER_STATE.json",
+    "repair_ready": "artifacts/b200-dynamic-fp8-repair2-20260728t1517z/.repair-handshakes/b200-dynamic-fp8-20260728T151757Z/REPAIR_READY.json",
+    "repair_id": "b200-dynamic-fp8-20260728T151757Z",
+    "failure_kind": "endpoint_worker",
+    "retry_scope": "endpoint_consumer"
+  },
+  "bound_sources": {
+    "run_endpoint_pair.sh": "45ec79a09d38d6db8e622b82cb0a758e2d78fb8ee546acf8736d13f44a369c3a",
+    "b200_dynamic_fp8_owner_repair2.sh": "a9b1c715aa6304ec2ccef9f022284ee5b731a70b9628675ed342c1459abdf802",
+    "dynamic_fp8_endpoint_driver.py": "104f81ffbb120c07e17259f5eb14fc4546281edb2a7a11c5f55910f57e91c4e3"
+  },
+  "evidence": {
+    "science_consumed": false,
+    "owner_progress": [
+      "2026-07-28T15:17:37Z pre_science_remote_setup",
+      "2026-07-28T15:17:41Z endpoint_execution",
+      "2026-07-28T15:17:57Z repair:endpoint_worker"
+    ],
+    "controller_worker_stdout_bytes": 0,
+    "controller_worker_stderr_bytes": 0,
+    "controller_repair_diagnostic_bytes": 1,
+    "interpretation": "The worker returned through its code-70 container-exit path, which writes the decision-bearing error to the retained remote bf16_control/server.log. The empty controller diagnostic does not support another guessed patch."
+  },
+  "discriminator": {
+    "destination": "artifacts/b200-dynamic-fp8-repair2-20260728t1517z/ENDPOINT_START_DISCRIMINATOR.json",
+    "remote_root": "/home/glmrunner/b200-dynamic-fp8-20260728t1515z",
+    "requirements": [
+      "Read the bound REPAIR_READY.json once, then verify owner 3260799/136787441 and the continuous claim once.",
+      "Retrieve only retained remote artifacts/INVOCATION_STATE.json, artifacts/bf16_control/server.log, container-id.txt, models.stderr, and one read-only inspect/log snapshot of container gemma4-b200-bf16_control if it still exists. Do not start a container, endpoint, or request during diagnosis.",
+      "Hash the retrieved evidence and record the exact failing command, container exit state, first causal error, science_consumed=false, and one classification: localized_launcher_or_runtime_adapter, runtime_route_rejected, or unsafe_or_unreachable_environment.",
+      "Do not infer dynamic-FP8 feasibility from a BF16 startup integration failure."
+    ]
+  },
+  "conditional_repair": {
+    "replacement_owner_source": "b200_dynamic_fp8_owner_repair2.sh",
+    "replacement_owner_source_sha256": "a9b1c715aa6304ec2ccef9f022284ee5b731a70b9628675ed342c1459abdf802",
+    "replacement_owner_destination": "b200_dynamic_fp8_owner_repair3.sh",
+    "replacement_artifact_root": "artifacts/b200-dynamic-fp8-repair3-20260728t1520z",
+    "start_by_utc": "2026-07-28T15:30:00Z",
+    "requirements": [
+      "Only for one discriminator-proven launcher or pinned-runtime adapter defect, patch exactly that defect, validate and hash-bind run_endpoint_pair.sh plus b200_dynamic_fp8_owner_repair3.sh, and atomically write REPAIR_REQUEST.json in generation b200-dynamic-fp8-20260728T151757Z.",
+      "After the request and replacement bytes are durable, re-read exact owner PID/start ticks and claim, stop only 3260799/136787441, and launch the replacement without release or reclaim.",
+      "If the discriminator establishes an unsupported runtime route, unsafe guest, or no feasible restart within the absolute window, write a typed terminal, request the retained owner exit, release the exact inspected claim generation, and do not launch another replacement.",
+      "Do not repeat snapshot/checkpoint work, change immutable scientific identities, or submit/replay any endpoint arm outside the bound owner."
+    ],
+    "command": "research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_endpoint/artifacts/b200-dynamic-fp8-repair3-20260728t1520z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_endpoint/artifacts/b200-dynamic-fp8-repair3-20260728t1520z/OWNER.log --cwd /root/workspace --unit-manager pid -- bash /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_dynamic_fp8_endpoint/b200_dynamic_fp8_owner_repair3.sh"
+  },
+  "science_contract": {
+    "order": "BF16 control c32, tiny real FP8-consumption probe, runtime dynamic-FP8 c32 candidate",
+    "fixed_denominator_seconds_per_request": 0.625149101968745,
+    "price_normalized_target_seconds_per_request": 0.500119281574996,
+    "unchanged": true
+  }
+}

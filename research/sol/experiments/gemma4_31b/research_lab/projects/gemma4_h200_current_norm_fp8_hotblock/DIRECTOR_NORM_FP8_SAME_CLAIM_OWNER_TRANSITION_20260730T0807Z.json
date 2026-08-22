@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T08:07:00Z",
+  "classification": "same_claim_owner_transition_authorized",
+  "project": "gemma4_h200_current_norm_fp8_hotblock",
+  "researcher_profile": "execution",
+  "decision": "Replace only the matching live controller owner under the existing claim. Correct the pre-science host-output redirection and continue directly into the unchanged corrected M=1/16/32 component consumer from resident staged inputs and the resident pulled image.",
+  "claim": {
+    "bench_id": "h200-r5-computeinstance-e00aehxdq8mpd68epd",
+    "claimed_at": "2026-07-30T07:57:09.853771Z",
+    "project": "gemma4_h200_current_norm_fp8_hotblock",
+    "new_claim_allowed": false,
+    "replacement_owner_allowed": true,
+    "maximum_claim_seconds": 2400,
+    "effective_claim_deadline_utc": "2026-07-30T08:37:09.853771Z",
+    "absolute_release_deadline_utc": "2026-07-30T08:39:00Z",
+    "watchdog_pid": 607919,
+    "watchdog_deadline_utc": "2026-07-30T09:01:39.329754Z"
+  },
+  "predecessor_owner": {
+    "pid": 665822,
+    "start_ticks": 151424737,
+    "unit_manager": "pid",
+    "state_path": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/DETACHED_OWNER.json",
+    "artifact_root": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z",
+    "active_repair_id": "norm-fp8-exact-order-1",
+    "repair_ready_path": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/.repair-handshakes/norm-fp8-exact-order-1/REPAIR_READY.json",
+    "repair_ready_sha256": "8fbe1b3a455e4ab98446907b2df4ca5720af7ea7f94aa1a76d1af7d3eff8b13e",
+    "dispatcher_conflict": "The predecessor can re-enter terminal_retrieval only. Do not send another request to it."
+  },
+  "conflict_evidence": {
+    "path": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/OWNER_REPAIR_ENTRYPOINT_CONFLICT.json",
+    "sha256": "16e01c7a594d1ed36d6ce2b08517206142486a74fa70da570d1614ae694c3213",
+    "remote_diagnostic_path": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/pre-repair-remote-diagnostic.txt",
+    "remote_diagnostic_sha256": "d3df09567ada1538a83a0f0192962dcf5565a0c2535c86c32b22186bd4fbe26a",
+    "worker_returncode": 1,
+    "worker_stderr": "bash: line 1: ../worker.stdout: Permission denied",
+    "invocation_state_present": false,
+    "cuda_started": false,
+    "science_consumed": false
+  },
+  "immutable_science": {
+    "execution_spec_path": "DIRECTOR_NORM_FP8_EXACT_ORDER_H200_COMPONENT_EXECUTION_20260730T0754Z.json",
+    "execution_spec_sha256": "0b2ee270c8e0300dd66ff83cc23d5396e86f69f7dff25b649dd60bbca54642ea",
+    "claim_binding_path": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/EXECUTION_BINDING.json",
+    "claim_binding_sha256": "244946f5aea67b0975da6e02f3c82cb8823d1957bddbb3a573870b9632799629",
+    "component_sha256": "dfa05dcf1f3f9ad6dd40f5318cf6c2c6d55eb93beebf0239f205e7fa88b85829",
+    "runner_sha256": "99656cd8d13139421a7fe8c7ab878f3efb00d8cb5904614af07222f591823b80",
+    "candidate_source_sha256": "fba1452c2cf460a92d229f9944b8fc14f77b10ce7490269e6c9307feb772c792",
+    "candidate_loader_sha256": "f18dfe570ee7bc2d7863d8982205f028d4f617ce9784be7f943a14a363f3956d",
+    "runtime_adapter_sha256": "adbd48db4599b05920026fdd070b893ee885ae08d63e5b6235cee0cd8d379471",
+    "runtime_image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "repetitions": 100,
+    "shapes_m": [
+      1,
+      16,
+      32
+    ]
+  },
+  "resident_state": {
+    "remote_root": "/home/glmrunner/norm-fp8-exact-order-20260730t0730z",
+    "immutable_staging_complete": true,
+    "image_pull_complete": true,
+    "existing_component_output_complete": false,
+    "reuse_required": [
+      "all six verified immutable files",
+      "the pulled pinned image",
+      "the original claim generation and spend clock"
+    ],
+    "restaging_forbidden": true
+  },
+  "mutable_implementation": {
+    "replacement_owner_destination": "run_norm_fp8_exact_order_component_owner_r2.py",
+    "transition_launcher_destination": "run_norm_fp8_exact_order_component_owner_transition_r2.py",
+    "ready_terminal_destination": "NORM_FP8_SAME_CLAIM_OWNER_R2_READY.json",
+    "replacement_artifact_root": "artifacts/norm-fp8-exact-order-h200-component-20260730t0754z/owner-r2",
+    "required_causal_change": "Move stdout/stderr capture outside the container's bash -lc command so the glmrunner host shell writes worker-r2.stdout and worker-r2.stderr under the writable remote root. Invoke the unchanged runner with a fresh out-r2 output directory.",
+    "required_remote_shape": "cd <remote_root> && sudo -n docker run <unchanged identity, GPU, mounts, workdir, image> bash -lc '<unchanged runner command using --output out-r2>' > worker-r2.stdout 2> worker-r2.stderr",
+    "authoritative_science_start": "Only the unchanged runner's invocation-state marker immediately before its first CUDA submission counts. The predecessor owner's controller-side science_started event is launch-attempt evidence only.",
+    "retry_scope": "scientific_runner_then_terminal_retrieval",
+    "conditional_same_turn_transition_authority": true
+  },
+  "transition_protocol": [
+    "Implement and hash-bind both named mutable files and publish NORM_FP8_SAME_CLAIM_OWNER_R2_READY.json with the causal diff, exact immutable identities, claim generation, predecessor PID/start ticks, and claim_allowed false.",
+    "Re-read the pool claim, predecessor detached-owner state, active repair ID, conflict artifact, and all lifecycle fences once. Abort without stopping anything if any identity changed, a terminal appeared, science was consumed, the guest became unsafe, or the remaining window cannot fit execution plus release.",
+    "Start owner R2 through detached-owner --unit-manager pid in standby mode. It may validate and heartbeat the exact claim but must not stage, launch Docker, or submit CUDA before takeover.",
+    "Require a fresh R2_STANDBY_READY.json proving the exact claim, resident input identities, pinned image, remote root, and predecessor identity. The predecessor remains live until this exists.",
+    "Stop only PID 665822 with start_ticks 151424737 and verify that exact process is absent. Do not send another retrieval-only repair request.",
+    "Atomically signal takeover to the already-live R2 owner. R2 must re-read the claim generation, prove no competing scientific executor exists, publish R2_OWNER_READY.json, and continue directly through the corrected scientific_runner and terminal retrieval.",
+    "Atomically replace STATUS.json.active_session only after R2 crosses that dynamic takeover boundary. Preserve claimed_at 2026-07-30T07:57:09.853771Z in every state and terminal.",
+    "On a complete decision-bearing component terminal, release the exact generation ready. On unsafe state or the effective claim deadline, release maintenance with the diagnostic. A recoverable pre-decision fault stays under R2's real repair loop while the measured restart still fits."
+  ],
+  "lifecycle": {
+    "replacement_standby_by_utc": "2026-07-30T08:14:00Z",
+    "scientific_runner_start_by_utc": "2026-07-30T08:18:00Z",
+    "terminal_target_utc": "2026-07-30T08:33:00Z",
+    "release_target_utc": "2026-07-30T08:36:30Z",
+    "effective_claim_deadline_utc": "2026-07-30T08:37:09.853771Z",
+    "repair_deadline_utc": "2026-07-30T08:35:39.853771Z",
+    "fit_basis": "Inputs and image are already resident. The first cold path spent about five minutes reaching the container launch; the replacement has over nineteen minutes from scientific-start target to terminal target plus over three minutes for retrieval and release."
+  },
+  "prohibitions": [
+    "Do not create, claim, release-then-reclaim, restage inputs, repull the image, or mutate provider lifecycle.",
+    "Do not change the candidate, runner, component, repetitions, shapes, numerical gate, timing gate, image, GPU, or claim generation.",
+    "Do not issue another terminal_retrieval request to the predecessor.",
+    "Do not run endpoint, R5, rejected-source, stock replay, or a second canonical component sample.",
+    "Do not stop the predecessor before the replacement is durably live in standby and bound to the exact claim."
+  ]
+}

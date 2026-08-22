@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "classification": "director_gated_activation_fp8_exact_rounding_h200_start_rebind",
+  "created_at_utc": "2026-07-29T16:48:30Z",
+  "project": "gemma4_h200_current_gated_activation_fp8_hotblock",
+  "researcher_profile": "execution",
+  "source_binding": {
+    "path": "DIRECTOR_GATED_ACTIVATION_FP8_EXACT_ROUNDING_H200_EXECUTION_20260729T1646Z.json",
+    "sha256": "572588121d2fac176b964fd23e35487fb92217a69e21b15063aee85fc3ff504f"
+  },
+  "decision": "Move only the unconsumed claim/start fence so one harness interval and worker startup fit. The source, scientific contract, invocation, immutable hashes, sample count, spend ceiling, bench, and watchdog are unchanged.",
+  "lifecycle": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "required_state": "available",
+    "claim_start_by_utc": "2026-07-29T16:52:00Z",
+    "execution_complete_by_utc": "2026-07-29T16:57:00Z",
+    "absolute_release_deadline_utc": "2026-07-29T16:58:00Z",
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1700z-watchdog-r7.service",
+    "watchdog_main_pid": 150669,
+    "watchdog_deadline_utc": "2026-07-29T17:00:00Z",
+    "measured_fit": "The closest component claim-to-release took 3m32s. Five minutes remain from the latest admissible claim to execution completion, followed by one minute for terminal/release and two minutes before watchdog cleanup."
+  },
+  "execution": {
+    "artifact_root": "artifacts/gated-activation-fp8-exact-rounding-h200-20260729t1646z",
+    "required_runner_invocation": "python3 h200_exact_rounding_runner.py --component-safetensors inputs/gemma4-layer0-down-proj-component.safetensors --component-manifest GATED_ACTIVATION_FP8_COMPONENT_EXECUTION_MANIFEST_20260729T1622Z.json --output artifacts/gated-activation-fp8-exact-rounding-h200-20260729t1646z --repetitions 100",
+    "scientific_submission_count": 1,
+    "science_consumed": false
+  },
+  "must": [
+    "Read this rebind and source binding once, verify both hashes and the current available bench/watchdog, then claim by 16:52Z.",
+    "Execute the source binding unchanged and release generation-fenced by 16:58Z."
+  ],
+  "must_not": [
+    "Do not change any scientific byte, gate, row, repetition, consumer, runtime, reservation, or provider lifecycle.",
+    "Do not claim after 16:52Z, replay the closed candidate, run endpoint science, or retain a claim after 16:58Z."
+  ]
+}

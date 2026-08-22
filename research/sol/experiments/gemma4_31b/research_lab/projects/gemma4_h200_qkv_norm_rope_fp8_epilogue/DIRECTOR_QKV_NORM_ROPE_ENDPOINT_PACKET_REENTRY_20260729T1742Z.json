@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "published_at_utc": "2026-07-29T17:42:00Z",
+  "project": "gemma4_h200_qkv_norm_rope_fp8_epilogue",
+  "decision": "reject_execution_readiness_drain_and_prepare_cold_reentry",
+  "scientific_state": {
+    "component_classification": "component_positive_exact_consumer",
+    "component_terminal": "SCIENTIFIC_TERMINAL.json",
+    "component_terminal_sha256": "6aa40802441a36184129bcef9486180acf0b5eba432b68715085d9f7c58d55a2",
+    "endpoint_science_consumed": false,
+    "endpoint_submission_count": 0,
+    "component_replay_allowed": false
+  },
+  "readiness_audit": {
+    "endpoint_ready": "ENDPOINT_READY.json",
+    "endpoint_ready_sha256": "7b4d217a6e1f98a4fe369153cf0eab08c516d819da00681d87b0eb801987a8a2",
+    "published_before_source_deadline": true,
+    "project_file_hashes_match": true,
+    "execution_binding_path_present": false,
+    "project_local_execution_packet_present": false,
+    "classification": "fail_closed_incomplete_execution_materialization",
+    "reason": "endpoint_owner.py requires the later binding to name a hash-bound project-local Python worker packet, but no such packet was published. Authorizing the owner would therefore fail after claim, and the remaining r10 interval did not justify implementing missing execution code in a director turn."
+  },
+  "retired_bench": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "instance_id": "computeinstance-e00n8vffvr4jkmm33f",
+    "disk_id": "computedisk-e00hnsmjxp85zq27ge",
+    "draining_at_utc": "2026-07-29T17:39:59.318920Z",
+    "instance_delete_finished_at_utc": "2026-07-29T17:40:52.592846Z",
+    "cleanup_verified_at_utc": "2026-07-29T17:41:33.557382Z",
+    "provider_instance_listing_empty": true,
+    "provider_disk_listing_empty": true,
+    "watchdog_unit": "gemma4-streaming-global-kv-fresh-20260729t1810z-watchdog-r10.service",
+    "watchdog_active_after_cleanup": false,
+    "inventory_retired": true
+  },
+  "offline_reentry_contract": {
+    "researcher_profile": "deep",
+    "wall_clock_budget_minutes": 45,
+    "gpu_allowed": false,
+    "provider_lifecycle_allowed": false,
+    "claim_allowed": false,
+    "required_artifact": "ENDPOINT_EXECUTION_PACKET_READY.json",
+    "required_worker": "endpoint_execution_packet.py",
+    "requirements": [
+      "Materialize every admitted workload, launch, qualified-baseline, patch, entrypoint, and remote-control byte under this project before any future claim; no cross-project path may be resolved after claim.",
+      "Bind the exact model, checkpoint manifest, pinned image, SGLang commit, H200 identity class, decode-c32 workload, stock comparator, one-submission limit, and endpoint quality and latency gates.",
+      "Implement strict-identity SSH staging, pinned-container launch, bounded health/load handling, exactly one c32 endpoint submission, compact result and path-proof retrieval, zero-GPU cleanup, and typed worker terminal behavior compatible with endpoint_owner.py.",
+      "Exercise only CPU/static/unit validation offline and publish every file hash, exact owner start command, conservative cold lifecycle estimate, and explicit endpoint_science_consumed=false.",
+      "Do not replay the closed component, launch endpoint traffic, call gpu_pool, SSH, Docker, CUDA, or provider APIs."
+    ]
+  },
+  "budget": {
+    "authorized_spend_usd_cumulative_requested": 10.0,
+    "recorded_actual_spend_usd_conservative": 2.94,
+    "reservation_required": true,
+    "provider_create_allowed": false,
+    "reason": "The exact $3 reservation did not cover a cold replacement after retirement. A later director may create only after the cumulative $10 reservation is durable and the source-complete execution packet passes."
+  },
+  "future_director_gate": [
+    "ENDPOINT_EXECUTION_PACKET_READY.json exists and all hashes verify",
+    "the cumulative exact-project reservation is durable and covers the conservative cold lifecycle",
+    "provider inventory is re-read before create",
+    "a later director publishes a fresh hardware and endpoint execution binding"
+  ]
+}

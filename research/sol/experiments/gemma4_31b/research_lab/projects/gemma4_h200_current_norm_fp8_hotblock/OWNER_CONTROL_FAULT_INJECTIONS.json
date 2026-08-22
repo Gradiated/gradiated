@@ -1,0 +1,38 @@
+{
+  "all_passed": true,
+  "classification": "offline_owner_control_fault_injections",
+  "provider_mutated": false,
+  "results": [
+    {
+      "launcher_orphans": 0,
+      "name": "delayed_staging_adopts_before_30s",
+      "passed": true,
+      "ready_phase": "owner_adopted_heartbeat_started"
+    },
+    {
+      "expected_claimed_at": "generation",
+      "name": "pre_adoption_failure_generation_release",
+      "passed": true
+    },
+    {
+      "generation": 1,
+      "name": "matching_repair_reenters_generation_1",
+      "passed": true,
+      "reentered_phase": "immutable_staging"
+    },
+    {
+      "condition": "maintenance",
+      "name": "missing_repair_request_deadline_release",
+      "passed": true,
+      "release_count": 1
+    },
+    {
+      "condition": "ready",
+      "name": "complete_terminal_ready_release_once",
+      "passed": true,
+      "release_count": 1
+    }
+  ],
+  "schema_version": 1,
+  "science_consumed": false
+}

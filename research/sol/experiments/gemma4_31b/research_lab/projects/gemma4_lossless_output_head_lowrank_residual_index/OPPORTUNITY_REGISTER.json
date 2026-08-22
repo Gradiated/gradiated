@@ -1,0 +1,41 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "A query-trained span collapses query residuals enough to make row bounds nearly exact.",
+        "Stock numeric envelopes or projection residuals leave a near-dense 32-query union.",
+        "Projected-index and score-buffer traffic erases gross exact-weight savings."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.9,
+      "discrimination_power": 0.95,
+      "evidence_scope": "google/gemma-4-31B-it@b9ea41a, exact tied BF16 head, same exact 32 c32 hidden rows, CPU/reference",
+      "falsifier": "An oracle lower bound cannot avoid 10% of physical union member-weight bytes.",
+      "id": "query_span_lowrank_residual",
+      "mechanism": "Fixed query-asymmetric orthonormal projection with per-row residual certificates and exact rescoring.",
+      "next_measurement": "One rank-32 spectrum/oracle discriminator followed conditionally by one feasible-seed conservative index.",
+      "observation": "The exact head is 5376 wide while the admitted workload contains 32 hidden rows, so its query span has rank at most 32; predecessor fixed-coordinate and cluster-radius bounds failed on physical union traffic.",
+      "readiness": 0.9,
+      "residual_bottleneck": "The in-sample span makes projected bounds nearly exact; the remaining uncertainty is transfer to hidden rows not used to form the basis.",
+      "resource_signature": {
+        "hardware": "CPU/reference only",
+        "modifiable_fraction": "up to the inherited 0.0351006092 s/request head interval",
+        "phase": "output head",
+        "upper_bound": "100% of dense head-weight bytes before index overhead"
+      },
+      "result": {
+        "decision": "promote_to_disjoint_query_reference_not_h200",
+        "evidence_class": "measured CPU/reference exact-stock-set containment and derived physical traffic",
+        "oracle_gross_physical_avoided_fraction": 0.9997138977050781,
+        "persisted_consumer_gross_physical_avoided_fraction": 0.9996070861816406,
+        "persisted_consumer_net_physical_avoided_fraction": 0.9000349456355685,
+        "persisted_consumer_physical_union_rows": 103,
+        "stock_candidate_set_certified": true
+      },
+      "status": "positive_in_scope_requires_disjoint_query_gate",
+      "transfer_penalty": 0.7,
+      "uncertainty": 0.7
+    }
+  ],
+  "schema_version": 1
+}

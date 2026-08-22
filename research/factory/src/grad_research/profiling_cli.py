@@ -16,6 +16,7 @@ from .profiling import (
 )
 from .gcore_inventory import GcoreInventoryError, load_cached_gcore_inventory, load_or_refresh_gcore_inventory
 from .provider_inventory import ProviderInventoryError, load_provider_inventory
+from .runpod_inventory import RunPodInventoryError, load_runpod_inventory
 
 
 FACTORY_ROOT = Path(__file__).resolve().parents[2]
@@ -42,8 +43,8 @@ def _parser() -> argparse.ArgumentParser:
     providers.add_argument("--inventory", type=Path, default=DEFAULT_PROVIDERS)
     providers.add_argument("--provider")
     providers.add_argument("--gcore-inventory", type=Path, default=DEFAULT_GCORE_INVENTORY)
-    providers.add_argument("--refresh", action="store_true", help="Force a Gcore inventory refresh")
-    providers.add_argument("--offline", action="store_true", help="Read the cached Gcore Markdown inventory only")
+    providers.add_argument("--refresh", action="store_true", help="Force a cached provider inventory refresh")
+    providers.add_argument("--offline", action="store_true", help="Return registered or cached provider state without a live request")
 
     capture = subparsers.add_parser("capture", help="Run a profiler-off baseline or a bounded diagnostic capture")
     capture.add_argument("--tier", choices=("baseline", "timeline", "compute"), default="baseline")
@@ -98,6 +99,8 @@ def main(argv: list[str] | None = None) -> int:
                         else load_or_refresh_gcore_inventory(args.gcore_inventory, force=args.refresh)
                     )
                     result = {**provider, "live_inventory": live}
+                elif args.provider == "runpod" and not args.offline:
+                    result = {**provider, "live_inventory": load_runpod_inventory()}
                 else:
                     result = provider
         elif args.subcommand == "capture":
@@ -132,7 +135,14 @@ def main(argv: list[str] | None = None) -> int:
             result = compare_profiles(args.control, args.candidate, args.output)
         else:
             result = append_shape_record(args.atlas, json.loads(args.input.read_text()))
-    except (OSError, json.JSONDecodeError, ProfilingError, ProviderInventoryError, GcoreInventoryError) as error:
+    except (
+        OSError,
+        json.JSONDecodeError,
+        ProfilingError,
+        ProviderInventoryError,
+        GcoreInventoryError,
+        RunPodInventoryError,
+    ) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2, sort_keys=True))

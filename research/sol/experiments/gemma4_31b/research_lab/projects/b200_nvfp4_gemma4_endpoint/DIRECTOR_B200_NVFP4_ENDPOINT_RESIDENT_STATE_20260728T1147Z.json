@@ -1,0 +1,9 @@
+{
+  "artifacts": "projects/b200_nvfp4_gemma4_endpoint/{artifacts/native-nvfp4-endpoint-packet-v1/PACKET_MANIFEST.json,DIRECTOR_B200_NVFP4_ENDPOINT_LLMCOMPRESSOR_REPAIR_20260728T1147Z.json,DIRECTOR_B200_NVFP4_ENDPOINT_LIFECYCLE_EXTENSION_20260728T1147Z.json}",
+  "caches": "Pinned vLLM serving image is pulled; exact BF16 checkpoint and packet are resident on the provider disk.",
+  "checkpoint": "Exact 62,578,655,208-byte eight-file BF16 source is fully staged and hash-bound; native-NVFP4 conversion remains unconsumed.",
+  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79 is pulled and remains the immutable serving image.",
+  "next": "Sole claimant b200_nvfp4_gemma4_endpoint must consume the hash-bound llmcompressor repair in the existing claim, launch one replacement PID owner by 2026-07-28T11:58:00Z, and release by 2026-07-28T12:35:00Z.",
+  "server_state": "No CUDA conversion, endpoint, control, candidate, or scientific sample has run. The prior owner exited pre-science on a missing llmcompressor dependency.",
+  "state": "claimed mutable warm bench with staged checkpoint and pulled image, protected by the 2026-07-28T12:40:00Z cleanup watchdog"
+}

@@ -1,0 +1,107 @@
+{
+  "artifact_type": "m384_attention_opportunity_register",
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "Adjacent query-head CTAs may obtain the same KV lines from L2",
+        "Register pressure may erase grouped-head reuse",
+        "Global head_dim 512 may require lower query-row tiling"
+      ],
+      "cost_usd": 0.01,
+      "decision_impact": 0.8,
+      "decision_resolution_per_dollar": 28.560000000000002,
+      "discrimination_power": 0.8,
+      "evidence_scope": "Exact local d256 GQA2 and global d512 GQA8 production geometry",
+      "falsifier": "Candidate L2 read sectors do not fall materially or component latency regresses",
+      "id": "group_query_heads_by_kv_head",
+      "mechanism": "Reuse each paged KV tile across the query-head group within one request-owned CTA schedule",
+      "next_measurement": "Exact H200 stock/candidate component A/B with L2, DRAM, registers, spills, and latency",
+      "observation": "Stock Triton maps one CTA per request/query-head and reloads a shared KV head for every GQA query head",
+      "readiness": 0.7,
+      "transfer_penalty": 0.25,
+      "uncertainty": 0.85
+    },
+    {
+      "competing_explanations": [
+        "Launch overhead may be hidden by the graph",
+        "Embedding the store may increase registers or duplicate stores"
+      ],
+      "cost_usd": 0.01,
+      "decision_impact": 0.35,
+      "decision_resolution_per_dollar": 13.104000000000001,
+      "discrimination_power": 0.9,
+      "evidence_scope": "Pinned M384 per-layer store_cache then extend_attention boundary",
+      "falsifier": "Fused-store candidate has no launch reduction or regresses attention latency",
+      "id": "fuse_future_kv_store",
+      "mechanism": "Elect one grouped-head stage-1 CTA per request/KV head to store the 12 new K/V rows while consuming them",
+      "next_measurement": "Kernel path proof, exact KV byte oracle, and launch-counted H200 A/B",
+      "observation": "Stock reads new K/V in attention and separately launches store_cache for future forwards",
+      "readiness": 0.8,
+      "transfer_penalty": 0.2,
+      "uncertainty": 0.65
+    },
+    {
+      "competing_explanations": [
+        "Metadata kernels may already be captured or hidden",
+        "Attention compute and KV traffic may dominate"
+      ],
+      "cost_usd": 0.01,
+      "decision_impact": 0.3,
+      "decision_resolution_per_dollar": 6.0,
+      "discrimination_power": 1.0,
+      "evidence_scope": "Pinned SGLang v0.5.13 TARGET_VERIFY source path",
+      "falsifier": "Per-layer source rebuilds request/page/mask metadata",
+      "id": "reuse_request_page_metadata",
+      "mechanism": "Prepare request-owned page, SWA, and mask metadata once per forward",
+      "next_measurement": "Source trace metadata construction and every layer consumer",
+      "observation": "The proposed metadata reuse may already exist",
+      "readiness": 1.0,
+      "transfer_penalty": 0.0,
+      "uncertainty": 0.2
+    },
+    {
+      "competing_explanations": [
+        "A current external library may support head_dim 512 but lack custom tree masks",
+        "A library adapter may require a different page size"
+      ],
+      "cost_usd": 0.01,
+      "decision_impact": 0.55,
+      "decision_resolution_per_dollar": 4.937625,
+      "discrimination_power": 0.95,
+      "evidence_scope": "Pinned Gemma4 backend allowlist plus current official library feature surfaces",
+      "falsifier": "A proven SM90 implementation accepts page-size-1 NHD, d256/d512, GQA, local window, and arbitrary NGRAM custom mask",
+      "id": "adapt_proven_library",
+      "mechanism": "Use an existing FlashInfer, FlashAttention, or CUTLASS exact consumer",
+      "next_measurement": "Compile and invoke the exact supported API on H200 only if all semantic predicates are source-proven",
+      "observation": "No inspected proven drop-in covers the complete pinned semantic tuple",
+      "readiness": 0.45,
+      "transfer_penalty": 0.4,
+      "uncertainty": 0.35
+    },
+    {
+      "competing_explanations": [
+        "KV quantization could preserve token decisions empirically",
+        "Quantized cache may be supported by a newer runtime"
+      ],
+      "cost_usd": 0.01,
+      "decision_impact": 0.7,
+      "decision_resolution_per_dollar": 0.0,
+      "discrimination_power": 1.0,
+      "evidence_scope": "Exact-logit semantics of the qualified BF16-cache endpoint",
+      "falsifier": "Bitwise identical dequantized K/V and target logits for all admissible BF16 inputs",
+      "id": "direct_fp8_paged_kv",
+      "mechanism": "Change the production paged KV representation from BF16 to FP8",
+      "next_measurement": "None in this semantics-preserving project",
+      "observation": "FP8 KV removes bytes only by changing stored values and scale semantics",
+      "readiness": 0.0,
+      "transfer_penalty": 1.0,
+      "uncertainty": 0.05
+    }
+  ],
+  "ranking_method": {
+    "claim_limit": "triage heuristic only; inputs are judgments and score is not a performance prediction",
+    "formula": "impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd",
+    "name": "heuristic_decision_resolution_per_dollar_v1"
+  },
+  "schema_version": 1
+}

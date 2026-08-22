@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "decision": "reuse_warm_h200_for_unconsumed_ngram_flashinfer_arm",
+  "project": "gemma4_dflash_exact_target_h200_component",
+  "researcher_profile": "execution",
+  "skills": [
+    "$researcher",
+    "$experiment-run"
+  ],
+  "campaign": {
+    "model": "google/gemma-4-31B-it",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "draft": "z-lab/gemma-4-31B-it-DFlash",
+    "draft_revision": "eabd648301ce28583cc14757912e5e0f84e152e1",
+    "qualified_h200_denominator_seconds_per_request": 0.625149101968745,
+    "h200_target_seconds_per_request": 0.500119281574996
+  },
+  "bench": {
+    "id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "condition": "ready",
+    "accelerator": "nvidia-h200-sxm",
+    "provider": "nebius",
+    "instance_id": "computeinstance-e00t5s028ts52zp215",
+    "boot_disk_id": "computedisk-e00vsj169nacjazg4k",
+    "staging_disk_id": "computedisk-e00rwewnz08e4fgt41",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "driver_version": "580.159.04",
+    "gpu_memory_mib": "143771",
+    "public_ipv4": "89.169.122.95",
+    "ssh_user": "glmrunner",
+    "known_hosts_namespace": "/root/.config/nebius/glm-campaign/known_hosts",
+    "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+    "ssh_ed25519_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw"
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-30T03:38:00Z",
+    "owner_launch_by_utc": "2026-07-30T03:42:00Z",
+    "owner_release_by_utc": "2026-07-30T04:35:00Z",
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z",
+    "watchdog_unit": "gemma4-dflash-r3-20260730t0323z-watchdog.service",
+    "watchdog_pid": 506236,
+    "lease_seconds": 4200
+  },
+  "spend": {
+    "authorized_cumulative_usd": 18.0,
+    "actual_through_r6_release_usd": 12.648691452930557,
+    "conservative_cumulative_through_watchdog_usd": 16.402758079555556,
+    "margin_usd": 1.597241920444444,
+    "hourly_rate_usd": 2.45
+  },
+  "immutable_inputs": {
+    "target_manifest_sha256": "6202e8f8565a350270875c95b67c31329a5266bbaf1cdc23b54df96da63da9d6",
+    "remote_target_path": "/home/glmrunner/dflash-component/r3-target/b9ea41a2887d8607f594846523f94c6cc75ac8a4-20260730T004946346350Z",
+    "remote_run": "/home/glmrunner/dflash-component/r3-runs/20260730T004946346350Z",
+    "packet_archive": "artifacts/dflash-h200-r6-ngram-flashinfer-repair/dflash-component-ngram-flashinfer-repair-packet.tar",
+    "packet_archive_sha256": "0131a839747c24b1b9142f7d2849139ef477a5c5d806e4bb8717167bc5658f39",
+    "packet_manifest_sha256": "04b23b7f3e8c50414441eb83d88529b9ead45aa074405cf8c926776092588d3d",
+    "packet_readiness": "artifacts/dflash-h200-r6-ngram-flashinfer-repair/R6_NGRAM_FLASHINFER_REPAIR_READY.json",
+    "packet_readiness_sha256": "dc2a2f5cae56b8f594d96cdece1e0aebbe4dac3625c98dfd5593a0196088a678",
+    "release_evidence": "artifacts/dflash-h200-r3-cold-worker3/run/RELEASE_EVIDENCE.json",
+    "release_evidence_sha256": "74ad3416f09f63fbe1aa4ea2dceb050d30b354f4c9581d41ab19f36d484c93fc",
+    "frozen_snapshot_manifest_sha256": "50881e51e39061cce00ff2431de7fcaf506144acea6d20823edabdb2a70ac301"
+  },
+  "scientific_scope": {
+    "ar": {
+      "complete_requests": 32,
+      "disposition": "frozen_no_replay"
+    },
+    "dflash": {
+      "complete_requests": 32,
+      "disposition": "frozen_no_replay"
+    },
+    "ngram": {
+      "complete_requests": 0,
+      "science_started": false,
+      "disposition": "only_authorized_arm",
+      "decode_attention_backend": "flashinfer",
+      "page_size": 16,
+      "block_size": 16,
+      "speculative_eagle_topk": 10
+    },
+    "worker_generation": 7,
+    "retry_scope": "classify"
+  },
+  "owner_contract": {
+    "source": "dflash_component_direct_recovery_owner_r7.py",
+    "execution_binding": "artifacts/dflash-h200-r7-ngram-flashinfer/EXECUTION_BINDING_R7.json",
+    "state": "artifacts/dflash-h200-r7-ngram-flashinfer/OWNER_STATE_R7.json",
+    "log": "artifacts/dflash-h200-r7-ngram-flashinfer/OWNER_R7.log",
+    "artifact_root": "artifacts/dflash-h200-r7-ngram-flashinfer/run",
+    "repair_namespace": "dflash-h200-r7-ngram-flashinfer-20260730t0325z",
+    "launch_command": "/root/workspace/research/factory/tools/detached-owner start --state artifacts/dflash-h200-r7-ngram-flashinfer/OWNER_STATE_R7.json --log artifacts/dflash-h200-r7-ngram-flashinfer/OWNER_R7.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_dflash_exact_target_h200_component --unit-manager pid -- /usr/bin/python3 dflash_component_direct_recovery_owner_r7.py --execution-binding artifacts/dflash-h200-r7-ngram-flashinfer/EXECUTION_BINDING_R7.json --artifact-root artifacts/dflash-h200-r7-ngram-flashinfer/run"
+  },
+  "delegation": {
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_dflash_exact_target_h200_component --bench h200-dflash-r3-computeinstance-e00t5s028ts52zp215 --lease-seconds 4200",
+    "requirements": [
+      "Read this binding once and verify its SHA-256, packet readiness and packet archive, release evidence, ready bench identity, replacement watchdog, and clock.",
+      "Derive the smallest R7 owner from dflash_component_direct_recovery_owner_r6.py. Bind it directly to this director contract and the validated FlashInfer packet. It must reuse the complete target and existing remote run without downloading or rehashing unchanged checkpoint rows.",
+      "The R7 owner must skip AR and DFlash completely, preserve their frozen 32-request results, archive any zero-request NGRAM partial before mutation, and enter only NGRAM through worker generation 7 and retry scope classify.",
+      "Keep mutable launcher, target-view, runtime-constructor, and retrieval defects repairable beneath one live retained dispatcher. Do not replay a scientific arm after its science marker.",
+      "Before claiming, hash-bind the complete R7 source and validate only its narrow control-flow and immutable identity checks. Do not contact the bench during source preparation.",
+      "Claim the exact ready bench once by claim_start_by_utc. Materialize the claim-specific execution binding from the returned claimed_at and current exact inventory identity, then launch exactly once with owner_contract.launch_command by owner_launch_by_utc.",
+      "Return after one grouped snapshot proves the detached owner PID/start_ticks, fresh heartbeat, exact claim generation, bound packet, and progress into NGRAM or a typed retained repair boundary. Do not follow model execution."
+    ]
+  },
+  "prohibitions": [
+    "Do not create, stop, replace, or extend provider resources or watchdogs.",
+    "Do not claim another bench or call a provider API.",
+    "Do not replay AR, DFlash, workers 0-6, or request 25.",
+    "Do not alter model, draft, workload, observer, timing boundary, packet semantics outside the NGRAM FlashInfer backend repair, target checkpoint, or target hardware.",
+    "Do not use the blank staging disk or restage the checkpoint."
+  ]
+}

@@ -399,6 +399,32 @@ def _parsed_evidence(
     }
 
 
+def _application_error(parsed_values: Sequence[Any]) -> dict[str, Any] | None:
+    for value in parsed_values:
+        if not isinstance(value, dict):
+            continue
+        event_type = value.get("type")
+        error_value = value.get("error")
+        if event_type not in {"error", "response.failed", "response.incomplete"} and (
+            error_value is None or error_value == {} or error_value == []
+        ):
+            continue
+        message: str | None = None
+        if isinstance(error_value, dict) and isinstance(
+            error_value.get("message"), str
+        ):
+            message = error_value["message"]
+        elif isinstance(error_value, str):
+            message = error_value
+        elif isinstance(value.get("message"), str):
+            message = value["message"]
+        return {
+            "kind": "application",
+            "message": message or str(event_type or "endpoint returned an error"),
+        }
+    return None
+
+
 def _sse_protocol_complete(events: Sequence[Mapping[str, Any]]) -> bool:
     for event in events:
         if event.get("data") == "[DONE]":
@@ -517,6 +543,8 @@ def _perform_request(
                             "kind": "invalid_json",
                             "message": str(parse_error),
                         }
+        if error is None:
+            error = _application_error(parsed_values)
         if not transport_complete and error is None:
             error = {
                 "kind": "transport",
@@ -567,17 +595,19 @@ def _perform_request(
     return metadata
 
 
-def _parse_arm_order(value: str | Sequence[str]) -> tuple[str, str]:
+def _parse_arm_order(value: str | Sequence[str]) -> tuple[str, ...]:
     parts = (
         [part.strip() for part in value.split(",")]
         if isinstance(value, str)
         else [str(part).strip() for part in value]
     )
-    if len(parts) != 2 or set(parts) != set(ARMS):
+    if not parts or len(parts) > 2 or len(set(parts)) != len(parts) or any(
+        arm not in ARMS for arm in parts
+    ):
         raise ScienceToolError(
-            "arm order must contain control and candidate exactly once"
+            "arm order must contain control and/or candidate, each at most once"
         )
-    return parts[0], parts[1]
+    return tuple(parts)
 
 
 def _request_complete(path: Path, request: WorkloadRequest, arm: str) -> bool:
@@ -616,10 +646,10 @@ def _request_complete(path: Path, request: WorkloadRequest, arm: str) -> bool:
 
 
 def _progress(
-    root: Path, requests: Sequence[WorkloadRequest]
+    root: Path, requests: Sequence[WorkloadRequest], arms: Sequence[str]
 ) -> dict[str, dict[str, int]]:
     result: dict[str, dict[str, int]] = {}
-    for arm in ARMS:
+    for arm in arms:
         complete = 0
         successful = 0
         for request in requests:
@@ -711,7 +741,7 @@ def run_endpoint_pair(
 
     def update_run(*, errors: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         with state_lock:
-            progress = _progress(root, requests)
+            progress = _progress(root, requests, order)
             artifact_complete = all(
                 row["complete_requests"] == row["total_requests"]
                 for row in progress.values()

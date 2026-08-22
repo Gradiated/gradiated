@@ -1,0 +1,310 @@
+{
+  "bounded_owner": {
+    "active_session_contract": [
+      "Record the detached-owner state path as unit.",
+      "Record emitted pid, start_ticks, unit_manager=pid, artifact_root, and absolute deadline in STATUS.json.active_session.",
+      "Keep claim, heartbeat, worker supervision, compact retrieval, repair generations, and final release inside this one controller."
+    ],
+    "deadline_rule": "Later director authority must provide claim_start_by_utc and owner_deadline_utc inside the registered bench lifecycle deadline with cleanup margin.",
+    "entrypoint": "pq_mips_h200_owner.py",
+    "launch": [
+      "/root/workspace/research/factory/tools/detached-owner",
+      "start",
+      "--state",
+      "<absolute-project-owner-state-path>",
+      "--log",
+      "<absolute-project-owner-log-path>",
+      "--cwd",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_output_head_pq_mips_recovery_proxy",
+      "--unit-manager",
+      "pid",
+      "--",
+      "/usr/bin/python3",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_output_head_pq_mips_recovery_proxy/pq_mips_h200_owner.py",
+      "--ready",
+      "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_output_head_pq_mips_recovery_proxy/PQ_MIPS_H200_PRODUCER_READY.json",
+      "--authority",
+      "<later-director-authority.json>",
+      "--output",
+      "<absolute-project-artifact-root>"
+    ],
+    "release_predicate": "Release ready only after the owner independently validates producer identity/reference fields and the complete three-shortlist/two-batch H200 terminal ledger. Unknown or incomplete results remain in repair; deadline disposition is maintenance after compact retrieval.",
+    "repair": "Recoverable producer, consumer, launcher, archive, or retrieval defects retain the claim and heartbeat under a fresh repair-handshake generation. A persisted producer is resumed, never replayed.",
+    "worker_terminal_order": [
+      "PRODUCER_STARTED.json",
+      "PRODUCER_TERMINAL.json",
+      "SCIENCE_STARTED.json",
+      "OUTPUT_HEAD_PQ_MIPS_H200_TERMINAL.json"
+    ]
+  },
+  "claim_allowed": false,
+  "classification": "hash_complete_offline_h200_vectorized_producer_ready",
+  "created_at_utc": "2026-07-29T21:26:52.591857+00:00",
+  "decision": "director_claim_authority_required",
+  "immutable_science": {
+    "batch_selection": [
+      "third capture-order row for every request in first-seen request order",
+      "fourth capture-order row for every request in first-seen request order"
+    ],
+    "capture_sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54",
+    "capture_terminal_sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc",
+    "codebook_dtype": "bfloat16",
+    "codebook_rows": 256,
+    "dimensions_per_subspace": 2,
+    "exact_rescore": "Capture-scoped containment of the complete pinned stock candidate set plus exact greedy agreement, not top-1 approximate agreement alone.",
+    "index_name": "pairwise_cartesian_gaussian_lloyd_max_pq",
+    "lowrank_terminal_sha256": "b3aecc3d68302ac11faf1c4fc9c278257ce85510143e579ded20eda18691b52a",
+    "model": "google/gemma-4-31B-it",
+    "pq_codes_dtype": "uint8",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "shortlist_sizes": [
+      256,
+      1024,
+      4096
+    ],
+    "subspaces": 2688,
+    "tie_break": "Descending approximate inner product, then ascending original token ID.",
+    "tied_weight_tensor_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+    "traffic_accounting": "Dense control charges one full physical BF16 read of all 262144 tied rows per c32 batch. Each PQ operating point charges the full packed-code scan, expanded BF16 codebooks, per-batch FP32 asymmetric lookup tables and score buffers, BF16 query input, candidate IDs, the physical union of exact BF16 member rows, and exact FP32 logits.",
+    "tuning_after_evaluation": "Forbidden",
+    "weight_dtype": "bfloat16",
+    "weight_shape": [
+      262144,
+      5376
+    ],
+    "weight_shard_sha256": "eeef8791537bc04f110967c513149e037d2a9ae97d49add7291ebfa62806bbfa"
+  },
+  "implementation": {
+    "cpu_reference": {
+      "gate": "Recompute population statistics, BF16 scalar codebooks, and packed codes with the existing CPU formula. Sampled BF16 codebooks and uint8 codes must be exact before SCIENCE_STARTED.",
+      "subspaces": [
+        0,
+        1,
+        17,
+        511,
+        1024,
+        2047,
+        2687
+      ],
+      "token_ids": [
+        0,
+        1,
+        106,
+        255,
+        4096,
+        65535,
+        131071,
+        262143
+      ]
+    },
+    "h200_consumer": {
+      "asymmetric_lookup": "FP32 c32x2688x256 query lookup table.",
+      "code_scan": "Exactly one c32 query chunk per packed-code row chunk, so the algorithmic code traffic is one full packed index read per frozen c32 batch.",
+      "component_ledger": [
+        "weight_h2d",
+        "weight_fp32_cast",
+        "statistics",
+        "encoding",
+        "asymmetric_lookup_and_code_scan",
+        "dense_exact_reference",
+        "stable_full_vocab_ranking",
+        "exact_union_rescore_by_shortlist"
+      ],
+      "exact_rescore": "For each shortlist and c32 batch, gather the sorted physical union of original BF16 rows once, form exact FP32 logits, and consume those logits for greedy IDs.",
+      "maximum_scan_gather_workspace_bytes": 176160768,
+      "ranking": "Stable descending full-vocabulary sort preserves ascending token ID on ties.",
+      "scan_row_chunk": 512
+    },
+    "physical_hypothesis": {
+      "classification": "inferred_until_target_h200_measurement",
+      "falsifier": "Any bounded CPU-reference mismatch, incomplete producer identity, missing c32 traffic equivalence, missing exact-union rescore row, or target-H200 component failure prevents scientific interpretation.",
+      "mechanism": "The producer replaces serial CPU threshold assignment with full-device vectorized reductions and batched searchsorted. The discriminator reuses each packed-code chunk across all 32 queries and gathers each exact survivor union once.",
+      "transfer_limit": "CPU/reference retrieval correctness and analytical traffic on these 64 exact capture rows only; a pass requires a later target-H200 exact-consumer component and GPQA-Diamond/TauBench recovery."
+    },
+    "producer": {
+      "codebook": "Frozen per-coordinate Gaussian Lloyd-Max 16-level BF16 scalar codebooks; adjacent pairs expand to 2688x256x2.",
+      "encoding": "Batched CUDA searchsorted over [5376,15] thresholds and row chunks; adjacent 4-bit scalar codes pack low+16*high into uint8 [262144,2688].",
+      "persistence": "Atomically persist frozen_pq_index.pt and hash-complete PRODUCER_TERMINAL.json before any selected hidden row is scored.",
+      "resume": "A later consumer repair must pass --resume-producer and validate the retained producer terminal and index hash; it cannot rerun statistics or encoding.",
+      "statistics": "One deterministic CUDA population var_mean over the full [262144,5376] FP32 view of the exact BF16 tied tensor."
+    }
+  },
+  "invalidated_unpublished_packet_identities": [
+    "6509c70113e73a38327836369b9932d0f82fbaf30ae06f89315c286522b860be"
+  ],
+  "later_director_gate": {
+    "accelerator": "nvidia-h200-sxm",
+    "bench_id": "h200-qkv-endpoint-computeinstance-e00qxw871hz1r79fjt",
+    "current_lifecycle_deadline_utc": "2026-07-29T23:55:00Z",
+    "gpu_uuid": "GPU-81ca2c99-6df0-5bf8-023c-3ee78a68f3d8",
+    "metered_rate_usd_per_hour": 2.45,
+    "prohibited_now": [
+      "No claim or ready transition.",
+      "No gpu_pool, SSH, Docker, CUDA, endpoint, or provider call.",
+      "No held-out scoring or scientific sample consumption."
+    ],
+    "required_authority": [
+      "Verify this READY SHA-256 and packet identity.",
+      "Verify remaining cumulative reservation and lifecycle runway.",
+      "Publish gpu_claim_allowed=true with exact bench, claim_start_by_utc, and owner_deadline_utc.",
+      "Launch the controller through detached-owner --unit-manager pid and atomically record active_session before relying on it."
+    ],
+    "reservation_usd": 6.0
+  },
+  "offline_validation": {
+    "artifact": "artifacts/PQ_MIPS_H200_OFFLINE_VALIDATION.json",
+    "owner_packet_validation": {
+      "artifact": "artifacts/owner-offline-validation.stdout",
+      "checks": {
+        "archive_hash": true,
+        "archive_members": true,
+        "manifest_hash": true,
+        "member:EXACT_CAPTURE_TERMINAL.json": true,
+        "member:EXPERIMENT_CONTRACT.json": true,
+        "member:LOSSLESS_LOWRANK_RESIDUAL_DISJOINT_TERMINAL.json": true,
+        "member:config.json": true,
+        "member:hidden_states.pt": true,
+        "member:model.safetensors.index.json": true,
+        "member:pq_mips_h200_owner.py": true,
+        "member:pq_mips_h200_worker.py": true,
+        "owner_hash": true,
+        "packet_identity": true,
+        "ready_claim_false": true,
+        "ready_project": true,
+        "weight_hash": true,
+        "worker_hash": true
+      },
+      "pass": true,
+      "sha256": "2ac999d248b35977939ed899a0288d69e9c5e7bd5b30fbf80b6a830ca86c18d5"
+    },
+    "prohibitions_observed": {
+      "cuda_called": false,
+      "docker_called": false,
+      "endpoint_traffic": false,
+      "gpu_pool_called": false,
+      "held_out_scoring_run": false,
+      "other_project_mutated": false,
+      "provider_api_called": false,
+      "ssh_called": false
+    },
+    "sha256": "ba389799225a6355e984f69b1b0eb26ce1fa8cbf706f218a7f955801d4769e3b",
+    "unit_tests": {
+      "command": "/usr/bin/python3 -m unittest -v test_pq_mips_h200_offline.py",
+      "pass": true,
+      "tests": 5
+    },
+    "weight_snapshot": {
+      "bytes": 2818572416,
+      "materialization": "project_local_single_tensor_safetensors",
+      "path": "inputs/h200-pq-mips/tied_output_weight.safetensors",
+      "sha256": "e69b0f2fde65d2f57f22d2f845f9b50db3702670e64e48e183914a8448a96ecf",
+      "tensor_dtype": "torch.bfloat16",
+      "tensor_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+      "tensor_shape": [
+        262144,
+        5376
+      ],
+      "weight_key": "model.language_model.embed_tokens.weight"
+    },
+    "worker_self_test": {
+      "codes_sha256": "3b39cd5cf15e26a68fcff4d1c36f2d95da71c2d84184478d22f6e7297fe24c9a",
+      "pass": true,
+      "rows": 2048,
+      "scores_sha256": "50a7862ec5130c4d672fb1c2a3f6998da83f94e1d28e8974b13372488053ea57",
+      "width": 16
+    }
+  },
+  "packet": {
+    "archive": "artifacts/pq-mips-h200-packet-bdc14325287c483b395662b80b44d89d2ee007e06a214f02be7653d16997b677.tar",
+    "archive_sha256": "882360b89e2b31b99c1fbd9db204ac25f8eaecf39d4a14b0ddc52d953ad63a76",
+    "files": [
+      {
+        "bytes": 745,
+        "path": "EXACT_CAPTURE_TERMINAL.json",
+        "sha256": "fc7297d3bf51e9118e0cf5bde4eec7c2bd22dc2d07a6608c3b19f8b55d55a9bc"
+      },
+      {
+        "bytes": 9894,
+        "path": "EXPERIMENT_CONTRACT.json",
+        "sha256": "d953f7a64c3ea5a8d118ea21a986385b0f5400eccf9c5985e4787f2029f67400"
+      },
+      {
+        "bytes": 27373,
+        "path": "LOSSLESS_LOWRANK_RESIDUAL_DISJOINT_TERMINAL.json",
+        "sha256": "b3aecc3d68302ac11faf1c4fc9c278257ce85510143e579ded20eda18691b52a"
+      },
+      {
+        "bytes": 4621,
+        "path": "config.json",
+        "sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1"
+      },
+      {
+        "bytes": 16600643,
+        "path": "hidden_states.pt",
+        "sha256": "ce7095836aea47701fc34ebacb2f0754c9066066062500a05fbd6136c59b4d54"
+      },
+      {
+        "bytes": 120246,
+        "path": "model.safetensors.index.json",
+        "sha256": "d4aff3b976d69c123a29d1c085d7ba4de1ac3f4ca1726a7f81e1b11462a64ea2"
+      },
+      {
+        "bytes": 23245,
+        "path": "pq_mips_h200_owner.py",
+        "sha256": "c2351cf69274f6000ae05916f7534bda663dd37266010bbf9c1c44a43e453d58"
+      },
+      {
+        "bytes": 29458,
+        "path": "pq_mips_h200_worker.py",
+        "sha256": "1a08af103520e55075516e2e979bbf93a202631eefb5bec09c95b2ee314c9b68"
+      }
+    ],
+    "identity_sha256": "bdc14325287c483b395662b80b44d89d2ee007e06a214f02be7653d16997b677",
+    "manifest": "inputs/h200-pq-mips/payload/PACKET_MANIFEST.json",
+    "manifest_sha256": "4afa62ef72fd56a7dc67df7c407ec670fc8ab953c2c4e1c75d2cbc3bde36be95",
+    "root": "inputs/h200-pq-mips/payload",
+    "weight_snapshot": {
+      "bytes": 2818572416,
+      "materialization": "project_local_single_tensor_safetensors",
+      "path": "inputs/h200-pq-mips/tied_output_weight.safetensors",
+      "sha256": "e69b0f2fde65d2f57f22d2f845f9b50db3702670e64e48e183914a8448a96ecf",
+      "tensor_dtype": "torch.bfloat16",
+      "tensor_sha256": "1053f051b1b894bb5f80eb52cdd434b8028aaad27c3006fcfdec48ac8c46d98d",
+      "tensor_shape": [
+        262144,
+        5376
+      ],
+      "weight_key": "model.language_model.embed_tokens.weight"
+    }
+  },
+  "project": "gemma4_output_head_pq_mips_recovery_proxy",
+  "resource_use_this_turn": {
+    "actual_spend_usd": 0.0,
+    "cuda_called": false,
+    "docker_called": false,
+    "endpoint_traffic": false,
+    "gpu_claimed": false,
+    "gpu_pool_called": false,
+    "held_out_rows_scored": 0,
+    "other_projects_mutated": false,
+    "packet_archive_bytes": 16834560,
+    "project_local_weight_snapshot_bytes": 2818572416,
+    "provider_api_called": false,
+    "scientific_samples_consumed": 0,
+    "ssh_called": false
+  },
+  "schema_version": 1,
+  "scope": "Deterministic vectorized weight-only PQ producer, bounded exact CPU-reference oracle, c32 asymmetric scan, exact union-rescore consumer, and durable owner packet only. Held-out science remains unconsumed.",
+  "source_hashes": {
+    "DIRECTOR_PQ_MIPS_H200_PRODUCER_RESCUE_20260729T2102Z.json": "d2ebe06c12a633850e251e304a66c110c789d22cc52b57f9220d9f43d9898715",
+    "DIRECTOR_PQ_MIPS_H200_RESERVED_MAINTENANCE_20260729T2107Z.json": "ac5eaf0590877d15bbbab1c7ceacf4ff145aedcb23f5fe363a3768e1b4b4f055",
+    "EXPERIMENT_CONTRACT.json": "d953f7a64c3ea5a8d118ea21a986385b0f5400eccf9c5985e4787f2029f67400",
+    "OPPORTUNITY_REGISTER.json": "a596c52affc8d3595363f2389edc6528300591506a5065a1cb0d5a3626cabc2e",
+    "OUTPUT_HEAD_PQ_MIPS_PROXY_TERMINAL.json": "e823868270c28a9622d58a9cf1dc1b46c3194dcb6425b0b650d110f3898cdc29",
+    "build_pq_mips_h200_packet.py": "0b89f89a622a6f4d74aa18f7a39a96be9353f6755d7247ff1398113e5eea9108",
+    "finalize_pq_mips_h200_ready.py": "91838d822742e394704894de77b504bcc8c59e1a864e8d3638eaf1bd465f6769",
+    "owner": "c2351cf69274f6000ae05916f7534bda663dd37266010bbf9c1c44a43e453d58",
+    "test_pq_mips_h200_offline.py": "0fac673da8eafd1c772c803ba42d5e0f1fb290b8a9f4d5513e6f6a8f600e3bbe",
+    "worker": "1a08af103520e55075516e2e979bbf93a202631eefb5bec09c95b2ee314c9b68"
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_b200_fp8_hybrid_attention_dataflow",
+  "decision": "same_claim_capture_repair_with_prestarted_replacement_owner",
+  "predecessor": {
+    "pid": 3468020,
+    "start_ticks": 137854710,
+    "artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_b200_fp8_hybrid_attention_dataflow/artifacts/b200-global-kv-20260728t1807z",
+    "claim_claimed_at": "2026-07-28T18:13:10.891596Z",
+    "repair_id": "global-kv-20260728T181554Z",
+    "repair_ready_sha256": "e6e8369e09409672ea8f4af1bbe41e6393719cd64d5e3c4d80c8ad0dc9751e16"
+  },
+  "localized_cause": {
+    "stage": "production_hidden_capture",
+    "classification": "recoverable_pre_science_transformers_hook_adapter",
+    "diagnosis": "The pinned Transformers attention layer supplied hidden_states through keyword arguments, while the capture hook indexed an empty positional tuple.",
+    "science_consumed": false
+  },
+  "prepared_repair": {
+    "patch_artifact": "capture_global_hidden.py",
+    "patch_sha256": "67a83f8b60799e553f722459a9df1c71b8de2b6ab1ad3e63128dd7556b56d4fa",
+    "retained_checkpoint_smoke": "artifacts/b200-global-kv-20260728t1807z/capture-repair-smoke.stdout",
+    "retained_checkpoint_smoke_sha256": "a0aa374b989f7280b000f2006d70486efc8fe1dbd8d3ccf7e911eb88dfaf79c1",
+    "observed_output": {
+      "shape": [
+        32,
+        5376
+      ],
+      "dtype": "torch.bfloat16"
+    }
+  },
+  "transition": {
+    "replacement_owner_destination": "b200_k_eq_v_owner_capture_repair.sh",
+    "replacement_artifact_root": "artifacts/b200-global-kv-capture-repair1-20260728t1820z",
+    "transition_start_by_utc": "2026-07-28T18:24:30Z",
+    "required_order": [
+      "Implement and hash-bind a replacement owner that inherits the original claimed_at timestamp, watchdog, immutable identities, component runner, and scientific submission count.",
+      "Launch the replacement owner durably while predecessor 3468020/137854710 remains live; the replacement may heartbeat but must wait for the exact repair request and predecessor exit before executing capture.",
+      "Atomically update STATUS.json.active_session to the verified replacement PID and start ticks.",
+      "Issue the shared repair-handshake request for repair ID global-kv-20260728T181554Z with retry scope capture and capture_global_hidden.py as the patch artifact.",
+      "Require the replacement to observe the hash-bound request and exact predecessor exit, copy only the amended capture adapter, and re-enter production_hidden_capture without repeating claim, checkpoint staging, or packet staging.",
+      "Write the repaired hidden to a fresh generation path, hash-bind it, and continue directly into the unchanged stock/candidate global K=V component."
+    ]
+  },
+  "immutable_science": {
+    "parent_binding": "DIRECTOR_B200_GLOBAL_KV_EXECUTION_20260728T1807Z.json",
+    "candidate": "global K=V projection elision",
+    "production_hidden_shape": [
+      32,
+      5376
+    ],
+    "component_runner_sha256": "71c4270cef39fd196d571aabbdec65319ed074345760ece804ab0996452b4c77",
+    "component_generations_allowed": 1,
+    "endpoint_requests_allowed": 0
+  },
+  "lifecycle": {
+    "bench": "b200-nvfp4-computeinstance-i00rqcq5yzr6xc991j",
+    "negative_or_incomplete_release_by_utc": "2026-07-28T18:32:00Z",
+    "watchdog_deadline_utc": "2026-07-28T18:36:00Z",
+    "provider_mutation": "forbidden"
+  },
+  "forbidden": [
+    "parallel capture or component executor",
+    "claim release and reclaim",
+    "checkpoint restaging",
+    "packet restaging",
+    "synthetic hidden replacement",
+    "candidate, oracle, workload, or component change",
+    "M32 dispatcher replay",
+    "provider lifecycle mutation"
+  ]
+}

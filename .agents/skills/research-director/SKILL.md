@@ -8,6 +8,13 @@ description: "Lead an ongoing model-optimization research lab: interpret telemet
 Your objective is decision-relevant research progress per wall-clock hour toward the exact model, workload, quality, and economic target in `CAMPAIGN.md`. Re-read that objective when it changes and treat it as the portfolio's objective function; inherited SLOs, gates, or project assumptions do not outrank it. Own the research portfolio, not every task. Read only the campaign state, telemetry, artifacts, and recent log sections needed to decide what to do next; do not spend a turn retelling the history.
 
 Make one portfolio decision from the current durable snapshot and return. A portfolio decision is one coherent rebalance and may admit, update, pause, or close several disjoint projects in the same turn; it does not mean choosing only one project. Never wait, sleep, poll, or monitor a researcher, provider owner, checkpoint transfer, model load, or experiment inside the director turn, and do not spawn internal subagents: the harness schedules researchers and invokes you again after material state changes. Provider create, register, drain, cleanup, and retire are the director's lifecycle actions; execute them when the portfolio decision requires them, then return without waiting for setup or running the experiment. If a result is pending, preserve its owner, fill available capacity with independent work that can advance now, record only decisions that can be made now, and return immediately.
+Warm-retention invariant: do not start provider deletion after a recoverable
+pre-science failure while a bounded same-lineage repair or acquisition is
+already active and the safe idle cost is below the measured cold-restart cost.
+Release the claim to maintenance if needed, request any cumulative reservation
+increase while the watchdog still protects the bench, and decide reuse after
+that repair returns; delete earlier only for an unsafe or incompatible bench,
+a lifecycle that cannot be extended safely, or unavailable spend authority.
 
 When a newly durable binding has a near-term claim, start, or warm-state
 deadline, return as soon as that runnable lane and its lifecycle safety are
@@ -23,6 +30,20 @@ harness scheduling interval and worker startup. If less remains, extend only
 that lifecycle fence when the unchanged absolute release/watchdog windows and
 authority still fit; otherwise keep the bench unclaimed and the project
 offline. Never hand a researcher an expired or sub-runway launch binding.
+Compute that final fence once with enough bounded commit-time slack to survive
+the remaining status, log, hash, and inventory writes, then persist those
+linked records as one final mutation and return. Do not rewrite the same
+runnable binding minute by minute merely to chase the 120-second floor: if the
+single final check fails, either publish one newly computed feasible fence and
+verify it once or keep the project offline. Each extra binding rewrite changes
+its digest, forces another inventory/status reconciliation, and consumes the
+warm execution window before the harness can schedule the researcher.
+When the harness cannot admit a new unclaimed researcher until the director
+returns, do not size a fence from an optimistic estimate of the remaining
+turn. If any work will continue after publishing the binding, give it at least
+the longest of the last three completed director durations plus the 120-second
+worker-start runway, measured from publication, or defer publishing the
+runnable binding until the final mutation of the turn.
 Before persisting a same-claim restart or repair as runnable, compare its
 remaining execution and release window with the measured duration of the
 closest same-lineage setup plus enough time to persist a terminal and release
@@ -47,8 +68,65 @@ the closest measured restart plus terminal/release margin still fits. If that
 was not preauthorized, retain the claim and bind the bounded repair before
 releasing; move to maintenance only when the guest is unsafe or unreachable,
 the absolute deadline requires it, or another measured restart cannot fit.
+Never combine “negative or incomplete” into one release disposition. A
+decision-bearing negative may release; an incomplete pre-science or
+uninterpretable result must retain the claim for its bounded mutable repair
+unless one of those explicit safety, deadline, or measured-fit conditions
+applies. Encode the two paths separately in every owner binding.
+When the current owner has published a live `repair-handshake` ready record,
+first establish from the durable owner code and any recorded entrypoint
+conflict that the live process can consume a request and re-enter the named
+invalidated stage. A `hold` or wait that merely returns into an unconditional
+maintenance release is not a repair dispatcher. If the owner can dispatch,
+atomically publish the patch binding, re-read the exact claim generation and
+repair ID once, then deliver it with `repair-handshake request --repair-id ...
+--patch-artifact ...` before returning. If it cannot dispatch, do not write the
+request: bind the exact replacement-owner handoff while the original owner
+still heartbeats, then replace only that matching PID under the same claim. If
+a request reports a terminal, release, different repair, or generation change,
+reconcile the new durable state instead of leaving an undeliverable side
+binding. This is repair coordination inside the existing mutable claim, not
+polling or a new validation stage.
+A same-claim recovery owner is not dispatcher-capable when its control flow
+returns after the named worker, after publishing the next `REPAIR_READY`, or
+after `repair-handshake wait` consumes a request. Do not approve that one-shot
+wrapper as retained ownership and then build another owner generation around
+its exit. Run the one-shot worker beneath an already-live dispatcher, or bind
+one owner whose loop consumes the next request and invokes its retry scope
+before returning. Infer this from the executable branch that follows the wait,
+not from the presence of repair artifacts; it is an execution-path correction,
+not a separate static readiness project.
+When delegating a bounded source or classification repair, include conditional
+same-turn request authority in that binding when it already fixes the success
+predicate, immutable science identities, retry scope, live owner identity,
+claim generation, and repair ID. Let the researcher publish the hash-bound
+patch and deliver it after proving that predicate and re-reading those exact
+live identities; do not require another director turn merely to verify the
+artifact the binding requested. Withhold this authority when the proof would
+change scientific scope, consumption remains unresolved by the bound evidence,
+or the next action needs an owner replacement, claim or provider mutation,
+deadline or spend change, or another safety judgment.
+A durable replacement or superseding binding is not by itself an execution
+fence for a live owner. In the same turn, either deliver an owner-observable,
+hash-bound fence and persist its acknowledgement or complete the exact-PID
+handoff; only then may the new binding revoke the predecessor's current repair
+authority. If immediate enforcement cannot be completed safely, record the
+replacement as a pending handoff and leave the predecessor's last consumed
+authority unchanged. Do not later treat post-binding output as both
+unauthorized and scientific terminal evidence.
 
 Researchers and the harness remain concurrent with the director turn. Immediately before persisting a portfolio or lifecycle mutation whose premise is a live claim, `active_session`, predecessor terminal, or bench availability, re-read those specific local durable records once. This is commit-time reconciliation, not polling. If the premise changed during the turn, recompute or abandon the stale mutation from that fresh state; do not park a runnable successor behind a predecessor that already released, protect an owner that already exited, or drain a bench that was just reclaimed.
+Treat every artifact in a project still owned by an active researcher as
+mutable, even when it is already named `TERMINAL`. A provisional result may
+justify requesting spend while the producer finishes, but it must not be
+copied into a claimable execution binding. After the producer's completion
+event and final handoff, compute the identities of all bound local files from
+their current bytes in one grouped command at the claim-opening mutation; do
+not inherit those digests from a provisional reservation. If the producer is
+still active, keep `claim_allowed: false` and let its completion wake the
+director. This is commit-time ownership reconciliation, not a separate
+readiness project or repeated validation pass.
+On a `researcher_no_progress` wake, inspect the newest artifact or final trace message produced by that researcher before redispatching the same project. If it reports a hash-bound binding, manifest, owner, identity, or deadline conflict, resolve or supersede that exact conflict in the current director decision; do not preserve and redispatch the unchanged authority merely because its own hashes still match. This is consumption of new durable evidence, not another validation pass. If the reported conflict is invalid, record the evidence that resolves it before retrying.
 
 For a serial lane on one exclusive warm bench, make the chosen next claimant unambiguous in durable scheduler state. Before returning, pause or dependency-gate every other active project that could claim that bench until its own prerequisite is durable; do not rely on priority, prose queue order, or a researcher's one-time availability read to enforce the itinerary. In particular, a project with a missing required input must not remain claimable while a prepared successor is admitted. Keep useful offline work active only when its durable next action cannot claim the shared bench, and reactivate it when the prerequisite is actually present.
 Once a queued project's offline work is complete and its next action only waits
@@ -79,6 +157,11 @@ least one independent zero-GPU lane from the current campaign phase and latest
 terminal before doing deeper opportunity synthesis. Do not consume the warm
 window enumerating closed mechanisms or reading a complete kernel playbook
 while both the portfolio and claim queue remain empty.
+If the retained bench's only active successor becomes bench-free source work,
+that successor no longer satisfies the direct-GPU floor. Before returning,
+either select an existing compatible direct experiment to reuse the bench or
+record the concrete blocker and the next lifecycle decision; do not create a
+project merely to occupy hardware or displace the bench-free source work.
 
 Keep at least one active project whose next result directly measures or falsifies an allowed intervention against the campaign target. If the target is comparative, keep the comparator and required cost-accounting threshold explicit; resolve a missing comparator without displacing all intervention work. Quality calibration and shared infrastructure may gate claims, but do not let them consume every research slot while an independent model- and workload-scoped cost experiment can run safely. If all active work is preparation, controller construction, or claim hygiene, redirect capacity before delegating another such turn. When the campaign permits a latency-for-cost trade, actively reconsider inherited interactive-serving SLOs and fixed low-concurrency operating points instead of preserving them by default.
 Do not call a source-complete paid lane “direct GPU” when its next result is
@@ -97,7 +180,13 @@ Treat low occupancy as a prompt to search for valuable independent work, not as 
 
 Do not impose a fixed minimum percentage improvement on an individual experiment. Small reproducible gains can compound. When a component result has a credible positive whole-request bound, the integration is ready or narrowly implementable, and an endpoint run is cheap relative to the remaining budget, measure the endpoint and retain a positive result. Use expected information and improvement per dollar and wall-clock hour—not an arbitrary 3%, 5%, or 10% gate—to decide whether to run it. A larger gate is appropriate only when the integration itself is expensive enough to require that hurdle.
 
-Own provider GPU allocation and teardown for the lab. Treat GPUs as shared warm benches, not project resources. Inspect `runtime/gpus.json` before allocating. Before activating or reserving a hardware-specific paid project, verify once from durable local bindings that its exact accelerator is reachable through an already-authenticated provider controller. A market listing, production price, or proposed venue is not experimental access. If no such interface exists, keep that project blocked and unreserved and select an authenticated compatible venue or materially distinct fallback; do not assign a researcher to rediscover provider setup. A requested, planned, or pending spend reservation is not provider authority: create only when the exact durable reservation is already present in the harness spend-cap snapshot and covers conservative lifecycle exposure. Treat `authorized_spend_usd` as a cumulative project ceiling: immediately before provider creation, require `actual_spend_usd + conservative maximum lifecycle exposure <= authorized_spend_usd`. A newly durable reservation does not erase prior spend. If the inequality does not hold, adjust the reservation or lifecycle before creation; do not create a paid bench and defer this reconciliation to the first researcher claim. If the reservation is absent, admit or update the project first and let the harness reserve it; return without provider mutation and create on a later director turn. Treat provider creation, watchdog start, and inventory registration as one safety transaction: as soon as create returns exact resource IDs, register the bench with `python3 -m grad_research.gpu_pool register --condition maintenance` before SSH, setup, or identity probes. A failed connection probe must leave a protected, non-claimable registered bench rather than an untracked provider resource; mark it ready only after the identity checks pass. Include hardware, provider resource, hourly cost, absolute watchdog/deadline, `lifecycle.provider_started_at_utc` captured immediately before the provider create attempt, and a concise description of resident model, checkpoint, image, runtime, caches, and server state. Retirement then records conservative provider exposure through cleanup verification; reconcile that evidence into project `actual_spend_usd` before terminal settlement, assigning shared-bench exposure explicitly. A legacy registration-based exposure is partial and omits creation time. For a remote bench, persist the current connection identity (resolved host or IP, SSH user, and known-hosts namespace or equivalent) in the registered resource metadata and require launchers to read it from that exact current bench record; never reuse an access endpoint from a retired or replaced resource. Before making a newly created remote bench claimable, reconcile a reused endpoint's host key against the authenticated provider instance identity, complete a strict SSH probe, and persist the verified fingerprint; the first researcher claim must not be the first identity check. Researchers atomically claim and release compatible benches; they never create or destroy them. Keep independent benches concurrent when the portfolio justifies the spend, with no GPU cap below the researcher cap.
+Own provider GPU allocation and teardown for the lab. Treat GPUs as shared warm benches, not project resources. Inspect `runtime/gpus.json` before allocating. For an ordinary AMD experiment, query `research/factory/tools/grad-profile providers --provider runpod` and prefer a stock-positive 1x MI300X Pod through the already configured RunPod controller. Use another AMD venue only after placement fails or when the experiment specifically requires newer AMD silicon, multi-GPU geometry, verified bare metal, firmware, or host-level controls. Before activating or reserving a hardware-specific paid project, verify once from durable local bindings that its exact accelerator is reachable through an already-authenticated provider controller. A market listing, production price, or proposed venue is not experimental access. If no such interface exists, keep that project blocked and unreserved and select an authenticated compatible venue or materially distinct fallback; do not assign a researcher to rediscover provider setup. A requested, planned, or pending spend reservation is not provider authority: create only when the exact durable reservation is already present in the harness spend-cap snapshot and covers conservative lifecycle exposure. Treat `authorized_spend_usd` as a cumulative project ceiling: immediately before provider creation, require `actual_spend_usd + conservative maximum lifecycle exposure <= authorized_spend_usd`. A newly durable reservation does not erase prior spend. If the inequality does not hold, adjust the reservation or lifecycle before creation; do not create a paid bench and defer this reconciliation to the first researcher claim. If the reservation is absent, admit or update the project first and let the harness reserve it; return without provider mutation and create on a later director turn. Treat provider creation, watchdog start, and inventory registration as one safety transaction: as soon as create returns exact resource IDs, register the bench with `python3 -m grad_research.gpu_pool register --condition maintenance` before SSH, setup, or identity probes. A failed connection probe must leave a protected, non-claimable registered bench rather than an untracked provider resource; mark it ready only after the identity checks pass. Include hardware, provider resource, hourly cost, absolute watchdog/deadline, `lifecycle.provider_started_at_utc` captured immediately before the provider create attempt, and a concise description of resident model, checkpoint, image, runtime, caches, and server state. Retirement then records conservative provider exposure through cleanup verification; reconcile that evidence into project `actual_spend_usd` before terminal settlement, assigning shared-bench exposure explicitly. A legacy registration-based exposure is partial and omits creation time. For a remote bench, persist the current connection identity (resolved host or IP, SSH user, and known-hosts namespace or equivalent) in the registered resource metadata and require launchers to read it from that exact current bench record; never reuse an access endpoint from a retired or replaced resource. Before making a newly created remote bench claimable, reconcile a reused endpoint's host key against the authenticated provider instance identity, complete a strict SSH probe, and persist the verified fingerprint; the first researcher claim must not be the first identity check. Researchers atomically claim and release compatible benches; they never create or destroy them. Keep independent benches concurrent when the portfolio justifies the spend, with no GPU cap below the researcher cap.
+Once an exact requested reservation is durable and the post-reservation binding
+or disposition is persisted, set `STATUS.json.reservation_required` to `false`
+in that same director turn. The harness intentionally defers every project
+whose flag remains true; confirming a reservation without clearing the flag
+must not deadlock runnable GPU-fenced source work behind repeated director
+wakes.
 
 When the director releases a claim after an inspection or owner transition,
 pass the inspected claim's `claimed_at` as `gpu_pool release
@@ -109,6 +198,33 @@ claim.
 When selecting a sole claimant for a bench in `maintenance`, finish the lifecycle handoff before scheduling that researcher. If the recorded state and any required owner inspection prove the bench safe, unoccupied, and compatible, mark it `ready` so the atomic claim can succeed; otherwise keep the project durably non-claimable and record the exact director-owned lifecycle action still required. Never spend a researcher turn discovering a known `maintenance` status through a failed claim.
 
 Bias toward retention. Size a new bench's watchdog for cold setup, the admitted experiment, likely compatible follow-ups, and a reasonable idle handoff window—not merely the first project's execution budget—while keeping total exposure inside the campaign spend authority. Treat project claims as bounded consumers of a lab resource rather than ownership of its lifecycle. When an existing useful bench needs more time and authority remains, start and verify a replacement cleanup watchdog, atomically replace its inventory lifecycle with `gpu_pool replace-watchdog`, then stop and verify the old watchdog; never create an unprotected interval.
+Treat the cleanup watchdog's command start as the irreversible retain-or-clean
+decision boundary, not as a post-deadline reconciliation wake. When an
+unconsumed compatible repair or successor remains plausible, decide early
+enough to start and verify any replacement watchdog before the old watchdog
+can enter provider deletion; otherwise record the positive drain reason and
+let cleanup proceed. Do not open or continue a paid claim whose remaining
+lifecycle cannot cover the closest measured restart, one retained repair,
+terminal/release, and this watchdog handoff margin. Once exact-ID deletion has
+started, do not attempt retention or reverse cleanup; record the resulting
+cold-restart cost. This is lifecycle scheduling, not another static validation
+stage.
+When a healthy warm bench is blocked only by a recoverable same-project
+pre-science integration omission and the current project ceiling is too small,
+request the cumulative reservation increase and return while retaining the
+bench protected and unclaimable. If campaign headroom and the measured
+idle-versus-cold-setup break-even justify reuse, let the harness durably reserve
+the increase on the next cycle, then extend the watchdog if needed and repair
+against resident state. Do not delete the bench first and request a cold
+replacement afterward. An expiring owner or claim-release fence permits
+generation-fenced release to maintenance; it is not evidence that the
+provider lifecycle must end while its watchdog remains safe. Deciding to fund
+a same-hardware, same-lineage replacement is itself evidence that compatible
+reuse remains likely, so return after requesting the reservation and let the
+next wake extend and reuse that bench rather than creating another one. Drain
+only when the reservation cannot be obtained, the measured repair plus
+execution and release cannot fit a safe extended lifecycle, the environment
+is incompatible, or the bench is unsafe.
 
 Keep a useful bench live across projects when its measured cold setup exceeds the likely idle gap or next experiment. When reuse timing is uncertain, compare paid idle cost with the paid cold-setup cost and lost wall time; retain by default while reuse within that break-even window is plausible. If the campaign remains open, keep newly released reusable state through the next portfolio selection: a momentarily empty queue immediately after a result is not evidence that no compatible work is likely. Choose the next experiment and hardware first, then drain only when that decision cannot reuse the bench. Queue compatible work onto resident state and let another researcher prepare a follow-up while the bench is claimed. Drain and clean only for a positive reason: no plausible compatible work within the break-even window, required hardware/environment replacement, unsafe state, or exhausted spend authority. A project terminal, empty claim, or short idle interval is not itself a teardown reason. An expired researcher claim is never auto-stolen: inspect it, reclaim it to maintenance, then decide whether to repair or drain. Retire the inventory record only after verified provider cleanup.
 When a compatible warm successor is already selected, complete its routine
@@ -146,6 +262,15 @@ Keep an operational correction inside the same scientific project. Do not create
 
 When a component is correct and materially positive but runtime integration fails, localize the failure before discarding the mechanism. If the evidence points to request ownership, padding, dynamic batching, cache lifetime, stream ordering, or another narrow integration defect, repair that defect and run a discriminating endpoint check in the same project. Close the mechanism only when the physical gain disappears, semantics cannot be preserved, or the repair cost is no longer competitive with better routes.
 
+When a claimed paid bench is waiting on a director-owned command, packet,
+input binding, or lifecycle decision, resolve that seam as the current
+portfolio action. In the same turn, either persist a hash-bound runnable
+same-project repair or explicit delegation with an owner and deadline, or make
+the evidence-backed release, reuse, or drain decision. Do not merely restate
+the missing seam while active researcher wakes rediscover it and the bench
+accrues cost. Bind mutable integration work without performing the delegated
+scientific experiment yourself.
+
 Match every close decision to what the evidence actually rejects: an observer, an implementation attempt, one candidate, one representation or recovery recipe, or the underlying mechanism. Do not generalize a narrow failure upward. For a transformation expected to preserve target semantics—such as target-verified speculation, exact caching, scheduling, layout, or kernel substitution—an unexpected output difference is localization evidence before it is mechanism evidence. Check the observer's invariants, an A/A baseline when nondeterminism is plausible, and the first divergent state; use task semantics and the campaign's eventual quality benchmarks rather than whitespace or raw-byte identity as the product gate. Continue only while the likely value of the cheapest discriminating repair beats alternative work.
 
 For a floating-point kernel transformation whose mechanism changes reduction
@@ -162,6 +287,15 @@ does not authorize replay of a consumed arm; apply it when admitting the next
 candidate.
 
 Separate discovery attempts from canonical samples. A compile, adapter, comparator, archive, or partial invocation that yields no interpretable candidate result may be amended and retried even if candidate code reached the GPU; record it as an invalid attempt, not a sample. Protect persisted costly stages and valid canonical measurements from silent replay, but do not turn “arm consumed” into a reason to discard an unmeasured high-value mechanism. A deadline or budget closes that project attempt; reconsider the mechanism at portfolio level when evidence and remaining authority justify a materially better attempt.
+
+Treat `science_started` as an attribution boundary, not by itself as proof
+that a canonical sample was consumed. If the bound consumer rejects a
+producer or control input before returning the minimum interpretable
+stock/candidate output, oracle, or timing required by the decision, classify
+the submission as an invalid attempt. Preserve successful costly stages and
+rank a corrected-input attempt against the rest of the portfolio; do not
+silently replay a valid result, exceed a deadline or budget, or assume the
+corrected attempt outranks other work.
 
 When a binding permits exactly one request, kernel call, or scientific sample, count only submissions after the durable `science_started` boundary. Do not express that limit as “no in-run repair,” “stop after any infrastructure terminal,” or unconditional release when a launcher, source-identity parser, observer attach, or other pre-science support step can fail recoverably. Require the owner to retain the claim and repair handshake through such a defect, then make the still-unsubmitted scientific call once. This does not authorize changing bound inputs or resubmitting an arm after its science marker; unsafe state, an absolute deadline, or a deliberate higher-value reassignment may still end the attempt.
 
@@ -216,6 +350,13 @@ controllers to discover how to launch. If no existing entrypoint fits, bind
 the smallest launcher mutation and its destination in this same project and
 keep the project offline until that implementation is the immediate action;
 do not create a separate readiness project.
+Complete and hash-validate any required local owner, manifest, packet, or
+preclaim mutation before opening a short warm-bench claim fence. The claim
+window is for atomic claim and detached launch, not orientation or code
+authoring. If local preparation genuinely must share the execution turn, size
+the claim fence from the nearest measured preparation duration plus the
+120-second scheduling runway while preserving the absolute release/watchdog
+margin; otherwise keep the bench non-claimable until those bytes are ready.
 An owner that accepts an unbound `component_command` is not runnable merely
 because its lifecycle disposition is tested. Before calling its offline repair
 terminal execution-ready, require that the same terminal hash-bind a

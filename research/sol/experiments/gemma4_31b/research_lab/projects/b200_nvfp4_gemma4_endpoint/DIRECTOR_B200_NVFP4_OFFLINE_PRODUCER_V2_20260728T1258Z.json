@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "decision_id": "b200-nvfp4-offline-producer-v2-20260728t1258z",
+  "created_at_utc": "2026-07-28T12:58:39Z",
+  "project": "b200_nvfp4_gemma4_endpoint",
+  "decision": "reactivate_same_scientific_project_for_offline_producer_completion",
+  "scientific_identity": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "packet_manifest": "artifacts/native-nvfp4-endpoint-packet-v1/PACKET_MANIFEST.json",
+    "packet_manifest_sha256": "707b20f442ade965a9970d3338d8b608946cf4e3168fa7257111963b38f0b116",
+    "intervention": "native W4A4 FP4 group-16 checkpoint consumed by the pinned B200 serving runtime",
+    "workload": "exact campaign c32 4214-prompt/358-output distribution plus the bound AA 10K view",
+    "endpoint_order": "same-B200 BF16 control then native-NVFP4 candidate",
+    "science_consumed": false
+  },
+  "prior_attempt": {
+    "terminal": "B200_ATTEMPT_TERMINAL_20260728T1224Z.json",
+    "terminal_sha256": "8ce88a675f63cf8924818cd483268df258b3666089032ad1a8d3341b8d5b0401",
+    "classification": "operationally_inconclusive_pre_science",
+    "diagnostic": "artifacts/b200-nvfp4-endpoint-20260728t1052z/REPAIR_DIAGNOSTIC.txt",
+    "diagnostic_sha256": "b6e8b8eae98c79b5789669750ce536f00ed2ef39304d503ccb552d518dcf4cce",
+    "dependency_manifest": "artifacts/b200-nvfp4-endpoint-20260728t1052z/LLMCOMPRESSOR_DEPENDENCY_MANIFEST.json",
+    "dependency_manifest_sha256": "c7cf749fccca9c4c2236c0618570a02c5bafde145c1ce9cc014bf3a641b0fa09",
+    "settled_spend_usd": 6.7383062365694455,
+    "last_failure": "The isolated llmcompressor==0.12.0 console path loaded 1,188 tensors, then Gemma4Processor initialization required torchvision."
+  },
+  "researcher_assignment": {
+    "skill": "$researcher",
+    "profile": "execution",
+    "scope": "offline_only",
+    "wall_clock_deadline_minutes": 90,
+    "local_cpu_budget_hours": 2,
+    "local_storage_budget_gib": 20,
+    "instructions": [
+      "Inspect only the named terminal, diagnostic, dependency manifest, current producer shim, and packet entrypoints.",
+      "Build a project-local, reproducibly versioned producer bundle that supplies the exact torchvision/processor boundary without resolving or replacing the pinned serving image's Torch, CUDA, Transformers, NumPy, compressed-tensors, or serving dependencies.",
+      "Use no-dependency installation or an equivalently closed lock, persist every package version and content hash, and prove the bundle from a fresh isolated environment.",
+      "Exercise the llmcompressor console entrypoint, import Gemma4Processor, and run the smallest exact-revision processor/config smoke that reaches the previously failing boundary without loading checkpoint weights.",
+      "Patch and hash-bind the existing endpoint owner so a future B200 claim can install the bundle, resumably stage the exact checkpoint, convert once, run BF16 control, run native-NVFP4 candidate, persist both terminals, and release.",
+      "Do not use provider APIs, claim a GPU, stage checkpoint shards, run conversion, launch an endpoint, or submit a scientific request."
+    ]
+  },
+  "decision_artifacts": {
+    "ready": "B200_NVFP4_PRODUCER_V2_READY.json",
+    "negative": "B200_NVFP4_PRODUCER_V2_RESULT.json",
+    "ready_requirements": [
+      "hash-bound dependency lock or wheel bundle and fresh-environment smoke evidence",
+      "hash-bound final endpoint owner and exact detached-owner invocation",
+      "explicit proof that core serving dependencies are unchanged",
+      "conservative measured setup estimate for producer install, checkpoint staging, conversion, both endpoints, terminal persistence, and release"
+    ],
+    "postcondition": "Set project status paused after either typed artifact. A later director may provision only after the ready artifact and an exact durable reservation are both visible."
+  },
+  "provider_gate": {
+    "provider_mutation_allowed": false,
+    "gpu_claim_allowed": false,
+    "required_future_accelerator": "b200",
+    "future_provider_exposure_budget_minutes": 180,
+    "future_hourly_cost_assumption_usd": 3.95,
+    "future_maximum_exposure_usd": 11.85,
+    "cumulative_project_spend_ceiling_usd": 19.0,
+    "cumulative_fit": true
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "The predecessor query span captures reusable local trajectory structure, so disjoint residuals remain selective.",
+        "The predecessor basis only memorizes its 32 fit/evaluation rows, so disjoint residual bounds approach the full vocabulary.",
+        "Exact-weight union pruning survives but fixed index and score-buffer traffic erases net savings."
+      ],
+      "cost_usd": 0.0,
+      "decision_impact": 0.95,
+      "discrimination_power": 0.98,
+      "evidence_scope": "google/gemma-4-31B-it@b9ea41a, exact tied BF16 head, frozen rank-32 index, 32 preregistered disjoint exact-capture rows, CPU/reference",
+      "falsifier": "Complete stock-set containment fails or fully charged net physical bytes avoided is nonpositive.",
+      "id": "frozen_lowrank_disjoint_query_transfer",
+      "mechanism": "Frozen query-asymmetric orthonormal projection with per-row residual certificates and exact rescoring.",
+      "next_measurement": "One single-shot deterministic held-out exact-stock-set and physical-union discriminator.",
+      "observation": "The predecessor avoided 90.0035% net bytes on the same 32 rows used to fit its basis; the exact capture has 1536 rows and 32 requests with 48 rows each.",
+      "readiness": 1.0,
+      "residual_bottleneck": "The disjoint query residual widened the conservative row bound until all non-masked vocabulary rows entered the 32-query physical union.",
+      "resource_signature": {
+        "hardware": "CPU/reference only",
+        "modifiable_fraction": "up to the inherited 0.0351006092 s/request output-head interval",
+        "phase": "output head",
+        "upper_bound": "100% of dense output-head weight traffic before fixed-index overhead"
+      },
+      "result": {
+        "decision": "close_frozen_rank32_transfer_representation",
+        "evidence_class": "measured CPU/reference exact-stock-set containment and derived fully charged physical traffic",
+        "exact_stock_set_certified": true,
+        "held_out_query_residual_norm_max": 226.37157343799157,
+        "net_physical_bytes_avoided_fraction": -0.13528192610967726,
+        "physical_union_rows": 262143
+      },
+      "status": "falsified_net_physical_transfer",
+      "transfer_penalty": 0.35,
+      "uncertainty": 0.05
+    }
+  ],
+  "schema_version": 1
+}

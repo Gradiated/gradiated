@@ -1,0 +1,54 @@
+{
+  "attention_config": {
+    "backend_per_kind": {
+      "full_attention": "FLEX_ATTENTION",
+      "sliding_window": "TRITON_ATTN"
+    }
+  },
+  "classification": "exact_layer_aware_dispatch",
+  "consumer_binding": {
+    "full_attention": {
+      "backend": "FLEX_ATTENTION",
+      "k_v_layout": "[T,4,512]",
+      "layers": 10,
+      "mask": "causal OR same_mm_prefix_block",
+      "q_layout": "[T,32,512]"
+    },
+    "kv_cache": {
+      "dtype": "BF16/auto only for this candidate",
+      "layout": "NHD",
+      "logical": "[num_blocks,num_kv_heads,block_size,2*head_dim]",
+      "ownership": "per-layer; num_kv_shared_layers=0",
+      "physical": "[num_blocks,block_size,num_kv_heads,2*head_dim]"
+    },
+    "sliding_window": {
+      "backend": "TRITON_ATTN",
+      "k_v_layout": "[T,16,256]",
+      "layers": 50,
+      "mask": "(causal OR same_mm_prefix_block) AND window_1024",
+      "q_layout": "[T,32,256]"
+    }
+  },
+  "model_geometry": {
+    "full_layers": 10,
+    "global_head_dim": 512,
+    "global_kv_heads": 4,
+    "layers": 60,
+    "local_head_dim": 256,
+    "local_kv_heads": 16,
+    "q_heads": 32,
+    "sliding_layers": 50,
+    "sliding_window": 1024
+  },
+  "schema_version": 1,
+  "source_hashes": {
+    "vllm/model_executor/layers/attention/attention.py": "04fa9a1acb71217c7b9815e193198f6b69f12019c84a8a989b8d7e87544f8bda",
+    "vllm/model_executor/models/gemma4.py": "f13cb41ed9208a5549d466fe9745378d9b3d7b747a52a1927d542c1e97d4cdc8",
+    "vllm/v1/attention/backends/flex_attention.py": "6a6298bd913dc0fab66282cc3cd9469f390dcbe7a54ff6429aac5bfd6ee5d449",
+    "vllm/v1/attention/backends/triton_attn.py": "20b4dd5f8c15cd2d6f9598268368f5fc572f2c980eb75327c5992100c49ff3ed",
+    "vllm/v1/attention/selector.py": "1752ef70633f643688df7e072b1374522a0cdc4c6fdcebfcca44a8a6566db6cd",
+    "vllm/v1/kv_cache_interface.py": "73b5967f23ff2d4526b984cf90c1203e550575e5f329650c8899269b8f78edcf",
+    "vllm/v1/worker/gpu_model_runner.py": "81b7627fbe81f7aaa2f77b4bf085faa353c69d03662ebfe369536a9773bb70d0"
+  },
+  "vllm_revision": "568afb3a13806beb53bb2e6bd518269357b237c0"
+}

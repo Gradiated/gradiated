@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "decision": "retain_exact_claim_and_repair_sm120_sampler_and_flex_resource_failures",
+  "created_at_utc": "2026-07-29T09:55:21Z",
+  "project": "gemma4_vllm026_sm120_heterogeneous_attention_split",
+  "campaign_objective": {
+    "qualified_denominator_s_per_request": 0.625149101968745,
+    "target_s_per_request": 0.500119281574996,
+    "requirement": "A component result is progress only; campaign completion requires a scope-matched endpoint and sustainable-cost result."
+  },
+  "inherited_execution": {
+    "path": "DIRECTOR_VLLM026_SM120_ATTENTION_SPLIT_STOPPED_PREDECESSOR_EXECUTION_20260729T0933Z.json",
+    "sha256": "dae923b7ae3c05abf62265ecbdf8fd002f116ae12fc049ab100d821f9c1a19d9",
+    "oracle_source_before_repair_sha256": "adb4f590988387fd32518b8955bef0c495fa6321235d13299f58dc230ad9e46b",
+    "native_vllm_wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4"
+  },
+  "retained_owner": {
+    "bench_id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "claim_generation": "2026-07-29T09:36:50.649263Z",
+    "owner_pid": 4059482,
+    "owner_start_ticks": 143382800,
+    "replacement_owner_allowed": false,
+    "new_claim_allowed": false,
+    "repair_id": "attention-oracle-2026-07-29T093650.649263Z-r1",
+    "repair_ready_sha256": "c9d3a510c79c6299a9c6cdb6125c53468ba8facf3462838e0e49b86631862e27",
+    "retry_scope": "retrieve_or_adopt_existing_attention_oracle_terminal"
+  },
+  "invalid_attempt_evidence": {
+    "terminal": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/repairs/output-root-r1/SM120_ATTENTION_SPLIT_ORACLE.json",
+    "terminal_sha256": "f7f8950ed35399c8ccf8e4d8e148cc68018af2b18fb0f09f6ba3379988e577d8",
+    "bundle": "artifacts/sm120-attention-stopped-predecessor-fence-20260729t0933z/repairs/output-root-r1/remote_terminal_bundle_final.tar",
+    "bundle_sha256": "31aec0437a0dfbd7c783cd72b968709a8807807d9eb376eb0217f78ba95835f2",
+    "control_stderr_sha256": "3394f44dcbd4035b2790758f44c8ff3fc8a5f375079308c1040261c5b04204c6",
+    "candidate_stderr_sha256": "ea42a142a5c458440b201aa8038f1f2a890c28578128248abb04575bae4ffbf2",
+    "classification": "invalid_zero_output_dual_runtime_failure",
+    "control_failure": "After exact all-TRITON model load and warmup, FlashInfer sampling rejected SM120 with `FlashInfer requires GPUs with sm75 or higher`.",
+    "candidate_failure": "The 50-TRITON/10-FLEX arm reached FLEX execution compilation, where Triton required 156672 resources against the SM120 hardware limit 101376.",
+    "decision_bearing_rows": 0,
+    "path_proof_complete": false,
+    "scientific_interpretation": "Neither failure compares attention mechanisms; both are localized runtime or lowering defects."
+  },
+  "immutable_science": {
+    "model_checkpoint_runtime_and_wheel": "unchanged from inherited execution binding",
+    "parent_arm_order": [
+      "all-TRITON control",
+      "50-TRITON/10-FLEX candidate"
+    ],
+    "candidate_geometry": {
+      "sliding_window_layers": 50,
+      "full_attention_layers": 10,
+      "sliding_window_backend": "TRITON_ATTN",
+      "full_attention_backend": "FLEX_ATTENTION"
+    },
+    "semantic_oracle": "Exact prompt and generated token IDs/text for two text requests plus one deterministic multimodal-prefix request.",
+    "valid_terminal": "Both arms must return rows and prove control_triton, candidate_triton, and candidate_flex paths.",
+    "additional_valid_parent_submissions": 1
+  },
+  "mutable_repair_scope": {
+    "profile": "deep",
+    "files": [
+      "future_sm120_oracle.py",
+      "the staged generation-local copy of future_sm120_oracle.py",
+      "one fresh generation-local output root",
+      "terminal retrieval and r1 adoption packaging"
+    ],
+    "control_repair": "Select a supported non-FlashInfer sampler path on SM120 without changing prompts, seeds, logits, sampling parameters, or output semantics.",
+    "candidate_repair": "Use pinned Torch/vLLM source and the captured failing FLEX kernel to choose one architecture-legal lowering configuration by reducing live resource demand (for example tile, warp, or stage geometry) while preserving exact attention semantics and the 50/10 backend split.",
+    "physical_hypothesis": "The candidate failure is a launch-resource legality defect: a smaller legal FLEX configuration should compile on SM120 and reach the exact consumer, trading bounded extra work or traffic for resource fit.",
+    "falsifier": "No architecture-legal FLEX lowering reaches the exact Gemma consumer with required path proof inside the retained deadline, or the legal lowering returns semantically invalid output."
+  },
+  "execution_contract": {
+    "use_skills": [
+      "$researcher",
+      "$experiment-run",
+      "$kernel-research"
+    ],
+    "revalidate_once_before_mutation": [
+      "owner PID 4059482 with start ticks 143382800",
+      "claim generation 2026-07-29T09:36:50.649263Z",
+      "r1 REPAIR_READY SHA-256 c9d3a510c79c6299a9c6cdb6125c53468ba8facf3462838e0e49b86631862e27",
+      "no REPAIR_REQUEST",
+      "zero parent/oracle processes and quiescent accelerator allocations"
+    ],
+    "implementation": "Inspect only the pinned sampler and FLEX lowering source needed for the two failures. Patch and hash-bind final source, archive the invalid remote run root by its terminal hash, stage the amended source atomically, and execute exactly one corrected parent against a fresh exclusive run root.",
+    "on_complete_terminal": "Publish a compact hash-bound adoption patch that records final source hash, fresh output identity, per-arm evidence hashes, CUDA/path proof, and terminal hash. Then send exactly one r1 repair-handshake request so the waiting owner retrieves, validates, and releases.",
+    "on_incomplete_terminal": "Send no r1 request and do not replay. Persist the compact failure plus whether each arm reached CUDA/path proof, preserve the owner and claim, and return for director disposition.",
+    "patch_and_launch_by_utc": "2026-07-29T10:10:00Z",
+    "result_required_by_utc": "2026-07-29T10:30:00Z"
+  },
+  "forbidden": [
+    "gpu_pool claim, release, ready, or maintenance mutation by the repair researcher",
+    "provider lifecycle calls",
+    "owner replacement or signal to PID 4059482",
+    "checkpoint restaging or shard rehash",
+    "native vLLM wheel or checkpoint mutation",
+    "norm-FP8 replay",
+    "c32 endpoint execution",
+    "changing prompts, semantic oracle, arm order, or 50/10 attention geometry",
+    "more than one corrected parent submission"
+  ],
+  "lifecycle": {
+    "absolute_release_deadline_utc": "2026-07-29T10:37:00Z",
+    "watchdog_deadline_utc": "2026-07-29T10:45:00Z",
+    "measured_prior_parent_seconds": 413,
+    "fit_assessment": "One source repair plus one prior-duration parent and terminal adoption fits before release with safety margin.",
+    "maximum_project_spend_usd": 3.0,
+    "disposition": "Retain the exact claim through complete adoption or a new typed repair boundary; release remains generation-fenced and owner-controlled."
+  }
+}

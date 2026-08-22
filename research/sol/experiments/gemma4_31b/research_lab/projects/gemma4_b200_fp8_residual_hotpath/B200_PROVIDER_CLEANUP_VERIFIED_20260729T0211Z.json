@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "cleanup_verified_at_utc": "2026-07-29T02:11:31.550583Z",
+  "bench": "b200-m32-static-computeinstance-i00z1c1rm2yatraaed",
+  "provider": "nebius",
+  "instance_id": "computeinstance-i00z1c1rm2yatraaed",
+  "disk_id": "computedisk-i00ch1ec97jas3szz2",
+  "project_id": "project-i00hfrkjpr00wmz2kzj3qm",
+  "delete_operation_id": "computeoperation-i00p16zxfv79vn1dk5",
+  "verification": {
+    "instance": "not_found",
+    "disk": "not_found",
+    "watchdog": "not_loaded_or_inactive",
+    "inventory": "retired_with_cleanup_verified"
+  },
+  "provider_exposure": {
+    "basis": "provider_start_to_cleanup_verification",
+    "started_at_utc": "2026-07-28T22:54:07.243681Z",
+    "seconds": 11844.306902,
+    "hourly_cost_usd": 3.95,
+    "spend_usd": 12.995836739694445,
+    "covers_pre_registration": true
+  },
+  "scientific_terminal": "artifacts/b200-static-scheduler-endpoint-manifest-reload-20260729t0128z/retrieved/PAIR_TERMINAL.json",
+  "scientific_terminal_sha256": "afe8b5475879dd5af822a557da86dfd224bc339aa014f7579f3a77137c60ba42",
+  "scientific_classification": "endpoint_pair_invalid"
+}

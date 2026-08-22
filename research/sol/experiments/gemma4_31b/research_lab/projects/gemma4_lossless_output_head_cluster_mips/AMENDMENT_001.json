@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-07-29T17:23:05Z",
+  "classification": "invalid_attempt_consumer_index_space_mismatch",
+  "parent_contract": "EXPERIMENT_CONTRACT.json",
+  "producer_cache": "artifacts/hierarchy.pt",
+  "producer_cache_sha256": "14a5affea6f0e884fd776c51a4cfb9e39d77993d9aab3ad1ba58a3cee388bbeb",
+  "failed_consumer_result": "artifacts/attempt0_consumer_index_space.json",
+  "failed_consumer_result_sha256": "ec621592aa2be41c5d0e148c371b165534628fed1a8d743cf6962f0ef56b1eca",
+  "science_consumed": false,
+  "producer_consumed_once": true,
+  "cause": "The hierarchy emitted survivor masks in permuted contiguous-layout positions, while the stock possible-winner and dense-reference IDs remained in original token-ID order. The comparator indexed those original-ID masks directly with layout positions.",
+  "causal_change": "Map the final member survivor mask through the retained hierarchy permutation back to original token-ID order before the stock candidate-set and dense-reference membership comparisons.",
+  "retry_scope": "hierarchy_consumer_only",
+  "unchanged": [
+    "weight and capture identities",
+    "stock sampler recovery",
+    "random-projection permutation",
+    "centroids and radii",
+    "dense reference scores and numeric envelopes",
+    "traffic accounting",
+    "decision gates"
+  ]
+}

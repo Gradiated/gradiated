@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "state": "ready_for_retained_claim_packet_idempotence_repair",
+  "runtime_manifest": "H200_55L5G_RETAINED_PACKET_IDEMPOTENCE_REPAIR_RUNTIME_MANIFEST.json",
+  "runtime_manifest_sha256": "4972fd77571018fdeb49bd24befa1ecc37d7b33e5c345ad1a0c0c168cd1b284c",
+  "owner": "run_h200_55l5g_retained_packet_ready_owner.py",
+  "owner_sha256": "d762b8f4d19bc18d980cfa4a7f78ac3208c28b6915e081061e76fffdc2cfcb39",
+  "claimed_at_utc": "2026-07-29T00:54:46.997840Z",
+  "science_consumed": false,
+  "quality_preservation_claimed": false,
+  "maximum_valid_pair_invocations": 1
+}

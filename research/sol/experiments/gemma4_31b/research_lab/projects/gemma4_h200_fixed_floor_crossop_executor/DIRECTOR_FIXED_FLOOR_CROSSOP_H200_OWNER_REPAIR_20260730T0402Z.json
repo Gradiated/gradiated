@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T04:02:00Z",
+  "classification": "director_same_project_pre_science_owner_repair_and_reexecution",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "researcher_profile": "execution",
+  "decision": "Repair only the lifecycle owner's local SSH-command collision and generic recoverable-failure disposition, then make the still-unconsumed exact H200 component call under a fresh claim.",
+  "predecessor_attempt": {
+    "director_binding": "DIRECTOR_FIXED_FLOOR_CROSSOP_H200_EXECUTION_20260730T0355Z.json",
+    "director_binding_sha256": "02207541818e7ffcfaa97607f949a5d0c0c314c28bdfb2958ba9428883d8a03d",
+    "derived_execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200.json",
+    "derived_execution_binding_sha256": "4b76de34f3af2aab76102d6724162224ce3a921bec58cc00a6f405d3eada71e3",
+    "failure_artifact": "artifacts/fixed-floor-crossop-h200-20260730t0355z/run/OWNER_FAILURE.json",
+    "failure_sha256": "de8ebc7f88406ad525c2849e7ba5b31ad794b4a13287f386ff351d342c779f7d",
+    "release_evidence": "artifacts/fixed-floor-crossop-h200-20260730t0355z/run/RELEASE_EVIDENCE.json",
+    "release_evidence_sha256": "dd71872352677f1aaa6a7b1e1e28cc92b5d6c314737b763b33464de4201ba17a",
+    "claim_generation": "2026-07-30T03:58:52.215691Z",
+    "claim_seconds": 0.012735,
+    "actual_spend_usd": 0.000008666875000000002,
+    "error": "Value after * must be an iterable, not function",
+    "science_consumed": false,
+    "staging_started": false,
+    "cuda_started": false
+  },
+  "safe_reuse_evidence": {
+    "verified_at_utc": "2026-07-30T04:01:00Z",
+    "bench_state": "maintenance",
+    "claim": null,
+    "strict_ssh": "pass",
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "gpu_memory_used_mib": 0,
+    "compute_processes": 0,
+    "running_containers": 0,
+    "watchdog_unit": "gemma4-dflash-r3-20260730t0323z-watchdog.service",
+    "watchdog_main_pid": 506236,
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z"
+  },
+  "immutable_science": {
+    "source_binding": "DIRECTOR_FIXED_FLOOR_CROSSOP_H200_EXECUTION_20260730T0355Z.json",
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate_sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d",
+    "consumer_sha256": "7175968c4be9b95e5d509b328df9424169c2ee499d9da5b2ec42688e4cf8d408",
+    "cases": 10,
+    "scientific_submission_count": 1,
+    "endpoint_submission_count": 0
+  },
+  "mutable_repair": {
+    "baseline_owner": "run_fixed_floor_crossop_h200_owner.py",
+    "baseline_owner_sha256": "9b5b88991070edb37009f738bb32a5c5d0959c111fea893c2940993319a4d91e",
+    "required_destination": "run_fixed_floor_crossop_h200_owner_r2.py",
+    "required_execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_R2.json",
+    "artifact_root": "artifacts/fixed-floor-crossop-h200-20260730t0402z-r2",
+    "required_changes": [
+      "Keep the already-corrected distinct ssh_cmd list and ssh execution function; never star-expand a function.",
+      "Move staging, container launch, retrieval, and terminal adoption into a re-enterable operation scope.",
+      "On a recoverable pre-science launcher, SSH, staging, permission, container, import, or runtime-API failure, publish a fresh repair-handshake generation, keep the claim heartbeating, consume a hash-bound request, and re-enter only that operation scope.",
+      "Do not release from a generic exception. Release a decision-bearing ten-case terminal ready, an unsafe or unreachable guest maintenance, or the absolute deadline maintenance.",
+      "Keep the claim generation and accumulated spend continuous across every in-claim repair."
+    ],
+    "preclaim_check": "Compile the final owner, parse the final derived binding, assert all hashes and the distinct ssh_cmd/function identities, and exercise only local command construction. Do not simulate the lifecycle or run science before claim."
+  },
+  "lifecycle": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "required_state_after_director_ready": "available",
+    "claim_start_by_utc": "2026-07-30T04:16:00Z",
+    "scientific_launch_by_utc": "2026-07-30T04:20:00Z",
+    "scientific_complete_by_utc": "2026-07-30T04:32:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T04:36:00Z",
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z",
+    "claim_lease_seconds": 1200,
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_fixed_floor_crossop_executor --bench h200-dflash-r3-computeinstance-e00t5s028ts52zp215 --lease-seconds 1200",
+    "detached_start_template": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/run_fixed_floor_crossop_h200_owner_r2.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_R2.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/run"
+  },
+  "budgets": {
+    "authorized_spend_usd": 1.0,
+    "actual_spend_usd_before_r2": 0.000008666875000000002,
+    "maximum_r2_claim_wall_minutes": 20,
+    "maximum_r2_claim_exposure_usd": 0.8166666666666667,
+    "maximum_scientific_gpu_minutes": 5,
+    "maximum_additional_storage_gibibytes": 2
+  },
+  "must": [
+    "Use $researcher with execution profile, $kernel-research, and $experiment-run.",
+    "Prepare and hash-bind the R2 owner and execution binding before claim; re-read the exact bench once, claim by 04:16Z, and launch by 04:20Z.",
+    "Return after one grouped snapshot proves the durable owner live, heartbeating, and beyond the corrected local SSH-command boundary, or after terminal and release."
+  ],
+  "must_not": [
+    "Do not change or replay the scientific contract, run an endpoint, or create another project.",
+    "Do not use the revoked R1 derived execution binding or its old owner hash.",
+    "Do not call provider lifecycle, mutate the watchdog, claim another bench, or let a generic recoverable exception release the bench."
+  ]
+}

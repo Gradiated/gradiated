@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "project": "gemma4_streaming_global_kv_memory_schedule",
+  "classification": "same_claim_invalid_candidate_endpoint_repair_fence_rebind",
+  "created_at_utc": "2026-07-29T15:50:30Z",
+  "source_binding": {
+    "path": "DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V12_INVALID_ENDPOINT_REPAIR_20260729T1547Z.json",
+    "sha256": "ef4002b225dfdde405fcfece6234384127d27426d2c5e66db12313bc8bbb21c5"
+  },
+  "supersedes_only": {
+    "field": "execution.no_replay_guard_by_utc",
+    "prior_value": "2026-07-29T15:52:00Z",
+    "new_value": "2026-07-29T15:53:00Z",
+    "reason": "The prior fence fell below the 120-second harness scheduling runway. The live repair wait began at 15:43:11Z under a 600-second outer cap, so the rebound fence remains before any automatic endpoint retry."
+  },
+  "authorization": {
+    "bench_id": "h200-streaming-global-kv-fresh-computeinstance-e00n8vffvr4jkmm33f",
+    "claim_generation": "2026-07-29T14:02:13.215196Z",
+    "owner_pid": 102131,
+    "owner_start_ticks": 145439383,
+    "repair_id": "streaming-global-kv-v11-endpoint_only-2",
+    "repair_ready_sha256": "7fafb09be0bcc2fc936e6773f298d504e8e61f3f23e17728f9c39d6332146408",
+    "new_claim_allowed": false,
+    "provider_lifecycle_change": false,
+    "release_by_utc": "2026-07-29T16:35:00Z",
+    "watchdog_deadline_utc": "2026-07-29T16:40:00Z"
+  },
+  "execution": {
+    "researcher_profile": "execution",
+    "no_replay_guard_by_utc": "2026-07-29T15:53:00Z",
+    "instruction": "Read this rebind and its source binding once, then execute the source binding unchanged with the rebound no-replay fence. Return immediately after the guard or exact-controller replacement is durable and one grouped snapshot proves the claim heartbeat and no duplicate endpoint executor."
+  },
+  "unchanged": [
+    "Attempt 0 remains an invalid candidate attempt with zero valid U=8 samples.",
+    "At most one corrected attributed U=8 endpoint is authorized.",
+    "The exact checkpoint, image, workload, schedule, server, claim generation, release deadline, drain fence, watchdog, and successor queue remain unchanged.",
+    "No provider lifecycle mutation is authorized."
+  ]
+}

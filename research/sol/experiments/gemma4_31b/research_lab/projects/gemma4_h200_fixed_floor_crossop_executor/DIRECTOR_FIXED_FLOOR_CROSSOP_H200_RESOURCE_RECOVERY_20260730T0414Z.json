@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "created_at_utc": "2026-07-30T04:14:00Z",
+  "classification": "director_evidence_only_compiler_resource_recovery",
+  "project": "gemma4_h200_fixed_floor_crossop_executor",
+  "researcher_profile": "execution",
+  "decision": "Recover the missing compiled register and spill evidence for the already-consumed positive ten-case component without launching the candidate kernel, replaying timing, or running an endpoint.",
+  "accepted_component_evidence": {
+    "terminal": "artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/run/TERMINAL.json",
+    "terminal_sha256": "8a4fba273e0923fac4ac55f552ff8d1e247473a1f15b9aa614f91bf963c46a71",
+    "release_evidence": "artifacts/fixed-floor-crossop-h200-20260730t0402z-r2/run/RELEASE_EVIDENCE.json",
+    "release_evidence_sha256": "e096676cefd89b1e4b81e42fc6dad852a42f8163c194dfafa83a5b3777bbb991",
+    "complete_cases": 10,
+    "all_qkv_nrmse_zero": true,
+    "all_cache_bytes_exact": true,
+    "minimum_median_reduction_fraction": 0.2373121946165545,
+    "maximum_median_reduction_fraction": 0.6747318469341507,
+    "science_consumed": true,
+    "timing_replay_allowed": false
+  },
+  "immutable_science": {
+    "model_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "runtime_revision": "28b095c01005d4a3a2a5b637b7d028b07fba31b2",
+    "image": "docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6",
+    "candidate": "fused_qkv_kv_cache.py",
+    "candidate_sha256": "4b697f3cc125c3b24f4e765be755feffbbc53ed259ada2762637afa1ebf8ef7d",
+    "kernel_symbol": "_qkv_norm_rope_cache_kernel",
+    "write_cache": true,
+    "num_q_heads": 32,
+    "num_warps": 4,
+    "specializations": [
+      {
+        "class": "local",
+        "num_kv_heads": 16,
+        "head_dim": 256,
+        "half_dim": 128,
+        "block_half": 128
+      },
+      {
+        "class": "global",
+        "num_kv_heads": 4,
+        "head_dim": 512,
+        "half_dim": 256,
+        "block_half": 256
+      }
+    ]
+  },
+  "recovery_contract": {
+    "required_runner_destination": "collect_fixed_floor_crossop_h200_resources.py",
+    "required_owner_destination": "run_fixed_floor_crossop_h200_resource_owner.py",
+    "required_execution_binding": "EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_RESOURCES.json",
+    "artifact_root": "artifacts/fixed-floor-crossop-h200-resources-20260730t0414z",
+    "allowed_operation": "Compile or recover the exact WRITE_CACHE=True local and global H200 specializations without kernel launch, then inspect compiler metadata and the generated target object.",
+    "required_evidence": [
+      "Exact candidate source hash, H200 UUID, image digest, Triton version, CUDA target, specialization constexprs, num_warps, compiled object identity, and compiler command or metadata identity.",
+      "Registers per thread for both exact candidate specializations.",
+      "Spill stores and spill loads from compiler metadata or target-object resource inspection for both specializations.",
+      "A durable proof that no candidate kernel launch, timing loop, component case, or endpoint request was submitted."
+    ],
+    "acceptance": {
+      "maximum_registers_per_thread": 32,
+      "maximum_spill_store_bytes": 0,
+      "maximum_spill_load_bytes": 0,
+      "all_specializations_required": true
+    },
+    "disposition": {
+      "pass": "Persist a typed promotion-complete component terminal and release the quiescent bench ready. A later director decides endpoint admission.",
+      "fail": "Persist a typed resource-gate negative and release the quiescent bench ready. Preserve the positive component timings as descriptive evidence only.",
+      "recoverable_integration": "Keep the claim under one repair-capable owner and repair only compile/resource extraction while it safely fits the absolute release deadline.",
+      "unsafe_or_deadline": "Release to maintenance with the exact diagnostic."
+    }
+  },
+  "lifecycle": {
+    "bench_id": "h200-dflash-r3-computeinstance-e00t5s028ts52zp215",
+    "required_initial_status": "available",
+    "required_initial_claim": null,
+    "claim_start_by_utc": "2026-07-30T04:25:00Z",
+    "owner_launch_by_utc": "2026-07-30T04:28:00Z",
+    "resource_terminal_by_utc": "2026-07-30T04:35:00Z",
+    "absolute_release_deadline_utc": "2026-07-30T04:39:00Z",
+    "watchdog_deadline_utc": "2026-07-30T04:51:56.187924Z",
+    "claim_lease_seconds": 840,
+    "claim_command": "PYTHONPATH=/root/workspace/research/factory/src python3 -m grad_research.gpu_pool --lab /root/workspace/research/sol/experiments/gemma4_31b/research_lab claim --project gemma4_h200_fixed_floor_crossop_executor --bench h200-dflash-r3-computeinstance-e00t5s028ts52zp215 --lease-seconds 840",
+    "detached_start_template": "/root/workspace/research/factory/tools/detached-owner start --unit-manager pid --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-20260730t0414z/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-20260730t0414z/OWNER.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/run_fixed_floor_crossop_h200_resource_owner.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/EXECUTION_BINDING_FIXED_FLOOR_CROSSOP_H200_RESOURCES.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/artifacts/fixed-floor-crossop-h200-resources-20260730t0414z/run"
+  },
+  "bench_identity": {
+    "gpu_uuid": "GPU-4a6a3b47-4f80-e015-a013-f13d5c364648",
+    "ssh_fingerprint": "SHA256:FyyWs3v7776yoRPt1Asg+jJ7hBH4lTGFmWpkfa7aOtw",
+    "watchdog_main_pid": 506236
+  },
+  "budgets": {
+    "authorized_spend_usd": 1.0,
+    "actual_spend_usd_before_recovery": 0.11532148298611113,
+    "maximum_claim_wall_minutes": 14,
+    "maximum_claim_exposure_usd": 0.5716666666666667,
+    "maximum_additional_storage_gibibytes": 1
+  },
+  "must": [
+    "Use $researcher with execution profile, $kernel-research, and $experiment-run.",
+    "Prepare and hash-bind the lifecycle-pure runner, repair-capable owner, and derived execution binding before claim.",
+    "Use compilation warmup or equivalent no-launch compilation; do not invoke the candidate kernel.",
+    "Release by 04:39Z after a typed resource terminal or unsafe/deadline handoff."
+  ],
+  "must_not": [
+    "Do not replay any of the ten consumed component cases or timings.",
+    "Do not run an endpoint, load the Gemma checkpoint, change candidate source, or alter scientific geometry.",
+    "Do not create another project, claim another bench, or call provider lifecycle."
+  ]
+}

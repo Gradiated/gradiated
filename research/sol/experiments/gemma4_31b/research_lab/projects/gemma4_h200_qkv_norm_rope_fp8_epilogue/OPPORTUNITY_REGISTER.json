@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "opportunities": [
+    {
+      "id": "direct_qkv_norm_rope_fp8_cache_layout",
+      "observation": "Pinned Gemma4Attention materializes BF16 QKV, launches fused QKV RMSNorm and RoPE, then separately writes K and V into the FP8 paged cache before Triton decode attention consumes Q and the cache.",
+      "evidence_scope": "google/gemma-4-31B-it@b9ea41a; SGLang v0.5.13@28b095c0; decode c32; H200; local Q32/KV16/d256 and global Q32/KV4/d512",
+      "phase": "decode",
+      "resource_signature": "small c32 epilogue grids and compulsory intermediate/cache traffic ahead of a memory-intensive paged-attention consumer",
+      "uncertainty": 0.45,
+      "competing_explanations": [
+        "The attention consumer dominates enough that launch/dataflow savings disappear in the full component boundary.",
+        "FP8 cache rounding after fused normalization/RoPE exceeds the consumer-output numerical gate."
+      ],
+      "mechanism": "One Triton kernel normalizes Q/K/V, applies exact partial/full RoPE, emits Q in consumer layout, and writes K/V directly into their final FP8 paged-cache rows.",
+      "modifiable_fraction": "Four stock pre-attention launches plus their intermediate BF16 traffic; the QKV GEMM and attention kernels remain unchanged.",
+      "upper_bound": "At most the complete stock epilogue/cache-write portion of the measured producer-output-to-consumer boundary.",
+      "falsifier": "A same-process target-H200 call through installed decode_attention_fwd is incorrect or the alternating profiler-off median is not lower.",
+      "next_measurement": "One local and one global exact decode-c32 correctness-bearing component comparison.",
+      "cost_usd": 0.35,
+      "decision_impact": 0.8,
+      "discrimination_power": 0.95,
+      "readiness": 0.9,
+      "transfer_penalty": 0.2,
+      "expected_information_per_dollar": "high"
+    }
+  ]
+}

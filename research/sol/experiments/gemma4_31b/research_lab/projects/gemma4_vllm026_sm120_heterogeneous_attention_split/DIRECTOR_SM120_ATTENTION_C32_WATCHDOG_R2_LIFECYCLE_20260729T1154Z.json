@@ -1,0 +1,10 @@
+{
+  "deadline_utc": "2026-07-29T13:11:00Z",
+  "provider_started_at_utc": "2026-07-29T11:31:43.898297Z",
+  "watchdog": {
+    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-sm120-attention-c32-3u5oyb8eazps50-watchdog-r2.service",
+    "main_pid": 4170010,
+    "unit": "gemma4-sm120-attention-c32-3u5oyb8eazps50-watchdog-r2.service",
+    "unit_manager": "user"
+  }
+}

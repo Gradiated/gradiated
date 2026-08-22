@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "checked_at_utc": "2026-07-29T08:17:36Z",
+  "classification": "separate_assistant_requires_multi_surface_mtp_adapter_bind_confirmed_eagle3_fallback",
+  "target": {
+    "identity": "google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "revision_http_verified": true,
+    "config_sha256": "e967dd38bc5cfd38bd09a995a7bf4a754075df2b46aba68f7fbb5a791e6d8dd1",
+    "architecture": "Gemma4ForConditionalGeneration",
+    "model_type": "gemma4",
+    "text_model_type": "gemma4_text",
+    "hidden_size": 5376,
+    "num_hidden_layers": 60,
+    "vocab_size": 262144
+  },
+  "assistant": {
+    "identity": "google/gemma-4-31B-it-assistant@627c5ec1458b9086b841a91e0512fd31fd2fbbf1",
+    "head_revision_verified": true,
+    "materialization": {
+      "path": "materialized/assistant",
+      "kind": "same-filesystem hard-linked project-local view",
+      "model_source_inode": "65028:21201883",
+      "model_materialized_inode": "65028:21201883"
+    },
+    "config_sha256": "d09487c1083a334a97545f204dd41ab1a40b0438bdead19558f0e1357e26d66a",
+    "model_sha256": "9f80df6099fa1fd7db71220ec9ee864d5ecff769878697dd5763e4285b15a1da",
+    "architecture": "Gemma4AssistantForCausalLM",
+    "model_type": "gemma4_assistant",
+    "backbone_hidden_size": 5376,
+    "assistant_hidden_size": 1024,
+    "assistant_layers": 4,
+    "tensor_header": {
+      "header_bytes": 5360,
+      "tensor_count": 48,
+      "mtp_prefix_count": 0,
+      "model_prefix_count": 46,
+      "structural_weights": [
+        "pre_projection.weight",
+        "model.layers.0.* through model.layers.3.*",
+        "post_projection.weight"
+      ]
+    }
+  },
+  "speculators": {
+    "repository": "https://github.com/vllm-project/speculators.git",
+    "commit": "aee3cc9b4ed151ae9ec79befee851757c62b3be9",
+    "source_version": "0.8.0.dev1 relative to v0.7.0",
+    "source_archive_sha256": "914f66c32a9bdc38188fb0ab417ecd19d3a9c49580d209f85c49f3e1e7f80067",
+    "mtp_supported_model_types": [
+      "qwen3",
+      "qwen3_next",
+      "qwen3_5_text",
+      "qwen3_5_moe_text"
+    ],
+    "mtp_converter_required_prefix": "mtp.",
+    "separate_assistant_direct_load": {
+      "supported": false,
+      "reasons": [
+        "the assistant checkpoint has model_type gemma4_assistant, not a Speculators MTPDraftModel config",
+        "the checkpoint contains no native mtp.* subtree required by MTPConverter",
+        "the MTP layer registry has no Gemma 4 decoder/norm implementation",
+        "the assistant uses four hidden-size-1024 layers with pre/post projections rather than the one native full-width MTP layer contract"
+      ],
+      "minimum_changes": [
+        "Gemma 4 assistant model components and training forward",
+        "separate-assistant checkpoint config/weight loader and remap",
+        "save/deployment adapter preserving vLLM gemma4_assistant layout"
+      ]
+    }
+  },
+  "fallback": {
+    "identity": "RedHatAI/gemma-4-31B-it-speculator.eagle3@28a1c8b4bb64dbaee883ba35341841138bdf1fe3",
+    "head_revision_verified": true,
+    "algorithm": "eagle3",
+    "checkpoint_xet_sha256": "e43aab0582ff5a42876fd86214006240b17120b8ec4ea8af53e2f3560b59741c",
+    "checkpoint_bytes": 4470642280,
+    "architecture": "Eagle3DraftModel",
+    "draft_hidden_size": 5376,
+    "draft_layers": 1,
+    "verifier": "google/gemma-4-31B-it",
+    "supported_cli": "scripts/train.py --speculator-type eagle3 --from-pretrained <checkpoint>",
+    "bound": true
+  },
+  "evidence_labels": {
+    "checkpoint_hashes_and_tensor_header": "measured locally",
+    "hub_revisions_and_xet_identity": "mechanically verified against Hugging Face",
+    "speculators_support_surface": "source-observed at the bound commit",
+    "need_for_multiple_adapters": "derived from three distinct missing source surfaces"
+  }
+}

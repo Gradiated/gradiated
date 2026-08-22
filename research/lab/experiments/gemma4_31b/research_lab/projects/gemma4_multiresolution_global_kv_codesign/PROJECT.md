@@ -117,3 +117,63 @@ Write `MULTIRESOLUTION_GLOBAL_KV_PHYSICAL_SCREEN.json` as exactly one of:
   or
 - `typed_none`, with the strongest attempted design and the first attribution,
   information-path, source-consumer, or target failure.
+
+## 2026-07-28 target-H200 execution reactivation
+
+The source-complete physical screen is accepted as the causal discriminator,
+not as endpoint evidence. The exact certified output-head line has now closed,
+and this candidate is the strongest independent route with a direct path to
+the locked target: `0.4999581203857146 s/request` after charged overhead,
+only `0.00016116118928138912` below the
+`0.500119281574996 s/request` threshold. That narrow margin makes an exact
+target-runtime compile and component measurement more valuable than another
+analytical refinement.
+
+This is the same scientific project and intervention. First, without a GPU,
+implement the smallest execution-equivalent H200 path:
+
+- add `h200_component_runner.py`, which installs or imports the bound
+  `multiresolution_global_kv.py` producer/consumer into pinned SGLang commit
+  `28b095c01005d4a3a2a5b637b7d028b07fba31b2`, invokes the real global
+  attention boundary for the exact prefill, ordinary-decode, and
+  target-verification geometries, and emits correctness, compact-entry,
+  fallback, compile, and timing records;
+- add `h200_endpoint_owner.sh`, a controller-local command suitable for
+  `research/factory/tools/detached-owner --unit-manager pid` that reads the
+  assigned bench connection from `runtime/gpus.json`, stages only missing
+  immutable inputs, preserves repair ownership, runs the component before any
+  endpoint, and releases only after a decision-bearing terminal or the
+  absolute deadline; and
+- emit `H200_EXECUTION_READY.json` binding the runner, owner, intervention,
+  pinned source, checkpoint, image, workload, and component command hashes.
+  Source/unit tests and an exact CPU fixture must pass, but no static fixture
+  may claim target-runtime correctness or measurement readiness.
+
+Do not claim a GPU, call provider APIs, or inspect or mutate the live B200
+while this offline implementation is incomplete. If it completes before an
+H200 is registered, set the project `paused` with the exact H200 requirement;
+do not spend another researcher cycle polling the pool.
+
+The later paid execution requires one H200 SXM bench using
+`docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6`
+and the exact checkpoint
+`google/gemma-4-31B-it@b9ea41a2887d8607f594846523f94c6cc75ac8a4`.
+Use the qualified c32 workload identity
+`7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d`.
+The director will select and register the provider resource only after this
+project's `$8.00` cumulative reservation is visible.
+
+On H200, use the first tiny real component call as the compile and integration
+check, repair ordinary defects in the retained claim, then measure one
+profiler-off stock/candidate component pair. Continue to one matched
+stock-then-candidate c32 endpoint pair only if every claimed phase stays
+within 64 compact entries, fallback is at most
+`0.0012873226748728159`, correctness and request ownership pass, and the
+component timing still admits the locked endpoint target. This remains a
+quality-unsafe model-semantics proxy; no deployability, GPQA-Diamond,
+TauBench, tool-path, or long-context claim is authorized.
+
+Budgets are 45 minutes for offline runner integration, at most 150 minutes of
+later provider lifecycle, at most 70 claimed H200 minutes for component plus
+conditional endpoint work, 6 GiB of new non-checkpoint artifacts, and a
+cumulative project spend ceiling of `$8.00`.

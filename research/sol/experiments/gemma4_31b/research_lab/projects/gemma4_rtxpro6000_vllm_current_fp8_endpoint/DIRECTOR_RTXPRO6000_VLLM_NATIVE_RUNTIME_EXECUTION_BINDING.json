@@ -1,0 +1,137 @@
+{
+  "schema_version": 1,
+  "decision": "execute_current_official_native_vllm_stock_fp8_on_the_retained_rtx_pro_6000_bench",
+  "issued_at_utc": "2026-07-29T06:13:00Z",
+  "project": "gemma4_rtxpro6000_vllm_current_fp8_endpoint",
+  "claim_allowed": true,
+  "authorization": {
+    "authorized_spend_usd": 7.0,
+    "actual_spend_usd_before_execution": 0.2,
+    "reservation_visible_at_utc": "2026-07-29T05:31:08.686589Z",
+    "reservation_remaining_usd": 6.8,
+    "experimental_rate_usd_per_hour": 1.89,
+    "provider_create_allowed": false,
+    "reuse_existing_bench_only": true
+  },
+  "bench": {
+    "id": "rtxpro6000-gemma4-fp8-f4nbtoufbwf66f",
+    "provider": "runpod",
+    "accelerator": "nvidia-rtx-pro-6000-blackwell-workstation",
+    "sm": "sm_120",
+    "metered_usd_per_hour": 1.89,
+    "checkpoint_revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_manifest_sha256": "864f24f4631315cd17cc8a3ff1ea57b2725d2a24f29c45778b101f16b5228a4f",
+    "resident_checkpoint_path": "/workspace/gemma4-31b-it-b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "remote_root": "/workspace/vllm-sm120-native-endpoint-20260729t0601z",
+    "private_vllm_port": 19124,
+    "controller_tunnel_port": 29124,
+    "resource": {
+      "pod_id": "f4nbtoufbwf66f",
+      "machine_id": "rb51k15hqqsh",
+      "public_ipv4": "213.192.6.70",
+      "ssh_user": "root",
+      "ssh_port": 40070,
+      "ssh_identity_path": "/root/.config/nebius/glm-campaign/ssh_ed25519",
+      "known_hosts_namespace": "/root/.config/runpod/gemma4/known_hosts",
+      "ssh_ed25519_fingerprint": "SHA256:yofIRQ/J654JgIzbWdB+4sM19iE/aepnrmJrYzIfCTg",
+      "connection_state": "strict_direct_ssh_verified"
+    }
+  },
+  "native_vllm": {
+    "version": "0.26.0",
+    "wheel_url": "https://github.com/vllm-project/vllm/releases/download/v0.26.0/vllm-0.26.0%2Bcu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+    "wheel_sha256": "6ce4ca30616f0a35810391015622b197a7b8b267ed27f8716f0789db79ff578b",
+    "wheel_asset": "vllm-0.26.0+cu129-cp38-abi3-manylinux_2_28_x86_64.whl",
+    "target": "manylinux_2_28_x86_64+cu129",
+    "python_abi": "cp38-abi3",
+    "runtime_root": "/workspace/vllm-sm120-native-runtime",
+    "vllm_source_commit": "6f00a1ae3bd4b86168667bce673998218f461c0f",
+    "delivery": "resumable_hash_verified_official_wheel_install_into_isolated_uv_environment"
+  },
+  "resident_sglang": {
+    "previous_pid": 16036,
+    "previous_start_ticks": 183853635,
+    "previous_port": 19123,
+    "observed_at_utc": "2026-07-29T06:12:03Z",
+    "pid_absent": true,
+    "port_listener_absent": true,
+    "compute_applications": 0,
+    "gpu_memory_used_mib": 2,
+    "disposition": "accept_absent_only_after_the_owner_repeats_its_strict_quiescent_gpu_census"
+  },
+  "immutable_inputs": {
+    "native_offline_result": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/NATIVE_VLLM_OWNER_OFFLINE_RESULT.json",
+      "sha256": "b80703d517e518f6b0d85f61fabecc2628e995da808df1c07c20d819a626ced6"
+    },
+    "native_owner_offline_repair": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/DIRECTOR_RTXPRO6000_VLLM_NATIVE_RUNTIME_OWNER_OFFLINE_REPAIR_20260729T0601Z.json",
+      "sha256": "66459b145a297a44f5bd22996f83eaf684e2ad4bfe13db14365140e080ce3cf2"
+    },
+    "owner": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/run_vllm_sm120_fp8_endpoint_owner.py",
+      "sha256": "117577e970bac68307da7e97891623978738fd908e2e2c176942938b3647ef7a"
+    },
+    "workload": {
+      "path": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/inputs/c32_requests.jsonl",
+      "sha256": "357f22f350a8c0f11df5e1a93f1cd19e4b2eb2d329c75ed993f8dda2cf72338c",
+      "bytes": 893666,
+      "request_identity_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d",
+      "payload_sha256": "60630a80335d5a95ebae87dd2d852c6cb8749a0b92e8617261ec6750b64a794c"
+    }
+  },
+  "scientific_contract": {
+    "model": "google/gemma-4-31B-it",
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "checkpoint_mode": "exact_stock_checkpoint_with_official_vllm_online_dynamic_fp8",
+    "activation_dtype": "bfloat16",
+    "concurrency": 32,
+    "prompt_tokens_per_request": 4214,
+    "output_tokens_per_request": 358,
+    "maximum_canonical_samples": 1,
+    "consumer": "research/factory/tools/lab-endpoint-pair",
+    "application_error_aware": true,
+    "minimum_terminal": "32_of_32_generated_token_bearing_successes",
+    "fixed_h200_denominator_seconds_per_request": 0.625149101968745,
+    "h200_target_seconds_per_request": 0.500119281574996,
+    "rtx_pro_6000_price_normalized_ceiling_seconds_per_request": 1.048637203302411,
+    "predecessor_sglang_result_seconds_per_request": 2.23382165625
+  },
+  "mutable_repair_policy": {
+    "allowed_before_science": [
+      "native_vllm_wheel_download_install_and_entrypoint_adapters",
+      "isolated_uv_environment_and_dependency_resolution",
+      "native_server_launch_arguments",
+      "sm_120_runtime_or_kernel_support",
+      "private_endpoint_and_tunnel_integration",
+      "memory_fit_and_scheduler_configuration"
+    ],
+    "must_preserve": [
+      "model_revision_and_checkpoint_bytes",
+      "official_stock_dynamic_fp8_and_bfloat16_activation_semantics",
+      "native_vllm_version_wheel_url_and_wheel_sha256",
+      "workload_request_and_payload_identities",
+      "single_canonical_sample_limit",
+      "bench_provider_and_accelerator",
+      "absolute_release_owner_and_provider_deadlines"
+    ],
+    "retain_claim_on_recoverable_pre_science_failure": true,
+    "release_on": [
+      "decision_bearing_terminal",
+      "unsafe_or_unreachable_guest",
+      "absolute_release_fence"
+    ]
+  },
+  "lifecycle": {
+    "claim_start_by_utc": "2026-07-29T06:25:00Z",
+    "detached_owner_start_by_utc": "2026-07-29T06:25:00Z",
+    "release_evidence_by_utc": "2026-07-29T07:55:00Z",
+    "owner_deadline_utc": "2026-07-29T08:05:00Z",
+    "provider_watchdog_deadline_utc": "2026-07-29T08:13:34.346354Z",
+    "controller_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller",
+    "science_artifact_root": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z"
+  },
+  "expected_terminal": "VLLM_SM120_FP8_ENDPOINT_TERMINAL.json",
+  "detached_owner_command": "/root/workspace/research/factory/tools/detached-owner start --state /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller/OWNER_STATE.json --log /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z-controller/owner.log --cwd /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint --unit-manager pid -- /usr/bin/python3 /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/run_vllm_sm120_fp8_endpoint_owner.py --execution-binding /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/DIRECTOR_RTXPRO6000_VLLM_NATIVE_RUNTIME_EXECUTION_BINDING.json --artifact-root /root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_rtxpro6000_vllm_current_fp8_endpoint/artifacts/vllm-sm120-native-endpoint-20260729t0601z",
+  "detached_owner_command_sha256": "2c84f17bd68f989d0590162f0d5360532315e57297fc4b59e9f010fe1752d148"
+}

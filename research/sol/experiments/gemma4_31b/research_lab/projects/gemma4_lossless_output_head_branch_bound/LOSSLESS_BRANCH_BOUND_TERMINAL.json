@@ -1,0 +1,382 @@
+{
+  "artifacts": {
+    "amendments": [
+      {
+        "path": "AMENDMENT_001.json",
+        "sha256": "362839338179d554a98d09b7b8cb11d8d83ec28ab9d2c1f8c48abd6df6a99c09"
+      },
+      {
+        "path": "AMENDMENT_002.json",
+        "sha256": "281f90b8ba9968a8e07d62fe032ad7adc6ff7c6e62fa5ef4ba07438b9192ffc1"
+      }
+    ],
+    "contract": "EXPERIMENT_CONTRACT.json",
+    "contract_sha256": "24fb9d06dbee3bef04704392a6d96a3ae5c63c164d644d31bf5d0cd0a48a1f1d",
+    "raw_result": "artifacts/reference_run.json",
+    "raw_result_sha256": "43636c49b17e19d587d0054ac0c8a43246974864021244585679b9b60ac75f52",
+    "runner": "run_lossless_branch_bound.py",
+    "runner_sha256": "c45a055197c900c923e02556ba1acd6027a40483dccd4285f6c2820e5d38f3d4"
+  },
+  "classification": "typed_falsification_lossless_bound_too_loose",
+  "completed_at_utc": "2026-07-29T17:04:33.449000Z",
+  "correctness": {
+    "all_inputs_finite": true,
+    "all_reference_winners_inside_all_survivor_sets": true,
+    "exact_real_dense_winner_certified_from_cpu_interval": true,
+    "lossless_semantics": "Every skipped row has a conservative upper bound below a feasible incumbent's conservative lower bound. Exact stock rescoring of all survivors therefore preserves the stock winner even though the CPU interval does not itself identify a unique H200 BF16 winner.",
+    "minimum_reference_margin": 0.45580577850341797,
+    "reference_top1_ids_sha256": "b5f7b5591b1e1007542fb3e194b4a926c646432d768cf8f9928793ba551c0a8a",
+    "skipped_row_certificate": "For every inactive row, its conservative stock upper bound is strictly below a feasible incumbent row's conservative stock lower bound.",
+    "softcap": "The stock 30.0 tanh softcap is monotone, so the certified pre-softcap survivor set remains safe for top-1.",
+    "stock_bf16_dense_winner_certified_from_cpu_interval": false
+  },
+  "decision": {
+    "close_mechanism": "fixed-coordinate partial-dot plus residual-Cauchy bound",
+    "promote_to_h200_component": false,
+    "reason": "The strongest oracle-incumbent stock-safe operating point avoided only 4.43246023995536% of physical 32-row union weight bytes, versus the preregistered 20% gate. The implementable incumbent avoided 3.745778401692712%."
+  },
+  "geometry_and_stock_consumer": {
+    "capture_dtype": "torch.bfloat16",
+    "capture_shape": [
+      1536,
+      5376
+    ],
+    "final_logit_softcapping": 30.0,
+    "model": "google/gemma-4-31B-it",
+    "post_projection": "tensor-parallel gather/scatter, buffer copy, monotone fused softcap at 30, then logits/sampler consumer",
+    "projection": "hidden_states.to(lm_head.weight.dtype) @ lm_head.weight.T",
+    "requests": 32,
+    "revision": "b9ea41a2887d8607f594846523f94c6cc75ac8a4",
+    "rows_per_request": 1,
+    "sample_rows": 32,
+    "selected_capture_rows": [
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 0,
+        "position": 4215,
+        "request_id": "6b1f246fc0474045b1dca018e5819e22"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 12,
+        "position": 4215,
+        "request_id": "9399e6cf862143ba82ecb26ddb1ca518"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 24,
+        "position": 4215,
+        "request_id": "9d416563b3004b1eafedfb19cb0d2d5b"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 36,
+        "position": 4215,
+        "request_id": "e552bebb9223410cb934665e6b3eb305"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 48,
+        "position": 4215,
+        "request_id": "89511159c6b34f2e83aebb518818fee8"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 60,
+        "position": 4215,
+        "request_id": "b3a4ee1c0ffe49cf93fe21a59ed36c4e"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 72,
+        "position": 4215,
+        "request_id": "4f288b59b8604a13a27a9addb82c20e7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 84,
+        "position": 4215,
+        "request_id": "e0e3895b5ba64fd2b1cb40bce412a769"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 96,
+        "position": 4215,
+        "request_id": "40945e3893b343a5bcbfc9a482fc0ce7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 108,
+        "position": 4215,
+        "request_id": "9e642dec6d104778826266911efead92"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 120,
+        "position": 4215,
+        "request_id": "fbfa99bc2d3e4ee99364f2ec124feddd"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 132,
+        "position": 4215,
+        "request_id": "d4a388fc46114f6198da02962a5f8920"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 144,
+        "position": 4215,
+        "request_id": "a35783f8f9d34f0381998f2b12bace12"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 156,
+        "position": 4215,
+        "request_id": "1d9db594e0374cb9bc48200472bd0c8c"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 168,
+        "position": 4215,
+        "request_id": "d46dd988da4946429593257c95b22e42"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 180,
+        "position": 4215,
+        "request_id": "eab627f514b04e0a8925e0a37cfed9ca"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 192,
+        "position": 4215,
+        "request_id": "466bfe6deb524b42a3d33933933e8477"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 204,
+        "position": 4215,
+        "request_id": "4eaceaacef7d43f49e25d6bbd1e2194f"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 216,
+        "position": 4215,
+        "request_id": "13c58002ef8e4d868499f753d147f426"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 228,
+        "position": 4215,
+        "request_id": "93cd1a98b3564b268ceda031bd68d667"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 240,
+        "position": 4215,
+        "request_id": "b150896017d84a26974220f3aa3193b8"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 252,
+        "position": 4215,
+        "request_id": "5af6e8d4cf8b4e4290c2aef8359021b7"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 264,
+        "position": 4215,
+        "request_id": "d1d1d20fd304494286c1003cfda6b442"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 276,
+        "position": 4215,
+        "request_id": "2c0b27cee4ca48aa997f054c57f42249"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 288,
+        "position": 4215,
+        "request_id": "d29cafc958cc45cc80bce4fd1e135b39"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 300,
+        "position": 4215,
+        "request_id": "3f84b395e118469e9acb0af910e4a700"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 312,
+        "position": 4215,
+        "request_id": "5d5798f8197d42a7aef277f1a23f3930"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 324,
+        "position": 4215,
+        "request_id": "1697b989ed4c4c6a8c054546c98eef81"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 336,
+        "position": 4215,
+        "request_id": "77fda0c8e4ab4b5597ce692c9cef35ec"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 348,
+        "position": 4215,
+        "request_id": "402394850a97473b97935fa83201611d"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 360,
+        "position": 4215,
+        "request_id": "db5c9aa50e3d4a67a54d843cb8ce6ed1"
+      },
+      {
+        "capture_index": 0,
+        "depth_index": 0,
+        "global_row": 372,
+        "position": 4215,
+        "request_id": "e9c3d9fd09fe4b8baa8ff707cf1fd2a0"
+      }
+    ],
+    "top1_effect": "strictly monotone softcap does not change a unique pre-softcap winner; the reference additionally charges a conservative BF16 matmul/output-rounding envelope",
+    "weight_dtype": "torch.bfloat16",
+    "weight_key": "model.language_model.embed_tokens.weight",
+    "weight_shape": [
+      262144,
+      5376
+    ],
+    "weight_tying": "lm_head is model.embed_tokens at PP1; checkpoint embed_tokens is routed into ParallelLMHead on the last PP rank"
+  },
+  "h200_context": {
+    "all_output_consumer_interval_fraction": 0.056147579963225835,
+    "campaign_target_seconds_per_request": 0.500119281574996,
+    "evidence_class": "derived from inherited exact-c32 measured trace and the new analytical byte bound",
+    "interpretation": "This deliberately overcredits byte avoidance as proportional elimination of the entire measured head/materialization/softcap/argmax interval. It yields only 0.24887191575671277% request reduction and remains far above target.",
+    "oracle_proportional_request_reduction_fraction": 0.0024887191575671277,
+    "oracle_proportional_seconds_saved": 0.0015558205464055014,
+    "oracle_proportional_service_seconds_per_request": 0.6235932814223395,
+    "trace_artifact": "gemma4_hierarchical_tied_head_codesign/HIERARCHICAL_TIED_HEAD_PHYSICAL_SCREEN.json",
+    "trace_artifact_sha256": "40b00f5bd09dfbb02420ca4535f80d024a9f2df01e3cfecedaf9f24afb54f206"
+  },
+  "mechanism": {
+    "all_vocabulary_rows_reachable": true,
+    "coordinate_order": "descending mean_capture_hidden_square times tied_weight_column_square",
+    "coordinate_order_sha256": "e4c0b32d7603a9fcfceb9dc33016c1d3606e32b7de6aad3b4f67230e88a9176d",
+    "exact_real_bound": "partial_dot + FP32 guard + residual_hidden_l2 * residual_weight_row_l2",
+    "implementable_incumbent": "full rescore lower bound for the row with maximum partial score",
+    "name": "fixed_coordinate_partial_dot_residual_cauchy",
+    "oracle_incumbent": "best lower bound across full dense reference; this can only overstate attainable pruning",
+    "stock_bound": "exact-real bound plus conservative FP32 accumulation and BF16 output-rounding envelopes"
+  },
+  "pruning_result": {
+    "best_implementable_stock_bf16": {
+      "active_rows_max": 135960,
+      "active_rows_mean": 8651.5625,
+      "active_rows_min": 16,
+      "dense_weight_bytes": 2818572288,
+      "logical_active_row_fraction": 0.03300309181213379,
+      "logical_weight_bytes_avoided_fraction": 0.0920949436369396,
+      "logical_weight_traffic_fraction": 0.9079050563630604,
+      "physical_residual_weight_bytes": 162857984,
+      "physical_union_active_row_fraction": 0.6066932678222656,
+      "physical_union_active_rows": 159041,
+      "physical_weight_bytes_avoided_fraction": 0.03745778401692712,
+      "physical_weight_traffic_fraction": 0.9625422159830729,
+      "queries": 32,
+      "selected_dimensions": 4864,
+      "selected_weight_bytes": 2550136832
+    },
+    "best_oracle_exact_real": {
+      "active_rows_max": 57314,
+      "active_rows_mean": 2002.53125,
+      "active_rows_min": 12,
+      "dense_weight_bytes": 2818572288,
+      "logical_active_row_fraction": 0.007639050483703613,
+      "logical_weight_bytes_avoided_fraction": 0.09451056662059965,
+      "logical_weight_traffic_fraction": 0.9054894333794004,
+      "physical_residual_weight_bytes": 60818432,
+      "physical_union_active_row_fraction": 0.22656631469726562,
+      "physical_union_active_rows": 59393,
+      "physical_weight_bytes_avoided_fraction": 0.07366035098121282,
+      "physical_weight_traffic_fraction": 0.9263396490187872,
+      "queries": 32,
+      "selected_dimensions": 4864,
+      "selected_weight_bytes": 2550136832
+    },
+    "best_oracle_stock_bf16": {
+      "active_rows_max": 115479,
+      "active_rows_mean": 7265.875,
+      "active_rows_min": 16,
+      "dense_weight_bytes": 2818572288,
+      "logical_active_row_fraction": 0.027717113494873047,
+      "logical_weight_bytes_avoided_fraction": 0.09259837014334538,
+      "logical_weight_traffic_fraction": 0.9074016298566546,
+      "physical_residual_weight_bytes": 143503360,
+      "physical_union_active_row_fraction": 0.5345916748046875,
+      "physical_union_active_rows": 140140,
+      "physical_weight_bytes_avoided_fraction": 0.0443246023995536,
+      "physical_weight_traffic_fraction": 0.9556753976004464,
+      "queries": 32,
+      "selected_dimensions": 4864,
+      "selected_weight_bytes": 2550136832
+    },
+    "causal_result": "Residual norms remain wider than logit margins until most coordinates are consumed. Across 32 rows, different logical survivors union into most vocabulary rows, erasing more pruning than the per-row averages suggest.",
+    "dense_tied_weight_bytes": 2818572288,
+    "zero_physical_pruning_through_dimensions": 3072
+  },
+  "question": "Can an exact partial-dot branch-and-bound search materially prune Gemma 4's 262144-way tied output head?",
+  "resource_use": {
+    "actual_spend_usd": 0.0,
+    "additional_project_bytes": 113687,
+    "checkpoint_downloaded": false,
+    "gpu_claimed": false,
+    "gpu_invocations": 0,
+    "provider_mutation": false,
+    "provider_spend_usd": 0.0,
+    "shared_checkpoint_read_only": true
+  },
+  "schema_version": 1,
+  "scope_and_limits": {
+    "mechanism_scope": "This closes the fixed common-coordinate L2 residual certificate. It does not close learned, approximate, quality-recovered, tree, or materially stronger exact MIPS indexes.",
+    "performance": "CPU runtime is diagnostic only. No H200 traversal, gather, dispatch, component latency, endpoint, or synthetic performance claim was made.",
+    "sample": "32 real rows, exactly one deterministic row from each request in the immutable 1536-row c32 capture",
+    "stock_identity_limit": "The conservative CPU BF16 interval could not name a unique stock H200 dense winner; the pruning proof is set-safe and requires exact stock rescoring of survivors."
+  }
+}

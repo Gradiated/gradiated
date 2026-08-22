@@ -7,12 +7,20 @@
 
 namespace gradiated::engine {
 
+struct GreedyVerificationResult {
+  // Number of proposed tokens accepted for each request.  The returned next_tokens are the
+  // target replacement at the first rejection, or the bonus token when every proposal matched.
+  std::vector<int> accepted_tokens;
+  std::vector<int> next_tokens;
+};
+
 // Homogeneous-position batch used to establish the throughput ceiling before ragged scheduling.
 class Gemma4BatchModelRunner {
  public:
   Gemma4BatchModelRunner(const struct Gemma4Config& config, const class DeviceWeightArena& weights,
                          int batch, int maximum_context,
-                         const class Fp8WeightArena* fp8_weights = nullptr);
+                         const class Fp8WeightArena* fp8_weights = nullptr,
+                         const class DeviceWeightArena* assistant_weights = nullptr);
   ~Gemma4BatchModelRunner();
   Gemma4BatchModelRunner(const Gemma4BatchModelRunner&) = delete;
   Gemma4BatchModelRunner& operator=(const Gemma4BatchModelRunner&) = delete;
@@ -36,6 +44,18 @@ class Gemma4BatchModelRunner {
   // Decodes compact active rows while retaining each request's stable cache slot.
   std::vector<int> append_ragged(const std::vector<int>& token_ids,
                                  const std::vector<int>& slots);
+  // Verifies four-token draft continuations in one target pass. Cache positions are committed
+  // only through each accepted prefix; rejected sliding-ring rows are restored exactly and
+  // stale global-cache tail rows remain unreachable.
+  GreedyVerificationResult verify_greedy_proposals(
+      const std::vector<std::vector<int>>& proposals,
+      const std::vector<int>& target_first_tokens,
+      const std::vector<int>& slots,
+      const std::vector<int>& maximum_accepted_tokens = {});
+  [[nodiscard]] bool has_assistant() const;
+  std::vector<std::vector<int>> draft_four(
+      const std::vector<int>& last_tokens, const std::vector<int>& slots,
+      const std::vector<int>& forced_first_tokens = {}, int depth = 4);
   void reset_slot(int slot);
   // Performance harness only: fills every allocated KV page with zero and advances logical time.
   void seed_empty_cache_for_benchmark(int position);

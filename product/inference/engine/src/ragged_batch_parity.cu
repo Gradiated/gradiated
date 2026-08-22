@@ -39,9 +39,10 @@ void require_equal(const std::vector<int>& actual, const std::vector<int>& expec
 
 int main(int argc, char** argv) {
   try {
-    if (argc != 3 && argc != 4) {
+    if (argc != 3 && argc != 4 && argc != 5) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
-                   "[profile-ragged|profile-suffix|prefix-benchmark]\n";
+                   "[profile-ragged|profile-suffix|prefix-benchmark|speculative-parity|"
+                   "assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -54,6 +55,105 @@ int main(int argc, char** argv) {
     gradiated::engine::validate_gemma4_weights(host_weights, config);
     const auto plan = gradiated::engine::WeightPlan::gemma4(config, host_weights);
     const auto weights = gradiated::engine::DeviceWeightArena::load(plan, host_weights);
+    if (argc == 5 && std::string(argv[3]) == "assistant-benchmark") {
+      constexpr int batch = 16;
+      const auto assistant_host = gradiated::engine::ShardedSafetensors::open(argv[4]);
+      const auto assistant_plan = gradiated::engine::WeightPlan::gemma4_assistant(assistant_host);
+      const auto assistant_weights = gradiated::engine::DeviceWeightArena::load(
+          assistant_plan, assistant_host);
+      const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+      gradiated::engine::Gemma4BatchModelRunner runner(
+          config, *weights, batch, 512, fp8_weights.get(), assistant_weights.get());
+      const int first_token = runner.prefill_slot(0, prompt, 128);
+      for (int slot = 1; slot < batch; ++slot) runner.clone_slot(0, slot);
+      std::vector<int> slots;
+      for (int slot = 0; slot < batch; ++slot) slots.push_back(slot);
+      const std::vector<int> last_tokens(static_cast<std::size_t>(batch), prompt.back());
+      const auto draft_begin = std::chrono::steady_clock::now();
+      const auto proposals = runner.draft_four(last_tokens, slots);
+      const double draft_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - draft_begin).count();
+      const auto verify_begin = std::chrono::steady_clock::now();
+      const auto verification = runner.verify_greedy_proposals(
+          proposals, std::vector<int>(static_cast<std::size_t>(batch), first_token), slots);
+      const double verify_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - verify_begin).count();
+      int accepted = 0;
+      for (const int count : verification.accepted_tokens) accepted += count;
+      std::cout << "assistant_native=true\n"
+                << "batch=" << batch << '\n'
+                << "draft_depth=4\n"
+                << "draft_seconds=" << draft_seconds << '\n'
+                << "verify_seconds=" << verify_seconds << '\n'
+                << "mean_accepted_tokens="
+                << static_cast<double>(accepted) / batch << '\n'
+                << "first_proposal=" << proposals.front().front() << '\n'
+                << "first_proposal_sequence=";
+      for (const int token : proposals.front()) std::cout << token << ',';
+      std::cout << '\n'
+                << "estimated_emitted_tokens_per_second="
+                << static_cast<double>(accepted + batch) / (draft_seconds + verify_seconds)
+                << '\n';
+      return 0;
+    }
+    if (argc == 4 && std::string(argv[3]) == "speculative-parity") {
+      if (expected.size() < 6) throw std::runtime_error("speculative fixture needs six tokens");
+      constexpr int batch = 16;
+      const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+      gradiated::engine::Gemma4BatchModelRunner runner(
+          config, *weights, batch, 512, fp8_weights.get());
+      std::vector<int> first(static_cast<std::size_t>(batch), expected[0]);
+      first[0] = runner.prefill_slot(0, prompt, 128);
+      for (int slot = 1; slot < batch; ++slot) runner.clone_slot(0, slot);
+      require_equal(first, std::vector<int>(batch, expected[0]),
+                    "speculative FP8 first token");
+      int rejected = (expected[0] + 1) % static_cast<int>(config.vocabulary_size);
+      if (rejected == expected[1]) rejected = (rejected + 1) %
+          static_cast<int>(config.vocabulary_size);
+      const std::vector<std::vector<int>> proposal_pattern{
+          {expected[0], expected[1], expected[2], expected[3]},
+          {rejected, expected[1], expected[2], expected[3]},
+          {expected[0], rejected, expected[2], expected[3]},
+          {expected[0], expected[1], rejected, expected[3]},
+      };
+      std::vector<std::vector<int>> proposals;
+      std::vector<int> slots;
+      std::vector<int> expected_accepted;
+      std::vector<int> expected_next;
+      std::vector<int> expected_after;
+      for (int request = 0; request < batch; ++request) {
+        const int pattern = request % 4;
+        proposals.push_back(proposal_pattern[static_cast<std::size_t>(pattern)]);
+        slots.push_back(request);
+        expected_accepted.push_back(pattern == 0 ? 4 : pattern - 1);
+        expected_next.push_back(expected[static_cast<std::size_t>(pattern == 0 ? 4 : pattern - 1)]);
+        expected_after.push_back(expected[static_cast<std::size_t>(pattern == 0 ? 5 : pattern)]);
+      }
+      cudaProfilerStart();
+      const auto begin = std::chrono::steady_clock::now();
+      const auto verification = runner.verify_greedy_proposals(
+          proposals, first, slots);
+      const double seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - begin).count();
+      cudaProfilerStop();
+      require_equal(verification.accepted_tokens, expected_accepted,
+                    "speculative accepted lengths");
+      require_equal(verification.next_tokens, expected_next,
+                    "speculative replacement and bonus tokens");
+      const auto after_rollback = runner.append_ragged(verification.next_tokens, slots);
+      require_equal(after_rollback, expected_after,
+                    "speculative sliding rollback decode");
+      std::cout << "speculative_parity=true\n"
+                << "requests=" << batch << '\n'
+                << "draft_depth=4\n"
+                << "verified_target_tokens=" << batch * 4 << '\n'
+                << "verification_seconds=" << seconds << '\n'
+                << "verification_candidate_tokens_per_second="
+                << static_cast<double>(batch * 4) / seconds << '\n';
+      return 0;
+    }
     if (argc == 4 && std::string(argv[3]) == "profile-ragged") {
       constexpr int batch = 16;
       constexpr int context = 8192;

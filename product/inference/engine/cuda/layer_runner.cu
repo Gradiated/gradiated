@@ -46,6 +46,7 @@ struct Gemma4LayerRunner::Implementation {
   int maximum_tokens;
   int maximum_context;
   int maximum_batch;
+  int maximum_decode_rows;
   int hidden;
   int intermediate;
   float epsilon;
@@ -82,6 +83,7 @@ struct Gemma4LayerRunner::Implementation {
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
+        maximum_decode_rows(4 * max_batch),
         hidden(static_cast<int>(model_config.hidden_size)),
         intermediate(static_cast<int>(model_config.intermediate_size)),
         epsilon(static_cast<float>(model_config.rms_norm_epsilon)),
@@ -106,9 +108,9 @@ struct Gemma4LayerRunner::Implementation {
         gate_up(4ULL * std::max(max_tokens, max_batch) * intermediate),
         activated(2ULL * std::max(max_tokens, max_batch) * intermediate),
         down(2ULL * std::max(max_tokens, max_batch) * hidden),
-        fp8_input(static_cast<std::uint64_t>(max_batch) *
+        fp8_input(static_cast<std::uint64_t>(4 * max_batch) *
                   std::max({hidden, intermediate, 18432})),
-        fp8_input_scales(sizeof(float) * static_cast<std::uint64_t>(max_batch) *
+        fp8_input_scales(sizeof(float) * static_cast<std::uint64_t>(4 * max_batch) *
                          ((std::max({hidden, intermediate, 18432}) + 127) / 128)),
         prefill_positions(sizeof(int) * static_cast<std::uint64_t>(max_batch)),
         prefill_cache_pointers(2ULL * sizeof(void*) * static_cast<std::uint64_t>(max_batch)) {
@@ -440,7 +442,8 @@ void Gemma4LayerRunner::run_prefill_chunks(
     int layer_index, const void* hidden_states, void* output,
     const std::vector<int>& token_counts, const std::vector<int>& position_starts,
     const std::vector<void*>& key_caches, const std::vector<void*>& value_caches,
-    const std::vector<int>& cache_capacities, cudaStream_t stream) {
+    const std::vector<int>& cache_capacities, cudaStream_t stream,
+    bool fp8_projections) {
   auto& state = *implementation_;
   const std::size_t requests = token_counts.size();
   if (requests == 0 || position_starts.size() != requests || key_caches.size() != requests ||
@@ -462,6 +465,10 @@ void Gemma4LayerRunner::run_prefill_chunks(
   if (total_tokens > state.maximum_tokens) {
     throw std::runtime_error("batched prefill exceeds projection workspace");
   }
+  if (fp8_projections && (state.fp8_weights == nullptr ||
+                          total_tokens > state.maximum_decode_rows)) {
+    throw std::runtime_error("FP8 verification exceeds decode workspace");
+  }
 
   const auto& layer = state.config.layers.at(static_cast<std::size_t>(layer_index));
   const int query_heads = static_cast<int>(layer.query_heads);
@@ -474,8 +481,13 @@ void Gemma4LayerRunner::run_prefill_chunks(
   const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
   rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), total_tokens,
                 state.hidden, state.epsilon, stream);
-  state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(), total_tokens,
-                   state.hidden, packed_width, stream);
+  if (fp8_projections) {
+    state.run_decode_linear(state.normalized.get(), prefix + "qkv", state.packed_qkv.get(),
+                            total_tokens, state.hidden, packed_width, stream);
+  } else {
+    state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(), total_tokens,
+                     state.hidden, packed_width, stream);
+  }
 
   bool uniform_shape = true;
   const int uniform_tokens = token_counts.front();
@@ -491,8 +503,9 @@ void Gemma4LayerRunner::run_prefill_chunks(
                  static_cast<int>(state.config.sliding_window) - 1) == uniform_prior;
   }
   const bool uniform_sliding = layer.attention == AttentionKind::sliding &&
-                               uniform_shape && uniform_prior_shape && requests >= 8 &&
-                               uniform_tokens >= 128;
+                               uniform_shape && uniform_prior_shape &&
+                               ((fp8_projections && requests >= 2) ||
+                                (requests >= 8 && uniform_tokens >= 128));
   if (uniform_sliding) {
     const int staging_tokens = uniform_prior + uniform_tokens;
     if (staging_tokens > state.maximum_tokens) {
@@ -524,19 +537,65 @@ void Gemma4LayerRunner::run_prefill_chunks(
         state.key_cache.get(), state.value_cache.get(), device_positions,
         static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
         layer.key_equals_value, uniform_prior, staging_tokens, state.epsilon, stream);
-    state.sliding_prefill_attention.run(
-        state.queries.get(), state.key_cache.get(), state.value_cache.get(),
-        state.attention_output.get(), static_cast<int>(requests), query_heads, kv_heads,
-        uniform_tokens, staging_tokens, staging_tokens, head_dimension,
-        static_cast<int>(state.config.sliding_window), stream);
+    const void* attention_states = state.attention_output.get();
+    if (fp8_projections) {
+      // cuDNN's small-query SDPA plans are either unavailable or launch-bound for q=4. The
+      // pointer-batched tensor-core QK/PV path treats the retained ring as an ordinary causal
+      // context and covers every request with two GEMM launches.
+      token_to_head_batch_bf16(state.queries.get(), state.queries_head_major.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      std::vector<const void*> staged_pointers(2 * requests);
+      const std::uint64_t request_elements = static_cast<std::uint64_t>(kv_heads) *
+          staging_tokens * head_dimension;
+      for (std::size_t request = 0; request < requests; ++request) {
+        staged_pointers[request] = static_cast<const unsigned char*>(state.key_cache.get()) +
+                                   2ULL * request * request_elements;
+        staged_pointers[requests + request] =
+            static_cast<const unsigned char*>(state.value_cache.get()) +
+            2ULL * request * request_elements;
+      }
+      std::vector<int> local_positions(requests, uniform_prior);
+      check(cudaMemcpyAsync(state.prefill_positions.get(), local_positions.data(),
+                            requests * sizeof(int), cudaMemcpyHostToDevice, stream),
+            "copy speculative local positions");
+      check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), staged_pointers.data(),
+                            staged_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice,
+                            stream), "copy speculative staged cache pointers");
+      state.global_prefill_attention.run_uniform_batch(
+          state.queries_head_major.get(),
+          reinterpret_cast<const void* const*>(pointer_base),
+          reinterpret_cast<const void* const*>(pointer_base + requests),
+          state.attention_output.get(),
+          static_cast<const int*>(state.prefill_positions.get()),
+          static_cast<int>(requests), query_heads, kv_heads, uniform_tokens, staging_tokens,
+          staging_tokens, head_dimension, stream);
+      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      attention_states = state.queries.get();
+      // Restore destination pointers and logical positions for the ring commit below.
+      check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
+                            requests * sizeof(int), cudaMemcpyHostToDevice, stream),
+            "restore speculative logical positions");
+      check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), cache_pointers.data(),
+                            cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice,
+                            stream), "restore speculative destination pointers");
+    } else {
+      state.sliding_prefill_attention.run(
+          state.queries.get(), state.key_cache.get(), state.value_cache.get(),
+          state.attention_output.get(), static_cast<int>(requests), query_heads, kv_heads,
+          uniform_tokens, staging_tokens, staging_tokens, head_dimension,
+          static_cast<int>(state.config.sliding_window), stream);
+    }
     copy_kv_spans_to_rings_bf16(
         state.key_cache.get(), state.value_cache.get(),
         reinterpret_cast<void* const*>(pointer_base),
         reinterpret_cast<void* const*>(pointer_base + requests), device_positions,
         static_cast<int>(requests), kv_heads, uniform_tokens, head_dimension, staging_tokens,
         uniform_prior, uniform_capacity, stream);
-    state.project(layer_index, hidden_states, state.attention_output.get(), output,
-                  total_tokens, false, stream);
+    state.project(layer_index, hidden_states, attention_states, output,
+                  total_tokens, fp8_projections, stream);
     return;
   }
 
@@ -597,7 +656,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
                              static_cast<int>(requests), uniform_tokens, query_heads,
                              head_dimension, stream);
     state.project(layer_index, hidden_states, state.attention_output.get(), output,
-                  total_tokens, false, stream);
+                  total_tokens, fp8_projections, stream);
     return;
   }
 
@@ -657,7 +716,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
     row_offset += tokens;
   }
   state.project(layer_index, hidden_states, state.attention_output.get(), output,
-                total_tokens, false, stream);
+                total_tokens, fp8_projections, stream);
 }
 
 }  // namespace gradiated::engine

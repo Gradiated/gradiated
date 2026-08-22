@@ -26,6 +26,7 @@ class WeightPlan {
  public:
   static WeightPlan gemma4(const struct Gemma4Config& config,
                            const class ShardedSafetensors& weights);
+  static WeightPlan gemma4_assistant(const class ShardedSafetensors& weights);
 
   [[nodiscard]] const WeightSegment& at(std::string_view name) const;
   [[nodiscard]] const std::vector<WeightSegment>& segments() const;

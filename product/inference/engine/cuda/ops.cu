@@ -166,6 +166,14 @@ __global__ void scale_kernel(__nv_bfloat16* values, const __nv_bfloat16* scalar,
   }
 }
 
+__global__ void scale_constant_kernel(__nv_bfloat16* values, float scalar,
+                                      std::size_t elements) {
+  const std::size_t index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < elements) {
+    values[index] = __float2bfloat16_rn(__bfloat162float(values[index]) * scalar);
+  }
+}
+
 __device__ float gelu_tanh(float value) {
   constexpr float coefficient = 0.7978845608028654F;
   return 0.5F * value * (1.0F + tanhf(coefficient * (value + 0.044715F * value * value * value)));
@@ -226,6 +234,29 @@ __global__ void gather_rows_kernel(const __nv_bfloat16* input, const int* row_in
     const int column = index % width;
     output[index] = input[static_cast<std::size_t>(row_indices[output_row]) * width + column];
   }
+}
+
+__global__ void scatter_rows_kernel(const __nv_bfloat16* input, const int* row_indices,
+                                    __nv_bfloat16* output, int rows, int width) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < rows * width) {
+    const int input_row = index / width;
+    const int column = index % width;
+    output[static_cast<std::size_t>(row_indices[input_row]) * width + column] = input[index];
+  }
+}
+
+__global__ void concatenate_rows_kernel(
+    const __nv_bfloat16* left, int left_width, const __nv_bfloat16* right,
+    int right_width, __nv_bfloat16* output, int rows) {
+  const int width = left_width + right_width;
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= rows * width) return;
+  const int row = index / width;
+  const int column = index % width;
+  output[index] = column < left_width
+      ? left[static_cast<std::size_t>(row) * left_width + column]
+      : right[static_cast<std::size_t>(row) * right_width + column - left_width];
 }
 
 __global__ void token_head_transpose_kernel(const __nv_bfloat16* input, __nv_bfloat16* output,
@@ -384,6 +415,65 @@ __global__ void copy_kv_spans_to_rings_kernel(
   value_destinations[request][destination_index] = staged_values[source_index];
 }
 
+__global__ void backup_kv_ring_spans_kernel(
+    const __nv_bfloat16* const* key_sources,
+    const __nv_bfloat16* const* value_sources, __nv_bfloat16* backup_keys,
+    __nv_bfloat16* backup_values, const int* position_starts, int requests, int heads,
+    int tokens, int dimension, int source_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int request_elements = heads * tokens * dimension;
+  if (index >= requests * request_elements) return;
+  const int request = index / request_elements;
+  const int local = index % request_elements;
+  const int component = local % dimension;
+  const int token = (local / dimension) % tokens;
+  const int head = local / (dimension * tokens);
+  const int source_token = (position_starts[request] + token) % source_capacity;
+  const std::uint64_t source_index =
+      (static_cast<std::uint64_t>(head) * source_capacity + source_token) * dimension + component;
+  backup_keys[index] = key_sources[request][source_index];
+  backup_values[index] = value_sources[request][source_index];
+}
+
+__global__ void restore_kv_ring_suffixes_kernel(
+    const __nv_bfloat16* backup_keys, const __nv_bfloat16* backup_values,
+    __nv_bfloat16* const* key_destinations,
+    __nv_bfloat16* const* value_destinations, const int* position_starts,
+    const int* accepted_tokens, int requests, int heads, int tokens, int dimension,
+    int destination_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int request_elements = heads * tokens * dimension;
+  if (index >= requests * request_elements) return;
+  const int request = index / request_elements;
+  const int local = index % request_elements;
+  const int component = local % dimension;
+  const int token = (local / dimension) % tokens;
+  if (token < accepted_tokens[request]) return;
+  const int head = local / (dimension * tokens);
+  const int destination_token = (position_starts[request] + token) % destination_capacity;
+  const std::uint64_t destination_index =
+      (static_cast<std::uint64_t>(head) * destination_capacity + destination_token) *
+      dimension + component;
+  key_destinations[request][destination_index] = backup_keys[index];
+  value_destinations[request][destination_index] = backup_values[index];
+}
+
+__global__ void clone_kv_cache_prefix_kernel(
+    const __nv_bfloat16* source_keys, const __nv_bfloat16* source_values,
+    __nv_bfloat16* destination_keys, __nv_bfloat16* destination_values,
+    int heads, int resident_tokens, int dimension, int cache_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = heads * resident_tokens * dimension;
+  if (index >= elements) return;
+  const int component = index % dimension;
+  const int token = (index / dimension) % resident_tokens;
+  const int head = index / (dimension * resident_tokens);
+  const std::uint64_t cache_index =
+      (static_cast<std::uint64_t>(head) * cache_capacity + token) * dimension + component;
+  destination_keys[cache_index] = source_keys[cache_index];
+  destination_values[cache_index] = source_values[cache_index];
+}
+
 struct Maximum {
   float value;
   int index;
@@ -477,6 +567,16 @@ void scale_bf16(void* values, const void* scalar, std::size_t elements, cudaStre
   check(cudaPeekAtLastError(), "launch scale_kernel");
 }
 
+void scale_constant_bf16(void* values, float scalar, std::size_t elements,
+                         cudaStream_t stream) {
+  if (values == nullptr || elements == 0) return;
+  constexpr unsigned threads = 256;
+  const auto blocks = static_cast<unsigned>((elements + threads - 1U) / threads);
+  scale_constant_kernel<<<blocks, threads, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(values), scalar, elements);
+  check(cudaPeekAtLastError(), "launch constant scale kernel");
+}
+
 void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,
                          std::size_t elements, cudaStream_t stream) {
   if (elements == 0) return;
@@ -536,6 +636,33 @@ void gather_rows_bf16(const void* input, const int* device_row_indices, void* ou
       static_cast<const __nv_bfloat16*>(input), device_row_indices,
       static_cast<__nv_bfloat16*>(output), rows, width);
   check(cudaPeekAtLastError(), "launch gather rows");
+}
+
+void scatter_rows_bf16(const void* input, const int* device_row_indices, void* output,
+                       int rows, int width, cudaStream_t stream) {
+  if (input == nullptr || device_row_indices == nullptr || output == nullptr || rows <= 0 ||
+      width <= 0) {
+    throw std::runtime_error("invalid scatter rows shape");
+  }
+  const int elements = rows * width;
+  scatter_rows_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), device_row_indices,
+      static_cast<__nv_bfloat16*>(output), rows, width);
+  check(cudaPeekAtLastError(), "launch scatter rows");
+}
+
+void concatenate_rows_bf16(const void* left, int left_width, const void* right,
+                           int right_width, void* output, int rows, cudaStream_t stream) {
+  if (left == nullptr || right == nullptr || output == nullptr || left_width <= 0 ||
+      right_width <= 0 || rows <= 0) {
+    throw std::runtime_error("invalid concatenate rows shape");
+  }
+  const int elements = rows * (left_width + right_width);
+  concatenate_rows_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(left), left_width,
+      static_cast<const __nv_bfloat16*>(right), right_width,
+      static_cast<__nv_bfloat16*>(output), rows);
+  check(cudaPeekAtLastError(), "launch concatenate rows");
 }
 
 void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
@@ -679,6 +806,69 @@ void copy_kv_spans_to_rings_bf16(const void* staged_keys, const void* staged_val
       device_position_starts, requests, heads, tokens, head_dimension, staging_capacity,
       staging_position_start, destination_capacity);
   check(cudaPeekAtLastError(), "launch batched KV ring copy");
+}
+
+void backup_kv_ring_spans_bf16(const void* const* device_key_sources,
+                               const void* const* device_value_sources,
+                               void* backup_keys, void* backup_values,
+                               const int* device_position_starts, int requests, int heads,
+                               int tokens, int head_dimension, int source_capacity,
+                               cudaStream_t stream) {
+  if (device_key_sources == nullptr || device_value_sources == nullptr || backup_keys == nullptr ||
+      backup_values == nullptr || device_position_starts == nullptr || requests <= 0 ||
+      heads <= 0 || tokens <= 0 || head_dimension <= 0 || source_capacity <= 0) {
+    throw std::runtime_error("invalid speculative KV backup shape");
+  }
+  const int elements = requests * heads * tokens * head_dimension;
+  backup_kv_ring_spans_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      reinterpret_cast<const __nv_bfloat16* const*>(device_key_sources),
+      reinterpret_cast<const __nv_bfloat16* const*>(device_value_sources),
+      static_cast<__nv_bfloat16*>(backup_keys), static_cast<__nv_bfloat16*>(backup_values),
+      device_position_starts, requests, heads, tokens, head_dimension, source_capacity);
+  check(cudaPeekAtLastError(), "launch speculative KV backup");
+}
+
+void restore_kv_ring_suffixes_bf16(const void* backup_keys, const void* backup_values,
+                                   void* const* device_key_destinations,
+                                   void* const* device_value_destinations,
+                                   const int* device_position_starts,
+                                   const int* device_accepted_tokens, int requests, int heads,
+                                   int tokens, int head_dimension, int destination_capacity,
+                                   cudaStream_t stream) {
+  if (backup_keys == nullptr || backup_values == nullptr ||
+      device_key_destinations == nullptr || device_value_destinations == nullptr ||
+      device_position_starts == nullptr || device_accepted_tokens == nullptr || requests <= 0 ||
+      heads <= 0 || tokens <= 0 || head_dimension <= 0 || destination_capacity <= 0) {
+    throw std::runtime_error("invalid speculative KV restore shape");
+  }
+  const int elements = requests * heads * tokens * head_dimension;
+  restore_kv_ring_suffixes_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(backup_keys),
+      static_cast<const __nv_bfloat16*>(backup_values),
+      reinterpret_cast<__nv_bfloat16* const*>(device_key_destinations),
+      reinterpret_cast<__nv_bfloat16* const*>(device_value_destinations),
+      device_position_starts, device_accepted_tokens, requests, heads, tokens,
+      head_dimension, destination_capacity);
+  check(cudaPeekAtLastError(), "launch speculative KV restore");
+}
+
+void clone_kv_cache_prefix_bf16(const void* source_keys, const void* source_values,
+                                void* destination_keys, void* destination_values,
+                                int heads, int resident_tokens, int head_dimension,
+                                int cache_capacity, cudaStream_t stream) {
+  if (source_keys == nullptr || source_values == nullptr || destination_keys == nullptr ||
+      destination_values == nullptr || heads <= 0 || resident_tokens <= 0 ||
+      resident_tokens > cache_capacity || head_dimension <= 0 || cache_capacity <= 0) {
+    throw std::runtime_error("invalid KV cache prefix clone shape");
+  }
+  const int elements = heads * resident_tokens * head_dimension;
+  clone_kv_cache_prefix_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source_keys),
+      static_cast<const __nv_bfloat16*>(source_values),
+      static_cast<__nv_bfloat16*>(destination_keys),
+      static_cast<__nv_bfloat16*>(destination_values), heads, resident_tokens,
+      head_dimension, cache_capacity);
+  check(cudaPeekAtLastError(), "launch KV cache prefix clone");
 }
 
 std::size_t argmax_bf16_workspace_bytes(int elements) {

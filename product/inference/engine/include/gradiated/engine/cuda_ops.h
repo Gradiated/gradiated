@@ -19,6 +19,8 @@ void rms_norm_add_scale_bf16(const void* input, const void* weight, const void* 
                              const void* scalar, void* output, std::size_t rows,
                              std::size_t width, float epsilon, cudaStream_t stream);
 void scale_bf16(void* values, const void* scalar, std::size_t elements, cudaStream_t stream);
+void scale_constant_bf16(void* values, float scalar, std::size_t elements,
+                         cudaStream_t stream);
 void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,
                          std::size_t elements, cudaStream_t stream);
 void gelu_tanh_gate_rows_bf16(const void* packed_gate_up, void* output,
@@ -30,6 +32,10 @@ void embedding_batch_bf16(const void* embedding_weight, const int* device_token_
                           float scale, cudaStream_t stream);
 void gather_rows_bf16(const void* input, const int* device_row_indices, void* output,
                       int rows, int width, cudaStream_t stream);
+void scatter_rows_bf16(const void* input, const int* device_row_indices, void* output,
+                       int rows, int width, cudaStream_t stream);
+void concatenate_rows_bf16(const void* left, int left_width, const void* right,
+                           int right_width, void* output, int rows, cudaStream_t stream);
 void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
                         int head_dimension, cudaStream_t stream);
 void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
@@ -61,6 +67,27 @@ void copy_kv_spans_to_rings_bf16(const void* staged_keys, const void* staged_val
                                  int tokens, int head_dimension, int staging_capacity,
                                  int staging_position_start, int destination_capacity,
                                  cudaStream_t stream);
+// Saves/restores the ring locations that speculative candidates may overwrite.  A rejected
+// tail must be restored because those physical locations still contain live sliding-window KV.
+void backup_kv_ring_spans_bf16(const void* const* device_key_sources,
+                               const void* const* device_value_sources,
+                               void* backup_keys, void* backup_values,
+                               const int* device_position_starts, int requests, int heads,
+                               int tokens, int head_dimension, int source_capacity,
+                               cudaStream_t stream);
+void restore_kv_ring_suffixes_bf16(const void* backup_keys, const void* backup_values,
+                                   void* const* device_key_destinations,
+                                   void* const* device_value_destinations,
+                                   const int* device_position_starts,
+                                   const int* device_accepted_tokens, int requests, int heads,
+                                   int tokens, int head_dimension, int destination_capacity,
+                                   cudaStream_t stream);
+// Copies a logical prefix between head-major cache allocations. A flat memcpy is only valid
+// when every head's full capacity is resident; shorter prefixes contain per-head gaps.
+void clone_kv_cache_prefix_bf16(const void* source_keys, const void* source_values,
+                                void* destination_keys, void* destination_values,
+                                int heads, int resident_tokens, int head_dimension,
+                                int cache_capacity, cudaStream_t stream);
 std::size_t argmax_bf16_workspace_bytes(int elements);
 void argmax_bf16(const void* values, int elements, int* device_output,
                  void* workspace, cudaStream_t stream);

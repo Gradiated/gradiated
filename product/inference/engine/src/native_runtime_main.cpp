@@ -38,6 +38,7 @@ constexpr int default_idle_prefill_quantum_tokens = 1024;
 constexpr int default_short_prefill_batch_window_microseconds = 10000;
 constexpr int short_prefill_cohort_tokens = 512;
 constexpr int maximum_slots = 16;
+constexpr int default_speculative_depth = 4;
 
 std::string environment(const char* name, const std::string& fallback = {}) {
   const char* value = std::getenv(name);
@@ -121,6 +122,12 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> suffix_prefill_batches{0};
   std::atomic<std::uint64_t> suffix_prefill_requests{0};
   std::atomic<std::uint64_t> suffix_prefill_tokens{0};
+  std::atomic<std::uint64_t> speculative_cycles{0};
+  std::atomic<std::uint64_t> speculative_proposed_tokens{0};
+  std::atomic<std::uint64_t> speculative_accepted_tokens{0};
+  std::atomic<std::uint64_t> speculative_first_token_rejections{0};
+  std::atomic<std::uint64_t> speculative_draft_microseconds{0};
+  std::atomic<std::uint64_t> speculative_verify_microseconds{0};
 };
 
 struct CompletionResult {
@@ -155,11 +162,15 @@ class ContinuousScheduler {
   ContinuousScheduler(const gradiated::engine::Gemma4Config& config,
                       const gradiated::engine::DeviceWeightArena& weights,
                       const gradiated::engine::Fp8WeightArena* fp8_weights,
-                      RuntimeMetrics& metrics, int prefill_quantum_tokens,
+                      const gradiated::engine::DeviceWeightArena* assistant_weights,
+                      RuntimeMetrics& metrics, int speculative_depth,
+                      int prefill_quantum_tokens,
                       int idle_prefill_quantum_tokens,
                       int short_prefill_batch_window_microseconds)
-      : runner_(config, weights, maximum_slots, maximum_context, fp8_weights),
+      : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
+                assistant_weights),
         slots_(maximum_slots), metrics_(metrics),
+        speculative_depth_(speculative_depth),
         prefill_quantum_tokens_(prefill_quantum_tokens),
         idle_prefill_quantum_tokens_(idle_prefill_quantum_tokens),
         short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds) {
@@ -457,6 +468,123 @@ class ContinuousScheduler {
       tokens.push_back(slot.token_to_append);
     }
     if (indices.empty()) return false;
+    if (runner_.has_assistant()) {
+      try {
+        std::vector<int> last_tokens;
+        std::vector<int> target_first;
+        std::vector<int> acceptance_caps;
+        last_tokens.reserve(indices.size());
+        target_first.reserve(indices.size());
+        acceptance_caps.reserve(indices.size());
+        for (const int index : indices) {
+          const auto& slot = slots_[static_cast<std::size_t>(index)];
+          if (slot.cached_tokens.empty()) {
+            throw std::runtime_error("assistant request has no resident token");
+          }
+          last_tokens.push_back(slot.cached_tokens.back());
+          target_first.push_back(slot.token_to_append);
+        }
+        const auto draft_begin = std::chrono::steady_clock::now();
+        const auto proposals = runner_.draft_four(
+            last_tokens, slots, target_first, speculative_depth_);
+        const auto draft_end = std::chrono::steady_clock::now();
+        for (std::size_t row = 0; row < indices.size(); ++row) {
+          const auto& slot = slots_[static_cast<std::size_t>(indices[row])];
+          int cap = std::min<int>(speculative_depth_, slot.job->max_tokens -
+              static_cast<int>(slot.output_ids.size()));
+          for (int candidate = 1; candidate < cap; ++candidate) {
+            if (slot.job->stop_ids.contains(
+                    proposals[row][static_cast<std::size_t>(candidate)])) {
+              cap = candidate + 1;
+              break;
+            }
+          }
+          acceptance_caps.push_back(cap);
+        }
+        const auto verification = runner_.verify_greedy_proposals(
+            proposals, target_first, slots, acceptance_caps);
+        const auto verify_end = std::chrono::steady_clock::now();
+        metrics_.speculative_draft_microseconds.fetch_add(
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+                draft_end - draft_begin).count()));
+        metrics_.speculative_verify_microseconds.fetch_add(
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+                verify_end - draft_end).count()));
+        metrics_.speculative_cycles.fetch_add(1);
+        metrics_.speculative_proposed_tokens.fetch_add(
+            static_cast<std::uint64_t>(speculative_depth_) * indices.size());
+        for (const int accepted : verification.accepted_tokens) {
+          metrics_.speculative_accepted_tokens.fetch_add(
+              static_cast<std::uint64_t>(accepted));
+          if (accepted == 0) metrics_.speculative_first_token_rejections.fetch_add(1);
+        }
+
+        std::vector<int> fallback_rows;
+        std::vector<int> fallback_slots;
+        std::vector<int> fallback_tokens;
+        for (std::size_t row = 0; row < indices.size(); ++row) {
+          if (verification.accepted_tokens[row] != 0) continue;
+          fallback_rows.push_back(static_cast<int>(row));
+          fallback_slots.push_back(slots[row]);
+          fallback_tokens.push_back(target_first[row]);
+        }
+        std::vector<int> fallback_next;
+        if (!fallback_rows.empty()) {
+          fallback_next = runner_.append_ragged(fallback_tokens, fallback_slots);
+        }
+
+        const auto token_time = std::chrono::steady_clock::now();
+        std::size_t fallback_index = 0;
+        for (std::size_t row = 0; row < indices.size(); ++row) {
+          const int index = indices[row];
+          auto& slot = slots_[static_cast<std::size_t>(index)];
+          const int accepted = verification.accepted_tokens[row];
+          int newly_emitted = 0;
+          bool stopped = false;
+          if (accepted == 0) {
+            slot.cached_tokens.push_back(slot.token_to_append);
+            slot.token_to_append = fallback_next.at(fallback_index++);
+            slot.output_ids.push_back(slot.token_to_append);
+            newly_emitted = 1;
+          } else {
+            for (int candidate = 0; candidate < accepted; ++candidate) {
+              slot.cached_tokens.push_back(
+                  proposals[row][static_cast<std::size_t>(candidate)]);
+              if (candidate == 0) continue;  // Already emitted before this cycle.
+              const int token = proposals[row][static_cast<std::size_t>(candidate)];
+              slot.output_ids.push_back(token);
+              ++newly_emitted;
+              if (slot.job->stop_ids.contains(token)) {
+                stopped = true;
+                break;
+              }
+            }
+            if (!stopped) {
+              slot.token_to_append = verification.next_tokens[row];
+              slot.output_ids.push_back(slot.token_to_append);
+              ++newly_emitted;
+            }
+          }
+          const auto cycle = static_cast<std::uint64_t>(
+              std::chrono::duration_cast<std::chrono::microseconds>(token_time - slot.last_token_at)
+                  .count());
+          const auto tpot = cycle / static_cast<std::uint64_t>(std::max(1, newly_emitted));
+          slot.decode_microseconds += cycle;
+          slot.maximum_tpot_microseconds = std::max(slot.maximum_tpot_microseconds, tpot);
+          slot.last_token_at = token_time;
+          if (stopped || slot.job->stop_ids.contains(slot.token_to_append)) {
+            complete_slot(index, "stop");
+          } else if (slot.output_ids.size() >= static_cast<std::size_t>(slot.job->max_tokens)) {
+            complete_slot(index, "length");
+          }
+        }
+      } catch (const std::exception& error) {
+        for (const int index : indices) {
+          if (slots_[static_cast<std::size_t>(index)].job) fail_slot(index, error.what());
+        }
+      }
+      return true;
+    }
     try {
       const auto predictions = runner_.append_ragged(tokens, slots);
       const auto token_time = std::chrono::steady_clock::now();
@@ -609,6 +737,7 @@ class ContinuousScheduler {
   gradiated::engine::Gemma4BatchModelRunner runner_;
   std::vector<Slot> slots_;
   RuntimeMetrics& metrics_;
+  int speculative_depth_;
   int prefill_quantum_tokens_;
   int idle_prefill_quantum_tokens_;
   int short_prefill_batch_window_microseconds_;
@@ -643,6 +772,19 @@ int main(int argc, char** argv) {
     } else if (fp8_decode != "off") {
       throw std::runtime_error("GRADIATED_FP8_DECODE must be off or tensor");
     }
+    std::unique_ptr<gradiated::engine::DeviceWeightArena> assistant_weights;
+    const std::string assistant_directory = environment("GRADIATED_ASSISTANT_MODEL_PATH");
+    if (!assistant_directory.empty()) {
+      if (!fp8_weights) {
+        throw std::runtime_error("the native assistant requires FP8 target verification");
+      }
+      const auto assistant_host =
+          gradiated::engine::ShardedSafetensors::open(assistant_directory);
+      const auto assistant_plan =
+          gradiated::engine::WeightPlan::gemma4_assistant(assistant_host);
+      assistant_weights = gradiated::engine::DeviceWeightArena::load(
+          assistant_plan, assistant_host);
+    }
 
     const std::string configured_key = environment(
         "GRADIATED_RUNTIME_API_KEY", environment("DESMOND_RUNTIME_API_KEY"));
@@ -658,8 +800,11 @@ int main(int argc, char** argv) {
     const int short_prefill_batch_window_microseconds = environment_integer(
         "GRADIATED_SHORT_PREFILL_BATCH_WINDOW_US",
         default_short_prefill_batch_window_microseconds, 0, 20000);
+    const int speculative_depth = environment_integer(
+        "GRADIATED_SPECULATIVE_DEPTH", default_speculative_depth, 1, 4);
     RuntimeMetrics metrics;
-    ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), metrics, prefill_quantum_tokens,
+    ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), assistant_weights.get(),
+                                  metrics, speculative_depth, prefill_quantum_tokens,
                                   idle_prefill_quantum_tokens,
                                   short_prefill_batch_window_microseconds);
 
@@ -692,6 +837,20 @@ int main(int argc, char** argv) {
              << metrics.suffix_prefill_requests.load() << '\n'
              << "gradiated_native_suffix_prefill_tokens_total "
              << metrics.suffix_prefill_tokens.load() << '\n'
+             << "gradiated_native_speculative_cycles_total "
+             << metrics.speculative_cycles.load() << '\n'
+             << "gradiated_native_speculative_proposed_tokens_total "
+             << metrics.speculative_proposed_tokens.load() << '\n'
+             << "gradiated_native_speculative_accepted_tokens_total "
+             << metrics.speculative_accepted_tokens.load() << '\n'
+             << "gradiated_native_speculative_first_token_rejections_total "
+             << metrics.speculative_first_token_rejections.load() << '\n'
+             << "gradiated_native_speculative_draft_seconds_total "
+             << static_cast<double>(metrics.speculative_draft_microseconds.load()) / 1000000.0
+             << '\n'
+             << "gradiated_native_speculative_verify_seconds_total "
+             << static_cast<double>(metrics.speculative_verify_microseconds.load()) / 1000000.0
+             << '\n'
              << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n';
         return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", body.str()};
       }
@@ -752,7 +911,8 @@ int main(int argc, char** argv) {
               << " idle_prefill_quantum_tokens=" << idle_prefill_quantum_tokens
               << " short_prefill_batch_window_us="
               << short_prefill_batch_window_microseconds
-              << " fp8_decode=" << fp8_decode << '\n';
+              << " fp8_decode=" << fp8_decode
+              << " assistant=" << (assistant_weights ? "enabled" : "off") << '\n';
     server.run();
     return 0;
   } catch (const std::exception& error) {

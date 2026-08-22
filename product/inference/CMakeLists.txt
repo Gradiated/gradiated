@@ -69,6 +69,7 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
   find_library(CUDNN_LIBRARY NAMES cudnn REQUIRED)
   add_library(gradiated_engine_cuda
     engine/cuda/attention.cu
+    engine/cuda/assistant_runner.cu
     engine/cuda/batch_model_runner.cu
     engine/cuda/gemm_attention.cu
     engine/cuda/prefill_gemm_attention.cu

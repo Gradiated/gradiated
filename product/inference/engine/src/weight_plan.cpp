@@ -87,6 +87,70 @@ WeightPlan WeightPlan::gemma4(const Gemma4Config& config, const ShardedSafetenso
   return result;
 }
 
+WeightPlan WeightPlan::gemma4_assistant(const ShardedSafetensors& weights) {
+  constexpr std::uint64_t hidden = 1024;
+  constexpr std::uint64_t backbone_hidden = 5376;
+  constexpr std::uint64_t intermediate = 8192;
+  constexpr std::uint64_t vocabulary = 262144;
+  WeightPlan result;
+  std::set<std::string> used;
+  std::uint64_t offset = 0;
+  const auto add = [&](std::string name, std::vector<std::uint64_t> shape,
+                       std::initializer_list<std::string> source_names) {
+    WeightSegment segment{.name = std::move(name), .shape = std::move(shape),
+                          .arena_offset = align_up(offset), .byte_size = 0, .sources = {}};
+    for (const auto& source_name : source_names) {
+      const auto& source = weights.at(source_name);
+      if (source.dtype != "BF16") {
+        throw std::runtime_error("assistant execution weights must be BF16: " + source_name);
+      }
+      if (!used.insert(source_name).second) {
+        throw std::runtime_error("assistant weight source used twice: " + source_name);
+      }
+      segment.sources.push_back({source_name, segment.byte_size, source.byte_size});
+      segment.byte_size += source.byte_size;
+    }
+    std::uint64_t elements = 1;
+    for (const auto dimension : segment.shape) elements *= dimension;
+    if (2ULL * elements != segment.byte_size) {
+      throw std::runtime_error("assistant execution shape mismatch: " + segment.name);
+    }
+    offset = segment.arena_offset + segment.byte_size;
+    result.by_name_.emplace(segment.name, result.segments_.size());
+    result.segments_.push_back(std::move(segment));
+  };
+  add("token_embedding", {vocabulary, hidden}, {"model.embed_tokens.weight"});
+  add("pre_projection", {hidden, 2ULL * backbone_hidden}, {"pre_projection.weight"});
+  add("post_projection", {backbone_hidden, hidden}, {"post_projection.weight"});
+  for (std::size_t layer = 0; layer < 4; ++layer) {
+    const bool global = layer == 3;
+    const std::uint64_t head_dimension = global ? 512 : 256;
+    const std::uint64_t query_width = 32 * head_dimension;
+    const std::string source = "model.layers." + std::to_string(layer) + ".";
+    const std::string prefix = "layer." + std::to_string(layer) + ".";
+    add(prefix + "input_norm", {hidden}, {source + "input_layernorm.weight"});
+    add(prefix + "q_norm", {head_dimension}, {source + "self_attn.q_norm.weight"});
+    add(prefix + "q", {query_width, hidden}, {source + "self_attn.q_proj.weight"});
+    add(prefix + "o", {hidden, query_width}, {source + "self_attn.o_proj.weight"});
+    add(prefix + "post_attention_norm", {hidden},
+        {source + "post_attention_layernorm.weight"});
+    add(prefix + "pre_mlp_norm", {hidden}, {source + "pre_feedforward_layernorm.weight"});
+    add(prefix + "gate_up", {2ULL * intermediate, hidden},
+        {source + "mlp.gate_proj.weight", source + "mlp.up_proj.weight"});
+    add(prefix + "down", {hidden, intermediate}, {source + "mlp.down_proj.weight"});
+    add(prefix + "post_mlp_norm", {hidden},
+        {source + "post_feedforward_layernorm.weight"});
+    add(prefix + "scalar", {1}, {source + "layer_scalar"});
+  }
+  add("final_norm", {hidden}, {"model.norm.weight"});
+  for (const auto& [name, tensor] : weights.tensors()) {
+    static_cast<void>(tensor);
+    if (!used.contains(name)) throw std::runtime_error("unused assistant tensor: " + name);
+  }
+  result.arena_bytes_ = align_up(offset);
+  return result;
+}
+
 const WeightSegment& WeightPlan::at(std::string_view name) const {
   const auto iterator = by_name_.find(name);
   if (iterator == by_name_.end()) throw std::runtime_error("missing execution weight " + std::string(name));

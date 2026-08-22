@@ -519,4 +519,31 @@ void Gemma4QkvPostprocessor::run_prefill_uniform(
   check(cudaPeekAtLastError(), "launch uniform prefill QKV postprocessing");
 }
 
+void Gemma4QkvPostprocessor::run_query_ragged(
+    const void* projected_queries, const void* query_norm_weight, void* queries,
+    const int* device_positions, int batch, int query_heads, int head_dimension,
+    bool global_attention, float epsilon, cudaStream_t stream) {
+  if (projected_queries == nullptr || query_norm_weight == nullptr || queries == nullptr ||
+      device_positions == nullptr || batch <= 0 || query_heads <= 0 ||
+      (head_dimension != 256 && head_dimension != 512) ||
+      global_attention != (head_dimension == 512)) {
+    throw std::runtime_error("invalid assistant query shape");
+  }
+  const int query_width = query_heads * head_dimension;
+  if (global_attention) {
+    ragged_query_kernel<512><<<batch * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(projected_queries),
+        static_cast<const __nv_bfloat16*>(query_norm_weight), implementation_->global_cosine,
+        implementation_->global_sine, static_cast<__nv_bfloat16*>(queries),
+        device_positions, batch, query_heads, query_width, epsilon);
+  } else {
+    ragged_query_kernel<256><<<batch * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(projected_queries),
+        static_cast<const __nv_bfloat16*>(query_norm_weight), implementation_->sliding_cosine,
+        implementation_->sliding_sine, static_cast<__nv_bfloat16*>(queries),
+        device_positions, batch, query_heads, query_width, epsilon);
+  }
+  check(cudaPeekAtLastError(), "launch assistant query postprocessing");
+}
+
 }  // namespace gradiated::engine

@@ -108,7 +108,15 @@ const TensorLocation& SafetensorsFile::at(std::string_view name) const {
 
 ShardedSafetensors ShardedSafetensors::open(const std::string& model_directory) {
   const std::filesystem::path directory(model_directory);
-  const Json index = Json::parse(read_text_file((directory / "model.safetensors.index.json").string()));
+  const auto index_path = directory / "model.safetensors.index.json";
+  if (!std::filesystem::exists(index_path)) {
+    const auto single_path = directory / "model.safetensors";
+    const auto single = SafetensorsFile::open(single_path.string());
+    ShardedSafetensors result;
+    result.tensors_ = single.tensors();
+    return result;
+  }
+  const Json index = Json::parse(read_text_file(index_path.string()));
   const auto& weight_map = index.at("weight_map").as_object();
   std::set<std::string> shard_names;
   for (const auto& [name, shard] : weight_map) {

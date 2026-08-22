@@ -46,6 +46,10 @@ class Gemma4QkvPostprocessor {
                            int kv_heads, int head_dimension, bool key_equals_value,
                            int staged_position_start, int staged_capacity,
                            float epsilon, cudaStream_t stream);
+  void run_query_ragged(const void* projected_queries, const void* query_norm_weight,
+                        void* queries, const int* device_positions, int batch,
+                        int query_heads, int head_dimension, bool global_attention,
+                        float epsilon, cudaStream_t stream);
 
  private:
   struct Implementation;

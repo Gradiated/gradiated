@@ -13,6 +13,7 @@ use hf_hub::{
 use serde_json::{Map, Value};
 use thiserror::Error;
 use tokenizers::Tokenizer;
+use tracing::error;
 
 use crate::{
     ChatCompletionRequest, GatewayError, ModelDeploymentRelease, OutputTokenLimit, QualifiedRequest,
@@ -49,7 +50,16 @@ impl ModelTokenizer {
         let tokenizer = self
             .tokenizer(&qualified.deployment.release)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+            .map_err(|source| {
+                error!(
+                    model_path = %qualified.deployment.release.model_path,
+                    tokenizer_path = %qualified.deployment.release.tokenizer_path,
+                    tokenizer_revision = %qualified.deployment.release.tokenizer_revision,
+                    error = %source,
+                    "model tokenizer is unavailable"
+                );
+                GatewayError::ServingStateUnavailable
+            })?;
         let input_tokens = tokenizer
             .count_input_tokens(&qualified.request)
             .map_err(map_request_error)?;
@@ -439,6 +449,27 @@ mod tests {
                 }
             }]),
         );
+
+        let bounded = ModelTokenizer::new()
+            .unwrap()
+            .enforce(qualified)
+            .await
+            .unwrap();
+        assert!(bounded.input_tokens > 0);
+    }
+
+    #[tokio::test]
+    #[ignore = "downloads the pinned production Gemma tokenizer from Hugging Face"]
+    async fn loads_and_renders_the_pinned_gemma4_release() {
+        let mut qualified = request(Some(64));
+        qualified.max_context_tokens = 8_192;
+        qualified.max_prompt_tokens = 4_096;
+        qualified.deployment.release.model_path = "google/gemma-4-31B-it".to_owned();
+        qualified.deployment.release.model_revision =
+            "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
+        qualified.deployment.release.tokenizer_path = "google/gemma-4-31B-it".to_owned();
+        qualified.deployment.release.tokenizer_revision =
+            "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
 
         let bounded = ModelTokenizer::new()
             .unwrap()

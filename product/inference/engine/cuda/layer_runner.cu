@@ -251,14 +251,83 @@ void Gemma4LayerRunner::run_prefill(int layer_index, const void* hidden_states, 
   if (layer.attention == AttentionKind::sliding) {
     state.sliding_prefill_attention.run(
         state.queries.get(), state.key_cache.get(), state.value_cache.get(),
-        state.attention_output.get(), 1, query_heads, kv_heads, tokens, head_dimension,
-        static_cast<int>(state.config.sliding_window), stream);
+        state.attention_output.get(), 1, query_heads, kv_heads, tokens, tokens, tokens,
+        head_dimension, static_cast<int>(state.config.sliding_window), stream);
   } else {
     token_to_head_bf16(state.queries.get(), state.queries_head_major.get(), tokens,
                        query_heads, head_dimension, stream);
     state.global_prefill_attention.run(
         state.queries_head_major.get(), state.key_cache.get(), state.value_cache.get(),
-        state.attention_output.get(), query_heads, kv_heads, tokens, head_dimension, stream);
+        state.attention_output.get(), query_heads, kv_heads, tokens, tokens, tokens, 0,
+        head_dimension, stream);
+    head_to_token_bf16(state.attention_output.get(), state.queries.get(), tokens,
+                       query_heads, head_dimension, stream);
+    attention_states = state.queries.get();
+  }
+  state.project(layer_index, hidden_states, attention_states, output, tokens, stream);
+}
+
+void Gemma4LayerRunner::run_prefill_chunk(int layer_index, const void* hidden_states, void* output,
+                                          int tokens, int position_start, void* key_cache,
+                                          void* value_cache, int cache_capacity,
+                                          cudaStream_t stream) {
+  auto& state = *implementation_;
+  if (tokens <= 0 || position_start < 0 || position_start + tokens > state.maximum_context ||
+      tokens > state.maximum_tokens || key_cache == nullptr || value_cache == nullptr ||
+      cache_capacity <= 0 || cache_capacity > state.maximum_context) {
+    throw std::runtime_error("invalid prefill chunk shape");
+  }
+  const auto& layer = state.config.layers.at(static_cast<std::size_t>(layer_index));
+  const int query_heads = static_cast<int>(layer.query_heads);
+  const int kv_heads = static_cast<int>(layer.kv_heads);
+  const int head_dimension = static_cast<int>(layer.head_dimension);
+  const int query_width = static_cast<int>(layer.query_width());
+  const int packed_width = query_width + static_cast<int>(layer.kv_width()) *
+      (layer.key_equals_value ? 1 : 2);
+  const std::string prefix = "layer." + std::to_string(layer_index) + ".";
+  const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
+  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), tokens, state.hidden,
+                state.epsilon, stream);
+  state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(), tokens,
+                   state.hidden, packed_width, stream);
+
+  const void* attention_states = state.attention_output.get();
+  if (layer.attention == AttentionKind::sliding) {
+    const int prior = std::min(position_start,
+        static_cast<int>(state.config.sliding_window) - 1);
+    const int staging_tokens = prior + tokens;
+    if (staging_tokens > state.maximum_tokens) {
+      throw std::runtime_error("sliding prefill staging exceeds workspace");
+    }
+    gather_kv_ring_bf16(key_cache, state.key_cache.get(), kv_heads, prior, head_dimension,
+                        cache_capacity, staging_tokens, position_start - prior, stream);
+    gather_kv_ring_bf16(value_cache, state.value_cache.get(), kv_heads, prior, head_dimension,
+                        cache_capacity, staging_tokens, position_start - prior, stream);
+    state.qkv_postprocessor.run_positioned(
+        state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+        state.key_cache.get(), state.value_cache.get(), tokens, query_heads, kv_heads,
+        head_dimension, layer.key_equals_value, position_start, prior, staging_tokens,
+        state.epsilon, stream);
+    state.sliding_prefill_attention.run(
+        state.queries.get(), state.key_cache.get(), state.value_cache.get(),
+        state.attention_output.get(), 1, query_heads, kv_heads, tokens, staging_tokens,
+        staging_tokens, head_dimension, static_cast<int>(state.config.sliding_window), stream);
+    copy_kv_span_to_ring_bf16(state.key_cache.get(), key_cache, kv_heads, tokens, head_dimension,
+                              staging_tokens, prior, cache_capacity, position_start, stream);
+    copy_kv_span_to_ring_bf16(state.value_cache.get(), value_cache, kv_heads, tokens, head_dimension,
+                              staging_tokens, prior, cache_capacity, position_start, stream);
+  } else {
+    state.qkv_postprocessor.run_positioned(
+        state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+        key_cache, value_cache, tokens, query_heads, kv_heads, head_dimension,
+        layer.key_equals_value, position_start, position_start, cache_capacity,
+        state.epsilon, stream);
+    token_to_head_bf16(state.queries.get(), state.queries_head_major.get(), tokens,
+                       query_heads, head_dimension, stream);
+    state.global_prefill_attention.run(
+        state.queries_head_major.get(), key_cache, value_cache, state.attention_output.get(),
+        query_heads, kv_heads, tokens, position_start + tokens, cache_capacity,
+        position_start, head_dimension, stream);
     head_to_token_bf16(state.attention_output.get(), state.queries.get(), tokens,
                        query_heads, head_dimension, stream);
     attention_states = state.queries.get();

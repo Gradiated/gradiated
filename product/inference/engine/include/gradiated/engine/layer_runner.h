@@ -25,6 +25,9 @@ class Gemma4LayerRunner {
                         cudaStream_t stream);
   void run_prefill(int layer_index, const void* hidden_states, void* output, int tokens,
                    void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream);
+  void run_prefill_chunk(int layer_index, const void* hidden_states, void* output, int tokens,
+                         int position_start, void* key_cache, void* value_cache,
+                         int cache_capacity, cudaStream_t stream);
 
  private:
   struct Implementation;

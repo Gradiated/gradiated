@@ -23,8 +23,8 @@ std::vector<int> integers(const gradiated::engine::Json& value) {
 
 int main(int argc, char** argv) {
   try {
-    if (argc != 3) {
-      std::cerr << "usage: gradiated-engine-prefill-model-parity MODEL_DIRECTORY FIXTURE_JSON\n";
+    if (argc != 3 && argc != 4) {
+      std::cerr << "usage: gradiated-engine-prefill-model-parity MODEL_DIRECTORY FIXTURE_JSON [CHUNK_TOKENS]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
         config, *weights, static_cast<int>(input_ids.size() + expected_ids.size() + 1));
 
     const auto prefill_begin = std::chrono::steady_clock::now();
-    int prediction = runner.prefill(input_ids);
+    int prediction = argc == 4 ? runner.prefill_chunked(input_ids, std::stoi(argv[3]))
+                               : runner.prefill(input_ids);
     const double prefill_seconds = std::chrono::duration<double>(
         std::chrono::steady_clock::now() - prefill_begin).count();
     int matches = 0;
@@ -57,6 +58,7 @@ int main(int argc, char** argv) {
     std::cout << "prompt_tokens=" << input_ids.size() << '\n'
               << "prefill_seconds=" << prefill_seconds << '\n'
               << "prefill_tokens_per_second=" << input_ids.size() / prefill_seconds << '\n'
+              << "chunk_tokens=" << (argc == 4 ? std::stoi(argv[3]) : 0) << '\n'
               << "decode_seconds=" << decode_seconds << '\n'
               << "greedy_matches=" << matches << '/' << expected_ids.size() << '\n';
     return matches == static_cast<int>(expected_ids.size()) ? 0 : 2;

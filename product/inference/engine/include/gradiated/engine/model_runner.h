@@ -17,6 +17,7 @@ class Gemma4ModelRunner {
   int append(int token_id);
   // Runs an initial prompt as one tensor-core prefill and returns its greedy next token.
   int prefill(const std::vector<int>& token_ids);
+  int prefill_chunked(const std::vector<int>& token_ids, int chunk_tokens);
   // Reuses plans and allocations for a new sequence. Prefill overwrites every cache entry it reads.
   void reset_sequence();
   [[nodiscard]] int position() const;

@@ -17,7 +17,8 @@ class GemmCausalPrefillAttention {
   GemmCausalPrefillAttention& operator=(const GemmCausalPrefillAttention&) = delete;
 
   void run(const void* query, const void* key, const void* value, void* output,
-           int query_heads, int kv_heads, int tokens, int head_dimension, cudaStream_t stream);
+           int query_heads, int kv_heads, int query_tokens, int kv_tokens, int kv_capacity,
+           int query_position_start, int head_dimension, cudaStream_t stream);
 
  private:
   struct Implementation;

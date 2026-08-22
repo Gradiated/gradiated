@@ -126,6 +126,29 @@ prefill populates the global history and sliding rings. These are single-sequenc
 prefill must still be chunked so a long cache miss cannot starve decode or violate TTFT. Chunk size
 is selected by measured decode interference, not a fixed framework default.
 
+The chunk path reconstructs only the previous 1,023 sliding tokens in logical order, appends new
+K/V with absolute-position RoPE, and uses bottom-right causal alignment. Global layers append to
+their persistent history directly. An 8-token chunk test across the 27-token fixture preserves all
+8/8 greedy outputs after cached decode. At 8k, measured warm tradeoffs are:
+
+| Chunk | Input token/s | Full-pass throughput retained | Approximate scheduling quantum |
+| ---: | ---: | ---: | ---: |
+| 256 | 6,406 | 78.3% | 40 ms |
+| 512 | 7,550 | 92.3% | 68 ms |
+| 1,024 | 8,055 | 98.4% | 127 ms |
+| 2,048 | 8,160 | 99.7% | 251 ms |
+| 4,096 | 8,185 | 100.1% | 500 ms |
+
+The scheduler should therefore use 1,024-token chunks when decode pressure is ordinary, shrink to
+512 or 256 under a tight p95 TPOT deadline, and expand to 2,048+ while idle. It does not need to pay
+a permanent throughput tax for responsiveness.
+
+An Nsight Systems capture of warm 8k prefill attributes about 73% of GPU time to tensor-core
+linears, 2.7% to fused sliding SDPA, and roughly 20% to engine-owned elementwise/layout work. The
+largest non-GEMM targets are GELU (4.8%), global causal softmax (4.5%), Q/K norm plus RoPE (about
+8.5%), RMS/residual kernels (3.7%), and global token/head transposes (1.6%). The apparently long
+final D2H copy is only the host synchronization point waiting for those kernels.
+
 The KV allocator is hybrid rather than uniform:
 
 - global layers use refcounted paged history;

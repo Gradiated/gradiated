@@ -156,6 +156,46 @@ __global__ void copy_kv_to_cache_kernel(const __nv_bfloat16* source, __nv_bfloat
   }
 }
 
+__global__ void gather_kv_ring_kernel(const __nv_bfloat16* source, __nv_bfloat16* destination,
+                                      int heads, int retained_tokens, int dimension,
+                                      int source_capacity, int destination_capacity,
+                                      int logical_position_start) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = heads * retained_tokens * dimension;
+  if (index < elements) {
+    const int component = index % dimension;
+    const int token = (index / dimension) % retained_tokens;
+    const int head = index / (dimension * retained_tokens);
+    const int source_token = (logical_position_start + token) % source_capacity;
+    const std::uint64_t source_index =
+        (static_cast<std::uint64_t>(head) * source_capacity + source_token) * dimension + component;
+    const std::uint64_t destination_index =
+        (static_cast<std::uint64_t>(head) * destination_capacity + token) * dimension + component;
+    destination[destination_index] = source[source_index];
+  }
+}
+
+__global__ void copy_kv_span_to_ring_kernel(
+    const __nv_bfloat16* source, __nv_bfloat16* destination, int heads, int tokens,
+    int dimension, int source_capacity, int source_position_start, int destination_capacity,
+    int logical_position_start) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = heads * tokens * dimension;
+  if (index < elements) {
+    const int component = index % dimension;
+    const int token = (index / dimension) % tokens;
+    const int head = index / (dimension * tokens);
+    const int destination_token = (logical_position_start + token) % destination_capacity;
+    const std::uint64_t source_index =
+        (static_cast<std::uint64_t>(head) * source_capacity + source_position_start + token) *
+        dimension + component;
+    const std::uint64_t destination_index =
+        (static_cast<std::uint64_t>(head) * destination_capacity + destination_token) *
+        dimension + component;
+    destination[destination_index] = source[source_index];
+  }
+}
+
 struct Maximum {
   float value;
   int index;
@@ -306,6 +346,40 @@ void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int
       static_cast<const __nv_bfloat16*>(source), static_cast<__nv_bfloat16*>(destination),
       heads, tokens, head_dimension, destination_capacity, position_start);
   check(cudaPeekAtLastError(), "launch KV cache copy");
+}
+
+void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,
+                         int head_dimension, int source_capacity, int destination_capacity,
+                         int logical_position_start, cudaStream_t stream) {
+  if (source == nullptr || destination == nullptr || heads <= 0 || retained_tokens < 0 ||
+      head_dimension <= 0 || source_capacity <= 0 || destination_capacity < retained_tokens ||
+      logical_position_start < 0) {
+    throw std::runtime_error("invalid KV ring gather shape");
+  }
+  if (retained_tokens == 0) return;
+  const int elements = heads * retained_tokens * head_dimension;
+  gather_kv_ring_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source), static_cast<__nv_bfloat16*>(destination),
+      heads, retained_tokens, head_dimension, source_capacity, destination_capacity,
+      logical_position_start);
+  check(cudaPeekAtLastError(), "launch KV ring gather");
+}
+
+void copy_kv_span_to_ring_bf16(const void* source, void* destination, int heads, int tokens,
+                               int head_dimension, int source_capacity, int source_position_start,
+                               int destination_capacity, int logical_position_start,
+                               cudaStream_t stream) {
+  if (source == nullptr || destination == nullptr || heads <= 0 || tokens <= 0 ||
+      head_dimension <= 0 || source_capacity < source_position_start + tokens ||
+      source_position_start < 0 || destination_capacity <= 0 || logical_position_start < 0) {
+    throw std::runtime_error("invalid KV ring span copy shape");
+  }
+  const int elements = heads * tokens * head_dimension;
+  copy_kv_span_to_ring_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source), static_cast<__nv_bfloat16*>(destination),
+      heads, tokens, head_dimension, source_capacity, source_position_start,
+      destination_capacity, logical_position_start);
+  check(cudaPeekAtLastError(), "launch KV ring span copy");
 }
 
 std::size_t argmax_bf16_workspace_bytes(int elements) {

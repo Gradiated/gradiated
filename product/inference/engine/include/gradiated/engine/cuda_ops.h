@@ -28,6 +28,13 @@ void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
                            int head_dimension, int destination_capacity, int position_start,
                            cudaStream_t stream);
+void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,
+                         int head_dimension, int source_capacity, int destination_capacity,
+                         int logical_position_start, cudaStream_t stream);
+void copy_kv_span_to_ring_bf16(const void* source, void* destination, int heads, int tokens,
+                               int head_dimension, int source_capacity, int source_position_start,
+                               int destination_capacity, int logical_position_start,
+                               cudaStream_t stream);
 std::size_t argmax_bf16_workspace_bytes(int elements);
 void argmax_bf16(const void* values, int elements, int* device_output,
                  void* workspace, cudaStream_t stream);

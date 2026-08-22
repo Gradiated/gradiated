@@ -55,7 +55,7 @@ float benchmark_sliding(int tokens) {
 
   gradiated::engine::CudnnPrefillAttention attention;
   attention.run(query.get(), key.get(), value.get(), output.get(), 1, query_heads, kv_heads,
-                tokens, dimension, window, nullptr);
+                tokens, tokens, tokens, dimension, window, nullptr);
   check(cudaDeviceSynchronize(), "warm up prefill attention");
   constexpr int iterations = 10;
   cudaEvent_t begin{}, end{};
@@ -64,7 +64,7 @@ float benchmark_sliding(int tokens) {
   check(cudaEventRecord(begin), "record begin event");
   for (int iteration = 0; iteration < iterations; ++iteration) {
     attention.run(query.get(), key.get(), value.get(), output.get(), 1, query_heads, kv_heads,
-                  tokens, dimension, window, nullptr);
+                  tokens, tokens, tokens, dimension, window, nullptr);
   }
   check(cudaEventRecord(end), "record end event");
   check(cudaEventSynchronize(end), "synchronize end event");
@@ -90,7 +90,7 @@ float benchmark_global(int tokens) {
 
   gradiated::engine::GemmCausalPrefillAttention attention(tokens, query_heads);
   attention.run(query.get(), key.get(), value.get(), output.get(), query_heads, kv_heads,
-                tokens, dimension, nullptr);
+                tokens, tokens, tokens, 0, dimension, nullptr);
   check(cudaDeviceSynchronize(), "warm up global prefill attention");
   constexpr int iterations = 10;
   cudaEvent_t begin{}, end{};
@@ -99,7 +99,7 @@ float benchmark_global(int tokens) {
   check(cudaEventRecord(begin), "record global begin event");
   for (int iteration = 0; iteration < iterations; ++iteration) {
     attention.run(query.get(), key.get(), value.get(), output.get(), query_heads, kv_heads,
-                  tokens, dimension, nullptr);
+                  tokens, tokens, tokens, 0, dimension, nullptr);
   }
   check(cudaEventRecord(end), "record global end event");
   check(cudaEventSynchronize(end), "synchronize global end event");

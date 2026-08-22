@@ -17,8 +17,8 @@ class CudnnPrefillAttention {
   CudnnPrefillAttention& operator=(const CudnnPrefillAttention&) = delete;
 
   void run(const void* query, const void* key, const void* value, void* output,
-           int batch, int query_heads, int kv_heads, int tokens, int head_dimension,
-           int left_window, cudaStream_t stream);
+           int batch, int query_heads, int kv_heads, int query_tokens, int kv_tokens,
+           int kv_capacity, int head_dimension, int left_window, cudaStream_t stream);
 
  private:
   struct Implementation;

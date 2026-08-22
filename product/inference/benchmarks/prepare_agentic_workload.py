@@ -88,7 +88,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--candidate-count", type=int, default=650)
     parser.add_argument("--sessions", type=int, default=64)
     parser.add_argument("--min-isl", type=int, default=4500)
-    parser.add_argument("--max-isl", type=int, default=6800)
+    # cl100k_base under-counts some prompts relative to Gemma 4's template and
+    # tokenizer. 6200 keeps this workload inside the current 8192-token runtime.
+    parser.add_argument("--max-isl", type=int, default=6200)
     parser.add_argument("--min-turns", type=int, default=8)
     parser.add_argument("--seed", type=int, default=20260822)
     parser.add_argument("--output", type=Path, required=True)

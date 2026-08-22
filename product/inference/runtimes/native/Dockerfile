@@ -12,13 +12,12 @@ RUN cmake -S . -B /build \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_TESTING=OFF \
       -DGRADIATED_ENGINE_ENABLE_CUDA=ON \
-    && cmake --build /build -j"$(nproc)" --target desmondd gradiated-engine-runtime \
-    && cmake --install /build --prefix /opt/gradiated
+    && cmake --build /build -j"$(nproc)" --target desmondd gradiated-engine-runtime
 
 FROM ${SGLANG_IMAGE}
 
-COPY --from=native-build /opt/gradiated/bin/desmondd /usr/local/bin/desmondd
-COPY --from=native-build /opt/gradiated/bin/gradiated-engine-runtime /usr/local/bin/gradiated-engine-runtime
+COPY --from=native-build /build/desmondd /usr/local/bin/desmondd
+COPY --from=native-build /build/gradiated-engine-runtime /usr/local/bin/gradiated-engine-runtime
 
 ENV DESMOND_CONTROL_HOST=0.0.0.0 \
     DESMOND_CONTROL_PORT=9090 \

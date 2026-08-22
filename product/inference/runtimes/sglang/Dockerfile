@@ -32,4 +32,4 @@ ENV DESMOND_CONTROL_HOST=0.0.0.0 \
 
 EXPOSE 30000 9090
 ENTRYPOINT ["/usr/local/bin/desmondd", "--"]
-CMD ["python3", "-m", "sglang.launch_server", "--model-path", "google/gemma-4-31B-it", "--tokenizer-path", "google/gemma-4-31B-it", "--revision", "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "--served-model-name", "google/gemma-4-31B-it", "--dtype", "bfloat16", "--tp-size", "1", "--context-length", "8192", "--max-running-requests", "16", "--mem-fraction-static", "0.85", "--enable-metrics", "--tool-call-parser", "gemma4", "--host", "0.0.0.0", "--port", "30000"]
+CMD ["python3", "-m", "sglang.launch_server", "--model-path", "google/gemma-4-31B-it", "--tokenizer-path", "google/gemma-4-31B-it", "--revision", "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "--served-model-name", "google/gemma-4-31B-it", "--dtype", "bfloat16", "--tp-size", "1", "--context-length", "8192", "--max-running-requests", "16", "--mem-fraction-static", "0.85", "--enable-metrics", "--tool-call-parser", "gemma4", "--log-level", "warning", "--host", "0.0.0.0", "--port", "30000"]

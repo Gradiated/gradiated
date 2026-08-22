@@ -70,6 +70,21 @@ struct DeviceWeightArena::Implementation {
   }
 };
 
+struct Fp8WeightArena::Implementation {
+  void* arena{nullptr};
+  void* scales{nullptr};
+  std::uint64_t allocated{0};
+  std::uint64_t scale_bytes{0};
+  Fp8Scaling scaling{Fp8Scaling::tensor};
+  std::map<std::string, const void*, std::less<>> pointers;
+  std::map<std::string, const float*, std::less<>> scale_pointers;
+
+  ~Implementation() {
+    if (scales != nullptr) cudaFree(scales);
+    if (arena != nullptr) cudaFree(arena);
+  }
+};
+
 DeviceWeightArena::DeviceWeightArena(std::unique_ptr<Implementation> implementation)
     : implementation_(std::move(implementation)) {}
 DeviceWeightArena::~DeviceWeightArena() = default;
@@ -133,5 +148,86 @@ const void* DeviceWeightArena::at(std::string_view name) const {
 
 std::uint64_t DeviceWeightArena::allocated_bytes() const { return implementation_->allocated; }
 std::uint64_t DeviceWeightArena::payload_bytes() const { return implementation_->payload; }
+
+Fp8WeightArena::Fp8WeightArena(std::unique_ptr<Implementation> implementation)
+    : implementation_(std::move(implementation)) {}
+Fp8WeightArena::~Fp8WeightArena() = default;
+
+std::unique_ptr<Fp8WeightArena> Fp8WeightArena::quantize(
+    const WeightPlan& plan, const DeviceWeightArena& bf16_weights, Fp8Scaling scaling) {
+  auto implementation = std::make_unique<Implementation>();
+  implementation->scaling = scaling;
+  std::map<std::string, std::uint64_t, std::less<>> offsets;
+  std::map<std::string, std::uint64_t, std::less<>> scale_offsets;
+  for (const auto& segment : plan.segments()) {
+    if (segment.shape.size() != 2) continue;
+    implementation->allocated = align_up(implementation->allocated);
+    offsets.emplace(segment.name, implementation->allocated);
+    implementation->allocated += segment.byte_size / 2;
+    implementation->scale_bytes = align_up(implementation->scale_bytes);
+    scale_offsets.emplace(segment.name, implementation->scale_bytes);
+    std::size_t scale_elements = 1;
+    if (scaling == Fp8Scaling::channel) {
+      scale_elements = static_cast<std::size_t>(segment.shape[0]);
+    } else if (scaling == Fp8Scaling::block_128) {
+      scale_elements = fp8_weight_block_scale_elements(
+          static_cast<int>(segment.shape[0]), static_cast<int>(segment.shape[1]));
+    }
+    implementation->scale_bytes += scale_elements * sizeof(float);
+  }
+  implementation->allocated = align_up(implementation->allocated);
+  implementation->scale_bytes = align_up(implementation->scale_bytes);
+  if (implementation->allocated == 0 || implementation->scale_bytes == 0) {
+    throw std::runtime_error("empty FP8 weight plan");
+  }
+  cuda_check(cudaMalloc(&implementation->arena, implementation->allocated),
+             "allocate FP8 weight arena");
+  cuda_check(cudaMalloc(&implementation->scales, implementation->scale_bytes),
+             "allocate FP8 scale arena");
+  for (const auto& segment : plan.segments()) {
+    const auto offset = offsets.find(segment.name);
+    if (offset == offsets.end()) continue;
+    auto* output = static_cast<unsigned char*>(implementation->arena) + offset->second;
+    auto* scale = reinterpret_cast<float*>(
+        static_cast<unsigned char*>(implementation->scales) + scale_offsets.at(segment.name));
+    implementation->pointers.emplace(segment.name, output);
+    implementation->scale_pointers.emplace(segment.name, scale);
+    const int output_width = static_cast<int>(segment.shape[0]);
+    const int input_width = static_cast<int>(segment.shape[1]);
+    if (scaling == Fp8Scaling::tensor) {
+      quantize_bf16_to_fp8_e4m3(bf16_weights.at(segment.name), output, scale,
+                                segment.byte_size / 2, nullptr);
+    } else if (scaling == Fp8Scaling::channel) {
+      quantize_bf16_rows_to_fp8_e4m3(bf16_weights.at(segment.name), output, scale,
+                                     output_width, input_width, nullptr);
+    } else {
+      quantize_bf16_weight_to_fp8_block_128(bf16_weights.at(segment.name), output, scale,
+                                            output_width, input_width, nullptr);
+    }
+  }
+  cuda_check(cudaDeviceSynchronize(), "finish FP8 weight quantization");
+  return std::unique_ptr<Fp8WeightArena>(new Fp8WeightArena(std::move(implementation)));
+}
+
+const void* Fp8WeightArena::at(std::string_view name) const {
+  const auto iterator = implementation_->pointers.find(name);
+  if (iterator == implementation_->pointers.end()) {
+    throw std::runtime_error("FP8 weight is not loaded: " + std::string(name));
+  }
+  return iterator->second;
+}
+
+const float* Fp8WeightArena::scale(std::string_view name) const {
+  const auto iterator = implementation_->scale_pointers.find(name);
+  if (iterator == implementation_->scale_pointers.end()) {
+    throw std::runtime_error("FP8 weight scale is not loaded: " + std::string(name));
+  }
+  return iterator->second;
+}
+
+Fp8Scaling Fp8WeightArena::scaling() const { return implementation_->scaling; }
+std::uint64_t Fp8WeightArena::allocated_bytes() const {
+  return implementation_->allocated + implementation_->scale_bytes;
+}
 
 }  // namespace gradiated::engine

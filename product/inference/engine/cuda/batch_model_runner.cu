@@ -44,6 +44,7 @@ struct CacheLocation { std::uint64_t offset; int capacity; };
 struct Gemma4BatchModelRunner::Implementation {
   const Gemma4Config& config;
   const DeviceWeightArena& weights;
+  const Fp8WeightArena* fp8_weights;
   int batch_size;
   int maximum_context;
   int current_position{0};
@@ -54,6 +55,7 @@ struct Gemma4BatchModelRunner::Implementation {
   std::uint64_t cache_payload_bytes;
   Gemma4LayerRunner layers;
   Bf16Linear lm_head;
+  Fp8Linear fp8_lm_head;
   Allocation cache_arena;
   Allocation hidden_a;
   Allocation hidden_b;
@@ -64,6 +66,8 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation device_positions;
   Allocation device_slots;
   Allocation argmax_workspace;
+  Allocation fp8_final_hidden;
+  Allocation fp8_final_scales;
 
   static std::uint64_t cache_payload(const Gemma4Config& config, int batch, int maximum_context,
                                      std::vector<CacheLocation>* locations) {
@@ -79,13 +83,16 @@ struct Gemma4BatchModelRunner::Implementation {
   }
 
   Implementation(const Gemma4Config& model_config, const DeviceWeightArena& device_weights,
-                 int requested_batch, int max_context)
-      : config(model_config), weights(device_weights), batch_size(requested_batch),
+                 int requested_batch, int max_context, const Fp8WeightArena* decode_weights)
+      : config(model_config), weights(device_weights), fp8_weights(decode_weights),
+        batch_size(requested_batch),
         maximum_context(max_context), hidden(static_cast<int>(model_config.hidden_size)),
         vocabulary(static_cast<int>(model_config.vocabulary_size)),
         slot_positions(static_cast<std::size_t>(requested_batch), 0), caches(),
         cache_payload_bytes(cache_payload(model_config, requested_batch, max_context, &caches)),
-        layers(model_config, device_weights, max_context, max_context, requested_batch), lm_head(),
+        layers(model_config, device_weights, max_context, max_context, requested_batch,
+               decode_weights), lm_head(),
+        fp8_lm_head(decode_weights == nullptr ? Fp8Scaling::tensor : decode_weights->scaling()),
         cache_arena(2ULL * cache_payload_bytes),
         hidden_a(2ULL * std::max(requested_batch, max_context) * hidden),
         hidden_b(2ULL * std::max(requested_batch, max_context) * hidden),
@@ -94,7 +101,10 @@ struct Gemma4BatchModelRunner::Implementation {
         device_input_tokens(sizeof(int) * std::max(requested_batch, max_context)),
         device_output_tokens(sizeof(int) * requested_batch),
         device_positions(sizeof(int) * requested_batch), device_slots(sizeof(int) * requested_batch),
-        argmax_workspace(argmax_bf16_workspace_bytes(vocabulary) * requested_batch) {
+        argmax_workspace(argmax_bf16_workspace_bytes(vocabulary) * requested_batch),
+        fp8_final_hidden(static_cast<std::uint64_t>(requested_batch) * hidden),
+        fp8_final_scales(sizeof(float) * static_cast<std::uint64_t>(requested_batch) *
+                         ((hidden + 127) / 128)) {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
   }
 
@@ -112,12 +122,36 @@ struct Gemma4BatchModelRunner::Implementation {
     return static_cast<unsigned char*>(value_cache(layer)) +
            2ULL * slot * caches.at(layer).capacity * config.layers.at(layer).kv_width();
   }
+
+  void run_decode_lm_head(const void* input, void* output, int rows, cudaStream_t stream) {
+    if (fp8_weights == nullptr) {
+      lm_head.run(input, weights.at("token_embedding"), output,
+                  rows, hidden, vocabulary, stream);
+      return;
+    }
+    auto* scales = static_cast<float*>(fp8_final_scales.get());
+    if (fp8_weights->scaling() == Fp8Scaling::tensor) {
+      quantize_bf16_to_fp8_e4m3(input, fp8_final_hidden.get(), scales,
+                                static_cast<std::size_t>(rows) * hidden, stream);
+    } else if (fp8_weights->scaling() == Fp8Scaling::channel) {
+      quantize_bf16_rows_to_fp8_e4m3(input, fp8_final_hidden.get(), scales,
+                                     rows, hidden, stream);
+    } else {
+      quantize_bf16_activation_to_fp8_block_128(input, fp8_final_hidden.get(), scales,
+                                                rows, hidden, stream);
+    }
+    fp8_lm_head.run(fp8_final_hidden.get(), scales, fp8_weights->at("token_embedding"),
+                    fp8_weights->scale("token_embedding"), output,
+                    rows, hidden, vocabulary, stream);
+  }
 };
 
 Gemma4BatchModelRunner::Gemma4BatchModelRunner(const Gemma4Config& config,
                                                const DeviceWeightArena& weights,
-                                               int batch, int maximum_context)
-    : implementation_(std::make_unique<Implementation>(config, weights, batch, maximum_context)) {}
+                                               int batch, int maximum_context,
+                                               const Fp8WeightArena* fp8_weights)
+    : implementation_(std::make_unique<Implementation>(config, weights, batch, maximum_context,
+                                                        fp8_weights)) {}
 Gemma4BatchModelRunner::~Gemma4BatchModelRunner() = default;
 
 std::vector<int> Gemma4BatchModelRunner::append(const std::vector<int>& token_ids) {
@@ -141,8 +175,7 @@ std::vector<int> Gemma4BatchModelRunner::append(const std::vector<int>& token_id
   }
   rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), state.batch_size,
                 state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
-  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"), state.logits.get(),
-                    state.batch_size, state.hidden, state.vocabulary, nullptr);
+  state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), state.batch_size, nullptr);
   const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
   for (int row = 0; row < state.batch_size; ++row) {
     const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
@@ -311,8 +344,7 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
   }
   rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), active,
                 state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
-  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"), state.logits.get(),
-                    active, state.hidden, state.vocabulary, nullptr);
+  state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), active, nullptr);
   const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
   for (int row = 0; row < active; ++row) {
     const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +

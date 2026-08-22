@@ -11,7 +11,8 @@ namespace gradiated::engine {
 class Gemma4BatchModelRunner {
  public:
   Gemma4BatchModelRunner(const struct Gemma4Config& config, const class DeviceWeightArena& weights,
-                         int batch, int maximum_context);
+                         int batch, int maximum_context,
+                         const class Fp8WeightArena* fp8_weights = nullptr);
   ~Gemma4BatchModelRunner();
   Gemma4BatchModelRunner(const Gemma4BatchModelRunner&) = delete;
   Gemma4BatchModelRunner& operator=(const Gemma4BatchModelRunner&) = delete;

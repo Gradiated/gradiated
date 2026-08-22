@@ -107,6 +107,27 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90
   )
+  add_executable(gradiated-engine-fp8-linear-benchmark engine/src/fp8_linear_benchmark.cu)
+  target_link_libraries(gradiated-engine-fp8-linear-benchmark PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-fp8-linear-benchmark PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
+  add_executable(gradiated-engine-fp8-model-parity engine/src/fp8_model_parity.cu)
+  target_link_libraries(gradiated-engine-fp8-model-parity PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-fp8-model-parity PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
+  add_executable(gradiated-engine-fp8-quality-eval engine/src/fp8_quality_eval.cu)
+  target_link_libraries(gradiated-engine-fp8-quality-eval PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-fp8-quality-eval PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
   add_executable(gradiated-engine-attention-benchmark engine/src/attention_benchmark.cu)
   target_link_libraries(gradiated-engine-attention-benchmark PRIVATE gradiated_engine_cuda)
   set_target_properties(gradiated-engine-attention-benchmark PROPERTIES

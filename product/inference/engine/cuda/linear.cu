@@ -2,16 +2,22 @@
 
 #include <cublasLt.h>
 #include <cuda_bf16.h>
+#include <cooperative_groups.h>
+#include <cuda_fp8.h>
 #include <cuda_runtime.h>
 
-#include <stdexcept>
-#include <string>
+#include <algorithm>
+#include <cmath>
 #include <map>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <tuple>
 
 namespace gradiated::engine {
 namespace {
+
+namespace cg = cooperative_groups;
 
 void cuda_check(cudaError_t result, const char* operation) {
   if (result != cudaSuccess) throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(result));
@@ -24,6 +30,279 @@ void cublas_check(cublasStatus_t result, const char* operation) {
 }
 
 }  // namespace
+
+__global__ void quantize_bf16_fp8_cooperative_kernel(
+    const __nv_bfloat16* input, __nv_fp8_e4m3* output, float* scale,
+    std::size_t elements) {
+  const cg::grid_group grid = cg::this_grid();
+  if (grid.thread_rank() == 0) *scale = 0.0F;
+  grid.sync();
+
+  float maximum = 0.0F;
+  for (std::size_t index = grid.thread_rank(); index < elements;
+       index += grid.size()) {
+    maximum = fmaxf(maximum, fabsf(__bfloat162float(input[index])));
+  }
+  for (int offset = 16; offset > 0; offset /= 2) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31) == 0) warp_maxima[threadIdx.x / 32] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32) {
+    maximum = threadIdx.x < blockDim.x / 32 ? warp_maxima[threadIdx.x] : 0.0F;
+    for (int offset = 16; offset > 0; offset /= 2) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (threadIdx.x == 0) {
+      atomicMax(reinterpret_cast<unsigned int*>(scale), __float_as_uint(maximum));
+    }
+  }
+  grid.sync();
+  if (grid.thread_rank() == 0) {
+    const float observed_maximum = *scale;
+    *scale = observed_maximum > 0.0F ? observed_maximum / 448.0F : 1.0F;
+  }
+  grid.sync();
+
+  const float inverse_scale = 1.0F / *scale;
+  for (std::size_t index = grid.thread_rank(); index < elements;
+       index += grid.size()) {
+    output[index] = __nv_fp8_e4m3(__bfloat162float(input[index]) * inverse_scale);
+  }
+}
+
+__global__ void bf16_amax_kernel(const __nv_bfloat16* input, std::size_t elements,
+                                 unsigned int* maximum_bits) {
+  float maximum = 0.0F;
+  for (std::size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < elements;
+       index += static_cast<std::size_t>(blockDim.x) * gridDim.x) {
+    maximum = fmaxf(maximum, fabsf(__bfloat162float(input[index])));
+  }
+  for (int offset = 16; offset > 0; offset /= 2) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31) == 0) warp_maxima[threadIdx.x / 32] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32) {
+    maximum = threadIdx.x < blockDim.x / 32 ? warp_maxima[threadIdx.x] : 0.0F;
+    for (int offset = 16; offset > 0; offset /= 2) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (threadIdx.x == 0) atomicMax(maximum_bits, __float_as_uint(maximum));
+  }
+}
+
+__global__ void finalize_fp8_scale_kernel(float* scale) {
+  const float maximum = *scale;
+  *scale = maximum > 0.0F ? maximum / 448.0F : 1.0F;
+}
+
+__global__ void quantize_bf16_fp8_kernel(const __nv_bfloat16* input, __nv_fp8_e4m3* output,
+                                         const float* scale, std::size_t elements) {
+  const float inverse_scale = 1.0F / *scale;
+  for (std::size_t index = blockIdx.x * blockDim.x + threadIdx.x; index < elements;
+       index += static_cast<std::size_t>(blockDim.x) * gridDim.x) {
+    output[index] = __nv_fp8_e4m3(__bfloat162float(input[index]) * inverse_scale);
+  }
+}
+
+void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
+                               std::size_t elements, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || scale == nullptr || elements == 0) {
+    throw std::runtime_error("invalid FP8 quantization shape");
+  }
+  constexpr int threads = 256;
+  static const int cooperative_block_limit = [] {
+    int device = 0;
+    cuda_check(cudaGetDevice(&device), "get FP8 quantization device");
+    cudaDeviceProp properties{};
+    cuda_check(cudaGetDeviceProperties(&properties, device), "get FP8 quantization device properties");
+    if (properties.cooperativeLaunch == 0) return 0;
+    int blocks_per_multiprocessor = 0;
+    cuda_check(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+                   &blocks_per_multiprocessor, quantize_bf16_fp8_cooperative_kernel,
+                   threads, 0),
+               "measure cooperative FP8 quantization occupancy");
+    // Two CTAs per SM retain enough latency hiding for the two streaming passes while keeping
+    // grid-wide barriers cheap. Larger resident grids made these small decode tensors slower.
+    return properties.multiProcessorCount * std::min(blocks_per_multiprocessor, 2);
+  }();
+  const int required_blocks = static_cast<int>((elements + threads - 1) / threads);
+  // Decode activations are sub-megabyte-scale tensors where launch collapse dominates. Large
+  // model weights quantize faster with the conventional unconstrained grid during startup.
+  if (cooperative_block_limit > 0 && elements <= 1024ULL * 1024ULL) {
+    const int blocks = std::min(required_blocks, cooperative_block_limit);
+    const auto* typed_input = static_cast<const __nv_bfloat16*>(input);
+    auto* typed_output = static_cast<__nv_fp8_e4m3*>(output);
+    void* arguments[] = {&typed_input, &typed_output, &scale, &elements};
+    cuda_check(cudaLaunchCooperativeKernel(
+                   reinterpret_cast<const void*>(quantize_bf16_fp8_cooperative_kernel),
+                   blocks, threads, arguments, 0, stream),
+               "launch cooperative E4M3 quantization");
+    return;
+  }
+
+  cuda_check(cudaMemsetAsync(scale, 0, sizeof(float), stream), "clear FP8 amax");
+  const int blocks = std::min(required_blocks, 4096);
+  bf16_amax_kernel<<<blocks, threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), elements,
+      reinterpret_cast<unsigned int*>(scale));
+  cuda_check(cudaPeekAtLastError(), "launch BF16 amax");
+  finalize_fp8_scale_kernel<<<1, 1, 0, stream>>>(scale);
+  cuda_check(cudaPeekAtLastError(), "finalize FP8 scale");
+  quantize_bf16_fp8_kernel<<<blocks, threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),
+      scale, elements);
+  cuda_check(cudaPeekAtLastError(), "launch E4M3 quantization");
+}
+
+__device__ float reduce_block_max(float maximum, float* warp_maxima);
+
+__global__ void quantize_bf16_rows_kernel(const __nv_bfloat16* input,
+                                          __nv_fp8_e4m3* output, float* scales,
+                                          int rows, int width) {
+  const int row = static_cast<int>(blockIdx.x);
+  float maximum = 0.0F;
+  for (int column = threadIdx.x; column < width; column += blockDim.x) {
+    maximum = fmaxf(maximum, fabsf(__bfloat162float(
+        input[static_cast<std::size_t>(row) * width + column])));
+  }
+  __shared__ float warp_maxima[8];
+  const float scale = fmaxf(reduce_block_max(maximum, warp_maxima) / 448.0F, 0x1p-24F);
+  if (threadIdx.x == 0) scales[row] = scale;
+  for (int column = threadIdx.x; column < width; column += blockDim.x) {
+    const std::size_t index = static_cast<std::size_t>(row) * width + column;
+    output[index] = __nv_fp8_e4m3(__bfloat162float(input[index]) / scale);
+  }
+}
+
+void quantize_bf16_rows_to_fp8_e4m3(const void* input, void* output, float* scales,
+                                    int rows, int width, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || scales == nullptr || rows <= 0 || width <= 0) {
+    throw std::runtime_error("invalid row-scaled FP8 quantization shape");
+  }
+  quantize_bf16_rows_kernel<<<rows, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),
+      scales, rows, width);
+  cuda_check(cudaPeekAtLastError(), "launch row-scaled E4M3 quantization");
+}
+
+__device__ float reduce_block_max(float maximum, float* warp_maxima) {
+  for (int offset = 16; offset > 0; offset /= 2) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  const int lane = threadIdx.x & 31;
+  const int warp = threadIdx.x / 32;
+  if (lane == 0) warp_maxima[warp] = maximum;
+  __syncthreads();
+  if (warp == 0) {
+    maximum = lane < blockDim.x / 32 ? warp_maxima[lane] : 0.0F;
+    for (int offset = 16; offset > 0; offset /= 2) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (lane == 0) warp_maxima[0] = maximum;
+  }
+  __syncthreads();
+  return warp_maxima[0];
+}
+
+__global__ void quantize_weight_block_128_kernel(
+    const __nv_bfloat16* input, __nv_fp8_e4m3* output, float* scales,
+    int output_width, int input_width, int scale_k_blocks) {
+  const int k_begin = static_cast<int>(blockIdx.x) * 128;
+  const int output_begin = static_cast<int>(blockIdx.y) * 128;
+  float maximum = 0.0F;
+  for (int element = threadIdx.x; element < 128 * 128; element += blockDim.x) {
+    const int output_row = output_begin + element / 128;
+    const int input_column = k_begin + element % 128;
+    if (output_row < output_width && input_column < input_width) {
+      maximum = fmaxf(maximum, fabsf(__bfloat162float(
+          input[static_cast<std::size_t>(output_row) * input_width + input_column])));
+    }
+  }
+  __shared__ float warp_maxima[8];
+  const float scale = fmaxf(reduce_block_max(maximum, warp_maxima) / 448.0F, 0x1p-24F);
+  if (threadIdx.x == 0) {
+    scales[static_cast<std::size_t>(blockIdx.y) * scale_k_blocks + blockIdx.x] = scale;
+  }
+  for (int element = threadIdx.x; element < 128 * 128; element += blockDim.x) {
+    const int output_row = output_begin + element / 128;
+    const int input_column = k_begin + element % 128;
+    if (output_row < output_width && input_column < input_width) {
+      const std::size_t index = static_cast<std::size_t>(output_row) * input_width + input_column;
+      output[index] = __nv_fp8_e4m3(__bfloat162float(input[index]) / scale);
+    }
+  }
+}
+
+__global__ void quantize_activation_block_128_kernel(
+    const __nv_bfloat16* input, __nv_fp8_e4m3* output, float* scales,
+    int rows, int input_width) {
+  const int row = static_cast<int>(blockIdx.y);
+  const int k_begin = static_cast<int>(blockIdx.x) * 128;
+  const int column = k_begin + threadIdx.x;
+  float value = 0.0F;
+  if (row < rows && column < input_width) {
+    value = __bfloat162float(input[static_cast<std::size_t>(row) * input_width + column]);
+  }
+  __shared__ float warp_maxima[4];
+  const float scale = fmaxf(reduce_block_max(fabsf(value), warp_maxima) / 448.0F, 0x1p-24F);
+  if (threadIdx.x == 0) {
+    scales[static_cast<std::size_t>(blockIdx.x) * rows + row] = scale;
+  }
+  if (row < rows && column < input_width) {
+    output[static_cast<std::size_t>(row) * input_width + column] = __nv_fp8_e4m3(value / scale);
+  }
+}
+
+std::size_t fp8_weight_block_scale_elements(int output_width, int input_width) {
+  if (output_width <= 0 || input_width <= 0) throw std::runtime_error("invalid FP8 weight shape");
+  const std::size_t k_blocks = (static_cast<std::size_t>(input_width) + 127) / 128;
+  const std::size_t padded_k_blocks = (k_blocks + 3) & ~std::size_t{3};
+  return padded_k_blocks * ((static_cast<std::size_t>(output_width) + 127) / 128);
+}
+
+std::size_t fp8_activation_block_scale_elements(int rows, int input_width) {
+  if (rows <= 0 || input_width <= 0) throw std::runtime_error("invalid FP8 activation shape");
+  return static_cast<std::size_t>(rows) *
+         ((static_cast<std::size_t>(input_width) + 127) / 128);
+}
+
+void quantize_bf16_weight_to_fp8_block_128(const void* input, void* output, float* scales,
+                                           int output_width, int input_width,
+                                           cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || scales == nullptr || output_width <= 0 ||
+      input_width <= 0) {
+    throw std::runtime_error("invalid FP8 block weight quantization shape");
+  }
+  const int k_blocks = (input_width + 127) / 128;
+  const int padded_k_blocks = (k_blocks + 3) & ~3;
+  cuda_check(cudaMemsetAsync(scales, 0,
+      fp8_weight_block_scale_elements(output_width, input_width) * sizeof(float), stream),
+      "clear FP8 block weight scales");
+  const dim3 grid(static_cast<unsigned>(k_blocks),
+                  static_cast<unsigned>((output_width + 127) / 128));
+  quantize_weight_block_128_kernel<<<grid, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),
+      scales, output_width, input_width, padded_k_blocks);
+  cuda_check(cudaPeekAtLastError(), "launch block-scaled FP8 weight quantization");
+}
+
+void quantize_bf16_activation_to_fp8_block_128(const void* input, void* output, float* scales,
+                                               int rows, int input_width,
+                                               cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || scales == nullptr || rows <= 0 || input_width <= 0) {
+    throw std::runtime_error("invalid FP8 block activation quantization shape");
+  }
+  const dim3 grid(static_cast<unsigned>((input_width + 127) / 128),
+                  static_cast<unsigned>(rows));
+  quantize_activation_block_128_kernel<<<grid, 128, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),
+      scales, rows, input_width);
+  cuda_check(cudaPeekAtLastError(), "launch block-scaled FP8 activation quantization");
+}
 
 struct Bf16Linear::Implementation {
   struct Plan {
@@ -115,6 +394,148 @@ void Bf16Linear::run(const void* input, const void* row_major_weight, void* outp
                               plan.output_layout, &plan.heuristic.algo, implementation_->workspace,
                               implementation_->workspace_bytes, stream),
                "run BF16 linear");
+}
+
+struct Fp8Linear::Implementation {
+  struct Plan {
+    cublasLtMatmulDesc_t operation{};
+    cublasLtMatrixLayout_t weight_layout{};
+    cublasLtMatrixLayout_t input_layout{};
+    cublasLtMatrixLayout_t output_layout{};
+    cublasLtMatmulHeuristicResult_t heuristic{};
+
+    ~Plan() {
+      if (output_layout != nullptr) cublasLtMatrixLayoutDestroy(output_layout);
+      if (input_layout != nullptr) cublasLtMatrixLayoutDestroy(input_layout);
+      if (weight_layout != nullptr) cublasLtMatrixLayoutDestroy(weight_layout);
+      if (operation != nullptr) cublasLtMatmulDescDestroy(operation);
+    }
+  };
+
+  cublasLtHandle_t handle{};
+  void* workspace{nullptr};
+  std::size_t workspace_bytes;
+  Fp8Scaling scaling;
+  std::map<std::tuple<int, int, int>, std::unique_ptr<Plan>> plans;
+
+  Implementation(Fp8Scaling requested_scaling, std::size_t bytes)
+      : workspace_bytes(bytes), scaling(requested_scaling) {
+    cublas_check(cublasLtCreate(&handle), "cublasLtCreate FP8");
+    if (workspace_bytes != 0) {
+      cuda_check(cudaMalloc(&workspace, workspace_bytes), "allocate FP8 linear workspace");
+    }
+  }
+  ~Implementation() {
+    plans.clear();
+    if (workspace != nullptr) cudaFree(workspace);
+    if (handle != nullptr) cublasLtDestroy(handle);
+  }
+
+  Plan& plan(int rows, int input_width, int output_width) {
+    const auto key = std::make_tuple(rows, input_width, output_width);
+    const auto existing = plans.find(key);
+    if (existing != plans.end()) return *existing->second;
+    auto result = std::make_unique<Plan>();
+    cublas_check(cublasLtMatmulDescCreate(&result->operation, CUBLAS_COMPUTE_32F, CUDA_R_32F),
+                 "create FP8 matmul descriptor");
+    const cublasOperation_t transpose = CUBLAS_OP_T;
+    const cublasOperation_t identity = CUBLAS_OP_N;
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_TRANSA, &transpose, sizeof(transpose)),
+                 "set FP8 weight transpose");
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_TRANSB, &identity, sizeof(identity)),
+                 "set FP8 input orientation");
+    const cublasLtMatmulMatrixScale_t weight_scale_mode = scaling == Fp8Scaling::block_128
+        ? CUBLASLT_MATMUL_MATRIX_SCALE_BLK128x128_32F
+        : scaling == Fp8Scaling::channel
+            ? CUBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F
+            : CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+    const cublasLtMatmulMatrixScale_t input_scale_mode = scaling == Fp8Scaling::block_128
+        ? CUBLASLT_MATMUL_MATRIX_SCALE_VEC128_32F
+        : scaling == Fp8Scaling::channel
+            ? CUBLASLT_MATMUL_MATRIX_SCALE_OUTER_VEC_32F
+            : CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_A_SCALE_MODE,
+                     &weight_scale_mode, sizeof(weight_scale_mode)),
+                 "set FP8 weight scale mode");
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_B_SCALE_MODE,
+                     &input_scale_mode, sizeof(input_scale_mode)),
+                 "set FP8 input scale mode");
+
+    // Row-major W[N,K], X[M,K], and Y[M,N] are column-major KxN, KxM, and NxM views.
+    cublas_check(cublasLtMatrixLayoutCreate(&result->weight_layout, CUDA_R_8F_E4M3,
+                                            input_width, output_width, input_width),
+                 "create FP8 weight layout");
+    cublas_check(cublasLtMatrixLayoutCreate(&result->input_layout, CUDA_R_8F_E4M3,
+                                            input_width, rows, input_width),
+                 "create FP8 input layout");
+    cublas_check(cublasLtMatrixLayoutCreate(&result->output_layout, CUDA_R_16BF,
+                                            output_width, rows, output_width),
+                 "create FP8 output layout");
+    const float* planning_scale = static_cast<const float*>(workspace);
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,
+                     &planning_scale, sizeof(planning_scale)),
+                 "set FP8 planning weight scale");
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     result->operation, CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,
+                     &planning_scale, sizeof(planning_scale)),
+                 "set FP8 planning input scale");
+    cublasLtMatmulPreference_t preference{};
+    cublas_check(cublasLtMatmulPreferenceCreate(&preference), "create FP8 matmul preference");
+    cublas_check(cublasLtMatmulPreferenceSetAttribute(
+                     preference, CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                     &workspace_bytes, sizeof(workspace_bytes)),
+                 "set FP8 matmul workspace");
+    int returned = 0;
+    const cublasStatus_t status = cublasLtMatmulAlgoGetHeuristic(
+        handle, result->operation, result->weight_layout, result->input_layout,
+        result->output_layout, result->output_layout, preference, 1,
+        &result->heuristic, &returned);
+    cublasLtMatmulPreferenceDestroy(preference);
+    cublas_check(status, "select FP8 matmul algorithm");
+    if (returned == 0) throw std::runtime_error("no cublasLt algorithm for FP8 linear shape");
+    Plan& reference = *result;
+    plans.emplace(key, std::move(result));
+    return reference;
+  }
+};
+
+Fp8Linear::Fp8Linear(Fp8Scaling scaling, std::size_t workspace_bytes)
+    : implementation_(std::make_unique<Implementation>(scaling, workspace_bytes)) {}
+Fp8Linear::~Fp8Linear() = default;
+
+void Fp8Linear::run(const void* fp8_input, const float* input_scale,
+                    const void* fp8_row_major_weight, const float* weight_scale,
+                    void* bf16_output, int rows, int input_width, int output_width,
+                    cudaStream_t stream) {
+  if (rows <= 0 || input_width <= 0 || output_width <= 0 || fp8_input == nullptr ||
+      input_scale == nullptr || fp8_row_major_weight == nullptr || weight_scale == nullptr ||
+      bf16_output == nullptr) {
+    throw std::runtime_error("invalid FP8 linear shape");
+  }
+  auto& state = *implementation_;
+  auto& plan = state.plan(rows, input_width, output_width);
+  cublas_check(cublasLtMatmulDescSetAttribute(
+                   plan.operation, CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,
+                   &weight_scale, sizeof(weight_scale)),
+               "set FP8 weight scale");
+  cublas_check(cublasLtMatmulDescSetAttribute(
+                   plan.operation, CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,
+                   &input_scale, sizeof(input_scale)),
+               "set FP8 input scale");
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  cublas_check(cublasLtMatmul(
+                   state.handle, plan.operation, &alpha,
+                   fp8_row_major_weight, plan.weight_layout,
+                   fp8_input, plan.input_layout, &beta,
+                   bf16_output, plan.output_layout, bf16_output, plan.output_layout,
+                   &plan.heuristic.algo, state.workspace, state.workspace_bytes, stream),
+               "run FP8 linear");
 }
 
 }  // namespace gradiated::engine

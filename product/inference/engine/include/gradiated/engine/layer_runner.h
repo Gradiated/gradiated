@@ -10,7 +10,8 @@ namespace gradiated::engine {
 class Gemma4LayerRunner {
  public:
   Gemma4LayerRunner(const struct Gemma4Config& config, const class DeviceWeightArena& weights,
-                    int maximum_tokens, int maximum_context = 8192, int maximum_batch = 1);
+                    int maximum_tokens, int maximum_context = 8192, int maximum_batch = 1,
+                    const class Fp8WeightArena* fp8_weights = nullptr);
   ~Gemma4LayerRunner();
   Gemma4LayerRunner(const Gemma4LayerRunner&) = delete;
   Gemma4LayerRunner& operator=(const Gemma4LayerRunner&) = delete;

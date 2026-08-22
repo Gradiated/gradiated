@@ -6,6 +6,8 @@
 #include <string_view>
 #include <vector>
 
+#include "gradiated/engine/linear.h"
+
 namespace gradiated::engine {
 
 class DeviceWeightArena {
@@ -25,6 +27,27 @@ class DeviceWeightArena {
  private:
   struct Implementation;
   explicit DeviceWeightArena(std::unique_ptr<Implementation> implementation);
+  std::unique_ptr<Implementation> implementation_;
+};
+
+class Fp8WeightArena {
+ public:
+  static std::unique_ptr<Fp8WeightArena> quantize(const class WeightPlan& plan,
+                                                   const DeviceWeightArena& bf16_weights,
+                                                   Fp8Scaling scaling);
+  ~Fp8WeightArena();
+
+  Fp8WeightArena(const Fp8WeightArena&) = delete;
+  Fp8WeightArena& operator=(const Fp8WeightArena&) = delete;
+
+  [[nodiscard]] const void* at(std::string_view name) const;
+  [[nodiscard]] const float* scale(std::string_view name) const;
+  [[nodiscard]] Fp8Scaling scaling() const;
+  [[nodiscard]] std::uint64_t allocated_bytes() const;
+
+ private:
+  struct Implementation;
+  explicit Fp8WeightArena(std::unique_ptr<Implementation> implementation);
   std::unique_ptr<Implementation> implementation_;
 };
 

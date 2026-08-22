@@ -83,6 +83,14 @@ about 63 token/s at batch 1 and 995 aggregate token/s at batch 16 before attenti
 and scheduling. The LM head's first-choice heuristic is unstable across row counts, so production
 plans must benchmark multiple cuBLASLt candidates and persist the winner per shape.
 
+The parity-tested homogeneous decode runner currently measures 48.2 token/s at batch 1 and 747.6
+aggregate token/s at batch 16 on the 27-token fixture. With physically allocated hybrid caches at
+8,192 logical tokens it measures 43.4 token/s at batch 1 and 474.9 aggregate token/s at batch 16.
+The latter is about 50% above the 315.9 aggregate token/s SGLang control, but is only a kernel
+ceiling: it uses equal-length requests and zero-filled synthetic history. Economics are not
+reported from it until ragged scheduling, real prefill, prefix reuse, and trace-level latency are
+measured together.
+
 ## Layout and execution decisions
 
 The BF16 correctness baseline uses a single 256-byte-aligned device weight arena. At load time it
@@ -96,6 +104,13 @@ kernel. RoPE is fused with Q/K normalization and KV-page writes. Grouped decode 
 cooperative block (or split block at long context) per request and KV head, staging K/V tiles in
 shared memory and updating every query in the group with online softmax. Sampling fuses logit
 softcap and top-k reduction so full-vocabulary logits are not round-tripped through host memory.
+
+The first measured grouped-attention implementation used one scalar dot-product dependency chain
+per query and reached only 3–50 GB/s. The retained tensor-core formulation groups work by physical
+KV head and uses strided batched QK/PV GEMMs, reaching about 3.2 TB/s for sliding attention and 3.8
+TB/s for global attention at batch 16. This failed baseline is intentionally recorded: a logically
+correct kernel that misses the H200 roofline by two orders of magnitude is not an optimization
+endpoint.
 
 Prefill uses cuBLASLt tensor-core GEMMs and a separate attention path. It is chunked so a long cache
 miss cannot starve decode or violate TTFT. Chunk size is selected by measured decode interference,

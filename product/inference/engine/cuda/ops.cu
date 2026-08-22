@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
@@ -75,6 +76,18 @@ __global__ void gelu_tanh_gate_kernel(const __nv_bfloat16* gate, const __nv_bflo
   }
 }
 
+__global__ void gelu_tanh_gate_rows_kernel(const __nv_bfloat16* packed, __nv_bfloat16* output,
+                                           int rows, int width) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < rows * width) {
+    const int row = index / width;
+    const int column = index % width;
+    const std::uint64_t base = static_cast<std::uint64_t>(row) * 2 * width;
+    output[index] = __float2bfloat16_rn(gelu_tanh(__bfloat162float(packed[base + column])) *
+                                        __bfloat162float(packed[base + width + column]));
+  }
+}
+
 __global__ void embedding_kernel(const __nv_bfloat16* weight, int token_id,
                                  __nv_bfloat16* output, int hidden_size, __nv_bfloat16 scale) {
   const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -82,6 +95,22 @@ __global__ void embedding_kernel(const __nv_bfloat16* weight, int token_id,
     output[index] = __float2bfloat16_rn(
         __bfloat162float(weight[static_cast<std::size_t>(token_id) * hidden_size + index]) *
         __bfloat162float(scale));
+  }
+}
+
+__global__ void embedding_batch_kernel(const __nv_bfloat16* weight, const int* token_ids,
+                                       __nv_bfloat16* output, int batch, int vocabulary_size,
+                                       int hidden_size, __nv_bfloat16 scale) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < batch * hidden_size) {
+    const int row = index / hidden_size;
+    const int column = index % hidden_size;
+    const int token_id = token_ids[row];
+    if (token_id >= 0 && token_id < vocabulary_size) {
+      output[index] = __float2bfloat16_rn(
+          __bfloat162float(weight[static_cast<std::size_t>(token_id) * hidden_size + column]) *
+          __bfloat162float(scale));
+    }
   }
 }
 
@@ -162,6 +191,16 @@ void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,
   check(cudaPeekAtLastError(), "launch gelu_tanh_gate_kernel");
 }
 
+void gelu_tanh_gate_rows_bf16(const void* packed_gate_up, void* output,
+                              int rows, int width, cudaStream_t stream) {
+  if (rows <= 0 || width <= 0) throw std::runtime_error("invalid packed gate/up shape");
+  constexpr int block_size = 256;
+  const int elements = rows * width;
+  gelu_tanh_gate_rows_kernel<<<(elements + block_size - 1) / block_size, block_size, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(packed_gate_up), static_cast<__nv_bfloat16*>(output), rows, width);
+  check(cudaPeekAtLastError(), "launch row-wise GELU gate kernel");
+}
+
 void embedding_bf16(const void* embedding_weight, int token_id, void* output,
                     int vocabulary_size, int hidden_size, float scale, cudaStream_t stream) {
   if (token_id < 0 || token_id >= vocabulary_size || hidden_size <= 0) {
@@ -172,6 +211,21 @@ void embedding_bf16(const void* embedding_weight, int token_id, void* output,
       static_cast<const __nv_bfloat16*>(embedding_weight), token_id,
       static_cast<__nv_bfloat16*>(output), hidden_size, __float2bfloat16_rn(scale));
   check(cudaPeekAtLastError(), "launch embedding kernel");
+}
+
+void embedding_batch_bf16(const void* embedding_weight, const int* device_token_ids,
+                          void* output, int batch, int vocabulary_size, int hidden_size,
+                          float scale, cudaStream_t stream) {
+  if (batch <= 0 || device_token_ids == nullptr || vocabulary_size <= 0 || hidden_size <= 0) {
+    throw std::runtime_error("invalid batched embedding lookup");
+  }
+  constexpr int block_size = 256;
+  const int elements = batch * hidden_size;
+  embedding_batch_kernel<<<(elements + block_size - 1) / block_size, block_size, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(embedding_weight), device_token_ids,
+      static_cast<__nv_bfloat16*>(output), batch, vocabulary_size, hidden_size,
+      __float2bfloat16_rn(scale));
+  check(cudaPeekAtLastError(), "launch batched embedding kernel");
 }
 
 std::size_t argmax_bf16_workspace_bytes(int elements) {

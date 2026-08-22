@@ -57,6 +57,7 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
   find_package(CUDAToolkit REQUIRED)
   add_library(gradiated_engine_cuda
     engine/cuda/attention.cu
+    engine/cuda/batch_model_runner.cu
     engine/cuda/gemm_attention.cu
     engine/cuda/ops.cu
     engine/cuda/device_weights.cu
@@ -108,6 +109,13 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
   add_executable(gradiated-engine-model-parity engine/src/model_parity.cu)
   target_link_libraries(gradiated-engine-model-parity PRIVATE gradiated_engine_cuda)
   set_target_properties(gradiated-engine-model-parity PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
+  add_executable(gradiated-engine-batch-benchmark engine/src/batch_benchmark.cu)
+  target_link_libraries(gradiated-engine-batch-benchmark PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-batch-benchmark PROPERTIES
     CUDA_STANDARD 20
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90

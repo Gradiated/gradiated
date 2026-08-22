@@ -58,7 +58,7 @@ __global__ void rope_cache_kernel(__nv_bfloat16* cosine, __nv_bfloat16* sine, in
   sine[index] = __float2bfloat16_rn(sin_value);
 }
 
-template <int dimension>
+template <int dimension, bool batched>
 __global__ void query_kernel(const __nv_bfloat16* packed, const __nv_bfloat16* norm_weight,
                              const __nv_bfloat16* cosine, const __nv_bfloat16* sine,
                              __nv_bfloat16* output, int tokens, int query_heads,
@@ -72,7 +72,7 @@ __global__ void query_kernel(const __nv_bfloat16* packed, const __nv_bfloat16* n
     square_sum += value * value;
   }
   const float inverse_rms = rsqrtf(block_sum(square_sum) / dimension + epsilon);
-  const int position = position_start + token;
+  const int position = position_start + (batched ? 0 : token);
   const int half = dimension / 2;
   for (int index = threadIdx.x; index < dimension; index += threads) {
     const int partner = index < half ? index + half : index - half;
@@ -88,7 +88,7 @@ __global__ void query_kernel(const __nv_bfloat16* packed, const __nv_bfloat16* n
   }
 }
 
-template <int dimension, bool key_equals_value>
+template <int dimension, bool key_equals_value, bool batched>
 __global__ void key_value_kernel(const __nv_bfloat16* packed, const __nv_bfloat16* norm_weight,
                                  const __nv_bfloat16* cosine, const __nv_bfloat16* sine,
                                  __nv_bfloat16* key_cache, __nv_bfloat16* value_cache,
@@ -114,10 +114,11 @@ __global__ void key_value_kernel(const __nv_bfloat16* packed, const __nv_bfloat1
   const float inverse_value_rms = key_equals_value
       ? inverse_key_rms
       : rsqrtf(block_sum(value_square_sum) / dimension + epsilon);
-  const int position = position_start + token;
+  const int position = position_start + (batched ? 0 : token);
+  const int cache_position = batched ? position % cache_capacity : position;
   const int half = dimension / 2;
-  const std::uint64_t cache_base =
-      (static_cast<std::uint64_t>(head) * cache_capacity + position) * dimension;
+  const std::uint64_t cache_head = (batched ? static_cast<std::uint64_t>(token) * kv_heads : 0ULL) + head;
+  const std::uint64_t cache_base = (cache_head * cache_capacity + cache_position) * dimension;
   for (int index = threadIdx.x; index < dimension; index += threads) {
     const int partner = index < half ? index + half : index - half;
     const float normalized = __bfloat162float(__float2bfloat16_rn(
@@ -181,21 +182,21 @@ void Gemma4QkvPostprocessor::run(
   const int kv_width = kv_heads * head_dimension;
   const int packed_width = query_width + kv_width * (key_equals_value ? 1 : 2);
   if (head_dimension == 256 && !key_equals_value) {
-    query_kernel<256><<<tokens * query_heads, threads, 0, stream>>>(
+    query_kernel<256, false><<<tokens * query_heads, threads, 0, stream>>>(
         static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(query_norm_weight),
         implementation_->sliding_cosine, implementation_->sliding_sine,
         static_cast<__nv_bfloat16*>(queries), tokens, query_heads, packed_width, position_start, epsilon);
-    key_value_kernel<256, false><<<tokens * kv_heads, threads, 0, stream>>>(
+    key_value_kernel<256, false, false><<<tokens * kv_heads, threads, 0, stream>>>(
         static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(key_norm_weight),
         implementation_->sliding_cosine, implementation_->sliding_sine,
         static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
         tokens, query_width, kv_heads, packed_width, position_start, cache_capacity, epsilon);
   } else if (head_dimension == 512 && key_equals_value) {
-    query_kernel<512><<<tokens * query_heads, threads, 0, stream>>>(
+    query_kernel<512, false><<<tokens * query_heads, threads, 0, stream>>>(
         static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(query_norm_weight),
         implementation_->global_cosine, implementation_->global_sine,
         static_cast<__nv_bfloat16*>(queries), tokens, query_heads, packed_width, position_start, epsilon);
-    key_value_kernel<512, true><<<tokens * kv_heads, threads, 0, stream>>>(
+    key_value_kernel<512, true, false><<<tokens * kv_heads, threads, 0, stream>>>(
         static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(key_norm_weight),
         implementation_->global_cosine, implementation_->global_sine,
         static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
@@ -204,6 +205,43 @@ void Gemma4QkvPostprocessor::run(
     throw std::runtime_error("unsupported Gemma 4 QKV shape");
   }
   check(cudaPeekAtLastError(), "launch QKV postprocessing");
+}
+
+void Gemma4QkvPostprocessor::run_decode_batch(
+    const void* packed_qkv, const void* query_norm_weight, const void* key_norm_weight,
+    void* queries, void* key_cache, void* value_cache, int batch, int query_heads,
+    int kv_heads, int head_dimension, bool key_equals_value, int position,
+    int cache_capacity, float epsilon, cudaStream_t stream) {
+  if (batch <= 0 || position < 0 || position >= implementation_->maximum_positions) {
+    throw std::runtime_error("invalid batched QKV position");
+  }
+  const int query_width = query_heads * head_dimension;
+  const int kv_width = kv_heads * head_dimension;
+  const int packed_width = query_width + kv_width * (key_equals_value ? 1 : 2);
+  if (head_dimension == 256 && !key_equals_value) {
+    query_kernel<256, true><<<batch * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(query_norm_weight),
+        implementation_->sliding_cosine, implementation_->sliding_sine,
+        static_cast<__nv_bfloat16*>(queries), batch, query_heads, packed_width, position, epsilon);
+    key_value_kernel<256, false, true><<<batch * kv_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(key_norm_weight),
+        implementation_->sliding_cosine, implementation_->sliding_sine,
+        static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
+        batch, query_width, kv_heads, packed_width, position, cache_capacity, epsilon);
+  } else if (head_dimension == 512 && key_equals_value) {
+    query_kernel<512, true><<<batch * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(query_norm_weight),
+        implementation_->global_cosine, implementation_->global_sine,
+        static_cast<__nv_bfloat16*>(queries), batch, query_heads, packed_width, position, epsilon);
+    key_value_kernel<512, true, true><<<batch * kv_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv), static_cast<const __nv_bfloat16*>(key_norm_weight),
+        implementation_->global_cosine, implementation_->global_sine,
+        static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
+        batch, query_width, kv_heads, packed_width, position, cache_capacity, epsilon);
+  } else {
+    throw std::runtime_error("unsupported batched Gemma 4 QKV shape");
+  }
+  check(cudaPeekAtLastError(), "launch batched QKV postprocessing");
 }
 
 }  // namespace gradiated::engine

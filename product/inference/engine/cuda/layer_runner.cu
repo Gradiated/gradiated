@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -502,7 +503,12 @@ void Gemma4LayerRunner::run_prefill_chunks(
         std::min(position_starts[request],
                  static_cast<int>(state.config.sliding_window) - 1) == uniform_prior;
   }
-  const bool uniform_sliding = layer.attention == AttentionKind::sliding &&
+  static const bool enable_batched_sliding_cudnn = [] {
+    const char* value = std::getenv("GRADIATED_ENABLE_BATCHED_SLIDING_CUDNN");
+    return value != nullptr && std::string_view(value) == "1";
+  }();
+  const bool uniform_sliding = enable_batched_sliding_cudnn &&
+                               layer.attention == AttentionKind::sliding &&
                                uniform_shape && uniform_prior_shape &&
                                ((fp8_projections && requests >= 2) ||
                                 (requests >= 8 && uniform_tokens >= 128));

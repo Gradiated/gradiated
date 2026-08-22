@@ -220,6 +220,9 @@ A standalone cuBLASLt experiment on the exact global QK geometry measured 0.1340
 keys/queries (4.01 TB/s) and 0.0705 ms with E4M3 keys/queries (3.81 TB/s), a 1.90x QK speedup from
 halving bytes. This proves the hardware path but not model quality or full-attention speed: PV,
 softmax and quantization scales remain. A fragmented-slot Lt integration was rejected after the
-full production-shape suffix parity suite failed; the same suffix failure persisted after reverting
-the Lt path, so the existing batched cuDNN suffix path remains a release blocker to isolate before
-any KV-precision promotion.
+full production-shape suffix parity suite failed. The failure persisted after reverting Lt and was
+isolated to the existing batched cuDNN sliding-suffix path at 10 requests by 257 tokens. That path
+is now disabled by default and available only with `GRADIATED_ENABLE_BATCHED_SLIDING_CUDNN=1` for
+further debugging. The complete parity suite passes without it, and the correctness-first setting
+sustains 387.1 output token/s on the asynchronous 16-conversation trace, within measurement noise
+of the former 385.6 token/s result.

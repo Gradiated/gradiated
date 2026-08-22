@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace gradiated::engine {
@@ -20,6 +21,10 @@ class Gemma4BatchModelRunner {
   // Continues prefill from an exact token prefix already resident in the slot's hybrid KV cache.
   int prefill_slot_from_prefix(int slot, const std::vector<int>& token_ids,
                                int cached_prefix_tokens, int chunk_tokens = 1024);
+  // Advances a slot's prefill by at most chunk_tokens. Returns the greedy next token only when
+  // the complete prompt is resident, allowing a scheduler to bound interruption of active decode.
+  std::optional<int> prefill_slot_chunk(int slot, const std::vector<int>& token_ids,
+                                        int chunk_tokens);
   // Decodes compact active rows while retaining each request's stable cache slot.
   std::vector<int> append_ragged(const std::vector<int>& token_ids,
                                  const std::vector<int>& slots);

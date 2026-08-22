@@ -125,7 +125,15 @@ int main(int argc, char** argv) {
                     {expected[1], expected[1]}, "exact-prefix cached decode");
 
       const int slot_zero = runner.prefill_slot(0, prompt, 16);
-      const int slot_two = runner.prefill_slot(2, prompt, 16);
+      runner.reset_slot(2);
+      std::optional<int> chunked_prediction;
+      int chunk_count = 0;
+      while (!chunked_prediction) {
+        chunked_prediction = runner.prefill_slot_chunk(2, prompt, 7);
+        ++chunk_count;
+      }
+      if (chunk_count < 2) throw std::runtime_error("resumable prefill did not yield between chunks");
+      const int slot_two = *chunked_prediction;
       require_equal({slot_zero, slot_two}, {expected[0], expected[0]}, "prefill");
 
       auto prediction = runner.append_ragged({slot_two, slot_zero}, {2, 0});

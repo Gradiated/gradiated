@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -174,36 +175,50 @@ int Gemma4BatchModelRunner::prefill_slot_from_prefix(
       state.slot_positions.at(static_cast<std::size_t>(slot)) != cached_prefix_tokens) {
     throw std::runtime_error("invalid slot prefill shape");
   }
-  for (const int token_id : token_ids) {
+  std::optional<int> prediction;
+  while (!prediction) prediction = prefill_slot_chunk(slot, token_ids, chunk_tokens);
+  return *prediction;
+}
+
+std::optional<int> Gemma4BatchModelRunner::prefill_slot_chunk(
+    int slot, const std::vector<int>& token_ids, int chunk_tokens) {
+  auto& state = *implementation_;
+  if (slot < 0 || slot >= state.batch_size || token_ids.empty() ||
+      token_ids.size() > static_cast<std::size_t>(state.maximum_context) || chunk_tokens <= 0 ||
+      chunk_tokens > state.maximum_context) {
+    throw std::runtime_error("invalid slot prefill chunk shape");
+  }
+  const int position = state.slot_positions.at(static_cast<std::size_t>(slot));
+  if (position < 0 || position >= static_cast<int>(token_ids.size())) {
+    throw std::runtime_error("slot prefill chunk does not extend resident context");
+  }
+  const int tokens = std::min(chunk_tokens, static_cast<int>(token_ids.size()) - position);
+  for (int index = position; index < position + tokens; ++index) {
+    const int token_id = token_ids[static_cast<std::size_t>(index)];
     if (token_id < 0 || token_id >= state.vocabulary) {
       throw std::runtime_error("slot prompt contains an invalid token id");
     }
   }
-  void* final_input = nullptr;
-  int final_chunk_tokens = 0;
-  for (int position = cached_prefix_tokens; position < static_cast<int>(token_ids.size());
-       position += chunk_tokens) {
-    const int tokens = std::min(chunk_tokens, static_cast<int>(token_ids.size()) - position);
-    check(cudaMemcpy(state.device_input_tokens.get(), token_ids.data() + position,
-                     static_cast<std::size_t>(tokens) * sizeof(int), cudaMemcpyHostToDevice),
-          "copy slot prompt tokens");
-    embedding_batch_bf16(state.weights.at("token_embedding"),
-        static_cast<const int*>(state.device_input_tokens.get()), state.hidden_a.get(), tokens,
-        state.vocabulary, state.hidden, std::sqrt(static_cast<float>(state.hidden)), nullptr);
-    void* input = state.hidden_a.get();
-    void* output = state.hidden_b.get();
-    for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
-      const auto& cache = state.caches[layer];
-      state.layers.run_prefill_chunk(static_cast<int>(layer), input, output, tokens, position,
-                                     state.slot_key_cache(layer, slot),
-                                     state.slot_value_cache(layer, slot), cache.capacity, nullptr);
-      std::swap(input, output);
-    }
-    final_input = input;
-    final_chunk_tokens = tokens;
+  check(cudaMemcpy(state.device_input_tokens.get(), token_ids.data() + position,
+                   static_cast<std::size_t>(tokens) * sizeof(int), cudaMemcpyHostToDevice),
+        "copy slot prompt chunk tokens");
+  embedding_batch_bf16(state.weights.at("token_embedding"),
+      static_cast<const int*>(state.device_input_tokens.get()), state.hidden_a.get(), tokens,
+      state.vocabulary, state.hidden, std::sqrt(static_cast<float>(state.hidden)), nullptr);
+  void* input = state.hidden_a.get();
+  void* output = state.hidden_b.get();
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    const auto& cache = state.caches[layer];
+    state.layers.run_prefill_chunk(static_cast<int>(layer), input, output, tokens, position,
+                                   state.slot_key_cache(layer, slot),
+                                   state.slot_value_cache(layer, slot), cache.capacity, nullptr);
+    std::swap(input, output);
   }
-  const auto* last_hidden = static_cast<const unsigned char*>(final_input) +
-                            2ULL * (final_chunk_tokens - 1) * state.hidden;
+  state.slot_positions.at(static_cast<std::size_t>(slot)) = position + tokens;
+  if (position + tokens != static_cast<int>(token_ids.size())) return std::nullopt;
+
+  const auto* last_hidden = static_cast<const unsigned char*>(input) +
+                            2ULL * (tokens - 1) * state.hidden;
   rms_norm_bf16(last_hidden, state.weights.at("final_norm"), state.final_hidden.get(), 1,
                 state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
   state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"), state.logits.get(),
@@ -213,7 +228,6 @@ int Gemma4BatchModelRunner::prefill_slot_from_prefix(
   int prediction = 0;
   check(cudaMemcpy(&prediction, state.device_output_tokens.get(), sizeof(prediction),
                    cudaMemcpyDeviceToHost), "copy slot prefill token");
-  state.slot_positions.at(static_cast<std::size_t>(slot)) = static_cast<int>(token_ids.size());
   return prediction;
 }
 

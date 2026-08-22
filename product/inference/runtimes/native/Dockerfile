@@ -33,4 +33,4 @@ ENV DESMOND_CONTROL_HOST=0.0.0.0 \
 
 EXPOSE 30000 9090
 ENTRYPOINT ["/usr/local/bin/desmondd", "--"]
-CMD ["/usr/local/bin/gradiated-engine-runtime", "/root/.cache/huggingface/hub/models--google--gemma-4-31B-it/snapshots/b9ea41a2887d8607f594846523f94c6cc75ac8a4"]
+CMD ["/usr/local/bin/gradiated-engine-runtime", "/var/lib/gradiated/huggingface/hub/models--google--gemma-4-31B-it/snapshots/b9ea41a2887d8607f594846523f94c6cc75ac8a4"]

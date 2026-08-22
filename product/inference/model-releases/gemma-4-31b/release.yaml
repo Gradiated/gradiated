@@ -1,0 +1,20 @@
+schema_version: 1
+model:
+  path: google/gemma-4-31B-it
+  revision: b9ea41a2887d8607f594846523f94c6cc75ac8a4
+tokenizer:
+  path: google/gemma-4-31B-it
+  revision: b9ea41a2887d8607f594846523f94c6cc75ac8a4
+runtime:
+  kind: sglang
+  protocol: sglang-openai-v1
+  upstream_image: docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
+  release: sglang-v0.5.13-gemma4-h200-v1
+hardware:
+  accelerator: nvidia-h200-sxm
+  count: 1
+server:
+  inference_port: 30000
+  desmond_port: 9090
+  context_length: 8192
+  max_running_requests: 16

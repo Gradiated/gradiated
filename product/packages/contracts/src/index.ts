@@ -79,3 +79,9 @@ export {
   type CreateWorkspace,
   type Workspace,
 } from "./workspaces.js";
+export {
+  ProfilingEventBatchSchema,
+  ProfilingEventSchema,
+  type ProfilingEvent,
+  type ProfilingEventBatch,
+} from "./profiling.js";

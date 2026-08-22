@@ -18,6 +18,10 @@ export {
   type StoredGenerationProperties,
 } from "./clickhouse/generation-ingestion.js";
 export {
+  createProfilingWriter,
+  type ProfilingWriter,
+} from "./clickhouse/profiling-ingestion.js";
+export {
   createGenerationSettlementReader,
   SettlementFinancialConflictError,
   type GenerationSettlementReader,

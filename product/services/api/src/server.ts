@@ -1,11 +1,14 @@
 import { serve } from "@hono/node-server";
 import { parseEnvironment } from "@gradiated/config";
 import {
+  createClickHouseRuntimeClient,
   createControlDatabase,
   createCatalogBillingService,
   createOrganizationService,
+  createProfilingWriter,
   createValkeyServingProjector,
   createWorkspaceApiKeyService,
+  parseClickHouseRuntimeEnvironment,
 } from "@gradiated/control";
 import { createApp } from "./app.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
@@ -20,6 +23,7 @@ import {
   unavailableBillingPaymentsService,
 } from "./billing/stripe.js";
 import { createValkeyClient } from "@gradiated/valkey";
+import { createProfilingIngestApp } from "./profiling-ingest.js";
 
 const environment = parseEnvironment(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
@@ -99,21 +103,40 @@ const server = serve({
   port: environment.PORT,
 });
 const metricsServer = startApiMetricsServer(metrics);
+const profilingToken = process.env.PROFILING_INGEST_TOKEN;
+const profilingClient = profilingToken
+  ? createClickHouseRuntimeClient(parseClickHouseRuntimeEnvironment(process.env))
+  : undefined;
+const profilingServer = profilingToken
+  ? serve({
+      fetch: createProfilingIngestApp({
+        token: profilingToken,
+        writer: createProfilingWriter(profilingClient!),
+      }).fetch,
+      hostname: process.env.PROFILING_HOST ?? "0.0.0.0",
+      port: Number(process.env.PROFILING_PORT ?? "3003"),
+    })
+  : undefined;
 
 console.log(
   `Gradiated API listening on http://${environment.HOST}:${environment.PORT}`,
 );
 console.log("Gradiated API metrics listening on http://0.0.0.0:9464/metrics");
+if (profilingServer) {
+  console.log("Profiling ingestion listening on the private service port");
+}
 
 const shutdown = (signal: NodeJS.Signals): void => {
   console.log(`Received ${signal}; shutting down`);
   metricsServer.close();
+  profilingServer?.close();
   server.close(async (error) => {
     if (error) {
       console.error("API shutdown failed", error);
       process.exitCode = 1;
     }
     if (valkey.isOpen) await valkey.quit();
+    await profilingClient?.close();
     await pool.end();
   });
 };

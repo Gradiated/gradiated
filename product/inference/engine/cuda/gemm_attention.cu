@@ -210,7 +210,7 @@ void GemmGroupedDecodeAttention::run_ragged(
     const void* query, const void* key_cache, const void* value_cache, void* output,
     const int* positions, const int* slots, int batch, int maximum_slots, int kv_heads,
     int query_group, int maximum_context_length, int head_dimension, cudaStream_t stream,
-    int cache_capacity, bool zero_based_contiguous_slots) {
+    int cache_capacity) {
   const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
                                        query_group * maximum_context_length;
   if (query == nullptr || key_cache == nullptr || value_cache == nullptr || output == nullptr ||
@@ -224,30 +224,6 @@ void GemmGroupedDecodeAttention::run_ragged(
   auto& state = *implementation_;
   cublas_check(cublasSetStream(state.handle, stream), "set ragged attention stream");
   const int head_batches = batch * kv_heads;
-  constexpr float alpha = 1.0F;
-  constexpr float beta = 0.0F;
-  if (zero_based_contiguous_slots) {
-    const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
-    const long long query_stride = static_cast<long long>(query_group) * head_dimension;
-    const long long score_stride = static_cast<long long>(query_group) * maximum_context_length;
-    cublas_check(cublasGemmStridedBatchedEx(
-        state.handle, CUBLAS_OP_T, CUBLAS_OP_N, maximum_context_length, query_group,
-        head_dimension, &alpha, key_cache, CUDA_R_16BF, head_dimension, cache_stride,
-        query, CUDA_R_16BF, head_dimension, query_stride, &beta, state.scores, CUDA_R_16BF,
-        maximum_context_length, score_stride, head_batches, CUBLAS_COMPUTE_32F,
-        CUBLAS_GEMM_DEFAULT_TENSOR_OP), "contiguous ragged grouped QK GEMM");
-    ragged_softmax_bf16_kernel<<<batch * kv_heads * query_group, 256, 0, stream>>>(
-        static_cast<__nv_bfloat16*>(state.scores), positions, kv_heads, query_group,
-        maximum_context_length, cache_capacity);
-    cuda_check(cudaPeekAtLastError(), "launch contiguous ragged attention softmax");
-    cublas_check(cublasGemmStridedBatchedEx(
-        state.handle, CUBLAS_OP_N, CUBLAS_OP_N, head_dimension, query_group,
-        maximum_context_length, &alpha, value_cache, CUDA_R_16BF, head_dimension, cache_stride,
-        state.scores, CUDA_R_16BF, maximum_context_length, score_stride, &beta, output,
-        CUDA_R_16BF, head_dimension, query_stride, head_batches, CUBLAS_COMPUTE_32F,
-        CUBLAS_GEMM_DEFAULT_TENSOR_OP), "contiguous ragged grouped PV GEMM");
-    return;
-  }
   auto** pointer_base = static_cast<void**>(state.pointers);
   auto** key_pointers = const_cast<void**>(pointer_base);
   auto** query_pointers = pointer_base + state.maximum_head_batches;
@@ -264,6 +240,9 @@ void GemmGroupedDecodeAttention::run_ragged(
       const_cast<const void**>(key_pointers), const_cast<const void**>(query_pointers),
       const_cast<const void**>(value_pointers), score_pointers, output_pointers);
   cuda_check(cudaPeekAtLastError(), "build ragged attention pointers");
+
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
   cublas_check(cublasGemmBatchedEx(
       state.handle, CUBLAS_OP_T, CUBLAS_OP_N, maximum_context_length, query_group,
       head_dimension, &alpha, reinterpret_cast<const void* const*>(key_pointers), CUDA_R_16BF,

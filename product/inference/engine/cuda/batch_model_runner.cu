@@ -92,7 +92,7 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation device_cache_pointers;
   cudaStream_t decode_stream{};
   std::unique_ptr<Gemma4AssistantRunner> assistant;
-  std::map<std::tuple<int, int, bool>, std::unique_ptr<DecodeGraph>> decode_graphs;
+  std::map<std::pair<int, int>, std::unique_ptr<DecodeGraph>> decode_graphs;
 
   static std::uint64_t cache_payload(const Gemma4Config& config, int batch, int maximum_context,
                                      std::vector<CacheLocation>* locations) {
@@ -228,8 +228,7 @@ struct Gemma4BatchModelRunner::Implementation {
                     rows, hidden, vocabulary, stream);
   }
 
-  void enqueue_ragged_decode(int active, int maximum_context_length,
-                             bool zero_based_contiguous_slots) {
+  void enqueue_ragged_decode(int active, int maximum_context_length) {
     embedding_batch_bf16(weights.at("token_embedding"),
         static_cast<const int*>(device_input_tokens.get()), hidden_a.get(), active,
         vocabulary, hidden, std::sqrt(static_cast<float>(hidden)), decode_stream);
@@ -242,8 +241,7 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<int>(layer), input, output,
           static_cast<const int*>(device_positions.get()),
           static_cast<const int*>(device_slots.get()), active, batch_size, context,
-          key_cache(layer), value_cache(layer), cache.capacity, decode_stream,
-          zero_based_contiguous_slots);
+          key_cache(layer), value_cache(layer), cache.capacity, decode_stream);
       std::swap(input, output);
     }
     rms_norm_bf16(input, weights.at("final_norm"), final_hidden.get(), active, hidden,
@@ -262,19 +260,17 @@ struct Gemma4BatchModelRunner::Implementation {
     }
   }
 
-  DecodeGraph& capture_decode_graph(int active, int maximum_context_length,
-                                    bool zero_based_contiguous_slots) {
+  DecodeGraph& capture_decode_graph(int active, int maximum_context_length) {
     auto captured = std::make_unique<DecodeGraph>();
     check(cudaStreamBeginCapture(decode_stream, cudaStreamCaptureModeThreadLocal),
           "begin ragged decode graph capture");
-    enqueue_ragged_decode(active, maximum_context_length, zero_based_contiguous_slots);
+    enqueue_ragged_decode(active, maximum_context_length);
     check(cudaStreamEndCapture(decode_stream, &captured->graph),
           "end ragged decode graph capture");
     check(cudaGraphInstantiate(&captured->executable, captured->graph, 0),
           "instantiate ragged decode graph");
     DecodeGraph& result = *captured;
-    decode_graphs.emplace(std::make_tuple(active, maximum_context_length,
-                                         zero_based_contiguous_slots), std::move(captured));
+    decode_graphs.emplace(std::make_pair(active, maximum_context_length), std::move(captured));
     return result;
   }
 };
@@ -548,7 +544,6 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
   std::vector<bool> seen(static_cast<std::size_t>(state.batch_size), false);
   std::vector<int> positions(static_cast<std::size_t>(active));
   int maximum_position = 0;
-  bool zero_based_contiguous_slots = true;
   for (int row = 0; row < active; ++row) {
     const int slot = slots[static_cast<std::size_t>(row)];
     const int token = token_ids[static_cast<std::size_t>(row)];
@@ -557,7 +552,6 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
       throw std::runtime_error("invalid or repeated ragged slot");
     }
     seen[static_cast<std::size_t>(slot)] = true;
-    zero_based_contiguous_slots = zero_based_contiguous_slots && slot == row;
     const int position = state.slot_positions[static_cast<std::size_t>(slot)];
     if (position <= 0 || position >= state.maximum_context) {
       throw std::runtime_error("ragged slot is empty or full");
@@ -583,12 +577,11 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
   const int maximum_context_length = std::min(
       state.maximum_context,
       ((maximum_position + 1 + context_bucket - 1) / context_bucket) * context_bucket);
-  const auto graph_key = std::make_tuple(active, maximum_context_length,
-                                         zero_based_contiguous_slots);
+  const auto graph_key = std::make_pair(active, maximum_context_length);
   const auto existing = state.decode_graphs.find(graph_key);
   const bool needs_capture = existing == state.decode_graphs.end();
   if (needs_capture) {
-    state.enqueue_ragged_decode(active, maximum_context_length, zero_based_contiguous_slots);
+    state.enqueue_ragged_decode(active, maximum_context_length);
   } else {
     check(cudaGraphLaunch(existing->second->executable, state.decode_stream),
           "launch ragged decode graph");
@@ -599,8 +592,7 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
         "copy ragged output tokens");
   check(cudaStreamSynchronize(state.decode_stream), "synchronize ragged decode");
   if (needs_capture) {
-    static_cast<void>(state.capture_decode_graph(active, maximum_context_length,
-                                                 zero_based_contiguous_slots));
+    static_cast<void>(state.capture_decode_graph(active, maximum_context_length));
   }
   for (const int slot : slots) ++state.slot_positions[static_cast<std::size_t>(slot)];
   return result;

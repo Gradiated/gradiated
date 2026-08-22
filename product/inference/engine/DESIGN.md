@@ -215,3 +215,11 @@ reduce physical global-KV bytes (quality-gated FP8 KV or equivalent compression)
 Hopper-native fused D=512 GQA kernel that performs QK, online softmax and PV without materializing
 scores. The current engine is close to the weight-stream lower bound, but the complete inference
 graph is not yet mathematically optimal.
+
+A standalone cuBLASLt experiment on the exact global QK geometry measured 0.1340 ms with BF16
+keys/queries (4.01 TB/s) and 0.0705 ms with E4M3 keys/queries (3.81 TB/s), a 1.90x QK speedup from
+halving bytes. This proves the hardware path but not model quality or full-attention speed: PV,
+softmax and quantization scales remain. A fragmented-slot Lt integration was rejected after the
+full production-shape suffix parity suite failed; the same suffix failure persisted after reverting
+the Lt path, so the existing batched cuDNN suffix path remains a release blocker to isolate before
+any KV-precision promotion.

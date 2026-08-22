@@ -160,10 +160,18 @@ std::vector<int> Gemma4BatchModelRunner::append(const std::vector<int>& token_id
 
 int Gemma4BatchModelRunner::prefill_slot(int slot, const std::vector<int>& token_ids,
                                          int chunk_tokens) {
+  reset_slot(slot);
+  return prefill_slot_from_prefix(slot, token_ids, 0, chunk_tokens);
+}
+
+int Gemma4BatchModelRunner::prefill_slot_from_prefix(
+    int slot, const std::vector<int>& token_ids, int cached_prefix_tokens, int chunk_tokens) {
   auto& state = *implementation_;
   if (slot < 0 || slot >= state.batch_size || token_ids.empty() ||
       token_ids.size() > static_cast<std::size_t>(state.maximum_context) || chunk_tokens <= 0 ||
-      chunk_tokens > state.maximum_context) {
+      chunk_tokens > state.maximum_context || cached_prefix_tokens < 0 ||
+      cached_prefix_tokens >= static_cast<int>(token_ids.size()) ||
+      state.slot_positions.at(static_cast<std::size_t>(slot)) != cached_prefix_tokens) {
     throw std::runtime_error("invalid slot prefill shape");
   }
   for (const int token_id : token_ids) {
@@ -173,7 +181,8 @@ int Gemma4BatchModelRunner::prefill_slot(int slot, const std::vector<int>& token
   }
   void* final_input = nullptr;
   int final_chunk_tokens = 0;
-  for (int position = 0; position < static_cast<int>(token_ids.size()); position += chunk_tokens) {
+  for (int position = cached_prefix_tokens; position < static_cast<int>(token_ids.size());
+       position += chunk_tokens) {
     const int tokens = std::min(chunk_tokens, static_cast<int>(token_ids.size()) - position);
     check(cudaMemcpy(state.device_input_tokens.get(), token_ids.data() + position,
                      static_cast<std::size_t>(tokens) * sizeof(int), cudaMemcpyHostToDevice),

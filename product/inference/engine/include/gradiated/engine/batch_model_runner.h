@@ -17,6 +17,9 @@ class Gemma4BatchModelRunner {
   std::vector<int> append(const std::vector<int>& token_ids);
   // Prefills one stable slot using the shared prefill workspace and returns its greedy next token.
   int prefill_slot(int slot, const std::vector<int>& token_ids, int chunk_tokens = 1024);
+  // Continues prefill from an exact token prefix already resident in the slot's hybrid KV cache.
+  int prefill_slot_from_prefix(int slot, const std::vector<int>& token_ids,
+                               int cached_prefix_tokens, int chunk_tokens = 1024);
   // Decodes compact active rows while retaining each request's stable cache slot.
   std::vector<int> append_ragged(const std::vector<int>& token_ids,
                                  const std::vector<int>& slots);

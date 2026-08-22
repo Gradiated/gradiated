@@ -40,7 +40,8 @@ void require_equal(const std::vector<int>& actual, const std::vector<int>& expec
 int main(int argc, char** argv) {
   try {
     if (argc != 3 && argc != 4) {
-      std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON [profile-ragged]\n";
+      std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
+                   "[profile-ragged|prefix-benchmark]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -77,8 +78,52 @@ int main(int argc, char** argv) {
                 << (static_cast<double>(batch * decode_steps) / seconds) << '\n';
       return 0;
     }
+    if (argc == 4 && std::string(argv[3]) == "prefix-benchmark") {
+      constexpr int context = 8192;
+      constexpr int cached_prefix = context * 9 / 10;
+      std::vector<int> long_prompt(static_cast<std::size_t>(context));
+      for (int index = 0; index < context; ++index) {
+        long_prompt[static_cast<std::size_t>(index)] =
+            prompt[static_cast<std::size_t>(index) % prompt.size()];
+      }
+      const std::vector<int> prefix(long_prompt.begin(), long_prompt.begin() + cached_prefix);
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 2, context);
+      static_cast<void>(runner.prefill_slot(0, prefix, 1024));
+      const auto reuse_begin = std::chrono::steady_clock::now();
+      const int reuse_prediction =
+          runner.prefill_slot_from_prefix(0, long_prompt, cached_prefix, 1024);
+      const double reuse_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - reuse_begin).count();
+      const auto fresh_begin = std::chrono::steady_clock::now();
+      const int fresh_prediction = runner.prefill_slot(1, long_prompt, 1024);
+      const double fresh_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - fresh_begin).count();
+      if (reuse_prediction != fresh_prediction) {
+        throw std::runtime_error("90% prefix reuse changed the greedy prediction");
+      }
+      std::cout << "prefix_parity=true\n"
+                << "prompt_tokens=" << context << '\n'
+                << "cached_prefix_tokens=" << cached_prefix << '\n'
+                << "suffix_tokens=" << (context - cached_prefix) << '\n'
+                << "fresh_prefill_seconds=" << fresh_seconds << '\n'
+                << "reuse_prefill_seconds=" << reuse_seconds << '\n'
+                << "ttft_speedup=" << (fresh_seconds / reuse_seconds) << '\n'
+                << "prefill_compute_avoided_fraction="
+                << (1.0 - reuse_seconds / fresh_seconds) << '\n';
+      return 0;
+    }
     {
       gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 4, 512);
+      const int prefix_tokens = static_cast<int>(prompt.size()) - 7;
+      const std::vector<int> prefix(prompt.begin(), prompt.begin() + prefix_tokens);
+      static_cast<void>(runner.prefill_slot(1, prefix, 8));
+      const int reused_prediction = runner.prefill_slot_from_prefix(1, prompt, prefix_tokens, 8);
+      const int fresh_prediction = runner.prefill_slot(3, prompt, 8);
+      require_equal({reused_prediction, fresh_prediction}, {expected[0], expected[0]},
+                    "exact-prefix suffix prefill");
+      require_equal(runner.append_ragged({reused_prediction, fresh_prediction}, {1, 3}),
+                    {expected[1], expected[1]}, "exact-prefix cached decode");
+
       const int slot_zero = runner.prefill_slot(0, prompt, 16);
       const int slot_two = runner.prefill_slot(2, prompt, 16);
       require_equal({slot_zero, slot_two}, {expected[0], expected[0]}, "prefill");

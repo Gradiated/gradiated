@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -55,7 +56,9 @@ void test_norm_add_and_scale() {
   const auto residual = bf16<width>({0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F, 0.5F});
   const auto scalar = bf16<1>({0.5F});
   DeviceAllocation<__nv_bfloat16> device_input(width), device_weight(width), device_residual(width),
-      device_output(width), device_scalar(1);
+      device_output(width), device_fused_output(width), device_first_residual(width),
+      device_fused_first_residual(width), device_normalized(width),
+      device_fused_normalized(width), device_scalar(1);
   cuda_check(cudaMemcpy(device_input.get(), input.data(), sizeof(input), cudaMemcpyHostToDevice), "copy input");
   cuda_check(cudaMemcpy(device_weight.get(), weight.data(), sizeof(weight), cudaMemcpyHostToDevice), "copy weight");
   cuda_check(cudaMemcpy(device_residual.get(), residual.data(), sizeof(residual), cudaMemcpyHostToDevice),
@@ -64,9 +67,33 @@ void test_norm_add_and_scale() {
   gradiated::engine::rms_norm_add_bf16(device_input.get(), device_weight.get(), device_residual.get(),
                                        device_output.get(), 1, width, 1e-6F, nullptr);
   gradiated::engine::scale_bf16(device_output.get(), device_scalar.get(), width, nullptr);
+  gradiated::engine::rms_norm_add_scale_bf16(
+      device_input.get(), device_weight.get(), device_residual.get(), device_scalar.get(),
+      device_fused_output.get(), 1, width, 1e-6F, nullptr);
+  gradiated::engine::rms_norm_add_bf16(
+      device_input.get(), device_weight.get(), device_residual.get(), device_first_residual.get(),
+      1, width, 1e-6F, nullptr);
+  gradiated::engine::rms_norm_bf16(device_first_residual.get(), device_weight.get(),
+                                   device_normalized.get(), 1, width, 1e-6F, nullptr);
+  gradiated::engine::rms_norm_add_and_norm_bf16(
+      device_input.get(), device_weight.get(), device_residual.get(), device_weight.get(),
+      device_fused_first_residual.get(), device_fused_normalized.get(), 1, width, 1e-6F, nullptr);
   cuda_check(cudaDeviceSynchronize(), "norm synchronization");
   std::array<__nv_bfloat16, width> output{};
+  std::array<__nv_bfloat16, width> fused_output{}, first_residual{}, fused_first_residual{},
+      normalized{}, fused_normalized{};
   cuda_check(cudaMemcpy(output.data(), device_output.get(), sizeof(output), cudaMemcpyDeviceToHost), "copy output");
+  cuda_check(cudaMemcpy(fused_output.data(), device_fused_output.get(), sizeof(fused_output),
+                        cudaMemcpyDeviceToHost), "copy fused output");
+  cuda_check(cudaMemcpy(first_residual.data(), device_first_residual.get(), sizeof(first_residual),
+                        cudaMemcpyDeviceToHost), "copy first residual");
+  cuda_check(cudaMemcpy(fused_first_residual.data(), device_fused_first_residual.get(),
+                        sizeof(fused_first_residual), cudaMemcpyDeviceToHost),
+             "copy fused first residual");
+  cuda_check(cudaMemcpy(normalized.data(), device_normalized.get(), sizeof(normalized),
+                        cudaMemcpyDeviceToHost), "copy normalized");
+  cuda_check(cudaMemcpy(fused_normalized.data(), device_fused_normalized.get(),
+                        sizeof(fused_normalized), cudaMemcpyDeviceToHost), "copy fused normalized");
   float mean_square = 0.0F;
   for (const auto value : input) {
     const float converted = __bfloat162float(value);
@@ -76,6 +103,11 @@ void test_norm_add_and_scale() {
   for (std::size_t index = 0; index < width; ++index) {
     const float expected = (__bfloat162float(input[index]) / std::sqrt(mean_square + 1e-6F) + 0.5F) * 0.5F;
     near(__bfloat162float(output[index]), expected, 0.012F, "rms_norm_add/scale");
+  }
+  if (std::memcmp(output.data(), fused_output.data(), sizeof(output)) != 0 ||
+      std::memcmp(first_residual.data(), fused_first_residual.data(), sizeof(first_residual)) != 0 ||
+      std::memcmp(normalized.data(), fused_normalized.data(), sizeof(normalized)) != 0) {
+    throw std::runtime_error("fused normalization changed BF16 rounding");
   }
 }
 

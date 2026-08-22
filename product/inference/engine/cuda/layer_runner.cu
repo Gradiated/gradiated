@@ -107,16 +107,14 @@ struct Gemma4LayerRunner::Implementation {
     const auto weight = [&](const char* suffix) { return weights.at(prefix + suffix); };
     linear.run(attention_states, weight("o"), projected_attention.get(),
                rows, query_width, hidden, stream);
-    rms_norm_add_bf16(projected_attention.get(), weight("post_attention_norm"), residual,
-                      first_residual.get(), rows, hidden, epsilon, stream);
-    rms_norm_bf16(first_residual.get(), weight("pre_mlp_norm"), pre_mlp.get(),
-                  rows, hidden, epsilon, stream);
+    rms_norm_add_and_norm_bf16(projected_attention.get(), weight("post_attention_norm"), residual,
+                               weight("pre_mlp_norm"), first_residual.get(), pre_mlp.get(),
+                               rows, hidden, epsilon, stream);
     linear.run(pre_mlp.get(), weight("gate_up"), gate_up.get(), rows, hidden, 2 * intermediate, stream);
     gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), rows, intermediate, stream);
     linear.run(activated.get(), weight("down"), down.get(), rows, intermediate, hidden, stream);
-    rms_norm_add_bf16(down.get(), weight("post_mlp_norm"), first_residual.get(), output,
-                      rows, hidden, epsilon, stream);
-    scale_bf16(output, weight("scalar"), static_cast<std::size_t>(rows) * hidden, stream);
+    rms_norm_add_scale_bf16(down.get(), weight("post_mlp_norm"), first_residual.get(),
+                            weight("scalar"), output, rows, hidden, epsilon, stream);
   }
 
   void finish(int selected_layer, const void* residual, const void* query, void* output, int batch,

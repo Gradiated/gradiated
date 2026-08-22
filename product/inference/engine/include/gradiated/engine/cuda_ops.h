@@ -11,6 +11,13 @@ void rms_norm_bf16(const void* input, const void* weight, void* output,
                    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream);
 void rms_norm_add_bf16(const void* input, const void* weight, const void* residual, void* output,
                        std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream);
+void rms_norm_add_and_norm_bf16(const void* input, const void* weight, const void* residual,
+                                const void* next_weight, void* residual_output,
+                                void* normalized_output, std::size_t rows, std::size_t width,
+                                float epsilon, cudaStream_t stream);
+void rms_norm_add_scale_bf16(const void* input, const void* weight, const void* residual,
+                             const void* scalar, void* output, std::size_t rows,
+                             std::size_t width, float epsilon, cudaStream_t stream);
 void scale_bf16(void* values, const void* scalar, std::size_t elements, cudaStream_t stream);
 void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,
                          std::size_t elements, cudaStream_t stream);

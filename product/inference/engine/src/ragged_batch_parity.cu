@@ -5,6 +5,9 @@
 #include "gradiated/engine/safetensors.h"
 #include "gradiated/engine/weight_plan.h"
 
+#include <cuda_profiler_api.h>
+#include <cuda_runtime.h>
+
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -36,8 +39,8 @@ void require_equal(const std::vector<int>& actual, const std::vector<int>& expec
 
 int main(int argc, char** argv) {
   try {
-    if (argc != 3) {
-      std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON\n";
+    if (argc != 3 && argc != 4) {
+      std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON [profile-ragged]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -50,6 +53,30 @@ int main(int argc, char** argv) {
     gradiated::engine::validate_gemma4_weights(host_weights, config);
     const auto plan = gradiated::engine::WeightPlan::gemma4(config, host_weights);
     const auto weights = gradiated::engine::DeviceWeightArena::load(plan, host_weights);
+    if (argc == 4 && std::string(argv[3]) == "profile-ragged") {
+      constexpr int batch = 16;
+      constexpr int context = 8192;
+      constexpr int decode_steps = 8;
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, batch,
+                                                       context + decode_steps + 1);
+      runner.seed_empty_cache_for_benchmark(context - 1);
+      std::vector<int> slots(static_cast<std::size_t>(batch));
+      for (int index = 0; index < batch; ++index) {
+        slots[static_cast<std::size_t>(index)] = batch - 1 - index;
+      }
+      std::vector<int> input(static_cast<std::size_t>(batch), 2);
+      input = runner.append_ragged(input, slots);
+      cudaProfilerStart();
+      const auto begin = std::chrono::steady_clock::now();
+      for (int step = 0; step < decode_steps; ++step) input = runner.append_ragged(input, slots);
+      cudaDeviceSynchronize();
+      const double seconds =
+          std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
+      cudaProfilerStop();
+      std::cout << "profile_ragged_tokens_per_second="
+                << (static_cast<double>(batch * decode_steps) / seconds) << '\n';
+      return 0;
+    }
     {
       gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 4, 512);
       const int slot_zero = runner.prefill_slot(0, prompt, 16);

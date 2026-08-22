@@ -69,8 +69,12 @@ float benchmark(gradiated::engine::Bf16Linear& linear, const Shape& shape, int r
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
   try {
+    if (argc > 2) {
+      std::cerr << "usage: gradiated-engine-linear-benchmark [ROWS]\n";
+      return 64;
+    }
     const std::vector<Shape> shapes{
         {"sliding_qkv", 5376, 16384, 50},
         {"sliding_o", 8192, 5376, 50},
@@ -80,7 +84,9 @@ int main() {
         {"down", 21504, 5376, 60},
         {"lm_head", 5376, 262144, 1},
     };
-    const std::vector<int> row_counts{1, 2, 4, 8, 16, 32, 64, 128};
+    const std::vector<int> row_counts = argc == 2
+        ? std::vector<int>{std::stoi(argv[1])}
+        : std::vector<int>{1, 2, 4, 8, 16, 32, 64, 128};
     gradiated::engine::Bf16Linear linear;
     std::map<int, double> layer_milliseconds;
     std::cout << "component,rows,milliseconds,effective_weight_gb_s,tflop_s\n";

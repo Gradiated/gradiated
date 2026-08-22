@@ -54,6 +54,110 @@ __global__ void rms_norm_kernel(const __nv_bfloat16* input, const __nv_bfloat16*
   }
 }
 
+__global__ void rms_norm_add_and_norm_kernel(
+    const __nv_bfloat16* input, const __nv_bfloat16* weight,
+    const __nv_bfloat16* residual, const __nv_bfloat16* next_weight,
+    __nv_bfloat16* residual_output, __nv_bfloat16* normalized_output,
+    std::size_t width, float epsilon) {
+  const std::size_t row = blockIdx.x;
+  const __nv_bfloat16* row_input = input + row * width;
+  const __nv_bfloat16* row_residual = residual + row * width;
+  __nv_bfloat16* row_residual_output = residual_output + row * width;
+  __nv_bfloat16* row_normalized_output = normalized_output + row * width;
+  extern __shared__ __align__(16) unsigned char storage[];
+  auto* first_residual = reinterpret_cast<__nv_bfloat16*>(storage);
+  __shared__ float warp_sums[32];
+
+  float square_sum = 0.0F;
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    const float value = __bfloat162float(row_input[column]);
+    square_sum += value * value;
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+  }
+  if ((threadIdx.x & 31U) == 0U) warp_sums[threadIdx.x >> 5U] = square_sum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    square_sum = threadIdx.x < (blockDim.x + 31U) / 32U ? warp_sums[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+    }
+    if (threadIdx.x == 0U) warp_sums[0] = rsqrtf(square_sum / static_cast<float>(width) + epsilon);
+  }
+  __syncthreads();
+  const float first_inverse_rms = warp_sums[0];
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    const __nv_bfloat16 value = __float2bfloat16_rn(
+        __bfloat162float(row_input[column]) * first_inverse_rms *
+            __bfloat162float(weight[column]) + __bfloat162float(row_residual[column]));
+    first_residual[column] = value;
+    row_residual_output[column] = value;
+  }
+  __syncthreads();
+
+  square_sum = 0.0F;
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    const float value = __bfloat162float(first_residual[column]);
+    square_sum += value * value;
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+  }
+  if ((threadIdx.x & 31U) == 0U) warp_sums[threadIdx.x >> 5U] = square_sum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    square_sum = threadIdx.x < (blockDim.x + 31U) / 32U ? warp_sums[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+    }
+    if (threadIdx.x == 0U) warp_sums[0] = rsqrtf(square_sum / static_cast<float>(width) + epsilon);
+  }
+  __syncthreads();
+  const float second_inverse_rms = warp_sums[0];
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    row_normalized_output[column] = __float2bfloat16_rn(
+        __bfloat162float(first_residual[column]) * second_inverse_rms *
+        __bfloat162float(next_weight[column]));
+  }
+}
+
+__global__ void rms_norm_add_scale_kernel(
+    const __nv_bfloat16* input, const __nv_bfloat16* weight,
+    const __nv_bfloat16* residual, const __nv_bfloat16* scalar,
+    __nv_bfloat16* output, std::size_t width, float epsilon) {
+  const std::size_t row = blockIdx.x;
+  const __nv_bfloat16* row_input = input + row * width;
+  __nv_bfloat16* row_output = output + row * width;
+  float square_sum = 0.0F;
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    const float value = __bfloat162float(row_input[column]);
+    square_sum += value * value;
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+  }
+  __shared__ float warp_sums[32];
+  if ((threadIdx.x & 31U) == 0U) warp_sums[threadIdx.x >> 5U] = square_sum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    square_sum = threadIdx.x < (blockDim.x + 31U) / 32U ? warp_sums[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      square_sum += __shfl_down_sync(0xffffffffU, square_sum, offset);
+    }
+    if (threadIdx.x == 0U) warp_sums[0] = rsqrtf(square_sum / static_cast<float>(width) + epsilon);
+  }
+  __syncthreads();
+  const float inverse_rms = warp_sums[0];
+  const float layer_scale = __bfloat162float(*scalar);
+  for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
+    const __nv_bfloat16 residual_value = __float2bfloat16_rn(
+        __bfloat162float(row_input[column]) * inverse_rms * __bfloat162float(weight[column]) +
+        __bfloat162float(residual[row * width + column]));
+    row_output[column] = __float2bfloat16_rn(__bfloat162float(residual_value) * layer_scale);
+  }
+}
+
 __global__ void scale_kernel(__nv_bfloat16* values, const __nv_bfloat16* scalar,
                              std::size_t elements) {
   const std::size_t index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -252,6 +356,32 @@ void rms_norm_add_bf16(const void* input, const void* weight, const void* residu
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       static_cast<const __nv_bfloat16*>(residual), static_cast<__nv_bfloat16*>(output), width, epsilon);
   check(cudaPeekAtLastError(), "launch rms_norm_add_kernel");
+}
+
+void rms_norm_add_and_norm_bf16(
+    const void* input, const void* weight, const void* residual, const void* next_weight,
+    void* residual_output, void* normalized_output, std::size_t rows, std::size_t width,
+    float epsilon, cudaStream_t stream) {
+  if (rows == 0 || width == 0) return;
+  rms_norm_add_and_norm_kernel<<<static_cast<unsigned>(rows), 256,
+                                 width * sizeof(__nv_bfloat16), stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
+      static_cast<const __nv_bfloat16*>(residual),
+      static_cast<const __nv_bfloat16*>(next_weight),
+      static_cast<__nv_bfloat16*>(residual_output),
+      static_cast<__nv_bfloat16*>(normalized_output), width, epsilon);
+  check(cudaPeekAtLastError(), "launch fused post-attention normalization");
+}
+
+void rms_norm_add_scale_bf16(
+    const void* input, const void* weight, const void* residual, const void* scalar,
+    void* output, std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
+  if (rows == 0 || width == 0) return;
+  rms_norm_add_scale_kernel<<<static_cast<unsigned>(rows), 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
+      static_cast<const __nv_bfloat16*>(residual), static_cast<const __nv_bfloat16*>(scalar),
+      static_cast<__nv_bfloat16*>(output), width, epsilon);
+  check(cudaPeekAtLastError(), "launch fused post-MLP normalization and scale");
 }
 
 void scale_bf16(void* values, const void* scalar, std::size_t elements, cudaStream_t stream) {

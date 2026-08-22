@@ -221,8 +221,9 @@ keys/queries (4.01 TB/s) and 0.0705 ms with E4M3 keys/queries (3.81 TB/s), a 1.9
 halving bytes. This proves the hardware path but not model quality or full-attention speed: PV,
 softmax and quantization scales remain. A fragmented-slot Lt integration was rejected after the
 full production-shape suffix parity suite failed. The failure persisted after reverting Lt and was
-isolated to the existing batched cuDNN sliding-suffix path at 10 requests by 257 tokens. That path
-is now disabled by default and available only with `GRADIATED_ENABLE_BATCHED_SLIDING_CUDNN=1` for
-further debugging. The complete parity suite passes without it, and the correctness-first setting
-sustains 387.1 output token/s on the asynchronous 16-conversation trace, within measurement noise
-of the former 385.6 token/s result.
+isolated to an undersized staging arena in the existing batched cuDNN sliding-suffix path at 10
+requests by 257 tokens. The arena had accounted for one 1,023-token prior instead of one per
+request, so the path overwrote adjacent GPU memory. Both K/V arenas now cover the exact worst case,
+`max_tokens + max_batch * (sliding_window - 1)`, and the complete production-shape parity suite
+passes with the fast path enabled. The temporarily disabled correctness-first setting sustained
+387.1 output token/s, within measurement noise of the former 385.6 token/s result.

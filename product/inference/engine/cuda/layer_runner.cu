@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -100,8 +99,14 @@ struct Gemma4LayerRunner::Implementation {
         queries_head_major(2ULL * std::max(max_tokens, max_batch) * 16384),
         // Also serves as the batched global-attention output arena, whose query width (8192)
         // exceeds the global K/V width (4096).
-        key_cache(2ULL * 8192 * max_tokens),
-        value_cache(2ULL * 4096 * max_tokens),
+        key_cache(2ULL * std::max<std::uint64_t>(
+            8192ULL * max_tokens,
+            4096ULL * (max_tokens + static_cast<std::uint64_t>(max_batch) *
+                (model_config.sliding_window - 1ULL)))),
+        value_cache(2ULL * std::max<std::uint64_t>(
+            4096ULL * max_tokens,
+            4096ULL * (max_tokens + static_cast<std::uint64_t>(max_batch) *
+                (model_config.sliding_window - 1ULL)))),
         attention_output(2ULL * std::max(max_tokens, max_batch) * 16384),
         projected_attention(2ULL * std::max(max_tokens, max_batch) * hidden),
         first_residual(2ULL * std::max(max_tokens, max_batch) * hidden),
@@ -503,12 +508,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
         std::min(position_starts[request],
                  static_cast<int>(state.config.sliding_window) - 1) == uniform_prior;
   }
-  static const bool enable_batched_sliding_cudnn = [] {
-    const char* value = std::getenv("GRADIATED_ENABLE_BATCHED_SLIDING_CUDNN");
-    return value != nullptr && std::string_view(value) == "1";
-  }();
-  const bool uniform_sliding = enable_batched_sliding_cudnn &&
-                               layer.attention == AttentionKind::sliding &&
+  const bool uniform_sliding = layer.attention == AttentionKind::sliding &&
                                uniform_shape && uniform_prior_shape &&
                                ((fp8_projections && requests >= 2) ||
                                 (requests >= 8 && uniform_tokens >= 128));

@@ -112,9 +112,19 @@ TB/s for global attention at batch 16. This failed baseline is intentionally rec
 correct kernel that misses the H200 roofline by two orders of magnitude is not an optimization
 endpoint.
 
-Prefill uses cuBLASLt tensor-core GEMMs and a separate attention path. It is chunked so a long cache
-miss cannot starve decode or violate TTFT. Chunk size is selected by measured decode interference,
-not a fixed framework default.
+Prefill uses cuBLASLt tensor-core GEMMs and a hybrid attention path. The 50 sliding layers use
+cuDNN's fused FlashAttention-2 graph with exact causal and 1,024-token left bounds; the 10 global
+layers use grouped tensor-core QK/PV GEMMs because Gemma's 512-wide heads exceed the fused Hopper
+SDPA contract. Global scores occupy a reusable 4.3 GB BF16 arena at 8k. The latter is a baseline to
+replace with a tiled online-softmax kernel, not a permanent reason to alter the model.
+
+On the production H200, sliding attention alone takes 0.437 ms per 8k layer and global attention
+takes 9.20 ms per 8k layer. The complete parity-tested BF16 model reaches 8,181 warm input token/s
+at 8k, 8,671 token/s at 4k, and 8,961 token/s at 2k. At 27 tokens, reusing initialized plans cuts
+prefill from 946 ms cold to 22.0 ms warm. All eight reference greedy tokens remain exact after
+prefill populates the global history and sliding rings. These are single-sequence measurements;
+prefill must still be chunked so a long cache miss cannot starve decode or violate TTFT. Chunk size
+is selected by measured decode interference, not a fixed framework default.
 
 The KV allocator is hybrid rather than uniform:
 

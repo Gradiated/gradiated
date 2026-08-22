@@ -89,14 +89,14 @@ struct Gemma4ModelRunner::Implementation {
         vocabulary(static_cast<int>(model_config.vocabulary_size)),
         caches(),
         cache_payload_bytes(cache_payload(model_config, max_context, &caches)),
-        layers(model_config, device_weights, 1, max_context),
+        layers(model_config, device_weights, max_context, max_context),
         lm_head(),
         cache_arena(2ULL * cache_payload_bytes),
-        hidden_a(2ULL * hidden),
-        hidden_b(2ULL * hidden),
+        hidden_a(2ULL * max_context * hidden),
+        hidden_b(2ULL * max_context * hidden),
         final_hidden(2ULL * hidden),
         logits(2ULL * vocabulary),
-        device_token(sizeof(int)),
+        device_token(sizeof(int) * max_context),
         argmax_workspace(argmax_bf16_workspace_bytes(vocabulary)) {
     if (max_context <= 0) throw std::runtime_error("invalid model context");
   }
@@ -139,6 +139,49 @@ int Gemma4ModelRunner::append(int token_id) {
   ++state.current_position;
   return next_token;
 }
+
+int Gemma4ModelRunner::prefill(const std::vector<int>& token_ids) {
+  auto& state = *implementation_;
+  if (state.current_position != 0) throw std::runtime_error("prefill requires an empty model runner");
+  if (token_ids.empty() || token_ids.size() > static_cast<std::size_t>(state.maximum_context)) {
+    throw std::runtime_error("prompt does not fit the model context");
+  }
+  for (const int token_id : token_ids) {
+    if (token_id < 0 || token_id >= state.vocabulary) {
+      throw std::runtime_error("prompt contains an invalid token id");
+    }
+  }
+  check(cudaMemcpy(state.device_token.get(), token_ids.data(), token_ids.size() * sizeof(int),
+                   cudaMemcpyHostToDevice), "copy prompt token ids");
+  const int tokens = static_cast<int>(token_ids.size());
+  embedding_batch_bf16(state.weights.at("token_embedding"),
+      static_cast<const int*>(state.device_token.get()), state.hidden_a.get(), tokens,
+      state.vocabulary, state.hidden, std::sqrt(static_cast<float>(state.hidden)), nullptr);
+  void* input = state.hidden_a.get();
+  void* output = state.hidden_b.get();
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    const auto& cache = state.caches[layer];
+    state.layers.run_prefill(static_cast<int>(layer), input, output, tokens,
+                             state.key_cache(layer), state.value_cache(layer),
+                             cache.capacity, nullptr);
+    std::swap(input, output);
+  }
+  const auto* last_hidden = static_cast<const unsigned char*>(input) +
+                            2ULL * (tokens - 1) * state.hidden;
+  rms_norm_bf16(last_hidden, state.weights.at("final_norm"), state.final_hidden.get(), 1,
+                state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
+  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"), state.logits.get(),
+                    1, state.hidden, state.vocabulary, nullptr);
+  argmax_bf16(state.logits.get(), state.vocabulary, static_cast<int*>(state.device_token.get()),
+              state.argmax_workspace.get(), nullptr);
+  int next_token = 0;
+  check(cudaMemcpy(&next_token, state.device_token.get(), sizeof(next_token), cudaMemcpyDeviceToHost),
+        "copy prefill greedy token");
+  state.current_position = tokens;
+  return next_token;
+}
+
+void Gemma4ModelRunner::reset_sequence() { implementation_->current_position = 0; }
 
 int Gemma4ModelRunner::position() const { return implementation_->current_position; }
 

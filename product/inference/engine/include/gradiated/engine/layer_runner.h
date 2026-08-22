@@ -23,6 +23,8 @@ class Gemma4LayerRunner {
   void run_decode_batch(int layer_index, const void* hidden_states, void* output, int batch,
                         int position, void* key_cache, void* value_cache, int cache_capacity,
                         cudaStream_t stream);
+  void run_prefill(int layer_index, const void* hidden_states, void* output, int tokens,
+                   void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream);
 
  private:
   struct Implementation;

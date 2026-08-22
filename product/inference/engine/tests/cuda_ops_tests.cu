@@ -168,6 +168,50 @@ void test_grouped_attention() {
   }
 }
 
+void test_prefill_layouts() {
+  constexpr int tokens = 5;
+  constexpr int heads = 2;
+  constexpr int dimension = 2;
+  std::array<float, tokens * heads * dimension> values{};
+  for (std::size_t index = 0; index < values.size(); ++index) values[index] = static_cast<float>(index);
+  const auto input = bf16<values.size()>(values);
+  DeviceAllocation<__nv_bfloat16> device_input(input.size()), device_head_major(input.size()),
+      device_round_trip(input.size());
+  cuda_check(cudaMemcpy(device_input.get(), input.data(), sizeof(input), cudaMemcpyHostToDevice),
+             "copy transpose input");
+  gradiated::engine::token_to_head_bf16(device_input.get(), device_head_major.get(), tokens,
+                                         heads, dimension, nullptr);
+  gradiated::engine::head_to_token_bf16(device_head_major.get(), device_round_trip.get(), tokens,
+                                         heads, dimension, nullptr);
+  std::array<__nv_bfloat16, input.size()> round_trip{};
+  cuda_check(cudaMemcpy(round_trip.data(), device_round_trip.get(), sizeof(round_trip),
+                        cudaMemcpyDeviceToHost), "copy transpose round trip");
+  for (std::size_t index = 0; index < input.size(); ++index) {
+    near(__bfloat162float(round_trip[index]), values[index], 0.01F, "prefill transpose");
+  }
+
+  constexpr int capacity = 3;
+  DeviceAllocation<__nv_bfloat16> device_cache(heads * capacity * dimension);
+  cuda_check(cudaMemset(device_cache.get(), 0, heads * capacity * dimension * sizeof(__nv_bfloat16)),
+             "clear ring cache");
+  gradiated::engine::copy_kv_to_cache_bf16(device_head_major.get(), device_cache.get(), heads,
+                                            tokens, dimension, capacity, 0, nullptr);
+  std::array<__nv_bfloat16, heads * capacity * dimension> cache{};
+  cuda_check(cudaMemcpy(cache.data(), device_cache.get(), sizeof(cache), cudaMemcpyDeviceToHost),
+             "copy ring cache");
+  for (int head = 0; head < heads; ++head) {
+    for (int source_token = tokens - capacity; source_token < tokens; ++source_token) {
+      const int slot = source_token % capacity;
+      for (int component = 0; component < dimension; ++component) {
+        const int source_index = (source_token * heads + head) * dimension + component;
+        const int cache_index = (head * capacity + slot) * dimension + component;
+        near(__bfloat162float(cache[cache_index]), values[source_index], 0.01F,
+             "prefill KV ring copy");
+      }
+    }
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -176,6 +220,7 @@ int main() {
     test_gelu_gate();
     test_linear();
     test_grouped_attention();
+    test_prefill_layouts();
     std::cout << "all CUDA operation tests passed\n";
     return 0;
   } catch (const std::exception& error) {

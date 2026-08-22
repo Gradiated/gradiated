@@ -114,6 +114,48 @@ __global__ void embedding_batch_kernel(const __nv_bfloat16* weight, const int* t
   }
 }
 
+__global__ void token_head_transpose_kernel(const __nv_bfloat16* input, __nv_bfloat16* output,
+                                            int tokens, int heads, int dimension,
+                                            bool token_to_head) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = tokens * heads * dimension;
+  if (index < elements) {
+    const int component = index % dimension;
+    const int head = (index / dimension) % heads;
+    const int token = index / (dimension * heads);
+    const std::uint64_t token_major =
+        (static_cast<std::uint64_t>(token) * heads + head) * dimension + component;
+    const std::uint64_t head_major =
+        (static_cast<std::uint64_t>(head) * tokens + token) * dimension + component;
+    if (token_to_head) {
+      output[head_major] = input[token_major];
+    } else {
+      output[token_major] = input[head_major];
+    }
+  }
+}
+
+__global__ void copy_kv_to_cache_kernel(const __nv_bfloat16* source, __nv_bfloat16* destination,
+                                        int heads, int tokens, int dimension,
+                                        int destination_capacity, int position_start) {
+  const int retained = min(tokens, destination_capacity);
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = heads * retained * dimension;
+  if (index < elements) {
+    const int component = index % dimension;
+    const int retained_token = (index / dimension) % retained;
+    const int head = index / (dimension * retained);
+    const int source_token = tokens - retained + retained_token;
+    const int logical_position = position_start + source_token;
+    const int destination_token = logical_position % destination_capacity;
+    const std::uint64_t source_index =
+        (static_cast<std::uint64_t>(head) * tokens + source_token) * dimension + component;
+    const std::uint64_t destination_index =
+        (static_cast<std::uint64_t>(head) * destination_capacity + destination_token) * dimension + component;
+    destination[destination_index] = source[source_index];
+  }
+}
+
 struct Maximum {
   float value;
   int index;
@@ -226,6 +268,44 @@ void embedding_batch_bf16(const void* embedding_weight, const int* device_token_
       static_cast<__nv_bfloat16*>(output), batch, vocabulary_size, hidden_size,
       __float2bfloat16_rn(scale));
   check(cudaPeekAtLastError(), "launch batched embedding kernel");
+}
+
+void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
+                        int head_dimension, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || tokens <= 0 || heads <= 0 || head_dimension <= 0) {
+    throw std::runtime_error("invalid token-to-head transpose shape");
+  }
+  const int elements = tokens * heads * head_dimension;
+  token_head_transpose_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
+      tokens, heads, head_dimension, true);
+  check(cudaPeekAtLastError(), "launch token-to-head transpose");
+}
+
+void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
+                        int head_dimension, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || tokens <= 0 || heads <= 0 || head_dimension <= 0) {
+    throw std::runtime_error("invalid head-to-token transpose shape");
+  }
+  const int elements = tokens * heads * head_dimension;
+  token_head_transpose_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
+      tokens, heads, head_dimension, false);
+  check(cudaPeekAtLastError(), "launch head-to-token transpose");
+}
+
+void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
+                           int head_dimension, int destination_capacity, int position_start,
+                           cudaStream_t stream) {
+  if (source == nullptr || destination == nullptr || heads <= 0 || tokens <= 0 ||
+      head_dimension <= 0 || destination_capacity <= 0 || position_start < 0) {
+    throw std::runtime_error("invalid KV cache copy shape");
+  }
+  const int elements = heads * std::min(tokens, destination_capacity) * head_dimension;
+  copy_kv_to_cache_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source), static_cast<__nv_bfloat16*>(destination),
+      heads, tokens, head_dimension, destination_capacity, position_start);
+  check(cudaPeekAtLastError(), "launch KV cache copy");
 }
 
 std::size_t argmax_bf16_workspace_bytes(int elements) {

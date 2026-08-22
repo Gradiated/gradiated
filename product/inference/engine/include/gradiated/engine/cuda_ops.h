@@ -21,6 +21,13 @@ void embedding_bf16(const void* embedding_weight, int token_id, void* output,
 void embedding_batch_bf16(const void* embedding_weight, const int* device_token_ids,
                           void* output, int batch, int vocabulary_size, int hidden_size,
                           float scale, cudaStream_t stream);
+void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
+                        int head_dimension, cudaStream_t stream);
+void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
+                        int head_dimension, cudaStream_t stream);
+void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
+                           int head_dimension, int destination_capacity, int position_start,
+                           cudaStream_t stream);
 std::size_t argmax_bf16_workspace_bytes(int elements);
 void argmax_bf16(const void* values, int elements, int* device_output,
                  void* workspace, cudaStream_t stream);

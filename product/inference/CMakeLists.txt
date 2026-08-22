@@ -55,11 +55,25 @@ target_compile_options(gradiated-engine-inspect PRIVATE -Wall -Wextra -Wpedantic
 if(GRADIATED_ENGINE_ENABLE_CUDA)
   enable_language(CUDA)
   find_package(CUDAToolkit REQUIRED)
+  include(FetchContent)
+  set(CUDNN_FRONTEND_BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
+  set(CUDNN_FRONTEND_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+  set(CUDNN_FRONTEND_BUILD_PYTHON_BINDINGS OFF CACHE BOOL "" FORCE)
+  FetchContent_Declare(
+    cudnn_frontend
+    GIT_REPOSITORY https://github.com/NVIDIA/cudnn-frontend.git
+    GIT_TAG b372d39879d44c91a8d5b342022e74802b6a8da2
+    GIT_SHALLOW FALSE
+  )
+  FetchContent_MakeAvailable(cudnn_frontend)
+  find_library(CUDNN_LIBRARY NAMES cudnn REQUIRED)
   add_library(gradiated_engine_cuda
     engine/cuda/attention.cu
     engine/cuda/batch_model_runner.cu
     engine/cuda/gemm_attention.cu
+    engine/cuda/prefill_gemm_attention.cu
     engine/cuda/ops.cu
+    engine/cuda/prefill_attention.cu
     engine/cuda/device_weights.cu
     engine/cuda/linear.cu
     engine/cuda/layer_runner.cu
@@ -67,7 +81,8 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     engine/cuda/qkv.cu
   )
   target_include_directories(gradiated_engine_cuda PUBLIC engine/include)
-  target_link_libraries(gradiated_engine_cuda PUBLIC gradiated_engine_model CUDA::cudart CUDA::cublas CUDA::cublasLt)
+  target_link_libraries(gradiated_engine_cuda PUBLIC gradiated_engine_model CUDA::cudart CUDA::cublas
+    CUDA::cublasLt cudnn_frontend ${CUDNN_LIBRARY})
   set_target_properties(gradiated_engine_cuda PROPERTIES
     CUDA_STANDARD 20
     CUDA_STANDARD_REQUIRED ON
@@ -99,6 +114,13 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90
   )
+  add_executable(gradiated-engine-prefill-attention-benchmark engine/src/prefill_attention_benchmark.cu)
+  target_link_libraries(gradiated-engine-prefill-attention-benchmark PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-prefill-attention-benchmark PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
   add_executable(gradiated-engine-layer-parity engine/src/layer_parity.cu)
   target_link_libraries(gradiated-engine-layer-parity PRIVATE gradiated_engine_cuda)
   set_target_properties(gradiated-engine-layer-parity PROPERTIES
@@ -109,6 +131,20 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
   add_executable(gradiated-engine-model-parity engine/src/model_parity.cu)
   target_link_libraries(gradiated-engine-model-parity PRIVATE gradiated_engine_cuda)
   set_target_properties(gradiated-engine-model-parity PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
+  add_executable(gradiated-engine-prefill-model-parity engine/src/prefill_model_parity.cu)
+  target_link_libraries(gradiated-engine-prefill-model-parity PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-prefill-model-parity PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
+  add_executable(gradiated-engine-prefill-benchmark engine/src/prefill_benchmark.cu)
+  target_link_libraries(gradiated-engine-prefill-benchmark PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-prefill-benchmark PROPERTIES
     CUDA_STANDARD 20
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90

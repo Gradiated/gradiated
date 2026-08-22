@@ -12,6 +12,11 @@ The engine is split into independently testable layers:
 - `gradiated_engine_cuda`: H200 (`sm_90`) BF16 kernels and CUDA/cuBLASLt execution primitives.
 - `gradiated-engine-inspect`: release validation and memory-planning CLI.
 
+The CUDA build pins NVIDIA's header-only cuDNN frontend to commit
+`b372d39879d44c91a8d5b342022e74802b6a8da2` (v1.17.0) and links the cuDNN 9 graph runtime from the
+node image. This makes the fused sliding-prefill graph reproducible while leaving engine-owned
+scheduling, cache layout, global D=512 attention, decode, and sampling in this tree.
+
 The execution roadmap is weight loading, parity-tested single-request forward, hybrid paged KV
 cache, continuous batching and prefix reuse, then overlapped frozen-KV speculative decoding. Each
 optimization is retained only when it improves sustained cheapest-price compute recovery while

@@ -5,6 +5,8 @@
 #include "gradiated/engine/gemm_attention.h"
 #include "gradiated/engine/gemma4_config.h"
 #include "gradiated/engine/linear.h"
+#include "gradiated/engine/prefill_attention.h"
+#include "gradiated/engine/prefill_gemm_attention.h"
 #include "gradiated/engine/qkv.h"
 
 #include <cuda_runtime.h>
@@ -48,9 +50,12 @@ struct Gemma4LayerRunner::Implementation {
   Bf16Linear linear;
   Gemma4QkvPostprocessor qkv_postprocessor;
   GemmGroupedDecodeAttention attention;
+  CudnnPrefillAttention sliding_prefill_attention;
+  GemmCausalPrefillAttention global_prefill_attention;
   Allocation normalized;
   Allocation packed_qkv;
   Allocation queries;
+  Allocation queries_head_major;
   Allocation key_cache;
   Allocation value_cache;
   Allocation attention_output;
@@ -74,47 +79,56 @@ struct Gemma4LayerRunner::Implementation {
         linear(),
         qkv_postprocessor(std::max(max_tokens, max_context)),
         attention(max_batch, 16, 8, std::max(max_tokens, max_context)),
+        sliding_prefill_attention(),
+        global_prefill_attention(max_tokens, 32),
         normalized(2ULL * std::max(max_tokens, max_batch) * hidden),
         packed_qkv(2ULL * std::max(max_tokens, max_batch) * 18432),
         queries(2ULL * std::max(max_tokens, max_batch) * 16384),
+        queries_head_major(2ULL * std::max(max_tokens, max_batch) * 16384),
         key_cache(2ULL * 4096 * max_tokens),
         value_cache(2ULL * 4096 * max_tokens),
-        attention_output(2ULL * max_batch * 16384),
-        projected_attention(2ULL * max_batch * hidden),
-        first_residual(2ULL * max_batch * hidden),
-        pre_mlp(2ULL * max_batch * hidden),
-        gate_up(4ULL * max_batch * intermediate),
-        activated(2ULL * max_batch * intermediate),
-        down(2ULL * max_batch * hidden) {
+        attention_output(2ULL * std::max(max_tokens, max_batch) * 16384),
+        projected_attention(2ULL * std::max(max_tokens, max_batch) * hidden),
+        first_residual(2ULL * std::max(max_tokens, max_batch) * hidden),
+        pre_mlp(2ULL * std::max(max_tokens, max_batch) * hidden),
+        gate_up(4ULL * std::max(max_tokens, max_batch) * intermediate),
+        activated(2ULL * std::max(max_tokens, max_batch) * intermediate),
+        down(2ULL * std::max(max_tokens, max_batch) * hidden) {
     if (max_tokens <= 0 || max_context <= 0 || max_batch <= 0) {
       throw std::runtime_error("invalid layer runner shape");
     }
+  }
+
+  void project(int selected_layer, const void* residual, const void* attention_states,
+               void* output, int rows, cudaStream_t stream) {
+    const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
+    const int query_width = static_cast<int>(layer.query_width());
+    const std::string prefix = "layer." + std::to_string(selected_layer) + ".";
+    const auto weight = [&](const char* suffix) { return weights.at(prefix + suffix); };
+    linear.run(attention_states, weight("o"), projected_attention.get(),
+               rows, query_width, hidden, stream);
+    rms_norm_add_bf16(projected_attention.get(), weight("post_attention_norm"), residual,
+                      first_residual.get(), rows, hidden, epsilon, stream);
+    rms_norm_bf16(first_residual.get(), weight("pre_mlp_norm"), pre_mlp.get(),
+                  rows, hidden, epsilon, stream);
+    linear.run(pre_mlp.get(), weight("gate_up"), gate_up.get(), rows, hidden, 2 * intermediate, stream);
+    gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), rows, intermediate, stream);
+    linear.run(activated.get(), weight("down"), down.get(), rows, intermediate, hidden, stream);
+    rms_norm_add_bf16(down.get(), weight("post_mlp_norm"), first_residual.get(), output,
+                      rows, hidden, epsilon, stream);
+    scale_bf16(output, weight("scalar"), static_cast<std::size_t>(rows) * hidden, stream);
   }
 
   void finish(int selected_layer, const void* residual, const void* query, void* output, int batch,
               const void* keys, const void* values, int context, int cache_capacity,
               cudaStream_t stream) {
     const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
-    const int query_width = static_cast<int>(layer.query_width());
     const int head_dimension = static_cast<int>(layer.head_dimension);
     const int kv_heads = static_cast<int>(layer.kv_heads);
     const int query_group = static_cast<int>(layer.query_heads / layer.kv_heads);
-    const std::string prefix = "layer." + std::to_string(selected_layer) + ".";
-    const auto weight = [&](const char* suffix) { return weights.at(prefix + suffix); };
     attention.run(query, keys, values, attention_output.get(), batch, kv_heads, query_group,
                   context, head_dimension, stream, cache_capacity);
-    linear.run(attention_output.get(), weight("o"), projected_attention.get(),
-               batch, query_width, hidden, stream);
-    rms_norm_add_bf16(projected_attention.get(), weight("post_attention_norm"), residual,
-                      first_residual.get(), batch, hidden, epsilon, stream);
-    rms_norm_bf16(first_residual.get(), weight("pre_mlp_norm"), pre_mlp.get(),
-                  batch, hidden, epsilon, stream);
-    linear.run(pre_mlp.get(), weight("gate_up"), gate_up.get(), batch, hidden, 2 * intermediate, stream);
-    gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), batch, intermediate, stream);
-    linear.run(activated.get(), weight("down"), down.get(), batch, intermediate, hidden, stream);
-    rms_norm_add_bf16(down.get(), weight("post_mlp_norm"), first_residual.get(), output,
-                      batch, hidden, epsilon, stream);
-    scale_bf16(output, weight("scalar"), static_cast<std::size_t>(batch) * hidden, stream);
+    project(selected_layer, residual, attention_output.get(), output, batch, stream);
   }
 };
 
@@ -202,6 +216,54 @@ void Gemma4LayerRunner::run_decode_batch(int layer_index, const void* hidden_sta
       layer.key_equals_value, position, cache_capacity, state.epsilon, stream);
   state.finish(layer_index, hidden_states, state.queries.get(), output, batch, key_cache, value_cache,
                std::min(position + 1, cache_capacity), cache_capacity, stream);
+}
+
+void Gemma4LayerRunner::run_prefill(int layer_index, const void* hidden_states, void* output,
+                                    int tokens, void* key_cache, void* value_cache,
+                                    int cache_capacity, cudaStream_t stream) {
+  auto& state = *implementation_;
+  if (tokens <= 0 || tokens > state.maximum_tokens || key_cache == nullptr || value_cache == nullptr ||
+      cache_capacity <= 0 || cache_capacity > state.maximum_context) {
+    throw std::runtime_error("invalid prefill shape");
+  }
+  const auto& layer = state.config.layers.at(static_cast<std::size_t>(layer_index));
+  const int query_heads = static_cast<int>(layer.query_heads);
+  const int kv_heads = static_cast<int>(layer.kv_heads);
+  const int head_dimension = static_cast<int>(layer.head_dimension);
+  const int query_width = static_cast<int>(layer.query_width());
+  const int packed_width = query_width + static_cast<int>(layer.kv_width()) *
+      (layer.key_equals_value ? 1 : 2);
+  const std::string prefix = "layer." + std::to_string(layer_index) + ".";
+  const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
+  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), tokens, state.hidden,
+                state.epsilon, stream);
+  state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(), tokens,
+                   state.hidden, packed_width, stream);
+  state.qkv_postprocessor.run(state.packed_qkv.get(), weight("q_norm"), weight("k_norm"),
+      state.queries.get(), state.key_cache.get(), state.value_cache.get(), tokens, query_heads,
+      kv_heads, head_dimension, layer.key_equals_value, 0, tokens, state.epsilon, stream);
+  copy_kv_to_cache_bf16(state.key_cache.get(), key_cache, kv_heads, tokens, head_dimension,
+                        cache_capacity, 0, stream);
+  copy_kv_to_cache_bf16(state.value_cache.get(), value_cache, kv_heads, tokens, head_dimension,
+                        cache_capacity, 0, stream);
+
+  const void* attention_states = state.attention_output.get();
+  if (layer.attention == AttentionKind::sliding) {
+    state.sliding_prefill_attention.run(
+        state.queries.get(), state.key_cache.get(), state.value_cache.get(),
+        state.attention_output.get(), 1, query_heads, kv_heads, tokens, head_dimension,
+        static_cast<int>(state.config.sliding_window), stream);
+  } else {
+    token_to_head_bf16(state.queries.get(), state.queries_head_major.get(), tokens,
+                       query_heads, head_dimension, stream);
+    state.global_prefill_attention.run(
+        state.queries_head_major.get(), state.key_cache.get(), state.value_cache.get(),
+        state.attention_output.get(), query_heads, kv_heads, tokens, head_dimension, stream);
+    head_to_token_bf16(state.attention_output.get(), state.queries.get(), tokens,
+                       query_heads, head_dimension, stream);
+    attention_states = state.queries.get();
+  }
+  state.project(layer_index, hidden_states, attention_states, output, tokens, stream);
 }
 
 }  // namespace gradiated::engine

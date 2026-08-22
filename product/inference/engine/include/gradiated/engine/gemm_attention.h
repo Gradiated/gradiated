@@ -24,7 +24,8 @@ class GemmGroupedDecodeAttention {
   void run_ragged(const void* query, const void* key_cache, const void* value_cache,
                   void* output, const int* positions, const int* slots, int batch,
                   int maximum_slots, int kv_heads, int query_group, int maximum_context_length,
-                  int head_dimension, cudaStream_t stream, int cache_capacity);
+                  int head_dimension, cudaStream_t stream, int cache_capacity,
+                  bool zero_based_contiguous_slots = false);
 
  private:
   struct Implementation;

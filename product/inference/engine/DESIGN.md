@@ -188,3 +188,30 @@ Every retained change must pass, in order:
 Desmond records sampled per-stage GPU timings, batch shape, prefix hit bytes, KV bytes, accepted
 draft depth, precision path and kernel identifiers in `profiling_events.properties`. CUPTI hardware
 counters are sampled in profiling runs, not enabled on every production request.
+
+## Measured optimization frontier (2026-08-22)
+
+The retained tensor-scaled FP8 decode projections take about 7.75 ms per model step. The measured
+30.7 GB FP8 weight stream at approximately 4.0 TB/s has a 7.67 ms lower bound, so further work on
+the dense projection kernels can recover at most about 1% unless it changes weight precision or
+fuses away traffic. Optimization effort therefore moves to KV traffic, attention and scheduling.
+
+On the asynchronous 16-conversation agentic workload (ten turns per conversation, 256 new input
+tokens and 128 output tokens per turn), the exact non-speculative engine sustains 385.6 output
+token/s. Cached-turn mean TTFT is 660 ms and mean TPOT is 28.8 ms. At the same traffic mix and the
+cheapest measured OpenRouter price, this is approximately 31.6% H200-cost recovery: about
+$1.42/hour gross against $4.50/hour compute, leaving about $3.08/hour or $2,245/month uncovered.
+
+The exact four-token MTP path is not promoted. At concurrency 16 it accepts 3.24 candidates per
+target verification on average, but sustains only 281.9 output token/s; drafting takes 8.35 s and
+target verification 28.9 s over the measured run. The base path is 36.8% faster and also has lower
+TTFT and request time. A two-token depth, minimum speculative cohort thresholds, context-sorted
+verification, eager execution and alternate legacy cuBLAS algorithms were measured and rejected.
+
+Nsight attributes 34.5% of a long-context FP8 decode step to the ten global QK operations. Dense
+FP8 projections, global QK, global PV, sliding attention and elementwise work account for nearly
+all GPU time; host transfers are negligible. This establishes the next first-principles target:
+reduce physical global-KV bytes (quality-gated FP8 KV or equivalent compression) and use a
+Hopper-native fused D=512 GQA kernel that performs QK, online softmax and PV without materializing
+scores. The current engine is close to the weight-stream lower bound, but the complete inference
+graph is not yet mathematically optimal.

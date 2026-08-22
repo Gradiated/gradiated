@@ -39,6 +39,7 @@ constexpr int default_short_prefill_batch_window_microseconds = 10000;
 constexpr int short_prefill_cohort_tokens = 512;
 constexpr int maximum_slots = 16;
 constexpr int default_speculative_depth = 4;
+constexpr int default_speculative_minimum_batch = 8;
 
 std::string environment(const char* name, const std::string& fallback = {}) {
   const char* value = std::getenv(name);
@@ -164,6 +165,7 @@ class ContinuousScheduler {
                       const gradiated::engine::Fp8WeightArena* fp8_weights,
                       const gradiated::engine::DeviceWeightArena* assistant_weights,
                       RuntimeMetrics& metrics, int speculative_depth,
+                      int speculative_minimum_batch,
                       int prefill_quantum_tokens,
                       int idle_prefill_quantum_tokens,
                       int short_prefill_batch_window_microseconds)
@@ -171,6 +173,7 @@ class ContinuousScheduler {
                 assistant_weights),
         slots_(maximum_slots), metrics_(metrics),
         speculative_depth_(speculative_depth),
+        speculative_minimum_batch_(speculative_minimum_batch),
         prefill_quantum_tokens_(prefill_quantum_tokens),
         idle_prefill_quantum_tokens_(idle_prefill_quantum_tokens),
         short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds) {
@@ -468,7 +471,8 @@ class ContinuousScheduler {
       tokens.push_back(slot.token_to_append);
     }
     if (indices.empty()) return false;
-    if (runner_.has_assistant()) {
+    if (runner_.has_assistant() &&
+        indices.size() >= static_cast<std::size_t>(speculative_minimum_batch_)) {
       try {
         // Keep ragged contexts monotonic so the target verifier can split the cohort into
         // narrower global-attention GEMMs instead of padding every request to the longest one.
@@ -755,6 +759,7 @@ class ContinuousScheduler {
   std::vector<Slot> slots_;
   RuntimeMetrics& metrics_;
   int speculative_depth_;
+  int speculative_minimum_batch_;
   int prefill_quantum_tokens_;
   int idle_prefill_quantum_tokens_;
   int short_prefill_batch_window_microseconds_;
@@ -819,9 +824,13 @@ int main(int argc, char** argv) {
         default_short_prefill_batch_window_microseconds, 0, 20000);
     const int speculative_depth = environment_integer(
         "GRADIATED_SPECULATIVE_DEPTH", default_speculative_depth, 1, 4);
+    const int speculative_minimum_batch = environment_integer(
+        "GRADIATED_SPECULATIVE_MIN_BATCH", default_speculative_minimum_batch, 1,
+        maximum_slots);
     RuntimeMetrics metrics;
     ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), assistant_weights.get(),
-                                  metrics, speculative_depth, prefill_quantum_tokens,
+                                  metrics, speculative_depth, speculative_minimum_batch,
+                                  prefill_quantum_tokens,
                                   idle_prefill_quantum_tokens,
                                   short_prefill_batch_window_microseconds);
 

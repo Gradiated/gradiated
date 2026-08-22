@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   try {
     if (argc != 3 && argc != 4 && argc != 5) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
-                   "[profile-ragged|profile-suffix|prefix-benchmark|speculative-parity|"
+                   "[profile-ragged|profile-ragged-fp8|profile-suffix|prefix-benchmark|speculative-parity|"
                    "assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
       return 64;
     }
@@ -154,16 +154,23 @@ int main(int argc, char** argv) {
                 << static_cast<double>(batch * 4) / seconds << '\n';
       return 0;
     }
-    if (argc == 4 && std::string(argv[3]) == "profile-ragged") {
+    if (argc == 4 && (std::string(argv[3]) == "profile-ragged" ||
+                      std::string(argv[3]) == "profile-ragged-fp8")) {
       constexpr int batch = 16;
       constexpr int context = 8192;
       constexpr int decode_steps = 8;
+      const bool fp8 = std::string(argv[3]) == "profile-ragged-fp8";
+      const auto fp8_weights = fp8
+          ? gradiated::engine::Fp8WeightArena::quantize(
+                plan, *weights, gradiated::engine::Fp8Scaling::tensor)
+          : nullptr;
       gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, batch,
-                                                       context + decode_steps + 1);
+                                                       context + decode_steps + 1,
+                                                       fp8_weights.get());
       runner.seed_empty_cache_for_benchmark(context - 1);
       std::vector<int> slots(static_cast<std::size_t>(batch));
       for (int index = 0; index < batch; ++index) {
-        slots[static_cast<std::size_t>(index)] = batch - 1 - index;
+        slots[static_cast<std::size_t>(index)] = fp8 ? index : batch - 1 - index;
       }
       std::vector<int> input(static_cast<std::size_t>(batch), 2);
       input = runner.append_ragged(input, slots);
@@ -174,7 +181,8 @@ int main(int argc, char** argv) {
       const double seconds =
           std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
       cudaProfilerStop();
-      std::cout << "profile_ragged_tokens_per_second="
+      std::cout << "profile_ragged_fp8=" << (fp8 ? "true" : "false") << '\n'
+                << "profile_ragged_tokens_per_second="
                 << (static_cast<double>(batch * decode_steps) / seconds) << '\n';
       return 0;
     }

@@ -38,6 +38,7 @@ def main() -> None:
     parser.add_argument("--turns", type=int, default=1)
     parser.add_argument("--cycles", type=int, default=1)
     parser.add_argument("--suffix-tokens", type=int, default=256)
+    parser.add_argument("--asynchronous-turns", action="store_true")
     args = parser.parse_args()
 
     with open(args.prompts_json, encoding="utf-8") as source:
@@ -69,6 +70,59 @@ def main() -> None:
         response["client_seconds"] = time.monotonic() - started
         response["prompt_id"] = prompt["id"]
         return response
+
+    if args.asynchronous_turns:
+        def run_conversation(prompt: dict[str, object]) -> list[dict[str, object]]:
+            full_input = prompt["input_ids"]
+            reserved = (args.suffix_tokens + args.max_tokens) * max(0, args.turns - 1)
+            initial_tokens = max(1, len(full_input) - reserved)
+            state = {
+                "id": prompt["id"],
+                "input_ids": list(full_input[:initial_tokens]),
+                "remaining_ids": list(full_input[initial_tokens:]),
+            }
+            results = []
+            for turn in range(args.turns):
+                result = complete(state)
+                result["turn"] = turn + 1
+                results.append(result)
+                if turn + 1 < args.turns:
+                    suffix = state["remaining_ids"][: args.suffix_tokens]
+                    state["remaining_ids"] = state["remaining_ids"][args.suffix_tokens :]
+                    state["input_ids"].extend(result["output_ids"])
+                    state["input_ids"].extend(suffix)
+            return results
+
+        benchmark_started = time.monotonic()
+        all_results = []
+        for _ in range(args.cycles):
+            with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as executor:
+                conversations = list(executor.map(run_conversation, prompts))
+            all_results.extend(result for conversation in conversations for result in conversation)
+        benchmark_seconds = time.monotonic() - benchmark_started
+        cached = [result for result in all_results if result["turn"] > 1]
+        total_output_tokens = sum(len(result["output_ids"]) for result in all_results)
+        cached_output_tokens = sum(len(result["output_ids"]) for result in cached)
+        print(json.dumps({
+            "asynchronous_turns": True,
+            "concurrency": args.concurrency,
+            "turns": args.turns,
+            "cycles": args.cycles,
+            "benchmark_seconds": benchmark_seconds,
+            "output_tokens": total_output_tokens,
+            "aggregate_output_tokens_per_second": total_output_tokens / benchmark_seconds,
+            "cached_output_tokens": cached_output_tokens,
+            "cached_mean_ttft_ms": statistics.mean(
+                result["timing"]["ttft_ms"] for result in cached
+            ),
+            "cached_mean_tpot_ms": statistics.mean(
+                result["timing"]["mean_tpot_ms"] for result in cached
+            ),
+            "cached_max_request_ms": max(
+                result["timing"]["total_ms"] for result in cached
+            ),
+        }, indent=2, sort_keys=True))
+        return
 
     turn_summaries = []
     benchmark_started = time.monotonic()

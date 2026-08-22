@@ -218,6 +218,16 @@ __global__ void embedding_batch_kernel(const __nv_bfloat16* weight, const int* t
   }
 }
 
+__global__ void gather_rows_kernel(const __nv_bfloat16* input, const int* row_indices,
+                                   __nv_bfloat16* output, int rows, int width) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < rows * width) {
+    const int output_row = index / width;
+    const int column = index % width;
+    output[index] = input[static_cast<std::size_t>(row_indices[output_row]) * width + column];
+  }
+}
+
 __global__ void token_head_transpose_kernel(const __nv_bfloat16* input, __nv_bfloat16* output,
                                             int tokens, int heads, int dimension,
                                             bool token_to_head) {
@@ -236,6 +246,30 @@ __global__ void token_head_transpose_kernel(const __nv_bfloat16* input, __nv_bfl
     } else {
       output[token_major] = input[head_major];
     }
+  }
+}
+
+__global__ void token_head_batch_transpose_kernel(
+    const __nv_bfloat16* input, __nv_bfloat16* output, int requests, int tokens,
+    int heads, int dimension, bool token_to_head) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int request_elements = tokens * heads * dimension;
+  if (index >= requests * request_elements) return;
+  const int request = index / request_elements;
+  const int local = index % request_elements;
+  const int component = local % dimension;
+  const int head = (local / dimension) % heads;
+  const int token = local / (dimension * heads);
+  const std::uint64_t token_major =
+      (static_cast<std::uint64_t>(request) * tokens * heads + token * heads + head) *
+      dimension + component;
+  const std::uint64_t head_major =
+      (static_cast<std::uint64_t>(request) * heads * tokens + head * tokens + token) *
+      dimension + component;
+  if (token_to_head) {
+    output[head_major] = input[token_major];
+  } else {
+    output[token_major] = input[head_major];
   }
 }
 
@@ -298,6 +332,56 @@ __global__ void copy_kv_span_to_ring_kernel(
         dimension + component;
     destination[destination_index] = source[source_index];
   }
+}
+
+__global__ void gather_kv_rings_kernel(
+    const __nv_bfloat16* const* key_sources,
+    const __nv_bfloat16* const* value_sources,
+    __nv_bfloat16* staged_keys, __nv_bfloat16* staged_values,
+    const int* position_starts, int requests, int heads, int retained_tokens,
+    int dimension, int source_capacity, int staging_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int request_elements = heads * retained_tokens * dimension;
+  if (index >= requests * request_elements) return;
+  const int request = index / request_elements;
+  const int local = index % request_elements;
+  const int component = local % dimension;
+  const int token = (local / dimension) % retained_tokens;
+  const int head = local / (dimension * retained_tokens);
+  const int source_token =
+      (position_starts[request] - retained_tokens + token) % source_capacity;
+  const std::uint64_t source_index =
+      (static_cast<std::uint64_t>(head) * source_capacity + source_token) * dimension + component;
+  const std::uint64_t destination_index =
+      ((static_cast<std::uint64_t>(request) * heads + head) * staging_capacity + token) *
+      dimension + component;
+  staged_keys[destination_index] = key_sources[request][source_index];
+  staged_values[destination_index] = value_sources[request][source_index];
+}
+
+__global__ void copy_kv_spans_to_rings_kernel(
+    const __nv_bfloat16* staged_keys, const __nv_bfloat16* staged_values,
+    __nv_bfloat16* const* key_destinations,
+    __nv_bfloat16* const* value_destinations,
+    const int* position_starts, int requests, int heads, int tokens, int dimension,
+    int staging_capacity, int staging_position_start, int destination_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int request_elements = heads * tokens * dimension;
+  if (index >= requests * request_elements) return;
+  const int request = index / request_elements;
+  const int local = index % request_elements;
+  const int component = local % dimension;
+  const int token = (local / dimension) % tokens;
+  const int head = local / (dimension * tokens);
+  const int destination_token = (position_starts[request] + token) % destination_capacity;
+  const std::uint64_t source_index =
+      ((static_cast<std::uint64_t>(request) * heads + head) * staging_capacity +
+       staging_position_start + token) * dimension + component;
+  const std::uint64_t destination_index =
+      (static_cast<std::uint64_t>(head) * destination_capacity + destination_token) *
+      dimension + component;
+  key_destinations[request][destination_index] = staged_keys[source_index];
+  value_destinations[request][destination_index] = staged_values[source_index];
 }
 
 struct Maximum {
@@ -440,6 +524,20 @@ void embedding_batch_bf16(const void* embedding_weight, const int* device_token_
   check(cudaPeekAtLastError(), "launch batched embedding kernel");
 }
 
+void gather_rows_bf16(const void* input, const int* device_row_indices, void* output,
+                      int rows, int width, cudaStream_t stream) {
+  if (input == nullptr || device_row_indices == nullptr || output == nullptr || rows <= 0 ||
+      width <= 0) {
+    throw std::runtime_error("invalid gather rows shape");
+  }
+  constexpr int threads = 256;
+  const int elements = rows * width;
+  gather_rows_kernel<<<(elements + threads - 1) / threads, threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), device_row_indices,
+      static_cast<__nv_bfloat16*>(output), rows, width);
+  check(cudaPeekAtLastError(), "launch gather rows");
+}
+
 void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
                         int head_dimension, cudaStream_t stream) {
   if (input == nullptr || output == nullptr || tokens <= 0 || heads <= 0 || head_dimension <= 0) {
@@ -462,6 +560,32 @@ void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
       static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
       tokens, heads, head_dimension, false);
   check(cudaPeekAtLastError(), "launch head-to-token transpose");
+}
+
+void token_to_head_batch_bf16(const void* input, void* output, int requests, int tokens,
+                              int heads, int head_dimension, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || requests <= 0 || tokens <= 0 || heads <= 0 ||
+      head_dimension <= 0) {
+    throw std::runtime_error("invalid batched token-to-head transpose shape");
+  }
+  const int elements = requests * tokens * heads * head_dimension;
+  token_head_batch_transpose_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
+      requests, tokens, heads, head_dimension, true);
+  check(cudaPeekAtLastError(), "launch batched token-to-head transpose");
+}
+
+void head_to_token_batch_bf16(const void* input, void* output, int requests, int tokens,
+                              int heads, int head_dimension, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || requests <= 0 || tokens <= 0 || heads <= 0 ||
+      head_dimension <= 0) {
+    throw std::runtime_error("invalid batched head-to-token transpose shape");
+  }
+  const int elements = requests * tokens * heads * head_dimension;
+  token_head_batch_transpose_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
+      requests, tokens, heads, head_dimension, false);
+  check(cudaPeekAtLastError(), "launch batched head-to-token transpose");
 }
 
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
@@ -510,6 +634,51 @@ void copy_kv_span_to_ring_bf16(const void* source, void* destination, int heads,
       heads, tokens, head_dimension, source_capacity, source_position_start,
       destination_capacity, logical_position_start);
   check(cudaPeekAtLastError(), "launch KV ring span copy");
+}
+
+void gather_kv_rings_bf16(const void* const* device_key_sources,
+                          const void* const* device_value_sources, void* staged_keys,
+                          void* staged_values, const int* device_position_starts,
+                          int requests, int heads, int retained_tokens, int head_dimension,
+                          int source_capacity, int staging_capacity, cudaStream_t stream) {
+  if (device_key_sources == nullptr || device_value_sources == nullptr || staged_keys == nullptr ||
+      staged_values == nullptr || device_position_starts == nullptr || requests <= 0 ||
+      heads <= 0 || retained_tokens <= 0 || head_dimension <= 0 || source_capacity <= 0 ||
+      staging_capacity < retained_tokens) {
+    throw std::runtime_error("invalid batched KV ring gather shape");
+  }
+  const int elements = requests * heads * retained_tokens * head_dimension;
+  gather_kv_rings_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      reinterpret_cast<const __nv_bfloat16* const*>(device_key_sources),
+      reinterpret_cast<const __nv_bfloat16* const*>(device_value_sources),
+      static_cast<__nv_bfloat16*>(staged_keys), static_cast<__nv_bfloat16*>(staged_values),
+      device_position_starts, requests, heads, retained_tokens, head_dimension,
+      source_capacity, staging_capacity);
+  check(cudaPeekAtLastError(), "launch batched KV ring gather");
+}
+
+void copy_kv_spans_to_rings_bf16(const void* staged_keys, const void* staged_values,
+                                 void* const* device_key_destinations,
+                                 void* const* device_value_destinations,
+                                 const int* device_position_starts, int requests, int heads,
+                                 int tokens, int head_dimension, int staging_capacity,
+                                 int staging_position_start, int destination_capacity,
+                                 cudaStream_t stream) {
+  if (staged_keys == nullptr || staged_values == nullptr || device_key_destinations == nullptr ||
+      device_value_destinations == nullptr || device_position_starts == nullptr || requests <= 0 ||
+      heads <= 0 || tokens <= 0 || head_dimension <= 0 || staging_position_start < 0 ||
+      staging_capacity < staging_position_start + tokens || destination_capacity <= 0) {
+    throw std::runtime_error("invalid batched KV ring copy shape");
+  }
+  const int elements = requests * heads * tokens * head_dimension;
+  copy_kv_spans_to_rings_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(staged_keys),
+      static_cast<const __nv_bfloat16*>(staged_values),
+      reinterpret_cast<__nv_bfloat16* const*>(device_key_destinations),
+      reinterpret_cast<__nv_bfloat16* const*>(device_value_destinations),
+      device_position_starts, requests, heads, tokens, head_dimension, staging_capacity,
+      staging_position_start, destination_capacity);
+  check(cudaPeekAtLastError(), "launch batched KV ring copy");
 }
 
 std::size_t argmax_bf16_workspace_bytes(int elements) {

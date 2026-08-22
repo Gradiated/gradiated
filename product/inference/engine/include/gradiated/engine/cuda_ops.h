@@ -28,10 +28,16 @@ void embedding_bf16(const void* embedding_weight, int token_id, void* output,
 void embedding_batch_bf16(const void* embedding_weight, const int* device_token_ids,
                           void* output, int batch, int vocabulary_size, int hidden_size,
                           float scale, cudaStream_t stream);
+void gather_rows_bf16(const void* input, const int* device_row_indices, void* output,
+                      int rows, int width, cudaStream_t stream);
 void token_to_head_bf16(const void* input, void* output, int tokens, int heads,
                         int head_dimension, cudaStream_t stream);
 void head_to_token_bf16(const void* input, void* output, int tokens, int heads,
                         int head_dimension, cudaStream_t stream);
+void token_to_head_batch_bf16(const void* input, void* output, int requests, int tokens,
+                              int heads, int head_dimension, cudaStream_t stream);
+void head_to_token_batch_bf16(const void* input, void* output, int requests, int tokens,
+                              int heads, int head_dimension, cudaStream_t stream);
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
                            int head_dimension, int destination_capacity, int position_start,
                            cudaStream_t stream);
@@ -42,6 +48,19 @@ void copy_kv_span_to_ring_bf16(const void* source, void* destination, int heads,
                                int head_dimension, int source_capacity, int source_position_start,
                                int destination_capacity, int logical_position_start,
                                cudaStream_t stream);
+// Uniform multi-request variants used to collapse cached suffix prefill into one launch.
+void gather_kv_rings_bf16(const void* const* device_key_sources,
+                          const void* const* device_value_sources, void* staged_keys,
+                          void* staged_values, const int* device_position_starts,
+                          int requests, int heads, int retained_tokens, int head_dimension,
+                          int source_capacity, int staging_capacity, cudaStream_t stream);
+void copy_kv_spans_to_rings_bf16(const void* staged_keys, const void* staged_values,
+                                 void* const* device_key_destinations,
+                                 void* const* device_value_destinations,
+                                 const int* device_position_starts, int requests, int heads,
+                                 int tokens, int head_dimension, int staging_capacity,
+                                 int staging_position_start, int destination_capacity,
+                                 cudaStream_t stream);
 std::size_t argmax_bf16_workspace_bytes(int elements);
 void argmax_bf16(const void* values, int elements, int* device_output,
                  void* workspace, cudaStream_t stream);

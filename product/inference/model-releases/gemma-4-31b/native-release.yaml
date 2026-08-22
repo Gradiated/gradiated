@@ -21,3 +21,6 @@ spec:
   limits:
     contextLength: 8192
     prefillChunkTokens: 1024
+  optimization:
+    decodeWeights: fp8-e4m3-tensor
+    prefillWeights: bf16

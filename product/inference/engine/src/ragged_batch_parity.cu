@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
   try {
     if (argc != 3 && argc != 4) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
-                   "[profile-ragged|prefix-benchmark]\n";
+                   "[profile-ragged|profile-suffix|prefix-benchmark]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -76,6 +76,37 @@ int main(int argc, char** argv) {
       cudaProfilerStop();
       std::cout << "profile_ragged_tokens_per_second="
                 << (static_cast<double>(batch * decode_steps) / seconds) << '\n';
+      return 0;
+    }
+    if (argc == 4 && std::string(argv[3]) == "profile-suffix") {
+      constexpr int batch = 10;
+      constexpr int position = 6000;
+      constexpr int suffix_tokens = 257;
+      constexpr int context = 8192;
+      std::vector<std::vector<int>> prompts(
+          batch, std::vector<int>(position + suffix_tokens, 2));
+      std::vector<const std::vector<int>*> prompt_pointers;
+      std::vector<int> slots;
+      for (int index = 0; index < batch; ++index) {
+        prompt_pointers.push_back(&prompts[static_cast<std::size_t>(index)]);
+        slots.push_back(index);
+      }
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, batch, context);
+      runner.seed_empty_cache_for_benchmark(position);
+      static_cast<void>(runner.prefill_slots_suffix(slots, prompt_pointers));
+      runner.seed_empty_cache_for_benchmark(position);
+      cudaProfilerStart();
+      const auto begin = std::chrono::steady_clock::now();
+      static_cast<void>(runner.prefill_slots_suffix(slots, prompt_pointers));
+      cudaDeviceSynchronize();
+      const double seconds =
+          std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
+      cudaProfilerStop();
+      std::cout << "profile_suffix_requests=" << batch << '\n'
+                << "profile_suffix_tokens=" << batch * suffix_tokens << '\n'
+                << "profile_suffix_seconds=" << seconds << '\n'
+                << "profile_suffix_tokens_per_second="
+                << static_cast<double>(batch * suffix_tokens) / seconds << '\n';
       return 0;
     }
     if (argc == 4 && std::string(argv[3]) == "prefix-benchmark") {
@@ -139,8 +170,33 @@ int main(int argc, char** argv) {
       require_equal(runner.append_ragged({reused_prediction, fresh_prediction}, {1, 3}),
                     {expected[1], expected[1]}, "exact-prefix cached decode");
 
-      const int slot_zero = runner.prefill_slot(0, prompt, 16);
+      // Pack unequal suffix lengths into one projection batch. This covers the row-offset and
+      // independent-cache invariants used by cached multi-turn cohorts in the runtime.
+      const int shorter_prefix_tokens = static_cast<int>(prompt.size()) - 4;
+      const std::vector<int> shorter_prefix(prompt.begin(), prompt.begin() + shorter_prefix_tokens);
+      static_cast<void>(runner.prefill_slot(0, prefix, 8));
+      static_cast<void>(runner.prefill_slot(2, shorter_prefix, 8));
+      const auto batched_suffix_predictions = runner.prefill_slots_suffix(
+          {0, 2}, {&prompt, &prompt});
+      require_equal(batched_suffix_predictions, {expected[0], expected[0]},
+                    "unequal batched suffix prefill");
+      require_equal(runner.append_ragged(batched_suffix_predictions, {0, 2}),
+                    {expected[1], expected[1]}, "unequal batched suffix cached decode");
+      runner.reset_slot(0);
       runner.reset_slot(2);
+
+      static_cast<void>(runner.prefill_slot(0, prefix, 8));
+      static_cast<void>(runner.prefill_slot(2, prefix, 8));
+      const auto uniform_suffix_predictions = runner.prefill_slots_suffix(
+          {0, 2}, {&prompt, &prompt});
+      require_equal(uniform_suffix_predictions, {expected[0], expected[0]},
+                    "uniform batched suffix prefill");
+      require_equal(runner.append_ragged(uniform_suffix_predictions, {0, 2}),
+                    {expected[1], expected[1]}, "uniform batched suffix cached decode");
+      runner.reset_slot(0);
+      runner.reset_slot(2);
+
+      const int slot_zero = runner.prefill_slot(0, prompt, 16);
       std::optional<int> chunked_prediction;
       int chunk_count = 0;
       while (!chunked_prediction) {
@@ -172,6 +228,75 @@ int main(int argc, char** argv) {
       std::cout << "ragged_parity=true\n"
                 << "short_ragged_batch=2\n"
                 << "short_ragged_tokens_per_second=" << (2.0 * measured_steps / seconds) << '\n';
+    }
+
+    {
+      // Four sorted long contexts force the split-width global-attention path. Compare it with
+      // independent suffix prefill and then compare the next cached decode token as well.
+      const std::vector<int> prefix_lengths{1100, 1300, 1800, 2000};
+      constexpr int suffix_tokens = 7;
+      std::vector<std::vector<int>> long_prompts;
+      for (const int prefix_length : prefix_lengths) {
+        std::vector<int> long_prompt(static_cast<std::size_t>(prefix_length + suffix_tokens));
+        for (std::size_t index = 0; index < long_prompt.size(); ++index) {
+          long_prompt[index] = prompt[index % prompt.size()];
+        }
+        long_prompts.push_back(std::move(long_prompt));
+      }
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 8, 2048);
+      for (int request = 0; request < 4; ++request) {
+        const auto& full = long_prompts[static_cast<std::size_t>(request)];
+        const int prefix_length = prefix_lengths[static_cast<std::size_t>(request)];
+        const std::vector<int> resident(full.begin(), full.begin() + prefix_length);
+        static_cast<void>(runner.prefill_slot(request, resident, 1024));
+        static_cast<void>(runner.prefill_slot(request + 4, resident, 1024));
+      }
+      std::vector<int> serial_predictions;
+      std::vector<const std::vector<int>*> prompt_pointers;
+      for (int request = 0; request < 4; ++request) {
+        serial_predictions.push_back(runner.prefill_slot_from_prefix(
+            request, long_prompts[static_cast<std::size_t>(request)],
+            prefix_lengths[static_cast<std::size_t>(request)], 16));
+        prompt_pointers.push_back(&long_prompts[static_cast<std::size_t>(request)]);
+      }
+      const auto batched_predictions =
+          runner.prefill_slots_suffix({4, 5, 6, 7}, prompt_pointers);
+      require_equal(batched_predictions, serial_predictions,
+                    "split-context batched suffix prefill");
+      const auto serial_decode = runner.append_ragged(serial_predictions, {0, 1, 2, 3});
+      const auto batched_decode = runner.append_ragged(batched_predictions, {4, 5, 6, 7});
+      require_equal(batched_decode, serial_decode,
+                    "split-context batched suffix cached decode");
+    }
+    {
+      // cuDNN's multi-request sliding plan is promoted only for the production-sized cohort and
+      // suffix shape. Compare that exact fast path with independent full prefill and decode.
+      constexpr int batch = 10;
+      constexpr int prefix_tokens = 3000;
+      constexpr int suffix_tokens = 257;
+      std::vector<int> full(static_cast<std::size_t>(prefix_tokens + suffix_tokens));
+      for (std::size_t index = 0; index < full.size(); ++index) {
+        full[index] = prompt[index % prompt.size()];
+      }
+      const std::vector<int> resident(full.begin(), full.begin() + prefix_tokens);
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, batch, 4000);
+      std::vector<int> slots;
+      std::vector<const std::vector<int>*> prompts;
+      for (int slot = 0; slot < batch; ++slot) {
+        slots.push_back(slot);
+        prompts.push_back(&full);
+        static_cast<void>(runner.prefill_slot(slot, resident, 1024));
+      }
+      const auto batched_predictions = runner.prefill_slots_suffix(slots, prompts);
+      const auto batched_decode = runner.append_ragged(batched_predictions, slots);
+      std::vector<int> serial_predictions;
+      for (int slot = 0; slot < batch; ++slot) {
+        serial_predictions.push_back(runner.prefill_slot(slot, full, 1024));
+      }
+      require_equal(batched_predictions, serial_predictions,
+                    "production-shape batched suffix prefill");
+      require_equal(batched_decode, runner.append_ragged(serial_predictions, slots),
+                    "production-shape batched suffix cached decode");
     }
 
     std::cout << "mode,batch,context,seconds,aggregate_tokens_per_second\n";

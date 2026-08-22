@@ -27,6 +27,10 @@ class Gemma4BatchModelRunner {
   // the complete prompt is resident, allowing a scheduler to bound interruption of active decode.
   std::optional<int> prefill_slot_chunk(int slot, const std::vector<int>& token_ids,
                                         int chunk_tokens);
+  // Extends several stable slots to the ends of their prompts with one shared projection batch.
+  std::vector<int> prefill_slots_suffix(
+      const std::vector<int>& slots,
+      const std::vector<const std::vector<int>*>& token_ids);
   // Copies the exact hybrid KV state and logical position between stable slots on device.
   std::uint64_t clone_slot(int source_slot, int destination_slot);
   // Decodes compact active rows while retaining each request's stable cache slot.

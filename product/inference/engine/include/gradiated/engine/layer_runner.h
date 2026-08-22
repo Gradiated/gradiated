@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 
 struct CUstream_st;
 using cudaStream_t = CUstream_st*;
@@ -33,6 +34,14 @@ class Gemma4LayerRunner {
   void run_prefill_chunk(int layer_index, const void* hidden_states, void* output, int tokens,
                          int position_start, void* key_cache, void* value_cache,
                          int cache_capacity, cudaStream_t stream);
+  // Runs variable cached suffixes as one projection batch while preserving independent attention
+  // and KV-cache ownership for each request.
+  void run_prefill_chunks(int layer_index, const void* hidden_states, void* output,
+                          const std::vector<int>& token_counts,
+                          const std::vector<int>& position_starts,
+                          const std::vector<void*>& key_caches,
+                          const std::vector<void*>& value_caches,
+                          const std::vector<int>& cache_capacities, cudaStream_t stream);
 
  private:
   struct Implementation;

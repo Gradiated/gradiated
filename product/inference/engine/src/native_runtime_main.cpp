@@ -31,6 +31,12 @@ constexpr int maximum_context = 8192;
 constexpr int default_chunk_tokens = 1024;
 constexpr int default_scheduler_prefill_quantum_tokens = 128;
 constexpr int default_idle_prefill_quantum_tokens = 1024;
+// OpenRouter-style bursts arrive over several milliseconds at the node even when the
+// upstream scheduler dispatches them together.  Ten milliseconds consistently formed
+// complete cohorts in the production c10 trace, while remaining below the measured
+// competing-provider TTFT margin.
+constexpr int default_short_prefill_batch_window_microseconds = 10000;
+constexpr int short_prefill_cohort_tokens = 512;
 constexpr int maximum_slots = 16;
 
 std::string environment(const char* name, const std::string& fallback = {}) {
@@ -112,6 +118,9 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> prefill_tokens_computed{0};
   std::atomic<std::uint64_t> kv_cache_clones{0};
   std::atomic<std::uint64_t> kv_cache_clone_bytes{0};
+  std::atomic<std::uint64_t> suffix_prefill_batches{0};
+  std::atomic<std::uint64_t> suffix_prefill_requests{0};
+  std::atomic<std::uint64_t> suffix_prefill_tokens{0};
 };
 
 struct CompletionResult {
@@ -145,16 +154,40 @@ class ContinuousScheduler {
  public:
   ContinuousScheduler(const gradiated::engine::Gemma4Config& config,
                       const gradiated::engine::DeviceWeightArena& weights,
+                      const gradiated::engine::Fp8WeightArena* fp8_weights,
                       RuntimeMetrics& metrics, int prefill_quantum_tokens,
-                      int idle_prefill_quantum_tokens)
-      : runner_(config, weights, maximum_slots, maximum_context),
+                      int idle_prefill_quantum_tokens,
+                      int short_prefill_batch_window_microseconds)
+      : runner_(config, weights, maximum_slots, maximum_context, fp8_weights),
         slots_(maximum_slots), metrics_(metrics),
         prefill_quantum_tokens_(prefill_quantum_tokens),
-        idle_prefill_quantum_tokens_(idle_prefill_quantum_tokens) {
+        idle_prefill_quantum_tokens_(idle_prefill_quantum_tokens),
+        short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds) {
     // Materialize latency-sensitive cuBLASLt and attention plans before advertising readiness.
     std::vector<int> warmup(2048, 2);
     while (!runner_.prefill_slot_chunk(0, warmup, default_chunk_tokens)) {}
     runner_.reset_slot(0);
+    // cuDNN SDPA plans are exact-shape keyed. Build the long-context active quantum and the
+    // one-token tail before readiness so a conversation's first cache extension cannot stall
+    // every decoder behind graph construction.
+    std::vector<int> active_prefill_warmup(
+        static_cast<std::size_t>(default_chunk_tokens + prefill_quantum_tokens_ + 1), 2);
+    static_cast<void>(runner_.prefill_slot_chunk(
+        0, active_prefill_warmup, default_chunk_tokens));
+    static_cast<void>(runner_.prefill_slot_chunk(
+        0, active_prefill_warmup, prefill_quantum_tokens_));
+    static_cast<void>(runner_.prefill_slot_chunk(
+        0, active_prefill_warmup, prefill_quantum_tokens_));
+    runner_.seed_empty_cache_for_benchmark(1);
+    for (int active = 1; active <= maximum_slots; ++active) {
+      std::vector<int> tokens(static_cast<std::size_t>(active), 2);
+      std::vector<int> slots(static_cast<std::size_t>(active));
+      for (int index = 0; index < active; ++index) {
+        slots[static_cast<std::size_t>(index)] = index;
+      }
+      static_cast<void>(runner_.append_ragged(tokens, slots));
+    }
+    for (int slot = 0; slot < maximum_slots; ++slot) runner_.reset_slot(slot);
     worker_ = std::thread([this] { run(); });
   }
 
@@ -366,7 +399,7 @@ class ContinuousScheduler {
     return true;
   }
 
-  bool prefill_step() {
+  bool prefill_step(bool force_idle_quantum = false) {
     int selected = -1;
     std::uint64_t oldest = std::numeric_limits<std::uint64_t>::max();
     for (int index = 0; index < maximum_slots; ++index) {
@@ -382,8 +415,9 @@ class ContinuousScheduler {
       const int before = runner_.slot_position(selected);
       const bool decode_is_active = std::any_of(
           slots_.begin(), slots_.end(), [](const Slot& candidate) { return candidate.decode_ready; });
-      const int quantum = decode_is_active
-          ? prefill_quantum_tokens_ : idle_prefill_quantum_tokens_;
+      const int quantum = force_idle_quantum || !decode_is_active
+          ? idle_prefill_quantum_tokens_
+          : prefill_quantum_tokens_;
       const auto prediction = runner_.prefill_slot_chunk(
           selected, slot.job->input_ids, quantum);
       const auto end = std::chrono::steady_clock::now();
@@ -454,10 +488,115 @@ class ContinuousScheduler {
     return std::any_of(slots_.begin(), slots_.end(), [](const Slot& slot) { return slot.job != nullptr; });
   }
 
+  bool drain_short_prefill_cohort() {
+    int waiting = 0;
+    std::vector<int> cohort_slots;
+    std::vector<const std::vector<int>*> cohort_prompts;
+    std::vector<int> computed_tokens;
+    for (int index = 0; index < maximum_slots; ++index) {
+      const auto& slot = slots_[static_cast<std::size_t>(index)];
+      if (!slot.job) continue;
+      if (slot.decode_ready) return false;
+      const int remaining = static_cast<int>(slot.job->input_ids.size()) -
+                            runner_.slot_position(index);
+      if (remaining <= 0 || remaining > short_prefill_cohort_tokens) return false;
+      ++waiting;
+      cohort_slots.push_back(index);
+      cohort_prompts.push_back(&slot.job->input_ids);
+      computed_tokens.push_back(remaining);
+    }
+    if (waiting < 2) return false;
+    std::vector<std::size_t> order(cohort_slots.size());
+    for (std::size_t index = 0; index < order.size(); ++index) order[index] = index;
+    std::stable_sort(order.begin(), order.end(), [&](std::size_t left, std::size_t right) {
+      return runner_.slot_position(cohort_slots[left]) <
+             runner_.slot_position(cohort_slots[right]);
+    });
+    std::vector<int> sorted_slots;
+    std::vector<const std::vector<int>*> sorted_prompts;
+    std::vector<int> sorted_computed_tokens;
+    sorted_slots.reserve(order.size());
+    sorted_prompts.reserve(order.size());
+    sorted_computed_tokens.reserve(order.size());
+    for (const std::size_t index : order) {
+      sorted_slots.push_back(cohort_slots[index]);
+      sorted_prompts.push_back(cohort_prompts[index]);
+      sorted_computed_tokens.push_back(computed_tokens[index]);
+    }
+    cohort_slots = std::move(sorted_slots);
+    cohort_prompts = std::move(sorted_prompts);
+    computed_tokens = std::move(sorted_computed_tokens);
+    try {
+      const auto predictions = runner_.prefill_slots_suffix(cohort_slots, cohort_prompts);
+      const auto prediction_time = std::chrono::steady_clock::now();
+      metrics_.suffix_prefill_batches.fetch_add(1);
+      metrics_.suffix_prefill_requests.fetch_add(cohort_slots.size());
+      for (std::size_t request = 0; request < cohort_slots.size(); ++request) {
+        const int index = cohort_slots[request];
+        auto& slot = slots_[static_cast<std::size_t>(index)];
+        metrics_.prefill_tokens_computed.fetch_add(
+            static_cast<std::uint64_t>(computed_tokens[request]));
+        metrics_.suffix_prefill_tokens.fetch_add(
+            static_cast<std::uint64_t>(computed_tokens[request]));
+        slot.cached_tokens = slot.job->input_ids;
+        slot.token_to_append = predictions[request];
+        slot.output_ids.push_back(predictions[request]);
+        slot.decode_ready = true;
+        slot.ttft_microseconds = static_cast<std::uint64_t>(
+            std::chrono::duration_cast<std::chrono::microseconds>(
+                prediction_time - slot.job->queued_at).count());
+        slot.last_token_at = prediction_time;
+        metrics_.decoding.fetch_add(1);
+        if (slot.job->stop_ids.contains(predictions[request])) {
+          complete_slot(index, "stop");
+        } else if (slot.job->max_tokens == 1) {
+          complete_slot(index, "length");
+        }
+      }
+    } catch (const std::exception& error) {
+      for (const int index : cohort_slots) {
+        if (slots_[static_cast<std::size_t>(index)].job) fail_slot(index, error.what());
+      }
+      return true;
+    }
+    const auto release_time = std::chrono::steady_clock::now();
+    for (auto& slot : slots_) {
+      if (!slot.job || !slot.decode_ready) continue;
+      slot.ttft_microseconds = static_cast<std::uint64_t>(
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              release_time - slot.job->queued_at).count());
+      slot.last_token_at = release_time;
+    }
+    return true;
+  }
+
+  bool wait_for_short_prefill_cohort() {
+    if (short_prefill_batch_window_microseconds_ <= 0) return false;
+    std::optional<std::chrono::steady_clock::time_point> oldest;
+    for (int index = 0; index < maximum_slots; ++index) {
+      const auto& slot = slots_[static_cast<std::size_t>(index)];
+      if (!slot.job) continue;
+      if (slot.decode_ready) return false;
+      const int remaining = static_cast<int>(slot.job->input_ids.size()) -
+                            runner_.slot_position(index);
+      if (remaining <= 0 || remaining > short_prefill_cohort_tokens) return false;
+      if (!oldest || slot.job->queued_at < *oldest) oldest = slot.job->queued_at;
+    }
+    if (!oldest) return false;
+    const auto deadline = *oldest +
+        std::chrono::microseconds(short_prefill_batch_window_microseconds_);
+    if (std::chrono::steady_clock::now() >= deadline) return false;
+    std::unique_lock lock(mutex_);
+    condition_.wait_until(lock, deadline, [&] { return stopping_ || !pending_.empty(); });
+    return !pending_.empty();
+  }
+
   void run() {
     while (true) {
       bool worked = false;
       while (admit_one()) worked = true;
+      if (wait_for_short_prefill_cohort()) continue;
+      if (drain_short_prefill_cohort()) worked = true;
       if (decode_step()) worked = true;
       if (prefill_step()) worked = true;
       if (worked) continue;
@@ -472,6 +611,7 @@ class ContinuousScheduler {
   RuntimeMetrics& metrics_;
   int prefill_quantum_tokens_;
   int idle_prefill_quantum_tokens_;
+  int short_prefill_batch_window_microseconds_;
   std::mutex mutex_;
   std::condition_variable condition_;
   std::deque<std::shared_ptr<CompletionJob>> pending_;
@@ -495,6 +635,14 @@ int main(int argc, char** argv) {
     gradiated::engine::validate_gemma4_weights(host_weights, config);
     const auto plan = gradiated::engine::WeightPlan::gemma4(config, host_weights);
     const auto weights = gradiated::engine::DeviceWeightArena::load(plan, host_weights);
+    std::unique_ptr<gradiated::engine::Fp8WeightArena> fp8_weights;
+    const std::string fp8_decode = environment("GRADIATED_FP8_DECODE", "off");
+    if (fp8_decode == "tensor") {
+      fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+    } else if (fp8_decode != "off") {
+      throw std::runtime_error("GRADIATED_FP8_DECODE must be off or tensor");
+    }
 
     const std::string configured_key = environment(
         "GRADIATED_RUNTIME_API_KEY", environment("DESMOND_RUNTIME_API_KEY"));
@@ -507,9 +655,13 @@ int main(int argc, char** argv) {
     const int idle_prefill_quantum_tokens = environment_integer(
         "GRADIATED_IDLE_PREFILL_QUANTUM_TOKENS", default_idle_prefill_quantum_tokens,
         1, maximum_context);
+    const int short_prefill_batch_window_microseconds = environment_integer(
+        "GRADIATED_SHORT_PREFILL_BATCH_WINDOW_US",
+        default_short_prefill_batch_window_microseconds, 0, 20000);
     RuntimeMetrics metrics;
-    ContinuousScheduler scheduler(config, *weights, metrics, prefill_quantum_tokens,
-                                  idle_prefill_quantum_tokens);
+    ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), metrics, prefill_quantum_tokens,
+                                  idle_prefill_quantum_tokens,
+                                  short_prefill_batch_window_microseconds);
 
     desmond::HttpServer server(bind_host, bind_port, [&](const desmond::HttpRequest& request) {
       if (request.method == "GET" && request.path == "/health") {
@@ -533,7 +685,14 @@ int main(int argc, char** argv) {
              << metrics.prefill_tokens_computed.load() << '\n'
              << "gradiated_native_kv_cache_clones_total " << metrics.kv_cache_clones.load() << '\n'
              << "gradiated_native_kv_cache_clone_bytes_total "
-             << metrics.kv_cache_clone_bytes.load() << '\n';
+             << metrics.kv_cache_clone_bytes.load() << '\n'
+             << "gradiated_native_suffix_prefill_batches_total "
+             << metrics.suffix_prefill_batches.load() << '\n'
+             << "gradiated_native_suffix_prefill_requests_total "
+             << metrics.suffix_prefill_requests.load() << '\n'
+             << "gradiated_native_suffix_prefill_tokens_total "
+             << metrics.suffix_prefill_tokens.load() << '\n'
+             << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n';
         return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", body.str()};
       }
       if (request.method != "POST" || request.path != "/v1/token-completions") {
@@ -590,7 +749,10 @@ int main(int argc, char** argv) {
     });
     std::cout << "gradiated native runtime ready on " << bind_host << ':' << bind_port
               << " active_prefill_quantum_tokens=" << prefill_quantum_tokens
-              << " idle_prefill_quantum_tokens=" << idle_prefill_quantum_tokens << '\n';
+              << " idle_prefill_quantum_tokens=" << idle_prefill_quantum_tokens
+              << " short_prefill_batch_window_us="
+              << short_prefill_batch_window_microseconds
+              << " fp8_decode=" << fp8_decode << '\n';
     server.run();
     return 0;
   } catch (const std::exception& error) {

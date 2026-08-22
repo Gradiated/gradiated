@@ -37,6 +37,15 @@ class Gemma4QkvPostprocessor {
                          int batch, int maximum_slots, int query_heads, int kv_heads,
                          int head_dimension, bool key_equals_value, int cache_capacity,
                          float epsilon, cudaStream_t stream);
+  // Processes equal-length request suffixes in one launch pair. Queries remain request-major
+  // token rows; K/V are written into request-major staged attention buffers.
+  void run_prefill_uniform(const void* packed_qkv, const void* query_norm_weight,
+                           const void* key_norm_weight, void* queries, void* staged_keys,
+                           void* staged_values, const int* device_position_starts,
+                           int requests, int tokens_per_request, int query_heads,
+                           int kv_heads, int head_dimension, bool key_equals_value,
+                           int staged_position_start, int staged_capacity,
+                           float epsilon, cudaStream_t stream);
 
  private:
   struct Implementation;

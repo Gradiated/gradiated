@@ -11,9 +11,11 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <vector>
 
 namespace gradiated::engine {
@@ -42,6 +44,16 @@ struct CacheLocation { std::uint64_t offset; int capacity; };
 }  // namespace
 
 struct Gemma4BatchModelRunner::Implementation {
+  struct DecodeGraph {
+    cudaGraph_t graph{};
+    cudaGraphExec_t executable{};
+
+    ~DecodeGraph() {
+      if (executable != nullptr) cudaGraphExecDestroy(executable);
+      if (graph != nullptr) cudaGraphDestroy(graph);
+    }
+  };
+
   const Gemma4Config& config;
   const DeviceWeightArena& weights;
   const Fp8WeightArena* fp8_weights;
@@ -68,6 +80,8 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation argmax_workspace;
   Allocation fp8_final_hidden;
   Allocation fp8_final_scales;
+  cudaStream_t decode_stream{};
+  std::map<std::pair<int, int>, std::unique_ptr<DecodeGraph>> decode_graphs;
 
   static std::uint64_t cache_payload(const Gemma4Config& config, int batch, int maximum_context,
                                      std::vector<CacheLocation>* locations) {
@@ -106,6 +120,17 @@ struct Gemma4BatchModelRunner::Implementation {
         fp8_final_scales(sizeof(float) * static_cast<std::uint64_t>(requested_batch) *
                          ((hidden + 127) / 128)) {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
+    check(cudaStreamCreateWithFlags(&decode_stream, cudaStreamNonBlocking),
+          "create decode stream");
+    // Global batched suffix attention pads shorter requests to one GEMM width. Zeroing once makes
+    // every unread cache tail finite; masked probabilities then contribute exactly zero in PV.
+    check(cudaMemset(cache_arena.get(), 0, static_cast<std::size_t>(2ULL * cache_payload_bytes)),
+          "initialize KV cache arena");
+  }
+
+  ~Implementation() {
+    decode_graphs.clear();
+    if (decode_stream != nullptr) cudaStreamDestroy(decode_stream);
   }
 
   void* key_cache(std::size_t layer) {
@@ -143,6 +168,50 @@ struct Gemma4BatchModelRunner::Implementation {
     fp8_lm_head.run(fp8_final_hidden.get(), scales, fp8_weights->at("token_embedding"),
                     fp8_weights->scale("token_embedding"), output,
                     rows, hidden, vocabulary, stream);
+  }
+
+  void enqueue_ragged_decode(int active, int maximum_context_length) {
+    embedding_batch_bf16(weights.at("token_embedding"),
+        static_cast<const int*>(device_input_tokens.get()), hidden_a.get(), active,
+        vocabulary, hidden, std::sqrt(static_cast<float>(hidden)), decode_stream);
+    void* input = hidden_a.get();
+    void* output = hidden_b.get();
+    for (std::size_t layer = 0; layer < config.layers.size(); ++layer) {
+      const auto& cache = caches[layer];
+      const int context = std::min(maximum_context_length, cache.capacity);
+      layers.run_decode_ragged(
+          static_cast<int>(layer), input, output,
+          static_cast<const int*>(device_positions.get()),
+          static_cast<const int*>(device_slots.get()), active, batch_size, context,
+          key_cache(layer), value_cache(layer), cache.capacity, decode_stream);
+      std::swap(input, output);
+    }
+    rms_norm_bf16(input, weights.at("final_norm"), final_hidden.get(), active, hidden,
+                  static_cast<float>(config.rms_norm_epsilon), decode_stream);
+    run_decode_lm_head(final_hidden.get(), logits.get(), active, decode_stream);
+    const std::size_t one_workspace = argmax_bf16_workspace_bytes(vocabulary);
+    for (int row = 0; row < active; ++row) {
+      const auto* row_logits = static_cast<const unsigned char*>(logits.get()) +
+                               2ULL * row * vocabulary;
+      auto* row_output = static_cast<int*>(device_output_tokens.get()) + row;
+      auto* row_workspace = static_cast<unsigned char*>(argmax_workspace.get()) +
+                            static_cast<std::size_t>(row) * one_workspace;
+      argmax_bf16(row_logits, vocabulary, row_output, row_workspace, decode_stream);
+    }
+  }
+
+  DecodeGraph& capture_decode_graph(int active, int maximum_context_length) {
+    auto captured = std::make_unique<DecodeGraph>();
+    check(cudaStreamBeginCapture(decode_stream, cudaStreamCaptureModeThreadLocal),
+          "begin ragged decode graph capture");
+    enqueue_ragged_decode(active, maximum_context_length);
+    check(cudaStreamEndCapture(decode_stream, &captured->graph),
+          "end ragged decode graph capture");
+    check(cudaGraphInstantiate(&captured->executable, captured->graph, 0),
+          "instantiate ragged decode graph");
+    DecodeGraph& result = *captured;
+    decode_graphs.emplace(std::make_pair(active, maximum_context_length), std::move(captured));
+    return result;
   }
 };
 
@@ -264,6 +333,102 @@ std::optional<int> Gemma4BatchModelRunner::prefill_slot_chunk(
   return prediction;
 }
 
+std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
+    const std::vector<int>& slots,
+    const std::vector<const std::vector<int>*>& token_ids) {
+  auto& state = *implementation_;
+  const int requests = static_cast<int>(slots.size());
+  if (requests <= 0 || requests > state.batch_size || token_ids.size() != slots.size()) {
+    throw std::runtime_error("invalid batched suffix prefill shape");
+  }
+  std::vector<bool> seen(static_cast<std::size_t>(state.batch_size), false);
+  std::vector<int> counts(static_cast<std::size_t>(requests));
+  std::vector<int> positions(static_cast<std::size_t>(requests));
+  std::vector<int> last_rows(static_cast<std::size_t>(requests));
+  std::vector<int> packed_tokens;
+  for (int request = 0; request < requests; ++request) {
+    const int slot = slots[static_cast<std::size_t>(request)];
+    const auto* prompt = token_ids[static_cast<std::size_t>(request)];
+    if (slot < 0 || slot >= state.batch_size || seen[static_cast<std::size_t>(slot)] ||
+        prompt == nullptr || prompt->empty() ||
+        prompt->size() > static_cast<std::size_t>(state.maximum_context)) {
+      throw std::runtime_error("invalid batched suffix prefill request");
+    }
+    seen[static_cast<std::size_t>(slot)] = true;
+    const int position = state.slot_positions[static_cast<std::size_t>(slot)];
+    const int count = static_cast<int>(prompt->size()) - position;
+    if (position < 0 || count <= 0) {
+      throw std::runtime_error("batched suffix does not extend resident context");
+    }
+    positions[static_cast<std::size_t>(request)] = position;
+    counts[static_cast<std::size_t>(request)] = count;
+    for (int index = position; index < static_cast<int>(prompt->size()); ++index) {
+      const int token = (*prompt)[static_cast<std::size_t>(index)];
+      if (token < 0 || token >= state.vocabulary) {
+        throw std::runtime_error("batched suffix contains an invalid token id");
+      }
+      packed_tokens.push_back(token);
+    }
+    last_rows[static_cast<std::size_t>(request)] =
+        static_cast<int>(packed_tokens.size()) - 1;
+  }
+  if (packed_tokens.size() > static_cast<std::size_t>(state.maximum_context)) {
+    throw std::runtime_error("batched suffix exceeds shared projection workspace");
+  }
+
+  check(cudaMemcpy(state.device_input_tokens.get(), packed_tokens.data(),
+                   packed_tokens.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy batched suffix tokens");
+  embedding_batch_bf16(
+      state.weights.at("token_embedding"),
+      static_cast<const int*>(state.device_input_tokens.get()), state.hidden_a.get(),
+      static_cast<int>(packed_tokens.size()), state.vocabulary, state.hidden,
+      std::sqrt(static_cast<float>(state.hidden)), nullptr);
+  void* input = state.hidden_a.get();
+  void* output = state.hidden_b.get();
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    std::vector<void*> key_caches;
+    std::vector<void*> value_caches;
+    std::vector<int> capacities(static_cast<std::size_t>(requests), state.caches[layer].capacity);
+    key_caches.reserve(static_cast<std::size_t>(requests));
+    value_caches.reserve(static_cast<std::size_t>(requests));
+    for (const int slot : slots) {
+      key_caches.push_back(state.slot_key_cache(layer, slot));
+      value_caches.push_back(state.slot_value_cache(layer, slot));
+    }
+    state.layers.run_prefill_chunks(static_cast<int>(layer), input, output, counts, positions,
+                                    key_caches, value_caches, capacities, nullptr);
+    std::swap(input, output);
+  }
+  check(cudaMemcpy(state.device_positions.get(), last_rows.data(),
+                   last_rows.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy batched suffix final rows");
+  gather_rows_bf16(input, static_cast<const int*>(state.device_positions.get()), output,
+                   requests, state.hidden, nullptr);
+  rms_norm_bf16(output, state.weights.at("final_norm"), state.final_hidden.get(), requests,
+                state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
+  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
+                    state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
+  for (int row = 0; row < requests; ++row) {
+    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
+                             2ULL * row * state.vocabulary;
+    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
+    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
+                          static_cast<std::size_t>(row) * one_workspace;
+    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
+  }
+  std::vector<int> predictions(static_cast<std::size_t>(requests));
+  check(cudaMemcpy(predictions.data(), state.device_output_tokens.get(),
+                   predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
+        "copy batched suffix predictions");
+  for (int request = 0; request < requests; ++request) {
+    state.slot_positions[static_cast<std::size_t>(slots[static_cast<std::size_t>(request)])] =
+        static_cast<int>(token_ids[static_cast<std::size_t>(request)]->size());
+  }
+  return predictions;
+}
+
 std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destination_slot) {
   auto& state = *implementation_;
   if (source_slot < 0 || source_slot >= state.batch_size || destination_slot < 0 ||
@@ -280,13 +445,13 @@ std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destinatio
     const int resident_tokens = std::min(position, cache.capacity);
     const std::size_t bytes = 2ULL * static_cast<std::size_t>(resident_tokens) *
                               state.config.layers[layer].kv_width();
-    check(cudaMemcpyAsync(state.slot_key_cache(layer, destination_slot),
-                          state.slot_key_cache(layer, source_slot), bytes,
-                          cudaMemcpyDeviceToDevice, nullptr),
+    check(cudaMemcpy(state.slot_key_cache(layer, destination_slot),
+                     state.slot_key_cache(layer, source_slot), bytes,
+                     cudaMemcpyDeviceToDevice),
           "clone slot key cache");
-    check(cudaMemcpyAsync(state.slot_value_cache(layer, destination_slot),
-                          state.slot_value_cache(layer, source_slot), bytes,
-                          cudaMemcpyDeviceToDevice, nullptr),
+    check(cudaMemcpy(state.slot_value_cache(layer, destination_slot),
+                     state.slot_value_cache(layer, source_slot), bytes,
+                     cudaMemcpyDeviceToDevice),
           "clone slot value cache");
     copied_bytes += 2ULL * bytes;
   }
@@ -319,45 +484,41 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
     positions[static_cast<std::size_t>(row)] = position;
     maximum_position = std::max(maximum_position, position);
   }
-  check(cudaMemcpy(state.device_input_tokens.get(), token_ids.data(),
-                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice),
+  check(cudaMemcpyAsync(state.device_input_tokens.get(), token_ids.data(),
+                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice,
+                   state.decode_stream),
         "copy ragged input tokens");
-  check(cudaMemcpy(state.device_positions.get(), positions.data(),
-                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice),
+  check(cudaMemcpyAsync(state.device_positions.get(), positions.data(),
+                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice,
+                   state.decode_stream),
         "copy ragged positions");
-  check(cudaMemcpy(state.device_slots.get(), slots.data(),
-                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice),
+  check(cudaMemcpyAsync(state.device_slots.get(), slots.data(),
+                   static_cast<std::size_t>(active) * sizeof(int), cudaMemcpyHostToDevice,
+                   state.decode_stream),
         "copy ragged slots");
-  embedding_batch_bf16(state.weights.at("token_embedding"),
-      static_cast<const int*>(state.device_input_tokens.get()), state.hidden_a.get(), active,
-      state.vocabulary, state.hidden, std::sqrt(static_cast<float>(state.hidden)), nullptr);
-  void* input = state.hidden_a.get();
-  void* output = state.hidden_b.get();
-  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
-    const auto& cache = state.caches[layer];
-    const int context = std::min(maximum_position + 1, cache.capacity);
-    state.layers.run_decode_ragged(
-        static_cast<int>(layer), input, output, static_cast<const int*>(state.device_positions.get()),
-        static_cast<const int*>(state.device_slots.get()), active, state.batch_size, context,
-        state.key_cache(layer), state.value_cache(layer), cache.capacity, nullptr);
-    std::swap(input, output);
-  }
-  rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), active,
-                state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
-  state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), active, nullptr);
-  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
-  for (int row = 0; row < active; ++row) {
-    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
-                             2ULL * row * state.vocabulary;
-    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
-    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                          static_cast<std::size_t>(row) * one_workspace;
-    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
+  // A 256-token context bucket allows the captured launch graph to survive ordinary decode
+  // steps. Per-row positions still mask every invalid score, so padding changes work, not math.
+  constexpr int context_bucket = 256;
+  const int maximum_context_length = std::min(
+      state.maximum_context,
+      ((maximum_position + 1 + context_bucket - 1) / context_bucket) * context_bucket);
+  const auto graph_key = std::make_pair(active, maximum_context_length);
+  const auto existing = state.decode_graphs.find(graph_key);
+  const bool needs_capture = existing == state.decode_graphs.end();
+  if (needs_capture) {
+    state.enqueue_ragged_decode(active, maximum_context_length);
+  } else {
+    check(cudaGraphLaunch(existing->second->executable, state.decode_stream),
+          "launch ragged decode graph");
   }
   std::vector<int> result(static_cast<std::size_t>(active));
-  check(cudaMemcpy(result.data(), state.device_output_tokens.get(),
-                   result.size() * sizeof(int), cudaMemcpyDeviceToHost),
+  check(cudaMemcpyAsync(result.data(), state.device_output_tokens.get(),
+                   result.size() * sizeof(int), cudaMemcpyDeviceToHost, state.decode_stream),
         "copy ragged output tokens");
+  check(cudaStreamSynchronize(state.decode_stream), "synchronize ragged decode");
+  if (needs_capture) {
+    static_cast<void>(state.capture_decode_graph(active, maximum_context_length));
+  }
   for (const int slot : slots) ++state.slot_positions[static_cast<std::size_t>(slot)];
   return result;
 }

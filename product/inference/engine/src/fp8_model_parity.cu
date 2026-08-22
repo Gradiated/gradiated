@@ -97,29 +97,34 @@ int main(int argc, char** argv) {
               << "steady_batch_one_tokens_per_second="
               << steady_batch_one_tokens_per_second << '\n';
 
-    constexpr int benchmark_batch = 16;
+    constexpr int benchmark_position = 8128;
     constexpr int benchmark_context = 8192;
-    constexpr int benchmark_steps = 8;
-    gradiated::engine::Gemma4BatchModelRunner batch_runner(
-        config, *weights, benchmark_batch, benchmark_context + benchmark_steps + 1,
-        fp8_weights.get());
-    batch_runner.seed_empty_cache_for_benchmark(benchmark_context - 1);
-    std::vector<int> slots(benchmark_batch), inputs(benchmark_batch, 2);
-    for (int index = 0; index < benchmark_batch; ++index) slots[index] = index;
-    inputs = batch_runner.append_ragged(inputs, slots);
-    if (profile) cudaProfilerStart();
-    const auto batch_begin = std::chrono::steady_clock::now();
-    for (int step = 0; step < benchmark_steps; ++step) {
+    constexpr int benchmark_steps = 32;
+    for (const int benchmark_batch : std::vector<int>{1, 4, 8, 10, 16}) {
+      gradiated::engine::Gemma4BatchModelRunner batch_runner(
+          config, *weights, benchmark_batch, benchmark_context,
+          fp8_weights.get());
+      batch_runner.seed_empty_cache_for_benchmark(benchmark_position);
+      std::vector<int> slots(static_cast<std::size_t>(benchmark_batch));
+      std::vector<int> inputs(static_cast<std::size_t>(benchmark_batch), 2);
+      for (int index = 0; index < benchmark_batch; ++index) slots[index] = index;
+      // The first call also captures the exact active/context graph. Keep graph construction out
+      // of the steady-state throughput interval while retaining it in end-to-end runtime tests.
       inputs = batch_runner.append_ragged(inputs, slots);
+      if (profile && benchmark_batch == 16) cudaProfilerStart();
+      const auto batch_begin = std::chrono::steady_clock::now();
+      for (int step = 0; step < benchmark_steps; ++step) {
+        inputs = batch_runner.append_ragged(inputs, slots);
+      }
+      const double batch_seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - batch_begin).count();
+      if (profile && benchmark_batch == 16) {
+        cudaDeviceSynchronize();
+        cudaProfilerStop();
+      }
+      std::cout << "steady_batch_" << benchmark_batch << "_tokens_per_second="
+                << static_cast<double>(benchmark_batch * benchmark_steps) / batch_seconds << '\n';
     }
-    const double batch_seconds = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - batch_begin).count();
-    if (profile) {
-      cudaDeviceSynchronize();
-      cudaProfilerStop();
-    }
-    std::cout << "steady_batch_16_tokens_per_second="
-              << static_cast<double>(benchmark_batch * benchmark_steps) / batch_seconds << '\n';
     return matching_prefix == expected.size() ? 0 : 2;
   } catch (const std::exception& error) {
     std::cerr << "FP8 model parity failed: " << error.what() << '\n';

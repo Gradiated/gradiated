@@ -1,2 +1,3 @@
 __pycache__/
-
+workloads/*.jsonl
+workloads/*.manifest.json

@@ -23,6 +23,8 @@ class Result:
     finished_at: float
     ttft_seconds: float
     prompt_tokens: int
+    cached_prompt_tokens: int
+    cacheable_prompt_tokens: int
     completion_tokens: int
     error: str = ""
 
@@ -39,7 +41,7 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
 
 
-def prompt(repetitions: int) -> str:
+def unique_prompt(repetitions: int) -> str:
     # Put a nonce first so SGLang cannot reuse the large common prompt prefix.
     prefix = f"Request {uuid.uuid4()}. "
     sentence = (
@@ -49,12 +51,46 @@ def prompt(repetitions: int) -> str:
     return prefix + sentence * repetitions
 
 
-def request_once(args: argparse.Namespace) -> Result:
+def session_prefix_prompt(args: argparse.Namespace, session_id: str) -> str:
+    prefix_sentence = (
+        "The coding agent is inspecting a production repository. It must preserve existing "
+        "behavior, use tools carefully, reason about tests, and make minimal verified changes. "
+        "Repository context includes application code, configuration, logs, test output, API "
+        "schemas, and prior conversation turns. "
+    )
+    suffix_sentence = (
+        "Review the next implementation detail, identify the likely failure mode, and propose "
+        "the smallest safe code change with a focused verification step. "
+    )
+    stable_prefix = (
+        f"Coding-agent session {session_id}.\n\n"
+        + prefix_sentence * args.session_prefix_repetitions
+    )
+    changing_suffix = (
+        f"\n\nCurrent turn {uuid.uuid4()}.\n"
+        + suffix_sentence * args.session_suffix_repetitions
+    )
+    return stable_prefix + changing_suffix
+
+
+def request_once(
+    args: argparse.Namespace,
+    prompt_text: str | None = None,
+    output_tokens: int | None = None,
+    messages: list[dict[str, object]] | None = None,
+) -> Result:
     started_at = time.monotonic()
+    requested_output_tokens = output_tokens or args.output_tokens
     payload = {
         "model": args.model,
-        "messages": [{"role": "user", "content": prompt(args.prompt_repetitions)}],
-        "max_tokens": args.output_tokens,
+        "messages": messages
+        or [
+            {
+                "role": "user",
+                "content": prompt_text or unique_prompt(args.prompt_repetitions),
+            }
+        ],
+        "max_tokens": requested_output_tokens,
         "temperature": 0,
         "stream": True,
         "stream_options": {"include_usage": True},
@@ -71,6 +107,7 @@ def request_once(args: argparse.Namespace) -> Result:
     )
     first_token_at = 0.0
     prompt_tokens = 0
+    cached_prompt_tokens = 0
     completion_tokens = 0
     try:
         with urllib.request.urlopen(request, timeout=args.timeout) as response:
@@ -81,6 +118,10 @@ def request_once(args: argparse.Namespace) -> Result:
                 chunk = json.loads(line[6:])
                 usage = chunk.get("usage") or {}
                 prompt_tokens = int(usage.get("prompt_tokens") or prompt_tokens)
+                prompt_details = usage.get("prompt_tokens_details") or {}
+                cached_prompt_tokens = int(
+                    prompt_details.get("cached_tokens") or cached_prompt_tokens
+                )
                 completion_tokens = int(usage.get("completion_tokens") or completion_tokens)
                 choices = chunk.get("choices") or []
                 if choices:
@@ -94,16 +135,18 @@ def request_once(args: argparse.Namespace) -> Result:
         if completion_tokens == 0:
             # ignore_eos makes this exact for successful requests, even when a
             # runtime omits usage from its final streaming chunk.
-            completion_tokens = args.output_tokens
+            completion_tokens = requested_output_tokens
         return Result(
             started_at,
             finished_at,
             first_token_at - started_at,
             prompt_tokens,
+            cached_prompt_tokens,
+            0,
             completion_tokens,
         )
     except Exception as error:  # noqa: BLE001 - benchmark records all failures
-        return Result(started_at, time.monotonic(), 0.0, 0, 0, str(error))
+        return Result(started_at, time.monotonic(), 0.0, 0, 0, 0, 0, str(error))
 
 
 def read_gpu_metrics(url: str, timeout: float) -> dict[str, float]:
@@ -123,16 +166,123 @@ def read_gpu_metrics(url: str, timeout: float) -> dict[str, float]:
     return metrics
 
 
-def run_level(args: argparse.Namespace, concurrency: int, seconds: float) -> dict[str, object]:
-    deadline = time.monotonic() + seconds
+def read_sglang_work_metrics(url: str, timeout: float) -> dict[str, float]:
+    with urllib.request.urlopen(f"{url.rstrip('/')}/metrics", timeout=timeout) as response:
+        body = response.read().decode()
+    metrics: dict[str, float] = {}
+    for line in body.splitlines():
+        if line.startswith("sglang:realtime_tokens_total{"):
+            value = float(line.rsplit(" ", 1)[1])
+            if 'mode="prefill_cache"' in line:
+                metrics["cached_tokens"] = value
+            elif 'mode="prefill_compute"' in line:
+                metrics["computed_prompt_tokens"] = value
+    return metrics
+
+
+def load_trace_sessions(path: str) -> list[dict[str, object]]:
+    sessions = []
+    with open(path, encoding="utf-8") as workload:
+        for line_number, line in enumerate(workload, start=1):
+            if not line.strip():
+                continue
+            session = json.loads(line)
+            messages = session.get("messages")
+            if not isinstance(messages, list) or not messages:
+                raise ValueError(f"{path}:{line_number}: messages must be a non-empty list")
+            sessions.append(session)
+    if not sessions:
+        raise ValueError(f"{path}: no sessions found")
+    return sessions
+
+
+def namespaced_trace_messages(
+    messages: list[dict[str, object]], namespace: str
+) -> list[dict[str, object]]:
+    copied = [dict(message) for message in messages]
+    marker = f"Benchmark replay {namespace}.\n"
+    if copied[0].get("role") == "system":
+        copied[0]["content"] = marker + str(copied[0].get("content") or "")
+    else:
+        copied.insert(0, {"role": "system", "content": marker})
+    return copied
+
+
+def trace_request_prefixes(
+    session: dict[str, object], namespace: str
+) -> list[list[dict[str, object]]]:
+    messages = namespaced_trace_messages(session["messages"], namespace)  # type: ignore[arg-type]
+    return [
+        messages[:index]
+        for index, message in enumerate(messages)
+        if message.get("role") == "assistant"
+        and index > 0
+        and messages[index - 1].get("role") == "user"
+    ]
+
+
+def run_level(
+    args: argparse.Namespace,
+    concurrency: int,
+    seconds: float,
+    trace_sessions: list[dict[str, object]],
+) -> dict[str, object]:
     results: list[Result] = []
     results_lock = threading.Lock()
     samples: list[dict[str, float]] = []
     stop_metrics = threading.Event()
 
-    def worker() -> None:
+    session_ids = [str(uuid.uuid4()) for _ in range(concurrency)]
+    trace_namespace = str(uuid.uuid4())
+
+    def prompt_for_session(index: int) -> str | None:
+        if args.prompt_mode == "session-prefix":
+            return session_prefix_prompt(args, session_ids[index])
+        return None
+
+    warmup_results: list[Result] = []
+    if args.prompt_mode == "session-prefix" and args.warm_session_prefixes:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
+            warmup_results = list(
+                executor.map(
+                    lambda index: request_once(
+                        args, prompt_for_session(index), args.warmup_output_tokens
+                    ),
+                    range(concurrency),
+                )
+            )
+
+    try:
+        sglang_before = read_sglang_work_metrics(args.base_url, min(args.timeout, 5.0))
+    except Exception:
+        sglang_before = {}
+    deadline = time.monotonic() + seconds
+
+    def worker(index: int) -> None:
+        if args.prompt_mode == "agent-trace":
+            session_index = index
+            while time.monotonic() < deadline and session_index < len(trace_sessions):
+                session = trace_sessions[session_index]
+                namespace = f"{trace_namespace}-{session_index}"
+                previous_prompt_tokens = 0
+                for messages in trace_request_prefixes(session, namespace):
+                    if time.monotonic() >= deadline:
+                        break
+                    result = request_once(args, messages=messages)
+                    if not result.error:
+                        # Each replay prefix grows from the same immutable trace.
+                        # The prior rendered prompt is therefore cacheable apart
+                        # from a few chat-template generation-marker tokens.
+                        result.cacheable_prompt_tokens = min(
+                            previous_prompt_tokens, result.prompt_tokens
+                        )
+                        previous_prompt_tokens = result.prompt_tokens
+                    with results_lock:
+                        results.append(result)
+                session_index += concurrency
+            return
         while time.monotonic() < deadline:
-            result = request_once(args)
+            result = request_once(args, prompt_for_session(index))
             with results_lock:
                 results.append(result)
 
@@ -146,10 +296,14 @@ def run_level(args: argparse.Namespace, concurrency: int, seconds: float) -> dic
     monitor_thread = threading.Thread(target=monitor, daemon=True)
     monitor_thread.start()
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrency) as executor:
-        futures = [executor.submit(worker) for _ in range(concurrency)]
+        futures = [executor.submit(worker, index) for index in range(concurrency)]
         concurrent.futures.wait(futures)
     stop_metrics.set()
     monitor_thread.join(timeout=2)
+    try:
+        sglang_after = read_sglang_work_metrics(args.base_url, min(args.timeout, 5.0))
+    except Exception:
+        sglang_after = {}
 
     successful = [result for result in results if not result.error]
     failed = [result for result in results if result.error]
@@ -174,6 +328,21 @@ def run_level(args: argparse.Namespace, concurrency: int, seconds: float) -> dic
     ]
     output_tokens = sum(result.completion_tokens for result in successful)
     input_tokens = sum(result.prompt_tokens for result in successful)
+    cached_input_tokens = sum(result.cached_prompt_tokens for result in successful)
+    cacheable_input_tokens = sum(
+        result.cacheable_prompt_tokens for result in successful
+    )
+    measured_cached_tokens = max(
+        0.0,
+        sglang_after.get("cached_tokens", 0.0)
+        - sglang_before.get("cached_tokens", 0.0),
+    )
+    measured_computed_prompt_tokens = max(
+        0.0,
+        sglang_after.get("computed_prompt_tokens", 0.0)
+        - sglang_before.get("computed_prompt_tokens", 0.0),
+    )
+    measured_prefill_tokens = measured_cached_tokens + measured_computed_prompt_tokens
 
     def sample_average(name: str) -> float:
         values = [sample[name] for sample in samples if name in sample]
@@ -187,6 +356,20 @@ def run_level(args: argparse.Namespace, concurrency: int, seconds: float) -> dic
         "successful": len(successful),
         "errors": len(failed),
         "input_tokens": input_tokens,
+        "cached_input_tokens": cached_input_tokens,
+        "cacheable_input_tokens": cacheable_input_tokens,
+        "workload_cacheable_ratio": round(cacheable_input_tokens / input_tokens, 4)
+        if input_tokens
+        else 0,
+        "reported_cache_hit_ratio": round(cached_input_tokens / input_tokens, 4)
+        if input_tokens
+        else 0,
+        "server_cached_tokens": int(measured_cached_tokens),
+        "server_computed_prompt_tokens": int(measured_computed_prompt_tokens),
+        "server_cache_hit_ratio": round(measured_cached_tokens / measured_prefill_tokens, 4)
+        if measured_prefill_tokens
+        else 0,
+        "server_cache_metrics_valid": measured_prefill_tokens <= input_tokens * 1.1,
         "output_tokens": output_tokens,
         "request_rate": round(len(successful) / wall_seconds, 3),
         "aggregate_output_tps": round(output_tokens / wall_seconds, 2),
@@ -203,6 +386,9 @@ def run_level(args: argparse.Namespace, concurrency: int, seconds: float) -> dic
         ),
         "gpu_power_watts_avg": round(sample_average("gpu_power_watts"), 2),
         "error_samples": [result.error for result in failed[:3]],
+        "warmup_requests": len(warmup_results),
+        "warmup_errors": sum(1 for result in warmup_results if result.error),
+        "trace_sessions_available": len(trace_sessions),
     }
 
 
@@ -217,30 +403,59 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sustain-concurrency", type=int, default=0)
     parser.add_argument("--sustain-seconds", type=float, default=120)
     parser.add_argument("--prompt-repetitions", type=int, default=45)
+    parser.add_argument(
+        "--prompt-mode",
+        choices=("unique", "session-prefix", "agent-trace"),
+        default="unique",
+    )
+    parser.add_argument("--trace-workload", default="")
+    parser.add_argument("--session-prefix-repetitions", type=int, default=160)
+    parser.add_argument("--session-suffix-repetitions", type=int, default=16)
+    parser.add_argument(
+        "--warm-session-prefixes", action=argparse.BooleanOptionalAction, default=True
+    )
+    parser.add_argument("--warmup-output-tokens", type=int, default=1)
     parser.add_argument("--output-tokens", type=int, default=128)
     parser.add_argument("--timeout", type=float, default=180)
     parser.add_argument("--cooldown-seconds", type=float, default=3)
     args = parser.parse_args()
     if not args.api_key:
         parser.error("--api-key or SGLANG_API_KEY is required")
+    if args.prompt_mode == "agent-trace" and not args.trace_workload:
+        parser.error("--trace-workload is required with --prompt-mode agent-trace")
     return args
 
 
 def main() -> int:
     args = parse_args()
     levels = [int(value) for value in args.concurrencies.split(",")]
+    trace_sessions = load_trace_sessions(args.trace_workload) if args.trace_workload else []
     print(
-        json.dumps({"benchmark": "started", "unix_time": time.time(), "levels": levels}),
+        json.dumps(
+            {
+                "benchmark": "started",
+                "unix_time": time.time(),
+                "levels": levels,
+                "prompt_mode": args.prompt_mode,
+                "session_prefix_repetitions": args.session_prefix_repetitions,
+                "session_suffix_repetitions": args.session_suffix_repetitions,
+                "output_tokens": args.output_tokens,
+                "trace_workload": args.trace_workload,
+                "trace_sessions": len(trace_sessions),
+            }
+        ),
         flush=True,
     )
     all_results = []
     for concurrency in levels:
-        result = run_level(args, concurrency, args.seconds)
+        result = run_level(args, concurrency, args.seconds, trace_sessions)
         all_results.append(result)
         print(json.dumps(result, sort_keys=True), flush=True)
         time.sleep(args.cooldown_seconds)
     if args.sustain_concurrency:
-        result = run_level(args, args.sustain_concurrency, args.sustain_seconds)
+        result = run_level(
+            args, args.sustain_concurrency, args.sustain_seconds, trace_sessions
+        )
         result["sustained"] = True
         all_results.append(result)
         print(json.dumps(result, sort_keys=True), flush=True)

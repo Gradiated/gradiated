@@ -23,6 +23,8 @@ pub struct ChatCompletionRequest {
     pub max_tokens: Option<u64>,
     #[serde(flatten)]
     pub parameters: Map<String, Value>,
+    #[serde(skip)]
+    pub(crate) encoded_input_ids: Option<Vec<u32>>,
 }
 
 impl ChatCompletionRequest {
@@ -49,6 +51,7 @@ impl ChatCompletionRequest {
             max_completion_tokens,
             max_tokens,
             mut parameters,
+            encoded_input_ids: _,
         } = self;
 
         parameters.insert("model".to_owned(), Value::String(model));

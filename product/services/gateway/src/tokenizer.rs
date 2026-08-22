@@ -60,9 +60,13 @@ impl ModelTokenizer {
                 );
                 GatewayError::ServingStateUnavailable
             })?;
-        let input_tokens = tokenizer
-            .count_input_tokens(&qualified.request)
+        let input_ids = tokenizer
+            .encode_input(&qualified.request)
             .map_err(map_request_error)?;
+        let input_tokens =
+            u64::try_from(input_ids.len()).map_err(|_| GatewayError::ServingStateUnavailable)?;
+        let mut qualified = qualified;
+        qualified.request.encoded_input_ids = Some(input_ids);
         enforce_bounds(qualified, input_tokens)
     }
 
@@ -74,6 +78,21 @@ impl ModelTokenizer {
             self.tokenizer(release).await?;
         }
         Ok(())
+    }
+
+    pub(crate) async fn decode(
+        &self,
+        release: &ModelDeploymentRelease,
+        token_ids: Vec<u32>,
+    ) -> Result<String, ModelTokenizerError> {
+        let tokenizer = self.tokenizer(release).await?;
+        tokio::task::spawn_blocking(move || {
+            tokenizer
+                .decode(&token_ids)
+                .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))
+        })
+        .await
+        .map_err(ModelTokenizerError::LoaderTask)?
     }
 
     async fn tokenizer(
@@ -178,10 +197,10 @@ impl CompiledTokenizer {
         })
     }
 
-    fn count_input_tokens(
+    fn encode_input(
         &self,
         request: &ChatCompletionRequest,
-    ) -> Result<u64, TokenizerRequestError> {
+    ) -> Result<Vec<u32>, TokenizerRequestError> {
         let input = render_input(request)?;
         let prompt = self.template.render(&input).map_err(|error| match error {
             ChatTemplateError::TemplateRaised { .. } => TokenizerRequestError::Rejected,
@@ -192,7 +211,13 @@ impl CompiledTokenizer {
             .tokenizer
             .encode(prompt, false)
             .map_err(|error| TokenizerRequestError::Encode(error.to_string()))?;
-        u64::try_from(encoding.len()).map_err(|_| TokenizerRequestError::CountOverflow)
+        Ok(encoding.get_ids().to_vec())
+    }
+
+    fn decode(&self, token_ids: &[u32]) -> Result<String, TokenizerRequestError> {
+        self.tokenizer
+            .decode(token_ids, true)
+            .map_err(|error| TokenizerRequestError::Decode(error.to_string()))
     }
 
     #[cfg(test)]
@@ -236,7 +261,7 @@ fn map_request_error(error: TokenizerRequestError) -> GatewayError {
         }
         TokenizerRequestError::Render(_)
         | TokenizerRequestError::Encode(_)
-        | TokenizerRequestError::CountOverflow => GatewayError::ServingStateUnavailable,
+        | TokenizerRequestError::Decode(_) => GatewayError::ServingStateUnavailable,
     }
 }
 
@@ -292,8 +317,8 @@ enum TokenizerRequestError {
     Render(String),
     #[error("tokenization failed: {0}")]
     Encode(String),
-    #[error("token count overflowed")]
-    CountOverflow,
+    #[error("detokenization failed: {0}")]
+    Decode(String),
 }
 
 #[cfg(test)]
@@ -387,14 +412,17 @@ mod tests {
                 max_completion_tokens: max_tokens,
                 max_tokens: None,
                 parameters: Map::new(),
+                encoded_input_ids: None,
             },
         }
     }
 
     #[test]
-    fn renders_the_generation_prompt_and_counts_without_retaining_tokens() {
+    fn renders_and_retains_the_exact_generation_prompt_tokens() {
         assert_eq!(
-            tokenizer().count_input_tokens(&request(None).request),
+            tokenizer()
+                .encode_input(&request(None).request)
+                .map(|ids| ids.len()),
             Ok(3)
         );
     }
@@ -404,7 +432,7 @@ mod tests {
         let mut request = request(None).request;
         request.messages = vec![serde_json::json!({"content": "hello"})];
         assert!(matches!(
-            tokenizer().count_input_tokens(&request),
+            tokenizer().encode_input(&request),
             Err(TokenizerRequestError::InvalidInput)
         ));
     }

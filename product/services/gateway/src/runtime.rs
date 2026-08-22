@@ -8,8 +8,11 @@ use reqwest::{header, redirect::Policy, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use thiserror::Error;
+use uuid::Uuid;
 
-use crate::{ChatCompletionRequest, GatewayError, GatewayModelDeployment, NormalizedUsage};
+use crate::{
+    ChatCompletionRequest, GatewayError, GatewayModelDeployment, ModelTokenizer, NormalizedUsage,
+};
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const RESPONSE_IDLE_TIMEOUT: Duration = Duration::from_secs(30);
@@ -102,6 +105,7 @@ impl RuntimeStreamChunk {
 pub struct SglangClient {
     client: reqwest::Client,
     api_key: Option<Arc<str>>,
+    tokenizer: Option<ModelTokenizer>,
 }
 
 impl SglangClient {
@@ -114,7 +118,17 @@ impl SglangClient {
         Ok(Self {
             client,
             api_key: api_key.map(Arc::from),
+            tokenizer: None,
         })
+    }
+
+    pub fn with_tokenizer(
+        api_key: Option<String>,
+        tokenizer: ModelTokenizer,
+    ) -> Result<Self, RuntimeClientError> {
+        let mut client = Self::new(api_key)?;
+        client.tokenizer = Some(tokenizer);
+        Ok(client)
     }
 
     pub async fn check_all(
@@ -144,6 +158,17 @@ impl SglangClient {
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
         if request.stream || effective_output_tokens == 0 {
             return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+
+        if deployment.release.runtime_revision.starts_with("native-") {
+            return self
+                .execute_native(
+                    deployment,
+                    request,
+                    effective_output_tokens,
+                    response_header_timeout,
+                )
+                .await;
         }
 
         let requested_model = request.model.clone();
@@ -181,6 +206,100 @@ impl SglangClient {
 
         let body = read_bounded_body(response).await?;
         normalize_completion(&body, &requested_model)
+    }
+
+    async fn execute_native(
+        &self,
+        deployment: &GatewayModelDeployment,
+        request: ChatCompletionRequest,
+        effective_output_tokens: u64,
+        response_header_timeout: Duration,
+    ) -> Result<RuntimeCompletion, RuntimeFailure> {
+        let tokenizer = self
+            .tokenizer
+            .as_ref()
+            .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let input_ids = request
+            .encoded_input_ids
+            .clone()
+            .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let max_tokens = usize::try_from(effective_output_tokens)
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::InvalidRequest))?;
+        let body = serde_json::to_vec(&NativeTokenRequest {
+            input_ids: &input_ids,
+            max_tokens,
+        })
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let mut upstream = self
+            .client
+            .post(endpoint(&deployment.service_url, "v1/token-completions"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::ACCEPT, "application/json")
+            .body(one_shot_body(body));
+        if let Some(api_key) = &self.api_key {
+            upstream = upstream.bearer_auth(api_key);
+        }
+        let response = tokio::time::timeout(response_header_timeout, upstream.send())
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+        let status = response.status();
+        if !status.is_success() {
+            return Err(RuntimeFailure::new(match status {
+                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
+                    RuntimeFailureKind::InvalidRequest
+                }
+                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
+                _ => RuntimeFailureKind::Unavailable,
+            }));
+        }
+        let body = read_bounded_body(response).await?;
+        let native: NativeTokenResponse = serde_json::from_slice(&body)
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        if native.usage.input_tokens != input_ids.len()
+            || native.usage.output_tokens != native.output_ids.len()
+            || native.output_ids.len() > max_tokens
+            || native.finish_reason.is_empty()
+        {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+        let content = tokenizer
+            .decode(&deployment.release, native.output_ids)
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+        let usage = NormalizedUsage::new(
+            native.usage.input_tokens as u64,
+            0,
+            0,
+            native.usage.output_tokens as u64,
+            0,
+        )
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let created = u64::try_from(Utc::now().timestamp())
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let finish_reason = native.finish_reason;
+        let response = serde_json::to_value(NormalizedCompletionResponse {
+            id: format!("chatcmpl-{}", Uuid::now_v7()),
+            object: "chat.completion".to_owned(),
+            created,
+            model: request.model,
+            choices: vec![NormalizedChoice {
+                index: 0,
+                message: Map::from_iter([
+                    ("role".to_owned(), Value::String("assistant".to_owned())),
+                    ("content".to_owned(), Value::String(content)),
+                ]),
+                logprobs: None,
+                finish_reason: finish_reason.clone(),
+            }],
+            usage: usage.into(),
+        })
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        Ok(RuntimeCompletion {
+            response,
+            finish_reason,
+            usage,
+        })
     }
 
     async fn execute_streaming(
@@ -509,6 +628,25 @@ fn optional_usage(body: &[u8]) -> Option<NormalizedUsage> {
         .usage?
         .normalize()
         .ok()
+}
+
+#[derive(Serialize)]
+struct NativeTokenRequest<'a> {
+    input_ids: &'a [u32],
+    max_tokens: usize,
+}
+
+#[derive(Deserialize)]
+struct NativeTokenResponse {
+    output_ids: Vec<u32>,
+    usage: NativeTokenUsage,
+    finish_reason: String,
+}
+
+#[derive(Deserialize)]
+struct NativeTokenUsage {
+    input_tokens: usize,
+    output_tokens: usize,
 }
 
 #[derive(Debug, Deserialize)]

@@ -2,7 +2,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <functional>
+#include <mutex>
 #include <string>
 #include <string_view>
 
@@ -12,6 +14,7 @@ struct HttpRequest {
   std::string method;
   std::string path;
   std::string authorization;
+  std::string body;
 };
 
 struct HttpResponse {
@@ -38,6 +41,10 @@ class HttpServer {
   HttpHandler handler_;
   std::atomic<bool> stopping_{false};
   int listen_fd_{-1};
+  std::mutex clients_mutex_;
+  std::condition_variable clients_condition_;
+  std::size_t active_clients_{0};
+  void handle_client(int client);
 };
 
 struct HttpGetResult {

@@ -149,6 +149,10 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90
   )
+  add_executable(gradiated-engine-runtime engine/src/native_runtime_main.cpp)
+  target_link_libraries(gradiated-engine-runtime PRIVATE gradiated_engine_cuda desmond_core)
+  target_compile_options(gradiated-engine-runtime PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
+  install(TARGETS gradiated-engine-runtime RUNTIME DESTINATION bin)
   add_executable(gradiated-engine-batch-benchmark engine/src/batch_benchmark.cu)
   target_link_libraries(gradiated-engine-batch-benchmark PRIVATE gradiated_engine_cuda)
   set_target_properties(gradiated-engine-batch-benchmark PROPERTIES

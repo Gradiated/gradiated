@@ -29,11 +29,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(iam) => ValkeyServingState::connect_with_iam(&config.valkey_url, iam).await?,
         None => ValkeyServingState::connect(&config.valkey_url).await?,
     });
-    let runtimes = SglangClient::new(config.sglang_api_key.clone())?;
+    let tokenizer = ModelTokenizer::new()?;
+    let runtimes = SglangClient::with_tokenizer(config.sglang_api_key.clone(), tokenizer.clone())?;
     let completions = CompletionService::new(
         serving_state.clone(),
         Arc::new(runtimes.clone()),
-        ModelTokenizer::new()?,
+        tokenizer,
         Arc::new(config.clone()),
     );
     let readiness = Arc::new(DependencyReadiness::new(

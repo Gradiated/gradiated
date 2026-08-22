@@ -67,9 +67,12 @@ int main(int argc, char** argv) {
       command.emplace_back(argv[index]);
     }
     const std::string runtime_api_key = environment("DESMOND_RUNTIME_API_KEY", "");
-    if (!runtime_api_key.empty()) {
+    const std::string runtime_api_key_mode = environment("DESMOND_RUNTIME_API_KEY_MODE", "argument");
+    if (!runtime_api_key.empty() && runtime_api_key_mode == "argument") {
       command.emplace_back("--api-key");
       command.push_back(runtime_api_key);
+    } else if (runtime_api_key_mode != "argument" && runtime_api_key_mode != "environment") {
+      throw std::runtime_error("DESMOND_RUNTIME_API_KEY_MODE must be argument or environment");
     }
 
     const std::string control_host = environment("DESMOND_CONTROL_HOST", "0.0.0.0");

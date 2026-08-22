@@ -14,12 +14,15 @@
 #include <cstring>
 #include <sstream>
 #include <stdexcept>
+#include <thread>
 
 namespace desmond {
 namespace {
 
 std::string status_text(const int status) {
   switch (status) {
+    case 400:
+      return "Bad Request";
     case 200:
       return "OK";
     case 401:
@@ -52,6 +55,7 @@ HttpRequest parse_request(const std::string& raw) {
     first_line >> request.method >> request.path;
   }
   while (std::getline(stream, line)) {
+    if (line == "\r" || line.empty()) break;
     const auto separator = line.find(':');
     if (separator == std::string::npos) {
       continue;
@@ -64,7 +68,29 @@ HttpRequest parse_request(const std::string& raw) {
       request.authorization = trim(line.substr(separator + 1));
     }
   }
+  const auto body_offset = raw.find("\r\n\r\n");
+  if (body_offset != std::string::npos) request.body = raw.substr(body_offset + 4);
   return request;
+}
+
+std::size_t content_length(const std::string& headers) {
+  std::istringstream stream(headers);
+  std::string line;
+  while (std::getline(stream, line)) {
+    const auto separator = line.find(':');
+    if (separator == std::string::npos) continue;
+    std::string name = line.substr(0, separator);
+    std::transform(name.begin(), name.end(), name.begin(), [](const unsigned char character) {
+      return static_cast<char>(std::tolower(character));
+    });
+    if (name != "content-length") continue;
+    const std::string value = trim(line.substr(separator + 1));
+    std::size_t consumed = 0;
+    const unsigned long long parsed = std::stoull(value, &consumed);
+    if (consumed != value.size()) throw std::runtime_error("invalid Content-Length");
+    return static_cast<std::size_t>(parsed);
+  }
+  return 0;
 }
 
 bool send_all(const int fd, const std::string& data) {
@@ -116,23 +142,63 @@ void HttpServer::run() {
     if (client < 0) {
       continue;
     }
-    std::array<char, 8192> buffer{};
-    const auto received = recv(client, buffer.data(), buffer.size() - 1, 0);
-    HttpResponse response;
-    if (received <= 0) {
-      response = {400, "text/plain; charset=utf-8", "bad request\n"};
-    } else {
-      const auto request = parse_request(std::string(buffer.data(), static_cast<std::size_t>(received)));
-      response = handler_(request);
+    {
+      std::lock_guard lock(clients_mutex_);
+      ++active_clients_;
     }
-    std::ostringstream headers;
-    headers << "HTTP/1.1 " << response.status << ' ' << status_text(response.status) << "\r\n"
-            << "Content-Type: " << response.content_type << "\r\n"
-            << "Content-Length: " << response.body.size() << "\r\n"
-            << "Connection: close\r\n\r\n";
-    send_all(client, headers.str() + response.body);
-    close(client);
+    std::thread([this, client] {
+      handle_client(client);
+      {
+        std::lock_guard lock(clients_mutex_);
+        --active_clients_;
+      }
+      clients_condition_.notify_all();
+    }).detach();
   }
+  std::unique_lock lock(clients_mutex_);
+  clients_condition_.wait(lock, [&] { return active_clients_ == 0; });
+}
+
+void HttpServer::handle_client(const int client) {
+  constexpr std::size_t maximum_header_bytes = 64 * 1024;
+  constexpr std::size_t maximum_body_bytes = 1024 * 1024;
+  timeval timeout{30, 0};
+  setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
+  setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
+  HttpResponse response;
+  try {
+    std::string raw;
+    std::array<char, 16384> buffer{};
+    std::size_t header_end = std::string::npos;
+    std::size_t expected_bytes = 0;
+    while (true) {
+      const auto received = recv(client, buffer.data(), buffer.size(), 0);
+      if (received <= 0) throw std::runtime_error("incomplete request");
+      raw.append(buffer.data(), static_cast<std::size_t>(received));
+      if (header_end == std::string::npos) {
+        header_end = raw.find("\r\n\r\n");
+        if (header_end == std::string::npos) {
+          if (raw.size() > maximum_header_bytes) throw std::runtime_error("request headers too large");
+          continue;
+        }
+        const std::size_t body_bytes = content_length(raw.substr(0, header_end + 2));
+        if (body_bytes > maximum_body_bytes) throw std::runtime_error("request body too large");
+        expected_bytes = header_end + 4 + body_bytes;
+      }
+      if (raw.size() >= expected_bytes) break;
+    }
+    raw.resize(expected_bytes);
+    response = handler_(parse_request(raw));
+  } catch (const std::exception& error) {
+    response = {400, "text/plain; charset=utf-8", std::string("bad request: ") + error.what() + "\n"};
+  }
+  std::ostringstream headers;
+  headers << "HTTP/1.1 " << response.status << ' ' << status_text(response.status) << "\r\n"
+          << "Content-Type: " << response.content_type << "\r\n"
+          << "Content-Length: " << response.body.size() << "\r\n"
+          << "Connection: close\r\n\r\n";
+  send_all(client, headers.str() + response.body);
+  close(client);
 }
 
 void HttpServer::stop() {

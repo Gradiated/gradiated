@@ -1,0 +1,23 @@
+apiVersion: inference.gradiated.ai/v1alpha1
+kind: ModelRelease
+metadata:
+  name: gemma-4-31b-native-h200-v1
+spec:
+  model: google/gemma-4-31B-it
+  revision: b9ea41a2887d8607f594846523f94c6cc75ac8a4
+  runtime:
+    kind: gradiated-native
+    protocol: token-completions-v1
+    release: native-gemma4-h200-v1
+    dockerfile: product/inference/runtimes/native/Dockerfile
+  hardware:
+    accelerator: NVIDIA-H200-SXM
+    count: 1
+  network:
+    inferencePort: 30000
+    desmondPort: 9090
+    transport: private-vpn
+    authentication: bearer
+  limits:
+    contextLength: 8192
+    prefillChunkTokens: 1024

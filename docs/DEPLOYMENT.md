@@ -56,6 +56,11 @@ healthy. S3 versioning keeps previous entry points for recovery.
 - Branch rules must allow `github-actions[bot]` to push the two generated release
   files, or provide an equivalent narrowly scoped ruleset bypass.
 
+Before observability reconciliation, populate the externally managed
+`gradiated/prod/platform/alertmanager-notifications` secret with a
+`webhook-url` key. Alert definitions and dashboards deploy without embedding
+receiver credentials; notification delivery requires that secret version.
+
 Terraform creates `gradiated-prod-deployment`. The role trusts only this
 repository's immutable GitHub OIDC subject in the `production` environment.
 

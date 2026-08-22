@@ -14,6 +14,7 @@
     "@gradiated/control": "workspace:*",
     "@gradiated/valkey": "workspace:*",
     "luxon": "^3.7.2",
+    "prom-client": "15.1.3",
     "zod": "4.4.3"
   },
   "devDependencies": {

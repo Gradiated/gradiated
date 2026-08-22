@@ -104,6 +104,13 @@ pub struct AdmittedGenerationMetrics {
 impl GatewayMetrics {
     pub fn new() -> Self {
         let mut registry = Registry::with_prefix("gradiated_gateway");
+        let service_info: Gauge = Gauge::default();
+        service_info.set(1);
+        registry.register(
+            "service_info",
+            "Constant service identity metric used to detect missing gateway telemetry.",
+            service_info,
+        );
         let http_requests = CounterFamily::default();
         let admissions = CounterFamily::default();
         let admission_rejections = CounterFamily::default();
@@ -578,6 +585,7 @@ mod tests {
         let body = metrics.encode();
 
         assert!(body.contains("model=\"model-a\""));
+        assert!(body.contains("gradiated_gateway_service_info 1"));
         assert!(body.contains("stream=\"true\""));
         assert!(body.contains("gradiated_gateway_time_to_first_token_seconds_count"));
         assert!(body.contains("gradiated_gateway_time_per_output_token_seconds_count"));

@@ -8,6 +8,7 @@ import {
   createWorkspaceApiKeyService,
 } from "@gradiated/control";
 import { createApp } from "./app.js";
+import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createAuthService } from "./auth.js";
 import {
   createSesMagicLinkSender,
@@ -54,9 +55,11 @@ const auth = createAuthService(database, {
   takeTestMagicLink: testMagicLinks?.take,
   trustedOrigins: environment.TRUSTED_ORIGINS,
 });
+const metrics = new ApiMetrics();
 const app = createApp({
   allowedOrigins: environment.TRUSTED_ORIGINS,
   auth,
+  metrics,
   checkDependencies: async () => {
     const checks: Record<string, "up" | "down"> = {
       postgres: "down",
@@ -95,13 +98,16 @@ const server = serve({
   hostname: environment.HOST,
   port: environment.PORT,
 });
+const metricsServer = startApiMetricsServer(metrics);
 
 console.log(
   `Gradiated API listening on http://${environment.HOST}:${environment.PORT}`,
 );
+console.log("Gradiated API metrics listening on http://0.0.0.0:9464/metrics");
 
 const shutdown = (signal: NodeJS.Signals): void => {
   console.log(`Received ${signal}; shutting down`);
+  metricsServer.close();
   server.close(async (error) => {
     if (error) {
       console.error("API shutdown failed", error);

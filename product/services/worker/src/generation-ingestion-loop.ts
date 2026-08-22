@@ -18,6 +18,16 @@ export type GenerationIngestionOptions = {
   readBlockMs: number;
   stream: string;
   onReady?: (() => Promise<void>) | undefined;
+  onBacklog?:
+    | ((
+        pending: number,
+        unread: number,
+        oldestPendingId: string | null,
+      ) => void)
+    | undefined;
+  onMessagesProcessed?:
+    ((source: "new" | "recovered", count: number) => void) | undefined;
+  onPass?: ((durationSeconds: number) => void) | undefined;
 };
 
 const streamIdPattern = /^(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
@@ -126,12 +136,15 @@ const processMessages = async (
   writer: GenerationWriter,
   options: GenerationIngestionOptions,
   messages: readonly (StreamMessage | null)[],
-): Promise<void> => {
+): Promise<number> => {
+  let processed = 0;
   for (const message of messages) {
     if (message) {
       await processGenerationMessage(client, writer, options, message);
+      processed += 1;
     }
   }
+  return processed;
 };
 
 const recoverStaleMessages = async (
@@ -149,7 +162,13 @@ const recoverStaleMessages = async (
       cursor,
       { COUNT: options.batchSize },
     );
-    await processMessages(client, writer, options, claimed.messages);
+    const processed = await processMessages(
+      client,
+      writer,
+      options,
+      claimed.messages,
+    );
+    options.onMessagesProcessed?.("recovered", processed);
     cursor = claimed.nextId;
   } while (cursor !== "0-0");
 };
@@ -165,6 +184,12 @@ const trimAcknowledgedMessages = async (
   const group = groups.find((candidate) => candidate.name === options.group);
   if (!group)
     throw new Error(`Valkey consumer group is missing: ${options.group}`);
+
+  options.onBacklog?.(
+    Number(pending.pending),
+    Number(group.lag),
+    pending.firstId ? String(pending.firstId) : null,
+  );
 
   const threshold = getSafeTrimThreshold(
     pending.firstId,
@@ -187,6 +212,7 @@ export const runGenerationIngestionLoop = async (
   await options.onReady?.();
 
   while (!signal.aborted) {
+    const started = process.hrtime.bigint();
     await recoverStaleMessages(client, writer, options);
     const streams = await client.xReadGroup(
       options.group,
@@ -195,8 +221,15 @@ export const runGenerationIngestionLoop = async (
       { COUNT: options.batchSize, BLOCK: options.readBlockMs },
     );
     for (const stream of streams ?? []) {
-      await processMessages(client, writer, options, stream.messages);
+      const processed = await processMessages(
+        client,
+        writer,
+        options,
+        stream.messages,
+      );
+      options.onMessagesProcessed?.("new", processed);
     }
     await trimAcknowledgedMessages(client, options);
+    options.onPass?.(Number(process.hrtime.bigint() - started) / 1e9);
   }
 };

@@ -15,6 +15,9 @@ export type SettlementLoopOptions = {
   consumerGroup: string;
   maxSlotsPerPass: number;
   onReady?: (() => Promise<void>) | undefined;
+  onPass?:
+    | ((result: SettlementPassResult, durationSeconds: number) => void)
+    | undefined;
   pollMilliseconds: number;
   settlementDelayMilliseconds: number;
   stream: string;
@@ -244,6 +247,7 @@ export const runGenerationSettlementLoop = async (
     try {
       let nextSlotId: string | undefined;
       while (!signal.aborted) {
+        const started = process.hrtime.bigint();
         const result = await processSettlementPass(
           reader,
           leadership,
@@ -253,6 +257,10 @@ export const runGenerationSettlementLoop = async (
           nextSlotId,
         );
         nextSlotId = result.nextSlotId ?? undefined;
+        options.onPass?.(
+          result,
+          Number(process.hrtime.bigint() - started) / 1e9,
+        );
         await wait(options.pollMilliseconds, signal);
       }
     } finally {

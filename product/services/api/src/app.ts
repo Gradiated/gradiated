@@ -5,6 +5,7 @@ import { requestId } from "hono/request-id";
 
 import { unavailableBillingPaymentsService } from "./billing/stripe.js";
 import { problemResponse } from "./http/problem-response.js";
+import { ApiMetrics } from "./metrics.js";
 import { registerCatalogBillingRoutes } from "./routes/catalog-billing.js";
 import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
@@ -15,6 +16,7 @@ import type { ApiEnvironment, ApiServices, AuthService } from "./types.js";
 export interface AppDependencies {
   allowedOrigins: string[];
   checkDependencies: DependencyCheck;
+  metrics: ApiMetrics;
   auth?: AuthService;
   services: ApiServices;
 }
@@ -29,6 +31,7 @@ export interface AppOverrides extends Omit<
 const defaultDependencies: AppDependencies = {
   allowedOrigins: [],
   checkDependencies: async () => ({}),
+  metrics: new ApiMetrics({ collectProcessMetrics: false }),
   services: {
     billingPayments: unavailableBillingPaymentsService(),
     catalogBilling: {
@@ -105,6 +108,7 @@ export const createApp = (overrides: AppOverrides = {}) => {
     },
   });
 
+  app.use("*", dependencies.metrics.middleware);
   app.use("*", requestId());
   app.use(
     "/api/*",
@@ -141,7 +145,11 @@ export const createApp = (overrides: AppOverrides = {}) => {
     );
   }
 
-  registerHealthRoutes(app, dependencies.checkDependencies);
+  registerHealthRoutes(
+    app,
+    dependencies.checkDependencies,
+    dependencies.metrics.recordDependencies.bind(dependencies.metrics),
+  );
   registerCatalogBillingRoutes(app, dependencies.services);
   registerMeRoutes(app, dependencies.services);
   registerOrganizationRoutes(app, dependencies.services);

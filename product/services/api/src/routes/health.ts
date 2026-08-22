@@ -45,10 +45,14 @@ const readinessRoute = createRoute({
 });
 
 export type DependencyCheck = () => Promise<Record<string, "up" | "down">>;
+export type DependencyCheckObserver = (
+  checks: Record<string, "up" | "down">,
+) => void;
 
 export function registerHealthRoutes(
   app: OpenAPIHono<ApiEnvironment>,
   checkDependencies: DependencyCheck,
+  observeDependencies: DependencyCheckObserver = () => undefined,
 ): void {
   app.openapi(livenessRoute, (context) =>
     context.json({ status: "live" as const }, 200),
@@ -56,6 +60,7 @@ export function registerHealthRoutes(
 
   app.openapi(readinessRoute, async (context) => {
     const checks = await checkDependencies();
+    observeDependencies(checks);
     if (Object.values(checks).every((status) => status === "up")) {
       return context.json({ status: "ready" as const, checks }, 200);
     }

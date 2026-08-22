@@ -91,6 +91,15 @@ public authentication error, UUIDv7 response metadata, and `413
 payload_too_large` before any serving-state lookup. Spawned generation tasks are
 not yet tracked for bounded process shutdown.
 
+Production observability now covers the API, worker, gateway, SGLang runtime,
+console edge, and Kubernetes workloads. API and worker expose private
+Prometheus listeners with bounded-cardinality HTTP, dependency, loop, lag,
+business-pipeline, and Node runtime metrics. The gateway's existing generation
+and runtime metrics include a telemetry heartbeat. Argo provisions six Grafana
+dashboards, HTTPS blackbox probes, failure-oriented Prometheus rules, and
+severity-routed Alertmanager webhook delivery. The metric catalog and runbooks
+are in [`docs/OBSERVABILITY.md`](../docs/OBSERVABILITY.md).
+
 The canonical `mprocs` stack now includes the native SGLang Metal/MLX process.
 The `sglang-local` mise task checks out exact SGLang revision
 `8bb106cee94c1ccb5625cdb78ef0ee3e0cad3918` into the ignored cache, installs its
@@ -108,6 +117,7 @@ seconds for the 336 MB model; cached restarts avoid those downloads.
 
 Add tracked shutdown and the streaming owner, bounded SSE pump, continuous
 usage, keep-alives, and client-cancellation delivery semantics. Then implement
-authenticated `/v1/models` and the private metrics surface.
+the remaining authenticated `/v1/models` behavior. Calibrate the launch alert
+thresholds after seven days of representative production telemetry.
 
 Do not add a second or general gateway, provider router, alias system, generalized fleet service or speculative product surface without a new decision record.

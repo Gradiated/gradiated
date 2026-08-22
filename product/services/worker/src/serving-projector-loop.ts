@@ -6,6 +6,9 @@ import type {
 export type ServingProjectorOptions = {
   balanceTransactionBatchSize: number;
   onReady?: (() => Promise<void>) | undefined;
+  onPass?:
+    | ((result: ServingProjectionResult, durationSeconds: number) => void)
+    | undefined;
   pollMilliseconds: number;
 };
 
@@ -103,11 +106,13 @@ export const runServingProjectorLoop = async (
   signal: AbortSignal,
 ): Promise<void> => {
   while (!signal.aborted) {
-    await projectServingStatePass(
+    const started = process.hrtime.bigint();
+    const result = await projectServingStatePass(
       reader,
       projector,
       options.balanceTransactionBatchSize,
     );
+    options.onPass?.(result, Number(process.hrtime.bigint() - started) / 1e9);
     await options.onReady?.();
     await wait(options.pollMilliseconds, signal);
   }

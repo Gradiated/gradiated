@@ -29,6 +29,14 @@ class Gemma4QkvPostprocessor {
                         void* value_cache, int batch, int query_heads, int kv_heads,
                         int head_dimension, bool key_equals_value, int position,
                         int cache_capacity, float epsilon, cudaStream_t stream);
+  // Compact input rows write into stable KV slots at independent absolute positions.
+  // positions and slots are device arrays with `batch` entries.
+  void run_decode_ragged(const void* packed_qkv, const void* query_norm_weight,
+                         const void* key_norm_weight, void* queries, void* key_cache,
+                         void* value_cache, const int* positions, const int* slots,
+                         int batch, int maximum_slots, int query_heads, int kv_heads,
+                         int head_dimension, bool key_equals_value, int cache_capacity,
+                         float epsilon, cudaStream_t stream);
 
  private:
   struct Implementation;

@@ -160,6 +160,13 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     CUDA_STANDARD_REQUIRED ON
     CUDA_ARCHITECTURES 90
   )
+  add_executable(gradiated-engine-ragged-batch-parity engine/src/ragged_batch_parity.cu)
+  target_link_libraries(gradiated-engine-ragged-batch-parity PRIVATE gradiated_engine_cuda)
+  set_target_properties(gradiated-engine-ragged-batch-parity PROPERTIES
+    CUDA_STANDARD 20
+    CUDA_STANDARD_REQUIRED ON
+    CUDA_ARCHITECTURES 90
+  )
 endif()
 
 if(BUILD_TESTING)

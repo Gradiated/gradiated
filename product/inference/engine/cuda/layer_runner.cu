@@ -130,6 +130,20 @@ struct Gemma4LayerRunner::Implementation {
                   context, head_dimension, stream, cache_capacity);
     project(selected_layer, residual, attention_output.get(), output, batch, stream);
   }
+
+  void finish_ragged(int selected_layer, const void* residual, const void* query, void* output,
+                     const int* positions, const int* slots, int batch, int maximum_slots,
+                     int maximum_context_length, const void* keys, const void* values,
+                     int cache_capacity, cudaStream_t stream) {
+    const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
+    const int head_dimension = static_cast<int>(layer.head_dimension);
+    const int kv_heads = static_cast<int>(layer.kv_heads);
+    const int query_group = static_cast<int>(layer.query_heads / layer.kv_heads);
+    attention.run_ragged(query, keys, values, attention_output.get(), positions, slots, batch,
+                         maximum_slots, kv_heads, query_group, maximum_context_length,
+                         head_dimension, stream, cache_capacity);
+    project(selected_layer, residual, attention_output.get(), output, batch, stream);
+  }
 };
 
 Gemma4LayerRunner::Gemma4LayerRunner(const Gemma4Config& config, const DeviceWeightArena& weights,
@@ -216,6 +230,39 @@ void Gemma4LayerRunner::run_decode_batch(int layer_index, const void* hidden_sta
       layer.key_equals_value, position, cache_capacity, state.epsilon, stream);
   state.finish(layer_index, hidden_states, state.queries.get(), output, batch, key_cache, value_cache,
                std::min(position + 1, cache_capacity), cache_capacity, stream);
+}
+
+void Gemma4LayerRunner::run_decode_ragged(
+    int layer_index, const void* hidden_states, void* output, const int* positions,
+    const int* slots, int batch, int maximum_slots, int maximum_context_length,
+    void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream) {
+  auto& state = *implementation_;
+  if (batch <= 0 || batch > state.maximum_batch || maximum_slots < batch ||
+      maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
+      cache_capacity > state.maximum_context || positions == nullptr || slots == nullptr ||
+      key_cache == nullptr || value_cache == nullptr) {
+    throw std::runtime_error("invalid ragged decode shape");
+  }
+  const auto& layer = state.config.layers.at(static_cast<std::size_t>(layer_index));
+  const int query_heads = static_cast<int>(layer.query_heads);
+  const int kv_heads = static_cast<int>(layer.kv_heads);
+  const int head_dimension = static_cast<int>(layer.head_dimension);
+  const int query_width = static_cast<int>(layer.query_width());
+  const int packed_width = query_width + static_cast<int>(layer.kv_width()) *
+      (layer.key_equals_value ? 1 : 2);
+  const std::string prefix = "layer." + std::to_string(layer_index) + ".";
+  const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
+  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), batch, state.hidden,
+                state.epsilon, stream);
+  state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(), batch,
+                   state.hidden, packed_width, stream);
+  state.qkv_postprocessor.run_decode_ragged(
+      state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+      key_cache, value_cache, positions, slots, batch, maximum_slots, query_heads, kv_heads,
+      head_dimension, layer.key_equals_value, cache_capacity, state.epsilon, stream);
+  state.finish_ragged(layer_index, hidden_states, state.queries.get(), output, positions, slots,
+                      batch, maximum_slots, maximum_context_length, key_cache, value_cache,
+                      cache_capacity, stream);
 }
 
 void Gemma4LayerRunner::run_prefill(int layer_index, const void* hidden_states, void* output,

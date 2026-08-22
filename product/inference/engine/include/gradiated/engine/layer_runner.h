@@ -23,6 +23,10 @@ class Gemma4LayerRunner {
   void run_decode_batch(int layer_index, const void* hidden_states, void* output, int batch,
                         int position, void* key_cache, void* value_cache, int cache_capacity,
                         cudaStream_t stream);
+  void run_decode_ragged(int layer_index, const void* hidden_states, void* output,
+                         const int* positions, const int* slots, int batch, int maximum_slots,
+                         int maximum_context_length, void* key_cache, void* value_cache,
+                         int cache_capacity, cudaStream_t stream);
   void run_prefill(int layer_index, const void* hidden_states, void* output, int tokens,
                    void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream);
   void run_prefill_chunk(int layer_index, const void* hidden_states, void* output, int tokens,

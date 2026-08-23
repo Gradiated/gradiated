@@ -224,6 +224,105 @@ void wgmma_attention_tile_parity() {
   }
 }
 
+void wgmma_split_attention_parity() {
+  constexpr int batch = 2;
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 128;
+  constexpr int dimension = 512;
+  constexpr int tiles_per_segment = 1;
+  constexpr int segments_per_head = context / 64 / tiles_per_segment;
+  constexpr int heads = batch * kv_heads;
+  constexpr std::uint64_t query_elements =
+      static_cast<std::uint64_t>(heads) * query_group * dimension;
+  constexpr std::uint64_t cache_elements =
+      static_cast<std::uint64_t>(heads) * context * dimension;
+  constexpr std::uint64_t partial_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group * dimension;
+  constexpr std::uint64_t statistic_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group;
+  Allocation query(2ULL * query_elements), key(2ULL * cache_elements),
+      value(2ULL * cache_elements), reference(2ULL * query_elements),
+      candidate(2ULL * query_elements), partial(sizeof(float) * partial_elements),
+      maxima(sizeof(float) * statistic_elements), sums(sizeof(float) * statistic_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x10203040U, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key.get()), cache_elements, 0x50607080U, 0.08F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(value.get()), cache_elements, 0x90abcdefU, 1.1F);
+  gradiated::engine::GemmGroupedDecodeAttention attention(
+      batch, kv_heads, query_group, context);
+  attention.run(query.get(), key.get(), value.get(), reference.get(), batch, kv_heads,
+                query_group, context, dimension, nullptr);
+  gradiated::engine::grouped_global_attention_wgmma_split_bf16(
+      query.get(), key.get(), value.get(), candidate.get(),
+      static_cast<float*>(partial.get()), static_cast<float*>(maxima.get()),
+      static_cast<float*>(sums.get()), batch, kv_heads, query_group, context, dimension,
+      tiles_per_segment, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize split WGMMA attention parity");
+  std::vector<__nv_bfloat16> expected(query_elements), actual(query_elements);
+  check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy split WGMMA reference");
+  check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy split WGMMA candidate");
+  float maximum = 0.0F;
+  double mean = 0.0;
+  for (std::uint64_t index = 0; index < query_elements; ++index) {
+    const float difference = std::abs(__bfloat162float(expected[index]) -
+                                      __bfloat162float(actual[index]));
+    maximum = std::max(maximum, difference);
+    mean += difference;
+  }
+  std::cout << "wgmma_split_attention_parity_max_abs=" << maximum << '\n'
+            << "wgmma_split_attention_parity_mean_abs=" << mean / query_elements << '\n';
+  if (maximum > 0.03F) {
+    throw std::runtime_error("split WGMMA attention parity exceeded tolerance");
+  }
+}
+
+float benchmark_split_attention(int batch, int context, int tiles_per_segment) {
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  const int heads = batch * kv_heads;
+  const int segments_per_head = context / 64 / tiles_per_segment;
+  const std::uint64_t query_elements =
+      static_cast<std::uint64_t>(heads) * query_group * dimension;
+  const std::uint64_t cache_elements =
+      static_cast<std::uint64_t>(heads) * context * dimension;
+  const std::uint64_t partial_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group * dimension;
+  const std::uint64_t statistic_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group;
+  Allocation query(2ULL * query_elements), key(2ULL * cache_elements),
+      value(2ULL * cache_elements), output(2ULL * query_elements),
+      partial(sizeof(float) * partial_elements), maxima(sizeof(float) * statistic_elements),
+      sums(sizeof(float) * statistic_elements);
+  const auto run = [&] {
+    gradiated::engine::grouped_global_attention_wgmma_split_bf16(
+        query.get(), key.get(), value.get(), output.get(), static_cast<float*>(partial.get()),
+        static_cast<float*>(maxima.get()), static_cast<float*>(sums.get()), batch, kv_heads,
+        query_group, context, dimension, tiles_per_segment, nullptr);
+  };
+  for (int iteration = 0; iteration < 2; ++iteration) run();
+  check(cudaDeviceSynchronize(), "split WGMMA attention warmup");
+  cudaEvent_t begin{}, end{};
+  check(cudaEventCreate(&begin), "create split WGMMA begin event");
+  check(cudaEventCreate(&end), "create split WGMMA end event");
+  constexpr int iterations = 5;
+  check(cudaEventRecord(begin), "record split WGMMA begin event");
+  for (int iteration = 0; iteration < iterations; ++iteration) run();
+  check(cudaEventRecord(end), "record split WGMMA end event");
+  check(cudaEventSynchronize(end), "synchronize split WGMMA benchmark");
+  float milliseconds = 0.0F;
+  check(cudaEventElapsedTime(&milliseconds, begin, end), "measure split WGMMA benchmark");
+  cudaEventDestroy(end);
+  cudaEventDestroy(begin);
+  return milliseconds / iterations;
+}
+
 float benchmark_qk(int batch, int context, bool wgmma, int tiles_per_block = 1) {
   constexpr int kv_heads = 4;
   constexpr int query_group = 8;
@@ -387,6 +486,7 @@ int main() {
     fp8_parity();
     wgmma_qk_parity();
     wgmma_attention_tile_parity();
+    wgmma_split_attention_parity();
     std::cout << "kind,batch,context,milliseconds,physical_kv_gb_s,naive_avoided_gb\n";
     for (const int batch : std::vector<int>{1, 2, 4, 8, 10, 16}) {
       const float sliding_ms = benchmark(batch, 16, 2, 1024, 256, 0);
@@ -407,6 +507,11 @@ int main() {
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
       const float global_tile_baseline_ms = benchmark(batch, 4, 8, 64, 512, 0);
       const float global_tile_wgmma_ms = benchmark(batch, 4, 8, 64, 512, 6);
+      std::vector<std::pair<int, float>> global_split_wgmma;
+      for (const int tiles_per_segment : std::vector<int>{4, 8, 16, 32}) {
+        global_split_wgmma.emplace_back(
+            tiles_per_segment, benchmark_split_attention(batch, 8192, tiles_per_segment));
+      }
       const float global_qk_ms = benchmark_qk(batch, 8192, false);
       std::vector<std::pair<int, float>> global_qk_wgmma;
       for (const int tiles_per_block : std::vector<int>{1, 2, 4, 8, 16, 32}) {
@@ -441,6 +546,11 @@ int main() {
                 << std::setprecision(4) << global_tile_baseline_ms << ",0,0\n";
       std::cout << "global_tile_wgmma," << batch << ",64," << std::fixed
                 << std::setprecision(4) << global_tile_wgmma_ms << ",0,0\n";
+      for (const auto& [tiles_per_segment, milliseconds] : global_split_wgmma) {
+        std::cout << "global_split_wgmma_t" << tiles_per_segment << ',' << batch
+                  << ",8192," << std::fixed << std::setprecision(4) << milliseconds
+                  << ",0,0\n";
+      }
       const double global_key_bytes = global_bytes * 0.5;
       std::cout << "global_qk," << batch << ",8192," << std::fixed
                 << std::setprecision(4) << global_qk_ms << ',' << std::setprecision(2)

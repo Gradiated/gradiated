@@ -37,4 +37,12 @@ void grouped_global_attention_wgmma_tile_bf16(
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
     cudaStream_t stream);
 
+// Full-context research path. Workspace contains FP32 partial outputs
+// [head, segment, query, dimension] and FP32 max/sum pairs [head, segment, query].
+void grouped_global_attention_wgmma_split_bf16(
+    const void* query, const void* key_cache, const void* value_cache, void* output,
+    float* partial_outputs, float* partial_maxima, float* partial_sums,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    int tiles_per_segment, cudaStream_t stream);
+
 }  // namespace gradiated::engine

@@ -690,3 +690,21 @@ explicit swizzled shared stores restored exact output. At B16/context64 the fuse
 0.0164 ms versus 0.0197 ms for the library composition; B1 is 0.0161 versus 0.0170 ms. This is a
 correct, modest launch-level win, not yet an 8k result. Full context requires segmented online
 softmax with partial max/sum/output reduction while preserving enough CTAs to occupy all H200 SMs.
+
+A full-context split prototype carries FP32 PV accumulators across each segment, emits compact
+max/sum/output partials, and combines segments with an exact log-sum-exp reduction. At 128 tokens
+it differs from the retained composition by at most `0.00195312` BF16 units (`9.63e-5` mean). It is
+not fast enough: B16/8k takes 1.322--1.407 ms across 4--32 tiles per segment versus 0.281 ms for the
+retained composition. Batching all eight PV WGMMA tiles into one asynchronous commit group is
+neutral. Cubin resource inspection reports 64 registers/thread, zero local memory and no spills;
+the 138 KiB shared tile permits one CTA/SM. Runtime is dominated by per-64-token shared-memory
+transitions and synchronization, not WGMMA issue or host launches, and the split path remains a
+correctness scaffold rather than a runtime candidate.
+
+This result makes the exact shared-projection representation operationally necessary. Separate
+64 KiB K and 64 KiB V tiles consume too much shared memory to double-buffer while retaining query,
+score and probability state. A single 64 KiB raw tile plus inverse-RMS scalars can be transformed
+in shared memory into the exact weighted/RoPE K and normalized V views, reducing HBM bytes and
+making a two-stage load/compute pipeline fit. The next integration changes global cache ownership
+and QKV writes first, then replaces the split scaffold's two cache loads with that pipelined raw
+tile; tuning the rejected two-vector scaffold further would optimize the wrong memory graph.

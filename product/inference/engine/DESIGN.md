@@ -392,3 +392,29 @@ The native HTTP listener is nonblocking. Under connection churn a readiness edge
 before `accept4`; a blocking listening descriptor could then strand the only accept loop and make
 health or metrics unreachable after a successful inference burst. A 512-request concurrent burst
 test now gates post-burst responsiveness.
+
+Cached suffix projections now optionally reuse the retained tensor-E4M3 weights when the complete
+cohort has at most 4,096 packed tokens. The FP8 activation workspace covers the full configured
+prefill row bound rather than only four speculative rows per slot. Large sliding suffixes continue
+to use fused cuDNN attention; the pointer-batched QK/PV path remains restricted to speculative
+queries of at most four tokens. On the 257-token cached-turn quality shape, batch-1 agreement is
+505/512 with 10/16 exact prompts versus the retained 504/512 and 10/16 gate. At batch eight, the
+matched BF16-prefill/FP8-decode control is 502/512 and 9/16 exact, while FP8 suffix is 503/512 and
+8/16 exact. The aggregate gate is non-regressing, but the changed exact-prompt membership is
+recorded rather than described as a quality improvement.
+
+The more important gain came from admission order. FIFO could admit a new cache miss while a
+continuation matching an idle multi-thousand-token slot waited behind it, making small timing
+changes cause expensive prefix eviction. Admission now selects the queued job with the longest
+resident prefix and bounds starvation by forcing the FIFO head after four bypasses. On a fixed-work
+64-conversation/c16/ten-turn run, this alone reduces recomputed input from 374,421 to 341,937 tokens,
+raises throughput from 480.87 to 501.87 output token/s, and improves p95 TTFT from 472 to 280 ms.
+
+The combined cache-affine and FP8-suffix policy reaches 516.32 output token/s when model EOS is
+ignored solely to fix the benchmark at exactly 81,920 outputs, 7.37% above the matched native
+control. With ordinary production EOS semantics it reaches 483.65 output token/s. Cached TTFT
+p50/p95 is 153/309 ms, TPOT p50/p95 is 24.60/39.40 ms, and request time p50/p95 is 3.28/5.22 s.
+This is 53.1% above the measured 315.94 token/s SGLang agentic control and 6.4% above the prior
+454.5 native mean. The observed token mix grosses $1.825/hour at $0.08/M uncached input,
+$0.01/M cache read and $0.35/M output: 40.55% of a $4.50 H200, leaving approximately $1,953 per
+730-hour month of compute uncovered.

@@ -5,6 +5,7 @@
 #include "gradiated/engine/safetensors.h"
 #include "gradiated/engine/weight_plan.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -18,6 +19,18 @@ namespace {
 
 constexpr int maximum_context = 8192;
 constexpr int evaluated_tokens = 32;
+
+int environment_non_negative_integer(const char* name) {
+  const char* value = std::getenv(name);
+  if (value == nullptr || *value == '\0') return 0;
+  const std::string text(value);
+  std::size_t consumed = 0;
+  const int parsed = std::stoi(text, &consumed);
+  if (consumed != text.size() || parsed < 0) {
+    throw std::runtime_error(std::string(name) + " must be a non-negative integer");
+  }
+  return parsed;
+}
 
 struct Prompt {
   std::string identifier;
@@ -48,6 +61,13 @@ int main(int argc, char** argv) {
       return 64;
     }
     const bool bf16_candidate = std::string(argv[3]) == "bf16";
+    const int suffix_tokens = environment_non_negative_integer(
+        "GRADIATED_QUALITY_SUFFIX_TOKENS");
+    const int quality_batch = std::max(
+        1, environment_non_negative_integer("GRADIATED_QUALITY_BATCH"));
+    if (quality_batch > 16) {
+      throw std::runtime_error("GRADIATED_QUALITY_BATCH must not exceed 16");
+    }
     const auto scaling = bf16_candidate
         ? gradiated::engine::Fp8Scaling::tensor : parse_scaling(argv[3]);
     const std::string model_directory = argv[1];
@@ -104,34 +124,72 @@ int main(int argc, char** argv) {
       setenv("GRADIATED_FP8_GLOBAL_K", "1", 1);
     }
     gradiated::engine::Gemma4BatchModelRunner fp8_runner(
-        config, *weights, 1, maximum_context, fp8_weights.get());
-    for (std::size_t prompt_index = 0; prompt_index < prompts.size(); ++prompt_index) {
-      const auto& prompt = prompts[prompt_index];
-      const auto& reference = references[prompt_index];
-      int fp8_prediction = fp8_runner.prefill_slot(0, prompt.input_ids, 1024);
-      int prompt_matches = 0;
-      int matching_prefix = 0;
-      bool prefix_intact = true;
-      for (int step = 0; step < evaluated_tokens; ++step) {
-        const bool match = reference[step] == fp8_prediction;
-        prompt_matches += match ? 1 : 0;
-        if (prefix_intact && match) {
-          ++matching_prefix;
+        config, *weights, quality_batch, maximum_context, fp8_weights.get());
+    for (std::size_t group_start = 0; group_start < prompts.size();
+         group_start += static_cast<std::size_t>(quality_batch)) {
+      const int group_size = std::min(
+          quality_batch, static_cast<int>(prompts.size() - group_start));
+      std::vector<int> slots(static_cast<std::size_t>(group_size));
+      std::vector<int> predictions(static_cast<std::size_t>(group_size));
+      std::vector<const std::vector<int>*> prompt_pointers(
+          static_cast<std::size_t>(group_size));
+      for (int row = 0; row < group_size; ++row) {
+        slots[static_cast<std::size_t>(row)] = row;
+        const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+        prompt_pointers[static_cast<std::size_t>(row)] = &prompt.input_ids;
+        if (suffix_tokens > 0) {
+          const int prefix_tokens = static_cast<int>(prompt.input_ids.size()) - suffix_tokens;
+          if (prefix_tokens <= 0) {
+            throw std::runtime_error("quality suffix consumes complete prompt: " +
+                                     prompt.identifier);
+          }
+          const std::vector<int> prefix(prompt.input_ids.begin(),
+                                        prompt.input_ids.begin() + prefix_tokens);
+          static_cast<void>(fp8_runner.prefill_slot(row, prefix, 1024));
         } else {
-          prefix_intact = false;
+          predictions[static_cast<std::size_t>(row)] =
+              fp8_runner.prefill_slot(row, prompt.input_ids, 1024);
         }
-        ++total_predictions;
-        matching_predictions += match ? 1U : 0U;
-        if (step + 1 == evaluated_tokens) break;
-        const int reference_token = reference[step];
-        fp8_prediction = fp8_runner.append_ragged({reference_token}, {0})[0];
       }
-      if (prompt_matches == evaluated_tokens) ++exact_prompts;
-      ++prompt_count;
-      std::cout << "prompt=" << prompt.identifier
-                << " input_tokens=" << prompt.input_ids.size()
-                << " agreement=" << prompt_matches << '/' << evaluated_tokens
-                << " matching_prefix=" << matching_prefix << std::endl;
+      if (suffix_tokens > 0) {
+        predictions = fp8_runner.prefill_slots_suffix(slots, prompt_pointers);
+      }
+      std::vector<int> prompt_matches(static_cast<std::size_t>(group_size), 0);
+      std::vector<int> matching_prefix(static_cast<std::size_t>(group_size), 0);
+      std::vector<bool> prefix_intact(static_cast<std::size_t>(group_size), true);
+      for (int step = 0; step < evaluated_tokens; ++step) {
+        std::vector<int> reference_tokens(static_cast<std::size_t>(group_size));
+        for (int row = 0; row < group_size; ++row) {
+          const int reference = references[group_start + static_cast<std::size_t>(row)]
+                                           [static_cast<std::size_t>(step)];
+          reference_tokens[static_cast<std::size_t>(row)] = reference;
+          const bool match = reference == predictions[static_cast<std::size_t>(row)];
+          prompt_matches[static_cast<std::size_t>(row)] += match ? 1 : 0;
+          if (prefix_intact[static_cast<std::size_t>(row)] && match) {
+            ++matching_prefix[static_cast<std::size_t>(row)];
+          } else {
+            prefix_intact[static_cast<std::size_t>(row)] = false;
+          }
+          ++total_predictions;
+          matching_predictions += match ? 1U : 0U;
+        }
+        if (step + 1 != evaluated_tokens) {
+          predictions = fp8_runner.append_ragged(reference_tokens, slots);
+        }
+      }
+      for (int row = 0; row < group_size; ++row) {
+        const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+        if (prompt_matches[static_cast<std::size_t>(row)] == evaluated_tokens) {
+          ++exact_prompts;
+        }
+        ++prompt_count;
+        std::cout << "prompt=" << prompt.identifier
+                  << " input_tokens=" << prompt.input_ids.size()
+                  << " agreement=" << prompt_matches[static_cast<std::size_t>(row)] << '/'
+                  << evaluated_tokens
+                  << " matching_prefix=" << matching_prefix[static_cast<std::size_t>(row)]
+                  << std::endl;
+      }
     }
     const double seconds = std::chrono::duration<double>(
         std::chrono::steady_clock::now() - begin).count();
@@ -140,6 +198,8 @@ int main(int argc, char** argv) {
               << "exact_prompts=" << exact_prompts << '\n'
               << "matching_predictions=" << matching_predictions << '\n'
               << "total_predictions=" << total_predictions << '\n'
+              << "quality_suffix_tokens=" << suffix_tokens << '\n'
+              << "quality_batch=" << quality_batch << '\n'
               << "teacher_forced_greedy_agreement="
               << static_cast<double>(matching_predictions) / total_predictions << '\n'
               << "evaluation_seconds=" << seconds << '\n';

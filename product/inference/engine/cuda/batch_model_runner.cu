@@ -34,6 +34,24 @@ bool fp8_global_k_enabled() {
   return value != nullptr && std::string_view(value) == "1";
 }
 
+int fp8_suffix_max_tokens() {
+  const char* value = std::getenv("GRADIATED_FP8_SUFFIX_MAX_TOKENS");
+  if (value == nullptr || *value == '\0') return 0;
+  try {
+    const std::string text(value);
+    std::size_t consumed = 0;
+    const int parsed = std::stoi(text, &consumed);
+    if (consumed != text.size() || parsed < 0) {
+      throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS must be a non-negative integer");
+    }
+    return parsed;
+  } catch (const std::invalid_argument&) {
+    throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS must be a non-negative integer");
+  } catch (const std::out_of_range&) {
+    throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS is out of range");
+  }
+}
+
 std::vector<bool> fp8_global_k_selection(const Gemma4Config& config, bool enabled) {
   std::vector<bool> selected(config.layers.size(), false);
   if (!enabled) return selected;
@@ -101,6 +119,7 @@ struct Gemma4BatchModelRunner::Implementation {
     std::vector<std::size_t> prompt_sizes;
     int packed_tokens{0};
     int next_layer{0};
+    bool fp8_projections{false};
   };
 
   const Gemma4Config& config;
@@ -117,6 +136,7 @@ struct Gemma4BatchModelRunner::Implementation {
   std::vector<int> slot_positions;
   std::vector<CacheLocation> caches;
   std::uint64_t cache_payload_bytes;
+  int fp8_suffix_token_limit;
   bool use_fp8_global_k;
   std::vector<bool> fp8_global_k_layers;
   std::vector<std::uint64_t> fp8_key_offsets;
@@ -206,6 +226,7 @@ struct Gemma4BatchModelRunner::Implementation {
         vocabulary(static_cast<int>(model_config.vocabulary_size)),
         slot_positions(static_cast<std::size_t>(requested_batch), 0), caches(),
         cache_payload_bytes(cache_payload(model_config, requested_batch, max_context, &caches)),
+        fp8_suffix_token_limit(fp8_suffix_max_tokens()),
         use_fp8_global_k(fp8_global_k_enabled()),
         fp8_global_k_layers(fp8_global_k_selection(model_config, use_fp8_global_k)),
         fp8_key_offsets(),
@@ -240,6 +261,9 @@ struct Gemma4BatchModelRunner::Implementation {
         suffix_hidden_a(2ULL * max_context * hidden),
         suffix_hidden_b(2ULL * max_context * hidden) {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
+    if (fp8_suffix_token_limit > max_context) {
+      throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS exceeds prefill workspace");
+    }
     check(cudaStreamCreateWithFlags(&decode_stream, cudaStreamNonBlocking),
           "create decode stream");
     for (std::size_t layer = 0; layer < config.layers.size(); ++layer) {
@@ -336,6 +360,11 @@ struct Gemma4BatchModelRunner::Implementation {
     fp8_lm_head.run(fp8_final_hidden.get(), scales, fp8_weights->at("token_embedding"),
                     fp8_weights->scale("token_embedding"), output,
                     rows, hidden, vocabulary, stream);
+  }
+
+  [[nodiscard]] bool use_fp8_suffix(const int packed_tokens) const noexcept {
+    return fp8_weights != nullptr && fp8_suffix_token_limit > 0 &&
+           packed_tokens <= fp8_suffix_token_limit;
   }
 
   void enqueue_ragged_decode(int active, int maximum_context_length,
@@ -556,6 +585,7 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
   if (packed_tokens.size() > static_cast<std::size_t>(state.maximum_context)) {
     throw std::runtime_error("batched suffix exceeds shared projection workspace");
   }
+  const bool fp8_projections = state.use_fp8_suffix(static_cast<int>(packed_tokens.size()));
 
   check(cudaMemcpy(state.device_input_tokens.get(), packed_tokens.data(),
                    packed_tokens.size() * sizeof(int), cudaMemcpyHostToDevice),
@@ -578,7 +608,8 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
       value_caches.push_back(state.slot_value_cache(layer, slot));
     }
     state.layers.run_prefill_chunks(static_cast<int>(layer), input, output, counts, positions,
-                                    key_caches, value_caches, capacities, nullptr);
+                                    key_caches, value_caches, capacities, nullptr,
+                                    fp8_projections);
     for (int request = 0; request < requests; ++request) {
       state.refresh_fp8_key_span(
           layer, slots[static_cast<std::size_t>(request)],
@@ -598,8 +629,12 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
                    cudaMemcpyHostToDevice), "copy suffix hidden slots");
   scatter_rows_bf16(state.final_hidden.get(), static_cast<const int*>(state.device_slots.get()),
                     state.target_hidden_slots.get(), requests, state.hidden, nullptr);
-  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
-                    state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  if (fp8_projections) {
+    state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), requests, nullptr);
+  } else {
+    state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
+                      state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  }
   const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
   for (int row = 0; row < requests; ++row) {
     const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
@@ -672,6 +707,7 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
       throw std::runtime_error("layer-sliced suffix exceeds shared projection workspace");
     }
     suffix.packed_tokens = static_cast<int>(packed_tokens.size());
+    suffix.fp8_projections = state.use_fp8_suffix(suffix.packed_tokens);
     check(cudaMemcpy(state.device_input_tokens.get(), packed_tokens.data(),
                      packed_tokens.size() * sizeof(int), cudaMemcpyHostToDevice),
           "copy layer-sliced suffix tokens");
@@ -715,7 +751,7 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
     }
     state.layers.run_prefill_chunks(
         layer, input, output, suffix.counts, suffix.positions,
-        key_caches, value_caches, capacities, nullptr);
+        key_caches, value_caches, capacities, nullptr, suffix.fp8_projections);
     for (int request = 0; request < requests; ++request) {
       state.refresh_fp8_key_span(
           static_cast<std::size_t>(layer), slots[static_cast<std::size_t>(request)],
@@ -741,8 +777,12 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
                    cudaMemcpyHostToDevice), "copy layer-sliced suffix slots");
   scatter_rows_bf16(state.final_hidden.get(), static_cast<const int*>(state.device_slots.get()),
                     state.target_hidden_slots.get(), requests, state.hidden, nullptr);
-  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
-                    state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  if (suffix.fp8_projections) {
+    state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), requests, nullptr);
+  } else {
+    state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
+                      state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  }
   const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
   for (int row = 0; row < requests; ++row) {
     const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +

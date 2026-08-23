@@ -9,6 +9,7 @@
 #include <cuda_runtime.h>
 
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -42,14 +43,20 @@ int main(int argc, char** argv) {
     if (argc != 3 && argc != 4 && argc != 5) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
                    "[profile-ragged|profile-ragged-fp8|profile-suffix|prefix-benchmark|speculative-parity|"
-                   "contiguous-parity|assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
+                   "contiguous-parity|fp8-suffix-parity|assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
     const auto fixture = gradiated::engine::Json::parse(gradiated::engine::read_text_file(argv[2]));
-    const auto prompt = integers(fixture.at("input_ids"));
-    const auto expected = integers(fixture.at("expected_output_ids"));
-    if (expected.size() < 4) throw std::runtime_error("fixture needs four expected tokens");
+    const bool fp8_suffix_parity = argc == 4 && std::string(argv[3]) == "fp8-suffix-parity";
+    const auto prompt = fp8_suffix_parity
+        ? integers(fixture.at("prompts").as_array().front().at("input_ids"))
+        : integers(fixture.at("input_ids"));
+    const auto expected = fp8_suffix_parity
+        ? std::vector<int>{} : integers(fixture.at("expected_output_ids"));
+    if (!fp8_suffix_parity && expected.size() < 4) {
+      throw std::runtime_error("fixture needs four expected tokens");
+    }
     const auto config = gradiated::engine::Gemma4Config::load(model_directory + "/config.json");
     const auto host_weights = gradiated::engine::ShardedSafetensors::open(model_directory);
     gradiated::engine::validate_gemma4_weights(host_weights, config);
@@ -294,6 +301,51 @@ int main(int argc, char** argv) {
                 << "ttft_speedup=" << (fresh_seconds / reuse_seconds) << '\n'
                 << "prefill_compute_avoided_fraction="
                 << (1.0 - reuse_seconds / fresh_seconds) << '\n';
+      return 0;
+    }
+    if (argc == 4 && std::string(argv[3]) == "fp8-suffix-parity") {
+      constexpr int batch = 10;
+      constexpr int prefix_tokens = 3000;
+      constexpr int suffix_tokens = 257;
+      std::vector<int> full(static_cast<std::size_t>(prefix_tokens + suffix_tokens));
+      for (std::size_t index = 0; index < full.size(); ++index) {
+        full[index] = prompt[index % prompt.size()];
+      }
+      const std::vector<int> resident(full.begin(), full.begin() + prefix_tokens);
+      setenv("GRADIATED_FP8_SUFFIX_MAX_TOKENS", "3000", 1);
+      const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+      gradiated::engine::Gemma4BatchModelRunner runner(
+          config, *weights, batch, 4000, fp8_weights.get());
+      std::vector<int> slots;
+      std::vector<const std::vector<int>*> prompts;
+      for (int slot = 0; slot < batch; ++slot) {
+        slots.push_back(slot);
+        prompts.push_back(&full);
+        static_cast<void>(runner.prefill_slot(slot, resident, 1024));
+      }
+      const auto unsliced = runner.prefill_slots_suffix(slots, prompts);
+      const auto unsliced_decode = runner.append_ragged(unsliced, slots);
+      for (int slot = 0; slot < batch; ++slot) {
+        static_cast<void>(runner.prefill_slot(slot, resident, 1024));
+      }
+      gradiated::engine::LayerSlicedSuffixPrefillResult sliced;
+      int slices = 0;
+      while (!sliced.complete) {
+        sliced = runner.prefill_slots_suffix_layer_slice(slots, prompts, 10);
+        ++slices;
+      }
+      require_equal(sliced.predictions, unsliced,
+                    "FP8 layer-sliced suffix prediction");
+      require_equal(runner.append_ragged(sliced.predictions, slots), unsliced_decode,
+                    "FP8 layer-sliced suffix decode");
+      if (slices != 6 || runner.has_suffix_layer_slices()) {
+        throw std::runtime_error("FP8 suffix did not complete in six exact slices");
+      }
+      std::cout << "fp8_suffix_parity=true\n"
+                << "batch=" << batch << '\n'
+                << "suffix_tokens=" << suffix_tokens << '\n'
+                << "slices=" << slices << '\n';
       return 0;
     }
     {

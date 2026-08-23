@@ -22,6 +22,14 @@ cache, continuous batching and prefix reuse, then overlapped frozen-KV speculati
 optimization is retained only when it improves sustained cheapest-price compute recovery while
 meeting TTFT, TPOT and output-parity gates on the held-out agentic trace workload.
 
+The native release uses tensor-scaled E4M3 projections for decode and for cached suffix cohorts
+whose packed row count does not exceed 4,096. Full cache-miss prefill remains BF16. The scheduler
+prefers a queued continuation with a longer resident prefix, but any FIFO head can be bypassed at
+most four times. These controls are exposed as `GRADIATED_FP8_SUFFIX_MAX_TOKENS` and
+`GRADIATED_CACHE_AFFINITY_MAX_BYPASSES`; zero disables either optimization. The
+`GRADIATED_IGNORE_MODEL_EOS` switch exists only to make performance A/B work counts deterministic
+and must remain unset in production.
+
 `tools/generate_layer_fixture.py` creates deterministic BF16 reference fixtures for one pinned
 decoder layer without loading the full model. Fixture binaries are runtime artifacts; their
 manifest and hashes establish exactly which model, layer, seed and shape a CUDA parity run used.

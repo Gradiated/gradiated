@@ -46,7 +46,7 @@ struct Gemma4LayerRunner::Implementation {
   int maximum_tokens;
   int maximum_context;
   int maximum_batch;
-  int maximum_decode_rows;
+  int maximum_fp8_rows;
   int hidden;
   int intermediate;
   float epsilon;
@@ -84,7 +84,7 @@ struct Gemma4LayerRunner::Implementation {
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
-        maximum_decode_rows(4 * max_batch),
+        maximum_fp8_rows(std::max(max_tokens, 4 * max_batch)),
         hidden(static_cast<int>(model_config.hidden_size)),
         intermediate(static_cast<int>(model_config.intermediate_size)),
         epsilon(static_cast<float>(model_config.rms_norm_epsilon)),
@@ -116,9 +116,10 @@ struct Gemma4LayerRunner::Implementation {
         gate_up(4ULL * std::max(max_tokens, max_batch) * intermediate),
         activated(2ULL * std::max(max_tokens, max_batch) * intermediate),
         down(2ULL * std::max(max_tokens, max_batch) * hidden),
-        fp8_input(static_cast<std::uint64_t>(4 * max_batch) *
+        fp8_input(static_cast<std::uint64_t>(std::max(max_tokens, 4 * max_batch)) *
                   std::max({hidden, intermediate, 18432})),
-        fp8_input_scales(sizeof(float) * static_cast<std::uint64_t>(4 * max_batch) *
+        fp8_input_scales(sizeof(float) *
+                         static_cast<std::uint64_t>(std::max(max_tokens, 4 * max_batch)) *
                          ((std::max({hidden, intermediate, 18432}) + 127) / 128)),
         prefill_positions(sizeof(int) * static_cast<std::uint64_t>(max_batch)),
         prefill_cache_pointers(2ULL * sizeof(void*) * static_cast<std::uint64_t>(max_batch)) {
@@ -498,8 +499,8 @@ void Gemma4LayerRunner::run_prefill_chunks(
     throw std::runtime_error("batched prefill exceeds projection workspace");
   }
   if (fp8_projections && (state.fp8_weights == nullptr ||
-                          total_tokens > state.maximum_decode_rows)) {
-    throw std::runtime_error("FP8 verification exceeds decode workspace");
+                          total_tokens > state.maximum_fp8_rows)) {
+    throw std::runtime_error("FP8 prefill exceeds quantization workspace");
   }
 
   const auto& layer = state.config.layers.at(static_cast<std::size_t>(layer_index));
@@ -534,9 +535,10 @@ void Gemma4LayerRunner::run_prefill_chunks(
         std::min(position_starts[request],
                  static_cast<int>(state.config.sliding_window) - 1) == uniform_prior;
   }
+  const bool speculative_sliding_gemm = fp8_projections && uniform_tokens <= 4;
   const bool uniform_sliding = layer.attention == AttentionKind::sliding &&
                                uniform_shape && uniform_prior_shape &&
-                               ((fp8_projections && requests >= 2) ||
+                               ((speculative_sliding_gemm && requests >= 2) ||
                                 (requests >= 8 && uniform_tokens >= 128));
   if (uniform_sliding) {
     const int staging_tokens = uniform_prior + uniform_tokens;
@@ -570,7 +572,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
         static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
         layer.key_equals_value, uniform_prior, staging_tokens, state.epsilon, stream);
     const void* attention_states = state.attention_output.get();
-    if (fp8_projections) {
+    if (speculative_sliding_gemm) {
       // cuDNN's small-query SDPA plans are either unavailable or launch-bound for q=4. The
       // pointer-batched tensor-core QK/PV path treats the retained ring as an ordinary causal
       // context and covers every request with two GEMM launches.

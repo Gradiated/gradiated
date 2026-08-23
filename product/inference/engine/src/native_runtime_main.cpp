@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <deque>
 #include <iostream>
+#include <iterator>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -46,6 +47,7 @@ constexpr int default_interleaved_suffix_layer_minimum_decode = 14;
 constexpr int maximum_slots = 16;
 constexpr int default_speculative_depth = 4;
 constexpr int default_speculative_minimum_batch = 8;
+constexpr int default_cache_affinity_max_bypasses = 4;
 
 std::string environment(const char* name, const std::string& fallback = {}) {
   const char* value = std::getenv(name);
@@ -69,6 +71,14 @@ int environment_integer(const char* name, int fallback, int minimum, int maximum
     throw std::runtime_error(std::string(name) + " is out of range");
   }
   return static_cast<int>(parsed);
+}
+
+bool environment_flag(const char* name, bool fallback = false) {
+  const std::string value = environment(name);
+  if (value.empty()) return fallback;
+  if (value == "1" || value == "true") return true;
+  if (value == "0" || value == "false") return false;
+  throw std::runtime_error(std::string(name) + " must be 0, 1, false, or true");
 }
 
 bool constant_time_equal(const std::string& left, const std::string& right) {
@@ -135,6 +145,8 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> decoding{0};
   std::atomic<std::uint64_t> prefix_cache_hits{0};
   std::atomic<std::uint64_t> prefix_tokens_reused{0};
+  std::atomic<std::uint64_t> cache_affinity_admissions{0};
+  std::atomic<std::uint64_t> cache_affinity_bypassed_requests{0};
   std::atomic<std::uint64_t> prefill_tokens_computed{0};
   std::atomic<std::uint64_t> kv_cache_clones{0};
   std::atomic<std::uint64_t> kv_cache_clone_bytes{0};
@@ -184,6 +196,7 @@ struct CompletionJob {
   std::deque<int> emitted_ids;
   std::atomic<bool> cancelled{false};
   std::atomic<std::uint64_t> cached_input_tokens{0};
+  std::uint32_t admission_bypasses{0};
   bool done{false};
   std::optional<CompletionResult> result;
   std::string error;
@@ -202,6 +215,7 @@ class ContinuousScheduler {
                       int short_prefill_batch_window_microseconds,
                       int interleaved_suffix_layer_quantum,
                       int interleaved_suffix_layer_minimum_decode,
+                      int cache_affinity_max_bypasses,
                       desmond::SharedTraceRing* trace_ring)
       : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
                 assistant_weights),
@@ -213,6 +227,7 @@ class ContinuousScheduler {
         short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds),
         interleaved_suffix_layer_quantum_(interleaved_suffix_layer_quantum),
         interleaved_suffix_layer_minimum_decode_(interleaved_suffix_layer_minimum_decode),
+        cache_affinity_max_bypasses_(cache_affinity_max_bypasses),
         config_layer_count_(config.layers.size()), trace_ring_(trace_ring) {
     // Materialize latency-sensitive cuBLASLt and attention plans before advertising readiness.
     std::vector<int> warmup(2048, 2);
@@ -504,10 +519,33 @@ class ContinuousScheduler {
     {
       std::lock_guard lock(mutex_);
       if (pending_.empty()) return false;
-      placement = select_slot(*pending_.front());
+      auto selected = pending_.begin();
+      placement = select_slot(**selected);
       if (placement.destination < 0) return false;
-      job = std::move(pending_.front());
-      pending_.pop_front();
+      if (cache_affinity_max_bypasses_ > 0 &&
+          (*selected)->admission_bypasses <
+              static_cast<std::uint32_t>(cache_affinity_max_bypasses_)) {
+        for (auto candidate = std::next(selected); candidate != pending_.end(); ++candidate) {
+          const Placement candidate_placement = select_slot(**candidate);
+          if (candidate_placement.destination >= 0 &&
+              candidate_placement.prefix_tokens > placement.prefix_tokens) {
+            selected = candidate;
+            placement = candidate_placement;
+          }
+        }
+      }
+      if (selected != pending_.begin()) {
+        metrics_.cache_affinity_admissions.fetch_add(1);
+        for (auto bypassed = pending_.begin(); bypassed != selected; ++bypassed) {
+          if ((*bypassed)->admission_bypasses <
+              static_cast<std::uint32_t>(cache_affinity_max_bypasses_)) {
+            ++(*bypassed)->admission_bypasses;
+          }
+          metrics_.cache_affinity_bypassed_requests.fetch_add(1);
+        }
+      }
+      job = std::move(*selected);
+      pending_.erase(selected);
       metrics_.queued.fetch_sub(1);
       slots_[static_cast<std::size_t>(placement.destination)].job = job;
       job->cached_input_tokens.store(static_cast<std::uint64_t>(placement.prefix_tokens),
@@ -1032,6 +1070,7 @@ class ContinuousScheduler {
   int short_prefill_batch_window_microseconds_;
   int interleaved_suffix_layer_quantum_;
   int interleaved_suffix_layer_minimum_decode_;
+  int cache_affinity_max_bypasses_;
   const std::size_t config_layer_count_;
   desmond::SharedTraceRing* trace_ring_;
   std::vector<int> inflight_suffix_slots_;
@@ -1109,6 +1148,10 @@ int main(int argc, char** argv) {
     const int speculative_minimum_batch = environment_integer(
         "GRADIATED_SPECULATIVE_MIN_BATCH", default_speculative_minimum_batch, 1,
         maximum_slots);
+    const int cache_affinity_max_bypasses = environment_integer(
+        "GRADIATED_CACHE_AFFINITY_MAX_BYPASSES", default_cache_affinity_max_bypasses,
+        0, 1024);
+    const bool ignore_model_eos = environment_flag("GRADIATED_IGNORE_MODEL_EOS");
     std::unique_ptr<desmond::SharedTraceRing> trace_ring;
     const std::string trace_path = environment("DESMOND_TRACE_PATH");
     if (!trace_path.empty()) {
@@ -1126,6 +1169,7 @@ int main(int argc, char** argv) {
                                   short_prefill_batch_window_microseconds,
                                   interleaved_suffix_layer_quantum,
                                   interleaved_suffix_layer_minimum_decode,
+                                  cache_affinity_max_bypasses,
                                   trace_ring.get());
 
     desmond::HttpServer server(bind_host, bind_port, [&](const desmond::HttpRequest& request) {
@@ -1147,6 +1191,10 @@ int main(int argc, char** argv) {
              << "gradiated_native_prefix_cache_hits_total " << metrics.prefix_cache_hits.load() << '\n'
              << "gradiated_native_prefix_tokens_reused_total "
              << metrics.prefix_tokens_reused.load() << '\n'
+             << "gradiated_native_cache_affinity_admissions_total "
+             << metrics.cache_affinity_admissions.load() << '\n'
+             << "gradiated_native_cache_affinity_bypassed_requests_total "
+             << metrics.cache_affinity_bypassed_requests.load() << '\n'
              << "gradiated_native_prefill_tokens_computed_total "
              << metrics.prefill_tokens_computed.load() << '\n'
              << "gradiated_native_kv_cache_clones_total " << metrics.kv_cache_clones.load() << '\n'
@@ -1214,8 +1262,10 @@ int main(int argc, char** argv) {
         if (max_tokens <= 0 || max_tokens > maximum_context - static_cast<int>(input_ids.size())) {
           throw std::runtime_error("max_tokens exceeds the remaining context");
         }
-        std::unordered_set<int> stop_ids(config.eos_token_ids.begin(),
-                                         config.eos_token_ids.end());
+        std::unordered_set<int> stop_ids;
+        if (!ignore_model_eos) {
+          stop_ids.insert(config.eos_token_ids.begin(), config.eos_token_ids.end());
+        }
         if (const auto* value = body.find("stop_token_ids")) {
           for (const int token : integer_array(*value, "stop_token_ids")) stop_ids.insert(token);
         }
@@ -1317,7 +1367,9 @@ int main(int argc, char** argv) {
               << interleaved_suffix_layer_quantum
               << " interleaved_suffix_layer_min_decode="
               << interleaved_suffix_layer_minimum_decode
+              << " cache_affinity_max_bypasses=" << cache_affinity_max_bypasses
               << " fp8_decode=" << fp8_decode
+              << " ignore_model_eos=" << (ignore_model_eos ? "true" : "false")
               << " assistant=" << (assistant_weights ? "enabled" : "off") << '\n';
     server.run();
     return 0;

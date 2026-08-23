@@ -305,6 +305,34 @@ GemmGroupedDecodeAttention::GemmGroupedDecodeAttention(int maximum_batch, int ma
                                                         maximum_query_group, maximum_context)) {}
 GemmGroupedDecodeAttention::~GemmGroupedDecodeAttention() = default;
 
+void GemmGroupedDecodeAttention::run_qk(
+    const void* query, const void* key_cache, void* scores, int batch, int kv_heads,
+    int query_group, int context_length, int head_dimension, cudaStream_t stream,
+    int cache_capacity) {
+  if (cache_capacity == 0) cache_capacity = context_length;
+  const std::uint64_t score_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * context_length;
+  if (query == nullptr || key_cache == nullptr || scores == nullptr || batch <= 0 ||
+      kv_heads <= 0 || query_group <= 0 || context_length <= 0 ||
+      cache_capacity < context_length || head_dimension <= 0 ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error("QK shape exceeds workspace");
+  }
+  cublas_check(cublasSetStream(implementation_->handle, stream), "set QK stream");
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const int head_batches = batch * kv_heads;
+  const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
+  const long long query_stride = static_cast<long long>(query_group) * head_dimension;
+  const long long score_stride = static_cast<long long>(query_group) * context_length;
+  cublas_check(cublasGemmStridedBatchedEx(
+      implementation_->handle, CUBLAS_OP_T, CUBLAS_OP_N, context_length, query_group,
+      head_dimension, &alpha, key_cache, CUDA_R_16BF, head_dimension, cache_stride,
+      query, CUDA_R_16BF, head_dimension, query_stride, &beta, scores, CUDA_R_16BF,
+      context_length, score_stride, head_batches, CUBLAS_COMPUTE_32F,
+      CUBLAS_GEMM_DEFAULT_TENSOR_OP), "benchmark grouped QK GEMM");
+}
+
 void GemmGroupedDecodeAttention::run(const void* query, const void* key_cache, const void* value_cache,
                                      void* output, int batch, int kv_heads, int query_group,
                                      int context_length, int head_dimension, cudaStream_t stream,

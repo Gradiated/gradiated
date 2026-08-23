@@ -66,12 +66,21 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     GIT_SHALLOW FALSE
   )
   FetchContent_MakeAvailable(cudnn_frontend)
+  FetchContent_Declare(
+    cutlass
+    GIT_REPOSITORY https://github.com/NVIDIA/cutlass.git
+    GIT_TAG 6c65a175668952f09bcbf66cb97a8de1b734b4a0
+    GIT_SHALLOW TRUE
+    SOURCE_SUBDIR _gradiated_header_only
+  )
+  FetchContent_MakeAvailable(cutlass)
   find_library(CUDNN_LIBRARY NAMES cudnn REQUIRED)
   add_library(gradiated_engine_cuda
     engine/cuda/attention.cu
     engine/cuda/assistant_runner.cu
     engine/cuda/batch_model_runner.cu
     engine/cuda/gemm_attention.cu
+    engine/cuda/hopper_attention.cu
     engine/cuda/prefill_gemm_attention.cu
     engine/cuda/ops.cu
     engine/cuda/prefill_attention.cu
@@ -81,13 +90,14 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     engine/cuda/model_runner.cu
     engine/cuda/qkv.cu
   )
-  target_include_directories(gradiated_engine_cuda PUBLIC engine/include)
+  target_include_directories(gradiated_engine_cuda PUBLIC engine/include PRIVATE
+    ${cutlass_SOURCE_DIR}/include)
   target_link_libraries(gradiated_engine_cuda PUBLIC gradiated_engine_model CUDA::cudart CUDA::cublas
     CUDA::cublasLt cudnn_frontend ${CUDNN_LIBRARY})
   set_target_properties(gradiated_engine_cuda PROPERTIES
     CUDA_STANDARD 20
     CUDA_STANDARD_REQUIRED ON
-    CUDA_ARCHITECTURES 90
+    CUDA_ARCHITECTURES 90a
   )
   if(BUILD_TESTING)
     add_executable(gradiated_engine_cuda_tests engine/tests/cuda_ops_tests.cu)

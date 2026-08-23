@@ -23,4 +23,11 @@ void grouped_decode_attention_wmma_bf16(
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
     cudaStream_t stream);
 
+// Benchmark/prototyping boundary for the Hopper-native global QK tile. Produces BF16 scores in
+// [batch, kv_head, query, context] order without softmax. Context must be a multiple of 64.
+void grouped_global_qk_wgmma_bf16(const void* query, const void* key_cache, void* scores,
+                                  int batch, int kv_heads, int query_group,
+                                  int context_length, int head_dimension,
+                                  cudaStream_t stream, int tiles_per_block = 1);
+
 }  // namespace gradiated::engine

@@ -19,6 +19,11 @@ class GemmGroupedDecodeAttention {
   void run(const void* query, const void* key_cache, const void* value_cache, void* output,
            int batch, int kv_heads, int query_group, int context_length,
            int head_dimension, cudaStream_t stream, int cache_capacity = 0);
+  // Benchmark boundary for the retained strided QK primitive. Scores are BF16 in
+  // [batch, kv_head, query, context] order and are not normalized.
+  void run_qk(const void* query, const void* key_cache, void* scores, int batch,
+              int kv_heads, int query_group, int context_length, int head_dimension,
+              cudaStream_t stream, int cache_capacity = 0);
   // Compact query/output rows attend to stable cache slots with independent absolute positions.
   // positions and slots are device arrays. Invalid tail scores are zeroed before PV.
   void run_ragged(const void* query, const void* key_cache, const void* value_cache,

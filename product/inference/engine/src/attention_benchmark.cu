@@ -12,6 +12,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -130,6 +131,92 @@ void fp8_parity() {
             << dot / std::sqrt(squared_reference * squared_candidate) << '\n';
 }
 
+void wgmma_qk_parity() {
+  constexpr int batch = 2;
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 128;
+  constexpr int dimension = 512;
+  constexpr std::uint64_t query_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * dimension;
+  constexpr std::uint64_t key_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * context * dimension;
+  constexpr std::uint64_t score_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * context;
+  Allocation query(2ULL * query_elements), key(2ULL * key_elements),
+      reference(2ULL * score_elements), candidate(2ULL * score_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x88776655U, 0.12F);
+  initialize_bf16<<<(key_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key.get()), key_elements, 0x10293847U, 0.08F);
+  gradiated::engine::GemmGroupedDecodeAttention attention(
+      batch, kv_heads, query_group, context);
+  attention.run_qk(query.get(), key.get(), reference.get(), batch, kv_heads,
+                   query_group, context, dimension, nullptr);
+  gradiated::engine::grouped_global_qk_wgmma_bf16(
+      query.get(), key.get(), candidate.get(), batch, kv_heads, query_group,
+      context, dimension, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize WGMMA QK parity");
+  std::vector<__nv_bfloat16> expected(score_elements), actual(score_elements);
+  check(cudaMemcpy(expected.data(), reference.get(), 2ULL * score_elements,
+                   cudaMemcpyDeviceToHost), "copy WGMMA QK reference");
+  check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * score_elements,
+                   cudaMemcpyDeviceToHost), "copy WGMMA QK candidate");
+  float maximum = 0.0F;
+  double mean = 0.0;
+  for (std::uint64_t index = 0; index < score_elements; ++index) {
+    const float difference = std::abs(__bfloat162float(expected[index]) -
+                                      __bfloat162float(actual[index]));
+    maximum = std::max(maximum, difference);
+    mean += difference;
+  }
+  std::cout << "wgmma_qk_parity_max_abs=" << maximum << '\n'
+            << "wgmma_qk_parity_mean_abs=" << mean / score_elements << '\n';
+  if (maximum > 0.02F) throw std::runtime_error("WGMMA QK parity exceeded tolerance");
+}
+
+float benchmark_qk(int batch, int context, bool wgmma, int tiles_per_block = 1) {
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  const std::uint64_t query_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * dimension;
+  const std::uint64_t key_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * context * dimension;
+  const std::uint64_t score_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * context;
+  Allocation query(2ULL * query_elements), key(2ULL * key_elements),
+      scores(2ULL * score_elements);
+  gradiated::engine::GemmGroupedDecodeAttention attention(
+      batch, kv_heads, query_group, context);
+  const auto run = [&] {
+    if (wgmma) {
+      gradiated::engine::grouped_global_qk_wgmma_bf16(
+          query.get(), key.get(), scores.get(), batch, kv_heads, query_group,
+          context, dimension, nullptr, tiles_per_block);
+    } else {
+      attention.run_qk(query.get(), key.get(), scores.get(), batch, kv_heads,
+                       query_group, context, dimension, nullptr);
+    }
+  };
+  for (int iteration = 0; iteration < 4; ++iteration) run();
+  check(cudaDeviceSynchronize(), "WGMMA QK warmup");
+  cudaEvent_t begin{}, end{};
+  check(cudaEventCreate(&begin), "create WGMMA QK begin event");
+  check(cudaEventCreate(&end), "create WGMMA QK end event");
+  constexpr int iterations = 20;
+  check(cudaEventRecord(begin), "record WGMMA QK begin event");
+  for (int iteration = 0; iteration < iterations; ++iteration) run();
+  check(cudaEventRecord(end), "record WGMMA QK end event");
+  check(cudaEventSynchronize(end), "synchronize WGMMA QK benchmark");
+  float milliseconds = 0.0F;
+  check(cudaEventElapsedTime(&milliseconds, begin, end), "measure WGMMA QK benchmark");
+  cudaEventDestroy(end);
+  cudaEventDestroy(begin);
+  return milliseconds / iterations;
+}
+
 void parity() {
   constexpr int context = 127;
   constexpr int dimension = 512;
@@ -246,6 +333,7 @@ int main() {
   try {
     parity();
     fp8_parity();
+    wgmma_qk_parity();
     std::cout << "kind,batch,context,milliseconds,physical_kv_gb_s,naive_avoided_gb\n";
     for (const int batch : std::vector<int>{1, 2, 4, 8, 10, 16}) {
       const float sliding_ms = benchmark(batch, 16, 2, 1024, 256, 0);
@@ -264,6 +352,12 @@ int main() {
       const float global_fp8_key_ms = benchmark(batch, 4, 8, 8192, 512, 3);
       const float global_cudnn_ms = benchmark(batch, 4, 8, 8192, 512, 4);
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
+      const float global_qk_ms = benchmark_qk(batch, 8192, false);
+      std::vector<std::pair<int, float>> global_qk_wgmma;
+      for (const int tiles_per_block : std::vector<int>{1, 2, 4, 8, 16, 32}) {
+        global_qk_wgmma.emplace_back(
+            tiles_per_block, benchmark_qk(batch, 8192, true, tiles_per_block));
+      }
       const double global_bytes = 4.0 * batch * 4 * 8192 * 512;
       std::cout << "global," << batch << ",8192," << std::fixed << std::setprecision(4)
                 << global_ms << ',' << std::setprecision(2) << global_bytes / (global_ms / 1000.0) / 1e9
@@ -288,6 +382,16 @@ int main() {
                 << std::setprecision(4) << global_ragged_ms << ',' << std::setprecision(2)
                 << global_bytes / (global_ragged_ms / 1000.0) / 1e9 << ','
                 << 7.0 * global_bytes / 1e9 << '\n';
+      const double global_key_bytes = global_bytes * 0.5;
+      std::cout << "global_qk," << batch << ",8192," << std::fixed
+                << std::setprecision(4) << global_qk_ms << ',' << std::setprecision(2)
+                << global_key_bytes / (global_qk_ms / 1000.0) / 1e9 << ",0\n";
+      for (const auto& [tiles_per_block, milliseconds] : global_qk_wgmma) {
+        std::cout << "global_qk_wgmma_t" << tiles_per_block << ',' << batch
+                  << ",8192," << std::fixed << std::setprecision(4) << milliseconds << ','
+                  << std::setprecision(2)
+                  << global_key_bytes / (milliseconds / 1000.0) / 1e9 << ",0\n";
+      }
       const double total_ms = 50.0 * sliding_ms + 10.0 * global_ms;
       const double fused_total_ms = 50.0 * sliding_fused_ms + 10.0 * global_fused_ms;
       std::cout << "all_layers," << batch << ",8192," << std::fixed << std::setprecision(4)

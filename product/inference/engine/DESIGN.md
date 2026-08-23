@@ -657,3 +657,26 @@ same-binary baseline and raw-roundtrip candidate artifacts have the identical SH
 `0ac9f224e90e779057f7112cd710f9e8a275fd427d802c83805410c804a246ee`. The probe is opt-in through
 `GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP=1` and intentionally materializes K/V; it establishes exactness
 but is not enabled as a runtime optimization until fused attention consumes the representation.
+
+## Hopper WGMMA global-attention tile (2026-08-23)
+
+The first Hopper-native building block uses CUTLASS/CuTe C++ pinned at
+`6c65a175668952f09bcbf66cb97a8de1b734b4a0` and compiles the engine for `sm_90a`. It executes the
+exact global QK geometry as 64 tokens by eight queries by 512 dimensions with BF16 inputs and FP32
+WGMMA accumulation. Its BF16 score tensor is bit-identical to the retained cuBLAS result on the
+deterministic parity fixture.
+
+The initial one-tile-per-CTA implementation used scalar BF16 copies into swizzled shared memory and
+reached only 265 GB/s: 2.028 ms at B16/8k versus 0.141 ms for cuBLAS. Replacing that path with
+128-bit `cp.async` tiled copies reduced it to 0.277 ms. A sweep amortizing 2--32 contiguous tiles per
+CTA found 32 tiles best at B16 (0.167 ms, 3.21 TB/s) and two tiles best at B1 (0.0125 ms), while
+cuBLAS remains faster at 0.141 and 0.0071 ms respectively. One persistent CTA per physical head was
+also rejected at 12.2 ms because 64 B16 CTAs cannot occupy the 132-SM H200 while serializing 128
+tiles each.
+
+The standalone QK prototype is therefore not a runtime replacement. It establishes correct WGMMA
+descriptors, swizzled layouts, vectorized asynchronous copies and the useful CTA-granularity range.
+Its purpose is the next fused kernel, where the same tile must perform online softmax and PV before
+discarding shared K/V, then consume the exact shared-projection cache. That composition can remove
+the global score round trip and one of the two physical cache vectors; QK alone has no byte advantage
+and is not expected to beat the highly tuned library GEMM.

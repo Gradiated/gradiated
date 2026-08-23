@@ -6,7 +6,9 @@
 #include "gradiated/engine/weight_plan.h"
 
 #include <chrono>
+#include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -33,7 +35,7 @@ gradiated::engine::Fp8Scaling parse_scaling(const std::string& value) {
   if (value == "tensor") return gradiated::engine::Fp8Scaling::tensor;
   if (value == "channel") return gradiated::engine::Fp8Scaling::channel;
   if (value == "block-128") return gradiated::engine::Fp8Scaling::block_128;
-  throw std::runtime_error("scaling must be tensor, channel, or block-128");
+  throw std::runtime_error("scaling must be bf16, tensor, channel, or block-128");
 }
 
 }  // namespace
@@ -42,10 +44,12 @@ int main(int argc, char** argv) {
   try {
     if (argc != 4) {
       std::cerr << "usage: gradiated-engine-fp8-quality-eval MODEL_DIRECTORY PROMPTS_JSON "
-                   "tensor|channel|block-128\n";
+                   "bf16|tensor|channel|block-128\n";
       return 64;
     }
-    const auto scaling = parse_scaling(argv[3]);
+    const bool bf16_candidate = std::string(argv[3]) == "bf16";
+    const auto scaling = bf16_candidate
+        ? gradiated::engine::Fp8Scaling::tensor : parse_scaling(argv[3]);
     const std::string model_directory = argv[1];
     const auto fixture = gradiated::engine::Json::parse(
         gradiated::engine::read_text_file(argv[2]));
@@ -68,6 +72,7 @@ int main(int argc, char** argv) {
 
     std::vector<std::vector<int>> references(prompts.size());
     {
+      unsetenv("GRADIATED_FP8_GLOBAL_K");
       gradiated::engine::Gemma4BatchModelRunner bf16_runner(
           config, *weights, 1, maximum_context);
       for (std::size_t prompt_index = 0; prompt_index < prompts.size(); ++prompt_index) {
@@ -86,13 +91,18 @@ int main(int argc, char** argv) {
       }
     }
 
-    const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(plan, *weights, scaling);
+    const auto fp8_weights = bf16_candidate
+        ? std::unique_ptr<gradiated::engine::Fp8WeightArena>{}
+        : gradiated::engine::Fp8WeightArena::quantize(plan, *weights, scaling);
 
     std::uint64_t total_predictions = 0;
     std::uint64_t matching_predictions = 0;
     std::uint64_t exact_prompts = 0;
     std::uint64_t prompt_count = 0;
     const auto begin = std::chrono::steady_clock::now();
+    if (std::getenv("GRADIATED_FP8_GLOBAL_K_EVAL") != nullptr) {
+      setenv("GRADIATED_FP8_GLOBAL_K", "1", 1);
+    }
     gradiated::engine::Gemma4BatchModelRunner fp8_runner(
         config, *weights, 1, maximum_context, fp8_weights.get());
     for (std::size_t prompt_index = 0; prompt_index < prompts.size(); ++prompt_index) {

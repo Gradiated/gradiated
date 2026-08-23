@@ -32,6 +32,15 @@ class GemmGroupedDecodeAttention {
                              void* output, const int* positions, int batch, int kv_heads,
                              int query_group, int maximum_context_length, int head_dimension,
                              int first_slot, cudaStream_t stream, int cache_capacity);
+  // Global-attention Q and K use Gemma-specific fixed-scale E4M3 (Q / 64, K / 1024)
+  // while softmax, V and output remain BF16.
+  // This path is valid only for a consecutive cache interval so cuBLASLt can retain one
+  // strided-batch tensor-core launch.
+  void run_ragged_contiguous_fp8_keys(
+      const void* fp8_query, const void* fp8_key_cache, const void* value_cache,
+      void* output, const int* positions, int batch, int kv_heads, int query_group,
+      int maximum_context_length, int head_dimension, int first_slot,
+      cudaStream_t stream, int cache_capacity);
 
  private:
   struct Implementation;

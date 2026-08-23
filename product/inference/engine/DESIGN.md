@@ -230,6 +230,25 @@ request, so the path overwrote adjacent GPU memory. Both K/V arenas now cover th
 passes with the fast path enabled. The temporarily disabled correctness-first setting sustained
 387.1 output token/s, within measurement noise of the former 385.6 token/s result.
 
+The production-shaped FP8-QK follow-up uses independent architecture-derived scales: global Q is
+multiplied by 64, while global K is multiplied by 1,024 because every global K RMSNorm weight is
+approximately 1/16. At B16/D512/8k, the complete QK/softmax/BF16-PV call falls from 0.2832 ms to
+0.2199--0.2420 ms. Synthetic Gemma-scaled output has 0.9986 cosine similarity to BF16, but the
+held-out coding-agent gate rejects the approximation. FP8 K on all ten global layers gives
+487/512 teacher-forced agreement and 3/16 exact prompts with BF16 weights. Alternating layers
+`{5,17,29,41,53}` give 500/512 and 8/16; the complementary set
+`{11,23,35,47,59}` gives 502/512 and 10/16. Combining the better set with retained tensor-FP8
+projections falls to 499/512 and 8/16, below the 503/512 projection-only baseline. The path remains
+explicitly opt-in for research and allocates its cuBLASLt workspace lazily; it is not a production
+precision policy.
+
+cuDNN SDPA was also measured as a BF16 fused-decode candidate at the same shape. It takes 0.702 ms
+at batch 1 and 0.862 ms at batch 16 versus 0.040 ms and 0.283 ms for the retained GEMM composition.
+The retained B16 composition moves the physical 1.07 GB K/V payload at about 3.79 TB/s, roughly
+79% of the 4.8 TB/s H200 HBM roof. A perfect BF16 fused attention kernel therefore has only about
+0.059 ms/layer left at this exact contiguous geometry; further material gains require improving
+fragmented cohorts or reducing bytes without the quality loss observed above.
+
 The production protocol now streams native token IDs as soon as each scheduler step completes,
 carries cumulative authoritative usage on every event, and cancels/reclaims a slot when the
 downstream socket closes. Gemma's pinned EOS set (`1`, `106`) is loaded from `config.json`; it is
@@ -336,6 +355,34 @@ The observed billed token mix recovers 37.46% of a $4.50/hour H200, effectively 
 37.49% matched unbounded run; normalizing both policies to the baseline token mix raises recovery
 from 37.49% to 38.28%. A 12-request threshold traded another 1.2 ms of p95 TPOT for lower TTFT and
 throughput, while 15- and 20-layer slices were dominated and rejected.
+
+The retained RMS schedule now uses 1,024 threads per long Gemma row instead of 256. At B16 there
+are only sixteen independent rows, so the smaller blocks left most H200 SMs idle while each thread
+serially processed many columns. The full-SM blocks preserve 8/8 pinned generation tokens and
+produce 504/512 teacher-forced FP8 agreement with 10/16 exact prompts on the coding-agent holdout.
+The homogeneous B16/8k
+frontier rises from 782.7 to 857.2 output token/s. A fused RMS-to-FP8 kernel was exact but reached
+only 779.1 token/s because its sixteen CTAs under-parallelized quantization; per-row FP8 scaling
+reached only 569.1 token/s; both are rejected. Keeping 256-thread RMS only for prefill was also
+rejected at 431.8 sustained token/s because slower suffix admission reduced the active decode
+cohort.
+
+On a cold same-fixture 64-conversation/c16/ten-turn A/B, the frozen 256-thread binary sustains
+412.87 output token/s. Two cold 1,024-thread runs sustain 456.17 and 452.84 token/s (454.50 mean),
+a 10.08% gain. Candidate cached TTFT p50/p95 ranges are 166--171/562--600 ms versus 163/712 ms for
+control; TPOT p50/p95 is 25.24--25.33/41.01--41.92 ms versus 27.42/44.06 ms; request p50/p95 is
+3.356--3.384/5.549--5.584 seconds versus 3.671/6.057 seconds. At each run's observed token mix,
+candidate gross is $1.781--$1.797/hour, recovering 39.58--39.92% of a $4.50 H200. The remaining
+loss is $2.70--$2.72/hour, approximately $1,974--$1,985 per 730-hour month.
+
+The final activation-quantization launch uses 256-thread cooperative CTAs below 65,536 elements
+and 512-thread CTAs at or above that boundary. The larger grid width reduces the two streaming
+passes and grid barriers for saturated decode batches without adding reduction overhead to B1.
+Across the complete B16 FP8 linear schedule, quantize-plus-GEMM time falls from a three-run
+9.968 ms mean to 9.849 ms; end-to-end ragged B16/8k decode rises from 491.64 to 492.84 token/s
+(three-run means). The gain is deliberately small because the retained GEMMs already stream
+weights at about 4.10 TB/s and the retained attention path streams physical KV bytes at about
+3.78 TB/s, respectively 85% and 79% of the H200's 4.8 TB/s HBM ceiling.
 
 The native HTTP listener is nonblocking. Under connection churn a readiness edge can disappear
 before `accept4`; a blocking listening descriptor could then strand the only accept loop and make

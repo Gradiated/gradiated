@@ -59,6 +59,7 @@ struct Gemma4LayerRunner::Implementation {
   Allocation normalized;
   Allocation packed_qkv;
   Allocation queries;
+  Allocation fp8_queries;
   Allocation queries_head_major;
   Allocation key_cache;
   Allocation value_cache;
@@ -96,6 +97,7 @@ struct Gemma4LayerRunner::Implementation {
         normalized(2ULL * std::max(max_tokens, max_batch) * hidden),
         packed_qkv(2ULL * std::max(max_tokens, max_batch) * 18432),
         queries(2ULL * std::max(max_tokens, max_batch) * 16384),
+        fp8_queries(static_cast<std::uint64_t>(max_batch) * 16384),
         queries_head_major(2ULL * std::max(max_tokens, max_batch) * 16384),
         // Also serves as the batched global-attention output arena, whose query width (8192)
         // exceeds the global K/V width (4096).
@@ -194,13 +196,20 @@ struct Gemma4LayerRunner::Implementation {
   void finish_ragged(int selected_layer, const void* residual, const void* query, void* output,
                      const int* positions, const int* slots, int batch, int maximum_slots,
                      int maximum_context_length, const void* keys, const void* values,
-                     int cache_capacity, bool fp8_decode, int contiguous_slot_start,
+                     const void* fp8_keys, int cache_capacity, bool fp8_decode,
+                     int contiguous_slot_start,
                      cudaStream_t stream) {
     const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
     const int head_dimension = static_cast<int>(layer.head_dimension);
     const int kv_heads = static_cast<int>(layer.kv_heads);
     const int query_group = static_cast<int>(layer.query_heads / layer.kv_heads);
-    if (contiguous_slot_start >= 0) {
+    if (fp8_keys != nullptr && contiguous_slot_start >= 0 &&
+        layer.attention == AttentionKind::global) {
+      attention.run_ragged_contiguous_fp8_keys(
+          fp8_queries.get(), fp8_keys, values, attention_output.get(), positions, batch,
+          kv_heads, query_group, maximum_context_length, head_dimension,
+          contiguous_slot_start, stream, cache_capacity);
+    } else if (contiguous_slot_start >= 0) {
       attention.run_ragged_contiguous(
           query, keys, values, attention_output.get(), positions, batch, kv_heads, query_group,
           maximum_context_length, head_dimension, contiguous_slot_start, stream, cache_capacity);
@@ -304,8 +313,8 @@ void Gemma4LayerRunner::run_decode_batch(int layer_index, const void* hidden_sta
 void Gemma4LayerRunner::run_decode_ragged(
     int layer_index, const void* hidden_states, void* output, const int* positions,
     const int* slots, int batch, int maximum_slots, int maximum_context_length,
-    void* key_cache, void* value_cache, int cache_capacity, int contiguous_slot_start,
-    cudaStream_t stream) {
+    void* key_cache, void* value_cache, void* fp8_key_cache, int cache_capacity,
+    int contiguous_slot_start, cudaStream_t stream) {
   auto& state = *implementation_;
   if (batch <= 0 || batch > state.maximum_batch || maximum_slots < batch ||
       maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
@@ -330,9 +339,18 @@ void Gemma4LayerRunner::run_decode_ragged(
       state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
       key_cache, value_cache, positions, slots, batch, maximum_slots, query_heads, kv_heads,
       head_dimension, layer.key_equals_value, cache_capacity, state.epsilon, stream);
+  if (fp8_key_cache != nullptr) {
+    if (layer.attention != AttentionKind::global) {
+      throw std::runtime_error("FP8 K cache supplied for a non-global layer");
+    }
+    quantize_global_decode_qk_fp8(
+        state.queries.get(), key_cache, state.fp8_queries.get(), fp8_key_cache,
+        positions, slots, batch, maximum_slots, query_heads, kv_heads,
+        head_dimension, cache_capacity, stream);
+  }
   state.finish_ragged(layer_index, hidden_states, state.queries.get(), output, positions, slots,
                       batch, maximum_slots, maximum_context_length, key_cache, value_cache,
-                      cache_capacity, true, contiguous_slot_start, stream);
+                      fp8_key_cache, cache_capacity, true, contiguous_slot_start, stream);
 }
 
 void Gemma4LayerRunner::run_prefill(int layer_index, const void* hidden_states, void* output,

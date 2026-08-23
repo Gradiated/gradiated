@@ -45,6 +45,17 @@ void head_to_token_batch_bf16(const void* input, void* output, int requests, int
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
                            int head_dimension, int destination_capacity, int position_start,
                            cudaStream_t stream);
+// Gemma 4 global K has an architecture-fixed RMS scale near 1/16. Its E4M3 mirror therefore
+// uses K * 1024, while normalized decode queries use Q * 64.
+void quantize_global_k_cache_span_fp8(const void* source, void* destination, int heads,
+                                     int tokens, int head_dimension, int cache_capacity,
+                                     int position_start, cudaStream_t stream);
+void quantize_global_decode_qk_fp8(const void* queries, const void* key_cache,
+                                   void* fp8_queries, void* fp8_key_cache,
+                                   const int* positions, const int* slots, int batch,
+                                   int maximum_slots, int query_heads, int kv_heads,
+                                   int head_dimension, int cache_capacity,
+                                   cudaStream_t stream);
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,
                          int head_dimension, int source_capacity, int destination_capacity,
                          int logical_position_start, cudaStream_t stream);

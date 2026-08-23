@@ -46,7 +46,7 @@ __global__ void quantize_bf16_fp8_cooperative_kernel(
   for (int offset = 16; offset > 0; offset /= 2) {
     maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
   }
-  __shared__ float warp_maxima[8];
+  __shared__ float warp_maxima[16];
   if ((threadIdx.x & 31) == 0) warp_maxima[threadIdx.x / 32] = maximum;
   __syncthreads();
   if (threadIdx.x < 32) {
@@ -113,22 +113,38 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
   if (input == nullptr || output == nullptr || scale == nullptr || elements == 0) {
     throw std::runtime_error("invalid FP8 quantization shape");
   }
-  constexpr int threads = 256;
-  static const int cooperative_block_limit = [] {
+  // Wider CTAs reduce grid-barrier and streaming-pass cost for large decode matrices;
+  // smaller activations retain 256 threads for lower launch and reduction overhead.
+  const int threads = elements >= 65536 ? 512 : 256;
+  struct CooperativeBlockLimits {
+    int threads_256;
+    int threads_512;
+  };
+  static const CooperativeBlockLimits cooperative_block_limits = [] {
     int device = 0;
     cuda_check(cudaGetDevice(&device), "get FP8 quantization device");
     cudaDeviceProp properties{};
     cuda_check(cudaGetDeviceProperties(&properties, device), "get FP8 quantization device properties");
-    if (properties.cooperativeLaunch == 0) return 0;
-    int blocks_per_multiprocessor = 0;
+    if (properties.cooperativeLaunch == 0) return CooperativeBlockLimits{0, 0};
+    int blocks_256_per_multiprocessor = 0;
+    int blocks_512_per_multiprocessor = 0;
     cuda_check(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
-                   &blocks_per_multiprocessor, quantize_bf16_fp8_cooperative_kernel,
-                   threads, 0),
-               "measure cooperative FP8 quantization occupancy");
+                   &blocks_256_per_multiprocessor, quantize_bf16_fp8_cooperative_kernel,
+                   256, 0),
+               "measure 256-thread cooperative FP8 quantization occupancy");
+    cuda_check(cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+                   &blocks_512_per_multiprocessor, quantize_bf16_fp8_cooperative_kernel,
+                   512, 0),
+               "measure 512-thread cooperative FP8 quantization occupancy");
     // Two CTAs per SM retain enough latency hiding for the two streaming passes while keeping
     // grid-wide barriers cheap. Larger resident grids made these small decode tensors slower.
-    return properties.multiProcessorCount * std::min(blocks_per_multiprocessor, 2);
+    return CooperativeBlockLimits{
+        properties.multiProcessorCount * std::min(blocks_256_per_multiprocessor, 2),
+        properties.multiProcessorCount * std::min(blocks_512_per_multiprocessor, 2)};
   }();
+  const int cooperative_block_limit = threads == 512
+      ? cooperative_block_limits.threads_512
+      : cooperative_block_limits.threads_256;
   const int required_blocks = static_cast<int>((elements + threads - 1) / threads);
   // Decode activations are sub-megabyte-scale tensors where launch collapse dominates. Large
   // model weights quantize faster with the conventional unconstrained grid during startup.

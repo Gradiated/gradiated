@@ -11,12 +11,14 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstdint>
 #include <limits>
 #include <map>
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <vector>
 
@@ -26,6 +28,39 @@ namespace {
 constexpr std::uint64_t alignment = 256;
 constexpr int speculative_depth = 4;
 std::uint64_t align_up(std::uint64_t value) { return (value + alignment - 1U) & ~(alignment - 1U); }
+
+bool fp8_global_k_enabled() {
+  const char* value = std::getenv("GRADIATED_FP8_GLOBAL_K");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+std::vector<bool> fp8_global_k_selection(const Gemma4Config& config, bool enabled) {
+  std::vector<bool> selected(config.layers.size(), false);
+  if (!enabled) return selected;
+  const char* requested = std::getenv("GRADIATED_FP8_GLOBAL_K_LAYERS");
+  if (requested == nullptr || *requested == '\0') {
+    for (std::size_t layer = 0; layer < config.layers.size(); ++layer) {
+      selected[layer] = config.layers[layer].attention == AttentionKind::global;
+    }
+    return selected;
+  }
+  const std::string list(requested);
+  std::size_t begin = 0;
+  while (begin < list.size()) {
+    const std::size_t end = list.find(',', begin);
+    const std::string item = list.substr(begin, end == std::string::npos
+        ? std::string::npos : end - begin);
+    const int layer = std::stoi(item);
+    if (layer < 0 || layer >= static_cast<int>(config.layers.size()) ||
+        config.layers[static_cast<std::size_t>(layer)].attention != AttentionKind::global) {
+      throw std::runtime_error("FP8 global K layer selection contains an invalid layer");
+    }
+    selected[static_cast<std::size_t>(layer)] = true;
+    if (end == std::string::npos) break;
+    begin = end + 1;
+  }
+  return selected;
+}
 
 void check(cudaError_t result, const char* operation) {
   if (result != cudaSuccess) {
@@ -82,12 +117,17 @@ struct Gemma4BatchModelRunner::Implementation {
   std::vector<int> slot_positions;
   std::vector<CacheLocation> caches;
   std::uint64_t cache_payload_bytes;
+  bool use_fp8_global_k;
+  std::vector<bool> fp8_global_k_layers;
+  std::vector<std::uint64_t> fp8_key_offsets;
+  std::uint64_t fp8_key_payload_bytes;
   std::vector<std::uint64_t> speculative_backup_offsets;
   std::uint64_t speculative_backup_payload_bytes;
   Gemma4LayerRunner layers;
   Bf16Linear lm_head;
   Fp8Linear fp8_lm_head;
   Allocation cache_arena;
+  Allocation fp8_key_arena;
   Allocation hidden_a;
   Allocation hidden_b;
   Allocation final_hidden;
@@ -138,6 +178,24 @@ struct Gemma4BatchModelRunner::Implementation {
     return align_up(bytes);
   }
 
+  static std::uint64_t fp8_key_payload(const Gemma4Config& config, int batch,
+                                       int maximum_context,
+                                       const std::vector<bool>& selected,
+                                       std::vector<std::uint64_t>* offsets) {
+    std::uint64_t bytes = 0;
+    for (const auto& layer : config.layers) {
+      const std::size_t layer_index = offsets->size();
+      if (!selected.at(layer_index)) {
+        offsets->push_back(std::numeric_limits<std::uint64_t>::max());
+        continue;
+      }
+      bytes = align_up(bytes);
+      offsets->push_back(bytes);
+      bytes += static_cast<std::uint64_t>(batch) * maximum_context * layer.kv_width();
+    }
+    return align_up(bytes);
+  }
+
   Implementation(const Gemma4Config& model_config, const DeviceWeightArena& device_weights,
                  int requested_batch, int max_context, const Fp8WeightArena* decode_weights,
                  const DeviceWeightArena* draft_weights)
@@ -148,6 +206,13 @@ struct Gemma4BatchModelRunner::Implementation {
         vocabulary(static_cast<int>(model_config.vocabulary_size)),
         slot_positions(static_cast<std::size_t>(requested_batch), 0), caches(),
         cache_payload_bytes(cache_payload(model_config, requested_batch, max_context, &caches)),
+        use_fp8_global_k(fp8_global_k_enabled()),
+        fp8_global_k_layers(fp8_global_k_selection(model_config, use_fp8_global_k)),
+        fp8_key_offsets(),
+        fp8_key_payload_bytes(use_fp8_global_k
+            ? fp8_key_payload(model_config, requested_batch, max_context,
+                              fp8_global_k_layers, &fp8_key_offsets)
+            : 0),
         speculative_backup_offsets(),
         speculative_backup_payload_bytes(speculative_backup_payload(
             model_config, requested_batch, &speculative_backup_offsets)),
@@ -155,6 +220,7 @@ struct Gemma4BatchModelRunner::Implementation {
                decode_weights), lm_head(),
         fp8_lm_head(decode_weights == nullptr ? Fp8Scaling::tensor : decode_weights->scaling()),
         cache_arena(2ULL * cache_payload_bytes),
+        fp8_key_arena(std::max<std::uint64_t>(1, fp8_key_payload_bytes)),
         hidden_a(2ULL * std::max(requested_batch, max_context) * hidden),
         hidden_b(2ULL * std::max(requested_batch, max_context) * hidden),
         final_hidden(2ULL * speculative_depth * requested_batch * hidden),
@@ -194,6 +260,10 @@ struct Gemma4BatchModelRunner::Implementation {
     // every unread cache tail finite; masked probabilities then contribute exactly zero in PV.
     check(cudaMemset(cache_arena.get(), 0, static_cast<std::size_t>(2ULL * cache_payload_bytes)),
           "initialize KV cache arena");
+    if (use_fp8_global_k) {
+      check(cudaMemset(fp8_key_arena.get(), 0, static_cast<std::size_t>(fp8_key_payload_bytes)),
+            "initialize FP8 global K cache arena");
+    }
   }
 
   ~Implementation() {
@@ -214,6 +284,28 @@ struct Gemma4BatchModelRunner::Implementation {
   void* slot_value_cache(std::size_t layer, int slot) {
     return static_cast<unsigned char*>(value_cache(layer)) +
            2ULL * slot * caches.at(layer).capacity * config.layers.at(layer).kv_width();
+  }
+  void* fp8_key_cache(std::size_t layer) {
+    if (!use_fp8_global_k || !fp8_global_k_layers.at(layer)) {
+      return nullptr;
+    }
+    return static_cast<unsigned char*>(fp8_key_arena.get()) + fp8_key_offsets.at(layer);
+  }
+  void* slot_fp8_key_cache(std::size_t layer, int slot) {
+    auto* base = static_cast<unsigned char*>(fp8_key_cache(layer));
+    if (base == nullptr) return nullptr;
+    return base + static_cast<std::uint64_t>(slot) * caches.at(layer).capacity *
+        config.layers.at(layer).kv_width();
+  }
+  void refresh_fp8_key_span(std::size_t layer, int slot, int position, int tokens,
+                            cudaStream_t stream) {
+    void* destination = slot_fp8_key_cache(layer, slot);
+    if (destination == nullptr) return;
+    const auto& layer_config = config.layers.at(layer);
+    quantize_global_k_cache_span_fp8(
+        slot_key_cache(layer, slot), destination, static_cast<int>(layer_config.kv_heads),
+        tokens, static_cast<int>(layer_config.head_dimension), caches.at(layer).capacity,
+        position, stream);
   }
   void* speculative_key_backup(std::size_t layer) {
     return static_cast<unsigned char*>(speculative_backup_arena.get()) +
@@ -260,7 +352,8 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<int>(layer), input, output,
           static_cast<const int*>(device_positions.get()),
           static_cast<const int*>(device_slots.get()), active, batch_size, context,
-          key_cache(layer), value_cache(layer), cache.capacity, contiguous_slot_start,
+          key_cache(layer), value_cache(layer), fp8_key_cache(layer), cache.capacity,
+          contiguous_slot_start,
           decode_stream);
       std::swap(input, output);
     }
@@ -397,6 +490,7 @@ std::optional<int> Gemma4BatchModelRunner::prefill_slot_chunk(
     state.layers.run_prefill_chunk(static_cast<int>(layer), input, output, tokens, position,
                                    state.slot_key_cache(layer, slot),
                                    state.slot_value_cache(layer, slot), cache.capacity, nullptr);
+    state.refresh_fp8_key_span(layer, slot, position, tokens, nullptr);
     std::swap(input, output);
   }
   state.slot_positions.at(static_cast<std::size_t>(slot)) = position + tokens;
@@ -485,6 +579,12 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
     }
     state.layers.run_prefill_chunks(static_cast<int>(layer), input, output, counts, positions,
                                     key_caches, value_caches, capacities, nullptr);
+    for (int request = 0; request < requests; ++request) {
+      state.refresh_fp8_key_span(
+          layer, slots[static_cast<std::size_t>(request)],
+          positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
+          nullptr);
+    }
     std::swap(input, output);
   }
   check(cudaMemcpy(state.device_positions.get(), last_rows.data(),
@@ -616,6 +716,12 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
     state.layers.run_prefill_chunks(
         layer, input, output, suffix.counts, suffix.positions,
         key_caches, value_caches, capacities, nullptr);
+    for (int request = 0; request < requests; ++request) {
+      state.refresh_fp8_key_span(
+          static_cast<std::size_t>(layer), slots[static_cast<std::size_t>(request)],
+          suffix.positions[static_cast<std::size_t>(request)],
+          suffix.counts[static_cast<std::size_t>(request)], nullptr);
+    }
     std::swap(input, output);
   }
   suffix.next_layer = end_layer;
@@ -688,6 +794,7 @@ std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destinatio
         state.slot_value_cache(layer, destination_slot),
         static_cast<int>(state.config.layers[layer].kv_heads), resident_tokens,
         static_cast<int>(state.config.layers[layer].head_dimension), cache.capacity, nullptr);
+    state.refresh_fp8_key_span(layer, destination_slot, 0, resident_tokens, nullptr);
     copied_bytes += 2ULL * bytes;
   }
   check(cudaMemcpy(
@@ -858,6 +965,12 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
     state.layers.run_prefill_chunks(
         static_cast<int>(layer), input, output, counts, positions, key_caches, value_caches,
         capacities, nullptr, true);
+    for (int request = 0; request < requests; ++request) {
+      state.refresh_fp8_key_span(
+          layer, slots[static_cast<std::size_t>(request)],
+          positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
+          nullptr);
+    }
     std::swap(input, output);
   }
 
@@ -1004,6 +1117,11 @@ void Gemma4BatchModelRunner::seed_empty_cache_for_benchmark(int position) {
   }
   check(cudaMemset(state.cache_arena.get(), 0, static_cast<std::size_t>(2ULL * state.cache_payload_bytes)),
         "zero benchmark KV cache");
+  if (state.use_fp8_global_k) {
+    check(cudaMemset(state.fp8_key_arena.get(), 0,
+                     static_cast<std::size_t>(state.fp8_key_payload_bytes)),
+          "zero benchmark FP8 K cache");
+  }
   state.current_position = position;
   std::fill(state.slot_positions.begin(), state.slot_positions.end(), position);
 }

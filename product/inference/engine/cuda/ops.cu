@@ -1,6 +1,7 @@
 #include "gradiated/engine/cuda_ops.h"
 
 #include <cuda_bf16.h>
+#include <cuda_fp8.h>
 #include <cuda_runtime.h>
 #include <math_constants.h>
 
@@ -12,6 +13,10 @@
 
 namespace gradiated::engine {
 namespace {
+
+// Gemma's rows are long enough that a full-SM block beats smaller CTAs in both decode and prefill.
+// At B16 decode there are only sixteen independent rows, making within-row parallelism essential.
+constexpr int rms_threads = 1024;
 
 void check(cudaError_t result, const char* operation) {
   if (result != cudaSuccess) {
@@ -357,6 +362,49 @@ __global__ void copy_kv_span_to_ring_kernel(
   }
 }
 
+__global__ void quantize_global_k_cache_span_kernel(
+    const __nv_bfloat16* source, __nv_fp8_e4m3* destination, int heads, int tokens,
+    int dimension, int cache_capacity, int position_start) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = heads * tokens * dimension;
+  if (index >= elements) return;
+  const int component = index % dimension;
+  const int token = (index / dimension) % tokens;
+  const int head = index / (dimension * tokens);
+  const std::uint64_t cache_index =
+      (static_cast<std::uint64_t>(head) * cache_capacity + position_start + token) *
+      dimension + component;
+  destination[cache_index] = __nv_fp8_e4m3(__bfloat162float(source[cache_index]) * 1024.0F);
+}
+
+__global__ void quantize_global_decode_qk_kernel(
+    const __nv_bfloat16* queries, const __nv_bfloat16* key_cache,
+    __nv_fp8_e4m3* fp8_queries, __nv_fp8_e4m3* fp8_key_cache,
+    const int* positions, const int* slots, int batch, int maximum_slots,
+    int query_heads, int kv_heads, int dimension, int cache_capacity) {
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int query_elements = batch * query_heads * dimension;
+  const int key_elements = batch * kv_heads * dimension;
+  if (index < query_elements) {
+    fp8_queries[index] = __nv_fp8_e4m3(__bfloat162float(queries[index]) * 64.0F);
+    return;
+  }
+  const int key_index = index - query_elements;
+  if (key_index >= key_elements) return;
+  const int component = key_index % dimension;
+  const int head = (key_index / dimension) % kv_heads;
+  const int row = key_index / (dimension * kv_heads);
+  const int slot = slots[row];
+  if (slot < 0 || slot >= maximum_slots) return;
+  const int position = positions[row];
+  if (position < 0 || position >= cache_capacity) return;
+  const std::uint64_t cache_index =
+      ((static_cast<std::uint64_t>(slot) * kv_heads + head) * cache_capacity + position) *
+      dimension + component;
+  fp8_key_cache[cache_index] =
+      __nv_fp8_e4m3(__bfloat162float(key_cache[cache_index]) * 1024.0F);
+}
+
 __global__ void gather_kv_rings_kernel(
     const __nv_bfloat16* const* key_sources,
     const __nv_bfloat16* const* value_sources,
@@ -509,7 +557,7 @@ __global__ void argmax_final_kernel(const Maximum* partials, int count, int* out
 void rms_norm_bf16(const void* input, const void* weight, void* output,
                    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_kernel<<<static_cast<unsigned>(rows), 256, 0, stream>>>(
+  rms_norm_kernel<<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       nullptr, static_cast<__nv_bfloat16*>(output), width, epsilon);
   check(cudaPeekAtLastError(), "launch rms_norm_kernel");
@@ -518,7 +566,7 @@ void rms_norm_bf16(const void* input, const void* weight, void* output,
 void rms_norm_add_bf16(const void* input, const void* weight, const void* residual, void* output,
                        std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_kernel<<<static_cast<unsigned>(rows), 256, 0, stream>>>(
+  rms_norm_kernel<<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       static_cast<const __nv_bfloat16*>(residual), static_cast<__nv_bfloat16*>(output), width, epsilon);
   check(cudaPeekAtLastError(), "launch rms_norm_add_kernel");
@@ -529,7 +577,7 @@ void rms_norm_add_and_norm_bf16(
     void* residual_output, void* normalized_output, std::size_t rows, std::size_t width,
     float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_add_and_norm_kernel<<<static_cast<unsigned>(rows), 256,
+  rms_norm_add_and_norm_kernel<<<static_cast<unsigned>(rows), rms_threads,
                                  width * sizeof(__nv_bfloat16), stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       static_cast<const __nv_bfloat16*>(residual),
@@ -543,7 +591,7 @@ void rms_norm_add_scale_bf16(
     const void* input, const void* weight, const void* residual, const void* scalar,
     void* output, std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_add_scale_kernel<<<static_cast<unsigned>(rows), 256, 0, stream>>>(
+  rms_norm_add_scale_kernel<<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       static_cast<const __nv_bfloat16*>(residual), static_cast<const __nv_bfloat16*>(scalar),
       static_cast<__nv_bfloat16*>(output), width, epsilon);
@@ -709,6 +757,43 @@ void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int
       static_cast<const __nv_bfloat16*>(source), static_cast<__nv_bfloat16*>(destination),
       heads, tokens, head_dimension, destination_capacity, position_start);
   check(cudaPeekAtLastError(), "launch KV cache copy");
+}
+
+void quantize_global_k_cache_span_fp8(const void* source, void* destination, int heads,
+                                     int tokens, int head_dimension, int cache_capacity,
+                                     int position_start, cudaStream_t stream) {
+  if (source == nullptr || destination == nullptr || heads <= 0 || tokens <= 0 ||
+      head_dimension != 512 || cache_capacity < position_start + tokens ||
+      position_start < 0) {
+    throw std::runtime_error("invalid global FP8 K span shape");
+  }
+  const int elements = heads * tokens * head_dimension;
+  quantize_global_k_cache_span_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source), static_cast<__nv_fp8_e4m3*>(destination),
+      heads, tokens, head_dimension, cache_capacity, position_start);
+  check(cudaPeekAtLastError(), "launch global FP8 K span quantization");
+}
+
+void quantize_global_decode_qk_fp8(const void* queries, const void* key_cache,
+                                   void* fp8_queries, void* fp8_key_cache,
+                                   const int* positions, const int* slots, int batch,
+                                   int maximum_slots, int query_heads, int kv_heads,
+                                   int head_dimension, int cache_capacity,
+                                   cudaStream_t stream) {
+  if (queries == nullptr || key_cache == nullptr || fp8_queries == nullptr ||
+      fp8_key_cache == nullptr || positions == nullptr || slots == nullptr || batch <= 0 ||
+      maximum_slots < batch || query_heads <= 0 || kv_heads <= 0 ||
+      query_heads % kv_heads != 0 || head_dimension != 512 || cache_capacity <= 0) {
+    throw std::runtime_error("invalid global FP8 decode QK shape");
+  }
+  const int elements = batch * (query_heads + kv_heads) * head_dimension;
+  quantize_global_decode_qk_kernel<<<(elements + 255) / 256, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(queries),
+      static_cast<const __nv_bfloat16*>(key_cache),
+      static_cast<__nv_fp8_e4m3*>(fp8_queries),
+      static_cast<__nv_fp8_e4m3*>(fp8_key_cache), positions, slots, batch, maximum_slots,
+      query_heads, kv_heads, head_dimension, cache_capacity);
+  check(cudaPeekAtLastError(), "launch global FP8 decode QK quantization");
 }
 
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,

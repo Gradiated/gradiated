@@ -1,13 +1,17 @@
 #include "gradiated/engine/gemm_attention.h"
 
+#include <cublasLt.h>
 #include <cublas_v2.h>
 #include <cuda_bf16.h>
 #include <cuda_runtime.h>
 #include <math_constants.h>
 
 #include <cstdint>
+#include <map>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 
 namespace gradiated::engine {
 namespace {
@@ -136,12 +140,33 @@ __global__ void ragged_pointer_kernel(
 }  // namespace
 
 struct GemmGroupedDecodeAttention::Implementation {
+  struct Fp8QkPlan {
+    cublasLtMatmulDesc_t operation{};
+    cublasLtMatrixLayout_t key_layout{};
+    cublasLtMatrixLayout_t query_layout{};
+    cublasLtMatrixLayout_t score_layout{};
+    cublasLtMatmulAlgo_t algorithm{};
+
+    ~Fp8QkPlan() {
+      if (score_layout != nullptr) cublasLtMatrixLayoutDestroy(score_layout);
+      if (query_layout != nullptr) cublasLtMatrixLayoutDestroy(query_layout);
+      if (key_layout != nullptr) cublasLtMatrixLayoutDestroy(key_layout);
+      if (operation != nullptr) cublasLtMatmulDescDestroy(operation);
+    }
+  };
+
   cublasHandle_t handle{};
+  cublasLtHandle_t lt_handle{};
   void* scores{nullptr};
   void* pointers{nullptr};
+  void* lt_workspace{nullptr};
+  float* fp8_key_scale{nullptr};
+  float* fp8_query_scale{nullptr};
   std::uint64_t maximum_score_elements;
   int maximum_batch;
   int maximum_head_batches;
+  static constexpr std::size_t lt_workspace_bytes = 32ULL * 1024 * 1024;
+  std::map<std::tuple<int, int, int, int, int, int>, std::unique_ptr<Fp8QkPlan>> fp8_plans;
 
   Implementation(int batch, int kv_heads, int query_group, int context)
       : maximum_score_elements(static_cast<std::uint64_t>(batch) * kv_heads * query_group * context),
@@ -158,9 +183,119 @@ struct GemmGroupedDecodeAttention::Implementation {
                "allocate ragged attention pointers");
   }
   ~Implementation() {
+    fp8_plans.clear();
+    if (fp8_query_scale != nullptr) cudaFree(fp8_query_scale);
+    if (fp8_key_scale != nullptr) cudaFree(fp8_key_scale);
+    if (lt_workspace != nullptr) cudaFree(lt_workspace);
     if (pointers != nullptr) cudaFree(pointers);
     if (scores != nullptr) cudaFree(scores);
+    if (lt_handle != nullptr) cublasLtDestroy(lt_handle);
     if (handle != nullptr) cublasDestroy(handle);
+  }
+
+  void ensure_fp8_resources() {
+    if (lt_handle != nullptr) return;
+    cublas_check(cublasLtCreate(&lt_handle), "cublasLtCreate attention");
+    cuda_check(cudaMalloc(&lt_workspace, lt_workspace_bytes),
+               "allocate FP8 QK workspace");
+    cuda_check(cudaMalloc(&fp8_key_scale, sizeof(float)), "allocate FP8 key scale");
+    cuda_check(cudaMalloc(&fp8_query_scale, sizeof(float)), "allocate FP8 query scale");
+    constexpr float fixed_key_scale = 1.0F / 1024.0F;
+    constexpr float fixed_query_scale = 1.0F / 64.0F;
+    cuda_check(cudaMemcpy(fp8_key_scale, &fixed_key_scale, sizeof(fixed_key_scale),
+                          cudaMemcpyHostToDevice), "initialize FP8 key scale");
+    cuda_check(cudaMemcpy(fp8_query_scale, &fixed_query_scale, sizeof(fixed_query_scale),
+                          cudaMemcpyHostToDevice), "initialize FP8 query scale");
+  }
+
+  Fp8QkPlan& fp8_plan(int batch, int kv_heads, int query_group, int context,
+                      int dimension, int cache_capacity) {
+    ensure_fp8_resources();
+    const auto key = std::make_tuple(
+        batch, kv_heads, query_group, context, dimension, cache_capacity);
+    const auto existing = fp8_plans.find(key);
+    if (existing != fp8_plans.end()) return *existing->second;
+    auto plan = std::make_unique<Fp8QkPlan>();
+    cublas_check(cublasLtMatmulDescCreate(
+                     &plan->operation, CUBLAS_COMPUTE_32F, CUDA_R_32F),
+                 "create FP8 QK descriptor");
+    constexpr cublasOperation_t transpose = CUBLAS_OP_T;
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     plan->operation, CUBLASLT_MATMUL_DESC_TRANSA,
+                     &transpose, sizeof(transpose)),
+                 "transpose FP8 keys");
+    constexpr cublasLtMatmulMatrixScale_t scalar_scale =
+        CUBLASLT_MATMUL_MATRIX_SCALE_SCALAR_32F;
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     plan->operation, CUBLASLT_MATMUL_DESC_A_SCALE_MODE,
+                     &scalar_scale, sizeof(scalar_scale)),
+                 "set FP8 key scale mode");
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     plan->operation, CUBLASLT_MATMUL_DESC_B_SCALE_MODE,
+                     &scalar_scale, sizeof(scalar_scale)),
+                 "set FP8 query scale mode");
+    const void* key_scale_pointer = fp8_key_scale;
+    const void* query_scale_pointer = fp8_query_scale;
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     plan->operation, CUBLASLT_MATMUL_DESC_A_SCALE_POINTER,
+                     &key_scale_pointer, sizeof(key_scale_pointer)),
+                 "set FP8 key scale");
+    cublas_check(cublasLtMatmulDescSetAttribute(
+                     plan->operation, CUBLASLT_MATMUL_DESC_B_SCALE_POINTER,
+                     &query_scale_pointer, sizeof(query_scale_pointer)),
+                 "set FP8 query scale");
+    cublas_check(cublasLtMatrixLayoutCreate(
+                     &plan->key_layout, CUDA_R_8F_E4M3, dimension, context, dimension),
+                 "create FP8 key layout");
+    cublas_check(cublasLtMatrixLayoutCreate(
+                     &plan->query_layout, CUDA_R_8F_E4M3,
+                     dimension, query_group, dimension),
+                 "create FP8 query layout");
+    cublas_check(cublasLtMatrixLayoutCreate(
+                     &plan->score_layout, CUDA_R_16BF,
+                     context, query_group, context),
+                 "create FP8 QK score layout");
+    const std::int32_t head_batches = batch * kv_heads;
+    const std::int64_t key_stride = static_cast<std::int64_t>(cache_capacity) * dimension;
+    const std::int64_t query_stride = static_cast<std::int64_t>(query_group) * dimension;
+    const std::int64_t score_stride = static_cast<std::int64_t>(query_group) * context;
+    for (const auto layout : {plan->key_layout, plan->query_layout, plan->score_layout}) {
+      cublas_check(cublasLtMatrixLayoutSetAttribute(
+                       layout, CUBLASLT_MATRIX_LAYOUT_BATCH_COUNT,
+                       &head_batches, sizeof(head_batches)),
+                   "set FP8 QK batch count");
+    }
+    cublas_check(cublasLtMatrixLayoutSetAttribute(
+                     plan->key_layout, CUBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                     &key_stride, sizeof(key_stride)),
+                 "set FP8 key stride");
+    cublas_check(cublasLtMatrixLayoutSetAttribute(
+                     plan->query_layout, CUBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                     &query_stride, sizeof(query_stride)),
+                 "set FP8 query stride");
+    cublas_check(cublasLtMatrixLayoutSetAttribute(
+                     plan->score_layout, CUBLASLT_MATRIX_LAYOUT_STRIDED_BATCH_OFFSET,
+                     &score_stride, sizeof(score_stride)),
+                 "set FP8 score stride");
+    cublasLtMatmulPreference_t preference{};
+    cublas_check(cublasLtMatmulPreferenceCreate(&preference),
+                 "create FP8 QK preference");
+    cublas_check(cublasLtMatmulPreferenceSetAttribute(
+                     preference, CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
+                     &lt_workspace_bytes, sizeof(lt_workspace_bytes)),
+                 "set FP8 QK workspace limit");
+    cublasLtMatmulHeuristicResult_t heuristic{};
+    int returned = 0;
+    const auto heuristic_status = cublasLtMatmulAlgoGetHeuristic(
+        lt_handle, plan->operation, plan->key_layout, plan->query_layout,
+        plan->score_layout, plan->score_layout, preference, 1, &heuristic, &returned);
+    cublasLtMatmulPreferenceDestroy(preference);
+    cublas_check(heuristic_status, "select FP8 QK algorithm");
+    if (returned == 0) throw std::runtime_error("no FP8 QK algorithm");
+    plan->algorithm = heuristic.algo;
+    Fp8QkPlan& result = *plan;
+    fp8_plans.emplace(key, std::move(plan));
+    return result;
   }
 };
 
@@ -309,6 +444,56 @@ void GemmGroupedDecodeAttention::run_ragged_contiguous(
       state.scores, CUDA_R_16BF, maximum_context_length, score_stride, &beta, output,
       CUDA_R_16BF, head_dimension, query_stride, head_batches, CUBLAS_COMPUTE_32F,
       CUBLAS_GEMM_DEFAULT_TENSOR_OP), "contiguous ragged grouped PV GEMM");
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous_fp8_keys(
+    const void* fp8_query, const void* fp8_key_cache, const void* value_cache,
+    void* output, const int* positions, int batch, int kv_heads, int query_group,
+    int maximum_context_length, int head_dimension, int first_slot,
+    cudaStream_t stream, int cache_capacity) {
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (fp8_query == nullptr || fp8_key_cache == nullptr || value_cache == nullptr ||
+      output == nullptr || positions == nullptr || batch <= 0 || kv_heads <= 0 ||
+      query_group <= 0 || first_slot < 0 ||
+      first_slot + batch > implementation_->maximum_batch || maximum_context_length <= 0 ||
+      maximum_context_length > cache_capacity || head_dimension <= 0 ||
+      batch * kv_heads > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error("FP8 contiguous ragged attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  auto& plan = state.fp8_plan(
+      batch, kv_heads, query_group, maximum_context_length, head_dimension, cache_capacity);
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto* contiguous_keys = static_cast<const unsigned char*>(fp8_key_cache) + cache_offset;
+  cublas_check(cublasLtMatmul(
+                   state.lt_handle, plan.operation, &alpha,
+                   contiguous_keys, plan.key_layout, fp8_query, plan.query_layout,
+                   &beta, state.scores, plan.score_layout, state.scores, plan.score_layout,
+                   &plan.algorithm, state.lt_workspace, state.lt_workspace_bytes, stream),
+               "run FP8 contiguous ragged QK");
+  ragged_softmax_bf16_kernel<<<batch * kv_heads * query_group, 256, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(state.scores), positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity);
+  cuda_check(cudaPeekAtLastError(), "launch FP8 contiguous ragged softmax");
+  cublas_check(cublasSetStream(state.handle, stream), "set FP8 PV stream");
+  const int head_batches = batch * kv_heads;
+  const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
+  const long long query_stride = static_cast<long long>(query_group) * head_dimension;
+  const long long score_stride = static_cast<long long>(query_group) * maximum_context_length;
+  const auto* contiguous_values = static_cast<const __nv_bfloat16*>(value_cache) +
+      static_cast<std::uint64_t>(first_slot) * kv_heads * cache_capacity * head_dimension;
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_N, CUBLAS_OP_N, head_dimension, query_group,
+      maximum_context_length, &alpha, contiguous_values, CUDA_R_16BF, head_dimension,
+      cache_stride, state.scores, CUDA_R_16BF, maximum_context_length, score_stride,
+      &beta, output, CUDA_R_16BF, head_dimension, query_stride, head_batches,
+      CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
+      "FP8-key contiguous ragged PV GEMM");
 }
 
 }  // namespace gradiated::engine

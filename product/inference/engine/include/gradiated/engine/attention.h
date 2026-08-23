@@ -37,6 +37,25 @@ void grouped_global_attention_wgmma_tile_bf16(
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
     cudaStream_t stream);
 
+// One-buffer RS-WGMMA frontier. Raw KV remains in shared memory while exact K and V fragments
+// are constructed directly in the tensor-core warpgroup's registers.
+void grouped_global_attention_wgmma_raw_rs_tile_bf16(
+    const void* query, const void* raw_cache, const float* inverse_rms_cache,
+    const void* key_norm_weight, const void* cosine, const void* sine, void* output,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    cudaStream_t stream);
+
+// Full-context counterpart to the one-buffer RS tile. Workspace has the same shape as the
+// materialized split prototype, but the persistent source is exact raw shared-projection KV.
+// Cosine and sine contain Gemma's 64 active global-RoPE frequencies in transposed
+// [frequency, position] order; low/high head halves share the same coefficient.
+void grouped_global_attention_wgmma_raw_rs_split_bf16(
+    const void* query, const void* raw_cache, const float* inverse_rms_cache,
+    const void* key_norm_weight, const void* cosine, const void* sine, void* output,
+    float* partial_outputs, float* partial_maxima, float* partial_sums,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    int tiles_per_segment, cudaStream_t stream);
+
 // Full-context research path. Workspace contains FP32 partial outputs
 // [head, segment, query, dimension] and FP32 max/sum pairs [head, segment, query].
 void grouped_global_attention_wgmma_split_bf16(

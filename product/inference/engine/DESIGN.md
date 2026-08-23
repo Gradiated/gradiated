@@ -708,3 +708,83 @@ in shared memory into the exact weighted/RoPE K and normalized V views, reducing
 making a two-stage load/compute pipeline fit. The next integration changes global cache ownership
 and QKV writes first, then replaces the split scaffold's two cache loads with that pipelined raw
 tile; tuning the rejected two-vector scaffold further would optimize the wrong memory graph.
+
+## Exact raw-KV Hopper attention frontier (2026-08-23)
+
+The exact shared-projection representation is now consumed directly by benchmark-only Hopper
+attention. A 64-token tile reads one BF16 raw vector plus its FP32 inverse RMS, reconstructs K with
+the released K-norm/RoPE rounding order, reconstructs V as BF16 RMS-normalized raw projection, and
+performs QK/softmax/PV without materializing K or V in global memory. Its output is bit-identical to
+the same fused tile over separately materialized K/V. Increasing the transform CTA from 256 to
+1,024 threads reduces the B16 tile from 45.9 to 24.3 microseconds, but the materialized tile remains
+faster at 16.4 microseconds. Repeated normalization and RoPE are therefore material costs, not free
+work hidden by the eliminated cache read.
+
+Two one-buffer schedules were explored. Retaining the complete raw tile in registers across QK is
+exact but compiles to 128--255 registers/thread plus 896--1,808 bytes of stack and regresses under
+saturation. The RS-WGMMA schedule instead leaves raw in a 64 KiB shared tile and constructs only the
+current 16-wide K or V fragment in registers. Its one-tile kernel has no spill; a two-fragment
+variant uses 63 registers/thread, while four-fragment issue is faster locally but raises register
+pressure. This proves the intended register-source tensor-core contract without a second 64 KiB
+transformed tile.
+
+The full-context RS path uses 128-thread CTAs, two resident segment CTAs per SM, online softmax and
+a 16 KiB FP32 shared numerator so only one output fragment is live. At B16/context 8,192 its best
+32-tile segment takes 1.0639 ms. That is 19.1% faster than the 1.3148 ms two-vector WGMMA scaffold,
+and B8 improves from 0.6661 to 0.5458 ms, but the retained library QK/softmax/PV composition remains
+far faster at approximately 0.282 ms. At context 128 the RS split differs from the materialized
+library result by at most 0.00195312 with 0.0001535 mean absolute error, matching the expected FP32
+online-reduction-order boundary.
+
+Further issue variants were rejected rather than promoted. Eight QK fragments per commit regresses
+B16 slightly to 1.0667 ms. A two-fragment asynchronous ping-pong path causes compiler-inserted
+warpgroup dependency barriers, grows to 253 registers plus stack and regresses to 2.038 ms. A
+four-warpgroup cooperative CTA attacks the real small-N issue bottleneck by splitting QK's reduction
+and PV's dimensions, but a 512-thread block is limited to 128 registers/thread; the combined graph
+spills more than 3.4 KiB/thread and is orders of magnitude slower. The cooperative benchmark is not
+part of the normal sweep.
+
+The retained evidence changes the integration decision. Exact raw KV is viable and measurably
+better than the custom two-vector scaffold, but it is not yet competitive with the existing
+batched-library memory path. Persistent cache ownership must not be changed until a schedule closes
+most of the remaining 3.8x global-attention gap. Production remains on the pinned SGLang image and
+none of these Hopper research kernels is selected by the model runner.
+
+### Exact raw-KV issue and representation optimization
+
+Source-level profiling showed that the first RS kernel was not limited by H200 HBM or WGMMA. It
+used 252 registers/thread, reached roughly 12% occupancy, and spent most issue stalls on scalar
+normalization, RoPE coefficient access and fragment construction. Pairing each low 16-component
+tile with its RoPE-coupled high tile removed duplicated normalization and reduced B16/context 8,192
+from 1.0639 to 1.026 ms. Specializing the released graph's `partial_rotary_factor=0.25` then removed
+all cosine/sine work for 448 of 512 components and reduced it to 0.722 ms.
+
+The retained kernel now keeps all eight FP32 PV numerators in registers, converts exact K and V
+pairs with native BF16x2 instructions, and stores the 64 active RoPE frequencies in transposed
+`[frequency, position]` order. Low and high head halves share each coefficient, eliminating three
+of four coefficient loads. This reduced the B16 result to 0.5856 ms. Grouping two low/high pairs
+per WGMMA commit reached 0.5472 ms; grouping four pairs regressed to 0.5737 ms. Packed BF16x2 PV
+conversion produced the retained 0.5409 ms result. The context-128 parity boundary remains
+`0.00195312` maximum and approximately `0.000158` mean absolute BF16 error.
+
+The current result is 49.2% faster than the 1.0639 ms RS checkpoint and 58.9% faster than the
+1.3148 ms two-vector scaffold. It is still 1.91x the approximately 0.283 ms materialized-library
+path, so it remains a research kernel rather than a runtime selection. A 32-token half tile was
+rejected at 1.278 ms because half-empty WGMMA and doubled barriers dominate. Shared key-norm
+staging was neutral.
+
+A two-warpgroup producer/consumer experiment tested whether scalar transforms could overlap SS-
+WGMMA. Two 8 KiB transformed stages, Hopper mbarriers, dynamic 64/192 register redistribution and
+maximum shared-memory carveout produced exact output and two CTAs/SM at 25% occupancy. It still
+took 1.75 ms at B16/context 8,192. The saturated profile executed approximately 626 million
+instructions, reported 60.5% cycles without an eligible warp, and was 3.2x slower than retained RS.
+Shared staging and synchronization more than doubled instruction work; replacing 128 mbarrier
+arrivals with named barriers regressed further. The implementation and public API were removed,
+as were the earlier spilling register-retained and 512-thread cooperative implementations.
+
+This closes the obvious on-the-fly shared-staging branch. The larger next avenue is cache-write
+amortization: compute K-norm/RoPE and V normalization once when a token enters the cache, then store
+materialized K/V in a quality-gated low-bit representation. Two FP8 vectors consume the same bytes
+as one raw BF16 vector while avoiding reconstruction of every historical token on every decode
+step. That path must pass free-running coding-agent quality, prefix-cache capacity and realistic
+Poisson-load economics before replacing exact raw KV.

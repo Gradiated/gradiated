@@ -53,6 +53,78 @@ __global__ void initialize_bf16(__nv_bfloat16* output, std::uint64_t elements,
   output[index] = __float2bfloat16_rn((2.0F * uniform - 1.0F) * magnitude);
 }
 
+__global__ void initialize_bf16_offset(__nv_bfloat16* output, std::uint64_t elements,
+                                       std::uint32_t seed, float center, float magnitude) {
+  const std::uint64_t index = static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const float uniform = static_cast<float>(mix(static_cast<std::uint32_t>(index) ^ seed)) /
+                        static_cast<float>(0xffffffffU);
+  output[index] = __float2bfloat16_rn(center + (2.0F * uniform - 1.0F) * magnitude);
+}
+
+__global__ void initialize_inverse_rms(float* output, std::uint64_t elements) {
+  const std::uint64_t index = static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index < elements) {
+    output[index] = 0.85F + 0.3F * static_cast<float>(mix(static_cast<std::uint32_t>(index))) /
+                                 static_cast<float>(0xffffffffU);
+  }
+}
+
+__global__ void initialize_rope(__nv_bfloat16* cosine, __nv_bfloat16* sine,
+                                std::uint64_t elements, int dimension) {
+  const std::uint64_t index = static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const int position = static_cast<int>(index / dimension);
+  const int component = static_cast<int>(index % dimension);
+  const int half_component = component % (dimension / 2);
+  // Gemma 4 full attention uses partial_rotary_factor=0.25: 64 frequencies are repeated across
+  // the two halves of a D=512 head and the remaining 384 components have identity rotation.
+  const float angle = half_component < dimension / 8
+      ? static_cast<float>(position) * expf(-0.0175F * static_cast<float>(half_component))
+      : 0.0F;
+  cosine[index] = __float2bfloat16_rn(cosf(angle));
+  sine[index] = __float2bfloat16_rn(sinf(angle));
+}
+
+__global__ void initialize_compact_global_rope(
+    __nv_bfloat16* cosine, __nv_bfloat16* sine, int positions) {
+  constexpr int frequencies = 64;
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= frequencies * positions) return;
+  const int frequency = index / positions;
+  const int position = index - frequency * positions;
+  const float angle =
+      static_cast<float>(position) * expf(-0.0175F * static_cast<float>(frequency));
+  cosine[index] = __float2bfloat16_rn(cosf(angle));
+  sine[index] = __float2bfloat16_rn(sinf(angle));
+}
+
+__global__ void materialize_raw_global_kv(
+    const __nv_bfloat16* raw, const float* inverse_rms,
+    const __nv_bfloat16* key_norm_weight, const __nv_bfloat16* cosine,
+    const __nv_bfloat16* sine, __nv_bfloat16* keys, __nv_bfloat16* values,
+    std::uint64_t elements, int context, int dimension) {
+  const std::uint64_t index = static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const int component = static_cast<int>(index % dimension);
+  const std::uint64_t row = index / dimension;
+  const int token = static_cast<int>(row % context);
+  const int half = dimension / 2;
+  const int partner = component < half ? component + half : component - half;
+  const std::uint64_t partner_index = row * dimension + partner;
+  const float scale = inverse_rms[row];
+  const float normalized = __bfloat162float(__float2bfloat16_rn(
+      __bfloat162float(raw[index]) * scale * __bfloat162float(key_norm_weight[component])));
+  const float partner_normalized = __bfloat162float(__float2bfloat16_rn(
+      __bfloat162float(raw[partner_index]) * scale * __bfloat162float(key_norm_weight[partner])));
+  const float rotated = component < half ? -partner_normalized : partner_normalized;
+  const std::uint64_t rotary = static_cast<std::uint64_t>(token) * dimension + component;
+  keys[index] = __float2bfloat16_rn(
+      normalized * __bfloat162float(cosine[rotary]) +
+      rotated * __bfloat162float(sine[rotary]));
+  values[index] = __float2bfloat16_rn(__bfloat162float(raw[index]) * scale);
+}
+
 __global__ void quantize_fixed_e4m3(const __nv_bfloat16* input, __nv_fp8_e4m3* output,
                                     std::uint64_t elements, float multiplier) {
   const std::uint64_t index = static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -224,6 +296,205 @@ void wgmma_attention_tile_parity() {
   }
 }
 
+void wgmma_raw_attention_tile_parity() {
+  constexpr int batch = 2;
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 64;
+  constexpr int dimension = 512;
+  constexpr std::uint64_t heads = batch * kv_heads;
+  constexpr std::uint64_t query_elements = heads * query_group * dimension;
+  constexpr std::uint64_t cache_elements = heads * context * dimension;
+  constexpr std::uint64_t statistic_elements = heads * context;
+  constexpr std::uint64_t rotary_elements = context * dimension;
+  Allocation query(2ULL * query_elements), raw(2ULL * cache_elements),
+      inverse_rms(sizeof(float) * statistic_elements), key_norm(2ULL * dimension),
+      cosine(2ULL * rotary_elements), sine(2ULL * rotary_elements),
+      key(2ULL * cache_elements), value(2ULL * cache_elements),
+      reference(2ULL * query_elements), rs_candidate(2ULL * query_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x14d3a97bU, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(raw.get()), cache_elements, 0x55ac1279U, 1.1F);
+  initialize_inverse_rms<<<(statistic_elements + threads - 1) / threads, threads>>>(
+      static_cast<float*>(inverse_rms.get()), statistic_elements);
+  initialize_bf16_offset<<<(dimension + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key_norm.get()), dimension, 0x7f4a219dU, 1.0F, 0.2F);
+  initialize_rope<<<(rotary_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(cosine.get()), static_cast<__nv_bfloat16*>(sine.get()),
+      rotary_elements, dimension);
+  materialize_raw_global_kv<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<const __nv_bfloat16*>(raw.get()), static_cast<const float*>(inverse_rms.get()),
+      static_cast<const __nv_bfloat16*>(key_norm.get()),
+      static_cast<const __nv_bfloat16*>(cosine.get()),
+      static_cast<const __nv_bfloat16*>(sine.get()),
+      static_cast<__nv_bfloat16*>(key.get()), static_cast<__nv_bfloat16*>(value.get()),
+      cache_elements, context, dimension);
+  gradiated::engine::grouped_global_attention_wgmma_tile_bf16(
+      query.get(), key.get(), value.get(), reference.get(), batch, kv_heads,
+      query_group, context, dimension, nullptr);
+  gradiated::engine::grouped_global_attention_wgmma_raw_rs_tile_bf16(
+      query.get(), raw.get(), static_cast<const float*>(inverse_rms.get()), key_norm.get(),
+      cosine.get(), sine.get(), rs_candidate.get(), batch, kv_heads, query_group,
+      context, dimension, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize raw WGMMA attention tile parity");
+  std::vector<__nv_bfloat16> expected(query_elements), rs_actual(query_elements);
+  check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy raw WGMMA attention tile reference");
+  check(cudaMemcpy(rs_actual.data(), rs_candidate.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy RS-raw WGMMA attention tile candidate");
+  float rs_maximum = 0.0F;
+  double rs_mean = 0.0;
+  std::uint64_t rs_unequal = 0;
+  for (std::uint64_t index = 0; index < query_elements; ++index) {
+    const float rs_difference = std::abs(__bfloat162float(expected[index]) -
+                                         __bfloat162float(rs_actual[index]));
+    rs_maximum = std::max(rs_maximum, rs_difference);
+    rs_mean += rs_difference;
+    rs_unequal += rs_difference != 0.0F;
+  }
+  std::cout << "wgmma_rs_raw_attention_tile_parity_max_abs=" << rs_maximum << '\n'
+            << "wgmma_rs_raw_attention_tile_parity_mean_abs=" << rs_mean / query_elements << '\n'
+            << "wgmma_rs_raw_attention_tile_parity_unequal=" << rs_unequal << '\n';
+  if (rs_unequal != 0) {
+    throw std::runtime_error("raw WGMMA attention tile was not bit-identical");
+  }
+}
+
+void wgmma_raw_rs_split_attention_parity() {
+  constexpr int batch = 2;
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 128;
+  constexpr int dimension = 512;
+  constexpr int tiles_per_segment = 1;
+  constexpr int heads = batch * kv_heads;
+  constexpr int segments_per_head = context / 64 / tiles_per_segment;
+  constexpr std::uint64_t query_elements =
+      static_cast<std::uint64_t>(heads) * query_group * dimension;
+  constexpr std::uint64_t cache_elements =
+      static_cast<std::uint64_t>(heads) * context * dimension;
+  constexpr std::uint64_t inverse_elements = static_cast<std::uint64_t>(heads) * context;
+  constexpr std::uint64_t rotary_elements =
+      static_cast<std::uint64_t>(context) * dimension;
+  constexpr std::uint64_t compact_rotary_elements =
+      static_cast<std::uint64_t>(context) * 64;
+  constexpr std::uint64_t partial_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group * dimension;
+  constexpr std::uint64_t statistic_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group;
+  Allocation query(2ULL * query_elements), raw(2ULL * cache_elements),
+      inverse_rms(sizeof(float) * inverse_elements), key_norm(2ULL * dimension),
+      cosine(2ULL * rotary_elements), sine(2ULL * rotary_elements),
+      compact_cosine(2ULL * compact_rotary_elements),
+      compact_sine(2ULL * compact_rotary_elements),
+      key(2ULL * cache_elements), value(2ULL * cache_elements),
+      reference(2ULL * query_elements), candidate(2ULL * query_elements),
+      partial(sizeof(float) * partial_elements), maxima(sizeof(float) * statistic_elements),
+      sums(sizeof(float) * statistic_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x19f47ba2U, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(raw.get()), cache_elements, 0x82ac731fU, 1.1F);
+  initialize_inverse_rms<<<(inverse_elements + threads - 1) / threads, threads>>>(
+      static_cast<float*>(inverse_rms.get()), inverse_elements);
+  initialize_bf16_offset<<<(dimension + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key_norm.get()), dimension, 0x3d861ae7U, 1.0F, 0.2F);
+  initialize_rope<<<(rotary_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(cosine.get()), static_cast<__nv_bfloat16*>(sine.get()),
+      rotary_elements, dimension);
+  initialize_compact_global_rope<<<
+      (compact_rotary_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(compact_cosine.get()),
+      static_cast<__nv_bfloat16*>(compact_sine.get()), context);
+  materialize_raw_global_kv<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<const __nv_bfloat16*>(raw.get()), static_cast<const float*>(inverse_rms.get()),
+      static_cast<const __nv_bfloat16*>(key_norm.get()),
+      static_cast<const __nv_bfloat16*>(cosine.get()),
+      static_cast<const __nv_bfloat16*>(sine.get()),
+      static_cast<__nv_bfloat16*>(key.get()), static_cast<__nv_bfloat16*>(value.get()),
+      cache_elements, context, dimension);
+  gradiated::engine::GemmGroupedDecodeAttention attention(
+      batch, kv_heads, query_group, context);
+  attention.run(query.get(), key.get(), value.get(), reference.get(), batch, kv_heads,
+                query_group, context, dimension, nullptr);
+  gradiated::engine::grouped_global_attention_wgmma_raw_rs_split_bf16(
+      query.get(), raw.get(), static_cast<const float*>(inverse_rms.get()), key_norm.get(),
+      compact_cosine.get(), compact_sine.get(), candidate.get(), static_cast<float*>(partial.get()),
+      static_cast<float*>(maxima.get()), static_cast<float*>(sums.get()), batch, kv_heads,
+      query_group, context, dimension, tiles_per_segment, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize split RS-raw WGMMA parity");
+  std::vector<__nv_bfloat16> expected(query_elements), actual(query_elements);
+  check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy split RS-raw WGMMA reference");
+  check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy split RS-raw WGMMA candidate");
+  float maximum = 0.0F;
+  double mean = 0.0;
+  for (std::uint64_t index = 0; index < query_elements; ++index) {
+    const float difference = std::abs(__bfloat162float(expected[index]) -
+                                      __bfloat162float(actual[index]));
+    maximum = std::max(maximum, difference);
+    mean += difference;
+  }
+  std::cout << "wgmma_rs_raw_split_parity_max_abs=" << maximum << '\n'
+            << "wgmma_rs_raw_split_parity_mean_abs=" << mean / query_elements << '\n';
+  if (maximum > 0.03F) {
+    throw std::runtime_error("split RS-raw WGMMA parity exceeded tolerance");
+  }
+}
+
+float benchmark_raw_rs_attention_tile(int batch) {
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 64;
+  constexpr int dimension = 512;
+  const std::uint64_t heads = static_cast<std::uint64_t>(batch) * kv_heads;
+  const std::uint64_t query_elements = heads * query_group * dimension;
+  const std::uint64_t cache_elements = heads * context * dimension;
+  const std::uint64_t statistic_elements = heads * context;
+  const std::uint64_t rotary_elements = context * dimension;
+  Allocation query(2ULL * query_elements), raw(2ULL * cache_elements),
+      inverse_rms(sizeof(float) * statistic_elements), key_norm(2ULL * dimension),
+      cosine(2ULL * rotary_elements), sine(2ULL * rotary_elements),
+      output(2ULL * query_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x6a75b24cU, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(raw.get()), cache_elements, 0x2874dc51U, 1.1F);
+  initialize_inverse_rms<<<(statistic_elements + threads - 1) / threads, threads>>>(
+      static_cast<float*>(inverse_rms.get()), statistic_elements);
+  initialize_bf16_offset<<<(dimension + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key_norm.get()), dimension, 0x913acd75U, 1.0F, 0.2F);
+  initialize_rope<<<(rotary_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(cosine.get()), static_cast<__nv_bfloat16*>(sine.get()),
+      rotary_elements, dimension);
+  const auto run = [&] {
+    gradiated::engine::grouped_global_attention_wgmma_raw_rs_tile_bf16(
+        query.get(), raw.get(), static_cast<const float*>(inverse_rms.get()), key_norm.get(),
+        cosine.get(), sine.get(), output.get(), batch, kv_heads, query_group,
+        context, dimension, nullptr);
+  };
+  for (int iteration = 0; iteration < 4; ++iteration) run();
+  check(cudaDeviceSynchronize(), "raw WGMMA attention tile warmup");
+  cudaEvent_t begin{}, end{};
+  check(cudaEventCreate(&begin), "create raw WGMMA tile begin event");
+  check(cudaEventCreate(&end), "create raw WGMMA tile end event");
+  constexpr int iterations = 20;
+  check(cudaEventRecord(begin), "record raw WGMMA tile begin event");
+  for (int iteration = 0; iteration < iterations; ++iteration) run();
+  check(cudaEventRecord(end), "record raw WGMMA tile end event");
+  check(cudaEventSynchronize(end), "synchronize raw WGMMA tile benchmark");
+  float milliseconds = 0.0F;
+  check(cudaEventElapsedTime(&milliseconds, begin, end), "measure raw WGMMA tile benchmark");
+  cudaEventDestroy(end);
+  cudaEventDestroy(begin);
+  return milliseconds / iterations;
+}
+
 void wgmma_split_attention_parity() {
   constexpr int batch = 2;
   constexpr int kv_heads = 4;
@@ -318,6 +589,63 @@ float benchmark_split_attention(int batch, int context, int tiles_per_segment) {
   check(cudaEventSynchronize(end), "synchronize split WGMMA benchmark");
   float milliseconds = 0.0F;
   check(cudaEventElapsedTime(&milliseconds, begin, end), "measure split WGMMA benchmark");
+  cudaEventDestroy(end);
+  cudaEventDestroy(begin);
+  return milliseconds / iterations;
+}
+
+float benchmark_raw_rs_split_attention(int batch, int context, int tiles_per_segment) {
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  const int heads = batch * kv_heads;
+  const int segments_per_head = context / 64 / tiles_per_segment;
+  const std::uint64_t query_elements =
+      static_cast<std::uint64_t>(heads) * query_group * dimension;
+  const std::uint64_t cache_elements =
+      static_cast<std::uint64_t>(heads) * context * dimension;
+  const std::uint64_t inverse_elements = static_cast<std::uint64_t>(heads) * context;
+  const std::uint64_t rotary_elements = static_cast<std::uint64_t>(context) * 64;
+  const std::uint64_t partial_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group * dimension;
+  const std::uint64_t statistic_elements =
+      static_cast<std::uint64_t>(heads) * segments_per_head * query_group;
+  Allocation query(2ULL * query_elements), raw(2ULL * cache_elements),
+      inverse_rms(sizeof(float) * inverse_elements), key_norm(2ULL * dimension),
+      cosine(2ULL * rotary_elements), sine(2ULL * rotary_elements),
+      output(2ULL * query_elements), partial(sizeof(float) * partial_elements),
+      maxima(sizeof(float) * statistic_elements), sums(sizeof(float) * statistic_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0x471ca982U, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(raw.get()), cache_elements, 0xa2375bc1U, 1.1F);
+  initialize_inverse_rms<<<(inverse_elements + threads - 1) / threads, threads>>>(
+      static_cast<float*>(inverse_rms.get()), inverse_elements);
+  initialize_bf16_offset<<<(dimension + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key_norm.get()), dimension, 0x95ca3187U, 1.0F, 0.2F);
+  initialize_compact_global_rope<<<(rotary_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(cosine.get()), static_cast<__nv_bfloat16*>(sine.get()),
+      context);
+  const auto run = [&] {
+    gradiated::engine::grouped_global_attention_wgmma_raw_rs_split_bf16(
+        query.get(), raw.get(), static_cast<const float*>(inverse_rms.get()), key_norm.get(),
+        cosine.get(), sine.get(), output.get(), static_cast<float*>(partial.get()),
+        static_cast<float*>(maxima.get()), static_cast<float*>(sums.get()), batch, kv_heads,
+        query_group, context, dimension, tiles_per_segment, nullptr);
+  };
+  for (int iteration = 0; iteration < 2; ++iteration) run();
+  check(cudaDeviceSynchronize(), "split RS-raw WGMMA warmup");
+  cudaEvent_t begin{}, end{};
+  check(cudaEventCreate(&begin), "create split RS-raw WGMMA begin event");
+  check(cudaEventCreate(&end), "create split RS-raw WGMMA end event");
+  constexpr int iterations = 5;
+  check(cudaEventRecord(begin), "record split RS-raw WGMMA begin event");
+  for (int iteration = 0; iteration < iterations; ++iteration) run();
+  check(cudaEventRecord(end), "record split RS-raw WGMMA end event");
+  check(cudaEventSynchronize(end), "synchronize split RS-raw WGMMA benchmark");
+  float milliseconds = 0.0F;
+  check(cudaEventElapsedTime(&milliseconds, begin, end), "measure split RS-raw WGMMA benchmark");
   cudaEventDestroy(end);
   cudaEventDestroy(begin);
   return milliseconds / iterations;
@@ -486,6 +814,8 @@ int main() {
     fp8_parity();
     wgmma_qk_parity();
     wgmma_attention_tile_parity();
+    wgmma_raw_attention_tile_parity();
+    wgmma_raw_rs_split_attention_parity();
     wgmma_split_attention_parity();
     std::cout << "kind,batch,context,milliseconds,physical_kv_gb_s,naive_avoided_gb\n";
     for (const int batch : std::vector<int>{1, 2, 4, 8, 10, 16}) {
@@ -507,10 +837,15 @@ int main() {
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
       const float global_tile_baseline_ms = benchmark(batch, 4, 8, 64, 512, 0);
       const float global_tile_wgmma_ms = benchmark(batch, 4, 8, 64, 512, 6);
+      const float global_tile_rs_raw_wgmma = benchmark_raw_rs_attention_tile(batch);
       std::vector<std::pair<int, float>> global_split_wgmma;
+      std::vector<std::pair<int, float>> global_rs_raw_split_wgmma;
       for (const int tiles_per_segment : std::vector<int>{4, 8, 16, 32}) {
         global_split_wgmma.emplace_back(
             tiles_per_segment, benchmark_split_attention(batch, 8192, tiles_per_segment));
+        global_rs_raw_split_wgmma.emplace_back(
+            tiles_per_segment,
+            benchmark_raw_rs_split_attention(batch, 8192, tiles_per_segment));
       }
       const float global_qk_ms = benchmark_qk(batch, 8192, false);
       std::vector<std::pair<int, float>> global_qk_wgmma;
@@ -546,8 +881,15 @@ int main() {
                 << std::setprecision(4) << global_tile_baseline_ms << ",0,0\n";
       std::cout << "global_tile_wgmma," << batch << ",64," << std::fixed
                 << std::setprecision(4) << global_tile_wgmma_ms << ",0,0\n";
+      std::cout << "global_tile_rs_raw_wgmma," << batch << ",64," << std::fixed
+                << std::setprecision(4) << global_tile_rs_raw_wgmma << ",0,0\n";
       for (const auto& [tiles_per_segment, milliseconds] : global_split_wgmma) {
         std::cout << "global_split_wgmma_t" << tiles_per_segment << ',' << batch
+                  << ",8192," << std::fixed << std::setprecision(4) << milliseconds
+                  << ",0,0\n";
+      }
+      for (const auto& [tiles_per_segment, milliseconds] : global_rs_raw_split_wgmma) {
+        std::cout << "global_rs_raw_split_wgmma_t" << tiles_per_segment << ',' << batch
                   << ",8192," << std::fixed << std::setprecision(4) << milliseconds
                   << ",0,0\n";
       }

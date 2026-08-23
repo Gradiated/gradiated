@@ -504,3 +504,27 @@ target-only repeats on identical fixed prompts produced different completions as
 batches changed activation scales. Speculative promotion still requires direct-runner rollback
 parity plus teacher-forced agreement on the untouched holdout. The production service remains on
 the pinned SGLang image until that quality gate and a production canary are explicitly approved.
+
+## Tensor-FP8 weight calibration (2026-08-23)
+
+The tensor-wide weight scale now accepts an explicit multiplier while activation quantization
+retains its measured dynamic maximum. This permits startup-only clipping without changing the
+stored one-byte weight layout, decode kernels, launch count, or HBM traffic. A multiplier of 0.98
+was selected on the held-out coding-agent prompts using completion-level evidence rather than the
+short teacher-forced score alone. Over 16 prompts and 128 free-running tokens, EOS-aware mean token
+edit similarity against the serial BF16 runner rose from 0.8364 to 0.9519 and the minimum rose from
+0.2656 to 0.6797. Batched BF16 measured 0.9612 mean and 0.5431 minimum on the same gate. Exact EOS-
+truncated sequences did not improve over baseline (7/16 for each, versus 13/16 for batched BF16),
+so calibration is a strong numerical candidate but not a complete functional-quality proof.
+
+The matched five-session causal A/B showed no material execution penalty: median TPOT moved from
+6.055 to 6.089 ms, median TTFT from 45.260 to 45.294 ms, and speculative acceptance from 83.0% to
+82.5%. The complete 30-session stationary replay then completed 300/300 requests with 6.242 ms
+median TPOT versus 6.208 ms for uncalibrated FP8. Steady output was 77.125 versus 76.726 token/s,
+SLO output was 73.049 versus 73.067 token/s, and cheapest-price steady SLO compute recovery was
+11.6034% versus 11.5793%. Paired mean TPOT changed by -0.082 ms with a 95% bootstrap interval of
+[-0.290, 0.113] ms. The candidate is therefore performance-neutral within run noise.
+
+`GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER=0.98` remains opt-in. Promotion still requires a task-level
+coding/tool-use gate, explicit EOS-quality acceptance, and a production canary; the pinned SGLang
+service is unchanged.

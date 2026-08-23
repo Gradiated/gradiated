@@ -46,7 +46,8 @@ class Fp8Linear {
 
 // Computes a tensor amax, stores scale=amax/448, and emits E4M3 bytes. Scale remains device-side.
 void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
-                               std::size_t elements, cudaStream_t stream);
+                               std::size_t elements, cudaStream_t stream,
+                               float scale_multiplier = 1.0F);
 void quantize_bf16_rows_to_fp8_e4m3(const void* input, void* output, float* scales,
                                     int rows, int width, cudaStream_t stream);
 

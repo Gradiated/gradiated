@@ -34,7 +34,8 @@ class Fp8WeightArena {
  public:
   static std::unique_ptr<Fp8WeightArena> quantize(const class WeightPlan& plan,
                                                    const DeviceWeightArena& bf16_weights,
-                                                   Fp8Scaling scaling);
+                                                   Fp8Scaling scaling,
+                                                   float tensor_scale_multiplier = 1.0F);
   ~Fp8WeightArena();
 
   Fp8WeightArena(const Fp8WeightArena&) = delete;

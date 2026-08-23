@@ -12,6 +12,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstdlib>
 #include <deque>
@@ -80,6 +81,18 @@ bool environment_flag(const char* name, bool fallback = false) {
   if (value == "1" || value == "true") return true;
   if (value == "0" || value == "false") return false;
   throw std::runtime_error(std::string(name) + " must be 0, 1, false, or true");
+}
+
+float environment_float(const char* name, float fallback, float minimum, float maximum) {
+  const std::string value = environment(name);
+  if (value.empty()) return fallback;
+  std::size_t consumed = 0;
+  const float parsed = std::stof(value, &consumed);
+  if (consumed != value.size() || !std::isfinite(parsed) ||
+      parsed < minimum || parsed > maximum) {
+    throw std::runtime_error(std::string(name) + " is out of range");
+  }
+  return parsed;
 }
 
 bool constant_time_equal(const std::string& left, const std::string& right) {
@@ -1212,8 +1225,14 @@ int main(int argc, char** argv) {
     std::unique_ptr<gradiated::engine::Fp8WeightArena> fp8_weights;
     const std::string fp8_decode = environment("GRADIATED_FP8_DECODE", "off");
     if (fp8_decode == "tensor") {
+      const float weight_scale_multiplier = environment_float(
+          "GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER", 1.0F, 0.0F, 1.0F);
+      if (weight_scale_multiplier == 0.0F) {
+        throw std::runtime_error("GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER must be positive");
+      }
       fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
-          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor,
+          weight_scale_multiplier);
     } else if (fp8_decode != "off") {
       throw std::runtime_error("GRADIATED_FP8_DECODE must be off or tensor");
     }

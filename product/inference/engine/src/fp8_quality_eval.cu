@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -18,7 +19,7 @@
 namespace {
 
 constexpr int maximum_context = 8192;
-constexpr int evaluated_tokens = 32;
+constexpr int default_evaluated_tokens = 32;
 
 int environment_non_negative_integer(const char* name) {
   const char* value = std::getenv(name);
@@ -28,6 +29,19 @@ int environment_non_negative_integer(const char* name) {
   const int parsed = std::stoi(text, &consumed);
   if (consumed != text.size() || parsed < 0) {
     throw std::runtime_error(std::string(name) + " must be a non-negative integer");
+  }
+  return parsed;
+}
+
+float environment_weight_scale_multiplier() {
+  const char* value = std::getenv("GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER");
+  if (value == nullptr || *value == '\0') return 1.0F;
+  const std::string text(value);
+  std::size_t consumed = 0;
+  const float parsed = std::stof(text, &consumed);
+  if (consumed != text.size() || parsed <= 0.0F || parsed > 1.0F) {
+    throw std::runtime_error(
+        "GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER must be in (0, 1]");
   }
   return parsed;
 }
@@ -44,11 +58,61 @@ std::vector<int> integers(const gradiated::engine::Json& value) {
   return result;
 }
 
+std::vector<int> through_eos(const std::vector<int>& tokens) {
+  const auto end = std::find_if(tokens.begin(), tokens.end(), [](int token) {
+    return token == 1 || token == 106;
+  });
+  return end == tokens.end() ? tokens : std::vector<int>(tokens.begin(), end + 1);
+}
+
+std::size_t edit_distance(const std::vector<int>& left, const std::vector<int>& right) {
+  std::vector<std::size_t> previous(right.size() + 1);
+  std::vector<std::size_t> current(right.size() + 1);
+  for (std::size_t index = 0; index <= right.size(); ++index) previous[index] = index;
+  for (std::size_t left_index = 1; left_index <= left.size(); ++left_index) {
+    current[0] = left_index;
+    for (std::size_t right_index = 1; right_index <= right.size(); ++right_index) {
+      const std::size_t substitution = previous[right_index - 1] +
+          (left[left_index - 1] == right[right_index - 1] ? 0U : 1U);
+      current[right_index] = std::min({previous[right_index] + 1,
+                                       current[right_index - 1] + 1,
+                                       substitution});
+    }
+    std::swap(previous, current);
+  }
+  return previous.back();
+}
+
 gradiated::engine::Fp8Scaling parse_scaling(const std::string& value) {
   if (value == "tensor") return gradiated::engine::Fp8Scaling::tensor;
   if (value == "channel") return gradiated::engine::Fp8Scaling::channel;
   if (value == "block-128") return gradiated::engine::Fp8Scaling::block_128;
   throw std::runtime_error("scaling must be bf16, tensor, channel, or block-128");
+}
+
+std::vector<std::string> precision_cases() {
+  const char* configured = std::getenv("GRADIATED_QUALITY_BF16_LAYER_CASES");
+  if (configured == nullptr || *configured == '\0') {
+    const char* selected = std::getenv("GRADIATED_FP8_BF16_LAYERS");
+    return {selected == nullptr || *selected == '\0' ? "none" : selected};
+  }
+
+  std::vector<std::string> cases;
+  const std::string_view specification(configured);
+  std::size_t begin = 0;
+  while (begin < specification.size()) {
+    const std::size_t end = specification.find(';', begin);
+    const std::string_view item = specification.substr(
+        begin, end == std::string_view::npos ? specification.size() - begin : end - begin);
+    if (item.empty()) {
+      throw std::runtime_error(
+          "GRADIATED_QUALITY_BF16_LAYER_CASES contains an empty case");
+    }
+    cases.emplace_back(item);
+    if (end == std::string_view::npos) break;
+    begin = end + 1;
+  }
+  return cases;
 }
 
 }  // namespace
@@ -61,6 +125,14 @@ int main(int argc, char** argv) {
       return 64;
     }
     const bool bf16_candidate = std::string(argv[3]) == "bf16";
+    const int configured_evaluated_tokens = environment_non_negative_integer(
+        "GRADIATED_QUALITY_EVALUATED_TOKENS");
+    const int evaluated_tokens = configured_evaluated_tokens == 0
+        ? default_evaluated_tokens : configured_evaluated_tokens;
+    if (evaluated_tokens > 256) {
+      throw std::runtime_error("GRADIATED_QUALITY_EVALUATED_TOKENS must not exceed 256");
+    }
+    const bool free_running = std::getenv("GRADIATED_QUALITY_FREE_RUNNING") != nullptr;
     const int suffix_tokens = environment_non_negative_integer(
         "GRADIATED_QUALITY_SUFFIX_TOKENS");
     const int quality_batch = std::max(
@@ -113,96 +185,136 @@ int main(int argc, char** argv) {
 
     const auto fp8_weights = bf16_candidate
         ? std::unique_ptr<gradiated::engine::Fp8WeightArena>{}
-        : gradiated::engine::Fp8WeightArena::quantize(plan, *weights, scaling);
+        : gradiated::engine::Fp8WeightArena::quantize(
+              plan, *weights, scaling,
+              scaling == gradiated::engine::Fp8Scaling::tensor
+                  ? environment_weight_scale_multiplier() : 1.0F);
 
-    std::uint64_t total_predictions = 0;
-    std::uint64_t matching_predictions = 0;
-    std::uint64_t exact_prompts = 0;
-    std::uint64_t prompt_count = 0;
-    const auto begin = std::chrono::steady_clock::now();
     if (std::getenv("GRADIATED_FP8_GLOBAL_K_EVAL") != nullptr) {
       setenv("GRADIATED_FP8_GLOBAL_K", "1", 1);
     }
-    gradiated::engine::Gemma4BatchModelRunner fp8_runner(
-        config, *weights, quality_batch, maximum_context, fp8_weights.get());
-    for (std::size_t group_start = 0; group_start < prompts.size();
-         group_start += static_cast<std::size_t>(quality_batch)) {
-      const int group_size = std::min(
-          quality_batch, static_cast<int>(prompts.size() - group_start));
-      std::vector<int> slots(static_cast<std::size_t>(group_size));
-      std::vector<int> predictions(static_cast<std::size_t>(group_size));
-      std::vector<const std::vector<int>*> prompt_pointers(
-          static_cast<std::size_t>(group_size));
-      for (int row = 0; row < group_size; ++row) {
-        slots[static_cast<std::size_t>(row)] = row;
-        const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
-        prompt_pointers[static_cast<std::size_t>(row)] = &prompt.input_ids;
-        if (suffix_tokens > 0) {
-          const int prefix_tokens = static_cast<int>(prompt.input_ids.size()) - suffix_tokens;
-          if (prefix_tokens <= 0) {
-            throw std::runtime_error("quality suffix consumes complete prompt: " +
-                                     prompt.identifier);
-          }
-          const std::vector<int> prefix(prompt.input_ids.begin(),
-                                        prompt.input_ids.begin() + prefix_tokens);
-          static_cast<void>(fp8_runner.prefill_slot(row, prefix, 1024));
-        } else {
-          predictions[static_cast<std::size_t>(row)] =
-              fp8_runner.prefill_slot(row, prompt.input_ids, 1024);
-        }
+    const auto cases = precision_cases();
+    for (const auto& precision_case : cases) {
+      if (precision_case == "none") {
+        unsetenv("GRADIATED_FP8_BF16_LAYERS");
+      } else {
+        setenv("GRADIATED_FP8_BF16_LAYERS", precision_case.c_str(), 1);
       }
-      if (suffix_tokens > 0) {
-        predictions = fp8_runner.prefill_slots_suffix(slots, prompt_pointers);
-      }
-      std::vector<int> prompt_matches(static_cast<std::size_t>(group_size), 0);
-      std::vector<int> matching_prefix(static_cast<std::size_t>(group_size), 0);
-      std::vector<bool> prefix_intact(static_cast<std::size_t>(group_size), true);
-      for (int step = 0; step < evaluated_tokens; ++step) {
-        std::vector<int> reference_tokens(static_cast<std::size_t>(group_size));
+      std::uint64_t total_predictions = 0;
+      std::uint64_t matching_predictions = 0;
+      std::uint64_t exact_prompts = 0;
+      std::uint64_t prompt_count = 0;
+      std::vector<std::vector<int>> candidate_sequences(prompts.size());
+      const auto begin = std::chrono::steady_clock::now();
+      gradiated::engine::Gemma4BatchModelRunner fp8_runner(
+          config, *weights, quality_batch, maximum_context, fp8_weights.get());
+      for (std::size_t group_start = 0; group_start < prompts.size();
+           group_start += static_cast<std::size_t>(quality_batch)) {
+        const int group_size = std::min(
+            quality_batch, static_cast<int>(prompts.size() - group_start));
+        std::vector<int> slots(static_cast<std::size_t>(group_size));
+        std::vector<int> predictions(static_cast<std::size_t>(group_size));
+        std::vector<const std::vector<int>*> prompt_pointers(
+            static_cast<std::size_t>(group_size));
         for (int row = 0; row < group_size; ++row) {
-          const int reference = references[group_start + static_cast<std::size_t>(row)]
-                                           [static_cast<std::size_t>(step)];
-          reference_tokens[static_cast<std::size_t>(row)] = reference;
-          const bool match = reference == predictions[static_cast<std::size_t>(row)];
-          prompt_matches[static_cast<std::size_t>(row)] += match ? 1 : 0;
-          if (prefix_intact[static_cast<std::size_t>(row)] && match) {
-            ++matching_prefix[static_cast<std::size_t>(row)];
+          slots[static_cast<std::size_t>(row)] = row;
+          const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+          prompt_pointers[static_cast<std::size_t>(row)] = &prompt.input_ids;
+          if (suffix_tokens > 0) {
+            const int prefix_tokens = static_cast<int>(prompt.input_ids.size()) - suffix_tokens;
+            if (prefix_tokens <= 0) {
+              throw std::runtime_error("quality suffix consumes complete prompt: " +
+                                       prompt.identifier);
+            }
+            const std::vector<int> prefix(prompt.input_ids.begin(),
+                                          prompt.input_ids.begin() + prefix_tokens);
+            static_cast<void>(fp8_runner.prefill_slot(row, prefix, 1024));
           } else {
-            prefix_intact[static_cast<std::size_t>(row)] = false;
+            predictions[static_cast<std::size_t>(row)] =
+                fp8_runner.prefill_slot(row, prompt.input_ids, 1024);
           }
-          ++total_predictions;
-          matching_predictions += match ? 1U : 0U;
         }
+        if (suffix_tokens > 0) {
+          predictions = fp8_runner.prefill_slots_suffix(slots, prompt_pointers);
+        }
+        std::vector<int> prompt_matches(static_cast<std::size_t>(group_size), 0);
+        std::vector<int> matching_prefix(static_cast<std::size_t>(group_size), 0);
+        std::vector<bool> prefix_intact(static_cast<std::size_t>(group_size), true);
+        for (int step = 0; step < evaluated_tokens; ++step) {
+          std::vector<int> reference_tokens(static_cast<std::size_t>(group_size));
+          for (int row = 0; row < group_size; ++row) {
+            candidate_sequences[group_start + static_cast<std::size_t>(row)].push_back(
+                predictions[static_cast<std::size_t>(row)]);
+            const int reference = references[group_start + static_cast<std::size_t>(row)]
+                                             [static_cast<std::size_t>(step)];
+            reference_tokens[static_cast<std::size_t>(row)] = reference;
+            const bool match = reference == predictions[static_cast<std::size_t>(row)];
+            prompt_matches[static_cast<std::size_t>(row)] += match ? 1 : 0;
+            if (prefix_intact[static_cast<std::size_t>(row)] && match) {
+              ++matching_prefix[static_cast<std::size_t>(row)];
+            } else {
+              prefix_intact[static_cast<std::size_t>(row)] = false;
+            }
+            ++total_predictions;
+            matching_predictions += match ? 1U : 0U;
+          }
         if (step + 1 != evaluated_tokens) {
-          predictions = fp8_runner.append_ragged(reference_tokens, slots);
+          predictions = fp8_runner.append_ragged(
+              free_running ? predictions : reference_tokens, slots);
+          }
+        }
+        for (int row = 0; row < group_size; ++row) {
+          const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+          if (prompt_matches[static_cast<std::size_t>(row)] == evaluated_tokens) {
+            ++exact_prompts;
+          }
+          ++prompt_count;
+          std::cout << "prompt=" << prompt.identifier
+                    << " input_tokens=" << prompt.input_ids.size()
+                    << " agreement=" << prompt_matches[static_cast<std::size_t>(row)] << '/'
+                    << evaluated_tokens
+                    << " matching_prefix=" << matching_prefix[static_cast<std::size_t>(row)]
+                    << std::endl;
         }
       }
-      for (int row = 0; row < group_size; ++row) {
-        const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
-        if (prompt_matches[static_cast<std::size_t>(row)] == evaluated_tokens) {
-          ++exact_prompts;
-        }
-        ++prompt_count;
-        std::cout << "prompt=" << prompt.identifier
-                  << " input_tokens=" << prompt.input_ids.size()
-                  << " agreement=" << prompt_matches[static_cast<std::size_t>(row)] << '/'
-                  << evaluated_tokens
-                  << " matching_prefix=" << matching_prefix[static_cast<std::size_t>(row)]
-                  << std::endl;
+      const double seconds = std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - begin).count();
+      std::vector<double> edit_similarities;
+      std::uint64_t eos_exact_prompts = 0;
+      edit_similarities.reserve(prompts.size());
+      for (std::size_t prompt_index = 0; prompt_index < prompts.size(); ++prompt_index) {
+        const auto reference = through_eos(references[prompt_index]);
+        const auto candidate = through_eos(candidate_sequences[prompt_index]);
+        const std::size_t denominator = std::max(reference.size(), candidate.size());
+        const double similarity = denominator == 0 ? 1.0 :
+            1.0 - static_cast<double>(edit_distance(reference, candidate)) / denominator;
+        edit_similarities.push_back(similarity);
+        eos_exact_prompts += reference == candidate ? 1U : 0U;
+        std::cout << "prompt_edit=" << prompts[prompt_index].identifier
+                  << " reference_tokens=" << reference.size()
+                  << " candidate_tokens=" << candidate.size()
+                  << " similarity=" << similarity << '\n';
       }
+      std::sort(edit_similarities.begin(), edit_similarities.end());
+      const double mean_edit_similarity = std::accumulate(
+          edit_similarities.begin(), edit_similarities.end(), 0.0) /
+          edit_similarities.size();
+      std::cout << "bf16_layers=" << precision_case << '\n'
+                << "scaling=" << argv[3] << '\n'
+                << "prompts=" << prompt_count << '\n'
+                << "exact_prompts=" << exact_prompts << '\n'
+                << "matching_predictions=" << matching_predictions << '\n'
+                << "total_predictions=" << total_predictions << '\n'
+                << "quality_suffix_tokens=" << suffix_tokens << '\n'
+                << "quality_batch=" << quality_batch << '\n'
+                << "free_running=" << (free_running ? "true" : "false") << '\n'
+                << "eos_exact_prompts=" << eos_exact_prompts << '\n'
+                << "mean_token_edit_similarity=" << mean_edit_similarity << '\n'
+                << "minimum_token_edit_similarity=" << edit_similarities.front() << '\n'
+                << "teacher_forced_greedy_agreement="
+                << static_cast<double>(matching_predictions) / total_predictions << '\n'
+                << "evaluation_seconds=" << seconds << '\n';
     }
-    const double seconds = std::chrono::duration<double>(
-        std::chrono::steady_clock::now() - begin).count();
-    std::cout << "scaling=" << argv[3] << '\n'
-              << "prompts=" << prompt_count << '\n'
-              << "exact_prompts=" << exact_prompts << '\n'
-              << "matching_predictions=" << matching_predictions << '\n'
-              << "total_predictions=" << total_predictions << '\n'
-              << "quality_suffix_tokens=" << suffix_tokens << '\n'
-              << "quality_batch=" << quality_batch << '\n'
-              << "teacher_forced_greedy_agreement="
-              << static_cast<double>(matching_predictions) / total_predictions << '\n'
-              << "evaluation_seconds=" << seconds << '\n';
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "FP8 quality evaluation failed: " << error.what() << '\n';

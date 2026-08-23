@@ -6,6 +6,7 @@
 #include <cuda_runtime.h>
 
 #include <cerrno>
+#include <cmath>
 #include <cstring>
 #include <fcntl.h>
 #include <map>
@@ -154,7 +155,13 @@ Fp8WeightArena::Fp8WeightArena(std::unique_ptr<Implementation> implementation)
 Fp8WeightArena::~Fp8WeightArena() = default;
 
 std::unique_ptr<Fp8WeightArena> Fp8WeightArena::quantize(
-    const WeightPlan& plan, const DeviceWeightArena& bf16_weights, Fp8Scaling scaling) {
+    const WeightPlan& plan, const DeviceWeightArena& bf16_weights, Fp8Scaling scaling,
+    float tensor_scale_multiplier) {
+  if (!std::isfinite(tensor_scale_multiplier) || tensor_scale_multiplier <= 0.0F ||
+      tensor_scale_multiplier > 1.0F ||
+      (scaling != Fp8Scaling::tensor && tensor_scale_multiplier != 1.0F)) {
+    throw std::runtime_error("invalid FP8 tensor weight scale multiplier");
+  }
   auto implementation = std::make_unique<Implementation>();
   implementation->scaling = scaling;
   std::map<std::string, std::uint64_t, std::less<>> offsets;
@@ -196,7 +203,7 @@ std::unique_ptr<Fp8WeightArena> Fp8WeightArena::quantize(
     const int input_width = static_cast<int>(segment.shape[1]);
     if (scaling == Fp8Scaling::tensor) {
       quantize_bf16_to_fp8_e4m3(bf16_weights.at(segment.name), output, scale,
-                                segment.byte_size / 2, nullptr);
+                                segment.byte_size / 2, nullptr, tensor_scale_multiplier);
     } else if (scaling == Fp8Scaling::channel) {
       quantize_bf16_rows_to_fp8_e4m3(bf16_weights.at(segment.name), output, scale,
                                      output_width, input_width, nullptr);

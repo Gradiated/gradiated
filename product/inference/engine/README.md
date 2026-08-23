@@ -30,6 +30,11 @@ most four times. These controls are exposed as `GRADIATED_FP8_SUFFIX_MAX_TOKENS`
 `GRADIATED_IGNORE_MODEL_EOS` switch exists only to make performance A/B work counts deterministic
 and must remain unset in production.
 
+`GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER` optionally applies startup-only clipping to tensor-FP8
+weights; it must be in `(0, 1]`. The current research candidate is `0.98`, which is performance-
+neutral on the stationary causal replay but remains gated on task-level and EOS quality. The
+default is `1.0`, and production must not enable the candidate without explicit promotion.
+
 `tools/generate_layer_fixture.py` creates deterministic BF16 reference fixtures for one pinned
 decoder layer without loading the full model. Fixture binaries are runtime artifacts; their
 manifest and hashes establish exactly which model, layer, seed and shape a CUDA parity run used.

@@ -33,7 +33,7 @@ void cublas_check(cublasStatus_t result, const char* operation) {
 
 __global__ void quantize_bf16_fp8_cooperative_kernel(
     const __nv_bfloat16* input, __nv_fp8_e4m3* output, float* scale,
-    std::size_t elements) {
+    std::size_t elements, float scale_multiplier) {
   const cg::grid_group grid = cg::this_grid();
   if (grid.thread_rank() == 0) *scale = 0.0F;
   grid.sync();
@@ -61,7 +61,8 @@ __global__ void quantize_bf16_fp8_cooperative_kernel(
   grid.sync();
   if (grid.thread_rank() == 0) {
     const float observed_maximum = *scale;
-    *scale = observed_maximum > 0.0F ? observed_maximum / 448.0F : 1.0F;
+    *scale = observed_maximum > 0.0F
+        ? observed_maximum * scale_multiplier / 448.0F : 1.0F;
   }
   grid.sync();
 
@@ -94,9 +95,9 @@ __global__ void bf16_amax_kernel(const __nv_bfloat16* input, std::size_t element
   }
 }
 
-__global__ void finalize_fp8_scale_kernel(float* scale) {
+__global__ void finalize_fp8_scale_kernel(float* scale, float scale_multiplier) {
   const float maximum = *scale;
-  *scale = maximum > 0.0F ? maximum / 448.0F : 1.0F;
+  *scale = maximum > 0.0F ? maximum * scale_multiplier / 448.0F : 1.0F;
 }
 
 __global__ void quantize_bf16_fp8_kernel(const __nv_bfloat16* input, __nv_fp8_e4m3* output,
@@ -109,8 +110,10 @@ __global__ void quantize_bf16_fp8_kernel(const __nv_bfloat16* input, __nv_fp8_e4
 }
 
 void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
-                               std::size_t elements, cudaStream_t stream) {
-  if (input == nullptr || output == nullptr || scale == nullptr || elements == 0) {
+                               std::size_t elements, cudaStream_t stream,
+                               float scale_multiplier) {
+  if (input == nullptr || output == nullptr || scale == nullptr || elements == 0 ||
+      !std::isfinite(scale_multiplier) || scale_multiplier <= 0.0F) {
     throw std::runtime_error("invalid FP8 quantization shape");
   }
   // Wider CTAs reduce grid-barrier and streaming-pass cost for large decode matrices;
@@ -152,7 +155,8 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
     const int blocks = std::min(required_blocks, cooperative_block_limit);
     const auto* typed_input = static_cast<const __nv_bfloat16*>(input);
     auto* typed_output = static_cast<__nv_fp8_e4m3*>(output);
-    void* arguments[] = {&typed_input, &typed_output, &scale, &elements};
+    void* arguments[] = {
+        &typed_input, &typed_output, &scale, &elements, &scale_multiplier};
     cuda_check(cudaLaunchCooperativeKernel(
                    reinterpret_cast<const void*>(quantize_bf16_fp8_cooperative_kernel),
                    blocks, threads, arguments, 0, stream),
@@ -166,7 +170,7 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
       static_cast<const __nv_bfloat16*>(input), elements,
       reinterpret_cast<unsigned int*>(scale));
   cuda_check(cudaPeekAtLastError(), "launch BF16 amax");
-  finalize_fp8_scale_kernel<<<1, 1, 0, stream>>>(scale);
+  finalize_fp8_scale_kernel<<<1, 1, 0, stream>>>(scale, scale_multiplier);
   cuda_check(cudaPeekAtLastError(), "finalize FP8 scale");
   quantize_bf16_fp8_kernel<<<blocks, threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),

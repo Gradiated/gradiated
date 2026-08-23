@@ -601,3 +601,27 @@ not just faster decode kernels. SGLang reused 4.5% of presented input while nati
 allowing the native runtime to remain stationary and preserve low decode tails. Future SGLang
 comparisons must either lower offered load until its backlog is stationary or explicitly test a
 tuned cache policy; this default control cannot support the target traffic economically.
+
+## Rejected GPU verifier commit and graph replay (2026-08-23)
+
+Moving greedy proposal acceptance and accepted-hidden-state commit from the host to CUDA passed a
+new deterministic integration test across 16 physical slots. The test covers mixed acceptance
+caps, direct hidden commit, wrapped sliding-ring rollback, replacement tokens and the following
+decode. Packing proposals, positions, slots, caps and target tokens into one transfer and using one
+dedicated stream reduced the warmed 6k-context verifier from a 23.705 ms frozen median to 23.532 ms
+in matched three-run measurements. This is only about 0.7% and did not survive causal scheduling.
+
+On the same five-session Poisson manifest with every request fixed to 64 output tokens, host commit
+completed 3,200 outputs at 46.003 token/s with 6.045/7.719 ms p50/p95 TPOT. GPU commit reached
+45.863 token/s with 6.054/7.730 ms TPOT and required 825 speculative cycles instead of 814. The
+change is therefore a small end-to-end regression despite its isolated verifier win and is removed.
+
+Exact-position CUDA graph replay established a larger theoretical launch-control opportunity: the
+warmed verifier fell from 23.532 to 22.276 ms, a 5.3% verifier improvement and about 4.1% of the
+combined draft-plus-verify cycle. A bounded canonical graph key based on batch, depth, global
+64-token context buckets and slot topology was not correct for live FP8 execution. In fixed-work
+traffic it reduced proposal acceptance from 82.0% to 59.3%, increased speculative cycles from 825
+to 1,167 and regressed p50/p95 TPOT from 6.054/7.730 to 8.133/15.201 ms. Both graph variants are
+removed. Recovering the measured replay ceiling requires refactoring every dynamic position,
+pointer, scale and work-selection input into an explicit device-resident graph contract; inferring
+equivalence from host branch outcomes is insufficient.

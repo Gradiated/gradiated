@@ -92,7 +92,7 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation device_cache_pointers;
   cudaStream_t decode_stream{};
   std::unique_ptr<Gemma4AssistantRunner> assistant;
-  std::map<std::pair<int, int>, std::unique_ptr<DecodeGraph>> decode_graphs;
+  std::map<std::tuple<int, int, int>, std::unique_ptr<DecodeGraph>> decode_graphs;
 
   static std::uint64_t cache_payload(const Gemma4Config& config, int batch, int maximum_context,
                                      std::vector<CacheLocation>* locations) {
@@ -228,7 +228,8 @@ struct Gemma4BatchModelRunner::Implementation {
                     rows, hidden, vocabulary, stream);
   }
 
-  void enqueue_ragged_decode(int active, int maximum_context_length) {
+  void enqueue_ragged_decode(int active, int maximum_context_length,
+                             int contiguous_slot_start) {
     embedding_batch_bf16(weights.at("token_embedding"),
         static_cast<const int*>(device_input_tokens.get()), hidden_a.get(), active,
         vocabulary, hidden, std::sqrt(static_cast<float>(hidden)), decode_stream);
@@ -241,7 +242,8 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<int>(layer), input, output,
           static_cast<const int*>(device_positions.get()),
           static_cast<const int*>(device_slots.get()), active, batch_size, context,
-          key_cache(layer), value_cache(layer), cache.capacity, decode_stream);
+          key_cache(layer), value_cache(layer), cache.capacity, contiguous_slot_start,
+          decode_stream);
       std::swap(input, output);
     }
     rms_norm_bf16(input, weights.at("final_norm"), final_hidden.get(), active, hidden,
@@ -260,17 +262,19 @@ struct Gemma4BatchModelRunner::Implementation {
     }
   }
 
-  DecodeGraph& capture_decode_graph(int active, int maximum_context_length) {
+  DecodeGraph& capture_decode_graph(int active, int maximum_context_length,
+                                    int contiguous_slot_start) {
     auto captured = std::make_unique<DecodeGraph>();
     check(cudaStreamBeginCapture(decode_stream, cudaStreamCaptureModeThreadLocal),
           "begin ragged decode graph capture");
-    enqueue_ragged_decode(active, maximum_context_length);
+    enqueue_ragged_decode(active, maximum_context_length, contiguous_slot_start);
     check(cudaStreamEndCapture(decode_stream, &captured->graph),
           "end ragged decode graph capture");
     check(cudaGraphInstantiate(&captured->executable, captured->graph, 0),
           "instantiate ragged decode graph");
     DecodeGraph& result = *captured;
-    decode_graphs.emplace(std::make_pair(active, maximum_context_length), std::move(captured));
+    decode_graphs.emplace(std::make_tuple(active, maximum_context_length, contiguous_slot_start),
+                          std::move(captured));
     return result;
   }
 };
@@ -577,11 +581,18 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
   const int maximum_context_length = std::min(
       state.maximum_context,
       ((maximum_position + 1 + context_bucket - 1) / context_bucket) * context_bucket);
-  const auto graph_key = std::make_pair(active, maximum_context_length);
+  int contiguous_slot_start = slots.front();
+  for (int row = 0; row < active; ++row) {
+    if (slots[static_cast<std::size_t>(row)] != contiguous_slot_start + row) {
+      contiguous_slot_start = -1;
+      break;
+    }
+  }
+  const auto graph_key = std::make_tuple(active, maximum_context_length, contiguous_slot_start);
   const auto existing = state.decode_graphs.find(graph_key);
   const bool needs_capture = existing == state.decode_graphs.end();
   if (needs_capture) {
-    state.enqueue_ragged_decode(active, maximum_context_length);
+    state.enqueue_ragged_decode(active, maximum_context_length, contiguous_slot_start);
   } else {
     check(cudaGraphLaunch(existing->second->executable, state.decode_stream),
           "launch ragged decode graph");
@@ -592,7 +603,8 @@ std::vector<int> Gemma4BatchModelRunner::append_ragged(
         "copy ragged output tokens");
   check(cudaStreamSynchronize(state.decode_stream), "synchronize ragged decode");
   if (needs_capture) {
-    static_cast<void>(state.capture_decode_graph(active, maximum_context_length));
+    static_cast<void>(state.capture_decode_graph(
+        active, maximum_context_length, contiguous_slot_start));
   }
   for (const int slot : slots) ++state.slot_positions[static_cast<std::size_t>(slot)];
   return result;

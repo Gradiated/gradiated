@@ -25,6 +25,13 @@ class GemmGroupedDecodeAttention {
                   void* output, const int* positions, const int* slots, int batch,
                   int maximum_slots, int kv_heads, int query_group, int maximum_context_length,
                   int head_dimension, cudaStream_t stream, int cache_capacity);
+  // Same independent-position arithmetic as run_ragged, specialized for one consecutive cache
+  // interval [first_slot, first_slot + batch). This retains strided tensor-core GEMMs instead of
+  // paying the pointer-array GEMM penalty.
+  void run_ragged_contiguous(const void* query, const void* key_cache, const void* value_cache,
+                             void* output, const int* positions, int batch, int kv_heads,
+                             int query_group, int maximum_context_length, int head_dimension,
+                             int first_slot, cudaStream_t stream, int cache_capacity);
 
  private:
   struct Implementation;

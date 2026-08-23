@@ -140,10 +140,12 @@ struct GemmGroupedDecodeAttention::Implementation {
   void* scores{nullptr};
   void* pointers{nullptr};
   std::uint64_t maximum_score_elements;
+  int maximum_batch;
   int maximum_head_batches;
 
   Implementation(int batch, int kv_heads, int query_group, int context)
       : maximum_score_elements(static_cast<std::uint64_t>(batch) * kv_heads * query_group * context),
+        maximum_batch(batch),
         maximum_head_batches(batch * kv_heads) {
     if (batch <= 0 || kv_heads <= 0 || query_group <= 0 || context <= 0) {
       throw std::runtime_error("invalid maximum attention shape");
@@ -261,6 +263,52 @@ void GemmGroupedDecodeAttention::run_ragged(
       CUDA_R_16BF, maximum_context_length, &beta, output_pointers, CUDA_R_16BF,
       head_dimension, head_batches, CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
       "ragged grouped PV GEMM");
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous(
+    const void* query, const void* key_cache, const void* value_cache, void* output,
+    const int* positions, int batch, int kv_heads, int query_group,
+    int maximum_context_length, int head_dimension, int first_slot, cudaStream_t stream,
+    int cache_capacity) {
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (query == nullptr || key_cache == nullptr || value_cache == nullptr || output == nullptr ||
+      positions == nullptr || batch <= 0 || kv_heads <= 0 || query_group <= 0 || first_slot < 0 ||
+      first_slot + batch > implementation_->maximum_batch ||
+      maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
+      head_dimension <= 0 || batch * kv_heads > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error("contiguous ragged attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  cublas_check(cublasSetStream(state.handle, stream),
+               "set contiguous ragged attention stream");
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const int head_batches = batch * kv_heads;
+  const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
+  const long long query_stride = static_cast<long long>(query_group) * head_dimension;
+  const long long score_stride = static_cast<long long>(query_group) * maximum_context_length;
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto* contiguous_keys = static_cast<const __nv_bfloat16*>(key_cache) + cache_offset;
+  const auto* contiguous_values = static_cast<const __nv_bfloat16*>(value_cache) + cache_offset;
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_T, CUBLAS_OP_N, maximum_context_length, query_group,
+      head_dimension, &alpha, contiguous_keys, CUDA_R_16BF, head_dimension, cache_stride,
+      query, CUDA_R_16BF, head_dimension, query_stride, &beta, state.scores, CUDA_R_16BF,
+      maximum_context_length, score_stride, head_batches, CUBLAS_COMPUTE_32F,
+      CUBLAS_GEMM_DEFAULT_TENSOR_OP), "contiguous ragged grouped QK GEMM");
+  ragged_softmax_bf16_kernel<<<batch * kv_heads * query_group, 256, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(state.scores), positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity);
+  cuda_check(cudaPeekAtLastError(), "launch contiguous ragged attention softmax");
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_N, CUBLAS_OP_N, head_dimension, query_group,
+      maximum_context_length, &alpha, contiguous_values, CUDA_R_16BF, head_dimension, cache_stride,
+      state.scores, CUDA_R_16BF, maximum_context_length, score_stride, &beta, output,
+      CUDA_R_16BF, head_dimension, query_stride, head_batches, CUBLAS_COMPUTE_32F,
+      CUBLAS_GEMM_DEFAULT_TENSOR_OP), "contiguous ragged grouped PV GEMM");
 }
 
 }  // namespace gradiated::engine

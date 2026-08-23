@@ -263,3 +263,31 @@ the only problem. CUDA WMMA's 16x16 operation wastes half the rows on Gemma's ei
 and repeated block-wide synchronization prevents enough independent tensor-core work. A viable
 single-pass kernel needs Hopper warpgroup MMA with asynchronous TMA/cp.async pipelining (or an
 equivalent CUTLASS/CuTe schedule), not a larger version of this WMMA kernel.
+
+FlashInfer was measured as an independent Hopper baseline at the exact global shape rather than
+assumed to be an upper bound. Its supported non-tensor-core D=512 decode path takes 0.0557 ms at
+batch 1 (1.21 TB/s of physical K/V) and 0.698 ms at batch 16 (1.54 TB/s). Its tensor-core prefill
+dispatcher rejects D=512 as an invalid MMA configuration. The retained strided cuBLAS composition
+is therefore still the best measured primitive at this geometry; adopting a framework kernel
+would regress the batch-16 layer from 0.282 ms before any integration overhead.
+
+The large gap between that primitive and the production graph was traced to cache addressing, not
+the arithmetic. `cublasGemmBatchedEx` on arbitrary stable-slot pointer arrays is much slower than
+`cublasGemmStridedBatchedEx`. Decode graphs now specialize consecutive active cache intervals and
+retain per-row position masks, so a saturated `[0,16)` cohort gets the strided path without
+changing model arithmetic. Exact tensor-FP8 greedy parity passes for all eight fixture tokens at
+batch 16, and also for the offset interval `[1,16)` at batch 15. At 8k the production-shaped
+ragged frontier rises from 407.1 to 465.9 output token/s, only 2.4% below the 477.6 token/s
+homogeneous ceiling.
+
+Asynchronous agent traffic does not retain that full synthetic gain because completed
+conversations create fragmented, nonconsecutive physical slot masks while their next cached turn
+is admitted. Two ten-turn concurrency-16 runs sustain 391.1 and 393.3 output token/s (mean 392.2),
+with cached mean TTFT 601--617 ms and mean TPOT 28.4--28.6 ms. Relative to the previous 387.1
+token/s trace result, throughput improves only 1.3% while TTFT improves about 6.5--8.9%. At the
+same cheapest-provider prices, measured compute-cost recovery is approximately 32.2%: about
+$1.45/hour gross against $4.50/hour H200 compute, leaving $3.05/hour or $2,227/month uncovered.
+The next attention optimization must therefore accelerate arbitrary slot maps without copying
+whole KV histories or materializing scores—most plausibly a slot-indexed WGMMA/TMA QK path (then
+online-softmax/PV fusion), or a bounded cache-compaction policy whose copy cost and prefix-hit loss
+are explicitly amortized over each conversation.

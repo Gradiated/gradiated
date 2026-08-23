@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
     if (argc != 3 && argc != 4 && argc != 5) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
                    "[profile-ragged|profile-ragged-fp8|profile-suffix|prefix-benchmark|speculative-parity|"
-                   "assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
+                   "contiguous-parity|assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -152,6 +152,36 @@ int main(int argc, char** argv) {
                 << "verification_seconds=" << seconds << '\n'
                 << "verification_candidate_tokens_per_second="
                 << static_cast<double>(batch * 4) / seconds << '\n';
+      return 0;
+    }
+    if (argc == 4 && std::string(argv[3]) == "contiguous-parity") {
+      constexpr int maximum_slots = 16;
+      constexpr int first_slot = 1;
+      constexpr int batch = maximum_slots - first_slot;
+      const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+          plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+      gradiated::engine::Gemma4BatchModelRunner runner(
+          config, *weights, maximum_slots, 512, fp8_weights.get());
+      std::vector<int> prediction(static_cast<std::size_t>(batch), expected[0]);
+      prediction[0] = runner.prefill_slot(first_slot, prompt, 64);
+      for (int slot = first_slot + 1; slot < maximum_slots; ++slot) {
+        runner.clone_slot(first_slot, slot);
+      }
+      require_equal(prediction, std::vector<int>(batch, expected[0]),
+                    "contiguous first token");
+      std::vector<int> slots(static_cast<std::size_t>(batch));
+      for (int row = 0; row < batch; ++row) {
+        slots[static_cast<std::size_t>(row)] = first_slot + row;
+      }
+      for (std::size_t step = 1; step < expected.size(); ++step) {
+        prediction = runner.append_ragged(prediction, slots);
+        require_equal(prediction, std::vector<int>(batch, expected[step]),
+                      "contiguous FP8 decode");
+      }
+      std::cout << "contiguous_fp8_parity=true\n"
+                << "batch=" << batch << '\n'
+                << "first_slot=" << first_slot << '\n'
+                << "verified_tokens=" << expected.size() << '\n';
       return 0;
     }
     if (argc == 4 && (std::string(argv[3]) == "profile-ragged" ||
@@ -428,6 +458,30 @@ int main(int argc, char** argv) {
       }
       std::cout << "homogeneous," << batch << ',' << context << ',' << homogeneous_seconds << ','
                 << (static_cast<double>(batch * decode_steps) / homogeneous_seconds) << '\n';
+
+      double contiguous_ragged_seconds = 0.0;
+      {
+        gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, batch,
+                                                         context + decode_steps + 1);
+        runner.seed_empty_cache_for_benchmark(context - 1);
+        std::vector<int> slots(static_cast<std::size_t>(batch));
+        for (int index = 0; index < batch; ++index) {
+          slots[static_cast<std::size_t>(index)] = index;
+        }
+        std::vector<int> input(static_cast<std::size_t>(batch), 2);
+        auto prediction = runner.append_ragged(input, slots);
+        const auto begin = std::chrono::steady_clock::now();
+        for (int step = 0; step < decode_steps; ++step) {
+          input = prediction;
+          prediction = runner.append_ragged(input, slots);
+        }
+        contiguous_ragged_seconds =
+            std::chrono::duration<double>(std::chrono::steady_clock::now() - begin).count();
+      }
+      std::cout << "contiguous_ragged," << batch << ',' << context << ','
+                << contiguous_ragged_seconds << ','
+                << (static_cast<double>(batch * decode_steps) / contiguous_ragged_seconds)
+                << '\n';
 
       double ragged_seconds = 0.0;
       {

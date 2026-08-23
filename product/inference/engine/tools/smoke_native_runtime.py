@@ -122,6 +122,7 @@ def main() -> None:
         ]
         benchmark_seconds = time.monotonic() - benchmark_started
         cached = [result for result in all_results if result["turn"] > 1]
+        initial = [result for result in all_results if result["turn"] == 1]
         total_output_tokens = sum(len(result["output_ids"]) for result in all_results)
         cached_output_tokens = sum(len(result["output_ids"]) for result in cached)
         total_input_tokens = sum(
@@ -158,6 +159,18 @@ def main() -> None:
             "cached_p50_request_ms": percentile(cached_request, 0.50),
             "cached_p95_request_ms": percentile(cached_request, 0.95),
             "cached_max_request_ms": max(cached_request),
+            "initial_p50_ttft_ms": percentile(
+                [result["timing"]["ttft_ms"] for result in initial], 0.50
+            ),
+            "initial_p95_ttft_ms": percentile(
+                [result["timing"]["ttft_ms"] for result in initial], 0.95
+            ),
+            "initial_p50_request_ms": percentile(
+                [result["timing"]["total_ms"] for result in initial], 0.50
+            ),
+            "initial_p95_request_ms": percentile(
+                [result["timing"]["total_ms"] for result in initial], 0.95
+            ),
         }, indent=2, sort_keys=True))
         return
 

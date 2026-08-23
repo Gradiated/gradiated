@@ -418,3 +418,23 @@ This is 53.1% above the measured 315.94 token/s SGLang agentic control and 6.4% 
 454.5 native mean. The observed token mix grosses $1.825/hour at $0.08/M uncached input,
 $0.01/M cache read and $0.35/M output: 40.55% of a $4.50 H200, leaving approximately $1,953 per
 730-hour month of compute uncovered.
+
+Quantizing full cache-miss prefill projections to tensor-scaled E4M3 was tested and rejected.
+Allowing every chunk shape up to 1,024 tokens caused pathological startup latency because the
+sixty Gemma projection shapes each acquired a new exact-row cuBLASLt plan for irregular prompt
+tails. Restricting FP8 to the prewarmed exact 1,024-token chunks removed that failure and preserved
+the retained quality gate exactly (504/512 teacher-forced predictions and 10/16 exact prompts),
+but did not improve the complete workload. Two fixed-work candidate runs reached 511.34 and
+511.63 output token/s (511.49 mean), versus 513.24 for a same-binary BF16-prefill control, despite
+the candidate recomputing slightly fewer input tokens. Candidate median first-turn TTFT was
+1.96--2.22 seconds versus 1.85 seconds for control. Full cache-miss prefill therefore remains BF16;
+future prefill quantization must fuse activation conversion into the projection or otherwise show
+an end-to-end gain rather than relying on the nominal FP8 GEMM peak.
+
+Replacing the global-attention softmax's accurate exponential with Hopper's fast intrinsic was
+also below the retention threshold: the saturated B16 primitive moved from 0.2831 to 0.2817 ms
+and the ragged path from 0.2839 to 0.2833 ms. Materializing unnormalized BF16 probabilities to
+avoid the second exponential reached 0.2823/0.2820 ms at B16 but regressed the latency-sensitive
+B1 contiguous path from 0.0410 to 0.0447 ms. These sub-percent saturated changes cannot materially
+move the full graph. The remaining global-attention opportunity is eliminating score traffic and
+reusing K/V tiles in a Hopper warpgroup/TMA schedule, not approximating scalar softmax arithmetic.

@@ -10,8 +10,8 @@ spec:
     protocol: token-completions-v1
     release: native-gemma4-h200-v1
     dockerfile: product/inference/runtimes/native/Dockerfile
-    image: cr.us-central1.nebius.cloud/u00t9b88da9hsqpsak/desmond-native@sha256:a0c57042d2418ce9e96c53c8842d5f853a7351e4bff105ba5ebfd5e3170e1913
-    sourceCommit: 021fc98e
+    image: cr.us-central1.nebius.cloud/u00t9b88da9hsqpsak/desmond-native@sha256:c10e5289c5c3cba1a2baabde7e726de38e713e55f96b6ba9f72075aeb24173f3
+    sourceCommit: e50d9059
   hardware:
     accelerator: NVIDIA-H200-SXM
     count: 1
@@ -25,7 +25,9 @@ spec:
     prefillChunkTokens: 1024
   optimization:
     decodeWeights: fp8-e4m3-tensor
-    prefillWeights: bf16
+    prefillWeights: bf16-full-fp8-e4m3-tensor-cached-suffix
+    suffixPrefillFp8MaximumPackedTokens: 4096
     suffixPrefillPreemption: transformer-layer
     suffixPrefillLayerQuantum: 10
     suffixPrefillMinimumDecode: 14
+    cacheAffinityMaximumBypasses: 4

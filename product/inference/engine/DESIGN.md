@@ -438,3 +438,17 @@ avoid the second exponential reached 0.2823/0.2820 ms at B16 but regressed the l
 B1 contiguous path from 0.0410 to 0.0447 ms. These sub-percent saturated changes cannot materially
 move the full graph. The remaining global-attention opportunity is eliminating score traffic and
 reusing K/V tiles in a Hopper warpgroup/TMA schedule, not approximating scalar softmax arithmetic.
+
+CUDA 13 grouped GEMMs were also tested as an exact-context alternative to padding every ragged
+global-attention row to the longest request. Grouping a deliberately wide 4k--8k B16 spread into
+256-token context buckets reduced the isolated QK/softmax/PV primitive from 0.2798 to 0.2618 ms,
+but narrower 5.6k--8k and 7.2k--8k spreads were neutral or slower. A conservative runtime gate
+selected the path only at batch 12 or above when mean padded context was at most 78% of the
+maximum. Primitive output was bit-exact for shuffled physical slots, and the forced B16 quality
+run reached 505/512 teacher-forced agreement with 11/16 exact prompts. Nevertheless, the gate
+activated on 1,773 sustained decode steps and reduced fixed-work agentic throughput from the
+same-binary 513.24 to 508.74 output token/s (-0.88%). Cached TTFT p50 increased from 168.2 to
+172.2 ms and TPOT p50 from 23.0 to 23.2 ms. Host grouping, extra pointer setup, and less efficient
+small GEMM shapes outweigh saved padded KV traffic on the real distribution, so the implementation
+was removed. Exact ragged contexts remain a target for a single persistent fused kernel, where
+context specialization does not multiply launches or library dispatch overhead.

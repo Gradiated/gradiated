@@ -521,6 +521,39 @@ void test_int8_kv_quality_oracle() {
       }
     }
   }
+
+  constexpr int materialized_rows = 3;
+  DeviceAllocation<std::int8_t> materialized(materialized_rows * dimension);
+  DeviceAllocation<float> materialized_scales(materialized_rows);
+  gradiated::engine::quantize_bf16_rows_symmetric_int8(
+      device_keys.get(), materialized.get(), materialized_scales.get(),
+      materialized_rows, dimension, nullptr);
+  std::array<float, materialized_rows> host_scales{};
+  std::vector<std::int8_t> host_materialized(materialized_rows * dimension);
+  cuda_check(cudaMemcpy(host_scales.data(), materialized_scales.get(), sizeof(host_scales),
+                        cudaMemcpyDeviceToHost), "copy materialized INT8 scales");
+  cuda_check(cudaMemcpy(host_materialized.data(), materialized.get(), host_materialized.size(),
+                        cudaMemcpyDeviceToHost), "copy materialized INT8 values");
+  for (int row = 0; row < materialized_rows; ++row) {
+    float maximum = 0.0F;
+    for (int column = 0; column < dimension; ++column) {
+      maximum = std::max(maximum, std::abs(__bfloat162float(
+          keys[static_cast<std::size_t>(row * dimension + column)])));
+    }
+    const float expected_scale = maximum == 0.0F ? 1.0F : maximum / 127.0F;
+    if (host_scales[static_cast<std::size_t>(row)] != expected_scale) {
+      throw std::runtime_error("materialized INT8 scale mismatch");
+    }
+    for (int column = 0; column < dimension; ++column) {
+      const float value = __bfloat162float(
+          keys[static_cast<std::size_t>(row * dimension + column)]);
+      const int expected = std::clamp(
+          static_cast<int>(std::nearbyint(value * (1.0F / expected_scale))), -127, 127);
+      if (host_materialized[static_cast<std::size_t>(row * dimension + column)] != expected) {
+        throw std::runtime_error("materialized INT8 value mismatch");
+      }
+    }
+  }
 }
 
 template <int query_tokens>

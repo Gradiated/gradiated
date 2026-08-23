@@ -1,4 +1,5 @@
 #include "gradiated/engine/attention.h"
+#include "gradiated/engine/cuda_ops.h"
 #include "gradiated/engine/gemm_attention.h"
 #include "gradiated/engine/prefill_attention.h"
 
@@ -148,6 +149,9 @@ void fp8_parity() {
       value(2ULL * cache_elements), fp8_query(query_elements), fp8_key(cache_elements),
       fp8_value(cache_elements), reference(2ULL * query_elements),
       candidate(2ULL * query_elements), fp8_kv_candidate(2ULL * query_elements),
+      int8_key(cache_elements), int8_key_scales(
+          sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
+      int8_candidate(2ULL * query_elements),
       positions(sizeof(int) * batch);
   constexpr int threads = 256;
   initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
@@ -164,6 +168,9 @@ void fp8_parity() {
       static_cast<__nv_fp8_e4m3*>(fp8_key.get()), cache_elements, 1024.0F);
   gradiated::engine::quantize_grouped_global_values_wgmma_fp8(
       value.get(), fp8_value.get(), batch, kv_heads, context, dimension, nullptr);
+  gradiated::engine::quantize_bf16_rows_symmetric_int8(
+      key.get(), int8_key.get(), static_cast<float*>(int8_key_scales.get()),
+      batch * kv_heads * context, dimension, nullptr);
   const std::vector<int> host_positions(batch, active_context - 1);
   check(cudaMemcpy(positions.get(), host_positions.data(), sizeof(int) * batch,
                    cudaMemcpyHostToDevice), "copy FP8 parity positions");
@@ -181,15 +188,21 @@ void fp8_parity() {
       fp8_query.get(), fp8_key.get(), fp8_value.get(), fp8_kv_candidate.get(),
       static_cast<const int*>(positions.get()), batch, kv_heads, query_group,
       active_context, dimension, 0, nullptr, context);
+  attention.run_ragged_contiguous_int8_keys(
+      query.get(), int8_key.get(), static_cast<const float*>(int8_key_scales.get()),
+      value.get(), int8_candidate.get(), static_cast<const int*>(positions.get()),
+      batch, kv_heads, query_group, active_context, dimension, 0, nullptr, context);
   check(cudaDeviceSynchronize(), "synchronize FP8-key parity");
   std::vector<__nv_bfloat16> expected(query_elements), actual(query_elements),
-      actual_fp8_kv(query_elements);
+      actual_fp8_kv(query_elements), actual_int8(query_elements);
   check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
                    cudaMemcpyDeviceToHost), "copy FP8-key reference");
   check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * query_elements,
                    cudaMemcpyDeviceToHost), "copy FP8-key candidate");
   check(cudaMemcpy(actual_fp8_kv.data(), fp8_kv_candidate.get(), 2ULL * query_elements,
                    cudaMemcpyDeviceToHost), "copy FP8-KV candidate");
+  check(cudaMemcpy(actual_int8.data(), int8_candidate.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy INT8-key candidate");
   double squared_error = 0.0;
   double squared_reference = 0.0;
   double squared_candidate = 0.0;
@@ -201,6 +214,11 @@ void fp8_parity() {
   double fp8_kv_dot = 0.0;
   double fp8_kv_mean = 0.0;
   float fp8_kv_maximum = 0.0F;
+  double int8_squared_error = 0.0;
+  double int8_squared_candidate = 0.0;
+  double int8_dot = 0.0;
+  double int8_mean = 0.0;
+  float int8_maximum = 0.0F;
   for (std::uint64_t index = 0; index < query_elements; ++index) {
     const float expected_value = __bfloat162float(expected[index]);
     const float actual_value = __bfloat162float(actual[index]);
@@ -218,6 +236,13 @@ void fp8_parity() {
     fp8_kv_squared_error += static_cast<double>(fp8_kv_difference) * fp8_kv_difference;
     fp8_kv_squared_candidate += static_cast<double>(fp8_kv_value) * fp8_kv_value;
     fp8_kv_dot += static_cast<double>(expected_value) * fp8_kv_value;
+    const float int8_value = __bfloat162float(actual_int8[index]);
+    const float int8_difference = std::abs(expected_value - int8_value);
+    int8_maximum = std::max(int8_maximum, int8_difference);
+    int8_mean += int8_difference;
+    int8_squared_error += static_cast<double>(int8_difference) * int8_difference;
+    int8_squared_candidate += static_cast<double>(int8_value) * int8_value;
+    int8_dot += static_cast<double>(expected_value) * int8_value;
   }
   std::cout << "fp8_key_parity_max_abs=" << maximum << '\n'
             << "fp8_key_parity_mean_abs=" << mean / query_elements << '\n'
@@ -229,7 +254,13 @@ void fp8_parity() {
             << "fp8_kv_parity_relative_l2="
             << std::sqrt(fp8_kv_squared_error / squared_reference) << '\n'
             << "fp8_kv_parity_cosine="
-            << fp8_kv_dot / std::sqrt(squared_reference * fp8_kv_squared_candidate) << '\n';
+            << fp8_kv_dot / std::sqrt(squared_reference * fp8_kv_squared_candidate) << '\n'
+            << "int8_key_parity_max_abs=" << int8_maximum << '\n'
+            << "int8_key_parity_mean_abs=" << int8_mean / query_elements << '\n'
+            << "int8_key_parity_relative_l2="
+            << std::sqrt(int8_squared_error / squared_reference) << '\n'
+            << "int8_key_parity_cosine="
+            << int8_dot / std::sqrt(squared_reference * int8_squared_candidate) << '\n';
 }
 
 void wgmma_qk_parity() {
@@ -777,10 +808,17 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
   const std::uint64_t cache_elements = cache_bytes / 2ULL;
   Allocation query(query_bytes), key(cache_bytes), value(cache_bytes), output(query_bytes),
       fp8_query(query_elements), fp8_key(cache_elements), fp8_value(cache_elements),
+      int8_key(cache_elements), int8_key_scales(
+          sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
       positions(sizeof(int) * batch);
   if (implementation == 7) {
     gradiated::engine::quantize_grouped_global_values_wgmma_fp8(
         value.get(), fp8_value.get(), batch, kv_heads, context, dimension, nullptr);
+  }
+  if (implementation == 8) {
+    gradiated::engine::quantize_bf16_rows_symmetric_int8(
+        key.get(), int8_key.get(), static_cast<float*>(int8_key_scales.get()),
+        batch * kv_heads * context, dimension, nullptr);
   }
   const std::vector<int> host_positions(batch, context - 1);
   check(cudaMemcpy(positions.get(), host_positions.data(), sizeof(int) * batch,
@@ -819,6 +857,11 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
           fp8_query.get(), fp8_key.get(), fp8_value.get(), output.get(),
           static_cast<const int*>(positions.get()), batch, kv_heads, query_group,
           context, dimension, 0, nullptr, context);
+    } else if (implementation == 8) {
+      attention.run_ragged_contiguous_int8_keys(
+          query.get(), int8_key.get(), static_cast<const float*>(int8_key_scales.get()),
+          value.get(), output.get(), static_cast<const int*>(positions.get()),
+          batch, kv_heads, query_group, context, dimension, 0, nullptr, context);
     } else {
       attention.run(query.get(), key.get(), value.get(), output.get(), batch, kv_heads,
                     query_group, context, dimension, nullptr);
@@ -873,6 +916,7 @@ int main() {
       const float global_wmma_ms = benchmark(batch, 4, 8, 8192, 512, 2);
       const float global_fp8_key_ms = benchmark(batch, 4, 8, 8192, 512, 3);
       const float global_fp8_kv_ms = benchmark(batch, 4, 8, 8192, 512, 7);
+      const float global_int8_key_ms = benchmark(batch, 4, 8, 8192, 512, 8);
       const float global_cudnn_ms = benchmark(batch, 4, 8, 8192, 512, 4);
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
       const float global_tile_baseline_ms = benchmark(batch, 4, 8, 64, 512, 0);
@@ -912,6 +956,10 @@ int main() {
       std::cout << "global_fp8_kv," << batch << ",8192," << std::fixed
                 << std::setprecision(4) << global_fp8_kv_ms << ',' << std::setprecision(2)
                 << (global_bytes * 0.5) / (global_fp8_kv_ms / 1000.0) / 1e9 << ','
+                << 7.0 * global_bytes / 1e9 << '\n';
+      std::cout << "global_int8_key," << batch << ",8192," << std::fixed
+                << std::setprecision(4) << global_int8_key_ms << ',' << std::setprecision(2)
+                << (global_bytes * 0.75) / (global_int8_key_ms / 1000.0) / 1e9 << ','
                 << 7.0 * global_bytes / 1e9 << '\n';
       std::cout << "global_cudnn," << batch << ",8192," << std::fixed
                 << std::setprecision(4) << global_cudnn_ms << ',' << std::setprecision(2)

@@ -53,6 +53,14 @@ class GemmGroupedDecodeAttention {
       void* output, const int* positions, int batch, int kv_heads, int query_group,
       int maximum_context_length, int head_dimension, int first_slot,
       cudaStream_t stream, int cache_capacity);
+  // Materialized signed-INT8 K baseline with one dynamic scale per token/head. Queries are
+  // quantized per query/head; S8 tensor-core QK accumulates in S32, then scales before softmax.
+  // V remains BF16 so this isolates the attainable K-cache byte reduction.
+  void run_ragged_contiguous_int8_keys(
+      const void* query, const void* int8_key_cache, const float* key_scales,
+      const void* value_cache, void* output, const int* positions, int batch,
+      int kv_heads, int query_group, int maximum_context_length, int head_dimension,
+      int first_slot, cudaStream_t stream, int cache_capacity);
 
  private:
   struct Implementation;

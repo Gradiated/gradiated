@@ -1,5 +1,6 @@
 #include "gradiated/engine/gemm_attention.h"
 #include "gradiated/engine/attention.h"
+#include "gradiated/engine/cuda_ops.h"
 
 #include <cublasLt.h>
 #include <cublas_v2.h>
@@ -116,6 +117,60 @@ __global__ void ragged_softmax_bf16_kernel(__nv_bfloat16* scores, const int* pos
   }
 }
 
+__global__ void scaled_int32_ragged_softmax_bf16_kernel(
+    const std::int32_t* scores, __nv_bfloat16* probabilities, const float* key_scales,
+    const float* query_scales, const int* positions, int kv_heads, int query_group,
+    int width, int cache_capacity) {
+  __shared__ float warp_values[32];
+  const int score_row = static_cast<int>(blockIdx.x);
+  const int request = score_row / (kv_heads * query_group);
+  const int compact_head = score_row / query_group;
+  const int valid = min(positions[request] + 1, cache_capacity);
+  const std::int32_t* row_scores = scores + static_cast<std::uint64_t>(score_row) * width;
+  __nv_bfloat16* row_probabilities =
+      probabilities + static_cast<std::uint64_t>(score_row) * width;
+  const float* row_key_scales =
+      key_scales + static_cast<std::uint64_t>(compact_head) * cache_capacity;
+  const float query_scale = query_scales[score_row];
+  float maximum = -CUDART_INF_F;
+  for (int index = threadIdx.x; index < valid; index += blockDim.x) {
+    maximum = max(maximum,
+                  static_cast<float>(row_scores[index]) * query_scale * row_key_scales[index]);
+  }
+  maximum = warp_max(maximum);
+  if ((threadIdx.x & 31U) == 0U) warp_values[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  maximum = threadIdx.x < (blockDim.x + 31U) / 32U ? warp_values[threadIdx.x] : -CUDART_INF_F;
+  if (threadIdx.x < 32U) maximum = warp_max(maximum);
+  if (threadIdx.x == 0U) warp_values[0] = maximum;
+  __syncthreads();
+  maximum = warp_values[0];
+
+  float sum = 0.0F;
+  for (int index = threadIdx.x; index < valid; index += blockDim.x) {
+    const float score =
+        static_cast<float>(row_scores[index]) * query_scale * row_key_scales[index];
+    sum += expf(score - maximum);
+  }
+  sum = warp_sum(sum);
+  if ((threadIdx.x & 31U) == 0U) warp_values[threadIdx.x >> 5U] = sum;
+  __syncthreads();
+  sum = threadIdx.x < (blockDim.x + 31U) / 32U ? warp_values[threadIdx.x] : 0.0F;
+  if (threadIdx.x < 32U) sum = warp_sum(sum);
+  if (threadIdx.x == 0U) warp_values[0] = 1.0F / sum;
+  __syncthreads();
+  const float inverse_sum = warp_values[0];
+  for (int index = threadIdx.x; index < width; index += blockDim.x) {
+    if (index < valid) {
+      const float score =
+          static_cast<float>(row_scores[index]) * query_scale * row_key_scales[index];
+      row_probabilities[index] = __float2bfloat16_rn(expf(score - maximum) * inverse_sum);
+    } else {
+      row_probabilities[index] = __float2bfloat16_rn(0.0F);
+    }
+  }
+}
+
 __global__ void ragged_pointer_kernel(
     const __nv_bfloat16* query, const __nv_bfloat16* key_cache,
     const __nv_bfloat16* value_cache, __nv_bfloat16* scores, __nv_bfloat16* output,
@@ -162,6 +217,9 @@ struct GemmGroupedDecodeAttention::Implementation {
   void* scores{nullptr};
   void* fp8_scores{nullptr};
   void* fp8_pv_partials{nullptr};
+  void* int8_scores{nullptr};
+  void* int8_queries{nullptr};
+  float* int8_query_scales{nullptr};
   void* pointers{nullptr};
   void* lt_workspace{nullptr};
   float* fp8_key_scale{nullptr};
@@ -169,6 +227,7 @@ struct GemmGroupedDecodeAttention::Implementation {
   std::uint64_t maximum_score_elements;
   int maximum_batch;
   int maximum_head_batches;
+  int maximum_query_group;
   static constexpr std::size_t lt_workspace_bytes = 32ULL * 1024 * 1024;
   static constexpr int maximum_fp8_pv_segments = 32;
   std::map<std::tuple<int, int, int, int, int, int>, std::unique_ptr<Fp8QkPlan>> fp8_plans;
@@ -176,7 +235,8 @@ struct GemmGroupedDecodeAttention::Implementation {
   Implementation(int batch, int kv_heads, int query_group, int context)
       : maximum_score_elements(static_cast<std::uint64_t>(batch) * kv_heads * query_group * context),
         maximum_batch(batch),
-        maximum_head_batches(batch * kv_heads) {
+        maximum_head_batches(batch * kv_heads),
+        maximum_query_group(query_group) {
     if (batch <= 0 || kv_heads <= 0 || query_group <= 0 || context <= 0) {
       throw std::runtime_error("invalid maximum attention shape");
     }
@@ -189,6 +249,9 @@ struct GemmGroupedDecodeAttention::Implementation {
   }
   ~Implementation() {
     fp8_plans.clear();
+    if (int8_query_scales != nullptr) cudaFree(int8_query_scales);
+    if (int8_queries != nullptr) cudaFree(int8_queries);
+    if (int8_scores != nullptr) cudaFree(int8_scores);
     if (fp8_pv_partials != nullptr) cudaFree(fp8_pv_partials);
     if (fp8_query_scale != nullptr) cudaFree(fp8_query_scale);
     if (fp8_key_scale != nullptr) cudaFree(fp8_key_scale);
@@ -224,6 +287,21 @@ struct GemmGroupedDecodeAttention::Implementation {
                    static_cast<std::size_t>(maximum_head_batches) * 8ULL * 512ULL *
                        maximum_fp8_pv_segments * sizeof(float)),
                "allocate segmented FP8 PV workspace");
+  }
+
+  void ensure_int8_resources() {
+    if (int8_scores != nullptr) return;
+    cuda_check(cudaMalloc(&int8_scores,
+                          static_cast<std::size_t>(maximum_score_elements) * sizeof(std::int32_t)),
+               "allocate INT8 QK score workspace");
+    const std::uint64_t maximum_query_rows =
+        static_cast<std::uint64_t>(maximum_head_batches) * maximum_query_group;
+    cuda_check(cudaMalloc(&int8_queries,
+                          static_cast<std::size_t>(maximum_query_rows * 512ULL)),
+               "allocate INT8 query workspace");
+    cuda_check(cudaMalloc(&int8_query_scales,
+                          static_cast<std::size_t>(maximum_query_rows * sizeof(float))),
+               "allocate INT8 query scales");
   }
 
   Fp8QkPlan& fp8_plan(int batch, int kv_heads, int query_group, int context,
@@ -594,6 +672,66 @@ void GemmGroupedDecodeAttention::run_ragged_contiguous_fp8_kv(
       contiguous_values, state.fp8_scores, state.fp8_pv_partials, output,
       batch, kv_heads, query_group, maximum_context_length, head_dimension,
       cache_capacity, pv_segments, stream);
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous_int8_keys(
+    const void* query, const void* int8_key_cache, const float* key_scales,
+    const void* value_cache, void* output, const int* positions, int batch,
+    int kv_heads, int query_group, int maximum_context_length, int head_dimension,
+    int first_slot, cudaStream_t stream, int cache_capacity) {
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (query == nullptr || int8_key_cache == nullptr || key_scales == nullptr ||
+      value_cache == nullptr || output == nullptr || positions == nullptr || batch <= 0 ||
+      kv_heads <= 0 || query_group <= 0 || query_group > implementation_->maximum_query_group ||
+      first_slot < 0 || first_slot + batch > implementation_->maximum_batch ||
+      maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
+      head_dimension != 512 || batch * kv_heads > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error("INT8-key contiguous ragged attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  state.ensure_int8_resources();
+  cublas_check(cublasSetStream(state.handle, stream), "set INT8-key attention stream");
+  const int head_batches = batch * kv_heads;
+  const int query_rows = head_batches * query_group;
+  quantize_bf16_rows_symmetric_int8(
+      query, state.int8_queries, state.int8_query_scales, query_rows, head_dimension, stream);
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto scale_offset =
+      static_cast<std::uint64_t>(first_slot) * kv_heads * cache_capacity;
+  const auto* contiguous_keys = static_cast<const std::int8_t*>(int8_key_cache) + cache_offset;
+  const auto* contiguous_key_scales = key_scales + scale_offset;
+  constexpr std::int32_t alpha_int = 1;
+  constexpr std::int32_t beta_int = 0;
+  const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
+  const long long query_stride = static_cast<long long>(query_group) * head_dimension;
+  const long long score_stride = static_cast<long long>(query_group) * maximum_context_length;
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_T, CUBLAS_OP_N, maximum_context_length, query_group,
+      head_dimension, &alpha_int, contiguous_keys, CUDA_R_8I, head_dimension, cache_stride,
+      state.int8_queries, CUDA_R_8I, head_dimension, query_stride, &beta_int,
+      state.int8_scores, CUDA_R_32I, maximum_context_length, score_stride, head_batches,
+      CUBLAS_COMPUTE_32I, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
+      "INT8-key contiguous ragged QK GEMM");
+  scaled_int32_ragged_softmax_bf16_kernel
+      <<<query_rows, 256, 0, stream>>>(
+      static_cast<const std::int32_t*>(state.int8_scores),
+      static_cast<__nv_bfloat16*>(state.scores), contiguous_key_scales,
+      state.int8_query_scales, positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity);
+  cuda_check(cudaPeekAtLastError(), "launch INT8-key scaled ragged softmax");
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const auto* contiguous_values = static_cast<const __nv_bfloat16*>(value_cache) + cache_offset;
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_N, CUBLAS_OP_N, head_dimension, query_group,
+      maximum_context_length, &alpha, contiguous_values, CUDA_R_16BF, head_dimension,
+      cache_stride, state.scores, CUDA_R_16BF, maximum_context_length, score_stride,
+      &beta, output, CUDA_R_16BF, head_dimension, query_stride, head_batches,
+      CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
+      "INT8-key contiguous ragged PV GEMM");
 }
 
 }  // namespace gradiated::engine

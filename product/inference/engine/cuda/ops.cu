@@ -442,6 +442,38 @@ __device__ void roundtrip_symmetric_int8_row(__nv_bfloat16* row, int dimension) 
   }
 }
 
+__global__ void quantize_bf16_rows_symmetric_int8_kernel(
+    const __nv_bfloat16* source, std::int8_t* destination, float* row_scales, int width) {
+  const int row = static_cast<int>(blockIdx.x);
+  const __nv_bfloat16* row_source = source + static_cast<std::uint64_t>(row) * width;
+  std::int8_t* row_destination = destination + static_cast<std::uint64_t>(row) * width;
+  float maximum = 0.0F;
+  for (int column = static_cast<int>(threadIdx.x); column < width;
+       column += static_cast<int>(blockDim.x)) {
+    maximum = fmaxf(maximum, fabsf(__bfloat162float(row_source[column])));
+  }
+  maximum = warp_maximum(maximum);
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    maximum = threadIdx.x < blockDim.x / 32 ? warp_maxima[threadIdx.x] : 0.0F;
+    maximum = warp_maximum(maximum);
+    if (threadIdx.x == 0U) warp_maxima[0] = maximum;
+  }
+  __syncthreads();
+  maximum = warp_maxima[0];
+  const float dequantization_scale = maximum == 0.0F ? 1.0F : maximum / 127.0F;
+  if (threadIdx.x == 0U) row_scales[row] = dequantization_scale;
+  const float quantization_scale = 1.0F / dequantization_scale;
+  for (int column = static_cast<int>(threadIdx.x); column < width;
+       column += static_cast<int>(blockDim.x)) {
+    const int quantized = max(-127, min(127, __float2int_rn(
+        __bfloat162float(row_source[column]) * quantization_scale)));
+    row_destination[column] = static_cast<std::int8_t>(quantized);
+  }
+}
+
 __global__ void roundtrip_global_kv_int8_per_token_kernel(
     __nv_bfloat16* keys, __nv_bfloat16* values, int heads, int tokens,
     int dimension, int cache_capacity, int position_start,
@@ -966,6 +998,20 @@ void roundtrip_global_decode_kv_int8_per_token_bf16(
       positions, slots, batch, maximum_slots, heads, head_dimension, cache_capacity,
       quantize_keys, quantize_values, block_width);
   check(cudaPeekAtLastError(), "launch global INT8 KV oracle decode");
+}
+
+void quantize_bf16_rows_symmetric_int8(const void* source, void* destination,
+                                       float* row_scales, int rows, int width,
+                                       cudaStream_t stream) {
+  if (source == nullptr || destination == nullptr || row_scales == nullptr ||
+      rows <= 0 || width <= 0) {
+    throw std::runtime_error("invalid symmetric INT8 row quantization shape");
+  }
+  constexpr int threads = 256;
+  quantize_bf16_rows_symmetric_int8_kernel<<<rows, threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(source), static_cast<std::int8_t*>(destination),
+      row_scales, width);
+  check(cudaPeekAtLastError(), "launch symmetric INT8 row quantization");
 }
 
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,

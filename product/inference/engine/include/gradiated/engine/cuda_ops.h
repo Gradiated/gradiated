@@ -71,6 +71,11 @@ void roundtrip_global_decode_kv_int8_per_token_bf16(
     int cache_capacity, cudaStream_t stream,
     bool quantize_keys = true, bool quantize_values = true,
     int block_width = 512);
+// Materializes contiguous BF16 rows as signed INT8 plus one FP32 dequantization scale per row.
+// The stored contract is real_value ~= quantized_value * row_scale.
+void quantize_bf16_rows_symmetric_int8(const void* source, void* destination,
+                                       float* row_scales, int rows, int width,
+                                       cudaStream_t stream);
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,
                          int head_dimension, int source_capacity, int destination_capacity,
                          int logical_position_start, cudaStream_t stream);

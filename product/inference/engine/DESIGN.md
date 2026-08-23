@@ -872,3 +872,31 @@ quantized per query block; score scaling must be applied before softmax. For V, 
 premultiplied by its V-block scale before probability quantization. Only after numerical parity,
 held-out quality and causal traffic pass will the BF16 cache be removed. Production remains on the
 pinned SGLang image.
+
+### Materialized S8 QK execution baseline
+
+The first physical one-byte primitive stores each 512-component BF16 K row as signed INT8 plus one
+FP32 dequantization scale. Decode queries are quantized by the same row contract. cuBLAS performs
+`S8 x S8 -> S32` QK; a custom softmax applies the query and per-token K scales before exponentiation,
+and the retained BF16 GEMM performs PV. Cache-write quantization is outside the timed decode call,
+while mandatory query quantization is included. At an active context of 6,144 inside an 8,192-token
+allocation, output parity against BF16 is 0.999934 cosine, 0.01152 relative L2, 0.000321 mean
+absolute and 0.001953 maximum absolute error—substantially better than fixed E4M3 K.
+
+| Batch | BF16 K/V | Fixed E4M3 K | Dynamic S8 K |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.0408 ms | **0.0378 ms** | 0.0484 ms |
+| 2 | 0.0540 ms | **0.0472 ms** | 0.0627 ms |
+| 4 | 0.0899 ms | **0.0707 ms** | 0.0867 ms |
+| 8 | 0.1543 ms | **0.1234 ms** | 0.1390 ms |
+| 10 | 0.1885 ms | **0.1497 ms** | 0.1692 ms |
+| 16 | 0.2841 ms | **0.2240 ms** | 0.2398 ms |
+
+At B16 the quality-compatible representation reduces attention latency by 15.6% versus BF16, but
+is 7.1% slower than the rejected fixed-E4M3 path. B1 loses because dynamic query reduction and
+scale-aware softmax cost more than the saved K bytes. The S32 score tensor is also twice the size
+of the BF16 score tensor and is reread with K scales during every softmax pass. This is the measured
+reason to build block-128 WGMMA rather than an assumption: the custom kernel must accumulate four
+scaled S32 partial dots into FP32 on chip, apply online softmax, and avoid materializing scores.
+Only that composition can combine the block-128 quality result with the byte reduction at low and
+high cohorts.

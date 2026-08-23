@@ -778,6 +778,51 @@ WGMMA. Two 8 KiB transformed stages, Hopper mbarriers, dynamic 64/192 register r
 maximum shared-memory carveout produced exact output and two CTAs/SM at 25% occupancy. It still
 took 1.75 ms at B16/context 8,192. The saturated profile executed approximately 626 million
 instructions, reported 60.5% cycles without an eligible warp, and was 3.2x slower than retained RS.
+
+## Materialized FP8-KV cache-write frontier (2026-08-23)
+
+The complementary approximate frontier quantizes global V once when a cache entry is written,
+instead of transposing or quantizing it on every decode. Values use fixed `V * 64` E4M3 and are
+stored directly in Hopper's K-major swizzled WGMMA layout. Softmax probabilities use `P * 448`;
+an `E4M3 x E4M3 -> FP32` register-source WGMMA performs PV and applies the inverse product scale.
+The active context length and physical cache capacity are separate kernel strides. The benchmark
+deliberately validates a 6,144-token active context in an 8,192-token allocation to prevent a
+compact-layout result from hiding a slot-stride error.
+
+Moving the V transform to cache writes reduced the original B16/context-8k implementation from
+1.7596 to 0.2810 ms. Register-source PV reduced it further to 0.2586 ms, and context segmentation
+keeps at least 512 CTAs available for small cohorts. The final capacity-correct sweep is:
+
+| Batch | BF16 K/V | FP8 K, BF16 V | FP8 K/V |
+| ---: | ---: | ---: | ---: |
+| 1 | 0.0406 ms | 0.0374 ms | **0.0363 ms** |
+| 2 | 0.0531 ms | **0.0465 ms** | 0.0554 ms |
+| 4 | 0.0892 ms | **0.0702 ms** | 0.0829 ms |
+| 8 | 0.1537 ms | **0.1238 ms** | 0.1446 ms |
+| 10 | 0.1881 ms | **0.1542 ms** | 0.1602 ms |
+| 16 | 0.2832 ms | **0.2194 ms** | 0.2559 ms |
+
+At B16 the complete FP8-KV call is 9.6% faster than BF16 but 16.6% slower than retaining BF16 V.
+Profiling reports 1.67 TB/s, 34.66% DRAM utilization, 42.41% compute utilization, 90 registers per
+thread and 23.83% achieved occupancy; 64.12% of cycles have no eligible warp. The extra softmax
+quantization and segmented PV reduction consume most of the bytes saved from V. Synthetic parity
+against BF16 is 0.997857 cosine, 0.06545 relative L2, 0.001855 mean absolute and 0.01514 maximum
+absolute error. K-only is better at 0.998600 cosine and 0.05290 relative L2.
+
+Completion-level quality is the binding rejection. On sixteen held-out prompts and 128 generated
+tokens, the retained tensor-FP8 projection control has 0.8714 mean edit similarity and 969/2,048
+token agreement against serial BF16. FP8-KV on all ten global layers falls to 0.5344 and 284/2,048;
+five layers `{11,23,35,47,59}` reach only 0.7013 and 541/2,048. K-only on those five layers is
+slightly worse at 0.6724 and 483/2,048, establishing that the fixed-scale K representation—not V
+alone—is the dominant numerical problem. A single layer 5 reaches 0.9560 mean similarity, but its
+matched 50-request session-live A/B changes half the completions and produces no causal execution
+gain: paired mean TPOT changes by +0.076 ms with a 95% bootstrap interval of
+`[-0.434, +0.679]` ms, while SLO-qualified recovery falls by 0.000825.
+
+`GRADIATED_FP8_GLOBAL_KV=1` therefore remains an explicit research boundary and production remains
+on the pinned SGLang image. More WGMMA tuning cannot repair this representation. The next one-byte
+cache candidate must first improve K resolution—quality-gated symmetric INT8 or a block-scaled
+format—before earning another full causal-traffic pass.
 Shared staging and synchronization more than doubled instruction work; replacing 128 mbarrier
 arrivals with named barriers regressed further. The implementation and public API were removed,
 as were the earlier spilling register-retained and 512-thread cooperative implementations.

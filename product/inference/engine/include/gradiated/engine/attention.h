@@ -37,6 +37,30 @@ void grouped_global_attention_wgmma_tile_bf16(
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
     cudaStream_t stream);
 
+// Fixed-scale E4M3 PV research primitive. Values are V*64 and probabilities are P*448;
+// the kernel applies the inverse product scale to its FP32 WGMMA accumulator. Context is split
+// into enough independent CTAs to occupy H200 at small batches, then reduced in FP32.
+void grouped_global_pv_wgmma_fp8_rs(
+    const void* value_cache, const void* probabilities, void* partial_outputs, void* output,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    int cache_capacity, int segments, cudaStream_t stream);
+
+// Research cache-write helpers for the FP8 PV primitive. Values are quantized once into the
+// native K-major WGMMA tile layout; probabilities are quantized into the same per-tile contract.
+void quantize_grouped_global_values_wgmma_fp8(
+    const void* values, void* packed_values, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream);
+void quantize_grouped_global_value_span_wgmma_fp8(
+    const void* values, void* packed_values, int kv_heads, int tokens,
+    int context_length, int head_dimension, int position_start, cudaStream_t stream);
+void quantize_grouped_global_decode_values_wgmma_fp8(
+    const void* values, void* packed_values, const int* positions, const int* slots,
+    int batch, int maximum_slots, int kv_heads, int context_length,
+    int head_dimension, cudaStream_t stream);
+void quantize_grouped_global_probabilities_wgmma_fp8(
+    const void* probabilities, void* packed_probabilities, int batch, int kv_heads,
+    int query_group, int context_length, cudaStream_t stream);
+
 // One-buffer RS-WGMMA frontier. Raw KV remains in shared memory while exact K and V fragments
 // are constructed directly in the tensor-core warpgroup's registers.
 void grouped_global_attention_wgmma_raw_rs_tile_bf16(

@@ -1,8 +1,10 @@
 #include "gradiated/engine/gemm_attention.h"
+#include "gradiated/engine/attention.h"
 
 #include <cublasLt.h>
 #include <cublas_v2.h>
 #include <cuda_bf16.h>
+#include <cuda_fp8.h>
 #include <cuda_runtime.h>
 #include <math_constants.h>
 
@@ -158,6 +160,8 @@ struct GemmGroupedDecodeAttention::Implementation {
   cublasHandle_t handle{};
   cublasLtHandle_t lt_handle{};
   void* scores{nullptr};
+  void* fp8_scores{nullptr};
+  void* fp8_pv_partials{nullptr};
   void* pointers{nullptr};
   void* lt_workspace{nullptr};
   float* fp8_key_scale{nullptr};
@@ -166,6 +170,7 @@ struct GemmGroupedDecodeAttention::Implementation {
   int maximum_batch;
   int maximum_head_batches;
   static constexpr std::size_t lt_workspace_bytes = 32ULL * 1024 * 1024;
+  static constexpr int maximum_fp8_pv_segments = 32;
   std::map<std::tuple<int, int, int, int, int, int>, std::unique_ptr<Fp8QkPlan>> fp8_plans;
 
   Implementation(int batch, int kv_heads, int query_group, int context)
@@ -184,8 +189,10 @@ struct GemmGroupedDecodeAttention::Implementation {
   }
   ~Implementation() {
     fp8_plans.clear();
+    if (fp8_pv_partials != nullptr) cudaFree(fp8_pv_partials);
     if (fp8_query_scale != nullptr) cudaFree(fp8_query_scale);
     if (fp8_key_scale != nullptr) cudaFree(fp8_key_scale);
+    if (fp8_scores != nullptr) cudaFree(fp8_scores);
     if (lt_workspace != nullptr) cudaFree(lt_workspace);
     if (pointers != nullptr) cudaFree(pointers);
     if (scores != nullptr) cudaFree(scores);
@@ -206,6 +213,17 @@ struct GemmGroupedDecodeAttention::Implementation {
                           cudaMemcpyHostToDevice), "initialize FP8 key scale");
     cuda_check(cudaMemcpy(fp8_query_scale, &fixed_query_scale, sizeof(fixed_query_scale),
                           cudaMemcpyHostToDevice), "initialize FP8 query scale");
+  }
+
+  void ensure_fp8_pv_resources() {
+    if (fp8_scores != nullptr) return;
+    cuda_check(cudaMalloc(&fp8_scores, static_cast<std::size_t>(maximum_score_elements)),
+               "allocate FP8 probability workspace");
+    cuda_check(cudaMalloc(
+                   &fp8_pv_partials,
+                   static_cast<std::size_t>(maximum_head_batches) * 8ULL * 512ULL *
+                       maximum_fp8_pv_segments * sizeof(float)),
+               "allocate segmented FP8 PV workspace");
   }
 
   Fp8QkPlan& fp8_plan(int batch, int kv_heads, int query_group, int context,
@@ -297,6 +315,7 @@ struct GemmGroupedDecodeAttention::Implementation {
     fp8_plans.emplace(key, std::move(plan));
     return result;
   }
+
 };
 
 GemmGroupedDecodeAttention::GemmGroupedDecodeAttention(int maximum_batch, int maximum_kv_heads,
@@ -522,6 +541,59 @@ void GemmGroupedDecodeAttention::run_ragged_contiguous_fp8_keys(
       &beta, output, CUDA_R_16BF, head_dimension, query_stride, head_batches,
       CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
       "FP8-key contiguous ragged PV GEMM");
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous_fp8_kv(
+    const void* fp8_query, const void* fp8_key_cache, const void* fp8_value_cache,
+    void* output, const int* positions, int batch, int kv_heads, int query_group,
+    int maximum_context_length, int head_dimension, int first_slot,
+    cudaStream_t stream, int cache_capacity) {
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (fp8_query == nullptr || fp8_key_cache == nullptr || fp8_value_cache == nullptr ||
+      output == nullptr || positions == nullptr || batch <= 0 || kv_heads <= 0 ||
+      query_group <= 0 || first_slot < 0 ||
+      first_slot + batch > implementation_->maximum_batch || maximum_context_length <= 0 ||
+      maximum_context_length > cache_capacity || head_dimension <= 0 ||
+      batch * kv_heads > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error("FP8-KV contiguous ragged attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  auto& plan = state.fp8_plan(
+      batch, kv_heads, query_group, maximum_context_length, head_dimension, cache_capacity);
+  state.ensure_fp8_pv_resources();
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto* contiguous_keys = static_cast<const unsigned char*>(fp8_key_cache) + cache_offset;
+  cublas_check(cublasLtMatmul(
+                   state.lt_handle, plan.operation, &alpha,
+                   contiguous_keys, plan.key_layout, fp8_query, plan.query_layout,
+                   &beta, state.scores, plan.score_layout, state.scores, plan.score_layout,
+                   &plan.algorithm, state.lt_workspace, state.lt_workspace_bytes, stream),
+               "run FP8-KV contiguous ragged QK");
+  ragged_softmax_bf16_kernel<<<batch * kv_heads * query_group, 256, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(state.scores), positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity);
+  cuda_check(cudaPeekAtLastError(), "launch FP8-KV contiguous ragged softmax");
+  quantize_grouped_global_probabilities_wgmma_fp8(
+      state.scores, state.fp8_scores, batch, kv_heads, query_group,
+      maximum_context_length, stream);
+  const auto* contiguous_values =
+      static_cast<const unsigned char*>(fp8_value_cache) + cache_offset;
+  int pv_segments = 1;
+  const int context_tiles = maximum_context_length / 64;
+  while (pv_segments < Implementation::maximum_fp8_pv_segments &&
+         context_tiles % (pv_segments * 2) == 0 &&
+         batch * kv_heads * 8 * pv_segments < 512) {
+    pv_segments *= 2;
+  }
+  grouped_global_pv_wgmma_fp8_rs(
+      contiguous_values, state.fp8_scores, state.fp8_pv_partials, output,
+      batch, kv_heads, query_group, maximum_context_length, head_dimension,
+      cache_capacity, pv_segments, stream);
 }
 
 }  // namespace gradiated::engine

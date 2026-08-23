@@ -41,6 +41,12 @@ weights; it must be in `(0, 1]`. The current research candidate is `0.98`, which
 neutral on the stationary causal replay but remains gated on task-level and EOS quality. The
 default is `1.0`, and production must not enable the candidate without explicit promotion.
 
+`GRADIATED_FP8_GLOBAL_KV=1` is a research-only materialized E4M3 global-cache path. It uses the
+same layer selection as `GRADIATED_FP8_GLOBAL_K_LAYERS`, stores V in a Hopper WGMMA-native layout,
+and allocates its PV workspace lazily. It is retained to make cache-format experiments
+reproducible, but fixed-scale E4M3 K fails the completion-quality gate and the complete path did
+not improve matched session-live economics. Production must leave it unset.
+
 `GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS` controls the largest activation tensor quantized by the
 cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
 boundary remains available for matched A/B work. Values must be positive.

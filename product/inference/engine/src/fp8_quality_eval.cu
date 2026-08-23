@@ -64,20 +64,23 @@ std::vector<std::vector<int>> load_references(
     const std::string& path, const std::vector<Prompt>& prompts, int evaluated_tokens) {
   std::ifstream input(path);
   if (!input) throw std::runtime_error("cannot read quality references " + path);
-  std::map<std::string, std::vector<int>, std::less<>> by_identifier;
+  std::map<std::pair<std::string, std::size_t>, std::vector<int>> by_prompt;
   std::string line;
   while (std::getline(input, line)) {
     if (line.empty()) continue;
     const auto record = gradiated::engine::Json::parse(line);
     const std::string& identifier = record.at("id").as_string();
+    const std::size_t input_tokens =
+        static_cast<std::size_t>(record.at("input_tokens").as_i64());
     auto tokens = integers(record.at("reference_ids"));
     if (tokens.size() < static_cast<std::size_t>(evaluated_tokens)) {
       throw std::runtime_error("quality reference is too short: " + identifier);
     }
     tokens.resize(static_cast<std::size_t>(evaluated_tokens));
-    const auto existing = by_identifier.find(identifier);
-    if (existing == by_identifier.end()) {
-      by_identifier.emplace(identifier, std::move(tokens));
+    const auto key = std::make_pair(identifier, input_tokens);
+    const auto existing = by_prompt.find(key);
+    if (existing == by_prompt.end()) {
+      by_prompt.emplace(key, std::move(tokens));
     } else if (existing->second != tokens) {
       throw std::runtime_error("quality artifact has conflicting references: " + identifier);
     }
@@ -87,8 +90,9 @@ std::vector<std::vector<int>> load_references(
   std::vector<std::vector<int>> references;
   references.reserve(prompts.size());
   for (const auto& prompt : prompts) {
-    const auto reference = by_identifier.find(prompt.identifier);
-    if (reference == by_identifier.end()) {
+    const auto reference = by_prompt.find(
+        std::make_pair(prompt.identifier, prompt.input_ids.size()));
+    if (reference == by_prompt.end()) {
       throw std::runtime_error("missing quality reference: " + prompt.identifier);
     }
     references.push_back(reference->second);
@@ -310,6 +314,7 @@ int main(int argc, char** argv) {
     } else {
       references.resize(prompts.size());
       unsetenv("GRADIATED_FP8_GLOBAL_K");
+      unsetenv("GRADIATED_FP8_GLOBAL_KV");
       gradiated::engine::Gemma4BatchModelRunner bf16_runner(
           config, *weights, reference_batch, maximum_context);
       for (std::size_t group_start = 0; group_start < prompts.size();
@@ -344,6 +349,9 @@ int main(int argc, char** argv) {
 
     if (std::getenv("GRADIATED_FP8_GLOBAL_K_EVAL") != nullptr) {
       setenv("GRADIATED_FP8_GLOBAL_K", "1", 1);
+    }
+    if (std::getenv("GRADIATED_FP8_GLOBAL_KV_EVAL") != nullptr) {
+      setenv("GRADIATED_FP8_GLOBAL_KV", "1", 1);
     }
     const auto cases = precision_cases();
     for (const float weight_scale_multiplier : weight_scale_cases(bf16_candidate)) {

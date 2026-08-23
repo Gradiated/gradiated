@@ -46,6 +46,13 @@ class GemmGroupedDecodeAttention {
       void* output, const int* positions, int batch, int kv_heads, int query_group,
       int maximum_context_length, int head_dimension, int first_slot,
       cudaStream_t stream, int cache_capacity);
+  // Research boundary for a fully materialized fixed-scale E4M3 cache. Values are stored as
+  // V * 64; normalized probabilities are quantized as P * 448 before FP8 tensor-core PV.
+  void run_ragged_contiguous_fp8_kv(
+      const void* fp8_query, const void* fp8_key_cache, const void* fp8_value_cache,
+      void* output, const int* positions, int batch, int kv_heads, int query_group,
+      int maximum_context_length, int head_dimension, int first_slot,
+      cudaStream_t stream, int cache_capacity);
 
  private:
   struct Implementation;

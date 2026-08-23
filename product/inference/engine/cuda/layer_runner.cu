@@ -1,5 +1,6 @@
 #include "gradiated/engine/layer_runner.h"
 
+#include "gradiated/engine/attention.h"
 #include "gradiated/engine/cuda_ops.h"
 #include "gradiated/engine/device_weights.h"
 #include "gradiated/engine/gemm_attention.h"
@@ -284,14 +285,21 @@ struct Gemma4LayerRunner::Implementation {
   void finish_ragged(int selected_layer, const void* residual, const void* query, void* output,
                      const int* positions, const int* slots, int batch, int maximum_slots,
                      int maximum_context_length, const void* keys, const void* values,
-                     const void* fp8_keys, int cache_capacity, bool fp8_decode,
+                     const void* fp8_keys, const void* fp8_values, int cache_capacity,
+                     bool fp8_decode,
                      int contiguous_slot_start,
                      cudaStream_t stream) {
     const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
     const int head_dimension = static_cast<int>(layer.head_dimension);
     const int kv_heads = static_cast<int>(layer.kv_heads);
     const int query_group = static_cast<int>(layer.query_heads / layer.kv_heads);
-    if (fp8_keys != nullptr && contiguous_slot_start >= 0 &&
+    if (fp8_keys != nullptr && fp8_values != nullptr && contiguous_slot_start >= 0 &&
+        layer.attention == AttentionKind::global) {
+      attention.run_ragged_contiguous_fp8_kv(
+          fp8_queries.get(), fp8_keys, fp8_values, attention_output.get(), positions, batch,
+          kv_heads, query_group, maximum_context_length, head_dimension,
+          contiguous_slot_start, stream, cache_capacity);
+    } else if (fp8_keys != nullptr && contiguous_slot_start >= 0 &&
         layer.attention == AttentionKind::global) {
       attention.run_ragged_contiguous_fp8_keys(
           fp8_queries.get(), fp8_keys, values, attention_output.get(), positions, batch,
@@ -403,8 +411,8 @@ void Gemma4LayerRunner::run_decode_batch(int layer_index, const void* hidden_sta
 void Gemma4LayerRunner::run_decode_ragged(
     int layer_index, const void* hidden_states, void* output, const int* positions,
     const int* slots, int batch, int maximum_slots, int maximum_context_length,
-    void* key_cache, void* value_cache, void* fp8_key_cache, int cache_capacity,
-    int contiguous_slot_start, cudaStream_t stream) {
+    void* key_cache, void* value_cache, void* fp8_key_cache, void* fp8_value_cache,
+    int cache_capacity, int contiguous_slot_start, cudaStream_t stream) {
   auto& state = *implementation_;
   if (batch <= 0 || batch > state.maximum_batch || maximum_slots < batch ||
       maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
@@ -440,10 +448,16 @@ void Gemma4LayerRunner::run_decode_ragged(
         state.queries.get(), key_cache, state.fp8_queries.get(), fp8_key_cache,
         positions, slots, batch, maximum_slots, query_heads, kv_heads,
         head_dimension, cache_capacity, stream);
+    if (fp8_value_cache != nullptr) {
+      quantize_grouped_global_decode_values_wgmma_fp8(
+          value_cache, fp8_value_cache, positions, slots, batch, maximum_slots,
+          kv_heads, cache_capacity, head_dimension, stream);
+    }
   }
   state.finish_ragged(layer_index, hidden_states, state.queries.get(), output, positions, slots,
                       batch, maximum_slots, maximum_context_length, key_cache, value_cache,
-                      use_fp8_key_cache ? fp8_key_cache : nullptr, cache_capacity, true,
+                      use_fp8_key_cache ? fp8_key_cache : nullptr,
+                      use_fp8_key_cache ? fp8_value_cache : nullptr, cache_capacity, true,
                       contiguous_slot_start, stream);
 }
 

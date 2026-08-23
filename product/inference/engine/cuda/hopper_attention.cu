@@ -6,6 +6,7 @@
 
 #include <cute/tensor.hpp>
 #include <cutlass/bfloat16.h>
+#include <cutlass/float8.h>
 
 #include <cstdint>
 #include <stdexcept>
@@ -34,6 +35,13 @@ using GlobalPvMma = decltype(make_tiled_mma(
     SM90_64x8x16_F32BF16BF16_SS<GMMA::Major::MN, GMMA::Major::K>{}));
 using GlobalRsMma = decltype(make_tiled_mma(
     SM90_64x8x16_F32BF16BF16_RS<GMMA::Major::K, GMMA::Major::K>{}));
+using Fp8Element = cutlass::float_e4m3_t;
+using Fp8ValueLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW32_Atom<Fp8Element>{}, make_shape(Int<64>{}, Int<64>{})));
+using Fp8ProbabilityLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW32_Atom<Fp8Element>{}, make_shape(Int<8>{}, Int<64>{})));
+using Fp8PvRsMma = decltype(make_tiled_mma(
+    SM90_64x8x32_F32E4M3E4M3_RS_TN<>{}));
 
 struct alignas(128) GlobalQkSharedStorage {
   ArrayEngine<Element, cosize_v<KeyLayout>> keys;
@@ -50,6 +58,103 @@ struct alignas(128) GlobalAttentionTileSharedStorage {
   float running_sum[8];
   float old_scale[8];
 };
+
+struct alignas(128) Fp8PvSharedStorage {
+  ArrayEngine<Fp8Element, cosize_v<Fp8ValueLayout>> values;
+  ArrayEngine<Fp8Element, cosize_v<Fp8ProbabilityLayout>> probabilities;
+};
+
+__device__ std::uint64_t packed_fp8_value_index(
+    std::uint64_t head, int token, int component, int context_length) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension_tiles = 8;
+  const int token_tile = token / tile_tokens;
+  const int token_in_tile = token - token_tile * tile_tokens;
+  const int dimension_tile = component / 64;
+  const int component_in_tile = component - dimension_tile * 64;
+  const std::uint64_t tile =
+      (head * (context_length / tile_tokens) + token_tile) * dimension_tiles + dimension_tile;
+  return tile * cosize_v<Fp8ValueLayout> +
+      Fp8ValueLayout{}(component_in_tile, token_in_tile);
+}
+
+__global__ void quantize_global_values_wgmma_fp8_kernel(
+    const Element* values, Fp8Element* packed_values, std::uint64_t elements,
+    int context_length) {
+  constexpr int dimension = 512;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const std::uint64_t head = index / (static_cast<std::uint64_t>(context_length) * dimension);
+  const int head_index = static_cast<int>(index -
+      head * static_cast<std::uint64_t>(context_length) * dimension);
+  const int token = head_index / dimension;
+  const int component = head_index - token * dimension;
+  const std::uint64_t destination =
+      packed_fp8_value_index(head, token, component, context_length);
+  packed_values[destination] = Fp8Element(static_cast<float>(values[index]) * 64.0F);
+}
+
+__global__ void quantize_global_value_span_wgmma_fp8_kernel(
+    const Element* values, Fp8Element* packed_values, int kv_heads, int tokens,
+    int context_length, int position_start) {
+  constexpr int dimension = 512;
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = kv_heads * tokens * dimension;
+  if (index >= elements) return;
+  const int component = index % dimension;
+  const int token_offset = (index / dimension) % tokens;
+  const int head = index / (dimension * tokens);
+  const int token = position_start + token_offset;
+  const std::uint64_t source =
+      (static_cast<std::uint64_t>(head) * context_length + token) * dimension + component;
+  packed_values[packed_fp8_value_index(head, token, component, context_length)] =
+      Fp8Element(static_cast<float>(values[source]) * 64.0F);
+}
+
+__global__ void quantize_global_decode_values_wgmma_fp8_kernel(
+    const Element* values, Fp8Element* packed_values, const int* positions,
+    const int* slots, int batch, int maximum_slots, int kv_heads,
+    int context_length) {
+  constexpr int dimension = 512;
+  const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const int elements = batch * kv_heads * dimension;
+  if (index >= elements) return;
+  const int component = index % dimension;
+  const int head = (index / dimension) % kv_heads;
+  const int row = index / (dimension * kv_heads);
+  const int slot = slots[row];
+  const int token = positions[row];
+  if (slot < 0 || slot >= maximum_slots || token < 0 || token >= context_length) return;
+  const std::uint64_t physical_head = static_cast<std::uint64_t>(slot) * kv_heads + head;
+  const std::uint64_t source =
+      (physical_head * context_length + token) * dimension + component;
+  packed_values[packed_fp8_value_index(
+      physical_head, token, component, context_length)] =
+      Fp8Element(static_cast<float>(values[source]) * 64.0F);
+}
+
+__global__ void quantize_global_probabilities_wgmma_fp8_kernel(
+    const Element* probabilities, Fp8Element* packed_probabilities,
+    std::uint64_t elements, int query_group, int context_length) {
+  constexpr int tile_tokens = 64;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const std::uint64_t head = index /
+      (static_cast<std::uint64_t>(query_group) * context_length);
+  const int head_index = static_cast<int>(index -
+      head * static_cast<std::uint64_t>(query_group) * context_length);
+  const int query = head_index / context_length;
+  const int token = head_index - query * context_length;
+  const int token_tile = token / tile_tokens;
+  const int token_in_tile = token - token_tile * tile_tokens;
+  const std::uint64_t tile = head * (context_length / tile_tokens) + token_tile;
+  const std::uint64_t destination = tile * cosize_v<Fp8ProbabilityLayout> +
+      Fp8ProbabilityLayout{}(query, token_in_tile);
+  packed_probabilities[destination] =
+      Fp8Element(static_cast<float>(probabilities[index]) * 448.0F);
+}
 
 struct alignas(128) RsRawGlobalAttentionTileSharedStorage {
   ArrayEngine<Element, cosize_v<KeyLayout>> raw;
@@ -275,6 +380,122 @@ __global__ __launch_bounds__(256) void global_attention_wgmma_tile_kernel(
       copy(accumulators, fragment_output);
     }
   }
+}
+
+__global__ __launch_bounds__(128, 2) void global_pv_wgmma_fp8_rs_segment_kernel(
+    const Fp8Element* values, const Fp8Element* probabilities, float* partial_outputs,
+    Element* output, int context_length, int cache_capacity, int segments) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  constexpr int dimension_tiles = dimension / 64;
+  const int head_dimension_segment = static_cast<int>(blockIdx.x);
+  const int segment = head_dimension_segment % segments;
+  const int head_dimension_tile = head_dimension_segment / segments;
+  const int head = head_dimension_tile / dimension_tiles;
+  const int dimension_tile = head_dimension_tile - head * dimension_tiles;
+  const int context_tiles = context_length / tile_tokens;
+  const int tiles_per_segment = context_tiles / segments;
+
+  extern __shared__ __align__(128) unsigned char storage_bytes[];
+  auto& storage = *reinterpret_cast<Fp8PvSharedStorage*>(storage_bytes);
+  Tensor shared_values = make_tensor(make_smem_ptr(storage.values.begin()), Fp8ValueLayout{});
+  Tensor shared_probabilities =
+      make_tensor(make_smem_ptr(storage.probabilities.begin()), Fp8ProbabilityLayout{});
+  Fp8PvRsMma mma;
+  ThrMMA thread_mma = mma.get_slice(static_cast<int>(threadIdx.x));
+  Tensor value_half = local_tile(
+      shared_values, make_shape(Int<64>{}, Int<32>{}), make_coord(0, 0));
+  Tensor value_fragment = thread_mma.partition_fragment_A(value_half);
+  Tensor value_coordinates = thread_mma.partition_A(
+      make_identity_tensor(make_shape(Int<64>{}, Int<32>{})));
+  Tensor partitioned_probabilities = thread_mma.partition_B(shared_probabilities);
+  Tensor fragment_probabilities = thread_mma.make_fragment_B(partitioned_probabilities);
+  const std::uint64_t partial_base =
+      (static_cast<std::uint64_t>(head_dimension_tile) * segments + segment) *
+      64 * query_group;
+  Tensor partial_output = make_tensor(
+      make_gmem_ptr(partial_outputs + partial_base),
+      make_shape(Int<64>{}, Int<8>{}), make_stride(Int<1>{}, Int<64>{}));
+  Tensor fragment_output = thread_mma.partition_C(partial_output);
+  Tensor accumulators = thread_mma.make_fragment_C(fragment_output);
+  clear(accumulators);
+
+  const int first_context_tile = segment * tiles_per_segment;
+  for (int tile_offset = 0; tile_offset < tiles_per_segment; ++tile_offset) {
+    const int token_tile = first_context_tile + tile_offset;
+    const std::uint64_t value_tile =
+        (static_cast<std::uint64_t>(head) * (cache_capacity / tile_tokens) + token_tile) *
+            dimension_tiles + dimension_tile;
+    const std::uint64_t probability_tile =
+        static_cast<std::uint64_t>(head) * context_tiles + token_tile;
+    if (threadIdx.x < cosize_v<Fp8ProbabilityLayout> / static_cast<int>(sizeof(uint4))) {
+      reinterpret_cast<uint4*>(storage.probabilities.begin())[threadIdx.x] =
+          reinterpret_cast<const uint4*>(
+              probabilities + probability_tile * cosize_v<Fp8ProbabilityLayout>)[threadIdx.x];
+    }
+    __syncthreads();
+    const Fp8Element* global_values =
+        values + value_tile * cosize_v<Fp8ValueLayout>;
+    #pragma unroll
+    for (int half = 0; half < 2; ++half) {
+      CUTE_UNROLL
+      for (int index = 0; index < size(value_fragment); ++index) {
+        const auto coordinate = value_coordinates(index);
+        value_fragment(index) = global_values[Fp8ValueLayout{}(
+            static_cast<int>(get<0>(coordinate)),
+            half * 32 + static_cast<int>(get<1>(coordinate)))];
+      }
+      warpgroup_fence_operand(value_fragment);
+      warpgroup_fence_operand(accumulators);
+      warpgroup_arrive();
+      cute::gemm(mma, value_fragment(_, _, 0),
+                 fragment_probabilities(_, _, half), accumulators);
+      warpgroup_commit_batch();
+      warpgroup_wait<0>();
+      warpgroup_fence_operand(value_fragment);
+      warpgroup_fence_operand(accumulators);
+    }
+    __syncthreads();
+  }
+  if (segments == 1) {
+    CUTE_UNROLL
+    for (int index = 0; index < size(accumulators); ++index) {
+      accumulators(index) *= 1.0F / (64.0F * 448.0F);
+    }
+    const std::uint64_t output_head =
+        static_cast<std::uint64_t>(head) * query_group * dimension;
+    Tensor global_output = make_tensor(
+        make_gmem_ptr(output + output_head + dimension_tile * 64),
+        make_shape(Int<64>{}, Int<8>{}), make_stride(Int<1>{}, Int<512>{}));
+    copy(accumulators, thread_mma.partition_C(global_output));
+  } else {
+    copy(accumulators, fragment_output);
+  }
+}
+
+__global__ void reduce_global_pv_wgmma_fp8_rs_segments_kernel(
+    const float* partial_outputs, Element* output, std::uint64_t output_elements,
+    int segments) {
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= output_elements) return;
+  const std::uint64_t head = index / (query_group * dimension);
+  const int head_index = static_cast<int>(index - head * query_group * dimension);
+  const int query = head_index / dimension;
+  const int component = head_index - query * dimension;
+  const int dimension_tile = component / 64;
+  const int component_in_tile = component - dimension_tile * 64;
+  const std::uint64_t head_dimension_tile = head * 8 + dimension_tile;
+  float total = 0.0F;
+  for (int segment = 0; segment < segments; ++segment) {
+    const std::uint64_t partial_base =
+        (head_dimension_tile * segments + segment) * 64 * query_group;
+    total += partial_outputs[partial_base + query * 64 + component_in_tile];
+  }
+  output[index] = Element(total * (1.0F / (64.0F * 448.0F)));
 }
 
 __global__ __launch_bounds__(128) void global_attention_wgmma_raw_rs_tile_kernel(
@@ -1043,6 +1264,110 @@ void grouped_global_attention_wgmma_tile_bf16(
       static_cast<const Element*>(value_cache), static_cast<Element*>(output),
       context_length);
   check(cudaPeekAtLastError(), "launch Hopper global-attention tile");
+}
+
+void grouped_global_pv_wgmma_fp8_rs(
+    const void* value_cache, const void* probabilities, void* partial_outputs, void* output,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    int cache_capacity, int segments, cudaStream_t stream) {
+  if (value_cache == nullptr || probabilities == nullptr || partial_outputs == nullptr ||
+      output == nullptr ||
+      batch <= 0 || kv_heads <= 0 || query_group != 8 || context_length <= 0 ||
+      context_length % 64 != 0 || head_dimension != 512 || segments <= 0 ||
+      segments > 32 || (context_length / 64) % segments != 0 ||
+      cache_capacity < context_length || cache_capacity % 64 != 0) {
+    throw std::runtime_error("invalid FP8 Hopper RS-PV shape");
+  }
+  constexpr int threads = 128;
+  constexpr int dimension_tiles = 8;
+  constexpr std::size_t shared_bytes = sizeof(Fp8PvSharedStorage);
+  global_pv_wgmma_fp8_rs_segment_kernel
+      <<<batch * kv_heads * dimension_tiles * segments, threads, shared_bytes, stream>>>(
+      static_cast<const Fp8Element*>(value_cache),
+      static_cast<const Fp8Element*>(probabilities), static_cast<float*>(partial_outputs),
+      static_cast<Element*>(output), context_length, cache_capacity, segments);
+  check(cudaPeekAtLastError(), "launch segmented FP8 Hopper RS-PV");
+  if (segments == 1) return;
+  const std::uint64_t output_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+      query_group * head_dimension;
+  constexpr int reduction_threads = 256;
+  reduce_global_pv_wgmma_fp8_rs_segments_kernel
+      <<<(output_elements + reduction_threads - 1) / reduction_threads,
+         reduction_threads, 0, stream>>>(
+      static_cast<const float*>(partial_outputs), static_cast<Element*>(output),
+      output_elements, segments);
+  check(cudaPeekAtLastError(), "launch segmented FP8 Hopper RS-PV reduction");
+}
+
+void quantize_grouped_global_values_wgmma_fp8(
+    const void* values, void* packed_values, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || batch <= 0 || kv_heads <= 0 ||
+      context_length <= 0 || context_length % 64 != 0 || head_dimension != 512) {
+    throw std::runtime_error("invalid FP8 Hopper value-pack shape");
+  }
+  const std::uint64_t elements = static_cast<std::uint64_t>(batch) * kv_heads *
+      context_length * head_dimension;
+  constexpr int threads = 256;
+  quantize_global_values_wgmma_fp8_kernel<<<(elements + threads - 1) / threads,
+                                             threads, 0, stream>>>(
+      static_cast<const Element*>(values), static_cast<Fp8Element*>(packed_values),
+      elements, context_length);
+  check(cudaPeekAtLastError(), "launch FP8 Hopper value pack");
+}
+
+void quantize_grouped_global_value_span_wgmma_fp8(
+    const void* values, void* packed_values, int kv_heads, int tokens,
+    int context_length, int head_dimension, int position_start, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || kv_heads <= 0 || tokens <= 0 ||
+      context_length <= 0 || context_length % 64 != 0 || head_dimension != 512 ||
+      position_start < 0 || position_start + tokens > context_length) {
+    throw std::runtime_error("invalid FP8 Hopper value-span shape");
+  }
+  const int elements = kv_heads * tokens * head_dimension;
+  constexpr int threads = 256;
+  quantize_global_value_span_wgmma_fp8_kernel<<<(elements + threads - 1) / threads,
+                                                threads, 0, stream>>>(
+      static_cast<const Element*>(values), static_cast<Fp8Element*>(packed_values),
+      kv_heads, tokens, context_length, position_start);
+  check(cudaPeekAtLastError(), "launch FP8 Hopper value-span pack");
+}
+
+void quantize_grouped_global_decode_values_wgmma_fp8(
+    const void* values, void* packed_values, const int* positions, const int* slots,
+    int batch, int maximum_slots, int kv_heads, int context_length,
+    int head_dimension, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || positions == nullptr || slots == nullptr ||
+      batch <= 0 || maximum_slots < batch || kv_heads <= 0 || context_length <= 0 ||
+      context_length % 64 != 0 || head_dimension != 512) {
+    throw std::runtime_error("invalid FP8 Hopper ragged value-pack shape");
+  }
+  const int elements = batch * kv_heads * head_dimension;
+  constexpr int threads = 256;
+  quantize_global_decode_values_wgmma_fp8_kernel<<<(elements + threads - 1) / threads,
+                                                   threads, 0, stream>>>(
+      static_cast<const Element*>(values), static_cast<Fp8Element*>(packed_values),
+      positions, slots, batch, maximum_slots, kv_heads, context_length);
+  check(cudaPeekAtLastError(), "launch FP8 Hopper ragged value pack");
+}
+
+void quantize_grouped_global_probabilities_wgmma_fp8(
+    const void* probabilities, void* packed_probabilities, int batch, int kv_heads,
+    int query_group, int context_length, cudaStream_t stream) {
+  if (probabilities == nullptr || packed_probabilities == nullptr || batch <= 0 ||
+      kv_heads <= 0 || query_group != 8 || context_length <= 0 ||
+      context_length % 64 != 0) {
+    throw std::runtime_error("invalid FP8 Hopper probability-pack shape");
+  }
+  const std::uint64_t elements = static_cast<std::uint64_t>(batch) * kv_heads *
+      query_group * context_length;
+  constexpr int threads = 256;
+  quantize_global_probabilities_wgmma_fp8_kernel<<<(elements + threads - 1) / threads,
+                                                    threads, 0, stream>>>(
+      static_cast<const Element*>(probabilities),
+      static_cast<Fp8Element*>(packed_probabilities), elements, query_group,
+      context_length);
+  check(cudaPeekAtLastError(), "launch FP8 Hopper probability pack");
 }
 
 void grouped_global_attention_wgmma_raw_rs_tile_bf16(

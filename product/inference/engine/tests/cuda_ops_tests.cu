@@ -403,6 +403,126 @@ void test_batched_argmax() {
   }
 }
 
+void test_int8_kv_quality_oracle() {
+  constexpr int slots = 2;
+  constexpr int heads = 2;
+  constexpr int capacity = 5;
+  constexpr int dimension = 512;
+  constexpr int elements = slots * heads * capacity * dimension;
+  std::vector<__nv_bfloat16> keys(elements), values(elements);
+  for (int index = 0; index < elements; ++index) {
+    keys[static_cast<std::size_t>(index)] = __float2bfloat16(
+        static_cast<float>((index * 37) % 257 - 128) / 311.0F);
+    values[static_cast<std::size_t>(index)] = __float2bfloat16(
+        static_cast<float>((index * 53) % 509 - 254) / 73.0F);
+  }
+  const auto original_keys = keys;
+  const auto original_values = values;
+  DeviceAllocation<__nv_bfloat16> device_keys(elements), device_values(elements);
+  cuda_check(cudaMemcpy(device_keys.get(), keys.data(), keys.size() * sizeof(keys[0]),
+                        cudaMemcpyHostToDevice), "copy INT8 oracle keys");
+  cuda_check(cudaMemcpy(device_values.get(), values.data(), values.size() * sizeof(values[0]),
+                        cudaMemcpyHostToDevice), "copy INT8 oracle values");
+
+  gradiated::engine::roundtrip_global_kv_int8_per_token_bf16(
+      device_keys.get(), device_values.get(), heads, 2, dimension, capacity, 1, nullptr);
+  const std::array<int, slots> positions{4, 0};
+  const std::array<int, slots> slot_order{1, 0};
+  DeviceAllocation<int> device_positions(slots), device_slots(slots);
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy INT8 oracle positions");
+  cuda_check(cudaMemcpy(device_slots.get(), slot_order.data(), sizeof(slot_order),
+                        cudaMemcpyHostToDevice), "copy INT8 oracle slots");
+  gradiated::engine::roundtrip_global_decode_kv_int8_per_token_bf16(
+      device_keys.get(), device_values.get(), device_positions.get(), device_slots.get(),
+      slots, slots, heads, dimension, capacity, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize INT8 KV oracle");
+  cuda_check(cudaMemcpy(keys.data(), device_keys.get(), keys.size() * sizeof(keys[0]),
+                        cudaMemcpyDeviceToHost), "copy INT8 oracle result keys");
+  cuda_check(cudaMemcpy(values.data(), device_values.get(), values.size() * sizeof(values[0]),
+                        cudaMemcpyDeviceToHost), "copy INT8 oracle result values");
+
+  const auto verify_cache = [&](const std::vector<__nv_bfloat16>& original,
+                                const std::vector<__nv_bfloat16>& actual,
+                                const char* operation) {
+    for (int slot = 0; slot < slots; ++slot) {
+      for (int head = 0; head < heads; ++head) {
+        for (int token = 0; token < capacity; ++token) {
+          const bool selected = (slot == 0 && (token == 0 || token == 1 || token == 2)) ||
+                                (slot == 1 && token == 4);
+          const std::size_t row =
+              (static_cast<std::size_t>(slot) * heads + head) * capacity + token;
+          float maximum = 0.0F;
+          if (selected) {
+            for (int component = 0; component < dimension; ++component) {
+              maximum = std::max(maximum, std::abs(__bfloat162float(
+                  original[row * dimension + static_cast<std::size_t>(component)])));
+            }
+          }
+          for (int component = 0; component < dimension; ++component) {
+            const std::size_t index = row * dimension + static_cast<std::size_t>(component);
+            float expected = __bfloat162float(original[index]);
+            if (selected && maximum != 0.0F) {
+              const int quantized = std::clamp(
+                  static_cast<int>(std::nearbyint(expected * (127.0F / maximum))), -127, 127);
+              expected = __bfloat162float(__float2bfloat16(
+                  static_cast<float>(quantized) * (maximum / 127.0F)));
+            }
+            if (__bfloat162float(actual[index]) != expected) {
+              throw std::runtime_error(std::string(operation) + " mismatch at row " +
+                                       std::to_string(row) + ", component " +
+                                       std::to_string(component));
+            }
+          }
+        }
+      }
+    }
+  };
+  verify_cache(original_keys, keys, "INT8 key oracle");
+  verify_cache(original_values, values, "INT8 value oracle");
+
+  // Exercise the block-scaled and keys-only mapping independently. Slot 1 is a guard region.
+  cuda_check(cudaMemcpy(device_keys.get(), original_keys.data(),
+                        original_keys.size() * sizeof(original_keys[0]), cudaMemcpyHostToDevice),
+             "reset block INT8 oracle keys");
+  cuda_check(cudaMemcpy(device_values.get(), original_values.data(),
+                        original_values.size() * sizeof(original_values[0]),
+                        cudaMemcpyHostToDevice), "reset block INT8 oracle values");
+  gradiated::engine::roundtrip_global_kv_int8_per_token_bf16(
+      device_keys.get(), device_values.get(), heads, capacity, dimension, capacity, 0,
+      nullptr, true, false, 128);
+  cuda_check(cudaMemcpy(keys.data(), device_keys.get(), keys.size() * sizeof(keys[0]),
+                        cudaMemcpyDeviceToHost), "copy block INT8 oracle keys");
+  for (int slot = 0; slot < slots; ++slot) {
+    for (int head = 0; head < heads; ++head) {
+      for (int token = 0; token < capacity; ++token) {
+        const std::size_t row =
+            (static_cast<std::size_t>(slot) * heads + head) * capacity + token;
+        for (int component_block = 0; component_block < dimension; component_block += 128) {
+          float maximum = 0.0F;
+          for (int component = component_block; component < component_block + 128; ++component) {
+            maximum = std::max(maximum, std::abs(__bfloat162float(
+                original_keys[row * dimension + static_cast<std::size_t>(component)])));
+          }
+          for (int component = component_block; component < component_block + 128; ++component) {
+            const std::size_t index = row * dimension + static_cast<std::size_t>(component);
+            float expected = __bfloat162float(original_keys[index]);
+            if (slot == 0 && maximum != 0.0F) {
+              const int quantized = std::clamp(static_cast<int>(std::nearbyint(
+                  expected * (127.0F / maximum))), -127, 127);
+              expected = __bfloat162float(__float2bfloat16(
+                  static_cast<float>(quantized) * (maximum / 127.0F)));
+            }
+            if (__bfloat162float(keys[index]) != expected) {
+              throw std::runtime_error("block INT8 key oracle mismatch");
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
 template <int query_tokens>
 void test_uniform_ring_attention() {
   constexpr int requests = 2;
@@ -557,6 +677,7 @@ int main() {
     test_grouped_attention();
     test_shared_global_kv_roundtrip();
     test_prefill_layouts();
+    test_int8_kv_quality_oracle();
     test_batched_argmax();
     test_uniform_ring_attention<4>();
     test_uniform_ring_attention<8>();

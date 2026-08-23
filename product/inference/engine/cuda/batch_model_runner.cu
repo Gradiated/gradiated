@@ -40,6 +40,35 @@ bool fp8_global_kv_enabled() {
   return value != nullptr && std::string_view(value) == "1";
 }
 
+bool int8_global_kv_oracle_enabled() {
+  const char* value = std::getenv("GRADIATED_INT8_GLOBAL_KV_ORACLE");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+enum class Int8OracleMode { keys, values, both };
+
+Int8OracleMode int8_global_kv_oracle_mode() {
+  const char* value = std::getenv("GRADIATED_INT8_GLOBAL_KV_ORACLE_MODE");
+  if (value == nullptr || *value == '\0' || std::string_view(value) == "both") {
+    return Int8OracleMode::both;
+  }
+  if (std::string_view(value) == "keys") return Int8OracleMode::keys;
+  if (std::string_view(value) == "values") return Int8OracleMode::values;
+  throw std::runtime_error(
+      "GRADIATED_INT8_GLOBAL_KV_ORACLE_MODE must be keys, values, or both");
+}
+
+int int8_global_kv_oracle_block_width() {
+  const char* value = std::getenv("GRADIATED_INT8_GLOBAL_KV_ORACLE_BLOCK");
+  if (value == nullptr || *value == '\0') return 512;
+  const int parsed = std::stoi(value);
+  if (parsed != 64 && parsed != 128 && parsed != 256 && parsed != 512) {
+    throw std::runtime_error(
+        "GRADIATED_INT8_GLOBAL_KV_ORACLE_BLOCK must be 64, 128, 256, or 512");
+  }
+  return parsed;
+}
+
 bool bf16_lm_head_enabled() {
   const char* value = std::getenv("GRADIATED_FP8_BF16_LM_HEAD");
   return value != nullptr && std::string_view(value) == "1";
@@ -63,10 +92,12 @@ int fp8_suffix_max_tokens() {
   }
 }
 
-std::vector<bool> fp8_global_k_selection(const Gemma4Config& config, bool enabled) {
+std::vector<bool> global_layer_selection(const Gemma4Config& config, bool enabled,
+                                         const char* environment_name,
+                                         const char* description) {
   std::vector<bool> selected(config.layers.size(), false);
   if (!enabled) return selected;
-  const char* requested = std::getenv("GRADIATED_FP8_GLOBAL_K_LAYERS");
+  const char* requested = std::getenv(environment_name);
   if (requested == nullptr || *requested == '\0') {
     for (std::size_t layer = 0; layer < config.layers.size(); ++layer) {
       selected[layer] = config.layers[layer].attention == AttentionKind::global;
@@ -82,7 +113,8 @@ std::vector<bool> fp8_global_k_selection(const Gemma4Config& config, bool enable
     const int layer = std::stoi(item);
     if (layer < 0 || layer >= static_cast<int>(config.layers.size()) ||
         config.layers[static_cast<std::size_t>(layer)].attention != AttentionKind::global) {
-      throw std::runtime_error("FP8 global K layer selection contains an invalid layer");
+      throw std::runtime_error(std::string(description) +
+                               " layer selection contains an invalid layer");
     }
     selected[static_cast<std::size_t>(layer)] = true;
     if (end == std::string::npos) break;
@@ -153,6 +185,10 @@ struct Gemma4BatchModelRunner::Implementation {
   bool use_fp8_global_kv;
   bool use_fp8_global_k;
   std::vector<bool> fp8_global_k_layers;
+  bool use_int8_global_kv_oracle;
+  Int8OracleMode int8_oracle_mode;
+  int int8_oracle_block_width;
+  std::vector<bool> int8_global_kv_oracle_layers;
   std::vector<std::uint64_t> fp8_key_offsets;
   std::uint64_t fp8_key_payload_bytes;
   std::vector<std::uint64_t> speculative_backup_offsets;
@@ -246,7 +282,14 @@ struct Gemma4BatchModelRunner::Implementation {
         use_fp8_lm_head(decode_weights != nullptr && !bf16_lm_head_enabled()),
         use_fp8_global_kv(fp8_global_kv_enabled()),
         use_fp8_global_k(fp8_global_k_enabled() || use_fp8_global_kv),
-        fp8_global_k_layers(fp8_global_k_selection(model_config, use_fp8_global_k)),
+        fp8_global_k_layers(global_layer_selection(
+            model_config, use_fp8_global_k, "GRADIATED_FP8_GLOBAL_K_LAYERS", "FP8 global K")),
+        use_int8_global_kv_oracle(int8_global_kv_oracle_enabled()),
+        int8_oracle_mode(int8_global_kv_oracle_mode()),
+        int8_oracle_block_width(int8_global_kv_oracle_block_width()),
+        int8_global_kv_oracle_layers(global_layer_selection(
+            model_config, use_int8_global_kv_oracle,
+            "GRADIATED_INT8_GLOBAL_KV_ORACLE_LAYERS", "INT8 global KV oracle")),
         fp8_key_offsets(),
         fp8_key_payload_bytes(use_fp8_global_k
             ? fp8_key_payload(model_config, requested_batch, max_context,
@@ -283,6 +326,10 @@ struct Gemma4BatchModelRunner::Implementation {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
     if (fp8_suffix_token_limit > max_context) {
       throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS exceeds prefill workspace");
+    }
+    if (use_int8_global_kv_oracle && use_fp8_global_k) {
+      throw std::runtime_error(
+          "INT8 global KV oracle cannot be combined with the FP8 global cache experiment");
     }
     check(cudaStreamCreateWithFlags(&decode_stream, cudaStreamNonBlocking),
           "create decode stream");
@@ -372,6 +419,19 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<int>(layer_config.head_dimension), position, stream);
     }
   }
+  void refresh_global_cache_approximations(std::size_t layer, int slot, int position,
+                                           int tokens, cudaStream_t stream) {
+    if (int8_global_kv_oracle_layers.at(layer)) {
+      const auto& layer_config = config.layers.at(layer);
+      roundtrip_global_kv_int8_per_token_bf16(
+          slot_key_cache(layer, slot), slot_value_cache(layer, slot),
+          static_cast<int>(layer_config.kv_heads), tokens,
+          static_cast<int>(layer_config.head_dimension), caches.at(layer).capacity,
+          position, stream, int8_oracle_mode != Int8OracleMode::values,
+          int8_oracle_mode != Int8OracleMode::keys, int8_oracle_block_width);
+    }
+    refresh_fp8_kv_span(layer, slot, position, tokens, stream);
+  }
   void* speculative_key_backup(std::size_t layer) {
     return static_cast<unsigned char*>(speculative_backup_arena.get()) +
            speculative_backup_offsets.at(layer);
@@ -423,6 +483,11 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<const int*>(device_positions.get()),
           static_cast<const int*>(device_slots.get()), active, batch_size, context,
           key_cache(layer), value_cache(layer), fp8_key_cache(layer), fp8_value_cache(layer),
+          int8_global_kv_oracle_layers.at(layer) &&
+              int8_oracle_mode != Int8OracleMode::values,
+          int8_global_kv_oracle_layers.at(layer) &&
+              int8_oracle_mode != Int8OracleMode::keys,
+          int8_oracle_block_width,
           cache.capacity, contiguous_slot_start,
           decode_stream);
       std::swap(input, output);
@@ -551,7 +616,7 @@ std::optional<int> Gemma4BatchModelRunner::prefill_slot_chunk(
     state.layers.run_prefill_chunk(static_cast<int>(layer), input, output, tokens, position,
                                    state.slot_key_cache(layer, slot),
                                    state.slot_value_cache(layer, slot), cache.capacity, nullptr);
-    state.refresh_fp8_kv_span(layer, slot, position, tokens, nullptr);
+    state.refresh_global_cache_approximations(layer, slot, position, tokens, nullptr);
     std::swap(input, output);
   }
   state.slot_positions.at(static_cast<std::size_t>(slot)) = position + tokens;
@@ -643,7 +708,7 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
                                     key_caches, value_caches, capacities, nullptr,
                                     fp8_projections);
     for (int request = 0; request < requests; ++request) {
-      state.refresh_fp8_kv_span(
+      state.refresh_global_cache_approximations(
           layer, slots[static_cast<std::size_t>(request)],
           positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
           nullptr);
@@ -753,7 +818,7 @@ std::vector<std::optional<int>> Gemma4BatchModelRunner::prefill_slots_chunks(
                                     key_caches, value_caches, capacities, nullptr,
                                     fp8_projections);
     for (int request = 0; request < requests; ++request) {
-      state.refresh_fp8_kv_span(
+      state.refresh_global_cache_approximations(
           layer, slots[static_cast<std::size_t>(request)],
           positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
           nullptr);
@@ -909,7 +974,7 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
         layer, input, output, suffix.counts, suffix.positions,
         key_caches, value_caches, capacities, nullptr, suffix.fp8_projections);
     for (int request = 0; request < requests; ++request) {
-      state.refresh_fp8_kv_span(
+      state.refresh_global_cache_approximations(
           static_cast<std::size_t>(layer), slots[static_cast<std::size_t>(request)],
           suffix.positions[static_cast<std::size_t>(request)],
           suffix.counts[static_cast<std::size_t>(request)], nullptr);
@@ -1171,7 +1236,7 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
         static_cast<void**>(state.device_cache_pointers.get()) +
             layer * pointers_per_layer);
     for (int request = 0; request < requests; ++request) {
-      state.refresh_fp8_kv_span(
+      state.refresh_global_cache_approximations(
           layer, slots[static_cast<std::size_t>(request)],
           positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
           nullptr);

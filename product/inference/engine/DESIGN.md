@@ -833,3 +833,42 @@ materialized K/V in a quality-gated low-bit representation. Two FP8 vectors cons
 as one raw BF16 vector while avoiding reconstruction of every historical token on every decode
 step. That path must pass free-running coding-agent quality, prefix-cache capacity and realistic
 Poisson-load economics before replacing exact raw KV.
+
+## Block-scaled INT8 KV quality frontier (2026-08-24)
+
+The INT8 frontier starts as a representation oracle rather than a performance claim. Each selected
+global K or V block is quantized symmetrically to `[-127, 127]` using its dynamic absolute maximum,
+then immediately dequantized into the existing BF16 cache. Attention, cache ownership and GEMMs are
+unchanged. This isolates the error of a future one-byte cache while avoiding an expensive INT8
+kernel implementation before the format passes quality. An eventual block-128 layout needs four
+scales per 512-byte vector: 3.125% overhead with FP32 scales or 1.5625% after a separately validated
+FP16-scale conversion.
+
+On the sixteen-prompt, 128-token free-running coding-agent holdout with tensor-FP8 projections at
+weight multiplier 0.98, fixed E4M3 K/V had only 0.5344 mean edit similarity. Dynamic INT8 is much
+closer to the projection-only control, but generation bifurcation makes the block sweep
+non-monotonic:
+
+| Cache approximation | Exact | EOS-exact | Token agreement | Mean edit | Minimum edit |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Projection-only control | 3/16 | 5/16 | 969/2,048 | 0.8714 | **0.4688** |
+| INT8 K only, block 512 | 1/16 | 6/16 | 780/2,048 | 0.8081 | 0.2578 |
+| INT8 V only, block 512 | 1/16 | 5/16 | 815/2,048 | 0.7929 | 0.2344 |
+| INT8 K/V, block 512 | 2/16 | **9/16** | 1,114/2,048 | 0.8712 | 0.3203 |
+| INT8 K/V, block 128 | 2/16 | **9/16** | **1,175/2,048** | **0.8853** | 0.2656 |
+| INT8 K/V, block 64 | 2/16 | 8/16 | 931/2,048 | 0.7737 | 0.2969 |
+
+The same variants were therefore compared teacher-forced, always appending the BF16 reference
+token so every prediction measures one-step perturbation at the same context. The projection-only
+control matches 2,009/2,048 predictions (98.0957%). Block-512 INT8 K/V matches 2,017 (98.4863%),
+block 128 matches 2,018 (98.5352%), and block 64 matches 2,013 (98.2910%). Block 128 is the current
+format candidate: it improves this one-step gate despite quantizing all ten global K/V caches and
+is the best free-running aggregate point. It is not promoted because its worst free-running prompt
+still regresses and no one-byte storage or INT8 tensor-core attention exists yet.
+
+The next implementation stores signed bytes plus per-block scales at cache write, then benchmarks
+an `S8 x S8 -> S32` QK/PV composition before committing to a custom WGMMA schedule. Q is dynamically
+quantized per query block; score scaling must be applied before softmax. For V, each probability is
+premultiplied by its V-block scale before probability quantization. Only after numerical parity,
+held-out quality and causal traffic pass will the BF16 cache be removed. Production remains on the
+pinned SGLang image.

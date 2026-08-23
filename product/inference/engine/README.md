@@ -47,6 +47,14 @@ and allocates its PV workspace lazily. It is retained to make cache-format exper
 reproducible, but fixed-scale E4M3 K fails the completion-quality gate and the complete path did
 not improve matched session-live economics. Production must leave it unset.
 
+`GRADIATED_INT8_GLOBAL_KV_ORACLE=1` is a quality oracle for the next cache representation. It
+round-trips selected global K/V vectors through symmetric INT8 and then runs the unchanged BF16
+attention, so it intentionally saves no memory or time. `GRADIATED_INT8_GLOBAL_KV_ORACLE_MODE`
+selects `keys`, `values`, or `both`; `GRADIATED_INT8_GLOBAL_KV_ORACLE_BLOCK` selects 64, 128, 256,
+or 512 components per dynamic scale; and `GRADIATED_INT8_GLOBAL_KV_ORACLE_LAYERS` optionally lists
+global layer indices. The oracle cannot be combined with the FP8 global-cache experiment and must
+remain unset in production.
+
 `GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS` controls the largest activation tensor quantized by the
 cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
 boundary remains available for matched A/B work. Values must be positive.

@@ -405,6 +405,87 @@ __global__ void quantize_global_decode_qk_kernel(
       __nv_fp8_e4m3(__bfloat162float(key_cache[cache_index]) * 1024.0F);
 }
 
+__device__ float warp_maximum(float value) {
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    value = fmaxf(value, __shfl_down_sync(0xffffffffU, value, offset));
+  }
+  return value;
+}
+
+__device__ void roundtrip_symmetric_int8_row(__nv_bfloat16* row, int dimension) {
+  float maximum = 0.0F;
+  for (int component = static_cast<int>(threadIdx.x); component < dimension;
+       component += static_cast<int>(blockDim.x)) {
+    maximum = fmaxf(maximum, fabsf(__bfloat162float(row[component])));
+  }
+  maximum = warp_maximum(maximum);
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31U) == 0U) {
+    warp_maxima[threadIdx.x >> 5U] = maximum;
+  }
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    maximum = threadIdx.x < blockDim.x / 32 ? warp_maxima[threadIdx.x] : 0.0F;
+    maximum = warp_maximum(maximum);
+    if (threadIdx.x == 0U) warp_maxima[0] = maximum;
+  }
+  __syncthreads();
+  maximum = warp_maxima[0];
+  if (maximum == 0.0F) return;
+  const float quantization_scale = 127.0F / maximum;
+  const float dequantization_scale = maximum / 127.0F;
+  for (int component = static_cast<int>(threadIdx.x); component < dimension;
+       component += static_cast<int>(blockDim.x)) {
+    const float value = __bfloat162float(row[component]);
+    const int quantized = max(-127, min(127, __float2int_rn(value * quantization_scale)));
+    row[component] = __float2bfloat16_rn(static_cast<float>(quantized) * dequantization_scale);
+  }
+}
+
+__global__ void roundtrip_global_kv_int8_per_token_kernel(
+    __nv_bfloat16* keys, __nv_bfloat16* values, int heads, int tokens,
+    int dimension, int cache_capacity, int position_start,
+    bool quantize_keys, bool quantize_values, int block_width) {
+  const int rows = heads * tokens;
+  const int blocks_per_row = dimension / block_width;
+  const int tensor_blocks = rows * blocks_per_row;
+  const int combined_block = static_cast<int>(blockIdx.x);
+  const bool is_value = quantize_values && (!quantize_keys || combined_block >= tensor_blocks);
+  const int local_block = combined_block - (is_value && quantize_keys ? tensor_blocks : 0);
+  const int row_index = local_block / blocks_per_row;
+  const int component_block = local_block - row_index * blocks_per_row;
+  const int head = row_index / tokens;
+  const int token = row_index - head * tokens;
+  __nv_bfloat16* cache = is_value ? values : keys;
+  cache += (static_cast<std::uint64_t>(head) * cache_capacity + position_start + token) *
+      dimension + component_block * block_width;
+  roundtrip_symmetric_int8_row(cache, block_width);
+}
+
+__global__ void roundtrip_global_decode_kv_int8_per_token_kernel(
+    __nv_bfloat16* keys, __nv_bfloat16* values, const int* positions,
+    const int* slots, int batch, int maximum_slots, int heads,
+    int dimension, int cache_capacity, bool quantize_keys, bool quantize_values,
+    int block_width) {
+  const int rows = batch * heads;
+  const int blocks_per_row = dimension / block_width;
+  const int tensor_blocks = rows * blocks_per_row;
+  const int combined_block = static_cast<int>(blockIdx.x);
+  const bool is_value = quantize_values && (!quantize_keys || combined_block >= tensor_blocks);
+  const int local_block = combined_block - (is_value && quantize_keys ? tensor_blocks : 0);
+  const int row_index = local_block / blocks_per_row;
+  const int component_block = local_block - row_index * blocks_per_row;
+  const int request = row_index / heads;
+  const int head = row_index - request * heads;
+  const int slot = slots[request];
+  const int position = positions[request];
+  if (slot < 0 || slot >= maximum_slots || position < 0 || position >= cache_capacity) return;
+  __nv_bfloat16* cache = is_value ? values : keys;
+  cache += ((static_cast<std::uint64_t>(slot) * heads + head) * cache_capacity + position) *
+      dimension + component_block * block_width;
+  roundtrip_symmetric_int8_row(cache, block_width);
+}
+
 __global__ void gather_kv_rings_kernel(
     const __nv_bfloat16* const* key_sources,
     const __nv_bfloat16* const* value_sources,
@@ -842,6 +923,49 @@ void quantize_global_decode_qk_fp8(const void* queries, const void* key_cache,
       static_cast<__nv_fp8_e4m3*>(fp8_key_cache), positions, slots, batch, maximum_slots,
       query_heads, kv_heads, head_dimension, cache_capacity);
   check(cudaPeekAtLastError(), "launch global FP8 decode QK quantization");
+}
+
+void roundtrip_global_kv_int8_per_token_bf16(
+    void* key_cache, void* value_cache, int heads, int tokens, int head_dimension,
+    int cache_capacity, int position_start, cudaStream_t stream,
+    bool quantize_keys, bool quantize_values, int block_width) {
+  if (key_cache == nullptr || value_cache == nullptr || heads <= 0 || tokens <= 0 ||
+      head_dimension != 512 || cache_capacity < position_start + tokens ||
+      position_start < 0 || (!quantize_keys && !quantize_values) || block_width < 32 ||
+      head_dimension % block_width != 0) {
+    throw std::runtime_error("invalid global INT8 KV oracle span shape");
+  }
+  constexpr int threads = 256;
+  const int tensors = static_cast<int>(quantize_keys) + static_cast<int>(quantize_values);
+  const int blocks_per_row = head_dimension / block_width;
+  roundtrip_global_kv_int8_per_token_kernel
+      <<<tensors * heads * tokens * blocks_per_row, threads, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
+      heads, tokens, head_dimension, cache_capacity, position_start,
+      quantize_keys, quantize_values, block_width);
+  check(cudaPeekAtLastError(), "launch global INT8 KV oracle span");
+}
+
+void roundtrip_global_decode_kv_int8_per_token_bf16(
+    void* key_cache, void* value_cache, const int* positions, const int* slots,
+    int batch, int maximum_slots, int heads, int head_dimension,
+    int cache_capacity, cudaStream_t stream, bool quantize_keys, bool quantize_values,
+    int block_width) {
+  if (key_cache == nullptr || value_cache == nullptr || positions == nullptr ||
+      slots == nullptr || batch <= 0 || maximum_slots < batch || heads <= 0 ||
+      head_dimension != 512 || cache_capacity <= 0 || (!quantize_keys && !quantize_values) ||
+      block_width < 32 || head_dimension % block_width != 0) {
+    throw std::runtime_error("invalid global INT8 KV oracle decode shape");
+  }
+  constexpr int threads = 256;
+  const int tensors = static_cast<int>(quantize_keys) + static_cast<int>(quantize_values);
+  const int blocks_per_row = head_dimension / block_width;
+  roundtrip_global_decode_kv_int8_per_token_kernel
+      <<<tensors * batch * heads * blocks_per_row, threads, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(key_cache), static_cast<__nv_bfloat16*>(value_cache),
+      positions, slots, batch, maximum_slots, heads, head_dimension, cache_capacity,
+      quantize_keys, quantize_values, block_width);
+  check(cudaPeekAtLastError(), "launch global INT8 KV oracle decode");
 }
 
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,

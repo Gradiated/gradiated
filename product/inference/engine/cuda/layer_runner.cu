@@ -412,7 +412,9 @@ void Gemma4LayerRunner::run_decode_ragged(
     int layer_index, const void* hidden_states, void* output, const int* positions,
     const int* slots, int batch, int maximum_slots, int maximum_context_length,
     void* key_cache, void* value_cache, void* fp8_key_cache, void* fp8_value_cache,
-    int cache_capacity, int contiguous_slot_start, cudaStream_t stream) {
+    bool int8_global_k_oracle, bool int8_global_v_oracle,
+    int int8_oracle_block_width, int cache_capacity, int contiguous_slot_start,
+    cudaStream_t stream) {
   auto& state = *implementation_;
   if (batch <= 0 || batch > state.maximum_batch || maximum_slots < batch ||
       maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
@@ -438,6 +440,15 @@ void Gemma4LayerRunner::run_decode_ragged(
       state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
       key_cache, value_cache, positions, slots, batch, maximum_slots, query_heads, kv_heads,
       head_dimension, layer.key_equals_value, cache_capacity, state.epsilon, stream);
+  if (int8_global_k_oracle || int8_global_v_oracle) {
+    if (layer.attention != AttentionKind::global) {
+      throw std::runtime_error("INT8 KV quality oracle is only valid for global attention");
+    }
+    roundtrip_global_decode_kv_int8_per_token_bf16(
+        key_cache, value_cache, positions, slots, batch, maximum_slots,
+        kv_heads, head_dimension, cache_capacity, stream,
+        int8_global_k_oracle, int8_global_v_oracle, int8_oracle_block_width);
+  }
   const bool use_fp8_key_cache = fp8_key_cache != nullptr &&
                                  state.uses_fp8_qkv(layer_index);
   if (use_fp8_key_cache) {

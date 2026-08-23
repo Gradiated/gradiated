@@ -28,7 +28,9 @@ class Gemma4LayerRunner {
   void run_decode_ragged(int layer_index, const void* hidden_states, void* output,
                          const int* positions, const int* slots, int batch, int maximum_slots,
                          int maximum_context_length, void* key_cache, void* value_cache,
-                         void* fp8_key_cache, void* fp8_value_cache, int cache_capacity,
+                         void* fp8_key_cache, void* fp8_value_cache,
+                         bool int8_global_k_oracle, bool int8_global_v_oracle,
+                         int int8_oracle_block_width, int cache_capacity,
                          int contiguous_slot_start, cudaStream_t stream);
   void run_prefill(int layer_index, const void* hidden_states, void* output, int tokens,
                    void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream);

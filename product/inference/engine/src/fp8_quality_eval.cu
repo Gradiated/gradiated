@@ -8,7 +8,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
+#include <map>
 #include <memory>
 #include <numeric>
 #include <stdexcept>
@@ -58,11 +60,108 @@ std::vector<int> integers(const gradiated::engine::Json& value) {
   return result;
 }
 
+std::vector<std::vector<int>> load_references(
+    const std::string& path, const std::vector<Prompt>& prompts, int evaluated_tokens) {
+  std::ifstream input(path);
+  if (!input) throw std::runtime_error("cannot read quality references " + path);
+  std::map<std::string, std::vector<int>, std::less<>> by_identifier;
+  std::string line;
+  while (std::getline(input, line)) {
+    if (line.empty()) continue;
+    const auto record = gradiated::engine::Json::parse(line);
+    const std::string& identifier = record.at("id").as_string();
+    auto tokens = integers(record.at("reference_ids"));
+    if (tokens.size() < static_cast<std::size_t>(evaluated_tokens)) {
+      throw std::runtime_error("quality reference is too short: " + identifier);
+    }
+    tokens.resize(static_cast<std::size_t>(evaluated_tokens));
+    const auto existing = by_identifier.find(identifier);
+    if (existing == by_identifier.end()) {
+      by_identifier.emplace(identifier, std::move(tokens));
+    } else if (existing->second != tokens) {
+      throw std::runtime_error("quality artifact has conflicting references: " + identifier);
+    }
+  }
+  if (!input.eof()) throw std::runtime_error("cannot finish quality references " + path);
+
+  std::vector<std::vector<int>> references;
+  references.reserve(prompts.size());
+  for (const auto& prompt : prompts) {
+    const auto reference = by_identifier.find(prompt.identifier);
+    if (reference == by_identifier.end()) {
+      throw std::runtime_error("missing quality reference: " + prompt.identifier);
+    }
+    references.push_back(reference->second);
+    std::cout << "loaded_reference_prompt=" << prompt.identifier
+              << " input_tokens=" << prompt.input_ids.size() << std::endl;
+  }
+  return references;
+}
+
 std::vector<int> through_eos(const std::vector<int>& tokens) {
   const auto end = std::find_if(tokens.begin(), tokens.end(), [](int token) {
     return token == 1 || token == 106;
   });
   return end == tokens.end() ? tokens : std::vector<int>(tokens.begin(), end + 1);
+}
+
+std::string json_string(std::string_view value) {
+  std::string result;
+  result.reserve(value.size() + 2);
+  result.push_back('"');
+  constexpr char hexadecimal[] = "0123456789abcdef";
+  for (const unsigned char character : value) {
+    switch (character) {
+      case '"': result += "\\\""; break;
+      case '\\': result += "\\\\"; break;
+      case '\b': result += "\\b"; break;
+      case '\f': result += "\\f"; break;
+      case '\n': result += "\\n"; break;
+      case '\r': result += "\\r"; break;
+      case '\t': result += "\\t"; break;
+      default:
+        if (character < 0x20U) {
+          result += "\\u00";
+          result.push_back(hexadecimal[character >> 4U]);
+          result.push_back(hexadecimal[character & 0x0fU]);
+        } else {
+          result.push_back(static_cast<char>(character));
+        }
+    }
+  }
+  result.push_back('"');
+  return result;
+}
+
+void write_token_array(std::ostream& output, const std::vector<int>& tokens) {
+  output << '[';
+  for (std::size_t index = 0; index < tokens.size(); ++index) {
+    if (index != 0) output << ',';
+    output << tokens[index];
+  }
+  output << ']';
+}
+
+void append_quality_artifact(
+    const std::string& path, std::string_view scaling, float weight_scale_multiplier,
+    std::string_view precision_case,
+    const std::vector<Prompt>& prompts, const std::vector<std::vector<int>>& references,
+    const std::vector<std::vector<int>>& candidates) {
+  std::ofstream output(path, std::ios::app);
+  if (!output) throw std::runtime_error("cannot append quality artifact " + path);
+  for (std::size_t index = 0; index < prompts.size(); ++index) {
+    output << "{\"id\":" << json_string(prompts[index].identifier)
+           << ",\"scaling\":" << json_string(scaling)
+           << ",\"weight_scale_multiplier\":" << weight_scale_multiplier
+           << ",\"bf16_layers\":" << json_string(precision_case)
+           << ",\"input_tokens\":" << prompts[index].input_ids.size()
+           << ",\"reference_ids\":";
+    write_token_array(output, references[index]);
+    output << ",\"candidate_ids\":";
+    write_token_array(output, candidates[index]);
+    output << "}\n";
+  }
+  if (!output) throw std::runtime_error("cannot write quality artifact " + path);
 }
 
 std::size_t edit_distance(const std::vector<int>& left, const std::vector<int>& right) {
@@ -88,6 +187,36 @@ gradiated::engine::Fp8Scaling parse_scaling(const std::string& value) {
   if (value == "channel") return gradiated::engine::Fp8Scaling::channel;
   if (value == "block-128") return gradiated::engine::Fp8Scaling::block_128;
   throw std::runtime_error("scaling must be bf16, tensor, channel, or block-128");
+}
+
+std::vector<float> weight_scale_cases(bool bf16_candidate) {
+  if (bf16_candidate) return {1.0F};
+  const char* configured = std::getenv("GRADIATED_QUALITY_WEIGHT_SCALE_CASES");
+  if (configured == nullptr || *configured == '\0') {
+    return {environment_weight_scale_multiplier()};
+  }
+
+  std::vector<float> cases;
+  const std::string_view specification(configured);
+  std::size_t begin = 0;
+  while (begin < specification.size()) {
+    const std::size_t end = specification.find(',', begin);
+    const std::string item(specification.substr(
+        begin, end == std::string_view::npos ? specification.size() - begin : end - begin));
+    std::size_t consumed = 0;
+    const float parsed = std::stof(item, &consumed);
+    if (consumed != item.size() || parsed <= 0.0F || parsed > 1.0F) {
+      throw std::runtime_error(
+          "GRADIATED_QUALITY_WEIGHT_SCALE_CASES entries must be in (0, 1]");
+    }
+    cases.push_back(parsed);
+    if (end == std::string_view::npos) break;
+    begin = end + 1;
+  }
+  if (cases.empty()) {
+    throw std::runtime_error("GRADIATED_QUALITY_WEIGHT_SCALE_CASES is empty");
+  }
+  return cases;
 }
 
 std::vector<std::string> precision_cases() {
@@ -129,16 +258,28 @@ int main(int argc, char** argv) {
         "GRADIATED_QUALITY_EVALUATED_TOKENS");
     const int evaluated_tokens = configured_evaluated_tokens == 0
         ? default_evaluated_tokens : configured_evaluated_tokens;
-    if (evaluated_tokens > 256) {
-      throw std::runtime_error("GRADIATED_QUALITY_EVALUATED_TOKENS must not exceed 256");
+    if (evaluated_tokens > 512) {
+      throw std::runtime_error("GRADIATED_QUALITY_EVALUATED_TOKENS must not exceed 512");
     }
     const bool free_running = std::getenv("GRADIATED_QUALITY_FREE_RUNNING") != nullptr;
+    const char* artifact_environment = std::getenv("GRADIATED_QUALITY_OUTPUT_JSONL");
+    const std::string artifact_path = artifact_environment == nullptr
+        ? std::string{} : std::string(artifact_environment);
+    if (!artifact_path.empty()) {
+      std::ofstream reset(artifact_path, std::ios::trunc);
+      if (!reset) throw std::runtime_error("cannot create quality artifact " + artifact_path);
+    }
     const int suffix_tokens = environment_non_negative_integer(
         "GRADIATED_QUALITY_SUFFIX_TOKENS");
     const int quality_batch = std::max(
         1, environment_non_negative_integer("GRADIATED_QUALITY_BATCH"));
     if (quality_batch > 16) {
       throw std::runtime_error("GRADIATED_QUALITY_BATCH must not exceed 16");
+    }
+    const int reference_batch = std::max(
+        1, environment_non_negative_integer("GRADIATED_QUALITY_REFERENCE_BATCH"));
+    if (reference_batch > 16) {
+      throw std::runtime_error("GRADIATED_QUALITY_REFERENCE_BATCH must not exceed 16");
     }
     const auto scaling = bf16_candidate
         ? gradiated::engine::Fp8Scaling::tensor : parse_scaling(argv[3]);
@@ -162,38 +303,56 @@ int main(int argc, char** argv) {
       prompts.push_back(std::move(prompt));
     }
 
-    std::vector<std::vector<int>> references(prompts.size());
-    {
+    const char* reference_environment = std::getenv("GRADIATED_QUALITY_REFERENCE_JSONL");
+    std::vector<std::vector<int>> references;
+    if (reference_environment != nullptr && *reference_environment != '\0') {
+      references = load_references(reference_environment, prompts, evaluated_tokens);
+    } else {
+      references.resize(prompts.size());
       unsetenv("GRADIATED_FP8_GLOBAL_K");
       gradiated::engine::Gemma4BatchModelRunner bf16_runner(
-          config, *weights, 1, maximum_context);
-      for (std::size_t prompt_index = 0; prompt_index < prompts.size(); ++prompt_index) {
-        const auto& prompt = prompts[prompt_index];
-        auto& reference = references[prompt_index];
-        reference.reserve(evaluated_tokens);
-        int prediction = bf16_runner.prefill_slot(0, prompt.input_ids, 1024);
+          config, *weights, reference_batch, maximum_context);
+      for (std::size_t group_start = 0; group_start < prompts.size();
+           group_start += static_cast<std::size_t>(reference_batch)) {
+        const int group_size = std::min(
+            reference_batch, static_cast<int>(prompts.size() - group_start));
+        std::vector<int> slots(static_cast<std::size_t>(group_size));
+        std::vector<int> predictions(static_cast<std::size_t>(group_size));
+        for (int row = 0; row < group_size; ++row) {
+          slots[static_cast<std::size_t>(row)] = row;
+          const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+          references[group_start + static_cast<std::size_t>(row)].reserve(evaluated_tokens);
+          predictions[static_cast<std::size_t>(row)] =
+              bf16_runner.prefill_slot(row, prompt.input_ids, 1024);
+        }
         for (int step = 0; step < evaluated_tokens; ++step) {
-          reference.push_back(prediction);
+          for (int row = 0; row < group_size; ++row) {
+            references[group_start + static_cast<std::size_t>(row)].push_back(
+                predictions[static_cast<std::size_t>(row)]);
+          }
           if (step + 1 != evaluated_tokens) {
-            prediction = bf16_runner.append_ragged({prediction}, {0})[0];
+            predictions = bf16_runner.append_ragged(predictions, slots);
           }
         }
-        std::cout << "reference_prompt=" << prompt.identifier
-                  << " input_tokens=" << prompt.input_ids.size() << std::endl;
+        for (int row = 0; row < group_size; ++row) {
+          const auto& prompt = prompts[group_start + static_cast<std::size_t>(row)];
+          std::cout << "reference_prompt=" << prompt.identifier
+                    << " input_tokens=" << prompt.input_ids.size() << std::endl;
+        }
       }
     }
-
-    const auto fp8_weights = bf16_candidate
-        ? std::unique_ptr<gradiated::engine::Fp8WeightArena>{}
-        : gradiated::engine::Fp8WeightArena::quantize(
-              plan, *weights, scaling,
-              scaling == gradiated::engine::Fp8Scaling::tensor
-                  ? environment_weight_scale_multiplier() : 1.0F);
 
     if (std::getenv("GRADIATED_FP8_GLOBAL_K_EVAL") != nullptr) {
       setenv("GRADIATED_FP8_GLOBAL_K", "1", 1);
     }
     const auto cases = precision_cases();
+    for (const float weight_scale_multiplier : weight_scale_cases(bf16_candidate)) {
+      const auto fp8_weights = bf16_candidate
+          ? std::unique_ptr<gradiated::engine::Fp8WeightArena>{}
+          : gradiated::engine::Fp8WeightArena::quantize(
+                plan, *weights, scaling,
+                scaling == gradiated::engine::Fp8Scaling::tensor
+                    ? weight_scale_multiplier : 1.0F);
     for (const auto& precision_case : cases) {
       if (precision_case == "none") {
         unsetenv("GRADIATED_FP8_BF16_LAYERS");
@@ -301,12 +460,14 @@ int main(int argc, char** argv) {
           edit_similarities.size();
       std::cout << "bf16_layers=" << precision_case << '\n'
                 << "scaling=" << argv[3] << '\n'
+                << "weight_scale_multiplier=" << weight_scale_multiplier << '\n'
                 << "prompts=" << prompt_count << '\n'
                 << "exact_prompts=" << exact_prompts << '\n'
                 << "matching_predictions=" << matching_predictions << '\n'
                 << "total_predictions=" << total_predictions << '\n'
                 << "quality_suffix_tokens=" << suffix_tokens << '\n'
                 << "quality_batch=" << quality_batch << '\n'
+                << "reference_batch=" << reference_batch << '\n'
                 << "free_running=" << (free_running ? "true" : "false") << '\n'
                 << "eos_exact_prompts=" << eos_exact_prompts << '\n'
                 << "mean_token_edit_similarity=" << mean_edit_similarity << '\n'
@@ -314,6 +475,12 @@ int main(int argc, char** argv) {
                 << "teacher_forced_greedy_agreement="
                 << static_cast<double>(matching_predictions) / total_predictions << '\n'
                 << "evaluation_seconds=" << seconds << '\n';
+      if (!artifact_path.empty()) {
+        append_quality_artifact(
+            artifact_path, argv[3], weight_scale_multiplier, precision_case, prompts,
+            references, candidate_sequences);
+      }
+    }
     }
     return 0;
   } catch (const std::exception& error) {

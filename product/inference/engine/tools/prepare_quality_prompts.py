@@ -29,7 +29,8 @@ def main() -> None:
             ]
             if not assistant_indices:
                 continue
-            context = messages[: assistant_indices[-1]]
+            response_index = assistant_indices[-1]
+            context = messages[:response_index]
             rendered = tokenizer.apply_chat_template(
                 context, tokenize=True, add_generation_prompt=True
             )
@@ -38,13 +39,28 @@ def main() -> None:
                 input_ids = input_ids[0]
             if not input_ids or len(input_ids) > args.maximum_tokens:
                 continue
-            prompts.append({"id": record["session_id"], "input_ids": input_ids})
+            prompts.append(
+                {
+                    "id": record["session_id"],
+                    "input_ids": input_ids,
+                    # This is a structural trace target, not a claim that the
+                    # recorded provider's wording is Gemma's canonical answer.
+                    "source_response": messages[response_index]["content"],
+                }
+            )
             if len(prompts) == args.prompts:
                 break
     if len(prompts) != args.prompts:
         raise RuntimeError(f"only {len(prompts)} qualifying prompts found")
     Path(args.output).write_text(
-        json.dumps({"model": args.model, "prompts": prompts}, separators=(",", ":")),
+        json.dumps(
+            {
+                "schema": "gradiated.agentic-quality-prompts.v1",
+                "model": args.model,
+                "prompts": prompts,
+            },
+            separators=(",", ":"),
+        ),
         encoding="utf-8",
     )
 

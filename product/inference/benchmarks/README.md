@@ -56,3 +56,60 @@ accepted when their token delta agrees with request usage; the
 Tool events are flattened into tagged message text for this serving benchmark
 so it is portable across model templates. AutoExacto-compatible tool-call
 correctness and JSON Schema adherence are separate quality gates.
+
+## Speculative-decoder evaluation
+
+Split sessions, rather than individual turns, so growing prefixes cannot leak
+between training and evaluation:
+
+```sh
+python3 split_agentic_workload.py \
+  --input workloads/agentic-coding-192.jsonl \
+  --output-dir workloads/speculative-splits
+```
+
+`speculative_eval.py` replays each session's final turns sequentially while
+running sessions in parallel. Capture a target-only baseline, then compare each
+speculative candidate against it. Greedy output must match exactly before a
+candidate's latency or throughput result is accepted:
+
+```sh
+SGLANG_API_KEY=... python3 speculative_eval.py \
+  --workload workloads/speculative-splits/holdout.jsonl \
+  --output results/speculative-baseline.json
+
+SGLANG_API_KEY=... python3 speculative_eval.py \
+  --workload workloads/speculative-splits/holdout.jsonl \
+  --baseline results/speculative-baseline.json \
+  --output results/speculative-candidate.json
+```
+
+## Native precision quality gates
+
+`gradiated-engine-fp8-quality-eval` can write the BF16 and candidate token
+streams for completion-level checks. Use the same batch geometry for the BF16
+reference and candidate so the comparison does not mistake batching-sensitive
+activation scales for a precision regression:
+
+```sh
+GRADIATED_QUALITY_FREE_RUNNING=1 \
+GRADIATED_QUALITY_EVALUATED_TOKENS=512 \
+GRADIATED_QUALITY_REFERENCE_BATCH=16 \
+GRADIATED_QUALITY_BATCH=16 \
+GRADIATED_QUALITY_OUTPUT_JSONL=/tmp/quality.jsonl \
+gradiated-engine-fp8-quality-eval MODEL PROMPTS.json tensor
+```
+
+`analyze_agentic_quality.py` checks EOS behavior, token-edit similarity, code
+fence structure, and Bash/Python/JSON syntax. `prepare_humaneval_prompts.py`
+creates disjoint partitions of the official HumanEval test set, and
+`analyze_humaneval.py` executes both BF16 and candidate completions. Because
+the latter executes generated code, run it only inside the networkless,
+read-only, resource-limited container used by the deployment quality job; the
+script intentionally treats that outer sandbox as part of its security model.
+
+The retained tensor-scaled E4M3 policy uses weight multiplier `1.0`. Its
+independent 64-task HumanEval holdout matched BF16 at 61/64 pass@1 with zero
+BF16-pass-to-FP8-fail regressions. Scale clipping, per-channel/block scaling,
+mixed BF16 islands, and MSE-selected weight scales remain rejected research
+variants rather than production defaults.

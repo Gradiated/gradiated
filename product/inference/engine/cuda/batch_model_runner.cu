@@ -34,6 +34,11 @@ bool fp8_global_k_enabled() {
   return value != nullptr && std::string_view(value) == "1";
 }
 
+bool bf16_lm_head_enabled() {
+  const char* value = std::getenv("GRADIATED_FP8_BF16_LM_HEAD");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
 int fp8_suffix_max_tokens() {
   const char* value = std::getenv("GRADIATED_FP8_SUFFIX_MAX_TOKENS");
   if (value == nullptr || *value == '\0') return 0;
@@ -138,6 +143,7 @@ struct Gemma4BatchModelRunner::Implementation {
   std::vector<CacheLocation> caches;
   std::uint64_t cache_payload_bytes;
   int fp8_suffix_token_limit;
+  bool use_fp8_lm_head;
   bool use_fp8_global_k;
   std::vector<bool> fp8_global_k_layers;
   std::vector<std::uint64_t> fp8_key_offsets;
@@ -229,6 +235,7 @@ struct Gemma4BatchModelRunner::Implementation {
         slot_positions(static_cast<std::size_t>(requested_batch), 0), caches(),
         cache_payload_bytes(cache_payload(model_config, requested_batch, max_context, &caches)),
         fp8_suffix_token_limit(fp8_suffix_max_tokens()),
+        use_fp8_lm_head(decode_weights != nullptr && !bf16_lm_head_enabled()),
         use_fp8_global_k(fp8_global_k_enabled()),
         fp8_global_k_layers(fp8_global_k_selection(model_config, use_fp8_global_k)),
         fp8_key_offsets(),
@@ -343,7 +350,7 @@ struct Gemma4BatchModelRunner::Implementation {
   }
 
   void run_decode_lm_head(const void* input, void* output, int rows, cudaStream_t stream) {
-    if (fp8_weights == nullptr) {
+    if (!use_fp8_lm_head) {
       lm_head.run(input, weights.at("token_embedding"), output,
                   rows, hidden, vocabulary, stream);
       return;

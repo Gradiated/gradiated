@@ -2,12 +2,14 @@
 
 #include "desmond/http.h"
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <cstdio>
 #include <iomanip>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 
 namespace desmond {
@@ -75,6 +77,11 @@ std::string utc_now() {
 ProfilingUploader::ProfilingUploader(ProfilingUploaderConfig config)
     : config_(std::move(config)) {
   if (enabled()) {
+    if (config_.batch_size == 0 || config_.batch_size > config_.queue_capacity ||
+        config_.retry_initial <= std::chrono::milliseconds::zero() ||
+        config_.retry_maximum < config_.retry_initial) {
+      throw std::invalid_argument("invalid profiling uploader queue or retry configuration");
+    }
     thread_ = std::thread([this] { run(); });
   }
 }
@@ -107,9 +114,11 @@ void ProfilingUploader::stop() {
 }
 
 void ProfilingUploader::run() {
+  std::deque<ProfilingEvent> batch;
+  std::string batch_id;
+  auto retry_delay = config_.retry_initial;
   while (true) {
-    std::deque<ProfilingEvent> batch;
-    {
+    if (batch.empty()) {
       std::unique_lock lock(mutex_);
       condition_.wait_for(lock, config_.flush_interval, [this] {
         return stopping_ || queue_.size() >= config_.batch_size;
@@ -120,26 +129,33 @@ void ProfilingUploader::run() {
         batch.push_back(std::move(queue_.front()));
         queue_.pop_front();
       }
+      batch_id = uuid_v4();
     }
     if (batch.empty()) continue;
-    if (upload(batch)) {
+    if (upload(batch_id, batch)) {
       std::lock_guard lock(mutex_);
       uploaded_ += batch.size();
+      batch.clear();
+      batch_id.clear();
+      retry_delay = config_.retry_initial;
     } else {
-      std::lock_guard lock(mutex_);
-      ++failed_batches_;
-      while (!batch.empty() && queue_.size() < config_.queue_capacity) {
-        queue_.push_front(std::move(batch.back()));
-        batch.pop_back();
+      {
+        std::lock_guard lock(mutex_);
+        ++failed_batches_;
+        if (stopping_) return;
       }
+      std::unique_lock lock(mutex_);
+      condition_.wait_for(lock, retry_delay, [this] { return stopping_; });
       if (stopping_) return;
+      retry_delay = std::min(retry_delay * 2, config_.retry_maximum);
     }
   }
 }
 
-bool ProfilingUploader::upload(const std::deque<ProfilingEvent>& events) {
+bool ProfilingUploader::upload(const std::string_view batch_id,
+                               const std::deque<ProfilingEvent>& events) {
   std::ostringstream body;
-  body << "{\"schema_version\":1,\"batch_id\":" << json_string(uuid_v4())
+  body << "{\"schema_version\":1,\"batch_id\":" << json_string(batch_id)
        << ",\"deployment_id\":" << json_string(config_.deployment_id)
        << ",\"model_id\":" << json_string(config_.model_id)
        << ",\"runtime_revision\":" << json_string(config_.runtime_revision)

@@ -187,9 +187,13 @@ Every retained change must pass, in order:
 4. p50/p95 TTFT, TPOT and request-time comparison against the production control;
 5. cheapest-OpenRouter-price revenue divided by measured H200 hourly cost.
 
-Desmond records sampled per-stage GPU timings, batch shape, prefix hit bytes, KV bytes, accepted
-draft depth, precision path and kernel identifiers in `profiling_events.properties`. CUPTI hardware
-counters are sampled in profiling runs, not enabled on every production request.
+The native scheduler emits request admission/completion, prefill, decode and speculative-batch
+events into a fixed-size shared-memory SPSC ring. The inference path performs one lock-free copy
+and drops rather than blocks when the ring is full. Desmond drains those events, adds periodic
+NVML/runtime snapshots, and uploads stable-ID batches into `profiling_events.properties` with
+bounded exponential retry. Per-kernel identifiers and CUPTI hardware counters remain opt-in
+profiling-run data; enabling them on every production request would perturb the timings being
+measured.
 
 ## Measured optimization frontier (2026-08-22)
 

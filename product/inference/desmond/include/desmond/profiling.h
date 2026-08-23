@@ -6,6 +6,7 @@
 #include <deque>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <thread>
 
 namespace desmond {
@@ -21,6 +22,8 @@ struct ProfilingUploaderConfig {
   std::size_t batch_size{200};
   std::size_t queue_capacity{20'000};
   std::chrono::seconds flush_interval{10};
+  std::chrono::milliseconds retry_initial{250};
+  std::chrono::milliseconds retry_maximum{30'000};
 };
 
 struct ProfilingEvent {
@@ -44,7 +47,7 @@ class ProfilingUploader {
 
  private:
   void run();
-  bool upload(const std::deque<ProfilingEvent>& events);
+  bool upload(std::string_view batch_id, const std::deque<ProfilingEvent>& events);
 
   ProfilingUploaderConfig config_;
   mutable std::mutex mutex_;

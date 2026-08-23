@@ -1,5 +1,6 @@
 #include "desmond/http.h"
 #include "desmond/profiling.h"
+#include "desmond/trace.h"
 #include "gradiated/engine/device_weights.h"
 #include "gradiated/engine/gemma4_config.h"
 #include "gradiated/engine/json.h"
@@ -173,6 +174,7 @@ class InferenceFailure : public std::runtime_error {
 };
 
 struct CompletionJob {
+  std::uint64_t request_id{0};
   std::vector<int> input_ids;
   int max_tokens{0};
   std::unordered_set<int> stop_ids;
@@ -199,7 +201,8 @@ class ContinuousScheduler {
                       int idle_prefill_quantum_tokens,
                       int short_prefill_batch_window_microseconds,
                       int interleaved_suffix_layer_quantum,
-                      int interleaved_suffix_layer_minimum_decode)
+                      int interleaved_suffix_layer_minimum_decode,
+                      desmond::SharedTraceRing* trace_ring)
       : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
                 assistant_weights),
         slots_(maximum_slots), metrics_(metrics),
@@ -210,7 +213,7 @@ class ContinuousScheduler {
         short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds),
         interleaved_suffix_layer_quantum_(interleaved_suffix_layer_quantum),
         interleaved_suffix_layer_minimum_decode_(interleaved_suffix_layer_minimum_decode),
-        config_layer_count_(config.layers.size()) {
+        config_layer_count_(config.layers.size()), trace_ring_(trace_ring) {
     // Materialize latency-sensitive cuBLASLt and attention plans before advertising readiness.
     std::vector<int> warmup(2048, 2);
     while (!runner_.prefill_slot_chunk(0, warmup, default_chunk_tokens)) {}
@@ -260,6 +263,7 @@ class ContinuousScheduler {
   std::shared_ptr<CompletionJob> submit(std::vector<int> input_ids, int max_tokens,
                                         std::unordered_set<int> stop_ids) {
     auto job = std::make_shared<CompletionJob>();
+    job->request_id = next_request_id_.fetch_add(1, std::memory_order_relaxed);
     job->input_ids = std::move(input_ids);
     job->max_tokens = max_tokens;
     job->stop_ids = std::move(stop_ids);
@@ -280,6 +284,27 @@ class ContinuousScheduler {
   }
 
  private:
+  void trace(const desmond::TraceEventType type, const std::uint64_t request_id = 0,
+             const std::uint64_t batch_id = 0, const std::uint64_t duration_us = 0,
+             const std::uint64_t graph_node_id = 0, const std::uint64_t value0 = 0,
+             const std::uint64_t value1 = 0, const std::uint32_t stream_id = 0) noexcept {
+    if (trace_ring_ == nullptr) return;
+    const auto monotonic_ns = static_cast<std::uint64_t>(
+        std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+    static_cast<void>(trace_ring_->try_push({
+        .monotonic_ns = monotonic_ns,
+        .request_id_low = request_id,
+        .batch_id = batch_id,
+        .graph_execution_id = duration_us,
+        .graph_node_id = graph_node_id,
+        .value0 = value0,
+        .value1 = value1,
+        .stream_id = stream_id,
+        .type = type,
+    }));
+  }
+
   struct Slot {
     std::shared_ptr<CompletionJob> job;
     std::vector<int> cached_tokens;
@@ -366,6 +391,9 @@ class ContinuousScheduler {
     result.total_microseconds = static_cast<std::uint64_t>(
         std::chrono::duration_cast<std::chrono::microseconds>(now - slot.job->queued_at).count());
     result.finish_reason = finish_reason;
+    trace(desmond::TraceEventType::request_finished, slot.job->request_id, 0,
+          result.total_microseconds, 0, result.output_ids.size(), result.ttft_microseconds,
+          static_cast<std::uint32_t>(index));
     metrics_.input_tokens.fetch_add(slot.job->input_ids.size());
     metrics_.output_tokens.fetch_add(result.output_ids.size());
     metrics_.inference_microseconds.fetch_add(result.total_microseconds);
@@ -384,6 +412,9 @@ class ContinuousScheduler {
 
   void fail_slot(int index, const std::string& error) {
     auto& slot = slots_[static_cast<std::size_t>(index)];
+    trace(desmond::TraceEventType::request_failed,
+          slot.job ? slot.job->request_id : 0, 0, 0, 0, 0, 0,
+          static_cast<std::uint32_t>(index));
     auto job = std::move(slot.job);
     slot.cached_tokens.clear();
     slot.output_ids.clear();
@@ -402,6 +433,9 @@ class ContinuousScheduler {
 
   void cancel_slot(int index) {
     auto& slot = slots_[static_cast<std::size_t>(index)];
+    trace(desmond::TraceEventType::request_cancelled,
+          slot.job ? slot.job->request_id : 0, 0, 0, 0, 0, 0,
+          static_cast<std::uint32_t>(index));
     auto job = std::move(slot.job);
     slot.cached_tokens.clear();
     slot.output_ids.clear();
@@ -431,6 +465,8 @@ class ContinuousScheduler {
         current = pending_.erase(current);
         metrics_.queued.fetch_sub(1);
         metrics_.cancelled.fetch_add(1);
+        trace(desmond::TraceEventType::request_cancelled, job->request_id,
+              0, 0, 0, 0, 0, std::numeric_limits<std::uint32_t>::max());
         {
           std::lock_guard job_lock(job->mutex);
           job->error = "request cancelled";
@@ -490,6 +526,9 @@ class ContinuousScheduler {
     slot.maximum_tpot_microseconds = 0;
     slot.admission_order = ++admission_order_;
     metrics_.active.fetch_add(1);
+    trace(desmond::TraceEventType::request_admitted, job->request_id, 0,
+          slot.queue_microseconds, 0, job->input_ids.size(), placement.prefix_tokens,
+          static_cast<std::uint32_t>(index));
     try {
       int cached_prediction = 0;
       if (placement.source >= 0) {
@@ -551,10 +590,17 @@ class ContinuousScheduler {
       const int quantum = force_idle_quantum || !decode_is_active
           ? idle_prefill_quantum_tokens_
           : prefill_quantum_tokens_;
+      const auto prefill_begin = std::chrono::steady_clock::now();
       const auto prediction = runner_.prefill_slot_chunk(
           selected, slot.job->input_ids, quantum);
       const auto end = std::chrono::steady_clock::now();
       const int resident = runner_.slot_position(selected);
+      const auto prefill_microseconds = static_cast<std::uint64_t>(
+          std::chrono::duration_cast<std::chrono::microseconds>(end - prefill_begin).count());
+      trace(desmond::TraceEventType::prefill_batch, slot.job->request_id, ++batch_id_,
+            prefill_microseconds, static_cast<std::uint64_t>(resident), 1,
+            static_cast<std::uint64_t>(resident - before),
+            static_cast<std::uint32_t>(selected));
       metrics_.prefill_tokens_computed.fetch_add(static_cast<std::uint64_t>(resident - before));
       slot.cached_tokens.assign(slot.job->input_ids.begin(),
                                 slot.job->input_ids.begin() + resident);
@@ -599,6 +645,19 @@ class ContinuousScheduler {
       metrics_.contiguous_decode_steps.fetch_add(1);
     } else {
       metrics_.fragmented_decode_steps.fetch_add(1);
+    }
+    int maximum_decode_context = 0;
+    for (const int slot : slots) {
+      maximum_decode_context = std::max(maximum_decode_context, runner_.slot_position(slot));
+    }
+    const std::uint64_t decode_batch_id = ++batch_id_;
+    const auto decode_begin = std::chrono::steady_clock::now();
+    for (std::size_t row = 0; row < indices.size(); ++row) {
+      const auto& slot = slots_[static_cast<std::size_t>(indices[row])];
+      trace(desmond::TraceEventType::batch_formed, slot.job->request_id, decode_batch_id,
+            0, static_cast<std::uint64_t>(runner_.slot_position(slots[row])), row,
+            static_cast<std::uint64_t>(maximum_decode_context),
+            static_cast<std::uint32_t>(slots[row]));
     }
     if (runner_.has_assistant() &&
         indices.size() >= static_cast<std::size_t>(speculative_minimum_batch_)) {
@@ -684,6 +743,11 @@ class ContinuousScheduler {
         }
 
         const auto token_time = std::chrono::steady_clock::now();
+        trace(desmond::TraceEventType::speculative_batch, 0, decode_batch_id,
+              static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+                  token_time - decode_begin).count()),
+              static_cast<std::uint64_t>(speculative_depth_), indices.size(),
+              static_cast<std::uint64_t>(maximum_decode_context), contiguous ? 1U : 2U);
         std::size_t fallback_index = 0;
         for (std::size_t row = 0; row < indices.size(); ++row) {
           const int index = indices[row];
@@ -738,6 +802,11 @@ class ContinuousScheduler {
     try {
       const auto predictions = runner_.append_ragged(tokens, slots);
       const auto token_time = std::chrono::steady_clock::now();
+      trace(desmond::TraceEventType::decode_batch, 0, decode_batch_id,
+            static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+                token_time - decode_begin).count()),
+            0, indices.size(), static_cast<std::uint64_t>(maximum_decode_context),
+            contiguous ? 1U : 2U);
       for (std::size_t row = 0; row < indices.size(); ++row) {
         const int index = indices[row];
         auto& slot = slots_[static_cast<std::size_t>(index)];
@@ -841,6 +910,23 @@ class ContinuousScheduler {
       const auto prefill_microseconds = static_cast<std::uint64_t>(
           std::chrono::duration_cast<std::chrono::microseconds>(
               prediction_time - prefill_begin).count());
+      std::uint64_t computed_tokens = 0;
+      for (const int tokens : cohort_tokens) {
+        computed_tokens += static_cast<std::uint64_t>(tokens);
+      }
+      const std::uint64_t prefill_batch_id = ++batch_id_;
+      for (std::size_t row = 0; row < cohort_slots.size(); ++row) {
+        const auto& slot = slots_[static_cast<std::size_t>(cohort_slots[row])];
+        trace(desmond::TraceEventType::batch_formed,
+              slot.job ? slot.job->request_id : 0, prefill_batch_id, 0,
+              static_cast<std::uint64_t>(runner_.slot_position(cohort_slots[row])), row,
+              row < cohort_tokens.size() ? static_cast<std::uint64_t>(cohort_tokens[row]) : 0,
+              static_cast<std::uint32_t>(cohort_slots[row]));
+      }
+      trace(desmond::TraceEventType::prefill_batch, 0, prefill_batch_id, prefill_microseconds,
+            complete ? config_layer_count_ : 0, cohort_slots.size(), computed_tokens,
+            static_cast<std::uint32_t>((has_decoding ? 1 : 0) |
+                                       (resuming_layer_slices ? 2 : 0)));
       metrics_.suffix_prefill_microseconds.fetch_add(prefill_microseconds);
       update_atomic_max(metrics_.maximum_suffix_prefill_microseconds, prefill_microseconds);
       if (!resuming_layer_slices) {
@@ -947,6 +1033,7 @@ class ContinuousScheduler {
   int interleaved_suffix_layer_quantum_;
   int interleaved_suffix_layer_minimum_decode_;
   const std::size_t config_layer_count_;
+  desmond::SharedTraceRing* trace_ring_;
   std::vector<int> inflight_suffix_slots_;
   std::vector<const std::vector<int>*> inflight_suffix_prompts_;
   std::mutex mutex_;
@@ -955,6 +1042,8 @@ class ContinuousScheduler {
   bool stopping_{false};
   std::uint64_t age_{0};
   std::uint64_t admission_order_{0};
+  std::atomic<std::uint64_t> next_request_id_{1};
+  std::uint64_t batch_id_{0};
   std::thread worker_;
 };
 
@@ -1020,6 +1109,15 @@ int main(int argc, char** argv) {
     const int speculative_minimum_batch = environment_integer(
         "GRADIATED_SPECULATIVE_MIN_BATCH", default_speculative_minimum_batch, 1,
         maximum_slots);
+    std::unique_ptr<desmond::SharedTraceRing> trace_ring;
+    const std::string trace_path = environment("DESMOND_TRACE_PATH");
+    if (!trace_path.empty()) {
+      try {
+        trace_ring = desmond::SharedTraceRing::open_existing(trace_path);
+      } catch (const std::exception& error) {
+        std::cerr << "native runtime: shared trace ring unavailable: " << error.what() << '\n';
+      }
+    }
     RuntimeMetrics metrics;
     ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), assistant_weights.get(),
                                   metrics, speculative_depth, speculative_minimum_batch,
@@ -1027,7 +1125,8 @@ int main(int argc, char** argv) {
                                   idle_prefill_quantum_tokens,
                                   short_prefill_batch_window_microseconds,
                                   interleaved_suffix_layer_quantum,
-                                  interleaved_suffix_layer_minimum_decode);
+                                  interleaved_suffix_layer_minimum_decode,
+                                  trace_ring.get());
 
     desmond::HttpServer server(bind_host, bind_port, [&](const desmond::HttpRequest& request) {
       if (request.method == "GET" && request.path == "/health") {

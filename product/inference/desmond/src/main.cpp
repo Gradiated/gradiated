@@ -2,6 +2,7 @@
 #include "desmond/http.h"
 #include "desmond/profiling.h"
 #include "desmond/supervisor.h"
+#include "desmond/trace.h"
 
 #include <signal.h>
 
@@ -9,10 +10,14 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <thread>
 #include <vector>
+
+#include <unistd.h>
 
 namespace {
 
@@ -48,6 +53,72 @@ std::string json_escape(const std::string& value) {
     }
   }
   return result;
+}
+
+std::string trace_properties(const desmond::TraceEvent& event) {
+  std::ostringstream properties;
+  properties << "{\"monotonic_ns\":" << event.monotonic_ns;
+  if (event.request_id_high != 0 || event.request_id_low != 0) {
+    properties << ",\"request_id_high\":"
+               << desmond::json_string(std::to_string(event.request_id_high))
+               << ",\"request_id_low\":"
+               << desmond::json_string(std::to_string(event.request_id_low));
+  }
+  if (event.batch_id != 0) {
+    properties << ",\"batch_id\":" << desmond::json_string(std::to_string(event.batch_id));
+  }
+  if (event.graph_node_id != 0) properties << ",\"graph_node_id\":" << event.graph_node_id;
+  if (event.device_id != 0) properties << ",\"device_id\":" << event.device_id;
+  switch (event.type) {
+    case desmond::TraceEventType::request_admitted:
+      properties << ",\"input_tokens\":" << event.value0
+                 << ",\"cached_input_tokens\":" << event.value1
+                 << ",\"slot_id\":" << event.stream_id
+                 << ",\"queue_us\":" << event.graph_execution_id;
+      break;
+    case desmond::TraceEventType::request_finished:
+      properties << ",\"output_tokens\":" << event.value0
+                 << ",\"ttft_us\":" << event.value1
+                 << ",\"slot_id\":" << event.stream_id
+                 << ",\"total_us\":" << event.graph_execution_id;
+      break;
+    case desmond::TraceEventType::batch_formed:
+      properties << ",\"batch_row\":" << event.value0
+                 << ",\"batch_shape_value\":" << event.value1
+                 << ",\"request_context_tokens\":" << event.graph_node_id
+                 << ",\"slot_id\":" << event.stream_id;
+      break;
+    case desmond::TraceEventType::request_failed:
+    case desmond::TraceEventType::request_cancelled:
+      if (event.stream_id != std::numeric_limits<std::uint32_t>::max()) {
+        properties << ",\"slot_id\":" << event.stream_id;
+      }
+      break;
+    case desmond::TraceEventType::prefill_batch:
+      properties << ",\"batch_size\":" << event.value0
+                 << ",\"computed_tokens\":" << event.value1
+                 << ",\"host_enqueue_us\":" << event.graph_execution_id;
+      if (event.request_id_high != 0 || event.request_id_low != 0) {
+        properties << ",\"slot_id\":" << event.stream_id;
+      } else {
+        properties << ",\"execution_flags\":" << event.stream_id;
+      }
+      break;
+    case desmond::TraceEventType::decode_batch:
+    case desmond::TraceEventType::speculative_batch:
+      properties << ",\"batch_size\":" << event.value0
+                 << ",\"maximum_context_tokens\":" << event.value1
+                 << ",\"duration_us\":" << event.graph_execution_id
+                 << ",\"cache_layout\":"
+                 << desmond::json_string(event.stream_id == 1 ? "contiguous" : "fragmented");
+      break;
+    default:
+      properties << ",\"value0\":" << event.value0 << ",\"value1\":" << event.value1
+                 << ",\"duration_us\":" << event.graph_execution_id;
+      break;
+  }
+  properties << '}';
+  return properties.str();
 }
 
 }  // namespace
@@ -96,6 +167,22 @@ int main(int argc, char** argv) {
         .runtime_revision = release,
     });
 
+    std::unique_ptr<desmond::SharedTraceRing> trace_ring;
+    const std::string default_trace_path =
+        "/dev/shm/desmond-trace-" + std::to_string(getpid());
+    const std::string trace_path = environment("DESMOND_TRACE_PATH", default_trace_path.c_str());
+    try {
+      trace_ring = desmond::SharedTraceRing::create(trace_path, 65'536);
+      if (setenv("DESMOND_TRACE_PATH", trace_path.c_str(), 1) != 0) {
+        throw std::runtime_error("failed to export DESMOND_TRACE_PATH");
+      }
+    } catch (const std::exception& error) {
+      unsetenv("DESMOND_TRACE_PATH");
+      std::cerr << "desmond: shared trace ring unavailable: " << error.what() << '\n';
+      trace_ring.reset();
+    }
+    std::atomic<std::uint64_t> consumed_trace_events{0};
+
     signal(SIGTERM, handle_signal);
     signal(SIGINT, handle_signal);
 
@@ -137,7 +224,12 @@ int main(int argc, char** argv) {
                 << "\",model=\"" << json_escape(model) << "\",model_revision=\""
                 << json_escape(model_revision) << "\"} 1\n"
                 << gpu_metrics.prometheus()
-                << profiling.prometheus();
+                << profiling.prometheus()
+                << "desmond_trace_enabled " << (trace_ring ? 1 : 0) << '\n'
+                << "desmond_trace_consumed_events_total "
+                << consumed_trace_events.load(std::memory_order_relaxed) << '\n'
+                << "desmond_trace_dropped_events_total "
+                << (trace_ring ? trace_ring->dropped() : 0) << '\n';
         const auto upstream = desmond::http_get(runtime_host, runtime_port, "/metrics",
                                                 std::chrono::seconds(2));
         if (upstream.transport_ok && upstream.status == 200) {
@@ -176,9 +268,21 @@ int main(int argc, char** argv) {
     auto next_gpu_profile = std::chrono::steady_clock::now();
     auto next_runtime_profile = std::chrono::steady_clock::now();
     bool prior_ready = false;
+    const auto drain_trace = [&](const std::size_t maximum_events) {
+      if (!trace_ring) return;
+      desmond::TraceEvent event;
+      std::size_t consumed = 0;
+      while (consumed < maximum_events && trace_ring->try_pop(event)) {
+        profiling.enqueue(std::string("runtime.") + desmond::trace_event_type_name(event.type),
+                          trace_properties(event));
+        ++consumed;
+      }
+      consumed_trace_events.fetch_add(consumed, std::memory_order_relaxed);
+    };
     profiling.enqueue("runtime.started", "{\"pid\":" +
                                             std::to_string(supervisor.status().pid) + "}");
     while (!stop_requested.load(std::memory_order_relaxed)) {
+      drain_trace(4'096);
       supervisor.poll();
       const auto status = supervisor.status();
       if (!status.child_running) {
@@ -229,6 +333,7 @@ int main(int argc, char** argv) {
 
     profiling.enqueue("runtime.stopping", "{}");
     supervisor.shutdown();
+    drain_trace(65'536);
     profiling.stop();
     server.stop();
     http_thread.join();

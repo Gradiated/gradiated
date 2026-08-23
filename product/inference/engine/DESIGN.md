@@ -252,3 +252,14 @@ quantization and layout overhead. At unchanged traffic mix and prices that would
 compute-cost recovery from 31.8% to about 38.0%, still far from break-even. A fused grouped-query
 kernel that loads each physical global K tile once, performs online softmax, and immediately
 accumulates V is required to attack the remaining gap; merely tuning the dense GEMMs cannot do so.
+
+A correctness-complete WMMA prototype tested that fusion boundary directly. One block owns a
+physical KV head, computes 8x64 QK with four tensor-core warps, performs online softmax, and uses
+sixteen warps for the 8x512 PV update. It never writes the score matrix to HBM and matches the BF16
+GEMM path at 127 tokens with maximum/mean absolute errors of `4.58e-5`/`1.09e-5`. It is rejected:
+at batch 16 and 8k it takes 5.55 ms per global layer versus 0.282 ms for the retained QK/softmax/PV
+GEMMs. A 32-token tile takes 5.65 ms, proving that shared-memory capacity and tile barriers are not
+the only problem. CUDA WMMA's 16x16 operation wastes half the rows on Gemma's eight-query group,
+and repeated block-wide synchronization prevents enough independent tensor-core work. A viable
+single-pass kernel needs Hopper warpgroup MMA with asynchronous TMA/cp.async pipelining (or an
+equivalent CUTLASS/CuTe schedule), not a larger version of this WMMA kernel.

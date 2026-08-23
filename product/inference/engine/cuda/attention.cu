@@ -2,6 +2,7 @@
 
 #include <cuda_bf16.h>
 #include <cuda_runtime.h>
+#include <mma.h>
 #include <math_constants.h>
 
 #include <cstdint>
@@ -12,6 +13,7 @@ namespace gradiated::engine {
 namespace {
 
 constexpr int threads = 256;
+constexpr int global_wmma_threads = 512;
 
 void check(cudaError_t result, const char* operation) {
   if (result != cudaSuccess) {
@@ -133,6 +135,154 @@ __global__ void grouped_decode_kernel(const __nv_bfloat16* query, const __nv_bfl
   }
 }
 
+__global__ void grouped_global_wmma_kernel(
+    const __nv_bfloat16* query, const __nv_bfloat16* key_cache,
+    const __nv_bfloat16* value_cache, __nv_bfloat16* output, int kv_heads,
+    int context_length) {
+  constexpr int dimension = 512;
+  constexpr int group = 8;
+  constexpr int tile_tokens = 64;
+  constexpr int padded_group = 16;
+  const int batch_index = static_cast<int>(blockIdx.x) / kv_heads;
+  const int kv_head = static_cast<int>(blockIdx.x) % kv_heads;
+  const std::uint64_t cache_base =
+      (static_cast<std::uint64_t>(batch_index) * kv_heads + kv_head) *
+      context_length * dimension;
+  const std::uint64_t query_base =
+      (static_cast<std::uint64_t>(batch_index) * kv_heads + kv_head) * group * dimension;
+
+  extern __shared__ __align__(16) unsigned char storage[];
+  auto* shared_query = reinterpret_cast<__nv_bfloat16*>(storage);
+  auto* shared_key = shared_query + padded_group * dimension;
+  auto* shared_value = shared_key + tile_tokens * dimension;
+  auto* probabilities = shared_value + tile_tokens * dimension;
+  auto* scores = reinterpret_cast<float*>(probabilities + padded_group * tile_tokens);
+  auto* partial_output = scores + padded_group * tile_tokens;
+  __shared__ float running_max[group];
+  __shared__ float running_sum[group];
+  __shared__ float previous_scale[group];
+
+  for (int index = threadIdx.x; index < padded_group * dimension;
+       index += global_wmma_threads) {
+    const int row = index / dimension;
+    shared_query[index] = row < group ? query[query_base + index]
+                                      : __float2bfloat16_rn(0.0F);
+  }
+  if (threadIdx.x < group) {
+    running_max[threadIdx.x] = -CUDART_INF_F;
+    running_sum[threadIdx.x] = 0.0F;
+  }
+  float accumulator[group]{};
+  __syncthreads();
+
+  const int warp = static_cast<int>(threadIdx.x) / 32;
+  for (int tile_begin = 0; tile_begin < context_length; tile_begin += tile_tokens) {
+    const int valid_tokens = min(tile_tokens, context_length - tile_begin);
+    for (int index = threadIdx.x; index < tile_tokens * dimension;
+         index += global_wmma_threads) {
+      const int token = index / dimension;
+      const int component = index % dimension;
+      if (token < valid_tokens) {
+        const auto source = cache_base +
+            static_cast<std::uint64_t>(tile_begin + token) * dimension + component;
+        shared_key[index] = key_cache[source];
+        shared_value[index] = value_cache[source];
+      } else {
+        shared_key[index] = __float2bfloat16_rn(0.0F);
+        shared_value[index] = __float2bfloat16_rn(0.0F);
+      }
+    }
+    __syncthreads();
+
+    if (warp < 4) {
+      using namespace nvcuda;
+      wmma::fragment<wmma::accumulator, 16, 16, 16, float> score_fragment;
+      wmma::fill_fragment(score_fragment, 0.0F);
+      for (int component = 0; component < dimension; component += 16) {
+        wmma::fragment<wmma::matrix_a, 16, 16, 16, __nv_bfloat16,
+                       wmma::row_major> query_fragment;
+        wmma::fragment<wmma::matrix_b, 16, 16, 16, __nv_bfloat16,
+                       wmma::col_major> key_fragment;
+        wmma::load_matrix_sync(query_fragment, shared_query + component, dimension);
+        wmma::load_matrix_sync(
+            key_fragment, shared_key + warp * 16 * dimension + component, dimension);
+        wmma::mma_sync(score_fragment, query_fragment, key_fragment, score_fragment);
+      }
+      wmma::store_matrix_sync(scores + warp * 16, score_fragment, tile_tokens,
+                              wmma::mem_row_major);
+    }
+    __syncthreads();
+
+    if (threadIdx.x < padded_group * tile_tokens) {
+      probabilities[threadIdx.x] = __float2bfloat16_rn(0.0F);
+    }
+    __syncthreads();
+    if (threadIdx.x < group) {
+      const int row = static_cast<int>(threadIdx.x);
+      float tile_maximum = -CUDART_INF_F;
+      for (int token = 0; token < valid_tokens; ++token) {
+        tile_maximum = max(tile_maximum, scores[row * tile_tokens + token]);
+      }
+      const float next_maximum = max(running_max[row], tile_maximum);
+      const float old_scale = expf(running_max[row] - next_maximum);
+      float tile_sum = 0.0F;
+      for (int token = 0; token < valid_tokens; ++token) {
+        const float probability = expf(scores[row * tile_tokens + token] - next_maximum);
+        probabilities[row * tile_tokens + token] = __float2bfloat16_rn(probability);
+        tile_sum += probability;
+      }
+      previous_scale[row] = old_scale;
+      running_sum[row] = running_sum[row] * old_scale + tile_sum;
+      running_max[row] = next_maximum;
+    }
+    __syncthreads();
+
+    if (warp < 16) {
+      using namespace nvcuda;
+      const int dimension_base = warp * 32;
+      #pragma unroll
+      for (int dimension_half = 0; dimension_half < 2; ++dimension_half) {
+        wmma::fragment<wmma::accumulator, 16, 16, 16, float> output_fragment;
+        wmma::fill_fragment(output_fragment, 0.0F);
+        #pragma unroll
+        for (int token = 0; token < tile_tokens; token += 16) {
+          wmma::fragment<wmma::matrix_a, 16, 16, 16, __nv_bfloat16,
+                         wmma::row_major> probability_fragment;
+          wmma::fragment<wmma::matrix_b, 16, 16, 16, __nv_bfloat16,
+                         wmma::row_major> value_fragment;
+          wmma::load_matrix_sync(probability_fragment, probabilities + token,
+                                 tile_tokens);
+          wmma::load_matrix_sync(
+              value_fragment,
+              shared_value + token * dimension + dimension_base + dimension_half * 16,
+              dimension);
+          wmma::mma_sync(output_fragment, probability_fragment, value_fragment,
+                         output_fragment);
+        }
+        wmma::store_matrix_sync(
+            partial_output + dimension_base + dimension_half * 16, output_fragment,
+            dimension, wmma::mem_row_major);
+      }
+    }
+    __syncthreads();
+
+    const int component = static_cast<int>(threadIdx.x);
+    #pragma unroll
+    for (int row = 0; row < group; ++row) {
+      accumulator[row] = accumulator[row] * previous_scale[row] +
+                         partial_output[row * dimension + component];
+    }
+    __syncthreads();
+  }
+
+  const int component = static_cast<int>(threadIdx.x);
+  #pragma unroll
+  for (int row = 0; row < group; ++row) {
+    output[query_base + row * dimension + component] =
+        __float2bfloat16_rn(accumulator[row] / running_sum[row]);
+  }
+}
+
 template <int head_dimension, int query_group, int tile_tokens>
 void launch(const void* query, const void* key_cache, const void* value_cache, void* output,
             int batch, int kv_heads, int context_length, cudaStream_t stream) {
@@ -166,6 +316,34 @@ void grouped_decode_attention_bf16(const void* query, const void* key_cache, con
   } else {
     throw std::runtime_error("unsupported grouped attention head shape");
   }
+}
+
+void grouped_decode_attention_wmma_bf16(
+    const void* query, const void* key_cache, const void* value_cache, void* output,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    cudaStream_t stream) {
+  if (batch <= 0 || kv_heads <= 0 || context_length <= 0 || query_group != 8 ||
+      head_dimension != 512) {
+    throw std::runtime_error("invalid WMMA global attention shape");
+  }
+  constexpr int padded_group = 16;
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr std::size_t shared_bytes =
+      sizeof(__nv_bfloat16) *
+          (padded_group * dimension + 2 * tile_tokens * dimension +
+           padded_group * tile_tokens) +
+      sizeof(float) * (padded_group * tile_tokens + padded_group * dimension);
+  check(cudaFuncSetAttribute(grouped_global_wmma_kernel,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             static_cast<int>(shared_bytes)),
+        "set WMMA global attention shared memory");
+  grouped_global_wmma_kernel<<<batch * kv_heads, global_wmma_threads, shared_bytes, stream>>>(
+      static_cast<const __nv_bfloat16*>(query),
+      static_cast<const __nv_bfloat16*>(key_cache),
+      static_cast<const __nv_bfloat16*>(value_cache),
+      static_cast<__nv_bfloat16*>(output), kv_heads, context_length);
+  check(cudaPeekAtLastError(), "launch WMMA global attention");
 }
 
 }  // namespace gradiated::engine

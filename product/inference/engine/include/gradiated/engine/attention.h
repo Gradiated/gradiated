@@ -15,4 +15,12 @@ void grouped_decode_attention_bf16(const void* query, const void* key_cache, con
                                    void* output, int batch, int kv_heads, int query_group,
                                    int context_length, int head_dimension, cudaStream_t stream);
 
+// Benchmark-only Hopper WMMA prototype for Gemma 4 global attention (D=512, GQA group=8). It
+// keeps scores on chip but is intentionally not selected by the model runner; measured evidence
+// in DESIGN.md rejects this synchronization-heavy implementation.
+void grouped_decode_attention_wmma_bf16(
+    const void* query, const void* key_cache, const void* value_cache, void* output,
+    int batch, int kv_heads, int query_group, int context_length, int head_dimension,
+    cudaStream_t stream);
+
 }  // namespace gradiated::engine

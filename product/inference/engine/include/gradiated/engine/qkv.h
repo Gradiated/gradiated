@@ -46,6 +46,16 @@ class Gemma4QkvPostprocessor {
                            int kv_heads, int head_dimension, bool key_equals_value,
                            int staged_position_start, int staged_capacity,
                            float epsilon, cudaStream_t stream);
+  // As above, but writes K/V directly into independent request caches. Cache pointers and
+  // absolute positions live on device so an entire speculative batch still costs one query
+  // launch and one K/V launch.
+  void run_prefill_uniform_direct(
+      const void* packed_qkv, const void* query_norm_weight,
+      const void* key_norm_weight, void* queries, void* const* device_key_caches,
+      void* const* device_value_caches, const int* device_position_starts,
+      int requests, int tokens_per_request, int query_heads, int kv_heads,
+      int head_dimension, bool key_equals_value, int cache_capacity,
+      float epsilon, cudaStream_t stream);
   void run_query_ragged(const void* projected_queries, const void* query_norm_weight,
                         void* queries, const int* device_positions, int batch,
                         int query_heads, int head_dimension, bool global_attention,

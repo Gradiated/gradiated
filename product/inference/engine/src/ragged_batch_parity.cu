@@ -68,33 +68,76 @@ int main(int argc, char** argv) {
       const auto assistant_plan = gradiated::engine::WeightPlan::gemma4_assistant(assistant_host);
       const auto assistant_weights = gradiated::engine::DeviceWeightArena::load(
           assistant_plan, assistant_host);
+      std::unique_ptr<gradiated::engine::Fp8WeightArena> assistant_fp8_weights;
+      const char* assistant_fp8_mode = std::getenv("GRADIATED_ASSISTANT_FP8_MODE");
+      if (assistant_fp8_mode != nullptr && std::string(assistant_fp8_mode) != "off") {
+        assistant_fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+            assistant_plan, *assistant_weights, gradiated::engine::Fp8Scaling::tensor);
+      }
       const auto fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
           plan, *weights, gradiated::engine::Fp8Scaling::tensor);
+      int benchmark_position = 512;
+      if (const char* configured = std::getenv("GRADIATED_ASSISTANT_BENCHMARK_POSITION")) {
+        benchmark_position = std::stoi(configured);
+      }
+      int draft_depth = 4;
+      if (const char* configured = std::getenv("GRADIATED_ASSISTANT_BENCHMARK_DEPTH")) {
+        draft_depth = std::stoi(configured);
+      }
+      if (draft_depth < 1 || draft_depth > 8 ||
+          benchmark_position < 1 || benchmark_position + draft_depth >= 8192) {
+        throw std::runtime_error("invalid assistant benchmark position");
+      }
       gradiated::engine::Gemma4BatchModelRunner runner(
-          config, *weights, batch, 512, fp8_weights.get(), assistant_weights.get());
-      const int first_token = runner.prefill_slot(0, prompt, 128);
-      for (int slot = 1; slot < batch; ++slot) runner.clone_slot(0, slot);
+          config, *weights, batch, std::max(1024, benchmark_position + 64),
+          fp8_weights.get(), assistant_weights.get(),
+          assistant_fp8_weights.get());
       std::vector<int> slots;
       for (int slot = 0; slot < batch; ++slot) slots.push_back(slot);
-      const std::vector<int> last_tokens(static_cast<std::size_t>(batch), prompt.back());
+      runner.seed_empty_cache_for_benchmark(benchmark_position);
+      const std::vector<int> last_tokens(static_cast<std::size_t>(batch), 2);
+      std::vector<int> target_first = runner.append_ragged(last_tokens, slots);
+      constexpr int draft_repetitions = 20;
+      static_cast<void>(runner.draft_four(last_tokens, slots, target_first, draft_depth));
+      std::vector<std::vector<int>> proposals;
+      const bool profile_verify = std::getenv("GRADIATED_PROFILE_ASSISTANT_VERIFY") != nullptr;
+      if (!profile_verify) cudaProfilerStart();
       const auto draft_begin = std::chrono::steady_clock::now();
-      const auto proposals = runner.draft_four(last_tokens, slots);
-      const double draft_seconds = std::chrono::duration<double>(
+      for (int repetition = 0; repetition < draft_repetitions; ++repetition) {
+        proposals = runner.draft_four(last_tokens, slots, target_first, draft_depth);
+      }
+      const double draft_total_seconds = std::chrono::duration<double>(
           std::chrono::steady_clock::now() - draft_begin).count();
+      const double draft_seconds = draft_total_seconds / draft_repetitions;
+      if (!profile_verify) cudaProfilerStop();
+      if (std::getenv("GRADIATED_WARM_ASSISTANT_VERIFY") != nullptr) {
+        static_cast<void>(runner.verify_greedy_proposals(proposals, target_first, slots));
+        runner.seed_empty_cache_for_benchmark(benchmark_position);
+        target_first = runner.append_ragged(last_tokens, slots);
+      }
+      if (profile_verify) cudaProfilerStart();
       const auto verify_begin = std::chrono::steady_clock::now();
       const auto verification = runner.verify_greedy_proposals(
-          proposals, std::vector<int>(static_cast<std::size_t>(batch), first_token), slots);
+          proposals, target_first, slots);
       const double verify_seconds = std::chrono::duration<double>(
           std::chrono::steady_clock::now() - verify_begin).count();
+      if (profile_verify) cudaProfilerStop();
       int accepted = 0;
       for (const int count : verification.accepted_tokens) accepted += count;
       std::cout << "assistant_native=true\n"
                 << "batch=" << batch << '\n'
-                << "draft_depth=4\n"
+                << "benchmark_position=" << benchmark_position << '\n'
+                << "draft_depth=" << draft_depth << '\n'
+                << "draft_repetitions=" << draft_repetitions << '\n'
                 << "draft_seconds=" << draft_seconds << '\n'
                 << "verify_seconds=" << verify_seconds << '\n'
                 << "mean_accepted_tokens="
                 << static_cast<double>(accepted) / batch << '\n'
+                << "accepted_tokens=";
+      for (const int count : verification.accepted_tokens) std::cout << count << ',';
+      std::cout << '\n' << "next_tokens=";
+      for (const int token : verification.next_tokens) std::cout << token << ',';
+      std::cout << '\n'
                 << "first_proposal=" << proposals.front().front() << '\n'
                 << "first_proposal_sequence=";
       for (const int token : proposals.front()) std::cout << token << ',';

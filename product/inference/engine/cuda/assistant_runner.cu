@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -22,13 +23,33 @@ constexpr int target_hidden = 5376;
 constexpr int assistant_hidden = 1024;
 constexpr int intermediate = 8192;
 constexpr int vocabulary = 262144;
-constexpr int maximum_draft_depth = 4;
+constexpr int maximum_draft_depth = 8;
 constexpr float epsilon = 1.0e-6F;
+
+enum class AssistantFp8Mode { off, lm_head, all };
+
+AssistantFp8Mode assistant_fp8_mode(const Fp8WeightArena* weights) {
+  const char* configured = std::getenv("GRADIATED_ASSISTANT_FP8_MODE");
+  const std::string mode = configured == nullptr ? "off" : configured;
+  if (mode == "off") return AssistantFp8Mode::off;
+  if (weights == nullptr) {
+    throw std::runtime_error("assistant FP8 mode requires quantized assistant weights");
+  }
+  if (mode == "lm_head") return AssistantFp8Mode::lm_head;
+  if (mode == "all") return AssistantFp8Mode::all;
+  throw std::runtime_error("GRADIATED_ASSISTANT_FP8_MODE must be off, lm_head or all");
+}
 
 void check(cudaError_t result, const char* operation) {
   if (result != cudaSuccess) {
     throw std::runtime_error(std::string(operation) + ": " + cudaGetErrorString(result));
   }
+}
+
+__global__ void offset_positions_kernel(const int* context_positions, int* query_positions,
+                                        int active, int offset) {
+  const int row = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (row < active) query_positions[row] = context_positions[row] + offset;
 }
 
 class Allocation {
@@ -46,9 +67,12 @@ class Allocation {
 
 struct Gemma4AssistantRunner::Implementation {
   const DeviceWeightArena& weights;
+  const Fp8WeightArena* fp8_weights;
+  AssistantFp8Mode fp8_mode;
   int maximum_batch;
   int maximum_context;
   Bf16Linear linear;
+  std::unique_ptr<Fp8Linear> fp8_linear;
   Gemma4QkvPostprocessor qkv;
   GemmGroupedDecodeAttention attention;
   Allocation target_embeddings;
@@ -70,13 +94,22 @@ struct Gemma4AssistantRunner::Implementation {
   Allocation logits;
   Allocation device_tokens;
   Allocation device_outputs;
+  Allocation device_forced_tokens;
+  Allocation device_proposals;
   Allocation device_context_positions;
   Allocation device_query_positions;
   Allocation device_slots;
   Allocation argmax_workspace;
+  Allocation fp8_input;
+  Allocation fp8_scale;
 
-  Implementation(const DeviceWeightArena& assistant_weights, int batch, int context)
-      : weights(assistant_weights), maximum_batch(batch), maximum_context(context), linear(),
+  Implementation(const DeviceWeightArena& assistant_weights,
+                 const Fp8WeightArena* assistant_fp8_weights, int batch, int context)
+      : weights(assistant_weights), fp8_weights(assistant_fp8_weights),
+        fp8_mode(assistant_fp8_mode(assistant_fp8_weights)), maximum_batch(batch),
+        maximum_context(context), linear(),
+        fp8_linear(fp8_mode == AssistantFp8Mode::off
+            ? nullptr : std::make_unique<Fp8Linear>(Fp8Scaling::tensor)),
         qkv(context), attention(batch, 16, 8, context),
         target_embeddings(2ULL * batch * target_hidden),
         previous_hidden(2ULL * batch * target_hidden),
@@ -91,10 +124,29 @@ struct Gemma4AssistantRunner::Implementation {
         activated(2ULL * batch * intermediate), down(2ULL * batch * assistant_hidden),
         final_hidden(2ULL * batch * assistant_hidden),
         logits(2ULL * batch * vocabulary), device_tokens(sizeof(int) * batch),
-        device_outputs(sizeof(int) * batch), device_context_positions(sizeof(int) * batch),
+        device_outputs(sizeof(int) * batch), device_forced_tokens(sizeof(int) * batch),
+        device_proposals(sizeof(int) * batch * maximum_draft_depth),
+        device_context_positions(sizeof(int) * batch),
         device_query_positions(sizeof(int) * batch), device_slots(sizeof(int) * batch),
-        argmax_workspace(argmax_bf16_workspace_bytes(vocabulary) * batch) {
+        argmax_workspace(argmax_bf16_workspace_bytes(vocabulary) * batch),
+        fp8_input(static_cast<std::uint64_t>(batch) * 16384), fp8_scale(sizeof(float)) {
     if (batch <= 0 || context <= 0) throw std::runtime_error("invalid assistant shape");
+  }
+
+  void run_linear(const void* input, const std::string& name, void* output,
+                  int rows, int input_width, int output_width) {
+    const bool use_fp8 = fp8_mode == AssistantFp8Mode::all ||
+        (fp8_mode == AssistantFp8Mode::lm_head && name == "token_embedding");
+    if (!use_fp8) {
+      linear.run(input, weights.at(name), output, rows, input_width, output_width, nullptr);
+      return;
+    }
+    quantize_bf16_to_fp8_e4m3(
+        input, fp8_input.get(), static_cast<float*>(fp8_scale.get()),
+        static_cast<std::size_t>(rows) * input_width, nullptr);
+    fp8_linear->run(fp8_input.get(), static_cast<const float*>(fp8_scale.get()),
+                    fp8_weights->at(name), fp8_weights->scale(name), output,
+                    rows, input_width, output_width, nullptr);
   }
 
   void run_layer(int layer, const void* input, void* output, int active,
@@ -110,8 +162,8 @@ struct Gemma4AssistantRunner::Implementation {
     const std::string prefix = "layer." + std::to_string(layer) + ".";
     rms_norm_bf16(input, weights.at(prefix + "input_norm"), normalized.get(), active,
                   assistant_hidden, epsilon, nullptr);
-    linear.run(normalized.get(), weights.at(prefix + "q"), projected_queries.get(), active,
-               assistant_hidden, query_width, nullptr);
+    run_linear(normalized.get(), prefix + "q", projected_queries.get(), active,
+               assistant_hidden, query_width);
     qkv.run_query_ragged(projected_queries.get(), weights.at(prefix + "q_norm"), queries.get(),
                          query_positions, active, 32, head_dimension, global, epsilon, nullptr);
     if (global && global_split > 0 && global_split < active) {
@@ -131,17 +183,17 @@ struct Gemma4AssistantRunner::Implementation {
                            slots, active, maximum_slots, kv_heads, query_group,
                            maximum_context_length, head_dimension, nullptr, cache_capacity);
     }
-    linear.run(attention_output.get(), weights.at(prefix + "o"), projected_attention.get(),
-               active, query_width, assistant_hidden, nullptr);
+    run_linear(attention_output.get(), prefix + "o", projected_attention.get(),
+               active, query_width, assistant_hidden);
     rms_norm_add_and_norm_bf16(
         projected_attention.get(), weights.at(prefix + "post_attention_norm"), input,
         weights.at(prefix + "pre_mlp_norm"), first_residual.get(), pre_mlp.get(), active,
         assistant_hidden, epsilon, nullptr);
-    linear.run(pre_mlp.get(), weights.at(prefix + "gate_up"), gate_up.get(), active,
-               assistant_hidden, 2 * intermediate, nullptr);
+    run_linear(pre_mlp.get(), prefix + "gate_up", gate_up.get(), active,
+               assistant_hidden, 2 * intermediate);
     gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), active, intermediate, nullptr);
-    linear.run(activated.get(), weights.at(prefix + "down"), down.get(), active,
-               intermediate, assistant_hidden, nullptr);
+    run_linear(activated.get(), prefix + "down", down.get(), active,
+               intermediate, assistant_hidden);
     rms_norm_add_scale_bf16(down.get(), weights.at(prefix + "post_mlp_norm"),
                             first_residual.get(), weights.at(prefix + "scalar"), output,
                             active, assistant_hidden, epsilon, nullptr);
@@ -149,8 +201,10 @@ struct Gemma4AssistantRunner::Implementation {
 };
 
 Gemma4AssistantRunner::Gemma4AssistantRunner(const DeviceWeightArena& weights,
+                                             const Fp8WeightArena* fp8_weights,
                                              int maximum_batch, int maximum_context)
-    : implementation_(std::make_unique<Implementation>(weights, maximum_batch, maximum_context)) {}
+    : implementation_(std::make_unique<Implementation>(
+          weights, fp8_weights, maximum_batch, maximum_context)) {}
 Gemma4AssistantRunner::~Gemma4AssistantRunner() = default;
 
 std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
@@ -199,30 +253,32 @@ std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
         "copy assistant context positions");
   check(cudaMemcpy(state.device_slots.get(), slots.data(), active * sizeof(int),
                    cudaMemcpyHostToDevice), "copy assistant slots");
+  if (!forced_first_tokens.empty()) {
+    check(cudaMemcpy(state.device_forced_tokens.get(), forced_first_tokens.data(),
+                     active * sizeof(int), cudaMemcpyHostToDevice),
+          "copy forced assistant first tokens");
+  }
   gather_rows_bf16(target_hidden_by_slot, static_cast<const int*>(state.device_slots.get()),
                    state.previous_hidden.get(), active, target_hidden, nullptr);
 
   std::vector<std::vector<int>> proposals(
       static_cast<std::size_t>(active), std::vector<int>(static_cast<std::size_t>(depth)));
-  std::vector<int> query_positions(static_cast<std::size_t>(active));
-  std::vector<int> drafted(static_cast<std::size_t>(active));
   for (int draft_index = 0; draft_index < depth; ++draft_index) {
+    const void* input_tokens = draft_index == 0
+        ? state.device_tokens.get() : state.device_outputs.get();
     embedding_batch_bf16(target_embedding_weight,
-                         static_cast<const int*>(state.device_tokens.get()),
+                         static_cast<const int*>(input_tokens),
                          state.target_embeddings.get(), active, vocabulary, target_hidden,
                          std::sqrt(static_cast<float>(target_hidden)), nullptr);
     concatenate_rows_bf16(state.target_embeddings.get(), target_hidden,
                           state.previous_hidden.get(), target_hidden, state.concatenated.get(),
                           active, nullptr);
-    state.linear.run(state.concatenated.get(), state.weights.at("pre_projection"),
-                     state.hidden_a.get(), active, 2 * target_hidden, assistant_hidden, nullptr);
-    for (int row = 0; row < active; ++row) {
-      query_positions[static_cast<std::size_t>(row)] =
-          context_positions[static_cast<std::size_t>(row)] + draft_index;
-    }
-    check(cudaMemcpy(state.device_query_positions.get(), query_positions.data(),
-                     active * sizeof(int), cudaMemcpyHostToDevice),
-          "copy assistant query positions");
+    state.run_linear(state.concatenated.get(), "pre_projection", state.hidden_a.get(),
+                     active, 2 * target_hidden, assistant_hidden);
+    offset_positions_kernel<<<(active + 255) / 256, 256>>>(
+        static_cast<const int*>(state.device_context_positions.get()),
+        static_cast<int*>(state.device_query_positions.get()), active, draft_index);
+    check(cudaPeekAtLastError(), "compute assistant query positions");
     void* input = state.hidden_a.get();
     void* output = state.hidden_b.get();
     for (int layer = 0; layer < 4; ++layer) {
@@ -240,29 +296,42 @@ std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
     }
     rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), active,
                   assistant_hidden, epsilon, nullptr);
-    state.linear.run(state.final_hidden.get(), state.weights.at("token_embedding"),
-                     state.logits.get(), active, assistant_hidden, vocabulary, nullptr);
-    const std::size_t one_workspace = argmax_bf16_workspace_bytes(vocabulary);
-    for (int row = 0; row < active; ++row) {
-      argmax_bf16(static_cast<const unsigned char*>(state.logits.get()) +
-                      2ULL * row * vocabulary,
-                  vocabulary, static_cast<int*>(state.device_outputs.get()) + row,
-                  static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                      static_cast<std::size_t>(row) * one_workspace,
-                  nullptr);
+    const bool forced_target_token = draft_index == 0 && !forced_first_tokens.empty();
+    if (forced_target_token) {
+      // The target has already produced this token. It seeds the recurrent second proposal,
+      // so evaluating and then overwriting the assistant's 262k-way LM head is dead work.
+      check(cudaMemcpyAsync(state.device_outputs.get(), state.device_forced_tokens.get(),
+                            active * sizeof(int), cudaMemcpyDeviceToDevice),
+            "select forced assistant first tokens");
+    } else {
+      state.run_linear(state.final_hidden.get(), "token_embedding", state.logits.get(),
+                       active, assistant_hidden, vocabulary);
+      const std::size_t one_workspace = argmax_bf16_workspace_bytes(vocabulary);
+      for (int row = 0; row < active; ++row) {
+        argmax_bf16(static_cast<const unsigned char*>(state.logits.get()) +
+                        2ULL * row * vocabulary,
+                    vocabulary, static_cast<int*>(state.device_outputs.get()) + row,
+                    static_cast<unsigned char*>(state.argmax_workspace.get()) +
+                        static_cast<std::size_t>(row) * one_workspace,
+                    nullptr);
+      }
     }
-    state.linear.run(state.final_hidden.get(), state.weights.at("post_projection"),
-                     state.previous_hidden.get(), active, assistant_hidden, target_hidden,
-                     nullptr);
-    check(cudaMemcpy(drafted.data(), state.device_outputs.get(), active * sizeof(int),
-                     cudaMemcpyDeviceToHost), "copy assistant predictions");
-    if (draft_index == 0 && !forced_first_tokens.empty()) drafted = forced_first_tokens;
+    state.run_linear(state.final_hidden.get(), "post_projection", state.previous_hidden.get(),
+                     active, assistant_hidden, target_hidden);
+    check(cudaMemcpyAsync(
+              static_cast<int*>(state.device_proposals.get()) + draft_index * active,
+              state.device_outputs.get(), active * sizeof(int), cudaMemcpyDeviceToDevice),
+          "store device assistant proposals");
+  }
+  std::vector<int> depth_major(static_cast<std::size_t>(active * depth));
+  check(cudaMemcpy(depth_major.data(), state.device_proposals.get(),
+                   depth_major.size() * sizeof(int), cudaMemcpyDeviceToHost),
+        "copy assistant proposals");
+  for (int draft_index = 0; draft_index < depth; ++draft_index) {
     for (int row = 0; row < active; ++row) {
       proposals[static_cast<std::size_t>(row)][static_cast<std::size_t>(draft_index)] =
-          drafted[static_cast<std::size_t>(row)];
+          depth_major[static_cast<std::size_t>(draft_index * active + row)];
     }
-    check(cudaMemcpy(state.device_tokens.get(), drafted.data(), active * sizeof(int),
-                     cudaMemcpyHostToDevice), "copy recurrent assistant tokens");
   }
   return proposals;
 }

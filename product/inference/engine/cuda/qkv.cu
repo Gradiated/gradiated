@@ -304,6 +304,59 @@ __global__ void uniform_prefill_key_value_kernel(
   }
 }
 
+template <int dimension, bool key_equals_value>
+__global__ void uniform_prefill_direct_key_value_kernel(
+    const __nv_bfloat16* packed, const __nv_bfloat16* norm_weight,
+    const __nv_bfloat16* cosine, const __nv_bfloat16* sine,
+    __nv_bfloat16* const* key_caches, __nv_bfloat16* const* value_caches,
+    const int* position_starts, int requests, int tokens_per_request,
+    int query_width, int kv_heads, int packed_width, int cache_capacity,
+    float epsilon) {
+  const int packed_head = static_cast<int>(blockIdx.x);
+  const int row = packed_head / kv_heads;
+  const int head = packed_head % kv_heads;
+  const int request = row / tokens_per_request;
+  const int token = row % tokens_per_request;
+  if (request >= requests) return;
+  const __nv_bfloat16* key_input = packed + static_cast<std::uint64_t>(row) * packed_width +
+                                   query_width + head * dimension;
+  const __nv_bfloat16* value_input = key_equals_value
+      ? key_input
+      : packed + static_cast<std::uint64_t>(row) * packed_width + query_width +
+            kv_heads * dimension + head * dimension;
+  float key_square_sum = 0.0F;
+  float value_square_sum = 0.0F;
+  for (int index = threadIdx.x; index < dimension; index += threads) {
+    const float key = __bfloat162float(key_input[index]);
+    const float value = __bfloat162float(value_input[index]);
+    key_square_sum += key * key;
+    value_square_sum += value * value;
+  }
+  const float inverse_key_rms = rsqrtf(block_sum(key_square_sum) / dimension + epsilon);
+  const float inverse_value_rms = key_equals_value
+      ? inverse_key_rms : rsqrtf(block_sum(value_square_sum) / dimension + epsilon);
+  const int position = position_starts[request] + token;
+  const int cache_position = position % cache_capacity;
+  const int half = dimension / 2;
+  const std::uint64_t cache_base =
+      (static_cast<std::uint64_t>(head) * cache_capacity + cache_position) * dimension;
+  __nv_bfloat16* key_cache = key_caches[request];
+  __nv_bfloat16* value_cache = value_caches[request];
+  for (int index = threadIdx.x; index < dimension; index += threads) {
+    const int partner = index < half ? index + half : index - half;
+    const float normalized = __bfloat162float(__float2bfloat16_rn(
+        __bfloat162float(key_input[index]) * inverse_key_rms * __bfloat162float(norm_weight[index])));
+    const float partner_normalized = __bfloat162float(__float2bfloat16_rn(
+        __bfloat162float(key_input[partner]) * inverse_key_rms * __bfloat162float(norm_weight[partner])));
+    const float rotated = index < half ? -partner_normalized : partner_normalized;
+    key_cache[cache_base + index] = __float2bfloat16_rn(
+        normalized * __bfloat162float(cosine[position * dimension + index]) +
+        rotated * __bfloat162float(sine[position * dimension + index]));
+    value_cache[cache_base + index] = __float2bfloat16_rn(
+        __bfloat162float(value_input[index]) * inverse_value_rms);
+  }
+}
+
 }  // namespace
 
 struct Gemma4QkvPostprocessor::Implementation {
@@ -517,6 +570,58 @@ void Gemma4QkvPostprocessor::run_prefill_uniform(
     throw std::runtime_error("unsupported uniform prefill Gemma 4 QKV shape");
   }
   check(cudaPeekAtLastError(), "launch uniform prefill QKV postprocessing");
+}
+
+void Gemma4QkvPostprocessor::run_prefill_uniform_direct(
+    const void* packed_qkv, const void* query_norm_weight,
+    const void* key_norm_weight, void* queries, void* const* device_key_caches,
+    void* const* device_value_caches, const int* device_position_starts,
+    int requests, int tokens_per_request, int query_heads, int kv_heads,
+    int head_dimension, bool key_equals_value, int cache_capacity,
+    float epsilon, cudaStream_t stream) {
+  if (packed_qkv == nullptr || query_norm_weight == nullptr || key_norm_weight == nullptr ||
+      queries == nullptr || device_key_caches == nullptr || device_value_caches == nullptr ||
+      device_position_starts == nullptr || requests <= 0 || tokens_per_request <= 0 ||
+      query_heads <= 0 || kv_heads <= 0 || cache_capacity <= 0 ||
+      cache_capacity > implementation_->maximum_positions) {
+    throw std::runtime_error("invalid direct uniform prefill QKV shape");
+  }
+  const int rows = requests * tokens_per_request;
+  const int query_width = query_heads * head_dimension;
+  const int kv_width = kv_heads * head_dimension;
+  const int packed_width = query_width + kv_width * (key_equals_value ? 1 : 2);
+  if (head_dimension == 256 && !key_equals_value) {
+    uniform_prefill_query_kernel<256><<<rows * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv),
+        static_cast<const __nv_bfloat16*>(query_norm_weight), implementation_->sliding_cosine,
+        implementation_->sliding_sine, static_cast<__nv_bfloat16*>(queries),
+        device_position_starts, requests, tokens_per_request, query_heads, packed_width, epsilon);
+    uniform_prefill_direct_key_value_kernel<256, false><<<rows * kv_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv),
+        static_cast<const __nv_bfloat16*>(key_norm_weight), implementation_->sliding_cosine,
+        implementation_->sliding_sine,
+        reinterpret_cast<__nv_bfloat16* const*>(device_key_caches),
+        reinterpret_cast<__nv_bfloat16* const*>(device_value_caches),
+        device_position_starts, requests, tokens_per_request, query_width, kv_heads,
+        packed_width, cache_capacity, epsilon);
+  } else if (head_dimension == 512 && key_equals_value) {
+    uniform_prefill_query_kernel<512><<<rows * query_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv),
+        static_cast<const __nv_bfloat16*>(query_norm_weight), implementation_->global_cosine,
+        implementation_->global_sine, static_cast<__nv_bfloat16*>(queries),
+        device_position_starts, requests, tokens_per_request, query_heads, packed_width, epsilon);
+    uniform_prefill_direct_key_value_kernel<512, true><<<rows * kv_heads, threads, 0, stream>>>(
+        static_cast<const __nv_bfloat16*>(packed_qkv),
+        static_cast<const __nv_bfloat16*>(key_norm_weight), implementation_->global_cosine,
+        implementation_->global_sine,
+        reinterpret_cast<__nv_bfloat16* const*>(device_key_caches),
+        reinterpret_cast<__nv_bfloat16* const*>(device_value_caches),
+        device_position_starts, requests, tokens_per_request, query_width, kv_heads,
+        packed_width, cache_capacity, epsilon);
+  } else {
+    throw std::runtime_error("unsupported direct uniform prefill Gemma 4 QKV shape");
+  }
+  check(cudaPeekAtLastError(), "launch direct uniform prefill QKV postprocessing");
 }
 
 void Gemma4QkvPostprocessor::run_query_ragged(

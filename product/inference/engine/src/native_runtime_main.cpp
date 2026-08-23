@@ -208,6 +208,7 @@ class ContinuousScheduler {
                       const gradiated::engine::DeviceWeightArena& weights,
                       const gradiated::engine::Fp8WeightArena* fp8_weights,
                       const gradiated::engine::DeviceWeightArena* assistant_weights,
+                      const gradiated::engine::Fp8WeightArena* assistant_fp8_weights,
                       RuntimeMetrics& metrics, int speculative_depth,
                       int speculative_minimum_batch,
                       int prefill_quantum_tokens,
@@ -218,7 +219,7 @@ class ContinuousScheduler {
                       int cache_affinity_max_bypasses,
                       desmond::SharedTraceRing* trace_ring)
       : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
-                assistant_weights),
+                assistant_weights, assistant_fp8_weights),
         slots_(maximum_slots), metrics_(metrics),
         speculative_depth_(speculative_depth),
         speculative_minimum_batch_(speculative_minimum_batch),
@@ -333,6 +334,7 @@ class ContinuousScheduler {
     std::uint64_t age{0};
     std::uint64_t admission_order{0};
     bool decode_ready{false};
+    bool speculative_cohort{false};
     std::chrono::steady_clock::time_point last_token_at;
   };
 
@@ -555,6 +557,7 @@ class ContinuousScheduler {
     auto& slot = slots_[static_cast<std::size_t>(index)];
     slot.output_ids.clear();
     slot.decode_ready = false;
+    slot.speculative_cohort = false;
     slot.inference_begin = std::chrono::steady_clock::now();
     slot.queue_microseconds = static_cast<std::uint64_t>(
         std::chrono::duration_cast<std::chrono::microseconds>(slot.inference_begin - job->queued_at)
@@ -697,9 +700,20 @@ class ContinuousScheduler {
             static_cast<std::uint64_t>(maximum_decode_context),
             static_cast<std::uint32_t>(slots[row]));
     }
+    const bool continuing_speculative_cohort = std::any_of(
+        indices.begin(), indices.end(), [&](int index) {
+          return slots_[static_cast<std::size_t>(index)].speculative_cohort;
+        });
     if (runner_.has_assistant() &&
-        indices.size() >= static_cast<std::size_t>(speculative_minimum_batch_)) {
+        (indices.size() >= static_cast<std::size_t>(speculative_minimum_batch_) ||
+         continuing_speculative_cohort)) {
       try {
+        // Starting speculation is batch-size gated, but once a cohort has paid that decision,
+        // keep accelerating its shrinking tail. Falling back as soon as one request finishes
+        // turned synchronized 16-way traffic into 14--20 slow single-token decode steps.
+        for (const int index : indices) {
+          slots_[static_cast<std::size_t>(index)].speculative_cohort = true;
+        }
         // Keep ragged contexts monotonic so the target verifier can split the cohort into
         // narrower global-attention GEMMs instead of padding every request to the longest one.
         std::vector<std::size_t> order(indices.size());
@@ -1109,6 +1123,7 @@ int main(int argc, char** argv) {
       throw std::runtime_error("GRADIATED_FP8_DECODE must be off or tensor");
     }
     std::unique_ptr<gradiated::engine::DeviceWeightArena> assistant_weights;
+    std::unique_ptr<gradiated::engine::Fp8WeightArena> assistant_fp8_weights;
     const std::string assistant_directory = environment("GRADIATED_ASSISTANT_MODEL_PATH");
     if (!assistant_directory.empty()) {
       if (!fp8_weights) {
@@ -1120,6 +1135,14 @@ int main(int argc, char** argv) {
           gradiated::engine::WeightPlan::gemma4_assistant(assistant_host);
       assistant_weights = gradiated::engine::DeviceWeightArena::load(
           assistant_plan, assistant_host);
+      const std::string assistant_fp8_mode = environment("GRADIATED_ASSISTANT_FP8_MODE", "off");
+      if (assistant_fp8_mode == "lm_head" || assistant_fp8_mode == "all") {
+        assistant_fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
+            assistant_plan, *assistant_weights, gradiated::engine::Fp8Scaling::tensor);
+      } else if (assistant_fp8_mode != "off") {
+        throw std::runtime_error(
+            "GRADIATED_ASSISTANT_FP8_MODE must be off, lm_head or all");
+      }
     }
 
     const std::string configured_key = environment(
@@ -1144,7 +1167,7 @@ int main(int argc, char** argv) {
         "GRADIATED_INTERLEAVED_SUFFIX_LAYER_MIN_DECODE",
         default_interleaved_suffix_layer_minimum_decode, 1, maximum_slots);
     const int speculative_depth = environment_integer(
-        "GRADIATED_SPECULATIVE_DEPTH", default_speculative_depth, 1, 4);
+        "GRADIATED_SPECULATIVE_DEPTH", default_speculative_depth, 1, 8);
     const int speculative_minimum_batch = environment_integer(
         "GRADIATED_SPECULATIVE_MIN_BATCH", default_speculative_minimum_batch, 1,
         maximum_slots);
@@ -1163,6 +1186,7 @@ int main(int argc, char** argv) {
     }
     RuntimeMetrics metrics;
     ContinuousScheduler scheduler(config, *weights, fp8_weights.get(), assistant_weights.get(),
+                                  assistant_fp8_weights.get(),
                                   metrics, speculative_depth, speculative_minimum_batch,
                                   prefill_quantum_tokens,
                                   idle_prefill_quantum_tokens,

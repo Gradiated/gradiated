@@ -11,6 +11,7 @@ namespace gradiated::engine {
 class Gemma4AssistantRunner {
  public:
   Gemma4AssistantRunner(const class DeviceWeightArena& assistant_weights,
+                        const class Fp8WeightArena* fp8_weights,
                         int maximum_batch, int maximum_context);
   ~Gemma4AssistantRunner();
   Gemma4AssistantRunner(const Gemma4AssistantRunner&) = delete;

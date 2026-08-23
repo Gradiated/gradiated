@@ -2,16 +2,19 @@
 #include "gradiated/engine/attention.h"
 #include "gradiated/engine/linear.h"
 #include "gradiated/engine/gemm_attention.h"
+#include "gradiated/engine/prefill_gemm_attention.h"
 
 #include <cuda_bf16.h>
 #include <cuda_runtime.h>
 
 #include <array>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace {
 
@@ -244,6 +247,150 @@ void test_prefill_layouts() {
   }
 }
 
+template <int query_tokens>
+void test_uniform_ring_attention() {
+  constexpr int requests = 2;
+  constexpr int query_heads = 2;
+  constexpr int kv_heads = 1;
+  constexpr int capacity = 16;
+  constexpr int dimension = 16;
+  constexpr int query_elements = requests * query_heads * query_tokens * dimension;
+  constexpr int cache_elements = requests * kv_heads * capacity * dimension;
+  constexpr int backup_elements = requests * kv_heads * query_tokens * dimension;
+  std::vector<float> query_values(query_elements);
+  std::vector<float> key_values(cache_elements);
+  std::vector<float> value_values(cache_elements);
+  std::vector<float> backup_key_values(backup_elements);
+  std::vector<float> backup_value_values(backup_elements);
+  const std::array<int, requests> positions{11, 13};
+  for (int index = 0; index < query_elements; ++index) {
+    query_values[static_cast<std::size_t>(index)] =
+        static_cast<float>((index * 7) % 19 - 9) / 32.0F;
+  }
+  for (int index = 0; index < cache_elements; ++index) {
+    key_values[static_cast<std::size_t>(index)] =
+        static_cast<float>((index * 5) % 23 - 11) / 48.0F;
+    value_values[static_cast<std::size_t>(index)] =
+        static_cast<float>((index * 11) % 29 - 14) / 24.0F;
+  }
+  for (int index = 0; index < backup_elements; ++index) {
+    backup_key_values[static_cast<std::size_t>(index)] =
+        static_cast<float>((index * 13) % 17 - 8) / 40.0F;
+    backup_value_values[static_cast<std::size_t>(index)] =
+        static_cast<float>((index * 3) % 31 - 15) / 20.0F;
+  }
+  const auto to_bf16 = [](const std::vector<float>& values) {
+    std::vector<__nv_bfloat16> result(values.size());
+    for (std::size_t index = 0; index < values.size(); ++index) {
+      result[index] = __float2bfloat16(values[index]);
+    }
+    return result;
+  };
+  const auto query = to_bf16(query_values);
+  const auto keys = to_bf16(key_values);
+  const auto values = to_bf16(value_values);
+  const auto backup_keys = to_bf16(backup_key_values);
+  const auto backup_values = to_bf16(backup_value_values);
+  DeviceAllocation<__nv_bfloat16> device_query(query_elements), device_keys(cache_elements),
+      device_values(cache_elements), device_backup_keys(backup_elements),
+      device_backup_values(backup_elements), device_output(query_elements);
+  DeviceAllocation<int> device_positions(requests);
+  DeviceAllocation<void*> device_pointers(2 * requests);
+  cuda_check(cudaMemcpy(device_query.get(), query.data(), query.size() * sizeof(query[0]),
+                        cudaMemcpyHostToDevice), "copy ring queries");
+  cuda_check(cudaMemcpy(device_keys.get(), keys.data(), keys.size() * sizeof(keys[0]),
+                        cudaMemcpyHostToDevice), "copy ring keys");
+  cuda_check(cudaMemcpy(device_values.get(), values.data(), values.size() * sizeof(values[0]),
+                        cudaMemcpyHostToDevice), "copy ring values");
+  cuda_check(cudaMemcpy(device_backup_keys.get(), backup_keys.data(),
+                        backup_keys.size() * sizeof(backup_keys[0]), cudaMemcpyHostToDevice),
+             "copy ring backup keys");
+  cuda_check(cudaMemcpy(device_backup_values.get(), backup_values.data(),
+                        backup_values.size() * sizeof(backup_values[0]), cudaMemcpyHostToDevice),
+             "copy ring backup values");
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy ring positions");
+  std::array<void*, 2 * requests> pointers{};
+  for (int request = 0; request < requests; ++request) {
+    pointers[static_cast<std::size_t>(request)] =
+        device_keys.get() + request * kv_heads * capacity * dimension;
+    pointers[static_cast<std::size_t>(requests + request)] =
+        device_values.get() + request * kv_heads * capacity * dimension;
+  }
+  cuda_check(cudaMemcpy(device_pointers.get(), pointers.data(), sizeof(pointers),
+                        cudaMemcpyHostToDevice), "copy ring pointers");
+  gradiated::engine::GemmCausalPrefillAttention attention(
+      requests * capacity, query_heads, requests);
+  attention.run_uniform_ring_batch(
+      device_query.get(), reinterpret_cast<const void* const*>(device_pointers.get()),
+      reinterpret_cast<const void* const*>(device_pointers.get() + requests),
+      device_backup_keys.get(), device_backup_values.get(), device_output.get(),
+      device_positions.get(), requests, query_heads, kv_heads, query_tokens,
+      capacity, dimension, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "ring attention synchronization");
+  std::vector<__nv_bfloat16> output(query_elements);
+  cuda_check(cudaMemcpy(output.data(), device_output.get(), output.size() * sizeof(output[0]),
+                        cudaMemcpyDeviceToHost), "copy ring attention output");
+
+  for (int request = 0; request < requests; ++request) {
+    for (int head = 0; head < query_heads; ++head) {
+      for (int query_token = 0; query_token < query_tokens; ++query_token) {
+        std::array<float, capacity> scores{};
+        float maximum = -INFINITY;
+        for (int physical = 0; physical < capacity; ++physical) {
+          int backup_token = -1;
+          for (int proposal = query_token + 1; proposal < query_tokens; ++proposal) {
+            if ((positions[static_cast<std::size_t>(request)] + proposal) % capacity == physical) {
+              backup_token = proposal;
+            }
+          }
+          float score = 0.0F;
+          for (int component = 0; component < dimension; ++component) {
+            const int query_index =
+                ((request * query_heads + head) * query_tokens + query_token) * dimension +
+                component;
+            const int key_index = backup_token >= 0
+                ? ((request * kv_heads) * query_tokens + backup_token) * dimension + component
+                : ((request * kv_heads) * capacity + physical) * dimension + component;
+            score += __bfloat162float(query[static_cast<std::size_t>(query_index)]) *
+                     __bfloat162float((backup_token >= 0 ? backup_keys : keys)
+                                         [static_cast<std::size_t>(key_index)]);
+          }
+          scores[static_cast<std::size_t>(physical)] = score;
+          maximum = std::max(maximum, score);
+        }
+        float denominator = 0.0F;
+        for (float& score : scores) {
+          score = std::exp(score - maximum);
+          denominator += score;
+        }
+        for (int component = 0; component < dimension; ++component) {
+          float expected = 0.0F;
+          for (int physical = 0; physical < capacity; ++physical) {
+            int backup_token = -1;
+            for (int proposal = query_token + 1; proposal < query_tokens; ++proposal) {
+              if ((positions[static_cast<std::size_t>(request)] + proposal) % capacity == physical) {
+                backup_token = proposal;
+              }
+            }
+            const int value_index = backup_token >= 0
+                ? ((request * kv_heads) * query_tokens + backup_token) * dimension + component
+                : ((request * kv_heads) * capacity + physical) * dimension + component;
+            expected += scores[static_cast<std::size_t>(physical)] / denominator *
+                        __bfloat162float((backup_token >= 0 ? backup_values : values)
+                                            [static_cast<std::size_t>(value_index)]);
+          }
+          const int output_index =
+              ((request * query_heads + head) * query_tokens + query_token) * dimension +
+              component;
+          near(__bfloat162float(output[static_cast<std::size_t>(output_index)]), expected,
+               0.015F, "uniform ring attention");
+        }
+      }
+    }
+  }
+}
+
 }  // namespace
 
 int main() {
@@ -253,6 +400,8 @@ int main() {
     test_linear();
     test_grouped_attention();
     test_prefill_layouts();
+    test_uniform_ring_attention<4>();
+    test_uniform_ring_attention<8>();
     std::cout << "all CUDA operation tests passed\n";
     return 0;
   } catch (const std::exception& error) {

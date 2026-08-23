@@ -35,18 +35,16 @@ class Allocation {
   void* pointer_{nullptr};
 };
 
-float benchmark(cudaDataType_t input_type, int input_bytes) {
+float benchmark(cudaDataType_t input_type, int input_bytes, int query_group, int context) {
   constexpr int batch = 16;
   constexpr int kv_heads = 4;
-  constexpr int query_group = 8;
-  constexpr int context = 8192;
   constexpr int dimension = 512;
   constexpr int head_batches = batch * kv_heads;
-  constexpr std::uint64_t key_elements =
+  const std::uint64_t key_elements =
       static_cast<std::uint64_t>(head_batches) * context * dimension;
-  constexpr std::uint64_t query_elements =
+  const std::uint64_t query_elements =
       static_cast<std::uint64_t>(head_batches) * query_group * dimension;
-  constexpr std::uint64_t score_elements =
+  const std::uint64_t score_elements =
       static_cast<std::uint64_t>(head_batches) * query_group * context;
   constexpr std::size_t workspace_bytes = 32ULL * 1024 * 1024;
   Allocation key(key_elements * input_bytes);
@@ -92,9 +90,9 @@ float benchmark(cudaDataType_t input_type, int input_bytes) {
   check(cublasLtMatrixLayoutCreate(
             &score_layout, CUDA_R_16BF, context, query_group, context), "create score layout");
   constexpr std::int32_t batch_count = head_batches;
-  constexpr std::int64_t key_stride = static_cast<std::int64_t>(context) * dimension;
-  constexpr std::int64_t query_stride = static_cast<std::int64_t>(query_group) * dimension;
-  constexpr std::int64_t score_stride = static_cast<std::int64_t>(query_group) * context;
+  const std::int64_t key_stride = static_cast<std::int64_t>(context) * dimension;
+  const std::int64_t query_stride = static_cast<std::int64_t>(query_group) * dimension;
+  const std::int64_t score_stride = static_cast<std::int64_t>(query_group) * context;
   for (auto layout : {key_layout, query_layout, score_layout}) {
     check(cublasLtMatrixLayoutSetAttribute(
               layout, CUBLASLT_MATRIX_LAYOUT_BATCH_COUNT, &batch_count, sizeof(batch_count)),
@@ -155,8 +153,9 @@ float benchmark(cudaDataType_t input_type, int input_bytes) {
 
 int main() {
   try {
-    const float bf16_ms = benchmark(CUDA_R_16BF, 2);
-    const float fp8_ms = benchmark(CUDA_R_8F_E4M3, 1);
+    const float bf16_ms = benchmark(CUDA_R_16BF, 2, 8, 8192);
+    const float fp8_ms = benchmark(CUDA_R_8F_E4M3, 1, 8, 8192);
+    const float verify_bf16_ms = benchmark(CUDA_R_16BF, 2, 32, 6016);
     constexpr double bf16_key_bytes = 2.0 * 16 * 4 * 8192 * 512;
     constexpr double fp8_key_bytes = bf16_key_bytes / 2.0;
     std::cout << std::fixed << std::setprecision(4)
@@ -164,7 +163,8 @@ int main() {
               << "bf16_key_gb_s=" << bf16_key_bytes / (bf16_ms / 1000.0) / 1e9 << '\n'
               << "fp8_qk_ms=" << fp8_ms << '\n'
               << "fp8_key_gb_s=" << fp8_key_bytes / (fp8_ms / 1000.0) / 1e9 << '\n'
-              << "qk_speedup=" << bf16_ms / fp8_ms << '\n';
+              << "qk_speedup=" << bf16_ms / fp8_ms << '\n'
+              << "verify_q4_bf16_qk_ms=" << verify_bf16_ms << '\n';
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "FP8 attention benchmark failed: " << error.what() << '\n';

@@ -27,6 +27,22 @@ class GemmCausalPrefillAttention {
                          const int* device_position_starts, int requests, int query_heads,
                          int kv_heads, int query_tokens, int maximum_kv_tokens,
                          int kv_capacity, int head_dimension, cudaStream_t stream);
+  // Equal-length requests whose KV allocations are one physically contiguous slot interval.
+  // A strided batch lets cuBLAS use regular-layout kernels instead of pointer-array kernels.
+  void run_uniform_contiguous_batch(
+      const void* query, const void* key_caches, const void* value_caches,
+      void* output, const int* device_position_starts, int requests,
+      int query_heads, int kv_heads, int query_tokens, int maximum_kv_tokens,
+      int kv_capacity, int head_dimension, cudaStream_t stream);
+  // Exact q<=4 attention over a full sliding ring. Proposal K/V already occupy their physical
+  // ring slots; the saved pre-write rows substitute for future proposal slots independently for
+  // each causal query, avoiding a full-ring gather.
+  void run_uniform_ring_batch(
+      const void* query, const void* const* device_key_caches,
+      const void* const* device_value_caches, const void* backup_keys,
+      const void* backup_values, void* output, const int* device_position_starts,
+      int requests, int query_heads, int kv_heads, int query_tokens,
+      int ring_capacity, int head_dimension, cudaStream_t stream);
 
  private:
   struct Implementation;

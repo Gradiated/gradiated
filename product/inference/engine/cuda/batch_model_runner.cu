@@ -26,7 +26,7 @@ namespace gradiated::engine {
 namespace {
 
 constexpr std::uint64_t alignment = 256;
-constexpr int speculative_depth = 4;
+constexpr int speculative_depth = 8;
 std::uint64_t align_up(std::uint64_t value) { return (value + alignment - 1U) & ~(alignment - 1U); }
 
 bool fp8_global_k_enabled() {
@@ -126,6 +126,7 @@ struct Gemma4BatchModelRunner::Implementation {
   const DeviceWeightArena& weights;
   const Fp8WeightArena* fp8_weights;
   const DeviceWeightArena* assistant_weights;
+  const Fp8WeightArena* assistant_fp8_weights;
   int batch_size;
   int maximum_context;
   int current_position{0};
@@ -218,9 +219,10 @@ struct Gemma4BatchModelRunner::Implementation {
 
   Implementation(const Gemma4Config& model_config, const DeviceWeightArena& device_weights,
                  int requested_batch, int max_context, const Fp8WeightArena* decode_weights,
-                 const DeviceWeightArena* draft_weights)
+                 const DeviceWeightArena* draft_weights,
+                 const Fp8WeightArena* draft_fp8_weights)
       : config(model_config), weights(device_weights), fp8_weights(decode_weights),
-        assistant_weights(draft_weights),
+        assistant_weights(draft_weights), assistant_fp8_weights(draft_fp8_weights),
         batch_size(requested_batch),
         maximum_context(max_context), hidden(static_cast<int>(model_config.hidden_size)),
         vocabulary(static_cast<int>(model_config.vocabulary_size)),
@@ -278,7 +280,7 @@ struct Gemma4BatchModelRunner::Implementation {
         throw std::runtime_error("target does not expose both assistant KV types");
       }
       assistant = std::make_unique<Gemma4AssistantRunner>(
-          *draft_weights, requested_batch, max_context);
+          *draft_weights, draft_fp8_weights, requested_batch, max_context);
     }
     // Global batched suffix attention pads shorter requests to one GEMM width. Zeroing once makes
     // every unread cache tail finite; masked probabilities then contribute exactly zero in PV.
@@ -423,9 +425,11 @@ Gemma4BatchModelRunner::Gemma4BatchModelRunner(const Gemma4Config& config,
                                                const DeviceWeightArena& weights,
                                                int batch, int maximum_context,
                                                const Fp8WeightArena* fp8_weights,
-                                               const DeviceWeightArena* assistant_weights)
+                                               const DeviceWeightArena* assistant_weights,
+                                               const Fp8WeightArena* assistant_fp8_weights)
     : implementation_(std::make_unique<Implementation>(config, weights, batch, maximum_context,
-                                                        fp8_weights, assistant_weights)) {}
+                                                        fp8_weights, assistant_weights,
+                                                        assistant_fp8_weights)) {}
 Gemma4BatchModelRunner::~Gemma4BatchModelRunner() = default;
 
 std::vector<int> Gemma4BatchModelRunner::append(const std::vector<int>& token_ids) {
@@ -1004,7 +1008,11 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
     }
     state.layers.run_prefill_chunks(
         static_cast<int>(layer), input, output, counts, positions, key_caches, value_caches,
-        capacities, nullptr, true);
+        capacities, nullptr, true,
+        state.config.layers[layer].attention == AttentionKind::sliding
+            ? state.speculative_key_backup(layer) : nullptr,
+        state.config.layers[layer].attention == AttentionKind::sliding
+            ? state.speculative_value_backup(layer) : nullptr);
     for (int request = 0; request < requests; ++request) {
       state.refresh_fp8_key_span(
           layer, slots[static_cast<std::size_t>(request)],

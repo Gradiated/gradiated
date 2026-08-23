@@ -25,7 +25,8 @@ class Gemma4BatchModelRunner {
   Gemma4BatchModelRunner(const struct Gemma4Config& config, const class DeviceWeightArena& weights,
                          int batch, int maximum_context,
                          const class Fp8WeightArena* fp8_weights = nullptr,
-                         const class DeviceWeightArena* assistant_weights = nullptr);
+                         const class DeviceWeightArena* assistant_weights = nullptr,
+                         const class Fp8WeightArena* assistant_fp8_weights = nullptr);
   ~Gemma4BatchModelRunner();
   Gemma4BatchModelRunner(const Gemma4BatchModelRunner&) = delete;
   Gemma4BatchModelRunner& operator=(const Gemma4BatchModelRunner&) = delete;

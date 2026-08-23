@@ -452,3 +452,44 @@ same-binary 513.24 to 508.74 output token/s (-0.88%). Cached TTFT p50 increased 
 small GEMM shapes outweigh saved padded KV traffic on the real distribution, so the implementation
 was removed. Exact ragged contexts remain a target for a single persistent fused kernel, where
 context specialization does not multiply launches or library dispatch overhead.
+
+## Native speculative verifier frontier (2026-08-23)
+
+The retained verifier no longer materializes each sliding layer's 1,024-token ring. It writes the
+proposal K/V rows directly into the physical cache, backs up only the overwritten proposal span,
+and repairs the few future causal positions around a pointer-batched QK/PV operation. The wrapped
+ring path is checked against a scalar reference at draft depths four and eight. At a 6,000-token
+context, the warmed depth-four verifier fell from 68.47 ms with ring materialization to 26.3 ms.
+
+Global attention had a separate shape cliff: H200's selected BF16 QK algorithm took about 0.83 ms
+at 6,005 keys but 0.105 ms at 6,016. Verification now rounds the masked global-KV extent to a
+64-token bucket. Unread cache tails are zero initialized and causal softmax masks those columns,
+so this changes work selection rather than model probabilities. The complete B16 verifier improved
+from roughly 36.4 to 26.2 ms at the 6k benchmark position.
+
+On 16 parallel coding-agent continuations with 64 new input tokens, 64 output tokens, and 99.0%
+prefix reuse, target-only reaches 704.9 output token/s with 277 ms median TTFT, 18.45 ms median
+TPOT, and 1.440 s median request time. Retained depth-four speculation with a shrinking-cohort tail
+policy produced 826.5, 831.6, and 870.5 token/s in three explicit minimum-one runs (831.6 median,
+18.0% over target-only); median TPOT was 12.67--12.97 ms in the two repeat runs. A cohort must still
+meet the configured batch threshold to start speculation, but once started it remains speculative
+as requests finish. This avoids making an isolated low-traffic request pay speculative overhead.
+
+Depths two and three reach 728.3 and 729.0 token/s. Depths five, six, seven, and eight reach 731.0,
+728.0, 740.0, and 638.2 token/s. The extra accepted prefix does not repay recurrent draft cost, so
+depth four remains the default. Skipping the assistant LM head for the forced first proposal is
+bit-identical and reduces the isolated draft from about 7.38 to 7.20 ms.
+
+Several variants were measured and rejected. Per-layer fixed FP8 activation scales made each
+verification cycle about 4% faster but reduced acceptance enough to fall to 758.9 token/s; the
+coarse all-shape version reached only 674.2. Prompt n-gram drafting reached 368.9 token/s with
+38.6% accepted proposals. A scalar-CUDA fused ring online-attention kernel passed the numerical
+reference but took 94.6--99.8 ms per verifier with 8- and 32-token tiles, versus 26.3 ms for the
+tensor-core cuBLAS path. A future fused kernel therefore needs a WGMMA/CUTLASS tensor-core schedule,
+not merely fewer launches and score writes.
+
+Live exact-completion A/B remains an invalid quality oracle for this tensor-wide FP8 runtime:
+target-only repeats on identical fixed prompts produced different completions as asynchronous
+batches changed activation scales. Speculative promotion still requires direct-runner rollback
+parity plus teacher-forced agreement on the untouched holdout. The production service remains on
+the pinned SGLang image until that quality gate and a production canary are explicitly approved.

@@ -12,11 +12,13 @@
 #include <cuda_runtime.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace gradiated::engine {
 namespace {
@@ -84,7 +86,7 @@ struct Gemma4LayerRunner::Implementation {
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
-        maximum_fp8_rows(std::max(max_tokens, 4 * max_batch)),
+        maximum_fp8_rows(std::max(max_tokens, 8 * max_batch)),
         hidden(static_cast<int>(model_config.hidden_size)),
         intermediate(static_cast<int>(model_config.intermediate_size)),
         epsilon(static_cast<float>(model_config.rms_norm_epsilon)),
@@ -116,10 +118,10 @@ struct Gemma4LayerRunner::Implementation {
         gate_up(4ULL * std::max(max_tokens, max_batch) * intermediate),
         activated(2ULL * std::max(max_tokens, max_batch) * intermediate),
         down(2ULL * std::max(max_tokens, max_batch) * hidden),
-        fp8_input(static_cast<std::uint64_t>(std::max(max_tokens, 4 * max_batch)) *
+        fp8_input(static_cast<std::uint64_t>(std::max(max_tokens, 8 * max_batch)) *
                   std::max({hidden, intermediate, 18432})),
         fp8_input_scales(sizeof(float) *
-                         static_cast<std::uint64_t>(std::max(max_tokens, 4 * max_batch)) *
+                         static_cast<std::uint64_t>(std::max(max_tokens, 8 * max_batch)) *
                          ((std::max({hidden, intermediate, 18432}) + 127) / 128)),
         prefill_positions(sizeof(int) * static_cast<std::uint64_t>(max_batch)),
         prefill_cache_pointers(2ULL * sizeof(void*) * static_cast<std::uint64_t>(max_batch)) {
@@ -476,7 +478,8 @@ void Gemma4LayerRunner::run_prefill_chunks(
     const std::vector<int>& token_counts, const std::vector<int>& position_starts,
     const std::vector<void*>& key_caches, const std::vector<void*>& value_caches,
     const std::vector<int>& cache_capacities, cudaStream_t stream,
-    bool fp8_projections) {
+    bool fp8_projections, const void* speculative_backup_keys,
+    const void* speculative_backup_values) {
   auto& state = *implementation_;
   const std::size_t requests = token_counts.size();
   if (requests == 0 || position_starts.size() != requests || key_caches.size() != requests ||
@@ -535,7 +538,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
         std::min(position_starts[request],
                  static_cast<int>(state.config.sliding_window) - 1) == uniform_prior;
   }
-  const bool speculative_sliding_gemm = fp8_projections && uniform_tokens <= 4;
+  const bool speculative_sliding_gemm = fp8_projections && uniform_tokens <= 8;
   const bool uniform_sliding = layer.attention == AttentionKind::sliding &&
                                uniform_shape && uniform_prior_shape &&
                                ((speculative_sliding_gemm && requests >= 2) ||
@@ -560,6 +563,60 @@ void Gemma4LayerRunner::run_prefill_chunks(
     auto* pointer_base = static_cast<void**>(state.prefill_cache_pointers.get());
     auto* device_key_caches = reinterpret_cast<const void* const*>(pointer_base);
     auto* device_value_caches = reinterpret_cast<const void* const*>(pointer_base + requests);
+    const bool direct_wrapped_speculation = speculative_sliding_gemm &&
+        speculative_backup_keys != nullptr && speculative_backup_values != nullptr &&
+        uniform_prior == uniform_capacity - 1 &&
+        std::getenv("GRADIATED_DISABLE_RING_SPECULATION") == nullptr;
+    if (direct_wrapped_speculation) {
+      state.qkv_postprocessor.run_prefill_uniform_direct(
+          state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+          pointer_base, pointer_base + requests, device_positions,
+          static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
+          layer.key_equals_value, uniform_capacity, state.epsilon, stream);
+      token_to_head_batch_bf16(state.queries.get(), state.queries_head_major.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      state.global_prefill_attention.run_uniform_ring_batch(
+          state.queries_head_major.get(), device_key_caches, device_value_caches,
+          speculative_backup_keys, speculative_backup_values, state.attention_output.get(),
+          device_positions, static_cast<int>(requests), query_heads, kv_heads,
+          uniform_tokens, uniform_capacity, head_dimension, stream);
+      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      state.project(layer_index, hidden_states, state.queries.get(), output,
+                    total_tokens, fp8_projections, stream);
+      return;
+    }
+    const bool direct_unwrapped_speculation = speculative_sliding_gemm &&
+        std::all_of(position_starts.begin(), position_starts.end(),
+                    [&](int position) { return position + uniform_tokens <= uniform_capacity; });
+    if (direct_unwrapped_speculation) {
+      // Before the first ring wrap, physical and logical KV order are identical. Write the
+      // proposal span into the real cache and attend there directly; this avoids materializing
+      // roughly 13 GiB of retained KV data across Gemma 4's 50 sliding layers per verify pass.
+      state.qkv_postprocessor.run_prefill_uniform_direct(
+          state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+          pointer_base, pointer_base + requests, device_positions,
+          static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
+          layer.key_equals_value, uniform_capacity, state.epsilon, stream);
+      token_to_head_batch_bf16(state.queries.get(), state.queries_head_major.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      const int maximum_kv_tokens = *std::max_element(
+          position_starts.begin(), position_starts.end()) + uniform_tokens;
+      state.global_prefill_attention.run_uniform_batch(
+          state.queries_head_major.get(), device_key_caches, device_value_caches,
+          state.attention_output.get(), device_positions, static_cast<int>(requests),
+          query_heads, kv_heads, uniform_tokens, maximum_kv_tokens, uniform_capacity,
+          head_dimension, stream);
+      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
+                               static_cast<int>(requests), uniform_tokens, query_heads,
+                               head_dimension, stream);
+      state.project(layer_index, hidden_states, state.queries.get(), output,
+                    total_tokens, fp8_projections, stream);
+      return;
+    }
     if (uniform_prior > 0) {
       gather_kv_rings_bf16(device_key_caches, device_value_caches,
                             state.key_cache.get(), state.value_cache.get(), device_positions,
@@ -660,6 +717,18 @@ void Gemma4LayerRunner::run_prefill_chunks(
                              static_cast<int>(requests), uniform_tokens, query_heads,
                              head_dimension, stream);
     const bool sorted_positions = std::is_sorted(position_starts.begin(), position_starts.end());
+    const std::uint64_t cache_request_bytes = 2ULL * kv_heads * uniform_capacity *
+                                              head_dimension;
+    bool contiguous_caches = true;
+    for (std::size_t request = 1; request < requests; ++request) {
+      contiguous_caches = contiguous_caches &&
+          static_cast<const unsigned char*>(key_caches[request]) ==
+              static_cast<const unsigned char*>(key_caches.front()) +
+                  request * cache_request_bytes &&
+          static_cast<const unsigned char*>(value_caches[request]) ==
+              static_cast<const unsigned char*>(value_caches.front()) +
+                  request * cache_request_bytes;
+    }
     const bool split_contexts = requests >= 4 && sorted_positions &&
                                 position_starts.back() - position_starts.front() > 512;
     const std::size_t split = split_contexts ? (requests + 1) / 2 : requests;
@@ -670,6 +739,13 @@ void Gemma4LayerRunner::run_prefill_chunks(
         group_maximum_kv_tokens = std::max(
             group_maximum_kv_tokens, position_starts[request] + uniform_tokens);
       }
+      if (fp8_projections && uniform_tokens <= 8) {
+        // Tiny changes in M select radically different Lt QK kernels (6,004 tokens reaches
+        // ~4 TB/s while 6,005 falls below 0.5 TB/s). The cache tail is zero-initialized and the
+        // causal softmax masks it, so a 64-token bucket changes work only, never probabilities.
+        group_maximum_kv_tokens = std::min(
+            uniform_capacity, ((group_maximum_kv_tokens + 63) / 64) * 64);
+      }
       const std::uint64_t request_elements =
           static_cast<std::uint64_t>(query_heads) * uniform_tokens * head_dimension;
       const auto* grouped_queries =
@@ -677,12 +753,20 @@ void Gemma4LayerRunner::run_prefill_chunks(
           2ULL * begin * request_elements;
       auto* grouped_output = static_cast<unsigned char*>(state.key_cache.get()) +
                              2ULL * begin * request_elements;
-      state.global_prefill_attention.run_uniform_batch(
-          grouped_queries, reinterpret_cast<const void* const*>(pointer_base + begin),
-          reinterpret_cast<const void* const*>(pointer_base + requests + begin),
-          grouped_output, device_positions + begin, static_cast<int>(end - begin),
-          query_heads, kv_heads, uniform_tokens, group_maximum_kv_tokens,
-          uniform_capacity, head_dimension, stream);
+      if (contiguous_caches) {
+        state.global_prefill_attention.run_uniform_contiguous_batch(
+            grouped_queries, key_caches[begin], value_caches[begin], grouped_output,
+            device_positions + begin, static_cast<int>(end - begin), query_heads,
+            kv_heads, uniform_tokens, group_maximum_kv_tokens, uniform_capacity,
+            head_dimension, stream);
+      } else {
+        state.global_prefill_attention.run_uniform_batch(
+            grouped_queries, reinterpret_cast<const void* const*>(pointer_base + begin),
+            reinterpret_cast<const void* const*>(pointer_base + requests + begin),
+            grouped_output, device_positions + begin, static_cast<int>(end - begin),
+            query_heads, kv_heads, uniform_tokens, group_maximum_kv_tokens,
+            uniform_capacity, head_dimension, stream);
+      }
     };
     run_group(0, split);
     run_group(split, requests);

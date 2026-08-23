@@ -26,6 +26,12 @@ python3 native_open_loop.py \
   --output results/baseline-rps4.json
 ```
 
+The replay client supports the native token endpoint by default. Use `--runtime sglang` against
+SGLang's streaming `/generate` endpoint; the adapter sends the same token IDs and records its
+server-reported first-token, per-output-token, queue, request, and cached-token values. This makes
+it possible to compare both runtimes with one manifest and one economic calculation. Keep greedy
+sampling and output limits identical.
+
 The manifest contains absolute offsets, complete tokenized inputs, output limits, prefix lineage,
 and a counter-style seed for every request. Conversation turns are immutable slices of the source
 trace, so variants execute the same work even if their generated outputs differ. Turns are ordered
@@ -76,6 +82,14 @@ For a long `session-live` run, `steady_window` scores completions after the conf
 window duration and excludes the artificial final drain. Keep the full-trace score beside it:
 the steady window estimates sustained economics, while the full trace exposes startup and tail
 debt that a short observation could hide.
+
+A completion window is not sufficient by itself under causal sessions. An overloaded scheduler
+can make cached continuations look excellent while cold sessions accumulate and their later turns
+have not even been submitted. Require `steady_window.live_stability.likely_stationary` at an
+economic operating point, inspect the cold/request queue trends, and reject configurations with a
+growing first-turn backlog. The highest overloaded goodput remains useful as a stress ceiling, but
+it is not a sustainable revenue estimate. Sweep session-start load around the stationarity knee;
+do not extrapolate a finite drain to an hour of production.
 
 `native_open_loop.py` computes revenue from the runtime's actual cached-input, uncached-input, and
 output-token counters. Its default prices are the measured cheapest OpenRouter Gemma 4 prices

@@ -32,6 +32,20 @@ def percentile(values: list[float], fraction: float) -> float:
     return ordered[lower] + (ordered[upper] - ordered[lower]) * (position - lower)
 
 
+def linear_slope(points: list[tuple[float, float]]) -> float:
+    """Return the ordinary-least-squares y/x slope, or zero without enough span."""
+    if len(points) < 2:
+        return 0.0
+    mean_x = sum(point[0] for point in points) / len(points)
+    mean_y = sum(point[1] for point in points) / len(points)
+    denominator = sum((point[0] - mean_x) ** 2 for point in points)
+    if denominator == 0.0:
+        return 0.0
+    return sum(
+        (point[0] - mean_x) * (point[1] - mean_y) for point in points
+    ) / denominator
+
+
 def metrics(base_url: str) -> dict[str, float]:
     try:
         with urllib.request.urlopen(f"{base_url.rstrip('/')}/metrics", timeout=5) as response:
@@ -54,22 +68,35 @@ def issue_request(
     event: dict[str, Any],
     base_url: str,
     api_key: str,
+    runtime: str,
     timeout: float,
     phase_started: float,
     submitted_at: float,
     scheduled_offset_s: float | None = None,
 ) -> dict[str, Any]:
     worker_started = time.monotonic()
-    payload = {
-        "input_ids": event["input_ids"],
-        "max_tokens": event["max_tokens"],
-        "stream": False,
-    }
+    if runtime == "native":
+        path = "/v1/token-completions"
+        payload = {
+            "input_ids": event["input_ids"],
+            "max_tokens": event["max_tokens"],
+            "stream": False,
+        }
+    else:
+        path = "/generate"
+        payload = {
+            "input_ids": event["input_ids"],
+            "sampling_params": {
+                "temperature": 0,
+                "max_new_tokens": event["max_tokens"],
+            },
+            "stream": True,
+        }
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     request = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/token-completions",
+        f"{base_url.rstrip('/')}{path}",
         data=json.dumps(payload).encode(),
         headers=headers,
         method="POST",
@@ -95,22 +122,66 @@ def issue_request(
     }
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            body = json.load(response)
-        completed_at = time.monotonic()
-        timing = body["timing"]
-        usage = body["usage"]
+            if runtime == "native":
+                body = json.load(response)
+                completed_at = time.monotonic()
+                timing = body["timing"]
+                usage = body["usage"]
+                output_ids = [int(token) for token in body["output_ids"]]
+                queue_ms = float(timing.get("queue_ms", 0.0))
+                ttft_ms = float(timing["ttft_ms"])
+                tpot_ms = float(timing["mean_tpot_ms"])
+                request_ms = float(timing["total_ms"])
+                input_tokens = int(usage["input_tokens"])
+                cached_input_tokens = int(usage["cached_input_tokens"])
+                finish_reason = str(body.get("finish_reason", ""))
+            else:
+                first_chunk_at: float | None = None
+                body = None
+                for raw_line in response:
+                    line = raw_line.decode().strip()
+                    if not line.startswith("data: ") or line == "data: [DONE]":
+                        continue
+                    if first_chunk_at is None:
+                        first_chunk_at = time.monotonic()
+                    body = json.loads(line[6:])
+                completed_at = time.monotonic()
+                if body is None or first_chunk_at is None:
+                    raise RuntimeError("SGLang stream completed without a token event")
+                meta = body["meta_info"]
+                output_ids = [int(token) for token in body["output_ids"]]
+                queue_ms = float(meta.get("queue_time", 0.0)) * 1000.0
+                received_timestamp = meta.get("request_received_ts")
+                first_timestamp = meta.get("response_sent_to_client_ts")
+                if received_timestamp is not None and first_timestamp is not None:
+                    ttft_ms = (float(first_timestamp) - float(received_timestamp)) * 1000.0
+                else:
+                    ttft_ms = (first_chunk_at - sent_at) * 1000.0
+                request_ms = float(
+                    meta.get("e2e_latency", completed_at - sent_at)
+                ) * 1000.0
+                decode_throughput = float(meta.get("decode_throughput", 0.0))
+                tpot_ms = 1000.0 / decode_throughput if decode_throughput > 0.0 else 0.0
+                input_tokens = int(meta.get("prompt_tokens", len(event["input_ids"])))
+                cached_input_tokens = int(meta.get("cached_tokens", 0))
+                raw_finish_reason = meta.get("finish_reason", "")
+                finish_reason = (
+                    str(raw_finish_reason.get("type", ""))
+                    if isinstance(raw_finish_reason, dict)
+                    else str(raw_finish_reason)
+                )
         result.update(
             {
                 "completion_offset_s": completed_at - phase_started,
                 "client_total_ms": (completed_at - sent_at) * 1000.0,
-                "queue_ms": float(timing.get("queue_ms", 0.0)),
-                "ttft_ms": float(timing["ttft_ms"]),
-                "tpot_ms": float(timing["mean_tpot_ms"]),
-                "request_ms": float(timing["total_ms"]),
-                "input_tokens": int(usage["input_tokens"]),
-                "cached_input_tokens": int(usage["cached_input_tokens"]),
-                "output_ids": [int(token) for token in body["output_ids"]],
-                "finish_reason": str(body.get("finish_reason", "")),
+                "queue_ms": queue_ms,
+                "ttft_ms": ttft_ms,
+                "tpot_ms": tpot_ms,
+                "request_ms": request_ms,
+                "input_tokens": input_tokens,
+                "cached_input_tokens": cached_input_tokens,
+                "output_ids": output_ids,
+                "finish_reason": finish_reason,
             }
         )
     except Exception as error:  # noqa: BLE001 - every failed request belongs in the result
@@ -135,6 +206,7 @@ def replay_phase(
     events: list[dict[str, Any]],
     base_url: str,
     api_key: str,
+    runtime: str,
     timeout: float,
     workers: int,
 ) -> tuple[list[dict[str, Any]], float]:
@@ -155,6 +227,7 @@ def replay_phase(
                     event,
                     base_url,
                     api_key,
+                    runtime,
                     timeout,
                     phase_started,
                     submitted_at,
@@ -168,6 +241,7 @@ def replay_live_sessions(
     events: list[dict[str, Any]],
     base_url: str,
     api_key: str,
+    runtime: str,
     timeout: float,
     workers: int,
 ) -> tuple[list[dict[str, Any]], float]:
@@ -217,6 +291,7 @@ def replay_live_sessions(
                 request_event,
                 base_url,
                 api_key,
+                runtime,
                 timeout,
                 phase_started,
                 submitted_at,
@@ -243,6 +318,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--base-url", default="http://127.0.0.1:30000")
     parser.add_argument("--api-key", default=os.environ.get("GRADIATED_RUNTIME_API_KEY", ""))
+    parser.add_argument("--runtime", choices=("native", "sglang"), default="native")
     parser.add_argument("--workers", type=int, default=256)
     parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--warmup-settle-seconds", type=float, default=1.0)
@@ -287,7 +363,8 @@ def main() -> int:
         else replay_phase
     )
     warmup_results, _ = replay(
-        manifest["warmup_events"], args.base_url, args.api_key, args.timeout, args.workers
+        manifest["warmup_events"], args.base_url, args.api_key, args.runtime,
+        args.timeout, args.workers
     )
     warmup_errors = sum(bool(result["error"]) for result in warmup_results)
     if warmup_errors:
@@ -296,7 +373,8 @@ def main() -> int:
         time.sleep(args.warmup_settle_seconds)
     before = metrics(args.base_url)
     results, wall_seconds = replay(
-        manifest["events"], args.base_url, args.api_key, args.timeout, args.workers
+        manifest["events"], args.base_url, args.api_key, args.runtime,
+        args.timeout, args.workers
     )
     after = metrics(args.base_url)
     results.sort(key=lambda result: result["id"])
@@ -351,6 +429,7 @@ def main() -> int:
             "requests": len(cohort),
             "slo_request_ratio": round(len(cohort_slo) / len(cohort), 6) if cohort else 0.0,
             "cache_ratio": round(cohort_cached / cohort_input, 6) if cohort_input else 0.0,
+            "queue_ms": cohort_distribution("queue_ms"),
             "ttft_ms": cohort_distribution("ttft_ms"),
             "tpot_ms": cohort_distribution("tpot_ms"),
             "request_ms": cohort_distribution("request_ms"),
@@ -434,6 +513,66 @@ def main() -> int:
     steady_slo_output_tokens = sum(len(result["output_ids"]) for result in steady_slo)
     steady_revenue_per_hour = cohort_revenue(steady) * steady_hourly_scale
     steady_slo_revenue_per_hour = cohort_revenue(steady_slo) * steady_hourly_scale
+
+    # A finite overloaded trace can report attractive completion economics while an
+    # ever-growing queue is hidden in the post-arrival drain. Session-live traffic needs a
+    # separate stationarity signal because later turns are intentionally not submitted until
+    # the previous response completes. Track first-turn births and completions at fixed wall
+    # clock boundaries so continuation locality cannot disguise starvation of new sessions.
+    cold_results = [result for result in successful if int(result["turn"]) == 0]
+    session_birth_offsets = [
+        float(event.get("session_start_offset_s", event["scheduled_offset_s"]))
+        for event in manifest["events"]
+        if int(event["turn"]) == 0
+    ]
+
+    def count_at_or_before(values: list[float], boundary: float) -> int:
+        return sum(value <= boundary for value in values)
+
+    cold_completion_offsets = [float(result["completion_offset_s"]) for result in cold_results]
+    births_at_start = count_at_or_before(session_birth_offsets, steady_start)
+    births_at_end = count_at_or_before(session_birth_offsets, schedule_span)
+    cold_completions_at_start = count_at_or_before(cold_completion_offsets, steady_start)
+    cold_completions_at_end = count_at_or_before(cold_completion_offsets, schedule_span)
+    backlog_at_start = births_at_start - cold_completions_at_start
+    backlog_at_end = births_at_end - cold_completions_at_end
+    backlog_change = backlog_at_end - backlog_at_start
+    steady_session_births = births_at_end - births_at_start
+    steady_session_completions = cold_completions_at_end - cold_completions_at_start
+    # Permit ordinary in-flight jitter of two sessions or 5% of steady births. Growth beyond
+    # that is evidence of an unstable offered load, not usable steady-state economics.
+    backlog_growth_tolerance = max(2, math.ceil(steady_session_births * 0.05))
+    cold_queue_points = [
+        (float(result["send_offset_s"]), float(result["queue_ms"]))
+        for result in cold_results
+        if steady_start <= float(result["send_offset_s"]) <= schedule_span
+    ]
+    request_queue_points = [
+        (float(result["send_offset_s"]), float(result["queue_ms"]))
+        for result in successful
+        if steady_start <= float(result["send_offset_s"]) <= schedule_span
+    ]
+    live_stability = {
+        "session_births": steady_session_births,
+        "session_completions": steady_session_completions,
+        "session_birth_rps": round(steady_session_births / steady_seconds, 4)
+        if steady_seconds
+        else 0.0,
+        "session_completion_rps": round(steady_session_completions / steady_seconds, 4)
+        if steady_seconds
+        else 0.0,
+        "session_backlog_at_start": backlog_at_start,
+        "session_backlog_at_end": backlog_at_end,
+        "session_backlog_change": backlog_change,
+        "session_backlog_slope_per_s": round(backlog_change / steady_seconds, 6)
+        if steady_seconds
+        else 0.0,
+        "cold_queue_trend_ms_per_s": round(linear_slope(cold_queue_points), 3),
+        "request_queue_trend_ms_per_s": round(linear_slope(request_queue_points), 3),
+        "post_arrival_drain_seconds": round(max(0.0, wall_seconds - schedule_span), 4),
+        "backlog_growth_tolerance": backlog_growth_tolerance,
+        "likely_stationary": backlog_change <= backlog_growth_tolerance,
+    }
     steady_summary = {
         "start_offset_s": round(steady_start, 4),
         "end_offset_s": round(schedule_span, 4),
@@ -458,6 +597,7 @@ def main() -> int:
         else None,
         "margin_per_hour": round(steady_revenue_per_hour - total_hourly_cost, 4),
         "slo_margin_per_hour": round(steady_slo_revenue_per_hour - total_hourly_cost, 4),
+        "live_stability": live_stability,
     }
     summary = {
         "requests": len(results),
@@ -498,6 +638,7 @@ def main() -> int:
         "schema": "gradiated.open-loop-result.v1",
         "manifest_sha256": hashlib.sha256(raw_manifest).hexdigest(),
         "manifest": str(args.manifest),
+        "runtime": args.runtime,
         "slo": {
             "ttft_ms": args.slo_ttft_ms,
             "tpot_ms": args.slo_tpot_ms,

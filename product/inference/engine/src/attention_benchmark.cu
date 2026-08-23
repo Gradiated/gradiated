@@ -176,6 +176,54 @@ void wgmma_qk_parity() {
   if (maximum > 0.02F) throw std::runtime_error("WGMMA QK parity exceeded tolerance");
 }
 
+void wgmma_attention_tile_parity() {
+  constexpr int batch = 2;
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int context = 64;
+  constexpr int dimension = 512;
+  constexpr std::uint64_t query_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * dimension;
+  constexpr std::uint64_t cache_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * context * dimension;
+  Allocation query(2ULL * query_elements), key(2ULL * cache_elements),
+      value(2ULL * cache_elements), reference(2ULL * query_elements),
+      candidate(2ULL * query_elements);
+  constexpr int threads = 256;
+  initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(query.get()), query_elements, 0xa1b2c3d4U, 0.12F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(key.get()), cache_elements, 0x55667788U, 0.08F);
+  initialize_bf16<<<(cache_elements + threads - 1) / threads, threads>>>(
+      static_cast<__nv_bfloat16*>(value.get()), cache_elements, 0xabcdef01U, 1.1F);
+  gradiated::engine::GemmGroupedDecodeAttention attention(
+      batch, kv_heads, query_group, context);
+  attention.run(query.get(), key.get(), value.get(), reference.get(), batch, kv_heads,
+                query_group, context, dimension, nullptr);
+  gradiated::engine::grouped_global_attention_wgmma_tile_bf16(
+      query.get(), key.get(), value.get(), candidate.get(), batch, kv_heads,
+      query_group, context, dimension, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize WGMMA attention tile parity");
+  std::vector<__nv_bfloat16> expected(query_elements), actual(query_elements);
+  check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy WGMMA attention tile reference");
+  check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * query_elements,
+                   cudaMemcpyDeviceToHost), "copy WGMMA attention tile candidate");
+  float maximum = 0.0F;
+  double mean = 0.0;
+  for (std::uint64_t index = 0; index < query_elements; ++index) {
+    const float difference = std::abs(__bfloat162float(expected[index]) -
+                                      __bfloat162float(actual[index]));
+    maximum = std::max(maximum, difference);
+    mean += difference;
+  }
+  std::cout << "wgmma_attention_tile_parity_max_abs=" << maximum << '\n'
+            << "wgmma_attention_tile_parity_mean_abs=" << mean / query_elements << '\n';
+  if (maximum > 0.02F) {
+    throw std::runtime_error("WGMMA attention tile parity exceeded tolerance");
+  }
+}
+
 float benchmark_qk(int batch, int context, bool wgmma, int tiles_per_block = 1) {
   constexpr int kv_heads = 4;
   constexpr int query_group = 8;
@@ -301,6 +349,10 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
           query.get(), key.get(), value.get(), output.get(),
           static_cast<const int*>(positions.get()), batch, kv_heads, query_group,
           context, dimension, 0, nullptr, context);
+    } else if (implementation == 6) {
+      gradiated::engine::grouped_global_attention_wgmma_tile_bf16(
+          query.get(), key.get(), value.get(), output.get(), batch, kv_heads,
+          query_group, context, dimension, nullptr);
     } else {
       attention.run(query.get(), key.get(), value.get(), output.get(), batch, kv_heads,
                     query_group, context, dimension, nullptr);
@@ -334,6 +386,7 @@ int main() {
     parity();
     fp8_parity();
     wgmma_qk_parity();
+    wgmma_attention_tile_parity();
     std::cout << "kind,batch,context,milliseconds,physical_kv_gb_s,naive_avoided_gb\n";
     for (const int batch : std::vector<int>{1, 2, 4, 8, 10, 16}) {
       const float sliding_ms = benchmark(batch, 16, 2, 1024, 256, 0);
@@ -352,6 +405,8 @@ int main() {
       const float global_fp8_key_ms = benchmark(batch, 4, 8, 8192, 512, 3);
       const float global_cudnn_ms = benchmark(batch, 4, 8, 8192, 512, 4);
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
+      const float global_tile_baseline_ms = benchmark(batch, 4, 8, 64, 512, 0);
+      const float global_tile_wgmma_ms = benchmark(batch, 4, 8, 64, 512, 6);
       const float global_qk_ms = benchmark_qk(batch, 8192, false);
       std::vector<std::pair<int, float>> global_qk_wgmma;
       for (const int tiles_per_block : std::vector<int>{1, 2, 4, 8, 16, 32}) {
@@ -382,6 +437,10 @@ int main() {
                 << std::setprecision(4) << global_ragged_ms << ',' << std::setprecision(2)
                 << global_bytes / (global_ragged_ms / 1000.0) / 1e9 << ','
                 << 7.0 * global_bytes / 1e9 << '\n';
+      std::cout << "global_tile_baseline," << batch << ",64," << std::fixed
+                << std::setprecision(4) << global_tile_baseline_ms << ",0,0\n";
+      std::cout << "global_tile_wgmma," << batch << ",64," << std::fixed
+                << std::setprecision(4) << global_tile_wgmma_ms << ",0,0\n";
       const double global_key_bytes = global_bytes * 0.5;
       std::cout << "global_qk," << batch << ",8192," << std::fixed
                 << std::setprecision(4) << global_qk_ms << ',' << std::setprecision(2)

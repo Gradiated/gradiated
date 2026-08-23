@@ -680,3 +680,13 @@ Its purpose is the next fused kernel, where the same tile must perform online so
 discarding shared K/V, then consume the exact shared-projection cache. That composition can remove
 the global score round trip and one of the two physical cache vectors; QK alone has no byte advantage
 and is not expected to beat the highly tuned library GEMM.
+
+The second building block fuses one complete 64-token tile: WGMMA QK writes scores to shared
+memory, eight warps reproduce the BF16 softmax contract, and eight WGMMA PV tiles produce the
+512-wide outputs without a global score tensor. Random Q/K/V output is bit-identical to the
+cuBLAS/softmax/cuBLAS composition. A generic CuTe transposed value copy initially failed parity;
+zero Q/K isolated it from softmax, and replacing that copy with aligned 128-bit global loads plus
+explicit swizzled shared stores restored exact output. At B16/context64 the fused tile takes
+0.0164 ms versus 0.0197 ms for the library composition; B1 is 0.0161 versus 0.0170 ms. This is a
+correct, modest launch-level win, not yet an 8k result. Full context requires segmented online
+softmax with partial max/sum/output reduction while preserving enough CTAs to occupy all H200 SMs.

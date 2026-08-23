@@ -1521,6 +1521,88 @@ mod tests {
     }
 
     #[tokio::test]
+    #[ignore = "downloads the pinned production Gemma tokenizer from Hugging Face"]
+    async fn parses_native_token_streams_with_authoritative_usage() {
+        let recorded = Arc::new(Mutex::new(Vec::new()));
+        let captured = recorded.clone();
+        let application = Router::new().route(
+            "/v1/token-completions",
+            post(move |headers: HeaderMap, body: Bytes| {
+                let captured = captured.clone();
+                async move {
+                    captured.lock().unwrap().push(RecordedRequest {
+                        headers,
+                        body: serde_json::from_slice(&body).unwrap(),
+                    });
+                    Response::builder()
+                        .header("content-type", "text/event-stream")
+                        .body(Body::from(concat!(
+                            "data: {\"token_id\":2021,\"usage\":{\"input_tokens\":3,\"output_tokens\":1}}\n\n",
+                            "data: {\"token_id\":1586,\"usage\":{\"input_tokens\":3,\"output_tokens\":2}}\n\n",
+                            "data: {\"finish_reason\":\"length\",\"usage\":{\"input_tokens\":3,\"output_tokens\":2}}\n\n",
+                            "data: [DONE]\n\n"
+                        )))
+                        .unwrap()
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move {
+            axum::serve(listener, application).await.unwrap();
+        });
+        let tokenizer = ModelTokenizer::new().unwrap();
+        let runtime = SglangClient::with_tokenizer(None, tokenizer).unwrap();
+        let mut deployment = deployment(format!("http://{address}"));
+        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+        deployment.release.model_path = "google/gemma-4-31B-it".to_owned();
+        deployment.release.model_revision = "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
+        deployment.release.tokenizer_path = "google/gemma-4-31B-it".to_owned();
+        deployment.release.tokenizer_revision =
+            "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
+        let mut request = streaming_request();
+        request.encoded_input_ids = Some(vec![2, 3, 4]);
+        let mut response = runtime
+            .stream(
+                &deployment,
+                request,
+                8,
+                Utc::now() + chrono::TimeDelta::seconds(30),
+            )
+            .await
+            .unwrap();
+
+        let mut usable_chunks = 0;
+        let mut finish = None;
+        let mut terminal_usage = None;
+        loop {
+            match response.next_event().await.unwrap().unwrap() {
+                RuntimeStreamEvent::Chunk(chunk) => {
+                    if chunk.has_usable_output() {
+                        usable_chunks += 1;
+                        assert!(chunk.usage().is_some());
+                    }
+                    if let Some(reason) = chunk.finish_reason() {
+                        finish = Some(reason.to_owned());
+                    }
+                    if chunk.is_terminal_usage() {
+                        terminal_usage = chunk.usage();
+                    }
+                }
+                RuntimeStreamEvent::Done => break,
+            }
+        }
+        assert!(usable_chunks > 0);
+        assert_eq!(finish.as_deref(), Some("length"));
+        assert_eq!(terminal_usage.unwrap().input_tokens(), 3);
+        assert_eq!(terminal_usage.unwrap().output_tokens(), 2);
+        let requests = recorded.lock().unwrap();
+        assert_eq!(requests[0].body["input_ids"], json!([2, 3, 4]));
+        assert_eq!(requests[0].body["stream"], true);
+        task.abort();
+    }
+
+    #[tokio::test]
     async fn maps_overload_without_retrying_and_retains_valid_error_usage() {
         let response = json!({
             "error": {"message": "queue full"},

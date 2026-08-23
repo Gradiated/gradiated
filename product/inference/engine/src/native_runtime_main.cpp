@@ -139,6 +139,7 @@ struct RuntimeMetrics {
 
 struct CompletionResult {
   std::vector<int> output_ids;
+  std::uint64_t cached_input_tokens{0};
   std::uint64_t queue_microseconds{0};
   std::uint64_t ttft_microseconds{0};
   std::uint64_t decode_microseconds{0};
@@ -161,6 +162,7 @@ struct CompletionJob {
   std::condition_variable condition;
   std::deque<int> emitted_ids;
   std::atomic<bool> cancelled{false};
+  std::atomic<std::uint64_t> cached_input_tokens{0};
   bool done{false};
   std::optional<CompletionResult> result;
   std::string error;
@@ -332,6 +334,7 @@ class ContinuousScheduler {
     const auto now = std::chrono::steady_clock::now();
     CompletionResult result;
     result.output_ids = std::move(slot.output_ids);
+    result.cached_input_tokens = slot.job->cached_input_tokens.load(std::memory_order_acquire);
     result.queue_microseconds = slot.queue_microseconds;
     result.ttft_microseconds = slot.ttft_microseconds;
     result.decode_microseconds = slot.decode_microseconds;
@@ -435,6 +438,8 @@ class ContinuousScheduler {
       pending_.pop_front();
       metrics_.queued.fetch_sub(1);
       slots_[static_cast<std::size_t>(placement.destination)].job = job;
+      job->cached_input_tokens.store(static_cast<std::uint64_t>(placement.prefix_tokens),
+                                     std::memory_order_release);
     }
     const int index = placement.destination;
     auto& slot = slots_[static_cast<std::size_t>(index)];
@@ -1010,9 +1015,12 @@ int main(int argc, char** argv) {
                   }
                   if (token) {
                     ++emitted_tokens;
+                    const auto cached_input_tokens =
+                        job->cached_input_tokens.load(std::memory_order_acquire);
                     std::ostringstream event;
                     event << "data: {\"token_id\":" << *token
                           << ",\"usage\":{\"input_tokens\":" << input_tokens
+                          << ",\"cached_input_tokens\":" << cached_input_tokens
                           << ",\"output_tokens\":" << emitted_tokens << "}}\n\n";
                     if (!write(event.str())) {
                       scheduler.cancel(job);
@@ -1025,6 +1033,8 @@ int main(int argc, char** argv) {
                   terminal << "data: {\"finish_reason\":"
                            << desmond::json_string(result->finish_reason)
                            << ",\"usage\":{\"input_tokens\":" << input_tokens
+                           << ",\"cached_input_tokens\":"
+                           << result->cached_input_tokens
                            << ",\"output_tokens\":" << result->output_ids.size()
                            << "}}\n\n";
                   if (!write(terminal.str()) || !write("data: [DONE]\n\n")) {
@@ -1039,6 +1049,7 @@ int main(int argc, char** argv) {
         std::ostringstream response;
         response << "{\"output_ids\":" << token_array_json(result.output_ids)
                  << ",\"usage\":{\"input_tokens\":" << input_ids.size()
+                 << ",\"cached_input_tokens\":" << result.cached_input_tokens
                  << ",\"output_tokens\":" << result.output_ids.size() << "}"
                  << ",\"timing\":{\"queue_ms\":"
                  << static_cast<double>(result.queue_microseconds) / 1000.0

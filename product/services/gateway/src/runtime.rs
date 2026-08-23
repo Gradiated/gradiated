@@ -260,6 +260,7 @@ impl SglangClient {
         let native: NativeTokenResponse = serde_json::from_slice(&body)
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         if native.usage.input_tokens != input_ids.len()
+            || native.usage.cached_input_tokens > native.usage.input_tokens
             || native.usage.output_tokens != native.output_ids.len()
             || native.output_ids.len() > max_tokens
             || native.finish_reason.is_empty()
@@ -272,7 +273,7 @@ impl SglangClient {
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
         let usage = NormalizedUsage::new(
             native.usage.input_tokens as u64,
-            0,
+            native.usage.cached_input_tokens as u64,
             0,
             native.usage.output_tokens as u64,
             0,
@@ -745,13 +746,14 @@ impl RuntimeEventStream for NativeEventStream {
                     return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
                 }
                 if token.usage.input_tokens != self.input_tokens
+                    || token.usage.cached_input_tokens > token.usage.input_tokens
                     || token.usage.output_tokens != self.output_tokens
                 {
                     return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
                 }
                 let usage = NormalizedUsage::new(
                     self.input_tokens as u64,
-                    0,
+                    token.usage.cached_input_tokens as u64,
                     0,
                     self.output_tokens as u64,
                     0,
@@ -796,14 +798,20 @@ impl RuntimeEventStream for NativeEventStream {
             if self.terminal_received
                 || terminal.finish_reason.is_empty()
                 || terminal.usage.input_tokens != self.input_tokens
+                || terminal.usage.cached_input_tokens > terminal.usage.input_tokens
                 || terminal.usage.output_tokens != self.output_tokens
             {
                 return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
             }
             self.terminal_received = true;
-            let usage =
-                NormalizedUsage::new(self.input_tokens as u64, 0, 0, self.output_tokens as u64, 0)
-                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+            let usage = NormalizedUsage::new(
+                self.input_tokens as u64,
+                terminal.usage.cached_input_tokens as u64,
+                0,
+                self.output_tokens as u64,
+                0,
+            )
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
             let finish_reason = terminal.finish_reason;
             let finish = RuntimeStreamChunk {
                 response: self.response(
@@ -960,6 +968,7 @@ struct NativeTokenResponse {
 #[derive(Deserialize)]
 struct NativeTokenUsage {
     input_tokens: usize,
+    cached_input_tokens: usize,
     output_tokens: usize,
 }
 
@@ -1561,9 +1570,9 @@ mod tests {
                     Response::builder()
                         .header("content-type", "text/event-stream")
                         .body(Body::from(concat!(
-                            "data: {\"token_id\":2021,\"usage\":{\"input_tokens\":3,\"output_tokens\":1}}\n\n",
-                            "data: {\"token_id\":1586,\"usage\":{\"input_tokens\":3,\"output_tokens\":2}}\n\n",
-                            "data: {\"finish_reason\":\"length\",\"usage\":{\"input_tokens\":3,\"output_tokens\":2}}\n\n",
+                            "data: {\"token_id\":2021,\"usage\":{\"input_tokens\":3,\"cached_input_tokens\":2,\"output_tokens\":1}}\n\n",
+                            "data: {\"token_id\":1586,\"usage\":{\"input_tokens\":3,\"cached_input_tokens\":2,\"output_tokens\":2}}\n\n",
+                            "data: {\"finish_reason\":\"length\",\"usage\":{\"input_tokens\":3,\"cached_input_tokens\":2,\"output_tokens\":2}}\n\n",
                             "data: [DONE]\n\n"
                         )))
                         .unwrap()
@@ -1619,6 +1628,7 @@ mod tests {
         assert!(usable_chunks > 0);
         assert_eq!(finish.as_deref(), Some("length"));
         assert_eq!(terminal_usage.unwrap().input_tokens(), 3);
+        assert_eq!(terminal_usage.unwrap().cached_input_tokens(), 2);
         assert_eq!(terminal_usage.unwrap().output_tokens(), 2);
         let requests = recorded.lock().unwrap();
         assert_eq!(requests[0].body["input_ids"], json!([2, 3, 4]));

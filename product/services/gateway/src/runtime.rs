@@ -216,6 +216,7 @@ impl SglangClient {
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
+        validate_native_parameters(&request)?;
         let tokenizer = self
             .tokenizer
             .as_ref()
@@ -396,6 +397,7 @@ impl SglangClient {
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        validate_native_parameters(&request)?;
         let tokenizer = self
             .tokenizer
             .clone()
@@ -515,6 +517,28 @@ fn one_shot_body(body: Vec<u8>) -> reqwest::Body {
 
 fn endpoint(service_url: &str, path: &str) -> String {
     format!("{}/{}", service_url.trim_end_matches('/'), path)
+}
+
+fn validate_native_parameters(request: &ChatCompletionRequest) -> Result<(), RuntimeFailure> {
+    if request
+        .parameters
+        .get("temperature")
+        .is_some_and(|value| value.as_f64() != Some(0.0))
+        || [
+            "top_p",
+            "top_k",
+            "min_p",
+            "seed",
+            "frequency_penalty",
+            "presence_penalty",
+            "repetition_penalty",
+        ]
+        .iter()
+        .any(|name| request.parameters.contains_key(*name))
+    {
+        return Err(RuntimeFailure::new(RuntimeFailureKind::InvalidRequest));
+    }
+    Ok(())
 }
 
 async fn read_bounded_body(mut response: reqwest::Response) -> Result<Vec<u8>, RuntimeFailure> {
@@ -1652,6 +1676,23 @@ mod tests {
 
         assert_eq!(failure.kind(), RuntimeFailureKind::ProtocolViolation);
         task.abort();
+    }
+
+    #[tokio::test]
+    async fn native_runtime_rejects_unimplemented_stochastic_sampling() {
+        let runtime = SglangClient::new(None).unwrap();
+        let mut deployment = deployment("http://127.0.0.1:1".to_owned());
+        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+        let failure = runtime
+            .complete(
+                &deployment,
+                request(),
+                32,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(failure.kind(), RuntimeFailureKind::InvalidRequest);
     }
 
     #[tokio::test]

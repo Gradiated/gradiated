@@ -3,9 +3,11 @@
 #include "desmond/trace.h"
 
 #include <chrono>
+#include <atomic>
 #include <cstdlib>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 namespace {
 
@@ -75,6 +77,32 @@ void test_http_stream() {
   thread.join();
 }
 
+void test_http_burst_remains_responsive() {
+  desmond::HttpServer server("127.0.0.1", 19093, [](const desmond::HttpRequest&) {
+    return desmond::HttpResponse{200, "text/plain; charset=utf-8", "ready\n"};
+  });
+  std::thread server_thread([&] { server.run(); });
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  std::atomic<int> failures{0};
+  std::vector<std::thread> clients;
+  for (int worker = 0; worker < 32; ++worker) {
+    clients.emplace_back([&] {
+      for (int request = 0; request < 16; ++request) {
+        const auto response = desmond::http_get(
+            "127.0.0.1", 19093, "/health", std::chrono::seconds(2));
+        if (!response.transport_ok || response.status != 200) failures.fetch_add(1);
+      }
+    });
+  }
+  for (auto& client : clients) client.join();
+  const auto final = desmond::http_get(
+      "127.0.0.1", 19093, "/metrics", std::chrono::seconds(2));
+  require(failures.load() == 0 && final.transport_ok && final.status == 200,
+          "HTTP server remains responsive after a connection burst");
+  server.stop();
+  server_thread.join();
+}
+
 }  // namespace
 
 int main() {
@@ -82,6 +110,7 @@ int main() {
   test_supervisor_lifecycle();
   test_http_server();
   test_http_stream();
+  test_http_burst_remains_responsive();
   std::cout << "desmond tests passed\n";
   return 0;
 }

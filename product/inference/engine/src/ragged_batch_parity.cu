@@ -435,6 +435,24 @@ int main(int argc, char** argv) {
                     "production-shape batched suffix prefill");
       require_equal(batched_decode, runner.append_ragged(serial_predictions, slots),
                     "production-shape batched suffix cached decode");
+
+      for (int slot = 0; slot < batch; ++slot) {
+        static_cast<void>(runner.prefill_slot(slot, resident, 1024));
+      }
+      gradiated::engine::LayerSlicedSuffixPrefillResult sliced;
+      int slices = 0;
+      while (!sliced.complete) {
+        sliced = runner.prefill_slots_suffix_layer_slice(slots, prompts, 10);
+        ++slices;
+      }
+      if (slices != 6 || runner.has_suffix_layer_slices()) {
+        throw std::runtime_error("production suffix did not use six exact layer slices");
+      }
+      require_equal(sliced.predictions, serial_predictions,
+                    "layer-sliced production suffix prefill");
+      require_equal(runner.append_ragged(sliced.predictions, slots),
+                    batched_decode,
+                    "layer-sliced production suffix cached decode");
     }
 
     std::cout << "mode,batch,context,seconds,aggregate_tokens_per_second\n";

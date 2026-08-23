@@ -113,7 +113,10 @@ HttpServer::HttpServer(std::string host, const std::uint16_t port, HttpHandler h
 HttpServer::~HttpServer() { stop(); }
 
 void HttpServer::run() {
-  listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  // poll readiness can be invalidated by a peer reset before accept4. Keep the listening socket
+  // nonblocking so a stale readiness edge cannot strand the sole accept loop after a traffic
+  // burst; accepted sockets remain blocking because Linux does not inherit O_NONBLOCK here.
+  listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
   if (listen_fd_ < 0) {
     throw std::runtime_error("failed to create HTTP socket");
   }

@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <optional>
 #include <stdexcept>
@@ -56,6 +57,17 @@ struct Gemma4BatchModelRunner::Implementation {
     }
   };
 
+  struct SuffixLayerState {
+    std::vector<int> slots;
+    std::vector<const std::vector<int>*> prompts;
+    std::vector<int> counts;
+    std::vector<int> positions;
+    std::vector<int> last_rows;
+    std::vector<std::size_t> prompt_sizes;
+    int packed_tokens{0};
+    int next_layer{0};
+  };
+
   const Gemma4Config& config;
   const DeviceWeightArena& weights;
   const Fp8WeightArena* fp8_weights;
@@ -90,9 +102,13 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation target_hidden_slots;
   Allocation speculative_backup_arena;
   Allocation device_cache_pointers;
+  // Suffix-only hidden states survive decode interleaving and do not share decode workspaces.
+  Allocation suffix_hidden_a;
+  Allocation suffix_hidden_b;
   cudaStream_t decode_stream{};
   std::unique_ptr<Gemma4AssistantRunner> assistant;
   std::map<std::tuple<int, int, int>, std::unique_ptr<DecodeGraph>> decode_graphs;
+  std::optional<SuffixLayerState> suffix_layer_state;
 
   static std::uint64_t cache_payload(const Gemma4Config& config, int batch, int maximum_context,
                                      std::vector<CacheLocation>* locations) {
@@ -154,7 +170,9 @@ struct Gemma4BatchModelRunner::Implementation {
                          ((hidden + 127) / 128)),
         target_hidden_slots(2ULL * requested_batch * hidden),
         speculative_backup_arena(2ULL * speculative_backup_payload_bytes),
-        device_cache_pointers(2ULL * sizeof(void*) * requested_batch) {
+        device_cache_pointers(2ULL * sizeof(void*) * requested_batch),
+        suffix_hidden_a(2ULL * max_context * hidden),
+        suffix_hidden_b(2ULL * max_context * hidden) {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
     check(cudaStreamCreateWithFlags(&decode_stream, cudaStreamNonBlocking),
           "create decode stream");
@@ -500,6 +518,152 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
         static_cast<int>(token_ids[static_cast<std::size_t>(request)]->size());
   }
   return predictions;
+}
+
+LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_layer_slice(
+    const std::vector<int>& slots,
+    const std::vector<const std::vector<int>*>& token_ids,
+    int maximum_layers) {
+  auto& state = *implementation_;
+  const int requests = static_cast<int>(slots.size());
+  if (requests <= 0 || requests > state.batch_size || token_ids.size() != slots.size() ||
+      maximum_layers <= 0) {
+    throw std::runtime_error("invalid layer-sliced suffix prefill shape");
+  }
+
+  if (!state.suffix_layer_state) {
+    Implementation::SuffixLayerState suffix;
+    suffix.slots = slots;
+    suffix.prompts = token_ids;
+    suffix.counts.resize(static_cast<std::size_t>(requests));
+    suffix.positions.resize(static_cast<std::size_t>(requests));
+    suffix.last_rows.resize(static_cast<std::size_t>(requests));
+    suffix.prompt_sizes.resize(static_cast<std::size_t>(requests));
+    std::vector<bool> seen(static_cast<std::size_t>(state.batch_size), false);
+    std::vector<int> packed_tokens;
+    for (int request = 0; request < requests; ++request) {
+      const int slot = slots[static_cast<std::size_t>(request)];
+      const auto* prompt = token_ids[static_cast<std::size_t>(request)];
+      if (slot < 0 || slot >= state.batch_size || seen[static_cast<std::size_t>(slot)] ||
+          prompt == nullptr || prompt->empty() ||
+          prompt->size() > static_cast<std::size_t>(state.maximum_context)) {
+        throw std::runtime_error("invalid layer-sliced suffix request");
+      }
+      seen[static_cast<std::size_t>(slot)] = true;
+      const int position = state.slot_positions[static_cast<std::size_t>(slot)];
+      const int count = static_cast<int>(prompt->size()) - position;
+      if (position < 0 || count <= 0) {
+        throw std::runtime_error("layer-sliced suffix does not extend resident context");
+      }
+      suffix.positions[static_cast<std::size_t>(request)] = position;
+      suffix.counts[static_cast<std::size_t>(request)] = count;
+      suffix.prompt_sizes[static_cast<std::size_t>(request)] = prompt->size();
+      for (int index = position; index < static_cast<int>(prompt->size()); ++index) {
+        const int token = (*prompt)[static_cast<std::size_t>(index)];
+        if (token < 0 || token >= state.vocabulary) {
+          throw std::runtime_error("layer-sliced suffix contains an invalid token id");
+        }
+        packed_tokens.push_back(token);
+      }
+      suffix.last_rows[static_cast<std::size_t>(request)] =
+          static_cast<int>(packed_tokens.size()) - 1;
+    }
+    if (packed_tokens.size() > static_cast<std::size_t>(state.maximum_context)) {
+      throw std::runtime_error("layer-sliced suffix exceeds shared projection workspace");
+    }
+    suffix.packed_tokens = static_cast<int>(packed_tokens.size());
+    check(cudaMemcpy(state.device_input_tokens.get(), packed_tokens.data(),
+                     packed_tokens.size() * sizeof(int), cudaMemcpyHostToDevice),
+          "copy layer-sliced suffix tokens");
+    embedding_batch_bf16(
+        state.weights.at("token_embedding"),
+        static_cast<const int*>(state.device_input_tokens.get()), state.suffix_hidden_a.get(),
+        suffix.packed_tokens, state.vocabulary, state.hidden,
+        std::sqrt(static_cast<float>(state.hidden)), nullptr);
+    state.suffix_layer_state = std::move(suffix);
+  } else {
+    const auto& suffix = *state.suffix_layer_state;
+    if (suffix.slots != slots || suffix.prompts != token_ids) {
+      throw std::runtime_error("layer-sliced suffix cohort changed while in flight");
+    }
+    for (int request = 0; request < requests; ++request) {
+      if (token_ids[static_cast<std::size_t>(request)] == nullptr ||
+          token_ids[static_cast<std::size_t>(request)]->size() !=
+              suffix.prompt_sizes[static_cast<std::size_t>(request)]) {
+        throw std::runtime_error("layer-sliced suffix prompt changed while in flight");
+      }
+    }
+  }
+
+  auto& suffix = *state.suffix_layer_state;
+  const int layer_count = static_cast<int>(state.config.layers.size());
+  const int end_layer = std::min(layer_count, suffix.next_layer + maximum_layers);
+  void* input = suffix.next_layer % 2 == 0
+      ? state.suffix_hidden_a.get() : state.suffix_hidden_b.get();
+  void* output = suffix.next_layer % 2 == 0
+      ? state.suffix_hidden_b.get() : state.suffix_hidden_a.get();
+  for (int layer = suffix.next_layer; layer < end_layer; ++layer) {
+    std::vector<void*> key_caches;
+    std::vector<void*> value_caches;
+    std::vector<int> capacities(static_cast<std::size_t>(requests),
+                                state.caches[static_cast<std::size_t>(layer)].capacity);
+    key_caches.reserve(static_cast<std::size_t>(requests));
+    value_caches.reserve(static_cast<std::size_t>(requests));
+    for (const int slot : slots) {
+      key_caches.push_back(state.slot_key_cache(static_cast<std::size_t>(layer), slot));
+      value_caches.push_back(state.slot_value_cache(static_cast<std::size_t>(layer), slot));
+    }
+    state.layers.run_prefill_chunks(
+        layer, input, output, suffix.counts, suffix.positions,
+        key_caches, value_caches, capacities, nullptr);
+    std::swap(input, output);
+  }
+  suffix.next_layer = end_layer;
+  if (end_layer != layer_count) {
+    check(cudaDeviceSynchronize(), "synchronize layer-sliced suffix prefill");
+    return {};
+  }
+
+  check(cudaMemcpy(state.device_positions.get(), suffix.last_rows.data(),
+                   suffix.last_rows.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy layer-sliced suffix final rows");
+  gather_rows_bf16(input, static_cast<const int*>(state.device_positions.get()), output,
+                   requests, state.hidden, nullptr);
+  rms_norm_bf16(output, state.weights.at("final_norm"), state.final_hidden.get(), requests,
+                state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
+  check(cudaMemcpy(state.device_slots.get(), slots.data(), slots.size() * sizeof(int),
+                   cudaMemcpyHostToDevice), "copy layer-sliced suffix slots");
+  scatter_rows_bf16(state.final_hidden.get(), static_cast<const int*>(state.device_slots.get()),
+                    state.target_hidden_slots.get(), requests, state.hidden, nullptr);
+  state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
+                    state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
+  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
+  for (int row = 0; row < requests; ++row) {
+    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
+                             2ULL * row * state.vocabulary;
+    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
+    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
+                          static_cast<std::size_t>(row) * one_workspace;
+    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
+  }
+  std::vector<int> predictions(static_cast<std::size_t>(requests));
+  check(cudaMemcpy(predictions.data(), state.device_output_tokens.get(),
+                   predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
+        "copy layer-sliced suffix predictions");
+  for (int request = 0; request < requests; ++request) {
+    state.slot_positions[static_cast<std::size_t>(slots[static_cast<std::size_t>(request)])] =
+        static_cast<int>(suffix.prompt_sizes[static_cast<std::size_t>(request)]);
+  }
+  state.suffix_layer_state.reset();
+  return LayerSlicedSuffixPrefillResult{true, std::move(predictions)};
+}
+
+void Gemma4BatchModelRunner::abort_suffix_layer_slices() {
+  implementation_->suffix_layer_state.reset();
+}
+
+bool Gemma4BatchModelRunner::has_suffix_layer_slices() const {
+  return implementation_->suffix_layer_state.has_value();
 }
 
 std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destination_slot) {

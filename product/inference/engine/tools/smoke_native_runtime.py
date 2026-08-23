@@ -132,6 +132,7 @@ def main() -> None:
         )
         cached_ttft = [result["timing"]["ttft_ms"] for result in cached]
         cached_tpot = [result["timing"]["mean_tpot_ms"] for result in cached]
+        cached_max_tpot = [result["timing"]["max_tpot_ms"] for result in cached]
         cached_request = [result["timing"]["total_ms"] for result in cached]
         print(json.dumps({
             "asynchronous_turns": True,
@@ -152,6 +153,8 @@ def main() -> None:
             "cached_mean_tpot_ms": statistics.mean(cached_tpot),
             "cached_p50_tpot_ms": percentile(cached_tpot, 0.50),
             "cached_p95_tpot_ms": percentile(cached_tpot, 0.95),
+            "cached_p50_max_tpot_ms": percentile(cached_max_tpot, 0.50),
+            "cached_p95_max_tpot_ms": percentile(cached_max_tpot, 0.95),
             "cached_p50_request_ms": percentile(cached_request, 0.50),
             "cached_p95_request_ms": percentile(cached_request, 0.95),
             "cached_max_request_ms": max(cached_request),

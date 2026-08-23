@@ -298,11 +298,13 @@ tail remain the competitive weakness. Exact usage over 181.4 seconds was 404,510
 that is $1.690/hour gross, 37.56% of the $4.50/hour H200, leaving $2.810/hour or about $2,051/month
 of compute uncovered.
 
-Tensor-scaled FP8 decode agrees with the independent BF16 runner on 508/512 teacher-forced coding
-agent predictions (99.22%); 12/16 prompts match all 32 evaluated positions. Channel scaling is
-worse at 505/512 and block-128 has no cuBLASLt algorithm for every Gemma projection shape, so
-tensor scaling remains the quality/performance choice. The next graph optimization must reduce
-tail TPOT and physical attention traffic without weakening this gate.
+On the current held-out fixture, tensor-scaled FP8 decode agrees with the independent BF16 runner
+on 503/512 teacher-forced coding-agent predictions (98.24%); 10/16 prompts match all 32 evaluated
+positions. An isolated rebuild of the immutable `d0a7e548` source produces the same 503/512 and
+10/16 result, so this is the reproducible baseline rather than the previously recorded 508/512
+figure. Block-128 has no cuBLASLt algorithm for every Gemma projection shape. The next precision
+experiment must beat this exact matched-source gate and include completion-level quality, not rely
+on an unreproducible prior count.
 
 Splitting a fragmented mask into several library GEMMs was measured and rejected. For the same
 four-run B12/D512/8k cache mask, one pointer-array QK/softmax/PV sequence takes 0.2307 ms while four
@@ -311,3 +313,31 @@ exact FP8 model path remained 8/8-token correct, but sustained agent traffic fel
 token/s with TPOT increasing to 29.16 ms. The experiment was removed. Fragmented slots need one
 persistent slot-indexed kernel (or physical compaction proven cheaper than the extra KV traffic),
 not a graph assembled from multiple contiguous library calls.
+
+Cached-suffix preemption was tested at the model graph's two natural boundaries. Splitting the
+usual 257-token extension at 192 tokens repeated a complete model-weight pass for the 65-token
+tail. It reduced neither end-to-end latency nor cost: sustained output fell from 422.2 to 411.9
+token/s, median request time rose from 3.626 to 3.837 seconds, and p95 request time rose from 5.958
+to 6.034 seconds. Token-quantum suffix splitting is therefore rejected for this traffic shape.
+
+The retained implementation instead keeps dedicated in-flight suffix hidden states and preempts
+only at exact transformer-layer boundaries. Decode uses separate workspaces and stable cache
+slots; partial suffix KV is not exposed by the logical slot position. Ten-layer slices execute
+every one of Gemma's sixty layers exactly once while permitting a decode wave between slices.
+Production-shape 10-request/257-token parity matches the unsliced path through the next decode
+token. Cancellation aborts the cohort state and leaves the old logical prefix valid.
+
+Always slicing improved decode tails but delayed admission enough to make aggregate throughput
+unstable. The retained pressure policy slices only while at least 14 of 16 requests are already
+decoding and finishes all remaining layers immediately below that threshold. On the same
+64-conversation, c16, ten-turn trace it sustains 431.0 output token/s. Cached TTFT p50/p95 is
+166/514 ms, mean TPOT p50/p95 is 27.49/44.26 ms, and request time p50/p95 is 3.636/5.917 seconds.
+The observed billed token mix recovers 37.46% of a $4.50/hour H200, effectively equal to the
+37.49% matched unbounded run; normalizing both policies to the baseline token mix raises recovery
+from 37.49% to 38.28%. A 12-request threshold traded another 1.2 ms of p95 TPOT for lower TTFT and
+throughput, while 15- and 20-layer slices were dominated and rejected.
+
+The native HTTP listener is nonblocking. Under connection churn a readiness edge can disappear
+before `accept4`; a blocking listening descriptor could then strand the only accept loop and make
+health or metrics unreachable after a successful inference burst. A 512-request concurrent burst
+test now gates post-burst responsiveness.

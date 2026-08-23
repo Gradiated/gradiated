@@ -14,6 +14,11 @@ struct GreedyVerificationResult {
   std::vector<int> next_tokens;
 };
 
+struct LayerSlicedSuffixPrefillResult {
+  bool complete{false};
+  std::vector<int> predictions;
+};
+
 // Homogeneous-position batch used to establish the throughput ceiling before ragged scheduling.
 class Gemma4BatchModelRunner {
  public:
@@ -39,6 +44,15 @@ class Gemma4BatchModelRunner {
   std::vector<int> prefill_slots_suffix(
       const std::vector<int>& slots,
       const std::vector<const std::vector<int>*>& token_ids);
+  // Runs a full suffix cohort through at most maximum_layers more transformer layers. Dedicated
+  // hidden-state storage survives intervening decode waves, so preemption does not repeat any
+  // model layer or alter the token graph.
+  LayerSlicedSuffixPrefillResult prefill_slots_suffix_layer_slice(
+      const std::vector<int>& slots,
+      const std::vector<const std::vector<int>*>& token_ids,
+      int maximum_layers);
+  void abort_suffix_layer_slices();
+  [[nodiscard]] bool has_suffix_layer_slices() const;
   // Copies the exact hybrid KV state and logical position between stable slots on device.
   std::uint64_t clone_slot(int source_slot, int destination_slot);
   // Decodes compact active rows while retaining each request's stable cache slot.

@@ -38,6 +38,10 @@ constexpr int default_idle_prefill_quantum_tokens = 1024;
 // competing-provider TTFT margin.
 constexpr int default_short_prefill_batch_window_microseconds = 10000;
 constexpr int short_prefill_cohort_tokens = 512;
+// Zero preserves the throughput-first full suffix batch. A positive value preempts only at exact
+// transformer-layer boundaries, retaining one execution of every prefill layer.
+constexpr int default_interleaved_suffix_layer_quantum = 10;
+constexpr int default_interleaved_suffix_layer_minimum_decode = 14;
 constexpr int maximum_slots = 16;
 constexpr int default_speculative_depth = 4;
 constexpr int default_speculative_minimum_batch = 8;
@@ -75,6 +79,12 @@ bool constant_time_equal(const std::string& left, const std::string& right) {
     difference |= static_cast<std::size_t>(a ^ b);
   }
   return difference == 0;
+}
+
+void update_atomic_max(std::atomic<std::uint64_t>& target, std::uint64_t value) {
+  std::uint64_t current = target.load(std::memory_order_relaxed);
+  while (current < value &&
+         !target.compare_exchange_weak(current, value, std::memory_order_relaxed)) {}
 }
 
 std::vector<int> integer_array(const gradiated::engine::Json& value, const char* field) {
@@ -131,6 +141,10 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> interleaved_suffix_prefill_batches{0};
   std::atomic<std::uint64_t> suffix_prefill_requests{0};
   std::atomic<std::uint64_t> suffix_prefill_tokens{0};
+  std::atomic<std::uint64_t> suffix_prefill_microseconds{0};
+  std::atomic<std::uint64_t> maximum_suffix_prefill_microseconds{0};
+  std::atomic<std::uint64_t> suffix_prefill_layer_slices{0};
+  std::array<std::atomic<std::uint64_t>, maximum_slots + 1> suffix_prefill_batch_calls{};
   std::atomic<std::uint64_t> speculative_cycles{0};
   std::atomic<std::uint64_t> speculative_proposed_tokens{0};
   std::atomic<std::uint64_t> speculative_accepted_tokens{0};
@@ -183,7 +197,9 @@ class ContinuousScheduler {
                       int speculative_minimum_batch,
                       int prefill_quantum_tokens,
                       int idle_prefill_quantum_tokens,
-                      int short_prefill_batch_window_microseconds)
+                      int short_prefill_batch_window_microseconds,
+                      int interleaved_suffix_layer_quantum,
+                      int interleaved_suffix_layer_minimum_decode)
       : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
                 assistant_weights),
         slots_(maximum_slots), metrics_(metrics),
@@ -191,7 +207,10 @@ class ContinuousScheduler {
         speculative_minimum_batch_(speculative_minimum_batch),
         prefill_quantum_tokens_(prefill_quantum_tokens),
         idle_prefill_quantum_tokens_(idle_prefill_quantum_tokens),
-        short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds) {
+        short_prefill_batch_window_microseconds_(short_prefill_batch_window_microseconds),
+        interleaved_suffix_layer_quantum_(interleaved_suffix_layer_quantum),
+        interleaved_suffix_layer_minimum_decode_(interleaved_suffix_layer_minimum_decode),
+        config_layer_count_(config.layers.size()) {
     // Materialize latency-sensitive cuBLASLt and attention plans before advertising readiness.
     std::vector<int> warmup(2048, 2);
     while (!runner_.prefill_slot_chunk(0, warmup, default_chunk_tokens)) {}
@@ -419,6 +438,18 @@ class ContinuousScheduler {
         }
         job->condition.notify_all();
         reaped = true;
+      }
+    }
+    if (!inflight_suffix_slots_.empty()) {
+      const bool cohort_cancelled = std::any_of(
+          inflight_suffix_slots_.begin(), inflight_suffix_slots_.end(), [&](const int index) {
+            const auto& slot = slots_[static_cast<std::size_t>(index)];
+            return !slot.job || slot.job->cancelled.load(std::memory_order_acquire);
+          });
+      if (cohort_cancelled) {
+        runner_.abort_suffix_layer_slices();
+        inflight_suffix_slots_.clear();
+        inflight_suffix_prompts_.clear();
       }
     }
     for (int index = 0; index < maximum_slots; ++index) {
@@ -736,76 +767,120 @@ class ContinuousScheduler {
   }
 
   bool drain_short_prefill_cohort() {
-    int waiting = 0;
-    bool has_decoding = false;
-    std::vector<int> cohort_slots;
-    std::vector<const std::vector<int>*> cohort_prompts;
-    std::vector<int> computed_tokens;
-    for (int index = 0; index < maximum_slots; ++index) {
-      const auto& slot = slots_[static_cast<std::size_t>(index)];
-      if (!slot.job) continue;
-      if (slot.decode_ready) {
-        has_decoding = true;
-        continue;
+    const bool resuming_layer_slices = !inflight_suffix_slots_.empty();
+    const int decoding = static_cast<int>(std::count_if(
+        slots_.begin(), slots_.end(), [](const Slot& slot) { return slot.decode_ready; }));
+    const bool has_decoding = decoding > 0;
+    const bool decode_pressure = decoding >= interleaved_suffix_layer_minimum_decode_;
+    std::vector<int> cohort_slots = inflight_suffix_slots_;
+    std::vector<const std::vector<int>*> cohort_prompts = inflight_suffix_prompts_;
+    std::vector<int> cohort_tokens;
+    if (!resuming_layer_slices) {
+      for (int index = 0; index < maximum_slots; ++index) {
+        const auto& slot = slots_[static_cast<std::size_t>(index)];
+        if (!slot.job || slot.decode_ready) continue;
+        const int remaining = static_cast<int>(slot.job->input_ids.size()) -
+                              runner_.slot_position(index);
+        if (remaining <= 0 || remaining > short_prefill_cohort_tokens) continue;
+        cohort_slots.push_back(index);
+        cohort_prompts.push_back(&slot.job->input_ids);
+        cohort_tokens.push_back(remaining);
       }
-      const int remaining = static_cast<int>(slot.job->input_ids.size()) -
-                            runner_.slot_position(index);
-      if (remaining <= 0 || remaining > short_prefill_cohort_tokens) continue;
-      ++waiting;
-      cohort_slots.push_back(index);
-      cohort_prompts.push_back(&slot.job->input_ids);
-      computed_tokens.push_back(remaining);
+      if (cohort_slots.size() < 2) return false;
+      std::vector<std::size_t> order(cohort_slots.size());
+      for (std::size_t index = 0; index < order.size(); ++index) order[index] = index;
+      std::stable_sort(order.begin(), order.end(), [&](std::size_t left, std::size_t right) {
+        return runner_.slot_position(cohort_slots[left]) <
+               runner_.slot_position(cohort_slots[right]);
+      });
+      std::vector<int> sorted_slots;
+      std::vector<const std::vector<int>*> sorted_prompts;
+      std::vector<int> sorted_tokens;
+      sorted_slots.reserve(order.size());
+      sorted_prompts.reserve(order.size());
+      sorted_tokens.reserve(order.size());
+      for (const std::size_t index : order) {
+        sorted_slots.push_back(cohort_slots[index]);
+        sorted_prompts.push_back(cohort_prompts[index]);
+        sorted_tokens.push_back(cohort_tokens[index]);
+      }
+      cohort_slots = std::move(sorted_slots);
+      cohort_prompts = std::move(sorted_prompts);
+      cohort_tokens = std::move(sorted_tokens);
     }
-    if (waiting < 2) return false;
-    std::vector<std::size_t> order(cohort_slots.size());
-    for (std::size_t index = 0; index < order.size(); ++index) order[index] = index;
-    std::stable_sort(order.begin(), order.end(), [&](std::size_t left, std::size_t right) {
-      return runner_.slot_position(cohort_slots[left]) <
-             runner_.slot_position(cohort_slots[right]);
-    });
-    std::vector<int> sorted_slots;
-    std::vector<const std::vector<int>*> sorted_prompts;
-    std::vector<int> sorted_computed_tokens;
-    sorted_slots.reserve(order.size());
-    sorted_prompts.reserve(order.size());
-    sorted_computed_tokens.reserve(order.size());
-    for (const std::size_t index : order) {
-      sorted_slots.push_back(cohort_slots[index]);
-      sorted_prompts.push_back(cohort_prompts[index]);
-      sorted_computed_tokens.push_back(computed_tokens[index]);
-    }
-    cohort_slots = std::move(sorted_slots);
-    cohort_prompts = std::move(sorted_prompts);
-    computed_tokens = std::move(sorted_computed_tokens);
     try {
-      const auto predictions = runner_.prefill_slots_suffix(cohort_slots, cohort_prompts);
+      const auto prefill_begin = std::chrono::steady_clock::now();
+      std::vector<std::optional<int>> predictions(cohort_slots.size());
+      const bool use_layer_slices = resuming_layer_slices ||
+          (decode_pressure && interleaved_suffix_layer_quantum_ > 0);
+      bool complete = true;
+      if (use_layer_slices) {
+        if (!resuming_layer_slices) {
+          inflight_suffix_slots_ = cohort_slots;
+          inflight_suffix_prompts_ = cohort_prompts;
+        }
+        const int layers = decode_pressure
+            ? interleaved_suffix_layer_quantum_
+            : static_cast<int>(config_layer_count_);
+        const auto result = runner_.prefill_slots_suffix_layer_slice(
+            cohort_slots, cohort_prompts, layers);
+        metrics_.suffix_prefill_layer_slices.fetch_add(1);
+        complete = result.complete;
+        if (complete) {
+          for (std::size_t request = 0; request < result.predictions.size(); ++request) {
+            predictions[request] = result.predictions[request];
+          }
+        }
+      } else {
+        const auto full_predictions = runner_.prefill_slots_suffix(cohort_slots, cohort_prompts);
+        for (std::size_t request = 0; request < full_predictions.size(); ++request) {
+          predictions[request] = full_predictions[request];
+        }
+      }
       const auto prediction_time = std::chrono::steady_clock::now();
-      metrics_.suffix_prefill_batches.fetch_add(1);
-      if (has_decoding) metrics_.interleaved_suffix_prefill_batches.fetch_add(1);
-      metrics_.suffix_prefill_requests.fetch_add(cohort_slots.size());
+      const auto prefill_microseconds = static_cast<std::uint64_t>(
+          std::chrono::duration_cast<std::chrono::microseconds>(
+              prediction_time - prefill_begin).count());
+      metrics_.suffix_prefill_microseconds.fetch_add(prefill_microseconds);
+      update_atomic_max(metrics_.maximum_suffix_prefill_microseconds, prefill_microseconds);
+      if (!resuming_layer_slices) {
+        metrics_.suffix_prefill_batches.fetch_add(1);
+        if (has_decoding) metrics_.interleaved_suffix_prefill_batches.fetch_add(1);
+        metrics_.suffix_prefill_requests.fetch_add(cohort_slots.size());
+        metrics_.suffix_prefill_batch_calls.at(cohort_slots.size()).fetch_add(1);
+        for (const int tokens : cohort_tokens) {
+          metrics_.prefill_tokens_computed.fetch_add(static_cast<std::uint64_t>(tokens));
+          metrics_.suffix_prefill_tokens.fetch_add(static_cast<std::uint64_t>(tokens));
+        }
+      }
+      if (!complete) return true;
+      inflight_suffix_slots_.clear();
+      inflight_suffix_prompts_.clear();
       for (std::size_t request = 0; request < cohort_slots.size(); ++request) {
         const int index = cohort_slots[request];
         auto& slot = slots_[static_cast<std::size_t>(index)];
-        metrics_.prefill_tokens_computed.fetch_add(
-            static_cast<std::uint64_t>(computed_tokens[request]));
-        metrics_.suffix_prefill_tokens.fetch_add(
-            static_cast<std::uint64_t>(computed_tokens[request]));
-        slot.cached_tokens = slot.job->input_ids;
-        slot.token_to_append = predictions[request];
-        emit_token(slot, predictions[request]);
+        const int resident = runner_.slot_position(index);
+        slot.cached_tokens.assign(slot.job->input_ids.begin(),
+                                  slot.job->input_ids.begin() + resident);
+        if (!predictions[request]) continue;
+        slot.token_to_append = *predictions[request];
+        emit_token(slot, *predictions[request]);
         slot.decode_ready = true;
         slot.ttft_microseconds = static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::microseconds>(
                 prediction_time - slot.job->queued_at).count());
         slot.last_token_at = prediction_time;
         metrics_.decoding.fetch_add(1);
-        if (slot.job->stop_ids.contains(predictions[request])) {
+        if (slot.job->stop_ids.contains(*predictions[request])) {
           complete_slot(index, "stop");
         } else if (slot.job->max_tokens == 1) {
           complete_slot(index, "length");
         }
       }
     } catch (const std::exception& error) {
+      runner_.abort_suffix_layer_slices();
+      inflight_suffix_slots_.clear();
+      inflight_suffix_prompts_.clear();
       for (const int index : cohort_slots) {
         if (slots_[static_cast<std::size_t>(index)].job) fail_slot(index, error.what());
       }
@@ -824,6 +899,7 @@ class ContinuousScheduler {
   }
 
   bool wait_for_short_prefill_cohort() {
+    if (!inflight_suffix_slots_.empty()) return false;
     if (short_prefill_batch_window_microseconds_ <= 0) return false;
     std::optional<std::chrono::steady_clock::time_point> oldest;
     for (int index = 0; index < maximum_slots; ++index) {
@@ -852,7 +928,7 @@ class ContinuousScheduler {
       if (wait_for_short_prefill_cohort()) continue;
       if (drain_short_prefill_cohort()) worked = true;
       if (decode_step()) worked = true;
-      if (prefill_step()) worked = true;
+      if (inflight_suffix_slots_.empty() && prefill_step()) worked = true;
       if (worked) continue;
       std::unique_lock lock(mutex_);
       condition_.wait(lock, [&] { return stopping_ || !pending_.empty(); });
@@ -868,6 +944,11 @@ class ContinuousScheduler {
   int prefill_quantum_tokens_;
   int idle_prefill_quantum_tokens_;
   int short_prefill_batch_window_microseconds_;
+  int interleaved_suffix_layer_quantum_;
+  int interleaved_suffix_layer_minimum_decode_;
+  const std::size_t config_layer_count_;
+  std::vector<int> inflight_suffix_slots_;
+  std::vector<const std::vector<int>*> inflight_suffix_prompts_;
   std::mutex mutex_;
   std::condition_variable condition_;
   std::deque<std::shared_ptr<CompletionJob>> pending_;
@@ -927,6 +1008,13 @@ int main(int argc, char** argv) {
     const int short_prefill_batch_window_microseconds = environment_integer(
         "GRADIATED_SHORT_PREFILL_BATCH_WINDOW_US",
         default_short_prefill_batch_window_microseconds, 0, 20000);
+    const int interleaved_suffix_layer_quantum = environment_integer(
+        "GRADIATED_INTERLEAVED_SUFFIX_LAYER_QUANTUM",
+        default_interleaved_suffix_layer_quantum, 0,
+        static_cast<int>(config.layers.size()));
+    const int interleaved_suffix_layer_minimum_decode = environment_integer(
+        "GRADIATED_INTERLEAVED_SUFFIX_LAYER_MIN_DECODE",
+        default_interleaved_suffix_layer_minimum_decode, 1, maximum_slots);
     const int speculative_depth = environment_integer(
         "GRADIATED_SPECULATIVE_DEPTH", default_speculative_depth, 1, 4);
     const int speculative_minimum_batch = environment_integer(
@@ -937,7 +1025,9 @@ int main(int argc, char** argv) {
                                   metrics, speculative_depth, speculative_minimum_batch,
                                   prefill_quantum_tokens,
                                   idle_prefill_quantum_tokens,
-                                  short_prefill_batch_window_microseconds);
+                                  short_prefill_batch_window_microseconds,
+                                  interleaved_suffix_layer_quantum,
+                                  interleaved_suffix_layer_minimum_decode);
 
     desmond::HttpServer server(bind_host, bind_port, [&](const desmond::HttpRequest& request) {
       if (request.method == "GET" && request.path == "/health") {
@@ -971,6 +1061,14 @@ int main(int argc, char** argv) {
              << metrics.suffix_prefill_requests.load() << '\n'
              << "gradiated_native_suffix_prefill_tokens_total "
              << metrics.suffix_prefill_tokens.load() << '\n'
+             << "gradiated_native_suffix_prefill_seconds_total "
+             << static_cast<double>(metrics.suffix_prefill_microseconds.load()) / 1000000.0
+             << '\n'
+             << "gradiated_native_suffix_prefill_max_seconds "
+             << static_cast<double>(metrics.maximum_suffix_prefill_microseconds.load()) / 1000000.0
+             << '\n'
+             << "gradiated_native_suffix_prefill_layer_slices_total "
+             << metrics.suffix_prefill_layer_slices.load() << '\n'
              << "gradiated_native_speculative_cycles_total "
              << metrics.speculative_cycles.load() << '\n'
              << "gradiated_native_speculative_proposed_tokens_total "
@@ -992,7 +1090,11 @@ int main(int argc, char** argv) {
              << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n';
         for (int batch = 1; batch <= maximum_slots; ++batch) {
           body << "gradiated_native_decode_batch_steps_total{batch=\"" << batch << "\"} "
-               << metrics.decode_batch_steps[static_cast<std::size_t>(batch)].load() << '\n';
+               << metrics.decode_batch_steps[static_cast<std::size_t>(batch)].load() << '\n'
+               << "gradiated_native_suffix_prefill_batch_calls_total{batch=\"" << batch
+               << "\"} "
+               << metrics.suffix_prefill_batch_calls[static_cast<std::size_t>(batch)].load()
+               << '\n';
         }
         return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", body.str()};
       }
@@ -1112,6 +1214,10 @@ int main(int argc, char** argv) {
               << " idle_prefill_quantum_tokens=" << idle_prefill_quantum_tokens
               << " short_prefill_batch_window_us="
               << short_prefill_batch_window_microseconds
+              << " interleaved_suffix_layer_quantum="
+              << interleaved_suffix_layer_quantum
+              << " interleaved_suffix_layer_min_decode="
+              << interleaved_suffix_layer_minimum_decode
               << " fp8_decode=" << fp8_decode
               << " assistant=" << (assistant_weights ? "enabled" : "off") << '\n';
     server.run();

@@ -238,7 +238,7 @@ including split-byte tokens, and emits normalized OpenAI SSE chunks. The initial
 intentionally advertises greedy `temperature=0` only. Native stochastic sampling is not
 implemented yet and must not be inferred from the sampling design above.
 
-The current 387.1 token/s trace result corresponds to 41.3 ms per full 16-request output wave when
+The former 387.1 token/s trace result corresponds to 41.3 ms per full 16-request output wave when
 all slots are productive. The fully parity-gated synthetic 8k frontier is 477.6 token/s
 homogeneous (33.5 ms/wave) and 407.1 token/s ragged (39.3 ms/wave). Against the measured 7.67 ms
 FP8 weight-stream floor plus approximately 5.0 ms for one physical BF16 KV pass across sixteen 8k
@@ -271,23 +271,43 @@ dispatcher rejects D=512 as an invalid MMA configuration. The retained strided c
 is therefore still the best measured primitive at this geometry; adopting a framework kernel
 would regress the batch-16 layer from 0.282 ms before any integration overhead.
 
-The large gap between that primitive and the production graph was traced to cache addressing, not
-the arithmetic. `cublasGemmBatchedEx` on arbitrary stable-slot pointer arrays is much slower than
-`cublasGemmStridedBatchedEx`. Decode graphs now specialize consecutive active cache intervals and
-retain per-row position masks, so a saturated `[0,16)` cohort gets the strided path without
+Part of the gap between that primitive and the production graph was traced to cache addressing.
+Decode graphs now specialize consecutive active cache intervals with
+`cublasGemmStridedBatchedEx` and retain per-row position masks, so a saturated `[0,16)` cohort gets
+the strided path without
 changing model arithmetic. Exact tensor-FP8 greedy parity passes for all eight fixture tokens at
 batch 16, and also for the offset interval `[1,16)` at batch 15. At 8k the production-shaped
 ragged frontier rises from 407.1 to 465.9 output token/s, only 2.4% below the 477.6 token/s
 homogeneous ceiling.
 
-Asynchronous agent traffic does not retain that full synthetic gain because completed
-conversations create fragmented, nonconsecutive physical slot masks while their next cached turn
-is admitted. Two ten-turn concurrency-16 runs sustain 391.1 and 393.3 output token/s (mean 392.2),
-with cached mean TTFT 601--617 ms and mean TPOT 28.4--28.6 ms. Relative to the previous 387.1
-token/s trace result, throughput improves only 1.3% while TTFT improves about 6.5--8.9%. At the
-same cheapest-provider prices, measured compute-cost recovery is approximately 32.2%: about
-$1.45/hour gross against $4.50/hour H200 compute, leaving $3.05/hour or $2,227/month uncovered.
-The next attention optimization must therefore accelerate arbitrary slot maps without copying
-whole KV histories or materializing scores—most plausibly a slot-indexed WGMMA/TMA QK path (then
-online-softmax/PV fusion), or a bounded cache-compaction policy whose copy cost and prefix-hit loss
-are explicitly amortized over each conversation.
+The original asynchronous harness queued exactly sixteen conversations and included their uneven
+terminal drain, producing 391--393 output token/s with a mean active batch of 12.20. The retained
+sustained harness queues 64 unique conversations through sixteen workers and reports exact token
+classes and latency percentiles. Even with backlog, cached turns temporarily leave decode while
+their new suffix is computed. Batching two or more waiting suffixes of at most 512 tokens through
+the parity-tested multi-request prefill path raises mean active batch from 13.06 to 13.79 and cuts
+batch-8-or-lower steps from 20.3% to 8.7%. Existing decoders retain their original clocks, so the
+reported TPOT includes every interleaved prefill pause rather than hiding scheduler interference.
+
+The confirmation run sustains 421.1 output token/s over 64 conversations and 640 turns. Cached
+TTFT p50/p95 is 143.8/628.5 ms, TPOT p50/p95 is 28.15/44.04 ms, and request time p50/p95 is
+3.685/6.006 seconds. A second run reached 428.8 output token/s. Against the SGLang coding-agent
+control, native TTFT and median request time are materially better; p95 request time and decode
+tail remain the competitive weakness. Exact usage over 181.4 seconds was 404,510 uncached input,
+2,608,294 cached input and 76,396 output tokens. At $0.08/$0.01/$0.35 per million respectively,
+that is $1.690/hour gross, 37.56% of the $4.50/hour H200, leaving $2.810/hour or about $2,051/month
+of compute uncovered.
+
+Tensor-scaled FP8 decode agrees with the independent BF16 runner on 508/512 teacher-forced coding
+agent predictions (99.22%); 12/16 prompts match all 32 evaluated positions. Channel scaling is
+worse at 505/512 and block-128 has no cuBLASLt algorithm for every Gemma projection shape, so
+tensor scaling remains the quality/performance choice. The next graph optimization must reduce
+tail TPOT and physical attention traffic without weakening this gate.
+
+Splitting a fragmented mask into several library GEMMs was measured and rejected. For the same
+four-run B12/D512/8k cache mask, one pointer-array QK/softmax/PV sequence takes 0.2307 ms while four
+strided sequences take 0.3052 ms, a 32.3% regression from smaller GEMMs and repeated launches. The
+exact FP8 model path remained 8/8-token correct, but sustained agent traffic fell to 385.5 output
+token/s with TPOT increasing to 29.16 ms. The experiment was removed. Fragmented slots need one
+persistent slot-indexed kernel (or physical compaction proven cheaper than the extra KV traffic),
+not a graph assembled from multiple contiguous library calls.

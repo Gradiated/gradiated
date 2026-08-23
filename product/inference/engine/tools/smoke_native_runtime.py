@@ -12,6 +12,17 @@ import urllib.error
 import urllib.request
 
 
+def percentile(values: list[float], fraction: float) -> float:
+    ordered = sorted(values)
+    if not ordered:
+        raise RuntimeError("cannot compute a percentile of an empty sample")
+    position = (len(ordered) - 1) * fraction
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = position - lower
+    return ordered[lower] * (1.0 - weight) + ordered[upper] * weight
+
+
 def request_json(url: str, api_key: str, payload: dict[str, object]) -> dict[str, object]:
     request = urllib.request.Request(
         url,
@@ -34,6 +45,12 @@ def main() -> None:
     parser.add_argument("--url", default="http://127.0.0.1:30000/v1/token-completions")
     parser.add_argument("--api-key", required=True)
     parser.add_argument("--concurrency", type=int, default=4)
+    parser.add_argument(
+        "--conversations",
+        type=int,
+        default=0,
+        help="unique conversations to queue continuously; defaults to concurrency",
+    )
     parser.add_argument("--max-tokens", type=int, default=32)
     parser.add_argument("--turns", type=int, default=1)
     parser.add_argument("--cycles", type=int, default=1)
@@ -41,10 +58,13 @@ def main() -> None:
     parser.add_argument("--asynchronous-turns", action="store_true")
     args = parser.parse_args()
 
+    conversation_count = args.conversations or args.concurrency
+    if conversation_count < args.concurrency:
+        raise RuntimeError("conversations must be at least concurrency")
     with open(args.prompts_json, encoding="utf-8") as source:
-        prompts = json.load(source)["prompts"][: args.concurrency]
-    if len(prompts) != args.concurrency:
-        raise RuntimeError("fixture has fewer prompts than requested concurrency")
+        prompts = json.load(source)["prompts"][:conversation_count]
+    if len(prompts) != conversation_count:
+        raise RuntimeError("fixture has fewer prompts than requested conversations")
 
     unauthorized = urllib.request.Request(
         args.url,
@@ -94,33 +114,47 @@ def main() -> None:
             return results
 
         benchmark_started = time.monotonic()
-        all_results = []
-        for _ in range(args.cycles):
-            with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as executor:
-                conversations = list(executor.map(run_conversation, prompts))
-            all_results.extend(result for conversation in conversations for result in conversation)
+        work = prompts * args.cycles
+        with concurrent.futures.ThreadPoolExecutor(max_workers=args.concurrency) as executor:
+            conversations = list(executor.map(run_conversation, work))
+        all_results = [
+            result for conversation in conversations for result in conversation
+        ]
         benchmark_seconds = time.monotonic() - benchmark_started
         cached = [result for result in all_results if result["turn"] > 1]
         total_output_tokens = sum(len(result["output_ids"]) for result in all_results)
         cached_output_tokens = sum(len(result["output_ids"]) for result in cached)
+        total_input_tokens = sum(
+            result["usage"]["input_tokens"] for result in all_results
+        )
+        total_cached_input_tokens = sum(
+            result["usage"]["cached_input_tokens"] for result in all_results
+        )
+        cached_ttft = [result["timing"]["ttft_ms"] for result in cached]
+        cached_tpot = [result["timing"]["mean_tpot_ms"] for result in cached]
+        cached_request = [result["timing"]["total_ms"] for result in cached]
         print(json.dumps({
             "asynchronous_turns": True,
             "concurrency": args.concurrency,
+            "conversations": conversation_count,
             "turns": args.turns,
             "cycles": args.cycles,
             "benchmark_seconds": benchmark_seconds,
             "output_tokens": total_output_tokens,
             "aggregate_output_tokens_per_second": total_output_tokens / benchmark_seconds,
+            "input_tokens": total_input_tokens,
+            "cached_input_tokens": total_cached_input_tokens,
+            "uncached_input_tokens": total_input_tokens - total_cached_input_tokens,
             "cached_output_tokens": cached_output_tokens,
-            "cached_mean_ttft_ms": statistics.mean(
-                result["timing"]["ttft_ms"] for result in cached
-            ),
-            "cached_mean_tpot_ms": statistics.mean(
-                result["timing"]["mean_tpot_ms"] for result in cached
-            ),
-            "cached_max_request_ms": max(
-                result["timing"]["total_ms"] for result in cached
-            ),
+            "cached_mean_ttft_ms": statistics.mean(cached_ttft),
+            "cached_p50_ttft_ms": percentile(cached_ttft, 0.50),
+            "cached_p95_ttft_ms": percentile(cached_ttft, 0.95),
+            "cached_mean_tpot_ms": statistics.mean(cached_tpot),
+            "cached_p50_tpot_ms": percentile(cached_tpot, 0.50),
+            "cached_p95_tpot_ms": percentile(cached_tpot, 0.95),
+            "cached_p50_request_ms": percentile(cached_request, 0.50),
+            "cached_p95_request_ms": percentile(cached_request, 0.95),
+            "cached_max_request_ms": max(cached_request),
         }, indent=2, sort_keys=True))
         return
 

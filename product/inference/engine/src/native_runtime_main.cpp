@@ -8,6 +8,7 @@
 #include "gradiated/engine/weight_plan.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -127,6 +128,7 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> kv_cache_clones{0};
   std::atomic<std::uint64_t> kv_cache_clone_bytes{0};
   std::atomic<std::uint64_t> suffix_prefill_batches{0};
+  std::atomic<std::uint64_t> interleaved_suffix_prefill_batches{0};
   std::atomic<std::uint64_t> suffix_prefill_requests{0};
   std::atomic<std::uint64_t> suffix_prefill_tokens{0};
   std::atomic<std::uint64_t> speculative_cycles{0};
@@ -135,6 +137,9 @@ struct RuntimeMetrics {
   std::atomic<std::uint64_t> speculative_first_token_rejections{0};
   std::atomic<std::uint64_t> speculative_draft_microseconds{0};
   std::atomic<std::uint64_t> speculative_verify_microseconds{0};
+  std::array<std::atomic<std::uint64_t>, maximum_slots + 1> decode_batch_steps{};
+  std::atomic<std::uint64_t> contiguous_decode_steps{0};
+  std::atomic<std::uint64_t> fragmented_decode_steps{0};
 };
 
 struct CompletionResult {
@@ -554,6 +559,16 @@ class ContinuousScheduler {
       tokens.push_back(slot.token_to_append);
     }
     if (indices.empty()) return false;
+    metrics_.decode_batch_steps.at(indices.size()).fetch_add(1);
+    bool contiguous = true;
+    for (std::size_t row = 1; row < slots.size(); ++row) {
+      contiguous &= slots[row] == slots.front() + static_cast<int>(row);
+    }
+    if (contiguous) {
+      metrics_.contiguous_decode_steps.fetch_add(1);
+    } else {
+      metrics_.fragmented_decode_steps.fetch_add(1);
+    }
     if (runner_.has_assistant() &&
         indices.size() >= static_cast<std::size_t>(speculative_minimum_batch_)) {
       try {
@@ -722,16 +737,20 @@ class ContinuousScheduler {
 
   bool drain_short_prefill_cohort() {
     int waiting = 0;
+    bool has_decoding = false;
     std::vector<int> cohort_slots;
     std::vector<const std::vector<int>*> cohort_prompts;
     std::vector<int> computed_tokens;
     for (int index = 0; index < maximum_slots; ++index) {
       const auto& slot = slots_[static_cast<std::size_t>(index)];
       if (!slot.job) continue;
-      if (slot.decode_ready) return false;
+      if (slot.decode_ready) {
+        has_decoding = true;
+        continue;
+      }
       const int remaining = static_cast<int>(slot.job->input_ids.size()) -
                             runner_.slot_position(index);
-      if (remaining <= 0 || remaining > short_prefill_cohort_tokens) return false;
+      if (remaining <= 0 || remaining > short_prefill_cohort_tokens) continue;
       ++waiting;
       cohort_slots.push_back(index);
       cohort_prompts.push_back(&slot.job->input_ids);
@@ -762,6 +781,7 @@ class ContinuousScheduler {
       const auto predictions = runner_.prefill_slots_suffix(cohort_slots, cohort_prompts);
       const auto prediction_time = std::chrono::steady_clock::now();
       metrics_.suffix_prefill_batches.fetch_add(1);
+      if (has_decoding) metrics_.interleaved_suffix_prefill_batches.fetch_add(1);
       metrics_.suffix_prefill_requests.fetch_add(cohort_slots.size());
       for (std::size_t request = 0; request < cohort_slots.size(); ++request) {
         const int index = cohort_slots[request];
@@ -792,7 +812,8 @@ class ContinuousScheduler {
       return true;
     }
     const auto release_time = std::chrono::steady_clock::now();
-    for (auto& slot : slots_) {
+    for (const int index : cohort_slots) {
+      auto& slot = slots_[static_cast<std::size_t>(index)];
       if (!slot.job || !slot.decode_ready) continue;
       slot.ttft_microseconds = static_cast<std::uint64_t>(
           std::chrono::duration_cast<std::chrono::microseconds>(
@@ -944,6 +965,8 @@ int main(int argc, char** argv) {
              << metrics.kv_cache_clone_bytes.load() << '\n'
              << "gradiated_native_suffix_prefill_batches_total "
              << metrics.suffix_prefill_batches.load() << '\n'
+             << "gradiated_native_interleaved_suffix_prefill_batches_total "
+             << metrics.interleaved_suffix_prefill_batches.load() << '\n'
              << "gradiated_native_suffix_prefill_requests_total "
              << metrics.suffix_prefill_requests.load() << '\n'
              << "gradiated_native_suffix_prefill_tokens_total "
@@ -962,7 +985,15 @@ int main(int argc, char** argv) {
              << "gradiated_native_speculative_verify_seconds_total "
              << static_cast<double>(metrics.speculative_verify_microseconds.load()) / 1000000.0
              << '\n'
+             << "gradiated_native_contiguous_decode_steps_total "
+             << metrics.contiguous_decode_steps.load() << '\n'
+             << "gradiated_native_fragmented_decode_steps_total "
+             << metrics.fragmented_decode_steps.load() << '\n'
              << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n';
+        for (int batch = 1; batch <= maximum_slots; ++batch) {
+          body << "gradiated_native_decode_batch_steps_total{batch=\"" << batch << "\"} "
+               << metrics.decode_batch_steps[static_cast<std::size_t>(batch)].load() << '\n';
+        }
         return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", body.str()};
       }
       if (request.method != "POST" || request.path != "/v1/token-completions") {

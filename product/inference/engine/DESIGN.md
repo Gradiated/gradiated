@@ -574,3 +574,30 @@ processed 31,493 suffix tokens in 16.54 seconds on average versus 28,786 in 17.4
 control: about 13.2% less measured suffix-prefill time per token. The repeated tail improvement
 and direct suffix counter retain the two-million-element default; the environment override remains
 for regression controls.
+
+## Matched high-rate SGLang control (2026-08-23)
+
+The retained native image and pinned production SGLang defaults were replayed against the same
+120-session manifest at 3.438 realized requests/s. SGLang used BF16, TP1, 16 running requests,
+8,192-token context, and an 85% static-memory fraction. Native used its quality-gated tensor-E4M3
+decode, depth-four assistant, 24 cache slots with a 23-slot idle reserve, 1,024-token prefill
+quantum, and the two-million-element cooperative quantizer.
+
+| Runtime | Trace wall time | Cache ratio | Steady output token/s | SLO output token/s | SLO request ratio | Continuation TTFT p50 / p95 | Continuation TPOT p50 / p95 | Request p95 | Session backlog change | Post-arrival drain |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Native | 398.1 s | 89.0% | 191.23 | 172.31 | 91.2% | 66 / 366 ms | 7.14 / 15.90 ms | 1.24 s | +1 | 49.1 s |
+| SGLang | 1,497.3 s | 4.5% | 48.84 | 0.91 | 1.5% | 107,304 / 120,100 ms | 238 / 360 ms | 136.59 s | +29 | 1,148.3 s |
+
+SGLang repeatedly reported a full KV pool and retracted requests after each had gained roughly
+5,000--7,500 tokens. It completed all requests without transport errors, but session completions
+did not keep pace with births, so its apparent steady-window economics are not an admissible
+capacity point. The fixed-work comparison remains valid: native finishes the trace 3.76x sooner,
+sustains 3.92x the steady output rate, and reduces measured compute cost per million output tokens
+from $27.04 to $7.11. Native's 189x SLO-output ratio is real for this offered load but should be
+read as SGLang overload collapse, not as an isolated-kernel speedup.
+
+The control also establishes that the dominant realistic-load advantage is cache-system behavior,
+not just faster decode kernels. SGLang reused 4.5% of presented input while native reused 89.0%,
+allowing the native runtime to remain stationary and preserve low decode tails. Future SGLang
+comparisons must either lower offered load until its backlog is stationary or explicitly test a
+tuned cache policy; this default control cannot support the target traffic economically.

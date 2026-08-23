@@ -42,6 +42,12 @@ std::uint16_t environment_port(const char* name, const std::uint16_t fallback) {
   return static_cast<std::uint16_t>(parsed);
 }
 
+std::string unique_trace_path() {
+  const auto start_nonce = std::chrono::steady_clock::now().time_since_epoch().count();
+  return "/dev/shm/desmond-trace-" + std::to_string(getpid()) + '-' +
+         std::to_string(start_nonce);
+}
+
 std::string json_escape(const std::string& value) {
   std::string result;
   for (const char character : value) {
@@ -97,7 +103,7 @@ std::string trace_properties(const desmond::TraceEvent& event) {
     case desmond::TraceEventType::prefill_batch:
       properties << ",\"batch_size\":" << event.value0
                  << ",\"computed_tokens\":" << event.value1
-                 << ",\"host_enqueue_us\":" << event.graph_execution_id;
+                 << ",\"duration_us\":" << event.graph_execution_id;
       if (event.request_id_high != 0 || event.request_id_low != 0) {
         properties << ",\"slot_id\":" << event.stream_id;
       } else {
@@ -168,8 +174,9 @@ int main(int argc, char** argv) {
     });
 
     std::unique_ptr<desmond::SharedTraceRing> trace_ring;
-    const std::string default_trace_path =
-        "/dev/shm/desmond-trace-" + std::to_string(getpid());
+    // Containers normally run desmondd as PID 1. Include a per-start nonce so a stale file from
+    // an unclean container exit cannot silently disable request-level telemetry on restart.
+    const std::string default_trace_path = unique_trace_path();
     const std::string trace_path = environment("DESMOND_TRACE_PATH", default_trace_path.c_str());
     try {
       trace_ring = desmond::SharedTraceRing::create(trace_path, 65'536);

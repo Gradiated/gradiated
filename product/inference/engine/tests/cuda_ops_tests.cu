@@ -3,6 +3,7 @@
 #include "gradiated/engine/linear.h"
 #include "gradiated/engine/gemm_attention.h"
 #include "gradiated/engine/prefill_gemm_attention.h"
+#include "gradiated/engine/qkv.h"
 
 #include <cuda_bf16.h>
 #include <cuda_runtime.h>
@@ -10,6 +11,7 @@
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -201,6 +203,131 @@ void test_grouped_attention() {
            "GEMM grouped attention");
     }
   }
+}
+
+void test_shared_global_kv_roundtrip() {
+  constexpr int tokens = 7;
+  constexpr int query_heads = 32;
+  constexpr int kv_heads = 4;
+  constexpr int dimension = 512;
+  constexpr int query_width = query_heads * dimension;
+  constexpr int packed_width = query_width + kv_heads * dimension;
+  constexpr int capacity = 64;
+  constexpr int maximum_slots = 4;
+  constexpr std::size_t packed_elements = static_cast<std::size_t>(tokens) * packed_width;
+  constexpr std::size_t positioned_cache_elements =
+      static_cast<std::size_t>(kv_heads) * capacity * dimension;
+  constexpr std::size_t ragged_cache_elements =
+      static_cast<std::size_t>(maximum_slots) * kv_heads * capacity * dimension;
+  constexpr std::size_t query_elements =
+      static_cast<std::size_t>(tokens) * query_heads * dimension;
+  std::vector<__nv_bfloat16> packed(packed_elements);
+  std::vector<__nv_bfloat16> norm_weight(dimension);
+  for (std::size_t index = 0; index < packed.size(); ++index) {
+    packed[index] = __float2bfloat16_rn(
+        0.75F * std::sin(static_cast<float>(index) * 0.00137F) +
+        0.2F * std::cos(static_cast<float>(index) * 0.00311F));
+  }
+  for (int index = 0; index < dimension; ++index) {
+    norm_weight[static_cast<std::size_t>(index)] = __float2bfloat16_rn(
+        0.055F + 0.01F * std::sin(static_cast<float>(index) * 0.017F));
+  }
+  DeviceAllocation<__nv_bfloat16> device_packed(packed_elements),
+      device_norm(dimension), baseline_queries(query_elements), candidate_queries(query_elements),
+      baseline_keys(ragged_cache_elements), baseline_values(ragged_cache_elements),
+      candidate_keys(ragged_cache_elements), candidate_values(ragged_cache_elements);
+  DeviceAllocation<int> device_positions(tokens), device_slots(tokens);
+  cuda_check(cudaMemcpy(device_packed.get(), packed.data(), packed.size() * sizeof(packed[0]),
+                        cudaMemcpyHostToDevice), "copy shared global packed input");
+  cuda_check(cudaMemcpy(device_norm.get(), norm_weight.data(),
+                        norm_weight.size() * sizeof(norm_weight[0]), cudaMemcpyHostToDevice),
+             "copy shared global norm weight");
+  unsetenv("GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP");
+  gradiated::engine::Gemma4QkvPostprocessor baseline(capacity);
+  setenv("GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP", "1", 1);
+  gradiated::engine::Gemma4QkvPostprocessor candidate(capacity);
+  unsetenv("GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP");
+
+  auto zero_outputs = [&] {
+    cuda_check(cudaMemset(baseline_keys.get(), 0,
+                          ragged_cache_elements * sizeof(__nv_bfloat16)),
+               "zero baseline shared global keys");
+    cuda_check(cudaMemset(baseline_values.get(), 0,
+                          ragged_cache_elements * sizeof(__nv_bfloat16)),
+               "zero baseline shared global values");
+    cuda_check(cudaMemset(candidate_keys.get(), 0,
+                          ragged_cache_elements * sizeof(__nv_bfloat16)),
+               "zero candidate shared global keys");
+    cuda_check(cudaMemset(candidate_values.get(), 0,
+                          ragged_cache_elements * sizeof(__nv_bfloat16)),
+               "zero candidate shared global values");
+  };
+  auto require_identical = [&](std::size_t cache_elements, std::size_t compared_queries,
+                               const char* operation) {
+    cuda_check(cudaDeviceSynchronize(), "synchronize shared global KV roundtrip");
+    std::vector<__nv_bfloat16> expected_keys(cache_elements), actual_keys(cache_elements),
+        expected_values(cache_elements), actual_values(cache_elements),
+        expected_queries(compared_queries), actual_queries(compared_queries);
+    cuda_check(cudaMemcpy(expected_keys.data(), baseline_keys.get(),
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy baseline shared global keys");
+    cuda_check(cudaMemcpy(actual_keys.data(), candidate_keys.get(),
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy candidate shared global keys");
+    cuda_check(cudaMemcpy(expected_values.data(), baseline_values.get(),
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy baseline shared global values");
+    cuda_check(cudaMemcpy(actual_values.data(), candidate_values.get(),
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy candidate shared global values");
+    cuda_check(cudaMemcpy(expected_queries.data(), baseline_queries.get(),
+                          compared_queries * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy baseline shared global queries");
+    cuda_check(cudaMemcpy(actual_queries.data(), candidate_queries.get(),
+                          compared_queries * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy candidate shared global queries");
+    if (std::memcmp(expected_keys.data(), actual_keys.data(),
+                    cache_elements * sizeof(__nv_bfloat16)) != 0 ||
+        std::memcmp(expected_values.data(), actual_values.data(),
+                    cache_elements * sizeof(__nv_bfloat16)) != 0 ||
+        std::memcmp(expected_queries.data(), actual_queries.data(),
+                    compared_queries * sizeof(__nv_bfloat16)) != 0) {
+      throw std::runtime_error(std::string(operation) + " changed BF16 output bits");
+    }
+  };
+
+  zero_outputs();
+  baseline.run_positioned(
+      device_packed.get(), device_norm.get(), device_norm.get(), baseline_queries.get(),
+      baseline_keys.get(), baseline_values.get(), tokens, query_heads, kv_heads, dimension,
+      true, 9, 9, capacity, 1e-6F, nullptr);
+  candidate.run_positioned(
+      device_packed.get(), device_norm.get(), device_norm.get(), candidate_queries.get(),
+      candidate_keys.get(), candidate_values.get(), tokens, query_heads, kv_heads, dimension,
+      true, 9, 9, capacity, 1e-6F, nullptr);
+  require_identical(positioned_cache_elements, query_elements,
+                    "positioned shared global KV roundtrip");
+
+  const std::array<int, maximum_slots> positions{3, 17, 31, 47};
+  const std::array<int, maximum_slots> slots{3, 0, 2, 1};
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy shared global positions");
+  cuda_check(cudaMemcpy(device_slots.get(), slots.data(), sizeof(slots),
+                        cudaMemcpyHostToDevice), "copy shared global slots");
+  zero_outputs();
+  baseline.run_decode_ragged(
+      device_packed.get(), device_norm.get(), device_norm.get(), baseline_queries.get(),
+      baseline_keys.get(), baseline_values.get(), device_positions.get(), device_slots.get(),
+      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity, 1e-6F,
+      nullptr);
+  candidate.run_decode_ragged(
+      device_packed.get(), device_norm.get(), device_norm.get(), candidate_queries.get(),
+      candidate_keys.get(), candidate_values.get(), device_positions.get(), device_slots.get(),
+      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity, 1e-6F,
+      nullptr);
+  require_identical(ragged_cache_elements,
+                    static_cast<std::size_t>(maximum_slots) * query_heads * dimension,
+                    "ragged shared global KV roundtrip");
 }
 
 void test_prefill_layouts() {
@@ -428,6 +555,7 @@ int main() {
     test_gelu_gate();
     test_linear();
     test_grouped_attention();
+    test_shared_global_kv_roundtrip();
     test_prefill_layouts();
     test_batched_argmax();
     test_uniform_ring_attention<4>();

@@ -648,3 +648,12 @@ two 512-element BF16 vectors to one vector plus four bytes. Realizing the byte r
 the planned fused Hopper kernel: materializing K/V back to HBM before separate QK and PV GEMMs would
 erase it. The next kernel prototype must prove bit-level K/V reconstruction first, then perform QK,
 online softmax and PV from the same shared-memory tile using WGMMA/TMA or an equivalent schedule.
+
+The two-stage correctness probe now proves that representation. It stages raw BF16 projection rows
+and FP32 inverse-RMS values, reconstructs ordinary K/V, and compares against the original fused QKV
+postprocessor. Positioned prefill and shuffled-slot ragged decode produce bit-identical K, V and Q
+tensors in the CUDA operation suite. On the full 24-prompt, 128-token free-running holdout, the
+same-binary baseline and raw-roundtrip candidate artifacts have the identical SHA-256
+`0ac9f224e90e779057f7112cd710f9e8a275fd427d802c83805410c804a246ee`. The probe is opt-in through
+`GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP=1` and intentionally materializes K/V; it establishes exactness
+but is not enabled as a runtime optimization until fused attention consumes the representation.

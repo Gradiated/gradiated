@@ -33,7 +33,7 @@ namespace {
 
 constexpr int maximum_context = 8192;
 constexpr int default_chunk_tokens = 1024;
-constexpr int default_scheduler_prefill_quantum_tokens = 128;
+constexpr int default_scheduler_prefill_quantum_tokens = 1024;
 constexpr int default_idle_prefill_quantum_tokens = 1024;
 // OpenRouter-style bursts arrive over several milliseconds at the node even when the
 // upstream scheduler dispatches them together.  Ten milliseconds consistently formed
@@ -1376,7 +1376,10 @@ int main(int argc, char** argv) {
              << metrics.contiguous_decode_steps.load() << '\n'
              << "gradiated_native_fragmented_decode_steps_total "
              << metrics.fragmented_decode_steps.load() << '\n'
-             << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n';
+             << "gradiated_native_fp8_decode " << (fp8_weights ? 1 : 0) << '\n'
+             << "gradiated_native_prefill_quantum_tokens " << prefill_quantum_tokens << '\n'
+             << "gradiated_native_idle_prefill_quantum_tokens "
+             << idle_prefill_quantum_tokens << '\n';
         for (int batch = 1; batch <= maximum_slots; ++batch) {
           body << "gradiated_native_decode_batch_steps_total{batch=\"" << batch << "\"} "
                << metrics.decode_batch_steps[static_cast<std::size_t>(batch)].load() << '\n'

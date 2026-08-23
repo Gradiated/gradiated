@@ -317,7 +317,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--base-url", default="http://127.0.0.1:30000")
-    parser.add_argument("--api-key", default=os.environ.get("GRADIATED_RUNTIME_API_KEY", ""))
+    parser.add_argument(
+        "--api-key",
+        default=os.environ.get(
+            "GRADIATED_RUNTIME_API_KEY", os.environ.get("DESMOND_RUNTIME_API_KEY", "")
+        ),
+    )
     parser.add_argument("--runtime", choices=("native", "sglang"), default="native")
     parser.add_argument("--workers", type=int, default=256)
     parser.add_argument("--timeout", type=float, default=300.0)

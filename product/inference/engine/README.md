@@ -30,6 +30,12 @@ most four times. These controls are exposed as `GRADIATED_FP8_SUFFIX_MAX_TOKENS`
 `GRADIATED_IGNORE_MODEL_EOS` switch exists only to make performance A/B work counts deterministic
 and must remain unset in production.
 
+Active and idle cache-miss prefill use 1,024-token quanta by default. This is the retained point
+from the stationary session-live frontier: smaller quanta reread the model weights too often,
+while 2,048-token quanta improve cold-start TTFT but regress continuation TPOT tails. Operators can
+override the active and idle values independently with `GRADIATED_PREFILL_QUANTUM_TOKENS` and
+`GRADIATED_IDLE_PREFILL_QUANTUM_TOKENS` for explicit experiments.
+
 `GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER` optionally applies startup-only clipping to tensor-FP8
 weights; it must be in `(0, 1]`. The current research candidate is `0.98`, which is performance-
 neutral on the stationary causal replay but remains gated on task-level and EOS quality. The

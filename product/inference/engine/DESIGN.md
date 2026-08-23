@@ -528,3 +528,27 @@ SLO output was 73.049 versus 73.067 token/s, and cheapest-price steady SLO compu
 `GRADIATED_FP8_WEIGHT_SCALE_MULTIPLIER=0.98` remains opt-in. Promotion still requires a task-level
 coding/tool-use gate, explicit EOS-quality acceptance, and a production canary; the pinned SGLang
 service is unchanged.
+
+## Stationary session-live prefill frontier (2026-08-23)
+
+The active prefill quantum was swept on one fixed Poisson/session-live manifest rather than on
+simultaneous or isolated requests. The trace has 120 independent ten-turn conversations, 64-token
+suffixes and outputs, 3.438 realized requests/s, 0.344 session starts/s, and approximately 90%
+expected prefix reuse. Every point uses the same seed, arrival times, prompts, 24 slots, 23-slot
+idle cache reserve, depth-four speculation, and cheapest-provider prices. All five traces are
+stationary by session-birth/completion and backlog checks.
+
+| Active prefill quantum | Steady output token/s | SLO output token/s | SLO cost recovery | Cold TTFT p50 | Continuation TTFT p95 | Continuation TPOT p50 / p95 | Request p95 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 128 | 190.650 | 169.302 | 21.397% | 4,060 ms | 404 ms | 7.58 / 16.48 ms | 1,331 ms |
+| 256 | 190.754 | 170.139 | 22.161% | 2,470 ms | 368 ms | 7.20 / 15.88 ms | 1,236 ms |
+| 512 | 190.913 | 171.653 | 23.342% | 2,429 ms | 393 ms | 7.19 / 16.71 ms | 1,244 ms |
+| **1,024** | **192.073** | **172.509** | **23.626%** | 2,058 ms | **365 ms** | **6.95 / 16.04 ms** | 1,248 ms |
+| 2,048 | 190.845 | 170.619 | 23.513% | **1,830 ms** | 462 ms | 7.03 / 17.17 ms | **1,226 ms** |
+
+The 128-token policy repeatedly streams Gemma's weights and loses both TTFT and decode efficiency.
+Increasing the quantum through 1,024 reduces total interference despite making each individual
+prefill slice longer. At 2,048, cold TTFT improves another 11.1%, but continuation p95 TPOT
+regresses 7.1% and SLO-qualified recovery falls slightly. The native runtime therefore defaults
+both active and idle prefill to 1,024 tokens. An adaptive smaller quantum remains a possible
+overload policy, but it is not promoted without a matched higher-pressure stationary frontier.

@@ -552,3 +552,25 @@ prefill slice longer. At 2,048, cold TTFT improves another 11.1%, but continuati
 regresses 7.1% and SLO-qualified recovery falls slightly. The native runtime therefore defaults
 both active and idle prefill to 1,024 tokens. An adaptive smaller quantum remains a possible
 overload policy, but it is not promoted without a matched higher-pressure stationary frontier.
+
+## Cooperative activation-quantization boundary (2026-08-23)
+
+The cooperative E4M3 activation quantizer was extended from one to two million elements so medium
+cached-suffix shapes can collapse their two streaming passes onto a resident grid. The threshold
+is configurable rather than encoded in the launch policy. A same-image A/B used the stationary
+session-live manifest above; Desmond tracing, the 1,024-token prefill default, model state, and all
+other runtime settings were identical.
+
+| Cooperative maximum | Steady output token/s | SLO output token/s | SLO cost recovery | Cold TTFT p95 | Continuation TTFT p95 | Continuation TPOT p50 / p95 | Request p95 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1,048,576 | 191.026 | 171.270 | 23.481% | 7,089 ms | 379 ms | 7.04 / 17.25 ms | 1,269 ms |
+| 2,097,152, run A | 190.265 | 171.430 | 23.868% | 6,480 ms | 365 ms | 6.99 / 15.90 ms | 1,208 ms |
+| 2,097,152, run B | 191.227 | 172.308 | 23.774% | 6,287 ms | 366 ms | 7.14 / 15.90 ms | 1,239 ms |
+
+The two candidate runs average 190.746 raw and 171.869 SLO-qualified output token/s. Raw throughput
+is therefore neutral (-0.15%), while SLO output rises 0.35%, SLO recovery rises 1.45% relative,
+and continuation p95 TPOT falls 7.86%. Across the different causal schedules, the candidate
+processed 31,493 suffix tokens in 16.54 seconds on average versus 28,786 in 17.40 seconds for the
+control: about 13.2% less measured suffix-prefill time per token. The repeated tail improvement
+and direct suffix counter retain the two-million-element default; the environment override remains
+for regression controls.

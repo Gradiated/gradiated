@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -151,7 +152,25 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
   const int required_blocks = static_cast<int>((elements + threads - 1) / threads);
   // Decode activations are sub-megabyte-scale tensors where launch collapse dominates. Large
   // model weights quantize faster with the conventional unconstrained grid during startup.
-  if (cooperative_block_limit > 0 && elements <= 1024ULL * 1024ULL) {
+  static const std::size_t cooperative_maximum_elements = [] {
+    const char* configured = std::getenv("GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS");
+    if (configured == nullptr || *configured == '\0') {
+      return static_cast<std::size_t>(2ULL * 1024ULL * 1024ULL);
+    }
+    try {
+      const std::string text(configured);
+      std::size_t consumed = 0;
+      const auto value = std::stoull(text, &consumed);
+      if (consumed != text.size() || value == 0) {
+        throw std::runtime_error("invalid cooperative FP8 quantization limit");
+      }
+      return static_cast<std::size_t>(value);
+    } catch (const std::exception&) {
+      throw std::runtime_error(
+          "GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS must be a positive integer");
+    }
+  }();
+  if (cooperative_block_limit > 0 && elements <= cooperative_maximum_elements) {
     const int blocks = std::min(required_blocks, cooperative_block_limit);
     const auto* typed_input = static_cast<const __nv_bfloat16*>(input);
     auto* typed_output = static_cast<__nv_fp8_e4m3*>(output);

@@ -41,6 +41,10 @@ weights; it must be in `(0, 1]`. The current research candidate is `0.98`, which
 neutral on the stationary causal replay but remains gated on task-level and EOS quality. The
 default is `1.0`, and production must not enable the candidate without explicit promotion.
 
+`GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS` controls the largest activation tensor quantized by the
+cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
+boundary remains available for matched A/B work. Values must be positive.
+
 `tools/generate_layer_fixture.py` creates deterministic BF16 reference fixtures for one pinned
 decoder layer without loading the full model. Fixture binaries are runtime artifacts; their
 manifest and hashes establish exactly which model, layer, seed and shape a CUDA parity run used.

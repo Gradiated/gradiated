@@ -10,8 +10,8 @@ spec:
     protocol: token-completions-v1
     release: native-gemma4-h200-v1
     dockerfile: product/inference/runtimes/native/Dockerfile
-    image: cr.us-central1.nebius.cloud/u00t9b88da9hsqpsak/desmond-native@sha256:8e74fa109dda5a3e71deaddc27e5f9cf976e7ce1a645aa2a0123b3f3fa92a034
-    sourceCommit: e26a9a15
+    image: cr.us-central1.nebius.cloud/u00t9b88da9hsqpsak/desmond-native@sha256:1ac55be22b88be89d3c30e38c7aee9ae2a094f493e8915cbbb4dce2bb063471d
+    sourceCommit: bbe662d2
   hardware:
     accelerator: NVIDIA-H200-SXM
     count: 1

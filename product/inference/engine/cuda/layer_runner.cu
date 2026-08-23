@@ -479,7 +479,8 @@ void Gemma4LayerRunner::run_prefill_chunks(
     const std::vector<void*>& key_caches, const std::vector<void*>& value_caches,
     const std::vector<int>& cache_capacities, cudaStream_t stream,
     bool fp8_projections, const void* speculative_backup_keys,
-    const void* speculative_backup_values) {
+    const void* speculative_backup_values, const int* prepared_positions,
+    void* const* prepared_cache_pointers) {
   auto& state = *implementation_;
   const std::size_t requests = token_counts.size();
   if (requests == 0 || position_starts.size() != requests || key_caches.size() != requests ||
@@ -553,14 +554,27 @@ void Gemma4LayerRunner::run_prefill_chunks(
       cache_pointers[request] = key_caches[request];
       cache_pointers[requests + request] = value_caches[request];
     }
-    check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
-                          requests * sizeof(int), cudaMemcpyHostToDevice, stream),
-          "copy uniform prefill positions");
-    check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), cache_pointers.data(),
-                          cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice, stream),
-          "copy uniform prefill cache pointers");
-    auto* device_positions = static_cast<const int*>(state.prefill_positions.get());
-    auto* pointer_base = static_cast<void**>(state.prefill_cache_pointers.get());
+    const bool can_use_prepared_metadata = prepared_positions != nullptr &&
+        prepared_cache_pointers != nullptr && speculative_sliding_gemm &&
+        std::getenv("GRADIATED_DISABLE_RING_SPECULATION") == nullptr &&
+        ((speculative_backup_keys != nullptr && speculative_backup_values != nullptr &&
+          uniform_prior == uniform_capacity - 1) ||
+         std::all_of(position_starts.begin(), position_starts.end(),
+                     [&](int position) {
+                       return position + uniform_tokens <= uniform_capacity;
+                     }));
+    if (!can_use_prepared_metadata) {
+      check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
+                            requests * sizeof(int), cudaMemcpyHostToDevice, stream),
+            "copy uniform prefill positions");
+      check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), cache_pointers.data(),
+                            cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice, stream),
+            "copy uniform prefill cache pointers");
+    }
+    const auto* device_positions = can_use_prepared_metadata
+        ? prepared_positions : static_cast<const int*>(state.prefill_positions.get());
+    auto* pointer_base = can_use_prepared_metadata
+        ? prepared_cache_pointers : static_cast<void**>(state.prefill_cache_pointers.get());
     auto* device_key_caches = reinterpret_cast<const void* const*>(pointer_base);
     auto* device_value_caches = reinterpret_cast<const void* const*>(pointer_base + requests);
     const bool direct_wrapped_speculation = speculative_sliding_gemm &&
@@ -695,24 +709,24 @@ void Gemma4LayerRunner::run_prefill_chunks(
     for (std::size_t request = 0; request < requests; ++request) {
       cache_pointers[request] = key_caches[request];
       cache_pointers[requests + request] = value_caches[request];
-      const auto* packed = static_cast<const unsigned char*>(state.packed_qkv.get()) +
-                           2ULL * request * uniform_tokens * packed_width;
-      auto* queries = static_cast<unsigned char*>(state.queries.get()) +
-                      2ULL * request * uniform_tokens * query_width;
-      state.qkv_postprocessor.run_positioned(
-          packed, weight("q_norm"), weight("k_norm"), queries, key_caches[request],
-          value_caches[request], uniform_tokens, query_heads, kv_heads, head_dimension,
-          layer.key_equals_value, position_starts[request], position_starts[request],
-          uniform_capacity, state.epsilon, stream);
     }
-    check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
-                          requests * sizeof(int), cudaMemcpyHostToDevice, stream),
-          "copy uniform global prefill positions");
-    check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), cache_pointers.data(),
-                          cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice, stream),
-          "copy uniform global prefill cache pointers");
-    auto* device_positions = static_cast<const int*>(state.prefill_positions.get());
-    auto* pointer_base = static_cast<void**>(state.prefill_cache_pointers.get());
+    if (prepared_positions == nullptr || prepared_cache_pointers == nullptr) {
+      check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
+                            requests * sizeof(int), cudaMemcpyHostToDevice, stream),
+            "copy uniform global prefill positions");
+      check(cudaMemcpyAsync(state.prefill_cache_pointers.get(), cache_pointers.data(),
+                            cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice, stream),
+            "copy uniform global prefill cache pointers");
+    }
+    const auto* device_positions = prepared_positions != nullptr
+        ? prepared_positions : static_cast<const int*>(state.prefill_positions.get());
+    auto* pointer_base = prepared_cache_pointers != nullptr
+        ? prepared_cache_pointers : static_cast<void**>(state.prefill_cache_pointers.get());
+    state.qkv_postprocessor.run_prefill_uniform_direct(
+        state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
+        pointer_base, pointer_base + requests, device_positions,
+        static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
+        layer.key_equals_value, uniform_capacity, state.epsilon, stream);
     token_to_head_batch_bf16(state.queries.get(), state.queries_head_major.get(),
                              static_cast<int>(requests), uniform_tokens, query_heads,
                              head_dimension, stream);

@@ -45,7 +45,9 @@ class Gemma4LayerRunner {
                           const std::vector<int>& cache_capacities, cudaStream_t stream,
                           bool fp8_projections = false,
                           const void* speculative_backup_keys = nullptr,
-                          const void* speculative_backup_values = nullptr);
+                          const void* speculative_backup_values = nullptr,
+                          const int* prepared_positions = nullptr,
+                          void* const* prepared_cache_pointers = nullptr);
 
  private:
   struct Implementation;

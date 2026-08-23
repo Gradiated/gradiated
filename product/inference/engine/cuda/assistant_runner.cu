@@ -306,15 +306,9 @@ std::vector<std::vector<int>> Gemma4AssistantRunner::draft_four(
     } else {
       state.run_linear(state.final_hidden.get(), "token_embedding", state.logits.get(),
                        active, assistant_hidden, vocabulary);
-      const std::size_t one_workspace = argmax_bf16_workspace_bytes(vocabulary);
-      for (int row = 0; row < active; ++row) {
-        argmax_bf16(static_cast<const unsigned char*>(state.logits.get()) +
-                        2ULL * row * vocabulary,
-                    vocabulary, static_cast<int*>(state.device_outputs.get()) + row,
-                    static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                        static_cast<std::size_t>(row) * one_workspace,
-                    nullptr);
-      }
+      argmax_bf16_rows(state.logits.get(), active, vocabulary,
+                       static_cast<int*>(state.device_outputs.get()),
+                       state.argmax_workspace.get(), nullptr);
     }
     state.run_linear(state.final_hidden.get(), "post_projection", state.previous_hidden.get(),
                      active, assistant_hidden, target_hidden);

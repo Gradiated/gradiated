@@ -259,7 +259,7 @@ struct Gemma4BatchModelRunner::Implementation {
                          ((hidden + 127) / 128)),
         target_hidden_slots(2ULL * requested_batch * hidden),
         speculative_backup_arena(2ULL * speculative_backup_payload_bytes),
-        device_cache_pointers(2ULL * sizeof(void*) * requested_batch),
+        device_cache_pointers(2ULL * sizeof(void*) * requested_batch * model_config.layers.size()),
         suffix_hidden_a(2ULL * max_context * hidden),
         suffix_hidden_b(2ULL * max_context * hidden) {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
@@ -393,15 +393,9 @@ struct Gemma4BatchModelRunner::Implementation {
     scatter_rows_bf16(final_hidden.get(), static_cast<const int*>(device_slots.get()),
                       target_hidden_slots.get(), active, hidden, decode_stream);
     run_decode_lm_head(final_hidden.get(), logits.get(), active, decode_stream);
-    const std::size_t one_workspace = argmax_bf16_workspace_bytes(vocabulary);
-    for (int row = 0; row < active; ++row) {
-      const auto* row_logits = static_cast<const unsigned char*>(logits.get()) +
-                               2ULL * row * vocabulary;
-      auto* row_output = static_cast<int*>(device_output_tokens.get()) + row;
-      auto* row_workspace = static_cast<unsigned char*>(argmax_workspace.get()) +
-                            static_cast<std::size_t>(row) * one_workspace;
-      argmax_bf16(row_logits, vocabulary, row_output, row_workspace, decode_stream);
-    }
+    argmax_bf16_rows(logits.get(), active, vocabulary,
+                     static_cast<int*>(device_output_tokens.get()),
+                     argmax_workspace.get(), decode_stream);
   }
 
   DecodeGraph& capture_decode_graph(int active, int maximum_context_length,
@@ -454,14 +448,9 @@ std::vector<int> Gemma4BatchModelRunner::append(const std::vector<int>& token_id
   rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), state.batch_size,
                 state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
   state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), state.batch_size, nullptr);
-  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
-  for (int row = 0; row < state.batch_size; ++row) {
-    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
-                             2ULL * row * state.vocabulary;
-    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
-    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) + row * one_workspace;
-    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
-  }
+  argmax_bf16_rows(state.logits.get(), state.batch_size, state.vocabulary,
+                   static_cast<int*>(state.device_output_tokens.get()),
+                   state.argmax_workspace.get(), nullptr);
   std::vector<int> result(state.batch_size);
   check(cudaMemcpy(result.data(), state.device_output_tokens.get(), result.size() * sizeof(int),
                    cudaMemcpyDeviceToHost), "copy batch output tokens");
@@ -639,15 +628,9 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
     state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
                       state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
   }
-  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
-  for (int row = 0; row < requests; ++row) {
-    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
-                             2ULL * row * state.vocabulary;
-    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
-    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                          static_cast<std::size_t>(row) * one_workspace;
-    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
-  }
+  argmax_bf16_rows(state.logits.get(), requests, state.vocabulary,
+                   static_cast<int*>(state.device_output_tokens.get()),
+                   state.argmax_workspace.get(), nullptr);
   std::vector<int> predictions(static_cast<std::size_t>(requests));
   check(cudaMemcpy(predictions.data(), state.device_output_tokens.get(),
                    predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
@@ -787,15 +770,9 @@ LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_laye
     state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
                       state.logits.get(), requests, state.hidden, state.vocabulary, nullptr);
   }
-  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
-  for (int row = 0; row < requests; ++row) {
-    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
-                             2ULL * row * state.vocabulary;
-    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
-    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                          static_cast<std::size_t>(row) * one_workspace;
-    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
-  }
+  argmax_bf16_rows(state.logits.get(), requests, state.vocabulary,
+                   static_cast<int*>(state.device_output_tokens.get()),
+                   state.argmax_workspace.get(), nullptr);
   std::vector<int> predictions(static_cast<std::size_t>(requests));
   check(cudaMemcpy(predictions.data(), state.device_output_tokens.get(),
                    predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
@@ -981,22 +958,30 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
   void* output = state.hidden_b.get();
   std::vector<void*> key_caches(static_cast<std::size_t>(requests));
   std::vector<void*> value_caches(static_cast<std::size_t>(requests));
+  const std::size_t pointers_per_layer = 2ULL * static_cast<std::size_t>(requests);
+  std::vector<void*> layer_cache_pointers(
+      state.config.layers.size() * pointers_per_layer);
   for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
-    std::fill(capacities.begin(), capacities.end(), state.caches[layer].capacity);
+    auto* layer_pointers = layer_cache_pointers.data() + layer * pointers_per_layer;
     for (int request = 0; request < requests; ++request) {
       const int slot = slots[static_cast<std::size_t>(request)];
-      key_caches[static_cast<std::size_t>(request)] = state.slot_key_cache(layer, slot);
-      value_caches[static_cast<std::size_t>(request)] = state.slot_value_cache(layer, slot);
+      layer_pointers[request] = state.slot_key_cache(layer, slot);
+      layer_pointers[requests + request] = state.slot_value_cache(layer, slot);
+    }
+  }
+  check(cudaMemcpy(state.device_cache_pointers.get(), layer_cache_pointers.data(),
+                   layer_cache_pointers.size() * sizeof(void*), cudaMemcpyHostToDevice),
+        "copy speculative cache pointer table");
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    std::fill(capacities.begin(), capacities.end(), state.caches[layer].capacity);
+    auto* layer_pointers = layer_cache_pointers.data() + layer * pointers_per_layer;
+    for (int request = 0; request < requests; ++request) {
+      key_caches[static_cast<std::size_t>(request)] = layer_pointers[request];
+      value_caches[static_cast<std::size_t>(request)] = layer_pointers[requests + request];
     }
     if (state.config.layers[layer].attention == AttentionKind::sliding) {
-      std::vector<void*> pointers;
-      pointers.reserve(static_cast<std::size_t>(2 * requests));
-      pointers.insert(pointers.end(), key_caches.begin(), key_caches.end());
-      pointers.insert(pointers.end(), value_caches.begin(), value_caches.end());
-      check(cudaMemcpy(state.device_cache_pointers.get(), pointers.data(),
-                       pointers.size() * sizeof(void*), cudaMemcpyHostToDevice),
-            "copy speculative cache pointers for backup");
-      auto** pointer_base = static_cast<void**>(state.device_cache_pointers.get());
+      auto** pointer_base = static_cast<void**>(state.device_cache_pointers.get()) +
+                            layer * pointers_per_layer;
       backup_kv_ring_spans_bf16(
           reinterpret_cast<const void* const*>(pointer_base),
           reinterpret_cast<const void* const*>(pointer_base + requests),
@@ -1012,7 +997,10 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
         state.config.layers[layer].attention == AttentionKind::sliding
             ? state.speculative_key_backup(layer) : nullptr,
         state.config.layers[layer].attention == AttentionKind::sliding
-            ? state.speculative_value_backup(layer) : nullptr);
+            ? state.speculative_value_backup(layer) : nullptr,
+        static_cast<const int*>(state.device_positions.get()),
+        static_cast<void**>(state.device_cache_pointers.get()) +
+            layer * pointers_per_layer);
     for (int request = 0; request < requests; ++request) {
       state.refresh_fp8_key_span(
           layer, slots[static_cast<std::size_t>(request)],
@@ -1026,15 +1014,9 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
   rms_norm_bf16(input, state.weights.at("final_norm"), state.final_hidden.get(), rows,
                 state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
   state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), rows, nullptr);
-  const std::size_t one_workspace = argmax_bf16_workspace_bytes(state.vocabulary);
-  for (int row = 0; row < rows; ++row) {
-    const auto* row_logits = static_cast<const unsigned char*>(state.logits.get()) +
-                             2ULL * row * state.vocabulary;
-    auto* row_output = static_cast<int*>(state.device_output_tokens.get()) + row;
-    auto* row_workspace = static_cast<unsigned char*>(state.argmax_workspace.get()) +
-                          static_cast<std::size_t>(row) * one_workspace;
-    argmax_bf16(row_logits, state.vocabulary, row_output, row_workspace, nullptr);
-  }
+  argmax_bf16_rows(state.logits.get(), rows, state.vocabulary,
+                   static_cast<int*>(state.device_output_tokens.get()),
+                   state.argmax_workspace.get(), nullptr);
   std::vector<int> target_predictions(static_cast<std::size_t>(rows));
   check(cudaMemcpy(target_predictions.data(), state.device_output_tokens.get(),
                    target_predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
@@ -1097,19 +1079,8 @@ GreedyVerificationResult Gemma4BatchModelRunner::verify_greedy_proposals(
         "copy speculative accepted lengths");
   for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
     if (state.config.layers[layer].attention != AttentionKind::sliding) continue;
-    for (int request = 0; request < requests; ++request) {
-      const int slot = slots[static_cast<std::size_t>(request)];
-      key_caches[static_cast<std::size_t>(request)] = state.slot_key_cache(layer, slot);
-      value_caches[static_cast<std::size_t>(request)] = state.slot_value_cache(layer, slot);
-    }
-    std::vector<void*> pointers;
-    pointers.reserve(static_cast<std::size_t>(2 * requests));
-    pointers.insert(pointers.end(), key_caches.begin(), key_caches.end());
-    pointers.insert(pointers.end(), value_caches.begin(), value_caches.end());
-    check(cudaMemcpy(state.device_cache_pointers.get(), pointers.data(),
-                     pointers.size() * sizeof(void*), cudaMemcpyHostToDevice),
-          "copy speculative cache pointers for restore");
-    auto** pointer_base = static_cast<void**>(state.device_cache_pointers.get());
+    auto** pointer_base = static_cast<void**>(state.device_cache_pointers.get()) +
+                          layer * pointers_per_layer;
     restore_kv_ring_suffixes_bf16(
         state.speculative_key_backup(layer), state.speculative_value_backup(layer), pointer_base,
         pointer_base + requests, static_cast<const int*>(state.device_positions.get()),

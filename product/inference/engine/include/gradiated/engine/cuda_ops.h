@@ -100,5 +100,7 @@ void clone_kv_cache_prefix_bf16(const void* source_keys, const void* source_valu
 std::size_t argmax_bf16_workspace_bytes(int elements);
 void argmax_bf16(const void* values, int elements, int* device_output,
                  void* workspace, cudaStream_t stream);
+void argmax_bf16_rows(const void* values, int rows, int elements, int* device_output,
+                      void* workspace, cudaStream_t stream);
 
 }  // namespace gradiated::engine

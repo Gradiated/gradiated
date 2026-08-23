@@ -552,6 +552,54 @@ __global__ void argmax_final_kernel(const Maximum* partials, int count, int* out
   if (threadIdx.x == 0) *output = reduction[0].index;
 }
 
+__global__ void argmax_rows_partials_kernel(
+    const __nv_bfloat16* values, int rows, int elements, int partial_count,
+    Maximum* partials) {
+  const int row = static_cast<int>(blockIdx.y);
+  if (row >= rows) return;
+  const __nv_bfloat16* row_values = values + static_cast<std::uint64_t>(row) * elements;
+  Maximum current{-CUDART_INF_F, 0};
+  for (int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
+       index < elements; index += blockDim.x * gridDim.x) {
+    current = better(current, {__bfloat162float(row_values[index]), index});
+  }
+  __shared__ Maximum reduction[256];
+  reduction[threadIdx.x] = current;
+  __syncthreads();
+  for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+    if (threadIdx.x < stride) {
+      reduction[threadIdx.x] = better(
+          reduction[threadIdx.x], reduction[threadIdx.x + stride]);
+    }
+    __syncthreads();
+  }
+  if (threadIdx.x == 0) {
+    partials[static_cast<std::uint64_t>(row) * partial_count + blockIdx.x] = reduction[0];
+  }
+}
+
+__global__ void argmax_rows_final_kernel(
+    const Maximum* partials, int rows, int partial_count, int* output) {
+  const int row = static_cast<int>(blockIdx.x);
+  if (row >= rows) return;
+  const Maximum* row_partials = partials + static_cast<std::uint64_t>(row) * partial_count;
+  Maximum current{-CUDART_INF_F, 0};
+  for (int index = threadIdx.x; index < partial_count; index += blockDim.x) {
+    current = better(current, row_partials[index]);
+  }
+  __shared__ Maximum reduction[256];
+  reduction[threadIdx.x] = current;
+  __syncthreads();
+  for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
+    if (threadIdx.x < stride) {
+      reduction[threadIdx.x] = better(
+          reduction[threadIdx.x], reduction[threadIdx.x + stride]);
+    }
+    __syncthreads();
+  }
+  if (threadIdx.x == 0) output[row] = reduction[0].index;
+}
+
 }  // namespace
 
 void rms_norm_bf16(const void* input, const void* weight, void* output,
@@ -955,6 +1003,21 @@ void argmax_bf16(const void* values, int elements, int* device_output,
       static_cast<const __nv_bfloat16*>(values), elements, partials);
   argmax_final_kernel<<<1, 256, 0, stream>>>(partials, blocks, device_output);
   check(cudaPeekAtLastError(), "launch argmax kernels");
+}
+
+void argmax_bf16_rows(const void* values, int rows, int elements, int* device_output,
+                      void* workspace, cudaStream_t stream) {
+  if (values == nullptr || rows <= 0 || elements <= 0 || device_output == nullptr ||
+      workspace == nullptr) {
+    throw std::runtime_error("invalid batched argmax arguments");
+  }
+  const int blocks = std::min(256, (elements + 255) / 256);
+  auto* partials = static_cast<Maximum*>(workspace);
+  const dim3 grid(static_cast<unsigned>(blocks), static_cast<unsigned>(rows));
+  argmax_rows_partials_kernel<<<grid, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(values), rows, elements, blocks, partials);
+  argmax_rows_final_kernel<<<rows, 256, 0, stream>>>(partials, rows, blocks, device_output);
+  check(cudaPeekAtLastError(), "launch batched argmax kernels");
 }
 
 }  // namespace gradiated::engine

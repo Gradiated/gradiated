@@ -475,6 +475,17 @@ policy produced 826.5, 831.6, and 870.5 token/s in three explicit minimum-one ru
 meet the configured batch threshold to start speculation, but once started it remains speculative
 as requests finish. This avoids making an isolated low-traffic request pay speculative overhead.
 
+The next launch-control pass submits each global layer's positioned QKV work as one batch and
+reduces all vocabulary rows with two argmax launches rather than two launches per row. Three
+fixed-work runs reached 842.8, 894.2, and 916.3 output token/s (894.2 median, 26.9% over target-only),
+with 277 ms median TTFT, 12.0 ms median TPOT, and 1.04 s median request time in the median run.
+Argmax now occupies only about 47 microseconds of a verification trace. A single device pointer
+table also replaces 100 synchronous per-layer backup/restore pointer copies; reusing that table
+inside attention reduces the warmed 6k verifier further to 23.8--24.1 ms without changing proposals
+or target tokens. The remaining verifier trace is approximately 21.6 ms of GPU kernels and more
+than 1,100 launches, making graph/persistent execution and dense FP8 projection kernels the next
+frontier rather than host token selection.
+
 Depths two and three reach 728.3 and 729.0 token/s. Depths five, six, seven, and eight reach 731.0,
 728.0, 740.0, and 638.2 token/s. The extra accepted prefix does not repay recurrent draft cost, so
 depth four remains the default. Skipping the assistant LM head for the forced first proposal is

@@ -247,6 +247,35 @@ void test_prefill_layouts() {
   }
 }
 
+void test_batched_argmax() {
+  constexpr int rows = 3;
+  constexpr int elements = 513;
+  std::vector<__nv_bfloat16> values(static_cast<std::size_t>(rows * elements),
+                                    __float2bfloat16(-2.0F));
+  const std::array<int, rows> expected{17, 0, 512};
+  values[17] = __float2bfloat16(9.0F);
+  values[elements + 0] = __float2bfloat16(4.0F);
+  values[elements + 401] = __float2bfloat16(4.0F);  // Equal values select the lower index.
+  values[2 * elements + 512] = __float2bfloat16(7.0F);
+  DeviceAllocation<__nv_bfloat16> device_values(values.size());
+  DeviceAllocation<int> device_output(rows);
+  const std::size_t workspace_bytes =
+      rows * gradiated::engine::argmax_bf16_workspace_bytes(elements);
+  DeviceAllocation<unsigned char> workspace(workspace_bytes);
+  cuda_check(cudaMemcpy(device_values.get(), values.data(), values.size() * sizeof(values[0]),
+                        cudaMemcpyHostToDevice), "copy batched argmax values");
+  gradiated::engine::argmax_bf16_rows(
+      device_values.get(), rows, elements, device_output.get(), workspace.get(), nullptr);
+  std::array<int, rows> output{};
+  cuda_check(cudaMemcpy(output.data(), device_output.get(), sizeof(output), cudaMemcpyDeviceToHost),
+             "copy batched argmax output");
+  for (int row = 0; row < rows; ++row) {
+    if (output[static_cast<std::size_t>(row)] != expected[static_cast<std::size_t>(row)]) {
+      throw std::runtime_error("batched argmax mismatch at row " + std::to_string(row));
+    }
+  }
+}
+
 template <int query_tokens>
 void test_uniform_ring_attention() {
   constexpr int requests = 2;
@@ -400,6 +429,7 @@ int main() {
     test_linear();
     test_grouped_attention();
     test_prefill_layouts();
+    test_batched_argmax();
     test_uniform_ring_attention<4>();
     test_uniform_ring_attention<8>();
     std::cout << "all CUDA operation tests passed\n";

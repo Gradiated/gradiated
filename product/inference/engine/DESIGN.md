@@ -102,8 +102,10 @@ Decode uses fixed batch buckets and captured CUDA graphs. QKV and gate/up share 
 launch. RMSNorm reductions accumulate in FP32; post-sublayer RMSNorm and residual addition are one
 kernel. RoPE is fused with Q/K normalization and KV-page writes. Grouped decode attention uses one
 cooperative block (or split block at long context) per request and KV head, staging K/V tiles in
-shared memory and updating every query in the group with online softmax. Sampling fuses logit
-softcap and top-k reduction so full-vocabulary logits are not round-tripped through host memory.
+shared memory and updating every query in the group with online softmax. The planned stochastic
+sampling path fuses logit softcap and top-k reduction so full-vocabulary logits are not
+round-tripped through host memory; the retained release currently executes exact greedy argmax
+only.
 
 The first measured grouped-attention implementation used one scalar dot-product dependency chain
 per query and reached only 3–50 GB/s. The retained tensor-core formulation groups work by physical
@@ -227,3 +229,26 @@ request, so the path overwrote adjacent GPU memory. Both K/V arenas now cover th
 `max_tokens + max_batch * (sliding_window - 1)`, and the complete production-shape parity suite
 passes with the fast path enabled. The temporarily disabled correctness-first setting sustained
 387.1 output token/s, within measurement noise of the former 385.6 token/s result.
+
+The production protocol now streams native token IDs as soon as each scheduler step completes,
+carries cumulative authoritative usage on every event, and cancels/reclaims a slot when the
+downstream socket closes. Gemma's pinned EOS set (`1`, `106`) is loaded from `config.json`; it is
+no longer optional caller state. The AWS gateway performs stateful incremental decoding,
+including split-byte tokens, and emits normalized OpenAI SSE chunks. The initial catalog contract
+intentionally advertises greedy `temperature=0` only. Native stochastic sampling is not
+implemented yet and must not be inferred from the sampling design above.
+
+The current 387.1 token/s trace result corresponds to 41.3 ms per full 16-request output wave when
+all slots are productive. The fully parity-gated synthetic 8k frontier is 477.6 token/s
+homogeneous (33.5 ms/wave) and 407.1 token/s ragged (39.3 ms/wave). Against the measured 7.67 ms
+FP8 weight-stream floor plus approximately 5.0 ms for one physical BF16 KV pass across sixteen 8k
+sequences, the complete decode graph is therefore only about 32--38% of its rough 1.2k token/s
+byte-traffic ceiling. Dense projections are near their own bound; the whole engine is not yet near
+the mathematical bound.
+
+The measured FP8-QK experiment gives a bounded next-step forecast. Applying its 1.90x QK speedup
+to the 34.5% Nsight share yields an Amdahl limit of 1.195x, or about 463 trace token/s before
+quantization and layout overhead. At unchanged traffic mix and prices that would raise
+compute-cost recovery from 31.8% to about 38.0%, still far from break-even. A fused grouped-query
+kernel that loads each physical global K tile once, performs online softmax, and immediately
+accumulates V is required to attack the remaining gap; merely tuning the dense GEMMs cannot do so.

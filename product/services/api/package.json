@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit && vitest run",
+    "configure:gemma4": "node dist/operations/configure-gemma4.js",
     "dev": "tsx watch src/server.ts",
     "openapi:check": "node --import tsx scripts/generate-openapi.ts --check",
     "openapi:generate": "node --import tsx scripts/generate-openapi.ts",

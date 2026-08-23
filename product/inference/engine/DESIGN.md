@@ -625,3 +625,26 @@ to 1,167 and regressed p50/p95 TPOT from 6.054/7.730 to 8.133/15.201 ms. Both gr
 removed. Recovering the measured replay ceiling requires refactoring every dynamic position,
 pointer, scale and work-selection input into an explicit device-resident graph contract; inferring
 equivalence from host branch outcomes is insufficient.
+
+## Exact shared-projection global KV representation (2026-08-23)
+
+Gemma 4 global attention projects only one 2,048-wide KV tensor. For each 512-wide physical head,
+the released graph stores V as the BF16-rounded RMS-normalized projection and stores K as the same
+unrounded normalized projection multiplied by the learned K-norm weights and then RoPE-rotated.
+This creates a model-specific opportunity to avoid reading independent K and V vectors.
+
+A first probe reconstructed K from the stored BF16 V, applying the K-norm weights and RoPE after
+V's rounding. It was rejected on the 24-prompt, 128-token free-running coding-agent holdout. Against
+the exact control artifact it retained 2,376/3,072 token positions, 0.9410 mean edit similarity and
+only 11/24 exact continuations (14/24 through EOS). The approximation changes rounding order and is
+not a valid cache compression policy.
+
+The exact representation instead stores the original BF16 shared projection plus one FP32
+inverse-RMS scalar per token and physical KV head. Inside an attention tile it reproduces V as
+`bf16(raw * inverse_rms)` and K as
+`bf16(raw * inverse_rms * k_norm_weight)` followed by the existing BF16 RoPE operation. This keeps
+the checkpoint's arithmetic order while reducing global cache source storage and HBM reads from
+two 512-element BF16 vectors to one vector plus four bytes. Realizing the byte reduction requires
+the planned fused Hopper kernel: materializing K/V back to HBM before separate QK and PV GEMMs would
+erase it. The next kernel prototype must prove bit-level K/V reconstruction first, then perform QK,
+online softmax and PV from the same shared-memory tile using WGMMA/TMA or an equivalent schedule.

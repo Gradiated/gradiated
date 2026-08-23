@@ -44,10 +44,11 @@ constexpr int short_prefill_cohort_tokens = 512;
 // transformer-layer boundaries, retaining one execution of every prefill layer.
 constexpr int default_interleaved_suffix_layer_quantum = 10;
 constexpr int default_interleaved_suffix_layer_minimum_decode = 14;
-constexpr int maximum_slots = 16;
+constexpr int maximum_slots = 24;
 constexpr int default_speculative_depth = 4;
 constexpr int default_speculative_minimum_batch = 8;
 constexpr int default_cache_affinity_max_bypasses = 4;
+constexpr int default_idle_cache_reserve_slots = 0;
 
 std::string environment(const char* name, const std::string& fallback = {}) {
   const char* value = std::getenv(name);
@@ -217,6 +218,7 @@ class ContinuousScheduler {
                       int interleaved_suffix_layer_quantum,
                       int interleaved_suffix_layer_minimum_decode,
                       int cache_affinity_max_bypasses,
+                      int idle_cache_reserve_slots,
                       desmond::SharedTraceRing* trace_ring)
       : runner_(config, weights, maximum_slots, maximum_context, fp8_weights,
                 assistant_weights, assistant_fp8_weights),
@@ -229,6 +231,7 @@ class ContinuousScheduler {
         interleaved_suffix_layer_quantum_(interleaved_suffix_layer_quantum),
         interleaved_suffix_layer_minimum_decode_(interleaved_suffix_layer_minimum_decode),
         cache_affinity_max_bypasses_(cache_affinity_max_bypasses),
+        idle_cache_reserve_slots_(idle_cache_reserve_slots),
         config_layer_count_(config.layers.size()), trace_ring_(trace_ring) {
     // Materialize latency-sensitive cuBLASLt and attention plans before advertising readiness.
     std::vector<int> warmup(2048, 2);
@@ -342,6 +345,7 @@ class ContinuousScheduler {
     int destination{-1};
     int source{-1};
     std::size_t prefix_tokens{0};
+    bool cache_reservation_blocked{false};
   };
 
   static void emit_token(Slot& slot, int token) {
@@ -385,12 +389,27 @@ class ContinuousScheduler {
       }
     }
     std::uint64_t oldest = std::numeric_limits<std::uint64_t>::max();
+    int active_slots = 0;
+    int idle_cached_slots = 0;
     for (int index = 0; index < maximum_slots; ++index) {
       const auto& slot = slots_[static_cast<std::size_t>(index)];
+      if (slot.job) {
+        ++active_slots;
+      } else if (!slot.cached_tokens.empty()) {
+        ++idle_cached_slots;
+      }
       if (!slot.job && slot.age < oldest) {
         oldest = slot.age;
         placement.destination = index;
       }
+    }
+    const std::size_t victim_prefix = placement.destination >= 0
+        ? slots_[static_cast<std::size_t>(placement.destination)].cached_tokens.size() : 0;
+    if (placement.destination >= 0 && active_slots > 0 &&
+        idle_cached_slots <= idle_cache_reserve_slots_ &&
+        placement.prefix_tokens < victim_prefix) {
+      placement.destination = -1;
+      placement.cache_reservation_blocked = true;
     }
     return placement;
   }
@@ -523,19 +542,22 @@ class ContinuousScheduler {
       if (pending_.empty()) return false;
       auto selected = pending_.begin();
       placement = select_slot(**selected);
-      if (placement.destination < 0) return false;
-      if (cache_affinity_max_bypasses_ > 0 &&
-          (*selected)->admission_bypasses <
-              static_cast<std::uint32_t>(cache_affinity_max_bypasses_)) {
+      const bool may_bypass = placement.cache_reservation_blocked ||
+          (cache_affinity_max_bypasses_ > 0 &&
+           (*selected)->admission_bypasses <
+               static_cast<std::uint32_t>(cache_affinity_max_bypasses_));
+      if (may_bypass) {
         for (auto candidate = std::next(selected); candidate != pending_.end(); ++candidate) {
           const Placement candidate_placement = select_slot(**candidate);
           if (candidate_placement.destination >= 0 &&
-              candidate_placement.prefix_tokens > placement.prefix_tokens) {
+              (placement.destination < 0 ||
+               candidate_placement.prefix_tokens > placement.prefix_tokens)) {
             selected = candidate;
             placement = candidate_placement;
           }
         }
       }
+      if (placement.destination < 0) return false;
       if (selected != pending_.begin()) {
         metrics_.cache_affinity_admissions.fetch_add(1);
         for (auto bypassed = pending_.begin(); bypassed != selected; ++bypassed) {
@@ -613,6 +635,80 @@ class ContinuousScheduler {
   }
 
   bool prefill_step(bool force_idle_quantum = false) {
+    const bool decode_is_active = std::any_of(
+        slots_.begin(), slots_.end(), [](const Slot& candidate) { return candidate.decode_ready; });
+    if (!force_idle_quantum && !decode_is_active) {
+      std::vector<int> candidates;
+      for (int index = 0; index < maximum_slots; ++index) {
+        const auto& slot = slots_[static_cast<std::size_t>(index)];
+        if (slot.job && !slot.decode_ready) candidates.push_back(index);
+      }
+      const int maximum_requests = std::max(1, maximum_context / idle_prefill_quantum_tokens_);
+      if (candidates.size() >= 2) {
+        std::stable_sort(candidates.begin(), candidates.end(), [&](const int left, const int right) {
+          const int left_position = runner_.slot_position(left);
+          const int right_position = runner_.slot_position(right);
+          if (left_position != right_position) return left_position < right_position;
+          return slots_[static_cast<std::size_t>(left)].admission_order <
+                 slots_[static_cast<std::size_t>(right)].admission_order;
+        });
+        if (candidates.size() > static_cast<std::size_t>(maximum_requests)) {
+          candidates.resize(static_cast<std::size_t>(maximum_requests));
+        }
+        std::vector<const std::vector<int>*> prompts;
+        std::vector<int> before;
+        prompts.reserve(candidates.size());
+        before.reserve(candidates.size());
+        for (const int index : candidates) {
+          prompts.push_back(&slots_[static_cast<std::size_t>(index)].job->input_ids);
+          before.push_back(runner_.slot_position(index));
+        }
+        try {
+          const auto prefill_begin = std::chrono::steady_clock::now();
+          const auto predictions = runner_.prefill_slots_chunks(
+              candidates, prompts, idle_prefill_quantum_tokens_);
+          const auto end = std::chrono::steady_clock::now();
+          const auto prefill_microseconds = static_cast<std::uint64_t>(
+              std::chrono::duration_cast<std::chrono::microseconds>(end - prefill_begin).count());
+          std::uint64_t computed_tokens = 0;
+          const std::uint64_t prefill_batch_id = ++batch_id_;
+          for (std::size_t row = 0; row < candidates.size(); ++row) {
+            const int index = candidates[row];
+            auto& slot = slots_[static_cast<std::size_t>(index)];
+            const int resident = runner_.slot_position(index);
+            const int advanced = resident - before[row];
+            computed_tokens += static_cast<std::uint64_t>(advanced);
+            metrics_.prefill_tokens_computed.fetch_add(static_cast<std::uint64_t>(advanced));
+            slot.cached_tokens.assign(slot.job->input_ids.begin(),
+                                      slot.job->input_ids.begin() + resident);
+            trace(desmond::TraceEventType::batch_formed, slot.job->request_id,
+                  prefill_batch_id, 0, static_cast<std::uint64_t>(resident), row,
+                  static_cast<std::uint64_t>(advanced), static_cast<std::uint32_t>(index));
+            if (!predictions[row]) continue;
+            slot.token_to_append = *predictions[row];
+            emit_token(slot, *predictions[row]);
+            slot.decode_ready = true;
+            slot.ttft_microseconds = static_cast<std::uint64_t>(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    end - slot.job->queued_at).count());
+            slot.last_token_at = end;
+            metrics_.decoding.fetch_add(1);
+            if (slot.job->stop_ids.contains(*predictions[row])) {
+              complete_slot(index, "stop");
+            } else if (slot.job->max_tokens == 1) {
+              complete_slot(index, "length");
+            }
+          }
+          trace(desmond::TraceEventType::prefill_batch, 0, prefill_batch_id,
+                prefill_microseconds, config_layer_count_, candidates.size(), computed_tokens, 0);
+        } catch (const std::exception& error) {
+          for (const int index : candidates) {
+            if (slots_[static_cast<std::size_t>(index)].job) fail_slot(index, error.what());
+          }
+        }
+        return true;
+      }
+    }
     int selected = -1;
     std::uint64_t oldest = std::numeric_limits<std::uint64_t>::max();
     for (int index = 0; index < maximum_slots; ++index) {
@@ -626,8 +722,6 @@ class ContinuousScheduler {
     auto& slot = slots_[static_cast<std::size_t>(selected)];
     try {
       const int before = runner_.slot_position(selected);
-      const bool decode_is_active = std::any_of(
-          slots_.begin(), slots_.end(), [](const Slot& candidate) { return candidate.decode_ready; });
       const int quantum = force_idle_quantum || !decode_is_active
           ? idle_prefill_quantum_tokens_
           : prefill_quantum_tokens_;
@@ -1085,6 +1179,7 @@ class ContinuousScheduler {
   int interleaved_suffix_layer_quantum_;
   int interleaved_suffix_layer_minimum_decode_;
   int cache_affinity_max_bypasses_;
+  int idle_cache_reserve_slots_;
   const std::size_t config_layer_count_;
   desmond::SharedTraceRing* trace_ring_;
   std::vector<int> inflight_suffix_slots_;
@@ -1174,6 +1269,9 @@ int main(int argc, char** argv) {
     const int cache_affinity_max_bypasses = environment_integer(
         "GRADIATED_CACHE_AFFINITY_MAX_BYPASSES", default_cache_affinity_max_bypasses,
         0, 1024);
+    const int idle_cache_reserve_slots = environment_integer(
+        "GRADIATED_IDLE_CACHE_RESERVE_SLOTS", default_idle_cache_reserve_slots,
+        0, maximum_slots - 1);
     const bool ignore_model_eos = environment_flag("GRADIATED_IGNORE_MODEL_EOS");
     std::unique_ptr<desmond::SharedTraceRing> trace_ring;
     const std::string trace_path = environment("DESMOND_TRACE_PATH");
@@ -1194,6 +1292,7 @@ int main(int argc, char** argv) {
                                   interleaved_suffix_layer_quantum,
                                   interleaved_suffix_layer_minimum_decode,
                                   cache_affinity_max_bypasses,
+                                  idle_cache_reserve_slots,
                                   trace_ring.get());
 
     desmond::HttpServer server(bind_host, bind_port, [&](const desmond::HttpRequest& request) {
@@ -1392,6 +1491,7 @@ int main(int argc, char** argv) {
               << " interleaved_suffix_layer_min_decode="
               << interleaved_suffix_layer_minimum_decode
               << " cache_affinity_max_bypasses=" << cache_affinity_max_bypasses
+              << " idle_cache_reserve_slots=" << idle_cache_reserve_slots
               << " fp8_decode=" << fp8_decode
               << " ignore_model_eos=" << (ignore_model_eos ? "true" : "false")
               << " assistant=" << (assistant_weights ? "enabled" : "off") << '\n';

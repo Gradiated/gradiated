@@ -43,7 +43,8 @@ int main(int argc, char** argv) {
     if (argc != 3 && argc != 4 && argc != 5) {
       std::cerr << "usage: gradiated-engine-ragged-batch-parity MODEL_DIRECTORY FIXTURE_JSON "
                    "[profile-ragged|profile-ragged-fp8|profile-suffix|prefix-benchmark|speculative-parity|"
-                   "contiguous-parity|fp8-suffix-parity|assistant-benchmark] [ASSISTANT_DIRECTORY]\n";
+                   "contiguous-parity|fp8-suffix-parity|batched-chunk-parity|assistant-benchmark] "
+                   "[ASSISTANT_DIRECTORY]\n";
       return 64;
     }
     const std::string model_directory = argv[1];
@@ -62,8 +63,48 @@ int main(int argc, char** argv) {
     gradiated::engine::validate_gemma4_weights(host_weights, config);
     const auto plan = gradiated::engine::WeightPlan::gemma4(config, host_weights);
     const auto weights = gradiated::engine::DeviceWeightArena::load(plan, host_weights);
+    if (argc == 4 && std::string(argv[3]) == "batched-chunk-parity") {
+      constexpr int prompt_tokens = 512;
+      constexpr int chunk_tokens = 64;
+      std::vector<int> chunk_prompt(static_cast<std::size_t>(prompt_tokens));
+      for (int index = 0; index < prompt_tokens; ++index) {
+        chunk_prompt[static_cast<std::size_t>(index)] = 2 + index % 251;
+      }
+      gradiated::engine::Gemma4BatchModelRunner runner(config, *weights, 4, prompt_tokens + 2);
+      const std::vector<int> serial_predictions{
+          runner.prefill_slot(0, chunk_prompt, chunk_tokens),
+          runner.prefill_slot(1, chunk_prompt, chunk_tokens)};
+      std::vector<std::optional<int>> batched_predictions(2);
+      int chunks = 0;
+      while (!batched_predictions[0] || !batched_predictions[1]) {
+        batched_predictions =
+            runner.prefill_slots_chunks({2, 3}, {&chunk_prompt, &chunk_prompt}, chunk_tokens);
+        ++chunks;
+      }
+      const std::vector<int> batched_tokens{
+          *batched_predictions[0], *batched_predictions[1]};
+      require_equal(batched_tokens, serial_predictions, "batched chunk prediction");
+      require_equal(runner.append_ragged(batched_tokens, {2, 3}),
+                    runner.append_ragged(serial_predictions, {0, 1}),
+                    "batched chunk cached decode");
+      if (chunks != prompt_tokens / chunk_tokens) {
+        throw std::runtime_error("batched chunk prefill advanced an unexpected number of waves");
+      }
+      std::cout << "batched_chunk_parity=true\n"
+                << "requests=2\n"
+                << "prompt_tokens=" << prompt_tokens << '\n'
+                << "chunk_tokens=" << chunk_tokens << '\n'
+                << "chunks=" << chunks << '\n';
+      return 0;
+    }
     if (argc == 5 && std::string(argv[3]) == "assistant-benchmark") {
-      constexpr int batch = 16;
+      int batch = 16;
+      if (const char* configured = std::getenv("GRADIATED_ASSISTANT_BENCHMARK_BATCH")) {
+        batch = std::stoi(configured);
+      }
+      if (batch < 1 || batch > 16) {
+        throw std::runtime_error("invalid assistant benchmark batch");
+      }
       const auto assistant_host = gradiated::engine::ShardedSafetensors::open(argv[4]);
       const auto assistant_plan = gradiated::engine::WeightPlan::gemma4_assistant(assistant_host);
       const auto assistant_weights = gradiated::engine::DeviceWeightArena::load(
@@ -143,7 +184,7 @@ int main(int argc, char** argv) {
       for (const int token : proposals.front()) std::cout << token << ',';
       std::cout << '\n'
                 << "estimated_emitted_tokens_per_second="
-                << static_cast<double>(accepted + batch) / (draft_seconds + verify_seconds)
+                << static_cast<double>(accepted) / (draft_seconds + verify_seconds)
                 << '\n';
       return 0;
     }
@@ -415,6 +456,25 @@ int main(int argc, char** argv) {
                     "unequal batched suffix prefill");
       require_equal(runner.append_ragged(batched_suffix_predictions, {0, 2}),
                     {expected[1], expected[1]}, "unequal batched suffix cached decode");
+      runner.reset_slot(0);
+      runner.reset_slot(2);
+
+      std::vector<std::optional<int>> batched_chunk_predictions(2);
+      int batched_chunk_count = 0;
+      while (!batched_chunk_predictions[0] || !batched_chunk_predictions[1]) {
+        batched_chunk_predictions =
+            runner.prefill_slots_chunks({0, 2}, {&prompt, &prompt}, 7);
+        ++batched_chunk_count;
+      }
+      if (batched_chunk_count < 2) {
+        throw std::runtime_error("batched resumable prefill did not yield between chunks");
+      }
+      const std::vector<int> batched_chunk_tokens{
+          *batched_chunk_predictions[0], *batched_chunk_predictions[1]};
+      require_equal(batched_chunk_tokens, {expected[0], expected[0]},
+                    "batched chunk prefill");
+      require_equal(runner.append_ragged(batched_chunk_tokens, {0, 2}),
+                    {expected[1], expected[1]}, "batched chunk cached decode");
       runner.reset_slot(0);
       runner.reset_slot(2);
 

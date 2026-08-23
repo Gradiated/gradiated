@@ -41,6 +41,12 @@ class Gemma4BatchModelRunner {
   // the complete prompt is resident, allowing a scheduler to bound interruption of active decode.
   std::optional<int> prefill_slot_chunk(int slot, const std::vector<int>& token_ids,
                                         int chunk_tokens);
+  // Advances several slots by one bounded chunk in a shared model pass. An entry contains a
+  // prediction only when that request's complete prompt became resident during this pass.
+  std::vector<std::optional<int>> prefill_slots_chunks(
+      const std::vector<int>& slots,
+      const std::vector<const std::vector<int>*>& token_ids,
+      int chunk_tokens);
   // Extends several stable slots to the ends of their prompts with one shared projection batch.
   std::vector<int> prefill_slots_suffix(
       const std::vector<int>& slots,

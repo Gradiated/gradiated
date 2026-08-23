@@ -642,6 +642,136 @@ std::vector<int> Gemma4BatchModelRunner::prefill_slots_suffix(
   return predictions;
 }
 
+std::vector<std::optional<int>> Gemma4BatchModelRunner::prefill_slots_chunks(
+    const std::vector<int>& slots,
+    const std::vector<const std::vector<int>*>& token_ids,
+    const int chunk_tokens) {
+  auto& state = *implementation_;
+  const int requests = static_cast<int>(slots.size());
+  if (requests <= 0 || requests > state.batch_size || token_ids.size() != slots.size() ||
+      chunk_tokens <= 0) {
+    throw std::runtime_error("invalid batched chunk prefill shape");
+  }
+  std::vector<bool> seen(static_cast<std::size_t>(state.batch_size), false);
+  std::vector<int> counts(static_cast<std::size_t>(requests));
+  std::vector<int> positions(static_cast<std::size_t>(requests));
+  std::vector<int> last_rows(static_cast<std::size_t>(requests));
+  std::vector<int> packed_tokens;
+  for (int request = 0; request < requests; ++request) {
+    const int slot = slots[static_cast<std::size_t>(request)];
+    const auto* prompt = token_ids[static_cast<std::size_t>(request)];
+    if (slot < 0 || slot >= state.batch_size || seen[static_cast<std::size_t>(slot)] ||
+        prompt == nullptr || prompt->empty() ||
+        prompt->size() > static_cast<std::size_t>(state.maximum_context)) {
+      throw std::runtime_error("invalid batched chunk prefill request");
+    }
+    seen[static_cast<std::size_t>(slot)] = true;
+    const int position = state.slot_positions[static_cast<std::size_t>(slot)];
+    const int remaining = static_cast<int>(prompt->size()) - position;
+    if (position < 0 || remaining <= 0) {
+      throw std::runtime_error("batched chunk does not extend resident context");
+    }
+    const int count = std::min(remaining, chunk_tokens);
+    positions[static_cast<std::size_t>(request)] = position;
+    counts[static_cast<std::size_t>(request)] = count;
+    for (int index = position; index < position + count; ++index) {
+      const int token = (*prompt)[static_cast<std::size_t>(index)];
+      if (token < 0 || token >= state.vocabulary) {
+        throw std::runtime_error("batched chunk contains an invalid token id");
+      }
+      packed_tokens.push_back(token);
+    }
+    last_rows[static_cast<std::size_t>(request)] =
+        static_cast<int>(packed_tokens.size()) - 1;
+  }
+  if (packed_tokens.size() > static_cast<std::size_t>(state.maximum_context)) {
+    throw std::runtime_error("batched chunks exceed shared projection workspace");
+  }
+  // This path replaces the BF16 single-request cold-prefill path. Keep its arithmetic contract
+  // unchanged so the scheduler experiment does not silently become a quantization experiment.
+  const bool fp8_projections = false;
+  check(cudaMemcpy(state.device_input_tokens.get(), packed_tokens.data(),
+                   packed_tokens.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy batched chunk tokens");
+  embedding_batch_bf16(
+      state.weights.at("token_embedding"),
+      static_cast<const int*>(state.device_input_tokens.get()), state.hidden_a.get(),
+      static_cast<int>(packed_tokens.size()), state.vocabulary, state.hidden,
+      std::sqrt(static_cast<float>(state.hidden)), nullptr);
+  void* input = state.hidden_a.get();
+  void* output = state.hidden_b.get();
+  for (std::size_t layer = 0; layer < state.config.layers.size(); ++layer) {
+    std::vector<void*> key_caches;
+    std::vector<void*> value_caches;
+    std::vector<int> capacities(static_cast<std::size_t>(requests), state.caches[layer].capacity);
+    key_caches.reserve(static_cast<std::size_t>(requests));
+    value_caches.reserve(static_cast<std::size_t>(requests));
+    for (const int slot : slots) {
+      key_caches.push_back(state.slot_key_cache(layer, slot));
+      value_caches.push_back(state.slot_value_cache(layer, slot));
+    }
+    state.layers.run_prefill_chunks(static_cast<int>(layer), input, output, counts, positions,
+                                    key_caches, value_caches, capacities, nullptr,
+                                    fp8_projections);
+    for (int request = 0; request < requests; ++request) {
+      state.refresh_fp8_key_span(
+          layer, slots[static_cast<std::size_t>(request)],
+          positions[static_cast<std::size_t>(request)], counts[static_cast<std::size_t>(request)],
+          nullptr);
+    }
+    std::swap(input, output);
+  }
+
+  std::vector<int> completed_rows;
+  std::vector<int> completed_slots;
+  std::vector<int> completed_requests;
+  for (int request = 0; request < requests; ++request) {
+    const int resident = positions[static_cast<std::size_t>(request)] +
+                         counts[static_cast<std::size_t>(request)];
+    state.slot_positions[static_cast<std::size_t>(slots[static_cast<std::size_t>(request)])] =
+        resident;
+    if (resident == static_cast<int>(token_ids[static_cast<std::size_t>(request)]->size())) {
+      completed_rows.push_back(last_rows[static_cast<std::size_t>(request)]);
+      completed_slots.push_back(slots[static_cast<std::size_t>(request)]);
+      completed_requests.push_back(request);
+    }
+  }
+  std::vector<std::optional<int>> predictions(static_cast<std::size_t>(requests));
+  if (completed_rows.empty()) return predictions;
+
+  const int completed = static_cast<int>(completed_rows.size());
+  check(cudaMemcpy(state.device_positions.get(), completed_rows.data(),
+                   completed_rows.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy batched chunk final rows");
+  gather_rows_bf16(input, static_cast<const int*>(state.device_positions.get()), output,
+                   completed, state.hidden, nullptr);
+  rms_norm_bf16(output, state.weights.at("final_norm"), state.final_hidden.get(), completed,
+                state.hidden, static_cast<float>(state.config.rms_norm_epsilon), nullptr);
+  check(cudaMemcpy(state.device_slots.get(), completed_slots.data(),
+                   completed_slots.size() * sizeof(int), cudaMemcpyHostToDevice),
+        "copy batched chunk completed slots");
+  scatter_rows_bf16(state.final_hidden.get(), static_cast<const int*>(state.device_slots.get()),
+                    state.target_hidden_slots.get(), completed, state.hidden, nullptr);
+  if (fp8_projections) {
+    state.run_decode_lm_head(state.final_hidden.get(), state.logits.get(), completed, nullptr);
+  } else {
+    state.lm_head.run(state.final_hidden.get(), state.weights.at("token_embedding"),
+                      state.logits.get(), completed, state.hidden, state.vocabulary, nullptr);
+  }
+  argmax_bf16_rows(state.logits.get(), completed, state.vocabulary,
+                   static_cast<int*>(state.device_output_tokens.get()),
+                   state.argmax_workspace.get(), nullptr);
+  std::vector<int> completed_predictions(static_cast<std::size_t>(completed));
+  check(cudaMemcpy(completed_predictions.data(), state.device_output_tokens.get(),
+                   completed_predictions.size() * sizeof(int), cudaMemcpyDeviceToHost),
+        "copy batched chunk predictions");
+  for (int row = 0; row < completed; ++row) {
+    predictions[static_cast<std::size_t>(completed_requests[static_cast<std::size_t>(row)])] =
+        completed_predictions[static_cast<std::size_t>(row)];
+  }
+  return predictions;
+}
+
 LayerSlicedSuffixPrefillResult Gemma4BatchModelRunner::prefill_slots_suffix_layer_slice(
     const std::vector<int>& slots,
     const std::vector<const std::vector<int>*>& token_ids,

@@ -73,8 +73,16 @@ Gemma4Config Gemma4Config::load(const std::string& config_path) {
       .maximum_positions = u32(text.at("max_position_embeddings"), "max_position_embeddings"),
       .rms_norm_epsilon = number_at(text, "rms_norm_eps"),
       .final_logit_softcap = number_at(text, "final_logit_softcapping"),
+      .eos_token_ids = {},
       .layers = {},
   };
+  const Json& eos = root.at("eos_token_id");
+  for (const Json& token : eos.as_array()) {
+    result.eos_token_ids.push_back(static_cast<int>(u32(token, "eos_token_id")));
+  }
+  if (result.eos_token_ids.empty()) {
+    throw std::runtime_error("eos_token_id must not be empty");
+  }
 
   const std::uint32_t query_heads = u32(text.at("num_attention_heads"), "num_attention_heads");
   const std::uint32_t sliding_kv_heads = u32(text.at("num_key_value_heads"), "num_key_value_heads");

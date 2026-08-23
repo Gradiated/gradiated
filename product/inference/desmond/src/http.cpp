@@ -194,10 +194,29 @@ void HttpServer::handle_client(const int client) {
   }
   std::ostringstream headers;
   headers << "HTTP/1.1 " << response.status << ' ' << status_text(response.status) << "\r\n"
-          << "Content-Type: " << response.content_type << "\r\n"
-          << "Content-Length: " << response.body.size() << "\r\n"
-          << "Connection: close\r\n\r\n";
-  send_all(client, headers.str() + response.body);
+          << "Content-Type: " << response.content_type << "\r\n";
+  if (response.stream) {
+    headers << "Transfer-Encoding: chunked\r\n"
+            << "Cache-Control: no-cache\r\n"
+            << "X-Accel-Buffering: no\r\n"
+            << "Connection: close\r\n\r\n";
+    if (send_all(client, headers.str())) {
+      bool connected = true;
+      const HttpChunkWriter write = [&](const std::string_view chunk) {
+        if (!connected) return false;
+        std::ostringstream frame;
+        frame << std::hex << chunk.size() << "\r\n" << chunk << "\r\n";
+        connected = send_all(client, frame.str());
+        return connected;
+      };
+      response.stream(write);
+      if (connected) static_cast<void>(send_all(client, "0\r\n\r\n"));
+    }
+  } else {
+    headers << "Content-Length: " << response.body.size() << "\r\n"
+            << "Connection: close\r\n\r\n";
+    static_cast<void>(send_all(client, headers.str() + response.body));
+  }
   close(client);
 }
 

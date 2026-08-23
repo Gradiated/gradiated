@@ -95,6 +95,11 @@ int optional_integer(const gradiated::engine::Json& object, const char* field, i
   return static_cast<int>(parsed);
 }
 
+bool optional_bool(const gradiated::engine::Json& object, const char* field, bool fallback) {
+  const auto* value = object.find(field);
+  return value == nullptr ? fallback : value->as_bool();
+}
+
 std::string token_array_json(const std::vector<int>& tokens) {
   std::ostringstream output;
   output << '[';
@@ -109,6 +114,7 @@ std::string token_array_json(const std::vector<int>& tokens) {
 struct RuntimeMetrics {
   std::atomic<std::uint64_t> requests{0};
   std::atomic<std::uint64_t> failures{0};
+  std::atomic<std::uint64_t> cancelled{0};
   std::atomic<std::uint64_t> input_tokens{0};
   std::atomic<std::uint64_t> output_tokens{0};
   std::atomic<std::uint64_t> inference_microseconds{0};
@@ -153,6 +159,8 @@ struct CompletionJob {
   std::chrono::steady_clock::time_point queued_at;
   std::mutex mutex;
   std::condition_variable condition;
+  std::deque<int> emitted_ids;
+  std::atomic<bool> cancelled{false};
   bool done{false};
   std::optional<CompletionResult> result;
   std::string error;
@@ -216,6 +224,15 @@ class ContinuousScheduler {
 
   CompletionResult complete(std::vector<int> input_ids, int max_tokens,
                             std::unordered_set<int> stop_ids) {
+    auto job = submit(std::move(input_ids), max_tokens, std::move(stop_ids));
+    std::unique_lock lock(job->mutex);
+    job->condition.wait(lock, [&] { return job->done; });
+    if (!job->error.empty()) throw InferenceFailure(job->error);
+    return std::move(*job->result);
+  }
+
+  std::shared_ptr<CompletionJob> submit(std::vector<int> input_ids, int max_tokens,
+                                        std::unordered_set<int> stop_ids) {
     auto job = std::make_shared<CompletionJob>();
     job->input_ids = std::move(input_ids);
     job->max_tokens = max_tokens;
@@ -228,10 +245,12 @@ class ContinuousScheduler {
       metrics_.queued.fetch_add(1);
     }
     condition_.notify_one();
-    std::unique_lock lock(job->mutex);
-    job->condition.wait(lock, [&] { return job->done; });
-    if (!job->error.empty()) throw InferenceFailure(job->error);
-    return std::move(*job->result);
+    return job;
+  }
+
+  void cancel(const std::shared_ptr<CompletionJob>& job) {
+    job->cancelled.store(true, std::memory_order_release);
+    condition_.notify_one();
   }
 
  private:
@@ -256,6 +275,15 @@ class ContinuousScheduler {
     int source{-1};
     std::size_t prefix_tokens{0};
   };
+
+  static void emit_token(Slot& slot, int token) {
+    slot.output_ids.push_back(token);
+    {
+      std::lock_guard lock(slot.job->mutex);
+      slot.job->emitted_ids.push_back(token);
+    }
+    slot.job->condition.notify_all();
+  }
 
   static bool starts_with(const std::vector<int>& input, const std::vector<int>& prefix) {
     return !prefix.empty() && prefix.size() <= input.size() &&
@@ -345,6 +373,56 @@ class ContinuousScheduler {
     job->condition.notify_one();
   }
 
+  void cancel_slot(int index) {
+    auto& slot = slots_[static_cast<std::size_t>(index)];
+    auto job = std::move(slot.job);
+    slot.cached_tokens.clear();
+    slot.output_ids.clear();
+    runner_.reset_slot(index);
+    metrics_.cancelled.fetch_add(1);
+    metrics_.active.fetch_sub(1);
+    if (slot.decode_ready) metrics_.decoding.fetch_sub(1);
+    slot.decode_ready = false;
+    {
+      std::lock_guard lock(job->mutex);
+      job->error = "request cancelled";
+      job->done = true;
+    }
+    job->condition.notify_all();
+  }
+
+  bool reap_cancelled() {
+    bool reaped = false;
+    {
+      std::lock_guard lock(mutex_);
+      for (auto current = pending_.begin(); current != pending_.end();) {
+        if (!(*current)->cancelled.load(std::memory_order_acquire)) {
+          ++current;
+          continue;
+        }
+        auto job = std::move(*current);
+        current = pending_.erase(current);
+        metrics_.queued.fetch_sub(1);
+        metrics_.cancelled.fetch_add(1);
+        {
+          std::lock_guard job_lock(job->mutex);
+          job->error = "request cancelled";
+          job->done = true;
+        }
+        job->condition.notify_all();
+        reaped = true;
+      }
+    }
+    for (int index = 0; index < maximum_slots; ++index) {
+      const auto& slot = slots_[static_cast<std::size_t>(index)];
+      if (slot.job && slot.job->cancelled.load(std::memory_order_acquire)) {
+        cancel_slot(index);
+        reaped = true;
+      }
+    }
+    return reaped;
+  }
+
   bool admit_one() {
     std::shared_ptr<CompletionJob> job;
     Placement placement;
@@ -394,7 +472,7 @@ class ContinuousScheduler {
       if (placement.prefix_tokens == job->input_ids.size()) {
         const auto token_time = std::chrono::steady_clock::now();
         slot.token_to_append = cached_prediction;
-        slot.output_ids.push_back(cached_prediction);
+        emit_token(slot, cached_prediction);
         slot.decode_ready = true;
         slot.ttft_microseconds = static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::microseconds>(
@@ -442,7 +520,7 @@ class ContinuousScheduler {
       if (!prediction) return true;
 
       slot.token_to_append = *prediction;
-      slot.output_ids.push_back(*prediction);
+      emit_token(slot, *prediction);
       slot.decode_ready = true;
       slot.ttft_microseconds = static_cast<std::uint64_t>(
           std::chrono::duration_cast<std::chrono::microseconds>(end - slot.job->queued_at).count());
@@ -565,7 +643,7 @@ class ContinuousScheduler {
           if (accepted == 0) {
             slot.cached_tokens.push_back(slot.token_to_append);
             slot.token_to_append = fallback_next.at(fallback_index++);
-            slot.output_ids.push_back(slot.token_to_append);
+            emit_token(slot, slot.token_to_append);
             newly_emitted = 1;
           } else {
             for (int candidate = 0; candidate < accepted; ++candidate) {
@@ -573,7 +651,7 @@ class ContinuousScheduler {
                   proposals[row][static_cast<std::size_t>(candidate)]);
               if (candidate == 0) continue;  // Already emitted before this cycle.
               const int token = proposals[row][static_cast<std::size_t>(candidate)];
-              slot.output_ids.push_back(token);
+              emit_token(slot, token);
               ++newly_emitted;
               if (slot.job->stop_ids.contains(token)) {
                 stopped = true;
@@ -582,7 +660,7 @@ class ContinuousScheduler {
             }
             if (!stopped) {
               slot.token_to_append = verification.next_tokens[row];
-              slot.output_ids.push_back(slot.token_to_append);
+              emit_token(slot, slot.token_to_append);
               ++newly_emitted;
             }
           }
@@ -614,7 +692,7 @@ class ContinuousScheduler {
         auto& slot = slots_[static_cast<std::size_t>(index)];
         slot.cached_tokens.push_back(slot.token_to_append);
         slot.token_to_append = predictions[row];
-        slot.output_ids.push_back(slot.token_to_append);
+        emit_token(slot, slot.token_to_append);
         const auto tpot = static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::microseconds>(token_time - slot.last_token_at)
                 .count());
@@ -689,7 +767,7 @@ class ContinuousScheduler {
             static_cast<std::uint64_t>(computed_tokens[request]));
         slot.cached_tokens = slot.job->input_ids;
         slot.token_to_append = predictions[request];
-        slot.output_ids.push_back(predictions[request]);
+        emit_token(slot, predictions[request]);
         slot.decode_ready = true;
         slot.ttft_microseconds = static_cast<std::uint64_t>(
             std::chrono::duration_cast<std::chrono::microseconds>(
@@ -743,6 +821,7 @@ class ContinuousScheduler {
   void run() {
     while (true) {
       bool worked = false;
+      if (reap_cancelled()) worked = true;
       while (admit_one()) worked = true;
       if (wait_for_short_prefill_cohort()) continue;
       if (drain_short_prefill_cohort()) worked = true;
@@ -842,6 +921,7 @@ int main(int argc, char** argv) {
         std::ostringstream body;
         body << "gradiated_native_requests_total " << metrics.requests.load() << '\n'
              << "gradiated_native_failures_total " << metrics.failures.load() << '\n'
+             << "gradiated_native_cancelled_requests_total " << metrics.cancelled.load() << '\n'
              << "gradiated_native_input_tokens_total " << metrics.input_tokens.load() << '\n'
              << "gradiated_native_output_tokens_total " << metrics.output_tokens.load() << '\n'
              << "gradiated_native_inference_seconds_total "
@@ -897,9 +977,62 @@ int main(int argc, char** argv) {
         if (max_tokens <= 0 || max_tokens > maximum_context - static_cast<int>(input_ids.size())) {
           throw std::runtime_error("max_tokens exceeds the remaining context");
         }
-        std::unordered_set<int> stop_ids;
+        std::unordered_set<int> stop_ids(config.eos_token_ids.begin(),
+                                         config.eos_token_ids.end());
         if (const auto* value = body.find("stop_token_ids")) {
           for (const int token : integer_array(*value, "stop_token_ids")) stop_ids.insert(token);
+        }
+        const bool stream = optional_bool(body, "stream", false);
+
+        if (stream) {
+          auto job = scheduler.submit(input_ids, max_tokens, std::move(stop_ids));
+          return desmond::HttpResponse{
+              200, "text/event-stream", {},
+              [job, &scheduler, input_tokens = input_ids.size()](
+                  const desmond::HttpChunkWriter& write) {
+                std::size_t emitted_tokens = 0;
+                while (true) {
+                  std::optional<int> token;
+                  std::optional<CompletionResult> result;
+                  std::string error;
+                  {
+                    std::unique_lock lock(job->mutex);
+                    job->condition.wait(lock, [&] {
+                      return !job->emitted_ids.empty() || job->done;
+                    });
+                    if (!job->emitted_ids.empty()) {
+                      token = job->emitted_ids.front();
+                      job->emitted_ids.pop_front();
+                    } else if (job->done) {
+                      error = job->error;
+                      if (job->result) result = std::move(*job->result);
+                    }
+                  }
+                  if (token) {
+                    ++emitted_tokens;
+                    std::ostringstream event;
+                    event << "data: {\"token_id\":" << *token
+                          << ",\"usage\":{\"input_tokens\":" << input_tokens
+                          << ",\"output_tokens\":" << emitted_tokens << "}}\n\n";
+                    if (!write(event.str())) {
+                      scheduler.cancel(job);
+                      return;
+                    }
+                    continue;
+                  }
+                  if (!error.empty() || !result) return;
+                  std::ostringstream terminal;
+                  terminal << "data: {\"finish_reason\":"
+                           << desmond::json_string(result->finish_reason)
+                           << ",\"usage\":{\"input_tokens\":" << input_tokens
+                           << ",\"output_tokens\":" << result->output_ids.size()
+                           << "}}\n\n";
+                  if (!write(terminal.str()) || !write("data: [DONE]\n\n")) {
+                    scheduler.cancel(job);
+                  }
+                  return;
+                }
+              }};
         }
 
         auto result = scheduler.complete(input_ids, max_tokens, std::move(stop_ids));

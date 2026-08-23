@@ -75,6 +75,7 @@ void test_gemma_config() {
   TemporaryDirectory temporary;
   const std::string config = R"({
     "model_type":"gemma4",
+    "eos_token_id":[1,106],
     "text_config":{
       "model_type":"gemma4_text","tie_word_embeddings":true,"attention_bias":false,
       "hidden_size_per_layer_input":0,"num_kv_shared_layers":0,
@@ -93,6 +94,7 @@ void test_gemma_config() {
   write_text(path, config);
   const auto parsed = gradiated::engine::Gemma4Config::load(path.string());
   check(parsed.layers.size() == 2, "layer count");
+  check(parsed.eos_token_ids == std::vector<int>({1, 106}), "EOS token ids");
   check(parsed.layers[0].query_width() == 8, "sliding query width");
   check(parsed.layers[0].kv_width() == 4, "sliding kv width");
   check(parsed.layers[0].rotary_dimension == 4, "sliding rotary dimension");

@@ -55,12 +55,33 @@ void test_http_server() {
   thread.join();
 }
 
+void test_http_stream() {
+  desmond::HttpServer server("127.0.0.1", 19092, [](const desmond::HttpRequest&) {
+    return desmond::HttpResponse{
+        200, "text/event-stream", {}, [](const desmond::HttpChunkWriter& write) {
+          require(write("data: one\n\n"), "first HTTP stream write");
+          require(write("data: [DONE]\n\n"), "second HTTP stream write");
+        }};
+  });
+  std::thread thread([&] { server.run(); });
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  const auto response = desmond::http_get("127.0.0.1", 19092, "/stream",
+                                          std::chrono::seconds(1));
+  require(response.transport_ok && response.status == 200 &&
+              response.body.find("data: one") != std::string::npos &&
+              response.body.find("data: [DONE]") != std::string::npos,
+          "HTTP chunked stream round trip");
+  server.stop();
+  thread.join();
+}
+
 }  // namespace
 
 int main() {
   test_trace_ring();
   test_supervisor_lifecycle();
   test_http_server();
+  test_http_stream();
   std::cout << "desmond tests passed\n";
   return 0;
 }

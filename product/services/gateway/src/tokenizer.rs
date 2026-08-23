@@ -35,6 +35,13 @@ pub struct ModelTokenizer {
     loaded: Arc<RwLock<HashMap<TokenizerRelease, Arc<CompiledTokenizer>>>>,
 }
 
+#[derive(Default)]
+pub(crate) struct TokenizerDecodeState {
+    ids: Vec<u32>,
+    prefix: String,
+    prefix_index: usize,
+}
+
 impl ModelTokenizer {
     pub fn new() -> Result<Self, ModelTokenizerError> {
         Ok(Self {
@@ -90,6 +97,23 @@ impl ModelTokenizer {
             tokenizer
                 .decode(&token_ids)
                 .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))
+        })
+        .await
+        .map_err(ModelTokenizerError::LoaderTask)?
+    }
+
+    pub(crate) async fn decode_step(
+        &self,
+        release: &ModelDeploymentRelease,
+        mut state: TokenizerDecodeState,
+        token_id: u32,
+    ) -> Result<(TokenizerDecodeState, Option<String>), ModelTokenizerError> {
+        let tokenizer = self.tokenizer(release).await?;
+        tokio::task::spawn_blocking(move || {
+            let chunk = tokenizer
+                .decode_step(&mut state, token_id)
+                .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))?;
+            Ok((state, chunk))
         })
         .await
         .map_err(ModelTokenizerError::LoaderTask)?
@@ -218,6 +242,22 @@ impl CompiledTokenizer {
         self.tokenizer
             .decode(token_ids, true)
             .map_err(|error| TokenizerRequestError::Decode(error.to_string()))
+    }
+
+    fn decode_step(
+        &self,
+        state: &mut TokenizerDecodeState,
+        token_id: u32,
+    ) -> Result<Option<String>, TokenizerRequestError> {
+        tokenizers::tokenizer::step_decode_stream(
+            &self.tokenizer,
+            vec![token_id],
+            true,
+            &mut state.ids,
+            &mut state.prefix,
+            &mut state.prefix_index,
+        )
+        .map_err(|error| TokenizerRequestError::Decode(error.to_string()))
     }
 
     #[cfg(test)]

@@ -7,6 +7,7 @@
 #include <mutex>
 #include <string>
 #include <string_view>
+#include <utility>
 
 namespace desmond {
 
@@ -17,10 +18,22 @@ struct HttpRequest {
   std::string body;
 };
 
+using HttpChunkWriter = std::function<bool(std::string_view)>;
+using HttpStream = std::function<void(const HttpChunkWriter&)>;
+
 struct HttpResponse {
   int status{200};
   std::string content_type{"text/plain; charset=utf-8"};
   std::string body;
+  HttpStream stream;
+
+  HttpResponse() = default;
+  HttpResponse(int response_status, std::string response_content_type,
+               std::string response_body, HttpStream response_stream = {})
+      : status(response_status),
+        content_type(std::move(response_content_type)),
+        body(std::move(response_body)),
+        stream(std::move(response_stream)) {}
 };
 
 using HttpHandler = std::function<HttpResponse(const HttpRequest&)>;

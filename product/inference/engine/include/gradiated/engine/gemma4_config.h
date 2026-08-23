@@ -31,6 +31,7 @@ struct Gemma4Config {
   std::uint32_t maximum_positions;
   double rms_norm_epsilon;
   double final_logit_softcap;
+  std::vector<int> eos_token_ids;
   std::vector<Gemma4LayerConfig> layers;
 
   static Gemma4Config load(const std::string& config_path);

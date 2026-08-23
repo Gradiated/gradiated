@@ -1,4 +1,4 @@
-use std::{convert::Infallible, pin::Pin, sync::Arc, time::Duration};
+use std::{collections::VecDeque, convert::Infallible, pin::Pin, sync::Arc, time::Duration};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -11,7 +11,8 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    ChatCompletionRequest, GatewayError, GatewayModelDeployment, ModelTokenizer, NormalizedUsage,
+    tokenizer::TokenizerDecodeState, ChatCompletionRequest, GatewayError, GatewayModelDeployment,
+    ModelDeploymentRelease, ModelTokenizer, NormalizedUsage,
 };
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
@@ -228,6 +229,7 @@ impl SglangClient {
         let body = serde_json::to_vec(&NativeTokenRequest {
             input_ids: &input_ids,
             max_tokens,
+            stream: false,
         })
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
@@ -313,6 +315,17 @@ impl SglangClient {
             return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
         }
 
+        if deployment.release.runtime_revision.starts_with("native-") {
+            return self
+                .execute_native_streaming(
+                    deployment,
+                    request,
+                    effective_output_tokens,
+                    response_header_timeout,
+                )
+                .await;
+        }
+
         let requested_model = request.model.clone();
         let body = serde_json::to_vec(&request.into_upstream_body(effective_output_tokens))
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
@@ -373,6 +386,85 @@ impl SglangClient {
         Ok(Box::new(SglangEventStream::new(
             Box::pin(bytes),
             requested_model,
+        )))
+    }
+
+    async fn execute_native_streaming(
+        &self,
+        deployment: &GatewayModelDeployment,
+        request: ChatCompletionRequest,
+        effective_output_tokens: u64,
+        response_header_timeout: Duration,
+    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        let tokenizer = self
+            .tokenizer
+            .clone()
+            .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let input_ids = request
+            .encoded_input_ids
+            .clone()
+            .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let max_tokens = usize::try_from(effective_output_tokens)
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::InvalidRequest))?;
+        let body = serde_json::to_vec(&NativeTokenRequest {
+            input_ids: &input_ids,
+            max_tokens,
+            stream: true,
+        })
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let mut upstream = self
+            .client
+            .post(endpoint(&deployment.service_url, "v1/token-completions"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .header(header::ACCEPT, "text/event-stream")
+            .body(one_shot_body(body));
+        if let Some(api_key) = &self.api_key {
+            upstream = upstream.bearer_auth(api_key);
+        }
+        let response = tokio::time::timeout(response_header_timeout, upstream.send())
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+        if !response.status().is_success() {
+            return Err(RuntimeFailure::new(match response.status() {
+                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
+                    RuntimeFailureKind::InvalidRequest
+                }
+                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
+                _ => RuntimeFailureKind::Unavailable,
+            }));
+        }
+        if response
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .is_none_or(|value| !value.starts_with("text/event-stream"))
+        {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
+        let bytes = response
+            .bytes_stream()
+            .map(|result| result.map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable)))
+            .scan(0_usize, |total, result| {
+                let result = result.and_then(|bytes| {
+                    *total = total
+                        .checked_add(bytes.len())
+                        .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge))?;
+                    if *total > MAX_RESPONSE_BYTES {
+                        return Err(RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge));
+                    }
+                    Ok(bytes)
+                });
+                std::future::ready(Some(result))
+            })
+            .eventsource();
+        Ok(Box::new(NativeEventStream::new(
+            Box::pin(bytes),
+            tokenizer,
+            deployment.release.clone(),
+            request.model,
+            input_ids.len(),
+            max_tokens,
         )))
     }
 }
@@ -521,6 +613,203 @@ impl RuntimeEventStream for SglangEventStream {
     }
 }
 
+struct NativeEventStream {
+    events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
+    tokenizer: ModelTokenizer,
+    release: ModelDeploymentRelease,
+    requested_model: String,
+    response_id: String,
+    created: u64,
+    input_tokens: usize,
+    max_tokens: usize,
+    output_tokens: usize,
+    decode_state: TokenizerDecodeState,
+    pending: VecDeque<RuntimeStreamEvent>,
+    terminal_received: bool,
+    done: bool,
+    sent_role: bool,
+}
+
+impl NativeEventStream {
+    fn new(
+        events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
+        tokenizer: ModelTokenizer,
+        release: ModelDeploymentRelease,
+        requested_model: String,
+        input_tokens: usize,
+        max_tokens: usize,
+    ) -> Self {
+        Self {
+            events,
+            tokenizer,
+            release,
+            requested_model,
+            response_id: format!("chatcmpl-{}", Uuid::now_v7()),
+            created: Utc::now().timestamp().try_into().unwrap_or(0),
+            input_tokens,
+            max_tokens,
+            output_tokens: 0,
+            decode_state: TokenizerDecodeState::default(),
+            pending: VecDeque::new(),
+            terminal_received: false,
+            done: false,
+            sent_role: false,
+        }
+    }
+
+    fn response(&self, choices: Vec<NormalizedStreamChoice>, usage: Option<PublicUsage>) -> Value {
+        serde_json::to_value(NormalizedStreamResponse {
+            id: self.response_id.clone(),
+            object: "chat.completion.chunk".to_owned(),
+            created: self.created,
+            model: self.requested_model.clone(),
+            choices,
+            usage,
+        })
+        .expect("normalized native stream response is serializable")
+    }
+}
+
+#[async_trait]
+impl RuntimeEventStream for NativeEventStream {
+    async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
+        if let Some(event) = self.pending.pop_front() {
+            return Ok(Some(event));
+        }
+        if self.done {
+            return Ok(None);
+        }
+        loop {
+            let event = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, self.events.next())
+                .await
+                .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?;
+            let Some(event) = event else {
+                return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+            };
+            let event = event.map_err(|error| match error {
+                EventStreamError::Transport(failure) => failure,
+                EventStreamError::Utf8(_) | EventStreamError::Parser(_) => {
+                    RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation)
+                }
+            })?;
+            if event.event != "message"
+                || !event.id.is_empty()
+                || event.retry.is_some()
+                || event.data.len() > MAX_STREAM_EVENT_BYTES
+            {
+                return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+            }
+            if event.data == "[DONE]" {
+                if !self.terminal_received {
+                    return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+                }
+                self.done = true;
+                return Ok(Some(RuntimeStreamEvent::Done));
+            }
+            let value: Value = serde_json::from_str(&event.data)
+                .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+            if let Some(token_id) = value.get("token_id").and_then(Value::as_u64) {
+                let token: NativeStreamToken = serde_json::from_value(value)
+                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+                if self.terminal_received || token.token_id != token_id {
+                    return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+                }
+                let token_id = u32::try_from(token_id)
+                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+                self.output_tokens += 1;
+                if self.output_tokens > self.max_tokens {
+                    return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+                }
+                if token.usage.input_tokens != self.input_tokens
+                    || token.usage.output_tokens != self.output_tokens
+                {
+                    return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+                }
+                let usage = NormalizedUsage::new(
+                    self.input_tokens as u64,
+                    0,
+                    0,
+                    self.output_tokens as u64,
+                    0,
+                )
+                .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+                let state = std::mem::take(&mut self.decode_state);
+                let (state, decoded) = self
+                    .tokenizer
+                    .decode_step(&self.release, state, token_id)
+                    .await
+                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+                self.decode_state = state;
+                let Some(content) = decoded else {
+                    continue;
+                };
+                let mut delta = Map::new();
+                if !self.sent_role {
+                    delta.insert("role".to_owned(), Value::String("assistant".to_owned()));
+                    self.sent_role = true;
+                }
+                delta.insert("content".to_owned(), Value::String(content.clone()));
+                let response = self.response(
+                    vec![NormalizedStreamChoice {
+                        index: 0,
+                        delta,
+                        logprobs: None,
+                        finish_reason: None,
+                    }],
+                    None,
+                );
+                return Ok(Some(RuntimeStreamEvent::Chunk(RuntimeStreamChunk {
+                    response,
+                    usage: Some(usage),
+                    finish_reason: None,
+                    usable_output: !content.is_empty(),
+                    terminal_usage: false,
+                })));
+            }
+
+            let terminal: NativeStreamTerminal = serde_json::from_value(value)
+                .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+            if self.terminal_received
+                || terminal.finish_reason.is_empty()
+                || terminal.usage.input_tokens != self.input_tokens
+                || terminal.usage.output_tokens != self.output_tokens
+            {
+                return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+            }
+            self.terminal_received = true;
+            let usage =
+                NormalizedUsage::new(self.input_tokens as u64, 0, 0, self.output_tokens as u64, 0)
+                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+            let finish_reason = terminal.finish_reason;
+            let finish = RuntimeStreamChunk {
+                response: self.response(
+                    vec![NormalizedStreamChoice {
+                        index: 0,
+                        delta: Map::new(),
+                        logprobs: None,
+                        finish_reason: Some(finish_reason.clone()),
+                    }],
+                    None,
+                ),
+                usage: None,
+                finish_reason: Some(finish_reason.clone()),
+                usable_output: false,
+                terminal_usage: false,
+            };
+            let terminal_usage = RuntimeStreamChunk {
+                response: self.response(Vec::new(), Some(usage.into())),
+                usage: Some(usage),
+                finish_reason: None,
+                usable_output: false,
+                terminal_usage: true,
+            };
+            self.pending
+                .push_back(RuntimeStreamEvent::Chunk(terminal_usage));
+            return Ok(Some(RuntimeStreamEvent::Chunk(finish)));
+        }
+    }
+}
+
 fn normalize_completion(
     body: &[u8],
     requested_model: &str,
@@ -634,6 +923,7 @@ fn optional_usage(body: &[u8]) -> Option<NormalizedUsage> {
 struct NativeTokenRequest<'a> {
     input_ids: &'a [u32],
     max_tokens: usize,
+    stream: bool,
 }
 
 #[derive(Deserialize)]
@@ -647,6 +937,19 @@ struct NativeTokenResponse {
 struct NativeTokenUsage {
     input_tokens: usize,
     output_tokens: usize,
+}
+
+#[derive(Deserialize)]
+struct NativeStreamTerminal {
+    finish_reason: String,
+    usage: NativeTokenUsage,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct NativeStreamToken {
+    token_id: u64,
+    usage: NativeTokenUsage,
 }
 
 #[derive(Debug, Deserialize)]

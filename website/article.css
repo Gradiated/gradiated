@@ -1,0 +1,2 @@
+.article ul{margin:30px 0 0;padding-left:1.15em}.article li{margin:0 0 12px;padding-left:.25em;font:500 24px/1.45 Newsreader,serif;letter-spacing:-.015em}.article li::marker{color:var(--accent);font-size:.7em}
+@media(max-width:700px){.article li{font-size:21px}}

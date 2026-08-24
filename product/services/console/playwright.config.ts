@@ -20,6 +20,12 @@ export default defineConfig({
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
       env: {
+        CLICKHOUSE_DATABASE: "gradiated",
+        CLICKHOUSE_HOST: "127.0.0.1",
+        CLICKHOUSE_PASSWORD: "gradiated",
+        CLICKHOUSE_PORT: "8123",
+        CLICKHOUSE_SECURE: "false",
+        CLICKHOUSE_USERNAME: "gradiated",
         DATABASE_URL:
           "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated",
         VALKEY_URL: "redis://127.0.0.1:6379",

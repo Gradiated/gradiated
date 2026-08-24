@@ -1,6 +1,7 @@
 import type {
   CatalogBillingService,
   OrganizationService,
+  UsageService,
   WorkspaceApiKeyService,
 } from "@gradiated/control";
 
@@ -32,5 +33,6 @@ export interface ApiServices {
   billingPayments: BillingPaymentsService;
   catalogBilling: CatalogBillingService;
   organizations: OrganizationService;
+  usage: UsageService;
   workspaces: WorkspaceApiKeyService;
 }

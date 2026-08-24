@@ -15,6 +15,12 @@ procs:
       NODE_ENV: development
       PORT: "3001"
       VALKEY_URL: redis://127.0.0.1:6379
+      CLICKHOUSE_DATABASE: gradiated
+      CLICKHOUSE_HOST: 127.0.0.1
+      CLICKHOUSE_PASSWORD: gradiated
+      CLICKHOUSE_PORT: "8123"
+      CLICKHOUSE_SECURE: "false"
+      CLICKHOUSE_USERNAME: gradiated
   worker:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/worker dev'

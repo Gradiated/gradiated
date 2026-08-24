@@ -4,6 +4,7 @@ import { Boxes, CircleCheck, LoaderCircle } from "lucide-react";
 import { listModels, type Model } from "@/api/queries";
 import { AppShell } from "@/components/app-shell";
 import { useProductContext } from "@/hooks/use-product-context";
+import { formatUsd } from "@/lib/format";
 
 const pricePerMillion = (model: Model, unit: "prompt" | "completion") => {
   const modality =
@@ -13,12 +14,7 @@ const pricePerMillion = (model: Model, unit: "prompt" | "completion") => {
   if (!modality) return "—";
   const price = modality.pricing.find((entry) => entry.type === unit);
   if (!price) return "—";
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(price.cost / 1_000);
+  return formatUsd(price.cost / 1_000);
 };
 
 export const ModelsPage = () => {

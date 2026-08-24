@@ -6,10 +6,13 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   redirect,
 } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+
+import "@fontsource-variable/inter";
 
 import { ApiKeysPage } from "@/pages/api-keys-page";
 import { BillingPage } from "@/pages/billing-page";
@@ -46,12 +49,32 @@ const billingRoute = createRoute({
   path: "/billing",
   component: BillingPage,
 });
+const usageRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/usage",
+  component: lazyRouteComponent(
+    () => import("@/pages/usage-page"),
+    "UsagePage",
+  ),
+});
+const logsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/logs",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(typeof search.apiKeyId === "string"
+      ? { apiKeyId: search.apiKeyId }
+      : {}),
+  }),
+  component: lazyRouteComponent(() => import("@/pages/logs-page"), "LogsPage"),
+});
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   apiKeysRoute,
   modelsRoute,
   billingRoute,
+  usageRoute,
+  logsRoute,
 ]);
 const router = createRouter({ routeTree });
 

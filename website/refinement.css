@@ -1,0 +1,11 @@
+/* A quiet sequence rather than a familiar feature-card pattern. */
+.how .process{display:block;margin-top:48px;border-top:1px solid var(--ink)}
+.how .process article{display:grid;grid-template-columns:70px minmax(220px,.7fr) 1.45fr;gap:28px;align-items:baseline;margin:0;padding:26px 0;border:0;border-bottom:1px solid var(--line)}
+.how .process article:last-child{border-bottom:1px solid var(--line)}
+.how .process h3{margin:0;font:500 clamp(25px,3vw,39px)/.96 Newsreader,serif;letter-spacing:-.055em}
+.how .process p{margin:0;max-width:470px;font-size:15px;line-height:1.6}
+.how .process span{align-self:start;padding-top:5px}
+@media(max-width:700px){.how .process article{grid-template-columns:42px 1fr;gap:14px;padding:22px 0}.how .process p{grid-column:2;font-size:14px}.how .process h3{font-size:29px}}
+
+.page-shell{position:relative}.path-field{position:absolute;top:0;left:0;z-index:0;pointer-events:none;mix-blend-mode:multiply;opacity:.38}.page-shell>*:not(.path-field){position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){.path-field{display:none}}

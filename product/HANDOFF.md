@@ -71,7 +71,7 @@ authentication, non-replayable bodies, redirect rejection, usage normalization,
 overload/no-retry, malformed usage, and elapsed deadlines.
 
 `CompletionService` now joins qualification, local bounds, atomic admission,
-and the non-streaming runtime path. It constructs every fallible identity value
+and both streaming and non-streaming runtime paths. It constructs every fallible identity value
 before admission, proves admission before dispatch, and transfers the lease and
 request to one spawned `GenerationTask`. Dropping the awaiting handler signals
 that owner; it drops the runtime future before recording a client-owned
@@ -88,8 +88,21 @@ and returns the stable error envelope and `X-Generation-Id` on both success and
 failure. Axum's owned byte buffer passes directly into qualification without a
 second request-body allocation. Focused HTTP tests cover route matching, the
 public authentication error, UUIDv7 response metadata, and `413
-payload_too_large` before any serving-state lookup. Spawned generation tasks are
-not yet tracked for bounded process shutdown.
+payload_too_large` before any serving-state lookup. Streaming uses a bounded SSE
+pump with keep-alives, continuous authoritative usage, finalization before
+`[DONE]`, and client/server cancellation ownership. Spawned generation tasks
+are tracked and cancelled during a bounded graceful process shutdown.
+
+Authenticated `GET /v1/models` reuses the same credential, workspace, account,
+and balance checks without admission. It enumerates the bounded Valkey model
+index and emits OpenRouter provider schema 2.4 with exact decimal USD prices,
+while excluding private deployment URLs and release details. The private
+`/metrics` surface exports OpenMetrics series for HTTP outcomes, admission,
+active and terminal generations, authoritative token usage, calculated charge,
+gateway and runtime TTFT, dispatch/runtime/end-to-end latency, TPOT, output
+throughput, finalization reliability, and dependency readiness. Generation
+series use only the bounded model, deployment, and streaming-mode dimensions;
+customer and generation identities are never labels.
 
 Production observability now covers the API, worker, gateway, SGLang runtime,
 console edge, and Kubernetes workloads. API and worker expose private
@@ -107,11 +120,21 @@ Apple dependency set into an isolated Python 3.12 environment, and serves pinned
 `mlx-community/Qwen3-0.6B-4bit` revision
 `73e3e38d981303bc594367cd910ea6eb48349da8` on port 30000 with bounded running
 and queued requests. `pnpm smoke:gateway` creates and later revokes a real local
-API key and exercises API/Valkey/gateway/local-tokenizer/SGLang/finalization.
+API key and exercises model discovery plus streaming and non-streaming
+API/Valkey/gateway/local-tokenizer/SGLang/finalization.
 The measured smoke returned HTTP 200, UUIDv7 `X-Generation-Id`, normalized
 14-input/32-output-token usage, and a matching succeeded `GenerationSettled`
 entry. First setup took about three and a half minutes for packages and 53
 seconds for the 336 MB model; cached restarts avoid those downloads.
+
+The console now has direct Usage and Logs routes. Usage shows spend, request,
+token, and model breakdowns with shadcn charts. Logs provides date, status,
+model, text, and sort filters, cursor pagination, and a request-detail sheet. The API
+authorizes workspace access before it reads terminal generation data. It
+returns summary and paginated generation metadata from ClickHouse. Prompt and
+completion content is not available because the product does not retain it.
+Usage query failures return a scoped 503 response and do not affect API
+readiness for the rest of the product.
 
 ## Next product work
 
@@ -119,5 +142,10 @@ Add tracked shutdown and the streaming owner, bounded SSE pump, continuous
 usage, keep-alives, and client-cancellation delivery semantics. Then implement
 the remaining authenticated `/v1/models` behavior. Calibrate the launch alert
 thresholds after seven days of representative production telemetry.
+
+Deploy the gateway with a cluster-private scrape path, connect the OpenMetrics
+surface to Prometheus/Grafana, and build the first latency, saturation, usage,
+cost, and settlement dashboards and alerts. Run the native smoke against the
+deployed serving environment before accepting provider traffic.
 
 Do not add a second or general gateway, provider router, alias system, generalized fleet service or speculative product surface without a new decision record.

@@ -1,0 +1,41 @@
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";
+
+@theme {
+  --breakpoint-site: 700px;
+  --container-content: 1240px;
+  --container-hero: 1050px;
+  --container-copy: 520px;
+  --container-api: 430px;
+  --container-api-title: 600px;
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-earth: var(--earth);
+  --font-newsreader: Newsreader, Georgia, serif;
+  --font-libre: "Libre Franklin", Arial, sans-serif;
+  --font-site-mono: "DM Mono", monospace;
+  --opacity-subtle: 0.58;
+  --text-label: 10px;
+  --text-label--line-height: 1;
+  --text-copy: 17px;
+  --text-copy-mobile: 15px;
+  --text-api-copy: 15px;
+  --text-hero: clamp(64px, 9vw, 124px);
+  --text-api-title: clamp(45px, 5.6vw, 76px);
+  --tracking-label: 0.08em;
+  --tracking-wordmark: -0.045em;
+  --tracking-display: -0.058em;
+  --tracking-heading: -0.045em;
+  --tracking-footer: 0.07em;
+  --leading-hero: 0.89;
+  --leading-api-title: 0.94;
+  --leading-copy: 1.6;
+  --leading-api-copy: 1.7;
+  --ease-editorial: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --saturate-product: 0.82;
+  --saturate-product-hover: 0.95;
+  --scale-product-hover: 1.018;
+}

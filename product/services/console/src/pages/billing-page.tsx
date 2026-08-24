@@ -15,16 +15,17 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { TopUpBalance } from "@/components/top-up-balance";
 import { useProductContext } from "@/hooks/use-product-context";
+import { formatNanoUsd } from "@/lib/format";
 
-const formatMoney = (value: string) => {
-  const amount = BigInt(value);
-  const negative = amount < 0n;
-  const absolute = negative ? -amount : amount;
-  const roundedCents = (absolute + 5_000_000n) / 10_000_000n;
-  const dollars = roundedCents / 100n;
-  const cents = (roundedCents % 100n).toString().padStart(2, "0");
-  return `${negative ? "-" : ""}$${dollars.toLocaleString()}.${cents}`;
-};
+const formatDateTime = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(new Date(value));
 
 const transactionLabel = (transaction: BalanceTransaction) => {
   const labels: Record<BalanceTransaction["type"], string> = {
@@ -120,7 +121,7 @@ export const BillingPage = () => {
                     Available balance
                   </div>
                   <p className="text-4xl font-semibold tracking-[-0.04em]">
-                    {account.data ? formatMoney(account.data.balance) : "—"}
+                    {account.data ? formatNanoUsd(account.data.balance) : "—"}
                   </p>
                 </div>
               )}
@@ -163,10 +164,7 @@ export const BillingPage = () => {
                             {transactionLabel(transaction)}
                           </p>
                           <p className="mt-0.5 text-xs text-muted-foreground">
-                            {new Intl.DateTimeFormat(undefined, {
-                              dateStyle: "medium",
-                              timeStyle: "short",
-                            }).format(new Date(transaction.created_at))}
+                            {formatDateTime(transaction.created_at)}
                           </p>
                         </div>
                       </div>
@@ -179,10 +177,10 @@ export const BillingPage = () => {
                           }
                         >
                           {positive ? "+" : ""}
-                          {formatMoney(transaction.amount)}
+                          {formatNanoUsd(transaction.amount)}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
-                          {formatMoney(transaction.balance_after)} balance
+                          {formatNanoUsd(transaction.balance_after)} balance
                         </p>
                       </div>
                     </div>

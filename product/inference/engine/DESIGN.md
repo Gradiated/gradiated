@@ -1028,3 +1028,35 @@ recovery also fell slightly in both brackets. The cooperative grid synchronizati
 cost erase the memory-pass saving under realistic mixed cohorts, so the implementation was removed.
 Future activation work should avoid grid-wide synchronization, ideally by carrying quantization
 metadata directly from a persistent producer into the projection consumer.
+
+## Producer-carried RMSNorm amax (2026-08-24)
+
+The successful replacement for the rejected cooperative fusion carries tensor-scale metadata out
+of the existing RMSNorm producers. Input RMSNorm for QKV and the fused post-attention/residual/
+pre-MLP normalization now reduce the maximum of their already-rounded BF16 output once per row.
+The following E4M3 conversion derives the tensor maximum from that small row vector independently
+in every CTA and reads the BF16 activation only for conversion. This removes the activation-wide
+amax reread and the cooperative grid barriers without changing the tensor-wide quantization domain.
+
+CUDA tests at the real 5,376-component hidden width establish bit-identical residual BF16,
+normalized BF16, tensor scale, and E4M3 bytes against the prior path. The 16-prompt, 128-token
+coding-agent quality gate is also exactly unchanged: all 2,048 candidate tokens match the retained
+tensor-FP8 artifact bit-for-bit, with the same 2,009/2,048 BF16-reference agreement and 0.988883
+mean token edit similarity.
+
+At batch 16, depth four, and context 6,000, fixed-state A-B-B-A reduces verifier time from a
+23.6713 ms control mean to 23.4379 ms, or 0.99%. Combined draft-plus-verifier time improves by
+0.73%. Single-pair screens at batches 1, 2, 4, 8, and 16 all improve verifier time; observed gains
+range from 0.55% to 2.66%, so there is no low-cohort reversal.
+
+Two seeded causal A-B-B-A runs preserve the latency result. Enabling carried amax changes paired
+mean TPOT by -0.1076 ms (`[-0.2278,+0.0048]`) and -0.2580 ms
+(`[-0.4610,-0.1064]`). Reversing the deployed default and explicitly disabling it changes mean
+TPOT by +0.1831 ms (`[+0.0645,+0.3320]`) and +0.0221 ms
+(`[-0.0092,+0.0495]`). TTFT does not regress. Raw output rates vary with generation length because
+the timing change alters dynamic cohorts and therefore tensor-FP8 batch scales; they are not used
+to claim a kernel speedup beyond the fixed-state bound.
+
+Producer-carried amax is enabled by default for tensor-FP8 QKV and gate/up projections. The
+`GRADIATED_DISABLE_QKV_NORM_CARRIED_AMAX` and
+`GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX` controls retain reproducible rollback paths.

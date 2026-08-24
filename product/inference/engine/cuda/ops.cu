@@ -24,9 +24,10 @@ void check(cudaError_t result, const char* operation) {
   }
 }
 
+template <bool emit_row_amax>
 __global__ void rms_norm_kernel(const __nv_bfloat16* input, const __nv_bfloat16* weight,
                                 const __nv_bfloat16* residual, __nv_bfloat16* output,
-                                std::size_t width, float epsilon) {
+                                float* row_amax, std::size_t width, float epsilon) {
   const std::size_t row = blockIdx.x;
   const __nv_bfloat16* row_input = input + row * width;
   __nv_bfloat16* row_output = output + row * width;
@@ -50,20 +51,40 @@ __global__ void rms_norm_kernel(const __nv_bfloat16* input, const __nv_bfloat16*
   }
   __syncthreads();
   const float inverse_rms = warp_sums[0];
+  float maximum = 0.0F;
   for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
     const float value = __bfloat162float(row_input[column]);
     const float scale = __bfloat162float(weight[column]);
     float result = value * inverse_rms * scale;
     if (residual != nullptr) result += __bfloat162float(residual[row * width + column]);
-    row_output[column] = __float2bfloat16_rn(result);
+    const __nv_bfloat16 rounded = __float2bfloat16_rn(result);
+    row_output[column] = rounded;
+    if constexpr (emit_row_amax) {
+      maximum = fmaxf(maximum, fabsf(__bfloat162float(rounded)));
+    }
+  }
+  if constexpr (emit_row_amax) {
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if ((threadIdx.x & 31U) == 0U) warp_sums[threadIdx.x >> 5U] = maximum;
+    __syncthreads();
+    if (threadIdx.x < 32U) {
+      maximum = warp_sums[threadIdx.x];
+      for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+        maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+      }
+      if (threadIdx.x == 0U) row_amax[row] = maximum;
+    }
   }
 }
 
+template <bool emit_row_amax>
 __global__ void rms_norm_add_and_norm_kernel(
     const __nv_bfloat16* input, const __nv_bfloat16* weight,
     const __nv_bfloat16* residual, const __nv_bfloat16* next_weight,
     __nv_bfloat16* residual_output, __nv_bfloat16* normalized_output,
-    std::size_t width, float epsilon) {
+    float* normalized_row_amax, std::size_t width, float epsilon) {
   const std::size_t row = blockIdx.x;
   const __nv_bfloat16* row_input = input + row * width;
   const __nv_bfloat16* row_residual = residual + row * width;
@@ -120,10 +141,29 @@ __global__ void rms_norm_add_and_norm_kernel(
   }
   __syncthreads();
   const float second_inverse_rms = warp_sums[0];
+  float maximum = 0.0F;
   for (std::size_t column = threadIdx.x; column < width; column += blockDim.x) {
-    row_normalized_output[column] = __float2bfloat16_rn(
+    const __nv_bfloat16 rounded = __float2bfloat16_rn(
         __bfloat162float(first_residual[column]) * second_inverse_rms *
         __bfloat162float(next_weight[column]));
+    row_normalized_output[column] = rounded;
+    if constexpr (emit_row_amax) {
+      maximum = fmaxf(maximum, fabsf(__bfloat162float(rounded)));
+    }
+  }
+  if constexpr (emit_row_amax) {
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if ((threadIdx.x & 31U) == 0U) warp_sums[threadIdx.x >> 5U] = maximum;
+    __syncthreads();
+    if (threadIdx.x < 32U) {
+      maximum = warp_sums[threadIdx.x];
+      for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+        maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+      }
+      if (threadIdx.x == 0U) normalized_row_amax[row] = maximum;
+    }
   }
 }
 
@@ -802,18 +842,30 @@ __global__ void argmax_rows_final_kernel(
 void rms_norm_bf16(const void* input, const void* weight, void* output,
                    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_kernel<<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
+  rms_norm_kernel<false><<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
-      nullptr, static_cast<__nv_bfloat16*>(output), width, epsilon);
+      nullptr, static_cast<__nv_bfloat16*>(output), nullptr, width, epsilon);
   check(cudaPeekAtLastError(), "launch rms_norm_kernel");
+}
+
+void rms_norm_bf16_with_row_amax(const void* input, const void* weight, void* output,
+                                 float* row_amax, std::size_t rows, std::size_t width,
+                                 float epsilon, cudaStream_t stream) {
+  if (rows == 0 || width == 0) return;
+  if (row_amax == nullptr) throw std::runtime_error("null RMSNorm row-amax output");
+  rms_norm_kernel<true><<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
+      nullptr, static_cast<__nv_bfloat16*>(output), row_amax, width, epsilon);
+  check(cudaPeekAtLastError(), "launch RMSNorm with row amax");
 }
 
 void rms_norm_add_bf16(const void* input, const void* weight, const void* residual, void* output,
                        std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_kernel<<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
+  rms_norm_kernel<false><<<static_cast<unsigned>(rows), rms_threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
-      static_cast<const __nv_bfloat16*>(residual), static_cast<__nv_bfloat16*>(output), width, epsilon);
+      static_cast<const __nv_bfloat16*>(residual), static_cast<__nv_bfloat16*>(output),
+      nullptr, width, epsilon);
   check(cudaPeekAtLastError(), "launch rms_norm_add_kernel");
 }
 
@@ -822,14 +874,32 @@ void rms_norm_add_and_norm_bf16(
     void* residual_output, void* normalized_output, std::size_t rows, std::size_t width,
     float epsilon, cudaStream_t stream) {
   if (rows == 0 || width == 0) return;
-  rms_norm_add_and_norm_kernel<<<static_cast<unsigned>(rows), rms_threads,
-                                 width * sizeof(__nv_bfloat16), stream>>>(
+  rms_norm_add_and_norm_kernel<false><<<static_cast<unsigned>(rows), rms_threads,
+                                        width * sizeof(__nv_bfloat16), stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
       static_cast<const __nv_bfloat16*>(residual),
       static_cast<const __nv_bfloat16*>(next_weight),
       static_cast<__nv_bfloat16*>(residual_output),
-      static_cast<__nv_bfloat16*>(normalized_output), width, epsilon);
+      static_cast<__nv_bfloat16*>(normalized_output), nullptr, width, epsilon);
   check(cudaPeekAtLastError(), "launch fused post-attention normalization");
+}
+
+void rms_norm_add_and_norm_bf16_with_row_amax(
+    const void* input, const void* weight, const void* residual, const void* next_weight,
+    void* residual_output, void* normalized_output, float* normalized_row_amax,
+    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream) {
+  if (rows == 0 || width == 0) return;
+  if (normalized_row_amax == nullptr) {
+    throw std::runtime_error("null fused normalization row-amax output");
+  }
+  rms_norm_add_and_norm_kernel<true><<<static_cast<unsigned>(rows), rms_threads,
+                                       width * sizeof(__nv_bfloat16), stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<const __nv_bfloat16*>(weight),
+      static_cast<const __nv_bfloat16*>(residual),
+      static_cast<const __nv_bfloat16*>(next_weight),
+      static_cast<__nv_bfloat16*>(residual_output),
+      static_cast<__nv_bfloat16*>(normalized_output), normalized_row_amax, width, epsilon);
+  check(cudaPeekAtLastError(), "launch fused normalization with row amax");
 }
 
 void rms_norm_add_scale_bf16(

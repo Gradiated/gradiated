@@ -118,6 +118,106 @@ void test_norm_add_and_scale() {
   }
 }
 
+void test_norm_carried_fp8_amax() {
+  constexpr int rows = 3;
+  constexpr int width = 5376;
+  constexpr float epsilon = 1e-6F;
+  const std::size_t elements = static_cast<std::size_t>(rows) * width;
+  std::vector<__nv_bfloat16> input(elements), residual(elements), weight(width), next_weight(width);
+  for (std::size_t index = 0; index < elements; ++index) {
+    input[index] = __float2bfloat16_rn(
+        1.3F * std::sin(static_cast<float>(index) * 0.013F) +
+        0.2F * std::cos(static_cast<float>(index) * 0.031F));
+    residual[index] = __float2bfloat16_rn(
+        0.7F * std::cos(static_cast<float>(index) * 0.017F));
+  }
+  for (int column = 0; column < width; ++column) {
+    weight[column] = __float2bfloat16_rn(
+        0.8F + 0.3F * std::sin(static_cast<float>(column) * 0.007F));
+    next_weight[column] = __float2bfloat16_rn(
+        1.1F + 0.2F * std::cos(static_cast<float>(column) * 0.011F));
+  }
+
+  DeviceAllocation<__nv_bfloat16> device_input(elements), device_residual(elements),
+      device_weight(width), device_next_weight(width), device_regular(elements),
+      device_carried(elements), device_regular_residual(elements),
+      device_carried_residual(elements);
+  DeviceAllocation<__nv_fp8_e4m3> device_regular_fp8(elements), device_carried_fp8(elements);
+  DeviceAllocation<float> device_regular_scale(1), device_carried_scale(1),
+      device_row_amax(rows);
+  cuda_check(cudaMemcpy(device_input.get(), input.data(), elements * sizeof(input[0]),
+                        cudaMemcpyHostToDevice), "copy carried-amax input");
+  cuda_check(cudaMemcpy(device_residual.get(), residual.data(), elements * sizeof(residual[0]),
+                        cudaMemcpyHostToDevice), "copy carried-amax residual");
+  cuda_check(cudaMemcpy(device_weight.get(), weight.data(), width * sizeof(weight[0]),
+                        cudaMemcpyHostToDevice), "copy carried-amax weight");
+  cuda_check(cudaMemcpy(device_next_weight.get(), next_weight.data(),
+                        width * sizeof(next_weight[0]), cudaMemcpyHostToDevice),
+             "copy carried-amax next weight");
+
+  const auto compare_quantization = [&](const char* operation) {
+    gradiated::engine::quantize_bf16_to_fp8_e4m3(
+        device_regular.get(), device_regular_fp8.get(), device_regular_scale.get(),
+        elements, nullptr);
+    gradiated::engine::quantize_bf16_to_fp8_e4m3_from_row_amax(
+        device_carried.get(), device_carried_fp8.get(), device_carried_scale.get(),
+        device_row_amax.get(), rows, width, nullptr);
+    cuda_check(cudaDeviceSynchronize(), operation);
+    std::vector<__nv_bfloat16> regular(elements), carried(elements);
+    std::vector<__nv_fp8_e4m3> regular_fp8(elements), carried_fp8(elements);
+    float regular_scale = 0.0F;
+    float carried_scale = 0.0F;
+    cuda_check(cudaMemcpy(regular.data(), device_regular.get(), elements * sizeof(regular[0]),
+                          cudaMemcpyDeviceToHost), "copy regular normalized output");
+    cuda_check(cudaMemcpy(carried.data(), device_carried.get(), elements * sizeof(carried[0]),
+                          cudaMemcpyDeviceToHost), "copy carried-amax normalized output");
+    cuda_check(cudaMemcpy(regular_fp8.data(), device_regular_fp8.get(),
+                          elements * sizeof(regular_fp8[0]), cudaMemcpyDeviceToHost),
+               "copy regular FP8 output");
+    cuda_check(cudaMemcpy(carried_fp8.data(), device_carried_fp8.get(),
+                          elements * sizeof(carried_fp8[0]), cudaMemcpyDeviceToHost),
+               "copy carried-amax FP8 output");
+    cuda_check(cudaMemcpy(&regular_scale, device_regular_scale.get(), sizeof(float),
+                          cudaMemcpyDeviceToHost), "copy regular FP8 scale");
+    cuda_check(cudaMemcpy(&carried_scale, device_carried_scale.get(), sizeof(float),
+                          cudaMemcpyDeviceToHost), "copy carried-amax FP8 scale");
+    if (std::memcmp(regular.data(), carried.data(), elements * sizeof(regular[0])) != 0 ||
+        std::memcmp(regular_fp8.data(), carried_fp8.data(),
+                    elements * sizeof(regular_fp8[0])) != 0 ||
+        std::memcmp(&regular_scale, &carried_scale, sizeof(float)) != 0) {
+      throw std::runtime_error(std::string(operation) + " changed BF16 or FP8 representation");
+    }
+  };
+
+  gradiated::engine::rms_norm_bf16(
+      device_input.get(), device_weight.get(), device_regular.get(),
+      rows, width, epsilon, nullptr);
+  gradiated::engine::rms_norm_bf16_with_row_amax(
+      device_input.get(), device_weight.get(), device_carried.get(), device_row_amax.get(),
+      rows, width, epsilon, nullptr);
+  compare_quantization("synchronize RMSNorm carried amax");
+
+  gradiated::engine::rms_norm_add_and_norm_bf16(
+      device_input.get(), device_weight.get(), device_residual.get(), device_next_weight.get(),
+      device_regular_residual.get(), device_regular.get(), rows, width, epsilon, nullptr);
+  gradiated::engine::rms_norm_add_and_norm_bf16_with_row_amax(
+      device_input.get(), device_weight.get(), device_residual.get(), device_next_weight.get(),
+      device_carried_residual.get(), device_carried.get(), device_row_amax.get(),
+      rows, width, epsilon, nullptr);
+  compare_quantization("synchronize dual RMSNorm carried amax");
+  std::vector<__nv_bfloat16> regular_residual(elements), carried_residual(elements);
+  cuda_check(cudaMemcpy(regular_residual.data(), device_regular_residual.get(),
+                        elements * sizeof(regular_residual[0]), cudaMemcpyDeviceToHost),
+             "copy regular carried-amax residual");
+  cuda_check(cudaMemcpy(carried_residual.data(), device_carried_residual.get(),
+                        elements * sizeof(carried_residual[0]), cudaMemcpyDeviceToHost),
+             "copy carried-amax residual");
+  if (std::memcmp(regular_residual.data(), carried_residual.data(),
+                  elements * sizeof(regular_residual[0])) != 0) {
+    throw std::runtime_error("carried amax changed post-attention residual");
+  }
+}
+
 void test_gelu_gate() {
   const auto gate = bf16<4>({-1.0F, 0.0F, 1.0F, 2.0F});
   const auto up = bf16<4>({2.0F, 2.0F, 2.0F, 2.0F});
@@ -1522,6 +1622,7 @@ void test_uniform_ring_attention() {
 int main() {
   try {
     test_norm_add_and_scale();
+    test_norm_carried_fp8_amax();
     test_gelu_gate();
     test_linear();
     test_int4_weight_oracle();

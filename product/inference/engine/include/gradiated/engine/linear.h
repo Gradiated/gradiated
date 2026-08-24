@@ -94,6 +94,11 @@ class Int4Bf16Linear {
 void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
                                std::size_t elements, cudaStream_t stream,
                                float scale_multiplier = 1.0F);
+// Converts a row-major BF16 tensor using maxima emitted by its producer. Every CTA derives the
+// same tensor scale from the small row-amax vector, avoiding a reread pass and a grid barrier.
+void quantize_bf16_to_fp8_e4m3_from_row_amax(
+    const void* input, void* output, float* scale, const float* row_amax,
+    int rows, int width, cudaStream_t stream, float scale_multiplier = 1.0F);
 void quantize_bf16_rows_to_fp8_e4m3(const void* input, void* output, float* scales,
                                     int rows, int width, cudaStream_t stream);
 

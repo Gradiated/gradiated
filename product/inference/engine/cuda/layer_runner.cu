@@ -85,6 +85,8 @@ struct Gemma4LayerRunner::Implementation {
   const std::vector<bool> bf16_o_layers;
   const std::vector<bool> bf16_gate_up_layers;
   const std::vector<bool> bf16_down_layers;
+  const bool carry_qkv_norm_amax;
+  const bool carry_gate_up_norm_amax;
   int maximum_tokens;
   int maximum_context;
   int maximum_batch;
@@ -137,6 +139,10 @@ struct Gemma4LayerRunner::Implementation {
             "GRADIATED_FP8_BF16_GATE_UP_LAYERS", model_config.layers.size())),
         bf16_down_layers(bf16_layer_selection(
             "GRADIATED_FP8_BF16_DOWN_LAYERS", model_config.layers.size())),
+        carry_qkv_norm_amax(
+            std::getenv("GRADIATED_DISABLE_QKV_NORM_CARRIED_AMAX") == nullptr),
+        carry_gate_up_norm_amax(
+            std::getenv("GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX") == nullptr),
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
@@ -233,6 +239,31 @@ struct Gemma4LayerRunner::Implementation {
                    fp8_weights->scale(weight_name), output, rows, input_width, output_width, stream);
   }
 
+  void run_qkv_projection(int layer_index, const void* input, void* output, int rows,
+                          int output_width, bool fp8_projections, cudaStream_t stream) {
+    const std::string prefix = "layer." + std::to_string(layer_index) + ".";
+    const bool use_fp8 = fp8_projections && uses_fp8_qkv(layer_index);
+    const bool carried_amax = use_fp8 && carry_qkv_norm_amax &&
+                              fp8_weights->scaling() == Fp8Scaling::tensor;
+    auto* scales = static_cast<float*>(fp8_input_scales.get());
+    if (carried_amax) {
+      rms_norm_bf16_with_row_amax(
+          input, weights.at(prefix + "input_norm"), normalized.get(), scales + 1,
+          rows, hidden, epsilon, stream);
+      quantize_bf16_to_fp8_e4m3_from_row_amax(
+          normalized.get(), fp8_input.get(), scales, scales + 1,
+          rows, hidden, stream);
+      fp8_linear.run(fp8_input.get(), scales, fp8_weights->at(prefix + "qkv"),
+                     fp8_weights->scale(prefix + "qkv"), output,
+                     rows, hidden, output_width, stream);
+      return;
+    }
+    rms_norm_bf16(input, weights.at(prefix + "input_norm"), normalized.get(),
+                  rows, hidden, epsilon, stream);
+    run_decode_linear(use_fp8, normalized.get(), prefix + "qkv", output,
+                      rows, hidden, output_width, stream);
+  }
+
   void project(int selected_layer, const void* residual, const void* attention_states,
                void* output, int rows, bool fp8_decode, cudaStream_t stream) {
     const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
@@ -249,12 +280,33 @@ struct Gemma4LayerRunner::Implementation {
       linear.run(attention_states, weight("o"), projected_attention.get(),
                  rows, query_width, hidden, stream);
     }
-    rms_norm_add_and_norm_bf16(projected_attention.get(), weight("post_attention_norm"), residual,
-                               weight("pre_mlp_norm"), first_residual.get(), pre_mlp.get(),
-                               rows, hidden, epsilon, stream);
+    const bool carried_gate_up_amax = gate_up_fp8 && carry_gate_up_norm_amax &&
+        fp8_weights->scaling() == Fp8Scaling::tensor;
+    auto* scales = static_cast<float*>(fp8_input_scales.get());
+    if (carried_gate_up_amax) {
+      rms_norm_add_and_norm_bf16_with_row_amax(
+          projected_attention.get(), weight("post_attention_norm"), residual,
+          weight("pre_mlp_norm"), first_residual.get(), pre_mlp.get(), scales + 1,
+          rows, hidden, epsilon, stream);
+    } else {
+      rms_norm_add_and_norm_bf16(
+          projected_attention.get(), weight("post_attention_norm"), residual,
+          weight("pre_mlp_norm"), first_residual.get(), pre_mlp.get(),
+          rows, hidden, epsilon, stream);
+    }
     if (gate_up_fp8) {
-      run_decode_linear(true, pre_mlp.get(), prefix + "gate_up", gate_up.get(),
-                        rows, hidden, 2 * intermediate, stream);
+      if (carried_gate_up_amax) {
+        quantize_bf16_to_fp8_e4m3_from_row_amax(
+            pre_mlp.get(), fp8_input.get(), scales, scales + 1,
+            rows, hidden, stream);
+        fp8_linear.run(
+            fp8_input.get(), scales, fp8_weights->at(prefix + "gate_up"),
+            fp8_weights->scale(prefix + "gate_up"), gate_up.get(),
+            rows, hidden, 2 * intermediate, stream);
+      } else {
+        run_decode_linear(true, pre_mlp.get(), prefix + "gate_up", gate_up.get(),
+                          rows, hidden, 2 * intermediate, stream);
+      }
     } else {
       linear.run(pre_mlp.get(), weight("gate_up"), gate_up.get(),
                  rows, hidden, 2 * intermediate, stream);
@@ -383,11 +435,8 @@ void Gemma4LayerRunner::run_decode(int layer_index, const void* hidden_state, vo
   const int packed_width = query_width + static_cast<int>(layer.kv_width()) * (layer.key_equals_value ? 1 : 2);
   const std::string prefix = "layer." + std::to_string(layer_index) + ".";
   const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
-  rms_norm_bf16(hidden_state, weight("input_norm"), state.normalized.get(), 1, state.hidden,
-                state.epsilon, stream);
-  state.run_decode_linear(state.uses_fp8_qkv(layer_index), state.normalized.get(),
-                          prefix + "qkv", state.packed_qkv.get(), 1, state.hidden,
-                          packed_width, stream);
+  state.run_qkv_projection(
+      layer_index, hidden_state, state.packed_qkv.get(), 1, packed_width, true, stream);
   state.qkv_postprocessor.run_decode_batch(state.packed_qkv.get(), weight("q_norm"), weight("k_norm"),
       state.queries.get(), key_cache, value_cache, 1, query_heads, kv_heads, head_dimension,
       layer.key_equals_value, position, cache_capacity, state.epsilon, stream);
@@ -411,11 +460,8 @@ void Gemma4LayerRunner::run_decode_batch(int layer_index, const void* hidden_sta
   const int packed_width = query_width + static_cast<int>(layer.kv_width()) * (layer.key_equals_value ? 1 : 2);
   const std::string prefix = "layer." + std::to_string(layer_index) + ".";
   const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
-  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), batch, state.hidden,
-                state.epsilon, stream);
-  state.run_decode_linear(state.uses_fp8_qkv(layer_index), state.normalized.get(),
-                          prefix + "qkv", state.packed_qkv.get(), batch, state.hidden,
-                          packed_width, stream);
+  state.run_qkv_projection(
+      layer_index, hidden_states, state.packed_qkv.get(), batch, packed_width, true, stream);
   state.qkv_postprocessor.run_decode_batch(state.packed_qkv.get(), weight("q_norm"), weight("k_norm"),
       state.queries.get(), key_cache, value_cache, batch, query_heads, kv_heads, head_dimension,
       layer.key_equals_value, position, cache_capacity, state.epsilon, stream);
@@ -459,11 +505,8 @@ void Gemma4LayerRunner::run_decode_ragged(
   } else if (int8_value_cache != nullptr || int8_value_scales != nullptr) {
     throw std::runtime_error("INT8 V cache requires the materialized INT8 K cache");
   }
-  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), batch, state.hidden,
-                state.epsilon, stream);
-  state.run_decode_linear(state.uses_fp8_qkv(layer_index), state.normalized.get(),
-                          prefix + "qkv", state.packed_qkv.get(), batch, state.hidden,
-                          packed_width, stream);
+  state.run_qkv_projection(
+      layer_index, hidden_states, state.packed_qkv.get(), batch, packed_width, true, stream);
   state.qkv_postprocessor.run_decode_ragged(
       state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
       key_cache, value_cache, positions, slots, batch, maximum_slots, query_heads, kv_heads,
@@ -679,17 +722,8 @@ void Gemma4LayerRunner::run_prefill_chunks(
       (layer.key_equals_value ? 1 : 2);
   const std::string prefix = "layer." + std::to_string(layer_index) + ".";
   const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
-  const bool layer_fp8 = fp8_projections && state.uses_fp8_qkv(layer_index);
-  rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), total_tokens,
-                state.hidden, state.epsilon, stream);
-  if (layer_fp8) {
-    state.run_decode_linear(true, state.normalized.get(), prefix + "qkv",
-                            state.packed_qkv.get(), total_tokens, state.hidden,
-                            packed_width, stream);
-  } else {
-    state.linear.run(state.normalized.get(), weight("qkv"), state.packed_qkv.get(),
-                     total_tokens, state.hidden, packed_width, stream);
-  }
+  state.run_qkv_projection(layer_index, hidden_states, state.packed_qkv.get(),
+                           total_tokens, packed_width, fp8_projections, stream);
 
   bool uniform_shape = true;
   const int uniform_tokens = token_counts.front();

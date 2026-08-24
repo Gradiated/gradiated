@@ -9,12 +9,21 @@ namespace gradiated::engine {
 
 void rms_norm_bf16(const void* input, const void* weight, void* output,
                    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream);
+// The row maxima are measured from the rounded BF16 output, so a later tensor-scale E4M3
+// conversion can skip its separate amax pass without changing quantized bytes.
+void rms_norm_bf16_with_row_amax(const void* input, const void* weight, void* output,
+                                 float* row_amax, std::size_t rows, std::size_t width,
+                                 float epsilon, cudaStream_t stream);
 void rms_norm_add_bf16(const void* input, const void* weight, const void* residual, void* output,
                        std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream);
 void rms_norm_add_and_norm_bf16(const void* input, const void* weight, const void* residual,
                                 const void* next_weight, void* residual_output,
                                 void* normalized_output, std::size_t rows, std::size_t width,
                                 float epsilon, cudaStream_t stream);
+void rms_norm_add_and_norm_bf16_with_row_amax(
+    const void* input, const void* weight, const void* residual, const void* next_weight,
+    void* residual_output, void* normalized_output, float* normalized_row_amax,
+    std::size_t rows, std::size_t width, float epsilon, cudaStream_t stream);
 void rms_norm_add_scale_bf16(const void* input, const void* weight, const void* residual,
                              const void* scalar, void* output, std::size_t rows,
                              std::size_t width, float epsilon, cudaStream_t stream);

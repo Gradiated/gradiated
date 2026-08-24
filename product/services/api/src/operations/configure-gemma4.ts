@@ -26,7 +26,11 @@ if (
   valkeyEnvironment.VALKEY_IAM_USER = process.env.VALKEY_IAM_USER;
 }
 
-const modelId = "google/gemma-4-31B-it";
+// Public model IDs are case-sensitive. Keep this aligned with the existing
+// OpenAI-compatible catalog ID; the Hugging Face repository keeps its own case
+// in artifactModelPath below.
+const modelId = "google/gemma-4-31b-it";
+const artifactModelPath = "google/gemma-4-31B-it";
 const modelRevision = "b9ea41a2887d8607f594846523f94c6cc75ac8a4";
 const deploymentId =
   process.env.GEMMA4_DEPLOYMENT_ID ?? "019c8ad2-f857-7000-8000-000000000001";
@@ -49,7 +53,7 @@ try {
       description:
         "Google Gemma 4 31B Instruct on Gradiated's native single-H200 runtime.",
       released_at: null,
-      hugging_face_id: modelId,
+      hugging_face_id: artifactModelPath,
       quantization: "fp8",
       tokenizer: "Gemma 4",
       input_modalities: [
@@ -88,9 +92,9 @@ try {
     release: {
       schema_version: 1,
       runtime_revision: runtimeRevision,
-      model_path: modelId,
+      model_path: artifactModelPath,
       model_revision: modelRevision,
-      tokenizer_path: modelId,
+      tokenizer_path: artifactModelPath,
       tokenizer_revision: modelRevision,
     },
   });

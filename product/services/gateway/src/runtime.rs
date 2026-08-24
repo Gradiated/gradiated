@@ -238,7 +238,9 @@ impl SglangClient {
             .post(endpoint(&deployment.service_url, "v1/token-completions"))
             .header(header::CONTENT_TYPE, "application/json")
             .header(header::ACCEPT, "application/json")
-            .body(one_shot_body(body));
+            // Desmond's deliberately small HTTP/1.1 parser requires a bounded
+            // Content-Length body and does not accept chunked request framing.
+            .body(body);
         if let Some(api_key) = &self.api_key {
             upstream = upstream.bearer_auth(api_key);
         }
@@ -420,7 +422,9 @@ impl SglangClient {
             .post(endpoint(&deployment.service_url, "v1/token-completions"))
             .header(header::CONTENT_TYPE, "application/json")
             .header(header::ACCEPT, "text/event-stream")
-            .body(one_shot_body(body));
+            // Keep the native C++ boundary length-delimited in both response
+            // modes; streaming applies to the response, not the request body.
+            .body(body);
         if let Some(api_key) = &self.api_key {
             upstream = upstream.bearer_auth(api_key);
         }
@@ -1680,6 +1684,74 @@ mod tests {
             .unwrap_err();
 
         assert_eq!(failure.kind(), RuntimeFailureKind::ProtocolViolation);
+        task.abort();
+    }
+
+    #[tokio::test]
+    async fn native_requests_are_length_delimited_for_the_cpp_runtime() {
+        let recorded = Arc::new(Mutex::new(Vec::new()));
+        let captured = recorded.clone();
+        let application = Router::new().route(
+            "/v1/token-completions",
+            post(move |headers: HeaderMap, body: Bytes| {
+                let captured = captured.clone();
+                async move {
+                    captured.lock().unwrap().push(RecordedRequest {
+                        headers,
+                        body: serde_json::from_slice(&body).unwrap(),
+                    });
+                    (
+                        StatusCode::BAD_REQUEST,
+                        axum::Json(json!({"error": "invalid_request"})),
+                    )
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let task = tokio::spawn(async move {
+            axum::serve(listener, application).await.unwrap();
+        });
+        let runtime = SglangClient::with_tokenizer(None, ModelTokenizer::new().unwrap()).unwrap();
+        let mut deployment = deployment(format!("http://{address}"));
+        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+
+        let mut non_streaming =
+            ChatCompletionRequest::parse(br#"{"model":"model-a","messages":[{}],"temperature":0}"#)
+                .unwrap();
+        non_streaming.encoded_input_ids = Some(vec![2, 3, 4]);
+        let failure = runtime
+            .complete(
+                &deployment,
+                non_streaming,
+                8,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .unwrap_err();
+        assert_eq!(failure.kind(), RuntimeFailureKind::InvalidRequest);
+
+        let mut streaming = streaming_request();
+        streaming.encoded_input_ids = Some(vec![2, 3, 4]);
+        let failure = runtime
+            .stream(
+                &deployment,
+                streaming,
+                8,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .err()
+            .expect("native request should preserve the upstream rejection");
+        assert_eq!(failure.kind(), RuntimeFailureKind::InvalidRequest);
+
+        let requests = recorded.lock().unwrap();
+        assert_eq!(requests.len(), 2);
+        for request in requests.iter() {
+            assert!(request.headers.contains_key(header::CONTENT_LENGTH));
+            assert!(!request.headers.contains_key(header::TRANSFER_ENCODING));
+            assert_eq!(request.body["input_ids"], json!([2, 3, 4]));
+        }
         task.abort();
     }
 

@@ -1123,3 +1123,51 @@ same 2,009/2,048 BF16 agreement, seven EOS-exact prompts, and 0.988883 mean edit
 
 Producer-carried GELU maxima are enabled by default for tensor-FP8 down projections at 16 or more
 rows. `GRADIATED_DISABLE_GELU_CARRIED_AMAX` retains the rollback path.
+
+## Producer-carried O-projection block maxima (2026-08-24)
+
+The retained post-GELU profile left 61 cooperative tensor-FP8 quantizers in a depth-four B16
+verifier. Sixty were O-projection inputs; the final one belongs to the target head. The O input is
+already read and rewritten by the mandatory head-major-to-token-major attention transpose, so a
+second full BF16 pass solely to find its tensor maximum is avoidable.
+
+The head-to-token producer now preserves its original 256-value output blocks and writes one
+maximum per block from the unchanged BF16 value. There are no atomics or initialization passes.
+The first implementation reduced those values to one maximum per row in another launch. It was
+numerically exact but only neutral at B16 because the reduction and conversion returned most of
+the saved 0.404 ms cooperative pass. The retained implementation removes that launch: every FP8
+conversion CTA reduces the compact block-max vector directly and derives the same tensor-wide
+scale. The CUDA oracle uses a deliberately non-aligned 514-component row and establishes
+bit-identical token-major BF16, E4M3 bytes, and FP32 scale against the original transpose plus
+cooperative converter.
+
+The retained B16 Nsight trace confirms the intended physical change: cooperative activation
+quantization falls from 61 calls/0.404 ms to one final-head call/0.006 ms. Sixty carried O
+conversions add 0.325 ms to the generalized producer-amax converter while the transpose is
+unchanged within noise, leaving approximately 0.08 ms net kernel time rather than counting the
+removed pass as a 0.404 ms whole-verifier gain.
+
+The isolated crossover is real but the smallest cohorts are not retained. Single-pair screens
+improved verifier time by 1.02% at B4, 1.65% at B8, and 0.83% at B16. A fixed-state B16 A-B-B-A
+then improved 23.6306 to 23.2466 ms and 23.6732 to 23.3590 ms: 1.62% and 1.33%, averaging 1.48%.
+Although B2 also improved in isolation, an initial live replay with an eight-row threshold changed
+dynamic cohort composition without improving SLO economics consistently. The retained policy
+therefore activates only at sixteen rows.
+
+The stricter policy passed a matched 400-request, 40-session, three-arrival/s Poisson A-B-B-A with
+the FP8 assistant, depth-four speculation, and 23 idle cache slots. Target verifier time per
+speculative cycle improved from 16.5468 to 16.4804 ms and from 16.6667 to 16.5916 ms: 0.40% and
+0.45%. Mean queue time fell 11.08 and 11.01 ms. Mean request latency changed by -4.99 ms
+(`[-48.57,+34.34]`) and -42.33 ms (`[-74.57,-12.86]`); mean TPOT changed by +0.338 ms
+(`[-0.097,+0.834]`) and -0.452 ms (`[-0.946,-0.030]`). SLO compute recovery rose by 0.099 and
+0.171 percentage points.
+
+Raw output rates fell because optimized runs generated 332 and 475 fewer output tokens. That is
+different work, not evidence of lower kernel throughput: optimized/optimized outputs matched only
+47.25%, while disabled/disabled repetitions matched 48.75%. The standard 16-prompt quality gate
+was repeated twice with the retained default and produced identical 2,048-token candidate streams,
+2,027/2,048 BF16-reference agreement, eight EOS-exact prompts, and 0.993492 mean edit similarity.
+
+Producer-carried O maxima are enabled by default for tensor-FP8 speculative/suffix projection
+cohorts of at least sixteen rows. `GRADIATED_DISABLE_O_TRANSPOSE_CARRIED_AMAX` retains an exact
+rollback path.

@@ -394,6 +394,41 @@ __global__ void token_head_batch_transpose_kernel(
   }
 }
 
+__global__ void head_to_token_batch_block_amax_kernel(
+    const __nv_bfloat16* input, __nv_bfloat16* output, float* block_amax,
+    int tokens, int heads, int dimension, int blocks_per_row) {
+  const int row = static_cast<int>(blockIdx.x) / blocks_per_row;
+  const int row_block = static_cast<int>(blockIdx.x) % blocks_per_row;
+  const int width = heads * dimension;
+  const int column = row_block * blockDim.x + threadIdx.x;
+  const int request = row / tokens;
+  const int token = row % tokens;
+  float maximum = 0.0F;
+  if (column < width) {
+    const int head = column / dimension;
+    const int component = column % dimension;
+    const std::uint64_t source_index =
+        (static_cast<std::uint64_t>(request) * heads * tokens + head * tokens + token) *
+            dimension + component;
+    const __nv_bfloat16 value = input[source_index];
+    output[static_cast<std::uint64_t>(row) * width + column] = value;
+    maximum = fabsf(__bfloat162float(value));
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    maximum = threadIdx.x < 8U ? warp_maxima[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (threadIdx.x == 0U) block_amax[blockIdx.x] = maximum;
+  }
+}
+
 __global__ void copy_kv_to_cache_kernel(const __nv_bfloat16* source, __nv_bfloat16* destination,
                                         int heads, int tokens, int dimension,
                                         int destination_capacity, int position_start) {
@@ -1137,6 +1172,22 @@ void head_to_token_batch_bf16(const void* input, void* output, int requests, int
       static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
       requests, tokens, heads, head_dimension, false);
   check(cudaPeekAtLastError(), "launch batched head-to-token transpose");
+}
+
+void head_to_token_batch_bf16_with_block_amax(
+    const void* input, void* output, float* block_amax, int requests, int tokens,
+    int heads, int head_dimension, cudaStream_t stream) {
+  if (input == nullptr || output == nullptr || block_amax == nullptr || requests <= 0 ||
+      tokens <= 0 || heads <= 0 || head_dimension <= 0) {
+    throw std::runtime_error("invalid carried-amax batched head-to-token transpose shape");
+  }
+  constexpr int threads = 256;
+  const int blocks_per_row = (heads * head_dimension + threads - 1) / threads;
+  head_to_token_batch_block_amax_kernel<<<
+      requests * tokens * blocks_per_row, threads, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(input), static_cast<__nv_bfloat16*>(output),
+      block_amax, tokens, heads, head_dimension, blocks_per_row);
+  check(cudaPeekAtLastError(), "launch carried-amax batched head-to-token transpose");
 }
 
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,

@@ -58,6 +58,11 @@ void token_to_head_batch_bf16(const void* input, void* output, int requests, int
                               int heads, int head_dimension, cudaStream_t stream);
 void head_to_token_batch_bf16(const void* input, void* output, int requests, int tokens,
                               int heads, int head_dimension, cudaStream_t stream);
+// The block maxima are measured from the unchanged BF16 transpose output. Blocks are
+// row-local and ordered [request * tokens + token, block], with 256 values per block.
+void head_to_token_batch_bf16_with_block_amax(
+    const void* input, void* output, float* block_amax, int requests, int tokens,
+    int heads, int head_dimension, cudaStream_t stream);
 void copy_kv_to_cache_bf16(const void* source, void* destination, int heads, int tokens,
                            int head_dimension, int destination_capacity, int position_start,
                            cudaStream_t stream);

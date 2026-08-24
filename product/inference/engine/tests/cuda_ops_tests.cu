@@ -304,6 +304,73 @@ void test_gelu_carried_fp8_amax() {
   }
 }
 
+void test_head_to_token_carried_fp8_amax() {
+  constexpr int requests = 3;
+  constexpr int tokens = 5;
+  constexpr int heads = 2;
+  constexpr int dimension = 257;
+  constexpr int rows = requests * tokens;
+  constexpr int width = heads * dimension;
+  constexpr int blocks_per_row = (width + 255) / 256;
+  constexpr int partial_amax_count = rows * blocks_per_row;
+  constexpr std::size_t elements = static_cast<std::size_t>(rows) * width;
+  std::vector<__nv_bfloat16> token_major(elements);
+  for (std::size_t index = 0; index < elements; ++index) {
+    token_major[index] = __float2bfloat16_rn(
+        2.3F * std::sin(static_cast<float>(index) * 0.013F) -
+        0.4F * std::cos(static_cast<float>(index) * 0.031F));
+  }
+  DeviceAllocation<__nv_bfloat16> device_token_major(elements), device_head_major(elements),
+      device_regular(elements), device_carried(elements);
+  DeviceAllocation<__nv_fp8_e4m3> device_regular_fp8(elements), device_carried_fp8(elements);
+  DeviceAllocation<float> device_regular_scale(1), device_carried_scale(1),
+      device_partial_amax(partial_amax_count);
+  cuda_check(cudaMemcpy(device_token_major.get(), token_major.data(),
+                        elements * sizeof(token_major[0]), cudaMemcpyHostToDevice),
+             "copy carried-amax transpose input");
+  gradiated::engine::token_to_head_batch_bf16(
+      device_token_major.get(), device_head_major.get(), requests, tokens, heads, dimension,
+      nullptr);
+  gradiated::engine::head_to_token_batch_bf16(
+      device_head_major.get(), device_regular.get(), requests, tokens, heads, dimension,
+      nullptr);
+  gradiated::engine::head_to_token_batch_bf16_with_block_amax(
+      device_head_major.get(), device_carried.get(), device_partial_amax.get(),
+      requests, tokens, heads, dimension, nullptr);
+  gradiated::engine::quantize_bf16_to_fp8_e4m3(
+      device_regular.get(), device_regular_fp8.get(), device_regular_scale.get(),
+      elements, nullptr);
+  gradiated::engine::quantize_bf16_to_fp8_e4m3_from_amax_values(
+      device_carried.get(), device_carried_fp8.get(), device_carried_scale.get(),
+      device_partial_amax.get(), partial_amax_count, rows, width, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize carried-amax transpose");
+
+  std::vector<__nv_bfloat16> regular(elements), carried(elements);
+  std::vector<__nv_fp8_e4m3> regular_fp8(elements), carried_fp8(elements);
+  float regular_scale = 0.0F;
+  float carried_scale = 0.0F;
+  cuda_check(cudaMemcpy(regular.data(), device_regular.get(), elements * sizeof(regular[0]),
+                        cudaMemcpyDeviceToHost), "copy regular transpose output");
+  cuda_check(cudaMemcpy(carried.data(), device_carried.get(), elements * sizeof(carried[0]),
+                        cudaMemcpyDeviceToHost), "copy carried transpose output");
+  cuda_check(cudaMemcpy(regular_fp8.data(), device_regular_fp8.get(),
+                        elements * sizeof(regular_fp8[0]), cudaMemcpyDeviceToHost),
+             "copy regular transpose FP8 output");
+  cuda_check(cudaMemcpy(carried_fp8.data(), device_carried_fp8.get(),
+                        elements * sizeof(carried_fp8[0]), cudaMemcpyDeviceToHost),
+             "copy carried transpose FP8 output");
+  cuda_check(cudaMemcpy(&regular_scale, device_regular_scale.get(), sizeof(float),
+                        cudaMemcpyDeviceToHost), "copy regular transpose FP8 scale");
+  cuda_check(cudaMemcpy(&carried_scale, device_carried_scale.get(), sizeof(float),
+                        cudaMemcpyDeviceToHost), "copy carried transpose FP8 scale");
+  if (std::memcmp(regular.data(), carried.data(), elements * sizeof(regular[0])) != 0 ||
+      std::memcmp(regular_fp8.data(), carried_fp8.data(),
+                  elements * sizeof(regular_fp8[0])) != 0 ||
+      std::memcmp(&regular_scale, &carried_scale, sizeof(float)) != 0) {
+    throw std::runtime_error("carried transpose amax changed BF16 or FP8 representation");
+  }
+}
+
 void test_linear() {
   const auto input = bf16<6>({1, 2, 3, 4, 5, 6});
   const auto weight = bf16<12>({1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1});
@@ -1693,6 +1760,7 @@ int main() {
     test_norm_carried_fp8_amax();
     test_gelu_gate();
     test_gelu_carried_fp8_amax();
+    test_head_to_token_carried_fp8_amax();
     test_linear();
     test_int4_weight_oracle();
     test_int4_fp8_linear();

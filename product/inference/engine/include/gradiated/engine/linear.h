@@ -99,6 +99,12 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
 void quantize_bf16_to_fp8_e4m3_from_row_amax(
     const void* input, void* output, float* scale, const float* row_amax,
     int rows, int width, cudaStream_t stream, float scale_multiplier = 1.0F);
+// General producer-metadata form. The values may be one maximum per row or multiple
+// row-local block maxima; every conversion CTA derives the same tensor scale from them.
+void quantize_bf16_to_fp8_e4m3_from_amax_values(
+    const void* input, void* output, float* scale, const float* amax_values,
+    int amax_count, int rows, int width, cudaStream_t stream,
+    float scale_multiplier = 1.0F);
 void quantize_bf16_rows_to_fp8_e4m3(const void* input, void* output, float* scales,
                                     int rows, int width, cudaStream_t stream);
 

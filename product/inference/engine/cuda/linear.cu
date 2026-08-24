@@ -112,11 +112,11 @@ __global__ void quantize_bf16_fp8_kernel(const __nv_bfloat16* input, __nv_fp8_e4
 
 __global__ void quantize_bf16_fp8_from_row_amax_kernel(
     const __nv_bfloat16* input, __nv_fp8_e4m3* output, float* output_scale,
-    const float* row_amax, int rows, std::size_t elements, float scale_multiplier) {
+    const float* amax_values, int amax_count, std::size_t elements, float scale_multiplier) {
   __shared__ float tensor_scale;
   float maximum = 0.0F;
-  for (int row = threadIdx.x; row < rows; row += blockDim.x) {
-    maximum = fmaxf(maximum, row_amax[row]);
+  for (int index = threadIdx.x; index < amax_count; index += blockDim.x) {
+    maximum = fmaxf(maximum, amax_values[index]);
   }
   for (int offset = 16; offset > 0; offset /= 2) {
     maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
@@ -232,10 +232,17 @@ void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
 void quantize_bf16_to_fp8_e4m3_from_row_amax(
     const void* input, void* output, float* scale, const float* row_amax,
     int rows, int width, cudaStream_t stream, float scale_multiplier) {
-  if (input == nullptr || output == nullptr || scale == nullptr || row_amax == nullptr ||
-      rows <= 0 || width <= 0 || !std::isfinite(scale_multiplier) ||
+  quantize_bf16_to_fp8_e4m3_from_amax_values(
+      input, output, scale, row_amax, rows, rows, width, stream, scale_multiplier);
+}
+
+void quantize_bf16_to_fp8_e4m3_from_amax_values(
+    const void* input, void* output, float* scale, const float* amax_values,
+    int amax_count, int rows, int width, cudaStream_t stream, float scale_multiplier) {
+  if (input == nullptr || output == nullptr || scale == nullptr || amax_values == nullptr ||
+      amax_count <= 0 || rows <= 0 || width <= 0 || !std::isfinite(scale_multiplier) ||
       scale_multiplier <= 0.0F) {
-    throw std::runtime_error("invalid row-amax FP8 quantization shape");
+    throw std::runtime_error("invalid producer-amax FP8 quantization shape");
   }
   const std::size_t elements = static_cast<std::size_t>(rows) * width;
   const int threads = elements >= 65536 ? 512 : 256;
@@ -243,8 +250,8 @@ void quantize_bf16_to_fp8_e4m3_from_row_amax(
       static_cast<int>((elements + threads - 1) / threads), 4096);
   quantize_bf16_fp8_from_row_amax_kernel<<<blocks, threads, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(input), static_cast<__nv_fp8_e4m3*>(output),
-      scale, row_amax, rows, elements, scale_multiplier);
-  cuda_check(cudaPeekAtLastError(), "launch row-amax E4M3 quantization");
+      scale, amax_values, amax_count, elements, scale_multiplier);
+  cuda_check(cudaPeekAtLastError(), "launch producer-amax E4M3 quantization");
 }
 
 __device__ float reduce_block_max(float maximum, float* warp_maxima);

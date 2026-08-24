@@ -88,6 +88,7 @@ struct Gemma4LayerRunner::Implementation {
   const bool carry_qkv_norm_amax;
   const bool carry_gate_up_norm_amax;
   const bool carry_gelu_amax;
+  const bool carry_o_transpose_amax;
   int maximum_tokens;
   int maximum_context;
   int maximum_batch;
@@ -146,6 +147,8 @@ struct Gemma4LayerRunner::Implementation {
             std::getenv("GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX") == nullptr),
         carry_gelu_amax(
             std::getenv("GRADIATED_DISABLE_GELU_CARRIED_AMAX") == nullptr),
+        carry_o_transpose_amax(
+            std::getenv("GRADIATED_DISABLE_O_TRANSPOSE_CARRIED_AMAX") == nullptr),
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
@@ -268,7 +271,8 @@ struct Gemma4LayerRunner::Implementation {
   }
 
   void project(int selected_layer, const void* residual, const void* attention_states,
-               void* output, int rows, bool fp8_decode, cudaStream_t stream) {
+               void* output, int rows, bool fp8_decode, cudaStream_t stream,
+               const float* attention_row_amax = nullptr) {
     const auto& layer = config.layers.at(static_cast<std::size_t>(selected_layer));
     const int query_width = static_cast<int>(layer.query_width());
     const std::string prefix = "layer." + std::to_string(selected_layer) + ".";
@@ -277,8 +281,22 @@ struct Gemma4LayerRunner::Implementation {
     const bool gate_up_fp8 = fp8_decode && uses_fp8_gate_up(selected_layer);
     const bool down_fp8 = fp8_decode && uses_fp8_down(selected_layer);
     if (o_fp8) {
-      run_decode_linear(true, attention_states, prefix + "o",
-                        projected_attention.get(), rows, query_width, hidden, stream);
+      if (attention_row_amax != nullptr &&
+          fp8_weights->scaling() == Fp8Scaling::tensor) {
+        auto* scales = static_cast<float*>(fp8_input_scales.get());
+        constexpr int producer_block_size = 256;
+        const int attention_amax_count = rows *
+            ((query_width + producer_block_size - 1) / producer_block_size);
+        quantize_bf16_to_fp8_e4m3_from_amax_values(
+            attention_states, fp8_input.get(), scales, attention_row_amax,
+            attention_amax_count, rows, query_width, stream);
+        fp8_linear.run(fp8_input.get(), scales, fp8_weights->at(prefix + "o"),
+                       fp8_weights->scale(prefix + "o"), projected_attention.get(),
+                       rows, query_width, hidden, stream);
+      } else {
+        run_decode_linear(true, attention_states, prefix + "o",
+                          projected_attention.get(), rows, query_width, hidden, stream);
+      }
     } else {
       linear.run(attention_states, weight("o"), projected_attention.get(),
                  rows, query_width, hidden, stream);
@@ -348,6 +366,26 @@ struct Gemma4LayerRunner::Implementation {
     }
     rms_norm_add_scale_bf16(down.get(), weight("post_mlp_norm"), first_residual.get(),
                             weight("scalar"), output, rows, hidden, epsilon, stream);
+  }
+
+  const float* transpose_attention_for_o_projection(
+      int selected_layer, const void* input, void* output, int requests, int tokens,
+      int heads, int head_dimension, bool fp8_projections, cudaStream_t stream) {
+    // Keep the policy on materially parallel cohorts. Although an isolated depth-four B2
+    // verifier crosses over, live scheduling noise erased that marginal gain; B4 and above
+    // retain at least sixteen rows and showed the stable fixed-state advantage.
+    const bool carried_amax = fp8_projections && carry_o_transpose_amax &&
+        requests * tokens >= 16 && uses_fp8_o(selected_layer) &&
+        fp8_weights->scaling() == Fp8Scaling::tensor;
+    if (!carried_amax) {
+      head_to_token_batch_bf16(
+          input, output, requests, tokens, heads, head_dimension, stream);
+      return nullptr;
+    }
+    auto* scales = static_cast<float*>(fp8_input_scales.get());
+    head_to_token_batch_bf16_with_block_amax(
+        input, output, scales + 1, requests, tokens, heads, head_dimension, stream);
+    return scales + 1;
   }
 
   void finish(int selected_layer, const void* residual, const void* query, void* output, int batch,
@@ -822,11 +860,12 @@ void Gemma4LayerRunner::run_prefill_chunks(
           speculative_backup_keys, speculative_backup_values, state.attention_output.get(),
           device_positions, static_cast<int>(requests), query_heads, kv_heads,
           uniform_tokens, uniform_capacity, head_dimension, stream);
-      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
-                               static_cast<int>(requests), uniform_tokens, query_heads,
-                               head_dimension, stream);
+      const float* attention_row_amax = state.transpose_attention_for_o_projection(
+          layer_index, state.attention_output.get(), state.queries.get(),
+          static_cast<int>(requests), uniform_tokens, query_heads, head_dimension,
+          fp8_projections, stream);
       state.project(layer_index, hidden_states, state.queries.get(), output,
-                    total_tokens, fp8_projections, stream);
+                    total_tokens, fp8_projections, stream, attention_row_amax);
       return;
     }
     const bool direct_unwrapped_speculation = speculative_sliding_gemm &&
@@ -851,11 +890,12 @@ void Gemma4LayerRunner::run_prefill_chunks(
           state.attention_output.get(), device_positions, static_cast<int>(requests),
           query_heads, kv_heads, uniform_tokens, maximum_kv_tokens, uniform_capacity,
           head_dimension, stream);
-      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
-                               static_cast<int>(requests), uniform_tokens, query_heads,
-                               head_dimension, stream);
+      const float* attention_row_amax = state.transpose_attention_for_o_projection(
+          layer_index, state.attention_output.get(), state.queries.get(),
+          static_cast<int>(requests), uniform_tokens, query_heads, head_dimension,
+          fp8_projections, stream);
       state.project(layer_index, hidden_states, state.queries.get(), output,
-                    total_tokens, fp8_projections, stream);
+                    total_tokens, fp8_projections, stream, attention_row_amax);
       return;
     }
     if (uniform_prior > 0) {
@@ -870,6 +910,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
         static_cast<int>(requests), uniform_tokens, query_heads, kv_heads, head_dimension,
         layer.key_equals_value, uniform_prior, staging_tokens, state.epsilon, stream);
     const void* attention_states = state.attention_output.get();
+    const float* attention_row_amax = nullptr;
     if (speculative_sliding_gemm) {
       // cuDNN's small-query SDPA plans are either unavailable or launch-bound for q=4. The
       // pointer-batched tensor-core QK/PV path treats the retained ring as an ordinary causal
@@ -902,9 +943,10 @@ void Gemma4LayerRunner::run_prefill_chunks(
           static_cast<const int*>(state.prefill_positions.get()),
           static_cast<int>(requests), query_heads, kv_heads, uniform_tokens, staging_tokens,
           staging_tokens, head_dimension, stream);
-      head_to_token_batch_bf16(state.attention_output.get(), state.queries.get(),
-                               static_cast<int>(requests), uniform_tokens, query_heads,
-                               head_dimension, stream);
+      attention_row_amax = state.transpose_attention_for_o_projection(
+          layer_index, state.attention_output.get(), state.queries.get(),
+          static_cast<int>(requests), uniform_tokens, query_heads, head_dimension,
+          fp8_projections, stream);
       attention_states = state.queries.get();
       // Restore destination pointers and logical positions for the ring commit below.
       check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
@@ -927,7 +969,7 @@ void Gemma4LayerRunner::run_prefill_chunks(
         static_cast<int>(requests), kv_heads, uniform_tokens, head_dimension, staging_tokens,
         uniform_prior, uniform_capacity, stream);
     state.project(layer_index, hidden_states, attention_states, output,
-                  total_tokens, fp8_projections, stream);
+                  total_tokens, fp8_projections, stream, attention_row_amax);
     return;
   }
 
@@ -1011,11 +1053,12 @@ void Gemma4LayerRunner::run_prefill_chunks(
     };
     run_group(0, split);
     run_group(split, requests);
-    head_to_token_batch_bf16(state.key_cache.get(), state.attention_output.get(),
-                             static_cast<int>(requests), uniform_tokens, query_heads,
-                             head_dimension, stream);
+    const float* attention_row_amax = state.transpose_attention_for_o_projection(
+        layer_index, state.key_cache.get(), state.attention_output.get(),
+        static_cast<int>(requests), uniform_tokens, query_heads, head_dimension,
+        fp8_projections, stream);
     state.project(layer_index, hidden_states, state.attention_output.get(), output,
-                  total_tokens, fp8_projections, stream);
+                  total_tokens, fp8_projections, stream, attention_row_amax);
     return;
   }
 

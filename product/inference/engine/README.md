@@ -30,10 +30,13 @@ most four times. These controls are exposed as `GRADIATED_FP8_SUFFIX_MAX_TOKENS`
 `GRADIATED_IGNORE_MODEL_EOS` switch exists only to make performance A/B work counts deterministic
 and must remain unset in production.
 
-Tensor-FP8 QKV, gate/up, and down inputs carry maxima from their producer kernels so conversion
-does not reread the activation or use a cooperative grid barrier. Down-input carry activates at
-16 rows, the first measured winning cohort; smaller cohorts retain the conventional converter.
+Tensor-FP8 QKV, O, gate/up, and down inputs carry maxima from their producer kernels so conversion
+does not reread the activation or use a cooperative grid barrier. O-input and down-input carry
+activate at 16 rows, the retained live-traffic crossover; smaller cohorts retain the conventional
+converter. The O path folds block maxima into the required head-to-token transpose and has each
+conversion CTA derive the unchanged tensor scale directly from that compact metadata vector.
 `GRADIATED_DISABLE_QKV_NORM_CARRIED_AMAX`,
+`GRADIATED_DISABLE_O_TRANSPOSE_CARRIED_AMAX`,
 `GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX`, and
 `GRADIATED_DISABLE_GELU_CARRIED_AMAX` provide independent rollback controls.
 

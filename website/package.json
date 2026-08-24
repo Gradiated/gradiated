@@ -1,0 +1,10 @@
+{
+  "name": "gradiated-com",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "build": "pnpm build:notes",
+    "build:notes": "ruby scripts/build-notes.rb"
+  }
+}

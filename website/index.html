@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Custom inference paths for open models." />
+  <title>Gradiated — Custom inference paths for open models.</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/refinement.css" />
+  <link rel="stylesheet" href="/api.css" />
+  <link rel="stylesheet" href="/blocks.css" />
+  <link rel="stylesheet" href="/spacing.css" />
+  <link rel="stylesheet" href="/socratic.css" />
+</head>
+<body class="home-page">
+  <div class="page-shell">
+    <canvas class="path-field" aria-hidden="true"></canvas>
+    <header class="nav">
+      <a class="wordmark" href="/">gradiated</a>
+      <nav><a class="active" href="/">Home</a><a href="/products/">Products</a><a href="/library/">Library</a></nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>The research lab focused on inference.</h1>
+        <p class="hero-copy">We codesign hardware and software to provide the world's cheapest inference.</p>
+      </section>
+
+      <section class="product" aria-labelledby="kimi-k3-title">
+        <div class="product-art"><img src="/assets/editorial/kimi-k3-v2.png" alt="A layered academy-like system of chambers, passages and researchers" width="1772" height="887" loading="lazy" /></div>
+        <div class="product-copy">
+          <p>Private beta · Our first product</p>
+          <h2 id="kimi-k3-title">Kimi K3.</h2>
+          <span>The world's most efficient Kimi K3 inference, in private beta.</span>
+          <a class="text-link" href="mailto:signal@gradiated.com?subject=Waitlist">Join waitlist <b>→</b></a>
+        </div>
+      </section>
+
+      <section class="section how">
+        <div class="api-layout"><div><h2>The harness API for controlling cost and latency.</h2><p>Submit a durable run through the SDK. Gradiated owns the planning, execution, and inference decisions beneath it. Each step uses the right model, at the right cost, for the work.</p></div><pre class="api-example" aria-label="Example Gradiated harness SDK request"><code><span class="code-key">import</span> { Gradiated } <span class="code-key">from</span> <span class="code-string">"@gradiated/sdk"</span>
+
+<span class="code-key">const</span> run = <span class="code-key">await</span> gradiated.runs.create({
+  task: <span class="code-string">"Research and compare three vendors"</span>,
+  tools: [webSearch, browser],
+  profile: {
+    budget: { max_usd: <span class="code-number">2</span> }, deadline: <span class="code-string">"20m"</span>, quality: <span class="code-string">"thorough"</span>
+  }
+})</code></pre></div>
+      </section>
+
+      <section class="news">
+        <div class="news-grid">
+          <a class="news-item" href="/notes/our-thesis/"><img src="/assets/editorial/thesis-v2.png" alt="A lone thinker facing an argument receding through successive architectural thresholds" width="1254" height="1254" loading="lazy" /><div class="news-copy"><div><p>13 July 2026</p><h2>Thesis</h2><span>Finding the right tool for the job.</span></div><b>Read note →</b></div></a>
+          <a class="news-secondary" href="/notes/working-with-us/"><div class="news-copy"><div><p>15 July 2026</p><h2>Working with us</h2><span>We are hiring founding engineers.</span></div><b>Read note →</b></div><img src="/assets/editorial/working-with-us-v2.png" alt="An eroded academy interior where groups of scholars gather in debate" width="1254" height="1254" loading="lazy" /></a>
+        </div>
+      </section>
+
+    </main>
+    <footer><a href="/">Gradiated</a><span>© 2026 Gradiated, Inc.</span><a href="/privacy/">Privacy</a></footer>
+  </div>
+  <script src="/theme.js"></script>
+  <script src="/paths.js"></script>
+</body>
+</html>

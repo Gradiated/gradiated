@@ -64,48 +64,6 @@ int hopper_fp8_heuristic_index(int rows, int input_width, int output_width) {
     }
   }
   if (input_width == 5376 && output_width == 16384 && rows == 64) return 1;
-  if (input_width == 5376 && output_width == 18432) {
-    switch (rows) {
-      case 1:
-      case 4:
-      case 8:
-      case 48:
-      case 72:
-      case 80:
-        return 3;
-      case 16:
-      case 24:
-      case 32:
-      case 40:
-        return 2;
-      default:
-        return 0;
-    }
-  }
-  if (input_width == 5376 && output_width == 262144) {
-    switch (rows) {
-      case 1:
-        return 2;
-      case 4:
-      case 32:
-      case 40:
-      case 64:
-      case 72:
-        return 4;
-      case 8:
-      case 16:
-      case 24:
-        return 5;
-      case 48:
-      case 80:
-        return 3;
-      case 56:
-      case 96:
-        return 2;
-      default:
-        return 0;
-    }
-  }
   return 0;
 }
 

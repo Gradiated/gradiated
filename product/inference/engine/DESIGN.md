@@ -1211,3 +1211,22 @@ The established 16-prompt coding quality gate also passes unchanged: 2,027/2,048
 tokens agree with BF16, eight prompts are EOS-exact, and mean token edit similarity is 0.993492.
 The complete 16-record candidate artifact is byte-identical to the retained pre-policy artifact
 (`935bc2111db6276feaed4c78fea0cfe10a5d7d828ffcf2e8f2b82686245e7b51`).
+
+The initial table also selected smaller global-QK and target-head wins. A matched 400-request,
+40-session, three-arrival/s A-B-B-A did not promote that full table. Verifier milliseconds per
+speculative cycle changed from 16.6046 to 16.6297 ms in the first bracket and from 16.6293 to
+16.5403 ms in the second. SLO compute recovery changed by -1.045 and +0.255 percentage points.
+The disabled repetitions matched only 43% of outputs, so raw throughput remained different-work
+evidence, but the inconsistent fixed-counter direction was sufficient to narrow the policy.
+
+At row 64 the down and sliding-QKV alternatives account for approximately 0.4135 ms of the
+0.4231 ms predicted projection saving. Global-QK and target-head choices contribute only about
+0.0096 ms while changing algorithms over many more live cohort widths. The retained production
+table therefore contains only the measured down-projection rows 64/72/80/96/112 and sliding-QKV
+row 64. The lower-value entries remain reproducible through the explicit-index benchmark but are
+not runtime defaults.
+
+The narrowed policy's real-model A-B-B-A confirms that the high-value subset survives integration.
+Disabled controls measured 23.4450 and 23.3287 ms; retained-policy arms measured 23.1751 and
+22.9738 ms. Mean verifier time improves from 23.3869 to 23.0745 ms, or 1.34%, with both brackets
+positive and all proposal, acceptance, and target-next-token outputs identical.

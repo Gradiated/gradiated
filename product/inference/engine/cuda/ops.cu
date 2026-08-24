@@ -237,6 +237,59 @@ __global__ void gelu_tanh_gate_rows_kernel(const __nv_bfloat16* packed, __nv_bfl
   }
 }
 
+__global__ void gelu_tanh_gate_rows_block_amax_kernel(
+    const __nv_bfloat16* packed, __nv_bfloat16* output,
+    float* block_amax, int width, int chunks_per_row) {
+  const int row = static_cast<int>(blockIdx.x) / chunks_per_row;
+  const int chunk = static_cast<int>(blockIdx.x) % chunks_per_row;
+  const int column = chunk * static_cast<int>(blockDim.x) + static_cast<int>(threadIdx.x);
+  float maximum = 0.0F;
+  if (column < width) {
+    const std::uint64_t base = static_cast<std::uint64_t>(row) * 2 * width;
+    const __nv_bfloat16 rounded = __float2bfloat16_rn(
+        gelu_tanh(__bfloat162float(packed[base + column])) *
+        __bfloat162float(packed[base + width + column]));
+    output[static_cast<std::uint64_t>(row) * width + column] = rounded;
+    maximum = fabsf(__bfloat162float(rounded));
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    maximum = threadIdx.x < 8U ? warp_maxima[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (threadIdx.x == 0U) block_amax[blockIdx.x] = maximum;
+  }
+}
+
+__global__ void reduce_block_amax_to_rows_kernel(
+    const float* block_amax, float* row_amax, int blocks_per_row) {
+  const int row = static_cast<int>(blockIdx.x);
+  float maximum = 0.0F;
+  for (int block = static_cast<int>(threadIdx.x); block < blocks_per_row;
+       block += static_cast<int>(blockDim.x)) {
+    maximum = fmaxf(maximum, block_amax[row * blocks_per_row + block]);
+  }
+  for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+    maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+  }
+  __shared__ float warp_maxima[8];
+  if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    maximum = threadIdx.x < 8U ? warp_maxima[threadIdx.x] : 0.0F;
+    for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+      maximum = fmaxf(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+    }
+    if (threadIdx.x == 0U) row_amax[row] = maximum;
+  }
+}
+
 __global__ void embedding_kernel(const __nv_bfloat16* weight, int token_id,
                                  __nv_bfloat16* output, int hidden_size, __nv_bfloat16 scale) {
   const int index = static_cast<int>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -940,6 +993,32 @@ void gelu_tanh_gate_rows_bf16(const void* packed_gate_up, void* output,
   gelu_tanh_gate_rows_kernel<<<(elements + block_size - 1) / block_size, block_size, 0, stream>>>(
       static_cast<const __nv_bfloat16*>(packed_gate_up), static_cast<__nv_bfloat16*>(output), rows, width);
   check(cudaPeekAtLastError(), "launch row-wise GELU gate kernel");
+}
+
+void gelu_tanh_gate_rows_bf16_with_block_amax(
+    const void* packed_gate_up, void* output, float* block_amax,
+    int rows, int width, cudaStream_t stream) {
+  if (packed_gate_up == nullptr || output == nullptr || block_amax == nullptr ||
+      rows <= 0 || width <= 0) {
+    throw std::runtime_error("invalid packed gate/up block-amax shape");
+  }
+  constexpr int block_size = 256;
+  const int chunks_per_row = (width + block_size - 1) / block_size;
+  gelu_tanh_gate_rows_block_amax_kernel<<<rows * chunks_per_row, block_size, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(packed_gate_up),
+      static_cast<__nv_bfloat16*>(output), block_amax, width, chunks_per_row);
+  check(cudaPeekAtLastError(), "launch row-wise GELU gate with block amax");
+}
+
+void reduce_block_amax_to_rows(const float* block_amax, float* row_amax,
+                               int rows, int blocks_per_row, cudaStream_t stream) {
+  if (block_amax == nullptr || row_amax == nullptr || rows <= 0 || blocks_per_row <= 0) {
+    throw std::runtime_error("invalid block-amax reduction shape");
+  }
+  constexpr int block_size = 256;
+  reduce_block_amax_to_rows_kernel<<<rows, block_size, 0, stream>>>(
+      block_amax, row_amax, blocks_per_row);
+  check(cudaPeekAtLastError(), "launch block-amax row reduction");
 }
 
 void embedding_bf16(const void* embedding_weight, int token_id, void* output,

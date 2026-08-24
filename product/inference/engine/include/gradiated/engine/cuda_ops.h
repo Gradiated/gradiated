@@ -32,6 +32,13 @@ void gelu_tanh_gate_bf16(const void* gate, const void* up, void* output,
                          std::size_t elements, cudaStream_t stream);
 void gelu_tanh_gate_rows_bf16(const void* packed_gate_up, void* output,
                               int rows, int width, cudaStream_t stream);
+// Emits one maximum per producer CTA from the rounded BF16 GELU product. This lets a following
+// tensor-scaled FP8 conversion avoid rereading the activation solely to find its maximum.
+void gelu_tanh_gate_rows_bf16_with_block_amax(
+    const void* packed_gate_up, void* output, float* block_amax,
+    int rows, int width, cudaStream_t stream);
+void reduce_block_amax_to_rows(const float* block_amax, float* row_amax,
+                               int rows, int blocks_per_row, cudaStream_t stream);
 void embedding_bf16(const void* embedding_weight, int token_id, void* output,
                     int vocabulary_size, int hidden_size, float scale, cudaStream_t stream);
 void embedding_batch_bf16(const void* embedding_weight, const int* device_token_ids,

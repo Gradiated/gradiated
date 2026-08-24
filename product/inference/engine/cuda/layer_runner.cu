@@ -87,6 +87,7 @@ struct Gemma4LayerRunner::Implementation {
   const std::vector<bool> bf16_down_layers;
   const bool carry_qkv_norm_amax;
   const bool carry_gate_up_norm_amax;
+  const bool carry_gelu_amax;
   int maximum_tokens;
   int maximum_context;
   int maximum_batch;
@@ -143,6 +144,8 @@ struct Gemma4LayerRunner::Implementation {
             std::getenv("GRADIATED_DISABLE_QKV_NORM_CARRIED_AMAX") == nullptr),
         carry_gate_up_norm_amax(
             std::getenv("GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX") == nullptr),
+        carry_gelu_amax(
+            std::getenv("GRADIATED_DISABLE_GELU_CARRIED_AMAX") == nullptr),
         maximum_tokens(max_tokens),
         maximum_context(max_context),
         maximum_batch(max_batch),
@@ -311,10 +314,35 @@ struct Gemma4LayerRunner::Implementation {
       linear.run(pre_mlp.get(), weight("gate_up"), gate_up.get(),
                  rows, hidden, 2 * intermediate, stream);
     }
-    gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), rows, intermediate, stream);
+    // Small cohorts do not amortize the extra partial-to-row reduction launch. Sixteen rows
+    // (four depth-four requests) is the first measured winning shape for the atomic-free path.
+    const bool carried_down_amax = down_fp8 && carry_gelu_amax && rows >= 16 &&
+        fp8_weights->scaling() == Fp8Scaling::tensor;
+    if (carried_down_amax) {
+      gelu_tanh_gate_rows_bf16_with_block_amax(
+          gate_up.get(), activated.get(), scales + 1, rows, intermediate, stream);
+    } else {
+      gelu_tanh_gate_rows_bf16(gate_up.get(), activated.get(), rows, intermediate, stream);
+    }
     if (down_fp8) {
-      run_decode_linear(true, activated.get(), prefix + "down", down.get(),
-                        rows, intermediate, hidden, stream);
+      if (carried_down_amax) {
+        constexpr int gelu_block_size = 256;
+        const int blocks_per_row =
+            (intermediate + gelu_block_size - 1) / gelu_block_size;
+        const int partial_amax_count = rows * blocks_per_row;
+        reduce_block_amax_to_rows(
+            scales + 1, scales + 1 + partial_amax_count, rows, blocks_per_row, stream);
+        quantize_bf16_to_fp8_e4m3_from_row_amax(
+            activated.get(), fp8_input.get(), scales,
+            scales + 1 + partial_amax_count, rows, intermediate, stream);
+        fp8_linear.run(
+            fp8_input.get(), scales, fp8_weights->at(prefix + "down"),
+            fp8_weights->scale(prefix + "down"), down.get(),
+            rows, intermediate, hidden, stream);
+      } else {
+        run_decode_linear(true, activated.get(), prefix + "down", down.get(),
+                          rows, intermediate, hidden, stream);
+      }
     } else {
       linear.run(activated.get(), weight("down"), down.get(), rows, intermediate, hidden, stream);
     }

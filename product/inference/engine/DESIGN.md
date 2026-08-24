@@ -1087,3 +1087,39 @@ repay the producer's strided stores and changed launch dependencies across the s
 mixture produced by live scheduling. The implementation and its runtime switch were removed. A
 future layout optimization must profile and optimize the producer-consumer pair on captured causal
 cohort sequences rather than infer whole-runtime value from one fixed batch shape.
+
+## Producer-carried GELU block maxima (2026-08-24)
+
+Down-projection tensor-FP8 conversion was the next remaining activation reread. The first exact
+implementation accumulated one maximum per GELU row with atomics and a preceding memset. It was
+bit-identical but only improved the fixed B16 verifier by 0.29% and was neutral on low-rate causal
+traffic. Having each thread produce two or four GELU values reduced atomics but regressed B16 by
+0.52% and 0.40%; those variants were removed.
+
+The retained producer preserves the original one-output-per-thread, 256-thread GELU geometry.
+Every CTA writes its rounded-BF16 maximum to a unique scratch entry, so there are no atomics and no
+initialization pass. One small CTA per row reduces the 84 block maxima, after which the existing
+row-amax E4M3 converter derives the exact tensor scale. Scratch fits in the existing activation
+scale arena. The complete sequence emits bit-identical BF16 activations, tensor scale, and E4M3
+bytes at Gemma's real 21,504-component intermediate width.
+
+The extra partial-to-row launch has a cohort crossover. Fixed screens regress B2 by about 1.0%,
+then improve B4, B8, and B16 verifier time by approximately 0.28%, 1.15%, and 0.61%. The policy
+therefore activates only at 16 activation rows, corresponding to four depth-four speculative
+requests, and retains the conventional converter below that threshold.
+
+On a matched 400-request, 40-session, high-rate A-B-B-A replay, verifier time per proposed token
+improved from 2,052.60 to 2,000.75 microseconds and from 1,965.96 to 1,955.97 microseconds: 2.53%
+and 0.51%. Raw output throughput rose 0.64% and 1.01%. SLO-qualified output rose 0.40% and 2.41%;
+mean queue time fell 37.1 and 50.8 ms, while mean TTFT fell 28.8 and 44.7 ms. SLO compute recovery
+changed by -0.029 and +0.616 percentage points, averaging a 0.293-point gain. Paired TPOT was
+neutral within wide dynamic-schedule intervals.
+
+Only 44.0% and 46.8% of candidate/control request outputs matched exactly, but the two control
+repetitions themselves matched only 45.0%. Small timing changes alter cohort-wide tensor scales in
+this saturated replay. The deterministic quality gate removes that confound: all 2,048 candidate
+tokens across 16 held-out coding prompts are bit-identical to the retained FP8 artifact, with the
+same 2,009/2,048 BF16 agreement, seven EOS-exact prompts, and 0.988883 mean edit similarity.
+
+Producer-carried GELU maxima are enabled by default for tensor-FP8 down projections at 16 or more
+rows. `GRADIATED_DISABLE_GELU_CARRIED_AMAX` retains the rollback path.

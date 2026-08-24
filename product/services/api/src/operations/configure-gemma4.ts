@@ -3,10 +3,7 @@ import {
   createControlDatabase,
   createValkeyServingProjector,
 } from "@gradiated/control";
-import {
-  createValkeyClient,
-  type ValkeyEnvironment,
-} from "@gradiated/valkey";
+import { createValkeyClient, type ValkeyEnvironment } from "@gradiated/valkey";
 
 const required = (name: string): string => {
   const value = process.env[name];
@@ -24,8 +21,7 @@ if (
   process.env.VALKEY_IAM_REGION &&
   process.env.VALKEY_IAM_USER
 ) {
-  valkeyEnvironment.VALKEY_IAM_CACHE_NAME =
-    process.env.VALKEY_IAM_CACHE_NAME;
+  valkeyEnvironment.VALKEY_IAM_CACHE_NAME = process.env.VALKEY_IAM_CACHE_NAME;
   valkeyEnvironment.VALKEY_IAM_REGION = process.env.VALKEY_IAM_REGION;
   valkeyEnvironment.VALKEY_IAM_USER = process.env.VALKEY_IAM_USER;
 }

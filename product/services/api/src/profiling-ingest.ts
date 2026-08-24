@@ -10,11 +10,16 @@ interface ProfilingIngestDependencies {
   writer: ProfilingWriter;
 }
 
-const matchesToken = (authorization: string | undefined, token: string): boolean => {
+const matchesToken = (
+  authorization: string | undefined,
+  token: string,
+): boolean => {
   if (!authorization?.startsWith("Bearer ")) return false;
   const supplied = Buffer.from(authorization.slice("Bearer ".length));
   const expected = Buffer.from(token);
-  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+  return (
+    supplied.length === expected.length && timingSafeEqual(supplied, expected)
+  );
 };
 
 export const createProfilingIngestApp = ({
@@ -22,7 +27,9 @@ export const createProfilingIngestApp = ({
   writer,
 }: ProfilingIngestDependencies): Hono => {
   if (token.length < 32) {
-    throw new Error("PROFILING_INGEST_TOKEN must contain at least 32 characters");
+    throw new Error(
+      "PROFILING_INGEST_TOKEN must contain at least 32 characters",
+    );
   }
   const app = new Hono();
   app.use(

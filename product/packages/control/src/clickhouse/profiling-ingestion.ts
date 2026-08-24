@@ -40,7 +40,9 @@ export const createProfilingWriter = (
       },
     });
     if (!result.executed) {
-      throw new Error(`ClickHouse did not execute profiling batch ${batch.batch_id}`);
+      throw new Error(
+        `ClickHouse did not execute profiling batch ${batch.batch_id}`,
+      );
     }
   },
 });

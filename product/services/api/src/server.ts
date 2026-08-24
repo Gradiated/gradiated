@@ -110,7 +110,9 @@ const server = serve({
 const metricsServer = startApiMetricsServer(metrics);
 const profilingToken = process.env.PROFILING_INGEST_TOKEN;
 const profilingClient = profilingToken
-  ? createClickHouseRuntimeClient(parseClickHouseRuntimeEnvironment(process.env))
+  ? createClickHouseRuntimeClient(
+      parseClickHouseRuntimeEnvironment(process.env),
+    )
   : undefined;
 const profilingServer = profilingToken
   ? serve({

@@ -24,10 +24,10 @@ cannot be folded into a residual branch.
 
 There are two materially different attention operators:
 
-| Layers | Count | Q heads | KV heads | Head width | Q width | KV width | KV source |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| Sliding | 50 | 32 | 16 | 256 | 8,192 | 4,096 | distinct K and V, 1,024-token window |
-| Global | 10 | 32 | 4 | 512 | 16,384 | 2,048 | V is normalized pre-RoPE K |
+| Layers  | Count | Q heads | KV heads | Head width | Q width | KV width | KV source                            |
+| ------- | ----: | ------: | -------: | ---------: | ------: | -------: | ------------------------------------ |
+| Sliding |    50 |      32 |       16 |        256 |   8,192 |    4,096 | distinct K and V, 1,024-token window |
+| Global  |    10 |      32 |        4 |        512 |  16,384 |    2,048 | V is normalized pre-RoPE K           |
 
 Global RoPE is proportional RoPE. It returns 512 coefficients, but only 64 frequencies in each
 half rotate (128 dimensions total); the remaining frequencies are zero and therefore leave those
@@ -134,12 +134,12 @@ their persistent history directly. An 8-token chunk test across the 27-token fix
 8/8 greedy outputs after cached decode. At 8k, measured warm tradeoffs are:
 
 | Chunk | Input token/s | Full-pass throughput retained | Approximate scheduling quantum |
-| ---: | ---: | ---: | ---: |
-| 256 | 6,406 | 78.3% | 40 ms |
-| 512 | 7,550 | 92.3% | 68 ms |
-| 1,024 | 8,055 | 98.4% | 127 ms |
-| 2,048 | 8,160 | 99.7% | 251 ms |
-| 4,096 | 8,185 | 100.1% | 500 ms |
+| ----: | ------------: | ----------------------------: | -----------------------------: |
+|   256 |         6,406 |                         78.3% |                          40 ms |
+|   512 |         7,550 |                         92.3% |                          68 ms |
+| 1,024 |         8,055 |                         98.4% |                         127 ms |
+| 2,048 |         8,160 |                         99.7% |                         251 ms |
+| 4,096 |         8,185 |                        100.1% |                         500 ms |
 
 The scheduler should therefore use 1,024-token chunks when decode pressure is ordinary, shrink to
 512 or 256 under a tight p95 TPOT deadline, and expand to 2,048+ while idle. It does not need to pay
@@ -538,13 +538,13 @@ expected prefix reuse. Every point uses the same seed, arrival times, prompts, 2
 idle cache reserve, depth-four speculation, and cheapest-provider prices. All five traces are
 stationary by session-birth/completion and backlog checks.
 
-| Active prefill quantum | Steady output token/s | SLO output token/s | SLO cost recovery | Cold TTFT p50 | Continuation TTFT p95 | Continuation TPOT p50 / p95 | Request p95 |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 128 | 190.650 | 169.302 | 21.397% | 4,060 ms | 404 ms | 7.58 / 16.48 ms | 1,331 ms |
-| 256 | 190.754 | 170.139 | 22.161% | 2,470 ms | 368 ms | 7.20 / 15.88 ms | 1,236 ms |
-| 512 | 190.913 | 171.653 | 23.342% | 2,429 ms | 393 ms | 7.19 / 16.71 ms | 1,244 ms |
-| **1,024** | **192.073** | **172.509** | **23.626%** | 2,058 ms | **365 ms** | **6.95 / 16.04 ms** | 1,248 ms |
-| 2,048 | 190.845 | 170.619 | 23.513% | **1,830 ms** | 462 ms | 7.03 / 17.17 ms | **1,226 ms** |
+| Active prefill quantum | Steady output token/s | SLO output token/s | SLO cost recovery | Cold TTFT p50 | Continuation TTFT p95 | Continuation TPOT p50 / p95 |  Request p95 |
+| ---------------------: | --------------------: | -----------------: | ----------------: | ------------: | --------------------: | --------------------------: | -----------: |
+|                    128 |               190.650 |            169.302 |           21.397% |      4,060 ms |                404 ms |             7.58 / 16.48 ms |     1,331 ms |
+|                    256 |               190.754 |            170.139 |           22.161% |      2,470 ms |                368 ms |             7.20 / 15.88 ms |     1,236 ms |
+|                    512 |               190.913 |            171.653 |           23.342% |      2,429 ms |                393 ms |             7.19 / 16.71 ms |     1,244 ms |
+|              **1,024** |           **192.073** |        **172.509** |       **23.626%** |      2,058 ms |            **365 ms** |         **6.95 / 16.04 ms** |     1,248 ms |
+|                  2,048 |               190.845 |            170.619 |           23.513% |  **1,830 ms** |                462 ms |             7.03 / 17.17 ms | **1,226 ms** |
 
 The 128-token policy repeatedly streams Gemma's weights and loses both TTFT and decode efficiency.
 Increasing the quantum through 1,024 reduces total interference despite making each individual
@@ -562,10 +562,10 @@ session-live manifest above; Desmond tracing, the 1,024-token prefill default, m
 other runtime settings were identical.
 
 | Cooperative maximum | Steady output token/s | SLO output token/s | SLO cost recovery | Cold TTFT p95 | Continuation TTFT p95 | Continuation TPOT p50 / p95 | Request p95 |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1,048,576 | 191.026 | 171.270 | 23.481% | 7,089 ms | 379 ms | 7.04 / 17.25 ms | 1,269 ms |
-| 2,097,152, run A | 190.265 | 171.430 | 23.868% | 6,480 ms | 365 ms | 6.99 / 15.90 ms | 1,208 ms |
-| 2,097,152, run B | 191.227 | 172.308 | 23.774% | 6,287 ms | 366 ms | 7.14 / 15.90 ms | 1,239 ms |
+| ------------------: | --------------------: | -----------------: | ----------------: | ------------: | --------------------: | --------------------------: | ----------: |
+|           1,048,576 |               191.026 |            171.270 |           23.481% |      7,089 ms |                379 ms |             7.04 / 17.25 ms |    1,269 ms |
+|    2,097,152, run A |               190.265 |            171.430 |           23.868% |      6,480 ms |                365 ms |             6.99 / 15.90 ms |    1,208 ms |
+|    2,097,152, run B |               191.227 |            172.308 |           23.774% |      6,287 ms |                366 ms |             7.14 / 15.90 ms |    1,239 ms |
 
 The two candidate runs average 190.746 raw and 171.869 SLO-qualified output token/s. Raw throughput
 is therefore neutral (-0.15%), while SLO output rises 0.35%, SLO recovery rises 1.45% relative,
@@ -584,9 +584,9 @@ decode, depth-four assistant, 24 cache slots with a 23-slot idle reserve, 1,024-
 quantum, and the two-million-element cooperative quantizer.
 
 | Runtime | Trace wall time | Cache ratio | Steady output token/s | SLO output token/s | SLO request ratio | Continuation TTFT p50 / p95 | Continuation TPOT p50 / p95 | Request p95 | Session backlog change | Post-arrival drain |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Native | 398.1 s | 89.0% | 191.23 | 172.31 | 91.2% | 66 / 366 ms | 7.14 / 15.90 ms | 1.24 s | +1 | 49.1 s |
-| SGLang | 1,497.3 s | 4.5% | 48.84 | 0.91 | 1.5% | 107,304 / 120,100 ms | 238 / 360 ms | 136.59 s | +29 | 1,148.3 s |
+| ------- | --------------: | ----------: | --------------------: | -----------------: | ----------------: | --------------------------: | --------------------------: | ----------: | ---------------------: | -----------------: |
+| Native  |         398.1 s |       89.0% |                191.23 |             172.31 |             91.2% |                 66 / 366 ms |             7.14 / 15.90 ms |      1.24 s |                     +1 |             49.1 s |
+| SGLang  |       1,497.3 s |        4.5% |                 48.84 |               0.91 |              1.5% |        107,304 / 120,100 ms |                238 / 360 ms |    136.59 s |                    +29 |          1,148.3 s |
 
 SGLang repeatedly reported a full KV pool and retracted requests after each had gained roughly
 5,000--7,500 tokens. It completed all requests without transport errors, but session completions
@@ -793,14 +793,14 @@ Moving the V transform to cache writes reduced the original B16/context-8k imple
 1.7596 to 0.2810 ms. Register-source PV reduced it further to 0.2586 ms, and context segmentation
 keeps at least 512 CTAs available for small cohorts. The final capacity-correct sweep is:
 
-| Batch | BF16 K/V | FP8 K, BF16 V | FP8 K/V |
-| ---: | ---: | ---: | ---: |
-| 1 | 0.0406 ms | 0.0374 ms | **0.0363 ms** |
-| 2 | 0.0531 ms | **0.0465 ms** | 0.0554 ms |
-| 4 | 0.0892 ms | **0.0702 ms** | 0.0829 ms |
-| 8 | 0.1537 ms | **0.1238 ms** | 0.1446 ms |
-| 10 | 0.1881 ms | **0.1542 ms** | 0.1602 ms |
-| 16 | 0.2832 ms | **0.2194 ms** | 0.2559 ms |
+| Batch |  BF16 K/V | FP8 K, BF16 V |       FP8 K/V |
+| ----: | --------: | ------------: | ------------: |
+|     1 | 0.0406 ms |     0.0374 ms | **0.0363 ms** |
+|     2 | 0.0531 ms | **0.0465 ms** |     0.0554 ms |
+|     4 | 0.0892 ms | **0.0702 ms** |     0.0829 ms |
+|     8 | 0.1537 ms | **0.1238 ms** |     0.1446 ms |
+|    10 | 0.1881 ms | **0.1542 ms** |     0.1602 ms |
+|    16 | 0.2832 ms | **0.2194 ms** |     0.2559 ms |
 
 At B16 the complete FP8-KV call is 9.6% faster than BF16 but 16.6% slower than retaining BF16 V.
 Profiling reports 1.67 TB/s, 34.66% DRAM utilization, 42.41% compute utilization, 90 registers per
@@ -849,14 +849,14 @@ weight multiplier 0.98, fixed E4M3 K/V had only 0.5344 mean edit similarity. Dyn
 closer to the projection-only control, but generation bifurcation makes the block sweep
 non-monotonic:
 
-| Cache approximation | Exact | EOS-exact | Token agreement | Mean edit | Minimum edit |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Projection-only control | 3/16 | 5/16 | 969/2,048 | 0.8714 | **0.4688** |
-| INT8 K only, block 512 | 1/16 | 6/16 | 780/2,048 | 0.8081 | 0.2578 |
-| INT8 V only, block 512 | 1/16 | 5/16 | 815/2,048 | 0.7929 | 0.2344 |
-| INT8 K/V, block 512 | 2/16 | **9/16** | 1,114/2,048 | 0.8712 | 0.3203 |
-| INT8 K/V, block 128 | 2/16 | **9/16** | **1,175/2,048** | **0.8853** | 0.2656 |
-| INT8 K/V, block 64 | 2/16 | 8/16 | 931/2,048 | 0.7737 | 0.2969 |
+| Cache approximation     | Exact | EOS-exact | Token agreement |  Mean edit | Minimum edit |
+| ----------------------- | ----: | --------: | --------------: | ---------: | -----------: |
+| Projection-only control |  3/16 |      5/16 |       969/2,048 |     0.8714 |   **0.4688** |
+| INT8 K only, block 512  |  1/16 |      6/16 |       780/2,048 |     0.8081 |       0.2578 |
+| INT8 V only, block 512  |  1/16 |      5/16 |       815/2,048 |     0.7929 |       0.2344 |
+| INT8 K/V, block 512     |  2/16 |  **9/16** |     1,114/2,048 |     0.8712 |       0.3203 |
+| INT8 K/V, block 128     |  2/16 |  **9/16** | **1,175/2,048** | **0.8853** |       0.2656 |
+| INT8 K/V, block 64      |  2/16 |      8/16 |       931/2,048 |     0.7737 |       0.2969 |
 
 The same variants were therefore compared teacher-forced, always appending the BF16 reference
 token so every prediction measures one-step perturbation at the same context. The projection-only
@@ -883,14 +883,14 @@ while mandatory query quantization is included. At an active context of 6,144 in
 allocation, output parity against BF16 is 0.999934 cosine, 0.01152 relative L2, 0.000321 mean
 absolute and 0.001953 maximum absolute error—substantially better than fixed E4M3 K.
 
-| Batch | BF16 K/V | Fixed E4M3 K | Dynamic S8 K |
-| ---: | ---: | ---: | ---: |
-| 1 | 0.0408 ms | **0.0378 ms** | 0.0484 ms |
-| 2 | 0.0540 ms | **0.0472 ms** | 0.0627 ms |
-| 4 | 0.0899 ms | **0.0707 ms** | 0.0867 ms |
-| 8 | 0.1543 ms | **0.1234 ms** | 0.1390 ms |
-| 10 | 0.1885 ms | **0.1497 ms** | 0.1692 ms |
-| 16 | 0.2841 ms | **0.2240 ms** | 0.2398 ms |
+| Batch |  BF16 K/V |  Fixed E4M3 K | Dynamic S8 K |
+| ----: | --------: | ------------: | -----------: |
+|     1 | 0.0408 ms | **0.0378 ms** |    0.0484 ms |
+|     2 | 0.0540 ms | **0.0472 ms** |    0.0627 ms |
+|     4 | 0.0899 ms | **0.0707 ms** |    0.0867 ms |
+|     8 | 0.1543 ms | **0.1234 ms** |    0.1390 ms |
+|    10 | 0.1885 ms | **0.1497 ms** |    0.1692 ms |
+|    16 | 0.2841 ms | **0.2240 ms** |    0.2398 ms |
 
 At B16 the quality-compatible representation reduces attention latency by 15.6% versus BF16, but
 is 7.1% slower than the rejected fixed-E4M3 path. B1 loses because dynamic query reduction and
@@ -1183,8 +1183,7 @@ The benchmark can enumerate an ordered heuristic with `GRADIATED_FP8_HEURISTIC_I
 Gemma shape, skip its unrelated correctness fixture, and increase timed iterations. A production-
 idle sweep covered all seven projection shapes, rows 1/4/8/16/32/64, and indices 0--15. The pinned
 library returned eight candidates. Candidate points were then repeated in four alternating-order
-rounds with 64 timed iterations, followed by a second four-round crossover sweep from rows 24 to
-128. Tensor, channel, and block FP8 correctness tests remained unchanged.
+rounds with 64 timed iterations, followed by a second four-round crossover sweep from rows 24 to 128. Tensor, channel, and block FP8 correctness tests remained unchanged.
 
 The important speculative-verifier point is 64 packed rows (16 requests times four proposals).
 At that point heuristic 1 reduces the 21,504-by-5,376 down projection from a 0.03760 ms median to

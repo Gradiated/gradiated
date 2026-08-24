@@ -1608,21 +1608,16 @@ mod tests {
         let mut usable_chunks = 0;
         let mut finish = None;
         let mut terminal_usage = None;
-        loop {
-            match response.next_event().await.unwrap().unwrap() {
-                RuntimeStreamEvent::Chunk(chunk) => {
-                    if chunk.has_usable_output() {
-                        usable_chunks += 1;
-                        assert!(chunk.usage().is_some());
-                    }
-                    if let Some(reason) = chunk.finish_reason() {
-                        finish = Some(reason.to_owned());
-                    }
-                    if chunk.is_terminal_usage() {
-                        terminal_usage = chunk.usage();
-                    }
-                }
-                RuntimeStreamEvent::Done => break,
+        while let RuntimeStreamEvent::Chunk(chunk) = response.next_event().await.unwrap().unwrap() {
+            if chunk.has_usable_output() {
+                usable_chunks += 1;
+                assert!(chunk.usage().is_some());
+            }
+            if let Some(reason) = chunk.finish_reason() {
+                finish = Some(reason.to_owned());
+            }
+            if chunk.is_terminal_usage() {
+                terminal_usage = chunk.usage();
             }
         }
         assert!(usable_chunks > 0);

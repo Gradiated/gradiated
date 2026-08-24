@@ -42,10 +42,37 @@ using Fp8ProbabilityLayout = decltype(tile_to_shape(
     GMMA::Layout_K_SW32_Atom<Fp8Element>{}, make_shape(Int<8>{}, Int<64>{})));
 using Fp8PvRsMma = decltype(make_tiled_mma(
     SM90_64x8x32_F32E4M3E4M3_RS_TN<>{}));
+using Int8Element = std::int8_t;
+using Int8KeyBlockLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW128_Atom<Int8Element>{}, make_shape(Int<64>{}, Int<128>{})));
+using Int8QueryBlockLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW128_Atom<Int8Element>{}, make_shape(Int<8>{}, Int<128>{})));
+using Int8QkMma = decltype(make_tiled_mma(SM90_64x8x32_S32S8S8_SS_TN{}));
+using Int8PvValueLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW64_Atom<Int8Element>{}, make_shape(Int<64>{}, Int<64>{})));
+using Int8PvProbabilityLayout = decltype(tile_to_shape(
+    GMMA::Layout_K_SW64_Atom<Int8Element>{}, make_shape(Int<8>{}, Int<64>{})));
+using Int8KeyCopy = decltype(make_tiled_copy(
+    Copy_Atom<SM80_CP_ASYNC_CACHEALWAYS<uint128_t>, Int8Element>{},
+    Layout<Shape<_16, _8>, Stride<_8, _1>>{}, Layout<Shape<_1, _16>>{}));
 
 struct alignas(128) GlobalQkSharedStorage {
   ArrayEngine<Element, cosize_v<KeyLayout>> keys;
   ArrayEngine<Element, cosize_v<QueryLayout>> queries;
+};
+
+struct alignas(128) Int8GlobalQkSharedStorage {
+  ArrayEngine<Int8Element, cosize_v<Int8KeyBlockLayout>> keys[2];
+  ArrayEngine<Int8Element, cosize_v<Int8QueryBlockLayout>> queries[2];
+  float key_scales[64 * 4];
+  float query_scales[8 * 4];
+};
+
+struct alignas(128) Int8GlobalQkTileOuterSharedStorage {
+  ArrayEngine<Int8Element, cosize_v<Int8KeyBlockLayout>> keys[2];
+  ArrayEngine<Int8Element, cosize_v<Int8QueryBlockLayout>> queries[4];
+  float key_scales[64 * 4];
+  float query_scales[8 * 4];
 };
 
 struct alignas(128) GlobalAttentionTileSharedStorage {
@@ -64,6 +91,16 @@ struct alignas(128) Fp8PvSharedStorage {
   ArrayEngine<Fp8Element, cosize_v<Fp8ProbabilityLayout>> probabilities;
 };
 
+struct alignas(128) Int8GlobalPvSharedStorage {
+  ArrayEngine<Element, cosize_v<ValueTileLayout>> values;
+  ArrayEngine<Element, cosize_v<ProbabilityLayout>> probabilities;
+};
+
+struct alignas(128) Int8GlobalPvRsSharedStorage {
+  ArrayEngine<Int8Element, cosize_v<Int8PvValueLayout>> values[8];
+  ArrayEngine<Int8Element, cosize_v<Int8PvProbabilityLayout>> probabilities[4];
+};
+
 __device__ std::uint64_t packed_fp8_value_index(
     std::uint64_t head, int token, int component, int context_length) {
   constexpr int tile_tokens = 64;
@@ -76,6 +113,38 @@ __device__ std::uint64_t packed_fp8_value_index(
       (head * (context_length / tile_tokens) + token_tile) * dimension_tiles + dimension_tile;
   return tile * cosize_v<Fp8ValueLayout> +
       Fp8ValueLayout{}(component_in_tile, token_in_tile);
+}
+
+__host__ __device__ std::uint64_t packed_int8_value_index(
+    std::uint64_t head, int token, int component, int context_length) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension_tiles = 8;
+  const int token_tile = token / tile_tokens;
+  const int token_in_tile = token - token_tile * tile_tokens;
+  const int dimension_tile = component / 64;
+  const int component_in_tile = component - dimension_tile * 64;
+  const std::uint64_t tile =
+      (head * (context_length / tile_tokens) + token_tile) * dimension_tiles +
+      dimension_tile;
+  return tile * cosize_v<Int8PvValueLayout> +
+      Int8PvValueLayout{}(component_in_tile, token_in_tile);
+}
+
+__global__ void pack_global_values_wgmma_int8_kernel(
+    const Int8Element* values, Int8Element* packed_values,
+    std::uint64_t elements, int context_length) {
+  constexpr int dimension = 512;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const std::uint64_t head = index /
+      (static_cast<std::uint64_t>(context_length) * dimension);
+  const int head_index = static_cast<int>(index -
+      head * static_cast<std::uint64_t>(context_length) * dimension);
+  const int token = head_index / dimension;
+  const int component = head_index - token * dimension;
+  packed_values[packed_int8_value_index(head, token, component, context_length)] =
+      values[index];
 }
 
 __global__ void quantize_global_values_wgmma_fp8_kernel(
@@ -200,6 +269,89 @@ __device__ float warp_total(float value) {
   return __shfl_sync(0xffffffffU, value, 0);
 }
 
+__device__ void quantize_packed_int8_value_row(
+    const Element* source, Int8Element* destination, float* scales,
+    std::uint64_t physical_head, int token, int cache_capacity) {
+  constexpr int dimension = 512;
+  constexpr int block_width = 128;
+  constexpr int blocks_per_row = dimension / block_width;
+  const std::uint64_t source_row =
+      (physical_head * cache_capacity + token) * dimension;
+  __shared__ float warp_maxima[8];
+  for (int block = 0; block < blocks_per_row; ++block) {
+    float maximum = 0.0F;
+    for (int component = block * block_width + static_cast<int>(threadIdx.x);
+         component < (block + 1) * block_width;
+         component += static_cast<int>(blockDim.x)) {
+      maximum = max(maximum, fabsf(static_cast<float>(source[source_row + component])));
+    }
+    maximum = warp_maximum(maximum);
+    if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+    __syncthreads();
+    if (threadIdx.x < 32U) {
+      maximum = threadIdx.x < blockDim.x / 32 ? warp_maxima[threadIdx.x] : 0.0F;
+      maximum = warp_maximum(maximum);
+      if (threadIdx.x == 0U) warp_maxima[0] = maximum;
+    }
+    __syncthreads();
+    maximum = warp_maxima[0];
+    const float scale = maximum == 0.0F ? 1.0F : maximum / 127.0F;
+    if (threadIdx.x == 0U) {
+      scales[(physical_head * cache_capacity + token) * blocks_per_row + block] = scale;
+    }
+    const float inverse_scale = 1.0F / scale;
+    for (int component = block * block_width + static_cast<int>(threadIdx.x);
+         component < (block + 1) * block_width;
+         component += static_cast<int>(blockDim.x)) {
+      const int quantized = max(-127, min(127, __float2int_rn(
+          static_cast<float>(source[source_row + component]) * inverse_scale)));
+      destination[packed_int8_value_index(
+          physical_head, token, component, cache_capacity)] =
+          static_cast<Int8Element>(quantized);
+    }
+    __syncthreads();
+  }
+}
+
+__global__ void quantize_global_values_wgmma_int8_kernel(
+    const Element* values, Int8Element* packed_values, float* scales,
+    int rows, int cache_capacity) {
+  const int row = static_cast<int>(blockIdx.x);
+  if (row >= rows) return;
+  const std::uint64_t head = static_cast<std::uint64_t>(row / cache_capacity);
+  const int token = row - static_cast<int>(head) * cache_capacity;
+  quantize_packed_int8_value_row(
+      values, packed_values, scales, head, token, cache_capacity);
+}
+
+__global__ void quantize_global_value_span_wgmma_int8_kernel(
+    const Element* values, Int8Element* packed_values, float* scales,
+    int heads, int tokens, int cache_capacity, int position_start) {
+  const int row = static_cast<int>(blockIdx.x);
+  if (row >= heads * tokens) return;
+  const std::uint64_t head = static_cast<std::uint64_t>(row / tokens);
+  const int token = position_start + row - static_cast<int>(head) * tokens;
+  quantize_packed_int8_value_row(
+      values, packed_values, scales, head, token, cache_capacity);
+}
+
+__global__ void quantize_global_decode_values_wgmma_int8_kernel(
+    const Element* values, Int8Element* packed_values, float* scales,
+    const int* positions, const int* slots, int batch, int maximum_slots,
+    int heads, int cache_capacity) {
+  const int row_head = static_cast<int>(blockIdx.x);
+  const int row = row_head / heads;
+  const int head = row_head - row * heads;
+  if (row >= batch) return;
+  const int slot = slots[row];
+  const int token = positions[row];
+  if (slot < 0 || slot >= maximum_slots || token < 0 || token >= cache_capacity) return;
+  const std::uint64_t physical_head =
+      static_cast<std::uint64_t>(slot) * heads + head;
+  quantize_packed_int8_value_row(
+      values, packed_values, scales, physical_head, token, cache_capacity);
+}
+
 __global__ __launch_bounds__(128) void global_qk_wgmma_kernel(
     const Element* queries, const Element* keys, Element* scores,
     int kv_heads, int context_length, int tiles_per_block) {
@@ -263,6 +415,525 @@ __global__ __launch_bounds__(128) void global_qk_wgmma_kernel(
     copy(accumulators, fragment_global_scores);
     __syncthreads();
   }
+}
+
+template <int tiles_per_block>
+__global__ __launch_bounds__(128, 2) void global_qk_wgmma_int8_block128_kernel(
+    const Int8Element* queries, const float* query_scales,
+    const Int8Element* keys, const float* key_scales, Element* scores,
+    int kv_heads, int context_length, int cache_capacity) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  constexpr int block_width = 128;
+  constexpr int blocks = dimension / block_width;
+  const int tiles_per_head = context_length / tile_tokens;
+  const int segments_per_head = tiles_per_head / tiles_per_block;
+  const int head_segment = static_cast<int>(blockIdx.x);
+  const int head = head_segment / segments_per_head;
+  const int segment = head_segment - head * segments_per_head;
+  const int first_tile = segment * tiles_per_block;
+  const std::uint64_t query_base =
+      static_cast<std::uint64_t>(head) * query_group * dimension;
+
+  extern __shared__ __align__(128) unsigned char storage_bytes[];
+  auto& storage = *reinterpret_cast<Int8GlobalQkSharedStorage*>(storage_bytes);
+  Tensor shared_keys =
+      make_tensor(make_smem_ptr(storage.keys[0].begin()), Int8KeyBlockLayout{});
+  Tensor shared_queries =
+      make_tensor(make_smem_ptr(storage.queries[0].begin()), Int8QueryBlockLayout{});
+  Int8QkMma mma;
+  ThrMMA thread_mma = mma.get_slice(static_cast<int>(threadIdx.x));
+  Tensor fragment_keys = thread_mma.partition_A(shared_keys);
+  Tensor fragment_queries = thread_mma.partition_B(shared_queries);
+  Int8KeyCopy key_copy;
+  ThrCopy key_thread_copy = key_copy.get_slice(static_cast<int>(threadIdx.x));
+  Tensor independent_shared_keys = as_position_independent_swizzle_tensor(shared_keys);
+  Tensor thread_shared_keys = key_thread_copy.partition_D(independent_shared_keys);
+  Tensor output_coordinates = thread_mma.partition_C(
+      make_identity_tensor(make_shape(Int<64>{}, Int<8>{})));
+  Tensor output_template = make_tensor(
+      make_gmem_ptr(scores), make_shape(Int<64>{}, Int<8>{}),
+      make_stride(Int<1>{}, Int<64>{}));
+  Tensor fragment_output = thread_mma.partition_C(output_template);
+  Tensor integer_accumulators = thread_mma.make_fragment_C(fragment_output);
+  using ScaledAccumulator = decltype(make_fragment_like<float>(integer_accumulators));
+  ScaledAccumulator scaled_accumulators[tiles_per_block];
+  #pragma unroll
+  for (int tile_offset = 0; tile_offset < tiles_per_block; ++tile_offset) {
+    clear(scaled_accumulators[tile_offset]);
+  }
+
+  if constexpr (tiles_per_block == 1) {
+    const int tile = first_tile;
+    const std::uint64_t key_scale_base =
+        (static_cast<std::uint64_t>(head) * cache_capacity + tile * tile_tokens) * blocks;
+    for (int index = static_cast<int>(threadIdx.x); index < tile_tokens * blocks;
+         index += static_cast<int>(blockDim.x)) {
+      storage.key_scales[index] = key_scales[key_scale_base + index];
+    }
+    for (int index = static_cast<int>(threadIdx.x); index < query_group * blocks;
+         index += static_cast<int>(blockDim.x)) {
+      storage.query_scales[index] =
+          query_scales[static_cast<std::uint64_t>(head) * query_group * blocks + index];
+    }
+    __syncthreads();
+  }
+
+  if constexpr (tiles_per_block == 1) {
+    constexpr int blocks_per_stage = 2;
+    #pragma unroll
+    for (int first_block = 0; first_block < blocks; first_block += blocks_per_stage) {
+      #pragma unroll
+      for (int stage = 0; stage < blocks_per_stage; ++stage) {
+        const int block = first_block + stage;
+        Tensor staged_keys = make_tensor(
+            make_smem_ptr(storage.keys[stage].begin()), Int8KeyBlockLayout{});
+        Tensor staged_queries = make_tensor(
+            make_smem_ptr(storage.queries[stage].begin()), Int8QueryBlockLayout{});
+        for (int index = static_cast<int>(threadIdx.x); index < query_group * block_width;
+             index += static_cast<int>(blockDim.x)) {
+          const int query = index / block_width;
+          const int component = index - query * block_width;
+          staged_queries(query, component) =
+              queries[query_base + static_cast<std::uint64_t>(query) * dimension +
+                      block * block_width + component];
+        }
+        const std::uint64_t key_base =
+            (static_cast<std::uint64_t>(head) * cache_capacity +
+             first_tile * tile_tokens) * dimension;
+        Tensor global_keys = make_tensor(
+            make_gmem_ptr(keys + key_base + block * block_width),
+            make_shape(Int<64>{}, Int<128>{}), make_stride(Int<512>{}, Int<1>{}));
+        Tensor independent_staged_keys =
+            as_position_independent_swizzle_tensor(staged_keys);
+        copy(key_copy, key_thread_copy.partition_S(global_keys),
+             key_thread_copy.partition_D(independent_staged_keys));
+        cp_async_fence();
+      }
+      cp_async_wait<0>();
+      __syncthreads();
+      #pragma unroll
+      for (int stage = 0; stage < blocks_per_stage; ++stage) {
+        const int block = first_block + stage;
+        Tensor staged_keys = make_tensor(
+            make_smem_ptr(storage.keys[stage].begin()), Int8KeyBlockLayout{});
+        Tensor staged_queries = make_tensor(
+            make_smem_ptr(storage.queries[stage].begin()), Int8QueryBlockLayout{});
+        Tensor staged_fragment_keys = thread_mma.partition_A(staged_keys);
+        Tensor staged_fragment_queries = thread_mma.partition_B(staged_queries);
+        clear(integer_accumulators);
+        warpgroup_fence_operand(integer_accumulators);
+        warpgroup_arrive();
+        cute::gemm(mma, staged_fragment_keys, staged_fragment_queries,
+                   integer_accumulators);
+        warpgroup_commit_batch();
+        warpgroup_wait<0>();
+        warpgroup_fence_operand(integer_accumulators);
+        CUTE_UNROLL
+        for (int index = 0; index < size(integer_accumulators); ++index) {
+          const auto coordinate = output_coordinates(index);
+          const int token = static_cast<int>(get<0>(coordinate));
+          const int query = static_cast<int>(get<1>(coordinate));
+          scaled_accumulators[0](index) +=
+              static_cast<float>(integer_accumulators(index)) *
+              storage.key_scales[token * blocks + block] *
+              storage.query_scales[query * blocks + block];
+        }
+      }
+      __syncthreads();
+    }
+  } else {
+    #pragma unroll
+    for (int block = 0; block < blocks; ++block) {
+      for (int index = static_cast<int>(threadIdx.x); index < query_group * block_width;
+           index += static_cast<int>(blockDim.x)) {
+        const int query = index / block_width;
+        const int component = index - query * block_width;
+        shared_queries(query, component) =
+            queries[query_base + static_cast<std::uint64_t>(query) * dimension +
+                    block * block_width + component];
+      }
+      #pragma unroll
+      for (int tile_offset = 0; tile_offset < tiles_per_block; ++tile_offset) {
+        const int tile = first_tile + tile_offset;
+        const std::uint64_t key_base =
+            (static_cast<std::uint64_t>(head) * cache_capacity + tile * tile_tokens) * dimension;
+        Tensor global_keys = make_tensor(
+            make_gmem_ptr(keys + key_base + block * block_width),
+            make_shape(Int<64>{}, Int<128>{}), make_stride(Int<512>{}, Int<1>{}));
+        copy(key_copy, key_thread_copy.partition_S(global_keys), thread_shared_keys);
+        cp_async_fence();
+        cp_async_wait<0>();
+        __syncthreads();
+        clear(integer_accumulators);
+        warpgroup_fence_operand(integer_accumulators);
+        warpgroup_arrive();
+        cute::gemm(mma, fragment_keys, fragment_queries, integer_accumulators);
+        warpgroup_commit_batch();
+        warpgroup_wait<0>();
+        warpgroup_fence_operand(integer_accumulators);
+        CUTE_UNROLL
+        for (int index = 0; index < size(integer_accumulators); ++index) {
+          const auto coordinate = output_coordinates(index);
+          const int token = static_cast<int>(get<0>(coordinate));
+          const int query = static_cast<int>(get<1>(coordinate));
+          const float key_scale = key_scales[
+              ((static_cast<std::uint64_t>(head) * cache_capacity +
+                tile * tile_tokens + token) * blocks) + block];
+          const float query_scale = query_scales[
+              (static_cast<std::uint64_t>(head) * query_group + query) * blocks + block];
+          scaled_accumulators[tile_offset](index) +=
+              static_cast<float>(integer_accumulators(index)) * key_scale * query_scale;
+        }
+        __syncthreads();
+      }
+    }
+  }
+
+  #pragma unroll
+  for (int tile_offset = 0; tile_offset < tiles_per_block; ++tile_offset) {
+    const int tile = first_tile + tile_offset;
+    CUTE_UNROLL
+    for (int index = 0; index < size(scaled_accumulators[tile_offset]); ++index) {
+      const auto coordinate = output_coordinates(index);
+      const int token = static_cast<int>(get<0>(coordinate));
+      const int query = static_cast<int>(get<1>(coordinate));
+      const std::uint64_t output =
+          static_cast<std::uint64_t>(head) * query_group * context_length +
+          static_cast<std::uint64_t>(query) * context_length + tile * tile_tokens + token;
+      scores[output] = Element(scaled_accumulators[tile_offset](index));
+    }
+  }
+}
+
+template <int tiles_per_block>
+__global__ __launch_bounds__(128, 2) void global_qk_wgmma_int8_block128_tile_outer_kernel(
+    const Int8Element* queries, const float* query_scales,
+    const Int8Element* keys, const float* key_scales, Element* scores,
+    int kv_heads, int context_length, int cache_capacity) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  constexpr int block_width = 128;
+  constexpr int blocks = dimension / block_width;
+  constexpr int blocks_per_stage = 2;
+  const int tiles_per_head = context_length / tile_tokens;
+  const int segments_per_head = tiles_per_head / tiles_per_block;
+  const int head_segment = static_cast<int>(blockIdx.x);
+  const int head = head_segment / segments_per_head;
+  const int segment = head_segment - head * segments_per_head;
+  const int first_tile = segment * tiles_per_block;
+  const std::uint64_t query_base =
+      static_cast<std::uint64_t>(head) * query_group * dimension;
+
+  extern __shared__ __align__(128) unsigned char storage_bytes[];
+  auto& storage =
+      *reinterpret_cast<Int8GlobalQkTileOuterSharedStorage*>(storage_bytes);
+  Int8QkMma mma;
+  ThrMMA thread_mma = mma.get_slice(static_cast<int>(threadIdx.x));
+  Int8KeyCopy key_copy;
+  ThrCopy key_thread_copy = key_copy.get_slice(static_cast<int>(threadIdx.x));
+  Tensor output_coordinates = thread_mma.partition_C(
+      make_identity_tensor(make_shape(Int<64>{}, Int<8>{})));
+  Tensor output_template = make_tensor(
+      make_gmem_ptr(scores), make_shape(Int<64>{}, Int<8>{}),
+      make_stride(Int<1>{}, Int<64>{}));
+  Tensor fragment_output = thread_mma.partition_C(output_template);
+  Tensor integer_accumulators = thread_mma.make_fragment_C(fragment_output);
+  auto scaled_accumulator = make_fragment_like<float>(integer_accumulators);
+
+  #pragma unroll
+  for (int block = 0; block < blocks; ++block) {
+    Tensor staged_queries = make_tensor(
+        make_smem_ptr(storage.queries[block].begin()), Int8QueryBlockLayout{});
+    for (int index = static_cast<int>(threadIdx.x); index < query_group * block_width;
+         index += static_cast<int>(blockDim.x)) {
+      const int query = index / block_width;
+      const int component = index - query * block_width;
+      staged_queries(query, component) =
+          queries[query_base + static_cast<std::uint64_t>(query) * dimension +
+                  block * block_width + component];
+    }
+  }
+  for (int index = static_cast<int>(threadIdx.x); index < query_group * blocks;
+       index += static_cast<int>(blockDim.x)) {
+    storage.query_scales[index] =
+        query_scales[static_cast<std::uint64_t>(head) * query_group * blocks + index];
+  }
+  __syncthreads();
+
+  #pragma unroll 1
+  for (int tile_offset = 0; tile_offset < tiles_per_block; ++tile_offset) {
+    const int tile = first_tile + tile_offset;
+    const std::uint64_t key_scale_base =
+        (static_cast<std::uint64_t>(head) * cache_capacity + tile * tile_tokens) * blocks;
+    for (int index = static_cast<int>(threadIdx.x); index < tile_tokens * blocks;
+         index += static_cast<int>(blockDim.x)) {
+      storage.key_scales[index] = key_scales[key_scale_base + index];
+    }
+    clear(scaled_accumulator);
+    #pragma unroll
+    for (int first_block = 0; first_block < blocks; first_block += blocks_per_stage) {
+      #pragma unroll
+      for (int stage = 0; stage < blocks_per_stage; ++stage) {
+        const int block = first_block + stage;
+        Tensor staged_keys = make_tensor(
+            make_smem_ptr(storage.keys[stage].begin()), Int8KeyBlockLayout{});
+        const std::uint64_t key_base =
+            (static_cast<std::uint64_t>(head) * cache_capacity +
+             tile * tile_tokens) * dimension;
+        Tensor global_keys = make_tensor(
+            make_gmem_ptr(keys + key_base + block * block_width),
+            make_shape(Int<64>{}, Int<128>{}), make_stride(Int<512>{}, Int<1>{}));
+        Tensor independent_staged_keys =
+            as_position_independent_swizzle_tensor(staged_keys);
+        copy(key_copy, key_thread_copy.partition_S(global_keys),
+             key_thread_copy.partition_D(independent_staged_keys));
+        cp_async_fence();
+      }
+      cp_async_wait<0>();
+      __syncthreads();
+      #pragma unroll
+      for (int stage = 0; stage < blocks_per_stage; ++stage) {
+        const int block = first_block + stage;
+        Tensor staged_keys = make_tensor(
+            make_smem_ptr(storage.keys[stage].begin()), Int8KeyBlockLayout{});
+        Tensor staged_queries = make_tensor(
+            make_smem_ptr(storage.queries[block].begin()), Int8QueryBlockLayout{});
+        Tensor staged_fragment_keys = thread_mma.partition_A(staged_keys);
+        Tensor staged_fragment_queries = thread_mma.partition_B(staged_queries);
+        clear(integer_accumulators);
+        warpgroup_fence_operand(integer_accumulators);
+        warpgroup_arrive();
+        cute::gemm(mma, staged_fragment_keys, staged_fragment_queries,
+                   integer_accumulators);
+        warpgroup_commit_batch();
+        warpgroup_wait<0>();
+        warpgroup_fence_operand(integer_accumulators);
+        CUTE_UNROLL
+        for (int index = 0; index < size(integer_accumulators); ++index) {
+          const auto coordinate = output_coordinates(index);
+          const int token = static_cast<int>(get<0>(coordinate));
+          const int query = static_cast<int>(get<1>(coordinate));
+          scaled_accumulator(index) +=
+              static_cast<float>(integer_accumulators(index)) *
+              storage.key_scales[token * blocks + block] *
+              storage.query_scales[query * blocks + block];
+        }
+      }
+      __syncthreads();
+    }
+    CUTE_UNROLL
+    for (int index = 0; index < size(scaled_accumulator); ++index) {
+      const auto coordinate = output_coordinates(index);
+      const int token = static_cast<int>(get<0>(coordinate));
+      const int query = static_cast<int>(get<1>(coordinate));
+      const std::uint64_t output =
+          static_cast<std::uint64_t>(head) * query_group * context_length +
+          static_cast<std::uint64_t>(query) * context_length + tile * tile_tokens + token;
+      scores[output] = Element(scaled_accumulator(index));
+    }
+  }
+}
+
+__global__ __launch_bounds__(128, 2) void global_pv_wgmma_int8_block128_kernel(
+    const Int8Element* values, const float* value_scales,
+    const Element* probabilities, Element* output,
+    int context_length, int cache_capacity) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  constexpr int dimension_tiles = dimension / 64;
+  constexpr int blocks_per_row = dimension / 128;
+  const int head_dimension_tile = static_cast<int>(blockIdx.x);
+  const int head = head_dimension_tile / dimension_tiles;
+  const int dimension_tile = head_dimension_tile - head * dimension_tiles;
+  const int component_start = dimension_tile * 64;
+  const int scale_block = dimension_tile / 2;
+  const std::uint64_t head_value_base =
+      static_cast<std::uint64_t>(head) * cache_capacity * dimension;
+  const std::uint64_t head_scale_base =
+      static_cast<std::uint64_t>(head) * cache_capacity * blocks_per_row;
+  const std::uint64_t head_probability_base =
+      static_cast<std::uint64_t>(head) * query_group * context_length;
+
+  extern __shared__ __align__(128) unsigned char storage_bytes[];
+  auto& storage = *reinterpret_cast<Int8GlobalPvSharedStorage*>(storage_bytes);
+  Tensor shared_values =
+      make_tensor(make_smem_ptr(storage.values.begin()), ValueTileLayout{});
+  Tensor shared_probabilities =
+      make_tensor(make_smem_ptr(storage.probabilities.begin()), ProbabilityLayout{});
+  GlobalPvMma mma;
+  ThrMMA thread_mma = mma.get_slice(static_cast<int>(threadIdx.x));
+  Tensor fragment_values = thread_mma.partition_A(shared_values);
+  Tensor fragment_probabilities = thread_mma.partition_B(shared_probabilities);
+  const std::uint64_t output_base =
+      static_cast<std::uint64_t>(head) * query_group * dimension + component_start;
+  Tensor global_output = make_tensor(
+      make_gmem_ptr(output + output_base), make_shape(Int<64>{}, Int<8>{}),
+      make_stride(Int<1>{}, Int<512>{}));
+  Tensor fragment_output = thread_mma.partition_C(global_output);
+  Tensor accumulators = thread_mma.make_fragment_C(fragment_output);
+  clear(accumulators);
+
+  for (int tile_start = 0; tile_start < context_length; tile_start += tile_tokens) {
+    for (int index = static_cast<int>(threadIdx.x); index < 64 * tile_tokens;
+         index += static_cast<int>(blockDim.x)) {
+      const int component = index / tile_tokens;
+      const int token = index - component * tile_tokens;
+      const std::uint64_t cache_row = tile_start + token;
+      const float scale = value_scales[
+          head_scale_base + cache_row * blocks_per_row + scale_block];
+      const auto quantized = values[
+          head_value_base + cache_row * dimension + component_start + component];
+      shared_values(component, token) =
+          Element(static_cast<float>(quantized) * scale);
+    }
+    for (int index = static_cast<int>(threadIdx.x); index < query_group * tile_tokens;
+         index += static_cast<int>(blockDim.x)) {
+      const int query = index / tile_tokens;
+      const int token = index - query * tile_tokens;
+      shared_probabilities(query, token) = probabilities[
+          head_probability_base + static_cast<std::uint64_t>(query) * context_length +
+          tile_start + token];
+    }
+    __syncthreads();
+    warpgroup_fence_operand(accumulators);
+    warpgroup_arrive();
+    cute::gemm(mma, fragment_values, fragment_probabilities, accumulators);
+    warpgroup_commit_batch();
+    warpgroup_wait<0>();
+    warpgroup_fence_operand(accumulators);
+    __syncthreads();
+  }
+  copy(accumulators, fragment_output);
+}
+
+__global__ __launch_bounds__(128, 2) void global_pv_wgmma_int8_rs_segment_kernel(
+    const Int8Element* values, const Int8Element* probabilities,
+    std::int32_t* partial_outputs, int context_length, int cache_capacity,
+    int segments) {
+  constexpr int tile_tokens = 64;
+  constexpr int dimension = 512;
+  constexpr int query_group = 8;
+  constexpr int dimension_tiles = dimension / 64;
+  const int head_segment = static_cast<int>(blockIdx.x);
+  const int segment = head_segment % segments;
+  const int head = head_segment / segments;
+  const int context_tiles = context_length / tile_tokens;
+  const int tiles_per_segment = context_tiles / segments;
+  const int first_tile = segment * tiles_per_segment;
+  extern __shared__ __align__(128) unsigned char storage_bytes[];
+  auto& storage = *reinterpret_cast<Int8GlobalPvRsSharedStorage*>(storage_bytes);
+  Int8QkMma mma;
+  ThrMMA thread_mma = mma.get_slice(static_cast<int>(threadIdx.x));
+  Tensor output_template = make_tensor(
+      make_gmem_ptr(partial_outputs), make_shape(Int<64>{}, Int<8>{}),
+      make_stride(Int<1>{}, Int<512>{}));
+  Tensor fragment_output = thread_mma.partition_C(output_template);
+  using Accumulator = decltype(thread_mma.make_fragment_C(fragment_output));
+  Accumulator accumulators[dimension_tiles];
+  #pragma unroll
+  for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+    clear(accumulators[dimension_tile]);
+  }
+
+  for (int tile_offset = 0; tile_offset < tiles_per_segment; ++tile_offset) {
+    const int tile_start = (first_tile + tile_offset) * tile_tokens;
+    for (int value_block = 0; value_block < 4; ++value_block) {
+      Tensor shared_probabilities = make_tensor(
+          make_smem_ptr(storage.probabilities[value_block].begin()),
+          Int8PvProbabilityLayout{});
+      const std::uint64_t probability_base =
+          (static_cast<std::uint64_t>(value_block) * gridDim.x / segments + head) *
+          query_group * context_length;
+      for (int index = static_cast<int>(threadIdx.x); index < query_group * tile_tokens;
+           index += static_cast<int>(blockDim.x)) {
+        const int query = index / tile_tokens;
+        const int token = index - query * tile_tokens;
+        shared_probabilities(query, token) = probabilities[
+            probability_base + static_cast<std::uint64_t>(query) * context_length +
+            tile_start + token];
+      }
+    }
+    #pragma unroll
+    for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+      constexpr int vectors_per_tile = cosize_v<Int8PvValueLayout> / 16;
+      const std::uint64_t packed_tile =
+          (static_cast<std::uint64_t>(head) * (cache_capacity / tile_tokens) +
+           first_tile + tile_offset) * dimension_tiles + dimension_tile;
+      const auto* source = values + packed_tile * cosize_v<Int8PvValueLayout>;
+      auto* destination = storage.values[dimension_tile].begin();
+      for (int vector_index = static_cast<int>(threadIdx.x);
+           vector_index < vectors_per_tile;
+           vector_index += static_cast<int>(blockDim.x)) {
+        reinterpret_cast<uint4*>(destination)[vector_index] =
+            reinterpret_cast<const uint4*>(source)[vector_index];
+      }
+    }
+    __syncthreads();
+    #pragma unroll
+    for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+      warpgroup_fence_operand(accumulators[dimension_tile]);
+    }
+    warpgroup_arrive();
+    #pragma unroll
+    for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+      Tensor shared_values = make_tensor(
+          make_smem_ptr(storage.values[dimension_tile].begin()), Int8PvValueLayout{});
+      Tensor fragment_values = thread_mma.partition_A(shared_values);
+      Tensor shared_probabilities = make_tensor(
+          make_smem_ptr(storage.probabilities[dimension_tile / 2].begin()),
+          Int8PvProbabilityLayout{});
+      Tensor fragment_probabilities = thread_mma.partition_B(shared_probabilities);
+      cute::gemm(mma, fragment_values, fragment_probabilities,
+                 accumulators[dimension_tile]);
+    }
+    warpgroup_commit_batch();
+    warpgroup_wait<0>();
+    #pragma unroll
+    for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+      warpgroup_fence_operand(accumulators[dimension_tile]);
+    }
+    __syncthreads();
+  }
+
+  const std::uint64_t partial_base =
+      (static_cast<std::uint64_t>(head) * segments + segment) * query_group * dimension;
+  #pragma unroll
+  for (int dimension_tile = 0; dimension_tile < dimension_tiles; ++dimension_tile) {
+    Tensor partial_output = make_tensor(
+        make_gmem_ptr(partial_outputs + partial_base + dimension_tile * 64),
+        make_shape(Int<64>{}, Int<8>{}), make_stride(Int<1>{}, Int<512>{}));
+    Tensor partial_fragment = thread_mma.partition_C(partial_output);
+    copy(accumulators[dimension_tile], partial_fragment);
+  }
+}
+
+__global__ void reduce_global_pv_int8_segments_kernel(
+    const std::int32_t* partial_outputs, const float* scales,
+    Element* output, int head_batches, int segments) {
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const std::uint64_t elements =
+      static_cast<std::uint64_t>(head_batches) * query_group * dimension;
+  if (index >= elements) return;
+  const int component = static_cast<int>(index % dimension);
+  const int query = static_cast<int>((index / dimension) % query_group);
+  const int head = static_cast<int>(index / (dimension * query_group));
+  std::int32_t total = 0;
+  for (int segment = 0; segment < segments; ++segment) {
+    const std::uint64_t partial =
+        ((static_cast<std::uint64_t>(head) * segments + segment) * query_group + query) *
+        dimension + component;
+    total += partial_outputs[partial];
+  }
+  const int value_block = component / 128;
+  output[index] = Element(static_cast<float>(total) * scales[
+      (static_cast<std::uint64_t>(value_block) * head_batches + head) * query_group + query]);
 }
 
 __global__ __launch_bounds__(256) void global_attention_wgmma_tile_kernel(
@@ -1244,6 +1915,58 @@ void grouped_global_qk_wgmma_bf16(const void* query, const void* key_cache, void
   check(cudaPeekAtLastError(), "launch Hopper global QK");
 }
 
+void grouped_global_qk_wgmma_int8_block128(
+    const void* query, const float* query_scales, const void* key_cache,
+    const float* key_scales, void* scores, int batch, int kv_heads,
+    int query_group, int context_length, int head_dimension, int cache_capacity,
+    cudaStream_t stream, int tiles_per_block) {
+  if (query == nullptr || query_scales == nullptr || key_cache == nullptr ||
+      key_scales == nullptr || scores == nullptr || batch <= 0 || kv_heads <= 0 ||
+      query_group != 8 || context_length <= 0 || context_length % 64 != 0 ||
+      head_dimension != 512 || cache_capacity < context_length || tiles_per_block <= 0 ||
+      tiles_per_block > 32 || (context_length / 64) % tiles_per_block != 0) {
+    throw std::runtime_error("invalid INT8 block-128 Hopper QK shape");
+  }
+  constexpr int threads = 128;
+  constexpr std::size_t shared_bytes = sizeof(Int8GlobalQkTileOuterSharedStorage);
+  const int grid = batch * kv_heads * (context_length / 64 / tiles_per_block);
+  const auto* typed_query = static_cast<const Int8Element*>(query);
+  const auto* typed_keys = static_cast<const Int8Element*>(key_cache);
+  auto* typed_scores = static_cast<Element*>(scores);
+  if (tiles_per_block == 1) {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<1>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  } else if (tiles_per_block == 2) {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<2>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  } else if (tiles_per_block == 4) {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<4>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  } else if (tiles_per_block == 8) {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<8>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  } else if (tiles_per_block == 16) {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<16>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  } else {
+    global_qk_wgmma_int8_block128_tile_outer_kernel<32>
+        <<<grid, threads, shared_bytes, stream>>>(
+        typed_query, query_scales, typed_keys, key_scales, typed_scores,
+        kv_heads, context_length, cache_capacity);
+  }
+  check(cudaPeekAtLastError(), "launch INT8 block-128 Hopper QK");
+}
+
 void grouped_global_attention_wgmma_tile_bf16(
     const void* query, const void* key_cache, const void* value_cache, void* output,
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
@@ -1264,6 +1987,64 @@ void grouped_global_attention_wgmma_tile_bf16(
       static_cast<const Element*>(value_cache), static_cast<Element*>(output),
       context_length);
   check(cudaPeekAtLastError(), "launch Hopper global-attention tile");
+}
+
+void grouped_global_pv_wgmma_int8_block128(
+    const void* value_cache, const float* value_scales, const void* probabilities,
+    void* output, int batch, int kv_heads, int query_group, int context_length,
+    int head_dimension, int cache_capacity, cudaStream_t stream) {
+  if (value_cache == nullptr || value_scales == nullptr || probabilities == nullptr ||
+      output == nullptr || batch <= 0 || kv_heads <= 0 || query_group != 8 ||
+      context_length <= 0 || context_length % 64 != 0 || head_dimension != 512 ||
+      cache_capacity < context_length) {
+    throw std::runtime_error("invalid INT8 block-128 Hopper PV shape");
+  }
+  constexpr int threads = 128;
+  constexpr std::size_t shared_bytes = sizeof(Int8GlobalPvSharedStorage);
+  constexpr int dimension_tiles = 8;
+  global_pv_wgmma_int8_block128_kernel
+      <<<batch * kv_heads * dimension_tiles, threads, shared_bytes, stream>>>(
+      static_cast<const Int8Element*>(value_cache), value_scales,
+      static_cast<const Element*>(probabilities), static_cast<Element*>(output),
+      context_length, cache_capacity);
+  check(cudaPeekAtLastError(), "launch INT8 block-128 Hopper PV");
+}
+
+void grouped_global_pv_wgmma_int8_rs(
+    const void* value_cache, const void* probabilities, const float* probability_scales,
+    void* partial_outputs, void* output, int batch, int kv_heads, int query_group,
+    int context_length, int head_dimension, int cache_capacity, int segments,
+    cudaStream_t stream) {
+  if (value_cache == nullptr || probabilities == nullptr || probability_scales == nullptr ||
+      partial_outputs == nullptr || output == nullptr || batch <= 0 || kv_heads <= 0 ||
+      query_group != 8 || context_length <= 0 || context_length % 64 != 0 ||
+      head_dimension != 512 || cache_capacity < context_length || segments <= 0 ||
+      segments > 32 || (context_length / 64) % segments != 0) {
+    throw std::runtime_error("invalid INT8 Hopper RS-PV shape");
+  }
+  constexpr int threads = 128;
+  constexpr std::size_t shared_bytes = sizeof(Int8GlobalPvRsSharedStorage);
+  check(cudaFuncSetAttribute(global_pv_wgmma_int8_rs_segment_kernel,
+                             cudaFuncAttributeMaxDynamicSharedMemorySize,
+                             static_cast<int>(shared_bytes)),
+        "set INT8 Hopper RS-PV shared memory");
+  const int head_batches = batch * kv_heads;
+  global_pv_wgmma_int8_rs_segment_kernel
+      <<<head_batches * segments, threads, shared_bytes, stream>>>(
+      static_cast<const Int8Element*>(value_cache),
+      static_cast<const Int8Element*>(probabilities),
+      static_cast<std::int32_t*>(partial_outputs), context_length, cache_capacity,
+      segments);
+  check(cudaPeekAtLastError(), "launch segmented INT8 Hopper RS-PV");
+  const std::uint64_t output_elements =
+      static_cast<std::uint64_t>(head_batches) * query_group * head_dimension;
+  constexpr int reduction_threads = 256;
+  reduce_global_pv_int8_segments_kernel
+      <<<(output_elements + reduction_threads - 1) / reduction_threads,
+         reduction_threads, 0, stream>>>(
+      static_cast<const std::int32_t*>(partial_outputs), probability_scales,
+      static_cast<Element*>(output), head_batches, segments);
+  check(cudaPeekAtLastError(), "launch segmented INT8 Hopper RS-PV reduction");
 }
 
 void grouped_global_pv_wgmma_fp8_rs(
@@ -1314,6 +2095,74 @@ void quantize_grouped_global_values_wgmma_fp8(
       static_cast<const Element*>(values), static_cast<Fp8Element*>(packed_values),
       elements, context_length);
   check(cudaPeekAtLastError(), "launch FP8 Hopper value pack");
+}
+
+void pack_grouped_global_values_wgmma_int8(
+    const void* values, void* packed_values, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || batch <= 0 || kv_heads <= 0 ||
+      context_length <= 0 || context_length % 64 != 0 || head_dimension != 512) {
+    throw std::runtime_error("invalid INT8 global V pack shape");
+  }
+  const std::uint64_t elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                 context_length * head_dimension;
+  constexpr int threads = 256;
+  pack_global_values_wgmma_int8_kernel
+      <<<(elements + threads - 1) / threads, threads, 0, stream>>>(
+      static_cast<const Int8Element*>(values), static_cast<Int8Element*>(packed_values),
+      elements, context_length);
+  check(cudaPeekAtLastError(), "launch INT8 global V pack");
+}
+
+void quantize_grouped_global_values_wgmma_int8(
+    const void* values, void* packed_values, float* scales, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || scales == nullptr || batch <= 0 ||
+      kv_heads <= 0 || context_length <= 0 || context_length % 64 != 0 ||
+      head_dimension != 512) {
+    throw std::runtime_error("invalid INT8 global V quantization shape");
+  }
+  constexpr int threads = 256;
+  const int rows = batch * kv_heads * context_length;
+  quantize_global_values_wgmma_int8_kernel<<<rows, threads, 0, stream>>>(
+      static_cast<const Element*>(values), static_cast<Int8Element*>(packed_values),
+      scales, rows, context_length);
+  check(cudaPeekAtLastError(), "launch INT8 global V quantization");
+}
+
+void quantize_grouped_global_value_span_wgmma_int8(
+    const void* values, void* packed_values, float* scales, int kv_heads, int tokens,
+    int context_length, int head_dimension, int position_start, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || scales == nullptr || kv_heads <= 0 ||
+      tokens <= 0 || context_length <= 0 || context_length % 64 != 0 ||
+      head_dimension != 512 || position_start < 0 ||
+      position_start + tokens > context_length) {
+    throw std::runtime_error("invalid INT8 global V span quantization shape");
+  }
+  constexpr int threads = 256;
+  const int rows = kv_heads * tokens;
+  quantize_global_value_span_wgmma_int8_kernel<<<rows, threads, 0, stream>>>(
+      static_cast<const Element*>(values), static_cast<Int8Element*>(packed_values),
+      scales, kv_heads, tokens, context_length, position_start);
+  check(cudaPeekAtLastError(), "launch INT8 global V span quantization");
+}
+
+void quantize_grouped_global_decode_values_wgmma_int8(
+    const void* values, void* packed_values, float* scales, const int* positions,
+    const int* slots, int batch, int maximum_slots, int kv_heads, int context_length,
+    int head_dimension, cudaStream_t stream) {
+  if (values == nullptr || packed_values == nullptr || scales == nullptr ||
+      positions == nullptr || slots == nullptr || batch <= 0 || maximum_slots < batch ||
+      kv_heads <= 0 || context_length <= 0 || context_length % 64 != 0 ||
+      head_dimension != 512) {
+    throw std::runtime_error("invalid INT8 global ragged V quantization shape");
+  }
+  constexpr int threads = 256;
+  quantize_global_decode_values_wgmma_int8_kernel
+      <<<batch * kv_heads, threads, 0, stream>>>(
+          static_cast<const Element*>(values), static_cast<Int8Element*>(packed_values),
+          scales, positions, slots, batch, maximum_slots, kv_heads, context_length);
+  check(cudaPeekAtLastError(), "launch INT8 global ragged V quantization");
 }
 
 void quantize_grouped_global_value_span_wgmma_fp8(

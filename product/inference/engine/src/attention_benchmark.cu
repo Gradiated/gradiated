@@ -8,6 +8,7 @@
 #include <cuda_fp8.h>
 
 #include <cmath>
+#include <array>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
@@ -151,7 +152,9 @@ void fp8_parity() {
       candidate(2ULL * query_elements), fp8_kv_candidate(2ULL * query_elements),
       int8_key(cache_elements), int8_key_scales(
           sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
-      int8_candidate(2ULL * query_elements),
+      int8_block_key(cache_elements), int8_block_key_scales(
+          4ULL * sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
+      int8_candidate(2ULL * query_elements), int8_block_candidate(2ULL * query_elements),
       positions(sizeof(int) * batch);
   constexpr int threads = 256;
   initialize_bf16<<<(query_elements + threads - 1) / threads, threads>>>(
@@ -171,6 +174,9 @@ void fp8_parity() {
   gradiated::engine::quantize_bf16_rows_symmetric_int8(
       key.get(), int8_key.get(), static_cast<float*>(int8_key_scales.get()),
       batch * kv_heads * context, dimension, nullptr);
+  gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+      key.get(), int8_block_key.get(), static_cast<float*>(int8_block_key_scales.get()),
+      batch * kv_heads * context, dimension, 128, nullptr);
   const std::vector<int> host_positions(batch, active_context - 1);
   check(cudaMemcpy(positions.get(), host_positions.data(), sizeof(int) * batch,
                    cudaMemcpyHostToDevice), "copy FP8 parity positions");
@@ -192,9 +198,15 @@ void fp8_parity() {
       query.get(), int8_key.get(), static_cast<const float*>(int8_key_scales.get()),
       value.get(), int8_candidate.get(), static_cast<const int*>(positions.get()),
       batch, kv_heads, query_group, active_context, dimension, 0, nullptr, context);
+  attention.run_ragged_contiguous_int8_block128_keys(
+      query.get(), int8_block_key.get(),
+      static_cast<const float*>(int8_block_key_scales.get()), value.get(),
+      int8_block_candidate.get(), static_cast<const int*>(positions.get()),
+      batch, kv_heads, query_group, active_context, dimension, 0, nullptr, context);
   check(cudaDeviceSynchronize(), "synchronize FP8-key parity");
   std::vector<__nv_bfloat16> expected(query_elements), actual(query_elements),
-      actual_fp8_kv(query_elements), actual_int8(query_elements);
+      actual_fp8_kv(query_elements), actual_int8(query_elements),
+      actual_int8_block(query_elements);
   check(cudaMemcpy(expected.data(), reference.get(), 2ULL * query_elements,
                    cudaMemcpyDeviceToHost), "copy FP8-key reference");
   check(cudaMemcpy(actual.data(), candidate.get(), 2ULL * query_elements,
@@ -203,6 +215,9 @@ void fp8_parity() {
                    cudaMemcpyDeviceToHost), "copy FP8-KV candidate");
   check(cudaMemcpy(actual_int8.data(), int8_candidate.get(), 2ULL * query_elements,
                    cudaMemcpyDeviceToHost), "copy INT8-key candidate");
+  check(cudaMemcpy(actual_int8_block.data(), int8_block_candidate.get(),
+                   2ULL * query_elements, cudaMemcpyDeviceToHost),
+        "copy INT8 block-128 key candidate");
   double squared_error = 0.0;
   double squared_reference = 0.0;
   double squared_candidate = 0.0;
@@ -219,6 +234,11 @@ void fp8_parity() {
   double int8_dot = 0.0;
   double int8_mean = 0.0;
   float int8_maximum = 0.0F;
+  double int8_block_squared_error = 0.0;
+  double int8_block_squared_candidate = 0.0;
+  double int8_block_dot = 0.0;
+  double int8_block_mean = 0.0;
+  float int8_block_maximum = 0.0F;
   for (std::uint64_t index = 0; index < query_elements; ++index) {
     const float expected_value = __bfloat162float(expected[index]);
     const float actual_value = __bfloat162float(actual[index]);
@@ -243,6 +263,15 @@ void fp8_parity() {
     int8_squared_error += static_cast<double>(int8_difference) * int8_difference;
     int8_squared_candidate += static_cast<double>(int8_value) * int8_value;
     int8_dot += static_cast<double>(expected_value) * int8_value;
+    const float int8_block_value = __bfloat162float(actual_int8_block[index]);
+    const float int8_block_difference = std::abs(expected_value - int8_block_value);
+    int8_block_maximum = std::max(int8_block_maximum, int8_block_difference);
+    int8_block_mean += int8_block_difference;
+    int8_block_squared_error +=
+        static_cast<double>(int8_block_difference) * int8_block_difference;
+    int8_block_squared_candidate +=
+        static_cast<double>(int8_block_value) * int8_block_value;
+    int8_block_dot += static_cast<double>(expected_value) * int8_block_value;
   }
   std::cout << "fp8_key_parity_max_abs=" << maximum << '\n'
             << "fp8_key_parity_mean_abs=" << mean / query_elements << '\n'
@@ -260,7 +289,102 @@ void fp8_parity() {
             << "int8_key_parity_relative_l2="
             << std::sqrt(int8_squared_error / squared_reference) << '\n'
             << "int8_key_parity_cosine="
-            << int8_dot / std::sqrt(squared_reference * int8_squared_candidate) << '\n';
+            << int8_dot / std::sqrt(squared_reference * int8_squared_candidate) << '\n'
+            << "int8_block128_key_parity_max_abs=" << int8_block_maximum << '\n'
+            << "int8_block128_key_parity_mean_abs="
+            << int8_block_mean / query_elements << '\n'
+            << "int8_block128_key_parity_relative_l2="
+            << std::sqrt(int8_block_squared_error / squared_reference) << '\n'
+            << "int8_block128_key_parity_cosine="
+            << int8_block_dot /
+                   std::sqrt(squared_reference * int8_block_squared_candidate) << '\n';
+}
+
+void int8_block_qk_contract_parity() {
+  constexpr int context = 64;
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  constexpr int blocks = 4;
+  std::vector<__nv_bfloat16> query(query_group * dimension);
+  std::vector<__nv_bfloat16> key(context * dimension);
+  for (int row = 0; row < query_group; ++row) {
+    for (int component = 0; component < dimension; ++component) {
+      const int block = component / 128;
+      query[static_cast<std::size_t>(row * dimension + component)] = __float2bfloat16(
+          (0.4F + 0.17F * block + 0.03F * row) *
+          std::sin(0.019F * static_cast<float>(row * dimension + component)));
+    }
+  }
+  for (int token = 0; token < context; ++token) {
+    for (int component = 0; component < dimension; ++component) {
+      const int block = component / 128;
+      key[static_cast<std::size_t>(token * dimension + component)] = __float2bfloat16(
+          (0.025F + 0.018F * block + 0.0004F * token) *
+          std::cos(0.013F * static_cast<float>(token * dimension + component)));
+    }
+  }
+  Allocation device_query(2ULL * query.size()), device_key(2ULL * key.size()),
+      int8_query(query.size()), int8_key(key.size()),
+      query_scales(sizeof(float) * query_group * blocks),
+      key_scales(sizeof(float) * context * blocks), scores(2ULL * context * query_group);
+  check(cudaMemcpy(device_query.get(), query.data(), 2ULL * query.size(), cudaMemcpyHostToDevice),
+        "copy INT8 block QK query");
+  check(cudaMemcpy(device_key.get(), key.data(), 2ULL * key.size(), cudaMemcpyHostToDevice),
+        "copy INT8 block QK key");
+  gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+      device_query.get(), int8_query.get(), static_cast<float*>(query_scales.get()),
+      query_group, dimension, 128, nullptr);
+  gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+      device_key.get(), int8_key.get(), static_cast<float*>(key_scales.get()),
+      context, dimension, 128, nullptr);
+  gradiated::engine::grouped_global_qk_wgmma_int8_block128(
+      int8_query.get(), static_cast<const float*>(query_scales.get()), int8_key.get(),
+      static_cast<const float*>(key_scales.get()), scores.get(), 1, 1, query_group,
+      context, dimension, context, nullptr);
+  check(cudaDeviceSynchronize(), "synchronize INT8 block QK contract");
+  std::vector<std::int8_t> host_query(query.size()), host_key(key.size());
+  std::array<float, query_group * blocks> host_query_scales{};
+  std::array<float, context * blocks> host_key_scales{};
+  std::array<__nv_bfloat16, context * query_group> actual{};
+  check(cudaMemcpy(host_query.data(), int8_query.get(), host_query.size(), cudaMemcpyDeviceToHost),
+        "copy INT8 block QK quantized query");
+  check(cudaMemcpy(host_key.data(), int8_key.get(), host_key.size(), cudaMemcpyDeviceToHost),
+        "copy INT8 block QK quantized key");
+  check(cudaMemcpy(host_query_scales.data(), query_scales.get(), sizeof(host_query_scales),
+                   cudaMemcpyDeviceToHost), "copy INT8 block QK query scales");
+  check(cudaMemcpy(host_key_scales.data(), key_scales.get(), sizeof(host_key_scales),
+                   cudaMemcpyDeviceToHost), "copy INT8 block QK key scales");
+  check(cudaMemcpy(actual.data(), scores.get(), sizeof(actual), cudaMemcpyDeviceToHost),
+        "copy INT8 block QK scores");
+  float maximum = 0.0F;
+  double mean = 0.0;
+  for (int query_index = 0; query_index < query_group; ++query_index) {
+    for (int token = 0; token < context; ++token) {
+      float expected = 0.0F;
+      for (int block = 0; block < blocks; ++block) {
+        std::int32_t dot = 0;
+        for (int component = 0; component < 128; ++component) {
+          dot += static_cast<std::int32_t>(host_key[
+                     static_cast<std::size_t>(token * dimension + block * 128 + component)]) *
+                 static_cast<std::int32_t>(host_query[
+                     static_cast<std::size_t>(query_index * dimension + block * 128 + component)]);
+        }
+        expected += static_cast<float>(dot) *
+                    host_key_scales[static_cast<std::size_t>(token * blocks + block)] *
+                    host_query_scales[
+                        static_cast<std::size_t>(query_index * blocks + block)];
+      }
+      expected = __bfloat162float(__float2bfloat16(expected));
+      const float difference = std::abs(
+          __bfloat162float(actual[static_cast<std::size_t>(query_index * context + token)]) -
+          expected);
+      maximum = std::max(maximum, difference);
+      mean += difference;
+    }
+  }
+  mean /= static_cast<double>(context * query_group);
+  std::cout << "int8_block128_qk_contract_max_abs=" << maximum << '\n'
+            << "int8_block128_qk_contract_mean_abs=" << mean << '\n';
 }
 
 void wgmma_qk_parity() {
@@ -752,6 +876,54 @@ float benchmark_qk(int batch, int context, bool wgmma, int tiles_per_block = 1) 
   return milliseconds / iterations;
 }
 
+float benchmark_int8_block128_qk(int batch, int context, int tiles_per_block) {
+  constexpr int kv_heads = 4;
+  constexpr int query_group = 8;
+  constexpr int dimension = 512;
+  const std::uint64_t query_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * dimension;
+  const std::uint64_t key_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * context * dimension;
+  const std::uint64_t score_elements =
+      static_cast<std::uint64_t>(batch) * kv_heads * query_group * context;
+  Allocation bf16_query(2ULL * query_elements), bf16_key(2ULL * key_elements),
+      int8_query(query_elements), int8_query_scales(
+          sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * query_group * 4ULL),
+      int8_key(key_elements), int8_key_scales(
+          sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context * 4ULL),
+      scores(2ULL * score_elements);
+  gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+      bf16_query.get(), int8_query.get(), static_cast<float*>(int8_query_scales.get()),
+      batch * kv_heads * query_group, dimension, 128, nullptr);
+  gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+      bf16_key.get(), int8_key.get(), static_cast<float*>(int8_key_scales.get()),
+      batch * kv_heads * context, dimension, 128, nullptr);
+  check(cudaDeviceSynchronize(), "INT8 block-128 QK quantization");
+  const auto run = [&] {
+    gradiated::engine::grouped_global_qk_wgmma_int8_block128(
+        int8_query.get(), static_cast<const float*>(int8_query_scales.get()),
+        int8_key.get(), static_cast<const float*>(int8_key_scales.get()), scores.get(),
+        batch, kv_heads, query_group, context, dimension, context, nullptr,
+        tiles_per_block);
+  };
+  for (int iteration = 0; iteration < 4; ++iteration) run();
+  check(cudaDeviceSynchronize(), "INT8 block-128 QK warmup");
+  cudaEvent_t begin{}, end{};
+  check(cudaEventCreate(&begin), "create INT8 block-128 QK begin event");
+  check(cudaEventCreate(&end), "create INT8 block-128 QK end event");
+  constexpr int iterations = 20;
+  check(cudaEventRecord(begin), "record INT8 block-128 QK begin event");
+  for (int iteration = 0; iteration < iterations; ++iteration) run();
+  check(cudaEventRecord(end), "record INT8 block-128 QK end event");
+  check(cudaEventSynchronize(end), "synchronize INT8 block-128 QK benchmark");
+  float milliseconds = 0.0F;
+  check(cudaEventElapsedTime(&milliseconds, begin, end),
+        "measure INT8 block-128 QK benchmark");
+  cudaEventDestroy(end);
+  cudaEventDestroy(begin);
+  return milliseconds / iterations;
+}
+
 void parity() {
   constexpr int context = 127;
   constexpr int dimension = 512;
@@ -810,6 +982,11 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
       fp8_query(query_elements), fp8_key(cache_elements), fp8_value(cache_elements),
       int8_key(cache_elements), int8_key_scales(
           sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
+      int8_block_key(cache_elements), int8_block_key_scales(
+          4ULL * sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
+      int8_block_value(cache_elements), int8_block_value_scales(
+          4ULL * sizeof(float) * static_cast<std::uint64_t>(batch) * kv_heads * context),
+      int8_packed_value(cache_elements),
       positions(sizeof(int) * batch);
   if (implementation == 7) {
     gradiated::engine::quantize_grouped_global_values_wgmma_fp8(
@@ -819,6 +996,20 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
     gradiated::engine::quantize_bf16_rows_symmetric_int8(
         key.get(), int8_key.get(), static_cast<float*>(int8_key_scales.get()),
         batch * kv_heads * context, dimension, nullptr);
+  }
+  if (implementation >= 9 && implementation <= 12) {
+    gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+        key.get(), int8_block_key.get(), static_cast<float*>(int8_block_key_scales.get()),
+        batch * kv_heads * context, dimension, 128, nullptr);
+  }
+  if (implementation == 13) {
+    gradiated::engine::quantize_bf16_blocks_symmetric_int8(
+        key.get(), int8_block_key.get(), static_cast<float*>(int8_block_key_scales.get()),
+        batch * kv_heads * context, dimension, 128, nullptr);
+    gradiated::engine::quantize_grouped_global_values_wgmma_int8(
+        value.get(), int8_packed_value.get(),
+        static_cast<float*>(int8_block_value_scales.get()), batch, kv_heads,
+        context, dimension, nullptr);
   }
   const std::vector<int> host_positions(batch, context - 1);
   check(cudaMemcpy(positions.get(), host_positions.data(), sizeof(int) * batch,
@@ -862,6 +1053,20 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
           query.get(), int8_key.get(), static_cast<const float*>(int8_key_scales.get()),
           value.get(), output.get(), static_cast<const int*>(positions.get()),
           batch, kv_heads, query_group, context, dimension, 0, nullptr, context);
+    } else if (implementation >= 9 && implementation <= 12) {
+      attention.run_ragged_contiguous_int8_block128_keys(
+          query.get(), int8_block_key.get(),
+          static_cast<const float*>(int8_block_key_scales.get()), value.get(), output.get(),
+          static_cast<const int*>(positions.get()), batch, kv_heads, query_group,
+          context, dimension, 0, nullptr, context, 1 << (implementation - 9));
+    } else if (implementation == 13) {
+      attention.run_ragged_contiguous_int8_block128_kv(
+          query.get(), int8_block_key.get(),
+          static_cast<const float*>(int8_block_key_scales.get()),
+          int8_packed_value.get(),
+          static_cast<const float*>(int8_block_value_scales.get()), output.get(),
+          static_cast<const int*>(positions.get()), batch, kv_heads, query_group,
+          context, dimension, 0, nullptr, context, 0);
     } else {
       attention.run(query.get(), key.get(), value.get(), output.get(), batch, kv_heads,
                     query_group, context, dimension, nullptr);
@@ -890,10 +1095,18 @@ float benchmark(int batch, int kv_heads, int query_group, int context, int dimen
 
 }  // namespace
 
-int main() {
+int main(int argc, char** argv) {
   try {
+    if (argc >= 2 && std::string(argv[1]) == "--int8-qk-only") {
+      const int tiles_per_block = argc >= 3 ? std::stoi(argv[2]) : 1;
+      const float milliseconds = benchmark_int8_block128_qk(16, 8192, tiles_per_block);
+      std::cout << "int8_block128_qk_only," << tiles_per_block << ',' << std::fixed
+                << std::setprecision(4) << milliseconds << "\n";
+      return 0;
+    }
     parity();
     fp8_parity();
+    int8_block_qk_contract_parity();
     wgmma_qk_parity();
     wgmma_attention_tile_parity();
     wgmma_raw_attention_tile_parity();
@@ -917,6 +1130,11 @@ int main() {
       const float global_fp8_key_ms = benchmark(batch, 4, 8, 8192, 512, 3);
       const float global_fp8_kv_ms = benchmark(batch, 4, 8, 8192, 512, 7);
       const float global_int8_key_ms = benchmark(batch, 4, 8, 8192, 512, 8);
+      const float global_int8_block128_key_ms = benchmark(batch, 4, 8, 8192, 512, 9);
+      const float global_int8_block128_key_t2_ms = benchmark(batch, 4, 8, 8192, 512, 10);
+      const float global_int8_block128_key_t4_ms = benchmark(batch, 4, 8, 8192, 512, 11);
+      const float global_int8_block128_key_t8_ms = benchmark(batch, 4, 8, 8192, 512, 12);
+      const float global_int8_block128_kv_ms = benchmark(batch, 4, 8, 8192, 512, 13);
       const float global_cudnn_ms = benchmark(batch, 4, 8, 8192, 512, 4);
       const float global_ragged_ms = benchmark(batch, 4, 8, 8192, 512, 5);
       const float global_tile_baseline_ms = benchmark(batch, 4, 8, 64, 512, 0);
@@ -961,6 +1179,26 @@ int main() {
                 << std::setprecision(4) << global_int8_key_ms << ',' << std::setprecision(2)
                 << (global_bytes * 0.75) / (global_int8_key_ms / 1000.0) / 1e9 << ','
                 << 7.0 * global_bytes / 1e9 << '\n';
+      std::cout << "global_int8_block128_key," << batch << ",8192," << std::fixed
+                << std::setprecision(4) << global_int8_block128_key_ms << ','
+                << std::setprecision(2)
+                << (global_bytes * 0.75) / (global_int8_block128_key_ms / 1000.0) / 1e9
+                << ',' << 7.0 * global_bytes / 1e9 << '\n';
+      for (const auto& [tiles, milliseconds] : std::vector<std::pair<int, float>>{
+               {2, global_int8_block128_key_t2_ms},
+               {4, global_int8_block128_key_t4_ms},
+               {8, global_int8_block128_key_t8_ms}}) {
+        std::cout << "global_int8_block128_key_t" << tiles << ',' << batch
+                  << ",8192," << std::fixed << std::setprecision(4) << milliseconds << ','
+                  << std::setprecision(2)
+                  << (global_bytes * 0.75) / (milliseconds / 1000.0) / 1e9 << ','
+                  << 7.0 * global_bytes / 1e9 << '\n';
+      }
+      std::cout << "global_int8_block128_kv," << batch << ",8192," << std::fixed
+                << std::setprecision(4) << global_int8_block128_kv_ms << ','
+                << std::setprecision(2)
+                << (global_bytes * 0.5) / (global_int8_block128_kv_ms / 1000.0) / 1e9
+                << ',' << 7.0 * global_bytes / 1e9 << '\n';
       std::cout << "global_cudnn," << batch << ",8192," << std::fixed
                 << std::setprecision(4) << global_cudnn_ms << ',' << std::setprecision(2)
                 << global_bytes / (global_cudnn_ms / 1000.0) / 1e9 << ','

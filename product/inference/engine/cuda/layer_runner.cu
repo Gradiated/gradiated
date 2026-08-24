@@ -286,6 +286,8 @@ struct Gemma4LayerRunner::Implementation {
                      const int* positions, const int* slots, int batch, int maximum_slots,
                      int maximum_context_length, const void* keys, const void* values,
                      const void* fp8_keys, const void* fp8_values, int cache_capacity,
+                     const void* int8_keys, const float* int8_key_scales,
+                     const void* int8_values, const float* int8_value_scales,
                      bool fp8_decode,
                      int contiguous_slot_start,
                      cudaStream_t stream) {
@@ -293,7 +295,20 @@ struct Gemma4LayerRunner::Implementation {
     const int head_dimension = static_cast<int>(layer.head_dimension);
     const int kv_heads = static_cast<int>(layer.kv_heads);
     const int query_group = static_cast<int>(layer.query_heads / layer.kv_heads);
-    if (fp8_keys != nullptr && fp8_values != nullptr && contiguous_slot_start >= 0 &&
+    if (int8_keys != nullptr && int8_values != nullptr && contiguous_slot_start >= 0 &&
+        layer.attention == AttentionKind::global) {
+      attention.run_ragged_contiguous_int8_block128_kv(
+          query, int8_keys, int8_key_scales, int8_values, int8_value_scales,
+          attention_output.get(), positions, batch, kv_heads, query_group,
+          maximum_context_length, head_dimension, contiguous_slot_start, stream,
+          cache_capacity, 0);
+    } else if (int8_keys != nullptr && contiguous_slot_start >= 0 &&
+        layer.attention == AttentionKind::global) {
+      attention.run_ragged_contiguous_int8_block128_keys(
+          query, int8_keys, int8_key_scales, values, attention_output.get(), positions, batch,
+          kv_heads, query_group, maximum_context_length, head_dimension,
+          contiguous_slot_start, stream, cache_capacity, 0);
+    } else if (fp8_keys != nullptr && fp8_values != nullptr && contiguous_slot_start >= 0 &&
         layer.attention == AttentionKind::global) {
       attention.run_ragged_contiguous_fp8_kv(
           fp8_queries.get(), fp8_keys, fp8_values, attention_output.get(), positions, batch,
@@ -412,6 +427,8 @@ void Gemma4LayerRunner::run_decode_ragged(
     int layer_index, const void* hidden_states, void* output, const int* positions,
     const int* slots, int batch, int maximum_slots, int maximum_context_length,
     void* key_cache, void* value_cache, void* fp8_key_cache, void* fp8_value_cache,
+    void* int8_key_cache, float* int8_key_scales,
+    void* int8_value_cache, float* int8_value_scales,
     bool int8_global_k_oracle, bool int8_global_v_oracle,
     int int8_oracle_block_width, int cache_capacity, int contiguous_slot_start,
     cudaStream_t stream) {
@@ -449,6 +466,28 @@ void Gemma4LayerRunner::run_decode_ragged(
         kv_heads, head_dimension, cache_capacity, stream,
         int8_global_k_oracle, int8_global_v_oracle, int8_oracle_block_width);
   }
+  const bool use_int8_key_cache = int8_key_cache != nullptr;
+  if (use_int8_key_cache) {
+    if (layer.attention != AttentionKind::global || int8_key_scales == nullptr) {
+      throw std::runtime_error("INT8 K cache supplied with an invalid layer or scale arena");
+    }
+    if (fp8_key_cache != nullptr) {
+      throw std::runtime_error("INT8 and FP8 global K caches cannot be combined");
+    }
+    quantize_global_decode_k_int8_block128(
+        key_cache, int8_key_cache, int8_key_scales, positions, slots, batch,
+        maximum_slots, kv_heads, head_dimension, cache_capacity, stream);
+    if (int8_value_cache != nullptr) {
+      if (int8_value_scales == nullptr) {
+        throw std::runtime_error("INT8 V cache supplied without a scale arena");
+      }
+      quantize_grouped_global_decode_values_wgmma_int8(
+          value_cache, int8_value_cache, int8_value_scales, positions, slots,
+          batch, maximum_slots, kv_heads, cache_capacity, head_dimension, stream);
+    }
+  } else if (int8_value_cache != nullptr || int8_value_scales != nullptr) {
+    throw std::runtime_error("INT8 V cache requires the materialized INT8 K cache");
+  }
   const bool use_fp8_key_cache = fp8_key_cache != nullptr &&
                                  state.uses_fp8_qkv(layer_index);
   if (use_fp8_key_cache) {
@@ -468,7 +507,12 @@ void Gemma4LayerRunner::run_decode_ragged(
   state.finish_ragged(layer_index, hidden_states, state.queries.get(), output, positions, slots,
                       batch, maximum_slots, maximum_context_length, key_cache, value_cache,
                       use_fp8_key_cache ? fp8_key_cache : nullptr,
-                      use_fp8_key_cache ? fp8_value_cache : nullptr, cache_capacity, true,
+                      use_fp8_key_cache ? fp8_value_cache : nullptr, cache_capacity,
+                      use_int8_key_cache ? int8_key_cache : nullptr,
+                      use_int8_key_cache ? int8_key_scales : nullptr,
+                      use_int8_key_cache ? int8_value_cache : nullptr,
+                      use_int8_key_cache ? int8_value_scales : nullptr,
+                      true,
                       contiguous_slot_start, stream);
 }
 

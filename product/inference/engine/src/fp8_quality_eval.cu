@@ -315,6 +315,8 @@ int main(int argc, char** argv) {
       references.resize(prompts.size());
       unsetenv("GRADIATED_FP8_GLOBAL_K");
       unsetenv("GRADIATED_FP8_GLOBAL_KV");
+      unsetenv("GRADIATED_INT8_GLOBAL_K");
+      unsetenv("GRADIATED_INT8_GLOBAL_KV");
       unsetenv("GRADIATED_INT8_GLOBAL_KV_ORACLE");
       gradiated::engine::Gemma4BatchModelRunner bf16_runner(
           config, *weights, reference_batch, maximum_context);
@@ -356,6 +358,11 @@ int main(int argc, char** argv) {
     }
     if (std::getenv("GRADIATED_INT8_GLOBAL_KV_ORACLE_EVAL") != nullptr) {
       setenv("GRADIATED_INT8_GLOBAL_KV_ORACLE", "1", 1);
+    }
+    if (std::getenv("GRADIATED_INT8_GLOBAL_KV_EVAL") != nullptr) {
+      setenv("GRADIATED_INT8_GLOBAL_KV", "1", 1);
+    } else if (std::getenv("GRADIATED_INT8_GLOBAL_K_EVAL") != nullptr) {
+      setenv("GRADIATED_INT8_GLOBAL_K", "1", 1);
     }
     const auto cases = precision_cases();
     for (const float weight_scale_multiplier : weight_scale_cases(bf16_candidate)) {

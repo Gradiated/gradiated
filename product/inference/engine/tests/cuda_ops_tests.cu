@@ -556,6 +556,190 @@ void test_int8_kv_quality_oracle() {
   }
 }
 
+void test_materialized_int8_global_k_cache_writes() {
+  constexpr int maximum_slots = 3;
+  constexpr int heads = 2;
+  constexpr int capacity = 5;
+  constexpr int dimension = 512;
+  constexpr int blocks_per_row = 4;
+  constexpr int rows = maximum_slots * heads * capacity;
+  std::vector<__nv_bfloat16> source(static_cast<std::size_t>(rows) * dimension);
+  for (std::size_t index = 0; index < source.size(); ++index) {
+    source[index] = __float2bfloat16_rn(
+        0.75F * std::sin(static_cast<float>(index) * 0.0137F) +
+        0.125F * std::cos(static_cast<float>(index) * 0.0031F));
+  }
+  DeviceAllocation<__nv_bfloat16> device_source(source.size());
+  DeviceAllocation<std::int8_t> device_destination(source.size());
+  DeviceAllocation<float> device_scales(static_cast<std::size_t>(rows) * blocks_per_row);
+  cuda_check(cudaMemcpy(device_source.get(), source.data(), source.size() * sizeof(source[0]),
+                        cudaMemcpyHostToDevice), "copy materialized INT8 source");
+  cuda_check(cudaMemset(device_destination.get(), 0, source.size()),
+             "zero materialized INT8 destination");
+  cuda_check(cudaMemset(device_scales.get(), 0,
+                        static_cast<std::size_t>(rows) * blocks_per_row * sizeof(float)),
+             "zero materialized INT8 scales");
+
+  constexpr int span_slot = 1;
+  const std::size_t span_value_offset =
+      static_cast<std::size_t>(span_slot) * heads * capacity * dimension;
+  const std::size_t span_scale_offset =
+      static_cast<std::size_t>(span_slot) * heads * capacity * blocks_per_row;
+  gradiated::engine::quantize_global_k_cache_span_int8_block128(
+      device_source.get() + span_value_offset,
+      device_destination.get() + span_value_offset,
+      device_scales.get() + span_scale_offset, heads, 2, dimension, capacity, 1, nullptr);
+
+  const std::array<int, 2> positions{4, 3};
+  const std::array<int, 2> slots{0, 2};
+  DeviceAllocation<int> device_positions(positions.size()), device_slots(slots.size());
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy materialized INT8 positions");
+  cuda_check(cudaMemcpy(device_slots.get(), slots.data(), sizeof(slots),
+                        cudaMemcpyHostToDevice), "copy materialized INT8 slots");
+  gradiated::engine::quantize_global_decode_k_int8_block128(
+      device_source.get(), device_destination.get(), device_scales.get(),
+      device_positions.get(), device_slots.get(), 2, maximum_slots, heads, dimension,
+      capacity, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize materialized INT8 cache writes");
+
+  std::vector<std::int8_t> destination(source.size());
+  std::vector<float> scales(static_cast<std::size_t>(rows) * blocks_per_row);
+  cuda_check(cudaMemcpy(destination.data(), device_destination.get(), destination.size(),
+                        cudaMemcpyDeviceToHost), "copy materialized INT8 cache");
+  cuda_check(cudaMemcpy(scales.data(), device_scales.get(), scales.size() * sizeof(scales[0]),
+                        cudaMemcpyDeviceToHost), "copy materialized INT8 cache scales");
+  for (int slot = 0; slot < maximum_slots; ++slot) {
+    for (int head = 0; head < heads; ++head) {
+      for (int token = 0; token < capacity; ++token) {
+        const bool touched = (slot == 1 && (token == 1 || token == 2)) ||
+                             (slot == 0 && token == 4) || (slot == 2 && token == 3);
+        const std::size_t row =
+            (static_cast<std::size_t>(slot) * heads + head) * capacity + token;
+        for (int block = 0; block < blocks_per_row; ++block) {
+          const float scale = scales[row * blocks_per_row + block];
+          if (!touched) {
+            if (scale != 0.0F) throw std::runtime_error("INT8 cache scale guard changed");
+            continue;
+          }
+          if (!(scale > 0.0F)) throw std::runtime_error("INT8 cache scale was not written");
+          for (int component = block * 128; component < (block + 1) * 128; ++component) {
+            const std::size_t index = row * dimension + component;
+            const float expected = __bfloat162float(source[index]);
+            const float reconstructed = static_cast<float>(destination[index]) * scale;
+            if (std::abs(expected - reconstructed) > 0.51F * scale + 1.0e-6F) {
+              throw std::runtime_error("INT8 cache reconstruction exceeded half a scale step");
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+void test_packed_int8_global_v_cache_writes() {
+  constexpr int maximum_slots = 3;
+  constexpr int heads = 2;
+  constexpr int capacity = 64;
+  constexpr int dimension = 512;
+  constexpr int blocks_per_row = 4;
+  constexpr int rows = maximum_slots * heads * capacity;
+  constexpr std::size_t elements = static_cast<std::size_t>(rows) * dimension;
+  std::vector<__nv_bfloat16> source(elements, __float2bfloat16(0.0F));
+  const auto touched = [](int slot, int token) {
+    return (slot == 1 && token >= 7 && token < 10) ||
+           (slot == 0 && token == 63) || (slot == 2 && token == 31);
+  };
+  for (int slot = 0; slot < maximum_slots; ++slot) {
+    for (int head = 0; head < heads; ++head) {
+      for (int token = 0; token < capacity; ++token) {
+        if (!touched(slot, token)) continue;
+        const std::size_t row =
+            (static_cast<std::size_t>(slot) * heads + head) * capacity + token;
+        for (int component = 0; component < dimension; ++component) {
+          source[row * dimension + component] = __float2bfloat16_rn(
+              0.9F * std::sin(static_cast<float>(row * dimension + component) * 0.017F) +
+              0.2F * std::cos(static_cast<float>(component) * 0.031F));
+        }
+      }
+    }
+  }
+  DeviceAllocation<__nv_bfloat16> device_source(elements);
+  DeviceAllocation<std::int8_t> expected_values(elements), candidate_values(elements);
+  DeviceAllocation<float> expected_scales(rows * blocks_per_row),
+      candidate_scales(rows * blocks_per_row);
+  cuda_check(cudaMemcpy(device_source.get(), source.data(), elements * sizeof(source[0]),
+                        cudaMemcpyHostToDevice), "copy packed INT8 V source");
+  cuda_check(cudaMemset(candidate_values.get(), 0, elements),
+             "zero packed INT8 V candidate");
+  cuda_check(cudaMemset(candidate_scales.get(), 0,
+                        rows * blocks_per_row * sizeof(float)),
+             "zero packed INT8 V candidate scales");
+  gradiated::engine::quantize_grouped_global_values_wgmma_int8(
+      device_source.get(), expected_values.get(), expected_scales.get(), maximum_slots,
+      heads, capacity, dimension, nullptr);
+
+  constexpr int span_slot = 1;
+  constexpr int span_start = 7;
+  constexpr int span_tokens = 3;
+  const std::size_t slot_element_offset =
+      static_cast<std::size_t>(span_slot) * heads * capacity * dimension;
+  const std::size_t slot_scale_offset =
+      static_cast<std::size_t>(span_slot) * heads * capacity * blocks_per_row;
+  gradiated::engine::quantize_grouped_global_value_span_wgmma_int8(
+      device_source.get() + slot_element_offset,
+      candidate_values.get() + slot_element_offset,
+      candidate_scales.get() + slot_scale_offset, heads, span_tokens, capacity,
+      dimension, span_start, nullptr);
+  const std::array<int, 2> positions{63, 31};
+  const std::array<int, 2> slots{0, 2};
+  DeviceAllocation<int> device_positions(positions.size()), device_slots(slots.size());
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy packed INT8 V positions");
+  cuda_check(cudaMemcpy(device_slots.get(), slots.data(), sizeof(slots),
+                        cudaMemcpyHostToDevice), "copy packed INT8 V slots");
+  gradiated::engine::quantize_grouped_global_decode_values_wgmma_int8(
+      device_source.get(), candidate_values.get(), candidate_scales.get(),
+      device_positions.get(), device_slots.get(), 2, maximum_slots, heads, capacity,
+      dimension, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize packed INT8 V cache writes");
+
+  std::vector<std::int8_t> expected(elements), candidate(elements);
+  std::vector<float> expected_scale_values(rows * blocks_per_row),
+      candidate_scale_values(rows * blocks_per_row);
+  cuda_check(cudaMemcpy(expected.data(), expected_values.get(), elements,
+                        cudaMemcpyDeviceToHost), "copy expected packed INT8 V");
+  cuda_check(cudaMemcpy(candidate.data(), candidate_values.get(), elements,
+                        cudaMemcpyDeviceToHost), "copy candidate packed INT8 V");
+  cuda_check(cudaMemcpy(expected_scale_values.data(), expected_scales.get(),
+                        rows * blocks_per_row * sizeof(float), cudaMemcpyDeviceToHost),
+             "copy expected packed INT8 V scales");
+  cuda_check(cudaMemcpy(candidate_scale_values.data(), candidate_scales.get(),
+                        rows * blocks_per_row * sizeof(float), cudaMemcpyDeviceToHost),
+             "copy candidate packed INT8 V scales");
+  if (expected != candidate) {
+    throw std::runtime_error("packed INT8 V span/scatter layout mismatch");
+  }
+  for (int slot = 0; slot < maximum_slots; ++slot) {
+    for (int head = 0; head < heads; ++head) {
+      for (int token = 0; token < capacity; ++token) {
+        const std::size_t row =
+            (static_cast<std::size_t>(slot) * heads + head) * capacity + token;
+        for (int block = 0; block < blocks_per_row; ++block) {
+          const std::size_t scale_index = row * blocks_per_row + block;
+          if (touched(slot, token)) {
+            if (candidate_scale_values[scale_index] != expected_scale_values[scale_index]) {
+              throw std::runtime_error("packed INT8 V scale mismatch");
+            }
+          } else if (candidate_scale_values[scale_index] != 0.0F) {
+            throw std::runtime_error("packed INT8 V scale guard changed");
+          }
+        }
+      }
+    }
+  }
+}
+
 template <int query_tokens>
 void test_uniform_ring_attention() {
   constexpr int requests = 2;
@@ -711,6 +895,8 @@ int main() {
     test_shared_global_kv_roundtrip();
     test_prefill_layouts();
     test_int8_kv_quality_oracle();
+    test_materialized_int8_global_k_cache_writes();
+    test_packed_int8_global_v_cache_writes();
     test_batched_argmax();
     test_uniform_ring_attention<4>();
     test_uniform_ring_attention<8>();

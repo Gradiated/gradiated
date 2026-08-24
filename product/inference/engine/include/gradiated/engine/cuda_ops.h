@@ -76,6 +76,19 @@ void roundtrip_global_decode_kv_int8_per_token_bf16(
 void quantize_bf16_rows_symmetric_int8(const void* source, void* destination,
                                        float* row_scales, int rows, int width,
                                        cudaStream_t stream);
+// Block-scaled counterpart. Scales are [row, width / block_width] in row-major order.
+void quantize_bf16_blocks_symmetric_int8(const void* source, void* destination,
+                                         float* block_scales, int rows, int width,
+                                         int block_width, cudaStream_t stream);
+// Materializes block-128 signed-INT8 global K rows in the same head/slot/token order as the
+// BF16 cache. Scales are [physical_head, token, 4] and reconstruct K as int8 * scale.
+void quantize_global_k_cache_span_int8_block128(
+    const void* source, void* destination, float* scales, int heads, int tokens,
+    int head_dimension, int cache_capacity, int position_start, cudaStream_t stream);
+void quantize_global_decode_k_int8_block128(
+    const void* source, void* destination, float* scales, const int* positions,
+    const int* slots, int batch, int maximum_slots, int heads, int head_dimension,
+    int cache_capacity, cudaStream_t stream);
 void gather_kv_ring_bf16(const void* source, void* destination, int heads, int retained_tokens,
                          int head_dimension, int source_capacity, int destination_capacity,
                          int logical_position_start, cudaStream_t stream);

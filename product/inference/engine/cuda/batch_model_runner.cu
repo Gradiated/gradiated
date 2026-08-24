@@ -45,6 +45,16 @@ bool int8_global_kv_oracle_enabled() {
   return value != nullptr && std::string_view(value) == "1";
 }
 
+bool int8_global_k_enabled() {
+  const char* value = std::getenv("GRADIATED_INT8_GLOBAL_K");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+bool int8_global_kv_enabled() {
+  const char* value = std::getenv("GRADIATED_INT8_GLOBAL_KV");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
 enum class Int8OracleMode { keys, values, both };
 
 Int8OracleMode int8_global_kv_oracle_mode() {
@@ -185,12 +195,21 @@ struct Gemma4BatchModelRunner::Implementation {
   bool use_fp8_global_kv;
   bool use_fp8_global_k;
   std::vector<bool> fp8_global_k_layers;
+  bool use_int8_global_kv;
+  bool use_int8_global_k;
+  std::vector<bool> int8_global_k_layers;
   bool use_int8_global_kv_oracle;
   Int8OracleMode int8_oracle_mode;
   int int8_oracle_block_width;
   std::vector<bool> int8_global_kv_oracle_layers;
   std::vector<std::uint64_t> fp8_key_offsets;
   std::uint64_t fp8_key_payload_bytes;
+  std::vector<std::uint64_t> int8_key_offsets;
+  std::uint64_t int8_key_payload_bytes;
+  std::vector<std::uint64_t> int8_key_scale_offsets;
+  std::uint64_t int8_key_scale_payload_bytes;
+  std::vector<std::uint64_t> int8_value_scale_offsets;
+  std::uint64_t int8_value_scale_payload_bytes;
   std::vector<std::uint64_t> speculative_backup_offsets;
   std::uint64_t speculative_backup_payload_bytes;
   Gemma4LayerRunner layers;
@@ -199,6 +218,10 @@ struct Gemma4BatchModelRunner::Implementation {
   Allocation cache_arena;
   Allocation fp8_key_arena;
   Allocation fp8_value_arena;
+  Allocation int8_key_arena;
+  Allocation int8_key_scale_arena;
+  Allocation int8_value_arena;
+  Allocation int8_value_scale_arena;
   Allocation hidden_a;
   Allocation hidden_b;
   Allocation final_hidden;
@@ -267,6 +290,42 @@ struct Gemma4BatchModelRunner::Implementation {
     return align_up(bytes);
   }
 
+  static std::uint64_t int8_key_scale_payload(
+      const Gemma4Config& config, int batch, int maximum_context,
+      const std::vector<bool>& selected, std::vector<std::uint64_t>* offsets) {
+    std::uint64_t bytes = 0;
+    for (const auto& layer : config.layers) {
+      const std::size_t layer_index = offsets->size();
+      if (!selected.at(layer_index)) {
+        offsets->push_back(std::numeric_limits<std::uint64_t>::max());
+        continue;
+      }
+      bytes = align_up(bytes);
+      offsets->push_back(bytes);
+      bytes += static_cast<std::uint64_t>(batch) * maximum_context * layer.kv_heads *
+               4ULL * sizeof(float);
+    }
+    return align_up(bytes);
+  }
+
+  static std::uint64_t int8_value_scale_payload(
+      const Gemma4Config& config, int batch, int maximum_context,
+      const std::vector<bool>& selected, std::vector<std::uint64_t>* offsets) {
+    std::uint64_t bytes = 0;
+    for (const auto& layer : config.layers) {
+      const std::size_t layer_index = offsets->size();
+      if (!selected.at(layer_index)) {
+        offsets->push_back(std::numeric_limits<std::uint64_t>::max());
+        continue;
+      }
+      bytes = align_up(bytes);
+      offsets->push_back(bytes);
+      bytes += static_cast<std::uint64_t>(batch) * maximum_context * layer.kv_heads *
+               4ULL * sizeof(float);
+    }
+    return align_up(bytes);
+  }
+
   Implementation(const Gemma4Config& model_config, const DeviceWeightArena& device_weights,
                  int requested_batch, int max_context, const Fp8WeightArena* decode_weights,
                  const DeviceWeightArena* draft_weights,
@@ -284,6 +343,11 @@ struct Gemma4BatchModelRunner::Implementation {
         use_fp8_global_k(fp8_global_k_enabled() || use_fp8_global_kv),
         fp8_global_k_layers(global_layer_selection(
             model_config, use_fp8_global_k, "GRADIATED_FP8_GLOBAL_K_LAYERS", "FP8 global K")),
+        use_int8_global_kv(int8_global_kv_enabled()),
+        use_int8_global_k(int8_global_k_enabled() || use_int8_global_kv),
+        int8_global_k_layers(global_layer_selection(
+            model_config, use_int8_global_k,
+            "GRADIATED_INT8_GLOBAL_K_LAYERS", "INT8 global K")),
         use_int8_global_kv_oracle(int8_global_kv_oracle_enabled()),
         int8_oracle_mode(int8_global_kv_oracle_mode()),
         int8_oracle_block_width(int8_global_kv_oracle_block_width()),
@@ -295,6 +359,21 @@ struct Gemma4BatchModelRunner::Implementation {
             ? fp8_key_payload(model_config, requested_batch, max_context,
                               fp8_global_k_layers, &fp8_key_offsets)
             : 0),
+        int8_key_offsets(),
+        int8_key_payload_bytes(use_int8_global_k
+            ? fp8_key_payload(model_config, requested_batch, max_context,
+                              int8_global_k_layers, &int8_key_offsets)
+            : 0),
+        int8_key_scale_offsets(),
+        int8_key_scale_payload_bytes(use_int8_global_k
+            ? int8_key_scale_payload(model_config, requested_batch, max_context,
+                                     int8_global_k_layers, &int8_key_scale_offsets)
+            : 0),
+        int8_value_scale_offsets(),
+        int8_value_scale_payload_bytes(use_int8_global_kv
+            ? int8_value_scale_payload(model_config, requested_batch, max_context,
+                                       int8_global_k_layers, &int8_value_scale_offsets)
+            : 0),
         speculative_backup_offsets(),
         speculative_backup_payload_bytes(speculative_backup_payload(
             model_config, requested_batch, &speculative_backup_offsets)),
@@ -305,6 +384,11 @@ struct Gemma4BatchModelRunner::Implementation {
         fp8_key_arena(std::max<std::uint64_t>(1, fp8_key_payload_bytes)),
         fp8_value_arena(std::max<std::uint64_t>(
             1, use_fp8_global_kv ? fp8_key_payload_bytes : 0)),
+        int8_key_arena(std::max<std::uint64_t>(1, int8_key_payload_bytes)),
+        int8_key_scale_arena(std::max<std::uint64_t>(1, int8_key_scale_payload_bytes)),
+        int8_value_arena(std::max<std::uint64_t>(
+            1, use_int8_global_kv ? int8_key_payload_bytes : 0)),
+        int8_value_scale_arena(std::max<std::uint64_t>(1, int8_value_scale_payload_bytes)),
         hidden_a(2ULL * std::max(requested_batch, max_context) * hidden),
         hidden_b(2ULL * std::max(requested_batch, max_context) * hidden),
         final_hidden(2ULL * speculative_depth * requested_batch * hidden),
@@ -330,6 +414,10 @@ struct Gemma4BatchModelRunner::Implementation {
     if (use_int8_global_kv_oracle && use_fp8_global_k) {
       throw std::runtime_error(
           "INT8 global KV oracle cannot be combined with the FP8 global cache experiment");
+    }
+    if (use_int8_global_k && (use_fp8_global_k || use_int8_global_kv_oracle)) {
+      throw std::runtime_error(
+          "materialized INT8 global K cannot be combined with FP8 K or the INT8 oracle");
     }
     check(cudaStreamCreateWithFlags(&decode_stream, cudaStreamNonBlocking),
           "create decode stream");
@@ -358,6 +446,22 @@ struct Gemma4BatchModelRunner::Implementation {
     if (use_fp8_global_kv) {
       check(cudaMemset(fp8_value_arena.get(), 0, static_cast<std::size_t>(fp8_key_payload_bytes)),
             "initialize FP8 global V cache arena");
+    }
+    if (use_int8_global_k) {
+      check(cudaMemset(int8_key_arena.get(), 0,
+                       static_cast<std::size_t>(int8_key_payload_bytes)),
+            "initialize INT8 global K cache arena");
+      check(cudaMemset(int8_key_scale_arena.get(), 0,
+                       static_cast<std::size_t>(int8_key_scale_payload_bytes)),
+            "initialize INT8 global K scale arena");
+    }
+    if (use_int8_global_kv) {
+      check(cudaMemset(int8_value_arena.get(), 0,
+                       static_cast<std::size_t>(int8_key_payload_bytes)),
+            "initialize INT8 global V cache arena");
+      check(cudaMemset(int8_value_scale_arena.get(), 0,
+                       static_cast<std::size_t>(int8_value_scale_payload_bytes)),
+            "initialize INT8 global V scale arena");
     }
   }
 
@@ -402,6 +506,69 @@ struct Gemma4BatchModelRunner::Implementation {
     return base + static_cast<std::uint64_t>(slot) * caches.at(layer).capacity *
         config.layers.at(layer).kv_width();
   }
+  void* int8_key_cache(std::size_t layer) {
+    if (!use_int8_global_k || !int8_global_k_layers.at(layer)) return nullptr;
+    return static_cast<unsigned char*>(int8_key_arena.get()) + int8_key_offsets.at(layer);
+  }
+  void* slot_int8_key_cache(std::size_t layer, int slot) {
+    auto* base = static_cast<unsigned char*>(int8_key_cache(layer));
+    if (base == nullptr) return nullptr;
+    return base + static_cast<std::uint64_t>(slot) * caches.at(layer).capacity *
+        config.layers.at(layer).kv_width();
+  }
+  float* int8_key_scales(std::size_t layer) {
+    if (!use_int8_global_k || !int8_global_k_layers.at(layer)) return nullptr;
+    auto* base = static_cast<unsigned char*>(int8_key_scale_arena.get()) +
+                 int8_key_scale_offsets.at(layer);
+    return reinterpret_cast<float*>(base);
+  }
+  float* slot_int8_key_scales(std::size_t layer, int slot) {
+    auto* base = int8_key_scales(layer);
+    if (base == nullptr) return nullptr;
+    return base + static_cast<std::uint64_t>(slot) *
+        config.layers.at(layer).kv_heads * caches.at(layer).capacity * 4ULL;
+  }
+  void* int8_value_cache(std::size_t layer) {
+    if (!use_int8_global_kv || !int8_global_k_layers.at(layer)) return nullptr;
+    return static_cast<unsigned char*>(int8_value_arena.get()) + int8_key_offsets.at(layer);
+  }
+  void* slot_int8_value_cache(std::size_t layer, int slot) {
+    auto* base = static_cast<unsigned char*>(int8_value_cache(layer));
+    if (base == nullptr) return nullptr;
+    return base + static_cast<std::uint64_t>(slot) * caches.at(layer).capacity *
+        config.layers.at(layer).kv_width();
+  }
+  float* int8_value_scales(std::size_t layer) {
+    if (!use_int8_global_kv || !int8_global_k_layers.at(layer)) return nullptr;
+    auto* base = static_cast<unsigned char*>(int8_value_scale_arena.get()) +
+                 int8_value_scale_offsets.at(layer);
+    return reinterpret_cast<float*>(base);
+  }
+  float* slot_int8_value_scales(std::size_t layer, int slot) {
+    auto* base = int8_value_scales(layer);
+    if (base == nullptr) return nullptr;
+    return base + static_cast<std::uint64_t>(slot) * config.layers.at(layer).kv_heads *
+        caches.at(layer).capacity * 4ULL;
+  }
+  void refresh_int8_kv_span(std::size_t layer, int slot, int position, int tokens,
+                            cudaStream_t stream) {
+    void* destination = slot_int8_key_cache(layer, slot);
+    if (destination == nullptr) return;
+    const auto& layer_config = config.layers.at(layer);
+    quantize_global_k_cache_span_int8_block128(
+        slot_key_cache(layer, slot), destination, slot_int8_key_scales(layer, slot),
+        static_cast<int>(layer_config.kv_heads), tokens,
+        static_cast<int>(layer_config.head_dimension), caches.at(layer).capacity,
+        position, stream);
+    void* value_destination = slot_int8_value_cache(layer, slot);
+    if (value_destination != nullptr) {
+      quantize_grouped_global_value_span_wgmma_int8(
+          slot_value_cache(layer, slot), value_destination,
+          slot_int8_value_scales(layer, slot), static_cast<int>(layer_config.kv_heads),
+          tokens, caches.at(layer).capacity,
+          static_cast<int>(layer_config.head_dimension), position, stream);
+    }
+  }
   void refresh_fp8_kv_span(std::size_t layer, int slot, int position, int tokens,
                            cudaStream_t stream) {
     void* destination = slot_fp8_key_cache(layer, slot);
@@ -430,6 +597,7 @@ struct Gemma4BatchModelRunner::Implementation {
           position, stream, int8_oracle_mode != Int8OracleMode::values,
           int8_oracle_mode != Int8OracleMode::keys, int8_oracle_block_width);
     }
+    refresh_int8_kv_span(layer, slot, position, tokens, stream);
     refresh_fp8_kv_span(layer, slot, position, tokens, stream);
   }
   void* speculative_key_backup(std::size_t layer) {
@@ -483,6 +651,8 @@ struct Gemma4BatchModelRunner::Implementation {
           static_cast<const int*>(device_positions.get()),
           static_cast<const int*>(device_slots.get()), active, batch_size, context,
           key_cache(layer), value_cache(layer), fp8_key_cache(layer), fp8_value_cache(layer),
+          int8_key_cache(layer), int8_key_scales(layer), int8_value_cache(layer),
+          int8_value_scales(layer),
           int8_global_kv_oracle_layers.at(layer) &&
               int8_oracle_mode != Int8OracleMode::values,
           int8_global_kv_oracle_layers.at(layer) &&
@@ -1049,6 +1219,7 @@ std::uint64_t Gemma4BatchModelRunner::clone_slot(int source_slot, int destinatio
         state.slot_value_cache(layer, destination_slot),
         static_cast<int>(state.config.layers[layer].kv_heads), resident_tokens,
         static_cast<int>(state.config.layers[layer].head_dimension), cache.capacity, nullptr);
+    state.refresh_int8_kv_span(layer, destination_slot, 0, resident_tokens, nullptr);
     state.refresh_fp8_kv_span(layer, destination_slot, 0, resident_tokens, nullptr);
     copied_bytes += 2ULL * bytes;
   }
@@ -1379,6 +1550,22 @@ void Gemma4BatchModelRunner::seed_empty_cache_for_benchmark(int position) {
     check(cudaMemset(state.fp8_value_arena.get(), 0,
                      static_cast<std::size_t>(state.fp8_key_payload_bytes)),
           "zero benchmark FP8 V cache");
+  }
+  if (state.use_int8_global_k) {
+    check(cudaMemset(state.int8_key_arena.get(), 0,
+                     static_cast<std::size_t>(state.int8_key_payload_bytes)),
+          "zero benchmark INT8 K cache");
+    check(cudaMemset(state.int8_key_scale_arena.get(), 0,
+                     static_cast<std::size_t>(state.int8_key_scale_payload_bytes)),
+          "zero benchmark INT8 K scale cache");
+  }
+  if (state.use_int8_global_kv) {
+    check(cudaMemset(state.int8_value_arena.get(), 0,
+                     static_cast<std::size_t>(state.int8_key_payload_bytes)),
+          "zero benchmark INT8 V cache");
+    check(cudaMemset(state.int8_value_scale_arena.get(), 0,
+                     static_cast<std::size_t>(state.int8_value_scale_payload_bytes)),
+          "zero benchmark INT8 V scale cache");
   }
   state.current_position = position;
   std::fill(state.slot_positions.begin(), state.slot_positions.end(), position);

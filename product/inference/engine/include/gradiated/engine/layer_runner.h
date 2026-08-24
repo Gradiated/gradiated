@@ -29,6 +29,8 @@ class Gemma4LayerRunner {
                          const int* positions, const int* slots, int batch, int maximum_slots,
                          int maximum_context_length, void* key_cache, void* value_cache,
                          void* fp8_key_cache, void* fp8_value_cache,
+                         void* int8_key_cache, float* int8_key_scales,
+                         void* int8_value_cache, float* int8_value_scales,
                          bool int8_global_k_oracle, bool int8_global_v_oracle,
                          int int8_oracle_block_width, int cache_capacity,
                          int contiguous_slot_start, cudaStream_t stream);

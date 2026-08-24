@@ -30,6 +30,14 @@ void grouped_global_qk_wgmma_bf16(const void* query, const void* key_cache, void
                                   int context_length, int head_dimension,
                                   cudaStream_t stream, int tiles_per_block = 1);
 
+// Block-128 signed-INT8 QK frontier. K/Q are row-major signed bytes and scales are
+// [row, 4]. Four independently scaled S32 WGMMA partials are accumulated into BF16 scores.
+void grouped_global_qk_wgmma_int8_block128(
+    const void* query, const float* query_scales, const void* key_cache,
+    const float* key_scales, void* scores, int batch, int kv_heads,
+    int query_group, int context_length, int head_dimension, int cache_capacity,
+    cudaStream_t stream, int tiles_per_block = 1);
+
 // Correctness frontier for one 64-token Hopper global-attention tile. This keeps QK scores and
 // probabilities in shared memory and performs both QK and PV with WGMMA.
 void grouped_global_attention_wgmma_tile_bf16(
@@ -45,11 +53,39 @@ void grouped_global_pv_wgmma_fp8_rs(
     int batch, int kv_heads, int query_group, int context_length, int head_dimension,
     int cache_capacity, int segments, cudaStream_t stream);
 
+// Block-128 signed-INT8 V frontier. V is reconstructed with per-token/block FP32 scales in
+// shared memory, then BF16 WGMMA accumulates the already-normalized probabilities in FP32.
+void grouped_global_pv_wgmma_int8_block128(
+    const void* value_cache, const float* value_scales, const void* probabilities,
+    void* output, int batch, int kv_heads, int query_group, int context_length,
+    int head_dimension, int cache_capacity, cudaStream_t stream);
+void grouped_global_pv_wgmma_int8_rs(
+    const void* value_cache, const void* probabilities, const float* probability_scales,
+    void* partial_outputs, void* output, int batch, int kv_heads, int query_group,
+    int context_length, int head_dimension, int cache_capacity, int segments,
+    cudaStream_t stream);
+
 // Research cache-write helpers for the FP8 PV primitive. Values are quantized once into the
 // native K-major WGMMA tile layout; probabilities are quantized into the same per-tile contract.
 void quantize_grouped_global_values_wgmma_fp8(
     const void* values, void* packed_values, int batch, int kv_heads,
     int context_length, int head_dimension, cudaStream_t stream);
+void pack_grouped_global_values_wgmma_int8(
+    const void* values, void* packed_values, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream);
+// Block-128-scaled signed-INT8 V stored directly in the native SW64 WGMMA tile layout. The scale
+// contract is four FP32 values per [physical head, token]. Span and decode variants update an
+// existing cache without materializing a row-major INT8 intermediate.
+void quantize_grouped_global_values_wgmma_int8(
+    const void* values, void* packed_values, float* scales, int batch, int kv_heads,
+    int context_length, int head_dimension, cudaStream_t stream);
+void quantize_grouped_global_value_span_wgmma_int8(
+    const void* values, void* packed_values, float* scales, int kv_heads, int tokens,
+    int context_length, int head_dimension, int position_start, cudaStream_t stream);
+void quantize_grouped_global_decode_values_wgmma_int8(
+    const void* values, void* packed_values, float* scales, const int* positions,
+    const int* slots, int batch, int maximum_slots, int kv_heads, int context_length,
+    int head_dimension, cudaStream_t stream);
 void quantize_grouped_global_value_span_wgmma_fp8(
     const void* values, void* packed_values, int kv_heads, int tokens,
     int context_length, int head_dimension, int position_start, cudaStream_t stream);

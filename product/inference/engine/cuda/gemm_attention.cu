@@ -117,6 +117,180 @@ __global__ void ragged_softmax_bf16_kernel(__nv_bfloat16* scores, const int* pos
   }
 }
 
+__global__ void ragged_softmax_quantize_scaled_probabilities_int8_row_kernel(
+    const __nv_bfloat16* scores, const float* value_scales,
+    std::int8_t* quantized_probabilities, float* probability_scales,
+    const int* positions, int kv_heads, int query_group, int width,
+    int cache_capacity) {
+  __shared__ float warp_maxima[32];
+  __shared__ float warp_sums[32];
+  const int score_row = static_cast<int>(blockIdx.x);
+  const int request = score_row / (kv_heads * query_group);
+  const int compact_head = score_row / query_group;
+  const int valid = min(positions[request] + 1, cache_capacity);
+  const auto* row_scores = scores + static_cast<std::uint64_t>(score_row) * width;
+  const auto* row_value_scales =
+      value_scales + static_cast<std::uint64_t>(compact_head) * cache_capacity;
+  auto* row_output = quantized_probabilities +
+      static_cast<std::uint64_t>(score_row) * width;
+
+  float maximum = -CUDART_INF_F;
+  for (int token = static_cast<int>(threadIdx.x); token < valid;
+       token += static_cast<int>(blockDim.x)) {
+    maximum = max(maximum, __bfloat162float(row_scores[token]));
+  }
+  maximum = warp_max(maximum);
+  if ((threadIdx.x & 31U) == 0U) warp_maxima[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  maximum = threadIdx.x < (blockDim.x + 31U) / 32U
+      ? warp_maxima[threadIdx.x] : -CUDART_INF_F;
+  if (threadIdx.x < 32U) maximum = warp_max(maximum);
+  if (threadIdx.x == 0U) warp_maxima[0] = maximum;
+  __syncthreads();
+  maximum = warp_maxima[0];
+
+  float sum = 0.0F;
+  float scaled_maximum = 0.0F;
+  for (int token = static_cast<int>(threadIdx.x); token < valid;
+       token += static_cast<int>(blockDim.x)) {
+    const float exponential = expf(__bfloat162float(row_scores[token]) - maximum);
+    sum += exponential;
+    scaled_maximum = max(scaled_maximum, exponential * row_value_scales[token]);
+  }
+  sum = warp_sum(sum);
+  scaled_maximum = warp_max(scaled_maximum);
+  if ((threadIdx.x & 31U) == 0U) {
+    const int warp = threadIdx.x >> 5U;
+    warp_sums[warp] = sum;
+    warp_maxima[warp] = scaled_maximum;
+  }
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    const bool active_warp = threadIdx.x < (blockDim.x + 31U) / 32U;
+    sum = active_warp ? warp_sums[threadIdx.x] : 0.0F;
+    scaled_maximum = active_warp ? warp_maxima[threadIdx.x] : 0.0F;
+    sum = warp_sum(sum);
+    scaled_maximum = warp_max(scaled_maximum);
+    if (threadIdx.x == 0U) {
+      warp_sums[0] = sum;
+      warp_maxima[0] = scaled_maximum;
+      probability_scales[score_row] =
+          scaled_maximum == 0.0F ? 1.0F : scaled_maximum / (sum * 127.0F);
+    }
+  }
+  __syncthreads();
+  scaled_maximum = warp_maxima[0];
+  const float quantization_scale =
+      scaled_maximum == 0.0F ? 0.0F : 127.0F / scaled_maximum;
+  for (int token = static_cast<int>(threadIdx.x); token < width;
+       token += static_cast<int>(blockDim.x)) {
+    if (token < valid) {
+      const float exponential = expf(__bfloat162float(row_scores[token]) - maximum);
+      row_output[token] = static_cast<std::int8_t>(max(
+          0, min(127, __float2int_rn(
+              exponential * row_value_scales[token] * quantization_scale))));
+    } else {
+      row_output[token] = 0;
+    }
+  }
+}
+
+__global__ void ragged_softmax_quantize_scaled_probabilities_int8_block128_kernel(
+    const __nv_bfloat16* scores, const float* value_scales,
+    std::int8_t* quantized_probabilities, float* probability_scales,
+    const int* positions, int kv_heads, int query_group, int width,
+    int cache_capacity, int head_batches) {
+  constexpr int value_blocks = 4;
+  __shared__ float warp_maxima[value_blocks][8];
+  __shared__ float warp_sums[8];
+  const int score_row = static_cast<int>(blockIdx.x);
+  const int request = score_row / (kv_heads * query_group);
+  const int compact_head = score_row / query_group;
+  const int valid = min(positions[request] + 1, cache_capacity);
+  const auto* row_scores = scores + static_cast<std::uint64_t>(score_row) * width;
+  const auto* row_value_scales = value_scales +
+      static_cast<std::uint64_t>(compact_head) * cache_capacity * value_blocks;
+
+  float score_maximum = -CUDART_INF_F;
+  for (int token = static_cast<int>(threadIdx.x); token < valid;
+       token += static_cast<int>(blockDim.x)) {
+    score_maximum = max(score_maximum, __bfloat162float(row_scores[token]));
+  }
+  score_maximum = warp_max(score_maximum);
+  if ((threadIdx.x & 31U) == 0U) {
+    warp_maxima[0][threadIdx.x >> 5U] = score_maximum;
+  }
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    score_maximum = threadIdx.x < 8U ? warp_maxima[0][threadIdx.x] : -CUDART_INF_F;
+    score_maximum = warp_max(score_maximum);
+    if (threadIdx.x == 0U) warp_maxima[0][0] = score_maximum;
+  }
+  __syncthreads();
+  score_maximum = warp_maxima[0][0];
+
+  float sum = 0.0F;
+  float scaled_maxima[value_blocks] = {0.0F, 0.0F, 0.0F, 0.0F};
+  for (int token = static_cast<int>(threadIdx.x); token < valid;
+       token += static_cast<int>(blockDim.x)) {
+    const float exponential = expf(__bfloat162float(row_scores[token]) - score_maximum);
+    sum += exponential;
+    #pragma unroll
+    for (int block = 0; block < value_blocks; ++block) {
+      scaled_maxima[block] = max(
+          scaled_maxima[block], exponential * row_value_scales[token * value_blocks + block]);
+    }
+  }
+  sum = warp_sum(sum);
+  #pragma unroll
+  for (int block = 0; block < value_blocks; ++block) {
+    scaled_maxima[block] = warp_max(scaled_maxima[block]);
+  }
+  if ((threadIdx.x & 31U) == 0U) {
+    const int warp = threadIdx.x >> 5U;
+    warp_sums[warp] = sum;
+    #pragma unroll
+    for (int block = 0; block < value_blocks; ++block) {
+      warp_maxima[block][warp] = scaled_maxima[block];
+    }
+  }
+  __syncthreads();
+  if (threadIdx.x < 32U) {
+    sum = threadIdx.x < 8U ? warp_sums[threadIdx.x] : 0.0F;
+    sum = warp_sum(sum);
+    #pragma unroll
+    for (int block = 0; block < value_blocks; ++block) {
+      scaled_maxima[block] = threadIdx.x < 8U
+          ? warp_maxima[block][threadIdx.x] : 0.0F;
+      scaled_maxima[block] = warp_max(scaled_maxima[block]);
+      if (threadIdx.x == 0U) {
+        warp_maxima[block][0] = scaled_maxima[block];
+        probability_scales[
+            (static_cast<std::uint64_t>(block) * head_batches * query_group) + score_row] =
+            scaled_maxima[block] == 0.0F
+                ? 1.0F : scaled_maxima[block] / (sum * 127.0F);
+      }
+    }
+  }
+  __syncthreads();
+  for (int token = static_cast<int>(threadIdx.x); token < width;
+       token += static_cast<int>(blockDim.x)) {
+    const float exponential = token < valid
+        ? expf(__bfloat162float(row_scores[token]) - score_maximum) : 0.0F;
+    #pragma unroll
+    for (int block = 0; block < value_blocks; ++block) {
+      const float scaled_maximum = warp_maxima[block][0];
+      const float inverse_scale = scaled_maximum == 0.0F ? 0.0F : 127.0F / scaled_maximum;
+      const std::uint64_t output_row =
+          static_cast<std::uint64_t>(block) * head_batches * query_group + score_row;
+      quantized_probabilities[output_row * width + token] =
+          static_cast<std::int8_t>(max(0, min(127, __float2int_rn(
+              exponential * row_value_scales[token * value_blocks + block] *
+              inverse_scale))));
+    }
+  }
+}
+
 __global__ void scaled_int32_ragged_softmax_bf16_kernel(
     const std::int32_t* scores, __nv_bfloat16* probabilities, const float* key_scales,
     const float* query_scales, const int* positions, int kv_heads, int query_group,
@@ -171,6 +345,125 @@ __global__ void scaled_int32_ragged_softmax_bf16_kernel(
   }
 }
 
+__global__ void quantize_scaled_probabilities_int8_block128_kernel(
+    const __nv_bfloat16* probabilities, const float* value_scales,
+    std::int8_t* quantized_probabilities, float* probability_scales,
+    int head_batches, int query_group, int context_length, int cache_capacity) {
+  constexpr int value_blocks = 4;
+  __shared__ float warp_values[32];
+  const int output_row = static_cast<int>(blockIdx.x);
+  const int query = output_row % query_group;
+  const int head_block = output_row / query_group;
+  const int head = head_block % head_batches;
+  const int value_block = head_block / head_batches;
+  const auto* row_probabilities = probabilities +
+      (static_cast<std::uint64_t>(head) * query_group + query) * context_length;
+  const auto* row_value_scales = value_scales +
+      static_cast<std::uint64_t>(head) * cache_capacity * value_blocks + value_block;
+  float maximum = 0.0F;
+  for (int token = static_cast<int>(threadIdx.x); token < context_length;
+       token += static_cast<int>(blockDim.x)) {
+    maximum = max(maximum, __bfloat162float(row_probabilities[token]) *
+                               row_value_scales[token * value_blocks]);
+  }
+  maximum = warp_max(maximum);
+  if ((threadIdx.x & 31U) == 0U) warp_values[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  maximum = threadIdx.x < (blockDim.x + 31U) / 32U
+      ? warp_values[threadIdx.x] : 0.0F;
+  if (threadIdx.x < 32U) maximum = warp_max(maximum);
+  if (threadIdx.x == 0U) warp_values[0] = maximum;
+  __syncthreads();
+  maximum = warp_values[0];
+  const float scale = maximum == 0.0F ? 1.0F : maximum / 127.0F;
+  if (threadIdx.x == 0U) probability_scales[output_row] = scale;
+  const float inverse_scale = 1.0F / scale;
+  auto* row_output = quantized_probabilities +
+      static_cast<std::uint64_t>(output_row) * context_length;
+  for (int token = static_cast<int>(threadIdx.x); token < context_length;
+       token += static_cast<int>(blockDim.x)) {
+    const float scaled_probability =
+        __bfloat162float(row_probabilities[token]) * row_value_scales[token * value_blocks];
+    row_output[token] = static_cast<std::int8_t>(max(
+        0, min(127, __float2int_rn(scaled_probability * inverse_scale))));
+  }
+}
+
+__global__ void scale_int32_pv_output_bf16_kernel(
+    const std::int32_t* source, const float* scales, __nv_bfloat16* output,
+    int head_batches, int query_group) {
+  constexpr int dimension = 512;
+  constexpr int block_width = 128;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  const std::uint64_t elements =
+      static_cast<std::uint64_t>(head_batches) * query_group * dimension;
+  if (index >= elements) return;
+  const int component = static_cast<int>(index % dimension);
+  const int query = static_cast<int>((index / dimension) % query_group);
+  const int head = static_cast<int>(index / (dimension * query_group));
+  const int value_block = component / block_width;
+  const int block_component = component - value_block * block_width;
+  const std::uint64_t source_row =
+      (static_cast<std::uint64_t>(value_block) * head_batches + head) * query_group + query;
+  output[index] = __float2bfloat16_rn(
+      static_cast<float>(source[source_row * block_width + block_component]) *
+      scales[source_row]);
+}
+
+__global__ void quantize_scaled_probabilities_int8_row_kernel(
+    const __nv_bfloat16* probabilities, const float* value_scales,
+    std::int8_t* quantized_probabilities, float* probability_scales,
+    int head_batches, int query_group, int context_length, int cache_capacity) {
+  __shared__ float warp_values[32];
+  const int output_row = static_cast<int>(blockIdx.x);
+  const int query = output_row % query_group;
+  const int head = output_row / query_group;
+  const auto* row_probabilities = probabilities +
+      (static_cast<std::uint64_t>(head) * query_group + query) * context_length;
+  const auto* row_value_scales =
+      value_scales + static_cast<std::uint64_t>(head) * cache_capacity;
+  float maximum = 0.0F;
+  for (int token = static_cast<int>(threadIdx.x); token < context_length;
+       token += static_cast<int>(blockDim.x)) {
+    maximum = max(maximum,
+                  __bfloat162float(row_probabilities[token]) * row_value_scales[token]);
+  }
+  maximum = warp_max(maximum);
+  if ((threadIdx.x & 31U) == 0U) warp_values[threadIdx.x >> 5U] = maximum;
+  __syncthreads();
+  maximum = threadIdx.x < (blockDim.x + 31U) / 32U
+      ? warp_values[threadIdx.x] : 0.0F;
+  if (threadIdx.x < 32U) maximum = warp_max(maximum);
+  if (threadIdx.x == 0U) warp_values[0] = maximum;
+  __syncthreads();
+  maximum = warp_values[0];
+  const float scale = maximum == 0.0F ? 1.0F : maximum / 127.0F;
+  if (threadIdx.x == 0U) probability_scales[output_row] = scale;
+  const float inverse_scale = 1.0F / scale;
+  auto* row_output = quantized_probabilities +
+      static_cast<std::uint64_t>(output_row) * context_length;
+  for (int token = static_cast<int>(threadIdx.x); token < context_length;
+       token += static_cast<int>(blockDim.x)) {
+    const float scaled_probability =
+        __bfloat162float(row_probabilities[token]) * row_value_scales[token];
+    row_output[token] = static_cast<std::int8_t>(max(
+        0, min(127, __float2int_rn(scaled_probability * inverse_scale))));
+  }
+}
+
+__global__ void scale_int32_pv_row_output_bf16_kernel(
+    const std::int32_t* source, const float* scales, __nv_bfloat16* output,
+    std::uint64_t elements, int query_group) {
+  constexpr int dimension = 512;
+  const std::uint64_t index =
+      static_cast<std::uint64_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+  if (index >= elements) return;
+  const std::uint64_t output_row = index / dimension;
+  output[index] = __float2bfloat16_rn(
+      static_cast<float>(source[index]) * scales[output_row]);
+}
+
 __global__ void ragged_pointer_kernel(
     const __nv_bfloat16* query, const __nv_bfloat16* key_cache,
     const __nv_bfloat16* value_cache, __nv_bfloat16* scores, __nv_bfloat16* output,
@@ -220,6 +513,9 @@ struct GemmGroupedDecodeAttention::Implementation {
   void* int8_scores{nullptr};
   void* int8_queries{nullptr};
   float* int8_query_scales{nullptr};
+  void* int8_scaled_probabilities{nullptr};
+  float* int8_probability_scales{nullptr};
+  void* int8_pv_accumulators{nullptr};
   void* pointers{nullptr};
   void* lt_workspace{nullptr};
   float* fp8_key_scale{nullptr};
@@ -230,6 +526,7 @@ struct GemmGroupedDecodeAttention::Implementation {
   int maximum_query_group;
   static constexpr std::size_t lt_workspace_bytes = 32ULL * 1024 * 1024;
   static constexpr int maximum_fp8_pv_segments = 32;
+  static constexpr int maximum_int8_pv_segments = 32;
   std::map<std::tuple<int, int, int, int, int, int>, std::unique_ptr<Fp8QkPlan>> fp8_plans;
 
   Implementation(int batch, int kv_heads, int query_group, int context)
@@ -249,6 +546,9 @@ struct GemmGroupedDecodeAttention::Implementation {
   }
   ~Implementation() {
     fp8_plans.clear();
+    if (int8_pv_accumulators != nullptr) cudaFree(int8_pv_accumulators);
+    if (int8_probability_scales != nullptr) cudaFree(int8_probability_scales);
+    if (int8_scaled_probabilities != nullptr) cudaFree(int8_scaled_probabilities);
     if (int8_query_scales != nullptr) cudaFree(int8_query_scales);
     if (int8_queries != nullptr) cudaFree(int8_queries);
     if (int8_scores != nullptr) cudaFree(int8_scores);
@@ -300,8 +600,19 @@ struct GemmGroupedDecodeAttention::Implementation {
                           static_cast<std::size_t>(maximum_query_rows * 512ULL)),
                "allocate INT8 query workspace");
     cuda_check(cudaMalloc(&int8_query_scales,
-                          static_cast<std::size_t>(maximum_query_rows * sizeof(float))),
+                          static_cast<std::size_t>(maximum_query_rows * 4ULL * sizeof(float))),
                "allocate INT8 query scales");
+    cuda_check(cudaMalloc(&int8_scaled_probabilities,
+                          static_cast<std::size_t>(maximum_score_elements * 4ULL)),
+               "allocate INT8 scaled probability workspace");
+    cuda_check(cudaMalloc(&int8_probability_scales,
+                          static_cast<std::size_t>(maximum_query_rows * 4ULL * sizeof(float))),
+               "allocate INT8 probability scales");
+    cuda_check(cudaMalloc(&int8_pv_accumulators,
+                          static_cast<std::size_t>(maximum_query_rows * 512ULL *
+                                                   maximum_int8_pv_segments *
+                                                   sizeof(std::int32_t))),
+               "allocate INT8 PV accumulator workspace");
   }
 
   Fp8QkPlan& fp8_plan(int batch, int kv_heads, int query_group, int context,
@@ -732,6 +1043,147 @@ void GemmGroupedDecodeAttention::run_ragged_contiguous_int8_keys(
       &beta, output, CUDA_R_16BF, head_dimension, query_stride, head_batches,
       CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
       "INT8-key contiguous ragged PV GEMM");
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous_int8_block128_keys(
+    const void* query, const void* int8_key_cache, const float* key_scales,
+    const void* value_cache, void* output, const int* positions, int batch,
+    int kv_heads, int query_group, int maximum_context_length, int head_dimension,
+    int first_slot, cudaStream_t stream, int cache_capacity, int tiles_per_block) {
+  const int head_batches = batch * kv_heads;
+  int selected_tiles = tiles_per_block;
+  if (selected_tiles == 0) {
+    selected_tiles = head_batches <= 4 ? 1 : head_batches <= 16 ? 2 :
+                     head_batches <= 32 ? 4 : 8;
+    while (selected_tiles > 1 &&
+           (maximum_context_length / 64) % selected_tiles != 0) {
+      selected_tiles /= 2;
+    }
+  }
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (query == nullptr || int8_key_cache == nullptr || key_scales == nullptr ||
+      value_cache == nullptr || output == nullptr || positions == nullptr || batch <= 0 ||
+      kv_heads <= 0 || query_group != 8 || first_slot < 0 ||
+      first_slot + batch > implementation_->maximum_batch || maximum_context_length <= 0 ||
+      maximum_context_length > cache_capacity || maximum_context_length % 64 != 0 ||
+      selected_tiles <= 0 || selected_tiles > 32 ||
+      (maximum_context_length / 64) % selected_tiles != 0 ||
+      head_dimension != 512 || batch * kv_heads > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error(
+        "INT8 block-128 contiguous ragged attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  state.ensure_int8_resources();
+  cublas_check(cublasSetStream(state.handle, stream),
+               "set INT8 block-128 attention stream");
+  const int query_rows = head_batches * query_group;
+  quantize_bf16_blocks_symmetric_int8(
+      query, state.int8_queries, state.int8_query_scales,
+      query_rows, head_dimension, 128, stream);
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto scale_offset =
+      static_cast<std::uint64_t>(first_slot) * kv_heads * cache_capacity * 4ULL;
+  const auto* contiguous_keys = static_cast<const std::int8_t*>(int8_key_cache) + cache_offset;
+  const auto* contiguous_key_scales = key_scales + scale_offset;
+  grouped_global_qk_wgmma_int8_block128(
+      state.int8_queries, state.int8_query_scales, contiguous_keys,
+      contiguous_key_scales, state.scores, batch, kv_heads, query_group,
+      maximum_context_length, head_dimension, cache_capacity, stream, selected_tiles);
+  ragged_softmax_bf16_kernel<<<query_rows, 256, 0, stream>>>(
+      static_cast<__nv_bfloat16*>(state.scores), positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity);
+  cuda_check(cudaPeekAtLastError(), "launch INT8 block-128 ragged softmax");
+  constexpr float alpha = 1.0F;
+  constexpr float beta = 0.0F;
+  const long long cache_stride = static_cast<long long>(cache_capacity) * head_dimension;
+  const long long query_stride = static_cast<long long>(query_group) * head_dimension;
+  const long long score_stride = static_cast<long long>(query_group) * maximum_context_length;
+  const auto* contiguous_values = static_cast<const __nv_bfloat16*>(value_cache) + cache_offset;
+  cublas_check(cublasGemmStridedBatchedEx(
+      state.handle, CUBLAS_OP_N, CUBLAS_OP_N, head_dimension, query_group,
+      maximum_context_length, &alpha, contiguous_values, CUDA_R_16BF, head_dimension,
+      cache_stride, state.scores, CUDA_R_16BF, maximum_context_length, score_stride,
+      &beta, output, CUDA_R_16BF, head_dimension, query_stride, head_batches,
+      CUBLAS_COMPUTE_32F, CUBLAS_GEMM_DEFAULT_TENSOR_OP),
+      "INT8 block-128 contiguous ragged PV GEMM");
+}
+
+void GemmGroupedDecodeAttention::run_ragged_contiguous_int8_block128_kv(
+    const void* query, const void* int8_key_cache, const float* key_scales,
+    const void* int8_value_cache, const float* value_scales, void* output,
+    const int* positions, int batch, int kv_heads, int query_group,
+    int maximum_context_length, int head_dimension, int first_slot,
+    cudaStream_t stream, int cache_capacity, int tiles_per_block) {
+  const int head_batches = batch * kv_heads;
+  int selected_tiles = tiles_per_block;
+  if (selected_tiles == 0) {
+    selected_tiles = head_batches <= 4 ? 1 : head_batches <= 16 ? 2 :
+                     head_batches <= 32 ? 4 : 8;
+    while (selected_tiles > 1 &&
+           (maximum_context_length / 64) % selected_tiles != 0) {
+      selected_tiles /= 2;
+    }
+  }
+  const std::uint64_t score_elements = static_cast<std::uint64_t>(batch) * kv_heads *
+                                       query_group * maximum_context_length;
+  if (query == nullptr || int8_key_cache == nullptr || key_scales == nullptr ||
+      int8_value_cache == nullptr || value_scales == nullptr || output == nullptr ||
+      positions == nullptr || batch <= 0 || kv_heads <= 0 || query_group != 8 ||
+      first_slot < 0 || first_slot + batch > implementation_->maximum_batch ||
+      maximum_context_length <= 0 || maximum_context_length > cache_capacity ||
+      maximum_context_length % 64 != 0 || selected_tiles <= 0 || selected_tiles > 32 ||
+      (maximum_context_length / 64) % selected_tiles != 0 || head_dimension != 512 ||
+      head_batches > implementation_->maximum_head_batches ||
+      score_elements > implementation_->maximum_score_elements) {
+    throw std::runtime_error(
+        "INT8 block-128 contiguous ragged KV attention shape exceeds workspace");
+  }
+  auto& state = *implementation_;
+  state.ensure_int8_resources();
+  cublas_check(cublasSetStream(state.handle, stream),
+               "set INT8 block-128 KV attention stream");
+  const int query_rows = head_batches * query_group;
+  quantize_bf16_blocks_symmetric_int8(
+      query, state.int8_queries, state.int8_query_scales,
+      query_rows, head_dimension, 128, stream);
+  const auto cache_offset = static_cast<std::uint64_t>(first_slot) * kv_heads *
+                            cache_capacity * head_dimension;
+  const auto scale_offset =
+      static_cast<std::uint64_t>(first_slot) * kv_heads * cache_capacity * 4ULL;
+  const auto* contiguous_keys =
+      static_cast<const std::int8_t*>(int8_key_cache) + cache_offset;
+  const auto* contiguous_key_scales = key_scales + scale_offset;
+  grouped_global_qk_wgmma_int8_block128(
+      state.int8_queries, state.int8_query_scales, contiguous_keys,
+      contiguous_key_scales, state.scores, batch, kv_heads, query_group,
+      maximum_context_length, head_dimension, cache_capacity, stream, selected_tiles);
+  const auto* contiguous_values =
+      static_cast<const std::int8_t*>(int8_value_cache) + cache_offset;
+  const auto value_scale_offset =
+      static_cast<std::uint64_t>(first_slot) * kv_heads * cache_capacity * 4ULL;
+  const auto* contiguous_value_scales = value_scales + value_scale_offset;
+  ragged_softmax_quantize_scaled_probabilities_int8_block128_kernel
+      <<<query_rows, 256, 0, stream>>>(
+      static_cast<const __nv_bfloat16*>(state.scores), contiguous_value_scales,
+      static_cast<std::int8_t*>(state.int8_scaled_probabilities),
+      state.int8_probability_scales, positions, kv_heads, query_group,
+      maximum_context_length, cache_capacity, head_batches);
+  cuda_check(cudaPeekAtLastError(), "launch fused block-128 INT8 softmax quantization");
+  int pv_segments = 1;
+  const int context_tiles = maximum_context_length / 64;
+  while (pv_segments < Implementation::maximum_int8_pv_segments &&
+         context_tiles % (pv_segments * 2) == 0 &&
+         head_batches * pv_segments < 512) {
+    pv_segments *= 2;
+  }
+  grouped_global_pv_wgmma_int8_rs(
+      contiguous_values, state.int8_scaled_probabilities,
+      state.int8_probability_scales, state.int8_pv_accumulators, output,
+      batch, kv_heads, query_group, maximum_context_length, head_dimension,
+      cache_capacity, pv_segments, stream);
 }
 
 }  // namespace gradiated::engine

@@ -61,6 +61,18 @@ class GemmGroupedDecodeAttention {
       const void* value_cache, void* output, const int* positions, int batch,
       int kv_heads, int query_group, int maximum_context_length, int head_dimension,
       int first_slot, cudaStream_t stream, int cache_capacity);
+  void run_ragged_contiguous_int8_block128_keys(
+      const void* query, const void* int8_key_cache, const float* key_scales,
+      const void* value_cache, void* output, const int* positions, int batch,
+      int kv_heads, int query_group, int maximum_context_length, int head_dimension,
+      int first_slot, cudaStream_t stream, int cache_capacity,
+      int tiles_per_block = 1);
+  void run_ragged_contiguous_int8_block128_kv(
+      const void* query, const void* int8_key_cache, const float* key_scales,
+      const void* int8_value_cache, const float* value_scales, void* output,
+      const int* positions, int batch, int kv_heads, int query_group,
+      int maximum_context_length, int head_dimension, int first_slot,
+      cudaStream_t stream, int cache_capacity, int tiles_per_block = 0);
 
  private:
   struct Implementation;

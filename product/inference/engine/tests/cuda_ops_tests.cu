@@ -318,13 +318,13 @@ void test_shared_global_kv_roundtrip() {
   baseline.run_decode_ragged(
       device_packed.get(), device_norm.get(), device_norm.get(), baseline_queries.get(),
       baseline_keys.get(), baseline_values.get(), device_positions.get(), device_slots.get(),
-      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity, 1e-6F,
-      nullptr);
+      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity,
+      nullptr, nullptr, 1e-6F, nullptr);
   candidate.run_decode_ragged(
       device_packed.get(), device_norm.get(), device_norm.get(), candidate_queries.get(),
       candidate_keys.get(), candidate_values.get(), device_positions.get(), device_slots.get(),
-      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity, 1e-6F,
-      nullptr);
+      maximum_slots, maximum_slots, query_heads, kv_heads, dimension, true, capacity,
+      nullptr, nullptr, 1e-6F, nullptr);
   require_identical(ragged_cache_elements,
                     static_cast<std::size_t>(maximum_slots) * query_heads * dimension,
                     "ragged shared global KV roundtrip");
@@ -637,6 +637,125 @@ void test_materialized_int8_global_k_cache_writes() {
   }
 }
 
+void test_fused_int8_global_k_cache_write() {
+  constexpr int batch = 3;
+  constexpr int maximum_slots = 3;
+  constexpr int query_heads = 32;
+  constexpr int kv_heads = 4;
+  constexpr int dimension = 512;
+  constexpr int capacity = 64;
+  constexpr int query_width = query_heads * dimension;
+  constexpr int packed_width = query_width + kv_heads * dimension;
+  constexpr std::size_t packed_elements = static_cast<std::size_t>(batch) * packed_width;
+  constexpr std::size_t query_elements =
+      static_cast<std::size_t>(batch) * query_heads * dimension;
+  constexpr std::size_t cache_elements =
+      static_cast<std::size_t>(maximum_slots) * kv_heads * capacity * dimension;
+  constexpr std::size_t scale_elements =
+      static_cast<std::size_t>(maximum_slots) * kv_heads * capacity * 4;
+  std::vector<__nv_bfloat16> packed(packed_elements), norm(dimension);
+  for (std::size_t index = 0; index < packed.size(); ++index) {
+    packed[index] = __float2bfloat16_rn(
+        0.7F * std::sin(static_cast<float>(index) * 0.0019F) +
+        0.3F * std::cos(static_cast<float>(index) * 0.0047F));
+  }
+  for (int index = 0; index < dimension; ++index) {
+    norm[static_cast<std::size_t>(index)] = __float2bfloat16_rn(
+        0.06F + 0.012F * std::sin(static_cast<float>(index) * 0.021F));
+  }
+  const std::array<int, batch> positions{3, 17, 42};
+  const std::array<int, batch> slots{2, 0, 1};
+  DeviceAllocation<__nv_bfloat16> device_packed(packed_elements), device_norm(dimension),
+      baseline_queries(query_elements), fused_queries(query_elements),
+      baseline_keys(cache_elements), fused_keys(cache_elements),
+      baseline_values(cache_elements), fused_values(cache_elements);
+  DeviceAllocation<std::int8_t> baseline_int8(cache_elements), fused_int8(cache_elements);
+  DeviceAllocation<float> baseline_scales(scale_elements), fused_scales(scale_elements);
+  DeviceAllocation<int> device_positions(batch), device_slots(batch);
+  cuda_check(cudaMemcpy(device_packed.get(), packed.data(), packed.size() * sizeof(packed[0]),
+                        cudaMemcpyHostToDevice), "copy fused INT8 QKV input");
+  cuda_check(cudaMemcpy(device_norm.get(), norm.data(), norm.size() * sizeof(norm[0]),
+                        cudaMemcpyHostToDevice), "copy fused INT8 QKV norm");
+  cuda_check(cudaMemcpy(device_positions.get(), positions.data(), sizeof(positions),
+                        cudaMemcpyHostToDevice), "copy fused INT8 positions");
+  cuda_check(cudaMemcpy(device_slots.get(), slots.data(), sizeof(slots),
+                        cudaMemcpyHostToDevice), "copy fused INT8 slots");
+  for (auto* pointer : {baseline_keys.get(), fused_keys.get(), baseline_values.get(),
+                        fused_values.get()}) {
+    cuda_check(cudaMemset(pointer, 0, cache_elements * sizeof(__nv_bfloat16)),
+               "zero fused INT8 BF16 cache");
+  }
+  cuda_check(cudaMemset(baseline_int8.get(), 0, cache_elements),
+             "zero baseline fused INT8 cache");
+  cuda_check(cudaMemset(fused_int8.get(), 0, cache_elements),
+             "zero candidate fused INT8 cache");
+  cuda_check(cudaMemset(baseline_scales.get(), 0, scale_elements * sizeof(float)),
+             "zero baseline fused INT8 scales");
+  cuda_check(cudaMemset(fused_scales.get(), 0, scale_elements * sizeof(float)),
+             "zero candidate fused INT8 scales");
+  unsetenv("GRADIATED_SHARED_GLOBAL_KV_ROUNDTRIP");
+  gradiated::engine::Gemma4QkvPostprocessor baseline(capacity), fused(capacity);
+  baseline.run_decode_ragged(
+      device_packed.get(), device_norm.get(), device_norm.get(), baseline_queries.get(),
+      baseline_keys.get(), baseline_values.get(), device_positions.get(), device_slots.get(),
+      batch, maximum_slots, query_heads, kv_heads, dimension, true, capacity,
+      nullptr, nullptr, 1e-6F, nullptr);
+  gradiated::engine::quantize_global_decode_k_int8_block128(
+      baseline_keys.get(), baseline_int8.get(), baseline_scales.get(),
+      device_positions.get(), device_slots.get(), batch, maximum_slots, kv_heads,
+      dimension, capacity, nullptr);
+  fused.run_decode_ragged(
+      device_packed.get(), device_norm.get(), device_norm.get(), fused_queries.get(),
+      fused_keys.get(), fused_values.get(), device_positions.get(), device_slots.get(),
+      batch, maximum_slots, query_heads, kv_heads, dimension, true, capacity,
+      fused_int8.get(), fused_scales.get(), 1e-6F, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize fused INT8 QKV cache write");
+
+  std::vector<__nv_bfloat16> baseline_bf16(cache_elements), fused_bf16(cache_elements);
+  const auto require_bf16_equal = [&](const __nv_bfloat16* left, const __nv_bfloat16* right,
+                                      const char* operation) {
+    cuda_check(cudaMemcpy(baseline_bf16.data(), left,
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy baseline fused INT8 BF16");
+    cuda_check(cudaMemcpy(fused_bf16.data(), right,
+                          cache_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+               "copy candidate fused INT8 BF16");
+    if (baseline_bf16 != fused_bf16) throw std::runtime_error(operation);
+  };
+  require_bf16_equal(baseline_keys.get(), fused_keys.get(),
+                     "fused INT8 QKV changed BF16 keys");
+  require_bf16_equal(baseline_values.get(), fused_values.get(),
+                     "fused INT8 QKV changed BF16 values");
+  std::vector<__nv_bfloat16> baseline_query_values(query_elements),
+      fused_query_values(query_elements);
+  cuda_check(cudaMemcpy(baseline_query_values.data(), baseline_queries.get(),
+                        query_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+             "copy baseline fused INT8 queries");
+  cuda_check(cudaMemcpy(fused_query_values.data(), fused_queries.get(),
+                        query_elements * sizeof(__nv_bfloat16), cudaMemcpyDeviceToHost),
+             "copy candidate fused INT8 queries");
+  if (baseline_query_values != fused_query_values) {
+    throw std::runtime_error("fused INT8 QKV changed queries");
+  }
+  std::vector<std::int8_t> baseline_int8_values(cache_elements),
+      fused_int8_values(cache_elements);
+  std::vector<float> baseline_scale_values(scale_elements), fused_scale_values(scale_elements);
+  cuda_check(cudaMemcpy(baseline_int8_values.data(), baseline_int8.get(), cache_elements,
+                        cudaMemcpyDeviceToHost), "copy baseline fused INT8 values");
+  cuda_check(cudaMemcpy(fused_int8_values.data(), fused_int8.get(), cache_elements,
+                        cudaMemcpyDeviceToHost), "copy candidate fused INT8 values");
+  cuda_check(cudaMemcpy(baseline_scale_values.data(), baseline_scales.get(),
+                        scale_elements * sizeof(float), cudaMemcpyDeviceToHost),
+             "copy baseline fused INT8 scales");
+  cuda_check(cudaMemcpy(fused_scale_values.data(), fused_scales.get(),
+                        scale_elements * sizeof(float), cudaMemcpyDeviceToHost),
+             "copy candidate fused INT8 scales");
+  if (baseline_int8_values != fused_int8_values ||
+      baseline_scale_values != fused_scale_values) {
+    throw std::runtime_error("fused INT8 QKV differs from standalone quantization");
+  }
+}
+
 void test_packed_int8_global_v_cache_writes() {
   constexpr int maximum_slots = 3;
   constexpr int heads = 2;
@@ -896,6 +1015,7 @@ int main() {
     test_prefill_layouts();
     test_int8_kv_quality_oracle();
     test_materialized_int8_global_k_cache_writes();
+    test_fused_int8_global_k_cache_write();
     test_packed_int8_global_v_cache_writes();
     test_batched_argmax();
     test_uniform_ring_attention<4>();

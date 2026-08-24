@@ -448,6 +448,17 @@ void Gemma4LayerRunner::run_decode_ragged(
       (layer.key_equals_value ? 1 : 2);
   const std::string prefix = "layer." + std::to_string(layer_index) + ".";
   const auto weight = [&](const char* suffix) { return state.weights.at(prefix + suffix); };
+  const bool use_int8_key_cache = int8_key_cache != nullptr;
+  if (use_int8_key_cache) {
+    if (layer.attention != AttentionKind::global || int8_key_scales == nullptr) {
+      throw std::runtime_error("INT8 K cache supplied with an invalid layer or scale arena");
+    }
+    if (fp8_key_cache != nullptr) {
+      throw std::runtime_error("INT8 and FP8 global K caches cannot be combined");
+    }
+  } else if (int8_value_cache != nullptr || int8_value_scales != nullptr) {
+    throw std::runtime_error("INT8 V cache requires the materialized INT8 K cache");
+  }
   rms_norm_bf16(hidden_states, weight("input_norm"), state.normalized.get(), batch, state.hidden,
                 state.epsilon, stream);
   state.run_decode_linear(state.uses_fp8_qkv(layer_index), state.normalized.get(),
@@ -456,7 +467,9 @@ void Gemma4LayerRunner::run_decode_ragged(
   state.qkv_postprocessor.run_decode_ragged(
       state.packed_qkv.get(), weight("q_norm"), weight("k_norm"), state.queries.get(),
       key_cache, value_cache, positions, slots, batch, maximum_slots, query_heads, kv_heads,
-      head_dimension, layer.key_equals_value, cache_capacity, state.epsilon, stream);
+      head_dimension, layer.key_equals_value, cache_capacity,
+      use_int8_key_cache ? int8_key_cache : nullptr,
+      use_int8_key_cache ? int8_key_scales : nullptr, state.epsilon, stream);
   if (int8_global_k_oracle || int8_global_v_oracle) {
     if (layer.attention != AttentionKind::global) {
       throw std::runtime_error("INT8 KV quality oracle is only valid for global attention");
@@ -466,17 +479,7 @@ void Gemma4LayerRunner::run_decode_ragged(
         kv_heads, head_dimension, cache_capacity, stream,
         int8_global_k_oracle, int8_global_v_oracle, int8_oracle_block_width);
   }
-  const bool use_int8_key_cache = int8_key_cache != nullptr;
   if (use_int8_key_cache) {
-    if (layer.attention != AttentionKind::global || int8_key_scales == nullptr) {
-      throw std::runtime_error("INT8 K cache supplied with an invalid layer or scale arena");
-    }
-    if (fp8_key_cache != nullptr) {
-      throw std::runtime_error("INT8 and FP8 global K caches cannot be combined");
-    }
-    quantize_global_decode_k_int8_block128(
-        key_cache, int8_key_cache, int8_key_scales, positions, slots, batch,
-        maximum_slots, kv_heads, head_dimension, cache_capacity, stream);
     if (int8_value_cache != nullptr) {
       if (int8_value_scales == nullptr) {
         throw std::runtime_error("INT8 V cache supplied without a scale arena");

@@ -230,7 +230,8 @@ __global__ void ragged_key_value_kernel(
     const __nv_bfloat16* cosine, const __nv_bfloat16* sine,
     __nv_bfloat16* key_cache, __nv_bfloat16* value_cache,
     const int* positions, const int* slots, int batch, int maximum_slots,
-    int query_width, int kv_heads, int packed_width, int cache_capacity, float epsilon) {
+    int query_width, int kv_heads, int packed_width, int cache_capacity,
+    std::int8_t* int8_key_cache, float* int8_key_scales, float epsilon) {
   const int row = static_cast<int>(blockIdx.x) / kv_heads;
   const int head = static_cast<int>(blockIdx.x) % kv_heads;
   if (row >= batch) return;
@@ -259,6 +260,62 @@ __global__ void ragged_key_value_kernel(
   const int half = dimension / 2;
   const std::uint64_t cache_head = static_cast<std::uint64_t>(slot) * kv_heads + head;
   const std::uint64_t cache_base = (cache_head * cache_capacity + cache_position) * dimension;
+  if constexpr (dimension == 512) {
+    if (int8_key_cache != nullptr) {
+      constexpr int block_width = 128;
+      constexpr int blocks_per_row = dimension / block_width;
+      __shared__ float warp_maxima[8];
+      __shared__ float block_maxima[blocks_per_row];
+      const int lane_in_block = static_cast<int>(threadIdx.x) % block_width;
+      const int block_group = static_cast<int>(threadIdx.x) / block_width;
+      const int warp = static_cast<int>(threadIdx.x) / 32;
+      for (int block_pair = 0; block_pair < 2; ++block_pair) {
+        const int component_block = block_pair * 2 + block_group;
+        const int index = component_block * block_width + lane_in_block;
+        const int partner = index < half ? index + half : index - half;
+        const float normalized = __bfloat162float(__float2bfloat16_rn(
+            __bfloat162float(key_input[index]) * inverse_key_rms *
+            __bfloat162float(norm_weight[index])));
+        const float partner_normalized = __bfloat162float(__float2bfloat16_rn(
+            __bfloat162float(key_input[partner]) * inverse_key_rms *
+            __bfloat162float(norm_weight[partner])));
+        const float rotated = index < half ? -partner_normalized : partner_normalized;
+        const float cos_value = __bfloat162float(cosine[position * dimension + index]);
+        const float sin_value = __bfloat162float(sine[position * dimension + index]);
+        const __nv_bfloat16 key = __float2bfloat16_rn(
+            normalized * cos_value + rotated * sin_value);
+        key_cache[cache_base + index] = key;
+        value_cache[cache_base + index] = __float2bfloat16_rn(
+            __bfloat162float(value_input[index]) * inverse_value_rms);
+
+        float maximum = fabsf(__bfloat162float(key));
+        for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+          maximum = max(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+        }
+        if ((threadIdx.x & 31U) == 0U) warp_maxima[warp] = maximum;
+        __syncthreads();
+        if (lane_in_block < 32) {
+          const int first_warp = block_group * 4;
+          maximum = lane_in_block < 4 ? warp_maxima[first_warp + lane_in_block] : 0.0F;
+          for (unsigned offset = 16; offset > 0; offset >>= 1U) {
+            maximum = max(maximum, __shfl_down_sync(0xffffffffU, maximum, offset));
+          }
+          if ((threadIdx.x & 31U) == 0U) block_maxima[component_block] = maximum;
+        }
+        __syncthreads();
+        const float maximum_block = block_maxima[component_block];
+        const float scale = maximum_block == 0.0F ? 1.0F : maximum_block / 127.0F;
+        if (lane_in_block == 0) {
+          int8_key_scales[(cache_head * cache_capacity + cache_position) *
+                          blocks_per_row + component_block] = scale;
+        }
+        const int quantized = max(-127, min(127, __float2int_rn(
+            __bfloat162float(key) / scale)));
+        int8_key_cache[cache_base + index] = static_cast<std::int8_t>(quantized);
+      }
+      return;
+    }
+  }
   for (int index = threadIdx.x; index < dimension; index += threads) {
     const int partner = index < half ? index + half : index - half;
     const float normalized = __bfloat162float(__float2bfloat16_rn(
@@ -623,11 +680,15 @@ void Gemma4QkvPostprocessor::run_decode_ragged(
     const void* packed_qkv, const void* query_norm_weight, const void* key_norm_weight,
     void* queries, void* key_cache, void* value_cache, const int* positions,
     const int* slots, int batch, int maximum_slots, int query_heads, int kv_heads,
-    int head_dimension, bool key_equals_value, int cache_capacity, float epsilon,
-    cudaStream_t stream) {
+    int head_dimension, bool key_equals_value, int cache_capacity,
+    void* int8_key_cache, float* int8_key_scales, float epsilon, cudaStream_t stream) {
   if (batch <= 0 || maximum_slots <= 0 || batch > maximum_slots || positions == nullptr ||
-      slots == nullptr || cache_capacity <= 0 || cache_capacity > implementation_->maximum_positions) {
+      slots == nullptr || cache_capacity <= 0 || cache_capacity > implementation_->maximum_positions ||
+      ((int8_key_cache == nullptr) != (int8_key_scales == nullptr))) {
     throw std::runtime_error("invalid ragged QKV shape");
+  }
+  if (int8_key_cache != nullptr && implementation_->shared_global_kv_roundtrip) {
+    throw std::runtime_error("fused INT8 K cannot be combined with shared global KV roundtrip");
   }
   const int query_width = query_heads * head_dimension;
   const int kv_width = kv_heads * head_dimension;
@@ -643,7 +704,7 @@ void Gemma4QkvPostprocessor::run_decode_ragged(
         static_cast<const __nv_bfloat16*>(key_norm_weight), implementation_->sliding_cosine,
         implementation_->sliding_sine, static_cast<__nv_bfloat16*>(key_cache),
         static_cast<__nv_bfloat16*>(value_cache), positions, slots, batch, maximum_slots,
-        query_width, kv_heads, packed_width, cache_capacity, epsilon);
+        query_width, kv_heads, packed_width, cache_capacity, nullptr, nullptr, epsilon);
   } else if (head_dimension == 512 && key_equals_value) {
     ragged_query_kernel<512><<<batch * query_heads, threads, 0, stream>>>(
         static_cast<const __nv_bfloat16*>(packed_qkv),
@@ -667,7 +728,8 @@ void Gemma4QkvPostprocessor::run_decode_ragged(
           static_cast<const __nv_bfloat16*>(key_norm_weight), implementation_->global_cosine,
           implementation_->global_sine, static_cast<__nv_bfloat16*>(key_cache),
           static_cast<__nv_bfloat16*>(value_cache), positions, slots, batch, maximum_slots,
-          query_width, kv_heads, packed_width, cache_capacity, epsilon);
+          query_width, kv_heads, packed_width, cache_capacity,
+          static_cast<std::int8_t*>(int8_key_cache), int8_key_scales, epsilon);
     }
   } else {
     throw std::runtime_error("unsupported ragged Gemma 4 QKV shape");

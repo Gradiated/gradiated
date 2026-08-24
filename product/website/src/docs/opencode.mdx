@@ -1,0 +1,96 @@
+<p className="docs-kicker">Coding agents</p>
+
+# Use Gradiated with OpenCode
+
+<p className="docs-lead">
+  OpenCode can use Gradiated as a custom OpenAI-compatible provider.
+</p>
+
+## Before you start
+
+You need:
+
+- An active Gradiated API key.
+- An exact model ID from `GET /v1/models`.
+- OpenCode installed on your machine.
+
+Set your key in the environment where you run OpenCode:
+
+```sh
+export GRADIATED_API_KEY="grad_..."
+```
+
+## Add Gradiated to `opencode.json`
+
+Add this provider to your OpenCode config. Keep the file in your project or in your user config. Do not put the API key in the file.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "gradiated": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Gradiated",
+      "options": {
+        "baseURL": "https://api.gradiated.com/v1",
+        "apiKey": "{env:GRADIATED_API_KEY}"
+      },
+      "models": {
+        "YOUR_MODEL_ID": {
+          "name": "Your model name"
+        }
+      }
+    }
+  }
+}
+```
+
+Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog. The ID must match exactly.
+
+The `@ai-sdk/openai-compatible` adapter targets `/v1/chat/completions`, which is the protocol Gradiated currently exposes.
+
+## Select the model
+
+Start OpenCode and run:
+
+```text
+/models
+```
+
+Choose the Gradiated provider. Then choose your model.
+
+Run a small test task first:
+
+```text
+Explain the main function in this repository in three short bullet points.
+```
+
+## Add model limits when needed
+
+OpenCode can use model limits to manage context and output. Add them when the model catalog provides these values:
+
+```json
+{
+  "models": {
+    "YOUR_MODEL_ID": {
+      "name": "Your model name",
+      "limit": {
+        "context": 128000,
+        "output": 4096
+      }
+    }
+  }
+}
+```
+
+Use the values for the selected model. Do not copy limits from another model.
+
+## Troubleshooting
+
+- Check that `GRADIATED_API_KEY` is set in the same shell that starts OpenCode.
+- Check that `baseURL` ends with `/v1`.
+- Check that the model ID matches the catalog response.
+- Check that the workspace has billing capacity.
+- Run `opencode auth list` if OpenCode reports a provider authentication error.
+
+OpenCode's [provider documentation](https://opencode.ai/docs/providers/) covers custom provider settings and the `/models` command.

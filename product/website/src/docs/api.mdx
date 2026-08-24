@@ -1,0 +1,102 @@
+<p className="docs-kicker">API reference</p>
+
+# Chat Completions API
+
+<p className="docs-lead">
+  Gradiated exposes a focused OpenAI-compatible inference API for exact model
+  requests.
+</p>
+
+## Base URL
+
+```text
+https://api.gradiated.com/v1
+```
+
+Send an API key with every request:
+
+```http
+Authorization: Bearer grad_...
+```
+
+## List models
+
+```http
+GET /models
+```
+
+The catalog returns exact model IDs, readiness, context limits, output limits, supported parameters, and pricing. Use a model with `is_ready: true` for inference.
+
+```sh
+curl https://api.gradiated.com/v1/models \
+  -H "Authorization: Bearer $GRADIATED_API_KEY"
+```
+
+## Create a completion
+
+```http
+POST /chat/completions
+Content-Type: application/json
+Authorization: Bearer grad_...
+```
+
+Required fields:
+
+| Field      | Type   | Description                      |
+| ---------- | ------ | -------------------------------- |
+| `model`    | string | Exact model ID from the catalog. |
+| `messages` | array  | At least one message.            |
+
+Common fields:
+
+| Field                   | Type    | Description                                 |
+| ----------------------- | ------- | ------------------------------------------- |
+| `stream`                | boolean | Return server-sent events when `true`.      |
+| `max_tokens`            | integer | Maximum generated tokens for older clients. |
+| `max_completion_tokens` | integer | Maximum generated tokens for newer clients. |
+
+Send only one of `max_tokens` and `max_completion_tokens`. The selected model decides which additional parameters it accepts.
+
+```json
+{
+  "model": "YOUR_MODEL_ID",
+  "messages": [
+    { "role": "system", "content": "Be concise." },
+    { "role": "user", "content": "What is inference?" }
+  ],
+  "max_completion_tokens": 128,
+  "stream": false
+}
+```
+
+The gateway preserves supported provider parameters and rejects parameters that the selected model does not support.
+
+## Streaming
+
+Set `stream` to `true`. The response uses `text/event-stream` and ends with a `[DONE]` event. The terminal usage event contains the authoritative token counts.
+
+## Errors
+
+Errors use this shape:
+
+```json
+{
+  "error": {
+    "message": "The requested model was not found.",
+    "type": "invalid_request_error",
+    "param": "model",
+    "code": "model_not_found"
+  }
+}
+```
+
+The HTTP status and `code` identify the failure. Retry only when the error is temporary, such as capacity or service availability.
+
+## Limits
+
+- Request bodies have an 8 MB limit.
+- The model catalog defines context and output limits.
+- The gateway may reject requests when the workspace billing capacity or concurrency limit is reached.
+- API keys are workspace-scoped and can be revoked from the console.
+
+The [quickstart](/docs/quickstart/) includes complete curl examples.

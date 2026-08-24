@@ -1,0 +1,49 @@
+<p className="docs-kicker">Coding agents</p>
+
+# Use Gradiated with Codex
+
+<p className="docs-lead">
+  Codex provider configuration is ready for a Responses API connection.
+  Gradiated's current public gateway exposes Chat Completions, so direct Codex
+  setup is not available yet.
+</p>
+
+<p className="docs-status">Not available yet</p>
+
+## Why
+
+Gradiated currently serves:
+
+- `GET /v1/models`
+- `POST /v1/chat/completions`
+- Non-streaming and server-sent event streaming
+
+The current Codex custom-provider configuration uses the Responses API wire format. A Chat Completions endpoint cannot use that configuration without a compatibility layer.
+
+Do not add a guessed `~/.codex/config.toml` entry. It will point Codex at the wrong request format.
+
+## What will change
+
+When Gradiated exposes the Responses API, the setup will use a user-level Codex provider configuration similar to this:
+
+```toml
+# ~/.codex/config.toml
+model = "YOUR_MODEL_ID"
+model_provider = "gradiated"
+
+[model_providers.gradiated]
+name = "Gradiated"
+base_url = "https://api.gradiated.com/v1"
+env_key = "GRADIATED_API_KEY"
+wire_api = "responses"
+```
+
+This is a preview of the future configuration. It is not a working Gradiated setup today.
+
+Provider settings belong in `~/.codex/config.toml`. Codex ignores provider and authentication settings in a project-local `.codex/config.toml`.
+
+## Use Gradiated today
+
+Use the [OpenCode setup](/docs/opencode/) or call the [Chat Completions API](/docs/api/) directly.
+
+We will publish the Codex setup when the endpoint and supported features are tested together.

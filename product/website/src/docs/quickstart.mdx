@@ -1,0 +1,94 @@
+<p className="docs-kicker">Get started</p>
+
+# Quickstart
+
+<p className="docs-lead">
+  Create a workspace key, find a model, and send your first request.
+</p>
+
+## 1. Create an API key
+
+1. Open the [Gradiated console](https://console.gradiated.com).
+2. Open the workspace that should pay for the requests.
+3. Open **API keys**.
+4. Create a key.
+5. Copy the secret before you close the dialog.
+
+Gradiated returns the secret once. If you lose it, revoke the key and create another one.
+
+## 2. Set the key
+
+Set the key in your shell:
+
+```sh
+export GRADIATED_API_KEY="grad_..."
+```
+
+Do not commit the key. Add it to your local secret manager or shell profile instead.
+
+## 3. Find a model
+
+The model catalog returns the exact IDs that you can use in requests:
+
+```sh
+curl https://api.gradiated.com/v1/models \
+  -H "Authorization: Bearer $GRADIATED_API_KEY"
+```
+
+Copy the `id` of a model with `is_ready: true`. Use the ID exactly. Model IDs can contain `/`.
+
+## 4. Send a request
+
+Replace `YOUR_MODEL_ID` with the model ID from the catalog:
+
+```sh
+curl https://api.gradiated.com/v1/chat/completions \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "YOUR_MODEL_ID",
+    "messages": [
+      {"role": "user", "content": "Reply with exactly: hello from Gradiated"}
+    ],
+    "max_tokens": 32,
+    "temperature": 0
+  }'
+```
+
+The response uses the familiar chat completion shape. The response includes the model, one or more choices, and token usage.
+
+## Stream the response
+
+Set `stream` to `true` to receive server-sent events:
+
+```sh
+curl https://api.gradiated.com/v1/chat/completions \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "YOUR_MODEL_ID",
+    "messages": [
+      {"role": "user", "content": "Write one short sentence about inference."}
+    ],
+    "max_tokens": 64,
+    "stream": true
+  }'
+```
+
+The stream ends with `[DONE]`. The final usage event includes input and output token counts when the client keeps the complete stream.
+
+## What happens when a request fails
+
+Errors use an `error` object with a stable `code`:
+
+| Code                      | Meaning                                         |
+| ------------------------- | ----------------------------------------------- |
+| `invalid_api_key`         | The key is missing, expired, or revoked.        |
+| `model_not_found`         | The model ID is not in the catalog.             |
+| `model_unavailable`       | The model is not ready to serve traffic.        |
+| `insufficient_balance`    | The workspace cannot fund the request.          |
+| `context_length_exceeded` | The request is too large for the model.         |
+| `unsupported_parameter`   | The model does not support a request parameter. |
+| `capacity_exceeded`       | The model is temporarily at capacity.           |
+
+See the [API reference](/docs/api/) for the request fields and response behavior.

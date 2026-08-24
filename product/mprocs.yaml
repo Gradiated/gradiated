@@ -47,6 +47,9 @@ procs:
   console:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/console dev'
+  website:
+    shell: >-
+      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && cd website && corepack pnpm dev'
   migrate-postgres:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control db:migrate'

@@ -1,7 +1,4 @@
-dist
-node_modules
-.turbo
-target
-services/api/generated
-**/playwright-report
-**/test-results
+.turbo/
+**/.turbo/
+**/target/
+**/dist/

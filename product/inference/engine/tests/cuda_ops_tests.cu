@@ -336,10 +336,16 @@ void test_int4_fp8_linear() {
   }
   DeviceAllocation<__nv_fp8_e4m3> device_random_weights(comparison_weights.size());
   DeviceAllocation<__nv_fp8_e4m3> device_oracle_weights(comparison_weights.size());
+  DeviceAllocation<__nv_fp8_e4m3> device_refined_weights(comparison_weights.size());
+  DeviceAllocation<__nv_fp8_e4m3> device_refined_oracle_weights(comparison_weights.size());
   DeviceAllocation<__nv_fp8_e4m3> device_comparison_input(comparison_input.size());
   DeviceAllocation<__nv_bfloat16> device_physical_output(
       static_cast<std::size_t>(comparison_rows) * comparison_output_width);
   DeviceAllocation<__nv_bfloat16> device_oracle_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_width);
+  DeviceAllocation<__nv_bfloat16> device_refined_physical_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_width);
+  DeviceAllocation<__nv_bfloat16> device_refined_oracle_output(
       static_cast<std::size_t>(comparison_rows) * comparison_output_width);
   DeviceAllocation<__nv_bfloat16> device_segment_output(
       static_cast<std::size_t>(comparison_rows) * comparison_segment_width);
@@ -357,6 +363,14 @@ void test_int4_fp8_linear() {
                         comparison_weights.size() * sizeof(comparison_weights[0]),
                         cudaMemcpyHostToDevice),
              "copy random oracle INT4 weights");
+  cuda_check(cudaMemcpy(device_refined_weights.get(), comparison_weights.data(),
+                        comparison_weights.size() * sizeof(comparison_weights[0]),
+                        cudaMemcpyHostToDevice),
+             "copy refined physical INT4 weights");
+  cuda_check(cudaMemcpy(device_refined_oracle_weights.get(), comparison_weights.data(),
+                        comparison_weights.size() * sizeof(comparison_weights[0]),
+                        cudaMemcpyHostToDevice),
+             "copy refined oracle INT4 weights");
   cuda_check(cudaMemcpy(device_comparison_input.get(), comparison_input.data(),
                         comparison_input.size() * sizeof(comparison_input[0]),
                         cudaMemcpyHostToDevice), "copy random physical INT4 input");
@@ -364,12 +378,20 @@ void test_int4_fp8_linear() {
              "copy physical INT4 unit scale");
   gradiated::engine::roundtrip_fp8_weight_via_int4_blocks(
       device_oracle_weights.get(), comparison_output_width, comparison_input_width, 256, nullptr);
+  constexpr int refined_group_width = 128;
+  constexpr int refinement_iterations = 4;
+  gradiated::engine::roundtrip_fp8_weight_via_int4_blocks(
+      device_refined_oracle_weights.get(), comparison_output_width, comparison_input_width,
+      refined_group_width, nullptr, refinement_iterations);
   gradiated::engine::Int4Fp8Linear random_linear(
       device_random_weights.get(), comparison_input_width, comparison_output_width, 256);
   gradiated::engine::Int4Fp8Linear random_strided_linear(
       device_random_weights.get(), comparison_input_width, comparison_output_width, 256);
   gradiated::engine::Int4Fp8Linear random_segment_linear(
       device_random_weights.get(), comparison_input_width, comparison_segment_width, 256);
+  gradiated::engine::Int4Fp8Linear refined_linear(
+      device_refined_weights.get(), comparison_input_width, comparison_output_width,
+      refined_group_width, 256, refinement_iterations);
   gradiated::engine::Fp8Linear oracle_linear;
   cuda_check(cudaMemset(device_strided_comparison_output.get(), 0xc1,
                         static_cast<std::size_t>(comparison_rows) * comparison_output_stride *
@@ -386,10 +408,18 @@ void test_int4_fp8_linear() {
   oracle_linear.run(device_comparison_input.get(), unit_scale.get(), device_oracle_weights.get(),
                     unit_scale.get(), device_oracle_output.get(), comparison_rows,
                     comparison_input_width, comparison_output_width, nullptr);
+  refined_linear.run(device_comparison_input.get(), device_refined_physical_output.get(),
+                     comparison_rows, nullptr);
+  oracle_linear.run(device_comparison_input.get(), unit_scale.get(),
+                    device_refined_oracle_weights.get(), unit_scale.get(),
+                    device_refined_oracle_output.get(), comparison_rows,
+                    comparison_input_width, comparison_output_width, nullptr);
   cuda_check(cudaDeviceSynchronize(), "synchronize physical INT4 oracle comparison");
   std::vector<__nv_bfloat16> physical(
       static_cast<std::size_t>(comparison_rows) * comparison_output_width);
   std::vector<__nv_bfloat16> oracle(physical.size());
+  std::vector<__nv_bfloat16> refined_physical(physical.size());
+  std::vector<__nv_bfloat16> refined_oracle(physical.size());
   std::vector<__nv_bfloat16> strided_comparison(
       static_cast<std::size_t>(comparison_rows) * comparison_output_stride);
   std::vector<__nv_bfloat16> segment_output(
@@ -399,6 +429,12 @@ void test_int4_fp8_linear() {
                         cudaMemcpyDeviceToHost), "copy random physical INT4 output");
   cuda_check(cudaMemcpy(oracle.data(), device_oracle_output.get(), oracle.size() * sizeof(oracle[0]),
                         cudaMemcpyDeviceToHost), "copy random oracle INT4 output");
+  cuda_check(cudaMemcpy(refined_physical.data(), device_refined_physical_output.get(),
+                        refined_physical.size() * sizeof(refined_physical[0]),
+                        cudaMemcpyDeviceToHost), "copy refined physical INT4 output");
+  cuda_check(cudaMemcpy(refined_oracle.data(), device_refined_oracle_output.get(),
+                        refined_oracle.size() * sizeof(refined_oracle[0]),
+                        cudaMemcpyDeviceToHost), "copy refined oracle INT4 output");
   cuda_check(cudaMemcpy(strided_comparison.data(), device_strided_comparison_output.get(),
                         strided_comparison.size() * sizeof(strided_comparison[0]),
                         cudaMemcpyDeviceToHost),
@@ -479,6 +515,50 @@ void test_int4_fp8_linear() {
         "physical INT4 linear exceeded representation-oracle tolerance: minimum cosine " +
         std::to_string(minimum_cosine) + ", argmax mismatches " +
         std::to_string(argmax_mismatches) + "/" + std::to_string(comparison_rows));
+  }
+
+  int refined_argmax_mismatches = 0;
+  double refined_minimum_cosine = 1.0;
+  for (int row = 0; row < comparison_rows; ++row) {
+    int physical_argmax = 0;
+    int oracle_argmax = 0;
+    double dot = 0.0;
+    double physical_squared = 0.0;
+    double oracle_squared = 0.0;
+    for (int column = 0; column < comparison_output_width; ++column) {
+      const std::size_t index =
+          static_cast<std::size_t>(row) * comparison_output_width + column;
+      const double physical_value = __bfloat162float(refined_physical[index]);
+      const double oracle_value = __bfloat162float(refined_oracle[index]);
+      if (physical_value > __bfloat162float(refined_physical[
+              static_cast<std::size_t>(row) * comparison_output_width + physical_argmax])) {
+        physical_argmax = column;
+      }
+      if (oracle_value > __bfloat162float(refined_oracle[
+              static_cast<std::size_t>(row) * comparison_output_width + oracle_argmax])) {
+        oracle_argmax = column;
+      }
+      dot += physical_value * oracle_value;
+      physical_squared += physical_value * physical_value;
+      oracle_squared += oracle_value * oracle_value;
+    }
+    refined_argmax_mismatches += physical_argmax != oracle_argmax ? 1 : 0;
+    refined_minimum_cosine = std::min(
+        refined_minimum_cosine, dot / std::sqrt(physical_squared * oracle_squared));
+  }
+  std::cout << "INT4 refined physical/oracle K=" << comparison_input_width
+            << " N=" << comparison_output_width
+            << " group=" << refined_group_width
+            << " iterations=" << refinement_iterations
+            << " minimum_cosine=" << refined_minimum_cosine
+            << " argmax_mismatches=" << refined_argmax_mismatches
+            << "/" << comparison_rows << '\n';
+  if (refined_minimum_cosine < 0.999999 || refined_argmax_mismatches != 0) {
+    throw std::runtime_error(
+        "refined physical INT4 linear differs from representation oracle: minimum cosine " +
+        std::to_string(refined_minimum_cosine) + ", argmax mismatches " +
+        std::to_string(refined_argmax_mismatches) + "/" +
+        std::to_string(comparison_rows));
   }
 }
 

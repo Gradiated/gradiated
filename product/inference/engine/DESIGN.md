@@ -976,3 +976,38 @@ draft-plus-verify time improves by 0.73% and 0.89%, consistent with the correcte
 This is a valid primitive but not an economically promotable LM-head-only policy. The implementation
 remains opt-in infrastructure for model-wide W4 experiments; production remains on the pinned
 SGLang image with both physical INT4 switches unset.
+
+## Selective model-wide W4A8 frontier (2026-08-24)
+
+The physical mixed-input path now supports 64-, 128-, and 256-column output tiles and 128- or
+256-component quantization groups. Exact Gemma projection shapes were weighted by their model
+multiplicity rather than summarized from the vocabulary head. Applying W4A8 to every projection
+is neutral through batch eight and regresses larger cohorts by up to approximately 3.4%. The
+winner is shape selective: QKV, gate/up, and the vocabulary head use W4A8 while O and down
+projections remain tensor E4M3. The resulting combined-linear primitive bound is 12.0%, 12.4%,
+12.9%, 13.8%, 10.2%, and 8.0% at batches 1, 4, 8, 16, 32, and 64 respectively. This is an upper
+bound on whole-model improvement, not an integrated throughput result.
+The primitive also omits the tensor-wide FP8 input/weight scale because that factor is irrelevant
+to LM-head argmax; an internal projection integration would have to fuse that scale into its
+consumer. Its cost is therefore absent from the bound.
+
+Neither Stream-K nor explicit split-K improved the underfilled Gemma shapes. Both were slower on
+the wide QKV/gate/head matrices and stalled on several O/down geometries, so the scheduler
+experiments were removed. A 64-component physical quantization group is also unsupported by the
+selected CUTLASS mixed-input contract and is rejected at construction; the representation oracle
+may still use it for quality research.
+
+Quality prevents promotion. On the 24-prompt, 32-token coding-agent holdout, the matched tensor-FP8
+control reaches 760/768 teacher-forced predictions, 17/24 exact sequences, and 0.990885 mean edit
+similarity. Group-256 selective W4 reaches 736/768; group 128 improves to 741/768 but remains well
+outside the gate. Isolated group-128 QKV, gate/up, and LM-head variants reach 757, 751, and 754
+predictions respectively, showing that no single component explains the accumulated error.
+
+An iterative load-time least-squares scale refinement was then validated against the physical
+packed representation: at group 128 and four iterations, physical and oracle GEMMs have at least
+0.999999 cosine and zero argmax mismatches over 17 rows. It does not improve model quality. Full
+selective W4 with 1, 2, 4, and 8 refinement iterations reaches 740, 742, 736, and 740 predictions;
+the best two-iteration point has only 10/24 exact sequences. The refinement remains an opt-in
+research knob, but no W4 projection policy is selected by the runtime. A future attempt must use
+activation-aware calibration, error feedback, or a larger quality-safe layer subset search before
+paying for another causal traffic run. Production remains on the pinned SGLang image.

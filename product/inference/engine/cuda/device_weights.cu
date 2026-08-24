@@ -233,13 +233,15 @@ const float* Fp8WeightArena::scale(std::string_view name) const {
 }
 
 void Fp8WeightArena::roundtrip_int4(std::string_view name, int output_width,
-                                    int input_width, int block_width) {
+                                    int input_width, int block_width,
+                                    int scale_refinement_iterations) {
   const auto iterator = implementation_->pointers.find(name);
   if (iterator == implementation_->pointers.end()) {
     throw std::runtime_error("FP8 weight is not loaded: " + std::string(name));
   }
   roundtrip_fp8_weight_via_int4_blocks(
-      const_cast<void*>(iterator->second), output_width, input_width, block_width, nullptr);
+      const_cast<void*>(iterator->second), output_width, input_width, block_width, nullptr,
+      scale_refinement_iterations);
   cuda_check(cudaDeviceSynchronize(), "finish INT4 weight oracle");
 }
 

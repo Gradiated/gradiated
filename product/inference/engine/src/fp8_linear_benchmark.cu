@@ -5,12 +5,15 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstdint>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -99,46 +102,103 @@ Measurements benchmark(gradiated::engine::Fp8Linear& linear, const Shape& shape,
   return {gemm_milliseconds, combined_milliseconds};
 }
 
-void benchmark_int4_lm_head(const std::vector<int>& row_counts) {
-  constexpr int input_width = 5376;
-  constexpr int output_width = 262144;
+void benchmark_int4_shapes(const std::vector<Shape>& shapes,
+                           const std::vector<int>& row_counts) {
+  const char* requested_shape = std::getenv("GRADIATED_INT4_BENCHMARK_SHAPE");
+  const char* requested_tile_text =
+      std::getenv("GRADIATED_INT4_BENCHMARK_TILE_COLUMNS");
+  const char* requested_group_text =
+      std::getenv("GRADIATED_INT4_BENCHMARK_GROUP_WIDTH");
+  const int requested_tile = requested_tile_text == nullptr
+      ? 0 : std::stoi(requested_tile_text);
+  const int requested_group = requested_group_text == nullptr
+      ? 0 : std::stoi(requested_group_text);
+  if (requested_tile != 0 && requested_tile != 64 && requested_tile != 128 &&
+      requested_tile != 256) {
+    throw std::runtime_error("GRADIATED_INT4_BENCHMARK_TILE_COLUMNS must be 64, 128, or 256");
+  }
+  if (requested_group != 0 && requested_group != 128 && requested_group != 256) {
+    throw std::runtime_error(
+        "GRADIATED_INT4_BENCHMARK_GROUP_WIDTH must be 128 or 256");
+  }
   const int maximum_rows = *std::max_element(row_counts.begin(), row_counts.end());
-  const std::size_t input_elements = static_cast<std::size_t>(maximum_rows) * input_width;
-  const std::size_t weight_elements =
-      static_cast<std::size_t>(input_width) * output_width;
-  Allocation bf16_input(2ULL * input_elements);
-  Allocation fp8_input(input_elements);
-  Allocation bf16_weight(2ULL * weight_elements);
-  Allocation fp8_weight(weight_elements);
-  Allocation output(2ULL * static_cast<std::size_t>(maximum_rows) * output_width);
-  Allocation input_scale(sizeof(float));
-  Allocation weight_scale(sizeof(float));
-  gradiated::engine::quantize_bf16_to_fp8_e4m3(
-      bf16_weight.get(), fp8_weight.get(), static_cast<float*>(weight_scale.get()),
-      weight_elements, nullptr);
-  gradiated::engine::Int4Fp8Linear linear(
-      fp8_weight.get(), input_width, output_width, 256);
-  check(cudaDeviceSynchronize(), "prepare W4A8 LM-head benchmark");
-
-  std::cout << "int4_component,rows,w4a8_gemm_ms,quantize_and_gemm_ms,"
-               "resident_weight_bytes\n";
-  for (const int rows : row_counts) {
-    if (!linear.supports_rows(rows)) continue;
-    const std::size_t active_input_elements = static_cast<std::size_t>(rows) * input_width;
+  std::map<int, double> gemm_iteration_milliseconds;
+  std::map<int, double> combined_iteration_milliseconds;
+  std::cout << "int4_component,group_width,tile_columns,rows,w4a8_gemm_ms,"
+               "quantize_and_gemm_ms,resident_weight_bytes\n";
+  for (const auto& shape : shapes) {
+    if (requested_shape != nullptr && requested_shape != std::string(shape.name)) continue;
+    const std::size_t input_elements =
+        static_cast<std::size_t>(maximum_rows) * shape.input_width;
+    const std::size_t weight_elements =
+        static_cast<std::size_t>(shape.input_width) * shape.output_width;
+    Allocation bf16_input(2ULL * input_elements);
+    Allocation fp8_input(input_elements);
+    Allocation bf16_weight(2ULL * weight_elements);
+    Allocation fp8_weight(weight_elements);
+    Allocation output(
+        2ULL * static_cast<std::size_t>(maximum_rows) * shape.output_width);
+    Allocation input_scale(sizeof(float));
+    Allocation weight_scale(sizeof(float));
     gradiated::engine::quantize_bf16_to_fp8_e4m3(
-        bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
-        active_input_elements, nullptr);
-    const auto gemm = [&] { linear.run(fp8_input.get(), output.get(), rows, nullptr); };
-    const float gemm_milliseconds = measure(gemm);
-    const float combined_milliseconds = measure([&] {
-      gradiated::engine::quantize_bf16_to_fp8_e4m3(
-          bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
-          active_input_elements, nullptr);
-      gemm();
-    });
-    std::cout << "lm_head," << rows << ',' << std::fixed << std::setprecision(4)
-              << gemm_milliseconds << ',' << combined_milliseconds << ','
-              << linear.allocated_bytes() << '\n';
+        bf16_weight.get(), fp8_weight.get(), static_cast<float*>(weight_scale.get()),
+        weight_elements, nullptr);
+    std::map<int, double> best_gemm;
+    std::map<int, double> best_combined;
+    for (const int rows : row_counts) {
+      best_gemm[rows] = std::numeric_limits<double>::infinity();
+      best_combined[rows] = std::numeric_limits<double>::infinity();
+    }
+    for (const auto [group_width, tile_columns] :
+         std::vector<std::pair<int, int>>{{128, 64}, {128, 128}, {128, 256},
+                                          {256, 64}, {256, 128}, {256, 256}}) {
+      if ((requested_group != 0 && group_width != requested_group) ||
+          (requested_tile != 0 && tile_columns != requested_tile)) {
+        continue;
+      }
+      gradiated::engine::Int4Fp8Linear linear(
+          fp8_weight.get(), shape.input_width, shape.output_width, group_width,
+          tile_columns);
+      check(cudaDeviceSynchronize(), "prepare W4A8 projection benchmark");
+      for (const int rows : row_counts) {
+        if (!linear.supports_rows(rows)) continue;
+        const std::size_t active_input_elements =
+            static_cast<std::size_t>(rows) * shape.input_width;
+        gradiated::engine::quantize_bf16_to_fp8_e4m3(
+            bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
+            active_input_elements, nullptr);
+        const auto gemm = [&] { linear.run(fp8_input.get(), output.get(), rows, nullptr); };
+        const float gemm_milliseconds = measure(gemm);
+        const float combined_milliseconds = measure([&] {
+          gradiated::engine::quantize_bf16_to_fp8_e4m3(
+              bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
+              active_input_elements, nullptr);
+          gemm();
+        });
+        best_gemm[rows] = std::min(best_gemm.at(rows),
+                                   static_cast<double>(gemm_milliseconds));
+        best_combined[rows] = std::min(best_combined.at(rows),
+                                       static_cast<double>(combined_milliseconds));
+        std::cout << shape.name << ',' << group_width << ',' << tile_columns << ',' << rows
+                  << ',' << std::fixed << std::setprecision(4) << gemm_milliseconds << ','
+                  << combined_milliseconds << ',' << linear.allocated_bytes() << '\n';
+      }
+    }
+    for (const int rows : row_counts) {
+      gemm_iteration_milliseconds[rows] += best_gemm.at(rows) * shape.multiplicity;
+      combined_iteration_milliseconds[rows] +=
+          best_combined.at(rows) * shape.multiplicity;
+    }
+  }
+  std::cout << "int4_summary_rows,w4a8_linear_iteration_ms,"
+               "quantized_w4a8_linear_iteration_ms,w4a8_aggregate_tokens_s,"
+               "quantized_w4a8_aggregate_tokens_s\n";
+  for (const int rows : row_counts) {
+    const double gemm_ms = gemm_iteration_milliseconds.at(rows);
+    const double combined_ms = combined_iteration_milliseconds.at(rows);
+    std::cout << rows << ',' << std::fixed << std::setprecision(4) << gemm_ms << ','
+              << combined_ms << ',' << rows * 1000.0 / gemm_ms << ','
+              << rows * 1000.0 / combined_ms << '\n';
   }
 }
 
@@ -267,6 +327,9 @@ void correctness_smoke_test() {
 
 int main(int argc, char** argv) {
   try {
+    // Individual CUTLASS scheduler candidates are commonly run under an external timeout. Flush
+    // each measurement so a pathological candidate can still be attributed after termination.
+    std::cout << std::unitbuf;
     correctness_smoke_test();
     const std::vector<Shape> shapes{
         {"sliding_qkv", 5376, 16384, 50},
@@ -288,33 +351,37 @@ int main(int argc, char** argv) {
       row_counts.push_back(rows);
     }
     if (row_counts.empty()) row_counts = {1, 4, 8, 16, 32};
+    const bool int4_only = std::getenv("GRADIATED_INT4_BENCHMARK_ONLY") != nullptr;
     gradiated::engine::Fp8Linear linear(gradiated::engine::Fp8Scaling::tensor);
     std::map<int, double> gemm_iteration_milliseconds;
     std::map<int, double> combined_iteration_milliseconds;
-    std::cout << "component,rows,fp8_gemm_ms,quantize_and_gemm_ms,effective_weight_gb_s\n";
-    for (const auto& shape : shapes) {
+    if (!int4_only) {
+      std::cout << "component,rows,fp8_gemm_ms,quantize_and_gemm_ms,effective_weight_gb_s\n";
+      for (const auto& shape : shapes) {
+        for (const int rows : row_counts) {
+          const Measurements measured = benchmark(linear, shape, rows);
+          const double seconds = measured.gemm_milliseconds / 1000.0;
+          const double weight_bytes = static_cast<double>(shape.input_width) * shape.output_width;
+          gemm_iteration_milliseconds[rows] += measured.gemm_milliseconds * shape.multiplicity;
+          combined_iteration_milliseconds[rows] +=
+              measured.quantize_and_gemm_milliseconds * shape.multiplicity;
+          std::cout << shape.name << ',' << rows << ',' << std::fixed << std::setprecision(4)
+                    << measured.gemm_milliseconds << ','
+                    << measured.quantize_and_gemm_milliseconds << ',' << std::setprecision(2)
+                    << weight_bytes / seconds / 1e9 << '\n';
+        }
+      }
+      std::cout << "summary_rows,fp8_linear_iteration_ms,quantized_linear_iteration_ms,"
+                   "fp8_aggregate_tokens_s,quantized_aggregate_tokens_s\n";
       for (const int rows : row_counts) {
-        const Measurements measured = benchmark(linear, shape, rows);
-        const double seconds = measured.gemm_milliseconds / 1000.0;
-        const double weight_bytes = static_cast<double>(shape.input_width) * shape.output_width;
-        gemm_iteration_milliseconds[rows] += measured.gemm_milliseconds * shape.multiplicity;
-        combined_iteration_milliseconds[rows] +=
-            measured.quantize_and_gemm_milliseconds * shape.multiplicity;
-        std::cout << shape.name << ',' << rows << ',' << std::fixed << std::setprecision(4)
-                  << measured.gemm_milliseconds << ',' << measured.quantize_and_gemm_milliseconds
-                  << ',' << std::setprecision(2) << weight_bytes / seconds / 1e9 << '\n';
+        const double gemm_ms = gemm_iteration_milliseconds.at(rows);
+        const double combined_ms = combined_iteration_milliseconds.at(rows);
+        std::cout << rows << ',' << std::fixed << std::setprecision(4) << gemm_ms << ','
+                  << combined_ms << ',' << rows * 1000.0 / gemm_ms << ','
+                  << rows * 1000.0 / combined_ms << '\n';
       }
     }
-    std::cout << "summary_rows,fp8_linear_iteration_ms,quantized_linear_iteration_ms,"
-                 "fp8_aggregate_tokens_s,quantized_aggregate_tokens_s\n";
-    for (const int rows : row_counts) {
-      const double gemm_ms = gemm_iteration_milliseconds.at(rows);
-      const double combined_ms = combined_iteration_milliseconds.at(rows);
-      std::cout << rows << ',' << std::fixed << std::setprecision(4) << gemm_ms << ','
-                << combined_ms << ',' << rows * 1000.0 / gemm_ms << ','
-                << rows * 1000.0 / combined_ms << '\n';
-    }
-    benchmark_int4_lm_head(row_counts);
+    benchmark_int4_shapes(shapes, row_counts);
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "FP8 linear benchmark failed: " << error.what() << '\n';

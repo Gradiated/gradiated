@@ -344,10 +344,12 @@ void quantize_bf16_activation_to_fp8_block_128(const void* input, void* output, 
 }
 
 __global__ void roundtrip_fp8_int4_blocks_kernel(
-    __nv_fp8_e4m3* weight, int output_width, int input_width, int block_width) {
+    __nv_fp8_e4m3* weight, int output_width, int input_width, int block_width,
+    int scale_refinement_iterations) {
   const int output_row = static_cast<int>(blockIdx.x);
   if (output_row >= output_width) return;
   __shared__ float warp_maxima[8];
+  __shared__ float optimized_scale;
   const std::size_t row_base = static_cast<std::size_t>(output_row) * input_width;
   for (int block_begin = 0; block_begin < input_width; block_begin += block_width) {
     const int column = block_begin + static_cast<int>(threadIdx.x);
@@ -356,7 +358,53 @@ __global__ void roundtrip_fp8_int4_blocks_kernel(
       value = static_cast<float>(weight[row_base + column]);
     }
     const float maximum = reduce_block_max(fabsf(value), warp_maxima);
-    const float scale = maximum > 0.0F ? fminf(maximum / 7.0F, 56.0F) : 1.0F;
+    if (threadIdx.x == 0) {
+      optimized_scale = maximum > 0.0F ? fminf(maximum / 7.0F, 56.0F) : 1.0F;
+    }
+    __syncthreads();
+    for (int iteration = 0; iteration < scale_refinement_iterations; ++iteration) {
+      const int quantized = max(-8, min(7, __float2int_rn(value / optimized_scale)));
+      float numerator = value * static_cast<float>(quantized);
+      float denominator = static_cast<float>(quantized * quantized);
+      for (int offset = 16; offset > 0; offset /= 2) {
+        numerator += __shfl_down_sync(0xffffffffU, numerator, offset);
+        denominator += __shfl_down_sync(0xffffffffU, denominator, offset);
+      }
+      const int lane = static_cast<int>(threadIdx.x) & 31;
+      const int warp = static_cast<int>(threadIdx.x) / 32;
+      if (lane == 0) {
+        warp_maxima[warp] = numerator;
+      }
+      __syncthreads();
+      if (warp == 0) {
+        numerator = lane < static_cast<int>(blockDim.x) / 32 ? warp_maxima[lane] : 0.0F;
+        for (int offset = 16; offset > 0; offset /= 2) {
+          numerator += __shfl_down_sync(0xffffffffU, numerator, offset);
+        }
+        if (lane == 0) warp_maxima[0] = numerator;
+      }
+      __syncthreads();
+      numerator = warp_maxima[0];
+      __syncthreads();
+      if (lane == 0) {
+        warp_maxima[warp] = denominator;
+      }
+      __syncthreads();
+      if (warp == 0) {
+        denominator = lane < static_cast<int>(blockDim.x) / 32 ? warp_maxima[lane] : 0.0F;
+        for (int offset = 16; offset > 0; offset /= 2) {
+          denominator += __shfl_down_sync(0xffffffffU, denominator, offset);
+        }
+        if (lane == 0) warp_maxima[0] = denominator;
+      }
+      __syncthreads();
+      denominator = warp_maxima[0];
+      if (threadIdx.x == 0 && denominator > 0.0F) {
+        optimized_scale = fminf(numerator / denominator, 56.0F);
+      }
+      __syncthreads();
+    }
+    const float scale = optimized_scale;
     if (threadIdx.x < block_width && column < input_width) {
       const int quantized = max(-8, min(7, __float2int_rn(value / scale)));
       weight[row_base + column] = __nv_fp8_e4m3(static_cast<float>(quantized) * scale);
@@ -366,13 +414,16 @@ __global__ void roundtrip_fp8_int4_blocks_kernel(
 }
 
 void roundtrip_fp8_weight_via_int4_blocks(void* fp8_weight, int output_width, int input_width,
-                                          int block_width, cudaStream_t stream) {
+                                          int block_width, cudaStream_t stream,
+                                          int scale_refinement_iterations) {
   if (fp8_weight == nullptr || output_width <= 0 || input_width <= 0 ||
-      (block_width != 32 && block_width != 64 && block_width != 128 && block_width != 256)) {
+      (block_width != 32 && block_width != 64 && block_width != 128 && block_width != 256) ||
+      scale_refinement_iterations < 0 || scale_refinement_iterations > 8) {
     throw std::runtime_error("invalid INT4 weight oracle shape");
   }
   roundtrip_fp8_int4_blocks_kernel<<<output_width, 256, 0, stream>>>(
-      static_cast<__nv_fp8_e4m3*>(fp8_weight), output_width, input_width, block_width);
+      static_cast<__nv_fp8_e4m3*>(fp8_weight), output_width, input_width, block_width,
+      scale_refinement_iterations);
   cuda_check(cudaPeekAtLastError(), "launch INT4 weight oracle");
 }
 

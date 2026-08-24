@@ -13,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <numeric>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -148,7 +149,9 @@ void write_token_array(std::ostream& output, const std::vector<int>& tokens) {
 
 void append_quality_artifact(
     const std::string& path, std::string_view scaling, float weight_scale_multiplier,
-    std::string_view precision_case,
+    std::string_view precision_case, std::string_view int4_components,
+    std::string_view int4_qkv_layers, std::string_view int4_gate_up_layers,
+    int int4_scale_refinement_iterations,
     const std::vector<Prompt>& prompts, const std::vector<std::vector<int>>& references,
     const std::vector<std::vector<int>>& candidates) {
   std::ofstream output(path, std::ios::app);
@@ -158,6 +161,11 @@ void append_quality_artifact(
            << ",\"scaling\":" << json_string(scaling)
            << ",\"weight_scale_multiplier\":" << weight_scale_multiplier
            << ",\"bf16_layers\":" << json_string(precision_case)
+           << ",\"int4_oracle_components\":" << json_string(int4_components)
+           << ",\"int4_oracle_qkv_layers\":" << json_string(int4_qkv_layers)
+           << ",\"int4_oracle_gate_up_layers\":" << json_string(int4_gate_up_layers)
+           << ",\"int4_scale_refinement_iterations\":"
+           << int4_scale_refinement_iterations
            << ",\"input_tokens\":" << prompts[index].input_ids.size()
            << ",\"reference_ids\":";
     write_token_array(output, references[index]);
@@ -246,6 +254,86 @@ std::vector<std::string> precision_cases() {
     begin = end + 1;
   }
   return cases;
+}
+
+std::set<std::string, std::less<>> int4_oracle_components() {
+  const char* configured = std::getenv("GRADIATED_INT4_ORACLE_COMPONENTS");
+  if ((configured == nullptr || *configured == '\0') &&
+      std::getenv("GRADIATED_INT4_LM_HEAD_ORACLE_EVAL") != nullptr) {
+    return {"lm_head"};
+  }
+  std::set<std::string, std::less<>> components;
+  if (configured == nullptr || *configured == '\0') return components;
+  const std::string_view specification(configured);
+  std::size_t begin = 0;
+  while (begin < specification.size()) {
+    const std::size_t end = specification.find(',', begin);
+    const std::string item(specification.substr(
+        begin, end == std::string_view::npos ? specification.size() - begin : end - begin));
+    if (item != "lm_head" && item != "qkv" && item != "gate_up") {
+      throw std::runtime_error(
+          "GRADIATED_INT4_ORACLE_COMPONENTS entries must be lm_head, qkv, or gate_up");
+    }
+    components.insert(item);
+    if (end == std::string_view::npos) break;
+    begin = end + 1;
+  }
+  return components;
+}
+
+std::string join_components(const std::set<std::string, std::less<>>& components) {
+  std::string result;
+  for (const auto& component : components) {
+    if (!result.empty()) result.push_back(',');
+    result += component;
+  }
+  return result;
+}
+
+std::set<int> int4_oracle_layers(const char* environment_name,
+                                 std::size_t layer_count) {
+  const char* configured = std::getenv(environment_name);
+  std::set<int> layers;
+  if (configured == nullptr || *configured == '\0') return layers;
+  const std::string_view specification(configured);
+  std::size_t begin = 0;
+  while (begin < specification.size()) {
+    const std::size_t end = specification.find(',', begin);
+    const std::string item(specification.substr(
+        begin, end == std::string_view::npos ? specification.size() - begin : end - begin));
+    std::size_t consumed = 0;
+    const int layer = std::stoi(item, &consumed);
+    if (consumed != item.size() || layer < 0 ||
+        static_cast<std::size_t>(layer) >= layer_count) {
+      throw std::runtime_error(std::string(environment_name) +
+                               " contains an invalid layer index");
+    }
+    layers.insert(layer);
+    if (end == std::string_view::npos) break;
+    begin = end + 1;
+  }
+  return layers;
+}
+
+int segment_layer(std::string_view name) {
+  constexpr std::string_view prefix = "layer.";
+  if (!name.starts_with(prefix)) return -1;
+  const std::size_t end = name.find('.', prefix.size());
+  if (end == std::string_view::npos) return -1;
+  const std::string text(name.substr(prefix.size(), end - prefix.size()));
+  std::size_t consumed = 0;
+  const int layer = std::stoi(text, &consumed);
+  return consumed == text.size() ? layer : -1;
+}
+
+std::string join_layers(const std::set<int>& layers) {
+  if (layers.empty()) return "all";
+  std::string result;
+  for (const int layer : layers) {
+    if (!result.empty()) result.push_back(',');
+    result += std::to_string(layer);
+  }
+  return result;
 }
 
 }  // namespace
@@ -365,6 +453,20 @@ int main(int argc, char** argv) {
       setenv("GRADIATED_INT8_GLOBAL_K", "1", 1);
     }
     const auto cases = precision_cases();
+    const auto selected_int4_components = int4_oracle_components();
+    const std::string selected_int4_text = join_components(selected_int4_components);
+    const auto selected_qkv_layers = int4_oracle_layers(
+        "GRADIATED_INT4_ORACLE_QKV_LAYERS", config.layers.size());
+    const auto selected_gate_up_layers = int4_oracle_layers(
+        "GRADIATED_INT4_ORACLE_GATE_UP_LAYERS", config.layers.size());
+    const std::string selected_qkv_text = join_layers(selected_qkv_layers);
+    const std::string selected_gate_up_text = join_layers(selected_gate_up_layers);
+    const int int4_scale_refinement_iterations = environment_non_negative_integer(
+        "GRADIATED_INT4_ORACLE_SCALE_REFINEMENT_ITERATIONS");
+    if (int4_scale_refinement_iterations > 8) {
+      throw std::runtime_error(
+          "GRADIATED_INT4_ORACLE_SCALE_REFINEMENT_ITERATIONS must not exceed 8");
+    }
     for (const float weight_scale_multiplier : weight_scale_cases(bf16_candidate)) {
       const auto fp8_weights = bf16_candidate
           ? std::unique_ptr<gradiated::engine::Fp8WeightArena>{}
@@ -372,20 +474,45 @@ int main(int argc, char** argv) {
                 plan, *weights, scaling,
                 scaling == gradiated::engine::Fp8Scaling::tensor
                     ? weight_scale_multiplier : 1.0F);
-    if (fp8_weights && std::getenv("GRADIATED_INT4_LM_HEAD_ORACLE_EVAL") != nullptr) {
-      const int block_width = environment_non_negative_integer(
-          "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK");
-      const int selected_width = block_width == 0 ? 128 : block_width;
-      if (selected_width != 32 && selected_width != 64 &&
-          selected_width != 128 && selected_width != 256) {
-        throw std::runtime_error(
-            "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK must be 32, 64, 128, or 256");
+      if (fp8_weights && !selected_int4_components.empty()) {
+        int block_width = environment_non_negative_integer("GRADIATED_INT4_ORACLE_BLOCK");
+        if (block_width == 0) {
+          block_width = environment_non_negative_integer(
+              "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK");
+        }
+        const int selected_width = block_width == 0 ? 128 : block_width;
+        if (selected_width != 32 && selected_width != 64 &&
+            selected_width != 128 && selected_width != 256) {
+          throw std::runtime_error(
+              "GRADIATED_INT4_ORACLE_BLOCK must be 32, 64, 128, or 256");
+        }
+        for (const auto& segment : plan.segments()) {
+          if (segment.shape.size() != 2) continue;
+          const int layer = segment_layer(segment.name);
+          const bool selected =
+              (segment.name == "token_embedding" &&
+               selected_int4_components.contains("lm_head")) ||
+              (segment.name.ends_with(".qkv") &&
+               selected_int4_components.contains("qkv") &&
+               (selected_qkv_layers.empty() || selected_qkv_layers.contains(layer))) ||
+              (segment.name.ends_with(".gate_up") &&
+               selected_int4_components.contains("gate_up") &&
+               (selected_gate_up_layers.empty() ||
+                selected_gate_up_layers.contains(layer)));
+          if (!selected) continue;
+          fp8_weights->roundtrip_int4(
+              segment.name, static_cast<int>(segment.shape[0]),
+              static_cast<int>(segment.shape[1]), selected_width,
+              int4_scale_refinement_iterations);
+        }
+        std::cout << "int4_oracle_components=" << selected_int4_text << '\n'
+                  << "int4_oracle_block=" << selected_width << '\n'
+                  << "int4_oracle_qkv_layers=" << selected_qkv_text << '\n'
+                  << "int4_oracle_gate_up_layers=" << selected_gate_up_text << '\n'
+                  << "int4_scale_refinement_iterations="
+                  << int4_scale_refinement_iterations << '\n';
       }
-      fp8_weights->roundtrip_int4(
-          "token_embedding", static_cast<int>(config.vocabulary_size),
-          static_cast<int>(config.hidden_size), selected_width);
-    }
-    for (const auto& precision_case : cases) {
+      for (const auto& precision_case : cases) {
       if (precision_case == "none") {
         unsetenv("GRADIATED_FP8_BF16_LAYERS");
       } else {
@@ -449,9 +576,9 @@ int main(int argc, char** argv) {
             ++total_predictions;
             matching_predictions += match ? 1U : 0U;
           }
-        if (step + 1 != evaluated_tokens) {
-          predictions = fp8_runner.append_ragged(
-              free_running ? predictions : reference_tokens, slots);
+          if (step + 1 != evaluated_tokens) {
+            predictions = fp8_runner.append_ragged(
+                free_running ? predictions : reference_tokens, slots);
           }
         }
         for (int row = 0; row < group_size; ++row) {
@@ -493,6 +620,11 @@ int main(int argc, char** argv) {
       std::cout << "bf16_layers=" << precision_case << '\n'
                 << "scaling=" << argv[3] << '\n'
                 << "weight_scale_multiplier=" << weight_scale_multiplier << '\n'
+                << "int4_oracle_components=" << selected_int4_text << '\n'
+                << "int4_oracle_qkv_layers=" << selected_qkv_text << '\n'
+                << "int4_oracle_gate_up_layers=" << selected_gate_up_text << '\n'
+                << "int4_scale_refinement_iterations="
+                << int4_scale_refinement_iterations << '\n'
                 << "prompts=" << prompt_count << '\n'
                 << "exact_prompts=" << exact_prompts << '\n'
                 << "matching_predictions=" << matching_predictions << '\n'
@@ -509,10 +641,11 @@ int main(int argc, char** argv) {
                 << "evaluation_seconds=" << seconds << '\n';
       if (!artifact_path.empty()) {
         append_quality_artifact(
-            artifact_path, argv[3], weight_scale_multiplier, precision_case, prompts,
-            references, candidate_sequences);
+            artifact_path, argv[3], weight_scale_multiplier, precision_case,
+            selected_int4_text, selected_qkv_text, selected_gate_up_text,
+            int4_scale_refinement_iterations, prompts, references, candidate_sequences);
       }
-    }
+      }
     }
     return 0;
   } catch (const std::exception& error) {

@@ -44,14 +44,16 @@ class Fp8Linear {
   std::unique_ptr<Implementation> implementation_;
 };
 
-// Hopper W4A8 mixed-input linear specialized for the Gemma LM head. Weights are quantized in
-// 256-component groups, encoded as signed INT4, and reordered once for register-source WGMMA.
-// Output is intentionally left without the positive tensor-wide FP8 input/weight scale product:
-// greedy argmax is invariant to that per-row factor, avoiding a logits-scale launch.
+// Hopper W4A8 mixed-input linear for Gemma decode projections. Weights are quantized in
+// K-local groups, encoded as signed INT4, and reordered once for register-source WGMMA.
+// Output is intentionally left without the positive tensor-wide FP8 input/weight scale product.
+// Greedy argmax is invariant to that factor for the LM head; intermediate projections must fuse
+// or otherwise apply it before this primitive can be selected by the model runner.
 class Int4Fp8Linear {
  public:
   Int4Fp8Linear(const void* fp8_row_major_weight, int input_width, int output_width,
-                int group_width = 256);
+                int group_width = 256, int tile_columns = 256,
+                int scale_refinement_iterations = 0);
   ~Int4Fp8Linear();
   Int4Fp8Linear(const Int4Fp8Linear&) = delete;
   Int4Fp8Linear& operator=(const Int4Fp8Linear&) = delete;
@@ -107,9 +109,10 @@ void quantize_bf16_activation_to_fp8_block_128(const void* input, void* output, 
                                                cudaStream_t stream);
 
 // Research oracle for a packed signed-INT4 weight representation. Each independent K block is
-// reduced to a symmetric [-7, 7] codebook and reconstructed in place as E4M3. The existing FP8
+// reduced to the signed INT4 [-8, 7] codebook and reconstructed in place as E4M3. The existing FP8
 // GEMM then isolates model-quality impact without claiming the reconstruction is a fast path.
 void roundtrip_fp8_weight_via_int4_blocks(void* fp8_weight, int output_width, int input_width,
-                                          int block_width, cudaStream_t stream);
+                                          int block_width, cudaStream_t stream,
+                                          int scale_refinement_iterations = 0);
 
 }  // namespace gradiated::engine

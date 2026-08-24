@@ -23,6 +23,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 namespace gradiated::engine {
 namespace {
@@ -76,6 +77,27 @@ __device__ float reduce_max(float value, float* warp_maxima) {
   return warp_maxima[0];
 }
 
+__device__ float reduce_sum(float value, float* warp_sums) {
+  for (int offset = 16; offset > 0; offset /= 2) {
+    value += __shfl_down_sync(0xffffffffU, value, offset);
+  }
+  const int lane = static_cast<int>(threadIdx.x) & 31;
+  const int warp = static_cast<int>(threadIdx.x) / 32;
+  if (lane == 0) warp_sums[warp] = value;
+  __syncthreads();
+  if (warp == 0) {
+    value = lane < static_cast<int>(blockDim.x) / 32 ? warp_sums[lane] : 0.0F;
+    for (int offset = 16; offset > 0; offset /= 2) {
+      value += __shfl_down_sync(0xffffffffU, value, offset);
+    }
+    if (lane == 0) warp_sums[0] = value;
+  }
+  __syncthreads();
+  value = warp_sums[0];
+  __syncthreads();
+  return value;
+}
+
 __device__ std::uint8_t unified_int4_code(int value) {
   return static_cast<std::uint8_t>(value > 0 ? 8 - value : value & 0x0f);
 }
@@ -83,10 +105,12 @@ __device__ std::uint8_t unified_int4_code(int value) {
 __global__ void quantize_fp8_int4_lut_kernel(
     const __nv_fp8_e4m3* input, std::uint8_t* row_major_output,
     PackedScale* packed_scales,
-    int output_width, int input_width, int group_width, int groups) {
+    int output_width, int input_width, int group_width, int groups,
+    int scale_refinement_iterations) {
   const int row = static_cast<int>(blockIdx.x);
   if (row >= output_width) return;
   __shared__ float warp_maxima[8];
+  __shared__ float optimized_scale;
   const std::size_t row_base = static_cast<std::size_t>(row) * input_width;
   const std::size_t packed_row_base = row_base / 2;
   for (int group = 0; group < groups; ++group) {
@@ -101,7 +125,22 @@ __global__ void quantize_fp8_int4_lut_kernel(
     // tops out at 448, so scale=max/7 is invalid for blocks whose FP8 maximum exceeds 392: the
     // otherwise-unused lookup entry overflows and poisons the tensor-core conversion. Cap the
     // scale at 448/8 and use the available -8 code for negative outliers.
-    const float scale = maximum > 0.0F ? fminf(maximum / 7.0F, 56.0F) : 1.0F;
+    if (threadIdx.x == 0) {
+      optimized_scale = maximum > 0.0F ? fminf(maximum / 7.0F, 56.0F) : 1.0F;
+    }
+    __syncthreads();
+    for (int iteration = 0; iteration < scale_refinement_iterations; ++iteration) {
+      const int quantized = max(-8, min(7, __float2int_rn(value / optimized_scale)));
+      const float numerator = reduce_sum(
+          value * static_cast<float>(quantized), warp_maxima);
+      const float denominator = reduce_sum(
+          static_cast<float>(quantized * quantized), warp_maxima);
+      if (threadIdx.x == 0 && denominator > 0.0F) {
+        optimized_scale = fminf(numerator / denominator, 56.0F);
+      }
+      __syncthreads();
+    }
+    const float scale = optimized_scale;
     if (threadIdx.x == 0) {
       PackedScale lookup;
 #pragma unroll
@@ -129,10 +168,16 @@ __global__ void quantize_fp8_int4_lut_kernel(
   }
 }
 
-template <int TileRows>
+template <int TileColumns, int TileRows>
 struct KernelConfiguration {
-  using TileShape = cute::Shape<cute::_256, cute::Int<TileRows>, cute::_128>;
+  using TileShape = cute::Shape<cute::Int<TileColumns>, cute::Int<TileRows>, cute::_128>;
   using ClusterShape = cute::Shape<cute::_1, cute::_1, cute::_1>;
+  // CUTLASS requires at least 128 M columns for the cooperative two-warpgroup schedule. A
+  // 64-column tile is still useful for Gemma's 5,376-wide projections, where the cooperative
+  // 256-column tile exposes only 21 CTAs on 132 SMs, so use the single-warpgroup schedule there.
+  using KernelSchedule = std::conditional_t<
+      TileColumns == 64, cutlass::gemm::KernelTmaWarpSpecialized,
+      cutlass::gemm::KernelTmaWarpSpecializedCooperative>;
   using Epilogue = typename cutlass::epilogue::collective::CollectiveBuilder<
       cutlass::arch::Sm90, cutlass::arch::OpClassTensorOp,
       TileShape, ClusterShape, cutlass::epilogue::collective::EpilogueTileAuto,
@@ -150,7 +195,7 @@ struct KernelConfiguration {
       TileShape, ClusterShape,
       cutlass::gemm::collective::StageCountAutoCarveout<
           static_cast<int>(sizeof(typename Epilogue::SharedStorage))>,
-      cutlass::gemm::KernelTmaWarpSpecializedCooperative>::CollectiveOp;
+      KernelSchedule>::CollectiveOp;
   using Kernel = cutlass::gemm::kernel::GemmUniversal<
       cute::Shape<int, int, int, int>, Mainloop, Epilogue>;
   using Gemm = cutlass::gemm::device::GemmUniversalAdapter<Kernel>;
@@ -167,9 +212,9 @@ struct Int4Fp8Linear::Implementation {
     int output_row_stride{};
   };
 
-  template <int TileRows>
+  template <int TileColumns, int TileRows>
   struct Plan final : PlanBase {
-    using Configuration = KernelConfiguration<TileRows>;
+    using Configuration = KernelConfiguration<TileColumns, TileRows>;
     using Gemm = typename Configuration::Gemm;
     Gemm gemm;
     void* workspace{};
@@ -194,7 +239,8 @@ struct Int4Fp8Linear::Implementation {
            static_cast<const PackedScale*>(state.packed_scales), state.scale_stride,
            state.group_width},
           {{1.0F, 0.0F}, static_cast<const ElementOutput*>(output), stride_output,
-           static_cast<ElementOutput*>(output), stride_output}};
+           static_cast<ElementOutput*>(output), stride_output},
+          {0, cutlass::KernelHardwareInfo::query_device_multiprocessor_count(0)}, {}};
       workspace_bytes = Gemm::get_workspace_size(arguments);
       if (workspace_bytes != 0) {
         cuda_check(cudaMalloc(&workspace, workspace_bytes), "allocate INT4 linear workspace");
@@ -216,19 +262,24 @@ struct Int4Fp8Linear::Implementation {
   int output_width;
   int group_width;
   int groups;
+  int tile_columns;
+  int scale_refinement_iterations;
   std::size_t weight_bytes;
   std::size_t scale_bytes;
   void* packed_weight{};
   void* packed_scales{};
   ReorderedWeightLayout reordered_layout;
-  using ScaleStride = typename KernelConfiguration<16>::Mainloop::StrideScale;
+  using ScaleStride = typename KernelConfiguration<256, 16>::Mainloop::StrideScale;
   ScaleStride scale_stride;
   std::map<int, std::unique_ptr<PlanBase>> plans;
 
   Implementation(const void* fp8_weight, int requested_input_width,
-                 int requested_output_width, int requested_group_width)
+                 int requested_output_width, int requested_group_width,
+                 int requested_tile_columns, int requested_scale_refinement_iterations)
       : input_width(requested_input_width), output_width(requested_output_width),
         group_width(requested_group_width), groups((input_width + group_width - 1) / group_width),
+        tile_columns(requested_tile_columns),
+        scale_refinement_iterations(requested_scale_refinement_iterations),
         weight_bytes(static_cast<std::size_t>(output_width) * input_width / 2),
         scale_bytes(static_cast<std::size_t>(output_width) * groups * sizeof(PackedScale)),
         reordered_layout(cute::tile_to_shape(
@@ -236,8 +287,11 @@ struct Int4Fp8Linear::Implementation {
         scale_stride(cutlass::make_cute_packed_stride(
             ScaleStride{}, cute::make_shape(output_width, groups, 1))) {
     if (fp8_weight == nullptr || input_width <= 0 || output_width <= 0 ||
-        (group_width != 128 && group_width != 256) || input_width % group_width != 0 ||
-        input_width % 2 != 0 || output_width % 256 != 0) {
+        (group_width != 128 && group_width != 256) ||
+        input_width % group_width != 0 ||
+        input_width % 2 != 0 || output_width % 256 != 0 ||
+        (tile_columns != 64 && tile_columns != 128 && tile_columns != 256) ||
+        scale_refinement_iterations < 0 || scale_refinement_iterations > 8) {
       throw std::runtime_error("invalid INT4 FP8 linear weight shape");
     }
     void* row_major_weight = nullptr;
@@ -255,7 +309,7 @@ struct Int4Fp8Linear::Implementation {
           static_cast<const __nv_fp8_e4m3*>(fp8_weight),
           static_cast<std::uint8_t*>(row_major_weight),
           static_cast<PackedScale*>(packed_scales),
-          output_width, input_width, group_width, groups);
+          output_width, input_width, group_width, groups, scale_refinement_iterations);
       cuda_check(cudaPeekAtLastError(), "launch INT4 LM-head quantization");
       cuda_check(cudaDeviceSynchronize(), "finish INT4 LM-head quantization");
       const auto source_stride = cutlass::make_cute_packed_stride(
@@ -295,15 +349,27 @@ struct Int4Fp8Linear::Implementation {
       }
       return *found->second;
     }
+    const auto create = [&]<int TileRows>() -> std::unique_ptr<PlanBase> {
+      if (tile_columns == 64) {
+        return std::make_unique<Plan<64, TileRows>>(
+            *this, input, output, rows, output_row_stride);
+      }
+      if (tile_columns == 128) {
+        return std::make_unique<Plan<128, TileRows>>(
+            *this, input, output, rows, output_row_stride);
+      }
+      return std::make_unique<Plan<256, TileRows>>(
+          *this, input, output, rows, output_row_stride);
+    };
     std::unique_ptr<PlanBase> created;
     if (rows <= 16) {
-      created = std::make_unique<Plan<16>>(*this, input, output, rows, output_row_stride);
+      created = create.template operator()<16>();
     } else if (rows <= 32) {
-      created = std::make_unique<Plan<32>>(*this, input, output, rows, output_row_stride);
+      created = create.template operator()<32>();
     } else if (rows <= 64) {
-      created = std::make_unique<Plan<64>>(*this, input, output, rows, output_row_stride);
+      created = create.template operator()<64>();
     } else {
-      created = std::make_unique<Plan<128>>(*this, input, output, rows, output_row_stride);
+      created = create.template operator()<128>();
     }
     PlanBase& reference = *created;
     plans.emplace(rows, std::move(created));
@@ -312,9 +378,11 @@ struct Int4Fp8Linear::Implementation {
 };
 
 Int4Fp8Linear::Int4Fp8Linear(const void* fp8_row_major_weight, int input_width,
-                             int output_width, int group_width)
+                             int output_width, int group_width, int tile_columns,
+                             int scale_refinement_iterations)
     : implementation_(std::make_unique<Implementation>(
-          fp8_row_major_weight, input_width, output_width, group_width)) {}
+          fp8_row_major_weight, input_width, output_width, group_width, tile_columns,
+          scale_refinement_iterations)) {}
 Int4Fp8Linear::~Int4Fp8Linear() = default;
 
 bool Int4Fp8Linear::supports_rows(int rows) const { return rows > 0 && rows <= 128; }

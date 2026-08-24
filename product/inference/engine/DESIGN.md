@@ -1060,3 +1060,30 @@ to claim a kernel speedup beyond the fixed-state bound.
 Producer-carried amax is enabled by default for tensor-FP8 QKV and gate/up projections. The
 `GRADIATED_DISABLE_QKV_NORM_CARRIED_AMAX` and
 `GRADIATED_DISABLE_GATE_UP_NORM_CARRIED_AMAX` controls retain reproducible rollback paths.
+
+## Rejected direct speculative layouts (2026-08-24)
+
+An exact layout experiment had the positioned QKV producer emit speculative queries directly as
+`[request,head,token,dimension]`. For wrapped sliding attention, the ring-repair producer also
+wrote its final output directly as `[request,token,head,dimension]`. This removed the explicit
+token-to-head and head-to-token copies from 50 sliding layers while preserving every BF16 value;
+the CUDA test compared both output layouts component by component.
+
+The fixed-state result was initially compelling. At batch 16, depth four, and context 6,000,
+verifier time fell from a 23.5039 ms control mean to 22.6451 ms, or 3.65%, and combined
+draft-plus-verifier time improved 2.89%. Batch 2, 4, and 8 screens also improved by approximately
+2.7%, while batch one was neutral. The candidate was therefore restricted to cohorts of at least
+two requests before causal evaluation.
+
+Both seeded 50-request session-live brackets rejected that policy. Candidate and control emitted
+identical outputs, reused the same 295,542 prefix tokens, and executed the same 716 speculative
+cycles with 3,220 proposals and 2,703 accepted tokens. Nevertheless, candidate verifier time rose
+from 12.1746 to 12.3025 seconds and from 12.1857 to 12.2716 seconds. Paired mean TPOT regressed by
+0.0630 ms (`[+0.0533,+0.0725]`) and 0.0355 ms (`[+0.0187,+0.0484]`); request latency regressed by
+2.47 and 1.40 ms. Aggregate output rate fell 0.058% and 0.038%.
+
+The removed copies were profitable in a continuously repeated uniform verifier shape but did not
+repay the producer's strided stores and changed launch dependencies across the short-lived cohort
+mixture produced by live scheduling. The implementation and its runtime switch were removed. A
+future layout optimization must profile and optimize the producer-consumer pair on captured causal
+cohort sequences rather than infer whole-runtime value from one fixed batch shape.

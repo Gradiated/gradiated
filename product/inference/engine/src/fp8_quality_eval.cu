@@ -372,6 +372,19 @@ int main(int argc, char** argv) {
                 plan, *weights, scaling,
                 scaling == gradiated::engine::Fp8Scaling::tensor
                     ? weight_scale_multiplier : 1.0F);
+    if (fp8_weights && std::getenv("GRADIATED_INT4_LM_HEAD_ORACLE_EVAL") != nullptr) {
+      const int block_width = environment_non_negative_integer(
+          "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK");
+      const int selected_width = block_width == 0 ? 128 : block_width;
+      if (selected_width != 32 && selected_width != 64 &&
+          selected_width != 128 && selected_width != 256) {
+        throw std::runtime_error(
+            "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK must be 32, 64, 128, or 256");
+      }
+      fp8_weights->roundtrip_int4(
+          "token_embedding", static_cast<int>(config.vocabulary_size),
+          static_cast<int>(config.hidden_size), selected_width);
+    }
     for (const auto& precision_case : cases) {
       if (precision_case == "none") {
         unsetenv("GRADIATED_FP8_BF16_LAYERS");

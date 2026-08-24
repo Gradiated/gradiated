@@ -44,6 +44,50 @@ class Fp8Linear {
   std::unique_ptr<Implementation> implementation_;
 };
 
+// Hopper W4A8 mixed-input linear specialized for the Gemma LM head. Weights are quantized in
+// 256-component groups, encoded as signed INT4, and reordered once for register-source WGMMA.
+// Output is intentionally left without the positive tensor-wide FP8 input/weight scale product:
+// greedy argmax is invariant to that per-row factor, avoiding a logits-scale launch.
+class Int4Fp8Linear {
+ public:
+  Int4Fp8Linear(const void* fp8_row_major_weight, int input_width, int output_width,
+                int group_width = 256);
+  ~Int4Fp8Linear();
+  Int4Fp8Linear(const Int4Fp8Linear&) = delete;
+  Int4Fp8Linear& operator=(const Int4Fp8Linear&) = delete;
+
+  [[nodiscard]] bool supports_rows(int rows) const;
+  void run(const void* fp8_input, void* bf16_output, int rows, cudaStream_t stream,
+           int output_row_stride = 0);
+  [[nodiscard]] std::size_t allocated_bytes() const;
+
+ private:
+  struct Implementation;
+  std::unique_ptr<Implementation> implementation_;
+};
+
+// Hopper W4A16 mixed-input linear. Unlike the FP8-input variant, weights are quantized directly
+// from BF16 and group scales remain BF16, avoiding the E4M3 lookup precision/range boundary. This
+// is intended for the bandwidth-bound Gemma LM head, where activation bytes are negligible next
+// to the tied embedding stream.
+class Int4Bf16Linear {
+ public:
+  Int4Bf16Linear(const void* row_major_weight, int input_width, int output_width,
+                 int group_width = 256, bool source_is_fp8 = false);
+  ~Int4Bf16Linear();
+  Int4Bf16Linear(const Int4Bf16Linear&) = delete;
+  Int4Bf16Linear& operator=(const Int4Bf16Linear&) = delete;
+
+  [[nodiscard]] bool supports_rows(int rows) const;
+  void run(const void* bf16_input, void* bf16_output, int rows, cudaStream_t stream,
+           int output_row_stride = 0);
+  [[nodiscard]] std::size_t allocated_bytes() const;
+
+ private:
+  struct Implementation;
+  std::unique_ptr<Implementation> implementation_;
+};
+
 // Computes a tensor amax, stores scale=amax/448, and emits E4M3 bytes. Scale remains device-side.
 void quantize_bf16_to_fp8_e4m3(const void* input, void* output, float* scale,
                                std::size_t elements, cudaStream_t stream,
@@ -61,5 +105,11 @@ void quantize_bf16_weight_to_fp8_block_128(const void* input, void* output, floa
 void quantize_bf16_activation_to_fp8_block_128(const void* input, void* output, float* scales,
                                                int rows, int input_width,
                                                cudaStream_t stream);
+
+// Research oracle for a packed signed-INT4 weight representation. Each independent K block is
+// reduced to a symmetric [-7, 7] codebook and reconstructed in place as E4M3. The existing FP8
+// GEMM then isolates model-quality impact without claiming the reconstruction is a fast path.
+void roundtrip_fp8_weight_via_int4_blocks(void* fp8_weight, int output_width, int input_width,
+                                          int block_width, cudaStream_t stream);
 
 }  // namespace gradiated::engine

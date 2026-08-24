@@ -6,11 +6,13 @@
 #include "gradiated/engine/qkv.h"
 
 #include <cuda_bf16.h>
+#include <cuda_fp8.h>
 #include <cuda_runtime.h>
 
 #include <array>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -150,6 +152,438 @@ void test_linear() {
   const std::array<float, 8> expected{1, 2, 3, 6, 4, 5, 6, 15};
   for (std::size_t index = 0; index < output.size(); ++index) {
     near(__bfloat162float(output[index]), expected[index], 0.01F, "linear");
+  }
+}
+
+void test_int4_weight_oracle() {
+  constexpr int rows = 3;
+  constexpr int width = 300;
+  constexpr int block_width = 128;
+  std::vector<__nv_fp8_e4m3> values(static_cast<std::size_t>(rows) * width), expected;
+  for (std::size_t index = 0; index < values.size(); ++index) {
+    values[index] = __nv_fp8_e4m3(
+        2.75F * std::sin(static_cast<float>(index) * 0.071F) +
+        0.31F * std::cos(static_cast<float>(index) * 0.013F));
+  }
+  expected = values;
+  for (int row = 0; row < rows; ++row) {
+    for (int begin = 0; begin < width; begin += block_width) {
+      const int end = std::min(width, begin + block_width);
+      float maximum = 0.0F;
+      for (int column = begin; column < end; ++column) {
+        maximum = std::max(maximum, std::abs(static_cast<float>(
+            expected[static_cast<std::size_t>(row) * width + column])));
+      }
+      const float scale = maximum > 0.0F ? std::min(maximum / 7.0F, 56.0F) : 1.0F;
+      for (int column = begin; column < end; ++column) {
+        const std::size_t index = static_cast<std::size_t>(row) * width + column;
+        const int quantized = std::clamp(static_cast<int>(std::nearbyint(
+            static_cast<float>(expected[index]) / scale)), -8, 7);
+        expected[index] = __nv_fp8_e4m3(static_cast<float>(quantized) * scale);
+      }
+    }
+  }
+  DeviceAllocation<__nv_fp8_e4m3> device(values.size());
+  cuda_check(cudaMemcpy(device.get(), values.data(), values.size() * sizeof(values[0]),
+                        cudaMemcpyHostToDevice), "copy INT4 weight oracle input");
+  gradiated::engine::roundtrip_fp8_weight_via_int4_blocks(
+      device.get(), rows, width, block_width, nullptr);
+  cuda_check(cudaMemcpy(values.data(), device.get(), values.size() * sizeof(values[0]),
+                        cudaMemcpyDeviceToHost), "copy INT4 weight oracle output");
+  if (std::memcmp(values.data(), expected.data(), values.size() * sizeof(values[0])) != 0) {
+    throw std::runtime_error("INT4 weight oracle differs from host reference");
+  }
+}
+
+void test_int4_fp8_linear() {
+  constexpr int input_width = 256;
+  constexpr int output_width = 256;
+  constexpr int maximum_rows = 65;
+  std::vector<__nv_fp8_e4m3> weights(
+      static_cast<std::size_t>(output_width) * input_width, __nv_fp8_e4m3(0.0F));
+  for (int component = 0; component < output_width; ++component) {
+    weights[static_cast<std::size_t>(component) * input_width + component] =
+        __nv_fp8_e4m3(7.0F);
+  }
+  std::vector<__nv_fp8_e4m3> input(
+      static_cast<std::size_t>(maximum_rows) * input_width, __nv_fp8_e4m3(0.0F));
+  for (int row = 0; row < maximum_rows; ++row) {
+    input[static_cast<std::size_t>(row) * input_width + (row * 17) % input_width] =
+        __nv_fp8_e4m3(1.0F);
+  }
+
+  DeviceAllocation<__nv_fp8_e4m3> device_weights(weights.size()), device_input(input.size());
+  DeviceAllocation<__nv_bfloat16> device_output(
+      static_cast<std::size_t>(maximum_rows) * output_width);
+  cuda_check(cudaMemcpy(device_weights.get(), weights.data(), weights.size() * sizeof(weights[0]),
+                        cudaMemcpyHostToDevice), "copy physical INT4 weights");
+  cuda_check(cudaMemcpy(device_input.get(), input.data(), input.size() * sizeof(input[0]),
+                        cudaMemcpyHostToDevice), "copy physical INT4 input");
+
+  gradiated::engine::Int4Fp8Linear linear(
+      device_weights.get(), input_width, output_width, 128);
+  for (const int rows : {1, 17, 33, 65}) {
+    cuda_check(cudaMemset(device_output.get(), 0,
+                          static_cast<std::size_t>(rows) * output_width *
+                              sizeof(__nv_bfloat16)),
+               "clear physical INT4 output");
+    linear.run(device_input.get(), device_output.get(), rows, nullptr);
+    cuda_check(cudaDeviceSynchronize(), "synchronize physical INT4 linear");
+    std::vector<__nv_bfloat16> output(static_cast<std::size_t>(rows) * output_width);
+    cuda_check(cudaMemcpy(output.data(), device_output.get(), output.size() * sizeof(output[0]),
+                          cudaMemcpyDeviceToHost), "copy physical INT4 output");
+    for (int row = 0; row < rows; ++row) {
+      int maximum_index = 0;
+      float maximum = -INFINITY;
+      for (int column = 0; column < output_width; ++column) {
+        const float value = __bfloat162float(
+            output[static_cast<std::size_t>(row) * output_width + column]);
+        if (value > maximum) {
+          maximum = value;
+          maximum_index = column;
+        }
+      }
+      const int expected = (row * 17) % input_width;
+      if (maximum_index != expected) {
+        std::string nonzero_offsets;
+        for (std::size_t index = 0; index < output.size() &&
+             nonzero_offsets.size() < 200; ++index) {
+          const float value = __bfloat162float(output[index]);
+          if (value != 0.0F) {
+            nonzero_offsets += std::to_string(index) + ":" + std::to_string(value) + ",";
+          }
+        }
+        throw std::runtime_error(
+            "physical INT4 linear orientation mismatch at row " + std::to_string(row) +
+            ": expected " + std::to_string(expected) + ", got " +
+            std::to_string(maximum_index) + ", maximum " + std::to_string(maximum) +
+            ", expected-value " + std::to_string(__bfloat162float(
+                output[static_cast<std::size_t>(row) * output_width + expected])) +
+            ", nonzero-offsets " + nonzero_offsets);
+      }
+    }
+  }
+
+  constexpr int strided_rows = 16;
+  constexpr int output_stride = 768;
+  constexpr int output_offset = 256;
+  constexpr std::uint16_t guard_pattern = 0xc1c1;
+  DeviceAllocation<__nv_bfloat16> device_strided_output(
+      static_cast<std::size_t>(strided_rows) * output_stride);
+  cuda_check(cudaMemset(device_strided_output.get(), 0xc1,
+                        static_cast<std::size_t>(strided_rows) * output_stride *
+                            sizeof(__nv_bfloat16)),
+             "initialize strided INT4 output guards");
+  linear.run(device_input.get(), device_strided_output.get() + output_offset,
+             strided_rows, nullptr, output_stride);
+  cuda_check(cudaDeviceSynchronize(), "synchronize strided physical INT4 linear");
+  std::vector<__nv_bfloat16> strided_output(
+      static_cast<std::size_t>(strided_rows) * output_stride);
+  cuda_check(cudaMemcpy(strided_output.data(), device_strided_output.get(),
+                        strided_output.size() * sizeof(strided_output[0]),
+                        cudaMemcpyDeviceToHost),
+             "copy strided physical INT4 output");
+  for (int row = 0; row < strided_rows; ++row) {
+    for (int column = 0; column < output_stride; ++column) {
+      const std::size_t index = static_cast<std::size_t>(row) * output_stride + column;
+      const bool is_output = column >= output_offset &&
+          column < output_offset + output_width;
+      if (!is_output) {
+        std::uint16_t bits = 0;
+        std::memcpy(&bits, &strided_output[index], sizeof(bits));
+        if (bits != guard_pattern) {
+          throw std::runtime_error("strided physical INT4 linear overwrote output guard");
+        }
+        continue;
+      }
+      const int output_column = column - output_offset;
+      const int expected = (row * 17) % input_width;
+      const float value = __bfloat162float(strided_output[index]);
+      if ((output_column == expected && value <= 0.0F) ||
+          (output_column != expected && value != 0.0F)) {
+        throw std::runtime_error("strided physical INT4 linear output mismatch");
+      }
+    }
+  }
+
+  constexpr int comparison_rows = 17;
+  constexpr int comparison_input_width = 5376;
+  constexpr int comparison_output_width = 8192;
+  constexpr int comparison_segment_width = 4096;
+  std::vector<__nv_fp8_e4m3> comparison_weights(
+      static_cast<std::size_t>(comparison_output_width) * comparison_input_width);
+  std::vector<__nv_fp8_e4m3> comparison_input(
+      static_cast<std::size_t>(comparison_rows) * comparison_input_width);
+  for (std::size_t index = 0; index < comparison_weights.size(); ++index) {
+    const int column = static_cast<int>(index % comparison_input_width);
+    const int group = column / 256;
+    const float amplitude = group + 1 == comparison_input_width / 256
+        ? 420.0F : 4.0F * static_cast<float>(group + 1);
+    comparison_weights[index] = __nv_fp8_e4m3(
+        amplitude * std::sin(static_cast<float>(index) * 0.071F) +
+        0.07F * amplitude * std::cos(static_cast<float>(index) * 0.013F));
+  }
+  int argmax_mismatches = 0;
+  double minimum_cosine = 1.0;
+  for (int row = 0; row < comparison_rows; ++row) {
+    for (int column = 0; column < comparison_input_width; ++column) {
+      comparison_input[static_cast<std::size_t>(row) * comparison_input_width + column] =
+          __nv_fp8_e4m3(
+          0.75F * std::sin(
+              static_cast<float>(row * comparison_input_width + column) * 0.037F) -
+          0.21F * std::cos(static_cast<float>(column) * 0.019F));
+    }
+  }
+  DeviceAllocation<__nv_fp8_e4m3> device_random_weights(comparison_weights.size());
+  DeviceAllocation<__nv_fp8_e4m3> device_oracle_weights(comparison_weights.size());
+  DeviceAllocation<__nv_fp8_e4m3> device_comparison_input(comparison_input.size());
+  DeviceAllocation<__nv_bfloat16> device_physical_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_width);
+  DeviceAllocation<__nv_bfloat16> device_oracle_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_width);
+  DeviceAllocation<__nv_bfloat16> device_segment_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_segment_width);
+  constexpr int comparison_output_stride = 16384;
+  constexpr int comparison_output_offset = 4096;
+  DeviceAllocation<__nv_bfloat16> device_strided_comparison_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_stride);
+  DeviceAllocation<float> unit_scale(1);
+  const float one = 1.0F;
+  cuda_check(cudaMemcpy(device_random_weights.get(), comparison_weights.data(),
+                        comparison_weights.size() * sizeof(comparison_weights[0]),
+                        cudaMemcpyHostToDevice),
+             "copy random physical INT4 weights");
+  cuda_check(cudaMemcpy(device_oracle_weights.get(), comparison_weights.data(),
+                        comparison_weights.size() * sizeof(comparison_weights[0]),
+                        cudaMemcpyHostToDevice),
+             "copy random oracle INT4 weights");
+  cuda_check(cudaMemcpy(device_comparison_input.get(), comparison_input.data(),
+                        comparison_input.size() * sizeof(comparison_input[0]),
+                        cudaMemcpyHostToDevice), "copy random physical INT4 input");
+  cuda_check(cudaMemcpy(unit_scale.get(), &one, sizeof(one), cudaMemcpyHostToDevice),
+             "copy physical INT4 unit scale");
+  gradiated::engine::roundtrip_fp8_weight_via_int4_blocks(
+      device_oracle_weights.get(), comparison_output_width, comparison_input_width, 256, nullptr);
+  gradiated::engine::Int4Fp8Linear random_linear(
+      device_random_weights.get(), comparison_input_width, comparison_output_width, 256);
+  gradiated::engine::Int4Fp8Linear random_strided_linear(
+      device_random_weights.get(), comparison_input_width, comparison_output_width, 256);
+  gradiated::engine::Int4Fp8Linear random_segment_linear(
+      device_random_weights.get(), comparison_input_width, comparison_segment_width, 256);
+  gradiated::engine::Fp8Linear oracle_linear;
+  cuda_check(cudaMemset(device_strided_comparison_output.get(), 0xc1,
+                        static_cast<std::size_t>(comparison_rows) * comparison_output_stride *
+                            sizeof(__nv_bfloat16)),
+             "initialize large-K strided INT4 output guards");
+  random_linear.run(
+      device_comparison_input.get(), device_physical_output.get(), comparison_rows, nullptr);
+  random_strided_linear.run(
+      device_comparison_input.get(),
+      device_strided_comparison_output.get() + comparison_output_offset,
+      comparison_rows, nullptr, comparison_output_stride);
+  random_segment_linear.run(
+      device_comparison_input.get(), device_segment_output.get(), comparison_rows, nullptr);
+  oracle_linear.run(device_comparison_input.get(), unit_scale.get(), device_oracle_weights.get(),
+                    unit_scale.get(), device_oracle_output.get(), comparison_rows,
+                    comparison_input_width, comparison_output_width, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize physical INT4 oracle comparison");
+  std::vector<__nv_bfloat16> physical(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_width);
+  std::vector<__nv_bfloat16> oracle(physical.size());
+  std::vector<__nv_bfloat16> strided_comparison(
+      static_cast<std::size_t>(comparison_rows) * comparison_output_stride);
+  std::vector<__nv_bfloat16> segment_output(
+      static_cast<std::size_t>(comparison_rows) * comparison_segment_width);
+  cuda_check(cudaMemcpy(physical.data(), device_physical_output.get(),
+                        physical.size() * sizeof(physical[0]),
+                        cudaMemcpyDeviceToHost), "copy random physical INT4 output");
+  cuda_check(cudaMemcpy(oracle.data(), device_oracle_output.get(), oracle.size() * sizeof(oracle[0]),
+                        cudaMemcpyDeviceToHost), "copy random oracle INT4 output");
+  cuda_check(cudaMemcpy(strided_comparison.data(), device_strided_comparison_output.get(),
+                        strided_comparison.size() * sizeof(strided_comparison[0]),
+                        cudaMemcpyDeviceToHost),
+             "copy large-K strided physical INT4 output");
+  cuda_check(cudaMemcpy(segment_output.data(), device_segment_output.get(),
+                        segment_output.size() * sizeof(segment_output[0]),
+                        cudaMemcpyDeviceToHost),
+             "copy segmented physical INT4 output");
+  for (int row = 0; row < comparison_rows; ++row) {
+    int physical_argmax = 0;
+    int oracle_argmax = 0;
+    for (int column = 1; column < comparison_output_width; ++column) {
+      const std::size_t index =
+          static_cast<std::size_t>(row) * comparison_output_width + column;
+      const std::size_t physical_best =
+          static_cast<std::size_t>(row) * comparison_output_width + physical_argmax;
+      const std::size_t oracle_best =
+          static_cast<std::size_t>(row) * comparison_output_width + oracle_argmax;
+      if (__bfloat162float(physical[index]) > __bfloat162float(physical[physical_best])) {
+        physical_argmax = column;
+      }
+      if (__bfloat162float(oracle[index]) > __bfloat162float(oracle[oracle_best])) {
+        oracle_argmax = column;
+      }
+    }
+    argmax_mismatches += physical_argmax != oracle_argmax ? 1 : 0;
+    double dot = 0.0;
+    double physical_squared = 0.0;
+    double oracle_squared = 0.0;
+    for (int column = 0; column < comparison_output_width; ++column) {
+      const std::size_t index =
+          static_cast<std::size_t>(row) * comparison_output_width + column;
+      const std::size_t strided_index =
+          static_cast<std::size_t>(row) * comparison_output_stride +
+          comparison_output_offset + column;
+      if (std::memcmp(&physical[index], &strided_comparison[strided_index],
+                      sizeof(physical[index])) != 0) {
+        throw std::runtime_error("large-K strided physical INT4 output mismatch");
+      }
+      if (column < comparison_segment_width) {
+        const std::size_t segment_index =
+            static_cast<std::size_t>(row) * comparison_segment_width + column;
+        if (std::memcmp(&physical[index], &segment_output[segment_index],
+                        sizeof(physical[index])) != 0) {
+          throw std::runtime_error(
+              "physical INT4 output depends on vocabulary segment width");
+        }
+      }
+      const double physical_value = __bfloat162float(physical[index]);
+      const double oracle_value = __bfloat162float(oracle[index]);
+      dot += physical_value * oracle_value;
+      physical_squared += physical_value * physical_value;
+      oracle_squared += oracle_value * oracle_value;
+    }
+    minimum_cosine = std::min(
+        minimum_cosine, dot / std::sqrt(physical_squared * oracle_squared));
+    for (int column = 0; column < comparison_output_stride; ++column) {
+      if (column >= comparison_output_offset &&
+          column < comparison_output_offset + comparison_output_width) {
+        continue;
+      }
+      const std::size_t guard_index =
+          static_cast<std::size_t>(row) * comparison_output_stride + column;
+      std::uint16_t bits = 0;
+      std::memcpy(&bits, &strided_comparison[guard_index], sizeof(bits));
+      if (bits != guard_pattern) {
+        throw std::runtime_error("large-K strided physical INT4 overwrote output guard");
+      }
+    }
+  }
+  std::cout << "INT4 physical/oracle K=" << comparison_input_width
+            << " N=" << comparison_output_width
+            << " minimum_cosine=" << minimum_cosine
+            << " argmax_mismatches=" << argmax_mismatches
+            << "/" << comparison_rows << '\n';
+  if (minimum_cosine < 0.995 || argmax_mismatches > 6) {
+    throw std::runtime_error(
+        "physical INT4 linear exceeded representation-oracle tolerance: minimum cosine " +
+        std::to_string(minimum_cosine) + ", argmax mismatches " +
+        std::to_string(argmax_mismatches) + "/" + std::to_string(comparison_rows));
+  }
+}
+
+void test_int4_bf16_linear() {
+  constexpr int rows = 17;
+  constexpr int input_width = 512;
+  constexpr int output_width = 256;
+  std::vector<__nv_bfloat16> weights(
+      static_cast<std::size_t>(output_width) * input_width);
+  std::vector<__nv_bfloat16> oracle_weights(weights.size());
+  std::vector<__nv_bfloat16> input(static_cast<std::size_t>(rows) * input_width);
+  for (std::size_t index = 0; index < weights.size(); ++index) {
+    const float amplitude = index % input_width < 256 ? 1.0F : 16.0F;
+    weights[index] = __float2bfloat16(
+        amplitude * (2.75F * std::sin(static_cast<float>(index) * 0.071F) +
+                     0.31F * std::cos(static_cast<float>(index) * 0.013F)));
+  }
+  oracle_weights = weights;
+  for (int row = 0; row < output_width; ++row) {
+    for (int begin = 0; begin < input_width; begin += 256) {
+      float maximum = 0.0F;
+      for (int column = begin; column < begin + 256; ++column) {
+        maximum = std::max(maximum, std::abs(__bfloat162float(
+            oracle_weights[static_cast<std::size_t>(row) * input_width + column])));
+      }
+      const __nv_bfloat16 encoded_scale = __float2bfloat16(
+          maximum > 0.0F ? maximum / 7.0F : 1.0F);
+      const float scale = __bfloat162float(encoded_scale);
+      for (int column = begin; column < begin + 256; ++column) {
+        const std::size_t index = static_cast<std::size_t>(row) * input_width + column;
+        const int quantized = std::clamp(
+            static_cast<int>(std::nearbyint(__bfloat162float(oracle_weights[index]) / scale)),
+            -7, 7);
+        oracle_weights[index] = __float2bfloat16(static_cast<float>(quantized) * scale);
+      }
+    }
+  }
+  for (int row = 0; row < rows; ++row) {
+    for (int column = 0; column < input_width; ++column) {
+      input[static_cast<std::size_t>(row) * input_width + column] = __float2bfloat16(
+          0.75F * std::sin(static_cast<float>(row * input_width + column) * 0.037F) -
+          0.21F * std::cos(static_cast<float>(column) * 0.019F));
+    }
+  }
+  DeviceAllocation<__nv_bfloat16> device_weights(weights.size());
+  DeviceAllocation<__nv_bfloat16> device_oracle_weights(oracle_weights.size());
+  DeviceAllocation<__nv_bfloat16> device_input(input.size());
+  DeviceAllocation<__nv_bfloat16> device_physical_output(
+      static_cast<std::size_t>(rows) * output_width);
+  DeviceAllocation<__nv_bfloat16> device_oracle_output(
+      static_cast<std::size_t>(rows) * output_width);
+  cuda_check(cudaMemcpy(device_weights.get(), weights.data(), weights.size() * sizeof(weights[0]),
+                        cudaMemcpyHostToDevice), "copy BF16 INT4 weights");
+  cuda_check(cudaMemcpy(device_oracle_weights.get(), oracle_weights.data(),
+                        oracle_weights.size() * sizeof(oracle_weights[0]),
+                        cudaMemcpyHostToDevice), "copy BF16 INT4 oracle weights");
+  cuda_check(cudaMemcpy(device_input.get(), input.data(), input.size() * sizeof(input[0]),
+                        cudaMemcpyHostToDevice), "copy BF16 INT4 input");
+  gradiated::engine::Int4Bf16Linear physical_linear(
+      device_weights.get(), input_width, output_width, 256);
+  gradiated::engine::Bf16Linear oracle_linear;
+  physical_linear.run(device_input.get(), device_physical_output.get(), rows, nullptr);
+  oracle_linear.run(device_input.get(), device_oracle_weights.get(), device_oracle_output.get(),
+                    rows, input_width, output_width, nullptr);
+  cuda_check(cudaDeviceSynchronize(), "synchronize BF16 INT4 comparison");
+  std::vector<__nv_bfloat16> physical(static_cast<std::size_t>(rows) * output_width);
+  std::vector<__nv_bfloat16> oracle(physical.size());
+  cuda_check(cudaMemcpy(physical.data(), device_physical_output.get(),
+                        physical.size() * sizeof(physical[0]), cudaMemcpyDeviceToHost),
+             "copy BF16 INT4 physical output");
+  cuda_check(cudaMemcpy(oracle.data(), device_oracle_output.get(),
+                        oracle.size() * sizeof(oracle[0]), cudaMemcpyDeviceToHost),
+             "copy BF16 INT4 oracle output");
+  double minimum_cosine = 1.0;
+  int argmax_mismatches = 0;
+  for (int row = 0; row < rows; ++row) {
+    double dot = 0.0;
+    double physical_squared = 0.0;
+    double oracle_squared = 0.0;
+    int physical_argmax = 0;
+    int oracle_argmax = 0;
+    for (int column = 0; column < output_width; ++column) {
+      const std::size_t index = static_cast<std::size_t>(row) * output_width + column;
+      const double physical_value = __bfloat162float(physical[index]);
+      const double oracle_value = __bfloat162float(oracle[index]);
+      if (physical_value > __bfloat162float(
+              physical[static_cast<std::size_t>(row) * output_width + physical_argmax])) {
+        physical_argmax = column;
+      }
+      if (oracle_value > __bfloat162float(
+              oracle[static_cast<std::size_t>(row) * output_width + oracle_argmax])) {
+        oracle_argmax = column;
+      }
+      dot += physical_value * oracle_value;
+      physical_squared += physical_value * physical_value;
+      oracle_squared += oracle_value * oracle_value;
+    }
+    minimum_cosine = std::min(
+        minimum_cosine, dot / std::sqrt(physical_squared * oracle_squared));
+    argmax_mismatches += physical_argmax != oracle_argmax ? 1 : 0;
+  }
+  std::cout << "INT4 BF16 physical/oracle minimum_cosine=" << minimum_cosine
+            << " argmax_mismatches=" << argmax_mismatches << '/' << rows << '\n';
+  if (minimum_cosine < 0.999 || argmax_mismatches > 1) {
+    throw std::runtime_error("BF16 INT4 linear exceeded representation-oracle tolerance");
   }
 }
 
@@ -1010,6 +1444,9 @@ int main() {
     test_norm_add_and_scale();
     test_gelu_gate();
     test_linear();
+    test_int4_weight_oracle();
+    test_int4_fp8_linear();
+    test_int4_bf16_linear();
     test_grouped_attention();
     test_shared_global_kv_roundtrip();
     test_prefill_layouts();

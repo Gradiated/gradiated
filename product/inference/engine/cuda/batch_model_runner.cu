@@ -8,6 +8,7 @@
 #include "gradiated/engine/layer_runner.h"
 #include "gradiated/engine/linear.h"
 
+#include <cuda_bf16.h>
 #include <cuda_runtime.h>
 
 #include <algorithm>
@@ -15,7 +16,9 @@
 #include <cstdlib>
 #include <cstdint>
 #include <limits>
+#include <iostream>
 #include <map>
+#include <memory>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -81,6 +84,51 @@ int int8_global_kv_oracle_block_width() {
 
 bool bf16_lm_head_enabled() {
   const char* value = std::getenv("GRADIATED_FP8_BF16_LM_HEAD");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+bool int4_lm_head_enabled() {
+  const char* value = std::getenv("GRADIATED_INT4_LM_HEAD");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+bool int4_bf16_lm_head_enabled() {
+  const char* value = std::getenv("GRADIATED_INT4_BF16_LM_HEAD");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+bool int4_bf16_lm_head_validation_enabled() {
+  const char* value = std::getenv("GRADIATED_INT4_BF16_LM_HEAD_VALIDATE");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+bool int4_lm_head_validation_enabled() {
+  const char* value = std::getenv("GRADIATED_INT4_LM_HEAD_VALIDATE");
+  return value != nullptr && std::string_view(value) == "1";
+}
+
+int int4_lm_head_segment_width() {
+  const char* value = std::getenv("GRADIATED_INT4_LM_HEAD_SEGMENT");
+  if (value == nullptr || *value == '\0') return 262144;
+  try {
+    const std::string text(value);
+    std::size_t consumed = 0;
+    const int parsed = std::stoi(text, &consumed);
+    if (consumed != text.size() || parsed < 256 || parsed % 256 != 0) {
+      throw std::runtime_error(
+          "GRADIATED_INT4_LM_HEAD_SEGMENT must be a positive multiple of 256");
+    }
+    return parsed;
+  } catch (const std::invalid_argument&) {
+    throw std::runtime_error(
+        "GRADIATED_INT4_LM_HEAD_SEGMENT must be a positive multiple of 256");
+  } catch (const std::out_of_range&) {
+    throw std::runtime_error("GRADIATED_INT4_LM_HEAD_SEGMENT is out of range");
+  }
+}
+
+bool int4_lm_head_oracle_enabled() {
+  const char* value = std::getenv("GRADIATED_INT4_LM_HEAD_ORACLE");
   return value != nullptr && std::string_view(value) == "1";
 }
 
@@ -153,6 +201,16 @@ struct CacheLocation { std::uint64_t offset; int capacity; };
 }  // namespace
 
 struct Gemma4BatchModelRunner::Implementation {
+  struct Int4LmHeadSegment {
+    int vocabulary_offset;
+    std::unique_ptr<Int4Fp8Linear> linear;
+  };
+
+  struct Int4Bf16LmHeadSegment {
+    int vocabulary_offset;
+    std::unique_ptr<Int4Bf16Linear> linear;
+  };
+
   struct DecodeGraph {
     cudaGraph_t graph{};
     cudaGraphExec_t executable{};
@@ -192,6 +250,10 @@ struct Gemma4BatchModelRunner::Implementation {
   std::uint64_t cache_payload_bytes;
   int fp8_suffix_token_limit;
   bool use_fp8_lm_head;
+  bool use_int4_lm_head;
+  bool use_int4_bf16_lm_head;
+  bool int4_lm_head_validation_logged{false};
+  bool int4_bf16_lm_head_validation_logged{false};
   bool use_fp8_global_kv;
   bool use_fp8_global_k;
   std::vector<bool> fp8_global_k_layers;
@@ -215,6 +277,8 @@ struct Gemma4BatchModelRunner::Implementation {
   Gemma4LayerRunner layers;
   Bf16Linear lm_head;
   Fp8Linear fp8_lm_head;
+  std::vector<Int4LmHeadSegment> int4_lm_head_segments;
+  std::vector<Int4Bf16LmHeadSegment> int4_bf16_lm_head_segments;
   Allocation cache_arena;
   Allocation fp8_key_arena;
   Allocation fp8_value_arena;
@@ -339,6 +403,8 @@ struct Gemma4BatchModelRunner::Implementation {
         cache_payload_bytes(cache_payload(model_config, requested_batch, max_context, &caches)),
         fp8_suffix_token_limit(fp8_suffix_max_tokens()),
         use_fp8_lm_head(decode_weights != nullptr && !bf16_lm_head_enabled()),
+        use_int4_lm_head(int4_lm_head_enabled()),
+        use_int4_bf16_lm_head(int4_bf16_lm_head_enabled()),
         use_fp8_global_kv(fp8_global_kv_enabled()),
         use_fp8_global_k(fp8_global_k_enabled() || use_fp8_global_kv),
         fp8_global_k_layers(global_layer_selection(
@@ -380,6 +446,8 @@ struct Gemma4BatchModelRunner::Implementation {
         layers(model_config, device_weights, max_context, max_context, requested_batch,
                decode_weights), lm_head(),
         fp8_lm_head(decode_weights == nullptr ? Fp8Scaling::tensor : decode_weights->scaling()),
+        int4_lm_head_segments(),
+        int4_bf16_lm_head_segments(),
         cache_arena(2ULL * cache_payload_bytes),
         fp8_key_arena(std::max<std::uint64_t>(1, fp8_key_payload_bytes)),
         fp8_value_arena(std::max<std::uint64_t>(
@@ -410,6 +478,63 @@ struct Gemma4BatchModelRunner::Implementation {
     if (requested_batch <= 0 || max_context <= 0) throw std::runtime_error("invalid batch model shape");
     if (fp8_suffix_token_limit > max_context) {
       throw std::runtime_error("GRADIATED_FP8_SUFFIX_MAX_TOKENS exceeds prefill workspace");
+    }
+    if (use_int4_lm_head &&
+        (decode_weights == nullptr || !use_fp8_lm_head ||
+         decode_weights->scaling() != Fp8Scaling::tensor)) {
+      throw std::runtime_error(
+          "GRADIATED_INT4_LM_HEAD requires tensor-scaled FP8 decode weights");
+    }
+    if (use_int4_lm_head && int4_lm_head_oracle_enabled()) {
+      throw std::runtime_error(
+          "physical and oracle INT4 LM-head modes cannot be combined");
+    }
+    if (use_int4_lm_head && use_int4_bf16_lm_head) {
+      throw std::runtime_error(
+          "FP8-input and BF16-input physical INT4 LM heads cannot be combined");
+    }
+    if (use_int4_bf16_lm_head && int4_lm_head_oracle_enabled()) {
+      throw std::runtime_error(
+          "physical BF16 INT4 and oracle INT4 LM-head modes cannot be combined");
+    }
+    if (use_int4_bf16_lm_head &&
+        (decode_weights == nullptr || decode_weights->scaling() != Fp8Scaling::tensor)) {
+      throw std::runtime_error(
+          "GRADIATED_INT4_BF16_LM_HEAD requires tensor-scaled FP8 decode weights");
+    }
+    if (use_int4_lm_head) {
+      const int segment_width = int4_lm_head_segment_width();
+      if (segment_width > vocabulary || vocabulary % segment_width != 0) {
+        throw std::runtime_error(
+            "GRADIATED_INT4_LM_HEAD_SEGMENT must divide the model vocabulary");
+      }
+      const auto* embedding = static_cast<const unsigned char*>(
+          decode_weights->at("token_embedding"));
+      int4_lm_head_segments.reserve(vocabulary / segment_width);
+      for (int offset = 0; offset < vocabulary; offset += segment_width) {
+        int4_lm_head_segments.push_back({
+            offset,
+            std::make_unique<Int4Fp8Linear>(
+                embedding + static_cast<std::size_t>(offset) * hidden,
+                hidden, segment_width, 256)});
+      }
+    }
+    if (use_int4_bf16_lm_head) {
+      const int segment_width = int4_lm_head_segment_width();
+      if (segment_width > vocabulary || vocabulary % segment_width != 0) {
+        throw std::runtime_error(
+            "GRADIATED_INT4_LM_HEAD_SEGMENT must divide the model vocabulary");
+      }
+      const auto* embedding = static_cast<const unsigned char*>(
+          decode_weights->at("token_embedding"));
+      int4_bf16_lm_head_segments.reserve(vocabulary / segment_width);
+      for (int offset = 0; offset < vocabulary; offset += segment_width) {
+        int4_bf16_lm_head_segments.push_back({
+            offset,
+            std::make_unique<Int4Bf16Linear>(
+                embedding + static_cast<std::size_t>(offset) * hidden,
+                hidden, segment_width, 256, true)});
+      }
     }
     if (use_int8_global_kv_oracle && use_fp8_global_k) {
       throw std::runtime_error(
@@ -610,6 +735,93 @@ struct Gemma4BatchModelRunner::Implementation {
   }
 
   void run_decode_lm_head(const void* input, void* output, int rows, cudaStream_t stream) {
+    if (use_int4_bf16_lm_head && !int4_bf16_lm_head_segments.empty() &&
+        int4_bf16_lm_head_segments.front().linear->supports_rows(rows)) {
+      const auto run_int4_bf16 = [&] {
+        for (const auto& segment : int4_bf16_lm_head_segments) {
+          auto* segment_output = static_cast<unsigned char*>(output) +
+              2ULL * segment.vocabulary_offset;
+          segment.linear->run(input, segment_output, rows, stream, vocabulary);
+        }
+      };
+      run_int4_bf16();
+      if (int4_bf16_lm_head_validation_enabled() &&
+          !int4_bf16_lm_head_validation_logged) {
+        std::vector<__nv_bfloat16> physical(static_cast<std::size_t>(vocabulary));
+        std::vector<__nv_bfloat16> reference(static_cast<std::size_t>(vocabulary));
+        std::vector<__nv_bfloat16> oracle(static_cast<std::size_t>(vocabulary));
+        check(cudaStreamSynchronize(stream), "synchronize BF16 INT4 LM-head validation");
+        check(cudaMemcpy(physical.data(), output,
+                         physical.size() * sizeof(physical[0]), cudaMemcpyDeviceToHost),
+              "copy BF16 INT4 LM-head validation logits");
+        lm_head.run(input, weights.at("token_embedding"), output,
+                    rows, hidden, vocabulary, stream);
+        check(cudaStreamSynchronize(stream), "synchronize BF16 LM-head validation reference");
+        check(cudaMemcpy(reference.data(), output,
+                         reference.size() * sizeof(reference[0]), cudaMemcpyDeviceToHost),
+              "copy BF16 LM-head validation reference logits");
+        auto* validation_scales = static_cast<float*>(fp8_final_scales.get());
+        quantize_bf16_to_fp8_e4m3(
+            input, fp8_final_hidden.get(), validation_scales,
+            static_cast<std::size_t>(rows) * hidden, stream);
+        Allocation oracle_weight(static_cast<std::uint64_t>(vocabulary) * hidden);
+        check(cudaMemcpyAsync(oracle_weight.get(), fp8_weights->at("token_embedding"),
+                              static_cast<std::size_t>(vocabulary) * hidden,
+                              cudaMemcpyDeviceToDevice, stream),
+              "copy BF16 INT4 validation oracle weight");
+        roundtrip_fp8_weight_via_int4_blocks(
+            oracle_weight.get(), vocabulary, hidden, 256, stream);
+        fp8_lm_head.run(fp8_final_hidden.get(), validation_scales, oracle_weight.get(),
+                        fp8_weights->scale("token_embedding"), output,
+                        rows, hidden, vocabulary, stream);
+        check(cudaStreamSynchronize(stream), "synchronize BF16 INT4 validation oracle");
+        check(cudaMemcpy(oracle.data(), output,
+                         oracle.size() * sizeof(oracle[0]), cudaMemcpyDeviceToHost),
+              "copy BF16 INT4 validation oracle logits");
+        int physical_argmax = 0;
+        int reference_argmax = 0;
+        int oracle_argmax = 0;
+        double dot = 0.0;
+        double physical_squared = 0.0;
+        double reference_squared = 0.0;
+        double physical_oracle_dot = 0.0;
+        double oracle_squared = 0.0;
+        for (int column = 0; column < vocabulary; ++column) {
+          const double physical_value = __bfloat162float(physical[column]);
+          const double reference_value = __bfloat162float(reference[column]);
+          const double oracle_value = __bfloat162float(oracle[column]);
+          if (physical_value > __bfloat162float(physical[physical_argmax])) {
+            physical_argmax = column;
+          }
+          if (reference_value > __bfloat162float(reference[reference_argmax])) {
+            reference_argmax = column;
+          }
+          if (oracle_value > __bfloat162float(oracle[oracle_argmax])) {
+            oracle_argmax = column;
+          }
+          dot += physical_value * reference_value;
+          physical_squared += physical_value * physical_value;
+          reference_squared += reference_value * reference_value;
+          physical_oracle_dot += physical_value * oracle_value;
+          oracle_squared += oracle_value * oracle_value;
+        }
+        std::cerr << "BF16 INT4 LM-head validation rows=" << rows
+                  << " segment_width=" << int4_lm_head_segment_width()
+                  << " physical_argmax=" << physical_argmax
+                  << " reference_argmax=" << reference_argmax
+                  << " cosine=" << dot / std::sqrt(physical_squared * reference_squared)
+                  << " norm_ratio=" << std::sqrt(physical_squared / reference_squared)
+                  << " oracle_argmax=" << oracle_argmax
+                  << " physical_oracle_cosine="
+                  << physical_oracle_dot / std::sqrt(physical_squared * oracle_squared)
+                  << " physical_oracle_norm_ratio="
+                  << std::sqrt(physical_squared / oracle_squared)
+                  << '\n';
+        run_int4_bf16();
+        int4_bf16_lm_head_validation_logged = true;
+      }
+      return;
+    }
     if (!use_fp8_lm_head) {
       lm_head.run(input, weights.at("token_embedding"), output,
                   rows, hidden, vocabulary, stream);
@@ -625,6 +837,95 @@ struct Gemma4BatchModelRunner::Implementation {
     } else {
       quantize_bf16_activation_to_fp8_block_128(input, fp8_final_hidden.get(), scales,
                                                 rows, hidden, stream);
+    }
+    if (use_int4_lm_head && !int4_lm_head_segments.empty() &&
+        int4_lm_head_segments.front().linear->supports_rows(rows)) {
+      const auto run_int4 = [&] {
+        for (const auto& segment : int4_lm_head_segments) {
+          auto* segment_output = static_cast<unsigned char*>(output) +
+              2ULL * segment.vocabulary_offset;
+          segment.linear->run(
+              fp8_final_hidden.get(), segment_output, rows, stream, vocabulary);
+        }
+      };
+      run_int4();
+      if (int4_lm_head_validation_enabled() && !int4_lm_head_validation_logged) {
+        std::vector<__nv_bfloat16> physical(static_cast<std::size_t>(vocabulary));
+        std::vector<__nv_bfloat16> reference(static_cast<std::size_t>(vocabulary));
+        std::vector<__nv_bfloat16> oracle(static_cast<std::size_t>(vocabulary));
+        check(cudaStreamSynchronize(stream), "synchronize physical INT4 LM-head validation");
+        check(cudaMemcpy(physical.data(), output,
+                         physical.size() * sizeof(physical[0]), cudaMemcpyDeviceToHost),
+              "copy physical INT4 LM-head validation logits");
+        fp8_lm_head.run(fp8_final_hidden.get(), scales, fp8_weights->at("token_embedding"),
+                        fp8_weights->scale("token_embedding"), output,
+                        rows, hidden, vocabulary, stream);
+        check(cudaStreamSynchronize(stream), "synchronize FP8 LM-head validation reference");
+        check(cudaMemcpy(reference.data(), output,
+                         reference.size() * sizeof(reference[0]), cudaMemcpyDeviceToHost),
+              "copy FP8 LM-head validation logits");
+        Allocation oracle_weight(
+            static_cast<std::uint64_t>(vocabulary) * hidden);
+        check(cudaMemcpyAsync(oracle_weight.get(), fp8_weights->at("token_embedding"),
+                              static_cast<std::size_t>(vocabulary) * hidden,
+                              cudaMemcpyDeviceToDevice, stream),
+              "copy INT4 LM-head validation oracle weight");
+        roundtrip_fp8_weight_via_int4_blocks(
+            oracle_weight.get(), vocabulary, hidden, 256, stream);
+        fp8_lm_head.run(fp8_final_hidden.get(), scales, oracle_weight.get(),
+                        fp8_weights->scale("token_embedding"), output,
+                        rows, hidden, vocabulary, stream);
+        check(cudaStreamSynchronize(stream), "synchronize INT4 LM-head validation oracle");
+        check(cudaMemcpy(oracle.data(), output,
+                         oracle.size() * sizeof(oracle[0]), cudaMemcpyDeviceToHost),
+              "copy INT4 LM-head validation oracle logits");
+        const auto compare = [&](const std::vector<__nv_bfloat16>& left,
+                                 const std::vector<__nv_bfloat16>& right) {
+          int left_argmax = 0;
+          int right_argmax = 0;
+          double dot = 0.0;
+          double left_squared = 0.0;
+          double right_squared = 0.0;
+          for (int column = 0; column < vocabulary; ++column) {
+            const double left_value = __bfloat162float(left[column]);
+            const double right_value = __bfloat162float(right[column]);
+            if (left_value > __bfloat162float(left[left_argmax])) left_argmax = column;
+            if (right_value > __bfloat162float(right[right_argmax])) right_argmax = column;
+            dot += left_value * right_value;
+            left_squared += left_value * left_value;
+            right_squared += right_value * right_value;
+          }
+          return std::tuple{
+              left_argmax, right_argmax,
+              dot / std::sqrt(left_squared * right_squared),
+              std::sqrt(left_squared / right_squared)};
+        };
+        const auto [physical_argmax, reference_argmax, cosine, norm_ratio] =
+            compare(physical, reference);
+        const auto [physical_oracle_argmax, oracle_argmax, physical_oracle_cosine,
+                    physical_oracle_norm_ratio] = compare(physical, oracle);
+        const auto [oracle_reference_argmax, oracle_reference_target,
+                    oracle_reference_cosine, oracle_reference_norm_ratio] =
+            compare(oracle, reference);
+        std::cerr << "INT4 LM-head validation rows=" << rows
+                  << " segment_width=" << int4_lm_head_segment_width()
+                  << " physical_argmax=" << physical_argmax
+                  << " reference_argmax=" << reference_argmax
+                  << " cosine=" << cosine
+                  << " norm_ratio=" << norm_ratio
+                  << " physical_oracle_argmax=" << physical_oracle_argmax
+                  << " oracle_argmax=" << oracle_argmax
+                  << " physical_oracle_cosine=" << physical_oracle_cosine
+                  << " physical_oracle_norm_ratio=" << physical_oracle_norm_ratio
+                  << " oracle_reference_argmax=" << oracle_reference_argmax
+                  << " oracle_reference_target=" << oracle_reference_target
+                  << " oracle_reference_cosine=" << oracle_reference_cosine
+                  << " oracle_reference_norm_ratio=" << oracle_reference_norm_ratio
+                  << '\n';
+        run_int4();
+        int4_lm_head_validation_logged = true;
+      }
+      return;
     }
     fp8_lm_head.run(fp8_final_hidden.get(), scales, fp8_weights->at("token_embedding"),
                     fp8_weights->scale("token_embedding"), output,

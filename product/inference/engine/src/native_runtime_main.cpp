@@ -1233,6 +1233,18 @@ int main(int argc, char** argv) {
       fp8_weights = gradiated::engine::Fp8WeightArena::quantize(
           plan, *weights, gradiated::engine::Fp8Scaling::tensor,
           weight_scale_multiplier);
+      if (environment("GRADIATED_INT4_LM_HEAD_ORACLE", "0") == "1") {
+        const int block_width = environment_integer(
+            "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK", 128, 32, 256);
+        if (block_width != 32 && block_width != 64 &&
+            block_width != 128 && block_width != 256) {
+          throw std::runtime_error(
+              "GRADIATED_INT4_LM_HEAD_ORACLE_BLOCK must be 32, 64, 128, or 256");
+        }
+        fp8_weights->roundtrip_int4(
+            "token_embedding", static_cast<int>(config.vocabulary_size),
+            static_cast<int>(config.hidden_size), block_width);
+      }
     } else if (fp8_decode != "off") {
       throw std::runtime_error("GRADIATED_FP8_DECODE must be off or tensor");
     }

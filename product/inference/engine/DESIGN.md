@@ -932,6 +932,47 @@ K exceeding the attention savings from changing only three of sixty-two layers.
 The physical INT8 implementation remains as reproducible research infrastructure, but production
 must leave it disabled. More tuning of this cache branch cannot materially move whole-model
 economics under the validated quality constraint. The next decode target is the model-wide
-bandwidth frontier, beginning with the 262,144-way target LM head: in the representative
-speculative-verification profile its FP8 GEMM alone accounts for approximately 26% of GPU time and
-streams roughly 1.4 GB of tied embedding weights per invocation.
+bandwidth frontier. The retained tensor-FP8 projections already sit at their one-byte weight-stream
+floor, so a material next step must reduce precision across repeatedly executed layer weights rather
+than infer a large opportunity from one isolated matrix.
+
+## Physical W4A8 target LM-head frontier (2026-08-24)
+
+The 262,144-way tied embedding was used to establish a physical Hopper W4A8 path before changing
+model-wide projection precision. Each 256-component group is quantized to signed INT4 and carries
+an eight-entry E4M3 lookup. CUTLASS mixed-input scales use group-major storage
+`group * output_width + row`; the initially assumed row-major order corrupted real weights while
+constant-scale synthetic probes hid the error. The strengthened CUDA test varies scale across
+K-groups, includes values above the E4M3 `-8 * scale` overflow boundary, and reports at least
+0.999999 physical/oracle cosine with zero argmax mismatches over seventeen shapes. The physical
+and representation-oracle heads also agree on all 512 predictions of the short real-model gate.
+
+The complete one-kernel head takes 0.196--0.211 ms for one to 32 rows versus 0.330--0.355 ms for
+the tensor-FP8 GEMM, a 39--42% isolated reduction. This does not imply an 11% verifier gain. The
+authoritative B16/context-6k Nsight trace contains one 0.349 ms target-head GEMM, only 1.6% of
+21.6 ms of verifier GPU kernels. An earlier reading of this trace incorrectly attributed 26% to
+the head; that figure is withdrawn. The mixed-input reorder also occupies approximately 1.45 GB,
+and the opt-in path retains the original FP8 embedding, so this experiment does not reduce current
+runtime residency.
+
+Quality remains acceptable at the task boundary. On the independent 64-task, 512-token HumanEval
+holdout, tensor-FP8 control and W4A8 both pass 61/64 tasks with zero regressions or improvements.
+The corrected full-vocabulary artifact has 11,632/32,768 token agreement and 0.9542 mean edit
+similarity against control, illustrating why task-level execution is the binding gate rather than
+exact free-running token identity.
+
+A clean-container A-B-B-A replay then used the same 50-request, five-session, approximately
+90%-cached session-live manifest, FP8 multiplier 0.98, FP8 assistant LM head, 23 idle cache slots,
+and depth-four speculation starting at batch one. Candidate median paired TPOT improved by 0.0379
+and 0.0381 ms, but paired mean TPOT changed by +0.0781 ms
+(`[-0.1091,+0.3099]` 95% bootstrap interval) and +0.1965 ms
+(`[-0.0504,+0.4621]`). Only 23/50 and 26/50 output sequences matched exactly; candidates emitted
+117 and 155 fewer tokens, making their 4.1% and 5.3% lower raw output rates different-work results.
+SLO compute recovery fell by 0.0381 and 0.0366 percentage points.
+
+The fixed-state B16/context-6k A-B-B-A removes that output-length confound. W4A8 reduces verifier
+time from 23.8148 to 23.5910 ms and from 23.7187 to 23.4688 ms: 0.94% and 1.05%. Combined
+draft-plus-verify time improves by 0.73% and 0.89%, consistent with the corrected profile bound.
+This is a valid primitive but not an economically promotable LM-head-only policy. The implementation
+remains opt-in infrastructure for model-wide W4 experiments; production remains on the pinned
+SGLang image with both physical INT4 switches unset.

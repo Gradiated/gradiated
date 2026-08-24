@@ -343,6 +343,39 @@ void quantize_bf16_activation_to_fp8_block_128(const void* input, void* output, 
   cuda_check(cudaPeekAtLastError(), "launch block-scaled FP8 activation quantization");
 }
 
+__global__ void roundtrip_fp8_int4_blocks_kernel(
+    __nv_fp8_e4m3* weight, int output_width, int input_width, int block_width) {
+  const int output_row = static_cast<int>(blockIdx.x);
+  if (output_row >= output_width) return;
+  __shared__ float warp_maxima[8];
+  const std::size_t row_base = static_cast<std::size_t>(output_row) * input_width;
+  for (int block_begin = 0; block_begin < input_width; block_begin += block_width) {
+    const int column = block_begin + static_cast<int>(threadIdx.x);
+    float value = 0.0F;
+    if (threadIdx.x < block_width && column < input_width) {
+      value = static_cast<float>(weight[row_base + column]);
+    }
+    const float maximum = reduce_block_max(fabsf(value), warp_maxima);
+    const float scale = maximum > 0.0F ? fminf(maximum / 7.0F, 56.0F) : 1.0F;
+    if (threadIdx.x < block_width && column < input_width) {
+      const int quantized = max(-8, min(7, __float2int_rn(value / scale)));
+      weight[row_base + column] = __nv_fp8_e4m3(static_cast<float>(quantized) * scale);
+    }
+    __syncthreads();
+  }
+}
+
+void roundtrip_fp8_weight_via_int4_blocks(void* fp8_weight, int output_width, int input_width,
+                                          int block_width, cudaStream_t stream) {
+  if (fp8_weight == nullptr || output_width <= 0 || input_width <= 0 ||
+      (block_width != 32 && block_width != 64 && block_width != 128 && block_width != 256)) {
+    throw std::runtime_error("invalid INT4 weight oracle shape");
+  }
+  roundtrip_fp8_int4_blocks_kernel<<<output_width, 256, 0, stream>>>(
+      static_cast<__nv_fp8_e4m3*>(fp8_weight), output_width, input_width, block_width);
+  cuda_check(cudaPeekAtLastError(), "launch INT4 weight oracle");
+}
+
 struct Bf16Linear::Implementation {
   struct Plan {
     cublasLtMatmulDesc_t operation{};

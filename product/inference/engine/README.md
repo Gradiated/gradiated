@@ -63,6 +63,16 @@ and every tested physical V format failed completion-quality gates, while the qu
 `5,29,59` failed to improve matched session-live latency or economics. Leave both switches unset in
 production.
 
+`GRADIATED_INT4_LM_HEAD=1` enables the research W4A8 target LM head. It quantizes the retained
+tensor-E4M3 embedding into group-256 signed INT4 with group-major E4M3 lookup scales and executes
+the complete 262,144-column head as one Hopper mixed-input CUTLASS GEMM. The physical kernel passes
+the CUDA oracle and HumanEval task gate, and reduces a fixed B16 verifier by about 1%, but it did
+not improve matched session-live SLO economics. It also keeps the FP8 embedding resident alongside
+the mixed-input representation. Production must leave it unset. `GRADIATED_INT4_LM_HEAD_SEGMENT`
+exists for explicit kernel experiments; its default is the complete 262,144-column vocabulary.
+`GRADIATED_INT4_BF16_LM_HEAD` is the corresponding W4A16 research control and is also never a
+production default.
+
 `GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS` controls the largest activation tensor quantized by the
 cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
 boundary remains available for matched A/B work. Values must be positive.

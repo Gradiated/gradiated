@@ -99,6 +99,49 @@ Measurements benchmark(gradiated::engine::Fp8Linear& linear, const Shape& shape,
   return {gemm_milliseconds, combined_milliseconds};
 }
 
+void benchmark_int4_lm_head(const std::vector<int>& row_counts) {
+  constexpr int input_width = 5376;
+  constexpr int output_width = 262144;
+  const int maximum_rows = *std::max_element(row_counts.begin(), row_counts.end());
+  const std::size_t input_elements = static_cast<std::size_t>(maximum_rows) * input_width;
+  const std::size_t weight_elements =
+      static_cast<std::size_t>(input_width) * output_width;
+  Allocation bf16_input(2ULL * input_elements);
+  Allocation fp8_input(input_elements);
+  Allocation bf16_weight(2ULL * weight_elements);
+  Allocation fp8_weight(weight_elements);
+  Allocation output(2ULL * static_cast<std::size_t>(maximum_rows) * output_width);
+  Allocation input_scale(sizeof(float));
+  Allocation weight_scale(sizeof(float));
+  gradiated::engine::quantize_bf16_to_fp8_e4m3(
+      bf16_weight.get(), fp8_weight.get(), static_cast<float*>(weight_scale.get()),
+      weight_elements, nullptr);
+  gradiated::engine::Int4Fp8Linear linear(
+      fp8_weight.get(), input_width, output_width, 256);
+  check(cudaDeviceSynchronize(), "prepare W4A8 LM-head benchmark");
+
+  std::cout << "int4_component,rows,w4a8_gemm_ms,quantize_and_gemm_ms,"
+               "resident_weight_bytes\n";
+  for (const int rows : row_counts) {
+    if (!linear.supports_rows(rows)) continue;
+    const std::size_t active_input_elements = static_cast<std::size_t>(rows) * input_width;
+    gradiated::engine::quantize_bf16_to_fp8_e4m3(
+        bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
+        active_input_elements, nullptr);
+    const auto gemm = [&] { linear.run(fp8_input.get(), output.get(), rows, nullptr); };
+    const float gemm_milliseconds = measure(gemm);
+    const float combined_milliseconds = measure([&] {
+      gradiated::engine::quantize_bf16_to_fp8_e4m3(
+          bf16_input.get(), fp8_input.get(), static_cast<float*>(input_scale.get()),
+          active_input_elements, nullptr);
+      gemm();
+    });
+    std::cout << "lm_head," << rows << ',' << std::fixed << std::setprecision(4)
+              << gemm_milliseconds << ',' << combined_milliseconds << ','
+              << linear.allocated_bytes() << '\n';
+  }
+}
+
 void correctness_smoke_test() {
   constexpr int rows = 4;
   constexpr int input_width = 128;
@@ -224,10 +267,6 @@ void correctness_smoke_test() {
 
 int main(int argc, char** argv) {
   try {
-    if (argc > 2) {
-      std::cerr << "usage: gradiated-engine-fp8-linear-benchmark [ROWS]\n";
-      return 64;
-    }
     correctness_smoke_test();
     const std::vector<Shape> shapes{
         {"sliding_qkv", 5376, 16384, 50},
@@ -238,9 +277,17 @@ int main(int argc, char** argv) {
         {"down", 21504, 5376, 60},
         {"lm_head", 5376, 262144, 1},
     };
-    const std::vector<int> row_counts = argc == 2
-        ? std::vector<int>{std::stoi(argv[1])}
-        : std::vector<int>{1, 4, 8, 16, 32};
+    std::vector<int> row_counts;
+    for (int argument = 1; argument < argc; ++argument) {
+      const int rows = std::stoi(argv[argument]);
+      if (rows <= 0 || rows > 128) {
+        std::cerr << "usage: gradiated-engine-fp8-linear-benchmark [ROWS ...], "
+                     "where each ROWS is in [1, 128]\n";
+        return 64;
+      }
+      row_counts.push_back(rows);
+    }
+    if (row_counts.empty()) row_counts = {1, 4, 8, 16, 32};
     gradiated::engine::Fp8Linear linear(gradiated::engine::Fp8Scaling::tensor);
     std::map<int, double> gemm_iteration_milliseconds;
     std::map<int, double> combined_iteration_milliseconds;
@@ -267,6 +314,7 @@ int main(int argc, char** argv) {
                 << combined_ms << ',' << rows * 1000.0 / gemm_ms << ','
                 << rows * 1000.0 / combined_ms << '\n';
     }
+    benchmark_int4_lm_head(row_counts);
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "FP8 linear benchmark failed: " << error.what() << '\n';

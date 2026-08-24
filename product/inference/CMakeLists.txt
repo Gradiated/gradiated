@@ -85,13 +85,16 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     engine/cuda/ops.cu
     engine/cuda/prefill_attention.cu
     engine/cuda/device_weights.cu
+    engine/cuda/int4_bf16_linear.cu
+    engine/cuda/int4_linear.cu
     engine/cuda/linear.cu
     engine/cuda/layer_runner.cu
     engine/cuda/model_runner.cu
     engine/cuda/qkv.cu
   )
   target_include_directories(gradiated_engine_cuda PUBLIC engine/include PRIVATE
-    ${cutlass_SOURCE_DIR}/include)
+    ${cutlass_SOURCE_DIR}/include
+    ${cutlass_SOURCE_DIR}/tools/util/include)
   target_link_libraries(gradiated_engine_cuda PUBLIC gradiated_engine_model CUDA::cudart CUDA::cublas
     CUDA::cublasLt cudnn_frontend ${CUDNN_LIBRARY})
   set_target_properties(gradiated_engine_cuda PROPERTIES

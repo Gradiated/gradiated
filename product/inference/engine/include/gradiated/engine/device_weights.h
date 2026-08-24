@@ -43,6 +43,8 @@ class Fp8WeightArena {
 
   [[nodiscard]] const void* at(std::string_view name) const;
   [[nodiscard]] const float* scale(std::string_view name) const;
+  void roundtrip_int4(std::string_view name, int output_width, int input_width,
+                      int block_width);
   [[nodiscard]] Fp8Scaling scaling() const;
   [[nodiscard]] std::uint64_t allocated_bytes() const;
 

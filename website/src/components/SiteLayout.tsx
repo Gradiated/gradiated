@@ -20,12 +20,12 @@ const SiteHeader = (): ReactElement => {
       : 'home';
 
   return (
-    <header className="nav mx-auto flex h-nav max-w-content items-center border-b border-line px-7 max-site:h-nav-mobile max-site:flex-nowrap max-site:gap-0 max-site:px-gutter-mobile">
+    <header className="nav mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-site:h-[72px] max-site:flex-nowrap max-site:gap-0 max-site:px-5">
       <Link className="wordmark inline-flex items-center gap-2.5 font-newsreader text-[20px] font-medium leading-none tracking-wordmark" to="/" aria-label="Gradiated home">
         <img className="wordmark-logo" src="/gradiated-logo-dark-exact.png" alt="" width="25" height="25" />
         gradiated
       </Link>
-      <nav className="ml-auto mr-0 flex gap-7 font-libre text-label font-medium uppercase tracking-label max-site:order-none max-site:w-auto max-site:gap-[18px]">
+      <nav className="ml-auto mr-0 flex gap-7 font-libre text-label font-medium uppercase tracking-label max-site:order-none max-site:w-auto max-site:gap-5">
         <Link className={`text-muted ${active === 'home' ? 'active text-ink' : ''} max-site:first:hidden`} to="/">Home</Link>
         <Link className={active === 'products' ? 'active text-ink' : 'text-muted'} to="/products/">Products</Link>
         <Link className={active === 'library' ? 'active text-ink' : 'text-muted'} to="/library/">Library</Link>
@@ -35,7 +35,7 @@ const SiteHeader = (): ReactElement => {
 };
 
 const SiteFooter = (): ReactElement => (
-  <footer className="relative mx-auto min-h-0 max-w-content border-t border-line px-7 pb-[42px] pt-[26px] font-libre text-label font-medium uppercase tracking-footer text-muted max-site:flex max-site:flex-wrap max-site:gap-[18px] max-site:px-gutter-mobile max-site:pb-9">
+  <footer className="relative mx-auto min-h-0 max-w-content border-t border-line px-7 pb-10 pt-6 font-libre text-label font-medium uppercase tracking-footer text-muted max-site:flex max-site:flex-wrap max-site:gap-5 max-site:px-5 max-site:pb-9">
     <Link className="text-ink" to="/">Gradiated</Link>
     <span>© 2026 Gradiated, Inc.</span>
     <Link className="ml-auto text-ink max-site:ml-auto" to="/privacy/">Privacy</Link>

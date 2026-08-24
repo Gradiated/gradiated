@@ -8,18 +8,18 @@ type HomePageProps = {
 
 export const HomePage = ({ onWaitlist }: HomePageProps): ReactElement => (
   <main>
-    <section className="hero flex min-h-hero-min flex-col border-b border-line px-7 pb-hero-bottom pt-hero-top max-site:min-h-hero-mobile-min max-site:px-gutter-mobile max-site:pb-hero-mobile-bottom max-site:pt-24">
-      <h1 className="mb-hero-heading max-w-hero font-newsreader text-hero font-normal leading-hero tracking-display max-site:mb-hero-mobile-heading max-site:text-hero-mobile">The research lab focused on inference.</h1>
+    <section className="hero flex min-h-[calc(100vh-76px)] flex-col border-b border-line px-7 pb-32 pt-[clamp(100px,16vh,175px)] max-site:min-h-[760px] max-site:px-5 max-site:pb-20 max-site:pt-24">
+      <h1 className="mb-16 max-w-hero font-newsreader text-hero font-normal leading-hero tracking-display max-site:mb-14 max-site:text-6xl">The research lab focused on inference.</h1>
       <p className="hero-copy ml-auto max-w-copy text-copy leading-copy text-muted max-site:ml-0 max-site:text-copy-mobile">We codesign hardware and software to provide the world&apos;s cheapest inference.</p>
     </section>
 
     <ProductSection onWaitlist={onWaitlist} />
 
-    <section className="section how px-7 pt-api-top max-site:px-gutter-mobile max-site:pt-[70px]">
-      <div className="api-layout grid grid-cols-2 items-end gap-[9%] border-0 pb-api-bottom max-site:grid-cols-1 max-site:gap-api-mobile-gap max-site:pb-24">
+    <section className="section how px-7 pt-24 max-site:px-5 max-site:pt-16">
+      <div className="api-layout grid grid-cols-2 items-end gap-[9%] border-0 pb-36 max-site:grid-cols-1 max-site:gap-16 max-site:pb-24">
         <div>
-          <h2 className="max-w-api-title font-newsreader text-api-title font-normal leading-api-title tracking-heading max-site:text-api-title-mobile">The harness API for controlling cost and latency.</h2>
-          <p className="mt-api-copy-top max-w-api text-[15px] leading-api-copy text-muted">Submit a durable run through the SDK. Gradiated owns the planning, execution, and inference decisions beneath it. Each step uses the right model, at the right cost, for the work.</p>
+          <h2 className="max-w-api-title font-newsreader text-api-title font-normal leading-api-title tracking-heading max-site:text-[43px]">The harness API for controlling cost and latency.</h2>
+          <p className="mt-8 max-w-api text-api-copy leading-api-copy text-muted">Submit a durable run through the SDK. Gradiated owns the planning, execution, and inference decisions beneath it. Each step uses the right model, at the right cost, for the work.</p>
         </div>
         <pre className="api-example" aria-label="Example Gradiated harness SDK request"><code><span className="code-key">import</span> {'{ Gradiated }'} <span className="code-key">from</span> <span className="code-string">&quot;@gradiated/sdk&quot;</span>{'\n\n'}<span className="code-key">const</span> run = <span className="code-key">await</span> gradiated.runs.create({'{'}{'\n'}  task: <span className="code-string">&quot;Research and compare three vendors&quot;</span>,{'\n'}  tools: [webSearch, browser],{'\n'}  profile: {'{'}{'\n'}    budget: {'{'} max_usd: <span className="code-number">2</span> {'}'}, deadline: <span className="code-string">&quot;20m&quot;</span>, quality: <span className="code-string">&quot;thorough&quot;</span>{'\n'}  {'}'}{'\n'}{'}'})</code></pre>
       </div>

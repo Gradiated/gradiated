@@ -1011,3 +1011,20 @@ the best two-iteration point has only 10/24 exact sequences. The refinement rema
 research knob, but no W4 projection policy is selected by the runtime. A future attempt must use
 activation-aware calibration, error feedback, or a larger quality-safe layer subset search before
 paying for another causal traffic run. Production remains on the pinned SGLang image.
+
+## Fused GELU and tensor-FP8 activation frontier (2026-08-24)
+
+The decode profile attributes approximately 7.8% of verifier GPU-kernel time to the cooperative
+tensor-FP8 activation quantizer. An exact experimental kernel fused the BF16-rounded GELU-gated
+down-projection input with its maximum reduction and E4M3 conversion. CUDA parity tests confirmed
+bit-identical BF16 activation, FP8 bytes, and scale against the retained sequential operations.
+
+At fixed batch 16 and context 6,000, A-B-B-A reduced verifier time from a 23.7356 ms control mean
+to 23.5911 ms, or 0.61%; combined draft-plus-verifier time improved by approximately 0.5%. That
+microbenchmark gain did not survive causal traffic. On the 50-request session-live replay, paired
+mean request latency changed by -5.49 ms (`[-15.83,+3.53]` 95% bootstrap interval) and -1.21 ms
+(`[-3.78,+1.41]`), while aggregate output throughput changed by -0.48% and -0.07%. Compute
+recovery also fell slightly in both brackets. The cooperative grid synchronization and occupancy
+cost erase the memory-pass saving under realistic mixed cohorts, so the implementation was removed.
+Future activation work should avoid grid-wide synchronization, ideally by carrying quantization
+metadata directly from a persistent producer into the projection consumer.

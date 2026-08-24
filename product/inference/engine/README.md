@@ -55,6 +55,14 @@ or 512 components per dynamic scale; and `GRADIATED_INT8_GLOBAL_KV_ORACLE_LAYERS
 global layer indices. The oracle cannot be combined with the FP8 global-cache experiment and must
 remain unset in production.
 
+`GRADIATED_INT8_GLOBAL_K=1` materializes block-128 signed-INT8 keys and four FP32 scales for each
+global-attention cache row. `GRADIATED_INT8_GLOBAL_K_LAYERS` optionally restricts the physical
+cache to selected global layer indices. `GRADIATED_INT8_GLOBAL_KV=1` additionally materializes the
+experimental signed-INT8 V layout. These are research paths, not production defaults: all-layer K
+and every tested physical V format failed completion-quality gates, while the quality-safe K subset
+`5,29,59` failed to improve matched session-live latency or economics. Leave both switches unset in
+production.
+
 `GRADIATED_FP8_COOPERATIVE_MAX_ELEMENTS` controls the largest activation tensor quantized by the
 cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
 boundary remains available for matched A/B work. Values must be positive.

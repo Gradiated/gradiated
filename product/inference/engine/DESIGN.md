@@ -900,3 +900,38 @@ reason to build block-128 WGMMA rather than an assumption: the custom kernel mus
 scaled S32 partial dots into FP32 on chip, apply online softmax, and avoid materializing scores.
 Only that composition can combine the block-128 quality result with the byte reduction at low and
 high cohorts.
+
+### Hopper block-128 S8 QK and physical-cache decision
+
+The block-128 format was subsequently implemented as a Hopper-native QK path rather than another
+materialized-score cuBLAS composition. At batch 16 and context 8,192, runtime-selected tile 8 takes
+approximately 0.234 ms versus 0.284 ms for retained BF16 attention, an 18% attention-call
+improvement. Decode cache writes now form normalized/RoPE-applied BF16 K once and, in the same QKV
+kernel, reduce four 128-component maxima and emit bit-identical signed bytes and scales. This
+removes the separate cache reread and quantization launch. The fused writer is tested over ragged,
+non-contiguous slots against the original standalone quantizer, including bit-identical Q, BF16 K/V,
+INT8 K, and FP32 scales.
+
+Physical completion quality is stricter than the representation oracle. Quantizing K in all ten
+global layers produced only 1,025/2,048 token agreement and 0.8163 mean edit similarity on the
+sixteen-prompt free-running holdout; full physical V was worse. A layer-subset search found
+`{5,29,59}` to be the strongest strict-gate candidate. On an independent 64-task, 512-token
+HumanEval holdout, both the tensor-FP8 control and this candidate pass 61/64 tasks, with zero task
+regressions or improvements. Its free-running aggregate has 0.9805 mean edit similarity and 0.8038
+minimum edit similarity against the control.
+
+The quality-safe subset still fails the causal-traffic promotion gate. A clean-container A-B-B-A
+run replayed the same 50-request, five-session, approximately 90%-cached manifest with speculative
+decoding enabled at batch one. Both control runs delivered 39.52 output tokens/s; candidates
+delivered 39.50. Across the two nearest brackets, candidate paired mean TPOT changed by +0.0212 ms
+(`[-0.0106,+0.0487]` 95% bootstrap interval) and +0.0120 ms
+(`[-0.0203,+0.0403]`), while throughput changed by -0.053% and -0.040%. Compute recovery fell by
+0.0039 and 0.0030 percentage points. The result is consistent with the cost of quantizing every new
+K exceeding the attention savings from changing only three of sixty-two layers.
+
+The physical INT8 implementation remains as reproducible research infrastructure, but production
+must leave it disabled. More tuning of this cache branch cannot materially move whole-model
+economics under the validated quality constraint. The next decode target is the model-wide
+bandwidth frontier, beginning with the 262,144-way target LM head: in the representative
+speculative-verification profile its FP8 GEMM alone accounts for approximately 26% of GPU time and
+streams roughly 1.4 GB of tied embedding weights per invocation.

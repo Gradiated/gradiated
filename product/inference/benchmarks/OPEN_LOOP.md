@@ -72,6 +72,12 @@ agreement. Aggregate throughput is still a trace-level measurement rather than a
 Alternate run order (`A-B-B-A`) and repeat with several manifests to control for clock, temperature,
 and acceptance variation.
 
+`run_native_abba.sh` automates that clean-container order on a Desmond node. It accepts one image,
+one immutable manifest, an output prefix, and candidate-only `NAME=VALUE` assignments. Common
+runtime assignments are supplied through newline-delimited `GRADIATED_ABBA_COMMON_ENV`. The runner
+records each arm separately, removes the benchmark container between arms, and restores the
+production systemd service even when a run fails.
+
 The primary production score is SLO-qualified goodput: output tokens completed while TTFT, TPOT,
 request latency, errors, and the independent model-quality gate all pass. Always retain raw
 throughput, queue latency, prefix-cache tokens, speculative acceptance, GPU power, and profiling

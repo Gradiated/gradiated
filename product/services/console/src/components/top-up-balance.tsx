@@ -7,6 +7,7 @@ import { createTopUpCheckout } from "@/api/queries";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { formatUsdShort } from "@/lib/format";
 
 const TopUpFormSchema = z.object({
   amount: z
@@ -94,7 +95,7 @@ export const TopUpBalance = ({
               size="sm"
               onClick={() => form.setValue("amount", String(amount))}
             >
-              ${amount}
+              {formatUsdShort(amount)}
             </Button>
           ))}
         </div>

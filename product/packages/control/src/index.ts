@@ -67,3 +67,10 @@ export {
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";
+export {
+  createUsageService,
+  type GenerationLogRecord,
+  type UsageRange,
+  type UsageService,
+  type UsageSummaryRecord,
+} from "./usage/service.js";

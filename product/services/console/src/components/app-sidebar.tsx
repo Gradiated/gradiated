@@ -3,11 +3,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import {
   Building2,
+  ChartNoAxesCombined,
   Check,
   ChevronsUpDown,
   KeyRound,
   Layers3,
   LogOut,
+  Logs,
   PackageOpen,
   Plus,
   Settings2,
@@ -63,7 +65,7 @@ export const AppSidebar = ({
   onSelectOrganization: (organizationId: string) => void;
   onSelectWorkspace: (workspaceId: string) => void;
   onSignOut: () => void;
-  activePage: "api-keys" | "billing" | "models";
+  activePage: "api-keys" | "billing" | "logs" | "models" | "usage";
 }) => {
   const { isMobile } = useSidebar();
   const queryClient = useQueryClient();
@@ -170,6 +172,18 @@ export const AppSidebar = ({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
+                  isActive={activePage === "models"}
+                  tooltip="Models"
+                >
+                  <Link to="/models">
+                    <PackageOpen />
+                    <span>Models</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
                   isActive={activePage === "api-keys"}
                   tooltip="API keys"
                 >
@@ -182,12 +196,24 @@ export const AppSidebar = ({
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  isActive={activePage === "models"}
-                  tooltip="Models"
+                  isActive={activePage === "usage"}
+                  tooltip="Usage"
                 >
-                  <Link to="/models">
-                    <PackageOpen />
-                    <span>Models</span>
+                  <Link to="/usage">
+                    <ChartNoAxesCombined />
+                    <span>Usage</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={activePage === "logs"}
+                  tooltip="Logs"
+                >
+                  <Link to="/logs">
+                    <Logs />
+                    <span>Logs</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

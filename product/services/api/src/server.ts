@@ -6,6 +6,7 @@ import {
   createCatalogBillingService,
   createOrganizationService,
   createProfilingWriter,
+  createUsageService,
   createValkeyServingProjector,
   createWorkspaceApiKeyService,
   parseClickHouseRuntimeEnvironment,
@@ -27,6 +28,9 @@ import { createProfilingIngestApp } from "./profiling-ingest.js";
 
 const environment = parseEnvironment(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
+const clickhouse = createClickHouseRuntimeClient(
+  parseClickHouseRuntimeEnvironment(process.env),
+);
 const valkey = createValkeyClient(environment);
 valkey.on("error", (error) => console.error("Valkey client error", error));
 await valkey.connect();
@@ -93,6 +97,7 @@ const app = createApp({
         : unavailableBillingPaymentsService(),
     organizations,
     catalogBilling,
+    usage: createUsageService(database, clickhouse),
     workspaces: createWorkspaceApiKeyService(database, servingProjector),
   },
 });
@@ -137,6 +142,7 @@ const shutdown = (signal: NodeJS.Signals): void => {
     }
     if (valkey.isOpen) await valkey.quit();
     await profilingClient?.close();
+    await clickhouse.close();
     await pool.end();
   });
 };

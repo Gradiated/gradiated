@@ -1,4 +1,4 @@
-import type { components } from "./schema";
+import type { components, operations } from "./schema";
 import { api, requireData } from "./client";
 
 export type CurrentUser = components["schemas"]["CurrentUser"];
@@ -9,6 +9,11 @@ export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
 export type Model = components["schemas"]["Model"];
 export type BillingAccount = components["schemas"]["BillingAccount"];
 export type BalanceTransaction = components["schemas"]["BalanceTransaction"];
+export type UsageSummary =
+  operations["getUsageSummary"]["responses"][200]["content"]["application/json"];
+export type GenerationList =
+  operations["listGenerations"]["responses"][200]["content"]["application/json"];
+export type GenerationLog = GenerationList["data"][number];
 
 export const getCurrentUser = () => {
   return requireData<CurrentUser>(api.GET("/api/v1/me"));
@@ -41,6 +46,58 @@ export const createWorkspace = (
 export const listModels = () => {
   return requireData<components["schemas"]["ModelList"]>(
     api.GET("/api/v1/models"),
+  );
+};
+
+export const getUsageSummary = (
+  organizationId: string,
+  workspaceId: string,
+  range: { from: string; to: string },
+) => {
+  return requireData<UsageSummary>(
+    api.GET(
+      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage",
+      {
+        params: {
+          path: {
+            organization_id: organizationId,
+            workspace_id: workspaceId,
+          },
+          query: range,
+        },
+      },
+    ),
+  );
+};
+
+export const listGenerationLogs = (
+  organizationId: string,
+  workspaceId: string,
+  filters: {
+    from: string;
+    to: string;
+    cursor?: string;
+    limit?: number;
+    api_key_id?: string;
+    model?: string;
+    search?: string;
+    sort?: "newest" | "highest_cost";
+    status?: GenerationLog["status"];
+  },
+) => {
+  return requireData<GenerationList>(
+    api.GET(
+      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations",
+      {
+        params: {
+          path: {
+            organization_id: organizationId,
+            workspace_id: workspaceId,
+          },
+          query: filters,
+        },
+      },
+    ),
   );
 };
 

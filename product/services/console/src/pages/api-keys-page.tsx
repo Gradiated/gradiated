@@ -1,5 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
   CalendarIcon,
@@ -47,6 +48,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -55,6 +63,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useProductContext } from "@/hooks/use-product-context";
+
+type KeyStatusFilter = "active" | "revoked";
 
 const formatDate = (value: string) => {
   return new Intl.DateTimeFormat(undefined, {
@@ -78,6 +88,7 @@ export const ApiKeysPage = () => {
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<CreatedApiKey | null>(null);
   const [copied, setCopied] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<KeyStatusFilter>("active");
 
   const keys = useQuery({
     queryKey: ["api-keys", organizationId, workspaceId],
@@ -100,6 +111,13 @@ export const ApiKeysPage = () => {
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1_500);
   };
+
+  const filteredKeys =
+    keys.data?.data.filter((apiKey) =>
+      statusFilter === "revoked"
+        ? Boolean(apiKey.revoked_at)
+        : !apiKey.revoked_at,
+    ) ?? [];
 
   return (
     <AppShell
@@ -124,20 +142,36 @@ export const ApiKeysPage = () => {
                 Create an API key to call models from your agents.
               </p>
             </div>
-            <CreateKeyDialog
-              open={createOpen}
-              onOpenChange={setCreateOpen}
-              organizationId={organizationId}
-              workspaceId={workspaceId}
-              disabled={!workspaceId}
-              onCreated={(result) => {
-                setCreated(result);
-                setCreateOpen(false);
-                void queryClient.invalidateQueries({
-                  queryKey: ["api-keys", organizationId, workspaceId],
-                });
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as KeyStatusFilter)
+                }
+              >
+                <SelectTrigger className="h-9 min-w-32" aria-label="Key status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="revoked">Revoked</SelectItem>
+                </SelectContent>
+              </Select>
+              <CreateKeyDialog
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                organizationId={organizationId}
+                workspaceId={workspaceId}
+                disabled={!workspaceId}
+                onCreated={(result) => {
+                  setCreated(result);
+                  setCreateOpen(false);
+                  void queryClient.invalidateQueries({
+                    queryKey: ["api-keys", organizationId, workspaceId],
+                  });
+                }}
+              />
+            </div>
           </div>
 
           <section className="overflow-hidden rounded-lg border bg-card">
@@ -145,7 +179,7 @@ export const ApiKeysPage = () => {
               <div className="grid min-h-48 place-items-center">
                 <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
               </div>
-            ) : keys.data?.data.length ? (
+            ) : filteredKeys.length ? (
               <Table>
                 <TableHeader className="bg-muted/40">
                   <TableRow className="hover:bg-transparent">
@@ -159,7 +193,7 @@ export const ApiKeysPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {keys.data.data.map((apiKey) => (
+                  {filteredKeys.map((apiKey) => (
                     <TableRow key={apiKey.id}>
                       <TableCell className="h-16 pl-5 font-medium">
                         {apiKey.name}
@@ -199,23 +233,28 @@ export const ApiKeysPage = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-36">
-                            <DropdownMenuItem
-                              disabled={
-                                Boolean(apiKey.revoked_at) || revoke.isPending
-                              }
-                              className="text-destructive focus:text-destructive"
-                              onSelect={() => {
-                                if (
-                                  window.confirm(
-                                    `Revoke ${apiKey.name}? This cannot be undone.`,
-                                  )
-                                ) {
-                                  revoke.mutate(apiKey.id);
-                                }
-                              }}
-                            >
-                              Revoke
+                            <DropdownMenuItem asChild>
+                              <Link to="/logs" search={{ apiKeyId: apiKey.id }}>
+                                View logs
+                              </Link>
                             </DropdownMenuItem>
+                            {!apiKey.revoked_at ? (
+                              <DropdownMenuItem
+                                disabled={revoke.isPending}
+                                className="text-destructive focus:text-destructive"
+                                onSelect={() => {
+                                  if (
+                                    window.confirm(
+                                      `Revoke ${apiKey.name}? This cannot be undone.`,
+                                    )
+                                  ) {
+                                    revoke.mutate(apiKey.id);
+                                  }
+                                }}
+                              >
+                                Revoke
+                              </DropdownMenuItem>
+                            ) : null}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -228,10 +267,15 @@ export const ApiKeysPage = () => {
                 <div className="mb-4 grid size-11 place-items-center rounded-lg bg-muted">
                   <KeyRound className="size-5 text-muted-foreground" />
                 </div>
-                <h3 className="font-medium">No API keys yet</h3>
+                <h3 className="font-medium">
+                  {statusFilter === "revoked"
+                    ? "No revoked API keys"
+                    : "No active API keys"}
+                </h3>
                 <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
-                  Create a key for this workspace when you are ready to send
-                  your first inference request.
+                  {statusFilter === "revoked"
+                    ? "Revoked keys will appear here."
+                    : "Create a key for this workspace when you are ready to send your first inference request."}
                 </p>
               </div>
             )}

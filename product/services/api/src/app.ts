@@ -10,6 +10,7 @@ import { registerCatalogBillingRoutes } from "./routes/catalog-billing.js";
 import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
+import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type { ApiEnvironment, ApiServices, AuthService } from "./types.js";
 
@@ -64,6 +65,18 @@ const defaultDependencies: AppDependencies = {
       ensurePersonalForUser: async () => {
         throw new Error("Organization service is not configured");
       },
+    },
+    usage: {
+      getSummary: async () => ({
+        charge: "0",
+        inputTokens: "0",
+        outputTokens: "0",
+        generationCount: "0",
+        succeededCount: "0",
+        daily: [],
+        models: [],
+      }),
+      listGenerations: async () => ({ data: [], nextCursor: null }),
     },
     workspaces: {
       listWorkspaces: async () => [],
@@ -154,6 +167,7 @@ export const createApp = (overrides: AppOverrides = {}) => {
   registerMeRoutes(app, dependencies.services);
   registerOrganizationRoutes(app, dependencies.services);
   registerWorkspaceRoutes(app, dependencies.services);
+  registerUsageRoutes(app, dependencies.services);
 
   app.doc31("/api/openapi.json", openApiDocument);
   app.get(
@@ -217,5 +231,9 @@ export const openApiDocument = {
     { name: "API keys", description: "Direct inference credentials." },
     { name: "Models", description: "Advertised exact-model catalog." },
     { name: "Billing", description: "Balances and durable movements." },
+    {
+      name: "Usage",
+      description: "Inference activity and generation history.",
+    },
   ],
 };

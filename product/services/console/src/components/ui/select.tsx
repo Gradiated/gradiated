@@ -5,24 +5,34 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export const Select = SelectPrimitive.Root;
-export const SelectValue = SelectPrimitive.Value;
+
+export function SelectValue(
+  props: React.ComponentProps<typeof SelectPrimitive.Value>,
+) {
+  return <SelectPrimitive.Value data-slot="select-value" {...props} />;
+}
 
 export function SelectTrigger({
   className,
+  size = "default",
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger>) {
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: "sm" | "default";
+}) {
   return (
     <SelectPrimitive.Trigger
+      data-slot="select-trigger"
+      data-size={size}
       className={cn(
-        "flex h-10 min-w-48 items-center justify-between gap-3 rounded-md border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring",
+        "flex w-fit items-center justify-between gap-2 whitespace-nowrap rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition-[color,box-shadow] data-[placeholder]:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 *:data-[slot=select-value]:line-clamp-1 [&_svg:not([class*='text-'])]:text-muted-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className,
       )}
       {...props}
     >
       {children}
       <SelectPrimitive.Icon>
-        <ChevronDown className="size-4 text-muted-foreground" />
+        <ChevronDown className="size-4 opacity-50" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );

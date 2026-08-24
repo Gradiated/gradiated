@@ -40,6 +40,16 @@ Preview the production build:
 pnpm exec vite preview --port 8675
 ```
 
+## Deploy with Vercel
+
+Create a Vercel project for this repository.
+
+Set the Vercel Root Directory to `website`.
+
+Vercel reads `vercel.json`, runs `pnpm build`, and serves `dist`.
+
+The rewrite keeps React Router routes working after a direct page load.
+
 ## Structure
 
 - `src/components/` contains shared site components.

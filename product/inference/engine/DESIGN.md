@@ -1171,3 +1171,43 @@ was repeated twice with the retained default and produced identical 2,048-token 
 Producer-carried O maxima are enabled by default for tensor-FP8 speculative/suffix projection
 cohorts of at least sixteen rows. `GRADIATED_DISABLE_O_TRANSPOSE_CARRIED_AMAX` retains an exact
 rollback path.
+
+## Hopper FP8 projection algorithm policy (2026-08-24)
+
+After producer-carried activation maxima, FP8 projection GEMMs remain approximately 42% of a
+B16/D4 verifier's GPU kernel time. The largest decode matrices move their resident E4M3 weights at
+roughly 2.9--4.1 TB/s, so the next question was whether cuBLASLt's first heuristic result was also
+the best low-M Hopper schedule for each exact Gemma shape.
+
+The benchmark can enumerate an ordered heuristic with `GRADIATED_FP8_HEURISTIC_INDEX`, isolate one
+Gemma shape, skip its unrelated correctness fixture, and increase timed iterations. A production-
+idle sweep covered all seven projection shapes, rows 1/4/8/16/32/64, and indices 0--15. The pinned
+library returned eight candidates. Candidate points were then repeated in four alternating-order
+rounds with 64 timed iterations, followed by a second four-round crossover sweep from rows 24 to
+128. Tensor, channel, and block FP8 correctness tests remained unchanged.
+
+The important speculative-verifier point is 64 packed rows (16 requests times four proposals).
+At that point heuristic 1 reduces the 21,504-by-5,376 down projection from a 0.03760 ms median to
+0.03250 ms (15.69%) and the 5,376-by-16,384 sliding QKV projection from 0.02815 to 0.02600 ms
+(8.27%). The best global-QK and target-head changes are smaller. Weighting by Gemma's 60 down, 50
+sliding, ten global, and one head calls predicts a 4.75% projection-GEMM reduction, approximately
+1.5--2% of the complete verifier. Crossover measurements reject broad rules: the sliding-QKV
+alternative wins strongly at row 64 but not at 56 or 72, while the down alternative wins from the
+measured rows 64 through 112 and is neutral again at 128.
+
+The retained policy is therefore an exact `(rows,K,N)` table on `sm_90`; unlisted points use index
+zero. An explicit index overrides the table for research, and
+`GRADIATED_DISABLE_FP8_HEURISTIC_POLICY` is the production rollback. Because heuristic ordering is
+a library contract rather than a kernel identity, the policy deliberately fails closed and must be
+requalified with any CUDA/cuBLASLt image change.
+
+A real-model fixed-state A-B-B-A at batch 16, draft depth four, and position 6,000 validates the
+whole boundary. The disabled controls measured 23.2134 and 23.4976 ms; policy arms measured
+22.9996 and 22.9800 ms. Mean verifier time improves from 23.3555 to 22.9898 ms, or 1.57%, in line
+with the physical bound. All four arms emitted identical proposal sequences, accepted one token
+per request, and produced identical target next tokens.
+
+The established 16-prompt coding quality gate also passes unchanged: 2,027/2,048 teacher-forced
+tokens agree with BF16, eight prompts are EOS-exact, and mean token edit similarity is 0.993492.
+The complete 16-record candidate artifact is byte-identical to the retained pre-policy artifact
+(`935bc2111db6276feaed4c78fea0cfe10a5d7d828ffcf2e8f2b82686245e7b51`).

@@ -7,6 +7,7 @@
 #include <cuda_runtime.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <map>
@@ -28,6 +29,84 @@ void cublas_check(cublasStatus_t result, const char* operation) {
   if (result != CUBLAS_STATUS_SUCCESS) {
     throw std::runtime_error(std::string(operation) + " failed with status " + std::to_string(result));
   }
+}
+
+int configured_fp8_heuristic_index() {
+  const char* configured = std::getenv("GRADIATED_FP8_HEURISTIC_INDEX");
+  if (configured == nullptr || *configured == '\0') return -1;
+  try {
+    const std::string text(configured);
+    std::size_t consumed = 0;
+    const int value = std::stoi(text, &consumed);
+    if (consumed != text.size() || value < 0 || value > 63) {
+      throw std::runtime_error("out of range");
+    }
+    return value;
+  } catch (const std::exception&) {
+    throw std::runtime_error("GRADIATED_FP8_HEURISTIC_INDEX must be in [0, 63]");
+  }
+}
+
+int hopper_fp8_heuristic_index(int rows, int input_width, int output_width) {
+  // These are retained H200 measurements for the pinned CUDA/cuBLASLt image. The index selects
+  // one result from the ordered heuristic list, so this policy must be requalified when that
+  // image changes. Unlisted shapes and row counts deliberately retain cuBLASLt's first choice.
+  if (input_width == 21504 && output_width == 5376) {
+    switch (rows) {
+      case 64:
+      case 72:
+      case 80:
+      case 96:
+      case 112:
+        return 1;
+      default:
+        return 0;
+    }
+  }
+  if (input_width == 5376 && output_width == 16384 && rows == 64) return 1;
+  if (input_width == 5376 && output_width == 18432) {
+    switch (rows) {
+      case 1:
+      case 4:
+      case 8:
+      case 48:
+      case 72:
+      case 80:
+        return 3;
+      case 16:
+      case 24:
+      case 32:
+      case 40:
+        return 2;
+      default:
+        return 0;
+    }
+  }
+  if (input_width == 5376 && output_width == 262144) {
+    switch (rows) {
+      case 1:
+        return 2;
+      case 4:
+      case 32:
+      case 40:
+      case 64:
+      case 72:
+        return 4;
+      case 8:
+      case 16:
+      case 24:
+        return 5;
+      case 48:
+      case 80:
+        return 3;
+      case 56:
+      case 96:
+        return 2;
+      default:
+        return 0;
+    }
+  }
+  return 0;
 }
 
 }  // namespace
@@ -596,10 +675,22 @@ struct Fp8Linear::Implementation {
   void* workspace{nullptr};
   std::size_t workspace_bytes;
   Fp8Scaling scaling;
+  int heuristic_override;
+  bool use_hopper_heuristic_policy;
   std::map<std::tuple<int, int, int>, std::unique_ptr<Plan>> plans;
 
   Implementation(Fp8Scaling requested_scaling, std::size_t bytes)
-      : workspace_bytes(bytes), scaling(requested_scaling) {
+      : workspace_bytes(bytes), scaling(requested_scaling),
+        heuristic_override(configured_fp8_heuristic_index()),
+        use_hopper_heuristic_policy(false) {
+    int device = 0;
+    cuda_check(cudaGetDevice(&device), "get FP8 linear device");
+    cudaDeviceProp properties{};
+    cuda_check(cudaGetDeviceProperties(&properties, device),
+               "get FP8 linear device properties");
+    use_hopper_heuristic_policy =
+        properties.major == 9 && properties.minor == 0 &&
+        std::getenv("GRADIATED_DISABLE_FP8_HEURISTIC_POLICY") == nullptr;
     cublas_check(cublasLtCreate(&handle), "cublasLtCreate FP8");
     if (workspace_bytes != 0) {
       cuda_check(cudaMalloc(&workspace, workspace_bytes), "allocate FP8 linear workspace");
@@ -670,14 +761,24 @@ struct Fp8Linear::Implementation {
                      preference, CUBLASLT_MATMUL_PREF_MAX_WORKSPACE_BYTES,
                      &workspace_bytes, sizeof(workspace_bytes)),
                  "set FP8 matmul workspace");
+    const int heuristic_index = heuristic_override >= 0
+        ? heuristic_override
+        : (use_hopper_heuristic_policy
+               ? hopper_fp8_heuristic_index(rows, input_width, output_width)
+               : 0);
+    std::array<cublasLtMatmulHeuristicResult_t, 64> heuristics{};
     int returned = 0;
     const cublasStatus_t status = cublasLtMatmulAlgoGetHeuristic(
         handle, result->operation, result->weight_layout, result->input_layout,
-        result->output_layout, result->output_layout, preference, 1,
-        &result->heuristic, &returned);
+        result->output_layout, result->output_layout, preference, heuristic_index + 1,
+        heuristics.data(), &returned);
     cublasLtMatmulPreferenceDestroy(preference);
     cublas_check(status, "select FP8 matmul algorithm");
-    if (returned == 0) throw std::runtime_error("no cublasLt algorithm for FP8 linear shape");
+    if (returned <= heuristic_index) {
+      throw std::runtime_error(
+          "requested FP8 heuristic index is unavailable for linear shape");
+    }
+    result->heuristic = heuristics.at(static_cast<std::size_t>(heuristic_index));
     Plan& reference = *result;
     plans.emplace(key, std::move(result));
     return reference;

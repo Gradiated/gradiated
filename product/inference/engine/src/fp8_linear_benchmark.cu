@@ -36,6 +36,17 @@ void check(cudaError_t result, const char* operation) {
   }
 }
 
+int measurement_iterations() {
+  const char* configured = std::getenv("GRADIATED_FP8_BENCHMARK_ITERATIONS");
+  if (configured == nullptr || *configured == '\0') return 8;
+  const int iterations = std::stoi(configured);
+  if (iterations < 1 || iterations > 4096) {
+    throw std::runtime_error(
+        "GRADIATED_FP8_BENCHMARK_ITERATIONS must be in [1, 4096]");
+  }
+  return iterations;
+}
+
 class Allocation {
  public:
   explicit Allocation(std::uint64_t bytes) {
@@ -56,7 +67,7 @@ float measure(Callable&& callable) {
   cudaEvent_t begin{}, end{};
   check(cudaEventCreate(&begin), "create FP8 begin event");
   check(cudaEventCreate(&end), "create FP8 end event");
-  constexpr int iterations = 8;
+  const int iterations = measurement_iterations();
   check(cudaEventRecord(begin), "record FP8 begin event");
   for (int iteration = 0; iteration < iterations; ++iteration) callable();
   check(cudaEventRecord(end), "record FP8 end event");
@@ -330,7 +341,9 @@ int main(int argc, char** argv) {
     // Individual CUTLASS scheduler candidates are commonly run under an external timeout. Flush
     // each measurement so a pathological candidate can still be attributed after termination.
     std::cout << std::unitbuf;
-    correctness_smoke_test();
+    const bool skip_correctness =
+        std::getenv("GRADIATED_FP8_BENCHMARK_SKIP_CORRECTNESS") != nullptr;
+    if (!skip_correctness) correctness_smoke_test();
     const std::vector<Shape> shapes{
         {"sliding_qkv", 5376, 16384, 50},
         {"sliding_o", 8192, 5376, 50},
@@ -352,12 +365,18 @@ int main(int argc, char** argv) {
     }
     if (row_counts.empty()) row_counts = {1, 4, 8, 16, 32};
     const bool int4_only = std::getenv("GRADIATED_INT4_BENCHMARK_ONLY") != nullptr;
+    const bool fp8_only = std::getenv("GRADIATED_FP8_BENCHMARK_ONLY") != nullptr;
+    const char* requested_fp8_shape = std::getenv("GRADIATED_FP8_BENCHMARK_SHAPE");
     gradiated::engine::Fp8Linear linear(gradiated::engine::Fp8Scaling::tensor);
     std::map<int, double> gemm_iteration_milliseconds;
     std::map<int, double> combined_iteration_milliseconds;
     if (!int4_only) {
       std::cout << "component,rows,fp8_gemm_ms,quantize_and_gemm_ms,effective_weight_gb_s\n";
       for (const auto& shape : shapes) {
+        if (requested_fp8_shape != nullptr &&
+            std::string(requested_fp8_shape) != shape.name) {
+          continue;
+        }
         for (const int rows : row_counts) {
           const Measurements measured = benchmark(linear, shape, rows);
           const double seconds = measured.gemm_milliseconds / 1000.0;
@@ -381,7 +400,7 @@ int main(int argc, char** argv) {
                   << rows * 1000.0 / combined_ms << '\n';
       }
     }
-    benchmark_int4_shapes(shapes, row_counts);
+    if (!fp8_only) benchmark_int4_shapes(shapes, row_counts);
     return 0;
   } catch (const std::exception& error) {
     std::cerr << "FP8 linear benchmark failed: " << error.what() << '\n';

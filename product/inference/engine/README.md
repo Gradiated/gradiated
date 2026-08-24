@@ -87,6 +87,14 @@ production default.
 cooperative two-pass CUDA kernel. It defaults to 2,097,152 elements; the former 1,048,576-element
 boundary remains available for matched A/B work. Values must be positive.
 
+FP8 projection plans use a retained Hopper cuBLASLt heuristic policy for the pinned runtime image.
+The policy is keyed by the exact Gemma projection dimensions and packed row count; every unmeasured
+shape keeps cuBLASLt's first recommendation. `GRADIATED_DISABLE_FP8_HEURISTIC_POLICY` restores that
+first-choice control. `GRADIATED_FP8_HEURISTIC_INDEX` forces one ordered heuristic result in
+`[0, 63]` and exists only for isolated algorithm enumeration; production must leave it unset. The
+retained table is fail-closed if a selected result disappears and must be requalified whenever the
+CUDA/cuBLASLt image changes.
+
 `tools/generate_layer_fixture.py` creates deterministic BF16 reference fixtures for one pinned
 decoder layer without loading the full model. Fixture binaries are runtime artifacts; their
 manifest and hashes establish exactly which model, layer, seed and shape a CUDA parity run used.

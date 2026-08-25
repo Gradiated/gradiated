@@ -271,7 +271,7 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
    model-specific descriptor. Remove optional fields that the selected model
    does not advertise.
 10. Apply the descriptor's outer type, range, enum, and size checks without
-   recreating every nested OpenAI or SGLang type in Rust.
+    recreating every nested OpenAI or SGLang type in Rust.
 11. Preserve every qualified, supported JSON value unchanged in the upstream
     body and capture effective pricing and the deployment release digest.
 

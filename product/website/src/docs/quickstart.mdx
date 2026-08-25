@@ -32,7 +32,7 @@ Keep the key on your server. Do not expose it in browser code.
 The model catalog returns the exact IDs that you can use in requests:
 
 ```sh
-curl https://api.gradiated.com/v1/models \
+curl https://api.gradiated.com/openai/v1/models \
   -H "Authorization: Bearer $GRADIATED_API_KEY"
 ```
 
@@ -43,7 +43,7 @@ Copy the `id` of a model with `is_ready: true`. Use the ID exactly. Model IDs ca
 Replace `YOUR_MODEL_ID` with the model ID from the catalog:
 
 ```sh
-curl https://api.gradiated.com/v1/chat/completions \
+curl https://api.gradiated.com/openai/v1/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -63,7 +63,7 @@ The response uses the familiar chat completion shape. The response includes the 
 Set `stream` to `true` to receive server-sent events:
 
 ```sh
-curl https://api.gradiated.com/v1/chat/completions \
+curl https://api.gradiated.com/openai/v1/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

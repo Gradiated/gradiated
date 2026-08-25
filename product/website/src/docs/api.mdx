@@ -10,7 +10,7 @@
 ## Base URL
 
 ```text
-https://api.gradiated.com/v1
+https://api.gradiated.com/openai/v1
 ```
 
 Send an API key with every request:
@@ -25,10 +25,10 @@ Authorization: Bearer grad_...
 GET /models
 ```
 
-The catalog returns exact model IDs, readiness, context limits, output limits, supported parameters, and pricing. Use a model with `is_ready: true` for inference.
+The catalog returns canonical lowercase model IDs, readiness, context limits, output limits, supported parameters, and pricing. Use a model with `is_ready: true` for inference. Model matching is case-insensitive.
 
 ```sh
-curl https://api.gradiated.com/v1/models \
+curl https://api.gradiated.com/openai/v1/models \
   -H "Authorization: Bearer $GRADIATED_API_KEY"
 ```
 
@@ -42,10 +42,10 @@ Authorization: Bearer grad_...
 
 Required fields:
 
-| Field      | Type   | Description                      |
-| ---------- | ------ | -------------------------------- |
-| `model`    | string | Exact model ID from the catalog. |
-| `messages` | array  | At least one message.            |
+| Field      | Type   | Description                                              |
+| ---------- | ------ | -------------------------------------------------------- |
+| `model`    | string | Model ID from the catalog. Matching is case-insensitive. |
+| `messages` | array  | At least one message.                                    |
 
 Common fields:
 

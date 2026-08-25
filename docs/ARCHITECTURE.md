@@ -218,12 +218,13 @@ The Rust service exposes the launch inference contract:
 - `GET /v1/models` with only exact currently advertised model IDs;
 - `/health/live`, `/health/ready` and `/metrics`.
 
-For each request it authenticates the API-key digest, resolves the exact model
-record, checks organization/workspace status, applies the operational
-prepaid balance/concurrency rule when applicable, and rejects parameters not
-advertised by the exact model before contacting SGLang. Invoiced organizations
-are not gated or concurrency-limited by their accounting balance. It renders
-and tokenizes the qualified request locally on CPU using the
+For each request it authenticates the API-key digest, converts the model ID to
+ASCII lowercase, resolves the exact canonical model record, checks
+organization/workspace status, applies the operational prepaid
+balance/concurrency rule when applicable, and rejects parameters not advertised
+by the exact model before contacting SGLang. Invoiced organizations are not
+gated or concurrency-limited by their accounting balance. It renders and
+tokenizes the qualified request locally on CPU using the
 exact tokenizer revision declared by the selected Valkey deployment record, then
 enforces the model's context bound before admission. The gateway keeps only a
 small typed request envelope; the model's Valkey-projected text-output

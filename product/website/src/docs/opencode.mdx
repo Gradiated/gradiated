@@ -11,7 +11,7 @@
 You need:
 
 - An active Gradiated API key.
-- An exact model ID from `GET /v1/models`.
+- A model ID from `GET /v1/models`. The gateway matches it without regard to letter case.
 - OpenCode installed on your machine.
 
 Set your key in the environment where you run OpenCode:
@@ -45,7 +45,7 @@ Add this provider to your OpenCode config. Keep the file in your project or in y
 }
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog. The ID must match exactly.
+Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog. Model matching is case-insensitive.
 
 The `@ai-sdk/openai-compatible` adapter targets `/v1/chat/completions`, which is the protocol Gradiated currently exposes.
 

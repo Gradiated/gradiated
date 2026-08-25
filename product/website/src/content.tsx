@@ -331,7 +331,7 @@ const PaletteItem = ({
 
 export const PrivacyContent = (): ReactNode => (
   <>
-    <p>Effective date: July 13, 2026</p>
+    <p>Effective date: August 25, 2026</p>
     <p>
       Gradiated Ltd (“Gradiated,” “we,” “us,” or “our”) respects your privacy.
       This policy explains how we collect, use, and share information when you
@@ -357,6 +357,23 @@ export const PrivacyContent = (): ReactNode => (
       and business operations, when required by law, or in connection with a
       corporate transaction. We require providers to handle information only as
       needed to provide their services.
+    </p>
+    <h2>Inference data</h2>
+    <p>
+      When you use Gradiated inference, we process your prompts, messages,
+      generated outputs, and request metadata to provide the service. We do not
+      use prompts or generated outputs to train models, and we do not
+      intentionally store them in the Gradiated product database or application
+      logs.
+    </p>
+    <p>
+      We retain limited usage records, including the model, token counts,
+      timing, request status, and service identifiers, to provide the service,
+      calculate charges, protect the system, and meet legal obligations.
+      Inference may run on contracted infrastructure providers. Those providers
+      may process request data temporarily to operate the runtime. OpenRouter
+      traffic follows this policy when it is sent to Gradiated, but OpenRouter
+      may keep records under its own policies.
     </p>
     <h2>Your choices</h2>
     <p>

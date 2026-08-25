@@ -3,11 +3,15 @@ use serde::Serialize;
 
 use crate::{
     domain::ModelStatus, GatewayModel, InputTokenPrice, ModelParameterDescriptor,
-    ModelQuantization, OutputTokenPrice, SupportedTextInputs, TokenMeasure,
+    ModelQuantization, OutputTokenPrice, SupportedTextInputs, TextInputModality,
+    TextOutputModality, TokenMeasure, TokenUnit,
 };
 
-const PROVIDER_SCHEMA_VERSION: &str = "2.5";
+const PROVIDER_SCHEMA_VERSION: &str = "2.4";
 const NANO_USD_SCALE: u64 = 1_000_000_000;
+const PROVIDER_DATACENTER_COUNTRY: &str = "US";
+const PROVIDER_DATACENTER_REGION: &str = "us-east-1";
+const PROVIDER_DEPLOYMENT_REGION: &str = "US";
 
 #[derive(Debug, Serialize)]
 pub struct ModelCatalogResponse<'a> {
@@ -38,13 +42,15 @@ struct ProviderModel<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     tokenizer: Option<&'a str>,
     description: &'a str,
-    supported_parameters: Vec<&'a str>,
     input_modalities: [ProviderTextInput<'a>; 1],
-    output_modalities: [ProviderTextOutput<'a>; 1],
+    output_modalities: [ProviderTextOutput; 1],
+    #[serde(skip_serializing_if = "std::collections::HashMap::is_empty")]
     passthrough_parameters: &'a std::collections::HashMap<String, ModelParameterDescriptor>,
     #[serde(skip_serializing_if = "Option::is_none")]
     deprecation_date: Option<&'a DateTime<Utc>>,
     is_ready: bool,
+    datacenters: [ProviderDatacenter; 1],
+    deployment_region: &'static str,
 }
 
 impl<'a> ProviderModel<'a> {
@@ -77,26 +83,16 @@ impl<'a> ProviderModel<'a> {
             quantization: model.properties.quantization,
             tokenizer: model.properties.tokenizer.as_deref(),
             description: &model.properties.description,
-            supported_parameters: model.properties.supported_parameter_names(),
-            input_modalities: [ProviderTextInput {
-                kind: "text",
-                supported_inputs: &input.supported_inputs,
-                pricing: input.pricing.iter().map(ProviderInputPrice::from).collect(),
-            }],
-            output_modalities: [ProviderTextOutput {
-                kind: "text",
-                max_length: &output.max_length,
-                streaming: output.streaming,
-                supported_parameters: &output.supported_parameters,
-                pricing: output
-                    .pricing
-                    .iter()
-                    .map(ProviderOutputPrice::from)
-                    .collect(),
-            }],
+            input_modalities: [ProviderTextInput::from_model(input)],
+            output_modalities: [ProviderTextOutput::from_model(output)],
             passthrough_parameters: &model.properties.passthrough_parameters,
             deprecation_date: model.properties.deprecation_date.as_ref(),
             is_ready,
+            datacenters: [ProviderDatacenter {
+                country_code: PROVIDER_DATACENTER_COUNTRY,
+                region: PROVIDER_DATACENTER_REGION,
+            }],
+            deployment_region: PROVIDER_DEPLOYMENT_REGION,
         })
     }
 }
@@ -109,14 +105,49 @@ struct ProviderTextInput<'a> {
     pricing: Vec<ProviderInputPrice>,
 }
 
+impl<'a> ProviderTextInput<'a> {
+    fn from_model(input: &'a TextInputModality) -> Self {
+        Self {
+            kind: "text",
+            supported_inputs: &input.supported_inputs,
+            pricing: input.pricing.iter().map(ProviderInputPrice::from).collect(),
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
-struct ProviderTextOutput<'a> {
+struct ProviderTextOutput {
     #[serde(rename = "type")]
     kind: &'static str,
-    max_length: &'a TokenMeasure,
+    max_length: TokenMeasure,
     streaming: bool,
-    supported_parameters: &'a std::collections::HashMap<String, ModelParameterDescriptor>,
+    supported_parameters: std::collections::HashMap<String, ModelParameterDescriptor>,
     pricing: Vec<ProviderOutputPrice>,
+}
+
+impl ProviderTextOutput {
+    fn from_model(output: &TextOutputModality) -> Self {
+        let mut supported_parameters = output.supported_parameters.clone();
+        supported_parameters.insert(
+            "max_tokens".to_owned(),
+            ModelParameterDescriptor::Integer {
+                min: 1,
+                max: output.max_length.value as i64,
+                unit: Some(TokenUnit::Token),
+            },
+        );
+        Self {
+            kind: "text",
+            max_length: output.max_length.clone(),
+            streaming: output.streaming,
+            supported_parameters,
+            pricing: output
+                .pricing
+                .iter()
+                .map(ProviderOutputPrice::from)
+                .collect(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -162,6 +193,12 @@ impl From<&OutputTokenPrice> for ProviderOutputPrice {
             cost_usd: nano_usd(price.cost()),
         }
     }
+}
+
+#[derive(Debug, Serialize)]
+struct ProviderDatacenter {
+    country_code: &'static str,
+    region: &'static str,
 }
 
 fn nano_usd(value: u64) -> String {
@@ -249,17 +286,11 @@ mod tests {
         let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
         let published = &response["data"][0];
 
-        assert_eq!(published["schema_version"], "2.5");
         assert_eq!(published["id"], "provider/model-a");
+        assert_eq!(published["input_modalities"][0]["type"], "text");
         assert_eq!(
-            published["supported_parameters"],
-            serde_json::json!([
-                "max_completion_tokens",
-                "max_tokens",
-                "response_format",
-                "stream",
-                "temperature"
-            ])
+            published["input_modalities"][0]["supported_inputs"]["max_context_length"]["value"],
+            8192
         );
         assert_eq!(
             published["input_modalities"][0]["pricing"][0]["cost_usd"],
@@ -269,12 +300,20 @@ mod tests {
             published["output_modalities"][0]["pricing"][0]["cost_usd"],
             "0.000002"
         );
+        assert_eq!(
+            published["output_modalities"][0]["supported_parameters"]["max_tokens"]["max"],
+            1024
+        );
+        assert_eq!(
+            published["datacenters"],
+            serde_json::json!([{ "country_code": "US", "region": "us-east-1" }])
+        );
+        assert_eq!(published["deployment_region"], "US");
         assert_eq!(published["is_ready"], true);
+        assert_eq!(published["schema_version"], "2.4");
+        assert!(published.get("capacity").is_none());
         assert!(published.get("deployments").is_none());
         assert!(published.get("service_url").is_none());
-        assert!(published["output_modalities"][0]
-            .get("default_length")
-            .is_none());
     }
 
     #[test]

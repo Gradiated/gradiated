@@ -71,7 +71,8 @@ request resolves current routing state from Valkey.
 
 ### Exact identifiers, minimal routing
 
-The request model ID and `GatewayModel.id` must match byte-for-byte. At launch
+The gateway converts the request model ID to ASCII lowercase. The normalized
+ID and `GatewayModel.id` must then match byte-for-byte. At launch
 `GatewayModel.deployments` is an ordered list and may contain multiple
 `available` deployments. The gateway chooses the first available entry. A
 mismatch or missing route is an error; the gateway does not score or discover
@@ -253,24 +254,25 @@ materializes 1,024 tokens capped by the model's `max_length`, so Rust never
 invents this catalog default. The effective ceiling is used for bounds and
 admission; other omitted parameters retain the pinned runtime/model defaults.
 
-### 5. Exact model and parameter qualification
+### 5. Canonical model and parameter qualification
 
-1. Read `model:<requested_model_id>` directly from Valkey.
-2. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
-3. Require `model.id` to equal the request model exactly.
-4. Reject `unavailable` or `retired` models for inference.
-5. Read the model's projected `deployments` array from that same
+1. Convert the requested model ID to ASCII lowercase.
+2. Read `model:<normalized_model_id>` directly from Valkey.
+3. Strictly deserialize `GatewayModel` and its closed `ModelProperties`.
+4. Require `model.id` to equal the normalized request model exactly.
+5. Reject `unavailable` or `retired` models for inference.
+6. Read the model's projected `deployments` array from that same
    `GatewayModel` value.
-6. Select the first valid `available` deployment in projection order; reject a
+7. Select the first valid `available` deployment in projection order; reject a
    missing, malformed, or empty route set.
-7. Read the text output modality's `supported_parameters` and the model's
+8. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
-8. Validate every advertised non-envelope top-level field against its
+9. Validate every advertised non-envelope top-level field against its
    model-specific descriptor. Remove optional fields that the selected model
    does not advertise.
-9. Apply the descriptor's outer type, range, enum, and size checks without
+10. Apply the descriptor's outer type, range, enum, and size checks without
    recreating every nested OpenAI or SGLang type in Rust.
-10. Preserve every qualified, supported JSON value unchanged in the upstream
+11. Preserve every qualified, supported JSON value unchanged in the upstream
     body and capture effective pricing and the deployment release digest.
 
 The `GatewayModel` is the complete current PostgreSQL projection of the model
@@ -707,7 +709,7 @@ access checks as Chat Completions but does not create a lease.
 5. Include available models with `is_ready = true`.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
    OpenRouter monitor can observe them without sending inference traffic.
-7. Assemble schema version `2.5` from customer-visible catalog fields and
+7. Assemble provider schema version `2.4` from customer-visible catalog fields and
    deployment declarations supplied separately when that provider surface is
    implemented.
 8. Convert integer nano-USD token prices to exact base-10 USD strings.
@@ -890,7 +892,7 @@ The TypeScript contracts package authors:
   pass-through parameter maps;
 - strict Chat Completions response schemas;
 - streaming event schemas;
-- provider `/v1/models` schema version `2.5`;
+- provider `/v1/models` schema version `2.4`;
 - `ModelDeploymentRelease` and the deployment children of `GatewayModel`;
 - `GenerationProperties` and `GenerationSettled`;
 - accepted and rejected cross-language fixtures.
@@ -913,7 +915,7 @@ proxy.
   removal;
 - preservation of qualified nested JSON values without coercion or silent
   field loss;
-- provider schema `2.5` model-document validation;
+- provider schema `2.4` model-document validation;
 - generated artifacts have no diff after regeneration.
 
 ### Authentication and access tests

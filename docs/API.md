@@ -19,8 +19,9 @@ and `@hono/zod-openapi` metadata before its handler is implemented.
 - Gradiated-owned routes use the `/api/v1` prefix. Better Auth owns
   `/api/auth/*`.
 - Request and response bodies use JSON. Timestamps are UTC RFC 3339 strings.
-- UUIDs are lowercase canonical strings. Public model IDs are bounded exact
-  strings such as `moonshotai/kimi-k3`.
+- UUIDs are lowercase canonical strings. Public model IDs are bounded lowercase
+  strings such as `moonshotai/kimi-k3`. Inference requests match model IDs
+  without regard to ASCII letter case.
 - Integer nano-USD values cross the JSON boundary as base-10 strings because
   JavaScript numbers cannot safely represent every PostgreSQL `bigint`.
 - Optional stored values are returned as explicit `null`; omitted fields mean

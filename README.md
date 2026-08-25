@@ -4,7 +4,8 @@ Gradiated hosts exact open-weight models and sells inference through direct cust
 
 1. [architecture](docs/ARCHITECTURE.md);
 2. [canonical data model](docs/DATA_MODEL.md);
-3. [Kimi K3 provider launch plan](docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md).
+3. [OpenRouter provider readiness](docs/OPENROUTER_PROVIDER_README.md);
+4. [Kimi K3 provider launch plan](docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md).
 
 Read [AGENTS.md](AGENTS.md) before making changes. Product and infrastructure entry points are [product/README.md](product/README.md) and [infra/README.md](infra/README.md). Research has its own authority under [research/README.md](research/README.md).
 

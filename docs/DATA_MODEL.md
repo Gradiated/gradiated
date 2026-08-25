@@ -34,7 +34,9 @@ research, alias and third-party-provider concepts.
 
 ## Global conventions
 
-- Application IDs are UUIDv7. Exact public model IDs are stable bounded text identifiers.
+- Application IDs are UUIDv7. Public model IDs are stable bounded lowercase
+  text identifiers. The gateway converts request model IDs to ASCII lowercase
+  before lookup.
 - PostgreSQL timestamps are `timestamptz` in UTC; ClickHouse timestamps are `DateTime64` in UTC.
 - Every internal monetary value and unit price is an integer nano-USD. Money field names omit the unit suffix: use `balance`, `amount`, `balance_after`, `charge`, `unit_price` and `cost` rather than unit-suffixed alternatives.
 - Monetary storage uses signed `bigint`/`Int64` unless explicitly constrained nonnegative. Floating-point arithmetic is forbidden; calculations use checked integer intermediates before conversion to the stored range.
@@ -206,7 +208,7 @@ Global hosted-model catalog. It is not organization-scoped. The primary key is t
 
 | Field        | Type        | Null | Rules                                        |
 | ------------ | ----------- | ---- | -------------------------------------------- |
-| `id`         | text        | no   | Primary key; exact immutable public model ID |
+| `id`         | text        | no   | Primary key; lowercase immutable public model ID |
 | `name`       | text        | no   | Bounded customer-facing name                 |
 | `status`     | text        | no   | `available`, `unavailable`, `retired`        |
 | `properties` | jsonb       | no   | Closed Zod `ModelProperties` document        |

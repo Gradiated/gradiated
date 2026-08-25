@@ -49,7 +49,8 @@ impl RequestCoordinator {
     ) -> Result<QualifiedRequest, GatewayError> {
         let identity = self.authenticate(headers, metadata.received_at).await?;
         let identity = self.authorize(identity).await?;
-        let request = ChatCompletionRequest::parse(body)?;
+        let mut request = ChatCompletionRequest::parse(body)?;
+        request.model.make_ascii_lowercase();
         let model = self.load_model(&request.model).await?;
         qualify_model_request(metadata, identity, request, model)
     }
@@ -212,6 +213,7 @@ mod tests {
         account: Option<GatewayAccount>,
         model: Option<GatewayModel>,
         calls: Mutex<Vec<&'static str>>,
+        requested_models: Mutex<Vec<String>>,
     }
 
     impl FakeServingState {
@@ -238,6 +240,7 @@ mod tests {
                 }),
                 model: Some(model(true)),
                 calls: Mutex::new(Vec::new()),
+                requested_models: Mutex::new(Vec::new()),
             }
         }
 
@@ -272,8 +275,12 @@ mod tests {
             Ok(self.account.clone())
         }
 
-        async fn model(&self, _model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
+        async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
             self.record("model");
+            self.requested_models
+                .lock()
+                .unwrap()
+                .push(model_id.to_owned());
             Ok(self.model.clone())
         }
 
@@ -404,6 +411,26 @@ mod tests {
             *state.calls.lock().unwrap(),
             ["credential", "workspace", "account", "model"]
         );
+    }
+
+    #[tokio::test]
+    async fn canonicalizes_model_ids_before_lookup_and_dispatch() {
+        let state = Arc::new(FakeServingState::ready());
+        let request = RequestCoordinator::new(state.clone())
+            .qualify(
+                metadata(),
+                &headers(),
+                br#"{"model":"MODEL-A","messages":[{}]}"#,
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(request.request.model, "model-a");
+        let upstream_body = request
+            .request
+            .into_upstream_body(request.effective_output_tokens);
+        assert_eq!(upstream_body["model"], "model-a");
+        assert_eq!(*state.requested_models.lock().unwrap(), ["model-a"]);
     }
 
     #[tokio::test]

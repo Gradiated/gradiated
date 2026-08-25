@@ -108,10 +108,15 @@ Production observability now covers the API, worker, gateway, SGLang runtime,
 console edge, and Kubernetes workloads. API and worker expose private
 Prometheus listeners with bounded-cardinality HTTP, dependency, loop, lag,
 business-pipeline, and Node runtime metrics. The gateway's existing generation
-and runtime metrics include a telemetry heartbeat. Argo provisions six Grafana
+and runtime metrics include a telemetry heartbeat. Argo provisions seven Grafana
 dashboards, HTTPS blackbox probes, failure-oriented Prometheus rules, and
 severity-routed Alertmanager webhook delivery. The metric catalog and runbooks
 are in [`docs/OBSERVABILITY.md`](../docs/OBSERVABILITY.md).
+
+The ClickHouse migration bootstrap also owns the `metabase_reader` user. It
+rotates that user's generated Secrets Manager password and grants only `SELECT`
+on `gradiated.*`. Metabase must use this user and must not use the application
+or ClickHouse administrator user.
 
 The canonical `mprocs` stack now includes the native SGLang Metal/MLX process.
 The `sglang-local` mise task checks out exact SGLang revision

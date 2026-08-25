@@ -16,6 +16,7 @@ prompt, or completion labels.
 | Gateway        | private in-cluster `/metrics`          | request outcomes, admission/rejection, active and terminal generations, tokens/charges, dispatch/runtime/TTFT/TPOT/throughput, finalization, Valkey/catalog/SGLang readiness | `Gradiated / Gateway`          |
 | SGLang runtime | gateway deployment-scoped observations | readiness, active work, terminal outcomes, runtime latency, TTFT, TPOT, per-request output throughput                                                                        | `Gradiated / SGLang Runtime`   |
 | Console        | external HTTPS blackbox probe          | end-to-end availability, HTTP status, DNS/TLS/request phases, response size, certificate expiry                                                                              | `Gradiated / Console`          |
+| Metabase       | private metrics plus HTTPS probe       | end-to-end availability, replica state, restarts, CPU, memory, JVM heap and application metrics                                                                               | `Gradiated / Metabase`         |
 | Whole product  | all sources plus kube-state-metrics    | endpoint/service health, traffic, generation outcomes, pipeline lag, alerts, desired/available replicas                                                                      | `Gradiated / Service Overview` |
 
 The API and worker metrics listeners are not attached to an HTTPRoute. The
@@ -36,7 +37,8 @@ The `gradiated-services` PrometheusRule covers:
   generation ownership stalls;
 - Node event-loop saturation, Kubernetes replica loss, restart loops, and
   memory pressure;
-- public certificate expiry.
+- public certificate expiry;
+- Metabase endpoint, replica, restart, and memory failures.
 
 Critical alerts repeat every 15 minutes; warnings repeat every two hours.
 Alertmanager groups by alert, service, and severity and sends firing and
@@ -61,6 +63,7 @@ After Argo reconciliation:
 
 ```sh
 kubectl -n gradiated get servicemonitor,podmonitor,probe,prometheusrule
+kubectl -n metabase get deployment,service,servicemonitor
 kubectl -n observability port-forward svc/observability-grafana 3000:80
 ```
 
@@ -184,6 +187,15 @@ Active leases without a terminal generation beyond the request deadline imply
 lost ownership, runtime cancellation, or finalization failure. Inspect the
 gateway task/drain state and SGLang request, then the lease expiry. Do not delete
 live leases to restore capacity.
+
+## Metabase
+
+Check the `metabase` Deployment, both container logs, and the ExternalSecret
+conditions. Then check the dedicated RDS instance and the shared Gateway route.
+The metrics proxy must reach `127.0.0.1:9191` inside the pod. It must not expose
+that port through a public route. If a data connection fails, test the matching
+`metabase_reader` credential and its read-only grants. Do not give Metabase a
+write-capable product credential.
 
 ## Certificate expiry
 

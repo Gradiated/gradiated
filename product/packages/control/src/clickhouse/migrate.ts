@@ -16,6 +16,8 @@ const environmentSchema = z.object({
   CLICKHOUSE_ADMIN_PASSWORD: z.string().min(1),
   CLICKHOUSE_APPLICATION_USERNAME: z.string().regex(identifierPattern),
   CLICKHOUSE_APPLICATION_PASSWORD: z.string().min(1),
+  CLICKHOUSE_METABASE_USERNAME: z.string().regex(identifierPattern),
+  CLICKHOUSE_METABASE_PASSWORD: z.string().min(1),
 });
 
 const safeIdentifier = (name: string, value: string): string => {
@@ -78,6 +80,8 @@ const bootstrapDatabase = async (
   adminUsername: string,
   applicationUsername: string,
   applicationPassword: string,
+  metabaseUsername: string,
+  metabasePassword: string,
 ): Promise<void> => {
   const databaseIdentifier = safeIdentifier("CLICKHOUSE_DATABASE", database);
   const userIdentifier = safeIdentifier(
@@ -89,18 +93,34 @@ const bootstrapDatabase = async (
     query: `CREATE DATABASE IF NOT EXISTS ${databaseIdentifier}`,
   });
 
-  if (applicationUsername === adminUsername) return;
+  if (applicationUsername !== adminUsername) {
+    await client.command({
+      query: `CREATE USER IF NOT EXISTS ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
+      query_params: { application_password: applicationPassword },
+    });
+    await client.command({
+      query: `ALTER USER ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
+      query_params: { application_password: applicationPassword },
+    });
+    await client.command({
+      query: `GRANT SELECT, INSERT ON ${databaseIdentifier}.* TO ${userIdentifier}`,
+    });
+  }
 
+  const metabaseUserIdentifier = safeIdentifier(
+    "CLICKHOUSE_METABASE_USERNAME",
+    metabaseUsername,
+  );
   await client.command({
-    query: `CREATE USER IF NOT EXISTS ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
-    query_params: { application_password: applicationPassword },
+    query: `CREATE USER IF NOT EXISTS ${metabaseUserIdentifier} IDENTIFIED WITH sha256_password BY {metabase_password:String}`,
+    query_params: { metabase_password: metabasePassword },
   });
   await client.command({
-    query: `ALTER USER ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
-    query_params: { application_password: applicationPassword },
+    query: `ALTER USER ${metabaseUserIdentifier} IDENTIFIED WITH sha256_password BY {metabase_password:String}`,
+    query_params: { metabase_password: metabasePassword },
   });
   await client.command({
-    query: `GRANT SELECT, INSERT ON ${databaseIdentifier}.* TO ${userIdentifier}`,
+    query: `GRANT SELECT ON ${databaseIdentifier}.* TO ${metabaseUserIdentifier}`,
   });
 };
 
@@ -177,6 +197,8 @@ const main = async (): Promise<void> => {
       environment.CLICKHOUSE_ADMIN_USERNAME,
       environment.CLICKHOUSE_APPLICATION_USERNAME,
       environment.CLICKHOUSE_APPLICATION_PASSWORD,
+      environment.CLICKHOUSE_METABASE_USERNAME,
+      environment.CLICKHOUSE_METABASE_PASSWORD,
     );
 
     const migrationClient = createClient({

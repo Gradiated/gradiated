@@ -48,6 +48,7 @@ and the same Valkey-backed authentication, admission and settlement path.
 | `api`            | TypeScript/Node Kubernetes Deployment on EKS CPU nodes                               | RDS PostgreSQL; Valkey for serving-relevant mutations; ClickHouse for usage views; Stripe | human sessions, organizations, workspaces, invitations, API keys, model catalog, billing operations, usage views and generated API/docs                    | serve inference, serve console assets, run asynchronous settlement loops, authenticate hot-path keys, own Rust behavior |
 | `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                  | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                  | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a public/application API, write PostgreSQL per generation, retain prompts or completions                         |
 | `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                     | Valkey; the selected SGLang endpoint; generated contract fixtures                         | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
+| `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                      | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                      | write product data, serve public shares, or become a product data authority                                               |
 | `sglang-kimi-k3` | SGLang pod on the external provider's 8x B300 Kubernetes node; never an EKS workload | pinned model/tokenizer artifacts, pinned SGLang image, GPU node and provider networking   | execute one exact Kimi K3 release and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                     | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api` and `worker` are two commands from one TypeScript application and image,
@@ -276,6 +277,7 @@ are ordered candidates for the exact model.
 | Dependency                    | Used by                      | Purpose                                                                | Launch boundary                                                                                                     |
 | ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | RDS PostgreSQL                | `api`, `worker`              | durable product and financial state                                    | private subnets, Multi-AZ, PITR and deletion protection                                                             |
+| RDS PostgreSQL for Metabase   | `metabase`                   | Metabase users, settings, questions and dashboard state                 | private subnets, Single-AZ `db.t4g.small`, 20 GiB gp3, PITR and deletion protection                                 |
 | ElastiCache Serverless Valkey | `api`, `worker`, `gateway`   | serving projection, leases and generation stream                       | managed Multi-AZ; fail closed when unavailable                                                                      |
 | ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention              |
 | Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                                            |
@@ -283,7 +285,7 @@ are ordered candidates for the exact model.
 | external Kubernetes provider  | `sglang-kimi-k3`             | B300 GPU capacity                                                      | provider-owned cluster/node pool; separate from EKS                                                                 |
 | ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                                        |
 | Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                                    |
-| Route 53 / ACM / ALB          | `api`, `gateway`             | DNS, TLS and Gateway API path routing on `api.gradiated.com`           | AWS Load Balancer Controller owns one public ALB with IP targets; `/openai/v1/*` to gateway; all other paths to API |
+| Route 53 / ACM / ALB          | `api`, `gateway`, `metabase` | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service                   |
 | S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                               |
 
 Production delivery follows [DEPLOYMENT.md](DEPLOYMENT.md). GitHub Actions
@@ -371,6 +373,8 @@ The minimum production deployment units are:
 3. `gateway` Rust Deployment and ClusterIP Service in EKS;
 4. one SGLang model Deployment and private Service on the external GPU cluster;
 5. PostgreSQL, Valkey and ClickHouse managed services.
+6. one Metabase Deployment and Service, plus its dedicated RDS PostgreSQL
+   state database.
 
 Local development preserves these process and network boundaries without
 reproducing production packaging. Docker Compose runs PostgreSQL, Valkey and

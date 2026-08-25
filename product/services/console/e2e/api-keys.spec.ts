@@ -28,5 +28,11 @@ test("API-key page creates a secret and revokes the key", async ({ page }) => {
   await row.getByRole("button", { name: `Actions for ${keyName}` }).click();
   page.once("dialog", (dialog) => dialog.accept());
   await page.getByRole("menuitem", { name: "Revoke" }).click();
-  await expect(row).toContainText("Revoked");
+  await expect(row).toHaveCount(0);
+
+  await page.getByRole("combobox", { name: "Key status" }).click();
+  await page.getByRole("option", { name: "Revoked" }).click();
+  await expect(
+    page.getByRole("row").filter({ hasText: keyName }),
+  ).toContainText("Revoked");
 });

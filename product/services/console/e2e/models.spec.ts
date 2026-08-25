@@ -11,6 +11,6 @@ test("models page shows the available model and pricing", async ({ page }) => {
     page.getByRole("heading", { name: "Qwen3 0.6B 4-bit" }),
   ).toBeVisible();
   await expect(page.getByText("mlx-community/qwen3-0.6b-4bit")).toBeVisible();
-  await expect(page.getByText("$0.10 / 1M")).toBeVisible();
-  await expect(page.getByText("$0.30 / 1M")).toBeVisible();
+  await expect(page.getByText("$0.100 / 1M")).toBeVisible();
+  await expect(page.getByText("$0.300 / 1M")).toBeVisible();
 });

@@ -2,3 +2,5 @@
 **/.turbo/
 **/target/
 **/dist/
+pnpm-lock.yaml
+services/api/generated/openapi.json

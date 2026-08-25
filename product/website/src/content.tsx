@@ -89,7 +89,7 @@ export const ThesisContent = (): ReactNode => (
     <p>
       The optimal architecture changes as models evolve. A dense model like GLM
       5.2 has very different requirements from a sparse mixture-of-experts model
-      such as Kimi K2, where only a subset of experts are active on each forward
+      such as Kimi K3, where only a subset of experts are active on each forward
       pass. Those models benefit from different memory layouts, routing
       mechanisms, interconnect topologies, and scheduling strategies. There is
       unlikely to be a single &quot;best&quot; accelerator for every frontier
@@ -333,7 +333,7 @@ export const PrivacyContent = (): ReactNode => (
   <>
     <p>Effective date: July 13, 2026</p>
     <p>
-      Gradiated, Inc. (“Gradiated,” “we,” “us,” or “our”) respects your privacy.
+      Gradiated Ltd (“Gradiated,” “we,” “us,” or “our”) respects your privacy.
       This policy explains how we collect, use, and share information when you
       visit gradiated.com or contact us.
     </p>

@@ -73,7 +73,7 @@ const SiteFooter = (): ReactElement => (
     <Link className="text-ink" to="/">
       Gradiated
     </Link>
-    <span>© 2026 Gradiated, Inc.</span>
+    <span>© 2026 Gradiated Ltd</span>
     <Link className="ml-auto text-ink max-site:ml-auto" to="/privacy/">
       Privacy
     </Link>

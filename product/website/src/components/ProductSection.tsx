@@ -23,13 +23,13 @@ export const ProductSection = ({
       />
     </div>
     <div className="product-copy flex flex-col border-b border-line border-t border-ink pb-6 pl-12 pt-8 max-site:min-h-96 max-site:border-t-0 max-site:pl-0 max-site:pt-8">
-      <p>Private beta · Our first product</p>
+      <p>Private beta · Optimized inference</p>
       <h2 id="kimi-k3-title">Kimi K3.</h2>
       <span>
         The world&apos;s most efficient Kimi K3 inference, in private beta.
       </span>
       <WaitlistLink className="text-link mt-auto pt-12" onOpen={onWaitlist}>
-        Join waitlist <b>→</b>
+        Request beta access <b>→</b>
       </WaitlistLink>
     </div>
   </section>

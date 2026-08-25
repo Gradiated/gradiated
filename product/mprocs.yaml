@@ -44,6 +44,7 @@ procs:
       VALKEY_URL: redis://127.0.0.1:6379
   sglang:
     shell: "mise run sglang-local"
+    autostart: false
     stop: SIGINT
   console:
     shell: >-
@@ -51,6 +52,7 @@ procs:
   website:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && cd website && corepack pnpm dev'
+    autostart: false
   migrate-postgres:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/control db:migrate'

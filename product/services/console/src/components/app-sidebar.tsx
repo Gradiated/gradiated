@@ -7,7 +7,6 @@ import {
   Check,
   ChevronsUpDown,
   KeyRound,
-  Layers3,
   LogOut,
   Logs,
   PackageOpen,
@@ -115,9 +114,13 @@ export const AppSidebar = ({
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   aria-label="Workspace menu"
                 >
-                  <span className="grid aspect-square size-8 place-items-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                    <Layers3 className="size-4" />
-                  </span>
+                  <img
+                    className="aspect-square size-8"
+                    src="/brand/gradiated-mark-dark.svg"
+                    alt=""
+                    width="32"
+                    height="32"
+                  />
                   <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">
                     {selectedWorkspace?.name ?? "Select workspace"}
                   </span>

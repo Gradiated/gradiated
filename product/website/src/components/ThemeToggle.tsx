@@ -28,8 +28,8 @@ export const ThemeToggle = (): ReactElement => {
     if (favicon) {
       favicon.href =
         theme === "dark"
-          ? "/gradiated-logo-light-exact.png"
-          : "/gradiated-logo-dark-exact.png";
+          ? "/brand/gradiated-mark-light.svg"
+          : "/brand/gradiated-mark-dark.svg";
     }
 
     try {

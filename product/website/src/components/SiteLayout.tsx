@@ -31,7 +31,7 @@ const SiteHeader = (): ReactElement => {
       >
         <img
           className="wordmark-logo"
-          src="/gradiated-logo-dark-exact.png"
+          src="/brand/gradiated-mark-dark.svg"
           alt=""
           width="25"
           height="25"

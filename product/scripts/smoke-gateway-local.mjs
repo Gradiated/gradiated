@@ -116,7 +116,7 @@ try {
   const advertisedModel = catalog.data?.find(
     (model) => model.id === "mlx-community/qwen3-0.6b-4bit",
   );
-  if (!advertisedModel || advertisedModel.schema_version !== "2.4") {
+  if (!advertisedModel || advertisedModel.schema_version !== "2.5") {
     throw new Error("Gateway model catalog does not advertise the local model");
   }
   if (

@@ -32,7 +32,7 @@ Add this provider to your OpenCode config. Keep the file in your project or in y
       "npm": "@ai-sdk/openai-compatible",
       "name": "Gradiated",
       "options": {
-        "baseURL": "https://api.gradiated.com/v1",
+        "baseURL": "https://api.gradiated.com/openai/v1",
         "apiKey": "{env:GRADIATED_API_KEY}"
       },
       "models": {
@@ -88,7 +88,7 @@ Use the values for the selected model. Do not copy limits from another model.
 ## Troubleshooting
 
 - Check that `GRADIATED_API_KEY` is set in the same shell that starts OpenCode.
-- Check that `baseURL` ends with `/v1`.
+- Check that `baseURL` is `https://api.gradiated.com/openai/v1`.
 - Check that the model ID matches the catalog response.
 - Check that the workspace has billing capacity.
 - Run `opencode auth list` if OpenCode reports a provider authentication error.

@@ -82,14 +82,14 @@ The stream ends with `[DONE]`. The final usage event includes input and output t
 
 Errors use an `error` object with a stable `code`:
 
-| Code                      | Meaning                                         |
-| ------------------------- | ----------------------------------------------- |
-| `invalid_api_key`         | The key is missing, expired, or revoked.        |
-| `model_not_found`         | The model ID is not in the catalog.             |
-| `model_unavailable`       | The model is not ready to serve traffic.        |
-| `insufficient_balance`    | The workspace cannot fund the request.          |
-| `context_length_exceeded` | The request is too large for the model.         |
-| `unsupported_parameter`   | The model does not support a request parameter. |
-| `capacity_exceeded`       | The model is temporarily at capacity.           |
+| Code                      | Meaning                                                          |
+| ------------------------- | ---------------------------------------------------------------- |
+| `invalid_api_key`         | The key is missing, expired, or revoked.                         |
+| `model_not_found`         | The model ID is not in the catalog.                              |
+| `model_unavailable`       | The model is not ready to serve traffic.                         |
+| `insufficient_balance`    | The workspace cannot fund the request.                           |
+| `context_length_exceeded` | The request is too large for the model.                          |
+| `unsupported_parameter`   | The model does not support a gateway feature, such as streaming. |
+| `capacity_exceeded`       | The model is temporarily at capacity.                            |
 
 See the [API reference](/docs/api/) for the request fields and response behavior.

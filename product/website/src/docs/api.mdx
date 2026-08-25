@@ -69,7 +69,7 @@ Send only one of `max_tokens` and `max_completion_tokens`. The selected model de
 }
 ```
 
-The gateway preserves supported provider parameters and rejects parameters that the selected model does not support.
+The gateway preserves supported provider parameters. It ignores optional parameters that the selected model does not support. It rejects invalid values for supported parameters.
 
 ## Streaming
 

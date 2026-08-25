@@ -6,7 +6,7 @@ use crate::{
     ModelQuantization, OutputTokenPrice, SupportedTextInputs, TokenMeasure,
 };
 
-const PROVIDER_SCHEMA_VERSION: &str = "2.4";
+const PROVIDER_SCHEMA_VERSION: &str = "2.5";
 const NANO_USD_SCALE: u64 = 1_000_000_000;
 
 #[derive(Debug, Serialize)]
@@ -38,6 +38,7 @@ struct ProviderModel<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     tokenizer: Option<&'a str>,
     description: &'a str,
+    supported_parameters: Vec<&'a str>,
     input_modalities: [ProviderTextInput<'a>; 1],
     output_modalities: [ProviderTextOutput<'a>; 1],
     passthrough_parameters: &'a std::collections::HashMap<String, ModelParameterDescriptor>,
@@ -76,6 +77,7 @@ impl<'a> ProviderModel<'a> {
             quantization: model.properties.quantization,
             tokenizer: model.properties.tokenizer.as_deref(),
             description: &model.properties.description,
+            supported_parameters: model.properties.supported_parameter_names(),
             input_modalities: [ProviderTextInput {
                 kind: "text",
                 supported_inputs: &input.supported_inputs,
@@ -211,7 +213,9 @@ mod tests {
                         {"type": "completion", "unit": "token", "cost": 2000}
                     ]
                 }],
-                "passthrough_parameters": {},
+                "passthrough_parameters": {
+                    "response_format": {"type": "unknown"}
+                },
                 "deprecation_date": null
             },
             "deployments": [{
@@ -245,8 +249,18 @@ mod tests {
         let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
         let published = &response["data"][0];
 
-        assert_eq!(published["schema_version"], "2.4");
+        assert_eq!(published["schema_version"], "2.5");
         assert_eq!(published["id"], "provider/model-a");
+        assert_eq!(
+            published["supported_parameters"],
+            serde_json::json!([
+                "max_completion_tokens",
+                "max_tokens",
+                "response_format",
+                "stream",
+                "temperature"
+            ])
+        );
         assert_eq!(
             published["input_modalities"][0]["pricing"][0]["cost_usd"],
             "0.000001"

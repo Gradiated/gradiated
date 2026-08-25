@@ -130,7 +130,7 @@ impl RequestCoordinator {
 fn qualify_model_request(
     metadata: RequestMetadata,
     identity: AuthenticatedIdentity,
-    request: ChatCompletionRequest,
+    mut request: ChatCompletionRequest,
     model: GatewayModel,
 ) -> Result<QualifiedRequest, GatewayError> {
     let deployment = model
@@ -143,14 +143,17 @@ fn qualify_model_request(
         return Err(GatewayError::unsupported_parameter("stream"));
     }
     for (name, value) in &request.parameters {
-        let descriptor = model
+        if model
             .properties
             .parameter(name)
-            .ok_or_else(|| GatewayError::unsupported_parameter(name))?;
-        if !descriptor.accepts(value) {
+            .is_some_and(|descriptor| !descriptor.accepts(value))
+        {
             return Err(GatewayError::invalid_request(Some(name)));
         }
     }
+    request
+        .parameters
+        .retain(|name, _| model.properties.parameter(name).is_some());
 
     let effective_output_tokens = match request.output_token_limit() {
         Some(limit) if limit.value() > output.max_length.value => {
@@ -557,12 +560,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn rejects_unadvertised_or_invalid_model_parameters() {
+    async fn ignores_unadvertised_model_parameters() {
+        let request = RequestCoordinator::new(Arc::new(FakeServingState::ready()))
+            .qualify(
+                metadata(),
+                &headers(),
+                br#"{
+                    "model":"model-a",
+                    "messages":[{}],
+                    "seed":7,
+                    "tools":[{"type":"function"}]
+                }"#,
+            )
+            .await
+            .unwrap();
+
+        assert!(!request.request.parameters.contains_key("seed"));
+        assert!(!request.request.parameters.contains_key("tools"));
+    }
+
+    #[tokio::test]
+    async fn rejects_invalid_supported_model_parameters() {
         for (body, expected) in [
-            (
-                br#"{"model":"model-a","messages":[{}],"seed":7}"#.as_slice(),
-                GatewayError::unsupported_parameter("seed"),
-            ),
             (
                 br#"{"model":"model-a","messages":[{}],"temperature":3}"#.as_slice(),
                 GatewayError::invalid_request(Some("temperature")),

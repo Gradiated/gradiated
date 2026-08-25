@@ -49,6 +49,24 @@ impl GatewayModelProperties {
             .get(name)
             .or_else(|| self.passthrough_parameters.get(name))
     }
+
+    pub fn supported_parameter_names(&self) -> Vec<&str> {
+        let output = self.text_output();
+        let mut names = vec!["max_completion_tokens", "max_tokens"];
+        if output.streaming {
+            names.push("stream");
+        }
+        names.extend(
+            output
+                .supported_parameters
+                .keys()
+                .chain(self.passthrough_parameters.keys())
+                .map(String::as_str),
+        );
+        names.sort_unstable();
+        names.dedup();
+        names
+    }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]

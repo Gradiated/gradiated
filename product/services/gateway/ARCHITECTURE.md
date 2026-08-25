@@ -243,7 +243,9 @@ for later model-specific qualification and forwarding. The envelope parser
 does not enumerate message roles, content parts, sampling controls, tool
 schemas, structured-output formats, or SGLang extensions. It rejects malformed
 JSON, a non-object body, duplicate top-level keys, and invalid gateway-owned
-fields, but it never silently drops or coerces a caller field.
+fields. It does not drop or coerce a caller field during envelope parsing.
+Model qualification removes optional fields that the selected model does not
+advertise.
 
 If neither output-token field is present, the gateway uses the text output
 modality's projected `default_length`. The control-plane Zod write schema
@@ -263,18 +265,19 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
    missing, malformed, or empty route set.
 7. Read the text output modality's `supported_parameters` and the model's
    request-scoped `passthrough_parameters` maps.
-8. Validate every non-envelope top-level field against those model-specific
-   allowlists. Reject fields the selected model does not advertise with
-   `400 unsupported_parameter`.
+8. Validate every advertised non-envelope top-level field against its
+   model-specific descriptor. Remove optional fields that the selected model
+   does not advertise.
 9. Apply the descriptor's outer type, range, enum, and size checks without
    recreating every nested OpenAI or SGLang type in Rust.
-10. Preserve every qualified JSON value unchanged in the upstream body and
-    capture effective pricing and the deployment release digest.
+10. Preserve every qualified, supported JSON value unchanged in the upstream
+    body and capture effective pricing and the deployment release digest.
 
 The `GatewayModel` is the complete current PostgreSQL projection of the model
 and its deployments. The launch lookup has no scoring, alias expansion,
-fallback, provider selection, or network discovery. The descriptor map is a public allowlist, not a claim that
-every model supports the same parameters. Adding a parameter normally changes
+fallback, provider selection, or network discovery. The descriptor map is the
+public capability list. It does not claim that every model supports the same
+parameters. Adding a parameter normally changes
 the model catalog and its conformance fixtures rather than the Rust request
 type. Complex values such as messages, tools, multimodal content, and response
 formats receive cheap gateway-owned structural and resource bounds; the pinned
@@ -704,7 +707,7 @@ access checks as Chat Completions but does not create a lease.
 5. Include available models with `is_ready = true`.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
    OpenRouter monitor can observe them without sending inference traffic.
-7. Assemble schema version `2.4` from customer-visible catalog fields and
+7. Assemble schema version `2.5` from customer-visible catalog fields and
    deployment declarations supplied separately when that provider surface is
    implemented.
 8. Convert integer nano-USD token prices to exact base-10 USD strings.
@@ -887,7 +890,7 @@ The TypeScript contracts package authors:
   pass-through parameter maps;
 - strict Chat Completions response schemas;
 - streaming event schemas;
-- provider `/v1/models` schema version `2.4`;
+- provider `/v1/models` schema version `2.5`;
 - `ModelDeploymentRelease` and the deployment children of `GatewayModel`;
 - `GenerationProperties` and `GenerationSettled`;
 - accepted and rejected cross-language fixtures.
@@ -907,10 +910,10 @@ proxy.
 
 - accepted and rejected TypeScript/Rust envelope fixtures;
 - model-specific advertised-parameter acceptance and unadvertised-parameter
-  rejection;
+  removal;
 - preservation of qualified nested JSON values without coercion or silent
   field loss;
-- provider schema `2.4` model-document validation;
+- provider schema `2.5` model-document validation;
 - generated artifacts have no diff after regeneration.
 
 ### Authentication and access tests
@@ -1001,7 +1004,8 @@ tests with a fake `ServingState`.
 - the gateway resolves the local model's projected deployment and reaches SGLang over
   localhost HTTP;
 - seeded direct and OpenRouter credentials both complete real local inference;
-- unadvertised parameters are rejected before any `ModelRuntime` invocation;
+- unadvertised optional parameters are removed before any `ModelRuntime`
+  invocation;
 - parameters advertised by the local model reach SGLang unchanged;
 - Rust format, Clippy, unit, integration, and conformance checks pass;
 - repository DevEx and whitespace checks pass.

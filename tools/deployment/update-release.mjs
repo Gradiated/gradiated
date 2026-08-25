@@ -10,6 +10,12 @@ const GATEWAY_REPOSITORY =
   "873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway";
 const IMAGES_START = "# deployment-images:start";
 const IMAGES_END = "# deployment-images:end";
+const IMAGE_MANIFESTS = [
+  { file: "api.yaml", repository: PRODUCT_REPOSITORY },
+  { file: "clickhouse-migrate.yaml", repository: PRODUCT_REPOSITORY },
+  { file: "worker.yaml", repository: PRODUCT_REPOSITORY },
+  { file: "gateway.yaml", repository: GATEWAY_REPOSITORY },
+];
 
 function parseArguments(values) {
   const result = { root: process.cwd() };
@@ -37,6 +43,18 @@ function replaceMetadataValue(contents, key, value) {
     throw new Error(`Missing release metadata key: ${key}`);
   }
   return contents.replace(expression, `$1"${value}"`);
+}
+
+function replaceImageReference(contents, repository, digest, file) {
+  const escapedRepository = repository.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const expression = new RegExp(
+    `${escapedRepository}(?:@sha256:[0-9a-f]{64}|:[^\\s\"']+)`,
+    "g",
+  );
+  if (!contents.match(expression)) {
+    throw new Error(`Missing ${repository} image reference in ${file}`);
+  }
+  return contents.replace(expression, `${repository}@${digest}`);
 }
 
 export async function updateRelease(options) {
@@ -85,6 +103,18 @@ export async function updateRelease(options) {
     "gatewayImage",
     `${GATEWAY_REPOSITORY}@${gatewayDigest}`,
   );
+
+  for (const { file, repository } of IMAGE_MANIFESTS) {
+    const manifestPath = path.join(workloads, file);
+    let manifest = await readFile(manifestPath, "utf8");
+    manifest = replaceImageReference(
+      manifest,
+      repository,
+      repository === PRODUCT_REPOSITORY ? productDigest : gatewayDigest,
+      file,
+    );
+    await writeFile(manifestPath, manifest);
+  }
 
   await writeFile(kustomizationPath, kustomization);
   await writeFile(metadataPath, metadata);

@@ -25,6 +25,22 @@ async function fixture() {
     path.join(workloads, "release-metadata.yaml"),
     'data:\n  sourceRevision: "unreleased"\n  consoleRevision: "unreleased"\n  productImage: "unreleased"\n  gatewayImage: "unreleased"\n',
   );
+  await writeFile(
+    path.join(workloads, "api.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
+  );
+  await writeFile(
+    path.join(workloads, "clickhouse-migrate.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product@sha256:${"d".repeat(64)}\n`,
+  );
+  await writeFile(
+    path.join(workloads, "worker.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product:old\n`,
+  );
+  await writeFile(
+    path.join(workloads, "gateway.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway:old\n`,
+  );
   return { root, workloads };
 }
 
@@ -45,8 +61,22 @@ test("updates one complete production release", async () => {
     path.join(workloads, "release-metadata.yaml"),
     "utf8",
   );
+  const api = await readFile(path.join(workloads, "api.yaml"), "utf8");
+  const clickhouseMigrate = await readFile(
+    path.join(workloads, "clickhouse-migrate.yaml"),
+    "utf8",
+  );
+  const worker = await readFile(path.join(workloads, "worker.yaml"), "utf8");
+  const gateway = await readFile(
+    path.join(workloads, "gateway.yaml"),
+    "utf8",
+  );
   assert.match(kustomization, new RegExp(`digest: ${PRODUCT_DIGEST}`));
   assert.match(kustomization, new RegExp(`digest: ${GATEWAY_DIGEST}`));
+  assert.match(api, new RegExp(`product@${PRODUCT_DIGEST}`));
+  assert.match(clickhouseMigrate, new RegExp(`product@${PRODUCT_DIGEST}`));
+  assert.match(worker, new RegExp(`product@${PRODUCT_DIGEST}`));
+  assert.match(gateway, new RegExp(`gateway@${GATEWAY_DIGEST}`));
   assert.match(metadata, new RegExp(`sourceRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`consoleRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`productImage: ".*@${PRODUCT_DIGEST}"`));

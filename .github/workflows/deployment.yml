@@ -160,6 +160,10 @@ jobs:
           release_paths=(
             infra/environments/prod/us-east-1/kubernetes/workloads/kustomization.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/release-metadata.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/api.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/clickhouse-migrate.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
           )
           if git diff --quiet -- "${release_paths[@]}"; then
             echo "Release state already matches ${SOURCE_SHA}."

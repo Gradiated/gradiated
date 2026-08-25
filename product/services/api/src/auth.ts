@@ -11,6 +11,7 @@ import type { MagicLinkSender } from "./auth-email.js";
 export interface AuthConfiguration {
   baseUrl: string;
   github?: { clientId: string; clientSecret: string } | undefined;
+  google?: { clientId: string; clientSecret: string } | undefined;
   onUserCreated: (user: { id: string; name: string }) => Promise<void>;
   secret: string;
   sendMagicLink: MagicLinkSender;
@@ -38,14 +39,24 @@ export function createAuthService(
         allowDifferentEmails: false,
       },
     },
-    socialProviders: configuration.github
-      ? {
-          github: {
-            clientId: configuration.github.clientId,
-            clientSecret: configuration.github.clientSecret,
-          },
-        }
-      : {},
+    socialProviders: {
+      ...(configuration.github
+        ? {
+            github: {
+              clientId: configuration.github.clientId,
+              clientSecret: configuration.github.clientSecret,
+            },
+          }
+        : {}),
+      ...(configuration.google
+        ? {
+            google: {
+              clientId: configuration.google.clientId,
+              clientSecret: configuration.google.clientSecret,
+            },
+          }
+        : {}),
+    },
     databaseHooks: {
       user: {
         create: {

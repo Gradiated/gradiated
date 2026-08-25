@@ -18,6 +18,8 @@ const EnvironmentSchema = z
     CONSOLE_URL: z.url().default("http://localhost:3000"),
     GITHUB_CLIENT_ID: z.string().trim().min(1).optional(),
     GITHUB_CLIENT_SECRET: z.string().trim().min(1).optional(),
+    GOOGLE_CLIENT_ID: z.string().trim().min(1).optional(),
+    GOOGLE_CLIENT_SECRET: z.string().trim().min(1).optional(),
     SES_REGION: z.string().trim().min(1).optional(),
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
@@ -39,6 +41,14 @@ const EnvironmentSchema = z
         "GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET must be configured together.",
     },
   )
+  .refine(
+    (value) =>
+      Boolean(value.GOOGLE_CLIENT_ID) === Boolean(value.GOOGLE_CLIENT_SECRET),
+    {
+      message:
+        "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be configured together.",
+    },
+  )
   .refine((value) => value.NODE_ENV !== "production" || !value.AUTH_TEST_MODE, {
     message: "AUTH_TEST_MODE cannot be enabled in production.",
     path: ["AUTH_TEST_MODE"],
@@ -57,6 +67,13 @@ const EnvironmentSchema = z
       value.NODE_ENV !== "production" || Boolean(value.GITHUB_CLIENT_ID),
     {
       message: "GitHub authentication credentials are required in production.",
+    },
+  )
+  .refine(
+    (value) =>
+      value.NODE_ENV !== "production" || Boolean(value.GOOGLE_CLIENT_ID),
+    {
+      message: "Google authentication credentials are required in production.",
     },
   )
   .refine(

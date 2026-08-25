@@ -22,7 +22,12 @@ import {
 const environment = parseWorkerEnvironment(process.env);
 const abortController = new AbortController();
 const metrics = new WorkerMetrics();
-const metricsServer = startWorkerMetricsServer(metrics);
+const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
+const metricsServer = startWorkerMetricsServer(
+  metrics,
+  "0.0.0.0",
+  metricsPort,
+);
 const ingestionReadinessPath = "/tmp/gradiated-generation-ingestion-ready";
 const settlementReadinessPath = "/tmp/gradiated-settlement-ready";
 const projectorReadinessPath = "/tmp/gradiated-serving-projector-ready";

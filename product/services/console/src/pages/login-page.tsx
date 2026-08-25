@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { authClient } from "@/auth";
 import { Brand } from "@/components/brand";
+import { GitHubIcon, GoogleIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,13 +22,16 @@ const LoginSchema = z.object({
 });
 
 type LoginValues = z.infer<typeof LoginSchema>;
+type SocialProvider = "github" | "google";
 
 export const LoginPage = () => {
   const callbackError = new URLSearchParams(window.location.search).get(
     "error",
   );
   const [sentTo, setSentTo] = useState<string | null>(null);
-  const [githubPending, setGithubPending] = useState(false);
+  const [socialPending, setSocialPending] = useState<SocialProvider | null>(
+    null,
+  );
   const form = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
     defaultValues: { email: "" },
@@ -50,18 +54,18 @@ export const LoginPage = () => {
     setSentTo(values.email);
   };
 
-  const signInWithGitHub = async () => {
-    setGithubPending(true);
+  const signInWithSocial = async (provider: SocialProvider) => {
+    setSocialPending(provider);
     const result = await authClient.signIn.social({
-      provider: "github",
+      provider,
       callbackURL: `${window.location.origin}/api-keys`,
       errorCallbackURL: `${window.location.origin}/login`,
       newUserCallbackURL: `${window.location.origin}/api-keys`,
     });
     if (result?.error) {
-      setGithubPending(false);
+      setSocialPending(null);
       form.setError("root", {
-        message: "GitHub sign-in could not start. Try again.",
+        message: `${provider === "google" ? "Google" : "GitHub"} sign-in could not start. Try again.`,
       });
     }
   };
@@ -82,18 +86,40 @@ export const LoginPage = () => {
                     Create an account or continue to your workspace.
                   </p>
                 </div>
-                <Button
-                  className="w-full"
-                  disabled={githubPending || form.formState.isSubmitting}
-                  onClick={() => void signInWithGitHub()}
-                  type="button"
-                  variant="outline"
-                >
-                  {githubPending ? (
-                    <LoaderCircle className="size-4 animate-spin" />
-                  ) : null}
-                  Continue with GitHub
-                </Button>
+                <div className="flex flex-col gap-3">
+                  <Button
+                    className="w-full gap-2.5"
+                    disabled={
+                      socialPending !== null || form.formState.isSubmitting
+                    }
+                    onClick={() => void signInWithSocial("google")}
+                    type="button"
+                    variant="outline"
+                  >
+                    {socialPending === "google" ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <GoogleIcon className="size-4" />
+                    )}
+                    Continue with Google
+                  </Button>
+                  <Button
+                    className="w-full gap-2.5"
+                    disabled={
+                      socialPending !== null || form.formState.isSubmitting
+                    }
+                    onClick={() => void signInWithSocial("github")}
+                    type="button"
+                    variant="outline"
+                  >
+                    {socialPending === "github" ? (
+                      <LoaderCircle className="size-4 animate-spin" />
+                    ) : (
+                      <GitHubIcon className="size-4" />
+                    )}
+                    Continue with GitHub
+                  </Button>
+                </div>
                 <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
                   <div className="h-px flex-1 bg-border" />
                   or
@@ -133,7 +159,9 @@ export const LoginPage = () => {
                     <Field>
                       <Button
                         className="w-full"
-                        disabled={form.formState.isSubmitting || githubPending}
+                        disabled={
+                          form.formState.isSubmitting || socialPending !== null
+                        }
                         type="submit"
                       >
                         {form.formState.isSubmitting ? (
@@ -148,9 +176,7 @@ export const LoginPage = () => {
                   <FieldError>{form.formState.errors.root.message}</FieldError>
                 ) : null}
                 {callbackError ? (
-                  <FieldError>
-                    This sign-in link is invalid or expired. Request a new link.
-                  </FieldError>
+                  <FieldError>Sign-in failed. Try again.</FieldError>
                 ) : null}
               </FieldGroup>
             </form>

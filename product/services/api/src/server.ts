@@ -55,6 +55,13 @@ const auth = createAuthService(database, {
           clientSecret: environment.GITHUB_CLIENT_SECRET,
         }
       : undefined,
+  google:
+    environment.GOOGLE_CLIENT_ID && environment.GOOGLE_CLIENT_SECRET
+      ? {
+          clientId: environment.GOOGLE_CLIENT_ID,
+          clientSecret: environment.GOOGLE_CLIENT_SECRET,
+        }
+      : undefined,
   onUserCreated: async (user) => {
     await organizations.ensurePersonalForUser(user.id);
   },
@@ -64,6 +71,7 @@ const auth = createAuthService(database, {
   trustedOrigins: environment.TRUSTED_ORIGINS,
 });
 const metrics = new ApiMetrics();
+const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
 const app = createApp({
   allowedOrigins: environment.TRUSTED_ORIGINS,
   auth,
@@ -107,7 +115,7 @@ const server = serve({
   hostname: environment.HOST,
   port: environment.PORT,
 });
-const metricsServer = startApiMetricsServer(metrics);
+const metricsServer = startApiMetricsServer(metrics, "0.0.0.0", metricsPort);
 const profilingToken = process.env.PROFILING_INGEST_TOKEN;
 const profilingClient = profilingToken
   ? createClickHouseRuntimeClient(
@@ -128,7 +136,9 @@ const profilingServer = profilingToken
 console.log(
   `Gradiated API listening on http://${environment.HOST}:${environment.PORT}`,
 );
-console.log("Gradiated API metrics listening on http://0.0.0.0:9464/metrics");
+console.log(
+  `Gradiated API metrics listening on http://0.0.0.0:${metricsPort}/metrics`,
+);
 if (profilingServer) {
   console.log("Profiling ingestion listening on the private service port");
 }

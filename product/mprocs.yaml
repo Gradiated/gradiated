@@ -32,6 +32,7 @@ procs:
       CLICKHOUSE_SECURE: "false"
       CLICKHOUSE_USERNAME: gradiated
       DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+      METRICS_PORT: "9465"
       VALKEY_URL: redis://127.0.0.1:6379
       WORKER_CONSUMER_NAME: local-worker-1
   gateway:

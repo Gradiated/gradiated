@@ -10,6 +10,14 @@
     serif;
   letter-spacing: -0.015em;
 }
+.legal li {
+  margin-bottom: 10px;
+  color: var(--muted);
+  font:
+    400 16px/1.65 Manrope,
+    sans-serif;
+  letter-spacing: normal;
+}
 .article li::marker {
   color: var(--accent);
   font-size: 0.7em;

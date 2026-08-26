@@ -2,7 +2,7 @@ use std::{future::IntoFuture, sync::Arc, time::Duration};
 
 use gradiated_gateway::{
     router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState, ModelTokenizer,
-    RequestCoordinator, SglangClient, ValkeyServingState,
+    RequestCoordinator, RuntimeTlsConfig, SglangClient, ValkeyServingState,
 };
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
@@ -30,7 +30,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => ValkeyServingState::connect(&config.valkey_url).await?,
     });
     let tokenizer = ModelTokenizer::new()?;
-    let runtimes = SglangClient::with_tokenizer(config.sglang_api_key.clone(), tokenizer.clone())?;
+    let runtime_tls = RuntimeTlsConfig::from_environment()?;
+    let runtimes = SglangClient::with_tokenizer_and_tls(
+        config.sglang_api_key.clone(),
+        tokenizer.clone(),
+        runtime_tls.as_ref(),
+    )?;
     let completions = CompletionService::new(
         serving_state.clone(),
         Arc::new(runtimes.clone()),

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "check": "tsc --noEmit && vitest run",
+    "configure:deepseek-v4-flash": "node dist/operations/configure-deepseek-v4-flash.js",
     "configure:gemma4": "node dist/operations/configure-gemma4.js",
     "configure:openrouter": "node dist/operations/configure-openrouter.js",
     "dev": "tsx watch src/server.ts",

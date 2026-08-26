@@ -1,10 +1,13 @@
-use std::{collections::VecDeque, convert::Infallible, pin::Pin, sync::Arc, time::Duration};
+use std::{
+    collections::VecDeque, convert::Infallible, fs, path::PathBuf, pin::Pin, sync::Arc,
+    time::Duration,
+};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use eventsource_stream::{Event, EventStreamError, Eventsource};
 use futures_util::{stream, Stream, StreamExt};
-use reqwest::{header, redirect::Policy, StatusCode};
+use reqwest::{header, redirect::Policy, Certificate, Identity, StatusCode};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use thiserror::Error;
@@ -109,12 +112,61 @@ pub struct SglangClient {
     tokenizer: Option<ModelTokenizer>,
 }
 
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RuntimeTlsConfig {
+    ca_certificate_path: PathBuf,
+    client_certificate_path: PathBuf,
+    client_key_path: PathBuf,
+}
+
+impl RuntimeTlsConfig {
+    pub fn from_environment() -> Result<Option<Self>, RuntimeClientError> {
+        Self::from_paths(
+            environment_path("SGLANG_TLS_CA_CERT_PATH"),
+            environment_path("SGLANG_TLS_CLIENT_CERT_PATH"),
+            environment_path("SGLANG_TLS_CLIENT_KEY_PATH"),
+        )
+    }
+
+    fn from_paths(
+        ca_certificate_path: Option<PathBuf>,
+        client_certificate_path: Option<PathBuf>,
+        client_key_path: Option<PathBuf>,
+    ) -> Result<Option<Self>, RuntimeClientError> {
+        match (
+            ca_certificate_path,
+            client_certificate_path,
+            client_key_path,
+        ) {
+            (None, None, None) => Ok(None),
+            (Some(ca_certificate_path), Some(client_certificate_path), Some(client_key_path)) => {
+                Ok(Some(Self {
+                    ca_certificate_path,
+                    client_certificate_path,
+                    client_key_path,
+                }))
+            }
+            _ => Err(RuntimeClientError::IncompleteTlsConfiguration),
+        }
+    }
+}
+
+fn environment_path(name: &str) -> Option<PathBuf> {
+    std::env::var_os(name)
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+}
+
 impl SglangClient {
     pub fn new(api_key: Option<String>) -> Result<Self, RuntimeClientError> {
-        let client = reqwest::Client::builder()
-            .connect_timeout(CONNECT_TIMEOUT)
-            .redirect(Policy::none())
-            .build()?;
+        Self::new_with_tls(api_key, None)
+    }
+
+    pub fn new_with_tls(
+        api_key: Option<String>,
+        tls: Option<&RuntimeTlsConfig>,
+    ) -> Result<Self, RuntimeClientError> {
+        let client = build_http_client(tls)?;
 
         Ok(Self {
             client,
@@ -127,7 +179,15 @@ impl SglangClient {
         api_key: Option<String>,
         tokenizer: ModelTokenizer,
     ) -> Result<Self, RuntimeClientError> {
-        let mut client = Self::new(api_key)?;
+        Self::with_tokenizer_and_tls(api_key, tokenizer, None)
+    }
+
+    pub fn with_tokenizer_and_tls(
+        api_key: Option<String>,
+        tokenizer: ModelTokenizer,
+        tls: Option<&RuntimeTlsConfig>,
+    ) -> Result<Self, RuntimeClientError> {
+        let mut client = Self::new_with_tls(api_key, tls)?;
         client.tokenizer = Some(tokenizer);
         Ok(client)
     }
@@ -474,6 +534,39 @@ impl SglangClient {
             max_tokens,
         )))
     }
+}
+
+fn build_http_client(
+    tls: Option<&RuntimeTlsConfig>,
+) -> Result<reqwest::Client, RuntimeClientError> {
+    let mut builder = reqwest::Client::builder()
+        .connect_timeout(CONNECT_TIMEOUT)
+        .redirect(Policy::none());
+
+    if let Some(tls) = tls {
+        let ca_certificate = read_tls_file(&tls.ca_certificate_path)?;
+        let client_certificate = read_tls_file(&tls.client_certificate_path)?;
+        let client_key = read_tls_file(&tls.client_key_path)?;
+        let mut identity = Vec::with_capacity(client_certificate.len() + client_key.len() + 1);
+        identity.extend_from_slice(&client_certificate);
+        if !identity.ends_with(b"\n") {
+            identity.push(b'\n');
+        }
+        identity.extend_from_slice(&client_key);
+
+        builder = builder
+            .add_root_certificate(Certificate::from_pem(&ca_certificate)?)
+            .identity(Identity::from_pem(&identity)?);
+    }
+
+    Ok(builder.build()?)
+}
+
+fn read_tls_file(path: &PathBuf) -> Result<Vec<u8>, RuntimeClientError> {
+    fs::read(path).map_err(|source| RuntimeClientError::TlsFile {
+        path: path.clone(),
+        source,
+    })
 }
 
 #[async_trait]
@@ -1292,8 +1385,18 @@ impl RuntimeFailure {
 
 #[derive(Debug, Error)]
 pub enum RuntimeClientError {
-    #[error("SGLang HTTP client could not be built: {0}")]
+    #[error("runtime HTTP client could not be built: {0}")]
     Request(#[from] reqwest::Error),
+    #[error(
+        "SGLANG_TLS_CA_CERT_PATH, SGLANG_TLS_CLIENT_CERT_PATH, and SGLANG_TLS_CLIENT_KEY_PATH must be set together"
+    )]
+    IncompleteTlsConfiguration,
+    #[error("runtime TLS file {path} could not be read: {source}")]
+    TlsFile {
+        path: PathBuf,
+        #[source]
+        source: std::io::Error,
+    },
 }
 
 #[derive(Debug, Error)]
@@ -1306,6 +1409,7 @@ pub enum RuntimeHealthError {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
     use std::sync::{
         atomic::{AtomicUsize, Ordering},
         Arc, Mutex,
@@ -1325,6 +1429,43 @@ mod tests {
 
     use super::*;
     use crate::{DeploymentStatus, ModelDeploymentRelease};
+
+    #[test]
+    fn runtime_tls_paths_are_optional_as_one_group() {
+        assert_eq!(
+            RuntimeTlsConfig::from_paths(None, None, None).unwrap(),
+            None
+        );
+
+        let config = RuntimeTlsConfig::from_paths(
+            Some(PathBuf::from("ca.crt")),
+            Some(PathBuf::from("client.crt")),
+            Some(PathBuf::from("client.key")),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(config.ca_certificate_path, PathBuf::from("ca.crt"));
+        assert_eq!(config.client_certificate_path, PathBuf::from("client.crt"));
+        assert_eq!(config.client_key_path, PathBuf::from("client.key"));
+    }
+
+    #[test]
+    fn runtime_tls_rejects_partial_path_groups() {
+        for paths in [
+            (Some(PathBuf::from("ca.crt")), None, None),
+            (
+                Some(PathBuf::from("ca.crt")),
+                Some(PathBuf::from("client.crt")),
+                None,
+            ),
+            (None, None, Some(PathBuf::from("client.key"))),
+        ] {
+            assert!(matches!(
+                RuntimeTlsConfig::from_paths(paths.0, paths.1, paths.2),
+                Err(RuntimeClientError::IncompleteTlsConfiguration)
+            ));
+        }
+    }
 
     #[derive(Clone)]
     struct RecordedRequest {

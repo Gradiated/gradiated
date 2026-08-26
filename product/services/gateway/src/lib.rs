@@ -47,7 +47,7 @@ pub use readiness::DependencyReadiness;
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
 pub use runtime::{
     ModelRuntime, RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
-    RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
+    RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, RuntimeTlsConfig, SglangClient,
 };
 pub use serving_state::{ServingState, ValkeyServingState};
 pub use tokenizer::{BoundedRequest, ModelTokenizer, ModelTokenizerError};

@@ -73,7 +73,7 @@ export const WaitlistDialog = ({
 
   const submit = (data: WaitlistFormValues): void => {
     const body = `Questioning: ${selectedQuestions.join(", ")}\nWho is asking: ${data.identity}\nEmail: ${data.email}`;
-    window.location.href = `mailto:signal@gradiated.com?subject=Waitlist&body=${encodeURIComponent(body)}`;
+    window.location.href = `mailto:team@gradiated.com?subject=Waitlist&body=${encodeURIComponent(body)}`;
   };
 
   const canSubmit = Boolean(identity && isValid && selectedQuestions.length);
@@ -181,7 +181,7 @@ export const WaitlistDialog = ({
         </section>
         <a
           className="waitlist-skip"
-          href="mailto:signal@gradiated.com?subject=Waitlist"
+          href="mailto:team@gradiated.com?subject=Waitlist"
         >
           Skip the questions — email us directly
         </a>
@@ -203,7 +203,7 @@ export const WaitlistLink = ({
 }: WaitlistLinkProps): ReactElement => (
   <a
     className={className}
-    href="mailto:signal@gradiated.com?subject=Waitlist"
+    href="mailto:team@gradiated.com?subject=Waitlist"
     onClick={(event) => {
       event.preventDefault();
       onOpen();

@@ -9,7 +9,7 @@ export const NotFoundPage = (): ReactElement => (
     <nav>
       <Link to="/">Return home →</Link>
       <Link to="/notes/our-thesis/">Read the thesis →</Link>
-      <a href="mailto:signal@gradiated.com">Ask us directly →</a>
+      <a href="mailto:team@gradiated.com">Ask us directly →</a>
     </nav>
   </main>
 );

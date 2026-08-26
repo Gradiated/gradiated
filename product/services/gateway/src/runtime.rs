@@ -233,10 +233,14 @@ impl SglangClient {
         }
 
         let requested_model = request.model.clone();
-        let body = serde_json::to_vec(&request.into_upstream_body_for_model(
-            effective_output_tokens,
-            deployment.release.runtime_model_name.as_deref(),
-        ))
+        let runtime_model = deployment
+            .release
+            .runtime_model_name
+            .clone()
+            .unwrap_or_else(|| requested_model.clone());
+        let body = serde_json::to_vec(
+            &request.into_upstream_body_for_model(effective_output_tokens, Some(&runtime_model)),
+        )
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
             .client
@@ -269,7 +273,7 @@ impl SglangClient {
         }
 
         let body = read_bounded_body(response).await?;
-        normalize_completion(&body, &requested_model)
+        normalize_completion(&body, &requested_model, &runtime_model)
     }
 
     async fn execute_native(
@@ -394,10 +398,14 @@ impl SglangClient {
         }
 
         let requested_model = request.model.clone();
-        let body = serde_json::to_vec(&request.into_upstream_body_for_model(
-            effective_output_tokens,
-            deployment.release.runtime_model_name.as_deref(),
-        ))
+        let runtime_model = deployment
+            .release
+            .runtime_model_name
+            .clone()
+            .unwrap_or_else(|| requested_model.clone());
+        let body = serde_json::to_vec(
+            &request.into_upstream_body_for_model(effective_output_tokens, Some(&runtime_model)),
+        )
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
             .client
@@ -456,6 +464,7 @@ impl SglangClient {
         Ok(Box::new(SglangEventStream::new(
             Box::pin(bytes),
             requested_model,
+            runtime_model,
         )))
     }
 
@@ -682,6 +691,7 @@ async fn read_bounded_body(mut response: reqwest::Response) -> Result<Vec<u8>, R
 struct SglangEventStream {
     events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
     requested_model: String,
+    runtime_model: String,
     response_id: Option<String>,
     created: Option<u64>,
     done: bool,
@@ -691,10 +701,12 @@ impl SglangEventStream {
     fn new(
         events: Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>,
         requested_model: String,
+        runtime_model: String,
     ) -> Self {
         Self {
             events,
             requested_model,
+            runtime_model,
             response_id: None,
             created: None,
             done: false,
@@ -734,6 +746,7 @@ impl RuntimeEventStream for SglangEventStream {
         let chunk = normalize_stream_chunk(
             event.data.as_bytes(),
             &self.requested_model,
+            &self.runtime_model,
             &mut self.response_id,
             &mut self.created,
         )?;
@@ -948,13 +961,14 @@ impl RuntimeEventStream for NativeEventStream {
 fn normalize_completion(
     body: &[u8],
     requested_model: &str,
+    runtime_model: &str,
 ) -> Result<RuntimeCompletion, RuntimeFailure> {
     let response: UpstreamCompletion = serde_json::from_slice(body)
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
     if response.object != "chat.completion"
         || response.id.is_empty()
         || response.id.chars().count() > MAX_RESPONSE_TEXT_CHARS
-        || response.model != requested_model
+        || response.model != runtime_model
         || response.choices.is_empty()
         || response.choices.iter().any(UpstreamChoice::is_invalid)
     {
@@ -966,7 +980,7 @@ fn normalize_completion(
         id: response.id,
         object: response.object,
         created: response.created,
-        model: response.model,
+        model: requested_model.to_owned(),
         choices: response
             .choices
             .into_iter()
@@ -987,6 +1001,7 @@ fn normalize_completion(
 fn normalize_stream_chunk(
     body: &[u8],
     requested_model: &str,
+    runtime_model: &str,
     response_id: &mut Option<String>,
     created: &mut Option<u64>,
 ) -> Result<RuntimeStreamChunk, RuntimeFailure> {
@@ -995,7 +1010,7 @@ fn normalize_stream_chunk(
     if chunk.object != "chat.completion.chunk"
         || chunk.id.is_empty()
         || chunk.id.chars().count() > MAX_RESPONSE_TEXT_CHARS
-        || chunk.model != requested_model
+        || chunk.model != runtime_model
         || chunk.choices.iter().any(UpstreamStreamChoice::is_invalid)
         || response_id.as_ref().is_some_and(|id| id != &chunk.id)
         || created.is_some_and(|value| value != chunk.created)
@@ -1022,7 +1037,7 @@ fn normalize_stream_chunk(
         id: chunk.id,
         object: chunk.object,
         created: chunk.created,
-        model: chunk.model,
+        model: requested_model.to_owned(),
         choices: chunk
             .choices
             .into_iter()
@@ -1591,12 +1606,16 @@ mod tests {
 
     #[tokio::test]
     async fn sends_one_qualified_request_and_normalizes_the_response() {
-        let (service_url, recorded, task) = server(StatusCode::OK, successful_response()).await;
+        let mut upstream_response = successful_response();
+        upstream_response["model"] = json!("runtime-model");
+        let (service_url, recorded, task) = server(StatusCode::OK, upstream_response).await;
         let runtime = SglangClient::new(Some("runtime-secret".to_owned())).unwrap();
+        let mut deployment = deployment(service_url);
+        deployment.release.runtime_model_name = Some("runtime-model".to_owned());
 
         let completion = runtime
             .complete(
-                &deployment(service_url),
+                &deployment,
                 request(),
                 1_024,
                 Utc::now() + chrono::TimeDelta::seconds(5),
@@ -1610,7 +1629,7 @@ mod tests {
             requests[0].headers[header::AUTHORIZATION],
             "Bearer runtime-secret"
         );
-        assert_eq!(requests[0].body["model"], "model-a");
+        assert_eq!(requests[0].body["model"], "runtime-model");
         assert_eq!(requests[0].body["messages"][0]["content"], "hello");
         assert_eq!(requests[0].body["temperature"], 0.25);
         assert_eq!(requests[0].body["tools"][0]["function"]["name"], "weather");
@@ -1623,6 +1642,7 @@ mod tests {
         assert_eq!(completion.usage().output_tokens(), 5);
         assert_eq!(completion.usage().reasoning_tokens(), 2);
         assert_eq!(completion.response()["usage"]["total_tokens"], 15);
+        assert_eq!(completion.response()["model"], "model-a");
         assert!(completion.response().get("metadata").is_none());
         assert!(completion.response()["choices"][0]
             .get("matched_stop")
@@ -1646,9 +1666,9 @@ mod tests {
                     Response::builder()
                         .header("content-type", "text/event-stream")
                         .body(Body::from(concat!(
-                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
-                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
-                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"model-a\",\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
                             "data: [DONE]\n\n"
                         )))
                         .unwrap()
@@ -1661,9 +1681,11 @@ mod tests {
             axum::serve(listener, application).await.unwrap();
         });
         let runtime = SglangClient::new(None).unwrap();
+        let mut deployment = deployment(format!("http://{address}"));
+        deployment.release.runtime_model_name = Some("runtime-model".to_owned());
         let mut response = runtime
             .stream(
-                &deployment(format!("http://{address}")),
+                &deployment,
                 streaming_request(),
                 32,
                 Utc::now() + chrono::TimeDelta::seconds(5),
@@ -1676,6 +1698,7 @@ mod tests {
             panic!("first event must be a chunk");
         };
         assert!(first.has_usable_output());
+        assert_eq!(first.clone().into_response()["model"], "model-a");
         assert_eq!(first.usage().unwrap().output_tokens(), 1);
         assert!(first.clone().into_response().get("usage").is_none());
 
@@ -1697,6 +1720,7 @@ mod tests {
         );
 
         let requests = recorded.lock().unwrap();
+        assert_eq!(requests[0].body["model"], "runtime-model");
         assert_eq!(requests[0].body["stream"], true);
         assert_eq!(requests[0].body["stream_options"]["include_usage"], true);
         assert_eq!(

@@ -233,8 +233,11 @@ impl SglangClient {
         }
 
         let requested_model = request.model.clone();
-        let body = serde_json::to_vec(&request.into_upstream_body(effective_output_tokens))
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let body = serde_json::to_vec(&request.into_upstream_body_for_model(
+            effective_output_tokens,
+            deployment.release.runtime_model_name.as_deref(),
+        ))
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
             .client
             .post(endpoint(&deployment.service_url, "v1/chat/completions"))
@@ -391,8 +394,11 @@ impl SglangClient {
         }
 
         let requested_model = request.model.clone();
-        let body = serde_json::to_vec(&request.into_upstream_body(effective_output_tokens))
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let body = serde_json::to_vec(&request.into_upstream_body_for_model(
+            effective_output_tokens,
+            deployment.release.runtime_model_name.as_deref(),
+        ))
+        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
             .client
             .post(endpoint(&deployment.service_url, "v1/chat/completions"))
@@ -1523,6 +1529,7 @@ mod tests {
                 runtime_revision: "runtime".to_owned(),
                 model_path: "model-a".to_owned(),
                 model_revision: "model-revision".to_owned(),
+                runtime_model_name: None,
                 tokenizer_path: "model-a".to_owned(),
                 tokenizer_revision: "tokenizer-revision".to_owned(),
                 tokenizer_mode: None,

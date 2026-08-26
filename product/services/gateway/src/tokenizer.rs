@@ -587,6 +587,7 @@ mod tests {
                     runtime_revision: "runtime".to_owned(),
                     model_path: "model".to_owned(),
                     model_revision: "model-revision".to_owned(),
+                    runtime_model_name: None,
                     tokenizer_path: "tokenizer".to_owned(),
                     tokenizer_revision: "tokenizer-revision".to_owned(),
                     tokenizer_mode: None,

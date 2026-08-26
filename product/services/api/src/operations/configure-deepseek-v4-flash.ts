@@ -59,6 +59,7 @@ try {
       runtime_revision: runtimeRevision,
       model_path: deepseekV4FlashArtifactModelPath,
       model_revision: modelRevision,
+      runtime_model_name: "deepseek-v4-flash",
       tokenizer_path: deepseekV4FlashArtifactModelPath,
       tokenizer_revision: modelRevision,
       tokenizer_mode: "deepseek_v4",

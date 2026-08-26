@@ -309,6 +309,11 @@ non-Hugging-Face renderer. `deepseek_v4` uses the DeepSeek V4 message encoding
 with the release's exact tokenizer artifacts. A live vLLM token-ID conformance
 fixture must pass before this mode can serve a deployment.
 
+The optional, digest-covered `runtime_model_name` field maps the public model
+ID to the private runtime model name. The gateway uses it only in the upstream
+request body. Public requests, responses, accounting, and release selection
+continue to use the public model ID.
+
 1. Render the qualified request with the pinned chat template and the same
    generation-prompt semantics used by SGLang.
 2. Tokenize the rendered input locally in the gateway process on CPU and

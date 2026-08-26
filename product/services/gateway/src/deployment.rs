@@ -36,6 +36,9 @@ pub struct ModelDeploymentRelease {
     #[validate(length(min = 1, max = 300))]
     pub model_revision: String,
     #[validate(length(min = 1, max = 300))]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub runtime_model_name: Option<String>,
+    #[validate(length(min = 1, max = 300))]
     pub tokenizer_path: String,
     #[validate(length(min = 1, max = 300))]
     pub tokenizer_revision: String,

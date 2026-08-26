@@ -62,6 +62,7 @@ export const ModelDeploymentReleaseSchema = z
     runtime_revision: BoundedIdentifierSchema,
     model_path: BoundedIdentifierSchema,
     model_revision: BoundedIdentifierSchema,
+    runtime_model_name: BoundedIdentifierSchema.optional(),
     tokenizer_path: BoundedIdentifierSchema,
     tokenizer_revision: BoundedIdentifierSchema,
     tokenizer_mode: z.enum(["deepseek_v4"]).optional(),

@@ -43,7 +43,11 @@ impl ChatCompletionRequest {
             .or_else(|| self.max_tokens.map(OutputTokenLimit::MaxTokens))
     }
 
-    pub(crate) fn into_upstream_body(self, effective_output_tokens: u64) -> Value {
+    pub(crate) fn into_upstream_body_for_model(
+        self,
+        effective_output_tokens: u64,
+        runtime_model_name: Option<&str>,
+    ) -> Value {
         let Self {
             model,
             messages,
@@ -54,7 +58,10 @@ impl ChatCompletionRequest {
             encoded_input_ids: _,
         } = self;
 
-        parameters.insert("model".to_owned(), Value::String(model));
+        parameters.insert(
+            "model".to_owned(),
+            Value::String(runtime_model_name.unwrap_or(&model).to_owned()),
+        );
         parameters.insert("messages".to_owned(), Value::Array(messages));
         parameters.insert("stream".to_owned(), Value::Bool(stream));
         if stream {
@@ -232,7 +239,7 @@ mod tests {
         )
         .unwrap();
 
-        let body = request.into_upstream_body(32);
+        let body = request.into_upstream_body_for_model(32, None);
 
         assert_eq!(body["model"], "model-a");
         assert_eq!(body["messages"][0]["content"], "hello");
@@ -244,13 +251,26 @@ mod tests {
     }
 
     #[test]
+    fn replaces_only_the_private_runtime_model_name() {
+        let request = ChatCompletionRequest::parse(
+            br#"{"model":"public/model","messages":[{"role":"user","content":"hello"}]}"#,
+        )
+        .unwrap();
+
+        let body = request.into_upstream_body_for_model(32, Some("runtime-model"));
+
+        assert_eq!(body["model"], "runtime-model");
+        assert_eq!(body["messages"][0]["content"], "hello");
+    }
+
+    #[test]
     fn materializes_the_qualified_default_output_ceiling() {
         let request = ChatCompletionRequest::parse(
             br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}]}"#,
         )
         .unwrap();
 
-        let body = request.into_upstream_body(1_024);
+        let body = request.into_upstream_body_for_model(1_024, None);
 
         assert_eq!(body["max_completion_tokens"], 1_024);
     }
@@ -266,7 +286,7 @@ mod tests {
         )
         .unwrap();
 
-        let body = request.into_upstream_body(128);
+        let body = request.into_upstream_body_for_model(128, None);
 
         assert_eq!(body["stream_options"]["include_usage"], true);
         assert_eq!(body["stream_options"]["continuous_usage_stats"], true);

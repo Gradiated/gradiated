@@ -428,7 +428,7 @@ mod tests {
         assert_eq!(request.request.model, "model-a");
         let upstream_body = request
             .request
-            .into_upstream_body(request.effective_output_tokens);
+            .into_upstream_body_for_model(request.effective_output_tokens, None);
         assert_eq!(upstream_body["model"], "model-a");
         assert_eq!(*state.requested_models.lock().unwrap(), ["model-a"]);
     }

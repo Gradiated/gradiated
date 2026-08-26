@@ -696,25 +696,18 @@ export const SubprocessorsContent = (): ReactNode => (
     <ul>
       <li>
         <strong>Amazon Web Services</strong> — cloud hosting, networking,
-        secrets, and supporting infrastructure.
+        secrets, transactional email delivery, and supporting infrastructure.
       </li>
       <li>
         <strong>ClickHouse</strong> — storage and queries for non-content usage
         and operational metrics.
       </li>
       <li>
-        <strong>Nebius</strong> — GPU infrastructure used by selected inference
-        runtimes.
-      </li>
-      <li>
-        <strong>RunPod</strong> — GPU infrastructure used by selected inference
-        runtimes.
+        <strong>Nebius and RunPod</strong> — GPU infrastructure used by selected
+        inference runtimes.
       </li>
       <li>
         <strong>Stripe</strong> — payment processing and billing support.
-      </li>
-      <li>
-        <strong>Amazon SES</strong> — transactional email delivery.
       </li>
     </ul>
     <p>

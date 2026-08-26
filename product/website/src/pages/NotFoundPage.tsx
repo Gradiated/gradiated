@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
+import { SiteLink } from "../components/SiteLink";
 
 export const NotFoundPage = (): ReactElement => (
   <main className="not-found">
@@ -9,7 +10,7 @@ export const NotFoundPage = (): ReactElement => (
     <nav>
       <Link to="/">Return home →</Link>
       <Link to="/notes/our-thesis/">Read the thesis →</Link>
-      <a href="mailto:team@gradiated.com">Ask us directly →</a>
+      <SiteLink href="mailto:team@gradiated.com">Ask us directly →</SiteLink>
     </nav>
   </main>
 );

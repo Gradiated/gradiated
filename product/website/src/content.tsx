@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import { LegalLink } from "./components/LegalLink";
+import { SiteLink } from "./components/SiteLink";
 
 export type Note = {
   slug: string;
@@ -394,9 +394,9 @@ export const PrivacyContent = (): ReactNode => (
       inference, payments, email, security, and analytics. We may also share
       information when required by law or in connection with a corporate
       transaction. The providers and purposes are listed on our
-      <LegalLink href="/subprocessors-security/">
+      <SiteLink href="/subprocessors-security/">
         Subprocessors and security
-      </LegalLink>{" "}
+      </SiteLink>{" "}
       page. We do not sell personal information.
     </p>
     <h2>International transfers</h2>
@@ -423,9 +423,9 @@ export const PrivacyContent = (): ReactNode => (
     </p>
     <p>
       You can complain to the UK Information Commissioner’s Office at{" "}
-      <LegalLink href="https://ico.org.uk/make-a-complaint/">
+      <SiteLink href="https://ico.org.uk/make-a-complaint/">
         ico.org.uk
-      </LegalLink>{" "}
+      </SiteLink>{" "}
       if you believe we have not handled your information lawfully.
     </p>
     <h2>Changes and contact</h2>
@@ -470,9 +470,9 @@ export const TermsContent = (): ReactNode => (
     <h2>Acceptable use</h2>
     <p>
       You must follow our
-      <LegalLink href="/acceptable-use/">Acceptable Use Policy</LegalLink> and
-      all laws that apply to your use of the service. We may limit, suspend, or
-      end access if needed to protect the service, other users, or the public.
+      <SiteLink href="/acceptable-use/">Acceptable Use Policy</SiteLink> and all
+      laws that apply to your use of the service. We may limit, suspend, or end
+      access if needed to protect the service, other users, or the public.
     </p>
     <h2>Third-party models and services</h2>
     <p>
@@ -600,7 +600,7 @@ export const DpaContent = (): ReactNode => (
       processor. In that case, Gradiated Ltd acts as the processor or
       subprocessor. For account, billing, and business contact information,
       Gradiated acts as a controller under our
-      <LegalLink href="/privacy/">Privacy Policy</LegalLink>.
+      <SiteLink href="/privacy/">Privacy Policy</SiteLink>.
     </p>
     <h2>Instructions and scope</h2>
     <p>
@@ -628,9 +628,9 @@ export const DpaContent = (): ReactNode => (
     <p>
       You give Gradiated general authorization to use the subprocessors listed
       on our
-      <LegalLink href="/subprocessors-security/">
+      <SiteLink href="/subprocessors-security/">
         Subprocessors and security
-      </LegalLink>{" "}
+      </SiteLink>{" "}
       page. We will update that page when we add or replace a material
       subprocessor. We will require each subprocessor to protect personal data
       under written terms that provide protection appropriate to its role.
@@ -714,8 +714,8 @@ export const SubprocessorsContent = (): ReactNode => (
     <p>
       Provider locations can vary by service and deployment. We use the
       safeguards described in our
-      <LegalLink href="/privacy/">Privacy Policy</LegalLink> and{" "}
-      <LegalLink href="/dpa/">DPA</LegalLink> where required.
+      <SiteLink href="/privacy/">Privacy Policy</SiteLink> and{" "}
+      <SiteLink href="/dpa/">DPA</SiteLink> where required.
     </p>
     <h2>Security measures</h2>
     <ul>

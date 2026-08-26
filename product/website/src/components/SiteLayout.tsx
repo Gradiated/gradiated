@@ -108,13 +108,16 @@ export const SiteLayout = ({
   description = "Custom inference paths for open models.",
   home = false,
 }: SiteLayoutProps): ReactElement => {
+  const location = useLocation();
+
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     document.title = title;
     const descriptionElement = document.querySelector<HTMLMetaElement>(
       'meta[name="description"]',
     );
     descriptionElement?.setAttribute("content", description);
-  }, [description, title]);
+  }, [description, location.pathname, title]);
 
   return (
     <div

@@ -29,7 +29,7 @@ invoice.
 | Application      | Submit the provider form and pass review                  | Not submitted                                                                                                            | pending      |
 | API protocol     | OpenAI-compatible `/chat/completions` with streaming      | Gateway implements both response modes and usage accounting                                                              | ready        |
 | Endpoint path    | Stable public provider endpoint                           | `https://api.gradiated.com/openai/v1`                                                                                    | ready        |
-| Authentication   | Protected endpoint and provider credential                | Bearer authentication works; the dedicated operator setup command is ready, but the production credential is not created | blocker      |
+| Authentication   | Protected endpoint and provider credential                | Dedicated production key authenticates; its raw value is stored only in AWS Secrets Manager                              | ready        |
 | Models endpoint  | Non-empty `/models` response                              | Catalog serializer emits the OpenRouter model shape; Gemma 4 is released in production after the configuration operation | ready        |
 | Model identity   | Exact model ID used by OpenRouter                         | Lowercase canonical IDs are implemented                                                                                  | ready        |
 | Release metadata | `created` timestamp for each model                        | Production Gemma 4 row has `released_at` set to `2026-08-22T14:09:29.651Z`                                               | ready        |
@@ -38,9 +38,9 @@ invoice.
 | Capabilities     | Advertise supported parameters and features               | Catalog emits typed modality parameter descriptors and only configured features                                          | partial      |
 | Capacity         | Measured or declared capacity                             | Typed capacity entries are optional and remain unset until measured                                                      | pending      |
 | Location         | Datacenter and deployment-region metadata                 | Catalog declares the production datacenter as `US`                                                                       | ready        |
-| Compliance       | Clear data-handling posture                               | No ZDR, HIPAA, or SOC 2 claim is made                                                                                    | partial      |
+| Compliance       | Clear data-handling posture                               | ZDR policy and catalog metadata are implemented; HIPAA and SOC 2 are not claimed; deployment is pending                  | partial      |
 | Privacy          | Policy with prompt logging, retention, and training terms | Privacy page now includes inference storage, training, retention, and subprocessors                                      | legal review |
-| Payments         | Monthly invoice or automatic payment setup                | Schema anticipates OpenRouter payments; onboarding is not configured                                                     | pending      |
+| Payments         | Monthly invoice or automatic payment setup                | OpenRouter has an invoiced production account; payment contact and reconciliation onboarding remain                     | partial      |
 | Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas exist; runtime soak results are incomplete                                                          | partial      |
 | Status page      | Public operational status                                 | To be completed by the Gradiated owner                                                                                   | user-owned   |
 | Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public terms are absent                                                            | recommended  |
@@ -85,6 +85,7 @@ Every released model must publish:
 - request-scoped passthrough parameters when supported;
 - `is_ready`;
 - datacenter and deployment-region metadata;
+- compliance metadata with `zdr: true` and `hipaa: false`;
 - capacity metadata when measured.
 
 The catalog must never publish private service URLs, credentials, artifact
@@ -132,10 +133,11 @@ The public privacy policy must add an inference-specific section. It must state:
 - which subprocessors handle inference traffic and infrastructure;
 - how customers request access or deletion;
 - how OpenRouter traffic follows the same policy;
-- which claims are not made, such as ZDR, HIPAA, or SOC 2, unless verified.
+- that OpenRouter traffic follows the same zero-data-retention policy;
+- which claims are not made, such as HIPAA or SOC 2, unless verified.
 
 The current architecture does not persist prompts or completions. The public
-policy must state this operational behavior clearly before application review.
+policy states this operational behavior and applies it to OpenRouter traffic.
 This document does not replace legal review.
 
 ## Provider account and payment setup
@@ -151,6 +153,15 @@ Complete these items in production:
 - configure the monthly invoice and payment contact;
 - verify that OpenRouter payments reconcile through `openrouter_payment`;
 - document key rotation and revocation.
+
+The production raw key is stored in AWS Secrets Manager at
+`gradiated/prod/integrations/openrouter-provider`. Do not synchronize this
+secret to a long-lived Kubernetes Secret. Import it only into an ephemeral
+operator job when the key must be configured or rotated.
+
+The OpenRouter organization uses invoiced billing. The gateway does not apply
+prepaid balance or prepaid concurrency limits to this account. Normal runtime
+capacity, overload, and platform safety controls still apply.
 
 The API image includes an idempotent operator command. Run it from an API pod
 with the raw key supplied by the production secret manager. Do not place the
@@ -250,7 +261,7 @@ responses are preferred to queued timeouts.
 
 1. Deploy the release-date change and confirm a non-empty production catalog. [done]
 2. Add measured capacity entries after the runtime soak test.
-3. Create and test the dedicated OpenRouter distribution-channel credential.
+3. Create and test the dedicated OpenRouter distribution-channel credential. [done]
 4. Complete privacy and company legal review.
 5. Configure monthly invoicing and payment reconciliation.
 6. Add a public status page or document the accepted alternative with OpenRouter. [user-owned]
@@ -269,3 +280,6 @@ responses are preferred to queued timeouts.
 | 2026-08-25 | Production release deployed                         | API and gateway pods rolled out; Gemma 4 model row now has `released_at` and is available                                          | GitHub deployment run and production database check |
 | 2026-08-25 | OpenRouter account setup prepared                   | Added idempotent operator command for the distribution channel, workspace, invoiced account, API-key digest, and Valkey projection | `configure:openrouter`                              |
 | 2026-08-25 | Provider catalog serializer tested                  | Typed input/output modalities, string USD prices, datacenter, region, and no private deployment fields                             | Gateway catalog test suite                          |
+| 2026-08-26 | OpenRouter production account configured            | Active distribution-channel organization, default workspace, invoiced billing, one active key, and public HTTP 200 authentication | Production database and gateway checks              |
+| 2026-08-26 | OpenRouter credential secured                       | Raw key stored in AWS Secrets Manager; only its digest remains in PostgreSQL and Valkey; temporary Kubernetes copy removed          | AWS Secrets Manager and Kubernetes checks           |
+| 2026-08-26 | ZDR provider metadata tested                        | Catalog emits `zdr: true` and `hipaa: false`; public policy explicitly applies ZDR to OpenRouter traffic                            | Gateway catalog test and website typecheck          |

@@ -12,6 +12,8 @@ const NANO_USD_SCALE: u64 = 1_000_000_000;
 const PROVIDER_DATACENTER_COUNTRY: &str = "US";
 const PROVIDER_DATACENTER_REGION: &str = "us-east-1";
 const PROVIDER_DEPLOYMENT_REGION: &str = "US";
+const PROVIDER_ZDR: bool = true;
+const PROVIDER_HIPAA: bool = false;
 
 #[derive(Debug, Serialize)]
 pub struct ModelCatalogResponse<'a> {
@@ -51,6 +53,7 @@ struct ProviderModel<'a> {
     is_ready: bool,
     datacenters: [ProviderDatacenter; 1],
     deployment_region: &'static str,
+    compliance: ProviderCompliance,
 }
 
 impl<'a> ProviderModel<'a> {
@@ -93,8 +96,18 @@ impl<'a> ProviderModel<'a> {
                 region: PROVIDER_DATACENTER_REGION,
             }],
             deployment_region: PROVIDER_DEPLOYMENT_REGION,
+            compliance: ProviderCompliance {
+                zdr: PROVIDER_ZDR,
+                hipaa: PROVIDER_HIPAA,
+            },
         })
     }
+}
+
+#[derive(Debug, Serialize)]
+struct ProviderCompliance {
+    zdr: bool,
+    hipaa: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -309,6 +322,10 @@ mod tests {
             serde_json::json!([{ "country_code": "US", "region": "us-east-1" }])
         );
         assert_eq!(published["deployment_region"], "US");
+        assert_eq!(
+            published["compliance"],
+            serde_json::json!({ "zdr": true, "hipaa": false })
+        );
         assert_eq!(published["is_ready"], true);
         assert_eq!(published["schema_version"], "2.4");
         assert!(published.get("capacity").is_none());

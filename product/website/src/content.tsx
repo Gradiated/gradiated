@@ -351,10 +351,12 @@ export const PrivacyContent = (): ReactNode => (
     </p>
     <h2>Inference data</h2>
     <p>
-      When you use Gradiated inference, we process prompts, messages, tool
-      payloads, attachments, generated outputs, and request metadata to return a
-      response. Gradiated does not persist this content after request
-      processing. It may exist in volatile memory while the request runs.
+      Gradiated applies zero data retention to inference content. This policy
+      also applies to requests that OpenRouter sends to Gradiated. We process
+      prompts, messages, tool payloads, attachments, generated outputs, and
+      request metadata to return a response. Gradiated does not persist this
+      content after request processing. It may exist in volatile memory while
+      the request runs.
     </p>
     <p>
       We do not use customer prompts, outputs, or other inference content to
@@ -702,6 +704,10 @@ export const SubprocessorsContent = (): ReactNode => (
       </li>
       <li>
         <strong>Nebius</strong> — GPU infrastructure used by selected inference
+        runtimes.
+      </li>
+      <li>
+        <strong>RunPod</strong> — GPU infrastructure used by selected inference
         runtimes.
       </li>
       <li>

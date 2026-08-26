@@ -74,9 +74,30 @@ const SiteFooter = (): ReactElement => (
       Gradiated
     </Link>
     <span>© 2026 Gradiated Ltd</span>
-    <Link className="ml-auto text-ink max-site:ml-auto" to="/privacy/">
-      Privacy
-    </Link>
+    <div className="ml-auto flex flex-wrap gap-5 max-site:ml-auto">
+      <Link className="text-ink" to="/privacy/">
+        Privacy
+      </Link>
+      <Link className="text-ink" to="/terms/">
+        Terms
+      </Link>
+      <Link className="text-ink" to="/acceptable-use/">
+        Acceptable use
+      </Link>
+      <Link className="text-ink" to="/dpa/">
+        DPA
+      </Link>
+      <Link className="text-ink" to="/subprocessors-security/">
+        Security
+      </Link>
+      <a
+        className="text-ink"
+        href="https://status.gradiated.com/"
+        rel="noreferrer"
+      >
+        Status
+      </a>
+    </div>
     <ThemeToggle />
   </footer>
 );

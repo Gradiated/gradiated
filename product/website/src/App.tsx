@@ -4,7 +4,9 @@ import type { ReactElement, ReactNode } from "react";
 import { SiteLayout } from "./components/SiteLayout";
 import { WaitlistDialog } from "./components/WaitlistDialog";
 import { ArticlePage } from "./pages/ArticlePage";
+import { AcceptableUsePage } from "./pages/AcceptableUsePage";
 import { DocsPage } from "./pages/DocsPage";
+import { DpaPage } from "./pages/DpaPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { HomePage } from "./pages/HomePage";
 import { LibraryPage } from "./pages/LibraryPage";
@@ -12,6 +14,8 @@ import { NotFoundPage } from "./pages/NotFoundPage";
 import { NotesPage } from "./pages/NotesPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { ProductsPage } from "./pages/ProductsPage";
+import { SubprocessorsPage } from "./pages/SubprocessorsPage";
+import { TermsPage } from "./pages/TermsPage";
 
 type LayoutRouteProps = {
   children: ReactNode;
@@ -176,6 +180,38 @@ export const App = (): ReactElement => {
           element={
             <LayoutRoute title="Privacy — Gradiated">
               <PrivacyPage />
+            </LayoutRoute>
+          }
+        />
+        <Route
+          path="/terms/"
+          element={
+            <LayoutRoute title="Terms — Gradiated">
+              <TermsPage />
+            </LayoutRoute>
+          }
+        />
+        <Route
+          path="/acceptable-use/"
+          element={
+            <LayoutRoute title="Acceptable use — Gradiated">
+              <AcceptableUsePage />
+            </LayoutRoute>
+          }
+        />
+        <Route
+          path="/dpa/"
+          element={
+            <LayoutRoute title="DPA — Gradiated">
+              <DpaPage />
+            </LayoutRoute>
+          }
+        />
+        <Route
+          path="/subprocessors-security/"
+          element={
+            <LayoutRoute title="Security — Gradiated">
+              <SubprocessorsPage />
             </LayoutRoute>
           }
         />

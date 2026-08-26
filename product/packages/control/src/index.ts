@@ -51,6 +51,10 @@ export {
 } from "./organizations/service.js";
 export { createValkeyServingProjector } from "./serving/valkey-projector.js";
 export {
+  configureOpenRouterDistributionChannel,
+  type ConfiguredDistributionChannel,
+} from "./distribution-channels/service.js";
+export {
   createServingProjectionReader,
   type BalanceProjectionTransaction,
   type BalanceTransactionCursor,

@@ -25,27 +25,27 @@ invoice.
 
 ## Current status
 
-| Area | OpenRouter expectation | Gradiated status | State |
-| --- | --- | --- | --- |
-| Application | Submit the provider form and pass review | Not submitted | pending |
-| API protocol | OpenAI-compatible `/chat/completions` with streaming | Gateway implements both response modes and usage accounting | ready |
-| Endpoint path | Stable public provider endpoint | `https://api.gradiated.com/openai/v1` | ready |
-| Authentication | Protected endpoint and provider credential | Bearer authentication works; no dedicated OpenRouter credential exists in production | blocker |
-| Models endpoint | Non-empty `/models` response | Catalog serializer emits the OpenRouter model shape; production has no advertised model because `released_at` is null | blocker |
-| Model identity | Exact model ID used by OpenRouter | Lowercase canonical IDs are implemented | ready |
-| Release metadata | `created` timestamp for each model | Source configuration now sets `released_at`; production is not updated | blocker |
-| Pricing | USD token prices | Catalog emits string USD prices from integer nano-USD values | ready |
-| Limits | Context and maximum output limits | Catalog emits model-owned limits | ready |
-| Capabilities | Advertise supported parameters and features | Catalog emits typed modality parameter descriptors and only configured features | partial |
-| Capacity | Measured or declared capacity | Typed capacity entries are optional and remain unset until measured | pending |
-| Location | Datacenter and deployment-region metadata | Catalog declares the production datacenter as `US` | ready |
-| Compliance | Clear data-handling posture | No ZDR, HIPAA, or SOC 2 claim is made | partial |
-| Privacy | Policy with prompt logging, retention, and training terms | Privacy page now includes inference storage, training, retention, and subprocessors | legal review |
-| Payments | Monthly invoice or automatic payment setup | Schema anticipates OpenRouter payments; onboarding is not configured | pending |
-| Reliability | Continuous monitoring and stable traffic handling | Two gateway replicas exist; runtime soak results are incomplete | partial |
-| Status page | Public operational status | No public Gradiated status page found | recommended |
-| Legal pages | Company identity, privacy, and service terms | Gradiated Ltd and privacy page exist; public terms are absent | recommended |
-| Next model | Model-specific runtime, features, and benchmarks | DeepSeek V4 Flash 0731 is not configured | pending |
+| Area             | OpenRouter expectation                                    | Gradiated status                                                                                                         | State        |
+| ---------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Application      | Submit the provider form and pass review                  | Not submitted                                                                                                            | pending      |
+| API protocol     | OpenAI-compatible `/chat/completions` with streaming      | Gateway implements both response modes and usage accounting                                                              | ready        |
+| Endpoint path    | Stable public provider endpoint                           | `https://api.gradiated.com/openai/v1`                                                                                    | ready        |
+| Authentication   | Protected endpoint and provider credential                | Bearer authentication works; the dedicated operator setup command is ready, but the production credential is not created | blocker      |
+| Models endpoint  | Non-empty `/models` response                              | Catalog serializer emits the OpenRouter model shape; Gemma 4 is released in production after the configuration operation | ready        |
+| Model identity   | Exact model ID used by OpenRouter                         | Lowercase canonical IDs are implemented                                                                                  | ready        |
+| Release metadata | `created` timestamp for each model                        | Production Gemma 4 row has `released_at` set to `2026-08-22T14:09:29.651Z`                                               | ready        |
+| Pricing          | USD token prices                                          | Catalog emits string USD prices from integer nano-USD values                                                             | ready        |
+| Limits           | Context and maximum output limits                         | Catalog emits model-owned limits                                                                                         | ready        |
+| Capabilities     | Advertise supported parameters and features               | Catalog emits typed modality parameter descriptors and only configured features                                          | partial      |
+| Capacity         | Measured or declared capacity                             | Typed capacity entries are optional and remain unset until measured                                                      | pending      |
+| Location         | Datacenter and deployment-region metadata                 | Catalog declares the production datacenter as `US`                                                                       | ready        |
+| Compliance       | Clear data-handling posture                               | No ZDR, HIPAA, or SOC 2 claim is made                                                                                    | partial      |
+| Privacy          | Policy with prompt logging, retention, and training terms | Privacy page now includes inference storage, training, retention, and subprocessors                                      | legal review |
+| Payments         | Monthly invoice or automatic payment setup                | Schema anticipates OpenRouter payments; onboarding is not configured                                                     | pending      |
+| Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas exist; runtime soak results are incomplete                                                          | partial      |
+| Status page      | Public operational status                                 | To be completed by the Gradiated owner                                                                                   | user-owned   |
+| Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public terms are absent                                                            | recommended  |
+| Next model       | Model-specific runtime, features, and benchmarks          | DeepSeek V4 Flash 0731 is not configured                                                                                 | pending      |
 
 OpenRouter does not require every model to support every feature. Advertise only
 features that have passed real request tests.
@@ -112,15 +112,15 @@ The gateway must:
 
 ### Capability policy
 
-| Capability | Initial policy |
-| --- | --- |
-| Text input and output | Required |
-| Streaming | Required |
-| Temperature and sampling | Advertise only tested values |
-| Tools | Advertise only after tool-call tests pass |
-| Structured outputs | Advertise only after JSON-schema tests pass |
-| Reasoning | Advertise only after reasoning and usage tests pass |
-| Images, audio, video, embeddings, reranking | Do not advertise unless implemented |
+| Capability                                  | Initial policy                                      |
+| ------------------------------------------- | --------------------------------------------------- |
+| Text input and output                       | Required                                            |
+| Streaming                                   | Required                                            |
+| Temperature and sampling                    | Advertise only tested values                        |
+| Tools                                       | Advertise only after tool-call tests pass           |
+| Structured outputs                          | Advertise only after JSON-schema tests pass         |
+| Reasoning                                   | Advertise only after reasoning and usage tests pass |
+| Images, audio, video, embeddings, reranking | Do not advertise unless implemented                 |
 
 ## Privacy and data policy
 
@@ -152,6 +152,15 @@ Complete these items in production:
 - configure the monthly invoice and payment contact;
 - verify that OpenRouter payments reconcile through `openrouter_payment`;
 - document key rotation and revocation.
+
+The API image includes an idempotent operator command. Run it from an API pod
+with the raw key supplied by the production secret manager. Do not place the
+raw key in the repository or in shell history:
+
+```sh
+OPENROUTER_API_KEY='secret-manager-value' \
+  node /app/services/api/dist/operations/configure-openrouter.js
+```
 
 Never put the OpenRouter credential in this repository, a public document, or a
 client-side application.
@@ -240,12 +249,12 @@ responses are preferred to queued timeouts.
 
 ## Work order
 
-1. Deploy the release-date change and confirm a non-empty production catalog.
+1. Deploy the release-date change and confirm a non-empty production catalog. [done]
 2. Add measured capacity entries after the runtime soak test.
 3. Create and test the dedicated OpenRouter distribution-channel credential.
 4. Complete privacy and company legal review.
 5. Configure monthly invoicing and payment reconciliation.
-6. Add a public status page or document the accepted alternative with OpenRouter.
+6. Add a public status page or document the accepted alternative with OpenRouter. [user-owned]
 7. Add and qualify DeepSeek V4 Flash 0731.
 8. Run the complete verification checklist.
 9. Submit the application with the endpoint, model data, pricing, capacity,
@@ -253,9 +262,11 @@ responses are preferred to queued timeouts.
 
 ## Evidence log
 
-| Date | Change or test | Result | Evidence |
-| --- | --- | --- | --- |
-| 2026-08-25 | Production model row inspected | `released_at` is null; catalog is not advertised | Read-only production check |
-| 2026-08-25 | Gateway model normalization tested | Mixed-case input becomes lowercase for lookup and upstream dispatch | Gateway test suite |
-| 2026-08-25 | Live OpenRouter catalog compared with provider docs | Public `/api/v1/models` is a normalized marketplace response; provider submission uses typed schema `2.4` | OpenRouter public API and provider schema |
-| 2026-08-25 | Provider catalog serializer tested | Typed input/output modalities, string USD prices, datacenter, region, and no private deployment fields | Gateway catalog test suite |
+| Date       | Change or test                                      | Result                                                                                                                             | Evidence                                            |
+| ---------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| 2026-08-25 | Production model row inspected                      | `released_at` is null; catalog is not advertised                                                                                   | Read-only production check                          |
+| 2026-08-25 | Gateway model normalization tested                  | Mixed-case input becomes lowercase for lookup and upstream dispatch                                                                | Gateway test suite                                  |
+| 2026-08-25 | Live OpenRouter catalog compared with provider docs | Public `/api/v1/models` is a normalized marketplace response; provider submission uses typed schema `2.4`                          | OpenRouter public API and provider schema           |
+| 2026-08-25 | Production release deployed                         | API and gateway pods rolled out; Gemma 4 model row now has `released_at` and is available                                          | GitHub deployment run and production database check |
+| 2026-08-25 | OpenRouter account setup prepared                   | Added idempotent operator command for the distribution channel, workspace, invoiced account, API-key digest, and Valkey projection | `configure:openrouter`                              |
+| 2026-08-25 | Provider catalog serializer tested                  | Typed input/output modalities, string USD prices, datacenter, region, and no private deployment fields                             | Gateway catalog test suite                          |

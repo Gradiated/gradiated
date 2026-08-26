@@ -36,8 +36,6 @@ describe("DeepSeek V4 Flash model configuration", () => {
       { type: "internal_reasoning", unit: "token", cost: 120 },
     ]);
     expect(output.supported_parameters).toHaveProperty("tools");
-    expect(output.supported_parameters).toHaveProperty(
-      "reasoning",
-    );
+    expect(output.supported_parameters).toHaveProperty("reasoning");
   });
 });

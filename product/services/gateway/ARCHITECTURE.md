@@ -304,6 +304,11 @@ that deployment's SGLang OpenAI-compatible server. A chat-template override is
 not an implicit runtime default: adding one later requires an explicit,
 digest-covered release field and matching gateway/SGLang conformance.
 
+The optional, digest-covered `tokenizer_mode` release field selects a pinned
+non-Hugging-Face renderer. `deepseek_v4` uses the DeepSeek V4 message encoding
+with the release's exact tokenizer artifacts. A live vLLM token-ID conformance
+fixture must pass before this mode can serve a deployment.
+
 1. Render the qualified request with the pinned chat template and the same
    generation-prompt semantics used by SGLang.
 2. Tokenize the rendered input locally in the gateway process on CPU and

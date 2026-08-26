@@ -39,6 +39,14 @@ pub struct ModelDeploymentRelease {
     pub tokenizer_path: String,
     #[validate(length(min = 1, max = 300))]
     pub tokenizer_revision: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tokenizer_mode: Option<TokenizerMode>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum TokenizerMode {
+    DeepseekV4,
 }
 
 impl GatewayModelDeployment {

@@ -45,11 +45,7 @@ export const createDeepseekV4FlashModelConfiguration = () => ({
           },
           frequency_penalty: { type: "range" as const, min: -2, max: 2 },
           presence_penalty: { type: "range" as const, min: -2, max: 2 },
-          tools: { type: "unknown" as const },
-          tool_choice: { type: "unknown" as const },
-          response_format: { type: "unknown" as const },
           stop: { type: "unknown" as const },
-          reasoning: { type: "unknown" as const },
         },
         pricing: [
           { type: "completion" as const, unit: "token" as const, cost: 120 },

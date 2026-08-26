@@ -61,6 +61,7 @@ try {
       model_revision: modelRevision,
       tokenizer_path: deepseekV4FlashArtifactModelPath,
       tokenizer_revision: modelRevision,
+      tokenizer_mode: "deepseek_v4",
     },
   });
   console.log(

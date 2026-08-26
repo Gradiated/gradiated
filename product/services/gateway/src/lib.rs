@@ -26,7 +26,9 @@ pub use completion::{
 };
 pub use config::{GatewayConfig, ValkeyIamConfig};
 pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata};
-pub use deployment::{DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease};
+pub use deployment::{
+    DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease, TokenizerMode,
+};
 pub use domain::GatewayModel;
 pub use error::GatewayError;
 pub use finalization::{FinalizationError, FinalizationOutcome};

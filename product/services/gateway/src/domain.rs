@@ -151,6 +151,7 @@ mod tests {
                 model_revision: "model-revision".to_owned(),
                 tokenizer_path: "tokenizer".to_owned(),
                 tokenizer_revision: "tokenizer-revision".to_owned(),
+                tokenizer_mode: None,
             },
         }
     }

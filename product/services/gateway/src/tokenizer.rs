@@ -16,7 +16,8 @@ use tokenizers::Tokenizer;
 use tracing::error;
 
 use crate::{
-    ChatCompletionRequest, GatewayError, ModelDeploymentRelease, OutputTokenLimit, QualifiedRequest,
+    ChatCompletionRequest, GatewayError, ModelDeploymentRelease, OutputTokenLimit,
+    QualifiedRequest, TokenizerMode,
 };
 
 const TOKENIZER_FILE: &str = "tokenizer.json";
@@ -136,9 +137,11 @@ impl ModelTokenizer {
         }
 
         let artifacts = self.download(&key).await?;
-        let tokenizer = tokio::task::spawn_blocking(move || CompiledTokenizer::load(&artifacts))
-            .await
-            .map_err(ModelTokenizerError::LoaderTask)??;
+        let mode = key.mode;
+        let tokenizer =
+            tokio::task::spawn_blocking(move || CompiledTokenizer::load(&artifacts, mode))
+                .await
+                .map_err(ModelTokenizerError::LoaderTask)??;
         let tokenizer = Arc::new(tokenizer);
         let mut loaded = self
             .loaded
@@ -181,6 +184,7 @@ impl ModelTokenizer {
 struct TokenizerRelease {
     path: String,
     revision: String,
+    mode: Option<TokenizerMode>,
 }
 
 impl From<&ModelDeploymentRelease> for TokenizerRelease {
@@ -188,6 +192,7 @@ impl From<&ModelDeploymentRelease> for TokenizerRelease {
         Self {
             path: release.tokenizer_path.clone(),
             revision: release.tokenizer_revision.clone(),
+            mode: release.tokenizer_mode,
         }
     }
 }
@@ -200,24 +205,35 @@ struct TokenizerArtifacts {
 
 struct CompiledTokenizer {
     tokenizer: Tokenizer,
-    template: ChatTemplate,
+    renderer: PromptRenderer,
+}
+
+enum PromptRenderer {
+    HuggingFace(Box<ChatTemplate>),
+    DeepseekV4,
 }
 
 impl CompiledTokenizer {
-    fn load(artifacts: &TokenizerArtifacts) -> Result<Self, ModelTokenizerError> {
+    fn load(
+        artifacts: &TokenizerArtifacts,
+        mode: Option<TokenizerMode>,
+    ) -> Result<Self, ModelTokenizerError> {
         let tokenizer = Tokenizer::from_file(&artifacts.tokenizer)
             .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))?;
         let config = read_tokenizer_config(&artifacts.config)?;
-        let template = match &artifacts.template {
-            Some(path) => {
-                let source = fs::read_to_string(path)?;
-                ChatTemplate::from_template_and_config(&source, &config)?
-            }
-            None => ChatTemplate::from_tokenizer_config(&config)?,
+        let renderer = match mode {
+            Some(TokenizerMode::DeepseekV4) => PromptRenderer::DeepseekV4,
+            None => PromptRenderer::HuggingFace(Box::new(match &artifacts.template {
+                Some(path) => {
+                    let source = fs::read_to_string(path)?;
+                    ChatTemplate::from_template_and_config(&source, &config)?
+                }
+                None => ChatTemplate::from_tokenizer_config(&config)?,
+            })),
         };
         Ok(Self {
             tokenizer,
-            template,
+            renderer,
         })
     }
 
@@ -225,12 +241,17 @@ impl CompiledTokenizer {
         &self,
         request: &ChatCompletionRequest,
     ) -> Result<Vec<u32>, TokenizerRequestError> {
-        let input = render_input(request)?;
-        let prompt = self.template.render(&input).map_err(|error| match error {
-            ChatTemplateError::TemplateRaised { .. } => TokenizerRequestError::Rejected,
-            error => TokenizerRequestError::Render(error.to_string()),
-        })?;
-        // The rendered HF template already contains its model's special tokens.
+        let prompt = match &self.renderer {
+            PromptRenderer::HuggingFace(template) => {
+                let input = render_input(request)?;
+                template.render(&input).map_err(|error| match error {
+                    ChatTemplateError::TemplateRaised { .. } => TokenizerRequestError::Rejected,
+                    error => TokenizerRequestError::Render(error.to_string()),
+                })?
+            }
+            PromptRenderer::DeepseekV4 => render_deepseek_v4(request)?,
+        };
+        // The selected renderer already contains its model's special tokens.
         let encoding = self
             .tokenizer
             .encode(prompt, false)
@@ -269,13 +290,17 @@ impl CompiledTokenizer {
         let tokenizer = Tokenizer::from_bytes(tokenizer)
             .map_err(|error| ModelTokenizerError::Tokenizer(error.to_string()))?;
         let config: TokenizerConfig = serde_json::from_slice(config)?;
-        let template = match template {
-            Some(source) => ChatTemplate::from_template_and_config(source, &config)?,
-            None => ChatTemplate::from_tokenizer_config(&config)?,
+        let renderer = match template {
+            Some(source) => PromptRenderer::HuggingFace(Box::new(
+                ChatTemplate::from_template_and_config(source, &config)?,
+            )),
+            None => {
+                PromptRenderer::HuggingFace(Box::new(ChatTemplate::from_tokenizer_config(&config)?))
+            }
         };
         Ok(Self {
             tokenizer,
-            template,
+            renderer,
         })
     }
 }
@@ -292,6 +317,148 @@ fn render_input(request: &ChatCompletionRequest) -> Result<RenderInput, Tokenize
     );
     fields.insert("add_generation_prompt".to_owned(), Value::Bool(true));
     serde_json::from_value(Value::Object(fields)).map_err(|_| TokenizerRequestError::InvalidInput)
+}
+
+const DEEPSEEK_V4_BOS: &str = "<｜begin▁of▁sentence｜>";
+const DEEPSEEK_V4_EOS: &str = "<｜end▁of▁sentence｜>";
+const DEEPSEEK_V4_USER: &str = "<｜User｜>";
+const DEEPSEEK_V4_ASSISTANT: &str = "<｜Assistant｜>";
+const DEEPSEEK_V4_CHAT: &str = "</think>";
+
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum DeepseekV4Role {
+    System,
+    Developer,
+    User,
+    Assistant,
+}
+
+struct DeepseekV4Message {
+    role: DeepseekV4Role,
+    content: String,
+}
+
+fn render_deepseek_v4(request: &ChatCompletionRequest) -> Result<String, TokenizerRequestError> {
+    let messages = normalize_deepseek_v4_messages(&request.messages)?;
+    let mut prompt = String::from(DEEPSEEK_V4_BOS);
+
+    for (index, message) in messages.iter().enumerate() {
+        match message.role {
+            DeepseekV4Role::System => prompt.push_str(&message.content),
+            DeepseekV4Role::Developer | DeepseekV4Role::User => {
+                prompt.push_str(DEEPSEEK_V4_USER);
+                prompt.push_str(&message.content);
+            }
+            DeepseekV4Role::Assistant => {
+                prompt.push_str(&message.content);
+                prompt.push_str(DEEPSEEK_V4_EOS);
+            }
+        }
+
+        let next_role = messages.get(index + 1).map(|next| next.role);
+        if matches!(
+            message.role,
+            DeepseekV4Role::Developer | DeepseekV4Role::User
+        ) && (next_role.is_none() || next_role == Some(DeepseekV4Role::Assistant))
+        {
+            prompt.push_str(DEEPSEEK_V4_ASSISTANT);
+            prompt.push_str(DEEPSEEK_V4_CHAT);
+        }
+    }
+
+    Ok(prompt)
+}
+
+fn normalize_deepseek_v4_messages(
+    messages: &[Value],
+) -> Result<Vec<DeepseekV4Message>, TokenizerRequestError> {
+    let mut normalized: Vec<DeepseekV4Message> = Vec::with_capacity(messages.len());
+
+    for message in messages {
+        let object = message
+            .as_object()
+            .ok_or(TokenizerRequestError::InvalidInput)?;
+        let role = object
+            .get("role")
+            .and_then(Value::as_str)
+            .ok_or(TokenizerRequestError::InvalidInput)?;
+        let content = deepseek_v4_content(object.get("content"))?;
+
+        match role {
+            "system" => normalized.push(DeepseekV4Message {
+                role: DeepseekV4Role::System,
+                content,
+            }),
+            "developer" => {
+                if content.is_empty() {
+                    return Err(TokenizerRequestError::Rejected);
+                }
+                normalized.push(DeepseekV4Message {
+                    role: DeepseekV4Role::Developer,
+                    content,
+                });
+            }
+            "user" => merge_deepseek_v4_user_content(&mut normalized, content),
+            "tool" => merge_deepseek_v4_user_content(
+                &mut normalized,
+                format!("<tool_result>{content}</tool_result>"),
+            ),
+            "assistant" => {
+                if object
+                    .get("tool_calls")
+                    .is_some_and(|calls| calls.as_array().is_none_or(|values| !values.is_empty()))
+                {
+                    return Err(TokenizerRequestError::Rejected);
+                }
+                normalized.push(DeepseekV4Message {
+                    role: DeepseekV4Role::Assistant,
+                    content,
+                });
+            }
+            _ => return Err(TokenizerRequestError::Rejected),
+        }
+    }
+
+    Ok(normalized)
+}
+
+fn merge_deepseek_v4_user_content(messages: &mut Vec<DeepseekV4Message>, content: String) {
+    if let Some(previous) = messages.last_mut() {
+        if previous.role == DeepseekV4Role::User {
+            previous.content.push_str("\n\n");
+            previous.content.push_str(&content);
+            return;
+        }
+    }
+    messages.push(DeepseekV4Message {
+        role: DeepseekV4Role::User,
+        content,
+    });
+}
+
+fn deepseek_v4_content(value: Option<&Value>) -> Result<String, TokenizerRequestError> {
+    match value {
+        None | Some(Value::Null) => Ok(String::new()),
+        Some(Value::String(content)) => Ok(content.clone()),
+        Some(Value::Array(parts)) => {
+            let mut content = String::new();
+            for part in parts {
+                let part = part
+                    .as_object()
+                    .ok_or(TokenizerRequestError::InvalidInput)?;
+                if part.get("type").and_then(Value::as_str) != Some("text") {
+                    return Err(TokenizerRequestError::Rejected);
+                }
+                content.push_str(
+                    part.get("text")
+                        .and_then(Value::as_str)
+                        .ok_or(TokenizerRequestError::InvalidInput)?,
+                );
+            }
+            Ok(content)
+        }
+        Some(_) => Err(TokenizerRequestError::InvalidInput),
+    }
 }
 
 fn map_request_error(error: TokenizerRequestError) -> GatewayError {
@@ -422,6 +589,7 @@ mod tests {
                     model_revision: "model-revision".to_owned(),
                     tokenizer_path: "tokenizer".to_owned(),
                     tokenizer_revision: "tokenizer-revision".to_owned(),
+                    tokenizer_mode: None,
                 },
             },
             served_release_digest: "sha256:test".to_owned(),
@@ -475,6 +643,51 @@ mod tests {
             tokenizer().encode_input(&request),
             Err(TokenizerRequestError::InvalidInput)
         ));
+    }
+
+    #[test]
+    fn renders_the_deepseek_v4_chat_mode_prompt() {
+        let mut chat = request(None).request;
+        chat.messages = vec![
+            serde_json::json!({"role": "system", "content": "Be concise."}),
+            serde_json::json!({"role": "user", "content": "Hello"}),
+            serde_json::json!({"role": "assistant", "content": "Hi"}),
+            serde_json::json!({"role": "user", "content": "Continue"}),
+        ];
+
+        assert_eq!(
+            render_deepseek_v4(&chat),
+            Ok(concat!(
+                "<｜begin▁of▁sentence｜>",
+                "Be concise.",
+                "<｜User｜>Hello",
+                "<｜Assistant｜></think>",
+                "Hi<｜end▁of▁sentence｜>",
+                "<｜User｜>Continue",
+                "<｜Assistant｜></think>"
+            )
+            .to_owned())
+        );
+    }
+
+    #[test]
+    fn merges_deepseek_v4_user_and_tool_result_messages() {
+        let mut chat = request(None).request;
+        chat.messages = vec![
+            serde_json::json!({"role": "user", "content": "First"}),
+            serde_json::json!({"role": "user", "content": "Second"}),
+            serde_json::json!({"role": "tool", "content": "Result"}),
+        ];
+
+        assert_eq!(
+            render_deepseek_v4(&chat),
+            Ok(concat!(
+                "<｜begin▁of▁sentence｜>",
+                "<｜User｜>First\n\nSecond\n\n<tool_result>Result</tool_result>",
+                "<｜Assistant｜></think>"
+            )
+            .to_owned())
+        );
     }
 
     #[test]
@@ -545,5 +758,41 @@ mod tests {
             .await
             .unwrap();
         assert!(bounded.input_tokens > 0);
+    }
+
+    #[tokio::test]
+    #[ignore = "downloads the pinned production DeepSeek V4 tokenizer from Hugging Face"]
+    async fn loads_and_renders_the_pinned_deepseek_v4_release() {
+        let mut qualified = request(Some(64));
+        qualified.max_context_tokens = 262_144;
+        qualified.max_prompt_tokens = 262_080;
+        qualified.deployment.release.model_path = "deepseek-ai/DeepSeek-V4-Flash-0731".to_owned();
+        qualified.deployment.release.model_revision =
+            "7872f01b1d1fe23eabc4c98b48bffcef5a386062".to_owned();
+        qualified.deployment.release.tokenizer_path =
+            "deepseek-ai/DeepSeek-V4-Flash-0731".to_owned();
+        qualified.deployment.release.tokenizer_revision =
+            "7872f01b1d1fe23eabc4c98b48bffcef5a386062".to_owned();
+        qualified.deployment.release.tokenizer_mode = Some(TokenizerMode::DeepseekV4);
+        qualified.request.messages = vec![
+            serde_json::json!({"role": "system", "content": "Be concise."}),
+            serde_json::json!({"role": "user", "content": "Hello"}),
+            serde_json::json!({"role": "assistant", "content": "Hi"}),
+            serde_json::json!({"role": "user", "content": "Continue"}),
+        ];
+
+        let bounded = ModelTokenizer::new()
+            .unwrap()
+            .enforce(qualified)
+            .await
+            .unwrap();
+        assert_eq!(bounded.input_tokens, 14);
+        assert_eq!(
+            bounded.qualified.request.encoded_input_ids,
+            Some(vec![
+                0, 7153, 47468, 16, 128_803, 19_923, 128_804, 128_822, 23_166, 1, 128_803, 56_761,
+                128_804, 128_822,
+            ])
+        );
     }
 }

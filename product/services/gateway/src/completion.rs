@@ -1151,6 +1151,7 @@ mod tests {
                     model_revision: "model-revision".to_owned(),
                     tokenizer_path: "model-a".to_owned(),
                     tokenizer_revision: "tokenizer-revision".to_owned(),
+                    tokenizer_mode: None,
                 },
             },
             served_release_digest: format!("sha256:{}", "a".repeat(64)),

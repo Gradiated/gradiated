@@ -44,8 +44,13 @@ Critical alerts repeat every 15 minutes; warnings repeat every two hours.
 Alertmanager groups by alert, service, and severity and sends firing and
 resolved events to the configured incident webhook. Populate the externally
 managed `gradiated/prod/platform/alertmanager-notifications` AWS Secrets
-Manager value with JSON containing `webhook-url`. The URL and downstream
-incident-routing credentials must never enter Git.
+Manager value with JSON containing `webhook-url` and `webhook-token`.
+Alertmanager reads the token as a Bearer credential. The URL and token must
+never enter Git.
+
+The `Watchdog` alert goes to a null receiver. It does not create an incident.
+The managed EKS control plane does not expose controller manager or scheduler
+targets. The chart disables alerts that require these targets.
 
 Thresholds are launch defaults, not measured long-term SLOs. Review them after
 the first seven days of representative traffic, retaining failure coverage
@@ -72,17 +77,13 @@ blackbox probes return `probe_success == 1`. In Alertmanager, use a temporary
 non-production receiver test from the incident system; do not create a fake
 production outage merely to test routing.
 
-## Build handoff
+## Verification
 
-This change is repository-complete but has not been reconciled to production.
-The product builds and tests, Rust formatting/tests/lints, Kubernetes and Helm
-renders, dashboard JSON and PromQL parsing, Prometheus rule validation,
-Alertmanager configuration validation, DevEx checks, and diff hygiene are the
-release gates. The incident webhook secret must exist before reconciliation.
-SGLang visibility is intentionally derived from the gateway because the
-runtime is external to this cluster. After deployment, verify scrape targets,
-dashboard population, probes, and notification delivery, then calibrate launch
-thresholds from seven days of representative traffic.
+After a change, run the product, Rust, Kubernetes, Helm, dashboard, PromQL,
+Prometheus rule, Alertmanager, and DevEx checks that apply to the change.
+Verify scrape targets, dashboard data, blackbox probes, and notification
+delivery after Argo CD reconciliation. SGLang visibility is derived from the
+gateway because the runtime is external to this cluster.
 
 ## Telemetry missing
 

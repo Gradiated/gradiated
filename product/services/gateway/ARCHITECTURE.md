@@ -4,7 +4,6 @@
 - scope: Rust inference data plane only
 - parent architecture: [`docs/ARCHITECTURE.md`](../../../docs/ARCHITECTURE.md)
 - canonical data model: [`docs/DATA_MODEL.md`](../../../docs/DATA_MODEL.md)
-- launch contract: [`docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md`](../../../docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
 This document translates the repository-wide architecture and data model into
 an implementation design for `product/services/gateway`. It refines those

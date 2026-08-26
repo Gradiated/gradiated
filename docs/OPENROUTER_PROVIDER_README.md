@@ -6,7 +6,6 @@
 - application: https://openrouter.ai/providers/apply
 - technical requirements: https://openrouter.ai/docs/guides/community/for-providers
 - architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- launch plan: [KIMI_K3_PROVIDER_LAUNCH_PLAN.md](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
 This document is the working checklist for OpenRouter onboarding. Update the
 status and evidence after each change. Do not submit the provider application

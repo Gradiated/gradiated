@@ -1,6 +1,6 @@
 # Product workstream instructions
 
-Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.md), the [Kimi K3 launch plan](../docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md), the [canonical data model](../docs/DATA_MODEL.md), this file and [HANDOFF.md](HANDOFF.md) before changing product code.
+Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.md), the [canonical data model](../docs/DATA_MODEL.md), and this file before changing product code.
 
 ## Boundaries
 

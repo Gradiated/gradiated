@@ -3,13 +3,10 @@
 - status: current implementation authority
 - date: 2026-08-15
 - data model: [DATA_MODEL.md](DATA_MODEL.md)
-- launch context: [KIMI_K3_PROVIDER_LAUNCH_PLAN.md](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
-This document defines the deployed services, their dependencies and their
-ownership boundaries for the exact-model product. [DATA_MODEL.md](DATA_MODEL.md)
-is authoritative for schemas, keys, event payloads and storage invariants. The
-Kimi K3 launch plan is authoritative for provider onboarding, launch sequencing
-and model-specific operating parameters.
+This document defines the deployed services, their dependencies, and their
+ownership boundaries. [DATA_MODEL.md](DATA_MODEL.md) is authoritative for
+schemas, keys, event payloads, and storage invariants.
 
 The seed system has three Gradiated processes and one external model runtime.
 `api` and `worker` use one TypeScript codebase and image; `gateway` is the Rust
@@ -31,7 +28,7 @@ public ALB path rule ---> gateway (Rust, EKS) ---> private/restricted TLS
                     v
                   Valkey
                                                    v
-                                    SGLang pod on 8x B300
+                                    selected SGLang model runtime
                                     external provider cluster
 ```
 
@@ -49,7 +46,7 @@ and the same Valkey-backed authentication, admission and settlement path.
 | `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                  | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                  | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a public/application API, write PostgreSQL per generation, retain prompts or completions                         |
 | `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                     | Valkey; the selected SGLang endpoint; generated contract fixtures                         | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
 | `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                      | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                      | write product data, serve public shares, or become a product data authority                                               |
-| `sglang-kimi-k3` | SGLang pod on the external provider's 8x B300 Kubernetes node; never an EKS workload | pinned model/tokenizer artifacts, pinned SGLang image, GPU node and provider networking   | execute one exact Kimi K3 release and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                     | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
+| `sglang-runtime` | SGLang runtime on the external provider's GPU Kubernetes cluster; never an EKS workload | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                     | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api` and `worker` are two commands from one TypeScript application and image,
 not independently versioned domain services. Keeping them in separate EKS
@@ -255,11 +252,10 @@ there is no durable in-progress request table at launch.
 Rust does not implement human sessions, customer CRUD, Stripe, OpenRouter
 onboarding, model purchasing, provider APIs or GPU provisioning.
 
-### `sglang-kimi-k3`
+### `sglang-runtime`
 
-The initial runtime is one SGLang pod scheduled directly onto the external
-provider's 8x B300 GPU node, using TP8 and a pinned Kimi K3-capable SGLang image
-and model revision. It is not deployed to or joined with EKS. A private
+The runtime is one SGLang pod scheduled on the external provider's GPU cluster,
+using a pinned image and model revision. It is not deployed to or joined with EKS. A private
 Kubernetes `Service` (or the provider's equivalent private endpoint) gives the
 EKS gateway a stable upstream address over private connectivity or restricted
 TLS.
@@ -283,7 +279,7 @@ are ordered candidates for the exact model.
 | ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention              |
 | Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                                            |
 | OpenRouter                    | external distribution client | calls the same exact-model endpoint using its channel organization/key | invoiced organization; onboarding/auth contract configured in api/infra                                             |
-| external Kubernetes provider  | `sglang-kimi-k3`             | B300 GPU capacity                                                      | provider-owned cluster/node pool; separate from EKS                                                                 |
+| external Kubernetes provider  | `sglang-runtime`             | dedicated GPU capacity                                                | provider-owned cluster/node pool; separate from EKS                                                                 |
 | ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                                        |
 | Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                                    |
 | Route 53 / ACM / ALB          | `api`, `gateway`, `metabase` | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service                   |
@@ -382,8 +378,8 @@ reproducing production packaging. Docker Compose runs PostgreSQL, Valkey and
 ClickHouse only. `mprocs` runs Vite, `api`, `worker`, `gateway` and SGLang as
 native host processes. On the supported Apple Silicon profile, SGLang uses its
 Metal/MLX backend and a pinned small local model; the local model has its own
-truthful exact PostgreSQL model and deployment rows rather than masquerading as
-Kimi K3. The gateway reaches SGLang over its normal HTTP interface on
+truthful exact PostgreSQL model and deployment rows rather than masking the
+runtime behind a generic alias. The gateway reaches SGLang over its normal HTTP interface on
 localhost, so Chat Completions, streaming, usage and cancellation cross the
 same runtime boundary as production. Gateway-local tokenizer parity is checked
 against that pinned SGLang release; pre-admission tokenization itself does not
@@ -393,8 +389,8 @@ Deterministic runtime failures that a real model server cannot safely induce
 use the gateway's in-process `ModelRuntime` test double. There is no deployed
 fake-SGLang process. Local development does not require Kubernetes, LocalStack,
 AWS credentials, NVIDIA capacity, OpenRouter credentials or Stripe
-credentials. Final release conformance still runs against the pinned CUDA
-SGLang and Kimi K3 deployment because MLX and the small local model prove the
+credentials. Final release conformance runs against the pinned production
+SGLang and model deployment because MLX and the small local model prove the
 protocol integration, not production model equivalence.
 
 ## Implementation rules and complexity gates

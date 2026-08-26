@@ -3,7 +3,6 @@
 - status: current implementation authority
 - date: 2026-08-15
 - architecture: [ARCHITECTURE.md](ARCHITECTURE.md)
-- launch plan: [Kimi K3 provider launch](KIMI_K3_PROVIDER_LAUNCH_PLAN.md)
 
 This is the canonical seed data model for the exact-model product. Database
 migrations, runtime schemas and API contracts must preserve the authorities,
@@ -204,7 +203,7 @@ The raw format is `grad_<32 random bytes encoded as base64url>`. Authentication 
 
 ### 10. `models`
 
-Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `moonshotai/kimi-k3`.
+Global hosted-model catalog. It is not organization-scoped. The primary key is the immutable human-readable model identifier used in direct requests and returned to OpenRouter, for example `google/gemma-4-31b-it`.
 
 | Field        | Type        | Null | Rules                                        |
 | ------------ | ----------- | ---- | -------------------------------------------- |

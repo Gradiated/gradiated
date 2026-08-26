@@ -1,6 +1,9 @@
 # Product
 
-Gradiated hosts exact open-weight models and sells inference through direct customer API keys and OpenRouter. The current architecture is defined by [ARCHITECTURE.md](../docs/ARCHITECTURE.md), the [Kimi K3 launch plan](../docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md), the [canonical data model](../docs/DATA_MODEL.md), and the [product API contract](../docs/API.md).
+Gradiated hosts open-weight models and sells inference through customer API keys
+and OpenRouter. The current architecture is defined by
+[ARCHITECTURE.md](../docs/ARCHITECTURE.md), the [canonical data model](../docs/DATA_MODEL.md),
+and the executable API schemas in `services/api`.
 
 The product side is deliberately small:
 
@@ -37,8 +40,6 @@ by PostgreSQL and Valkey. The Vite application uses shadcn/ui, React Query,
 React Hook Form with Zod validation, and Zustand for the small
 organization/workspace UI selection state. Do not revive deleted product
 blueprints; extend the focused contract when a behavior is ready to be decided.
-
-Read [HANDOFF.md](HANDOFF.md) for the next build sequence.
 
 ## API development
 
@@ -86,6 +87,18 @@ The smoke command creates a temporary API key through the product API, calls the
 gateway on port 3002, verifies UUIDv7 and authoritative usage in the response,
 and revokes the key. A successful response is returned only after the gateway
 has atomically finalized the generation in Valkey.
+
+To test the production gateway with the official OpenAI SDK, set a production
+API key and run:
+
+```sh
+GRADIATED_API_KEY=grad_... pnpm smoke:gateway:openai
+```
+
+The SDK test calls `models.list()` and both non-streaming and streaming
+`chat.completions.create()`. It uses
+`https://api.gradiated.com/openai/v1` by default. Set `GRADIATED_MODEL` to
+select a specific model or `GRADIATED_BASE_URL` to test another gateway.
 
 The console listens on port 3000 and proxies `/api` and `/health`
 to the API process on port 3001. The generated OpenAPI schema is available at

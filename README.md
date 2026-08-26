@@ -1,12 +1,16 @@
 # Gradiated
 
-Gradiated hosts exact open-weight models and sells inference through direct customer API keys and OpenRouter. The current architecture is deliberately small and is defined by:
+Gradiated provides hosted open-weight model inference through a customer API and
+OpenRouter. Production includes a TypeScript API and worker, a Rust inference
+gateway, a React console, and managed PostgreSQL, Valkey, and ClickHouse.
 
-1. [architecture](docs/ARCHITECTURE.md);
-2. [canonical data model](docs/DATA_MODEL.md);
-3. [OpenRouter provider readiness](docs/OPENROUTER_PROVIDER_README.md);
-4. [Kimi K3 provider launch plan](docs/KIMI_K3_PROVIDER_LAUNCH_PLAN.md).
+Start here:
 
-Read [AGENTS.md](AGENTS.md) before making changes. Product and infrastructure entry points are [product/README.md](product/README.md) and [infra/README.md](infra/README.md). Research has its own authority under [research/README.md](research/README.md).
+- [Architecture](docs/ARCHITECTURE.md)
+- [Data model](docs/DATA_MODEL.md)
+- [Product](product/README.md)
+- [Infrastructure](infra/README.md)
+- [Research](research/README.md)
 
-There is no product or infrastructure implementation yet. New contracts should be short, reviewed documents tied to the current architecture. Do not use deleted historical blueprints as requirements.
+Read [AGENTS.md](AGENTS.md) before making changes. Use the deployment and
+service READMEs for commands and operational details.

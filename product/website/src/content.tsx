@@ -393,7 +393,7 @@ export const PrivacyContent = (): ReactNode => (
       We share information with service providers that support hosting,
       inference, payments, email, security, and analytics. We may also share
       information when required by law or in connection with a corporate
-      transaction. The providers and purposes are listed on our
+      transaction. The providers and purposes are listed on our{" "}
       <SiteLink href="/subprocessors-security/">
         Subprocessors and security
       </SiteLink>{" "}
@@ -469,7 +469,7 @@ export const TermsContent = (): ReactNode => (
     </p>
     <h2>Acceptable use</h2>
     <p>
-      You must follow our
+      You must follow our{" "}
       <SiteLink href="/acceptable-use/">Acceptable Use Policy</SiteLink> and all
       laws that apply to your use of the service. We may limit, suspend, or end
       access if needed to protect the service, other users, or the public.
@@ -599,7 +599,7 @@ export const DpaContent = (): ReactNode => (
       Gradiated to process personal data and the customer is the controller or
       processor. In that case, Gradiated Ltd acts as the processor or
       subprocessor. For account, billing, and business contact information,
-      Gradiated acts as a controller under our
+      Gradiated acts as a controller under our{" "}
       <SiteLink href="/privacy/">Privacy Policy</SiteLink>.
     </p>
     <h2>Instructions and scope</h2>
@@ -713,7 +713,7 @@ export const SubprocessorsContent = (): ReactNode => (
     </ul>
     <p>
       Provider locations can vary by service and deployment. We use the
-      safeguards described in our
+      safeguards described in our{" "}
       <SiteLink href="/privacy/">Privacy Policy</SiteLink> and{" "}
       <SiteLink href="/dpa/">DPA</SiteLink> where required.
     </p>

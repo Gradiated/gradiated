@@ -265,7 +265,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("0.1.0");
+    console.log("0.2.0");
     return;
   }
   await runInstall();

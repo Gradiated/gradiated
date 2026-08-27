@@ -253,7 +253,7 @@ const runCodex = async (
         "--sandbox",
         "read-only",
         "--json",
-        "Reply with exactly ready.",
+        "ready",
       ],
       {
         cwd: home,

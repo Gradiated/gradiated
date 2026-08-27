@@ -9,6 +9,7 @@
 
 The wizard now detects OpenCode and Codex. The `--agent` option restricts one
 run to either client. A bare run configures all detected supported clients.
+This feature releases as `@gradiated/wizard` version `0.2.0`.
 
 OpenCode keeps its existing default model. Codex receives an opt-in
 `gradiated` profile. The wizard does not change the default Codex provider.
@@ -52,6 +53,8 @@ pnpm format:check
 - Real Codex strict-config and local Responses request: passed in Vitest.
 - Website production build: passed.
 - Product formatting check: passed.
+- GitHub Terraform format and static validation job: passed in 3m20s. The
+  former disk exhaustion did not recur.
 
 ## Limits and external requirements
 
@@ -60,8 +63,8 @@ The real client test uses the installed `codex` executable. CI installs
 credentials are required. The test uses a local HTTP stub and a synthetic API
 key.
 
-The Terraform disk fix is verified by workflow inspection. The GitHub-hosted
-runner provides the final disk-use measurement.
+The GitHub-hosted runner verified the Terraform disk fix. A later production
+apply failure is outside the static validation fix.
 
 ## Next safe action
 

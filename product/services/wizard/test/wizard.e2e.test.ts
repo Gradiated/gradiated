@@ -1,0 +1,271 @@
+import { spawn } from "node:child_process";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { createServer, type Server } from "node:http";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+
+const FIXTURE_CATALOG = {
+  data: [
+    {
+      schema_version: "2.4",
+      id: "z-ai/glm-5.3-flash",
+      name: "GLM-5.3 Flash",
+      input_modalities: [
+        {
+          type: "text",
+          supported_inputs: {
+            max_context_length: { value: 1_048_576, unit: "token" },
+          },
+        },
+      ],
+      output_modalities: [
+        {
+          type: "text",
+          max_length: { value: 131_072, unit: "token" },
+          streaming: true,
+          supported_parameters: {},
+        },
+      ],
+    },
+    {
+      schema_version: "2.4",
+      id: "google/gemma-4-31b-it",
+      name: "Gemma 4 31B",
+      input_modalities: [
+        {
+          type: "text",
+          supported_inputs: {
+            max_context_length: { value: 128_000, unit: "token" },
+          },
+        },
+      ],
+      output_modalities: [
+        {
+          type: "text",
+          max_length: { value: 8_192, unit: "token" },
+          streaming: true,
+          supported_parameters: {},
+        },
+      ],
+    },
+  ],
+};
+
+const PORT = 8973;
+const API_KEY = "grad_test_wizard_fixture_key_0000000000000000000";
+
+let server: Server;
+
+const startStub = async (): Promise<void> => {
+  server = createServer((request, response) => {
+    const url = new URL(request.url ?? "/", `http://127.0.0.1:${PORT}`);
+    const auth = request.headers.authorization;
+    if (auth !== `Bearer ${API_KEY}`) {
+      response.writeHead(401, { "content-type": "application/problem+json" });
+      response.end(
+        JSON.stringify({
+          type: "https://gradiated.com/problems/unauthenticated",
+          title: "Authentication required",
+          status: 401,
+          detail: "The API key was rejected.",
+          code: "unauthenticated",
+          request_id: "stub",
+        }),
+      );
+      return;
+    }
+    if (url.pathname === "/openai/v1/models") {
+      response.writeHead(200, { "content-type": "application/json" });
+      response.end(JSON.stringify(FIXTURE_CATALOG));
+      return;
+    }
+    response.writeHead(404, { "content-type": "application/problem+json" });
+    response.end(
+      JSON.stringify({
+        type: "https://gradiated.com/problems/not-found",
+        title: "Not found",
+        status: 404,
+        detail: "Not found.",
+        code: "not_found",
+        request_id: "stub",
+      }),
+    );
+  });
+  await new Promise<void>((resolvePromise) => {
+    server.listen(PORT, "127.0.0.1", resolvePromise);
+  });
+};
+
+const stopStub = async (): Promise<void> => {
+  await new Promise<void>((resolvePromise, rejectPromise) => {
+    server.close((error) => (error ? rejectPromise(error) : resolvePromise()));
+  });
+};
+
+const runWizard = async (
+  arguments_: readonly string[],
+  home: string,
+): Promise<{ status: number | null; stdout: string; stderr: string }> =>
+  new Promise((resolvePromise) => {
+    const child = spawn(
+      process.execPath,
+      [join(import.meta.dirname, "../dist/bin.js"), ...arguments_],
+      {
+        env: {
+          ...process.env,
+          HOME: home,
+          GRADIATED_CREDENTIALS_PATH: join(
+            home,
+            ".gradiated",
+            "credentials.json",
+          ),
+          GRADIATED_API_KEY: "",
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("close", (status) => {
+      resolvePromise({ status, stdout, stderr });
+    });
+  });
+
+describe("wizard install end to end", () => {
+  beforeAll(startStub);
+  afterAll(async () => {
+    await stopStub();
+  });
+
+  it("writes the opencode provider block, credential file and auth.json", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const result = await runWizard(
+        [
+          "--yes",
+          "--key",
+          API_KEY,
+          "--model",
+          "Z-AI/GLM-5.3-FLASH",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+
+      const config = JSON.parse(
+        await readFile(join(home, ".config/opencode/opencode.json"), "utf8"),
+      ) as {
+        $schema: string;
+        model: string;
+        provider: Record<string, unknown>;
+      };
+      expect(config.$schema).toBe("https://opencode.ai/config.json");
+      expect(config.model).toBe("gradiated/z-ai/glm-5.3-flash");
+      const provider = config.provider.gradiated as {
+        npm: string;
+        name: string;
+        options: { baseURL: string; apiKey: string };
+        models: Record<string, unknown>;
+      };
+      expect(provider.npm).toBe("@ai-sdk/openai-compatible");
+      expect(provider.name).toBe("Gradiated");
+      expect(provider.options.baseURL).toBe(
+        `http://127.0.0.1:${PORT}/openai/v1`,
+      );
+      expect(provider.options.apiKey).toBe("{env:GRADIATED_API_KEY}");
+      expect(provider.models["z-ai/glm-5.3-flash"]).toEqual({
+        name: "GLM-5.3 Flash",
+        limit: { context: 1_048_576, output: 131_072 },
+      });
+      expect(provider.models["google/gemma-4-31b-it"]).toEqual({
+        name: "Gemma 4 31B",
+        limit: { context: 128_000, output: 8_192 },
+      });
+
+      const credentials = JSON.parse(
+        await readFile(join(home, ".gradiated/credentials.json"), "utf8"),
+      ) as { api_key: string };
+      expect(credentials.api_key).toBe(API_KEY);
+
+      const auth = JSON.parse(
+        await readFile(join(home, ".local/share/opencode/auth.json"), "utf8"),
+      ) as { gradiated: { type: string; key: string } };
+      expect(auth.gradiated.type).toBe("api");
+      expect(auth.gradiated.key).toBe(API_KEY);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+
+  it("fails with the gateway message when the key is rejected", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const result = await runWizard(
+        [
+          "--yes",
+          "--key",
+          "grad_wrong_key",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+
+      expect(result.status).toBe(1);
+      expect(result.stdout).toContain("The API key was rejected");
+      await expect(
+        readFile(join(home, ".config/opencode/opencode.json"), "utf8"),
+      ).rejects.toThrow();
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+
+  it("respects an existing default model", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const { mkdir, writeFile } = await import("node:fs/promises");
+      const configDir = join(home, ".config/opencode");
+      await mkdir(configDir, { recursive: true });
+      await writeFile(
+        join(configDir, "opencode.json"),
+        JSON.stringify({
+          $schema: "https://opencode.ai/config.json",
+          model: "anthropic/claude-sonnet-4-5",
+          // trailing comma and comment on purpose
+        }) + "\n",
+      );
+
+      const result = await runWizard(
+        [
+          "--yes",
+          "--key",
+          API_KEY,
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+
+      expect(result.status).toBe(0);
+      const config = JSON.parse(
+        await readFile(join(configDir, "opencode.json"), "utf8"),
+      ) as { model: string; provider: Record<string, unknown> };
+      expect(config.model).toBe("anthropic/claude-sonnet-4-5");
+      expect(Object.keys(config.provider)).toContain("gradiated");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  });
+});

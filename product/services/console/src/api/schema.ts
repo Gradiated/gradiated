@@ -148,6 +148,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getUsageSummary"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listGenerations"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/wizard/key": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations["createWizardKey"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/organizations/{organization_id}/workspaces": {
     parameters: {
       query?: never;
@@ -191,38 +239,6 @@ export interface paths {
     put?: never;
     post?: never;
     delete: operations["revokeApiKey"];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["getUsageSummary"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["listGenerations"];
-    put?: never;
-    post?: never;
-    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -542,45 +558,21 @@ export interface components {
     CreateOrganization: {
       name: string;
     };
-    WorkspaceList: {
-      data: components["schemas"]["Workspace"][];
-      next_cursor: string | null;
-    };
-    Workspace: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      id: string;
+    WizardKeyResponse: {
+      api_key: components["schemas"]["ApiKey"];
+      secret: string;
       /**
        * Format: uuid
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       organization_id: string;
-      name: string;
-      is_default: boolean;
       /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
-      archived_at: string | null;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      created_at: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      updated_at: string;
-    };
-    CreateWorkspace: {
-      name: string;
-    };
-    ApiKeyList: {
-      data: components["schemas"]["ApiKey"][];
-      next_cursor: string | null;
+      workspace_id: string;
+      organization_name: string;
+      balance_nano_usd: number;
     };
     ApiKey: {
       /**
@@ -624,6 +616,46 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       updated_at: string;
+    };
+    WorkspaceList: {
+      data: components["schemas"]["Workspace"][];
+      next_cursor: string | null;
+    };
+    Workspace: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      organization_id: string;
+      name: string;
+      is_default: boolean;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      archived_at: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      updated_at: string;
+    };
+    CreateWorkspace: {
+      name: string;
+    };
+    ApiKeyList: {
+      data: components["schemas"]["ApiKey"][];
+      next_cursor: string | null;
     };
     CreatedApiKey: {
       api_key: components["schemas"]["ApiKey"];
@@ -1017,6 +1049,252 @@ export interface operations {
       };
     };
   };
+  getUsageSummary: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+      };
+      header?: never;
+      path: {
+        organization_id: string;
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Usage totals and daily breakdowns for the selected workspace. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            charge: string;
+            input_tokens: string;
+            output_tokens: string;
+            generation_count: string;
+            succeeded_count: string;
+            daily: {
+              /** Format: date */
+              date: string;
+              charge: string;
+              input_tokens: string;
+              output_tokens: string;
+              generation_count: string;
+            }[];
+            models: {
+              model_id: string;
+              charge: string;
+              input_tokens: string;
+              output_tokens: string;
+              generation_count: string;
+            }[];
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The date range is invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Usage data is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listGenerations: {
+    parameters: {
+      query: {
+        from: string;
+        to: string;
+        cursor?: string;
+        limit?: number;
+        api_key_id?: string;
+        model?: string;
+        search?: string;
+        sort?: "newest" | "highest_cost";
+        status?: "succeeded" | "failed" | "cancelled" | "abandoned";
+      };
+      header?: never;
+      path: {
+        organization_id: string;
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Terminal generations for the selected workspace. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": {
+            data: {
+              /**
+               * Format: uuid
+               * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+               */
+              id: string;
+              external_id: string | null;
+              model_id: string;
+              /** @enum {string} */
+              status: "succeeded" | "failed" | "cancelled" | "abandoned";
+              streamed: boolean;
+              charge: string;
+              input_tokens: number;
+              cached_input_tokens: number;
+              cache_write_tokens: number;
+              output_tokens: number;
+              reasoning_tokens: number;
+              finish_reason: string | null;
+              error_code: string | null;
+              usable_output_delivered: boolean;
+              /** @enum {string|null} */
+              cancellation_owner: "client" | "server" | "runtime" | null;
+              /**
+               * Format: date-time
+               * @example 2026-08-16T12:00:00.000Z
+               */
+              received_at: string;
+              /**
+               * Format: date-time
+               * @example 2026-08-16T12:00:00.000Z
+               */
+              started_at: string | null;
+              /**
+               * Format: date-time
+               * @example 2026-08-16T12:00:00.000Z
+               */
+              first_token_at: string | null;
+              /**
+               * Format: date-time
+               * @example 2026-08-16T12:00:00.000Z
+               */
+              completed_at: string;
+            }[];
+            next_cursor: string | null;
+          };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The filters are invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Generation logs are unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  createWizardKey: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A local API key minted on the session's organization, with its one-time secret. */
+      201: {
+        headers: {
+          /** @description Prevents storage of the one-time secret. */
+          "Cache-Control"?: string;
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["WizardKeyResponse"];
+        };
+      };
+      /** @description No valid human session is present. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The session user has no organization. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
   listWorkspaces: {
     parameters: {
       query?: {
@@ -1302,203 +1580,6 @@ export interface operations {
         };
       };
       /** @description Serving state is unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
-  getUsageSummary: {
-    parameters: {
-      query: {
-        from: string;
-        to: string;
-      };
-      header?: never;
-      path: {
-        organization_id: string;
-        workspace_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Usage totals and daily breakdowns for the selected workspace. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            charge: string;
-            input_tokens: string;
-            output_tokens: string;
-            generation_count: string;
-            succeeded_count: string;
-            daily: {
-              /** Format: date */
-              date: string;
-              charge: string;
-              input_tokens: string;
-              output_tokens: string;
-              generation_count: string;
-            }[];
-            models: {
-              model_id: string;
-              charge: string;
-              input_tokens: string;
-              output_tokens: string;
-              generation_count: string;
-            }[];
-          };
-        };
-      };
-      /** @description Authentication is required. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description The workspace was not found. */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description The date range is invalid. */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Usage data is unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
-  listGenerations: {
-    parameters: {
-      query: {
-        from: string;
-        to: string;
-        cursor?: string;
-        limit?: number;
-        api_key_id?: string;
-        model?: string;
-        search?: string;
-        sort?: "newest" | "highest_cost";
-        status?: "succeeded" | "failed" | "cancelled" | "abandoned";
-      };
-      header?: never;
-      path: {
-        organization_id: string;
-        workspace_id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Terminal generations for the selected workspace. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": {
-            data: {
-              /**
-               * Format: uuid
-               * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-               */
-              id: string;
-              external_id: string | null;
-              model_id: string;
-              /** @enum {string} */
-              status: "succeeded" | "failed" | "cancelled" | "abandoned";
-              streamed: boolean;
-              charge: string;
-              input_tokens: number;
-              cached_input_tokens: number;
-              cache_write_tokens: number;
-              output_tokens: number;
-              reasoning_tokens: number;
-              finish_reason: string | null;
-              error_code: string | null;
-              usable_output_delivered: boolean;
-              /** @enum {string|null} */
-              cancellation_owner: "client" | "server" | "runtime" | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              received_at: string;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              started_at: string | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              first_token_at: string | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              completed_at: string;
-            }[];
-            next_cursor: string | null;
-          };
-        };
-      };
-      /** @description Authentication is required. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description The workspace was not found. */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description The filters are invalid. */
-      422: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Generation logs are unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

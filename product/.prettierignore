@@ -4,3 +4,4 @@
 **/dist/
 pnpm-lock.yaml
 services/api/generated/openapi.json
+inference/build/

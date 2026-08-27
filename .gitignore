@@ -8,6 +8,11 @@ mise.*.local.toml
 *.key
 *.p12
 *.token
+.DS_Store
+
+# Bitstream and hardware-export bundles stay outside the repository
+*.bit
+*.xsa
 **/*.config.yaml
 
 # Repo-local generated environments and agent runtime state
@@ -104,3 +109,4 @@ research/**/experiments/gemma4_31b/research_lab/projects/sglang_gemma4_exact_pre
 
 # Built application artifacts
 dist/
+product/inference/build/

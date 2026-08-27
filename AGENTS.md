@@ -44,7 +44,6 @@ This repository is the complete project state for the research and product-build
 - `$research-director`: Sol-led opportunity selection and parallel project delegation.
 - `$researcher`: autonomous execution and logging for one research project.
 - `$research-supervisor`: periodic improvement of research speed and effectiveness.
-- `$evidence-research`: source-backed, falsifiable technical or market research.
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
 - `$experiment-run`: bounded, reproducible experiments with durable artifacts and cleanup.

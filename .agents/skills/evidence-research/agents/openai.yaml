@@ -1,4 +1,0 @@
-interface:
-  display_name: "Evidence Research"
-  short_description: "Run source-backed, falsifiable research"
-  default_prompt: "Use $evidence-research to investigate a question and leave a source-backed, uncertainty-labeled research artifact in the repository."

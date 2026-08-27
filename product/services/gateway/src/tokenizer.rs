@@ -311,12 +311,46 @@ fn read_tokenizer_config(path: &Path) -> Result<TokenizerConfig, ModelTokenizerE
 
 fn render_input(request: &ChatCompletionRequest) -> Result<RenderInput, TokenizerRequestError> {
     let mut fields: Map<String, Value> = request.parameters.clone();
-    fields.insert(
-        "messages".to_owned(),
-        Value::Array(request.messages.clone()),
-    );
+    let messages = request
+        .messages
+        .iter()
+        .cloned()
+        .map(normalize_chat_template_message)
+        .collect::<Result<Vec<_>, _>>()?;
+    fields.insert("messages".to_owned(), Value::Array(messages));
     fields.insert("add_generation_prompt".to_owned(), Value::Bool(true));
     serde_json::from_value(Value::Object(fields)).map_err(|_| TokenizerRequestError::InvalidInput)
+}
+
+fn normalize_chat_template_message(mut message: Value) -> Result<Value, TokenizerRequestError> {
+    let Some(tool_calls) = message
+        .as_object_mut()
+        .and_then(|message| message.get_mut("tool_calls"))
+    else {
+        return Ok(message);
+    };
+    let Some(tool_calls) = tool_calls.as_array_mut() else {
+        return Err(TokenizerRequestError::InvalidInput);
+    };
+    for tool_call in tool_calls {
+        let Some(arguments) = tool_call
+            .as_object_mut()
+            .and_then(|tool_call| tool_call.get_mut("function"))
+            .and_then(Value::as_object_mut)
+            .and_then(|function| function.get_mut("arguments"))
+        else {
+            continue;
+        };
+        if let Value::String(encoded) = arguments {
+            let decoded: Value =
+                serde_json::from_str(encoded).map_err(|_| TokenizerRequestError::InvalidInput)?;
+            if !decoded.is_object() {
+                return Err(TokenizerRequestError::InvalidInput);
+            }
+            *arguments = decoded;
+        }
+    }
+    Ok(message)
 }
 
 const DEEPSEEK_V4_BOS: &str = "<｜begin▁of▁sentence｜>";
@@ -567,6 +601,20 @@ mod tests {
         CompiledTokenizer::from_bytes(encoded.as_bytes(), config, None).unwrap()
     }
 
+    fn tool_continuation_tokenizer() -> CompiledTokenizer {
+        let vocabulary = [("[UNK]".to_owned(), 0)].into_iter().collect();
+        let model = WordLevel::builder()
+            .vocab(vocabulary)
+            .unk_token("[UNK]".to_owned())
+            .build()
+            .unwrap();
+        let tokenizer = Tokenizer::new(model).to_string(false).unwrap();
+        let config = br#"{
+            "chat_template": "{% for message in messages %}{% if message.tool_calls %}{% for call in message.tool_calls %}{% for key, value in call.function.arguments.items() %}{{ key }}={{ value }}{% endfor %}{% endfor %}{% else %}{{ message.content }}{% endif %}{% endfor %}"
+        }"#;
+        CompiledTokenizer::from_bytes(tokenizer.as_bytes(), config, None).unwrap()
+    }
+
     fn request(max_tokens: Option<u64>) -> QualifiedRequest {
         QualifiedRequest {
             metadata: RequestMetadata {
@@ -646,6 +694,55 @@ mod tests {
         request.messages = vec![serde_json::json!({"content": "hello"})];
         assert!(matches!(
             tokenizer().encode_input(&request),
+            Err(TokenizerRequestError::InvalidInput)
+        ));
+    }
+
+    #[test]
+    fn renders_openai_tool_call_arguments_in_follow_up_requests() {
+        let mut chat = request(None).request;
+        chat.messages = vec![
+            serde_json::json!({"role": "user", "content": "List the files."}),
+            serde_json::json!({
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{
+                    "id": "call_test",
+                    "type": "function",
+                    "function": {
+                        "name": "bash",
+                        "arguments": "{\"command\":\"ls -la\"}"
+                    }
+                }]
+            }),
+            serde_json::json!({
+                "role": "tool",
+                "tool_call_id": "call_test",
+                "content": "Permission denied"
+            }),
+        ];
+
+        assert!(tool_continuation_tokenizer().encode_input(&chat).is_ok());
+        assert_eq!(
+            chat.messages[1]["tool_calls"][0]["function"]["arguments"],
+            "{\"command\":\"ls -la\"}"
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_tool_call_argument_json() {
+        let mut chat = request(None).request;
+        chat.messages = vec![serde_json::json!({
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [{
+                "type": "function",
+                "function": {"name": "bash", "arguments": "{"}
+            }]
+        })];
+
+        assert!(matches!(
+            tool_continuation_tokenizer().encode_input(&chat),
             Err(TokenizerRequestError::InvalidInput)
         ));
     }
@@ -756,6 +853,62 @@ mod tests {
         qualified.deployment.release.tokenizer_path = "google/gemma-4-31B-it".to_owned();
         qualified.deployment.release.tokenizer_revision =
             "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
+
+        let bounded = ModelTokenizer::new()
+            .unwrap()
+            .enforce(qualified)
+            .await
+            .unwrap();
+        assert!(bounded.input_tokens > 0);
+    }
+
+    #[tokio::test]
+    #[ignore = "downloads the pinned production GLM tokenizer from Hugging Face"]
+    async fn loads_and_renders_the_pinned_glm_tool_continuation() {
+        let mut qualified = request(Some(64));
+        qualified.max_context_tokens = 1_048_576;
+        qualified.max_prompt_tokens = 1_048_512;
+        qualified.deployment.release.model_path = "zai-org/GLM-5.3-Flash".to_owned();
+        qualified.deployment.release.model_revision =
+            "84c6a6aa9497188e15a635ba793b0f95a79b1033".to_owned();
+        qualified.deployment.release.tokenizer_path = "zai-org/GLM-5.3-Flash".to_owned();
+        qualified.deployment.release.tokenizer_revision =
+            "84c6a6aa9497188e15a635ba793b0f95a79b1033".to_owned();
+        qualified.request.messages = vec![
+            serde_json::json!({"role": "user", "content": "List the files."}),
+            serde_json::json!({
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [{
+                    "id": "call_test",
+                    "type": "function",
+                    "function": {
+                        "name": "bash",
+                        "arguments": "{\"command\":\"ls -la\"}"
+                    }
+                }]
+            }),
+            serde_json::json!({
+                "role": "tool",
+                "tool_call_id": "call_test",
+                "content": "Permission denied"
+            }),
+        ];
+        qualified.request.parameters.insert(
+            "tools".to_owned(),
+            serde_json::json!([{
+                "type": "function",
+                "function": {
+                    "name": "bash",
+                    "description": "Run a shell command",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {"command": {"type": "string"}},
+                        "required": ["command"]
+                    }
+                }
+            }]),
+        );
 
         let bounded = ModelTokenizer::new()
             .unwrap()

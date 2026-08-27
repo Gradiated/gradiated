@@ -5,6 +5,7 @@ import { fetchCatalog, type CatalogModel } from "./catalog.js";
 import { readStoredKey, storeKey } from "./credentials.js";
 import { HttpError } from "./http.js";
 import { detectAgents } from "./agents/detect.js";
+import * as claude from "./agents/claude.js";
 import * as codex from "./agents/codex.js";
 import {
   buildProviderBlock,
@@ -32,7 +33,7 @@ Options:
   --signup            Create a new account (skips the menu)
   --login             Log in to an existing account (skips the menu)
   --key <key>         Use this API key instead of signing in
-  --agent <name>      Restrict the run to opencode or codex
+  --agent <name>      Restrict the run to opencode, codex, or claude
   --model <id>        Use this model from the catalog
   --api-base-url <u>  Override the API base URL (staging)
   --dry-run           Show what would be written; change nothing
@@ -157,9 +158,21 @@ const runInstall = async (): Promise<void> => {
     })),
   );
 
+  // Claude needs detection only for a friendlier table: the wrapper is a
+  // standalone script, so it can be installed before claude itself is.
+  const claudeRequested = options.agent === "claude";
+  const claudeOnPath = agents.some(
+    (agent) => agent.name === "claude" && agent.found,
+  );
+  if (claudeRequested && !claudeOnPath) {
+    ui.warn(
+      "'claude' was not found on PATH. Installing the wrapper anyway; install Claude Code before using it.",
+    );
+  }
+
   const selectedAgents = agents.filter(
     (agent) =>
-      agent.found &&
+      (agent.found || (agent.name === "claude" && claudeRequested)) &&
       (options.agent === undefined || agent.name === options.agent),
   );
   if (options.agent !== undefined && selectedAgents.length === 0) {
@@ -169,7 +182,7 @@ const runInstall = async (): Promise<void> => {
   }
   if (selectedAgents.length === 0) {
     ui.outro(
-      "No supported coding agent was found. Install OpenCode or Codex, then run this wizard again.",
+      "No supported coding agent was found. Install OpenCode, Codex, or Claude Code, then run this wizard again.",
     );
     return;
   }
@@ -185,6 +198,9 @@ const runInstall = async (): Promise<void> => {
     (agent) => agent.name === "opencode",
   );
   const configureCodex = selectedAgents.some((agent) => agent.name === "codex");
+  const configureClaude = selectedAgents.some(
+    (agent) => agent.name === "claude",
+  );
 
   // OpenCode receives the full catalog so /models offers every Gradiated
   // model. Codex receives an opt-in profile for the selected model.
@@ -208,6 +224,12 @@ const runInstall = async (): Promise<void> => {
     if (codexProvider !== null && codexProfile !== null) {
       ui.note(codexProvider, `Would merge into ${codex.configPath()}`);
       ui.note(codexProfile, `Would write ${codex.profilePath()}`);
+    }
+    if (configureClaude) {
+      ui.note(
+        `Would write ${claude.wrapperPath()} and add it to PATH`,
+        "Claude Code wrapper",
+      );
     }
     ui.outro("Dry run complete. No files were changed.");
     return;
@@ -243,6 +265,24 @@ const runInstall = async (): Promise<void> => {
     }
   }
 
+  let claudePathUpdated: string[] = [];
+  if (configureClaude) {
+    const wrapper = await claude.writeWrapper(options.apiBaseUrl, model.id);
+    ui.success(`Installed the claude-gradiated wrapper at ${wrapper}.`);
+    claudePathUpdated = await claude.addWrapperToPath();
+    if (claudePathUpdated.length > 0) {
+      ui.success(
+        `Added ~/.gradiated/bin to PATH in ${claudePathUpdated.join(", ")}.`,
+      );
+    } else if (!(await claude.hasWrapperOnPath())) {
+      ui.warn(
+        `Add this to your shell profile to use the wrapper:\n  export PATH="$HOME/.gradiated/bin:$PATH"`,
+      );
+    } else {
+      ui.success("PATH already contains the Gradiated wrapper directory.");
+    }
+  }
+
   const modelsLine = models.map((entry) => entry.name).join(", ");
   const nextSteps = [
     ...(configureOpenCode
@@ -255,6 +295,11 @@ const runInstall = async (): Promise<void> => {
           "Codex:\n  codex --profile gradiated\nUse -m <model-id> to select another Gradiated model.",
         ]
       : []),
+    ...(configureClaude
+      ? [
+          "Claude Code:\n  claude-gradiated\nYour normal `claude` is unchanged.\n  /model <id>                      switch models in a session\n  ANTHROPIC_MODEL=<id> claude-gradiated   override for one run\nNote: Claude Pro/Max login does not work through a custom gateway —\nclaude-gradiated is for Anthropic API-key setups.",
+        ]
+      : []),
   ].join("\n\n");
   const agentNames = selectedAgents.map((agent) => agent.name).join(" and ");
   ui.outro(
@@ -262,7 +307,7 @@ const runInstall = async (): Promise<void> => {
   );
 };
 
-type UninstallTarget = "opencode" | "codex" | "key";
+type UninstallTarget = "opencode" | "codex" | "claude" | "key";
 
 interface UninstallSelection {
   targets: readonly UninstallTarget[];
@@ -272,6 +317,7 @@ const detectUninstallTargets = async (): Promise<UninstallTarget[]> => {
   const present: UninstallTarget[] = [];
   if (await openCodeInstalled()) present.push("opencode");
   if (await codex.isInstalled()) present.push("codex");
+  if (claude.isWrapperInstalled()) present.push("claude");
   if ((await readStoredKey()) !== null) present.push("key");
   return present;
 };
@@ -294,6 +340,10 @@ const runUninstall = async (): Promise<void> => {
     codex: {
       label: "Codex",
       hint: "provider block and gradiated profile",
+    },
+    claude: {
+      label: "Claude Code wrapper",
+      hint: "claude-gradiated command and PATH entry",
     },
     key: {
       label: "Stored API key",
@@ -350,6 +400,15 @@ const runUninstall = async (): Promise<void> => {
         removed.push(`Codex profile (${codex.profilePath()})`);
       if (authRemoved) removed.push(`Codex credential (${codex.authPath()})`);
     }
+    if (target === "claude") {
+      const wrapperPath = await claude.uninstallWrapper();
+      const profilesUpdated = await claude.removeWrapperFromPath();
+      if (wrapperPath !== null)
+        removed.push(`claude-gradiated wrapper (${wrapperPath})`);
+      for (const profile of profilesUpdated) {
+        removed.push(`PATH entry (${profile})`);
+      }
+    }
     if (target === "key") {
       const { clearStoredKey } = await import("./credentials.js");
       const path = await clearStoredKey();
@@ -373,7 +432,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("0.2.0");
+    console.log("0.2.1");
     return;
   }
   if (parsed.command === "uninstall") {

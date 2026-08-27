@@ -7,7 +7,7 @@ export interface DetectedAgent {
   version: string | null;
 }
 
-const AGENTS = ["opencode", "codex"] as const;
+const AGENTS = ["opencode", "codex", "claude"] as const;
 
 const detectOne = (name: (typeof AGENTS)[number]): DetectedAgent => {
   try {

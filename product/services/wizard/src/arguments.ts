@@ -2,7 +2,7 @@ export const DEFAULT_API_BASE_URL = "https://api.gradiated.com";
 export const INFERENCE_BASE_URL = "https://api.gradiated.com/openai/v1";
 export const CONSOLE_URL = "https://console.gradiated.com";
 
-export type AgentName = "opencode" | "codex";
+export type AgentName = "opencode" | "codex" | "claude";
 
 export interface Options {
   apiBaseUrl: string;
@@ -57,10 +57,11 @@ export function parseArguments(argv: readonly string[]): ParsedArguments {
   if (
     requestedAgent !== undefined &&
     requestedAgent !== "opencode" &&
-    requestedAgent !== "codex"
+    requestedAgent !== "codex" &&
+    requestedAgent !== "claude"
   ) {
     throw new Error(
-      `Unsupported agent "${requestedAgent}". Use "opencode" or "codex".`,
+      `Unsupported agent "${requestedAgent}". Use "opencode", "codex", or "claude".`,
     );
   }
 

@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { homedir } from "node:os";
@@ -529,6 +530,65 @@ describe("wizard install end to end", () => {
         await readFile(join(home, ".gradiated/credentials.json"), "utf8"),
       ) as Record<string, unknown>;
       expect(credentials.api_key).toBe(API_KEY);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("installs and uninstalls the claude wrapper without touching ~/.claude", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      // No shell profiles initially; create one so PATH handling is exercised.
+      const { writeFile: writeFileRaw } = await import("node:fs/promises");
+      await writeFileRaw(join(home, ".zshrc"), "export EDITOR=vim\n");
+
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "claude",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.stderr).toBe("");
+      expect(install.status).toBe(0);
+      expect(install.stdout).toContain("claude-gradiated");
+
+      const wrapperPath = join(home, ".gradiated/bin/claude-gradiated");
+      const wrapper = await readFile(wrapperPath, "utf8");
+      // The wrapper stores exactly the base URL the wizard was invoked with.
+      expect(wrapper).toContain(`const BASE_URL = "http://127.0.0.1:${PORT}"`);
+      expect(wrapper).toContain('"z-ai/glm-5.3-flash"');
+      // The wrapper must read the key at runtime, never embed it.
+      expect(wrapper).not.toContain(API_KEY);
+      await expect(readFile(wrapperPath, "utf8")).resolves.toContain(
+        "credentials.json",
+      );
+
+      const zshrc = await readFile(join(home, ".zshrc"), "utf8");
+      expect(zshrc).toContain("export EDITOR=vim");
+      expect(zshrc).toContain("# >>> gradiated >>>");
+      expect(zshrc).toContain(".gradiated/bin");
+
+      // ~/.claude must remain untouched by the wizard.
+      expect(existsSync(join(home, ".claude"))).toBe(false);
+
+      const uninstall = await runWizardUninstall(["--yes"], home);
+      expect(uninstall.stderr).toBe("");
+      expect(uninstall.status).toBe(0);
+      expect(uninstall.stdout).toContain("claude-gradiated wrapper");
+
+      expect(existsSync(join(home, ".gradiated/bin"))).toBe(false);
+      const cleaned = await readFile(join(home, ".zshrc"), "utf8");
+      expect(cleaned).toContain("export EDITOR=vim");
+      expect(cleaned).not.toContain("# >>> gradiated >>>");
+      expect(existsSync(join(home, ".claude"))).toBe(false);
     } finally {
       await rm(home, { recursive: true, force: true });
     }

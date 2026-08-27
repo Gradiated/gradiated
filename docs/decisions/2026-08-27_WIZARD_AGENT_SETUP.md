@@ -2,13 +2,13 @@
 
 - Date: 2026-08-27
 - Status: implemented
-- Decision: configure OpenCode and Codex in the wizard. Document manual
-  Claude Code setup.
+- Decision: configure OpenCode, Codex, and Claude Code in the wizard.
 
 ## What changed and why
 
-The wizard now detects OpenCode and Codex. The `--agent` option restricts one
-run to either client. A bare run configures all detected supported clients.
+The wizard now detects OpenCode, Codex, and Claude Code. The `--agent` option
+restricts one run to one client. A bare run configures all detected supported
+clients.
 This feature releases as `@gradiated/wizard` version `0.2.0`.
 
 OpenCode keeps its existing default model. Codex receives an opt-in
@@ -16,9 +16,13 @@ OpenCode keeps its existing default model. Codex receives an opt-in
 Codex reads the owner-only Gradiated credential through its command-backed
 provider authentication.
 
-Claude Code setup remains manual. Its environment variables select the base
-URL, token, and model for one shell. The wizard does not change the global
-Claude Code route.
+Claude Code receives an opt-in `claude-gradiated` wrapper command in
+`~/.gradiated/bin`. The wrapper sets `ANTHROPIC_BASE_URL`,
+`ANTHROPIC_AUTH_TOKEN` and `ANTHROPIC_MODEL` for that invocation only and
+reads the key from the wizard credential file at runtime, so it never embeds
+the key. The wizard never writes to `~/.claude` and never changes the global
+Claude Code route. PATH integration is a marker-scoped block in `~/.zshrc`
+and `~/.bashrc`; uninstall removes the wrapper and the block.
 
 Terraform static CI now shares one provider plugin cache across module roots.
 It removes each temporary `.terraform` directory after validation. This stops

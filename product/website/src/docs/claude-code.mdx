@@ -3,9 +3,54 @@
 # Use Gradiated with Claude Code
 
 <p className="docs-lead">
-  Start Claude Code with temporary Gradiated environment variables. Your default
-  Claude Code route stays unchanged.
+  Run Claude Code on Gradiated with the claude-gradiated command. Your normal
+  `claude` stays exactly as it is.
 </p>
+
+## Set up automatically
+
+Run the Gradiated wizard:
+
+```sh
+npx -y @gradiated/wizard --agent claude
+```
+
+The wizard gets or validates your Gradiated API key, lets you pick a default
+model from the catalog, and installs a `claude-gradiated` command. It also
+adds `~/.gradiated/bin` to your PATH in `~/.zshrc` and `~/.bashrc` (other
+shells print a manual line instead).
+
+Start Claude Code on Gradiated:
+
+```sh
+claude-gradiated
+```
+
+Your normal `claude` command is unchanged and keeps using your default
+Anthropic route. The wrapper reads your key from
+`~/.gradiated/credentials.json` at runtime, so the key itself is never inside
+the wrapper.
+
+Switch models inside a session:
+
+```text
+/model YOUR_MODEL_ID
+```
+
+Or override the model for one run:
+
+```sh
+ANTHROPIC_MODEL="YOUR_MODEL_ID" claude-gradiated
+```
+
+### Notes
+
+- `claude-gradiated` is for Anthropic **API-key** setups. Claude Pro/Max
+  subscription login does not work through a custom gateway.
+- The wrapper sets `ANTHROPIC_BASE_URL` (bare host — Claude Code appends
+  `/v1/messages` itself), `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_MODEL`. Any
+  of these you set yourself in the environment wins over the wrapper.
+- Re-run the wizard any time to refresh the default model.
 
 ## Set up manually
 
@@ -42,16 +87,17 @@ unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL
 - Check that `ANTHROPIC_AUTH_TOKEN` contains your Gradiated API key.
 - Check that `ANTHROPIC_MODEL` matches the Gradiated catalog.
 - Check that the workspace has billing capacity.
+- If `claude-gradiated` is not found, open a new shell after install or add
+  `~/.gradiated/bin` to your PATH.
 
 ## Uninstall
 
-Gradiated is removed from Claude Code by deleting the environment variables
-from the shell profile line the setup added. The wizard does not manage
-Claude Code globally, so there is nothing for `@gradiated/wizard uninstall`
-to remove for it. If you also configured OpenCode or Codex, run:
+Remove the wrapper and its PATH entry with:
 
 ```sh
 npx -y @gradiated/wizard uninstall
 ```
 
-and pick the agents to clean up.
+Pick the Claude Code wrapper in the list. The wizard deletes the
+`claude-gradiated` command, removes the PATH block it added from your shell
+profiles, and leaves your `~/.claude` directory and normal `claude` untouched.

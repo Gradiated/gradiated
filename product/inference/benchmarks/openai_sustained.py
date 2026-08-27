@@ -27,6 +27,7 @@ class Result:
     cacheable_prompt_tokens: int
     completion_tokens: int
     error: str = ""
+    provider: str = ""
 
 
 def percentile(values: list[float], fraction: float) -> float:
@@ -94,8 +95,14 @@ def request_once(
         "temperature": 0,
         "stream": True,
         "stream_options": {"include_usage": True},
-        "ignore_eos": True,
     }
+    if args.ignore_eos:
+        payload["ignore_eos"] = True
+    if args.provider:
+        payload["provider"] = {
+            "only": [args.provider],
+            "allow_fallbacks": False,
+        }
     request = urllib.request.Request(
         f"{args.base_url.rstrip('/')}/v1/chat/completions",
         data=json.dumps(payload).encode(),
@@ -109,6 +116,7 @@ def request_once(
     prompt_tokens = 0
     cached_prompt_tokens = 0
     completion_tokens = 0
+    provider = ""
     try:
         with urllib.request.urlopen(request, timeout=args.timeout) as response:
             for raw_line in response:
@@ -116,6 +124,8 @@ def request_once(
                 if not line.startswith("data: ") or line == "data: [DONE]":
                     continue
                 chunk = json.loads(line[6:])
+                if isinstance(chunk.get("provider"), str):
+                    provider = chunk["provider"]
                 usage = chunk.get("usage") or {}
                 prompt_tokens = int(usage.get("prompt_tokens") or prompt_tokens)
                 prompt_details = usage.get("prompt_tokens_details") or {}
@@ -126,7 +136,11 @@ def request_once(
                 choices = chunk.get("choices") or []
                 if choices:
                     delta = choices[0].get("delta") or {}
-                    emitted = delta.get("content") or delta.get("reasoning_content")
+                    emitted = (
+                        delta.get("content")
+                        or delta.get("reasoning_content")
+                        or delta.get("reasoning")
+                    )
                     if emitted and first_token_at == 0.0:
                         first_token_at = time.monotonic()
         finished_at = time.monotonic()
@@ -144,7 +158,31 @@ def request_once(
             cached_prompt_tokens,
             0,
             completion_tokens,
+            provider=provider,
         )
+    except urllib.error.HTTPError as error:
+        body = error.read().decode("utf-8", errors="replace").strip()
+        detail = ""
+        try:
+            payload_error = json.loads(body).get("error") or {}
+            metadata = payload_error.get("metadata") or {}
+            safe_error = {
+                "message": payload_error.get("message"),
+                "code": payload_error.get("code"),
+                "provider_name": metadata.get("provider_name"),
+                "limit_source": metadata.get("limit_source"),
+                "raw": metadata.get("raw"),
+            }
+            detail = json.dumps(
+                {key: value for key, value in safe_error.items() if value is not None},
+                separators=(",", ":"),
+            )[:1000]
+        except (AttributeError, json.JSONDecodeError):
+            detail = "response body omitted"
+        message = f"HTTP {error.code}"
+        if detail:
+            message = f"{message}: {detail}"
+        return Result(started_at, time.monotonic(), 0.0, 0, 0, 0, 0, message)
     except Exception as error:  # noqa: BLE001 - benchmark records all failures
         return Result(started_at, time.monotonic(), 0.0, 0, 0, 0, 0, str(error))
 
@@ -332,6 +370,10 @@ def run_level(
     cacheable_input_tokens = sum(
         result.cacheable_prompt_tokens for result in successful
     )
+    provider_counts: dict[str, int] = {}
+    for result in successful:
+        if result.provider:
+            provider_counts[result.provider] = provider_counts.get(result.provider, 0) + 1
     measured_cached_tokens = max(
         0.0,
         sglang_after.get("cached_tokens", 0.0)
@@ -371,6 +413,7 @@ def run_level(
         else 0,
         "server_cache_metrics_valid": measured_prefill_tokens <= input_tokens * 1.1,
         "output_tokens": output_tokens,
+        "providers": provider_counts,
         "request_rate": round(len(successful) / wall_seconds, 3),
         "aggregate_output_tps": round(output_tokens / wall_seconds, 2),
         "aggregate_total_tps": round((input_tokens + output_tokens) / wall_seconds, 2),
@@ -397,6 +440,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-url", default="http://10.96.0.50:30000")
     parser.add_argument("--desmond-url", default="http://10.96.0.50:9090")
     parser.add_argument("--model", default="google/gemma-4-31B-it")
+    parser.add_argument("--provider", default="")
     parser.add_argument("--api-key", default=os.environ.get("SGLANG_API_KEY", ""))
     parser.add_argument("--concurrencies", default="1,2,4,8,16,24")
     parser.add_argument("--seconds", type=float, default=20)
@@ -416,6 +460,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--warmup-output-tokens", type=int, default=1)
     parser.add_argument("--output-tokens", type=int, default=128)
+    parser.add_argument(
+        "--ignore-eos", action=argparse.BooleanOptionalAction, default=True
+    )
     parser.add_argument("--timeout", type=float, default=180)
     parser.add_argument("--cooldown-seconds", type=float, default=3)
     args = parser.parse_args()
@@ -440,6 +487,8 @@ def main() -> int:
                 "session_prefix_repetitions": args.session_prefix_repetitions,
                 "session_suffix_repetitions": args.session_suffix_repetitions,
                 "output_tokens": args.output_tokens,
+                "provider": args.provider,
+                "ignore_eos": args.ignore_eos,
                 "trace_workload": args.trace_workload,
                 "trace_sessions": len(trace_sessions),
             }

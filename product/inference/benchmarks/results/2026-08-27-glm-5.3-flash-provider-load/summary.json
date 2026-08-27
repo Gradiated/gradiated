@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-27",
+  "decision": "competitive_at_configured_concurrency_8",
+  "evidence_scope": {
+    "model": "zai-org/GLM-5.3-Flash",
+    "model_revision": "84c6a6aa9497188e15a635ba793b0f95a79b1033",
+    "runtime_revision": "vllm-933876c388fb129ad82590660e6506614559cb86",
+    "hardware": "4x NVIDIA B300 as two TP2 replicas",
+    "precision": "FP8 weights and FP8 KV cache",
+    "workload": "9790-9792 uncached input tokens and 256 output tokens",
+    "production_limit": "4 requests per TP2 replica, 8 requests total"
+  },
+  "hypothesis": "Two TP2 replicas can serve eight concurrent long requests with lower latency and higher throughput than the main same-price OpenRouter providers.",
+  "quality_gate": "Valid streaming output, valid usage, and no request errors.",
+  "slo": "Zero errors and p95 TTFT below 5 seconds at configured concurrency 8.",
+  "budget": {
+    "maximum_openrouter_spend_usd": 5.0,
+    "estimated_openrouter_spend_usd": "less_than_0.10",
+    "maximum_wall_clock_minutes": 30
+  },
+  "measured_gradiated": {
+    "concurrency_8_combined": {
+      "successful": 16,
+      "errors": 0,
+      "aggregate_output_tokens_per_second": 460.32,
+      "replica_median_ttft_seconds": [1.63, 1.896],
+      "replica_p95_ttft_seconds": [2.016, 2.321],
+      "replica_median_decode_tokens_per_second": [97.74, 104.42]
+    },
+    "cold_single_request": {
+      "replica_median_ttft_seconds": [0.66, 0.716],
+      "replica_median_decode_tokens_per_second": [138.56, 149.69]
+    },
+    "cached_concurrency_4_per_replica": {
+      "input_cache_hit_ratio": 0.885,
+      "replica_p95_ttft_seconds": [2.519, 2.777],
+      "replica_aggregate_output_tokens_per_second": [228.45, 248.53]
+    }
+  },
+  "matched_openrouter": {
+    "z_ai_fp8": {
+      "price_cohort": "same_price",
+      "concurrency_8": {
+        "successful": 9,
+        "errors": 0,
+        "aggregate_output_tokens_per_second": 148.16,
+        "median_ttft_seconds": 5.97,
+        "p95_ttft_seconds": 10.854,
+        "median_decode_tokens_per_second": 59.58
+      }
+    },
+    "novita_fp8": {
+      "price_cohort": "same_price",
+      "concurrency_8": {
+        "successful": 10,
+        "errors": 17,
+        "aggregate_output_tokens_per_second": 160.0,
+        "median_ttft_seconds": 2.053,
+        "p95_ttft_seconds": 2.374,
+        "median_decode_tokens_per_second": 42.98
+      }
+    },
+    "other_providers": {
+      "providers_tested": [
+        "BaseTen",
+        "Cloudflare",
+        "DeepInfra",
+        "Parasail",
+        "Reka",
+        "Together"
+      ],
+      "result": "Each provider returned at least one HTTP 429 during the pinned test. Successful request performance remains in the individual JSONL files."
+    }
+  },
+  "rate_limit_diagnosis": {
+    "measured": true,
+    "openrouter_limit_source": "upstream_provider_shared_pool",
+    "providers_confirmed": [
+      "BaseTen",
+      "Cloudflare",
+      "DeepInfra",
+      "Novita",
+      "Parasail",
+      "Reka",
+      "Together"
+    ],
+    "interpretation": "The provider endpoint shared with OpenRouter was rate-limited. This was not a per-user OpenRouter account limit. A provider can have other private capacity that is not available to OpenRouter."
+  },
+  "derived_comparison": {
+    "gradiated_vs_z_ai_aggregate_output_throughput_ratio": 3.11,
+    "gradiated_vs_novita_aggregate_output_throughput_ratio": 2.88,
+    "gradiated_vs_z_ai_p95_ttft_improvement_ratio_using_slower_replica": 4.68,
+    "gradiated_vs_novita_p95_ttft_improvement_ratio_using_slower_replica": 1.02
+  },
+  "limits": [
+    "Gradiated was measured through a direct SSH tunnel to each runtime. OpenRouter providers were measured through OpenRouter.",
+    "The provider runs were short. They show current endpoint behavior, not long-term uptime.",
+    "Immediate benchmark retries make repeated 429 counts a stress signal. They are not an uptime percentage.",
+    "The first replica-1 high-concurrency samples included Triton compilation. The warm repeat is the steady-state result."
+  ],
+  "next_actions": [
+    "Keep the production limit at four requests per TP2 replica.",
+    "Compile all expected Triton shapes before the deployment reports ready.",
+    "Measure the public gateway path after the OpenRouter endpoint is active.",
+    "Monitor OpenRouter TTFT, throughput, and 429 rate after launch."
+  ]
+}

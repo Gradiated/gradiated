@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "date": "2026-08-27",
+  "decision": "concurrency_8_is_stable_and_fast_through_500k_cached_input",
+  "evidence_class": "measured",
+  "scope": {
+    "model": "zai-org/GLM-5.3-Flash",
+    "model_revision": "84c6a6aa9497188e15a635ba793b0f95a79b1033",
+    "runtime_revision": "vllm-933876c388fb129ad82590660e6506614559cb86",
+    "hardware": "4x NVIDIA B300 as two TP2 replicas",
+    "placement": "four concurrent requests per TP2 replica",
+    "output_tokens_per_request": 256,
+    "prefix_cache": "four distinct warmed prefixes per replica"
+  },
+  "contract": {
+    "hypothesis": "Both TP2 replicas can complete four heavily cached long-context requests at the same time without OOM, request errors, or runtime failure.",
+    "quality_gate": "Eight valid streaming responses with valid usage and no errors at each input size.",
+    "stop_rule": "Stop escalation after OOM, runtime failure, or severe queueing.",
+    "maximum_wall_clock_minutes": 30,
+    "maximum_retained_gpu_cost_usd": 7.5,
+    "estimated_test_cost_usd": "less_than_1.50",
+    "cleanup": "Retain the production runtimes and close the temporary SSH tunnel."
+  },
+  "results": {
+    "100k": {
+      "measurement_path": "workstation through SSH tunnel; treat latency as an upper bound",
+      "input_tokens_total": 800204,
+      "cached_input_tokens_total": 765952,
+      "reported_cache_hit_ratio": 0.9572,
+      "successful_requests": 8,
+      "errors": 0,
+      "replica_median_ttft_seconds": [1.372, 1.49],
+      "replica_p95_ttft_seconds": [1.623, 1.771],
+      "replica_median_decode_tokens_per_second": [96.6, 86.93],
+      "combined_aggregate_output_tokens_per_second": 481.5
+    },
+    "250k": {
+      "measurement_path": "workstation through SSH tunnel; treat latency as an upper bound",
+      "input_tokens_total": 2000121,
+      "cached_input_tokens_total": 1984512,
+      "reported_cache_hit_ratio": 0.9922,
+      "successful_requests": 8,
+      "errors": 0,
+      "replica_median_ttft_seconds": [8.191, 3.846],
+      "replica_p95_ttft_seconds": [8.693, 4.429],
+      "replica_median_decode_tokens_per_second": [100.41, 87.4],
+      "combined_aggregate_output_tokens_per_second": 236.68
+    },
+    "500k": {
+      "measurement_path": "benchmark clients on the RunPod host through localhost",
+      "input_tokens_total": 4000155,
+      "cached_input_tokens_total": 3969024,
+      "reported_cache_hit_ratio": 0.9922,
+      "successful_requests": 8,
+      "errors": 0,
+      "replica_median_ttft_seconds": [2.923, 3.152],
+      "replica_p95_ttft_seconds": [4.148, 4.662],
+      "replica_median_decode_tokens_per_second": [100.99, 98.1],
+      "combined_aggregate_output_tokens_per_second": 310.38
+    }
+  },
+  "invalid_arms": [
+    {
+      "input_size": "100k",
+      "reason": "A 0.01-second launch window allowed only seven measured workers to start.",
+      "runtime_errors": 0,
+      "action": "Repeated with a one-second launch window."
+    },
+    {
+      "input_size": "500k",
+      "reason": "Workstation clients uploaded about 22 MB of request JSON through two SSH tunnels. This added 60 to 74 seconds of transport delay.",
+      "runtime_errors": 0,
+      "action": "Repeated with both benchmark clients on the RunPod host."
+    }
+  ],
+  "observations": [
+    "All 24 valid measured requests completed without an error or OOM.",
+    "Both runtimes were healthy with zero running and zero waiting requests after the test.",
+    "The valid 500K p95 TTFT was below 4.7 seconds on both replicas.",
+    "The invalid SSH-tunnel result was caused by request upload time, not model inference.",
+    "A separate 500K localhost test at concurrency one had 1.42-second TTFT and 161.78 decode tokens per second.",
+    "The valid 500K arm did not produce a new JIT warning.",
+    "Replica 1 compiled BuildPrefillChunkMetadataKernel during an earlier long-context arm."
+  ],
+  "limits": [
+    "The valid 500K test used localhost on the RunPod host. It did not measure the public gateway or OpenRouter request-upload path.",
+    "Each size has one valid measured wave. The result establishes function and current latency, not a long-term tail distribution.",
+    "The warmup cost is excluded from measured TTFT."
+  ],
+  "next_measurement": "Test 500K through the public gateway from a client with normal upload bandwidth."
+}

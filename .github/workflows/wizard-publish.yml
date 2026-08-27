@@ -1,0 +1,36 @@
+name: Wizard publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "product/services/wizard/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: wizard-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish @gradiated/wizard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build and verify
+        working-directory: product
+        run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
+      - name: Publish with provenance
+        working-directory: product/services/wizard
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

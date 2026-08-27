@@ -2,11 +2,13 @@ import { Link } from "react-router-dom";
 import type { ComponentType, ReactElement } from "react";
 import DocsIndex from "../docs/index.mdx";
 import DocsApi from "../docs/api.mdx";
+import DocsClaudeCode from "../docs/claude-code.mdx";
 import DocsCodex from "../docs/codex.mdx";
 import DocsOpenCode from "../docs/opencode.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 
-export type DocsPageKey = "index" | "quickstart" | "opencode" | "codex" | "api";
+export type DocsPageKey =
+  "index" | "quickstart" | "opencode" | "codex" | "claude-code" | "api";
 
 type DocsPageProps = {
   page: DocsPageKey;
@@ -44,6 +46,12 @@ const documents: Record<DocsPageKey, DocsDocument> = {
     label: "Coding agents",
     Component: DocsCodex,
   },
+  "claude-code": {
+    title: "Claude Code",
+    path: "/docs/claude-code/",
+    label: "Coding agents",
+    Component: DocsClaudeCode,
+  },
   api: {
     title: "Chat Completions API",
     path: "/docs/api/",
@@ -54,7 +62,7 @@ const documents: Record<DocsPageKey, DocsDocument> = {
 
 const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
   { heading: "Get started", items: ["index", "quickstart"] },
-  { heading: "Coding agents", items: ["opencode", "codex"] },
+  { heading: "Coding agents", items: ["opencode", "codex", "claude-code"] },
   { heading: "API", items: ["api"] },
 ];
 

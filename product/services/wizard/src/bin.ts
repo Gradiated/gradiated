@@ -1,17 +1,12 @@
 #!/usr/bin/env node
-import {
-  DEFAULT_API_BASE_URL,
-  INFERENCE_BASE_URL,
-  CONSOLE_URL,
-  parseArguments,
-} from "./arguments.js";
+import { CONSOLE_URL, parseArguments } from "./arguments.js";
 import { resolveAccount } from "./account.js";
 import { fetchCatalog, type CatalogModel } from "./catalog.js";
 import { readStoredKey, storeKey } from "./credentials.js";
 import { HttpError } from "./http.js";
 import { detectAgents } from "./agents/detect.js";
+import * as codex from "./agents/codex.js";
 import {
-  authPath,
   buildProviderBlock,
   locateConfig,
   mergeAuthCredential,
@@ -33,6 +28,7 @@ Options:
   --signup            Create a new account (skips the menu)
   --login             Log in to an existing account (skips the menu)
   --key <key>         Use this API key instead of signing in
+  --agent <name>      Configure only opencode or codex
   --model <id>        Use this model from the catalog
   --api-base-url <u>  Override the API base URL (staging)
   --dry-run           Show what would be written; change nothing
@@ -40,11 +36,6 @@ Options:
   --help              Show this help
   --version           Show the version
 `;
-
-const SUPPORTED_NOTES: Record<string, string | undefined> = {
-  codex: "needs the Responses API; see gradiated.com/docs/codex",
-  claude: "needs the Anthropic Messages API; see gradiated.com/docs/codex",
-};
 
 const validateCatalogKey = async (
   inferenceBaseUrl: string,
@@ -87,7 +78,7 @@ const pickModel = async (
     return first;
   }
   const choice = await ui.selectOption(
-    "Which model should OpenCode use by default?",
+    "Which model should Gradiated use by default?",
     models.map((model) => ({
       value: model.id,
       label: model.name,
@@ -159,15 +150,22 @@ const runInstall = async (): Promise<void> => {
     agents.map((agent) => ({
       name: agent.name,
       found: agent.found,
-      ...(SUPPORTED_NOTES[agent.name] !== undefined
-        ? { note: SUPPORTED_NOTES[agent.name] }
-        : {}),
     })),
   );
 
-  if (!agents.some((agent) => agent.name === "opencode" && agent.found)) {
+  const selectedAgents = agents.filter(
+    (agent) =>
+      agent.found &&
+      (options.agent === undefined || agent.name === options.agent),
+  );
+  if (options.agent !== undefined && selectedAgents.length === 0) {
+    ui.fail(
+      `${options.agent} is not installed or is not on PATH. Install it, then run this wizard again.`,
+    );
+  }
+  if (selectedAgents.length === 0) {
     ui.outro(
-      "OpenCode is not installed. Install it with:\n  curl -fsSL https://opencode.ai/install | bash\nThen run this wizard again.",
+      "No supported coding agent was found. Install OpenCode or Codex, then run this wizard again.",
     );
     return;
   }
@@ -179,42 +177,84 @@ const runInstall = async (): Promise<void> => {
     requested: options.model,
   });
 
-  // Write the full catalog so /models offers every Gradiated model; the
-  // default selection only sets the top-level "model" key.
-  const configured = buildProviderBlock(options.inferenceBaseUrl, models);
+  const configureOpenCode = selectedAgents.some(
+    (agent) => agent.name === "opencode",
+  );
+  const configureCodex = selectedAgents.some((agent) => agent.name === "codex");
+
+  // OpenCode receives the full catalog so /models offers every Gradiated
+  // model. Codex receives an opt-in profile for the selected model.
+  const openCodeProvider = configureOpenCode
+    ? buildProviderBlock(options.inferenceBaseUrl, models)
+    : null;
+  const codexProvider = configureCodex
+    ? codex.buildProviderBlock(options.apiBaseUrl)
+    : null;
+  const codexProfile = configureCodex
+    ? codex.buildProfileBlock(model.id)
+    : null;
 
   if (options.dryRun) {
-    ui.note(
-      JSON.stringify(configured, null, 2),
-      "Would write this provider block",
-    );
+    if (openCodeProvider !== null) {
+      ui.note(
+        JSON.stringify(openCodeProvider, null, 2),
+        "Would write this OpenCode provider",
+      );
+    }
+    if (codexProvider !== null && codexProfile !== null) {
+      ui.note(codexProvider, `Would merge into ${codex.configPath()}`);
+      ui.note(codexProfile, `Would write ${codex.profilePath()}`);
+    }
     ui.outro("Dry run complete. No files were changed.");
     return;
   }
 
-  const located = locateConfig();
-  const document = await readConfigDocument(located);
-  const { document: merged, defaultModel } = mergeProvider(
-    document,
-    configured,
-  );
-  const configPath = await writeConfig(located, merged);
-  ui.success(
-    `Wrote the Gradiated provider to ${configPath}` +
-      (defaultModel !== null ? ` (default model: ${defaultModel})` : ""),
-  );
+  if (openCodeProvider !== null) {
+    const located = locateConfig();
+    const document = await readConfigDocument(located);
+    const { document: merged, defaultModel } = mergeProvider(
+      document,
+      openCodeProvider,
+    );
+    const configPath = await writeConfig(located, merged);
+    ui.success(
+      `Wrote the Gradiated provider to ${configPath}` +
+        (defaultModel !== null ? ` (default model: ${defaultModel})` : ""),
+    );
+  }
+
+  if (codexProvider !== null) {
+    const written = await codex.writeConfig(options.apiBaseUrl, model.id);
+    ui.success(`Wrote the Gradiated Codex provider to ${written.configPath}.`);
+    ui.success(`Wrote the Gradiated Codex profile to ${written.profilePath}.`);
+  }
 
   await storeKey(apiKey);
   ui.success("Stored the key in ~/.gradiated/credentials.json (0600).");
 
-  const authWritten = await mergeAuthCredential(apiKey);
-  if (authWritten !== null) {
-    ui.success(`Stored the credential for OpenCode in ${authWritten}.`);
+  if (configureOpenCode) {
+    const authWritten = await mergeAuthCredential(apiKey);
+    if (authWritten !== null) {
+      ui.success(`Stored the credential for OpenCode in ${authWritten}.`);
+    }
   }
 
   const modelsLine = models.map((entry) => entry.name).join(", ");
+  const nextSteps = [
+    ...(configureOpenCode
+      ? [
+          `OpenCode:\n  opencode\nThen use /models to switch between ${modelsLine}.`,
+        ]
+      : []),
+    ...(configureCodex
+      ? [
+          "Codex:\n  codex --profile gradiated\nUse -m <model-id> to select another Gradiated model.",
+        ]
+      : []),
+  ].join("\n\n");
+  const agentNames = selectedAgents.map((agent) => agent.name).join(" and ");
   ui.outro(
-    `Ready. OpenCode now runs on Gradiated.\n\n  opencode\n\nThen /models to switch between ${modelsLine}.\n\nAffordable inference for open-weight models — https://gradiated.com/docs`,
+    `Ready. Gradiated is configured for ${agentNames}.\n\n${nextSteps}\n\nAffordable inference for open-weight models — https://gradiated.com/docs`,
   );
 };
 

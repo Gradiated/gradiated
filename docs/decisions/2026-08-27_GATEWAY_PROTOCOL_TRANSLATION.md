@@ -81,8 +81,9 @@ gateway hot path or the model runtime contract?
 
 ## Consequences
 
-- Codex and Claude Code onboarding is unblocked; the wizard's `codex` and
-  `claude` modules can land without gateway work.
+- Codex onboarding is unblocked through a separate wizard-managed profile.
+  Claude Code uses manual environment configuration so the wizard does not
+  change its default route.
 - New provider formats become an additive `Protocol` variant plus fixtures.
 - The gateway now depends on a young third-party crate; pinning, the module
   boundary, and conformance fixtures bound that risk.

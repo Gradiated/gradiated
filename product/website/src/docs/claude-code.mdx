@@ -1,0 +1,44 @@
+<p className="docs-kicker">Coding agents</p>
+
+# Use Gradiated with Claude Code
+
+<p className="docs-lead">
+  Start Claude Code with temporary Gradiated environment variables. Your default
+  Claude Code route stays unchanged.
+</p>
+
+## Set up manually
+
+You need an active Gradiated API key, a model ID from the Gradiated model
+catalog, and Claude Code on your machine.
+
+Set the variables in the shell that will start Claude Code:
+
+```sh
+export GRADIATED_API_KEY="grad_..."
+export ANTHROPIC_BASE_URL="https://api.gradiated.com"
+export ANTHROPIC_AUTH_TOKEN="$GRADIATED_API_KEY"
+export ANTHROPIC_MODEL="YOUR_MODEL_ID"
+claude
+```
+
+Replace `YOUR_MODEL_ID` with an ID from:
+
+```sh
+curl https://api.gradiated.com/openai/v1/models \
+  -H "Authorization: Bearer $GRADIATED_API_KEY"
+```
+
+These variables apply only to processes that start from this shell. Remove
+them to use your normal Claude Code route again:
+
+```sh
+unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL
+```
+
+## Troubleshooting
+
+- Check that `ANTHROPIC_BASE_URL` does not include `/v1`.
+- Check that `ANTHROPIC_AUTH_TOKEN` contains your Gradiated API key.
+- Check that `ANTHROPIC_MODEL` matches the Gradiated catalog.
+- Check that the workspace has billing capacity.

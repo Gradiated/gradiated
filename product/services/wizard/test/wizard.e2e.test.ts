@@ -80,6 +80,104 @@ const startStub = async (): Promise<void> => {
       response.end(JSON.stringify(FIXTURE_CATALOG));
       return;
     }
+    if (url.pathname === "/v1/responses") {
+      const events = [
+        {
+          type: "response.created",
+          response: {
+            id: "resp_wizard",
+            object: "response",
+            status: "in_progress",
+            model: "z-ai/glm-5.3-flash",
+            output: [],
+            usage: {
+              input_tokens: 1,
+              output_tokens: 0,
+              total_tokens: 1,
+              input_tokens_details: { cached_tokens: 0 },
+              output_tokens_details: { reasoning_tokens: 0 },
+            },
+          },
+        },
+        {
+          type: "response.output_item.added",
+          output_index: 0,
+          item: {
+            type: "message",
+            id: "msg_0",
+            role: "assistant",
+            status: "in_progress",
+            content: [],
+          },
+        },
+        {
+          type: "response.content_part.added",
+          output_index: 0,
+          content_index: 0,
+          part: { type: "output_text", text: "" },
+        },
+        {
+          type: "response.output_text.delta",
+          output_index: 0,
+          content_index: 0,
+          delta: "ready",
+        },
+        {
+          type: "response.content_part.done",
+          output_index: 0,
+          content_index: 0,
+          part: { type: "output_text", text: "ready" },
+        },
+        {
+          type: "response.output_item.done",
+          output_index: 0,
+          item: {
+            type: "message",
+            role: "assistant",
+            status: "completed",
+            content: [{ type: "output_text", text: "ready" }],
+          },
+        },
+        {
+          type: "response.completed",
+          response: {
+            id: "resp_wizard",
+            object: "response",
+            status: "completed",
+            incomplete_details: null,
+            model: "z-ai/glm-5.3-flash",
+            output: [
+              {
+                type: "message",
+                role: "assistant",
+                status: "completed",
+                content: [{ type: "output_text", text: "ready" }],
+              },
+            ],
+            usage: {
+              input_tokens: 1,
+              output_tokens: 1,
+              total_tokens: 2,
+              input_tokens_details: { cached_tokens: 0 },
+              output_tokens_details: { reasoning_tokens: 0 },
+            },
+          },
+        },
+      ];
+      response.writeHead(200, {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+      });
+      response.end(
+        events
+          .map(
+            (event) =>
+              `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`,
+          )
+          .join(""),
+      );
+      return;
+    }
     response.writeHead(404, { "content-type": "application/problem+json" });
     response.end(
       JSON.stringify({
@@ -115,6 +213,7 @@ const runWizard = async (
         env: {
           ...process.env,
           HOME: home,
+          USERPROFILE: home,
           GRADIATED_CREDENTIALS_PATH: join(
             home,
             ".gradiated",
@@ -122,6 +221,56 @@ const runWizard = async (
           ),
           GRADIATED_API_KEY: "",
         },
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("close", (status) => {
+      resolvePromise({ status, stdout, stderr });
+    });
+  });
+
+const runCodex = async (
+  home: string,
+): Promise<{ status: number | null; stdout: string; stderr: string }> =>
+  new Promise((resolvePromise) => {
+    const child = spawn(
+      "codex",
+      [
+        "exec",
+        "--profile",
+        "gradiated",
+        "--strict-config",
+        "--skip-git-repo-check",
+        "--ephemeral",
+        "--sandbox",
+        "read-only",
+        "--json",
+        "Reply with exactly ready.",
+      ],
+      {
+        cwd: home,
+        env: {
+          ...process.env,
+          HOME: home,
+          USERPROFILE: home,
+          CODEX_HOME: join(home, ".codex"),
+          GRADIATED_CREDENTIALS_PATH: join(
+            home,
+            ".gradiated",
+            "credentials.json",
+          ),
+          GRADIATED_API_KEY: "",
+          NO_COLOR: "1",
+        },
+        shell: process.platform === "win32",
         stdio: ["ignore", "pipe", "pipe"],
       },
     );
@@ -150,6 +299,8 @@ describe("wizard install end to end", () => {
       const result = await runWizard(
         [
           "--yes",
+          "--agent",
+          "opencode",
           "--key",
           API_KEY,
           "--model",
@@ -208,12 +359,57 @@ describe("wizard install end to end", () => {
     }
   });
 
+  it("writes a Codex profile that the real client can use", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const result = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "codex",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+
+      const config = await readFile(join(home, ".codex/config.toml"), "utf8");
+      expect(config).toContain("[model_providers.gradiated]");
+      expect(config).toContain(`base_url = "http://127.0.0.1:${PORT}/v1"`);
+      expect(config).toContain('wire_api = "responses"');
+      expect(config).toContain('auth = { command = "node"');
+      expect(config).not.toContain(API_KEY);
+
+      const profile = await readFile(
+        join(home, ".codex/gradiated.config.toml"),
+        "utf8",
+      );
+      expect(profile).toContain('model_provider = "gradiated"');
+      expect(profile).toContain('model = "z-ai/glm-5.3-flash"');
+
+      const codex = await runCodex(home);
+      expect(codex.status, codex.stderr).toBe(0);
+      expect(codex.stdout).toContain("ready");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
   it("fails with the gateway message when the key is rejected", async () => {
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
     try {
       const result = await runWizard(
         [
           "--yes",
+          "--agent",
+          "opencode",
           "--key",
           "grad_wrong_key",
           "--api-base-url",
@@ -250,6 +446,8 @@ describe("wizard install end to end", () => {
       const result = await runWizard(
         [
           "--yes",
+          "--agent",
+          "opencode",
           "--key",
           API_KEY,
           "--api-base-url",

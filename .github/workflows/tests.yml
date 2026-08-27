@@ -48,6 +48,8 @@ jobs:
           key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-gateway-unit-
+      - name: Install wizard client fixtures
+        run: npm install -g opencode-ai @openai/codex
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Run unit tests and static checks

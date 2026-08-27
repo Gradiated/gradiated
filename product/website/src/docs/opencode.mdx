@@ -6,7 +6,32 @@
   OpenCode can use Gradiated as a custom OpenAI-compatible provider.
 </p>
 
-## Before you start
+## Set up automatically
+
+Run the Gradiated wizard:
+
+```sh
+npx -y @gradiated/wizard --agent opencode
+```
+
+The wizard detects OpenCode. It gets or validates your Gradiated API key. It
+fetches the model catalog. It then merges the Gradiated provider into your
+OpenCode user configuration.
+
+The wizard preserves your existing default model. It writes a backup before
+it changes an existing configuration file.
+
+Start OpenCode after the wizard finishes:
+
+```sh
+opencode
+```
+
+Run `/models` to select a Gradiated model.
+
+## Set up manually
+
+### Before you start
 
 You need:
 
@@ -20,7 +45,7 @@ Set your key in the environment where you run OpenCode:
 export GRADIATED_API_KEY="grad_..."
 ```
 
-## Add Gradiated to `opencode.json`
+### Add Gradiated to `opencode.json`
 
 Add this provider to your OpenCode config. Keep the file in your project or in your user config. Do not put the API key in the file.
 
@@ -49,7 +74,7 @@ Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog. Model match
 
 The `@ai-sdk/openai-compatible` adapter targets `/v1/chat/completions`, which is the protocol Gradiated currently exposes.
 
-## Select the model
+### Select the model
 
 Start OpenCode and run:
 
@@ -65,7 +90,7 @@ Run a small test task first:
 Explain the main function in this repository in three short bullet points.
 ```
 
-## Add model limits when needed
+### Add model limits when needed
 
 OpenCode can use model limits to manage context and output. Add them when the model catalog provides these values:
 

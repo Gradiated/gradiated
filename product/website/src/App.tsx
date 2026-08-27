@@ -158,9 +158,20 @@ export const App = (): ReactElement => {
           element={
             <LayoutRoute
               title="Codex — Gradiated Docs"
-              description="Current Codex compatibility with Gradiated inference."
+              description="Use Gradiated inference in Codex."
             >
               <DocsPage page="codex" />
+            </LayoutRoute>
+          }
+        />
+        <Route
+          path="/docs/claude-code/"
+          element={
+            <LayoutRoute
+              title="Claude Code — Gradiated Docs"
+              description="Use Gradiated inference in Claude Code."
+            >
+              <DocsPage page="claude-code" />
             </LayoutRoute>
           }
         />

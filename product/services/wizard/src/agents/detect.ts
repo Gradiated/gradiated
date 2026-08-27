@@ -1,12 +1,13 @@
+import type { AgentName } from "../arguments.js";
 import { execFileSync } from "node:child_process";
 
 export interface DetectedAgent {
-  name: "opencode" | "codex" | "claude";
+  name: AgentName;
   found: boolean;
   version: string | null;
 }
 
-const AGENTS = ["opencode", "codex", "claude"] as const;
+const AGENTS = ["opencode", "codex"] as const;
 
 const detectOne = (name: (typeof AGENTS)[number]): DetectedAgent => {
   try {
@@ -19,7 +20,11 @@ const detectOne = (name: (typeof AGENTS)[number]): DetectedAgent => {
       // fixed literal, so this is not an injection vector.
       shell: process.platform === "win32",
     }).trim();
-    return { name, found: true, version: output.split("\r\n")[0]?.split("\n")[0] ?? null };
+    return {
+      name,
+      found: true,
+      version: output.split("\r\n")[0]?.split("\n")[0] ?? null,
+    };
   } catch {
     return { name, found: false, version: null };
   }

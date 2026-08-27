@@ -10,10 +10,11 @@ set -eu
 MAXIMUM_CONCURRENCY="${MAXIMUM_CONCURRENCY:-4}"
 KV_USAGE_LIMIT="${KV_USAGE_LIMIT:-0.90}"
 
-status_header_file="/run/gradiated-status-${DEPLOYMENT_ID}.header"
+status_header_file="/run/gradiated-status-${DEPLOYMENT_ID}-$$.header"
 umask 077
 printf 'Authorization: Bearer %s\n' "$(cat "${STATUS_TOKEN_FILE}")" > "${status_header_file}"
-trap 'rm -f "${status_header_file}"' EXIT INT TERM
+trap 'rm -f "${status_header_file}"' EXIT
+trap 'exit 0' INT TERM
 
 metric_value() {
   metric_name="$1"

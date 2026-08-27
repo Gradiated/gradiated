@@ -58,8 +58,9 @@ healthy. S3 versioning keeps previous entry points for recovery.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a
-`webhook-url` key. Alert definitions and dashboards deploy without embedding
-receiver credentials; notification delivery requires that secret version.
+`webhook-url` key and a `webhook-token` key. Alert definitions and dashboards
+deploy without embedded receiver credentials. Notification delivery requires
+that secret version.
 
 Terraform creates `gradiated-prod-deployment`. The role trusts only this
 repository's immutable GitHub OIDC subject in the `production` environment.

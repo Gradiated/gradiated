@@ -34,3 +34,21 @@ jobs:
       - name: Publish with OIDC trusted publishing
         working-directory: product/services/wizard
         run: npm publish --provenance --access public
+
+  e2e:
+    name: Wizard e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - run: npm install -g npm@^11.5.1
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build and test on a fresh home
+        working-directory: product
+        run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force

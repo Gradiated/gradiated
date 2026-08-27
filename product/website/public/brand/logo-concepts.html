@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gradiated logo directions</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #e8e2d5;
+        --surface: #f1ece2;
+        --ink: #1c1b18;
+        --muted: #68665f;
+        --line: #c9c1b2;
+        --accent: #72745a;
+        --icon-paper: #e8e2d5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 400;
+      }
+
+      header,
+      main,
+      footer {
+        width: min(1240px, calc(100% - 48px));
+        margin: 0 auto;
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr minmax(280px, 420px);
+        gap: 48px;
+        padding: 76px 0 62px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .eyebrow,
+      .number,
+      .tag,
+      .size-label {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        line-height: 1;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        max-width: 720px;
+        margin: 20px 0 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(54px, 7vw, 94px);
+        font-weight: 400;
+        letter-spacing: -0.055em;
+        line-height: 0.92;
+      }
+
+      .intro {
+        align-self: end;
+        margin: 0;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.65;
+      }
+
+      .concepts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        border-left: 1px solid var(--line);
+      }
+
+      article {
+        min-width: 0;
+        padding: 28px;
+        border-right: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+      }
+
+      .tag {
+        color: var(--accent);
+      }
+
+      .hero-mark {
+        display: grid;
+        min-height: 360px;
+        place-items: center;
+      }
+
+      .hero-mark svg {
+        width: min(58%, 250px);
+        color: var(--ink);
+      }
+
+      h2 {
+        margin: 0 0 10px;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 32px;
+        font-weight: 400;
+        letter-spacing: -0.035em;
+      }
+
+      .description {
+        min-height: 48px;
+        margin: 0 0 26px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .wordmark-row {
+        display: flex;
+        min-height: 72px;
+        align-items: center;
+        gap: 14px;
+        padding: 18px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .wordmark-row svg {
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        color: var(--ink);
+      }
+
+      .wordmark {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 26px;
+        letter-spacing: -0.055em;
+      }
+
+      .size-test {
+        display: flex;
+        align-items: end;
+        gap: 18px;
+        min-height: 112px;
+        margin-top: 12px;
+        padding: 18px;
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      .size {
+        display: grid;
+        justify-items: center;
+        gap: 9px;
+      }
+
+      .size svg {
+        display: block;
+        color: var(--paper);
+        --icon-paper: var(--ink);
+      }
+
+      .size-label {
+        color: #aaa49a;
+        font-size: 8px;
+      }
+
+      .s24 {
+        width: 24px;
+        height: 24px;
+      }
+
+      .s32 {
+        width: 32px;
+        height: 32px;
+      }
+
+      .s48 {
+        width: 48px;
+        height: 48px;
+      }
+
+      .s72 {
+        width: 72px;
+        height: 72px;
+      }
+
+      .recommendation {
+        display: grid;
+        grid-column: 1 / -1;
+        grid-template-columns: minmax(240px, 0.8fr) 1.2fr;
+        gap: 60px;
+        padding: 52px;
+        background: var(--ink);
+        color: var(--paper);
+      }
+
+      .recommendation h2 {
+        margin: 14px 0 0;
+        font-size: clamp(40px, 5vw, 68px);
+        line-height: 0.95;
+      }
+
+      .recommendation-copy {
+        align-self: end;
+        max-width: 580px;
+        margin: 0;
+        color: #bcb6ab;
+        font-size: 16px;
+        line-height: 1.7;
+      }
+
+      footer {
+        padding: 28px 0 44px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .symbol-definitions {
+        position: absolute;
+        width: 0;
+        height: 0;
+        overflow: hidden;
+      }
+
+      @media (max-width: 760px) {
+        header,
+        .recommendation {
+          grid-template-columns: 1fr;
+        }
+
+        header {
+          padding-top: 48px;
+        }
+
+        .concepts {
+          grid-template-columns: 1fr;
+        }
+
+        .hero-mark {
+          min-height: 280px;
+        }
+
+        .recommendation {
+          gap: 28px;
+          padding: 36px 28px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <svg class="symbol-definitions" aria-hidden="true">
+      <defs>
+        <symbol id="mark-heavy" viewBox="0 0 100 100" fill="none">
+          <g
+            stroke="currentColor"
+            stroke-width="5.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M41 8A42 42 0 0 0 8 50a42 42 0 0 0 33 42M59 8a42 42 0 0 1 33 42 42 42 0 0 1-33 42" />
+            <path d="M38 26A27 27 0 0 0 23 50a27 27 0 0 0 15 24M62 26a27 27 0 0 1 15 24 27 27 0 0 1-15 24" />
+            <path d="M50 18v64M45 18h10M50 62 40 52M50 62l10-10" />
+          </g>
+        </symbol>
+
+        <symbol id="mark-balanced" viewBox="0 0 100 100" fill="none">
+          <g
+            stroke="currentColor"
+            stroke-width="4.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M40 9A42 42 0 0 0 8 50a42 42 0 0 0 32 41M60 9a42 42 0 0 1 32 41 42 42 0 0 1-32 41" />
+            <path d="M37 28A25 25 0 0 0 24 50a25 25 0 0 0 13 22M63 28a25 25 0 0 1 13 22 25 25 0 0 1-13 22" />
+            <path d="M50 20v60M44.5 20h11M50 61 39.5 50.5M50 61l10.5-10.5" />
+          </g>
+        </symbol>
+
+        <symbol id="mark-outline-tile" viewBox="0 0 100 100" fill="none">
+          <rect x="5" y="5" width="90" height="90" rx="23" stroke="currentColor" stroke-width="4.5" />
+          <g
+            stroke="currentColor"
+            stroke-width="5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M41 23a29 29 0 0 0-20 27 29 29 0 0 0 20 27M59 23a29 29 0 0 1 20 27 29 29 0 0 1-20 27" />
+            <path d="M38 35a17 17 0 0 0-7 15 17 17 0 0 0 7 15M62 35a17 17 0 0 1 7 15 17 17 0 0 1-7 15" />
+            <path d="M50 30v40M45 30h10M50 59l-8-8M50 59l8-8" />
+          </g>
+        </symbol>
+
+        <symbol id="mark-solid-tile" viewBox="0 0 100 100" fill="none">
+          <rect x="4" y="4" width="92" height="92" rx="24" fill="currentColor" />
+          <g
+            stroke="var(--icon-paper)"
+            stroke-width="5.2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M41 23a29 29 0 0 0-20 27 29 29 0 0 0 20 27M59 23a29 29 0 0 1 20 27 29 29 0 0 1-20 27" />
+            <path d="M38 35a17 17 0 0 0-7 15 17 17 0 0 0 7 15M62 35a17 17 0 0 1 7 15 17 17 0 0 1-7 15" />
+            <path d="M50 30v40M45 30h10M50 59l-8-8M50 59l8-8" />
+          </g>
+        </symbol>
+
+        <symbol id="mark-disc" viewBox="0 0 100 100" fill="none">
+          <circle cx="50" cy="50" r="46" fill="currentColor" />
+          <g
+            stroke="var(--icon-paper)"
+            stroke-width="5.4"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M40 23a30 30 0 0 0 0 54M60 23a30 30 0 0 1 0 54" />
+            <path d="M37 36a17 17 0 0 0 0 28M63 36a17 17 0 0 1 0 28" />
+            <path d="M50 30v40M45 30h10M50 59l-8-8M50 59l8-8" />
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+
+    <header>
+      <div>
+        <span class="eyebrow">Gradiated / identity study 01</span>
+        <h1>A stronger signal.</h1>
+      </div>
+      <p class="intro">
+        Five treatments of the existing mark. Each option uses more weight and clearer spacing. The small-size tests show how each mark works in product navigation and app icons.
+      </p>
+    </header>
+
+    <main class="concepts">
+      <article>
+        <div class="card-head">
+          <span class="number">01</span>
+          <span class="tag">Pure mark</span>
+        </div>
+        <div class="hero-mark">
+          <svg role="img" aria-label="Heavy open Gradiated mark"><use href="#mark-heavy" /></svg>
+        </div>
+        <h2>Heavier original</h2>
+        <p class="description">The same idea with a 69% heavier stroke. This keeps the open, technical character.</p>
+        <div class="wordmark-row">
+          <svg aria-hidden="true"><use href="#mark-heavy" /></svg>
+          <span class="wordmark">Gradiated</span>
+        </div>
+        <div class="size-test">
+          <div class="size"><svg class="s24"><use href="#mark-heavy" /></svg><span class="size-label">24</span></div>
+          <div class="size"><svg class="s32"><use href="#mark-heavy" /></svg><span class="size-label">32</span></div>
+          <div class="size"><svg class="s48"><use href="#mark-heavy" /></svg><span class="size-label">48</span></div>
+          <div class="size"><svg class="s72"><use href="#mark-heavy" /></svg><span class="size-label">72</span></div>
+        </div>
+      </article>
+
+      <article>
+        <div class="card-head">
+          <span class="number">02</span>
+          <span class="tag">Refined mark</span>
+        </div>
+        <div class="hero-mark">
+          <svg role="img" aria-label="Balanced Gradiated mark"><use href="#mark-balanced" /></svg>
+        </div>
+        <h2>Balanced signal</h2>
+        <p class="description">A controlled weight increase with tighter inner arcs. This option feels calm and precise.</p>
+        <div class="wordmark-row">
+          <svg aria-hidden="true"><use href="#mark-balanced" /></svg>
+          <span class="wordmark">Gradiated</span>
+        </div>
+        <div class="size-test">
+          <div class="size"><svg class="s24"><use href="#mark-balanced" /></svg><span class="size-label">24</span></div>
+          <div class="size"><svg class="s32"><use href="#mark-balanced" /></svg><span class="size-label">32</span></div>
+          <div class="size"><svg class="s48"><use href="#mark-balanced" /></svg><span class="size-label">48</span></div>
+          <div class="size"><svg class="s72"><use href="#mark-balanced" /></svg><span class="size-label">72</span></div>
+        </div>
+      </article>
+
+      <article>
+        <div class="card-head">
+          <span class="number">03</span>
+          <span class="tag">Open tile</span>
+        </div>
+        <div class="hero-mark">
+          <svg role="img" aria-label="Gradiated mark in an outlined rounded square"><use href="#mark-outline-tile" /></svg>
+        </div>
+        <h2>Framed system</h2>
+        <p class="description">A rounded-square frame gives the mark a stable boundary. It works well beside the wordmark.</p>
+        <div class="wordmark-row">
+          <svg aria-hidden="true"><use href="#mark-outline-tile" /></svg>
+          <span class="wordmark">Gradiated</span>
+        </div>
+        <div class="size-test">
+          <div class="size"><svg class="s24"><use href="#mark-outline-tile" /></svg><span class="size-label">24</span></div>
+          <div class="size"><svg class="s32"><use href="#mark-outline-tile" /></svg><span class="size-label">32</span></div>
+          <div class="size"><svg class="s48"><use href="#mark-outline-tile" /></svg><span class="size-label">48</span></div>
+          <div class="size"><svg class="s72"><use href="#mark-outline-tile" /></svg><span class="size-label">72</span></div>
+        </div>
+      </article>
+
+      <article>
+        <div class="card-head">
+          <span class="number">04</span>
+          <span class="tag">Solid tile</span>
+        </div>
+        <div class="hero-mark">
+          <svg role="img" aria-label="Light Gradiated mark in a solid rounded square"><use href="#mark-solid-tile" /></svg>
+        </div>
+        <h2>Product icon</h2>
+        <p class="description">The solid tile has the strongest silhouette. It is the clearest option for favicons, avatars, and apps.</p>
+        <div class="wordmark-row">
+          <svg aria-hidden="true"><use href="#mark-solid-tile" /></svg>
+          <span class="wordmark">Gradiated</span>
+        </div>
+        <div class="size-test">
+          <div class="size"><svg class="s24"><use href="#mark-solid-tile" /></svg><span class="size-label">24</span></div>
+          <div class="size"><svg class="s32"><use href="#mark-solid-tile" /></svg><span class="size-label">32</span></div>
+          <div class="size"><svg class="s48"><use href="#mark-solid-tile" /></svg><span class="size-label">48</span></div>
+          <div class="size"><svg class="s72"><use href="#mark-solid-tile" /></svg><span class="size-label">72</span></div>
+        </div>
+      </article>
+
+      <article>
+        <div class="card-head">
+          <span class="number">05</span>
+          <span class="tag">Circular badge</span>
+        </div>
+        <div class="hero-mark">
+          <svg role="img" aria-label="Light Gradiated mark in a solid circle"><use href="#mark-disc" /></svg>
+        </div>
+        <h2>Research seal</h2>
+        <p class="description">A circular field feels more institutional. It suits research reports, model cards, and social profiles.</p>
+        <div class="wordmark-row">
+          <svg aria-hidden="true"><use href="#mark-disc" /></svg>
+          <span class="wordmark">Gradiated</span>
+        </div>
+        <div class="size-test">
+          <div class="size"><svg class="s24"><use href="#mark-disc" /></svg><span class="size-label">24</span></div>
+          <div class="size"><svg class="s32"><use href="#mark-disc" /></svg><span class="size-label">32</span></div>
+          <div class="size"><svg class="s48"><use href="#mark-disc" /></svg><span class="size-label">48</span></div>
+          <div class="size"><svg class="s72"><use href="#mark-disc" /></svg><span class="size-label">72</span></div>
+        </div>
+      </article>
+
+      <section class="recommendation">
+        <div>
+          <span class="eyebrow">Recommended system</span>
+          <h2>02 for the brand.<br />04 for the product.</h2>
+        </div>
+        <p class="recommendation-copy">
+          Use the balanced open mark beside the Gradiated name. Use the solid rounded tile when the mark must stand alone. Both versions share the same internal geometry, so they form one flexible identity.
+        </p>
+      </section>
+    </main>
+
+    <footer>Draft identity directions for Gradiated. August 2026.</footer>
+  </body>
+</html>

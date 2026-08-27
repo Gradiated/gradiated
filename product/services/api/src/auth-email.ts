@@ -71,3 +71,65 @@ export const createTestMagicLinkTransport = (): TestMagicLinkTransport => {
     },
   };
 };
+
+export interface OtpCodeMessage {
+  code: string;
+  email: string;
+}
+
+export type OtpCodeSender = (message: OtpCodeMessage) => Promise<void>;
+
+export const createSesOtpSender = (configuration: {
+  from: string;
+  region: string;
+}): OtpCodeSender => {
+  const client = new SESv2Client({ region: configuration.region });
+
+  return async ({ code, email }) => {
+    const safeCode = escapeHtml(code);
+    await client.send(
+      new SendEmailCommand({
+        FromEmailAddress: configuration.from,
+        Destination: { ToAddresses: [email] },
+        Content: {
+          Simple: {
+            Subject: {
+              Charset: "UTF-8",
+              Data: "Your Gradiated verification code",
+            },
+            Body: {
+              Text: {
+                Charset: "UTF-8",
+                Data: `Your Gradiated verification code:\n\n${code}\n\nThis code expires shortly and can be used once. If you did not request it, you can ignore this email.`,
+              },
+              Html: {
+                Charset: "UTF-8",
+                Data: `<!doctype html><html><body><p>Your Gradiated verification code:</p><p><strong>${safeCode}</strong></p><p>This code expires shortly and can be used once.</p></body></html>`,
+              },
+            },
+          },
+        },
+      }),
+    );
+  };
+};
+
+export interface TestOtpTransport {
+  send: OtpCodeSender;
+  take(email: string): string | null;
+}
+
+export const createTestOtpTransport = (): TestOtpTransport => {
+  const codes = new Map<string, string>();
+  return {
+    send: async ({ code, email }) => {
+      codes.set(email.trim().toLowerCase(), code);
+    },
+    take: (email) => {
+      const key = email.trim().toLowerCase();
+      const code = codes.get(key) ?? null;
+      codes.delete(key);
+      return code;
+    },
+  };
+};

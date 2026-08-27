@@ -50,6 +50,7 @@ export {
   type ModelRecord,
 } from "./catalog-billing/service.js";
 export {
+  SIGNUP_CREDIT_NANO_USD,
   createOrganizationService,
   type CreatedOrganization,
   type OrganizationRole,

@@ -15,6 +15,7 @@ export {
   type CreateOrganization,
   type Organization,
 } from "./organizations.js";
+export { WizardKeyResponseSchema, type WizardKeyResponse } from "./wizard.js";
 export { ProblemSchema, problemContent, type Problem } from "./http/problem.js";
 export {
   ModelListSchema,

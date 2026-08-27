@@ -11,6 +11,7 @@ import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
+import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type { ApiEnvironment, ApiServices, AuthService } from "./types.js";
 
@@ -153,6 +154,15 @@ export const createApp = (overrides: AppOverrides = {}) => {
         return context.json({ url });
       });
     }
+    if (dependencies.auth.takeTestOtp) {
+      app.get("/api/auth/test/otp", (context) => {
+        const email = context.req.query("email");
+        if (!email) return context.json({ error: "Email is required." }, 400);
+        const code = dependencies.auth!.takeTestOtp!(email);
+        if (!code) return context.json({ error: "Code not found." }, 404);
+        return context.json({ code });
+      });
+    }
     app.on(["GET", "POST"], "/api/auth/*", (context) =>
       dependencies.auth!.handler(context.req.raw),
     );
@@ -166,8 +176,9 @@ export const createApp = (overrides: AppOverrides = {}) => {
   registerCatalogBillingRoutes(app, dependencies.services);
   registerMeRoutes(app, dependencies.services);
   registerOrganizationRoutes(app, dependencies.services);
-  registerWorkspaceRoutes(app, dependencies.services);
   registerUsageRoutes(app, dependencies.services);
+  registerWizardRoutes(app, dependencies.services);
+  registerWorkspaceRoutes(app, dependencies.services);
 
   app.doc31("/api/openapi.json", openApiDocument);
   app.get(

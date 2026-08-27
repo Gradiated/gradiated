@@ -17,7 +17,9 @@ import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createAuthService } from "./auth.js";
 import {
   createSesMagicLinkSender,
+  createSesOtpSender,
   createTestMagicLinkTransport,
+  createTestOtpTransport,
 } from "./auth-email.js";
 import {
   createBillingPaymentsService,
@@ -46,9 +48,18 @@ const organizations = createOrganizationService(database, servingProjector);
 const testMagicLinks = environment.AUTH_TEST_MODE
   ? createTestMagicLinkTransport()
   : undefined;
+const testOtpCodes = environment.AUTH_TEST_MODE
+  ? createTestOtpTransport()
+  : undefined;
 const sendMagicLink =
   testMagicLinks?.send ??
   createSesMagicLinkSender({
+    from: environment.AUTH_EMAIL_FROM!,
+    region: environment.SES_REGION!,
+  });
+const sendOtp =
+  testOtpCodes?.send ??
+  createSesOtpSender({
     from: environment.AUTH_EMAIL_FROM!,
     region: environment.SES_REGION!,
   });
@@ -73,7 +84,9 @@ const auth = createAuthService(database, {
   },
   secret: environment.BETTER_AUTH_SECRET,
   sendMagicLink,
+  sendOtp,
   takeTestMagicLink: testMagicLinks?.take,
+  takeTestOtp: testOtpCodes?.take,
   trustedOrigins: environment.TRUSTED_ORIGINS,
 });
 const metrics = new ApiMetrics();

@@ -26,6 +26,7 @@ const createSocialAuth = () =>
       onUserCreated: async () => undefined,
       secret: "local-only-not-secret-change-in-production-0001",
       sendMagicLink: async () => undefined,
+      sendOtp: async () => undefined,
       trustedOrigins: ["http://localhost:3000"],
     },
   );

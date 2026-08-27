@@ -1,12 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { magicLink, openAPI } from "better-auth/plugins";
+import { emailOTP, magicLink, openAPI } from "better-auth/plugins";
 import { v7 as uuidv7 } from "uuid";
 
 import { betterAuthSchema, type ControlDatabase } from "@gradiated/control";
 
 import type { AuthService } from "./types.js";
-import type { MagicLinkSender } from "./auth-email.js";
+import type { MagicLinkSender, OtpCodeSender } from "./auth-email.js";
 
 export interface AuthConfiguration {
   baseUrl: string;
@@ -15,7 +15,9 @@ export interface AuthConfiguration {
   onUserCreated: (user: { id: string; name: string }) => Promise<void>;
   secret: string;
   sendMagicLink: MagicLinkSender;
+  sendOtp: OtpCodeSender;
   takeTestMagicLink?: ((email: string) => string | null) | undefined;
+  takeTestOtp?: ((email: string) => string | null) | undefined;
   trustedOrigins: string[];
 }
 
@@ -75,6 +77,13 @@ export function createAuthService(
         sendMagicLink: configuration.sendMagicLink,
         storeToken: "hashed",
       }),
+      emailOTP({
+        expiresIn: 600,
+        otpLength: 6,
+        sendVerificationOTP: ({ email, otp }) =>
+          configuration.sendOtp({ code: otp, email }),
+        storeOTP: "hashed",
+      }),
       openAPI({ disableDefaultReference: true }),
     ],
   });
@@ -83,6 +92,9 @@ export function createAuthService(
     handler: (request) => auth.handler(request),
     ...(configuration.takeTestMagicLink
       ? { takeTestMagicLink: configuration.takeTestMagicLink }
+      : {}),
+    ...(configuration.takeTestOtp
+      ? { takeTestOtp: configuration.takeTestOtp }
       : {}),
     async resolveSession(headers) {
       const result = await auth.api.getSession({ headers });

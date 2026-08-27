@@ -3,6 +3,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { ControlDatabase } from "../db/client.js";
 import {
+  balanceTransactions,
   billingAccounts,
   organizationMembers,
   organizations,
@@ -34,6 +35,9 @@ export interface CreatedOrganization {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export const SIGNUP_CREDIT_NANO_USD = 5_000_000_000n;
+export const SIGNUP_CREDIT_SOURCE_TYPE = "operator";
 
 export interface OrganizationService {
   listForUser(userId: string): Promise<UserOrganization[]>;
@@ -87,22 +91,39 @@ export function createOrganizationService(
     },
 
     async createForUser(userId, name) {
-      const organizationId = uuidv7();
-      const workspaceId = uuidv7();
-      const now = new Date();
+      return createOrganization({ signupCredit: false, userId, name });
+    },
+    async ensurePersonalForUser(userId, name = "Personal") {
+      const existing = await service.listForUser(userId);
+      if (existing[0]) return existing[0];
+      return createOrganization({ signupCredit: true, userId, name });
+    },
+  };
+  return service;
 
-      await database.transaction(async (transaction) => {
+  async function createOrganization(input: {
+    signupCredit: boolean;
+    userId: string;
+    name: string;
+  }): Promise<CreatedOrganization> {
+    const organizationId = uuidv7();
+    const workspaceId = uuidv7();
+    const now = new Date();
+    const signupCreditTransactionId = input.signupCredit ? uuidv7() : null;
+
+    const creditBalanceAfter = await database.transaction(
+      async (transaction) => {
         await transaction.insert(organizations).values({
           id: organizationId,
           kind: "customer",
-          name,
+          name: input.name,
           status: "active",
           createdAt: now,
           updatedAt: now,
         });
         await transaction.insert(organizationMembers).values({
           organizationId,
-          userId,
+          userId: input.userId,
           role: "owner",
           status: "active",
           createdAt: now,
@@ -123,50 +144,73 @@ export function createOrganizationService(
           createdAt: now,
           updatedAt: now,
         });
-      });
-
-      try {
-        await projector.initializeAccount({
+        if (!signupCreditTransactionId) {
+          return 0n;
+        }
+        await transaction.insert(balanceTransactions).values({
+          id: signupCreditTransactionId,
           organizationId,
-          organizationKind: "customer",
-          organizationStatus: "active",
-          billingMode: "prepaid",
-          balance: 0n,
-        });
-        const workspace: WorkspaceRecord = {
-          id: workspaceId,
-          organizationId,
-          name: "Default",
-          isDefault: true,
-          archivedAt: null,
+          type: "credit",
+          amount: SIGNUP_CREDIT_NANO_USD,
+          balanceAfter: SIGNUP_CREDIT_NANO_USD,
+          sourceType: SIGNUP_CREDIT_SOURCE_TYPE,
+          sourceId: `signup-grant:${organizationId}`,
+          createdBy: input.userId,
           createdAt: now,
-          updatedAt: now,
-        };
-        await projector.projectWorkspace(workspace);
-      } catch (error) {
-        throw new ControlServiceError(
-          "unavailable",
-          "The organization was created, but serving state is not yet available.",
-          error,
-        );
-      }
+        });
+        await transaction
+          .update(billingAccounts)
+          .set({
+            balance: SIGNUP_CREDIT_NANO_USD,
+            updatedAt: now,
+          })
+          .where(eq(billingAccounts.organizationId, organizationId));
+        return SIGNUP_CREDIT_NANO_USD;
+      },
+    );
 
-      return {
-        id: organizationId,
-        kind: "customer",
-        name,
-        status: "active",
-        role: "owner",
-        defaultWorkspaceId: workspaceId,
+    try {
+      await projector.initializeAccount({
+        organizationId,
+        organizationKind: "customer",
+        organizationStatus: "active",
+        billingMode: "prepaid",
+        balance: 0n,
+      });
+      const workspace: WorkspaceRecord = {
+        id: workspaceId,
+        organizationId,
+        name: "Default",
+        isDefault: true,
+        archivedAt: null,
         createdAt: now,
         updatedAt: now,
       };
-    },
-    async ensurePersonalForUser(userId, name = "Personal") {
-      const existing = await service.listForUser(userId);
-      if (existing[0]) return existing[0];
-      return service.createForUser(userId, name);
-    },
-  };
-  return service;
+      await projector.projectWorkspace(workspace);
+      if (signupCreditTransactionId && creditBalanceAfter !== 0n) {
+        await projector.applyBalanceTransaction({
+          organizationId,
+          transactionId: signupCreditTransactionId,
+          amount: creditBalanceAfter,
+        });
+      }
+    } catch (error) {
+      throw new ControlServiceError(
+        "unavailable",
+        "The organization was created, but serving state is not yet available.",
+        error,
+      );
+    }
+
+    return {
+      id: organizationId,
+      kind: "customer",
+      name: input.name,
+      status: "active",
+      role: "owner",
+      defaultWorkspaceId: workspaceId,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
 }

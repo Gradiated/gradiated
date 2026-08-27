@@ -123,6 +123,14 @@ fn body_rejection(rejection: BytesRejection) -> GatewayError {
     }
 }
 
+fn translate_inbound(protocol: Protocol, body: &Bytes) -> Result<Bytes, GatewayError> {
+    let request = parse_body(body)?;
+    if protocol == Protocol::OpenAiResponses && responses_use_unsupported_state(&request) {
+        return Err(GatewayError::invalid_request(Some("store")));
+    }
+    protocol.translate_request(&request).map(Bytes::from)
+}
+
 async fn complete_with_protocol(
     state: &GatewayState,
     protocol: Protocol,
@@ -130,13 +138,7 @@ async fn complete_with_protocol(
     headers: &HeaderMap,
     body: Bytes,
 ) -> Result<Response, GatewayError> {
-    let request = parse_body(&body)?;
-    let translated = protocol.translate_request(&request)?;
-    match state
-        .completions
-        .complete(metadata, headers, Bytes::from(translated))
-        .await?
-    {
+    match state.completions.complete(metadata, headers, body).await? {
         CompletionResponse::NonStreaming(result) => {
             Ok(Json(protocol.translate_response(result.into_response())?).into_response())
         }
@@ -212,9 +214,13 @@ async fn chat_completions(
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
     let result = match body {
-        Ok(body) => {
-            complete_with_protocol(&state, Protocol::OpenAiChat, metadata, &headers, body).await
-        }
+        Ok(body) => match translate_inbound(Protocol::OpenAiChat, &body) {
+            Ok(translated) => {
+                complete_with_protocol(&state, Protocol::OpenAiChat, metadata, &headers, translated)
+                    .await
+            }
+            Err(error) => Err(error),
+        },
         Err(rejection) => Err(body_rejection(rejection)),
     };
     finish(
@@ -234,16 +240,19 @@ async fn messages(
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
     let result = match body {
-        Ok(body) => {
-            complete_with_protocol(
-                &state,
-                Protocol::AnthropicMessages,
-                metadata,
-                &headers,
-                body,
-            )
-            .await
-        }
+        Ok(body) => match translate_inbound(Protocol::AnthropicMessages, &body) {
+            Ok(translated) => {
+                complete_with_protocol(
+                    &state,
+                    Protocol::AnthropicMessages,
+                    metadata,
+                    &headers,
+                    translated,
+                )
+                .await
+            }
+            Err(error) => Err(error),
+        },
         Err(rejection) => Err(body_rejection(rejection)),
     };
     finish(
@@ -291,20 +300,13 @@ async fn responses(
     let generation_id = metadata.generation_id;
     let result = async {
         let body = body.map_err(body_rejection)?;
-        let request = parse_body(&body).and_then(|request| {
-            if responses_use_unsupported_state(&request) {
-                Err(GatewayError::invalid_request(Some("store")))
-            } else {
-                Ok(request)
-            }
-        })?;
-        let translated = Protocol::OpenAiResponses.translate_request(&request)?;
+        let translated = translate_inbound(Protocol::OpenAiResponses, &body)?;
         complete_with_protocol(
             &state,
             Protocol::OpenAiResponses,
             metadata,
             &headers,
-            Bytes::from(translated),
+            translated,
         )
         .await
     }
@@ -775,5 +777,38 @@ mod tests {
         assert!(response.headers().contains_key(GENERATION_ID_HEADER));
         assert_eq!(credential_lookups.load(Ordering::SeqCst), 0);
         assert_eq!(error_code(response).await, "payload_too_large");
+    }
+
+    #[test]
+    fn inbound_translation_happens_exactly_once_per_protocol() {
+        let responses_body = Bytes::from_static(
+            br#"{"model":"model-a","stream":false,"input":"Reply with exactly: PONG"}"#,
+        );
+        let translated: Value = serde_json::from_slice(
+            &translate_inbound(Protocol::OpenAiResponses, &responses_body).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(
+            translated["messages"][0]["content"],
+            "Reply with exactly: PONG"
+        );
+
+        let chat_body = Bytes::from_static(
+            br#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
+        );
+        let translated: Value =
+            serde_json::from_slice(&translate_inbound(Protocol::OpenAiChat, &chat_body).unwrap())
+                .unwrap();
+        assert_eq!(translated["messages"][0]["content"], "hi");
+
+        let messages_body = Bytes::from_static(
+            br#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+        );
+        let translated: Value = serde_json::from_slice(
+            &translate_inbound(Protocol::AnthropicMessages, &messages_body).unwrap(),
+        )
+        .unwrap();
+        assert_eq!(translated["messages"][0]["role"], "user");
+        assert_eq!(translated["messages"][0]["content"], "hi");
     }
 }

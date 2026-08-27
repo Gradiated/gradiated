@@ -53,6 +53,10 @@ try {
     id: deploymentId,
     modelId: deepseekV4FlashModelId,
     status: "available",
+    provider: process.env.DEEPSEEK_V4_FLASH_PROVIDER ?? "runpod",
+    region: process.env.DEEPSEEK_V4_FLASH_REGION ?? "us",
+    faultDomain:
+      process.env.DEEPSEEK_V4_FLASH_FAULT_DOMAIN ?? `runpod:${deploymentId}`,
     serviceUrl,
     release: {
       schema_version: 1,

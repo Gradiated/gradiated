@@ -1,4 +1,5 @@
 use axum::http::Uri;
+use chrono::{DateTime, TimeDelta, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -10,10 +11,39 @@ use validator::Validate;
 pub struct GatewayModelDeployment {
     pub id: Uuid,
     pub status: DeploymentStatus,
+    #[validate(length(min = 1, max = 100))]
+    pub provider: String,
+    #[validate(length(min = 1, max = 100))]
+    pub region: String,
+    #[validate(length(min = 1, max = 300))]
+    pub fault_domain: String,
     #[validate(url, length(max = 2048))]
     pub service_url: String,
     #[validate(nested)]
     pub release: ModelDeploymentRelease,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
+#[serde(deny_unknown_fields)]
+pub struct DeploymentRuntimeStatus {
+    #[validate(range(min = 1, max = 1))]
+    pub schema_version: u16,
+    pub deployment_id: Uuid,
+    #[validate(length(min = 1, max = 300))]
+    pub runtime_revision: String,
+    pub received_at: DateTime<Utc>,
+    pub healthy: bool,
+    pub accepting_requests: bool,
+    #[validate(range(min = 1, max = 100_000))]
+    pub maximum_concurrency: u64,
+    #[validate(length(min = 1, max = 100))]
+    pub reason_code: Option<String>,
+}
+
+impl DeploymentRuntimeStatus {
+    pub fn is_fresh_at(&self, now: DateTime<Utc>, maximum_age: TimeDelta) -> bool {
+        self.received_at <= now + TimeDelta::seconds(5) && self.received_at >= now - maximum_age
+    }
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq, Serialize)]
@@ -105,8 +135,10 @@ mod tests {
         let digest = deployment
             .served_release_digest()
             .expect("release should serialize");
-        assert!(digest.starts_with("sha256:"));
-        assert_eq!(digest.len(), 71);
+        assert_eq!(
+            digest,
+            "sha256:e4a74e6c4981b6176e08acc9fa391ca5fe5562485b5df96fdf088c48ae406eda"
+        );
     }
 
     #[test]

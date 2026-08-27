@@ -1,0 +1,46 @@
+worker_processes 1;
+pid /run/gradiated-runtime-proxy.pid;
+error_log /var/log/gradiated-runtime-proxy-error.log warn;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    access_log /var/log/gradiated-runtime-proxy-access.log;
+    client_max_body_size 32M;
+    map_hash_bucket_size 128;
+
+    map $http_authorization $runtime_authorized {
+        default 0;
+        "Bearer __SGLANG_API_KEY__" 1;
+    }
+
+    server {
+        listen 8888;
+
+        if ($runtime_authorized = 0) {
+            return 401;
+        }
+
+        location /t2-0/ {
+            proxy_pass http://127.0.0.1:8000/;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+
+        location /t2-1/ {
+            proxy_pass http://127.0.0.1:8002/;
+            proxy_http_version 1.1;
+            proxy_set_header Connection "";
+            proxy_buffering off;
+            proxy_request_buffering off;
+            proxy_read_timeout 3600s;
+            proxy_send_timeout 3600s;
+        }
+    }
+}

@@ -143,6 +143,9 @@ mod tests {
         GatewayModelDeployment {
             id: Uuid::from_u128(id),
             status,
+            provider: "local".to_owned(),
+            region: "local".to_owned(),
+            fault_domain: format!("local:{id}"),
             service_url: "http://127.0.0.1:30000".to_owned(),
             release: ModelDeploymentRelease {
                 schema_version: 1,

@@ -1,6 +1,7 @@
 #include "desmond/gpu_metrics.h"
 #include "desmond/http.h"
 #include "desmond/profiling.h"
+#include "desmond/status.h"
 #include "desmond/supervisor.h"
 #include "desmond/trace.h"
 
@@ -40,6 +41,24 @@ std::uint16_t environment_port(const char* name, const std::uint16_t fallback) {
     throw std::runtime_error(std::string("invalid port in ") + name);
   }
   return static_cast<std::uint16_t>(parsed);
+}
+
+std::uint64_t environment_u64(const char* name, const std::uint64_t fallback) {
+  const char* value = std::getenv(name);
+  if (value == nullptr || *value == '\0') return fallback;
+  const auto parsed = std::stoull(value);
+  if (parsed == 0) throw std::runtime_error(std::string("invalid value in ") + name);
+  return parsed;
+}
+
+double environment_double(const char* name, const double fallback) {
+  const char* value = std::getenv(name);
+  if (value == nullptr || *value == '\0') return fallback;
+  const auto parsed = std::stod(value);
+  if (parsed <= 0.0 || parsed > 1.0) {
+    throw std::runtime_error(std::string("invalid value in ") + name);
+  }
+  return parsed;
 }
 
 std::string unique_trace_path() {
@@ -172,6 +191,21 @@ int main(int argc, char** argv) {
         .model_id = model,
         .runtime_revision = release,
     });
+    const auto maximum_concurrency =
+        environment_u64("DESMOND_MAXIMUM_CONCURRENCY", 1);
+    const auto kv_usage_limit = environment_double("DESMOND_KV_USAGE_LIMIT", 0.90);
+    const auto waiting_request_limit = environment_u64(
+        "DESMOND_WAITING_REQUEST_LIMIT", maximum_concurrency);
+    desmond::StatusReporter status_reporter({
+        .host = environment("DESMOND_STATUS_HOST", ""),
+        .port = environment_port("DESMOND_STATUS_PORT", 80),
+        .path = environment("DESMOND_STATUS_PATH", "/v1/deployment-status"),
+        .token = environment("DESMOND_STATUS_TOKEN", ""),
+        .deployment_id = deployment_id,
+        .runtime_revision = release,
+        .maximum_concurrency = maximum_concurrency,
+        .interval = std::chrono::seconds(1),
+    });
 
     std::unique_ptr<desmond::SharedTraceRing> trace_ring;
     // Containers normally run desmondd as PID 1. Include a per-start nonce so a stale file from
@@ -232,6 +266,7 @@ int main(int argc, char** argv) {
                 << json_escape(model_revision) << "\"} 1\n"
                 << gpu_metrics.prometheus()
                 << profiling.prometheus()
+                << status_reporter.prometheus()
                 << "desmond_trace_enabled " << (trace_ring ? 1 : 0) << '\n'
                 << "desmond_trace_consumed_events_total "
                 << consumed_trace_events.load(std::memory_order_relaxed) << '\n'
@@ -272,6 +307,7 @@ int main(int argc, char** argv) {
     });
 
     auto next_health = std::chrono::steady_clock::now();
+    auto next_status = std::chrono::steady_clock::now();
     auto next_gpu_profile = std::chrono::steady_clock::now();
     auto next_runtime_profile = std::chrono::steady_clock::now();
     bool prior_ready = false;
@@ -299,13 +335,43 @@ int main(int argc, char** argv) {
       }
       if (std::chrono::steady_clock::now() >= next_health) {
         supervisor.check_health();
-        next_health = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+        next_health = std::chrono::steady_clock::now() + std::chrono::seconds(1);
       }
       const auto current = supervisor.status();
       if (current.runtime_ready != prior_ready) {
         profiling.enqueue("runtime.state", std::string("{\"ready\":") +
                                                (current.runtime_ready ? "true}" : "false}"));
         prior_ready = current.runtime_ready;
+      }
+      if (std::chrono::steady_clock::now() >= next_status) {
+        desmond::RuntimePressure pressure;
+        if (current.runtime_ready) {
+          const auto runtime_metrics = desmond::http_get(
+              runtime_host, runtime_port, "/metrics", std::chrono::milliseconds(750));
+          if (runtime_metrics.transport_ok && runtime_metrics.status == 200) {
+            pressure = desmond::parse_runtime_pressure(
+                runtime_metrics.body, kv_usage_limit, waiting_request_limit,
+                maximum_concurrency);
+          }
+        }
+        desmond::DeploymentStatusSnapshot snapshot;
+        snapshot.healthy = current.child_running && current.runtime_ready;
+        snapshot.accepting_requests = snapshot.healthy && !current.draining &&
+                                      !pressure.kv_pressure && !pressure.queue_pressure &&
+                                      !pressure.concurrency_pressure;
+        if (!snapshot.healthy) {
+          snapshot.reason_code = "runtime_unavailable";
+        } else if (current.draining) {
+          snapshot.reason_code = "draining";
+        } else if (pressure.kv_pressure) {
+          snapshot.reason_code = "kv_pressure";
+        } else if (pressure.queue_pressure) {
+          snapshot.reason_code = "queue_pressure";
+        } else if (pressure.concurrency_pressure) {
+          snapshot.reason_code = "concurrency_full";
+        }
+        status_reporter.update(std::move(snapshot));
+        next_status = std::chrono::steady_clock::now() + std::chrono::seconds(1);
       }
       if (std::chrono::steady_clock::now() >= next_gpu_profile) {
         for (const auto& gpu : gpu_metrics.sample()) {
@@ -342,6 +408,7 @@ int main(int argc, char** argv) {
     supervisor.shutdown();
     drain_trace(65'536);
     profiling.stop();
+    status_reporter.stop();
     server.stop();
     http_thread.join();
     return 0;

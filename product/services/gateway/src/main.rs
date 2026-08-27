@@ -44,7 +44,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let readiness = Arc::new(DependencyReadiness::new(
         (*serving_state).clone(),
-        runtimes,
         completions.metrics(),
     ));
     let listener = tokio::net::TcpListener::bind(config.bind_address).await?;

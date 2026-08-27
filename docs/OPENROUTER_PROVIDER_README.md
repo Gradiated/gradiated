@@ -36,15 +36,15 @@ invoice.
 | Pricing          | USD token prices                                          | Catalog emits string USD prices from integer nano-USD values                                                             | ready        |
 | Limits           | Context and maximum output limits                         | Catalog emits model-owned limits                                                                                         | ready        |
 | Capabilities     | Advertise supported parameters and features               | Catalog emits typed modality parameter descriptors and only configured features                                          | partial      |
-| Capacity         | Measured or declared capacity                             | Typed capacity entries are optional and remain unset until measured                                                      | pending      |
-| Location         | Datacenter and deployment-region metadata                 | Catalog declares the production datacenter as `US`                                                                       | ready        |
+| Capacity         | Measured or declared capacity                             | Catalog sums healthy deployment concurrency from fresh status                                                            | ready        |
+| Location         | Datacenter and deployment-region metadata                 | Catalog derives the location from each deployment; GLM reports `SG`                                                       | ready        |
 | Compliance       | Clear data-handling posture                               | ZDR policy and catalog metadata are implemented; HIPAA and SOC 2 are not claimed; deployment is pending                  | partial      |
 | Privacy          | Policy with prompt logging, retention, and training terms | Privacy page now includes inference storage, training, retention, and subprocessors                                      | legal review |
 | Payments         | Monthly invoice or automatic payment setup                | OpenRouter has an invoiced production account; payment contact and reconciliation onboarding remain                     | partial      |
 | Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas exist; runtime soak results are incomplete                                                          | partial      |
 | Status page      | Public operational status                                 | To be completed by the Gradiated owner                                                                                   | user-owned   |
 | Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public terms are absent                                                            | recommended  |
-| Next model       | Model-specific runtime, features, and benchmarks          | DeepSeek V4 Flash 0731 is not configured                                                                                 | pending      |
+| Next model       | Model-specific runtime, features, and benchmarks          | GLM-5.3 Flash configuration is ready; the secure RunPod URLs are pending                                                  | partial      |
 
 OpenRouter does not require every model to support every feature. Advertise only
 features that have passed real request tests.
@@ -180,6 +180,10 @@ client-side application.
 Run these checks with the dedicated provider key. Store results in a release
 record. Do not store the key or request content.
 
+Use [OPENROUTER_ENDPOINT_TEST_RUNBOOK.md](OPENROUTER_ENDPOINT_TEST_RUNBOOK.md)
+for the complete executable preflight, capability, cancellation, capacity,
+soak, restart, and drain checks.
+
 ### Catalog
 
 ```sh
@@ -260,12 +264,12 @@ responses are preferred to queued timeouts.
 ## Work order
 
 1. Deploy the release-date change and confirm a non-empty production catalog. [done]
-2. Add measured capacity entries after the runtime soak test.
+2. Confirm each deployment's conservative concurrency after the runtime soak test.
 3. Create and test the dedicated OpenRouter distribution-channel credential. [done]
 4. Complete privacy and company legal review.
 5. Configure monthly invoicing and payment reconciliation.
 6. Add a public status page or document the accepted alternative with OpenRouter. [user-owned]
-7. Add and qualify DeepSeek V4 Flash 0731.
+7. Add and qualify GLM-5.3 Flash.
 8. Run the complete verification checklist.
 9. Submit the application with the endpoint, model data, pricing, capacity,
    region, privacy policy, and payment contact.

@@ -238,6 +238,9 @@ export const modelDeployments = pgTable(
       .notNull()
       .references(() => models.id, { onDelete: "restrict" }),
     status: text("status").notNull(),
+    provider: text("provider").notNull(),
+    region: text("region").notNull(),
+    faultDomain: text("fault_domain").notNull(),
     serviceUrl: text("service_url").notNull(),
     release: jsonb("release").$type<ModelDeploymentReleaseRecord>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -264,6 +267,18 @@ export const modelDeployments = pgTable(
     check(
       "model_deployments_service_url_scheme_check",
       sql`${table.serviceUrl} ~ '^https?://'`,
+    ),
+    check(
+      "model_deployments_provider_check",
+      sql`${table.provider} ~ '^[a-z][a-z0-9_-]{0,99}$'`,
+    ),
+    check(
+      "model_deployments_region_length_check",
+      sql`char_length(${table.region}) between 1 and 100`,
+    ),
+    check(
+      "model_deployments_fault_domain_length_check",
+      sql`char_length(${table.faultDomain}) between 1 and 300`,
     ),
   ],
 );

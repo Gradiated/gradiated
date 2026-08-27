@@ -234,13 +234,14 @@ concurrent generations. Invoiced organizations bypass the balance and
 organization-concurrency checks at launch. The gateway forwards only qualified
 fields to the model runtime,
 preserving cancellation, backpressure and streaming semantics.
-An exact model may have multiple available SGLang deployments. The projected
-deployment array is ordered, and the gateway dispatches to its first available
-entry. The current projector uses a stable creation order; a future availability
-service can publish capacity-aware ordering without adding scheduling logic to
-the request path. SGLang remains authoritative for instantaneous runtime admission;
-the gateway normalizes downstream overload to `429` and does not queue, retry,
-or select another deployment.
+An exact model may have multiple available runtime deployments. Each deployment
+sends status to Valkey every second through the private telemetry endpoint. The
+gateway uses fresh status, a shared concurrency lease, and rendezvous hashing to
+select a deployment. A session ID or prompt-prefix hash keeps related requests
+on one deployment when it has capacity. The gateway does not queue. It returns
+`429` when all healthy deployments are busy. It returns `503` when no fresh,
+healthy deployment exists. It retries once on another deployment only when no
+usable output reached the client.
 
 The request captures the effective model pricing and served release digest at
 admission. On terminal success, failure, cancellation or abandonment, Rust
@@ -267,7 +268,7 @@ limits, including bounded `max_running_requests` and `max_queued_requests`.
 It does not implement customer authentication or billing. A second model is a
 second explicit catalog row, `model_deployments` row and SGLang deployment; it
 is not a reason to introduce a separate routing layer. Additional deployments
-are ordered candidates for the exact model.
+are independent candidates for the exact model.
 
 ## External services and infrastructure
 
@@ -399,19 +400,18 @@ protocol integration, not production model equivalence.
 - Keep all asynchronous roles in one `worker` process from the `api` codebase
   and image. Split a role into another Deployment only after measured scaling
   or isolation requirements.
-- Keep exact model dispatch finite and explicit. Do not add routing or provider
-  abstractions for hypothetical capacity.
-- Let the selected SGLang deployment own runtime admission. Normalize overload
-  to `429`; do not queue, retry, or fall back in the gateway.
+- Keep exact model dispatch finite and explicit. Use fresh status, one shared
+  concurrency lease, and rendezvous hashing.
+- Let the selected runtime own exact scheduler and KV admission. Normalize
+  overload to `429`. Do not queue. Retry once before usable output.
 - Keep PostgreSQL, Valkey and ClickHouse as separate authorities with no hidden
   cross-store source of truth.
 - Do not add Kafka, CDC, an outbox, a service mesh, Temporal, KEDA, Karpenter,
   RDS Proxy or a custom operator at launch.
 - Add a second model through model and deployment rows, an SGLang deployment,
   capacity measurement and conformance fixtures.
-- Introduce a routing/platform layer only after at least two real hosted models
-  create a measured shared-routing requirement that cannot be represented by
-  the exact-model catalog.
+- Keep provider deployments simple. Put global placement and retry logic in the
+  gateway.
 - Introduce more workers or services only when a measured SLO, throughput,
   isolation or recovery requirement cannot be met within the existing service.
 

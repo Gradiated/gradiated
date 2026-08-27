@@ -1,6 +1,7 @@
 #include "desmond/http.h"
 #include "desmond/profiling.h"
 #include "desmond/supervisor.h"
+#include "desmond/status.h"
 #include "desmond/trace.h"
 
 #include <chrono>
@@ -195,6 +196,18 @@ void test_profiling_retry_is_idempotent_and_backed_off() {
           "profiling retry preserves the batch id and body");
 }
 
+void test_runtime_pressure_uses_vllm_metrics() {
+  const auto pressure = desmond::parse_runtime_pressure(
+      "vllm:kv_cache_usage_perc 0.95\n"
+      "vllm:num_requests_waiting 2\n"
+      "vllm:num_requests_running 4\n",
+      0.90, 2, 4);
+  require(pressure.kv_pressure, "KV pressure threshold is applied");
+  require(pressure.queue_pressure, "queue pressure threshold is applied");
+  require(pressure.concurrency_pressure,
+          "running request threshold is applied");
+}
+
 }  // namespace
 
 int main() {
@@ -206,6 +219,7 @@ int main() {
   test_http_stream();
   test_http_burst_remains_responsive();
   test_profiling_retry_is_idempotent_and_backed_off();
+  test_runtime_pressure_uses_vllm_metrics();
   std::cout << "desmond tests passed\n";
   return 0;
 }

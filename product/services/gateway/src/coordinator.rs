@@ -8,8 +8,9 @@ use crate::{
     auth::{authenticate_credential, authorize_access, credential_digest, AuthenticatedIdentity},
     domain::{BillingMode, ModelStatus},
     generation::CapturedPricing,
+    healthy_installed_concurrency,
     serving_state::ServingState,
-    ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
+    CatalogModel, ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
 };
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -50,6 +51,9 @@ impl RequestCoordinator {
         let identity = self.authenticate(headers, metadata.received_at).await?;
         let identity = self.authorize(identity).await?;
         let mut request = ChatCompletionRequest::parse(body)?;
+        if request.session_id.is_none() {
+            request.session_id = session_header(headers)?;
+        }
         request.model.make_ascii_lowercase();
         let model = self.load_model(&request.model).await?;
         qualify_model_request(metadata, identity, request, model)
@@ -59,13 +63,39 @@ impl RequestCoordinator {
         &self,
         headers: &HeaderMap,
         requested_at: DateTime<Utc>,
-    ) -> Result<Vec<GatewayModel>, GatewayError> {
+    ) -> Result<Vec<CatalogModel>, GatewayError> {
         let identity = self.authenticate(headers, requested_at).await?;
         self.authorize(identity).await?;
-        self.serving_state
+        let models = self
+            .serving_state
             .models()
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)
+            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+        let mut catalog = Vec::with_capacity(models.len());
+        for model in models {
+            let release_digest = model
+                .first_available_deployment()
+                .ok()
+                .flatten()
+                .and_then(|deployment| deployment.served_release_digest().ok());
+            let statuses = match release_digest {
+                Some(digest) => self
+                    .serving_state
+                    .deployment_statuses(&digest)
+                    .await
+                    .map_err(|_| GatewayError::ServingStateUnavailable)?,
+                None => Vec::new(),
+            };
+            catalog.push(CatalogModel {
+                installed_concurrency: healthy_installed_concurrency(
+                    &model.deployments,
+                    &statuses,
+                    requested_at,
+                ),
+                model,
+            });
+        }
+        Ok(catalog)
     }
 
     async fn authenticate(
@@ -126,6 +156,21 @@ impl RequestCoordinator {
         }
         Ok(model)
     }
+}
+
+fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
+    for name in ["x-gradiated-session-id", "x-session-id"] {
+        if let Some(value) = headers.get(name) {
+            let value = value
+                .to_str()
+                .map_err(|_| GatewayError::invalid_request(Some("session_id")))?;
+            if value.is_empty() || value.len() > 256 {
+                return Err(GatewayError::invalid_request(Some("session_id")));
+            }
+            return Ok(Some(value.to_owned()));
+        }
+    }
+    Ok(None)
 }
 
 fn qualify_model_request(
@@ -289,6 +334,28 @@ mod tests {
             Ok(self.model.clone().into_iter().collect())
         }
 
+        async fn deployment_statuses(
+            &self,
+            _release_digest: &str,
+        ) -> Result<Vec<crate::DeploymentRuntimeStatus>, ServingStateError> {
+            Ok(self
+                .model
+                .as_ref()
+                .and_then(|model| model.deployments.first())
+                .map(|deployment| crate::DeploymentRuntimeStatus {
+                    schema_version: 1,
+                    deployment_id: deployment.id,
+                    runtime_revision: deployment.release.runtime_revision.clone(),
+                    received_at: metadata().received_at,
+                    healthy: true,
+                    accepting_requests: true,
+                    maximum_concurrency: 4,
+                    reason_code: None,
+                })
+                .into_iter()
+                .collect())
+        }
+
         async fn admit(
             &self,
             _generation_id: Uuid,
@@ -353,6 +420,9 @@ mod tests {
             "deployments": [{
                 "id": "0198c36f-9b6a-7000-8000-000000000005",
                 "status": "available",
+                "provider": "local",
+                "region": "local",
+                "fault_domain": "local:runtime-1",
                 "service_url": "http://127.0.0.1:30000",
                 "release": {
                     "schema_version": 1,
@@ -442,7 +512,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(models.len(), 1);
-        assert_eq!(models[0].id, "model-a");
+        assert_eq!(models[0].model.id, "model-a");
         assert_eq!(
             *state.calls.lock().unwrap(),
             ["credential", "workspace", "account", "models"]

@@ -76,6 +76,9 @@ export interface ServingProjector {
     deployments: Array<{
       id: string;
       status: "available" | "unavailable" | "draining";
+      provider: string;
+      region: string;
+      faultDomain: string;
       serviceUrl: string;
       release: ModelDeploymentReleaseRecord;
     }>;

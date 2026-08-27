@@ -19,13 +19,15 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "openapi:generate": "turbo run openapi:generate && turbo run api:generate",
-    "smoke:gateway": "node scripts/smoke-gateway-local.mjs"
+    "smoke:gateway": "node scripts/smoke-gateway-local.mjs",
+    "smoke:gateway:openai": "node scripts/smoke-gateway-openai.mjs"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
     "@types/pg": "^8.15.0",
     "drizzle-kit": "0.31.10",
     "mprocs": "0.9.6",
+    "openai": "^7.5.0",
     "prettier": "^3.6.0",
     "tsx": "4.23.12",
     "turbo": "2.10.10",

@@ -1538,6 +1538,9 @@ mod tests {
         GatewayModelDeployment {
             id: Uuid::now_v7(),
             status: DeploymentStatus::Available,
+            provider: "local".to_owned(),
+            region: "local".to_owned(),
+            fault_domain: "local:runtime-1".to_owned(),
             service_url,
             release: ModelDeploymentRelease {
                 schema_version: 1,

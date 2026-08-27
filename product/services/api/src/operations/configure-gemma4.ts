@@ -51,6 +51,9 @@ try {
     id: deploymentId,
     modelId: gemma4ModelId,
     status: "available",
+    provider: process.env.GEMMA4_PROVIDER ?? "local",
+    region: process.env.GEMMA4_REGION ?? "local",
+    faultDomain: process.env.GEMMA4_FAULT_DOMAIN ?? `local:${deploymentId}`,
     serviceUrl,
     release: {
       schema_version: 1,

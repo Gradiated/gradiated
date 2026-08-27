@@ -105,6 +105,39 @@ bool send_all(const int fd, const std::string& data) {
   return true;
 }
 
+int create_socket(const int family, const int type, const int protocol, const bool nonblocking) {
+  int socket_type = type;
+#ifdef SOCK_CLOEXEC
+  socket_type |= SOCK_CLOEXEC;
+#endif
+#ifdef SOCK_NONBLOCK
+  if (nonblocking) socket_type |= SOCK_NONBLOCK;
+#endif
+  const int fd = socket(family, socket_type, protocol);
+  if (fd < 0) return fd;
+#ifndef SOCK_CLOEXEC
+  static_cast<void>(fcntl(fd, F_SETFD, FD_CLOEXEC));
+#endif
+#ifndef SOCK_NONBLOCK
+  if (nonblocking) static_cast<void>(fcntl(fd, F_SETFL, O_NONBLOCK));
+#endif
+  return fd;
+}
+
+int accept_client(const int listen_fd) {
+#ifdef __linux__
+  const int client = accept4(listen_fd, nullptr, nullptr, SOCK_CLOEXEC);
+#else
+  const int client = accept(listen_fd, nullptr, nullptr);
+  if (client >= 0) static_cast<void>(fcntl(client, F_SETFD, FD_CLOEXEC));
+#endif
+  if (client >= 0) {
+    const int flags = fcntl(client, F_GETFL, 0);
+    if (flags >= 0) static_cast<void>(fcntl(client, F_SETFL, flags & ~O_NONBLOCK));
+  }
+  return client;
+}
+
 }  // namespace
 
 HttpServer::HttpServer(std::string host, const std::uint16_t port, HttpHandler handler)
@@ -116,7 +149,7 @@ void HttpServer::run() {
   // poll readiness can be invalidated by a peer reset before accept4. Keep the listening socket
   // nonblocking so a stale readiness edge cannot strand the sole accept loop after a traffic
   // burst; accepted sockets remain blocking because Linux does not inherit O_NONBLOCK here.
-  listen_fd_ = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0);
+  listen_fd_ = create_socket(AF_INET, SOCK_STREAM, 0, true);
   if (listen_fd_ < 0) {
     throw std::runtime_error("failed to create HTTP socket");
   }
@@ -141,7 +174,7 @@ void HttpServer::run() {
     if (poll_result <= 0 || (descriptor.revents & POLLIN) == 0) {
       continue;
     }
-    const int client = accept4(listen_fd_, nullptr, nullptr, SOCK_CLOEXEC);
+    const int client = accept_client(listen_fd_);
     if (client < 0) {
       continue;
     }
@@ -244,8 +277,8 @@ HttpGetResult http_get(const std::string_view host, const std::uint16_t port,
   if (getaddrinfo(host_string.c_str(), port_string.c_str(), &hints, &addresses) != 0) {
     return result;
   }
-  const int fd = socket(addresses->ai_family, addresses->ai_socktype | SOCK_CLOEXEC,
-                        addresses->ai_protocol);
+  const int fd = create_socket(addresses->ai_family, addresses->ai_socktype,
+                               addresses->ai_protocol, false);
   if (fd < 0) {
     freeaddrinfo(addresses);
     return result;
@@ -311,8 +344,8 @@ HttpGetResult http_post(const std::string_view host, const std::uint16_t port,
   if (getaddrinfo(host_string.c_str(), port_string.c_str(), &hints, &addresses) != 0) {
     return result;
   }
-  const int fd = socket(addresses->ai_family, addresses->ai_socktype | SOCK_CLOEXEC,
-                        addresses->ai_protocol);
+  const int fd = create_socket(addresses->ai_family, addresses->ai_socktype,
+                               addresses->ai_protocol, false);
   if (fd < 0) {
     freeaddrinfo(addresses);
     return result;

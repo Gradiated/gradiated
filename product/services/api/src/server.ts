@@ -4,6 +4,7 @@ import {
   createClickHouseRuntimeClient,
   createControlDatabase,
   createCatalogBillingService,
+  createDeploymentStatusService,
   createOrganizationService,
   createProfilingWriter,
   createUsageService,
@@ -25,6 +26,11 @@ import {
 } from "./billing/stripe.js";
 import { createValkeyClient } from "@gradiated/valkey";
 import { createProfilingIngestApp } from "./profiling-ingest.js";
+import {
+  createDeploymentStatusIngestApp,
+  parseDeploymentStatusTokens,
+} from "./deployment-status-ingest.js";
+import { Hono } from "hono";
 
 const environment = parseEnvironment(process.env);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
@@ -72,6 +78,9 @@ const auth = createAuthService(database, {
 });
 const metrics = new ApiMetrics();
 const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
+const deploymentStatusTokens = parseDeploymentStatusTokens(
+  process.env.DEPLOYMENT_STATUS_INGEST_TOKENS,
+);
 const app = createApp({
   allowedOrigins: environment.TRUSTED_ORIGINS,
   auth,
@@ -109,6 +118,15 @@ const app = createApp({
     workspaces: createWorkspaceApiKeyService(database, servingProjector),
   },
 });
+if (deploymentStatusTokens.size > 0) {
+  app.route(
+    "/",
+    createDeploymentStatusIngestApp({
+      tokens: deploymentStatusTokens,
+      service: createDeploymentStatusService(database, valkey),
+    }),
+  );
+}
 
 const server = serve({
   fetch: app.fetch,
@@ -122,14 +140,24 @@ const profilingClient = profilingToken
       parseClickHouseRuntimeEnvironment(process.env),
     )
   : undefined;
-const profilingServer = profilingToken
+const privateApp = new Hono();
+if (profilingToken) {
+  privateApp.route(
+    "/",
+    createProfilingIngestApp({
+      token: profilingToken,
+      writer: createProfilingWriter(profilingClient!),
+    }),
+  );
+}
+const privateServer = profilingToken
   ? serve({
-      fetch: createProfilingIngestApp({
-        token: profilingToken,
-        writer: createProfilingWriter(profilingClient!),
-      }).fetch,
-      hostname: process.env.PROFILING_HOST ?? "0.0.0.0",
-      port: Number(process.env.PROFILING_PORT ?? "3003"),
+      fetch: privateApp.fetch,
+      hostname:
+        process.env.TELEMETRY_HOST ?? process.env.PROFILING_HOST ?? "0.0.0.0",
+      port: Number(
+        process.env.TELEMETRY_PORT ?? process.env.PROFILING_PORT ?? "3003",
+      ),
     })
   : undefined;
 
@@ -139,14 +167,16 @@ console.log(
 console.log(
   `Gradiated API metrics listening on http://0.0.0.0:${metricsPort}/metrics`,
 );
-if (profilingServer) {
-  console.log("Profiling ingestion listening on the private service port");
+if (privateServer) {
+  console.log(
+    "Runtime telemetry ingestion listening on the private service port",
+  );
 }
 
 const shutdown = (signal: NodeJS.Signals): void => {
   console.log(`Received ${signal}; shutting down`);
   metricsServer.close();
-  profilingServer?.close();
+  privateServer?.close();
   server.close(async (error) => {
     if (error) {
       console.error("API shutdown failed", error);

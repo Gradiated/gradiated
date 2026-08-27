@@ -581,6 +581,9 @@ mod tests {
             deployment: GatewayModelDeployment {
                 id: Uuid::nil(),
                 status: DeploymentStatus::Available,
+                provider: "local".to_owned(),
+                region: "local".to_owned(),
+                fault_domain: "local:runtime-1".to_owned(),
                 service_url: "http://127.0.0.1:30000".to_owned(),
                 release: ModelDeploymentRelease {
                     schema_version: 1,
@@ -618,6 +621,7 @@ mod tests {
                 model: "model".to_owned(),
                 messages: vec![serde_json::json!({"role": "user", "content": "hello"})],
                 stream: false,
+                session_id: None,
                 max_completion_tokens: max_tokens,
                 max_tokens: None,
                 parameters: Map::new(),

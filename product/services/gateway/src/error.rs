@@ -101,7 +101,7 @@ impl GatewayError {
             Self::ContextLengthExceeded { .. } => {
                 "The requested token limit exceeds the model limit."
             }
-            Self::PayloadTooLarge => "The request body exceeds 8 MB.",
+            Self::PayloadTooLarge => "The request body exceeds 32 MB.",
             Self::InvalidApiKey => "The API key is invalid.",
             Self::InsufficientBalance => "The prepaid balance is insufficient.",
             Self::ConcurrencyExceeded => {

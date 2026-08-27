@@ -9,11 +9,14 @@ use crate::{
 
 const PROVIDER_SCHEMA_VERSION: &str = "2.4";
 const NANO_USD_SCALE: u64 = 1_000_000_000;
-const PROVIDER_DATACENTER_COUNTRY: &str = "US";
-const PROVIDER_DATACENTER_REGION: &str = "us-east-1";
-const PROVIDER_DEPLOYMENT_REGION: &str = "US";
 const PROVIDER_ZDR: bool = true;
 const PROVIDER_HIPAA: bool = false;
+
+#[derive(Debug)]
+pub struct CatalogModel {
+    pub model: GatewayModel,
+    pub installed_concurrency: u64,
+}
 
 #[derive(Debug, Serialize)]
 pub struct ModelCatalogResponse<'a> {
@@ -21,7 +24,7 @@ pub struct ModelCatalogResponse<'a> {
 }
 
 impl<'a> ModelCatalogResponse<'a> {
-    pub fn from_models(models: &'a [GatewayModel]) -> Self {
+    pub fn from_models(models: &'a [CatalogModel]) -> Self {
         Self {
             data: models
                 .iter()
@@ -51,15 +54,18 @@ struct ProviderModel<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     deprecation_date: Option<&'a DateTime<Utc>>,
     is_ready: bool,
-    datacenters: [ProviderDatacenter; 1],
-    deployment_region: &'static str,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    capacity: Vec<ProviderCapacity>,
+    datacenters: Vec<ProviderDatacenter<'a>>,
+    deployment_region: String,
     compliance: ProviderCompliance,
 }
 
 impl<'a> ProviderModel<'a> {
-    fn from_model(model: &'a GatewayModel) -> Option<Self> {
+    fn from_model(catalog: &'a CatalogModel) -> Option<Self> {
+        let model = &catalog.model;
         let is_ready = match model.status {
-            ModelStatus::Available => true,
+            ModelStatus::Available => catalog.installed_concurrency > 0,
             ModelStatus::Unavailable => false,
             ModelStatus::Retired => return None,
         };
@@ -73,6 +79,28 @@ impl<'a> ProviderModel<'a> {
         if is_ready && model.first_available_deployment().ok().flatten().is_none() {
             return None;
         }
+
+        let mut regions = model
+            .deployments
+            .iter()
+            .filter(|deployment| {
+                deployment.status == crate::DeploymentStatus::Available
+                    && deployment.validate().is_ok()
+            })
+            .map(|deployment| deployment.region.as_str())
+            .collect::<Vec<_>>();
+        regions.sort_unstable();
+        regions.dedup();
+        let datacenters = regions
+            .into_iter()
+            .map(|region| ProviderDatacenter {
+                country_code: country_code(region),
+                region,
+            })
+            .collect::<Vec<_>>();
+        let deployment_region = datacenters
+            .first()
+            .map_or_else(|| "US".to_owned(), |entry| entry.country_code.clone());
 
         let released_at = model.properties.released_at.as_ref()?;
         let input = model.properties.text_input();
@@ -91,17 +119,30 @@ impl<'a> ProviderModel<'a> {
             passthrough_parameters: &model.properties.passthrough_parameters,
             deprecation_date: model.properties.deprecation_date.as_ref(),
             is_ready,
-            datacenters: [ProviderDatacenter {
-                country_code: PROVIDER_DATACENTER_COUNTRY,
-                region: PROVIDER_DATACENTER_REGION,
-            }],
-            deployment_region: PROVIDER_DEPLOYMENT_REGION,
+            capacity: (catalog.installed_concurrency > 0)
+                .then_some(ProviderCapacity {
+                    kind: "concurrency",
+                    unit: "request",
+                    value: catalog.installed_concurrency,
+                })
+                .into_iter()
+                .collect(),
+            datacenters,
+            deployment_region,
             compliance: ProviderCompliance {
                 zdr: PROVIDER_ZDR,
                 hipaa: PROVIDER_HIPAA,
             },
         })
     }
+}
+
+#[derive(Debug, Serialize)]
+struct ProviderCapacity {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    unit: &'static str,
+    value: u64,
 }
 
 #[derive(Debug, Serialize)]
@@ -209,9 +250,22 @@ impl From<&OutputTokenPrice> for ProviderOutputPrice {
 }
 
 #[derive(Debug, Serialize)]
-struct ProviderDatacenter {
-    country_code: &'static str,
-    region: &'static str,
+struct ProviderDatacenter<'a> {
+    country_code: String,
+    region: &'a str,
+}
+
+fn country_code(region: &str) -> String {
+    let candidate = region
+        .split(['-', '_'])
+        .next()
+        .unwrap_or(region)
+        .to_ascii_uppercase();
+    if candidate.len() == 2 && candidate.bytes().all(|byte| byte.is_ascii_alphabetic()) {
+        candidate
+    } else {
+        "US".to_owned()
+    }
 }
 
 fn nano_usd(value: u64) -> String {
@@ -271,6 +325,9 @@ mod tests {
             "deployments": [{
                 "id": "0198c36f-9b6a-7000-8000-000000000005",
                 "status": "available",
+                "provider": "local",
+                "region": "us-east-1",
+                "fault_domain": "local:runtime-1",
                 "service_url": "http://private-sglang:30000",
                 "release": {
                     "schema_version": 1,
@@ -295,7 +352,10 @@ mod tests {
 
     #[test]
     fn publishes_only_customer_visible_provider_fields() {
-        let models = [model()];
+        let models = [CatalogModel {
+            model: model(),
+            installed_concurrency: 8,
+        }];
         let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
         let published = &response["data"][0];
 
@@ -327,10 +387,31 @@ mod tests {
             serde_json::json!({ "zdr": true, "hipaa": false })
         );
         assert_eq!(published["is_ready"], true);
+        assert_eq!(
+            published["capacity"],
+            serde_json::json!([{"type": "concurrency", "unit": "request", "value": 8}])
+        );
         assert_eq!(published["schema_version"], "2.4");
-        assert!(published.get("capacity").is_none());
         assert!(published.get("deployments").is_none());
         assert!(published.get("service_url").is_none());
+    }
+
+    #[test]
+    fn publishes_singapore_deployment_location() {
+        let mut singapore = model();
+        singapore.deployments[0].region = "sg".to_owned();
+        let models = [CatalogModel {
+            model: singapore,
+            installed_concurrency: 8,
+        }];
+        let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+        let published = &response["data"][0];
+
+        assert_eq!(
+            published["datacenters"],
+            serde_json::json!([{ "country_code": "SG", "region": "sg" }])
+        );
+        assert_eq!(published["deployment_region"], "SG");
     }
 
     #[test]
@@ -343,7 +424,10 @@ mod tests {
         missing_deployment.deployments.clear();
 
         for model in [retired, missing_release, missing_deployment] {
-            let models = [model];
+            let models = [CatalogModel {
+                model,
+                installed_concurrency: 0,
+            }];
             let response =
                 serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
             assert_eq!(response["data"].as_array().unwrap().len(), 0);

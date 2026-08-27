@@ -379,22 +379,23 @@ The reconciler exports its last-success time, failures and mismatches as metrics
 
 ## 13. `model_deployments`
 
-Durable registry of concrete SGLang deployments for hosted models. One model
-may have multiple rows so releases can overlap during draining and a future
-availability service can manage capacity without changing the model catalog.
-The gateway accepts multiple `available` rows and selects the first available
-child in projection order. The current order is deterministic; a future
-availability service may make that order capacity-aware.
+Durable registry of concrete runtime deployments for hosted models. One model
+may have multiple rows. The gateway combines these rows with fresh deployment
+status from Valkey. It uses rendezvous hashing for stable placement and one
+shared concurrency lease for admission.
 
-| Field         | Type        | Null | Rules                                                        |
-| ------------- | ----------- | ---- | ------------------------------------------------------------ |
-| `id`          | uuid        | no   | Primary key; stable deployment identity                      |
-| `model_id`    | text        | no   | FK `models.id`                                               |
-| `status`      | text        | no   | `available`, `unavailable`, `draining`                       |
-| `service_url` | text        | no   | Bounded private or restricted absolute HTTP(S) SGLang URL    |
-| `release`     | jsonb       | no   | Closed Zod `ModelDeploymentRelease` document                 |
-| `created_at`  | timestamptz | no   | Creation time                                                |
-| `updated_at`  | timestamptz | no   | Last routing/status mutation                                 |
+| Field          | Type        | Null | Rules                                                     |
+| -------------- | ----------- | ---- | --------------------------------------------------------- |
+| `id`           | uuid        | no   | Primary key; stable deployment identity                   |
+| `model_id`     | text        | no   | FK `models.id`                                            |
+| `status`       | text        | no   | `available`, `unavailable`, `draining`                    |
+| `provider`     | text        | no   | GPU provider identifier                                   |
+| `region`       | text        | no   | Provider region identifier                                |
+| `fault_domain` | text        | no   | Failure boundary used for retry placement                 |
+| `service_url`  | text        | no   | Bounded private or restricted absolute HTTP(S) runtime URL |
+| `release`      | jsonb       | no   | Closed Zod `ModelDeploymentRelease` document              |
+| `created_at`   | timestamptz | no   | Creation time                                             |
+| `updated_at`   | timestamptz | no   | Last durable mutation                                     |
 
 `ModelDeploymentRelease` contains `schema_version`, initially `1`, plus
 `runtime_revision`, `model_path`, `model_revision`, `tokenizer_path`, and
@@ -404,12 +405,10 @@ SGLang source revision locally and an immutable OCI image digest in production.
 Rust serializes this typed object canonically and hashes only it to produce the
 `served_release_digest` captured by each admitted generation.
 
-There is no generic deployment metadata. A field that later affects routing,
-availability, capacity, compliance or cost becomes an explicit column or part
-of another closed versioned document. Provider, region, GPU shape and configured
-capacity are added only when the availability service consumes them. Volatile
-health, queue depth and free capacity remain operational observations rather
-than durable PostgreSQL fields.
+There is no generic deployment metadata. A field that affects routing,
+availability, capacity, compliance, or cost becomes an explicit column or part
+of another closed versioned document. Volatile status remains in Valkey. It is
+not a durable PostgreSQL field.
 
 Git continues to own the Kubernetes/SGLang workload declaration that creates a
 deployment. The deployment workflow registers the resulting route and exact
@@ -508,7 +507,7 @@ The application validates the complete properties document before insertion; it 
 
 One TypeScript ClickHouse-ingestion consumer group reads `GenerationSettled` from Valkey. For each event it derives the global `settlement.slot_id` from the Valkey Stream ID's time bucket and settlement schema. Every organization in that time bucket receives the same slot ID; ClickHouse materializes it for chronological reconciliation. The worker issues one logical insert per generation with ClickHouse `async_insert = 1` and `wait_for_async_insert = 1`; ClickHouse combines those inserts server-side. Retries use a generation-ID-based insert deduplication token as a normal-path optimization, but billing correctness never depends on the lifetime of that token. The worker acknowledges a stream entry only after ClickHouse confirms the asynchronous insert was flushed, uses `XAUTOCLAIM` to recover abandoned pending entries, and trims only through the contiguous acknowledged watermark. That watermark is derived from the consumer group's last-delivered ID and oldest pending ID rather than stored in another database table. Do not use `ReplacingMergeTree`, lifecycle updates or `FINAL` queries for the launch schema.
 
-Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs or attempt arrays. The seed has one exact runtime target and no fallback. Generations have no TTL and are retained indefinitely at launch. Rely on ClickHouse Cloud's managed durability and backups initially; do not build a separate archival or export pipeline until retention, regulatory or recovery requirements justify one.
+Do not store prompts, completions, arbitrary request JSON, credentials, private runtime URLs, or attempt arrays. One customer-visible generation can have one safe runtime retry. Generations have no TTL and are retained indefinitely at launch. Rely on ClickHouse Cloud's managed durability and backups initially; do not build a separate archival or export pipeline until retention, regulatory or recovery requirements justify one.
 
 # Inference event contracts
 
@@ -581,21 +580,37 @@ Valkey key: `model:<id>`.
 
 This is the route-ready projection of one PostgreSQL `models` row and all of
 its `model_deployments` rows. Each `GatewayModelDeployment` contains `id`,
-`status`, `service_url`, and the closed `ModelDeploymentRelease`; `model_id` is
-not duplicated inside each child because the parent key and `GatewayModel.id`
-already fix it. The projector replaces the complete document with one `SET`
-after either the model or one of its deployments changes. `gateway-model-ids`
-is a Valkey set containing projected model IDs; it is an enumeration index for
-readiness and `/v1/models`, not another authority.
+`status`, `provider`, `region`, `fault_domain`, `service_url`, and the closed
+`ModelDeploymentRelease`. The projector replaces the complete document with
+one `SET`. `gateway-model-ids` is the enumeration index for readiness and
+`/v1/models`.
 
-An available model is ready for inference when at least one valid child
-deployment has `status = available`. The gateway selects the first such child
-in the projected array. The projector currently orders rows deterministically
-by creation time and ID; a future availability service may publish a
-capacity-aware order. A missing route fails closed as
-`serving_state_unavailable`.
+The gateway caches this projection in memory for one second. A miss reloads it
+from Valkey. A missing route fails closed.
 
-## 20. `InFlightGenerationLease`
+## 20. `DeploymentRuntimeStatus`
+
+Valkey key: `deployment-status:{<served_release_digest>}`. This is a hash. The
+field is `deployment_id`. The value is one closed status document.
+
+The document contains `deployment_id`, `runtime_revision`, `received_at`,
+`healthy`, `accepting_requests`, `maximum_concurrency`, and `reason_code`.
+Desmond sends it every second. The ingest service checks provider ownership and
+the durable runtime revision before it writes the field. The hash has an
+eight-second TTL. The gateway accepts status for six seconds and caches one
+Valkey read for one second.
+
+## 21. `DeploymentCapacityLease`
+
+Valkey key: `deployment-inflight:{<deployment_id>}`. This is a sorted set.
+Each member is a `generation_id`. Each score is the request expiry time.
+
+All gateway replicas use one Lua script to remove expired members, compare the
+count with `maximum_concurrency`, and add one member. The gateway releases the
+member when an attempt ends. Expiry recovers capacity after a gateway failure.
+This lease does not reserve KV tokens.
+
+## 22. `InFlightGenerationLease`
 
 Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorted set, not a row or hash.
 
@@ -616,7 +631,7 @@ Seed runs one settlement shard. Later horizontal scaling assigns each organizati
 
 The lease intentionally contains no request metadata. Rust carries the authenticated identities, model release, actual usage, admission-time prices and timing through the live request. It uses those captured nano-USD prices to calculate `properties.usage.charge` and emits the exact pricing snapshot and changing terminal details inside `GenerationSettled.properties`. `generation_id` identifies the durable ClickHouse row. The ClickHouse consumer adds the global settlement slot, and the PostgreSQL worker derives the per-organization source ID as `<settlement_slot_id>:<organization_id>`. The Valkey Stream has its own transport entry ID, so there is no separate event UUID. A process loss may leave an unbilled generation that expires without a terminal analytics row. That bounded revenue and observability loss is accepted at launch in exchange for eliminating monetary reservations and durable in-progress request state.
 
-## 21. `AppliedBalanceTransactionIds`
+## 23. `AppliedBalanceTransactionIds`
 
 Valkey key at seed: `applied-balance-transactions:{settlement-0}:<organization_id>`. This is a set, not a row or hash.
 

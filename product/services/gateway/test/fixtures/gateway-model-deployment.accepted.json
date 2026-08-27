@@ -1,6 +1,9 @@
 {
   "id": "0198c36f-9b6a-7000-8000-000000000004",
   "status": "available",
+  "provider": "local",
+  "region": "local",
+  "fault_domain": "local:runtime-1",
   "service_url": "http://127.0.0.1:30000",
   "release": {
     "schema_version": 1,

@@ -199,6 +199,9 @@ describe("catalog billing service", () => {
         {
           id: "0198c36f-9b6a-7000-8000-000000000004",
           status: "available",
+          provider: "local",
+          region: "local",
+          faultDomain: "local:runtime-1",
           serviceUrl: "http://127.0.0.1:30000",
           release: {
             schema_version: 1,
@@ -212,6 +215,9 @@ describe("catalog billing service", () => {
         {
           id: "0198c36f-9b6a-7000-8000-000000000005",
           status: "available",
+          provider: "local",
+          region: "local",
+          faultDomain: "local:runtime-2",
           serviceUrl: "http://127.0.0.1:30001",
           release: {
             schema_version: 1,

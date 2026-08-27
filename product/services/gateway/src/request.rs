@@ -17,6 +17,8 @@ pub struct ChatCompletionRequest {
     pub messages: Vec<Value>,
     #[serde(default)]
     pub stream: bool,
+    #[validate(length(min = 1, max = 256))]
+    pub session_id: Option<String>,
     #[validate(range(min = 1_u64, max = 9_007_199_254_740_991_u64))]
     pub max_completion_tokens: Option<u64>,
     #[validate(range(min = 1_u64, max = 9_007_199_254_740_991_u64))]
@@ -52,6 +54,7 @@ impl ChatCompletionRequest {
             model,
             messages,
             stream,
+            session_id: _,
             max_completion_tokens,
             max_tokens,
             mut parameters,

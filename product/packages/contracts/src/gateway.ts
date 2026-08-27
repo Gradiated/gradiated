@@ -10,6 +10,7 @@ export const ChatCompletionRequestSchema = z
     model: z.string().min(1).max(200),
     messages: z.array(z.unknown()).min(1),
     stream: z.boolean().default(false),
+    session_id: z.string().min(1).max(256).optional(),
     max_completion_tokens: z.number().int().positive().optional(),
     max_tokens: z.number().int().positive().optional(),
   })
@@ -73,6 +74,13 @@ export const GatewayModelDeploymentSchema = z
   .strictObject({
     id: UuidSchema,
     status: z.enum(["available", "unavailable", "draining"]),
+    provider: z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[a-z][a-z0-9_-]*$/),
+    region: z.string().min(1).max(100),
+    fault_domain: z.string().min(1).max(300),
     service_url: z
       .url()
       .max(2_048)
@@ -82,6 +90,23 @@ export const GatewayModelDeploymentSchema = z
     release: ModelDeploymentReleaseSchema,
   })
   .openapi("GatewayModelDeployment");
+
+export const DeploymentStatusReportSchema = z
+  .strictObject({
+    schema_version: z.literal(1),
+    deployment_id: UuidSchema,
+    runtime_revision: BoundedIdentifierSchema,
+    healthy: z.boolean(),
+    accepting_requests: z.boolean(),
+    maximum_concurrency: z.number().int().min(1).max(100_000),
+    reason_code: z
+      .string()
+      .min(1)
+      .max(100)
+      .regex(/^[a-z][a-z0-9_]*$/)
+      .nullable(),
+  })
+  .openapi("DeploymentStatusReport");
 
 export const GatewayModelSchema = z
   .strictObject({
@@ -155,6 +180,9 @@ export const GenerationSettledSchema = z
 export type GatewayAccount = z.infer<typeof GatewayAccountSchema>;
 export type ChatCompletionRequest = z.infer<typeof ChatCompletionRequestSchema>;
 export type GatewayCredential = z.infer<typeof GatewayCredentialSchema>;
+export type DeploymentStatusReport = z.infer<
+  typeof DeploymentStatusReportSchema
+>;
 export type GatewayModel = z.infer<typeof GatewayModelSchema>;
 export type GatewayModelDeployment = z.infer<
   typeof GatewayModelDeploymentSchema

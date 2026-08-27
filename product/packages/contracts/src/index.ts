@@ -44,6 +44,7 @@ export {
 } from "./billing.js";
 export {
   ChatCompletionRequestSchema,
+  DeploymentStatusReportSchema,
   GatewayAccountSchema,
   GatewayCredentialSchema,
   GatewayModelSchema,
@@ -54,6 +55,7 @@ export {
   GenerationSettledSchema,
   ModelDeploymentReleaseSchema,
   type ChatCompletionRequest,
+  type DeploymentStatusReport,
   type GatewayAccount,
   type GatewayCredential,
   type GatewayModel,

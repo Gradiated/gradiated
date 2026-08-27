@@ -115,6 +115,9 @@ export function createValkeyServingProjector(
         deployments: model.deployments.map((deployment) => ({
           id: deployment.id,
           status: deployment.status,
+          provider: deployment.provider,
+          region: deployment.region,
+          fault_domain: deployment.faultDomain,
           service_url: deployment.serviceUrl,
           release: deployment.release,
         })),

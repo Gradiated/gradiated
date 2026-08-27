@@ -24,7 +24,8 @@ in Valkey. It is not a general-purpose API gateway or a model-routing platform.
 - authenticate direct and OpenRouter keys through the same Valkey projection;
 - reject invalid, unsupported, or unpaid requests before generation and
   normalize SGLang overload responses;
-- dispatch to the first available SGLang endpoint projected for the exact model;
+- select one healthy deployment with stable rendezvous hashing;
+- enforce shared deployment concurrency and retry one safe failed attempt;
 - preserve streaming backpressure and stop upstream work on cancellation;
 - calculate charges from authoritative usage and admission-time prices;
 - atomically consume the in-flight lease, debit the operational balance, and
@@ -38,10 +39,10 @@ The gateway does not contain:
 - PostgreSQL or ClickHouse clients;
 - customer, workspace, API-key, model, or billing CRUD;
 - Stripe or OpenRouter onboarding workflows;
-- provider discovery, selection, scoring, routing, or fallback;
+- cross-model routing or provider discovery;
 - model aliases or silent parameter translation;
 - GPU provisioning or a fleet controller;
-- request retries that might duplicate inference;
+- parallel or post-output request retries;
 - prompt, completion, arbitrary request-body, or credential persistence;
 - a second cache, durable queue, reservation ledger, or in-progress database.
 
@@ -63,19 +64,18 @@ classify or settle the same generation.
 ### Mutable state always comes from Valkey
 
 Credentials, workspaces, accounts, model catalog state, balances, in-flight
-leases, and terminal events are read or mutated in Valkey. Mutable gateway
-records, including deployment catalogs, are not cached inside the gateway.
-Configuration and reusable HTTP clients may remain in memory, but every
-request resolves current routing state from Valkey.
+leases, and terminal events are read or mutated in Valkey. The gateway uses one
+lazy one-second memory cache for models, model IDs, and deployment status.
+Credentials, accounts, and workspaces are read directly from Valkey.
 
 ### Exact identifiers, minimal routing
 
 The gateway converts the request model ID to ASCII lowercase. The normalized
-ID and `GatewayModel.id` must then match byte-for-byte. At launch
-`GatewayModel.deployments` is an ordered list and may contain multiple
-`available` deployments. The gateway chooses the first available entry. A
-mismatch or missing route is an error; the gateway does not score or discover
-targets in the request path.
+ID and `GatewayModel.id` must then match byte-for-byte.
+`GatewayModel.deployments` may contain multiple `available` deployments. The
+gateway intersects them with fresh status. It uses a session ID when present.
+Otherwise, it hashes the first 4,096 rendered token IDs. Rendezvous hashing
+gives one stable candidate order. A mismatch or missing route is an error.
 
 ### Atomic financial mutations
 
@@ -101,7 +101,8 @@ components:
 | `GatewayState`          | concrete struct             | Composition root holding immutable configuration, Valkey adapter, runtime client, coordinator, and telemetry. |
 | `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                  |
 | `ValkeyServingState`    | concrete adapter            | Reads gateway records and executes admission and finalization Lua scripts.                                    |
-| `GatewayModel`          | typed Valkey record         | Carries the exact model policy and ordered deployment candidates, and requires at least one available route.  |
+| `GatewayModel`          | typed Valkey record         | Carries the exact model policy and durable deployment candidates.                                             |
+| `DeploymentRuntimeStatus` | typed Valkey record       | Carries current health, admission status, and installed concurrency.                                          |
 | `ModelTokenizer`        | concrete struct             | Renders chat input and tokenizes it locally from the selected deployment's pinned tokenizer artifact.         |
 | `SglangClient`          | concrete adapter            | Calls health and Chat Completions on the selected SGLang deployment.                                          |
 | `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                   |
@@ -176,7 +177,7 @@ makes that attempt financially idempotent.
 1. The ALB accepts TLS and routes the request to the gateway.
 2. Axum matches canonical `POST /v1/chat/completions`.
 3. The gateway generates a UUIDv7 `generation_id` and records `received_at` in memory.
-4. It enforces an 8 MB (8,000,000-byte) body ceiling before JSON
+4. It enforces a 32 MB (32,000,000-byte) body ceiling before JSON
    deserialization.
 5. An oversized request returns `413 payload_too_large` without a Valkey lookup
    or SGLang call.
@@ -400,7 +401,7 @@ Initial operational defaults and requirements are:
 
 | Setting                                  |                        Value |
 | ---------------------------------------- | ---------------------------: |
-| request-body ceiling                     |       8 MB (8,000,000 bytes) |
+| request-body ceiling                     |     32 MB (32,000,000 bytes) |
 | normalized output `default_length`       | 1,024 capped by `max_length` |
 | total-generation timeout                 |                  300 seconds |
 | lease finalization margin                |                   60 seconds |
@@ -713,14 +714,13 @@ access checks as Chat Completions but does not create a lease.
 1. Authenticate the caller and check workspace/account access.
 2. Enumerate exact IDs from the bounded `gateway-model-ids` Valkey set; do not
    use `KEYS` or an unbounded Valkey scan.
-3. Fetch each corresponding `GatewayModel`.
+3. Fetch each corresponding `GatewayModel` and its deployment status hash.
 4. Exclude retired, malformed, or missing-deployment models.
-5. Include available models with `is_ready = true`.
+5. Set `is_ready = true` when at least one deployment has fresh healthy status.
 6. Include explicitly staged unavailable models with `is_ready = false` so the
    OpenRouter monitor can observe them without sending inference traffic.
-7. Assemble provider schema version `2.4` from customer-visible catalog fields and
-   deployment declarations supplied separately when that provider surface is
-   implemented.
+7. Report healthy installed concurrency in the root `capacity` array. Include
+   a healthy deployment when it is temporarily busy.
 8. Convert integer nano-USD token prices to exact base-10 USD strings.
 9. Require `released_at` before advertising a model because the provider
    document requires a creation timestamp.
@@ -733,8 +733,7 @@ or the internal served-release digest.
 `GatewayModel` is Zod-authored and projected from the PostgreSQL model plus all
 of its deployment rows. Rust strictly validates the complete Valkey document.
 An available model must have at least one valid available child deployment.
-The deployment array is an explicit ordered candidate list, and the gateway
-selects its first available entry. Missing routes fail closed.
+Fresh deployment status controls live routing. Missing routes fail closed.
 
 The served-release digest is calculated over the selected deployment's closed `release`
 object: SGLang runtime revision, model path and immutable revision, and
@@ -749,25 +748,24 @@ response, trace, or metric.
 
 ## Runtime overload and exact dispatch
 
-Every exact model maps to an ordered list of SGLang deployment candidates. The
-gateway sends the qualified request directly to the first available deployment
-and has no runtime-capacity semaphore, internal generation queue, request-path
-scoring, retry, or fallback.
-SGLang owns its runtime admission and scheduling. The SGLang workload pins its
-measured `max_running_requests` and bounded `max_queued_requests` settings. Once that
-runtime queue is full, the gateway normalizes SGLang's overload response to
-`429 capacity_exceeded` and returns it to the caller; it does not try another
-endpoint. Release conformance verifies the pinned SGLang version actually
-produces this behavior.
+Every exact model maps to independent runtime deployment candidates. Desmond
+sends status every second. The gateway rejects stale, unhealthy, draining, or
+busy candidates. It uses rendezvous hashing for stable placement and a Valkey
+sorted-set lease to enforce `maximum_concurrency` across gateway replicas. It
+does not queue.
+
+One request can use at most two sequential runtime attempts. A retry requires
+an availability or capacity failure, no usable output, time on the shared
+deadline, and another deployment for the same release. The second attempt
+prefers another fault domain. A started public stream is never retried. Both
+attempts use one generation ID and one settlement.
 
 Per-organization concurrency remains separate and is always enforced by the
 Valkey admission script before generation dispatch. It limits customer
 financial exposure and fairness, not GPU capacity.
 
-A future availability service may optimize deployments across GPU providers
-and publish routing decisions or alternate capacity. That is a separate
-control-plane design requiring explicit failure, retry, idempotency, and
-settlement semantics. The launch gateway does not prebuild that abstraction.
+The runtime remains authoritative for KV cache use and exact scheduler state.
+Desmond sets `accepting_requests: false` before severe KV or queue pressure.
 
 ## Error mapping
 
@@ -981,10 +979,9 @@ tests with a fake `ServingState`.
   being exposed as public per-chunk usage;
 - cancellation charging the latest observed cumulative usage, and
   cancellation before the first usage snapshot charging zero;
-- SGLang overload normalized to `429 capacity_exceeded` with no alternate
-  endpoint attempt;
+- runtime overload normalized to `429 capacity_exceeded`;
 - runtime timeout, other HTTP error, malformed response, and truncated SSE;
-- no automatic inference retry.
+- one pre-output retry on another deployment.
 
 ### Usage and pricing tests
 

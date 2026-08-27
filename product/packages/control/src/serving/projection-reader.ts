@@ -109,6 +109,9 @@ export const createServingProjectionReader = (
         id: deployment.id,
         status:
           deployment.status as ModelProjection["deployments"][number]["status"],
+        provider: deployment.provider,
+        region: deployment.region,
+        faultDomain: deployment.faultDomain,
         serviceUrl: deployment.serviceUrl,
         release: deployment.release,
       });

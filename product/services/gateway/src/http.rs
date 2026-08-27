@@ -20,7 +20,7 @@ use crate::{
     ModelCatalogResponse, RequestCoordinator, RequestMetadata,
 };
 
-const MAX_REQUEST_BYTES: usize = 8_000_000;
+const MAX_REQUEST_BYTES: usize = 32_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 

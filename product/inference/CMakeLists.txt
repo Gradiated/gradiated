@@ -13,6 +13,7 @@ add_library(desmond_core
   desmond/src/gpu_metrics.cpp
   desmond/src/http.cpp
   desmond/src/profiling.cpp
+  desmond/src/status.cpp
   desmond/src/supervisor.cpp
   desmond/src/trace.cpp
 )

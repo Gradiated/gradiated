@@ -22,6 +22,13 @@ export {
   type ProfilingWriter,
 } from "./clickhouse/profiling-ingestion.js";
 export {
+  createDeploymentStatusService,
+  DeploymentStatusError,
+  servedReleaseDigest,
+  type DeploymentStatusFailure,
+  type DeploymentStatusService,
+} from "./deployment-status/service.js";
+export {
   createGenerationSettlementReader,
   SettlementFinancialConflictError,
   type GenerationSettlementReader,

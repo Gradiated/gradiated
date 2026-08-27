@@ -36,6 +36,9 @@ export interface ModelDeploymentRecord {
   id: string;
   modelId: string;
   status: "available" | "unavailable" | "draining";
+  provider: string;
+  region: string;
+  faultDomain: string;
   serviceUrl: string;
   release: ModelDeploymentRelease;
   createdAt: Date;
@@ -99,6 +102,9 @@ export interface CatalogBillingService {
     id: string;
     modelId: string;
     status: ModelDeploymentRecord["status"];
+    provider: string;
+    region: string;
+    faultDomain: string;
     serviceUrl: string;
     release: ModelDeploymentRelease;
   }): Promise<ModelDeploymentRecord>;
@@ -303,6 +309,9 @@ export const createCatalogBillingService = (
       const validated = GatewayModelDeploymentSchema.parse({
         id: input.id,
         status: input.status,
+        provider: input.provider,
+        region: input.region,
+        fault_domain: input.faultDomain,
         service_url: input.serviceUrl,
         release: input.release,
       });
@@ -313,6 +322,9 @@ export const createCatalogBillingService = (
           id: validated.id,
           modelId: input.modelId,
           status: validated.status,
+          provider: validated.provider,
+          region: validated.region,
+          faultDomain: validated.fault_domain,
           serviceUrl: validated.service_url,
           release: validated.release,
           createdAt: now,
@@ -322,6 +334,9 @@ export const createCatalogBillingService = (
           target: modelDeployments.id,
           set: {
             status: validated.status,
+            provider: validated.provider,
+            region: validated.region,
+            faultDomain: validated.fault_domain,
             serviceUrl: validated.service_url,
             release: validated.release,
             updatedAt: now,

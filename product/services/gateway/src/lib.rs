@@ -1,5 +1,6 @@
 pub mod admission;
 pub mod auth;
+mod cache;
 pub mod catalog;
 pub mod completion;
 pub mod config;
@@ -14,20 +15,22 @@ pub mod metrics;
 pub mod model;
 pub mod readiness;
 pub mod request;
+pub mod routing;
 pub mod runtime;
 pub mod serving_state;
 pub mod tokenizer;
 mod valkey_auth;
 
 pub use admission::{AdmissionError, AdmissionLease};
-pub use catalog::ModelCatalogResponse;
+pub use catalog::{CatalogModel, ModelCatalogResponse};
 pub use completion::{
     CompletionResponse, CompletionResult, CompletionService, StreamingCompletion,
 };
 pub use config::{GatewayConfig, ValkeyIamConfig};
 pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata};
 pub use deployment::{
-    DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease, TokenizerMode,
+    DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease,
+    TokenizerMode,
 };
 pub use domain::GatewayModel;
 pub use error::GatewayError;
@@ -47,6 +50,10 @@ pub use model::{
 };
 pub use readiness::DependencyReadiness;
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
+pub use routing::{
+    healthy_installed_concurrency, order_deployments, RouteAvailability, RouteInput,
+    RoutedDeployment,
+};
 pub use runtime::{
     ModelRuntime, RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
     RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, RuntimeTlsConfig, SglangClient,

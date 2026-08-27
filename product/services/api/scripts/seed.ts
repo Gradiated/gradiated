@@ -158,6 +158,9 @@ try {
     id: "0198c36f-9b6a-7000-8000-000000000004",
     modelId: "mlx-community/qwen3-0.6b-4bit",
     status: "available",
+    provider: "local",
+    region: "local",
+    faultDomain: "local:runtime-1",
     serviceUrl: "http://127.0.0.1:30000",
     release: {
       schema_version: 1,

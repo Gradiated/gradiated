@@ -1,7 +1,7 @@
 # OpenRouter provider readiness
 
 - status: working checklist
-- date: 2026-08-25
+- date: 2026-08-27
 - owner: Gradiated Ltd
 - application: https://openrouter.ai/providers/apply
 - technical requirements: https://openrouter.ai/docs/guides/community/for-providers
@@ -11,9 +11,10 @@ This document is the working checklist for OpenRouter onboarding. Update the
 status and evidence after each change. Do not submit the provider application
 until all blocker items are complete.
 
-DeepSeek V4 Flash 0731 is the next model-specific launch. Its runtime, model
-configuration, tool support, and GPU qualification remain pending. Complete the
-shared provider work in this document before adding that model.
+GLM-5.3 Flash is the launch model for the first provider application. The
+application lists only GLM-5.3 Flash; Gemma 4 remains a direct-catalog model
+and is not submitted to OpenRouter. Complete the shared provider work in this
+document before submitting.
 
 ## Target outcome
 
@@ -30,7 +31,7 @@ invoice.
 | API protocol     | OpenAI-compatible `/chat/completions` with streaming      | Gateway implements both response modes and usage accounting                                                              | ready        |
 | Endpoint path    | Stable public provider endpoint                           | `https://api.gradiated.com/openai/v1`                                                                                    | ready        |
 | Authentication   | Protected endpoint and provider credential                | Dedicated production key authenticates; its raw value is stored only in AWS Secrets Manager                              | ready        |
-| Models endpoint  | Non-empty `/models` response                              | Catalog serializer emits the OpenRouter model shape; Gemma 4 is released in production after the configuration operation | ready        |
+| Models endpoint  | Non-empty `/models` response                              | Catalog serializer emits the OpenRouter model shape; the application lists GLM-5.3 Flash only                            | ready        |
 | Model identity   | Exact model ID used by OpenRouter                         | Lowercase canonical IDs are implemented                                                                                  | ready        |
 | Release metadata | `created` timestamp for each model                        | Production Gemma 4 row has `released_at` set to `2026-08-22T14:09:29.651Z`                                               | ready        |
 | Pricing          | USD token prices                                          | Catalog emits string USD prices from integer nano-USD values                                                             | ready        |
@@ -38,13 +39,13 @@ invoice.
 | Capabilities     | Advertise supported parameters and features               | Catalog emits typed modality parameter descriptors and only configured features                                          | partial      |
 | Capacity         | Measured or declared capacity                             | Catalog sums healthy deployment concurrency from fresh status                                                            | ready        |
 | Location         | Datacenter and deployment-region metadata                 | Catalog derives the location from each deployment; GLM reports `SG`                                                       | ready        |
-| Compliance       | Clear data-handling posture                               | ZDR policy and catalog metadata are implemented; HIPAA and SOC 2 are not claimed; deployment is pending                  | partial      |
-| Privacy          | Policy with prompt logging, retention, and training terms | Privacy page now includes inference storage, training, retention, and subprocessors                                      | legal review |
-| Payments         | Monthly invoice or automatic payment setup                | OpenRouter has an invoiced production account; payment contact and reconciliation onboarding remain                     | partial      |
-| Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas exist; runtime soak results are incomplete                                                          | partial      |
-| Status page      | Public operational status                                 | To be completed by the Gradiated owner                                                                                   | user-owned   |
-| Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public terms are absent                                                            | recommended  |
-| Next model       | Model-specific runtime, features, and benchmarks          | GLM-5.3 Flash configuration is ready; the secure RunPod URLs are pending                                                  | partial      |
+| Compliance       | Clear data-handling posture                               | ZDR policy and catalog metadata are implemented; HIPAA and SOC 2 are not claimed                                         | ready        |
+| Privacy          | Policy with prompt logging, retention, and training terms | Privacy page includes inference storage, training, retention, and subprocessors; external legal review is waived by owner decision | ready |
+| Payments         | Monthly invoice or automatic payment setup                | OpenRouter does not request payment details at application time; the production account is invoiced                       | post-acceptance |
+| Reliability      | Continuous monitoring and stable traffic handling         | Two gateway replicas, a production smoke test, and provider load results; the 24-hour soak was waived by owner decision   | ready        |
+| Status page      | Public operational status                                 | Public status page is live                                                                                                | done         |
+| Legal pages      | Company identity, privacy, and service terms              | Gradiated Ltd and privacy page exist; public service terms are not planned for the application                            | waived       |
+| Next model       | Model-specific runtime, features, and benchmarks          | GLM-5.3 Flash serves production traffic through the authenticated proxy; capability preflight remains before submission   | partial      |
 
 OpenRouter does not require every model to support every feature. Advertise only
 features that have passed real request tests.
@@ -251,7 +252,8 @@ Before enabling production traffic:
 
 - run a representative load test;
 - record TTFT, output tokens per second, error rate, and concurrency;
-- complete a 24-hour soak test;
+- 24-hour soak test: waived by owner decision; rely on the production smoke test
+  and provider load results;
 - confirm clean model restart behavior;
 - confirm GPU, runtime, gateway, and network alerts;
 - document maintenance and incident procedures;
@@ -264,15 +266,17 @@ responses are preferred to queued timeouts.
 ## Work order
 
 1. Deploy the release-date change and confirm a non-empty production catalog. [done]
-2. Confirm each deployment's conservative concurrency after the runtime soak test.
+2. Confirm each deployment's conservative concurrency from the GLM-5.3 Flash
+   provider load results.
 3. Create and test the dedicated OpenRouter distribution-channel credential. [done]
-4. Complete privacy and company legal review.
-5. Configure monthly invoicing and payment reconciliation.
-6. Add a public status page or document the accepted alternative with OpenRouter. [user-owned]
-7. Add and qualify GLM-5.3 Flash.
+4. External legal review. [waived by owner decision 2026-08-27]
+5. Configure monthly invoicing and payment reconciliation. [post-acceptance]
+6. Add a public status page. [done]
+7. Add and qualify GLM-5.3 Flash. [serving production; capability preflight remains]
 8. Run the complete verification checklist.
-9. Submit the application with the endpoint, model data, pricing, capacity,
-   region, privacy policy, and payment contact.
+9. Submit the application with GLM-5.3 Flash only: endpoint, model data, pricing,
+   capacity, region, and privacy policy. OpenRouter does not request payment
+   details at application time.
 
 ## Evidence log
 
@@ -287,3 +291,9 @@ responses are preferred to queued timeouts.
 | 2026-08-26 | OpenRouter production account configured            | Active distribution-channel organization, default workspace, invoiced billing, one active key, and public HTTP 200 authentication | Production database and gateway checks              |
 | 2026-08-26 | OpenRouter credential secured                       | Raw key stored in AWS Secrets Manager; only its digest remains in PostgreSQL and Valkey; temporary Kubernetes copy removed          | AWS Secrets Manager and Kubernetes checks           |
 | 2026-08-26 | ZDR provider metadata tested                        | Catalog emits `zdr: true` and `hipaa: false`; public policy explicitly applies ZDR to OpenRouter traffic                            | Gateway catalog test and website typecheck          |
+| 2026-08-27 | Status page completed                               | Public status page is live                                                                                                          | Owner confirmation                                  |
+| 2026-08-27 | 24-hour soak waived                                 | Reliability gate relies on the production smoke test and provider load results                                                      | Owner decision; GLM_5_3_FLASH_PRODUCTION_SMOKE.md   |
+| 2026-08-27 | External legal review waived                        | Privacy page and ZDR claims stand without external review                                                                           | Owner decision                                      |
+| 2026-08-27 | Payment expectation corrected                       | OpenRouter does not request payment details in the application; invoicing is configured after acceptance                            | OpenRouter application flow                         |
+| 2026-08-27 | Secure URL checklist item resolved                  | GLM-5.3 Flash serves through the authenticated t2-0/t2-1 proxy; OpenRouter never receives runtime URLs                              | GLM_5_3_FLASH_PRODUCTION_SMOKE.md; RunPod README    |
+| 2026-08-27 | Submission scope set                                | The application lists GLM-5.3 Flash only; Gemma 4 is excluded                                                                       | Owner decision                                      |

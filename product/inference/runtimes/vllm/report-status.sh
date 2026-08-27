@@ -74,7 +74,7 @@ while true; do
       reason_code: (if $reason_code == "" then null else $reason_code end)
     }')"
 
-  if ! curl --fail --silent --show-error --max-time 0.75 \
+  if ! curl --fail --silent --show-error --max-time 3 \
       --output /dev/null \
       --request POST \
       --header @"${status_header_file}" \

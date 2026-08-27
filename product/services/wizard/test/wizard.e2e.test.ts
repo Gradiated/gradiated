@@ -560,16 +560,17 @@ describe("wizard install end to end", () => {
       expect(install.status).toBe(0);
       expect(install.stdout).toContain("claude-gradiated");
 
-      const wrapperPath = join(home, ".gradiated/bin/claude-gradiated");
-      const wrapper = await readFile(wrapperPath, "utf8");
+      // The wrapper launcher is claude-gradiated.js on every platform.
+      const wrapper = await readFile(
+        join(home, ".gradiated/bin/claude-gradiated.js"),
+        "utf8",
+      );
       // The wrapper stores exactly the base URL the wizard was invoked with.
       expect(wrapper).toContain(`const BASE_URL = "http://127.0.0.1:${PORT}"`);
       expect(wrapper).toContain('"z-ai/glm-5.3-flash"');
       // The wrapper must read the key at runtime, never embed it.
       expect(wrapper).not.toContain(API_KEY);
-      await expect(readFile(wrapperPath, "utf8")).resolves.toContain(
-        "credentials.json",
-      );
+      expect(wrapper).toContain("credentials.json");
 
       const zshrc = await readFile(join(home, ".zshrc"), "utf8");
       expect(zshrc).toContain("export EDITOR=vim");

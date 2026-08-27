@@ -7,19 +7,19 @@ import { dirname, join } from "node:path";
 const PATH_BLOCK_START = "# >>> gradiated >>>";
 const PATH_BLOCK_END = "# <<< gradiated <<<";
 
-const CREDENTIAL_READ_SNIPPET = [
-  'const fs=require("node:fs")',
-  'const os=require("node:os")',
-  'const path=require("node:path")',
-  'const file=process.env.GRADIATED_CREDENTIALS_PATH||path.join(os.homedir(),".gradiated","credentials.json")',
-  'process.stdout.write(String(JSON.parse(fs.readFileSync(file,"utf8")).api_key||""))',
-].join(";");
+const WRAPPER_NAME = "claude-gradiated.js";
 
-export const wrapperPath = (): string => {
-  const name =
-    process.platform === "win32" ? "claude-gradiated.cmd" : "claude-gradiated";
-  return join(homedir(), ".gradiated", "bin", name);
-};
+export const wrapperPath = (): string =>
+  join(homedir(), ".gradiated", "bin", WRAPPER_NAME);
+
+/** The command users invoke: extensionless on POSIX, .cmd on Windows. */
+export const wrapperCommandPath = (): string =>
+  join(
+    homedir(),
+    ".gradiated",
+    "bin",
+    process.platform === "win32" ? "claude-gradiated.cmd" : "claude-gradiated",
+  );
 
 export const detect = async (): Promise<string | null> => {
   try {
@@ -114,22 +114,15 @@ export const writeWrapper = async (
 ): Promise<string> => {
   const path = wrapperPath();
   await mkdir(dirname(path), { recursive: true });
-  const script =
-    process.platform === "win32"
-      ? `@echo off\r\nnode "%~dp0claude-gradiated.js" %*\r\n`
-      : wrapperScript(baseUrl, modelId);
-  const scriptPath =
-    process.platform === "win32"
-      ? join(dirname(path), "claude-gradiated.js")
-      : path;
-  await writeFile(scriptPath, script, { mode: 0o755 });
-  await chmod(scriptPath, 0o755);
+  // The real launcher is a Node script on every platform; Windows gets an
+  // additional .cmd shim because cmd.exe will not execute extensionless
+  // shebang scripts from PATH.
+  await writeFile(path, wrapperScript(baseUrl, modelId), { mode: 0o755 });
+  await chmod(path, 0o755);
   if (process.platform === "win32") {
-    // The .cmd shim and the real script both live in the wrapper dir.
-    await writeFile(path, script, { mode: 0o755 });
     await writeFile(
-      join(dirname(path), "claude-gradiated.js"),
-      wrapperScript(baseUrl, modelId),
+      wrapperCommandPath(),
+      `@echo off\r\nnode "%~dp0${WRAPPER_NAME}" %*\r\n`,
       { mode: 0o755 },
     );
   }

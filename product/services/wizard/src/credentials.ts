@@ -1,6 +1,6 @@
 import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 
 const CREDENTIALS_PATH = join(homedir(), ".gradiated", "credentials.json");
 
@@ -26,7 +26,7 @@ export async function readStoredKey(): Promise<string | null> {
 
 export async function storeKey(apiKey: string): Promise<string> {
   const path = credentialsPath();
-  await mkdir(path.slice(0, path.lastIndexOf("/")), { recursive: true });
+  await mkdir(dirname(path), { recursive: true });
   const credentials: StoredCredentials = { api_key: apiKey };
   await writeFile(path, `${JSON.stringify(credentials, null, 2)}\n`, {
     mode: 0o600,

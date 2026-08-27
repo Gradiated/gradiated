@@ -1,7 +1,7 @@
-import { copyFile, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 
 const USER_CONFIG_DIR = join(homedir(), ".config", "opencode");
 const AUTH_PATH = join(homedir(), ".local", "share", "opencode", "auth.json");
@@ -158,6 +158,7 @@ export const writeConfig = async (
       .slice(0, 14);
     await copyFile(located.path, `${located.path}.bak.${timestamp}Z`);
   }
+  await mkdir(dirname(located.path), { recursive: true });
   const serialized = `${JSON.stringify(merged, null, 2)}\n`;
   await writeFile(located.path, serialized, { mode: 0o600 });
   return located.path;
@@ -176,6 +177,7 @@ export const mergeAuthCredential = async (
     }
     const existing = (document.gradiated ?? {}) as Record<string, unknown>;
     document.gradiated = { ...existing, type: "api", key: apiKey };
+    await mkdir(dirname(AUTH_PATH), { recursive: true });
     await writeFile(AUTH_PATH, `${JSON.stringify(document, null, 2)}\n`, {
       mode: 0o600,
     });
@@ -186,4 +188,3 @@ export const mergeAuthCredential = async (
 };
 
 export const authPath = (): string => AUTH_PATH;
-export const projectRelative = (path: string): string => resolve(dirname(path));

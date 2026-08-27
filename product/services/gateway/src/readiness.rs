@@ -35,19 +35,12 @@ impl ReadinessCheck for DependencyReadiness {
             let (ping, models) =
                 tokio::join!(self.serving_state.ping(), self.serving_state.models());
             self.metrics.set_dependency_ready("valkey", ping.is_ok());
-            let Ok(models) = models else {
+            if models.is_err() {
                 return false;
-            };
+            }
             self.metrics.set_dependency_ready("catalog", true);
             if ping.is_err() {
                 return false;
-            }
-
-            for model in &models {
-                if model.first_available_deployment().is_err() {
-                    self.metrics.set_dependency_ready("catalog", false);
-                    return false;
-                }
             }
             true
         };

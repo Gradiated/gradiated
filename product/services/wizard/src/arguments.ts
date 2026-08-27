@@ -12,11 +12,12 @@ export interface Options {
   model: string | undefined;
   key: string | undefined;
   agent: AgentName | undefined;
+  agents: readonly AgentName[];
   mode: "auto" | "signup" | "login";
 }
 
 export interface ParsedArguments {
-  command: "install" | "help" | "version";
+  command: "install" | "uninstall" | "help" | "version";
   options: Options;
 }
 
@@ -36,11 +37,13 @@ export function parseArguments(argv: readonly string[]): ParsedArguments {
   const positional = argv.filter((argument) => !argument.startsWith("--"));
   const first = positional[0];
   const command =
-    first === "help" || hasFlag(argv, "--help")
-      ? "help"
-      : hasFlag(argv, "--version")
-        ? "version"
-        : "install";
+    first === "uninstall"
+      ? "uninstall"
+      : first === "help" || hasFlag(argv, "--help")
+        ? "help"
+        : hasFlag(argv, "--version")
+          ? "version"
+          : "install";
 
   const mode = hasFlag(argv, "--signup")
     ? "signup"
@@ -71,6 +74,7 @@ export function parseArguments(argv: readonly string[]): ParsedArguments {
       model: argumentValue(argv, "--model"),
       key: argumentValue(argv, "--key"),
       agent: requestedAgent,
+      agents: requestedAgent !== undefined ? [requestedAgent] : [],
       mode,
     },
   };

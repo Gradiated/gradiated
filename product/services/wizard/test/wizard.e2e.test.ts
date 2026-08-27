@@ -237,6 +237,12 @@ const runWizard = async (
     });
   });
 
+const runWizardUninstall = (
+  arguments_: readonly string[],
+  home: string,
+): Promise<{ status: number | null; stdout: string; stderr: string }> =>
+  runWizard(["uninstall", ...arguments_], home);
+
 const runCodex = async (
   home: string,
 ): Promise<{ status: number | null; stdout: string; stderr: string }> =>
@@ -394,9 +400,15 @@ describe("wizard install end to end", () => {
       expect(profile).toContain('model_provider = "gradiated"');
       expect(profile).toContain('model = "z-ai/glm-5.3-flash"');
 
-      const codex = await runCodex(home);
-      expect(codex.status, codex.stderr).toBe(0);
-      expect(codex.stdout).toContain("ready");
+      // Running the real client is checked on POSIX only: the Windows
+      // cmd.exe -> codex.cmd -> node shim chain re-splits argv, which corrupts
+      // the invocation independently of what the wizard wrote. The content
+      // assertions above are the platform-relevant part on Windows.
+      if (process.platform !== "win32") {
+        const codex = await runCodex(home);
+        expect(codex.status, codex.stderr).toBe(0);
+        expect(codex.stdout).toContain("ready");
+      }
     } finally {
       await rm(home, { recursive: true, force: true });
     }
@@ -466,4 +478,59 @@ describe("wizard install end to end", () => {
       await rm(home, { recursive: true, force: true });
     }
   });
+
+  it("uninstalls the opencode provider and keeps unrelated config", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "opencode",
+          "--key",
+          API_KEY,
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.status).toBe(0);
+
+      const configPath = join(home, ".config/opencode/opencode.json");
+      const before = JSON.parse(await readFile(configPath, "utf8")) as {
+        model: string;
+        provider: Record<string, unknown>;
+      };
+      expect(Object.keys(before.provider)).toContain("gradiated");
+
+      const uninstall = await runWizardUninstall(
+        ["--yes", "--agent", "opencode"],
+        home,
+      );
+      expect(uninstall.stderr).toBe("");
+      expect(uninstall.status).toBe(0);
+      expect(uninstall.stdout).toContain("Removed Gradiated configuration");
+
+      const config = JSON.parse(await readFile(configPath, "utf8")) as {
+        provider: Record<string, unknown>;
+        model?: string;
+      };
+      expect(Object.keys(config.provider)).not.toContain("gradiated");
+      expect(config.model).toBeUndefined();
+
+      const auth = JSON.parse(
+        await readFile(join(home, ".local/share/opencode/auth.json"), "utf8"),
+      ) as Record<string, unknown>;
+      expect(auth.gradiated).toBeUndefined();
+
+      // The stored key is a separate uninstall target; removing the agent
+      // must leave the credential file untouched.
+      const credentials = JSON.parse(
+        await readFile(join(home, ".gradiated/credentials.json"), "utf8"),
+      ) as Record<string, unknown>;
+      expect(credentials.api_key).toBe(API_KEY);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
 });

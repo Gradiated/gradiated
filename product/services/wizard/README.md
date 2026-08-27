@@ -40,12 +40,23 @@ The wizard does not change the global Claude Code route.
 --signup            Create a new account (skips the menu)
 --login             Log in to an existing account (skips the menu)
 --key <key>         Use this API key instead of signing in
---agent <name>      Configure only opencode or codex
+--agent <name>      Restrict the run to opencode or codex
 --model <id>        Use this model from the catalog
 --api-base-url <u>  Override the API base URL (staging)
 --dry-run           Show what would be written; change nothing
 --yes               Non-interactive: first model, no extra prompts
 ```
+
+## Uninstall
+
+```sh
+npx -y @gradiated/wizard uninstall
+```
+
+The wizard detects which agents have Gradiated configured and lets you
+multiselect what to remove: the OpenCode provider and credential, the Codex
+provider and profile, and the stored API key. Timestamped backups of every
+changed file are kept. Your other providers are never touched.
 
 Your key is stored with owner-only permissions and is never printed. No
 telemetry. Requires Node 18+.

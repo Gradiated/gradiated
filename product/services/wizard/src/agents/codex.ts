@@ -1,10 +1,11 @@
-import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 
 const CONFIG_PATH = join(homedir(), ".codex", "config.toml");
 const PROFILE_PATH = join(homedir(), ".codex", "gradiated.config.toml");
+const AUTH_PATH = join(homedir(), ".codex", "auth.json");
 const BLOCK_START = "# --- Gradiated (added by @gradiated/wizard) ---";
 const BLOCK_END = "# --- End Gradiated ---";
 
@@ -110,3 +111,66 @@ export const writeConfig = async (
   );
   return { configPath: CONFIG_PATH, profilePath: PROFILE_PATH, backups };
 };
+
+export const isInstalled = async (): Promise<boolean> => {
+  const raw = await readConfigRaw();
+  return (
+    (raw !== null && raw.includes(BLOCK_START)) || existsSync(PROFILE_PATH)
+  );
+};
+
+export const readConfigRaw = async (): Promise<string | null> => {
+  try {
+    return await readFile(CONFIG_PATH, "utf8");
+  } catch {
+    return null;
+  }
+};
+
+export const readProfileRaw = async (): Promise<string | null> => {
+  try {
+    return await readFile(PROFILE_PATH, "utf8");
+  } catch {
+    return null;
+  }
+};
+
+/** Remove the wizard-managed provider block from config.toml. */
+export const uninstallConfig = async (): Promise<boolean> => {
+  const raw = await readConfigRaw();
+  if (raw === null || !raw.includes(BLOCK_START)) return false;
+  await backupFile(CONFIG_PATH);
+  await writeFile(CONFIG_PATH, withoutManagedBlock(raw), { mode: 0o600 });
+  return true;
+};
+
+/** Remove the wizard-managed gradiated profile file. */
+export const uninstallProfile = async (): Promise<boolean> => {
+  const raw = await readProfileRaw();
+  if (raw === null || !raw.includes(BLOCK_START)) return false;
+  await backupFile(PROFILE_PATH);
+  const { rm } = await import("node:fs/promises");
+  await rm(PROFILE_PATH);
+  return true;
+};
+
+/** Remove the gradiated credential entry from Codex auth.json. */
+export const removeAuth = async (): Promise<boolean> => {
+  if (!existsSync(AUTH_PATH)) return false;
+  try {
+    const document = JSON.parse(await readFile(AUTH_PATH, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    if (document.gradiated === undefined) return false;
+    delete document.gradiated;
+    await writeFile(AUTH_PATH, `${JSON.stringify(document, null, 2)}\n`, {
+      mode: 0o600,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+export const authPath = (): string => AUTH_PATH;

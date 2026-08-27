@@ -42,3 +42,16 @@ unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL
 - Check that `ANTHROPIC_AUTH_TOKEN` contains your Gradiated API key.
 - Check that `ANTHROPIC_MODEL` matches the Gradiated catalog.
 - Check that the workspace has billing capacity.
+
+## Uninstall
+
+Gradiated is removed from Claude Code by deleting the environment variables
+from the shell profile line the setup added. The wizard does not manage
+Claude Code globally, so there is nothing for `@gradiated/wizard uninstall`
+to remove for it. If you also configured OpenCode or Codex, run:
+
+```sh
+npx -y @gradiated/wizard uninstall
+```
+
+and pick the agents to clean up.

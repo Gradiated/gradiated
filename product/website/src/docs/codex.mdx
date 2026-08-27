@@ -87,3 +87,16 @@ one run.
 - Check that the model ID matches the Gradiated catalog.
 - Use `codex exec --profile gradiated --strict-config` to find configuration errors.
 - Check that the workspace has billing capacity.
+
+## Uninstall
+
+Remove Gradiated from Codex (and any other agent it is configured for) with:
+
+```sh
+npx -y @gradiated/wizard uninstall
+```
+
+Pick Codex in the list and the wizard removes the provider block from
+`~/.codex/config.toml`, deletes the `gradiated.config.toml` profile, and
+clears the stored credential. Timestamped backups of changed files are kept.
+Your default Codex provider and model are never touched.

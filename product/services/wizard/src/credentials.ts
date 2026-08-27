@@ -34,3 +34,14 @@ export async function storeKey(apiKey: string): Promise<string> {
   await chmod(path, 0o600);
   return path;
 }
+
+export async function clearStoredKey(): Promise<string | null> {
+  const path = credentialsPath();
+  try {
+    const raw = await readFile(path, "utf8");
+    await writeFile(path, "{}\n", { mode: 0o600 });
+    return JSON.parse(raw).api_key !== undefined ? path : null;
+  } catch {
+    return null;
+  }
+}

@@ -188,3 +188,51 @@ export const mergeAuthCredential = async (
 };
 
 export const authPath = (): string => AUTH_PATH;
+
+/** True when the OpenCode config carries a Gradiated provider block. */
+export const isInstalled = async (): Promise<boolean> => {
+  const located = locateConfig();
+  if (!located.existed) return false;
+  const document = await readConfigDocument(located);
+  const providers = document.provider as Record<string, unknown> | undefined;
+  return providers?.gradiated !== undefined;
+};
+
+/** Remove the Gradiated provider and any gradiated/* default model. */
+export const uninstallConfig = async (): Promise<string | null> => {
+  const located = locateConfig();
+  if (!located.existed) return null;
+  const document = await readConfigDocument(located);
+  const providers = document.provider as Record<string, unknown> | undefined;
+  if (providers?.gradiated === undefined) return null;
+  const remaining = { ...providers };
+  delete remaining.gradiated;
+  const merged: Record<string, unknown> = { ...document, provider: remaining };
+  if (
+    typeof merged.model === "string" &&
+    merged.model.startsWith("gradiated/")
+  ) {
+    delete merged.model;
+  }
+  await writeConfig(located, merged);
+  return located.path;
+};
+
+/** Remove the gradiated credential from OpenCode's auth store. */
+export const uninstallAuthCredential = async (): Promise<string | null> => {
+  if (!existsSync(AUTH_PATH)) return null;
+  try {
+    const document = JSON.parse(await readFile(AUTH_PATH, "utf8")) as Record<
+      string,
+      unknown
+    >;
+    if (document.gradiated === undefined) return null;
+    delete document.gradiated;
+    await writeFile(AUTH_PATH, `${JSON.stringify(document, null, 2)}\n`, {
+      mode: 0o600,
+    });
+    return AUTH_PATH;
+  } catch {
+    return null;
+  }
+};

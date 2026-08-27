@@ -67,6 +67,30 @@ export const selectOption = async <T extends string>(
   return result;
 };
 
+export const selectMany = async <T extends string>(
+  message: string,
+  options: ReadonlyArray<{
+    value: T;
+    label: string;
+    hint?: string | undefined;
+  }>,
+): Promise<T[]> => {
+  const result = await p.multiselect<T>({
+    message,
+    options: options.map((option) => ({
+      value: option.value,
+      label: option.label,
+      ...(option.hint !== undefined ? { hint: option.hint } : {}),
+    })) as p.Option<T>[],
+    required: false,
+  });
+  if (p.isCancel(result)) {
+    p.cancel("Setup cancelled.");
+    process.exit(0);
+  }
+  return result;
+};
+
 export const askText = async (
   message: string,
   validate: (value: string) => string | undefined,

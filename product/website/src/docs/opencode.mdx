@@ -118,4 +118,17 @@ Use the values for the selected model. Do not copy limits from another model.
 - Check that the workspace has billing capacity.
 - Run `opencode auth list` if OpenCode reports a provider authentication error.
 
+## Uninstall
+
+Remove Gradiated from OpenCode (and any other agent it is configured for) with:
+
+```sh
+npx -y @gradiated/wizard uninstall
+```
+
+The wizard shows everything it found and lets you pick what to remove. It
+deletes the provider block and the stored credential, keeps a timestamped
+backup of each changed file, and never touches your other providers or your
+default model unless it was a `gradiated/*` one.
+
 OpenCode's [provider documentation](https://opencode.ai/docs/providers/) covers custom provider settings and the `/models` command.

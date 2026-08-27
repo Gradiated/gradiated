@@ -12,6 +12,9 @@ import {
   mergeAuthCredential,
   mergeProvider,
   readConfigDocument,
+  uninstallAuthCredential,
+  uninstallConfig as uninstallOpenCodeConfig,
+  isInstalled as openCodeInstalled,
   writeConfig,
 } from "./agents/opencode.js";
 import * as ui from "./ui.js";
@@ -23,12 +26,13 @@ Usage:
 
 Commands:
   install      Configure your coding agent (default)
+  uninstall    Remove Gradiated from your coding agents
 
 Options:
   --signup            Create a new account (skips the menu)
   --login             Log in to an existing account (skips the menu)
   --key <key>         Use this API key instead of signing in
-  --agent <name>      Configure only opencode or codex
+  --agent <name>      Restrict the run to opencode or codex
   --model <id>        Use this model from the catalog
   --api-base-url <u>  Override the API base URL (staging)
   --dry-run           Show what would be written; change nothing
@@ -258,6 +262,110 @@ const runInstall = async (): Promise<void> => {
   );
 };
 
+type UninstallTarget = "opencode" | "codex" | "key";
+
+interface UninstallSelection {
+  targets: readonly UninstallTarget[];
+}
+
+const detectUninstallTargets = async (): Promise<UninstallTarget[]> => {
+  const present: UninstallTarget[] = [];
+  if (await openCodeInstalled()) present.push("opencode");
+  if (await codex.isInstalled()) present.push("codex");
+  if ((await readStoredKey()) !== null) present.push("key");
+  return present;
+};
+
+const runUninstall = async (): Promise<void> => {
+  const options = parseArguments(process.argv.slice(2)).options;
+  ui.intro("Gradiated uninstall");
+
+  const present = await detectUninstallTargets();
+  if (present.length === 0) {
+    ui.outro("No Gradiated configuration was found. Nothing to remove.");
+    return;
+  }
+
+  const labels: Record<UninstallTarget, { label: string; hint: string }> = {
+    opencode: {
+      label: "OpenCode",
+      hint: "provider block and credential in auth.json",
+    },
+    codex: {
+      label: "Codex",
+      hint: "provider block and gradiated profile",
+    },
+    key: {
+      label: "Stored API key",
+      hint: "~/.gradiated/credentials.json",
+    },
+  };
+
+  let selection: readonly UninstallTarget[];
+  const preset =
+    options.agent !== undefined
+      ? present.filter((target) => target === options.agent)
+      : present;
+  if (options.yes) {
+    selection = preset;
+  } else if (options.dryRun) {
+    selection = present;
+  } else {
+    selection = await ui.selectMany<UninstallTarget>(
+      "Which agents should Gradiated be removed from?",
+      present.map((target) => ({
+        value: target,
+        label: labels[target].label,
+        hint: labels[target].hint,
+      })),
+    );
+    if (selection.length === 0) {
+      ui.outro("Nothing selected. No files were changed.");
+      return;
+    }
+    const proceed = await ui.confirm(
+      "Remove the selected configuration? Backups (.bak) are kept.",
+    );
+    if (!proceed) {
+      ui.outro("Cancelled. No files were changed.");
+      return;
+    }
+  }
+  const confirmed: UninstallSelection = { targets: selection };
+
+  const removed: string[] = [];
+  for (const target of confirmed.targets) {
+    if (target === "opencode") {
+      const configPath = await uninstallOpenCodeConfig();
+      const authPath = await uninstallAuthCredential();
+      if (configPath !== null) removed.push(`OpenCode config (${configPath})`);
+      if (authPath !== null) removed.push(`OpenCode credential (${authPath})`);
+    }
+    if (target === "codex") {
+      const configRemoved = await codex.uninstallConfig();
+      const profileRemoved = await codex.uninstallProfile();
+      const authRemoved = await codex.removeAuth();
+      if (configRemoved) removed.push(`Codex provider (${codex.configPath()})`);
+      if (profileRemoved)
+        removed.push(`Codex profile (${codex.profilePath()})`);
+      if (authRemoved) removed.push(`Codex credential (${codex.authPath()})`);
+    }
+    if (target === "key") {
+      const { clearStoredKey } = await import("./credentials.js");
+      const path = await clearStoredKey();
+      if (path !== null) removed.push(`Stored key (${path})`);
+    }
+  }
+
+  if (removed.length === 0) {
+    ui.outro("Nothing to remove for the selected agents.");
+    return;
+  }
+  ui.outro(
+    `Removed Gradiated configuration from:\n${removed.map((entry) => `  - ${entry}`).join("\n")}\n\nBackups with a .bak timestamp were kept next to each changed file.`,
+  );
+};
+
 const main = async (): Promise<void> => {
   const parsed = parseArguments(process.argv.slice(2));
   if (parsed.command === "help") {
@@ -266,6 +374,10 @@ const main = async (): Promise<void> => {
   }
   if (parsed.command === "version") {
     console.log("0.2.0");
+    return;
+  }
+  if (parsed.command === "uninstall") {
+    await runUninstall();
     return;
   }
   await runInstall();

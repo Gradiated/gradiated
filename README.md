@@ -10,6 +10,7 @@ Start here:
 - [Data model](docs/DATA_MODEL.md)
 - [Product](product/README.md)
 - [Infrastructure](infra/README.md)
+- [DeepSeek V4 Flash RunPod setup](docs/DEEPSEEK_V4_FLASH_RUNPOD.md)
 - [Research](research/README.md)
 
 Read [AGENTS.md](AGENTS.md) before making changes. Use the deployment and

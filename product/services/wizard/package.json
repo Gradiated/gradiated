@@ -1,6 +1,6 @@
 {
   "name": "@gradiated/wizard",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Set up Gradiated inference for your coding agent in one command.",
   "license": "UNLICENSED",
   "type": "module",
@@ -8,7 +8,8 @@
     "gradiated": "dist/bin.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "engines": {
     "node": ">=18"

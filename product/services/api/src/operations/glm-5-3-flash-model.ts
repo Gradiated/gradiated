@@ -6,7 +6,7 @@ export const createGlm53FlashModelConfiguration = () => ({
   name: "GLM-5.3 Flash",
   status: "available" as const,
   properties: {
-    description: "GLM-5.3 Flash FP8 on Gradiated B300 runtimes.",
+    description: "GLM-5.3 Flash is a fast reasoning and tool-use model from Z.AI",
     released_at: "2026-08-27T00:00:00.000Z",
     hugging_face_id: glm53FlashArtifactModelPath,
     quantization: "fp8" as const,

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import concurrent.futures
 import json
 import math
@@ -345,6 +346,9 @@ def run_level(
 
     successful = [result for result in results if not result.error]
     failed = [result for result in results if result.error]
+    error_counts = collections.Counter(
+        result.error.partition(":")[0] for result in failed
+    )
     if not successful:
         return {
             "concurrency": concurrency,
@@ -352,6 +356,7 @@ def run_level(
             "requests": len(results),
             "successful": 0,
             "errors": len(failed),
+            "errors_by_type": dict(sorted(error_counts.items())),
             "error_samples": [result.error for result in failed[:3]],
         }
 
@@ -397,6 +402,7 @@ def run_level(
         "requests": len(results),
         "successful": len(successful),
         "errors": len(failed),
+        "errors_by_type": dict(sorted(error_counts.items())),
         "input_tokens": input_tokens,
         "cached_input_tokens": cached_input_tokens,
         "cacheable_input_tokens": cacheable_input_tokens,

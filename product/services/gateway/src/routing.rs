@@ -7,7 +7,7 @@ use validator::Validate;
 
 use crate::{DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment};
 
-const MAXIMUM_STATUS_AGE: TimeDelta = TimeDelta::seconds(6);
+const MAXIMUM_STATUS_AGE: TimeDelta = TimeDelta::seconds(15);
 const PREFIX_TOKEN_LIMIT: usize = 4_096;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -235,7 +235,7 @@ mod tests {
         let now = Utc::now();
         let deployments = vec![deployment(1)];
         let digest = deployments[0].served_release_digest().unwrap();
-        let mut runtime_status = status(&deployments[0], now - TimeDelta::seconds(7));
+        let mut runtime_status = status(&deployments[0], now - TimeDelta::seconds(16));
         assert_eq!(
             order_deployments(RouteInput {
                 workspace_id: Uuid::from_u128(9),
@@ -249,6 +249,20 @@ mod tests {
             }),
             RouteAvailability::Unavailable,
         );
+        runtime_status.received_at = now - TimeDelta::seconds(14);
+        assert!(matches!(
+            order_deployments(RouteInput {
+                workspace_id: Uuid::from_u128(9),
+                model_id: "model",
+                release_digest: &digest,
+                session_id: None,
+                input_ids: &[1],
+                deployments: &deployments,
+                statuses: &[runtime_status.clone()],
+                now,
+            }),
+            RouteAvailability::Ready(_),
+        ));
         runtime_status.received_at = now;
         runtime_status.accepting_requests = false;
         assert_eq!(

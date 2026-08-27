@@ -13,8 +13,7 @@ const client = new OpenAI({ apiKey, baseURL });
 
 const models = await client.models.list();
 const availableModels = models.data.filter((model) => model.is_ready !== false);
-const model =
-  requestedModel ?? availableModels[0]?.id ?? models.data[0]?.id;
+const model = requestedModel ?? availableModels[0]?.id ?? models.data[0]?.id;
 
 if (!model) {
   throw new Error("The gateway returned no models");

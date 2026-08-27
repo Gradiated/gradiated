@@ -96,18 +96,18 @@ development connects that binary to a native SGLang process; it does not add a
 second fake-runtime binary. The process uses a small set of concrete
 components:
 
-| Component               | Kind                        | Responsibility                                                                                                |
-| ----------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `GatewayState`          | concrete struct             | Composition root holding immutable configuration, Valkey adapter, runtime client, coordinator, and telemetry. |
-| `CompletionService`     | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                  |
-| `ValkeyServingState`    | concrete adapter            | Reads gateway records and executes admission and finalization Lua scripts.                                    |
-| `GatewayModel`          | typed Valkey record         | Carries the exact model policy and durable deployment candidates.                                             |
-| `DeploymentRuntimeStatus` | typed Valkey record       | Carries current health, admission status, and installed concurrency.                                          |
-| `ModelTokenizer`        | concrete struct             | Renders chat input and tokenizes it locally from the selected deployment's pinned tokenizer artifact.         |
-| `SglangClient`          | concrete adapter            | Calls health and Chat Completions on the selected SGLang deployment.                                          |
-| `GenerationTask`        | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                   |
-| `Telemetry`             | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                 |
-| contract/domain modules | data and pure functions     | Strict wire types, validation, usage normalization, pricing, release hashing, and error mapping.              |
+| Component                 | Kind                        | Responsibility                                                                                                |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `GatewayState`            | concrete struct             | Composition root holding immutable configuration, Valkey adapter, runtime client, coordinator, and telemetry. |
+| `CompletionService`       | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                  |
+| `ValkeyServingState`      | concrete adapter            | Reads gateway records and executes admission and finalization Lua scripts.                                    |
+| `GatewayModel`            | typed Valkey record         | Carries the exact model policy and durable deployment candidates.                                             |
+| `DeploymentRuntimeStatus` | typed Valkey record         | Carries current health, admission status, and installed concurrency.                                          |
+| `ModelTokenizer`          | concrete struct             | Renders chat input and tokenizes it locally from the selected deployment's pinned tokenizer artifact.         |
+| `SglangClient`            | concrete adapter            | Calls health and Chat Completions on the selected SGLang deployment.                                          |
+| `GenerationTask`          | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                   |
+| `Telemetry`               | thin wrapper                | Emits metrics and structured events with bounded labels and sanitized fields.                                 |
+| contract/domain modules   | data and pure functions     | Strict wire types, validation, usage normalization, pricing, release hashing, and error mapping.              |
 
 Only external boundaries receive traits:
 

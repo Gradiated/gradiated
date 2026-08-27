@@ -82,6 +82,6 @@ export const createDeploymentStatusService = (
         received_at: new Date().toISOString(),
       }),
     );
-    await valkey.expire(key, 8);
+    await valkey.expire(key, 30);
   },
 });

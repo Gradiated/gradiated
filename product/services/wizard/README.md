@@ -7,9 +7,8 @@ one command:
 npx -y @gradiated/wizard
 ```
 
-Gradiated hosts exact open-weight models (starting with
-[z-ai/glm-5.3-flash](https://gradiated.com/docs)) behind an OpenAI-compatible
-API. The wizard signs you up ($5 free credit included) or logs you in with a
+Gradiated hosts exact open-weight models behind an OpenAI-compatible API.
+The wizard signs you up (free credit included) or logs you in with a
 six-digit email code, then writes the provider block into your OpenCode
 config. No manual JSON editing, no browser, no card.
 
@@ -29,8 +28,8 @@ Start OpenCode and run `/models` to pick a Gradiated model.
 ## Codex and Claude Code
 
 These agents are detected but not configured yet: Codex speaks only the
-Responses API and Claude Code the Anthropic Messages API. Gradiated serves
-Chat Completions today. See [gradiated.com/docs/codex](https://gradiated.com/docs/codex).
+Responses API and Claude Code the Anthropic Messages API. Gradiated's
+protocol coverage is listed in [the docs](https://gradiated.com/docs).
 
 ## Options
 

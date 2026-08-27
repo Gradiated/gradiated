@@ -132,7 +132,7 @@ const resolveKey = async (
       {
         value: "signup",
         label: "Create a free account",
-        hint: "$5 of credit included",
+        hint: "free credit included",
       },
       { value: "login", label: "Log in to an existing account" },
       { value: "paste", label: "Paste an existing API key" },

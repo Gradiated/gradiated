@@ -23,7 +23,7 @@ export const resolveAccount = async (
       {
         value: "signup",
         label: "Create a free account",
-        hint: "$5 of credit included",
+        hint: "free credit included",
       },
       { value: "login", label: "Log in to an existing account" },
     ],
@@ -113,8 +113,9 @@ const exchange = async (
   const balance =
     typeof body.balance_nano_usd === "number" ? body.balance_nano_usd : 0;
   if (balance > 0) {
-    ui.success(
-      `Account created. $${(balance / 1_000_000_000).toFixed(2)} credit applied.`,
+    ui.success("Account created. Free credit applied.");
+    ui.info(
+      `Current balance: $${(balance / 1_000_000_000).toFixed(2)} (from the API).`,
     );
   } else if (choice === "login") {
     ui.success("Logged in.");

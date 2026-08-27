@@ -33,7 +33,7 @@ jobs:
         run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
       - name: Publish with OIDC trusted publishing
         working-directory: product/services/wizard
-        run: npm publish --provenance --access public
+        run: npm publish --access public
 
   e2e:
     name: Wizard e2e (${{ matrix.os }})

@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "product/services/wizard/**"
+      - ".github/workflows/wizard-publish.yml"
   workflow_dispatch:
 
 permissions:

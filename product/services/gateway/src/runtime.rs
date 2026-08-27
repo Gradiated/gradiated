@@ -1156,6 +1156,11 @@ impl UpstreamStreamChoice {
                 .is_some_and(|content| !content.is_empty())
             || self
                 .delta
+                .get("reasoning")
+                .and_then(Value::as_str)
+                .is_some_and(|content| !content.is_empty())
+            || self
+                .delta
                 .get("tool_calls")
                 .and_then(Value::as_array)
                 .is_some_and(|calls| !calls.is_empty())
@@ -1669,7 +1674,7 @@ mod tests {
                     Response::builder()
                         .header("content-type", "text/event-stream")
                         .body(Body::from(concat!(
-                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
+                            "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[{\"index\":0,\"delta\":{\"reasoning\":\"hello\"},\"finish_reason\":null}],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
                             "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
                             "data: {\"id\":\"chatcmpl-stream\",\"object\":\"chat.completion.chunk\",\"created\":1,\"model\":\"runtime-model\",\"choices\":[],\"usage\":{\"prompt_tokens\":10,\"completion_tokens\":1,\"total_tokens\":11}}\n\n",
                             "data: [DONE]\n\n"

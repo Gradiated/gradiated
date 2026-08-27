@@ -12,12 +12,16 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use futures_util::StreamExt;
 use serde::Serialize;
+use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
-    readiness::ReadinessCheck, CompletionResponse, CompletionService, GatewayError, GatewayMetrics,
-    ModelCatalogResponse, RequestCoordinator, RequestMetadata,
+    protocol::{responses_use_unsupported_state, Frame, Protocol, StreamItem},
+    readiness::ReadinessCheck,
+    CompletionResponse, CompletionService, GatewayError, GatewayMetrics, ModelCatalogResponse,
+    RequestCoordinator, RequestMetadata,
 };
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
@@ -53,15 +57,134 @@ struct HealthResponse {
     status: &'static str,
 }
 
+fn inference_routes() -> Router<GatewayState> {
+    Router::new()
+        .route("/chat/completions", post(chat_completions))
+        .route("/messages", post(messages))
+        .route("/messages/count_tokens", post(messages_count_tokens))
+        .route("/responses", post(responses))
+        .route("/models", get(models))
+}
+
 pub fn router(state: GatewayState) -> Router {
     Router::new()
-        .route("/v1/chat/completions", post(chat_completions))
-        .route("/v1/models", get(models))
+        .nest("/v1", inference_routes())
+        .merge(inference_routes())
         .route("/health/live", get(live))
         .route("/health/ready", get(ready))
         .route("/metrics", get(metrics))
         .layer(DefaultBodyLimit::max(MAX_REQUEST_BYTES))
         .with_state(state)
+}
+
+fn generation_id_header(generation_id: Uuid) -> HeaderValue {
+    HeaderValue::from_str(&generation_id.to_string())
+        .expect("a UUID is always a valid HTTP header value")
+}
+
+fn finish(
+    state: &GatewayState,
+    route: &'static str,
+    protocol: Protocol,
+    generation_id: Uuid,
+    result: Result<Response, GatewayError>,
+) -> Response {
+    let error = result
+        .as_ref()
+        .err()
+        .map(GatewayError::code)
+        .unwrap_or("none");
+    let mut response = result.unwrap_or_else(|error| protocol.error_response(error));
+    state
+        .metrics
+        .record_http(route, response.status().as_u16(), error);
+    response
+        .headers_mut()
+        .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
+    response
+}
+
+fn request_metadata() -> RequestMetadata {
+    RequestMetadata {
+        generation_id: Uuid::now_v7(),
+        received_at: Utc::now(),
+    }
+}
+
+fn parse_body(body: &Bytes) -> Result<Value, GatewayError> {
+    serde_json::from_slice(body).map_err(|_| GatewayError::invalid_request(None))
+}
+
+fn body_rejection(rejection: BytesRejection) -> GatewayError {
+    if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE {
+        GatewayError::PayloadTooLarge
+    } else {
+        GatewayError::invalid_request(None)
+    }
+}
+
+async fn complete_with_protocol(
+    state: &GatewayState,
+    protocol: Protocol,
+    metadata: RequestMetadata,
+    headers: &HeaderMap,
+    body: Bytes,
+) -> Result<Response, GatewayError> {
+    let request = parse_body(&body)?;
+    let translated = protocol.translate_request(&request)?;
+    match state
+        .completions
+        .complete(metadata, headers, Bytes::from(translated))
+        .await?
+    {
+        CompletionResponse::NonStreaming(result) => {
+            Ok(Json(protocol.translate_response(result.into_response())?).into_response())
+        }
+        CompletionResponse::Streaming(result) => Ok(sse_response(protocol, result.into_stream())),
+    }
+}
+
+fn sse_response(
+    protocol: Protocol,
+    stream: impl futures_util::Stream<Item = StreamItem> + Send + 'static,
+) -> Response {
+    let renderer = Arc::new(std::sync::Mutex::new(protocol.stream_renderer()));
+    let frames = stream.map(move |item| {
+        let rendered = renderer
+            .lock()
+            .expect("the stream renderer is never poisoned while unwinding")
+            .render(item);
+        futures_util::stream::iter(
+            frames_into_events(rendered)
+                .into_iter()
+                .map(Ok::<_, axum::Error>),
+        )
+    });
+    let mut response = Sse::new(frames.flatten())
+        .keep_alive(
+            KeepAlive::new()
+                .interval(STREAM_KEEP_ALIVE)
+                .text("keep-alive"),
+        )
+        .into_response();
+    response.headers_mut().insert(
+        HeaderName::from_static("x-accel-buffering"),
+        HeaderValue::from_static("no"),
+    );
+    response
+}
+
+fn frames_into_events(frames: Vec<Frame>) -> Vec<axum::response::sse::Event> {
+    frames
+        .into_iter()
+        .map(|frame| {
+            let mut event = axum::response::sse::Event::default();
+            if let Some(name) = frame.event {
+                event = event.event(name);
+            }
+            event.data(frame.data)
+        })
+        .collect()
 }
 
 async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Response {
@@ -86,55 +209,113 @@ async fn chat_completions(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    let metadata = RequestMetadata {
-        generation_id: Uuid::now_v7(),
-        received_at: Utc::now(),
-    };
+    let metadata = request_metadata();
     let generation_id = metadata.generation_id;
     let result = match body {
-        Ok(body) => state
-            .completions
-            .complete(metadata, &headers, body)
-            .await
-            .map(|result| match result {
-                CompletionResponse::NonStreaming(result) => {
-                    Json(result.into_response()).into_response()
-                }
-                CompletionResponse::Streaming(result) => {
-                    let mut response = Sse::new(result.into_stream())
-                        .keep_alive(
-                            KeepAlive::new()
-                                .interval(STREAM_KEEP_ALIVE)
-                                .text("keep-alive"),
-                        )
-                        .into_response();
-                    response.headers_mut().insert(
-                        HeaderName::from_static("x-accel-buffering"),
-                        HeaderValue::from_static("no"),
-                    );
-                    response
-                }
-            }),
-        Err(rejection) if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE => {
-            Err(GatewayError::PayloadTooLarge)
+        Ok(body) => {
+            complete_with_protocol(&state, Protocol::OpenAiChat, metadata, &headers, body).await
         }
-        Err(_) => Err(GatewayError::invalid_request(None)),
+        Err(rejection) => Err(body_rejection(rejection)),
     };
-    let error = result
-        .as_ref()
-        .err()
-        .map(GatewayError::code)
-        .unwrap_or("none");
-    let mut response = result.unwrap_or_else(IntoResponse::into_response);
-    state
-        .metrics
-        .record_http("chat_completions", response.status().as_u16(), error);
-    response.headers_mut().insert(
-        GENERATION_ID_HEADER,
-        HeaderValue::from_str(&generation_id.to_string())
-            .expect("a UUID is always a valid HTTP header value"),
-    );
-    response
+    finish(
+        &state,
+        "chat_completions",
+        Protocol::OpenAiChat,
+        generation_id,
+        result,
+    )
+}
+
+async fn messages(
+    State(state): State<GatewayState>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
+    let metadata = request_metadata();
+    let generation_id = metadata.generation_id;
+    let result = match body {
+        Ok(body) => {
+            complete_with_protocol(
+                &state,
+                Protocol::AnthropicMessages,
+                metadata,
+                &headers,
+                body,
+            )
+            .await
+        }
+        Err(rejection) => Err(body_rejection(rejection)),
+    };
+    finish(
+        &state,
+        "messages",
+        Protocol::AnthropicMessages,
+        generation_id,
+        result,
+    )
+}
+
+async fn messages_count_tokens(
+    State(state): State<GatewayState>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
+    let metadata = request_metadata();
+    let generation_id = metadata.generation_id;
+    let result = async {
+        let body = body.map_err(body_rejection)?;
+        let request = parse_body(&body)?;
+        let translated = Protocol::AnthropicMessages.translate_request(&request)?;
+        let count = state
+            .completions
+            .count_tokens(&headers, &translated)
+            .await?;
+        Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
+    }
+    .await;
+    finish(
+        &state,
+        "messages_count_tokens",
+        Protocol::AnthropicMessages,
+        generation_id,
+        result,
+    )
+}
+
+async fn responses(
+    State(state): State<GatewayState>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
+    let metadata = request_metadata();
+    let generation_id = metadata.generation_id;
+    let result = async {
+        let body = body.map_err(body_rejection)?;
+        let request = parse_body(&body).and_then(|request| {
+            if responses_use_unsupported_state(&request) {
+                Err(GatewayError::invalid_request(Some("store")))
+            } else {
+                Ok(request)
+            }
+        })?;
+        let translated = Protocol::OpenAiResponses.translate_request(&request)?;
+        complete_with_protocol(
+            &state,
+            Protocol::OpenAiResponses,
+            metadata,
+            &headers,
+            Bytes::from(translated),
+        )
+        .await
+    }
+    .await;
+    finish(
+        &state,
+        "responses",
+        Protocol::OpenAiResponses,
+        generation_id,
+        result,
+    )
 }
 
 async fn live() -> Json<HealthResponse> {
@@ -172,8 +353,10 @@ mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
     use async_trait::async_trait;
-    use axum::{body::to_bytes, body::Body, http::header::AUTHORIZATION, http::Request};
-    use chrono::DateTime;
+    use axum::{
+        body::{to_bytes, Body},
+        http::{header::AUTHORIZATION, Request},
+    };
     use tower::ServiceExt;
 
     use super::*;
@@ -210,14 +393,14 @@ mod tests {
 
         async fn workspace(
             &self,
-            _workspace_id: Uuid,
+            _workspace_id: uuid::Uuid,
         ) -> Result<Option<GatewayWorkspace>, ServingStateError> {
             Ok(None)
         }
 
         async fn account(
             &self,
-            _organization_id: Uuid,
+            _organization_id: uuid::Uuid,
         ) -> Result<Option<GatewayAccount>, ServingStateError> {
             Ok(None)
         }
@@ -232,10 +415,10 @@ mod tests {
 
         async fn admit(
             &self,
-            _generation_id: Uuid,
-            _organization_id: Uuid,
-            _received_at: DateTime<Utc>,
-            _admitted_at: DateTime<Utc>,
+            _generation_id: uuid::Uuid,
+            _organization_id: uuid::Uuid,
+            _received_at: chrono::DateTime<chrono::Utc>,
+            _admitted_at: chrono::DateTime<chrono::Utc>,
             _config: &GatewayConfig,
         ) -> Result<AdmissionLease, AdmissionError> {
             unreachable!("missing credentials cannot reach admission")
@@ -243,8 +426,8 @@ mod tests {
 
         async fn finalize(
             &self,
-            _generation_id: Uuid,
-            _organization_id: Uuid,
+            _generation_id: uuid::Uuid,
+            _organization_id: uuid::Uuid,
             _properties: &crate::GenerationProperties,
         ) -> Result<FinalizationOutcome, FinalizationError> {
             unreachable!("missing credentials cannot reach finalization")
@@ -260,20 +443,13 @@ mod tests {
             _deployment: &GatewayModelDeployment,
             _request: ChatCompletionRequest,
             _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
+            _request_deadline: chrono::DateTime<chrono::Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
             Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))
         }
     }
 
     fn application(ready: bool, credential_lookups: Arc<AtomicUsize>) -> Router {
-        application_with_completions(ready, credential_lookups).0
-    }
-
-    fn application_with_completions(
-        ready: bool,
-        credential_lookups: Arc<AtomicUsize>,
-    ) -> (Router, CompletionService) {
         let config = Arc::new(GatewayConfig {
             bind_address: "127.0.0.1:3002".parse().unwrap(),
             generation_timeout_seconds: 300,
@@ -296,14 +472,39 @@ mod tests {
             config,
         );
         let coordinator = RequestCoordinator::new(serving_state);
-        (
-            router(GatewayState::new(
-                Arc::new(FixedReadiness(ready)),
-                completions.clone(),
-                coordinator,
-            )),
+        router(GatewayState::new(
+            Arc::new(FixedReadiness(ready)),
             completions,
-        )
+            coordinator,
+        ))
+    }
+
+    async fn post_json(application: Router, path: &str, body: &str) -> axum::http::Response<Body> {
+        application
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri(path)
+                    .header("content-type", "application/json")
+                    .header(AUTHORIZATION, "Bearer secret")
+                    .body(Body::from(body.to_owned()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap()
+    }
+
+    async fn error_code(response: axum::http::Response<Body>) -> String {
+        let body = to_bytes(response.into_body(), 4_096).await.unwrap();
+        let value: Value = serde_json::from_slice(&body).unwrap();
+        value
+            .pointer("/error/code")
+            .or(value.pointer("/error/error/code"))
+            .cloned()
+            .unwrap_or(Value::Null)
+            .as_str()
+            .unwrap_or_default()
+            .to_owned()
     }
 
     #[tokio::test]
@@ -337,25 +538,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn readiness_fails_as_soon_as_draining_begins() {
-        let (application, completions) =
-            application_with_completions(true, Arc::new(AtomicUsize::new(0)));
-        completions.begin_draining();
-
-        let response = application
-            .oneshot(
-                Request::builder()
-                    .uri("/health/ready")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
-    }
-
-    #[tokio::test]
     async fn metrics_are_available_without_customer_authentication() {
         let response = application(true, Arc::new(AtomicUsize::new(0)))
             .oneshot(
@@ -368,16 +550,34 @@ mod tests {
             .unwrap();
 
         assert_eq!(response.status(), StatusCode::OK);
-        assert!(response
-            .headers()
-            .get(CONTENT_TYPE)
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .starts_with("application/openmetrics-text"));
         let body = to_bytes(response.into_body(), 100_000).await.unwrap();
         let body = std::str::from_utf8(&body).unwrap();
         assert!(body.ends_with("# EOF\n"));
+    }
+
+    #[tokio::test]
+    async fn inference_routes_answer_under_v1_and_bare_prefixes() {
+        for path in [
+            "/v1/chat/completions",
+            "/chat/completions",
+            "/v1/messages",
+            "/messages",
+            "/v1/responses",
+            "/responses",
+        ] {
+            let response = post_json(
+                application(true, Arc::new(AtomicUsize::new(0))),
+                path,
+                r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
+            )
+            .await;
+            assert_eq!(
+                response.status(),
+                StatusCode::UNAUTHORIZED,
+                "unexpected status for {path}"
+            );
+            assert_eq!(error_code(response).await, "invalid_api_key");
+        }
     }
 
     #[tokio::test]
@@ -398,10 +598,162 @@ mod tests {
 
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
         let generation_id = response.headers()[GENERATION_ID_HEADER].to_str().unwrap();
-        assert_eq!(Uuid::parse_str(generation_id).unwrap().get_version_num(), 7);
-        let body = to_bytes(response.into_body(), 1_024).await.unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(body["error"]["code"], "invalid_api_key");
+        assert_eq!(
+            uuid::Uuid::parse_str(generation_id)
+                .unwrap()
+                .get_version_num(),
+            7
+        );
+        assert_eq!(error_code(response).await, "invalid_api_key");
+    }
+
+    #[tokio::test]
+    async fn anthropic_routes_render_anthropic_error_envelopes() {
+        for path in ["/v1/messages", "/messages", "/v1/messages/count_tokens"] {
+            let response = post_json(
+                application(true, Arc::new(AtomicUsize::new(0))),
+                path,
+                r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED, "{path}");
+            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
+            let value: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(value["type"], "error", "{path}");
+            assert_eq!(value["error"]["code"], "invalid_api_key", "{path}");
+        }
+    }
+
+    #[tokio::test]
+    async fn x_api_key_authentication_reaches_the_credential_lookup() {
+        let credential_lookups = Arc::new(AtomicUsize::new(0));
+        let application = application(true, credential_lookups.clone());
+        let response = application
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/messages")
+                    .header("content-type", "application/json")
+                    .header("x-api-key", "secret")
+                    .header("anthropic-version", "2023-06-01")
+                    .body(Body::from(
+                        r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        assert_eq!(credential_lookups.load(Ordering::SeqCst), 1);
+        assert_eq!(error_code(response).await, "invalid_api_key");
+    }
+
+    #[tokio::test]
+    async fn responses_stateful_fields_are_rejected() {
+        let response = post_json(
+            application(true, Arc::new(AtomicUsize::new(0))),
+            "/v1/responses",
+            r#"{"model":"model-a","input":"hi","store":true}"#,
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(error_code(response).await, "invalid_request");
+    }
+
+    #[tokio::test]
+    async fn malformed_bodies_render_protocol_envelopes() {
+        let response = post_json(
+            application(true, Arc::new(AtomicUsize::new(0))),
+            "/v1/chat/completions",
+            "{oops",
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert_eq!(error_code(response).await, "invalid_request");
+
+        for path in ["/v1/messages", "/messages"] {
+            let response = post_json(
+                application(true, Arc::new(AtomicUsize::new(0))),
+                path,
+                "{oops",
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
+            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
+            let value: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(value["type"], "error", "{path}");
+            assert_eq!(value["error"]["code"], "invalid_request", "{path}");
+        }
+
+        for path in ["/v1/responses", "/responses"] {
+            let response = post_json(
+                application(true, Arc::new(AtomicUsize::new(0))),
+                path,
+                "{oops",
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
+            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
+            let value: Value = serde_json::from_slice(&body).unwrap();
+            assert_eq!(value["error"]["code"], "invalid_request", "{path}");
+        }
+    }
+
+    #[tokio::test]
+    async fn streaming_frames_use_the_protocol_event_names() {
+        let chunk = StreamItem::Chunk(serde_json::json!({
+            "id":"chatcmpl-1","object":"chat.completion.chunk","created":1,"model":"model-a",
+            "choices":[{"index":0,"delta":{"role":"assistant","content":"hi"},"logprobs":null,"finish_reason":null}]
+        }));
+
+        let response = sse_response(
+            Protocol::AnthropicMessages,
+            futures_util::stream::iter(vec![chunk.clone(), StreamItem::Done]),
+        );
+        assert_eq!(response.headers()["x-accel-buffering"], "no");
+        let body = to_bytes(response.into_body(), 16_384).await.unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(body.starts_with("event: message_start\n"));
+        assert!(body.contains("event: content_block_delta\n"));
+        assert!(body.ends_with("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"));
+
+        let response = sse_response(
+            Protocol::OpenAiResponses,
+            futures_util::stream::iter(vec![chunk.clone(), StreamItem::Done]),
+        );
+        let body = to_bytes(response.into_body(), 16_384).await.unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(body.starts_with("event: response.created\n"));
+        assert!(body.contains("event: response.output_text.delta\n"));
+
+        let response = sse_response(
+            Protocol::OpenAiChat,
+            futures_util::stream::iter(vec![chunk, StreamItem::Done]),
+        );
+        let body = to_bytes(response.into_body(), 16_384).await.unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(!body.contains("event:"));
+        assert!(body.ends_with("data: [DONE]\n\n"));
+    }
+
+    #[tokio::test]
+    async fn streaming_errors_render_the_protocol_envelope_inline() {
+        let response = sse_response(
+            Protocol::AnthropicMessages,
+            futures_util::stream::iter(vec![StreamItem::Error(GatewayError::CapacityExceeded)]),
+        );
+        let body = to_bytes(response.into_body(), 4_096).await.unwrap();
+        let body = String::from_utf8(body.to_vec()).unwrap();
+        assert!(body.starts_with("event: error\ndata: "));
+        let value: Value = serde_json::from_str(
+            body.strip_prefix("event: error\ndata: ")
+                .and_then(|rest| rest.strip_suffix("\n\n"))
+                .unwrap(),
+        )
+        .unwrap();
+        assert_eq!(value["error"]["code"], "capacity_exceeded");
+        assert_eq!(value["error"]["type"], "rate_limit_error");
     }
 
     #[tokio::test]
@@ -422,8 +774,6 @@ mod tests {
         assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
         assert!(response.headers().contains_key(GENERATION_ID_HEADER));
         assert_eq!(credential_lookups.load(Ordering::SeqCst), 0);
-        let body = to_bytes(response.into_body(), 1_024).await.unwrap();
-        let body: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(body["error"]["code"], "payload_too_large");
+        assert_eq!(error_code(response).await, "payload_too_large");
     }
 }

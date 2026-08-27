@@ -13,6 +13,7 @@ pub mod generation;
 pub mod http;
 pub mod metrics;
 pub mod model;
+pub mod protocol;
 pub mod readiness;
 pub mod request;
 pub mod routing;
@@ -48,6 +49,7 @@ pub use model::{
     ModelQuantization, OutputPriceType, OutputTokenPrice, ParameterValue, SupportedTextInputs,
     TextInputModality, TextOutputModality, TokenMeasure, TokenUnit,
 };
+pub use protocol::{Frame, Protocol, StreamItem};
 pub use readiness::DependencyReadiness;
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
 pub use routing::{

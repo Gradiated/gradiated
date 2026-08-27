@@ -1,6 +1,5 @@
 use std::{
     cmp,
-    convert::Infallible,
     future::Future,
     sync::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
@@ -9,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use axum::{body::Bytes, http::HeaderMap, response::sse::Event};
+use axum::{body::Bytes, http::HeaderMap};
 use chrono::{DateTime, TimeDelta, Utc};
 use futures_util::stream;
 use serde_json::Value;
@@ -20,12 +19,12 @@ use tokio::{
 use uuid::Uuid;
 
 use crate::{
-    metrics::AdmittedGenerationMetrics, order_deployments, BoundedRequest, CancellationOwner,
-    FinalizationOutcome, GatewayConfig, GatewayError, GatewayMetrics, GenerationIdentity,
-    GenerationProperties, GenerationStatus, GenerationTiming, ModelRuntime, ModelTokenizer,
-    NormalizedUsage, PricedUsage, RequestCoordinator, RequestMetadata, RouteAvailability,
-    RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind, RuntimeStreamEvent,
-    ServingState, TerminalOutcome,
+    metrics::AdmittedGenerationMetrics, order_deployments, protocol::StreamItem, BoundedRequest,
+    CancellationOwner, FinalizationOutcome, GatewayConfig, GatewayError, GatewayMetrics,
+    GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming, ModelRuntime,
+    ModelTokenizer, NormalizedUsage, PricedUsage, RequestCoordinator, RequestMetadata,
+    RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind,
+    RuntimeStreamEvent, ServingState, TerminalOutcome,
 };
 
 const FINALIZATION_ATTEMPTS: usize = 3;
@@ -201,6 +200,19 @@ impl CompletionService {
                 .await
                 .map(CompletionResponse::NonStreaming)
         }
+    }
+
+    pub async fn count_tokens(
+        &self,
+        headers: &HeaderMap,
+        body: &[u8],
+    ) -> Result<u64, GatewayError> {
+        let metadata = RequestMetadata {
+            generation_id: Uuid::now_v7(),
+            received_at: Utc::now(),
+        };
+        let qualified = self.coordinator.qualify(metadata, headers, body).await?;
+        self.tokenizer.count(&qualified).await
     }
 
     async fn route_bounded(
@@ -464,13 +476,13 @@ pub enum CompletionResponse {
 }
 
 pub struct StreamingCompletion {
-    receiver: mpsc::Receiver<Event>,
+    receiver: mpsc::Receiver<StreamItem>,
 }
 
 impl StreamingCompletion {
-    pub fn into_stream(self) -> impl futures_util::Stream<Item = Result<Event, Infallible>> + Send {
+    pub fn into_stream(self) -> impl futures_util::Stream<Item = StreamItem> + Send {
         stream::unfold(self.receiver, |mut receiver| async move {
-            receiver.recv().await.map(|event| (Ok(event), receiver))
+            receiver.recv().await.map(|item| (item, receiver))
         })
     }
 }
@@ -640,7 +652,7 @@ impl StreamingGenerationTask {
     async fn run(
         self,
         started: oneshot::Sender<Result<(), GatewayError>>,
-        events: mpsc::Sender<Event>,
+        events: mpsc::Sender<StreamItem>,
         mut shutdown: watch::Receiver<bool>,
     ) {
         let StreamingGenerationTask {
@@ -808,9 +820,9 @@ impl StreamingGenerationTask {
                             }
                             terminal_usage_seen |= chunk.is_terminal_usage();
                             let usable_output = chunk.has_usable_output();
-                            let event = sse_data(&chunk.into_response());
+                            let item = StreamItem::Chunk(chunk.into_response());
                             let delivery = tokio::select! {
-                                result = events.send(event) => result
+                                result = events.send(item) => result
                                     .map_err(|_| CancellationOwner::Client),
                                 _ = &mut deadline => Err(CancellationOwner::Server),
                                 _ = force_shutdown_requested(&mut shutdown) => {
@@ -869,15 +881,15 @@ impl StreamingGenerationTask {
         }
         match settlement {
             Ok(GenerationEnd::Succeeded(_)) => {
-                let _ = events.send(Event::default().data("[DONE]")).await;
+                let _ = events.send(StreamItem::Done).await;
             }
             Ok(terminal) => {
                 if let Some(error) = terminal.public_error() {
-                    let _ = events.send(error.sse_event()).await;
+                    let _ = events.send(StreamItem::Error(error)).await;
                 }
             }
             Err(error) => {
-                let _ = events.send(error.sse_event()).await;
+                let _ = events.send(StreamItem::Error(error)).await;
             }
         }
     }
@@ -1093,12 +1105,6 @@ fn usage_is_monotonic(previous: NormalizedUsage, next: NormalizedUsage) -> bool 
         && previous.reasoning_tokens() <= next.reasoning_tokens()
 }
 
-fn sse_data(value: &Value) -> Event {
-    Event::default()
-        .json_data(value)
-        .expect("normalized JSON values always serialize")
-}
-
 async fn finalize_with_retry(
     serving_state: &Arc<dyn ServingState>,
     generation_id: Uuid,
@@ -1172,11 +1178,8 @@ mod tests {
     };
 
     use async_trait::async_trait;
-    use axum::{
-        body::to_bytes,
-        response::{sse::Sse, IntoResponse},
-    };
     use chrono::{DateTime, TimeDelta, Utc};
+    use futures_util::StreamExt;
     use serde_json::json;
 
     use super::*;
@@ -1845,18 +1848,24 @@ mod tests {
         bounded.qualified.request.stream = true;
 
         let streaming = service.stream_bounded(bounded).await.unwrap();
-        let body = to_bytes(
-            Sse::new(streaming.into_stream())
-                .into_response()
-                .into_body(),
-            16_384,
-        )
-        .await
-        .unwrap();
-        let body = String::from_utf8(body.to_vec()).unwrap();
+        let mut renderer = crate::protocol::Protocol::OpenAiChat.stream_renderer();
+        let frames = streaming
+            .into_stream()
+            .flat_map(move |item| futures_util::stream::iter(renderer.render(item)))
+            .collect::<Vec<_>>()
+            .await;
 
-        assert!(body.ends_with("data: [DONE]\n\n"));
-        assert_eq!(body.matches("\"usage\"").count(), 1);
+        assert_eq!(
+            frames.last().map(|frame| frame.data.as_str()),
+            Some("[DONE]")
+        );
+        assert_eq!(
+            frames
+                .iter()
+                .filter(|frame| frame.data.contains("\"usage\""))
+                .count(),
+            1
+        );
         let finalized = state.finalized.lock().unwrap();
         assert_eq!(finalized.len(), 1);
         assert_eq!(finalized[0]["status"], "succeeded");

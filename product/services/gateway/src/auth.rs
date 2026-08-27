@@ -1,10 +1,12 @@
-use axum::http::{header::AUTHORIZATION, HeaderMap};
+use axum::http::{header::HeaderName, header::AUTHORIZATION, HeaderMap};
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::domain::{GatewayAccount, GatewayCredential, GatewayWorkspace, OrganizationStatus};
+
+const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AuthenticatedIdentity {
@@ -15,22 +17,35 @@ pub struct AuthenticatedIdentity {
 
 pub fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
     let mut values = headers.get_all(AUTHORIZATION).iter();
-    let value = values.next().ok_or(AuthenticationError::InvalidApiKey)?;
-    if values.next().is_some() {
-        return Err(AuthenticationError::InvalidApiKey);
+    if let Some(value) = values.next() {
+        if values.next().is_some() {
+            return Err(AuthenticationError::InvalidApiKey);
+        }
+        let value = value
+            .to_str()
+            .map_err(|_| AuthenticationError::InvalidApiKey)?;
+        let secret = value
+            .strip_prefix("Bearer ")
+            .filter(|secret| {
+                !secret.is_empty() && !secret.bytes().any(|byte| byte.is_ascii_whitespace())
+            })
+            .ok_or(AuthenticationError::InvalidApiKey)?;
+        return Ok(format!("{:x}", Sha256::digest(secret.as_bytes())));
     }
-    let value = value
+
+    let mut values = headers.get_all(X_API_KEY).iter();
+    let value = values
+        .next()
+        .ok_or(AuthenticationError::InvalidApiKey)?
         .to_str()
         .map_err(|_| AuthenticationError::InvalidApiKey)?;
-    let secret = value
-        .strip_prefix("Bearer ")
-        .filter(|secret| {
-            !secret.is_empty() && !secret.bytes().any(|byte| byte.is_ascii_whitespace())
-        })
-        .ok_or(AuthenticationError::InvalidApiKey)?;
-
-    let digest = Sha256::digest(secret.as_bytes());
-    Ok(format!("{digest:x}"))
+    if values.next().is_some()
+        || value.is_empty()
+        || value.bytes().any(|byte| byte.is_ascii_whitespace())
+    {
+        return Err(AuthenticationError::InvalidApiKey);
+    }
+    Ok(format!("{:x}", Sha256::digest(value.as_bytes())))
 }
 
 pub fn authenticate_credential(
@@ -142,6 +157,41 @@ mod tests {
         assert_eq!(
             credential_digest(&headers),
             Err(AuthenticationError::InvalidApiKey)
+        );
+    }
+
+    #[test]
+    fn x_api_key_authenticates_with_the_same_digest_as_bearer() {
+        let mut headers = HeaderMap::new();
+        headers.insert(X_API_KEY, "grad_example".parse().unwrap());
+        assert_eq!(
+            credential_digest(&headers).unwrap(),
+            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
+        );
+
+        for value in ["", "a b"] {
+            let mut headers = HeaderMap::new();
+            headers.insert(X_API_KEY, value.parse().unwrap());
+            assert_eq!(
+                credential_digest(&headers),
+                Err(AuthenticationError::InvalidApiKey)
+            );
+        }
+
+        let mut headers = HeaderMap::new();
+        headers.append(X_API_KEY, "first".parse().unwrap());
+        headers.append(X_API_KEY, "second".parse().unwrap());
+        assert_eq!(
+            credential_digest(&headers),
+            Err(AuthenticationError::InvalidApiKey)
+        );
+
+        let mut both = HeaderMap::new();
+        both.insert(AUTHORIZATION, "Bearer grad_example".parse().unwrap());
+        both.insert(X_API_KEY, "grad_example".parse().unwrap());
+        assert_eq!(
+            credential_digest(&both).unwrap(),
+            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
         );
     }
 

@@ -1,6 +1,6 @@
 use axum::{
     http::StatusCode,
-    response::{sse::Event, IntoResponse, Response},
+    response::{IntoResponse, Response},
     Json,
 };
 use serde::Serialize;
@@ -92,7 +92,7 @@ impl GatewayError {
         }
     }
 
-    fn message(&self) -> &'static str {
+    pub(crate) fn message(&self) -> &'static str {
         match self {
             Self::InvalidRequest { .. } => "The request is invalid.",
             Self::UnsupportedParameter { .. } => {
@@ -117,7 +117,7 @@ impl GatewayError {
         }
     }
 
-    fn param(&self) -> Option<&str> {
+    pub(crate) fn param(&self) -> Option<&str> {
         match self {
             Self::InvalidRequest { param }
             | Self::UnsupportedParameter { param }
@@ -128,13 +128,7 @@ impl GatewayError {
         }
     }
 
-    pub(crate) fn sse_event(&self) -> Event {
-        Event::default()
-            .json_data(self.envelope())
-            .expect("the bounded public error envelope always serializes")
-    }
-
-    fn envelope(&self) -> ErrorEnvelope<'_> {
+    pub(crate) fn envelope(&self) -> ErrorEnvelope<'_> {
         ErrorEnvelope {
             error: ErrorBody {
                 message: self.message(),
@@ -143,6 +137,15 @@ impl GatewayError {
                 code: self.code(),
             },
         }
+    }
+
+    pub(crate) fn anthropic_envelope(&self) -> AnthropicErrorEnvelope<'_> {
+        AnthropicErrorEnvelope::new(ErrorBody {
+            message: self.message(),
+            error_type: self.error_type(),
+            param: self.param(),
+            code: self.code(),
+        })
     }
 }
 
@@ -161,8 +164,24 @@ fn bounded_param(param: Option<&str>) -> Option<String> {
 }
 
 #[derive(Serialize)]
-struct ErrorEnvelope<'a> {
+pub(crate) struct ErrorEnvelope<'a> {
     error: ErrorBody<'a>,
+}
+
+#[derive(Serialize)]
+pub(crate) struct AnthropicErrorEnvelope<'a> {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    error: ErrorBody<'a>,
+}
+
+impl<'a> AnthropicErrorEnvelope<'a> {
+    fn new(error: ErrorBody<'a>) -> Self {
+        Self {
+            kind: "error",
+            error,
+        }
+    }
 }
 
 #[derive(Serialize)]

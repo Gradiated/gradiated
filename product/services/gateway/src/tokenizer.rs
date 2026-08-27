@@ -78,6 +78,26 @@ impl ModelTokenizer {
         enforce_bounds(qualified, input_tokens)
     }
 
+    pub async fn count(&self, qualified: &QualifiedRequest) -> Result<u64, GatewayError> {
+        let tokenizer = self
+            .tokenizer(&qualified.deployment.release)
+            .await
+            .map_err(|source| {
+                error!(
+                    model_path = %qualified.deployment.release.model_path,
+                    tokenizer_path = %qualified.deployment.release.tokenizer_path,
+                    tokenizer_revision = %qualified.deployment.release.tokenizer_revision,
+                    error = %source,
+                    "model tokenizer is unavailable"
+                );
+                GatewayError::ServingStateUnavailable
+            })?;
+        let input_ids = tokenizer
+            .encode_input(&qualified.request)
+            .map_err(map_request_error)?;
+        u64::try_from(input_ids.len()).map_err(|_| GatewayError::ServingStateUnavailable)
+    }
+
     pub async fn preload(
         &self,
         releases: impl IntoIterator<Item = &ModelDeploymentRelease>,

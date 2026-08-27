@@ -2,6 +2,7 @@ import { expect, test } from "./fixtures";
 
 test("billing page shows the organization balance and ledger", async ({
   page,
+  account,
 }) => {
   await page.goto("/billing");
 
@@ -10,8 +11,10 @@ test("billing page shows the organization balance and ledger", async ({
     page.getByRole("heading", { level: 1, name: "Billing" }),
   ).toBeVisible();
   await expect(page.getByText("$100.00", { exact: true })).toBeVisible();
-  await expect(page.getByText("Credit", { exact: true })).toBeVisible();
-  await expect(page.getByText("+$100.00", { exact: true })).toBeVisible();
+  await expect(page.getByText("Credit", { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText(account.creditUsd, { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole("heading", { name: "Add funds" })).toBeVisible();
   await expect(
     page.getByRole("button", { name: "Continue to Stripe" }),

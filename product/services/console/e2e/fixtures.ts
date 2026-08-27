@@ -18,6 +18,8 @@ export interface TestAccount {
   email: string;
   userName: string;
   organizationName: string;
+  organizationId: string;
+  creditUsd: string;
 }
 
 const requireOk = async (response: {
@@ -66,6 +68,17 @@ const signInWithMagicLink = async (
   if (![302, 303, 307].includes(verified.status())) await requireOk(verified);
 };
 
+const formatSignedNanoUsd = (nanoUsd: bigint): string => {
+  const cents = nanoUsd / 10_000_000n;
+  const negative = cents < 0n;
+  const absolute = negative ? -cents : cents;
+  const whole = absolute / 100n;
+  const fraction = absolute % 100n;
+  return `${negative ? "-" : "+"}$${whole}.${fraction
+    .toString()
+    .padStart(2, "0")}`;
+};
+
 export const test = base.extend<{ account: TestAccount }>({
   account: [
     async ({ context }, use) => {
@@ -74,6 +87,8 @@ export const test = base.extend<{ account: TestAccount }>({
         email: `playwright-${suffix}@gradiated.test`,
         userName: `Playwright ${suffix.slice(0, 8)}`,
         organizationName: "Personal",
+        organizationId: "",
+        creditUsd: "+$0.00",
       };
 
       await signInWithMagicLink(context, account.email, account.userName);
@@ -86,23 +101,37 @@ export const test = base.extend<{ account: TestAccount }>({
       };
       const organization = currentUser.organizations[0];
       if (!organization) throw new Error("Test account has no organization");
+      account.organizationId = organization.id;
+
+      const billingResponse = await context.request.get(
+        `${apiUrl}/api/v1/organizations/${organization.id}/billing`,
+      );
+      await requireOk(billingResponse);
+      const billing = (await billingResponse.json()) as { balance: string };
 
       const { database, pool } = createControlDatabase(databaseUrl);
       const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });
       await valkey.connect();
       try {
-        const billing = createCatalogBillingService(
+        const billingService = createCatalogBillingService(
           database,
           createValkeyServingProjector(valkey),
         );
-        await billing.applyBalanceTransaction({
-          organizationId: organization.id,
-          type: "credit",
-          amount: 100_000_000_000n,
-          sourceType: "operator",
-          sourceId: `playwright-credit-v1:${organization.id}`,
-          createdBy: currentUser.id,
-        });
+        // New accounts start with the signup credit; top up to an exact
+        // $100.00 so billing-page assertions stay stable.
+        const targetBalance = 100_000_000_000n;
+        const creditAmount = targetBalance - BigInt(billing.balance);
+        if (creditAmount > 0n) {
+          await billingService.applyBalanceTransaction({
+            organizationId: organization.id,
+            type: "credit",
+            amount: creditAmount,
+            sourceType: "operator",
+            sourceId: `playwright-credit-v1:${organization.id}`,
+            createdBy: currentUser.id,
+          });
+        }
+        account.creditUsd = formatSignedNanoUsd(creditAmount);
       } finally {
         if (valkey.isOpen) await valkey.quit();
         await pool.end();

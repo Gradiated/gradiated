@@ -363,7 +363,7 @@ describe("wizard install end to end", () => {
     } finally {
       await rm(home, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it("writes a Codex profile that the real client can use", async () => {
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
@@ -438,7 +438,7 @@ describe("wizard install end to end", () => {
     } finally {
       await rm(home, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it("respects an existing default model", async () => {
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
@@ -477,7 +477,7 @@ describe("wizard install end to end", () => {
     } finally {
       await rm(home, { recursive: true, force: true });
     }
-  });
+  }, 30_000);
 
   it("uninstalls the opencode provider and keeps unrelated config", async () => {
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));

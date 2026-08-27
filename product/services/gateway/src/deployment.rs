@@ -11,16 +11,31 @@ use validator::Validate;
 pub struct GatewayModelDeployment {
     pub id: Uuid,
     pub status: DeploymentStatus,
+    #[serde(default = "legacy_provider")]
     #[validate(length(min = 1, max = 100))]
     pub provider: String,
+    #[serde(default = "legacy_region")]
     #[validate(length(min = 1, max = 100))]
     pub region: String,
+    #[serde(default = "legacy_fault_domain")]
     #[validate(length(min = 1, max = 300))]
     pub fault_domain: String,
     #[validate(url, length(max = 2048))]
     pub service_url: String,
     #[validate(nested)]
     pub release: ModelDeploymentRelease,
+}
+
+fn legacy_provider() -> String {
+    "legacy".to_owned()
+}
+
+fn legacy_region() -> String {
+    "unknown".to_owned()
+}
+
+fn legacy_fault_domain() -> String {
+    "legacy:unknown".to_owned()
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
@@ -149,6 +164,22 @@ mod tests {
         .expect_err("unknown field must be rejected");
 
         assert!(error.to_string().contains("unexpected_private_option"));
+    }
+
+    #[test]
+    fn legacy_projection_uses_safe_routing_defaults() {
+        let mut value = serde_json::to_value(accepted_deployment()).unwrap();
+        let object = value.as_object_mut().unwrap();
+        object.remove("provider");
+        object.remove("region");
+        object.remove("fault_domain");
+
+        let deployment: GatewayModelDeployment = serde_json::from_value(value).unwrap();
+
+        deployment.validate().unwrap();
+        assert_eq!(deployment.provider, "legacy");
+        assert_eq!(deployment.region, "unknown");
+        assert_eq!(deployment.fault_domain, "legacy:unknown");
     }
 
     #[test]

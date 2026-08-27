@@ -212,8 +212,9 @@ const runInstall = async (): Promise<void> => {
     ui.success(`Stored the credential for OpenCode in ${authWritten}.`);
   }
 
+  const modelsLine = models.map((entry) => entry.name).join(", ");
   ui.outro(
-    `Done. Start coding:\n  opencode\n\nGradiated serves exact open-weight models with no markup. Docs: https://gradiated.com/docs`,
+    `Ready. OpenCode now runs on Gradiated.\n\n  opencode\n\nThen /models to switch between ${modelsLine}.\n\nAffordable inference for open-weight models — https://gradiated.com/docs`,
   );
 };
 

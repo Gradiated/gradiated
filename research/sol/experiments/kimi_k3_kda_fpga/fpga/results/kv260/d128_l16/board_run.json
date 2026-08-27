@@ -1,0 +1,36 @@
+{
+  "evidence_class": "measured_fpga",
+  "board": "KV260",
+  "device": "xck26-sfvc784-2LV-c",
+  "bitstream": "kda_kv260.bit",
+  "id": "0x4b444131",
+  "head_dim": 128,
+  "lanes": 16,
+  "clock_hz_target": 100000000,
+  "post_route_wns_ns": -0.915,
+  "runs": [
+    {
+      "tokens": 8,
+      "mismatches": 0,
+      "cycles_per_token": 7168.0,
+      "host_wall_us_per_token": 72.25
+    },
+    {
+      "tokens": 64,
+      "mismatches": 0,
+      "cycles_per_token": 7168.0,
+      "host_wall_us_per_token": 72.16
+    },
+    {
+      "tokens": 256,
+      "mismatches": 0,
+      "cycles_per_token": 7168.0,
+      "host_wall_us_per_token": 74.93
+    }
+  ],
+  "notes": [
+    "The FPGA manager loaded the bitstream successfully.",
+    "The host test was corrected to accept the sticky done status after a completed command.",
+    "Post-route timing is not closed at 100 MHz; do not use this run as a production timing result."
+  ]
+}

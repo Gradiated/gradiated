@@ -1,0 +1,101 @@
+{
+   "creator": "Yosys 0.68+post (git sha1 c12172fbae8af5e20f6fb52e3d4e92d56ed587b6, Release, AppleClang clang++ 17.0.0.17000604)",
+   "invocation": "stat -json -hierarchy ",
+   "modules": {
+      "$paramod$7a308942078899a28ac19cf99cdc3c8b3a293028\\kda_core": {
+         "num_wires":         { "count": "38304", "area": "0.000000", "local_count": "38080", "local_area": "0.000000" },
+         "num_wire_bits":     { "count": "123738", "area": "0.000000", "local_count": "120410", "local_area": "0.000000" },
+         "num_pub_wires":     { "count": "1215", "area": "0.000000", "local_count": "1023", "local_area": "0.000000" },
+         "num_pub_wire_bits": { "count": "27072", "area": "0.000000", "local_count": "24896", "local_area": "0.000000" },
+         "num_ports":         { "count": "205", "area": "0.000000", "local_count": "13", "local_area": "0.000000" },
+         "num_port_bits":     { "count": "2314", "area": "0.000000", "local_count": "138", "local_area": "0.000000" },
+         "num_memories":      { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_memory_bits":   { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_processes":     { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells":         { "count": "56690", "area": "0.000000", "local_count": "56658", "local_area": "0.000000" },
+         "num_submodules":       { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "sequential_area":    { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells_by_type": {
+            "BUFG": { "count": "1", "area": "0.000000", "local_count": "1", "local_area": "0.000000" },
+            "CARRY4": { "count": "1477", "area": "0.000000", "local_count": "1477", "local_area": "0.000000" },
+            "DSP48E2": { "count": "256", "area": "0.000000", "local_count": "256", "local_area": "0.000000" },
+            "FDRE": { "count": "9063", "area": "0.000000", "local_count": "9063", "local_area": "0.000000" },
+            "FDSE": { "count": "1472", "area": "0.000000", "local_count": "1472", "local_area": "0.000000" },
+            "IBUF": { "count": "72", "area": "0.000000", "local_count": "72", "local_area": "0.000000" },
+            "INV": { "count": "8642", "area": "0.000000", "local_count": "8642", "local_area": "0.000000" },
+            "LUT1": { "count": "10", "area": "0.000000", "local_count": "10", "local_area": "0.000000" },
+            "LUT2": { "count": "5957", "area": "0.000000", "local_count": "5957", "local_area": "0.000000" },
+            "LUT3": { "count": "1227", "area": "0.000000", "local_count": "1227", "local_area": "0.000000" },
+            "LUT4": { "count": "349", "area": "0.000000", "local_count": "349", "local_area": "0.000000" },
+            "LUT5": { "count": "1078", "area": "0.000000", "local_count": "1078", "local_area": "0.000000" },
+            "LUT6": { "count": "16303", "area": "0.000000", "local_count": "16303", "local_area": "0.000000" },
+            "MUXF7": { "count": "6302", "area": "0.000000", "local_count": "6302", "local_area": "0.000000" },
+            "MUXF8": { "count": "2949", "area": "0.000000", "local_count": "2949", "local_area": "0.000000" },
+            "MUXF9": { "count": "1434", "area": "0.000000", "local_count": "1434", "local_area": "0.000000" },
+            "OBUF": { "count": "66", "area": "0.000000", "local_count": "66", "local_area": "0.000000" },
+            "RAMB18E2": { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" }
+      },
+         "num_submodules_by_type": {
+            "$paramod$8ebd5a8dee5fd5e271d919c3cba0baf43e478973\\kda_state_bank": { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" }
+      }
+      },
+      "$paramod$8ebd5a8dee5fd5e271d919c3cba0baf43e478973\\kda_state_bank": {
+         "num_wires":         { "count": "7", "area": "0.000000", "local_count": "7", "local_area": "0.000000" },
+         "num_wire_bits":     { "count": "104", "area": "0.000000", "local_count": "104", "local_area": "0.000000" },
+         "num_pub_wires":     { "count": "6", "area": "0.000000", "local_count": "6", "local_area": "0.000000" },
+         "num_pub_wire_bits": { "count": "68", "area": "0.000000", "local_count": "68", "local_area": "0.000000" },
+         "num_ports":         { "count": "6", "area": "0.000000", "local_count": "6", "local_area": "0.000000" },
+         "num_port_bits":     { "count": "68", "area": "0.000000", "local_count": "68", "local_area": "0.000000" },
+         "num_memories":      { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_memory_bits":   { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_processes":     { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells":         { "count": "1", "area": "0.000000", "local_count": "1", "local_area": "0.000000" },
+         "num_submodules":       { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "sequential_area":    { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells_by_type": {
+            "RAMB18E2": { "count": "1", "area": "0.000000", "local_count": "1", "local_area": "0.000000" }
+      },
+         "num_submodules_by_type": {
+
+      }
+      }
+   },
+      "design": {
+         "num_wires":         { "count": "38304", "area": "0.000000", "local_count": "38080", "local_area": "0.000000" },
+         "num_wire_bits":     { "count": "123738", "area": "0.000000", "local_count": "120410", "local_area": "0.000000" },
+         "num_pub_wires":     { "count": "1215", "area": "0.000000", "local_count": "1023", "local_area": "0.000000" },
+         "num_pub_wire_bits": { "count": "27072", "area": "0.000000", "local_count": "24896", "local_area": "0.000000" },
+         "num_ports":         { "count": "205", "area": "0.000000", "local_count": "13", "local_area": "0.000000" },
+         "num_port_bits":     { "count": "2314", "area": "0.000000", "local_count": "138", "local_area": "0.000000" },
+         "num_memories":      { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_memory_bits":   { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_processes":     { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells":         { "count": "56690", "area": "0.000000", "local_count": "56658", "local_area": "0.000000" },
+         "num_submodules":       { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "sequential_area":    { "count": "0", "area": "0.000000", "local_count": "0", "local_area": "0.000000" },
+         "num_cells_by_type": {
+            "BUFG": { "count": "1", "area": "0.000000", "local_count": "1", "local_area": "0.000000" },
+            "CARRY4": { "count": "1477", "area": "0.000000", "local_count": "1477", "local_area": "0.000000" },
+            "DSP48E2": { "count": "256", "area": "0.000000", "local_count": "256", "local_area": "0.000000" },
+            "FDRE": { "count": "9063", "area": "0.000000", "local_count": "9063", "local_area": "0.000000" },
+            "FDSE": { "count": "1472", "area": "0.000000", "local_count": "1472", "local_area": "0.000000" },
+            "IBUF": { "count": "72", "area": "0.000000", "local_count": "72", "local_area": "0.000000" },
+            "INV": { "count": "8642", "area": "0.000000", "local_count": "8642", "local_area": "0.000000" },
+            "LUT1": { "count": "10", "area": "0.000000", "local_count": "10", "local_area": "0.000000" },
+            "LUT2": { "count": "5957", "area": "0.000000", "local_count": "5957", "local_area": "0.000000" },
+            "LUT3": { "count": "1227", "area": "0.000000", "local_count": "1227", "local_area": "0.000000" },
+            "LUT4": { "count": "349", "area": "0.000000", "local_count": "349", "local_area": "0.000000" },
+            "LUT5": { "count": "1078", "area": "0.000000", "local_count": "1078", "local_area": "0.000000" },
+            "LUT6": { "count": "16303", "area": "0.000000", "local_count": "16303", "local_area": "0.000000" },
+            "MUXF7": { "count": "6302", "area": "0.000000", "local_count": "6302", "local_area": "0.000000" },
+            "MUXF8": { "count": "2949", "area": "0.000000", "local_count": "2949", "local_area": "0.000000" },
+            "MUXF9": { "count": "1434", "area": "0.000000", "local_count": "1434", "local_area": "0.000000" },
+            "OBUF": { "count": "66", "area": "0.000000", "local_count": "66", "local_area": "0.000000" },
+            "RAMB18E2": { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" }
+      },
+         "num_submodules_by_type": {
+            "$paramod$8ebd5a8dee5fd5e271d919c3cba0baf43e478973\\kda_state_bank": { "count": "32", "area": "0.000000", "local_count": "0", "local_area": "0.000000" }
+      }
+      }
+}
+

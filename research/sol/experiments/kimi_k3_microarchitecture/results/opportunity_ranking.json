@@ -1,0 +1,68 @@
+{
+  "opportunities": [
+    {
+      "competing_explanations": [
+        "Batch reuse may reduce weight traffic.",
+        "Expert weights may already be resident near compute.",
+        "Routing imbalance may increase or decrease useful reuse."
+      ],
+      "cost_usd": 0,
+      "decision_impact": 1.0,
+      "decision_resolution_per_dollar": 21.6,
+      "discrimination_power": 0.9,
+      "evidence_scope": "Analytical Kimi K3 decode model before trace calibration.",
+      "falsifier": "Measured traces show expert weight movement below ten percent of critical-path time.",
+      "id": "k3-expert-weight-movement",
+      "mechanism": "Place expert compute near expert weight storage and schedule tokens by expert.",
+      "next_measurement": "Capture selected expert IDs and HBM bytes for representative decode batches.",
+      "observation": "The selected routed experts require many more weight values than the router or elementwise stages.",
+      "readiness": 0.5,
+      "transfer_penalty": 0.4,
+      "uncertainty": 0.8
+    },
+    {
+      "competing_explanations": [
+        "The full state cannot fit on chip for useful batch sizes.",
+        "State traffic may overlap with expert compute.",
+        "A lower-precision state may reduce traffic without quality loss."
+      ],
+      "cost_usd": 0,
+      "decision_impact": 0.9,
+      "decision_resolution_per_dollar": 13.824000000000003,
+      "discrimination_power": 0.8,
+      "evidence_scope": "Exact state geometry with analytical traffic and one reduced KV260 head measurement.",
+      "falsifier": "Capacity or bandwidth makes local state slower or less efficient than a generic memory path.",
+      "id": "k3-kda-state-locality",
+      "mechanism": "Bank recurrent state near a fused KDA update engine.",
+      "next_measurement": "Compare local and streamed state RTL with matched arithmetic on the KV260.",
+      "observation": "KDA replaces context-growing cache with fixed recurrent state, but that state is read and written for every token.",
+      "readiness": 0.8,
+      "transfer_penalty": 0.6,
+      "uncertainty": 0.6
+    },
+    {
+      "competing_explanations": [
+        "A two-dimensional tile may improve compute use.",
+        "Tile setup and banking may remove the benefit at batch one."
+      ],
+      "cost_usd": 0,
+      "decision_impact": 0.7,
+      "decision_resolution_per_dollar": 8.959999999999999,
+      "discrimination_power": 0.8,
+      "evidence_scope": "Measured 8-lane KV260 core plus uncalibrated tile proxy.",
+      "falsifier": "Post-route cycles, timing, or memory conflicts do not improve over the row-lane design.",
+      "id": "k3-two-dimensional-compute",
+      "mechanism": "Use a resource-matched two-dimensional tile for projections and recurrent updates.",
+      "next_measurement": "Implement a small exact-arithmetic tiled RTL candidate.",
+      "observation": "The current KDA FPGA core uses one-dimensional row lanes and does not prove that this is the best compute shape.",
+      "readiness": 0.4,
+      "transfer_penalty": 0.5,
+      "uncertainty": 0.8
+    }
+  ],
+  "ranking_method": {
+    "claim_limit": "triage heuristic only; inputs are judgments and score is not a performance prediction",
+    "formula": "impact*uncertainty*discrimination*readiness*(1-transfer_penalty)/cost_usd",
+    "name": "heuristic_decision_resolution_per_dollar_v1"
+  }
+}

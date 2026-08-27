@@ -1,0 +1,48 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (lin64) Build 6299465 Fri Nov 14 12:34:56 MST 2025
+| Date         : Thu Aug 27 12:49:28 2026
+| Host         : js-gradiated running 64-bit Debian GNU/Linux 13 (trixie)
+| Command      : report_utilization -hierarchical -file /tmp/kda_kv260_fpga/fpga/results/kv260/d128_l8/post_route_utilization.rpt
+| Design       : system_wrapper
+| Device       : xck26-sfvc784-2LV-c
+| Speed File   : -2LV
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------------------------------+----------------------------------------------------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+|                     Instance                     |                                Module                                | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | URAM | DSP Blocks |
++--------------------------------------------------+----------------------------------------------------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+| system_wrapper                                   |                                                                (top) |       6855 |       6853 |       0 |    2 | 10094 |      8 |      8 |    0 |         56 |
+|   system_i                                       |                                                               system |       6855 |       6853 |       0 |    2 | 10094 |      8 |      8 |    0 |         56 |
+|     kda                                          |                                                         system_kda_0 |       6115 |       6115 |       0 |    0 |  9258 |      8 |      8 |    0 |         56 |
+|       inst                                       |                                             system_kda_0_kda_axi_top |       6115 |       6115 |       0 |    0 |  9258 |      8 |      8 |    0 |         56 |
+|         (inst)                                   |                                             system_kda_0_kda_axi_top |         40 |         40 |       0 |    0 |   183 |      0 |      0 |    0 |          0 |
+|         core                                     |                                                system_kda_0_kda_core |       6075 |       6075 |       0 |    0 |  9075 |      8 |      8 |    0 |         56 |
+|           (core)                                 |                                                system_kda_0_kda_core |       5971 |       5971 |       0 |    0 |  9075 |      0 |      0 |    0 |         56 |
+|     interconnect                                 |                                                system_interconnect_0 |        724 |        723 |       0 |    1 |   798 |      0 |      0 |    0 |          0 |
+|       inst                                       |                                        system_interconnect_0_bd_b306 |        724 |        723 |       0 |    1 |   798 |      0 |      0 |    0 |          0 |
+|         s00_entry_pipeline                       |                 system_interconnect_0_s00_entry_pipeline_imp_1WR4ZUX |        665 |        665 |       0 |    0 |   633 |      0 |      0 |    0 |          0 |
+|           s00_mmu                                |                               system_interconnect_0_bd_b306_s00mmu_0 |        220 |        220 |       0 |    0 |   257 |      0 |      0 |    0 |          0 |
+|             inst                                 |                             system_interconnect_0_sc_mmu_v1_0_16_top |        220 |        220 |       0 |    0 |   257 |      0 |      0 |    0 |          0 |
+|               (inst)                             |                             system_interconnect_0_sc_mmu_v1_0_16_top |         74 |         74 |       0 |    0 |    17 |      0 |      0 |    0 |          0 |
+|               ar_reg_stall                       |   system_interconnect_0_sc_util_v1_0_4_axi_reg_stall__parameterized0 |         46 |         46 |       0 |    0 |    94 |      0 |      0 |    0 |          0 |
+|               aw_reg_stall                       | system_interconnect_0_sc_util_v1_0_4_axi_reg_stall__parameterized0_7 |         48 |         48 |       0 |    0 |    94 |      0 |      0 |    0 |          0 |
+|               gen_endpoint.decerr_slave_inst     |                    system_interconnect_0_sc_mmu_v1_0_16_decerr_slave |         54 |         54 |       0 |    0 |    49 |      0 |      0 |    0 |          0 |
+|           s00_si_converter                       |                               system_interconnect_0_bd_b306_s00sic_0 |        441 |        441 |       0 |    0 |   336 |      0 |      0 |    0 |          0 |
+|             inst                                 |                    system_interconnect_0_sc_si_converter_v1_0_16_top |        441 |        441 |       0 |    0 |   336 |      0 |      0 |    0 |          0 |
+|               gen_axilite_conv.axilite_conv_inst |           system_interconnect_0_sc_si_converter_v1_0_16_axilite_conv |        440 |        440 |       0 |    0 |   332 |      0 |      0 |    0 |          0 |
+|         s00_nodes                                |                          system_interconnect_0_s00_nodes_imp_1QTWTXV |         39 |         39 |       0 |    0 |   126 |      0 |      0 |    0 |          0 |
++--------------------------------------------------+----------------------------------------------------------------------+------------+------------+---------+------+-------+--------+--------+------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+

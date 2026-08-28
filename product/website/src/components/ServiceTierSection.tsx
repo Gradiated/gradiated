@@ -25,7 +25,7 @@ const TIER_OPTIONS: readonly TierOption[] = [
   {
     id: "default",
     name: "Default",
-    priceChange: "30%",
+    priceChange: "20%",
     priceNote: "cheaper than other providers",
     description: "Normal application traffic.",
   },

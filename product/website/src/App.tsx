@@ -48,7 +48,7 @@ export const App = (): ReactElement => {
               title="Gradiated — Custom inference paths for open models."
               home
             >
-              <HomePage onWaitlist={() => setWaitlistOpen(true)} />
+              <HomePage />
             </LayoutRoute>
           }
         />

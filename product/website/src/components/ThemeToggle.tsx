@@ -44,17 +44,20 @@ export const ThemeToggle = (): ReactElement => {
 
   return (
     <button
-      className="theme-toggle fixed bottom-6 right-7 z-[5] m-0 w-32 border-0 bg-transparent px-0 py-2 text-right font-libre text-label font-medium uppercase tracking-label text-muted opacity-subtle transition-opacity duration-200 hover:text-ink hover:opacity-100 focus-visible:text-ink focus-visible:opacity-100 max-site:relative max-site:bottom-auto max-site:right-auto max-site:ml-auto max-site:w-auto max-site:p-0"
+      className="group fixed bottom-6 right-7 z-[5] m-0 w-32 border-0 bg-transparent px-0 py-2 text-right font-libre text-label font-medium uppercase tracking-label text-muted opacity-subtle transition-opacity duration-200 hover:text-ink hover:opacity-100 focus-visible:text-ink focus-visible:opacity-100 max-site:relative max-site:bottom-auto max-site:right-auto max-site:mt-8 max-site:w-auto max-site:p-0 max-site:text-left max-site:opacity-70"
       type="button"
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}
       onClick={() => setTheme(dark ? "light" : "dark")}
     >
-      <span className="theme-question">
+      <span className="block transition-opacity duration-150 group-hover:opacity-0 group-focus-visible:opacity-0">
         {dark ? "Light" : "Dark"}
-        <i>?</i>
+        <i className="not-italic text-accent">?</i>
       </span>
-      <span className="theme-consider" aria-hidden="true">
+      <span
+        className="absolute right-0 top-2 block w-full whitespace-nowrap text-ink opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 max-site:left-0 max-site:right-auto max-site:top-0"
+        aria-hidden="true"
+      >
         Consider {alternative} →
       </span>
     </button>

@@ -24,8 +24,7 @@ body {
   overflow: hidden;
 }
 .nav,
-main,
-footer {
+main {
   max-width: 1180px;
   margin: auto;
 }
@@ -329,22 +328,6 @@ a {
 .hiring .text-link {
   margin-top: 38px;
 }
-footer {
-  border-top: 1px solid var(--line);
-  padding: 20px 24px 42px;
-  display: flex;
-  gap: 25px;
-  font:
-    500 11px "DM Mono",
-    monospace;
-  color: var(--muted);
-}
-footer a:first-child {
-  color: var(--ink);
-}
-footer a:last-child {
-  margin-left: auto;
-}
 .notes,
 .article {
   min-height: 70vh;
@@ -525,10 +508,6 @@ footer a:last-child {
   }
   .article p {
     font-size: 21px;
-  }
-  footer {
-    padding: 20px 22px 38px;
-    flex-wrap: wrap;
   }
 }
 

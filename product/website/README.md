@@ -61,7 +61,15 @@ The rewrite keeps React Router routes working after a direct page load.
 - `src/docs/` contains the public MDX documentation.
 - `src/content.tsx` contains article content.
 - `public/` contains files served without transformation.
-- The existing root CSS files preserve the original visual system.
+- The remaining root CSS files preserve legacy page styles.
 
 The docs use MDX compiled by Vite. Add a page to `src/docs/`, register its route
 and navigation entry in `src/pages/DocsPage.tsx`, then run `pnpm build`.
+
+The home page service-tier section keeps tier names, discount values, and
+descriptions in `src/components/ServiceTierSection.tsx`. Update that table when
+the service-tier pricing changes.
+
+The home page, shared header, shared footer, and theme control use Tailwind
+utilities. Keep new layout rules in their components unless a shared design
+token belongs in `src/tailwind.css`.

@@ -715,6 +715,12 @@ describe("wizard install end to end", () => {
   }, 30_000);
 
   it("runs claude through the wrapper with the Gradiated gateway env", async () => {
+    // PATH lookup for an extensionless script is a POSIX concern; Windows
+    // coverage is the .cmd shim content assertions in the test above.
+    if (process.platform === "win32") {
+      console.warn("wrapper PATH lookup is POSIX-only; skipping on Windows");
+      return;
+    }
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
     try {
       // A fake `claude` earlier on PATH records the environment the wrapper
@@ -758,6 +764,10 @@ describe("wizard install end to end", () => {
   }, 30_000);
 
   it("passes arguments through the wrapper to the real Claude Code", async () => {
+    if (process.platform === "win32") {
+      console.warn("wrapper PATH lookup is POSIX-only; skipping on Windows");
+      return;
+    }
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
     try {
       const install = await runWizard(
@@ -1007,18 +1017,18 @@ describe("wizard install end to end", () => {
       );
       expect(scoped.status).toBe(0);
       expect(scoped.stdout).toContain("not configured for opencode");
-      expect(existsSync(join(home, ".gradiated/bin/claude-gradiated"))).toBe(
-        true,
-      );
+      const commandFile =
+        process.platform === "win32"
+          ? "claude-gradiated.cmd"
+          : "claude-gradiated";
+      expect(existsSync(join(home, ".gradiated/bin", commandFile))).toBe(true);
 
       // Dry run reports the plan and leaves every file in place.
       const dry = await runWizardUninstall(["--dry-run"], home);
       expect(dry.status).toBe(0);
       expect(dry.stdout).toContain("Would remove");
       expect(dry.stdout).toContain("Dry run complete. No files were changed.");
-      expect(existsSync(join(home, ".gradiated/bin/claude-gradiated"))).toBe(
-        true,
-      );
+      expect(existsSync(join(home, ".gradiated/bin", commandFile))).toBe(true);
       expect(
         JSON.parse(
           await readFile(join(home, ".gradiated/credentials.json"), "utf8"),

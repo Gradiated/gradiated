@@ -33,7 +33,13 @@ jobs:
         run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
       - name: Publish with OIDC trusted publishing
         working-directory: product/services/wizard
-        run: npm publish --access public
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "@gradiated/wizard@$VERSION" version > /dev/null 2>&1; then
+            echo "@gradiated/wizard@$VERSION is already published; skipping"
+          else
+            npm publish --access public
+          fi
 
   e2e:
     name: Wizard e2e (${{ matrix.os }})

@@ -50,7 +50,7 @@ export const ThemeToggle = (): ReactElement => {
 
   return (
     <button
-      className="group fixed bottom-6 right-7 z-[5] m-0 w-32 border-0 bg-transparent px-0 py-2 text-right font-libre text-label font-medium uppercase tracking-label text-muted opacity-subtle transition-opacity duration-200 hover:text-ink hover:opacity-100 focus-visible:text-ink focus-visible:opacity-100 max-site:relative max-site:bottom-auto max-site:right-auto max-site:mt-8 max-site:w-auto max-site:p-0 max-site:text-left max-site:opacity-70"
+      className="group fixed bottom-6 right-7 z-[5] m-0 w-32 border-0 bg-transparent px-0 py-2 text-right font-libre text-label font-medium uppercase tracking-label text-muted opacity-subtle transition-opacity duration-200 hover:text-ink hover:opacity-100 focus-visible:text-ink focus-visible:opacity-100 max-site:relative max-site:bottom-auto max-site:right-auto max-site:w-auto max-site:p-0 max-site:text-left max-site:opacity-70"
       type="button"
       aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={dark}

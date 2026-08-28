@@ -74,9 +74,9 @@ const SiteHeader = (): ReactElement => {
         : "home";
 
   return (
-    <header className="mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-site:h-[72px] max-site:flex-nowrap max-site:gap-0 max-site:px-5">
+    <header className="mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-[850px]:h-[72px] max-[850px]:flex-nowrap max-[850px]:gap-0 max-[850px]:px-5 max-[420px]:px-4">
       <Link
-        className="inline-flex items-center gap-2.5 font-newsreader text-[20px] font-medium leading-none tracking-wordmark transition-colors hover:text-accent"
+        className="inline-flex shrink-0 items-center gap-2.5 font-newsreader text-[20px] font-medium leading-none tracking-wordmark transition-colors hover:text-accent"
         to="/"
         aria-label="Gradiated home"
       >
@@ -89,10 +89,10 @@ const SiteHeader = (): ReactElement => {
         />
         gradiated
       </Link>
-      <nav className="ml-10 flex flex-1 items-center font-libre text-label font-medium uppercase tracking-label max-site:ml-3">
-        <div className="flex items-center gap-7 text-left max-site:gap-3">
+      <nav className="ml-10 flex min-w-0 flex-1 items-center font-libre text-label font-medium uppercase tracking-label max-[850px]:ml-5 max-site:ml-3 max-[420px]:ml-2">
+        <div className="flex items-center gap-7 whitespace-nowrap text-left max-[850px]:gap-5 max-site:gap-3 max-[420px]:gap-2">
           <Link
-            className={`transition-colors hover:text-accent max-site:hidden ${active === "home" ? "text-ink" : "text-muted"}`}
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "home" ? "text-ink" : "text-muted"}`}
             to="/"
           >
             Home
@@ -118,14 +118,14 @@ const SiteHeader = (): ReactElement => {
         </div>
         <div className="ml-auto flex items-center justify-end gap-7 max-site:gap-3">
           <a
-            className="border-b border-current pb-0.5 text-muted transition-colors hover:text-accent max-site:hidden"
+            className="border-b border-current pb-0.5 text-muted transition-colors hover:text-accent max-[850px]:hidden"
             href="https://cal.com/jsgradiated/30min"
             rel="noreferrer"
           >
             Book a call
           </a>
           <a
-            className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-site:px-3"
+            className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-[1100px]:hidden"
             href="https://console.gradiated.com/"
             rel="noreferrer"
           >
@@ -138,7 +138,7 @@ const SiteHeader = (): ReactElement => {
 };
 
 const SiteFooter = (): ReactElement => (
-  <footer className="mx-auto grid max-w-content grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] gap-x-16 border-t border-line px-7 py-12 font-libre text-[11px] font-medium uppercase tracking-footer text-muted max-site:grid-cols-2 max-site:gap-x-8 max-site:px-[22px] max-site:py-12">
+  <footer className="mx-auto grid max-w-content grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] gap-x-16 border-t border-line px-7 py-12 font-libre text-[11px] font-medium uppercase tracking-footer text-muted max-site:grid-cols-1 max-site:gap-x-0 max-site:gap-y-12 max-site:px-[22px] max-site:py-12">
     <div className="flex min-w-0 flex-col items-start">
       <Link
         className="font-newsreader text-[20px] font-medium normal-case tracking-wordmark text-ink transition-colors hover:text-accent"
@@ -149,7 +149,6 @@ const SiteFooter = (): ReactElement => (
       <span className="mt-4 max-w-[150px] leading-[1.6]">
         © 2026 Gradiated Ltd
       </span>
-      <ThemeToggle />
     </div>
     <nav className="grid grid-cols-2 gap-x-10 gap-y-4 max-site:grid-cols-1 max-site:content-start max-site:justify-items-start">
       <Link
@@ -193,6 +192,7 @@ const SiteFooter = (): ReactElement => (
         Status
       </a>
     </nav>
+    <ThemeToggle />
   </footer>
 );
 

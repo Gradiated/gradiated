@@ -4,10 +4,10 @@ import type { FormEvent, ReactElement } from "react";
 import { authClient } from "../../api/auth";
 import { useDocsSession } from "./DocsSession";
 
-const loginLabelClass =
-  "block min-h-[28px] text-[10px] uppercase tracking-label text-muted";
+const loginHeadingClass =
+  "m-0 pb-3 text-[10px] uppercase tracking-label text-muted";
 const loginInputClass =
-  "mt-3 h-[34px] w-full border border-line px-3 font-libre text-[12px] text-ink outline-none focus:border-ink";
+  "h-[34px] w-full border border-line px-3 font-libre text-[12px] text-ink outline-none focus:border-ink";
 const loginPrimaryButtonClass =
   "mt-2 h-[34px] w-full border border-ink px-3 font-libre text-[10px] font-medium uppercase tracking-label";
 const loginSocialButtonClass =
@@ -46,13 +46,7 @@ const DocsAccountSkeleton = (): ReactElement => (
     role="status"
   >
     <div aria-hidden="true" className="animate-pulse">
-      <div className={`${loginLabelClass} relative`}>
-        <span className="invisible">
-          Log in to create keys and run requests
-        </span>
-        <span className="absolute left-0 top-0.5 h-2 w-[88%] bg-line" />
-        <span className="absolute left-0 top-[17px] h-2 w-[48%] bg-line" />
-      </div>
+      <div className="mb-3 h-2 w-12 bg-line" />
       <div className={`${loginInputClass} bg-line`} />
       <div className="mt-2 h-[34px] w-full bg-line" />
       <div className="mt-2 grid grid-cols-2 gap-2">
@@ -201,8 +195,9 @@ export const DocsAccount = (): ReactElement => {
 
   return (
     <form className="border-b border-line pb-6" onSubmit={sendMagicLink}>
-      <label className={loginLabelClass}>
-        Log in to create keys and run requests
+      <p className={loginHeadingClass}>Sign in</p>
+      <label className="sr-only" htmlFor="docs-login-email">
+        Email address
       </label>
       <input
         className={`${loginInputClass} bg-transparent`}

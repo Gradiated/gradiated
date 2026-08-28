@@ -13,13 +13,18 @@ export const CareersPage = (): ReactElement => (
       <h1 className="mb-10 mt-6 max-w-[980px] font-newsreader text-[clamp(58px,8vw,108px)] font-normal leading-[0.9] tracking-display max-site:text-[52px]">
         Build inference from model to silicon.
       </h1>
-      <p className="m-0 max-w-[630px] text-copy leading-copy text-muted max-site:text-copy-mobile">
-        Our goal is to maximize tokens per joule. We build software and hardware
-        to make open-weight model inference as efficient as possible. We want
-        people who can go deep across the abstraction stack, and want to
-        understand what can be achieved by optimizing software and hardware
-        together.
-      </p>
+      <div className="flex max-w-[630px] flex-col gap-8 text-copy leading-copy text-muted max-site:gap-6 max-site:text-copy-mobile">
+        <p className="m-0">Our goal is to maximize intelligence per joule.</p>
+        <p className="m-0">
+          We build software and hardware to make open-weight model inference as
+          efficient as possible.
+        </p>
+        <p className="m-0">
+          We want people who can go deep across the abstraction stack, and want
+          to understand what can be achieved by optimizing software and hardware
+          together.
+        </p>
+      </div>
     </section>
 
     <section

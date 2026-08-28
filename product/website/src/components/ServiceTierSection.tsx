@@ -21,21 +21,23 @@ const TIER_OPTIONS: readonly TierOption[] = [
     name: "Fast",
     priceChange: "2.3x",
     priceNote: "faster inference than other providers",
-    description: "Interactive requests that need the lowest delay.",
+    description: "For interactive workloads where response time matters most.",
   },
   {
     id: "default",
     name: "Default",
     priceChange: "20%",
     priceNote: "cheaper than other providers",
-    description: "Normal application traffic.",
+    description:
+      "For production workloads that need a balance of speed and cost.",
   },
   {
     id: "flex",
     name: "Flex",
     priceChange: "50%",
     priceNote: "cheaper than other providers",
-    description: "Asynchronous work where latency is not the primary concern.",
+    description:
+      "For background agents that can trade response time for lower cost.",
   },
 ] as const;
 
@@ -181,19 +183,12 @@ export const ServiceTierSection = (): ReactElement => {
     >
       <div className="mx-auto max-w-content px-7 py-36 max-site:px-[22px] max-site:py-24">
         <header>
-          <p className="mb-6 font-libre text-label font-medium uppercase tracking-[0.1em] text-earth">
-            Service tiers
-          </p>
           <h2
             className="m-0 max-w-[680px] font-newsreader text-[clamp(44px,5vw,68px)] font-normal leading-[0.96] tracking-[-0.045em] max-site:text-[44px]"
             id="service-tier-title"
           >
             Lower cost when your request can wait.
           </h2>
-          <p className="mt-6 max-w-[520px] text-[15px] leading-[1.7] text-muted">
-            Select a tier for each request. You get the same model at a
-            different speed and price.
-          </p>
         </header>
 
         <div className="mt-[78px] grid grid-cols-[minmax(330px,0.82fr)_minmax(0,1.18fr)] border-y border-b-line border-t-ink max-site:mt-[58px] max-site:grid-cols-1">

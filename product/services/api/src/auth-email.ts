@@ -20,6 +20,13 @@ const escapeHtml = (value: string): string =>
       })[character]!,
   );
 
+export const createMagicLinkEmailContent = (
+  url: string,
+): { html: string; text: string } => ({
+  html: `<!doctype html><html><body><p><a href="${escapeHtml(url)}">Sign in to Gradiated</a></p><p>This link expires in 10 minutes and can be used once.</p><p>If you did not request it, you can ignore this email.</p></body></html>`,
+  text: `${url}\n\nThis link expires in 10 minutes and can be used once.\n\nIf you did not request it, you can ignore this email.`,
+});
+
 export const createSesMagicLinkSender = (configuration: {
   from: string;
   region: string;
@@ -27,7 +34,7 @@ export const createSesMagicLinkSender = (configuration: {
   const client = new SESv2Client({ region: configuration.region });
 
   return async ({ email, url }) => {
-    const safeUrl = escapeHtml(url);
+    const content = createMagicLinkEmailContent(url);
     await client.send(
       new SendEmailCommand({
         FromEmailAddress: configuration.from,
@@ -38,11 +45,11 @@ export const createSesMagicLinkSender = (configuration: {
             Body: {
               Text: {
                 Charset: "UTF-8",
-                Data: `Sign in to Gradiated:\n\n${url}\n\nThis link expires in 10 minutes and can be used once. If you did not request it, you can ignore this email.`,
+                Data: content.text,
               },
               Html: {
                 Charset: "UTF-8",
-                Data: `<!doctype html><html><body><p>Sign in to Gradiated.</p><p><a href="${safeUrl}">Sign in to Gradiated</a></p><p>This link expires in 10 minutes and can be used once.</p><p>If you did not request it, you can ignore this email.</p></body></html>`,
+                Data: content.html,
               },
             },
           },

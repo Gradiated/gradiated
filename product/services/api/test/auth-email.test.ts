@@ -1,6 +1,25 @@
 import { describe, expect, it } from "vitest";
 
-import { createTestMagicLinkTransport } from "../src/auth-email.js";
+import {
+  createMagicLinkEmailContent,
+  createTestMagicLinkTransport,
+} from "../src/auth-email.js";
+
+describe("magic-link email", () => {
+  it("starts with one sign-in link and does not repeat the instruction", () => {
+    const content = createMagicLinkEmailContent(
+      "https://api.example.com/verify?token=secret&next=/docs",
+    );
+
+    expect(content.text).toBe(
+      "https://api.example.com/verify?token=secret&next=/docs\n\nThis link expires in 10 minutes and can be used once.\n\nIf you did not request it, you can ignore this email.",
+    );
+    expect(content.html).toBe(
+      '<!doctype html><html><body><p><a href="https://api.example.com/verify?token=secret&amp;next=/docs">Sign in to Gradiated</a></p><p>This link expires in 10 minutes and can be used once.</p><p>If you did not request it, you can ignore this email.</p></body></html>',
+    );
+    expect(content.html).not.toContain("<p>Sign in to Gradiated.</p>");
+  });
+});
 
 describe("test magic-link transport", () => {
   it("normalizes the email address and consumes each link once", async () => {

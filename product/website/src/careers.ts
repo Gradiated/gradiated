@@ -50,7 +50,7 @@ export const jobs: Job[] = [
       "You use profiling and controlled experiments to identify system limits.",
       "You are open to learning about hardware, and what is limiting the execution of the model.",
       "You can maintain production code, not only experimental code.",
-      "You can explain hard technical solutions clearly"
+      "You can explain hard technical solutions clearly",
     ],
     notFor: [
       "You want to work within one layer of the inference stack.",

@@ -18,7 +18,7 @@ const newsCtaClass =
 
 export const HomePage = (): ReactElement => (
   <main>
-    <section className="flex min-h-[calc(100vh-76px)] flex-col px-7 pb-32 pt-[clamp(100px,16vh,175px)] max-site:min-h-[760px] max-site:px-5 max-site:pb-20 max-site:pt-24">
+    <section className="flex min-h-[calc(100vh-76px)] flex-col px-7 pb-32 pt-[clamp(100px,16vh,175px)] max-site:min-h-0 max-site:px-5 max-site:pb-20 max-site:pt-24">
       <h1 className="mb-5 max-w-[940px] font-newsreader text-[clamp(58px,7.8vw,106px)] font-normal leading-[0.91] tracking-display max-site:mb-5 max-site:text-[52px]">
         The research lab focused on inference.
       </h1>
@@ -72,26 +72,6 @@ export const HomePage = (): ReactElement => (
             </div>
             <b className={`${newsCtaClass} border-accent`}>Read note →</b>
           </div>
-        </Link>
-        <Link className={newsLinkClass} to="/careers/">
-          <div className={`${newsCopyClass} max-site:order-2`}>
-            <div>
-              <p className={`${newsDateClass} text-earth`}>15 July 2026</p>
-              <h2 className={newsTitleClass}>Working with us</h2>
-              <span className={newsSummaryClass}>
-                We are hiring founding engineers.
-              </span>
-            </div>
-            <b className={`${newsCtaClass} border-earth`}>View roles →</b>
-          </div>
-          <img
-            className={`${newsImageClass} border-l border-line max-site:order-1 max-site:border-l-0`}
-            src="/assets/editorial/working-with-us-v2.png"
-            alt="An eroded academy interior where groups of scholars gather in debate"
-            width="1254"
-            height="1254"
-            loading="lazy"
-          />
         </Link>
       </div>
     </section>

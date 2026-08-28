@@ -96,15 +96,7 @@ export const AppRoutes = (): ReactElement => {
           path="/notes/our-thesis/"
           element={
             <LayoutRoute>
-              <ArticlePage kind="thesis" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/notes/working-with-us/"
-          element={
-            <LayoutRoute>
-              <ArticlePage kind="working" />
+              <ArticlePage />
             </LayoutRoute>
           }
         />

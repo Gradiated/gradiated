@@ -10,12 +10,6 @@ export type Note = {
 
 export const notes = [
   {
-    slug: "working-with-us",
-    date: "2026-07-15",
-    title: "Working with us",
-    description: "We are hiring founding engineers.",
-  },
-  {
     slug: "our-thesis",
     date: "2026-07-13",
     title: "Thesis",
@@ -132,21 +126,6 @@ export const ThesisContent = (): ReactNode => (
         As we build expertise and distribution, expand into all of inference.
       </li>
     </ul>
-  </>
-);
-
-export const WorkingWithUsContent = (): ReactNode => (
-  <>
-    <p>We are hiring founding engineers.</p>
-    <p>
-      We are looking for people who either have experience building chips, or
-      have experience building looping agentic research systems.
-    </p>
-    <p>We are very early. This is the time for maximum upside.</p>
-    <p>
-      We want people who are extraordinarily anti-bureaucratic, optimistic, and
-      high-agency.
-    </p>
   </>
 );
 

@@ -49,11 +49,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Read why Gradiated believes inference should be a choice, not a constraint.",
   },
-  "/notes/working-with-us/": {
-    title: "Working with us",
-    description:
-      "Learn how Gradiated works and what we look for in founding engineers.",
-  },
   "/library/handbook/brand/": {
     title: "Brand",
     description: "Read the principles that define the Gradiated brand.",
@@ -170,13 +165,6 @@ const metadataDetailsFor = (
       image: "/assets/editorial/thesis-v2.png",
       kind: "article",
       publishedAt: "2026-07-13",
-    };
-  }
-  if (pathname === "/notes/working-with-us/") {
-    return {
-      image: "/assets/editorial/working-with-us-v2.png",
-      kind: "article",
-      publishedAt: "2026-07-15",
     };
   }
   if (pathname !== "/careers/" && pathname.startsWith("/careers/")) {

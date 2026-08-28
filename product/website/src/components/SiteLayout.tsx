@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import {
@@ -64,6 +64,7 @@ const setStructuredData = (data: object[]): void => {
 
 const SiteHeader = (): ReactElement => {
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
   const active = location.pathname.startsWith("/careers")
     ? "careers"
     : location.pathname.startsWith("/docs")
@@ -74,7 +75,10 @@ const SiteHeader = (): ReactElement => {
         : "home";
 
   return (
-    <header className="mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-[850px]:h-[72px] max-[850px]:flex-nowrap max-[850px]:gap-0 max-[850px]:px-5 max-[420px]:px-4">
+    <header
+      className="relative mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-[850px]:h-[72px] max-[850px]:flex-nowrap max-[850px]:gap-0 max-[850px]:px-5 max-[420px]:px-4"
+      style={{ zIndex: 40 }}
+    >
       <Link
         className="inline-flex shrink-0 items-center gap-2.5 font-newsreader text-[20px] font-medium leading-none tracking-wordmark transition-colors hover:text-accent"
         to="/"
@@ -104,7 +108,7 @@ const SiteHeader = (): ReactElement => {
             Docs
           </Link>
           <Link
-            className={`transition-colors hover:text-accent ${active === "library" ? "text-ink" : "text-muted"}`}
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "library" ? "text-ink" : "text-muted"}`}
             to="/library/"
           >
             Library
@@ -131,8 +135,56 @@ const SiteHeader = (): ReactElement => {
           >
             Log in
           </a>
+          <button
+            aria-controls="mobile-site-menu"
+            aria-expanded={menuOpen}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="hidden h-9 cursor-pointer items-center gap-2 border-0 bg-transparent p-0 font-libre text-label font-medium uppercase tracking-label text-ink max-[850px]:flex"
+            onClick={() => setMenuOpen((current) => !current)}
+            type="button"
+          >
+            Menu
+            <span aria-hidden="true" className="relative h-3.5 w-4">
+              <span
+                className={`absolute left-0 top-1 block h-px w-4 bg-current transition-transform ${menuOpen ? "translate-y-[3px] rotate-45" : ""}`}
+              />
+              <span
+                className={`absolute bottom-1 left-0 block h-px w-4 bg-current transition-transform ${menuOpen ? "-translate-y-[3px] -rotate-45" : ""}`}
+              />
+            </span>
+          </button>
         </div>
       </nav>
+      {menuOpen && (
+        <nav
+          aria-label="Mobile navigation"
+          className="absolute left-0 right-0 top-full z-30 grid border-b border-line bg-paper px-5 py-5 font-libre text-[11px] font-medium uppercase tracking-label shadow-[0_16px_28px_rgba(28,27,24,0.08)] min-[851px]:hidden max-[420px]:px-4"
+          id="mobile-site-menu"
+        >
+          {[
+            { label: "Home", to: "/" },
+            { label: "Docs", to: "/docs/" },
+            { label: "Library", to: "/library/" },
+            { label: "Careers", to: "/careers/" },
+          ].map((item) => (
+            <Link
+              className="border-b border-line py-3 text-ink transition-colors last:border-b-0 hover:text-accent"
+              key={item.to}
+              onClick={() => setMenuOpen(false)}
+              to={item.to}
+            >
+              {item.label}
+            </Link>
+          ))}
+          <a
+            className="pt-3 text-muted transition-colors hover:text-accent"
+            href="https://cal.com/jsgradiated/30min"
+            rel="noreferrer"
+          >
+            Book a call
+          </a>
+        </nav>
+      )}
     </header>
   );
 };

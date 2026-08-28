@@ -19,7 +19,7 @@ The customer product still includes users, organizations, workspaces, membership
 
 Turborepo orchestrates the deployable `services/` and shared `packages/`:
 
-- `services/api`: TypeScript/Hono product API;
+- `services/api`: TypeScript/Hono Management API;
 - `services/worker`: TypeScript background loops;
 - `services/console`: Vite/React/shadcn customer console;
 - `services/gateway`: Rust inference data plane;
@@ -83,7 +83,7 @@ pnpm --filter @gradiated/api seed
 pnpm smoke:gateway
 ```
 
-The smoke command creates a temporary API key through the product API, calls the
+The smoke command creates a temporary API key through the Management API, calls the
 gateway on port 3002, verifies UUIDv7 and authoritative usage in the response,
 and revokes the key. A successful response is returned only after the gateway
 has atomically finalized the generation in Valkey.
@@ -97,7 +97,7 @@ GRADIATED_API_KEY=grad_... pnpm smoke:gateway:openai
 
 The SDK test calls `models.list()` and both non-streaming and streaming
 `chat.completions.create()`. It uses
-`https://api.gradiated.com/openai/v1` by default. Set `GRADIATED_MODEL` to
+`https://api.gradiated.com` by default. Set `GRADIATED_MODEL` to
 select a specific model or `GRADIATED_BASE_URL` to test another gateway.
 
 The console listens on port 3000 and proxies `/api` and `/health`
@@ -106,9 +106,10 @@ to the API process on port 3001. The generated OpenAPI schema is available at
 
 In production, the console is hosted at `https://console.gradiated.com` and the
 API at `https://api.gradiated.com`. Set `VITE_API_URL` when building the console,
-`BETTER_AUTH_URL` to the API origin, and `TRUSTED_ORIGINS` and `CONSOLE_URL` to
-the console origin. Local development leaves `VITE_API_URL` unset and keeps the
-existing Vite proxy and ports.
+`BETTER_AUTH_URL` to the API origin, and `CONSOLE_URL` to the console origin.
+`TRUSTED_ORIGINS` must contain the exact console and website origins. Local
+development leaves `VITE_API_URL` unset and uses the configured console and
+website ports.
 
 The seeded development identity is `dev@gradiated.com`; local test-mode magic
 links are captured by the API rather than delivered. Compose volumes preserve

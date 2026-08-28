@@ -1,10 +1,9 @@
-<p className="docs-kicker">Coding agents</p>
-
 # Use Gradiated with OpenCode
 
-<p className="docs-lead">
-  OpenCode can use Gradiated as a custom OpenAI-compatible provider.
-</p>
+<DocsLead>
+  Add Gradiated as an OpenCode provider. Your current provider and default model
+  stay unchanged.
+</DocsLead>
 
 ## Set up automatically
 
@@ -14,12 +13,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent opencode
 ```
 
-The wizard detects OpenCode. It gets or validates your Gradiated API key. It
-fetches the model catalog. It then merges the Gradiated provider into your
-OpenCode user configuration.
-
-The wizard preserves your existing default model. It writes a backup before
-it changes an existing configuration file.
+The wizard adds the provider and available models to your user configuration. It preserves your default model and writes a backup before it changes the file.
 
 Start OpenCode after the wizard finishes:
 
@@ -27,19 +21,11 @@ Start OpenCode after the wizard finishes:
 opencode
 ```
 
-Run `/models` to select a Gradiated model.
+Run `/models` and choose Gradiated when you want to switch models.
 
 ## Set up manually
 
-### Before you start
-
-You need:
-
-- An active Gradiated API key.
-- A model ID from `GET /v1/models`. The gateway matches it without regard to letter case.
-- OpenCode installed on your machine.
-
-Set your key in the environment where you run OpenCode:
+Set your Gradiated API key in the shell that starts OpenCode:
 
 ```sh
 export GRADIATED_API_KEY="grad_..."
@@ -47,7 +33,7 @@ export GRADIATED_API_KEY="grad_..."
 
 ### Add Gradiated to `opencode.json`
 
-Add this provider to your OpenCode config. Keep the file in your project or in your user config. Do not put the API key in the file.
+Add this provider to your project or user configuration. Keep the API key in the environment.
 
 ```json
 {
@@ -57,7 +43,7 @@ Add this provider to your OpenCode config. Keep the file in your project or in y
       "npm": "@ai-sdk/openai-compatible",
       "name": "Gradiated",
       "options": {
-        "baseURL": "https://api.gradiated.com/openai/v1",
+        "baseURL": "https://api.gradiated.com",
         "apiKey": "{env:GRADIATED_API_KEY}"
       },
       "models": {
@@ -70,9 +56,9 @@ Add this provider to your OpenCode config. Keep the file in your project or in y
 }
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog. Model matching is case-insensitive.
+Replace `YOUR_MODEL_ID` with an ID from [models and pricing](/docs/models-pricing/).
 
-The `@ai-sdk/openai-compatible` adapter targets `/v1/chat/completions`, which is the protocol Gradiated currently exposes.
+The adapter adds the Chat Completions path, so `baseURL` stays `https://api.gradiated.com`.
 
 ### Select the model
 
@@ -82,17 +68,11 @@ Start OpenCode and run:
 /models
 ```
 
-Choose the Gradiated provider. Then choose your model.
-
-Run a small test task first:
-
-```text
-Explain the main function in this repository in three short bullet points.
-```
+Choose the Gradiated provider and model.
 
 ### Add model limits when needed
 
-OpenCode can use model limits to manage context and output. Add them when the model catalog provides these values:
+Add the model context and output limits when you want OpenCode to enforce them:
 
 ```json
 {
@@ -108,27 +88,24 @@ OpenCode can use model limits to manage context and output. Add them when the mo
 }
 ```
 
-Use the values for the selected model. Do not copy limits from another model.
+Use the limits from the selected model.
 
 ## Troubleshooting
 
 - Check that `GRADIATED_API_KEY` is set in the same shell that starts OpenCode.
-- Check that `baseURL` is `https://api.gradiated.com/openai/v1`.
+- Check that `baseURL` is `https://api.gradiated.com`.
 - Check that the model ID matches the catalog response.
 - Check that the workspace has billing capacity.
 - Run `opencode auth list` if OpenCode reports a provider authentication error.
 
 ## Uninstall
 
-Remove Gradiated from OpenCode (and any other agent it is configured for) with:
+Run the uninstall command:
 
 ```sh
 npx -y @gradiated/wizard uninstall
 ```
 
-The wizard shows everything it found and lets you pick what to remove. It
-deletes the provider block and the stored credential, keeps a timestamped
-backup of each changed file, and never touches your other providers or your
-default model unless it was a `gradiated/*` one.
+Select OpenCode. The wizard removes the provider and stored credential. It keeps a timestamped backup.
 
 OpenCode's [provider documentation](https://opencode.ai/docs/providers/) covers custom provider settings and the `/models` command.

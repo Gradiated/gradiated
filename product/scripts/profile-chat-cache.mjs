@@ -4,7 +4,7 @@ import { writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 
 const defaults = {
-  baseUrl: "https://api.gradiated.com/openai/v1",
+  baseUrl: "https://api.gradiated.com",
   model: "z-ai/glm-5.3-flash",
   pairs: 3,
   targetInputTokens: 10_000,

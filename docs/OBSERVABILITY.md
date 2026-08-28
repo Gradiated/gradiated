@@ -20,7 +20,7 @@ prompt, or completion labels.
 | Whole product  | all sources plus kube-state-metrics    | endpoint/service health, traffic, generation outcomes, pipeline lag, alerts, desired/available replicas                                                                      | `Gradiated / Service Overview` |
 
 The API and worker metrics listeners are not attached to an HTTPRoute. The
-gateway public route accepts only `/openai/v1/*`, so its health and metrics
+gateway public route accepts only inference paths. Its health and metrics
 routes remain private even though they share the in-cluster HTTP port.
 
 ## Alert coverage

@@ -1,11 +1,9 @@
-<p className="docs-kicker">Coding agents</p>
-
 # Use Gradiated with Codex
 
-<p className="docs-lead">
-  Use a separate Codex profile for Gradiated. Your normal Codex provider and
+<DocsLead>
+  Add Gradiated as a separate Codex profile. Your current provider and default
   model stay unchanged.
-</p>
+</DocsLead>
 
 ## Set up automatically
 
@@ -15,13 +13,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent codex
 ```
 
-The wizard detects Codex. It gets or validates your Gradiated API key. It
-fetches the model catalog. It then adds a Gradiated provider and a separate
-`gradiated` profile.
-
-The wizard stores the key in `~/.gradiated/credentials.json`. It does not put
-the key in the Codex configuration. It does not change your default Codex
-profile.
+The wizard adds a Gradiated provider and a `gradiated` profile. It stores the key outside the Codex configuration and preserves your default profile.
 
 Start Codex with the Gradiated profile:
 
@@ -31,15 +23,7 @@ codex --profile gradiated
 
 ## Set up manually
 
-### Before you start
-
-You need:
-
-- An active Gradiated API key.
-- A model ID from `GET https://api.gradiated.com/openai/v1/models`.
-- Codex installed on your machine.
-
-Set your key in the environment where you run Codex:
+Set your Gradiated API key in the shell that starts Codex:
 
 ```sh
 export GRADIATED_API_KEY="grad_..."
@@ -57,8 +41,7 @@ env_key = "GRADIATED_API_KEY"
 wire_api = "responses"
 ```
 
-Keep provider settings in the user-level file. Do not put them in a project
-`.codex/config.toml` file.
+Keep this provider in the user configuration. A project-level file can affect everyone who opens the repository.
 
 ### Add the profile
 
@@ -69,7 +52,7 @@ model_provider = "gradiated"
 model = "YOUR_MODEL_ID"
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from the Gradiated model catalog.
+Replace `YOUR_MODEL_ID` with an ID from [models and pricing](/docs/models-pricing/).
 
 Start Codex with this profile:
 
@@ -77,8 +60,7 @@ Start Codex with this profile:
 codex --profile gradiated
 ```
 
-Use `-m YOUR_MODEL_ID` with the profile to select another Gradiated model for
-one run.
+Add `-m YOUR_MODEL_ID` to select another Gradiated model for one run.
 
 ## Troubleshooting
 
@@ -90,13 +72,10 @@ one run.
 
 ## Uninstall
 
-Remove Gradiated from Codex (and any other agent it is configured for) with:
+Run the uninstall command:
 
 ```sh
 npx -y @gradiated/wizard uninstall
 ```
 
-Pick Codex in the list and the wizard removes the provider block from
-`~/.codex/config.toml`, deletes the `gradiated.config.toml` profile, and
-clears the stored credential. Timestamped backups of changed files are kept.
-Your default Codex provider and model are never touched.
+Select Codex. The wizard removes the provider, profile, and stored credential. It keeps timestamped backups and does not change your default profile.

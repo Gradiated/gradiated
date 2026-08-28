@@ -1,0 +1,26 @@
+# Parameters and model support
+
+<DocsLead>
+  Parameter support and limits vary by model. The catalog is the source of truth
+  for each model.
+</DocsLead>
+
+The model catalog lists `supported_parameters` and `passthrough_parameters` for each model.
+
+## Common parameters
+
+| Parameter      | Purpose                              |
+| -------------- | ------------------------------------ |
+| `max_tokens`   | Set the maximum output length.       |
+| `temperature`  | Change output variation.             |
+| `stream`       | Return server-sent events.           |
+| `tools`        | Give the model tool definitions.     |
+| `service_tier` | Select `fast`, `default`, or `flex`. |
+
+Gradiated rejects unsupported parameters. It does not remove them silently. The response uses the code `unsupported_parameter` and names the parameter when possible.
+
+## Context limits
+
+The request must fit the selected model context. This includes messages, tools, and the requested output length.
+
+Reduce the input or `max_tokens` when the API returns `context_length_exceeded`.

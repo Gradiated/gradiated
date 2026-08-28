@@ -1,5 +1,5 @@
 export const DEFAULT_API_BASE_URL = "https://api.gradiated.com";
-export const INFERENCE_BASE_URL = "https://api.gradiated.com/openai/v1";
+export const INFERENCE_BASE_URL = "https://api.gradiated.com";
 export const CONSOLE_URL = "https://console.gradiated.com";
 
 export type AgentName = "opencode" | "codex" | "claude";
@@ -69,7 +69,7 @@ export function parseArguments(argv: readonly string[]): ParsedArguments {
     command,
     options: {
       apiBaseUrl,
-      inferenceBaseUrl: `${apiBaseUrl.replace(/\/$/, "")}/openai/v1`,
+      inferenceBaseUrl: apiBaseUrl.replace(/\/$/, ""),
       yes: hasFlag(argv, "--yes"),
       dryRun: hasFlag(argv, "--dry-run"),
       model: argumentValue(argv, "--model"),

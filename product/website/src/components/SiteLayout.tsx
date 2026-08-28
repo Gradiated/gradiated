@@ -1,13 +1,12 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
+import { formatPageTitle, getPageMetadata } from "../metadata";
 import { PathField } from "./PathField";
 import { ThemeToggle } from "./ThemeToggle";
 
 type SiteLayoutProps = {
   children: ReactNode;
-  title: string;
-  description?: string;
   home?: boolean;
 };
 
@@ -147,20 +146,19 @@ const SiteFooter = (): ReactElement => (
 
 export const SiteLayout = ({
   children,
-  title,
-  description = "Custom inference paths for open models.",
   home = false,
 }: SiteLayoutProps): ReactElement => {
   const location = useLocation();
+  const metadata = getPageMetadata(location.pathname);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.title = title;
+    document.title = formatPageTitle(metadata.title);
     const descriptionElement = document.querySelector<HTMLMetaElement>(
       'meta[name="description"]',
     );
-    descriptionElement?.setAttribute("content", description);
-  }, [description, location.pathname, title]);
+    descriptionElement?.setAttribute("content", metadata.description);
+  }, [location.pathname, metadata.description, metadata.title]);
 
   return (
     <div

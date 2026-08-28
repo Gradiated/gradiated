@@ -1,0 +1,170 @@
+# Use the Anthropic SDK
+
+<DocsLead>
+  Keep your Messages request. Change the base URL, API key, and model ID.
+</DocsLead>
+
+Use `anthropic` for Python or `@anthropic-ai/sdk` for Node. The same client can send your existing Messages requests to Gradiated.
+
+## Install
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```bash
+pip install anthropic
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```bash
+npm install @anthropic-ai/sdk
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Messages
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from anthropic import Anthropic
+import os
+
+client = Anthropic(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+
+message = client.messages.create(
+    model="YOUR_MODEL_ID",
+    max_tokens=256,
+    messages=[
+        {"role": "user", "content": "Explain inference in one sentence."}
+    ],
+    extra_body={"service_tier": "default"},
+)
+
+print(message.content[0].text)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const message = await client.messages.create({
+  model: "YOUR_MODEL_ID",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Explain inference in one sentence." }],
+  service_tier: "default",
+});
+
+console.log(message.content[0].text);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Choose an exact ID from [models and pricing](/docs/models-pricing/). This example uses the `default` service tier.
+
+## Stream output
+
+Streaming returns text while the model is still generating it.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+with client.messages.stream(
+    model="YOUR_MODEL_ID",
+    max_tokens=256,
+    messages=[{"role": "user", "content": "Write one short sentence."}],
+) as stream:
+    for text in stream.text_stream:
+        print(text, end="", flush=True)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+const stream = client.messages
+  .stream({
+    model: "YOUR_MODEL_ID",
+    max_tokens: 256,
+    messages: [{ role: "user", content: "Write one short sentence." }],
+  })
+  .on("text", (text) => process.stdout.write(text));
+
+await stream.finalMessage();
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Call tools
+
+Send tool definitions with the request. Your application validates the input and runs the selected tool.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+message = client.messages.create(
+    model="YOUR_MODEL_ID",
+    max_tokens=256,
+    messages=[{"role": "user", "content": "What is the weather in Warsaw?"}],
+    tools=[{
+        "name": "get_weather",
+        "description": "Get the current weather for a city.",
+        "input_schema": {
+            "type": "object",
+            "properties": {"city": {"type": "string"}},
+            "required": ["city"],
+        },
+    }],
+)
+
+tool_uses = [block for block in message.content if block.type == "tool_use"]
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+const message = await client.messages.create({
+  model: "YOUR_MODEL_ID",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "What is the weather in Warsaw?" }],
+  tools: [
+    {
+      name: "get_weather",
+      description: "Get the current weather for a city.",
+      input_schema: {
+        type: "object",
+        properties: { city: { type: "string" } },
+        required: ["city"],
+      },
+    },
+  ],
+});
+
+const toolUses = message.content.filter((block) => block.type === "tool_use");
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Return each result in a `tool_result` block before you continue the conversation.
+
+Check [service tiers](/docs/service-tiers/), [model parameters](/docs/parameters/), and [retry behavior](/docs/errors/) before production use.

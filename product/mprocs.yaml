@@ -5,13 +5,13 @@ procs:
       send-keys: ["<C-c>"]
   api:
     shell: >-
-      zsh -lc 'set -a; if [[ -f ../.env ]]; then source ../.env; fi; if [[ -f ../.env.local ]]; then source ../.env.local; fi; set +a; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/api dev'
+      zsh -lc 'gradiated_local_auth_url="$BETTER_AUTH_URL"; gradiated_local_trusted_origins="$TRUSTED_ORIGINS"; set -a; if [[ -f ../.env ]]; then source ../.env; fi; if [[ -f ../.env.local ]]; then source ../.env.local; fi; set +a; export BETTER_AUTH_URL="$gradiated_local_auth_url" TRUSTED_ORIGINS="$gradiated_local_trusted_origins"; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/api dev'
     env:
       DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
       AUTH_TEST_MODE: "true"
       BETTER_AUTH_URL: http://localhost:3000
       BETTER_AUTH_SECRET: local-only-not-secret-change-in-production-0001
-      TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      TRUSTED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173
       NODE_ENV: development
       PORT: "3001"
       VALKEY_URL: redis://127.0.0.1:6379
@@ -40,6 +40,7 @@ procs:
     env:
       GATEWAY_BIND_ADDRESS: 127.0.0.1:3002
       GATEWAY_GENERATION_TIMEOUT_SECONDS: "300"
+      GATEWAY_BROWSER_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "100000"
       VALKEY_URL: redis://127.0.0.1:6379
   sglang:

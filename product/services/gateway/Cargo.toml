@@ -28,6 +28,7 @@ sha2 = "0.10.9"
 thiserror = "2.0.12"
 tokenizers = { version = "=0.23.1", default-features = false, features = ["fancy-regex"] }
 tokio = { version = "1.45.1", features = ["macros", "net", "rt-multi-thread", "signal", "sync", "time"] }
+tower-http = { version = "0.6.6", features = ["cors"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
 uuid = { version = "1.16.0", features = ["serde", "v7"] }

@@ -7,8 +7,16 @@ describe("API contract", () => {
     const document = createApp().getOpenAPI31Document(openApiDocument);
 
     expect(document.openapi).toBe("3.1.0");
-    expect(document.paths).toHaveProperty("/health/live");
-    expect(document.paths).toHaveProperty("/health/ready");
+    expect(document.info.title).toBe("Gradiated Management API");
+    expect(document.paths).not.toHaveProperty("/health/live");
+    expect(document.paths).not.toHaveProperty("/health/ready");
+    expect(document.paths).not.toHaveProperty("/api/v1/wizard/key");
+    expect(document.paths).not.toHaveProperty("/api/webhooks/stripe");
+    expect(document.components?.schemas).not.toHaveProperty("HealthStatus");
+    expect(document.components?.schemas).not.toHaveProperty("Readiness");
+    expect(document.components?.schemas).not.toHaveProperty(
+      "WizardKeyResponse",
+    );
     expect(document.paths).toHaveProperty("/api/v1/me");
     expect(document.paths).toHaveProperty("/api/v1/organizations");
     expect(document.paths).toHaveProperty("/api/v1/models");

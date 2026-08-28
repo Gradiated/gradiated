@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Gradiated Product API",
+    "title": "Gradiated Management API",
     "version": "0.1.0",
-    "description": "Application API for Gradiated exact-model inference."
+    "description": "Use the Management API to manage workspaces, billing limits, workspace members and model availability."
   },
   "servers": [
     {
@@ -12,10 +12,6 @@
     }
   ],
   "tags": [
-    {
-      "name": "System",
-      "description": "Process health and readiness."
-    },
     {
       "name": "Session",
       "description": "Current human session context."
@@ -47,109 +43,6 @@
   ],
   "components": {
     "schemas": {
-      "HealthStatus": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "live",
-              "ready",
-              "not_ready"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ]
-      },
-      "Readiness": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/HealthStatus"
-          },
-          {
-            "type": "object",
-            "properties": {
-              "checks": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string",
-                  "enum": [
-                    "up",
-                    "down"
-                  ]
-                }
-              }
-            },
-            "required": [
-              "checks"
-            ]
-          }
-        ]
-      },
-      "Problem": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "format": "uri",
-            "example": "https://gradiated.com/problems/validation"
-          },
-          "title": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "status": {
-            "type": "integer",
-            "minimum": 400,
-            "maximum": 599
-          },
-          "detail": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 2000
-          },
-          "code": {
-            "type": "string",
-            "pattern": "^[a-z][a-z0-9_]*$"
-          },
-          "request_id": {
-            "type": "string",
-            "minLength": 1
-          },
-          "errors": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "path": {
-                  "type": "string",
-                  "maxLength": 500
-                },
-                "message": {
-                  "type": "string",
-                  "maxLength": 500
-                }
-              },
-              "required": [
-                "path",
-                "message"
-              ]
-            },
-            "maxItems": 100
-          }
-        },
-        "required": [
-          "type",
-          "title",
-          "status",
-          "detail",
-          "code",
-          "request_id"
-        ]
-      },
       "ModelList": {
         "type": "object",
         "properties": {
@@ -667,6 +560,68 @@
         ],
         "additionalProperties": false
       },
+      "Problem": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri",
+            "example": "https://gradiated.com/problems/validation"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$"
+          },
+          "request_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "maxLength": 500
+                },
+                "message": {
+                  "type": "string",
+                  "maxLength": 500
+                }
+              },
+              "required": [
+                "path",
+                "message"
+              ]
+            },
+            "maxItems": 100
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "code",
+          "request_id"
+        ]
+      },
       "BalanceTransactionList": {
         "type": "object",
         "properties": {
@@ -801,21 +756,6 @@
         },
         "required": [
           "amount"
-        ],
-        "additionalProperties": false
-      },
-      "StripeWebhookResponse": {
-        "type": "object",
-        "properties": {
-          "received": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
-          }
-        },
-        "required": [
-          "received"
         ],
         "additionalProperties": false
       },
@@ -983,114 +923,6 @@
         ],
         "additionalProperties": false
       },
-      "WizardKeyResponse": {
-        "type": "object",
-        "properties": {
-          "api_key": {
-            "$ref": "#/components/schemas/ApiKey"
-          },
-          "secret": {
-            "type": "string",
-            "pattern": "^grad_[A-Za-z0-9_-]{43}$"
-          },
-          "organization_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "workspace_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "organization_name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "balance_nano_usd": {
-            "type": "integer"
-          }
-        },
-        "required": [
-          "api_key",
-          "secret",
-          "organization_id",
-          "workspace_id",
-          "organization_name",
-          "balance_nano_usd"
-        ]
-      },
-      "ApiKey": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "organization_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "workspace_id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "expires_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "revoked_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "created_by": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          }
-        },
-        "required": [
-          "id",
-          "organization_id",
-          "workspace_id",
-          "name",
-          "expires_at",
-          "revoked_at",
-          "created_by",
-          "created_at",
-          "updated_at"
-        ]
-      },
       "WorkspaceList": {
         "type": "object",
         "properties": {
@@ -1197,6 +1029,76 @@
           "next_cursor"
         ]
       },
+      "ApiKey": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "organization_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "created_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "organization_id",
+          "workspace_id",
+          "name",
+          "expires_at",
+          "revoked_at",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ]
+      },
       "CreatedApiKey": {
         "type": "object",
         "properties": {
@@ -1239,56 +1141,6 @@
     "parameters": {}
   },
   "paths": {
-    "/health/live": {
-      "get": {
-        "operationId": "getLiveness",
-        "tags": [
-          "System"
-        ],
-        "responses": {
-          "200": {
-            "description": "The API process is live.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthStatus"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/health/ready": {
-      "get": {
-        "operationId": "getReadiness",
-        "tags": [
-          "System"
-        ],
-        "responses": {
-          "200": {
-            "description": "The API is ready to serve product traffic.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Readiness"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "At least one required dependency is unavailable.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/models": {
       "get": {
         "operationId": "listModels",
@@ -1297,21 +1149,11 @@
         ],
         "responses": {
           "200": {
-            "description": "The currently advertised exact-model catalog.",
+            "description": "The public catalog of supported exact models and prices.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ModelList"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication is required.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
                 }
               }
             }
@@ -1524,68 +1366,6 @@
           },
           "503": {
             "description": "Stripe Checkout is unavailable.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/webhooks/stripe": {
-      "post": {
-        "operationId": "handleStripeWebhook",
-        "tags": [
-          "Billing"
-        ],
-        "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            },
-            "required": true,
-            "name": "stripe-signature",
-            "in": "header"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "description": "The raw, signed Stripe event payload."
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "The signed Stripe event was accepted.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StripeWebhookResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The signature or event payload is invalid.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Stripe webhooks are not configured.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2206,64 +1986,6 @@
           },
           "503": {
             "description": "Generation logs are unavailable.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/wizard/key": {
-      "post": {
-        "operationId": "createWizardKey",
-        "tags": [
-          "API keys"
-        ],
-        "responses": {
-          "201": {
-            "description": "A local API key minted on the session's organization, with its one-time secret.",
-            "headers": {
-              "Cache-Control": {
-                "description": "Prevents storage of the one-time secret.",
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WizardKeyResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No valid human session is present.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "The session user has no organization.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Problem"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Serving state is unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

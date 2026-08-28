@@ -14,7 +14,7 @@ import {
 } from "@gradiated/control";
 import { createApp } from "./app.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
-import { createAuthService } from "./auth.js";
+import { createAuthService, resolveAuthTrustedOrigins } from "./auth.js";
 import {
   createSesMagicLinkSender,
   createSesOtpSender,
@@ -63,6 +63,10 @@ const sendOtp =
     from: environment.AUTH_EMAIL_FROM!,
     region: environment.SES_REGION!,
   });
+const trustedOrigins = resolveAuthTrustedOrigins(
+  environment.TRUSTED_ORIGINS,
+  environment.NODE_ENV,
+);
 const auth = createAuthService(database, {
   baseUrl: environment.BETTER_AUTH_URL,
   github:
@@ -87,7 +91,7 @@ const auth = createAuthService(database, {
   sendOtp,
   takeTestMagicLink: testMagicLinks?.take,
   takeTestOtp: testOtpCodes?.take,
-  trustedOrigins: environment.TRUSTED_ORIGINS,
+  trustedOrigins,
 });
 const metrics = new ApiMetrics();
 const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
@@ -95,7 +99,7 @@ const deploymentStatusTokens = parseDeploymentStatusTokens(
   process.env.DEPLOYMENT_STATUS_INGEST_TOKENS,
 );
 const app = createApp({
-  allowedOrigins: environment.TRUSTED_ORIGINS,
+  allowedOrigins: trustedOrigins,
   auth,
   metrics,
   checkDependencies: async () => {

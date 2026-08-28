@@ -184,18 +184,8 @@ export const createApp = (overrides: AppOverrides = {}) => {
   app.get(
     "/docs",
     apiReference({
-      pageTitle: "Gradiated API",
-      sources: [
-        { title: "Product API", url: "/api/openapi.json" },
-        ...(dependencies.auth
-          ? [
-              {
-                title: "Authentication API",
-                url: "/api/auth/open-api/generate-schema",
-              },
-            ]
-          : []),
-      ],
+      pageTitle: "Gradiated Management API",
+      sources: [{ title: "Management API", url: "/api/openapi.json" }],
     }),
   );
 
@@ -229,13 +219,13 @@ export const createApp = (overrides: AppOverrides = {}) => {
 export const openApiDocument = {
   openapi: "3.1.0" as const,
   info: {
-    title: "Gradiated Product API",
+    title: "Gradiated Management API",
     version: "0.1.0",
-    description: "Application API for Gradiated exact-model inference.",
+    description:
+      "Use the Management API to manage workspaces, billing limits, workspace members and model availability.",
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [
-    { name: "System", description: "Process health and readiness." },
     { name: "Session", description: "Current human session context." },
     { name: "Organizations", description: "Customer organization lifecycle." },
     { name: "Workspaces", description: "Usage and policy boundaries." },

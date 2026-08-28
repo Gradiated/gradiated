@@ -27,7 +27,7 @@ OPENCODE_CONFIG_CONTENT="$(jq -cn '{
       npm: "@ai-sdk/openai-compatible",
       name: "Gradiated",
       options: {
-        baseURL: "https://api.gradiated.com/openai/v1",
+        baseURL: "https://api.gradiated.com",
         apiKey: "{env:GRADIATED_OPENCODE_KEY}"
       },
       models: {

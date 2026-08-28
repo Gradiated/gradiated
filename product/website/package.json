@@ -8,6 +8,7 @@
     "node": ">=22.12.0 <23"
   },
   "scripts": {
+    "api:generate": "openapi-typescript ../services/api/generated/openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts",
     "dev": "mise exec -- vite",
     "build": "tsc -b && vite build",
     "preview": "mise exec -- vite preview",
@@ -15,6 +16,8 @@
   },
   "dependencies": {
     "@hookform/resolvers": "5.9.1",
+    "better-auth": "1.6.29",
+    "openapi-fetch": "0.17.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-hook-form": "7.86.0",
@@ -27,6 +30,8 @@
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
+    "openapi-typescript": "7.13.0",
+    "rehype-highlight": "7.0.2",
     "remark-gfm": "^4.0.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",

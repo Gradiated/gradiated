@@ -84,7 +84,7 @@ const startStub = async (): Promise<void> => {
       );
       return;
     }
-    if (url.pathname === "/openai/v1/models") {
+    if (url.pathname === "/models") {
       response.writeHead(200, { "content-type": "application/json" });
       response.end(JSON.stringify(FIXTURE_CATALOG));
       return;
@@ -438,9 +438,7 @@ describe("wizard install end to end", () => {
       };
       expect(provider.npm).toBe("@ai-sdk/openai-compatible");
       expect(provider.name).toBe("Gradiated");
-      expect(provider.options.baseURL).toBe(
-        `http://127.0.0.1:${PORT}/openai/v1`,
-      );
+      expect(provider.options.baseURL).toBe(`http://127.0.0.1:${PORT}`);
       expect(provider.options.apiKey).toBe("{env:GRADIATED_API_KEY}");
       expect(provider.models["z-ai/glm-5.3-flash"]).toEqual({
         name: "GLM-5.3 Flash",

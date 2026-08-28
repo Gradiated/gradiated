@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import { SiteLayout } from "./components/SiteLayout";
@@ -7,7 +7,6 @@ import { jobs } from "./careers";
 import { ArticlePage } from "./pages/ArticlePage";
 import { AcceptableUsePage } from "./pages/AcceptableUsePage";
 import { CareersPage } from "./pages/CareersPage";
-import { DocsPage } from "./pages/DocsPage";
 import { DpaPage } from "./pages/DpaPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { HomePage } from "./pages/HomePage";
@@ -20,10 +19,12 @@ import { ProductsPage } from "./pages/ProductsPage";
 import { SubprocessorsPage } from "./pages/SubprocessorsPage";
 import { TermsPage } from "./pages/TermsPage";
 
+const DocsPage = lazy(() =>
+  import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
+);
+
 type LayoutRouteProps = {
   children: ReactNode;
-  title: string;
-  description?: string;
   home?: boolean;
 };
 
@@ -47,10 +48,7 @@ export const App = (): ReactElement => {
         <Route
           path="/"
           element={
-            <LayoutRoute
-              title="Gradiated — Custom inference paths for open models."
-              home
-            >
+            <LayoutRoute home>
               <HomePage />
             </LayoutRoute>
           }
@@ -58,10 +56,7 @@ export const App = (): ReactElement => {
         <Route
           path="/products/*"
           element={
-            <LayoutRoute
-              title="Products — Gradiated"
-              description="Gradiated inference products."
-            >
+            <LayoutRoute>
               <ProductsPage onWaitlist={() => setWaitlistOpen(true)} />
             </LayoutRoute>
           }
@@ -69,10 +64,7 @@ export const App = (): ReactElement => {
         <Route
           path="/library/"
           element={
-            <LayoutRoute
-              title="Library — Gradiated"
-              description="Writing and the Gradiated method."
-            >
+            <LayoutRoute>
               <LibraryPage />
             </LayoutRoute>
           }
@@ -80,10 +72,7 @@ export const App = (): ReactElement => {
         <Route
           path="/careers/"
           element={
-            <LayoutRoute
-              title="Careers — Gradiated"
-              description="Build inference software and silicon at Gradiated."
-            >
+            <LayoutRoute>
               <CareersPage />
             </LayoutRoute>
           }
@@ -93,10 +82,7 @@ export const App = (): ReactElement => {
             key={job.slug}
             path={`/careers/${job.slug}/`}
             element={
-              <LayoutRoute
-                title={`${job.title} — Gradiated`}
-                description={job.summary}
-              >
+              <LayoutRoute>
                 <JobPage job={job} />
               </LayoutRoute>
             }
@@ -105,7 +91,7 @@ export const App = (): ReactElement => {
         <Route
           path="/notes/"
           element={
-            <LayoutRoute title="Notes — Gradiated">
+            <LayoutRoute>
               <NotesPage />
             </LayoutRoute>
           }
@@ -113,7 +99,7 @@ export const App = (): ReactElement => {
         <Route
           path="/notes/our-thesis/"
           element={
-            <LayoutRoute title="Thesis — Gradiated">
+            <LayoutRoute>
               <ArticlePage kind="thesis" />
             </LayoutRoute>
           }
@@ -121,7 +107,7 @@ export const App = (): ReactElement => {
         <Route
           path="/notes/working-with-us/"
           element={
-            <LayoutRoute title="Working with us — Gradiated">
+            <LayoutRoute>
               <ArticlePage kind="working" />
             </LayoutRoute>
           }
@@ -129,10 +115,7 @@ export const App = (): ReactElement => {
         <Route
           path="/library/handbook/brand/"
           element={
-            <LayoutRoute
-              title="Brand — Gradiated Method"
-              description="The Gradiated brand principles."
-            >
+            <LayoutRoute>
               <HandbookPage kind="brand" />
             </LayoutRoute>
           }
@@ -140,84 +123,31 @@ export const App = (): ReactElement => {
         <Route
           path="/library/handbook/values/"
           element={
-            <LayoutRoute
-              title="Values — Gradiated Method"
-              description="The values in the Gradiated method."
-            >
+            <LayoutRoute>
               <HandbookPage kind="values" />
             </LayoutRoute>
           }
         />
         <Route
-          path="/docs/"
+          path="/docs/*"
           element={
-            <LayoutRoute
-              title="Docs — Gradiated"
-              description="Use Gradiated inference in your tools and applications."
-            >
-              <DocsPage page="index" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/docs/quickstart/"
-          element={
-            <LayoutRoute
-              title="Quickstart — Gradiated Docs"
-              description="Make your first Gradiated inference request."
-            >
-              <DocsPage page="quickstart" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/docs/opencode/"
-          element={
-            <LayoutRoute
-              title="OpenCode — Gradiated Docs"
-              description="Use Gradiated inference in OpenCode."
-            >
-              <DocsPage page="opencode" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/docs/codex/"
-          element={
-            <LayoutRoute
-              title="Codex — Gradiated Docs"
-              description="Use Gradiated inference in Codex."
-            >
-              <DocsPage page="codex" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/docs/claude-code/"
-          element={
-            <LayoutRoute
-              title="Claude Code — Gradiated Docs"
-              description="Use Gradiated inference in Claude Code."
-            >
-              <DocsPage page="claude-code" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/docs/api/"
-          element={
-            <LayoutRoute
-              title="Chat Completions API — Gradiated Docs"
-              description="Call Gradiated inference through the OpenAI-compatible API."
-            >
-              <DocsPage page="api" />
+            <LayoutRoute>
+              <Suspense
+                fallback={
+                  <main className="mx-auto min-h-[60vh] max-w-content px-7 py-20 font-libre text-sm text-muted">
+                    Loading docs…
+                  </main>
+                }
+              >
+                <DocsPage />
+              </Suspense>
             </LayoutRoute>
           }
         />
         <Route
           path="/privacy/"
           element={
-            <LayoutRoute title="Privacy — Gradiated">
+            <LayoutRoute>
               <PrivacyPage />
             </LayoutRoute>
           }
@@ -225,7 +155,7 @@ export const App = (): ReactElement => {
         <Route
           path="/terms/"
           element={
-            <LayoutRoute title="Terms — Gradiated">
+            <LayoutRoute>
               <TermsPage />
             </LayoutRoute>
           }
@@ -233,7 +163,7 @@ export const App = (): ReactElement => {
         <Route
           path="/acceptable-use/"
           element={
-            <LayoutRoute title="Acceptable use — Gradiated">
+            <LayoutRoute>
               <AcceptableUsePage />
             </LayoutRoute>
           }
@@ -241,7 +171,7 @@ export const App = (): ReactElement => {
         <Route
           path="/dpa/"
           element={
-            <LayoutRoute title="DPA — Gradiated">
+            <LayoutRoute>
               <DpaPage />
             </LayoutRoute>
           }
@@ -249,7 +179,7 @@ export const App = (): ReactElement => {
         <Route
           path="/subprocessors-security/"
           element={
-            <LayoutRoute title="Security — Gradiated">
+            <LayoutRoute>
               <SubprocessorsPage />
             </LayoutRoute>
           }
@@ -257,7 +187,7 @@ export const App = (): ReactElement => {
         <Route
           path="*"
           element={
-            <LayoutRoute title="Not found — Gradiated">
+            <LayoutRoute>
               <NotFoundPage />
             </LayoutRoute>
           }

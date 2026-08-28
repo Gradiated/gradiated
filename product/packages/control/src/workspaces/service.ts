@@ -364,9 +364,23 @@ export function createWorkspaceApiKeyService(
           revokedAt: null,
         });
       } catch (error) {
+        const revokedAt = new Date();
+        await database
+          .update(apiKeys)
+          .set({ revokedAt, updatedAt: revokedAt })
+          .where(eq(apiKeys.id, apiKey.id));
+        await projector
+          .projectCredential(digest.toString("hex"), {
+            apiKeyId: apiKey.id,
+            organizationId,
+            workspaceId,
+            expiresAt: input.expiresAt,
+            revokedAt,
+          })
+          .catch(() => undefined);
         throw new ControlServiceError(
           "unavailable",
-          "The key was stored but serving state is not yet available.",
+          "The API key could not be activated. No active key was created.",
           error,
         );
       }

@@ -8,6 +8,8 @@ const MAX_LUA_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Validate)]
 pub struct GatewayConfig {
+    #[serde(rename = "gateway_browser_origins")]
+    pub browser_origins: Option<String>,
     #[serde(rename = "gateway_bind_address", default = "default_bind_address")]
     pub bind_address: SocketAddr,
     #[serde(
@@ -62,6 +64,7 @@ impl GatewayConfig {
         let mut config: Self = envy::from_iter(variables)?;
         config.validate()?;
         config.validate_valkey_auth()?;
+        config.browser_origins = config.browser_origins.filter(|value| !value.is_empty());
         config.sglang_api_key = config.sglang_api_key.filter(|value| !value.is_empty());
         Ok(config)
     }
@@ -79,6 +82,16 @@ impl GatewayConfig {
             }),
             _ => None,
         }
+    }
+
+    pub fn browser_origins(&self) -> Vec<&str> {
+        self.browser_origins
+            .as_deref()
+            .into_iter()
+            .flat_map(|value| value.split(','))
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+            .collect()
     }
 
     fn validate_valkey_auth(&self) -> Result<(), ConfigError> {
@@ -163,6 +176,7 @@ mod tests {
         .expect("minimal environment should parse");
 
         assert_eq!(config.bind_address, default_bind_address());
+        assert!(config.browser_origins().is_empty());
         assert_eq!(
             config.generation_timeout_seconds,
             default_generation_timeout_seconds()
@@ -186,6 +200,10 @@ mod tests {
     fn environment_parses_existing_variable_names() {
         let config = GatewayConfig::from_variables(variables(&[
             ("GATEWAY_BIND_ADDRESS", "0.0.0.0:8080"),
+            (
+                "GATEWAY_BROWSER_ORIGINS",
+                "https://gradiated.com, https://www.gradiated.com",
+            ),
             ("GATEWAY_GENERATION_TIMEOUT_SECONDS", "120"),
             ("GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS", "30"),
             ("GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS", "240"),
@@ -201,6 +219,10 @@ mod tests {
         .expect("complete environment should parse");
 
         assert_eq!(config.bind_address, "0.0.0.0:8080".parse().unwrap());
+        assert_eq!(
+            config.browser_origins(),
+            vec!["https://gradiated.com", "https://www.gradiated.com"]
+        );
         assert_eq!(config.generation_timeout_seconds, 120);
         assert_eq!(config.lease_finalization_margin_seconds, 30);
         assert_eq!(config.expired_lease_cleanup_grace_seconds, 240);

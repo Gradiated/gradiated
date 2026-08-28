@@ -3,7 +3,10 @@ use std::{sync::Arc, time::Duration};
 use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, State},
-    http::{header::CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue, StatusCode},
+    http::{
+        header::{AUTHORIZATION, CONTENT_TYPE},
+        HeaderMap, HeaderName, HeaderValue, Method, StatusCode,
+    },
     response::{
         sse::{KeepAlive, Sse},
         IntoResponse, Response,
@@ -15,6 +18,7 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use serde::Serialize;
 use serde_json::Value;
+use tower_http::cors::{AllowOrigin, CorsLayer};
 use uuid::Uuid;
 
 use crate::{
@@ -27,6 +31,15 @@ use crate::{
 const MAX_REQUEST_BYTES: usize = 32_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
+
+pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
+    CorsLayer::new()
+        .allow_origin(AllowOrigin::list(origins))
+        .allow_methods([Method::GET, Method::POST])
+        .allow_headers([AUTHORIZATION, CONTENT_TYPE])
+        .expose_headers([GENERATION_ID_HEADER])
+        .max_age(Duration::from_secs(3600))
+}
 
 #[derive(Clone)]
 pub struct GatewayState {
@@ -454,6 +467,7 @@ mod tests {
     fn application(ready: bool, credential_lookups: Arc<AtomicUsize>) -> Router {
         let config = Arc::new(GatewayConfig {
             bind_address: "127.0.0.1:3002".parse().unwrap(),
+            browser_origins: None,
             generation_timeout_seconds: 300,
             lease_finalization_margin_seconds: 60,
             expired_lease_cleanup_grace_seconds: 300,
@@ -555,6 +569,47 @@ mod tests {
         let body = to_bytes(response.into_body(), 100_000).await.unwrap();
         let body = std::str::from_utf8(&body).unwrap();
         assert!(body.ends_with("# EOF\n"));
+    }
+
+    #[tokio::test]
+    async fn browser_cors_allows_only_a_configured_origin() {
+        let app = application(true, Arc::new(AtomicUsize::new(0)))
+            .layer(browser_cors(vec!["https://gradiated.com".parse().unwrap()]));
+        let allowed = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("OPTIONS")
+                    .uri("/v1/chat/completions")
+                    .header("origin", "https://gradiated.com")
+                    .header("access-control-request-method", "POST")
+                    .header(
+                        "access-control-request-headers",
+                        "authorization,content-type",
+                    )
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            allowed.headers()["access-control-allow-origin"],
+            "https://gradiated.com"
+        );
+
+        let denied = app
+            .oneshot(
+                Request::builder()
+                    .method("OPTIONS")
+                    .uri("/v1/chat/completions")
+                    .header("origin", "https://example.com")
+                    .header("access-control-request-method", "POST")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert!(!denied.headers().contains_key("access-control-allow-origin"));
     }
 
     #[tokio::test]

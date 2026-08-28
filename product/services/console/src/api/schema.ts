@@ -4,38 +4,6 @@
  */
 
 export interface paths {
-  "/health/live": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["getLiveness"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/health/ready": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations["getReadiness"];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/api/v1/models": {
     parameters: {
       query?: never;
@@ -94,22 +62,6 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations["createTopUpCheckout"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  "/api/webhooks/stripe": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations["handleStripeWebhook"];
     delete?: never;
     options?: never;
     head?: never;
@@ -180,22 +132,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/wizard/key": {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations["createWizardKey"];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   "/api/v1/organizations/{organization_id}/workspaces": {
     parameters: {
       query?: never;
@@ -248,31 +184,6 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
-    HealthStatus: {
-      /** @enum {string} */
-      status: "live" | "ready" | "not_ready";
-    };
-    Readiness: components["schemas"]["HealthStatus"] & {
-      checks: {
-        [key: string]: "up" | "down";
-      };
-    };
-    Problem: {
-      /**
-       * Format: uri
-       * @example https://gradiated.com/problems/validation
-       */
-      type: string;
-      title: string;
-      status: number;
-      detail: string;
-      code: string;
-      request_id: string;
-      errors?: {
-        path: string;
-        message: string;
-      }[];
-    };
     ModelList: {
       data: components["schemas"]["Model"][];
       next_cursor: string | null;
@@ -424,6 +335,22 @@ export interface components {
        */
       updated_at: string;
     };
+    Problem: {
+      /**
+       * Format: uri
+       * @example https://gradiated.com/problems/validation
+       */
+      type: string;
+      title: string;
+      status: number;
+      detail: string;
+      code: string;
+      request_id: string;
+      errors?: {
+        path: string;
+        message: string;
+      }[];
+    };
     BalanceTransactionList: {
       data: components["schemas"]["BalanceTransaction"][];
       next_cursor: string | null;
@@ -485,10 +412,6 @@ export interface components {
        * @example 50000000000
        */
       amount: string;
-    };
-    StripeWebhookResponse: {
-      /** @enum {boolean} */
-      received: true;
     };
     CurrentUser: {
       /**
@@ -558,21 +481,45 @@ export interface components {
     CreateOrganization: {
       name: string;
     };
-    WizardKeyResponse: {
-      api_key: components["schemas"]["ApiKey"];
-      secret: string;
+    WorkspaceList: {
+      data: components["schemas"]["Workspace"][];
+      next_cursor: string | null;
+    };
+    Workspace: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
       /**
        * Format: uuid
        * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
        */
       organization_id: string;
+      name: string;
+      is_default: boolean;
       /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
        */
-      workspace_id: string;
-      organization_name: string;
-      balance_nano_usd: number;
+      archived_at: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      updated_at: string;
+    };
+    CreateWorkspace: {
+      name: string;
+    };
+    ApiKeyList: {
+      data: components["schemas"]["ApiKey"][];
+      next_cursor: string | null;
     };
     ApiKey: {
       /**
@@ -617,46 +564,6 @@ export interface components {
        */
       updated_at: string;
     };
-    WorkspaceList: {
-      data: components["schemas"]["Workspace"][];
-      next_cursor: string | null;
-    };
-    Workspace: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      id: string;
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      organization_id: string;
-      name: string;
-      is_default: boolean;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      archived_at: string | null;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      created_at: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      updated_at: string;
-    };
-    CreateWorkspace: {
-      name: string;
-    };
-    ApiKeyList: {
-      data: components["schemas"]["ApiKey"][];
-      next_cursor: string | null;
-    };
     CreatedApiKey: {
       api_key: components["schemas"]["ApiKey"];
       secret: string;
@@ -678,55 +585,6 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  getLiveness: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description The API process is live. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["HealthStatus"];
-        };
-      };
-    };
-  };
-  getReadiness: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description The API is ready to serve product traffic. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["Readiness"];
-        };
-      };
-      /** @description At least one required dependency is unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
   listModels: {
     parameters: {
       query?: never;
@@ -736,22 +594,13 @@ export interface operations {
     };
     requestBody?: never;
     responses: {
-      /** @description The currently advertised exact-model catalog. */
+      /** @description The public catalog of supported exact models and prices. */
       200: {
         headers: {
           [name: string]: unknown;
         };
         content: {
           "application/json": components["schemas"]["ModelList"];
-        };
-      };
-      /** @description Authentication is required. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
         };
       };
     };
@@ -915,50 +764,6 @@ export interface operations {
         };
       };
       /** @description Stripe Checkout is unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
-  handleStripeWebhook: {
-    parameters: {
-      query?: never;
-      header: {
-        "stripe-signature": string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        "application/json": Record<string, never>;
-      };
-    };
-    responses: {
-      /** @description The signed Stripe event was accepted. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["StripeWebhookResponse"];
-        };
-      };
-      /** @description The signature or event payload is invalid. */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Stripe webhooks are not configured. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -1236,55 +1041,6 @@ export interface operations {
         };
       };
       /** @description Generation logs are unavailable. */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-    };
-  };
-  createWizardKey: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description A local API key minted on the session's organization, with its one-time secret. */
-      201: {
-        headers: {
-          /** @description Prevents storage of the one-time secret. */
-          "Cache-Control"?: string;
-          [name: string]: unknown;
-        };
-        content: {
-          "application/json": components["schemas"]["WizardKeyResponse"];
-        };
-      };
-      /** @description No valid human session is present. */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description The session user has no organization. */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          "application/problem+json": components["schemas"]["Problem"];
-        };
-      };
-      /** @description Serving state is unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

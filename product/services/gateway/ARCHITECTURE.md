@@ -132,9 +132,10 @@ The gateway owns these canonical routes:
 | `GET`  | `/health/ready`        | none               | Readiness of required serving dependencies.              |
 | `GET`  | `/metrics`             | network-restricted | Prometheus metrics for the private observability stack.  |
 
-The public ALB routes `api.gradiated.com/openai/v1/*` to this service and removes
-the `/openai` prefix. The gateway does not maintain duplicate public route
-aliases. Local clients and conformance tests call `/v1/*` directly.
+Both SDKs use `https://api.gradiated.com` as their public base URL. The public
+ALB routes the OpenAI and Anthropic request paths to this service. The gateway
+accepts each inference path with or without `/v1`. The ALB keeps the legacy
+`/openai/v1/*` route and removes the `/openai` prefix.
 
 All errors use a stable OpenAI-compatible envelope:
 

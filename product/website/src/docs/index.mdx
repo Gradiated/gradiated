@@ -1,50 +1,24 @@
-<p className="docs-kicker">Inference API</p>
+# Build with Gradiated
 
-# Use Gradiated inference
+<DocsLead>
+  Use exact open models through the SDK you already know. Choose the speed and
+  price for each request.
+</DocsLead>
 
-<p className="docs-lead">
-  Call exact open models through an OpenAI-compatible API. Keep your existing
-  client. Change the endpoint, key, and model.
-</p>
+## Choose your API
 
-## Start here
+- The [OpenAI SDK](/docs/openai-sdk/) supports Chat Completions and Responses.
+- The [Anthropic SDK](/docs/anthropic-sdk/) supports Messages.
+- The [quickstart](/docs/quickstart/) includes Python, Node, and cURL examples.
+- [Models and pricing](/docs/models-pricing/) lists every exact model ID you can use.
 
-- [Make your first request](/docs/quickstart/)
-- [Configure OpenCode](/docs/opencode/)
-- [Configure Codex](/docs/codex/)
-- [Configure Claude Code](/docs/claude-code/)
-- [Read the Chat Completions API](/docs/api/)
-
-## What you need
-
-You need a Gradiated account, a workspace API key, and a model ID.
-
-Create API keys in the [Gradiated console](https://console.gradiated.com). A key belongs to one workspace. The console shows the secret only when you create the key. Store it in an environment variable.
-
-The inference API is available at `https://api.gradiated.com/openai/v1`. It accepts requests at `/chat/completions` and uses the standard `Authorization: Bearer` header.
-
-## The request path
-
-Every request follows the same path:
-
-1. Pick a model ID from the model catalog.
-2. Send a chat completion request to Gradiated.
-3. Set `stream` to `true` when you want server-sent events.
-4. Read usage from the response.
-
-Gradiated routes each request to the selected model. The API applies the model's context and output limits. The API also checks workspace access and billing capacity before it starts inference.
-
-## Keep your key private
-
-Do not put an API key in a browser bundle, a public repository, an `opencode.json` file, or a project config file. Use an environment variable or a local credential store.
-
-<div className="docs-callout">
-  <p>
-    <strong>Use the API for server-side work.</strong> A browser should call
-    your server. Your server should call Gradiated.
-  </p>
-</div>
-
-## Next
-
-Start with the [quickstart](/docs/quickstart/). It lists the exact commands for model discovery and your first request.
+<DocsNext>
+  <a href="/docs/quickstart/">
+    <small>Next</small>
+    <strong>Quickstart</strong>
+  </a>
+  <a href="/docs/models-pricing/">
+    <small>Compare</small>
+    <strong>Models and pricing</strong>
+  </a>
+</DocsNext>

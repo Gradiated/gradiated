@@ -15,6 +15,7 @@ const ReadinessSchema = HealthStatusSchema.extend({
 }).openapi("Readiness");
 
 const livenessRoute = createRoute({
+  hide: true,
   method: "get",
   path: "/health/live",
   operationId: "getLiveness",
@@ -28,6 +29,7 @@ const livenessRoute = createRoute({
 });
 
 const readinessRoute = createRoute({
+  hide: true,
   method: "get",
   path: "/health/ready",
   operationId: "getReadiness",

@@ -20,7 +20,7 @@ browser ---> api (TypeScript/Node; also serves built Vite assets)
 
 worker (TypeScript/Node) ---> PostgreSQL / Valkey / ClickHouse
 
-direct API key or OpenRouter key (`api.gradiated.com/openai/v1/*`)
+direct API key or OpenRouter key (`api.gradiated.com`)
   |
   v
 public ALB path rule ---> gateway (Rust, EKS) ---> private/restricted TLS
@@ -39,14 +39,14 @@ and the same Valkey-backed authentication, admission and settlement path.
 
 ## Service inventory
 
-| Component        | Runtime/deployment                                                                   | Depends on                                                                                | Owns or performs                                                                                                                                           | Must not do                                                                                                             |
-| ---------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `console`        | Static Vite/React deployment at `console.gradiated.com`                              | `api.gradiated.com`                                                                       | customer product UI and generated API client                                                                                                               | access datastores, hold server secrets, proxy inference                                                                 |
-| `api`            | TypeScript/Node Kubernetes Deployment on EKS CPU nodes                               | RDS PostgreSQL; Valkey for serving-relevant mutations; ClickHouse for usage views; Stripe | human sessions, organizations, workspaces, invitations, API keys, model catalog, billing operations, usage views and generated API/docs                    | serve inference, serve console assets, run asynchronous settlement loops, authenticate hot-path keys, own Rust behavior |
-| `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                  | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                  | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a public/application API, write PostgreSQL per generation, retain prompts or completions                         |
-| `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                     | Valkey; the selected SGLang endpoint; generated contract fixtures                         | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
-| `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                      | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                      | write product data, serve public shares, or become a product data authority                                               |
-| `sglang-runtime` | SGLang runtime on the external provider's GPU Kubernetes cluster; never an EKS workload | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                     | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
+| Component        | Runtime/deployment                                                                      | Depends on                                                                                 | Owns or performs                                                                                                                                           | Must not do                                                                                                             |
+| ---------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `console`        | Static Vite/React deployment at `console.gradiated.com`                                 | `api.gradiated.com`                                                                        | customer product UI and generated API client                                                                                                               | access datastores, hold server secrets, proxy inference                                                                 |
+| `api`            | TypeScript/Node Kubernetes Deployment on EKS CPU nodes                                  | RDS PostgreSQL; Valkey for serving-relevant mutations; ClickHouse for usage views; Stripe  | human sessions, organizations, workspaces, invitations, API keys, model catalog, billing operations, usage views and generated API/docs                    | serve inference, serve console assets, run asynchronous settlement loops, authenticate hot-path keys, own Rust behavior |
+| `worker`         | TypeScript/Node Kubernetes Deployment using the same image as `api`                     | RDS PostgreSQL; Valkey; ClickHouse Cloud                                                   | periodic PostgreSQL-to-Valkey reconciliation/rebuild, `GenerationSettled` ingestion into ClickHouse and global-slot settlement into PostgreSQL             | expose a public/application API, write PostgreSQL per generation, retain prompts or completions                         |
+| `gateway`        | Rust deployment on EKS CPU nodes, exposed through the public ALB                        | Valkey; the selected SGLang endpoint; generated contract fixtures                          | API-key authentication, exact model lookup, bounds/admission, streaming proxy, cancellation, usage normalization, terminal finalization and health/metrics | query PostgreSQL/ClickHouse, run product CRUD, process Stripe, select providers, provision GPUs, persist prompts        |
+| `metabase`       | One Metabase Open Source pod on EKS at `metabase.gradiated.com`                         | dedicated RDS PostgreSQL state database; read-only product PostgreSQL and ClickHouse users | internal analytics, saved questions, dashboards, and Google Sign-In for `gradiated.com`                                                                    | write product data, serve public shares, or become a product data authority                                             |
+| `sglang-runtime` | SGLang runtime on the external provider's GPU Kubernetes cluster; never an EKS workload | pinned model/tokenizer artifacts, pinned runtime image, GPU node and provider networking   | execute one exact released model and expose a private OpenAI-compatible runtime endpoint to `gateway`                                                      | authenticate customers, charge balances, expose a public endpoint, choose another model/provider                        |
 
 `api` and `worker` are two commands from one TypeScript application and image,
 not independently versioned domain services. Keeping them in separate EKS
@@ -159,11 +159,25 @@ secret API-key material after the one-time creation response.
 
 Production hosts the console at `console.gradiated.com` and all public API
 traffic at `api.gradiated.com`. Local development runs Vite on port 3000 and
-proxies API requests to port 3001. On the public ALB, `/openai/v1/*` routes to the
-Rust gateway and every other path routes to the TypeScript API service. The
-console does not proxy inference requests through the API service. The static
-host must return `index.html` for console routes so browser refreshes preserve
-client-side routing.
+proxies API requests to port 3001. On the public ALB, the inference paths route
+to the Rust gateway. The gateway also keeps the legacy `/openai/v1/*` route.
+All other paths route to the TypeScript API service. The console does not proxy
+inference requests through the API service. The static host must return
+`index.html` for console routes so browser refreshes preserve client-side
+routing.
+
+### `website` and developer docs
+
+The public Vite website runs at `gradiated.com`. Its docs use the generated
+Management API client and the same Better Auth service as the console. The docs
+can create workspace API keys through the TypeScript API. A one-time key secret
+stays in browser memory and is not persisted.
+
+The docs show inference examples but do not send inference requests from the
+browser. The TypeScript API does not proxy inference.
+
+The developer docs information architecture, action rules, and writing standard
+are defined in [DEVELOPER_DOCS.md](DEVELOPER_DOCS.md).
 
 ### `api`
 
@@ -272,19 +286,19 @@ are independent candidates for the exact model.
 
 ## External services and infrastructure
 
-| Dependency                    | Used by                      | Purpose                                                                | Launch boundary                                                                                                     |
-| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| RDS PostgreSQL                | `api`, `worker`              | durable product and financial state                                    | private subnets, Multi-AZ, PITR and deletion protection                                                             |
-| RDS PostgreSQL for Metabase   | `metabase`                   | Metabase users, settings, questions and dashboard state                 | private subnets, Single-AZ `db.t4g.small`, 20 GiB gp3, PITR and deletion protection                                 |
-| ElastiCache Serverless Valkey | `api`, `worker`, `gateway`   | serving projection, leases and generation stream                       | managed Multi-AZ; fail closed when unavailable                                                                      |
-| ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention              |
-| Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                                            |
-| OpenRouter                    | external distribution client | calls the same exact-model endpoint using its channel organization/key | invoiced organization; onboarding/auth contract configured in api/infra                                             |
-| external Kubernetes provider  | `sglang-runtime`             | dedicated GPU capacity                                                | provider-owned cluster/node pool; separate from EKS                                                                 |
-| ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                                        |
-| Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                                    |
-| Route 53 / ACM / ALB          | `api`, `gateway`, `metabase` | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service                   |
-| S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                               |
+| Dependency                    | Used by                      | Purpose                                                                | Launch boundary                                                                                        |
+| ----------------------------- | ---------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| RDS PostgreSQL                | `api`, `worker`              | durable product and financial state                                    | private subnets, Multi-AZ, PITR and deletion protection                                                |
+| RDS PostgreSQL for Metabase   | `metabase`                   | Metabase users, settings, questions and dashboard state                | private subnets, Single-AZ `db.t4g.small`, 20 GiB gp3, PITR and deletion protection                    |
+| ElastiCache Serverless Valkey | `api`, `worker`, `gateway`   | serving projection, leases and generation stream                       | managed Multi-AZ; fail closed when unavailable                                                         |
+| ClickHouse Cloud              | `api`, `worker`              | immutable generations, settlement queries and product usage views      | AWS-aligned region through PrivateLink in production; no prompt retention; indefinite launch retention |
+| Stripe                        | `api`                        | direct prepaid top-ups and payment events                              | webhook signature verification; no Stripe call from Rust                                               |
+| OpenRouter                    | external distribution client | calls the same exact-model endpoint using its channel organization/key | invoiced organization; onboarding/auth contract configured in api/infra                                |
+| external Kubernetes provider  | `sglang-runtime`             | dedicated GPU capacity                                                 | provider-owned cluster/node pool; separate from EKS                                                    |
+| ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                           |
+| Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                       |
+| Route 53 / ACM / ALB          | `api`, `gateway`, `metabase` | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service       |
+| S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                  |
 
 Production delivery follows [DEPLOYMENT.md](DEPLOYMENT.md). GitHub Actions
 builds the product image, gateway image and console from one source revision.

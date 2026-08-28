@@ -1,8 +1,9 @@
 use std::{future::IntoFuture, sync::Arc, time::Duration};
 
+use axum::http::HeaderValue;
 use gradiated_gateway::{
-    router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState, ModelTokenizer,
-    RequestCoordinator, RuntimeTlsConfig, SglangClient, ValkeyServingState,
+    browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
+    ModelTokenizer, RequestCoordinator, RuntimeTlsConfig, SglangClient, ValkeyServingState,
 };
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
@@ -54,18 +55,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "gateway listening"
     );
     let (stop_server, server_stopped) = tokio::sync::oneshot::channel();
-    let server = axum::serve(
-        listener,
-        router(GatewayState::new(
-            readiness,
-            completions.clone(),
-            RequestCoordinator::new(serving_state),
-        )),
-    )
-    .with_graceful_shutdown(async {
-        let _ = server_stopped.await;
-    })
-    .into_future();
+    let browser_origins = config
+        .browser_origins()
+        .into_iter()
+        .map(str::parse::<HeaderValue>)
+        .collect::<Result<Vec<_>, _>>()?;
+    let app = router(GatewayState::new(
+        readiness,
+        completions.clone(),
+        RequestCoordinator::new(serving_state),
+    ));
+    let app = if browser_origins.is_empty() {
+        app
+    } else {
+        app.layer(browser_cors(browser_origins))
+    };
+    let server = axum::serve(listener, app)
+        .with_graceful_shutdown(async {
+            let _ = server_stopped.await;
+        })
+        .into_future();
     tokio::pin!(server);
     tokio::select! {
         result = &mut server => result?,

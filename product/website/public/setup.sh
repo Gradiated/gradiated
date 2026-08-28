@@ -16,7 +16,7 @@
 # works when piped: curl -fsSL ... | bash
 set -euo pipefail
 
-API_BASE_URL="${GRADIATED_API_BASE_URL:-https://api.gradiated.com/openai/v1}"
+API_BASE_URL="${GRADIATED_API_BASE_URL:-https://api.gradiated.com}"
 OPENCODE_CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 OPENCODE_CONFIG_FILE="$OPENCODE_CONFIG_DIR/opencode.json"
 PROVIDER_ID="gradiated"

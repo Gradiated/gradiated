@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import type { ControlDatabase } from "@gradiated/control";
 
-import { createAuthService } from "../src/auth.js";
+import { createAuthService, resolveAuthTrustedOrigins } from "../src/auth.js";
 
-const createSocialAuth = () =>
+const createSocialAuth = (
+  trustedOrigins: string[] = ["http://localhost:3000"],
+) =>
   createAuthService(
     {
       insert: () => ({
@@ -27,11 +29,44 @@ const createSocialAuth = () =>
       secret: "local-only-not-secret-change-in-production-0001",
       sendMagicLink: async () => undefined,
       sendOtp: async () => undefined,
-      trustedOrigins: ["http://localhost:3000"],
+      trustedOrigins,
     },
   );
 
 describe("social authentication providers", () => {
+  it("accepts a website docs callback during local development", async () => {
+    const auth = createSocialAuth(
+      resolveAuthTrustedOrigins(["http://localhost:3000"], "development"),
+    );
+    const callbackURL = "http://localhost:5173/docs/openai-sdk/";
+    const response = await auth.handler(
+      new Request("http://localhost:3000/api/auth/sign-in/social", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          origin: "http://localhost:5173",
+        },
+        body: JSON.stringify({
+          provider: "github",
+          callbackURL,
+          newUserCallbackURL: callbackURL,
+          disableRedirect: true,
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  it("does not add local website origins in production", () => {
+    expect(
+      resolveAuthTrustedOrigins(
+        ["https://console.gradiated.com", "https://www.gradiated.com"],
+        "production",
+      ),
+    ).toEqual(["https://console.gradiated.com", "https://www.gradiated.com"]);
+  });
+
   it.each([
     {
       provider: "github" as const,

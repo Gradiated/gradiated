@@ -32,12 +32,8 @@ const listModelsRoute = createRoute({
   tags: ["Models"],
   responses: {
     200: {
-      description: "The currently advertised exact-model catalog.",
+      description: "The public catalog of supported exact models and prices.",
       content: { "application/json": { schema: ModelListSchema } },
-    },
-    401: {
-      description: "Authentication is required.",
-      content: problemContent,
     },
   },
 });
@@ -135,6 +131,7 @@ const createTopUpCheckoutRoute = createRoute({
 });
 
 const stripeWebhookRoute = createRoute({
+  hide: true,
   method: "post",
   path: "/api/webhooks/stripe",
   operationId: "handleStripeWebhook",
@@ -300,7 +297,6 @@ export const registerCatalogBillingRoutes = (
   services: ApiServices,
 ): void => {
   app.openapi(listModelsRoute, async (context) => {
-    if (!context.get("user")) return unauthenticated(context);
     const records = await services.catalogBilling.listModels();
     return context.json(
       { data: records.map(modelResponse), next_cursor: null },

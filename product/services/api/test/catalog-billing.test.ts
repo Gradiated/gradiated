@@ -99,9 +99,8 @@ const catalogBillingService = (): CatalogBillingService => ({
 });
 
 describe("catalog and billing routes", () => {
-  it("lists the advertised exact models", async () => {
+  it("lists the advertised exact models without a session", async () => {
     const app = createApp({
-      auth: authenticated,
       services: { catalogBilling: catalogBillingService() },
     });
     const response = await app.request("/api/v1/models");

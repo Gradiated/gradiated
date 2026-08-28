@@ -6,7 +6,7 @@ if (!apiKey) {
 }
 
 const baseURL =
-  process.env.GRADIATED_BASE_URL ?? "https://api.gradiated.com/openai/v1";
+  process.env.GRADIATED_BASE_URL ?? "https://api.gradiated.com";
 const requestedModel = process.env.GRADIATED_MODEL;
 const prompt = "Reply with exactly: production-chat-ready";
 const client = new OpenAI({ apiKey, baseURL });

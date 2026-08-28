@@ -21,6 +21,21 @@ export interface AuthConfiguration {
   trustedOrigins: string[];
 }
 
+const DEVELOPMENT_TRUSTED_ORIGINS = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+] as const;
+
+export const resolveAuthTrustedOrigins = (
+  configuredOrigins: readonly string[],
+  nodeEnvironment: string | undefined,
+): string[] => [
+  ...new Set([
+    ...configuredOrigins,
+    ...(nodeEnvironment === "production" ? [] : DEVELOPMENT_TRUSTED_ORIGINS),
+  ]),
+];
+
 export function createAuthService(
   database: ControlDatabase,
   configuration: AuthConfiguration,

@@ -1,0 +1,209 @@
+# Use the OpenAI SDK
+
+<DocsLead>
+  Keep your OpenAI request. Change the base URL, API key, and model ID.
+</DocsLead>
+
+Use the `openai` package for Python or Node. The same client can send your existing Chat Completions requests to Gradiated.
+
+## Install
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```bash
+pip install openai
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```bash
+npm install openai
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Chat Completions
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+```python
+from openai import OpenAI
+import os
+
+client = OpenAI(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+
+response = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[
+        {"role": "user", "content": "Explain inference in one sentence."}
+    ],
+    extra_body={"service_tier": "default"},
+)
+
+print(response.choices[0].message.content)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const response = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "Explain inference in one sentence." }],
+  service_tier: "default",
+});
+
+console.log(response.choices[0].message.content);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Choose an exact ID from [models and pricing](/docs/models-pricing/). This example uses the `default` service tier.
+
+## Responses API
+
+Use the same client for Responses requests.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+response = client.responses.create(
+    model="YOUR_MODEL_ID",
+    input="Explain inference in one sentence.",
+    extra_body={"service_tier": "default"},
+)
+
+print(response.output_text)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+const response = await client.responses.create({
+  model: "YOUR_MODEL_ID",
+  input: "Explain inference in one sentence.",
+  service_tier: "default",
+});
+
+console.log(response.output_text);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Gradiated does not support stored Responses state. Send the complete input with each request.
+
+## Stream output
+
+Streaming returns text while the model is still generating it.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+stream = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[{"role": "user", "content": "Write one short sentence."}],
+    stream=True,
+)
+
+for chunk in stream:
+    text = chunk.choices[0].delta.content
+    if text:
+        print(text, end="", flush=True)
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+const stream = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "Write one short sentence." }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  const text = chunk.choices[0]?.delta?.content;
+  if (text) process.stdout.write(text);
+}
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+## Call tools
+
+Send function definitions with the request. Your application validates the arguments and runs the selected function.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Python">
+
+```python
+response = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[{"role": "user", "content": "What is the weather in Warsaw?"}],
+    tools=[{
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather for a city.",
+            "parameters": {
+                "type": "object",
+                "properties": {"city": {"type": "string"}},
+                "required": ["city"],
+            },
+        },
+    }],
+)
+
+tool_calls = response.choices[0].message.tool_calls
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+```javascript
+const response = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "What is the weather in Warsaw?" }],
+  tools: [
+    {
+      type: "function",
+      function: {
+        name: "get_weather",
+        description: "Get the current weather for a city.",
+        parameters: {
+          type: "object",
+          properties: { city: { type: "string" } },
+          required: ["city"],
+        },
+      },
+    },
+  ],
+});
+
+const toolCalls = response.choices[0].message.tool_calls;
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Check [service tiers](/docs/service-tiers/), [model parameters](/docs/parameters/), and [retry behavior](/docs/errors/) before production use.

@@ -9,7 +9,8 @@ type Language = "python" | "node";
 type TierOption = {
   id: ServiceTier;
   name: string;
-  discount: number;
+  priceChange: string;
+  priceNote: string;
   description: string;
 };
 
@@ -17,20 +18,23 @@ const TIER_OPTIONS: readonly TierOption[] = [
   {
     id: "fast",
     name: "Fast",
-    discount: 10,
-    description: "Low latency for requests that need an immediate response.",
+    priceChange: "+50%",
+    priceNote: "more per token",
+    description: "Interactive requests that need the lowest delay.",
   },
   {
     id: "default",
     name: "Default",
-    discount: 30,
-    description: "A balance of response time and cost for everyday inference.",
+    priceChange: "—",
+    priceNote: "standard price",
+    description: "Normal application traffic.",
   },
   {
     id: "flex",
     name: "Flex",
-    discount: 50,
-    description: "The lowest cost for work that can use available capacity.",
+    priceChange: "−30%",
+    priceNote: "less per token",
+    description: "Asynchronous work where latency is not the primary concern.",
   },
 ] as const;
 
@@ -62,7 +66,7 @@ const message = await client.messages.create({
     return `import OpenAI from "openai";
 
 const client = new OpenAI({
-  baseURL: "https://api.gradiated.com/openai/v1",
+  baseURL: "https://api.gradiated.com",
   apiKey: "YOUR_GRADIATED_API_KEY",
 });
 
@@ -98,7 +102,7 @@ message = client.messages.create(
   return `from openai import OpenAI
 
 client = OpenAI(
-    base_url="https://api.gradiated.com/openai/v1",
+    base_url="https://api.gradiated.com",
     api_key="YOUR_GRADIATED_API_KEY",
 )
 
@@ -198,9 +202,9 @@ export const ServiceTierSection = (): ReactElement => {
               aria-live="polite"
             >
               <strong className="font-newsreader text-[clamp(48px,5vw,68px)] font-normal leading-[0.94] tracking-[-0.045em] max-site:text-[56px]">
-                {tier.discount}%
+                {tier.priceChange}
               </strong>
-              <span className="text-sm text-muted">less per token</span>
+              <span className="text-sm text-muted">{tier.priceNote}</span>
             </p>
             <p className="mt-6 min-h-[50px] max-w-[440px] text-sm leading-[1.65] text-muted max-site:min-h-0">
               {tier.description}
@@ -216,7 +220,7 @@ export const ServiceTierSection = (): ReactElement => {
               </div>
               <input
                 aria-label="Service tier"
-                aria-valuetext={`${tier.name}, ${tier.discount}% less per token`}
+                aria-valuetext={`${tier.name}, ${tier.priceChange === "—" ? tier.priceNote : `${tier.priceChange} ${tier.priceNote}`}`}
                 className="m-0 h-[30px] w-full cursor-pointer appearance-none rounded-none bg-transparent bg-[linear-gradient(var(--ink),var(--ink)),linear-gradient(var(--line),var(--line))] [background-position:0_50%,0_50%] [background-repeat:no-repeat] [background-size:var(--tier-progress)_1px,100%_1px] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-ink [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:shadow-[inset_0_0_0_5px_var(--paper)] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-ink [&::-webkit-slider-thumb]:bg-paper [&::-webkit-slider-thumb]:shadow-[inset_0_0_0_5px_var(--ink)]"
                 max="2"
                 min="0"

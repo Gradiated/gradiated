@@ -58,6 +58,7 @@ The rewrite keeps React Router routes working after a direct page load.
 
 - `src/components/` contains shared site components.
 - `src/pages/` contains route-level pages.
+- `src/metadata.ts` defines page titles and descriptions for all public routes.
 - `src/careers.ts` contains the public job descriptions and role metadata.
 - `src/docs/` contains the public MDX documentation.
 - `src/content.tsx` contains article content.

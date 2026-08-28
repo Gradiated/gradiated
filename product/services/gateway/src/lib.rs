@@ -42,7 +42,7 @@ pub use generation::{
     GenerationTimingError, NormalizedUsage, PricedUsage, PricingError, TerminalOutcome,
     TerminalOutcomeError, UsageError,
 };
-pub use http::{router, GatewayState};
+pub use http::{browser_cors, router, GatewayState};
 pub use metrics::GatewayMetrics;
 pub use model::{
     GatewayModelProperties, InputPriceType, InputTokenPrice, ModelParameterDescriptor,

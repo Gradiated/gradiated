@@ -161,6 +161,7 @@ mod tests {
     fn config() -> GatewayConfig {
         GatewayConfig {
             bind_address: "127.0.0.1:3002".parse().unwrap(),
+            browser_origins: None,
             generation_timeout_seconds: 300,
             lease_finalization_margin_seconds: 60,
             expired_lease_cleanup_grace_seconds: 300,

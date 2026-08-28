@@ -1,0 +1,123 @@
+# Service tiers
+
+<DocsLead>
+  Run the same model at a different speed and price. Choose a tier for each
+  request.
+</DocsLead>
+
+| Tier      | Price change | Use it for                                                  |
+| --------- | -----------: | ----------------------------------------------------------- |
+| `fast`    |         +50% | Interactive requests that need the lowest delay.            |
+| `default` |            — | Normal application traffic.                                 |
+| `flex`    |         −30% | Asynchronous work where latency is not the primary concern. |
+
+## Set the tier
+
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
+
+<DocsCodeVariants>
+  <DocsCodeVariant label="OpenAI SDK">
+
+```python
+from openai import OpenAI
+import os
+
+client = OpenAI(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+
+response = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[{"role": "user", "content": "Summarize this document."}],
+    extra_body={"service_tier": "flex"},
+)
+```
+
+  </DocsCodeVariant>
+  <DocsCodeVariant label="Anthropic SDK">
+
+```python
+from anthropic import Anthropic
+import os
+
+client = Anthropic(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
+
+message = client.messages.create(
+    model="YOUR_MODEL_ID",
+    max_tokens=256,
+    messages=[{"role": "user", "content": "Summarize this document."}],
+    extra_body={"service_tier": "flex"},
+)
+```
+
+  </DocsCodeVariant>
+</DocsCodeVariants>
+
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
+
+<DocsCodeVariants>
+  <DocsCodeVariant label="OpenAI SDK">
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const response = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "Summarize this document." }],
+  service_tier: "flex",
+});
+```
+
+  </DocsCodeVariant>
+  <DocsCodeVariant label="Anthropic SDK">
+
+```javascript
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const message = await client.messages.create({
+  model: "YOUR_MODEL_ID",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Summarize this document." }],
+  service_tier: "flex",
+});
+```
+
+  </DocsCodeVariant>
+</DocsCodeVariants>
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/chat/completions \
+  -H "Authorization: Bearer $GRADIATED_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "YOUR_MODEL_ID",
+    "service_tier": "flex",
+    "messages": [{"role": "user", "content": "Summarize this document."}]
+  }'
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Set `service_tier` on each request that needs different behavior. If you omit it, Gradiated uses `default`.
+
+`flex` uses the normal request and response API. It does not create a batch job.

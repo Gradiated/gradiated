@@ -1,95 +1,130 @@
-<p className="docs-kicker">Get started</p>
-
 # Quickstart
 
-<p className="docs-lead">
-  Create a workspace key, find a model, and send your first request.
-</p>
+<DocsLead>
+  Gradiated works with the OpenAI and Anthropic SDKs. Point your client at
+  Gradiated, choose a model, and keep the request format you already use.
+</DocsLead>
 
-## 1. Create an API key
+## Send a request
 
-1. Open the [Gradiated console](https://console.gradiated.com).
-2. Open the workspace that should pay for the requests.
-3. Open **API keys**.
-4. Create a key.
-5. Copy the secret before you close the dialog.
+<DocsCodeTabs action={<DocsApiKeyAction />}>
+  <DocsCodeTab label="Python">
 
-Gradiated returns the secret once. If you lose it, revoke the key and create another one.
+<DocsCodeVariants>
+  <DocsCodeVariant label="OpenAI SDK">
 
-## 2. Set the key
+```python
+from openai import OpenAI
+import os
 
-Set the key in your shell:
+client = OpenAI(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
 
-```sh
-export GRADIATED_API_KEY="grad_..."
+response = client.chat.completions.create(
+    model="YOUR_MODEL_ID",
+    messages=[{"role": "user", "content": "Hello from Gradiated."}],
+)
+
+print(response.choices[0].message.content)
 ```
 
-Do not commit the key. Add it to your local secret manager or shell profile instead.
-Keep the key on your server. Do not expose it in browser code.
+  </DocsCodeVariant>
+  <DocsCodeVariant label="Anthropic SDK">
 
-## 3. Find a model
+```python
+from anthropic import Anthropic
+import os
 
-The model catalog returns the exact IDs that you can use in requests:
+client = Anthropic(
+    base_url="https://api.gradiated.com",
+    api_key=os.environ["GRADIATED_API_KEY"],
+)
 
-```sh
-curl https://api.gradiated.com/openai/v1/models \
-  -H "Authorization: Bearer $GRADIATED_API_KEY"
+message = client.messages.create(
+    model="YOUR_MODEL_ID",
+    max_tokens=256,
+    messages=[{"role": "user", "content": "Hello from Gradiated."}],
+)
+
+print(message.content[0].text)
 ```
 
-Copy the `id` of a model with `is_ready: true`. Use the ID exactly. Model IDs can contain `/`.
+  </DocsCodeVariant>
+</DocsCodeVariants>
 
-## 4. Send a request
+  </DocsCodeTab>
+  <DocsCodeTab label="Node">
 
-Replace `YOUR_MODEL_ID` with the model ID from the catalog:
+<DocsCodeVariants>
+  <DocsCodeVariant label="OpenAI SDK">
 
-```sh
-curl https://api.gradiated.com/openai/v1/chat/completions \
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const response = await client.chat.completions.create({
+  model: "YOUR_MODEL_ID",
+  messages: [{ role: "user", content: "Hello from Gradiated." }],
+});
+
+console.log(response.choices[0].message.content);
+```
+
+  </DocsCodeVariant>
+  <DocsCodeVariant label="Anthropic SDK">
+
+```javascript
+import Anthropic from "@anthropic-ai/sdk";
+
+const client = new Anthropic({
+  baseURL: "https://api.gradiated.com",
+  apiKey: process.env.GRADIATED_API_KEY,
+});
+
+const message = await client.messages.create({
+  model: "YOUR_MODEL_ID",
+  max_tokens: 256,
+  messages: [{ role: "user", content: "Hello from Gradiated." }],
+});
+
+console.log(message.content[0].text);
+```
+
+  </DocsCodeVariant>
+</DocsCodeVariants>
+
+  </DocsCodeTab>
+  <DocsCodeTab label="cURL">
+
+```bash
+curl https://api.gradiated.com/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "YOUR_MODEL_ID",
-    "messages": [
-      {"role": "user", "content": "Reply with exactly: hello from Gradiated"}
-    ],
-    "max_tokens": 32,
-    "temperature": 0
+    "messages": [{"role": "user", "content": "Hello from Gradiated."}]
   }'
 ```
 
-The response uses the familiar chat completion shape. The response includes the model, one or more choices, and token usage.
+  </DocsCodeTab>
+</DocsCodeTabs>
 
-## Stream the response
+## Base URL
 
-Set `stream` to `true` to receive server-sent events:
+Both SDKs use `https://api.gradiated.com`.
 
-```sh
-curl https://api.gradiated.com/openai/v1/chat/completions \
-  -H "Authorization: Bearer $GRADIATED_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "model": "YOUR_MODEL_ID",
-    "messages": [
-      {"role": "user", "content": "Write one short sentence about inference."}
-    ],
-    "max_tokens": 64,
-    "stream": true
-  }'
-```
+Choose a model from [models and pricing](/docs/models-pricing/). Replace `YOUR_MODEL_ID` with the copied ID.
 
-The stream ends with `[DONE]`. The final usage event includes input and output token counts when the client keeps the complete stream.
+Set the key as `GRADIATED_API_KEY` in your server environment. Do not put it in client-side code.
 
-## What happens when a request fails
+## Next steps
 
-Errors use an `error` object with a stable `code`:
-
-| Code                      | Meaning                                                          |
-| ------------------------- | ---------------------------------------------------------------- |
-| `invalid_api_key`         | The key is missing, expired, or revoked.                         |
-| `model_not_found`         | The model ID is not in the catalog.                              |
-| `model_unavailable`       | The model is not ready to serve traffic.                         |
-| `insufficient_balance`    | The workspace cannot fund the request.                           |
-| `context_length_exceeded` | The request is too large for the model.                          |
-| `unsupported_parameter`   | The model does not support a gateway feature, such as streaming. |
-| `capacity_exceeded`       | The model is temporarily at capacity.                            |
-
-See the [API reference](/docs/api/) for the request fields and response behavior.
+- Tune latency and cost with [service tiers](/docs/service-tiers/).
+- Add [streaming](/docs/streaming/) or [tool calling](/docs/tool-calling/).
+- Check [model parameters and limits](/docs/parameters/) before production use.

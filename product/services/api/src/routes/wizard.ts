@@ -6,6 +6,7 @@ import { problemDocument } from "../http/problem-response.js";
 import type { ApiEnvironment, ApiServices } from "../types.js";
 
 const createWizardKeyRoute = createRoute({
+  hide: true,
   method: "post",
   path: "/api/v1/wizard/key",
   operationId: "createWizardKey",

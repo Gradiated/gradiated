@@ -18,22 +18,22 @@ const TIER_OPTIONS: readonly TierOption[] = [
   {
     id: "fast",
     name: "Fast",
-    priceChange: "+50%",
-    priceNote: "more per token",
+    priceChange: "2.3x",
+    priceNote: "faster inference than other providers",
     description: "Interactive requests that need the lowest delay.",
   },
   {
     id: "default",
     name: "Default",
-    priceChange: "—",
-    priceNote: "standard price",
+    priceChange: "30%",
+    priceNote: "cheaper than other providers",
     description: "Normal application traffic.",
   },
   {
     id: "flex",
     name: "Flex",
-    priceChange: "−30%",
-    priceNote: "less per token",
+    priceChange: "50%",
+    priceNote: "cheaper than other providers",
     description: "Asynchronous work where latency is not the primary concern.",
   },
 ] as const;
@@ -220,7 +220,7 @@ export const ServiceTierSection = (): ReactElement => {
               </div>
               <input
                 aria-label="Service tier"
-                aria-valuetext={`${tier.name}, ${tier.priceChange === "—" ? tier.priceNote : `${tier.priceChange} ${tier.priceNote}`}`}
+                aria-valuetext={`${tier.name}, ${tier.priceChange} ${tier.priceNote}`}
                 className="m-0 h-[30px] w-full cursor-pointer appearance-none rounded-none bg-transparent bg-[linear-gradient(var(--ink),var(--ink)),linear-gradient(var(--line),var(--line))] [background-position:0_50%,0_50%] [background-repeat:no-repeat] [background-size:var(--tier-progress)_1px,100%_1px] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-accent [&::-moz-range-thumb]:h-[18px] [&::-moz-range-thumb]:w-[18px] [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border [&::-moz-range-thumb]:border-ink [&::-moz-range-thumb]:bg-ink [&::-moz-range-thumb]:shadow-[inset_0_0_0_5px_var(--paper)] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-ink [&::-webkit-slider-thumb]:bg-paper [&::-webkit-slider-thumb]:shadow-[inset_0_0_0_5px_var(--ink)]"
                 max="2"
                 min="0"

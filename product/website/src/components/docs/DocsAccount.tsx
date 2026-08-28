@@ -54,10 +54,10 @@ const DocsAccountSkeleton = (): ReactElement => (
         <span className="absolute left-0 top-[17px] h-2 w-[48%] bg-line" />
       </div>
       <div className={`${loginInputClass} bg-line`} />
-      <div className={`${loginPrimaryButtonClass} bg-line`} />
+      <div className="mt-2 h-[34px] w-full bg-line" />
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <div className={`${loginSocialButtonClass} bg-line`} />
-        <div className={`${loginSocialButtonClass} bg-line`} />
+        <div className="h-[34px] bg-line" />
+        <div className="h-[34px] bg-line" />
       </div>
     </div>
   </div>

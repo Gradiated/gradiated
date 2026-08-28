@@ -436,12 +436,6 @@ const DocsContent = (): ReactElement => {
         className="font-site-mono text-[11px] leading-[1.35] max-[800px]:border-b max-[800px]:border-line max-[800px]:pb-7"
         aria-label="Documentation"
       >
-        <Link
-          className="mb-8 inline-block border-b border-ink pb-1 text-ink max-[800px]:hidden"
-          to="/"
-        >
-          ← Gradiated
-        </Link>
         <div className="max-[800px]:hidden">
           <DocsAccount />
         </div>

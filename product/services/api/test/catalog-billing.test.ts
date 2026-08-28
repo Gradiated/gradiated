@@ -106,6 +106,9 @@ describe("catalog and billing routes", () => {
     const response = await app.request("/api/v1/models");
 
     expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe(
+      "public, max-age=15, s-maxage=15, stale-while-revalidate=15",
+    );
     await expect(response.json()).resolves.toMatchObject({
       data: [
         {

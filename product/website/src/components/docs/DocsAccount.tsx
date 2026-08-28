@@ -4,6 +4,65 @@ import type { FormEvent, ReactElement } from "react";
 import { authClient } from "../../api/auth";
 import { useDocsSession } from "./DocsSession";
 
+const loginLabelClass =
+  "block min-h-[28px] text-[10px] uppercase tracking-label text-muted";
+const loginInputClass =
+  "mt-3 h-[34px] w-full border border-line px-3 font-libre text-[12px] text-ink outline-none focus:border-ink";
+const loginPrimaryButtonClass =
+  "mt-2 h-[34px] w-full border border-ink px-3 font-libre text-[10px] font-medium uppercase tracking-label";
+const loginSocialButtonClass =
+  "h-[34px] border border-line px-2 font-libre text-[10px] font-medium uppercase tracking-label";
+
+const LogoutSpinner = (): ReactElement => (
+  <svg
+    aria-hidden="true"
+    className="mx-auto h-3.5 w-3.5 animate-spin"
+    fill="none"
+    viewBox="0 0 16 16"
+  >
+    <circle
+      className="opacity-25"
+      cx="8"
+      cy="8"
+      r="6"
+      stroke="currentColor"
+      strokeWidth="2"
+    />
+    <path
+      className="opacity-80"
+      d="M8 2a6 6 0 0 1 6 6"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeWidth="2"
+    />
+  </svg>
+);
+
+const DocsAccountSkeleton = (): ReactElement => (
+  <div
+    aria-label="Loading account"
+    aria-live="polite"
+    className="border-b border-line pb-6"
+    role="status"
+  >
+    <div aria-hidden="true" className="animate-pulse">
+      <div className={`${loginLabelClass} relative`}>
+        <span className="invisible">
+          Log in to create keys and run requests
+        </span>
+        <span className="absolute left-0 top-0.5 h-2 w-[88%] bg-line" />
+        <span className="absolute left-0 top-[17px] h-2 w-[48%] bg-line" />
+      </div>
+      <div className={`${loginInputClass} bg-line`} />
+      <div className={`${loginPrimaryButtonClass} bg-line`} />
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <div className={`${loginSocialButtonClass} bg-line`} />
+        <div className={`${loginSocialButtonClass} bg-line`} />
+      </div>
+    </div>
+  </div>
+);
+
 export const DocsAccount = (): ReactElement => {
   const session = useDocsSession();
   const [email, setEmail] = useState("");
@@ -57,7 +116,7 @@ export const DocsAccount = (): ReactElement => {
   };
 
   if (session.status === "loading") {
-    return <p className="m-0 text-[11px] text-muted">Checking account…</p>;
+    return <DocsAccountSkeleton />;
   }
 
   if (session.status === "ready" && session.user) {
@@ -73,12 +132,13 @@ export const DocsAccount = (): ReactElement => {
             </p>
           </div>
           <button
-            className="cursor-pointer border-0 bg-transparent p-0 text-[10px] uppercase tracking-label text-muted hover:text-ink"
+            aria-label={signingOut ? "Logging out" : "Log out"}
+            className="h-5 w-[52px] shrink-0 cursor-pointer border-0 bg-transparent p-0 text-[10px] uppercase tracking-label text-muted hover:text-ink"
             disabled={signingOut}
             onClick={() => void signOut()}
             type="button"
           >
-            {signingOut ? "Logging out…" : "Log out"}
+            {signingOut ? <LogoutSpinner /> : "Log out"}
           </button>
         </div>
         {session.user.organizations.length > 1 && session.organization && (
@@ -141,11 +201,11 @@ export const DocsAccount = (): ReactElement => {
 
   return (
     <form className="border-b border-line pb-6" onSubmit={sendMagicLink}>
-      <label className="block text-[10px] uppercase tracking-label text-muted">
+      <label className={loginLabelClass}>
         Log in to create keys and run requests
       </label>
       <input
-        className="mt-3 w-full border border-line bg-transparent px-3 py-2 font-libre text-[12px] text-ink outline-none focus:border-ink"
+        className={`${loginInputClass} bg-transparent`}
         id="docs-login-email"
         onChange={(event) => setEmail(event.target.value)}
         placeholder="you@company.com"
@@ -154,21 +214,21 @@ export const DocsAccount = (): ReactElement => {
         value={email}
       />
       <button
-        className="mt-2 w-full cursor-pointer border border-ink bg-ink px-3 py-2 font-libre text-[10px] font-medium uppercase tracking-label text-paper hover:bg-transparent hover:text-ink"
+        className={`${loginPrimaryButtonClass} cursor-pointer bg-ink text-paper hover:bg-transparent hover:text-ink`}
         type="submit"
       >
         Email login link
       </button>
       <div className="mt-2 grid grid-cols-2 gap-2">
         <button
-          className="cursor-pointer border border-line bg-transparent px-2 py-2 font-libre text-[10px] font-medium uppercase tracking-label text-ink hover:border-ink"
+          className={`${loginSocialButtonClass} cursor-pointer bg-transparent text-ink hover:border-ink`}
           onClick={() => void signInWith("github")}
           type="button"
         >
           GitHub
         </button>
         <button
-          className="cursor-pointer border border-line bg-transparent px-2 py-2 font-libre text-[10px] font-medium uppercase tracking-label text-ink hover:border-ink"
+          className={`${loginSocialButtonClass} cursor-pointer bg-transparent text-ink hover:border-ink`}
           onClick={() => void signInWith("google")}
           type="button"
         >

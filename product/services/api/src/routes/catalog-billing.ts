@@ -25,6 +25,9 @@ import { BillingPaymentsError } from "../billing/stripe.js";
 import { problemDocument } from "../http/problem-response.js";
 import type { ApiEnvironment, ApiServices } from "../types.js";
 
+const MODEL_CATALOG_CACHE_CONTROL =
+  "public, max-age=15, s-maxage=15, stale-while-revalidate=15";
+
 const listModelsRoute = createRoute({
   method: "get",
   path: "/api/v1/models",
@@ -33,6 +36,13 @@ const listModelsRoute = createRoute({
   responses: {
     200: {
       description: "The public catalog of supported exact models and prices.",
+      headers: {
+        "Cache-Control": {
+          description:
+            "Caches the public model catalog for 15 seconds and permits stale responses while the cache refreshes.",
+          schema: { type: "string" },
+        },
+      },
       content: { "application/json": { schema: ModelListSchema } },
     },
   },
@@ -298,6 +308,7 @@ export const registerCatalogBillingRoutes = (
 ): void => {
   app.openapi(listModelsRoute, async (context) => {
     const records = await services.catalogBilling.listModels();
+    context.header("Cache-Control", MODEL_CATALOG_CACHE_CONTROL);
     return context.json(
       { data: records.map(modelResponse), next_cursor: null },
       200,

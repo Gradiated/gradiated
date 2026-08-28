@@ -5,6 +5,14 @@ import { listModels, type Model } from "../../api/queries";
 
 type PriceType = "prompt" | "cached_prompt" | "completion";
 
+const MODEL_COLUMNS = [
+  "Model",
+  "Input",
+  "Cached input",
+  "Output",
+  "Context",
+] as const;
+
 const pricePerMillion = (model: Model, type: PriceType): string => {
   const entries =
     type === "completion"
@@ -72,6 +80,58 @@ const CopyModelId = ({
   </button>
 );
 
+const ModelTableHead = (): ReactElement => (
+  <thead className="bg-[color-mix(in_srgb,var(--soft)_60%,transparent)]">
+    <tr>
+      {MODEL_COLUMNS.map((label) => (
+        <th
+          className="border-b border-line px-3 py-3.5 text-left font-site-mono text-[10px] font-medium uppercase tracking-[0.06em] text-muted first:pl-4"
+          key={label}
+          scope="col"
+        >
+          {label}
+        </th>
+      ))}
+      <th className="border-b border-line px-3 py-3" scope="col">
+        <span className="sr-only">Copy model ID</span>
+      </th>
+    </tr>
+  </thead>
+);
+
+const ModelTableSkeletonRow = (): ReactElement => (
+  <tr aria-hidden="true" className="animate-pulse">
+    {["w-28", "w-14", "w-14", "w-14", "w-8"].map((width, index) => (
+      <td className="px-3 py-4 first:pl-4" key={`${width}-${index}`}>
+        <span className={`block h-3.5 ${width} max-w-full bg-line`} />
+      </td>
+    ))}
+    <td className="px-3 py-4 text-right">
+      <span className="ml-auto block h-[34px] w-[66px] bg-line" />
+    </td>
+  </tr>
+);
+
+const ModelCardSkeleton = (): ReactElement => (
+  <article
+    aria-hidden="true"
+    className="animate-pulse rounded-xl border border-line p-4"
+  >
+    <div className="flex items-start justify-between gap-3">
+      <span className="mt-2 block h-3.5 w-32 bg-line" />
+      <span className="block h-[34px] w-[66px] bg-line" />
+    </div>
+    <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-line pt-4">
+      {MODEL_COLUMNS.slice(1).map((label) => (
+        <div key={label}>
+          <span className="block h-2.5 w-16 bg-line" />
+          <span className="mt-2 block h-3.5 w-12 bg-line" />
+        </div>
+      ))}
+    </div>
+  </article>
+);
+
 export const DocsModelCatalog = (): ReactElement => {
   const [models, setModels] = useState<Model[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
@@ -100,14 +160,6 @@ export const DocsModelCatalog = (): ReactElement => {
     window.setTimeout(() => setCopiedId(null), 1600);
   };
 
-  if (status === "loading") {
-    return (
-      <div className="my-7 rounded-xl border border-line px-5 py-8 font-libre text-[14px] text-muted">
-        Loading models…
-      </div>
-    );
-  }
-
   if (status === "error") {
     return (
       <div className="my-7 flex items-center justify-between gap-4 rounded-xl border border-line px-5 py-5">
@@ -125,7 +177,7 @@ export const DocsModelCatalog = (): ReactElement => {
     );
   }
 
-  if (models.length === 0) {
+  if (status === "ready" && models.length === 0) {
     return (
       <div className="my-7 rounded-xl border border-line px-5 py-8 font-libre text-[14px] text-muted">
         No models are listed.
@@ -135,100 +187,110 @@ export const DocsModelCatalog = (): ReactElement => {
 
   return (
     <div className="my-7 max-w-[760px]">
+      {status === "loading" && (
+        <p className="sr-only" role="status">
+          Loading models
+        </p>
+      )}
       <div className="hidden overflow-hidden rounded-xl border border-line min-[641px]:block">
-        <table className="w-full border-collapse font-libre text-[13px]">
-          <thead className="bg-[color-mix(in_srgb,var(--soft)_60%,transparent)]">
-            <tr>
-              {["Model", "Input", "Cached input", "Output", "Context"].map(
-                (label) => (
-                  <th
-                    className="border-b border-line px-3 py-3.5 text-left font-site-mono text-[10px] font-medium uppercase tracking-[0.06em] text-muted first:pl-4"
-                    key={label}
-                    scope="col"
-                  >
-                    {label}
-                  </th>
-                ),
-              )}
-              <th className="border-b border-line px-3 py-3" scope="col">
-                <span className="sr-only">Copy model ID</span>
-              </th>
-            </tr>
-          </thead>
+        <table
+          aria-busy={status === "loading"}
+          className="w-full table-fixed border-collapse font-libre text-[13px]"
+        >
+          <colgroup>
+            <col className="w-[26%]" />
+            <col className="w-[14%]" />
+            <col className="w-[18%]" />
+            <col className="w-[14%]" />
+            <col className="w-[10%]" />
+            <col className="w-[18%]" />
+          </colgroup>
+          <ModelTableHead />
           <tbody>
-            {models.map((model) => (
-              <tr
-                className="border-b border-line last:border-b-0"
-                key={model.id}
-              >
-                <td className="px-3 py-4 pl-4 align-middle">
-                  <strong className="font-libre text-[15px] font-semibold text-ink">
-                    {model.name}
-                  </strong>
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
-                  {pricePerMillion(model, "prompt")}
-                  <span className="ml-1 text-[10px] text-muted">/ 1M</span>
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
-                  {pricePerMillion(model, "cached_prompt")}
-                  <span className="ml-1 text-[10px] text-muted">/ 1M</span>
-                </td>
-                <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
-                  {pricePerMillion(model, "completion")}
-                  <span className="ml-1 text-[10px] text-muted">/ 1M</span>
-                </td>
-                <td className="px-3 py-4 font-site-mono text-[13px] text-ink">
-                  {formatContext(model)}
-                </td>
-                <td className="px-3 py-4 text-right">
-                  <CopyModelId
-                    copied={copiedId === model.id}
-                    id={model.id}
-                    onCopy={(id) => void copyModelId(id)}
-                  />
-                </td>
-              </tr>
-            ))}
+            {status === "loading" ? (
+              <ModelTableSkeletonRow />
+            ) : (
+              models.map((model) => (
+                <tr
+                  className="border-b border-line last:border-b-0"
+                  key={model.id}
+                >
+                  <td className="px-3 py-4 pl-4 align-middle">
+                    <strong className="font-libre text-[15px] font-semibold text-ink">
+                      {model.name}
+                    </strong>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
+                    {pricePerMillion(model, "prompt")}
+                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
+                    {pricePerMillion(model, "cached_prompt")}
+                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
+                    {pricePerMillion(model, "completion")}
+                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                  </td>
+                  <td className="px-3 py-4 font-site-mono text-[13px] text-ink">
+                    {formatContext(model)}
+                  </td>
+                  <td className="px-3 py-4 text-right">
+                    <CopyModelId
+                      copied={copiedId === model.id}
+                      id={model.id}
+                      onCopy={(id) => void copyModelId(id)}
+                    />
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="grid gap-3 min-[641px]:hidden">
-        {models.map((model) => (
-          <article className="rounded-xl border border-line p-4" key={model.id}>
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <strong className="font-libre text-[15px] font-semibold text-ink">
-                  {model.name}
-                </strong>
+        {status === "loading" ? (
+          <ModelCardSkeleton />
+        ) : (
+          models.map((model) => (
+            <article
+              className="rounded-xl border border-line p-4"
+              key={model.id}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <strong className="font-libre text-[15px] font-semibold text-ink">
+                    {model.name}
+                  </strong>
+                </div>
+                <CopyModelId
+                  copied={copiedId === model.id}
+                  id={model.id}
+                  onCopy={(id) => void copyModelId(id)}
+                />
               </div>
-              <CopyModelId
-                copied={copiedId === model.id}
-                id={model.id}
-                onCopy={(id) => void copyModelId(id)}
-              />
-            </div>
-            <dl className="mb-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-line pt-4">
-              <Price
-                label="Input"
-                perMillion
-                value={pricePerMillion(model, "prompt")}
-              />
-              <Price
-                label="Cached input"
-                perMillion
-                value={pricePerMillion(model, "cached_prompt")}
-              />
-              <Price
-                label="Output"
-                perMillion
-                value={pricePerMillion(model, "completion")}
-              />
-              <Price label="Context" value={formatContext(model)} />
-            </dl>
-          </article>
-        ))}
+              <dl className="mb-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-line pt-4">
+                <Price
+                  label="Input"
+                  perMillion
+                  value={pricePerMillion(model, "prompt")}
+                />
+                <Price
+                  label="Cached input"
+                  perMillion
+                  value={pricePerMillion(model, "cached_prompt")}
+                />
+                <Price
+                  label="Output"
+                  perMillion
+                  value={pricePerMillion(model, "completion")}
+                />
+                <Price label="Context" value={formatContext(model)} />
+              </dl>
+            </article>
+          ))
+        )}
       </div>
     </div>
   );

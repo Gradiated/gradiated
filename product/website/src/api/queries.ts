@@ -8,7 +8,9 @@ export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
 export type Model = components["schemas"]["Model"];
 
 export const listModels = (): Promise<components["schemas"]["ModelList"]> =>
-  requireData<components["schemas"]["ModelList"]>(api.GET("/api/v1/models"));
+  requireData<components["schemas"]["ModelList"]>(
+    api.GET("/api/v1/models", { credentials: "omit" }),
+  );
 
 export const getCurrentUser = (): Promise<CurrentUser> =>
   requireData<CurrentUser>(api.GET("/api/v1/me"));

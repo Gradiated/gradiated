@@ -597,6 +597,8 @@ export interface operations {
       /** @description The public catalog of supported exact models and prices. */
       200: {
         headers: {
+          /** @description Caches the public model catalog for 15 seconds and permits stale responses while the cache refreshes. */
+          "Cache-Control"?: string;
           [name: string]: unknown;
         };
         content: {

@@ -48,6 +48,10 @@ the same Rust service.
 
 `GET https://api.gradiated.com/api/v1/models` returns all supported non-retired models without authentication. The response includes exact model IDs, availability, token prices, context limits, output limits, and supported parameters.
 
+The endpoint uses a 15-second public cache. It permits stale responses for 15
+seconds while the cache refreshes. Website requests omit credentials so shared
+caches can serve the catalog.
+
 The Models and pricing page renders this endpoint. Each model row has a copy action for the exact model ID. The desktop view uses a compact table. The mobile view uses stacked cards.
 
 ## Account session
@@ -117,7 +121,10 @@ Use ASD-STE100 Simplified Technical English.
 - Each SDK page puts the compact API key action beside its primary example.
 - The public model catalog does not require a session or API key.
 - The Models and pricing page shows live catalog prices and copies exact model IDs.
+- The model catalog loading state uses the final table columns and a skeleton row.
 - A guest can log in and return to the same docs page.
+- The initial account skeleton has the same dimensions as the logged-out form.
+- The logout button keeps its width and shows a spinner while logout runs.
 - The docs select the default workspace.
 - An owner or administrator can create and copy a raw key with one action.
 - The secret does not enter browser storage.

@@ -1150,6 +1150,14 @@
         "responses": {
           "200": {
             "description": "The public catalog of supported exact models and prices.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Caches the public model catalog for 15 seconds and permits stale responses while the cache refreshes.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {

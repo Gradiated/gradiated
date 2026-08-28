@@ -148,7 +148,7 @@ const highlightCode = (source: string): ReactNode[] => {
 };
 
 export const ServiceTierSection = (): ReactElement => {
-  const [tierIndex, setTierIndex] = useState(1);
+  const [tierIndex, setTierIndex] = useState(2);
   const [sdk, setSdk] = useState<Sdk>("openai");
   const [language, setLanguage] = useState<Language>("python");
   const [copiedSdk, setCopiedSdk] = useState<Sdk | null>(null);

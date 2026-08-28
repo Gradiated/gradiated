@@ -19,6 +19,13 @@ const interviewSteps = [
   "References and an offer decision.",
 ] as const;
 
+const aboutGradiated = [
+  "Gradiated is a research lab focused on inference. We co-design software and hardware for efficiently serving open-weight models.",
+  "Our goal is to maximize intelligence per joule. We work across model behavior, software, systems, and silicon to find better ways to run models.",
+  "We start by thinking about the model as a mathematical function, and map that out onto hardware and then build software on top of that which is custom to each model. This maximises performance and removes wasted abstractions.",
+  "We are early. You will help set the technical direction and the way the company works.",
+];
+
 const JobSection = ({ children, title }: JobSectionProps): ReactElement => (
   <section className="grid grid-cols-[220px_minmax(0,1fr)] gap-12 border-t border-line py-14 max-site:grid-cols-1 max-site:gap-7 max-site:py-11">
     <h2 className="m-0 pt-1.5 font-newsreader text-[30px] font-normal leading-none tracking-heading max-site:pt-0">
@@ -92,38 +99,11 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
 
         <div className="pt-16 max-site:pt-12">
           <JobSection title="About Gradiated">
-            <div className="space-y-5">
-              <p className="m-0">
-                Gradiated is a research lab focused on inference. We co-design
-                software and hardware for efficiently serving open-weight
-                models.
-              </p>
-              <p className="m-0">
-                Our goal is to maximize intelligence per joule. We work across
-                model behavior, software, systems, and silicon to find better
-                ways to run models.
-              </p>
-              <p className="m-0">
-                We start by thinking about the model as a mathematical function,
-                and map that out onto hardware and then build software on top of
-                that which is custom to each model. This maximises performance
-                and removes wasted abstractions.
-              </p>
-              <p className="m-0">
-                We are early. You will help set the technical direction and the
-                way the company works.
-              </p>
-            </div>
+            <JobList items={aboutGradiated} />
           </JobSection>
 
           <JobSection title="Why this role exists">
-            <div className="space-y-5">
-              {job.purpose.map((paragraph) => (
-                <p className="m-0" key={paragraph}>
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+            <JobList items={job.purpose} />
           </JobSection>
 
           <JobSection title="What you will do">

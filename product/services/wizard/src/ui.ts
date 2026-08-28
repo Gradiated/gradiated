@@ -125,3 +125,34 @@ export const confirm = async (
 };
 
 export const spinner = () => p.spinner();
+
+export interface UiTask {
+  title: string;
+  /** Set false to skip the task entirely (no spinner line). */
+  enabled?: boolean;
+  /**
+   * Run the step. Call `message` to update the loading text mid-step and
+   * return a short completion line (shown after the checkmark), or nothing.
+   */
+  run: (
+    message: (text: string) => void,
+  ) => string | void | Promise<string | void>;
+}
+
+/** Run steps sequentially, each behind a clack loading spinner. */
+export const runTasks = async (tasks: readonly UiTask[]): Promise<void> => {
+  for (const task of tasks) {
+    if (task.enabled === false) continue;
+    const progress = p.spinner();
+    progress.start(task.title);
+    try {
+      const result = await task.run((text) => progress.message(text));
+      progress.stop(
+        typeof result === "string" && result.length > 0 ? result : task.title,
+      );
+    } catch (error) {
+      progress.stop(`${task.title} — failed`, 1);
+      throw error;
+    }
+  }
+};

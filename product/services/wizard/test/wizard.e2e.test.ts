@@ -1,6 +1,14 @@
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { createServer, type Server } from "node:http";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -244,6 +252,98 @@ const runWizardUninstall = (
 ): Promise<{ status: number | null; stdout: string; stderr: string }> =>
   runWizard(["uninstall", ...arguments_], home);
 
+/** True when the command exists on PATH (does not require exit code 0). */
+const hasCommand = (command: string): boolean =>
+  spawnSync(command, ["--version"], {
+    stdio: "ignore",
+    shell: process.platform === "win32",
+  }).error === undefined;
+
+/** Run an installed CLI with a temporary HOME and optional XDG overrides. */
+const runClient = async (
+  command: string,
+  arguments_: readonly string[],
+  home: string,
+  extraEnv: Record<string, string> = {},
+): Promise<{ status: number | null; stdout: string; stderr: string }> =>
+  new Promise((resolvePromise) => {
+    const child = spawn(command, [...arguments_], {
+      cwd: home,
+      env: {
+        ...process.env,
+        HOME: home,
+        USERPROFILE: home,
+        NO_COLOR: "1",
+        ...extraEnv,
+      },
+      shell: process.platform === "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("close", (status) => {
+      resolvePromise({ status, stdout, stderr });
+    });
+  });
+
+/**
+ * Run the installed claude-gradiated command with <home>/.gradiated/bin (and
+ * an optional directory, e.g. holding a fake `claude`) first on PATH.
+ */
+const runClaudeWrapper = async (
+  home: string,
+  pathPrepend: readonly string[] = [],
+  arguments_: readonly string[] = [],
+): Promise<{ status: number | null; stdout: string; stderr: string }> =>
+  new Promise((resolvePromise) => {
+    const separator = process.platform === "win32" ? ";" : ":";
+    const child = spawn("claude-gradiated", [...arguments_], {
+      env: {
+        ...process.env,
+        HOME: home,
+        USERPROFILE: home,
+        GRADIATED_CREDENTIALS_PATH: join(
+          home,
+          ".gradiated",
+          "credentials.json",
+        ),
+        GRADIATED_API_KEY: "",
+        PATH: [
+          join(home, ".gradiated", "bin"),
+          ...pathPrepend,
+          process.env.PATH ?? "",
+        ].join(separator),
+      },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk);
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk);
+    });
+    child.on("close", (status) => {
+      resolvePromise({ status, stdout, stderr });
+    });
+  });
+
+const listBackups = async (directory: string): Promise<number> => {
+  try {
+    const entries = await readdir(directory);
+    return entries.filter((entry) => entry.includes(".bak.")).length;
+  } catch {
+    return 0;
+  }
+};
+
 const runCodex = async (
   home: string,
 ): Promise<{ status: number | null; stdout: string; stderr: string }> =>
@@ -401,11 +501,12 @@ describe("wizard install end to end", () => {
       expect(profile).toContain('model_provider = "gradiated"');
       expect(profile).toContain('model = "z-ai/glm-5.3-flash"');
 
-      // Running the real client is checked on POSIX only: the Windows
-      // cmd.exe -> codex.cmd -> node shim chain re-splits argv, which corrupts
-      // the invocation independently of what the wizard wrote. The content
-      // assertions above are the platform-relevant part on Windows.
-      if (process.platform !== "win32") {
+      // Running the real client is checked wherever `codex` is installed
+      // (CI installs the latest version). The Windows cmd.exe -> codex.cmd ->
+      // node shim chain re-splits argv, which corrupts the invocation
+      // independently of what the wizard wrote; the content assertions above
+      // are the platform-relevant part on Windows.
+      if (process.platform !== "win32" && hasCommand("codex")) {
         const codex = await runCodex(home);
         expect(codex.status, codex.stderr).toBe(0);
         expect(codex.stdout).toContain("ready");
@@ -560,7 +661,9 @@ describe("wizard install end to end", () => {
       expect(install.status).toBe(0);
       expect(install.stdout).toContain("claude-gradiated");
 
-      // The wrapper launcher is claude-gradiated.js on every platform.
+      // The wrapper launcher is claude-gradiated.js on every platform, and
+      // POSIX also gets the extensionless claude-gradiated command that PATH
+      // lookup resolves.
       const wrapper = await readFile(
         join(home, ".gradiated/bin/claude-gradiated.js"),
         "utf8",
@@ -571,6 +674,22 @@ describe("wizard install end to end", () => {
       // The wrapper must read the key at runtime, never embed it.
       expect(wrapper).not.toContain(API_KEY);
       expect(wrapper).toContain("credentials.json");
+
+      const commandPath = join(home, ".gradiated/bin/claude-gradiated");
+      if (process.platform === "win32") {
+        const shim = await readFile(
+          join(home, ".gradiated/bin/claude-gradiated.cmd"),
+          "utf8",
+        );
+        expect(shim).toContain("claude-gradiated.js");
+      } else {
+        expect(existsSync(commandPath)).toBe(true);
+        const mode = (await stat(commandPath)).mode;
+        expect(mode & 0o111).toBe(0o111);
+        expect(await readFile(commandPath, "utf8")).toContain(
+          "#!/usr/bin/env node",
+        );
+      }
 
       const zshrc = await readFile(join(home, ".zshrc"), "utf8");
       expect(zshrc).toContain("export EDITOR=vim");
@@ -590,6 +709,321 @@ describe("wizard install end to end", () => {
       expect(cleaned).toContain("export EDITOR=vim");
       expect(cleaned).not.toContain("# >>> gradiated >>>");
       expect(existsSync(join(home, ".claude"))).toBe(false);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("runs claude through the wrapper with the Gradiated gateway env", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      // A fake `claude` earlier on PATH records the environment the wrapper
+      // hands to Claude Code, so the wiring is verifiable without network.
+      const fakeBin = join(home, "fakebin");
+      await mkdir(fakeBin, { recursive: true });
+      await writeFile(
+        join(fakeBin, "claude"),
+        "#!/bin/sh\n" +
+          'echo "BASE_URL=$ANTHROPIC_BASE_URL"\n' +
+          'echo "AUTH_TOKEN=$ANTHROPIC_AUTH_TOKEN"\n' +
+          'echo "MODEL=$ANTHROPIC_MODEL"\n',
+        { mode: 0o755 },
+      );
+
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "claude",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.stderr).toBe("");
+      expect(install.status).toBe(0);
+
+      const result = await runClaudeWrapper(home, [fakeBin], ["--version"]);
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toContain(`BASE_URL=http://127.0.0.1:${PORT}`);
+      expect(result.stdout).toContain(`AUTH_TOKEN=${API_KEY}`);
+      expect(result.stdout).toContain("MODEL=z-ai/glm-5.3-flash");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("passes arguments through the wrapper to the real Claude Code", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "claude",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.status).toBe(0);
+
+      // CI installs the latest Claude Code; skip silently where it is not
+      // present (the env-wiring test above covers the wrapper itself).
+      if (!hasCommand("claude")) {
+        console.warn("claude is not installed; skipping the real client check");
+        return;
+      }
+      const result = await runClaudeWrapper(home, [], ["--version"]);
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.stdout).toMatch(/\d+\.\d+/);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it("registers the provider and credential with the real opencode client", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "opencode",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.stderr).toBe("");
+      expect(install.status).toBe(0);
+
+      // CI installs the latest opencode. A full completion round-trip is
+      // environment dependent (the bundled provider plugin is sandboxed on
+      // some hosts), so assert on the deterministic client surfaces: config
+      // parsing, model registration and stored credentials.
+      if (!hasCommand("opencode")) {
+        console.warn(
+          "opencode is not installed; skipping the real client check",
+        );
+        return;
+      }
+      const xdgEnv = {
+        XDG_CONFIG_HOME: join(home, ".config"),
+        XDG_DATA_HOME: join(home, ".local", "share"),
+      };
+      const models = await runClient("opencode", ["models"], home, xdgEnv);
+      expect(models.status, models.stderr).toBe(0);
+      expect(models.stdout).toContain("gradiated/z-ai/glm-5.3-flash");
+      expect(models.stdout).toContain("gradiated/google/gemma-4-31b-it");
+
+      const auth = await runClient("opencode", ["auth", "list"], home, xdgEnv);
+      expect(auth.status, auth.stderr).toBe(0);
+      expect(auth.stdout).toContain("gradiated");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it("re-running install and uninstall for codex is idempotent", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const arguments_ = [
+        "--yes",
+        "--agent",
+        "codex",
+        "--key",
+        API_KEY,
+        "--model",
+        "z-ai/glm-5.3-flash",
+        "--api-base-url",
+        `http://127.0.0.1:${PORT}`,
+      ];
+      // Pre-existing user configuration: the first install must back it up
+      // and preserve it, and nothing may change after that.
+      await mkdir(join(home, ".codex"), { recursive: true });
+      await writeFile(join(home, ".codex/config.toml"), 'model = "gpt-5"\n');
+      const first = await runWizard(arguments_, home);
+      expect(first.stderr).toBe("");
+      expect(first.status).toBe(0);
+      expect(
+        await readFile(join(home, ".codex/config.toml"), "utf8"),
+      ).toContain('model = "gpt-5"');
+
+      const configPath = join(home, ".codex/config.toml");
+      const profilePath = join(home, ".codex/gradiated.config.toml");
+      const configAfterFirst = await readFile(configPath, "utf8");
+      const profileAfterFirst = await readFile(profilePath, "utf8");
+      expect(await listBackups(join(home, ".codex"))).toBe(1);
+
+      const second = await runWizard(arguments_, home);
+      expect(second.stderr).toBe("");
+      expect(second.status).toBe(0);
+      expect(second.stdout).toContain(
+        "Codex already has the current Gradiated provider",
+      );
+      expect(await readFile(configPath, "utf8")).toBe(configAfterFirst);
+      expect(await readFile(profilePath, "utf8")).toBe(profileAfterFirst);
+      // The unchanged second run must not create another backup.
+      expect(await listBackups(join(home, ".codex"))).toBe(1);
+
+      const uninstallFirst = await runWizardUninstall(
+        ["--yes", "--agent", "codex"],
+        home,
+      );
+      expect(uninstallFirst.stderr).toBe("");
+      expect(uninstallFirst.status).toBe(0);
+
+      const uninstallSecond = await runWizardUninstall(
+        ["--yes", "--agent", "codex"],
+        home,
+      );
+      expect(uninstallSecond.stderr).toBe("");
+      expect(uninstallSecond.status).toBe(0);
+      expect(uninstallSecond.stdout).toContain("not configured for codex");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("re-running install and uninstall for opencode is idempotent", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const arguments_ = [
+        "--yes",
+        "--agent",
+        "opencode",
+        "--key",
+        API_KEY,
+        "--model",
+        "z-ai/glm-5.3-flash",
+        "--api-base-url",
+        `http://127.0.0.1:${PORT}`,
+      ];
+      const first = await runWizard(arguments_, home);
+      expect(first.status).toBe(0);
+
+      const configPath = join(home, ".config/opencode/opencode.json");
+      const authPath = join(home, ".local/share/opencode/auth.json");
+      const configAfterFirst = await readFile(configPath, "utf8");
+      const authAfterFirst = await readFile(authPath, "utf8");
+
+      const second = await runWizard(arguments_, home);
+      expect(second.status).toBe(0);
+      expect(second.stdout).toContain(
+        "OpenCode already has the current Gradiated provider",
+      );
+      expect(await readFile(configPath, "utf8")).toBe(configAfterFirst);
+      expect(await readFile(authPath, "utf8")).toBe(authAfterFirst);
+      expect(await listBackups(join(home, ".config/opencode"))).toBe(0);
+
+      const uninstallFirst = await runWizardUninstall(
+        ["--yes", "--agent", "opencode"],
+        home,
+      );
+      expect(uninstallFirst.status).toBe(0);
+
+      const uninstallSecond = await runWizardUninstall(
+        ["--yes", "--agent", "opencode"],
+        home,
+      );
+      expect(uninstallSecond.status).toBe(0);
+      expect(uninstallSecond.stdout).toContain("not configured for opencode");
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("focuses the run on the requested agent when --agent is passed", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const result = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "codex",
+          "--key",
+          API_KEY,
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(result.stderr).toBe("");
+      expect(result.status).toBe(0);
+
+      // Other agents must not appear in the output or on disk. (Detection
+      // itself scaffolds opencode/codex state dirs via their --version
+      // calls, so assert on the configuration files the wizard writes.)
+      expect(result.stdout).not.toMatch(/opencode/i);
+      expect(result.stdout).not.toMatch(/claude/i);
+      expect(existsSync(join(home, ".config/opencode/opencode.json"))).toBe(
+        false,
+      );
+      expect(existsSync(join(home, ".local/share/opencode/auth.json"))).toBe(
+        false,
+      );
+      expect(existsSync(join(home, ".gradiated/bin"))).toBe(false);
+    } finally {
+      await rm(home, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("uninstall with --agent and --dry-run stay scoped and change nothing", async () => {
+    const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
+    try {
+      const install = await runWizard(
+        [
+          "--yes",
+          "--agent",
+          "claude",
+          "--key",
+          API_KEY,
+          "--model",
+          "z-ai/glm-5.3-flash",
+          "--api-base-url",
+          `http://127.0.0.1:${PORT}`,
+        ],
+        home,
+      );
+      expect(install.status).toBe(0);
+
+      // A scoped uninstall of an unconfigured agent removes nothing.
+      const scoped = await runWizardUninstall(
+        ["--yes", "--agent", "opencode"],
+        home,
+      );
+      expect(scoped.status).toBe(0);
+      expect(scoped.stdout).toContain("not configured for opencode");
+      expect(existsSync(join(home, ".gradiated/bin/claude-gradiated"))).toBe(
+        true,
+      );
+
+      // Dry run reports the plan and leaves every file in place.
+      const dry = await runWizardUninstall(["--dry-run"], home);
+      expect(dry.status).toBe(0);
+      expect(dry.stdout).toContain("Would remove");
+      expect(dry.stdout).toContain("Dry run complete. No files were changed.");
+      expect(existsSync(join(home, ".gradiated/bin/claude-gradiated"))).toBe(
+        true,
+      );
+      expect(
+        JSON.parse(
+          await readFile(join(home, ".gradiated/credentials.json"), "utf8"),
+        ),
+      ).toEqual({ api_key: API_KEY });
     } finally {
       await rm(home, { recursive: true, force: true });
     }

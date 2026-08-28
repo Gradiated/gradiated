@@ -106,34 +106,53 @@ child.on("exit", (code, signal) => {
 });
 `;
 
-export const isWrapperInstalled = (): boolean => existsSync(wrapperPath());
+export const isWrapperInstalled = (): boolean =>
+  existsSync(wrapperPath()) || existsSync(wrapperCommandPath());
+
+export interface WrapperInstall {
+  path: string;
+  commandPath: string;
+  /** False when both files already had exactly this content. */
+  changed: boolean;
+}
 
 export const writeWrapper = async (
   baseUrl: string,
   modelId: string,
-): Promise<string> => {
+): Promise<WrapperInstall> => {
   const path = wrapperPath();
-  await mkdir(dirname(path), { recursive: true });
-  // The real launcher is a Node script on every platform; Windows gets an
-  // additional .cmd shim because cmd.exe will not execute extensionless
-  // shebang scripts from PATH.
-  await writeFile(path, wrapperScript(baseUrl, modelId), { mode: 0o755 });
-  await chmod(path, 0o755);
-  if (process.platform === "win32") {
-    await writeFile(
-      wrapperCommandPath(),
-      `@echo off\r\nnode "%~dp0${WRAPPER_NAME}" %*\r\n`,
-      { mode: 0o755 },
-    );
+  const commandPath = wrapperCommandPath();
+  const script = wrapperScript(baseUrl, modelId);
+  const commandContent =
+    process.platform === "win32"
+      ? `@echo off\r\nnode "%~dp0${WRAPPER_NAME}" %*\r\n`
+      : script;
+  const unchanged =
+    existsSync(path) &&
+    existsSync(commandPath) &&
+    (await readFile(path, "utf8")) === script &&
+    (await readFile(commandPath, "utf8")) === commandContent;
+  if (unchanged) {
+    return { path, commandPath, changed: false };
   }
-  return path;
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, script, { mode: 0o755 });
+  await chmod(path, 0o755);
+  // The command on PATH must be extensionless on POSIX: `claude-gradiated`
+  // resolves to that file, and a .js suffix would leave the command missing.
+  // Windows gets a .cmd shim because cmd.exe will not execute extensionless
+  // shebang scripts from PATH.
+  await writeFile(commandPath, commandContent, { mode: 0o755 });
+  await chmod(commandPath, 0o755);
+  return { path, commandPath, changed: true };
 };
 
 export const uninstallWrapper = async (): Promise<string | null> => {
-  const path = wrapperPath();
-  if (!existsSync(path)) return null;
-  await rm(dirname(path), { recursive: true, force: true });
-  return path;
+  if (!existsSync(wrapperPath()) && !existsSync(wrapperCommandPath())) {
+    return null;
+  }
+  await rm(dirname(wrapperPath()), { recursive: true, force: true });
+  return wrapperCommandPath();
 };
 
 const profilePaths = (): string[] =>

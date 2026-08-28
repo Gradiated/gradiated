@@ -147,11 +147,22 @@ export const readConfigDocument = async (
   return parseJsonc(raw);
 };
 
+export interface WriteResult {
+  path: string;
+  /** False when the file already had exactly this content. */
+  changed: boolean;
+}
+
 export const writeConfig = async (
   located: LocatedConfig,
   merged: Record<string, unknown>,
-): Promise<string> => {
+): Promise<WriteResult> => {
+  const serialized = `${JSON.stringify(merged, null, 2)}\n`;
   if (located.existed) {
+    const raw = await readFile(located.path, "utf8");
+    if (raw === serialized) {
+      return { path: located.path, changed: false };
+    }
     const timestamp = new Date()
       .toISOString()
       .replace(/[-:]/g, "")
@@ -159,9 +170,8 @@ export const writeConfig = async (
     await copyFile(located.path, `${located.path}.bak.${timestamp}Z`);
   }
   await mkdir(dirname(located.path), { recursive: true });
-  const serialized = `${JSON.stringify(merged, null, 2)}\n`;
   await writeFile(located.path, serialized, { mode: 0o600 });
-  return located.path;
+  return { path: located.path, changed: true };
 };
 
 export const mergeAuthCredential = async (

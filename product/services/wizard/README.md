@@ -22,14 +22,20 @@ configuration editing, no browser, no card.
    It preserves your existing defaults and other providers.
 5. Stores the key in `~/.gradiated/credentials.json` (0600).
 
+Both install and uninstall are idempotent: re-running install only rewrites
+files that would change (and skips the backup in that case), and re-running
+uninstall after everything is removed is a clean no-op.
+
 ## Agents
 
 - **OpenCode**: full provider with every catalog model. Pick one with
   `/models`.
 - **Codex**: an opt-in `gradiated` provider and profile. Start with
   `codex --profile gradiated`. Your default Codex provider is unchanged.
-- **Claude Code**: a `claude-gradiated` command that runs Claude Code on
-  Gradiated. Your normal `claude` is unchanged. See the
+- **Claude Code**: a `claude-gradiated` command installed to
+  `~/.gradiated/bin` and added to your shell PATH. Open a new terminal (or
+  re-source your profile) after installing. Your normal `claude` is
+  unchanged. See the
   [Claude Code docs](https://gradiated.com/docs/claude-code/).
 
 ## Options
@@ -54,8 +60,9 @@ npx -y @gradiated/wizard uninstall
 The wizard detects which agents have Gradiated configured and lets you
 multiselect what to remove: the OpenCode provider and credential, the Codex
 provider and profile, the Claude Code wrapper and PATH entry, and the stored
-API key. Timestamped backups of every changed file are kept. Your other
-providers are never touched.
+API key. `--agent <name>` scopes detection and output to one agent, and
+`--dry-run` prints the plan without touching anything. Timestamped backups
+of every changed file are kept. Your other providers are never touched.
 
 Your key is stored with owner-only permissions and is never printed. No
 telemetry. Requires Node 18+.

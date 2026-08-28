@@ -79,6 +79,7 @@ export const writeConfig = async (
 ): Promise<{
   configPath: string;
   profilePath: string;
+  changed: boolean;
   backups: string[];
 }> => {
   const configRaw = existsSync(CONFIG_PATH)
@@ -94,22 +95,36 @@ export const writeConfig = async (
     );
   }
 
+  const nextConfig = mergeProviderConfig(
+    configRaw,
+    buildProviderBlock(baseUrl),
+  );
+  const nextProfile = mergeProfileConfig(
+    profileRaw,
+    buildProfileBlock(modelId),
+  );
+  const configChanged = nextConfig !== configRaw;
+  const profileChanged = nextProfile !== profileRaw;
+
   const backups: string[] = [];
-  if (existsSync(CONFIG_PATH)) backups.push(await backupFile(CONFIG_PATH));
-  if (existsSync(PROFILE_PATH)) backups.push(await backupFile(PROFILE_PATH));
+  if (configChanged && existsSync(CONFIG_PATH))
+    backups.push(await backupFile(CONFIG_PATH));
+  if (profileChanged && existsSync(PROFILE_PATH))
+    backups.push(await backupFile(PROFILE_PATH));
 
   await mkdir(dirname(CONFIG_PATH), { recursive: true });
-  await writeFile(
-    CONFIG_PATH,
-    mergeProviderConfig(configRaw, buildProviderBlock(baseUrl)),
-    { mode: 0o600 },
-  );
-  await writeFile(
-    PROFILE_PATH,
-    mergeProfileConfig(profileRaw, buildProfileBlock(modelId)),
-    { mode: 0o600 },
-  );
-  return { configPath: CONFIG_PATH, profilePath: PROFILE_PATH, backups };
+  if (configChanged) {
+    await writeFile(CONFIG_PATH, nextConfig, { mode: 0o600 });
+  }
+  if (profileChanged) {
+    await writeFile(PROFILE_PATH, nextProfile, { mode: 0o600 });
+  }
+  return {
+    configPath: CONFIG_PATH,
+    profilePath: PROFILE_PATH,
+    changed: configChanged || profileChanged,
+    backups,
+  };
 };
 
 export const isInstalled = async (): Promise<boolean> => {

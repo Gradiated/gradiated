@@ -2,7 +2,7 @@
 import { CONSOLE_URL, parseArguments } from "./arguments.js";
 import { resolveAccount } from "./account.js";
 import { fetchCatalog, type CatalogModel } from "./catalog.js";
-import { readStoredKey, storeKey } from "./credentials.js";
+import { readStoredKey, storeKey, clearStoredKey } from "./credentials.js";
 import { HttpError } from "./http.js";
 import { detectAgents } from "./agents/detect.js";
 import * as claude from "./agents/claude.js";
@@ -29,6 +29,9 @@ Commands:
   install      Configure your coding agent (default)
   uninstall    Remove Gradiated from your coding agents
 
+Both commands are safe to run repeatedly; re-running install only rewrites
+files that would change.
+
 Options:
   --signup            Create a new account (skips the menu)
   --login             Log in to an existing account (skips the menu)
@@ -42,7 +45,11 @@ Options:
   --version           Show the version
 `;
 
-const validateCatalogKey = async (
+/**
+ * Fetch the catalog with the candidate key, turning gateway failures into
+ * plain Error messages so they surface cleanly from loading tasks.
+ */
+const loadCatalog = async (
   inferenceBaseUrl: string,
   apiKey: string,
 ): Promise<CatalogModel[]> => {
@@ -50,10 +57,10 @@ const validateCatalogKey = async (
     return await fetchCatalog(inferenceBaseUrl, apiKey);
   } catch (error) {
     if (error instanceof HttpError && error.status === 401) {
-      ui.fail(`The API key was rejected: ${error.message}`);
+      throw new Error(`The API key was rejected: ${error.message}`);
     }
     if (error instanceof HttpError) {
-      ui.fail(
+      throw new Error(
         `Could not fetch the model catalog (${error.status || "network"}): ${error.message}`,
       );
     }
@@ -102,13 +109,15 @@ const resolveKey = async (
     ui.info("Using GRADIATED_API_KEY from the environment.");
     return environmentKey;
   }
+  // An explicit --key wins over the stored credential so re-running with a
+  // different key does what was asked.
+  if (options.key !== undefined) {
+    return options.key;
+  }
   const stored = await readStoredKey();
   if (stored !== null) {
     ui.info("Using the stored key from ~/.gradiated/credentials.json.");
     return stored;
-  }
-  if (options.key !== undefined) {
-    return options.key;
   }
 
   if (options.mode === "login" || options.mode === "signup") {
@@ -150,7 +159,12 @@ const runInstall = async (): Promise<void> => {
 
   ui.intro("Gradiated setup");
 
-  const agents = detectAgents();
+  const detected = detectAgents();
+  // With --agent, keep the whole run focused on that one agent.
+  const agents =
+    options.agent === undefined
+      ? detected
+      : detected.filter((agent) => agent.name === options.agent);
   ui.agentTable(
     agents.map((agent) => ({
       name: agent.name,
@@ -187,13 +201,6 @@ const runInstall = async (): Promise<void> => {
     return;
   }
 
-  const apiKey = await resolveKey(options, targets);
-  const models = await validateCatalogKey(targets.inferenceBaseUrl, apiKey);
-  const model = await pickModel(models, {
-    yes: options.yes,
-    requested: options.model,
-  });
-
   const configureOpenCode = selectedAgents.some(
     (agent) => agent.name === "opencode",
   );
@@ -202,16 +209,28 @@ const runInstall = async (): Promise<void> => {
     (agent) => agent.name === "claude",
   );
 
+  const apiKey = await resolveKey(options, targets);
+
+  let models: CatalogModel[] = [];
+  await ui.runTasks([
+    {
+      title: "Validating the API key and fetching the model catalog",
+      run: async (message) => {
+        message(`Connecting to ${targets.inferenceBaseUrl}…`);
+        models = await loadCatalog(targets.inferenceBaseUrl, apiKey);
+        return `${models.length} model${models.length === 1 ? "" : "s"} available`;
+      },
+    },
+  ]);
+  const model = await pickModel(models, {
+    yes: options.yes,
+    requested: options.model,
+  });
+
   // OpenCode receives the full catalog so /models offers every Gradiated
   // model. Codex receives an opt-in profile for the selected model.
   const openCodeProvider = configureOpenCode
     ? buildProviderBlock(options.inferenceBaseUrl, models)
-    : null;
-  const codexProvider = configureCodex
-    ? codex.buildProviderBlock(options.apiBaseUrl)
-    : null;
-  const codexProfile = configureCodex
-    ? codex.buildProfileBlock(model.id)
     : null;
 
   if (options.dryRun) {
@@ -221,13 +240,19 @@ const runInstall = async (): Promise<void> => {
         "Would write this OpenCode provider",
       );
     }
-    if (codexProvider !== null && codexProfile !== null) {
-      ui.note(codexProvider, `Would merge into ${codex.configPath()}`);
-      ui.note(codexProfile, `Would write ${codex.profilePath()}`);
+    if (configureCodex) {
+      ui.note(
+        codex.buildProviderBlock(options.apiBaseUrl),
+        `Would merge into ${codex.configPath()}`,
+      );
+      ui.note(
+        codex.buildProfileBlock(model.id),
+        `Would write ${codex.profilePath()}`,
+      );
     }
     if (configureClaude) {
       ui.note(
-        `Would write ${claude.wrapperPath()} and add it to PATH`,
+        `Would write ${claude.wrapperCommandPath()} and add it to PATH`,
         "Claude Code wrapper",
       );
     }
@@ -235,83 +260,127 @@ const runInstall = async (): Promise<void> => {
     return;
   }
 
-  if (openCodeProvider !== null) {
-    const located = locateConfig();
-    const document = await readConfigDocument(located);
-    const { document: merged, defaultModel } = mergeProvider(
-      document,
-      openCodeProvider,
-    );
-    const configPath = await writeConfig(located, merged);
-    ui.success(
-      `Wrote the Gradiated provider to ${configPath}` +
-        (defaultModel !== null ? ` (default model: ${defaultModel})` : ""),
-    );
-  }
-
-  if (codexProvider !== null) {
-    const written = await codex.writeConfig(options.apiBaseUrl, model.id);
-    ui.success(`Wrote the Gradiated Codex provider to ${written.configPath}.`);
-    ui.success(`Wrote the Gradiated Codex profile to ${written.profilePath}.`);
-  }
-
-  await storeKey(apiKey);
-  ui.success("Stored the key in ~/.gradiated/credentials.json (0600).");
-
-  if (configureOpenCode) {
-    const authWritten = await mergeAuthCredential(apiKey);
-    if (authWritten !== null) {
-      ui.success(`Stored the credential for OpenCode in ${authWritten}.`);
-    }
-  }
-
+  const changes: string[] = [];
   let claudePathUpdated: string[] = [];
-  if (configureClaude) {
-    const wrapper = await claude.writeWrapper(options.apiBaseUrl, model.id);
-    ui.success(`Installed the claude-gradiated wrapper at ${wrapper}.`);
-    claudePathUpdated = await claude.addWrapperToPath();
+  let claudeWrapperPath: string | null = null;
+
+  await ui.runTasks([
+    {
+      title: "Storing the API key",
+      run: async () => {
+        const path = await storeKey(apiKey);
+        return `Stored the key in ${path} (0600)`;
+      },
+    },
+    {
+      title: "Configuring OpenCode",
+      enabled: configureOpenCode,
+      run: async () => {
+        if (openCodeProvider === null) return;
+        const located = locateConfig();
+        const document = await readConfigDocument(located);
+        const { document: merged, defaultModel } = mergeProvider(
+          document,
+          openCodeProvider,
+        );
+        const written = await writeConfig(located, merged);
+        const authWritten = await mergeAuthCredential(apiKey);
+        if (!written.changed) {
+          return "OpenCode already has the current Gradiated provider";
+        }
+        changes.push(
+          `OpenCode provider in ${written.path}` +
+            (defaultModel !== null ? ` (default model: ${defaultModel})` : ""),
+        );
+        if (authWritten !== null) {
+          changes.push(`OpenCode credential in ${authWritten}`);
+        }
+        return `Wrote the Gradiated provider to ${written.path}`;
+      },
+    },
+    {
+      title: "Configuring Codex",
+      enabled: configureCodex,
+      run: async () => {
+        const written = await codex.writeConfig(options.apiBaseUrl, model.id);
+        if (!written.changed) {
+          return "Codex already has the current Gradiated provider";
+        }
+        changes.push(`Codex provider in ${written.configPath}`);
+        changes.push(`Codex profile in ${written.profilePath}`);
+        return "Wrote the Gradiated provider and gradiated profile to ~/.codex";
+      },
+    },
+    {
+      title: "Installing the claude-gradiated wrapper",
+      enabled: configureClaude,
+      run: async () => {
+        const wrapper = await claude.writeWrapper(options.apiBaseUrl, model.id);
+        claudePathUpdated = await claude.addWrapperToPath();
+        if (!wrapper.changed) {
+          return "claude-gradiated is already installed";
+        }
+        claudeWrapperPath = wrapper.path;
+        return `Installed ${wrapper.commandPath}`;
+      },
+    },
+  ]);
+
+  if (configureClaude && claudeWrapperPath !== null) {
+    changes.push(`claude-gradiated wrapper in ${claudeWrapperPath}`);
     if (claudePathUpdated.length > 0) {
-      ui.success(
-        `Added ~/.gradiated/bin to PATH in ${claudePathUpdated.join(", ")}.`,
-      );
+      changes.push(`PATH entry in ${claudePathUpdated.join(", ")}`);
     } else if (!(await claude.hasWrapperOnPath())) {
       ui.warn(
         `Add this to your shell profile to use the wrapper:\n  export PATH="$HOME/.gradiated/bin:$PATH"`,
       );
-    } else {
-      ui.success("PATH already contains the Gradiated wrapper directory.");
     }
   }
 
-  const modelsLine = models.map((entry) => entry.name).join(", ");
-  const nextSteps = [
-    ...(configureOpenCode
-      ? [
-          `OpenCode:\n  opencode\nThen use /models to switch between ${modelsLine}.`,
-        ]
-      : []),
-    ...(configureCodex
-      ? [
-          "Codex:\n  codex --profile gradiated\nUse -m <model-id> to select another Gradiated model.",
-        ]
-      : []),
-    ...(configureClaude
-      ? [
-          "Claude Code:\n  claude-gradiated\nYour normal `claude` is unchanged.\n  /model <id>                      switch models in a session\n  ANTHROPIC_MODEL=<id> claude-gradiated   override for one run\nNote: Claude Pro/Max login does not work through a custom gateway —\nclaude-gradiated is for Anthropic API-key setups.",
-        ]
-      : []),
-  ].join("\n\n");
   const agentNames = selectedAgents.map((agent) => agent.name).join(" and ");
+  const modelsLine = models.map((entry) => entry.name).join(", ");
+  const nextSteps: string[] = [];
+  if (configureOpenCode) {
+    nextSteps.push(
+      `OpenCode: run \`opencode\` — /models switches between ${modelsLine}`,
+    );
+  }
+  if (configureCodex) {
+    nextSteps.push(
+      "Codex: run `codex --profile gradiated` — add `-m <model-id>` for another Gradiated model",
+    );
+  }
+  if (configureClaude) {
+    const claudeLines = [
+      claudePathUpdated.length > 0
+        ? "Claude Code: open a new terminal so the updated PATH applies, then run `claude-gradiated`"
+        : "Claude Code: run `claude-gradiated`",
+      "    your normal `claude` is unchanged; /model <id> switches models in a session",
+      "    ANTHROPIC_MODEL=<id> claude-gradiated overrides the model for one run",
+      "    note: Claude Pro/Max login does not work through a custom gateway —",
+      "    claude-gradiated is for Anthropic API-key setups",
+    ];
+    nextSteps.push(claudeLines.join("\n"));
+  }
+
+  if (changes.length === 0) {
+    ui.outro(
+      `Gradiated was already configured for ${agentNames}. No files were changed.\n\n` +
+        `Next steps:\n  ${nextSteps.join("\n  \n  ")}\n\n` +
+        "Docs: https://gradiated.com/docs",
+    );
+    return;
+  }
+
   ui.outro(
-    `Ready. Gradiated is configured for ${agentNames}.\n\n${nextSteps}\n\nAffordable inference for open-weight models — https://gradiated.com/docs`,
+    `Ready. Gradiated is configured for ${agentNames}.\n\n` +
+      `Changed:\n${changes.map((entry) => `  - ${entry}`).join("\n")}\n\n` +
+      `Next steps:\n  ${nextSteps.join("\n  \n  ")}\n\n` +
+      "Affordable inference for open-weight models — https://gradiated.com/docs",
   );
 };
 
 type UninstallTarget = "opencode" | "codex" | "claude" | "key";
-
-interface UninstallSelection {
-  targets: readonly UninstallTarget[];
-}
 
 const detectUninstallTargets = async (): Promise<UninstallTarget[]> => {
   const present: UninstallTarget[] = [];
@@ -327,7 +396,19 @@ const runUninstall = async (): Promise<void> => {
   ui.intro("Gradiated uninstall");
 
   const present = await detectUninstallTargets();
-  if (present.length === 0) {
+  // With --agent, only consider that agent and keep other findings out of
+  // the output entirely.
+  const scoped =
+    options.agent === undefined
+      ? present
+      : present.filter((target) => target === options.agent);
+  if (options.agent !== undefined && scoped.length === 0) {
+    ui.outro(
+      `Gradiated is not configured for ${options.agent}. Nothing to remove.`,
+    );
+    return;
+  }
+  if (scoped.length === 0) {
     ui.outro("No Gradiated configuration was found. Nothing to remove.");
     return;
   }
@@ -352,18 +433,12 @@ const runUninstall = async (): Promise<void> => {
   };
 
   let selection: readonly UninstallTarget[];
-  const preset =
-    options.agent !== undefined
-      ? present.filter((target) => target === options.agent)
-      : present;
-  if (options.yes) {
-    selection = preset;
-  } else if (options.dryRun) {
-    selection = present;
+  if (options.yes || options.dryRun) {
+    selection = scoped;
   } else {
     selection = await ui.selectMany<UninstallTarget>(
       "Which agents should Gradiated be removed from?",
-      present.map((target) => ({
+      scoped.map((target) => ({
         value: target,
         label: labels[target].label,
         hint: labels[target].hint,
@@ -381,47 +456,89 @@ const runUninstall = async (): Promise<void> => {
       return;
     }
   }
-  const confirmed: UninstallSelection = { targets: selection };
+
+  if (options.dryRun) {
+    ui.note(
+      selection.map((target) => labels[target].label).join("\n"),
+      "Would remove",
+    );
+    ui.outro("Dry run complete. No files were changed.");
+    return;
+  }
 
   const removed: string[] = [];
-  for (const target of confirmed.targets) {
-    if (target === "opencode") {
-      const configPath = await uninstallOpenCodeConfig();
-      const authPath = await uninstallAuthCredential();
-      if (configPath !== null) removed.push(`OpenCode config (${configPath})`);
-      if (authPath !== null) removed.push(`OpenCode credential (${authPath})`);
-    }
-    if (target === "codex") {
-      const configRemoved = await codex.uninstallConfig();
-      const profileRemoved = await codex.uninstallProfile();
-      const authRemoved = await codex.removeAuth();
-      if (configRemoved) removed.push(`Codex provider (${codex.configPath()})`);
-      if (profileRemoved)
-        removed.push(`Codex profile (${codex.profilePath()})`);
-      if (authRemoved) removed.push(`Codex credential (${codex.authPath()})`);
-    }
-    if (target === "claude") {
-      const wrapperPath = await claude.uninstallWrapper();
-      const profilesUpdated = await claude.removeWrapperFromPath();
-      if (wrapperPath !== null)
-        removed.push(`claude-gradiated wrapper (${wrapperPath})`);
-      for (const profile of profilesUpdated) {
-        removed.push(`PATH entry (${profile})`);
-      }
-    }
-    if (target === "key") {
-      const { clearStoredKey } = await import("./credentials.js");
-      const path = await clearStoredKey();
-      if (path !== null) removed.push(`Stored key (${path})`);
-    }
-  }
+  await ui.runTasks([
+    {
+      title: "Removing the OpenCode provider",
+      enabled: selection.includes("opencode"),
+      run: async () => {
+        const configPath = await uninstallOpenCodeConfig();
+        const authPath = await uninstallAuthCredential();
+        if (configPath !== null)
+          removed.push(`OpenCode config (${configPath})`);
+        if (authPath !== null)
+          removed.push(`OpenCode credential (${authPath})`);
+        if (configPath === null && authPath === null) return "Nothing found";
+        return `Removed from ${configPath ?? authPath}`;
+      },
+    },
+    {
+      title: "Removing the Codex provider",
+      enabled: selection.includes("codex"),
+      run: async () => {
+        const configRemoved = await codex.uninstallConfig();
+        const profileRemoved = await codex.uninstallProfile();
+        const authRemoved = await codex.removeAuth();
+        if (configRemoved)
+          removed.push(`Codex provider (${codex.configPath()})`);
+        if (profileRemoved)
+          removed.push(`Codex profile (${codex.profilePath()})`);
+        if (authRemoved) removed.push(`Codex credential (${codex.authPath()})`);
+        if (!configRemoved && !profileRemoved && !authRemoved)
+          return "Nothing found";
+        return `Removed ${[configRemoved, profileRemoved, authRemoved].filter(Boolean).length} file(s) from ~/.codex`;
+      },
+    },
+    {
+      title: "Removing the claude-gradiated wrapper",
+      enabled: selection.includes("claude"),
+      run: async () => {
+        const wrapperPath = await claude.uninstallWrapper();
+        const profilesUpdated = await claude.removeWrapperFromPath();
+        if (wrapperPath !== null)
+          removed.push(`claude-gradiated wrapper (${wrapperPath})`);
+        for (const profile of profilesUpdated) {
+          removed.push(`PATH entry (${profile})`);
+        }
+        if (wrapperPath === null && profilesUpdated.length === 0)
+          return "Nothing found";
+        return "Removed the wrapper and PATH entry";
+      },
+    },
+    {
+      title: "Removing the stored API key",
+      enabled: selection.includes("key"),
+      run: async () => {
+        const path = await clearStoredKey();
+        if (path !== null) removed.push(`Stored key (${path})`);
+        return path !== null ? `Cleared ${path}` : "Nothing found";
+      },
+    },
+  ]);
 
   if (removed.length === 0) {
     ui.outro("Nothing to remove for the selected agents.");
     return;
   }
+  const backupNote = removed.some(
+    (entry) => entry.startsWith("Codex") || entry.startsWith("OpenCode"),
+  )
+    ? "Backups (.bak.<timestamp>) were kept next to each modified config file. "
+    : "";
   ui.outro(
-    `Removed Gradiated configuration from:\n${removed.map((entry) => `  - ${entry}`).join("\n")}\n\nBackups with a .bak timestamp were kept next to each changed file.`,
+    `Removed Gradiated configuration from:\n${removed.map((entry) => `  - ${entry}`).join("\n")}\n\n` +
+      `${backupNote}Your other providers and settings are untouched. The claude-gradiated\n` +
+      "wrapper comes back if you run the wizard again.",
   );
 };
 
@@ -432,7 +549,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("0.2.2");
+    console.log("1.0.0");
     return;
   }
   if (parsed.command === "uninstall") {

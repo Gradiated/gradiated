@@ -3,12 +3,15 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import { SiteLayout } from "./components/SiteLayout";
 import { WaitlistDialog } from "./components/WaitlistDialog";
+import { jobs } from "./careers";
 import { ArticlePage } from "./pages/ArticlePage";
 import { AcceptableUsePage } from "./pages/AcceptableUsePage";
+import { CareersPage } from "./pages/CareersPage";
 import { DocsPage } from "./pages/DocsPage";
 import { DpaPage } from "./pages/DpaPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { HomePage } from "./pages/HomePage";
+import { JobPage } from "./pages/JobPage";
 import { LibraryPage } from "./pages/LibraryPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { NotesPage } from "./pages/NotesPage";
@@ -74,6 +77,31 @@ export const App = (): ReactElement => {
             </LayoutRoute>
           }
         />
+        <Route
+          path="/careers/"
+          element={
+            <LayoutRoute
+              title="Careers — Gradiated"
+              description="Build inference software and silicon at Gradiated."
+            >
+              <CareersPage />
+            </LayoutRoute>
+          }
+        />
+        {jobs.map((job) => (
+          <Route
+            key={job.slug}
+            path={`/careers/${job.slug}/`}
+            element={
+              <LayoutRoute
+                title={`${job.title} — Gradiated`}
+                description={job.summary}
+              >
+                <JobPage job={job} />
+              </LayoutRoute>
+            }
+          />
+        ))}
         <Route
           path="/notes/"
           element={

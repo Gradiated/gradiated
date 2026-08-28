@@ -73,7 +73,7 @@ export const HomePage = (): ReactElement => (
             <b className={`${newsCtaClass} border-accent`}>Read note →</b>
           </div>
         </Link>
-        <Link className={newsLinkClass} to="/notes/working-with-us/">
+        <Link className={newsLinkClass} to="/careers/">
           <div className={`${newsCopyClass} max-site:order-2`}>
             <div>
               <p className={`${newsDateClass} text-earth`}>15 July 2026</p>
@@ -82,7 +82,7 @@ export const HomePage = (): ReactElement => (
                 We are hiring founding engineers.
               </span>
             </div>
-            <b className={`${newsCtaClass} border-earth`}>Read note →</b>
+            <b className={`${newsCtaClass} border-earth`}>View roles →</b>
           </div>
           <img
             className={`${newsImageClass} border-l border-line max-site:order-1 max-site:border-l-0`}

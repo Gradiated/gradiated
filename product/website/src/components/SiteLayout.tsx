@@ -13,12 +13,14 @@ type SiteLayoutProps = {
 
 const SiteHeader = (): ReactElement => {
   const location = useLocation();
-  const active = location.pathname.startsWith("/docs")
-    ? "docs"
-    : location.pathname.startsWith("/library") ||
-        location.pathname.startsWith("/notes")
-      ? "library"
-      : "home";
+  const active = location.pathname.startsWith("/careers")
+    ? "careers"
+    : location.pathname.startsWith("/docs")
+      ? "docs"
+      : location.pathname.startsWith("/library") ||
+          location.pathname.startsWith("/notes")
+        ? "library"
+        : "home";
 
   return (
     <header className="mx-auto flex h-[76px] max-w-content items-center border-b border-line px-7 max-site:h-[72px] max-site:flex-nowrap max-site:gap-0 max-site:px-5">
@@ -36,8 +38,8 @@ const SiteHeader = (): ReactElement => {
         />
         gradiated
       </Link>
-      <nav className="ml-10 flex flex-1 items-center font-libre text-label font-medium uppercase tracking-label max-site:ml-4">
-        <div className="flex items-center gap-7 text-left max-site:gap-4">
+      <nav className="ml-10 flex flex-1 items-center font-libre text-label font-medium uppercase tracking-label max-site:ml-3">
+        <div className="flex items-center gap-7 text-left max-site:gap-3">
           <Link
             className={`transition-colors hover:text-accent max-site:hidden ${active === "home" ? "text-ink" : "text-muted"}`}
             to="/"
@@ -56,8 +58,14 @@ const SiteHeader = (): ReactElement => {
           >
             Library
           </Link>
+          <Link
+            className={`transition-colors hover:text-accent ${active === "careers" ? "text-ink" : "text-muted"}`}
+            to="/careers/"
+          >
+            Careers
+          </Link>
         </div>
-        <div className="ml-auto flex items-center justify-end gap-7 max-site:gap-5">
+        <div className="ml-auto flex items-center justify-end gap-7 max-site:gap-3">
           <a
             className="border-b border-current pb-0.5 text-muted transition-colors hover:text-accent max-site:hidden"
             href="https://cal.com/jsgradiated/30min"
@@ -66,7 +74,7 @@ const SiteHeader = (): ReactElement => {
             Book a call
           </a>
           <a
-            className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper"
+            className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-site:px-3"
             href="https://console.gradiated.com/"
             rel="noreferrer"
           >
@@ -93,10 +101,16 @@ const SiteFooter = (): ReactElement => (
       <ThemeToggle />
     </div>
     <nav className="grid grid-cols-2 gap-x-10 gap-y-4 max-site:grid-cols-1 max-site:content-start max-site:justify-items-start">
-      <Link className="text-ink transition-colors hover:text-accent" to="/privacy/">
+      <Link
+        className="text-ink transition-colors hover:text-accent"
+        to="/privacy/"
+      >
         Privacy
       </Link>
-      <Link className="text-ink transition-colors hover:text-accent" to="/terms/">
+      <Link
+        className="text-ink transition-colors hover:text-accent"
+        to="/terms/"
+      >
         Terms
       </Link>
       <Link
@@ -107,6 +121,12 @@ const SiteFooter = (): ReactElement => (
       </Link>
       <Link className="text-ink transition-colors hover:text-accent" to="/dpa/">
         DPA
+      </Link>
+      <Link
+        className="text-ink transition-colors hover:text-accent"
+        to="/careers/"
+      >
+        Careers
       </Link>
       <Link
         className="text-ink transition-colors hover:text-accent"

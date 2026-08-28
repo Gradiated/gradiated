@@ -58,6 +58,7 @@ The rewrite keeps React Router routes working after a direct page load.
 
 - `src/components/` contains shared site components.
 - `src/pages/` contains route-level pages.
+- `src/careers.ts` contains the public job descriptions and role metadata.
 - `src/docs/` contains the public MDX documentation.
 - `src/content.tsx` contains article content.
 - `public/` contains files served without transformation.
@@ -65,6 +66,12 @@ The rewrite keeps React Router routes working after a direct page load.
 
 The docs use MDX compiled by Vite. Add a page to `src/docs/`, register its route
 and navigation entry in `src/pages/DocsPage.tsx`, then run `pnpm build`.
+
+The careers index is at `/careers/`. Each job in `src/careers.ts` generates a
+route under `/careers/<slug>/`. The shared page structure, compensation text,
+work schedule, interview process, and application link are in
+`src/pages/JobPage.tsx`. Applications use `team@gradiated.com` and do not need
+an external service.
 
 The home page service-tier section keeps tier names, discount values, and
 descriptions in `src/components/ServiceTierSection.tsx`. Update that table when

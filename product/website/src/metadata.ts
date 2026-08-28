@@ -84,11 +84,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Choose a Gradiated service tier for your latency and cost requirements.",
   },
-  "/docs/parameters/": {
-    title: "Parameters and model support",
-    description:
-      "Review the request parameters and model behavior that Gradiated supports.",
-  },
   "/docs/errors/": {
     title: "Errors, limits, and retries",
     description: "Handle Gradiated API errors, limits, and retries.",

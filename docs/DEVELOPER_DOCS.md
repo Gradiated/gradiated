@@ -25,7 +25,6 @@ The docs use these groups:
    - OpenAI SDK
    - Anthropic SDK
    - Service tiers
-   - Parameters and model support
    - Errors, limits, and retries
 3. Integrations
    - OpenCode

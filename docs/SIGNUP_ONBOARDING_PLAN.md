@@ -321,7 +321,7 @@ the future signup-protections decision record (section 4), not by this work.
   mechanism, not a runtime flag.
 - Work order (each its own reviewed PR):
   1. SES production access request (long lead time — start it first).
-  2. email-otp plugin in `auth.ts` + OTP sender + test transport.
+x  2. email-otp plugin in `auth.ts` + OTP sender + test transport.
   3. Org-creation signup-credit hook (shared logic; console and wizard both
      inherit) + Valkey projection (reuses existing helpers).
   4. Wizard wrapper routes + Zod schemas + generated clients + Rust fixtures.

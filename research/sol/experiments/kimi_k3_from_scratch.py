@@ -647,13 +647,22 @@ def append_kv_cache(
     Concatenate each old cache with its new values along the token axis.
     """
 
-    if key_cache.size[0] != value_cache.size[0]:
+    if key_cache.shape[0] != value_cache.shape[0]:
         raise ValueError("key_cache and value_cache must have the same T_past dimension")
 
-    if new_key.size
+    if new_key.shape[0] != new_value.shape[0]:
+        raise ValueError("new_key and new_value must have the same T_new dimension")
 
-    raise NotImplementedError("Implement exercise 7f")
+    if key_cache.shape[1] != new_key.shape[1]:
+        raise ValueError("key_cache and new_key must have the same H_key dimension")
 
+    if value_cache.shape[1] != new_value.shape[1]:
+        raise ValueError("value_cache and new_value must have the same H_value dimension")
+
+    key_cache = np.concatenate([key_cache, new_key], axis=0)
+    value_cache = np.concatenate([value_cache, new_value], axis=0)
+
+    return key_cache, value_cache
 
 def check_append_kv_cache() -> None:
     key_cache = np.array([[1.0, 2.0]])
@@ -686,6 +695,80 @@ def check_append_kv_cache() -> None:
     assert actual_value_cache.shape == (2, 3)
 
 
+def cached_self_attention_step(
+    x_new: Tensor,
+    key_cache: Tensor,
+    value_cache: Tensor,
+    query_weight: Tensor,
+    key_weight: Tensor,
+    value_weight: Tensor,
+    output_weight: Tensor,
+) -> tuple[Tensor, Tensor, Tensor]:
+    """Apply self-attention for one new token and update its KV cache.
+
+    The equations are:
+
+        query = linear(x_new, query_weight)
+        new_key = linear(x_new, key_weight)
+        new_value = linear(x_new, value_weight)
+        key_cache, value_cache = append_kv_cache(...)
+        scores = scaled_attention_scores(query, key_cache)
+        weights = softmax(scores)
+        context = attention_context(weights, value_cache)
+        output = linear(context, output_weight)
+
+    A causal mask is not required. The cache contains only past tokens and the
+    current token. It does not contain future tokens.
+
+    Exercise 7g:
+    Check that x_new contains exactly one token.
+    Implement the equations by calling the functions you already wrote.
+    Return output, the updated key cache, and the updated value cache.
+    """
+
+    if x_new.shape[0] != 1:
+        raise ValueError("x_new must contain exactly one token")
+
+    query = linear(x_new, query_weight)
+    new_key = linear(x_new, key_weight)
+    new_value = linear(x_new, value_weight)
+    key_cache, value_cache = append_kv_cache()
+
+    raise NotImplementedError("Implement exercise 7g")
+
+
+def check_cached_self_attention_step() -> None:
+    x_new = np.array([[0.0, 1.0]])
+    key_cache = np.array([[1.0, 0.0]])
+    value_cache = np.array([[1.0, 0.0]])
+    identity = np.eye(2)
+
+    expected_output = np.array(
+        [[0.330238450673343, 0.669761549326657]]
+    )
+    expected_key_cache = np.array(
+        [
+            [1.0, 0.0],
+            [0.0, 1.0],
+        ]
+    )
+    expected_value_cache = expected_key_cache.copy()
+
+    output, updated_key_cache, updated_value_cache = cached_self_attention_step(
+        x_new,
+        key_cache,
+        value_cache,
+        query_weight=identity,
+        key_weight=identity,
+        value_weight=identity,
+        output_weight=identity,
+    )
+    np.testing.assert_allclose(output, expected_output)
+    np.testing.assert_allclose(updated_key_cache, expected_key_cache)
+    np.testing.assert_allclose(updated_value_cache, expected_value_cache)
+    assert output.shape == x_new.shape
+
+
 def main() -> None:
     check_linear()
     print("PASS exercise 1: linear projection")
@@ -711,6 +794,8 @@ def main() -> None:
     print("PASS exercise 7e: complete causal self-attention")
     check_append_kv_cache()
     print("PASS exercise 7f: append KV cache")
+    check_cached_self_attention_step()
+    print("PASS exercise 7g: cached self-attention step")
 
 
 if __name__ == "__main__":

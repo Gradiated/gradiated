@@ -26,7 +26,6 @@ import DocsIndex from "../docs/index.mdx";
 import DocsModelsPricing from "../docs/models-pricing.mdx";
 import DocsOpenAiSdk from "../docs/openai-sdk.mdx";
 import DocsOpenCode from "../docs/opencode.mdx";
-import DocsParameters from "../docs/parameters.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
 
@@ -67,11 +66,6 @@ const documents = {
     path: "/docs/service-tiers/",
     Component: DocsServiceTiers,
   },
-  parameters: {
-    title: "Parameters and model support",
-    path: "/docs/parameters/",
-    Component: DocsParameters,
-  },
   errors: {
     title: "Errors, limits, and retries",
     path: "/docs/errors/",
@@ -108,13 +102,7 @@ const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
   },
   {
     heading: "Inference",
-    items: [
-      "openai-sdk",
-      "anthropic-sdk",
-      "service-tiers",
-      "parameters",
-      "errors",
-    ],
+    items: ["openai-sdk", "anthropic-sdk", "service-tiers", "errors"],
   },
   { heading: "Integrations", items: ["opencode", "codex", "claude-code"] },
   { heading: "Reference", items: ["api-reference"] },

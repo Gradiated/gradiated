@@ -116,10 +116,9 @@ curl https://api.gradiated.com/v1/chat/completions \
 
 Both SDKs use `https://api.gradiated.com` as the base URL. Choose a model from [models and pricing](/docs/models-pricing/) and replace `YOUR_MODEL` with your choice.
 
-Store the key as `GRADIATED_API_KEY` in your server environment. Never include it in browser or mobile application code.
+Store the key as an environment variable named `GRADIATED_API_KEY` in your server environment. Never include it in browser or mobile application code.
 
 ## Next steps
 
 - Tune latency and cost with [service tiers](/docs/service-tiers/).
 - See the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/) guide for streaming and tool calling.
-- Check [parameters and model support](/docs/parameters/) before you deploy.

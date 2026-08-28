@@ -432,7 +432,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("0.2.1");
+    console.log("0.2.2");
     return;
   }
   if (parsed.command === "uninstall") {

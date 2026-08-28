@@ -171,7 +171,7 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
             <ol className="m-0 list-none space-y-4 p-0">
               {interviewSteps.map((step, index) => (
                 <li
-                  className="grid grid-cols-[32px_minmax(0,1fr)] items-baseline gap-3"
+                  className="grid grid-cols-[32px_minmax(0,1fr)] items-center gap-3"
                   key={step}
                 >
                   <span

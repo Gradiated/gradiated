@@ -68,10 +68,10 @@ export const jobs: Job[] = [
     team: "Silicon",
     location: "Bristol, London",
     summary:
-      "Define our silicon direction and build a hands-on team for model-specific inference hardware.",
+      "Define our silicon direction and build a team for model-specific inference hardware.",
     purpose: [
-      "Inference hardware must start with the models and workloads that it will run. It cannot start with a generic accelerator diagram.",
-      "You will turn measured software behavior into a silicon strategy. You will own the technical direction and build the team that delivers it.",
+      "This will be our first silicon hire, we do not yet have a fixed micro-architecture. Your first job will be to work with the inference research team to understand the models we want to serve, and the current hardware bottlenecks.",
+      "You will build performance models and decide which ideas are worth pursuing. As the direction becomes clear, you will turn that into a silicon roadmap. You will then build and lead the team that takes the architecture through implementation, tape-out, and bring-up",
     ],
     responsibilities: [
       "Define the silicon strategy from measured model and workload behavior.",

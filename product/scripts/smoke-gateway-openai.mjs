@@ -5,8 +5,7 @@ if (!apiKey) {
   throw new Error("GRADIATED_API_KEY is required");
 }
 
-const baseURL =
-  process.env.GRADIATED_BASE_URL ?? "https://api.gradiated.com";
+const baseURL = process.env.GRADIATED_BASE_URL ?? "https://api.gradiated.com";
 const requestedModel = process.env.GRADIATED_MODEL;
 const prompt = "Reply with exactly: production-chat-ready";
 const client = new OpenAI({ apiKey, baseURL });

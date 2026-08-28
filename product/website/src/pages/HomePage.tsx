@@ -73,6 +73,25 @@ export const HomePage = (): ReactElement => (
             <b className={`${newsCtaClass} border-accent`}>Read note →</b>
           </div>
         </Link>
+        <Link
+          className="group mt-10 grid grid-cols-[minmax(0,1fr)_auto] items-end gap-8 border-y border-ink py-8 text-ink transition-colors hover:text-accent max-site:grid-cols-1 max-site:gap-8"
+          to="/careers/"
+        >
+          <div>
+            <p className="mb-5 font-libre text-label font-medium uppercase tracking-label text-earth">
+              Careers
+            </p>
+            <h2 className="m-0 font-newsreader text-[clamp(42px,4.7vw,64px)] font-normal leading-[0.95] tracking-[-0.04em]">
+              We are hiring.
+            </h2>
+            <p className="mb-0 mt-4 text-sm text-muted">
+              Founding roles in inference software and silicon.
+            </p>
+          </div>
+          <b className="justify-self-end border-b border-earth pb-[5px] font-libre text-label font-medium uppercase tracking-label max-site:justify-self-start">
+            View roles →
+          </b>
+        </Link>
       </div>
     </section>
   </main>

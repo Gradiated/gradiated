@@ -437,16 +437,18 @@ const DocsContent = (): ReactElement => {
         aria-label="Documentation"
       >
         <Link
-          className="mb-8 inline-block border-b border-ink pb-1 text-ink"
+          className="mb-8 inline-block border-b border-ink pb-1 text-ink max-[800px]:hidden"
           to="/"
         >
           ← Gradiated
         </Link>
-        <DocsAccount />
+        <div className="max-[800px]:hidden">
+          <DocsAccount />
+        </div>
         <div className="mt-8 hidden min-[801px]:block">
           <DocsNavigation current={key} />
         </div>
-        <details className="mt-7 min-[801px]:hidden">
+        <details className="mt-7 min-[801px]:hidden max-[800px]:mt-0">
           <summary className="cursor-pointer text-[10px] uppercase tracking-label text-ink">
             Browse docs
           </summary>

@@ -65,6 +65,8 @@ const setStructuredData = (data: object[]): void => {
 const SiteHeader = (): ReactElement => {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const mobileMenuLinkClass =
+    "border-b border-line py-3 text-ink transition-colors last:border-b-0 hover:text-accent";
   const active = location.pathname.startsWith("/careers")
     ? "careers"
     : location.pathname.startsWith("/docs")
@@ -102,7 +104,7 @@ const SiteHeader = (): ReactElement => {
             Home
           </Link>
           <Link
-            className={`transition-colors hover:text-accent ${active === "docs" ? "text-ink" : "text-muted"}`}
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "docs" ? "text-ink" : "text-muted"}`}
             to="/docs/"
           >
             Docs
@@ -114,7 +116,7 @@ const SiteHeader = (): ReactElement => {
             Library
           </Link>
           <Link
-            className={`transition-colors hover:text-accent ${active === "careers" ? "text-ink" : "text-muted"}`}
+            className={`transition-colors hover:text-accent max-[850px]:hidden ${active === "careers" ? "text-ink" : "text-muted"}`}
             to="/careers/"
           >
             Careers
@@ -168,7 +170,7 @@ const SiteHeader = (): ReactElement => {
             { label: "Careers", to: "/careers/" },
           ].map((item) => (
             <Link
-              className="border-b border-line py-3 text-ink transition-colors last:border-b-0 hover:text-accent"
+              className={mobileMenuLinkClass}
               key={item.to}
               onClick={() => setMenuOpen(false)}
               to={item.to}
@@ -177,11 +179,18 @@ const SiteHeader = (): ReactElement => {
             </Link>
           ))}
           <a
-            className="pt-3 text-muted transition-colors hover:text-accent"
+            className={mobileMenuLinkClass}
             href="https://cal.com/jsgradiated/30min"
             rel="noreferrer"
           >
-            Book a call
+            Book a demo
+          </a>
+          <a
+            className={mobileMenuLinkClass}
+            href="https://console.gradiated.com/"
+            rel="noreferrer"
+          >
+            Log in
           </a>
         </nav>
       )}

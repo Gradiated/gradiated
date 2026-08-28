@@ -72,12 +72,12 @@ export const LoginPage = () => {
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-muted p-6 md:p-10">
-      <div className="w-full max-w-sm md:max-w-4xl">
+      <div className="w-full max-w-sm">
         <div className="mb-6">
           <Brand />
         </div>
         <Card className="overflow-hidden p-0 shadow-xl shadow-black/5">
-          <CardContent className="grid p-0 md:grid-cols-2">
+          <CardContent className="p-0">
             <form className="p-6 md:p-9" onSubmit={form.handleSubmit(submit)}>
               <FieldGroup>
                 <div className="flex flex-col items-center gap-2 text-center">
@@ -180,24 +180,6 @@ export const LoginPage = () => {
                 ) : null}
               </FieldGroup>
             </form>
-            <div className="relative hidden min-h-[520px] overflow-hidden bg-[#181914] text-white md:block">
-              <div className="absolute inset-0 bg-[radial-gradient(circle_at_75%_20%,rgba(215,243,110,0.18),transparent_28%),linear-gradient(145deg,transparent_42%,rgba(255,255,255,0.04)_42%)]" />
-              <div className="absolute -bottom-28 -right-24 size-96 rounded-full border border-[#d7f36e]/30" />
-              <div className="absolute -bottom-10 right-24 size-52 rounded-full border border-white/10" />
-              <div className="relative flex h-full flex-col p-9">
-                <div className="mt-auto space-y-4">
-                  <p className="text-3xl font-medium leading-tight tracking-[-0.035em]">
-                    Infrastructure that makes every token count.
-                  </p>
-                  <p className="max-w-sm text-sm leading-6 text-white/55">
-                    Deploy optimized open-weight models at the lowest cost.
-                  </p>
-                </div>
-                <p className="mt-12 font-mono text-[10px] text-white/35">
-                  gradiated.com
-                </p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

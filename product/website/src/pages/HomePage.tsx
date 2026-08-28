@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import { ServiceTierSection } from "../components/ServiceTierSection";
@@ -33,15 +34,22 @@ export const HomePage = (): ReactElement => (
             href="https://console.gradiated.com/"
           >
             Get API key
-            <b className="font-medium transition-transform group-hover:translate-x-[3px]">
-              →
-            </b>
+            <ArrowRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5 transition-transform group-hover:translate-x-[3px]"
+              strokeWidth={1.5}
+            />
           </a>
           <Link
             className="inline-flex items-center gap-1.5 border-b border-line pb-[3px] font-libre text-[11px] font-medium uppercase tracking-[0.08em] text-muted transition-colors hover:border-ink hover:text-ink"
             to="/docs/"
           >
-            View docs <b className="font-medium text-accent">→</b>
+            View docs
+            <ArrowRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5 text-accent"
+              strokeWidth={1.5}
+            />
           </Link>
         </div>
       </div>
@@ -70,7 +78,16 @@ export const HomePage = (): ReactElement => (
                 Finding the right tool for the job.
               </span>
             </div>
-            <b className={`${newsCtaClass} border-accent`}>Read note →</b>
+            <b
+              className={`${newsCtaClass} inline-flex items-center gap-1.5 border-accent`}
+            >
+              Read note
+              <ArrowRight
+                aria-hidden="true"
+                className="h-3.5 w-3.5"
+                strokeWidth={1.5}
+              />
+            </b>
           </div>
         </Link>
         <Link
@@ -88,8 +105,13 @@ export const HomePage = (): ReactElement => (
               Founding roles in inference software and silicon.
             </p>
           </div>
-          <b className="justify-self-end border-b border-earth pb-[5px] font-libre text-label font-medium uppercase tracking-label max-site:justify-self-start">
-            View roles →
+          <b className="inline-flex items-center gap-1.5 justify-self-end border-b border-earth pb-[5px] font-libre text-label font-medium uppercase tracking-label max-site:justify-self-start">
+            View roles
+            <ArrowRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5"
+              strokeWidth={1.5}
+            />
           </b>
         </Link>
       </div>

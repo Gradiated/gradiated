@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import type { Job } from "../careers";
@@ -51,10 +52,11 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
     <main className="px-7 pb-28 pt-20 max-site:px-[22px] max-site:pb-20 max-site:pt-14">
       <div className="mx-auto max-w-[1040px]">
         <Link
-          className="eyebrow inline-block transition-colors hover:text-accent"
+          className="eyebrow inline-flex items-center gap-2 transition-colors hover:text-accent"
           to="/careers/"
         >
-          ← Careers
+          <ArrowLeft aria-hidden="true" className="h-3 w-3" strokeWidth={1.5} />
+          Careers
         </Link>
 
         <header className="pb-16 pt-12 max-site:pb-12 max-site:pt-9">
@@ -77,13 +79,13 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
           <div className="border-r border-line px-7 py-6 max-site:border-b max-site:border-r-0 max-site:px-0 max-site:py-5">
             <dt className="eyebrow">Office</dt>
             <dd className="mb-0 ml-0 mt-3 text-[15px] leading-[1.5]">
-              Monday, Wednesday, Friday
+              Mon, Wed, Fri
             </dd>
           </div>
           <div className="py-6 pl-7 max-site:py-5 max-site:pl-0">
             <dt className="eyebrow">Compensation</dt>
             <dd className="mb-0 ml-0 mt-3 text-[15px] leading-[1.5]">
-              £240,000–£500,000 base + significant equity
+              £240,000-£420,000 base + significant equity
             </dd>
           </div>
         </dl>
@@ -92,17 +94,20 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
           <JobSection title="About Gradiated">
             <div className="space-y-5">
               <p className="m-0">
-                Gradiated is a research lab focused on inference. We build
-                software and hardware for open-weight models.
+                Gradiated is a research lab focused on inference. We co-design
+                software and hardware for efficiently serving open-weight
+                models.
               </p>
               <p className="m-0">
-                Our goal is to maximize tokens per joule. We work across model
-                behavior, software, systems, and silicon to find better ways to
-                run models.
+                Our goal is to maximize intelligence per joule. We work across
+                model behavior, software, systems, and silicon to find better
+                ways to run models.
               </p>
               <p className="m-0">
-                We treat each model as a mathematical function. We map that
-                function onto hardware and build a custom software stack for it.
+                We start by thinking about the model as a mathematical function,
+                and map that out onto hardware and then build software on top of
+                that which is custom to each model. This maximises performance
+                and removes wasted abstractions.
               </p>
               <p className="m-0">
                 We are early. You will help set the technical direction and the
@@ -140,14 +145,13 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
           <JobSection title="How we work">
             <div className="space-y-5">
               <p className="m-0">
-                We prefer evidence to assertion. State the question, measure the
-                result, and record what you learned. A failed idea is useful
-                when it gives us a clear decision.
+                We like to experiment a lot and do the hard thing even if it's
+                likely to fail.
               </p>
               <p className="m-0">
                 We work in the office on Monday, Wednesday, Friday. We value
-                working in person to solve hard problems, but we are flexible.
-                Some of the team work abroad for short periods.
+                working in person to solve hard problems, but are also flexible,
+                some of the team work abroad for short periods.
               </p>
             </div>
           </JobSection>
@@ -155,13 +159,13 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
           <JobSection title="Pay and equity">
             <div className="space-y-5">
               <p className="m-0">
-                The base salary is £240,000–£500,000. Every offer also includes
-                significant equity.
+                The base salary is £240,000-£420,000, with significant equity on
+                top of that.
               </p>
               <p className="m-0">
                 We pay at the top of the market because talent density is what
-                will allow us to build the most efficient inference. We want a
-                small team of exceptional people who can solve hard problems
+                allows us to build the most efficient inference. We want a small
+                team of exceptional people who have fun solving hard problems
                 together.
               </p>
             </div>
@@ -193,14 +197,20 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
             Let&apos;s talk.
           </h2>
           <p className="mx-auto mb-8 mt-0 max-w-[620px] text-[15px] leading-[1.65] text-muted">
-            If this work interests you, we would like to hear from you. You do
-            not need to prepare anything. We will start with a conversation.
+            If this sounds interesting to you, we&apos;d like to hear from you.
+            There&apos;s no need to prepare anything, we'll start with a
+            conversation.
           </p>
           <a
-            className="inline-flex border border-ink px-6 pb-[13px] pt-3.5 font-libre text-[11px] font-medium uppercase tracking-label transition-colors hover:bg-ink hover:text-paper"
+            className="inline-flex items-center gap-2 border border-ink px-6 pb-[13px] pt-3.5 font-libre text-[11px] font-medium uppercase tracking-label transition-colors hover:bg-ink hover:text-paper"
             href={applyHref}
           >
-            Start a conversation →
+            Start a conversation
+            <ArrowRight
+              aria-hidden="true"
+              className="h-3.5 w-3.5"
+              strokeWidth={1.5}
+            />
           </a>
         </section>
       </div>

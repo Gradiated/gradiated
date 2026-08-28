@@ -1,3 +1,4 @@
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -125,7 +126,12 @@ export const WaitlistDialog = ({
             disabled={!selectedQuestions.length}
             onClick={() => setStep(2)}
           >
-            Continue →
+            Continue
+            <ArrowRight
+              aria-hidden="true"
+              className="h-3 w-3"
+              strokeWidth={1.5}
+            />
           </button>
         </section>
 
@@ -168,14 +174,24 @@ export const WaitlistDialog = ({
               type="button"
               onClick={() => setStep(1)}
             >
-              ← Back
+              <ArrowLeft
+                aria-hidden="true"
+                className="h-3 w-3"
+                strokeWidth={1.5}
+              />
+              Back
             </button>
             <button
               className="waitlist-submit"
               type="submit"
               disabled={!canSubmit}
             >
-              Join waitlist →
+              Join waitlist
+              <ArrowRight
+                aria-hidden="true"
+                className="h-3 w-3"
+                strokeWidth={1.5}
+              />
             </button>
           </div>
         </section>

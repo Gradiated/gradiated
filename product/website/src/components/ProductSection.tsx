@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { WaitlistLink } from "./WaitlistDialog";
 import type { ReactElement } from "react";
 
@@ -29,7 +30,12 @@ export const ProductSection = ({
         The world&apos;s most efficient Kimi K3 inference, in private beta.
       </span>
       <WaitlistLink className="text-link mt-auto pt-12" onOpen={onWaitlist}>
-        Request beta access <b>→</b>
+        Request beta access
+        <ArrowRight
+          aria-hidden="true"
+          className="h-3.5 w-3.5 text-accent"
+          strokeWidth={1.5}
+        />
       </WaitlistLink>
     </div>
   </section>

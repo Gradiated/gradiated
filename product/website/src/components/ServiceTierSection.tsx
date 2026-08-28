@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { CSSProperties, ReactElement, ReactNode } from "react";
@@ -272,10 +273,15 @@ export const ServiceTierSection = (): ReactElement => {
                 ))}
               </div>
               <Link
-                className="shrink-0 border-b border-line pb-[7px] font-libre text-[11px] font-medium uppercase tracking-[0.08em] text-muted hover:border-ink hover:text-ink"
+                className="inline-flex shrink-0 items-center gap-1.5 border-b border-line pb-[7px] font-libre text-[11px] font-medium uppercase tracking-[0.08em] text-muted hover:border-ink hover:text-ink"
                 to="/docs/quickstart/"
               >
-                View docs →
+                View docs
+                <ArrowRight
+                  aria-hidden="true"
+                  className="h-3.5 w-3.5"
+                  strokeWidth={1.5}
+                />
               </Link>
             </div>
             <div

@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 
@@ -61,10 +62,11 @@ export const ThemeToggle = (): ReactElement => {
         <i className="not-italic text-accent">?</i>
       </span>
       <span
-        className="absolute right-0 top-2 block w-full whitespace-nowrap text-ink opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 max-site:left-0 max-site:right-auto max-site:top-0"
+        className="absolute right-0 top-2 flex w-full items-center justify-end gap-1.5 whitespace-nowrap text-ink opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 max-site:left-0 max-site:right-auto max-site:top-0 max-site:justify-start"
         aria-hidden="true"
       >
-        Consider {alternative} →
+        Consider {alternative}
+        <ArrowRight className="h-3 w-3" strokeWidth={1.5} />
       </span>
     </button>
   );

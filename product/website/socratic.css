@@ -115,11 +115,6 @@ main {
   margin-top: auto;
   padding-top: 50px;
 }
-.product-copy .text-link b {
-  color: var(--accent);
-  font-weight: 500;
-}
-
 .notes,
 .article {
   padding-top: 100px;
@@ -309,6 +304,9 @@ main {
 .waitlist-next,
 .waitlist-submit,
 .waitlist-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   align-self: flex-start;
   margin-top: auto;
   padding: 0 0 6px;
@@ -484,6 +482,9 @@ main {
   margin-top: auto;
 }
 .not-found nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   padding-bottom: 5px;
   border-bottom: 1px solid var(--line);
   font:

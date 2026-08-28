@@ -1,3 +1,4 @@
+import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement } from "react";
 import { jobs } from "../careers";
@@ -14,8 +15,10 @@ export const CareersPage = (): ReactElement => (
       </h1>
       <p className="m-0 max-w-[630px] text-copy leading-copy text-muted max-site:text-copy-mobile">
         Our goal is to maximize tokens per joule. We build software and hardware
-        for open-weight model inference. We want people who can go deep across
-        the abstraction stack.
+        to make open-weight model inference as efficient as possible. We want
+        people who can go deep across the abstraction stack, and want to
+        understand what can be achieved by optimizing software and hardware
+        together.
       </p>
     </section>
 
@@ -35,15 +38,15 @@ export const CareersPage = (): ReactElement => (
       <div className="max-w-[700px] text-[17px] leading-[1.7] text-muted max-site:text-[15px]">
         <p className="m-0">
           We work from first principles. We start by thinking about the model as
-          a mathematical function. We map that function onto hardware. We then
-          build a custom software stack for each model. This maximises
+          a mathematical function, and map that out onto hardware and then build
+          software on top of that which is custom to each model. This maximises
           performance and removes wasted abstractions.
         </p>
         <p className="mb-0 mt-10 max-site:mt-8">
-          We pay at the top of the market because talent density is what will
-          allow us to build the most efficient inference. A small team of
-          exceptional people can move faster, make better decisions, and solve
-          harder problems.
+          We pay at the top of the market because talent density is what allows
+          us to build the most efficient inference. A small team of exceptional
+          people can move faster, make better decisions, and solve harder
+          problems.
         </p>
       </div>
     </section>
@@ -78,9 +81,11 @@ export const CareersPage = (): ReactElement => (
                 <span>{job.location}</span>
               </div>
             </div>
-            <b className="self-start font-newsreader text-[28px] font-normal transition-transform group-hover:translate-x-1">
-              →
-            </b>
+            <ArrowRight
+              aria-hidden="true"
+              className="h-7 w-7 self-start transition-transform group-hover:translate-x-1"
+              strokeWidth={1.25}
+            />
           </Link>
         ))}
       </div>

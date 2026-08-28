@@ -105,9 +105,9 @@ export const jobs: Job[] = [
     ],
     notFor: [
       "You want a management-only role.",
-      "You want to copy a general GPU architecture without starting from workloads.",
+      "You want to copy a general GPU architecture instead of starting with the model definitions.",
       "You treat software as a fixed input to hardware design.",
-      "You want a large team before you can make progress.",
+      "You need a large team before you can make progress.",
       "You use process, title, or past employers as a substitute for technical evidence.",
       "You want to delegate the hard architecture decisions.",
     ],

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import type { ReactElement } from "react";
 import { notes } from "../content";
 
@@ -18,7 +19,11 @@ export const LibraryPage = (): ReactElement => (
               <h2>{note.title}</h2>
               <p>{note.description}</p>
             </div>
-            <b>↗</b>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="post-row-icon"
+              strokeWidth={1.5}
+            />
           </Link>
         ))}
       </div>
@@ -35,7 +40,11 @@ export const LibraryPage = (): ReactElement => (
             <h2>Values</h2>
             <p>Depth and meritocracy.</p>
           </div>
-          <b>↗</b>
+          <ArrowUpRight
+            aria-hidden="true"
+            className="post-row-icon"
+            strokeWidth={1.5}
+          />
         </Link>
         <Link className="post-row" to="/library/handbook/brand/">
           <span>Market</span>
@@ -43,7 +52,11 @@ export const LibraryPage = (): ReactElement => (
             <h2>Brand</h2>
             <p>Everything is considered.</p>
           </div>
-          <b>↗</b>
+          <ArrowUpRight
+            aria-hidden="true"
+            className="post-row-icon"
+            strokeWidth={1.5}
+          />
         </Link>
       </div>
     </section>

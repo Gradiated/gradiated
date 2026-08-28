@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { ArrowUpRight } from "lucide-react";
 import type { ReactElement } from "react";
 import { notes } from "../content";
 
@@ -13,7 +14,11 @@ export const NotesPage = (): ReactElement => (
             <h2>{note.title}</h2>
             <p>{note.description}</p>
           </div>
-          <b>↗</b>
+          <ArrowUpRight
+            aria-hidden="true"
+            className="post-row-icon"
+            strokeWidth={1.5}
+          />
         </Link>
       ))}
     </div>

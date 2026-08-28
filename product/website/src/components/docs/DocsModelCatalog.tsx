@@ -39,7 +39,7 @@ const formatContext = (model: Model): string => {
   }).format(tokens);
 };
 
-const Price = ({
+const ModelMetric = ({
   label,
   perMillion = false,
   value,
@@ -48,11 +48,11 @@ const Price = ({
   perMillion?: boolean;
   value: string;
 }) => (
-  <div>
+  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 border-b border-line py-3 last:border-b-0">
     <dt className="font-site-mono text-[10px] font-medium uppercase tracking-[0.07em] text-muted">
       {label}
     </dt>
-    <dd className="mb-0 mt-1 font-site-mono text-[13px] text-ink">
+    <dd className="m-0 whitespace-nowrap text-right font-site-mono text-[13px] text-ink">
       {value}
       {perMillion && value !== "—" && (
         <span className="ml-1 text-[10px] text-muted">/ 1M</span>
@@ -113,19 +113,19 @@ const ModelTableSkeletonRow = (): ReactElement => (
 );
 
 const ModelCardSkeleton = (): ReactElement => (
-  <article
-    aria-hidden="true"
-    className="animate-pulse rounded-xl border border-line p-4"
-  >
-    <div className="flex items-start justify-between gap-3">
-      <span className="mt-2 block h-3.5 w-32 bg-line" />
+  <article aria-hidden="true" className="animate-pulse border-y border-line">
+    <div className="flex items-center justify-between gap-4 py-4">
+      <span className="block h-3.5 w-32 bg-line" />
       <span className="block h-[34px] w-[66px] bg-line" />
     </div>
-    <div className="mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-line pt-4">
+    <div className="border-t border-line">
       {MODEL_COLUMNS.slice(1).map((label) => (
-        <div key={label}>
+        <div
+          className="flex items-center justify-between border-b border-line py-3 last:border-b-0"
+          key={label}
+        >
           <span className="block h-2.5 w-16 bg-line" />
-          <span className="mt-2 block h-3.5 w-12 bg-line" />
+          <span className="block h-3.5 w-12 bg-line" />
         </div>
       ))}
     </div>
@@ -249,16 +249,17 @@ export const DocsModelCatalog = (): ReactElement => {
         </table>
       </div>
 
-      <div className="grid gap-3 min-[641px]:hidden">
+      <div className="grid gap-6 min-[641px]:hidden" data-model-cards>
         {status === "loading" ? (
           <ModelCardSkeleton />
         ) : (
           models.map((model) => (
             <article
-              className="rounded-xl border border-line p-4"
+              className="border-y border-line"
+              data-model-card
               key={model.id}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center justify-between gap-4 py-4">
                 <div className="min-w-0">
                   <strong className="font-libre text-[15px] font-semibold text-ink">
                     {model.name}
@@ -270,23 +271,23 @@ export const DocsModelCatalog = (): ReactElement => {
                   onCopy={(id) => void copyModelId(id)}
                 />
               </div>
-              <dl className="mb-0 mt-4 grid grid-cols-2 gap-x-5 gap-y-4 border-t border-line pt-4">
-                <Price
+              <dl className="m-0 border-t border-line">
+                <ModelMetric
                   label="Input"
                   perMillion
                   value={pricePerMillion(model, "prompt")}
                 />
-                <Price
+                <ModelMetric
                   label="Cached input"
                   perMillion
                   value={pricePerMillion(model, "cached_prompt")}
                 />
-                <Price
+                <ModelMetric
                   label="Output"
                   perMillion
                   value={pricePerMillion(model, "completion")}
                 />
-                <Price label="Context" value={formatContext(model)} />
+                <ModelMetric label="Context" value={formatContext(model)} />
               </dl>
             </article>
           ))

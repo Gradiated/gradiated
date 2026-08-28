@@ -3,11 +3,11 @@ import type { ReactElement } from "react";
 import { ServiceTierSection } from "../components/ServiceTierSection";
 
 const newsLinkClass =
-  "group grid h-[390px] min-h-[390px] grid-cols-2 items-stretch overflow-hidden text-ink max-site:h-auto max-site:min-h-0 max-site:grid-cols-1";
+  "thesis-card group grid h-[390px] min-h-[390px] grid-cols-2 items-stretch overflow-hidden text-ink max-site:h-auto max-site:min-h-0 max-site:grid-cols-1";
 const newsImageClass =
-  "block h-full min-h-[390px] w-full object-cover saturate-[0.8] transition-[transform,filter] duration-700 ease-editorial group-hover:scale-[1.02] group-hover:saturate-[0.95] motion-reduce:transition-none max-site:aspect-square max-site:min-h-0";
+  "thesis-card-image block h-full min-h-[390px] w-full object-cover saturate-[0.8] transition-[transform,filter] duration-700 ease-editorial group-hover:scale-[1.02] group-hover:saturate-[0.95] motion-reduce:transition-none max-site:aspect-square max-site:h-auto max-site:min-h-0";
 const newsCopyClass =
-  "flex flex-col justify-between p-[30px] transition-colors duration-200 group-hover:bg-ink group-hover:text-paper max-site:min-h-[230px] max-site:px-[22px] max-site:py-[26px]";
+  "thesis-card-copy flex flex-col justify-between p-[30px] transition-colors duration-200 group-hover:bg-ink group-hover:text-paper max-site:min-h-[230px] max-site:px-[22px] max-site:py-[26px]";
 const newsDateClass =
   "mb-[35px] font-libre text-label font-medium uppercase tracking-label group-hover:text-line";
 const newsTitleClass =

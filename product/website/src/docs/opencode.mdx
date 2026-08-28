@@ -1,9 +1,6 @@
-# Use Gradiated with OpenCode
+# OpenCode
 
-<DocsLead>
-  Add Gradiated as an OpenCode provider. Your current provider and default model
-  stay unchanged.
-</DocsLead>
+<DocsLead>Add Gradiated as another OpenCode provider, then switch models when you want to use it. Your current default stays unchanged.</DocsLead>
 
 ## Set up automatically
 
@@ -13,7 +10,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent opencode
 ```
 
-The wizard adds the provider and available models to your user configuration. It preserves your default model and writes a backup before it changes the file.
+The wizard adds the provider and current model list to your user configuration. It backs up the file before making changes and leaves your default model alone.
 
 Start OpenCode after the wizard finishes:
 
@@ -24,6 +21,8 @@ opencode
 Run `/models` and choose Gradiated when you want to switch models.
 
 ## Set up manually
+
+Use manual setup if you do not want the wizard to change your configuration.
 
 Set your Gradiated API key in the shell that starts OpenCode:
 
@@ -47,7 +46,7 @@ Add this provider to your project or user configuration. Keep the API key in the
         "apiKey": "{env:GRADIATED_API_KEY}"
       },
       "models": {
-        "YOUR_MODEL_ID": {
+        "YOUR_MODEL": {
           "name": "Your model name"
         }
       }
@@ -56,9 +55,9 @@ Add this provider to your project or user configuration. Keep the API key in the
 }
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from [models and pricing](/docs/models-pricing/).
+Replace `YOUR_MODEL` with a model from [models and pricing](/docs/models-pricing/).
 
-The adapter adds the Chat Completions path, so `baseURL` stays `https://api.gradiated.com`.
+The adapter adds the Chat Completions path. Keep `baseURL` set to `https://api.gradiated.com`.
 
 ### Select the model
 
@@ -70,14 +69,14 @@ Start OpenCode and run:
 
 Choose the Gradiated provider and model.
 
-### Add model limits when needed
+### Configure model limits
 
-Add the model context and output limits when you want OpenCode to enforce them:
+Add the model context and output limits if you want OpenCode to enforce them:
 
 ```json
 {
   "models": {
-    "YOUR_MODEL_ID": {
+    "YOUR_MODEL": {
       "name": "Your model name",
       "limit": {
         "context": 128000,
@@ -88,13 +87,13 @@ Add the model context and output limits when you want OpenCode to enforce them:
 }
 ```
 
-Use the limits from the selected model.
+Copy the limits from [models and pricing](/docs/models-pricing/).
 
 ## Troubleshooting
 
 - Check that `GRADIATED_API_KEY` is set in the same shell that starts OpenCode.
 - Check that `baseURL` is `https://api.gradiated.com`.
-- Check that the model ID matches the catalog response.
+- Check that the model matches the catalog response.
 - Check that the workspace has billing capacity.
 - Run `opencode auth list` if OpenCode reports a provider authentication error.
 
@@ -106,6 +105,6 @@ Run the uninstall command:
 npx -y @gradiated/wizard uninstall
 ```
 
-Select OpenCode. The wizard removes the provider and stored credential. It keeps a timestamped backup.
+Select OpenCode. The wizard removes the provider and stored credential, and it keeps a timestamped backup.
 
 OpenCode's [provider documentation](https://opencode.ai/docs/providers/) covers custom provider settings and the `/models` command.

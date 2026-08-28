@@ -1,9 +1,6 @@
-# Use Gradiated with Claude Code
+# Claude Code
 
-<DocsLead>
-  Add a `claude-gradiated` command for Gradiated models. Your normal `claude`
-  command stays unchanged.
-</DocsLead>
+<DocsLead>Add a separate `claude-gradiated` command for Gradiated models. Your existing `claude` command continues to use its current provider.</DocsLead>
 
 ## Set up automatically
 
@@ -13,7 +10,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent claude
 ```
 
-The wizard lets you choose a model and installs `claude-gradiated`. For zsh and bash, it adds `~/.gradiated/bin` to your PATH.
+The wizard lets you choose a model and installs `claude-gradiated`. For zsh and bash, it also adds `~/.gradiated/bin` to your `PATH`.
 
 Start Claude Code on Gradiated:
 
@@ -21,27 +18,29 @@ Start Claude Code on Gradiated:
 claude-gradiated
 ```
 
-The command reads the Gradiated key from `~/.gradiated/credentials.json`. Your normal `claude` command continues to use its current Anthropic route.
+The command reads the Gradiated key from `~/.gradiated/credentials.json`.
 
 Switch models inside a session:
 
 ```text
-/model YOUR_MODEL_ID
+/model YOUR_MODEL
 ```
 
 Or override the model for one run:
 
 ```sh
-ANTHROPIC_MODEL="YOUR_MODEL_ID" claude-gradiated
+ANTHROPIC_MODEL="YOUR_MODEL" claude-gradiated
 ```
 
 ### API-key accounts
 
-`claude-gradiated` works with Claude Code API-key accounts. A Claude Pro or Max subscription cannot authenticate through a custom gateway.
+`claude-gradiated` requires a Claude Code API-key account. Claude Pro and Max subscriptions cannot authenticate through a custom gateway.
 
-The wrapper sets `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_MODEL`. Your shell values override the wrapper values.
+The wrapper sets `ANTHROPIC_BASE_URL`, `ANTHROPIC_AUTH_TOKEN`, and `ANTHROPIC_MODEL`. Values already set in your shell take priority.
 
 ## Set up manually
+
+Use manual setup if you prefer to start the standard `claude` command with Gradiated environment variables.
 
 Set the variables in the shell that will start Claude Code:
 
@@ -49,13 +48,13 @@ Set the variables in the shell that will start Claude Code:
 export GRADIATED_API_KEY="grad_..."
 export ANTHROPIC_BASE_URL="https://api.gradiated.com"
 export ANTHROPIC_AUTH_TOKEN="$GRADIATED_API_KEY"
-export ANTHROPIC_MODEL="YOUR_MODEL_ID"
+export ANTHROPIC_MODEL="YOUR_MODEL"
 claude
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from [models and pricing](/docs/models-pricing/).
+Replace `YOUR_MODEL` with a model from [models and pricing](/docs/models-pricing/).
 
-Remove the variables to use your normal Claude Code route again:
+Remove the variables to return to your normal Claude Code provider:
 
 ```sh
 unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL
@@ -67,8 +66,7 @@ unset ANTHROPIC_BASE_URL ANTHROPIC_AUTH_TOKEN ANTHROPIC_MODEL
 - Check that `ANTHROPIC_AUTH_TOKEN` contains your Gradiated API key.
 - Check that `ANTHROPIC_MODEL` matches the Gradiated catalog.
 - Check that the workspace has billing capacity.
-- If `claude-gradiated` is not found, open a new shell after install or add
-  `~/.gradiated/bin` to your PATH.
+- If `claude-gradiated` is not found, open a new shell after install or add `~/.gradiated/bin` to your PATH.
 
 ## Uninstall
 
@@ -78,4 +76,4 @@ Run the uninstall command:
 npx -y @gradiated/wizard uninstall
 ```
 
-Select the Claude Code wrapper. The wizard removes the command and its PATH entry. It does not change `~/.claude` or the normal `claude` command.
+Select the Claude Code wrapper. The wizard removes the command and its `PATH` entry. It does not change `~/.claude` or the normal `claude` command.

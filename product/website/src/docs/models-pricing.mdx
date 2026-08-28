@@ -1,20 +1,9 @@
 # Models and pricing
 
-<DocsLead>
-  Compare prices and context limits. Copy a model ID when you are ready to use
-  it.
-</DocsLead>
+<DocsLead>Choose a model and check its current price, context window, and supported features.</DocsLead>
 
 ## Supported models
 
 <DocsModelCatalog />
 
-Use `GET https://api.gradiated.com/api/v1/models` when your application needs the catalog. This endpoint is public.
-
-The response also contains output limits, streaming support, and supported parameters.
-
-## Model selection
-
-Gradiated runs the model you name. It does not replace the model with an alias or fallback.
-
-If that model is temporarily unavailable, the API returns `model_unavailable`. Retry later or choose another model.
+If you want to load the available models on demand, you can call `GET https://api.gradiated.com/api/v1/models`. This endpoint also returns output limits, streaming support, and supported parameters.

@@ -1,9 +1,6 @@
-# Use Gradiated with Codex
+# Codex
 
-<DocsLead>
-  Add Gradiated as a separate Codex profile. Your current provider and default
-  model stay unchanged.
-</DocsLead>
+<DocsLead>Add Gradiated as a separate Codex profile. You can use it without changing your current default provider or model.</DocsLead>
 
 ## Set up automatically
 
@@ -13,7 +10,7 @@ Run the Gradiated wizard:
 npx -y @gradiated/wizard --agent codex
 ```
 
-The wizard adds a Gradiated provider and a `gradiated` profile. It stores the key outside the Codex configuration and preserves your default profile.
+The wizard adds a Gradiated provider and a `gradiated` profile. It stores the API key outside the Codex configuration and leaves your default profile alone.
 
 Start Codex with the Gradiated profile:
 
@@ -22,6 +19,8 @@ codex --profile gradiated
 ```
 
 ## Set up manually
+
+Use manual setup if you do not want the wizard to change your Codex files.
 
 Set your Gradiated API key in the shell that starts Codex:
 
@@ -41,7 +40,7 @@ env_key = "GRADIATED_API_KEY"
 wire_api = "responses"
 ```
 
-Keep this provider in the user configuration. A project-level file can affect everyone who opens the repository.
+Keep this provider in your user configuration. A project-level Codex file can change the setup for everyone who opens the repository.
 
 ### Add the profile
 
@@ -49,10 +48,10 @@ Create `~/.codex/gradiated.config.toml`:
 
 ```toml
 model_provider = "gradiated"
-model = "YOUR_MODEL_ID"
+model = "YOUR_MODEL"
 ```
 
-Replace `YOUR_MODEL_ID` with an ID from [models and pricing](/docs/models-pricing/).
+Replace `YOUR_MODEL` with a model from [models and pricing](/docs/models-pricing/).
 
 Start Codex with this profile:
 
@@ -60,13 +59,13 @@ Start Codex with this profile:
 codex --profile gradiated
 ```
 
-Add `-m YOUR_MODEL_ID` to select another Gradiated model for one run.
+Add `-m YOUR_MODEL` to select another Gradiated model for one run.
 
 ## Troubleshooting
 
 - Check that `GRADIATED_API_KEY` is set in the shell that starts Codex.
 - Check that the provider base URL is `https://api.gradiated.com/v1`.
-- Check that the model ID matches the Gradiated catalog.
+- Check that the model matches the Gradiated catalog.
 - Use `codex exec --profile gradiated --strict-config` to find configuration errors.
 - Check that the workspace has billing capacity.
 

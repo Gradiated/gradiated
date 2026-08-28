@@ -29,8 +29,6 @@ import DocsOpenCode from "../docs/opencode.mdx";
 import DocsParameters from "../docs/parameters.mdx";
 import DocsQuickstart from "../docs/quickstart.mdx";
 import DocsServiceTiers from "../docs/service-tiers.mdx";
-import DocsStreaming from "../docs/streaming.mdx";
-import DocsToolCalling from "../docs/tool-calling.mdx";
 
 type DocsDocument = {
   title: string;
@@ -68,16 +66,6 @@ const documents = {
     title: "Service tiers",
     path: "/docs/service-tiers/",
     Component: DocsServiceTiers,
-  },
-  streaming: {
-    title: "Streaming",
-    path: "/docs/streaming/",
-    Component: DocsStreaming,
-  },
-  "tool-calling": {
-    title: "Tool calling",
-    path: "/docs/tool-calling/",
-    Component: DocsToolCalling,
   },
   parameters: {
     title: "Parameters and model support",
@@ -124,8 +112,6 @@ const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
       "openai-sdk",
       "anthropic-sdk",
       "service-tiers",
-      "streaming",
-      "tool-calling",
       "parameters",
       "errors",
     ],
@@ -139,6 +125,8 @@ const legacyPaths: Record<string, string> = {
   "/docs/api-keys/": documents.quickstart.path,
   "/docs/billing/": documents.errors.path,
   "/docs/migrate/": documents.quickstart.path,
+  "/docs/streaming/": documents["openai-sdk"].path,
+  "/docs/tool-calling/": documents["openai-sdk"].path,
   "/docs/usage/": documents.index.path,
 };
 

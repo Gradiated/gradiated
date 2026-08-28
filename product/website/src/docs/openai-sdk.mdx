@@ -1,10 +1,6 @@
-# Use the OpenAI SDK
+# OpenAI SDK
 
-<DocsLead>
-  Keep your OpenAI request. Change the base URL, API key, and model ID.
-</DocsLead>
-
-Use the `openai` package for Python or Node. The same client can send your existing Chat Completions requests to Gradiated.
+<DocsLead>Point the official OpenAI SDK at Gradiated. You only need to change the base URL, API key, and model.</DocsLead>
 
 ## Install
 
@@ -40,7 +36,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     messages=[
         {"role": "user", "content": "Explain inference in one sentence."}
     ],
@@ -62,7 +58,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   messages: [{ role: "user", content: "Explain inference in one sentence." }],
   service_tier: "default",
 });
@@ -73,18 +69,18 @@ console.log(response.choices[0].message.content);
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Choose an exact ID from [models and pricing](/docs/models-pricing/). This example uses the `default` service tier.
+Replace `YOUR_MODEL` with a model from [models and pricing](/docs/models-pricing/).
+
+The example uses the `default` service tier. Change to `flex` for background agents where latency is less important, or `fast` when you want faster responses and are happy to pay more.
 
 ## Responses API
-
-Use the same client for Responses requests.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 response = client.responses.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     input="Explain inference in one sentence.",
     extra_body={"service_tier": "default"},
 )
@@ -97,7 +93,7 @@ print(response.output_text)
 
 ```javascript
 const response = await client.responses.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   input: "Explain inference in one sentence.",
   service_tier: "default",
 });
@@ -108,18 +104,16 @@ console.log(response.output_text);
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Gradiated does not support stored Responses state. Send the complete input with each request.
+## Streaming
 
-## Stream output
-
-Streaming returns text while the model is still generating it.
+Set `stream` to `true` to process output as the model generates it.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 stream = client.chat.completions.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     messages=[{"role": "user", "content": "Write one short sentence."}],
     stream=True,
 )
@@ -135,7 +129,7 @@ for chunk in stream:
 
 ```javascript
 const stream = await client.chat.completions.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   messages: [{ role: "user", content: "Write one short sentence." }],
   stream: true,
 });
@@ -149,16 +143,18 @@ for await (const chunk of stream) {
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Call tools
+Check [models and pricing](/docs/models-pricing/) to confirm that the model supports streaming.
 
-Send function definitions with the request. Your application validates the arguments and runs the selected function.
+## Tool calling
+
+Send function definitions with the request. The model can then ask your application to run one of them.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 response = client.chat.completions.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     messages=[{"role": "user", "content": "What is the weather in Warsaw?"}],
     tools=[{
         "type": "function",
@@ -182,7 +178,7 @@ tool_calls = response.choices[0].message.tool_calls
 
 ```javascript
 const response = await client.chat.completions.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   messages: [{ role: "user", content: "What is the weather in Warsaw?" }],
   tools: [
     {
@@ -206,4 +202,4 @@ const toolCalls = response.choices[0].message.tool_calls;
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Check [service tiers](/docs/service-tiers/), [model parameters](/docs/parameters/), and [retry behavior](/docs/errors/) before deploying to production.
+Your application must validate the arguments and run the function. Gradiated does not run it.

@@ -1,10 +1,6 @@
-# Use the Anthropic SDK
+# Anthropic SDK
 
-<DocsLead>
-  Keep your Messages request. Change the base URL, API key, and model ID.
-</DocsLead>
-
-Use `anthropic` for Python or `@anthropic-ai/sdk` for Node. The same client can send your existing Messages requests to Gradiated.
+<DocsLead>Point the official Anthropic SDK at Gradiated. You only need to change the base URL, API key, and model.</DocsLead>
 
 ## Install
 
@@ -40,7 +36,7 @@ client = Anthropic(
 )
 
 message = client.messages.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     max_tokens=256,
     messages=[
         {"role": "user", "content": "Explain inference in one sentence."}
@@ -63,7 +59,7 @@ const client = new Anthropic({
 });
 
 const message = await client.messages.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   max_tokens: 256,
   messages: [{ role: "user", content: "Explain inference in one sentence." }],
   service_tier: "default",
@@ -75,18 +71,20 @@ console.log(message.content[0].text);
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Choose an exact ID from [models and pricing](/docs/models-pricing/). This example uses the `default` service tier.
+Replace `YOUR_MODEL` with a model from [models and pricing](/docs/models-pricing/).
 
-## Stream output
+The example uses the `default` service tier. Change to `flex` for background agents where latency is less important, or `fast` when you want faster responses and are happy to pay more.
 
-Streaming returns text while the model is still generating it.
+## Streaming
+
+Use the streaming helper to process text as the model generates it.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 with client.messages.stream(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     max_tokens=256,
     messages=[{"role": "user", "content": "Write one short sentence."}],
 ) as stream:
@@ -100,7 +98,7 @@ with client.messages.stream(
 ```javascript
 const stream = client.messages
   .stream({
-    model: "YOUR_MODEL_ID",
+    model: "YOUR_MODEL",
     max_tokens: 256,
     messages: [{ role: "user", content: "Write one short sentence." }],
   })
@@ -112,16 +110,18 @@ await stream.finalMessage();
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Call tools
+Check [models and pricing](/docs/models-pricing/) to confirm that the model supports streaming.
 
-Send tool definitions with the request. Your application validates the input and runs the selected tool.
+## Tool calling
+
+Send tool definitions with the request. The model can then ask your application to run one of them.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Python">
 
 ```python
 message = client.messages.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     max_tokens=256,
     messages=[{"role": "user", "content": "What is the weather in Warsaw?"}],
     tools=[{
@@ -143,7 +143,7 @@ tool_uses = [block for block in message.content if block.type == "tool_use"]
 
 ```javascript
 const message = await client.messages.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   max_tokens: 256,
   messages: [{ role: "user", content: "What is the weather in Warsaw?" }],
   tools: [
@@ -165,6 +165,4 @@ const toolUses = message.content.filter((block) => block.type === "tool_use");
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Return each result in a `tool_result` block before you continue the conversation.
-
-Check [service tiers](/docs/service-tiers/), [model parameters](/docs/parameters/), and [retry behavior](/docs/errors/) before deploying to production.
+Your application must validate the tool input and run the function. Send the result in a `tool_result` block when you continue the conversation.

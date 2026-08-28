@@ -1,16 +1,31 @@
-# Build with Gradiated
+# Gradiated API
 
-<DocsLead>
-  Use exact open models through the SDK you already know. Choose the speed and
-  price for each request.
-</DocsLead>
+<DocsLead>Connect your existing OpenAI or Anthropic client to affordable inference.</DocsLead>
 
-## Choose your API
+## Connect
 
-- The [OpenAI SDK](/docs/openai-sdk/) supports Chat Completions and Responses.
-- The [Anthropic SDK](/docs/anthropic-sdk/) supports Messages.
-- The [quickstart](/docs/quickstart/) includes Python, Node, and cURL examples.
-- [Models and pricing](/docs/models-pricing/) lists which models are available.
+Every request needs three values:
+
+- Base URL: `https://api.gradiated.com`
+- API key: a Gradiated key sent from your server
+- Model: a model from [models and pricing](/docs/models-pricing/)
+
+You can use the official [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/), or call the HTTP endpoints directly. You won't need to make any code changes to use our inference. The [quickstart](/docs/quickstart/) includes working examples for Python, Node, and cURL.
+
+## Service tiers
+
+Gradiated allows you to select the trade-off you want between performance and cost. You can use the `service_tier` parameter for this.
+
+Use `fast` for interactive workloads, `default` for general production traffic, or `flex` for background agents.
+
+```json
+{
+  "model": "YOUR_MODEL",
+  "service_tier": "default"
+}
+```
+
+See [service tiers](/docs/service-tiers/) for prices and complete SDK examples.
 
 <DocsNext>
   <a href="/docs/quickstart/">

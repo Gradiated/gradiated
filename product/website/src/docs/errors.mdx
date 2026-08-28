@@ -1,14 +1,11 @@
 # Errors, limits, and retries
 
-<DocsLead>
-  Error codes tell your application whether to change the request, wait, or ask
-  for user action.
-</DocsLead>
+<DocsLead>The following error codes tell you what went wrong during your request.</DocsLead>
 
 | Code                      | Action                                                          |
 | ------------------------- | --------------------------------------------------------------- |
 | `invalid_api_key`         | Check the key. Create another key if it was revoked or expired. |
-| `model_not_found`         | Use an exact ID from the model catalog.                         |
+| `model_not_found`         | Choose a model from the model catalog.                          |
 | `model_unavailable`       | Retry later or select another ready model.                      |
 | `insufficient_balance`    | Add credits or use another funded workspace.                    |
 | `context_length_exceeded` | Reduce the input or output limit.                               |
@@ -17,12 +14,8 @@
 
 ## Retry rules
 
-Retry `429` and temporary `503` responses. Use exponential backoff, add random delay, and set a retry limit.
+You should retry `429` and temporary `503` responses with exponential backoff.
 
-Do not retry `401`, `404`, or parameter errors without changing the request.
+Do not retry a request that has a `401`, `404`, or parameter errors without changing the request, it will continue to fail.
 
-A `429` response means that no model slot is available now. The gateway does not queue the request.
-
-## Request IDs
-
-Keep the response request or generation ID in your application logs. Do not log prompts, outputs, or API keys with it.
+A `429` response means that the model is currently at full capacity, retrying will cause the request to succeed.

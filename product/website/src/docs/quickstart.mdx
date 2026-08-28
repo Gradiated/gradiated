@@ -1,9 +1,6 @@
 # Quickstart
 
-<DocsLead>
-  Gradiated works with the OpenAI and Anthropic SDKs. Point your client at
-  Gradiated, choose a model, and keep the request format you already use.
-</DocsLead>
+<DocsLead>Send your first request with the OpenAI SDK, Anthropic SDK, or cURL. You need a Gradiated API key and the model you'd like to use.</DocsLead>
 
 ## Send a request
 
@@ -23,7 +20,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     messages=[{"role": "user", "content": "Hello from Gradiated."}],
 )
 
@@ -43,7 +40,7 @@ client = Anthropic(
 )
 
 message = client.messages.create(
-    model="YOUR_MODEL_ID",
+    model="YOUR_MODEL",
     max_tokens=256,
     messages=[{"role": "user", "content": "Hello from Gradiated."}],
 )
@@ -69,7 +66,7 @@ const client = new OpenAI({
 });
 
 const response = await client.chat.completions.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   messages: [{ role: "user", content: "Hello from Gradiated." }],
 });
 
@@ -88,7 +85,7 @@ const client = new Anthropic({
 });
 
 const message = await client.messages.create({
-  model: "YOUR_MODEL_ID",
+  model: "YOUR_MODEL",
   max_tokens: 256,
   messages: [{ role: "user", content: "Hello from Gradiated." }],
 });
@@ -103,11 +100,11 @@ console.log(message.content[0].text);
   <DocsCodeTab label="cURL">
 
 ```bash
-curl https://api.gradiated.com/chat/completions \
+curl https://api.gradiated.com/v1/chat/completions \
   -H "Authorization: Bearer $GRADIATED_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "YOUR_MODEL_ID",
+    "model": "YOUR_MODEL",
     "messages": [{"role": "user", "content": "Hello from Gradiated."}]
   }'
 ```
@@ -115,16 +112,14 @@ curl https://api.gradiated.com/chat/completions \
   </DocsCodeTab>
 </DocsCodeTabs>
 
-## Base URL
+## Configuration
 
-Both SDKs use `https://api.gradiated.com`.
+Both SDKs use `https://api.gradiated.com` as the base URL. Choose a model from [models and pricing](/docs/models-pricing/) and replace `YOUR_MODEL` with your choice.
 
-Choose a model from [models and pricing](/docs/models-pricing/). Replace `YOUR_MODEL_ID` with the copied ID.
-
-Set the key as `GRADIATED_API_KEY` in your server environment. Do not put it in client-side code.
+Store the key as `GRADIATED_API_KEY` in your server environment. Never include it in browser or mobile application code.
 
 ## Next steps
 
 - Tune latency and cost with [service tiers](/docs/service-tiers/).
-- Add [streaming](/docs/streaming/) or [tool calling](/docs/tool-calling/).
-- Check [model parameters and limits](/docs/parameters/) before deploying to production.
+- See the [OpenAI SDK](/docs/openai-sdk/) or [Anthropic SDK](/docs/anthropic-sdk/) guide for streaming and tool calling.
+- Check [parameters and model support](/docs/parameters/) before you deploy.

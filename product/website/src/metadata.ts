@@ -84,14 +84,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Choose a Gradiated service tier for your latency and cost requirements.",
   },
-  "/docs/streaming/": {
-    title: "Streaming",
-    description: "Stream inference responses from the Gradiated API.",
-  },
-  "/docs/tool-calling/": {
-    title: "Tool calling",
-    description: "Use model tool calls through the Gradiated API.",
-  },
   "/docs/parameters/": {
     title: "Parameters and model support",
     description:

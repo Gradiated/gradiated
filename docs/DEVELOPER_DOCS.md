@@ -25,8 +25,6 @@ The docs use these groups:
    - OpenAI SDK
    - Anthropic SDK
    - Service tiers
-   - Streaming
-   - Tool calling
    - Parameters and model support
    - Errors, limits, and retries
 3. Integrations
@@ -46,13 +44,13 @@ the same Rust service.
 
 ## Public model catalog
 
-`GET https://api.gradiated.com/api/v1/models` returns all supported non-retired models without authentication. The response includes exact model IDs, availability, token prices, context limits, output limits, and supported parameters.
+`GET https://api.gradiated.com/api/v1/models` returns all supported non-retired models without authentication. The response lists each model with its availability, token prices, context limits, output limits, and supported parameters.
 
 The endpoint uses a 15-second public cache. It permits stale responses for 15
 seconds while the cache refreshes. Website requests omit credentials so shared
 caches can serve the catalog.
 
-The Models and pricing page renders this endpoint. Each model row has a copy action for the exact model ID. The desktop view uses a compact table. The mobile view uses stacked cards.
+The Models and pricing page renders this endpoint. Each model row has a copy action. The desktop view uses a compact table. The mobile view uses stacked cards.
 
 ## Account session
 
@@ -86,11 +84,11 @@ The public reference excludes Better Auth routes, health checks, wizard routes, 
 
 The docs use these values:
 
-| Tier      | Price change | Purpose                                                     |
-| --------- | -----------: | ----------------------------------------------------------- |
-| `fast`    |         +50% | Interactive work where response delay affects the user.     |
-| `default` |            — | Normal application traffic.                                 |
-| `flex`    |         −30% | Asynchronous work where latency is not the primary concern. |
+| Tier      | Price change | Purpose                                                        |
+| --------- | -----------: | -------------------------------------------------------------- |
+| `fast`    |         +50% | Interactive workloads where response time matters most.        |
+| `default` |           0% | Production workloads that balance speed and cost.              |
+| `flex`    |         −30% | Background agents that can trade response time for lower cost. |
 
 `flex` uses the normal request and response workflow. It does not create a batch job.
 
@@ -98,7 +96,8 @@ The docs use these values:
 
 Use ASD-STE100 Simplified Technical English.
 
-- Use short sentences.
+- Use natural sentence lengths. Do not split closely related facts into
+  separate sentences when one sentence is easier to read.
 - Use active voice.
 - Put the result before background information.
 - Use one instruction per sentence.
@@ -106,6 +105,8 @@ Use ASD-STE100 Simplified Technical English.
 - Do not use marketing claims.
 - Do not describe a control that is clear from its label.
 - Keep a paragraph only when it helps a developer choose, configure, verify, or recover.
+- Make each paragraph answer one developer question. Do not use fragments only
+  to make the copy look concise.
 - Explain why a setting matters when the reason is not clear from the code.
 - Do not tell the user to open the console when the docs can perform the action.
 - State the exact recovery action for each error.
@@ -120,7 +121,7 @@ Use ASD-STE100 Simplified Technical English.
 - The Anthropic SDK page covers installation, Messages, streaming, and tool calls.
 - Each SDK page puts the compact API key action beside its primary example.
 - The public model catalog does not require a session or API key.
-- The Models and pricing page shows live catalog prices and copies exact model IDs.
+- The Models and pricing page shows live catalog prices and lets the user copy a model.
 - The model catalog loading state uses the final table columns and a skeleton row.
 - A guest can log in and return to the same docs page.
 - The initial account skeleton has the same dimensions as the logged-out form.
@@ -140,6 +141,6 @@ Use ASD-STE100 Simplified Technical English.
 - The SEO build check passes for every public route.
 - Equivalent code examples use one tab group.
 - Service-tier examples include Python, Node, and cURL. Python and Node include OpenAI and Anthropic SDK variants.
-- Streaming and tool-calling examples include Python and Node with OpenAI and Anthropic SDK variants.
+- The OpenAI and Anthropic SDK pages include Python and Node examples for streaming and tool calling.
 - Next-page cards show separate labels and titles.
 - The website builds without TypeScript or MDX errors.

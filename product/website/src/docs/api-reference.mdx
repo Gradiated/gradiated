@@ -1,17 +1,19 @@
 # API reference
 
-<DocsLead>Use inference endpoints for model requests.</DocsLead>
+<DocsLead>Gradiated accepts OpenAI and Anthropic compatible inference requests.</DocsLead>
 
 ## Inference endpoints
 
-| Method | Path                | Purpose                                  |
-| ------ | ------------------- | ---------------------------------------- |
-| `GET`  | `/models`           | List accessible models.                  |
-| `POST` | `/chat/completions` | Send an OpenAI Chat Completions request. |
-| `POST` | `/v1/responses`     | Send an OpenAI Responses request.        |
-| `POST` | `/v1/messages`      | Send an Anthropic Messages request.      |
+You can use `https://api.gradiated.com` as the base URL in all SDKs.
 
-Send the API key as a bearer token:
+| Method | Path                   | Purpose                                  |
+| ------ | ---------------------- | ---------------------------------------- |
+| `GET`  | `/models`              | List accessible models.                  |
+| `POST` | `/v1/chat/completions` | Send an OpenAI Chat Completions request. |
+| `POST` | `/v1/responses`        | Send an OpenAI Responses request.        |
+| `POST` | `/v1/messages`         | Send an Anthropic Messages request.      |
+
+For direct HTTP requests, send the API key as a bearer token:
 
 ```http
 Authorization: Bearer grad_...
@@ -19,6 +21,6 @@ Authorization: Bearer grad_...
 
 ## Management API
 
-Use the management API to manage workspaces, billing limits, workspace members and model availability.
+The Management API covers workspaces, billing limits, members, API keys, and model availability.
 
-[Open the Management API reference](https://api.gradiated.com/docs).
+[View the Management API reference](https://api.gradiated.com/docs).

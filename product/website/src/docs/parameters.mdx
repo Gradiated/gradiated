@@ -1,26 +1,21 @@
 # Parameters and model support
 
-<DocsLead>
-  Parameter support and limits vary by model. The catalog is the source of truth
-  for each model.
-</DocsLead>
+<DocsLead>Each model has its own context limit and supported parameters. Check the catalog before you build a request.</DocsLead>
 
-The model catalog lists `supported_parameters` and `passthrough_parameters` for each model.
+The [model catalog](/docs/models-pricing/) lists `supported_parameters` and `passthrough_parameters` for every model.
 
 ## Common parameters
 
-| Parameter      | Purpose                              |
-| -------------- | ------------------------------------ |
-| `max_tokens`   | Set the maximum output length.       |
-| `temperature`  | Change output variation.             |
-| `stream`       | Return server-sent events.           |
-| `tools`        | Give the model tool definitions.     |
-| `service_tier` | Select `fast`, `default`, or `flex`. |
+| Parameter      | Purpose                                   |
+| -------------- | ----------------------------------------- |
+| `max_tokens`   | Limit the number of generated tokens.     |
+| `temperature`  | Adjust sampling variation.                |
+| `stream`       | Receive output as the model generates it. |
+| `tools`        | Provide the tools available to the model. |
+| `service_tier` | Choose `fast`, `default`, or `flex`.      |
 
-Gradiated rejects unsupported parameters. It does not remove them silently. The response uses the code `unsupported_parameter` and names the parameter when possible.
+Gradiated rejects an unsupported parameter instead of ignoring it. The response uses the code `unsupported_parameter` and names the parameter when possible.
 
 ## Context limits
 
-The request must fit the selected model context. This includes messages, tools, and the requested output length.
-
-Reduce the input or `max_tokens` when the API returns `context_length_exceeded`.
+Messages, tool definitions, and the requested output must fit within the model context window. If the API returns `context_length_exceeded`, reduce the input or `max_tokens`.

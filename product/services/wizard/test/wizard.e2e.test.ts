@@ -658,6 +658,10 @@ describe("wizard install end to end", () => {
       expect(install.stderr).toBe("");
       expect(install.status).toBe(0);
       expect(install.stdout).toContain("claude-gradiated");
+      // The wizard must hand back an immediate-apply command for the shell
+      // it ran under, or fall back to the new-terminal instruction when the
+      // shell is unknown.
+      expect(install.stdout).toMatch(/source |new terminal/);
 
       // The wrapper launcher is claude-gradiated.js on every platform, and
       // POSIX also gets the extensionless claude-gradiated command that PATH

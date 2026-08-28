@@ -332,7 +332,9 @@ const runInstall = async (): Promise<void> => {
       changes.push(`PATH entry in ${claudePathUpdated.join(", ")}`);
     } else if (!(await claude.hasWrapperOnPath())) {
       ui.warn(
-        `Add this to your shell profile to use the wrapper:\n  export PATH="$HOME/.gradiated/bin:$PATH"`,
+        process.platform === "win32"
+          ? `Add this directory to your PATH to use the wrapper:\n  %USERPROFILE%\\.gradiated\\bin`
+          : `Add this to your shell profile to use the wrapper:\n  export PATH="$HOME/.gradiated/bin:$PATH"`,
       );
     }
   }
@@ -351,10 +353,23 @@ const runInstall = async (): Promise<void> => {
     );
   }
   if (configureClaude) {
+    const applyCommand = claude.applyNowCommand(
+      claudePathUpdated,
+      claude.currentShell(),
+    );
+    const applyLine =
+      applyCommand !== null
+        ? `Claude Code: run \`${applyCommand}\` in this terminal, then \`claude-gradiated\``
+        : claudePathUpdated.length > 0
+          ? "Claude Code: open a new terminal so the updated PATH applies, then run `claude-gradiated`"
+          : "Claude Code: run `claude-gradiated`";
     const claudeLines = [
-      claudePathUpdated.length > 0
-        ? "Claude Code: open a new terminal so the updated PATH applies, then run `claude-gradiated`"
-        : "Claude Code: run `claude-gradiated`",
+      applyLine,
+      // On Windows the PATH was not persisted, so the session command above
+      // must be paired with a manual persistent PATH entry.
+      ...(process.platform === "win32" && applyCommand !== null
+        ? ["    for new terminals, add %USERPROFILE%\\.gradiated\\bin to your PATH"]
+        : []),
       "    your normal `claude` is unchanged; /model <id> switches models in a session",
       "    ANTHROPIC_MODEL=<id> claude-gradiated overrides the model for one run",
       "    note: Claude Pro/Max login does not work through a custom gateway —",

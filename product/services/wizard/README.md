@@ -33,9 +33,10 @@ uninstall after everything is removed is a clean no-op.
 - **Codex**: an opt-in `gradiated` provider and profile. Start with
   `codex --profile gradiated`. Your default Codex provider is unchanged.
 - **Claude Code**: a `claude-gradiated` command installed to
-  `~/.gradiated/bin` and added to your shell PATH. Open a new terminal (or
-  re-source your profile) after installing. Your normal `claude` is
-  unchanged. See the
+  `~/.gradiated/bin` and added to your shell PATH (zsh, bash and fish). The
+  wizard detects your shell and prints the exact command to enable it in the
+  current terminal (e.g. `source ~/.zshrc`); otherwise open a new terminal.
+  Your normal `claude` is unchanged. See the
   [Claude Code docs](https://gradiated.com/docs/claude-code/).
 
 ## Options

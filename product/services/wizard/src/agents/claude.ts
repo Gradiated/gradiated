@@ -9,6 +9,63 @@ const PATH_BLOCK_END = "# <<< gradiated <<<";
 
 const WRAPPER_NAME = "claude-gradiated.js";
 
+export type ShellName =
+  | "zsh"
+  | "bash"
+  | "fish"
+  | "powershell"
+  | "cmd"
+  | "unknown";
+
+/**
+ * The shell the wizard is running under. A child process cannot export into
+ * its parent shell, so this drives the exact "apply now" command printed at
+ * the end instead of a generic "open a new terminal" message.
+ */
+export const currentShell = (): ShellName => {
+  if (process.platform === "win32") {
+    // PSModulePath is only set in PowerShell sessions.
+    return process.env.PSModulePath !== undefined ? "powershell" : "cmd";
+  }
+  const name = (process.env.SHELL ?? "").split("/").pop() ?? "";
+  if (name === "zsh" || name === "bash" || name === "fish") {
+    return name;
+  }
+  return "unknown";
+};
+
+/**
+ * The one-liner that makes claude-gradiated resolvable in the terminal the
+ * wizard was run from, or null when no exact command is known (the caller
+ * then falls back to "open a new terminal").
+ */
+export const applyNowCommand = (
+  updatedProfiles: readonly string[],
+  shell: ShellName,
+): string | null => {
+  if (shell === "powershell") {
+    return '$env:Path = "$env:USERPROFILE\\.gradiated\\bin;" + $env:Path';
+  }
+  if (shell === "cmd") {
+    return 'set "PATH=%USERPROFILE%\\.gradiated\\bin;%PATH%"';
+  }
+  const updated = (suffix: string): string | null =>
+    updatedProfiles.find((path) => path.endsWith(suffix)) ?? null;
+  if (shell === "zsh") {
+    const profile = updated(".zshrc");
+    return profile === null ? null : `source ${profile}`;
+  }
+  if (shell === "bash") {
+    const profile = updated(".bash_profile") ?? updated(".bashrc");
+    return profile === null ? null : `source ${profile}`;
+  }
+  if (shell === "fish") {
+    const profile = updated("config.fish");
+    return profile === null ? null : `source ${profile}`;
+  }
+  return null;
+};
+
 export const wrapperPath = (): string =>
   join(homedir(), ".gradiated", "bin", WRAPPER_NAME);
 
@@ -155,23 +212,53 @@ export const uninstallWrapper = async (): Promise<string | null> => {
   return wrapperCommandPath();
 };
 
-const profilePaths = (): string[] =>
-  [join(homedir(), ".zshrc"), join(homedir(), ".bashrc")].filter((path) =>
-    existsSync(path),
-  );
+const fishConfigPath = (): string =>
+  join(homedir(), ".config", "fish", "config.fish");
+
+const posixProfilePaths = (): string[] =>
+  [
+    join(homedir(), ".zshrc"),
+    join(homedir(), ".bash_profile"),
+    join(homedir(), ".bashrc"),
+  ].filter((path) => existsSync(path));
+
+const profilePaths = (): string[] => {
+  const fish = fishConfigPath();
+  return existsSync(fish)
+    ? [...posixProfilePaths(), fish]
+    : posixProfilePaths();
+};
+
+const POSIX_PATH_BLOCK = [
+  "",
+  PATH_BLOCK_START,
+  'export PATH="$HOME/.gradiated/bin:$PATH"',
+  PATH_BLOCK_END,
+  "",
+].join("\n");
+
+const FISH_PATH_BLOCK = [
+  "",
+  PATH_BLOCK_START,
+  'fish_add_path -g "$HOME/.gradiated/bin"',
+  PATH_BLOCK_END,
+  "",
+].join("\n");
 
 export const addWrapperToPath = async (): Promise<string[]> => {
   const updated: string[] = [];
-  for (const profile of profilePaths()) {
-    const raw = await readFile(profile, "utf8");
+  const candidates = profilePaths();
+  const fish = fishConfigPath();
+  // Fish users with no config file still need a block the session command
+  // can source, so create it for them.
+  if (currentShell() === "fish" && !existsSync(fish)) {
+    await mkdir(dirname(fish), { recursive: true });
+    candidates.push(fish);
+  }
+  for (const profile of candidates) {
+    const raw = existsSync(profile) ? await readFile(profile, "utf8") : "";
     if (raw.includes(PATH_BLOCK_START)) continue;
-    const block = [
-      "",
-      PATH_BLOCK_START,
-      'export PATH="$HOME/.gradiated/bin:$PATH"',
-      PATH_BLOCK_END,
-      "",
-    ].join("\n");
+    const block = profile === fish ? FISH_PATH_BLOCK : POSIX_PATH_BLOCK;
     await writeFile(profile, `${raw.replace(/\n*$/, "\n")}${block}`);
     updated.push(profile);
   }

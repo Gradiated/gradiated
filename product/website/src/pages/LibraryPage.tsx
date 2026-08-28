@@ -27,7 +27,7 @@ export const LibraryPage = (): ReactElement => (
       className="library-section library-handbook"
       aria-labelledby="method-heading"
     >
-      <h1 id="method-heading">Method</h1>
+      <h2 id="method-heading">Method</h2>
       <div className="post-list">
         <Link className="post-row" to="/library/handbook/values/">
           <span>Company</span>

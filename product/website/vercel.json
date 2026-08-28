@@ -4,10 +4,56 @@
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
-  "rewrites": [
+  "trailingSlash": true,
+  "redirects": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/docs/api/",
+      "destination": "/docs/api-reference/",
+      "permanent": true
+    },
+    {
+      "source": "/docs/api-keys/",
+      "destination": "/docs/quickstart/",
+      "permanent": true
+    },
+    {
+      "source": "/docs/billing/",
+      "destination": "/docs/errors/",
+      "permanent": true
+    },
+    {
+      "source": "/docs/migrate/",
+      "destination": "/docs/quickstart/",
+      "permanent": true
+    },
+    {
+      "source": "/docs/usage/",
+      "destination": "/docs/",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/docs/(.*).md",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/markdown; charset=utf-8"
+        },
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
     }
   ]
 }

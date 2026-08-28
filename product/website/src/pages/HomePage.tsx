@@ -24,8 +24,8 @@ export const HomePage = (): ReactElement => (
       </h1>
       <div className="max-w-copy text-left">
         <p className="m-0 text-copy leading-copy text-muted max-site:text-copy-mobile">
-          We co-design hardware and software to provide the world&apos;s
-          cheapest inference.
+          We co-design hardware and software to provide the world&apos;s most
+          affordable inference.
         </p>
         <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
           <a

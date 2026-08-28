@@ -5,6 +5,14 @@
 
 The developer docs are part of `gradiated.com`. They help a developer connect an OpenAI or Anthropic SDK to Gradiated.
 
+The production build renders each docs route to static HTML. The page content is
+available before JavaScript runs. Account state and the public model catalog load
+from the Management API after the page loads.
+
+The build also creates a clean Markdown file for each docs page. The `Copy page`
+button copies this Markdown. It keeps headings, links, lists, and code fences. It
+does not copy navigation, account controls, or page layout text.
+
 ## Information architecture
 
 The docs use these groups:
@@ -117,6 +125,12 @@ Use ASD-STE100 Simplified Technical English.
 - An unconfigured browser origin does not receive gateway CORS access.
 - The Management API reference does not show authentication, health, wizard, or provider webhook routes.
 - Code blocks have syntax highlighting and a copy action.
+- Each docs route returns its complete content in the first HTML response.
+- Docs navigation does not show a page-loading fallback.
+- The `Copy page` button copies the generated Markdown version.
+- Each generated Markdown page starts with one level-one heading.
+- The build generates a complete sitemap, robots file, and LLM index files.
+- The SEO build check passes for every public route.
 - Equivalent code examples use one tab group.
 - Service-tier examples include Python, Node, and cURL. Python and Node include OpenAI and Anthropic SDK variants.
 - Streaming and tool-calling examples include Python and Node with OpenAI and Anthropic SDK variants.

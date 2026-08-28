@@ -4,7 +4,9 @@ import type { paths } from "./schema";
 
 export const productApiBaseUrl =
   import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? window.location.origin : "https://api.gradiated.com");
+  (import.meta.env.DEV && typeof window !== "undefined"
+    ? window.location.origin
+    : "https://api.gradiated.com");
 
 export const gatewayBaseUrl =
   import.meta.env.VITE_GATEWAY_URL ??

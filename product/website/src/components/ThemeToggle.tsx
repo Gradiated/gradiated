@@ -4,6 +4,8 @@ import type { ReactElement } from "react";
 type Theme = "light" | "dark";
 
 const getInitialTheme = (): Theme => {
+  if (typeof window === "undefined") return "light";
+
   try {
     const savedTheme = localStorage.getItem("gradiated-theme");
     if (savedTheme === "dark" || savedTheme === "light") return savedTheme;
@@ -17,7 +19,11 @@ const getInitialTheme = (): Theme => {
 };
 
 export const ThemeToggle = (): ReactElement => {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [theme, setTheme] = useState<Theme>("light");
+
+  useEffect(() => {
+    setTheme(getInitialTheme());
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;

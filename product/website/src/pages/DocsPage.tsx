@@ -1,4 +1,4 @@
-import { isValidElement, lazy, Suspense, useState } from "react";
+import { isValidElement, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import type {
   ComponentPropsWithoutRef,
@@ -17,21 +17,20 @@ import {
 import { DocsApiKeyAction } from "../components/docs/InteractiveQuickstart";
 import { DocsModelCatalog } from "../components/docs/DocsModelCatalog";
 import { DocsSessionProvider } from "../components/docs/DocsSession";
-
-const DocsIndex = lazy(() => import("../docs/index.mdx"));
-const DocsQuickstart = lazy(() => import("../docs/quickstart.mdx"));
-const DocsModelsPricing = lazy(() => import("../docs/models-pricing.mdx"));
-const DocsOpenAiSdk = lazy(() => import("../docs/openai-sdk.mdx"));
-const DocsAnthropicSdk = lazy(() => import("../docs/anthropic-sdk.mdx"));
-const DocsServiceTiers = lazy(() => import("../docs/service-tiers.mdx"));
-const DocsStreaming = lazy(() => import("../docs/streaming.mdx"));
-const DocsToolCalling = lazy(() => import("../docs/tool-calling.mdx"));
-const DocsParameters = lazy(() => import("../docs/parameters.mdx"));
-const DocsErrors = lazy(() => import("../docs/errors.mdx"));
-const DocsOpenCode = lazy(() => import("../docs/opencode.mdx"));
-const DocsCodex = lazy(() => import("../docs/codex.mdx"));
-const DocsClaudeCode = lazy(() => import("../docs/claude-code.mdx"));
-const DocsApiReference = lazy(() => import("../docs/api-reference.mdx"));
+import DocsAnthropicSdk from "../docs/anthropic-sdk.mdx";
+import DocsApiReference from "../docs/api-reference.mdx";
+import DocsClaudeCode from "../docs/claude-code.mdx";
+import DocsCodex from "../docs/codex.mdx";
+import DocsErrors from "../docs/errors.mdx";
+import DocsIndex from "../docs/index.mdx";
+import DocsModelsPricing from "../docs/models-pricing.mdx";
+import DocsOpenAiSdk from "../docs/openai-sdk.mdx";
+import DocsOpenCode from "../docs/opencode.mdx";
+import DocsParameters from "../docs/parameters.mdx";
+import DocsQuickstart from "../docs/quickstart.mdx";
+import DocsServiceTiers from "../docs/service-tiers.mdx";
+import DocsStreaming from "../docs/streaming.mdx";
+import DocsToolCalling from "../docs/tool-calling.mdx";
 
 type DocsDocument = {
   title: string;
@@ -40,7 +39,11 @@ type DocsDocument = {
 };
 
 const documents = {
-  index: { title: "Overview", path: "/docs/", Component: DocsIndex },
+  index: {
+    title: "Overview",
+    path: "/docs/",
+    Component: DocsIndex,
+  },
   quickstart: {
     title: "Quickstart",
     path: "/docs/quickstart/",
@@ -91,7 +94,11 @@ const documents = {
     path: "/docs/opencode/",
     Component: DocsOpenCode,
   },
-  codex: { title: "Codex", path: "/docs/codex/", Component: DocsCodex },
+  codex: {
+    title: "Codex",
+    path: "/docs/codex/",
+    Component: DocsCodex,
+  },
   "claude-code": {
     title: "Claude Code",
     path: "/docs/claude-code/",
@@ -133,6 +140,81 @@ const legacyPaths: Record<string, string> = {
   "/docs/billing/": documents.errors.path,
   "/docs/migrate/": documents.quickstart.path,
   "/docs/usage/": documents.index.path,
+};
+
+const markdownPathFor = (path: string): string =>
+  path === "/docs/" ? "/docs/index.md" : `${path.replace(/\/$/, "")}.md`;
+
+const CopyIcon = (): ReactElement => (
+  <svg
+    aria-hidden="true"
+    className="h-[18px] w-[18px]"
+    fill="none"
+    viewBox="0 0 20 20"
+  >
+    <rect height="12" rx="2" stroke="currentColor" width="12" x="6" y="6" />
+    <path
+      d="M4 14H3a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+      stroke="currentColor"
+    />
+  </svg>
+);
+
+const writeClipboardText = async (text: string): Promise<void> => {
+  if (navigator.clipboard) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch {
+      // Use the browser fallback below.
+    }
+  }
+
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("The browser could not copy the page.");
+};
+
+const DocsPageActions = ({
+  markdownPath,
+}: {
+  markdownPath: string;
+}): ReactElement => {
+  const [copied, setCopied] = useState(false);
+
+  const copyPage = async (): Promise<void> => {
+    try {
+      const response = await fetch(markdownPath);
+      if (!response.ok) throw new Error("The Markdown page is not available.");
+      const markdown = await response.text();
+      await writeClipboardText(markdown);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <div className="relative z-10 float-right mb-5 ml-6 max-[600px]:float-none max-[600px]:mb-8 max-[600px]:ml-0">
+      <button
+        aria-label="Copy this page as Markdown"
+        className="inline-flex cursor-pointer items-center gap-2.5 border border-ink bg-transparent px-4 py-2.5 font-site-mono text-[10px] font-medium uppercase tracking-[0.06em] text-ink transition-colors hover:bg-ink hover:text-paper"
+        onClick={() => void copyPage()}
+        type="button"
+      >
+        <CopyIcon />
+        {copied ? "Copied" : "Copy page"}
+      </button>
+    </div>
+  );
 };
 
 const getCodeText = (node: ReactNode): string => {
@@ -374,38 +456,33 @@ const DocsContent = (): ReactElement => {
         </details>
       </aside>
       <article className="min-w-0">
-        <Suspense
-          fallback={
-            <p className="font-libre text-sm text-muted">Loading page…</p>
-          }
-        >
-          <Content
-            components={{
-              a: DocsAnchor,
-              code: DocsInlineCode,
-              div: DocsDiv,
-              h1: DocsH1,
-              h2: DocsH2,
-              h3: DocsH3,
-              li: DocsListItem,
-              ol: DocsOrderedList,
-              p: DocsParagraph,
-              pre: DocsCodeBlock,
-              table: DocsTable,
-              td: DocsTableCell,
-              th: DocsTableHead,
-              ul: DocsUnorderedList,
-              DocsApiKeyAction,
-              DocsCodeTab,
-              DocsCodeTabs,
-              DocsCodeVariant,
-              DocsCodeVariants,
-              DocsLead,
-              DocsModelCatalog,
-              DocsNext,
-            }}
-          />
-        </Suspense>
+        <DocsPageActions markdownPath={markdownPathFor(document.path)} />
+        <Content
+          components={{
+            a: DocsAnchor,
+            code: DocsInlineCode,
+            div: DocsDiv,
+            h1: DocsH1,
+            h2: DocsH2,
+            h3: DocsH3,
+            li: DocsListItem,
+            ol: DocsOrderedList,
+            p: DocsParagraph,
+            pre: DocsCodeBlock,
+            table: DocsTable,
+            td: DocsTableCell,
+            th: DocsTableHead,
+            ul: DocsUnorderedList,
+            DocsApiKeyAction,
+            DocsCodeTab,
+            DocsCodeTabs,
+            DocsCodeVariant,
+            DocsCodeVariants,
+            DocsLead,
+            DocsModelCatalog,
+            DocsNext,
+          }}
+        />
       </article>
     </main>
   );

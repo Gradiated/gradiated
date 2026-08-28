@@ -515,7 +515,8 @@ main {
 .library {
   padding-top: 105px;
 }
-.library-section > h1 {
+.library-section > h1,
+.library-section > h2 {
   margin: 0 0 58px;
 }
 .library-handbook {
@@ -593,7 +594,8 @@ main {
   .library {
     padding-top: 72px;
   }
-  .library-section > h1 {
+  .library-section > h1,
+  .library-section > h2 {
     margin-bottom: 45px;
   }
   .library-handbook {

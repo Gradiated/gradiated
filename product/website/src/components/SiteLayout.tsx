@@ -1,13 +1,65 @@
 import { useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
-import { formatPageTitle, getPageMetadata } from "../metadata";
+import {
+  absoluteUrl,
+  formatPageTitle,
+  getPageMetadata,
+  getStructuredData,
+} from "../metadata";
 import { PathField } from "./PathField";
 import { ThemeToggle } from "./ThemeToggle";
 
 type SiteLayoutProps = {
   children: ReactNode;
   home?: boolean;
+};
+
+const setMetaContent = (
+  attribute: "name" | "property",
+  key: string,
+  content?: string,
+): void => {
+  const selector = `meta[${attribute}="${key}"]`;
+  const current = document.querySelector<HTMLMetaElement>(selector);
+  if (!content) {
+    current?.remove();
+    return;
+  }
+
+  const element = current ?? document.createElement("meta");
+  element.setAttribute(attribute, key);
+  element.content = content;
+  if (!current) document.head.append(element);
+};
+
+const setCanonicalUrl = (url: string): void => {
+  const current = document.querySelector<HTMLLinkElement>(
+    'link[rel="canonical"]',
+  );
+  const element = current ?? document.createElement("link");
+  element.rel = "canonical";
+  element.href = url;
+  if (!current) document.head.append(element);
+};
+
+const setStructuredData = (data: object[]): void => {
+  const current = document.querySelector<HTMLScriptElement>(
+    "script[data-page-structured-data]",
+  );
+  if (data.length === 0) {
+    current?.remove();
+    return;
+  }
+
+  const element = current ?? document.createElement("script");
+  element.type = "application/ld+json";
+  element.dataset.pageStructuredData = "true";
+  element.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@graph": data,
+  });
+  if (!current) document.head.append(element);
 };
 
 const SiteHeader = (): ReactElement => {
@@ -150,15 +202,56 @@ export const SiteLayout = ({
 }: SiteLayoutProps): ReactElement => {
   const location = useLocation();
   const metadata = getPageMetadata(location.pathname);
+  const canonicalPath =
+    location.pathname === "/"
+      ? "/"
+      : `${location.pathname.replace(/\/+$/, "")}/`;
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    document.title = formatPageTitle(metadata.title);
-    const descriptionElement = document.querySelector<HTMLMetaElement>(
-      'meta[name="description"]',
+    const title = formatPageTitle(metadata.title);
+    const canonicalUrl = absoluteUrl(canonicalPath);
+    const imageUrl = absoluteUrl(metadata.image);
+
+    document.title = title;
+    setCanonicalUrl(canonicalUrl);
+    setMetaContent("name", "description", metadata.description);
+    setMetaContent(
+      "name",
+      "robots",
+      metadata.index ? "index, follow" : "noindex, nofollow",
     );
-    descriptionElement?.setAttribute("content", metadata.description);
-  }, [location.pathname, metadata.description, metadata.title]);
+    setMetaContent("property", "og:site_name", "Gradiated");
+    setMetaContent(
+      "property",
+      "og:type",
+      metadata.kind === "article" ? "article" : "website",
+    );
+    setMetaContent("property", "og:title", title);
+    setMetaContent("property", "og:description", metadata.description);
+    setMetaContent("property", "og:url", canonicalUrl);
+    setMetaContent("property", "og:image", imageUrl);
+    setMetaContent("property", "og:image:alt", `${metadata.title} - Gradiated`);
+    setMetaContent("property", "article:published_time", metadata.publishedAt);
+    setMetaContent(
+      "name",
+      "twitter:card",
+      metadata.image.startsWith("/assets/") ? "summary_large_image" : "summary",
+    );
+    setMetaContent("name", "twitter:title", title);
+    setMetaContent("name", "twitter:description", metadata.description);
+    setMetaContent("name", "twitter:image", imageUrl);
+    setStructuredData(getStructuredData(canonicalPath));
+  }, [
+    canonicalPath,
+    location.pathname,
+    metadata.description,
+    metadata.image,
+    metadata.index,
+    metadata.kind,
+    metadata.publishedAt,
+    metadata.title,
+  ]);
 
   return (
     <div

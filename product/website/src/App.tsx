@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import { SiteLayout } from "./components/SiteLayout";
@@ -8,6 +8,7 @@ import { ArticlePage } from "./pages/ArticlePage";
 import { AcceptableUsePage } from "./pages/AcceptableUsePage";
 import { CareersPage } from "./pages/CareersPage";
 import { DpaPage } from "./pages/DpaPage";
+import { DocsPage } from "./pages/DocsPage";
 import { HandbookPage } from "./pages/HandbookPage";
 import { HomePage } from "./pages/HomePage";
 import { JobPage } from "./pages/JobPage";
@@ -18,10 +19,6 @@ import { PrivacyPage } from "./pages/PrivacyPage";
 import { ProductsPage } from "./pages/ProductsPage";
 import { SubprocessorsPage } from "./pages/SubprocessorsPage";
 import { TermsPage } from "./pages/TermsPage";
-
-const DocsPage = lazy(() =>
-  import("./pages/DocsPage").then((module) => ({ default: module.DocsPage })),
-);
 
 type LayoutRouteProps = {
   children: ReactNode;
@@ -35,15 +32,14 @@ const LayoutRoute = ({
   <SiteLayout {...layoutProps}>{children}</SiteLayout>
 );
 
-export const App = (): ReactElement => {
+export const AppRoutes = (): ReactElement => {
   const [waitlistOpen, setWaitlistOpen] = useState(false);
 
   return (
-    <BrowserRouter>
-      <WaitlistDialog
-        open={waitlistOpen}
-        onClose={() => setWaitlistOpen(false)}
-      />
+    <>
+      {waitlistOpen && (
+        <WaitlistDialog open onClose={() => setWaitlistOpen(false)} />
+      )}
       <Routes>
         <Route
           path="/"
@@ -132,15 +128,7 @@ export const App = (): ReactElement => {
           path="/docs/*"
           element={
             <LayoutRoute>
-              <Suspense
-                fallback={
-                  <main className="mx-auto min-h-[60vh] max-w-content px-7 py-20 font-libre text-sm text-muted">
-                    Loading docs…
-                  </main>
-                }
-              >
-                <DocsPage />
-              </Suspense>
+              <DocsPage />
             </LayoutRoute>
           }
         />
@@ -193,6 +181,12 @@ export const App = (): ReactElement => {
           }
         />
       </Routes>
-    </BrowserRouter>
+    </>
   );
 };
+
+export const App = (): ReactElement => (
+  <BrowserRouter>
+    <AppRoutes />
+  </BrowserRouter>
+);

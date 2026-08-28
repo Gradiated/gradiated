@@ -1,18 +1,28 @@
 import { jobs } from "./careers";
 
+export const siteOrigin = "https://gradiated.com";
+
+export type PageKind = "article" | "documentation" | "job" | "website";
+
 export type PageMetadata = {
   description: string;
+  image: string;
+  index: boolean;
+  kind: PageKind;
+  publishedAt?: string;
   title: string;
 };
+
+type PageMetadataContent = Pick<PageMetadata, "description" | "title">;
 
 export const formatPageTitle = (title: string): string =>
   `${title} | Gradiated`;
 
-const pageMetadata: Record<string, PageMetadata> = {
+const pageMetadata: Record<string, PageMetadataContent> = {
   "/": {
-    title: "Home",
+    title: "Inference research lab",
     description:
-      "Gradiated builds software and hardware that makes open-model inference more efficient.",
+      "Gradiated builds software and hardware to provide the most affordable open-model inference.",
   },
   "/products/": {
     title: "Products",
@@ -53,7 +63,7 @@ const pageMetadata: Record<string, PageMetadata> = {
     description: "Read the values that guide how Gradiated works.",
   },
   "/docs/": {
-    title: "Docs",
+    title: "Developer docs",
     description: "Learn how to use the Gradiated API for open-model inference.",
   },
   "/docs/quickstart/": {
@@ -65,15 +75,6 @@ const pageMetadata: Record<string, PageMetadata> = {
     title: "Models and pricing",
     description:
       "Compare the models, prices, and capabilities available through Gradiated.",
-  },
-  "/docs/api-keys/": {
-    title: "API keys and workspaces",
-    description: "Create and manage Gradiated API keys and workspaces.",
-  },
-  "/docs/migrate/": {
-    title: "Migrate to Gradiated",
-    description:
-      "Move an existing OpenAI-compatible application to the Gradiated API.",
   },
   "/docs/openai-sdk/": {
     title: "OpenAI SDK",
@@ -104,14 +105,6 @@ const pageMetadata: Record<string, PageMetadata> = {
   "/docs/errors/": {
     title: "Errors, limits, and retries",
     description: "Handle Gradiated API errors, limits, and retries.",
-  },
-  "/docs/usage/": {
-    title: "Usage and request logs",
-    description: "Review inference usage and request logs in Gradiated.",
-  },
-  "/docs/billing/": {
-    title: "Billing and credits",
-    description: "Manage Gradiated billing, credits, and usage costs.",
   },
   "/docs/opencode/": {
     title: "OpenCode",
@@ -153,7 +146,7 @@ const pageMetadata: Record<string, PageMetadata> = {
   },
 };
 
-const notFoundMetadata: PageMetadata = {
+const notFoundMetadata: PageMetadataContent = {
   title: "Page not found",
   description:
     "The requested page does not exist. Find another page on the Gradiated website.",
@@ -164,19 +157,243 @@ const normalizePath = (pathname: string): string => {
   return pathname.endsWith("/") ? pathname : `${pathname}/`;
 };
 
+const defaultImage = "/brand/png/gradiated-mark-dark-1024.png";
+
+const metadataDetailsFor = (
+  pathname: string,
+): Pick<PageMetadata, "image" | "kind" | "publishedAt"> => {
+  if (pathname.startsWith("/docs/")) {
+    return { image: defaultImage, kind: "documentation" };
+  }
+  if (pathname === "/notes/our-thesis/") {
+    return {
+      image: "/assets/editorial/thesis-v2.png",
+      kind: "article",
+      publishedAt: "2026-07-13",
+    };
+  }
+  if (pathname === "/notes/working-with-us/") {
+    return {
+      image: "/assets/editorial/working-with-us-v2.png",
+      kind: "article",
+      publishedAt: "2026-07-15",
+    };
+  }
+  if (pathname !== "/careers/" && pathname.startsWith("/careers/")) {
+    return {
+      image: "/assets/editorial/working-with-us-v2.png",
+      kind: "job",
+      publishedAt: "2026-08-28",
+    };
+  }
+  return { image: defaultImage, kind: "website" };
+};
+
 export const getPageMetadata = (pathname: string): PageMetadata => {
   const normalizedPath = normalizePath(pathname);
   const exactMetadata = pageMetadata[normalizedPath];
-  if (exactMetadata) return exactMetadata;
+  if (exactMetadata) {
+    return {
+      ...exactMetadata,
+      ...metadataDetailsFor(normalizedPath),
+      index: true,
+    };
+  }
 
   const job = jobs.find(({ slug }) => normalizedPath === `/careers/${slug}/`);
   if (job) {
-    return { title: job.title, description: job.summary };
+    return {
+      title: job.title,
+      description: job.summary,
+      image: "/assets/editorial/working-with-us-v2.png",
+      index: true,
+      kind: "job",
+      publishedAt: "2026-08-28",
+    };
   }
 
   if (normalizedPath.startsWith("/products/")) {
-    return pageMetadata["/products/"];
+    return {
+      ...pageMetadata["/products/"],
+      ...metadataDetailsFor("/products/"),
+      index: true,
+    };
   }
 
-  return notFoundMetadata;
+  return {
+    ...notFoundMetadata,
+    image: defaultImage,
+    index: false,
+    kind: "website",
+  };
+};
+
+export const getIndexablePaths = (): string[] => [
+  ...Object.keys(pageMetadata),
+  ...jobs.map(({ slug }) => `/careers/${slug}/`),
+];
+
+export const absoluteUrl = (path: string): string =>
+  new URL(path, siteOrigin).toString();
+
+const organization = {
+  "@type": "Organization",
+  "@id": `${siteOrigin}/#organization`,
+  name: "Gradiated",
+  url: siteOrigin,
+  logo: absoluteUrl(defaultImage),
+};
+
+const breadcrumbFor = (pathname: string, title: string): object | null => {
+  const parts: Array<{ name: string; path: string }> = [
+    { name: "Home", path: "/" },
+  ];
+
+  if (pathname.startsWith("/docs/")) {
+    parts.push({ name: "Developer docs", path: "/docs/" });
+  } else if (pathname.startsWith("/careers/")) {
+    parts.push({ name: "Careers", path: "/careers/" });
+  } else if (pathname.startsWith("/notes/")) {
+    parts.push({ name: "Notes", path: "/notes/" });
+  } else if (pathname.startsWith("/library/")) {
+    parts.push({ name: "Library", path: "/library/" });
+  } else {
+    return null;
+  }
+
+  if (parts.at(-1)?.path !== pathname) {
+    parts.push({ name: title, path: pathname });
+  }
+
+  return {
+    "@type": "BreadcrumbList",
+    itemListElement: parts.map((part, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: part.name,
+      item: absoluteUrl(part.path),
+    })),
+  };
+};
+
+const escapeHtml = (value: string): string =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+const htmlList = (items: string[]): string =>
+  `<ul>${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
+
+const jobDescription = (job: (typeof jobs)[number]): string =>
+  [
+    `<p>${escapeHtml(job.summary)}</p>`,
+    "<h2>Why this role exists</h2>",
+    ...job.purpose.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
+    "<h2>What you will do</h2>",
+    htmlList(job.responsibilities),
+    "<h2>Problems you may work on</h2>",
+    htmlList(job.problems),
+    "<h2>What we are looking for</h2>",
+    htmlList(job.requirements),
+    "<h2>This role is not for you if</h2>",
+    htmlList(job.notFor),
+  ].join("");
+
+export const getStructuredData = (pathname: string): object[] => {
+  const normalizedPath = normalizePath(pathname);
+  const metadata = getPageMetadata(normalizedPath);
+  if (!metadata.index) return [];
+
+  const url = absoluteUrl(normalizedPath);
+  const data: object[] = [organization];
+  const breadcrumb = breadcrumbFor(normalizedPath, metadata.title);
+  if (breadcrumb) data.push(breadcrumb);
+
+  const job = jobs.find(({ slug }) => normalizedPath === `/careers/${slug}/`);
+  if (job) {
+    data.push({
+      "@type": "JobPosting",
+      title: job.title,
+      description: jobDescription(job),
+      datePosted: "2026-08-28",
+      employmentType: "FULL_TIME",
+      hiringOrganization: organization,
+      identifier: {
+        "@type": "PropertyValue",
+        name: "Gradiated",
+        value: job.slug,
+      },
+      jobLocation: job.location.split(",").map((city) => ({
+        "@type": "Place",
+        address: {
+          "@type": "PostalAddress",
+          addressCountry: "GB",
+          addressLocality: city.trim(),
+        },
+      })),
+      baseSalary: {
+        "@type": "MonetaryAmount",
+        currency: "GBP",
+        value: {
+          "@type": "QuantitativeValue",
+          minValue: 240000,
+          maxValue: 500000,
+          unitText: "YEAR",
+        },
+      },
+      url,
+    });
+    return data;
+  }
+
+  if (metadata.kind === "article") {
+    data.push({
+      "@type": "Article",
+      headline: metadata.title,
+      description: metadata.description,
+      datePublished: metadata.publishedAt,
+      dateModified: metadata.publishedAt,
+      image: absoluteUrl(metadata.image),
+      mainEntityOfPage: url,
+      author: organization,
+      publisher: organization,
+    });
+    return data;
+  }
+
+  if (metadata.kind === "documentation") {
+    data.push({
+      "@type": "TechArticle",
+      headline: metadata.title,
+      description: metadata.description,
+      mainEntityOfPage: url,
+      author: organization,
+      publisher: organization,
+    });
+    return data;
+  }
+
+  if (normalizedPath === "/") {
+    data.push({
+      "@type": "WebSite",
+      "@id": `${siteOrigin}/#website`,
+      name: "Gradiated",
+      description: metadata.description,
+      url: siteOrigin,
+      publisher: organization,
+    });
+  } else {
+    data.push({
+      "@type": "WebPage",
+      name: metadata.title,
+      description: metadata.description,
+      url,
+      isPartOf: { "@id": `${siteOrigin}/#website` },
+    });
+  }
+
+  return data;
 };

@@ -5,7 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 
-export default defineConfig({
+export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     {
       ...mdx({
@@ -27,4 +27,7 @@ export default defineConfig({
       "/health": "http://127.0.0.1:3001",
     },
   },
-});
+  build: {
+    emptyOutDir: !isSsrBuild,
+  },
+}));

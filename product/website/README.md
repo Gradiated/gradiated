@@ -52,13 +52,15 @@ Set the Vercel Root Directory to `product/website`.
 
 Vercel reads `vercel.json`, runs `pnpm build`, and serves `dist`.
 
-The rewrite keeps React Router routes working after a direct page load.
+The build writes one static HTML file for each public route. Vercel serves these
+files directly. `vercel.json` redirects old docs routes to their current routes.
 
 ## Structure
 
 - `src/components/` contains shared site components.
 - `src/pages/` contains route-level pages.
-- `src/metadata.ts` defines page titles and descriptions for all public routes.
+- `src/metadata.ts` defines titles, descriptions, canonical URLs, social tags,
+  and structured data for all public routes.
 - `src/careers.ts` contains the public job descriptions and role metadata.
 - `src/docs/` contains the public MDX documentation.
 - `src/content.tsx` contains article content.
@@ -67,6 +69,15 @@ The rewrite keeps React Router routes working after a direct page load.
 
 The docs use MDX compiled by Vite. Add a page to `src/docs/`, register its route
 and navigation entry in `src/pages/DocsPage.tsx`, then run `pnpm build`.
+
+The production build renders every public page to static HTML. It also generates
+portable Markdown for each docs page, `sitemap.xml`, `robots.txt`, `llms.txt`,
+and `llms-full.txt`. The docs `Copy page` button copies the generated Markdown.
+Live account state and the model catalog still load from the Management API.
+
+The build runs `scripts/check-seo.mjs`. This check requires unique metadata, one
+page heading, canonical URLs, social tags, structured data, and a complete
+sitemap.
 
 The careers index is at `/careers/`. Each job in `src/careers.ts` generates a
 route under `/careers/<slug>/`. The shared page structure, compensation text,

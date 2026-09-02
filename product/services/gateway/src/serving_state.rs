@@ -657,7 +657,14 @@ mod tests {
             completed_at,
         )
         .unwrap();
-        GenerationProperties::new(identity, false, priced_usage, terminal, timing)
+        GenerationProperties::new(
+            identity,
+            crate::ServiceTier::Default,
+            false,
+            priced_usage,
+            terminal,
+            timing,
+        )
     }
 
     async fn admit(

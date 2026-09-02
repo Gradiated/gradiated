@@ -244,6 +244,14 @@ nonnegative integer `cost` in nano-USD. Pricing types are unique within their
 modality; `prompt`, `cached_prompt`, and `completion` are present in every
 stored document.
 
+The public API offers `flex`, `default`, and `fast` service tiers. The stored
+model prices are the `default` prices. The gateway derives each effective
+nano-USD unit price before admission. It uses `floor(default * 7 / 10)` for
+`flex`, the stored price for `default`, and `floor(default * 3 / 2)` for
+`fast`. It applies the ratio independently to `prompt`, `cached_prompt`,
+`cache_write`, `completion`, and `internal_reasoning`. A derived unit price can
+be zero. The Models API returns this global policy with the model catalog.
+
 The Zod write schema is the normalization boundary. Before PostgreSQL is
 written it materializes `schema_version = 1`, nullable catalog metadata,
 `deprecation_date = null`, empty parameter maps, `streaming = true`, and an
@@ -418,6 +426,12 @@ appear in this table; the gateway reads the optional upstream credential from
 the fixed `SGLANG_API_KEY` process secret. One gateway-wide hard generation
 timeout applies to every model and defaults to 300 seconds at launch.
 
+Every deployment supports all three service tiers. Do not add service-tier
+capability fields to `model_deployments`. The tiers share the same deployment
+pool, release, capacity lease, and retry candidates. The runtime scheduler uses
+request priority to give `fast` work precedence over `default` work and
+`default` work precedence over `flex` work.
+
 # ClickHouse models
 
 ClickHouse Cloud on AWS stores the durable immutable terminal-generation history for customer usage, aggregate PostgreSQL settlement, spend analysis and inference performance. It is not the authority for current balances, credentials, in-flight leases or posted financial movements.
@@ -448,6 +462,7 @@ Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and init
 ```text
 {
   event_schema_version: integer,
+  service_tier: "flex" | "default" | "fast",
   external_id: string | null,
   organization_id: uuid,
   workspace_id: uuid,
@@ -491,6 +506,7 @@ Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and init
 }
 ```
 
+Version 2 requires `service_tier`. Version 1 omits it and means `default`.
 `pricing` contains every effective price component used for the generation,
 including configured zero-quantity or zero-price components. Terminal generation
 units remain normalized as `input_token`, `cached_input_token`,
@@ -498,7 +514,8 @@ units remain normalized as `input_token`, `cached_input_token`,
 types map from `prompt`, `cached_prompt`, `cache_write`, `completion`, and
 `internal_reasoning` respectively. Under the global nano-USD convention, each
 component's `amount` is exactly `quantity * unit_price`, and all component
-amounts sum exactly to `usage.charge`; no monetary rounding policy is needed.
+amounts sum exactly to `usage.charge`. Service-tier unit-price adjustment uses
+the floor rule before this multiplication. No later monetary rounding occurs.
 This preserves the complete billing calculation when the global model price
 later changes without copying unrelated model descriptions, capabilities,
 capacity, or availability.

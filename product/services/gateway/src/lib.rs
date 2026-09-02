@@ -18,6 +18,7 @@ pub mod readiness;
 pub mod request;
 pub mod routing;
 pub mod runtime;
+pub mod service_tier;
 pub mod serving_state;
 pub mod tokenizer;
 mod valkey_auth;
@@ -60,5 +61,6 @@ pub use runtime::{
     ModelRuntime, RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
     RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, RuntimeTlsConfig, SglangClient,
 };
+pub use service_tier::ServiceTier;
 pub use serving_state::{ServingState, ValkeyServingState};
 pub use tokenizer::{BoundedRequest, ModelTokenizer, ModelTokenizerError};

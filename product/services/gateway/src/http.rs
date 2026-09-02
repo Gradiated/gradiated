@@ -30,6 +30,7 @@ use crate::{
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
+const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 
 pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
@@ -37,7 +38,7 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
         .allow_origin(AllowOrigin::list(origins))
         .allow_methods([Method::GET, Method::POST])
         .allow_headers([AUTHORIZATION, CONTENT_TYPE])
-        .expose_headers([GENERATION_ID_HEADER])
+        .expose_headers([GENERATION_ID_HEADER, SERVICE_TIER_HEADER])
         .max_age(Duration::from_secs(3600))
 }
 
@@ -152,10 +153,29 @@ async fn complete_with_protocol(
     body: Bytes,
 ) -> Result<Response, GatewayError> {
     match state.completions.complete(metadata, headers, body).await? {
-        CompletionResponse::NonStreaming(result) => {
-            Ok(Json(protocol.translate_response(result.into_response())?).into_response())
+        CompletionResponse::NonStreaming {
+            result,
+            service_tier,
+        } => {
+            let mut response =
+                Json(protocol.translate_response(result.into_response())?).into_response();
+            response.headers_mut().insert(
+                SERVICE_TIER_HEADER,
+                HeaderValue::from_static(service_tier.as_str()),
+            );
+            Ok(response)
         }
-        CompletionResponse::Streaming(result) => Ok(sse_response(protocol, result.into_stream())),
+        CompletionResponse::Streaming {
+            result,
+            service_tier,
+        } => {
+            let mut response = sse_response(protocol, result.into_stream());
+            response.headers_mut().insert(
+                SERVICE_TIER_HEADER,
+                HeaderValue::from_static(service_tier.as_str()),
+            );
+            Ok(response)
+        }
     }
 }
 
@@ -596,6 +616,27 @@ mod tests {
             allowed.headers()["access-control-allow-origin"],
             "https://gradiated.com"
         );
+
+        let exposed = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .method("POST")
+                    .uri("/v1/chat/completions")
+                    .header("origin", "https://gradiated.com")
+                    .header("content-type", "application/json")
+                    .body(Body::from(
+                        r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        let exposed_headers = exposed.headers()["access-control-expose-headers"]
+            .to_str()
+            .unwrap();
+        assert!(exposed_headers.contains("x-generation-id"));
+        assert!(exposed_headers.contains("x-gradiated-service-tier"));
 
         let denied = app
             .oneshot(

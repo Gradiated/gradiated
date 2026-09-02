@@ -10,12 +10,7 @@ const PATH_BLOCK_END = "# <<< gradiated <<<";
 const WRAPPER_NAME = "claude-gradiated.js";
 
 export type ShellName =
-  | "zsh"
-  | "bash"
-  | "fish"
-  | "powershell"
-  | "cmd"
-  | "unknown";
+  "zsh" | "bash" | "fish" | "powershell" | "cmd" | "unknown";
 
 /**
  * The shell the wizard is running under. A child process cannot export into

@@ -120,6 +120,26 @@ describe("catalog and billing routes", () => {
           },
         },
       ],
+      service_tiers: [
+        {
+          service_tier: "flex",
+          price_multiplier_numerator: 7,
+          price_multiplier_denominator: 10,
+          price_change_percent: -30,
+        },
+        {
+          service_tier: "default",
+          price_multiplier_numerator: 1,
+          price_multiplier_denominator: 1,
+          price_change_percent: 0,
+        },
+        {
+          service_tier: "fast",
+          price_multiplier_numerator: 3,
+          price_multiplier_denominator: 2,
+          price_change_percent: 50,
+        },
+      ],
     });
   });
 

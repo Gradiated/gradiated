@@ -1,6 +1,7 @@
 import { z } from "@hono/zod-openapi";
 
 import { TimestampSchema } from "./common.js";
+import { ServiceTierPricingPolicySchema } from "./service-tiers.js";
 
 const DEFAULT_OUTPUT_TOKENS = 1_024;
 
@@ -268,6 +269,7 @@ export const ModelListSchema = z
   .strictObject({
     data: z.array(ModelSchema),
     next_cursor: z.string().nullable(),
+    service_tiers: z.array(ServiceTierPricingPolicySchema).length(3),
   })
   .openapi("ModelList");
 

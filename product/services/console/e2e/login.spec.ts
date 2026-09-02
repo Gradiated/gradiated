@@ -1,4 +1,4 @@
-import { expect, test } from "./fixtures";
+import { apiUrl, expect, test } from "./fixtures";
 
 test("sign-in page sends and consumes a magic link", async ({
   account,
@@ -14,13 +14,14 @@ test("sign-in page sends and consumes a magic link", async ({
   await expect(page.getByText("Check your email")).toBeVisible();
 
   const captured = await context.request.get(
-    `http://127.0.0.1:3001/api/auth/test/magic-link?email=${encodeURIComponent(account.email)}`,
+    `${apiUrl}/api/auth/test/magic-link?email=${encodeURIComponent(account.email)}`,
   );
   expect(captured.ok()).toBe(true);
   const { url } = (await captured.json()) as { url: string };
   const verification = new URL(url);
-  verification.hostname = "127.0.0.1";
-  verification.port = "3001";
+  const apiOrigin = new URL(apiUrl);
+  verification.protocol = apiOrigin.protocol;
+  verification.host = apiOrigin.host;
   await page.goto(verification.toString());
 
   await expect(page).toHaveURL(/\/api-keys$/);

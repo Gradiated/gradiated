@@ -7,6 +7,8 @@ export type Workspace = components["schemas"]["Workspace"];
 export type ApiKey = components["schemas"]["ApiKey"];
 export type CreatedApiKey = components["schemas"]["CreatedApiKey"];
 export type Model = components["schemas"]["Model"];
+export type ServiceTierPricingPolicy =
+  components["schemas"]["ServiceTierPricingPolicy"];
 export type BillingAccount = components["schemas"]["BillingAccount"];
 export type BalanceTransaction = components["schemas"]["BalanceTransaction"];
 export type UsageSummary =

@@ -4,6 +4,7 @@ import {
   CreateTopUpCheckoutSchema,
   ModelListSchema,
   OrganizationIdParamsSchema,
+  SERVICE_TIER_PRICING_POLICY,
   StripeWebhookHeadersSchema,
   StripeWebhookPayloadSchema,
   StripeWebhookResponseSchema,
@@ -310,7 +311,11 @@ export const registerCatalogBillingRoutes = (
     const records = await services.catalogBilling.listModels();
     context.header("Cache-Control", MODEL_CATALOG_CACHE_CONTROL);
     return context.json(
-      { data: records.map(modelResponse), next_cursor: null },
+      {
+        data: records.map(modelResponse),
+        next_cursor: null,
+        service_tiers: [...SERVICE_TIER_PRICING_POLICY],
+      },
       200,
     );
   });

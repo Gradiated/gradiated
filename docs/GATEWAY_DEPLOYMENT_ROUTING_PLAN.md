@@ -25,6 +25,30 @@ The gateway uses:
 
 The first version does not store affinity records. It does not reserve KV tokens.
 
+## Service tiers
+
+Each exact deployment supports `flex`, `default`, and `fast`. The tiers use one
+shared deployment pool. Do not store tier availability on a deployment.
+
+The request can set `service_tier`. The gateway uses `default` when the field is
+absent. It maps the tiers to runtime priority as follows:
+
+| Tier      | Runtime priority | Default-price ratio |
+| --------- | ---------------- | ------------------- |
+| `fast`    | `-10`            | `3 / 2`             |
+| `default` | `0`              | `1 / 1`             |
+| `flex`    | `10`             | `7 / 10`            |
+
+The runtime schedules lower priority values first. Cache-affinity selection
+cannot move a lower tier ahead of a higher tier. The gateway rejects a client
+`priority` field and an `x-vllm-priority` header.
+
+The gateway applies the price ratio to each nano-USD unit price and rounds down.
+It captures these effective prices before admission. Retries keep the same
+tier and price snapshot. Version 2 generation events store `service_tier`.
+Version 1 events mean `default`. Successful responses include
+`x-gradiated-service-tier`.
+
 ## Request flow
 
 ```text

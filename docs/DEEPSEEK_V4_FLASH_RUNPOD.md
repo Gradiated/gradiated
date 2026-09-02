@@ -134,6 +134,7 @@ exec vllm serve /workspace/models/DeepSeek-V4-Flash-0731 \
   --gpu-memory-utilization 0.92 \
   --max-model-len 262144 \
   --max-num-seqs 16 \
+  --scheduling-policy priority \
   --max-num-batched-tokens 8192 \
   --tokenizer-mode deepseek_v4 \
   --tool-call-parser deepseek_v4 \

@@ -118,3 +118,7 @@ curl https://api.gradiated.com/v1/chat/completions \
 The `service_tier` parameter is optional and defaults to `default`, which is the normal speed you'd expect from an inference provider at an affordable price.
 
 The `flex` tier is for background agents where latency isn't as important. It returns a normal response or stream, so you don't need to make any changes to your code to adopt it.
+
+Every hosted model supports all three tiers. A retry keeps the selected tier. The response includes the selected tier in the `x-gradiated-service-tier` header.
+
+Tier pricing applies to input, cached input, cache write, output, and reasoning output prices when the model uses those token types. Gradiated calculates each nano-USD unit price and rounds down before it calculates the request charge.

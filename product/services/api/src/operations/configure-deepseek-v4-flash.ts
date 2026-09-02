@@ -38,7 +38,7 @@ const deploymentId =
   "019cc9fa-1d00-7000-8000-000000000001";
 const runtimeRevision =
   process.env.DEEPSEEK_V4_FLASH_RUNTIME_REVISION ??
-  "vllm-0.27.1-deepseek-v4-flash-b300-v1";
+  "vllm-0.27.1-deepseek-v4-flash-b300-v2";
 
 const { database, pool } = createControlDatabase(databaseUrl);
 const valkey = createValkeyClient(valkeyEnvironment);

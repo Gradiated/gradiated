@@ -5,7 +5,7 @@ use serde::Serialize;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{InputPriceType, InputTokenPrice, OutputPriceType, OutputTokenPrice};
+use crate::{InputPriceType, InputTokenPrice, OutputPriceType, OutputTokenPrice, ServiceTier};
 
 const MAX_JSON_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
@@ -22,6 +22,14 @@ impl CapturedPricing {
     pub fn new(
         input: &[InputTokenPrice],
         output: &[OutputTokenPrice],
+    ) -> Result<Self, CapturedPricingError> {
+        Self::for_service_tier(input, output, ServiceTier::Default)
+    }
+
+    pub fn for_service_tier(
+        input: &[InputTokenPrice],
+        output: &[OutputTokenPrice],
+        service_tier: ServiceTier,
     ) -> Result<Self, CapturedPricingError> {
         if input
             .iter()
@@ -47,11 +55,21 @@ impl CapturedPricing {
             return Err(CapturedPricingError::UnsafeInteger);
         }
         Ok(Self {
-            prompt: input_price(input, InputPriceType::Prompt)?,
-            cached_prompt: input_price(input, InputPriceType::CachedPrompt)?,
-            cache_write: optional_input_price(input, InputPriceType::CacheWrite),
-            completion: output_price(output, OutputPriceType::Completion)?,
-            internal_reasoning: optional_output_price(output, OutputPriceType::InternalReasoning),
+            prompt: tier_price(input_price(input, InputPriceType::Prompt)?, service_tier)?,
+            cached_prompt: tier_price(
+                input_price(input, InputPriceType::CachedPrompt)?,
+                service_tier,
+            )?,
+            cache_write: optional_input_price(input, InputPriceType::CacheWrite)
+                .map(|price| tier_price(price, service_tier))
+                .transpose()?,
+            completion: tier_price(
+                output_price(output, OutputPriceType::Completion)?,
+                service_tier,
+            )?,
+            internal_reasoning: optional_output_price(output, OutputPriceType::InternalReasoning)
+                .map(|price| tier_price(price, service_tier))
+                .transpose()?,
         })
     }
 
@@ -74,6 +92,18 @@ impl CapturedPricing {
     pub fn internal_reasoning(&self) -> Option<u64> {
         self.internal_reasoning
     }
+}
+
+fn tier_price(default_price: u64, service_tier: ServiceTier) -> Result<u64, CapturedPricingError> {
+    let (numerator, denominator) = service_tier.price_ratio();
+    let adjusted = u128::from(default_price)
+        .checked_mul(u128::from(numerator))
+        .ok_or(CapturedPricingError::UnsafeInteger)?
+        / u128::from(denominator);
+    u64::try_from(adjusted)
+        .ok()
+        .filter(|price| *price <= MAX_JSON_SAFE_INTEGER)
+        .ok_or(CapturedPricingError::UnsafeInteger)
 }
 
 fn input_price(
@@ -548,6 +578,7 @@ pub enum GenerationTimingError {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct GenerationProperties {
     event_schema_version: u16,
+    service_tier: ServiceTier,
     #[serde(flatten)]
     identity: GenerationIdentity,
     status: GenerationStatus,
@@ -561,13 +592,15 @@ pub struct GenerationProperties {
 impl GenerationProperties {
     pub fn new(
         identity: GenerationIdentity,
+        service_tier: ServiceTier,
         streamed: bool,
         priced_usage: PricedUsage,
         terminal: TerminalOutcome,
         timing: GenerationTiming,
     ) -> Self {
         Self {
-            event_schema_version: 1,
+            event_schema_version: 2,
+            service_tier,
             identity,
             status: terminal.status,
             streamed,
@@ -736,6 +769,40 @@ mod tests {
     }
 
     #[test]
+    fn captured_pricing_applies_each_tier_ratio_with_floor_rounding() {
+        let input = [
+            InputTokenPrice::Prompt {
+                unit: TokenUnit::Token,
+                cost: 11,
+            },
+            InputTokenPrice::CachedPrompt {
+                unit: TokenUnit::Token,
+                cost: 1,
+            },
+        ];
+        let output = [OutputTokenPrice::Completion {
+            unit: TokenUnit::Token,
+            cost: 11,
+        }];
+
+        let flex = CapturedPricing::for_service_tier(&input, &output, ServiceTier::Flex).unwrap();
+        assert_eq!(flex.prompt(), 7);
+        assert_eq!(flex.cached_prompt(), 0);
+        assert_eq!(flex.completion(), 7);
+
+        let default =
+            CapturedPricing::for_service_tier(&input, &output, ServiceTier::Default).unwrap();
+        assert_eq!(default.prompt(), 11);
+        assert_eq!(default.cached_prompt(), 1);
+        assert_eq!(default.completion(), 11);
+
+        let fast = CapturedPricing::for_service_tier(&input, &output, ServiceTier::Fast).unwrap();
+        assert_eq!(fast.prompt(), 16);
+        assert_eq!(fast.cached_prompt(), 1);
+        assert_eq!(fast.completion(), 16);
+    }
+
+    #[test]
     fn calculates_every_configured_component_in_canonical_order() {
         let priced = PricedUsage::calculate(
             &prices(),
@@ -859,14 +926,22 @@ mod tests {
             None,
         )
         .unwrap();
-        let properties = GenerationProperties::new(identity(), false, priced, terminal, timing());
+        let properties = GenerationProperties::new(
+            identity(),
+            ServiceTier::Fast,
+            false,
+            priced,
+            terminal,
+            timing(),
+        );
 
         let value = serde_json::to_value(properties).unwrap();
-        assert_eq!(value["event_schema_version"], 1);
+        assert_eq!(value["event_schema_version"], 2);
+        assert_eq!(value["service_tier"], "fast");
         assert_eq!(value["status"], "succeeded");
         assert_eq!(value["pricing"]["schema_version"], 1);
         assert_eq!(value["outcome"]["cancellation_owner"], Value::Null);
         assert!(value.get("settlement").is_none());
-        assert_eq!(value.as_object().unwrap().len(), 13);
+        assert_eq!(value.as_object().unwrap().len(), 14);
     }
 }

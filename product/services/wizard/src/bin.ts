@@ -368,7 +368,9 @@ const runInstall = async (): Promise<void> => {
       // On Windows the PATH was not persisted, so the session command above
       // must be paired with a manual persistent PATH entry.
       ...(process.platform === "win32" && applyCommand !== null
-        ? ["    for new terminals, add %USERPROFILE%\\.gradiated\\bin to your PATH"]
+        ? [
+            "    for new terminals, add %USERPROFILE%\\.gradiated\\bin to your PATH",
+          ]
         : []),
       "    your normal `claude` is unchanged; /model <id> switches models in a session",
       "    ANTHROPIC_MODEL=<id> claude-gradiated overrides the model for one run",

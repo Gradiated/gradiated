@@ -1,20 +1,61 @@
 import { useQuery } from "@tanstack/react-query";
 import { Boxes, CircleCheck, LoaderCircle } from "lucide-react";
 
-import { listModels, type Model } from "@/api/queries";
+import {
+  listModels,
+  type Model,
+  type ServiceTierPricingPolicy,
+} from "@/api/queries";
 import { AppShell } from "@/components/app-shell";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useProductContext } from "@/hooks/use-product-context";
 import { formatUsd } from "@/lib/format";
 
-const pricePerMillion = (model: Model, unit: "prompt" | "completion") => {
-  const modality =
-    unit === "prompt"
-      ? model.properties.input_modalities[0]
-      : model.properties.output_modalities[0];
-  if (!modality) return "—";
-  const price = modality.pricing.find((entry) => entry.type === unit);
-  if (!price) return "—";
-  return formatUsd(price.cost / 1_000);
+type PriceType =
+  | "prompt"
+  | "cached_prompt"
+  | "cache_write"
+  | "completion"
+  | "internal_reasoning";
+
+const PRICE_ROWS = [
+  { type: "prompt", label: "Input" },
+  { type: "cached_prompt", label: "Cached input" },
+  { type: "cache_write", label: "Cache write" },
+  { type: "completion", label: "Output" },
+  { type: "internal_reasoning", label: "Reasoning output" },
+] as const satisfies ReadonlyArray<{ type: PriceType; label: string }>;
+
+const defaultPrice = (model: Model, type: PriceType): number | undefined => {
+  const entries = [
+    ...(model.properties.input_modalities[0]?.pricing ?? []),
+    ...(model.properties.output_modalities[0]?.pricing ?? []),
+  ];
+  return entries.find((entry) => entry.type === type)?.cost;
+};
+
+const tierPrice = (
+  defaultNanoUsd: number,
+  policy: ServiceTierPricingPolicy,
+): number =>
+  Number(
+    (BigInt(defaultNanoUsd) * BigInt(policy.price_multiplier_numerator)) /
+      BigInt(policy.price_multiplier_denominator),
+  );
+
+const tierLabel = (policy: ServiceTierPricingPolicy): string => {
+  const name =
+    policy.service_tier.charAt(0).toUpperCase() + policy.service_tier.slice(1);
+  if (policy.price_change_percent === 0) return name;
+  const sign = policy.price_change_percent > 0 ? "+" : "";
+  return `${name} (${sign}${policy.price_change_percent}%)`;
 };
 
 export const ModelsPage = () => {
@@ -85,16 +126,6 @@ export const ModelsPage = () => {
                         </code>
                       </div>
                     </div>
-                    <div className="flex gap-6 text-sm">
-                      <Price
-                        label="Input"
-                        value={pricePerMillion(model, "prompt")}
-                      />
-                      <Price
-                        label="Output"
-                        value={pricePerMillion(model, "completion")}
-                      />
-                    </div>
                   </div>
                   <div className="grid gap-6 p-6 md:grid-cols-[1fr_auto]">
                     <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
@@ -117,6 +148,15 @@ export const ModelsPage = () => {
                       />
                     </dl>
                   </div>
+                  <div className="border-t px-4 py-5 sm:px-6">
+                    <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Price per 1M tokens
+                    </p>
+                    <TierPricingTable
+                      model={model}
+                      policies={models.data.service_tiers}
+                    />
+                  </div>
                 </article>
               ))}
             </div>
@@ -131,12 +171,59 @@ export const ModelsPage = () => {
   );
 };
 
-const Price = ({ label, value }: { label: string; value: string }) => (
-  <div>
-    <p className="text-xs text-muted-foreground">{label}</p>
-    <p className="mt-0.5 font-medium">{value} / 1M</p>
-  </div>
-);
+const TierPricingTable = ({
+  model,
+  policies,
+}: {
+  model: Model;
+  policies: ServiceTierPricingPolicy[];
+}) => {
+  const rows = PRICE_ROWS.flatMap((row) => {
+    const price = defaultPrice(model, row.type);
+    return price === undefined ? [] : [{ ...row, price }];
+  });
+
+  return (
+    <Table className="min-w-[34rem] table-fixed">
+      <TableHeader>
+        <TableRow className="hover:bg-transparent">
+          <TableHead>Token type</TableHead>
+          {policies.map((policy) => (
+            <TableHead
+              key={policy.service_tier}
+              className={
+                policy.service_tier === "default"
+                  ? "bg-muted/40 text-right"
+                  : "text-right"
+              }
+            >
+              {tierLabel(policy)}
+            </TableHead>
+          ))}
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow key={row.type}>
+            <TableCell className="font-medium">{row.label}</TableCell>
+            {policies.map((policy) => (
+              <TableCell
+                key={policy.service_tier}
+                className={
+                  policy.service_tier === "default"
+                    ? "bg-muted/40 text-right font-medium"
+                    : "text-right"
+                }
+              >
+                {formatUsd(tierPrice(row.price, policy) / 1_000)}
+              </TableCell>
+            ))}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
 
 const Metric = ({ label, value }: { label: string; value: string }) => (
   <div>

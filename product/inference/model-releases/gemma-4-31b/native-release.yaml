@@ -8,7 +8,7 @@ spec:
   runtime:
     kind: gradiated-native
     protocol: token-completions-v1
-    release: native-gemma4-h200-v1
+    release: native-gemma4-h200-v2
     dockerfile: product/inference/runtimes/native/Dockerfile
     image: cr.us-central1.nebius.cloud/u00t9b88da9hsqpsak/desmond-native@sha256:ca1a65459bf9c21261737477ab5e9080f181b215fc55e43612e9e4ef067ee95a
     sourceCommit: f1e8a5a20a416cd1946815aedda3335b22434b1f

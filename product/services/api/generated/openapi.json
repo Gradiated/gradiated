@@ -57,11 +57,18 @@
               "string",
               "null"
             ]
+          },
+          "service_tiers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ServiceTierPricingPolicy"
+            }
           }
         },
         "required": [
           "data",
-          "next_cursor"
+          "next_cursor",
+          "service_tiers"
         ],
         "additionalProperties": false
       },
@@ -519,6 +526,40 @@
             ],
             "additionalProperties": false
           }
+        ]
+      },
+      "ServiceTierPricingPolicy": {
+        "type": "object",
+        "properties": {
+          "service_tier": {
+            "$ref": "#/components/schemas/ServiceTier"
+          },
+          "price_multiplier_numerator": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "price_multiplier_denominator": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "price_change_percent": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "service_tier",
+          "price_multiplier_numerator",
+          "price_multiplier_denominator",
+          "price_change_percent"
+        ],
+        "additionalProperties": false
+      },
+      "ServiceTier": {
+        "type": "string",
+        "enum": [
+          "flex",
+          "default",
+          "fast"
         ]
       },
       "BillingAccount": {

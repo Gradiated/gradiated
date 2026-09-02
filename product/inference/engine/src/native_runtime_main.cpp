@@ -203,6 +203,7 @@ struct CompletionJob {
   std::uint64_t request_id{0};
   std::vector<int> input_ids;
   int max_tokens{0};
+  int priority{0};
   std::unordered_set<int> stop_ids;
   std::chrono::steady_clock::time_point queued_at;
   std::mutex mutex;
@@ -284,8 +285,8 @@ class ContinuousScheduler {
   }
 
   CompletionResult complete(std::vector<int> input_ids, int max_tokens,
-                            std::unordered_set<int> stop_ids) {
-    auto job = submit(std::move(input_ids), max_tokens, std::move(stop_ids));
+                            std::unordered_set<int> stop_ids, int priority) {
+    auto job = submit(std::move(input_ids), max_tokens, std::move(stop_ids), priority);
     std::unique_lock lock(job->mutex);
     job->condition.wait(lock, [&] { return job->done; });
     if (!job->error.empty()) throw InferenceFailure(job->error);
@@ -293,11 +294,12 @@ class ContinuousScheduler {
   }
 
   std::shared_ptr<CompletionJob> submit(std::vector<int> input_ids, int max_tokens,
-                                        std::unordered_set<int> stop_ids) {
+                                        std::unordered_set<int> stop_ids, int priority) {
     auto job = std::make_shared<CompletionJob>();
     job->request_id = next_request_id_.fetch_add(1, std::memory_order_relaxed);
     job->input_ids = std::move(input_ids);
     job->max_tokens = max_tokens;
+    job->priority = priority;
     job->stop_ids = std::move(stop_ids);
     job->queued_at = std::chrono::steady_clock::now();
     {
@@ -553,6 +555,14 @@ class ContinuousScheduler {
     {
       std::lock_guard lock(mutex_);
       if (pending_.empty()) return false;
+      const auto priority_selected = std::min_element(
+          pending_.begin(), pending_.end(),
+          [](const auto& left, const auto& right) {
+            return left->priority < right->priority;
+          });
+      if (priority_selected != pending_.begin()) {
+        std::rotate(pending_.begin(), priority_selected, std::next(priority_selected));
+      }
       auto selected = pending_.begin();
       placement = select_slot(**selected);
       const bool may_bypass = placement.cache_reservation_blocked ||
@@ -561,6 +571,7 @@ class ContinuousScheduler {
                static_cast<std::uint32_t>(cache_affinity_max_bypasses_));
       if (may_bypass) {
         for (auto candidate = std::next(selected); candidate != pending_.end(); ++candidate) {
+          if ((*candidate)->priority != (*selected)->priority) continue;
           const Placement candidate_placement = select_slot(**candidate);
           if (candidate_placement.destination >= 0 &&
               (placement.destination < 0 ||
@@ -1427,9 +1438,10 @@ int main(int argc, char** argv) {
           for (const int token : integer_array(*value, "stop_token_ids")) stop_ids.insert(token);
         }
         const bool stream = optional_bool(body, "stream", false);
+        const int priority = optional_integer(body, "priority", 0);
 
         if (stream) {
-          auto job = scheduler.submit(input_ids, max_tokens, std::move(stop_ids));
+          auto job = scheduler.submit(input_ids, max_tokens, std::move(stop_ids), priority);
           return desmond::HttpResponse{
               200, "text/event-stream", {},
               [job, &scheduler, input_tokens = input_ids.size()](
@@ -1484,7 +1496,7 @@ int main(int argc, char** argv) {
               }};
         }
 
-        auto result = scheduler.complete(input_ids, max_tokens, std::move(stop_ids));
+        auto result = scheduler.complete(input_ids, max_tokens, std::move(stop_ids), priority);
         std::ostringstream response;
         response << "{\"output_ids\":" << token_array_json(result.output_ids)
                  << ",\"usage\":{\"input_tokens\":" << input_ids.size()

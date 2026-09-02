@@ -8,7 +8,10 @@ import {
 import { createValkeyClient } from "@gradiated/valkey";
 import { expect, test as base, type BrowserContext } from "@playwright/test";
 
-const apiUrl = "http://127.0.0.1:3001";
+const apiPort = process.env.PLAYWRIGHT_API_PORT ?? "3001";
+const consolePort = process.env.PLAYWRIGHT_CONSOLE_PORT ?? "3000";
+export const apiUrl = `http://127.0.0.1:${apiPort}`;
+const consoleUrl = `http://127.0.0.1:${consolePort}`;
 const databaseUrl =
   process.env.DATABASE_URL ??
   "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated";
@@ -41,13 +44,13 @@ const signInWithMagicLink = async (
   const requested = await context.request.post(
     `${apiUrl}/api/auth/sign-in/magic-link`,
     {
-      headers: { Origin: "http://127.0.0.1:3000" },
+      headers: { Origin: consoleUrl },
       data: {
         email,
         name,
-        callbackURL: "http://127.0.0.1:3000/api-keys",
-        newUserCallbackURL: "http://127.0.0.1:3000/api-keys",
-        errorCallbackURL: "http://127.0.0.1:3000/login",
+        callbackURL: `${consoleUrl}/api-keys`,
+        newUserCallbackURL: `${consoleUrl}/api-keys`,
+        errorCallbackURL: `${consoleUrl}/login`,
       },
     },
   );
@@ -59,9 +62,9 @@ const signInWithMagicLink = async (
   await requireOk(captured);
   const { url } = (await captured.json()) as { url: string };
   const verification = new URL(url);
-  verification.protocol = "http:";
-  verification.hostname = "127.0.0.1";
-  verification.port = "3001";
+  const apiOrigin = new URL(apiUrl);
+  verification.protocol = apiOrigin.protocol;
+  verification.host = apiOrigin.host;
   const verified = await context.request.get(verification.toString(), {
     maxRedirects: 0,
   });

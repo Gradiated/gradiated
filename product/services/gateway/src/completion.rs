@@ -24,7 +24,7 @@ use crate::{
     GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming, ModelRuntime,
     ModelTokenizer, NormalizedUsage, PricedUsage, RequestCoordinator, RequestMetadata,
     RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind,
-    RuntimeStreamEvent, ServingState, TerminalOutcome,
+    RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
 };
 
 const FINALIZATION_ATTEMPTS: usize = 3;
@@ -189,16 +189,23 @@ impl CompletionService {
         let qualified = self.coordinator.qualify(metadata, headers, &body).await?;
         drop(body);
         let streaming = qualified.request.stream;
+        let service_tier = qualified.request.service_tier;
         let bounded = self.tokenizer.enforce(qualified).await?;
         let routed = self.route_bounded(bounded).await?;
         if streaming {
             self.stream_routed(routed)
                 .await
-                .map(CompletionResponse::Streaming)
+                .map(|result| CompletionResponse::Streaming {
+                    result,
+                    service_tier,
+                })
         } else {
             self.complete_routed(routed)
                 .await
-                .map(CompletionResponse::NonStreaming)
+                .map(|result| CompletionResponse::NonStreaming {
+                    result,
+                    service_tier,
+                })
         }
     }
 
@@ -430,6 +437,7 @@ impl CompletionService {
                     &request.request.model,
                     request.deployment.id,
                     request.request.stream,
+                    request.request.service_tier,
                     &error,
                 );
                 return Err(error.into());
@@ -439,6 +447,7 @@ impl CompletionService {
             &request.request.model,
             request.deployment.id,
             request.request.stream,
+            request.request.service_tier,
         );
         Ok((lease, metrics))
     }
@@ -471,8 +480,14 @@ fn generation_identity(bounded: &BoundedRequest) -> Result<GenerationIdentity, G
 }
 
 pub enum CompletionResponse {
-    NonStreaming(CompletionResult),
-    Streaming(StreamingCompletion),
+    NonStreaming {
+        result: CompletionResult,
+        service_tier: ServiceTier,
+    },
+    Streaming {
+        result: StreamingCompletion,
+        service_tier: ServiceTier,
+    },
 }
 
 pub struct StreamingCompletion {
@@ -534,6 +549,7 @@ impl GenerationTask {
         } = bounded.qualified;
         let generation_id = metadata.generation_id;
         let organization_id = authenticated_identity.organization_id;
+        let service_tier = request.service_tier;
         let received_at = metadata.received_at;
         let expected_input_tokens = bounded.input_tokens;
         let started_at = cmp::max(Utc::now(), received_at);
@@ -543,6 +559,7 @@ impl GenerationTask {
             organization_id,
             generation_identity,
             pricing,
+            service_tier,
             received_at,
             started_at,
             streamed: false,
@@ -675,6 +692,7 @@ impl StreamingGenerationTask {
         } = bounded.qualified;
         let generation_id = metadata.generation_id;
         let received_at = metadata.received_at;
+        let service_tier = request.service_tier;
         let expected_input_tokens = bounded.input_tokens;
         let started_at = cmp::max(Utc::now(), received_at);
         let settlement = GenerationSettlement {
@@ -683,6 +701,7 @@ impl StreamingGenerationTask {
             organization_id: identity.organization_id,
             generation_identity,
             pricing,
+            service_tier,
             received_at,
             started_at,
             streamed: true,
@@ -997,6 +1016,7 @@ struct GenerationSettlement {
     organization_id: Uuid,
     generation_identity: GenerationIdentity,
     pricing: crate::CapturedPricing,
+    service_tier: ServiceTier,
     received_at: chrono::DateTime<Utc>,
     started_at: chrono::DateTime<Utc>,
     streamed: bool,
@@ -1080,6 +1100,7 @@ impl GenerationSettlement {
         );
         let properties = GenerationProperties::new(
             self.generation_identity,
+            self.service_tier,
             self.streamed,
             priced_usage,
             outcome,
@@ -1570,6 +1591,7 @@ mod tests {
             &bounded.qualified.request.model,
             bounded.qualified.deployment.id,
             bounded.qualified.request.stream,
+            bounded.qualified.request.service_tier,
         );
         GenerationTask {
             bounded,

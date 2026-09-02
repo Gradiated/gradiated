@@ -248,6 +248,12 @@ concurrent generations. Invoiced organizations bypass the balance and
 organization-concurrency checks at launch. The gateway forwards only qualified
 fields to the model runtime,
 preserving cancellation, backpressure and streaming semantics.
+The optional `service_tier` request field accepts `flex`, `default`, or `fast`.
+It defaults to `default`. Every deployment serves every tier from shared
+capacity. The gateway maps `fast` to runtime priority `-10`, `default` to `0`,
+and `flex` to `10`. It rejects caller-supplied runtime priority controls. A
+retry keeps the requested tier. Successful responses return the effective tier
+in `x-gradiated-service-tier`, and browser CORS exposes this header.
 An exact model may have multiple available runtime deployments. Each deployment
 sends status to Valkey every second through the private telemetry endpoint. The
 gateway uses fresh status, a shared concurrency lease, and rendezvous hashing to
@@ -257,7 +263,7 @@ on one deployment when it has capacity. The gateway does not queue. It returns
 healthy deployment exists. It retries once on another deployment only when no
 usable output reached the client.
 
-The request captures the effective model pricing and served release digest at
+The request captures the tier-adjusted effective model pricing and served release digest at
 admission. On terminal success, failure, cancellation or abandonment, Rust
 normalizes authoritative token usage, calculates the integer nano-USD charge,
 constructs the closed generation properties document and invokes the Valkey
@@ -279,6 +285,12 @@ The deployment exposes readiness only after model load and qualified serving
 checks. It uses explicit B300 placement, large shared memory, persistent local
 model/compile caches, conservative restart behavior and measured capacity
 limits, including bounded `max_running_requests` and `max_queued_requests`.
+SGLang enables priority scheduling with lower numeric values first. The native
+runtime applies the same order before cache-affinity selection. The scheduler
+can batch requests from different tiers after admission. It does not use a
+different per-request batch size for each tier. A vLLM deployment must use its
+priority scheduling policy. The gateway sends the same trusted `priority`
+field to either OpenAI-compatible runtime.
 It does not implement customer authentication or billing. A second model is a
 second explicit catalog row, `model_deployments` row and SGLang deployment; it
 is not a reason to introduce a separate routing layer. Additional deployments

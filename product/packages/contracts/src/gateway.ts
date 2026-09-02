@@ -2,6 +2,7 @@ import { z } from "@hono/zod-openapi";
 
 import { TimestampSchema, UuidSchema } from "./common.js";
 import { ModelPropertiesSchema } from "./models.js";
+import { ServiceTierSchema } from "./service-tiers.js";
 
 const BoundedIdentifierSchema = z.string().min(1).max(300);
 
@@ -10,6 +11,7 @@ export const ChatCompletionRequestSchema = z
     model: z.string().min(1).max(200),
     messages: z.array(z.unknown()).min(1),
     stream: z.boolean().default(false),
+    service_tier: ServiceTierSchema.default("default"),
     session_id: z.string().min(1).max(256).optional(),
     max_completion_tokens: z.number().int().positive().optional(),
     max_tokens: z.number().int().positive().optional(),
@@ -134,7 +136,8 @@ export const GenerationPriceComponentSchema = z.strictObject({
 
 export const GenerationPropertiesSchema = z
   .strictObject({
-    event_schema_version: z.literal(1),
+    event_schema_version: z.union([z.literal(1), z.literal(2)]),
+    service_tier: ServiceTierSchema.optional(),
     external_id: z.string().max(300).nullable(),
     organization_id: UuidSchema,
     workspace_id: UuidSchema,
@@ -167,6 +170,21 @@ export const GenerationPropertiesSchema = z
       first_token_at: TimestampSchema.nullable(),
       completed_at: TimestampSchema,
     }),
+  })
+  .superRefine((properties, context) => {
+    if (
+      (properties.event_schema_version === 1 &&
+        properties.service_tier !== undefined) ||
+      (properties.event_schema_version === 2 &&
+        properties.service_tier === undefined)
+    ) {
+      context.addIssue({
+        code: "custom",
+        message:
+          "service_tier must be absent in version 1 and present in version 2",
+        path: ["service_tier"],
+      });
+    }
   })
   .openapi("GenerationProperties");
 

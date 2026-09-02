@@ -75,9 +75,16 @@ impl Protocol {
                 serde_json::to_vec(body).map_err(|_| GatewayError::invalid_request(None))
             }
             Self::AnthropicMessages | Self::OpenAiResponses => {
-                let output = Self::engine()
+                let mut output = Self::engine()
                     .translate_request(self.wire(), WireFormat::OpenAiChat, body, &policy())
                     .map_err(|_| GatewayError::invalid_request(None))?;
+                if let Some(service_tier) = body.get("service_tier") {
+                    output
+                        .body
+                        .as_object_mut()
+                        .ok_or_else(|| GatewayError::invalid_request(None))?
+                        .insert("service_tier".to_owned(), service_tier.clone());
+                }
                 serde_json::to_vec(&output.body).map_err(|_| GatewayError::invalid_request(None))
             }
         }
@@ -335,6 +342,7 @@ mod tests {
             "model": "model-a",
             "max_tokens": 32,
             "temperature": 0.5,
+            "service_tier": "flex",
             "system": "be brief",
             "messages": [
                 {"role": "user", "content": [{"type": "text", "text": "hello"}]},
@@ -352,6 +360,7 @@ mod tests {
         assert_eq!(translated["model"], "model-a");
         assert_eq!(translated["max_completion_tokens"], 32);
         assert_eq!(translated["temperature"], 0.5);
+        assert_eq!(translated["service_tier"], "flex");
         assert_eq!(translated["messages"][0]["role"], "system");
         assert_eq!(translated["messages"][0]["content"], "be brief");
         assert_eq!(translated["messages"][1]["role"], "user");
@@ -369,7 +378,8 @@ mod tests {
             "max_output_tokens": 64,
             "instructions": "be brief",
             "input": "hello",
-            "stream": true
+            "stream": true,
+            "service_tier": "fast"
         });
         let translated = serde_json::from_slice::<Value>(
             &Protocol::OpenAiResponses.translate_request(&body).unwrap(),
@@ -382,6 +392,7 @@ mod tests {
         assert_eq!(translated["messages"][1]["role"], "user");
         assert_eq!(translated["messages"][1]["content"], "hello");
         assert_eq!(translated["stream"], true);
+        assert_eq!(translated["service_tier"], "fast");
     }
 
     #[test]

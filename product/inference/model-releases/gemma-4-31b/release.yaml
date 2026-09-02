@@ -9,7 +9,7 @@ runtime:
   kind: sglang
   protocol: sglang-openai-v1
   upstream_image: docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
-  release: sglang-v0.5.13-gemma4-h200-v1
+  release: sglang-v0.5.13-gemma4-h200-v2
 hardware:
   accelerator: nvidia-h200-sxm
   count: 1

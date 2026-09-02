@@ -7,7 +7,7 @@ use serde::{
 use serde_json::{Map, Value};
 use validator::Validate;
 
-use crate::GatewayError;
+use crate::{GatewayError, ServiceTier};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
 pub struct ChatCompletionRequest {
@@ -17,6 +17,8 @@ pub struct ChatCompletionRequest {
     pub messages: Vec<Value>,
     #[serde(default)]
     pub stream: bool,
+    #[serde(default)]
+    pub service_tier: ServiceTier,
     #[validate(length(min = 1, max = 256))]
     pub session_id: Option<String>,
     #[validate(range(min = 1_u64, max = 9_007_199_254_740_991_u64))]
@@ -54,6 +56,7 @@ impl ChatCompletionRequest {
             model,
             messages,
             stream,
+            service_tier,
             session_id: _,
             max_completion_tokens,
             max_tokens,
@@ -67,6 +70,10 @@ impl ChatCompletionRequest {
         );
         parameters.insert("messages".to_owned(), Value::Array(messages));
         parameters.insert("stream".to_owned(), Value::Bool(stream));
+        parameters.insert(
+            "priority".to_owned(),
+            Value::from(service_tier.runtime_priority()),
+        );
         if stream {
             parameters.insert(
                 "stream_options".to_owned(),
@@ -107,6 +114,9 @@ impl ChatCompletionRequest {
         <Self as Validate>::validate(self).map_err(|_| GatewayError::invalid_request(None))?;
         if self.max_completion_tokens.is_some() && self.max_tokens.is_some() {
             return Err(GatewayError::invalid_request(Some("max_completion_tokens")));
+        }
+        if self.parameters.contains_key("priority") {
+            return Err(GatewayError::invalid_request(Some("priority")));
         }
         Ok(())
     }
@@ -187,10 +197,37 @@ mod tests {
         .expect("request should parse");
 
         assert!(!request.stream);
+        assert_eq!(request.service_tier, ServiceTier::Default);
         assert_eq!(request.output_token_limit(), None);
         assert_eq!(request.parameters["temperature"], 0.25);
         assert_eq!(request.parameters["tools"][0]["type"], "function");
         assert_eq!(request.messages[0]["content"], "hello");
+    }
+
+    #[test]
+    fn parses_service_tiers_and_rejects_priority_overrides() {
+        for (value, expected) in [
+            ("flex", ServiceTier::Flex),
+            ("default", ServiceTier::Default),
+            ("fast", ServiceTier::Fast),
+        ] {
+            let body =
+                format!(r#"{{"model":"model-a","messages":[{{}}],"service_tier":"{value}"}}"#);
+            assert_eq!(
+                ChatCompletionRequest::parse(body.as_bytes())
+                    .unwrap()
+                    .service_tier,
+                expected
+            );
+        }
+        assert!(ChatCompletionRequest::parse(
+            br#"{"model":"model-a","messages":[{}],"service_tier":"slow"}"#
+        )
+        .is_err());
+        assert_eq!(
+            ChatCompletionRequest::parse(br#"{"model":"model-a","messages":[{}],"priority":-100}"#),
+            Err(GatewayError::invalid_request(Some("priority")))
+        );
     }
 
     #[test]
@@ -247,10 +284,24 @@ mod tests {
         assert_eq!(body["model"], "model-a");
         assert_eq!(body["messages"][0]["content"], "hello");
         assert_eq!(body["stream"], false);
+        assert_eq!(body["priority"], 0);
         assert_eq!(body["max_tokens"], 32);
         assert!(body.get("max_completion_tokens").is_none());
         assert_eq!(body["temperature"], 0.25);
         assert_eq!(body["tools"][0]["function"]["name"], "weather");
+    }
+
+    #[test]
+    fn injects_the_trusted_runtime_priority() {
+        for (tier, priority) in [("fast", -10), ("default", 0), ("flex", 10)] {
+            let body =
+                format!(r#"{{"model":"model-a","messages":[{{}}],"service_tier":"{tier}"}}"#);
+            let upstream = ChatCompletionRequest::parse(body.as_bytes())
+                .unwrap()
+                .into_upstream_body_for_model(32, None);
+            assert_eq!(upstream["priority"], priority);
+            assert!(upstream.get("service_tier").is_none());
+        }
     }
 
     #[test]

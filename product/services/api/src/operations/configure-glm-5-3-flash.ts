@@ -40,7 +40,8 @@ if (
 }
 
 const modelRevision = "84c6a6aa9497188e15a635ba793b0f95a79b1033";
-const runtimeRevision = "vllm-933876c388fb129ad82590660e6506614559cb86";
+const runtimeRevision =
+  "vllm-933876c388fb129ad82590660e6506614559cb86-priority-v1";
 const deploymentIds = [
   process.env.GLM_5_3_FLASH_DEPLOYMENT_1_ID ??
     "019d5a4a-0000-7000-8000-000000000001",

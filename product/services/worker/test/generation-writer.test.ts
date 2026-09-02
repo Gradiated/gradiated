@@ -56,6 +56,31 @@ describe("ClickHouse generation writer", () => {
     ).toBeDefined();
   });
 
+  it("accepts version 2 properties with the charged service tier", () => {
+    expect(
+      storedGenerationPropertiesSchema.parse({
+        ...event.properties,
+        event_schema_version: 2,
+        service_tier: "fast",
+        settlement: { slot_id: "20260815T123000Z-300s-v1" },
+      }),
+    ).toMatchObject({ event_schema_version: 2, service_tier: "fast" });
+  });
+
+  it("requires the service tier only for version 2 properties", () => {
+    for (const properties of [
+      { ...event.properties, service_tier: "fast" },
+      { ...event.properties, event_schema_version: 2 },
+    ]) {
+      expect(() =>
+        storedGenerationPropertiesSchema.parse({
+          ...properties,
+          settlement: { slot_id: "20260815T123000Z-300s-v1" },
+        }),
+      ).toThrow();
+    }
+  });
+
   it("rejects a charge that does not match the pricing components", () => {
     expect(() =>
       storedGenerationPropertiesSchema.parse({

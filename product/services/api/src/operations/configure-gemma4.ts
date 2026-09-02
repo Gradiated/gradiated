@@ -36,7 +36,7 @@ const modelRevision = "b9ea41a2887d8607f594846523f94c6cc75ac8a4";
 const deploymentId =
   process.env.GEMMA4_DEPLOYMENT_ID ?? "019c8ad2-f857-7000-8000-000000000001";
 const runtimeRevision =
-  process.env.GEMMA4_RUNTIME_REVISION ?? "native-gemma4-h200-v1";
+  process.env.GEMMA4_RUNTIME_REVISION ?? "native-gemma4-h200-v2";
 
 const { database, pool } = createControlDatabase(databaseUrl);
 const valkey = createValkeyClient(valkeyEnvironment);

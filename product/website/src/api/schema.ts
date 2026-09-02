@@ -187,6 +187,7 @@ export interface components {
     ModelList: {
       data: components["schemas"]["Model"][];
       next_cursor: string | null;
+      service_tiers: components["schemas"]["ServiceTierPricingPolicy"][];
     };
     Model: {
       id: string;
@@ -315,6 +316,14 @@ export interface components {
           /** @enum {string} */
           type: "unknown";
         };
+    ServiceTierPricingPolicy: {
+      service_tier: components["schemas"]["ServiceTier"];
+      price_multiplier_numerator: number;
+      price_multiplier_denominator: number;
+      price_change_percent: number;
+    };
+    /** @enum {string} */
+    ServiceTier: "flex" | "default" | "fast";
     BillingAccount: {
       /**
        * Format: uuid

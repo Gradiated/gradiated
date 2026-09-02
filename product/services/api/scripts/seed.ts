@@ -6,6 +6,7 @@ import {
 import { createValkeyClient } from "@gradiated/valkey";
 
 const apiUrl = process.env.SEED_API_URL ?? "http://127.0.0.1:3001";
+const consoleUrl = process.env.SEED_CONSOLE_URL ?? "http://localhost:3000";
 const databaseUrl =
   process.env.DATABASE_URL ??
   "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated";
@@ -42,14 +43,14 @@ const authenticate = async (): Promise<string> => {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Origin: "http://localhost:3000",
+      Origin: consoleUrl,
     },
     body: JSON.stringify({
       email,
       name: userName,
-      callbackURL: "http://localhost:3000/api-keys",
-      newUserCallbackURL: "http://localhost:3000/api-keys",
-      errorCallbackURL: "http://localhost:3000/login",
+      callbackURL: `${consoleUrl}/api-keys`,
+      newUserCallbackURL: `${consoleUrl}/api-keys`,
+      errorCallbackURL: `${consoleUrl}/login`,
     }),
   });
   if (!requested.ok)

@@ -50,6 +50,9 @@ impl RequestCoordinator {
     ) -> Result<QualifiedRequest, GatewayError> {
         let identity = self.authenticate(headers, metadata.received_at).await?;
         let identity = self.authorize(identity).await?;
+        if headers.contains_key("x-vllm-priority") {
+            return Err(GatewayError::invalid_request(Some("priority")));
+        }
         let mut request = ChatCompletionRequest::parse(body)?;
         if request.session_id.is_none() {
             request.session_id = session_header(headers)?;
@@ -214,8 +217,9 @@ fn qualify_model_request(
         .served_release_digest()
         .map_err(|_| GatewayError::ServingStateUnavailable)?;
     let input = model.properties.text_input();
-    let pricing = CapturedPricing::new(&input.pricing, &output.pricing)
-        .map_err(|_| GatewayError::ServingStateUnavailable)?;
+    let pricing =
+        CapturedPricing::for_service_tier(&input.pricing, &output.pricing, request.service_tier)
+            .map_err(|_| GatewayError::ServingStateUnavailable)?;
 
     Ok(QualifiedRequest {
         metadata,
@@ -461,6 +465,7 @@ mod tests {
                 br#"{
                     "model":"model-a",
                     "messages":[{"role":"user","content":"hello"}],
+                    "service_tier":"fast",
                     "temperature":0.5,
                     "response_format":"json"
                 }"#,
@@ -473,9 +478,9 @@ mod tests {
         assert_eq!(request.max_context_tokens, 8_192);
         assert_eq!(request.identity.organization_id, ORGANIZATION_ID);
         assert_eq!(request.request.parameters["temperature"], 0.5);
-        assert_eq!(request.pricing.prompt(), 100);
-        assert_eq!(request.pricing.cached_prompt(), 50);
-        assert_eq!(request.pricing.completion(), 200);
+        assert_eq!(request.pricing.prompt(), 150);
+        assert_eq!(request.pricing.cached_prompt(), 75);
+        assert_eq!(request.pricing.completion(), 300);
         assert!(request.served_release_digest.starts_with("sha256:"));
         assert_eq!(
             *state.calls.lock().unwrap(),
@@ -612,6 +617,22 @@ mod tests {
 
     #[tokio::test]
     async fn request_and_model_failures_remain_pre_admission() {
+        let priority_override = Arc::new(FakeServingState::ready());
+        let mut override_headers = headers();
+        override_headers.insert("x-vllm-priority", HeaderValue::from_static("-100"));
+        let result = RequestCoordinator::new(priority_override.clone())
+            .qualify(
+                metadata(),
+                &override_headers,
+                br#"{"model":"model-a","messages":[{}]}"#,
+            )
+            .await;
+        assert_eq!(result, Err(GatewayError::invalid_request(Some("priority"))));
+        assert_eq!(
+            *priority_override.calls.lock().unwrap(),
+            ["credential", "workspace", "account"]
+        );
+
         let malformed = Arc::new(FakeServingState::ready());
         let result = RequestCoordinator::new(malformed.clone())
             .qualify(metadata(), &headers(), br#"{"model":"model-a"}"#)

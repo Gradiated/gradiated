@@ -1,0 +1,36 @@
+name: Research lab
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/research-lab.yml"
+      - "research/lab/**"
+      - "mise.toml"
+  pull_request:
+    paths:
+      - ".github/workflows/research-lab.yml"
+      - "research/lab/**"
+      - "mise.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: research-lab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust:
+    name: Rust (research/lab)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - run: cargo fmt --all -- --check
+        working-directory: research/lab
+      - run: cargo test --workspace
+        working-directory: research/lab

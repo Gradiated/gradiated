@@ -8,7 +8,7 @@ use prometheus_client::{
 };
 use uuid::Uuid;
 
-use crate::{AdmissionError, NormalizedUsage};
+use crate::{AdmissionError, NormalizedUsage, ServiceTier};
 
 type CounterFamily<L> = Family<L, Counter>;
 type GaugeFamily<L> = Family<L, Gauge>;
@@ -55,6 +55,7 @@ struct GenerationLabels {
     model: String,
     deployment: String,
     stream: String,
+    service_tier: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -62,6 +63,7 @@ struct AdmissionRejectionLabels {
     model: String,
     deployment: String,
     stream: String,
+    service_tier: String,
     reason: String,
 }
 
@@ -70,6 +72,7 @@ struct GenerationOutcomeLabels {
     model: String,
     deployment: String,
     stream: String,
+    service_tier: String,
     status: String,
     error: String,
     cancellation_owner: String,
@@ -80,6 +83,7 @@ struct TokenLabels {
     model: String,
     deployment: String,
     stream: String,
+    service_tier: String,
     kind: String,
 }
 
@@ -88,6 +92,7 @@ struct FinalizationLabels {
     model: String,
     deployment: String,
     stream: String,
+    service_tier: String,
     result: String,
 }
 
@@ -272,15 +277,17 @@ impl GatewayMetrics {
         model: &str,
         deployment: Uuid,
         stream: bool,
+        service_tier: ServiceTier,
         error: &AdmissionError,
     ) {
-        let labels = generation_labels(model, deployment, stream);
+        let labels = generation_labels(model, deployment, stream, service_tier);
         self.inner
             .admission_rejections
             .get_or_create(&AdmissionRejectionLabels {
                 model: labels.model,
                 deployment: labels.deployment,
                 stream: labels.stream,
+                service_tier: labels.service_tier,
                 reason: admission_reason(error).to_owned(),
             })
             .inc();
@@ -291,8 +298,9 @@ impl GatewayMetrics {
         model: &str,
         deployment: Uuid,
         stream: bool,
+        service_tier: ServiceTier,
     ) -> AdmittedGenerationMetrics {
-        let labels = generation_labels(model, deployment, stream);
+        let labels = generation_labels(model, deployment, stream, service_tier);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
         AdmittedGenerationMetrics {
@@ -338,6 +346,7 @@ impl AdmittedGenerationMetrics {
                 model: self.labels.model.clone(),
                 deployment: self.labels.deployment.clone(),
                 stream: self.labels.stream.clone(),
+                service_tier: self.labels.service_tier.clone(),
                 status: status.to_owned(),
                 error: error.to_owned(),
                 cancellation_owner: cancellation_owner.to_owned(),
@@ -357,6 +366,7 @@ impl AdmittedGenerationMetrics {
                     model: self.labels.model.clone(),
                     deployment: self.labels.deployment.clone(),
                     stream: self.labels.stream.clone(),
+                    service_tier: self.labels.service_tier.clone(),
                     kind: kind.to_owned(),
                 })
                 .inc_by(quantity);
@@ -435,6 +445,7 @@ impl AdmittedGenerationMetrics {
                 model: self.labels.model.clone(),
                 deployment: self.labels.deployment.clone(),
                 stream: self.labels.stream.clone(),
+                service_tier: self.labels.service_tier.clone(),
                 result: result.to_owned(),
             })
             .inc();
@@ -473,11 +484,17 @@ impl Default for GatewayMetrics {
     }
 }
 
-fn generation_labels(model: &str, deployment: Uuid, stream: bool) -> GenerationLabels {
+fn generation_labels(
+    model: &str,
+    deployment: Uuid,
+    stream: bool,
+    service_tier: ServiceTier,
+) -> GenerationLabels {
     GenerationLabels {
         model: model.to_owned(),
         deployment: deployment.to_string(),
         stream: stream.to_string(),
+        service_tier: service_tier.as_str().to_owned(),
     }
 }
 
@@ -567,6 +584,7 @@ mod tests {
             "model-a",
             Uuid::from_u128(0x0198c36f9b6a70008000000000000001),
             true,
+            ServiceTier::Fast,
         );
         let received_at = Utc.with_ymd_and_hms(2026, 8, 20, 12, 0, 0).unwrap();
         generation.record_terminal(
@@ -587,6 +605,7 @@ mod tests {
         assert!(body.contains("model=\"model-a\""));
         assert!(body.contains("gradiated_gateway_service_info 1"));
         assert!(body.contains("stream=\"true\""));
+        assert!(body.contains("service_tier=\"fast\""));
         assert!(body.contains("gradiated_gateway_time_to_first_token_seconds_count"));
         assert!(body.contains("gradiated_gateway_time_per_output_token_seconds_count"));
         assert!(body.contains("gradiated_gateway_output_tokens_per_second_count"));

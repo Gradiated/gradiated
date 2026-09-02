@@ -6,6 +6,26 @@ on:
     paths:
       - "product/services/wizard/**"
       - ".github/workflows/wizard-publish.yml"
+      - "product/.nvmrc"
+      - "product/package.json"
+      - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "product/prettier.config.mjs"
+      - "product/tsconfig.base.json"
+      - "product/turbo.json"
+      - "mise.toml"
+  pull_request:
+    paths:
+      - "product/services/wizard/**"
+      - ".github/workflows/wizard-publish.yml"
+      - "product/.nvmrc"
+      - "product/package.json"
+      - "product/pnpm-lock.yaml"
+      - "product/pnpm-workspace.yaml"
+      - "product/prettier.config.mjs"
+      - "product/tsconfig.base.json"
+      - "product/turbo.json"
+      - "mise.toml"
   workflow_dispatch:
 
 permissions:
@@ -19,6 +39,7 @@ concurrency:
 jobs:
   publish:
     name: Publish @gradiated/wizard
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -30,7 +51,9 @@ jobs:
         working-directory: product
       - name: Build and verify
         working-directory: product
-        run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
+        run: |
+          pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
+          pnpm exec prettier --check services/wizard
       - name: Publish with OIDC trusted publishing
         working-directory: product/services/wizard
         run: |
@@ -71,3 +94,7 @@ jobs:
       - name: Build and test on a fresh home
         working-directory: product
         run: pnpm turbo run build check --filter=@gradiated/wizard --env-mode=loose --force
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        working-directory: product
+        run: pnpm exec prettier --check services/wizard

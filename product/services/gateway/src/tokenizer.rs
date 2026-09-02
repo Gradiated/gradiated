@@ -689,6 +689,7 @@ mod tests {
                 model: "model".to_owned(),
                 messages: vec![serde_json::json!({"role": "user", "content": "hello"})],
                 stream: false,
+                service_tier: crate::ServiceTier::Default,
                 session_id: None,
                 max_completion_tokens: max_tokens,
                 max_tokens: None,

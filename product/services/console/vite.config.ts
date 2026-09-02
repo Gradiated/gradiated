@@ -13,8 +13,8 @@ export default defineConfig({
     port: 3000,
     strictPort: true,
     proxy: {
-      "/api/": "http://127.0.0.1:3001",
-      "/health": "http://127.0.0.1:3001",
+      "/api/": process.env.CONSOLE_API_PROXY_URL ?? "http://127.0.0.1:3001",
+      "/health": process.env.CONSOLE_API_PROXY_URL ?? "http://127.0.0.1:3001",
     },
   },
 });

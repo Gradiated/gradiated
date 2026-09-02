@@ -24,7 +24,7 @@ ENV DESMOND_CONTROL_HOST=0.0.0.0 \
     DESMOND_RUNTIME_HEALTH_PATH=/health \
     DESMOND_MODEL=google/gemma-4-31B-it \
     DESMOND_MODEL_REVISION=b9ea41a2887d8607f594846523f94c6cc75ac8a4 \
-    DESMOND_RELEASE=sglang-v0.5.13-gemma4-h200-v1 \
+    DESMOND_RELEASE=sglang-v0.5.13-gemma4-h200-v2 \
     DESMOND_PROFILING_PORT=80 \
     DESMOND_PROFILING_PATH=/v1/profiling-events \
     HF_HOME=/var/lib/gradiated/huggingface \
@@ -32,4 +32,4 @@ ENV DESMOND_CONTROL_HOST=0.0.0.0 \
 
 EXPOSE 30000 9090
 ENTRYPOINT ["/usr/local/bin/desmondd", "--"]
-CMD ["python3", "-m", "sglang.launch_server", "--model-path", "google/gemma-4-31B-it", "--tokenizer-path", "google/gemma-4-31B-it", "--revision", "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "--served-model-name", "google/gemma-4-31B-it", "--dtype", "bfloat16", "--tp-size", "1", "--context-length", "8192", "--max-running-requests", "16", "--mem-fraction-static", "0.85", "--enable-metrics", "--tool-call-parser", "gemma4", "--log-level", "warning", "--host", "0.0.0.0", "--port", "30000"]
+CMD ["python3", "-m", "sglang.launch_server", "--model-path", "google/gemma-4-31B-it", "--tokenizer-path", "google/gemma-4-31B-it", "--revision", "b9ea41a2887d8607f594846523f94c6cc75ac8a4", "--served-model-name", "google/gemma-4-31B-it", "--dtype", "bfloat16", "--tp-size", "1", "--context-length", "8192", "--max-running-requests", "16", "--mem-fraction-static", "0.85", "--enable-priority-scheduling", "--schedule-low-priority-values-first", "--enable-metrics", "--tool-call-parser", "gemma4", "--log-level", "warning", "--host", "0.0.0.0", "--port", "30000"]

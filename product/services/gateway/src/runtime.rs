@@ -294,10 +294,12 @@ impl SglangClient {
             .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let max_tokens = usize::try_from(effective_output_tokens)
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::InvalidRequest))?;
+        let priority = request.service_tier.runtime_priority();
         let body = serde_json::to_vec(&NativeTokenRequest {
             input_ids: &input_ids,
             max_tokens,
             stream: false,
+            priority,
         })
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
@@ -486,10 +488,12 @@ impl SglangClient {
             .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let max_tokens = usize::try_from(effective_output_tokens)
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::InvalidRequest))?;
+        let priority = request.service_tier.runtime_priority();
         let body = serde_json::to_vec(&NativeTokenRequest {
             input_ids: &input_ids,
             max_tokens,
             stream: true,
+            priority,
         })
         .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
         let mut upstream = self
@@ -1074,6 +1078,7 @@ struct NativeTokenRequest<'a> {
     input_ids: &'a [u32],
     max_tokens: usize,
     stream: bool,
+    priority: i64,
 }
 
 #[derive(Deserialize)]
@@ -1621,10 +1626,12 @@ mod tests {
         let mut deployment = deployment(service_url);
         deployment.release.runtime_model_name = Some("runtime-model".to_owned());
 
+        let mut request = request();
+        request.service_tier = crate::ServiceTier::Fast;
         let completion = runtime
             .complete(
                 &deployment,
-                request(),
+                request,
                 1_024,
                 Utc::now() + chrono::TimeDelta::seconds(5),
             )
@@ -1643,6 +1650,7 @@ mod tests {
         assert_eq!(requests[0].body["tools"][0]["function"]["name"], "weather");
         assert_eq!(requests[0].body["max_completion_tokens"], 1_024);
         assert_eq!(requests[0].body["stream"], false);
+        assert_eq!(requests[0].body["priority"], -10);
 
         assert_eq!(completion.finish_reason(), "stop");
         assert_eq!(completion.usage().input_tokens(), 10);
@@ -1691,10 +1699,12 @@ mod tests {
         let runtime = SglangClient::new(None).unwrap();
         let mut deployment = deployment(format!("http://{address}"));
         deployment.release.runtime_model_name = Some("runtime-model".to_owned());
+        let mut request = streaming_request();
+        request.service_tier = crate::ServiceTier::Flex;
         let mut response = runtime
             .stream(
                 &deployment,
-                streaming_request(),
+                request,
                 32,
                 Utc::now() + chrono::TimeDelta::seconds(5),
             )
@@ -1730,6 +1740,7 @@ mod tests {
         let requests = recorded.lock().unwrap();
         assert_eq!(requests[0].body["model"], "runtime-model");
         assert_eq!(requests[0].body["stream"], true);
+        assert_eq!(requests[0].body["priority"], 10);
         assert_eq!(requests[0].body["stream_options"]["include_usage"], true);
         assert_eq!(
             requests[0].body["stream_options"]["continuous_usage_stats"],
@@ -1772,7 +1783,7 @@ mod tests {
         let tokenizer = ModelTokenizer::new().unwrap();
         let runtime = SglangClient::with_tokenizer(None, tokenizer).unwrap();
         let mut deployment = deployment(format!("http://{address}"));
-        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+        deployment.release.runtime_revision = "native-gemma4-h200-v2".to_owned();
         deployment.release.model_path = "google/gemma-4-31B-it".to_owned();
         deployment.release.model_revision = "b9ea41a2887d8607f594846523f94c6cc75ac8a4".to_owned();
         deployment.release.tokenizer_path = "google/gemma-4-31B-it".to_owned();
@@ -1813,6 +1824,7 @@ mod tests {
         let requests = recorded.lock().unwrap();
         assert_eq!(requests[0].body["input_ids"], json!([2, 3, 4]));
         assert_eq!(requests[0].body["stream"], true);
+        assert_eq!(requests[0].body["priority"], 0);
         task.abort();
     }
 
@@ -1895,7 +1907,7 @@ mod tests {
         });
         let runtime = SglangClient::with_tokenizer(None, ModelTokenizer::new().unwrap()).unwrap();
         let mut deployment = deployment(format!("http://{address}"));
-        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+        deployment.release.runtime_revision = "native-gemma4-h200-v2".to_owned();
 
         let mut non_streaming =
             ChatCompletionRequest::parse(br#"{"model":"model-a","messages":[{}],"temperature":0}"#)
@@ -1940,7 +1952,7 @@ mod tests {
     async fn native_runtime_rejects_unimplemented_stochastic_sampling() {
         let runtime = SglangClient::new(None).unwrap();
         let mut deployment = deployment("http://127.0.0.1:1".to_owned());
-        deployment.release.runtime_revision = "native-gemma4-h200-v1".to_owned();
+        deployment.release.runtime_revision = "native-gemma4-h200-v2".to_owned();
         let failure = runtime
             .complete(
                 &deployment,

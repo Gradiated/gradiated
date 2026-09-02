@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const consolePort = process.env.PLAYWRIGHT_CONSOLE_PORT ?? "3000";
+const apiPort = process.env.PLAYWRIGHT_API_PORT ?? "3001";
+const metricsPort = process.env.PLAYWRIGHT_METRICS_PORT ?? "9464";
+const consoleUrl = `http://127.0.0.1:${consolePort}`;
+const apiUrl = `http://127.0.0.1:${apiPort}`;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: false,
@@ -8,7 +14,7 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   globalSetup: "./e2e/global-setup.ts",
   use: {
-    baseURL: "http://127.0.0.1:3000",
+    baseURL: consoleUrl,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
@@ -16,7 +22,7 @@ export default defineConfig({
   webServer: [
     {
       command: "pnpm --filter @gradiated/api dev",
-      url: "http://127.0.0.1:3001/health/ready",
+      url: `${apiUrl}/health/ready`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
       env: {
@@ -30,18 +36,22 @@ export default defineConfig({
           "postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated",
         VALKEY_URL: "redis://127.0.0.1:6379",
         AUTH_TEST_MODE: "true",
-        BETTER_AUTH_URL: "http://localhost:3000",
+        BETTER_AUTH_URL: consoleUrl,
         BETTER_AUTH_SECRET: "local-only-not-secret-change-in-production-0001",
-        PORT: "3001",
-        TRUSTED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000",
+        PORT: apiPort,
+        TRUSTED_ORIGINS: consoleUrl,
         NODE_ENV: "test",
+        METRICS_PORT: metricsPort,
       },
     },
     {
-      command: "pnpm dev",
-      url: "http://127.0.0.1:3000/login",
+      command: `pnpm dev --port ${consolePort}`,
+      url: `${consoleUrl}/login`,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,
+      env: {
+        CONSOLE_API_PROXY_URL: apiUrl,
+      },
     },
   ],
 });

@@ -516,6 +516,12 @@ main {
 .library {
   padding-top: 105px;
 }
+.library .post-list {
+  border-top: 0;
+}
+.library .post-row {
+  border-bottom: 0;
+}
 .library-section > h1,
 .library-section > h2 {
   margin: 0 0 58px;
@@ -543,6 +549,64 @@ main {
   font-size: clamp(34px, 4vw, 50px) !important;
   line-height: 1.05 !important;
   letter-spacing: -0.035em !important;
+}
+.method-page {
+  max-width: 1180px;
+  display: grid;
+  grid-template-columns: 190px minmax(0, 820px);
+  gap: 70px;
+}
+.method-content {
+  grid-column: 2;
+  min-width: 0;
+}
+.method-nav {
+  grid-column: 1;
+  align-self: start;
+  position: sticky;
+  top: 32px;
+}
+.section-nav {
+  padding-top: 4px;
+  font-family: "Libre Franklin", Arial, sans-serif;
+}
+.section-nav h2 {
+  margin: 14px 0 22px;
+  color: var(--ink);
+  font:
+    500 11px "Libre Franklin",
+    Arial,
+    sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.section-nav-group {
+  margin-top: 18px;
+}
+.section-nav-group span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.section-nav a {
+  display: block;
+  padding: 5px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.section-nav a:hover,
+.section-nav a[aria-current="page"] {
+  color: var(--ink);
+}
+.section-nav a[aria-current="page"]::before {
+  content: "→";
+  margin-right: 7px;
+  color: var(--accent);
 }
 .brand-palette {
   display: grid;
@@ -604,6 +668,40 @@ main {
   }
   .handbook-article section {
     margin-top: 50px;
+  }
+  .method-page {
+    display: block;
+  }
+  .method-nav {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 18px;
+    margin: 0 0 55px;
+    padding-top: 4px;
+  }
+  .method-nav.section-nav h2 {
+    grid-column: 1 / -1;
+    margin-bottom: 0;
+  }
+  .method-nav .section-nav-group {
+    margin-top: 0;
+  }
+  .method-nav.section-nav a {
+    padding: 4px 0;
+  }
+  .method-nav.section-nav a[aria-current="page"]::before {
+    display: none;
+  }
+  .method-nav.section-nav a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-color: var(--accent);
+    text-underline-offset: 4px;
+  }
+}
+@media (max-width: 800px) {
+  .docs-section-nav {
+    position: static;
   }
 }
 

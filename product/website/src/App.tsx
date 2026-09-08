@@ -9,10 +9,11 @@ import { AcceptableUsePage } from "./pages/AcceptableUsePage";
 import { CareersPage } from "./pages/CareersPage";
 import { DpaPage } from "./pages/DpaPage";
 import { DocsPage } from "./pages/DocsPage";
-import { HandbookPage } from "./pages/HandbookPage";
+import { methodPages } from "./method";
 import { HomePage } from "./pages/HomePage";
 import { JobPage } from "./pages/JobPage";
 import { LibraryPage } from "./pages/LibraryPage";
+import { MethodPage } from "./pages/MethodPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { NotesPage } from "./pages/NotesPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
@@ -100,22 +101,17 @@ export const AppRoutes = (): ReactElement => {
             </LayoutRoute>
           }
         />
-        <Route
-          path="/library/handbook/brand/"
-          element={
-            <LayoutRoute>
-              <HandbookPage kind="brand" />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/library/handbook/values/"
-          element={
-            <LayoutRoute>
-              <HandbookPage kind="values" />
-            </LayoutRoute>
-          }
-        />
+        {methodPages.map((page) => (
+          <Route
+            key={page.slug}
+            path={`/library/method/${page.slug}/`}
+            element={
+              <LayoutRoute>
+                <MethodPage slug={page.slug} />
+              </LayoutRoute>
+            }
+          />
+        ))}
         <Route
           path="/docs/*"
           element={

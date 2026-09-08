@@ -356,30 +356,23 @@ const DocsNavigation = ({
 }: {
   current: DocsPageKey;
 }): ReactElement => (
-  <>
+  <nav className="docs-section-nav section-nav" aria-label="Documentation">
+    <h2>Docs</h2>
     {navigation.map((group) => (
-      <div className="mb-7" key={group.heading}>
-        <p className="mb-2.5 mt-0 text-[10px] uppercase tracking-[0.08em] text-muted">
-          {group.heading}
-        </p>
-        <nav className="grid gap-2">
-          {group.items.map((item) => (
-            <Link
-              className={`relative text-[11px] transition-colors hover:text-ink ${
-                item === current
-                  ? "text-ink before:absolute before:-left-[13px] before:top-[0.42em] before:h-[5px] before:w-[5px] before:rounded-full before:bg-accent"
-                  : "text-muted"
-              }`}
-              key={item}
-              to={documents[item].path}
-            >
-              {documents[item].title}
-            </Link>
-          ))}
-        </nav>
+      <div className="section-nav-group" key={group.heading}>
+        <span>{group.heading}</span>
+        {group.items.map((item) => (
+          <Link
+            aria-current={item === current ? "page" : undefined}
+            key={item}
+            to={documents[item].path}
+          >
+            {documents[item].title}
+          </Link>
+        ))}
       </div>
     ))}
-  </>
+  </nav>
 );
 
 const DocsContent = (): ReactElement => {
@@ -408,10 +401,7 @@ const DocsContent = (): ReactElement => {
 
   return (
     <main className="mx-auto grid min-h-[calc(100vh-154px)] max-w-[1180px] grid-cols-[220px_minmax(0,760px)] gap-[76px] px-6 pb-[120px] pt-16 max-[800px]:grid-cols-1 max-[800px]:gap-10 max-[800px]:px-[22px] max-[800px]:pb-[90px] max-[800px]:pt-12">
-      <aside
-        className="font-site-mono text-[11px] leading-[1.35] max-[800px]:border-b max-[800px]:border-line max-[800px]:pb-7"
-        aria-label="Documentation"
-      >
+      <aside className="max-[800px]:border-b max-[800px]:border-line max-[800px]:pb-7">
         <div className="max-[800px]:hidden">
           <DocsAccount />
         </div>
@@ -422,7 +412,7 @@ const DocsContent = (): ReactElement => {
           <summary className="cursor-pointer text-[10px] uppercase tracking-label text-ink">
             Browse docs
           </summary>
-          <div className="mt-6 grid grid-cols-2 gap-x-8 max-[500px]:grid-cols-1">
+          <div className="mt-6">
             <DocsNavigation current={key} />
           </div>
         </details>

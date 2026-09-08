@@ -1,4 +1,5 @@
 import { jobs } from "./careers";
+import { methodPages } from "./method";
 
 export const siteOrigin = "https://gradiated.com";
 
@@ -49,14 +50,12 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Read why Gradiated believes inference should be a choice, not a constraint.",
   },
-  "/library/handbook/brand/": {
-    title: "Brand",
-    description: "Read the principles that define the Gradiated brand.",
-  },
-  "/library/handbook/values/": {
-    title: "Values",
-    description: "Read the values that guide how Gradiated works.",
-  },
+  ...Object.fromEntries(
+    methodPages.map((page) => [
+      `/library/method/${page.slug}/`,
+      { title: page.pageTitle, description: page.description },
+    ]),
+  ),
   "/docs/": {
     title: "Developer docs",
     description: "Learn how to use the Gradiated API for open-model inference.",

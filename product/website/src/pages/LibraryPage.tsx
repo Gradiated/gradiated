@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import type { ReactElement } from "react";
 import { notes } from "../content";
+import { methodPages } from "../method";
 
 export const LibraryPage = (): ReactElement => (
   <main className="notes library">
@@ -34,30 +35,24 @@ export const LibraryPage = (): ReactElement => (
     >
       <h2 id="method-heading">Method</h2>
       <div className="post-list">
-        <Link className="post-row" to="/library/handbook/values/">
-          <span>Company</span>
-          <div>
-            <h2>Values</h2>
-            <p>Depth and meritocracy.</p>
-          </div>
-          <ArrowUpRight
-            aria-hidden="true"
-            className="post-row-icon"
-            strokeWidth={1.5}
-          />
-        </Link>
-        <Link className="post-row" to="/library/handbook/brand/">
-          <span>Market</span>
-          <div>
-            <h2>Brand</h2>
-            <p>Everything is considered.</p>
-          </div>
-          <ArrowUpRight
-            aria-hidden="true"
-            className="post-row-icon"
-            strokeWidth={1.5}
-          />
-        </Link>
+        {methodPages.map((page) => (
+          <Link
+            className="post-row"
+            key={page.slug}
+            to={`/library/method/${page.slug}/`}
+          >
+            <span>{page.section}</span>
+            <div>
+              <h2>{page.title}</h2>
+              <p>{page.indexDescription}</p>
+            </div>
+            <ArrowUpRight
+              aria-hidden="true"
+              className="post-row-icon"
+              strokeWidth={1.5}
+            />
+          </Link>
+        ))}
       </div>
     </section>
   </main>

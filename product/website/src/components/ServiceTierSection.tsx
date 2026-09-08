@@ -191,7 +191,7 @@ export const ServiceTierSection = (): ReactElement => {
           </h2>
         </header>
 
-        <div className="mt-[78px] grid grid-cols-[minmax(330px,0.82fr)_minmax(0,1.18fr)] border-y border-b-line border-t-ink max-site:mt-[58px] max-site:grid-cols-1">
+        <div className="mt-[78px] grid grid-cols-[minmax(330px,0.82fr)_minmax(0,1.18fr)] border-b border-b-line max-site:mt-[58px] max-site:grid-cols-1">
           <div className="min-w-0 border-r border-line py-[42px] pr-12 max-site:border-r-0 max-site:border-b max-site:px-0 max-site:py-[34px] max-site:pb-[38px]">
             <p
               className="m-0 flex items-baseline gap-[13px]"

@@ -1,5 +1,6 @@
 import { jobs } from "./careers";
 import { methodPages } from "./method";
+import { articles } from "./articles";
 
 export const siteOrigin = "https://gradiated.com";
 
@@ -11,6 +12,7 @@ export type PageMetadata = {
   index: boolean;
   kind: PageKind;
   publishedAt?: string;
+  updatedAt?: string;
   title: string;
 };
 
@@ -44,11 +46,6 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     title: "Notes",
     description:
       "Read Gradiated notes about inference research, systems, hardware, and company building.",
-  },
-  "/notes/our-thesis/": {
-    title: "Thesis",
-    description:
-      "Read why Gradiated believes inference should be a choice, not a constraint.",
   },
   ...Object.fromEntries(
     methodPages.map((page) => [
@@ -146,13 +143,6 @@ const metadataDetailsFor = (
   if (pathname.startsWith("/docs/")) {
     return { image: defaultImage, kind: "documentation" };
   }
-  if (pathname === "/notes/our-thesis/") {
-    return {
-      image: "/assets/editorial/thesis-v2.png",
-      kind: "article",
-      publishedAt: "2026-07-13",
-    };
-  }
   if (pathname !== "/careers/" && pathname.startsWith("/careers/")) {
     return {
       image: "/assets/editorial/working-with-us-v2.png",
@@ -165,6 +155,18 @@ const metadataDetailsFor = (
 
 export const getPageMetadata = (pathname: string): PageMetadata => {
   const normalizedPath = normalizePath(pathname);
+  const article = articles.find((entry) => entry.path === normalizedPath);
+  if (article) {
+    return {
+      title: article.title,
+      description: article.description,
+      image: article.image,
+      publishedAt: article.publishedAt,
+      updatedAt: article.updatedAt,
+      index: article.status === "published",
+      kind: "article",
+    };
+  }
   const exactMetadata = pageMetadata[normalizedPath];
   if (exactMetadata) {
     return {
@@ -204,6 +206,9 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
 
 export const getIndexablePaths = (): string[] => [
   ...Object.keys(pageMetadata),
+  ...articles
+    .filter((article) => article.status === "published")
+    .map((article) => article.path),
   ...jobs.map(({ slug }) => `/careers/${slug}/`),
 ];
 
@@ -329,7 +334,7 @@ export const getStructuredData = (pathname: string): object[] => {
       headline: metadata.title,
       description: metadata.description,
       datePublished: metadata.publishedAt,
-      dateModified: metadata.publishedAt,
+      dateModified: metadata.updatedAt ?? metadata.publishedAt,
       image: absoluteUrl(metadata.image),
       mainEntityOfPage: url,
       author: organization,

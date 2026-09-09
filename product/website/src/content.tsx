@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { SiteLink } from "./components/SiteLink";
+import { articles } from "./articles";
 
 export type Note = {
   slug: string;
@@ -8,14 +9,14 @@ export type Note = {
   description: string;
 };
 
-export const notes = [
-  {
-    slug: "our-thesis",
-    date: "2026-07-13",
-    title: "Thesis",
-    description: "Inference should be a choice, not a constraint.",
-  },
-] satisfies Note[];
+export const notes: Note[] = articles
+  .filter((article) => article.path.startsWith("/notes/"))
+  .map((article) => ({
+    slug: article.path.split("/")[2],
+    date: article.status === "draft" ? "Draft" : article.publishedAt,
+    title: article.title,
+    description: article.description,
+  }));
 
 export const ThesisContent = (): ReactNode => (
   <>

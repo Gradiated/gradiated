@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import type { ReactElement } from "react";
-import { notes } from "../content";
+import { articles } from "../articles";
 import { methodPages } from "../method";
 
 export const LibraryPage = (): ReactElement => (
@@ -9,13 +9,9 @@ export const LibraryPage = (): ReactElement => (
     <section className="library-section" aria-labelledby="writing-heading">
       <h1 id="writing-heading">Writing</h1>
       <div className="post-list">
-        {notes.map((note) => (
-          <Link
-            className="post-row"
-            key={note.slug}
-            to={`/notes/${note.slug}/`}
-          >
-            <span>{note.date}</span>
+        {articles.map((note) => (
+          <Link className="post-row" key={note.path} to={note.path}>
+            <span>{note.status === "draft" ? "Draft" : note.publishedAt}</span>
             <div>
               <h2>{note.title}</h2>
               <p>{note.description}</p>

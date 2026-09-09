@@ -732,9 +732,17 @@ def cached_self_attention_step(
     query = linear(x_new, query_weight)
     new_key = linear(x_new, key_weight)
     new_value = linear(x_new, value_weight)
-    key_cache, value_cache = append_kv_cache()
+    key_cache, value_cache = append_kv_cache(key_cache, value_cache, new_key, new_value)
 
-    raise NotImplementedError("Implement exercise 7g")
+    scores = scaled_attention_scores(query, key_cache)
+
+    weights = softmax(scores)
+
+    context = attention_context(weights, value_cache)
+
+    output = linear(context, output_weight)
+
+    return output, key_cache, value_cache
 
 
 def check_cached_self_attention_step() -> None:
@@ -769,6 +777,45 @@ def check_cached_self_attention_step() -> None:
     assert output.shape == x_new.shape
 
 
+def outer_product(left: Tensor, right: Tensor) -> Tensor:
+    """Create a matrix containing every pairwise product.
+
+    The equation is:
+
+        matrix[i, j] = left[i] * right[j]
+
+    Shapes:
+
+        left:   (H_left,)
+        right:  (H_right,)
+        matrix: (H_left, H_right)
+
+    KDA uses this operation to create a key-value association for its state.
+
+    Exercise 8a:
+    Check that left and right are one-dimensional vectors.
+    Add singleton dimensions and use element-wise multiplication.
+    Do not use a loop.
+    """
+
+    raise NotImplementedError("Implement exercise 8a")
+
+
+def check_outer_product() -> None:
+    left = np.array([1.0, 2.0])
+    right = np.array([3.0, -1.0, 4.0])
+    expected = np.array(
+        [
+            [3.0, -1.0, 4.0],
+            [6.0, -2.0, 8.0],
+        ]
+    )
+
+    actual = outer_product(left, right)
+    np.testing.assert_allclose(actual, expected)
+    assert actual.shape == (2, 3)
+
+
 def main() -> None:
     check_linear()
     print("PASS exercise 1: linear projection")
@@ -796,6 +843,8 @@ def main() -> None:
     print("PASS exercise 7f: append KV cache")
     check_cached_self_attention_step()
     print("PASS exercise 7g: cached self-attention step")
+    check_outer_product()
+    print("PASS exercise 8a: outer product")
 
 
 if __name__ == "__main__":

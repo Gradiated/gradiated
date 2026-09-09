@@ -295,6 +295,13 @@ export const SiteLayout = ({
     setMetaContent("property", "og:image:alt", `${metadata.title} - Gradiated`);
     setMetaContent("property", "article:published_time", metadata.publishedAt);
     setMetaContent(
+      "property",
+      "article:modified_time",
+      metadata.kind === "article"
+        ? (metadata.updatedAt ?? metadata.publishedAt)
+        : undefined,
+    );
+    setMetaContent(
       "name",
       "twitter:card",
       metadata.image.startsWith("/assets/") ? "summary_large_image" : "summary",
@@ -311,6 +318,7 @@ export const SiteLayout = ({
     metadata.index,
     metadata.kind,
     metadata.publishedAt,
+    metadata.updatedAt,
     metadata.title,
   ]);
 

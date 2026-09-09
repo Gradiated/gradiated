@@ -47,8 +47,77 @@
   --code-muted: #92978f;
   --code-accent: #e0a45c;
   --code-string: #8fb5a3;
+  --code-function: #cfd9e6;
+  --code-deletion: #e2907e;
   --code-border: rgba(240, 236, 226, 0.13);
   --code-shadow: 0 18px 46px rgba(28, 27, 24, 0.1);
+}
+
+/* highlight.js scopes (rehype-highlight at build time), one restrained palette for every language. */
+.docs-code-block .hljs-comment,
+.docs-code-block .hljs-doctag,
+.docs-code-block .hljs-meta,
+.docs-code-block .hljs-meta .hljs-keyword,
+.docs-code-block .hljs-meta .hljs-string,
+.docs-code-block .hljs-quote,
+.docs-code-block .hljs-params,
+.docs-code-block .hljs-punctuation {
+  color: var(--code-muted);
+}
+.docs-code-block .hljs-keyword,
+.docs-code-block .hljs-built_in,
+.docs-code-block .hljs-literal,
+.docs-code-block .hljs-type,
+.docs-code-block .hljs-title.class_,
+.docs-code-block .hljs-title.class_.inherited__,
+.docs-code-block .hljs-selector-tag,
+.docs-code-block .hljs-selector-class,
+.docs-code-block .hljs-selector-id,
+.docs-code-block .hljs-selector-pseudo,
+.docs-code-block .hljs-tag,
+.docs-code-block .hljs-name,
+.docs-code-block .hljs-section,
+.docs-code-block .hljs-template-tag {
+  color: var(--code-accent);
+}
+.docs-code-block .hljs-string,
+.docs-code-block .hljs-regexp,
+.docs-code-block .hljs-symbol,
+.docs-code-block .hljs-bullet,
+.docs-code-block .hljs-link,
+.docs-code-block .hljs-char.escape_,
+.docs-code-block .hljs-addition,
+.docs-code-block .hljs-number,
+.docs-code-block .hljs-attr,
+.docs-code-block .hljs-selector-attr,
+.docs-code-block .hljs-template-variable,
+.docs-code-block .hljs-code {
+  color: var(--code-string);
+}
+.docs-code-block .hljs-title.function_,
+.docs-code-block .hljs-title.function_.invoke__,
+.docs-code-block .hljs-title,
+.docs-code-block .hljs-attribute,
+.docs-code-block .hljs-property,
+.docs-code-block .hljs-variable.language_,
+.docs-code-block .hljs-variable.constant_ {
+  color: var(--code-function);
+}
+.docs-code-block .hljs-variable,
+.docs-code-block .hljs-operator,
+.docs-code-block .hljs-subst,
+.docs-code-block .hljs-formula {
+  color: var(--code-fg);
+}
+.docs-code-block .hljs-deletion {
+  color: var(--code-deletion);
+}
+.docs-code-block .hljs-emphasis {
+  font-style: italic;
+}
+.docs-code-block .hljs-strong,
+.docs-code-block .hljs-section {
+  font-weight: 600;
 }
 
 /* Keep the editorial copy visible in iPhone Safari grid layouts. */

@@ -104,6 +104,19 @@ The console listens on port 3000 and proxies `/api` and `/health`
 to the API process on port 3001. The generated OpenAPI schema is available at
 `http://localhost:3000/api/openapi.json`; interactive reference is at `/docs`.
 
+To view a cloud sandbox through `gradiated-dev.test`, map the hostname to
+`127.0.0.1` in `/etc/hosts`, then start the SSH profile:
+
+```sh
+pnpm dev:forward
+```
+
+The SSH profile owns the forwarded ports. Add a `LocalForward` line to
+`gradiated-dev` to expose another port. The command stops stale local
+listeners before it starts one persistent SSH session. Press `Control-C` to
+stop all forwarded ports. Visit `http://gradiated-dev.test:3000` for port 3000
+and use the same pattern for the other ports.
+
 In production, the console is hosted at `https://console.gradiated.com` and the
 API at `https://api.gradiated.com`. Set `VITE_API_URL` when building the console,
 `BETTER_AUTH_URL` to the API origin, and `CONSOLE_URL` to the console origin.

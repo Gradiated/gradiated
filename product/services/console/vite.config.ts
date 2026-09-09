@@ -10,6 +10,7 @@ export default defineConfig({
     alias: { "@": path.resolve(import.meta.dirname, "src") },
   },
   server: {
+    allowedHosts: ["gradiated-dev.test"],
     port: 3000,
     strictPort: true,
     proxy: {

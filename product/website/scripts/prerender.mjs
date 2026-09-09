@@ -52,6 +52,11 @@ const renderHead = ({ metadata, path, structuredData, title }) => {
       `<meta property="article:published_time" content="${metadata.publishedAt}" />`,
     );
   }
+  if (metadata.kind === "article") {
+    tags.push(
+      `<meta property="article:modified_time" content="${metadata.updatedAt ?? metadata.publishedAt}" />`,
+    );
+  }
   if (structuredData.length > 0) {
     tags.push(
       `<script type="application/ld+json" data-page-structured-data>${graph}</script>`,

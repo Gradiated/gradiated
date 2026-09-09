@@ -3,21 +3,33 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import remarkGfm from "remark-gfm";
+import remarkFrontmatter from "remark-frontmatter";
 import rehypeHighlight from "rehype-highlight";
+import { all } from "lowlight";
+
+const mdxPlugin = mdx({
+  remarkPlugins: [remarkFrontmatter, remarkGfm],
+  rehypePlugins: [[rehypeHighlight, { detect: false, languages: all }]],
+});
 
 export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     {
-      ...mdx({
-        remarkPlugins: [remarkGfm],
-        rehypePlugins: [[rehypeHighlight, { detect: false }]],
-      }),
+      ...mdxPlugin,
+      transform(code, id) {
+        // MDX strips query strings before filtering. Leave raw source imports to Vite.
+        if (id.includes("?raw")) return;
+        if (typeof mdxPlugin.transform === "function") {
+          return mdxPlugin.transform.call(this, code, id);
+        }
+      },
       enforce: "pre",
     },
     react({ include: /\.(jsx|js|tsx|ts|mdx)$/ }),
     tailwindcss(),
   ],
   server: {
+    allowedHosts: ["gradiated-dev.test"],
     proxy: {
       "/api/": {
         changeOrigin: true,

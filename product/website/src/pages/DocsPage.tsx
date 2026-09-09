@@ -1,4 +1,4 @@
-import { isValidElement, useState } from "react";
+import { useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
 import type {
   ComponentPropsWithoutRef,
@@ -8,6 +8,10 @@ import type {
 } from "react";
 
 import { DocsAccount } from "../components/docs/DocsAccount";
+import {
+  DocsCodeBlock,
+  DocsInlineCode,
+} from "../components/docs/DocsCodeBlock";
 import {
   DocsCodeTab,
   DocsCodeTabs,
@@ -193,55 +197,6 @@ const DocsPageActions = ({
   );
 };
 
-const getCodeText = (node: ReactNode): string => {
-  if (typeof node === "string" || typeof node === "number") {
-    return String(node);
-  }
-  if (Array.isArray(node)) return node.map(getCodeText).join("");
-  if (isValidElement<{ children?: ReactNode }>(node)) {
-    return getCodeText(node.props.children);
-  }
-  return "";
-};
-
-const DocsCodeBlock = ({
-  children,
-  className = "",
-  ...props
-}: ComponentPropsWithoutRef<"pre">): ReactElement => {
-  const [copied, setCopied] = useState(false);
-  const copyCode = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(getCodeText(children).trimEnd());
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      setCopied(false);
-    }
-  };
-
-  return (
-    <div
-      className="relative my-[27px] [&_.hljs-attr]:text-[var(--code-string)] [&_.hljs-attribute]:text-[var(--code-fg)] [&_.hljs-built_in]:text-[var(--code-accent)] [&_.hljs-comment]:text-[var(--code-muted)] [&_.hljs-keyword]:text-[var(--code-accent)] [&_.hljs-literal]:text-[var(--code-string)] [&_.hljs-meta]:text-[var(--code-muted)] [&_.hljs-number]:text-[var(--code-string)] [&_.hljs-params]:text-[var(--code-muted)] [&_.hljs-property]:text-[var(--code-fg)] [&_.hljs-string]:text-[var(--code-string)] [&_.hljs-title.class_]:text-[var(--code-accent)] [&_.hljs-title.function_]:text-[var(--code-fg)] [&_.hljs-type]:text-[var(--code-accent)] [&_.hljs-variable]:text-[var(--code-muted)]"
-      data-docs-code-block
-    >
-      <button
-        className="absolute right-4 top-3 z-[1] cursor-pointer border-0 bg-transparent px-2 py-1 font-site-mono text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--code-muted)] hover:text-[var(--code-fg)] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--code-fg)]"
-        onClick={copyCode}
-        type="button"
-      >
-        {copied ? "Copied" : "Copy"}
-      </button>
-      <pre
-        className={`m-0 overflow-x-auto rounded-xl border border-[var(--code-border)] bg-[var(--code-bg)] px-6 py-[22px] pr-24 font-site-mono text-[12.5px] leading-[1.72] text-[var(--code-fg)] shadow-[var(--code-shadow)] max-[500px]:px-4 max-[500px]:py-[18px] max-[500px]:text-[11.5px] ${className}`}
-        {...props}
-      >
-        {children}
-      </pre>
-    </div>
-  );
-};
-
 const DocsH1 = (props: ComponentPropsWithoutRef<"h1">): ReactElement => (
   <h1
     {...props}
@@ -295,22 +250,6 @@ const DocsAnchor = (props: ComponentPropsWithoutRef<"a">): ReactElement => (
     className={`text-accent underline decoration-line underline-offset-[3px] ${props.className ?? ""}`}
   />
 );
-
-const DocsInlineCode = (
-  props: ComponentPropsWithoutRef<"code">,
-): ReactElement => {
-  const block = props.className?.includes("hljs");
-  return (
-    <code
-      {...props}
-      className={
-        block
-          ? `bg-transparent p-0 font-inherit ${props.className ?? ""}`
-          : `bg-[rgba(28,27,24,0.08)] px-[5px] py-0.5 font-site-mono text-[0.88em] font-medium leading-[1.4] ${props.className ?? ""}`
-      }
-    />
-  );
-};
 
 const DocsTable = (props: ComponentPropsWithoutRef<"table">): ReactElement => (
   <div className="my-7 max-w-[760px] overflow-x-auto">

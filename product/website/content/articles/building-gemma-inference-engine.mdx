@@ -1,0 +1,138 @@
+---
+title: "Carat: An inference engine designed for Gemma 4"
+description: "Designing Carat, an inference engine built specifically around the model architecture of Gemma 4."
+path: /library/gemma-inference-engine/
+status: published
+publishedAt: "2026-09-02"
+---
+
+import { SpeculativeAttentionExplorer } from "../../src/components/articles/gemma/SpeculativeAttentionExplorer";
+import {
+  EngineArchitecture,
+  SpeculativeRingExplorer,
+  AttentionShapeExplorer,
+} from "../../src/components/articles/gemma/Explorers";
+import {
+  DocsCodeTab,
+  DocsCodeTabs,
+} from "../../src/components/docs/DocsCodeTabs";
+
+Getting started with inference is easy. Rent a few NVIDIA GPUs, run vLLM or SGLang on them, and you’re good to go.
+
+But what if you want the maximum number of tokens for your budget? What would change if you designed the inference engine around the model itself?
+
+The usual approach is to profile an existing engine and optimize its bottlenecks. That can take you a long way. But changes spanning the cache layout, attention kernels and scheduler require revisiting decisions across the engine.
+
+Inference repeatedly executes the same operations with predictable model dimensions. That gives us an opportunity to specialize how data is stored, how work is grouped and which GPU kernels execute it.
+
+A general inference engine has to accommodate many models, hardware configurations and workloads. We built Carat, a custom C++/CUDA inference engine, around a single target: serving Gemma 4 efficiently on an H200.
+
+That let us design the cache layout, attention kernels and runtime together, with each informed by the model’s architecture and the hardware executing it.
+
+Here’s what we learned.
+
+## Exploiting Gemma's attention architecture
+
+One of the core things an inference engine needs to optimize is KV cache reuse for attention layers. The KV cache for a session includes intermediate state from the attention calculations, and we store it to avoid recomputing it on every forward pass of the model to generate a new token.
+
+As context windows grow larger, the bandwidth used to transfer the KV cache begins to dominate relative to the model weights, and so KV cache optimization is one of the biggest targets for increasing model throughput.
+
+Unlike standard attention that attends across all previous tokens, [Gemma uses a 1024-token sliding window for attention in 50 of its 60 transformer layers](https://huggingface.co/google/gemma-4-31B-it/blob/main/config.json).
+
+<EngineArchitecture />
+
+A general engine has to support many model architectures. Building Carat specifically for Gemma lets us carry model-specific decisions through the cache layout, attention kernels and runtime.
+
+SGLang builds indices for the recent window from the request's token mapping, and then translates those into local-cache locations. The attention kernel then loads those indices and reads KV values at the resulting addresses. The slots can be scattered, and paging allows for efficient use of memory rather than reserving the maximum context length in memory.
+
+Carat instead exploits the token-window architecture specific to the model and gives each request a fixed ring for its local history. A token’s absolute position determines its slot modulo the window size.
+
+When the window advances, a new token reuses an old slot without shifting the remaining data.
+
+<SpeculativeRingExplorer />
+
+This, alongside other improvements to how attention is handled in Carat, reduced the time-per-output-token (TPOT) from 35.92 ms to 24.96 ms[^tpot-method].
+
+[^tpot-method]: Measured on an NVIDIA H200 using Gemma 4 31B, with BF16 weights and KV cache, without quantization or [speculative decoding](https://arxiv.org/abs/2211.17192). Each of 16 concurrent requests contained 8,192 input tokens and generated 1,024 output tokens.
+
+## More FLOPs can be faster
+
+The sliding-window ring only helps for Gemma’s local layers. The ten global layers still need the full context, and their attention matrices grow with the conversation length.
+
+Looking at inputs from our dataset, Gemma 4’s global query-key multiplication did not scale smoothly with input length. It was spiky. One input with 6,005 keys took 0.830 ms which was longer than expected and global attention layers became a bottleneck. We experimented with padding the K matrix here to see if more FLOPs could improve performance.
+
+<AttentionShapeExplorer />
+
+The figure shows the last 64 columns of the key matrix. Switching from Exact to Padded adds eleven columns that are not useful in the attention calculation: the preallocated cache tail is zero-initialized and the causal mask gives those columns zero weight, so the output is unchanged.
+
+Rounding the dimensions of K up to the next multiple of 64 and masking the future positions resulted in a very large performance improvement for QK calculations.
+
+<DocsCodeTabs>
+  <DocsCodeTab label="Before">
+
+```cpp
+const int key_count = context_length + proposal_count; // 6,005
+
+// BF16 matrix multiplication through cuBLASLt.
+qk_matmul(queries, key_cache, scores, key_count);
+
+// Each query can attend only up to its own position.
+causal_softmax(scores, query_positions, key_count);
+
+pv_matmul(scores, value_cache, output, key_count);
+```
+
+  </DocsCodeTab>
+  <DocsCodeTab label="After">
+
+```cpp
+const int key_count = context_length + proposal_count; // 6,005
+const int extent = std::min(
+    cache_capacity,
+    ((key_count + 63) / 64) * 64                       // 6,016
+);
+
+// Same library operation, with a rounded-up key extent.
+// The preallocated cache's unused tail is zero-initialized.
+qk_matmul(queries, key_cache, scores, extent);
+
+// Query positions are unchanged. Extra columns receive zero weight.
+causal_softmax(scores, query_positions, extent);
+
+pv_matmul(scores, value_cache, output, extent);
+```
+
+  </DocsCodeTab>
+</DocsCodeTabs>
+
+Why is this faster? At 6,005 keys, [cuBLASLt](https://docs.nvidia.com/cuda/cublas/#using-the-cublaslt-api) uses a conventional kernel with ordinary floating-point multiply-add instructions. At 6,016 keys, it used a [Hopper Tensor Core](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/) kernel with HGMMA instructions, which is built to be significantly more efficient at matrix multiplications.
+
+Adding a few masked columns and increasing slightly the number of FLOPs in the calculation can significantly improve the speed by pushing it to take a different route through the hardware. This matches our experience optimizing inference, counting FLOPs is a poor predictor of execution time, and the fastest configuration is often counter-intuitive.
+
+## Speculative decoding
+
+Up until now, we’ve focused on making the target model’s forward pass faster. Speculative decoding lets the target model check several proposed tokens together in a single forward pass, amortizing the cost of reading weights and loading the KV cache from memory.
+
+Speculative verification sits between ordinary decoding and prompt processing. Instead of attending with one new token or thousands, the target model checks a handful of proposed positions together.
+
+For Gemma's global-attention layers, the SGLang version we tested uses one fused attention kernel for each query head. Each head processes its four query positions against the cached history in chunks, calculating attention scores, applying softmax, and combining values within the same kernel.
+
+Carat instead groups the eight query heads that share each KV head. With four positions per head, each group has 32 query rows to process against the same cached keys and values. Carat performs that work using batched matrix multiplications: one to calculate attention scores, followed by softmax, then another to combine the values.
+
+<SpeculativeAttentionExplorer />
+
+SGLang keeps the calculation fused and split by head, while Carat groups heads and positions and separates the calculation into matrix operations. At this verification shape, those matrix operations run much faster, even after accounting for the extra memory traffic from storing intermediate scores.
+
+In a controlled global-attention benchmark, SGLang’s production-style attention core took 1.60 ms, compared with 0.099 ms for Carat. Even with the padding optimization from the previous section disabled, Carat took 0.165 ms, 9.7× faster.
+
+Across the complete serving workload, Carat produced 350.8 output tokens/s versus SGLang’s 209.8, a 67.2% increase, while reducing TPOT from 15.22 ms to 7.46 ms.
+
+## Conclusion
+
+Abstractions exist throughout the inference stack, and they serve a purpose - allowing software to be reusable and easy to maintain.
+
+Agents allow us to build much faster than before, and using that we're able to build more from scratch on a per-model basis, reducing the wasted performance lost from unnecessary abstractions.
+
+Building Carat based on that thesis delivers 67% more output tokens per second and 51% lower TPOT than SGLang in our benchmarks.
+
+Getting the best performance means designing the engine around the model, all the way down.

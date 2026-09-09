@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import { SiteLayout } from "./components/SiteLayout";
 import { WaitlistDialog } from "./components/WaitlistDialog";
 import { jobs } from "./careers";
+import { articles } from "./articles";
 import { ArticlePage } from "./pages/ArticlePage";
 import { AcceptableUsePage } from "./pages/AcceptableUsePage";
 import { CareersPage } from "./pages/CareersPage";
@@ -42,6 +43,17 @@ export const AppRoutes = (): ReactElement => {
         <WaitlistDialog open onClose={() => setWaitlistOpen(false)} />
       )}
       <Routes>
+        {articles.map((article) => (
+          <Route
+            key={article.path}
+            path={article.path}
+            element={
+              <LayoutRoute>
+                <ArticlePage article={article} />
+              </LayoutRoute>
+            }
+          />
+        ))}
         <Route
           path="/"
           element={
@@ -90,14 +102,6 @@ export const AppRoutes = (): ReactElement => {
           element={
             <LayoutRoute>
               <NotesPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/notes/our-thesis/"
-          element={
-            <LayoutRoute>
-              <ArticlePage />
             </LayoutRoute>
           }
         />

@@ -49,7 +49,10 @@ procs:
     stop: SIGINT
   console:
     shell: >-
-      zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/console dev'
+      zsh -lc 'set -a; if [[ -f ../.env ]]; then source ../.env; fi; if [[ -f ../.env.local ]]; then source ../.env.local; fi; set +a; source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && corepack pnpm --filter @gradiated/console dev'
+    env:
+      # PostHog "Development" project (a public client token); the root .env can override it.
+      VITE_POSTHOG_KEY: phc_umjFzXmQDsCr89BAGzpegeqe64WgrLuvEH9tvKB3qA2H
   website:
     shell: >-
       zsh -lc 'source "$NVM_DIR/nvm.sh" && nvm use >/dev/null && cd website && corepack pnpm dev'

@@ -6,6 +6,7 @@ import {
   ChartNoAxesCombined,
   Check,
   ChevronsUpDown,
+  FlaskConical,
   KeyRound,
   LogOut,
   Logs,
@@ -19,6 +20,7 @@ import type { CurrentUser, Workspace } from "@/api/queries";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CreateOrganizationDialog } from "@/components/create-organization-dialog";
 import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
+import { useFeatureFlag } from "@/lib/feature-flags";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,9 +66,10 @@ export const AppSidebar = ({
   onSelectOrganization: (organizationId: string) => void;
   onSelectWorkspace: (workspaceId: string) => void;
   onSignOut: () => void;
-  activePage: "api-keys" | "billing" | "logs" | "models" | "usage";
+  activePage: "api-keys" | "billing" | "logs" | "models" | "tasks" | "usage";
 }) => {
   const { isMobile } = useSidebar();
+  const trainingConsole = useFeatureFlag("training");
   const queryClient = useQueryClient();
   const selectedOrganization =
     user?.organizations.find(
@@ -168,6 +171,27 @@ export const AppSidebar = ({
       </SidebarHeader>
 
       <SidebarContent>
+        {trainingConsole === true ? (
+          <SidebarGroup>
+            <SidebarGroupLabel>Research</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={activePage === "tasks"}
+                    tooltip="Training"
+                  >
+                    <Link to="/tasks">
+                      <FlaskConical />
+                      <span>Training</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ) : null}
         <SidebarGroup>
           <SidebarGroupLabel>Inference</SidebarGroupLabel>
           <SidebarGroupContent>

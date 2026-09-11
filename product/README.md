@@ -124,6 +124,14 @@ API at `https://api.gradiated.com`. Set `VITE_API_URL` when building the console
 development leaves `VITE_API_URL` unset and uses the configured console and
 website ports.
 
+Feature flags come from PostHog: set `VITE_POSTHOG_KEY` (the project's public
+client key) when building the console and every flag is then evaluated per
+signed-in user, so a flag such as `training` can be rolled out to one
+email domain from the PostHog UI. Without the key every flag is off. Mprocs
+gives the console the PostHog Development project's token, so local flags are
+evaluated against that project; `VITE_FEATURE_FLAGS=training` in the root
+`.env` forces flags on by name without PostHog.
+
 The seeded development identity is `dev@gradiated.com`; local test-mode magic
 links are captured by the API rather than delivered. Compose volumes preserve
 local data; use

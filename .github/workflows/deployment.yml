@@ -88,6 +88,8 @@ jobs:
         working-directory: product
         env:
           VITE_API_URL: https://api.gradiated.com
+          # PostHog project key (a public client token); leave unset to keep every feature flag off.
+          VITE_POSTHOG_KEY: ${{ vars.CONSOLE_POSTHOG_KEY }}
         run: pnpm --filter @gradiated/console build
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:

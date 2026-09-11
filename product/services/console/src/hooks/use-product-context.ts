@@ -4,6 +4,7 @@ import { useEffect } from "react";
 
 import { getCurrentUser, listWorkspaces } from "@/api/queries";
 import { authClient } from "@/auth";
+import { identifyUser, resetUser } from "@/lib/feature-flags";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
 export const useProductContext = () => {
@@ -21,6 +22,10 @@ export const useProductContext = () => {
       void navigate({ to: "/login" });
     }
   }, [me.error, navigate]);
+
+  useEffect(() => {
+    if (me.data) identifyUser(me.data);
+  }, [me.data]);
 
   useEffect(() => {
     if (!selection.organizationId && me.data?.organizations[0]) {
@@ -49,6 +54,7 @@ export const useProductContext = () => {
 
   const signOut = async () => {
     await authClient.signOut();
+    resetUser();
     queryClient.clear();
     selection.reset();
     await navigate({ to: "/login" });

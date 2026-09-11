@@ -32,6 +32,7 @@
     "date-fns": "^4.4.0",
     "lucide-react": "latest",
     "openapi-fetch": "latest",
+    "posthog-js": "^1.430.2",
     "react": "latest",
     "react-day-picker": "^10.0.1",
     "react-dom": "latest",

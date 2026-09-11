@@ -42,6 +42,22 @@ const modelsRoute = createRoute({
   path: "/models",
   component: ModelsPage,
 });
+const tasksRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tasks",
+  validateSearch: (search: Record<string, unknown>) => ({
+    ...(search.empty ? { empty: true } : {}),
+  }),
+  component: lazyRouteComponent(
+    () => import("@/pages/tasks-page"),
+    "TasksPage",
+  ),
+});
+const taskRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/tasks/$taskId",
+  component: lazyRouteComponent(() => import("@/pages/task-page"), "TaskPage"),
+});
 const billingRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/billing",
@@ -70,6 +86,8 @@ const routeTree = rootRoute.addChildren([
   loginRoute,
   apiKeysRoute,
   modelsRoute,
+  tasksRoute,
+  taskRoute,
   billingRoute,
   usageRoute,
   logsRoute,

@@ -20,6 +20,7 @@ import type { CurrentUser, Workspace } from "@/api/queries";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CreateOrganizationDialog } from "@/components/create-organization-dialog";
 import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
+import { Logo } from "@/components/logo";
 import { useFeatureFlag } from "@/lib/feature-flags";
 import {
   DropdownMenu,
@@ -117,13 +118,9 @@ export const AppSidebar = ({
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   aria-label="Workspace menu"
                 >
-                  <img
-                    className="aspect-square size-8"
-                    src="/brand/gradiated-mark-dark.svg"
-                    alt=""
-                    width="32"
-                    height="32"
-                  />
+                  <span className="flex size-8 shrink-0 items-center justify-center">
+                    <Logo className="size-6" aria-hidden="true" />
+                  </span>
                   <span className="min-w-0 flex-1 truncate text-left text-sm font-medium">
                     {selectedWorkspace?.name ?? "Select workspace"}
                   </span>

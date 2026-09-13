@@ -1,5 +1,5 @@
 ---
-title: "Carat: An inference engine designed for Gemma 4"
+title: "Announcing Carat: An inference engine designed for Gemma 4"
 description: "Designing Carat, an inference engine built specifically around the model architecture of Gemma 4."
 path: /library/gemma-inference-engine/
 status: published
@@ -17,21 +17,11 @@ import {
   DocsCodeTabs,
 } from "../../src/components/docs/DocsCodeTabs";
 
-Getting started with inference is easy. Rent a few NVIDIA GPUs, run vLLM or SGLang on them, and you’re good to go.
+Getting started with inference is easy. Rent a few NVIDIA GPUs, run vLLM or SGLang, and you’re good to go. But if you already know which model you’ll run, how much performance are you leaving on the table by using an engine built for everything else too?
 
-But what if you want the maximum number of tokens for your budget? What would change if you designed the inference engine around the model itself?
+We built Carat, a C++/CUDA inference engine for Gemma 4, to find out. Gemma’s fixed sliding window and shared KV heads let us replace page lookups with ring buffers and group attention queries into larger matrix multiplications. Here’s what we learned.
 
-The usual approach is to profile an existing engine and optimize its bottlenecks. That can take you a long way. But changes spanning the cache layout, attention kernels and scheduler require revisiting decisions across the engine.
-
-Inference repeatedly executes the same operations with predictable model dimensions. That gives us an opportunity to specialize how data is stored, how work is grouped and which GPU kernels execute it.
-
-A general inference engine has to accommodate many models, hardware configurations and workloads. We built Carat, a custom C++/CUDA inference engine, around a single target: serving Gemma 4 efficiently on an H200.
-
-That let us design the cache layout, attention kernels and runtime together, with each informed by the model’s architecture and the hardware executing it.
-
-Here’s what we learned.
-
-## Exploiting Gemma's attention architecture
+## Replacing page lookups with a ring buffer
 
 One of the core things an inference engine needs to optimize is KV cache reuse for attention layers. The KV cache for a session includes intermediate state from the attention calculations, and we store it to avoid recomputing it on every forward pass of the model to generate a new token.
 
@@ -41,7 +31,7 @@ Unlike standard attention that attends across all previous tokens, [Gemma uses a
 
 <EngineArchitecture />
 
-A general engine has to support many model architectures. Building Carat specifically for Gemma lets us carry model-specific decisions through the cache layout, attention kernels and runtime.
+Building Carat specifically for Gemma lets us carry model-specific decisions through the cache layout, attention kernels and runtime.
 
 SGLang builds indices for the recent window from the request's token mapping, and then translates those into local-cache locations. The attention kernel then loads those indices and reads KV values at the resulting addresses. The slots can be scattered, and paging allows for efficient use of memory rather than reserving the maximum context length in memory.
 
@@ -65,7 +55,7 @@ Looking at inputs from our dataset, Gemma 4’s global query-key multiplication 
 
 The figure shows the last 64 columns of the key matrix. Switching from Exact to Padded adds eleven columns that are not useful in the attention calculation: the preallocated cache tail is zero-initialized and the causal mask gives those columns zero weight, so the output is unchanged.
 
-Rounding the dimensions of K up to the next multiple of 64 and masking the future positions resulted in a very large performance improvement for QK calculations.
+Rounding the dimensions of K up to the next multiple of 64 and masking the future positions resulted in a 7.9x performance improvement for QK calculations.
 
 <DocsCodeTabs>
   <DocsCodeTab label="Before">
@@ -105,11 +95,11 @@ pv_matmul(scores, value_cache, output, extent);
   </DocsCodeTab>
 </DocsCodeTabs>
 
-Why is this faster? At 6,005 keys, [cuBLASLt](https://docs.nvidia.com/cuda/cublas/#using-the-cublaslt-api) uses a conventional kernel with ordinary floating-point multiply-add instructions. At 6,016 keys, it used a [Hopper Tensor Core](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/) kernel with HGMMA instructions, which is built to be significantly more efficient at matrix multiplications.
+At 6,005 keys, [cuBLASLt](https://docs.nvidia.com/cuda/cublas/#using-the-cublaslt-api) uses a conventional kernel with ordinary floating-point multiply-add instructions. At 6,016 keys, it used a [Hopper Tensor Core](https://developer.nvidia.com/blog/nvidia-hopper-architecture-in-depth/) kernel with HGMMA instructions, which is built to be significantly more efficient at matrix multiplications.
 
 Adding a few masked columns and increasing slightly the number of FLOPs in the calculation can significantly improve the speed by pushing it to take a different route through the hardware. This matches our experience optimizing inference, counting FLOPs is a poor predictor of execution time, and the fastest configuration is often counter-intuitive.
 
-## Speculative decoding
+## Doing it all in one kernel can be slower
 
 Up until now, we’ve focused on making the target model’s forward pass faster. Speculative decoding lets the target model check several proposed tokens together in a single forward pass, amortizing the cost of reading weights and loading the KV cache from memory.
 
@@ -127,12 +117,12 @@ In a controlled global-attention benchmark, SGLang’s production-style attentio
 
 Across the complete serving workload, Carat produced 350.8 output tokens/s versus SGLang’s 209.8, a 67.2% increase, while reducing TPOT from 15.22 ms to 7.46 ms.
 
-## Conclusion
+## Design the inference engine around the model
+
+Carat demonstrates that the best performance means designing the engine around the model, all the way down.
 
 Abstractions exist throughout the inference stack, and they serve a purpose - allowing software to be reusable and easy to maintain.
 
-Agents allow us to build much faster than before, and using that we're able to build more from scratch on a per-model basis, reducing the wasted performance lost from unnecessary abstractions.
+Agents allow us to build much faster than before, and using them we're able to build more from scratch on a per-model basis, reducing the wasted performance lost from unnecessary abstractions.
 
 Building Carat based on that thesis delivers 67% more output tokens per second and 51% lower TPOT than SGLang in our benchmarks.
-
-Getting the best performance means designing the engine around the model, all the way down.

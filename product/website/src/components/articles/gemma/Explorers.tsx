@@ -467,7 +467,7 @@ export const EngineArchitecture = () => {
   return (
     <Figure
       title="Attention layers in Gemma 4"
-      intro="Gemma splits it's 60 layers into 10 groups of six layers. Five layers use a short attention window, then one looks across the full history. That pattern repeats ten times."
+      intro="Gemma splits its 60 layers into 10 groups of six layers. Five layers use a short attention window, then one looks across the full history. That pattern repeats ten times."
     >
       <div className="gx-model-flow">
         <div>
@@ -525,9 +525,6 @@ export const EngineArchitecture = () => {
         </button>
       </div>
       <section className="gx-panel gx-model-detail" aria-live="polite">
-        <span className="gx-eyebrow">
-          Inside a {global ? "global" : "local"} layer
-        </span>
         <h4>
           {global ? "Read the full history" : "Read the latest 1,024 tokens"}
         </h4>

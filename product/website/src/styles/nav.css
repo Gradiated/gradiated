@@ -1,0 +1,980 @@
+/* ---------------------------------------------------------------------------
+   nav — the site bar and its shared dropdown.
+
+   Depends on tokens only. The dropdown is ONE panel whose left/width/height
+   arrive as inline styles from Nav.tsx; the transitions here are what carry
+   it between items — the glide-and-resize is the whole pattern. All motion is
+   the response family.
+   --------------------------------------------------------------------------- */
+
+/* Absolute, not fixed: the bar belongs to the fold and scrolls away with it.
+   A sticky header over the reference shell would sit on top of the tool rather
+   than beside it, and its condensed state was a wide frosted slab floating
+   mid-screen over content it had nothing to do with.
+
+   Padding is start-only: the action buttons run the bar's full height and sit
+   flush to its end edge, as in the design. */
+.gr-nav {
+  position: absolute;
+  top: var(--u);
+  left: 50%;
+  translate: -50% 0;
+  width: var(--nav-w);
+  height: var(--nav-h);
+  z-index: var(--z-nav);
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  /* No inset. The bar paints no ground of its own, so a padding here only
+     pushed the wordmark 24px inboard of the page's own left edge while the
+     actions stayed flush right — the nav read as narrower than the page it
+     sits over. Aligned, the two share one measure. */
+  overflow: hidden;
+
+  /* No surface: over the hero the bar is just its marks, with nothing to sit
+     on. It scrolls away rather than ever overlapping content it would need to
+     separate itself from. */
+}
+
+
+/* Holds the inline Logo, which paints with currentColor — the colour set here
+   is the ink the whole logo takes.
+
+   Condensing clips the box to the mark's square while the svg keeps its full
+   width, so the wordmark slides out of view rather than disappearing: one
+   element morphing, not two swapping. The group fades slightly ahead of the
+   clip so no glyph is caught mid-cut at the edge. */
+.gr-nav-wordmark {
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  /* --logo-aspect is published by Nav.tsx from LOGO_ASPECT, so replacing the
+     artwork resizes this automatically. The fallback is only for the case
+     where the property has not been set. */
+  width: calc(var(--nav-logo-h) * var(--logo-aspect, 4.79));
+  color: var(--color-text);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-wordmark svg {
+  height: var(--nav-logo-h);
+  width: auto;
+  flex: none;
+}
+
+
+
+
+.gr-nav-wordmark:hover {
+  color: var(--color-interactive);
+}
+
+
+
+.gr-nav-links {
+  display: flex;
+  align-items: center;
+}
+
+/* Mono caps, matching the label role — the same voice as every other piece of
+   system chrome. */
+/* A text link, like every other link on the site: the rule draws under the
+   label on hover. Inset to the label rather than the padding, so the rule
+   measures the word and not the gap to the next item. */
+.gr-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text);
+  text-decoration: none;
+  padding-inline: calc(0.75 * var(--u));
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-link::after {
+  content: "";
+  position: absolute;
+  left: calc(0.75 * var(--u));
+  right: calc(0.75 * var(--u));
+  /* Below the line box, not inset into it. A unit-based offset is wrong here:
+     the box is only as tall as one caps line, so 0.25u put the rule 3.6px
+     ABOVE the text bottom and struck through the glyphs. Em-based, and the
+     same -0.15em .gr-link uses, so both links draw their rule at the same
+     distance from their own text. */
+  bottom: -0.15em;
+  height: 1px;
+  background: currentColor;
+  transform-origin: left;
+  scale: 0 1;
+  transition: scale var(--dur-media) var(--ease-media);
+}
+
+/* Open counts as hovered: the panel is showing because of this item, so the
+   item should look like the reason. */
+.gr-nav-link--active::after,
+.gr-nav-link:hover::after,
+.gr-nav-link:focus-visible::after {
+  scale: 1 1;
+}
+
+/* Links, not buttons. The bar carries no surface, so a ghost button's hover
+   fill would appear out of nowhere over the hero — and a filled shape beside
+   four caps labels is a second weight class in a bar that is otherwise all
+   text. Links keep one register across the whole bar, with the drawn rule
+   doing the work the fill was doing. */
+.gr-nav-actions {
+  display: flex;
+  align-items: center;
+}
+
+/* The caps treatment, so an action reads as part of the bar rather than as
+   body copy that wandered in. Behaviour comes from .gr-link — the drawn rule
+   and the chevron extending — so there is one link component, not two. */
+.gr-nav-action {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text);
+  padding-inline: calc(0.75 * var(--u));
+}
+
+/* The last one takes the bar's own inset at its end, mirroring the space the
+   logo gets at the start so the bar is evenly inset on both sides. */
+.gr-nav-action:last-child {
+  padding-inline-end: var(--u);
+}
+
+/* The rule spans the label, not the padding separating the two actions. */
+.gr-nav-action::after {
+  left: calc(0.75 * var(--u));
+  right: calc(0.75 * var(--u));
+}
+
+.gr-nav-action:last-child::after {
+  right: var(--u);
+}
+
+/* -- the shared panel ------------------------------------------------------ */
+
+/* A full-bleed band, not a card hung from its trigger. It runs from the top of
+   the viewport to its own edges — anchoring it below the bar left a strip of
+   page above it, which reads as a floating card with square corners rather
+   than as a band. So the bar sits ON the panel (it is the layer above; see
+   --z-nav), and the content clears the bar with padding instead.
+
+   One rule, at the bottom: the other three sides are the viewport's. No radius
+   either — a corner on something that runs off both edges has nothing to
+   round. Only the height is driven from JS. */
+.gr-nav-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  /* Without this the panel is z-index auto, and every positioned section
+     below it in the document paints over it — the hero did exactly that. */
+  z-index: var(--z-nav-panel);
+  background: var(--color-overlay);
+  border-block-end: 1px solid var(--color-rule);
+  overflow: hidden;
+  opacity: 0;
+  translate: 0 calc(-0.25 * var(--u));
+  pointer-events: none;
+  transition:
+    height var(--dur-base) var(--ease-response),
+    opacity var(--dur-fast) var(--ease-response),
+    translate var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-panel--open {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* First frame of an open: geometry lands instantly and only the fade plays.
+   Gliding in from the panel's stale position reads as a bug, not a flourish. */
+.gr-nav-panel--snap {
+  transition:
+    opacity var(--dur-fast) var(--ease-response),
+    translate var(--dur-fast) var(--ease-response);
+}
+
+/* Every item's content is mounted for measurement; only the active one is
+   visible. Inactive content sits one step toward its own side (--slide is ±1
+   by whether it is left or right of the active item), so switching items
+   reads as travel in the direction the pointer moved. */
+/* Sized by its cards, not configured. Fixed-width columns and `max-content`
+   mean the content measures to whatever its card count needs, which is what
+   the panel then morphs to — Product's four and Library's two with no width
+   written down for either. */
+.gr-nav-panel-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  /* Clears the bar, which now floats on top of this band. */
+  padding: calc(var(--u) + var(--nav-h) + var(--u)) var(--u) calc(1.5 * var(--u));
+  display: grid;
+  grid-auto-flow: column;
+  /* Centred in the band. The columns keep their fixed width, so a two-card
+     panel and a four-card panel are both centred on the same axis rather than
+     one being a stretched version of the other. */
+  justify-content: center;
+  /* Wide enough for the longest title on one line — "Inference hardware" at
+     subheading size — because a wrapped title turns a row of cards into a row
+     of different heights. */
+  grid-auto-columns: calc(10 * var(--u));
+  gap: calc(0.75 * var(--u));
+  opacity: 0;
+  translate: calc(var(--slide, 1) * 0.75 * var(--u)) 0;
+  pointer-events: none;
+  transition:
+    opacity var(--dur-fast) var(--ease-response),
+    translate var(--dur-fast) var(--ease-response);
+}
+
+.gr-nav-panel-content--active {
+  opacity: 1;
+  translate: 0 0;
+  pointer-events: auto;
+}
+
+/* A statement beside the cards, in the panel's first column. Wider than a
+   card, because it is a sentence rather than a label — a card-width column
+   would break it into four lines.
+
+   Aligned to the bottom of the row: the cards' titles sit under their wells,
+   so a line hung from the top of the column would be level with nothing. */
+/* The panel's tracks are one card wide. A sentence needs more, so a panel
+   carrying one widens its FIRST track only — the cards keep their width and
+   the group stays centred, rather than the sentence spilling across the card
+   beside it. */
+.gr-nav-panel-content:has(.gr-nav-intro) {
+  grid-template-columns: calc(11.5 * var(--u));
+}
+
+/* Centred on the CARDS, not on the column — the cards are a well plus two
+   lines of type under it, so their optical middle is the middle of the whole
+   card, and a statement set beside them should sit on that axis rather than
+   being hung from the top or dropped to the baseline. */
+.gr-nav-intro {
+  align-self: center;
+  width: 100%;
+  margin: 0;
+  font-family: var(--font-title);
+  /* 40px. --u is 24px, so a calc that multiplies it will not land here. */
+  font-size: 2.5rem;
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  color: var(--color-text);
+}
+
+/* -- the card -------------------------------------------------------------
+   A media well with its label under it. The same component in the panel and
+   in the sheet, so the two never drift.                                      */
+
+.gr-nav-card {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  /* Title to body is one gap; well to title is a larger one, so the type
+     reads as a block under the picture rather than as a third row of it. */
+  gap: calc(0.3 * var(--u));
+  align-content: start;
+  padding: calc(0.5 * var(--u));
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+/* The title reads at subheading weight — the same role the reference page's
+   part titles use — so a card announces a destination rather than captioning
+   a picture. */
+/* The chevron follows the last word, not the card's edge — it belongs to the
+   label, and pushed to the far side it reads as a separate control. */
+.gr-nav-card-title {
+  margin-block-start: calc(0.45 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  font-family: var(--font-title);
+  /* A step under the part titles it was matched to. A dropdown card is a
+     wayfinding label, not a section heading, and at full subheading size four
+     of them across the band shouted louder than the page behind. */
+  font-size: var(--text-card);
+  font-weight: var(--weight-heading);
+  line-height: var(--leading-heading);
+  letter-spacing: var(--tracking-heading);
+}
+
+/* One line is the intent, two is the ceiling. Clamped rather than trusted, so
+   a longer line cannot make one card taller than its neighbours. */
+.gr-nav-card-body {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: var(--leading-body);
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+/* The well. 4:5 so a column of them reads as a row of portraits rather than
+   as generic boxes, and it holds its shape before any media arrives. */
+/* A step darker than the panel it sits on, always — mixed from the panel's own
+   surface rather than named, so a well is recessed into its card on every
+   ground instead of only on the light one. */
+.gr-nav-card-media {
+  display: block;
+  aspect-ratio: 4 / 5;
+  background: color-mix(in srgb, var(--color-text) 7%, var(--color-overlay));
+  border-radius: var(--radius);
+  /* Clips the zoom. Without it the image would grow past the well and over
+     its neighbours. */
+  overflow: hidden;
+}
+
+.gr-nav-card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* Scaled from the centre so the crop opens evenly on all four sides — a
+     default origin would anchor the top-left and the image would appear to
+     slide rather than to zoom. */
+  transform-origin: center;
+  transition: scale var(--dur-media) var(--ease-media);
+}
+
+/* 6%: enough that the image is unmistakably coming forward, still short of the
+   point where a 384px source starts to soften. It runs longer and softer than
+   the block sliding in behind it — the two are one gesture, but the picture is
+   the slow half of it. */
+.gr-nav-card:hover .gr-nav-card-media img,
+.gr-nav-card:focus-visible .gr-nav-card-media img {
+  scale: 1.06;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-nav-card-media img {
+    transition: none;
+  }
+
+  .gr-nav-card:hover .gr-nav-card-media img,
+  .gr-nav-card:focus-visible .gr-nav-card-media img {
+    scale: 1;
+  }
+}
+
+.gr-nav-card-label {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: var(--leading-body);
+}
+
+/* The chevron extends into an arrow as the block arrives — the same gesture
+   every link on the site makes, driven here by the card rather than by
+   .gr-link, because the card is the target and the title is inside it. */
+.gr-nav-card:hover .gr-arrow,
+.gr-nav-card:focus-visible .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-nav-card:hover .gr-arrow-shaft,
+.gr-nav-card:focus-visible .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+/* -- entrance -------------------------------------------------------------- */
+
+@keyframes gr-nav-in {
+  from {
+    opacity: 0;
+    translate: -50% calc(-0.25 * var(--u));
+  }
+  to {
+    opacity: 1;
+    translate: -50% 0;
+  }
+}
+
+.gr-nav {
+  animation: gr-nav-in var(--entrance-module) var(--ease-response)
+    var(--entrance-nav-lead) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-nav {
+    animation: none;
+    transition: none;
+  }
+
+  .gr-nav-panel,
+  .gr-nav-panel-content,
+  .gr-nav-link,
+  .gr-nav-card-media,
+  .gr-nav-highlight {
+    transition: none;
+  }
+}
+
+/* -- the travelling highlight ---------------------------------------------
+   One light block that moves to the CARD under the pointer.
+
+   Same idea as the segmented control, different mechanism: tabs have equal
+   cells so their indicator is arithmetic, and a card's box depends on the
+   length of its label, so this one takes its position and width from a
+   measurement (see Nav.tsx). Light rather than filled, because a card is a
+   picture with type under it and a solid block behind it would bury both.
+
+   It lives in the panel and nowhere else. The bar's own items are text links
+   and answer with a drawn rule like every other link on the site — a second
+   block up there would read as a segmented control competing with this one.  */
+
+.gr-nav-highlight {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--hl-w, 0);
+  height: var(--hl-h, 0);
+  translate: var(--hl-x, 0) var(--hl-y, 0);
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+  border-radius: var(--radius);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    translate var(--dur-base) var(--ease-response),
+    width var(--dur-base) var(--ease-response),
+    height var(--dur-base) var(--ease-response),
+    opacity var(--dur-fast) var(--ease-response);
+}
+
+/* Fades in where it lands rather than sliding in from a stale position — the
+   same reason the panel snaps on its first open. */
+.gr-nav-highlight--on {
+  opacity: 1;
+}
+
+/* -- the drawer ------------------------------------------------------------
+   Below `wide` there is no room for four items, two actions and a panel, so
+   the bar keeps only the mark and a trigger, and navigation becomes a drawer
+   from the right holding the same cards.                                     */
+
+/* The touch target is the full bar height — 69px on a phone — and it is
+   INVISIBLE. It carried a 6% ink wash, which on a phone reads as a large grey
+   plate around a small glyph; the target has to be that big to be thumbable,
+   but it does not have to be seen.
+
+   The tap highlight goes with it. iOS paints its own grey rectangle over any
+   tapped control, which is the flash reported here, and on a borderless
+   button that flash is the only thing that looks like a background. */
+.gr-nav-burger {
+  display: none;
+  place-items: center;
+  width: var(--nav-h);
+  height: var(--nav-h);
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  /* Positions itself, now that it is not a child of the bar. Absolute like
+     the bar, so it scrolls away with the fold rather than following the
+     reader down the page; the offsets put it on the bar's own right edge,
+     which sits at 50% + nav-w/2 from the left. */
+  position: absolute;
+  top: var(--u);
+  right: calc(50% - var(--nav-w) / 2);
+  z-index: var(--z-nav);
+}
+
+/* Open: fixed, and above the drawer. The only thing that changes layer is
+   this button — the bar and its wordmark stay exactly where they are and let
+   the drawer cover them, which is what a higher layer is for. */
+.gr-nav-burger[aria-expanded="true"] {
+  position: fixed;
+  z-index: calc(var(--z-nav) + 3);
+}
+
+/* Two bars that become a cross.
+ *
+ * Drawn rather than set: the mark was the ☰ character, which is a glyph with
+ * no guaranteed metrics — it shifted on tap because it falls back to whatever
+ * face has it, and it cannot be animated. These are two elements positioned
+ * from the centre, so rotating them about that centre is the whole animation.
+ *
+ * 1rem square, independent of --u: this is an icon inside a target, and it
+ * should not grow with the page's spacing unit. */
+.gr-burger {
+  position: relative;
+  display: block;
+  width: 1rem;
+  height: 1rem;
+}
+
+.gr-burger-bar {
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: currentColor;
+  /* Transformed from the middle of the box, so both bars share one pivot and
+     the cross closes on the icon's centre. */
+  top: calc(50% - 1px);
+  transition:
+    translate var(--dur-base) var(--ease-response),
+    rotate var(--dur-base) var(--ease-response);
+}
+
+.gr-burger-bar:first-child {
+  translate: 0 -0.25rem;
+}
+
+.gr-burger-bar:last-child {
+  translate: 0 0.25rem;
+}
+
+/* Open: both bars come to the centre and cross. Rotating AFTER the translate
+   has been zeroed is what makes it read as a fold rather than a swipe. */
+.gr-nav-burger[aria-expanded="true"] .gr-burger-bar {
+  translate: 0 0;
+}
+
+.gr-nav-burger[aria-expanded="true"] .gr-burger-bar:first-child {
+  rotate: 45deg;
+}
+
+.gr-nav-burger[aria-expanded="true"] .gr-burger-bar:last-child {
+  rotate: -45deg;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-burger-bar {
+    transition: none;
+  }
+}
+
+[data-tier="wide"] .gr-nav-burger {
+  display: none;
+}
+
+/* Nothing here changes when the drawer opens. The bar keeps its layer and
+   its wordmark; the drawer is simply above it. That is the whole reason the
+   trigger was moved out of the bar — see .gr-nav-burger above. */
+
+[data-tier="mid"] .gr-nav-links,
+[data-tier="mid"] .gr-nav-actions,
+[data-tier="compact"] .gr-nav-links,
+[data-tier="compact"] .gr-nav-actions,
+[data-tier="narrow"] .gr-nav-links,
+[data-tier="narrow"] .gr-nav-actions {
+  display: none;
+}
+
+[data-tier="mid"] .gr-nav-burger,
+[data-tier="compact"] .gr-nav-burger,
+[data-tier="narrow"] .gr-nav-burger {
+  display: grid;
+}
+
+/* The panel is a pointer affordance; below `wide` there is no pointer and no
+   room, and the sheet carries the same content. */
+[data-tier="mid"] .gr-nav-panel,
+[data-tier="compact"] .gr-nav-panel,
+[data-tier="narrow"] .gr-nav-panel {
+  display: none;
+}
+
+/* A drawer from the right, not a sheet over everything.
+ *
+ * It arrives from the edge the control is on, so the movement and the thing
+ * that caused it are on the same side. 90% of the screen: wide enough for two
+ * cards to a row, which is what keeps the whole drawer glanceable rather than
+ * a column to be scrolled — and the remaining tenth keeps the page visible
+ * behind it, which is what says dismissible rather than new page.
+ *
+ * dvh, so an iOS address bar appearing mid-scroll cannot leave the drawer
+ * short of the bottom of the screen. */
+.gr-nav-sheet {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 90vw;
+  height: 100dvh;
+  z-index: calc(var(--z-nav) + 2);
+  background: var(--color-overlay);
+  box-shadow: var(--shadow-lift);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: gr-sheet-in var(--dur-base) var(--ease-response) both;
+}
+
+@keyframes gr-sheet-in {
+  from {
+    translate: 100% 0;
+  }
+}
+
+/* The page beside the drawer, tappable to dismiss. A button rather than a div
+   so it is a real control; aria-hidden and out of the tab order because the
+   Escape key and the bar's own cross are the accessible ways out, and a
+   screen reader should not meet an unlabelled 86vw button. */
+.gr-nav-scrim {
+  position: fixed;
+  inset: 0;
+  /* Above the BAR, not just above the page: the wordmark is in the bar and
+     the drawer is meant to cover it. */
+  z-index: calc(var(--z-nav) + 1);
+  border: none;
+  padding: 0;
+  background: color-mix(in srgb, var(--color-ink-000) 28%, transparent);
+  cursor: pointer;
+  animation: gr-scrim-in var(--dur-base) var(--ease-response) both;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes gr-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Starts below the bar. The drawer has no header of its own any more — the
+   bar's cross is the close control — so the first thing in it would otherwise
+   sit underneath that cross. */
+.gr-nav-sheet-inner {
+  padding: calc(var(--nav-h) + 2 * var(--u)) var(--u) calc(2 * var(--u));
+  display: grid;
+  gap: calc(1.5 * var(--u));
+}
+
+.gr-nav-sheet-title {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  margin-block-end: var(--u);
+}
+
+/* Two to a row. The cards are smaller than they would be stacked, but they
+   stay comfortably tappable, and halving the drawer's height is what lets the
+   whole of it be taken in at a glance instead of scrolled through — which is
+   worth more here than a larger picture. */
+.gr-nav-sheet-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--u);
+}
+
+.gr-nav-sheet-group + .gr-nav-sheet-group {
+  border-top: 1px solid var(--color-rule);
+  padding-block-start: calc(1.5 * var(--u));
+}
+
+/* One per row, full width. There are three of them, and in two columns the
+   third sat alone beside an empty cell — a grid that visibly failed to fill
+   reads as something missing rather than as a layout. A stack of three also
+   gives each one the drawer's whole width to be tapped.
+
+   The dividers are the grid's own 1px gaps over a ruled ground. */
+.gr-nav-sheet-plain {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--color-rule);
+  border-block: 1px solid var(--color-rule);
+}
+
+.gr-nav-sheet-plain-link {
+  padding-block: var(--u);
+  background: var(--color-overlay);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.gr-nav-sheet-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: calc(0.75 * var(--u));
+}
+
+.gr-nav-sheet-actions .gr-button {
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-nav-sheet {
+    animation: none;
+  }
+}
+
+/* -- the writing list ------------------------------------------------------
+   What is actually in the Library, beside the cards that say what the Library
+   is. Rows are thumbnail, title, date — enough to recognise a piece, not
+   enough to compete with the cards.
+
+   It spans two card columns, so a panel carrying a list is exactly as wide as
+   one that does not: moving between Product and Library changes the panel's
+   height, never its span.                                                    */
+
+/* The writing column is sized by its CONTENT, not by two card widths. Fixed
+   at 2 tracks it was 480px holding about 220px of ink, and all that empty
+   space on its right pushed the panel's visible mass left of the axis it was
+   geometrically centred on — the panel measured centred and looked wrong. */
+.gr-nav-panel-content:has(.gr-nav-writing) {
+  grid-template-columns: repeat(2, calc(10 * var(--u))) max-content;
+}
+
+.gr-nav-writing {
+  /* Centred on the cards, like the Product panel's statement. The column
+     itself still stretches so its dividing rule runs the panel's full height —
+     it is the CONTENT that centres, not the box. */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: calc(0.5 * var(--u));
+  /* Divides the list from the cards without a second surface — the panel is
+     one plane and a boxed column would break that. */
+  border-inline-start: 1px solid var(--color-rule);
+  padding-inline-start: calc(1.25 * var(--u));
+  margin-inline-start: calc(0.75 * var(--u));
+}
+
+.gr-nav-writing-title {
+  color: var(--color-text-muted);
+  margin-block-end: calc(0.75 * var(--u));
+}
+
+/* Each row as wide as its own thumb and type, so the column's width is the
+   widest row rather than a track it happens to sit in. */
+.gr-nav-note {
+  width: max-content;
+}
+
+.gr-nav-writing ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: calc(0.25 * var(--u));
+}
+
+.gr-nav-note {
+  display: grid;
+  grid-template-columns: calc(4 * var(--u)) 1fr;
+  align-items: center;
+  gap: calc(0.75 * var(--u));
+  padding: calc(0.4 * var(--u));
+  text-decoration: none;
+  color: var(--color-text);
+  border-radius: var(--radius);
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
+/* Its own hover, not the travelling block: the block belongs to the cards, and
+   one indicator crossing between a row of pictures and a list of rows would
+   have to travel diagonally to get there. */
+.gr-nav-note:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* Landscape where the cards are portrait — a row thumbnail is an aside, and
+   matching the cards' 4:5 would make it a small card instead. */
+.gr-nav-note-thumb {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  /* The image and its offset are set inline, per entry. This is the fallback
+     for an entry with no cover yet. */
+  background-color: color-mix(in srgb, var(--color-text) 7%, var(--color-overlay));
+  /* Blown up so the thumbnail is a WINDOW onto the ramp rather than the whole
+     of it — at this size a complete two-stop gradient reads as a swatch. */
+  background-size: 340% 100%;
+  background-repeat: no-repeat;
+  border-radius: var(--radius);
+}
+
+.gr-nav-note-text {
+  display: grid;
+  gap: 0.1em;
+  min-width: 0;
+}
+
+.gr-nav-note-name {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: 1.3;
+  /* One line: a wrapped title would make its row taller than the others and
+     the list would stop reading as a list. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-nav-note-date {
+  font-family: var(--font-code);
+  font-size: 11px;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-nav-note {
+    transition: none;
+  }
+}
+
+/* The way out of a sample. Aligned to the rows' text column rather than the
+   thumbnails, so it reads as the end of the list and not as another row. */
+/* The card titles' type, not the body's. This is a peer of "Notes" and
+   "Methods" — a way into the same set — and it was reading as a caption
+   because it inherited Barlow at body size. */
+.gr-nav-writing-all {
+  margin-block-start: var(--u);
+  margin-inline-start: calc(0.4 * var(--u));
+  align-self: start;
+  font-family: var(--font-title);
+  font-size: var(--text-card);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  /* The panel's ink, not the site's link colour. `.gr-link` paints every text
+     link olive, which is right in body copy — but in here the card titles are
+     links too and they are black, so the olive read as a different KIND of
+     thing rather than as a link. The drawn rule still marks it as one, and it
+     takes currentColor so it follows this. */
+  color: var(--color-text);
+}
+
+/* The mark lights up into the theme's gradient pairing.
+
+   Targets the PATHS, not the <svg>. Each path carries fill="currentColor" as a
+   presentation attribute, and a presentation attribute beats an INHERITED CSS
+   value — so setting fill on the svg looked correct in the computed style and
+   changed nothing on screen. A rule matching the path itself outranks its own
+   attribute.
+
+   Not transitioned: `fill` cannot interpolate from a colour to a gradient
+   reference, so a duration here would jump partway rather than fade. It
+   arrives at once, which suits a mark lighting up. */
+.gr-nav-wordmark:hover svg path,
+.gr-nav-wordmark:focus-visible svg path {
+  fill: var(--logo-gradient);
+}
+
+/* -- the film card ---------------------------------------------------------
+   One card's cover is a video rather than a still. It behaves exactly like an
+   image cover — same fill, same crop, same hover zoom — so there is no second
+   set of rules to keep in step with the first.
+
+   The glass stack that used to sit over this is gone, along with the overlay
+   blend under it. Recorded here because the intent was Figma's material —
+   refraction 80, depth 70, dispersion 100, splay 100 — and CSS has none of it:
+   nothing in the platform bends what is behind an element, so each parameter
+   was standing in for itself with a blur, an inset shadow or a saturation.
+   Two panes compounded rather than layering, and the blend flattened the
+   footage to a single hue. The plain video reads better than the substitute
+   did. If the material is wanted for real it needs WebGL, and that is a
+   decision about glass across the system rather than about this card.        */
+
+.gr-nav-card-media--film {
+  position: relative;
+  /* Behind the video, so the well is never bare while the first frame
+     decodes — the poster covers most of that, this covers the rest. */
+  background: var(--color-taupe-500);
+}
+
+.gr-nav-card-media--film video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: center;
+  transition: scale var(--dur-media) var(--ease-media);
+}
+
+.gr-nav-card:hover .gr-nav-card-media--film video,
+.gr-nav-card:focus-visible .gr-nav-card-media--film video {
+  scale: 1.06;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-nav-card-media--film video {
+    transition: none;
+  }
+
+  .gr-nav-card:hover .gr-nav-card-media--film video,
+  .gr-nav-card:focus-visible .gr-nav-card-media--film video {
+    scale: 1;
+  }
+}
+
+/* The writing list, unframed for the drawer.
+ *
+ * In the panel it is a second column, so it carries a dividing rule and an
+ * inset to sit beside the cards. In the drawer it is underneath them, where
+ * that rule reads as a stray vertical line and the inset as a misalignment.
+ *
+ * The rows also stop being max-content: in a column of their own width the
+ * tappable area ends at the date, which on a phone means a row that looks
+ * like a list item but only answers near its left half. */
+.gr-nav-sheet .gr-nav-writing {
+  padding: 0;
+  border-inline-start: none;
+  padding-inline-start: 0;
+  margin-inline-start: 0;
+  margin-block-start: var(--u);
+}
+
+.gr-nav-sheet .gr-nav-note {
+  width: auto;
+}
+
+/* Leaving.
+ *
+ * Only the animation-NAME is swapped: duration, easing and fill all carry
+ * from the rule above, so the exit is the entrance's mirror by construction
+ * rather than by two sets of numbers kept in step by hand.
+ *
+ * `to` rather than `from`, so the drawer starts wherever it currently is and
+ * travels out to the edge it came in from. */
+.gr-nav-sheet--closing {
+  animation-name: gr-sheet-out;
+}
+
+@keyframes gr-sheet-out {
+  to {
+    translate: 100% 0;
+  }
+}
+
+.gr-nav-scrim--closing {
+  animation-name: gr-scrim-out;
+}
+
+@keyframes gr-scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.gr-nav-note-thumb > .gr-wafer-artwork {
+  position: absolute;
+  inset: 0;
+}

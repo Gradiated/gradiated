@@ -39,7 +39,7 @@ type DocsDocument = {
   Component: ComponentType<Record<string, unknown>>;
 };
 
-const documents = {
+export const documents = {
   index: {
     title: "Overview",
     path: "/docs/",
@@ -97,9 +97,9 @@ const documents = {
   },
 } satisfies Record<string, DocsDocument>;
 
-type DocsPageKey = keyof typeof documents;
+export type DocsPageKey = keyof typeof documents;
 
-const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
+export const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
   {
     heading: "Get started",
     items: ["index", "quickstart", "models-pricing"],
@@ -112,7 +112,7 @@ const navigation: Array<{ heading: string; items: DocsPageKey[] }> = [
   { heading: "Reference", items: ["api-reference"] },
 ];
 
-const legacyPaths: Record<string, string> = {
+export const legacyPaths: Record<string, string> = {
   "/docs/api/": documents["api-reference"].path,
   "/docs/api-keys/": documents.quickstart.path,
   "/docs/billing/": documents.errors.path,
@@ -122,7 +122,7 @@ const legacyPaths: Record<string, string> = {
   "/docs/usage/": documents.index.path,
 };
 
-const markdownPathFor = (path: string): string =>
+export const markdownPathFor = (path: string): string =>
   path === "/docs/" ? "/docs/index.md" : `${path.replace(/\/$/, "")}.md`;
 
 const CopyIcon = (): ReactElement => (

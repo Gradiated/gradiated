@@ -8,13 +8,13 @@ test("models page shows the available model and pricing", async ({ page }) => {
     page.getByRole("heading", { level: 1, name: "Models" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "Qwen3 0.6B 4-bit" }),
+    page.getByRole("heading", { name: "DeepSeek V4.1 Flash" }),
   ).toBeVisible();
-  await expect(page.getByText("mlx-community/qwen3-0.6b-4bit")).toBeVisible();
+  await expect(page.getByText("deepseek/deepseek-v4.1-flash")).toBeVisible();
 
   const modelCard = page
     .locator("article")
-    .filter({ hasText: "mlx-community/qwen3-0.6b-4bit" })
+    .filter({ hasText: "deepseek/deepseek-v4.1-flash" })
     .first();
   const table = modelCard.getByRole("table");
   await expect(table.getByRole("columnheader")).toHaveText([
@@ -25,13 +25,13 @@ test("models page shows the available model and pricing", async ({ page }) => {
   ]);
   await expect(
     table.getByRole("row", { name: /^Input / }).getByRole("cell"),
-  ).toHaveText(["Input", "$0.0700", "$0.100", "$0.150"]);
+  ).toHaveText(["Input", "$0.210", "$0.300", "$0.450"]);
   await expect(
     table.getByRole("row", { name: /^Cached input / }).getByRole("cell"),
-  ).toHaveText(["Cached input", "$0.0350", "$0.0500", "$0.0750"]);
+  ).toHaveText(["Cached input", "$0.00400", "$0.00600", "$0.00900"]);
   await expect(
     table.getByRole("row", { name: /^Output / }).getByRole("cell"),
-  ).toHaveText(["Output", "$0.210", "$0.300", "$0.450"]);
+  ).toHaveText(["Output", "$0.840", "$1.20", "$1.80"]);
 
   const layout = await table.evaluate((element) => {
     const tableWidth = element.getBoundingClientRect().width;

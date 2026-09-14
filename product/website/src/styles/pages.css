@@ -1,0 +1,4315 @@
+/* ---------------------------------------------------------------------------
+   pages — the compositions the product pages are built from.
+
+   Chrome for /inference/, /training/, /hardware/ and /model-detail/, in the
+   same sense layouts.css is chrome for /style/: these are page shapes, not
+   system primitives. Anything here that turns out to be needed by a third
+   page belongs in components.css instead.
+
+   Nothing here sets its own ground or block spacing — the Module does that,
+   so these sections stay reorderable and re-themeable.
+   --------------------------------------------------------------------------- */
+
+/* -- the centred fold ------------------------------------------------------
+   Centred because these pages open with a statement and one next step. The
+   reference page's hero is two columns for the opposite reason: it is about
+   the system, so it puts the argument beside the claim.                      */
+
+.gr-page-hero {
+  display: grid;
+  /* Each column takes what it needs and the pair sits left, rather than both
+     stretching to fill the band. Stretched, a short second line like "model
+     yours." left most of its column empty and the standfirst started a long
+     way from the title it belongs to — the gap between them was a consequence
+     of the grid, not a decision. */
+  /* Both tracks size to their content. The standfirst's measure is set on the
+     PARAGRAPH, in its own 20px ch — putting a ch width on the track instead
+     resolved it against the container's 15px and came out a quarter narrower,
+     which is why the copy suddenly wrapped to six lines. */
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  justify-content: start;
+  column-gap: calc(3 * var(--u));
+  /* Last baselines: the two blocks END together. They are different heights —
+     two lines of 54px against three or four of 20px — so something has to give,
+     and a shared floor reads as deliberate where a shared ceiling leaves the
+     shorter column hanging.
+
+     `last baseline`, not `baseline`: first-baseline alignment lines up the
+     bottom of a 54px line with the bottom of a 20px one, which drops the
+     standfirst 32px below the title's cap and looks like a mistake. */
+  align-items: last baseline;
+  text-align: left;
+}
+
+/* Picture left, the whole text block right. Two rows so the title and the
+   standfirst stack in one column while the picture spans both. */
+.gr-page-hero--beside {
+  grid-template-columns: minmax(0, max-content) minmax(0, max-content);
+  grid-template-areas:
+    "media claim"
+    "media say";
+  grid-template-rows: auto auto;
+  justify-content: center;
+  align-content: center;
+  column-gap: calc(5 * var(--u));
+  row-gap: calc(1.2 * var(--u));
+}
+
+.gr-page-hero--beside .gr-page-hero-media {
+  grid-area: media;
+  /* Its own column now, so it neither spans the band nor centres on it. */
+  margin: 0;
+  align-self: center;
+}
+
+.gr-page-hero--beside .gr-page-hero-claim {
+  grid-area: claim;
+  align-self: end;
+}
+
+.gr-page-hero--beside .gr-page-hero-say {
+  grid-area: say;
+}
+
+.gr-page-hero--beside .gr-page-hero-lede {
+  max-width: 36.5ch;
+}
+
+.gr-page-hero-media {
+  grid-column: 1 / -1;
+}
+
+.gr-page-hero-claim,
+.gr-page-hero-say {
+  min-width: 0;
+}
+
+/* No nudge. The two first lines already start on the same pixel row with the
+   boxes aligned at the top — checked from rendered pixels on all three pages
+   at four widths. An offset was fitted and applied first, on a measurement
+   that had searched from above the hero and found the EYEBROW in the left
+   column rather than the title; correcting a gap that was not there put the
+   standfirst 11px too high. */
+
+/* No measure: the breaks are authored, and a max-width would only re-wrap
+   lines that have already been placed. The cap is here for narrow screens,
+   where an authored line can still be too long for the viewport. */
+.gr-page-hero .gr-hero {
+  max-width: 24ch;
+}
+
+.gr-hero-line {
+  display: block;
+}
+
+/* Measured, not full width. A centred paragraph that runs the whole band has
+   no left edge for the eye to return to, and every line lands somewhere
+   different — and the narrower the measure, the more even the rag. */
+.gr-page-hero-lede {
+  max-width: 44ch;
+}
+
+.gr-page-hero-lede + .gr-page-hero-lede {
+  margin-block-start: var(--u);
+}
+
+.gr-page-hero .gr-button {
+  margin-block-start: calc(2 * var(--u));
+}
+
+@media (max-width: 60rem) {
+  .gr-page-hero {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: calc(1.2 * var(--u));
+  }
+
+  .gr-page-hero .gr-hero {
+    max-width: 22ch;
+  }
+
+}
+
+.gr-page-hero-media {
+  margin-block-end: var(--u);
+}
+
+/* Bounded by the VIEWPORT, not only by width. In a fold this image shares one
+   screen with a title, a standfirst and an action, so its height is what has
+   to give — sized by width alone it pushed the fold to 1030px on a 900px
+   screen and the action fell off the bottom. */
+.gr-page-hero-media img {
+  display: block;
+  max-width: min(100%, calc(18.54 * var(--u)));
+  max-height: 26dvh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  margin-inline: auto;
+}
+
+/* -- the chip stack -------------------------------------------------------
+   The hardware hero's package, opening downward into its layers.
+
+   The casing is the only child left in the flow, so the stack inherits the
+   media rules and the fold's height budget without restating either.
+   Everything behind it is absolutely placed and therefore costs no layout —
+   which is what lets the opened stack hang below the casing without pushing
+   anything down the page.                                                    */
+
+.gr-chipstack {
+  position: relative;
+  width: fit-content;
+  margin-inline: auto;
+  /* Room underneath for the layers to drop into. Reserved rather than
+     discovered: the layers are out of flow, so without this the fold would
+     size to the closed chip and the opened stack would overlap what follows.
+
+     MINUS 45px, and that subtraction is the alignment. The text column's
+     button sits on the grid's bottom line, which is set by this box — so the
+     splayed INK ending short of the button was not the drop being too small,
+     it was this reserve being too big: the deepest layer's artwork is shorter
+     than the casing's, so the ink always stops above the box however far it
+     drops. Deepening the drop moved both bottoms in lockstep and changed
+     nothing. And the trim runs at half strength — the fold recentres, giving
+     back ~half of every pixel trimmed — which is why 45px of trim closes the
+     ~25px optical gap. Measured to delta 1px at the wide tier. */
+  padding-block-end: calc(var(--chip-drop) * 5 - 45px);
+  --chip-drop: 3.1rem;
+}
+
+.gr-chipstack-frame {
+  position: relative;
+}
+
+.gr-chipstack-casing {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+/* 76.17% is not a chosen number: the layers were exported 2864px wide in the
+   same document as the 3760px casing, so it is the size they actually are
+   relative to it. */
+.gr-chipstack .gr-chipstack-layer {
+  position: absolute;
+  top: 49.7%;
+  left: 51.3%;
+  width: 76.17%;
+  max-width: none;
+  max-height: none;
+  height: auto;
+  translate: -50% -50%;
+  /* Each layer sits directly ON the one below it, so its shadow falls DOWN
+     onto the band of that layer the drop has just exposed — the seam is where
+     depth is actually read, and it is now the top edge of every band. */
+  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--color-dark-000) 34%, transparent));
+  transition: translate var(--chip-open) var(--ease-assemble);
+  transition-delay: calc((var(--layer) - 1) * 90ms);
+  --chip-open: 1100ms;
+  /* The chip arrives before it opens. Its entrance is --dur-showpiece long and
+     starts at --module-delay, so the splay waits out both and then a beat —
+     two things moving at once reads as one confused gesture, and the layers
+     separating is the part worth watching. */
+  --chip-wait: calc(var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms);
+}
+
+/* Opened: each layer steps down by its depth, so the deepest sits lowest and
+   every one shows an equal band of itself. */
+/* Deepest first, so the stack opens from the bottom out. */
+.gr-chipstack--open .gr-chipstack-layer {
+  translate: -50% calc(-50% + var(--layer) * var(--chip-drop));
+  transition-delay: calc(var(--chip-wait) + (5 - var(--layer)) * 130ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-chipstack .gr-chipstack-layer {
+    transition: none;
+  }
+}
+
+/* -- the showpiece ---------------------------------------------------------
+   A window onto something larger, not a scaled-down copy of it. The content
+   sits at full size and is cropped; the fade at the foot is what says the
+   crop is deliberate rather than an accident of height.                      */
+
+.gr-showpiece {
+  position: relative;
+  border-radius: var(--radius);
+  overflow: hidden;
+  /* Tall enough to show a real amount, short enough that the page moves on. */
+  height: calc(24 * var(--u));
+}
+
+/* Both tones take the theme's code surface — the difference is only whether
+   the content keeps the panel's padding or bleeds to its edges. */
+.gr-showpiece--code {
+  background: var(--color-code-surface);
+  color: var(--color-code-text);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-showpiece--media {
+  background: var(--color-overlay);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-showpiece-inner {
+  height: 100%;
+  padding: calc(1.5 * var(--u));
+  overflow: hidden;
+}
+
+/* The crop, stated. Masked rather than painted with a gradient overlay: an
+   overlay would need to know the panel's colour, and a mask works on any
+   ground — including a screenshot that runs to the panel's edge. */
+.gr-showpiece::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: calc(5 * var(--u));
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-substrate) 92%
+  );
+  pointer-events: none;
+}
+
+.gr-showpiece--code::after {
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-code-surface) 92%
+  );
+}
+
+/* A screenshot fills the panel edge to edge; code keeps the panel's padding. */
+.gr-showpiece--media .gr-showpiece-inner {
+  padding: 0;
+}
+
+.gr-showpiece--media img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* -- features --------------------------------------------------------------
+   Three short claims. The heading is a subheading rather than a title: these
+   support the fold's statement, they do not restate it.                      */
+
+.gr-features .gr-heading {
+  margin-block-end: calc(0.5 * var(--u));
+}
+
+/* -- cards -----------------------------------------------------------------
+   A row of destinations. The media well holds its shape before any image
+   arrives, exactly as the nav's cards do.                                    */
+
+.gr-cards {
+  align-items: end;
+}
+
+.gr-card {
+  display: grid;
+  gap: calc(0.4 * var(--u));
+  text-decoration: none;
+  color: var(--color-text);
+}
+
+.gr-card-media {
+  display: block;
+  aspect-ratio: 1 / 1;
+  background-color: color-mix(
+    in srgb,
+    var(--color-text) 7%,
+    var(--color-overlay)
+  );
+  background-size: cover;
+  background-position: center;
+  border-radius: var(--radius);
+  transition:
+    scale var(--dur-media) var(--ease-media),
+    translate var(--dur-media) var(--ease-media);
+}
+
+.gr-card-label {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  margin-block-start: calc(0.4 * var(--u));
+}
+
+/* The models row. Cards sit on a baseline and the hovered one rises out of
+   it — which is why .gr-cards is `align-items: end` rather than stretch: the
+   lift has to have something to lift FROM. */
+.gr-cards--lift .gr-card-media {
+  aspect-ratio: 3 / 4;
+}
+
+.gr-cards--lift .gr-card:hover .gr-card-media,
+.gr-cards--lift .gr-card:focus-visible .gr-card-media {
+  translate: 0 calc(-0.75 * var(--u));
+  scale: 1.04;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-card-media {
+    transition: none;
+  }
+
+  .gr-cards--lift .gr-card:hover .gr-card-media,
+  .gr-cards--lift .gr-card:focus-visible .gr-card-media {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+/* -- the model page --------------------------------------------------------
+   A model's identity, then everything there is to know about it.             */
+
+.gr-model-head {
+  display: grid;
+  grid-template-columns: calc(10 * var(--u)) 1fr;
+  gap: calc(1.5 * var(--u));
+  align-items: start;
+}
+
+.gr-model-mark {
+  aspect-ratio: 1 / 1;
+  background: var(--color-overlay);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+}
+
+.gr-model-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.4 * var(--u));
+  margin-block-start: var(--u);
+  padding: 0;
+  list-style: none;
+}
+
+/* The contents of a model page, as a list you read rather than a rail you
+   scan. At this size the list IS the page's structure — it is the first thing
+   a reader meets, so it is set at title size rather than as navigation. */
+.gr-model-contents {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: calc(0.4 * var(--u));
+}
+
+.gr-model-contents a {
+  font-family: var(--font-title);
+  font-size: var(--text-section);
+  font-weight: var(--weight-heading);
+  line-height: 1.25;
+  letter-spacing: var(--tracking-heading);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-model-contents a:hover {
+  color: var(--color-interactive);
+}
+
+@media (max-width: 620px) {
+  .gr-model-head {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* -- placeholders ----------------------------------------------------------
+   Standing in for artwork that does not exist yet: the console screenshot,
+   the technical diagram, each model's mark.
+
+   Deliberately labelled rather than blank. An empty box reads as a layout
+   bug, and a grey rectangle nobody can name survives into production; one
+   that says what belongs there is a to-do that is visible from the page.     */
+
+.gr-placeholder {
+  display: grid;
+  place-items: center;
+  min-height: calc(12 * var(--u));
+  height: 100%;
+  background: color-mix(in srgb, var(--color-text) 5%, var(--color-overlay));
+  border: 1px dashed var(--color-rule);
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--u);
+}
+
+.gr-placeholder--tall {
+  min-height: calc(18 * var(--u));
+}
+
+/* Code inside a showpiece: the panel owns the surface and the crop, so the
+   block brings only its highlighting and its copy control. */
+.gr-showpiece .gr-codewrap {
+  margin-block-start: var(--u);
+}
+
+/* The panel owns the surface, the crop AND the elevation. A block inside it
+   keeps only its highlighting — left with its own shadow it drew a second
+   lifted rectangle inside the first. */
+.gr-showpiece .gr-codeblock {
+  background: none;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+/* -- the fold --------------------------------------------------------------
+   One viewport holding the claim and its evidence. The showpiece is cropped
+   by the fold, and the fade at the foot carries the crop into the next
+   section — so the two folds read as one continuous surface rather than as a
+   panel that stopped.                                                        */
+
+.gr-fold {
+  position: relative;
+  min-height: 100dvh;
+  /* Hero takes what it needs; the media takes the rest and is clipped. */
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+/* Clears the bar. The nav floats over the page rather than occupying space,
+   so a fold that starts at the top of the viewport starts underneath it.
+
+   The ROW gap tightens here too: a fold with a chip, an eyebrow, a title, a
+   standfirst and an action shares one screen, and at the hero's usual rhythm
+   they came to 928px on a 900px viewport. Row only — the shorthand used to be
+   `gap`, which also overwrote the hero's column gap and left 18px between the
+   two columns instead of 72. */
+.gr-fold .gr-page-hero {
+  padding-block: calc(var(--u) + var(--nav-h) + 4 * var(--u))
+    calc(2 * var(--u));
+  row-gap: calc(0.75 * var(--u));
+}
+
+/* A fold with nothing under the hero centres it in the viewport instead of
+   hanging it from the top. The two-row grid exists for folds that carry a
+   showpiece — the second row takes the rest of the screen and is cropped. With
+   no showpiece that row still swallowed the leftover height, which is what put
+   the hardware hero high with a screen's worth of nothing below it.
+
+   The top padding still clears the floating nav; the rest is symmetric, so
+   what centres is the content rather than the padded box. */
+.gr-fold:not(:has(.gr-fold-media)) {
+  grid-template-rows: auto;
+  align-content: center;
+}
+
+.gr-fold:not(:has(.gr-fold-media)) .gr-page-hero {
+  padding-block: calc(var(--nav-h) + var(--u));
+}
+
+/* Tightened for the fold, where the hero shares one screen with whatever it
+   introduces — but not so tight that the action reads as part of the
+   paragraph above it. Was 0.5u, which put 12px between the two. */
+.gr-fold .gr-page-hero .gr-button {
+  margin-block-start: calc(1.6 * var(--u));
+}
+
+/* min-height: 0 lets a grid row be SMALLER than its content, which is what
+   allows the showpiece to be cropped instead of stretching the fold past a
+   viewport. Without it the row floors at the content's height and the fade
+   ends up somewhere down the page. */
+.gr-fold-media {
+  min-height: 0;
+}
+
+/* Whatever the fold holds fills it. This targeted .gr-showpiece only, so the
+   tier panel — which is not one — collapsed to its natural height and left the
+   fold two-thirds empty. */
+.gr-fold-media > * {
+  height: 100%;
+}
+
+/* The showpiece gives up its own fade inside a fold — the fold's runs the
+   full width and to the page's ground, and two would compound into a band. */
+.gr-fold-media .gr-showpiece::after {
+  display: none;
+}
+
+/* Full-bleed, so the transition is the viewport ending rather than a panel
+   edge. Sits above the media and below nothing — the fold has no interactive
+   content this low. */
+.gr-fold::after {
+  content: "";
+  position: absolute;
+  inset-inline: calc(50% - 50vw);
+  bottom: 0;
+  height: calc(7 * var(--u));
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    var(--color-substrate) 88%
+  );
+  pointer-events: none;
+}
+
+/* A module holding a fold contributes no block spacing of its own — the fold
+   IS the viewport, and the module's usual 7u would push it past one. */
+.gr-module--fold {
+  padding-block: 0;
+}
+
+/* Centred under the row it belongs to, with enough space that it reads as the
+   row's conclusion rather than as a fourth column. */
+.gr-features-action {
+  display: flex;
+  justify-content: center;
+  margin-block-start: calc(2 * var(--u));
+}
+
+/* 5 + 6. The section after a fold carries neither a divider nor its usual top
+   padding. The fold already ends in a fade to this exact ground — a rule
+   drawn across that fade contradicts it, and the space is already there. */
+.gr-module--fold + .gr-module::before {
+  display: none;
+}
+
+.gr-module--fold + .gr-module {
+  padding-block-start: calc(2 * var(--u));
+}
+
+/* -- the marquee -----------------------------------------------------------
+   A row that travels. Full-bleed, because a row that stops at the band's edge
+   is a row that has stopped — the point is that it continues past the page.  */
+
+.gr-marquee {
+  width: 100vw;
+  margin-inline: calc(50% - 50vw);
+  overflow: hidden;
+  /* The edges fade to nothing rather than to a colour. A mask needs to know
+     nothing about the ground behind it, so this holds on every theme and over
+     the wave field; two gradient overlays would have to be repainted with the
+     ground each time. */
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 12%,
+    #000 88%,
+    transparent
+  );
+}
+
+.gr-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: gr-marquee-run var(--dur-marquee) linear infinite;
+}
+
+/* Exactly half the track, which is one full copy of the run — so the second
+   copy is where the first was at the moment the loop restarts and there is no
+   seam to see. */
+@keyframes gr-marquee-run {
+  to {
+    translate: -50% 0;
+  }
+}
+
+.gr-marquee-run {
+  display: flex;
+  gap: var(--u);
+  padding-inline-end: var(--u);
+}
+
+/* A link that is moving is a link you have to chase. */
+.gr-marquee:hover .gr-marquee-track,
+.gr-marquee:focus-within .gr-marquee-track {
+  animation-play-state: paused;
+}
+
+.gr-marquee-card {
+  width: calc(9 * var(--u));
+  flex: none;
+}
+
+.gr-marquee-card .gr-card-media {
+  aspect-ratio: 3 / 4;
+  transition:
+    scale var(--dur-media) var(--ease-media),
+    translate var(--dur-media) var(--ease-media);
+}
+
+.gr-marquee-card:hover .gr-card-media,
+.gr-marquee-card:focus-visible .gr-card-media {
+  translate: 0 calc(-0.5 * var(--u));
+  scale: 1.04;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-marquee-track {
+    animation: none;
+  }
+
+  .gr-marquee-card .gr-card-media {
+    transition: none;
+  }
+
+  .gr-marquee-card:hover .gr-card-media {
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+/* -- the tier explorer -----------------------------------------------------
+   A sample and the tier it is set to, as one control on one surface.
+
+   ONE surface, split by a rule — not two panels side by side. The halves do
+   different jobs but they are the same object, and a second fill would say
+   they were two things that happened to be adjacent.                          */
+
+.gr-tier {
+  display: grid;
+  /* The panel is 18.5u — 444px — which is 72px of inset a side plus the same
+     300px measure the content had when the panel was narrower. The extra
+     width is entirely padding; widening the column without matching the
+     padding would lengthen the lines instead of adding air.
+
+     The FLOOR is what sizes this, not the percentage: at every width the
+     content pane is wide enough to matter, 18.5u exceeds 37%, so the minmax
+     resolves to its minimum. The percentage is the ceiling for very wide
+     viewports. */
+  grid-template-columns: 1fr minmax(calc(18.5 * var(--u)), 37%);
+  background: var(--color-code-surface);
+  border-radius: var(--radius);
+  /* The same shadow a model tile carries when it is lifted — the two are the
+     page's raised objects and should sit at one height, even though the tile
+     only reaches it on hover. */
+  box-shadow: var(--shadow-lift);
+  overflow: hidden;
+}
+
+.gr-tier-code {
+  min-width: 0;
+  /* min-height: 0 so the column can be shorter than its code and crop, rather
+     than stretching the panel past the fold. */
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  overflow: hidden;
+}
+
+/* The SDK row, ruled off below. The rule is what separates the two registers
+   of control: SDK above it, language below it and belonging to the code. */
+.gr-tier-code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--u);
+  padding: calc(1.25 * var(--u));
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-tier-code > .gr-tabs {
+  margin: calc(1.25 * var(--u)) calc(1.25 * var(--u)) 0;
+}
+
+.gr-tier-code .gr-codewrap {
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--u) calc(1.25 * var(--u));
+}
+
+.gr-tier .gr-codeblock {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+
+/* A rule on its leading edge and nothing else — no fill. The two halves are
+   one surface. */
+/* Its own ground — light-000, the brighter of the two halves, so the control
+   panel reads as the lit side of the object and the code as the recessed one.
+
+   Spacing is set per element rather than by one gap: each label belongs to
+   the thing BELOW it, so a uniform rhythm would sit them equidistant between
+   two statements and leave the reader to guess which they introduce. */
+.gr-tier-panel {
+  background: var(--color-panel);
+  border-left: 1px solid var(--color-rule);
+  padding: calc(1.75 * var(--u)) calc(3 * var(--u));
+  display: flex;
+  flex-direction: column;
+}
+
+/* 24px / 120% / -4%, and measured so it breaks after "your". */
+.gr-tier-panel .gr-heading {
+  font-size: 24px;
+  font-weight: var(--weight-heading);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  max-width: 18ch;
+}
+
+/* Every label in this panel is the same quiet grey — they are scaffolding for
+   the two statements, not statements themselves.
+
+   The muted ROLE, not a fixed grey: dark-400 is legible on a white panel and
+   close to invisible on a dark one, and the statements beside it were already
+   following the theme. */
+.gr-tier-legend,
+.gr-tier-stop {
+  color: var(--color-text-muted);
+}
+
+/* Far from what precedes it, close to what follows: an eyebrow attaches to
+   its statement. Equidistant, it read as a caption on the thing above.
+
+   Scoped to the panel because the unscoped rule lost — a paragraph margin
+   from later in the bundle was overriding it, which is why "Select mode" sat
+   8px under the heading and flush against the slider labels. */
+.gr-tier-panel .gr-tier-legend {
+  margin-block-start: calc(2.75 * var(--u));
+  margin-block-end: 0;
+}
+
+/* The label sits directly on its statement. Measured rather than guessed: at
+   margin-end 0 the two were already touching, so the earlier 25px gap was the
+   label's own trailing leading, not a margin — and a negative pull on top of
+   that overlapped them by 8px. */
+.gr-tier-panel .gr-tier-note--strong {
+  margin-block-start: calc(0.35 * var(--u));
+}
+
+/* The heading and the paragraphs, likewise reset before they are spaced. */
+.gr-tier-panel > * {
+  margin-block: 0;
+}
+
+/* Aligned on the LAST baseline, not the first.
+
+   `baseline` matches the first line of each item, so a note that wraps to
+   three lines hangs below the figure and the pair stops reading as one
+   statement. `last baseline` matches the note's final line to the figure's
+   baseline, which is what "sitting on the same line" means when one side is
+   a paragraph. */
+.gr-tier-claim {
+  display: flex;
+  align-items: last baseline;
+  gap: calc(0.6 * var(--u));
+}
+
+.gr-tier-claim-figure {
+  font-family: var(--font-title);
+  font-size: calc(3 * var(--u));
+  font-weight: var(--weight-heading);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+/* The panel's two statements — the claim's unit and the description. Title
+   face at 18px, because these are the sentences the reader is meant to take
+   away; everything else in the panel is a label. */
+.gr-tier-note {
+  font-family: var(--font-title);
+  font-size: 17px;
+  font-weight: var(--weight-heading);
+  line-height: 1.2;
+  letter-spacing: -0.04em;
+  color: var(--color-text-muted);
+  max-width: 22ch;
+}
+
+.gr-tier-note--strong {
+  color: var(--color-text);
+}
+
+/* A range, not three buttons: the tiers are points on one axis — faster,
+   default, flex — and a slider says so. It also brings keyboard support and a
+   drag gesture that three buttons would each need building. */
+/* A slim line. The thumb marks the position; the track only has to say there
+   is one axis for it to sit on, and at 6px it read as a progress bar. */
+.gr-tier-slider {
+  position: relative;
+  margin-block-start: var(--u);
+  --thumb: calc(0.55 * var(--u));
+}
+
+.gr-tier-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 2px;
+  margin: 0;
+  background: var(--color-rule);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+}
+
+/* The native thumb is the hit target and nothing else — it carries the drag
+   and the keyboard, and the visible thumb below does the moving. */
+.gr-tier-range::-webkit-slider-thumb {
+  appearance: none;
+  width: var(--thumb);
+  height: var(--thumb);
+  opacity: 0;
+  cursor: grab;
+}
+
+.gr-tier-range::-moz-range-thumb {
+  width: var(--thumb);
+  height: var(--thumb);
+  opacity: 0;
+  border: none;
+  cursor: grab;
+}
+
+.gr-tier-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: var(--radius-full);
+  background: var(--color-taupe-500);
+  pointer-events: none;
+  /* Positioned with `left`, not `translate`: a percentage in translate
+     resolves against the ELEMENT's own box, so `100%` there would be the
+     thumb's width rather than the track's. `left` resolves against the
+     containing block, which is the track.
+
+     Inset by the thumb's own width so it lands ON the end stops instead of
+     overhanging them. */
+  left: calc(var(--pos, 0) * (100% - var(--thumb)));
+  translate: 0 -50%;
+  transition: left var(--dur-spring) var(--ease-spring);
+}
+
+.gr-tier-range:focus-visible + .gr-tier-thumb {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-tier-thumb {
+    transition: none;
+  }
+}
+
+/* The stops are also the labels, spread so each sits under the position it
+   selects. */
+.gr-tier-stops {
+  display: flex;
+  justify-content: space-between;
+  margin-block-start: calc(0.5 * var(--u));
+}
+
+.gr-tier-stop {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-tier-stop[aria-pressed="true"],
+.gr-tier-stop:hover {
+  color: var(--color-text);
+}
+
+@media (max-width: 900px) {
+  .gr-tier {
+    grid-template-columns: 1fr;
+  }
+
+  .gr-tier-panel {
+    border-left: none;
+    border-top: 1px solid var(--color-rule);
+  }
+}
+
+/* -- the story reel --------------------------------------------------------
+   One chapter at a time, advancing on its own.                                */
+
+/* The whole reel is narrowed, not just its tile: the caption belongs to the
+   frame above it, and at the column's full measure it ran past the tile's
+   edge and stopped reading as part of the same thing. One width, so the
+   stage, the progress bar and the copy share an edge by construction. */
+.gr-reel {
+  width: 85%;
+}
+
+/* The same white ground and the same resting height as a model tile, so the
+   two columns read as one family of objects sitting on the page. It stays
+   there: the reel plays on its own and is not a link, so there is nothing for
+   a lift to promise. */
+.gr-reel-stage {
+  aspect-ratio: 3 / 4;
+  background: var(--color-light-000);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+  overflow: hidden;
+  /* The ground for the sound button, which sits over the picture. */
+  position: relative;
+}
+
+/* Sound, over the bottom corner of the picture.
+
+   On the footage rather than beside it: it acts on the film, and a control
+   parked under the stage would read as belonging to the caption. It is the
+   only thing here a reader can do to the video, so it stays visible rather
+   than appearing on hover — a control you have to discover is one nobody
+   finds on a touchscreen, where there is no hover to discover it with.
+
+   Its own translucent ground, because it sits on moving footage: the frame
+   behind it changes constantly, and a mark painted straight onto that would
+   disappear whenever a light frame came round. */
+.gr-reel-sound {
+  position: absolute;
+  inset-block-end: var(--u);
+  inset-inline-end: var(--u);
+  display: grid;
+  place-items: center;
+  width: calc(2.25 * var(--u));
+  height: calc(2.25 * var(--u));
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-ink-000) 55%, transparent);
+  backdrop-filter: blur(8px);
+  /* Sized here rather than inherited: the icon is drawn in em, and the reel's
+     surrounding type is not what should decide how big this mark is. */
+  font-size: var(--text-ui);
+  color: var(--color-light-000);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    scale var(--dur-fast) var(--ease-response);
+}
+
+.gr-reel-sound:hover {
+  background: color-mix(in srgb, var(--color-ink-000) 75%, transparent);
+  scale: 1.06;
+}
+
+.gr-reel-sound .gr-icon {
+  width: 1em;
+  height: 1em;
+}
+
+/* The stage owns the ground, so the standing-in placeholder brings only its
+   label — left with its own fill it painted grey over the white and the tile
+   did not match the model cards beside it. */
+.gr-reel-stage .gr-placeholder {
+  background: none;
+  border: none;
+}
+
+.gr-reel-stage video,
+.gr-reel-stage .gr-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: none;
+  min-height: 0;
+}
+
+/* Cropped from the TOP of the frame rather than its middle.
+
+   The footage is shot 9:16 and the stage is 3:4, so cover discards about an
+   eighth of the height at each end — and a piece to camera puts the head in
+   the upper third, which is exactly what a centred crop eats. Anchoring high
+   keeps the face and still reaches past the hands, which are half of what
+   someone talking is doing. */
+.gr-reel-stage video {
+  object-position: 50% 15%;
+}
+
+/* One segment per chapter — the convention people already know — and each is
+   a button, so the reel can be read in any order rather than waited through. */
+.gr-reel-progress {
+  display: flex;
+  gap: calc(0.25 * var(--u));
+  margin-block-start: calc(0.5 * var(--u));
+}
+
+.gr-reel-segment {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  padding: 0;
+  border: none;
+  background: var(--color-rule);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.gr-reel-segment::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-text);
+  transform-origin: left;
+  scale: var(--fill, 0) 1;
+}
+
+.gr-reel-caption {
+  margin-block-start: var(--u);
+}
+
+/* A step under the section subheading: the reel's chapter title names one
+   frame of an argument, not a section of the page. */
+.gr-reel-caption .gr-heading {
+  font-size: 20px;
+  letter-spacing: -0.04em;
+  margin-block-end: calc(0.4 * var(--u));
+}
+
+/* Both halves of the pair lead with a subheading — the same role the feature
+   titles use — so the two columns read as one section, and as a peer of the
+   row above rather than as a bigger thing under it. */
+/* Scoped, like the tier panel's labels: an unscoped class here loses to a
+   heading margin contributed later in the bundle, which left 8px where 40 was
+   asked for. */
+.gr-pair .gr-pair-title {
+  margin-block: 0 calc(1.7 * var(--u));
+}
+
+/* Restores the gap under an eyebrow.
+ *
+ * The rule above sets margin-block: 0 at the top, which ties with
+ * `.gr-root .gr-label + *` on specificity and wins on order — so the system's
+ * --space-label was being zeroed out and the label sat on the heading's
+ * cap-line. Three classes here, so this settles it rather than relying on
+ * which file loads last.
+ *
+ * LESS than --space-label, not more. The standard gap is measured against a
+ * line of body copy; under an eyebrow this small, above a heading this large,
+ * the same 20px opened a hole between the two. The label belongs to the
+ * heading, so it sits close to it. */
+.gr-pair .gr-label + .gr-pair-title {
+  margin-block-start: calc(0.7 * var(--space-label));
+}
+
+/* -- the reel and models pair ----------------------------------------------
+   Uneven on purpose: the reel is one portrait, the grid is six cards three
+   across. Equal columns made the cards small enough to be decoration, which
+   is wrong for the one element on the page that leads to a model.            */
+
+.gr-pair {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: calc(3 * var(--u));
+  /* Stretch, so the two halves end level. The grid then FILLS its column and
+     the tiles take whatever height that leaves — which is why they carry no
+     aspect ratio of their own: a fixed ratio would decide the height and the
+     columns would only match by coincidence. */
+  align-items: stretch;
+}
+
+.gr-pair > * {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .gr-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Shorter than a portrait card and white, because each holds a LOGO rather
+   than an image: a tall well would leave a small mark floating in a lot of
+   empty ground, and a tint would say something about the model that is not
+   true. */
+.gr-pair .gr-cards {
+  gap: 40px;
+  flex: 1;
+  grid-auto-rows: 1fr;
+  min-height: 0;
+}
+
+.gr-pair .gr-card {
+  height: 100%;
+  min-height: 0;
+}
+
+/* The model tile's ground follows the theme.
+
+   It was fixed white while the name set on it takes --color-text, so every
+   dark theme wrote white on white and the tile lost its label. The base
+   .gr-card-media was already themed; this override reintroduced the constant
+   purely to make the tile brighter. */
+.gr-pair .gr-cards .gr-card-media {
+  aspect-ratio: auto;
+  height: 100%;
+  background-color: var(--color-panel);
+  box-shadow: var(--shadow-raise);
+  transition: box-shadow var(--dur-spring) var(--ease-spring);
+}
+
+/* The whole card moves, not just its well: the name is set ON the tile, so
+   translating the media alone would leave the label behind.
+
+   A couple of degrees of rotation with the lift — enough that the tile reads
+   as having been picked up rather than nudged, and not so much that it reads
+   as a deliberate angle. Turned counter-clockwise because the travel is up and
+   to the left: the rotation follows the direction of the movement instead of
+   fighting it.
+
+   One `transform` rather than the individual translate/rotate properties:
+   those apply in a fixed order that rotates last, about the page's axis after
+   the move, which swings the tile further than the angle says. */
+.gr-pair .gr-card {
+  transition:
+    transform var(--dur-lift) var(--ease-lift),
+    box-shadow var(--dur-lift) var(--ease-lift);
+}
+
+.gr-pair .gr-card:hover,
+.gr-pair .gr-card:focus-visible {
+  transform: translate(-0.5rem, -1.25rem) rotate(-2deg);
+  /* In front of its neighbours while raised — without this the next tile in
+     source order paints over the lifted corner. */
+  position: relative;
+  z-index: 1;
+}
+
+/* The shadow travels further than the tile does. Height is read from the gap
+   between an object and its shadow far more than from the object's own
+   position, so a lift whose shadow stays put reads as a slide. */
+.gr-pair .gr-card:hover .gr-card-media,
+.gr-pair .gr-card:focus-visible .gr-card-media {
+  box-shadow: var(--shadow-lift);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-pair .gr-card {
+    transition: none;
+  }
+
+  .gr-pair .gr-card:hover,
+  .gr-pair .gr-card:focus-visible {
+    transform: none;
+  }
+}
+
+/* -- overlaid labels -------------------------------------------------------
+   The name sits ON the card rather than under it. That is not only a
+   composition choice: a label under the tile adds a row of type to the
+   column's height, and these tiles have to fill a column whose height is set
+   by the half beside them.                                                   */
+
+.gr-cards--overlay .gr-card {
+  position: relative;
+  display: block;
+}
+
+.gr-cards--overlay .gr-card-label {
+  position: absolute;
+  inset-inline-start: var(--u);
+  inset-block-end: var(--u);
+  margin: 0;
+}
+
+/* -- the fold arrives in order ---------------------------------------------
+   Title, then standfirst, then the thing they are about.
+
+   The module's own content fade is switched off here and the pieces are
+   animated individually: one fade over the whole fold makes the claim and its
+   evidence arrive together, which reads as a screenshot appearing rather than
+   as a page being made. The title already has its own word-by-word entrance;
+   these two follow it.
+
+   Delays are offsets from --module-delay, the beat the module would have
+   arrived on, so the fold stays in step with the opening no matter how the
+   entrance is retimed.                                                       */
+
+.gr-module--fold .gr-module-inner {
+  animation: none;
+}
+
+.gr-page-hero-lede {
+  animation: gr-fold-piece-in var(--entrance-piece) var(--ease-response)
+    calc(var(--module-delay) + 160ms) both;
+}
+
+/* The showpiece arrives in three dimensions.
+
+   It tilts up from its own bottom edge rather than fading in place: this is
+   the one object on the page that IS the product, and a flat fade gives it
+   the same weight as a paragraph. Hinged at the foot, so it swings up to meet
+   the reader instead of sliding — the movement reads as something being set
+   down rather than something appearing.
+
+   Perspective is on the element rather than the parent because it is the only
+   thing here in 3D; a perspective on .gr-fold would put the whole fold in one
+   space and tilt the type with it.
+
+   Longer than the other pieces, on the assemble easing: a big object should
+   take longer to settle than a line of text, and its settle should be the one
+   the eye is left watching. */
+.gr-fold-media {
+  transform-origin: 50% 100%;
+  animation: gr-showpiece-in var(--dur-showpiece) var(--ease-assemble)
+    calc(var(--module-delay) + 320ms) both;
+}
+
+@keyframes gr-showpiece-in {
+  from {
+    opacity: 0;
+    transform: perspective(1400px) rotateX(16deg) translateY(6%) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1400px) rotateX(0deg) translateY(0) scale(1);
+  }
+}
+
+/* The chip is a physical object, so it arrives like one: tilted back, then
+   laid flat to face the reader.
+
+   Hinged at its own centre rather than an edge — a component this size reads
+   as being turned toward you, where an edge hinge would read as a door. It
+   leads the fold: this is the first thing on the page and everything after it
+   is a caption on it.
+
+   It had no entrance at all before this. The fold switches off the module's
+   content fade so its pieces can be sequenced individually, and the media was
+   the one piece never given its own — so it sat at full opacity from the
+   first frame while the type faded in around it. */
+.gr-page-hero-media {
+  transform-origin: 50% 55%;
+  animation: gr-chip-in var(--dur-showpiece) var(--ease-assemble)
+    var(--module-delay) both;
+}
+
+@keyframes gr-chip-in {
+  from {
+    opacity: 0;
+    transform: perspective(1200px) rotateX(20deg) scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: perspective(1200px) rotateX(0deg) scale(1);
+  }
+}
+
+/* The eyebrow and the action bracket the pair: the eyebrow leads the title,
+   the action follows everything. */
+.gr-page-hero .gr-label {
+  animation: gr-fold-piece-in var(--entrance-piece) var(--ease-response)
+    calc(var(--module-delay) + 200ms) both;
+}
+
+.gr-page-hero .gr-button {
+  animation: gr-fold-piece-in var(--entrance-piece) var(--ease-response)
+    calc(var(--module-delay) + 420ms) both;
+}
+
+/* Named for this file, not `gr-piece-in` — that name already belongs to the
+   split-text entrance in substrate.css, and defining it again here quietly
+   replaced the system's blur-and-rise with this plainer fade wherever it was
+   used. A keyframe name is global; there is no scoping to hide behind. */
+@keyframes gr-fold-piece-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(0.6 * var(--u));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-page-hero-lede,
+  .gr-fold-media,
+  .gr-page-hero-media,
+  .gr-page-hero .gr-label,
+  .gr-page-hero .gr-button {
+    animation: none;
+  }
+
+  .gr-fold-media,
+  .gr-page-hero-media {
+    transform: none;
+  }
+}
+
+/* -- the library -----------------------------------------------------------
+   A magazine index. Every piece is the same card — well, title, standfirst,
+   excerpt, byline — and the layout is the RHYTHM of those cards: a wide-and-
+   narrow pair, an even pair, a row of three. Promoting a piece changes the
+   column it sits in, never what the card contains.                           */
+
+/* Clears the floating nav and then some. The nav is absolutely positioned, so
+   it occupies no space and the first module would otherwise start 12px under
+   it; the frame leaves 80px of air between the bar and the first line. */
+.gr-module--top {
+  padding-block-start: calc(var(--u) + var(--nav-h) + 3.33 * var(--u));
+}
+
+/* The frame's masthead: label, then the page's name at twice the section
+   head — the only type on the index set that large. */
+.gr-masthead {
+  margin-block-end: calc(2.33 * var(--u));
+}
+
+/* Controls on the title's own line, sitting on its baseline rather than
+   floating level with its cap — the row reads as one line of the page. */
+.gr-masthead-line {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--u);
+  flex-wrap: wrap;
+}
+
+.gr-library-controls {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  padding-block-end: calc(0.4 * var(--u));
+}
+
+/* Square, like the reading page's tags: both are labels for a kind of piece,
+   and the shape is what says so. */
+/* Rounded full. These are the one control on the page that is a switch rather
+   than a surface — every card, well and tag here is a squared block, so a pill
+   is unmistakably not one of them. */
+.gr-library-filter,
+.gr-library-view {
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: var(--color-panel);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--text-note);
+  line-height: 1;
+  padding: 0.55em 0.9em;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+/* Hover only where hovering exists.
+ *
+ * A touchscreen has no pointer to leave, so a tapped control keeps its hover
+ * fill until something else is tapped — which on a filter reads as a second,
+ * half-selected state sitting beside the real one. `hover: hover` is false on
+ * touch, so the rule simply does not apply there. */
+@media (hover: hover) {
+  .gr-library-filter:hover,
+  .gr-library-view:hover {
+    background: color-mix(in srgb, var(--color-text) 8%, var(--color-panel));
+  }
+}
+
+/* Pressed is a FILL, not a tint: these sit on a page whose every other
+   surface is a pale block, and a filter that only shades slightly reads as
+   another card rather than as a state. */
+.gr-library-filter[aria-pressed="true"] {
+  background: var(--color-interactive-fill);
+  color: var(--color-inverse);
+}
+
+/* Circular: an icon in a pill would be a pill with nothing in it. */
+.gr-library-view {
+  padding: 0.55em;
+  aspect-ratio: 1;
+}
+
+.gr-icon {
+  width: 1.1em;
+  height: 1.1em;
+  display: block;
+}
+
+/* The view switcher's mark, pinned to the same box as the section button's.
+ *
+ * .gr-icon is sized in em, so the SAME stroke-width renders at different
+ * weights depending on the type of the control it sits in: the switcher's
+ * button is set at 18px and the section button's at 15px, which put 1.86px of
+ * stroke beside 1.55px and made these two icons look like different families.
+ *
+ * Fixed here rather than by giving these icons a thinner stroke — one stroke
+ * value across the system is worth more than one icon's convenience, and a
+ * second value is how a set starts to drift. */
+.gr-library-view .gr-icon {
+  width: calc(1.1 * var(--text-ui));
+  height: calc(1.1 * var(--text-ui));
+  /* Lighter than the system's 1.5, because this icon sits IN A ROW WITH TYPE
+     rather than alone in a button. The filters beside it are 18px at regular
+     weight, whose stems are about 1.2px, and a 1.55px mark next to them reads
+     as bold. Set in CSS rather than on the component so the icon keeps one
+     definition and only this context lightens it — stroke-width is a CSS
+     property, and a rule here beats the presentation attribute. */
+  stroke-width: 1.2;
+}
+
+/* -- the list view --------------------------------------------------------- */
+
+.gr-storylist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-storylist li {
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.gr-storylist-row {
+  display: grid;
+  grid-template-columns: minmax(0, 10em) minmax(0, 1fr);
+  gap: var(--u);
+  align-items: baseline;
+  padding-block: calc(0.9 * var(--u));
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--dur-fast) var(--ease-response);
+}
+
+/* The same light the cards answer with, in the one place a travelling block
+   would have nothing to travel between — the rows are all one width. */
+.gr-storylist-row:hover,
+.gr-storylist-row:focus-visible {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+.gr-storylist-meta {
+  font-size: var(--text-note);
+}
+
+.gr-storylist-title {
+  display: block;
+  font-family: var(--font-title);
+  font-size: var(--text-card);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+}
+
+.gr-storylist-lede {
+  display: block;
+  margin-block-start: 0.2em;
+  font-size: var(--text-note);
+}
+
+@media (max-width: 40rem) {
+  .gr-storylist-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(0.25 * var(--u));
+  }
+
+  /* The title takes the card view's size.
+   *
+   * --text-card is a scanning size: it earns itself on a desktop, where the
+   * row is three columns and the date and the kind sit beside the title, so a
+   * reader runs down one axis comparing many rows at once. Stacked into one
+   * column that density is gone — the row is just a title with its metadata
+   * above and below it, which is the card without the well. So it is set like
+   * a card, from the same token .gr-story-title uses, and the two views stop
+   * disagreeing about how big a piece's name is. */
+  .gr-storylist-title {
+    font-size: var(--text-heading);
+    line-height: 1.2;
+  }
+}
+
+.gr-root .gr-masthead-title {
+  margin-block: calc(0.37 * var(--u)) 0;
+  font-family: var(--font-title);
+  font-size: calc(2 * var(--text-heading));
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.05;
+}
+
+/* The careers masthead is the page — there is no lead story under it and no
+   grid competing with it, so the title takes the room the Library's cannot.
+   Fluid rather than fixed: at 104px a fixed size would not survive a narrow
+   window, and this is the one line on the page that must not wrap badly. */
+.gr-root .gr-masthead-title--display {
+  font-size: var(--text-masthead);
+  line-height: 0.95;
+}
+
+.gr-story-row {
+  position: relative;
+  display: grid;
+  /* One gutter for every row shape. A pair used to sit at 32px while a row of
+     three opened to 96, so the same grid changed rhythm depending on how many
+     cards a row happened to hold. --card-gutter is the leftover once three
+     narrow cards are placed, so using it here makes the two agree by
+     construction rather than by a matched pair of numbers. */
+  column-gap: var(--card-gutter);
+  row-gap: calc(1.33 * var(--u));
+
+  /* ONE narrow column width, shared by every row that has one. A row set in
+     `fr` sizes its narrow card against that row's own wide card, so the same
+     "narrow" card came out 373px beside a wide one and 320px in a three-up.
+     A percentage of the row is the same measure in both, and still scales. */
+  --card-narrow: 27.78%;
+  /* What is left over once three narrow cards are placed — the gutter the
+     three-up row opens up. */
+  --card-gutter: 8.33%;
+}
+
+/* Rows are separated from each other, not from the module — so the first row
+   under a heading sits where the module puts it. */
+/* The same measure vertically as the gutter between narrow cards, so the grid
+   reads as one field rather than as rows that happen to sit near each other.
+
+   A percentage block margin resolves against the container's WIDTH, not its
+   height — usually a trap, exactly right here: it makes this margin the same
+   number of pixels as the horizontal gutter at every width. */
+.gr-story-row + .gr-story-row {
+  margin-block-start: var(--card-gutter);
+}
+
+/* Three across gets a wider gutter than two, so the cards themselves come in
+   rather than the row pulling back from the page. Same measure, slimmer
+   objects — a row of three at the pair's gutter reads as one solid band. */
+/* Fixed columns with the slack pushed into the gutters, so three narrow cards
+   are exactly as wide as one narrow card beside a wide one. No column-gap of
+   its own — the leftover space IS the gutter, which is what keeps the two in
+   step at every width. */
+.gr-story-row[data-columns="3"] {
+  justify-content: space-between;
+  column-gap: 0;
+  align-items: start;
+}
+
+.gr-story {
+  position: relative;
+}
+
+.gr-story-link {
+  display: grid;
+  /* 32px, the frame's one gutter — between well and text, and between cards. */
+  gap: calc(1.33 * var(--u));
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Height is fixed rather than an aspect ratio because the cards in a row are
+   DIFFERENT widths — a ratio would make the wide card taller than the narrow
+   one beside it and break the line the titles sit on. */
+.gr-story-well {
+  display: block;
+  /* 360px in the Figma frame. Every card's well is that height whatever its
+     column is wide, which is what keeps the titles on one line across a row. */
+  height: calc(15 * var(--u));
+  background: var(--color-light-000);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+}
+
+/* -- library cover system -------------------------------------------------
+   Generated by the same wafer engine as /artwork-generator/. There is no
+   source plate to enlarge and soften: the canvas gets a fresh device-pixel
+   backing store for the exact well it sits in. */
+.gr-story-cover {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.gr-wafer-artwork {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-wafer-artwork canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.gr-story-text {
+  display: block;
+  min-width: 0;
+}
+
+.gr-story-title {
+  display: block;
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.2;
+}
+
+/* 20px against the excerpt's 18px. It inherited the system's 15px interface
+   body before this, which put the card's claim BELOW its evidence in the type
+   hierarchy — the reader met the smaller line first. */
+.gr-story-lede {
+  display: block;
+  margin-block-start: calc(0.2 * var(--u));
+  font-size: var(--text-lede);
+  line-height: var(--leading-lede);
+  letter-spacing: var(--tracking-heading);
+}
+
+/* Set smaller and quieter than the standfirst above it. The standfirst is the
+   piece's claim; the excerpt is only evidence that there is more. */
+.gr-story-excerpt {
+  display: block;
+  margin-block-start: calc(0.67 * var(--u));
+  font-size: var(--text-note);
+  line-height: 1.5;
+}
+
+.gr-story-byline {
+  display: block;
+  margin-block-start: calc(0.5 * var(--u));
+  font-size: var(--text-note);
+}
+
+/* -- the lead -------------------------------------------------------------- */
+
+/* The well beside the text rather than above it, and given the larger share:
+   the lead earns its place by the size of the picture, not the length of the
+   copy. */
+.gr-story--lead .gr-story-link {
+  /* 707 : 337 in the frame. */
+  grid-template-columns: 2.1fr 1fr;
+  gap: calc(1.5 * var(--u));
+  align-items: start;
+}
+
+/* 400px — the lead's well is taller than a card's, not just wider. */
+.gr-story--lead .gr-story-well {
+  height: calc(16.67 * var(--u));
+}
+
+@media (max-width: 60rem) {
+  .gr-story-row,
+  .gr-story--lead .gr-story-link {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* -- reading ---------------------------------------------------------------
+   Two columns doing different jobs. The right is the piece; the left is
+   everything ABOUT the piece — cover, collection, byline, and where you are
+   in it. Keeping the apparatus out of the reading column is what lets the
+   prose hold one measure from the first line to the last.                    */
+
+.gr-read-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-block-end: calc(1.4 * var(--u));
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* Pointing back the way the reader came. */
+.gr-read-back-arrow {
+  display: inline-flex;
+  rotate: 180deg;
+  transition: translate var(--dur-spring) var(--ease-spring);
+}
+
+.gr-read-back:hover .gr-read-back-arrow {
+  translate: -0.25em 0;
+}
+
+/* 304 : 672 with a 104px gutter in the frame — a narrower apparatus column
+   and a wider gap than the index's, so the reading column is unmistakably the
+   page and the left is unmistakably beside it. */
+.gr-read-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.21fr);
+  gap: calc(4.33 * var(--u));
+  align-items: start;
+}
+
+/* Sticky so the section list stays with the reader. `align-self: start` is
+   what makes that possible — a stretched grid item is as tall as the prose
+   and has nothing left to stick within. */
+.gr-read-side {
+  position: sticky;
+  top: calc(var(--nav-h) + var(--u));
+  align-self: start;
+}
+
+/* The narrow card's shape, so one asset serves both.
+ *
+ * 320 x 360 is what a narrow card's well measures on the desktop band — the
+ * recurring card in the Library's rhythm, and therefore the shape a cover is
+ * worth designing against. The read page used 304 x 360, which is close
+ * enough to look intentional and far enough to need its own crop.
+ *
+ * It cannot be derived: a card's well is a FIXED 360px tall at whatever width
+ * its column gives it, so the ratio changes with the column and with the tier
+ * — a row can hold four different ones at once. Matching the narrow card is
+ * matching the one that recurs; anything wider is that same asset cropped,
+ * which is what background-size: cover is for. */
+.gr-read-cover {
+  display: block;
+  aspect-ratio: var(--cover-ratio);
+  overflow: hidden;
+  background: var(--color-light-000);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-read-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.67 * var(--u));
+  margin-block: calc(1.33 * var(--u)) 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Square corners, against a page where everything else is rounded: a tag is a
+   label ON the piece, not another object in the layout.
+
+   A TINT OF THE INK, not a surface. --color-panel is a raised surface, and a
+   raised surface means different things per theme by design: white on taupe,
+   a step lighter than the module on dark. That gave the same tag a hard white
+   chip on one theme and a soft lift on the other.
+
+   A percentage of the theme's own text colour is soft in both directions —
+   dark ink over a pale ground, light ink over a dark one — so the tag reads
+   as a mark on the page rather than as an object sitting on it, which is what
+   the square corners are already saying. */
+.gr-read-tag {
+  padding: 0.44em 0.47em;
+  background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  font-size: var(--text-note);
+  line-height: 1;
+}
+
+/* Above the title, in the reading column — the frame puts it there rather
+   than with the rest of the apparatus on the left. */
+.gr-root .gr-read-byline {
+  margin: 0 0 calc(0.67 * var(--u));
+  font-size: var(--text-note);
+}
+
+.gr-read-sections {
+  display: grid;
+  margin-block-start: calc(3.33 * var(--u));
+}
+
+.gr-read-section {
+  padding: 0.55em 0 0.55em 0.9em;
+  color: var(--color-text-muted);
+  font-size: var(--text-note);
+  line-height: 1.3;
+  text-decoration: none;
+  transition: color var(--dur-spring) var(--ease-spring);
+}
+
+.gr-read-section:hover,
+.gr-read-section:focus-visible {
+  color: var(--color-text);
+}
+
+/* A rule in the gutter marks where the reader is. Weight AND the rule, never
+   colour alone — colour alone is the one distinction some readers cannot
+   see. */
+.gr-read-section[aria-current] {
+  color: var(--color-text);
+  box-shadow: inset 2px 0 0 0 var(--color-text);
+}
+
+/* ~68px. The largest type in the system, and it earns it: on a reading page
+   the title is the only thing competing with the prose for the eye. */
+/* Fluid, unlike before.
+ *
+ * This was a fixed 2.6x the heading role — 67.6px at every width — so on a
+ * phone an article's title came out LARGER than the homepage's statement,
+ * which clamps down to 57.2px there. The loudest type on the site ended up
+ * being a piece in the library.
+ *
+ * The cap is the size it already was, so nothing changes on a desktop; only
+ * the floor is new. 1.7x is below the homepage's floor at every width a phone
+ * has, which is the relationship that was inverted. */
+.gr-read-title {
+  margin: 0;
+  font-family: var(--font-title);
+  font-size: clamp(
+    calc(1.7 * var(--text-heading)),
+    6.4vw,
+    calc(2.6 * var(--text-heading))
+  );
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.06;
+}
+
+/* .gr-root-prefixed: base.css zeroes the margin on every `.gr-root p`, which
+   outranks a single-class rule — without this the prose started flush against
+   the standfirst. */
+.gr-root .gr-read-lede {
+  margin-block: calc(0.17 * var(--u)) calc(2 * var(--u));
+  font-size: calc(1.15 * var(--text-heading));
+  line-height: var(--leading-lede);
+  letter-spacing: var(--tracking-heading);
+}
+
+@media (max-width: 60rem) {
+  .gr-read-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-read-side {
+    position: static;
+  }
+
+  /* The contents list goes; the cover and the tags stay.
+   *
+   * Same reasoning as the job posting's index: stacked above the prose it is
+   * a list of the headings you are about to read past, and its value was
+   * being sticky. The button carries it instead — see SectionFab. The cover
+   * and the tags are not duplicates of anything, so they remain. */
+  .gr-read-sections {
+    display: none;
+  }
+
+  /* No override: the cover keeps --cover-ratio here too, so the asset that
+     fits it on a desktop fits it on a phone without a second crop. */
+}
+
+/* -- the prose ------------------------------------------------------------- */
+
+.gr-prose {
+  /* The reading size and the body's tracking — the same settings .gr-body
+     takes, because this is the same kind of text. The comment that used to sit
+     here said the system's body was set for labels; that is fixed at the token
+     now, so this can just say what it is. */
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+  line-height: var(--leading-body);
+}
+
+/* .gr-root-prefixed, and it has to be: base.css zeroes the margin on every
+   `.gr-root p` and `.gr-root h2` so the system's own components can own their
+   spacing. That rule is two classes; `.gr-prose > * + *` is one, and loses —
+   which is how a page of prose ended up with no space between paragraphs. */
+.gr-root .gr-prose > * {
+  margin-block: 0;
+}
+
+.gr-root .gr-prose > * + * {
+  margin-block-start: 1.1em;
+}
+
+/* Space above a heading, not below it: a heading belongs to what follows it,
+   and equal space on both sides leaves it floating between two sections. */
+.gr-prose h2,
+.gr-prose h3 {
+  font-family: var(--font-title);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.2;
+}
+
+.gr-root .gr-prose > h2 {
+  margin-block-start: 2.2em;
+  font-size: calc(1.15 * var(--text-heading));
+}
+
+.gr-root .gr-prose > h3 {
+  margin-block-start: 1.8em;
+  font-size: var(--text-card);
+}
+
+.gr-prose ul,
+.gr-prose ol {
+  padding-inline-start: 1.2em;
+}
+
+.gr-prose li + li {
+  margin-block-start: 0.4em;
+}
+
+.gr-prose a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+  text-decoration-color: color-mix(in srgb, var(--color-text) 35%, transparent);
+}
+
+.gr-prose a:hover,
+.gr-prose a:focus-visible {
+  text-decoration-color: currentcolor;
+}
+
+.gr-prose strong {
+  font-weight: 500;
+}
+
+.gr-prose blockquote {
+  padding-inline-start: 1em;
+  border-inline-start: 2px solid var(--color-rule);
+  color: var(--color-text-muted);
+}
+
+.gr-prose code {
+  font-family: var(--font-code);
+  font-size: 0.92em;
+  background: var(--color-code-surface);
+  border-radius: calc(var(--radius) / 3);
+  padding: 0.1em 0.3em;
+}
+
+/* The whole block, not half of it.
+
+   The <pre> an article renders is still the legacy Tailwind component, which
+   paints itself with --code-bg and --code-fg: a fixed near-black panel with
+   cream type. This rule is a class plus an element, so it outranked the
+   single-class background and left the cream type sitting on the system's
+   light code surface — invisible on taupe, and only legible on the dark
+   themes by accident.
+
+   So the ground, the ink and the edge are all claimed here. Taking one
+   without the others is what broke it. */
+.gr-prose pre {
+  overflow-x: auto;
+  padding: var(--u);
+  background: var(--color-code-surface);
+  color: var(--color-code-text);
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+}
+
+/* Beats the legacy `text-[var(--code-fg)]` on the inner <code>, which is a
+   single class and would otherwise put the cream back on every token that
+   has no syntax colour of its own. */
+.gr-prose pre code {
+  color: inherit;
+}
+
+.gr-prose pre code {
+  background: none;
+  padding: 0;
+}
+
+.gr-prose hr {
+  border: 0;
+  border-block-start: 1px solid var(--color-rule);
+  margin-block: 2em;
+}
+
+@media (max-width: 60rem) {
+  .gr-read--aside .gr-read-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-read-aside {
+    position: static;
+  }
+}
+
+/* -- careers ---------------------------------------------------------------
+   A list, not a grid. There are three roles, and three cards would make them
+   look like a product range — a role is read one at a time, and each line is a
+   decision.                                                                  */
+
+.gr-roles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-roles li {
+  border-block-end: 1px solid var(--color-rule);
+}
+
+/* The last row keeps no rule. The footer draws its own directly below, so a
+   closing border here puts two lines back to back with only whitespace
+   between them — and with the rule gone, that whitespace can close up too. */
+.gr-roles li:last-child {
+  border-block-end: 0;
+}
+
+.gr-roles {
+  margin-block-end: calc(-2.5 * var(--u));
+}
+
+.gr-role {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--u);
+  align-items: center;
+  padding-block: calc(1.6 * var(--u));
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Above the light, which is absolutely positioned and would otherwise paint
+   over the type however early it sits in the DOM. */
+.gr-role > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The light fades out at both ends instead of stopping at an edge. A flat
+   block has to end somewhere, and wherever it ends is a hard vertical line
+   the row does not otherwise have; a gradient lets it belong to the row
+   without drawing a box around it.
+
+   It bleeds two units past the text on each side, so the fade has room to
+   happen outside the words rather than across them. */
+.gr-role::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(-2 * var(--u));
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--color-text) 6%, transparent) 12%,
+    color-mix(in srgb, var(--color-text) 6%, transparent) 88%,
+    transparent 100%
+  );
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-role:hover::before,
+.gr-role:focus-visible::before {
+  opacity: 1;
+}
+
+/* The chevron becomes an arrow, the same gesture every other call to action
+   on the site makes. */
+.gr-role-go {
+  display: inline-flex;
+  align-items: center;
+  font-size: calc(1.4 * var(--text-heading));
+}
+
+.gr-role:hover .gr-arrow {
+  translate: 0.15em 0;
+}
+
+.gr-role:hover .gr-arrow-shaft {
+  stroke-dashoffset: 0;
+}
+
+.gr-role-title {
+  display: block;
+  font-family: var(--font-title);
+  font-size: calc(1.4 * var(--text-heading));
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.1;
+}
+
+.gr-role-summary {
+  display: block;
+  margin-block-start: calc(0.5 * var(--u));
+  max-width: 46ch;
+  font-size: var(--text-note);
+}
+
+.gr-role-facts {
+  display: flex;
+  gap: 0.5em;
+  margin-block-start: calc(0.7 * var(--u));
+}
+
+/* -- one posting ----------------------------------------------------------- */
+
+/* No measure on the container. A `ch` here resolves against the HEAD's font,
+   which is the body's 15px — so a 24ch cap wrapped 60px type at about 190px
+   and gave the title one word a line. Each piece carries its own measure, in
+   its own size. */
+/* Title and terms side by side. The right column is the width of the facts,
+   not a share of the page — they are short lines, and a wide column would let
+   "Cambridge, London" sit alone in the middle of a lot of nothing. */
+.gr-job-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 19em);
+  gap: calc(3 * var(--u));
+  /* Both columns share a floor. Aligning only the facts to the bottom worked
+     for a two-line title and failed for a one-line one — the row is as tall as
+     its tallest item, so the SHORTER column has to be the one that drops.
+     Ending both means whichever is taller sets the floor and the other meets
+     it. */
+  align-items: end;
+  /* The rule under the hero. It used to come from the first section's own
+     top border; suppressing that border to tidy the section stack took the
+     separator with it, and the head ran straight into the body. It belongs to
+     the head, so it lives here now and cannot be lost that way again. */
+  margin-block: calc(1.6 * var(--u)) calc(2.6 * var(--u));
+  padding-block-end: calc(2.2 * var(--u));
+  border-block-end: 1px solid var(--color-rule);
+}
+
+.gr-job-head {
+  margin: 0;
+}
+
+.gr-root .gr-job-title {
+  margin-block: calc(0.5 * var(--u)) 0;
+  max-width: 18ch;
+  font-family: var(--font-title);
+  font-size: calc(2.3 * var(--text-heading));
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.06;
+}
+
+.gr-root .gr-job-summary {
+  margin-block-start: var(--u);
+  max-width: 30ch;
+  font-size: calc(1.1 * var(--text-heading));
+  line-height: 1.3;
+  letter-spacing: var(--tracking-heading);
+}
+
+/* Stacked, with a rule per entry rather than one box around all three: read
+   down, they are three separate facts, and a shared border made them look
+   like one table with three cells. */
+/* Bottom-aligned to the standfirst beside it. The stack is shorter than the
+   head, so hanging it from the top left it floating with a gap underneath;
+   sitting it on the same baseline gives the two columns a shared floor and
+   lets the title breathe above it. */
+.gr-job-facts {
+  display: grid;
+  margin: 0;
+}
+
+/* Rules BETWEEN the facts, not around them. A line above the first and below
+   the last drew a box, and a box says these three are a table; a line only
+   where two facts meet says they are a list. */
+.gr-job-facts > div {
+  padding-block: calc(1.35 * var(--u));
+}
+
+.gr-job-facts > div + div {
+  border-block-start: 1px solid var(--color-rule);
+}
+
+/* No padding outside the stack, so the first label sits on the title's line
+   and the last value ends the column cleanly. */
+.gr-job-facts > div:first-child {
+  padding-block-start: 0;
+}
+
+.gr-job-facts > div:last-child {
+  padding-block-end: 0;
+}
+
+/* The label's own line box is most of what separates it from its value — the
+   eyebrow is uppercase mono with leading built in, so trimming the margin
+   alone stops working. Setting its line-height to the glyphs is what actually
+   closes the gap. */
+.gr-job-facts dt {
+  line-height: 1;
+}
+
+/* Close to its label: the two are one fact, and the air belongs between facts
+   rather than inside them.
+
+   .gr-root-prefixed because `.gr-root .gr-label + *` sets the system's
+   standard 20px under every label, and that outranks a single-class rule —
+   which is why trimming this margin appeared to do nothing at all. */
+.gr-root .gr-job-facts dd {
+  margin: calc(0.15 * var(--u)) 0 0;
+  font-size: var(--text-note);
+  line-height: 1.4;
+}
+
+/* The contents beside the posting, the posting itself in one column.
+
+   The headings used to sit beside their lists, which put a column of headings
+   down the page — useful for finding a section, and expensive: it cost the
+   content a third of its width and left every heading stranded beside a list
+   it could not touch. The nav does the finding now, and does it better,
+   because it is all nine at once rather than whichever two are on screen. */
+.gr-job-body {
+  display: grid;
+  /* 15em, not 13: at the narrower width "Problems you may work on" wrapped
+     its last word, and the wrap only appeared once the square chip pushed the
+     text across — an item that changes shape when you arrive at it. */
+  grid-template-columns: minmax(0, 15em) minmax(0, 1fr);
+  gap: calc(5.8 * var(--u));
+  align-items: start;
+}
+
+/* Aligned to the first heading's TEXT, not to the boxes. The boxes already
+   agreed; what the eye compares is the first line of each column, and the
+   first section carries a top padding the nav did not. */
+.gr-job-nav {
+  position: sticky;
+  top: calc(var(--nav-h) + var(--u));
+  display: grid;
+  padding-block-start: calc(1.4 * var(--u));
+}
+
+.gr-job-nav-link:first-child {
+  padding-block-start: 0;
+}
+
+.gr-job-nav-link {
+  position: relative;
+  padding: 0.5em 0 0.5em 1.5em;
+  color: var(--color-text-muted);
+  font-size: var(--text-ui);
+  line-height: 1.3;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-job-nav-link:hover,
+.gr-job-nav-link:focus-visible {
+  color: var(--color-text);
+}
+
+/* A filled square in the gutter marks where the reader is. Weight AND the
+   mark, never colour alone.
+
+   The square is drawn on every link and only shown on the current one, so the
+   type never shifts as the mark appears — an indicator that moves the words
+   it points at is worse than no indicator. */
+.gr-job-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.95em;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-job-nav-link[aria-current] {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.gr-job-nav-link[aria-current]::before {
+  opacity: 1;
+}
+
+.gr-job-section {
+  padding-block: calc(1.8 * var(--u));
+  border-block-start: 1px solid var(--color-rule);
+}
+
+/* Clears the floating nav when a contents link jumps to a section. */
+.gr-job-section {
+  scroll-margin-top: calc(var(--nav-h) + 2 * var(--u));
+}
+
+/* The first section carries no rule of its own — the head's rule is directly
+   above it — but it keeps a generous top so the posting starts clear of that
+   line rather than crowding it. */
+.gr-job-sections > .gr-job-section:first-child {
+  border-block-start: 0;
+  padding-block-start: calc(1.4 * var(--u));
+}
+
+.gr-root .gr-job-section-title {
+  margin: 0 0 calc(0.9 * var(--u));
+  font-family: var(--font-title);
+  font-size: var(--text-heading);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.15;
+}
+
+/* Wider now that it is not sharing the row with a heading — but still a
+   measure. 76ch rather than 68: the shorter one was leaving a single word on
+   its own at the end of too many list items. */
+.gr-job-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 76ch;
+  font-size: var(--text-note);
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.gr-job-list li {
+  display: grid;
+  grid-template-columns: 2em minmax(0, 1fr);
+  align-items: baseline;
+}
+
+.gr-job-list li + li {
+  margin-block-start: 0.7em;
+}
+
+/* A rule rather than a bullet: the system draws lines, not dots. */
+.gr-job-mark {
+  display: block;
+  width: 0.75em;
+  height: 1px;
+  background: var(--color-interactive);
+  translate: 0 -0.35em;
+}
+
+.gr-job-step {
+  font-family: var(--font-code);
+  font-size: 0.8em;
+  color: var(--color-interactive);
+}
+
+.gr-job-apply {
+  margin-block-start: calc(2.5 * var(--u));
+  /* Tighter below than above: the footer's own rule follows immediately, so
+     the space under the button is shared with whatever the footer opens with
+     rather than being this section's alone. */
+  padding-block: calc(2.5 * var(--u)) calc(1.6 * var(--u));
+  /* Opens with a rule and closes with nothing — the footer draws its own line
+     directly below, and two rules that close to each other read as a boxed
+     panel rather than as the end of the page. */
+  border-block-start: 1px solid var(--color-text);
+  text-align: center;
+}
+
+.gr-root .gr-job-apply-title {
+  margin-block: calc(0.5 * var(--u)) var(--u);
+  font-family: var(--font-title);
+  font-size: calc(1.8 * var(--text-heading));
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.05;
+}
+
+.gr-root .gr-job-apply-body {
+  margin: 0 auto calc(1.5 * var(--u));
+  max-width: 46ch;
+  font-size: var(--text-note);
+}
+
+@media (max-width: 60rem) {
+  .gr-job-body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(1.5 * var(--u));
+  }
+
+  /* Gone, not unstuck.
+   *
+   * It was a STICKY index beside the text — worth its space because it stays
+   * with you and shows all nine sections at once. Stacked above the content
+   * it is neither: a list of the headings you are about to scroll past
+   * anyway, costing a screen before the role's first sentence.
+   *
+   * The headings it pointed at are all still there, so nothing is lost but
+   * the duplicate. */
+  .gr-job-nav {
+    display: none;
+  }
+
+  .gr-job-top {
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(1.5 * var(--u));
+  }
+}
+
+/* -- documentation ---------------------------------------------------------
+   The docs render plain MDX — h1, p, ul, a, code, table — and are styled as
+   elements rather than through a component per tag. A component per tag is how
+   a link ends up with no underline: the day someone adds an element nobody
+   remembers to add a mapping for it, and it silently falls back to nothing.
+
+   The body sits inside .gr-prose, so headings, lists, links and inline code
+   are already the system's. What follows is what the reference pages need on
+   top: a sidebar, a wider measure, tables, and real syntax highlighting.     */
+
+.gr-doc {
+  display: grid;
+  grid-template-columns: minmax(0, 14em) minmax(0, 1fr);
+  gap: calc(4 * var(--u));
+  align-items: start;
+}
+
+.gr-doc-side {
+  position: sticky;
+  top: calc(var(--nav-h) + var(--u));
+  display: grid;
+  gap: calc(1.5 * var(--u));
+}
+
+.gr-doc-nav {
+  display: grid;
+  gap: calc(1.2 * var(--u));
+}
+
+.gr-doc-nav-group {
+  display: grid;
+  gap: 0.15em;
+}
+
+.gr-doc-nav-heading {
+  margin: 0 0 0.4em;
+  color: var(--color-text-muted);
+}
+
+.gr-doc-nav-link {
+  position: relative;
+  padding: 0.4em 0 0.4em 1.5em;
+  color: var(--color-text-muted);
+  font-size: var(--text-note);
+  line-height: 1.3;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-nav-link:hover,
+.gr-doc-nav-link:focus-visible {
+  color: var(--color-text);
+}
+
+/* The same square the job posting's contents uses — drawn on every link and
+   revealed on the current one, so the type never shifts. */
+.gr-doc-nav-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.85em;
+  width: 0.5em;
+  height: 0.5em;
+  background: var(--color-text);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-nav-link[aria-current] {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.gr-doc-nav-link[aria-current]::before {
+  opacity: 1;
+}
+
+/* Wider than a reading page's measure. Reference prose is read in fragments
+   rather than continuously, and it carries code and tables that a 34em column
+   would crush. */
+.gr-doc-main {
+  min-width: 0;
+  max-width: 46em;
+}
+
+.gr-doc-main > :first-child {
+  margin-block-start: 0;
+}
+
+/* Floated, so the page's first heading sits beside it rather than under it. */
+.gr-doc-copypage {
+  float: right;
+  margin: 0 0 var(--u) var(--u);
+  padding: 0.5em 0.9em;
+  border: 1px solid var(--color-interactive);
+  border-radius: 999px;
+  background: none;
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-copypage:hover {
+  background: var(--color-interactive-fill);
+  color: var(--color-inverse);
+}
+
+.gr-root .gr-doc-main h1 {
+  margin-block: 0 calc(0.8 * var(--u));
+  font-family: var(--font-title);
+  font-size: calc(1.9 * var(--text-heading));
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.05;
+}
+
+.gr-doc-lead {
+  margin-block-end: calc(1.6 * var(--u));
+  max-width: 40em;
+  font-size: var(--text-lede);
+  line-height: var(--leading-lede);
+  letter-spacing: var(--tracking-heading);
+  color: var(--color-text-muted);
+}
+
+.gr-doc-lead p {
+  margin: 0;
+}
+
+/* -- tables ---------------------------------------------------------------- */
+
+/* Scrolls inside its own box. A wide table must never make the PAGE scroll
+   sideways — that turns one long row into a broken layout on every screen. */
+.gr-doc-tablewrap {
+  overflow-x: auto;
+  margin-block: calc(1.4 * var(--u));
+}
+
+.gr-doc-main table:not([data-model-table]) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-ui);
+  line-height: 1.5;
+}
+
+.gr-doc-main table:not([data-model-table]) th {
+  padding: 0.7em 1em 0.7em 0;
+  border-block-end: 1px solid var(--color-rule);
+  text-align: left;
+  vertical-align: top;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.gr-doc-main table:not([data-model-table]) td {
+  padding: 0.7em 1em 0.7em 0;
+  border-block-end: 1px solid var(--color-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.gr-doc-main table:not([data-model-table]) tr:last-child td {
+  border-block-end: 0;
+}
+
+/* -- code ------------------------------------------------------------------ */
+
+.gr-doc-code {
+  position: relative;
+  margin-block: calc(1.4 * var(--u));
+}
+
+/* Inside the block, and only on hover or focus — a control that is always
+   visible competes with the code it is attached to. It stays once focused, or
+   a keyboard reader would be tabbing to something invisible. */
+.gr-doc-copy {
+  position: absolute;
+  top: calc(0.5 * var(--u));
+  right: calc(0.5 * var(--u));
+  z-index: 1;
+  padding: 0.3em 0.6em;
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  background: var(--color-code-surface);
+  color: var(--color-code-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-code:hover .gr-doc-copy,
+.gr-doc-copy:focus-visible {
+  opacity: 1;
+}
+
+.gr-doc-copy:hover {
+  color: var(--color-code-text);
+}
+
+.gr-doc-main pre {
+  margin: 0;
+  overflow-x: auto;
+  padding: calc(0.9 * var(--u)) calc(1.1 * var(--u));
+  /* Room for the copy control, so a long first line never runs under it. */
+  padding-inline-end: calc(4 * var(--u));
+  background: var(--color-code-surface);
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+  color: var(--color-code-text);
+  font-size: var(--text-ui);
+  line-height: 1.7;
+}
+
+/* A block's code carries the surface; only INLINE code paints its own. */
+.gr-doc-main pre code {
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* -- syntax ----------------------------------------------------------------
+   Every token highlight.js emits for the languages these pages use — json,
+   python, javascript, bash, sh, http, toml, text — mapped onto the system's
+   code roles. Enumerated from the rendered pages rather than guessed, then
+   extended with the tokens the same grammars can emit for content that does
+   not exist yet, so a new page cannot introduce an unstyled token.          */
+
+.gr-doc-main .hljs-comment,
+.gr-prose .hljs-comment,
+.gr-doc-main .hljs-quote,
+.gr-prose .hljs-quote,
+.gr-doc-main .hljs-meta,
+.gr-prose .hljs-meta,
+.gr-doc-main .hljs-params,
+.gr-prose .hljs-params,
+.gr-doc-main .hljs-variable,
+.gr-prose .hljs-variable,
+.gr-doc-main .hljs-punctuation,
+.gr-prose .hljs-punctuation,
+.gr-doc-main .hljs-subst,
+.gr-prose .hljs-subst {
+  color: var(--color-code-muted);
+}
+
+.gr-doc-main .hljs-string,
+.gr-prose .hljs-string,
+.gr-doc-main .hljs-attr,
+.gr-prose .hljs-attr,
+.gr-doc-main .hljs-regexp,
+.gr-prose .hljs-regexp,
+.gr-doc-main .hljs-addition,
+.gr-prose .hljs-addition,
+.gr-doc-main .hljs-bullet,
+.gr-prose .hljs-bullet,
+.gr-doc-main .hljs-symbol,
+.gr-prose .hljs-symbol {
+  color: var(--color-code-string);
+}
+
+.gr-doc-main .hljs-number,
+.gr-prose .hljs-number,
+.gr-doc-main .hljs-literal,
+.gr-prose .hljs-literal {
+  color: var(--color-code-number);
+}
+
+.gr-doc-main .hljs-keyword,
+.gr-prose .hljs-keyword,
+.gr-doc-main .hljs-built_in,
+.gr-prose .hljs-built_in,
+.gr-doc-main .hljs-type,
+.gr-prose .hljs-type,
+.gr-doc-main .hljs-name,
+.gr-prose .hljs-name,
+.gr-doc-main .hljs-tag,
+.gr-prose .hljs-tag,
+.gr-doc-main .hljs-selector,
+.gr-prose .hljs-selector-tag,
+.gr-doc-main .hljs-selector,
+.gr-prose .hljs-selector-class,
+.gr-doc-main .hljs-selector,
+.gr-prose .hljs-selector-id,
+.gr-doc-main .hljs-section,
+.gr-prose .hljs-section,
+.gr-doc-main .hljs-doctag,
+.gr-prose .hljs-doctag,
+.gr-doc-main .hljs-title.class_,
+.gr-prose .hljs-title.class_,
+.gr-doc-main .hljs-deletion,
+.gr-prose .hljs-deletion {
+  color: var(--color-code-keyword);
+}
+
+.gr-doc-main .hljs-attribute,
+.gr-doc-main .hljs-property,
+.gr-doc-main .hljs-title,
+.gr-doc-main .hljs-title.function_ {
+  color: var(--color-code-text);
+}
+
+.gr-doc-main .hljs-emphasis {
+  font-style: italic;
+}
+
+.gr-doc-main .hljs-strong {
+  font-weight: 600;
+}
+
+/* Links inside a sample keep the sample's colour — an underlined blue link in
+   a code block reads as a token that is not there. */
+.gr-doc-main pre a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+/* -- code tabs ------------------------------------------------------------- */
+
+.gr-doc-tabs {
+  margin-block: calc(1.4 * var(--u));
+}
+
+.gr-doc-tabs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: calc(0.6 * var(--u)) calc(1.2 * var(--u));
+}
+
+.gr-doc-tablist {
+  display: flex;
+  gap: calc(1.2 * var(--u));
+  border-block-end: 1px solid var(--color-rule);
+}
+
+/* A drawn rule under the chosen label, not a filled cell: these sit directly
+   on the page, and a block behind one of them would read as a button. */
+.gr-doc-tab {
+  padding: 0 0 0.6em;
+  border: 0;
+  border-block-end: 1px solid transparent;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-doc-tab:hover {
+  color: var(--color-text);
+}
+
+.gr-doc-tab[aria-selected="true"] {
+  color: var(--color-text);
+  border-block-end-color: var(--color-text);
+}
+
+.gr-doc-tabs > [role="tabpanel"] > .gr-doc-code,
+.gr-doc-tabs > [role="tabpanel"] > .gr-doc-variants {
+  margin-block-start: calc(0.6 * var(--u));
+  margin-block-end: 0;
+}
+
+/* Variants choose INSIDE the sample's surface, so the shell owns the frame and
+   the block inside it gives up its own — otherwise the sample is a bordered
+   box inside a bordered box. */
+.gr-doc-variants {
+  margin-block: calc(1.4 * var(--u));
+  overflow: hidden;
+  background: var(--color-code-surface);
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-doc-variantlist {
+  display: flex;
+  gap: calc(1.2 * var(--u));
+  width: fit-content;
+  margin-inline: calc(1.1 * var(--u));
+  padding-block-start: calc(0.7 * var(--u));
+  border-block-end: 1px solid var(--color-code-border);
+}
+
+.gr-doc-variantlist .gr-doc-tab {
+  color: var(--color-code-muted);
+}
+
+.gr-doc-variantlist .gr-doc-tab:hover,
+.gr-doc-variantlist .gr-doc-tab[aria-selected="true"] {
+  color: var(--color-code-text);
+}
+
+.gr-doc-variantlist .gr-doc-tab[aria-selected="true"] {
+  border-block-end-color: var(--color-code-text);
+}
+
+.gr-doc-variants .gr-doc-code {
+  margin: 0;
+}
+
+.gr-doc-variants .gr-doc-code pre {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* -- what comes next ------------------------------------------------------- */
+
+.gr-doc-next {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--u);
+  margin-block-start: calc(2.5 * var(--u));
+}
+
+.gr-doc-next a {
+  display: block;
+  padding-block: calc(0.9 * var(--u));
+  border-block-start: 1px solid var(--color-text);
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.gr-doc-next small {
+  display: block;
+  margin-block-end: calc(0.4 * var(--u));
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.gr-doc-next strong {
+  display: block;
+  font-family: var(--font-title);
+  font-size: var(--text-card);
+  font-weight: 500;
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.2;
+}
+
+.gr-doc-next a:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+/* -- artwork generator ----------------------------------------------------
+   A real working surface, not a marketing page. The preview takes the room;
+   controls form one dense instrument rail beside it. The Library uses the
+   same WaferField engine and presets, so this page is also its source of
+   truth rather than a disconnected demo. */
+.gr-artwork-module {
+  padding-block-end: calc(3 * var(--u));
+}
+
+.gr-artwork-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
+  align-items: end;
+  gap: calc(2 * var(--u));
+  margin-block-end: calc(2 * var(--u));
+}
+
+.gr-artwork-head .gr-lede {
+  max-width: 30rem;
+  margin: 0;
+}
+
+.gr-artwork-app {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 22rem);
+  min-height: min(74rem, calc(100vh - 5 * var(--u)));
+  overflow: hidden;
+  background: var(--color-dark-100);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+}
+
+.gr-artwork-stage {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 42rem;
+  overflow: hidden;
+  transition: background-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-artwork-stage canvas {
+  display: block;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.gr-artwork-panel {
+  overflow-y: auto;
+  padding: var(--u);
+  color: var(--color-light-100);
+  background: var(--color-dark-100);
+  border-inline-start: 1px solid var(--color-dark-300);
+}
+
+.gr-art-section {
+  display: grid;
+  gap: calc(0.65 * var(--u));
+  padding-block: var(--u);
+  border-block-end: 1px solid var(--color-dark-300);
+}
+
+.gr-art-section:first-child {
+  padding-block-start: 0;
+}
+
+.gr-art-section:last-child {
+  border-block-end: 0;
+}
+
+.gr-artwork-panel .gr-label,
+.gr-artwork-panel .gr-field-hint,
+.gr-art-control output {
+  color: var(--color-light-400);
+}
+
+.gr-artwork-panel .gr-input,
+.gr-artwork-panel .gr-select {
+  color: var(--color-light-100);
+  background: var(--color-dark-200);
+  border-color: var(--color-dark-300);
+}
+
+.gr-art-pair {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-art-pair label {
+  display: grid;
+  gap: calc(0.35 * var(--u));
+}
+
+.gr-art-pair input[type="color"] {
+  width: 100%;
+  height: calc(1.6 * var(--u));
+  padding: 3px;
+  background: var(--color-dark-200);
+  border: 1px solid var(--color-dark-300);
+  border-radius: var(--radius);
+}
+
+.gr-art-palette {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(0.3 * var(--u));
+}
+
+.gr-art-palette label {
+  display: grid;
+  gap: calc(0.2 * var(--u));
+}
+
+.gr-art-palette input[type="color"] {
+  width: 100%;
+  height: calc(1.4 * var(--u));
+  padding: 2px;
+  background: var(--color-dark-200);
+  border: 1px solid var(--color-dark-300);
+  border-radius: var(--radius);
+}
+
+.gr-art-control {
+  display: grid;
+  gap: calc(0.25 * var(--u));
+}
+
+.gr-art-control > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--u);
+}
+
+.gr-art-control output {
+  font-family: var(--font-code);
+  font-size: var(--text-note);
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-art-control input[type="range"] {
+  width: 100%;
+  accent-color: var(--color-kiln-300);
+}
+
+.gr-art-upload,
+.gr-art-check {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+  font-size: var(--text-ui);
+}
+
+.gr-art-upload {
+  justify-content: space-between;
+  padding: calc(0.5 * var(--u)) calc(0.65 * var(--u));
+  background: var(--color-dark-200);
+  border: 1px solid var(--color-dark-300);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.gr-art-upload input {
+  width: 8rem;
+  color: var(--color-light-400);
+  font-size: var(--text-note);
+}
+
+.gr-art-text-button,
+.gr-art-style button,
+.gr-art-actions button,
+.gr-art-exports button {
+  min-height: calc(1.8 * var(--u));
+  padding: calc(0.45 * var(--u)) calc(0.7 * var(--u));
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--color-dark-300);
+  border-radius: var(--radius);
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.gr-art-text-button {
+  justify-self: start;
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  color: var(--color-light-400);
+}
+
+.gr-art-style {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gr-art-style button {
+  border-radius: 0;
+}
+
+.gr-art-style button:first-child {
+  border-start-start-radius: var(--radius);
+  border-end-start-radius: var(--radius);
+}
+
+.gr-art-style button:last-child {
+  border-start-end-radius: var(--radius);
+  border-end-end-radius: var(--radius);
+}
+
+.gr-art-style button + button {
+  margin-inline-start: -1px;
+}
+
+.gr-art-style button[aria-pressed="true"] {
+  position: relative;
+  z-index: 1;
+  color: var(--color-dark-100);
+  background: var(--color-light-100);
+  border-color: var(--color-light-100);
+}
+
+.gr-art-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-art-actions .gr-art-primary {
+  color: var(--color-dark-100);
+  background: var(--color-kiln-300);
+  border-color: var(--color-kiln-300);
+}
+
+.gr-art-exports {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gr-art-exports .gr-label,
+.gr-art-exports .gr-field-hint {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 72rem) {
+  .gr-artwork-app {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-artwork-stage {
+    min-height: 34rem;
+  }
+
+  .gr-artwork-panel {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--color-dark-300);
+  }
+}
+
+@media (max-width: 48rem) {
+  .gr-artwork-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .gr-artwork-stage {
+    min-height: 24rem;
+  }
+}
+
+@media (max-width: 60rem) {
+  .gr-doc {
+    grid-template-columns: minmax(0, 1fr);
+    gap: calc(1.5 * var(--u));
+  }
+
+  .gr-doc-side {
+    position: static;
+  }
+
+  .gr-doc-next {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* -- the cost field --------------------------------------------------------
+   The training hero. Squares of traffic packing a surface, coloured by what
+   they cost — see CostStory.tsx for why it is a field rather than a chart.
+
+   The canvas fills whatever the fold leaves it, which is the point: the
+   surface filling up IS the visualisation, so it wants the whole pane.      */
+
+.gr-cost {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  /* The field runs to the panel's own edges, so it has to be clipped by the
+     panel's radius rather than squaring off its corners. */
+  overflow: hidden;
+  gap: var(--u);
+  height: 100%;
+  /* No padding on the panel. The field is meant to reach three of its edges,
+     and pulling it back out with negative margins fought the grid — the panel
+     pads its HEADER instead, which is the only part that wants an inset. */
+  background: var(--color-code-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lift);
+}
+
+.gr-cost-meters {
+  display: flex;
+  align-items: end;
+  gap: calc(1.6 * var(--u));
+  padding: calc(0.9 * var(--u)) calc(1.4 * var(--u)) 0;
+}
+
+/* Label and reading on one line. At the same size and weight the stacked
+   pair read as two separate labels; side by side they read as one instrument
+   with its value. */
+.gr-cost-meter {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.7em;
+}
+
+.gr-cost-meter-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  color: var(--color-text-muted);
+}
+
+/* Mono and tabular: a counter in a proportional face jitters on every digit
+   change, which reads as the layout twitching rather than the number moving. */
+/* The value set exactly as its label: same face, same size, same tracking.
+   The readouts read as one line of instrumentation rather than as a caption
+   with a number under it.
+
+   tabular-nums is kept even though the face is the body's — without it a
+   digit changing width makes the whole row twitch on every frame. */
+.gr-cost-meter-value {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.gr-cost-live {
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  background: var(--color-interactive);
+  animation: gr-cost-pulse 1.8s var(--ease-response) infinite;
+}
+
+@keyframes gr-cost-pulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+
+/* Pushed to the far end of the meter row: it is a control, and the numbers
+   beside it are readouts. */
+/* One switch, at the far end of the meter row: this is a thing that is on or
+   off, and a pair of pills read as a choice between two products. */
+.gr-cost-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.gr-cost-switch-name {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-cost-switch[aria-checked="true"] .gr-cost-switch-name {
+  color: var(--color-text);
+}
+
+.gr-cost-switch-track {
+  position: relative;
+  display: block;
+  width: 2.6em;
+  height: 1.5em;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  transition: background var(--dur-base) var(--ease-response);
+}
+
+.gr-cost-switch[aria-checked="true"] .gr-cost-switch-track {
+  background: color-mix(in srgb, var(--color-interactive) 30%, transparent);
+}
+
+.gr-cost-switch-knob {
+  position: absolute;
+  top: 0.15em;
+  left: 0.15em;
+  width: 1.2em;
+  height: 1.2em;
+  border-radius: 50%;
+  background: var(--color-light-000);
+  box-shadow: var(--shadow-raise);
+  transition:
+    translate var(--dur-base) var(--ease-spring),
+    background var(--dur-base) var(--ease-response);
+}
+
+/* The page's ink, not the muted button fill — a thrown switch should read as
+   fully on. */
+.gr-cost-switch[aria-checked="true"] .gr-cost-switch-knob {
+  translate: 1.1em 0;
+  background: var(--color-text);
+}
+
+/* Full bleed across the panel: the stream runs edge to edge, so chips enter
+   and leave at the panel's own boundary rather than at an inset margin that
+   would read as a second frame inside the first. */
+/* Flush on three sides: the stream enters and leaves at the panel boundary
+   and stands on its floor, rather than sitting in an inset box that would
+   read as a second frame inside the first. */
+/* Flush on three sides: the stream enters and leaves at the panel boundary
+   and stands on its floor, rather than sitting in an inset box that would
+   read as a second frame inside the first. */
+.gr-cost-field {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+/* Absolute and 100%, so the backing store is the only thing that has to be
+   measured — a canvas sized only in JS keeps whatever width it was given on
+   the frame it first ran, which here was before --u had resolved. */
+.gr-cost-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The reading for one bar: how much traffic went through it, and what that
+   traffic cost. Stacked, because the two are one fact about one moment. */
+.gr-cost-tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  gap: 0.15em;
+  padding: 0.5em 0.7em;
+  background: var(--color-text);
+  color: var(--color-inverse);
+  border-radius: calc(var(--radius) / 2);
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-response);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-cost-live {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* -- the benchmark ---------------------------------------------------------
+   Product evaluation scores use a 0–100% scale. Horizontal positions show
+   the user-requested relative costs, not measured dollar amounts.             */
+
+.gr-bench {
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: calc(0.9 * var(--u));
+  margin: 0;
+  padding: calc(1 * var(--u));
+  background: var(--color-code-surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-raise);
+}
+
+.gr-bench-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.gr-bench-title {
+  font-family: var(--font-body);
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+
+/* -- the field ------------------------------------------------------------- */
+
+.gr-bench-field {
+  position: relative;
+  height: calc(11 * var(--u));
+  min-height: 250px;
+  border: 1px solid var(--color-rule);
+  border-radius: calc(var(--radius) / 2);
+  overflow: hidden;
+}
+
+/* The lattice, in the ground rather than as elements: two repeating gradients
+   cost one paint and no DOM. */
+.gr-bench-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--color-rule) 0 1px,
+      transparent 1px calc(1.5 * var(--u))
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--color-rule) 0 1px,
+      transparent 1px calc(1.5 * var(--u))
+    );
+  opacity: 0.55;
+}
+
+.gr-bench-axis {
+  position: absolute;
+  color: var(--color-text-muted);
+}
+
+.gr-bench-axis--y {
+  top: calc(0.5 * var(--u));
+  left: calc(0.6 * var(--u));
+}
+
+.gr-bench-axis--x {
+  right: calc(0.6 * var(--u));
+  bottom: 2.5rem;
+}
+
+/* -- the badges ------------------------------------------------------------ */
+
+.gr-bench-badge {
+  position: absolute;
+  left: var(--left);
+  bottom: var(--up);
+  translate: -50% 50%;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.7em;
+  padding: 0.55em 0.95em;
+  border-radius: 999px;
+  background: var(--color-panel);
+  box-shadow: var(--shadow-raise);
+  white-space: nowrap;
+  /* The badge moves to its new reading rather than cutting to it: the same
+     model in the same pill, travelling, which is what makes switching tasks
+     read as a comparison rather than a slide change. */
+  transition:
+    left var(--dur-base) var(--ease-spring) var(--delay, 0ms),
+    bottom var(--dur-base) var(--ease-spring) var(--delay, 0ms),
+    background var(--dur-base) var(--ease-response);
+}
+
+/* The number is the one thing that cannot travel — it is a different value —
+   so it resolves in on arrival. */
+.gr-bench-badge-score {
+  animation: gr-bench-score-in var(--dur-base) var(--ease-response)
+    var(--delay, 0ms) both;
+}
+
+@keyframes gr-bench-score-in {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-bench-badge {
+    transition: none;
+  }
+
+  .gr-bench-badge-score {
+    animation: none;
+  }
+}
+
+.gr-bench-badge-mark {
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-text-muted);
+}
+
+.gr-bench-badge-mark svg {
+  display: block;
+  width: 0.85em;
+  height: 0.85em;
+}
+
+.gr-bench-badge-mark svg[viewBox] {
+  width: 0.85em;
+}
+
+/* The key, between the field and the run's details. */
+.gr-bench-key {
+  display: grid;
+  margin: 0;
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+}
+
+.gr-bench-key-item {
+  display: grid;
+  grid-template-columns: 1em minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6em;
+  padding-block: 0.6em;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-bench-key-item:last-child {
+  border-bottom: 0;
+}
+
+.gr-bench-key-score {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+.gr-bench-badge-score {
+  font-family: var(--font-code);
+  font-size: var(--text-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+
+/* The weights that came back are the subject of the picture. */
+.gr-bench-badge--tuned {
+  background: var(--color-text);
+}
+
+.gr-bench-badge--tuned .gr-bench-badge-mark,
+.gr-bench-badge--tuned .gr-bench-badge-score {
+  color: var(--color-inverse);
+}
+
+/* A regression is the one result worth colouring here. */
+.gr-bench-badge--down {
+  background: var(--gradient-ember-from);
+}
+
+.gr-bench-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 calc(1.1 * var(--u));
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+
+/* -- the centred fold -----------------------------------------------------
+   One centred statement, its standfirst, and two ways in — on one screen.
+
+   Centred, unlike every product hero: those pair a claim with its evidence and
+   set the two side by side, and this one has no evidence to place. So the
+   sentence sits in the middle of the screen and the measure shapes it.
+
+   A screen tall, like .gr-fold, and centred the same way — 100dvh rather than
+   100vh, because on a phone 100vh is the address bar's problem and puts the
+   buttons under it. The top padding clears the floating nav; the rest is
+   symmetric, so what centres is the content rather than the padded box.      */
+
+.gr-fold-centred {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+  text-align: center;
+  padding-block: calc(var(--nav-h) + var(--u));
+}
+
+/* Items fill the column and the TEXT centres inside them. `justify-items:
+   center` looks like the way to centre this and is a trap: it sizes each item
+   to its own content, so the title and the standfirst sized to their widest
+   line and overflowed a narrow column instead of wrapping in it — the block
+   ran off the right of a phone. Anything here that wants a measure sets one
+   and centres itself with an auto margin. */
+.gr-fold-centred > * {
+  justify-self: stretch;
+  min-width: 0;
+}
+
+/* The breaks are authored in the page, so there is no measure shaping this —
+   the max-width is only a floor guard, for the narrow viewport where an
+   authored line would otherwise run past the screen.
+
+   Two classes, so this beats `.gr-root h1` from base.css. A single-class rule
+   would lose to it and the margin would silently do nothing — as it does for
+   any margin on a p or an h1 in this system. */
+.gr-fold-centred .gr-home-title {
+  max-width: 100%;
+  margin: 0;
+  font-size: clamp(3.25rem, 7vw, 6rem);
+}
+
+/* The authored breaks come off on a phone.
+ *
+ * "lab focused on" measures 358px at the floor size, and the band on a 430px
+ * screen is 368 — so the three-line composition is what was holding the type
+ * down to a size that fits it. The breaks are a decision about a wide screen;
+ * on a narrow one the sentence reflows and the type can be as large as the
+ * page can carry. */
+.gr-root:not([data-tier="wide"]) .gr-home-title .gr-hero-line {
+  display: inline;
+}
+
+/* A space where the line break used to be.
+ *
+ * The spans are siblings with no whitespace between them — correct while each
+ * is a block, and the reason "on" and "inference." ran together the moment
+ * they became inline. The separator belongs to the inline state, so it is
+ * added here rather than in the markup, where it would put a stray space
+ * inside every hero on the site. */
+.gr-root:not([data-tier="wide"])
+  .gr-home-title
+  .gr-hero-line
+  + .gr-hero-line::before {
+  content: " ";
+}
+
+/* Wide enough for two lines at 28px, and no wider.
+
+   The measure is in ch and resolves against this size rather than the
+   standfirst's usual one, so it had to be re-set when the size went up: 31ch
+   is about 31 characters a line, and this sentence is 83 — three lines. 46ch
+   takes it to two.
+
+   Balanced rather than left to fill-and-spill, which would have put most of
+   the sentence on the first line and a short remainder under it. Balance
+   evens the two, which is what the mock has and what a centred block needs —
+   a centred rag is visible from both edges. */
+.gr-fold-centred .gr-home-lede {
+  max-width: 46ch;
+  font-size: var(--text-lede-display);
+  margin-block: calc(1.5 * var(--u)) 0;
+  margin-inline: auto;
+  text-wrap: balance;
+}
+
+/* Scaled with the title: the h1's floor came down an eighth for phones, and
+   the standfirst follows by the same ratio so the pair keeps its proportion —
+   28px against a 117px title is right, against 56px it shouted. The measure
+   is in ch, so the two-line break survives the resize on its own. */
+.gr-root:not([data-tier="wide"]) .gr-fold-centred .gr-home-lede {
+  font-size: calc(0.875 * var(--text-lede-display));
+}
+
+.gr-home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: calc(0.75 * var(--u));
+  margin-block-start: calc(2 * var(--u));
+}
+
+/* The 404 sits on the centred fold at hero size — the display size belongs to
+   the page that has something to say, not to the one apologising.
+
+   No top margin: it led the title away from an eyebrow that is no longer
+   there, and the title is the first thing in the fold now. */
+/* Balanced, so the two lines come out even instead of filling the first and
+   dropping "for?" underneath on its own. Not an authored break: the homepage
+   states its three lines because they are a composition, and this is one
+   sentence that only needs to avoid an orphan. */
+.gr-fold-centred .gr-notfound-title {
+  max-width: 20ch;
+  margin-inline: auto;
+  margin-block: 0;
+  font-size: var(--text-masthead);
+  line-height: 0.95;
+  text-wrap: balance;
+}
+
+/* Auto margins, because .gr-lede brings its own max-width: the element is
+   narrower than the column, and text-align only centres the text INSIDE it —
+   the box itself still sat against the left edge. */
+.gr-fold-centred .gr-notfound-lede {
+  margin-block: calc(1.25 * var(--u)) 0;
+  margin-inline: auto;
+}
+
+/* -- mobile: the fold stops cropping -------------------------------------
+   A fold is a viewport-tall frame with its showpiece cropped by the bottom
+   edge — the crop IS the composition on a desktop, where there is a screen's
+   worth of panel above the cut.
+
+   On a phone there is not. The panel runs to 945px inside a 913px fold, so
+   `overflow: hidden` simply takes the bottom off it, and the same squeeze is
+   what was clipping the standfirst. So below the wide tier the fold stops
+   being a frame: it takes the height its content needs and the page scrolls,
+   which is what a phone does anyway.
+
+   The foot fade goes with it. It exists to say "the viewport ended here",
+   and once nothing is cropped there is nothing to say it about — left in, it
+   would wash the bottom of a panel that is fully visible.                  */
+
+.gr-root:not([data-tier="wide"]) .gr-fold {
+  min-height: 0;
+  grid-template-rows: auto auto;
+  overflow: visible;
+}
+
+.gr-root:not([data-tier="wide"]) .gr-fold::after {
+  display: none;
+}
+
+/* The hero's top padding only has to clear the floating bar here, not centre
+   a hero in a screen. */
+.gr-root:not([data-tier="wide"]) .gr-fold .gr-page-hero {
+  padding-block: calc(var(--nav-h) + 2 * var(--u)) calc(1.5 * var(--u));
+}
+
+/* -- mobile: the live meters stack ---------------------------------------
+   Tokens over Spend, with the switch beside both.
+
+   On one line the three shared 432px: "Spend / hr" broke across two lines and
+   the switch was pushed to the edge of the panel. Stacking the two readings
+   costs a line of height and buys the switch a column of its own — and the
+   two readings are a pair, so reading them down is no worse than across.   */
+
+.gr-root:not([data-tier="wide"]) .gr-cost-meters {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  column-gap: var(--u);
+  row-gap: calc(0.3 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(1) {
+  grid-area: 1 / 1;
+}
+
+.gr-root:not([data-tier="wide"]) .gr-cost-meter:nth-of-type(2) {
+  grid-area: 2 / 1;
+}
+
+/* On Tokens' line, not floating between the two readings.
+ *
+ * It spanned both rows and centred across them, which left it aligned to
+ * nothing — a control sitting in the gap between two lines of type. Sharing
+ * the first line gives it something to line up with, and it has its own label
+ * so there is a real baseline to use rather than a synthesised one. */
+.gr-root:not([data-tier="wide"]) .gr-cost-switch {
+  grid-area: 1 / 2;
+  align-self: baseline;
+}
+
+/* -- mobile: sections sit closer together --------------------------------
+   4.5u of padding a side is air between sections on a page that is 1152px
+   wide and reads in columns. Stacked into one column it is a screenful of
+   nothing between a button and the next heading — which is what put the
+   action adrift under the features.
+
+   The action also stops centring: under a single stacked column there is no
+   centre for it to be on, only a left edge that everything else shares.     */
+
+.gr-root:not([data-tier="wide"]) .gr-module:not(.gr-module--fold) {
+  padding-block: calc(2.5 * var(--u));
+}
+
+/* The FIRST module still has to clear the floating nav.
+ *
+ * The rule above sets padding-block — both sides — at four classes of
+ * specificity, and .gr-module--top's clearance is one. So it was overwritten,
+ * and on every page whose first module is a masthead rather than a fold —
+ * library, careers, docs — the page's own title started underneath the
+ * wordmark.
+ *
+ * Written with .gr-module as well as the modifier so it matches the rule
+ * above rather than losing to it. Less air than the desktop's 80px: that was
+ * measured under a bar on a 1152px page, and the same gap on a phone is a
+ * third of the screen before anything is said. */
+.gr-root:not([data-tier="wide"]) .gr-module.gr-module--top {
+  padding-block-start: calc(var(--nav-h) + 2 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-module--fold + .gr-module {
+  padding-block-start: calc(1.5 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-features-action {
+  justify-content: flex-start;
+  margin-block-start: calc(1.25 * var(--u));
+}
+
+/* The showpiece needs its own height once the fold stops giving it one.
+ *
+ * Inside a viewport-tall fold the media row is `1fr` — it takes whatever the
+ * hero leaves and the canvas fills it. With the fold sized by its content
+ * that row is `auto`, and a canvas has no intrinsic height, so the panel
+ * collapsed to just its meters. A viewport fraction rather than a unit
+ * multiple: this is a picture being given a share of the screen. */
+.gr-root:not([data-tier="wide"]) .gr-cost-field {
+  min-height: 52dvh;
+}
+
+/* The hardware hero stacks: picture, then claim, then standfirst.
+ *
+ * `beside` puts the chip in its own column because the chip is TALL and there
+ * is width going spare next to it. On a phone there is no width going spare,
+ * and the two max-content columns resolved to a squeezed media track and an
+ * indented block of type — the chip rendered at a size that made it invisible
+ * while still pushing the sentence 90px inboard.
+ *
+ * So it becomes what the other heroes already are here: one column, in
+ * reading order, flush to the band. */
+.gr-root:not([data-tier="wide"]) .gr-page-hero--beside {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "media"
+    "claim"
+    "say";
+  grid-template-rows: auto auto auto;
+  justify-content: stretch;
+  column-gap: 0;
+}
+
+/* Back to spanning its row, and capped so a tall object cannot take the whole
+   screen before the sentence that explains it. */
+.gr-root:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-media {
+  justify-self: center;
+  max-width: min(100%, calc(14 * var(--u)));
+  margin-block-end: var(--u);
+}
+
+.gr-root:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-lede {
+  max-width: none;
+}
+
+/* The heading's two sentences, one per line. The second is the ask, and it
+   reads as one when it starts its own line rather than continuing the first. */
+.gr-pair-title span {
+  display: block;
+}
+
+
+/* -- mobile: the reel and models pair stacks -----------------------------
+   The pair is 1fr 2fr with `align-items: stretch`, and the tiles carry NO
+   aspect ratio precisely because that stretch decides their height — the
+   comment on .gr-pair says so.
+
+   Stacked, there is no stretch to inherit from: the row is auto, so
+   `height: 100%` resolved against nothing and the tiles collapsed to zero.
+   That is why the model cards were not rendering at all on a phone rather
+   than merely being small.
+
+   So on one column they take a ratio of their own again, and go two across —
+   six tiles in one column is a screen and a half of wells.              */
+
+.gr-root:not([data-tier="wide"]) .gr-pair {
+  grid-template-columns: minmax(0, 1fr);
+  gap: calc(2 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-pair .gr-cards {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-pair .gr-cards .gr-card-media {
+  height: auto;
+  aspect-ratio: var(--cover-ratio);
+}
+
+/* Nothing to promise, so nothing moves: the lift and the pointer belong to a
+   tile that goes somewhere. */
+.gr-card--pending {
+  cursor: default;
+}
+
+.gr-cards--lift .gr-card--pending:hover .gr-card-media {
+  box-shadow: var(--shadow-raise);
+  translate: none;
+}
+
+/* The reel takes the whole column on a phone.
+ *
+ * 85% is a proportion for a tile sharing a row with a six-card grid — it
+ * keeps the portrait from dominating its half. Stacked, there is nothing
+ * beside it to be narrower than, so the same 85% reads as a panel inset from
+ * the page for no reason. Full width, like the showpiece in the fold. */
+.gr-root:not([data-tier="wide"]) .gr-reel {
+  width: 100%;
+}
+
+/* -- the section button ----------------------------------------------------
+   A phone's form of the sticky section index: one button, bottom left, with
+   the reader's progress drawn as its edge. See SectionFab.tsx.
+
+   Hidden above the wide tier, where the sticky column beside the text does
+   this job better than a button that covers it could.                       */
+
+.gr-fab {
+  display: none;
+}
+
+.gr-root:not([data-tier="wide"]) .gr-fab {
+  position: fixed;
+  inset-block-end: calc(1.25 * var(--u));
+  inset-inline-end: calc(1.25 * var(--u));
+  /* Below every layer the nav puts up — scrim, drawer, and the cross above
+     both. Sharing the nav's stacking context is what makes this comparison
+     mean anything; see SectionFab.tsx. */
+  z-index: calc(var(--z-nav) - 1);
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: calc(0.75 * var(--u));
+  /* The wrapper spans nothing the list does not need: taps between the list
+     and the button fall through to the page. */
+  pointer-events: none;
+}
+
+.gr-fab > * {
+  pointer-events: auto;
+}
+
+.gr-fab-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  /* 2.5u, so the target clears 44px at every tier below wide — at the
+     compact tier's 18px unit, 2.4u came to 43. */
+  width: calc(2.5 * var(--u));
+  height: calc(2.5 * var(--u));
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-panel);
+  box-shadow: var(--shadow-lift);
+  color: var(--color-text);
+  font-size: var(--text-ui);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The ring is the button's edge, so it sits ON the button's box rather than
+   inside its padding. Rotated so the fill starts at twelve o'clock, which is
+   where a reader expects a dial to start. */
+.gr-fab-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  rotate: -90deg;
+  overflow: visible;
+}
+
+.gr-fab-ring-track,
+.gr-fab-ring-read {
+  fill: none;
+  stroke-width: 2.5;
+}
+
+.gr-fab-ring-track {
+  stroke: var(--color-rule);
+}
+
+/* pathLength="1" on the circle makes its length 1 whatever the radius, so the
+   dash offset IS the fraction still unread — no circumference to compute, and
+   nothing here to keep in step with the SVG's geometry. */
+.gr-fab-ring-read {
+  stroke: var(--color-interactive);
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--read, 0));
+}
+
+/* The list opens upward from the button, capped so a nine-section posting
+   cannot fill the screen with its own contents. */
+.gr-fab-list {
+  display: grid;
+  max-height: 60dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-width: calc(11 * var(--u));
+  max-width: calc(100vw - 2.5 * var(--u));
+  padding: calc(0.5 * var(--u));
+  border-radius: var(--radius);
+  background: var(--color-overlay);
+  box-shadow: var(--shadow-lift);
+  animation: gr-fab-list-in var(--dur-fast) var(--ease-response) both;
+}
+
+@keyframes gr-fab-list-in {
+  from {
+    opacity: 0;
+    translate: 0 calc(0.5 * var(--u));
+  }
+}
+
+.gr-fab-link {
+  padding: calc(0.5 * var(--u)) calc(0.75 * var(--u));
+  border-radius: calc(var(--radius) / 2);
+  color: var(--color-text);
+  font-size: var(--text-ui);
+  text-decoration: none;
+}
+
+.gr-fab-link:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-fab-list {
+    animation: none;
+  }
+}
+
+/* Leaving, and coming back.
+ *
+ * Both directions at --dur-fast: the exit can afford to be quick because the
+ * footer arriving is the reader's own doing, and the return has to be quick
+ * or the button appears to lag behind the scroll that brought it back. */
+.gr-root:not([data-tier="wide"]) .gr-fab {
+  transition:
+    opacity var(--dur-fast) var(--ease-response),
+    translate var(--dur-fast) var(--ease-response);
+}
+
+.gr-fab--away {
+  opacity: 0;
+  /* Down and out, the way it came in — not shrinking, which on a ring reads
+     as the progress changing rather than the button leaving. */
+  translate: 0 calc(0.5 * var(--u));
+}
+
+/* Unreachable while it is invisible, or a thumb near the footer's last link
+   would still be hitting a button it cannot see. */
+.gr-fab--away,
+.gr-fab--away > * {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-root:not([data-tier="wide"]) .gr-fab {
+    transition: none;
+  }
+}
+
+/* The docs' chapter list is grouped, unlike a posting's flat run of sections.
+   Same links, same spacing as the sidebar's — only the container differs. */
+.gr-fab-group + .gr-fab-group {
+  margin-block-start: calc(0.75 * var(--u));
+  padding-block-start: calc(0.75 * var(--u));
+  border-block-start: 1px solid var(--color-rule);
+}
+
+.gr-fab-heading {
+  padding: calc(0.4 * var(--u)) calc(0.75 * var(--u));
+  color: var(--color-text-muted);
+}
+
+.gr-fab-link {
+  display: block;
+}
+
+/* The page you are on, in the list of pages. The sidebar marks it the same
+   way, so the two forms of the same nav agree. */
+.gr-fab-link[aria-current="page"] {
+  color: var(--color-interactive);
+}
+
+/* The docs sidebar goes on mobile, like the posting's index and the article's
+   contents: stacked above the page it is a full chapter list to scroll past
+   before the documentation starts. The account block stays — it is not a
+   duplicate of anything below it. */
+@media (max-width: 60rem) {
+  .gr-doc-nav {
+    display: none;
+  }
+}
+
+/* Titles that carry arbitrary content break rather than overflow.
+ *
+ * A masthead, an article's title and a job's title are all set from copy the
+ * stylesheet has never seen — the next legal page or the next role could have
+ * a longer word than any that exist today. The type is sized so the longest
+ * word the site currently has fits, and this is the net under that: a word
+ * with nowhere to go breaks instead of running off the page.
+ *
+ * It costs nothing when nothing overflows, which is why it belongs on all
+ * three rather than on whichever one last caused trouble. */
+.gr-masthead-title,
+.gr-read-title,
+.gr-job-title {
+  overflow-wrap: break-word;
+}
+
+/* Stacked, a card's well takes the cover ratio like everything else.
+ *
+ * Its fixed 360px height exists to hold the titles of a row on one line when
+ * the cards beside each other are different widths. Below the wide tier they
+ * are not — they stack, or sit two-up at equal widths — so the constraint is
+ * gone and the well can be the same shape as every other cover. */
+.gr-root:not([data-tier="wide"]) .gr-story-well {
+  height: auto;
+  aspect-ratio: var(--cover-ratio);
+}
+
+/* Stacked, every gap between two stories is the same — and wider.
+ *
+ * On a wide screen these are two different things: row-gap separates cards
+ * INSIDE a row, and --card-gutter separates one row from the next. Stacked
+ * into a single column there are no rows left, only a run of cards — but the
+ * two measures carried on alternating, so the column ran 24px, 36px, 24px and
+ * read as pairs that had drifted together rather than as an even list.
+ *
+ * 2u for both, which is also more air than either had: a story is a picture
+ * with a title and a standfirst under it, and at 24px the next picture starts
+ * before the last one has finished being read. */
+.gr-root:not([data-tier="wide"]) .gr-story-row {
+  row-gap: calc(2 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-story-row + .gr-story-row {
+  margin-block-start: calc(2 * var(--u));
+}
+
+/* -- the homepage beam -----------------------------------------------------
+   Behind the fold's content and cropped by it. The cone's mouth is wider than
+   the page and its point sits just inside the right edge, so the layer spans
+   the whole module rather than the band.                                    */
+
+/* Runs HALF A SCREEN PAST the fold, and dissolves instead of ending.
+ *
+ * The canvas used to stop at the module's edge, and on the left — where the
+ * cone's mouth is at full strength — that edge was a hard horizontal cut,
+ * which read as a crop rather than as light. The container now overhangs the
+ * next section and a mask fades the last third to nothing, so the colour
+ * bleeds through the stories below and is gone before the footer.
+ *
+ * z-index -1, not 0: the overhang sits under the NEXT module's content, and a
+ * positioned element at z 0 would paint over that module's static text. At -1
+ * it drops behind all in-flow content while staying above the substrate's
+ * ground, because .gr-substrate isolates. */
+.gr-beam {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: calc(100% + 55vh);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+  mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
+}
+
+/* Stretched from a smaller buffer — see RESOLUTION in HeroBeam.tsx. The field
+   has no detail to lose, and the browser's own filtering does the smoothing
+   that a blur would otherwise be paying for. */
+.gr-beam-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The fold's content sits above it: both are in the same stacking context, so
+   without this the canvas paints over the title. */
+.gr-fold-centred {
+  position: relative;
+  z-index: 1;
+}
+
+/* -- the news row ----------------------------------------------------------
+   The homepage's three latest pieces, in the same three-card grid the
+   hardware page uses. The heading and its way-through share a line.        */
+
+.gr-news-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--u);
+  margin-block-end: calc(1.2 * var(--u));
+}
+
+/* On the homepage the cards are teasers under a heading that already frames
+   them — the title and the date carry it, and three standfirsts of different
+   lengths put the three dates on three different baselines. The Library
+   keeps its ledes; there the cards ARE the page. */
+.gr-news .gr-story-lede,
+.gr-news .gr-story-excerpt {
+  display: none;
+}
+
+.gr-bench-cost-tick {
+  position: absolute;
+  bottom: calc(0.5 * var(--u));
+  transform: translateX(-50%);
+  font-family: var(--font-code);
+  font-size: 10px;
+  color: var(--color-text-muted);
+  background: var(--color-code-surface);
+}
+
+.gr-bench-model-cost {
+  display: block;
+  font-family: var(--font-code);
+  font-size: 11px;
+  margin-top: 0.25em;
+}
+
+.gr-bench-subtitle {
+  font-size: var(--text-ui);
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
+/* Fade traffic inside the canvas so the cost line keeps full contrast. */
+.gr-fold:has(.gr-cost)::after {
+  display: none;
+}
+
+.gr-cost {
+  background: linear-gradient(to bottom, var(--color-code-surface) 65%, var(--color-substrate));
+  box-shadow: none;
+}
+
+/* Keep the docs layout and apply the website's type and color tokens. */
+.gr-model-catalog {
+  max-width: none;
+}
+
+.gr-model-catalog [data-model-table-frame] {
+  border-color: var(--color-rule);
+  border-radius: var(--radius);
+}
+
+.gr-model-catalog thead {
+  background: var(--color-code-surface);
+}
+
+.gr-model-catalog th {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  color: var(--color-text-muted);
+}
+
+.gr-model-catalog th,
+.gr-model-catalog tr {
+  border-color: var(--color-rule);
+}
+
+.gr-model-catalog td {
+  font-family: var(--font-code);
+  color: var(--color-text);
+}
+
+.gr-model-catalog strong {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.gr-model-catalog button {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  border-color: var(--color-rule);
+  border-radius: var(--radius);
+  color: var(--color-text-muted);
+}
+
+.gr-model-catalog button:hover {
+  border-color: var(--color-text);
+  color: var(--color-text);
+}

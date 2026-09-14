@@ -1,0 +1,950 @@
+/* ---------------------------------------------------------------------------
+   substrate + module — the layout system.
+
+   The substrate is a lattice of cells: dies on a wafer, not columns with
+   gutters. The entrance pries one cell open until what it housed is the page;
+   the resting state is that opened cell with the modules resting on it.
+   --------------------------------------------------------------------------- */
+
+.gr-substrate {
+  position: relative;
+  min-height: 100dvh;
+  background-color: var(--color-substrate);
+  isolation: isolate;
+  /* Seam lines are 100vw, which exceeds the content box when a scrollbar is
+     present. `clip` trims them without creating a scroll container. */
+  overflow-x: clip;
+}
+
+.gr-substrate-content {
+  position: relative;
+}
+
+/* -- the lattice -----------------------------------------------------------
+
+   Real elements, one per line. A tiled background is a single layer and can
+   only move as one piece; the opening displaces every line, so displacement
+   needs per-line elements.
+
+   Lines are anchored to the CELL (±(u/2 + k·u) from centre — see
+   Substrate.tsx), and the opening shoves each one outward by --shift-x, the
+   exact distance the cell's edge travels. The bounding lines therefore ride
+   the opening's edges, all lines keep their u-spacing as they move, and the
+   survivors land at module-edge ± k·u: the resting gutter lattice IS the
+   displaced lattice, not a swap.
+
+   The hairline is thinned by `scale`, not width: a layout box is snapped to
+   whole device pixels, so `width: 0.5px` still paints two device pixels on a
+   2dppx screen, while a scale is not snapped. `scale` and `translate` stay
+   individual properties because the draw animates scale while the opening
+   drives translate — combined in one `transform`, they would overwrite each
+   other instead of composing.                                                 */
+
+.gr-lattice {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* The opening operates on the first fold only, so its lattice is clipped to
+   it. Displaced lines are clipped away the moment they cross the fold's edge
+   rather than parking just beyond it — without this, the bottom-side
+   horizontal lines sit below the fold until the entrance ends, and scrolling
+   early catches them before they are removed. */
+.gr-lattice--open {
+  height: 100dvh;
+  bottom: auto;
+}
+
+.gr-line-v {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--color-grid);
+  transform-origin: top left;
+  scale: var(--hair-scale) 1;
+}
+
+/* Only the opening lattice is displaced; the resting lattice never moves. */
+.gr-lattice--open .gr-line-v {
+  translate: calc(var(--sign, 1) * var(--shift-x, 0px) * var(--t)) 0;
+}
+
+/* Horizontal lattice lines exist only during the entrance: every one is
+   displaced off screen by the opening — the top ones ride up with the cell's
+   top edge, the bottom ones exit below — which is why the resting page has no
+   horizontal lattice, only module seams. --ty is each side's travel, set per
+   line in Substrate.tsx because the bottom travel depends on page height. */
+.gr-line-h {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-grid);
+  transform-origin: top left;
+  scale: 1 var(--hair-scale);
+}
+
+.gr-lattice--open .gr-line-h {
+  translate: 0 calc(var(--sign, 1) * var(--ty, 0px) * var(--v));
+}
+
+/* -- module band -----------------------------------------------------------
+   Spacing lives in the band, never in the content. That is the property that
+   makes modules reorderable and swappable without touching anything inside
+   them. A module carries no outer margin of its own.                          */
+
+.gr-band {
+  position: relative;
+  width: var(--module-w);
+  margin-inline: auto;
+}
+
+/* The plate: what the opened cell reveals — the first fold's surface.
+
+   Clipped to the cell's current opening: one lattice cell at the start, the
+   full 100vw x 100dvh fold once open. --chip-half is u/2 + shift·t, the same
+   expression that displaces the lattice lines, which is what keeps the cell's
+   bounding lines exactly on the opening's edges throughout. The vertical
+   edges travel (50dvh - u/2) each way — the same distance the horizontal
+   lattice lines are pushed — so the top and bottom lines ride the edges too.
+
+   It exists only during the entrance: the hero module occupies the identical
+   region in the identical colour before the plate is removed. */
+.gr-plate {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100dvh;
+  background: var(--color-module);
+  pointer-events: none;
+
+  --chip-half: calc(var(--u) / 2 + var(--shift-x, 0px) * var(--t));
+
+  clip-path: inset(
+    calc((50dvh - var(--u) / 2) * (1 - var(--v)))
+    calc(50% - var(--chip-half))
+    calc((50dvh - var(--u) / 2) * (1 - var(--v)))
+    calc(50% - var(--chip-half))
+  );
+}
+
+/* Sections sit directly on the substrate and are separated by full-bleed
+   dividers rather than being panelled — one continuous surface with rules
+   across it, which is what lets a full-bleed element run between two sections
+   without a panel edge interrupting it. With no panel to define a section, the
+   space between them is the only thing doing that work, hence the generous
+   block padding. */
+.gr-module {
+  position: relative;
+  padding-block: calc(4.5 * var(--u));
+}
+
+/* The first fold is the exception: it is what the opening cell reveals and
+   what the plate hands over to, so it keeps a surface and its full height. */
+.gr-module--viewport {
+  background-color: var(--color-module);
+}
+
+/* Scribe lines. Each module draws its own top edge, and the last one also
+   draws its bottom — a seam is a property of the module rather than something
+   measured from it, so add, remove or reorder modules and the lines follow
+   with nothing to recompute.
+
+   The line bleeds to the viewport edges so it crosses the gutters, where it
+   meets the vertical lattice. */
+/* Dividers, not panel edges. Inset to the band so they read as rules on the
+   page rather than as the boundary of a box, and heavier than a seam because
+   they are now the only structure marking a section. */
+.gr-module::before,
+.gr-module:last-child::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: var(--module-w);
+  margin-left: calc(var(--module-w) / -2);
+  height: 1px;
+  background: var(--color-grid);
+  transform-origin: top left;
+  scale: 1 var(--hair-scale);
+}
+
+.gr-module::before {
+  top: 0;
+}
+
+/* Nothing precedes the fold, so it needs no divider. */
+.gr-module--viewport::before {
+  display: none;
+}
+
+/* The fold keeps the inset model. Sections below it sit flush to the band
+   because they have no panel around them, but the fold DOES have a surface —
+   so flush type would touch its edge. Folding the open layout into the base
+   dropped this and the hero silently moved 3u left. */
+.gr-module--viewport .gr-cols {
+  column-gap: 0;
+}
+
+.gr-module--viewport .gr-cols > * {
+  padding-inline: var(--pad);
+}
+
+.gr-module:last-child::after {
+  bottom: 0;
+}
+
+.gr-module-title {
+  padding-block-end: var(--pad);
+}
+
+/* -- full-bleed module -----------------------------------------------------
+   The surface spans the whole viewport; the content does not. The inner
+   wrapper puts the content back on the band grid, so type in a bled section
+   aligns with type in a banded one — only the ground extends. Same breakout
+   as the seam lines, so it needs nothing from the band's layout. */
+.gr-module--bleed {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.gr-module--bleed .gr-module-inner {
+  width: var(--module-w);
+  margin-inline: auto;
+}
+
+/* Pinned to the first fold: exactly the region the entrance reveals, so the
+   opened cell and this module are the same surface. */
+/* dvh, not vh: the opening's vertical travel is computed from
+   window.innerHeight in Substrate, which tracks the CURRENT viewport. vh is
+   the largest viewport, so on mobile the two disagree by the height of the
+   browser chrome and the plate stops short of the fold it is meant to fill. */
+.gr-module--viewport {
+  min-height: 100dvh;
+  display: grid;
+  align-content: center;
+}
+
+/* Row spacing inside a module is a whole unit, so stacked rows keep module
+   height on the lattice. */
+.gr-rows {
+  display: grid;
+  row-gap: calc(2 * var(--u));
+}
+
+/* -- columns ---------------------------------------------------------------
+   gap: 0 is deliberate. With a gap, N columns of a 48u module do not land on
+   whole units (3 cols with a 1u gap gives 15.33u each). With zero gap every
+   column boundary falls exactly on a lattice line, and separation comes from
+   the inset below instead.
+
+   It is truer to the metaphor too: adjacent dies are separated by a scribe
+   line, not by empty space.                                                   */
+
+.gr-cols {
+  display: grid;
+  grid-template-columns: repeat(var(--gr-cols, 2), 1fr);
+  column-gap: var(--pad);
+  row-gap: calc(2 * var(--u));
+}
+
+/* Columns are flush to the band with a real gutter between them. Without a
+   panel around the content, an inset would read as the text being indented
+   rather than as the panel having padding. One measure everywhere, at any
+   count: 2 col -> 540+72+540, 3 col -> 336 x3, 4 col -> 234 x4. */
+.gr-cols > * {
+  padding-inline: 0;
+}
+
+/* Compact as well as narrow. Three text columns inside 432px give each about
+   120px, which is one or two words a line — the column stops being a column
+   and becomes a stack of fragments. Below `mid` they go to one. */
+.gr-root[data-tier="narrow"] .gr-cols,
+.gr-root[data-tier="compact"] .gr-cols {
+  grid-template-columns: 1fr;
+  row-gap: var(--pad);
+}
+
+/* -- entrance --------------------------------------------------------------
+
+   One cell of the lattice is pried open: vertical edges pulled apart, then
+   top and bottom, until what the cell housed is the page. The opening
+   displaces the lattice rather than covering it.
+
+   Two registered properties drive everything — the plate's clip and every
+   line's displacement read the same values, which is what keeps the opening
+   edges and the lines they carry in exact lockstep:
+
+     --t   horizontal opening, 0 (one cell wide) to 1 (full viewport width)
+     --v   vertical opening,   0 (one cell tall) to 1 (full first fold, 100dvh)
+
+   Their registered initial-value is 1, so the resting page is fully open with
+   no declaration anywhere; .gr-substrate--entering animates them up from 0.
+   The same pair is the handle for page transitions later: closing a page is
+   these two values running back down.                                         */
+
+@property --t {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --v {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes gr-open-x {
+  from {
+    --t: 0;
+  }
+  to {
+    --t: 1;
+  }
+}
+
+@keyframes gr-open-y {
+  from {
+    --v: 0;
+  }
+  to {
+    --v: 1;
+  }
+}
+
+.gr-substrate--entering {
+  /* The lattice sequence is gone — see the note by the line animations. --t
+     and --v rest at their initial 1, so the substrate is simply open. */
+}
+
+/* The lattice materialises before the opening: each line draws along its own
+   axis, staggered outward from the cell (--i is distance from centre in
+   cells), so the grid appears to grow out of the chip it is about to reveal. */
+@keyframes gr-line-v-in {
+  from {
+    scale: var(--hair-scale) 0;
+  }
+  to {
+    scale: var(--hair-scale) 1;
+  }
+}
+
+@keyframes gr-line-h-in {
+  from {
+    scale: 0 var(--hair-scale);
+  }
+  to {
+    scale: 1 var(--hair-scale);
+  }
+}
+
+/* The exit: a drift outward and a fade, staggered like the draw.
+
+   Retracting by scale was the obvious mirror of the draw and it read badly —
+   a line shortening from one end is a different gesture from a line leaving,
+   and at the viewport edge it looked like the grid was being eaten.
+
+   `transform` rather than the `translate` property: the opening already owns
+   `translate` (see .gr-lattice--open below), and an animation on the same
+   property would override that displacement instead of adding to it. The
+   individual properties resolve before `transform`, so the two compose and
+   the line drifts on from wherever the opening left it. */
+@keyframes gr-line-v-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(calc(var(--sign, 1) * var(--entrance-line-drift)));
+  }
+}
+
+@keyframes gr-line-h-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(calc(var(--sign, 1) * var(--entrance-line-drift)));
+  }
+}
+
+/* Two animations per line: draw in, then retract.
+
+   The second is `forwards`, not `both`. With `both` its backwards fill would
+   apply from time zero — and since it is later in the list it would win —
+   pinning every line to `scale 1` and cancelling the draw entirely. With
+   `forwards` it holds nothing during its delay, so the draw's own forwards
+   fill carries the line until the retraction starts. */
+.gr-lattice--entering .gr-line-v {
+  /* NO LATTICE SEQUENCE. The grid lines used to draw themselves outward from
+     the centre and then retract, and everything else on the page waited for
+     them: --entrance-modules-lead was 2050ms, which is precisely the delay
+     before a reader could see anything. The design has moved away from the
+     grid as a motif, so the sequence goes and the leads collapse with it.
+
+     Every other entrance is untouched — the seam, the surface and type
+     resolve, the per-word titles, the fold's pieces, the showpiece's tilt and
+     the chip's. They now start immediately instead of queueing behind this. */
+}
+
+.gr-lattice--entering .gr-line-h {
+}
+
+@keyframes gr-seam-in {
+  from {
+    scale: 0 var(--hair-scale);
+  }
+  to {
+    scale: 1 var(--hair-scale);
+  }
+}
+
+/* The module's SURFACE fades in. This is not optional dressing: the first
+   module is 100dvh and painted in --color-module, so without it the surface is
+   opaque from the first frame and covers the lattice and the opening chip
+   entirely — the whole entrance plays underneath an unbroken panel. */
+@keyframes gr-surface-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* The module's CONTENT resolves out of a blur as it rises — type coming into
+   focus rather than sliding into place.
+ 
+   Split across two elements for two separate reasons: a filter on the module
+   itself would smear its own box edges against the seam line drawn at its top,
+   and opacity belongs to the surface above, so putting it here as well would
+   compound into a double fade. */
+@keyframes gr-type-in {
+  from {
+    filter: blur(var(--entrance-type-blur));
+    transform: translateY(var(--entrance-rise));
+  }
+  to {
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+/* A single word or line. Carries its own opacity, unlike gr-type-in — the
+   block-level resolve leaves opacity to the surface above it, but a piece has
+   to fade on its own or every word would be visible from the first frame. */
+@keyframes gr-piece-in {
+  from {
+    opacity: 0;
+    filter: blur(var(--entrance-type-blur));
+    transform: translateY(var(--entrance-rise));
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+/* Modules arrive top to bottom, one after another: each module's seam draws,
+   then the module itself settles in behind it. --gr-index is its position in
+   the stack, so the whole sequence is one delay expression. */
+.gr-module::before,
+.gr-module:last-child::after {
+  animation: gr-seam-in var(--entrance-seam) var(--ease-draw) both;
+  animation-delay: calc(
+    var(--entrance-modules-lead) + var(--gr-index, 0) *
+      var(--entrance-module-stagger)
+  );
+}
+
+/* One delay, shared by the module's surface, its content and any split text
+   inside it — so a piece added later starts from the same beat rather than
+   recomputing the chain and drifting. */
+.gr-module {
+  --module-delay: calc(
+    var(--entrance-modules-lead) + var(--entrance-seam-lead) +
+      var(--gr-index, 0) * var(--entrance-module-stagger)
+  );
+}
+
+.gr-module,
+.gr-module-inner {
+  animation-duration: var(--entrance-module);
+  animation-timing-function: var(--ease-response);
+  animation-fill-mode: both;
+  animation-delay: var(--module-delay);
+}
+
+.gr-module {
+  animation-name: gr-surface-in;
+}
+
+.gr-module-inner {
+  animation-name: gr-type-in;
+}
+
+.gr-split-part {
+  /* inline-block so the filter has a box to apply to, and so a word is never
+     broken across lines mid-resolve. */
+  display: inline-block;
+  animation: gr-piece-in var(--entrance-piece) var(--ease-response) both;
+  animation-delay: calc(
+    var(--module-delay, 0ms) + var(--i, 0) *
+      var(--stagger-piece, var(--stagger-word))
+  );
+}
+
+/* Outside the fold, the pieces keep the stagger and the rise but drop the
+   blur.
+
+   A fold hands the job over completely: it switches off the block-level
+   resolve so it can sequence title, standfirst and showpiece individually, and
+   each word there carries the full blur-and-rise itself. Every other module is
+   still resolving its content as one block, and that block includes this text
+   — so a word that also blurred would be blurred twice over the same window,
+   which compounds into mush.
+
+   Scoped this way round on purpose. The earlier rule suppressed the module's
+   content fade wherever it found split text, which reads as the tidier fix
+   until a masthead shares its module with a list or a card grid: suppressing
+   the fade to suit the title silently strips the entrance from everything
+   standing beside it. The title bends to the module, not the module to the
+   title. */
+.gr-module:not(.gr-module--fold) .gr-split-part {
+  animation-name: gr-piece-rise;
+}
+
+@keyframes gr-piece-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--entrance-rise));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.gr-split--line .gr-split-part {
+  --stagger-piece: var(--stagger-line);
+}
+
+/* Ambient and scroll-scrubbed assembly are exactly what triggers vestibular
+   problems. Reduced motion gets the assembled end state immediately: with the
+   animations off, --t and --v rest at their initial value of 1, so the page
+   is simply open. */
+@media (prefers-reduced-motion: reduce) {
+  .gr-substrate--entering,
+  .gr-lattice--entering .gr-line-v,
+  .gr-lattice--entering .gr-line-h,
+  .gr-module::before,
+  .gr-module:last-child::after,
+  .gr-module,
+  .gr-module-inner,
+  .gr-split-part {
+    animation: none;
+  }
+}
+
+/* -- footer ----------------------------------------------------------------
+   Link columns, then the chip-assembled wordmark as the page's last statement.
+   The wordmark spans the band's full width; the canvas inside it is sized by
+   WordmarkField to a whole number of chip steps, so the mark always lands on
+   the chip grid rather than being scaled to fit.                              */
+
+/* Mark at the band's left edge, four link columns packed against the right,
+   and a valley between them.
+
+   The valley is the single `1fr` track: every other track is sized to its
+   content or fixed, so the free space collects in one place instead of being
+   shared out.
+
+   No inline padding, unlike a normal module's columns: the mark sits flush to
+   the band's left edge and the last link column flush to its right, so both
+   line up with the wordmark spanning the full band below them. The footer
+   frames its own content by its outermost elements rather than by an inset. */
+.gr-footer-top {
+  display: grid;
+  /* Link tracks are sized to their content, not to a fixed width. A fixed
+     track is flush at its BOX edge while its text ends wherever it ends —
+     "Legal" is far narrower than its column, so a fixed last track leaves an
+     apparent gap at the right even though the grid itself is flush. With
+     max-content the text is the edge, and the consistent thing becomes the
+     gutter between columns rather than the column width. */
+  grid-template-columns: auto 1fr repeat(4, max-content);
+  /* --pad rather than a bare multiplier: the gutter between link columns is
+     the same measure as a module's inset, so the footer breathes at the same
+     rate as everything above it. The valley absorbs the difference, so
+     widening this narrows the valley rather than pushing anything off-edge. */
+  column-gap: var(--pad);
+}
+
+/* The valley is an empty track, so nothing auto-places into it: the first nav
+   is pinned past it and the rest flow on from there. Without this the four
+   navs fill tracks 2-5 — the first one landing in the valley — and the last
+   track is left empty, which reads as the links being off-centre rather than
+   packed right. */
+.gr-footer-top nav:first-of-type {
+  grid-column-start: 3;
+}
+
+.gr-footer-mark {
+  display: inline-flex;
+  align-items: start;
+  color: var(--color-text);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+/* Sized here rather than by the component's height prop, so it derives from
+   the lattice unit and scales with the tier like everything else. */
+.gr-footer-mark svg {
+  height: calc(2 * var(--u));
+  width: auto;
+}
+
+.gr-footer-mark:hover {
+  color: var(--color-interactive);
+}
+
+/* Below the wide tier the valley cannot hold: the mark takes its own row and
+   the links fall to two columns. */
+.gr-root:not([data-tier="wide"]) .gr-footer-top {
+  grid-template-columns: repeat(2, 1fr);
+  row-gap: calc(2 * var(--u));
+}
+
+/* Both of the footer's big vertical measures come in on a phone.
+ *
+ * They are sized in --u, which barely shrinks below the wide tier — 24px to
+ * 23px — so a gap tuned to sit under four columns of links on a 1152px page
+ * arrives almost unchanged under a 2x2 block on a 430px one, where it reads
+ * as the footer having come apart rather than as air.
+ *
+ * The lead above the wordmark halves; the room below the copyright comes down
+ * to the band's own inset, which is enough to end a page on. */
+.gr-root:not([data-tier="wide"]) {
+  --wordmark-lead: calc(3 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-footer {
+  padding-block-end: calc(2 * var(--u));
+}
+
+/* The pin comes off with the valley.
+ *
+ * There is no valley track to clear here, so `grid-column-start: 3` against a
+ * two-column grid did not place the first nav — it INVENTED a third column for
+ * it. Which is why the footer came out three tracks wide with Product sitting
+ * to the right of Developers and Company, and Legal alone underneath: the
+ * links were in neither document order nor a 2x2. */
+.gr-root:not([data-tier="wide"]) .gr-footer-top nav:first-of-type {
+  grid-column-start: auto;
+}
+
+.gr-root:not([data-tier="wide"]) .gr-footer-mark {
+  grid-column: 1 / -1;
+}
+
+/* Spacing above comes from the .gr-label + * rule in base.css, so every caps
+   label in the system leads its content by the same measure. */
+.gr-footer-links {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: calc(0.4 * var(--u));
+}
+
+/* A .gr-link, so the rule draws under it exactly as it does in body copy —
+   one hover gesture for every link on the site.
+
+   What it does NOT take is the arrow. The arrow marks a single onward action;
+   twelve of them stacked in a footer column is decoration, not signal. The
+   component is the rule and the ink, and the arrow is a child you pass when
+   the link is that kind of link.
+
+   Resting ink stays muted rather than interactive: a footer's twelve links are
+   a reference list, and colouring them all as live actions makes the column
+   shout louder than the page above it. The rule and the ink shift are what
+   answer the hover. */
+.gr-footer-link {
+  color: var(--color-text-muted);
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-footer-link:hover {
+  color: var(--color-interactive);
+}
+
+/* The canvas is exactly the mark: no overhang to position around, and nothing
+   to clip, now that the chips are static rather than falling into place. */
+.gr-wordmark-field {
+  margin-block-start: var(--wordmark-lead);
+  display: flex;
+  justify-content: center;
+}
+
+.gr-wordmark-field canvas {
+  pointer-events: none;
+}
+
+/* -- footer bar ------------------------------------------------------------
+   Copyright left, GMT clock centred, theme swatches right. Three tracks with
+   the outer two equal, so the clock is centred on the BAND rather than on
+   whatever the two flanking items happen to measure.                          */
+
+.gr-footer-bar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  margin-block-start: calc(3 * var(--u));
+  padding-block-start: calc(1.5 * var(--u));
+  border-top: 1px solid var(--color-rule);
+}
+
+.gr-footer-legal,
+.gr-footer-clock {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  color: var(--color-text-muted);
+}
+
+.gr-footer-clock {
+  justify-self: center;
+}
+
+/* -- theme swatches -------------------------------------------------------- */
+
+/* Four swatches in a row with a single circular indicator behind the active
+   one, sliding between positions.
+
+   Geometry all derives from --swatch-size: the gap equals the swatch, so the
+   step is twice it; the circle is exactly one step across and travels
+   index × step. The container's inline padding is half a swatch, so the
+   circle's overhang at either end sits inside the box rather than spilling
+   past the band edge. Resize the control by changing that one token.
+
+   The circle is the one form here that is not on the radius scale. It is
+   deliberate: it reads as an indicator passing behind the swatches rather than
+   as a container, and nothing else in the system should acquire a radius from
+   it. Conceptually it is the substrate showing through the module — which is
+   also why it takes the substrate colour and so inverts correctly per theme. */
+
+.gr-swatches {
+  position: relative;
+  display: flex;
+  align-items: center;
+  --swatch-step: calc(2 * var(--swatch-size));
+
+  gap: var(--swatch-size);
+  padding-inline: calc(0.5 * var(--swatch-size));
+  justify-self: end;
+}
+
+.gr-swatch-dot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: var(--swatch-step);
+  height: var(--swatch-step);
+  border-radius: 50%;
+  background: var(--color-substrate);
+  translate: calc(var(--active, 0) * var(--swatch-step)) -50%;
+  transition: translate var(--dur-base) var(--ease-response);
+}
+
+.gr-swatch {
+  position: relative;
+  z-index: 1;
+  width: var(--swatch-size);
+  height: var(--swatch-size);
+  padding: 0;
+  border: 1px solid var(--swatch-ink);
+  border-radius: var(--radius);
+  cursor: pointer;
+  /* Ground with its ink as the edge: the swatch previews the theme's PAIRING,
+     which is the thing actually being chosen. */
+  background: var(--swatch-ground);
+}
+
+.gr-swatch:focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-swatch-dot {
+    transition: none;
+  }
+}
+
+.gr-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Uncovered by clipping rather than by scaling: scaleY on text squashes the
+   glyphs instead of revealing them. */
+
+/* The field materialises before it opens, from the centre outward. */
+
+
+/* -- the hero's wave field -------------------------------------------------
+   A field of wavy lines drawn in characters, behind the fold's type.
+
+   Two motions, deliberately different speeds. The characters themselves are
+   redrawn on a 24s loop (see WaveField.tsx), and the whole field drifts one
+   character cell sideways over a longer one. The drift is what stops the
+   redraw reading as a flicker in place: without it the eye sees glyphs
+   changing, with it the eye sees a surface moving.
+
+   Both are ambient — untriggered, never appearing to complete — so they take
+   the ambient easing rather than the response family.                        */
+
+.gr-wavefield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  color: var(--color-grid);
+  /* The field is texture, not content: it sits under the type at a weight
+     that reads as ground. */
+  opacity: 0.55;
+  animation: gr-wavefield-drift var(--dur-wavefield-drift) linear infinite;
+}
+
+.gr-wavefield pre {
+  margin: 0;
+  font-family: var(--font-code);
+  font-size: calc(0.5 * var(--u));
+  line-height: 1.35;
+  white-space: pre;
+  /* Nudged off the edge so the drift never exposes a bare margin. */
+  padding-inline-start: calc(-1 * var(--wavefield-cell));
+}
+
+/* Exactly one cell, so the loop closes on the character grid rather than
+   part-way through a glyph. */
+@keyframes gr-wavefield-drift {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--wavefield-cell) 0;
+  }
+}
+
+/* The fold's content sits above the field. Both are in the same stacking
+   context, and a positioned element paints over unpositioned siblings
+   regardless of order — so the content has to be positioned too. */
+.gr-module--viewport .gr-cols {
+  position: relative;
+  z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-wavefield {
+    animation: none;
+  }
+}
+
+/* -- arriving on scroll ----------------------------------------------------
+   Modules below the first fold hold until they are approaching the viewport,
+   rather than joining the load stagger.
+
+   The load stagger is right for the fold and wrong for everything under it: a
+   section that animates at 2.4s while three screens down has spent its reveal
+   on nobody, and is already finished by the time it is reached. Worse on a
+   long page, where the stagger keeps running through content no one will see
+   for another minute.
+
+   The animation is the same shape as the entrance's, so a page reads as one
+   piece however its sections arrive.                                         */
+
+.gr-module--reveal {
+  /* Overrides the load-stagger animation this module would otherwise run. */
+  animation: none;
+  opacity: 0;
+  translate: 0 calc(0.75 * var(--u));
+  transition:
+    opacity var(--dur-base) var(--ease-response),
+    translate var(--entrance-module) var(--ease-response);
+}
+
+.gr-module--reveal .gr-module-inner {
+  animation: none;
+}
+
+.gr-module--seen {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* No hold and no travel: the content is simply there, which is what reduced
+   motion asks for. */
+@media (prefers-reduced-motion: reduce) {
+  .gr-module--reveal {
+    opacity: 1;
+    translate: 0 0;
+    transition: none;
+  }
+}
+
+/* Below the wide tier the bar becomes a stack and a control.
+ *
+ * Three items on one line at 430px leaves the clock squeezed between two
+ * things it has nothing to do with. So the two pieces of TEXT stack in one
+ * column — they are both statements about the company, read one after the
+ * other — and the picker sits to the right of them as the only thing here
+ * that does anything.
+ *
+ * Explicit rows rather than `order`: the copyright stays first in the
+ * document, which is its reading order, and the grid places it second without
+ * a screen reader hearing it second.
+ *
+ * Baseline, not centre: the picker's dots line up with a line of type rather
+ * than floating against the middle of a two-line block, which is what ties
+ * the control to the text beside it. */
+.gr-root:not([data-tier="wide"]) .gr-footer-bar {
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  row-gap: calc(0.4 * var(--u));
+  /* Closer under the wordmark, for the same reason as the lead above it: the
+     measure was set against a mark spanning 1152px, and it is spanning 431px
+     here. */
+  margin-block-start: calc(2 * var(--u));
+}
+
+.gr-root:not([data-tier="wide"]) .gr-footer-clock {
+  grid-area: 1 / 1;
+  justify-self: start;
+}
+
+.gr-root:not([data-tier="wide"]) .gr-footer-legal {
+  grid-area: 2 / 1;
+  justify-self: start;
+}
+
+/* On the copyright's row, not the clock's: the bar ends on that line, so the
+   control ending there too closes the block rather than hanging above it. */
+.gr-root:not([data-tier="wide"]) .gr-swatches {
+  grid-area: 2 / 2;
+  align-self: baseline;
+}

@@ -1,3 +1,4 @@
+import { CONSOLE_BASE_URL } from "../urls";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
@@ -132,7 +133,7 @@ const SiteHeader = (): ReactElement => {
           </a>
           <a
             className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-[1100px]:hidden"
-            href="https://console.gradiated.com/"
+            href={CONSOLE_BASE_URL}
             rel="noreferrer"
           >
             Log in
@@ -187,7 +188,7 @@ const SiteHeader = (): ReactElement => {
           </a>
           <a
             className={mobileMenuLinkClass}
-            href="https://console.gradiated.com/"
+            href={CONSOLE_BASE_URL}
             rel="noreferrer"
           >
             Log in

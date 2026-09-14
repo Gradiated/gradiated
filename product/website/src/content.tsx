@@ -21,112 +21,136 @@ export const notes: Note[] = articles
 export const ThesisContent = (): ReactNode => (
   <>
     <p>
-      AI is moving from software that responds to people, to software that keeps
-      working when nobody is there. As models get smarter and more applications
-      connect them to real-world work, the world is going to have a
-      near-insatiable demand for inference.
+      Intelligence is still extraordinarily early. Frontier labs claim
+      AGI, yet economic growth remains ordinary. The models exist; the products
+      and infrastructure that turn them into useful work mostly do not. The
+      engine may be running, but the car is not built.
     </p>
     <p>
-      Intelligence is comparable to the invention of electricity. Factories
-      initially replaced steam engines with electric motors to carry out the
-      same work at reduced cost. But once electricity became cheap enough, it
-      reorganized industry: refrigeration, elevators, radios, air conditioning,
-      and home appliances followed. Demand for power rose enormously. We think
-      there will be near-unlimited demand for inference—likely on a far more
-      dramatic scale, because of what AI can unlock. AI is still at the start of
-      this journey. In coding, for example, models mostly emulate a human
-      developer and generate lots of iterative pull requests. The overall design
-      of software products has not changed entirely, <em>yet</em>.
+      Most AI software still waits for a person to ask a question. That will
+      change. Software is becoming increasingly proactive: it can research, plan, use tools,
+      and keep working in the cloud for hours. This is logical because proactive software is objectively better than reactive, once users can trust it. As more real work moves into
+      these systems, demand for inference will be close to insatiable.
     </p>
     <p>
-      The first part of that transformation is longer-running work moving to the
-      cloud. Software is starting to shift from reactive to proactive: agents
-      can research, plan, use tools, and keep working for hours without a human
-      waiting for each response.
+      Electricity followed a similar path. Factories first replaced steam
+      engines with electric motors to do the same work more cheaply. Once power
+      became cheap and widely available, it reorganized industry and made
+      entirely new products possible. Intelligence will do the same, but only
+      when it becomes practical to use far more of it.
+    </p>
+    <h2>Inference should fit the work</h2>
+    <p>
+      Inference is usually sold as if every request has the same requirements.
+      It does not. A person waiting for an answer cares about latency. A cloud
+      task running for hours may care much more about accuracy, reliability, and
+      cost. Today developers compare providers, benchmarks, prices, and latency,
+      then commit to a compromise they cannot properly control.
     </p>
     <p>
-      Inference today is not built for those cloud tasks. They can run for hours
-      without human interaction and tolerate much higher latency. For them,{" "}
-      <em>efficiency</em> is the priority, not <em>latency</em>. Current
-      inference is poorly set up for this. Ask any developer and they will tell
-      you that everything is heading in this direction.
+      Gradiated provides inference designed for the workload. We turn its traces
+      into an RL environment, build the evals, and post-train an open model
+      automatically. The developer just changes the base URL. The result is a
+      model shaped around the work it actually performs, with direct control
+      over the tradeoff between latency and cost.
+    </p>
+    <h2>Open models are taking the market</h2>
+    <p>
+      Open-weight models are not merely growing with inference. They are taking
+      share from closed models. Between September 2025 and August 2026, their
+      share of OpenRouter tokens rose from 26% to 60% for requests originating
+      in the US and from 16% to 65% in the EU. Open models overtook closed
+      models in both regions in early 2026, according to OpenRouter&apos;s{" "}
+      <SiteLink href="https://openrouter.ai/blog/announcements/us-in-region-routing/">
+        regional usage data
+      </SiteLink>
+      .
     </p>
     <p>
-      Gradiated is a harness for this kind of work, with an API underneath.
-      Developers give the harness a task, tools, a budget, a deadline, and a
-      quality bar. It plans, runs, and revises the work; the API lets them
-      control the cost and latency tradeoffs beneath it. The goal is simple: use
-      the right model, at the right cost, for each part of the job.
+      That change is happening inside a market that is itself compounding.
+      <SiteLink href="https://openrouter.ai/blog/announcements/series-b/">
+        OpenRouter&apos;s weekly volume grew fivefold in six months
+      </SiteLink>
+      , from 5 trillion to 25 trillion tokens. By September 2026, nine of its
+      ten most used models by 30-day token volume were open-weight, according
+      to its <SiteLink href="https://openrouter.ai/data/">usage data</SiteLink>.
     </p>
     <p>
-      Our approach is to optimize every layer of the vertical stack. The product
-      is a developer tool—not infrastructure for its own sake, in the same way
-      Stripe is a developer tool rather than a fintech company. Underneath are
-      the software, infrastructure, and eventually chip design needed to make
-      those runs cheaper and more capable. As with any engineering task,
-      optimizing across the whole stack is how to win. Gradiated will go much
-      deeper from the start.
+      OpenRouter is one marketplace, not the whole market. But its direction is
+      hard to ignore. Open weights can be post-trained, measured, and served in
+      different ways. No single model will be best for every task simply because using a general purpose, many parameter model is less efficient to serve, and post-trained models frequently have better task-specific performance.
     </p>
-    <h2>Inference systems and hardware</h2>
+    <h2>Go all the way down</h2>
     <p>
-      We&apos;ve already made significant progress in inference systems
-      research. Take GLM 5.2 as an example. Today, inference is fundamentally
-      memory-bandwidth bound rather than compute-bound. In practice, only around
-      3% of the model&apos;s parameters are responsible for roughly 70% of the
-      computation during inference. That changes how you should think about
-      hardware design. Rather than building a general-purpose accelerator, you
-      can architect a chip specifically for this workload—for example, pairing
-      around 20GB of ultra-high-bandwidth memory dedicated to the hot working
-      set used in matrix multiplication with approximately 380GB of lower-cost
-      memory for the remaining parameters. By matching the memory hierarchy to
-      the model&apos;s access patterns, you dramatically reduce bandwidth
-      bottlenecks while substantially lowering the cost of inference.
+      Assume inference becomes a commodity. Reliability and trust are table
+      stakes, in the same way a gas station would go out of business near instantly if its fuel wasn't good enough for cars to use. Beyond that, the provider that can deliver the most useful
+      intelligence with the least wasted computation wins.
     </p>
     <p>
-      The optimal architecture changes as models evolve. A dense model like GLM
-      5.2 has very different requirements from a sparse mixture-of-experts model
-      such as Kimi K3, where only a subset of experts are active on each forward
-      pass. Those models benefit from different memory layouts, routing
-      mechanisms, interconnect topologies, and scheduling strategies. There is
-      unlikely to be a single &quot;best&quot; accelerator for every frontier
-      model.
+      At the extreme, that requires control of the whole stack. A model&apos;s architecture
+      determines its memory access. The runtime and kernels determine how much
+      of the hardware is used. Scheduling and infrastructure determine whether
+      expensive capacity sits idle. Eventually, the workload should determine
+      the silicon itself where possible.
     </p>
     <p>
-      This is why we&apos;re building a full end-to-end simulation environment
-      spanning both hardware and software. Instead of designing chips or
-      software in isolation, we can co-design compilers, runtimes, memory
-      hierarchies, and silicon around the model architectures we serve. The
-      simulator lets us explore architectural trade-offs before tape-out,
-      optimize across the entire stack, and rapidly adapt as new model
-      architectures emerge. Rather than chasing yesterday&apos;s workloads,
-      we&apos;re designing inference infrastructure that evolves alongside the
-      models themselves.
+      General-purpose accelerators must support almost anything. We do not need
+      to. Sparse mixture-of-experts models such as Kimi K3 activate only part of
+      the model for each forward pass. Their ideal memory layout, interconnect,
+      and scheduling are different from those of a dense model. A chip designed
+      around a small number of known model families can be simpler and much more
+      efficient than one designed around every possible model.
     </p>
     <p>
-      There will be challenges. Chip design is slow and the supply chain is
-      difficult. Software alone is enough to win right now, but getting the full
-      stack right is key to building a trillion-dollar company—at which point we
-      are directly competing with Nvidia.
+      We are building an end-to-end simulation environment so that software and
+      hardware can be designed together. It lets us test compilers, runtimes,
+      memory hierarchies, and silicon before tape-out, then change the design as
+      models and workloads change.
+    </p>
+    <h2>There is a boring way to do this</h2>
+    <p>
+      We start with a reliable inference service on existing GPUs. Real usage
+      tells us which models matter, how long requests run, what latency they
+      need, and where computation is wasted. We optimize those model families,
+      post-train them for customer workloads, and sell unused capacity through
+      marketplaces.
     </p>
     <p>
-      If Gradiated succeeds, exactly the right intelligence will be provided for
-      every task. That will make us the leading provider, because it means we
-      outperform every provider.
+      We do not need to guess at a chip on day one. The API collects its
+      requirements first. Once the workload is clear and the volume is there,
+      we can build a straightforward chip around the parts that matter. Then we
+      repeat the same process at the data-centre level.
     </p>
-    <p>So the plan is:</p>
+    <p>The sequence is:</p>
     <ul>
       <li>
-        Ship cheaper inference for cloud tasks with lower latency needs. Use
-        software to achieve this while making margin in the early days.
+        Use traces to build evals and RL environments, then post-train models for
+        the workload automatically. Provide trusted open-model inference with latency configurability as a by-product.
       </li>
       <li>
-        Build chips at scale to provide more inference flexibility than anyone
-        else can provide.
+        Optimize the model, runtime, kernels, scheduling, and infrastructure as
+        one system.
       </li>
       <li>
-        As we build expertise and distribution, expand into all of inference.
+        Turn the requirements learned from real demand into silicon and get to the scale where we can buy specialist chips if needed for workloads our own silicon cannot service.
+      </li>
+      <li>
+        Repeat, using the efficiency to drive more scale, to the point where we can get to data center scale and beyond. We will lose eventually if we do not go this deep.
       </li>
     </ul>
+    <h2>Why now</h2>
+    <p>
+      The model landscape is still moving, open weights have crossed from the
+      minority to the majority on a major marketplace, and no inference provider
+      has won the market. Distribution matters because scale lowers purchasing
+      costs, makes specialization worthwhile, and funds the next layer of the
+      stack. The market is open now. It will not remain open forever.
+    </p>
+    <p>
+      If Gradiated succeeds, every workload gets the intelligence it actually
+      needs: accurate, fast, and cheap, in the combination that matters for that
+      work. Ultimately, driving down tokens per joule we believe is the greatest impact we can have on mankind as it is the best way to empower every person and every system to research, build, understand and do more.
+    </p>
   </>
 );
 

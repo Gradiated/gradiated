@@ -1,0 +1,242 @@
+/* ---------------------------------------------------------------------------
+   brand — the palette itself, and the only place its values are written.
+
+   THE SYSTEM HAS TWO COLOUR LAYERS. This file is one of them.
+
+   1. BRAND (here). Seven families, the colours chosen for Gradiated. Muted and
+      close in chroma — kiln holds ~0.137 across its whole range — because they
+      have to sit together as a theme. Use them for surfaces, marks and
+      anything whose job is to look like this company.
+
+   2. FUNCTIONAL (Tailwind's defaults, left switched on). Twenty-five families
+      at eleven steps, already installed and maintained upstream. Use them for
+      meanings that are the same on every website: red for destructive, amber
+      for a warning, stone or taupe for neutral UI greys. These are far more
+      saturated than the brand range, and that is correct — a warning that does
+      not read as a warning is broken.
+
+      The test: would this colour mean the same thing on any site? Then it is
+      functional. Does it only make sense as Gradiated? Then it is brand.
+
+   3. Above both sit the ROLES in tokens.css — --color-module, --color-text,
+      --color-interactive. Roles are what components should reference: they
+      carry meaning and are what themes rebind, so UI built on them follows
+      every theme for free. Reach past a role only when you mean that exact
+      colour rather than that job.
+
+   NAMING. Two families are named away from the obvious word because Tailwind
+   already ships those names, and a collision would be silent: grove-600 would
+   be ours while grove-500 quietly resolved to Tailwind's. Taupe earth and the
+   sacred grove are the truer names anyway.
+
+   STEPS. Numbered on Tailwind's 50-950 scale, placed by measured lightness, so
+   a step number means the same thing here as it does anywhere. Gaps are
+   deliberate: there are only the colours that were designed, and none have
+   been interpolated to fill a scale.
+
+   Half-steps (350, 650, 750, 050, 150, 250) exist because the themes needed
+   them. They were literals written inside themes.css — eight of them — which
+   broke the rule that this file is the only place a colour value appears. Two
+   more turned out to be duplicates of steps already here, within a delta of
+   1.4 and 4.5, and were collapsed rather than added.
+
+   Declared inside @theme, which emits every value as a :root custom property
+   AND generates a utility from the same declaration, so --color-grove-600 and
+   bg-grove-600 cannot drift. `static` because Tailwind prunes theme variables
+   it cannot see used, and the reference page composes names at runtime.
+   --------------------------------------------------------------------------- */
+
+@theme static {
+
+  /* Neutrals, light. Ordered from white down, so the number is the step away
+     from white rather than a lightness coordinate — these are the achromatic
+     pair, not a tinted family. */
+  --color-light-000: #ffffff;
+  --color-light-050: #f8f8f8; /* L* 97.6 */
+  --color-light-100: #eeeeee;
+  --color-light-200: #dddddd;
+  --color-light-300: #cccccc;
+  --color-light-400: #bbbbbb;
+
+  /* Neutrals, dark. Ordered from black up, mirroring the light set.
+
+     050 sits between black and 100 because the Dark theme needs a ground that
+     is unmistakably dark without being pure black: at #000 the lattice has to
+     be lifted so far to be visible that it stops reading as a hairline, and
+     glass over it has nothing to blur. */
+  --color-dark-000: #000000;
+  --color-dark-050: #141414;
+  --color-dark-100: #222222;
+  --color-dark-150: #2e2e2e; /* L* 18.9 */
+  --color-dark-200: #444444;
+  --color-dark-250: #4a4e4f; /* L* 32.9, faintly green — the Dark rule */
+  --color-dark-300: #666666;
+  --color-dark-400: #888888;
+
+  /* Attic — earth through cut stone to pale limestone. The grounds.
+     Named for Taupe earth rather than "stone", which is a Tailwind family. */
+  --color-taupe-500: #94754f;
+  --color-taupe-400: #c8c1b4;
+  --color-taupe-350: #d5ccbb; /* L* 82.3 */
+  --color-taupe-300: #e7e2d6;
+  --color-taupe-200: #efece3;
+  --color-taupe-100: #f6f3ec; /* L* 95.9 */
+
+  /* Kiln — fired clay through to ochre. The brand's warm range; for UI
+     signalling use Tailwind's amber and red, which are built to be loud. */
+  --color-kiln-700: #883534;
+  --color-kiln-600: #b04742;
+  --color-kiln-500: #be5e31;
+  --color-kiln-300: #e9b748;
+
+  /* Grove — the sacred olive. Interaction lives here.
+     Named for the grove rather than "olive", which is a Tailwind family.
+
+     800 is the recessed surface of the Grove theme — the step the family was
+     missing, since 700 was its darkest and a theme needs two grounds. */
+  --color-grove-800: #232a17;
+  --color-grove-750: #2d3420; /* L* 20.5 */
+  --color-grove-700: #323c20;
+  --color-grove-650: #505e39; /* L* 37.9 */
+  --color-grove-600: #5e6043;
+  --color-grove-500: #838e70;
+  --color-grove-400: #7f917d;
+
+  /* Plum — the night sky over the Academy. */
+  --color-plum-800: #291e3a;
+  --color-plum-700: #413758;
+  --color-plum-500: #696585;
+  --color-plum-400: #8b87a4;
+
+  /* Aegean — water and distance. */
+  --color-aegean-700: #1f3b50;
+  --color-aegean-600: #39586e;
+  --color-aegean-500: #407486;
+  --color-aegean-400: #73959f;
+
+  /* Code — the syntax palette, carried over from the live site rather than
+     re-derived. It sits apart from the families above because a code block is
+     always dark whatever the theme, so these are chosen against one warm
+     near-black ground and never rebound.
+
+     Measured on --color-ink-000: text 15.88, muted 6.02, accent 8.23,
+     string 7.95. The set that preceded this was built from the brand families
+     and reached only 4.49 for muted and 4.73 for strings. */
+  --color-ink-000: #181713;
+  --color-ink-100: #f4f1e8;
+  --color-ink-muted: #92978f;
+  /* Comments on Grove. Its module is lighter than Dark's, so the shared muted
+     falls to 4.34 there; this reads 5.32. Not a brand olive — grove-500 and
+     grove-400 measure 3.74 and 3.85 on that ground, being the same hue as it. */
+  --color-ink-muted-lift: #a3a89d;
+  --color-ink-accent: #e0a45c;
+  --color-ink-string: #8fb5a3;
+
+  /* Faces. Sizes stay in tokens.css, beside the leading and tracking that make
+     them a role rather than a number. */
+  --font-title: "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Gradients sit outside @theme: they are not steps of a scale but pairs, and a
+   pairing is the design. Declared as complete backgrounds so the angle travels
+   with the colours — a gradient re-angled at the point of use is a different
+   image. */
+:root {
+
+  /* One per theme. Declared as complete backgrounds so the angle travels with
+     the colours — re-angled at the point of use it is a different image.
+
+     These were literals inside themes.css until now, which put colour values
+     outside this file. Named here so a theme references a token like everything
+     else does. */
+  /* Declared as STOPS, with the background composed from them, because the
+     stops are needed on their own: an SVG fill cannot take a CSS gradient, so
+     the logo's hover state reads these directly. Composing the background here
+     means the pair is still written once. */
+  --gradient-tide-from: #2a7688;
+  --gradient-tide-to: #c9c1b2;
+  --gradient-shallows-from: #2a7688;
+  --gradient-shallows-to: #f2b424;
+  --gradient-ember-from: #be3d3d;
+  --gradient-ember-to: #f2b424;
+  --gradient-dawn-from: #e8e2d5;
+  --gradient-dawn-to: #6a96a1;
+  --gradient-terrace-from: #e8e2d5;
+  --gradient-terrace-to: #808f6d;
+  --gradient-morning-from: #ffffff;
+  --gradient-morning-to: #808f6d;
+
+  --gradient-tide: linear-gradient(90deg, var(--gradient-tide-from) 0%, var(--gradient-tide-to) 100%);
+  --gradient-shallows: linear-gradient(90deg, var(--gradient-shallows-from) 0%, var(--gradient-shallows-to) 100%);
+  --gradient-ember: linear-gradient(90deg, var(--gradient-ember-from) 0%, var(--gradient-ember-to) 100%);
+  --gradient-dawn: linear-gradient(90deg, var(--gradient-dawn-from) 0%, var(--gradient-dawn-to) 100%);
+  --gradient-terrace: linear-gradient(90deg, var(--gradient-terrace-from) 0%, var(--gradient-terrace-to) 100%);
+  --gradient-morning: linear-gradient(90deg, var(--gradient-morning-from) 0%, var(--gradient-morning-to) 100%);
+}
+
+/* ---------------------------------------------------------------------------
+   Role utilities.
+
+   Declared with @utility rather than registered in @theme, because a role is a
+   REFERENCE, not a value: --color-module points at a ramp colour today and a
+   different one under each theme. @theme needs literal values to generate a
+   utility from, so putting roles there would mean copying their defaults and
+   letting the copy drift.
+
+   These emit var(--color-*) directly, so a themed page rebinds them for free:
+   `bg-module` is the correct surface on Default and on Dark alike, with no
+   dark-mode variant written anywhere.
+
+   Prefer these over ramp utilities in product UI. Reach for the ramp only when
+   a colour is chosen because it is that colour.
+   --------------------------------------------------------------------------- */
+
+@utility bg-substrate {
+  background-color: var(--color-substrate);
+}
+
+@utility bg-module {
+  background-color: var(--color-module);
+}
+
+@utility bg-interactive {
+  background-color: var(--color-interactive);
+}
+
+@utility bg-interactive-fill {
+  background-color: var(--color-interactive-fill);
+}
+
+@utility bg-inverse {
+  background-color: var(--color-inverse);
+}
+
+@utility text-ink {
+  color: var(--color-text);
+}
+
+@utility text-muted {
+  color: var(--color-text-muted);
+}
+
+@utility text-interactive {
+  color: var(--color-interactive);
+}
+
+@utility text-emphasis {
+  color: var(--color-emphasis);
+}
+
+@utility text-inverse {
+  color: var(--color-inverse);
+}
+
+@utility border-rule {
+  border-color: var(--color-rule);
+}
+
+@utility border-grid {
+  border-color: var(--color-grid);
+}

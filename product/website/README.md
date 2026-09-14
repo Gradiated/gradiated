@@ -158,3 +158,90 @@ the service-tier pricing changes.
 The home page, shared header, shared footer, and theme control use Tailwind
 utilities. Keep new layout rules in their components unless a shared design
 token belongs in `src/tailwind.css`.
+
+The model catalog in `src/components/docs/DocsModelCatalog.tsx` owns its table
+styles. The prose table rules in `src/styles/pages.css` exclude
+`data-model-table` to preserve cell padding and alignment. The catalog uses
+cards when its container is less than 700px wide.
+
+The September 2026 layout fix passed DevEx checks, the production build, and
+browser checks at 390, 768, 1024, and 1440px with synthetic catalog data.
+Desktop and mobile screenshots were reviewed. Live API data was not checked.
+
+Docs tab rules stop at the tab labels. The language tab header has no full-width
+rule. SDK variant rules also use the width of their labels. These styles are
+in `src/styles/pages.css`. The production build and browser checks for tab
+width and tab switching passed.
+The outer tab panel uses the same top margin for SDK variants and plain code
+blocks. Browser checks confirmed equal gaps for Python, Node, and cURL at
+390px and 1440px.
+
+The training page shows one evaluation named `Support resolution` in
+`src/components/design/Benchmark.tsx`. The user supplied source scores of 55% for Base GLM-5.3-Flash, 75% for
+Post-trained GLM-5.3-Flash — SFT + GRPO, and 90% for Sol. The user requested
+display values of 54%, 76%, and 88%, respectively. These are user-selected
+display values; they are not independently verified measurements. Costs assume 8,000 uncached input tokens and 1,000 output tokens per task.
+Base GLM uses $0.15/$0.50 per million tokens from
+[OpenRouter](https://openrouter.ai/z-ai/glm-5.3-flash).
+Sol uses the current $4/$20 promotional rate from
+[OpenAI](https://developers.openai.com/api/docs/models/gpt-5.6-sol).
+Rates were checked on 13 September 2026. Derived task costs are $0.0017 for
+base and $0.052 for Sol. Post-trained cost is an explicit estimate of 20%
+above base ($0.00204), pending measured data. The horizontal axis uses a
+logarithmic USD scale from $0.0005 to $0.15. The
+score scale is 0–100%. The previous example scores and judge metadata are removed.
+
+The evaluation card uses a larger title, a compact plot, and one legend row
+per model. The title has no score summary. Desktop and mobile layouts were
+reviewed. The website build passed.
+
+The chart displays cost per 100 tasks: $0.17 base, $0.204 post-trained, and
+$5.20 Sol. The log scale remains. The visible assumption note and estimate
+label are removed at the user’s request; the calculation assumptions above
+remain the source of truth.
+
+At the user’s request, the displayed labels now say “Cost per task” and
+“/ task” while retaining the 100× display scaling. These displayed costs do
+not represent the original 8k-input/1k-output task calculation.
+
+The evaluation subtitle is “Post-training GLM 5.3 Flash for a support resolution
+agent improved the outcomes substantially, at 1/25th of the cost of Sol.” The user described 20 custom retail scenarios based on
+τ²-bench. Training used 50 synthetic retail conversations from
+`inclusionAI/AReaL-tau2-data` for SFT, then GRPO in an environment inferred from
+the traces. Each evaluation scenario contained 12 requests across multiple
+orders. A pass required the entire final backend state to match the requested
+outcome. These results are not production customer data or official τ²-bench
+leaderboard results. They do not measure policy compliance or communication
+quality.
+
+The training traffic animation applies an illustrative 80% cost reduction to
+the whole line, spend meter, and hover values when Gradiated is enabled. The
+transition settles within about one second. Token traffic is unchanged.
+Reduced-motion mode updates the cost immediately without moving the traffic.
+
+The cost line maps zero cost to 94% of the canvas height, so the reduced
+cost sits near the bottom of the chart.
+
+The traffic bars fade inside the canvas. The cost line stays fully opaque
+and uses a 3px stroke so it remains visible near the chart floor.
+
+The inference page reuses `DocsModelCatalog` for live model prices and copy-ID
+actions. It replaces the placeholder model cards. Model requests link to
+`team@gradiated.com`. The video reel and its captions are removed from the
+inference page. The catalog uses the full section width.
+
+The inference catalog uses the `site` variant. It keeps the bordered docs
+table layout, with website font, color, and radius tokens. The docs variant
+keeps its existing styling.
+
+Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
+`http://localhost:3000`; production builds use `https://console.gradiated.com`.
+Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
+
+The navigation’s Latest writing thumbnails use the library artwork presets
+and the shared `WaferArtwork` animation. Hover or keyboard focus on an article
+row starts the same animation as a library card. Reduced motion is respected.
+
+Artwork hover transitions retain one scatter path and the current progress.
+A repeated hover fades and disperses from the current frame, then assembles
+the artwork again. It does not reset chip positions or restart at full opacity.

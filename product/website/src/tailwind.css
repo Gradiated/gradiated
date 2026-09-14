@@ -1,4 +1,11 @@
 @import "tailwindcss/theme.css";
+
+/* The brand palette and its Tailwind registration compile in the SAME CSS root
+   as the utilities layer, and BEFORE it: Tailwind generates utilities at the
+   point utilities.css is imported, so a theme declared after that point
+   registers variables but produces no classes. */
+@import "./styles/brand.css";
+
 @import "tailwindcss/utilities.css";
 
 @theme {
@@ -8,11 +15,24 @@
   --container-copy: 520px;
   --container-api: 430px;
   --container-api-title: 600px;
-  --color-paper: var(--paper);
-  --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-accent: var(--accent);
+  /* The legacy palette, pointed at the system's roles.
+   *
+   * --paper, --ink, --muted and --line are declared in the root-level sheets
+   * legacy.css imports, as FIXED colours: ink is #1c1b18 whatever the theme.
+   * Every legacy component still in service reads them through these Tailwind
+   * names — the docs' model catalogue, the account block, the code tabs — so
+   * on the dark theme they were painting near-black text on a near-black
+   * ground. Visible on taupe by luck rather than by design.
+   *
+   * Mapped here rather than in each component: they are all inside .gr-root
+   * now, so the roles resolve, and one line covers every utility any of them
+   * uses. The fixed values stay where they are for anything that still reads
+   * the bare variables. */
+  --color-paper: var(--color-substrate);
+  --color-ink: var(--color-text);
+  --color-muted: var(--color-text-muted);
+  --color-line: var(--color-rule);
+  --color-accent: var(--color-interactive);
   --color-earth: var(--earth);
   --color-soft: var(--soft);
   --font-newsreader: Newsreader, Georgia, serif;

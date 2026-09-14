@@ -5,6 +5,11 @@ import {
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 
+import { createGlm53FlashModelConfiguration } from "../src/operations/glm-5-3-flash-model.js";
+import { createDeepseekV41FlashSeedModel } from "./seed-models.js";
+
+const includeLocalQwen = process.env.SEED_LOCAL_QWEN === "1";
+
 const apiUrl = process.env.SEED_API_URL ?? "http://127.0.0.1:3001";
 const consoleUrl = process.env.SEED_CONSOLE_URL ?? "http://localhost:3000";
 const databaseUrl =
@@ -77,34 +82,42 @@ const authenticate = async (): Promise<string> => {
   return cookie;
 };
 
-await waitForApi();
-const cookie = await authenticate();
-const me = await fetch(`${apiUrl}/api/v1/me`, { headers: { Cookie: cookie } });
-if (!me.ok)
-  throw new Error(`Current-user lookup failed with status ${me.status}`);
-
-const currentUser = (await me.json()) as {
-  id: string;
-  organizations: Array<{ id: string }>;
-};
-let organizationId = currentUser.organizations[0]?.id;
-if (currentUser.organizations.length === 0) {
-  const organization = await fetch(`${apiUrl}/api/v1/organizations`, {
-    method: "POST",
-    headers: { Cookie: cookie, "Content-Type": "application/json" },
-    body: JSON.stringify({ name: organizationName }),
+const catalogOnly = process.env.SEED_CATALOG_ONLY === "1";
+let organizationId: string | undefined;
+let createdBy: string | undefined;
+if (!catalogOnly) {
+  await waitForApi();
+  const cookie = await authenticate();
+  const me = await fetch(`${apiUrl}/api/v1/me`, {
+    headers: { Cookie: cookie },
   });
-  if (!organization.ok) {
-    throw new Error(
-      `Organization seed failed with status ${organization.status}`,
-    );
-  }
-  const created = (await organization.json()) as { id: string };
-  organizationId = created.id;
-  console.log(`Seeded ${email} with organization ${organizationName}`);
-}
+  if (!me.ok)
+    throw new Error(`Current-user lookup failed with status ${me.status}`);
 
-if (!organizationId) throw new Error("Seed organization identity is missing");
+  const currentUser = (await me.json()) as {
+    id: string;
+    organizations: Array<{ id: string }>;
+  };
+  organizationId = currentUser.organizations[0]?.id;
+  createdBy = currentUser.id;
+  if (currentUser.organizations.length === 0) {
+    const organization = await fetch(`${apiUrl}/api/v1/organizations`, {
+      method: "POST",
+      headers: { Cookie: cookie, "Content-Type": "application/json" },
+      body: JSON.stringify({ name: organizationName }),
+    });
+    if (!organization.ok) {
+      throw new Error(
+        `Organization seed failed with status ${organization.status}`,
+      );
+    }
+    const created = (await organization.json()) as { id: string };
+    organizationId = created.id;
+    console.log(`Seeded ${email} with organization ${organizationName}`);
+  }
+
+  if (!organizationId) throw new Error("Seed organization identity is missing");
+}
 
 const { database, pool } = createControlDatabase(databaseUrl);
 const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });
@@ -114,75 +127,88 @@ try {
     database,
     createValkeyServingProjector(valkey),
   );
-  await catalogBilling.upsertModel({
-    id: "mlx-community/qwen3-0.6b-4bit",
-    name: "Qwen3 0.6B 4-bit",
-    status: "available",
-    properties: {
-      description:
-        "Pinned small local-development model served with zero prompt and response retention.",
-      released_at: "2025-04-29T00:00:00.000Z",
-      hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
-      quantization: "int4",
-      tokenizer: "Qwen3",
-      input_modalities: [
-        {
-          type: "text",
-          supported_inputs: {
-            max_context_length: { value: 32_768, unit: "token" },
-          },
-          pricing: [
-            { type: "prompt", unit: "token", cost: 100 },
-            { type: "cached_prompt", unit: "token", cost: 50 },
-          ],
-        },
-      ],
-      output_modalities: [
-        {
-          type: "text",
-          max_length: { value: 4_096, unit: "token" },
-          supported_parameters: {
-            max_tokens: {
-              type: "integer",
-              min: 1,
-              max: 4_096,
-              unit: "token",
+  await catalogBilling.upsertModel(createDeepseekV41FlashSeedModel());
+  await catalogBilling.upsertModel(createGlm53FlashModelConfiguration());
+  if (includeLocalQwen) {
+    await catalogBilling.upsertModel({
+      id: "mlx-community/qwen3-0.6b-4bit",
+      name: "Qwen3 0.6B 4-bit",
+      status: "available",
+      properties: {
+        description:
+          "Pinned small local-development model served with zero prompt and response retention.",
+        released_at: "2025-04-29T00:00:00.000Z",
+        hugging_face_id: "mlx-community/Qwen3-0.6B-4bit",
+        quantization: "int4",
+        tokenizer: "Qwen3",
+        input_modalities: [
+          {
+            type: "text",
+            supported_inputs: {
+              max_context_length: { value: 32_768, unit: "token" },
             },
-            temperature: { type: "range", min: 0, max: 2 },
+            pricing: [
+              { type: "prompt", unit: "token", cost: 100 },
+              { type: "cached_prompt", unit: "token", cost: 50 },
+            ],
           },
-          pricing: [{ type: "completion", unit: "token", cost: 300 }],
-        },
-      ],
-    },
-  });
-  await catalogBilling.upsertModelDeployment({
-    id: "0198c36f-9b6a-7000-8000-000000000004",
-    modelId: "mlx-community/qwen3-0.6b-4bit",
-    status: "available",
-    provider: "local",
-    region: "local",
-    faultDomain: "local:runtime-1",
-    serviceUrl: "http://127.0.0.1:30000",
-    release: {
-      schema_version: 1,
-      runtime_revision: "8bb106cee94c1ccb5625cdb78ef0ee3e0cad3918",
-      model_path: "mlx-community/Qwen3-0.6B-4bit",
-      model_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
-      tokenizer_path: "mlx-community/Qwen3-0.6B-4bit",
-      tokenizer_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
-    },
-  });
-  await catalogBilling.initializeCurrentAccount(organizationId);
-  await catalogBilling.applyBalanceTransaction({
-    organizationId,
-    type: "credit",
-    amount: 100_000_000_000n,
-    sourceType: "operator",
-    sourceId: `local-development-credit-v1:${organizationId}`,
-    createdBy: currentUser.id,
-  });
+        ],
+        output_modalities: [
+          {
+            type: "text",
+            max_length: { value: 4_096, unit: "token" },
+            supported_parameters: {
+              max_tokens: {
+                type: "integer",
+                min: 1,
+                max: 4_096,
+                unit: "token",
+              },
+              temperature: { type: "range", min: 0, max: 2 },
+            },
+            pricing: [{ type: "completion", unit: "token", cost: 300 }],
+          },
+        ],
+      },
+    });
+    await catalogBilling.upsertModelDeployment({
+      id: "0198c36f-9b6a-7000-8000-000000000004",
+      modelId: "mlx-community/qwen3-0.6b-4bit",
+      status: "available",
+      provider: "local",
+      region: "local",
+      faultDomain: "local:runtime-1",
+      serviceUrl: "http://127.0.0.1:30000",
+      release: {
+        schema_version: 1,
+        runtime_revision: "8bb106cee94c1ccb5625cdb78ef0ee3e0cad3918",
+        model_path: "mlx-community/Qwen3-0.6B-4bit",
+        model_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
+        tokenizer_path: "mlx-community/Qwen3-0.6B-4bit",
+        tokenizer_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
+      },
+    });
+  } else {
+    const qwen = (await catalogBilling.listModels()).find(
+      (model) => model.id === "mlx-community/qwen3-0.6b-4bit",
+    );
+    if (qwen) await catalogBilling.upsertModel({ ...qwen, status: "retired" });
+  }
+  if (organizationId && createdBy) {
+    await catalogBilling.initializeCurrentAccount(organizationId);
+    await catalogBilling.applyBalanceTransaction({
+      organizationId,
+      type: "credit",
+      amount: 100_000_000_000n,
+      sourceType: "operator",
+      sourceId: `local-development-credit-v1:${organizationId}`,
+      createdBy,
+    });
+  }
   console.log(
-    `Seed data ready for ${email}: ${organizationName}, local Qwen and $100.00 credit`,
+    catalogOnly
+      ? "Local model catalog updated"
+      : `Seed data ready for ${email}: ${organizationName}, DeepSeek V4.1 Flash, GLM-5.3 Flash and $100.00 credit`,
   );
 } finally {
   if (valkey.isOpen) await valkey.quit();

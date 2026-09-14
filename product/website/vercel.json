@@ -37,7 +37,22 @@
       "permanent": true
     }
   ],
+  "rewrites": [
+    {
+      "source": "/style/",
+      "destination": "/index.html"
+    }
+  ],
   "headers": [
+    {
+      "source": "/style/",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex"
+        }
+      ]
+    },
     {
       "source": "/assets/(.*)",
       "headers": [

@@ -1,0 +1,448 @@
+/* ---------------------------------------------------------------------------
+   reference-page scaffolding — the section rail, the device preview and the
+   theme specimens.
+
+   Chrome for /style/, not part of the system it documents. The layout variants
+   that used to live here are gone: Open won, so its rules are the base styles
+   in substrate.css rather than an override, and the grid and ascii lattices
+   they needed have been deleted with them.
+   --------------------------------------------------------------------------- */
+
+/* -- the reference shell --------------------------------------------------
+   A two-pane screen that pins below the fold. The fold scrolls normally
+   because it is a statement; everything after it is a tool, so it behaves
+   like one — the index stays put and the content pane moves rather than the
+   page growing to the length of every specimen stacked end to end.
+
+   The run is the scroll budget the pin spends: one viewport for the shell
+   itself, plus --book-run, which Storybook.tsx sets to the pane's scrollable
+   distance. Sticky needs a taller ancestor to travel inside, and this is it —
+   the run's extra height is precisely what the reader scrolls through while
+   the shell holds still.
+
+   Before the script measures, --book-run is 0 and the run is a single
+   viewport: the shell renders at its natural size and simply does not pin.   */
+
+.gr-book-run {
+  height: calc(100dvh + var(--book-run, 0px));
+  /* Both edges of the full-bleed pull, so the run is as wide as the shell it
+     contains and nothing overflows the page horizontally. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+}
+
+.gr-book {
+  position: sticky;
+  top: 0;
+  display: grid;
+  grid-template-columns: calc(11 * var(--u)) 1fr;
+  height: 100dvh;
+  border-top: 1px solid var(--color-rule);
+  transition: grid-template-columns var(--dur-base) var(--ease-response);
+}
+
+.gr-book--collapsed {
+  grid-template-columns: calc(2.5 * var(--u)) 1fr;
+}
+
+.gr-book-aside {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--color-rule);
+  overflow: hidden;
+}
+
+/* The control and the label are one line of chrome, so they sit on one
+   baseline grid: same box height, same optical centre. The head's inline
+   padding is set on the label rather than the row, so the glyph can carry a
+   hit area wider than itself without pushing the text off the rail's
+   alignment. */
+.gr-book-aside-head {
+  display: flex;
+  align-items: center;
+  padding-block: calc(0.75 * var(--u));
+  padding-inline-end: calc(0.75 * var(--u));
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-book--collapsed .gr-book-aside-head .gr-label,
+.gr-book--collapsed .gr-book-index {
+  display: none;
+}
+
+/* A glyph, not a button. Boxed, it was a second weight class next to a caps
+   label and sat taller than the line it shared — the border was doing nothing
+   the hover state does not do better. The square is sized to the caps line so
+   the two share a centre exactly. */
+.gr-book-collapse {
+  display: grid;
+  place-items: center;
+  /* Exactly the rail's inline padding, and it IS that padding: the glyph
+     hangs in the gutter so the label starts where every group title and link
+     below it starts. One left edge down the whole rail. */
+  width: calc(0.75 * var(--u));
+  height: 1.25rem;
+  flex: none;
+  font-family: var(--font-code);
+  font-size: var(--text-caps);
+  line-height: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-response);
+}
+
+.gr-book-collapse:hover {
+  color: var(--color-text);
+}
+
+/* The index scrolls on its own, so a long list never pushes the collapse
+   control out of reach. */
+.gr-book-index {
+  overflow-y: auto;
+  padding: calc(0.75 * var(--u)) 0;
+  /* Takes the free space so the escape links below sit at the foot of the
+     rail rather than floating under the last section. */
+  flex: 1;
+}
+
+/* Explicit ways out. Chaining works, but it means scrolling the whole pane to
+   reach the footer — these are the short path. */
+/* Block padding only. These are .gr-book-link like the sections above, and
+   the link carries its own inline padding — adding the container's on top put
+   them at twice the rail's inset and broke the one left edge. */
+.gr-book-exits {
+  display: grid;
+  gap: 1px;
+  padding-block: calc(0.75 * var(--u));
+  border-top: 1px solid var(--color-rule);
+}
+
+.gr-book--collapsed .gr-book-exits {
+  display: none;
+}
+
+.gr-book-index ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gr-book-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: calc(0.4 * var(--u)) calc(0.75 * var(--u));
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease-response),
+    background var(--dur-fast) var(--ease-response);
+}
+
+.gr-book-link:hover {
+  color: var(--color-text);
+}
+
+.gr-book-link[aria-current="true"] {
+  background: var(--color-text);
+  color: var(--color-inverse);
+}
+
+/* Not a scroller. The pane's position is driven entirely by the page's scroll
+   offset while the shell is pinned (see Storybook.tsx), and a pane that also
+   answered the wheel would fight the page for the same gesture — two
+   scrollers, one input, positions drifting apart. Hidden rather than clipped
+   because the pin still needs to set scrollTop programmatically.
+
+   This is also why the reader can never be trapped: the only scroller is the
+   window, so the fold above and the footer below are always one gesture away
+   in the direction you would expect. */
+.gr-book-pane {
+  overflow-y: hidden;
+  padding: calc(2 * var(--u)) calc(2 * var(--u)) calc(6 * var(--u));
+}
+
+/* -- a specimen ------------------------------------------------------------
+   What it looks like, how to use it, what to know. A specimen alone leaves
+   someone guessing at the markup; markup alone leaves them guessing at the
+   constraints.                                                                */
+
+.gr-spec {
+  max-width: calc(40 * var(--u));
+  margin-inline: auto;
+  /* So a spec can ask about its own width — see the colour families below. */
+  container-type: inline-size;
+  padding-block-end: calc(3 * var(--u));
+  margin-block-end: calc(3 * var(--u));
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-spec:last-child {
+  border-bottom: none;
+}
+
+.gr-spec-head {
+  margin-block-end: var(--u);
+  max-width: 62ch;
+}
+
+/* No panel. Specimens sit directly on the page's ground, like every other
+   section — a bordered box around each would put back exactly the nesting the
+   open layout removed, and it would also lie: a component shown on a tinted
+   panel is not being shown on the surface it will actually live on. */
+.gr-spec-demo {
+  padding-block: var(--u);
+}
+
+.gr-spec-notes {
+  margin-block-start: calc(0.5 * var(--u));
+  font-family: var(--font-body);
+  font-size: var(--text-note);
+  line-height: var(--leading-note);
+  letter-spacing: var(--tracking-note);
+  color: var(--color-text-muted);
+}
+
+.gr-spec .gr-codeblock {
+  margin-block-start: var(--u);
+}
+
+/* -- theme specimens -------------------------------------------------------
+   Cards on the column grid, so a family reads as a set rather than a list.    */
+
+.gr-theme-cards {
+  margin-block-start: var(--u);
+}
+
+/* Bounded, always. A card whose ground is close to the page's — taupe-1 is
+   #f0ece2 on a #efece3 page — has no visible edge otherwise, and dissolves.
+   The border takes the theme's own rule colour so it belongs to the card.
+
+   This is presentation of the specimen, not part of the theme. A taupe-1
+   section on a taupe page has the same problem for real and wants a deliberate
+   answer there. */
+.gr-theme-card {
+  background: var(--color-substrate);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  /* Clips the surface band to the card's corners when a radius is applied. */
+  overflow: hidden;
+}
+
+/* surface-2 as itself. The second surface may not appear anywhere in a
+   rendered card, so inferring it from the specimen is guesswork. */
+.gr-theme-surface {
+  height: calc(3 * var(--u));
+  background: var(--color-module);
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-theme-body {
+  padding: var(--u);
+}
+
+.gr-theme-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(0.5 * var(--u));
+  margin-block-start: var(--u);
+}
+
+/* Buttons keep their own colours across every theme — a primary action stays
+   findable rather than blending into whatever ground it lands on. */
+.gr-button--main {
+  background: var(--color-button-main);
+  color: var(--color-button-main-ink);
+}
+
+.gr-button--secondary {
+  background: var(--color-button-secondary);
+  color: var(--color-button-secondary-ink);
+}
+
+.gr-theme-rule {
+  border: none;
+  border-top: 1px solid var(--color-rule);
+  margin-block: var(--u);
+}
+
+
+
+.gr-theme-gradient {
+  border-radius: var(--radius);
+  height: calc(2 * var(--u));
+  margin-block: var(--u);
+  background: var(--gradient-theme);
+  display: flex;
+  align-items: center;
+  padding-inline: calc(0.6 * var(--u));
+}
+
+/* A fixed light ink on the saturated pairings, where a blend would invert to
+   the stop's complement and tint the label. See ThemeGallery.tsx. */
+.gr-theme-gradient-name {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-light-000);
+}
+
+/* Near-neutral stops invert to near-neutral ink, so the blend reads as a
+   colour rather than as an effect — and it is the only thing legible on a
+   pale ramp, where every light ink disappears. */
+.gr-theme-gradient-name--blend {
+  mix-blend-mode: difference;
+}
+
+/* -- colour chips ----------------------------------------------------------
+   Small circles rather than blocks. A block of colour reads as a surface you
+   could put something on; a chip reads as a value in a set, which is what the
+   ramp actually is.
+
+   The circle is the second deliberate exception to the system's square
+   corners, after the theme indicator — both are markers rather than containers,
+   and nothing that holds content should take a radius from either.           */
+
+/* Two columns: seven families of five chips is a lot of vertical distance for
+   very little ink, and a family occupies nowhere near the text measure the
+   rest of a spec is set to. Falls to one column when the pane is too narrow to
+   hold two families side by side. */
+.gr-swatch-families {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(1.5 * var(--u)) calc(2 * var(--u));
+}
+
+@container (max-width: 640px) {
+  .gr-swatch-families {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.gr-chips {
+  list-style: none;
+  margin: calc(0.5 * var(--u)) 0 0;
+  padding: 0;
+  display: flex;
+  gap: var(--u);
+}
+
+.gr-chips li {
+  display: grid;
+  justify-items: center;
+  gap: calc(0.25 * var(--u));
+}
+
+.gr-chip {
+  display: block;
+  width: calc(1.25 * var(--u));
+  height: calc(1.25 * var(--u));
+  border-radius: 50%;
+  /* A hairline keeps white and near-white chips visible on a light ground —
+     without it the first step of the light family disappears entirely. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent);
+}
+
+.gr-chip-label {
+  font-family: var(--font-code);
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+/* "Terrace as seen in taupe-1", as one line rather than a name with labels
+   stacked under it. Baseline-aligned, not centre-aligned: the label is caps
+   and the badge has a border, so centring lines up their BOXES and leaves the
+   lettering visibly off from the connecting words. The badge is the existing
+   component — a second way of marking the same kind of thing is how a system
+   starts to disagree with itself. */
+.gr-gradient-meta {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: calc(0.35 * var(--u));
+  margin: calc(0.5 * var(--u)) 0 0;
+}
+
+.gr-gradient-seen {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* Radius preview, above the escape links. */
+.gr-book-controls {
+  display: grid;
+  gap: calc(0.4 * var(--u));
+  padding: calc(0.75 * var(--u));
+  border-top: 1px solid var(--color-rule);
+}
+
+.gr-book--collapsed .gr-book-controls {
+  display: none;
+}
+
+
+/* Radius scale control. */
+.gr-radius-control {
+  display: flex;
+  align-items: center;
+  gap: calc(0.5 * var(--u));
+}
+
+.gr-radius-range {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-text);
+}
+
+.gr-radius-value {
+  font-family: var(--font-code);
+  font-size: var(--text-caps);
+  color: var(--color-text-muted);
+  min-width: 3ch;
+  text-align: right;
+}
+
+/* -- index groups ----------------------------------------------------------
+   The rail is two runs, not one list: what the system is made of, then what
+   is made from it. Without the headings that ordering is just a sequence
+   someone has to infer.                                                      */
+
+.gr-book-group + .gr-book-group {
+  margin-block-start: calc(0.75 * var(--u));
+}
+
+.gr-book-group-title {
+  padding: calc(0.4 * var(--u)) calc(0.75 * var(--u));
+  color: var(--color-text);
+  opacity: 0.45;
+}
+
+/* -- a part ----------------------------------------------------------------
+   A subsection of a spec. Separated by space alone — a rule here would compete
+   with the one closing the spec itself and flatten the hierarchy back out.    */
+
+.gr-part {
+  margin-block-start: calc(2 * var(--u));
+}
+
+.gr-part-notes {
+  margin-block-start: calc(0.4 * var(--u));
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  line-height: var(--leading-body);
+  color: var(--color-text-muted);
+  max-width: 62ch;
+}

@@ -1,0 +1,470 @@
+/* ---------------------------------------------------------------------------
+   components — the product surface.
+
+   Everything here is a FIRST PASS, present so it can be designed rather than
+   discovered missing halfway through a build. Each one is built on roles, so
+   it already follows every theme and theme; what it does not yet have is
+   considered proportion, state design or personality.
+
+   Shared rules: no radius, roles never literals, sizes from --u, motion from
+   the response family, and every interactive element has a visible focus ring
+   because keyboard users are not a later pass.
+   --------------------------------------------------------------------------- */
+
+/* -- fields ---------------------------------------------------------------- */
+
+.gr-field {
+  display: grid;
+  gap: calc(0.3 * var(--u));
+}
+
+.gr-input,
+.gr-textarea,
+.gr-select {
+  font-family: var(--font-body);
+  font-size: var(--text-ui);
+  color: var(--color-text);
+  background: var(--color-module);
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  padding: calc(0.45 * var(--u)) calc(0.6 * var(--u));
+  width: 100%;
+  transition: border-color var(--dur-fast) var(--ease-response);
+}
+
+.gr-textarea {
+  min-height: calc(4 * var(--u));
+  resize: vertical;
+}
+
+.gr-input::placeholder,
+.gr-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.gr-input:hover,
+.gr-textarea:hover,
+.gr-select:hover {
+  border-color: var(--color-interactive);
+}
+
+.gr-input:focus-visible,
+.gr-textarea:focus-visible,
+.gr-select:focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: 1px;
+  border-color: var(--color-interactive);
+}
+
+/* Invalid is marked by more than colour — an icon or message carries it too,
+   since colour alone excludes anyone who cannot distinguish it. */
+.gr-input[aria-invalid="true"],
+.gr-textarea[aria-invalid="true"] {
+  border-color: var(--color-kiln-600);
+  border-width: 2px;
+}
+
+.gr-field-hint {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.gr-field-error {
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--color-kiln-600);
+}
+
+/* -- tabs ------------------------------------------------------------------
+   A segmented control: one track, one indicator that travels.
+
+   The TRACK carries the shape and clips the indicator to it, which is what
+   makes this survive the radius scale. Filling each cell instead would round
+   every cell, and the control would read as a row of pills fused at the
+   edges rather than as one object.
+
+   Equal columns, so the indicator's position is arithmetic from the index —
+   nothing to measure, and nothing to resynchronise when a label or the font
+   changes.                                                                    */
+
+.gr-tabs {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  /* Clips the indicator to the track's corners at every radius. */
+  overflow: hidden;
+}
+
+.gr-tab-indicator {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: calc(100% / var(--gr-tabs));
+  translate: calc(var(--active, 0) * 100%) 0;
+  background: var(--color-text);
+  border-radius: var(--radius);
+  transition: translate var(--dur-base) var(--ease-response);
+}
+
+.gr-tab {
+  /* Above the indicator, which passes beneath the labels. */
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: calc(0.45 * var(--u)) var(--u);
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  /* Matched to the indicator's travel, so the ink arrives with the fill
+     rather than flipping ahead of it. */
+  transition: color var(--dur-base) var(--ease-response);
+}
+
+.gr-tab[aria-selected="true"] {
+  color: var(--color-inverse);
+}
+
+.gr-tab:hover[aria-selected="false"] {
+  color: var(--color-text);
+}
+
+.gr-tab:focus-visible {
+  outline: 2px solid var(--color-interactive);
+  outline-offset: -3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-tab-indicator {
+    transition: none;
+  }
+}
+
+/* -- table ----------------------------------------------------------------
+   Modelled on the live models-and-pricing table: a bounded box, a tinted
+   header, mono figures with a small unit suffix, and the first column carrying
+   the row's name at a heavier weight.
+
+   Square, not rounded — the live one uses a radius, which nothing else in this
+   system does.
+
+   Figures are LEFT aligned, not right. Ordinarily right alignment is what makes
+   a column of numbers scannable, but each figure here is followed by its unit
+   ("0.14 / 1M"), and right alignment would ragged the units instead of the
+   digits. The mono face plus a fixed layout keeps the columns true anyway.     */
+
+.gr-table-wrap {
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  /* Clips the header tint and the last row's edge to the box. */
+  overflow: hidden;
+}
+
+.gr-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+
+.gr-table thead {
+  background: color-mix(in srgb, var(--color-rule) 45%, transparent);
+}
+
+.gr-table th {
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  text-align: left;
+  padding: calc(0.6 * var(--u)) calc(0.5 * var(--u));
+  border-bottom: 1px solid var(--color-rule);
+}
+
+.gr-table td {
+  padding: calc(0.7 * var(--u)) calc(0.5 * var(--u));
+  border-bottom: 1px solid var(--color-rule);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.gr-table tr:last-child td {
+  border-bottom: none;
+}
+
+.gr-table th:first-child,
+.gr-table td:first-child {
+  padding-inline-start: calc(0.75 * var(--u));
+}
+
+.gr-table th:last-child,
+.gr-table td:last-child {
+  padding-inline-end: calc(0.75 * var(--u));
+}
+
+/* The row's name, carrying the row. */
+.gr-cell-name {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.gr-table td[data-numeric] {
+  font-family: var(--font-code);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The unit rides with its figure rather than sitting in the column header, so
+   a cell reads as a complete value on its own. */
+.gr-cell-unit {
+  margin-inline-start: 0.35em;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+/* -- code ------------------------------------------------------------------
+   Dark on every theme. A code block is a terminal; switching it to a light
+   surface in a light theme makes pasted code feel unlike the tool it came
+   from. That is why these roles are defined once rather than per theme.       */
+
+.gr-codeblock {
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-code-text);
+  background: var(--color-code-surface);
+  /* Lifted, not outlined — see --shadow-raise. A hairline around a surface
+     this close to the page read as a box drawn on it. */
+  box-shadow: var(--shadow-raise);
+  border-radius: var(--radius);
+  padding: var(--u);
+  overflow-x: auto;
+  margin: 0;
+}
+
+.gr-codeblock .tok-comment {
+  color: var(--color-code-muted);
+}
+.gr-codeblock .tok-keyword {
+  color: var(--color-code-keyword);
+}
+.gr-codeblock .tok-string {
+  color: var(--color-code-string);
+}
+.gr-codeblock .tok-number {
+  color: var(--color-code-number);
+}
+
+/* Inline code sits in a sentence, so it takes a tint of the surrounding
+   surface rather than the block's dark ground — a dark slab mid-paragraph
+   reads as a bug. */
+.gr-code-inline {
+  border-radius: var(--radius);
+  font-family: var(--font-code);
+  font-size: 0.9em;
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  border: 1px solid var(--color-rule);
+  padding: 0.1em 0.35em;
+}
+
+/* -- badge ----------------------------------------------------------------- */
+
+.gr-badge {
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: 0.15em 0.5em;
+  border: 1px solid var(--color-rule);
+  color: var(--color-text-muted);
+}
+
+.gr-badge--emphasis {
+  border-color: var(--color-emphasis);
+  color: var(--color-emphasis);
+}
+
+/* -- code sample -----------------------------------------------------------
+   The block plus its copy control. The button sits inside the block rather
+   than above it, so a sample is one object — and it only surfaces on hover or
+   focus, because a control that is always visible competes with the code it
+   is attached to.
+
+   It stays visible once focused, or a keyboard user would be tabbing to
+   something they cannot see.                                                  */
+
+.gr-codewrap {
+  position: relative;
+}
+
+.gr-copy {
+  position: absolute;
+  top: calc(0.5 * var(--u));
+  right: calc(0.5 * var(--u));
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: calc(0.25 * var(--u)) calc(0.5 * var(--u));
+  border: 1px solid var(--color-code-border);
+  border-radius: var(--radius);
+  background: var(--color-code-surface);
+  color: var(--color-code-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur-fast) var(--ease-response),
+    color var(--dur-fast) var(--ease-response);
+}
+
+.gr-codewrap:hover .gr-copy,
+.gr-copy:focus-visible {
+  opacity: 1;
+}
+
+.gr-copy:hover {
+  color: var(--color-code-text);
+}
+
+.gr-copy:focus-visible {
+  outline: 2px solid var(--color-code-text);
+  outline-offset: 1px;
+}
+
+/* -- quiet tabs ------------------------------------------------------------
+   A second register for the same control. The segmented version is a choice
+   you make; this one is a view you switch — a language toggle inside a panel
+   that already has an SDK control above it, where two filled tracks would be
+   two competing controls rather than one nested in another.
+
+   Same component, same behaviour, same travelling indicator — the indicator
+   is just a rule under the label instead of a block behind it.               */
+
+.gr-tabs--quiet {
+  border: none;
+  border-radius: 0;
+  gap: var(--u);
+  grid-auto-columns: max-content;
+}
+
+.gr-tabs--quiet .gr-tab {
+  padding-inline: 0;
+  padding-block: calc(0.35 * var(--u));
+}
+
+.gr-tabs--quiet .gr-tab[aria-selected="true"] {
+  color: var(--color-text);
+}
+
+/* Measured, not arithmetic: these cells are max-content, so the indicator
+   takes its width and offset from the active label (see Tabs.tsx).
+
+   It stays ABSOLUTE. An earlier version made it a grid item so it could sit in
+   a column — which put it in the flow, where it occupied a track of its own
+   and shoved the labels sideways every time the selection moved. */
+.gr-tabs--quiet .gr-tab-indicator {
+  top: auto;
+  bottom: 0;
+  height: 1px;
+  border-radius: 0;
+  width: var(--bar-w, 0);
+  translate: var(--bar-x, 0) 0;
+}
+
+/* -- the tab group's mobile form: a select --------------------------------
+   One control, two shapes. Which one shows is decided here rather than in
+   JS — see Tabs.tsx.                                                        */
+
+/* Hidden above the wide tier, and hidden completely rather than merely
+   invisible: display none takes it out of the accessibility tree too, so a
+   screen reader is never offered the same choice twice. */
+.gr-tabselect {
+  display: none;
+}
+
+/* Hugs its label rather than spanning the panel. It was full-width, which at
+   16px caps type made it read as a toolbar rather than a control — the
+   chevron stays attached because the wrapper hugs the select too, which was
+   the whole reason it went full-width in the first place. */
+.gr-root:not([data-tier="wide"]) .gr-tabselect {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+}
+
+/* The quiet variant is exempt: its cells are max-content, so it fits a phone
+   on its own terms, and it is usually nested under a segmented control that
+   has already become a select. */
+.gr-root:not([data-tier="wide"]) .gr-tabs:not(.gr-tabs--quiet) {
+  display: none;
+}
+
+/* Takes the track's own shape, so swapping the control does not change what
+   the thing looks like it is. The native arrow is dropped for the mark the
+   rest of the system uses — appearance:none, and the padding at the end
+   leaves room for it. */
+.gr-tabselect-input {
+  appearance: none;
+  /* The FONT cannot shrink — under 16px iOS zooms the page on focus and does
+     not zoom back — so smallness comes from the box: tighter padding, no
+     imposed minimum height. */
+  padding: calc(0.35 * var(--u)) calc(2 * var(--u)) calc(0.35 * var(--u))
+    calc(0.75 * var(--u));
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius);
+  background: var(--color-panel);
+  color: var(--color-text);
+  font-family: var(--font-caps);
+  /* 1rem, not --text-caps.
+   *
+   * iOS zooms the whole page in when a form control is focused with a
+   * computed font-size below 16px — and it does not zoom back out. The caps
+   * role is 12px, so tapping this would have thrown the reader into a zoomed
+   * page they then had to pinch out of. The label is a little larger than the
+   * segmented control's as a result, which on the one control a phone gets is
+   * the right way round anyway. */
+  font-size: 1rem;
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* A chevron drawn from a rotated corner rather than an icon import: it is two
+   borders, and it cannot fall out of step with the type the way a glyph can. */
+.gr-tabselect-chevron {
+  position: absolute;
+  inset-inline-end: var(--u);
+  width: 0.4em;
+  height: 0.4em;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  rotate: 45deg;
+  /* Lifted by a quarter of its own height, so the mark reads as centred on
+     the line rather than sitting low — a rotated square's visual centre is
+     below its box centre. */
+  translate: 0 -0.1em;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}

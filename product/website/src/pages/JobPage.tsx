@@ -2,6 +2,13 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
 import type { Job } from "../careers";
+import {
+  aboutGradiated,
+  applyHrefFor,
+  howWeWork,
+  interviewSteps,
+  payAndEquity,
+} from "../careers-copy";
 
 type JobPageProps = {
   job: Job;
@@ -11,20 +18,6 @@ type JobSectionProps = {
   children: ReactNode;
   title: string;
 };
-
-const interviewSteps = [
-  "A 60-minute call about your goals and the role.",
-  "We get together in person and talk through the problems we will work on.",
-  "A paid in-person working session, so we can get to know you and you can meet the team.",
-  "References and an offer decision.",
-] as const;
-
-const aboutGradiated = [
-  "Gradiated is a research lab focused on inference. We co-design software and hardware for efficiently serving open-weight models.",
-  "Our goal is to maximize intelligence per joule. We work across model behavior, software, systems, and silicon to find better ways to run models.",
-  "We start by thinking about the model as a mathematical function, and map that out onto hardware and then build software on top of that which is custom to each model. This maximises performance and removes wasted abstractions.",
-  "We are early. You will help set the technical direction and the way the company works.",
-];
 
 const JobSection = ({ children, title }: JobSectionProps): ReactElement => (
   <section className="grid grid-cols-[220px_minmax(0,1fr)] gap-12 border-t border-line py-14 max-site:grid-cols-1 max-site:gap-7 max-site:py-11">
@@ -52,8 +45,7 @@ const JobList = ({ items }: { items: string[] }): ReactElement => (
 );
 
 export const JobPage = ({ job }: JobPageProps): ReactElement => {
-  const subject = encodeURIComponent(`Application: ${job.title}`);
-  const applyHref = `mailto:team@gradiated.com?subject=${subject}`;
+  const applyHref = applyHrefFor(job.title);
 
   return (
     <main className="px-7 pb-28 pt-20 max-site:px-[22px] max-site:pb-20 max-site:pt-14">
@@ -124,30 +116,21 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
 
           <JobSection title="How we work">
             <div className="space-y-5">
-              <p className="m-0">
-                We like to experiment a lot and do the hard thing even if it's
-                likely to fail.
-              </p>
-              <p className="m-0">
-                We work in the office on Monday, Wednesday, Friday. We value
-                working in person to solve hard problems, but are also flexible,
-                some of the team work abroad for short periods.
-              </p>
+              {howWeWork.map((line) => (
+                <p className="m-0" key={line}>
+                  {line}
+                </p>
+              ))}
             </div>
           </JobSection>
 
           <JobSection title="Pay and equity">
             <div className="space-y-5">
-              <p className="m-0">
-                The base salary is £240,000-£420,000, with significant equity on
-                top of that.
-              </p>
-              <p className="m-0">
-                We pay at the top of the market because talent density is what
-                allows us to build the most efficient inference. We want a small
-                team of exceptional people who have fun solving hard problems
-                together.
-              </p>
+              {payAndEquity.map((line) => (
+                <p className="m-0" key={line}>
+                  {line}
+                </p>
+              ))}
             </div>
           </JobSection>
 

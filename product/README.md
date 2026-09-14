@@ -80,6 +80,8 @@ path:
 
 ```sh
 pnpm --filter @gradiated/api seed
+# Include the small runtime model for the inference smoke check.
+SEED_LOCAL_QWEN=1 pnpm --filter @gradiated/api seed
 pnpm smoke:gateway
 ```
 
@@ -173,3 +175,45 @@ shared fixture, so the spec files remain safe to run in parallel.
 GitHub's product-only `tests.yml` workflow runs only for `product/**` changes.
 Its unit, real-datastore integration, and browser E2E jobs have no dependencies
 on one another and therefore run in parallel.
+
+## Local model catalog
+
+The default seed lists DeepSeek V4.1 Flash and GLM-5.3 Flash. It retires the
+old Qwen catalog entry without deleting history. Use `SEED_LOCAL_QWEN=1` to
+include Qwen for the local inference smoke check.
+
+To update only the model catalog, run from `product/`:
+
+```sh
+SEED_CATALOG_ONLY=1 pnpm --filter @gradiated/api seed
+```
+
+This mode does not sign in or change account credit. The new entries do not
+create inference deployments. The local SGLang process still serves Qwen;
+DeepSeek and GLM require matching deployments before they can serve requests.
+
+IDs were checked on 13 September 2026:
+
+- [DeepSeek catalog ID](https://openrouter.ai/deepseek/deepseek-v4.1-flash):
+  `deepseek/deepseek-v4.1-flash`.
+- [DeepSeek weights](https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash):
+  `deepseek-ai/DeepSeek-V4.1-Flash`.
+- [GLM catalog ID](https://openrouter.ai/z-ai/glm-5.3-flash):
+  `z-ai/glm-5.3-flash`.
+- [GLM weights](https://huggingface.co/zai-org/GLM-5.3-Flash):
+  `zai-org/GLM-5.3-Flash`.
+
+DeepSeek seed prices use the common full provider rate from the cited OpenRouter
+snapshot: $0.30 input, $0.006 cached input, and $1.20 output per million tokens.
+These match Together, SiliconFlow, and several other providers on 13 September
+2026. Do not use the lowest headline rate of $0.15/$0.003/$0.60. OpenRouter has
+provider-specific prices, so this is an explicit seed pricing policy. Limits
+also use the cited snapshot. These are
+local catalog fixtures, not measured serving limits or production pricing.
+GLM reuses the existing model configuration. Both seeds expose text input.
+
+Verification: API type checks and three model configuration tests passed.
+Two catalog-only seed runs returned exactly the two requested models from the
+local API. The full account seed could not finish because the local magic-link
+endpoint returned HTTP 500. The console test expectations were updated;
+the authenticated browser test was not run.

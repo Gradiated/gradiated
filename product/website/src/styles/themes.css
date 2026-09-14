@@ -1,0 +1,252 @@
+/* ---------------------------------------------------------------------------
+   themes — role remappings, and nothing else.
+
+   A THEME IS A SET, not a colour: a ground, the surface on it, a rule, an ink
+   pair, an interactive colour, buttons and a gradient. That is the smallest
+   unit that can render anything, which is why themes are authored whole rather
+   than derived from a single value.
+
+   THERE USED TO BE TWO OF THESE. "Themes" rebound roles for the page and
+   "schemes" rebound them for a section — but they were the same object twice,
+   distinguished only by where the attribute was written. Scope is a property
+   of the usage, not of the thing, so there is now one construct, one name and
+   one attribute:
+
+     <div className="gr-root" data-theme="grove">   the whole page
+     <Module theme="grove">                         one section
+
+   Same declarations, same result, no second vocabulary to keep in sync — and
+   no second place to forget a new role. Three roles were added during the
+   split (--color-inverse, --color-overlay, --gradient-theme) and all three
+   shipped broken in one of the two lists. Every role a theme can rebind is now
+   rebound by ALL FOUR below, or by none of them.
+
+   Note the direction of ground -> surface is NOT fixed. Taupe goes lighter,
+   grove goes darker. Which is the point: the pair is designed, not computed,
+   so a theme can reverse the relationship where that reads better.
+
+   BUTTONS FOLLOW THE THEME. They used to be constant — black on white
+   everywhere, so a primary action looked the same on every ground. That was
+   defensible while dark grounds were only ever one section on a light page,
+   and it is indefensible now that a dark ground can be the page: black
+   measures 3.21:1 on grove-1, 1.79:1 on grove and 1.32:1 on dark. The
+   three dark themes invert.
+
+   FOUR THEMES: Taupe, Grove, Light, Dark. There were seven, numbered within
+   families; each of the three that went sat close enough to a survivor that
+   keeping it meant maintaining a variant nobody would choose deliberately.
+
+   With one theme per ground the numbers stopped meaning anything — taupe-1 of
+   what? — so the names are now the grounds themselves, and each carries one
+   gradient: Taupe/Terrace, Grove/Ember, Light/Tide, Dark/Shallows.
+
+   Applied as data-theme; the footer's selector sets it and persists the
+   choice. taupe carries no attribute — its values ARE the defaults in
+   tokens.css — so it is what renders before any script runs.
+
+   Every contrast below is measured against that theme's own ground.
+   --------------------------------------------------------------------------- */
+
+/* Re-declare, at the theme boundary, everything COMPOSED from theme roles.
+
+   Two things need this and they need it for the same reason.
+
+   .gr-root sets `color: var(--color-text)`, which COMPUTES there. Descendants
+   inherit the resulting colour, not the variable — so rebinding --color-text
+   on a section changes nothing for anything that merely inherits, and only
+   elements that re-declare colour from the token follow it. That is why the
+   grove themes once showed a correct lede (.gr-muted declares its own colour)
+   above an unchanged dark title.
+
+   One declaration here re-evaluates the token at the boundary, and everything
+   inside inherits the theme's ink. Any future scope that rebinds --color-text
+   needs the same line. */
+[data-theme] {
+  color: var(--color-text);
+
+  /* --gradient-theme is built from --gradient-from/--gradient-to in
+     tokens.css, and a var() inside a custom property is substituted on the
+     element that DECLARES it. Declared only on .gr-root, every theme inherited
+     the root's already-composed string: the cards each had the right stops and
+     all four painted Taupe's gradient.
+
+     Recomposing here re-runs the substitution against this element's own
+     stops. Anything else assembled from theme roles needs the same line. */
+  --gradient-theme: linear-gradient(
+    90deg,
+    var(--gradient-from) 0%,
+    var(--gradient-to) 100%
+  );
+}
+
+/* -- Taupe: the limestone ground, and the default. ------------------------ */
+
+/* Also the default, whose values live in tokens.css. This block is what
+   restores it when it is chosen over another theme, and what makes it usable
+   as a section. Ink 17.80, muted 13.49, interactive 5.51. */
+[data-theme="taupe"] {
+  --color-substrate: var(--color-taupe-200);
+  --color-module: var(--color-taupe-100); /* lighter than its ground */
+  --color-rule: var(--color-taupe-350);
+  --color-grid: var(--color-taupe-350);
+  --color-text: var(--color-dark-000);
+  --color-text-muted: var(--color-dark-100);
+  --color-interactive: var(--color-grove-600);
+  --color-interactive-fill: var(--color-grove-500);
+  --color-inverse: var(--color-light-000);
+  --color-overlay: var(--color-light-000);
+  /* White against the taupe-100 module: the lit side of the object. */
+  --color-panel: var(--color-light-000);
+  --color-button-main: var(--color-dark-000);
+  --color-button-main-ink: var(--color-light-000);
+  /* Not white: on limestone a white fill read at 1.18 against the ground and
+     1.11 against a module, and the button dissolved. taupe-300 is quieter than
+     the separation numbers alone would pick — 1.10 / 1.17, which is nominally
+     no better than white — but it is warm where white is not, so it reads as
+     part of the family rather than as a hole punched in it. */
+  --color-button-secondary: var(--color-taupe-300);
+  --color-button-secondary-ink: var(--color-dark-000);
+  --gradient-from: var(--gradient-terrace-from);
+  --gradient-to: var(--gradient-terrace-to);
+}
+
+
+
+/* -- Grove: the sacred olive, as a ground rather than an accent. ---------- */
+
+
+/* Ink 11.74, muted 9.95. */
+[data-theme="grove"] {
+  --color-substrate: var(--color-grove-700);
+  --color-module: var(--color-grove-750);
+  --color-rule: var(--color-grove-650);
+  --color-grid: var(--color-grove-650);
+  --color-text: var(--color-light-000);
+  --color-text-muted: var(--color-taupe-200);
+  --color-interactive: var(--color-light-000);
+  --color-interactive-fill: var(--color-taupe-200);
+  --color-inverse: var(--color-grove-750);
+  /* DEEPER than either ground, not lighter. The panel is a band dropped over
+     the page rather than a card lifted off it, and on an olive ground the
+     lighter reading made it look like a hole cut in the hero. Deeper reads as
+     shadow, which is what an overlay actually is. It also buys contrast:
+     white ink goes from 9.52 to 14.84. */
+  --color-overlay: var(--color-grove-800);
+  /* Deeper than BOTH grounds. grove-700 is this theme's substrate, so a panel
+     set there dissolved into the page the moment it left a taupe section —
+     which is the trap in this role: a panel has two neighbours, the module it
+     sits in and the substrate behind that, and it has to differ from each. */
+  --color-panel: var(--color-grove-800);
+  --color-button-main: var(--color-light-000);
+  --color-button-main-ink: var(--color-dark-000);
+  --color-button-secondary: var(--color-grove-750);
+  --color-button-secondary-ink: var(--color-light-000);
+  --glass-tint: rgb(0 0 0 / 0.45);
+  --glass-border: rgb(255 255 255 / 0.16);
+  /* A dark ground takes light syntax. The surface itself is inherited — it is
+     this theme's own module, like every other theme's. */
+  /* The module is darker than the page here, so the block is recessed and
+     a shadow under it would contradict that. */
+  --shadow-raise: none;
+  --color-code-text: var(--color-ink-100);
+  --color-code-muted: var(--color-ink-muted);
+  --color-code-keyword: var(--color-ink-accent);
+  --color-code-string: var(--color-ink-string);
+  --color-code-number: var(--color-ink-string);
+  --color-code-border: color-mix(in srgb, var(--color-ink-100) 13%, transparent);
+  /* Overrides the line above: see --color-ink-muted-lift. */
+  --color-code-muted: var(--color-ink-muted-lift);
+
+  --gradient-from: var(--gradient-ember-from);
+  --gradient-to: var(--gradient-ember-to);
+}
+
+/* -- The achromatic pair. -------------------------------------------------- */
+
+/* Ink 19.77, muted 14.98, interactive 6.12. */
+[data-theme="light"] {
+  --color-substrate: var(--color-light-050);
+  --color-module: var(--color-light-000);
+  --color-rule: var(--color-light-300);
+  --color-grid: var(--color-light-300);
+  --color-text: var(--color-dark-000);
+  --color-text-muted: var(--color-dark-100);
+  --color-interactive: var(--color-grove-600);
+  --color-interactive-fill: var(--color-grove-500);
+  --color-inverse: var(--color-light-000);
+  --color-overlay: var(--color-light-000);
+  /* Darker than the module, because the module is already pure white and
+     there is nothing above it — and a step FURTHER than light-050, which is
+     this theme's substrate and left the panel invisible against the page. */
+  --color-panel: var(--color-light-100);
+  --color-button-main: var(--color-dark-000);
+  --color-button-main-ink: var(--color-light-000);
+  /* Same problem, achromatic: white on #f8f8f8 is 1.06 and on a white module
+     1.00 — literally invisible. light-100 is 1.09 / 1.16. */
+  --color-button-secondary: var(--color-light-100);
+  --color-button-secondary-ink: var(--color-dark-000);
+  --gradient-from: var(--gradient-tide-from);
+  --gradient-to: var(--gradient-tide-to);
+}
+
+/* The one dark theme that keeps the brand olive for interaction: grove-500
+   survives on an achromatic ground at 4.60 where it drowns on the olive ones.
+   Ink 15.91, muted 13.49. */
+[data-theme="dark"] {
+  --color-substrate: var(--color-dark-100);
+  --color-module: var(--color-dark-050);
+  --color-rule: var(--color-dark-250);
+  --color-grid: var(--color-dark-250);
+  --color-text: var(--color-light-000);
+  --color-text-muted: var(--color-taupe-200);
+  --color-interactive: var(--color-grove-500);
+  --color-interactive-fill: var(--color-grove-600);
+  --color-inverse: var(--color-dark-050);
+  --color-overlay: var(--color-dark-150);
+  /* Lifted off the near-black module, the way white is lifted off taupe —
+     and clear of dark-100, which is this theme's substrate. */
+  --color-panel: var(--color-dark-150);
+  --color-button-main: var(--color-light-000);
+  --color-button-main-ink: var(--color-dark-000);
+  --color-button-secondary: var(--color-dark-050);
+  --color-button-secondary-ink: var(--color-light-000);
+  --glass-tint: rgb(0 0 0 / 0.5);
+  --glass-border: rgb(255 255 255 / 0.18);
+  /* A dark ground takes light syntax. The surface itself is inherited — it is
+     this theme's own module, like every other theme's. */
+  /* The module is darker than the page here, so the block is recessed and
+     a shadow under it would contradict that. */
+  --shadow-raise: none;
+  --color-code-text: var(--color-ink-100);
+  --color-code-muted: var(--color-ink-muted);
+  --color-code-keyword: var(--color-ink-accent);
+  --color-code-string: var(--color-ink-string);
+  --color-code-number: var(--color-ink-string);
+  --color-code-border: color-mix(in srgb, var(--color-ink-100) 13%, transparent);
+
+  --gradient-from: var(--gradient-shallows-from);
+  --gradient-to: var(--gradient-shallows-to);
+}
+
+/* Swatch previews for the footer selector. Each shows its theme's ground with
+   its ink inset, so the control previews the PAIRING rather than a single
+   colour — which is the thing actually being chosen. */
+.gr-swatch[data-swatch="taupe"] {
+  --swatch-ground: var(--color-taupe-200);
+  --swatch-ink: var(--color-dark-100);
+}
+
+.gr-swatch[data-swatch="grove"] {
+  --swatch-ground: var(--color-grove-700);
+  --swatch-ink: var(--color-taupe-200);
+}
+
+.gr-swatch[data-swatch="light"] {
+  --swatch-ground: var(--color-light-050);
+  --swatch-ink: var(--color-dark-100);
+}
+
+.gr-swatch[data-swatch="dark"] {
+  --swatch-ground: var(--color-dark-100);
+  --swatch-ink: var(--color-light-100);
+}

@@ -1,181 +1,78 @@
-import { useState } from "react";
+import type { ReactElement } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import type { ReactElement, ReactNode } from "react";
-import { SiteLayout } from "./components/SiteLayout";
-import { WaitlistDialog } from "./components/WaitlistDialog";
-import { jobs } from "./careers";
 import { articles } from "./articles";
-import { ArticlePage } from "./pages/ArticlePage";
-import { AcceptableUsePage } from "./pages/AcceptableUsePage";
-import { CareersPage } from "./pages/CareersPage";
-import { DpaPage } from "./pages/DpaPage";
-import { DocsPage } from "./pages/DocsPage";
+import { jobs } from "./careers";
 import { methodPages } from "./method";
+import { CareersIndexPage, JobDetailPage } from "./pages/CareersPages";
+import { DocsNextPage } from "./pages/DocsNextPage";
+import { HardwarePage } from "./pages/HardwarePage";
 import { HomePage } from "./pages/HomePage";
-import { JobPage } from "./pages/JobPage";
-import { LibraryPage } from "./pages/LibraryPage";
-import { MethodPage } from "./pages/MethodPage";
+import { InferencePage } from "./pages/InferencePage";
+import { LEGAL, LegalPage } from "./pages/LegalPages";
+import type { LegalSlug } from "./pages/LegalPages";
+import { LibraryIndexPage } from "./pages/LibraryIndexPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { NotesPage } from "./pages/NotesPage";
-import { PrivacyPage } from "./pages/PrivacyPage";
-import { ProductsPage } from "./pages/ProductsPage";
-import { SubprocessorsPage } from "./pages/SubprocessorsPage";
-import { TermsPage } from "./pages/TermsPage";
+import {
+  ArticleReadingPage,
+  MethodReadingPage,
+} from "./pages/ReadingPages";
+import { StylePage } from "./pages/StylePage";
+import { TrainingPage } from "./pages/TrainingPage";
+import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
 
-type LayoutRouteProps = {
-  children: ReactNode;
-  home?: boolean;
-};
+/* No layout wrapper. Every route now carries its own Substrate, Nav and
+   Footer, so there is nowhere left for the legacy SiteLayout to be reached
+   from — the 404 was the last one. */
 
-const LayoutRoute = ({
-  children,
-  ...layoutProps
-}: LayoutRouteProps): ReactElement => (
-  <SiteLayout {...layoutProps}>{children}</SiteLayout>
+export const AppRoutes = (): ReactElement => (
+  <Routes>
+    {articles.map((article) => (
+      <Route
+        element={<ArticleReadingPage article={article} />}
+        key={article.path}
+        path={article.path}
+      />
+    ))}
+    {/* No SiteLayout: the homepage carries its own Nav and Footer now, like
+        every other page on the design system. The legacy layout is what was
+        giving it the old nav and the old footer. */}
+    <Route element={<HomePage />} path="/" />
+    <Route element={<LibraryIndexPage />} path="/library/" />
+    <Route element={<LibraryIndexPage initialFilter="notes" />} path="/notes/" />
+    <Route element={<CareersIndexPage />} path="/careers/" />
+    {jobs.map((job) => (
+      <Route
+        element={<JobDetailPage job={job} />}
+        key={job.slug}
+        path={`/careers/${job.slug}/`}
+      />
+    ))}
+    {methodPages.map((page) => (
+      <Route
+        element={<MethodReadingPage slug={page.slug} />}
+        key={page.slug}
+        path={`/library/method/${page.slug}/`}
+      />
+    ))}
+    <Route element={<DocsNextPage />} path="/docs/*" />
+    {Object.keys(LEGAL).map((slug) => (
+      <Route
+        element={<LegalPage slug={slug as LegalSlug} />}
+        key={`legal-${slug}`}
+        path={`/${slug}/`}
+      />
+    ))}
+    <Route element={<InferencePage />} path="/inference/" />
+    <Route element={<TrainingPage />} path="/training/" />
+    <Route element={<HardwarePage />} path="/hardware/" />
+    <Route element={<ArtworkGeneratorPage />} path="/artwork-generator/" />
+    {/* /model-detail/ is not routed while it has no data on it. The cards
+        that pointed here render as plain tiles now — see InferencePage. Put
+        the route back with the content. */}
+    <Route element={<StylePage />} path="/style/" />
+    <Route element={<NotFoundPage />} path="*" />
+  </Routes>
 );
-
-export const AppRoutes = (): ReactElement => {
-  const [waitlistOpen, setWaitlistOpen] = useState(false);
-
-  return (
-    <>
-      {waitlistOpen && (
-        <WaitlistDialog open onClose={() => setWaitlistOpen(false)} />
-      )}
-      <Routes>
-        {articles.map((article) => (
-          <Route
-            key={article.path}
-            path={article.path}
-            element={
-              <LayoutRoute>
-                <ArticlePage article={article} />
-              </LayoutRoute>
-            }
-          />
-        ))}
-        <Route
-          path="/"
-          element={
-            <LayoutRoute home>
-              <HomePage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/products/*"
-          element={
-            <LayoutRoute>
-              <ProductsPage onWaitlist={() => setWaitlistOpen(true)} />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/library/"
-          element={
-            <LayoutRoute>
-              <LibraryPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/careers/"
-          element={
-            <LayoutRoute>
-              <CareersPage />
-            </LayoutRoute>
-          }
-        />
-        {jobs.map((job) => (
-          <Route
-            key={job.slug}
-            path={`/careers/${job.slug}/`}
-            element={
-              <LayoutRoute>
-                <JobPage job={job} />
-              </LayoutRoute>
-            }
-          />
-        ))}
-        <Route
-          path="/notes/"
-          element={
-            <LayoutRoute>
-              <NotesPage />
-            </LayoutRoute>
-          }
-        />
-        {methodPages.map((page) => (
-          <Route
-            key={page.slug}
-            path={`/library/method/${page.slug}/`}
-            element={
-              <LayoutRoute>
-                <MethodPage slug={page.slug} />
-              </LayoutRoute>
-            }
-          />
-        ))}
-        <Route
-          path="/docs/*"
-          element={
-            <LayoutRoute>
-              <DocsPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/privacy/"
-          element={
-            <LayoutRoute>
-              <PrivacyPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/terms/"
-          element={
-            <LayoutRoute>
-              <TermsPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/acceptable-use/"
-          element={
-            <LayoutRoute>
-              <AcceptableUsePage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/dpa/"
-          element={
-            <LayoutRoute>
-              <DpaPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="/subprocessors-security/"
-          element={
-            <LayoutRoute>
-              <SubprocessorsPage />
-            </LayoutRoute>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <LayoutRoute>
-              <NotFoundPage />
-            </LayoutRoute>
-          }
-        />
-      </Routes>
-    </>
-  );
-};
 
 export const App = (): ReactElement => (
   <BrowserRouter>

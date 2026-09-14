@@ -73,8 +73,7 @@
   grid-row: span 3;
   align-self: start;
   font:
-    14px "DM Mono",
-    monospace;
+    14px var(--font-code);
 }
 .sa-head-softmax {
   display: flex;
@@ -128,8 +127,7 @@
 .sa-axis {
   fill: var(--muted);
   font:
-    11px "DM Mono",
-    monospace;
+    11px var(--font-code);
 }
 .sa-query {
   transition: transform 850ms cubic-bezier(0.4, 0, 0.2, 1);
@@ -143,8 +141,7 @@
 .sa-packed-label {
   fill: white;
   font:
-    11px "DM Mono",
-    monospace;
+    11px var(--font-code);
 }
 .sa-packed-label {
   font-size: 8px;
@@ -170,8 +167,7 @@
   align-items: center;
   gap: 7px;
   font:
-    12px "DM Mono",
-    monospace;
+    12px var(--font-code);
 }
 .sa-chunk {
   height: 10px;
@@ -200,8 +196,7 @@
 .sa-explorer .sa-math {
   margin: 9px 0;
   font:
-    13px/1.6 "DM Mono",
-    monospace;
+    13px/1.6 var(--font-code);
   overflow-wrap: anywhere;
   color: var(--ink);
 }
@@ -284,8 +279,7 @@
 .sa-operand > span {
   display: block;
   font:
-    10px/1.5 "DM Mono",
-    monospace;
+    10px/1.5 var(--font-code);
   margin-top: 9px;
   color: var(--muted);
 }
@@ -420,8 +414,7 @@
 }
 .sa-chunk-math span {
   font:
-    10px/1.6 "DM Mono",
-    monospace;
+    10px/1.6 var(--font-code);
 }
 .sa-running {
   display: flex;

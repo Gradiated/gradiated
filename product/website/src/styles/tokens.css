@@ -1,0 +1,564 @@
+/* ---------------------------------------------------------------------------
+   tokens — the system layer: geometry, type, motion, and the colour ROLES.
+
+   Scoped to .gr-root so the new system can coexist with legacy.css during
+   migration, and so a theme can rebind roles without touching the brand values
+   underneath. The palette those roles point at lives in brand.css, global.
+
+   No literal px/hex here that is not a token definition. To restyle the
+   system, edit values here; to restyle the brand, edit brand.css.
+   --------------------------------------------------------------------------- */
+
+.gr-root {
+  /* -- the lattice ---------------------------------------------------------
+
+     The module is a whole number of units; the unit is whatever makes that
+     fit the device. Alignment between substrate and module is therefore true
+     by construction at every viewport — there is no phase to maintain.
+
+     --module-u is chosen so it divides cleanly by every column count we use:
+       48u  →  2, 3, 4, 6, 8, 12, 16
+       36u  →  2, 3, 4, 6, 9, 12
+       16u  →  2, 4, 8            (single-column tier; divisibility is moot)
+
+     These CSS derivations are the pre-hydration fallback only. The source of
+     truth is useLattice.ts, which re-resolves the unit against the element's
+     real width and overrides --u / --module-u / --shift-x on mount — see the
+     comment there for why CSS alone is not enough.
+
+     `round(down, …, 1px)` snaps the unit to whole pixels; at fractional
+     intervals the lattice lines shimmer and vary in weight. The first --u
+     declaration is the fallback for engines without round().                  */
+
+  --module-u: 48;
+  --pad-u: 3;
+  --u-max: 24px;
+
+  --u: min(var(--u-max), calc((100vw - 48px) / var(--module-u)));
+  --u: round(down, min(var(--u-max), calc((100vw - 48px) / var(--module-u))), 1px);
+
+  --module-w: calc(var(--module-u) * var(--u));
+  --pad: calc(var(--pad-u) * var(--u));
+
+  /* Corner radius.
+
+     A scale on Tailwind's naming, in rem so it honours a reader's text size
+     the way the type does — a 4px corner beside 20px type is not the same
+     corner beside 28px type.
+
+     --radius is what every component reads. It is a separate token from the
+     scale so the whole system can be moved through the steps from one place;
+     the scale is the vocabulary, --radius is the current setting.
+
+     xl is the setting, matching the product's own corners — the marketing
+     site and the console are one thing to a customer, and a square site in
+     front of a rounded product reads as two.
+
+     This overrides the original brief, which was square: the metaphor is
+     silicon and a die has no rounded corners. That argument holds for the
+     LATTICE and the seams, which are drawn geometry rather than containers and
+     take no radius; it turned out not to hold for the boxes on top of them.
+     Circles (colour chips, the theme indicator) set 50% explicitly and are
+     unaffected — they are marks, not containers. */
+  --radius-none: 0;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-full: 9999px;
+
+  --radius: var(--radius-xl);
+
+  /* ONE SHAPE FOR EVERY COVER.
+   *
+   * 320 x 360 is what a narrow card's well measures on the desktop band — the
+   * card that recurs in the Library's rhythm. Every place a cover image can
+   * appear reads this, so one asset is authored once and cropped by the few
+   * places that are necessarily wider.
+   *
+   * The exception is a card well on a WIDE screen, which keeps a fixed 360px
+   * height instead: the cards in a row are different widths, and a ratio would
+   * make the wide one taller than the narrow one beside it and break the line
+   * the titles sit on. That constraint is a row's, so it lifts as soon as the
+   * cards stack. */
+  --cover-ratio: 320 / 360;
+
+  /* A true one-device-pixel hairline. At 1px on a 2dppx display a lattice
+     line is two device pixels wide, which reads as heavy. Applied as a
+     transform scale, not a width — see substrate.css for why. */
+  --hair-scale: 1;
+
+  /* -- type ----------------------------------------------------------------
+     Provisional. Extracted from the Figma frame, not yet tuned in browser.    */
+
+  --font-title: "Instrument Sans", system-ui, sans-serif;
+  --font-body: "Barlow", system-ui, sans-serif;
+  --font-code: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Sizes are rem so the whole scale is root-relative: it honours a reader's
+     browser text-size setting, and no value compounds against its container
+     the way em would. The fluid ones keep a vw middle term so they still
+     respond to viewport as well. */
+  --text-hero: clamp(2.25rem, 4.5vw, 3.375rem);
+  /* The homepage's single statement, and only that.
+
+     Twice --text-hero at the top end. A product hero shares its fold with a
+     showpiece and has to leave room for it; the homepage hero has nothing
+     beside it and is the whole first screen, so the sentence is the object.
+     All three numbers are one scale, so the size is raised by moving the
+     whole clamp rather than the cap alone — raising only the ceiling changes
+     nothing until the viewport is wide enough to reach it.
+
+     THE FLOOR IS SET BY THE LONGEST WORD PAIR, not by taste. Measured against
+     a 430px phone, whose band is 368px: at 72px the sentence broke to five
+     lines with "The" and "on" each stranded alone, at 68px to four. 60px is
+     the largest that still gives three clean lines with room to spare — 64px
+     also fits, by five pixels, which is not a margin. */
+  --text-display: clamp(3.5rem, 8.58vw, 7.2875rem);
+  /* The standfirst that goes under it — 28px, a size of its own rather than a
+     multiple of --text-lede.
+
+     It lives here because it IS a step in the scale now: at 28px it is past
+     --text-heading, so it is no longer "the standfirst, slightly louder" and
+     a calc in a page rule would have hidden that. The one page that speaks at
+     display size needs a standfirst that can stand under it. */
+  --text-lede-display: 1.75rem;
+  /* The masthead size: a page whose title IS the page, with no showpiece and
+     no grid competing with it — careers, and the 404.
+
+     A step below --text-display, which belongs to the homepage alone. Derived
+     from --text-heading because that is the relationship it was built on: a
+     masthead is twice a heading at the floor and four times at the cap.
+
+     THE FLOOR IS SET BY THE LONGEST WORD, measured rather than guessed.
+     "Subprocessors" is 13 characters and came to exactly 368px at the old
+     2.2x floor — the full width of the band on a 430px phone, so it spilled
+     past the edge. At 2x it measures 332px and has 36 to spare. */
+  --text-masthead: clamp(
+    calc(2 * var(--text-heading)),
+    7vw,
+    calc(4 * var(--text-heading))
+  );
+  --text-section: clamp(1.625rem, 2.4vw, 2.125rem);
+  /* 26px. The subheading is the workhorse of the product pages — it titles a
+     feature, a column, a reel caption and a theme card — so it is set at the
+     size those need rather than a step down from the section title. */
+  --text-heading: 1.625rem;
+  /* The lede: standfirst copy set beside a hero. Same size as a subheading but
+     regular weight, open leading and noticeably tighter tracking. */
+  --text-lede: 1.25rem;
+  /* THE READING SIZE. Anything set in sentences takes this: section copy,
+     card excerpts, prose on a docs or legal page.
+
+     It used to be 0.9375rem, which is an interface size — and because it was
+     called "body", every time a page actually needed prose it reached for
+     --text-note instead and left a 15/18 split behind it. The two names had
+     drifted into meaning the opposite of what they said. --text-note is now
+     an alias and wants removing once nothing references it. */
+  --text-body: 1.125rem;
+  --text-note: var(--text-body);
+
+  /* Interface text: controls, labels, table cells, code, tooltips, nav items.
+     Named for the job so it cannot be mistaken for prose again. */
+  --text-ui: 0.9375rem;
+
+  /* Nav dropdown card titles: under a subheading, over body. */
+  --text-card: 1.0625rem;
+
+  /* Caps — the system's chrome voice: nav items, buttons, eyebrow labels.
+     One definition so every piece of chrome speaks identically.
+
+     Sized in rem, which is root-relative: it holds at 12px regardless of the
+     font-size of whatever it sits in, and still honours a reader's browser
+     text-size preference. (`em` would compound against its container.) */
+  --font-caps: var(--font-body);
+  --text-caps: 0.75rem;
+  --weight-caps: 600;
+  --tracking-caps: 0.08em;
+
+  --leading-hero: 1.06;
+  /* Tighter than --leading-hero: at display size the line gap grows with the
+     type, so the same ratio that sets three lines comfortably at 54px opens a
+     visible gap between them at 106px. */
+  --leading-display: 0.95;
+  --leading-heading: 1.05;
+  --leading-lede: 1.4;
+  --leading-note: 1.5;
+  --leading-body: 1.62;
+  --tracking-hero: -0.035em;
+  --tracking-heading: -0.04em;
+  --tracking-lede: -0.04em;
+  --tracking-note: -0.04em;
+  /* Body sits at -0.015em, not the -0.04em the headings take. Barlow is not a
+     variable font — Google serves it as static 400/500/600 — so weight cannot
+     be nudged fractionally, and tightening is what gives running text the
+     firmer colour that a half-step of weight would have. At 18px the headings'
+     -0.04em is -0.72px, which is tight enough to start closing counters in
+     running copy. */
+  --tracking-body: -0.015em;
+  --weight-heading: 500;
+  --weight-lede: 400;
+
+  /* Space between a subheading and the copy under it. Type-internal spacing is
+     rem-based rather than derived from --u: it belongs to the type, so it
+     should track the reader's text size, not the lattice. The lattice governs
+     module chrome; inside a module, type spaces itself. */
+  --space-heading: 0.5rem;
+
+  /* Space under a caps label. Larger than --space-heading: caps have no
+     descenders and sit optically high in their line box, so the same measure
+     that reads as a gap under a sentence-case subheading reads as cramped
+     under a label. */
+  --space-label: 1.25rem;
+
+  /* -- elevation ------------------------------------------------------------
+     The system's only shadow, and the first thing in it that is not a hairline
+     or a sharp edge.
+
+     It exists because the code block's surface is the theme's MODULE — a step
+     from the page rather than a panel against it — so at ~1.06:1 the surface
+     cannot say where the block begins. A border said it, but a hairline around
+     a barely-tinted rectangle reads as a box drawn on the page; a shadow says
+     the same thing by lifting it off.
+
+     Tighter and darker than Tailwind's `shadow-md`, which was tried first and
+     read as a haze: on a warm limestone ground a 10% black spread over 6px has
+     almost nothing to land on, so the edge dissolved instead of lifting.
+
+     Shorter offsets and roughly double the alpha, with negative spread pulling
+     the second layer back in. The block is a step off the page — the shadow
+     should say a few millimetres, not a few centimetres. Written as a mix from
+     the ink rather than a literal rgba, so it reads as the page's own dark and
+     obeys the rule that colour values live in brand.css.
+
+     ONLY MEANINGFUL ON LIGHT GROUNDS. A dark theme's module is DARKER than its
+     page, so the block is recessed there and a shadow under it would be a lie
+     — those themes set this to none. */
+  --shadow-raise:
+    0 1px 2px color-mix(in srgb, var(--color-dark-000) 8%, transparent),
+    0 2px 6px -1px color-mix(in srgb, var(--color-dark-000) 16%, transparent);
+
+  /* The hovered step. Longer and softer than --shadow-raise, because the
+     object is further from the page — a lift that changes position without
+     changing its shadow reads as the whole page moving instead. */
+  --shadow-lift:
+    0 2px 4px color-mix(in srgb, var(--color-dark-000) 8%, transparent),
+    0 18px 32px -8px color-mix(in srgb, var(--color-dark-000) 22%, transparent);
+
+  /* -- stacking -------------------------------------------------------------
+     The only two layers in the system, named because they have to agree.
+
+     Both the bar and its panel are taken out of flow, and anything positioned
+     that comes AFTER them in the document paints over them by default — which
+     is not a rule anyone remembers while writing a section. Stating the layers
+     here is what stops the next positioned element from silently winning.
+
+     The panel sits one below the bar: it hangs from the bar's underside, so
+     where the two meet the bar is what should be in front.                    */
+  --z-nav: 10;
+  --z-nav-panel: 9;
+
+  /* Theme selector. One dial: the step is twice the swatch, the indicator
+     circle is exactly one step, and the container's padding is half a swatch —
+     so the whole control scales from this single value and the ratios hold. */
+  --swatch-size: calc(0.75 * var(--u));
+
+  /* -- motion --------------------------------------------------------------
+     Three families. They do not share values, because an ambient loop
+     borrowing an interaction easing reads as a UI element that is stuck.
+
+     Only the response family is consumed today. Ambient (shaders, gradient
+     drift) and assembly (wafer-field chip graphics) are RESERVED: they are
+     the agreed vocabulary for motion that is designed but not yet built.
+     Assembly values match the wafer-field engine defaults so CSS and JS agree
+     when it lands. Do not delete them as dead code; do not invent parallel
+     tokens when building those features.                                      */
+
+  /* 1. response — triggered by the user, settles quickly */
+  --dur-fast: 120ms;
+  --dur-base: 240ms;
+  --ease-response: cubic-bezier(0.2, 0.7, 0.2, 1);
+
+  /* A settle that overshoots slightly and comes back. For a control that
+     moves between fixed positions: a linear or ease-out move between three
+     stops reads as stepping, and the small overshoot is what makes it read as
+     a thing with weight arriving somewhere. Do not use it for fades — an
+     overshoot on opacity is a flicker. */
+  --dur-spring: 340ms;
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+  /* A harder overshoot than --ease-spring, for a gesture that should read as
+     the object being thrown rather than eased into place. */
+  --ease-lift: cubic-bezier(0.16, 1.7, 0.3, 1);
+  --dur-lift: 420ms;
+
+  /* The chip splay. Damped rather than springy: five sheets sliding out of a
+     package is a mechanism, and a mechanism that overshoots reads as loose.
+     The curve moves decisively and settles without hunting. */
+  --ease-splay: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-splay: 340ms;
+
+  /* Media moves slower than chrome. A picture easing at the same rate as a
+     button reads as snapping, because the eye tracks the whole frame rather
+     than one edge — so image reveals get their own duration and a curve with
+     no acceleration at the start: it is already moving when you notice it,
+     and it never appears to arrive. */
+  --dur-media: 520ms;
+  --ease-media: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+  /* 2. ambient — untriggered, never appears to complete */
+  --dur-ambient: 24s;
+  --ease-ambient: linear;
+
+  /* The hero field's sideways drift. Deliberately not --dur-ambient: it runs
+     against the field's own 24s redraw, and two ambient motions on the same
+     period would beat against each other and read as a stutter. */
+  --dur-wavefield-drift: 37s;
+
+  /* One full pass of the models marquee. Long: the row is meant to drift
+     past, not to scroll. */
+  --dur-marquee: 60s;
+  --wavefield-cell: calc(0.3 * var(--u));
+
+  /* 3. assembly — wafer-field chips resolving into shape (reserved) */
+  --dur-assemble: 900ms;
+  --stagger-assemble: 350ms;
+  --ease-assemble: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* -- entrance ------------------------------------------------------------
+     The one-time opening choreography (see substrate.css for the mechanism).
+     Named separately from the families above because it plays once and is
+     tuned as a whole. The timeline, in order:
+
+       1. draw     the lattice materialises, staggered out from the centre
+       2. open     the cell is pried apart horizontally (--t)
+       3. extend   …then vertically to the full first fold (--v)
+       4. modules  seam draws, module settles in behind it, top to bottom
+
+     Leads are absolute delays from navigation; the open/extend beats overlap
+     so the opening reads as one gesture rather than two moves.                */
+
+  /* 1. draw */
+  --entrance-line: 620ms;
+  --stagger-line-v: 24ms;
+  /* Caps the accumulated stagger so far-from-centre lines still draw before
+     the opening starts. */
+  --stagger-cap: 620ms;
+  --ease-draw: cubic-bezier(0.33, 0, 0.12, 1);
+
+  /* 1b. exit — the lines drift outward and fade, staggered like the draw.
+
+     Without this the lattice simply unmounted when the entrance timer ended
+     and the lines vanished mid-frame. Reversing the draw was tried first and
+     read worse: a line shortening from one end is a different gesture from a
+     line leaving. Drifting on in the direction the opening was already pushing
+     them is the one that looks like the grid letting go.
+
+     Slower than the draw and on the media curve, because an exit that matches
+     the entrance's energy reads as a second event rather than a release. */
+  --entrance-line-out: 900ms;
+  --entrance-line-out-lead: 2150ms;
+  --entrance-line-drift: calc(3 * var(--u));
+
+  /* 2. open — energy first, long settle */
+  --entrance-open: 1050ms;
+  --entrance-open-lead: 1150ms;
+  --ease-open: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* 3. extend */
+  --entrance-extend: 700ms;
+  --entrance-extend-lead: 1550ms;
+  --ease-plate: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 4. modules — each seam leads its module by --entrance-seam-lead.
+        The nav arrives with the hero, on the same beat. */
+  /* Distance between the footer links and the wordmark. Purely compositional
+     now — it was the chips' fall zone while the mark assembled on scroll, and
+     needed to be long enough to scrub against; with the mark static it only
+     has to separate the two. */
+  --wordmark-lead: calc(6 * var(--u));
+
+  /* Was 2050ms: the wait for the lattice to draw and retract. With the
+     lattice gone there is nothing to wait for, so a module's own entrance
+     begins as soon as the page does. */
+  --entrance-modules-lead: 0ms;
+  --entrance-nav-lead: 0ms;
+  --entrance-seam: 540ms;
+  --entrance-seam-lead: 190ms;
+  --entrance-module: 720ms;
+
+  /* A single word or line of split text, and the fold's own pieces. Slower
+     than the module fade it used to borrow: a blur resolving is a slower
+     gesture than a surface appearing, and at 720ms the words snapped into
+     focus before the eye had settled on them. */
+  --entrance-piece: 1100ms;
+
+  /* The fold's showpiece, tilting up. The longest single move in the
+     entrance, because it is the largest object in it. */
+  --dur-showpiece: 1300ms;
+  /* Per-piece stagger for split text. Words are quick — a title should read as
+     one phrase arriving, not as separate words. Lines are slower, since each
+     carries much more to take in. */
+  --stagger-word: 70ms;
+  --stagger-line: 120ms;
+  /* Type resolves out of a blur rather than sliding in. Unit-derived so it
+     scales with the tier alongside the rise it accompanies. */
+  --entrance-type-blur: calc(0.25 * var(--u));
+  --entrance-module-stagger: 165ms;
+  --entrance-rise: calc(0.5 * var(--u));
+
+  /* -- roles ---------------------------------------------------------------
+     Named after the chip metaphor, not after generic surfaces, so the tokens
+     teach the system to whoever reads them next. Components reference ROLES,
+     never the ramp above and never a literal — that is what makes applying
+     the colour layer a one-file change.
+
+     --color-emphasis is reserved for the colour edition (attic earth in the
+     brand palette: diagram and output emphasis).                              */
+
+  /* These ARE taupe, spelled out rather than referenced, because this block
+     is the no-attribute state: it renders before any script runs and before
+     themes.css has anything to match. Keep the two in step — themes.css
+     restates the same values so taupe also works as a section. */
+  --color-substrate: var(--color-taupe-200);
+  --color-module: var(--color-taupe-100);
+  --color-grid: var(--color-taupe-350);
+  --color-rule: var(--color-taupe-350);
+  --color-text: var(--color-dark-000);
+  --color-text-muted: var(--color-dark-100);
+  /* grove-600 measures 5.51:1 on this ground — past AA for normal text, which
+     is what lets interaction be olive at text size. grove-400 is 2.93:1 and is
+     therefore a FILL and large-text value only; using it for a link would
+     fail. That split is the one in the brand note: olive indicates
+     interaction, and it must not become decoration. */
+  --color-interactive: var(--color-grove-600);
+  --color-interactive-fill: var(--color-grove-500);
+
+  /* The surface of things that float ABOVE the page — the nav panel, the
+     sheet. It cannot be --color-module: a dropdown over a module-coloured
+     hero would then be the same colour as what it covers and read as a hole
+     rather than a card. This is the one surface that is deliberately outside
+     the substrate/module pair, because its job is to sit on top of either. */
+  --color-overlay: var(--color-light-000);
+
+  /* A surface raised off a module and still part of it: the lit half of the
+     tier explorer, and the small controls that sit on the page — filter pills,
+     the view switch, a tag, a badge.
+
+     Its own role rather than a borrowed one. --color-module is the recessed
+     half, so the panel cannot use it; --color-overlay is the wrong meaning —
+     in Grove an overlay is deliberately DEEPER than its ground, because a
+     floating sheet reads as shadow, and a panel that took that value would
+     invert the relationship it is supposed to state.
+
+     Every theme defines it against its OWN module, which is the whole point:
+     these surfaces carry text in --color-text, and a fixed white one left that
+     text unreadable the moment the theme went dark. */
+  --color-panel: var(--color-light-000);
+
+  /* Taupe earth: emphasis in diagrams and output, never body copy — 3.62:1 is
+     large-text only. Reserved. */
+  --color-emphasis: var(--color-taupe-500);
+
+  /* The ink that sits ON --color-text: a filled tab, an active rail item. */
+  --color-inverse: var(--color-light-000);
+
+  /* Buttons follow the theme — see the note in themes.css. These are
+     taupe's. */
+  --color-button-main: var(--color-dark-000);
+  --color-button-main-ink: var(--color-light-000);
+  --color-button-secondary: var(--color-taupe-300);
+  --color-button-secondary-ink: var(--color-dark-000);
+
+  /* Every theme carries one gradient: the footer wordmark paints itself with
+     it, and the logo lights up into it on hover. A theme sets the two STOPS
+     and the background is composed here, so nothing has to restate the angle
+     and nothing has to parse a gradient string to recover its colours.
+     Terrace is Taupe's. */
+  --gradient-from: var(--gradient-terrace-from);
+  --gradient-to: var(--gradient-terrace-to);
+  --gradient-theme: linear-gradient(90deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
+
+  /* -- nav -----------------------------------------------------------------
+     Two states, open and condensed. Everything that differs between them is a
+     transitioned property on the same element, so scrolling past the threshold
+     never causes a layout jump. Widths are whole unit counts, like modules. */
+
+  --nav-w: var(--module-w);
+  --nav-h: calc(3 * var(--u));
+  --nav-logo-h: calc(1.25 * var(--u));
+
+
+  /* The condense is a shape change, not a UI response — slower than the
+     response family so it reads as the bar settling rather than snapping. */
+
+  /* -- code ----------------------------------------------------------------
+     Defined once rather than per theme: a code block is a terminal, and
+     switching it to a light surface in a light theme makes pasted code feel
+     unlike the tool it came from. The existing site already works this way.
+
+     Syntax colours are drawn from the brand ramp so a snippet still looks like
+     Gradiated rather than like a generic editor theme.                        */
+
+  /* THE CODE SURFACE IS THE THEME'S MODULE. A code block is a raised surface
+     like any other, so it takes the one the theme already defines rather than
+     a value of its own — which makes it per-theme with nothing to restate,
+     and keeps it 1.06-1.16 from its page on every theme. A near-black block
+     on limestone was 15.2:1: not a panel, a hole.
+
+     Only the INK divides, and it divides by ground rather than by theme:
+     light grounds take dark syntax, dark grounds take light. Those two sets
+     are below and in themes.css.
+
+     The dark set was chosen against ink-000 and holds on the dark modules.
+     The light-ground set is drawn from the brand families — the obvious picks
+     all failed on taupe-100: dark-300 for comments at 4.60, kiln-600 for
+     keywords at 4.41, kiln-500 at 3.49. Measured here: text 14.36, comments
+     5.87, keywords 7.27, strings 10.51, numbers 10.53. */
+  --color-code-surface: var(--color-module);
+  --color-code-text: var(--color-dark-100);
+  --color-code-muted: var(--color-grove-600);
+  --color-code-keyword: var(--color-kiln-700);
+  --color-code-string: var(--color-grove-700);
+  --color-code-number: var(--color-aegean-700);
+  --color-code-border: color-mix(in srgb, var(--color-dark-100) 22%, transparent);
+
+  /* -- glass ---------------------------------------------------------------
+     Frosted: a heavy blur with a boosted saturate so whatever passes behind
+     stays luminous instead of muddy. Values are provisional by nature — glass
+     reads against what is behind it, and in monochrome there is no chromatic
+     backdrop to tune against. Revisit once shaders and colour land.           */
+
+  --glass-border-w: 1px;
+  --glass-blur: 20px;
+  --glass-saturate: 1.4;
+  --glass-tint: rgb(255 255 255 / 0.45);
+  --glass-border: rgb(255 255 255 / 0.55);
+}
+
+@media (min-resolution: 2dppx) {
+  .gr-root {
+    --hair-scale: 0.5;
+  }
+}
+
+/* Tiers. Only the unit COUNT changes; every derived value follows.
+
+   Keyed off data-tier, which useLattice sets from the element's own width, not
+   off a media query reading the window. That is what lets the layout respond
+   to a constrained container — the device preview on the reference page — and
+   it is the same reason --u is resolved in JS rather than from 100vw. */
+.gr-root[data-tier="mid"] {
+  --module-u: 36;
+}
+
+.gr-root[data-tier="compact"] {
+  --module-u: 24;
+  --pad-u: 2;
+}
+
+.gr-root[data-tier="narrow"] {
+  --module-u: 16;
+  --pad-u: 2;
+}

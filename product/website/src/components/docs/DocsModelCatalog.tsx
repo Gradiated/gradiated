@@ -55,7 +55,9 @@ const ModelMetric = ({
     <dd className="m-0 whitespace-nowrap text-right font-site-mono text-[13px] text-ink">
       {value}
       {perMillion && value !== "—" && (
-        <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+        <span data-price-unit className="ml-1 text-[10px] text-muted">
+          / 1M
+        </span>
       )}
     </dd>
   </div>
@@ -106,7 +108,7 @@ const ModelTableSkeletonRow = (): ReactElement => (
         <span className={`block h-3.5 ${width} max-w-full bg-line`} />
       </td>
     ))}
-    <td className="px-3 py-4 text-right">
+    <td className="px-3 py-4 pr-4 text-right align-middle">
       <span className="ml-auto block h-[34px] w-[66px] bg-line" />
     </td>
   </tr>
@@ -132,7 +134,11 @@ const ModelCardSkeleton = (): ReactElement => (
   </article>
 );
 
-export const DocsModelCatalog = (): ReactElement => {
+export const DocsModelCatalog = ({
+  variant = "docs",
+}: {
+  variant?: "docs" | "site";
+}): ReactElement => {
   const [models, setModels] = useState<Model[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -186,15 +192,21 @@ export const DocsModelCatalog = (): ReactElement => {
   }
 
   return (
-    <div className="my-7 max-w-[760px]">
+    <div
+      className={`@container my-7 ${variant === "site" ? "gr-model-catalog w-full max-w-none" : "max-w-[760px]"}`}
+    >
       {status === "loading" && (
         <p className="sr-only" role="status">
           Loading models
         </p>
       )}
-      <div className="hidden overflow-hidden rounded-xl border border-line min-[641px]:block">
+      <div
+        data-model-table-frame
+        className="hidden overflow-hidden rounded-xl border border-line @min-[700px]:block"
+      >
         <table
           aria-busy={status === "loading"}
+          data-model-table
           className="w-full table-fixed border-collapse font-libre text-[13px]"
         >
           <colgroup>
@@ -222,20 +234,35 @@ export const DocsModelCatalog = (): ReactElement => {
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
                     {pricePerMillion(model, "prompt")}
-                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                    <span
+                      data-price-unit
+                      className="ml-1 text-[10px] text-muted"
+                    >
+                      / 1M
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
                     {pricePerMillion(model, "cached_prompt")}
-                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                    <span
+                      data-price-unit
+                      className="ml-1 text-[10px] text-muted"
+                    >
+                      / 1M
+                    </span>
                   </td>
                   <td className="whitespace-nowrap px-3 py-4 font-site-mono text-[13px] text-ink">
                     {pricePerMillion(model, "completion")}
-                    <span className="ml-1 text-[10px] text-muted">/ 1M</span>
+                    <span
+                      data-price-unit
+                      className="ml-1 text-[10px] text-muted"
+                    >
+                      / 1M
+                    </span>
                   </td>
                   <td className="px-3 py-4 font-site-mono text-[13px] text-ink">
                     {formatContext(model)}
                   </td>
-                  <td className="px-3 py-4 text-right">
+                  <td className="px-3 py-4 pr-4 text-right align-middle">
                     <CopyModelId
                       copied={copiedId === model.id}
                       id={model.id}
@@ -249,7 +276,7 @@ export const DocsModelCatalog = (): ReactElement => {
         </table>
       </div>
 
-      <div className="grid gap-6 min-[641px]:hidden" data-model-cards>
+      <div className="grid gap-6 @min-[700px]:hidden" data-model-cards>
         {status === "loading" ? (
           <ModelCardSkeleton />
         ) : (

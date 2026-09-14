@@ -16,7 +16,9 @@ export type PageMetadata = {
   title: string;
 };
 
-type PageMetadataContent = Pick<PageMetadata, "description" | "title">;
+type PageMetadataContent = Pick<PageMetadata, "description" | "title"> & {
+  index?: boolean;
+};
 
 export const formatPageTitle = (title: string): string =>
   `${title} | Gradiated`;
@@ -27,10 +29,25 @@ const pageMetadata: Record<string, PageMetadataContent> = {
     description:
       "Gradiated builds software and hardware to provide the most affordable open-model inference.",
   },
-  "/products/": {
-    title: "Products",
+  "/training/": {
+    title: "Training",
     description:
-      "Explore Gradiated products for efficient open-model inference.",
+      "Automatically fine-tune open models for better quality, speed, and cost.",
+  },
+  "/inference/": {
+    title: "Inference",
+    description:
+      "Open-model inference priced for the latency your workload requires.",
+  },
+  "/hardware/": {
+    title: "Hardware",
+    description:
+      "Inference hardware designed for efficient, long-running cloud workloads.",
+  },
+  "/artwork-generator/": {
+    title: "Artwork generator",
+    description: "Create Gradiated wafer-field artwork from a motif or image.",
+    index: false,
   },
   "/library/": {
     title: "Library",
@@ -172,7 +189,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
     return {
       ...exactMetadata,
       ...metadataDetailsFor(normalizedPath),
-      index: true,
+      index: exactMetadata.index ?? true,
     };
   }
 
@@ -184,15 +201,7 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
       image: "/assets/editorial/working-with-us-v2.png",
       index: true,
       kind: "job",
-      publishedAt: "2026-08-28",
-    };
-  }
-
-  if (normalizedPath.startsWith("/products/")) {
-    return {
-      ...pageMetadata["/products/"],
-      ...metadataDetailsFor("/products/"),
-      index: true,
+      publishedAt: job.datePosted ?? "2026-08-28",
     };
   }
 
@@ -205,7 +214,9 @@ export const getPageMetadata = (pathname: string): PageMetadata => {
 };
 
 export const getIndexablePaths = (): string[] => [
-  ...Object.keys(pageMetadata),
+  ...Object.entries(pageMetadata)
+    .filter(([, metadata]) => metadata.index !== false)
+    .map(([path]) => path),
   ...articles
     .filter((article) => article.status === "published")
     .map((article) => article.path),
@@ -273,8 +284,9 @@ const jobDescription = (job: (typeof jobs)[number]): string =>
     ...job.purpose.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`),
     "<h2>What you will do</h2>",
     htmlList(job.responsibilities),
-    "<h2>Problems you may work on</h2>",
-    htmlList(job.problems),
+    ...(job.problems.length > 0
+      ? ["<h2>Problems you may work on</h2>", htmlList(job.problems)]
+      : []),
     "<h2>What we are looking for</h2>",
     htmlList(job.requirements),
     "<h2>This role is not for you if</h2>",
@@ -297,7 +309,7 @@ export const getStructuredData = (pathname: string): object[] => {
       "@type": "JobPosting",
       title: job.title,
       description: jobDescription(job),
-      datePosted: "2026-08-28",
+      datePosted: job.datePosted ?? "2026-08-28",
       employmentType: "FULL_TIME",
       hiringOrganization: organization,
       identifier: {
@@ -318,8 +330,8 @@ export const getStructuredData = (pathname: string): object[] => {
         currency: "GBP",
         value: {
           "@type": "QuantitativeValue",
-          minValue: 240000,
-          maxValue: 500000,
+          minValue: job.salaryMin ?? 240000,
+          maxValue: job.salaryMax ?? 420000,
           unitText: "YEAR",
         },
       },

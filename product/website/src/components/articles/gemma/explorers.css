@@ -1,17 +1,35 @@
+/* The figures, on the system's roles.
+ *
+ * These were written against a palette the site no longer has: --paper, --ink,
+ * --line and --muted are used 93 times between this file and the speculative
+ * attention one, and NONE of them is defined anywhere in the app. An undefined
+ * custom property fails silently, so the figures were taking whatever they
+ * inherited rather than any colour anyone chose.
+ *
+ * Mapped here at the scope root rather than rewritten at all 93 call sites:
+ * the figure's internals keep talking about paper and ink, which is the right
+ * vocabulary for a diagram, and the four names now resolve to the theme.
+ */
 .gemma-figure {
-  --gx-green: #246957;
-  --gx-orange: #a55327;
+  --paper: var(--color-panel);
+  --ink: var(--color-text);
+  --line: var(--color-rule);
+  --muted: var(--color-text-muted);
+
+  /* The two figure accents. They carry meaning — green is the cached path,
+     orange the recomputed one — so they stay distinct hues rather than
+     collapsing onto --color-interactive, but they come from the brand ramps
+     and lift on the dark themes below. */
+  --gx-green: var(--color-grove-600);
+  --gx-orange: var(--color-kiln-700);
   --gx-wash: color-mix(in srgb, var(--ink) 3%, var(--paper));
   margin: 48px 0 64px;
   padding: clamp(16px, 3vw, 30px);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--radius);
   background: var(--paper);
   color: var(--ink);
-  font:
-    14px/1.5 "Libre Franklin",
-    Arial,
-    sans-serif;
+  font: 14px/1.5 var(--font-body);
   letter-spacing: normal;
   min-width: 0;
 }
@@ -28,17 +46,13 @@
 }
 .gemma-figure h3 {
   font:
-    500 clamp(24px, 3vw, 32px)/1.15 Newsreader,
-    Georgia,
-    serif;
+    500 clamp(24px, 3vw, 32px)/1.15 var(--font-title);
   letter-spacing: -0.02em;
   margin: 10px 0;
 }
 .gemma-figure h4 {
   font:
-    600 15px/1.4 "Libre Franklin",
-    Arial,
-    sans-serif;
+    600 15px/1.4 var(--font-body);
   margin: 0 0 14px;
   letter-spacing: normal;
 }
@@ -51,8 +65,7 @@
 .gemma-figure .gx-eyebrow {
   display: block;
   font:
-    11px/1.5 "DM Mono",
-    monospace;
+    11px/1.5 var(--font-code);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted);
@@ -106,7 +119,7 @@
   accent-color: var(--gx-green);
 }
 .gx-controls strong {
-  font-family: "DM Mono", monospace;
+  font-family: var(--font-code);
   min-width: 20px;
 }
 .gx-stage-labels {
@@ -126,7 +139,7 @@
 }
 .gx-stage-labels button span {
   display: block;
-  font-family: "DM Mono", monospace;
+  font-family: var(--font-code);
   margin-bottom: 4px;
   opacity: 0.6;
 }
@@ -188,8 +201,7 @@
 .gx-ring-cell text {
   fill: var(--ink);
   font:
-    14px "DM Mono",
-    monospace;
+    14px var(--font-code);
   text-anchor: middle;
 }
 .gx-ring-cell .gx-ring-slot-number {
@@ -250,8 +262,7 @@
   border: 1px solid var(--line);
   border-radius: 4px;
   font:
-    11px/1.3 "DM Mono",
-    monospace;
+    11px/1.3 var(--font-code);
   background: var(--gx-wash);
 }
 .gx-token small {
@@ -262,7 +273,7 @@
 .gx-token.is-new {
   background: var(--gx-green);
   border-color: var(--gx-green);
-  color: white;
+  color: var(--color-light-000);
 }
 .gx-token.is-backup {
   border-color: var(--gx-orange);
@@ -286,8 +297,7 @@
 }
 .gx-operation strong {
   font:
-    500 30px/1 Newsreader,
-    serif;
+    500 30px/1 var(--font-title);
   min-width: 38px;
 }
 .gx-operation span {
@@ -332,8 +342,7 @@
   gap: 16px;
   margin: 12px 0;
   font:
-    500 clamp(25px, 4vw, 37px)/1.1 Newsreader,
-    serif;
+    500 clamp(25px, 4vw, 37px)/1.1 var(--font-title);
 }
 .gx-result-values strong {
   color: var(--gx-green);
@@ -372,13 +381,12 @@
 }
 .gx-matrix-cell {
   background: var(--gx-green);
-  color: white;
+  color: var(--color-light-000);
   border: 1px solid transparent;
   padding: 8px 2px;
   text-align: center;
   font:
-    12px/1.2 "DM Mono",
-    monospace;
+    12px/1.2 var(--font-code);
 }
 .gx-matrix-cell span {
   display: block;
@@ -501,8 +509,7 @@
   padding: 10px 3px;
   text-align: center;
   font:
-    10px "DM Mono",
-    monospace;
+    10px var(--font-code);
   border: 1px solid var(--line);
   background: var(--paper);
   border-radius: 3px;
@@ -511,7 +518,7 @@
   padding: 8px;
   margin-top: 10px;
   background: var(--gx-green);
-  color: white;
+  color: var(--color-light-000);
   font-size: 11px;
   text-align: center;
 }
@@ -522,12 +529,11 @@
 .gx-summary-vector span {
   flex: 1;
   background: var(--gx-green);
-  color: white;
+  color: var(--color-light-000);
   padding: 12px 4px;
   text-align: center;
   font:
-    12px "DM Mono",
-    monospace;
+    12px var(--font-code);
 }
 .gx-activation-grid {
   display: grid;
@@ -544,8 +550,7 @@
   border-top: 3px dashed var(--gx-orange);
   border-bottom: 3px dashed var(--gx-orange);
   font:
-    11px/1.6 "DM Mono",
-    monospace;
+    11px/1.6 var(--font-code);
   text-align: center;
 }
 .gx-converters {
@@ -589,8 +594,7 @@
 }
 .gx-payload strong {
   font:
-    500 28px Newsreader,
-    serif;
+    500 28px var(--font-title);
 }
 .gx-details {
   margin-top: 18px;
@@ -611,8 +615,7 @@
   padding: 12px;
   background: var(--gx-wash);
   font:
-    11px/1.6 "DM Mono",
-    monospace;
+    11px/1.6 var(--font-code);
 }
 .gemma-figure pre.gx-formula {
   margin: 20px 0;
@@ -621,8 +624,7 @@
   background: transparent;
   color: var(--ink);
   font:
-    11px/1.6 "DM Mono",
-    monospace;
+    11px/1.6 var(--font-code);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -665,9 +667,16 @@
   font-size: 11px;
   opacity: 0.8;
 }
-html[data-theme="dark"] .gemma-figure {
-  --gx-green: #70ac98;
-  --gx-orange: #dca170;
+/* Both dark themes, and from any ancestor.
+ *
+ * The old rule was html[data-theme="dark"] — it named one of the four themes
+ * and required the attribute to be on <html>, but a theme here is scoped to
+ * whatever element carries it, so a dark SECTION never matched and Grove never
+ * matched at all. */
+[data-theme="dark"] .gemma-figure,
+[data-theme="grove"] .gemma-figure {
+  --gx-green: var(--color-grove-400);
+  --gx-orange: var(--color-kiln-300);
 }
 @media (max-width: 600px) {
   .gx-two-panels {
@@ -712,9 +721,7 @@ html[data-theme="dark"] .gemma-figure {
 
 .article .gemma-figure p {
   font:
-    14px/1.6 "Libre Franklin",
-    Arial,
-    sans-serif;
+    14px/1.6 var(--font-body);
   letter-spacing: normal;
   margin: 10px 0;
 }
@@ -740,7 +747,7 @@ html[data-theme="dark"]
     .gx-token.is-new,
     .gx-matrix-cell.is-visible
   ) {
-  color: #171714;
+  color: var(--color-ink-000);
 }
 .gx-before-after {
   display: flex;
@@ -772,9 +779,7 @@ html[data-theme="dark"]
 }
 .gx-simple-copy-count strong {
   font:
-    500 60px/1 Newsreader,
-    Georgia,
-    serif;
+    500 60px/1 var(--font-title);
   color: var(--gx-green);
 }
 .gx-simple-copy-count span {
@@ -825,21 +830,19 @@ html[data-theme="dark"]
   height: 42px;
   padding: 8px;
   font:
-    15px "DM Mono",
-    monospace;
+    15px var(--font-code);
   border: 1px solid var(--line);
   border-radius: 5px;
   background: var(--gx-wash);
 }
 .gx-number.is-largest {
-  color: white;
+  color: var(--color-light-000);
   background: var(--gx-green);
   border-color: var(--gx-green);
 }
 .gx-saved-max {
   font:
-    12px "DM Mono",
-    monospace;
+    12px var(--font-code);
   border: 1px solid var(--gx-green);
   color: var(--gx-green);
   padding: 10px;
@@ -858,9 +861,7 @@ html[data-theme="dark"]
 }
 .gx-final-max {
   font:
-    500 36px Newsreader,
-    Georgia,
-    serif;
+    500 36px var(--font-title);
   color: var(--gx-green);
 }
 .gx-unchanged {
@@ -896,17 +897,16 @@ html[data-theme="dark"]
 .gx-real-size strong {
   display: block;
   font:
-    500 clamp(26px, 4vw, 36px) Newsreader,
-    Georgia,
-    serif;
+    500 clamp(26px, 4vw, 36px) var(--font-title);
   margin-top: 6px;
 }
 .article .gemma-figure .gx-real-size p {
   font-size: 12px;
   color: var(--muted);
 }
-html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
-  color: #171714;
+[data-theme="dark"] .gemma-figure .gx-number.is-largest,
+[data-theme="grove"] .gemma-figure .gx-number.is-largest {
+  color: var(--color-ink-000);
 }
 @media (max-width: 600px) {
   .gx-before-after {
@@ -976,8 +976,7 @@ html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
   padding: 9px;
   border-bottom: 1px solid var(--line);
   font:
-    12px "DM Mono",
-    monospace;
+    12px var(--font-code);
 }
 .gx-page-map strong {
   justify-self: end;
@@ -1008,8 +1007,7 @@ html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
   border: 1px solid var(--gx-green);
   border-radius: 5px;
   font:
-    11px/1.6 "DM Mono",
-    monospace;
+    11px/1.6 var(--font-code);
   text-align: center;
 }
 .gx-cache-example {
@@ -1018,8 +1016,7 @@ html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
   gap: 16px;
   padding: 18px 0;
   font:
-    13px "DM Mono",
-    monospace;
+    13px var(--font-code);
   color: var(--gx-green);
 }
 .gx-cache-example > span {
@@ -1084,8 +1081,7 @@ html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
 }
 .gx-layer-row > span:first-child {
   font:
-    11px "DM Mono",
-    monospace;
+    11px var(--font-code);
   opacity: 0.65;
 }
 .gx-model-layer {
@@ -1094,8 +1090,7 @@ html[data-theme="dark"] .gemma-figure .gx-number.is-largest {
   border-radius: 3px;
   padding: 5px 0;
   font:
-    11px "DM Mono",
-    monospace;
+    11px var(--font-code);
   opacity: 0.45;
 }
 .gx-model-layer.is-global {

@@ -1,7 +1,15 @@
 export type Job = {
   slug: string;
+  datePosted?: string;
+  compensation?: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  foundingContext?: string;
+  officeDays?: string;
+  howWeWork?: string[];
+  interviewSteps?: string[];
   title: string;
-  team: string;
+  team?: string;
   location: string;
   summary: string;
   purpose: string[];
@@ -12,6 +20,55 @@ export type Job = {
 };
 
 export const jobs: Job[] = [
+  {
+    slug: "engineer-journalist",
+    datePosted: "2026-09-11",
+    compensation: "£130,000-£160,000 base + significant equity",
+    salaryMin: 130000,
+    salaryMax: 160000,
+    foundingContext:
+      "We are early. Be the founding content and marketing person in the company.",
+    officeDays: "Several days a week",
+    howWeWork: [
+      "We like to experiment a lot and do the hard thing even if it's likely to fail.",
+      "We work in the office several days a week. We value working in person to solve hard problems, but are also flexible, some of the team work abroad for short periods.",
+    ],
+    interviewSteps: [
+      "We get together in person and talk through the problems we will work on.",
+      "A paid in-person working session, so we can get to know you and you can meet the team.",
+      "References and an offer decision.",
+    ],
+    title: "Engineer Journalist",
+    location: "Cambridge, London",
+    summary:
+      "Turn research on models, inference, and hardware into work that helps engineers understand the stack they rely on.",
+    purpose: [
+      "Software engineers increasingly rely on models, inference systems, and hardware for almost all of their day-to-day work, but rarely get a clear view of how those systems work. We think they should. Knowledge is power.",
+      "Our research team produces whitepapers about the inference stack. You will be the translation layer between this work and regular full-stack software engineers who want a deeper understanding of what they are building on top of.",
+    ],
+    responsibilities: [
+      "Work with our researchers as their work develops, not only after a paper is finished.",
+      "Turn our whitepapers into articles that teach full-stack engineers the concepts, evidence, and practical consequences of the research.",
+      "Read new model papers, then explain the architecture, training process, evaluations, strengths, weaknesses, and implications for inference.",
+      "Build small experiments, benchmarks, diagrams, and code examples when they make an explanation more useful or more honest.",
+      "Develop a distinct technical reputation for Gradiated that engineers trust.",
+    ],
+    problems: [],
+    requirements: [
+      "You have real software engineering experience and can investigate a technical claim in papers, code, traces, and benchmarks rather than repeating its summary.",
+      "You write clearly and precisely, and you care about teaching rather than sounding clever.",
+      "You can explain technical depth without removing the caveats, evidence, or uncertainty that make it trustworthy.",
+      "You are curious enough to follow a question across models, training, inference software, systems, and hardware.",
+      "You know how to interview technical people, challenge assumptions, and find the question that unlocks an explanation.",
+      "You have writing, teaching, or explanatory work that shows how you think. It does not need to have been your job title.",
+    ],
+    notFor: [
+      "You don't already read lots of whitepapers.",
+      "You're scared about learning about hardware if you're not in that world already.",
+      "You haven't truly been an engineer building production systems before.",
+      "You need lots of handholding.",
+    ],
+  },
   {
     slug: "founding-inference-research-engineer",
     title: "Founding Inference Research Engineer",

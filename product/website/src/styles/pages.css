@@ -4319,3 +4319,43 @@
 .gr-substrate:has(.gr-read) > .gr-lattice--open {
   display: none;
 }
+
+/* -- real cover artwork ----------------------------------------------------
+   A piece with delivered artwork shows it; the generated wafer cover remains
+   the fallback for pieces still waiting on theirs.                          */
+
+/* The card is the container, because the card is what the row cycle seats in
+   a narrow, pair or lead cell — the story cannot know which. inline-size
+   containment only: the card's height must stay content-driven. */
+.gr-story {
+  container-type: inline-size;
+}
+
+.gr-story-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-image: var(--art-tall);
+  background-size: cover;
+  background-position: 50% 50%;
+}
+
+/* Wider than a narrow cell can be: the pair and lead cells, which is where
+   the landscape crop belongs. The tall crop would cover them too, but with
+   its head and feet cut off — the wide crop was composed for this shape. */
+@container (min-width: 30rem) {
+  .gr-story-art {
+    background-image: var(--art-wide, var(--art-tall));
+  }
+}
+
+/* The read page's cover takes the tall crop as its ground; the wafer canvas
+   only renders when there is no art. */
+.gr-read-cover {
+  background-size: cover;
+  background-position: 50% 50%;
+}
+
+.gr-nav-note-thumb {
+  background-size: cover;
+}

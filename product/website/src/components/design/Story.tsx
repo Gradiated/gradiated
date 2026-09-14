@@ -18,8 +18,18 @@ import { WaferArtwork } from "./WaferArtwork";
 
 export type StoryCover = ArtworkPreset;
 
+/** Real artwork for a piece, in the two crops the layout uses. */
+export type StoryArt = {
+  /** The 0.89 portrait crop — narrow cells, the read page, mobile. */
+  tall: string;
+  /** The landscape crop for the lead and pair cells. Falls back to tall. */
+  wide?: string;
+};
+
 export type Story = {
-  /** A generated wafer artwork, shared by every card for it. */
+  /** Real artwork, when a piece has it. Wins over `cover`. */
+  art?: StoryArt;
+  /** A generated wafer artwork — the fallback while art does not exist. */
   cover?: StoryCover;
   /** Which half of the Library this belongs to — what the filters act on. */
   kind: "method" | "note";
@@ -43,9 +53,28 @@ export const StoryCard = ({
 }): ReactElement => (
   <article className={`gr-story gr-story--${variant}`}>
     <a className="gr-story-link" href={story.href}>
-      {/* Decorative: the title immediately below carries the meaning. */}
-      <span aria-hidden className={`gr-story-well${story.cover ? " gr-story-cover" : ""}`}>
-        {story.cover ? <WaferArtwork options={story.cover} /> : null}
+      {/* Decorative: the title immediately below carries the meaning.
+          Real artwork wins over the generated cover; the two crops are
+          chosen by the CARD'S OWN WIDTH via a container query, because a
+          story does not know which cell the row cycle will seat it in —
+          see .gr-story-art in pages.css. */}
+      <span
+        aria-hidden
+        className={`gr-story-well${story.art || story.cover ? " gr-story-cover" : ""}`}
+      >
+        {story.art ? (
+          <span
+            className="gr-story-art"
+            style={
+              {
+                "--art-tall": `url(${story.art.tall})`,
+                "--art-wide": `url(${story.art.wide ?? story.art.tall})`,
+              } as CSSProperties
+            }
+          />
+        ) : story.cover ? (
+          <WaferArtwork options={story.cover} />
+        ) : null}
       </span>
 
       <span className="gr-story-text">

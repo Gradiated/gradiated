@@ -24,11 +24,11 @@ flowchart LR
   RELAY -->|unchanged bytes| PROV[Provider]
   HOST -->|private route| RT[Serving host runtime]
   BUF -->|async batch insert| CH[(ClickHouse traces)]
-  GW -->|generation events| VK[(Valkey streams)]
-  VK2[(Valkey projections)] -->|workspace, task, model,<br/>deployment status, revocation| RES
+  GW -->|generation events| VK[(Valkey generation stream)]
+  VK2[(Valkey projections)] -->|workspace, task, model,<br/>deployment status| RES
 ```
 
-The gateway reads Valkey projections and writes ClickHouse and Valkey streams. It never queries PostgreSQL, never calls the fleet controller, and never waits on capture.
+The gateway reads Valkey projections and writes ClickHouse and Valkey generation stream. It never queries PostgreSQL, never calls Nomad or the autoscaler, and never waits on capture.
 
 ## Decisions in this contract
 
@@ -70,7 +70,7 @@ Run tokens are identified by a dedicated JWT `typ`, issuer and audience under st
 | `/messages/count_tokens`, `/v1/messages/count_tokens` | POST | Anthropic | Operational observation only |
 | `/models`, `/v1/models` | GET | The provider of the credential type present | Nothing |
 
-There is no catch-all and no legacy `/completions`, files, batches, provider fine-tuning, resource mutation or multipart API. Query strings pass through on permitted routes. `/internal/v1/` belongs to the API service and never falls through to relay. Internal inference uses the ordinary inference routes.
+There is no catch-all and no legacy `/completions`, files, batches, provider fine-tuning, resource mutation or multipart API. Query strings pass through on permitted routes. Route `/internal/v1/*` to the API service only. Internal inference uses the ordinary inference routes.
 
 Native `/models` lists the workspace's private models and the global catalog. Proxy `/models` is the provider's own listing, unmodified; it does not imply every listed id can be relayed. The console links to the workspace model list.
 
@@ -80,7 +80,7 @@ On a POST route that carries a model, the gateway parses a bounded JSON object a
 
 **Resolution order.**
 
-1. Workspace-scoped local reservations, including retired, deleted and inaccessible ones. A local access or lifecycle failure is a local error.
+1. Workspace-scoped task and version records, then exact hosted catalog ids. A local access or lifecycle failure is a local error. A name in the task/version format is always resolved locally; an unknown task or version never reaches a provider.
 2. In proxy mode only: an unresolved name starting with `gpt-` on an OpenAI route or `claude-` on an Anthropic route is relayed. The route never switches provider. Any other name is a local model error. A typo inside an admitted prefix reaches the provider; we do not claim to catch it.
 
 Native mode never relays. Internal mode may use only the models named in its token.
@@ -90,14 +90,16 @@ Native mode never relays. Internal mode may use only the models named in its tok
 | Name | Form |
 | --- | --- |
 | Production | The bare task slug |
-| Exact version | `<task-slug>-<YYYYMMDD>`, then `-2`, `-3`, … for further versions that UTC day |
+| Exact version | `<task-slug>/yyyy-mm-dd`, then `-2`, `-3`, … for further versions that UTC day |
 | Task slug | `^[a-z0-9][a-z0-9-]{0,63}$`; immutable; display name may change |
 | Version string | At most 200 ASCII characters; checked integer ordinal; explicit failure on overflow |
 | Internal model id | Globally unique; separate from the public name; keys artifacts and caches |
 
-A version name is reserved once under the task lock; its date and ordinal persist across retries and midnight; nothing is allocated by counting rows; no reservation is reused. A slug that looks like a version name gets the normal uniqueness check and nothing special.
+Assign a version date and ordinal when publishing the model, under the task lock. Use the UTC publication date in `yyyy-mm-dd` format; further versions that day use `-2`, `-3`, and so on. Store these fields on the model record. A retry finds the model by its source run ID and returns the same name. Retained model identity records prevent name reuse.
 
-One `public_model_names` table: workspace, name, kind, owner id, tombstone; unique on `(workspace_id, name)`. Global catalog ids are a separate registry, and both are checked under one namespace lock. Collisions are reported without revealing another workspace's names. The same private name may exist in different workspaces. Every cache, negative cache, token count, retry, listing and load intent includes the workspace id.
+Task slugs cannot contain `/`. Enforce unique `(workspace_id, slug)` on tasks, unique `(task_id, version_string)` on private models and one published model per source run. Resolve names through these records; there is no name registry table. Failed runs that publish no model need no public name.
+
+Global catalog ids must not use the task/version format. Task creation and catalog registration reject collisions between bare task slugs and exact catalog ids. The same private name may exist in different workspaces. Every cache, negative cache, token count, retry, listing and adapter request includes the workspace id.
 
 **Reserved roots.** A task slug may not be `gpt`, `chatgpt`, `o1`, `o3`, `o4` or `claude`, nor one of those followed by `-` or a digit, nor an exact hosted catalog id, compared ASCII case-insensitively. Adding a root requires a collision audit and a migration of existing slugs. Reservation never enables provider routing.
 
@@ -123,23 +125,35 @@ One `public_model_names` table: workspace, name, kind, owner id, tombstone; uniq
 | `CAPTURE_MAX_BODY_BYTES` | 16 MiB per request or response; truncated means ineligible |
 | `CAPTURE_INSERT_BUFFER_BYTES` | 256 MiB per process; overflow drops newest captures and counts the loss |
 | `CAPTURE_INSERT_BATCH` | Flush at 8 MiB or 2 s |
-| Recorded exempt spool | 32 MiB, 8,192 records fleet-wide; maximum record size in the schema |
+| Generation event stream | One shared bounded stream; retain unacknowledged events and apply existing settlement backpressure; qualify capacity for combined traffic |
 | SSE observer frame | 256 KiB; larger frames lose observation only |
 | Model cache | 10,000 entries, 16 MiB per process, including in-flight loads; bounded negative entries |
 | Projection cache | 1 s; no stale-on-error extension |
 
-**Capture path.** After a response completes, the gateway appends a row (metadata plus whole request and response bodies, compressed) to an in-memory batch and inserts batches into ClickHouse `traces` with async inserts. If ClickHouse is down or the buffer is full, the newest captures are dropped, a loss counter increments, and the session's coverage evidence records the gap. Serving is never delayed. Whole bodies are stored per generation; agent sessions repeat their context every step and that growth is accepted. Settlement and recorded exempt events keep their Valkey streams. Automatic capture shedding changes an operational status, not the customer's switch.
+**Capture path.** After a response completes, the gateway appends a row (metadata plus whole request and response bodies, compressed) to an in-memory batch and inserts batches into ClickHouse `traces` with async inserts. If ClickHouse is down or the buffer is full, the newest captures are dropped, a loss counter increments, and the session's coverage evidence records the gap. Serving is never delayed. Whole bodies are stored per generation; agent sessions repeat their context every step and that growth is accepted. All generation events use the same `generation-events` Valkey stream. Automatic capture shedding changes an operational status, not the customer's switch.
 
 **Modes.**
 
 | Mode | Tenant check | Charge | Capacity | Terminal event |
 | --- | --- | --- | --- | --- |
-| Native customer | Workspace credential, visible model | Billed admission and finalisation | Physical deployment lease | Settlement stream |
-| Hosted in proxy mode | Same; provider credential discarded before dispatch | Same | Same | Settlement stream |
-| Provider relay | Workspace credential, active account | None | Proxy permits | Recorded stream, zero charge |
-| Internal hosted | Run token, current tenant access, exact claims | None | Reserved capacity, or shared capacity above customer headroom, plus deployment lease | Recorded stream, zero charge |
+| Native customer | Workspace credential, visible model | Billed admission and finalisation | Physical deployment lease | `generation-events`, billable |
+| Hosted in proxy mode | Same; provider credential discarded before dispatch | Same | Same | `generation-events`, billable |
+| Provider relay | Workspace credential, active account | None | Proxy permits | `generation-events`, exempt |
+| Internal hosted | Run token, current tenant access, exact claims | None | Reserved capacity, or shared capacity above customer headroom, plus deployment lease | `generation-events`, exempt |
 
-Billed settlement scripts are unchanged. Exempt finalisation is idempotent by generation id, releases its permits, and records once within a 24-hour marker window; later duplicates are removed by logical dedupe. Exempt records never advance settlement watermarks. Adapter inference is billed at the base model's price. Internal evaluation and relay are zero-charge with their own cost observations.
+**One generation stream.** All terminal generation events use `generation-events` and one worker ingestion path into ClickHouse `generations`. The event schema includes:
+
+| Field | Meaning |
+| --- | --- |
+| `billing_mode` | Required enum: `billable` or `exempt`, set by the gateway from the authorized request mode |
+| `exemption_reason` | `provider_relay` or `internal_execution` for exempt events; null for billable events |
+| Usage and charge | Actual usage and computed customer charge; unknown usage/cost stays null; exempt customer charge is zero |
+
+Never infer billing mode from charge amount. A billable request can have zero charge. Provider cost observations are separate from the customer charge. Adapter inference uses the base model's price.
+
+The worker validates and deduplicates all events by generation ID before writing `generations`. Settlement explicitly filters `billing_mode = 'billable'`. Exempt events cannot debit balances or contribute to billable settlement totals. Ingestion acknowledgement covers both event classes; stream position alone does not establish billing eligibility.
+
+The gateway retains its existing billable charge calculation and atomic balance finalization. Update the event append destination and schema in that finalization path to use the shared stream. Exempt finalization releases its own permits and appends an exempt event without changing a customer balance. Both paths remain idempotent by generation ID. Stream retention and overload behavior must preserve unconsumed billable records under combined relay and internal traffic; a second exempt spool is not introduced.
 
 ## GW-04 Protocols and release qualification
 
@@ -164,7 +178,7 @@ A compatible tokenizer, template and parameter class is selected before tokenisi
 
 ## CAP-01 Capture identity and eligibility evidence
 
-Capture needs the workspace's current policy and a valid task label, and covers native, hosted and relayed requests. Internal requests never create tasks, are never captured, and earn no credit. A task is created only from valid non-internal traffic; a provider authentication failure or a malformed request cannot configure a reference model.
+Capture needs the workspace's current policy and a valid task label, and covers native, hosted and relayed requests. Internal requests never create tasks, are never captured, and do not count toward automatic training. A task is created only from valid non-internal traffic; a provider authentication failure or a malformed request cannot configure a reference model.
 
 **Session.** `(workspace_id, task_id, supplied_trace_id)`. The UTC day of the first generation selects the sampling policy and source expiry; it is not part of the identity. A session ends, for counting, after 24 hours without a generation. Without a trace header, each generation is its own session. Sessions are never inferred from message overlap or Responses chains. The rule is documented for customers.
 
@@ -176,9 +190,9 @@ Capture needs the workspace's current policy and a valid task label, and covers 
 
 ## CAP-02 Sampling and counters
 
-Distinct counters with distinct names: observed sessions, sampled sessions, complete captured requests, eligible sessions, selected sessions, consumed session credit, excluded or unknown coverage. Body-free observation cannot establish eligibility. The console and the automation loop read the same eligible-credit view.
+Distinct counters with distinct names: observed sessions, sampled sessions, complete captured requests, eligible sessions, new sessions since the run cutoff, package-selected sessions, excluded or unknown coverage. Body-free observation cannot establish eligibility. The console and the automation loop read the same new-session view.
 
-**Sampling.** A keyed HMAC of the session identity against the day's frozen policy, so every gateway makes the same choice. Key version and policy version are recorded; the identity key stays stable for the retained grouping window; rotation uses an explicit overlap mapping so it never manufactures credit; secrets stay out of records; old daily policies are kept through request and insert lag.
+**Sampling.** A keyed HMAC of the session identity against the day's frozen policy, so every gateway makes the same choice. Key version and policy version are recorded; the identity key stays stable for the retained grouping window; rotation uses an explicit overlap mapping so it never duplicates session counts; secrets stay out of records; old daily policies are kept through request and insert lag.
 
 Target: 500 sampled sessions per task per seven days, a target and not a quota. Default probability 1.0. Once a day's observation coverage is complete, the next day's probability is `min(1, target / distinct_observed_sessions_in_last_7_days)`; with incomplete coverage the last valid probability is kept; a new task stays at 1.0. S2 measures usable yield.
 
@@ -188,4 +202,6 @@ Source expiry and ingestion follow the operations contract. The workspace switch
 
 ## Required evidence
 
-S1: route and credential ambiguity, protocol equivalence, unsupported fields, real transport bounds. S2: missing events, sessions crossing midnight, key rotation, repeated-context growth, credit and split protection. SDK conformance on all three APIs through the declared aliases. Memory and loss tests fill the capture buffer at maximum body sizes with ClickHouse unavailable, and stop recorded ingestion, while serving latency and billed settlement stay correct.
+S1: route and credential ambiguity, protocol equivalence, unsupported fields, real transport bounds. S2: missing events, sessions crossing midnight, key rotation, repeated-context growth, run cutoff boundaries. SDK conformance on all three APIs through the declared aliases. Memory and loss tests fill the capture buffer at maximum body sizes with ClickHouse unavailable, and stop shared generation ingestion, while serving latency and billed settlement stay correct.
+
+Cold adapter requests go directly to a compatible base runtime after normal authorization and admission. The host loads and caches the exact adapter from S3 under SERV-01 and SERV-02. No Valkey warm key or worker request is involved. Cache status is an optional routing hint, not required authorization or readiness evidence.

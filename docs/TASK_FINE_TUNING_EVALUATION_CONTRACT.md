@@ -6,14 +6,13 @@ Status: specified design; S8 qualifies the judge and estimators before any metri
 
 ```mermaid
 flowchart LR
-  M[(Committed dataset:<br/>holdout groups)] --> W[Evaluation worker]
+  M[(Package manifest:<br/>evaluation groups)] --> W[Evaluation worker]
   W -->|candidate| GW[Gateway, run token] --> RT[Serving runtimes]
   W -->|original provider, company key| PROV[Provider API]
   W -->|pairwise, both orders| J[Frontier judge API]
-  W --> PG[(PostgreSQL: operations, summary)]
-  W --> CH[(ClickHouse: per-example results)]
+  W --> CH[(ClickHouse: training_run_events)]
   W --> S3[(S3: arm outputs, judge evidence)]
-  PG --> CON[Console: results, coverage, uncertainty]
+  CH --> CON[Console: results, coverage, uncertainty]
 ```
 
 ## Decisions in this contract
@@ -34,14 +33,14 @@ Evaluation measures judge-assessed response quality. It does not prove task comp
 
 Task criteria are drafted automatically from permitted task context and development examples; no customer approval step. The rubric is versioned and qualified in S8.
 
-**Frozen at creation:** dataset and example ids, split and grouping revision, sampling seed, arm identities, replay controls, judge identity, rubric version, operation limits, deadline. The holdout is independent of trainer selection and invisible to the trainer. A later recipe or judge change is a new evaluation.
+**Frozen at creation:** dataset and example ids, split and grouping revision, sampling seed, arm identities, replay controls, judge identity, rubric version, operation limits, deadline. The training package supplies a frozen evaluation manifest under DATA-01. These examples are excluded from weight updates and training-time selection. The evaluation worker does not choose a new split. The evaluation belongs to one training run. A later recipe or judge change requires a new run; there is no independently scheduled evaluation at launch.
 
 | Arm | What runs |
 | --- | --- |
 | Candidate | The new adapter on its qualified base release |
 | Original provider | The provider model the task is configured to replace; fresh call, company-paid |
 
-The provider is not automatically the judge; the task explicitly configures an eligible reference model. Observed traffic may suggest one but cannot authorise an arbitrary endpoint. Recovery reuses only the matching accepted operation. Requested and observed provider identity and time are recorded. A retired alias reports unavailable and requires explicit reconfiguration.
+The provider is not automatically the judge; the task explicitly configures an eligible `provider_models` record for the reference model. Observed traffic may suggest one but cannot authorise an arbitrary endpoint. Recovery reuses only the matching accepted operation. Requested and observed provider identity and time are recorded. A retired alias reports unavailable and requires explicit reconfiguration.
 
 The candidate is judged against the original provider only. Versions are not judged against each other or against the bare base; every version shares the same baseline, so versions stay comparable over time through that baseline. An unavailable provider arm is explicit missing evidence and does not remove examples from the sample.
 
@@ -74,7 +73,13 @@ The denominator is fixed. Generation coverage, judge coverage and resolution are
 
 ## EVAL-03 Operations, cost and latency
 
-Each arm generation and each judge ordering is an operation with an immutable input hash, attempt identity, provider or release, deadline, retry ceiling and accepted manifest; one result by compare-and-set. Customer text and judge evidence live in workspace-scoped evaluation objects. Cost metadata carries operation ids. A worker crash cannot create a new sample or restart the comparison.
+Evaluation is keyed by `run_id`. The run spec fixes the reference model, judge and evaluation configuration. The `evaluation_started` event in ClickHouse `training_run_events` fixes the exact sample manifest, settings hash and deadline before any comparison calls. There are no PostgreSQL evaluation or evaluation-operation tables, and no separate evaluation ID.
+
+Each arm generation and judge ordering has a deterministic operation ID derived from run ID, example ID, arm or judge ordering, and the frozen settings hash. Structured events record dispatch intent, call number, input hash, provider or release, deadline, result manifest, failure and usage. The frozen sample manifest, candidate/provider responses and large judge evidence live under `runs/<run_id>/evaluation/`. Small verdicts, scores, usage, errors and summaries live directly in `training_run_events`. Events reference immutable S3 objects instead of duplicating their contents. The API reads events for summary views and fetches referenced files when the user opens a detailed comparison. `evaluation_completed` records the final summary and coverage in the same event log. Any derived reporting view is rebuildable from these events.
+
+**Resume.** The existing single orchestrator owns dispatch. Before a call, it writes an acknowledged intent event. After the call, it writes an acknowledged result event with the same operation identity. On worker restart, it reads and deduplicates the run history, verifies referenced artifacts, reuses completed results and continues unfinished operations. It never changes the sample or reruns a valid unfavorable verdict. An uncertain provider call waits until its recorded deadline before a bounded retry; possible duplicate cost is recorded. A lost write acknowledgement is reconciled by stable event ID. Conflicting results for the same call identity are an error, not last-write-wins. Later calls cannot replace a valid earlier result.
+
+Worker takeover waits out outstanding call bounds before redispatch. These rules use the existing run execution control and leadership boundary; they do not require a PostgreSQL row per call. When history cannot be read, resume waits. Cancelled, failed or closed runs do not resume. This supports worker recovery during evaluation; it does not restart GPU training after host failure.
 
 External calls follow RUN-04 (run tokens, provider slots), use company credentials, and cost the customer nothing. No price lookup, Grafana query or ledger gates execution. An uncertain provider request waits out its bound before retry; duplicate cost is recorded; exactly-once is never claimed. A failed evaluation never retrains, unpublishes or promotes.
 
@@ -82,8 +87,10 @@ External calls follow RUN-04 (run tokens, provider slots), use company credentia
 
 **Latency.** Compared only with its context: vantage point, queue and admission delay, cold load, first token, total time, streaming mode, completion. Customer-observed and worker-only durations are never compared as like for like. Fixed fleet cost is reported separately from busy GPU time.
 
-Final evaluation records and evidence are retained indefinitely (OPS-02). Training rollouts and checkpoints are intermediates unless accepted into an evidence manifest. Turning capture off after a run's first start still permits its evaluation; an explicit cancel stops new operations.
+Final evaluation events and evidence are retained indefinitely (OPS-02). Training rollouts and checkpoints are intermediates unless accepted into an evidence manifest. Turning capture off after a run's first start still permits its evaluation; an explicit cancel stops new operations.
 
 ## Required evidence
 
 S1: replay controls. S8: the judge on known outcomes, swaps, adversarial text, correlated sessions, unavailable arms, selective timeouts; estimators against independent fixtures. Nothing here grants provider permission or proves training worked.
+
+S6 checks worker loss before and after intent and result writes, duplicate events, uncertain provider calls, stale workers, cancellation and missing evidence objects. Replaying a run must preserve its frozen sample and completed results.

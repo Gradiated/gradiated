@@ -1,8 +1,8 @@
 # Fine-tuning from traces: launch plan
 
-Status: implementation plan. Nothing is implemented or qualified yet. Each section states what must be true before its part can be enabled for customers.
+Status: implementation plan for the backend. A gated console prototype exists; it does not prove the backend contracts are implemented or qualified. Each section states what must be true before its part can be enabled for customers.
 
-The [remaining simplification opportunities](TASK_FINE_TUNING_SIMPLIFICATION_OPPORTUNITIES.md) are proposals for follow-up review. They do not change the requirements in this plan until accepted into the owning contract.
+The detailed contracts define the architecture. The [remaining simplification proposals](TASK_FINE_TUNING_SIMPLIFICATION_OPPORTUNITIES.md) do not change those requirements unless accepted into the owning contract.
 
 ## 1. What we are building
 
@@ -56,6 +56,9 @@ flowchart LR
   WK --> S3
   WK -->|projections, write| VK
   WK -->|jobs| NS
+  GIT[Git job templates and scaling policies] --> NS
+  PROM[Prometheus] --> AUTO[Nomad Autoscaler]
+  AUTO -->|replica counts| NS
   NS --> SRV
   NS --> TRN
   TRN -->|judge calls, run token| GW
@@ -67,67 +70,61 @@ flowchart LR
 | Component | Language, where | Owns | Talks to |
 | --- | --- | --- | --- |
 | Gateway | Rust, EKS | Authentication, routing, relay, hosted inference, capture rows, generation events | Providers (relay), serving hosts, ClickHouse (inserts), Valkey (read projections, write streams) |
-| API | TypeScript, EKS | Management routes (console), run-token issuance, artifact grants, trainer events and runtime registration/status ingest | PostgreSQL, S3 (presign), Valkey (revocation and runtime status), Nomad API (allocation validation) |
-| Worker | TypeScript, EKS, one leader | Loops: capture eligibility, automation, run orchestrator, fleet controller, evaluation, projector, ingestion | PostgreSQL, ClickHouse, S3, Valkey, Nomad API, providers (evaluation) |
+| API | TypeScript, EKS | Management routes (console), run-token issuance, artifact grants, trainer events and runtime registration/status ingest | PostgreSQL, S3 (presign), Valkey (runtime status), Nomad API (allocation validation) |
+| Worker | TypeScript, EKS, one leader | Loops: capture eligibility, automation, run orchestrator, evaluation, projector, ingestion | PostgreSQL, ClickHouse, S3, Valkey, Nomad API, providers (evaluation) |
 | Nomad servers | Nomad CE 2.0.x, EKS StatefulSet | Host and GPU placement within workload constraints; serving restart, reschedule and rollout; allocation state and host liveness | Hosts (clients dial out), worker (API) |
 | Serving host | VM at a neocloud; Nomad client; Docker | One base runtime (vLLM, later native engine) with adapters; host agent reports status | Gateway (private route), S3 (adapter download), API (status) |
 | Training host | VM at a neocloud; Nomad client; Docker | One training job: trainer plus in-job inference engine | API (token, grants, events), S3 (grants), gateway (judge calls) |
 | Trainer image | Python, Docker | The recipe steps, checkpoints, artifact upload | As above |
 | Console | TypeScript, browser | Tasks, sessions, runs, versions, promotion, settings | API only |
 
-Ownership rules: Rust owns everything on the request path. TypeScript owns policy, state and orchestration. Python exists only in the trainer image and the existing host reporter. PostgreSQL owns product state, workload targets and training admissions. Nomad owns physical placement and serving recovery. The orchestrator alone creates training attempts; Nomad does not retry them. Training admission is stored on the attempt. The production adapter set is derived from task pointers and pending promotions, with its revision on the serving target; there is no per-host placement plan.
+Ownership rules: Rust owns everything on the request path. TypeScript owns policy, state and orchestration. Python exists only in the trainer image and the existing host reporter. PostgreSQL owns the model catalog, host inventory and run definitions. Git owns Nomad job templates and serving scaling policies. Nomad Autoscaler adjusts replica counts from Prometheus. Nomad owns physical placement and serving recovery. Each run has one execution. A host failure fails the run; neither the orchestrator nor Nomad retries it. Training admission is stored on the run. Hosts own on-demand adapter loading and eviction; there is no per-host adapter placement plan.
+
+Valkey is the gateway's only required synchronous internal state store. Capture writes must not block inference. Training and control-plane operations may use ClickHouse as authoritative storage, including for recovery decisions. PostgreSQL run rows define runs; detailed execution history belongs in ClickHouse.
 
 ## 3. Data
+
+The model catalog stays in PostgreSQL. Git serving declarations reference its immutable base-release IDs and define runtime and scaling configuration. Private adapters have no separate Nomad job.
 
 ### PostgreSQL
 
 | Record | Purpose | Key fields |
 | --- | --- | --- |
 | `workspaces` (additions) | Capture switch and its audit | `trace_capture_enabled`, policy revision, changed by, changed at |
+| `provider_models` | Configured OpenAI and Anthropic models | `id`, provider, exact API model name, display name, enabled; task reference and judge IDs reference these records |
 | `tasks` | One customer workload | `id`, `workspace_id`, `slug` (immutable), display name, `base_release_id`, `reference_model_id`, `recipe_version`, `evaluation_judge_id`, `production_model_id`, production revision, sampling policy per day |
-| `public_model_names` | Name reservations | `workspace_id`, `name`, kind (task or version), owner id, tombstone; unique per workspace |
-| `training_runs` | One run | `id`, task, `spec_hash`, stage, `state_revision`, deadlines, retry window, attempt count, dataset manifest hash, cancel intent, terminal reason |
-| `training_attempts` | One trainer execution | run, attempt number, deterministic job id, admission revision, resource and dependency commitment, accepted allocation, node and trainer boot binding, start exchange time, checkpoint manifest, terminal observation |
-| `training_run_steps` | One side effect | run, stage, `operation_id`, input hash, status, output manifest |
-| `task_dataset_memberships` | Split protection and credit | example id, group id, split, protection, consumed by run; no bodies |
-| `models` (additions) | A private version | workspace, task, base release, run, lifecycle (`candidate`, `available`, `retired`), artifact manifest reference, compatibility hashes |
-| `promotion_operations` | One promotion | task, target, previous, actor, expected revision, state, base protected-set reservation and revision |
-| `evaluations` and operations | One evaluation and its arm and judge operations | evaluation id, frozen sample and settings, per-operation result manifests |
-| `instances` | One GPU host | provider, region, fault domain, GPU shape, capabilities, Nomad node id, allowed workload kinds, floor or reserve designation, eligibility revision, health, quarantine reason, enrollment identity |
-| `serving_targets` | Accepted workload target and base-set coordination | stable Nomad job id, base and runtime release, host class, desired count, target revision, protected-set revision, pending promotion owner; no physical host assignment |
-| `artifact_operations`, `purge_operations` | Inventoried writes and deletions | object versions, expiries, states |
-| `audit_events` | Immutable audit | actor, action, revision, bounded payload; written in the same transaction |
+| `training_runs` | One configured execution | `id`, `task_id`, frozen `config`, `status`, `created_at`, `started_at`, `finished_at`, `cancel_requested_at`; config schema in RUN-01 |
+| `models` (additions) | A private version | workspace, task, version string, base release, run, lifecycle (`candidate`, `available`, `retired`), artifact manifest reference, compatibility hashes |
+| `instances` | One GPU host | provider, region, fault domain, GPU shape, capabilities, Nomad node id, allowed workload kinds, operator eligibility, quarantine reason, enrollment identity |
 
 ### ClickHouse
 
 | Table | Rows | Written by |
 | --- | --- | --- |
-| `generations` (v3) | One per request: route, mode, provider, usage, cost, timing, served version | Worker, from Valkey streams |
+| `audit_events` | Best-effort structured action history: actor, action, resource, timestamp and changes | Shared control-plane audit helper |
+| `generations` (v3) | One per request: route, mode, billing mode and exemption reason, provider, usage, cost, timing, served version | Worker, from `generation-events` |
 | `traces` | One per captured request: metadata, whole request and response bodies, eligibility evidence, expiry | Gateway, direct async inserts |
-| `training_run_events` | Trainer and control-plane events per run and attempt | API (trainer events), worker (audit outbox) |
-| `evaluation_results` | One per example per arm, plus judge verdicts | Worker |
-| `availability_events` | Content-free request outcomes for the SLO | Worker, from a Valkey stream |
-| `fleet_events` | Sanitised Nomad events | Worker |
+| `training_run_events` | Structured JSON execution history per run; user logs, training and evaluation results, call history, summaries and checkpoint references | API (trainer events), worker (execution events) |
 
 ### S3 (`gradiated-<env>-artifacts-us-east-1`)
 
 | Prefix | Content | Written by |
 | --- | --- | --- |
 | `bases/<base>/<hash>/` | Mirrored base weights and tokenizer | Operator operation |
-| `datasets/<run>/<hash>/` | Selected examples, splits, manifest | Worker |
-| `quarantine/<run>/attempt-<n>/` | Trainer output before validation | Trainer, via grants |
-| `adapters/<hash>/` | Verified adapter bytes and manifest | Publisher (worker) only |
-| `evaluations/<id>/` | Arm outputs and judge evidence | Worker |
+| `runs/<run_id>/` | Input snapshot, package-generated datasets and splits, checkpoints, output adapter, and large evaluation artifacts | Worker supplies input; training package and evaluation worker write their own artifacts |
+| `adapters/<hash>/` | Verified immutable adapter bytes and manifest for serving and export | Publisher (worker) only |
+
+Run subdirectories organize files without separate storage workflows: `input/`, `dataset/`, `checkpoints/`, `output/`, and `evaluation/`. The training package owns dataset selection and splits. Evaluation manifests, candidate/provider responses and large judge evidence live under `runs/<run_id>/evaluation/`. Small settings, progress, verdicts, scores, usage, errors and summaries live in ClickHouse `training_run_events`, with immutable S3 references where needed. Do not duplicate result payloads across both stores.
+
+These paths do not change retention: accepted datasets and evaluation evidence are retained; intermediate checkpoints and files expire under OPS-02. Do not apply one blanket TTL to `runs/`. The run ID identifies its workspace; grants and all reads check that ownership. Only the publisher writes `adapters/`; serving never loads unvalidated run output.
 
 ### Valkey
 
 | Key | Content | Writer, reader |
 | --- | --- | --- |
 | `workspace:<id>`, `task:<ws>:<slug>`, `model:<id>` | Projections with `(bootstrap_epoch, revision)` | Worker projector, gateway |
-| `deployment-status:<digest>`, `instance-status:<id>` | Host and runtime status, adapter states, TTL | Status ingest, gateway and fleet controller |
-| `run-auth-epoch:<run>` | Revocation epoch for long-lived run tokens | Worker, gateway and API |
-| `adapter-warm:<model>` | Recent-use intent for non-production adapters | Gateway, worker adapter reconciliation |
-| `generation-settled`, `generation-recorded`, availability stream | Event streams | Gateway, worker |
+| `deployment-status:<digest>`, `instance-status:<id>` | Host and runtime status, adapter states, TTL | Status ingest, gateway and worker |
+| `generation-events` | One generation stream with explicit billing mode | Gateway, worker |
 
 ## 4. The life of a task
 
@@ -145,13 +142,14 @@ sequenceDiagram
   C->>G: requests with task label
   G->>G: relay or serve; capture row to ClickHouse
   Note over W: 500 new eligible sessions
-  W->>W: build dataset, splits, base probe
-  W->>N: admit attempt, register batch job
+  W->>W: freeze input snapshot
+  W->>N: register batch job from run config
   N->>H: choose host, start job
   H->>A: exchange Nomad identity for run token (= start)
-  A->>A: bind actual allocation to admitted attempt
+  A->>A: validate allocation and authorize run
+  H->>H: package prepares dataset and splits
   H->>J: score candidates during training
-  H-->>W: adapter in quarantine
+  H-->>W: adapter in run output
   W->>W: validate, publish version (callable by id)
   W->>E: evaluate candidate vs provider
   Note over C: reads results, promotes by hand
@@ -178,12 +176,12 @@ Each decision names the choice, why, and what was rejected. The contracts hold t
 | Frontier model | Customer-facing evaluation and rubric review only | Its outputs never drive weight updates | Frontier rewards |
 | Provider output | Never a training target; recorded calls used only as hard-check references, listed under D01 | Provider terms | Training on provider outputs |
 | Promotion | Manual only, including the first version; results shown, no recommendation or pass mark | Customers try versions first; automatic promotion is a later decision | Automatic first promotion; quality gates |
-| Residency | Same production adapter set in host memory on every ready replica of its base, at least two hosts; engine manages GPU; non-production loads on demand | RAM holds hundreds of adapters; GPU slots would have capped customers per base | GPU pinning; different production subsets per replica; every historical version resident |
-| Versions | `<task>-<YYYYMMDD>[-n]`; production is the bare slug; no customer retire | Readable, stable; promotion is the only state | Alias table; TTL field (replaced by operator cleanup after a year unused) |
-| Internal auth | One run token with scopes, variable lifetime, epoch revocation; Nomad identity exchanged once (that is the start permit) | One credential, one issuer, one verifier per language | Internal listener; static bearer; separate grant and permit systems |
-| Fleet substrate | Nomad CE 2.0.x places jobs and recovers serving; worker sets targets and admits training | Use the scheduler for placement; T0 qualifies networking and recovery on our VMs | Kubernetes per site; a thin agent of our own |
-| Fleet at launch | Operators set counts and eligibility; controller admits training and protects floors and reserve; Nomad places jobs and repairs serving; demand reported | Handful of hosts; reallocation logic is the riskiest code | Metrics-driven reallocation at launch (phase 2) |
-| Floors | At least two replicas per base with its complete production adapter set, two training nodes per required host class, compatible recovery reserve | Availability target and non-interruption of training | Scale to zero; borrowing the training floor |
+| Residency | Host-owned disk/RAM/GPU adapter caches; adapters load on demand from S3 | Local caches avoid distributed warm queues | Global cache synchronization; mandatory production preloading |
+| Versions | `<task>/yyyy-mm-dd[-n]`; production is the bare slug; no customer retire | Readable, stable; promotion is the only state | Alias table; TTL field (replaced by operator cleanup after a year unused) |
+| Internal auth | One run token with scopes and fixed expiry, no renewal or per-run revocation; Nomad identity exchanged once (that is the start permit) | One credential, one issuer, one verifier per language | Internal listener; static bearer; separate grant and permit systems |
+| Fleet substrate | Nomad CE 2.0.x places jobs and recovers serving; Git defines serving policies; worker submits training jobs | Use the scheduler for placement; T0 qualifies networking and recovery on our VMs | Kubernetes per site; a thin agent of our own |
+| Fleet at launch | Git job/scaling policies, Prometheus and Nomad Autoscaler; Nomad placement and serving recovery; manual VM provisioning | Use standard scheduling and autoscaling | Custom fleet coordinator; PostgreSQL serving targets |
+| Capacity | Serving minima and workload constraints in job configuration; insufficient GPUs leave jobs pending and alert operators | Explicit configuration on a fixed fleet | Custom training-floor and reserve ledger |
 | Retention | Sources 30 days; datasets and evaluation evidence indefinite; models no TTL with operator cleanup; intermediates 30 days | Training window versus evidence versus cost | A one-year TTL field |
 | Judge and evaluation | Frontier judge, candidate against a fresh call to the replaced provider model only, position-swapped, results only | One comparison the customer can trust, same baseline for every version | Judge scores as gates; base and production arms |
 
@@ -196,8 +194,8 @@ Each decision names the choice, why, and what was rejected. The contracts hold t
 | Capture | Whole bodies, 16 MiB per request bound, straight to ClickHouse; no per-session cap |
 | Versions | Immutable, validated; callable by exact name regardless of evaluation; publication never changes production |
 | Promotion | Manual; B over A leaves A callable; no retire action |
-| Fleet | Shared whole-host fleet; operator counts and eligibility; Nomad placement and serving recovery; floors enforced; training never interrupted for priority; VMs added by hand |
-| Serving | Complete production adapter set on every ready replica of its base, at least two hosts; non-production from S3 on demand; internal calls with run tokens |
+| Fleet | Shared whole-host fleet; Git scaling policies and operator eligibility; Nomad Autoscaler counts; Nomad placement and serving recovery; training never interrupted for priority; VMs added by hand |
+| Serving | At least two ready base replicas; each host fetches and caches exact adapters from S3 on demand; internal calls with run tokens |
 | Evaluation | Frontier judge; candidate versus original provider; results, coverage, uncertainty; no recommendation |
 | Data lifetime | Sources 30 days; datasets and evidence indefinite; models until operator cleanup; intermediates 30 days |
 
@@ -207,13 +205,13 @@ Each decision names the choice, why, and what was rejected. The contracts hold t
 | --- | --- |
 | Rust gateway: authentication, qualification, `switchyard_translation` to `ChatCompletionRequest`, admission, streaming, usage | All three APIs, hosted inference, relay, capture normalisation |
 | TypeScript control plane: API, PostgreSQL, billing, projection, ingestion loops | Management routes, run state, projections |
-| Valkey streams for settlement | Unchanged |
+| Valkey generation ingestion and billing finalization | One shared generation stream; explicit billing classification; existing charge semantics |
 | RunPod pods with `report_status.py` | Host status reporting; adapter sync |
 
 | New | Where |
 | --- | --- |
-| Credential modes, route allowlist, capture inserts, run-token verification, cold-load intents | Gateway |
-| Run orchestrator with training job submission; fleet policy and controller; shared Nomad helpers; evaluation worker, automation loop, projector revisions | Worker |
+| Credential modes, route allowlist, capture inserts, run-token verification, host-owned cold loading | Gateway |
+| Run orchestrator with training job submission; shared Nomad submission helpers; evaluation worker, automation loop, projector revisions | Worker |
 | Run-token issuer, artifact grants, trainer events ingest, runtime registration and status, management routes | API |
 | Trainer image with versioned recipes | `product/inference/training/` |
 | Nomad servers, enrollment, host images | Infrastructure |
@@ -232,17 +230,15 @@ flowchart LR
   I2 --> I4[4 Manual training]
   I3 --> I4
   I4 --> I5[5 Automatic training]
-  I5 --> I6[6 Fleet phase 2]
 ```
 
 | Increment | What a customer or operator can do | Flag | Contracts | Built here | Opens when |
 | --- | --- | --- | --- | --- | --- |
-| 1 Proxy | Swap the base URL; see tasks and provider usage in the console; nothing stored | `proxy_enabled` per workspace | GW-01 to GW-04; OPS-01 projections; OPS-05 availability events; task record and connection-status route | Generation v3 readers and writers; workspace-scoped names; configuration registry; canonical doc updates | S1; malformed, private-route and cross-tenant tests; SDK conformance on three APIs; availability path under loss |
-| 2 Capture | Turn on the switch; see sessions as conversations, eligible counts, retention | The switch, behind an operator allowlist until increment 5 | CAP-01, CAP-02; DATA-01; OPS-02; OPS-01 barrier; OPS-03 purge | Direct capture inserts; `traces`; memberships; expiry and purge | S2; loss tests with ClickHouse down; expiry and purge end to end |
-| 3 Private models | Call private versions by name; promote to the task name; export; floors and spare recovery hold. First adapters trained offline by us | `private_models_enabled` per workspace | ART-01; SERV-01 to SERV-04; FLEET-00 to 02, 04, 05; promotion and export routes; GW-04 release qualification | Nomad servers and enrollment; serving targets and service jobs; local drain and cleanup; bf16 LoRA base deployment; validator and publisher; explicit loader; projector prune | T0; S3 and S4 on the first base; S5 replacement and spare; S6 publication and promotion races; complete-set readiness on each replica and replacement |
-| 4 Manual training | Start a run by hand; see stages, log and evaluation; version published | `training_enabled` per workspace; operator or allowlisted console action | RUN-01 to RUN-05; EVAL-01 to EVAL-03; FLEET-03 queue and floor | Orchestrator and admitted batch jobs; run-token issuer and verifiers; trainer image with first recipe; training-judge deployment; evaluation worker and provider client; `training_run_events` | Recipe design done; T1; S5 training starts and lost hosts; S6 crash matrix; S8 |
-| 5 Automatic training | The switch alone: trigger, versions, promotion, the loop through production | The switch, open to all workspaces | DATA-02 credit; continuation and disable in OPS-01 and OPS-04; FLEET-03 fairness; OPS-05 incidents | Automation loop; atomic credit; fair queue; alerts and drills; restore drill; rollback | Launch parts of S7; T2, T3; repeated full cycle; capacity, drain, recovery measured; backup inventory; isolation review |
-| 6 Fleet phase 2 | Counts and eligibility change from demand; Nomad places the workloads | `fleet_autoreallocation` | Phase-2 parts of FLEET-03, FLEET-04 | Policy targets acted on; safe count and eligibility changes; hysteresis | Phase-2 parts of S7 and T2 on real traffic |
+| 1 Proxy | Swap the base URL; see tasks and provider usage in the console; nothing stored | `proxy_enabled` per workspace | GW-01 to GW-04; OPS-01 projections; OPS-05 monitoring; task record and connection-status route | Generation v3 readers and writers; workspace-scoped names; configuration registry; canonical doc updates | S1; malformed, private-route and cross-tenant tests; SDK conformance on three APIs; monitoring-gap alerts |
+| 2 Capture | Turn on the switch; see sessions as conversations, eligible counts, retention | The switch, behind an operator allowlist until increment 5 | CAP-01, CAP-02; DATA-01; OPS-02; OPS-01 barrier; OPS-03 cleanup | Direct capture inserts; `traces`; input snapshots; expiry and cleanup | S2; loss tests with ClickHouse down; expiry and cleanup end to end |
+| 3 Private models | Call private versions by name; promote to the task name; export; configured serving minima hold. First adapters trained offline by us | `private_models_enabled` per workspace | ART-01; SERV-01 to SERV-04; FLEET-00 to 02, 04, 05; promotion and export routes; GW-04 release qualification | Nomad servers and enrollment; Git service jobs and scaling policies; Nomad Autoscaler; local drain and cleanup; bf16 LoRA base deployment; validator and publisher; explicit loader; projector prune | T0; S3 and S4 on the first base; S5 serving replacement; S6 publication and promotion races; base/loader readiness and independent host caches |
+| 4 Manual training | Start a run by hand; see stages, log and evaluation; version published | `training_enabled` per workspace; operator or allowlisted console action | RUN-01 to RUN-05; EVAL-01 to EVAL-03; FLEET-01 batch jobs and FLEET-02 constraints | Orchestrator and admitted batch jobs; run-token issuer and verifiers; trainer image with first recipe; training-judge deployment; evaluation worker and provider client; `training_run_events` | Recipe design done; T1; S5 training starts and lost hosts; S6 crash matrix; S8 |
+| 5 Automatic training | The switch alone: trigger, versions, promotion, the loop through production | The switch, open to all workspaces | DATA-02 input cutoff; continuation and disable in OPS-01 and OPS-04; FLEET-03 autoscaling; OPS-05 incidents | Automation loop; run input cutoffs; Nomad job priority; alerts and drills; restore drill; rollback | Launch parts of S7; T2, T3; repeated full cycle; capacity, drain, recovery measured; backup inventory; isolation review |
 
 Increments 2 and 3 are independent; 3 is larger and starts first. Safety lands before enablement in every increment: cancellation, cleanup, publication and bounded internal admission exist before an automatic run depends on them. A later increment never supplies something an earlier one promised.
 
@@ -257,31 +253,31 @@ Each S item is an experiment with a hypothesis, fixed inputs, a resource ceiling
 | Evidence | Must show | Gates |
 | --- | --- | --- |
 | S1 | Source feature matrix; fixtures that detect translation loss | Gateway and replay |
-| S2 | Honest capture coverage; deterministic credit and splits; bounded grouping | Capture and automatic selection |
-| S3 | Exact MoE layout on every load; protected host-memory set; swap, cold-load and promotion timings | Adapter serving |
+| S2 | Honest capture coverage; reproducible input snapshots and run cutoffs | Capture and automatic selection |
+| S3 | Exact MoE layout on every load; host-owned caches; swap, cold-load and promotion timings | Adapter serving |
 | S4 | Measured artifact, RAM, GPU, disk and validation envelopes | Every release and host shape |
 | S5 | Local deadlines; host fencing; start, stop and recovery under faults | Training and host reassignment |
-| S6 | Transaction-and-effect crash matrix; projection epochs; late writes; expiry; purge | Durable automation and lifecycle |
-| S7 | Deterministic policy and fairness; drain and recovery capacity; a truthful availability number | Shared-fleet rollout |
+| S6 | Transaction-and-effect crash matrix; projection epochs; late writes; expiry; cleanup | Durable automation and lifecycle |
+| S7 | Autoscaler policies, fixed-pool capacity limits, drain and recovery; a truthful availability number | Shared-fleet rollout |
 | S8 | Judge calibration; comparison semantics; estimator fixtures | Published evaluation metrics |
 | T0 | Pinned Nomad and VM networking, identity, constraints, device exclusion, serving recovery and rollout, training recovery disabled | Nomad infrastructure |
 | T1 | The recipe with its permitted data and reward flow; complete checkpoints; correct artifact | Real training |
-| T2 | Launch stop, restart, recovery, drain and cleanup; phase-2 role transitions separately | Each host action |
+| T2 | Serving recovery, training failure, drain and cleanup | Each host action |
 | T3 | Two-host production; any-one-host recovery; a repeated full cycle | Customer launch |
 
 **S1 Protocol and routing.** A versioned corpus for all three APIs: text and tools, tool linkage, structured output, reasoning, state references, unknown controls, malformed and duplicate `model` keys, complete and partial streams, maximum bodies. Supported inputs keep meaning and served identity; unsupported ones produce the declared rejection or exclusion; relayed bytes are unchanged. Artifacts: capability matrix, fixtures, memory results, SDK conformance. Budget: two engineer-days; 15 minutes a corpus run.
 
-**S2 Capture, credit and splits.** Per-request eligibility under missing events, interrupted sessions, midnight, 24-hour inactivity, repeated contexts, maximum bodies, ClickHouse outages; 500 multi-step sessions; duplicate events; HMAC rotation; oversized groups; late merges; sources expiring during selection. Capture loss never blocks serving or fakes completeness; manifests reproduce exactly; consumed credit does not repeat; protected examples never reach training; the simplest grouping that meets DATA-01 is chosen. Artifacts: counters, fixtures, stored bytes, peak memory. Budget: two engineer-days; up to a million synthetic records; 30 minutes a run.
+**S2 Capture and input cutoffs.** Per-request eligibility under missing events, interrupted sessions, midnight, 24-hour inactivity, repeated contexts, maximum bodies, ClickHouse outages; 500 multi-step sessions; duplicate events; HMAC rotation; late arrivals; sources expiring during selection. Capture loss never blocks serving or fakes completeness; manifests reproduce exactly; automatic runs do not reuse the same input window; package selection and split correctness are qualified under T1. Artifacts: counters, fixtures, stored bytes, peak memory. Budget: two engineer-days; up to a million synthetic records; 30 minutes a run.
 
-**S3 Adapter loading and residency.** On the exact serving image with the explicit loader: reference outputs or logits across first load, cold reload and restart within a declared tolerance; the 3D layout flag and wrong declarations; worker disagreement; protected-set saturation; GPU swapping; promotion overlap; active-use leases; the same production set on every replica and after replacement. Wrong layout or model blocks readiness; test loads cannot evict production; a full cache fails in a bounded way. Budget: one engineer-day prototype; up to four host-hours on one host. Stop on wrong-model output or lost production residency. Two hosts need T3.
+**S3 Adapter loading and residency.** Test the pinned host loader on first load, cache hit, eviction and restart. Validate exact bytes and MoE layout across tensor workers. Test concurrent requests for one adapter, memory saturation, cancellation, missing S3 objects and independent replica caches. No worker warm queue or synchronized cache map is required. Budget: one engineer-day prototype; up to four host-hours on one host. Stop on wrong-model output or active-use eviction. Two-host readiness needs T3.
 
 **S4 Release resource envelope.** Inventory one release: tensor index, dtype, rank and modules, tokenizer, image, adapter, checkpoints, assets; plus extraction, validator memory, runtime and KV cache, handover assets, cleanup margin. Measure the host shape and every artifact limit; reject combinations that do not fit; block a release with no trainer memory evidence. Budget: one engineer-day analysis; two host-hours for a fit test. No downloads when arithmetic already fails.
 
-**S5 Host ownership and termination.** Deterministic job registration; token exchange before compute; admission revisions and actual allocation binding; duplicate allocations; stale leaders; disconnected hosts; control-store outages; normal and stuck streams; failed signal forwarding. No training compute without an accepted start; lost contact never frees a GPU; local deadline, exit and cleanup checked before every process start, including same-allocation restart. Launch: Nomad placement, training starts, serving restart and reschedule, new route registration, spare recovery. The orchestrator never competes with Nomad to replace serving, and Nomad never starts a second training execution. Phase 2: live role changes. Budget: two engineer-days; two hours on the recovery host set. Stop on overlapping compute or failed termination.
+**S5 Host ownership and termination.** Deterministic job registration; token exchange before compute; run status and execution-start evidence; duplicate allocations; stale leaders; disconnected hosts; control-store outages; normal and stuck streams; failed signal forwarding. No training compute without an accepted start; lost contact never frees a GPU; local deadline, exit and cleanup checked before every process start, including same-allocation restart. Launch: Nomad placement, training starts, serving restart and reschedule, new route registration, serving recovery. The orchestrator never competes with Nomad to replace serving, and Nomad never starts a second training execution. Budget: two engineer-days; two hours on the recovery host set. Stop on overlapping compute or failed termination.
 
-**S6 Durable operations and storage races.** Failure before and after every transaction and effect: disable versus first exchange, publication, promotion, projection acknowledgement, source acceptance, checkpoint upload, operator cleanup; stale projections; Valkey bootstrap; short-token expiry; long-token epoch revocation; provider slots; pending operations; conflicting retries; purge against issued URLs, multipart uploads and expiry. Exactly one result commits; restrictive state survives recovery; content stays inventoried; late writes cannot escape cleanup. Budget: two engineer-days; 30 minutes a run. S3 URL and versioning behaviour is checked on S3 itself.
+**S6 Durable operations and storage races.** Failure before and after every transaction and effect: disable versus first exchange, publication, promotion, projection acknowledgement, source acceptance, checkpoint upload, operator cleanup; stale projections; Valkey bootstrap; fixed JWT expiry; cancellation without token revocation; provider slots; pending operations; conflicting retries; cleanup against issued URLs, multipart uploads and expiry. Exactly one result commits; restrictive state survives recovery; content stays inventoried; late writes cannot escape cleanup. Budget: two engineer-days; 30 minutes a run. S3 URL and versioning behaviour is checked on S3 itself.
 
-**S7 Fleet policy and availability.** Fixed-seed scenarios: equal-weight organisations, many tasks in one organisation, incompatible host classes, mixed job lengths, protected nodes per class, floors, single-host failures, maintenance, stale metrics. Launch: queue fairness, operator counts and eligibility, Nomad replica repair, spare recovery, demand reporting; no metric-driven count or role changes. Phase 2: demand targets, fairness accounting, handover, hysteresis. Report constraint failures, service units, fairness lag, unmet demand, manual capacity needs. Budget: two engineer-days; 100,000 ticks; 30 minutes a run. Availability replay: duplicate, missing and late records; month boundaries; capacity errors; cold loads; cancellations; interrupted streams; counts reconcile or report incomplete; drain and recovery failures measured against 99.9%; Incident.io drills.
+**S7 Autoscaling and availability.** Test Git-defined Nomad Autoscaler policies against Prometheus fixtures and the actual serving runtime: min/max bounds, cooldowns, metric loss, insufficient compatible GPUs, pending jobs, recovery, scale-down and rollout interaction. Confirm that job redeployment does not overwrite autoscaled counts and the worker does not compete with the autoscaler. No global fairness or automatic node-provisioning claim. Budget: two engineer-days; 30 minutes per local policy test; bounded real-fleet qualification recorded before execution. Check Prometheus request counters, edge failures, probes and monitoring-gap alerts under capacity errors, cold loads, cancellations and interrupted streams. Do not claim an exact per-request ledger. Measure drain and recovery against the internal 99.9% target.
 
 **S8 Evaluation and reporting.** Known synthetic outcomes: ties, position disagreement, absent production, unavailable references, correlated groups, identical arms, parser errors, partial usage and cost. Every score, interval and unavailable result recomputed independently under EVAL-02; missing results stay in coverage; no result controls promotion; rubric tested against instructions inside evaluated text. Budget: one engineer-day; real-judge calibration on at most 100 synthetic comparisons with a token budget; qualification applies only to that judge and configuration.
 

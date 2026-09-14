@@ -1,4 +1,4 @@
-import { CONSOLE_BASE_URL } from "../../urls";
+import { WaitlistButton } from "../WaitlistButton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { library } from "./library";
@@ -463,10 +463,10 @@ export const Nav = (): ReactElement => {
           >
             Book a call
           </a>
-          <a className="gr-link gr-nav-action" href={CONSOLE_BASE_URL}>
-            Log in
+          <WaitlistButton className="gr-link gr-nav-action">
+            Join the waitlist
             <Arrow />
-          </a>
+          </WaitlistButton>
         </div>
 
       </nav>
@@ -622,12 +622,9 @@ export const Nav = (): ReactElement => {
                 >
                   Book a call
                 </a>
-                <a
-                  className="gr-button gr-button--main"
-                  href={CONSOLE_BASE_URL}
-                >
-                  Log in
-                </a>
+                <WaitlistButton className="gr-button gr-button--main">
+                  Join the waitlist
+                </WaitlistButton>
               </div>
             </div>
           </div>

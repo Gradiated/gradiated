@@ -255,3 +255,19 @@ tokens. The comparison controls use outlined and filled brand buttons. Attention
 retain eight distinct brand colors, with lighter variants in dark themes.
 Diagram content, geometry, measurements, controls, and animation timing are
 unchanged. Styles remain scoped to the Gemma figures.
+
+## Waitlist access
+
+Public desktop/mobile navigation and the docs sidebar use `WaitlistButton`
+instead of login controls. It opens Typeform `pU8EArMC` in a full-screen native
+modal dialog, loading the form only on demand. The dialog provides a close
+button, Escape dismissal, background scroll locking, and a direct new-tab
+link if the embedded form cannot load. Submissions are handled by Typeform.
+This website change does not disable authentication on the separate console
+or API services.
+
+Verified with the production build and SEO checks (37 routes), DevEx, and
+Chromium at 1440px and 390px: full viewport sizing, close/reopen, Escape,
+focus restoration, scroll restoration after closing the mobile menu, and
+removal of docs sign-in controls. Escape events stay inside the modal so
+navigation menu handlers cannot leave the page scroll-locked.

@@ -1,0 +1,61 @@
+.waitlist-trigger {
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+}
+
+.waitlist-trigger.gr-link {
+  border: 0;
+  background: transparent;
+}
+
+.waitlist-modal {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: var(--paper, #faf9f6);
+  color: var(--ink, #1c1b18);
+}
+
+.waitlist-modal[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.waitlist-modal-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  padding: max(16px, env(safe-area-inset-top)) 20px 16px;
+  border-bottom: 1px solid currentColor;
+  font-size: 14px;
+}
+
+.waitlist-modal-header > a {
+  margin-left: auto;
+  text-decoration: underline;
+}
+
+.waitlist-modal-header > button {
+  background: transparent;
+  color: inherit;
+  border: 1px solid currentColor;
+  padding: 8px 12px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.waitlist-modal iframe {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+}

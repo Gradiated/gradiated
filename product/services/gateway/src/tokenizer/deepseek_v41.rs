@@ -102,6 +102,30 @@ fn calls(value: &Value) -> Result<String, TokenizerRequestError> {
     ))
 }
 
+// Match the pinned vLLM FunctionDefinition serializer before prompt encoding.
+// Optional description/parameters become null; strict/defer_loading are omitted
+// when null, and unrecognized fields are not part of the rendered definition.
+fn tool_schema(tool: &Value) -> Result<String, TokenizerRequestError> {
+    let function = tool["function"]
+        .as_object()
+        .ok_or(TokenizerRequestError::InvalidInput)?;
+    let name = function
+        .get("name")
+        .and_then(Value::as_str)
+        .ok_or(TokenizerRequestError::InvalidInput)?;
+    let mut normalized = json!({
+        "name": name,
+        "description": function.get("description").unwrap_or(&Value::Null),
+        "parameters": function.get("parameters").unwrap_or(&Value::Null),
+    });
+    for key in ["strict", "defer_loading"] {
+        if let Some(value) = function.get(key).filter(|value| !value.is_null()) {
+            normalized[key] = value.clone();
+        }
+    }
+    Ok(python_json(&normalized))
+}
+
 pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, TokenizerRequestError> {
     let kwargs = request.parameters.get("chat_template_kwargs");
     let option = |name: &str| kwargs.and_then(|v| v.get(name));
@@ -257,8 +281,8 @@ pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, Tokenize
                 if let Some(tools) = message["tools"].as_array().filter(|v| !v.is_empty()) {
                     let schemas = tools
                         .iter()
-                        .map(|t| python_json(&t["function"]))
-                        .collect::<Vec<_>>()
+                        .map(tool_schema)
+                        .collect::<Result<Vec<_>, _>>()?
                         .join("\n");
                     prompt.push_str("\n\n");
                     prompt.push_str(

@@ -272,8 +272,8 @@ jobs:
             "https://${CONSOLE_DOMAIN}/login" --output /tmp/console-login.html
           cmp console-dist/index.html /tmp/console-login.html
           curl --fail --show-error --silent --retry 12 --retry-all-errors --retry-delay 5 \
-            "https://${CONSOLE_DOMAIN}/brand/gradiated-mark-dark.svg" \
+            "https://${CONSOLE_DOMAIN}/brand/gradiated-icon.svg" \
             --output /tmp/console-logo.svg
-          cmp console-dist/brand/gradiated-mark-dark.svg /tmp/console-logo.svg
+          cmp console-dist/brand/gradiated-icon.svg /tmp/console-logo.svg
           curl --fail --show-error --silent --retry 12 --retry-all-errors --retry-delay 5 \
             https://api.gradiated.com/health/ready

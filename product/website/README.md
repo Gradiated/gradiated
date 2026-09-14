@@ -245,3 +245,7 @@ row starts the same animation as a library card. Reduced motion is respected.
 Artwork hover transitions retain one scatter path and the current progress.
 A repeated hover fades and disperses from the current frame, then assembles
 the artwork again. It does not reset chip positions or restart at full opacity.
+
+Reading pages hide the unused opening lattice from the first paint. Its old
+animation was removed, but its static lines otherwise remain until the four-second
+entrance timer removes them. This prevents temporary lines on mobile articles.

@@ -16,8 +16,8 @@ import { createApp } from "./app.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createAuthService, resolveAuthTrustedOrigins } from "./auth.js";
 import {
-  createSesMagicLinkSender,
-  createSesOtpSender,
+  createResendMagicLinkSender,
+  createResendOtpSender,
   createTestMagicLinkTransport,
   createTestOtpTransport,
 } from "./auth-email.js";
@@ -53,15 +53,15 @@ const testOtpCodes = environment.AUTH_TEST_MODE
   : undefined;
 const sendMagicLink =
   testMagicLinks?.send ??
-  createSesMagicLinkSender({
+  createResendMagicLinkSender({
     from: environment.AUTH_EMAIL_FROM!,
-    region: environment.SES_REGION!,
+    apiKey: environment.RESEND_API_KEY!,
   });
 const sendOtp =
   testOtpCodes?.send ??
-  createSesOtpSender({
+  createResendOtpSender({
     from: environment.AUTH_EMAIL_FROM!,
-    region: environment.SES_REGION!,
+    apiKey: environment.RESEND_API_KEY!,
   });
 const trustedOrigins = resolveAuthTrustedOrigins(
   environment.TRUSTED_ORIGINS,

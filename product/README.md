@@ -217,3 +217,17 @@ Two catalog-only seed runs returned exactly the two requested models from the
 local API. The full account seed could not finish because the local magic-link
 endpoint returned HTTP 500. The console test expectations were updated;
 the authenticated browser test was not run.
+
+### Transactional email
+
+The API sends magic-link and verification-code emails through Resend's HTTPS
+API. Set `RESEND_API_KEY` and `AUTH_EMAIL_FROM` when `AUTH_TEST_MODE=false`.
+Production uses `Gradiated <auth@mail.gradiated.com>`. The key comes from
+`gradiated/prod/product/api` in AWS Secrets Manager through External Secrets.
+No key belongs in a ConfigMap or Git. The approved email templates and their
+plain-text versions remain in `services/api/src/auth-email.ts`.
+
+Apply the Terraform transactional-email module and verify `mail.gradiated.com`
+in Resend before deploying the sender change. Sending requests time out after
+10 seconds. Provider errors do not include email bodies, codes, or API keys.
+Test mode keeps its in-memory transport and does not call Resend.

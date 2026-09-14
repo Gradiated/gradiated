@@ -20,7 +20,7 @@ const EnvironmentSchema = z
     GITHUB_CLIENT_SECRET: z.string().trim().min(1).optional(),
     GOOGLE_CLIENT_ID: z.string().trim().min(1).optional(),
     GOOGLE_CLIENT_SECRET: z.string().trim().min(1).optional(),
-    SES_REGION: z.string().trim().min(1).optional(),
+    RESEND_API_KEY: z.string().trim().min(1).optional(),
     STRIPE_SECRET_KEY: z.string().min(1).optional(),
     STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
     TRUSTED_ORIGINS: z
@@ -56,10 +56,10 @@ const EnvironmentSchema = z
   .refine(
     (value) =>
       value.AUTH_TEST_MODE ||
-      Boolean(value.AUTH_EMAIL_FROM && value.SES_REGION),
+      Boolean(value.AUTH_EMAIL_FROM && value.RESEND_API_KEY),
     {
       message:
-        "AUTH_EMAIL_FROM and SES_REGION are required when AUTH_TEST_MODE is disabled.",
+        "AUTH_EMAIL_FROM and RESEND_API_KEY are required when AUTH_TEST_MODE is disabled.",
     },
   )
   .refine(

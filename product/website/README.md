@@ -249,3 +249,9 @@ the artwork again. It does not reset chip positions or restart at full opacity.
 Reading pages hide the unused opening lattice from the first paint. Its old
 animation was removed, but its static lines otherwise remain until the four-second
 entrance timer removes them. This prevents temporary lines on mobile articles.
+
+Gemma article diagrams use the website's surface, radius, typography, and color
+tokens. The comparison controls use outlined and filled brand buttons. Attention heads
+retain eight distinct brand colors, with lighter variants in dark themes.
+Diagram content, geometry, measurements, controls, and animation timing are
+unchanged. Styles remain scoped to the Gemma figures.

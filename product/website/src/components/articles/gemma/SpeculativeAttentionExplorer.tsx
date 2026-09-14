@@ -7,16 +7,7 @@ const heads = Array.from({ length: 8 }, (_, head) => head);
 const queries = heads.flatMap((head) =>
   Array.from({ length: 4 }, (_, position) => ({ head, position })),
 );
-const colors = [
-  "#246957",
-  "#497baf",
-  "#aa6339",
-  "#8564a6",
-  "#967324",
-  "#a85475",
-  "#39878b",
-  "#647345",
-];
+const colors = Array.from({ length: 8 }, (_, head) => `var(--sa-head-${head})`);
 function Matrix({
   label,
   shape,

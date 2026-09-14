@@ -1,17 +1,23 @@
-.sa-explorer .sa-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+/* Attention heads retain their identities across both implementations. */
+.sa-explorer {
+  --sa-head-0: var(--color-grove-600);
+  --sa-head-1: var(--color-aegean-600);
+  --sa-head-2: var(--color-kiln-700);
+  --sa-head-3: var(--color-plum-500);
+  --sa-head-4: var(--color-taupe-500);
+  --sa-head-5: var(--color-kiln-600);
+  --sa-head-6: var(--color-aegean-500);
+  --sa-head-7: var(--color-grove-650);
 }
-.sa-explorer .sa-tabs button {
-  text-align: left;
-  font-weight: 600;
-  padding: 12px 16px;
-}
-.sa-explorer .sa-tabs button[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--paper);
-  border-color: var(--ink);
+:is([data-theme="dark"], [data-theme="grove"]) .sa-explorer {
+  --sa-head-0: var(--color-grove-400);
+  --sa-head-1: var(--color-aegean-400);
+  --sa-head-2: var(--color-kiln-300);
+  --sa-head-3: var(--color-plum-400);
+  --sa-head-4: var(--color-taupe-400);
+  --sa-head-5: var(--color-ink-accent);
+  --sa-head-6: var(--color-ink-string);
+  --sa-head-7: var(--color-grove-500);
 }
 .sa-explorer button:focus-visible {
   outline: 2px solid var(--gx-green);
@@ -45,7 +51,7 @@
 .sa-independent .sa-head-flow {
   grid-template-columns: minmax(0, 1fr);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius);
   padding: 12px 8px;
   margin-bottom: 12px;
 }
@@ -139,7 +145,7 @@
 }
 .sa-cell-label,
 .sa-packed-label {
-  fill: white;
+  fill: var(--gx-on-accent);
   font:
     11px var(--font-code);
 }
@@ -153,7 +159,7 @@
 }
 .sa-fused {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 12px 16px;
 }
 .sa-lanes {
@@ -219,7 +225,7 @@
 }
 .sa-stage {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 15px;
   transition:
     background 220ms,
@@ -254,7 +260,7 @@
   margin: 24px 0;
   padding: 20px;
   background: var(--gx-wash);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 .sa-equation {
   display: flex;

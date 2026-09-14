@@ -77,3 +77,10 @@ neither Python nor the echo fixture.
 
 An initial Debian HTTP package download failed hash verification. HTTPS package
 downloads passed with hash and TLS checks enabled. No verification was disabled.
+
+## Publication
+
+On merge, `nomad-deployment.yml` runs the checks and requests this image from
+`build-images.yml`. It then records the digest in the Nomad manifest. Changes
+to unrelated application or model inputs do not rebuild this image. The Nomad
+directory is still outside Argo sync; recording a digest does not deploy it.

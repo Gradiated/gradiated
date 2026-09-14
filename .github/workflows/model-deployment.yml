@@ -1,0 +1,40 @@
+name: Model deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - product/inference/images/**
+      - tools/images/**
+      - .github/workflows/model-deployment.yml
+      - .github/workflows/build-images.yml
+  pull_request:
+    paths:
+      - product/inference/images/**
+      - tools/images/**
+      - .github/workflows/model-deployment.yml
+      - .github/workflows/build-images.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: |
+          node --test tools/images/*.test.mjs
+          bash product/inference/images/tests/test_launch.sh
+  images:
+    needs: checks
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/build-images.yml
+    with:
+      source_sha: ${{ github.sha }}
+      images: '["deepseek-v4-1-flash"]'
+      artifact_prefix: models
+  # GPU qualification and Nomad rollout are not implemented yet.
+  # Publication alone must not update a serving job or production route.

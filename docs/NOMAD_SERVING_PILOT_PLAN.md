@@ -464,3 +464,12 @@ Prepared three SSH relay pods on separate nodes, an internal Service, and a
 disruption budget with `minAvailable: 2`. The
 manifest requires a published image digest and external key/config provisioning.
 No public endpoint or Argo application was added. No cluster change was applied.
+
+### Image publication workflows
+
+`build-images.yml` resolves immutable digests for each caller's required images.
+Application, Nomad, and model deployment workflows are independent. The application
+sequence retains its production rollout. Nomad stops at a relay GitOps record;
+model publication stops before GPU qualification or rollout. The input catalog
+and checks are documented in `tools/images/README.md`. GLM publication remains
+disabled until a qualified base image digest is recorded.

@@ -1,4 +1,4 @@
-import { CONSOLE_BASE_URL } from "../urls";
+import { WaitlistButton } from "./WaitlistButton";
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import type { ReactElement, ReactNode } from "react";
@@ -131,13 +131,9 @@ const SiteHeader = (): ReactElement => {
           >
             Book a call
           </a>
-          <a
-            className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-[1100px]:hidden"
-            href={CONSOLE_BASE_URL}
-            rel="noreferrer"
-          >
-            Log in
-          </a>
+          <WaitlistButton className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-[1100px]:hidden">
+            Join the waitlist
+          </WaitlistButton>
           <button
             aria-controls="mobile-site-menu"
             aria-expanded={menuOpen}
@@ -186,13 +182,9 @@ const SiteHeader = (): ReactElement => {
           >
             Book a demo
           </a>
-          <a
-            className={mobileMenuLinkClass}
-            href={CONSOLE_BASE_URL}
-            rel="noreferrer"
-          >
-            Log in
-          </a>
+          <WaitlistButton className={mobileMenuLinkClass}>
+            Join the waitlist
+          </WaitlistButton>
         </nav>
       )}
     </header>

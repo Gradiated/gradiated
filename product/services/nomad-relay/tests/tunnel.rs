@@ -130,7 +130,7 @@ fn user(index: usize) -> String {
 fn restricts_access_and_revokes_active_tunnels() {
     let root = tempfile::tempdir().unwrap();
     let name = format!(
-        "ssh-relay-{}",
+        "nomad-relay-{}",
         root.path()
             .file_name()
             .unwrap()
@@ -166,6 +166,26 @@ fn restricts_access_and_revokes_active_tunnels() {
         &fixture.name,
         "--platform",
         "linux/amd64",
+        "--security-opt",
+        "no-new-privileges",
+        "--cap-drop",
+        "ALL",
+        "--cap-add",
+        "CHOWN",
+        "--cap-add",
+        "DAC_OVERRIDE",
+        "--cap-add",
+        "FOWNER",
+        "--cap-add",
+        "KILL",
+        "--cap-add",
+        "SETGID",
+        "--cap-add",
+        "SETUID",
+        "--cap-add",
+        "SYS_CHROOT",
+        "--cap-add",
+        "AUDIT_WRITE",
         "--add-host",
         "nomad-0.nomad-headless.nomad.svc.cluster.local:127.0.0.1",
         "-p",
@@ -174,7 +194,7 @@ fn restricts_access_and_revokes_active_tunnels() {
         &format!("{}:/access:ro", root.join("access").display()),
         "-v",
         &format!("{}:/host-keys:ro", root.join("hostkeys").display()),
-        "gradiated/ssh-relay:test",
+        "gradiated/nomad-relay:test",
     ]));
     let mapped = checked(Command::new("docker").args(["port", &fixture.name, "2222/tcp"]));
     let port = mapped.trim().rsplit(':').next().unwrap();

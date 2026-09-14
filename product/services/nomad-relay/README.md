@@ -1,4 +1,4 @@
-# SSH relay
+# Nomad relay
 
 Small Rust service for the Nomad SSH relay in EKS. Deployment is pending.
 It runs beside OpenSSH in one container. It is separate from the inference gateway.
@@ -8,7 +8,7 @@ GPU host: Nomad client -> OpenSSH client
                               |
                          SSH connection
                               |
-EKS pod:                  ssh-relay + sshd -> private Nomad servers:4647
+EKS pod:                  nomad-relay + sshd -> private Nomad servers:4647
 ```
 
 OpenSSH carries Nomad RPC traffic. Nomad mutual TLS authenticates that traffic.
@@ -51,12 +51,12 @@ shells, commands, reverse forwarding, and unrelated destinations.
 From the repository root:
 
 ```sh
-cargo fmt --manifest-path product/services/ssh-relay/Cargo.toml --check
-cargo clippy --manifest-path product/services/ssh-relay/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path product/services/ssh-relay/Cargo.toml --locked
-docker build --platform linux/amd64 --target integration -t gradiated/ssh-relay:test product/services/ssh-relay
-cargo test --manifest-path product/services/ssh-relay/Cargo.toml --test tunnel -- --ignored
-docker build --platform linux/amd64 --target production -t gradiated/ssh-relay:local product/services/ssh-relay
+cargo fmt --manifest-path product/services/nomad-relay/Cargo.toml --check
+cargo clippy --manifest-path product/services/nomad-relay/Cargo.toml --all-targets -- -D warnings
+cargo test --manifest-path product/services/nomad-relay/Cargo.toml --locked
+docker build --platform linux/amd64 --target integration -t gradiated/nomad-relay:test product/services/nomad-relay
+cargo test --manifest-path product/services/nomad-relay/Cargo.toml --test tunnel -- --ignored
+docker build --platform linux/amd64 --target production -t gradiated/nomad-relay:local product/services/nomad-relay
 ```
 
 The Rust integration test runs on the developer machine. Its echo fixture is Rust

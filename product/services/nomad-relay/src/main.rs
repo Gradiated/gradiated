@@ -203,7 +203,7 @@ fn run() -> io::Result<()> {
 
 fn main() {
     if run().is_err() {
-        eprintln!("ssh-relay stopped: configuration, account sync, or SSH daemon failure");
+        eprintln!("nomad-relay stopped: configuration, account sync, or SSH daemon failure");
         std::process::exit(1);
     }
 }

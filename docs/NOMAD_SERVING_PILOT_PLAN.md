@@ -431,7 +431,7 @@ work is retained for later expansion and does not block this rollout.
 ### Component naming and host language
 
 The SSH relay runs in EKS and is separate from the inference gateway. Its
-account reconciler uses Rust in `product/services/ssh-relay`. Custom GPU host-agent code uses C++.
+account reconciler uses Rust in `product/services/nomad-relay`. Custom GPU host-agent code uses C++.
 GPU hosts also run the Nomad and OpenSSH clients. The earlier Python CPU probe
 was a test fixture, not the production host agent. The selected vLLM serving
 runtime remains unchanged.
@@ -439,7 +439,7 @@ runtime remains unchanged.
 ### Test locations
 
 Model launch tests stay in `product/inference/images/tests`. SSH relay tests
-live in `product/services/ssh-relay/tests`. Nomad server configuration tests
+live in `product/services/nomad-relay/tests`. Nomad server configuration tests
 live beside the Kubernetes configuration in
 `infra/environments/prod/us-east-1/kubernetes/nomad/tests`.
 
@@ -453,3 +453,14 @@ The regular relay unit tests use `cargo test`. Its Docker integration test also
 uses Rust and runs explicitly with `--test tunnel -- --ignored`. Model launch
 and Nomad configuration checks use shell, matching their launch scripts. Run
 these checks when the related component changes. They are not yet wired into CI.
+
+### Remote sync and relay workload — 2026-09-14
+
+Merged remote main at `411ad9da`. Its production record now reports both
+DeepSeek replicas active. Recheck that state before any migration; the earlier
+assumption that the selected pod is not serving production is no longer valid.
+
+Prepared three SSH relay pods on separate nodes, an internal Service, and a
+disruption budget with `minAvailable: 2`. The
+manifest requires a published image digest and external key/config provisioning.
+No public endpoint or Argo application was added. No cluster change was applied.

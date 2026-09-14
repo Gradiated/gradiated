@@ -3,7 +3,7 @@
 Status: Rust relay container integration passed locally; EKS deployment pending.
 
 The SSH relay runs in EKS. It is separate from the inference gateway.
-Its Rust account reconciler is in `product/services/ssh-relay` and does not run on GPU hosts. GPU hosts use the
+Its Rust account reconciler is in `product/services/nomad-relay` and does not run on GPU hosts. GPU hosts use the
 OpenSSH client and Nomad client. Custom GPU host-agent code will use C++.
 The shell script starts the SSH client; it is not a Python service.
 

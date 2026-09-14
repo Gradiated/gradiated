@@ -12,10 +12,10 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && apt-get install -y --no-install-recommends openssh-server procps passwd \
     && rm -rf /var/lib/apt/lists/* /etc/ssh/ssh_host_* \
     && dpkg-query -W > /usr/local/share/package-versions.txt
-COPY --from=build /build/target/release/ssh-relay /usr/local/bin/ssh-relay
+COPY --from=build /build/target/release/nomad-relay /usr/local/bin/nomad-relay
 COPY sshd_config /etc/ssh/nomad-tunnel.conf
 EXPOSE 2222
-ENTRYPOINT ["/usr/local/bin/ssh-relay"]
+ENTRYPOINT ["/usr/local/bin/nomad-relay"]
 
 FROM runtime AS integration
 COPY --from=build /build/target/release/examples/echo /usr/local/bin/test-echo

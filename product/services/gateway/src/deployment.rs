@@ -95,6 +95,7 @@ pub struct ModelDeploymentRelease {
 #[serde(rename_all = "snake_case")]
 pub enum TokenizerMode {
     DeepseekV4,
+    DeepseekV41,
 }
 
 impl GatewayModelDeployment {

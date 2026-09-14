@@ -6,6 +6,7 @@ use std::{
 };
 
 use hf_chat_template::{ChatTemplate, Error as ChatTemplateError, RenderInput, TokenizerConfig};
+mod deepseek_v41;
 use hf_hub::{
     api::tokio::{Api, ApiBuilder, ApiError},
     Repo, RepoType,
@@ -231,6 +232,7 @@ struct CompiledTokenizer {
 enum PromptRenderer {
     HuggingFace(Box<ChatTemplate>),
     DeepseekV4,
+    DeepseekV41,
 }
 
 impl CompiledTokenizer {
@@ -243,6 +245,7 @@ impl CompiledTokenizer {
         let config = read_tokenizer_config(&artifacts.config)?;
         let renderer = match mode {
             Some(TokenizerMode::DeepseekV4) => PromptRenderer::DeepseekV4,
+            Some(TokenizerMode::DeepseekV41) => PromptRenderer::DeepseekV41,
             None => PromptRenderer::HuggingFace(Box::new(match &artifacts.template {
                 Some(path) => {
                     let source = fs::read_to_string(path)?;
@@ -270,6 +273,7 @@ impl CompiledTokenizer {
                 })?
             }
             PromptRenderer::DeepseekV4 => render_deepseek_v4(request)?,
+            PromptRenderer::DeepseekV41 => deepseek_v41::render(request)?,
         };
         // The selected renderer already contains its model's special tokens.
         let encoding = self

@@ -696,4 +696,21 @@ The following existed in older plans and are not part of the data model:
 - `allocation_members`
 - `cells`
 - all research program, campaign and experiment tables
-- a generic fleet registry beyond the explicit `model_deployments` rows
+- a custom scheduler or a second store of Nomad allocation state
+
+## Instance inventory (migration pending)
+
+The Nomad pilot adds `instances` in migration 0005. One row represents one
+provider pod or machine. Provider, account, and provider instance ID form the
+unique provider identity. Region and fault domain can be unknown. `sku` identifies
+the hardware offering, such as `4xb300` or `cpu-32vcpu`.
+
+The nullable, unique `nomad_node_id` links the inventory record to Nomad.
+Creation, update, and retirement timestamps describe the record. They do not
+control access. Credential issuance and revocation remain separate. Nomad owns
+device discovery, scheduling eligibility, resource availability, and allocations.
+
+The optional `model_deployments.instance_id` foreign key preserves manual deployment
+compatibility. It does not assign jobs to hosts. The control service can register
+inventory and set or clear a Nomad node link. Authentication and verification of
+that link remain pending. The application database migration remains pending.

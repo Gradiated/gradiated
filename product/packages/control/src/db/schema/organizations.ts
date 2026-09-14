@@ -22,6 +22,7 @@ import type {
 } from "@gradiated/contracts";
 
 import { users } from "./auth.js";
+import { instances } from "./instances.js";
 
 const bytea = customType<{ data: Buffer }>({
   dataType() {
@@ -234,6 +235,9 @@ export const modelDeployments = pgTable(
   "model_deployments",
   {
     id: uuid("id").primaryKey(),
+    instanceId: uuid("instance_id").references(() => instances.id, {
+      onDelete: "restrict",
+    }),
     modelId: text("model_id")
       .notNull()
       .references(() => models.id, { onDelete: "restrict" }),

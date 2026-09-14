@@ -95,7 +95,7 @@ The model catalog stays in PostgreSQL. Git serving declarations reference its im
 | `tasks` | One customer workload | `id`, `workspace_id`, `slug` (immutable), display name, `base_release_id`, `reference_model_id`, `recipe_version`, `evaluation_judge_id`, `production_model_id`, production revision, sampling policy per day |
 | `training_runs` | One configured execution | `id`, `task_id`, frozen `config`, `status`, `created_at`, `started_at`, `finished_at`, `cancel_requested_at`; config schema in RUN-01 |
 | `models` (additions) | A private version | workspace, task, version string, base release, run, lifecycle (`candidate`, `available`, `retired`), artifact manifest reference, compatibility hashes |
-| `instances` | One GPU host | provider, region, fault domain, GPU shape, capabilities, Nomad node id, allowed workload kinds, operator eligibility, quarantine reason, enrollment identity |
+| `instances` | One provider instance | provider, provider account ID, provider instance ID, SKU, region, fault domain, Nomad node ID, creation/update/retirement timestamps |
 
 ### ClickHouse
 
@@ -194,7 +194,7 @@ Each decision names the choice, why, and what was rejected. The contracts hold t
 | Capture | Whole bodies, 16 MiB per request bound, straight to ClickHouse; no per-session cap |
 | Versions | Immutable, validated; callable by exact name regardless of evaluation; publication never changes production |
 | Promotion | Manual; B over A leaves A callable; no retire action |
-| Fleet | Shared whole-host fleet; Git scaling policies and operator eligibility; Nomad Autoscaler counts; Nomad placement and serving recovery; training never interrupted for priority; VMs added by hand |
+| Fleet | Shared GPU fleet with per-workload GPU reservations; Git scaling policies and operator eligibility; Nomad Autoscaler counts; Nomad placement and serving recovery; training never interrupted for priority; VMs added by hand |
 | Serving | At least two ready base replicas; each host fetches and caches exact adapters from S3 on demand; internal calls with run tokens |
 | Evaluation | Frontier judge; candidate versus original provider; results, coverage, uncertainty; no recommendation |
 | Data lifetime | Sources 30 days; datasets and evidence indefinite; models until operator cleanup; intermediates 30 days |

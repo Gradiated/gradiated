@@ -7,10 +7,10 @@ The images contain no Runpod bootstrap, SSH server, proxy credentials, or superv
 The current configurations require NVIDIA B300 GPUs. Other GPU models and
 other tensor-parallel sizes need separate qualification.
 
-| Image | Replica | Runtime source | Status |
-| --- | --- | --- | --- |
-| deepseek-v4-1-flash | TP4 | Image digest from PR #46 | Packaging added; image and GPU tests pending |
-| glm-5-3-flash | TP2 | Exact existing vLLM package | Base image digest and build required |
+| Image               | Replica | Runtime source              | Status                                       |
+| ------------------- | ------- | --------------------------- | -------------------------------------------- |
+| deepseek-v4-1-flash | TP4     | Image digest from PR #46    | Packaging added; image and GPU tests pending |
+| glm-5-3-flash       | TP2     | Exact existing vLLM package | Base image digest and build required         |
 
 ## Build
 

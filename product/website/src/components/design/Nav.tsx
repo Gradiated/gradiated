@@ -178,11 +178,17 @@ const WritingList = (): ReactElement => (
               aria-hidden
               className="gr-nav-note-thumb"
               style={{
-                backgroundImage: note.cover ? undefined : `var(${note.gradient})`,
-                backgroundPosition: `${note.coverAt} 50%`,
+                backgroundImage: note.art
+                  ? `url(${note.art})`
+                  : note.cover
+                    ? undefined
+                    : `var(${note.gradient})`,
+                backgroundPosition: note.art ? "50% 50%" : `${note.coverAt} 50%`,
               }}
             >
-              {note.cover ? <WaferArtwork options={note.cover} /> : null}
+              {!note.art && note.cover ? (
+                <WaferArtwork options={note.cover} />
+              ) : null}
             </div>
             <span className="gr-nav-note-text">
               <span className="gr-nav-note-name">{note.title}</span>

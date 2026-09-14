@@ -35,6 +35,7 @@ export const Reading = ({
   byline,
   bylineDateTime,
   children,
+  art,
   cover,
   lede,
   tags = [],
@@ -43,6 +44,8 @@ export const Reading = ({
   byline?: string;
   bylineDateTime?: string;
   children: ReactNode;
+  /** The tall crop of the piece's real artwork. Wins over `cover`. */
+  art?: string;
   cover?: StoryCover;
   lede?: string;
   /** What the piece belongs to — its collection, then its section. */
@@ -97,8 +100,12 @@ export const Reading = ({
 
       <div className="gr-read-grid">
         <aside className="gr-read-side">
-          <span aria-hidden className="gr-read-cover">
-            {cover ? <WaferArtwork options={cover} /> : null}
+          <span
+            aria-hidden
+            className="gr-read-cover"
+            style={art ? { backgroundImage: `url(${art})` } : undefined}
+          >
+            {!art && cover ? <WaferArtwork options={cover} /> : null}
           </span>
 
           {tags.length > 0 ? (

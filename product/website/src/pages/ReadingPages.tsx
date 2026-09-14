@@ -49,6 +49,7 @@ export const MethodReadingPage = ({
           <Reading
             byline={on(METHOD_DATE)}
             bylineDateTime={METHOD_DATE}
+            art={storyAt(`/library/method/${slug}/`)?.art?.tall}
             cover={storyAt(`/library/method/${slug}/`)?.cover}
             lede={page.indexDescription}
             tags={["Method", page.section]}
@@ -85,6 +86,7 @@ export const ArticleReadingPage = ({
             bylineDateTime={
               article.status === "draft" ? undefined : article.publishedAt
             }
+            art={storyAt(article.path)?.art?.tall}
             cover={storyAt(article.path)?.cover}
             lede={article.description}
             tags={["Notes"]}

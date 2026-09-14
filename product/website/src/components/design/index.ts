@@ -32,7 +32,7 @@ export { Benchmark } from "./Benchmark";
 export { CodeBlock } from "./CodeBlock";
 export { CostStory } from "./CostStory";
 export { StoryCard, StoryList, StoryRow } from "./Story";
-export type { Story, StoryCover } from "./Story";
+export type { Story, StoryCover, StoryArt } from "./Story";
 export { Logo } from "./Logo";
 export { Nav } from "./Nav";
 export { Reading } from "./Reading";

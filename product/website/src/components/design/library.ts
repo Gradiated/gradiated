@@ -22,6 +22,8 @@ import { libraryStories } from "../../library-stories";
  */
 
 export type LibraryEntry = {
+  /** The tall crop of the piece's real artwork. Wins over `cover`. */
+  art?: string;
   cover?: ArtworkPreset;
   /** Where in the gradient the cover's window sits. */
   coverAt: string;
@@ -57,6 +59,7 @@ const COVERS = [
 export const library: LibraryEntry[] = libraryStories.map((story, index) => {
   const cover = COVERS[index % COVERS.length];
   return {
+    art: story.art?.tall,
     cover: story.cover,
     coverAt: cover.at,
     date: story.date,

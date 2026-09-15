@@ -36,9 +36,23 @@ export const plan = (names, revision) => {
     new Set(names).size !== names.length
   )
     throw new Error("Expected unique image names");
-  const entries = execFileSync("git", ["ls-tree", "-r", "-z", revision], {
-    encoding: "utf8",
-  })
+  const paths = [
+    ...new Set(
+      names.flatMap((name) => {
+        if (!Object.hasOwn(catalog, name) || catalog[name].disabled)
+          throw new Error(catalog[name]?.disabled ?? `Unknown image: ${name}`);
+        return catalog[name].paths;
+      }),
+    ),
+  ];
+  const entries = execFileSync(
+    "git",
+    ["ls-tree", "-r", "-z", revision, "--", ...paths],
+    {
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+    },
+  )
     .split("\0")
     .filter(Boolean)
     .map((line) => {

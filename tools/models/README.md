@@ -20,6 +20,12 @@ and recovery checks therefore run on the GPU qualification node.
 
 ## Change detection
 
+Pull requests run the full runtime build when base inputs, runtime packaging,
+or the DeepSeek launch script change. Documentation, test-only changes, and
+unrelated release tooling run the quick checks without rebuilding the runtime.
+The comparison covers the full pull request. New pushes cancel older PR runs;
+production releases are not cancelled. This does not add a persistent build cache.
+
 Image inputs use the existing image catalog. A changed base Dockerfile,
 launcher, or base configuration produces a new base digest. Bundle inputs
 include that digest, its Dockerfile and packaging scripts, the model launch

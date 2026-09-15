@@ -28,7 +28,12 @@ export const catalog = {
     repository: "gradiated/prod/inference",
     target: "",
     paths: [
-      "product/inference/images/nomad-base/",
+      "product/inference/images/nomad-base/Dockerfile",
+      "product/inference/images/nomad-base/base-id",
+      "product/inference/images/nomad-base/start.sh",
+      "product/inference/images/nomad-base/start-client.sh",
+      "product/inference/images/nomad-base/sshd_config",
+      "product/inference/.dockerignore",
       "product/inference/runtime-launcher/CMakeLists.txt",
       "product/inference/runtime-launcher/main.cpp",
       "product/inference/runtime-launcher/supervise.cpp",

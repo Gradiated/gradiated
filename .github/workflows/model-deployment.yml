@@ -28,7 +28,7 @@ permissions:
 
 concurrency:
   group: model-release-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   checks:
@@ -36,13 +36,20 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: verification
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node tools/models/verify-inputs.mjs "$BASE_SHA"
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
           bash product/inference/images/tests/test_launch.sh
       - uses: docker/setup-buildx-action@v3
-        if: github.event_name == 'pull_request'
+        if: steps.verification.outputs.required == 'true'
       - name: Verify the complete runtime on pull requests
-        if: github.event_name == 'pull_request'
+        if: steps.verification.outputs.required == 'true'
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python

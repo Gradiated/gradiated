@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { CONSOLE_URL, parseArguments } from "./arguments.js";
-import { resolveAccount } from "./account.js";
+import { parseArguments } from "./arguments.js";
+import { resolveKey } from "./key.js";
 import { fetchCatalog, type CatalogModel } from "./catalog.js";
 import { readStoredKey, storeKey, clearStoredKey } from "./credentials.js";
 import { HttpError } from "./http.js";
@@ -98,56 +98,6 @@ const pickModel = async (
     })),
   );
   return models.find((model) => model.id === choice) ?? first;
-};
-
-const resolveKey = async (
-  options: { yes: boolean; key: string | undefined; mode: string },
-  targets: { apiBaseUrl: string; inferenceBaseUrl: string },
-): Promise<string> => {
-  const environmentKey = process.env.GRADIATED_API_KEY;
-  if (environmentKey !== undefined && environmentKey.length > 0) {
-    ui.info("Using GRADIATED_API_KEY from the environment.");
-    return environmentKey;
-  }
-  // An explicit --key wins over the stored credential so re-running with a
-  // different key does what was asked.
-  if (options.key !== undefined) {
-    return options.key;
-  }
-  const stored = await readStoredKey();
-  if (stored !== null) {
-    ui.info("Using the stored key from ~/.gradiated/credentials.json.");
-    return stored;
-  }
-
-  if (options.mode === "login" || options.mode === "signup") {
-    const account = await resolveAccount(targets, options.mode);
-    return account.apiKey;
-  }
-
-  if (options.yes) {
-    ui.fail(
-      `No Gradiated key found. Create one at ${CONSOLE_URL} or run without --yes.`,
-    );
-  }
-
-  const choice = await ui.selectOption<"signup" | "login" | "paste">(
-    "No Gradiated key found. What would you like to do?",
-    [
-      {
-        value: "signup",
-        label: "Create a free account",
-        hint: "free credit included",
-      },
-      { value: "login", label: "Log in to an existing account" },
-      { value: "paste", label: "Paste an existing API key" },
-    ],
-  );
-  if (choice === "paste") {
-    return ui.askPassword(`Paste your API key (create one at ${CONSOLE_URL}):`);
-  }
-  const account = await resolveAccount(targets, choice);
-  return account.apiKey;
 };
 
 const runInstall = async (): Promise<void> => {
@@ -566,7 +516,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("1.1.1");
+    console.log("1.1.2");
     return;
   }
   if (parsed.command === "uninstall") {

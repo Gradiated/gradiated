@@ -15,7 +15,7 @@ configuration editing, no browser, no card.
 ## What it does
 
 1. Detects supported coding agents (OpenCode, Codex, Claude Code).
-2. Resolves an API key: environment, stored credential, or a quick
+2. Lets you choose a detected environment key, saved credential, or a quick
    account signup / login (email + code) — or paste an existing key.
 3. Fetches the live model catalog with your key to prove it works.
 4. Merges the Gradiated provider into each selected agent's configuration.
@@ -51,6 +51,11 @@ uninstall after everything is removed is a clean no-op.
 --dry-run           Show what would be written; change nothing
 --yes               Non-interactive: first model, no extra prompts
 ```
+
+Interactive setup always offers signup, login, and pasting a key alongside any
+detected keys. Key values are never displayed. Explicit `--key`, `--signup`,
+and `--login` bypass this menu. With `--yes`, the environment key is used first,
+then the saved key. OpenCode uses the selected credential saved in its auth store.
 
 ## Uninstall
 

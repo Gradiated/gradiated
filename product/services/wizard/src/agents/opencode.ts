@@ -97,7 +97,6 @@ export const buildProviderBlock = (
     name: "Gradiated",
     options: {
       baseURL: inferenceBaseUrl,
-      apiKey: "{env:GRADIATED_API_KEY}",
     },
     models: modelEntries,
   };

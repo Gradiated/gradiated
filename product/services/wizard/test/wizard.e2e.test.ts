@@ -213,6 +213,7 @@ const stopStub = async (): Promise<void> => {
 const runWizard = async (
   arguments_: readonly string[],
   home: string,
+  extraEnv: Record<string, string> = {},
 ): Promise<{ status: number | null; stdout: string; stderr: string }> =>
   new Promise((resolvePromise) => {
     const child = spawn(
@@ -229,6 +230,7 @@ const runWizard = async (
             "credentials.json",
           ),
           GRADIATED_API_KEY: "",
+          ...extraEnv,
         },
         stdio: ["ignore", "pipe", "pipe"],
       },
@@ -416,6 +418,7 @@ describe("wizard install end to end", () => {
           `http://127.0.0.1:${PORT}`,
         ],
         home,
+        { GRADIATED_API_KEY: "grad_unselected_environment_fixture" },
       );
 
       expect(result.stderr).toBe("");
@@ -439,7 +442,7 @@ describe("wizard install end to end", () => {
       expect(provider.npm).toBe("@ai-sdk/openai-compatible");
       expect(provider.name).toBe("Gradiated");
       expect(provider.options.baseURL).toBe(`http://127.0.0.1:${PORT}`);
-      expect(provider.options.apiKey).toBe("{env:GRADIATED_API_KEY}");
+      expect(provider.options.apiKey).toBeUndefined();
       expect(provider.models["z-ai/glm-5.3-flash"]).toEqual({
         name: "GLM-5.3 Flash",
         limit: { context: 1_048_576, output: 131_072 },

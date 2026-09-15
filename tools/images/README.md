@@ -48,3 +48,12 @@ actionlint .github/workflows/build-images.yml .github/workflows/application-depl
 
 The first merge must verify ECR publication and the GitOps commit in GitHub.
 Local tests cannot prove that the production role and branch rules permit them.
+
+## Large model images
+
+DeepSeek uses `COPY --link` so the launch script can be added without extracting
+the large vLLM base filesystem. Keep this image free of `RUN` steps unless the
+runner disk budget is revisited. Publication still transfers base layers to ECR.
+Model builds remove unused hosted-runner SDKs and require 25 GiB free before build.
+They skip GitHub Actions cache import/export; immutable ECR tags still provide reuse.
+The first successful hosted publication is the acceptance check for the disk fix.

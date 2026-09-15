@@ -72,6 +72,18 @@ jobs:
           REPOSITORY: ${{ matrix.repository }}
           IMAGE_TAG: ${{ matrix.tag }}
         run: node tools/images/images.mjs lookup "$REPOSITORY" "$IMAGE_TAG"
+      - name: Free disk for model image publication
+        if: steps.existing.outputs.exists != 'true' && startsWith(matrix.context, 'product/inference/images/')
+        shell: bash
+        run: |
+          # Hosted-runner SDKs are not used by these Docker-only model builds.
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+          available_kib=$(df -Pk / | awk 'NR == 2 {print $4}')
+          if (( available_kib < 25 * 1024 * 1024 )); then
+            echo 'Model image publication requires at least 25 GiB of free disk.' >&2
+            exit 1
+          fi
       - if: steps.existing.outputs.exists != 'true'
         uses: docker/setup-buildx-action@v3
       - if: steps.existing.outputs.exists != 'true'
@@ -86,8 +98,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/${{ matrix.repository }}:${{ matrix.tag }}
-          cache-from: type=gha,scope=image-${{ matrix.name }}
-          cache-to: type=gha,mode=max,scope=image-${{ matrix.name }}
+          cache-from: ${{ !startsWith(matrix.context, 'product/inference/images/') && format('type=gha,scope=image-{0}', matrix.name) || '' }}
+          cache-to: ${{ !startsWith(matrix.context, 'product/inference/images/') && format('type=gha,mode=max,scope=image-{0}', matrix.name) || '' }}
       - name: Record resolved digest
         env:
           IMAGE_NAME: ${{ matrix.name }}

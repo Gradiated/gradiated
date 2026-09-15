@@ -1,16 +1,30 @@
-.waitlist-trigger {
+/* ---------------------------------------------------------------------------
+   waitlist — the trigger, and the drawer it opens.
+
+   The element is a <dialog> for the platform's focus trap and top layer; the
+   DRAWER is only how it dresses. It portals into .gr-root, so the design
+   system's tokens are in scope and the type is the system's own — gr-heading,
+   gr-label, gr-body, gr-button come from the component; this file only adds
+   what the system has no component for yet: form controls, and the drawer's
+   own geometry.
+   --------------------------------------------------------------------------- */
+
+.gr-waitlist-trigger {
   cursor: pointer;
   font: inherit;
   color: inherit;
   text-align: inherit;
 }
 
-.waitlist-trigger.gr-link {
+.gr-waitlist-trigger.gr-link {
   border: 0;
   background: transparent;
 }
 
-.waitlist-modal {
+/* The drawer: full height, pinned right, the page visible beside it. The
+   dialog box spans the viewport so its own surface can be the click-outside
+   target; only .gr-waitlist-body paints. */
+.gr-waitlist-drawer {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -20,42 +34,190 @@
   margin: 0;
   padding: 0;
   border: 0;
-  background: var(--paper, #faf9f6);
-  color: var(--ink, #1c1b18);
+  background: transparent;
+  display: flex;
+  justify-content: flex-end;
 }
 
-.waitlist-modal[open] {
+.gr-waitlist-drawer::backdrop {
+  background: color-mix(in srgb, var(--color-ink-000) 32%, transparent);
+  animation: waitlist-scrim-in var(--dur-base) var(--ease-response) both;
+}
+
+.gr-waitlist-body {
+  width: min(92vw, 27rem);
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--color-overlay);
+  color: var(--color-text);
+  box-shadow: var(--shadow-lift);
+  padding: var(--u) calc(1.25 * var(--u)) calc(1.25 * var(--u));
+  animation: gr-waitlist-drawer-in var(--dur-base) var(--ease-response) both;
 }
 
-.waitlist-modal-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  padding: max(16px, env(safe-area-inset-top)) 20px 16px;
-  border-bottom: 1px solid currentColor;
-  font-size: 14px;
+/* Leaves the way it came — the component keeps the dialog mounted for the
+   duration (CLOSE_MS matches --dur-base). */
+.gr-waitlist-drawer--closing .gr-waitlist-body {
+  animation: gr-waitlist-drawer-out var(--dur-base) var(--ease-response) both;
 }
 
-.waitlist-modal-header > a {
-  margin-left: auto;
-  text-decoration: underline;
+.gr-waitlist-drawer--closing::backdrop {
+  animation: waitlist-scrim-out var(--dur-base) var(--ease-response) both;
 }
 
-.waitlist-modal-header > button {
-  background: transparent;
-  color: inherit;
-  border: 1px solid currentColor;
-  padding: 8px 12px;
-  cursor: pointer;
-  font: inherit;
+@keyframes gr-waitlist-drawer-in {
+  from {
+    translate: 100% 0;
+  }
 }
 
-.waitlist-modal iframe {
-  flex: 1;
+@keyframes gr-waitlist-drawer-out {
+  to {
+    translate: 100% 0;
+  }
+}
+
+@keyframes waitlist-scrim-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes waitlist-scrim-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* PLACEHOLDER — the spot graphic's box, grounded like the library's wells
+   before their art so the composition can be judged before the art exists. */
+/* The art is the drawer's flexible element: 3:2 when the viewport affords
+   it, compressed when it doesn't, so the FORM is what always fits — the
+   drawer must never ask a signup to scroll. */
+.gr-waitlist-art {
+  aspect-ratio: 3 / 2;
+  flex: 0 1 auto;
   min-height: 0;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--color-text) 6%, var(--color-overlay));
+  margin-block-end: var(--u);
+}
+
+/* Only the art compresses; the words and the fields hold their size. */
+.gr-waitlist-head,
+.gr-waitlist-form,
+.gr-waitlist-done {
+  flex-shrink: 0;
+}
+
+/* Two classes, so this beats `.gr-root p` — the same base-margin trap as
+   every other page. */
+.gr-waitlist-head .gr-body,
+.gr-waitlist-done .gr-body {
+  margin-block: calc(0.4 * var(--u)) var(--u);
+}
+
+/* Proximity does the grouping: the space BETWEEN pairs is several times the
+   space WITHIN one, so a question reads as captioning the field below it,
+   not the field above. */
+.gr-waitlist-form {
+  display: grid;
+  gap: calc(1.3 * var(--u));
+}
+
+.gr-waitlist-form label {
+  display: grid;
+  gap: calc(0.1 * var(--u));
+}
+
+/* The label component is set for one-line captions; these questions wrap. */
+.gr-waitlist-form .gr-label {
+  line-height: 1.5;
+}
+
+/* What the system has no component for yet: text inputs. The shape borrows
+   the tab-select's grammar — rule border, system radius, quiet tint — so a
+   field reads as kin to the controls that already exist.
+
+   16px is a floor, not a taste: a form control under it makes iOS zoom the
+   page on focus and not zoom back. --text-body is 18px, one size for all
+   three control kinds. */
+.gr-waitlist-form input,
+.gr-waitlist-form select,
+.gr-waitlist-form textarea {
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  color: inherit;
+  background: color-mix(in srgb, var(--color-text) 4%, var(--color-overlay));
+  border: 1px solid var(--color-rule);
+  border-radius: var(--radius-lg);
+  padding: calc(0.45 * var(--u)) calc(0.6 * var(--u));
+}
+
+.gr-waitlist-form textarea {
+  resize: vertical;
+  min-height: calc(4.5 * var(--u));
+}
+
+/* Focus comes from base.css's .gr-root :focus-visible — the drawer lives
+   inside the root, so there is nothing to restate here. */
+
+.gr-waitlist-error {
+  margin: 0;
+  color: var(--color-kiln-600);
+}
+
+/* .gr-button carries the look; the drawer only makes it full width, because
+   a drawer is a single column and a floating pill in it reads unanchored. */
+.gr-waitlist-submit {
   width: 100%;
-  border: 0;
+  justify-content: center;
+  padding-block: calc(0.55 * var(--u));
+  margin-block-start: calc(0.25 * var(--u));
+}
+
+.gr-waitlist-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* A short viewport gets a denser drawer, so the whole form is on screen
+   before the art gives up any more of its height. */
+@media (max-height: 780px) {
+  .gr-waitlist-body {
+    padding-block: calc(0.6 * var(--u));
+  }
+
+  .gr-waitlist-art,
+  .gr-waitlist-head .gr-body {
+    margin-block-end: calc(0.6 * var(--u));
+  }
+
+  .gr-waitlist-form {
+    gap: calc(0.9 * var(--u));
+  }
+
+  .gr-waitlist-form textarea {
+    min-height: calc(3 * var(--u));
+  }
+}
+
+/* Below this there is no height left worth painting — a squeezed art well
+   reads as a stray bar, so the graphic is the first thing to go. */
+@media (max-height: 740px) {
+  .gr-waitlist-art {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-waitlist-body,
+  .gr-waitlist-drawer::backdrop,
+  .gr-waitlist-drawer--closing .gr-waitlist-body,
+  .gr-waitlist-drawer--closing::backdrop {
+    animation: none;
+  }
 }

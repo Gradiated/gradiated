@@ -10,6 +10,7 @@ import {
   createUsageService,
   createValkeyServingProjector,
   createWorkspaceApiKeyService,
+  createWaitlistService,
   parseClickHouseRuntimeEnvironment,
 } from "@gradiated/control";
 import { createApp } from "./app.js";
@@ -28,6 +29,10 @@ import {
 } from "./billing/stripe.js";
 import { createValkeyClient } from "@gradiated/valkey";
 import { createProfilingIngestApp } from "./profiling-ingest.js";
+import {
+  createLoggingWaitlistWelcomeSender,
+  createResendWaitlistWelcomeSender,
+} from "./waitlist-email.js";
 import {
   createDeploymentStatusIngestApp,
   parseDeploymentStatusTokens,
@@ -98,8 +103,17 @@ const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
 const deploymentStatusTokens = parseDeploymentStatusTokens(
   process.env.DEPLOYMENT_STATUS_INGEST_TOKENS,
 );
+const sendWaitlistWelcome =
+  environment.RESEND_API_KEY && environment.AUTH_EMAIL_FROM
+    ? createResendWaitlistWelcomeSender({
+        from: environment.AUTH_EMAIL_FROM,
+        apiKey: environment.RESEND_API_KEY,
+      })
+    : createLoggingWaitlistWelcomeSender();
+
 const app = createApp({
   allowedOrigins: trustedOrigins,
+  sendWaitlistWelcome,
   auth,
   metrics,
   checkDependencies: async () => {
@@ -132,6 +146,7 @@ const app = createApp({
     organizations,
     catalogBilling,
     usage: createUsageService(database, clickhouse),
+    waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database, servingProjector),
   },
 });

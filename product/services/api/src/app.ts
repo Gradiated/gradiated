@@ -11,12 +11,15 @@ import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
 import { registerUsageRoutes } from "./routes/usage.js";
+import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type { ApiEnvironment, ApiServices, AuthService } from "./types.js";
+import type { WaitlistWelcomeSender } from "./waitlist-email.js";
 
 export interface AppDependencies {
   allowedOrigins: string[];
+  sendWaitlistWelcome: WaitlistWelcomeSender;
   checkDependencies: DependencyCheck;
   metrics: ApiMetrics;
   auth?: AuthService;
@@ -33,9 +36,15 @@ export interface AppOverrides extends Omit<
 const defaultDependencies: AppDependencies = {
   allowedOrigins: [],
   checkDependencies: async () => ({}),
+  sendWaitlistWelcome: async () => {},
   metrics: new ApiMetrics({ collectProcessMetrics: false }),
   services: {
     billingPayments: unavailableBillingPaymentsService(),
+    waitlist: {
+      join: async () => {
+        throw new Error("Waitlist service is not configured");
+      },
+    },
     catalogBilling: {
       listModels: async () => [],
       getBillingAccount: async () => {
@@ -177,6 +186,11 @@ export const createApp = (overrides: AppOverrides = {}) => {
   registerMeRoutes(app, dependencies.services);
   registerOrganizationRoutes(app, dependencies.services);
   registerUsageRoutes(app, dependencies.services);
+  registerWaitlistRoutes(
+    app,
+    dependencies.services,
+    dependencies.sendWaitlistWelcome,
+  );
   registerWizardRoutes(app, dependencies.services);
   registerWorkspaceRoutes(app, dependencies.services);
 

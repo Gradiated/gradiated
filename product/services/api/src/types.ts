@@ -2,6 +2,7 @@ import type {
   CatalogBillingService,
   OrganizationService,
   UsageService,
+  WaitlistService,
   WorkspaceApiKeyService,
 } from "@gradiated/control";
 
@@ -31,6 +32,7 @@ export interface AuthService {
 }
 
 export interface ApiServices {
+  waitlist: WaitlistService;
   billingPayments: BillingPaymentsService;
   catalogBilling: CatalogBillingService;
   organizations: OrganizationService;

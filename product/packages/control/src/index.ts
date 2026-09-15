@@ -57,6 +57,13 @@ export {
   type OrganizationService,
   type UserOrganization,
 } from "./organizations/service.js";
+export {
+  COMPANY_SIZES,
+  createWaitlistService,
+  waitlistSignupSchema,
+  type WaitlistService,
+  type WaitlistSignupInput,
+} from "./waitlist/service.js";
 export { createValkeyServingProjector } from "./serving/valkey-projector.js";
 export {
   configureOpenRouterDistributionChannel,

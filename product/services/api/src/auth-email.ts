@@ -30,7 +30,7 @@ const escapeHtml = (value: string): string =>
       })[character]!,
   );
 
-const createEmailShell = ({
+export const createEmailShell = ({
   body,
   eyebrow,
   preheader,
@@ -101,13 +101,13 @@ export const createMagicLinkEmailContent = (url: string): EmailContent => {
   };
 };
 
-interface ResendConfiguration {
+export interface ResendConfiguration {
   from: string;
   apiKey: string;
   fetch?: typeof globalThis.fetch;
 }
 
-const sendResendEmail = async (
+export const sendResendEmail = async (
   configuration: ResendConfiguration,
   email: string,
   subject: string,

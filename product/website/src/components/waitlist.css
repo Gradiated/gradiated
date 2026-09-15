@@ -92,21 +92,9 @@
   }
 }
 
-/* PLACEHOLDER — the spot graphic's box, grounded like the library's wells
-   before their art so the composition can be judged before the art exists. */
-/* The art is the drawer's flexible element: 3:2 when the viewport affords
-   it, compressed when it doesn't, so the FORM is what always fits — the
-   drawer must never ask a signup to scroll. */
-.gr-waitlist-art {
-  aspect-ratio: 3 / 2;
-  flex: 0 1 auto;
-  min-height: 0;
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--color-text) 6%, var(--color-overlay));
-  margin-block-end: var(--u);
-}
-
-/* Only the art compresses; the words and the fields hold their size. */
+/* Nothing here shrinks: the words and the fields hold their size. (The spot
+   graphic will return above the header once the art exists — it was the
+   drawer's one flexible element.) */
 .gr-waitlist-head,
 .gr-waitlist-form,
 .gr-waitlist-done {
@@ -191,7 +179,6 @@
     padding-block: calc(0.6 * var(--u));
   }
 
-  .gr-waitlist-art,
   .gr-waitlist-head .gr-body {
     margin-block-end: calc(0.6 * var(--u));
   }
@@ -202,14 +189,6 @@
 
   .gr-waitlist-form textarea {
     min-height: calc(3 * var(--u));
-  }
-}
-
-/* Below this there is no height left worth painting — a squeezed art well
-   reads as a stray bar, so the graphic is the first thing to go. */
-@media (max-height: 740px) {
-  .gr-waitlist-art {
-    display: none;
   }
 }
 

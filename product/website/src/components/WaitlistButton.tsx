@@ -143,10 +143,6 @@ export const WaitlistButton = ({
             }}
           >
             <div className="gr-waitlist-body">
-              {/* PLACEHOLDER — the spot graphic goes here. An empty well in
-                  the meantime, like the library's cards before their art. */}
-              <div aria-hidden className="gr-waitlist-art" />
-
               {phase === "done" ? (
                 <div className="gr-waitlist-done" role="status">
                   <h2 className="gr-heading">You&rsquo;re on the list.</h2>

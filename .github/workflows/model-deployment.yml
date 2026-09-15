@@ -22,6 +22,7 @@ on:
       - .github/workflows/build-images.yml
 
 permissions:
+  actions: read
   contents: read
   id-token: write
 
@@ -58,7 +59,7 @@ jobs:
     needs: images
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 90
+    timeout-minutes: 180
     env:
       SOURCE_SHA: ${{ github.sha }}
       AWS_REGION: us-east-1
@@ -66,6 +67,13 @@ jobs:
       BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['nomad-base'].digest) }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Wait for infrastructure changes in this merge
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node tools/models/wait-infrastructure.mjs
       - uses: aws-actions/configure-aws-credentials@v6.2.3
         with:
           aws-region: us-east-1

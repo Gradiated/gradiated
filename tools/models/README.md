@@ -31,8 +31,10 @@ used by a serving job.
 ## Storage setup
 
 Terraform's registry module owns the private artifact bucket. The deployment
-role can upload and read its objects. Apply the registry and deployment IAM
-changes before the first publication run. This PR does not apply Terraform.
+role can upload and read its objects. When a merge also changes Terraform inputs, runtime publication waits for
+the Terraform workflow for that commit to succeed. The existing Terraform
+workflow applies the private bucket and deployment-IAM changes on merge.
+A failed infrastructure run prevents runtime publication.
 
 During client enrollment, supply read-only S3 credentials in the Nomad
 agent's root-owned environment. Grant only `s3:GetObject` on the bucket's

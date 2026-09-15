@@ -6,12 +6,14 @@ on:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
+      - product/inference/runtime-launcher/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
   pull_request:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
+      - product/inference/runtime-launcher/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
 
@@ -29,3 +31,5 @@ jobs:
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
           node --check tools/nomad/create-bootstrap-secrets.mjs
+          bash product/inference/nomad/tests/validate-job.sh
+          docker build -f product/inference/runtime-launcher/tests/Dockerfile product/inference/runtime-launcher

@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+set -euo pipefail
+exec "${GRADIATED_RUNTIME_ROOT:?}/python/bin/python3" -m vllm.entrypoints.cli.main "$@"

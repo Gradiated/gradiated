@@ -5,36 +5,106 @@ on:
     branches: [main]
     paths:
       - product/inference/images/**
+      - product/inference/bundles/**
+      - product/inference/runtime-launcher/**
       - tools/images/**
+      - tools/models/**
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
   pull_request:
     paths:
       - product/inference/images/**
+      - product/inference/bundles/**
+      - product/inference/runtime-launcher/**
       - tools/images/**
+      - tools/models/**
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
 
 permissions:
+  actions: read
   contents: read
   id-token: write
+
+concurrency:
+  group: model-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   checks:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
       - run: |
-          node --test tools/images/*.test.mjs
+          node --test tools/images/*.test.mjs tools/models/*.test.mjs
           bash product/inference/images/tests/test_launch.sh
+      - uses: docker/setup-buildx-action@v3
+        if: github.event_name == 'pull_request'
+      - name: Verify the complete runtime on pull requests
+        if: github.event_name == 'pull_request'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
+          df -h /
+          docker buildx bake -f product/inference/bundles/build.hcl verify
+
   images:
     needs: checks
     if: github.event_name == 'push'
     uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ github.sha }}
-      images: '["deepseek-v4-1-flash"]'
+      images: '["nomad-base"]'
       artifact_prefix: models
-  # GPU qualification and Nomad rollout are not implemented yet.
-  # Publication alone must not update a serving job or production route.
+
+  runtime:
+    needs: images
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 180
+    env:
+      SOURCE_SHA: ${{ github.sha }}
+      AWS_REGION: us-east-1
+      ARTIFACT_BUCKET: gradiated-prod-model-artifacts-${{ vars.AWS_ACCOUNT_ID }}
+      BASE_IMAGE: ${{ format('{0}.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/inference@{1}', vars.AWS_ACCOUNT_ID, fromJSON(needs.images.outputs.images)['nomad-base'].digest) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Wait for infrastructure changes in this merge
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node tools/models/wait-infrastructure.mjs
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+      - id: existing
+        run: node tools/models/release.mjs lookup "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
+      - if: steps.existing.outputs.exists != 'true'
+        uses: aws-actions/amazon-ecr-login@v2
+      - if: steps.existing.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v3
+      - name: Package and verify the runtime
+        if: steps.existing.outputs.exists != 'true'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
+          df -h /
+          docker buildx build --platform linux/amd64 \
+            -f product/inference/bundles/deepseek-v4-1-flash/Dockerfile \
+            --build-context "runtime-base=docker-image://$BASE_IMAGE" --target artifact \
+            --output type=local,dest=model-release product/inference
+      - if: steps.existing.outputs.exists != 'true'
+        run: node tools/models/release.mjs publish "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-runtime-release
+          path: model-release/release.json
+          retention-days: 30
+
+  # Submission is enabled only after runtime-user, GPU, and recovery qualification.
+  # A published base image does not replace a provider pod.

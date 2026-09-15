@@ -57,11 +57,13 @@ job "deepseek-v4-1-flash" {
     }
     task "vllm" {
       driver         = "raw_exec"
+      user           = "runtime"
       shutdown_delay = "10s"
       kill_signal    = "SIGTERM"
       kill_timeout   = "60s"
       artifact {
         source      = var.bundle_url
+        chown       = true
         destination = "local/runtime"
         options {
           checksum = "sha256:${var.bundle_sha256}"

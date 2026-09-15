@@ -8,10 +8,11 @@ returns their exact digests. It does not deploy workloads.
 | --- | --- | --- |
 | `application-deployment.yml` | Successful Product tests, required images and console build, release record, application rollout and checks | Existing application deployment |
 | `nomad-deployment.yml` | Server configuration tests | Argo owns manifests; first sync is manual |
-| `model-deployment.yml` | Launch checks, model image publication | Publication only; GPU qualification and serving rollout are pending |
+| `model-deployment.yml` | Launch checks, Nomad base image, verified runtime bundle and release record | Artifact publication; GPU qualification and serving rollout remain pending |
 
 The application requires `product` and `gateway`. Nomad uses the pinned upstream image; it needs no custom image.
-The model workflow currently publishes DeepSeek. GLM is listed in the catalog
+The model workflow publishes the Nomad base and DeepSeek runtime bundle.
+See `tools/models/README.md` for the build order and release contract. GLM is listed in the catalog
 but cannot build until its qualified base image digest is recorded. A disabled
 image fails explicitly if requested. A model failure does not block application
 or Nomad validation. Before adding model rollouts, give each model a separate
@@ -31,9 +32,9 @@ use distinct tag prefixes in the existing `gradiated/prod/inference` repository.
 Build results record both the requested source revision and the input tag.
 Use a distinct artifact prefix for each call within a workflow run.
 
-All current base images are external inputs. If we introduce a shared base that
-we build, add an explicit base-build dependency and pass its immutable digest
-to dependent builds. Do not infer ordering from matrix position.
+The runtime bundle depends on the shared Nomad base image. The model workflow
+builds the base first and passes its immutable digest to the bundle build.
+Do not infer ordering from matrix position.
 
 No model serving job or route changes on publication. Workflow credentials use the existing production
 OIDC role and environment. No local AWS session is required for publication.

@@ -7,6 +7,8 @@ client {
   max_kill_timeout = "60s"
   artifact {
     http_read_timeout = "10m"
+    s3_timeout = "10m"
+    set_environment_variables = "AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_SESSION_TOKEN,AWS_REGION"
     http_max_size = "20GiB"
     decompression_size_limit = "40GiB"
     # Python environments contain more files than Nomad's 4096-file default.

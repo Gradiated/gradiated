@@ -22,6 +22,19 @@ export const catalog = {
     target: "",
     paths: ["product/services/gateway/"],
   },
+  "nomad-base": {
+    context: "product/inference",
+    dockerfile: "product/inference/images/nomad-base/Dockerfile",
+    repository: "gradiated/prod/inference",
+    target: "",
+    paths: [
+      "product/inference/images/nomad-base/",
+      "product/inference/runtime-launcher/CMakeLists.txt",
+      "product/inference/runtime-launcher/main.cpp",
+      "product/inference/runtime-launcher/supervise.cpp",
+      "product/inference/runtime-launcher/supervise.h",
+    ],
+  },
   "deepseek-v4-1-flash": {
     context: "product/inference/images/deepseek-v4-1-flash",
     repository: "gradiated/prod/inference",

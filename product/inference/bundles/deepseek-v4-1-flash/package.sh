@@ -1,18 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Archive the pinned distribution without making a second package-tree copy.
-python3 -c 'import sys; assert sys.version_info[:2] == (3, 12)'
-stdlib=$(python3 -c 'import sysconfig; print(sysconfig.get_path("stdlib"))')
-packages=$(python3 -c 'import sysconfig; print(sysconfig.get_path("purelib"))')
-install -d /bundle/python/bin /bundle/python/lib/python3.12
-ln -s "$(readlink -f "$(command -v python3)")" /bundle/python/bin/python3
-for entry in "$stdlib"/*; do
-  case "${entry##*/}" in
-    site-packages|dist-packages|__pycache__) continue ;;
-  esac
-  ln -s "$entry" "/bundle/python/lib/python3.12/${entry##*/}"
-done
-ln -s "$packages" /bundle/python/lib/python3.12/site-packages
-# Dereference links so the archive has no paths into the builder filesystem.
-tar --dereference --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-  --exclude=__pycache__ --exclude='*.pyc' -C /bundle -czf /runtime.tar.gz .
+# Stream only Python from the pinned image. Do not unpack CUDA or build caches.
+source_image=vllm/vllm-openai@sha256:4f3c8bcf6328305b8cb6f61146dbfa125b0b04ae98eef3d091019ec30f564a9b
+crane export --platform linux/amd64 "$source_image" - |
+  tar -x -C /bundle --exclude=__pycache__ --exclude='*.pyc' \
+    --transform='s|^usr/bin/python3.12$|python/bin/python3|' \
+    --transform='s|^usr/lib/python3.12|python/lib/python3.12|' \
+    --transform='s|^usr/local/lib/python3.12/dist-packages|python/lib/python3.12/site-packages|' \
+    usr/bin/python3.12 usr/lib/python3.12 usr/local/lib/python3.12/dist-packages
+# The same layer removes the extracted files after packaging to limit disk use.
+tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
+  -C /bundle -czf /runtime.tar.gz .
+rm -rf /bundle

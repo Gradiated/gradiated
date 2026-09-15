@@ -1,4 +1,9 @@
-FROM vllm/vllm-openai@sha256:4f3c8bcf6328305b8cb6f61146dbfa125b0b04ae98eef3d091019ec30f564a9b AS package
+FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS package
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSLo /tmp/crane.tar.gz https://github.com/google/go-containerregistry/releases/download/v0.20.3/go-containerregistry_Linux_x86_64.tar.gz \
+    && echo '36c67a932f489b3f2724b64af90b599a8ef2aa7b004872597373c0ad694dc059  /tmp/crane.tar.gz' | sha256sum -c - \
+    && tar -xzf /tmp/crane.tar.gz -C /usr/local/bin crane && rm /tmp/crane.tar.gz
 COPY bundles/deepseek-v4-1-flash/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint
@@ -8,6 +13,7 @@ RUN bash /package.sh
 
 # The caller supplies the exact base digest as a named build context.
 FROM runtime-base AS verify
+ENV PYTHONHOME=/bundle/python PYTHONPATH=/bundle/python/lib/python3.12/site-packages
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
     && /bundle/python/bin/python3 -c 'import torch, vllm; print(torch.__version__, vllm.__version__)' \

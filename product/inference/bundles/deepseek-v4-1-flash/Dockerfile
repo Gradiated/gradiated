@@ -1,9 +1,13 @@
-FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS package
+FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl pigz \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSLo /tmp/crane.tar.gz https://github.com/google/go-containerregistry/releases/download/v0.20.3/go-containerregistry_Linux_x86_64.tar.gz \
     && echo '36c67a932f489b3f2724b64af90b599a8ef2aa7b004872597373c0ad694dc059  /tmp/crane.tar.gz' | sha256sum -c - \
     && tar -xzf /tmp/crane.tar.gz -C /usr/local/bin crane && rm /tmp/crane.tar.gz
+COPY bundles/deepseek-v4-1-flash/extract-dependencies.sh /extract-dependencies.sh
+RUN bash /extract-dependencies.sh
+
+FROM dependencies AS package
 COPY bundles/deepseek-v4-1-flash/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint

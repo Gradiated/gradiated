@@ -19,10 +19,11 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   configuration-checks:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -32,4 +33,12 @@ jobs:
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
           node --check tools/nomad/create-bootstrap-secrets.mjs
           bash product/inference/nomad/tests/validate-job.sh
-          docker build -f product/inference/runtime-launcher/tests/Dockerfile product/inference/runtime-launcher
+      - uses: depot/setup-action@v1
+      - name: Build and test the runtime launcher
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: product/inference/runtime-launcher
+          file: product/inference/runtime-launcher/tests/Dockerfile
+          target: tests
+          platforms: linux/amd64

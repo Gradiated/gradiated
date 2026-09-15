@@ -18,13 +18,50 @@ base digest. Publication never bypasses the verification stage. The CUDA build
 requires a GPU even for CLI argument parsing. Full CLI startup, model serving,
 and recovery checks therefore run on the GPU qualification node.
 
+## Depot builds
+
+The model checks, runtime publication, shared image builds, and launcher tests
+use Depot remote container builders. These jobs run on `depot-ubuntu-24.04`.
+The same `DEPOT_PROJECT_ID` repository variable selects the persistent build
+cache for PR and release builds. No explicit Docker cache export is required.
+
+Before merging this setup:
+
+1. Enable Depot GitHub Actions runners for `Gradiated/gradiated`.
+2. Create a Depot container-build project with enough disk for the CUDA base,
+   extracted Python dependencies, and archive. The extracted dependencies are
+   about 17 GiB; the archive is about 6.8 GB, before base layers and cache history.
+3. Add a GitHub trust relationship for this repository in the Depot project.
+   Permit the intended PR and production workflows. This repository uses
+   customized OIDC subjects; verify that the trust matches the issued claims.
+4. Set the GitHub repository variable `DEPOT_PROJECT_ID` to that project ID.
+
+GitHub OIDC authenticates the builder. Existing AWS OIDC and ECR login steps
+still control release publication. Images stay in private ECR; runtime archives
+stay in private S3. The builder receives build inputs and registry access for
+these builds. It does not receive model weights or the GPU client's credentials.
+
+Dependency extraction is a separate Docker layer from model launch files.
+Changing a launch script reuses extraction, but still creates the final archive
+and verifies it against the selected base. Changing vLLM rebuilds dependencies.
+A warm build still exports the archive to the runner and uploads it to S3.
+The first build is cold. No measured Depot speedup is claimed yet.
+
+After setup, compare a cold PR build, an unchanged rebuild, and a launch-script
+change. Check that dependency extraction is cached on the last two. Check a
+main release separately: its verification uses the published base digest.
+Confirm that its release record and S3 archive checksum still match.
+
+References: [Depot GitHub Actions integration](https://depot.dev/docs/container-builds/integrations/github-actions)
+and [Depot runners](https://depot.dev/docs/github-actions/overview).
+
 ## Change detection
 
 Pull requests run the full runtime build when base inputs, runtime packaging,
 or the DeepSeek launch script change. Documentation, test-only changes, and
 unrelated release tooling run the quick checks without rebuilding the runtime.
 The comparison covers the full pull request. New pushes cancel older PR runs;
-production releases are not cancelled. This does not add a persistent build cache.
+production releases are not cancelled. Depot keeps the Docker build layers between runs.
 
 Image inputs use the existing image catalog. A changed base Dockerfile,
 launcher, or base configuration produces a new base digest. Bundle inputs

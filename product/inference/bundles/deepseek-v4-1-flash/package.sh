@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Stream only Python from the pinned image. Do not unpack CUDA or build caches.
-source_image=vllm/vllm-openai@sha256:4f3c8bcf6328305b8cb6f61146dbfa125b0b04ae98eef3d091019ec30f564a9b
-crane export --platform linux/amd64 "$source_image" - |
-  tar -x -C /bundle --exclude=__pycache__ --exclude='*.pyc' \
-    --transform='s|^usr/bin/python3.12$|python/bin/python3|' \
-    --transform='s|^usr/lib/python3.12|python/lib/python3.12|' \
-    --transform='s|^usr/local/lib/python3.12/dist-packages|python/lib/python3.12/site-packages|' \
-    usr/bin/python3.12 usr/lib/python3.12 usr/local/lib/python3.12/dist-packages
-# The same layer removes the extracted files after packaging to limit disk use.
+# Build the release archive from cached dependencies and current launch files.
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
   -C /bundle -I "pigz -p 4" -cf /runtime.tar.gz .
-rm -rf /bundle

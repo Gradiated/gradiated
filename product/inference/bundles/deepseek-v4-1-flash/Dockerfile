@@ -16,6 +16,7 @@ FROM runtime-base AS verify
 ENV PYTHONHOME=/bundle/python PYTHONPATH=/bundle/python/lib/python3.12/site-packages
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
+    && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import torch, vllm; print(torch.__version__, vllm.__version__)' \
     && CUDA_VISIBLE_DEVICES="" /bundle/python/bin/python3 -m vllm.entrypoints.cli.main --help >/dev/null \
     && rm -rf /bundle && touch /verified

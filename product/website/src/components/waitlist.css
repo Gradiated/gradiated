@@ -21,6 +21,14 @@
   background: transparent;
 }
 
+/* The scroll lock lives on the dialog's presence, not in component JS: two
+   right-edge panels (this and the nav sheet) can hand off to each other, and
+   inline-style locks restored out of order unlock the page under whichever
+   panel is still standing. */
+body:has(.gr-waitlist-drawer[open]) {
+  overflow: hidden;
+}
+
 /* The drawer: full height, pinned right, the page visible beside it. The
    dialog box spans the viewport so its own surface can be the click-outside
    target; only .gr-waitlist-body paints. */
@@ -90,6 +98,66 @@
   to {
     opacity: 0;
   }
+}
+
+/* THE HANDOFF — opened from a panel already standing at the right edge (the
+   mobile nav sheet, same width to within a few pixels). The drawer's own
+   slide-in is suppressed and its CONTENT arrives instead: to the reader the
+   panel never moved, only what it holds. Returning to the menu is the same
+   swap reversed — the content leaves, the panel stays, and the menu is back
+   underneath by the time the dialog leaves the top layer. */
+/* Entry only — a true close (Escape, Done, the backdrop) still slides the
+   whole panel out, because by then the menu is gone and leaving means
+   leaving. Only the back arrow's return keeps the panel still. */
+.gr-waitlist-drawer--handoff:not(.gr-waitlist-drawer--closing)
+  .gr-waitlist-body,
+.gr-waitlist-drawer--handoff::backdrop {
+  animation: none;
+}
+
+.gr-waitlist-drawer--returning .gr-waitlist-body {
+  animation: none;
+}
+
+.gr-waitlist-drawer--handoff .gr-waitlist-body > * {
+  animation: gr-waitlist-content-in var(--dur-base) var(--ease-response) both;
+}
+
+.gr-waitlist-drawer--returning .gr-waitlist-body > * {
+  animation: gr-waitlist-content-out var(--dur-base) var(--ease-response) both;
+}
+
+@keyframes gr-waitlist-content-in {
+  from {
+    opacity: 0;
+    translate: 1.5rem 0;
+  }
+}
+
+@keyframes gr-waitlist-content-out {
+  to {
+    opacity: 0;
+    translate: 1.5rem 0;
+  }
+}
+
+/* The way back to the menu the drawer arrived from. */
+.gr-waitlist-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  align-self: start;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-caps);
+  font-size: var(--text-caps);
+  font-weight: var(--weight-caps);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin-block-end: var(--u);
 }
 
 /* Nothing here shrinks: the words and the fields hold their size. (The spot
@@ -163,7 +231,10 @@
 .gr-waitlist-submit {
   width: 100%;
   justify-content: center;
-  padding-block: calc(0.55 * var(--u));
+  /* The fields' own height — their block padding plus their text line plus
+     their border — because the button may not stand shorter than the
+     controls it submits. */
+  min-height: calc(0.9 * var(--u) + 1.5rem);
   margin-block-start: calc(0.25 * var(--u));
 }
 
@@ -196,7 +267,9 @@
   .gr-waitlist-body,
   .gr-waitlist-drawer::backdrop,
   .gr-waitlist-drawer--closing .gr-waitlist-body,
-  .gr-waitlist-drawer--closing::backdrop {
+  .gr-waitlist-drawer--closing::backdrop,
+  .gr-waitlist-drawer--handoff .gr-waitlist-body > *,
+  .gr-waitlist-drawer--returning .gr-waitlist-body > * {
     animation: none;
   }
 }

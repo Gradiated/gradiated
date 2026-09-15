@@ -1,4 +1,4 @@
-import { WaitlistButton } from "../WaitlistButton";
+import { WaitlistButton, WaitlistDrawer } from "../WaitlistButton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { library } from "./library";
@@ -285,6 +285,10 @@ export const Nav = (): ReactElement => {
   /** True for the first frame of an open, to snap geometry instead of gliding. */
   const [snapping, setSnapping] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  /* The waitlist drawer's mount lives HERE, not in its trigger: the trigger
+     sits inside the sheet, and the sheet unmounts on handoff — a drawer
+     owned by that trigger would die with the menu that opened it. */
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
   /* Kept mounted through its exit. Unmounting on close is why the drawer used
      to vanish — there was nothing left on the page to animate out. */
   const [sheetClosing, setSheetClosing] = useState(false);
@@ -623,13 +627,27 @@ export const Nav = (): ReactElement => {
                 >
                   Book a call
                 </a>
-                <WaitlistButton className="gr-button gr-button--main">
+                <button
+                  className="gr-button gr-button--main"
+                  type="button"
+                  onClick={() => {
+                    setWaitlistOpen(true);
+                    closeSheet();
+                  }}
+                >
                   Join the waitlist
-                </WaitlistButton>
+                </button>
               </div>
             </div>
           </div>
         </>
+      ) : null}
+
+      {waitlistOpen ? (
+        <WaitlistDrawer
+          handoff={{ openMenu: () => setSheetOpen(true) }}
+          onExited={() => setWaitlistOpen(false)}
+        />
       ) : null}
     </>
   );

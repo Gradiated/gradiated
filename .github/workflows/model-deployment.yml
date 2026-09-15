@@ -45,8 +45,9 @@ jobs:
         if: github.event_name == 'pull_request'
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          docker build -f product/inference/images/nomad-base/Dockerfile             -t gradiated-nomad-base:test product/inference
-          docker build -f product/inference/bundles/deepseek-v4-1-flash/Dockerfile             --build-arg BASE_IMAGE=gradiated-nomad-base:test --target verify product/inference
+          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
+          df -h /
+          docker buildx bake -f product/inference/bundles/build.hcl verify
 
   images:
     needs: checks
@@ -93,7 +94,10 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
           sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
           df -h /
-          docker buildx build --platform linux/amd64             -f product/inference/bundles/deepseek-v4-1-flash/Dockerfile             --build-context "runtime-base=docker-image://$BASE_IMAGE" --target artifact             --output type=local,dest=model-release product/inference
+          docker buildx build --platform linux/amd64 \
+            -f product/inference/bundles/deepseek-v4-1-flash/Dockerfile \
+            --build-context "runtime-base=docker-image://$BASE_IMAGE" --target artifact \
+            --output type=local,dest=model-release product/inference
       - if: steps.existing.outputs.exists != 'true'
         run: node tools/models/release.mjs publish "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
       - uses: actions/upload-artifact@v4

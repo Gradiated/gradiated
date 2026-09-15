@@ -32,9 +32,9 @@ use distinct tag prefixes in the existing `gradiated/prod/inference` repository.
 Build results record both the requested source revision and the input tag.
 Use a distinct artifact prefix for each call within a workflow run.
 
-All current base images are external inputs. If we introduce a shared base that
-we build, add an explicit base-build dependency and pass its immutable digest
-to dependent builds. Do not infer ordering from matrix position.
+The runtime bundle depends on the shared Nomad base image. The model workflow
+builds the base first and passes its immutable digest to the bundle build.
+Do not infer ordering from matrix position.
 
 No model serving job or route changes on publication. Workflow credentials use the existing production
 OIDC role and environment. No local AWS session is required for publication.

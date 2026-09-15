@@ -25,27 +25,29 @@ struct RuntimeStatus {
 
 class RuntimeSupervisor {
  public:
-  RuntimeSupervisor(std::vector<std::string> command, std::string health_host,
-                    std::uint16_t health_port, std::string health_path,
-                    std::chrono::seconds shutdown_grace);
-  ~RuntimeSupervisor();
-  RuntimeSupervisor(const RuntimeSupervisor&) = delete;
-  RuntimeSupervisor& operator=(const RuntimeSupervisor&) = delete;
+   RuntimeSupervisor(std::vector<std::string> command, std::string health_host,
+                     std::uint16_t health_port, std::string health_path,
+                     std::chrono::seconds shutdown_grace,
+                     bool observe_only = false);
+   ~RuntimeSupervisor();
+   RuntimeSupervisor(const RuntimeSupervisor &) = delete;
+   RuntimeSupervisor &operator=(const RuntimeSupervisor &) = delete;
 
-  bool start();
-  void poll();
-  void check_health();
-  void shutdown();
-  [[nodiscard]] RuntimeStatus status() const;
+   bool start();
+   void poll();
+   void check_health();
+   void shutdown();
+   [[nodiscard]] RuntimeStatus status() const;
 
  private:
-  std::vector<std::string> command_;
-  std::string health_host_;
-  std::uint16_t health_port_;
-  std::string health_path_;
-  std::chrono::seconds shutdown_grace_;
-  mutable std::mutex mutex_;
-  RuntimeStatus status_;
+   bool observe_only_;
+   std::vector<std::string> command_;
+   std::string health_host_;
+   std::uint16_t health_port_;
+   std::string health_path_;
+   std::chrono::seconds shutdown_grace_;
+   mutable std::mutex mutex_;
+   RuntimeStatus status_;
 };
 
 }  // namespace desmond

@@ -18,6 +18,8 @@ struct StatusReporterConfig {
   std::string runtime_revision;
   std::uint64_t maximum_concurrency{1};
   std::chrono::seconds interval{1};
+  // HTTPS for remote providers. Empty retains the private HTTP host/port path.
+  std::string url;
 };
 
 struct DeploymentStatusSnapshot {
@@ -40,6 +42,7 @@ class StatusReporter {
   StatusReporter& operator=(const StatusReporter&) = delete;
 
   [[nodiscard]] bool enabled() const;
+  [[nodiscard]] bool recently_uploaded() const;
   void update(DeploymentStatusSnapshot snapshot);
   void stop();
   [[nodiscard]] std::string prometheus() const;
@@ -53,8 +56,10 @@ class StatusReporter {
   std::condition_variable condition_;
   DeploymentStatusSnapshot latest_;
   std::thread thread_;
+  int last_http_status_{0};
   bool has_value_{false};
   bool stopping_{false};
+  std::chrono::steady_clock::time_point last_uploaded_{};
   std::uint64_t uploaded_{0};
   std::uint64_t failures_{0};
 };

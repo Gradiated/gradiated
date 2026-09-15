@@ -6,6 +6,9 @@ on:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
+      - product/inference/desmond/**
+      - product/inference/CMakeLists.txt
+      - .mise/tasks/desmond/test
       - product/inference/runtime-launcher/**
       - product/inference/images/nomad-base/**
       - tools/nomad/**
@@ -14,6 +17,9 @@ on:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
+      - product/inference/desmond/**
+      - product/inference/CMakeLists.txt
+      - .mise/tasks/desmond/test
       - product/inference/runtime-launcher/**
       - product/inference/images/nomad-base/**
       - tools/nomad/**
@@ -30,6 +36,11 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: jdx/mise-action@v4.2.3
+      - name: Test Desmond reporting and runtime ownership
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ libcurl4-openssl-dev python3 openssl
+          bash .mise/tasks/desmond/test
       - run: |
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh

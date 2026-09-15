@@ -10,6 +10,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <memory>
@@ -29,6 +30,21 @@ void handle_signal(int) { stop_requested.store(true, std::memory_order_relaxed);
 std::string environment(const char* name, const char* fallback) {
   const char* value = std::getenv(name);
   return value == nullptr || *value == '\0' ? fallback : value;
+}
+
+std::string token_from_environment(const char *name, const char *file_name) {
+  const auto path = environment(file_name, "");
+  if (path.empty())
+    return environment(name, "");
+  std::ifstream file(path);
+  std::string token;
+  if (!file || !std::getline(file, token) || token.empty() ||
+      token.size() > 4096) {
+    throw std::runtime_error("could not read token file");
+  }
+  if (!token.empty() && token.back() == '\r')
+    token.pop_back();
+  return token;
 }
 
 std::uint16_t environment_port(const char* name, const std::uint16_t fallback) {
@@ -150,12 +166,13 @@ std::string trace_properties(const desmond::TraceEvent& event) {
 
 int main(int argc, char** argv) {
   try {
-    int command_start = 1;
+    const bool observe_only = argc == 2 && std::string(argv[1]) == "--observe";
+    int command_start = observe_only ? argc : 1;
     if (argc > 1 && std::string(argv[1]) == "--") {
       command_start = 2;
     }
-    if (argc <= command_start) {
-      std::cerr << "usage: desmondd -- <runtime> [arguments...]\n";
+    if (!observe_only && argc <= command_start) {
+      std::cerr << "usage: desmondd --observe | -- <runtime> [arguments...]\n";
       return 64;
     }
     std::vector<std::string> command;
@@ -164,10 +181,12 @@ int main(int argc, char** argv) {
     }
     const std::string runtime_api_key = environment("DESMOND_RUNTIME_API_KEY", "");
     const std::string runtime_api_key_mode = environment("DESMOND_RUNTIME_API_KEY_MODE", "argument");
-    if (!runtime_api_key.empty() && runtime_api_key_mode == "argument") {
+    if (!observe_only && !runtime_api_key.empty() &&
+        runtime_api_key_mode == "argument") {
       command.emplace_back("--api-key");
       command.push_back(runtime_api_key);
-    } else if (runtime_api_key_mode != "argument" && runtime_api_key_mode != "environment") {
+    } else if (runtime_api_key_mode != "argument" &&
+               runtime_api_key_mode != "environment") {
       throw std::runtime_error("DESMOND_RUNTIME_API_KEY_MODE must be argument or environment");
     }
 
@@ -179,7 +198,8 @@ int main(int argc, char** argv) {
     const std::string release = environment("DESMOND_RELEASE", "unknown");
     const std::string model = environment("DESMOND_MODEL", "unknown");
     const std::string model_revision = environment("DESMOND_MODEL_REVISION", "unknown");
-    const std::string control_token = environment("DESMOND_CONTROL_TOKEN", "");
+    const std::string control_token = token_from_environment(
+        "DESMOND_CONTROL_TOKEN", "DESMOND_CONTROL_TOKEN_FILE");
     const std::string deployment_id = environment("DESMOND_DEPLOYMENT_ID", "");
 
     desmond::ProfilingUploader profiling({
@@ -200,12 +220,19 @@ int main(int argc, char** argv) {
         .host = environment("DESMOND_STATUS_HOST", ""),
         .port = environment_port("DESMOND_STATUS_PORT", 80),
         .path = environment("DESMOND_STATUS_PATH", "/v1/deployment-status"),
-        .token = environment("DESMOND_STATUS_TOKEN", ""),
+        .token = token_from_environment("DESMOND_STATUS_TOKEN",
+                                        "DESMOND_STATUS_TOKEN_FILE"),
         .deployment_id = deployment_id,
         .runtime_revision = release,
         .maximum_concurrency = maximum_concurrency,
         .interval = std::chrono::seconds(1),
+        .url = environment("DESMOND_STATUS_URL", ""),
     });
+    if (observe_only && (!status_reporter.enabled() || release == "unknown" ||
+                         model == "unknown")) {
+      throw std::runtime_error("observer requires deployment identity and "
+                               "status reporting configuration");
+    }
 
     std::unique_ptr<desmond::SharedTraceRing> trace_ring;
     // Containers normally run desmondd as PID 1. Include a per-start nonce so a stale file from
@@ -213,9 +240,11 @@ int main(int argc, char** argv) {
     const std::string default_trace_path = unique_trace_path();
     const std::string trace_path = environment("DESMOND_TRACE_PATH", default_trace_path.c_str());
     try {
-      trace_ring = desmond::SharedTraceRing::create(trace_path, 65'536);
-      if (setenv("DESMOND_TRACE_PATH", trace_path.c_str(), 1) != 0) {
-        throw std::runtime_error("failed to export DESMOND_TRACE_PATH");
+      if (!observe_only) {
+        trace_ring = desmond::SharedTraceRing::create(trace_path, 65'536);
+        if (setenv("DESMOND_TRACE_PATH", trace_path.c_str(), 1) != 0) {
+          throw std::runtime_error("failed to export DESMOND_TRACE_PATH");
+        }
       }
     } catch (const std::exception& error) {
       unsetenv("DESMOND_TRACE_PATH");
@@ -231,8 +260,9 @@ int main(int argc, char** argv) {
     if (!gpu_metrics.available()) {
       std::cerr << "desmond: NVML unavailable at startup: " << gpu_metrics.error() << '\n';
     }
-    desmond::RuntimeSupervisor supervisor(command, runtime_host, runtime_port,
-                                          runtime_health_path, std::chrono::seconds(30));
+    desmond::RuntimeSupervisor supervisor(
+        command, runtime_host, runtime_port, runtime_health_path,
+        std::chrono::seconds(30), observe_only);
     if (!supervisor.start()) {
       std::cerr << "desmond: failed to start runtime\n";
       return 70;
@@ -240,6 +270,8 @@ int main(int argc, char** argv) {
 
     desmond::HttpServer server(control_host, control_port, [&](const desmond::HttpRequest& request) {
       const auto status = supervisor.status();
+      const bool ready = status.runtime_ready && !status.draining &&
+                         (!observe_only || status_reporter.recently_uploaded());
       if (request.method != "GET") {
         return desmond::HttpResponse{405, "text/plain; charset=utf-8", "method not allowed\n"};
       }
@@ -247,9 +279,9 @@ int main(int argc, char** argv) {
         return desmond::HttpResponse{200, "text/plain; charset=utf-8", "ok\n"};
       }
       if (request.path == "/health/ready" || request.path == "/health") {
-        return desmond::HttpResponse{status.runtime_ready && !status.draining ? 200 : 503,
+        return desmond::HttpResponse{ready ? 200 : 503,
                                      "text/plain; charset=utf-8",
-                                     status.runtime_ready && !status.draining ? "ready\n" : "not ready\n"};
+                                     ready ? "ready\n" : "not ready\n"};
       }
       if (request.path == "/metrics") {
         std::ostringstream metrics;
@@ -322,13 +354,14 @@ int main(int argc, char** argv) {
       }
       consumed_trace_events.fetch_add(consumed, std::memory_order_relaxed);
     };
-    profiling.enqueue("runtime.started", "{\"pid\":" +
-                                            std::to_string(supervisor.status().pid) + "}");
+    profiling.enqueue(observe_only ? "observer.started" : "runtime.started",
+                      "{\"pid\":" + std::to_string(supervisor.status().pid) +
+                          "}");
     while (!stop_requested.load(std::memory_order_relaxed)) {
       drain_trace(4'096);
       supervisor.poll();
       const auto status = supervisor.status();
-      if (!status.child_running) {
+      if (!observe_only && !status.child_running) {
         std::cerr << "desmond: runtime exited with code " << status.last_exit_code << '\n';
         stop_requested.store(true, std::memory_order_relaxed);
         break;
@@ -345,10 +378,12 @@ int main(int argc, char** argv) {
       }
       if (std::chrono::steady_clock::now() >= next_status) {
         desmond::RuntimePressure pressure;
+        bool metrics_available = false;
         if (current.runtime_ready) {
           const auto runtime_metrics = desmond::http_get(
               runtime_host, runtime_port, "/metrics", std::chrono::milliseconds(750));
           if (runtime_metrics.transport_ok && runtime_metrics.status == 200) {
+            metrics_available = true;
             pressure = desmond::parse_runtime_pressure(
                 runtime_metrics.body, kv_usage_limit, waiting_request_limit,
                 maximum_concurrency);
@@ -356,13 +391,16 @@ int main(int argc, char** argv) {
         }
         desmond::DeploymentStatusSnapshot snapshot;
         snapshot.healthy = current.child_running && current.runtime_ready;
-        snapshot.accepting_requests = snapshot.healthy && !current.draining &&
-                                      !pressure.kv_pressure && !pressure.queue_pressure &&
-                                      !pressure.concurrency_pressure;
+        snapshot.accepting_requests =
+            snapshot.healthy && !current.draining &&
+            (!observe_only || metrics_available) && !pressure.kv_pressure &&
+            !pressure.queue_pressure && !pressure.concurrency_pressure;
         if (!snapshot.healthy) {
           snapshot.reason_code = "runtime_unavailable";
         } else if (current.draining) {
           snapshot.reason_code = "draining";
+        } else if (observe_only && !metrics_available) {
+          snapshot.reason_code = "metrics_unavailable";
         } else if (pressure.kv_pressure) {
           snapshot.reason_code = "kv_pressure";
         } else if (pressure.queue_pressure) {
@@ -404,8 +442,12 @@ int main(int argc, char** argv) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    profiling.enqueue("runtime.stopping", "{}");
+    profiling.enqueue(observe_only ? "observer.stopping" : "runtime.stopping",
+                      "{}");
     supervisor.shutdown();
+    status_reporter.update({.healthy = false,
+                            .accepting_requests = false,
+                            .reason_code = "draining"});
     drain_trace(65'536);
     profiling.stop();
     status_reporter.stop();

@@ -1,10 +1,15 @@
-# Candidate job. Validate GPU device support and worker cleanup before submission.
+# Serving job: runtime and reporting are mandatory tasks in the same allocation.
 variable "bundle_url" { type = string }
 variable "bundle_sha256" { type = string }
 variable "base_id" { type = string }
 variable "cpu_mhz" { type = number }
 variable "memory_mb" { type = number }
 variable "runtime_disk_mb" { type = number }
+
+variable "deployment_id" { type = string }
+variable "runtime_revision" { type = string }
+variable "status_url" { type = string }
+variable "maximum_concurrency" { type = number }
 
 job "deepseek-v4-1-flash" {
   type        = "service"
@@ -50,6 +55,10 @@ job "deepseek-v4-1-flash" {
     }
     network {
       mode = "host"
+      port "desmond" {
+        static       = 9090
+        host_network = "loopback"
+      }
       port "runtime" {
         static       = 8000
         host_network = "loopback"
@@ -74,6 +83,59 @@ job "deepseek-v4-1-flash" {
       resources {
         cpu    = 1000
         memory = 1024
+      }
+    }
+    # Starts with the allocation and is restarted by Nomad independently of vLLM.
+    # A separate Unix user keeps the reporting credential out of the runtime.
+    task "desmond" {
+      driver         = "raw_exec"
+      user           = "desmond"
+      kill_signal    = "SIGTERM"
+      kill_timeout   = "10s"
+      shutdown_delay = "5s"
+      lifecycle {
+        hook    = "prestart"
+        sidecar = true
+      }
+      config {
+        command = "/usr/bin/setpriv"
+        args = [
+          "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
+          "/bin/bash", "/opt/gradiated/bin/start-desmond",
+        ]
+      }
+      env {
+        DESMOND_DEPLOYMENT_ID       = var.deployment_id
+        DESMOND_RELEASE             = var.runtime_revision
+        DESMOND_MODEL               = "deepseek/deepseek-v4.1-flash"
+        DESMOND_MODEL_REVISION      = "dba1be0a40aa45a94ad051997016db3960a90277"
+        DESMOND_RUNTIME_HOST        = "127.0.0.1"
+        DESMOND_RUNTIME_PORT        = "8000"
+        DESMOND_CONTROL_HOST        = "127.0.0.1"
+        DESMOND_CONTROL_PORT        = "9090"
+        DESMOND_STATUS_URL          = var.status_url
+        DESMOND_CONTROL_TOKEN_FILE  = "/etc/gradiated/runtime-access.token"
+        DESMOND_STATUS_TOKEN_FILE   = "/etc/gradiated/deployment-status.token"
+        DESMOND_MAXIMUM_CONCURRENCY = var.maximum_concurrency
+      }
+      resources {
+        cpu    = 250
+        memory = 256
+      }
+      service {
+        name     = "deepseek-v4-1-flash-reporting"
+        provider = "nomad"
+        address  = "127.0.0.1"
+        port     = "desmond"
+        check {
+          name     = "runtime-and-reporting-ready"
+          type     = "http"
+          path     = "/health/ready"
+          interval = "10s"
+          timeout  = "2s"
+          # Do not restart a healthy runtime during an ingest outage.
+          # Nomad still restarts Desmond when its process exits.
+        }
       }
     }
     task "vllm" {

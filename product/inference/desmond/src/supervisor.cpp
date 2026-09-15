@@ -10,18 +10,21 @@
 
 namespace desmond {
 
-RuntimeSupervisor::RuntimeSupervisor(std::vector<std::string> command, std::string health_host,
-                                     const std::uint16_t health_port, std::string health_path,
-                                     const std::chrono::seconds shutdown_grace)
-    : command_(std::move(command)),
-      health_host_(std::move(health_host)),
-      health_port_(health_port),
-      health_path_(std::move(health_path)),
-      shutdown_grace_(shutdown_grace) {}
+RuntimeSupervisor::RuntimeSupervisor(std::vector<std::string> command,
+                                     std::string health_host,
+                                     const std::uint16_t health_port,
+                                     std::string health_path,
+                                     const std::chrono::seconds shutdown_grace,
+                                     const bool observe_only)
+    : observe_only_(observe_only), command_(std::move(command)),
+      health_host_(std::move(health_host)), health_port_(health_port),
+      health_path_(std::move(health_path)), shutdown_grace_(shutdown_grace) {}
 
 RuntimeSupervisor::~RuntimeSupervisor() { shutdown(); }
 
 bool RuntimeSupervisor::start() {
+  if (observe_only_)
+    return command_.empty();
   if (command_.empty()) {
     return false;
   }
@@ -53,6 +56,8 @@ bool RuntimeSupervisor::start() {
 }
 
 void RuntimeSupervisor::poll() {
+  if (observe_only_)
+    return;
   pid_t pid = -1;
   {
     std::lock_guard lock(mutex_);
@@ -87,16 +92,25 @@ void RuntimeSupervisor::check_health() {
     running = status_.child_running;
   }
   bool ready = false;
-  if (running) {
+  if (running || observe_only_) {
     const auto health = http_get(health_host_, health_port_, health_path_, std::chrono::seconds(2));
     ready = health.transport_ok && health.status >= 200 && health.status < 300;
   }
   std::lock_guard lock(mutex_);
   status_.runtime_ready = ready;
+  if (observe_only_)
+    status_.child_running = ready;
   status_.last_health_check = std::chrono::steady_clock::now();
 }
 
 void RuntimeSupervisor::shutdown() {
+  if (observe_only_) {
+    std::lock_guard lock(mutex_);
+    status_.draining = true;
+    status_.runtime_ready = false;
+    status_.child_running = false;
+    return;
+  }
   pid_t pid = -1;
   {
     std::lock_guard lock(mutex_);

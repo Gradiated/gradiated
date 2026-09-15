@@ -9,9 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 option(DESMOND_ENABLE_SANITIZERS "Build Desmond with address and undefined behavior sanitizers" OFF)
 option(GRADIATED_ENGINE_ENABLE_CUDA "Build the native Gemma 4 CUDA execution backend" OFF)
 
+find_package(CURL REQUIRED)
+
 add_library(desmond_core
   desmond/src/gpu_metrics.cpp
   desmond/src/http.cpp
+  desmond/src/https.cpp
   desmond/src/profiling.cpp
   desmond/src/status.cpp
   desmond/src/supervisor.cpp
@@ -19,7 +22,7 @@ add_library(desmond_core
 )
 target_include_directories(desmond_core PUBLIC desmond/include)
 target_compile_options(desmond_core PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
-target_link_libraries(desmond_core PUBLIC dl pthread)
+target_link_libraries(desmond_core PUBLIC dl pthread CURL::libcurl)
 
 if(DESMOND_ENABLE_SANITIZERS)
   target_compile_options(desmond_core PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
@@ -36,6 +39,10 @@ if(BUILD_TESTING)
   target_link_libraries(desmond_tests PRIVATE desmond_core)
   target_compile_options(desmond_tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
   add_test(NAME desmond_tests COMMAND desmond_tests)
+  find_package(Python3 COMPONENTS Interpreter REQUIRED)
+  add_test(NAME desmond_observer COMMAND ${Python3_EXECUTABLE}
+    ${CMAKE_CURRENT_SOURCE_DIR}/desmond/tests/observer.py $<TARGET_FILE:desmondd>)
+  set_tests_properties(desmond_observer PROPERTIES TIMEOUT 60)
 endif()
 
 install(TARGETS desmondd RUNTIME DESTINATION bin)

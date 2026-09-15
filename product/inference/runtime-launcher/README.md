@@ -70,6 +70,40 @@ Before submitting this job, qualify the following on the actual provider:
 6. Confirm checkpoint identity and a small inference request before exposing
    traffic. The Nomad health check alone does not establish model identity.
 
+Every serving allocation must include the `desmond` task from the job template.
+The base image installs Desmond, its HTTPS transport and a dedicated `desmond`
+Unix user. Desmond runs as a Nomad prestart sidecar in the same task group as the
+model; it observes the runtime without spawning, stopping or restarting it. Nomad
+and `runtime-launch` retain ownership of runtime lifecycle and descendant cleanup.
+The client retains `DAC_OVERRIDE` for garbage collection of downloader/runtime-owned
+directories; task launch drops all inherited and ambient capabilities.
+Reporter crashes are restarted independently; a reporting outage does not restart
+a healthy GPU runtime. Both tasks stop when the allocation is stopped.
+
+Before submission, enrollment must register the deployment ID and runtime revision
+in the control-plane catalog, configure a gateway-reachable secured inference
+endpoint, and install `/etc/gradiated/deployment-status.token` owned by `desmond`
+with mode `0600`. Also install `/etc/gradiated/runtime-access.token` for the
+authenticated control endpoint, with the same ownership/mode. The runtime user must not be able to read that file. Pass the
+matching `deployment_id`, `runtime_revision`, HTTPS `status_url` and measured
+`maximum_concurrency` as non-secret job inputs. Never put the token in HCL or
+Nomad variables visible in job inspection. The job intentionally has one replica;
+create distinct deployment registrations for additional replicas.
+
+The observer refuses to start without reporting identity and credentials. Its
+`/health/ready` requires runtime health and a successful status upload within ten
+seconds; the gateway independently rejects reports older than fifteen seconds.
+Missing runtime metrics make the deployment non-accepting, rather than guessing
+available capacity. `/metrics` combines GPU and runtime metrics with report upload
+counters. Stock vLLM does not emit the native engine's shared-memory trace events;
+observer mode does not create an unused trace ring. Profiling ingestion remains a
+separately configured endpoint; status reporting does not imply trace collection.
+
+Nomad's local service catalog is not the gateway deployment catalog. Register the
+secured inference endpoint and verify fresh reports in Valkey before directing
+traffic to any allocation. This is separate from connecting the GPU Nomad client
+to the EKS Nomad control plane.
+
 The job reserves four B300 devices on one client. No host-loss replacement is
 requested automatically. The localhost service is for health checks; it does
 not register an endpoint with the Gradiated gateway. Cold-start grace is 65

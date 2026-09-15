@@ -75,4 +75,10 @@ struct HttpGetResult {
                                       std::string_view body,
                                       std::chrono::milliseconds timeout);
 
+// Verifies TLS peer and hostname, refuses redirects, and bounds response/time.
+[[nodiscard]] HttpGetResult https_post(std::string_view url,
+                                       std::string_view authorization,
+                                       std::string_view body,
+                                       std::chrono::milliseconds timeout);
+
 }  // namespace desmond

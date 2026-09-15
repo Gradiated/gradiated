@@ -4,6 +4,7 @@
 #include "desmond/profiling.h"
 
 #include <algorithm>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
@@ -46,8 +47,15 @@ StatusReporter::StatusReporter(StatusReporterConfig config)
 StatusReporter::~StatusReporter() { stop(); }
 
 bool StatusReporter::enabled() const {
-  return !config_.host.empty() && !config_.token.empty() &&
-         !config_.deployment_id.empty() && !config_.runtime_revision.empty();
+  return (!config_.url.empty() || !config_.host.empty()) &&
+         !config_.token.empty() && !config_.deployment_id.empty() &&
+         !config_.runtime_revision.empty();
+}
+
+bool StatusReporter::recently_uploaded() const {
+  std::lock_guard lock(mutex_);
+  return uploaded_ > 0 && std::chrono::steady_clock::now() - last_uploaded_ <
+                              std::chrono::seconds(10);
 }
 
 void StatusReporter::update(DeploymentStatusSnapshot snapshot) {
@@ -71,6 +79,7 @@ void StatusReporter::stop() {
 }
 
 void StatusReporter::run() {
+  bool upload_failed = false;
   auto next_upload = std::chrono::steady_clock::now();
   while (true) {
     DeploymentStatusSnapshot snapshot;
@@ -85,10 +94,18 @@ void StatusReporter::run() {
       snapshot = latest_;
     }
     const bool sent = upload(snapshot);
+    if (!sent && !upload_failed) {
+      std::cerr << "desmond: status upload failed http_status="
+                << last_http_status_ << '\n';
+    } else if (sent && upload_failed) {
+      std::cerr << "desmond: status upload recovered\n";
+    }
+    upload_failed = !sent;
     {
       std::lock_guard lock(mutex_);
       if (sent) {
         ++uploaded_;
+        last_uploaded_ = std::chrono::steady_clock::now();
       } else {
         ++failures_;
       }
@@ -113,9 +130,13 @@ bool StatusReporter::upload(const DeploymentStatusSnapshot& snapshot) {
     body << json_string(snapshot.reason_code);
   }
   body << '}';
-  const auto response = http_post(config_.host, config_.port, config_.path,
-                                  "Bearer " + config_.token, body.str(),
-                                  std::chrono::milliseconds(750));
+  const auto response =
+      config_.url.empty() ? http_post(config_.host, config_.port, config_.path,
+                                      "Bearer " + config_.token, body.str(),
+                                      std::chrono::milliseconds(750))
+                          : https_post(config_.url, "Bearer " + config_.token,
+                                       body.str(), std::chrono::seconds(2));
+  last_http_status_ = response.transport_ok ? response.status : 0;
   return response.transport_ok && response.status == 204;
 }
 

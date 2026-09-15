@@ -3,7 +3,7 @@ ARG SGLANG_IMAGE=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4
 FROM ${SGLANG_IMAGE} AS native-build
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends build-essential cmake git \
+    && apt-get install -y --no-install-recommends build-essential cmake git libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -15,6 +15,8 @@ RUN cmake -S . -B /build \
     && cmake --build /build -j"$(nproc)" --target desmondd gradiated-engine-runtime
 
 FROM ${SGLANG_IMAGE}
+RUN apt-get update && apt-get install -y --no-install-recommends libcurl4 ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY --from=native-build /build/desmondd /usr/local/bin/desmondd
 COPY --from=native-build /build/gradiated-engine-runtime /usr/local/bin/gradiated-engine-runtime

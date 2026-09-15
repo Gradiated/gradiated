@@ -603,3 +603,14 @@ a 240-second timeout as root in the selected pod. The harness creates a
 temporary unprivileged account, binds loopback ports 24646–24648, and removes
 its files and processes on exit. Do not run it against a production Nomad
 agent. Existing workloads remain outside the test scheduler's inventory.
+
+Production capacity rollout completed: all six EKS nodes and all three Nomad
+servers are Ready. Each server requests 500m CPU and 1 GiB memory. Autopilot
+reports all three voters healthy with failure tolerance 1. Anonymous operator
+access remains denied. Argo's `nomad` application temporarily tracks
+`nomad-deepseek-job` for this approved resource rollout; return it to `main`
+after PR #55 is merged. No external RPC load balancer was created, and no GPU
+client is enrolled with the EKS quorum yet.
+
+Both restored GLM replicas also passed a small synthetic chat-completion
+request. The earlier base-image restore is verified.

@@ -27,7 +27,6 @@ export const Arrow = (): ReactElement => (
   </svg>
 );
 
-
 /**
  * The view switch's two marks: rows, and a field of cells.
  *

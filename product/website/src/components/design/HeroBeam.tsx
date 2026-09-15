@@ -52,7 +52,9 @@ const parse = (value: string): Stop | null => {
   const short = /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(hex);
   const full = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex);
   const read = (parts: string[]) =>
-    parts.map((part) => parseInt(part.length === 1 ? part + part : part, 16) / 255) as Stop;
+    parts.map(
+      (part) => parseInt(part.length === 1 ? part + part : part, 16) / 255,
+    ) as Stop;
   if (short) return read([short[1], short[2], short[3]]);
   if (full) return read([full[1], full[2], full[3]]);
   return null;

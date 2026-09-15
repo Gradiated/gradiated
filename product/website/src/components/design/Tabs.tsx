@@ -112,21 +112,21 @@ export const Tabs = ({
           quiet variant rather than hidden: there is no width problem to solve
           there, and nothing should be in the tree that no tier will show. */}
       {quiet ? null : (
-      <div className="gr-tabselect">
-        <select
-          aria-label={label}
-          className="gr-tabselect-input"
-          onChange={(event) => select(event.target.value)}
-          value={current}
-        >
-          {options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <span aria-hidden className="gr-tabselect-chevron" />
-      </div>
+        <div className="gr-tabselect">
+          <select
+            aria-label={label}
+            className="gr-tabselect-input"
+            onChange={(event) => select(event.target.value)}
+            value={current}
+          >
+            {options.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <span aria-hidden className="gr-tabselect-chevron" />
+        </div>
       )}
 
       <div

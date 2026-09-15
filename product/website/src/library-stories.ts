@@ -111,8 +111,7 @@ const METHOD_COVERS: Record<MethodSlug, StoryCover> = {
 const writing: Story[] = articles.map((article) => ({
   art: NOTE_ART[article.path],
   cover: NOTE_COVERS[article.path],
-  date:
-    article.status === "draft" ? "Draft" : displayDate(article.publishedAt),
+  date: article.status === "draft" ? "Draft" : displayDate(article.publishedAt),
   dateTime: article.status === "draft" ? undefined : article.publishedAt,
   href: article.path,
   kind: "note" as const,
@@ -132,7 +131,6 @@ const method: Story[] = methodPages.map((page) => ({
   lede: page.indexDescription,
   title: page.title,
 }));
-
 
 /** Newest note first, then the handbook in its authored order. */
 export const libraryStories: Story[] = [...writing, ...method];

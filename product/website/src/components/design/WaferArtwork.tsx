@@ -38,8 +38,12 @@ export const WaferArtwork = ({
       const width = Math.max(240, host.clientWidth);
       const height = Math.max(180, host.clientHeight);
       const columns = options.columns ?? 144;
-      const rows = options.rows ?? Math.max(12, Math.round(columns * (height / width)));
-      const step = Math.max(2, Math.floor(Math.min(width / columns, height / rows)));
+      const rows =
+        options.rows ?? Math.max(12, Math.round(columns * (height / width)));
+      const step = Math.max(
+        2,
+        Math.floor(Math.min(width / columns, height / rows)),
+      );
       const gap = options.gap ?? Math.max(1, Math.round(step * 0.22));
       const chipSize = options.chipSize ?? Math.max(1, step - gap);
 
@@ -79,7 +83,11 @@ export const WaferArtwork = ({
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
       // Keep one scatter path. A new hover reverses from the current frame.
-      const transition = (target: number, duration: number, done?: () => void) => {
+      const transition = (
+        target: number,
+        duration: number,
+        done?: () => void,
+      ) => {
         cancelAnimationFrame(animationFrame);
         const start = performance.now();
         const from = progress;
@@ -103,11 +111,14 @@ export const WaferArtwork = ({
     };
 
     void draw();
-    const trigger = host.closest<HTMLElement>(".gr-story-link, .gr-nav-note") ?? host;
+    const trigger =
+      host.closest<HTMLElement>(".gr-story-link, .gr-nav-note") ?? host;
     const onPlay = () => play();
     trigger.addEventListener("mouseenter", onPlay);
     trigger.addEventListener("focus", onPlay);
-    const observer = new ResizeObserver(() => { void draw(); });
+    const observer = new ResizeObserver(() => {
+      void draw();
+    });
     observer.observe(host);
 
     return () => {

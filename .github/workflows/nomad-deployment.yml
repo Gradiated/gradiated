@@ -1,0 +1,87 @@
+name: Nomad deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - product/services/nomad-relay/**
+      - infra/environments/prod/us-east-1/kubernetes/nomad/**
+      - tools/images/**
+      - .github/workflows/nomad-deployment.yml
+      - .github/workflows/build-images.yml
+  pull_request:
+    paths:
+      - product/services/nomad-relay/**
+      - infra/environments/prod/us-east-1/kubernetes/nomad/**
+      - tools/images/**
+      - .github/workflows/nomad-deployment.yml
+      - .github/workflows/build-images.yml
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  relay-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4.2.3
+      - run: |
+          rustup component add rustfmt clippy
+          cargo fmt --manifest-path product/services/nomad-relay/Cargo.toml --check
+          cargo clippy --manifest-path product/services/nomad-relay/Cargo.toml --all-targets -- -D warnings
+          cargo test --manifest-path product/services/nomad-relay/Cargo.toml --locked
+          node --test tools/images/*.test.mjs
+          kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
+          bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
+          docker build --platform linux/amd64 --target integration -t gradiated/nomad-relay:test product/services/nomad-relay
+          cargo test --manifest-path product/services/nomad-relay/Cargo.toml --test tunnel -- --ignored
+  relay-image:
+    needs: relay-checks
+    if: github.event_name == 'push'
+    uses: ./.github/workflows/build-images.yml
+    with:
+      source_sha: ${{ github.sha }}
+      images: '["nomad-relay"]'
+      artifact_prefix: relay
+  record-relay:
+    needs: relay-image
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: nomad-relay-release-record
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Record relay digest without overwriting newer source
+        env:
+          IMAGES: ${{ needs.relay-image.outputs.images }}
+          SOURCE_SHA: ${{ github.sha }}
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+        shell: bash
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          for attempt in 1 2 3; do
+            echo "Record attempt $attempt"
+            git fetch origin main
+            git reset --hard origin/main
+            if ! git diff --quiet "$SOURCE_SHA" HEAD -- product/services/nomad-relay tools/images .github/workflows/build-images.yml .github/workflows/nomad-deployment.yml; then
+              echo 'Newer relay inputs exist. Leave the release record to the newer run.'
+              exit 0
+            fi
+            node tools/images/record-relay.mjs
+            kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
+            git add infra/environments/prod/us-east-1/kubernetes/nomad/nomad-relay.yaml
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "deploy(nomad): record relay image [skip ci]"
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1

@@ -98,9 +98,7 @@ export const TierExplorer = (): ReactElement => {
             lets it ease between stops instead of snapping. */}
         <div
           className="gr-tier-slider"
-          style={
-            { "--pos": tierIndex / (TIERS.length - 1) } as CSSProperties
-          }
+          style={{ "--pos": tierIndex / (TIERS.length - 1) } as CSSProperties}
         >
           <input
             aria-label="Service tier"

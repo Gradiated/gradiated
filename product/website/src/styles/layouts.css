@@ -276,8 +276,6 @@
   margin-block: var(--u);
 }
 
-
-
 .gr-theme-gradient {
   border-radius: var(--radius);
   height: calc(2 * var(--u));
@@ -352,7 +350,8 @@
   border-radius: 50%;
   /* A hairline keeps white and near-white chips visible on a light ground —
      without it the first step of the light family disappears entirely. */
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 18%, transparent);
+  box-shadow: inset 0 0 0 1px
+    color-mix(in srgb, var(--color-text) 18%, transparent);
 }
 
 .gr-chip-label {
@@ -392,7 +391,6 @@
 .gr-book--collapsed .gr-book-controls {
   display: none;
 }
-
 
 /* Radius scale control. */
 .gr-radius-control {

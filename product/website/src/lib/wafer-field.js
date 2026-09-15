@@ -17,7 +17,8 @@ export const Easing = {
   easeOutQuad: (t) => 1 - (1 - t) * (1 - t),
   easeInOutQuad: (t) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2),
   easeOutCubic: (t) => 1 - Math.pow(1 - t, 3),
-  easeInOutCubic: (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2),
+  easeInOutCubic: (t) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2,
   easeOutQuart: (t) => 1 - Math.pow(1 - t, 4),
   easeOutQuint: (t) => 1 - Math.pow(1 - t, 5),
   easeOutExpo: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)),
@@ -28,7 +29,11 @@ export const Easing = {
   },
   easeOutElastic: (t) => {
     const c4 = (2 * Math.PI) / 3;
-    return t === 0 ? 0 : t === 1 ? 1 : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
+    return t === 0
+      ? 0
+      : t === 1
+        ? 1
+        : Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * c4) + 1;
   },
 };
 
@@ -68,7 +73,8 @@ const builtinPatterns = {
     const dist = Math.hypot(dx, dy) || 1;
     const nx = dx / dist;
     const ny = dy / dist;
-    const burst = Math.max(ctx.canvasWidth, ctx.canvasHeight) * (1.1 + Math.random() * 0.6);
+    const burst =
+      Math.max(ctx.canvasWidth, ctx.canvasHeight) * (1.1 + Math.random() * 0.6);
     return {
       x: cx + nx * burst,
       y: cy + ny * burst,
@@ -91,7 +97,8 @@ const builtinPatterns = {
     const cy = ctx.canvasHeight / 2;
     const t = ctx.index / Math.max(1, ctx.total - 1);
     const angle = t * Math.PI * 10; // ~5 full rotations across the set
-    const radius = Math.max(ctx.canvasWidth, ctx.canvasHeight) * (0.15 + t * 0.9);
+    const radius =
+      Math.max(ctx.canvasWidth, ctx.canvasHeight) * (0.15 + t * 0.9);
     return {
       x: cx + Math.cos(angle) * radius,
       y: cy + Math.sin(angle) * radius,
@@ -103,8 +110,9 @@ const builtinPatterns = {
     return {
       x: chip.targetX,
       y: ctx.canvasHeight + ctx.chipStep + Math.random() * ctx.chipStep * 4,
-      delay: 0.15 * Math.sin(chip.col / Math.max(1, ctx.cols - 1) * Math.PI) +
-             (chip.row / Math.max(1, ctx.rows - 1)) * 0.3,
+      delay:
+        0.15 * Math.sin((chip.col / Math.max(1, ctx.cols - 1)) * Math.PI) +
+        (chip.row / Math.max(1, ctx.rows - 1)) * 0.3,
     };
   },
 
@@ -114,7 +122,9 @@ const builtinPatterns = {
   // single mechanical swirl.
   "orbit-in"(chip, ctx) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = Math.max(ctx.canvasWidth, ctx.canvasHeight) * (0.35 + Math.random() * 0.55);
+    const radius =
+      Math.max(ctx.canvasWidth, ctx.canvasHeight) *
+      (0.35 + Math.random() * 0.55);
     return {
       x: chip.targetX + Math.cos(angle) * radius,
       y: chip.targetY + Math.sin(angle) * radius,
@@ -195,7 +205,8 @@ export class WaferField {
     this.shading = options.shading ?? "gradient"; // 'gradient' | 'flat' | 'off'
 
     this.pixelRatio =
-      options.pixelRatio ?? (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
+      options.pixelRatio ??
+      (typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1);
 
     this.autoShimmer = options.autoShimmer ?? true;
     this.shimmerOptions = {
@@ -238,7 +249,10 @@ export class WaferField {
     this.canvas.style.width = logicalWidth + "px";
     this.canvas.style.height = logicalHeight + "px";
     this.canvas.width = Math.max(1, Math.round(logicalWidth * this.pixelRatio));
-    this.canvas.height = Math.max(1, Math.round(logicalHeight * this.pixelRatio));
+    this.canvas.height = Math.max(
+      1,
+      Math.round(logicalHeight * this.pixelRatio),
+    );
   }
 
   /**
@@ -307,7 +321,13 @@ export class WaferField {
    *   and ascii-with-random-char for real per-chip variety.
    */
   randomizeShapes({ shapes, chars, mode = "shape" } = {}) {
-    const shapePool = shapes ?? ["square", "circle", "diamond", "triangle", "hexagon"];
+    const shapePool = shapes ?? [
+      "square",
+      "circle",
+      "diamond",
+      "triangle",
+      "hexagon",
+    ];
     const charPool = chars ?? this.asciiChars;
     for (const chip of this.chips) {
       if (!chip.active) continue;
@@ -429,7 +449,9 @@ export class WaferField {
     let cols = opts.cols ?? this.cols;
     let rows = opts.rows ?? this.rows;
     if (!cols) {
-      throw new Error("setShapeFromImage: no grid exists yet — pass {cols} (and optionally {rows}).");
+      throw new Error(
+        "setShapeFromImage: no grid exists yet — pass {cols} (and optionally {rows}).",
+      );
     }
     if (!rows) {
       rows = Math.max(1, Math.round(cols * (ih / iw)));
@@ -441,7 +463,10 @@ export class WaferField {
     const offCtx = off.getContext("2d");
     offCtx.imageSmoothingEnabled = true;
 
-    const scale = fit === "cover" ? Math.max(cols / iw, rows / ih) : Math.min(cols / iw, rows / ih);
+    const scale =
+      fit === "cover"
+        ? Math.max(cols / iw, rows / ih)
+        : Math.min(cols / iw, rows / ih);
     const w = iw * scale;
     const h = ih * scale;
     offCtx.drawImage(img, (cols - w) / 2, (rows - h) / 2, w, h);
@@ -454,7 +479,12 @@ export class WaferField {
       const colourRow = [];
       for (let c = 0; c < cols; c++) {
         const i = (r * cols + c) * 4;
-        const [red, green, blue, alpha] = [data[i], data[i + 1], data[i + 2], data[i + 3]];
+        const [red, green, blue, alpha] = [
+          data[i],
+          data[i + 1],
+          data[i + 2],
+          data[i + 3],
+        ];
         let value;
         if (mode === "alpha") {
           value = alpha;
@@ -478,7 +508,9 @@ export class WaferField {
           const hash = Math.sin((c + 1) * 127.1 + (r + 1) * 311.7) * 43758.5453;
           const dither = (hash - Math.floor(hash) - 0.5) / palette.length;
           normalized = Math.max(0, Math.min(1, normalized + dither));
-          colourRow.push(palette[Math.round(normalized * (palette.length - 1))]);
+          colourRow.push(
+            palette[Math.round(normalized * (palette.length - 1))],
+          );
         } else {
           colourRow.push(null);
         }
@@ -606,7 +638,12 @@ export class WaferField {
    * Animate active chips from their current (start) position into their
    * fixed grid slot. Inactive chips stay hidden.
    */
-  assemble({ duration = 900, stagger = 350, easing = "easeOutCubic", onComplete } = {}) {
+  assemble({
+    duration = 900,
+    stagger = 350,
+    easing = "easeOutCubic",
+    onComplete,
+  } = {}) {
     this.stopShimmer();
     return this._tween({
       duration,
@@ -616,7 +653,12 @@ export class WaferField {
         onComplete?.();
         if (this.autoShimmer) this.startShimmer();
       },
-      getFrom: (c) => ({ x: c.startX, y: c.startY, z: c.startZ ?? 0, alpha: c.alpha || 1 }),
+      getFrom: (c) => ({
+        x: c.startX,
+        y: c.startY,
+        z: c.startZ ?? 0,
+        alpha: c.alpha || 1,
+      }),
       getTo: () => ({ z: 0, alpha: 1 }),
       useTarget: true,
     });
@@ -626,7 +668,13 @@ export class WaferField {
    * Animate active chips from their grid slot back out to scatter positions
    * (computed fresh from the given pattern), then mark them inactive.
    */
-  disperse({ pattern = "random", duration = 700, stagger = 250, easing = "easeOutCubic", onComplete } = {}) {
+  disperse({
+    pattern = "random",
+    duration = 700,
+    stagger = 250,
+    easing = "easeOutCubic",
+    onComplete,
+  } = {}) {
     this.stopShimmer();
     const fn = typeof pattern === "function" ? pattern : this.patterns[pattern];
     const active = this.chips.filter((c) => c.active);
@@ -753,13 +801,17 @@ export class WaferField {
    */
   startShimmer(opts = {}) {
     this.stopShimmer();
-    const { speed, width, intensity, angle } = { ...this.shimmerOptions, ...opts };
+    const { speed, width, intensity, angle } = {
+      ...this.shimmerOptions,
+      ...opts,
+    };
     const angleRad = (angle * Math.PI) / 180;
     const dirX = Math.cos(angleRad);
     const dirY = Math.sin(angleRad);
     const logicalWidth = Math.max(1, this.cols * this.chipStep - this.gap);
     const logicalHeight = Math.max(1, this.rows * this.chipStep - this.gap);
-    const span = Math.abs(logicalWidth * dirX) + Math.abs(logicalHeight * dirY) || 1;
+    const span =
+      Math.abs(logicalWidth * dirX) + Math.abs(logicalHeight * dirY) || 1;
     const halfWidth = Math.max(0.001, width) / 2;
     const start = performance.now();
 
@@ -814,7 +866,10 @@ export class WaferField {
     for (const chip of active) {
       const elevation = chip.relief + chip.z * 0.6;
       const speed = Math.hypot(chip.x - chip.prevX, chip.y - chip.prevY);
-      const glow = this.motionGlow > 0 ? Math.min(1, speed / (this.chipSize * 0.6)) * this.motionGlow : 0;
+      const glow =
+        this.motionGlow > 0
+          ? Math.min(1, speed / (this.chipSize * 0.6)) * this.motionGlow
+          : 0;
       chip.prevX = chip.x;
       chip.prevY = chip.y;
 
@@ -826,7 +881,10 @@ export class WaferField {
       const dy = cy - size / 2;
       const brightness = Math.max(
         -0.6,
-        Math.min(0.85, elevation * this.lightIntensity + glow + (chip.shimmer || 0))
+        Math.min(
+          0.85,
+          elevation * this.lightIntensity + glow + (chip.shimmer || 0),
+        ),
       );
 
       ctx.globalAlpha = chip.alpha;
@@ -835,7 +893,9 @@ export class WaferField {
       const chipColor = chip.color || this.chipColor;
 
       if (shape === "ascii") {
-        const char = chip.char || this.asciiChars[(chip.col + chip.row) % this.asciiChars.length];
+        const char =
+          chip.char ||
+          this.asciiChars[(chip.col + chip.row) % this.asciiChars.length];
         ctx.fillStyle =
           this.shading === "off"
             ? chip.shimmer
@@ -852,8 +912,10 @@ export class WaferField {
       if (this.shading === "gradient") {
         const bevel = this.lightIntensity * 0.5;
         const grad = ctx.createLinearGradient(
-          dx - lightDx * size * 0.5, dy - lightDy * size * 0.5,
-          dx + lightDx * size * 0.5, dy + lightDy * size * 0.5
+          dx - lightDx * size * 0.5,
+          dy - lightDy * size * 0.5,
+          dx + lightDx * size * 0.5,
+          dy + lightDy * size * 0.5,
         );
         grad.addColorStop(0, shadeColor(chipColor, brightness + bevel));
         grad.addColorStop(1, shadeColor(chipColor, brightness - bevel));
@@ -861,7 +923,9 @@ export class WaferField {
       } else if (this.shading === "flat") {
         ctx.fillStyle = shadeColor(chipColor, brightness);
       } else {
-        ctx.fillStyle = chip.shimmer ? shadeColor(chipColor, chip.shimmer) : chipColor;
+        ctx.fillStyle = chip.shimmer
+          ? shadeColor(chipColor, chip.shimmer)
+          : chipColor;
       }
 
       ctx.beginPath();
@@ -917,7 +981,11 @@ function roundRect(ctx, x, y, w, h, r) {
 
 function hexToRgb(hex) {
   let h = String(hex).trim().replace("#", "");
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (h.length === 3)
+    h = h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
   const num = parseInt(h, 16);
   return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
@@ -974,18 +1042,26 @@ function recordCanvasToVideo(
     mimeTypeCandidates,
     fileExt,
     onRecordingStarted,
-  } = {}
+  } = {},
 ) {
   if (!canvas.captureStream) {
-    return Promise.reject(new Error("canvas.captureStream() isn't supported in this browser."));
+    return Promise.reject(
+      new Error("canvas.captureStream() isn't supported in this browser."),
+    );
   }
   if (!window.MediaRecorder) {
-    return Promise.reject(new Error("MediaRecorder isn't supported in this browser."));
+    return Promise.reject(
+      new Error("MediaRecorder isn't supported in this browser."),
+    );
   }
-  const mimeType = mimeTypeCandidates.find((t) => MediaRecorder.isTypeSupported(t));
+  const mimeType = mimeTypeCandidates.find((t) =>
+    MediaRecorder.isTypeSupported(t),
+  );
   if (!mimeType) {
     return Promise.reject(
-      new Error(`No supported codec found for .${fileExt} in this browser (tried: ${mimeTypeCandidates.join(", ")}).`)
+      new Error(
+        `No supported codec found for .${fileExt} in this browser (tried: ${mimeTypeCandidates.join(", ")}).`,
+      ),
     );
   }
 
@@ -995,7 +1071,8 @@ function recordCanvasToVideo(
   recorder.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
 
   return new Promise((resolve, reject) => {
-    recorder.onerror = (e) => reject(e.error || new Error("MediaRecorder error"));
+    recorder.onerror = (e) =>
+      reject(e.error || new Error("MediaRecorder error"));
     recorder.onstop = () => {
       if (chunks.length === 0) {
         reject(new Error("No frames were captured."));
@@ -1014,7 +1091,11 @@ export function recordCanvasToWebM(canvas, opts = {}) {
   return recordCanvasToVideo(canvas, {
     ...opts,
     fileExt: "webm",
-    mimeTypeCandidates: ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"],
+    mimeTypeCandidates: [
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm",
+    ],
   });
 }
 

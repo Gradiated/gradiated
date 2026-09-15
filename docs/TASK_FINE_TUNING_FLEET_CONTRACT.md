@@ -23,7 +23,7 @@ flowchart LR
 | Git | Serving jobs, pinned runtime images, GPU requirements, constraints, scaling limits and metric policies |
 | Nomad Autoscaler | Serving replica counts from Prometheus and the configured policies |
 | Nomad | Node resource discovery, job placement, allocation state, serving restart, reschedule and rollout |
-| PostgreSQL `instances` | Provider inventory, enrollment, expected hardware and operator-approved workload eligibility |
+| PostgreSQL `instances` | Provider inventory, hardware SKU, location, timestamps, and Nomad node link |
 | Worker | Submit and cancel one training job per run; interpret run events; publish validated adapters |
 | Host agent and runtime | Load adapters, manage local memory, report readiness, drain and clean up |
 | Gateway | Request admission and routing using Valkey runtime status |
@@ -40,11 +40,11 @@ Private adapters do not create Nomad jobs or Git entries. They load into compati
 
 Deployment tooling owns job configuration. Nomad Autoscaler owns the live replica count within policy limits. Redeploying a job must preserve that count unless an operator explicitly changes it; qualify the chosen deploy command/API path before rollout. The worker does not independently write serving counts.
 
-Operators maintain host inventory and eligibility. Nomad owns observed liveness, resource availability and allocations. These observations may be displayed or logged but are not a second scheduler state in PostgreSQL. The gateway does not query Nomad, Prometheus, PostgreSQL or the autoscaler on the request path.
+Operators maintain provider inventory in PostgreSQL and scheduling eligibility in Nomad. Nomad owns device discovery, observed liveness, resource availability and allocations. These observations may be displayed or logged but are not a second scheduler state in PostgreSQL. The gateway does not query Nomad, Prometheus, PostgreSQL or the autoscaler on the request path.
 
 ## FLEET-01 Jobs and placement
 
-Use one service job per base release, with host-owned on-demand adapter caches. Nomad selects compatible hosts using GPU resources, CPU/RAM requirements, node metadata and constraints. Whole-host GPU use and distinct serving hosts remain the initial placement policy. Future adapter sharding is outside launch scope.
+Use one service job per base release, with host-owned on-demand adapter caches. Nomad selects compatible hosts using GPU resources, CPU/RAM requirements, node metadata and constraints. Serving replicas reserve their required GPUs. Pack compatible replicas onto hosts to use the available GPU capacity. Distinct-host placement is a model-specific availability choice, not a universal constraint. Future adapter sharding is outside launch scope.
 
 A training run creates one deterministic batch job, `training-<run_id>`, from its frozen config. Reconcile uncertain submission by job ID and config hash. Disable training restart, reschedule and disconnected-client replacement. A host or trainer failure fails that run. Serving uses Nomad's qualified restart and reschedule policies. The worker never starts replacement serving jobs.
 
@@ -54,7 +54,8 @@ Nomad events wake reconciliation; current node, job and allocation queries estab
 
 ## FLEET-02 Capacity and priority
 
-Minimum replicas, GPU requirements, workload eligibility and job priorities are explicit configuration. Keep at least two distinct serving hosts per offered base under the current availability policy. A configured minimum is desired capacity, not proof that resources exist.
+Minimum replicas, GPU requirements, workload eligibility and job priorities are explicit configuration. The initial pilot uses one DeepSeek serving replica. Expansion may configure two
+serving replicas per offered base. They may share a host when the selected GPU packing requires it; report the resulting host-failure exposure. A configured minimum is desired capacity, not proof that resources exist.
 
 If compatible GPUs are unavailable, Nomad leaves allocations pending. Alert on pending allocations, insufficient ready replicas and capacity shortfalls; operators add capacity or change policies. Do not build a custom reserve activation system, training-floor ledger or fair-share allocator. Operators may use static workload constraints where serving capacity needs protection from training.
 
@@ -82,11 +83,11 @@ Model releases are qualified before rollout. Keep the old serving path until rep
 
 ## FLEET-05 Placement, identity and network
 
-Constrain jobs to a qualified host class and request its complete GPU inventory, with measured CPU, RAM and disk. This excludes another GPU workload on the same node. Apply `distinct_hosts` to the serving group so its replicas are separate. Prefer broader failure-domain spread where known; unknown metadata is not evidence of independence. No normal job constraint names a physical host. Project operator-approved host capabilities and workload eligibility into Nomad metadata. Placement constraints use these fields. Serving and training jobs use the declared workload eligibility constraints. Quarantine clears eligibility and closes the local guard. Missing metadata matches no workload. T0 verifies these constraints, stale eligibility and device inventory. [Constraint scope](https://developer.hashicorp.com/nomad/docs/job-specification/constraint), [device resources](https://developer.hashicorp.com/nomad/docs/job-specification/device).
+Constrain jobs to a qualified host class and reserve the GPUs required by each replica, with measured CPU, RAM and disk. GPU assignments on one host must be disjoint. Request the complete inventory only for workloads that need the whole host. Apply `distinct_hosts` when the model availability policy requires separate hosts; it is not required for the initial GLM pair. Prefer broader failure-domain spread where known; unknown metadata is not evidence of independence. No normal job constraint names a physical host. Configure operator-approved host capabilities and workload eligibility in Nomad metadata. Do not duplicate these fields in the instance record. Placement constraints use these fields. Serving and training jobs use the declared workload eligibility constraints. Quarantine clears eligibility and closes the local guard. Missing metadata matches no workload. T0 verifies these constraints, stale eligibility and device inventory. [Constraint scope](https://developer.hashicorp.com/nomad/docs/job-specification/constraint), [device resources](https://developer.hashicorp.com/nomad/docs/job-specification/device).
 
-Enrollment records provider machine id, boot id, GPU inventory, release capabilities, region, failure domain, agent identity and status. Operators approve hosts. A reused hostname inherits no permission. Training jobs exchange Nomad workload identity for a run token under RUN-04; that exchange binds the actual allocation selected by Nomad. No static key or provider credential is baked into an image.
+Inventory records provider, provider account ID, provider instance ID, SKU, region, fault domain, timestamps, and the unique Nomad node link. Credential issuance and revocation remain separate. Enrollment verifies the authenticated instance and its Nomad node identity. Nomad owns device inventory and scheduling eligibility. A reused hostname inherits no permission. Training jobs exchange Nomad workload identity for a run token under RUN-04; that exchange binds the actual allocation selected by Nomad. No static key or provider credential is baked into an image.
 
-**Serving discovery.** The runtime registers its actual Nomad job, allocation, node, endpoint, engine boot id, release and base/loader readiness through the authenticated control API. The API validates workload identity, enrollment and eligibility, the registered managed Nomad job and qualified release and the allocation's actual ownership before accepting a route. During a rollout, old and target qualified runtime revisions remain authorised while Nomad keeps those allocations active; a newer job revision alone must not remove the old routes. Subsequent status uses that accepted binding. Runtime status and adapter acknowledgements populate the existing deployment projection and Valkey status path. A replacement registers its new allocation; it does not need a preassigned host row. Late status from an old allocation or boot cannot overwrite or remove its replacement. The gateway reads Valkey, never Nomad or PostgreSQL. Readiness requires the exact base and functional loader; adapters are verified on demand under SERV-01. Reconciliation removes routes for allocations Nomad has stopped or replaced. Restarts do not inherit readiness.
+**Serving discovery.** The runtime registers its actual Nomad job, allocation, node, endpoint, engine boot id, release and base/loader readiness through the authenticated control API. The API validates workload identity, current credential authorization and node binding, the registered managed Nomad job and qualified release and the allocation's actual ownership before accepting a route. During a rollout, old and target qualified runtime revisions remain authorised while Nomad keeps those allocations active; a newer job revision alone must not remove the old routes. Subsequent status uses that accepted binding. Runtime status and adapter acknowledgements populate the existing deployment projection and Valkey status path. A replacement registers its new allocation; it does not need a preassigned host row. Late status from an old allocation or boot cannot overwrite or remove its replacement. The gateway reads Valkey, never Nomad or PostgreSQL. Readiness requires the exact base and functional loader; adapters are verified on demand under SERV-01. Reconciliation removes routes for allocations Nomad has stopped or replaced. Restarts do not inherit readiness.
 
 | Flow | Control |
 | --- | --- |
@@ -105,3 +106,14 @@ Host networking is not tenant authorisation. External HTTPS uses 443. Nomad API 
 ## Required evidence
 
 T0: pinned Nomad and Autoscaler versions, GPU discovery, constraints, managed-job deployment, count preservation, identity, networking and serving recovery. S4: resource fit. S5: one training execution, terminal host failure, drain and cleanup. S7: Prometheus scaling, min/max bounds, cooldown, metric loss, insufficient GPUs, scale-down and rollout interaction. No test may claim fairness or automatic capacity provisioning that this design does not provide.
+
+The first serving-only migration is specified in [Nomad serving pilot](NOMAD_SERVING_PILOT_PLAN.md). It starts with one DeepSeek TP4 replica on one four-B300 pod. The earlier GLM pair and second DeepSeek replica are deferred. Training and autoscaling are outside that pilot.
+
+## Pilot security scope
+
+The [pilot security contract](NOMAD_SERVING_PILOT_PLAN.md#security-contract) records
+the agreed network, identity, process-isolation, revocation, and release gates.
+GPU clients initiate restricted outbound tunnels to the three private EKS Nomad
+servers. Each instance has its own tunnel key and Nomad TLS certificate. Provider
+IP stability is not required. A host certificate does not grant gateway inference
+access or general EKS access. Arbitrary customer code is outside scope.

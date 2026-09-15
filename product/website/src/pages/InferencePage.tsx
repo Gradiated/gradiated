@@ -51,8 +51,8 @@ export const InferencePage = (): ReactElement => (
       <Module index={2}>
         <h2 className="gr-heading gr-pair-title">Available models</h2>
         <p className="gr-body gr-muted" style={{ maxWidth: "none" }}>
-          Move your application over to open-source models and spend ~10x less on
-          tokens for the equivalent quality.
+          Move your application over to open-source models and spend ~10x less
+          on tokens for the equivalent quality.
         </p>
         <DocsModelCatalog variant="site" />
         <p className="gr-body gr-muted">

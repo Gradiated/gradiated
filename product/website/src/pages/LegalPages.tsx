@@ -24,35 +24,33 @@ import "../styles/index.css";
  */
 
 export type LegalSlug =
-  | "acceptable-use"
-  | "dpa"
-  | "privacy"
-  | "subprocessors-security"
-  | "terms";
+  "acceptable-use" | "dpa" | "privacy" | "subprocessors-security" | "terms";
 
 /* The full name IS the title. These pages used to lead with an abbreviation
    and put the real name in an eyebrow above it — two pieces of chrome saying
    the same thing, the smaller one carrying the meaning. One line, set large. */
-export const LEGAL: Record<LegalSlug, { Content: ComponentType; title: string }> =
-  {
-    "acceptable-use": {
-      Content: AcceptableUseContent as ComponentType,
-      title: "Acceptable Use Policy",
-    },
-    dpa: {
-      Content: DpaContent as ComponentType,
-      title: "Data Processing Addendum",
-    },
-    privacy: {
-      Content: PrivacyContent as ComponentType,
-      title: "Privacy Policy",
-    },
-    "subprocessors-security": {
-      Content: SubprocessorsContent as ComponentType,
-      title: "Subprocessors and security",
-    },
-    terms: { Content: TermsContent as ComponentType, title: "Terms of Service" },
-  };
+export const LEGAL: Record<
+  LegalSlug,
+  { Content: ComponentType; title: string }
+> = {
+  "acceptable-use": {
+    Content: AcceptableUseContent as ComponentType,
+    title: "Acceptable Use Policy",
+  },
+  dpa: {
+    Content: DpaContent as ComponentType,
+    title: "Data Processing Addendum",
+  },
+  privacy: {
+    Content: PrivacyContent as ComponentType,
+    title: "Privacy Policy",
+  },
+  "subprocessors-security": {
+    Content: SubprocessorsContent as ComponentType,
+    title: "Subprocessors and security",
+  },
+  terms: { Content: TermsContent as ComponentType, title: "Terms of Service" },
+};
 
 /** `Your data` -> `your-data`, for the anchor. */
 const anchor = (text: string) =>
@@ -108,9 +106,7 @@ export const LegalPage = ({ slug }: { slug: LegalSlug }): ReactElement => {
                 <nav aria-label="Sections" className="gr-doc-nav">
                   {sections.map((section) => (
                     <a
-                      aria-current={
-                        section.id === active ? "page" : undefined
-                      }
+                      aria-current={section.id === active ? "page" : undefined}
                       className="gr-doc-nav-link"
                       href={`#${section.id}`}
                       key={section.id}

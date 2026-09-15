@@ -277,7 +277,8 @@ export const CostStory = (): ReactElement => {
         }
         /* The chip currently arriving, fading up as it lands. */
         if (part > 0 && whole < column.rows) {
-          ctx.globalAlpha = part * smoothstep(0, height * 0.32, (whole + 1) * PITCH);
+          ctx.globalAlpha =
+            part * smoothstep(0, height * 0.32, (whole + 1) * PITCH);
           ctx.fillRect(x, height - (whole + 1) * PITCH, CELL, CELL);
         }
       }

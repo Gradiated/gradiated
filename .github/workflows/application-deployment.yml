@@ -1,4 +1,4 @@
-name: Production deployment
+name: Application deployment
 
 on:
   workflow_run:
@@ -61,9 +61,9 @@ jobs:
           echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
 
   build-images:
-    name: Resolve staged production images
+    name: Build required application images
     needs: resolve
-    uses: ./.github/workflows/stage-production-images.yml
+    uses: ./.github/workflows/build-images.yml
     with:
       source_sha: ${{ needs.resolve.outputs.source_sha }}
     permissions:

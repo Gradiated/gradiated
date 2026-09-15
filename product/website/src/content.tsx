@@ -21,16 +21,18 @@ export const notes: Note[] = articles
 export const ThesisContent = (): ReactNode => (
   <>
     <p>
-      Intelligence is still extraordinarily early. Frontier labs claim
-      AGI, yet economic growth remains ordinary. The models exist; the products
-      and infrastructure that turn them into useful work mostly do not. The
-      engine may be running, but the car is not built.
+      Intelligence is still extraordinarily early. Frontier labs claim AGI, yet
+      economic growth remains ordinary. The models exist; the products and
+      infrastructure that turn them into useful work mostly do not. The engine
+      may be running, but the car is not built.
     </p>
     <p>
       Most AI software still waits for a person to ask a question. That will
-      change. Software is becoming increasingly proactive: it can research, plan, use tools,
-      and keep working in the cloud for hours. This is logical because proactive software is objectively better than reactive, once users can trust it. As more real work moves into
-      these systems, demand for inference will be close to insatiable.
+      change. Software is becoming increasingly proactive: it can research,
+      plan, use tools, and keep working in the cloud for hours. This is logical
+      because proactive software is objectively better than reactive, once users
+      can trust it. As more real work moves into these systems, demand for
+      inference will be close to insatiable.
     </p>
     <p>
       Electricity followed a similar path. Factories first replaced steam
@@ -72,26 +74,30 @@ export const ThesisContent = (): ReactNode => (
         OpenRouter&apos;s weekly volume grew fivefold in six months
       </SiteLink>
       , from 5 trillion to 25 trillion tokens. By September 2026, nine of its
-      ten most used models by 30-day token volume were open-weight, according
-      to its <SiteLink href="https://openrouter.ai/data/">usage data</SiteLink>.
+      ten most used models by 30-day token volume were open-weight, according to
+      its <SiteLink href="https://openrouter.ai/data/">usage data</SiteLink>.
     </p>
     <p>
       OpenRouter is one marketplace, not the whole market. But its direction is
       hard to ignore. Open weights can be post-trained, measured, and served in
-      different ways. No single model will be best for every task simply because using a general purpose, many parameter model is less efficient to serve, and post-trained models frequently have better task-specific performance.
+      different ways. No single model will be best for every task simply because
+      using a general purpose, many parameter model is less efficient to serve,
+      and post-trained models frequently have better task-specific performance.
     </p>
     <h2>Go all the way down</h2>
     <p>
       Assume inference becomes a commodity. Reliability and trust are table
-      stakes, in the same way a gas station would go out of business near instantly if its fuel wasn't good enough for cars to use. Beyond that, the provider that can deliver the most useful
-      intelligence with the least wasted computation wins.
+      stakes, in the same way a gas station would go out of business near
+      instantly if its fuel wasn't good enough for cars to use. Beyond that, the
+      provider that can deliver the most useful intelligence with the least
+      wasted computation wins.
     </p>
     <p>
-      At the extreme, that requires control of the whole stack. A model&apos;s architecture
-      determines its memory access. The runtime and kernels determine how much
-      of the hardware is used. Scheduling and infrastructure determine whether
-      expensive capacity sits idle. Eventually, the workload should determine
-      the silicon itself where possible.
+      At the extreme, that requires control of the whole stack. A model&apos;s
+      architecture determines its memory access. The runtime and kernels
+      determine how much of the hardware is used. Scheduling and infrastructure
+      determine whether expensive capacity sits idle. Eventually, the workload
+      should determine the silicon itself where possible.
     </p>
     <p>
       General-purpose accelerators must support almost anything. We do not need
@@ -117,25 +123,30 @@ export const ThesisContent = (): ReactNode => (
     </p>
     <p>
       We do not need to guess at a chip on day one. The API collects its
-      requirements first. Once the workload is clear and the volume is there,
-      we can build a straightforward chip around the parts that matter. Then we
+      requirements first. Once the workload is clear and the volume is there, we
+      can build a straightforward chip around the parts that matter. Then we
       repeat the same process at the data-centre level.
     </p>
     <p>The sequence is:</p>
     <ul>
       <li>
-        Use traces to build evals and RL environments, then post-train models for
-        the workload automatically. Provide trusted open-model inference with latency configurability as a by-product.
+        Use traces to build evals and RL environments, then post-train models
+        for the workload automatically. Provide trusted open-model inference
+        with latency configurability as a by-product.
       </li>
       <li>
         Optimize the model, runtime, kernels, scheduling, and infrastructure as
         one system.
       </li>
       <li>
-        Turn the requirements learned from real demand into silicon and get to the scale where we can buy specialist chips if needed for workloads our own silicon cannot service.
+        Turn the requirements learned from real demand into silicon and get to
+        the scale where we can buy specialist chips if needed for workloads our
+        own silicon cannot service.
       </li>
       <li>
-        Repeat, using the efficiency to drive more scale, to the point where we can get to data center scale and beyond. We will lose eventually if we do not go this deep.
+        Repeat, using the efficiency to drive more scale, to the point where we
+        can get to data center scale and beyond. We will lose eventually if we
+        do not go this deep.
       </li>
     </ul>
     <h2>Why now</h2>
@@ -149,7 +160,9 @@ export const ThesisContent = (): ReactNode => (
     <p>
       If Gradiated succeeds, every workload gets the intelligence it actually
       needs: accurate, fast, and cheap, in the combination that matters for that
-      work. Ultimately, driving down tokens per joule we believe is the greatest impact we can have on mankind as it is the best way to empower every person and every system to research, build, understand and do more.
+      work. Ultimately, driving down tokens per joule we believe is the greatest
+      impact we can have on mankind as it is the best way to empower every
+      person and every system to research, build, understand and do more.
     </p>
   </>
 );

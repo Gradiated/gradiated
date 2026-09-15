@@ -36,7 +36,6 @@
      separate itself from. */
 }
 
-
 /* Holds the inline Logo, which paints with currentColor — the colour set here
    is the ink the whole logo takes.
 
@@ -62,14 +61,9 @@
   flex: none;
 }
 
-
-
-
 .gr-nav-wordmark:hover {
   color: var(--color-interactive);
 }
-
-
 
 .gr-nav-links {
   display: flex;
@@ -220,7 +214,8 @@
   left: 0;
   width: 100%;
   /* Clears the bar, which now floats on top of this band. */
-  padding: calc(var(--u) + var(--nav-h) + var(--u)) var(--u) calc(1.5 * var(--u));
+  padding: calc(var(--u) + var(--nav-h) + var(--u)) var(--u)
+    calc(1.5 * var(--u));
   display: grid;
   grid-auto-flow: column;
   /* Centred in the band. The columns keep their fixed width, so a two-card
@@ -803,7 +798,11 @@
   aspect-ratio: 3 / 2;
   /* The image and its offset are set inline, per entry. This is the fallback
      for an entry with no cover yet. */
-  background-color: color-mix(in srgb, var(--color-text) 7%, var(--color-overlay));
+  background-color: color-mix(
+    in srgb,
+    var(--color-text) 7%,
+    var(--color-overlay)
+  );
   /* Blown up so the thumbnail is a WINDOW onto the ramp rather than the whole
      of it — at this size a complete two-stop gradient reads as a swatch. */
   background-size: 340% 100%;

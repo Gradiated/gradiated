@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
     paths:
-      - ".github/workflows/deployment.yml"
-      - ".github/workflows/stage-production-images.yml"
+      - ".github/workflows/application-deployment.yml"
+      - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
       - "product/packages/**"
       - "product/scripts/**"
@@ -25,10 +25,11 @@ on:
       - "product/tsconfig.base.json"
       - "product/turbo.json"
       - "mise.toml"
+      - "tools/images/**"
   pull_request:
     paths:
-      - ".github/workflows/deployment.yml"
-      - ".github/workflows/stage-production-images.yml"
+      - ".github/workflows/application-deployment.yml"
+      - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
       - "product/packages/**"
       - "product/scripts/**"
@@ -48,6 +49,7 @@ on:
       - "product/tsconfig.base.json"
       - "product/turbo.json"
       - "mise.toml"
+      - "tools/images/**"
   workflow_dispatch:
 
 permissions:
@@ -59,16 +61,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  stage-production-images:
-    name: Stage immutable production images
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    uses: ./.github/workflows/stage-production-images.yml
-    with:
-      source_sha: ${{ github.sha }}
-    permissions:
-      contents: read
-      id-token: write
-
   unit:
     name: Unit tests
     runs-on: ubuntu-latest

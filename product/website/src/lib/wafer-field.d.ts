@@ -41,7 +41,8 @@ export type WaferFieldOptions = {
   durationJitter?: number;
   gap?: number;
   depthAmount?: number;
-  chipShape?: "ascii" | "circle" | "diamond" | "hexagon" | "square" | "triangle";
+  chipShape?:
+    "ascii" | "circle" | "diamond" | "hexagon" | "square" | "triangle";
   pixelRatio?: number;
   shading?: "flat" | "gradient" | "off";
   shimmer?: ShimmerOptions;
@@ -123,7 +124,10 @@ export declare class WaferField {
    */
   registerScatterPattern(
     name: string,
-    fn: (chip: Chip, ctx: PatternContext) => { delay: number; x: number; y: number },
+    fn: (
+      chip: Chip,
+      ctx: PatternContext,
+    ) => { delay: number; x: number; y: number },
   ): void;
 
   /** Moves chips to their entrance positions and fixes their stagger order. */

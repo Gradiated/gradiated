@@ -126,7 +126,6 @@
   .gr-page-hero .gr-hero {
     max-width: 22ch;
   }
-
 }
 
 .gr-page-hero-media {
@@ -202,7 +201,9 @@
   /* Each layer sits directly ON the one below it, so its shadow falls DOWN
      onto the band of that layer the drop has just exposed — the seam is where
      depth is actually read, and it is now the top edge of every band. */
-  filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--color-dark-000) 34%, transparent));
+  filter: drop-shadow(
+    0 2px 3px color-mix(in srgb, var(--color-dark-000) 34%, transparent)
+  );
   transition: translate var(--chip-open) var(--ease-assemble);
   transition-delay: calc((var(--layer) - 1) * 90ms);
   --chip-open: 1100ms;
@@ -496,8 +497,7 @@
    `gap`, which also overwrote the hero's column gap and left 18px between the
    two columns instead of 72. */
 .gr-fold .gr-page-hero {
-  padding-block: calc(var(--u) + var(--nav-h) + 4 * var(--u))
-    calc(2 * var(--u));
+  padding-block: calc(var(--u) + var(--nav-h) + 4 * var(--u)) calc(2 * var(--u));
   row-gap: calc(0.75 * var(--u));
 }
 
@@ -734,7 +734,6 @@
   border-radius: 0;
   padding: 0;
 }
-
 
 /* A rule on its leading edge and nothing else — no fill. The two halves are
    one surface. */
@@ -3267,8 +3266,13 @@
 }
 
 @keyframes gr-cost-pulse {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Pushed to the far end of the meter row: it is a control, and the numbers
@@ -3419,7 +3423,6 @@
   letter-spacing: -0.035em;
   line-height: 1.2;
 }
-
 
 /* -- the field ------------------------------------------------------------- */
 
@@ -3594,7 +3597,6 @@
   text-transform: uppercase;
   color: var(--color-text-muted);
 }
-
 
 /* -- the centred fold -----------------------------------------------------
    One centred statement, its standfirst, and two ways in — on one screen.
@@ -3879,7 +3881,6 @@
 .gr-pair-title span {
   display: block;
 }
-
 
 /* -- mobile: the reel and models pair stacks -----------------------------
    The pair is 1fr 2fr with `align-items: stretch`, and the tiles carry NO
@@ -4256,7 +4257,11 @@
 }
 
 .gr-cost {
-  background: linear-gradient(to bottom, var(--color-code-surface) 65%, var(--color-substrate));
+  background: linear-gradient(
+    to bottom,
+    var(--color-code-surface) 65%,
+    var(--color-substrate)
+  );
   box-shadow: none;
 }
 

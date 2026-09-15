@@ -47,7 +47,14 @@ export { Tabs } from "./Tabs";
 export { WaveField } from "./WaveField";
 export { Part, Spec, Storybook } from "./Storybook";
 export type { Group, Section } from "./Storybook";
-export { Cards, Features, Fold, Marquee, PageHero, Showpiece } from "./Sections";
+export {
+  Cards,
+  Features,
+  Fold,
+  Marquee,
+  PageHero,
+  Showpiece,
+} from "./Sections";
 export type { CardItem } from "./Sections";
 export { StoryReel } from "./StoryReel";
 export type { Chapter } from "./StoryReel";

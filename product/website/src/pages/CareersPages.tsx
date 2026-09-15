@@ -173,103 +173,105 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
   }, [job.slug]);
 
   return (
-  <Substrate>
-    <Nav />
+    <Substrate>
+      <Nav />
 
-    <Band>
-      <Module className="gr-module--top" index={0}>
-        <a className="gr-read-back gr-label" href="/careers/">
-          <span aria-hidden className="gr-read-back-arrow">
-            <Arrow />
-          </span>
-          Careers
-        </a>
+      <Band>
+        <Module className="gr-module--top" index={0}>
+          <a className="gr-read-back gr-label" href="/careers/">
+            <span aria-hidden className="gr-read-back-arrow">
+              <Arrow />
+            </span>
+            Careers
+          </a>
 
-        <div className="gr-job-top">
-          <header className="gr-job-head">
-            {job.team ? <p className="gr-label gr-muted">{job.team}</p> : null}
-            <h1 className="gr-job-title">{job.title}</h1>
-            <p className="gr-job-summary gr-muted">{job.summary}</p>
-          </header>
+          <div className="gr-job-top">
+            <header className="gr-job-head">
+              {job.team ? (
+                <p className="gr-label gr-muted">{job.team}</p>
+              ) : null}
+              <h1 className="gr-job-title">{job.title}</h1>
+              <p className="gr-job-summary gr-muted">{job.summary}</p>
+            </header>
 
-          {/* The three things a reader checks before reading anything else,
+            {/* The three things a reader checks before reading anything else,
               beside the title rather than under it — they are the terms of the
               role, and the reader is weighing them WHILE they read it. */}
-          <dl className="gr-job-facts">
-            <div>
-              <dt className="gr-label gr-muted">Location</dt>
-              <dd>{job.location}</dd>
-            </div>
-            <div>
-              <dt className="gr-label gr-muted">Office</dt>
-              <dd>{job.officeDays ?? OFFICE_DAYS}</dd>
-            </div>
-            <div>
-              <dt className="gr-label gr-muted">Compensation</dt>
-              <dd>{job.compensation ?? COMPENSATION}</dd>
-            </div>
-          </dl>
-        </div>
+            <dl className="gr-job-facts">
+              <div>
+                <dt className="gr-label gr-muted">Location</dt>
+                <dd>{job.location}</dd>
+              </div>
+              <div>
+                <dt className="gr-label gr-muted">Office</dt>
+                <dd>{job.officeDays ?? OFFICE_DAYS}</dd>
+              </div>
+              <div>
+                <dt className="gr-label gr-muted">Compensation</dt>
+                <dd>{job.compensation ?? COMPENSATION}</dd>
+              </div>
+            </dl>
+          </div>
 
-        <div className="gr-job-body">
-          {/* Sticky, so the whole posting stays reachable however far down it
+          <div className="gr-job-body">
+            {/* Sticky, so the whole posting stays reachable however far down it
               the reader is — nine sections is too many to scroll back through
               to find the one about pay. */}
-          <nav aria-label="Sections" className="gr-job-nav">
-            {sections.map((section) => (
-              <a
-                aria-current={
-                  anchor(section.title) === active ? "true" : undefined
-                }
-                className="gr-job-nav-link"
-                href={`#${anchor(section.title)}`}
-                key={section.title}
-              >
-                {section.title}
-              </a>
-            ))}
-          </nav>
+            <nav aria-label="Sections" className="gr-job-nav">
+              {sections.map((section) => (
+                <a
+                  aria-current={
+                    anchor(section.title) === active ? "true" : undefined
+                  }
+                  className="gr-job-nav-link"
+                  href={`#${anchor(section.title)}`}
+                  key={section.title}
+                >
+                  {section.title}
+                </a>
+              ))}
+            </nav>
 
-          <div className="gr-job-sections">
-            {sections.map((section) => (
-              <Section key={section.title} {...section} />
-            ))}
+            <div className="gr-job-sections">
+              {sections.map((section) => (
+                <Section key={section.title} {...section} />
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* The section index's mobile form — hidden above the wide tier,
+          {/* The section index's mobile form — hidden above the wide tier,
             where the sticky column beside the text does this job. */}
-        {sections.length > 1 ? (
-          <SectionFab>
-            {sections.map((section) => (
-              <a
-                className="gr-fab-link"
-                href={`#${anchor(section.title)}`}
-                key={section.title}
-              >
-                {section.title}
-              </a>
-            ))}
-          </SectionFab>
-        ) : null}
+          {sections.length > 1 ? (
+            <SectionFab>
+              {sections.map((section) => (
+                <a
+                  className="gr-fab-link"
+                  href={`#${anchor(section.title)}`}
+                  key={section.title}
+                >
+                  {section.title}
+                </a>
+              ))}
+            </SectionFab>
+          ) : null}
 
-        <section className="gr-job-apply">
-          <p className="gr-label">Apply</p>
-          <h2 className="gr-job-apply-title">Let&apos;s talk.</h2>
-          <p className="gr-job-apply-body gr-muted">
-            If this sounds interesting to you, we&apos;d like to hear from you.
-            There&apos;s no need to prepare anything, we&apos;ll start with a
-            conversation.
-          </p>
-          <a
-            className="gr-button gr-button--main"
-            href={applyHrefFor(job.title)}
-          >
-            Start a conversation
-            <Arrow />
-          </a>
-        </section>
-      </Module>
+          <section className="gr-job-apply">
+            <p className="gr-label">Apply</p>
+            <h2 className="gr-job-apply-title">Let&apos;s talk.</h2>
+            <p className="gr-job-apply-body gr-muted">
+              If this sounds interesting to you, we&apos;d like to hear from
+              you. There&apos;s no need to prepare anything, we&apos;ll start
+              with a conversation.
+            </p>
+            <a
+              className="gr-button gr-button--main"
+              href={applyHrefFor(job.title)}
+            >
+              Start a conversation
+              <Arrow />
+            </a>
+          </section>
+        </Module>
       </Band>
 
       <Band>

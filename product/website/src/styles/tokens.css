@@ -35,7 +35,11 @@
   --u-max: 24px;
 
   --u: min(var(--u-max), calc((100vw - 48px) / var(--module-u)));
-  --u: round(down, min(var(--u-max), calc((100vw - 48px) / var(--module-u))), 1px);
+  --u: round(
+    down,
+    min(var(--u-max), calc((100vw - 48px) / var(--module-u))),
+    1px
+  );
 
   --module-w: calc(var(--module-u) * var(--u));
   --pad: calc(var(--pad-u) * var(--u));
@@ -478,7 +482,11 @@
      Terrace is Taupe's. */
   --gradient-from: var(--gradient-terrace-from);
   --gradient-to: var(--gradient-terrace-to);
-  --gradient-theme: linear-gradient(90deg, var(--gradient-from) 0%, var(--gradient-to) 100%);
+  --gradient-theme: linear-gradient(
+    90deg,
+    var(--gradient-from) 0%,
+    var(--gradient-to) 100%
+  );
 
   /* -- nav -----------------------------------------------------------------
      Two states, open and condensed. Everything that differs between them is a
@@ -488,7 +496,6 @@
   --nav-w: var(--module-w);
   --nav-h: calc(3 * var(--u));
   --nav-logo-h: calc(1.25 * var(--u));
-
 
   /* The condense is a shape change, not a UI response — slower than the
      response family so it reads as the bar settling rather than snapping. */
@@ -522,7 +529,11 @@
   --color-code-keyword: var(--color-kiln-700);
   --color-code-string: var(--color-grove-700);
   --color-code-number: var(--color-aegean-700);
-  --color-code-border: color-mix(in srgb, var(--color-dark-100) 22%, transparent);
+  --color-code-border: color-mix(
+    in srgb,
+    var(--color-dark-100) 22%,
+    transparent
+  );
 
   /* -- glass ---------------------------------------------------------------
      Frosted: a heavy blur with a boosted saturate so whatever passes behind

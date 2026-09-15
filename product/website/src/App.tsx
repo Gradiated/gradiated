@@ -12,10 +12,7 @@ import { LEGAL, LegalPage } from "./pages/LegalPages";
 import type { LegalSlug } from "./pages/LegalPages";
 import { LibraryIndexPage } from "./pages/LibraryIndexPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import {
-  ArticleReadingPage,
-  MethodReadingPage,
-} from "./pages/ReadingPages";
+import { ArticleReadingPage, MethodReadingPage } from "./pages/ReadingPages";
 import { StylePage } from "./pages/StylePage";
 import { TrainingPage } from "./pages/TrainingPage";
 import { ArtworkGeneratorPage } from "./pages/ArtworkGeneratorPage";
@@ -38,7 +35,10 @@ export const AppRoutes = (): ReactElement => (
         giving it the old nav and the old footer. */}
     <Route element={<HomePage />} path="/" />
     <Route element={<LibraryIndexPage />} path="/library/" />
-    <Route element={<LibraryIndexPage initialFilter="notes" />} path="/notes/" />
+    <Route
+      element={<LibraryIndexPage initialFilter="notes" />}
+      path="/notes/"
+    />
     <Route element={<CareersIndexPage />} path="/careers/" />
     {jobs.map((job) => (
       <Route

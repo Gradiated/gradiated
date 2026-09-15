@@ -48,37 +48,37 @@ export const ChipStack = (): ReactElement => {
   }, []);
 
   return (
-  <div className={`gr-chipstack${open ? " gr-chipstack--open" : ""}`}>
-    {/* The layers are placed against THIS box, not the outer one. The outer
+    <div className={`gr-chipstack${open ? " gr-chipstack--open" : ""}`}>
+      {/* The layers are placed against THIS box, not the outer one. The outer
         box reserves the room the opened stack hangs into, and anything
         positioned against it would have its centre moved by that reservation
         — the chip would drift as the drop distance changed. */}
-    <div className="gr-chipstack-frame">
-    {/* First in the DOM but lifted over the rest, because it is the only
+      <div className="gr-chipstack-frame">
+        {/* First in the DOM but lifted over the rest, because it is the only
         layer that does not move and everything else emerges from under it. */}
-    <img
-      alt="A Gradiated inference package, shown from above."
-      className="gr-chipstack-casing"
-      height={887}
-      src="/brand/hardware/chip/1-casing.webp"
-      width={900}
-    />
+        <img
+          alt="A Gradiated inference package, shown from above."
+          className="gr-chipstack-casing"
+          height={887}
+          src="/brand/hardware/chip/1-casing.webp"
+          width={900}
+        />
 
-    {LAYERS.map((layer, index) => (
-      <img
-        alt=""
-        className="gr-chipstack-layer"
-        height={686}
-        key={layer.file}
-        /* Decorative until the fan opens, and never the thing a reader is
+        {LAYERS.map((layer, index) => (
+          <img
+            alt=""
+            className="gr-chipstack-layer"
+            height={686}
+            key={layer.file}
+            /* Decorative until the fan opens, and never the thing a reader is
            waiting on — the casing above is what has to arrive with the fold. */
-        loading="lazy"
-        src={`/brand/hardware/chip/${layer.file}.webp`}
-        style={{ "--layer": LAYERS.length - index } as CSSProperties}
-        width={686}
-      />
-    ))}
+            loading="lazy"
+            src={`/brand/hardware/chip/${layer.file}.webp`}
+            style={{ "--layer": LAYERS.length - index } as CSSProperties}
+            width={686}
+          />
+        ))}
+      </div>
     </div>
-  </div>
   );
 };

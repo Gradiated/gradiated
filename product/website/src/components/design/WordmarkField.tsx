@@ -105,8 +105,6 @@ const SHIMMER = { angle: -45, speed: 0.16, width: 0.16 };
    them, so the sweep has the engine's full positive range to climb. */
 const SHIMMER_INTENSITY = 0.85;
 
-
-
 /** Width-to-height ratio of public/brand/wordmark.svg's viewBox. */
 const WORDMARK_ASPECT = 913.69 / 159.75;
 

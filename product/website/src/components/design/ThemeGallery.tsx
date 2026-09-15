@@ -109,7 +109,9 @@ export const ThemeGallery = (): ReactElement => {
               <div className="gr-theme-gradient">
                 <span
                   className={`gr-theme-gradient-name${
-                    GRADIENTS[theme].blend ? " gr-theme-gradient-name--blend" : ""
+                    GRADIENTS[theme].blend
+                      ? " gr-theme-gradient-name--blend"
+                      : ""
                   }`}
                 >
                   {GRADIENTS[theme].name}

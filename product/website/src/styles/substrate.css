@@ -126,10 +126,8 @@
   --chip-half: calc(var(--u) / 2 + var(--shift-x, 0px) * var(--t));
 
   clip-path: inset(
-    calc((50dvh - var(--u) / 2) * (1 - var(--v)))
-    calc(50% - var(--chip-half))
-    calc((50dvh - var(--u) / 2) * (1 - var(--v)))
-    calc(50% - var(--chip-half))
+    calc((50dvh - var(--u) / 2) * (1 - var(--v))) calc(50% - var(--chip-half))
+      calc((50dvh - var(--u) / 2) * (1 - var(--v))) calc(50% - var(--chip-half))
   );
 }
 
@@ -802,7 +800,6 @@
    glyphs instead of revealing them. */
 
 /* The field materialises before it opens, from the centre outward. */
-
 
 /* -- the hero's wave field -------------------------------------------------
    A field of wavy lines drawn in characters, behind the fold's type.

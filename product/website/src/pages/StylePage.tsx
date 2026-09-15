@@ -20,19 +20,28 @@ import {
 import type { Group } from "../components/design";
 import "../styles/index.css";
 
-
 /** The ramp: every colour literal in the system, by family. */
 const families = [
-  { name: "Neutral · Light", prefix: "light", steps: ["000", "100", "200", "300", "400"] },
-  { name: "Neutral · Dark", prefix: "dark", steps: ["000", "050", "100", "200", "300", "400"] },
+  {
+    name: "Neutral · Light",
+    prefix: "light",
+    steps: ["000", "100", "200", "300", "400"],
+  },
+  {
+    name: "Neutral · Dark",
+    prefix: "dark",
+    steps: ["000", "050", "100", "200", "300", "400"],
+  },
   { name: "Taupe", prefix: "taupe", steps: ["200", "300", "400", "500"] },
   { name: "Kiln", prefix: "kiln", steps: ["300", "500", "600", "700"] },
-  { name: "Grove", prefix: "grove", steps: ["400", "500", "600", "700", "800"] },
+  {
+    name: "Grove",
+    prefix: "grove",
+    steps: ["400", "500", "600", "700", "800"],
+  },
   { name: "Plum", prefix: "plum", steps: ["400", "500", "700", "800"] },
   { name: "Aegean", prefix: "aegean", steps: ["400", "500", "600", "700"] },
 ];
-
-
 
 /* One per theme, plus two the palette keeps without a taker. */
 const gradients = [
@@ -43,8 +52,6 @@ const gradients = [
   { token: "--gradient-dawn", name: "Dawn", themes: [] },
   { token: "--gradient-morning", name: "Morning", themes: [] },
 ];
-
-
 
 /* The rail, in two runs.
 
@@ -81,8 +88,6 @@ const GROUPS: Group[] = [
   },
 ];
 
-
-
 const typefaces = [
   {
     label: "Titles",
@@ -103,7 +108,6 @@ const typefaces = [
     body: "Tall x-height improves reading. Ligature support reduces eye strain, and consistent widths ensure precise alignment.",
   },
 ];
-
 
 export const StylePage = (): ReactElement => (
   <Substrate>
@@ -171,7 +175,13 @@ export const StylePage = (): ReactElement => (
           {typefaces.map((face) => (
             <div key={face.name}>
               <p className="gr-label">{face.label}</p>
-              <p style={{ fontFamily: face.family, fontSize: "21px", marginBlock: "calc(0.5 * var(--u))" }}>
+              <p
+                style={{
+                  fontFamily: face.family,
+                  fontSize: "21px",
+                  marginBlock: "calc(0.5 * var(--u))",
+                }}
+              >
                 {face.name}
               </p>
               <p className="gr-body gr-muted">{face.body}</p>
@@ -273,7 +283,10 @@ export const StylePage = (): ReactElement => (
                   <div
                     aria-hidden
                     key={i}
-                    style={{ background: "var(--color-rule)", height: "calc(2 * var(--u))" }}
+                    style={{
+                      background: "var(--color-rule)",
+                      height: "calc(2 * var(--u))",
+                    }}
                   />
                 ))}
               </Columns>
@@ -281,7 +294,6 @@ export const StylePage = (): ReactElement => (
           ))}
         </div>
       </Spec>
-
 
       <Spec
         id="buttons"
@@ -309,7 +321,9 @@ export const StylePage = (): ReactElement => (
         notes="A rule draws across as the chevron extends into an arrow. Pass an Arrow child only when the link is a single onward action."
         code={`<a className="gr-link" href="/docs">\n  Read the docs\n  <Arrow />\n</a>`}
       >
-        <div style={{ display: "grid", gap: "var(--u)", justifyItems: "start" }}>
+        <div
+          style={{ display: "grid", gap: "var(--u)", justifyItems: "start" }}
+        >
           <a className="gr-link" href="#links">
             this is a new link
             <Arrow />
@@ -336,10 +350,20 @@ export const StylePage = (): ReactElement => (
         notes="Invalid state uses a heavier border and a message, never colour alone. Every field has a visible focus ring."
         code={`<label className="gr-field">\n  <span className="gr-label">API key name</span>\n  <input className="gr-input" placeholder="production" />\n  <span className="gr-field-hint">Shown in your dashboard.</span>\n</label>`}
       >
-        <div style={{ display: "grid", gap: "var(--u)", maxWidth: "calc(18 * var(--u))" }}>
+        <div
+          style={{
+            display: "grid",
+            gap: "var(--u)",
+            maxWidth: "calc(18 * var(--u))",
+          }}
+        >
           <label className="gr-field">
             <span className="gr-label">API key name</span>
-            <input className="gr-input" defaultValue="" placeholder="production" />
+            <input
+              className="gr-input"
+              defaultValue=""
+              placeholder="production"
+            />
             <span className="gr-field-hint">Shown in your dashboard.</span>
           </label>
           <label className="gr-field">
@@ -411,9 +435,13 @@ export const StylePage = (): ReactElement => (
         <CodeBlock
           code={`// create a run\nconst run = await client.runs.create({\n  model: "glm-5.2",\n  budget: 2.50,\n});`}
         />
-        <p className="gr-body gr-muted" style={{ marginBlockStart: "var(--u)" }}>
-          Inline, it reads as <code className="gr-code-inline">POST /v1/runs</code>{" "}
-          within a sentence.
+        <p
+          className="gr-body gr-muted"
+          style={{ marginBlockStart: "var(--u)" }}
+        >
+          Inline, it reads as{" "}
+          <code className="gr-code-inline">POST /v1/runs</code> within a
+          sentence.
         </p>
       </Spec>
 
@@ -440,7 +468,6 @@ export const StylePage = (): ReactElement => (
           Live at the top of this page — hover Product or Library.
         </p>
       </Spec>
-
     </Storybook>
 
     <Band>

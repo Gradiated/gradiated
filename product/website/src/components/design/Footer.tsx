@@ -42,7 +42,11 @@ const COLUMNS: FooterColumn[] = [
       /* Status is a service Gradiated runs, not a page this site renders — a
          reader looking for it is a developer checking whether the API is up,
          so it belongs here rather than in Legal. */
-      { external: true, href: "https://status.gradiated.com/", label: "Status" },
+      {
+        external: true,
+        href: "https://status.gradiated.com/",
+        label: "Status",
+      },
     ],
   },
   {

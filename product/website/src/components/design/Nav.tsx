@@ -183,7 +183,9 @@ const WritingList = (): ReactElement => (
                   : note.cover
                     ? undefined
                     : `var(${note.gradient})`,
-                backgroundPosition: note.art ? "50% 50%" : `${note.coverAt} 50%`,
+                backgroundPosition: note.art
+                  ? "50% 50%"
+                  : `${note.coverAt} 50%`,
               }}
             >
               {!note.art && note.cover ? (
@@ -244,35 +246,35 @@ const Card = ({
   }, [showing]);
 
   return (
-  <a
-    className="gr-nav-card"
-    href={card.href}
-    onPointerEnter={(event) => onEnter?.(event.currentTarget)}
-  >
-    <span
-      className={`gr-nav-card-media${card.video ? " gr-nav-card-media--film" : ""}`}
+    <a
+      className="gr-nav-card"
+      href={card.href}
+      onPointerEnter={(event) => onEnter?.(event.currentTarget)}
     >
-      {card.video ? (
-        <video
-          muted
-          playsInline
-          poster={`/brand/nav/${card.video}-poster.jpg`}
-          preload="metadata"
-          ref={videoRef}
-        >
-          <source src={`/brand/nav/${card.video}.webm`} type="video/webm" />
-          <source src={`/brand/nav/${card.video}.mp4`} type="video/mp4" />
-        </video>
-      ) : card.image ? (
-        <img alt="" src={card.image} />
-      ) : null}
-    </span>
-    <span className="gr-nav-card-title">
-      {card.label}
-      <Arrow />
-    </span>
-    <span className="gr-nav-card-body">{card.body}</span>
-  </a>
+      <span
+        className={`gr-nav-card-media${card.video ? " gr-nav-card-media--film" : ""}`}
+      >
+        {card.video ? (
+          <video
+            muted
+            playsInline
+            poster={`/brand/nav/${card.video}-poster.jpg`}
+            preload="metadata"
+            ref={videoRef}
+          >
+            <source src={`/brand/nav/${card.video}.webm`} type="video/webm" />
+            <source src={`/brand/nav/${card.video}.mp4`} type="video/mp4" />
+          </video>
+        ) : card.image ? (
+          <img alt="" src={card.image} />
+        ) : null}
+      </span>
+      <span className="gr-nav-card-title">
+        {card.label}
+        <Arrow />
+      </span>
+      <span className="gr-nav-card-body">{card.body}</span>
+    </a>
   );
 };
 
@@ -468,7 +470,6 @@ export const Nav = (): ReactElement => {
             <Arrow />
           </WaitlistButton>
         </div>
-
       </nav>
 
       {/* A SIBLING of the bar, not a child.
@@ -586,7 +587,7 @@ export const Nav = (): ReactElement => {
             role="dialog"
           >
             <div className="gr-nav-sheet-inner">
-            {NAV_ITEMS.filter((item) => item.panel).map((item) => (
+              {NAV_ITEMS.filter((item) => item.panel).map((item) => (
                 <section className="gr-nav-sheet-group" key={item.label}>
                   <h2 className="gr-nav-sheet-title">{item.label}</h2>
                   <div className="gr-nav-sheet-cards">
@@ -600,19 +601,19 @@ export const Nav = (): ReactElement => {
                 </section>
               ))}
 
-            {/* The panel-less items, side by side: they are single
+              {/* The panel-less items, side by side: they are single
                 destinations, so they get a row rather than a gallery. */}
-            <div className="gr-nav-sheet-plain">
-              {NAV_ITEMS.filter((item) => !item.panel).map((item) => (
-                <a
-                  className="gr-nav-sheet-plain-link"
-                  href={item.href}
-                  key={item.label}
-                >
-                  {item.label}
-                </a>
-              ))}
-            </div>
+              <div className="gr-nav-sheet-plain">
+                {NAV_ITEMS.filter((item) => !item.panel).map((item) => (
+                  <a
+                    className="gr-nav-sheet-plain-link"
+                    href={item.href}
+                    key={item.label}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
 
               <div className="gr-nav-sheet-actions">
                 <a

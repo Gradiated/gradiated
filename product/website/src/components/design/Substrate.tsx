@@ -83,7 +83,10 @@ const OpeningLattice = ({
   }
 
   return (
-    <div aria-hidden className="gr-lattice gr-lattice--open gr-lattice--entering">
+    <div
+      aria-hidden
+      className="gr-lattice gr-lattice--open gr-lattice--entering"
+    >
       {lines}
     </div>
   );

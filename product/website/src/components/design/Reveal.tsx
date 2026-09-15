@@ -93,7 +93,9 @@ export const Reveal = ({
           <span
             className="gr-split-part"
             style={
-              { "--i": from + (lineOf ? lineOf[index] : index) } as CSSProperties
+              {
+                "--i": from + (lineOf ? lineOf[index] : index),
+              } as CSSProperties
             }
           >
             {word}

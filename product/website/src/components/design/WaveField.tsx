@@ -113,7 +113,12 @@ export const WaveField = (): ReactElement => {
        `u` is position across the width, 0 to 1. The amplitude ramp is the
        artwork's defining feature: at u=0 every line is flat and they sit
        evenly, and by u=1 they are at full swing. */
-    const offsetAt = (line: number, u: number, t: number, amplitude: number) => {
+    const offsetAt = (
+      line: number,
+      u: number,
+      t: number,
+      amplitude: number,
+    ) => {
       let sum = 0;
       for (const [fx, ft, weight] of HARMONICS) {
         // The line index enters as a phase shift, so neighbours are offset
@@ -151,7 +156,6 @@ export const WaveField = (): ReactElement => {
           const u = col / (cols - 1);
           const offset = offsetAt(line, u, t, amplitude);
           const row = Math.round(base + offset);
-
 
           /* Fill the whole span this column covers, not just its endpoint.
              Where a line is steep it crosses several rows between one column

@@ -1,10 +1,6 @@
 import { Children, isValidElement, useId, useState } from "react";
 import { Link, Navigate, useLocation } from "react-router-dom";
-import type {
-  ComponentPropsWithoutRef,
-  ReactElement,
-  ReactNode,
-} from "react";
+import type { ComponentPropsWithoutRef, ReactElement, ReactNode } from "react";
 import {
   Band,
   Footer,
@@ -128,7 +124,11 @@ export const DocsCodeTabs = ({
   return (
     <div className="gr-doc-tabs">
       <div className="gr-doc-tabs-head">
-        <div aria-label="Code examples" className="gr-doc-tablist" role="tablist">
+        <div
+          aria-label="Code examples"
+          className="gr-doc-tablist"
+          role="tablist"
+        >
           {items.map((tab, index) => (
             <button
               aria-controls={`${id}-panel-${index}`}

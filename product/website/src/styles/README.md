@@ -48,12 +48,14 @@ import "../styles/index.css";
 
 <Substrate>
   <Band>
-    <Module bleed height="viewport" index={0}>…hero…</Module>
+    <Module bleed height="viewport" index={0}>
+      …hero…
+    </Module>
     <Module index={1} title="Principles">
       <Columns count={2}>…</Columns>
     </Module>
   </Band>
-</Substrate>
+</Substrate>;
 ```
 
 - `Substrate` — the wafer. One per page, owns the lattices and the entrance.
@@ -98,7 +100,7 @@ where load order silently decided which declaration won.
 1. **`tokens.css` holds every raw value, and nothing else.** No selectors
    below `.gr-root`; no literal px/hex/ms in any other style file or inline in
    JSX. To change how the system looks or moves, edit tokens. Tokens marked
-   *reserved* (ambient/assembly motion, `--color-emphasis`) are the agreed
+   _reserved_ (ambient/assembly motion, `--color-emphasis`) are the agreed
    vocabulary for designed-but-unbuilt work: do not delete them, and do not
    invent parallels when building those features.
 2. **Dependencies point one direction.** tokens → base → substrate →

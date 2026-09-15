@@ -92,7 +92,9 @@ export const ArticleReadingPage = ({
             tags={["Notes"]}
             title={article.title}
           >
-            <Content components={{ code: DocsInlineCode, pre: DocsCodeBlock }} />
+            <Content
+              components={{ code: DocsInlineCode, pre: DocsCodeBlock }}
+            />
           </Reading>
         </Module>
       </Band>

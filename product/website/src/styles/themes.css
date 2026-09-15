@@ -110,10 +110,7 @@
   --gradient-to: var(--gradient-terrace-to);
 }
 
-
-
 /* -- Grove: the sacred olive, as a ground rather than an accent. ---------- */
-
 
 /* Ink 11.74, muted 9.95. */
 [data-theme="grove"] {
@@ -153,7 +150,11 @@
   --color-code-keyword: var(--color-ink-accent);
   --color-code-string: var(--color-ink-string);
   --color-code-number: var(--color-ink-string);
-  --color-code-border: color-mix(in srgb, var(--color-ink-100) 13%, transparent);
+  --color-code-border: color-mix(
+    in srgb,
+    var(--color-ink-100) 13%,
+    transparent
+  );
   /* Overrides the line above: see --color-ink-muted-lift. */
   --color-code-muted: var(--color-ink-muted-lift);
 
@@ -222,7 +223,11 @@
   --color-code-keyword: var(--color-ink-accent);
   --color-code-string: var(--color-ink-string);
   --color-code-number: var(--color-ink-string);
-  --color-code-border: color-mix(in srgb, var(--color-ink-100) 13%, transparent);
+  --color-code-border: color-mix(
+    in srgb,
+    var(--color-ink-100) 13%,
+    transparent
+  );
 
   --gradient-from: var(--gradient-shallows-from);
   --gradient-to: var(--gradient-shallows-to);

@@ -47,7 +47,6 @@
    --------------------------------------------------------------------------- */
 
 @theme static {
-
   /* Neutrals, light. Ordered from white down, so the number is the step away
      from white rather than a lightness coordinate — these are the achromatic
      pair, not a tinted family. */
@@ -144,7 +143,6 @@
    with the colours — a gradient re-angled at the point of use is a different
    image. */
 :root {
-
   /* One per theme. Declared as complete backgrounds so the angle travels with
      the colours — re-angled at the point of use it is a different image.
 
@@ -168,12 +166,36 @@
   --gradient-morning-from: #ffffff;
   --gradient-morning-to: #808f6d;
 
-  --gradient-tide: linear-gradient(90deg, var(--gradient-tide-from) 0%, var(--gradient-tide-to) 100%);
-  --gradient-shallows: linear-gradient(90deg, var(--gradient-shallows-from) 0%, var(--gradient-shallows-to) 100%);
-  --gradient-ember: linear-gradient(90deg, var(--gradient-ember-from) 0%, var(--gradient-ember-to) 100%);
-  --gradient-dawn: linear-gradient(90deg, var(--gradient-dawn-from) 0%, var(--gradient-dawn-to) 100%);
-  --gradient-terrace: linear-gradient(90deg, var(--gradient-terrace-from) 0%, var(--gradient-terrace-to) 100%);
-  --gradient-morning: linear-gradient(90deg, var(--gradient-morning-from) 0%, var(--gradient-morning-to) 100%);
+  --gradient-tide: linear-gradient(
+    90deg,
+    var(--gradient-tide-from) 0%,
+    var(--gradient-tide-to) 100%
+  );
+  --gradient-shallows: linear-gradient(
+    90deg,
+    var(--gradient-shallows-from) 0%,
+    var(--gradient-shallows-to) 100%
+  );
+  --gradient-ember: linear-gradient(
+    90deg,
+    var(--gradient-ember-from) 0%,
+    var(--gradient-ember-to) 100%
+  );
+  --gradient-dawn: linear-gradient(
+    90deg,
+    var(--gradient-dawn-from) 0%,
+    var(--gradient-dawn-to) 100%
+  );
+  --gradient-terrace: linear-gradient(
+    90deg,
+    var(--gradient-terrace-from) 0%,
+    var(--gradient-terrace-to) 100%
+  );
+  --gradient-morning: linear-gradient(
+    90deg,
+    var(--gradient-morning-from) 0%,
+    var(--gradient-morning-to) 100%
+  );
 }
 
 /* ---------------------------------------------------------------------------

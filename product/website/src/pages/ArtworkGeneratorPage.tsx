@@ -89,7 +89,9 @@ export const ArtworkGeneratorPage = (): ReactElement => {
   const [darkPixels, setDarkPixels] = useState(artworkPresets.carat.invert);
   const [palette, setPalette] = useState([...artworkPresets.carat.palette]);
   const [background, setBackground] = useState(artworkPresets.carat.background);
-  const [backgroundTo, setBackgroundTo] = useState(artworkPresets.carat.backgroundTo);
+  const [backgroundTo, setBackgroundTo] = useState(
+    artworkPresets.carat.backgroundTo,
+  );
   const [scatter, setScatter] = useState<ScatterPattern>("orbit-in");
   const [duration, setDuration] = useState(900);
   const [stagger, setStagger] = useState(350);
@@ -123,8 +125,17 @@ export const ArtworkGeneratorPage = (): ReactElement => {
       paint();
       const context = canvas.getContext("2d");
       const snapshotContext = snapshot.getContext("2d");
-      if (!context || !snapshotContext || canvas.width === 0 || canvas.height === 0) return field;
-      if (snapshot.width !== canvas.width || snapshot.height !== canvas.height) {
+      if (
+        !context ||
+        !snapshotContext ||
+        canvas.width === 0 ||
+        canvas.height === 0
+      )
+        return field;
+      if (
+        snapshot.width !== canvas.width ||
+        snapshot.height !== canvas.height
+      ) {
         snapshot.width = canvas.width;
         snapshot.height = canvas.height;
       }
@@ -132,7 +143,12 @@ export const ArtworkGeneratorPage = (): ReactElement => {
       snapshotContext.drawImage(canvas, 0, 0);
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, canvas.width, canvas.height);
-      const gradient = context.createLinearGradient(0, canvas.height, canvas.width, 0);
+      const gradient = context.createLinearGradient(
+        0,
+        canvas.height,
+        canvas.width,
+        0,
+      );
       gradient.addColorStop(0, background);
       gradient.addColorStop(1, backgroundTo);
       context.fillStyle = gradient;
@@ -165,7 +181,22 @@ export const ArtworkGeneratorPage = (): ReactElement => {
       field.stop();
       if (fieldRef.current === field) fieldRef.current = null;
     };
-  }, [background, backgroundTo, chipShape, chipSize, columns, cornerRadius, curve, darkPixels, gap, image, palette, scatter, threshold, timingVariance]);
+  }, [
+    background,
+    backgroundTo,
+    chipShape,
+    chipSize,
+    columns,
+    cornerRadius,
+    curve,
+    darkPixels,
+    gap,
+    image,
+    palette,
+    scatter,
+    threshold,
+    timingVariance,
+  ]);
 
   const readImage = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -179,7 +210,9 @@ export const ArtworkGeneratorPage = (): ReactElement => {
   };
 
   const assemble = () => {
-    fieldRef.current?.scatterIn(scatter).assemble({ duration, easing, stagger });
+    fieldRef.current
+      ?.scatterIn(scatter)
+      .assemble({ duration, easing, stagger });
   };
 
   const disperse = () => {
@@ -204,7 +237,8 @@ export const ArtworkGeneratorPage = (): ReactElement => {
     if (!canvas || !field) return;
     setStatus(`Recording ${format.toUpperCase()}…`);
     try {
-      const recorder = format === "mp4" ? recordCanvasToMP4 : recordCanvasToWebM;
+      const recorder =
+        format === "mp4" ? recordCanvasToMP4 : recordCanvasToWebM;
       const blob = await recorder(canvas, {
         durationMs: duration + stagger + 250,
         fps: 60,
@@ -235,7 +269,11 @@ export const ArtworkGeneratorPage = (): ReactElement => {
 
           <div className="gr-artwork-app">
             <div className="gr-artwork-stage" style={{ background }}>
-              <canvas aria-label="Generated wafer artwork" ref={canvasRef} role="img" />
+              <canvas
+                aria-label="Generated wafer artwork"
+                ref={canvasRef}
+                role="img"
+              />
             </div>
 
             <aside className="gr-artwork-panel">
@@ -258,8 +296,14 @@ export const ArtworkGeneratorPage = (): ReactElement => {
                       setBackgroundTo(preset.backgroundTo);
                     }}
                   >
-                    <option disabled value="">Choose a cover</option>
-                    {LIBRARY_PRESETS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    <option disabled value="">
+                      Choose a cover
+                    </option>
+                    {LIBRARY_PRESETS.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="gr-field">
@@ -267,11 +311,19 @@ export const ArtworkGeneratorPage = (): ReactElement => {
                   <select
                     className="gr-select"
                     onChange={(event) => setImage(event.currentTarget.value)}
-                    value={image.startsWith("/assets/artwork-sources/") ? image : "custom"}
+                    value={
+                      image.startsWith("/assets/artwork-sources/")
+                        ? image
+                        : "custom"
+                    }
                   >
-                    {!image.startsWith("/assets/artwork-sources/") ? <option value="custom">Uploaded image</option> : null}
+                    {!image.startsWith("/assets/artwork-sources/") ? (
+                      <option value="custom">Uploaded image</option>
+                    ) : null}
                     {ARTWORK_SOURCES.map((option) => (
-                      <option key={option.value} value={option.value}>{option.label}</option>
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -289,7 +341,15 @@ export const ArtworkGeneratorPage = (): ReactElement => {
                       <span className="gr-field-hint">{index + 1}</span>
                       <input
                         aria-label={`Block colour ${index + 1}`}
-                        onChange={(event) => setPalette((current) => current.map((entry, entryIndex) => entryIndex === index ? event.currentTarget.value : entry))}
+                        onChange={(event) =>
+                          setPalette((current) =>
+                            current.map((entry, entryIndex) =>
+                              entryIndex === index
+                                ? event.currentTarget.value
+                                : entry,
+                            ),
+                          )
+                        }
                         type="color"
                         value={colour}
                       />
@@ -299,63 +359,215 @@ export const ArtworkGeneratorPage = (): ReactElement => {
               </div>
 
               <div className="gr-art-section gr-art-pair">
-                <label><span className="gr-label">Gradient start</span><input onChange={(event) => setBackground(event.currentTarget.value)} type="color" value={background} /></label>
-                <label><span className="gr-label">Gradient end</span><input onChange={(event) => setBackgroundTo(event.currentTarget.value)} type="color" value={backgroundTo} /></label>
+                <label>
+                  <span className="gr-label">Gradient start</span>
+                  <input
+                    onChange={(event) =>
+                      setBackground(event.currentTarget.value)
+                    }
+                    type="color"
+                    value={background}
+                  />
+                </label>
+                <label>
+                  <span className="gr-label">Gradient end</span>
+                  <input
+                    onChange={(event) =>
+                      setBackgroundTo(event.currentTarget.value)
+                    }
+                    type="color"
+                    value={backgroundTo}
+                  />
+                </label>
               </div>
 
               <div className="gr-art-section">
-                <Range label="Grid resolution" max={220} min={48} onChange={setColumns} value={columns} />
-                <Range label="Chip size" max={8} min={1} onChange={setChipSize} value={chipSize} />
-                <Range label="Gap" max={4} min={0} onChange={setGap} value={gap} />
-                <Range label="Corner radius" max={chipSize / 2} min={0} onChange={setCornerRadius} step={0.5} value={Math.min(cornerRadius, chipSize / 2)} />
-                <div className="gr-art-style" role="group" aria-label="Chip style">
-                  <button aria-pressed={chipShape === "square" && cornerRadius === 0} onClick={() => { setChipShape("square"); setCornerRadius(0); }} type="button">Sharp</button>
-                  <button aria-pressed={chipShape === "square" && cornerRadius > 0} onClick={() => { setChipShape("square"); setCornerRadius(Math.max(1, chipSize / 4)); }} type="button">Rounded</button>
-                  <button aria-pressed={chipShape === "circle"} onClick={() => setChipShape("circle")} type="button">Circle</button>
+                <Range
+                  label="Grid resolution"
+                  max={220}
+                  min={48}
+                  onChange={setColumns}
+                  value={columns}
+                />
+                <Range
+                  label="Chip size"
+                  max={8}
+                  min={1}
+                  onChange={setChipSize}
+                  value={chipSize}
+                />
+                <Range
+                  label="Gap"
+                  max={4}
+                  min={0}
+                  onChange={setGap}
+                  value={gap}
+                />
+                <Range
+                  label="Corner radius"
+                  max={chipSize / 2}
+                  min={0}
+                  onChange={setCornerRadius}
+                  step={0.5}
+                  value={Math.min(cornerRadius, chipSize / 2)}
+                />
+                <div
+                  className="gr-art-style"
+                  role="group"
+                  aria-label="Chip style"
+                >
+                  <button
+                    aria-pressed={chipShape === "square" && cornerRadius === 0}
+                    onClick={() => {
+                      setChipShape("square");
+                      setCornerRadius(0);
+                    }}
+                    type="button"
+                  >
+                    Sharp
+                  </button>
+                  <button
+                    aria-pressed={chipShape === "square" && cornerRadius > 0}
+                    onClick={() => {
+                      setChipShape("square");
+                      setCornerRadius(Math.max(1, chipSize / 4));
+                    }}
+                    type="button"
+                  >
+                    Rounded
+                  </button>
+                  <button
+                    aria-pressed={chipShape === "circle"}
+                    onClick={() => setChipShape("circle")}
+                    type="button"
+                  >
+                    Circle
+                  </button>
                 </div>
               </div>
 
               <div className="gr-art-section">
-                <Range label="Tone balance" max={255} min={0} onChange={setThreshold} value={threshold} />
-                <label className="gr-art-check"><input checked={darkPixels} onChange={(event) => setDarkPixels(event.currentTarget.checked)} type="checkbox" /><span>Dark pixels become chips</span></label>
+                <Range
+                  label="Tone balance"
+                  max={255}
+                  min={0}
+                  onChange={setThreshold}
+                  value={threshold}
+                />
+                <label className="gr-art-check">
+                  <input
+                    checked={darkPixels}
+                    onChange={(event) =>
+                      setDarkPixels(event.currentTarget.checked)
+                    }
+                    type="checkbox"
+                  />
+                  <span>Dark pixels become chips</span>
+                </label>
               </div>
 
               <div className="gr-art-section">
                 <label className="gr-field">
                   <span className="gr-field-hint">Scatter pattern</span>
-                  <select className="gr-select" onChange={(event) => setScatter(event.currentTarget.value as ScatterPattern)} value={scatter}>
-                    {ARTWORK_SCATTERS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  <select
+                    className="gr-select"
+                    onChange={(event) =>
+                      setScatter(event.currentTarget.value as ScatterPattern)
+                    }
+                    value={scatter}
+                  >
+                    {ARTWORK_SCATTERS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label className="gr-field">
                   <span className="gr-field-hint">Easing</span>
-                  <select className="gr-select" onChange={(event) => setEasing(event.currentTarget.value as EasingName)} value={easing}>
-                    {EASINGS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  <select
+                    className="gr-select"
+                    onChange={(event) =>
+                      setEasing(event.currentTarget.value as EasingName)
+                    }
+                    value={easing}
+                  >
+                    {EASINGS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                   </select>
                 </label>
-                <Range label="Duration" max={2400} min={200} onChange={setDuration} step={50} value={duration} />
-                <Range label="Stagger" max={1200} min={0} onChange={setStagger} step={25} value={stagger} />
-                <Range label="Path curve" max={0.9} min={0} onChange={setCurve} step={0.05} value={curve} />
-                <Range label="Timing variance" max={0.8} min={0} onChange={setTimingVariance} step={0.05} value={timingVariance} />
+                <Range
+                  label="Duration"
+                  max={2400}
+                  min={200}
+                  onChange={setDuration}
+                  step={50}
+                  value={duration}
+                />
+                <Range
+                  label="Stagger"
+                  max={1200}
+                  min={0}
+                  onChange={setStagger}
+                  step={25}
+                  value={stagger}
+                />
+                <Range
+                  label="Path curve"
+                  max={0.9}
+                  min={0}
+                  onChange={setCurve}
+                  step={0.05}
+                  value={curve}
+                />
+                <Range
+                  label="Timing variance"
+                  max={0.8}
+                  min={0}
+                  onChange={setTimingVariance}
+                  step={0.05}
+                  value={timingVariance}
+                />
               </div>
 
               <div className="gr-art-section gr-art-actions">
-                <button className="gr-art-primary" onClick={assemble} type="button">Assemble</button>
-                <button onClick={disperse} type="button">Disperse</button>
+                <button
+                  className="gr-art-primary"
+                  onClick={assemble}
+                  type="button"
+                >
+                  Assemble
+                </button>
+                <button onClick={disperse} type="button">
+                  Disperse
+                </button>
               </div>
 
               <div className="gr-art-section gr-art-exports">
                 <p className="gr-label">Export</p>
-                <button onClick={exportPng} type="button">PNG · 4×</button>
-                <button onClick={() => void record("webm")} type="button">WebM</button>
-                <button onClick={() => void record("mp4")} type="button">MP4</button>
-                <p aria-live="polite" className="gr-field-hint">{status}</p>
+                <button onClick={exportPng} type="button">
+                  PNG · 4×
+                </button>
+                <button onClick={() => void record("webm")} type="button">
+                  WebM
+                </button>
+                <button onClick={() => void record("mp4")} type="button">
+                  MP4
+                </button>
+                <p aria-live="polite" className="gr-field-hint">
+                  {status}
+                </p>
               </div>
             </aside>
           </div>
         </Module>
       </Band>
-      <Band><Footer index={1} /></Band>
+      <Band>
+        <Footer index={1} />
+      </Band>
     </Substrate>
   );
 };

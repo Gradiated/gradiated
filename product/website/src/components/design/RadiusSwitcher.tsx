@@ -33,7 +33,10 @@ export const RadiusSwitcher = (): ReactElement => {
     const root = document.querySelector<HTMLElement>(".gr-root");
     if (!root) return;
     const chosen = STEPS.find(({ id }) => id === step);
-    root.style.setProperty("--radius", `var(${chosen?.token ?? "--radius-none"})`);
+    root.style.setProperty(
+      "--radius",
+      `var(${chosen?.token ?? "--radius-none"})`,
+    );
   }, [step]);
 
   return (

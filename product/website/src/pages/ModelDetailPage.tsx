@@ -1,11 +1,5 @@
 import type { ReactElement } from "react";
-import {
-  Band,
-  Footer,
-  Module,
-  Nav,
-  Substrate,
-} from "../components/design";
+import { Band, Footer, Module, Nav, Substrate } from "../components/design";
 import "../styles/index.css";
 
 /* The page's own structure, and the first thing a reader meets. Set at title
@@ -21,7 +15,10 @@ const CONTENTS = [
 ];
 
 const slug = (name: string) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 
 export const ModelDetailPage = (): ReactElement => (
   <Substrate>
@@ -34,7 +31,10 @@ export const ModelDetailPage = (): ReactElement => (
           <div className="gr-model-mark">Model-4</div>
           <div>
             <h1 className="gr-section-title">Model name</h1>
-            <p className="gr-lede gr-muted" style={{ marginBlockStart: "0.5rem" }}>
+            <p
+              className="gr-lede gr-muted"
+              style={{ marginBlockStart: "0.5rem" }}
+            >
               We co-design hardware and software to provide the world&rsquo;s
               most affordable inference.
             </p>

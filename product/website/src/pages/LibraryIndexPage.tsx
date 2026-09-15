@@ -72,7 +72,8 @@ export const LibraryIndexPage = ({
     show === "notes" ? ["note"] : show === "methods" ? ["method"] : [];
 
   const shown = useMemo(
-    () => (kinds.length === 0 ? ALL : ALL.filter((s) => kinds.includes(s.kind))),
+    () =>
+      kinds.length === 0 ? ALL : ALL.filter((s) => kinds.includes(s.kind)),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [show],
   );

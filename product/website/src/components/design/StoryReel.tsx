@@ -106,7 +106,10 @@ export const StoryReel = ({
             preload="metadata"
             ref={videoRef}
           >
-            <source src={`/brand/reel/${chapter.video}.webm`} type="video/webm" />
+            <source
+              src={`/brand/reel/${chapter.video}.webm`}
+              type="video/webm"
+            />
             <source src={`/brand/reel/${chapter.video}.mp4`} type="video/mp4" />
           </video>
         ) : null}

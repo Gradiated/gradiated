@@ -66,10 +66,7 @@ export const HomePage = (): ReactElement => (
             URL.
           </p>
           <div className="gr-home-actions">
-            <a
-              className="gr-button gr-button--main"
-              href={CONSOLE_BASE_URL}
-            >
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
               Get API Key
               <Arrow />
             </a>

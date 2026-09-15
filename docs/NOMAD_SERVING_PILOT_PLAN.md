@@ -20,6 +20,102 @@ or a zero-downtime rollout. This does not authorize deleting pods or their data.
 Select and verify the task driver and GPU assignment method before finalizing job specifications;
 do not replace it with an assumed Docker-host architecture.
 
+### Nested container check, 2026-09-14
+
+Measured on Runpod pod `uv33dai39yeqe1`, using
+`runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404`, with four NVIDIA B300
+SXM6 AC GPUs. Two TP2 vLLM workloads were running. The checks did not stop or
+change those workloads. No additional pod was rented.
+
+- Docker and dockerd were absent. `/var/run/docker.sock` was absent.
+- `unshare --mount true`, `unshare --pid --fork true`, and
+  `unshare --net true` each failed with `Operation not permitted`.
+- `unshare --user --map-root-user true` failed with `Operation not permitted`
+  both as root and through `runuser -u nobody --`.
+- Effective and bounding capabilities were `00000000a80425fb`. Seccomp mode
+  was 2. The cgroup v2 mount reported writable access; this did not permit
+  namespace creation.
+
+Inference: this pod cannot run standard nested Docker containers under its
+current permissions. Rootless Docker also requires user namespaces. No Docker
+daemon was installed or started after these prerequisite failures. This result
+does not establish the capabilities of other Runpod configurations or providers.
+
+The user then selected a stable provider base with separately versioned
+runtime bundles, as recorded below. The job reserves GPUs and launches a
+pinned bundle through `raw_exec`.
+
+### Runtime bundle experiment
+
+The user approved testing a stable provider base with separately versioned
+runtime bundles and a separate model cache. First test runtime relocation on
+the existing pod before selecting a bundle format for releases.
+
+- Hypothesis: the existing self-contained vLLM environment can run from an
+  extracted archive at a different path on the same provider base.
+- Input: `/opt/glm53-stock-vllm-0.29.0` on `uv33dai39yeqe1`. Record the imported
+  package versions; the directory name is not a version authority.
+- Gate: verify the archive checksum, import vLLM and PyTorch from the extracted
+  environment, run one single-element CUDA operation on each GPU, and load
+  the vLLM CLI help. Do not load model weights or start a serving replica.
+- Budget: no new rental, 600-second timeout, 15-second kill grace. Require
+  space for two environment copies plus 4 GiB. Remove temporary files on exit.
+- Harness: `product/inference/nomad/tests/probe-runtime-bundle.sh`. Run it
+  inside the provider container through `timeout --kill-after=15s 600s bash`.
+- Scope limit: this checks relocation on the same base. It does not prove
+  base-image portability, DeepSeek compatibility, model-load time, or Nomad
+  GPU worker cleanup. The system Python, driver, and system libraries remain
+  dependencies of the bundle.
+
+Measured result (2026-09-15, 03:09:41–03:10:36 UTC): all gates passed in
+approximately 55 seconds on the existing pod. The source environment used
+7.9 GiB. The imported versions were vLLM `0.28.1rc1.dev580+g385dce36b`,
+PyTorch `2.13.0+cu130`, and CUDA `13.0`. The archive SHA-256 was
+`9393930ce088e386b79c301dfffd5678abc6984a39b908e2305f419df97d3e23`.
+This hash identifies the test archive, not a published release. Archive
+verification and extraction took approximately 40 seconds together. No network
+download or model load was measured. The CLI help check hid GPUs and reported
+that it used `/usr/local/cuda` as CUDA_HOME.
+
+Cleanup completed. No experiment directory remained. The same four existing
+vLLM worker PIDs remained, with their original reported GPU memory usage.
+Next: package a pinned runtime from a controlled build, declare its base
+dependencies, and test Nomad startup and worker cleanup before a model swap.
+
+### In-place Runpod image update, 2026-09-15
+
+Measured on `uv33dai39yeqe1`: a PATCH of only `imageName` replaced the base
+image without a Stop, Terminate, or Create request. The old image was
+`runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404`. The new image was
+`runpod/pytorch@sha256:60baa36d3fb6b98fd4f4ece6b96776c83c01a8b7c540e54460ab4d496816141f`
+(tag `1.0.3-cu1281-torch291-ubuntu2404`).
+
+The machine ID remained `rnnuez505hyy`. All four GPU UUIDs matched before
+and after. The container filesystem was replaced; `/workspace` survived.
+The public SSH port changed from `39600` to `39555`. Rediscover connection
+ports after base updates. This test supports in-place base updates on this
+pod; it is not a provider-wide availability guarantee.
+
+At the user's request, the full-filesystem backup was cancelled and its
+partial archive removed. Only the 7.9 GiB serving environment and startup
+hook were archived, producing a verified 4.18 GB compressed archive under
+`/workspace/gradiated-image-update-backup-20260915`. Other local tools and
+caches were intentionally not preserved. Model weights and launch settings
+were already in persistent storage.
+
+The serving environment was restored on the new base. The base's Jupyter
+process occupied port 8888; it was stopped so the model proxy could bind.
+Both GLM TP2 replicas passed health checks at 03:51:39 UTC and later passed
+small synthetic chat-completion requests. The restore is verified.
+
+### Runtime implementation
+
+The current bundle contract and test commands are in
+`product/inference/runtime-launcher/README.md`. Nomad owns download,
+checksum verification, and extraction. The C++ launcher only checks the base
+and supervises the entrypoint. The candidate DeepSeek job is not submitted.
+The latest qualification results and remaining gates are recorded below.
+
 ## Initial placement
 
 Scope revised by the user: one DeepSeek V4.1 Flash replica, TP4, on one four-B300
@@ -465,3 +561,83 @@ A compromised provider or pod can steal its Nomad client credentials. The relay
 would not contain the resulting hostile Nomad traffic. This design accepts that
 trust boundary for our workloads. It does not claim isolation between providers.
 The release gates above still require credential, allocation, and runtime checks.
+
+### Live driver qualification and capacity, 2026-09-15
+
+The approved EC2 quota is 16 vCPUs. Retrying the existing desired capacity of
+six brought two additional m7i.large nodes online. All six nodes were Ready,
+with two nodes per availability zone. Restore the server CPU request to
+500m; retain the existing memory reservation, limits, and quorum PDB.
+
+Both GLM health endpoints passed at 03:51:39 UTC after the base-image update.
+The later live Nomad probe used no model weights or GPU memory. It ran a
+temporary, loopback-only server and client, not a connection to EKS.
+
+Measured with Nomad 2.0.6 and NVIDIA device plugin 1.1.0 on the Runpod pod:
+
+- GPU inventory found all four B300 devices.
+- Two raw-exec allocations requesting two GPUs received disjoint UUID pairs.
+- Stopping the job removed its ordinary child processes.
+- The first test left two detached children alive. The supervisor correction
+  below resolved this synthetic failure. GPU visibility masks do not provide isolation.
+- The harness removed the remaining processes and its temporary account.
+
+Reproduction: `product/inference/nomad/tests/qualify-raw-exec.sh`, run under
+a 240-second timeout as root in the selected pod. The harness creates a
+temporary unprivileged account, binds loopback ports 24646–24648, and removes
+its files and processes on exit. Do not run it against a production Nomad
+agent. Existing workloads remain outside the test scheduler's inventory.
+
+Production capacity rollout completed: all six EKS nodes and all three Nomad
+servers are Ready. Each server requests 500m CPU and 1 GiB memory. Autopilot
+reports all three voters healthy with failure tolerance 1. Anonymous operator
+access remains denied. Argo applied the approved resource change from the
+branch revision. Its parent configuration restored the source to `main`, so
+the application is Healthy but OutOfSync until PR #55 is merged. Do not sync
+the older main revision, which would restore the temporary 100m requests. No external RPC load balancer was created, and no GPU
+client is enrolled with the EKS quorum yet.
+
+Both restored GLM replicas also passed a small synthetic chat-completion
+request. The earlier base-image restore is verified.
+
+### Process cleanup correction, 2026-09-15
+
+The C++ launcher now supervises its runtime with Linux child-subreaper mode.
+It adopts orphaned descendants even when they start a new session. On runtime
+exit or a shutdown signal, it requests termination, escalates after 25 seconds,
+and reaps all descendants before returning. It preserves the main runtime's
+exit status. Nomad's task kill timeout remains 60 seconds.
+
+Local tests passed for normal shutdown, normal runtime exit, runtime crash,
+double-forked descendants, and descendants that ignore SIGTERM. An unrelated
+process stayed alive. The first live run lost its final result over SSH and
+is not counted as a pass. The rerun used a non-blocking job-stop API request
+and SSH keepalives. It passed two disjoint GPU assignments and reported
+`cleanup_survivors=0` before the harness removed its account and files.
+
+This resolves the earlier synthetic detached-process cleanup failure. It
+does not prove real vLLM worker recovery or cleanup after SIGKILL of the
+supervisor itself. Runtime-user separation and a real model stop/restart test
+remain deployment gates. The live test used the same supervisor source through
+a small test adapter; it did not replace either running GLM service.
+
+### Runtime bundle simplification
+
+The current job uses Nomad's native artifact block for archive download,
+SHA-256 verification, and extraction. The launcher now only checks the base ID
+and entrypoint, sets the runtime directory, and supervises worker cleanup.
+Removed libcurl, OpenSSL, libarchive, digest locks, and the shared runtime cache.
+Runtime bundles now belong to each allocation. Model weights keep their
+persistent cache. Release submission must provide runtime disk capacity.
+
+The client example sets a 10-minute download timeout, 20-GiB download limit,
+40-GiB extraction limit, and 200,000-file limit. Keep artifact inspection
+enabled. These bounds need checking against the first published bundle.
+
+Measured locally: the existing detached-process fixture leaves a worker alive
+under Tini 0.19.0 with `-s -g`. Keep the small C++ supervisor. The simplified
+launcher passes the base-ID, entrypoint, argument, stop, exit, crash, and
+SIGTERM-resistant descendant tests. A local Nomad 2.0.6 fixture also passed
+HTTPS download, checksum verification, extraction, entrypoint launch, and
+wrong-checksum rejection. Job and client configuration validation passed.
+This change does not qualify a real vLLM restart or deploy a GPU client.

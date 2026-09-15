@@ -676,3 +676,26 @@ bundle preparation. Preserve persistent model data. Test startup and one short
 request before a process failure and restart. Record exact bundle/base/model
 revisions, device UUIDs, readiness times, cleanup, and failures. Do not claim
 production migration or multi-node recovery from this local test.
+
+The reviewed infrastructure plans added only the instance IAM reader, its
+GetObject-only policy, and its secret container, plus the publisher's missing
+ECR layer-download permission. Applied on 2026-09-15. Real credential checks
+passed for reading a bundle-prefix marker and denied listing, writing,
+reading outside that prefix, and ECR access. The temporary marker was removed.
+The private key is stored in Secrets Manager and a mode-600 agent-owned file
+on the container filesystem; it is not on the mounted model volume.
+
+The Runpod model volume reports root ownership and mode 777 and rejects
+chown. The runtime user can write it. Startup now creates the model cache as
+runtime rather than trying to change its owner. Treat this volume as shared
+model storage, never as storage for agent credentials. The older root-owned
+cache initialization would stop the base entrypoint on this mount.
+
+A qualification archive built on the existing pod from the pinned distribution
+and repository packaging script has SHA-256
+`7391c834c1098369ab09422ab295830f0c219dc191edb5bcab37f6f37120c5ec`
+and size 6,789,591,133 bytes. It is a qualification artifact, not a published
+release. Bundle preparation took 6 minutes 12 seconds. The checkpoint download
+is pinned to `dba1be0a40aa45a94ad051997016db3960a90277` and has a two-hour
+watchdog. The existing 1000 GB volume held 467,206,164,992 bytes before download;
+the checkpoint plus a 16 GiB reserve fits that conservative decimal capacity.

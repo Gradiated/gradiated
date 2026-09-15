@@ -2,7 +2,8 @@
 set -euo pipefail
 # Enrollment supplies client configuration and private, agent-owned TLS files.
 install -d /run/sshd
-install -d -o runtime -g runtime /workspace/gradiated/model-cache
+# Mounted provider storage may reject chown. Create the cache as its user.
+runuser -u runtime -- mkdir -p /workspace/gradiated/model-cache
 if [[ -n "${PUBLIC_KEY:-}" ]]; then
   install -d -m 700 /root/.ssh
   printf '%s\n' "$PUBLIC_KEY" > /root/.ssh/authorized_keys

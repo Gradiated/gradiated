@@ -607,9 +607,10 @@ agent. Existing workloads remain outside the test scheduler's inventory.
 Production capacity rollout completed: all six EKS nodes and all three Nomad
 servers are Ready. Each server requests 500m CPU and 1 GiB memory. Autopilot
 reports all three voters healthy with failure tolerance 1. Anonymous operator
-access remains denied. Argo's `nomad` application temporarily tracks
-`nomad-deepseek-job` for this approved resource rollout; return it to `main`
-after PR #55 is merged. No external RPC load balancer was created, and no GPU
+access remains denied. Argo applied the approved resource change from the
+branch revision. Its parent configuration restored the source to `main`, so
+the application is Healthy but OutOfSync until PR #55 is merged. Do not sync
+the older main revision, which would restore the temporary 100m requests. No external RPC load balancer was created, and no GPU
 client is enrolled with the EKS quorum yet.
 
 Both restored GLM replicas also passed a small synthetic chat-completion

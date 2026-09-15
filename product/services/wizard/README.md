@@ -97,3 +97,9 @@ Better Auth's origin checks for Node clients. Email codes use the same backend
 Resend delivery service as console sign-in. Regression tests run the real Better
 Auth OTP and session flow with origin protection explicitly enabled and an
 in-memory email transport.
+
+Version 1.1.4 lets interactive users retry rejected API keys: the wizard says
+“API key invalid” and asks for another key without restarting setup. Press
+Ctrl+C to cancel. Config and credential writes happen only after validation
+succeeds. With `--yes` or non-interactive input, an invalid key exits with an
+error; network and service failures remain distinct from invalid credentials.

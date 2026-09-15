@@ -1,3 +1,5 @@
+import { fetchCatalog, type CatalogModel } from "./catalog.js";
+import { HttpError } from "./http.js";
 import { CONSOLE_URL } from "./arguments.js";
 import { resolveAccount } from "./account.js";
 import { readStoredKey } from "./credentials.js";
@@ -64,4 +66,44 @@ export const resolveKey = async (
   throw new Error(
     "The selected API key is no longer available. Run the wizard again.",
   );
+};
+
+/** Validate before storing anything; interactive users can replace a rejected key. */
+export const validateKey = async (
+  candidateKey: string,
+  inferenceBaseUrl: string,
+  interactive: boolean,
+): Promise<{ apiKey: string; models: CatalogModel[] }> => {
+  let apiKey = candidateKey;
+  while (true) {
+    const progress = ui.spinner();
+    progress.start("Validating the API key and fetching the model catalog");
+    try {
+      const models = await fetchCatalog(inferenceBaseUrl, apiKey);
+      progress.stop(
+        `${models.length} model${models.length === 1 ? "" : "s"} available`,
+      );
+      return { apiKey, models };
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 401) {
+        progress.stop("API key invalid.", 1);
+        if (!interactive) {
+          throw new Error(
+            "API key invalid. Supply a different key or run the wizard interactively to try again.",
+          );
+        }
+      } else {
+        progress.stop("Could not fetch the model catalog", 1);
+        if (error instanceof HttpError) {
+          throw new Error(
+            `Could not fetch the model catalog (${error.status || "network"}): ${error.message}`,
+          );
+        }
+        throw error;
+      }
+    }
+    apiKey = await ui.askPassword(
+      "Paste a different API key (Ctrl+C to cancel):",
+    );
+  }
 };

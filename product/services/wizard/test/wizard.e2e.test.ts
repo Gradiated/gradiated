@@ -517,7 +517,7 @@ describe("wizard install end to end", () => {
     }
   }, 30_000);
 
-  it("fails with the gateway message when the key is rejected", async () => {
+  it("fails clearly without prompting or writing config when --yes rejects a key", async () => {
     const home = await mkdtemp(join(homedir(), "gradiated-wizard-test-"));
     try {
       const result = await runWizard(
@@ -534,7 +534,9 @@ describe("wizard install end to end", () => {
       );
 
       expect(result.status).toBe(1);
-      expect(result.stdout).toContain("The API key was rejected");
+      expect(result.stdout).toContain("API key invalid.");
+      expect(result.stdout).not.toContain("Paste a different API key");
+      expect(existsSync(join(home, ".gradiated/credentials.json"))).toBe(false);
       await expect(
         readFile(join(home, ".config/opencode/opencode.json"), "utf8"),
       ).rejects.toThrow();

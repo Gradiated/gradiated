@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { parseArguments } from "./arguments.js";
-import { resolveKey } from "./key.js";
-import { fetchCatalog, type CatalogModel } from "./catalog.js";
+import { resolveKey, validateKey } from "./key.js";
+import { type CatalogModel } from "./catalog.js";
 import { readStoredKey, storeKey, clearStoredKey } from "./credentials.js";
 import { HttpError } from "./http.js";
 import { detectAgents } from "./agents/detect.js";
@@ -44,29 +44,6 @@ Options:
   --help              Show this help
   --version           Show the version
 `;
-
-/**
- * Fetch the catalog with the candidate key, turning gateway failures into
- * plain Error messages so they surface cleanly from loading tasks.
- */
-const loadCatalog = async (
-  inferenceBaseUrl: string,
-  apiKey: string,
-): Promise<CatalogModel[]> => {
-  try {
-    return await fetchCatalog(inferenceBaseUrl, apiKey);
-  } catch (error) {
-    if (error instanceof HttpError && error.status === 401) {
-      throw new Error(`The API key was rejected: ${error.message}`);
-    }
-    if (error instanceof HttpError) {
-      throw new Error(
-        `Could not fetch the model catalog (${error.status || "network"}): ${error.message}`,
-      );
-    }
-    throw error;
-  }
-};
 
 const pickModel = async (
   models: readonly CatalogModel[],
@@ -159,19 +136,12 @@ const runInstall = async (): Promise<void> => {
     (agent) => agent.name === "claude",
   );
 
-  const apiKey = await resolveKey(options, targets);
-
-  let models: CatalogModel[] = [];
-  await ui.runTasks([
-    {
-      title: "Validating the API key and fetching the model catalog",
-      run: async (message) => {
-        message(`Connecting to ${targets.inferenceBaseUrl}…`);
-        models = await loadCatalog(targets.inferenceBaseUrl, apiKey);
-        return `${models.length} model${models.length === 1 ? "" : "s"} available`;
-      },
-    },
-  ]);
+  const candidateKey = await resolveKey(options, targets);
+  const { apiKey, models } = await validateKey(
+    candidateKey,
+    targets.inferenceBaseUrl,
+    !options.yes && Boolean(process.stdin.isTTY),
+  );
   const model = await pickModel(models, {
     yes: options.yes,
     requested: options.model,
@@ -516,7 +486,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("1.1.3");
+    console.log("1.1.4");
     return;
   }
   if (parsed.command === "uninstall") {

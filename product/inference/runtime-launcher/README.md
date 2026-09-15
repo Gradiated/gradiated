@@ -4,7 +4,7 @@ Status: local prototype. No published bundle or deployment integration yet.
 
 `runtime-launch` is a C++ executable for trusted serving runtimes. Nomad calls
 it with `raw_exec`. It verifies a tar archive, extracts it into a cache directory
-named by its SHA-256 digest, and replaces itself with the bundle entrypoint.
+named by its SHA-256 digest, and supervises the bundle entrypoint.
 It does not install packages into the base or start a container.
 
 ## Bundle contract
@@ -59,10 +59,11 @@ Before submitting this job, qualify the following on the actual provider:
 2. The bundle entrypoint maps assigned device UUIDs to `CUDA_VISIBLE_DEVICES`.
    A visibility mask is not device isolation.
 3. The runtime user cannot read the Nomad client key.
-4. **Blocked:** a live stop test left two detached child processes running.
-   Ordinary child processes stopped. The test cleanup removed the survivors.
-   The launcher uses `exec`; it is not a process supervisor. Add and verify
-   process-tree cleanup before running serving workloads through this job.
+4. Synthetic process-tree cleanup now passes locally and on a live Nomad
+   client. The launcher acts as a Linux child subreaper. On shutdown or runtime
+   exit, it terminates descendants, escalates to SIGKILL after 25 seconds, and
+   reaps them before returning. The live test included detached processes
+   that ignored SIGTERM. A real vLLM stop/restart test remains required.
 5. Set the client's maximum kill timeout to at least 60 seconds.
 6. Confirm checkpoint identity and a small inference request before exposing
    traffic. The Nomad health check alone does not establish model identity.
@@ -87,5 +88,18 @@ docker build -f product/inference/runtime-launcher/tests/Dockerfile \
 ```
 
 These tests cover launch arguments, cache reuse, checksum failure, base
-mismatch, archive traversal, and writes through archive symlinks. They do not
-prove GPU assignment, model startup, or worker cleanup.
+mismatch, archive traversal, HTTPS certificate checks, and writes through
+archive symlinks. Process tests cover ordinary and double-forked descendants,
+runtime exit, runtime crash, and children that ignore SIGTERM. They check that
+unrelated processes remain alive and that the runtime exit status is retained.
+
+Live test: run `../nomad/tests/qualify-raw-exec.sh` with this source directory
+as its first argument on the selected Runpod pod, under a 240-second timeout.
+It compiles a test adapter around the same supervisor implementation. It does
+not install the launcher or change the existing serving processes.
+
+The 25-second grace must be shorter than Nomad's task kill timeout. The
+supervisor cannot guarantee cleanup if it is itself killed with SIGKILL, if
+the client dies, or if a process remains stuck in an uninterruptible kernel
+wait. These cases still require node fencing before replacement. This is
+process lifecycle management, not isolation for hostile code.

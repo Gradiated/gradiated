@@ -1,3 +1,5 @@
+#include "supervise.h"
+
 #include <archive.h>
 #include <archive_entry.h>
 #include <curl/curl.h>
@@ -177,8 +179,7 @@ int main(int argc, char** argv) {
     std::vector<char*> args{const_cast<char*>(entry.c_str())};
     if (index < argc) for (++index; index < argc; ++index) args.push_back(argv[index]);
     args.push_back(nullptr);
-    execv(entry.c_str(), args.data());
-    throw std::runtime_error("Cannot execute bundle entrypoint");
+    return supervise(args.data());
   } catch (const std::exception& error) {
     if (lock >= 0) close(lock);
     if (!staging.empty()) { std::error_code ignored; fs::remove_all(staging, ignored); }

@@ -2,6 +2,8 @@
 # Run as root inside the selected pod: timeout --kill-after=15s 240s bash SCRIPT
 # Only GPU inventory is read. Existing serving processes are not modified.
 set -euo pipefail
+source_root=${1:?Pass the runtime-launcher source directory}
+source_root=$(realpath "$source_root")
 work=$(mktemp -d /tmp/gradiated-nomad-live.XXXXXX)
 account="nomad-test-$$"
 uid=''
@@ -15,11 +17,13 @@ cleanup() {
   rm -rf "$work"
 }
 trap cleanup EXIT
-trap 'exit 143' TERM
+trap 'echo "Probe watchdog expired"; exit 143' TERM
 for port in 24646 24647 24648; do
   if ss -lnt | grep -q ":$port "; then echo 'Probe port already in use'; exit 1; fi
 done
 cd "$work"
+g++ -std=c++20 -Wall -Wextra -Werror -I "$source_root" \
+  "$source_root/supervise.cpp" "$source_root/tests/supervise-main.cpp" -o "$work/supervise"
 curl -fsS --max-time 40 -o nomad.zip https://releases.hashicorp.com/nomad/2.0.6/nomad_2.0.6_linux_amd64.zip
 printf '%s  nomad.zip\n' c6da734081a41d51cadf15ec880d5eab0313093a29d2ee0984ca5ae1cdf867ec | sha256sum -c -
 unzip -q nomad.zip nomad
@@ -34,6 +38,7 @@ bind_addr = "127.0.0.1"
 plugin_dir = "$work/plugins"
 ports { http = 24646 rpc = 24647 serf = 24648 }
 server { num_schedulers = 1 }
+client { max_kill_timeout = "60s" }
 plugin "raw_exec" { config { enabled = true } }
 plugin "nomad-device-nvidia" { config { enabled = true } }
 HCL
@@ -43,7 +48,7 @@ set -eu
 printf '%s\n' "${NVIDIA_VISIBLE_DEVICES:?Missing assigned GPU IDs}" > "$1/gpus-$NOMAD_ALLOC_INDEX"
 sleep 600 &
 printf '%s\n' "$!" > "$1/child-$NOMAD_ALLOC_INDEX"
-setsid sleep 600 &
+setsid bash -c 'trap "" TERM; exec sleep 600' &
 printf '%s\n' "$!" > "$1/detached-$NOMAD_ALLOC_INDEX"
 wait
 WORKLOAD
@@ -71,9 +76,10 @@ job "gpu-bookkeeping-probe" {
     }
     task "probe" {
       driver = "raw_exec"
+      kill_timeout = "60s"
       config {
-        command = "/bin/bash"
-        args = ["$work/workload.sh", "$work"]
+        command = "$work/supervise"
+        args = ["/bin/bash", "$work/workload.sh", "$work"]
       }
       resources {
         cpu = 100
@@ -96,12 +102,22 @@ fi
 cat gpus-0 gpus-1 | tr ',' '\n' | sort > assigned.txt
 [[ "$(wc -l < assigned.txt)" -eq 4 && "$(sort -u assigned.txt | wc -l)" -eq 4 ]]
 printf 'PASS: two disjoint pairs of assigned GPU UUIDs\n'
-"$work/nomad" job stop -purge gpu-bookkeeping-probe >/dev/null
-sleep 5
+printf "Requesting job stop at %s\n" "$(date -u +%FT%TZ)"
+curl -fsS --max-time 10 -X DELETE "$NOMAD_ADDR/v1/job/gpu-bookkeeping-probe?purge=true" >/dev/null
+printf "Job stop accepted at %s\n" "$(date -u +%FT%TZ)"
+for attempt in $(seq 1 65); do
+  survivors=0
+  for pidfile in child-* detached-*; do
+    pid=$(cat "$pidfile")
+    if kill -0 "$pid" 2>/dev/null; then survivors=$((survivors + 1)); fi
+  done
+  [[ "$survivors" -eq 0 ]] && break
+  sleep 1
+done
 leaks=0
 for pidfile in child-* detached-*; do
   pid=$(cat "$pidfile")
-  if kill -0 "$pid" 2>/dev/null && [[ "$(ps -p "$pid" -o stat=)" != Z* ]]; then
+  if kill -0 "$pid" 2>/dev/null; then
     printf 'FAIL: surviving %s process\n' "${pidfile%-*}"
     leaks=$((leaks + 1))
   fi

@@ -615,3 +615,24 @@ client is enrolled with the EKS quorum yet.
 
 Both restored GLM replicas also passed a small synthetic chat-completion
 request. The earlier base-image restore is verified.
+
+### Process cleanup correction, 2026-09-15
+
+The C++ launcher now supervises its runtime with Linux child-subreaper mode.
+It adopts orphaned descendants even when they start a new session. On runtime
+exit or a shutdown signal, it requests termination, escalates after 25 seconds,
+and reaps all descendants before returning. It preserves the main runtime's
+exit status. Nomad's task kill timeout remains 60 seconds.
+
+Local tests passed for normal shutdown, normal runtime exit, runtime crash,
+double-forked descendants, and descendants that ignore SIGTERM. An unrelated
+process stayed alive. The first live run lost its final result over SSH and
+is not counted as a pass. The rerun used a non-blocking job-stop API request
+and SSH keepalives. It passed two disjoint GPU assignments and reported
+`cleanup_survivors=0` before the harness removed its account and files.
+
+This resolves the earlier synthetic detached-process cleanup failure. It
+does not prove real vLLM worker recovery or cleanup after SIGKILL of the
+supervisor itself. Runtime-user separation and a real model stop/restart test
+remain deployment gates. The live test used the same supervisor source through
+a small test adapter; it did not replace either running GLM service.

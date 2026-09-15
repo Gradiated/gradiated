@@ -64,3 +64,31 @@ cp "$work/cert.pem" /usr/local/share/ca-certificates/runtime-launch-test.crt
 update-ca-certificates >/dev/null 2>&1
 [[ "$("$launcher" --bundle https://localhost:19443/bundle.tar.gz --sha256 "$hash" --cache "$work/https-cache" -- https-ok)" == https-ok ]]
 echo PASS: HTTPS-download-and-certificate-validation
+# The supervisor must clean ordinary and detached descendants on stop or exit.
+g++ -std=c++20 tests/process-tree.cpp -o "$work/source/entrypoint"
+pack
+sleep 600 &
+unrelated=$!
+trap 'kill "$server" "$unrelated" 2>/dev/null || true; wait "$server" "$unrelated" 2>/dev/null || true; rm -rf "$work"' EXIT
+for mode in stop exit crash stubborn; do
+  mkdir "$work/$mode"
+  "$launcher" --archive "$work/bundle.tar.gz" --sha256 "$hash" --cache "$work/cache" -- "$work/$mode" "$mode" &
+  supervisor=$!
+  for attempt in $(seq 1 100); do [[ -f "$work/$mode/detached" ]] && break; sleep 0.05; done
+  [[ -s "$work/$mode/detached" ]]
+  if [[ "$mode" == stop || "$mode" == stubborn ]]; then kill -TERM "$supervisor"; fi
+  set +e
+  wait "$supervisor"
+  result=$?
+  set -e
+  case "$mode" in
+    stop|stubborn) [[ "$result" -eq 143 ]] ;;
+    exit) [[ "$result" -eq 37 ]] ;;
+    crash) [[ "$result" -eq 137 ]] ;;
+  esac
+  for pidfile in "$work/$mode/leader" "$work/$mode/ordinary" "$work/$mode/detached"; do
+    if kill -0 "$(cat "$pidfile")" 2>/dev/null; then echo "Surviving process: $mode"; exit 1; fi
+  done
+  kill -0 "$unrelated"
+  echo "PASS: process-tree-cleanup-$mode"
+done

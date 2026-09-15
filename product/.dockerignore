@@ -6,4 +6,3 @@ node_modules
 **/target
 services/api/generated
 # Separate service image. Exclude it from the application build context.
-services/nomad-relay

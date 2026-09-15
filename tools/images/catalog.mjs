@@ -15,19 +15,12 @@ export const catalog = {
       "product/turbo.json",
       "product/tsconfig.base.json",
     ],
-    exclude: ["product/services/nomad-relay/"],
   },
   gateway: {
     context: "product/services/gateway",
     repository: "gradiated/prod/gateway",
     target: "",
     paths: ["product/services/gateway/"],
-  },
-  "nomad-relay": {
-    context: "product/services/nomad-relay",
-    repository: "gradiated/prod/inference",
-    target: "production",
-    paths: ["product/services/nomad-relay/"],
   },
   "deepseek-v4-1-flash": {
     context: "product/inference/images/deepseek-v4-1-flash",

@@ -24,13 +24,13 @@ test("changed build contents and file modes produce a new identity", () => {
     ]),
   );
 });
-test("relay changes do not rebuild the application image", () => {
+test("Nomad configuration changes do not rebuild the application image", () => {
   const base = [entry("product/Dockerfile")];
   assert.equal(
     fingerprint("product", base),
     fingerprint("product", [
       ...base,
-      entry("product/services/nomad-relay/src/main.rs"),
+      entry("infra/environments/prod/us-east-1/kubernetes/nomad/servers.yaml"),
     ]),
   );
 });
@@ -53,7 +53,7 @@ test("plans all enabled images against the actual repository tree", () => {
   const revision = execFileSync("git", ["rev-parse", "HEAD"], {
     encoding: "utf8",
   }).trim();
-  const names = ["product", "gateway", "nomad-relay", "deepseek-v4-1-flash"];
+  const names = ["product", "gateway", "deepseek-v4-1-flash"];
   const result = plan(names, revision);
   assert.deepEqual(
     result.include.map((image) => image.name),
@@ -62,7 +62,7 @@ test("plans all enabled images against the actual repository tree", () => {
   for (const image of result.include)
     assert.match(image.tag, /-inputs-[0-9a-f]{64}$/);
   assert.deepEqual(
-    plan(["nomad-relay"], revision).include[0],
+    plan(["deepseek-v4-1-flash"], revision).include[0],
     result.include[2],
   );
 });

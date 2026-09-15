@@ -55,28 +55,40 @@ job "deepseek-v4-1-flash" {
         host_network = "loopback"
       }
     }
+    task "download-runtime" {
+      driver       = "raw_exec"
+      user         = "downloader"
+      kill_timeout = "30s"
+      lifecycle {
+        hook    = "prestart"
+        sidecar = false
+      }
+      config {
+        command = "/usr/bin/setpriv"
+        args = [
+          "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
+          "/bin/bash", "/opt/gradiated/bin/fetch-runtime",
+          var.bundle_url, var.bundle_sha256, "${NOMAD_ALLOC_DIR}/runtime",
+        ]
+      }
+      resources {
+        cpu    = 1000
+        memory = 1024
+      }
+    }
     task "vllm" {
       driver         = "raw_exec"
       user           = "runtime"
       shutdown_delay = "10s"
       kill_signal    = "SIGTERM"
       kill_timeout   = "60s"
-      artifact {
-        source      = var.bundle_url
-        chown       = true
-        destination = "local/runtime"
-        options {
-          checksum = "sha256:${var.bundle_sha256}"
-          archive  = "tar.gz"
-        }
-      }
       config {
         # The agent can switch users; the model must retain none of its capabilities.
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
           "/opt/gradiated/bin/runtime-launch",
-          "${NOMAD_TASK_DIR}/runtime",
+          "${NOMAD_ALLOC_DIR}/runtime",
         ]
       }
       env {

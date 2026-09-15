@@ -7,6 +7,7 @@ on:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
       - product/inference/runtime-launcher/**
+      - product/inference/images/nomad-base/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
   pull_request:
@@ -14,6 +15,7 @@ on:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - product/inference/nomad/**
       - product/inference/runtime-launcher/**
+      - product/inference/images/nomad-base/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
 
@@ -38,7 +40,7 @@ jobs:
         uses: depot/build-push-action@v1
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
-          context: product/inference/runtime-launcher
+          context: product/inference
           file: product/inference/runtime-launcher/tests/Dockerfile
           target: tests
           platforms: linux/amd64

@@ -1,6 +1,7 @@
 variable "name" { type = string }
 variable "checksum" { type = string }
 variable "launcher" { type = string }
+variable "bundle" { type = string }
 
 job "artifact-test" {
   name = var.name
@@ -15,19 +16,29 @@ job "artifact-test" {
       unlimited = false
     }
 
-    task "runtime" {
+    task "download-runtime" {
       driver = "raw_exec"
-      artifact {
-        source      = "https://localhost:19443/bundle.tar.gz"
-        destination = "local/runtime"
-        options {
-          checksum = "sha256:${var.checksum}"
-          archive  = "tar.gz"
-        }
+      lifecycle {
+        hook = "prestart"
+        sidecar = false
+      }
+      env {
+        TEST_BUNDLE = var.bundle
       }
       config {
+        command = "/bin/bash"
+        args = [
+          "/opt/gradiated/bin/fetch-runtime",
+          "s3::https://test-bucket.s3.us-east-1.amazonaws.com/bundles/sha256/${var.checksum}.tar.gz",
+          var.checksum, "${NOMAD_ALLOC_DIR}/runtime",
+        ]
+      }
+    }
+    task "runtime" {
+      driver = "raw_exec"
+      config {
         command = var.launcher
-        args    = ["${NOMAD_TASK_DIR}/runtime", "--", "literal $(false)"]
+        args    = ["${NOMAD_ALLOC_DIR}/runtime", "--", "literal $(false)"]
       }
     }
   }

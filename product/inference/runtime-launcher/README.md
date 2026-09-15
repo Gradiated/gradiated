@@ -1,10 +1,11 @@
 # Runtime bundle launcher
 
-Status: candidate Nomad job. No published runtime bundle or production deployment yet.
+Status: published runtime bundles; live serving qualification is in progress.
 
 `runtime-launch` is a small C++ executable for trusted serving runtimes.
-Nomad downloads the pinned archive, checks its SHA-256 digest, and extracts it
-into the task directory with its [artifact block](https://developer.hashicorp.com/nomad/docs/job-specification/artifact).
+A Nomad pre-start task downloads the pinned archive with `s5cmd`, checks its
+SHA-256 digest, and extracts it into the shared allocation directory. It runs
+as `downloader`, with read-only S3 credentials that the model user cannot read.
 The launcher checks base compatibility and supervises the entrypoint.
 It does not download files, install packages, or start a container.
 
@@ -31,7 +32,7 @@ runtime-launch /path/to/extracted/runtime -- optional-entrypoint-argument
 ```
 
 Nomad extracts the archive into `local/runtime`. The job passes its absolute
-path through `NOMAD_TASK_DIR`. A failed download or checksum check prevents
+path through `NOMAD_ALLOC_DIR`. A failed download or checksum check prevents
 task startup. Direct local launches expect an already verified directory.
 
 Runtime files belong to each allocation. A new allocation downloads its own
@@ -39,11 +40,11 @@ copy. There is no shared runtime cache, prefetch service, or cache lock.
 Keep model weights in `/workspace/gradiated/model-cache`, outside the allocation.
 Add a shared runtime cache only if measured download time requires it.
 
-The client example sets a 10-minute HTTP timeout, a 20-GiB download limit,
-a 40-GiB extraction limit, and a 200,000-file limit. A Python environment can
-exceed Nomad's default file count. Keep artifact inspection enabled.
-The job requires `runtime_disk_mb`; include space for extraction, temporary
-archive data, and logs. Measure this for each release.
+The downloader accepts only content-addressed S3 release URLs. It verifies
+the digest before using `bsdtar` to extract the trusted archive. Nomad's native
+artifact size and file-count limits do not apply to this pre-start task.
+The job requires `runtime_disk_mb`; include space for the compressed archive,
+extracted runtime, and logs. Measure this for each release.
 
 ## Nomad integration
 
@@ -72,8 +73,9 @@ Before submitting this job, qualify the following on the actual provider:
 The job reserves four B300 devices on one client. No host-loss replacement is
 requested automatically. The localhost service is for health checks; it does
 not register an endpoint with the Gradiated gateway. Cold-start grace is 65
-minutes, including up to 10 minutes for the runtime download. Tune this with
-measured cold-start data before deployment.
+minutes after the model task starts. Bundle download runs before that task
+starts and has a 20-minute limit; extraction has a 10-minute limit. Tune these
+with measured startup data before deployment.
 
 CI builds a versioned runtime bundle separately from the base image. A future
 release step will update the job's bundle digest and submit it. This prototype
@@ -81,7 +83,8 @@ does not add that release step or change any provider pod.
 
 ## Verification
 
-The Docker test image runs CTest, ShellCheck, clang-format, and shfmt.
+The Docker test image runs CTest, ShellCheck, clang-format, and shfmt. It also
+checks pre-start ordering, checksum rejection, and download failure cleanup.
 CTest reports each launcher and cleanup case separately. The integration test
 runs only in this disposable container because it creates a local CA and
 starts a temporary Nomad agent.
@@ -90,7 +93,7 @@ Run the checks:
 
 ```sh
 docker build -f product/inference/runtime-launcher/tests/Dockerfile \
-  product/inference/runtime-launcher
+  product/inference
 ```
 
 For a production build, configure CMake with `-DBUILD_TESTING=OFF`.
@@ -102,8 +105,9 @@ descendants,
 runtime exit, runtime crash, and children that ignore SIGTERM. They check that
 unrelated processes remain alive and that the runtime exit status is retained.
 
-A local Nomad 2.0.6 fixture also downloads a bundle over HTTPS, launches its
-entrypoint, and rejects a wrong SHA-256 digest. It runs without a GPU.
+A local Nomad 2.0.6 fixture checks pre-start ordering and checksum rejection,
+using a local copy in place of S3. It runs without a GPU. Real S3 transfer speed
+and credential isolation require the live provider test.
 
 Live test: run `../nomad/tests/qualify-raw-exec.sh` with this source directory
 as its first argument on the selected Runpod pod, under a 240-second timeout.
@@ -124,5 +128,5 @@ The local comparison used Tini 0.19.0 with `-s -g` and the same
 `tests/process-tree.cpp` fixture in `stop` mode. The detached child remained
 alive after Tini exited. The container was removed after the test.
 The C++ supervisor passes that fixture, including forced cleanup after its
-25-second grace period. Its process cleanup code is unchanged by the artifact
-simplification. No third-party C++ libraries are needed.
+25-second grace period. Download changes do not affect this process cleanup.
+No third-party C++ libraries are needed.

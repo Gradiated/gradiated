@@ -10,7 +10,6 @@ source "$test_dir/test-support.sh"
 
 launcher=${1:?Pass the launcher executable}
 work=$(mktemp -d)
-server_pid=
 agent_pid=
 export NOMAD_ADDR=http://127.0.0.1:4646
 
@@ -19,14 +18,11 @@ cleanup() {
   if ((status != 0)) && [[ -f "$work/agent.log" ]]; then
     tail -50 "$work/agent.log" >&2
   fi
-  for pid in "$agent_pid" "$server_pid"; do
-    if [[ -n "$pid" ]]; then
-      kill "$pid" 2>/dev/null || true
-      wait "$pid" 2>/dev/null || true
-    fi
-  done
-  rm -f /usr/local/share/ca-certificates/nomad-fixture.crt
-  update-ca-certificates >/dev/null 2>&1 || true
+  if [[ -n "$agent_pid" ]]; then
+    kill "$agent_pid" 2>/dev/null || true
+    wait "$agent_pid" 2>/dev/null || true
+  fi
+  rm -f /usr/local/bin/s5cmd /etc/gradiated/artifact.env
   rm -rf "$work"
 }
 trap cleanup EXIT
@@ -41,17 +37,15 @@ prepare_bundle() {
   tar -czf "$work/bundle.tar.gz" -C "$work/bundle" .
 }
 
-start_https_server() {
-  openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
-    -subj /CN=localhost -addext subjectAltName=DNS:localhost \
-    -keyout "$work/key.pem" -out "$work/cert.pem" >/dev/null 2>&1
-  cp "$work/cert.pem" /usr/local/share/ca-certificates/nomad-fixture.crt
-  update-ca-certificates >/dev/null 2>&1
-  (
-    cd "$work"
-    exec openssl s_server -quiet -accept 19443 -cert cert.pem -key key.pem -WWW
-  ) >"$work/tls.log" 2>&1 &
-  server_pid=$!
+prepare_downloader() {
+  printf 'AWS_ACCESS_KEY_ID=test-only\n' >/etc/gradiated/artifact.env
+  cat >/usr/local/bin/s5cmd <<'FIXTURE'
+#!/usr/bin/env bash
+set -euo pipefail
+[[ "$AWS_ACCESS_KEY_ID" == test-only ]]
+cp "$TEST_BUNDLE" "${@: -1}"
+FIXTURE
+  chmod 755 /usr/local/bin/s5cmd
 }
 
 node_is_ready() {
@@ -79,7 +73,7 @@ allocation_exists() {
 submit_job() {
   local name=$1 checksum=$2
   nomad job run -output -var="name=$name" -var="checksum=$checksum" \
-    -var="launcher=$launcher" "$test_dir/fixtures/artifact.nomad.hcl" |
+    -var="launcher=$launcher" -var="bundle=$work/bundle.tar.gz" "$test_dir/fixtures/artifact.nomad.hcl" |
     jq '.Job.ID = .Job.Name' >"$work/job.json"
   nomad job run -detach -json "$work/job.json" >/dev/null
   wait_until "an allocation for $name" 10 allocation_exists "$name"
@@ -103,18 +97,21 @@ test_valid_bundle() {
 
 test_invalid_checksum() {
   submit_job artifact-invalid "$(printf '%064d' 0)"
-  wait_until "checksum rejection" 15 task_is_terminal
+  wait_until "checksum rejection" 15 download_failed
   jq -e '
-    .TaskStates.runtime |
-    .Failed == true and
-    any(.Events[]; .Type == "Failed Artifact Download") and
-    all(.Events[]; .Type != "Started")
+    .TaskStates["download-runtime"].Failed == true and
+    all(.TaskStates.runtime.Events[]; .Type != "Started")
   ' "$work/allocation.json" >/dev/null ||
     fail "The bad checksum did not prevent task startup"
 }
 
+download_failed() {
+  nomad alloc status -json "$allocation_id" >"$work/allocation.json"
+  jq -e '.TaskStates["download-runtime"].State == "dead"' "$work/allocation.json" >/dev/null
+}
+
 prepare_bundle
-start_https_server
+prepare_downloader
 start_nomad
 test_valid_bundle
 test_invalid_checksum

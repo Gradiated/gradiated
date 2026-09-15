@@ -32,6 +32,7 @@ export const catalog = {
       "product/inference/images/nomad-base/base-id",
       "product/inference/images/nomad-base/start.sh",
       "product/inference/images/nomad-base/start-client.sh",
+      "product/inference/images/nomad-base/fetch-runtime.sh",
       "product/inference/images/nomad-base/sshd_config",
       "product/inference/.dockerignore",
       "product/inference/runtime-launcher/CMakeLists.txt",

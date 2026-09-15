@@ -81,14 +81,25 @@ the Terraform workflow for that commit to succeed. The existing Terraform
 workflow applies the private bucket and deployment-IAM changes on merge.
 A failed infrastructure run prevents runtime publication.
 
-During client enrollment, supply read-only S3 credentials in the Nomad
-agent's private environment. Grant only `s3:GetObject` on the bucket's
-`bundles/*` prefix. The client forwards these variables to Nomad's artifact
-downloader. Do not put credentials in the image, job, bundle, or runtime user
-environment. Terraform creates a separate read-only IAM user for each configured instance.
-Access keys are created outside Terraform and stored in the instance secret.
-No key values enter Terraform state. The runtime user cannot read the agent
-credential files, and Nomad excludes AWS credentials from task environments.
+During client enrollment, install the read-only S3 environment file at
+`/etc/gradiated/artifact.env`, owned by `downloader:downloader` (UID 10003)
+with mode `0400`. Grant only `s3:GetObject` on the bucket's `bundles/*` prefix.
+The Nomad pre-start task runs `s5cmd` with eight parallel ranges, checks SHA-256,
+and extracts the trusted release into the shared allocation directory. It
+publishes the directory only after extraction succeeds. The model task cannot
+start if download or verification fails. Process restarts reuse this directory;
+a replacement allocation downloads its own copy.
+
+Do not put credentials in the image, job, bundle, or model environment. The
+`runtime` user cannot read the downloader credential file. The `downloader`
+user cannot read Nomad TLS keys. Terraform creates a read-only IAM user for
+each configured instance. Access keys are created outside Terraform and stored
+in the instance secret; no key values enter Terraform state.
+
+When enrolling a node with base v2, move the credentials from the old
+`/etc/nomad/artifact.env` location and remove that old file. The Nomad agent
+no longer needs S3 credentials. Install the new base before submitting the
+pre-start job; older bases lack the downloader user and tools.
 
 ## GPU rollout
 

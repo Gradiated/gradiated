@@ -71,8 +71,11 @@ job "deepseek-v4-1-flash" {
         }
       }
       config {
-        command = "/opt/gradiated/bin/runtime-launch"
+        # The agent can switch users; the model must retain none of its capabilities.
+        command = "/usr/bin/setpriv"
         args = [
+          "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
+          "/opt/gradiated/bin/runtime-launch",
           "${NOMAD_TASK_DIR}/runtime",
         ]
       }

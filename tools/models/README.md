@@ -12,9 +12,11 @@ the C++ launcher, SSH, and an unprivileged runtime account. It contains no
 model weights. The runtime archive contains Python, the packages from the
 pinned vLLM distribution, and the model launch scripts.
 
-PR checks build the base and verify runtime imports and CLI startup. Merges
+PR checks build the base and verify Python, runtime, and CLI module imports. Merges
 publish the base first, then build and verify the bundle against that exact
-base digest. Publication never bypasses the verification stage.
+base digest. Publication never bypasses the verification stage. The CUDA build
+requires a GPU even for CLI argument parsing. Full CLI startup, model serving,
+and recovery checks therefore run on the GPU qualification node.
 
 ## Change detection
 
@@ -37,10 +39,13 @@ workflow applies the private bucket and deployment-IAM changes on merge.
 A failed infrastructure run prevents runtime publication.
 
 During client enrollment, supply read-only S3 credentials in the Nomad
-agent's root-owned environment. Grant only `s3:GetObject` on the bucket's
+agent's private environment. Grant only `s3:GetObject` on the bucket's
 `bundles/*` prefix. The client forwards these variables to Nomad's artifact
 downloader. Do not put credentials in the image, job, bundle, or runtime user
-environment. Client credentials are not created by this PR.
+environment. Terraform creates a separate read-only IAM user for each configured instance.
+Access keys are created outside Terraform and stored in the instance secret.
+No key values enter Terraform state. The runtime user cannot read the agent
+credential files, and Nomad excludes AWS credentials from task environments.
 
 ## GPU rollout
 

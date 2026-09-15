@@ -641,3 +641,61 @@ SIGTERM-resistant descendant tests. A local Nomad 2.0.6 fixture also passed
 HTTPS download, checksum verification, extraction, entrypoint launch, and
 wrong-checksum rejection. Job and client configuration validation passed.
 This change does not qualify a real vLLM restart or deploy a GPU client.
+
+### Runtime user and EKS connectivity checks — 2026-09-15
+
+The user confirmed that `uv33dai39yeqe1` is the only remaining Runpod pod,
+that it serves no production traffic, and that it may be used for the
+DeepSeek migration. The older two-pod DeepSeek record is not current inventory.
+
+Measured: a Nomad 2.0.6 agent running as a separate Linux user with only
+SETUID, SETGID, CHOWN, and KILL capabilities started a raw-exec task under a
+second user. Allocation directories must be outside the private agent data
+directory. The task used `setpriv` to clear inherited and ambient capabilities
+and set `no_new_privs`. It reported zero effective and ambient capabilities,
+the expected runtime UID, and could not read the agent-owned synthetic key.
+The timed probe removed its processes, users, and temporary directories.
+
+The base now defines `nomad` (10002) and `runtime` (10001). Nomad's default
+environment denylist excludes AWS credential variables from task environments.
+The client restricts task drivers to raw_exec and denies tasks running as root
+or nomad. These controls do not provide cgroup resource isolation or contain a
+compromised Nomad agent.
+
+A one-day instance certificate and SSH/kubectl port-forward allowed initial
+registration with the EKS quorum. Nomad then learned the private advertised
+server addresses and could not reach them from Runpod. The client was stopped.
+This is evidence of TLS registration only, not stable EKS connectivity. Client
+certificates must use ECDSA or RSA keys: the client rejected an Ed25519 private
+key during initialization. No operator credential was copied to the GPU.
+
+The next experiment uses the same job and runtime on a temporary local Nomad
+server/client to test serving while public RPC endpoints remain unavailable.
+Budget: the existing pod only, no new GPU rental; two-hour test limit after
+bundle preparation. Preserve persistent model data. Test startup and one short
+request before a process failure and restart. Record exact bundle/base/model
+revisions, device UUIDs, readiness times, cleanup, and failures. Do not claim
+production migration or multi-node recovery from this local test.
+
+The reviewed infrastructure plans added only the instance IAM reader, its
+GetObject-only policy, and its secret container, plus the publisher's missing
+ECR layer-download permission. Applied on 2026-09-15. Real credential checks
+passed for reading a bundle-prefix marker and denied listing, writing,
+reading outside that prefix, and ECR access. The temporary marker was removed.
+The private key is stored in Secrets Manager and a mode-600 agent-owned file
+on the container filesystem; it is not on the mounted model volume.
+
+The Runpod model volume reports root ownership and mode 777 and rejects
+chown. The runtime user can write it. Startup now creates the model cache as
+runtime rather than trying to change its owner. Treat this volume as shared
+model storage, never as storage for agent credentials. The older root-owned
+cache initialization would stop the base entrypoint on this mount.
+
+A qualification archive built on the existing pod from the pinned distribution
+and repository packaging script has SHA-256
+`7391c834c1098369ab09422ab295830f0c219dc191edb5bcab37f6f37120c5ec`
+and size 6,789,591,133 bytes. It is a qualification artifact, not a published
+release. Bundle preparation took 6 minutes 12 seconds. The checkpoint download
+is pinned to `dba1be0a40aa45a94ad051997016db3960a90277` and has a two-hour
+watchdog. The existing 1000 GB volume held 467,206,164,992 bytes before download;
+the checkpoint plus a 16 GiB reserve fits that conservative decimal capacity.

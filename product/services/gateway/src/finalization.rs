@@ -25,3 +25,14 @@ impl From<FinalizationError> for GatewayError {
         Self::FinalizationUnavailable
     }
 }
+
+impl FinalizationError {
+    pub(crate) fn diagnostic_code(&self) -> &'static str {
+        match self {
+            Self::OrganizationMismatch => "organization_mismatch",
+            Self::Serialization(_) => "serialization",
+            Self::UnknownScriptResult(_) => "unexpected_script_result",
+            Self::Redis(_) => "redis",
+        }
+    }
+}

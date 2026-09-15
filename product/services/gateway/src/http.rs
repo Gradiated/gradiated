@@ -104,7 +104,7 @@ fn finish(
     result: Result<Response, GatewayError>,
 ) -> Response {
     if let Err(error) = &result {
-        tracing::warn!(
+        crate::diagnostics::limited_warn!(
             %generation_id,
             route,
             status = error.status().as_u16(),

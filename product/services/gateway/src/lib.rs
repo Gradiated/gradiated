@@ -6,6 +6,7 @@ pub mod completion;
 pub mod config;
 pub mod coordinator;
 pub mod deployment;
+mod diagnostics;
 pub mod domain;
 pub mod error;
 pub mod finalization;

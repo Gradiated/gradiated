@@ -576,6 +576,24 @@ pub enum ServingStateError {
     Iam(String),
 }
 
+impl ServingStateError {
+    /// A bounded classification; the underlying errors can contain private record data.
+    pub(crate) fn diagnostic_code(&self) -> &'static str {
+        match self {
+            Self::Redis(_) => "redis",
+            Self::UnexpectedPingResponse => "unexpected_ping",
+            Self::MalformedRecord { .. } => "malformed_record",
+            Self::MalformedAccount { .. } => "malformed_account",
+            Self::MismatchedModelId => "model_id_mismatch",
+            Self::MismatchedDeploymentId => "deployment_id_mismatch",
+            Self::UnknownDeploymentScriptResult(_) => "unexpected_script_result",
+            Self::UnsupportedOperation => "unsupported_operation",
+            Self::InvalidModelProperties(_) => "invalid_model_properties",
+            Self::Iam(_) => "iam",
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use chrono::{TimeDelta, TimeZone, Utc};

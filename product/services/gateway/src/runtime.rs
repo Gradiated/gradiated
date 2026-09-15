@@ -255,7 +255,7 @@ impl SglangClient {
         let response = tokio::time::timeout(response_header_timeout, upstream.send())
             .await
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+            .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
             let kind = match status {
@@ -269,7 +269,7 @@ impl SglangClient {
                 Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
                 Err(_) => NormalizedUsage::zero(),
             };
-            return Err(RuntimeFailure { kind, usage });
+            return Err(RuntimeFailure::with_usage(kind, usage).with_status(status));
         }
 
         let body = read_bounded_body(response).await?;
@@ -316,7 +316,7 @@ impl SglangClient {
         let response = tokio::time::timeout(response_header_timeout, upstream.send())
             .await
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+            .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
             return Err(RuntimeFailure::new(match status {
@@ -325,7 +325,8 @@ impl SglangClient {
                 }
                 StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
                 _ => RuntimeFailureKind::Unavailable,
-            }));
+            })
+            .with_status(status));
         }
         let body = read_bounded_body(response).await?;
         let native: NativeTokenResponse = serde_json::from_slice(&body)
@@ -422,7 +423,7 @@ impl SglangClient {
         let response = tokio::time::timeout(response_header_timeout, upstream.send())
             .await
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+            .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
             let kind = match status {
@@ -436,7 +437,7 @@ impl SglangClient {
                 Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
                 Err(_) => NormalizedUsage::zero(),
             };
-            return Err(RuntimeFailure { kind, usage });
+            return Err(RuntimeFailure::with_usage(kind, usage).with_status(status));
         }
         if response
             .headers()
@@ -449,7 +450,7 @@ impl SglangClient {
 
         let bytes = response
             .bytes_stream()
-            .map(|result| result.map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable)))
+            .map(|result| result.map_err(RuntimeFailure::from_transport))
             .scan(0_usize, |total, result| {
                 let result = result.and_then(|bytes| {
                     *total = total
@@ -510,7 +511,7 @@ impl SglangClient {
         let response = tokio::time::timeout(response_header_timeout, upstream.send())
             .await
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+            .map_err(RuntimeFailure::from_transport)?;
         if !response.status().is_success() {
             return Err(RuntimeFailure::new(match response.status() {
                 StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
@@ -518,7 +519,8 @@ impl SglangClient {
                 }
                 StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
                 _ => RuntimeFailureKind::Unavailable,
-            }));
+            })
+            .with_status(response.status()));
         }
         if response
             .headers()
@@ -530,7 +532,7 @@ impl SglangClient {
         }
         let bytes = response
             .bytes_stream()
-            .map(|result| result.map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable)))
+            .map(|result| result.map_err(RuntimeFailure::from_transport))
             .scan(0_usize, |total, result| {
                 let result = result.and_then(|bytes| {
                     *total = total
@@ -676,7 +678,7 @@ async fn read_bounded_body(mut response: reqwest::Response) -> Result<Vec<u8>, R
         let chunk = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, response.chunk())
             .await
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::Unavailable))?;
+            .map_err(RuntimeFailure::from_transport)?;
         let Some(chunk) = chunk else {
             break;
         };
@@ -1380,6 +1382,8 @@ pub enum RuntimeFailureKind {
 pub struct RuntimeFailure {
     kind: RuntimeFailureKind,
     usage: NormalizedUsage,
+    upstream_status: Option<u16>,
+    transport: Option<&'static str>,
 }
 
 impl RuntimeFailure {
@@ -1387,11 +1391,57 @@ impl RuntimeFailure {
         Self {
             kind,
             usage: NormalizedUsage::zero(),
+            upstream_status: None,
+            transport: None,
         }
     }
 
     pub(crate) fn with_usage(kind: RuntimeFailureKind, usage: NormalizedUsage) -> Self {
-        Self { kind, usage }
+        Self {
+            usage,
+            ..Self::new(kind)
+        }
+    }
+
+    fn with_status(mut self, status: StatusCode) -> Self {
+        self.upstream_status = Some(status.as_u16());
+        self
+    }
+
+    fn from_transport(error: reqwest::Error) -> Self {
+        // Never retain the error: its display/debug representation may include a private URL.
+        let mut failure = Self::new(RuntimeFailureKind::Unavailable);
+        failure.transport = Some(if error.is_timeout() {
+            "timeout"
+        } else if error.is_connect() {
+            "connect"
+        } else if error.is_body() {
+            "body"
+        } else if error.is_decode() {
+            "decode"
+        } else {
+            "transport"
+        });
+        failure
+    }
+
+    pub(crate) fn log_attempt(
+        &self,
+        generation_id: Uuid,
+        model_id: &str,
+        deployment_id: Uuid,
+        attempt: u8,
+        elapsed_ms: u64,
+        retry_selected: bool,
+    ) {
+        crate::diagnostics::limited_warn!(%generation_id, model_id, %deployment_id, attempt, phase = "dispatch",
+            elapsed_ms, retry_selected, failure_kind = ?self.kind,
+            upstream_status = self.upstream_status, transport = self.transport,
+            "runtime attempt failed");
+    }
+
+    pub(crate) fn transport_code(&self) -> Option<&'static str> {
+        self.transport
     }
 
     pub fn kind(&self) -> RuntimeFailureKind {
@@ -1829,6 +1879,40 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn transport_diagnostic_drops_private_url_and_correlates_attempt() {
+        let error = reqwest::Client::new()
+            .get("http://private-runtime.invalid/secret-path")
+            .timeout(Duration::ZERO)
+            .send()
+            .await
+            .unwrap_err();
+        let failure = RuntimeFailure::from_transport(error);
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        let generation_id = Uuid::from_u128(123);
+        failure.log_attempt(
+            generation_id,
+            "hosted-model",
+            Uuid::from_u128(456),
+            1,
+            20,
+            true,
+        );
+        let events = logs.events();
+        assert_eq!(events.len(), 1);
+        assert_eq!(
+            events[0]["fields"]["generation_id"],
+            generation_id.to_string()
+        );
+        assert_eq!(events[0]["fields"]["retry_selected"], true);
+        assert!(events[0]["fields"]["transport"].is_string());
+        assert!(!serde_json::to_string(&events)
+            .unwrap()
+            .contains("private-runtime"));
+        assert!(!format!("{failure:?}").contains("secret-path"));
+    }
+
+    #[tokio::test]
     async fn maps_overload_without_retrying_and_retains_valid_error_usage() {
         let response = json!({
             "error": {"message": "queue full"},
@@ -1852,6 +1936,22 @@ mod tests {
             .await
             .unwrap_err();
 
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        failure.log_attempt(
+            Uuid::from_u128(123),
+            "hosted-model",
+            Uuid::from_u128(456),
+            1,
+            20,
+            false,
+        );
+        let events = logs.events();
+        assert_eq!(events[0]["fields"]["upstream_status"], 429);
+        assert!(!serde_json::to_string(&events)
+            .unwrap()
+            .contains("queue full"));
+        assert_eq!(failure.upstream_status, Some(429));
         assert_eq!(failure.kind(), RuntimeFailureKind::CapacityExceeded);
         assert_eq!(failure.gateway_error(), GatewayError::CapacityExceeded);
         assert_eq!(failure.usage().input_tokens(), 2);

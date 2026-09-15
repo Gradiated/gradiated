@@ -62,7 +62,28 @@ pub fn healthy_installed_concurrency(
         .sum()
 }
 
+/// Counts only the first rejection reason for each candidate; never contains endpoints.
+#[derive(Default, Debug, Eq, PartialEq)]
+pub(crate) struct RouteDiagnostics {
+    pub candidates: usize,
+    pub unavailable: usize,
+    pub invalid_deployment: usize,
+    pub release_mismatch: usize,
+    pub missing_status: usize,
+    pub invalid_status: usize,
+    pub revision_mismatch: usize,
+    pub stale_status: usize,
+    pub unhealthy: usize,
+    pub at_capacity: usize,
+}
+
 pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
+    order_deployments_diagnosed(input).0
+}
+
+pub(crate) fn order_deployments_diagnosed(
+    input: RouteInput<'_>,
+) -> (RouteAvailability, RouteDiagnostics) {
     let RouteInput {
         workspace_id,
         model_id,
@@ -77,22 +98,42 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
         .iter()
         .map(|status| (status.deployment_id, status))
         .collect();
+    let mut diagnostics = RouteDiagnostics {
+        candidates: deployments.len(),
+        ..Default::default()
+    };
     let mut healthy = Vec::new();
     for deployment in deployments {
-        if deployment.status != DeploymentStatus::Available
-            || deployment.validate().is_err()
-            || deployment.served_release_digest().ok().as_deref() != Some(release_digest)
-        {
+        let rejection = if deployment.status != DeploymentStatus::Available {
+            Some(&mut diagnostics.unavailable)
+        } else if deployment.validate().is_err() {
+            Some(&mut diagnostics.invalid_deployment)
+        } else if deployment.served_release_digest().ok().as_deref() != Some(release_digest) {
+            Some(&mut diagnostics.release_mismatch)
+        } else {
+            None
+        };
+        if let Some(count) = rejection {
+            *count += 1;
             continue;
         }
         let Some(status) = statuses.get(&deployment.id) else {
+            diagnostics.missing_status += 1;
             continue;
         };
-        if status.validate().is_err()
-            || status.runtime_revision != deployment.release.runtime_revision
-            || !status.is_fresh_at(now, MAXIMUM_STATUS_AGE)
-            || !status.healthy
-        {
+        let rejection = if status.validate().is_err() {
+            Some(&mut diagnostics.invalid_status)
+        } else if status.runtime_revision != deployment.release.runtime_revision {
+            Some(&mut diagnostics.revision_mismatch)
+        } else if !status.is_fresh_at(now, MAXIMUM_STATUS_AGE) {
+            Some(&mut diagnostics.stale_status)
+        } else if !status.healthy {
+            Some(&mut diagnostics.unhealthy)
+        } else {
+            None
+        };
+        if let Some(count) = rejection {
+            *count += 1;
             continue;
         }
         healthy.push(RoutedDeployment {
@@ -101,15 +142,17 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
         });
     }
     if healthy.is_empty() {
-        return RouteAvailability::Unavailable;
+        return (RouteAvailability::Unavailable, diagnostics);
     }
+    let healthy_count = healthy.len();
     healthy.retain(|candidate| {
         statuses
             .get(&candidate.deployment.id)
             .is_some_and(|status| status.accepting_requests)
     });
+    diagnostics.at_capacity = healthy_count - healthy.len();
     if healthy.is_empty() {
-        return RouteAvailability::AtCapacity;
+        return (RouteAvailability::AtCapacity, diagnostics);
     }
 
     let route_key = route_key(
@@ -123,7 +166,7 @@ pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
         rendezvous_score(&route_key, right.deployment.id)
             .cmp(&rendezvous_score(&route_key, left.deployment.id))
     });
-    RouteAvailability::Ready(healthy)
+    (RouteAvailability::Ready(healthy), diagnostics)
 }
 
 fn route_key(
@@ -196,6 +239,44 @@ mod tests {
             maximum_concurrency: 4,
             reason_code: None,
         }
+    }
+
+    #[test]
+    fn diagnoses_missing_stale_mismatched_and_busy_deployments_without_changing_routing() {
+        let now = Utc::now();
+        let deployments = (1..=5).map(deployment).collect::<Vec<_>>();
+        let digest = deployments[0].served_release_digest().unwrap();
+        let mut statuses = deployments[1..]
+            .iter()
+            .map(|d| status(d, now))
+            .collect::<Vec<_>>();
+        statuses[0].received_at = now - TimeDelta::seconds(16);
+        statuses[1].runtime_revision = "different".to_owned();
+        statuses[2].healthy = false;
+        statuses[3].accepting_requests = false;
+        let (availability, diagnostics) = order_deployments_diagnosed(RouteInput {
+            workspace_id: Uuid::from_u128(9),
+            model_id: "model",
+            release_digest: &digest,
+            session_id: None,
+            input_ids: &[1],
+            deployments: &deployments,
+            statuses: &statuses,
+            now,
+        });
+        assert_eq!(availability, RouteAvailability::AtCapacity);
+        assert_eq!(
+            diagnostics,
+            RouteDiagnostics {
+                candidates: 5,
+                missing_status: 1,
+                stale_status: 1,
+                revision_mismatch: 1,
+                unhealthy: 1,
+                at_capacity: 1,
+                ..Default::default()
+            }
+        );
     }
 
     #[test]

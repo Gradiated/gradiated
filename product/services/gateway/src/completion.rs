@@ -19,12 +19,12 @@ use tokio::{
 use uuid::Uuid;
 
 use crate::{
-    metrics::AdmittedGenerationMetrics, order_deployments, protocol::StreamItem, BoundedRequest,
-    CancellationOwner, FinalizationOutcome, GatewayConfig, GatewayError, GatewayMetrics,
-    GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming, ModelRuntime,
-    ModelTokenizer, NormalizedUsage, PricedUsage, RequestCoordinator, RequestMetadata,
-    RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind,
-    RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
+    metrics::AdmittedGenerationMetrics, protocol::StreamItem, routing::order_deployments_diagnosed,
+    BoundedRequest, CancellationOwner, FinalizationOutcome, GatewayConfig, GatewayError,
+    GatewayMetrics, GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming,
+    ModelRuntime, ModelTokenizer, NormalizedUsage, PricedUsage, RequestCoordinator,
+    RequestMetadata, RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure,
+    RuntimeFailureKind, RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
 };
 
 const FINALIZATION_ATTEMPTS: usize = 3;
@@ -231,19 +231,29 @@ impl CompletionService {
             .serving_state
             .model(&request.request.model)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
+                    model_id = %request.request.model, phase = "catalog_read",
+                    error_code = error.diagnostic_code(), "routing dependency failed");
+                GatewayError::ServingStateUnavailable
+            })?
             .ok_or(GatewayError::RuntimeUnavailable)?;
         let statuses = self
             .serving_state
             .deployment_statuses(&request.served_release_digest)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
+                    model_id = %request.request.model, phase = "deployment_status_read",
+                    error_code = error.diagnostic_code(), "routing dependency failed");
+                GatewayError::ServingStateUnavailable
+            })?;
         let input_ids = request
             .request
             .encoded_input_ids
             .as_deref()
             .ok_or(GatewayError::ServingStateUnavailable)?;
-        let candidates = order_deployments(RouteInput {
+        let (candidates, diagnostics) = order_deployments_diagnosed(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
             release_digest: &request.served_release_digest,
@@ -254,6 +264,19 @@ impl CompletionService {
             now: Utc::now(),
         });
         let RouteAvailability::Ready(candidates) = candidates else {
+            crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
+                model_id = %request.request.model, phase = "routing",
+                candidates = diagnostics.candidates,
+                unavailable = diagnostics.unavailable,
+                invalid_deployment = diagnostics.invalid_deployment,
+                release_mismatch = diagnostics.release_mismatch,
+                missing_status = diagnostics.missing_status,
+                invalid_status = diagnostics.invalid_status,
+                revision_mismatch = diagnostics.revision_mismatch,
+                stale_status = diagnostics.stale_status,
+                unhealthy = diagnostics.unhealthy,
+                at_capacity = diagnostics.at_capacity,
+                "no eligible runtime deployment");
             return Err(match candidates {
                 RouteAvailability::AtCapacity => GatewayError::CapacityExceeded,
                 RouteAvailability::Unavailable => GatewayError::RuntimeUnavailable,
@@ -275,13 +298,23 @@ impl CompletionService {
                     candidate.maximum_concurrency,
                 )
                 .await
-                .map_err(|_| GatewayError::ServingStateUnavailable)?
+                .map_err(|error| {
+                    crate::diagnostics::limited_warn!(%generation_id, deployment_id = %candidate.deployment.id,
+                        phase = "capacity_reserve", error_code = error.diagnostic_code(),
+                        "deployment capacity reservation failed");
+                    GatewayError::ServingStateUnavailable
+                })?
             {
                 selected = Some(candidate.clone());
                 break;
             }
         }
-        let active = selected.ok_or(GatewayError::CapacityExceeded)?;
+        let active = selected.ok_or_else(|| {
+            crate::diagnostics::limited_warn!(%generation_id, model_id = %request.request.model,
+                phase = "capacity_reserve", candidates_attempted = candidates.len().min(MAXIMUM_RESERVATION_ATTEMPTS),
+                "deployment capacity exhausted");
+            GatewayError::CapacityExceeded
+        })?;
         bounded.qualified.deployment = active.deployment.clone();
         let remaining = candidates
             .into_iter()
@@ -569,6 +602,8 @@ impl GenerationTask {
         let mut route = route;
         let mut retry_used = false;
         let (usage, terminal, response) = loop {
+            let attempt_started = std::time::Instant::now();
+            let attempt = if retry_used { 2 } else { 1 };
             let attempt_deployment = deployment.clone();
             let runtime_call = runtime.complete(
                 &attempt_deployment,
@@ -624,9 +659,25 @@ impl GenerationTask {
                         reserve_retry(&serving_state, generation_id, &mut route, failure.kind())
                             .await
                     {
+                        failure.log_attempt(
+                            generation_id,
+                            &request.model,
+                            deployment.id,
+                            attempt,
+                            attempt_started.elapsed().as_millis() as u64,
+                            true,
+                        );
                         deployment = next;
                         continue;
                     }
+                    failure.log_attempt(
+                        generation_id,
+                        &request.model,
+                        deployment.id,
+                        attempt,
+                        attempt_started.elapsed().as_millis() as u64,
+                        false,
+                    );
                     break (
                         failure.usage(),
                         GenerationEnd::from_runtime_failure(failure.kind()),
@@ -634,6 +685,14 @@ impl GenerationTask {
                     );
                 }
                 Err(failure) => {
+                    failure.log_attempt(
+                        generation_id,
+                        &request.model,
+                        deployment.id,
+                        attempt,
+                        attempt_started.elapsed().as_millis() as u64,
+                        false,
+                    );
                     break (
                         failure.usage(),
                         GenerationEnd::from_runtime_failure(failure.kind()),
@@ -710,6 +769,8 @@ impl StreamingGenerationTask {
         let mut route = route;
         let mut retry_used = false;
         let mut runtime_stream = loop {
+            let attempt_started = std::time::Instant::now();
+            let attempt = if retry_used { 2 } else { 1 };
             let attempt_deployment = deployment.clone();
             let stream_call = runtime.stream(
                 &attempt_deployment,
@@ -749,10 +810,26 @@ impl StreamingGenerationTask {
                         reserve_retry(&serving_state, generation_id, &mut route, failure.kind())
                             .await
                     {
+                        failure.log_attempt(
+                            generation_id,
+                            &request.model,
+                            deployment.id,
+                            attempt,
+                            attempt_started.elapsed().as_millis() as u64,
+                            true,
+                        );
                         deployment = next;
                         continue;
                     }
                     release_active_route(&serving_state, generation_id, &mut route).await;
+                    failure.log_attempt(
+                        generation_id,
+                        &request.model,
+                        deployment.id,
+                        attempt,
+                        attempt_started.elapsed().as_millis() as u64,
+                        false,
+                    );
                     let public_error = failure.gateway_error();
                     let result = settlement
                         .settle(
@@ -768,6 +845,14 @@ impl StreamingGenerationTask {
                 }
                 Err(failure) => {
                     release_active_route(&serving_state, generation_id, &mut route).await;
+                    failure.log_attempt(
+                        generation_id,
+                        &request.model,
+                        deployment.id,
+                        attempt,
+                        attempt_started.elapsed().as_millis() as u64,
+                        false,
+                    );
                     let public_error = failure.gateway_error();
                     let result = settlement
                         .settle(
@@ -812,15 +897,19 @@ impl StreamingGenerationTask {
         ));
         tokio::pin!(deadline);
 
+        let mut terminal_reason = "client_disconnect";
+        let mut stream_failure = None;
         let terminal = loop {
             tokio::select! {
                 _ = events.closed() => {
                     break GenerationEnd::Cancelled(CancellationOwner::Client);
                 }
                 _ = &mut deadline => {
+                    terminal_reason = "deadline";
                     break GenerationEnd::Cancelled(CancellationOwner::Server);
                 }
                 _ = force_shutdown_requested(&mut shutdown) => {
+                    terminal_reason = "shutdown";
                     break GenerationEnd::Cancelled(CancellationOwner::Server);
                 }
                 event = runtime_stream.next_event() => {
@@ -830,6 +919,7 @@ impl StreamingGenerationTask {
                                 if usage.input_tokens() != expected_input_tokens
                                     || !usage_is_monotonic(latest_usage, usage)
                                 {
+                                    terminal_reason = "invalid_usage";
                                     break GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
                                 }
                                 latest_usage = usage;
@@ -843,8 +933,9 @@ impl StreamingGenerationTask {
                             let delivery = tokio::select! {
                                 result = events.send(item) => result
                                     .map_err(|_| CancellationOwner::Client),
-                                _ = &mut deadline => Err(CancellationOwner::Server),
+                                _ = &mut deadline => { terminal_reason = "deadline"; Err(CancellationOwner::Server) },
                                 _ = force_shutdown_requested(&mut shutdown) => {
+                                    terminal_reason = "shutdown";
                                     Err(CancellationOwner::Server)
                                 },
                             };
@@ -864,6 +955,7 @@ impl StreamingGenerationTask {
                             );
                         }
                         Ok(Some(RuntimeStreamEvent::Done) | None) => {
+                            terminal_reason = "incomplete_stream";
                             break GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
                         }
                         Err(failure) => {
@@ -874,12 +966,27 @@ impl StreamingGenerationTask {
                             {
                                 latest_usage = failure_usage;
                             }
-                            break GenerationEnd::from_runtime_failure(failure.kind());
+                            terminal_reason = "runtime_failure";
+                            let kind = failure.kind();
+                            stream_failure = Some(failure);
+                            break GenerationEnd::from_runtime_failure(kind);
                         }
                     }
                 }
             }
         };
+        if !matches!(
+            terminal,
+            GenerationEnd::Succeeded(_) | GenerationEnd::Cancelled(CancellationOwner::Client)
+        ) {
+            crate::diagnostics::limited_warn!(%generation_id, model_id = %request.model, deployment_id = %deployment.id,
+                phase = "stream", reason = terminal_reason,
+                failure_kind = ?stream_failure.as_ref().map(RuntimeFailure::kind),
+                transport = stream_failure.as_ref().and_then(RuntimeFailure::transport_code),
+                usable_output_delivered,
+                elapsed_ms = (Utc::now() - started_at).num_milliseconds().max(0),
+                "generation stream terminated abnormally");
+        }
         drop(runtime_stream);
         release_active_route(&serving_state, generation_id, &mut route).await;
 
@@ -929,9 +1036,21 @@ async fn release_active_route(
     let Some(active) = route.as_mut().and_then(|route| route.active.take()) else {
         return;
     };
-    let _ = serving_state
-        .release_deployment_capacity(generation_id, active.deployment.id)
-        .await;
+    release_capacity(serving_state, generation_id, active.deployment.id).await;
+}
+
+async fn release_capacity(
+    serving_state: &Arc<dyn ServingState>,
+    generation_id: Uuid,
+    deployment_id: Uuid,
+) {
+    if let Err(error) = serving_state
+        .release_deployment_capacity(generation_id, deployment_id)
+        .await
+    {
+        crate::diagnostics::limited_warn!(%generation_id, %deployment_id, phase = "capacity_release",
+            error_code = error.diagnostic_code(), "deployment capacity release failed");
+    }
 }
 
 async fn reserve_retry(
@@ -943,9 +1062,7 @@ async fn reserve_retry(
     let route = route.as_mut()?;
     let prior = route.active.as_ref()?.deployment.clone();
     let active = route.active.take()?;
-    let _ = serving_state
-        .release_deployment_capacity(generation_id, active.deployment.id)
-        .await;
+    release_capacity(serving_state, generation_id, active.deployment.id).await;
 
     route.remaining.sort_by_key(|candidate| {
         let same_fault_domain = candidate.deployment.fault_domain == prior.fault_domain;
@@ -972,6 +1089,11 @@ async fn reserve_retry(
                 candidate.maximum_concurrency,
             )
             .await
+            .map_err(|error| {
+                crate::diagnostics::limited_warn!(%generation_id, deployment_id = %candidate.deployment.id,
+                    phase = "retry_reservation", error_code = error.diagnostic_code(),
+                    "deployment capacity reservation failed");
+            })
             .ok()?;
         if acquired {
             let selected = candidate;
@@ -1158,6 +1280,10 @@ async fn finalize_with_retry(
         }
     }
     metrics.record_finalization_failure();
+    tracing::error!(%generation_id, %organization_id, phase = "finalization",
+        attempts = FINALIZATION_ATTEMPTS,
+        error_code = last_error.as_ref().map(|error| error.diagnostic_code()),
+        "generation settlement retries exhausted");
     match last_error {
         Some(error) => Err(error.into()),
         None => Err(GatewayError::FinalizationUnavailable),
@@ -1809,6 +1935,8 @@ mod tests {
 
     #[tokio::test]
     async fn unconfirmed_finalization_withholds_the_successful_response() {
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
         let state = Arc::new(FakeServingState::new(FINALIZATION_ATTEMPTS));
         let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
         let (_cancel, cancellation) = oneshot::channel();
@@ -1823,6 +1951,15 @@ mod tests {
             FINALIZATION_ATTEMPTS
         );
         assert!(state.finalized.lock().unwrap().is_empty());
+        let events = logs.events();
+        let failures = events
+            .iter()
+            .filter(|event| event["fields"]["phase"] == "finalization")
+            .collect::<Vec<_>>();
+        assert_eq!(failures.len(), 1);
+        assert_eq!(failures[0]["level"], "ERROR");
+        assert_eq!(failures[0]["fields"]["attempts"], FINALIZATION_ATTEMPTS);
+        assert!(failures[0]["fields"]["generation_id"].is_string());
     }
 
     #[tokio::test]
@@ -1897,6 +2034,53 @@ mod tests {
         assert_eq!(finalized[0]["usage"]["output_tokens"], 2);
         assert_eq!(finalized[0]["outcome"]["usable_output_delivered"], true);
         assert!(finalized[0]["timing"]["first_token_at"].is_string());
+    }
+
+    #[tokio::test]
+    async fn logs_incomplete_stream_after_response_start_without_payload() {
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        let state = Arc::new(FakeServingState::new(0));
+        let runtime = Arc::new(StreamingRuntime {
+            events: Mutex::new(Some(VecDeque::from([
+                Ok(RuntimeStreamEvent::Chunk(
+                    RuntimeStreamChunk::from_normalized_parts(
+                        json!({"choices":[{"delta":{"content":"private-output-canary"}}]}),
+                        None,
+                        None,
+                        true,
+                        false,
+                    ),
+                )),
+                Ok(RuntimeStreamEvent::Done),
+            ]))),
+        });
+        let service = CompletionService::new(
+            state.clone(),
+            runtime,
+            ModelTokenizer::new().unwrap(),
+            Arc::new(config()),
+        );
+        let mut bounded = bounded_request();
+        bounded.qualified.request.stream = true;
+        let generation_id = bounded.qualified.metadata.generation_id;
+        let streaming = service.stream_bounded(bounded).await.unwrap();
+        let _items = streaming.into_stream().collect::<Vec<_>>().await;
+        let events = logs.events();
+        let failure = events
+            .iter()
+            .find(|event| event["fields"]["phase"] == "stream")
+            .unwrap();
+        assert_eq!(
+            failure["fields"]["generation_id"],
+            generation_id.to_string()
+        );
+        assert_eq!(failure["fields"]["reason"], "incomplete_stream");
+        assert_eq!(failure["fields"]["usable_output_delivered"], true);
+        assert!(!serde_json::to_string(&events)
+            .unwrap()
+            .contains("private-output-canary"));
+        assert_eq!(state.finalized.lock().unwrap()[0]["status"], "failed");
     }
 
     #[tokio::test]

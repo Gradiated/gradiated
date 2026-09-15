@@ -831,6 +831,24 @@ They must not contain:
 - private SGLang URLs or secret references;
 - raw upstream response or error bodies.
 
+Failure diagnostics are emitted at lifecycle boundaries, not for tokens or successful
+requests. Routing failures include candidate counts by exclusion reason (including
+missing/stale status, release/revision mismatch and capacity); runtime attempts
+include deployment ID, attempt, upstream HTTP status, bounded transport/failure
+class, elapsed time and retry selection. Streaming failures after response startup
+include a terminal reason and whether usable output was delivered. Ordinary client
+disconnects do not produce warnings. Capacity cleanup and exhausted settlement
+retries have explicit diagnostics; settlement errors are never sampled. Dependency
+readiness logs initial failure, failure transitions and recovery, not each probe.
+
+Request-failure warnings, including the HTTP rejection summary, are limited to ten
+per second per call site per gateway process. The next emitted event reports the
+number suppressed at that site; no payloads or per-customer maps are retained.
+Metrics remain unsampled. Under this limit, use `generation_id` (also returned as
+`x-generation-id`) to correlate the HTTP summary with the detailed lifecycle event.
+During an outage a sampled generation may have only one of those events. These
+logs do not create ClickHouse generation rows for pre-admission rejections.
+
 Initial Prometheus instruments cover:
 
 - request totals by route, HTTP status, and bounded error class;

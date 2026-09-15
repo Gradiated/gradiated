@@ -1,1 +1,0 @@
-{"default_non_reasoning":true,"max_nll_delta":0.03,"max_tokens":128,"minimum_scored_tokens":128,"model":"google/gemma-4-31B-it","repetitions":2,"revision":"b9ea41a2887d8607f594846523f94c6cc75ac8a4","temperature":0.0,"top_p":1.0}

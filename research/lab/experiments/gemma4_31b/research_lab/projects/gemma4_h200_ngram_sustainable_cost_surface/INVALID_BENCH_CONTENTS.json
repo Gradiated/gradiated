@@ -1,7 +1,0 @@
-{
-  "project": "gemma4_h200_ngram_sustainable_cost_surface",
-  "result": "invalid_consumer_attempt_no_valid_sample",
-  "server_state": "No container, worker, or GPU process remains; retained checkpoint, image, and caches are available until the short watchdog.",
-  "artifacts": "Remote OWNER.log preserves the context-length HTTP 400.",
-  "actual_spend_usd_pending": true
-}

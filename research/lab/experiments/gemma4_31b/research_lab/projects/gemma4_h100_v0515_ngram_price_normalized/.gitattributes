@@ -1,2 +1,0 @@
-evidence/*.stderr -diff
-packet/candidate-v0.5.15/diffs/*.patch -diff

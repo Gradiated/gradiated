@@ -1,9 +1,0 @@
-{
-  "adapter_sha256": "d8838c09048ec7fd20ffbe8ddc4a259467000f1a5ed0a8d8063622812ad908ae",
-  "candidate_gemma4_causal_sha256": "3f429439ce1def9e882055e1e49b7a26e2fd2b13da2685b25ff5aa4ecdb1d1c9",
-  "candidate_import": "fixed_floor_crossop_endpoint_adapter",
-  "candidate_invocation_proof": "FIXED_FLOOR_CROSSOP_AUDIT JSONL emits local/global QKV-to-E5M2 cache commits",
-  "runtime_source": "/root/workspace/research/sol/experiments/gemma4_31b/research_lab/projects/gemma4_h200_fixed_floor_crossop_executor/inputs/pinned_source/gemma4_causal.py",
-  "runtime_source_sha256": "bc8bc948a89e82b2118c32d380497ce76a568b8839c7f02150195af93a0e8989",
-  "schema_version": 1
-}

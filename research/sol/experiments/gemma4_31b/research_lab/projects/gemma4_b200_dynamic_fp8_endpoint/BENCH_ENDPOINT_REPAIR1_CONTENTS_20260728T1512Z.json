@@ -1,5 +1,0 @@
-{
-  "artifacts": "DIRECTOR_B200_DYNAMIC_FP8_ENDPOINT_REPAIR1_20260728T1512Z.json binds one pre-science Bash declaration repair and same-claim replacement owner.",
-  "next": "Only gemma4_b200_dynamic_fp8_endpoint owns the continuous claim. Replace exact owner 3254267/136744835 after hash-bound repair request, start repair-1 by 2026-07-28T15:18:00Z, and release by 2026-07-28T16:35:00Z.",
-  "server_state": "No endpoint server or scientific request started; endpoint worker exited while entering the first arm due to a local unbound-variable declaration."
-}

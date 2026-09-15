@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "state": "repair_requested",
-  "requested_at_utc": "2026-07-25T17:44:29.539037401Z",
-  "ready_sha256": "ae1a960e0c63a5bb2f688d3352e40bb142746aba8e1af8fe4093286317643793",
-  "retry_scope": "endpoint_consumer_only; reuse retained resident server/checkpoint/image; resume at endpoint_pair.py with fresh pair output root; guard-control and any complete arm only if terminal/persisted/raw evidence proves completion; never rerun component or NCU producer",
-  "patch_artifact": "endpoint_pair.py",
-  "packet_path": "endpoint_pair.py"
-}

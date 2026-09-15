@@ -1,9 +1,0 @@
-{
-  "classification": "cycle_oracle",
-  "cycles_evaluated": 112,
-  "first_cycle": null,
-  "first_divergence_phase": null,
-  "first_divergent_field": null,
-  "pass": true,
-  "schema_version": 1
-}

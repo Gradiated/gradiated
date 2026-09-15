@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "classification": "profile_window_repair_authorized",
-  "scientific_question_unchanged": true,
-  "resolved": true,
-  "retry_scope": "exact c32 16-step CPU+CUDA trace only",
-  "reuse": "same retained claim, checkpoint, image, launch binding, workload, concurrency, NGRAM settings, and outer owner",
-  "amendment": "start the profiler only after all 32 streams have emitted their first token; preserve the failed prefill trace"
-}

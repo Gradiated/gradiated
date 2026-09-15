@@ -1,2 +1,0 @@
-FROM glm-vllm:0.15.0-transformers-1618d44@sha256:4672d4aa966cf5f4d437d9f7fd9fb4d1b662a067455f3db46d2ab6cce3f3f62c
-RUN python3 -m pip install --no-cache-dir --disable-pip-version-check peft==0.19.1

@@ -1,3 +1,0 @@
-# The exact checkpoint bytes were materialized locally for the hash-bound GPU
-# invocation. Preserve them in the workspace, but never publish model payloads.
-/inputs/checkpoint/

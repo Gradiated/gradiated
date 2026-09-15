@@ -1,3 +1,0 @@
-# Preserve retrieved tool logs byte-for-byte; compiler output may contain
-# trailing spaces that are meaningful to artifact hash/replay comparisons.
-/artifacts/** -whitespace

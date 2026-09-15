@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "director_binding": "DIRECTOR_H100_REMOTE_COMMAND_RECOVERY_20260726T1700Z.json",
-  "director_binding_sha256": "115347e35a1be52ed420bd4df282d28bcc7b8d6bc118d9d412e9eeb521f4ab17",
-  "repair_scope": "Preserve the verified remote packet; create artifacts/h100-component before redirection and pass bash -lc plus its complete payload as one shlex-quoted SSH remote command. The exact component command and scientific packet are unchanged.",
-  "run_h100_owner_sha256": "88f29d980ec819c79fa110085b9e6ea2e272ac715127afc40fd8a955fbc49a18",
-  "gpu_claim_allowed": false
-}

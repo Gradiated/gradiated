@@ -1,5 +1,10 @@
 # Inference Foundry Development Instructions
 
+## Repository hygiene
+
+Historical research campaigns have been removed. Keep reusable source, tests, and required fixtures. Put new run logs and generated output under ignored `.agents/runtime/`. Do not create dated reports, evidence folders, handoff files, ledgers, or experiment trees unless the user explicitly requests them. Use an existing README for lasting operating instructions. This rule takes precedence over the reporting requirements below.
+
+
 - Continue autonomously through reversible, in-scope engineering and research decisions. Do not ask the user to select the next test, approve a safe retry with a materially changed hypothesis, inspect routine output, or confirm an evidence-backed choice.
 - Research progress is valid model/workload evidence and decisions, not preparation. Treat an assigned project brief and its content-bound references as the director's admission decision. Check mutable launch facts once in a grouped command, then run; revisit history only when a current observation contradicts it.
 - A failed placement, provider/API fault, unavailable GPU, incompatible runtime, negative result, or killed hypothesis is evidence about one lineage, not a campaign blocker. If the workload never reached the GPU, prefer one material correction or the last launcher that produced a valid result, then continue with a fresh matched control.

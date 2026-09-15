@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "classification": "fresh_h200_v8_owner_lifecycle_repair",
-  "binding": {"path":"DIRECTOR_STREAMING_GLOBAL_KV_FRESH_H200_V8_IMPLEMENT_AND_EXECUTE_20260729T1324Z.json","sha256":"d69c2d5f8f29e40268d11e339468e5650174134ade1e7565d99aa83589e720d0"},
-  "source_owner":{"path":"run_streaming_global_kv_h200_owner_v7.sh","sha256":"7db91f0e0340de46947bc12c4543835bbc8b47039b0ea0b1b05fd8699af4a308"},
-  "final_owner":{"path":"run_streaming_global_kv_h200_owner_v8.sh","sha256":"620be2bd084f28dda5cbbc1a17a51b900f1192a6c34ce8c700000156ba56d539"},
-  "repairs":["guest-only streaming SHA-256 checksum verification","streaming local hash verification","retained post-claim staging repair","separate staging and server deadlines","atomic claim generation and generation-fenced release retained"],
-  "scientific_identities_unchanged":true
-}

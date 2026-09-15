@@ -1,9 +1,0 @@
-{
-  "project": "gemma4_h200_dflash_endpoint",
-  "result": "adapted DFlash four-request diagnostic reached real drafting and target verification but failed deterministic token equality for 2 of 4 requests",
-  "terminal": "gemma4_h200_dflash_endpoint/TIED_HEAD_ADAPTER_H200_TERMINAL.json",
-  "server_state": "DFlash container stopped after final logs and inspect retrieval; exact target, draft, source, image, caches, and resident manifest remain on disk",
-  "c32_pair_started": false,
-  "actual_spend_usd": 10.61,
-  "artifacts": "gemma4_h200_dflash_endpoint/artifacts/dflash-diagnostic-repair*"
-}

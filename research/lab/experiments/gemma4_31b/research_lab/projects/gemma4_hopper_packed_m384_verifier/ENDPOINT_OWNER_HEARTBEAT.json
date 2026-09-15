@@ -1,6 +1,0 @@
-{
-  "at_utc": "2026-07-26T18:23:49.724256Z",
-  "exit": 0,
-  "stderr": "",
-  "stdout": "ky3jvm7m53gqwda\",\n    \"disk_name\": \"gemma4-h100-paged-fp8-20260726t1536z-boot\",\n    \"instance_id\": \"computeinstance-e00mkpyvykfak0bg1m\",\n    \"instance_name\": \"gemma4-h100-paged-fp8-20260726t1536z\",\n    \"known_hosts_namespace\": \"/root/.config/nebius/glm-campaign/known_hosts\",\n    \"public_ipv4\": \"89.169.109.0\",\n    \"ssh_ed25519_fingerprint\": \"SHA256:QmMzoOOoCH6C4OBDN/EWgbVtH3QpZpjAvfoanqLUqoE\",\n    \"ssh_user\": \"glmrunner\"\n  },\n  \"status\": \"claimed\",\n  \"updated_at\": \"2026-07-26T18:23:49.709355Z\"\n}\n"
-}

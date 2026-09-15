@@ -40,7 +40,7 @@ export const manifest = ({ source, baseImage, baseId, digest, bucket }) => {
     baseImage,
     baseId,
     sha256: digest,
-    url: `s3::https://s3.us-east-1.amazonaws.com/${bucket}/bundles/sha256/${digest}.tar.gz`,
+    url: `s3::https://${bucket}.s3.us-east-1.amazonaws.com/bundles/sha256/${digest}.tar.gz`,
   };
 };
 const aws = (...args) => execFileSync("aws", args, { encoding: "utf8" });

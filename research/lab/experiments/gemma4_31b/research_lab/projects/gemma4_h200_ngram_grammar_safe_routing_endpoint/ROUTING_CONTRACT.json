@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "classification": "grammar_safe_native_ngram_routing",
-  "rule": "any(req.grammar) => ScheduleBatch.spec_algorithm=NONE; otherwise preserve server NGRAM algorithm",
-  "mixed_batch": "whole_batch_autoregressive_fallback",
-  "source_boundary": "ScheduleBatch.init_new",
-  "grammar_fields": ["json_schema", "regex", "ebnf", "structural_tag"],
-  "candidate_symbol": "sitecustomize._init_new_with_grammar_fallback"
-}

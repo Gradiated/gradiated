@@ -1,8 +1,0 @@
-{
-  "authority": "DIRECTOR_EXACT_REQUEST_STATE_CAPTURE.json and latest director decision at 2026-07-25T22:49Z",
-  "classification": "controller_preflight_amendment",
-  "decision": "The older local predecessor-file gate is informational only for this re-admitted capture.",
-  "reason": "The latest director reconciliation establishes that both predecessor component phases are terminal and that this project is the sole warm-bench claimant. The current FP8 STATUS terminal filename is stale relative to that reconciliation.",
-  "scope": "Only the request-state capture owner's local predecessor preflight; immutable packet, model, runtime, workload, observer, and scientific arms remain unchanged.",
-  "schema_version": 1
-}

@@ -1,9 +1,0 @@
-# Research log
-
-## 2026-07-27T04:10Z — pre-science launcher amendment
-
-Question: run the single preregistered checkpoint-tensor selector. Action: the first shell command used an optional `/usr/bin/time` wrapper. Evidence: the shell returned `127` because that binary is absent; Python never started, no tensor was scored, and no scientific sample was consumed. Interpretation: ordinary local launcher defect. Next move: remove only the redundant wrapper and run the unchanged hash-bound selector, whose own resource accounting is sufficient.
-
-## 2026-07-27T04:11Z — offline layer-importance terminal
-
-Question: can one content-addressed signal choose a stronger five-global placement than the settled alternating comparator without changing attention work? Action: preregistered the RMS of each stock global layer's learned post-attention RMSNorm weight, hashed the exact checkpoint/source inputs, read the ten 10,752-byte BF16 tensors in place, and retained the top five with a lower-layer tie-break. Evidence: ranking `59,41,35,29,53,23,47,17,11,5`; retained set `{29,35,41,53,59}` versus alternating `{5,17,29,41,53}`; selector signal sum `4.8261046090` versus `3.5112715174` (`+37.4461%`), with an `8.9013%` fifth/sixth margin. Both placements are exactly 55 local/5 global, preserving the inherited `20.334496%` attention-component reduction. CPU accounting was `10.5853 s` wall, `8.0859 s` user, `2.4911 s` system; no GPU, network, provider mutation, shard copy, sweep, training, or spend occurred. Interpretation: the content-bound scale signal distinguishes a concrete placement, but it cannot quantify task recovery and no existing lab input can execute a selected-placement recovery/quality consumer. Terminal classification is `typed_negative_no_executable_quality_recovery_consumer`. Next move: none; return the deep slot to the director. Artifact: `HYBRID_ATTENTION_LAYER_IMPORTANCE_OFFLINE_TERMINAL.json`.

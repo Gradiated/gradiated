@@ -80,9 +80,11 @@ job "deepseek-v4-1-flash" {
         ]
       }
       env {
-        RUNTIME_HOST = "127.0.0.1"
-        RUNTIME_PORT = "8000"
-        HF_HOME      = "/workspace/gradiated/model-cache"
+        HOME           = "/home/runtime"
+        XDG_CACHE_HOME = "/home/runtime/.cache"
+        RUNTIME_HOST   = "127.0.0.1"
+        RUNTIME_PORT   = "8000"
+        HF_HOME        = "/workspace/gradiated/model-cache"
       }
       resources {
         cpu    = var.cpu_mhz

@@ -1,7 +1,0 @@
-{
-  "file": "/sgl-workspace/sglang/python/sglang/srt/models/deepseek_common/attention_forward_methods/forward_mla_fused_rope_cpu.py",
-  "purpose": "guard initialization-only CPU dtype probes for compressed-tensors wrapper",
-  "before_sha256": "c6c3965d5d76a6a80ffca6dfd40229df38ce92ed8aae946eb2bd356c50cef268",
-  "after_sha256": "11d9c9fa6aff96fe028ac2124954662abe13344ff243e9d7812c91c11b50d576",
-  "replacement_count": 2
-}

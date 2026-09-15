@@ -1,5 +1,0 @@
-name,evidence,cycles,dsp,lut,bram,timing_mhz,state_bytes_per_token,notes,head_dim,lanes,clock_mhz_target,latency_us_at_target,speedup_vs_specialized,state_read_write_kb,macs,groups
-specialized_kda_row_lanes,measured_kv260,14336,56,6853,12.0,100.0,49152,Persistent banked state; fused recurrence and readout.,128,8,100.0,143.36,1.0,48.0,81920,16
-generic_simt_vector_proxy,analytical_proxy,24960,8,5640,0,100.0,196608,Separate vector passes with global synchronization and state traffic.,128,8,100.0,249.6,0.5743589743589743,192.0,81920,16
-tiled_tensor_core_proxy,analytical_proxy,3456,256,15000,32,100.0,49152,16x16 tile schedule; better with batch or many independent heads.,128,8,100.0,34.56,4.148148148148148,48.0,81920,16
-tiled_tensor_resource_matched_proxy,analytical_proxy,17280,56,9000,16,100.0,49152,Same tile schedule scaled to the measured 56-DSP budget.,128,8,100.0,172.8,0.8296296296296296,48.0,81920,16

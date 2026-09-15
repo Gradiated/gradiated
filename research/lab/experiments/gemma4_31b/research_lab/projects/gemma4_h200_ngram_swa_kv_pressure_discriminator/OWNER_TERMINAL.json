@@ -1,8 +1,0 @@
-{
-  "artifact_root": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_swa_kv_pressure_discriminator/artifacts/swa-pressure-20260724t194035z",
-  "at_utc": "2026-07-24T19:55:34.302666Z",
-  "attempt_provider_spend_usd": 0.6143874510566394,
-  "claimed_seconds": 899.1035869121552,
-  "conservative_provider_spend_usd": 0.6213069812774659,
-  "disposition": "scientific_terminal_released_maintenance"
-}

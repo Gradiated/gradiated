@@ -18,7 +18,8 @@ This repository is the complete project state for the research and product-build
 - Use `README.md`, `docs/ARCHITECTURE.md` and `research/README.md` as the orientation map.
 - Use the top-level documents in `docs/` for product architecture, data models and implementation plans; do not encode durable interfaces only in chat or issue comments.
 - Put browser automation code and dependency declarations in `tools/browser/`.
-- Put ephemeral browser profiles, caches, and run logs under `.agents/runtime/`; never commit them.
+- Put temporary profiles, caches, test output, and run logs under `.agents/runtime/`; never commit them.
+- Routine product, infrastructure, and CI work must not create evidence folders, dated reports, task packets, ledgers, or handoff files. Summarize checks in the PR or response. Update an existing README or plan only when behavior, operation, or a useful decision changes. Keep research deliverables only when the research task requires them.
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
 - Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
@@ -31,7 +32,7 @@ This repository is the complete project state for the research and product-build
 - Before declaring the objective blocked, exhaust safe in-scope diagnostics and materially distinct alternatives. Ask the user only when progress requires new authorization, credentials they have not already supplied, an irreversible or destructive external action, material scope expansion, acceptance of safety/legal risk, or spending beyond the authorized cap.
 - Non-response from the user is not a blocker for a choice the agent can make within scope. Preserve momentum with the safest reversible assumption, document it, and keep working.
 - A local stop rule kills only that experiment lineage unless it explicitly defines the campaign's terminal decision. Continue with the next admissible lineage while budget and objective remain open.
-- State the decision, hypothesis, scope, quality gate, SLO, budget, timeout, and artifact contract before running an experiment.
+- State the hypothesis, scope, success criteria, budget, and timeout before running an experiment. For routine product or infrastructure checks, a short progress message is enough; no separate record is required.
 - Prefer reproducible scripts and pinned inputs over one-off shell commands.
 - Label evidence as measured, analytical, vendor-reported, derived, inferred, or synthetic.
 - Do not transfer a result across models, workloads, hardware, or intervention sets without fresh scope-matched evidence.
@@ -46,7 +47,7 @@ This repository is the complete project state for the research and product-build
 - `$research-supervisor`: periodic improvement of research speed and effectiveness.
 - `$browser-research`: reproducible research on JavaScript-heavy or interactive websites.
 - `$product-build`: repository-first product implementation, verification, and handoff.
-- `$experiment-run`: bounded, reproducible experiments with durable artifacts and cleanup.
+- `$experiment-run`: bounded, reproducible experiments with cleanup; routine output stays untracked.
 
 ## Verification
 

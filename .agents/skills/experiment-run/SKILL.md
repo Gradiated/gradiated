@@ -1,13 +1,26 @@
 ---
 name: experiment-run
-description: Plan, execute, verify, measure the efficiency of, and record bounded technical or product experiments with explicit hypotheses, budgets, timeouts, cleanup, and durable artifacts. Use when an agent needs to benchmark, run a model or browser experiment, compare alternatives, gather evidence for a decision, or diagnose research throughput.
+description: Plan, execute, verify, measure the efficiency of, and record bounded technical or product experiments with explicit hypotheses, budgets, timeouts, and cleanup. Use when an agent needs to benchmark, run a model or browser experiment, compare alternatives, gather evidence for a decision, or diagnose research throughput.
 ---
 
 # Experiment run
 
 Make experiments useful to the next agent, including when they fail.
 
-## Workflow
+## Routine product and infrastructure checks
+
+For deployment tests, CI diagnosis, service checks, and small operational benchmarks:
+
+- State the scope, success criteria, timeout, and cost limit in a short progress message.
+- Keep raw output and temporary scripts under ignored `.agents/runtime/`, or the remote host's temporary directory.
+- Do not create evidence folders, dated reports, task packets, ledgers, opportunity registers, or handoff files.
+- Report the result and limitations in the response or PR. Update an existing README or plan only when a useful operating instruction or decision changes.
+- Keep reusable tests with the component they test. Do not retain one-off probes as product code.
+- Preserve credentials and active test state during cleanup. Stop test processes and verify cleanup within the authorized scope.
+
+The research workflow below applies only to research campaigns that need recorded measurements. It does not apply to routine product or infrastructure work.
+
+## Research workflow
 
 1. Create or claim a task packet before running work. For a research-lab harness project, its existing `projects/<id>/` brief, status, and log are the task packet: do not create, claim, assign, or update GitHub issues or `tasks/` files.
 2. State the causal hypothesis, stock control, exact inputs and revisions, workload geometry, quality gate, SLO, maximum spend, timeout, and artifact contract.

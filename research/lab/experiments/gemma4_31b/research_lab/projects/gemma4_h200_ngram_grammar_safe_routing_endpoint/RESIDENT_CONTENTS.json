@@ -1,9 +1,0 @@
-{
-  "action": "terminal grammar-safe routing reject; candidate container retained for director disposition",
-  "artifacts": "projects/gemma4_h200_ngram_grammar_safe_routing_endpoint/artifacts/grammar-safe-20260724t012615Z",
-  "container": "gemma-ngram-grammar-safe-candidate",
-  "gpu_memory_used_mib": 124790,
-  "gpu_process": "sglang scheduler",
-  "port": 30000,
-  "server_state": "healthy loaded candidate; no compatible successor identified"
-}

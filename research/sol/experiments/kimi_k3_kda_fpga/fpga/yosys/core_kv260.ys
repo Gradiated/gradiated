@@ -1,4 +1,0 @@
-read_verilog -sv rtl/kda_state_bank.sv rtl/kda_core.sv
-chparam -set HEAD_DIM 128 -set LANES 16 kda_core
-synth_xilinx -family xcu -top kda_core
-stat

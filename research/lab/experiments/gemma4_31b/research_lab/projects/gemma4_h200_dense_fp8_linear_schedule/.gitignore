@@ -1,7 +1,0 @@
-__pycache__/
-artifacts/
-inputs/checkpoint/*.safetensors
-inputs/cutlass/
-inputs/cutlass-*.tar.gz
-inputs/sgl-kernel-v0513/
-PROGRAM.tar.gz

@@ -1,4 +1,0 @@
-{
-  "action": "retry_remote_worker",
-  "reason": "restart after stale detached status; source and bytecode now aligned"
-}

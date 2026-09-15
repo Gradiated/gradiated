@@ -1,9 +1,0 @@
-{
-  "packet_path": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_verified_trunk_sitecustomize.py",
-  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_ngram_sustained_acceptance_causal/request_local_verified_trunk_sitecustomize.py",
-  "ready_sha256": "192d598014a0b2cf866eac6abe8dfbba3e22f1b06df459ff60ce516b21c9ca11",
-  "requested_at_utc": "2026-07-25T04:02:38.380376Z",
-  "retry_scope": "Retry only fail-closed activation and the unconsumed requests-0-through-790 discriminator after binding keyword-only server_args; preserve mechanism, workload, comparator, and conditional endpoint gates.",
-  "schema_version": 1,
-  "state": "repair_requested"
-}

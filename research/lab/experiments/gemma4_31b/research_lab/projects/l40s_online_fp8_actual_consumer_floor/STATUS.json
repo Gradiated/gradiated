@@ -1,9 +1,0 @@
-{
-  "active_session": null,
-  "last_result_classification": "paid_zero_row_current_vllm_tensor_parallel_context_failure",
-  "priority": 0,
-  "provider_mutation": "none",
-  "status": "closed",
-  "summary": "Paid L40S primary sweep failed before its first row because the current vLLM tensor-parallel group was not initialized; no FP8/W4 performance inference, W4 did not execute, and authenticated cleanup is zero instances/disks.",
-  "terminal_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/l40s_online_fp8_actual_consumer_floor/artifacts/RECONCILED_TERMINAL.json"
-}

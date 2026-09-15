@@ -27,6 +27,6 @@ test("release binds the source, base and content-addressed private bundle", () =
   assert.equal(record.sha256, "d".repeat(64));
   assert.equal(
     record.url,
-    `s3::https://s3.us-east-1.amazonaws.com/test-artifacts/bundles/sha256/${record.sha256}.tar.gz`,
+    `s3::https://test-artifacts.s3.us-east-1.amazonaws.com/bundles/sha256/${record.sha256}.tar.gz`,
   );
 });

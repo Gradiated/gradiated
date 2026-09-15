@@ -1,1 +1,0 @@
-{"exception_type": "TypeError", "message": "wait_ssh() missing 1 required positional argument: 'deadline'", "stage": "capture"}

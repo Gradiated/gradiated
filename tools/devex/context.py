@@ -14,8 +14,6 @@ WORKSTREAMS = {
     "sol": {
         "instructions": "research/lab/AGENTS.md",
         "start": "research/lab/README.md",
-        "handoff": "research/lab/CONTEXT_HANDOFF.md",
-        "artifacts": ("research/lab/docs", "research/lab/evidence", "research/lab/experiments"),
         "checks": "cd research/lab && cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
     },
 }
@@ -52,17 +50,14 @@ def print_pack(workstream: str | None) -> None:
     for name in selected:
         spec = WORKSTREAMS[name]
         print(f"\nWorkstream: {name}")
-        for key in ("instructions", "start", "handoff"):
+        for key in ("instructions", "start"):
             print(f"- {exists(spec[key])}")
-        print("- artifact roots:")
-        for artifact_root in spec["artifacts"]:
-            print(f"  - {exists(artifact_root)}")
         print(f"- checks: {spec['checks']}")
 
     print("\nBefore changing files:")
     print("- inspect git status and preserve unrelated worktree changes")
     print("- reserve directory/artifact scope; do not edit another agent's files")
-    print("- state the acceptance check, budget/timeout, and artifact paths")
+    print("- state the acceptance check and any test budget or timeout")
 
 
 def main() -> int:

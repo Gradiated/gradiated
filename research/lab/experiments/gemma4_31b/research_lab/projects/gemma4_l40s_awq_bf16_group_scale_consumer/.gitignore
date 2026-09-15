@@ -1,4 +1,0 @@
-# Immutable AWQ producer bytes and derived compute arrays are materialized
-# project-locally for the hash-bound GPU handoff, but remain outside Git.
-/inputs/exact_consumer/producer/
-/EXACT_CONSUMER_DATA.tar.gz

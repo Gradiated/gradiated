@@ -1,4 +1,0 @@
-{
-  "artifacts": "DIRECTOR_B200_DYNAMIC_FP8_LAUNCH_ENVELOPE_20260728T1458Z.json supersedes only the prior start fence; all scientific identities remain bound.",
-  "next": "Only gemma4_b200_dynamic_fp8_endpoint may claim after its exact local snapshot owner terminates validly and by 2026-07-28T15:18:00Z; release by 2026-07-28T16:10:00Z."
-}

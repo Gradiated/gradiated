@@ -1,9 +1,0 @@
-{
-  "artifacts": "artifacts/request217-decode-20260725t072904z",
-  "candidate_sample_consumed": true,
-  "checkpoint": "/home/glmrunner/gemma4-h200-ngram-decode-equivalent-verifier/checkpoint remains resident and read-only.",
-  "image": "docker.io/lmsysorg/sglang@sha256:ae55a60885cba1acad22c224b971aa29309b676f5a079f7713a690a8b0dbc9cd",
-  "project": "gemma4_v0515_request217_semantic_causal",
-  "result": "request217_decode_attention_semantic_discriminator",
-  "server_state": "Official v0.5.15 decode-attention NGRAM candidate remains loaded on port 30000; maintenance disposition required before unrelated reuse."
-}

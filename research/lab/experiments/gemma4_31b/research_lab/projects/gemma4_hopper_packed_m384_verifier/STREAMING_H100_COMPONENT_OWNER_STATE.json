@@ -1,7 +1,0 @@
-{
-  "at_utc": "2026-07-26T22:13:53.340707Z",
-  "invocation_disposition": "science_started_ambiguous",
-  "phase": "repair_resumed",
-  "repair_id": "streaming-h100-1785103561963304790",
-  "repair_scope": "offline_result_construction"
-}

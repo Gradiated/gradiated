@@ -1,8 +1,0 @@
-{
-  "patch_artifact": "/root/workspace/research/lab/experiments/gemma4_31b/research_lab/projects/gemma4_h200_ngram_qlen_mask_target_verify/artifacts/qlen-mask-20260724t1911z-real-c32/endpoint-normalizer-repair.py",
-  "ready_sha256": "f43ef7a58f23884ec1ce45f0e07ff6a82ed0392b48f6288386053345a8f99cc2",
-  "requested_at_utc": "2026-07-24T19:22:16.032978Z",
-  "retry_scope": "candidate_endpoint_only",
-  "schema_version": 1,
-  "state": "repair_requested"
-}

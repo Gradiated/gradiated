@@ -1,9 +1,0 @@
-{
-  "status": "complete",
-  "priority": 70,
-  "summary": "Killed for this campaign: EAGLE argument parsing exists, but retained checkpoint/runtime launch evidence fails before a valid MTP arm; deterministic bounds require 0.48–2.71 mean accepted draft tokens depending on overhead and dilution.",
-  "next_action": "Do not retry unchanged. Reopen only with separately validated draft/checkpoint execution, acceptance and overhead counters, then exact-quality and matched c8 A/B admission.",
-  "artifact": "mtp_acceptance_bound.json",
-  "decision": "KILL_FOR_CAMPAIGN",
-  "provider_mutation": "prohibited_zero_provider_bound"
-}

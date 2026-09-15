@@ -1,7 +1,0 @@
-{
-  "next": "Only gemma4_rtxpro6000_fp8_endpoint may prepare a lifecycle-pure Workstation/SSH-port owner repair offline. A later director binding must authorize the claim and sole concurrent-c32 sample.",
-  "runtime": "Strict SSH verified RunPod pod f4nbtoufbwf66f at 213.192.6.70:40070 with host fingerprint SHA256:yofIRQ/J654JgIzbWdB+4sM19iE/aepnrmJrYzIfCTg; NVIDIA RTX PRO 6000 Blackwell Workstation Edition, sm_120, driver 610.43.03, 97,887 MiB.",
-  "scientific_terminal": "One exact stock dynamic-FP8 true concurrent-c32 endpoint sample remains unconsumed.",
-  "server_state": "Strict read-only census measured zero compute applications, 0% GPU utilization, and 2 MiB used. No checkpoint, endpoint, model load, or scientific request has started.",
-  "state": "provider_identity_verified_ready_for_preclaim_owner_repair"
-}

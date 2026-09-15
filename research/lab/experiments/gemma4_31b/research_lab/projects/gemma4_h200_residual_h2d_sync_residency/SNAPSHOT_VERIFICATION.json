@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "pass": true,
-  "verified_at_utc": "2026-07-23T03:57:30Z",
-  "input_snapshot_sha256": "a18a91cd747e5723d25b8f691ebef83383137e3a4dd3caef8861bee60a0351f5",
-  "files_verified": 21,
-  "checkpoint_bytes": 62578655208,
-  "verification": "streaming_sha256_and_size_for_every_manifest_entry"
-}

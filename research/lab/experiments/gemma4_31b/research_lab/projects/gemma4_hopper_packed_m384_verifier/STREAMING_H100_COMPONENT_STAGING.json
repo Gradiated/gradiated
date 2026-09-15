@@ -1,9 +1,0 @@
-{
-  "at_utc": "2026-07-26T21:21:23.401440Z",
-  "image": "docker.io/vllm/vllm-openai:gemma4@sha256:952594c2e6ded02be6e3f195eb95d5a50c5f2a44a879427b2f77c32e0a732a79",
-  "manifest_sha256": "5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583",
-  "packet_root": "/home/glmrunner/gemma4_hopper_packed_m384_verifier-streaming/packet-5189f2beab6cd7def9fa6d7ee3a1e8297c5076f6a533b949814246f8ad595583",
-  "packet_sha256": "917eee09ef74f7e38bb7ea8c1844aa0c396641e4db936f5353f09f56e0f62b9b",
-  "remote_root": "/home/glmrunner/gemma4_hopper_packed_m384_verifier-streaming",
-  "remote_state": "stage_required"
-}

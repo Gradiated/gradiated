@@ -1,8 +1,0 @@
-{
-  "all_body_hashes_match_workload": true,
-  "request_body_manifest_sha256": "338669f7dc9110d5484123e8f3381ad0cc7d98c585baef9e6d48c31004ae07a5",
-  "request_count": 32,
-  "request_record_manifest_sha256": "e73a44c6fdaa84caaee5c9303c3295e84f39a3876130acda1c54c3ba90fc01aa",
-  "schema_version": 1,
-  "workload_sha256": "7a05fa6218a5fbfd87744bca1ac491949ddd64bf0d58007b4d3569594f08225d"
-}

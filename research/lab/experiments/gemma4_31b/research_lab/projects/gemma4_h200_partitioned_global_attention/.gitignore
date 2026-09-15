@@ -1,4 +1,0 @@
-__pycache__/
-*.pyc
-artifacts/offline_compile.stdout
-inputs/checkpoint/

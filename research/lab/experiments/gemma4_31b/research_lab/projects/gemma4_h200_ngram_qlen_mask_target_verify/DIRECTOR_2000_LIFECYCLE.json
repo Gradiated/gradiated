@@ -1,9 +1,0 @@
-{
-  "deadline_utc": "2026-07-24T20:00:00Z",
-  "watchdog": {
-    "unit": "gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
-    "main_pid": 36681,
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-ngram-verifier-h200-20260724t2000-watchdog.service",
-    "unit_manager": "user"
-  }
-}

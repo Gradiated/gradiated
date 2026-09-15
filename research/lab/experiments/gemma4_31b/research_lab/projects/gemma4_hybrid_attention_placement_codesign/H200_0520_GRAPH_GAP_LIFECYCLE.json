@@ -1,9 +1,0 @@
-{
-  "deadline_utc": "2026-07-26T05:20:00Z",
-  "watchdog": {
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma4-c32-graph-gap-20260726t0520-watchdog.service",
-    "main_pid": 1531696,
-    "unit": "gemma4-c32-graph-gap-20260726t0520-watchdog.service",
-    "unit_manager": "user"
-  }
-}

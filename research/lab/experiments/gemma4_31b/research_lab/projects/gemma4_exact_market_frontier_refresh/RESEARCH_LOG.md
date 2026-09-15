@@ -1,5 +1,0 @@
-# Research log
-
-## 2026-07-26 — exact market frontier refresh
-
-Question: whether current public exact-Gemma-4-31B provider evidence changes the locked target or placement order. Action: queried the current Artificial Analysis exact non-reasoning comparison and public provider metadata only; no provider contact, GPU claim, or spend. Evidence: the comparison lists eight providers, lowest 7:2:1 cache/input/output blend `$0.14/M`, and P50-over-72-hours leader metrics; OpenRouter's exact-named CoreWeave BF16 endpoint prices cache/input/output at `$0.10/$0.10/$0.34/M`. Normalized to 4,214 prompt, 535 cached-prefix, and 358 output tokens, that endpoint is `$0.00054312/request` or `$0.118792651/M` total tokens—8.26% above the locked `$0.109725/M` target. Interpretation: `typed_none`; current retail data do not justify relaxing the target or promoting an unmatched provider route over unmeasured self-hosted candidates. Full evidence, arithmetic, exclusions, and falsifiers: `EXACT_MODEL_MARKET_FRONTIER_REFRESH.json`. Next move: director review; refresh only if a source exposes an exact-revision, cache-aware price/measurement capable of changing this result.

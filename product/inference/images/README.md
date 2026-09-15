@@ -16,7 +16,11 @@ other tensor-parallel sizes need separate qualification.
 
 Build DeepSeek from its directory with Docker, targeting linux/amd64.
 GLM requires a RUNTIME_IMAGE build argument with a repository and SHA-256 digest.
-First package or locate the recorded GLM runtime and verify its CUDA dependencies.
+The captured GLM source is commit `933876c388fb129ad82590660e6506614559cb86`
+with local changes in `glm-5-3-flash/runtime.patch`. Its recorded packages are
+vLLM `0.1.dev19910+g933876c38.d20260826`, PyTorch `2.13.0`, Transformers
+`5.16.1`, Triton `3.7.1`, and FlashInfer `0.6.17`.
+First package or locate that runtime and verify its CUDA dependencies.
 Do not substitute a newer vLLM image to make the build pass. The Dockerfile checks
 its package version. That check alone does not qualify the runtime.
 

@@ -1,6 +1,8 @@
-# Build handoff contract
+# Completion checklist
 
-Record:
+Use these points in the final response or PR when relevant. Do not create a separate handoff file.
+
+Summarize:
 
 - what changed and why
 - files and interfaces affected

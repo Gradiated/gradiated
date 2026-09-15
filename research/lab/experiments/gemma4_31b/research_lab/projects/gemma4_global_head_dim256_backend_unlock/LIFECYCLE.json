@@ -1,9 +1,0 @@
-{
-  "deadline_utc": "2026-07-18T22:30:00Z",
-  "watchdog": {
-    "control_group": "/user.slice/user-0.slice/user@0.service/app.slice/gemma-global-head256-h200-202607182110z-watchdog.service",
-    "main_pid": "2626523",
-    "unit": "gemma-global-head256-h200-202607182110z-watchdog.service",
-    "unit_manager": "user"
-  }
-}

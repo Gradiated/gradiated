@@ -1,3 +1,0 @@
-# Exact checkpoint bytes are materialized and hash-bound locally for transfer,
-# but are too large and externally licensed to store in this repository.
-/inputs/checkpoint/

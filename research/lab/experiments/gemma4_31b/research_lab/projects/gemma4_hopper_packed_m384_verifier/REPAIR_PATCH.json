@@ -1,6 +1,0 @@
-{
-  "schema_version": 1,
-  "repair_id": "packet-stage-recovery-20260726t1652z",
-  "scope": "Replace only remote staged-manifest verification with a Python per-file SHA-256 checker that binds INPUT_MANIFEST.json itself, rejects unsafe paths/symlinks, preserves a matched packet.tmp by atomic promotion, and transfers/extracts only when no matched resident packet exists; create the exact command's bound h100-component artifact directory before shell redirection. No scientific input, command, geometry, consumer, control, or quality gate changed.",
-  "run_h100_owner_sha256": "c5294f2c4d81c5811cfc2646217ec80ed252fda31d4322aa76622d64db3e645d"
-}

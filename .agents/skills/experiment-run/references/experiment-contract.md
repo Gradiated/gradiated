@@ -1,4 +1,6 @@
-# Experiment contract
+# Research experiment contract
+
+Use this record for research campaigns that require retained measurements. Routine product, infrastructure, and CI checks follow the short workflow in SKILL.md and do not need this document or separate artifacts.
 
 Before execution, record:
 

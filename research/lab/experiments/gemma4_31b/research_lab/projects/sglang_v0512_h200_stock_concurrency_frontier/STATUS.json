@@ -1,9 +1,0 @@
-{
-  "active_session": null,
-  "authorized_spend_usd": 0.85,
-  "next_action": "Closed: the prerequisite safe-code quality terminal is false, so no c64/c96/c48 performance measurement can produce an eligible campaign candidate. Do not allocate or claim a bench for this line.",
-  "priority": 360,
-  "researcher_profile": "execution",
-  "status": "complete",
-  "summary": "Concurrency line closed without GPU execution because the preregistered safe-code quality prerequisite failed identically under BF16-KV and FP8-E5M2."
-}

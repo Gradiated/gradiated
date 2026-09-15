@@ -8,6 +8,10 @@ rust = "1.97.1"
 terraform = "1.14.6"
 terragrunt = "1.1.2"
 
+[tasks."aws:login"]
+description = "Log in to Gradiated AWS through the configured organization SSO profile"
+run = "aws sso login --profile gradiated-admin"
+
 [tasks.infra-fmt]
 description = "Format Terraform and Terragrunt configuration"
 run = [

@@ -80,21 +80,13 @@ Three Nomad servers run in EKS. GPU pods run Nomad clients and vLLM. No Nomad
 server runs on a GPU pod in the deployed architecture. The earlier colocated
 server/client probe was a temporary qualification test.
 
-GPU hosts initiate authenticated outbound TCP tunnels to EKS. Forward only the
-three private Nomad RPC destinations. Do not grant shell access, arbitrary port
-forwarding, or general access to the EKS network. Keep the Nomad management API
-and server gossip private. Fixed provider IPs are not required for identity or
-reconnection. Source-IP restrictions may be an extra control where practical.
-This replaces the earlier proposal to expose source-restricted Nomad RPC endpoints.
-
-The proposed transport is SSH TCP forwarding. A local listener on the GPU pod
-forwards bytes to a specific private server endpoint. It is not a Nomad server.
-Test server address discovery, all three destinations, and reconnect behavior;
-forwarding one bootstrap address is not sufficient.
+GPU hosts connect directly to three public Nomad RPC endpoints with mutual TLS.
+Each endpoint forwards TCP to one server ordinal. Keep the management HTTP API
+and server gossip private. No SSH relay or fixed provider IP range is required.
+Test all three endpoints, server discovery, and reconnect behavior before cutover.
 
 | Credential | Scope and authority |
 | --- | --- |
-| Instance tunnel SSH key | One approved host; only its permitted forwarding destinations |
 | Instance Nomad TLS certificate and private key | One host's credential, signed by the shared private CA; authenticate the Nomad client role and region |
 | Runtime registration identity | Bind an approved instance, actual allocation, engine boot, endpoint, and release |
 | Customer Gradiated API key | Authorize customer inference through the gateway; not issued to hosts for enrollment |
@@ -102,9 +94,7 @@ forwarding one bootstrap address is not sufficient.
 
 Issue different credentials for each provider pod or machine, not for each GPU
 or provider. Record provider membership in the instance inventory. Use one private
-X.509 CA initially. The SSH key is a separate credential; the SSH tunnel does not
-use the Nomad TLS certificate. Keep the CA signing key off GPU hosts and images.
-Keep Nomad TLS enabled inside the tunnel.
+X.509 CA initially. Keep its signing key off GPU hosts and images.
 
 A certificate proves possession of its private key. A copied public certificate
 alone cannot impersonate a host. A stolen private key can. Unique certificates
@@ -115,13 +105,13 @@ CA signing authority, or broad AWS credentials.
 
 A host certificate does not authorize customer inference through the gateway.
 The host-to-control-API path and gateway-to-runtime path require their own explicit
-authorization. An outbound RPC tunnel does not create a return inference route.
+authorization. An outbound RPC connection does not create a return inference route.
 Keep vLLM on loopback or a restricted private interface. Before cutover, verify
 that anonymous public requests cannot reach inference or administrative handlers.
 
 ### Process and secret separation
 
-Run the Nomad client and tunnel under a dedicated host-agent identity. Run vLLM
+Run the Nomad client under a dedicated host-agent identity. Run vLLM
 under a different OS user. Restrict host private-key files and directories to the
 host agent. Do not place keys in model images, shared model caches, or the vLLM
 environment. Apply the same isolation to status credentials that carry host authority.
@@ -144,14 +134,13 @@ renewal margin, and outage behavior before deployment. Renewal requires current
 credential authorization. Do not let possession of an old credential renew
 access after revocation.
 
-Disabling a host must block new tunnel authentication and renewal, close its active
-tunnel connections, reject new runtime registration, and remove its serving routes.
-Reject late status that would reopen a removed route. Set and measure the maximum
-revocation-to-denial time before cutover. Certificate expiry alone is not immediate
-revocation. Removing access does not prove that compute on the remote host stopped.
-
-Test that disabling one instance leaves other instances connected. Replace keys
-and re-enroll only after cleanup or replacement of a compromised host.
+Disabling a host must block renewal and runtime registration and remove its serving
+routes. Reject late status that would reopen a removed route. Direct mutual TLS
+has no immediate per-instance revocation mechanism in this design. Certificate
+expiry does not close existing connections. If immediate RPC denial is required,
+replace CA trust and reconnect healthy clients. This can affect fleet availability.
+Test and measure that response before cutover. Removing access does not prove that
+compute on the remote host stopped. Re-enroll only after host cleanup or replacement.
 
 ### Remaining risks
 
@@ -161,7 +150,7 @@ and re-enroll only after cleanup or replacement of a compromised host.
 - Compromised runtime code or dependencies can read requests and change responses
   even when the process cannot read host credentials.
 - Authentication does not prevent all resource exhaustion. Bound connections,
-  requests, timeouts, and model loading. Monitor tunnel and control-plane failures.
+  requests, timeouts, and model loading. Monitor RPC and control-plane failures.
 - Revocation can fail if existing sessions or stale routes remain active.
 - The single serving pod is a failure domain. Security isolation does not provide replica availability.
 
@@ -170,7 +159,7 @@ and re-enroll only after cleanup or replacement of a compromised host.
 1. From the vLLM user, prove that host-agent private keys and privileged tokens cannot
    be read through files, process interfaces, or inherited environment variables.
 2. Prove that a host cannot submit arbitrary jobs, register another instance's
-   allocation, obtain broad cloud credentials, or open undeclared tunnel destinations.
+   allocation, obtain broad cloud credentials, or access private EKS services.
 3. Test expired, untrusted, wrong-role, and wrong-region certificates. Test stale
    enrollment and allocation bindings. No failed check may create a serving route.
 4. Disable one instance during active connections. Verify access denial, route removal,
@@ -423,25 +412,20 @@ AWS access and pod SSH access were established. GLM source changes were captured
 The non-root Nomad 2.0.6 CPU recovery probe passed in 4.02 seconds. Separate-user
 launch, GPU isolation, and the security gates above remain unqualified.
 
-Next: implement and qualify the private tunnel and per-instance identities, build
+Next: implement and qualify direct mutual TLS and per-instance identities, build
 the DeepSeek image, and implement authenticated enrollment and runtime registration.
 Then deploy the three-server control plane and the single DeepSeek job. GLM image
 work is retained for later expansion and does not block this rollout.
 
 ### Component naming and host language
 
-The SSH relay runs in EKS and is separate from the inference gateway. Its
-account reconciler uses Rust in `product/services/nomad-relay`. Custom GPU host-agent code uses C++.
-GPU hosts also run the Nomad and OpenSSH clients. The earlier Python CPU probe
-was a test fixture, not the production host agent. The selected vLLM serving
-runtime remains unchanged.
+GPU hosts run the Nomad client. Custom GPU host-agent code uses C++.
+The selected vLLM runtime remains unchanged. No custom transport service is needed.
 
 ### Test locations
 
-Model launch tests stay in `product/inference/images/tests`. SSH relay tests
-live in `product/services/nomad-relay/tests`. Nomad server configuration tests
-live beside the Kubernetes configuration in
-`infra/environments/prod/us-east-1/kubernetes/nomad/tests`.
+Model launch tests stay in `product/inference/images/tests`. Nomad server
+configuration tests stay in `infra/environments/prod/us-east-1/kubernetes/nomad/tests`.
 
 The one-off Runpod CPU probe and raw results moved to the ignored local folder
 `.agents/runtime/nomad-qualification`. They are not production code or a required
@@ -449,10 +433,7 @@ test suite. The durable result is the 4.02-second synthetic recovery recorded
 above. The harness attempted cleanup; a later external SSH cleanup check could
 not complete. Do not treat this probe as proof of complete process cleanup.
 
-The regular relay unit tests use `cargo test`. Its Docker integration test also
-uses Rust and runs explicitly with `--test tunnel -- --ignored`. Model launch
-and Nomad configuration checks use shell, matching their launch scripts. Run
-these checks when the related component changes. They are not yet wired into CI.
+Model launch and Nomad configuration checks use shell and run in CI.
 
 ### Remote sync and relay workload — 2026-09-14
 
@@ -460,7 +441,7 @@ Merged remote main at `411ad9da`. Its production record now reports both
 DeepSeek replicas active. Recheck that state before any migration; the earlier
 assumption that the selected pod is not serving production is no longer valid.
 
-Prepared three SSH relay pods on separate nodes, an internal Service, and a
+Historical design, superseded by direct mutual TLS below: prepared three SSH relay pods on separate nodes, an internal Service, and a
 disruption budget with `minAvailable: 2`. The
 manifest requires a published image digest and external key/config provisioning.
 No public endpoint or Argo application was added. No cluster change was applied.
@@ -469,7 +450,18 @@ No public endpoint or Argo application was added. No cluster change was applied.
 
 `build-images.yml` resolves immutable digests for each caller's required images.
 Application, Nomad, and model deployment workflows are independent. The application
-sequence retains its production rollout. Nomad stops at a relay GitOps record;
+sequence retains its production rollout. Nomad validates manifests and uses the pinned upstream image;
 model publication stops before GPU qualification or rollout. The input catalog
 and checks are documented in `tools/images/README.md`. GLM publication remains
 disabled until a qualified base image digest is recorded.
+
+### Direct RPC decision — 2026-09-14
+
+The user selected direct mutual TLS instead of the SSH relay. Remove the relay
+service, client tunnels, host key, access inventory, and custom image workflow.
+Use one public TCP NLB per Nomad server. HTTP and gossip remain private.
+
+A compromised provider or pod can steal its Nomad client credentials. The relay
+would not contain the resulting hostile Nomad traffic. This design accepts that
+trust boundary for our workloads. It does not claim isolation between providers.
+The release gates above still require credential, allocation, and runtime checks.

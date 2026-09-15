@@ -115,7 +115,7 @@ both health checks and a small inference request pass.
 
 ### Runtime launcher implementation
 
-The local prototype is in `product/inference/runtime-launcher`. It uses C++,
+The initial prototype was in `product/inference/runtime-launcher`. It used C++,
 libcurl, OpenSSL, and libarchive. Its README defines the bundle and base-ID
 contract. Fixture tests passed on Linux: cached launch, exact argument passing,
 checksum rejection, base mismatch, archive traversal and symlink rejection,
@@ -636,3 +636,24 @@ does not prove real vLLM worker recovery or cleanup after SIGKILL of the
 supervisor itself. Runtime-user separation and a real model stop/restart test
 remain deployment gates. The live test used the same supervisor source through
 a small test adapter; it did not replace either running GLM service.
+
+### Runtime bundle simplification
+
+The current job uses Nomad's native artifact block for archive download,
+SHA-256 verification, and extraction. The launcher now only checks the base ID
+and entrypoint, sets the runtime directory, and supervises worker cleanup.
+Removed libcurl, OpenSSL, libarchive, digest locks, and the shared runtime cache.
+Runtime bundles now belong to each allocation. Model weights keep their
+persistent cache. Release submission must provide runtime disk capacity.
+
+The client example sets a 10-minute download timeout, 20-GiB download limit,
+40-GiB extraction limit, and 200,000-file limit. Keep artifact inspection
+enabled. These bounds need checking against the first published bundle.
+
+Measured locally: the existing detached-process fixture leaves a worker alive
+under Tini 0.19.0 with `-s -g`. Keep the small C++ supervisor. The simplified
+launcher passes the base-ID, entrypoint, argument, stop, exit, crash, and
+SIGTERM-resistant descendant tests. A local Nomad 2.0.6 fixture also passed
+HTTPS download, checksum verification, extraction, entrypoint launch, and
+wrong-checksum rejection. Job and client configuration validation passed.
+This change does not qualify a real vLLM restart or deploy a GPU client.

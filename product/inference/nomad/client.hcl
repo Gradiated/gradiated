@@ -4,6 +4,14 @@ region = "global"
 data_dir = "/var/lib/nomad"
 client {
   enabled = true
+  max_kill_timeout = "60s"
+  artifact {
+    http_read_timeout = "10m"
+    http_max_size = "20GiB"
+    decompression_size_limit = "40GiB"
+    # Python environments contain more files than Nomad's 4096-file default.
+    decompression_file_count_limit = 200000
+  }
   servers = [
     "nomad-0.rpc.gradiated.com:4647",
     "nomad-1.rpc.gradiated.com:4647",

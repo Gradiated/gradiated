@@ -1,11 +1,12 @@
 # Runtime bundle launcher
 
-Status: local prototype. No published bundle or deployment integration yet.
+Status: candidate Nomad job. No published runtime bundle or production deployment yet.
 
-`runtime-launch` is a C++ executable for trusted serving runtimes. Nomad calls
-it with `raw_exec`. It verifies a tar archive, extracts it into a cache directory
-named by its SHA-256 digest, and supervises the bundle entrypoint.
-It does not install packages into the base or start a container.
+`runtime-launch` is a small C++ executable for trusted serving runtimes.
+Nomad downloads the pinned archive, checks its SHA-256 digest, and extracts it
+into the task directory with its [artifact block](https://developer.hashicorp.com/nomad/docs/job-specification/artifact).
+The launcher checks base compatibility and supervises the entrypoint.
+It does not download files, install packages, or start a container.
 
 ## Bundle contract
 
@@ -17,8 +18,8 @@ The archive contains:
 
 The base ID identifies the system dependency contract, including OS, CPU
 architecture, Python ABI, and required system libraries. Assign a new ID for
-incompatible changes. The base image must also contain the launcher, its linked
-libraries, CA certificates, Nomad, and the qualified GPU device plugin.
+incompatible changes. The base image must also contain the launcher, the C++
+standard library, CA certificates, Nomad, and the qualified GPU device plugin.
 
 The bundle entrypoint uses `GRADIATED_RUNTIME_ROOT` to find its own files. Use
 its interpreter explicitly rather than a console script with an old absolute
@@ -26,29 +27,29 @@ shebang. The model launch code pins the checkpoint revision and serving flags.
 Keep checkpoint weights in a separate persistent cache.
 
 ```sh
-runtime-launch --bundle https://artifacts.example/runtime.tar.gz \
-  --sha256 <64-character-digest> --cache /workspace/gradiated/runtimes
+runtime-launch /path/to/extracted/runtime -- optional-entrypoint-argument
 ```
 
-`--archive PATH` uses an existing archive for local tests or staging. Both
-sources require a checksum. HTTPS redirects stay on HTTPS. Download limits
-are 10 minutes and 20 GiB. Expanded file sizes are limited to 40 GiB.
+Nomad extracts the archive into `local/runtime`. The job passes its absolute
+path through `NOMAD_TASK_DIR`. A failed download or checksum check prevents
+task startup. Direct local launches expect an already verified directory.
 
-The launcher serializes extraction per digest and publishes the extracted
-directory with an atomic rename. It checks the base ID and entrypoint before
-publication. Cache hits skip the download. Cache directories must be private
-to the trusted runtime user; this is not a hostile-code sandbox. Cached runtime
-files are not rehashed on every launch. Do not mutate published bundles.
+Runtime files belong to each allocation. A new allocation downloads its own
+copy. There is no shared runtime cache, prefetch service, or cache lock.
+Keep model weights in `/workspace/gradiated/model-cache`, outside the allocation.
+Add a shared runtime cache only if measured download time requires it.
 
-A normal error removes staging files. Forced termination can leave a
-`*.partial.*` directory; it is never used as a completed cache entry. Cache
-retention and prefetch are not implemented yet.
+The client example sets a 10-minute HTTP timeout, a 20-GiB download limit,
+a 40-GiB extraction limit, and a 200,000-file limit. A Python environment can
+exceed Nomad's default file count. Keep artifact inspection enabled.
+The job requires `runtime_disk_mb`; include space for extraction, temporary
+archive data, and logs. Measure this for each release.
 
 ## Nomad integration
 
 The candidate job is `../nomad/jobs/deepseek-v4-1-flash.nomad.hcl`. Its bundle
-URL, checksum, base ID, CPU MHz, and memory MiB are required inputs. No resource
-sizing or release digest is guessed. Set client metadata `runtime_base_id` to
+URL, checksum, base ID, CPU MHz, memory MiB, and runtime disk MiB are required
+inputs. No resource sizing or release digest is guessed. Set client metadata `runtime_base_id` to
 the ID installed in the provider image. Configure a `loopback` host network.
 
 Before submitting this job, qualify the following on the actual provider:
@@ -87,11 +88,14 @@ docker build -f product/inference/runtime-launcher/tests/Dockerfile \
   product/inference/runtime-launcher
 ```
 
-These tests cover launch arguments, cache reuse, checksum failure, base
-mismatch, archive traversal, HTTPS certificate checks, and writes through
-archive symlinks. Process tests cover ordinary and double-forked descendants,
+These tests cover literal launch arguments, missing or mismatched base IDs,
+and invalid entrypoints. Process tests cover ordinary and double-forked
+descendants,
 runtime exit, runtime crash, and children that ignore SIGTERM. They check that
 unrelated processes remain alive and that the runtime exit status is retained.
+
+A local Nomad 2.0.6 fixture also downloads a bundle over HTTPS, launches its
+entrypoint, and rejects a wrong SHA-256 digest. It runs without a GPU.
 
 Live test: run `../nomad/tests/qualify-raw-exec.sh` with this source directory
 as its first argument on the selected Runpod pod, under a 240-second timeout.
@@ -103,3 +107,14 @@ supervisor cannot guarantee cleanup if it is itself killed with SIGKILL, if
 the client dies, or if a process remains stuck in an uninterruptible kernel
 wait. These cases still require node fencing before replacement. This is
 process lifecycle management, not isolation for hostile code.
+
+## Why the small supervisor remains
+
+Tini forwards signals to a process group and reaps children. It does not
+terminate a worker that starts a separate session when its main child exits.
+The local comparison used Tini 0.19.0 with `-s -g` and the same
+`tests/process-tree.cpp` fixture in `stop` mode. The detached child remained
+alive after Tini exited. The container was removed after the test.
+The C++ supervisor passes that fixture, including forced cleanup after its
+25-second grace period. Its process cleanup code is unchanged by the artifact
+simplification. No third-party C++ libraries are needed.

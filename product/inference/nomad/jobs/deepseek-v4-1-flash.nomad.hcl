@@ -4,6 +4,7 @@ variable "bundle_sha256" { type = string }
 variable "base_id" { type = string }
 variable "cpu_mhz" { type = number }
 variable "memory_mb" { type = number }
+variable "runtime_disk_mb" { type = number }
 
 job "deepseek-v4-1-flash" {
   type        = "service"
@@ -17,6 +18,9 @@ job "deepseek-v4-1-flash" {
 
   group "replicas" {
     count = 1
+    ephemeral_disk {
+      size = var.runtime_disk_mb
+    }
     constraint {
       operator = "distinct_hosts"
       value    = "true"
@@ -56,12 +60,18 @@ job "deepseek-v4-1-flash" {
       shutdown_delay = "10s"
       kill_signal    = "SIGTERM"
       kill_timeout   = "60s"
+      artifact {
+        source      = var.bundle_url
+        destination = "local/runtime"
+        options {
+          checksum = "sha256:${var.bundle_sha256}"
+          archive  = "tar.gz"
+        }
+      }
       config {
         command = "/opt/gradiated/bin/runtime-launch"
         args = [
-          "--bundle", var.bundle_url,
-          "--sha256", var.bundle_sha256,
-          "--cache", "/workspace/gradiated/runtimes",
+          "${NOMAD_TASK_DIR}/runtime",
         ]
       }
       env {

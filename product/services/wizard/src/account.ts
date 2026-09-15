@@ -25,6 +25,9 @@ const exchange = async (
   targets: ApiTargets,
   choice: "signup" | "login",
 ): Promise<WizardAccount> => {
+  // Node fetch sends Fetch Metadata but no Origin; Better Auth requires a
+  // trusted origin for these requests, just as it does for the console.
+  const origin = new URL(targets.apiBaseUrl).origin;
   const email = await ui.askText("Email:", (value) => {
     const trimmed = value.trim();
     if (!EMAIL_PATTERN.test(trimmed)) return "Enter a valid email address.";
@@ -38,7 +41,7 @@ const exchange = async (
       `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/email-otp/send-verification-otp`,
       {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", origin },
         body: JSON.stringify({ email: email.trim(), type: "sign-in" }),
         redirect: "error",
       },
@@ -66,7 +69,7 @@ const exchange = async (
       `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/sign-in/email-otp`,
       {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", origin },
         body: JSON.stringify({ email: email.trim(), otp: code.trim() }),
         redirect: "error",
       },
@@ -113,7 +116,7 @@ const exchange = async (
       `${targets.apiBaseUrl.replace(/\/$/, "")}/api/v1/wizard/key`,
       {
         method: "POST",
-        headers: { cookie: sessionCookie },
+        headers: { cookie: sessionCookie, origin },
         redirect: "error",
       },
     );

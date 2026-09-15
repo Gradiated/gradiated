@@ -516,7 +516,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("1.1.2");
+    console.log("1.1.3");
     return;
   }
   if (parsed.command === "uninstall") {

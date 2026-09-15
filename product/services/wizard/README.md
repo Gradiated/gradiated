@@ -91,3 +91,9 @@ Version 1.1.1 fixes email onboarding: it uses the deployed Better Auth endpoints
 (`/api/auth/email-otp/send-verification-otp` and `/api/auth/sign-in/email-otp`)
 and forwards the returned session cookies to `/api/v1/wizard/key`. The session
 stays in memory. Signup/login selection is passed through without a second menu.
+
+Version 1.1.3 sends the API origin on email authentication requests, satisfying
+Better Auth's origin checks for Node clients. Email codes use the same backend
+Resend delivery service as console sign-in. Regression tests run the real Better
+Auth OTP and session flow with origin protection explicitly enabled and an
+in-memory email transport.

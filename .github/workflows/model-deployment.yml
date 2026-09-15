@@ -32,7 +32,7 @@ concurrency:
 
 jobs:
   checks:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7
@@ -46,15 +46,15 @@ jobs:
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
           bash product/inference/images/tests/test_launch.sh
-      - uses: docker/setup-buildx-action@v3
+      - uses: depot/setup-action@v1
         if: steps.verification.outputs.required == 'true'
       - name: Verify the complete runtime on pull requests
         if: steps.verification.outputs.required == 'true'
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
-          df -h /
-          docker buildx bake -f product/inference/bundles/build.hcl verify
+        uses: depot/bake-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          files: product/inference/bundles/build.hcl
+          targets: verify
 
   images:
     needs: checks
@@ -67,7 +67,7 @@ jobs:
 
   runtime:
     needs: images
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     environment: production
     timeout-minutes: 180
     env:
@@ -94,17 +94,18 @@ jobs:
       - if: steps.existing.outputs.exists != 'true'
         uses: aws-actions/amazon-ecr-login@v2
       - if: steps.existing.outputs.exists != 'true'
-        uses: docker/setup-buildx-action@v3
+        uses: depot/setup-action@v1
       - name: Package and verify the runtime
         if: steps.existing.outputs.exists != 'true'
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo rm -rf /usr/share/swift /usr/local/share/powershell /usr/lib/jvm /opt/hostedtoolcache/Python
-          df -h /
-          docker buildx build --platform linux/amd64 \
-            -f product/inference/bundles/deepseek-v4-1-flash/Dockerfile \
-            --build-context "runtime-base=docker-image://$BASE_IMAGE" --target artifact \
-            --output type=local,dest=model-release product/inference
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: product/inference
+          file: product/inference/bundles/deepseek-v4-1-flash/Dockerfile
+          platforms: linux/amd64
+          build-contexts: runtime-base=docker-image://${{ env.BASE_IMAGE }}
+          target: artifact
+          outputs: type=local,dest=model-release
       - if: steps.existing.outputs.exists != 'true'
         run: node tools/models/release.mjs publish "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
       - uses: actions/upload-artifact@v4

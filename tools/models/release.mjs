@@ -12,6 +12,7 @@ import { pathToFileURL } from "node:url";
 export const bundleInputs = [
   "product/inference/bundles/deepseek-v4-1-flash/Dockerfile",
   "product/inference/bundles/deepseek-v4-1-flash/package.sh",
+  "product/inference/bundles/deepseek-v4-1-flash/extract-dependencies.sh",
   "product/inference/bundles/deepseek-v4-1-flash/entrypoint",
   "product/inference/bundles/deepseek-v4-1-flash/vllm",
   "product/inference/images/deepseek-v4-1-flash/start.sh",

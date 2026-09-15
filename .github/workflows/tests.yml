@@ -63,7 +63,7 @@ concurrency:
 jobs:
   unit:
     name: Unit tests
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -90,7 +90,7 @@ jobs:
 
   integration:
     name: Integration tests
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -125,7 +125,7 @@ jobs:
 
   e2e:
     name: End-to-end tests
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4

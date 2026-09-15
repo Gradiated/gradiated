@@ -24,12 +24,21 @@ concurrency:
 jobs:
   rust:
     name: Rust (research/lab)
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            research/lab/target
+          key: ${{ runner.os }}-${{ runner.arch }}-research-rust-${{ hashFiles('research/lab/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-${{ runner.arch }}-research-rust-${{ hashFiles('research/lab/Cargo.lock') }}-
       - run: cargo fmt --all -- --check
         working-directory: research/lab
       - run: cargo test --workspace

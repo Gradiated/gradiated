@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root=${GRADIATED_RUNTIME_ROOT:?The launcher must set the runtime directory}
+export CUDA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:?Nomad must assign GPU UUIDs}
+export PATH="$root/python/bin:$PATH"
+export VLLM_BIN="$root/vllm"
+exec bash "$root/start.sh" "$@"

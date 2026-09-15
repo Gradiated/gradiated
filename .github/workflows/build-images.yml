@@ -73,7 +73,7 @@ jobs:
           IMAGE_TAG: ${{ matrix.tag }}
         run: node tools/images/images.mjs lookup "$REPOSITORY" "$IMAGE_TAG"
       - name: Free disk for model image publication
-        if: steps.existing.outputs.exists != 'true' && startsWith(matrix.context, 'product/inference/images/')
+        if: steps.existing.outputs.exists != 'true' && startsWith(matrix.context, 'product/inference')
         shell: bash
         run: |
           # Hosted-runner SDKs are not used by these Docker-only model builds.
@@ -93,13 +93,13 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.context }}
-          file: ${{ matrix.context }}/Dockerfile
+          file: ${{ matrix.dockerfile || format('{0}/Dockerfile', matrix.context) }}
           target: ${{ matrix.target }}
           platforms: linux/amd64
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/${{ matrix.repository }}:${{ matrix.tag }}
-          cache-from: ${{ !startsWith(matrix.context, 'product/inference/images/') && format('type=gha,scope=image-{0}', matrix.name) || '' }}
-          cache-to: ${{ !startsWith(matrix.context, 'product/inference/images/') && format('type=gha,mode=max,scope=image-{0}', matrix.name) || '' }}
+          cache-from: ${{ !startsWith(matrix.context, 'product/inference') && format('type=gha,scope=image-{0}', matrix.name) || '' }}
+          cache-to: ${{ !startsWith(matrix.context, 'product/inference') && format('type=gha,mode=max,scope=image-{0}', matrix.name) || '' }}
       - name: Record resolved digest
         env:
           IMAGE_NAME: ${{ matrix.name }}

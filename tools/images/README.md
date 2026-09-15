@@ -8,10 +8,11 @@ returns their exact digests. It does not deploy workloads.
 | --- | --- | --- |
 | `application-deployment.yml` | Successful Product tests, required images and console build, release record, application rollout and checks | Existing application deployment |
 | `nomad-deployment.yml` | Server configuration tests | Argo owns manifests; first sync is manual |
-| `model-deployment.yml` | Launch checks, model image publication | Publication only; GPU qualification and serving rollout are pending |
+| `model-deployment.yml` | Launch checks, Nomad base image, verified runtime bundle and release record | Artifact publication; GPU qualification and serving rollout remain pending |
 
 The application requires `product` and `gateway`. Nomad uses the pinned upstream image; it needs no custom image.
-The model workflow currently publishes DeepSeek. GLM is listed in the catalog
+The model workflow publishes the Nomad base and DeepSeek runtime bundle.
+See `tools/models/README.md` for the build order and release contract. GLM is listed in the catalog
 but cannot build until its qualified base image digest is recorded. A disabled
 image fails explicitly if requested. A model failure does not block application
 or Nomad validation. Before adding model rollouts, give each model a separate

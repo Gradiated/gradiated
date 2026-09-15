@@ -1,9 +1,17 @@
-# Merge these connection settings into the qualified GPU client configuration.
-# Driver configuration, GPU discovery, and runtime user separation are separate.
+# Enrollment supplies the node name and runtime_base_id metadata.
 region = "global"
 data_dir = "/var/lib/nomad"
+plugin_dir = "/opt/nomad/plugins"
 client {
   enabled = true
+  # Keep allocation paths traversable without exposing private agent state.
+  alloc_dir = "/var/lib/nomad-alloc"
+  host_network "loopback" { cidr = "127.0.0.0/8" }
+  options = {
+    "driver.allowlist" = "raw_exec"
+    "user.checked_drivers" = "raw_exec"
+    "user.denylist" = "root,nomad"
+  }
   max_kill_timeout = "60s"
   artifact {
     http_read_timeout = "10m"
@@ -39,3 +47,6 @@ tls {
 addresses {
   http = "127.0.0.1"
 }
+
+plugin "raw_exec" { config { enabled = true } }
+plugin "nomad-device-nvidia" { config { enabled = true } }

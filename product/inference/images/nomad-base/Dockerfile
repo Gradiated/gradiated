@@ -10,18 +10,21 @@ RUN curl -fsSLo /tmp/nvidia.zip https://releases.hashicorp.com/nomad-device-nvid
 
 FROM nvidia/cuda:13.0.1-devel-ubuntu24.04@sha256:7d2f6a8c2071d911524f95061a0db363e24d27aa51ec831fcccf9e76eb72bc92
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates openssh-server libnuma1 libgomp1 libibverbs1 librdmacm1 \
+    ca-certificates openssh-server util-linux libnuma1 libgomp1 libibverbs1 librdmacm1 \
     libopenmpi3t64 libssl3t64 libgfortran5 \
     libexpat1 libffi8 libbz2-1.0 liblzma5 libsqlite3-0 libreadline8t64 libuuid1 \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --uid 10001 --create-home --shell /usr/sbin/nologin runtime \
-    && install -d -m 700 /etc/nomad/tls \
+    && useradd --uid 10002 --create-home --shell /usr/sbin/nologin nomad \
+    && install -d -m 700 -o nomad -g nomad /etc/nomad/tls /var/lib/nomad \
+    && install -d -m 755 -o nomad -g nomad /var/lib/nomad-alloc /var/lib/alloc_mounts \
     && install -d /etc/gradiated /opt/gradiated/bin /opt/nomad/plugins /run/sshd \
     && install -d -o runtime -g runtime /workspace/gradiated/model-cache
 COPY --from=hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 /bin/nomad /usr/local/bin/nomad
 COPY --from=launcher /build/runtime-launch /opt/gradiated/bin/runtime-launch
 COPY --from=launcher /plugin/nomad-device-nvidia /opt/nomad/plugins/nomad-device-nvidia
 COPY images/nomad-base/base-id /etc/gradiated/base-id
+COPY images/nomad-base/start-client.sh /opt/gradiated/bin/start-client
 COPY images/nomad-base/start.sh /opt/gradiated/bin/start-node
 COPY images/nomad-base/sshd_config /etc/ssh/sshd_config
 STOPSIGNAL SIGTERM

@@ -641,3 +641,38 @@ SIGTERM-resistant descendant tests. A local Nomad 2.0.6 fixture also passed
 HTTPS download, checksum verification, extraction, entrypoint launch, and
 wrong-checksum rejection. Job and client configuration validation passed.
 This change does not qualify a real vLLM restart or deploy a GPU client.
+
+### Runtime user and EKS connectivity checks — 2026-09-15
+
+The user confirmed that `uv33dai39yeqe1` is the only remaining Runpod pod,
+that it serves no production traffic, and that it may be used for the
+DeepSeek migration. The older two-pod DeepSeek record is not current inventory.
+
+Measured: a Nomad 2.0.6 agent running as a separate Linux user with only
+SETUID, SETGID, CHOWN, and KILL capabilities started a raw-exec task under a
+second user. Allocation directories must be outside the private agent data
+directory. The task used `setpriv` to clear inherited and ambient capabilities
+and set `no_new_privs`. It reported zero effective and ambient capabilities,
+the expected runtime UID, and could not read the agent-owned synthetic key.
+The timed probe removed its processes, users, and temporary directories.
+
+The base now defines `nomad` (10002) and `runtime` (10001). Nomad's default
+environment denylist excludes AWS credential variables from task environments.
+The client restricts task drivers to raw_exec and denies tasks running as root
+or nomad. These controls do not provide cgroup resource isolation or contain a
+compromised Nomad agent.
+
+A one-day instance certificate and SSH/kubectl port-forward allowed initial
+registration with the EKS quorum. Nomad then learned the private advertised
+server addresses and could not reach them from Runpod. The client was stopped.
+This is evidence of TLS registration only, not stable EKS connectivity. Client
+certificates must use ECDSA or RSA keys: the client rejected an Ed25519 private
+key during initialization. No operator credential was copied to the GPU.
+
+The next experiment uses the same job and runtime on a temporary local Nomad
+server/client to test serving while public RPC endpoints remain unavailable.
+Budget: the existing pod only, no new GPU rental; two-hour test limit after
+bundle preparation. Preserve persistent model data. Test startup and one short
+request before a process failure and restart. Record exact bundle/base/model
+revisions, device UUIDs, readiness times, cleanup, and failures. Do not claim
+production migration or multi-node recovery from this local test.

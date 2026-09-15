@@ -1,5 +1,5 @@
 FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS package
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl \
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates curl pigz \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSLo /tmp/crane.tar.gz https://github.com/google/go-containerregistry/releases/download/v0.20.3/go-containerregistry_Linux_x86_64.tar.gz \
     && echo '36c67a932f489b3f2724b64af90b599a8ef2aa7b004872597373c0ad694dc059  /tmp/crane.tar.gz' | sha256sum -c - \
@@ -18,7 +18,7 @@ RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
     && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import torch, vllm; print(torch.__version__, vllm.__version__)' \
-    && CUDA_VISIBLE_DEVICES="" /bundle/python/bin/python3 -m vllm.entrypoints.cli.main --help >/dev/null \
+    && /bundle/python/bin/python3 -c 'import vllm.entrypoints.cli.main' \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

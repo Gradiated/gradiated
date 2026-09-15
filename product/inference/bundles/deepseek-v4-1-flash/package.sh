@@ -10,5 +10,5 @@ crane export --platform linux/amd64 "$source_image" - |
     usr/bin/python3.12 usr/lib/python3.12 usr/local/lib/python3.12/dist-packages
 # The same layer removes the extracted files after packaging to limit disk use.
 tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner \
-  -C /bundle -czf /runtime.tar.gz .
+  -C /bundle -I "pigz -p 4" -cf /runtime.tar.gz .
 rm -rf /bundle

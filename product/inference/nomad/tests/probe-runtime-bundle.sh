@@ -13,11 +13,14 @@ trap 'exit 130' INT
 # Leave space for the archive, extracted environment, and a 4 GiB margin.
 size=$(du -sk "$source_env" | awk '{print $1}')
 free=$(df -Pk "$work" | awk 'NR==2 {print $4}')
-(( free > size * 2 + 4194304 )) || { echo 'Insufficient temporary disk space' >&2; exit 1; }
+((free > size * 2 + 4194304)) || {
+  echo 'Insufficient temporary disk space' >&2
+  exit 1
+}
 export PYTHONDONTWRITEBYTECODE=1
 printf 'phase=archive time=%s\n' "$(date -u +%FT%TZ)"
 tar -C "$source_env" -cf "$work/runtime.tar" .
-(cd "$work" && sha256sum runtime.tar > runtime.sha256 && sha256sum -c runtime.sha256)
+(cd "$work" && sha256sum runtime.tar >runtime.sha256 && sha256sum -c runtime.sha256)
 cat "$work/runtime.sha256"
 mkdir "$work/runtime"
 printf 'phase=extract time=%s\n' "$(date -u +%FT%TZ)"
@@ -46,6 +49,6 @@ print(json.dumps({"runtime_relocated": True, "vllm": vllm.__version__,
                   "torch": torch.__version__, "cuda": torch.version.cuda,
                   "gpu_count": count, "tiny_cuda_operation": "passed"}))
 PY
-CUDA_VISIBLE_DEVICES='' "$work/runtime/bin/python" -I -B -m vllm.entrypoints.cli.main --help > "$work/help.txt"
+CUDA_VISIBLE_DEVICES='' "$work/runtime/bin/python" -I -B -m vllm.entrypoints.cli.main --help >"$work/help.txt"
 grep -q 'serve' "$work/help.txt"
 printf 'phase=complete time=%s cli_help=passed\n' "$(date -u +%FT%TZ)"

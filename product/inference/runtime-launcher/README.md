@@ -81,12 +81,20 @@ does not add that release step or change any provider pod.
 
 ## Verification
 
-Run the Linux fixture tests:
+The Docker test image runs CTest, ShellCheck, clang-format, and shfmt.
+CTest reports each launcher and cleanup case separately. The integration test
+runs only in this disposable container because it creates a local CA and
+starts a temporary Nomad agent.
+
+Run the checks:
 
 ```sh
 docker build -f product/inference/runtime-launcher/tests/Dockerfile \
   product/inference/runtime-launcher
 ```
+
+For a production build, configure CMake with `-DBUILD_TESTING=OFF`.
+The installed launcher has no test-tool dependency.
 
 These tests cover literal launch arguments, missing or mismatched base IDs,
 and invalid entrypoints. Process tests cover ordinary and double-forked

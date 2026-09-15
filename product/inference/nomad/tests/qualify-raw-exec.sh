@@ -19,7 +19,10 @@ cleanup() {
 trap cleanup EXIT
 trap 'echo "Probe watchdog expired"; exit 143' TERM
 for port in 24646 24647 24648; do
-  if ss -lnt | grep -q ":$port "; then echo 'Probe port already in use'; exit 1; fi
+  if ss -lnt | grep -q ":$port "; then
+    printf 'Probe port %s is already in use\n' "$port" >&2
+    exit 1
+  fi
 done
 cd "$work"
 g++ -std=c++20 -Wall -Wextra -Werror -I "$source_root" \
@@ -33,7 +36,7 @@ printf '%s  nvidia.zip\n' 4c2ab571192ae465f1fbe09c47e5e6d1fcc8c1c7a6458b1ef563a9
 unzip -q nvidia.zip -d plugins
 useradd --system --no-create-home --shell /usr/sbin/nologin "$account"
 uid=$(id -u "$account")
-cat > config.hcl <<HCL
+cat >config.hcl <<HCL
 bind_addr = "127.0.0.1"
 plugin_dir = "$work/plugins"
 ports { http = 24646 rpc = 24647 serf = 24648 }
@@ -42,7 +45,7 @@ client { max_kill_timeout = "60s" }
 plugin "raw_exec" { config { enabled = true } }
 plugin "nomad-device-nvidia" { config { enabled = true } }
 HCL
-cat > workload.sh <<'WORKLOAD'
+cat >workload.sh <<'WORKLOAD'
 #!/bin/bash
 set -eu
 printf '%s\n' "${NVIDIA_VISIBLE_DEVICES:?Missing assigned GPU IDs}" > "$1/gpus-$NOMAD_ALLOC_INDEX"
@@ -53,15 +56,24 @@ printf '%s\n' "$!" > "$1/detached-$NOMAD_ALLOC_INDEX"
 wait
 WORKLOAD
 chown -R "$uid:$uid" "$work"
-runuser -u "$account" -- "$work/nomad" agent -dev -config "$work/config.hcl" -data-dir "$work/data" > agent.log 2>&1 &
+runuser -u "$account" -- "$work/nomad" agent -dev -config "$work/config.hcl" -data-dir "$work/data" >agent.log 2>&1 &
 export NOMAD_ADDR=http://127.0.0.1:24646
-for attempt in $(seq 1 45); do
-  if curl -fsS --max-time 2 "$NOMAD_ADDR/v1/nodes" > nodes.json && jq -e 'length == 1 and .[0].Status == "ready"' nodes.json >/dev/null; then break; fi
+node_ready=false
+for _ in $(seq 1 45); do
+  if curl -fsS --max-time 2 "$NOMAD_ADDR/v1/nodes" >nodes.json && jq -e 'length == 1 and .[0].Status == "ready"' nodes.json >/dev/null; then
+    node_ready=true
+    break
+  fi
   sleep 1
 done
+if [[ "$node_ready" != true ]]; then
+  printf 'Nomad node did not become ready within 45 attempts\n' >&2
+  tail -50 agent.log >&2
+  exit 1
+fi
 node=$(jq -er '.[0].ID' nodes.json)
 curl -fsS --max-time 3 "$NOMAD_ADDR/v1/node/$node" | jq '{devices:[.NodeResources.Devices[]|{Name,ids:[.Instances[].ID]}]}'
-cat > job.hcl <<HCL
+cat >job.hcl <<HCL
 job "gpu-bookkeeping-probe" {
   datacenters = ["dc1"]
   group "replicas" {
@@ -91,21 +103,21 @@ job "gpu-bookkeeping-probe" {
 }
 HCL
 "$work/nomad" job run -detach job.hcl
-for attempt in $(seq 1 30); do
+for _ in $(seq 1 30); do
   [[ -f gpus-0 && -f gpus-1 ]] && break
   sleep 1
 done
 if [[ ! -f gpus-0 || ! -f gpus-1 ]]; then
-  curl -fsS "$NOMAD_ADDR/v1/job/gpu-bookkeeping-probe/allocations" | jq '[.[]|{ClientStatus,TaskStates}]'
+  curl -fsS --max-time 3 "$NOMAD_ADDR/v1/job/gpu-bookkeeping-probe/allocations" | jq '[.[]|{ClientStatus,TaskStates}]'
   exit 1
 fi
-cat gpus-0 gpus-1 | tr ',' '\n' | sort > assigned.txt
-[[ "$(wc -l < assigned.txt)" -eq 4 && "$(sort -u assigned.txt | wc -l)" -eq 4 ]]
+cat gpus-0 gpus-1 | tr ',' '\n' | sort >assigned.txt
+[[ "$(wc -l <assigned.txt)" -eq 4 && "$(sort -u assigned.txt | wc -l)" -eq 4 ]]
 printf 'PASS: two disjoint pairs of assigned GPU UUIDs\n'
 printf "Requesting job stop at %s\n" "$(date -u +%FT%TZ)"
 curl -fsS --max-time 10 -X DELETE "$NOMAD_ADDR/v1/job/gpu-bookkeeping-probe?purge=true" >/dev/null
 printf "Job stop accepted at %s\n" "$(date -u +%FT%TZ)"
-for attempt in $(seq 1 65); do
+for _ in $(seq 1 65); do
   survivors=0
   for pidfile in child-* detached-*; do
     pid=$(cat "$pidfile")

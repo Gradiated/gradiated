@@ -41,10 +41,9 @@ current permissions. Rootless Docker also requires user namespaces. No Docker
 daemon was installed or started after these prerequisite failures. This result
 does not establish the capabilities of other Runpod configurations or providers.
 
-The desired release contract remains a job that reserves GPUs and starts a
-pinned model image. Resolve the container runtime requirement before adding
-that job. Process execution inside a preinstalled model image is a different
-release contract and requires an explicit decision.
+The user then selected a stable provider base with separately versioned
+runtime bundles, as recorded below. The job reserves GPUs and launches a
+pinned bundle through `raw_exec`.
 
 ### Runtime bundle experiment
 
@@ -105,32 +104,17 @@ caches were intentionally not preserved. Model weights and launch settings
 were already in persistent storage.
 
 The serving environment was restored on the new base. The base's Jupyter
-process occupied port 8888; it was stopped so the existing model proxy could
-bind that port. Both TP2 replicas restarted and began checkpoint loading.
-Health checks had not passed at the last observation (approximately 8% of
-checkpoint shards loaded). A bounded health monitor writes to
-`/workspace/gradiated-image-update-backup-20260915/health-result.txt` and
-stops after 45 minutes. Do not treat the serving restore as verified until
-both health checks and a small inference request pass.
+process occupied port 8888; it was stopped so the model proxy could bind.
+Both GLM TP2 replicas passed health checks at 03:51:39 UTC and later passed
+small synthetic chat-completion requests. The restore is verified.
 
-### Runtime launcher implementation
+### Runtime implementation
 
-The initial prototype was in `product/inference/runtime-launcher`. It used C++,
-libcurl, OpenSSL, and libarchive. Its README defines the bundle and base-ID
-contract. Fixture tests passed on Linux: cached launch, exact argument passing,
-checksum rejection, base mismatch, archive traversal and symlink rejection,
-and HTTPS certificate verification.
-
-The candidate job in `product/inference/nomad/jobs` passed Nomad 2.0.6 static
-validation. It is not submitted. The Nomad workflow now checks the launcher
-and candidate job when their files change. Live GPU reservations, runtime-user
-separation, worker cleanup, reproducible bundle publication, and release
-submission remain open. Do not infer those guarantees from fixture tests.
-
-Latest serving-restore observation: both GLM replicas finished loading weights
-and were performing DeepGEMM kernel warmup. Neither health endpoint was ready
-at that observation. Persisting compatible kernel caches may reduce future
-base-update recovery time; this has not been measured.
+The current bundle contract and test commands are in
+`product/inference/runtime-launcher/README.md`. Nomad owns download,
+checksum verification, and extraction. The C++ launcher only checks the base
+and supervises the entrypoint. The candidate DeepSeek job is not submitted.
+The latest qualification results and remaining gates are recorded below.
 
 ## Initial placement
 
@@ -594,8 +578,8 @@ Measured with Nomad 2.0.6 and NVIDIA device plugin 1.1.0 on the Runpod pod:
 - GPU inventory found all four B300 devices.
 - Two raw-exec allocations requesting two GPUs received disjoint UUID pairs.
 - Stopping the job removed its ordinary child processes.
-- Two detached child processes survived. **Serving deployment is blocked on
-  process-tree cleanup.** GPU visibility masks do not provide isolation.
+- The first test left two detached children alive. The supervisor correction
+  below resolved this synthetic failure. GPU visibility masks do not provide isolation.
 - The harness removed the remaining processes and its temporary account.
 
 Reproduction: `product/inference/nomad/tests/qualify-raw-exec.sh`, run under

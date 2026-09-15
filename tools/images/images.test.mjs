@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fingerprint } from "./images.mjs";
+import { execFileSync } from "node:child_process";
+import { fingerprint, plan } from "./images.mjs";
 const entry = (path, meta = "100644 blob aaa") => ({ path, meta });
 test("unrelated changes reuse the same image identity", () => {
   const base = [entry("product/services/gateway/Dockerfile")];
@@ -46,4 +47,22 @@ test("shared product packages invalidate the application image", () => {
 test("unqualified GLM image and unknown image fail explicitly", () => {
   assert.throws(() => fingerprint("glm-5-3-flash", []), /qualified GLM/);
   assert.throws(() => fingerprint("typo", []), /Unknown image/);
+});
+
+test("plans all enabled images against the actual repository tree", () => {
+  const revision = execFileSync("git", ["rev-parse", "HEAD"], {
+    encoding: "utf8",
+  }).trim();
+  const names = ["product", "gateway", "nomad-relay", "deepseek-v4-1-flash"];
+  const result = plan(names, revision);
+  assert.deepEqual(
+    result.include.map((image) => image.name),
+    names,
+  );
+  for (const image of result.include)
+    assert.match(image.tag, /-inputs-[0-9a-f]{64}$/);
+  assert.deepEqual(
+    plan(["nomad-relay"], revision).include[0],
+    result.include[2],
+  );
 });

@@ -103,6 +103,16 @@ fn finish(
     generation_id: Uuid,
     result: Result<Response, GatewayError>,
 ) -> Response {
+    if let Err(error) = &result {
+        tracing::warn!(
+            %generation_id,
+            route,
+            status = error.status().as_u16(),
+            error_code = error.code(),
+            parameter = error.param(),
+            "inference request rejected before response"
+        );
+    }
     let error = result
         .as_ref()
         .err()

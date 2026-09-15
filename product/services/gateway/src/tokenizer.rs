@@ -521,6 +521,9 @@ fn deepseek_v4_content(value: Option<&Value>) -> Result<String, TokenizerRequest
 
 fn map_request_error(error: TokenizerRequestError) -> GatewayError {
     match error {
+        TokenizerRequestError::InvalidParameter(param) => {
+            GatewayError::invalid_request(Some(param))
+        }
         TokenizerRequestError::InvalidInput | TokenizerRequestError::Rejected => {
             GatewayError::invalid_request(Some("messages"))
         }
@@ -574,6 +577,8 @@ pub enum ModelTokenizerError {
 
 #[derive(Debug, Error, Eq, PartialEq)]
 enum TokenizerRequestError {
+    #[error("invalid request parameter: {0}")]
+    InvalidParameter(&'static str),
     #[error("request cannot be represented as chat-template input")]
     InvalidInput,
     #[error("chat template rejected the request")]

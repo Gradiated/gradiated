@@ -136,7 +136,13 @@ pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, Tokenize
                 || b.and_then(Value::as_bool).unwrap_or(false)
         }
     };
-    let effort = option("reasoning_effort").or_else(|| request.parameters.get("reasoning_effort"));
+    let (effort, effort_param) = match option("reasoning_effort") {
+        Some(value) => (Some(value), "chat_template_kwargs.reasoning_effort"),
+        None => (
+            request.parameters.get("reasoning_effort"),
+            "reasoning_effort",
+        ),
+    };
     let budget = match effort {
         None | Some(Value::Null) => 50,
         Some(Value::String(s)) => match s.as_str() {
@@ -148,12 +154,12 @@ pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, Tokenize
             "high" => 50,
             "xhigh" => 75,
             "max" => 100,
-            _ => return Err(TokenizerRequestError::Rejected),
+            _ => return Err(TokenizerRequestError::InvalidParameter(effort_param)),
         },
         Some(value) => value
             .as_u64()
             .filter(|n| (1..=100).contains(n))
-            .ok_or(TokenizerRequestError::Rejected)?,
+            .ok_or(TokenizerRequestError::InvalidParameter(effort_param))?,
     };
     let tools = request
         .parameters
@@ -346,6 +352,51 @@ pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, Tokenize
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn invalid_reasoning_effort_identifies_the_parameter() {
+        for effort in [json!("medium"), json!(0), json!(101), json!(true)] {
+            for nested in [false, true] {
+                let mut body = json!({
+                    "model": "test",
+                    "messages": [{"role": "user", "content": "hi there"}],
+                });
+                let param = if nested {
+                    body["chat_template_kwargs"] = json!({"reasoning_effort": effort});
+                    "chat_template_kwargs.reasoning_effort"
+                } else {
+                    body["reasoning_effort"] = effort.clone();
+                    "reasoning_effort"
+                };
+                let request: ChatCompletionRequest = serde_json::from_value(body).unwrap();
+                let error = super::super::map_request_error(render(&request).unwrap_err());
+                assert_eq!(error, crate::GatewayError::invalid_request(Some(param)));
+            }
+        }
+    }
+
+    #[test]
+    fn responses_reasoning_effort_reaches_the_model_encoder() {
+        for effort in ["medium", "high"] {
+            let body = json!({
+                "model": "deepseek/deepseek-v4.1-flash",
+                "input": [{"role": "user", "content": [{"type": "input_text", "text": "hi there"}]}],
+                "reasoning": {"effort": effort},
+            });
+            let translated = crate::protocol::Protocol::OpenAiResponses
+                .translate_request(&body)
+                .unwrap();
+            let request = ChatCompletionRequest::parse(&translated).unwrap();
+            if effort == "medium" {
+                assert_eq!(
+                    super::super::map_request_error(render(&request).unwrap_err()),
+                    crate::GatewayError::invalid_request(Some("reasoning_effort")),
+                );
+            } else {
+                assert!(render(&request).unwrap().contains("Reasoning Effort: 50"));
+            }
+        }
+    }
 
     #[test]
     fn matches_pinned_vllm_encoder() {

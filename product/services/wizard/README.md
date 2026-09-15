@@ -73,3 +73,16 @@ telemetry. Requires Node 18+.
 - [Documentation](https://gradiated.com/docs)
 - [Console (keys and usage)](https://console.gradiated.com)
 - [OpenCode docs](https://opencode.ai/docs/providers/)
+
+## Development verification
+
+From `product/`, run `pnpm --filter @gradiated/wizard check`. The end-to-end
+suite requires OpenCode and Codex on PATH; install Claude Code as well to
+exercise its real launcher. Tests use temporary homes and a local API fixture.
+Account tests exercise HTTP requests and session cookies with mocked terminal
+prompts, including rejected codes and missing sessions.
+
+Version 1.1.1 fixes email onboarding: it uses the deployed Better Auth endpoints
+(`/api/auth/email-otp/send-verification-otp` and `/api/auth/sign-in/email-otp`)
+and forwards the returned session cookies to `/api/v1/wizard/key`. The session
+stays in memory. Signup/login selection is passed through without a second menu.

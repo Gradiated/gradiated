@@ -16,18 +16,8 @@ export interface WizardAccount {
 
 export const resolveAccount = async (
   targets: ApiTargets,
+  choice: "signup" | "login",
 ): Promise<WizardAccount> => {
-  const choice = await ui.selectOption<"signup" | "login">(
-    "What would you like to do?",
-    [
-      {
-        value: "signup",
-        label: "Create a free account",
-        hint: "free credit included",
-      },
-      { value: "login", label: "Log in to an existing account" },
-    ],
-  );
   return exchange(targets, choice);
 };
 
@@ -44,11 +34,15 @@ const exchange = async (
   const send = ui.spinner();
   send.start("Requesting a verification code");
   try {
-    await request(`${targets.apiBaseUrl}/api/v1/public/wizard/code`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: email.trim() }),
-    });
+    await request(
+      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/email-otp/send-verification-otp`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), type: "sign-in" }),
+        redirect: "error",
+      },
+    );
   } catch (error) {
     send.stop("Could not send the code", 1);
     throw error;
@@ -64,14 +58,37 @@ const exchange = async (
     /^\d{6}$/.test(value.trim()) ? undefined : "Enter the six-digit code.",
   );
 
+  let sessionCookie = "";
   const session = ui.spinner();
   session.start("Verifying the code");
   try {
-    await request(`${targets.apiBaseUrl}/api/v1/public/wizard/session`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ email: email.trim(), code: code.trim() }),
-    });
+    const response = await request(
+      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/sign-in/email-otp`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), otp: code.trim() }),
+        redirect: "error",
+      },
+    );
+    // Node fetch has no cookie jar. Keep the session in memory and forward
+    // only name/value pairs to key creation on this same API.
+    // Older Node 18 releases expose multiple cookies as a combined header.
+    const cookies =
+      typeof response.headers.getSetCookie === "function"
+        ? response.headers.getSetCookie()
+        : (response.headers.get("set-cookie") ?? "").split(
+            /,(?=\s*[^;,=\s]+=)/,
+          );
+    sessionCookie = cookies
+      .map((cookie) => cookie.split(";")[0]?.trim())
+      .filter(Boolean)
+      .join("; ");
+    if (!sessionCookie) {
+      throw new Error(
+        "Sign-in did not return a session cookie. Run the wizard again.",
+      );
+    }
   } catch (error) {
     session.stop("Verification failed", 1);
     if (
@@ -92,9 +109,14 @@ const exchange = async (
     balance_nano_usd?: unknown;
   };
   try {
-    const response = await request(`${targets.apiBaseUrl}/api/v1/wizard/key`, {
-      method: "POST",
-    });
+    const response = await request(
+      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/v1/wizard/key`,
+      {
+        method: "POST",
+        headers: { cookie: sessionCookie },
+        redirect: "error",
+      },
+    );
     body = response.body as typeof body;
   } catch (error) {
     mint.stop("Key creation failed", 1);

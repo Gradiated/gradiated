@@ -121,7 +121,7 @@ const resolveKey = async (
   }
 
   if (options.mode === "login" || options.mode === "signup") {
-    const account = await resolveAccount(targets);
+    const account = await resolveAccount(targets, options.mode);
     return account.apiKey;
   }
 
@@ -146,7 +146,7 @@ const resolveKey = async (
   if (choice === "paste") {
     return ui.askPassword(`Paste your API key (create one at ${CONSOLE_URL}):`);
   }
-  const account = await resolveAccount(targets);
+  const account = await resolveAccount(targets, choice);
   return account.apiKey;
 };
 
@@ -566,7 +566,7 @@ const main = async (): Promise<void> => {
     return;
   }
   if (parsed.command === "version") {
-    console.log("1.1.0");
+    console.log("1.1.1");
     return;
   }
   if (parsed.command === "uninstall") {

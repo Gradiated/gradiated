@@ -18,11 +18,18 @@ RUN bash /package.sh
 # The caller supplies the exact base digest as a named build context.
 FROM runtime-base AS verify
 ENV PYTHONHOME=/bundle/python PYTHONPATH=/bundle/python/lib/python3.12/site-packages
+# Compile Triton's actual helper to check bundled headers without a GPU or driver.
 RUN --mount=from=package,source=/runtime.tar.gz,target=/tmp/runtime.tar.gz \
     mkdir /bundle && tar -xzf /tmp/runtime.tar.gz -C /bundle \
     && /bundle/python/bin/python3 -c 'import bz2, ctypes, lzma, readline, sqlite3, ssl, uuid, xml.parsers.expat' \
     && /bundle/python/bin/python3 -c 'import torch, vllm; print(torch.__version__, vllm.__version__)' \
     && /bundle/python/bin/python3 -c 'import vllm.entrypoints.cli.main' \
+    && timeout 60 cc -O3 -fPIC -c \
+        /bundle/python/lib/python3.12/site-packages/triton/backends/nvidia/driver.c \
+        -I/bundle/python/include/python3.12 \
+        -I/bundle/python/lib/python3.12/site-packages/triton/backends/nvidia/include \
+        -o /tmp/cuda_utils.o \
+    && rm /tmp/cuda_utils.o \
     && rm -rf /bundle && touch /verified
 
 FROM scratch AS artifact

@@ -234,10 +234,11 @@ ASCII lowercase, resolves the exact canonical model record, checks
 organization/workspace status, applies the operational prepaid
 balance/concurrency rule when applicable, and rejects parameters not advertised
 by the exact model before contacting SGLang. Invoiced organizations are not
-gated or concurrency-limited by their accounting balance. It renders and
-tokenizes the qualified request locally on CPU using the
-exact tokenizer revision declared by the selected Valkey deployment record, then
-enforces the model's context bound before admission. The gateway keeps only a
+gated or concurrency-limited by their accounting balance. Chat deployments own
+prompt rendering, tokenization, and input/context validation; the gateway forwards
+qualified messages without a local tokenizer dependency. Native token-ID deployments
+require the gateway to prepare their actual input IDs with the pinned tokenizer
+and enforce bounds on that payload before admission. The gateway keeps only a
 small typed request envelope; the model's Valkey-projected text-output
 `supported_parameters` and request-scoped `passthrough_parameters` maps qualify the remaining JSON fields without a
 gateway-wide model schema. Each concurrency slot represents
@@ -257,8 +258,10 @@ in `x-gradiated-service-tier`, and browser CORS exposes this header.
 An exact model may have multiple available runtime deployments. Each deployment
 sends status to Valkey every second through the private telemetry endpoint. The
 gateway uses fresh status, a shared concurrency lease, and rendezvous hashing to
-select a deployment. A session ID or prompt-prefix hash keeps related requests
-on one deployment when it has capacity. The gateway does not queue. It returns
+select a deployment. A session ID or request-prefix hash keeps related requests
+on one deployment when it has capacity. Without a session ID, chat routing hashes
+the first 16 KiB of serialized messages; native routing hashes up to 4,096 actual
+input IDs. Routing never requires a second rendering of a chat deployment's prompt. The gateway does not queue. It returns
 `429` when all healthy deployments are busy. It returns `503` when no fresh,
 healthy deployment exists. It retries once on another deployment only when no
 usable output reached the client.
@@ -269,6 +272,26 @@ normalizes authoritative token usage, calculates the integer nano-USD charge,
 constructs the closed generation properties document and invokes the Valkey
 finalization script. A lost process may leave an expired, unbilled generation;
 there is no durable in-progress request table at launch.
+
+The model runtime owns prompt normalization and reports authoritative token usage.
+Gateway-local token counts must not veto chat dispatch, abort a response, or
+substitute for engine counts in billing. The gateway still validates usage
+arithmetic, supported integer ranges, cached/reasoning token bounds, stable input
+counts and monotonic counters within a stream, and terminal stream completeness.
+Native token-ID transports additionally validate counts against the actual input
+and output IDs crossing their boundary; those are measured payloads, not a second
+reconstruction of the runtime's prompt.
+
+The explicit Anthropic `count_tokens` endpoint still provides a local estimate;
+it does not gate generation or settlement. The DeepSeek estimator mirrors the
+pinned chat endpoint's normalization of malformed historical tool arguments to
+an empty object. Exact deployment-side counting would require a separate runtime
+counting contract; this endpoint must not be treated as billing authority.
+
+Gateway-owned checks remain authentication/authorization, advertised product
+parameters and output caps, release identity, fresh deployment health, capacity,
+request/response size limits, timeouts, and wire-protocol validity. These validate
+access and transport contracts rather than predict deployment behavior.
 
 Rust does not implement human sessions, customer CRUD, Stripe, OpenRouter
 onboarding, model purchasing, provider APIs or GPU provisioning.
@@ -408,9 +431,9 @@ Metal/MLX backend and a pinned small local model; the local model has its own
 truthful exact PostgreSQL model and deployment rows rather than masking the
 runtime behind a generic alias. The gateway reaches SGLang over its normal HTTP interface on
 localhost, so Chat Completions, streaming, usage and cancellation cross the
-same runtime boundary as production. Gateway-local tokenizer parity is checked
-against that pinned SGLang release; pre-admission tokenization itself does not
-make an SGLang request.
+same runtime boundary as production. The explicit local token-count estimator
+is checked against the pinned SGLang release; chat inference itself does not
+render or tokenize the prompt in the gateway.
 
 Deterministic runtime failures that a real model server cannot safely induce
 use the gateway's in-process `ModelRuntime` test double. There is no deployed

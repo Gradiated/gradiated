@@ -1959,6 +1959,56 @@ mod tests {
         task.abort();
     }
 
+    #[test]
+    fn rejects_missing_unparseable_and_impossible_engine_usage() {
+        for usage in [
+            Value::Null,
+            json!("not usage"),
+            json!({}),
+            json!({"prompt_tokens":"10","completion_tokens":2,"total_tokens":12}),
+            json!({"prompt_tokens":-1,"completion_tokens":2,"total_tokens":1}),
+            json!({"prompt_tokens":1.5,"completion_tokens":2,"total_tokens":3.5}),
+            json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":99}),
+            json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"prompt_tokens_details":{"cached_tokens":11}}),
+            json!({"prompt_tokens":10,"completion_tokens":2,"total_tokens":12,"reasoning_tokens":3}),
+        ] {
+            let mut response = successful_response();
+            response["usage"] = usage.clone();
+            assert_eq!(
+                normalize_completion(
+                    &serde_json::to_vec(&response).unwrap(),
+                    "model-a",
+                    "model-a"
+                )
+                .unwrap_err()
+                .kind(),
+                RuntimeFailureKind::ProtocolViolation
+            );
+            let terminal = json!({"id":"chatcmpl-1","object":"chat.completion.chunk",
+                "created":1,"model":"model-a","choices":[],"usage":usage});
+            assert_eq!(
+                normalize_stream_chunk(
+                    &serde_json::to_vec(&terminal).unwrap(),
+                    "model-a",
+                    "model-a",
+                    &mut None,
+                    &mut None
+                )
+                .unwrap_err()
+                .kind(),
+                RuntimeFailureKind::ProtocolViolation
+            );
+        }
+        let mut missing = successful_response();
+        missing.as_object_mut().unwrap().remove("usage");
+        assert_eq!(
+            normalize_completion(&serde_json::to_vec(&missing).unwrap(), "model-a", "model-a")
+                .unwrap_err()
+                .kind(),
+            RuntimeFailureKind::ProtocolViolation
+        );
+    }
+
     #[tokio::test]
     async fn rejects_inconsistent_authoritative_usage() {
         let mut response = successful_response();

@@ -190,7 +190,7 @@ impl CompletionService {
         drop(body);
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
-        let bounded = self.tokenizer.enforce(qualified).await?;
+        let bounded = self.prepare_request(qualified).await?;
         let routed = self.route_bounded(bounded).await?;
         if streaming {
             self.stream_routed(routed)
@@ -206,6 +206,28 @@ impl CompletionService {
                     result,
                     service_tier,
                 })
+        }
+    }
+
+    async fn prepare_request(
+        &self,
+        qualified: crate::QualifiedRequest,
+    ) -> Result<BoundedRequest, GatewayError> {
+        if qualified
+            .deployment
+            .release
+            .runtime_revision
+            .starts_with("native-")
+        {
+            // This transport sends the actual token IDs produced here.
+            self.tokenizer.enforce(qualified).await
+        } else {
+            // Chat deployments own normalization, tokenization, and context
+            // validation. Local rendering must not veto their requests.
+            Ok(BoundedRequest {
+                qualified,
+                input_tokens: None,
+            })
         }
     }
 
@@ -248,17 +270,16 @@ impl CompletionService {
                     error_code = error.diagnostic_code(), "routing dependency failed");
                 GatewayError::ServingStateUnavailable
             })?;
-        let input_ids = request
-            .request
-            .encoded_input_ids
-            .as_deref()
-            .ok_or(GatewayError::ServingStateUnavailable)?;
+        let prompt = match request.request.encoded_input_ids.as_deref() {
+            Some(ids) => crate::routing::RoutePrompt::TokenIds(ids),
+            None => crate::routing::RoutePrompt::ChatMessages(&request.request.messages),
+        };
         let (candidates, diagnostics) = order_deployments_diagnosed(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
             release_digest: &request.served_release_digest,
             session_id: request.request.session_id.as_deref(),
-            input_ids,
+            prompt,
             deployments: &model.deployments,
             statuses: &statuses,
             now: Utc::now(),
@@ -584,7 +605,6 @@ impl GenerationTask {
         let organization_id = authenticated_identity.organization_id;
         let service_tier = request.service_tier;
         let received_at = metadata.received_at;
-        let expected_input_tokens = bounded.input_tokens;
         let started_at = cmp::max(Utc::now(), received_at);
         let settlement = GenerationSettlement {
             serving_state: serving_state.clone(),
@@ -614,16 +634,7 @@ impl GenerationTask {
             tokio::pin!(runtime_call);
 
             let result = tokio::select! {
-                result = &mut runtime_call => Some(result.and_then(|completion| {
-                    if completion.usage().input_tokens() == expected_input_tokens {
-                        Ok(completion)
-                    } else {
-                        Err(RuntimeFailure::with_usage(
-                            RuntimeFailureKind::ProtocolViolation,
-                            completion.usage(),
-                        ))
-                    }
-                })),
+                result = &mut runtime_call => Some(result),
                 _ = &mut cancellation => None,
                 _ = force_shutdown_requested(&mut shutdown) => {
                     break (
@@ -752,7 +763,6 @@ impl StreamingGenerationTask {
         let generation_id = metadata.generation_id;
         let received_at = metadata.received_at;
         let service_tier = request.service_tier;
-        let expected_input_tokens = bounded.input_tokens;
         let started_at = cmp::max(Utc::now(), received_at);
         let settlement = GenerationSettlement {
             serving_state: serving_state.clone(),
@@ -916,9 +926,7 @@ impl StreamingGenerationTask {
                     match event {
                         Ok(Some(RuntimeStreamEvent::Chunk(chunk))) => {
                             if let Some(usage) = chunk.usage() {
-                                if usage.input_tokens() != expected_input_tokens
-                                    || !usage_is_monotonic(latest_usage, usage)
-                                {
+                                if !usage_is_monotonic(latest_usage, usage) {
                                     terminal_reason = "invalid_usage";
                                     break GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
                                 }
@@ -961,7 +969,6 @@ impl StreamingGenerationTask {
                         Err(failure) => {
                             let failure_usage = failure.usage();
                             if failure_usage != NormalizedUsage::zero()
-                                && failure_usage.input_tokens() == expected_input_tokens
                                 && usage_is_monotonic(latest_usage, failure_usage)
                             {
                                 latest_usage = failure_usage;
@@ -1691,7 +1698,7 @@ mod tests {
         };
         BoundedRequest {
             qualified,
-            input_tokens: 10,
+            input_tokens: Some(10),
         }
     }
 
@@ -1759,6 +1766,110 @@ mod tests {
         assert_eq!(finalized[0]["status"], "succeeded");
         assert_eq!(finalized[0]["usage"]["charge"], 31);
         assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
+    }
+
+    #[tokio::test]
+    async fn chat_dispatch_does_not_depend_on_local_template_or_context_estimates() {
+        let state = Arc::new(FakeServingState::new(0));
+        let service = CompletionService::new(
+            state,
+            Arc::new(FixedRuntime(Ok(successful_completion()))),
+            ModelTokenizer::new().unwrap(),
+            Arc::new(config()),
+        );
+        let mut qualified = bounded_request().qualified;
+        // Invalid local artifact and absurd projected input bounds would have
+        // blocked dispatch before the chat deployment could validate the request.
+        qualified.deployment.release.tokenizer_path = "missing/local-artifact".to_owned();
+        qualified.max_prompt_tokens = 0;
+        qualified.max_context_tokens = 1;
+        qualified
+            .request
+            .parameters
+            .insert("reasoning_effort".to_owned(), json!("deployment-specific"));
+        let request = qualified.request.clone();
+        let prepared = service.prepare_request(qualified).await.unwrap();
+        assert_eq!(prepared.qualified.request, request);
+        assert_eq!(prepared.input_tokens, None);
+        assert_eq!(prepared.qualified.request.encoded_input_ids, None);
+    }
+
+    #[tokio::test]
+    async fn runtime_usage_overrides_local_input_estimate_for_settlement() {
+        for estimated_input in [7, 13] {
+            let state = Arc::new(FakeServingState::new(0));
+            let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
+            let mut generation = task(state.clone(), runtime);
+            generation.bounded.input_tokens = Some(estimated_input);
+            let (_cancel, cancellation) = oneshot::channel();
+            assert!(generation
+                .run(cancellation, running_shutdown())
+                .await
+                .is_ok());
+            let finalized = state.finalized.lock().unwrap();
+            assert_eq!(finalized.len(), 1);
+            assert_eq!(finalized[0]["status"], "succeeded");
+            assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
+            assert_eq!(finalized[0]["usage"]["charge"], 31);
+        }
+    }
+
+    #[tokio::test]
+    async fn streaming_uses_runtime_counts_but_rejects_inconsistent_counters() {
+        // Local admission counted 10. Both higher and lower engine counts are
+        // authoritative, but a changing prompt count or decreasing output is not.
+        for (first_input, last_input, last_output, status) in [
+            (7, 7, 2, "succeeded"),
+            (13, 13, 2, "succeeded"),
+            (7, 8, 2, "failed"),
+            (7, 7, 0, "failed"),
+        ] {
+            let state = Arc::new(FakeServingState::new(0));
+            let runtime = Arc::new(StreamingRuntime {
+                events: Mutex::new(Some(VecDeque::from([
+                    Ok(RuntimeStreamEvent::Chunk(
+                        RuntimeStreamChunk::from_normalized_parts(
+                            json!({"choices":[{"delta":{"content":"hi"}}]}),
+                            Some(NormalizedUsage::new(first_input, 0, 0, 1, 0).unwrap()),
+                            None,
+                            true,
+                            false,
+                        ),
+                    )),
+                    Ok(RuntimeStreamEvent::Chunk(
+                        RuntimeStreamChunk::from_normalized_parts(
+                            json!({"choices":[], "usage":{"prompt_tokens":last_input,"completion_tokens":last_output,"total_tokens":last_input+last_output}}),
+                            Some(NormalizedUsage::new(last_input, 0, 0, last_output, 0).unwrap()),
+                            Some("stop".to_owned()),
+                            false,
+                            true,
+                        ),
+                    )),
+                    Ok(RuntimeStreamEvent::Done),
+                ]))),
+            });
+            let service = CompletionService::new(
+                state.clone(),
+                runtime,
+                ModelTokenizer::new().unwrap(),
+                Arc::new(config()),
+            );
+            let mut bounded = bounded_request();
+            bounded.qualified.request.stream = true;
+            let stream = service.stream_bounded(bounded).await.unwrap();
+            let _items = stream.into_stream().collect::<Vec<_>>().await;
+            let finalized = state.finalized.lock().unwrap();
+            assert_eq!(finalized.len(), 1);
+            assert_eq!(finalized[0]["status"], status);
+            assert_eq!(finalized[0]["usage"]["input_tokens"], first_input);
+            if status == "succeeded" {
+                assert_eq!(finalized[0]["usage"]["output_tokens"], last_output);
+                assert_eq!(
+                    finalized[0]["usage"]["charge"],
+                    first_input * 2 + last_output * 3
+                );
+            }
+        }
     }
 
     #[tokio::test]

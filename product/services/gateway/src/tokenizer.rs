@@ -28,7 +28,8 @@ const CHAT_TEMPLATE_FILE: &str = "chat_template.jinja";
 #[derive(Clone, Debug, PartialEq)]
 pub struct BoundedRequest {
     pub qualified: QualifiedRequest,
-    pub input_tokens: u64,
+    /// Present only when the gateway tokenizes the actual native input payload.
+    pub input_tokens: Option<u64>,
 }
 
 #[derive(Clone)]
@@ -553,7 +554,7 @@ fn enforce_bounds(
     }
     Ok(BoundedRequest {
         qualified,
-        input_tokens,
+        input_tokens: Some(input_tokens),
     })
 }
 
@@ -839,7 +840,7 @@ mod tests {
         );
 
         let bounded = enforce_bounds(request(Some(7)), 3).unwrap();
-        assert_eq!(bounded.input_tokens, 3);
+        assert_eq!(bounded.input_tokens, Some(3));
     }
 
     #[tokio::test]
@@ -868,7 +869,7 @@ mod tests {
             .enforce(qualified)
             .await
             .unwrap();
-        assert!(bounded.input_tokens > 0);
+        assert!(bounded.input_tokens.is_some_and(|count| count > 0));
     }
 
     #[tokio::test]
@@ -889,7 +890,7 @@ mod tests {
             .enforce(qualified)
             .await
             .unwrap();
-        assert!(bounded.input_tokens > 0);
+        assert!(bounded.input_tokens.is_some_and(|count| count > 0));
     }
 
     #[tokio::test]
@@ -945,7 +946,7 @@ mod tests {
             .enforce(qualified)
             .await
             .unwrap();
-        assert!(bounded.input_tokens > 0);
+        assert!(bounded.input_tokens.is_some_and(|count| count > 0));
     }
 
     #[tokio::test]
@@ -974,7 +975,7 @@ mod tests {
             .enforce(qualified)
             .await
             .unwrap();
-        assert_eq!(bounded.input_tokens, 14);
+        assert_eq!(bounded.input_tokens, Some(14));
         assert_eq!(
             bounded.qualified.request.encoded_input_ids,
             Some(vec![

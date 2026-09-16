@@ -63,21 +63,19 @@ fn calls(value: &Value) -> Result<String, TokenizerRequestError> {
         let name = function["name"]
             .as_str()
             .ok_or(TokenizerRequestError::InvalidInput)?;
-        let mut args = function["arguments"].clone();
-        for _ in 0..2 {
-            if let Some(text) = args.as_str() {
-                match serde_json::from_str(text) {
-                    Ok(parsed) => args = parsed,
-                    Err(_) => break,
-                }
-            }
-        }
-        if !args.is_object() {
-            args = json!({"arguments": function["arguments"]});
-        }
-        let args = args
-            .as_object()
-            .ok_or(TokenizerRequestError::InvalidInput)?;
+        // The chat endpoint runs chat_utils._postprocess_messages before the
+        // DeepSeek encoder. It parses arguments once and replaces malformed or
+        // non-object history with {} so an incomplete tool call does not poison
+        // every later turn. Counting the encoder's raw-string fallback here
+        // disagrees with the prompt actually served by vLLM.
+        let args = match &function["arguments"] {
+            Value::Object(args) => args.clone(),
+            Value::String(text) => serde_json::from_str::<Value>(text)
+                .ok()
+                .and_then(|value| value.as_object().cloned())
+                .unwrap_or_default(),
+            _ => Default::default(),
+        };
         let parameters = args
             .iter()
             .map(|(key, value)| {
@@ -352,6 +350,38 @@ pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, Tokenize
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn incomplete_tool_history_matches_chat_endpoint_normalization() {
+        let call = |arguments: Value| {
+            json!([{
+                "id": "call_1", "type": "function",
+                "function": {"name": "shell", "arguments": arguments}
+            }])
+        };
+        let expected = "\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"shell\">\n\n</｜DSML｜ invoke>\n</｜DSML｜ calls>";
+        for arguments in [
+            json!("{\"cmd\": \""), // a truncated nine-character argument string
+            json!(""),
+            json!("null"),
+            json!("[]"),
+            json!("42"),
+            json!("true"),
+            Value::Null,
+            json!("\"{\\\"cmd\\\":\\\"ls\\\"}\""), // parsed once, not twice
+            json!("{}"),
+            json!({}),
+        ] {
+            assert_eq!(
+                calls(&call(arguments.clone())).unwrap(),
+                expected,
+                "{arguments}"
+            );
+        }
+        assert!(calls(&call(json!("{\"cmd\":\"ls\"}")))
+            .unwrap()
+            .contains("name=\"cmd\" string=\"true\">ls</"));
+    }
 
     #[test]
     fn invalid_reasoning_effort_identifies_the_parameter() {

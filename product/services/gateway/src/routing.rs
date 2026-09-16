@@ -9,6 +9,13 @@ use crate::{DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment};
 
 const MAXIMUM_STATUS_AGE: TimeDelta = TimeDelta::seconds(15);
 const PREFIX_TOKEN_LIMIT: usize = 4_096;
+const PREFIX_BYTE_LIMIT: usize = 16_384;
+
+#[derive(Clone, Copy)]
+pub enum RoutePrompt<'a> {
+    TokenIds(&'a [u32]),
+    ChatMessages(&'a [serde_json::Value]),
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RoutedDeployment {
@@ -28,7 +35,7 @@ pub struct RouteInput<'a> {
     pub model_id: &'a str,
     pub release_digest: &'a str,
     pub session_id: Option<&'a str>,
-    pub input_ids: &'a [u32],
+    pub prompt: RoutePrompt<'a>,
     pub deployments: &'a [GatewayModelDeployment],
     pub statuses: &'a [DeploymentRuntimeStatus],
     pub now: DateTime<Utc>,
@@ -89,7 +96,7 @@ pub(crate) fn order_deployments_diagnosed(
         model_id,
         release_digest,
         session_id,
-        input_ids,
+        prompt,
         deployments,
         statuses,
         now,
@@ -155,13 +162,7 @@ pub(crate) fn order_deployments_diagnosed(
         return (RouteAvailability::AtCapacity, diagnostics);
     }
 
-    let route_key = route_key(
-        workspace_id,
-        model_id,
-        release_digest,
-        session_id,
-        input_ids,
-    );
+    let route_key = route_key(workspace_id, model_id, release_digest, session_id, prompt);
     healthy.sort_by(|left, right| {
         rendezvous_score(&route_key, right.deployment.id)
             .cmp(&rendezvous_score(&route_key, left.deployment.id))
@@ -174,7 +175,7 @@ fn route_key(
     model_id: &str,
     release_digest: &str,
     session_id: Option<&str>,
-    input_ids: &[u32],
+    prompt: RoutePrompt<'_>,
 ) -> [u8; 32] {
     let mut hash = Sha256::new();
     hash.update(workspace_id.as_bytes());
@@ -187,9 +188,19 @@ fn route_key(
         hash.update((session_id.len() as u64).to_be_bytes());
         hash.update(session_id.as_bytes());
     } else {
-        hash.update([0]);
-        for token in input_ids.iter().take(PREFIX_TOKEN_LIMIT) {
-            hash.update(token.to_be_bytes());
+        match prompt {
+            RoutePrompt::TokenIds(input_ids) => {
+                hash.update([0]);
+                for token in input_ids.iter().take(PREFIX_TOKEN_LIMIT) {
+                    hash.update(token.to_be_bytes());
+                }
+            }
+            RoutePrompt::ChatMessages(messages) => {
+                hash.update([2]);
+                // JSON values are serializable without consulting model artifacts.
+                let bytes = serde_json::to_vec(messages).expect("chat messages are JSON values");
+                hash.update(&bytes[..bytes.len().min(PREFIX_BYTE_LIMIT)]);
+            }
         }
     }
     hash.finalize().into()
@@ -242,6 +253,28 @@ mod tests {
     }
 
     #[test]
+    fn chat_routing_uses_request_prefix_and_preserves_session_affinity() {
+        let first = vec![serde_json::json!({"role":"user","content":"hello"})];
+        let second = vec![serde_json::json!({"role":"user","content":"different"})];
+        let key = |messages: &[serde_json::Value], session| {
+            route_key(
+                Uuid::from_u128(9),
+                "model",
+                "release",
+                session,
+                RoutePrompt::ChatMessages(messages),
+            )
+        };
+        assert_eq!(key(&first, None), key(&first, None));
+        assert_ne!(key(&first, None), key(&second, None));
+        assert_eq!(key(&first, Some("session")), key(&second, Some("session")));
+        let long = vec![serde_json::json!({"role":"user","content":"x".repeat(PREFIX_BYTE_LIMIT)})];
+        let mut extended = long.clone();
+        extended.push(serde_json::json!({"role":"assistant","content":"reply"}));
+        assert_eq!(key(&long, None), key(&extended, None));
+    }
+
+    #[test]
     fn diagnoses_missing_stale_mismatched_and_busy_deployments_without_changing_routing() {
         let now = Utc::now();
         let deployments = (1..=5).map(deployment).collect::<Vec<_>>();
@@ -259,7 +292,7 @@ mod tests {
             model_id: "model",
             release_digest: &digest,
             session_id: None,
-            input_ids: &[1],
+            prompt: RoutePrompt::TokenIds(&[1]),
             deployments: &deployments,
             statuses: &statuses,
             now,
@@ -293,7 +326,7 @@ mod tests {
             model_id: "z-ai/glm-5.3-flash",
             release_digest: &digest,
             session_id: Some("conversation-1"),
-            input_ids: &[1, 2, 3],
+            prompt: RoutePrompt::TokenIds(&[1, 2, 3]),
             deployments: &deployments,
             statuses: &statuses,
             now,
@@ -303,7 +336,7 @@ mod tests {
             model_id: "z-ai/glm-5.3-flash",
             release_digest: &digest,
             session_id: Some("conversation-1"),
-            input_ids: &[9, 9, 9],
+            prompt: RoutePrompt::TokenIds(&[9, 9, 9]),
             deployments: &deployments,
             statuses: &statuses,
             now,
@@ -323,7 +356,7 @@ mod tests {
                 model_id: "model",
                 release_digest: &digest,
                 session_id: None,
-                input_ids: &[1],
+                prompt: RoutePrompt::TokenIds(&[1]),
                 deployments: &deployments,
                 statuses: &[runtime_status.clone()],
                 now,
@@ -337,7 +370,7 @@ mod tests {
                 model_id: "model",
                 release_digest: &digest,
                 session_id: None,
-                input_ids: &[1],
+                prompt: RoutePrompt::TokenIds(&[1]),
                 deployments: &deployments,
                 statuses: &[runtime_status.clone()],
                 now,
@@ -352,7 +385,7 @@ mod tests {
                 model_id: "model",
                 release_digest: &digest,
                 session_id: None,
-                input_ids: &[1],
+                prompt: RoutePrompt::TokenIds(&[1]),
                 deployments: &deployments,
                 statuses: &[runtime_status],
                 now,

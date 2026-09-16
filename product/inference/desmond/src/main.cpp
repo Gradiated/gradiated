@@ -59,14 +59,6 @@ std::uint16_t environment_port(const char* name, const std::uint16_t fallback) {
   return static_cast<std::uint16_t>(parsed);
 }
 
-std::uint64_t environment_u64(const char* name, const std::uint64_t fallback) {
-  const char* value = std::getenv(name);
-  if (value == nullptr || *value == '\0') return fallback;
-  const auto parsed = std::stoull(value);
-  if (parsed == 0) throw std::runtime_error(std::string("invalid value in ") + name);
-  return parsed;
-}
-
 double environment_double(const char* name, const double fallback) {
   const char* value = std::getenv(name);
   if (value == nullptr || *value == '\0') return fallback;
@@ -211,11 +203,7 @@ int main(int argc, char** argv) {
         .model_id = model,
         .runtime_revision = release,
     });
-    const auto maximum_concurrency =
-        environment_u64("DESMOND_MAXIMUM_CONCURRENCY", 1);
     const auto kv_usage_limit = environment_double("DESMOND_KV_USAGE_LIMIT", 0.90);
-    const auto waiting_request_limit = environment_u64(
-        "DESMOND_WAITING_REQUEST_LIMIT", maximum_concurrency);
     desmond::StatusReporter status_reporter({
         .host = environment("DESMOND_STATUS_HOST", ""),
         .port = environment_port("DESMOND_STATUS_PORT", 80),
@@ -224,7 +212,6 @@ int main(int argc, char** argv) {
                                         "DESMOND_STATUS_TOKEN_FILE"),
         .deployment_id = deployment_id,
         .runtime_revision = release,
-        .maximum_concurrency = maximum_concurrency,
         .interval = std::chrono::seconds(1),
         .url = environment("DESMOND_STATUS_URL", ""),
     });
@@ -384,17 +371,15 @@ int main(int argc, char** argv) {
               runtime_host, runtime_port, "/metrics", std::chrono::milliseconds(750));
           if (runtime_metrics.transport_ok && runtime_metrics.status == 200) {
             metrics_available = true;
-            pressure = desmond::parse_runtime_pressure(
-                runtime_metrics.body, kv_usage_limit, waiting_request_limit,
-                maximum_concurrency);
+            pressure = desmond::parse_runtime_pressure(runtime_metrics.body,
+                                                       kv_usage_limit);
           }
         }
         desmond::DeploymentStatusSnapshot snapshot;
         snapshot.healthy = current.child_running && current.runtime_ready;
         snapshot.accepting_requests =
             snapshot.healthy && !current.draining &&
-            (!observe_only || metrics_available) && !pressure.kv_pressure &&
-            !pressure.queue_pressure && !pressure.concurrency_pressure;
+            (!observe_only || metrics_available) && !pressure.kv_pressure;
         if (!snapshot.healthy) {
           snapshot.reason_code = "runtime_unavailable";
         } else if (current.draining) {
@@ -403,10 +388,6 @@ int main(int argc, char** argv) {
           snapshot.reason_code = "metrics_unavailable";
         } else if (pressure.kv_pressure) {
           snapshot.reason_code = "kv_pressure";
-        } else if (pressure.queue_pressure) {
-          snapshot.reason_code = "queue_pressure";
-        } else if (pressure.concurrency_pressure) {
-          snapshot.reason_code = "concurrency_full";
         }
         status_reporter.update(std::move(snapshot));
         next_status = std::chrono::steady_clock::now() + std::chrono::seconds(1);

@@ -21,8 +21,6 @@ use crate::{valkey_auth::ValkeyIamCredentials, ValkeyIamConfig};
 
 const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
 const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
-const ADMIT_DEPLOYMENT_V1: &str = include_str!("scripts/admit_deployment_v1.lua");
-const RELEASE_DEPLOYMENT_V1: &str = include_str!("scripts/release_deployment_v1.lua");
 const ROUTING_CACHE_TTL: Duration = Duration::from_secs(1);
 
 #[async_trait]
@@ -48,31 +46,6 @@ pub trait ServingState: Send + Sync {
         let _ = release_digest;
         Err(ServingStateError::UnsupportedOperation)
     }
-    async fn acquire_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-        now: DateTime<Utc>,
-        expires_at: DateTime<Utc>,
-        maximum_concurrency: u64,
-    ) -> Result<bool, ServingStateError> {
-        let _ = (
-            generation_id,
-            deployment_id,
-            now,
-            expires_at,
-            maximum_concurrency,
-        );
-        Err(ServingStateError::UnsupportedOperation)
-    }
-    async fn release_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-    ) -> Result<(), ServingStateError> {
-        let _ = (generation_id, deployment_id);
-        Err(ServingStateError::UnsupportedOperation)
-    }
     async fn admit(
         &self,
         generation_id: Uuid,
@@ -94,8 +67,6 @@ pub struct ValkeyServingState {
     connection: ClusterConnection,
     admission_script: Script,
     finalization_script: Script,
-    deployment_admission_script: Script,
-    deployment_release_script: Script,
     model_cache: LazyTtlCache<String, Option<GatewayModel>>,
     models_cache: LazyTtlCache<(), Vec<GatewayModel>>,
     status_cache: LazyTtlCache<String, Vec<DeploymentRuntimeStatus>>,
@@ -127,8 +98,6 @@ impl ValkeyServingState {
             connection,
             admission_script: Script::new(ADMIT_GENERATION_V1),
             finalization_script: Script::new(FINALIZE_GENERATION_V1),
-            deployment_admission_script: Script::new(ADMIT_DEPLOYMENT_V1),
-            deployment_release_script: Script::new(RELEASE_DEPLOYMENT_V1),
             model_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
             models_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
             status_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
@@ -264,63 +233,9 @@ impl ValkeyServingState {
                             .arg(format!("deployment-status:{{{release_digest}}}")),
                     )
                     .await?;
-                let mut statuses = Vec::with_capacity(fields.len());
-                for (deployment_id, value) in fields {
-                    let status: DeploymentRuntimeStatus =
-                        serde_json::from_str(&value).map_err(|source| {
-                            ServingStateError::MalformedRecord {
-                                kind: "DeploymentRuntimeStatus",
-                                source,
-                            }
-                        })?;
-                    if status.deployment_id.to_string() != deployment_id {
-                        return Err(ServingStateError::MismatchedDeploymentId);
-                    }
-                    statuses.push(status);
-                }
-                Ok(statuses)
+                Ok(parse_deployment_statuses(fields))
             })
             .await
-    }
-
-    pub async fn acquire_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-        now: DateTime<Utc>,
-        expires_at: DateTime<Utc>,
-        maximum_concurrency: u64,
-    ) -> Result<bool, ServingStateError> {
-        let mut invocation = self.deployment_admission_script.prepare_invoke();
-        invocation
-            .key(format!("deployment-inflight:{{{deployment_id}}}"))
-            .arg(generation_id.to_string())
-            .arg(now.timestamp_millis())
-            .arg(expires_at.timestamp_millis())
-            .arg(maximum_concurrency);
-        let result: i64 = invocation
-            .invoke_async(&mut self.connection.clone())
-            .await?;
-        match result {
-            0 => Ok(false),
-            1 => Ok(true),
-            value => Err(ServingStateError::UnknownDeploymentScriptResult(value)),
-        }
-    }
-
-    pub async fn release_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-    ) -> Result<(), ServingStateError> {
-        let mut invocation = self.deployment_release_script.prepare_invoke();
-        invocation
-            .key(format!("deployment-inflight:{{{deployment_id}}}"))
-            .arg(generation_id.to_string());
-        let _: i64 = invocation
-            .invoke_async(&mut self.connection.clone())
-            .await?;
-        Ok(())
     }
 
     pub async fn admit(
@@ -434,6 +349,37 @@ impl ValkeyServingState {
     }
 }
 
+/// One malformed status drops only its own deployment. A rejected document
+/// must never fail every request for the model.
+fn parse_deployment_statuses(fields: HashMap<String, String>) -> Vec<DeploymentRuntimeStatus> {
+    let mut statuses = Vec::with_capacity(fields.len());
+    for (deployment_id, value) in fields {
+        let status: DeploymentRuntimeStatus = match serde_json::from_str(&value) {
+            Ok(status) => status,
+            Err(_) => {
+                crate::diagnostics::limited_warn!(
+                    deployment_id = %deployment_id,
+                    phase = "deployment_status_read",
+                    error_code = "malformed_record",
+                    "dropping malformed deployment status"
+                );
+                continue;
+            }
+        };
+        if status.deployment_id.to_string() != deployment_id {
+            crate::diagnostics::limited_warn!(
+                deployment_id = %deployment_id,
+                phase = "deployment_status_read",
+                error_code = "deployment_id_mismatch",
+                "dropping mismatched deployment status"
+            );
+            continue;
+        }
+        statuses.push(status);
+    }
+    statuses
+}
+
 #[derive(Clone, Debug)]
 struct GenerationKeys {
     account: String,
@@ -493,33 +439,6 @@ impl ServingState for ValkeyServingState {
         ValkeyServingState::deployment_statuses(self, release_digest).await
     }
 
-    async fn acquire_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-        now: DateTime<Utc>,
-        expires_at: DateTime<Utc>,
-        maximum_concurrency: u64,
-    ) -> Result<bool, ServingStateError> {
-        ValkeyServingState::acquire_deployment_capacity(
-            self,
-            generation_id,
-            deployment_id,
-            now,
-            expires_at,
-            maximum_concurrency,
-        )
-        .await
-    }
-
-    async fn release_deployment_capacity(
-        &self,
-        generation_id: Uuid,
-        deployment_id: Uuid,
-    ) -> Result<(), ServingStateError> {
-        ValkeyServingState::release_deployment_capacity(self, generation_id, deployment_id).await
-    }
-
     async fn admit(
         &self,
         generation_id: Uuid,
@@ -564,8 +483,6 @@ pub enum ServingStateError {
     MalformedAccount { source: crate::domain::RecordError },
     #[error("GatewayModel ID does not match its Valkey key")]
     MismatchedModelId,
-    #[error("Deployment status ID does not match its Valkey field")]
-    MismatchedDeploymentId,
     #[error("deployment capacity script returned {0}")]
     UnknownDeploymentScriptResult(i64),
     #[error("serving state operation is not implemented")]
@@ -585,7 +502,6 @@ impl ServingStateError {
             Self::MalformedRecord { .. } => "malformed_record",
             Self::MalformedAccount { .. } => "malformed_account",
             Self::MismatchedModelId => "model_id_mismatch",
-            Self::MismatchedDeploymentId => "deployment_id_mismatch",
             Self::UnknownDeploymentScriptResult(_) => "unexpected_script_result",
             Self::UnsupportedOperation => "unsupported_operation",
             Self::InvalidModelProperties(_) => "invalid_model_properties",
@@ -743,6 +659,36 @@ mod tests {
             .unwrap();
     }
 
+    fn status_json(id: Uuid, extra: &str) -> String {
+        format!(
+            r#"{{"schema_version":1,"deployment_id":"{id}","runtime_revision":"r",
+                "received_at":"2026-08-27T12:00:00Z","healthy":true,
+                "accepting_requests":true,"reason_code":null{extra}}}"#
+        )
+    }
+
+    #[test]
+    fn status_parsing_keeps_good_records_and_drops_bad_ones() {
+        let good = Uuid::from_u128(1);
+        let mismatched = Uuid::from_u128(2);
+        let mut fields = HashMap::new();
+        fields.insert(good.to_string(), status_json(good, ""));
+        fields.insert(mismatched.to_string(), status_json(good, ""));
+        fields.insert(Uuid::from_u128(3).to_string(), "not json".to_owned());
+        fields.insert(
+            Uuid::from_u128(4).to_string(),
+            status_json(Uuid::from_u128(4), r#","retired_field":7"#),
+        );
+
+        let statuses = parse_deployment_statuses(fields);
+        assert_eq!(
+            statuses.len(),
+            2,
+            "only the good and forward-compatible records survive"
+        );
+        assert!(statuses.iter().any(|status| status.deployment_id == good));
+    }
+
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn local_cluster_enforces_settlement_hash_tag() {
@@ -776,41 +722,6 @@ mod tests {
             error.to_string().to_ascii_lowercase().contains("crossslot"),
             "unexpected cluster error: {error}"
         );
-    }
-
-    #[tokio::test]
-    #[ignore = "requires the local one-node Valkey cluster"]
-    async fn deployment_capacity_is_atomic_and_released() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
-        let deployment_id = Uuid::now_v7();
-        let first = Uuid::now_v7();
-        let second = Uuid::now_v7();
-        let now = Utc::now();
-        let expires_at = now + TimeDelta::minutes(5);
-
-        assert!(state
-            .acquire_deployment_capacity(first, deployment_id, now, expires_at, 1)
-            .await
-            .unwrap());
-        assert!(!state
-            .acquire_deployment_capacity(second, deployment_id, now, expires_at, 1)
-            .await
-            .unwrap());
-        state
-            .release_deployment_capacity(first, deployment_id)
-            .await
-            .unwrap();
-        assert!(state
-            .acquire_deployment_capacity(second, deployment_id, now, expires_at, 1)
-            .await
-            .unwrap());
-
-        let _: i64 = state
-            .query(redis::cmd("DEL").arg(format!("deployment-inflight:{{{deployment_id}}}")))
-            .await
-            .unwrap();
     }
 
     #[tokio::test]

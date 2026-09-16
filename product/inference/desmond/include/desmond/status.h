@@ -16,7 +16,6 @@ struct StatusReporterConfig {
   std::string token;
   std::string deployment_id;
   std::string runtime_revision;
-  std::uint64_t maximum_concurrency{1};
   std::chrono::seconds interval{1};
   // HTTPS for remote providers. Empty retains the private HTTP host/port path.
   std::string url;
@@ -30,8 +29,6 @@ struct DeploymentStatusSnapshot {
 
 struct RuntimePressure {
   bool kv_pressure{false};
-  bool queue_pressure{false};
-  bool concurrency_pressure{false};
 };
 
 class StatusReporter {
@@ -65,7 +62,6 @@ class StatusReporter {
 };
 
 [[nodiscard]] RuntimePressure parse_runtime_pressure(
-    const std::string& prometheus_text, double kv_usage_limit,
-    std::uint64_t waiting_request_limit, std::uint64_t maximum_concurrency);
+    const std::string& prometheus_text, double kv_usage_limit);
 
 }  // namespace desmond

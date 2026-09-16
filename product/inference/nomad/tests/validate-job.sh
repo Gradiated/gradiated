@@ -9,6 +9,5 @@ docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
   -var=bundle_sha256=0000000000000000000000000000000000000000000000000000000000000000 \
   -var=deployment_id=00000000-0000-4000-8000-000000000001 \
   -var=runtime_revision=test-release -var=status_url=https://api.example.test/v1/deployment-status \
-  -var=maximum_concurrency=4 \
   -var=base_id=test-base-v1 -var=cpu_mhz=1000 -var=memory_mb=1024 -var=runtime_disk_mb=1024 \
   /jobs/deepseek-v4-1-flash.nomad.hcl

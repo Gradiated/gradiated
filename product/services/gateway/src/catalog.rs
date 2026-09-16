@@ -15,7 +15,7 @@ const PROVIDER_HIPAA: bool = false;
 #[derive(Debug)]
 pub struct CatalogModel {
     pub model: GatewayModel,
-    pub installed_concurrency: u64,
+    pub healthy_deployments: u64,
 }
 
 #[derive(Debug, Serialize)]
@@ -54,8 +54,6 @@ struct ProviderModel<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     deprecation_date: Option<&'a DateTime<Utc>>,
     is_ready: bool,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    capacity: Vec<ProviderCapacity>,
     datacenters: Vec<ProviderDatacenter<'a>>,
     deployment_region: String,
     compliance: ProviderCompliance,
@@ -65,7 +63,7 @@ impl<'a> ProviderModel<'a> {
     fn from_model(catalog: &'a CatalogModel) -> Option<Self> {
         let model = &catalog.model;
         let is_ready = match model.status {
-            ModelStatus::Available => catalog.installed_concurrency > 0,
+            ModelStatus::Available => catalog.healthy_deployments > 0,
             ModelStatus::Unavailable => false,
             ModelStatus::Retired => return None,
         };
@@ -119,14 +117,6 @@ impl<'a> ProviderModel<'a> {
             passthrough_parameters: &model.properties.passthrough_parameters,
             deprecation_date: model.properties.deprecation_date.as_ref(),
             is_ready,
-            capacity: (catalog.installed_concurrency > 0)
-                .then_some(ProviderCapacity {
-                    kind: "concurrency",
-                    unit: "request",
-                    value: catalog.installed_concurrency,
-                })
-                .into_iter()
-                .collect(),
             datacenters,
             deployment_region,
             compliance: ProviderCompliance {
@@ -135,14 +125,6 @@ impl<'a> ProviderModel<'a> {
             },
         })
     }
-}
-
-#[derive(Debug, Serialize)]
-struct ProviderCapacity {
-    #[serde(rename = "type")]
-    kind: &'static str,
-    unit: &'static str,
-    value: u64,
 }
 
 #[derive(Debug, Serialize)]
@@ -354,7 +336,7 @@ mod tests {
     fn publishes_only_customer_visible_provider_fields() {
         let models = [CatalogModel {
             model: model(),
-            installed_concurrency: 8,
+            healthy_deployments: 2,
         }];
         let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
         let published = &response["data"][0];
@@ -387,10 +369,7 @@ mod tests {
             serde_json::json!({ "zdr": true, "hipaa": false })
         );
         assert_eq!(published["is_ready"], true);
-        assert_eq!(
-            published["capacity"],
-            serde_json::json!([{"type": "concurrency", "unit": "request", "value": 8}])
-        );
+        assert!(published.get("capacity").is_none());
         assert_eq!(published["schema_version"], "2.4");
         assert!(published.get("deployments").is_none());
         assert!(published.get("service_url").is_none());
@@ -402,7 +381,7 @@ mod tests {
         singapore.deployments[0].region = "sg".to_owned();
         let models = [CatalogModel {
             model: singapore,
-            installed_concurrency: 8,
+            healthy_deployments: 2,
         }];
         let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
         let published = &response["data"][0];
@@ -426,11 +405,27 @@ mod tests {
         for model in [retired, missing_release, missing_deployment] {
             let models = [CatalogModel {
                 model,
-                installed_concurrency: 0,
+                healthy_deployments: 0,
             }];
             let response =
                 serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
             assert_eq!(response["data"].as_array().unwrap().len(), 0);
+        }
+    }
+
+    #[test]
+    fn readiness_follows_the_healthy_deployment_count() {
+        for (healthy_deployments, expected) in [(0_u64, false), (1, true), (3, true)] {
+            let models = [CatalogModel {
+                model: model(),
+                healthy_deployments,
+            }];
+            let response =
+                serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+            assert_eq!(
+                response["data"][0]["is_ready"], expected,
+                "{healthy_deployments} healthy deployments"
+            );
         }
     }
 }

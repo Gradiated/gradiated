@@ -201,11 +201,20 @@ void test_runtime_pressure_uses_vllm_metrics() {
       "vllm:kv_cache_usage_perc 0.95\n"
       "vllm:num_requests_waiting 2\n"
       "vllm:num_requests_running 4\n",
-      0.90, 2, 4);
+      0.90);
   require(pressure.kv_pressure, "KV pressure threshold is applied");
-  require(pressure.queue_pressure, "queue pressure threshold is applied");
-  require(pressure.concurrency_pressure,
-          "running request threshold is applied");
+}
+
+void test_runtime_pressure_ignores_batch_counters() {
+  // The engine owns request admission. Batch counters track engine state, not
+  // a capacity limit, so they must not mark the deployment as not accepting.
+  // vLLM rejects excess load with HTTP 503 once its own queue limit is hit.
+  const auto pressure = desmond::parse_runtime_pressure(
+      "vllm:kv_cache_usage_perc 0.10\n"
+      "vllm:num_requests_waiting 50\n"
+      "vllm:num_requests_running 999\n",
+      0.90);
+  require(!pressure.kv_pressure, "low KV usage is not pressure");
 }
 
 }  // namespace
@@ -220,6 +229,7 @@ int main() {
   test_http_burst_remains_responsive();
   test_profiling_retry_is_idempotent_and_backed_off();
   test_runtime_pressure_uses_vllm_metrics();
+  test_runtime_pressure_ignores_batch_counters();
   std::cout << "desmond tests passed\n";
   return 0;
 }

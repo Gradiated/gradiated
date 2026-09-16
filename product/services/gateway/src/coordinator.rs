@@ -8,7 +8,7 @@ use crate::{
     auth::{authenticate_credential, authorize_access, credential_digest, AuthenticatedIdentity},
     domain::{BillingMode, ModelStatus},
     generation::CapturedPricing,
-    healthy_installed_concurrency,
+    healthy_deployment_count,
     serving_state::ServingState,
     CatalogModel, ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
 };
@@ -90,7 +90,7 @@ impl RequestCoordinator {
                 None => Vec::new(),
             };
             catalog.push(CatalogModel {
-                installed_concurrency: healthy_installed_concurrency(
+                healthy_deployments: healthy_deployment_count(
                     &model.deployments,
                     &statuses,
                     requested_at,
@@ -353,7 +353,6 @@ mod tests {
                     received_at: metadata().received_at,
                     healthy: true,
                     accepting_requests: true,
-                    maximum_concurrency: 4,
                     reason_code: None,
                 })
                 .into_iter()

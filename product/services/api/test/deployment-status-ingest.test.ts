@@ -20,7 +20,6 @@ const report = (): DeploymentStatusReport => ({
   runtime_revision: "vllm-revision",
   healthy: true,
   accepting_requests: true,
-  maximum_concurrency: 4,
   reason_code: null,
 });
 

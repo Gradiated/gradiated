@@ -33,16 +33,36 @@ class StatusHandler(BaseHTTPRequestHandler):
 
 
 class ReportStatusTests(unittest.TestCase):
-    def test_classifies_runtime_pressure(self):
+    def test_accepts_low_kv_usage_regardless_of_batch_counters(self):
+        # The engine owns admission. A busy batch must not mark the deployment
+        # as not accepting, because vLLM rejects excess load with HTTP 503 once
+        # its own queue limit is reached.
         status = classify_runtime(
             True,
-            "vllm:num_requests_running 4\nvllm:kv_cache_usage_perc 0.2\n",
-            maximum_concurrency=4,
+            "vllm:num_requests_running 999\n"
+            "vllm:num_requests_waiting 50\n"
+            "vllm:kv_cache_usage_perc 0.2\n",
+            kv_usage_limit=0.9,
+        )
+        self.assertTrue(status.healthy)
+        self.assertTrue(status.accepting_requests)
+        self.assertIsNone(status.reason_code)
+
+    def test_marks_kv_pressure_unsafe(self):
+        status = classify_runtime(
+            True,
+            "vllm:num_requests_running 1\nvllm:kv_cache_usage_perc 0.95\n",
             kv_usage_limit=0.9,
         )
         self.assertTrue(status.healthy)
         self.assertFalse(status.accepting_requests)
-        self.assertEqual(status.reason_code, "concurrency_full")
+        self.assertEqual(status.reason_code, "kv_pressure")
+
+    def test_unhealthy_runtime_is_not_accepting(self):
+        status = classify_runtime(False, "", kv_usage_limit=0.9)
+        self.assertFalse(status.healthy)
+        self.assertFalse(status.accepting_requests)
+        self.assertEqual(status.reason_code, "runtime_unhealthy")
 
     def test_reuses_one_http_connection(self):
         StatusHandler.reports = []

@@ -20,7 +20,7 @@ The gateway uses:
 
 - fresh deployment status;
 - rendezvous hashing for stable routing;
-- one concurrency lease for each active request;
+- engine-owned admission with one retry;
 - one retry before output starts.
 
 The first version does not store affinity records. It does not reserve KV tokens.
@@ -57,7 +57,6 @@ authenticate
   -> validate and tokenize
   -> build route key
   -> order deployments
-  -> reserve one concurrency slot
   -> call runtime
   -> retry once if allowed
   -> settle once
@@ -65,8 +64,11 @@ authenticate
 
 Return:
 
-- `429` when healthy deployments cannot accept more work;
+- `429` when the engine rejects for capacity, or no deployment is accepting;
 - `503` when no healthy deployment exists.
+
+The engine rejects excess load with HTTP 503. The gateway maps 503 and 429 to
+`capacity_exceeded` and returns 429 to the client.
 
 Do not queue in the gateway.
 
@@ -122,7 +124,6 @@ Each field name is a deployment ID. Each field value is:
   "received_at": "2026-08-27T12:00:00Z",
   "healthy": true,
   "accepting_requests": false,
-  "maximum_concurrency": 4,
   "reason_code": "kv_pressure"
 }
 ```
@@ -133,9 +134,10 @@ state. It does not replay old status records.
 Initial timing:
 
 - Desmond interval: 1 second;
-- maximum status age: 6 seconds;
-- Valkey hash TTL: 8 seconds;
-- gateway cache TTL: 1 second.
+- maximum status age: 15 seconds;
+- Valkey hash TTL: 30 seconds;
+- gateway cache TTL: 1 second;
+- future-dated tolerance: 5 seconds.
 
 The gateway ignores stale, unknown, or mismatched fields.
 
@@ -151,12 +153,12 @@ Set `healthy: false` for conditions such as:
 
 `accepting_requests` means the runtime can accept a new request now.
 
-Set `accepting_requests: false` for conditions such as:
+Set `accepting_requests: false` for these reasons:
 
-- draining;
-- KV pressure;
-- queue pressure;
-- repeated preemption.
+- `runtime_unavailable`: the runtime is not ready or the child process stopped;
+- `draining`: the deployment is shutting down;
+- `metrics_unavailable`: the runtime metrics could not be read;
+- `kv_pressure`: KV cache usage is at or above the limit.
 
 Existing requests continue when `accepting_requests` becomes false.
 
@@ -165,6 +167,8 @@ metrics. Keep the detailed metrics in ClickHouse.
 
 Use `reason_code` for logs, metrics, and the `429` or `503` decision. Do not send
 provider details to the client.
+
+`accepting_requests` reports runtime safety. It is not a concurrency limit.
 
 ## Simple gateway cache
 
@@ -203,8 +207,9 @@ Always use Valkey for:
 - workspace and organization status;
 - balances;
 - organization admission leases;
-- deployment concurrency leases;
 - settlement.
+
+The gateway keeps no per-deployment concurrency state in Valkey.
 
 The tokenizer already lazy-loads and caches exact tokenizer releases. Keep that
 code.
@@ -255,51 +260,71 @@ store, or forward the raw value.
 OpenRouter may not forward a session value. The opening-message route key is the
 fallback.
 
-## Deployment concurrency lease
+## Deployment concurrency
 
-The existing organization lease controls billing and organization concurrency.
-Add one separate temporary lease for deployment concurrency.
+The gateway does not track deployment concurrency. The engine owns admission.
 
-Use a sorted set for each deployment:
+Route by rendezvous ranking. Dispatch to the highest-ranked deployment. When
+that deployment is full, the runtime rejects the request and the gateway retries
+once on the next candidate. No reservation is taken before dispatch.
 
-```text
-deployment-inflight:{<deployment-id>}
-```
+Removed: the `deployment-inflight:{<deployment-id>}` sorted set and its Lua
+scripts. The gateway no longer reserves a slot per generation.
 
-Each member is a generation ID. Its score is the lease expiry time.
+Reason for removal:
 
-One atomic Valkey operation:
+- The engine already bounds admission atomically through `max_num_queued_reqs`
+  and `max_num_queued_tokens`, counted in the API server across all ranks.
+- The status document that fed the limit is sampled once per second. Two
+  gateway replicas can read the same sample and dispatch together. A lease is
+  needed only when the signal is a stale boolean.
+- The lease outlived the request. Its reservation used the generation timeout
+  plus a finalization margin, so a slot stayed reserved after the stream closed.
+  That produced phantom slots and admission flapping.
 
-1. removes expired members;
-2. checks the member count against `maximum_concurrency`;
-3. adds the generation ID when a slot is free.
+The organization lease still controls billing and organization concurrency. It
+is a separate limit and it stays.
 
-Use the request hard deadline plus a finalization margin as the expiry. Do not
-add lease renewal in the first version.
+### Required runtime flags
 
-Release the lease on:
+The launch scripts always pass `--max-num-queued-reqs` and
+`--max-num-queued-tokens`. Both flags exist from vLLM v0.29.0.
 
-- completion;
-- cancellation;
-- failed dispatch;
-- retry handoff.
-
-The lease prevents two gateway replicas from taking the same final slot.
-
-Production generation traffic must use the gateway. Direct runtime traffic
-would bypass the lease.
+vLLM queues without a bound when `max_num_queued_reqs` is unset. The engine then
+accepts load past its batch capacity and preempts KV instead of rejecting.
+Preemption collapses time to first token for every request on the deployment.
+The runtime build must support both flags. A runtime that does not support them
+fails at startup instead of running without a bound.
 
 ### Why no KV lease at launch
 
-Most expected requests are long. Set a conservative concurrency limit from
-measurements on the 2×TP2 deployment.
+Most expected requests are long. Desmond marks a deployment as not accepting
+requests when KV pressure becomes unsafe. vLLM remains the final authority.
 
-Desmond marks a deployment as not accepting requests when KV or queue pressure
-becomes unsafe. vLLM remains the final authority.
+Do not gate admission on `vllm:num_requests_running`. That counter is a proxy for
+the engine batch state, not a capacity limit. It changes with prompt length and
+KV budget, so a fixed threshold rejects work that the engine can accept.
 
-Before launch, measure 128K, 500K, and 900K prompts at several concurrency
-levels. Add token-weighted leases only if safe concurrency changes enough to
-justify the extra logic.
+Set the engine queue limits instead:
+
+- `--max-num-queued-reqs` bounds waiting plus running requests.
+- `--max-num-queued-tokens` bounds the prefill token backlog.
+  Set it to `target_TTFT * prefill_throughput`.
+
+vLLM rejects a request with HTTP 503 when either limit is reached. The gateway
+maps 503 and 429 to `capacity_exceeded`, so the client can retry. A 503 never
+maps to `runtime_unavailable`.
+
+Size the two limits for the deployment:
+
+- `max_num_queued_reqs`: `data_parallel_size * max_num_seqs + queue_depth`.
+  The DeepSeek runtime uses `max_num_seqs=32`, so 64 leaves a small queue.
+- `max_num_queued_tokens`: `target_TTFT * prefill_throughput`.
+  A value below one full-context prompt sheds work the engine could accept.
+
+The status document declares no concurrency value. The gateway does not publish
+a capacity limit and does not gate admission on one. Readiness requires one
+fresh healthy deployment status.
 
 ## One retry
 
@@ -311,10 +336,10 @@ Retry once only when:
 - time remains;
 - another deployment serves the same release.
 
-Release the first deployment lease before retry.
+Exclude the first deployment.
 
-Exclude the first deployment. Prefer another fault domain. For connection or
-runtime failure, prefer another provider.
+Prefer another fault domain. For connection or runtime failure, prefer another
+provider.
 
 Do not retry:
 
@@ -328,23 +353,15 @@ and settlement.
 
 ## OpenRouter capacity
 
-Report root concurrency:
+The catalog omits the `capacity` array. OpenRouter treats an absent array as an
+undeclared limit, not zero. A declared concurrency value would be wrong because
+safe concurrency depends on prompt length, and the gateway does not enforce a
+limit.
 
-```json
-"capacity": [
-  {
-    "type": "concurrency",
-    "unit": "request",
-    "value": 8
-  }
-]
-```
-
-The value is the sum of `maximum_concurrency` for healthy deployments. Include a
-healthy deployment even when it is busy or has `accepting_requests: false`.
-
-Running requests do not reduce declared capacity. Temporary saturation returns
-`429`.
+A model is ready when at least one fresh healthy deployment reports status.
+Running requests do not change readiness. Temporary saturation returns `429`.
+OpenRouter does not count `429` against uptime, and it prefers an early `429`
+over a queued request.
 
 Use OpenRouter `is_ready` for launch control and sustained outages. Do not change
 it because the fleet is busy.
@@ -358,7 +375,6 @@ Do not report token throughput until measurements exist.
 - Add `provider`, `region`, and `fault_domain` to deployments.
 - Add the status request and Valkey value contracts.
 - Add `session_id` as a gateway-owned request field.
-- Add the deployment concurrency lease operation.
 
 ### 2. Desmond and status ingestion
 
@@ -373,7 +389,6 @@ Do not report token throughput until measurements exist.
 - Cache model and status data for one second.
 - Add the session normalizer.
 - Add rendezvous ordering.
-- Add the concurrency lease.
 
 ### 4. Retry and reporting
 
@@ -385,16 +400,16 @@ Do not report token throughput until measurements exist.
 
 - Measure one TP2 runtime first.
 - Measure both TP2 runtimes together.
-- Set conservative `maximum_concurrency` values.
+- Set the engine queue limits, `max_num_queued_reqs` and `max_num_queued_tokens`.
 - Test status loss, saturation, cancellation, retry, and streaming.
 - Enable the new route only for GLM-5.3-Flash first.
 
 ## Launch gates
 
-- Stale status removes a deployment within 6 seconds.
-- Busy healthy deployments return `429`, not `503`.
+- Stale status removes a deployment within 15 seconds.
+- Busy healthy deployments return `429`.
 - Unhealthy fleets return `503`.
-- Two gateways cannot reserve the same final slot.
+- The engine rejects excess load; the gateway holds no concurrency state.
 - One request makes at most two runtime attempts.
 - A retry never changes the model release.
 - A started stream is never retried.
@@ -404,7 +419,7 @@ Do not report token throughput until measurements exist.
 
 ## Deferred work
 
-- KV-token or weighted concurrency leases;
+- KV-token or weighted admission limits;
 - stored affinity records;
 - runtime-instance cache epochs;
 - latency, price, or throughput scoring;
@@ -418,8 +433,10 @@ Do not report token throughput until measurements exist.
 
 ## Known limits
 
-The status view can be up to 6 seconds old. The concurrency lease limits burst
-overload during that window. One retry handles immediate runtime failure.
+The status view can be up to 15 seconds old. The engine bounds admission, so a
+stale healthy view can send work to a full deployment; the engine rejects it and
+one retry handles it. A stale view also keeps a stopped runtime in rotation for
+up to 15 seconds.
 
 The gateway request limit is 32 MB. Test it with the largest supported JSON
 request before advertising the full context window.

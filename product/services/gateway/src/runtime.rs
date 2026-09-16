@@ -258,13 +258,7 @@ impl SglangClient {
             .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
-            let kind = match status {
-                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
-                    RuntimeFailureKind::InvalidRequest
-                }
-                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
-                _ => RuntimeFailureKind::Unavailable,
-            };
+            let kind = failure_kind_for_status(status);
             let usage = match read_bounded_body(response).await {
                 Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
                 Err(_) => NormalizedUsage::zero(),
@@ -319,14 +313,7 @@ impl SglangClient {
             .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
-            return Err(RuntimeFailure::new(match status {
-                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
-                    RuntimeFailureKind::InvalidRequest
-                }
-                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
-                _ => RuntimeFailureKind::Unavailable,
-            })
-            .with_status(status));
+            return Err(RuntimeFailure::new(failure_kind_for_status(status)).with_status(status));
         }
         let body = read_bounded_body(response).await?;
         let native: NativeTokenResponse = serde_json::from_slice(&body)
@@ -426,13 +413,7 @@ impl SglangClient {
             .map_err(RuntimeFailure::from_transport)?;
         let status = response.status();
         if !status.is_success() {
-            let kind = match status {
-                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
-                    RuntimeFailureKind::InvalidRequest
-                }
-                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
-                _ => RuntimeFailureKind::Unavailable,
-            };
+            let kind = failure_kind_for_status(status);
             let usage = match read_bounded_body(response).await {
                 Ok(body) => optional_usage(&body).unwrap_or_else(NormalizedUsage::zero),
                 Err(_) => NormalizedUsage::zero(),
@@ -513,14 +494,10 @@ impl SglangClient {
             .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
             .map_err(RuntimeFailure::from_transport)?;
         if !response.status().is_success() {
-            return Err(RuntimeFailure::new(match response.status() {
-                StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
-                    RuntimeFailureKind::InvalidRequest
-                }
-                StatusCode::TOO_MANY_REQUESTS => RuntimeFailureKind::CapacityExceeded,
-                _ => RuntimeFailureKind::Unavailable,
-            })
-            .with_status(response.status()));
+            return Err(
+                RuntimeFailure::new(failure_kind_for_status(response.status()))
+                    .with_status(response.status()),
+            );
         }
         if response
             .headers()
@@ -1386,6 +1363,25 @@ pub struct RuntimeFailure {
     transport: Option<&'static str>,
 }
 
+/// Maps an upstream status to a failure kind.
+///
+/// A vLLM `QueueOverflowError` or `MaxQueuedTokensError` rejects with HTTP 503
+/// when the engine queue reaches `max_num_queued_reqs` or `max_num_queued_tokens`.
+/// That rejection is admission backpressure, not an outage, so it must stay
+/// retryable and must not surface as `runtime_unavailable`. Include 429 for
+/// runtimes that reject excess load with `Too Many Requests`.
+fn failure_kind_for_status(status: StatusCode) -> RuntimeFailureKind {
+    match status {
+        StatusCode::BAD_REQUEST | StatusCode::UNPROCESSABLE_ENTITY => {
+            RuntimeFailureKind::InvalidRequest
+        }
+        StatusCode::TOO_MANY_REQUESTS | StatusCode::SERVICE_UNAVAILABLE => {
+            RuntimeFailureKind::CapacityExceeded
+        }
+        _ => RuntimeFailureKind::Unavailable,
+    }
+}
+
 impl RuntimeFailure {
     pub fn new(kind: RuntimeFailureKind) -> Self {
         Self {
@@ -2006,6 +2002,54 @@ mod tests {
                 .unwrap_err()
                 .kind(),
             RuntimeFailureKind::ProtocolViolation
+        );
+    }
+
+    #[tokio::test]
+    async fn maps_engine_queue_rejection_to_capacity() {
+        // vLLM rejects with 503 when max_num_queued_reqs or max_num_queued_tokens
+        // is reached. That is admission backpressure and must stay retryable.
+        let response = json!({
+            "error": {
+                "message": "The engine is currently busy and cannot accept new requests."
+            }
+        });
+        let (service_url, _, task) = server(StatusCode::SERVICE_UNAVAILABLE, response).await;
+        let runtime = SglangClient::new(None).unwrap();
+
+        let failure = runtime
+            .complete(
+                &deployment(service_url),
+                request(),
+                1_024,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .unwrap_err();
+
+        assert_eq!(failure.upstream_status, Some(503));
+        assert_eq!(failure.kind(), RuntimeFailureKind::CapacityExceeded);
+        assert_eq!(failure.gateway_error(), GatewayError::CapacityExceeded);
+        task.abort();
+    }
+
+    #[test]
+    fn classifies_admission_statuses_and_real_outages() {
+        assert_eq!(
+            failure_kind_for_status(StatusCode::SERVICE_UNAVAILABLE),
+            RuntimeFailureKind::CapacityExceeded
+        );
+        assert_eq!(
+            failure_kind_for_status(StatusCode::TOO_MANY_REQUESTS),
+            RuntimeFailureKind::CapacityExceeded
+        );
+        assert_eq!(
+            failure_kind_for_status(StatusCode::BAD_GATEWAY),
+            RuntimeFailureKind::Unavailable
+        );
+        assert_eq!(
+            failure_kind_for_status(StatusCode::BAD_REQUEST),
+            RuntimeFailureKind::InvalidRequest
         );
     }
 

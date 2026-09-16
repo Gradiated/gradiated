@@ -38,8 +38,10 @@ fn legacy_fault_domain() -> String {
     "legacy:unknown".to_owned()
 }
 
+// The status document is a wire format between independently deployed
+// processes. Unknown fields are ignored so a newer producer cannot break an
+// older gateway replica during a rolling change.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct DeploymentRuntimeStatus {
     #[validate(range(min = 1, max = 1))]
     pub schema_version: u16,
@@ -49,8 +51,6 @@ pub struct DeploymentRuntimeStatus {
     pub received_at: DateTime<Utc>,
     pub healthy: bool,
     pub accepting_requests: bool,
-    #[validate(range(min = 1, max = 100_000))]
-    pub maximum_concurrency: u64,
     #[validate(length(min = 1, max = 100))]
     pub reason_code: Option<String>,
 }
@@ -204,6 +204,34 @@ mod tests {
             Err(DeploymentError::Invalid(
                 "service_url must be an absolute HTTP or HTTPS URL".to_owned()
             ))
+        );
+    }
+
+    #[test]
+    fn status_ignores_unknown_fields_and_requires_known_ones() {
+        let status: DeploymentRuntimeStatus = serde_json::from_value(serde_json::json!({
+            "schema_version": 1,
+            "deployment_id": Uuid::nil(),
+            "runtime_revision": "vllm-revision",
+            "received_at": "2026-08-27T12:00:00Z",
+            "healthy": true,
+            "accepting_requests": true,
+            "reason_code": null,
+            "maximum_concurrency": 4
+        }))
+        .expect("a retired field must not break a running producer");
+        assert_eq!(status.runtime_revision, "vllm-revision");
+
+        let missing = serde_json::from_value::<DeploymentRuntimeStatus>(serde_json::json!({
+            "schema_version": 1,
+            "deployment_id": Uuid::nil(),
+            "runtime_revision": "vllm-revision",
+            "received_at": "2026-08-27T12:00:00Z",
+            "healthy": true
+        }));
+        assert!(
+            missing.is_err(),
+            "a missing required field must be rejected"
         );
     }
 }

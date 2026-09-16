@@ -47,19 +47,18 @@ class RuntimeStatus:
 def classify_runtime(
     healthy: bool,
     metrics: str,
-    maximum_concurrency: int,
     kv_usage_limit: float,
 ) -> RuntimeStatus:
+    """Classify deployment pressure from runtime metrics.
+
+    The engine owns running-set admission. Do not gate on
+    ``vllm:num_requests_running``: that counter tracks engine batch state, not a
+    capacity limit, and it moves with prompt length and KV budget. The engine
+    rejects excess load itself with HTTP 503 when ``max_num_queued_reqs`` or
+    ``max_num_queued_tokens`` is reached.
+    """
     if not healthy:
         return RuntimeStatus(False, False, "runtime_unhealthy")
-    waiting_requests = metric_value(
-        metrics,
-        ("vllm:num_requests_waiting", "vllm_num_requests_waiting"),
-    )
-    running_requests = metric_value(
-        metrics,
-        ("vllm:num_requests_running", "vllm_num_requests_running"),
-    )
     kv_usage = metric_value(
         metrics,
         (
@@ -69,10 +68,6 @@ def classify_runtime(
             "vllm_gpu_cache_usage_perc",
         ),
     )
-    if waiting_requests >= 1:
-        return RuntimeStatus(True, False, "waiting_requests")
-    if running_requests >= maximum_concurrency:
-        return RuntimeStatus(True, False, "concurrency_full")
     if kv_usage >= kv_usage_limit:
         return RuntimeStatus(True, False, "kv_pressure")
     return RuntimeStatus(True, True, None)
@@ -138,22 +133,21 @@ class RuntimeObserver:
     def __init__(self, port: int, timeout: float):
         self.client = PersistentClient(f"http://127.0.0.1:{port}", timeout)
 
-    def observe(self, maximum_concurrency: int, kv_usage_limit: float) -> RuntimeStatus:
+    def observe(self, kv_usage_limit: float) -> RuntimeStatus:
         try:
             health_status, _ = self.client.request("GET", "/health")
             if health_status != 200:
-                return classify_runtime(False, "", maximum_concurrency, kv_usage_limit)
+                return classify_runtime(False, "", kv_usage_limit)
             metrics_status, metrics = self.client.request("GET", "/metrics")
             if metrics_status != 200:
-                return classify_runtime(False, "", maximum_concurrency, kv_usage_limit)
+                return classify_runtime(False, "", kv_usage_limit)
             return classify_runtime(
                 True,
                 metrics.decode("utf-8", errors="replace"),
-                maximum_concurrency,
                 kv_usage_limit,
             )
         except Exception:
-            return classify_runtime(False, "", maximum_concurrency, kv_usage_limit)
+            return classify_runtime(False, "", kv_usage_limit)
 
 
 class StatusUploader:
@@ -188,7 +182,6 @@ def main() -> int:
     status_token = Path(required("STATUS_TOKEN_FILE")).read_text().strip()
     if not status_token:
         raise RuntimeError("status token file is empty")
-    maximum_concurrency = int(os.environ.get("MAXIMUM_CONCURRENCY", "4"))
     kv_usage_limit = float(os.environ.get("KV_USAGE_LIMIT", "0.90"))
     interval = float(os.environ.get("STATUS_INTERVAL_SECONDS", "1"))
     timeout = float(os.environ.get("STATUS_TIMEOUT_SECONDS", "2"))
@@ -198,14 +191,13 @@ def main() -> int:
 
     while True:
         started = time.monotonic()
-        runtime = observer.observe(maximum_concurrency, kv_usage_limit)
+        runtime = observer.observe(kv_usage_limit)
         payload: dict[str, object] = {
             "schema_version": 1,
             "deployment_id": deployment_id,
             "runtime_revision": runtime_revision,
             "healthy": runtime.healthy,
             "accepting_requests": runtime.accepting_requests,
-            "maximum_concurrency": maximum_concurrency,
             "reason_code": runtime.reason_code,
         }
         try:

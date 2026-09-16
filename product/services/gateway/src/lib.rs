@@ -55,7 +55,7 @@ pub use protocol::{Frame, Protocol, StreamItem};
 pub use readiness::DependencyReadiness;
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
 pub use routing::{
-    healthy_installed_concurrency, order_deployments, RouteAvailability, RouteInput, RoutePrompt,
+    healthy_deployment_count, order_deployments, RouteAvailability, RouteInput, RoutePrompt,
     RoutedDeployment,
 };
 pub use runtime::{

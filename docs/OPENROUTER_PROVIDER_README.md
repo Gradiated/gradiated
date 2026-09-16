@@ -37,7 +37,7 @@ invoice.
 | Pricing          | USD token prices                                          | Catalog emits string USD prices from integer nano-USD values                                                             | ready        |
 | Limits           | Context and maximum output limits                         | Catalog emits model-owned limits                                                                                         | ready        |
 | Capabilities     | Advertise supported parameters and features               | Catalog emits typed modality parameter descriptors and only configured features                                          | partial      |
-| Capacity         | Measured or declared capacity                             | Catalog sums healthy deployment concurrency from fresh status                                                            | ready        |
+| Capacity         | Measured or declared capacity                             | Catalog omits the capacity array; the engine owns admission and the gateway does not enforce a limit                     | ready        |
 | Location         | Datacenter and deployment-region metadata                 | Catalog derives the location from each deployment; GLM reports `SG`                                                       | ready        |
 | Compliance       | Clear data-handling posture                               | ZDR policy and catalog metadata are implemented; HIPAA and SOC 2 are not claimed                                         | ready        |
 | Privacy          | Policy with prompt logging, retention, and training terms | Privacy page includes inference storage, training, retention, and subprocessors; external legal review is waived by owner decision | ready |

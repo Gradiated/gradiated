@@ -9,7 +9,6 @@ variable "runtime_disk_mb" { type = number }
 variable "deployment_id" { type = string }
 variable "runtime_revision" { type = string }
 variable "status_url" { type = string }
-variable "maximum_concurrency" { type = number }
 
 job "deepseek-v4-1-flash" {
   type        = "service"
@@ -116,7 +115,6 @@ job "deepseek-v4-1-flash" {
         DESMOND_STATUS_URL          = var.status_url
         DESMOND_CONTROL_TOKEN_FILE  = "/etc/gradiated/runtime-access.token"
         DESMOND_STATUS_TOKEN_FILE   = "/etc/gradiated/deployment-status.token"
-        DESMOND_MAXIMUM_CONCURRENCY = var.maximum_concurrency
       }
       resources {
         cpu    = 250

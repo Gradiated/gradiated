@@ -5,7 +5,6 @@ set -euo pipefail
 : "${DESMOND_DEPLOYMENT_ID:?deployment registration is required}"
 : "${DESMOND_RELEASE:?runtime revision is required}"
 : "${DESMOND_MODEL:?model identity is required}"
-: "${DESMOND_MAXIMUM_CONCURRENCY:?capacity is required}"
 : "${DESMOND_STATUS_URL:?status endpoint is required}"
 : "${DESMOND_CONTROL_TOKEN_FILE:?runtime access token file is required}"
 : "${DESMOND_STATUS_TOKEN_FILE:?status token file is required}"

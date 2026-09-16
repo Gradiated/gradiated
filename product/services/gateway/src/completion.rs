@@ -9,7 +9,7 @@ use std::{
 };
 
 use axum::{body::Bytes, http::HeaderMap};
-use chrono::{DateTime, TimeDelta, Utc};
+use chrono::Utc;
 use futures_util::stream;
 use serde_json::Value;
 use tokio::{
@@ -30,12 +30,10 @@ use crate::{
 const FINALIZATION_ATTEMPTS: usize = 3;
 const FINALIZATION_RETRY_DELAY: Duration = Duration::from_millis(25);
 const STREAM_CHANNEL_CAPACITY: usize = 8;
-const MAXIMUM_RESERVATION_ATTEMPTS: usize = 3;
 
 struct DeploymentRoute {
     active: Option<RoutedDeployment>,
     remaining: Vec<RoutedDeployment>,
-    expires_at: DateTime<Utc>,
 }
 
 struct RoutedRequest {
@@ -304,49 +302,22 @@ impl CompletionService {
                 RouteAvailability::Ready(_) => unreachable!(),
             });
         };
-        let now = cmp::max(Utc::now(), request.metadata.received_at);
-        let expires_at = deployment_lease_expiry(now, &self.config)?;
-        let generation_id = request.metadata.generation_id;
-        let mut selected = None;
-        for candidate in candidates.iter().take(MAXIMUM_RESERVATION_ATTEMPTS) {
-            if self
-                .serving_state
-                .acquire_deployment_capacity(
-                    generation_id,
-                    candidate.deployment.id,
-                    now,
-                    expires_at,
-                    candidate.maximum_concurrency,
-                )
-                .await
-                .map_err(|error| {
-                    crate::diagnostics::limited_warn!(%generation_id, deployment_id = %candidate.deployment.id,
-                        phase = "capacity_reserve", error_code = error.diagnostic_code(),
-                        "deployment capacity reservation failed");
-                    GatewayError::ServingStateUnavailable
-                })?
-            {
-                selected = Some(candidate.clone());
-                break;
-            }
-        }
-        let active = selected.ok_or_else(|| {
-            crate::diagnostics::limited_warn!(%generation_id, model_id = %request.request.model,
-                phase = "capacity_reserve", candidates_attempted = candidates.len().min(MAXIMUM_RESERVATION_ATTEMPTS),
-                "deployment capacity exhausted");
-            GatewayError::CapacityExceeded
+        // The engine owns admission. Pick the highest-ranked rendezvous
+        // candidate and dispatch. When the runtime is full it rejects the
+        // request, and the retry path moves to the next candidate.
+        let mut candidates = candidates.into_iter();
+        let active = candidates.next().ok_or_else(|| {
+            crate::diagnostics::limited_warn!(%request.metadata.generation_id,
+                model_id = %request.request.model, phase = "routing",
+                "no eligible runtime deployment after ordering");
+            GatewayError::RuntimeUnavailable
         })?;
         bounded.qualified.deployment = active.deployment.clone();
-        let remaining = candidates
-            .into_iter()
-            .filter(|candidate| candidate.deployment.id != active.deployment.id)
-            .collect();
         Ok(RoutedRequest {
             bounded,
             route: Some(DeploymentRoute {
                 active: Some(active),
-                remaining,
-                expires_at,
+                remaining: candidates.collect(),
             }),
         })
     }
@@ -367,28 +338,16 @@ impl CompletionService {
         &self,
         routed: RoutedRequest,
     ) -> Result<CompletionResult, GatewayError> {
-        let RoutedRequest { bounded, mut route } = routed;
+        let RoutedRequest { bounded, route } = routed;
         let generation_identity = match generation_identity(&bounded) {
             Ok(identity) => identity,
             Err(error) => {
-                release_active_route(
-                    &self.serving_state,
-                    bounded.qualified.metadata.generation_id,
-                    &mut route,
-                )
-                .await;
                 return Err(error);
             }
         };
         let (lease, generation_metrics) = match self.admit_generation(&bounded).await {
             Ok(admission) => admission,
             Err(error) => {
-                release_active_route(
-                    &self.serving_state,
-                    bounded.qualified.metadata.generation_id,
-                    &mut route,
-                )
-                .await;
                 return Err(error);
             }
         };
@@ -423,28 +382,16 @@ impl CompletionService {
         &self,
         routed: RoutedRequest,
     ) -> Result<StreamingCompletion, GatewayError> {
-        let RoutedRequest { bounded, mut route } = routed;
+        let RoutedRequest { bounded, route } = routed;
         let generation_identity = match generation_identity(&bounded) {
             Ok(identity) => identity,
             Err(error) => {
-                release_active_route(
-                    &self.serving_state,
-                    bounded.qualified.metadata.generation_id,
-                    &mut route,
-                )
-                .await;
                 return Err(error);
             }
         };
         let (lease, generation_metrics) = match self.admit_generation(&bounded).await {
             Ok(admission) => admission,
             Err(error) => {
-                release_active_route(
-                    &self.serving_state,
-                    bounded.qualified.metadata.generation_id,
-                    &mut route,
-                )
-                .await;
                 return Err(error);
             }
         };
@@ -505,20 +452,6 @@ impl CompletionService {
         );
         Ok((lease, metrics))
     }
-}
-
-fn deployment_lease_expiry(
-    admitted_at: DateTime<Utc>,
-    config: &GatewayConfig,
-) -> Result<DateTime<Utc>, GatewayError> {
-    let seconds = config
-        .generation_timeout_seconds
-        .checked_add(config.lease_finalization_margin_seconds)
-        .and_then(|value| i64::try_from(value).ok())
-        .ok_or(GatewayError::ServingStateUnavailable)?;
-    admitted_at
-        .checked_add_signed(TimeDelta::seconds(seconds))
-        .ok_or(GatewayError::ServingStateUnavailable)
 }
 
 fn generation_identity(bounded: &BoundedRequest) -> Result<GenerationIdentity, GatewayError> {
@@ -666,10 +599,7 @@ impl GenerationTask {
                         && retryable(failure.kind()) =>
                 {
                     retry_used = true;
-                    if let Some(next) =
-                        reserve_retry(&serving_state, generation_id, &mut route, failure.kind())
-                            .await
-                    {
+                    if let Some(next) = reserve_retry(&mut route, failure.kind()).await {
                         failure.log_attempt(
                             generation_id,
                             &request.model,
@@ -712,7 +642,6 @@ impl GenerationTask {
                 }
             }
         };
-        release_active_route(&serving_state, generation_id, &mut route).await;
         let usable_output_delivered = response.is_some();
         let terminal = settlement
             .settle(None, usage, usable_output_delivered, terminal)
@@ -794,7 +723,6 @@ impl StreamingGenerationTask {
                 _ = force_shutdown_requested(&mut shutdown) => None,
             };
             let Some(result) = result else {
-                release_active_route(&serving_state, generation_id, &mut route).await;
                 let result = settlement
                     .settle(
                         None,
@@ -816,10 +744,7 @@ impl StreamingGenerationTask {
                         && retryable(failure.kind()) =>
                 {
                     retry_used = true;
-                    if let Some(next) =
-                        reserve_retry(&serving_state, generation_id, &mut route, failure.kind())
-                            .await
-                    {
+                    if let Some(next) = reserve_retry(&mut route, failure.kind()).await {
                         failure.log_attempt(
                             generation_id,
                             &request.model,
@@ -831,7 +756,6 @@ impl StreamingGenerationTask {
                         deployment = next;
                         continue;
                     }
-                    release_active_route(&serving_state, generation_id, &mut route).await;
                     failure.log_attempt(
                         generation_id,
                         &request.model,
@@ -854,7 +778,6 @@ impl StreamingGenerationTask {
                     return;
                 }
                 Err(failure) => {
-                    release_active_route(&serving_state, generation_id, &mut route).await;
                     failure.log_attempt(
                         generation_id,
                         &request.model,
@@ -880,7 +803,6 @@ impl StreamingGenerationTask {
         };
 
         if started.send(Ok(())).is_err() {
-            release_active_route(&serving_state, generation_id, &mut route).await;
             let _ = settlement
                 .settle(
                     None,
@@ -995,7 +917,6 @@ impl StreamingGenerationTask {
                 "generation stream terminated abnormally");
         }
         drop(runtime_stream);
-        release_active_route(&serving_state, generation_id, &mut route).await;
 
         let client_cancelled = matches!(
             terminal,
@@ -1035,41 +956,13 @@ fn retryable(kind: RuntimeFailureKind) -> bool {
     )
 }
 
-async fn release_active_route(
-    serving_state: &Arc<dyn ServingState>,
-    generation_id: Uuid,
-    route: &mut Option<DeploymentRoute>,
-) {
-    let Some(active) = route.as_mut().and_then(|route| route.active.take()) else {
-        return;
-    };
-    release_capacity(serving_state, generation_id, active.deployment.id).await;
-}
-
-async fn release_capacity(
-    serving_state: &Arc<dyn ServingState>,
-    generation_id: Uuid,
-    deployment_id: Uuid,
-) {
-    if let Err(error) = serving_state
-        .release_deployment_capacity(generation_id, deployment_id)
-        .await
-    {
-        crate::diagnostics::limited_warn!(%generation_id, %deployment_id, phase = "capacity_release",
-            error_code = error.diagnostic_code(), "deployment capacity release failed");
-    }
-}
-
 async fn reserve_retry(
-    serving_state: &Arc<dyn ServingState>,
-    generation_id: Uuid,
     route: &mut Option<DeploymentRoute>,
     failure: RuntimeFailureKind,
 ) -> Option<crate::GatewayModelDeployment> {
     let route = route.as_mut()?;
     let prior = route.active.as_ref()?.deployment.clone();
-    let active = route.active.take()?;
-    release_capacity(serving_state, generation_id, active.deployment.id).await;
+    route.active.take()?;
 
     route.remaining.sort_by_key(|candidate| {
         let same_fault_domain = candidate.deployment.fault_domain == prior.fault_domain;
@@ -1079,39 +972,12 @@ async fn reserve_retry(
             failure == RuntimeFailureKind::Unavailable && same_provider,
         )
     });
-    let now = Utc::now();
-    let candidates = route
+    let selected = route.remaining.first()?.clone();
+    route
         .remaining
-        .iter()
-        .take(MAXIMUM_RESERVATION_ATTEMPTS)
-        .cloned()
-        .collect::<Vec<_>>();
-    for candidate in candidates {
-        let acquired = serving_state
-            .acquire_deployment_capacity(
-                generation_id,
-                candidate.deployment.id,
-                now,
-                route.expires_at,
-                candidate.maximum_concurrency,
-            )
-            .await
-            .map_err(|error| {
-                crate::diagnostics::limited_warn!(%generation_id, deployment_id = %candidate.deployment.id,
-                    phase = "retry_reservation", error_code = error.diagnostic_code(),
-                    "deployment capacity reservation failed");
-            })
-            .ok()?;
-        if acquired {
-            let selected = candidate;
-            route
-                .remaining
-                .retain(|candidate| candidate.deployment.id != selected.deployment.id);
-            route.active = Some(selected.clone());
-            return Some(selected.deployment);
-        }
-    }
-    None
+        .retain(|candidate| candidate.deployment.id != selected.deployment.id);
+    route.active = Some(selected.clone());
+    Some(selected.deployment)
 }
 
 #[derive(Clone)]
@@ -1352,8 +1218,6 @@ mod tests {
         admitted: Arc<AtomicBool>,
         finalization_failures: AtomicUsize,
         finalization_attempts: AtomicUsize,
-        deployment_acquisitions: Mutex<Vec<Uuid>>,
-        deployment_releases: Mutex<Vec<Uuid>>,
     }
 
     impl FakeServingState {
@@ -1363,8 +1227,6 @@ mod tests {
                 admitted: Arc::new(AtomicBool::new(false)),
                 finalization_failures: AtomicUsize::new(finalization_failures),
                 finalization_attempts: AtomicUsize::new(0),
-                deployment_acquisitions: Mutex::new(Vec::new()),
-                deployment_releases: Mutex::new(Vec::new()),
             }
         }
     }
@@ -1398,30 +1260,6 @@ mod tests {
 
         async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
             Ok(Vec::new())
-        }
-
-        async fn acquire_deployment_capacity(
-            &self,
-            _generation_id: Uuid,
-            deployment_id: Uuid,
-            _now: DateTime<Utc>,
-            _expires_at: DateTime<Utc>,
-            _maximum_concurrency: u64,
-        ) -> Result<bool, ServingStateError> {
-            self.deployment_acquisitions
-                .lock()
-                .unwrap()
-                .push(deployment_id);
-            Ok(true)
-        }
-
-        async fn release_deployment_capacity(
-            &self,
-            _generation_id: Uuid,
-            deployment_id: Uuid,
-        ) -> Result<(), ServingStateError> {
-            self.deployment_releases.lock().unwrap().push(deployment_id);
-            Ok(())
         }
 
         async fn admit(
@@ -1891,13 +1729,10 @@ mod tests {
         task.route = Some(DeploymentRoute {
             active: Some(RoutedDeployment {
                 deployment: first.clone(),
-                maximum_concurrency: 1,
             }),
             remaining: vec![RoutedDeployment {
                 deployment: second.clone(),
-                maximum_concurrency: 1,
             }],
-            expires_at: Utc::now() + TimeDelta::minutes(5),
         });
         let (_cancel, cancellation) = oneshot::channel();
 
@@ -1906,14 +1741,6 @@ mod tests {
         assert_eq!(result.response["id"], "chatcmpl-1");
         assert_eq!(
             *runtime.deployments.lock().unwrap(),
-            vec![first.id, second.id]
-        );
-        assert_eq!(
-            *state.deployment_acquisitions.lock().unwrap(),
-            vec![second.id]
-        );
-        assert_eq!(
-            *state.deployment_releases.lock().unwrap(),
             vec![first.id, second.id]
         );
         assert_eq!(state.finalized.lock().unwrap().len(), 1);

@@ -20,7 +20,6 @@ pub enum RoutePrompt<'a> {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RoutedDeployment {
     pub deployment: GatewayModelDeployment,
-    pub maximum_concurrency: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -41,7 +40,7 @@ pub struct RouteInput<'a> {
     pub now: DateTime<Utc>,
 }
 
-pub fn healthy_installed_concurrency(
+pub fn healthy_deployment_count(
     deployments: &[GatewayModelDeployment],
     statuses: &[DeploymentRuntimeStatus],
     now: DateTime<Utc>,
@@ -65,8 +64,7 @@ pub fn healthy_installed_concurrency(
                         status.runtime_revision == deployment.release.runtime_revision
                     })
         })
-        .map(|status| status.maximum_concurrency)
-        .sum()
+        .count() as u64
 }
 
 /// Counts only the first rejection reason for each candidate; never contains endpoints.
@@ -145,7 +143,6 @@ pub(crate) fn order_deployments_diagnosed(
         }
         healthy.push(RoutedDeployment {
             deployment: deployment.clone(),
-            maximum_concurrency: status.maximum_concurrency,
         });
     }
     if healthy.is_empty() {
@@ -247,7 +244,6 @@ mod tests {
             received_at: now,
             healthy: true,
             accepting_requests: true,
-            maximum_concurrency: 4,
             reason_code: None,
         }
     }

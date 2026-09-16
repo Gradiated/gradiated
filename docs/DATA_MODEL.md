@@ -611,23 +611,30 @@ Valkey key: `deployment-status:{<served_release_digest>}`. This is a hash. The
 field is `deployment_id`. The value is one closed status document.
 
 The document contains `deployment_id`, `runtime_revision`, `received_at`,
-`healthy`, `accepting_requests`, `maximum_concurrency`, and `reason_code`.
+`healthy`, `accepting_requests`, and `reason_code`.
+`accepting_requests` reports runtime safety only: KV pressure and draining.
+It is not a concurrency limit. The engine owns admission.
+The reader ignores unknown fields so a newer producer cannot break an older
+gateway. A malformed document drops only its own deployment.
 Desmond sends it every second. The ingest service checks provider ownership and
-the durable runtime revision before it writes the field. The hash has an
-eight-second TTL. The gateway accepts status for six seconds and caches one
-Valkey read for one second.
+the durable runtime revision before it writes the field.
 
-## 21. `DeploymentCapacityLease`
+Timing values, as implemented:
 
-Valkey key: `deployment-inflight:{<deployment_id>}`. This is a sorted set.
-Each member is a `generation_id`. Each score is the request expiry time.
+| Stage | Value |
+| ----- | ----- |
+| Desmond send interval | 1 second |
+| Gateway in-memory status cache | 1 second |
+| Gateway accepts status age | 15 seconds |
+| Valkey key TTL | 30 seconds |
+| Desmond ready gate after last upload | 10 seconds |
+| Future-dated tolerance | 5 seconds |
 
-All gateway replicas use one Lua script to remove expired members, compare the
-count with `maximum_concurrency`, and add one member. The gateway releases the
-member when an attempt ends. Expiry recovers capacity after a gateway failure.
-This lease does not reserve KV tokens.
+The key TTL is longer than the acceptance window. The gateway staleness check is
+the binding limit, so the key can outlive its usability. The gateway also
+rejects a `received_at` more than five seconds in the future.
 
-## 22. `InFlightGenerationLease`
+## 21. `InFlightGenerationLease`
 
 Valkey key at seed: `inflight:{settlement-0}:<organization_id>`. This is a sorted set, not a row or hash.
 

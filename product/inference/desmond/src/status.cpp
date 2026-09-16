@@ -36,8 +36,7 @@ bool metric_at_or_above(const std::string& text, const std::string& name,
 StatusReporter::StatusReporter(StatusReporterConfig config)
     : config_(std::move(config)) {
   if (enabled()) {
-    if (config_.maximum_concurrency == 0 ||
-        config_.interval <= std::chrono::seconds::zero()) {
+    if (config_.interval <= std::chrono::seconds::zero()) {
       throw std::invalid_argument("invalid deployment status reporter configuration");
     }
     thread_ = std::thread([this] { run(); });
@@ -122,7 +121,6 @@ bool StatusReporter::upload(const DeploymentStatusSnapshot& snapshot) {
        << (snapshot.healthy ? "true" : "false")
        << ",\"accepting_requests\":"
        << (snapshot.accepting_requests ? "true" : "false")
-       << ",\"maximum_concurrency\":" << config_.maximum_concurrency
        << ",\"reason_code\":";
   if (snapshot.reason_code.empty()) {
     body << "null";
@@ -149,25 +147,13 @@ std::string StatusReporter::prometheus() const {
 }
 
 RuntimePressure parse_runtime_pressure(const std::string& prometheus_text,
-                                       const double kv_usage_limit,
-                                       const std::uint64_t waiting_request_limit,
-                                       const std::uint64_t maximum_concurrency) {
+                                       const double kv_usage_limit) {
   RuntimePressure pressure;
   pressure.kv_pressure =
       metric_at_or_above(prometheus_text, "vllm:kv_cache_usage_perc", kv_usage_limit) ||
       metric_at_or_above(prometheus_text, "vllm_kv_cache_usage_perc", kv_usage_limit) ||
       metric_at_or_above(prometheus_text, "vllm:gpu_cache_usage_perc", kv_usage_limit) ||
       metric_at_or_above(prometheus_text, "vllm_gpu_cache_usage_perc", kv_usage_limit);
-  pressure.queue_pressure =
-      metric_at_or_above(prometheus_text, "vllm:num_requests_waiting",
-                         static_cast<double>(waiting_request_limit)) ||
-      metric_at_or_above(prometheus_text, "vllm_num_requests_waiting",
-                         static_cast<double>(waiting_request_limit));
-  pressure.concurrency_pressure =
-      metric_at_or_above(prometheus_text, "vllm:num_requests_running",
-                         static_cast<double>(maximum_concurrency)) ||
-      metric_at_or_above(prometheus_text, "vllm_num_requests_running",
-                         static_cast<double>(maximum_concurrency));
   return pressure;
 }
 

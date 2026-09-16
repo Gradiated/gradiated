@@ -93,14 +93,15 @@ export const GatewayModelDeploymentSchema = z
   })
   .openapi("GatewayModelDeployment");
 
+// The deployment status report crosses independently deployed processes.
+// Unknown fields are ignored so a newer runtime cannot break ingest.
 export const DeploymentStatusReportSchema = z
-  .strictObject({
+  .object({
     schema_version: z.literal(1),
     deployment_id: UuidSchema,
     runtime_revision: BoundedIdentifierSchema,
     healthy: z.boolean(),
     accepting_requests: z.boolean(),
-    maximum_concurrency: z.number().int().min(1).max(100_000),
     reason_code: z
       .string()
       .min(1)

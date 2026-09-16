@@ -85,8 +85,8 @@ in the control-plane catalog, configure a gateway-reachable secured inference
 endpoint, and install `/etc/gradiated/deployment-status.token` owned by `desmond`
 with mode `0600`. Also install `/etc/gradiated/runtime-access.token` for the
 authenticated control endpoint, with the same ownership/mode. The runtime user must not be able to read that file. Pass the
-matching `deployment_id`, `runtime_revision`, HTTPS `status_url` and measured
-`maximum_concurrency` as non-secret job inputs. Never put the token in HCL or
+matching `deployment_id`, `runtime_revision`, and HTTPS `status_url` as
+non-secret job inputs. Never put the token in HCL or
 Nomad variables visible in job inspection. The job intentionally has one replica;
 create distinct deployment registrations for additional replicas.
 

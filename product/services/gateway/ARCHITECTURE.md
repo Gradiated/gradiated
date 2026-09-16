@@ -751,9 +751,13 @@ response, trace, or metric.
 
 Every exact model maps to independent runtime deployment candidates. Desmond
 sends status every second. The gateway rejects stale, unhealthy, draining, or
-busy candidates. It uses rendezvous hashing for stable placement and a Valkey
-sorted-set lease to enforce `maximum_concurrency` across gateway replicas. It
-does not queue.
+not-accepting candidates. It uses rendezvous hashing for stable placement. It
+does not queue and it does not enforce a concurrency limit: the engine owns
+admission.
+
+A model is ready when at least one fresh healthy deployment reports status. The
+catalog publishes no capacity limit. A malformed status document drops only its
+own deployment.
 
 One request can use at most two sequential runtime attempts. A retry requires
 an availability or capacity failure, no usable output, time on the shared

@@ -119,10 +119,6 @@ body:has(.gr-waitlist-drawer[open]) {
   animation: none;
 }
 
-.gr-waitlist-drawer--handoff .gr-waitlist-body > * {
-  animation: gr-waitlist-content-in var(--dur-base) var(--ease-response) both;
-}
-
 .gr-waitlist-drawer--returning .gr-waitlist-body > * {
   animation: gr-waitlist-content-out var(--dur-base) var(--ease-response) both;
 }
@@ -169,6 +165,64 @@ body:has(.gr-waitlist-drawer[open]) {
   flex-shrink: 0;
 }
 
+/* CENTRED while the spot graphic is away: auto margins rather than
+   justify-content, because auto margins collapse to nothing when the
+   viewport is short — centring must never push the form's top out of
+   reach. The back arrow sits outside the pair, so it stays pinned up top.
+   (When the graphic returns, it takes the top slot and these go.) */
+.gr-waitlist-head {
+  margin-block-start: auto;
+}
+
+.gr-waitlist-form {
+  margin-block-end: auto;
+}
+
+.gr-waitlist-done {
+  margin-block: auto;
+}
+
+/* THE ENTRANCE — question by question. Every piece of content rises in on
+   its own beat, back arrow first, submit last, so the form assembles in
+   reading order in either mode: inside the panel's slide on a fresh open,
+   as the arriving content of a handoff. The error is exempt — it appears
+   mid-session and must not saunter. */
+.gr-waitlist-back,
+.gr-waitlist-head,
+.gr-waitlist-done,
+.gr-waitlist-form > * {
+  animation: gr-waitlist-content-in var(--dur-base) var(--ease-response) both;
+}
+
+.gr-waitlist-head,
+.gr-waitlist-done {
+  animation-delay: 60ms;
+}
+
+.gr-waitlist-form > :nth-child(1) {
+  animation-delay: 130ms;
+}
+
+.gr-waitlist-form > :nth-child(2) {
+  animation-delay: 190ms;
+}
+
+.gr-waitlist-form > :nth-child(3) {
+  animation-delay: 250ms;
+}
+
+.gr-waitlist-form > :nth-child(4) {
+  animation-delay: 310ms;
+}
+
+.gr-waitlist-submit {
+  animation-delay: 370ms;
+}
+
+.gr-waitlist-error {
+  animation-delay: 0ms;
+}
+
 /* Two classes, so this beats `.gr-root p` — the same base-margin trap as
    every other page. */
 .gr-waitlist-head .gr-body,
@@ -211,6 +265,24 @@ body:has(.gr-waitlist-drawer[open]) {
   border: 1px solid var(--color-rule);
   border-radius: var(--radius-lg);
   padding: calc(0.45 * var(--u)) calc(0.6 * var(--u));
+}
+
+/* The select draws its own chevron: the native one sits hard against the
+   edge and ignores padding. Two gradient squares meet in a ∨, set in
+   currentColor so it follows the theme like any glyph. */
+.gr-waitlist-form select {
+  appearance: none;
+  padding-inline-end: calc(1.5 * var(--u));
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    right calc(0.6 * var(--u) + 5px) center,
+    right calc(0.6 * var(--u)) center;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
 }
 
 .gr-waitlist-form textarea {
@@ -268,8 +340,11 @@ body:has(.gr-waitlist-drawer[open]) {
   .gr-waitlist-drawer::backdrop,
   .gr-waitlist-drawer--closing .gr-waitlist-body,
   .gr-waitlist-drawer--closing::backdrop,
-  .gr-waitlist-drawer--handoff .gr-waitlist-body > *,
-  .gr-waitlist-drawer--returning .gr-waitlist-body > * {
+  .gr-waitlist-drawer--returning .gr-waitlist-body > *,
+  .gr-waitlist-back,
+  .gr-waitlist-head,
+  .gr-waitlist-done,
+  .gr-waitlist-form > * {
     animation: none;
   }
 }

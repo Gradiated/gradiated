@@ -46,6 +46,9 @@ tls {
 addresses {
   http = "127.0.0.1"
 }
+advertise {
+  http = "127.0.0.1:4646"
+}
 
 plugin "raw_exec" { config { enabled = true } }
 plugin "nomad-device-nvidia" { config { enabled = true } }

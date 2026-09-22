@@ -1,0 +1,55 @@
+[
+  {
+    "name": "choice-default-tier",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "Charged twice",
+      "questions": {
+        "category": {
+          "type": "choice",
+          "instructions": "Choose a department",
+          "criteria": { "billing": null, "other": "Other topics" }
+        }
+      }
+    }
+  },
+  {
+    "name": "structured-state-instructions-and-criteria",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": {
+        "ticket": [
+          "Charged twice",
+          { "resolved": false, "count": 2, "missing": null }
+        ]
+      },
+      "questions": {
+        "billing": {
+          "type": "noul",
+          "instructions": { "task": ["Is this billing?", true] },
+          "criteria": {
+            "true": { "description": "Payments" },
+            "false": ["Other"]
+          }
+        },
+        "urgency": {
+          "type": "score",
+          "instructions": ["Rate urgency", { "threshold": 1 }],
+          "criteria": [null, { "label": "Today" }]
+        }
+      },
+      "session_id": "local-parity",
+      "service_tier": "default"
+    }
+  },
+  {
+    "name": "array-state-null-instructions",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": [null, true, 1, { "nested": [] }],
+      "questions": {
+        "q": { "type": "noul", "instructions": null, "criteria": null }
+      }
+    }
+  }
+]

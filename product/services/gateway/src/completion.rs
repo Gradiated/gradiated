@@ -179,7 +179,6 @@ impl CompletionService {
         if self.tasks.is_draining() {
             return Err(GatewayError::RuntimeUnavailable);
         }
-
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
         let bounded = self.prepare_request(qualified).await?;
@@ -253,9 +252,13 @@ impl CompletionService {
                     error_code = error.diagnostic_code(), "routing dependency failed");
                 GatewayError::ServingStateUnavailable
             })?;
-        let prompt = match request.request.encoded_input_ids.as_deref() {
-            Some(ids) => crate::routing::RoutePrompt::TokenIds(ids),
-            None => crate::routing::RoutePrompt::ChatMessages(&request.request.messages),
+        let prompt = if let Some(decision) = &request.request.decision {
+            crate::routing::RoutePrompt::DecisionState(&decision.state)
+        } else {
+            match request.request.encoded_input_ids.as_deref() {
+                Some(ids) => crate::routing::RoutePrompt::TokenIds(ids),
+                None => crate::routing::RoutePrompt::ChatMessages(&request.request.messages),
+            }
         };
         let (candidates, diagnostics) = order_deployments_diagnosed(RouteInput {
             workspace_id: request.identity.workspace_id,
@@ -422,6 +425,7 @@ impl CompletionService {
                 self.metrics.record_admission_rejection(
                     &request.request.model,
                     request.deployment.id,
+                    request.deployment.release.protocol_label(),
                     request.request.stream,
                     request.request.service_tier,
                     &error,
@@ -432,6 +436,7 @@ impl CompletionService {
         let metrics = self.metrics.generation_admitted(
             &request.request.model,
             request.deployment.id,
+            request.deployment.release.protocol_label(),
             request.request.stream,
             request.request.service_tier,
         );
@@ -1192,8 +1197,8 @@ mod tests {
         auth::AuthenticatedIdentity,
         domain::{GatewayAccount, GatewayCredential, GatewayWorkspace},
         serving_state::ServingStateError,
-        AdmissionError, AdmissionLease, CapturedPricing, ChatCompletionRequest, DeploymentStatus,
-        FinalizationError, GatewayModel, GatewayModelDeployment, InputTokenPrice,
+        AdmissionError, AdmissionLease, CapturedPricing, DeploymentStatus, FinalizationError,
+        GatewayModel, GatewayModelDeployment, InferenceRequest, InputTokenPrice,
         ModelDeploymentRelease, OutputTokenPrice, QualifiedRequest, RuntimeCompletion,
         RuntimeEventStream, RuntimeStreamChunk, TokenUnit,
     };
@@ -1299,7 +1304,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1312,7 +1317,7 @@ mod tests {
         async fn complete(
             &self,
             deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1357,7 +1362,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1367,7 +1372,7 @@ mod tests {
         async fn stream(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
@@ -1380,7 +1385,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1390,7 +1395,7 @@ mod tests {
         async fn stream(
             &self,
             _deployment: &GatewayModelDeployment,
-            request: ChatCompletionRequest,
+            request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
@@ -1410,7 +1415,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1426,7 +1431,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: DateTime<Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -1453,7 +1458,7 @@ mod tests {
     fn bounded_request() -> BoundedRequest {
         let generation_id = Uuid::now_v7();
         let organization_id = Uuid::now_v7();
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}]}"#,
         )
         .unwrap();
@@ -1477,6 +1482,7 @@ mod tests {
                 release: ModelDeploymentRelease {
                     schema_version: 1,
                     runtime_revision: "runtime".to_owned(),
+                    protocol: None,
                     model_path: "model-a".to_owned(),
                     model_revision: "model-revision".to_owned(),
                     runtime_model_name: None,
@@ -1535,6 +1541,7 @@ mod tests {
         let metrics = GatewayMetrics::new().generation_admitted(
             &bounded.qualified.request.model,
             bounded.qualified.deployment.id,
+            bounded.qualified.deployment.release.protocol_label(),
             bounded.qualified.request.stream,
             bounded.qualified.request.service_tier,
         );
@@ -1604,6 +1611,35 @@ mod tests {
         assert_eq!(prepared.qualified.request, request);
         assert_eq!(prepared.input_tokens, None);
         assert_eq!(prepared.qualified.request.encoded_input_ids, None);
+    }
+
+    #[tokio::test]
+    async fn decision_settlement_bills_input_and_cached_input_without_output() {
+        let state = Arc::new(SettlementServingState::new(0));
+        let runtime = Arc::new(FixedRuntime(Ok(RuntimeCompletion::from_normalized_parts(
+            json!({"model":"model-a","answers":{"q":{"type":"noul","noul":0.9}}}),
+            "stop".to_owned(),
+            NormalizedUsage::new(10, 4, 0, 0, 0).unwrap(),
+        ))));
+        let mut generation = task(state.clone(), runtime);
+        generation.bounded.qualified.request = InferenceRequest::parse_kind(
+            br#"{"model":"model-a","state":"x","questions":{"q":{"type":"noul","instructions":"yes?"}}}"#,
+            crate::RequestKind::SystemOne,
+        ).unwrap();
+        generation.bounded.qualified.effective_output_tokens = 0;
+        generation.bounded.qualified.deployment.release.protocol =
+            Some(crate::RuntimeProtocol::SystemOne);
+        let (_cancel, cancellation) = oneshot::channel();
+        generation
+            .run(cancellation, running_shutdown())
+            .await
+            .unwrap();
+        let finalized = state.finalized.lock().unwrap();
+        assert_eq!(finalized.len(), 1);
+        assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
+        assert_eq!(finalized[0]["usage"]["cached_input_tokens"], 4);
+        assert_eq!(finalized[0]["usage"]["output_tokens"], 0);
+        assert_eq!(finalized[0]["usage"]["charge"], 16);
     }
 
     #[tokio::test]

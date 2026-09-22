@@ -1,0 +1,26 @@
+# The CPU build of the same vLLM production runs, with the test weights baked in,
+# for the gateway's real-runtime fidelity tests.
+#
+# This is NOT a production image: production serves its models on GPU from the
+# RunPod scripts under infra/environments/prod/runpod. It exists so CI can exercise
+# the gateway against a real OpenAI-compatible server rather than our own mock, and
+# so a run never has to reach Hugging Face to do it.
+#
+# The base is pinned by digest. The weights layer is keyed by the model below, so
+# a rebuild repeats the download only when that changes.
+FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo@sha256:ea8b61f8ccab650e1c369105373863ac12a581b53f289b344cea72a09238e131
+
+ARG CPU_WEIGHTS=Qwen/Qwen2.5-0.5B-Instruct
+
+ENV CPU_WEIGHTS=${CPU_WEIGHTS}
+
+RUN python3 -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download('${CPU_WEIGHTS}')"
+
+# Only after the weights are in the image: serving offline is deliberate, so an
+# image that lost them fails loudly instead of quietly downloading them again.
+ENV HF_HUB_OFFLINE=1
+
+# The base image's entrypoint is ["vllm", "serve"], so the caller supplies the
+# model and flags as arguments.

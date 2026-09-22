@@ -79,6 +79,7 @@ struct HealthResponse {
 fn inference_routes() -> Router<GatewayState> {
     Router::new()
         .route("/chat/completions", post(chat_completions))
+        .route("/systemone", post(systemone))
         .route("/messages", post(messages))
         .route("/messages/count_tokens", post(messages_count_tokens))
         .route("/responses", post(responses))
@@ -159,13 +160,14 @@ async fn inference(
     route: &'static str,
     protocol: Protocol,
     relay: Option<RelayRoute>,
+    kind: crate::RequestKind,
 ) -> Response {
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
     let result = async {
         let body = body.map_err(body_rejection)?;
 
-        serve(&state, protocol, relay, metadata, &headers, body).await
+        serve(&state, protocol, relay, metadata, &headers, body, kind).await
     }
     .await;
 
@@ -181,6 +183,7 @@ async fn serve(
     metadata: RequestMetadata,
     headers: &HeaderMap,
     body: Bytes,
+    kind: crate::RequestKind,
 ) -> Result<Response, GatewayError> {
     let classified = state
         .coordinator
@@ -203,9 +206,10 @@ async fn serve(
         }
         RequestRoute::Hosted { hosted, request } => {
             let translated = protocol.translate_request(&request).map(Bytes::from)?;
-            let qualified = state
-                .coordinator
-                .qualify(metadata, headers, *hosted, &translated)?;
+            let qualified =
+                state
+                    .coordinator
+                    .qualify_kind(metadata, headers, *hosted, &translated, kind)?;
 
             complete_with_protocol(state, protocol, qualified).await
         }
@@ -337,6 +341,26 @@ async fn chat_completions(
         "chat_completions",
         Protocol::OpenAiChat,
         None,
+        crate::RequestKind::Chat,
+    )
+    .await
+}
+
+/// The native decision protocol. It is hosted-only: a decision model always
+/// resolves locally, so classification never offers it a relay route.
+async fn systemone(
+    State(state): State<GatewayState>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
+    inference(
+        state,
+        headers,
+        body,
+        "systemone",
+        Protocol::OpenAiChat,
+        None,
+        crate::RequestKind::SystemOne,
     )
     .await
 }
@@ -353,6 +377,7 @@ async fn messages(
         "messages",
         Protocol::AnthropicMessages,
         Some(RelayRoute::AnthropicMessages),
+        crate::RequestKind::Chat,
     )
     .await
 }
@@ -369,6 +394,7 @@ async fn responses(
         "responses",
         Protocol::OpenAiResponses,
         None,
+        crate::RequestKind::Chat,
     )
     .await
 }
@@ -458,9 +484,8 @@ mod tests {
 
     use super::*;
     use crate::{
-        test_support::TestServingState, ChatCompletionRequest, GatewayConfig,
-        GatewayModelDeployment, ModelRuntime, ModelTokenizer, RuntimeCompletion, RuntimeFailure,
-        RuntimeFailureKind,
+        test_support::TestServingState, GatewayConfig, GatewayModelDeployment, InferenceRequest,
+        ModelRuntime, ModelTokenizer, RuntimeCompletion, RuntimeFailure, RuntimeFailureKind,
     };
 
     pub(super) struct FixedReadiness(pub(super) bool);
@@ -479,7 +504,7 @@ mod tests {
         async fn complete(
             &self,
             _deployment: &GatewayModelDeployment,
-            _request: ChatCompletionRequest,
+            _request: InferenceRequest,
             _effective_output_tokens: u64,
             _request_deadline: chrono::DateTime<chrono::Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {

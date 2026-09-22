@@ -12,13 +12,14 @@ disagree, the parent authority wins until the discrepancy is resolved in the
 repository.
 
 The gateway is one Rust service with one purpose: authenticate, qualify, admit,
-and execute exact-model Chat Completions, then atomically record terminal usage
+and execute exact-model Chat Completions or native SystemOne, then record terminal usage
 in Valkey. It is not a general-purpose API gateway or a model-routing platform.
 
 ## Goals
 
 - expose OpenAI-compatible `POST /v1/chat/completions` for streaming and
   non-streaming inference;
+- expose non-streaming `POST /v1/systemone` for native Kev pointer inference;
 - expose the current provider `GET /v1/models` document for exact configured
   models;
 - authenticate direct and OpenRouter keys through the same Valkey projection;
@@ -74,8 +75,38 @@ The gateway converts the request model ID to ASCII lowercase. The normalized
 ID and `GatewayModel.id` must then match byte-for-byte.
 `GatewayModel.deployments` may contain multiple `available` deployments. The
 gateway intersects them with fresh status. It uses a session ID when present.
-Otherwise, it hashes the first 4,096 rendered token IDs. Rendezvous hashing
+Otherwise, it hashes the first 4,096 actual input token IDs for token transports,
+or the first 16 KiB of serialized chat messages or SystemOne state. Prompt
+types have separate hash domains; every key includes workspace, model and
+served-release identity. Rendezvous hashing
 gives one stable candidate order. A mismatch or missing route is an error.
+
+### Native SystemOne contract
+
+`systemone.rs` validates the closed request envelope and rejects duplicate JSON
+keys at every depth. A required exact model and text/object/array state accompany
+1..64 named questions. `choice` takes 1..255 named criteria; `score` takes
+2..255 ordered criteria; `noul` optionally takes a null or object criteria value
+whose only permitted keys are `false` and `true`. Unknown outcome keys are
+rejected, never silently dropped. Instructions and descriptions accept JSON values.
+Model and question names are 1..200 UTF-16 code units; an optional, non-null
+session ID is 1..256. Shared accepted/rejected fixtures test TypeScript parity.
+
+Only `service_tier: "default"` is implemented. Streaming, output-token controls,
+caller priority and unknown fields fail before dispatch. A `system_one` runtime
+revision selects `/v1/systemone` and excludes Chat Completions; the prefix is a
+transport discriminator within the digest-covered release, not a model alias.
+The request uses the existing authentication, admission, routing, retry and
+terminal-finalization lifecycle. Without a session ID, affinity follows state
+alone, so changing questions does not move an otherwise identical request.
+
+Responses must identify the selected runtime model and match the requested
+question keys, answer types and options. Probability sums tolerate independent
+two-decimal rounding; score indices and bounds are validated. Safe integer
+usage requires `cached_input_tokens <= input_tokens` and `output_tokens == 0`.
+Normalized cache-write and reasoning usage are also zero: this is prefill-only
+inference, and serializing answers creates no billable generated tokens.
+The returned model is rewritten to the requested public model ID.
 
 ### Atomic financial mutations
 

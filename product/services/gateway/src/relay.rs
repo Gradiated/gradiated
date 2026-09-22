@@ -17,7 +17,6 @@ use crate::{
     auth::{Provider, ProviderCredential},
     config::ProxyLimits,
     error::GatewayError,
-    request::UniqueJsonObject,
 };
 
 const HOP_HEADER: HeaderName = HeaderName::from_static("x-gradiated-hop");
@@ -95,8 +94,13 @@ pub struct RequestTarget {
 /// keys, so a body can never carry a second, ignored target. The parsed request
 /// is returned so a hosted request is never parsed twice.
 pub fn parse_target(body: &[u8]) -> Result<RequestTarget, GatewayError> {
-    let UniqueJsonObject(fields) =
-        serde_json::from_slice(body).map_err(|_| GatewayError::invalid_request(None))?;
+    // Nested duplicates matter as much as top-level ones: a decision body carries
+    // structured state and instructions where a silent collapse would change meaning.
+    let Value::Object(fields) =
+        crate::json::strict_json(body).map_err(|_| GatewayError::invalid_request(None))?
+    else {
+        return Err(GatewayError::invalid_request(None));
+    };
 
     let Some(Value::String(model)) = fields.get("model") else {
         return Err(GatewayError::invalid_request(Some("model")));

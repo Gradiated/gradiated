@@ -9,8 +9,14 @@ use validator::Validate;
 
 use crate::{GatewayError, ServiceTier};
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum RequestKind {
+    Chat,
+    SystemOne,
+}
+
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
-pub struct ChatCompletionRequest {
+pub struct InferenceRequest {
     #[validate(length(min = 1, max = 200))]
     pub model: String,
     #[validate(length(min = 1))]
@@ -29,9 +35,29 @@ pub struct ChatCompletionRequest {
     pub parameters: Map<String, Value>,
     #[serde(skip)]
     pub(crate) encoded_input_ids: Option<Vec<u32>>,
+    #[serde(skip)]
+    pub(crate) decision: Option<crate::systemone::SystemOneRequest>,
 }
 
-impl ChatCompletionRequest {
+impl InferenceRequest {
+    pub fn parse_kind(body: &[u8], kind: RequestKind) -> Result<Self, GatewayError> {
+        if kind == RequestKind::Chat {
+            return Self::parse(body);
+        }
+        let decision = crate::systemone::SystemOneRequest::parse(body)?;
+        Ok(Self {
+            model: decision.model.clone(),
+            messages: Vec::new(),
+            stream: false,
+            service_tier: decision.service_tier,
+            session_id: decision.session_id.clone(),
+            max_completion_tokens: None,
+            max_tokens: None,
+            parameters: Map::new(),
+            encoded_input_ids: None,
+            decision: Some(decision),
+        })
+    }
     pub fn parse(body: &[u8]) -> Result<Self, GatewayError> {
         let UniqueJsonObject(fields) =
             serde_json::from_slice(body).map_err(|_| GatewayError::invalid_request(None))?;
@@ -62,6 +88,7 @@ impl ChatCompletionRequest {
             max_tokens,
             mut parameters,
             encoded_input_ids: _,
+            decision: _,
         } = self;
 
         parameters.insert(
@@ -186,7 +213,7 @@ mod tests {
 
     #[test]
     fn parses_the_gateway_owned_fields_and_preserves_other_values() {
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{
                 "model":"mlx-community/qwen3-0.6b-4bit",
                 "messages":[{"role":"user","content":"hello"}],
@@ -214,18 +241,18 @@ mod tests {
             let body =
                 format!(r#"{{"model":"model-a","messages":[{{}}],"service_tier":"{value}"}}"#);
             assert_eq!(
-                ChatCompletionRequest::parse(body.as_bytes())
+                InferenceRequest::parse(body.as_bytes())
                     .unwrap()
                     .service_tier,
                 expected
             );
         }
-        assert!(ChatCompletionRequest::parse(
+        assert!(InferenceRequest::parse(
             br#"{"model":"model-a","messages":[{}],"service_tier":"slow"}"#
         )
         .is_err());
         assert_eq!(
-            ChatCompletionRequest::parse(br#"{"model":"model-a","messages":[{}],"priority":-100}"#),
+            InferenceRequest::parse(br#"{"model":"model-a","messages":[{}],"priority":-100}"#),
             Err(GatewayError::invalid_request(Some("priority")))
         );
     }
@@ -238,7 +265,7 @@ mod tests {
             "messages":[{}]
         }"#;
         assert_eq!(
-            ChatCompletionRequest::parse(duplicate),
+            InferenceRequest::parse(duplicate),
             Err(GatewayError::invalid_request(None))
         );
 
@@ -249,7 +276,7 @@ mod tests {
             "max_completion_tokens":10
         }"#;
         assert_eq!(
-            ChatCompletionRequest::parse(conflicting),
+            InferenceRequest::parse(conflicting),
             Err(GatewayError::invalid_request(Some("max_completion_tokens")))
         );
     }
@@ -262,13 +289,13 @@ mod tests {
             br#"{"model":"model-a","messages":[{}],"stream":"yes"}"#.as_slice(),
             br#"{"model":"model-a","messages":[{}],"max_tokens":0}"#.as_slice(),
         ] {
-            assert!(ChatCompletionRequest::parse(body).is_err());
+            assert!(InferenceRequest::parse(body).is_err());
         }
     }
 
     #[test]
     fn builds_a_new_upstream_body_without_losing_qualified_fields() {
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{
                 "model":"model-a",
                 "messages":[{"role":"user","content":"hello"}],
@@ -296,7 +323,7 @@ mod tests {
         for (tier, priority) in [("fast", -10), ("default", 0), ("flex", 10)] {
             let body =
                 format!(r#"{{"model":"model-a","messages":[{{}}],"service_tier":"{tier}"}}"#);
-            let upstream = ChatCompletionRequest::parse(body.as_bytes())
+            let upstream = InferenceRequest::parse(body.as_bytes())
                 .unwrap()
                 .into_upstream_body_for_model(32, None);
             assert_eq!(upstream["priority"], priority);
@@ -306,7 +333,7 @@ mod tests {
 
     #[test]
     fn replaces_only_the_private_runtime_model_name() {
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{"model":"public/model","messages":[{"role":"user","content":"hello"}]}"#,
         )
         .unwrap();
@@ -319,7 +346,7 @@ mod tests {
 
     #[test]
     fn materializes_the_qualified_default_output_ceiling() {
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}]}"#,
         )
         .unwrap();
@@ -331,7 +358,7 @@ mod tests {
 
     #[test]
     fn streaming_always_requests_continuous_authoritative_usage() {
-        let request = ChatCompletionRequest::parse(
+        let request = InferenceRequest::parse(
             br#"{
                 "model":"model-a",
                 "messages":[{"role":"user","content":"hello"}],

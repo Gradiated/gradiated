@@ -14,7 +14,7 @@ use thiserror::Error;
 use uuid::Uuid;
 
 use crate::{
-    tokenizer::TokenizerDecodeState, ChatCompletionRequest, GatewayError, GatewayModelDeployment,
+    tokenizer::TokenizerDecodeState, GatewayError, GatewayModelDeployment, InferenceRequest,
     ModelDeploymentRelease, ModelTokenizer, NormalizedUsage,
 };
 
@@ -30,7 +30,7 @@ pub trait ModelRuntime: Send + Sync {
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         request_deadline: DateTime<Utc>,
     ) -> Result<RuntimeCompletion, RuntimeFailure>;
@@ -38,7 +38,7 @@ pub trait ModelRuntime: Send + Sync {
     async fn stream(
         &self,
         _deployment: &GatewayModelDeployment,
-        _request: ChatCompletionRequest,
+        _request: InferenceRequest,
         _effective_output_tokens: u64,
         _request_deadline: DateTime<Utc>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
@@ -213,10 +213,22 @@ impl SglangClient {
     async fn execute_non_streaming(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
+        if request.decision.is_some() {
+            if !deployment.release.is_system_one() || request.stream || effective_output_tokens != 0
+            {
+                return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+            }
+            return self
+                .execute_system_one(deployment, request, response_header_timeout)
+                .await;
+        }
+        if deployment.release.is_system_one() {
+            return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
+        }
         if request.stream || effective_output_tokens == 0 {
             return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
         }
@@ -270,10 +282,62 @@ impl SglangClient {
         normalize_completion(&body, &requested_model, &runtime_model)
     }
 
+    async fn execute_system_one(
+        &self,
+        deployment: &GatewayModelDeployment,
+        request: InferenceRequest,
+        response_header_timeout: Duration,
+    ) -> Result<RuntimeCompletion, RuntimeFailure> {
+        let decision = request
+            .decision
+            .as_ref()
+            .ok_or_else(|| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?;
+        let runtime_model = deployment
+            .release
+            .runtime_model_name
+            .as_deref()
+            .unwrap_or(&request.model);
+        let body = serde_json::json!({
+            "model": runtime_model,
+            "state": decision.state,
+            "questions": decision.questions,
+            "priority": request.service_tier.runtime_priority(),
+        });
+        let mut upstream = self
+            .client
+            .post(endpoint(&deployment.service_url, "v1/systemone"))
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(
+                serde_json::to_vec(&body)
+                    .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))?,
+            );
+        if let Some(api_key) = &self.api_key {
+            upstream = upstream.bearer_auth(api_key);
+        }
+        let response = tokio::time::timeout(response_header_timeout, upstream.send())
+            .await
+            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+            .map_err(RuntimeFailure::from_transport)?;
+        if !response.status().is_success() {
+            return Err(
+                RuntimeFailure::new(failure_kind_for_status(response.status()))
+                    .with_status(response.status()),
+            );
+        }
+        let body = read_bounded_body(response).await?;
+        let (response, usage) =
+            crate::systemone::normalize_response(&body, decision, runtime_model)?;
+        Ok(RuntimeCompletion {
+            response,
+            usage,
+            finish_reason: "stop".to_owned(),
+        })
+    }
+
     async fn execute_native(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -368,11 +432,15 @@ impl SglangClient {
     async fn execute_streaming(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-        if !request.stream || effective_output_tokens == 0 {
+        if request.decision.is_some()
+            || deployment.release.is_system_one()
+            || !request.stream
+            || effective_output_tokens == 0
+        {
             return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
         }
 
@@ -455,7 +523,7 @@ impl SglangClient {
     async fn execute_native_streaming(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         response_header_timeout: Duration,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
@@ -572,7 +640,7 @@ impl ModelRuntime for SglangClient {
     async fn complete(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         request_deadline: DateTime<Utc>,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
@@ -592,7 +660,7 @@ impl ModelRuntime for SglangClient {
     async fn stream(
         &self,
         deployment: &GatewayModelDeployment,
-        request: ChatCompletionRequest,
+        request: InferenceRequest,
         effective_output_tokens: u64,
         request_deadline: DateTime<Utc>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
@@ -615,7 +683,7 @@ fn endpoint(service_url: &str, path: &str) -> String {
     format!("{}/{}", service_url.trim_end_matches('/'), path)
 }
 
-fn validate_native_parameters(request: &ChatCompletionRequest) -> Result<(), RuntimeFailure> {
+fn validate_native_parameters(request: &InferenceRequest) -> Result<(), RuntimeFailure> {
     if request
         .parameters
         .get("temperature")
@@ -1581,6 +1649,7 @@ mod tests {
         };
         let application = Router::new()
             .route("/v1/chat/completions", post(respond))
+            .route("/v1/systemone", post(respond))
             .with_state(state);
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let address = listener.local_addr().unwrap();
@@ -1601,6 +1670,7 @@ mod tests {
             release: ModelDeploymentRelease {
                 schema_version: 1,
                 runtime_revision: "runtime".to_owned(),
+                protocol: None,
                 model_path: "model-a".to_owned(),
                 model_revision: "model-revision".to_owned(),
                 runtime_model_name: None,
@@ -1611,8 +1681,8 @@ mod tests {
         }
     }
 
-    fn request() -> ChatCompletionRequest {
-        ChatCompletionRequest::parse(
+    fn request() -> InferenceRequest {
+        InferenceRequest::parse(
             br#"{
                 "model":"model-a",
                 "messages":[{"role":"user","content":"hello"}],
@@ -1623,8 +1693,8 @@ mod tests {
         .unwrap()
     }
 
-    fn streaming_request() -> ChatCompletionRequest {
-        ChatCompletionRequest::parse(
+    fn streaming_request() -> InferenceRequest {
+        InferenceRequest::parse(
             br#"{
                 "model":"model-a",
                 "messages":[{"role":"user","content":"hello"}],
@@ -1661,6 +1731,46 @@ mod tests {
             },
             "metadata": {"private_runtime_field": true}
         })
+    }
+
+    #[tokio::test]
+    async fn decision_transport_preserves_schema_and_authoritative_usage() {
+        let response = json!({"model":"runtime-model", "answers":{"q":{"type":"noul","noul":0.9}},
+            "usage":{"input_tokens":100,"cached_input_tokens":80,"output_tokens":0}});
+        let (url, recorded, task) = server(StatusCode::OK, response).await;
+        let mut deployment = deployment(url);
+        deployment.release.protocol = Some(crate::RuntimeProtocol::SystemOne);
+        deployment.release.runtime_model_name = Some("runtime-model".to_owned());
+        let request = InferenceRequest::parse_kind(
+            br#"{"model":"model-a","state":{"ticket":"charged twice"},"questions":{"q":{"type":"noul","instructions":"Duplicate?"}}}"#,
+            crate::RequestKind::SystemOne,
+        ).unwrap();
+        let completion = SglangClient::new(Some("runtime-secret".to_owned()))
+            .unwrap()
+            .complete(
+                &deployment,
+                request,
+                0,
+                Utc::now() + chrono::TimeDelta::seconds(5),
+            )
+            .await
+            .unwrap();
+        assert_eq!(
+            completion.usage(),
+            NormalizedUsage::new(100, 80, 0, 0, 0).unwrap()
+        );
+        assert_eq!(completion.into_response()["model"], "model-a");
+        let requests = recorded.lock().unwrap();
+        assert_eq!(requests[0].body["model"], "runtime-model");
+        assert_eq!(requests[0].body["state"]["ticket"], "charged twice");
+        assert_eq!(requests[0].body["priority"], 0);
+        assert!(requests[0].body.get("messages").is_none());
+        assert!(requests[0].body.get("max_completion_tokens").is_none());
+        assert_eq!(
+            requests[0].headers["authorization"],
+            "Bearer runtime-secret"
+        );
+        task.abort();
     }
 
     #[tokio::test]
@@ -2104,7 +2214,7 @@ mod tests {
         deployment.release.runtime_revision = "native-gemma4-h200-v2".to_owned();
 
         let mut non_streaming =
-            ChatCompletionRequest::parse(br#"{"model":"model-a","messages":[{}],"temperature":0}"#)
+            InferenceRequest::parse(br#"{"model":"model-a","messages":[{}],"temperature":0}"#)
                 .unwrap();
         non_streaming.encoded_input_ids = Some(vec![2, 3, 4]);
         let failure = runtime

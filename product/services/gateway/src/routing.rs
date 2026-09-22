@@ -15,6 +15,7 @@ const PREFIX_BYTE_LIMIT: usize = 16_384;
 pub enum RoutePrompt<'a> {
     TokenIds(&'a [u32]),
     ChatMessages(&'a [serde_json::Value]),
+    DecisionState(&'a serde_json::Value),
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -198,6 +199,11 @@ fn route_key(
                 let bytes = serde_json::to_vec(messages).expect("chat messages are JSON values");
                 hash.update(&bytes[..bytes.len().min(PREFIX_BYTE_LIMIT)]);
             }
+            RoutePrompt::DecisionState(state) => {
+                hash.update([3]);
+                let bytes = serde_json::to_vec(state).expect("decision state is JSON");
+                hash.update(&bytes[..bytes.len().min(PREFIX_BYTE_LIMIT)]);
+            }
         }
     }
     hash.finalize().into()
@@ -226,6 +232,7 @@ mod tests {
             release: ModelDeploymentRelease {
                 schema_version: 1,
                 runtime_revision: "vllm-revision".to_owned(),
+                protocol: None,
                 model_path: "zai-org/GLM-5.3-Flash".to_owned(),
                 model_revision: "model-revision".to_owned(),
                 runtime_model_name: None,
@@ -267,6 +274,65 @@ mod tests {
         let long = vec![serde_json::json!({"role":"user","content":"x".repeat(PREFIX_BYTE_LIMIT)})];
         let mut extended = long.clone();
         extended.push(serde_json::json!({"role":"assistant","content":"reply"}));
+        assert_eq!(key(&long, None), key(&extended, None));
+    }
+
+    #[test]
+    fn decision_state_route_keys_preserve_affinity_and_isolate_domains() {
+        let state = serde_json::json!([{"ticket":"billing"}]);
+        let changed = serde_json::json!([{"ticket":"support"}]);
+        let workspace = Uuid::from_u128(9);
+        let key = |state: &serde_json::Value, session| {
+            route_key(
+                workspace,
+                "model",
+                "release",
+                session,
+                RoutePrompt::DecisionState(state),
+            )
+        };
+        let original = key(&state, None);
+        assert_eq!(original, key(&state.clone(), None));
+        assert_ne!(original, key(&changed, None));
+        assert_eq!(key(&state, Some("session")), key(&changed, Some("session")));
+        assert_ne!(
+            key(&state, Some("session")),
+            key(&state, Some("other-session"))
+        );
+        assert_ne!(original, key(&state, Some("session")));
+
+        // Identical serialized JSON must not share chat and decision route keys.
+        assert_ne!(
+            original,
+            route_key(
+                workspace,
+                "model",
+                "release",
+                None,
+                RoutePrompt::ChatMessages(state.as_array().unwrap())
+            )
+        );
+        for session in [None, Some("session")] {
+            for (workspace_id, model, release) in [
+                (Uuid::from_u128(10), "model", "release"),
+                (workspace, "other-model", "release"),
+                (workspace, "model", "other-release"),
+            ] {
+                assert_ne!(
+                    key(&state, session),
+                    route_key(
+                        workspace_id,
+                        model,
+                        release,
+                        session,
+                        RoutePrompt::DecisionState(&state)
+                    )
+                );
+            }
+        }
+        let prefix = "x".repeat(PREFIX_BYTE_LIMIT);
+        let long = serde_json::json!(format!("{prefix}first"));
+        let extended = serde_json::json!(format!("{prefix}second"));
         assert_eq!(key(&long, None), key(&extended, None));
     }
 

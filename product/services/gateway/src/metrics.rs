@@ -54,6 +54,7 @@ struct HttpRequestLabels {
 struct GenerationLabels {
     model: String,
     deployment: String,
+    protocol: String,
     stream: String,
     service_tier: String,
 }
@@ -62,6 +63,7 @@ struct GenerationLabels {
 struct AdmissionRejectionLabels {
     model: String,
     deployment: String,
+    protocol: String,
     stream: String,
     service_tier: String,
     reason: String,
@@ -276,16 +278,18 @@ impl GatewayMetrics {
         &self,
         model: &str,
         deployment: Uuid,
+        protocol: &str,
         stream: bool,
         service_tier: ServiceTier,
         error: &AdmissionError,
     ) {
-        let labels = generation_labels(model, deployment, stream, service_tier);
+        let labels = generation_labels(model, deployment, protocol, stream, service_tier);
         self.inner
             .admission_rejections
             .get_or_create(&AdmissionRejectionLabels {
                 model: labels.model,
                 deployment: labels.deployment,
+                protocol: labels.protocol,
                 stream: labels.stream,
                 service_tier: labels.service_tier,
                 reason: admission_reason(error).to_owned(),
@@ -297,10 +301,11 @@ impl GatewayMetrics {
         &self,
         model: &str,
         deployment: Uuid,
+        protocol: &str,
         stream: bool,
         service_tier: ServiceTier,
     ) -> AdmittedGenerationMetrics {
-        let labels = generation_labels(model, deployment, stream, service_tier);
+        let labels = generation_labels(model, deployment, protocol, stream, service_tier);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
         AdmittedGenerationMetrics {
@@ -487,12 +492,14 @@ impl Default for GatewayMetrics {
 fn generation_labels(
     model: &str,
     deployment: Uuid,
+    protocol: &str,
     stream: bool,
     service_tier: ServiceTier,
 ) -> GenerationLabels {
     GenerationLabels {
         model: model.to_owned(),
         deployment: deployment.to_string(),
+        protocol: protocol.to_owned(),
         stream: stream.to_string(),
         service_tier: service_tier.as_str().to_owned(),
     }
@@ -583,6 +590,7 @@ mod tests {
         let generation = metrics.generation_admitted(
             "model-a",
             Uuid::from_u128(0x0198c36f9b6a70008000000000000001),
+            "openai_chat",
             true,
             ServiceTier::Fast,
         );
@@ -606,6 +614,8 @@ mod tests {
         assert!(body.contains("gradiated_gateway_service_info 1"));
         assert!(body.contains("stream=\"true\""));
         assert!(body.contains("service_tier=\"fast\""));
+        // Dashboards split ordinary LLM traffic from other protocols on this label.
+        assert!(body.contains("protocol=\"openai_chat\""));
         assert!(body.contains("gradiated_gateway_time_to_first_token_seconds_count"));
         assert!(body.contains("gradiated_gateway_time_per_output_token_seconds_count"));
         assert!(body.contains("gradiated_gateway_output_tokens_per_second_count"));

@@ -14,6 +14,9 @@ importers:
       '@types/pg':
         specifier: ^8.15.0
         version: 8.21.0
+      '@typesafe-ai/sdk':
+        specifier: 0.6.0
+        version: 0.6.0
       drizzle-kit:
         specifier: 0.31.10
         version: 0.31.10
@@ -26,6 +29,9 @@ importers:
       prettier:
         specifier: ^3.6.0
         version: 3.9.6
+      redis:
+        specifier: 5.8.2
+        version: 5.8.2
       tsx:
         specifier: 4.23.12
         version: 4.23.12
@@ -265,7 +271,17 @@ importers:
         specifier: latest
         version: 8.2.2(@types/node@20.19.43)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0)
 
-  services/gateway: {}
+  services/gateway:
+    devDependencies:
+      '@typesafe-ai/sdk':
+        specifier: 0.6.0
+        version: 0.6.0
+      openai:
+        specifier: ^7.5.0
+        version: 7.5.0(@aws-sdk/credential-provider-node@3.972.80)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.2)(zod@4.4.3)
+      redis:
+        specifier: 5.8.2
+        version: 5.8.2
 
   services/wizard:
     dependencies:
@@ -2183,6 +2199,10 @@ packages:
 
   '@types/use-sync-external-store@0.0.6':
     resolution: {integrity: sha512-zFDAD+tlpf2r4asuHEj0XH6pY6i0g5NeAHPn+15wk3BV6JA69eERFXC1gyGThDkVa1zCyKr5jox1+2LbV/AMLg==}
+
+  '@typesafe-ai/sdk@0.6.0':
+    resolution: {integrity: sha512-IddX+Q0XM+VagOUZFeP7wZjaO4SHMdvnh2zEBdrZZnXedWI3BNK1lKhMx3ayrkFWvVLbVcUHJy6AVZlY+e6Jaw==}
+    engines: {node: '>=20'}
 
   '@ungap/structured-clone@1.3.3':
     resolution: {integrity: sha512-60YRaenCQcVjYEKOcG824+DRGGIQ3VKErcBoAEDJZz5bKIs2ZG+X/H9Nk+Q6EVkwJk5QNApxbrc5QtBSwtrXAg==}
@@ -5338,6 +5358,8 @@ snapshots:
   '@types/unist@3.0.3': {}
 
   '@types/use-sync-external-store@0.0.6': {}
+
+  '@typesafe-ai/sdk@0.6.0': {}
 
   '@ungap/structured-clone@1.3.3': {}
 

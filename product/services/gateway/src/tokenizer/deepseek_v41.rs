@@ -1,6 +1,6 @@
 //! Text prompt encoding for the pinned vLLM DeepSeek V4.1 release.
 //! Adapted from vLLM's Apache-2.0 deepseek_v41_encoding.py.
-use super::{ChatCompletionRequest, TokenizerRequestError};
+use super::{InferenceRequest, TokenizerRequestError};
 use serde_json::{json, Value};
 
 const BOS: &str = "<｜begin▁of▁sentence｜>";
@@ -124,7 +124,7 @@ fn tool_schema(tool: &Value) -> Result<String, TokenizerRequestError> {
     Ok(python_json(&normalized))
 }
 
-pub(super) fn render(request: &ChatCompletionRequest) -> Result<String, TokenizerRequestError> {
+pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequestError> {
     let kwargs = request.parameters.get("chat_template_kwargs");
     let option = |name: &str| kwargs.and_then(|v| v.get(name));
     let mut thinking = match (option("thinking"), option("enable_thinking")) {
@@ -398,7 +398,7 @@ mod tests {
                     body["reasoning_effort"] = effort.clone();
                     "reasoning_effort"
                 };
-                let request: ChatCompletionRequest = serde_json::from_value(body).unwrap();
+                let request: InferenceRequest = serde_json::from_value(body).unwrap();
                 let error = super::super::map_request_error(render(&request).unwrap_err());
                 assert_eq!(error, crate::GatewayError::invalid_request(Some(param)));
             }
@@ -416,7 +416,7 @@ mod tests {
             let translated = crate::protocol::Protocol::OpenAiResponses
                 .translate_request(&body)
                 .unwrap();
-            let request = ChatCompletionRequest::parse(&translated).unwrap();
+            let request = InferenceRequest::parse(&translated).unwrap();
             if effort == "medium" {
                 assert_eq!(
                     super::super::map_request_error(render(&request).unwrap_err()),
@@ -435,7 +435,7 @@ mod tests {
         ))
         .unwrap();
         for case in cases["cases"].as_array().unwrap() {
-            let request: ChatCompletionRequest =
+            let request: InferenceRequest =
                 serde_json::from_value(case["request"].clone()).unwrap();
             assert_eq!(
                 render(&request).unwrap(),
@@ -452,7 +452,7 @@ mod tests {
             json!({"model":"test", "messages":[{"role":"user","content":"Hello"}], "reasoning_effort":"medium"}),
             json!({"model":"test", "messages":[{"role":"user","content":[{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]}]}),
         ] {
-            let request: ChatCompletionRequest = serde_json::from_value(request).unwrap();
+            let request: InferenceRequest = serde_json::from_value(request).unwrap();
             assert!(render(&request).is_err());
         }
     }

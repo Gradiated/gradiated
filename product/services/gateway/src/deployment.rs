@@ -76,6 +76,8 @@ pub struct ModelDeploymentRelease {
     pub schema_version: u16,
     #[validate(length(min = 1, max = 300))]
     pub runtime_revision: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub protocol: Option<RuntimeProtocol>,
     #[validate(length(min = 1, max = 300))]
     pub model_path: String,
     #[validate(length(min = 1, max = 300))]
@@ -91,11 +93,35 @@ pub struct ModelDeploymentRelease {
     pub tokenizer_mode: Option<TokenizerMode>,
 }
 
+/// The wire protocol a deployment's runtime speaks. Absent means the OpenAI chat
+/// protocol, which is what all ordinary LLM deployments serve; only a runtime that
+/// genuinely speaks something else declares a value here.
+#[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RuntimeProtocol {
+    SystemOne,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Eq, Hash, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TokenizerMode {
     DeepseekV4,
     DeepseekV41,
+}
+
+impl ModelDeploymentRelease {
+    /// Whether this release speaks the native, non-streaming decision protocol.
+    pub fn is_system_one(&self) -> bool {
+        self.protocol == Some(RuntimeProtocol::SystemOne)
+    }
+
+    /// Stable metric label separating ordinary LLM traffic from everything else.
+    pub fn protocol_label(&self) -> &'static str {
+        match self.protocol {
+            None => "openai_chat",
+            Some(RuntimeProtocol::SystemOne) => "system_one",
+        }
+    }
 }
 
 impl GatewayModelDeployment {

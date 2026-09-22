@@ -7,6 +7,7 @@ on:
       - ".github/workflows/application-deployment.yml"
       - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
+      - "product/inference/runtimes/kev/**"
       - "product/packages/**"
       - "product/scripts/**"
       - "product/services/api/**"
@@ -31,6 +32,7 @@ on:
       - ".github/workflows/application-deployment.yml"
       - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
+      - "product/inference/runtimes/kev/**"
       - "product/packages/**"
       - "product/scripts/**"
       - "product/services/api/**"
@@ -68,6 +70,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: jdx/mise-action@v4.2.3
+      - uses: astral-sh/setup-uv@v6
+      - name: Run Kev runtime CPU unit tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: >-
+          uv run --no-project --python 3.12
+          --with fastapi --with httpx --with pytest
+          python -m pytest -p no:cacheprovider product/inference/runtimes/kev -q
       - name: Install Rust check components
         run: rustup component add rustfmt clippy
       - name: Restore Rust build cache
@@ -82,6 +92,9 @@ jobs:
             ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile
         working-directory: product
+      - name: Check official TypeSafe SDK wire contract (offline)
+        working-directory: product
+        run: pnpm test:kev-sdk
       - name: Run unit tests and static checks
         working-directory: product
         run: |
@@ -122,6 +135,112 @@ jobs:
         if: always()
         working-directory: product
         run: docker compose down --volumes
+
+  gateway-contract:
+    name: Gateway runtime integration
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gateway-contract-
+            ${{ runner.os }}-gateway-integration-
+            ${{ runner.os }}-gateway-unit-
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build actual gateway binary
+        run: cargo build --locked --manifest-path product/services/gateway/Cargo.toml
+      - name: Pull disposable serving-state image
+        run: docker pull valkey/valkey:8.1.9-alpine3.24
+      - name: Exercise gateway against Kev and vLLM HTTP peers
+        working-directory: product
+        run: >-
+          pnpm --filter @gradiated/gateway exec vitest run
+          --reporter=default --reporter=junit
+          --outputFile.junit=../../../.agents/runtime/gateway-integration.xml
+      - name: Upload integration results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-runtime-integration
+          path: .agents/runtime/gateway-integration.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+  runtime-fidelity:
+    name: Real runtime fidelity
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - uses: depot/setup-action@v1
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+          key: ${{ runner.os }}-gateway-contract-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-gateway-contract-
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build actual gateway binary
+        run: cargo build --locked --manifest-path product/services/gateway/Cargo.toml
+      - name: Pull disposable serving-state image
+        run: docker pull valkey/valkey:8.1.9-alpine3.24
+      # Both runtime images carry their weights, so nothing is downloaded at run
+      # time. Depot caches the layers, so an unchanged Dockerfile rebuilds nothing.
+      - name: Build the CPU LLM runtime
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: product/inference/runtimes/vllm
+          file: product/inference/runtimes/vllm/Dockerfile.cpu
+          platforms: linux/amd64
+          load: true
+          tags: gradiated/vllm-cpu:ci
+      - name: Build the CPU decision runtime
+        uses: depot/build-push-action@v1
+        with:
+          project: ${{ vars.DEPOT_PROJECT_ID }}
+          context: product/inference/runtimes/kev
+          file: product/inference/runtimes/kev/Dockerfile.cpu
+          platforms: linux/amd64
+          load: true
+          tags: gradiated/kev-cpu:ci
+      - name: Exercise the gateway against real CPU runtimes
+        working-directory: product
+        env:
+          GATEWAY_REAL_RUNTIME: vllm,kev
+        run: >-
+          pnpm --filter @gradiated/gateway exec vitest run
+          --reporter=default --reporter=junit
+          --outputFile.junit=../../../.agents/runtime/runtime-fidelity.xml
+      - name: Upload fidelity results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-fidelity
+          path: .agents/runtime/runtime-fidelity.xml
+          if-no-files-found: ignore
+          retention-days: 7
 
   e2e:
     name: End-to-end tests

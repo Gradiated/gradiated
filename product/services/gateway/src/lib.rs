@@ -12,6 +12,7 @@ pub mod error;
 pub mod finalization;
 pub mod generation;
 pub mod http;
+mod json;
 pub mod metrics;
 pub mod model;
 pub mod protocol;
@@ -22,6 +23,7 @@ pub mod routing;
 pub mod runtime;
 pub mod service_tier;
 pub mod serving_state;
+pub mod systemone;
 #[cfg(test)]
 mod test_support;
 pub mod tokenizer;
@@ -36,7 +38,7 @@ pub use config::{GatewayConfig, ValkeyIamConfig};
 pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata, RequestRoute};
 pub use deployment::{
     DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease,
-    TokenizerMode,
+    RuntimeProtocol, TokenizerMode,
 };
 pub use domain::GatewayModel;
 pub use error::GatewayError;
@@ -57,7 +59,7 @@ pub use model::{
 pub use protocol::{Frame, Protocol, StreamItem};
 pub use readiness::DependencyReadiness;
 pub use relay::{ProviderRelay, RelayError, RelayRoute};
-pub use request::{ChatCompletionRequest, OutputTokenLimit};
+pub use request::{InferenceRequest, OutputTokenLimit, RequestKind};
 pub use routing::{
     healthy_deployment_count, order_deployments, RouteAvailability, RouteInput, RoutePrompt,
     RoutedDeployment,

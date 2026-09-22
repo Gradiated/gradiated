@@ -180,6 +180,26 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/systemone": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /**
+     * Answer named questions with native SystemOne inference
+     * @description Served by the Rust gateway. Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.
+     */
+    post: operations["systemOne"];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -585,6 +605,137 @@ export interface components {
        */
       expires_at?: string | null;
     };
+    /** @description Completed native SystemOne inference response. */
+    SystemOneResponse: {
+      /** @description Exact hosted model ID, required; no default, alias resolution or fallback. */
+      model: string;
+      /** @description Answers keyed by the request question names. */
+      answers: {
+        [key: string]: components["schemas"]["SystemOneAnswer"];
+      };
+      usage: components["schemas"]["SystemOneUsage"];
+      /** @description Optional inference latency in milliseconds. */
+      latency_ms?: number;
+    };
+    /** @description Native inference answer, keyed by the original question name. */
+    SystemOneAnswer:
+      | {
+          /** @enum {string} */
+          type: "choice";
+          /** @description Selected option name. */
+          choice: string;
+          /** @description Probability or confidence in [0, 1]. */
+          confidence: number;
+          /** @description Per-option probabilities, rounded independently by Kev; their sum need not be exactly one. */
+          probabilities: {
+            [key: string]: number;
+          };
+        }
+      | {
+          /** @enum {string} */
+          type: "noul";
+          /** @description Probability that the answer is true. */
+          noul: number;
+        }
+      | {
+          /** @enum {string} */
+          type: "score";
+          /** @description Expected zero-based rubric level, potentially fractional. */
+          score: number;
+          /** @description Probability or confidence in [0, 1]. */
+          confidence: number;
+          /** @description Zero-based level indices mapped to rendered upstream JSON descriptions. */
+          legend: {
+            [key: string]: string;
+          };
+          /** @description Probabilities keyed by zero-based level index. */
+          probabilities: {
+            [key: string]: number;
+          };
+        };
+    /** @description Native inference token usage; serialized answers are not generated tokens. */
+    SystemOneUsage: {
+      /** @description Total input tokens, including cached input. */
+      input_tokens: number;
+      /** @description Cached subset of input_tokens. */
+      cached_input_tokens: number;
+      /**
+       * @description Always zero: pointer inference generates no output tokens.
+       * @enum {number}
+       */
+      output_tokens: 0;
+    };
+    /** @description POST /v1/systemone. Non-streaming inference only; output-token controls and unknown fields are rejected. */
+    SystemOneRequest: {
+      /** @description Exact hosted model ID, required; no default, alias resolution or fallback. */
+      model: string;
+      /** @description State to evaluate: text, a JSON object or an array. Nested JSON scalars are allowed. */
+      state:
+        | string
+        | {
+            [key: string]: components["schemas"]["SystemOneJson"];
+          }
+        | components["schemas"]["SystemOneJson"][];
+      /** @description One to 64 named questions; each name is 1..200 characters. */
+      questions: {
+        [key: string]: components["schemas"]["SystemOneQuestion"];
+      };
+      /** @description Optional session affinity identifier, at most 256 characters. */
+      session_id?: string;
+      /**
+       * @description Only default is implemented for SystemOne; fast and flex are rejected.
+       * @default default
+       * @enum {string}
+       */
+      service_tier: "default";
+    };
+    /** @description JSON content, including nested objects/arrays, finite numbers, booleans and null. The runtime additionally enforces body, nesting-depth and token bounds (currently 1 MiB, 32 levels and 8192 input tokens). */
+    SystemOneJson:
+      | string
+      | number
+      | boolean
+      | {
+          [key: string]: unknown;
+        }
+      | unknown[]
+      | null;
+    /** @description A native Kev choice, noul or score question. */
+    SystemOneQuestion:
+      | {
+          /**
+           * @description Select one named option.
+           * @enum {string}
+           */
+          type: "choice";
+          instructions: components["schemas"]["SystemOneJson"] & unknown;
+          /** @description One to 255 named options with JSON descriptions; null leaves an option undescribed. */
+          criteria: {
+            [key: string]: components["schemas"]["SystemOneJson"];
+          };
+        }
+      | {
+          /**
+           * @description Estimate the probability of true.
+           * @enum {string}
+           */
+          type: "noul";
+          instructions: components["schemas"]["SystemOneJson"] & unknown;
+          /** @description Optional JSON descriptions for false and true outcomes. Other keys are rejected to prevent silently ignored options. */
+          criteria?: {
+            false?: components["schemas"]["SystemOneJson"] & unknown;
+            true?: components["schemas"]["SystemOneJson"] & unknown;
+          } | null;
+        }
+      | {
+          /**
+           * @description Expected zero-based level on an ordered rubric.
+           * @enum {string}
+           */
+          type: "score";
+          instructions: components["schemas"]["SystemOneJson"] & unknown;
+          /** @description Two to 255 ordered JSON level descriptions, indexed from zero. */
+          criteria: components["schemas"]["SystemOneJson"][];
+        };
   };
   responses: never;
   parameters: never;
@@ -1354,6 +1505,79 @@ export interface operations {
         content: {
           "application/problem+json": components["schemas"]["Problem"];
         };
+      };
+    };
+  };
+  systemOne: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["SystemOneRequest"];
+      };
+    };
+    responses: {
+      /** @description Native answers and authoritative input/cache usage; output_tokens is always zero. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["SystemOneResponse"];
+        };
+      };
+      /** @description Invalid request or unsupported inference parameter. */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Missing or invalid workspace API key. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description The prepaid account has insufficient balance. */
+      402: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description The exact requested model is unavailable or unknown. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description The request exceeds the gateway body limit. */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Admission or inference capacity is exhausted. */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

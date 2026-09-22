@@ -63,6 +63,8 @@ export const ModelDeploymentReleaseSchema = z
   .strictObject({
     schema_version: z.literal(1),
     runtime_revision: BoundedIdentifierSchema,
+    // Absent means the OpenAI chat protocol, which every ordinary LLM deployment serves.
+    protocol: z.enum(["system_one"]).optional(),
     model_path: BoundedIdentifierSchema,
     model_revision: BoundedIdentifierSchema,
     runtime_model_name: BoundedIdentifierSchema.optional(),

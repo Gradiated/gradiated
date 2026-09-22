@@ -16,7 +16,7 @@ use crate::{
     protocol::Protocol,
     relay::{parse_target, RelayRoute},
     serving_state::ServingState,
-    CatalogModel, ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
+    CatalogModel, GatewayError, GatewayModel, GatewayModelDeployment, InferenceRequest,
 };
 
 /// A runtime scheduling hint that only internal callers may set.
@@ -38,7 +38,7 @@ pub struct QualifiedRequest {
     pub max_prompt_tokens: u64,
     pub effective_output_tokens: u64,
     pub pricing: CapturedPricing,
-    pub request: ChatCompletionRequest,
+    pub request: InferenceRequest,
 }
 
 /// The selected execution path for one generation. Each arm carries everything
@@ -115,11 +115,26 @@ impl RequestCoordinator {
         hosted: HostedRequest,
         body: &[u8],
     ) -> Result<QualifiedRequest, GatewayError> {
-        let mut request = ChatCompletionRequest::parse(body)?;
+        self.qualify_kind(metadata, headers, hosted, body, crate::RequestKind::Chat)
+    }
+
+    /// As `qualify`, for a protocol whose body is not an OpenAI chat request.
+    pub fn qualify_kind(
+        &self,
+        metadata: RequestMetadata,
+        headers: &HeaderMap,
+        hosted: HostedRequest,
+        body: &[u8],
+        kind: crate::RequestKind,
+    ) -> Result<QualifiedRequest, GatewayError> {
+        let mut request = InferenceRequest::parse_kind(body, kind)?;
         if request.session_id.is_none() {
             request.session_id = session_header(headers)?;
         }
         request.model.make_ascii_lowercase();
+        if let Some(decision) = &mut request.decision {
+            decision.model = request.model.clone();
+        }
         if request.model != hosted.model.id {
             return Err(GatewayError::ServingStateUnavailable);
         }
@@ -302,7 +317,7 @@ fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
 fn qualify_model_request(
     metadata: RequestMetadata,
     identity: AuthenticatedIdentity,
-    mut request: ChatCompletionRequest,
+    mut request: InferenceRequest,
     model: GatewayModel,
 ) -> Result<QualifiedRequest, GatewayError> {
     let deployment = model
@@ -311,6 +326,9 @@ fn qualify_model_request(
         .ok_or(GatewayError::ModelUnavailable)?
         .clone();
     let output = model.properties.text_output();
+    if request.decision.is_some() != deployment.release.is_system_one() {
+        return Err(GatewayError::unsupported_parameter("model"));
+    }
     if request.stream && !output.streaming {
         return Err(GatewayError::unsupported_parameter("stream"));
     }
@@ -327,14 +345,18 @@ fn qualify_model_request(
         .parameters
         .retain(|name, _| model.properties.parameter(name).is_some());
 
-    let effective_output_tokens = match request.output_token_limit() {
-        Some(limit) if limit.value() > output.max_length.value => {
-            return Err(GatewayError::context_length_exceeded(
-                limit.parameter_name(),
-            ))
+    let effective_output_tokens = if request.decision.is_some() {
+        0
+    } else {
+        match request.output_token_limit() {
+            Some(limit) if limit.value() > output.max_length.value => {
+                return Err(GatewayError::context_length_exceeded(
+                    limit.parameter_name(),
+                ))
+            }
+            Some(limit) => limit.value(),
+            None => output.default_length.value,
         }
-        Some(limit) => limit.value(),
-        None => output.default_length.value,
     };
     let served_release_digest = deployment
         .served_release_digest()
@@ -386,6 +408,34 @@ mod tests {
         };
 
         coordinator.qualify(metadata(), headers, *hosted, body)
+    }
+
+    /// As `qualify`, for a body the native decision protocol owns.
+    pub(super) async fn qualify_decision(
+        coordinator: &RequestCoordinator,
+        headers: &HeaderMap,
+        body: &[u8],
+    ) -> Result<QualifiedRequest, GatewayError> {
+        let classified = coordinator
+            .classify(
+                headers,
+                body,
+                metadata().received_at,
+                Protocol::OpenAiChat,
+                None,
+            )
+            .await?;
+        let RequestRoute::Hosted { hosted, .. } = classified else {
+            panic!("no relay route was offered");
+        };
+
+        coordinator.qualify_kind(
+            metadata(),
+            headers,
+            *hosted,
+            body,
+            crate::RequestKind::SystemOne,
+        )
     }
 
     fn headers() -> HeaderMap {
@@ -444,6 +494,47 @@ mod tests {
             .into_upstream_body_for_model(request.effective_output_tokens, None);
         assert_eq!(upstream_body["model"], "model-a");
         assert_eq!(*state.requested_models.lock().unwrap(), ["model-a"]);
+    }
+
+    #[tokio::test]
+    async fn system_one_uses_existing_auth_and_rejects_cross_protocol_models() {
+        let body = br#"{"model":"MODEL-A","state":"charged twice","questions":{"billing":{"type":"noul","instructions":"Duplicate charge?"}}}"#;
+        let mut state = TestServingState::ready();
+        state.model.as_mut().unwrap().deployments[0]
+            .release
+            .protocol = Some(crate::RuntimeProtocol::SystemOne);
+        let state = Arc::new(state);
+        let coordinator = RequestCoordinator::new(state.clone());
+
+        let qualified = qualify_decision(&coordinator, &headers(), body)
+            .await
+            .unwrap();
+        assert_eq!(qualified.effective_output_tokens, 0);
+        assert_eq!(qualified.request.model, "model-a");
+        assert_eq!(qualified.request.decision.unwrap().model, "model-a");
+        // Identity is resolved by the same pipeline every other protocol uses.
+        assert_eq!(
+            *state.calls.lock().unwrap(),
+            ["credential", "workspace", "account", "model"]
+        );
+
+        // Neither protocol may be served by the other's deployment.
+        assert!(qualify(
+            &coordinator,
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#
+        )
+        .await
+        .is_err());
+        let chat = RequestCoordinator::new(Arc::new(TestServingState::ready()));
+        assert!(qualify_decision(&chat, &headers(), body).await.is_err());
+
+        assert_eq!(
+            qualify_decision(&coordinator, &HeaderMap::new(), body)
+                .await
+                .unwrap_err(),
+            GatewayError::InvalidApiKey
+        );
     }
 
     #[tokio::test]

@@ -150,6 +150,7 @@ mod tests {
             release: ModelDeploymentRelease {
                 schema_version: 1,
                 runtime_revision: "runtime".to_owned(),
+                protocol: None,
                 model_path: "model".to_owned(),
                 model_revision: "model-revision".to_owned(),
                 runtime_model_name: None,

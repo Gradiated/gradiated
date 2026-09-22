@@ -1,0 +1,161 @@
+[
+  {
+    "name": "unknown-noul-option",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": {
+          "type": "noul",
+          "instructions": "Check",
+          "criteria": { "ignored-upstream": null }
+        }
+      }
+    }
+  },
+  {
+    "name": "model-required",
+    "request": {
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } }
+    }
+  },
+  {
+    "name": "empty-model",
+    "request": {
+      "model": "",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } }
+    }
+  },
+  {
+    "name": "scalar-state",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": 1,
+      "questions": { "q": { "type": "noul", "instructions": "Check" } }
+    }
+  },
+  {
+    "name": "empty-questions",
+    "request": { "model": "jaredpalmer/kev-9b", "state": "x", "questions": {} }
+  },
+  {
+    "name": "empty-question-name",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "": { "type": "noul", "instructions": "Check" } }
+    }
+  },
+  {
+    "name": "instructions-required",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul" } }
+    }
+  },
+  {
+    "name": "empty-choice-options",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "choice", "instructions": "Pick", "criteria": {} }
+      }
+    }
+  },
+  {
+    "name": "score-needs-two-levels",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "score", "instructions": "Rank", "criteria": ["only"] }
+      }
+    }
+  },
+  {
+    "name": "unknown-question-field",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": {
+        "q": { "type": "noul", "instructions": "Check", "unknown": true }
+      }
+    }
+  },
+  {
+    "name": "unknown-top-level-field",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "unknown": true
+    }
+  },
+  {
+    "name": "stream-false-still-unsupported",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "stream": false
+    }
+  },
+  {
+    "name": "output-control-unsupported",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "max_tokens": 1
+    }
+  },
+  {
+    "name": "fast-unimplemented",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "service_tier": "fast"
+    }
+  },
+  {
+    "name": "flex-unimplemented",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "service_tier": "flex"
+    }
+  },
+  {
+    "name": "null-session",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "session_id": null
+    }
+  },
+  {
+    "name": "empty-session",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "session_id": ""
+    }
+  },
+  {
+    "name": "session-over-256-characters",
+    "request": {
+      "model": "jaredpalmer/kev-9b",
+      "state": "x",
+      "questions": { "q": { "type": "noul", "instructions": "Check" } },
+      "session_id": "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567"
+    }
+  }
+]

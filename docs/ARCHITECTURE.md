@@ -226,6 +226,7 @@ private PodMonitor scrapes its dedicated metrics listener on port 9464.
 The Rust service exposes the launch inference contract:
 
 - `POST /v1/chat/completions`, streaming and non-streaming;
+- `POST /v1/systemone`, non-streaming native Kev pointer inference;
 - `GET /v1/models` with only exact currently advertised model IDs;
 - `/health/live`, `/health/ready` and `/metrics`.
 
@@ -249,8 +250,8 @@ concurrent generations. Invoiced organizations bypass the balance and
 organization-concurrency checks at launch. The gateway forwards only qualified
 fields to the model runtime,
 preserving cancellation, backpressure and streaming semantics.
-The optional `service_tier` request field accepts `flex`, `default`, or `fast`.
-It defaults to `default`. Every deployment serves every tier from shared
+For Chat Completions, the optional `service_tier` request field accepts `flex`, `default`, or `fast`.
+It defaults to `default`. Chat deployments serve every tier from shared
 capacity. The gateway maps `fast` to runtime priority `-10`, `default` to `0`,
 and `flex` to `10`. It rejects caller-supplied runtime priority controls. A
 retry keeps the requested tier. Successful responses return the effective tier
@@ -261,7 +262,10 @@ gateway uses fresh status, a shared concurrency lease, and rendezvous hashing to
 select a deployment. A session ID or request-prefix hash keeps related requests
 on one deployment when it has capacity. Without a session ID, chat routing hashes
 the first 16 KiB of serialized messages; native routing hashes up to 4,096 actual
-input IDs. Routing never requires a second rendering of a chat deployment's prompt. The gateway does not queue. It returns
+input IDs. SystemOne hashes the first 16 KiB of serialized state, excluding
+questions. Route keys are scoped to workspace, model and served release, with
+separate hash domains for state, messages and token IDs. Routing never requires
+a second rendering of a chat deployment's prompt. The gateway does not queue. It returns
 `429` when all healthy deployments are busy. It returns `503` when no fresh,
 healthy deployment exists. It retries once on another deployment only when no
 usable output reached the client.
@@ -272,6 +276,22 @@ normalizes authoritative token usage, calculates the integer nano-USD charge,
 constructs the closed generation properties document and invokes the Valkey
 finalization script. A lost process may leave an expired, unbilled generation;
 there is no durable in-progress request table at launch.
+
+Native SystemOne accepts an exact model, text/object/array state and 1..64
+named `choice`, `noul` or `score` questions with JSON instructions and criteria.
+Optional `noul` criteria accept only `false` and `true` keys; unsupported
+outcomes are rejected rather than silently discarded by the runtime.
+Its closed envelope rejects streaming, output-token controls, caller priority
+and unknown fields. Only the default service tier is implemented; `fast` and
+`flex` fail before dispatch. Optional session IDs are non-null strings of
+1..256 UTF-16 code units. A deployment release declaring `protocol: "system_one"`
+selects the native `/v1/systemone` transport and cannot serve chat; an absent
+`protocol` means the ordinary OpenAI chat transport.
+It shares the existing admission and settlement path. Runtime identity and
+answers are validated before rewriting the response model to the public ID.
+Authoritative usage counts prefill input and cached input, with output,
+cache-write and reasoning tokens fixed at zero. Serialized answers are not
+generated model tokens.
 
 The model runtime owns prompt normalization and reports authoritative token usage.
 Gateway-local token counts must not veto chat dispatch, abort a response, or

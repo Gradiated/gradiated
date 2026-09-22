@@ -1,7 +1,7 @@
 # Gateway
 
 The Rust inference data plane authenticates and admits direct and OpenRouter
-requests through Valkey, calls one exact SGLang deployment per model, and
+requests through Valkey, calls a deployment of the exact requested model, and
 settles terminal usage. Its implementation authority is
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
@@ -21,13 +21,36 @@ The runnable service currently provides:
   atomic finalization script that consumes a lease, debits the balance once,
   and appends the terminal stream event.
 
-The request coordinator and tokenizer components currently cover Chat
-Completions qualification, model selection, and local token bounds. Connecting
-those components to admission and the finalization boundary, then adding SGLang
-dispatch and streaming, are the next implementation slices. No fake inference
-endpoint is used.
+The request coordinator connects qualification and exact model selection to
+admission, runtime dispatch and terminal settlement. Chat Completions support
+streaming; native SystemOne uses the same lifecycle without streaming. No fake
+inference endpoint is used.
+
+## Native SystemOne
+
+`POST /v1/systemone` accepts an exact model, text/object/array `state`, and
+1..64 named `choice`, `noul`, or `score` questions. Instructions and criteria
+support structured JSON. Optional `noul` criteria allow only `false` and `true`
+outcome keys; any other key is rejected. Unknown fields, streaming, output-token controls,
+caller priority, and `fast`/`flex` are rejected; only `default` is implemented.
+An optional `session_id` must contain 1..256 UTF-16 code units.
+
+Deployments whose `release.protocol` is `system_one` use the native
+SystemOne transport and cannot serve Chat Completions. They share gateway
+authentication, admission, health-based routing, retries and settlement.
+Session affinity takes precedence; otherwise routing hashes the first 16 KiB
+of serialized state, scoped to workspace, model and served release. Questions
+do not affect this state affinity. The runtime reports authoritative prefill
+input and cached-input usage with exactly zero output tokens; serialized
+answers are not generated tokens. The gateway validates answers and runtime
+model identity before returning the requested public model ID.
 
 ## Run locally
+
+For CPU-only integration tests against real Kev/vLLM HTTP mock servers and
+disposable Valkey, see [runtime integration tests](test/integration/README.md).
+The gateway is the actual built binary; the suite covers both successful
+requests and failure/cancellation/settlement boundaries without GPUs.
 
 From `product/`, `pnpm dev` starts the one-node Valkey cluster and the gateway
 alongside the other native services. Run the local seed once to create the

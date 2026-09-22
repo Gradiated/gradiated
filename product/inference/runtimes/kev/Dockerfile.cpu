@@ -1,0 +1,64 @@
+# The Kev decision runtime on CPU, for the gateway's real-runtime fidelity tests.
+#
+# This is NOT the production image: production serves kev-9b on GPU through the
+# RunPod scripts in infra/environments/prod/runpod/kev-9b. It exists so CI can run
+# the adapter we actually deploy against a small checkpoint, rather than upstream's
+# own server, whose usage shape the gateway deliberately rejects.
+#
+# The upstream source is pinned here by commit, which is the guarantee that replaces
+# the adapter's checkout verification inside a container.
+FROM python:3.12-slim
+
+ARG KEV_COMMIT=f0ae8fb9af5762254974dcdba8c82cbf48587b2e
+ARG KEV_MODEL=jaredpalmer/kev-0.5b
+ARG KEV_REVISION=9ce2fd39db3a397c89733f94af948e3d1fdfffcd
+ARG KEV_BASE=Qwen/Qwen2.5-0.5B
+# The 0.5b checkpoint declares no base revision; empty asserts exactly that.
+ARG KEV_BASE_REVISION=""
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    KEV_COMMIT=${KEV_COMMIT} \
+    KEV_MODEL=${KEV_MODEL} \
+    KEV_REVISION=${KEV_REVISION} \
+    KEV_BASE=${KEV_BASE} \
+    KEV_BASE_REVISION=${KEV_BASE_REVISION}
+
+# Layers are ordered coldest first so a rebuild only repeats what actually changed:
+# dependencies, then pinned source, then weights, and the adapter last.
+
+# CPU-only torch; the decision path needs no CUDA, Triton or FLA kernels.
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch \
+ && pip install "transformers" "peft" "accelerate" "numpy<3" "safetensors" \
+      "pydantic" "fastapi" "uvicorn" "huggingface_hub"
+
+ADD https://github.com/jaredpalmer/kev/archive/${KEV_COMMIT}.tar.gz /tmp/kev.tar.gz
+RUN mkdir -p /opt/kev \
+ && tar -xzf /tmp/kev.tar.gz -C /opt/kev --strip-components=1 \
+ && pip install --no-deps /opt/kev \
+ && rm /tmp/kev.tar.gz
+
+# Baked in, so a run never reaches Hugging Face. The revisions are the cache key:
+# this layer is rebuilt only when one of them changes.
+RUN python -c "\
+from huggingface_hub import snapshot_download; \
+snapshot_download('${KEV_MODEL}', revision='${KEV_REVISION}'); \
+snapshot_download('${KEV_BASE}')"
+
+# Only after the weights are in the image: serving offline is deliberate, so an
+# image that lost them fails loudly instead of quietly downloading them again.
+ENV HF_HUB_OFFLINE=1
+
+COPY adapter.py /opt/adapter/adapter.py
+
+EXPOSE 8000
+
+# The source is pinned by KEV_COMMIT above, so the adapter's checkout verification
+# has nothing to check and the weakening is stated explicitly rather than implied.
+CMD python /opt/adapter/adapter.py \
+      --host 0.0.0.0 --port 8000 \
+      --model "${KEV_MODEL}" --revision "${KEV_REVISION}" \
+      --base "${KEV_BASE}" --base-revision "${KEV_BASE_REVISION}" \
+      --upstream-commit "${KEV_COMMIT}" \
+      --device cpu --dtype float32 \
+      --allow-unpinned-source

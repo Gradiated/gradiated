@@ -42,6 +42,13 @@
     }
   ],
   "components": {
+    "securitySchemes": {
+      "InferenceBearer": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Workspace API key for the Rust inference gateway."
+      }
+    },
     "schemas": {
       "ModelList": {
         "type": "object",
@@ -1177,6 +1184,399 @@
           "name"
         ],
         "additionalProperties": false
+      },
+      "SystemOneResponse": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID, required; no default, alias resolution or fallback."
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SystemOneAnswer"
+            },
+            "minProperties": 1,
+            "maxProperties": 64,
+            "description": "Answers keyed by the request question names."
+          },
+          "usage": {
+            "$ref": "#/components/schemas/SystemOneUsage"
+          },
+          "latency_ms": {
+            "type": "number",
+            "minimum": 0,
+            "description": "Optional inference latency in milliseconds."
+          }
+        },
+        "required": [
+          "model",
+          "answers",
+          "usage"
+        ],
+        "additionalProperties": false,
+        "description": "Completed native SystemOne inference response."
+      },
+      "SystemOneAnswer": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "choice"
+                ]
+              },
+              "choice": {
+                "type": "string",
+                "description": "Selected option name."
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Probability or confidence in [0, 1]."
+              },
+              "probabilities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Probability or confidence in [0, 1]."
+                },
+                "minProperties": 1,
+                "maxProperties": 255,
+                "description": "Per-option probabilities, rounded independently by Kev; their sum need not be exactly one."
+              }
+            },
+            "required": [
+              "type",
+              "choice",
+              "confidence",
+              "probabilities"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "noul"
+                ]
+              },
+              "noul": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Probability that the answer is true."
+              }
+            },
+            "required": [
+              "type",
+              "noul"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "score"
+                ]
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 254,
+                "description": "Expected zero-based rubric level, potentially fractional."
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "description": "Probability or confidence in [0, 1]."
+              },
+              "legend": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "minProperties": 2,
+                "maxProperties": 255,
+                "description": "Zero-based level indices mapped to rendered upstream JSON descriptions."
+              },
+              "probabilities": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Probability or confidence in [0, 1]."
+                },
+                "minProperties": 2,
+                "maxProperties": 255,
+                "description": "Probabilities keyed by zero-based level index."
+              }
+            },
+            "required": [
+              "type",
+              "score",
+              "confidence",
+              "legend",
+              "probabilities"
+            ],
+            "additionalProperties": false
+          }
+        ],
+        "description": "Native inference answer, keyed by the original question name."
+      },
+      "SystemOneUsage": {
+        "type": "object",
+        "properties": {
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total input tokens, including cached input."
+          },
+          "cached_input_tokens": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Cached subset of input_tokens."
+          },
+          "output_tokens": {
+            "type": "number",
+            "enum": [
+              0
+            ],
+            "description": "Always zero: pointer inference generates no output tokens."
+          }
+        },
+        "required": [
+          "input_tokens",
+          "cached_input_tokens",
+          "output_tokens"
+        ],
+        "additionalProperties": false,
+        "description": "Native inference token usage; serialized answers are not generated tokens."
+      },
+      "SystemOneRequest": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Exact hosted model ID, required; no default, alias resolution or fallback."
+          },
+          "state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/SystemOneJson"
+                }
+              },
+              {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SystemOneJson"
+                }
+              }
+            ],
+            "description": "State to evaluate: text, a JSON object or an array. Nested JSON scalars are allowed."
+          },
+          "questions": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/SystemOneQuestion"
+            },
+            "minProperties": 1,
+            "maxProperties": 64,
+            "description": "One to 64 named questions; each name is 1..200 characters."
+          },
+          "session_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256,
+            "description": "Optional session affinity identifier, at most 256 characters."
+          },
+          "service_tier": {
+            "type": "string",
+            "enum": [
+              "default"
+            ],
+            "default": "default",
+            "description": "Only default is implemented for SystemOne; fast and flex are rejected."
+          }
+        },
+        "required": [
+          "model",
+          "state",
+          "questions"
+        ],
+        "additionalProperties": false,
+        "description": "POST /v1/systemone. Non-streaming inference only; output-token controls and unknown fields are rejected."
+      },
+      "SystemOneJson": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "object",
+          "array",
+          "null"
+        ],
+        "description": "JSON content, including nested objects/arrays, finite numbers, booleans and null. The runtime additionally enforces body, nesting-depth and token bounds (currently 1 MiB, 32 levels and 8192 input tokens).",
+        "additionalProperties": {},
+        "items": {}
+      },
+      "SystemOneQuestion": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "choice"
+                ],
+                "description": "Select one named option."
+              },
+              "instructions": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SystemOneJson"
+                  },
+                  {
+                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                  }
+                ]
+              },
+              "criteria": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/SystemOneJson"
+                },
+                "minProperties": 1,
+                "maxProperties": 255,
+                "description": "One to 255 named options with JSON descriptions; null leaves an option undescribed."
+              }
+            },
+            "required": [
+              "type",
+              "instructions",
+              "criteria"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "noul"
+                ],
+                "description": "Estimate the probability of true."
+              },
+              "instructions": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SystemOneJson"
+                  },
+                  {
+                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                  }
+                ]
+              },
+              "criteria": {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "false": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/SystemOneJson"
+                      },
+                      {
+                        "description": "Description of the false outcome."
+                      }
+                    ]
+                  },
+                  "true": {
+                    "allOf": [
+                      {
+                        "$ref": "#/components/schemas/SystemOneJson"
+                      },
+                      {
+                        "description": "Description of the true outcome."
+                      }
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "description": "Optional JSON descriptions for false and true outcomes. Other keys are rejected to prevent silently ignored options."
+              }
+            },
+            "required": [
+              "type",
+              "instructions"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "score"
+                ],
+                "description": "Expected zero-based level on an ordered rubric."
+              },
+              "instructions": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/SystemOneJson"
+                  },
+                  {
+                    "description": "Required question instructions as JSON, rendered using upstream Kev JSON semantics."
+                  }
+                ]
+              },
+              "criteria": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/SystemOneJson"
+                },
+                "minItems": 2,
+                "maxItems": 255,
+                "description": "Two to 255 ordered JSON level descriptions, indexed from zero."
+              }
+            },
+            "required": [
+              "type",
+              "instructions",
+              "criteria"
+            ],
+            "additionalProperties": false
+          }
+        ],
+        "description": "A native Kev choice, noul or score question."
       }
     },
     "parameters": {}
@@ -2461,6 +2861,64 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v1/systemone": {
+      "post": {
+        "operationId": "systemOne",
+        "tags": [
+          "Inference"
+        ],
+        "summary": "Answer named questions with native SystemOne inference",
+        "description": "Served by the Rust gateway. Requires an exact hosted model and a workspace API key. Supports choice, noul and score questions over text or structured state. No streaming or generated output tokens; only the default service tier is implemented.",
+        "security": [
+          {
+            "InferenceBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemOneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Native answers and authoritative input/cache usage; output_tokens is always zero.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemOneResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request or unsupported inference parameter."
+          },
+          "401": {
+            "description": "Missing or invalid workspace API key."
+          },
+          "402": {
+            "description": "The prepaid account has insufficient balance."
+          },
+          "404": {
+            "description": "The exact requested model is unavailable or unknown."
+          },
+          "413": {
+            "description": "The request exceeds the gateway body limit."
+          },
+          "429": {
+            "description": "Admission or inference capacity is exhausted."
+          },
+          "503": {
+            "description": "Runtime failure, invalid native response, no healthy deployment, or an unavailable gateway dependency."
           }
         }
       }

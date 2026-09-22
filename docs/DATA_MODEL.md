@@ -409,7 +409,12 @@ shared concurrency lease for admission.
 `runtime_revision`, `model_path`, `model_revision`, `tokenizer_path`, and
 `tokenizer_revision`. All identifiers are required and bounded even when the
 tokenizer identity equals the model identity. `runtime_revision` is a native
-SGLang source revision locally and an immutable OCI image digest in production.
+SGLang source revision locally and an immutable runtime release identifier in
+production. An explicit `protocol` of `system_one` selects native SystemOne
+transport, and an absent `protocol` means the ordinary OpenAI chat transport;
+it must identify the pinned Kev release and cannot serve Chat Completions.
+This transport discriminator is included in the release digest, not stored in
+an additional routing record.
 Rust serializes this typed object canonically and hashes only it to produce the
 `served_release_digest` captured by each admitted generation.
 
@@ -426,7 +431,9 @@ appear in this table; the gateway reads the optional upstream credential from
 the fixed `SGLANG_API_KEY` process secret. One gateway-wide hard generation
 timeout applies to every model and defaults to 300 seconds at launch.
 
-Every deployment supports all three service tiers. Do not add service-tier
+Chat deployments support all three service tiers. Native SystemOne currently
+supports only `default`; requests for `fast` or `flex` are rejected because
+its tier scheduler is not implemented. Do not add service-tier
 capability fields to `model_deployments`. The tiers share the same deployment
 pool, release, capacity lease, and retry candidates. The runtime scheduler uses
 request priority to give `fast` work precedence over `default` work and
@@ -507,6 +514,16 @@ Use an append-only `MergeTree`, partitioned by `toYYYYMM(completed_at)` and init
 ```
 
 Version 2 requires `service_tier`. Version 1 omits it and means `default`.
+Native SystemOne uses this same generation event with `service_tier: "default"`.
+Its authoritative prefill usage has nonnegative safe-integer input tokens and
+cached input no greater than input. Output, cache-write and reasoning quantities
+are zero; answer serialization is not generated-token usage. No new event or
+storage table is required. State, questions and answers remain request-local.
+The optional 1..256 UTF-16-code-unit session ID selects affinity; otherwise the
+gateway hashes the first 16 KiB of serialized state, scoped to workspace, model
+and served release. Neither state nor session affinity introduces durable
+customer-content storage.
+
 `pricing` contains every effective price component used for the generation,
 including configured zero-quantity or zero-price components. Terminal generation
 units remain normalized as `input_token`, `cached_input_token`,

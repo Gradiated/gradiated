@@ -10,6 +10,7 @@ import { registerCatalogBillingRoutes } from "./routes/catalog-billing.js";
 import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
 import { registerMeRoutes } from "./routes/me.js";
 import { registerOrganizationRoutes } from "./routes/organizations.js";
+import { registerSystemOneContract } from "./routes/systemone-contract.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
@@ -193,6 +194,7 @@ export const createApp = (overrides: AppOverrides = {}) => {
   );
   registerWizardRoutes(app, dependencies.services);
   registerWorkspaceRoutes(app, dependencies.services);
+  registerSystemOneContract(app);
 
   app.doc31("/api/openapi.json", openApiDocument);
   app.get(

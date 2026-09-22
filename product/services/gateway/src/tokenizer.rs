@@ -17,8 +17,8 @@ use tokenizers::Tokenizer;
 use tracing::error;
 
 use crate::{
-    ChatCompletionRequest, GatewayError, ModelDeploymentRelease, OutputTokenLimit,
-    QualifiedRequest, TokenizerMode,
+    GatewayError, InferenceRequest, ModelDeploymentRelease, OutputTokenLimit, QualifiedRequest,
+    TokenizerMode,
 };
 
 const TOKENIZER_FILE: &str = "tokenizer.json";
@@ -261,10 +261,7 @@ impl CompiledTokenizer {
         })
     }
 
-    fn encode_input(
-        &self,
-        request: &ChatCompletionRequest,
-    ) -> Result<Vec<u32>, TokenizerRequestError> {
+    fn encode_input(&self, request: &InferenceRequest) -> Result<Vec<u32>, TokenizerRequestError> {
         let prompt = match &self.renderer {
             PromptRenderer::HuggingFace(template) => {
                 let input = render_input(request)?;
@@ -334,7 +331,7 @@ fn read_tokenizer_config(path: &Path) -> Result<TokenizerConfig, ModelTokenizerE
     Ok(serde_json::from_slice(&fs::read(path)?)?)
 }
 
-fn render_input(request: &ChatCompletionRequest) -> Result<RenderInput, TokenizerRequestError> {
+fn render_input(request: &InferenceRequest) -> Result<RenderInput, TokenizerRequestError> {
     let mut fields: Map<String, Value> = request.parameters.clone();
     let messages = request
         .messages
@@ -397,7 +394,7 @@ struct DeepseekV4Message {
     content: String,
 }
 
-fn render_deepseek_v4(request: &ChatCompletionRequest) -> Result<String, TokenizerRequestError> {
+fn render_deepseek_v4(request: &InferenceRequest) -> Result<String, TokenizerRequestError> {
     let messages = normalize_deepseek_v4_messages(&request.messages)?;
     let mut prompt = String::from(DEEPSEEK_V4_BOS);
 
@@ -666,6 +663,7 @@ mod tests {
                 release: ModelDeploymentRelease {
                     schema_version: 1,
                     runtime_revision: "runtime".to_owned(),
+                    protocol: None,
                     model_path: "model".to_owned(),
                     model_revision: "model-revision".to_owned(),
                     runtime_model_name: None,
@@ -695,7 +693,7 @@ mod tests {
                 }],
             )
             .unwrap(),
-            request: ChatCompletionRequest {
+            request: InferenceRequest {
                 model: "model".to_owned(),
                 messages: vec![serde_json::json!({"role": "user", "content": "hello"})],
                 stream: false,
@@ -705,6 +703,7 @@ mod tests {
                 max_tokens: None,
                 parameters: Map::new(),
                 encoded_input_ids: None,
+                decision: None,
             },
         }
     }

@@ -143,7 +143,7 @@ impl OutputTokenLimit {
     }
 }
 
-struct UniqueJsonObject(Map<String, Value>);
+pub(crate) struct UniqueJsonObject(pub(crate) Map<String, Value>);
 
 impl<'de> Deserialize<'de> for UniqueJsonObject {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

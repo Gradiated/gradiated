@@ -2,16 +2,25 @@ use std::sync::Arc;
 
 use axum::http::HeaderMap;
 use chrono::{DateTime, Utc};
+use serde_json::Value;
 use uuid::Uuid;
 
 use crate::{
-    auth::{authenticate_credential, authorize_access, credential_digest, AuthenticatedIdentity},
+    auth::{
+        authenticate_credential, authorize_access, extract_credentials, AuthenticatedIdentity,
+        Provider, ProviderCredential,
+    },
     domain::{BillingMode, ModelStatus},
     generation::CapturedPricing,
     healthy_deployment_count,
+    protocol::Protocol,
+    relay::{parse_target, RelayRoute},
     serving_state::ServingState,
     CatalogModel, ChatCompletionRequest, GatewayError, GatewayModel, GatewayModelDeployment,
 };
+
+/// A runtime scheduling hint that only internal callers may set.
+const RUNTIME_PRIORITY_HEADER: &str = "x-vllm-priority";
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct RequestMetadata {
@@ -32,6 +41,61 @@ pub struct QualifiedRequest {
     pub request: ChatCompletionRequest,
 }
 
+/// The selected execution path for one generation. Each arm carries everything
+/// the path needs, so nothing downstream repeats authorization or model loading.
+pub enum RequestRoute<'a> {
+    Hosted {
+        // Boxed so a hosted model projection does not enlarge every classification.
+        hosted: Box<HostedRequest>,
+        request: Value,
+    },
+    Relay {
+        route: RelayRoute,
+        identity: AuthenticatedIdentity,
+        credential: ProviderCredential<'a>,
+    },
+}
+
+/// An authorized identity and the validated model that will serve it.
+pub struct HostedRequest {
+    identity: AuthenticatedIdentity,
+    model: GatewayModel,
+}
+
+pub struct AuthorizedRequest<'a> {
+    identity: AuthenticatedIdentity,
+    provider: Option<ProviderCredential<'a>>,
+    billing_mode: BillingMode,
+    balance: i64,
+}
+
+impl<'a> AuthorizedRequest<'a> {
+    pub fn carries_provider_credential(&self) -> bool {
+        self.provider.is_some()
+    }
+
+    pub fn into_hosted_identity(self) -> Result<AuthenticatedIdentity, GatewayError> {
+        if self.billing_mode == BillingMode::Prepaid && self.balance <= 0 {
+            return Err(GatewayError::InsufficientBalance);
+        }
+
+        Ok(self.identity)
+    }
+
+    pub fn into_provider_request(
+        self,
+        expected_provider: Provider,
+    ) -> Result<(AuthenticatedIdentity, ProviderCredential<'a>), GatewayError> {
+        let credential = self.provider.ok_or(GatewayError::ProviderKeyRequired)?;
+
+        if credential.provider != expected_provider {
+            return Err(GatewayError::InvalidApiKey);
+        }
+
+        Ok((self.identity, credential))
+    }
+}
+
 #[derive(Clone)]
 pub struct RequestCoordinator {
     serving_state: Arc<dyn ServingState>,
@@ -42,24 +106,25 @@ impl RequestCoordinator {
         Self { serving_state }
     }
 
-    pub async fn qualify(
+    /// Completes a hosted request that `classify` already authorized and resolved.
+    /// It performs no state lookup of its own.
+    pub fn qualify(
         &self,
         metadata: RequestMetadata,
         headers: &HeaderMap,
+        hosted: HostedRequest,
         body: &[u8],
     ) -> Result<QualifiedRequest, GatewayError> {
-        let identity = self.authenticate(headers, metadata.received_at).await?;
-        let identity = self.authorize(identity).await?;
-        if headers.contains_key("x-vllm-priority") {
-            return Err(GatewayError::invalid_request(Some("priority")));
-        }
         let mut request = ChatCompletionRequest::parse(body)?;
         if request.session_id.is_none() {
             request.session_id = session_header(headers)?;
         }
         request.model.make_ascii_lowercase();
-        let model = self.load_model(&request.model).await?;
-        qualify_model_request(metadata, identity, request, model)
+        if request.model != hosted.model.id {
+            return Err(GatewayError::ServingStateUnavailable);
+        }
+
+        qualify_model_request(metadata, hosted.identity, request, hosted.model)
     }
 
     pub async fn list_models(
@@ -67,8 +132,10 @@ impl RequestCoordinator {
         headers: &HeaderMap,
         requested_at: DateTime<Utc>,
     ) -> Result<Vec<CatalogModel>, GatewayError> {
-        let identity = self.authenticate(headers, requested_at).await?;
-        self.authorize(identity).await?;
+        self.authorize_request(headers, requested_at)
+            .await?
+            .into_hosted_identity()?;
+
         let models = self
             .serving_state
             .models()
@@ -101,25 +168,78 @@ impl RequestCoordinator {
         Ok(catalog)
     }
 
-    async fn authenticate(
+    /// Decides between hosted serving and customer-key relay before any hosted
+    /// admission or translation. Local names always resolve first, so an unknown
+    /// task or private version never reaches a provider.
+    pub async fn classify<'a>(
         &self,
-        headers: &HeaderMap,
+        headers: &'a HeaderMap,
+        body: &[u8],
         received_at: DateTime<Utc>,
-    ) -> Result<AuthenticatedIdentity, GatewayError> {
-        let digest = credential_digest(headers).map_err(|_| GatewayError::InvalidApiKey)?;
+        protocol: Protocol,
+        relay: Option<RelayRoute>,
+    ) -> Result<RequestRoute<'a>, GatewayError> {
+        // A malformed or unsupported request is a local error on every route, so it
+        // is rejected before identity, as the hosted translation rejected it before.
+        if headers.contains_key(RUNTIME_PRIORITY_HEADER) {
+            return Err(GatewayError::invalid_request(Some("priority")));
+        }
+
+        let target = parse_target(body)?;
+        protocol.validate_request(&target.request)?;
+
+        let authorized = self.authorize_request(headers, received_at).await?;
+
+        // Hosted names match without regard to case; a relayed body keeps the
+        // caller's own spelling because its bytes are never rewritten.
+        let mut hosted_id = target.model;
+        hosted_id.make_ascii_lowercase();
+        let hosted = self
+            .serving_state
+            .model(&hosted_id)
+            .await
+            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+
+        if let Some(model) = hosted {
+            return Ok(RequestRoute::Hosted {
+                hosted: Box::new(HostedRequest {
+                    identity: authorized.into_hosted_identity()?,
+                    model: validate_hosted_model(model, &hosted_id)?,
+                }),
+                request: target.request,
+            });
+        }
+
+        // The provider is authoritative for its own model names. Without a relay
+        // route or its key there is nothing to ask, so the name stays a local error.
+        let Some(route) = relay.filter(|_| authorized.carries_provider_credential()) else {
+            return Err(GatewayError::ModelNotFound);
+        };
+        let (identity, credential) = authorized.into_provider_request(route.provider())?;
+
+        Ok(RequestRoute::Relay {
+            route,
+            identity,
+            credential,
+        })
+    }
+
+    pub async fn authorize_request<'a>(
+        &self,
+        headers: &'a HeaderMap,
+        received_at: DateTime<Utc>,
+    ) -> Result<AuthorizedRequest<'a>, GatewayError> {
+        let credentials = extract_credentials(headers).map_err(|_| GatewayError::InvalidApiKey)?;
+        let digest = credentials.api_key_digest();
         let credential = self
             .serving_state
             .credential(&digest)
             .await
             .map_err(|_| GatewayError::ServingStateUnavailable)?
             .ok_or(GatewayError::InvalidApiKey)?;
-        authenticate_credential(credential, received_at).map_err(|_| GatewayError::InvalidApiKey)
-    }
+        let identity = authenticate_credential(credential, received_at)
+            .map_err(|_| GatewayError::InvalidApiKey)?;
 
-    async fn authorize(
-        &self,
-        identity: AuthenticatedIdentity,
-    ) -> Result<AuthenticatedIdentity, GatewayError> {
         let workspace = self
             .serving_state
             .workspace(identity.workspace_id)
@@ -132,33 +252,36 @@ impl RequestCoordinator {
             .await
             .map_err(|_| GatewayError::ServingStateUnavailable)?
             .ok_or(GatewayError::ServingStateUnavailable)?;
-        let identity = authorize_access(identity, &workspace, &account)
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
-        if account.billing_mode == BillingMode::Prepaid && account.balance <= 0 {
-            return Err(GatewayError::InsufficientBalance);
-        }
-        Ok(identity)
+        let identity = authorize_access(identity, &workspace, &account)?;
+
+        Ok(AuthorizedRequest {
+            identity,
+            provider: credentials.provider,
+            billing_mode: account.billing_mode,
+            balance: account.balance,
+        })
+    }
+}
+
+/// A projection that disagrees with its own key, or that cannot serve, is not a
+/// missing model: it is inconsistent serving state.
+fn validate_hosted_model(
+    model: GatewayModel,
+    requested_model: &str,
+) -> Result<GatewayModel, GatewayError> {
+    if model.id != requested_model {
+        return Err(GatewayError::ServingStateUnavailable);
     }
 
-    async fn load_model(&self, requested_model: &str) -> Result<GatewayModel, GatewayError> {
-        let model = self
-            .serving_state
-            .model(requested_model)
-            .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?
-            .ok_or(GatewayError::ModelNotFound)?;
-        if model.id != requested_model {
-            return Err(GatewayError::ServingStateUnavailable);
-        }
-        model
-            .properties
-            .validate_for_serving()
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
-        if model.status != ModelStatus::Available {
-            return Err(GatewayError::ModelUnavailable);
-        }
-        Ok(model)
+    model
+        .properties
+        .validate_for_serving()
+        .map_err(|_| GatewayError::ServingStateUnavailable)?;
+    if model.status != ModelStatus::Available {
+        return Err(GatewayError::ModelUnavailable);
     }
+
+    Ok(model)
 }
 
 fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
@@ -236,215 +359,33 @@ fn qualify_model_request(
 
 #[cfg(test)]
 mod tests {
-    use std::sync::Mutex;
-
-    use async_trait::async_trait;
     use axum::http::{header::AUTHORIZATION, HeaderValue};
-    use chrono::TimeZone;
 
     use super::*;
-    use crate::{
-        domain::{
-            GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace, OrganizationKind,
-            OrganizationStatus,
-        },
-        serving_state::ServingStateError,
-    };
+    use crate::domain::OrganizationStatus;
+    use crate::test_support::ORGANIZATION_ID;
+    pub(super) use crate::test_support::{metadata, model, TestServingState};
 
-    const API_KEY_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000001);
-    const ORGANIZATION_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000002);
-    const WORKSPACE_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000003);
-    const GENERATION_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000004);
+    /// Runs the production pipeline: classify, then qualify what it resolved.
+    pub(super) async fn qualify(
+        coordinator: &RequestCoordinator,
+        headers: &HeaderMap,
+        body: &[u8],
+    ) -> Result<QualifiedRequest, GatewayError> {
+        let classified = coordinator
+            .classify(
+                headers,
+                body,
+                metadata().received_at,
+                Protocol::OpenAiChat,
+                None,
+            )
+            .await?;
+        let RequestRoute::Hosted { hosted, .. } = classified else {
+            panic!("no relay route was offered");
+        };
 
-    struct FakeServingState {
-        credential: Option<GatewayCredential>,
-        workspace: Option<GatewayWorkspace>,
-        account: Option<GatewayAccount>,
-        model: Option<GatewayModel>,
-        calls: Mutex<Vec<&'static str>>,
-        requested_models: Mutex<Vec<String>>,
-    }
-
-    impl FakeServingState {
-        fn ready() -> Self {
-            Self {
-                credential: Some(GatewayCredential {
-                    api_key_id: API_KEY_ID,
-                    organization_id: ORGANIZATION_ID,
-                    workspace_id: WORKSPACE_ID,
-                    expires_at: None,
-                    revoked_at: None,
-                }),
-                workspace: Some(GatewayWorkspace {
-                    organization_id: ORGANIZATION_ID,
-                    workspace_id: WORKSPACE_ID,
-                    archived_at: None,
-                }),
-                account: Some(GatewayAccount {
-                    organization_id: ORGANIZATION_ID,
-                    organization_kind: OrganizationKind::Customer,
-                    organization_status: OrganizationStatus::Active,
-                    billing_mode: BillingMode::Prepaid,
-                    balance: 1,
-                }),
-                model: Some(model(true)),
-                calls: Mutex::new(Vec::new()),
-                requested_models: Mutex::new(Vec::new()),
-            }
-        }
-
-        fn record(&self, call: &'static str) {
-            self.calls.lock().unwrap().push(call);
-        }
-    }
-
-    #[async_trait]
-    impl ServingState for FakeServingState {
-        async fn credential(
-            &self,
-            _digest_hex: &str,
-        ) -> Result<Option<GatewayCredential>, ServingStateError> {
-            self.record("credential");
-            Ok(self.credential.clone())
-        }
-
-        async fn workspace(
-            &self,
-            _workspace_id: Uuid,
-        ) -> Result<Option<GatewayWorkspace>, ServingStateError> {
-            self.record("workspace");
-            Ok(self.workspace.clone())
-        }
-
-        async fn account(
-            &self,
-            _organization_id: Uuid,
-        ) -> Result<Option<GatewayAccount>, ServingStateError> {
-            self.record("account");
-            Ok(self.account.clone())
-        }
-
-        async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
-            self.record("model");
-            self.requested_models
-                .lock()
-                .unwrap()
-                .push(model_id.to_owned());
-            Ok(self.model.clone())
-        }
-
-        async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
-            self.record("models");
-            Ok(self.model.clone().into_iter().collect())
-        }
-
-        async fn deployment_statuses(
-            &self,
-            _release_digest: &str,
-        ) -> Result<Vec<crate::DeploymentRuntimeStatus>, ServingStateError> {
-            Ok(self
-                .model
-                .as_ref()
-                .and_then(|model| model.deployments.first())
-                .map(|deployment| crate::DeploymentRuntimeStatus {
-                    schema_version: 1,
-                    deployment_id: deployment.id,
-                    runtime_revision: deployment.release.runtime_revision.clone(),
-                    received_at: metadata().received_at,
-                    healthy: true,
-                    accepting_requests: true,
-                    reason_code: None,
-                })
-                .into_iter()
-                .collect())
-        }
-
-        async fn admit(
-            &self,
-            _generation_id: Uuid,
-            _organization_id: Uuid,
-            _received_at: DateTime<Utc>,
-            _admitted_at: DateTime<Utc>,
-            _config: &crate::GatewayConfig,
-        ) -> Result<crate::AdmissionLease, crate::AdmissionError> {
-            unreachable!("coordinator tests never admit")
-        }
-
-        async fn finalize(
-            &self,
-            _generation_id: Uuid,
-            _organization_id: Uuid,
-            _properties: &crate::GenerationProperties,
-        ) -> Result<crate::FinalizationOutcome, crate::FinalizationError> {
-            unreachable!("coordinator tests never finalize")
-        }
-    }
-
-    fn model(streaming: bool) -> GatewayModel {
-        serde_json::from_value(serde_json::json!({
-            "id": "model-a",
-            "name": "Model A",
-            "status": "available",
-            "properties": {
-                "schema_version": 1,
-                "description": "Model A",
-                "released_at": null,
-                "hugging_face_id": null,
-                "quantization": null,
-                "tokenizer": null,
-                "input_modalities": [{
-                    "type": "text",
-                    "supported_inputs": {
-                        "max_context_length": {"value": 8192, "unit": "token"},
-                        "max_prompt_length": {"value": 7168, "unit": "token"}
-                    },
-                    "pricing": [
-                        {"type": "prompt", "unit": "token", "cost": 100},
-                        {"type": "cached_prompt", "unit": "token", "cost": 50}
-                    ]
-                }],
-                "output_modalities": [{
-                    "type": "text",
-                    "max_length": {"value": 4096, "unit": "token"},
-                    "default_length": {"value": 1024, "unit": "token"},
-                    "streaming": streaming,
-                    "supported_parameters": {
-                        "temperature": {"type": "range", "min": 0, "max": 2}
-                    },
-                    "pricing": [
-                        {"type": "completion", "unit": "token", "cost": 200}
-                    ]
-                }],
-                "passthrough_parameters": {
-                    "response_format": {"type": "enum", "values": ["text", "json"]}
-                },
-                "deprecation_date": null
-            },
-            "deployments": [{
-                "id": "0198c36f-9b6a-7000-8000-000000000005",
-                "status": "available",
-                "provider": "local",
-                "region": "local",
-                "fault_domain": "local:runtime-1",
-                "service_url": "http://127.0.0.1:30000",
-                "release": {
-                    "schema_version": 1,
-                    "runtime_revision": "runtime",
-                    "model_path": "model",
-                    "model_revision": "model-revision",
-                    "tokenizer_path": "tokenizer",
-                    "tokenizer_revision": "tokenizer-revision"
-                }
-            }]
-        }))
-        .unwrap()
-    }
-
-    fn metadata() -> RequestMetadata {
-        RequestMetadata {
-            generation_id: GENERATION_ID,
-            received_at: Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap(),
-        }
+        coordinator.qualify(metadata(), headers, *hosted, body)
     }
 
     fn headers() -> HeaderMap {
@@ -455,22 +396,21 @@ mod tests {
 
     #[tokio::test]
     async fn qualifies_the_complete_pre_admission_request() {
-        let state = Arc::new(FakeServingState::ready());
+        let state = Arc::new(TestServingState::ready());
         let coordinator = RequestCoordinator::new(state.clone());
-        let request = coordinator
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{
+        let request = qualify(
+            &coordinator,
+            &headers(),
+            br#"{
                     "model":"model-a",
                     "messages":[{"role":"user","content":"hello"}],
                     "service_tier":"fast",
                     "temperature":0.5,
                     "response_format":"json"
                 }"#,
-            )
-            .await
-            .unwrap();
+        )
+        .await
+        .unwrap();
 
         assert_eq!(request.effective_output_tokens, 1_024);
         assert_eq!(request.max_prompt_tokens, 7_168);
@@ -489,15 +429,14 @@ mod tests {
 
     #[tokio::test]
     async fn canonicalizes_model_ids_before_lookup_and_dispatch() {
-        let state = Arc::new(FakeServingState::ready());
-        let request = RequestCoordinator::new(state.clone())
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"MODEL-A","messages":[{}]}"#,
-            )
-            .await
-            .unwrap();
+        let state = Arc::new(TestServingState::ready());
+        let request = qualify(
+            &RequestCoordinator::new(state.clone()),
+            &headers(),
+            br#"{"model":"MODEL-A","messages":[{}]}"#,
+        )
+        .await
+        .unwrap();
 
         assert_eq!(request.request.model, "model-a");
         let upstream_body = request
@@ -509,7 +448,7 @@ mod tests {
 
     #[tokio::test]
     async fn model_listing_reuses_the_complete_access_pipeline_without_admission() {
-        let state = Arc::new(FakeServingState::ready());
+        let state = Arc::new(TestServingState::ready());
         let models = RequestCoordinator::new(state.clone())
             .list_models(&headers(), metadata().received_at)
             .await
@@ -525,172 +464,168 @@ mod tests {
 
     #[tokio::test]
     async fn stops_at_the_first_failed_access_stage() {
-        let mut missing_credential = FakeServingState::ready();
+        let mut missing_credential = TestServingState::ready();
         missing_credential.credential = None;
         let missing_credential = Arc::new(missing_credential);
-        let result = RequestCoordinator::new(missing_credential.clone())
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(missing_credential.clone()),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::InvalidApiKey));
         assert_eq!(*missing_credential.calls.lock().unwrap(), ["credential"]);
 
-        let mut empty_balance = FakeServingState::ready();
+        let mut empty_balance = TestServingState::ready();
         empty_balance.account.as_mut().unwrap().balance = 0;
         let empty_balance = Arc::new(empty_balance);
-        let result = RequestCoordinator::new(empty_balance.clone())
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(empty_balance.clone()),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::InsufficientBalance));
         assert_eq!(
             *empty_balance.calls.lock().unwrap(),
-            ["credential", "workspace", "account"]
+            ["credential", "workspace", "account", "model"],
+            "the model decides whether a request is hosted, so it resolves before              the hosted balance gate"
         );
     }
 
     #[tokio::test]
     async fn invoiced_accounts_are_not_gated_by_their_balance() {
-        let mut state = FakeServingState::ready();
+        let mut state = TestServingState::ready();
         let account = state.account.as_mut().unwrap();
         account.billing_mode = BillingMode::Invoiced;
         account.balance = -10_000;
 
-        let request = RequestCoordinator::new(Arc::new(state))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await
-            .unwrap();
+        let request = qualify(
+            &RequestCoordinator::new(Arc::new(state)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await
+        .unwrap();
         assert_eq!(request.effective_output_tokens, 1_024);
     }
 
     #[tokio::test]
     async fn fails_closed_for_inconsistent_or_inactive_access_state() {
-        let mut archived = FakeServingState::ready();
+        let mut archived = TestServingState::ready();
         archived.workspace.as_mut().unwrap().archived_at = Some(metadata().received_at);
         let archived = Arc::new(archived);
-        let result = RequestCoordinator::new(archived.clone())
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
-        assert_eq!(result, Err(GatewayError::ServingStateUnavailable));
+        let result = qualify(
+            &RequestCoordinator::new(archived.clone()),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
+        // A permanent denial is not a dependency failure, so it is not retryable.
+        assert_eq!(result, Err(GatewayError::WorkspaceArchived));
         assert_eq!(
             *archived.calls.lock().unwrap(),
             ["credential", "workspace", "account"]
         );
 
-        let mut suspended = FakeServingState::ready();
+        let mut suspended = TestServingState::ready();
         suspended.account.as_mut().unwrap().organization_status = OrganizationStatus::Suspended;
-        let result = RequestCoordinator::new(Arc::new(suspended))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
-        assert_eq!(result, Err(GatewayError::ServingStateUnavailable));
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(suspended)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
+        assert_eq!(result, Err(GatewayError::OrganizationSuspended));
 
-        let mut mismatched = FakeServingState::ready();
+        let mut mismatched = TestServingState::ready();
         mismatched.workspace.as_mut().unwrap().organization_id = Uuid::from_u128(99);
-        let result = RequestCoordinator::new(Arc::new(mismatched))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(mismatched)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::ServingStateUnavailable));
     }
 
     #[tokio::test]
     async fn request_and_model_failures_remain_pre_admission() {
-        let priority_override = Arc::new(FakeServingState::ready());
+        let priority_override = Arc::new(TestServingState::ready());
         let mut override_headers = headers();
         override_headers.insert("x-vllm-priority", HeaderValue::from_static("-100"));
-        let result = RequestCoordinator::new(priority_override.clone())
-            .qualify(
-                metadata(),
-                &override_headers,
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(priority_override.clone()),
+            &override_headers,
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::invalid_request(Some("priority"))));
-        assert_eq!(
-            *priority_override.calls.lock().unwrap(),
-            ["credential", "workspace", "account"]
+        assert!(
+            priority_override.calls.lock().unwrap().is_empty(),
+            "a header the caller must not send is refused before any state lookup"
         );
 
-        let malformed = Arc::new(FakeServingState::ready());
-        let result = RequestCoordinator::new(malformed.clone())
-            .qualify(metadata(), &headers(), br#"{"model":"model-a"}"#)
-            .await;
+        let malformed = Arc::new(TestServingState::ready());
+        let result = qualify(
+            &RequestCoordinator::new(malformed.clone()),
+            &headers(),
+            br#"{"model":"model-a"}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::invalid_request(None)));
         assert_eq!(
             *malformed.calls.lock().unwrap(),
-            ["credential", "workspace", "account"]
+            ["credential", "workspace", "account", "model"],
+            "classification needs only the target, so the rest of the request shape \
+             is checked after the model resolves"
         );
 
-        let mut missing = FakeServingState::ready();
+        let mut missing = TestServingState::ready();
         missing.model = None;
-        let result = RequestCoordinator::new(Arc::new(missing))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(missing)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::ModelNotFound));
 
-        let mut unavailable = FakeServingState::ready();
+        let mut unavailable = TestServingState::ready();
         unavailable.model.as_mut().unwrap().status = ModelStatus::Unavailable;
-        let result = RequestCoordinator::new(Arc::new(unavailable))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(unavailable)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::ModelUnavailable));
 
-        let mut missing_route = FakeServingState::ready();
+        let mut missing_route = TestServingState::ready();
         missing_route.model.as_mut().unwrap().deployments.clear();
-        let result = RequestCoordinator::new(Arc::new(missing_route))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}]}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(missing_route)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}]}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::ServingStateUnavailable));
     }
 
     #[tokio::test]
     async fn ignores_unadvertised_model_parameters() {
-        let request = RequestCoordinator::new(Arc::new(FakeServingState::ready()))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{
+        let request = qualify(
+            &RequestCoordinator::new(Arc::new(TestServingState::ready())),
+            &headers(),
+            br#"{
                     "model":"model-a",
                     "messages":[{}],
                     "seed":7,
                     "tools":[{"type":"function"}]
                 }"#,
-            )
-            .await
-            .unwrap();
+        )
+        .await
+        .unwrap();
 
         assert!(!request.request.parameters.contains_key("seed"));
         assert!(!request.request.parameters.contains_key("tools"));
@@ -708,21 +643,31 @@ mod tests {
                 GatewayError::context_length_exceeded("max_tokens"),
             ),
         ] {
-            let result = RequestCoordinator::new(Arc::new(FakeServingState::ready()))
-                .qualify(metadata(), &headers(), body)
-                .await;
+            let result = qualify(
+                &RequestCoordinator::new(Arc::new(TestServingState::ready())),
+                &headers(),
+                body,
+            )
+            .await;
             assert_eq!(result, Err(expected));
         }
 
-        let mut state = FakeServingState::ready();
+        let mut state = TestServingState::ready();
         state.model = Some(model(false));
-        let result = RequestCoordinator::new(Arc::new(state))
-            .qualify(
-                metadata(),
-                &headers(),
-                br#"{"model":"model-a","messages":[{}],"stream":true}"#,
-            )
-            .await;
+        let result = qualify(
+            &RequestCoordinator::new(Arc::new(state)),
+            &headers(),
+            br#"{"model":"model-a","messages":[{}],"stream":true}"#,
+        )
+        .await;
         assert_eq!(result, Err(GatewayError::unsupported_parameter("stream")));
     }
 }
+
+#[cfg(test)]
+#[path = "coordinator_auth_tests.rs"]
+mod authorization_tests;
+
+#[cfg(test)]
+#[path = "coordinator_route_tests.rs"]
+mod route_tests;

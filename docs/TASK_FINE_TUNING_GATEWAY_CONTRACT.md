@@ -34,28 +34,28 @@ The gateway reads Valkey projections and writes ClickHouse and Valkey generation
 
 | Decision | Reason | Rejected |
 | --- | --- | --- |
-| Mode is decided by the credential format | One rule for every caller; no header can select a mode by being present | A mode header; a separate internal listener with a static token |
-| Local names always resolve before relay | A private model name must never reach a provider; a local error must never fall back to a provider | Provider fallback; relay first |
+| Authenticate the workspace and retain the request provider key | Hosted billing and customer-key relay stay separate | Platform-funded relay; account switching after an error |
+| Local names resolve first; request or workspace policy selects fallback | Private names never reach a provider; tasks own no fallback | Fallback for unknown names, access errors, or exact versions |
 | Relay only `gpt-` and `claude-` on their own routes | We claim relay only for the two providers we have tested | A catch-all proxy; every vendor family |
 | Task slugs may not start with those roots or equal a catalog id | Those are the only names that could shadow a relay or a hosted model | A thirteen-vendor reserved registry |
-| Relayed bytes are forwarded unchanged | Customers must see exactly the provider's behaviour | Rewriting, decompressing or retrying provider requests |
+| Direct provider requests keep their body bytes; fallback replaces only the model value | Provider semantics stay intact; a task name never reaches the provider | Cross-protocol translation, decompression, or provider retries |
 | Capture rows go from the gateway straight to ClickHouse, whole bodies, best effort | Megabyte bodies through Valkey memory needed caps that dropped agent sessions; ClickHouse compresses repeated text well | A Valkey spool; Kafka (an upgrade if durability is needed); delta or content-addressed storage |
-| No per-workspace in-flight cap for relay; memory is the only bound | A relay costs memory and nothing else | A per-workspace request count |
+| Customer-key relay uses bounded proxy permits | The customer pays the provider directly | Platform-funded provider inference |
 | The eligible unit is a complete captured request | A request carries its whole context; long or interrupted sessions still contribute | Requiring verified whole sessions |
 | Sessions are `(workspace, task, trace id)`; the day only picks the sampling rate | Midnight must not split or double-count a session | The day inside the identity |
 | Sampling is per session, decided by a keyed hash | Whole sessions are captured or not; every gateway agrees | Per-request sampling |
 
 ## GW-01 Credentials and routes
 
-**One credential per header.** Duplicate headers, combined bearer values, both `Authorization` and `x-api-key`, and malformed syntax are rejected. Classification order:
+**One credential per header.** Duplicate headers, combined bearer values, and malformed syntax are rejected. A Gradiated key and one provider key may occupy `Authorization` and `x-api-key`. Matching Gradiated keys across different headers are accepted; conflicting keys or multiple provider keys are rejected. Classification order:
 
 | Presented | Mode |
 | --- | --- |
 | A valid run token (RUN-04 in the run contract) | Internal hosted inference; never relayed |
 | Something shaped like a run token but invalid or expired | 401, locally; never tried as a provider credential |
-| A `grad_` key in the standard header | Native customer inference |
-| `x-gradiated-api-key: grad_...` with no standard credential | Native customer inference |
-| A provider credential plus `x-gradiated-api-key` | Proxy mode, after workspace and account checks |
+| A `grad_` key in the standard header | Hosted inference only; provider calls require a customer provider key |
+| `x-gradiated-api-key: grad_...` with no standard credential | Hosted inference only; provider calls require a customer provider key |
+| A provider credential plus `x-gradiated-api-key` | Customer-key relay, after workspace and account checks |
 | Two Gradiated credentials | Digests must match, else 401 |
 
 Run tokens are identified by a dedicated JWT `typ`, issuer and audience under strict JOSE validation. A JWKS URL never comes from a request. Credentials are never logged. A provider credential lives in bounded request memory and goes only to its provider.
@@ -72,18 +72,18 @@ Run tokens are identified by a dedicated JWT `typ`, issuer and audience under st
 
 There is no catch-all and no legacy `/completions`, files, batches, provider fine-tuning, resource mutation or multipart API. Query strings pass through on permitted routes. Route `/internal/v1/*` to the API service only. Internal inference uses the ordinary inference routes.
 
-Native `/models` lists the workspace's private models and the global catalog. Proxy `/models` is the provider's own listing, unmodified; it does not imply every listed id can be relayed. The console links to the workspace model list.
+Gradiated-only `/models` lists the workspace's private models and the hosted global catalog. Proxy `/models` is the provider's own listing, unmodified; it does not imply every listed id can be relayed. The console links to the workspace model list.
 
 ## GW-02 Classification and naming
 
-On a POST route that carries a model, the gateway parses a bounded JSON object and requires exactly one non-empty string `model`. Duplicate `model` keys, invalid JSON, a missing model or an unsupported content encoding are rejected locally in the caller's error envelope. After classification, a relayed body is forwarded byte for byte.
+On a POST route that carries a model, the gateway parses a bounded JSON object and requires exactly one non-empty string `model`. Duplicate `model` keys, invalid JSON, a missing model or an unsupported content encoding are rejected locally in the caller's error envelope. After classification, a direct provider body is forwarded byte for byte. GW-05 defines the sole model-field change for task fallback.
 
 **Resolution order.**
 
-1. Workspace-scoped task and version records, then exact hosted catalog ids. A local access or lifecycle failure is a local error. A name in the task/version format is always resolved locally; an unknown task or version never reaches a provider.
-2. In proxy mode only: an unresolved name starting with `gpt-` on an OpenAI route or `claude-` on an Anthropic route is relayed. The route never switches provider. Any other name is a local model error. A typo inside an admitted prefix reaches the provider; we do not claim to catch it.
+1. Workspace-scoped task and version records, then exact hosted catalog ids. A local access or lifecycle failure is a local error. An existing active task or known hosted base model can use a request override or workspace default under GW-05. A name in the task/version format is always resolved locally; an unknown task or version never reaches a provider.
+2. Customer-key relay permits an unresolved `gpt-` name on an OpenAI route or `claude-` name on an Anthropic route. Provider price metadata is optional and does not gate relay. The route never switches provider. Any other name is a local model error. A typo inside a customer-key prefix reaches the provider.
 
-Native mode never relays. Internal mode may use only the models named in its token.
+A Gradiated-only request cannot relay to a provider. Internal mode may use only the models named in its token and never uses a task fallback.
 
 **Names.**
 
@@ -138,7 +138,7 @@ Global catalog ids must not use the task/version format. Task creation and catal
 | --- | --- | --- | --- | --- |
 | Native customer | Workspace credential, visible model | Billed admission and finalisation | Physical deployment lease | `generation-events`, billable |
 | Hosted in proxy mode | Same; provider credential discarded before dispatch | Same | Same | `generation-events`, billable |
-| Provider relay | Workspace credential, active account | None | Proxy permits | `generation-events`, exempt |
+| Customer-key provider relay | Workspace credential, active account | None at launch | Proxy permits | `generation-events`, exempt |
 | Internal hosted | Run token, current tenant access, exact claims | None | Reserved capacity, or shared capacity above customer headroom, plus deployment lease | `generation-events`, exempt |
 
 **One generation stream.** All terminal generation events use `generation-events` and one worker ingestion path into ClickHouse `generations`. The event schema includes:
@@ -157,7 +157,7 @@ The gateway retains its existing billable charge calculation and atomic balance 
 
 ## GW-04 Protocols and release qualification
 
-All three APIs go through the existing Rust `switchyard_translation` into `ChatCompletionRequest`. TypeScript consumes the versioned normalised capture schema and never reinterprets provider wire formats.
+Hosted requests on all three APIs go through the existing Rust `switchyard_translation` into `ChatCompletionRequest`. Provider relay bypasses translation; only its optional observer normalises content. TypeScript consumes the versioned normalised capture schema and never reinterprets provider wire formats.
 
 **Nothing is dropped silently.** Source fields are validated before translation can discard them. Each qualified release has a generated matrix marking every source feature `supported`, `rejected` or `capture_ineligible`. A feature without an entry cannot be used for trained-adapter replay.
 
@@ -205,3 +205,47 @@ Source expiry and ingestion follow the operations contract. The workspace switch
 S1: route and credential ambiguity, protocol equivalence, unsupported fields, real transport bounds. S2: missing events, sessions crossing midnight, key rotation, repeated-context growth, run cutoff boundaries. SDK conformance on all three APIs through the declared aliases. Memory and loss tests fill the capture buffer at maximum body sizes with ClickHouse unavailable, and stop shared generation ingestion, while serving latency and billed settlement stay correct.
 
 Cold adapter requests go directly to a compatible base runtime after normal authorization and admission. The host loads and caches the exact adapter from S3 under SERV-01 and SERV-02. No Valkey warm key or worker request is involved. Cache status is an optional routing hint, not required authorization or readiness evidence.
+
+
+## GW-05 Proxy implementation plan
+
+The standalone [proxy feature plan](PROXY_FEATURE_PLAN.md) owns the current
+scope, fallback policy, build order, and reporting contract. It supersedes
+platform-funded relay and task-owned fallback proposals.
+
+Provider relay is available to every active workspace without a proxy enable
+flag or allowlist. It always uses a customer key supplied on the current request.
+A Gradiated key alone authorizes hosted inference, not external provider calls.
+There are no stored customer provider keys or platform provider credentials in
+this feature. Keys remain in bounded request memory and go only to their provider.
+
+Workspace `proxy_settings.fallback_models` contains nullable `anthropic` and
+`openai` model IDs. It is strict typed JSON with a separate policy revision.
+`x-gradiated-fallback-model` overrides the matching provider default for one
+request. Strip this header before dispatch. No task has a fallback field.
+A missing provider key makes default fallback unavailable; an explicit override
+without a provider key returns `provider_key_required`.
+
+For an active task without production, or a known hosted base target with no
+healthy deployment before dispatch, select the effective fallback automatically
+if its key is present. Exact private versions never fallback. Unknown names,
+access errors, invalid input, insufficient hosted balance, and unavailable
+projection state fail locally. Never start fallback after hosted dispatch.
+Never retry a provider request or switch accounts after a provider error.
+
+Keep the original provider-protocol request for fallback. Replace only its
+model value. A direct frontier request keeps its exact requested model and
+body bytes, with or without a task. Provider pricing is not a dispatch gate.
+Missing prices or usage produce unknown analytics estimates.
+
+All provider generations are exempt from Gradiated charges and settlement.
+Hosted inference keeps its existing billing. Report route identity, fallback
+source and reason, policy revisions, and nullable provider usage. Optional
+public price snapshots support savings estimates only. Never debit an account
+from a provider-cost estimate.
+
+Implement relay, event separation, workspace defaults, optional task production
+routing, and usage reporting in the sequence in the standalone plan. Capture,
+training, run-token infrastructure, and private adapter publication are not
+proxy prerequisites. Keep the existing settlement stream key unless a separate
+migration is necessary; a stream rename is not a proxy prerequisite.

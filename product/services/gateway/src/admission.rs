@@ -159,21 +159,7 @@ mod tests {
     use super::*;
 
     fn config() -> GatewayConfig {
-        GatewayConfig {
-            bind_address: "127.0.0.1:3002".parse().unwrap(),
-            browser_origins: None,
-            generation_timeout_seconds: 300,
-            lease_finalization_margin_seconds: 60,
-            expired_lease_cleanup_grace_seconds: 300,
-            prepaid_organization_concurrency_cap: 50,
-            balance_per_concurrency_slot_nano_usd: 1_000_000_000,
-            settlement_backlog_limit: 100_000,
-            valkey_url: "redis://127.0.0.1:6379".to_owned(),
-            valkey_iam_cache_name: None,
-            valkey_iam_region: None,
-            valkey_iam_user: None,
-            sglang_api_key: None,
-        }
+        GatewayConfig::for_tests()
     }
 
     #[test]

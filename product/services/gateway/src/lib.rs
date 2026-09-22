@@ -16,11 +16,14 @@ pub mod metrics;
 pub mod model;
 pub mod protocol;
 pub mod readiness;
+pub mod relay;
 pub mod request;
 pub mod routing;
 pub mod runtime;
 pub mod service_tier;
 pub mod serving_state;
+#[cfg(test)]
+mod test_support;
 pub mod tokenizer;
 mod valkey_auth;
 
@@ -30,7 +33,7 @@ pub use completion::{
     CompletionResponse, CompletionResult, CompletionService, StreamingCompletion,
 };
 pub use config::{GatewayConfig, ValkeyIamConfig};
-pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata};
+pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata, RequestRoute};
 pub use deployment::{
     DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease,
     TokenizerMode,
@@ -53,6 +56,7 @@ pub use model::{
 };
 pub use protocol::{Frame, Protocol, StreamItem};
 pub use readiness::DependencyReadiness;
+pub use relay::{ProviderRelay, RelayError, RelayRoute};
 pub use request::{ChatCompletionRequest, OutputTokenLimit};
 pub use routing::{
     healthy_deployment_count, order_deployments, RouteAvailability, RouteInput, RoutePrompt,

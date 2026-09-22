@@ -1,4 +1,4 @@
-use std::{env, net::SocketAddr};
+use std::{env, net::SocketAddr, time::Duration};
 
 use serde::Deserialize;
 use thiserror::Error;
@@ -45,6 +45,30 @@ pub struct GatewayConfig {
     #[serde(rename = "gateway_settlement_backlog_limit")]
     #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
     pub settlement_backlog_limit: u64,
+    #[serde(default = "default_anthropic_origin")]
+    pub proxy_anthropic_origin: String,
+    #[serde(default = "default_proxy_connect_timeout_seconds")]
+    #[validate(range(min = 1, max = 120))]
+    pub proxy_connect_timeout_seconds: u64,
+    #[serde(default = "default_proxy_response_header_timeout_seconds")]
+    #[validate(range(min = 1, max = 900))]
+    pub proxy_response_header_timeout_seconds: u64,
+    #[serde(default = "default_proxy_idle_timeout_seconds")]
+    #[validate(range(min = 1, max = 900))]
+    pub proxy_idle_timeout_seconds: u64,
+    /// The total deadline starts before body buffering, so it bounds the whole relay.
+    #[serde(default = "default_proxy_total_timeout_seconds")]
+    #[validate(range(min = 1, max = 3600))]
+    pub proxy_total_timeout_seconds: u64,
+    #[serde(default = "default_proxy_max_request_bytes")]
+    #[validate(range(min = 1024, max = 33_554_432))]
+    pub proxy_max_request_bytes: u64,
+    #[serde(default = "default_proxy_request_buffer_bytes")]
+    #[validate(range(min = 1_048_576, max = MAX_LUA_SAFE_INTEGER))]
+    pub proxy_request_buffer_bytes: u64,
+    #[serde(default = "default_proxy_max_in_flight")]
+    #[validate(range(min = 1, max = 1_000_000))]
+    pub proxy_max_in_flight: u64,
     pub valkey_url: String,
     pub valkey_iam_cache_name: Option<String>,
     pub valkey_iam_region: Option<String>,
@@ -53,6 +77,35 @@ pub struct GatewayConfig {
 }
 
 impl GatewayConfig {
+    /// Shared fixture for tests that need a configuration value but do not
+    /// exercise configuration itself.
+    #[cfg(test)]
+    pub(crate) fn for_tests() -> Self {
+        Self {
+            bind_address: "127.0.0.1:3002".parse().unwrap(),
+            browser_origins: None,
+            generation_timeout_seconds: default_generation_timeout_seconds(),
+            lease_finalization_margin_seconds: default_lease_finalization_margin_seconds(),
+            expired_lease_cleanup_grace_seconds: default_expired_lease_cleanup_grace_seconds(),
+            prepaid_organization_concurrency_cap: default_prepaid_organization_concurrency_cap(),
+            balance_per_concurrency_slot_nano_usd: default_balance_per_concurrency_slot_nano_usd(),
+            settlement_backlog_limit: 100_000,
+            proxy_anthropic_origin: default_anthropic_origin(),
+            proxy_connect_timeout_seconds: default_proxy_connect_timeout_seconds(),
+            proxy_response_header_timeout_seconds: default_proxy_response_header_timeout_seconds(),
+            proxy_idle_timeout_seconds: default_proxy_idle_timeout_seconds(),
+            proxy_total_timeout_seconds: default_proxy_total_timeout_seconds(),
+            proxy_max_request_bytes: default_proxy_max_request_bytes(),
+            proxy_request_buffer_bytes: default_proxy_request_buffer_bytes(),
+            proxy_max_in_flight: default_proxy_max_in_flight(),
+            valkey_url: "redis://127.0.0.1:6379".to_owned(),
+            valkey_iam_cache_name: None,
+            valkey_iam_region: None,
+            valkey_iam_user: None,
+            sglang_api_key: None,
+        }
+    }
+
     pub fn from_environment() -> Result<Self, ConfigError> {
         Self::from_variables(env::vars())
     }
@@ -64,6 +117,7 @@ impl GatewayConfig {
         let mut config: Self = envy::from_iter(variables)?;
         config.validate()?;
         config.validate_valkey_auth()?;
+        config.validate_proxy()?;
         config.browser_origins = config.browser_origins.filter(|value| !value.is_empty());
         config.sglang_api_key = config.sglang_api_key.filter(|value| !value.is_empty());
         Ok(config)
@@ -94,6 +148,38 @@ impl GatewayConfig {
             .collect()
     }
 
+    pub fn proxy_limits(&self) -> ProxyLimits {
+        ProxyLimits {
+            connect_timeout: Duration::from_secs(self.proxy_connect_timeout_seconds),
+            response_header_timeout: Duration::from_secs(
+                self.proxy_response_header_timeout_seconds,
+            ),
+            idle_timeout: Duration::from_secs(self.proxy_idle_timeout_seconds),
+            total_timeout: Duration::from_secs(self.proxy_total_timeout_seconds),
+            max_request_bytes: self.proxy_max_request_bytes,
+            request_buffer_bytes: self.proxy_request_buffer_bytes,
+            max_in_flight: self.proxy_max_in_flight,
+        }
+    }
+
+    /// Relay origins are fixed configuration, never derived from a request.
+    fn validate_proxy(&self) -> Result<(), ConfigError> {
+        let origin = self.proxy_anthropic_origin.as_str();
+        let Some(authority) = origin.strip_prefix("https://") else {
+            return Err(ConfigError::InsecureProviderOrigin);
+        };
+
+        if authority.is_empty() || authority.contains('/') || authority.contains('?') {
+            return Err(ConfigError::ProviderOriginHasPath);
+        }
+
+        if self.proxy_request_buffer_bytes < self.proxy_max_request_bytes {
+            return Err(ConfigError::ProxyBufferBelowRequestCap);
+        }
+
+        Ok(())
+    }
+
     fn validate_valkey_auth(&self) -> Result<(), ConfigError> {
         let values = [
             self.valkey_iam_cache_name.as_deref(),
@@ -109,6 +195,19 @@ impl GatewayConfig {
         }
         Ok(())
     }
+}
+
+/// Relay limits from the gateway contract. A single request can always fit the
+/// process buffer, so a well-formed request never fails on the byte budget alone.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ProxyLimits {
+    pub connect_timeout: Duration,
+    pub response_header_timeout: Duration,
+    pub idle_timeout: Duration,
+    pub total_timeout: Duration,
+    pub max_request_bytes: u64,
+    pub request_buffer_bytes: u64,
+    pub max_in_flight: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -142,6 +241,38 @@ fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
     1_000_000_000
 }
 
+fn default_anthropic_origin() -> String {
+    "https://api.anthropic.com".to_owned()
+}
+
+fn default_proxy_connect_timeout_seconds() -> u64 {
+    10
+}
+
+fn default_proxy_response_header_timeout_seconds() -> u64 {
+    120
+}
+
+fn default_proxy_idle_timeout_seconds() -> u64 {
+    120
+}
+
+fn default_proxy_total_timeout_seconds() -> u64 {
+    900
+}
+
+fn default_proxy_max_request_bytes() -> u64 {
+    8 * 1024 * 1024
+}
+
+fn default_proxy_request_buffer_bytes() -> u64 {
+    64 * 1024 * 1024
+}
+
+fn default_proxy_max_in_flight() -> u64 {
+    2_000
+}
+
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("gateway environment is invalid: {0}")]
@@ -154,6 +285,12 @@ pub enum ConfigError {
     IncompleteValkeyIam,
     #[error("Valkey IAM configuration values must not be empty")]
     EmptyValkeyIam,
+    #[error("PROXY_ANTHROPIC_ORIGIN must use https")]
+    InsecureProviderOrigin,
+    #[error("PROXY_ANTHROPIC_ORIGIN must be an origin without a path or query")]
+    ProviderOriginHasPath,
+    #[error("PROXY_REQUEST_BUFFER_BYTES must be at least PROXY_MAX_REQUEST_BYTES")]
+    ProxyBufferBelowRequestCap,
 }
 
 #[cfg(test)]

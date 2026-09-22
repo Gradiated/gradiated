@@ -22,6 +22,9 @@ use crate::{valkey_auth::ValkeyIamCredentials, ValkeyIamConfig};
 const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
 const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
 const ROUTING_CACHE_TTL: Duration = Duration::from_secs(1);
+/// Model and status keys come from requests, so the contract caps their count.
+const MODEL_CACHE_CAPACITY: usize = 10_000;
+const STATUS_CACHE_CAPACITY: usize = 10_000;
 
 #[async_trait]
 pub trait ServingState: Send + Sync {
@@ -98,9 +101,9 @@ impl ValkeyServingState {
             connection,
             admission_script: Script::new(ADMIT_GENERATION_V1),
             finalization_script: Script::new(FINALIZE_GENERATION_V1),
-            model_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
-            models_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
-            status_cache: LazyTtlCache::new(ROUTING_CACHE_TTL),
+            model_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, MODEL_CACHE_CAPACITY),
+            models_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, 1),
+            status_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, STATUS_CACHE_CAPACITY),
         };
         state.ping().await?;
         Ok(state)
@@ -522,21 +525,7 @@ mod tests {
     };
 
     fn config() -> GatewayConfig {
-        GatewayConfig {
-            bind_address: "127.0.0.1:3002".parse().unwrap(),
-            browser_origins: None,
-            generation_timeout_seconds: 300,
-            lease_finalization_margin_seconds: 60,
-            expired_lease_cleanup_grace_seconds: 300,
-            prepaid_organization_concurrency_cap: 50,
-            balance_per_concurrency_slot_nano_usd: 1_000_000_000,
-            settlement_backlog_limit: 100_000,
-            valkey_url: "redis://127.0.0.1:6379".to_owned(),
-            valkey_iam_cache_name: None,
-            valkey_iam_region: None,
-            valkey_iam_user: None,
-            sglang_api_key: None,
-        }
+        GatewayConfig::for_tests()
     }
 
     fn test_keys(organization_id: Uuid) -> GenerationKeys {

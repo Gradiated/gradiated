@@ -12,6 +12,12 @@ pub enum GatewayError {
     ContextLengthExceeded { param: Option<String> },
     PayloadTooLarge,
     InvalidApiKey,
+    ProviderKeyRequired,
+    WorkspaceArchived,
+    OrganizationSuspended,
+    ProviderUnavailable,
+    ProviderTimeout,
+    ProxyOverloaded,
     InsufficientBalance,
     ConcurrencyExceeded,
     SettlementBacklog,
@@ -48,7 +54,11 @@ impl GatewayError {
             | Self::UnsupportedParameter { .. }
             | Self::ContextLengthExceeded { .. } => StatusCode::BAD_REQUEST,
             Self::PayloadTooLarge => StatusCode::PAYLOAD_TOO_LARGE,
-            Self::InvalidApiKey => StatusCode::UNAUTHORIZED,
+            Self::InvalidApiKey | Self::ProviderKeyRequired => StatusCode::UNAUTHORIZED,
+            Self::WorkspaceArchived | Self::OrganizationSuspended => StatusCode::FORBIDDEN,
+            Self::ProviderUnavailable => StatusCode::BAD_GATEWAY,
+            Self::ProviderTimeout => StatusCode::GATEWAY_TIMEOUT,
+            Self::ProxyOverloaded => StatusCode::SERVICE_UNAVAILABLE,
             Self::InsufficientBalance => StatusCode::PAYMENT_REQUIRED,
             Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
                 StatusCode::TOO_MANY_REQUESTS
@@ -67,6 +77,12 @@ impl GatewayError {
             Self::ContextLengthExceeded { .. } => "context_length_exceeded",
             Self::PayloadTooLarge => "payload_too_large",
             Self::InvalidApiKey => "invalid_api_key",
+            Self::ProviderKeyRequired => "provider_key_required",
+            Self::WorkspaceArchived => "workspace_archived",
+            Self::OrganizationSuspended => "organization_suspended",
+            Self::ProviderUnavailable => "provider_unavailable",
+            Self::ProviderTimeout => "provider_timeout",
+            Self::ProxyOverloaded => "proxy_overloaded",
             Self::InsufficientBalance => "insufficient_balance",
             Self::ConcurrencyExceeded => "concurrency_exceeded",
             Self::SettlementBacklog => "settlement_backlog",
@@ -81,7 +97,11 @@ impl GatewayError {
 
     fn error_type(&self) -> &'static str {
         match self {
-            Self::InvalidApiKey => "authentication_error",
+            Self::InvalidApiKey | Self::ProviderKeyRequired => "authentication_error",
+            Self::WorkspaceArchived | Self::OrganizationSuspended => "permission_error",
+            Self::ProviderUnavailable | Self::ProviderTimeout | Self::ProxyOverloaded => {
+                "api_error"
+            }
             Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
                 "rate_limit_error"
             }
@@ -101,8 +121,16 @@ impl GatewayError {
             Self::ContextLengthExceeded { .. } => {
                 "The requested token limit exceeds the model limit."
             }
-            Self::PayloadTooLarge => "The request body exceeds 32 MB.",
+            Self::PayloadTooLarge => "The request body is too large.",
             Self::InvalidApiKey => "The API key is invalid.",
+            Self::ProviderKeyRequired => {
+                "Supply the provider API key and a Gradiated workspace key."
+            }
+            Self::WorkspaceArchived => "The workspace is archived.",
+            Self::OrganizationSuspended => "The organization is suspended.",
+            Self::ProviderUnavailable => "The provider connection failed.",
+            Self::ProviderTimeout => "The provider request timed out.",
+            Self::ProxyOverloaded => "Provider relay is temporarily at capacity.",
             Self::InsufficientBalance => "The prepaid balance is insufficient.",
             Self::ConcurrencyExceeded => {
                 "The organization has reached its funded concurrency limit."

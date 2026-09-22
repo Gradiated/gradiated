@@ -36,6 +36,8 @@ Logical records live in the existing control modular monolith; schemas and const
 
 Every JSON and event variant has a closed versioned schema with lengths, units and null semantics. Generation v3 makes API-key and release identity and unknown usage and cost nullable by mode; typed JSON paths and materialised columns migrate together; v1 and v2 rows keep their meaning; old rows, nulls and mixed readers are tested before v3 is emitted. All v3 generation events carry explicit `billing_mode` and `exemption_reason`; settlement filters billable records, never zero versus nonzero charge.
 
+Workspace `proxy_settings.fallback_models` contains nullable `anthropic` and `openai` model IDs. It has a strict described JSON schema and uses the workspace policy revision. Updates project the complete policy before reporting success. Request overrides are transient. Tasks have no fallback field. Provider price metadata is optional analytics data and contains no credentials. GW-05 defines customer-key routing; no external-provider accounting is required.
+
 **Projections.** Every projected resource carries `(bootstrap_epoch, resource_revision)`. The projector writes with a compare-and-set script accepting only a newer pair or identical content at the same pair; different content at the same pair is corruption. Tombstones follow the same order. Deployment heartbeats expire after 6 s; gateway caches last 1 s with no stale-on-error extension. Runtime registration validates actual Nomad allocation ownership and enrollment (FLEET-05). Status binds allocation id, engine boot id, release and base/loader readiness; stale incarnations cannot overwrite current readiness. Nomad running state alone never opens routing.
 
 **Restriction barrier.**
@@ -121,6 +123,7 @@ A task seen in valid traffic exists before configuration, collects eligible data
 | `GET /workspaces/:workspaceId/connection-status` | Latest valid customer request and task from generations; capture policy; ingestion freshness; works with capture off |
 | `POST /workspaces/:workspaceId/tasks` | `slug`, `display_name`, idempotency key; 201 or existing identical result |
 | `PATCH /workspaces/:workspaceId/trace-capture` | `enabled`, `expected_revision`, disclosure version, idempotency key; 202 policy operation |
+| `PATCH /workspaces/:workspaceId` | Expected workspace revision and typed `proxy_settings`; complete projection before success, or explicit pending state |
 | `PATCH /tasks/:taskId` | Expected revision plus any of `display_name`, `base_release_id`, `reference_model_id`, `recipe_version`, `evaluation_judge_id`; 200; no slug change |
 | `POST /tasks/:taskId/training-runs` | Expected task revision, idempotency key, optional explicit source selection; 202 run |
 | `GET /training-runs/:runId` | Stage, deadline, execution identity, blocked reason, model and evaluation references |
@@ -165,3 +168,7 @@ Rollback after the first private model or run exists keeps compatible readers an
 ## Required evidence
 
 S6: transactional effects, stale leaders, expiry, grants, cleanup, restore. S7: availability counting; response and recovery faults. API tests: wrong tenant, equal member permissions, inference-token rejection, session protections, idempotency, every lifecycle action. Infrastructure evidence: real backup coverage and restore results.
+
+## Core proxy reporting
+
+The [core proxy product plan](PROXY_FEATURE_PLAN.md) defines the usage API and console additions. Reporting works with capture disabled. Task production targets can select a global hosted open model or a private model from the same task and workspace. Preserve the private ownership constraints through an explicit target variant. Freeze baseline prices per generation. Unknown cost stays null. Signed savings never enter the billing ledger.

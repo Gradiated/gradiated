@@ -69,6 +69,16 @@ impl Protocol {
         TranslationEngine::new(FormatRegistry::with_builtins())
     }
 
+    /// Local validation that must run before identity, so an unsupported request
+    /// is refused in the caller's own error envelope.
+    pub fn validate_request(self, request: &Value) -> Result<(), GatewayError> {
+        if self == Self::OpenAiResponses && responses_use_unsupported_state(request) {
+            return Err(GatewayError::invalid_request(Some("store")));
+        }
+
+        Ok(())
+    }
+
     pub fn translate_request(self, body: &Value) -> Result<Vec<u8>, GatewayError> {
         match self {
             Self::OpenAiChat => {

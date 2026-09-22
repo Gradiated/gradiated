@@ -6,7 +6,7 @@ The detailed contracts define the architecture. The [remaining simplification pr
 
 ## 1. What we are building
 
-A customer points their OpenAI or Anthropic SDK at `api.gradiated.com`, keeps their provider key, and adds two headers: a Gradiated workspace key and a task label. Traffic passes through unchanged. With capture on, we store requests and responses per task. When a task has 500 new sessions, we train a LoRA adapter on an open base model, publish it as a private version, evaluate it against the provider model it would replace, and the customer promotes it by hand. Production is the task name, so switching is a one-line change, and the adapter can be exported.
+A customer points their OpenAI or Anthropic SDK at `api.gradiated.com` and supplies a Gradiated workspace key. Provider relay requires their provider key on each request and uses their provider account. Without it, only hosted inference is available. Direct provider request bodies pass through unchanged. A request can override the workspace fallback default for its provider. Tasks have no fallback setting. The [proxy implementation plan](TASK_FINE_TUNING_GATEWAY_CONTRACT.md#gw-05-proxy-implementation-plan) defines credential handling, fallback, billing, build order, and acceptance. A task label links traffic to the workload. With capture on, we store requests and responses per task. When a task has 500 new sessions, we train a LoRA adapter on an open base model, publish it as a private version, evaluate it against the provider model it would replace, and the customer promotes it by hand. Production is the task name, so switching is a one-line change, and the adapter can be exported.
 
 | Property | How |
 | --- | --- |
@@ -90,7 +90,7 @@ The model catalog stays in PostgreSQL. Git serving declarations reference its im
 
 | Record | Purpose | Key fields |
 | --- | --- | --- |
-| `workspaces` (additions) | Capture switch and its audit | `trace_capture_enabled`, policy revision, changed by, changed at |
+| `workspaces` (additions) | Capture switch and its audit | `trace_capture_enabled`, typed `proxy_settings.fallback_models` with nullable `anthropic` and `openai` defaults, policy revision, changed by, changed at |
 | `provider_models` | Configured OpenAI and Anthropic models | `id`, provider, exact API model name, display name, enabled; task reference and judge IDs reference these records |
 | `tasks` | One customer workload | `id`, `workspace_id`, `slug` (immutable), display name, `base_release_id`, `reference_model_id`, `recipe_version`, `evaluation_judge_id`, `production_model_id`, production revision, sampling policy per day |
 | `training_runs` | One configured execution | `id`, `task_id`, frozen `config`, `status`, `created_at`, `started_at`, `finished_at`, `cancel_requested_at`; config schema in RUN-01 |
@@ -163,8 +163,8 @@ Each decision names the choice, why, and what was rejected. The contracts hold t
 
 | Area | Decision | Why | Rejected |
 | --- | --- | --- | --- |
-| Mode selection | The credential format decides: `grad_` key is native, provider key plus `grad_` key is proxy, run token is internal | No header means anything by presence; one rule for all callers | A mode header; a separate internal listener |
-| Relay | Bytes unchanged; only `gpt-` and `claude-` names on their routes; local names resolve first | Never silently change a provider request; never leak a private name to a provider | A catch-all proxy; provider fallback on local errors |
+| Mode selection | Authenticate the workspace; provider relay requires the customer provider key on the request; run tokens remain internal | Customers pay providers directly | Platform-funded relay; account switching after an error |
+| Relay | Direct body bytes unchanged; local names resolve first; request/workspace fallback replaces only the model value under GW-05 | Explicit provider targets and account selection | A catch-all proxy; fallback on access errors or exact versions |
 | Capture transport | Gateway inserts whole bodies straight into ClickHouse from a bounded memory buffer; best effort | Megabyte bodies through Valkey memory needed caps that dropped agent sessions; cost after compression is small | Valkey stream spool; Kafka (later if durability is needed); delta or content-addressed storage |
 | Eligible unit | A complete captured request; a session counts when it has one | Each request carries its full context; long or interrupted sessions still contribute | Requiring whole verified sessions |
 | Session identity | `(workspace, task, trace id)`; the day only picks the sampling rate; 24 h inactivity ends it | Midnight must not split a session or double-count it | Day in the identity |
@@ -234,7 +234,7 @@ flowchart LR
 
 | Increment | What a customer or operator can do | Flag | Contracts | Built here | Opens when |
 | --- | --- | --- | --- | --- | --- |
-| 1 Proxy | Swap the base URL; see tasks and provider usage in the console; nothing stored | `proxy_enabled` per workspace | GW-01 to GW-04; OPS-01 projections; OPS-05 monitoring; task record and connection-status route | Generation v3 readers and writers; workspace-scoped names; configuration registry; canonical doc updates | S1; malformed, private-route and cross-tenant tests; SDK conformance on three APIs; monitoring-gap alerts |
+| 1 Proxy | Relay with a customer provider key; configure per-provider workspace defaults and request overrides; see tasks and usage; no payload retention | No workspace flag; available to every active workspace | GW-01 to GW-05; OPS-01 projections; OPS-05 monitoring; task record and connection-status route | Generation v3 readers and writers; workspace-scoped names; configuration registry; canonical doc updates | S1; malformed, private-route and cross-tenant tests; SDK conformance on three APIs; monitoring-gap alerts |
 | 2 Capture | Turn on the switch; see sessions as conversations, eligible counts, retention | The switch, behind an operator allowlist until increment 5 | CAP-01, CAP-02; DATA-01; OPS-02; OPS-01 barrier; OPS-03 cleanup | Direct capture inserts; `traces`; input snapshots; expiry and cleanup | S2; loss tests with ClickHouse down; expiry and cleanup end to end |
 | 3 Private models | Call private versions by name; promote to the task name; export; configured serving minima hold. First adapters trained offline by us | `private_models_enabled` per workspace | ART-01; SERV-01 to SERV-04; FLEET-00 to 02, 04, 05; promotion and export routes; GW-04 release qualification | Nomad servers and enrollment; Git service jobs and scaling policies; Nomad Autoscaler; local drain and cleanup; bf16 LoRA base deployment; validator and publisher; explicit loader; projector prune | T0; S3 and S4 on the first base; S5 serving replacement; S6 publication and promotion races; base/loader readiness and independent host caches |
 | 4 Manual training | Start a run by hand; see stages, log and evaluation; version published | `training_enabled` per workspace; operator or allowlisted console action | RUN-01 to RUN-05; EVAL-01 to EVAL-03; FLEET-01 batch jobs and FLEET-02 constraints | Orchestrator and admitted batch jobs; run-token issuer and verifiers; trainer image with first recipe; training-judge deployment; evaluation worker and provider client; `training_run_events` | Recipe design done; T1; S5 training starts and lost hosts; S6 crash matrix; S8 |
@@ -290,3 +290,11 @@ One typed configuration registry holds every value with owner, unit, default or 
 Each PR maps the rule ids it touches to code, tests and evidence, and runs the DevEx check, generated API checks, the relevant tests and `git diff --check`. No customer data or credentials in fixtures.
 
 Two designs remain before their dependent code: RUN-03 (the recipe, its environment, its permitted provider uses) and OPS-03 (real backup coverage and restore). They are finished in their owning contract before enablement.
+
+
+## 11. Core proxy product and usage plan
+
+The standalone [proxy feature plan](PROXY_FEATURE_PLAN.md) now owns this feature.
+It defines customer-key relay, workspace fallback, task routing, open-model share, estimated savings,
+API and console changes, build sequence, and release checks. Proxy delivery does
+not depend on trace capture, training, or private adapter publication.

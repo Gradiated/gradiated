@@ -1,4 +1,6 @@
-use axum::http::{header::HeaderName, header::AUTHORIZATION, HeaderMap};
+use axum::http::HeaderMap;
+#[cfg(test)]
+use axum::http::{header::HeaderName, header::AUTHORIZATION};
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
@@ -6,6 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::{GatewayAccount, GatewayCredential, GatewayWorkspace, OrganizationStatus};
 
+#[cfg(test)]
 const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -15,37 +18,139 @@ pub struct AuthenticatedIdentity {
     pub workspace_id: Uuid,
 }
 
-pub fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
-    let mut values = headers.get_all(AUTHORIZATION).iter();
-    if let Some(value) = values.next() {
-        if values.next().is_some() {
-            return Err(AuthenticationError::InvalidApiKey);
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum Provider {
+    OpenAi,
+    Anthropic,
+}
+
+impl Provider {
+    /// Recognizes a key namespace, not whether the provider accepts the key.
+    fn from_key(key: &str) -> Option<Self> {
+        if key
+            .strip_prefix("sk-ant-")
+            .is_some_and(|suffix| !suffix.is_empty())
+        {
+            Some(Self::Anthropic)
+        } else if !key.starts_with("sk-ant-")
+            && key
+                .strip_prefix("sk-")
+                .is_some_and(|suffix| !suffix.is_empty())
+        {
+            Some(Self::OpenAi)
+        } else {
+            None
         }
-        let value = value
-            .to_str()
-            .map_err(|_| AuthenticationError::InvalidApiKey)?;
-        let secret = value
-            .strip_prefix("Bearer ")
-            .filter(|secret| {
-                !secret.is_empty() && !secret.bytes().any(|byte| byte.is_ascii_whitespace())
-            })
-            .ok_or(AuthenticationError::InvalidApiKey)?;
-        return Ok(format!("{:x}", Sha256::digest(secret.as_bytes())));
+    }
+}
+
+pub fn is_api_key(key: &str) -> bool {
+    key.strip_prefix("grad_")
+        .is_some_and(|suffix| !suffix.is_empty())
+}
+
+pub fn is_provider_key(key: &str) -> bool {
+    Provider::from_key(key).is_some()
+}
+
+// Secrets deliberately have no Debug or serialization implementation.
+pub struct ProviderCredential<'a> {
+    pub provider: Provider,
+    pub secret: &'a str,
+}
+
+pub struct RequestCredentials<'a> {
+    pub api_key: &'a str,
+    pub provider: Option<ProviderCredential<'a>>,
+}
+
+impl RequestCredentials<'_> {
+    pub fn api_key_digest(&self) -> String {
+        format!("{:x}", Sha256::digest(self.api_key.as_bytes()))
+    }
+}
+
+fn single_secret<'a>(
+    headers: &'a HeaderMap,
+    name: &str,
+) -> Result<Option<&'a str>, AuthenticationError> {
+    let mut values = headers.get_all(name).iter();
+    let Some(value) = values.next() else {
+        return Ok(None);
+    };
+
+    if values.next().is_some() {
+        return Err(AuthenticationError::InvalidApiKey);
     }
 
-    let mut values = headers.get_all(X_API_KEY).iter();
-    let value = values
-        .next()
-        .ok_or(AuthenticationError::InvalidApiKey)?
+    let value = value
         .to_str()
         .map_err(|_| AuthenticationError::InvalidApiKey)?;
-    if values.next().is_some()
-        || value.is_empty()
-        || value.bytes().any(|byte| byte.is_ascii_whitespace())
+    let secret = if name == "authorization" {
+        value
+            .strip_prefix("Bearer ")
+            .ok_or(AuthenticationError::InvalidApiKey)?
+    } else {
+        value
+    };
+
+    if secret.is_empty()
+        || secret.len() > 4096
+        || secret
+            .bytes()
+            .any(|b| !b.is_ascii_alphanumeric() && b != b'-' && b != b'_')
     {
         return Err(AuthenticationError::InvalidApiKey);
     }
-    Ok(format!("{:x}", Sha256::digest(value.as_bytes())))
+
+    Ok(Some(secret))
+}
+
+/// Extracts identity from the supported headers. Valkey and the provider still
+/// validate their own keys. A route must match the extracted provider before relay.
+pub fn extract_credentials(
+    headers: &HeaderMap,
+) -> Result<RequestCredentials<'_>, AuthenticationError> {
+    let workspace = single_secret(headers, "x-gradiated-api-key")?;
+    let bearer = single_secret(headers, "authorization")?;
+    let standard = single_secret(headers, "x-api-key")?;
+
+    if workspace.is_some_and(|key| !is_api_key(key)) {
+        return Err(AuthenticationError::InvalidApiKey);
+    }
+
+    let mut api_key = workspace;
+    let mut provider = None;
+
+    for key in [bearer, standard].into_iter().flatten() {
+        if is_api_key(key) {
+            if api_key.is_some_and(|existing| existing != key) {
+                return Err(AuthenticationError::InvalidApiKey);
+            }
+
+            api_key = Some(key);
+        } else if let Some(kind) = Provider::from_key(key) {
+            if provider.is_some() {
+                return Err(AuthenticationError::InvalidApiKey);
+            }
+
+            provider = Some(ProviderCredential {
+                provider: kind,
+                secret: key,
+            });
+        } else {
+            return Err(AuthenticationError::InvalidApiKey);
+        }
+    }
+
+    Ok(RequestCredentials {
+        api_key: api_key.ok_or(AuthenticationError::InvalidApiKey)?,
+        provider,
+    })
+}
+
+pub fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
+    Ok(extract_credentials(headers)?.api_key_digest())
 }
 
 pub fn authenticate_credential(
@@ -92,6 +197,17 @@ pub fn authorize_access(
 pub enum AuthenticationError {
     #[error("invalid API key")]
     InvalidApiKey,
+}
+
+impl From<AccessError> for crate::GatewayError {
+    fn from(error: AccessError) -> Self {
+        match error {
+            // A permanent denial must not look like a dependency that may recover.
+            AccessError::WorkspaceArchived => Self::WorkspaceArchived,
+            AccessError::OrganizationSuspended => Self::OrganizationSuspended,
+            AccessError::InconsistentServingState => Self::ServingStateUnavailable,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Error, Eq, PartialEq)]
@@ -235,3 +351,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "auth_credentials_tests.rs"]
+mod credential_tests;

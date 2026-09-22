@@ -79,7 +79,7 @@ Runtime readiness means the base and loader are ready to accept compatible reque
 
 The gateway checks tenant access and model lifecycle, selects a compatible base runtime from Valkey, and dispatches through normal bounded admission. The host checks its caches, fetches a missing adapter from S3 and executes the request. Normal generation identity, cancellation and finalization apply once across cold loading and inference; failed loading does not become a successful generation. Billing uses actual execution usage, never a synthetic charge for loading.
 
-Cold loading has a 60-second bound within the request deadline. Limit waiters to 64 per adapter per host and bound total host waiters and download concurrency by its qualified resource profile. Cache saturation returns a capacity error; load failure or timeout returns an explicit unavailable error. A cancelled waiter detaches; shared loading can continue for remaining callers within its bound. No fallback to a different model. Retries obey the gateway's existing before-output policy and retain the exact adapter identity.
+Cold loading has a 60-second bound within the request deadline. Limit waiters to 64 per adapter per host and bound total host waiters and download concurrency by its qualified resource profile. Cache saturation returns a capacity error; load failure or timeout returns an explicit unavailable error. A cancelled waiter detaches; shared loading can continue for remaining callers within its bound. No fallback after a runtime dispatch or for an exact version. A bare task can use the request override or provider-specific workspace default before dispatch under GW-05, with the customer provider key. Tasks own no fallback setting. Retries obey the gateway's existing before-output policy and retain the exact adapter identity.
 
 Publication validates the output, copies final bytes to `adapters/`, tests those immutable bytes through the same host loader, then commits the available model record. The private test is authorized only for the owning run before publication. The serving loader never reads unvalidated run output. Publication does not set the task production pointer.
 
@@ -119,3 +119,6 @@ Runtime upgrades: qualified once per base on the fixed adapter set (SERV-02). Th
 ## Required evidence
 
 S3: exact adapter identity and layout, first load, disk/RAM/GPU cache hits, concurrent cold requests, bounded download and memory use, cancellation, eviction and restart. S4: resource envelopes. S5/S6: host loss, missing S3 objects, partial tensor-worker loads, promotion and cleanup races, stale cache hints, and publication tests reading only validated bytes. Two base replicas must work even when their adapter caches differ.
+
+
+The [core proxy product plan](PROXY_FEATURE_PLAN.md) also permits an explicit global hosted open-model production target before private training is available. Private promotion retains its task and workspace ownership checks. Both target variants use the same routing and reporting contract.

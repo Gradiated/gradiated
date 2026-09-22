@@ -22,6 +22,23 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
   components. Generated or directly imported shadcn primitives may retain their
   upstream syntax.
 
+## Code readability
+
+- Separate logical steps inside functions with one blank line. Apply this to
+  authored Rust and TypeScript code.
+- Keep related declarations together. Add a blank line between setup,
+  validation, loops, state changes, and the final return.
+- Add a blank line after a guard clause before the normal path continues.
+- Do not add a blank line after every statement. Use spacing to show logical
+  groups. Formatters do not replace this readability check.
+- Do not edit generated code or imported upstream code only to change spacing.
+- Add comments only when the code does not make the necessary information
+  clear. Explain a constraint, reason, or non-obvious behavior; do not restate
+  the code.
+- Write comments about the code as it stands. Make each comment useful without
+  the current conversation. Do not refer to session discussions, user requests,
+  or the history of an edit.
+
 ## Local contract
 
 `pnpm dev`/mprocs is the canonical local path. Docker Compose runs only the

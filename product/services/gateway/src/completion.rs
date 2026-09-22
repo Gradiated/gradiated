@@ -8,7 +8,6 @@ use std::{
     time::Duration,
 };
 
-use axum::{body::Bytes, http::HeaderMap};
 use chrono::Utc;
 use futures_util::stream;
 use serde_json::Value;
@@ -22,9 +21,9 @@ use crate::{
     metrics::AdmittedGenerationMetrics, protocol::StreamItem, routing::order_deployments_diagnosed,
     BoundedRequest, CancellationOwner, FinalizationOutcome, GatewayConfig, GatewayError,
     GatewayMetrics, GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming,
-    ModelRuntime, ModelTokenizer, NormalizedUsage, PricedUsage, RequestCoordinator,
-    RequestMetadata, RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure,
-    RuntimeFailureKind, RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
+    ModelRuntime, ModelTokenizer, NormalizedUsage, PricedUsage, QualifiedRequest,
+    RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind,
+    RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
 };
 
 const FINALIZATION_ATTEMPTS: usize = 3;
@@ -127,7 +126,6 @@ async fn force_shutdown_requested(force_shutdown: &mut watch::Receiver<bool>) {
 
 #[derive(Clone)]
 pub struct CompletionService {
-    coordinator: RequestCoordinator,
     tokenizer: ModelTokenizer,
     serving_state: Arc<dyn ServingState>,
     runtime: Arc<dyn ModelRuntime>,
@@ -145,7 +143,6 @@ impl CompletionService {
     ) -> Self {
         let metrics = GatewayMetrics::new();
         Self {
-            coordinator: RequestCoordinator::new(serving_state.clone()),
             tokenizer,
             serving_state,
             runtime,
@@ -177,15 +174,12 @@ impl CompletionService {
 
     pub async fn complete(
         &self,
-        metadata: RequestMetadata,
-        headers: &HeaderMap,
-        body: Bytes,
+        qualified: QualifiedRequest,
     ) -> Result<CompletionResponse, GatewayError> {
         if self.tasks.is_draining() {
             return Err(GatewayError::RuntimeUnavailable);
         }
-        let qualified = self.coordinator.qualify(metadata, headers, &body).await?;
-        drop(body);
+
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
         let bounded = self.prepare_request(qualified).await?;
@@ -229,17 +223,8 @@ impl CompletionService {
         }
     }
 
-    pub async fn count_tokens(
-        &self,
-        headers: &HeaderMap,
-        body: &[u8],
-    ) -> Result<u64, GatewayError> {
-        let metadata = RequestMetadata {
-            generation_id: Uuid::now_v7(),
-            received_at: Utc::now(),
-        };
-        let qualified = self.coordinator.qualify(metadata, headers, body).await?;
-        self.tokenizer.count(&qualified).await
+    pub async fn count_tokens(&self, qualified: &QualifiedRequest) -> Result<u64, GatewayError> {
+        self.tokenizer.count(qualified).await
     }
 
     async fn route_bounded(
@@ -1213,14 +1198,17 @@ mod tests {
         RuntimeEventStream, RuntimeStreamChunk, TokenUnit,
     };
 
-    struct FakeServingState {
+    /// Observes admission and settlement. It serves no projections, because these
+    /// tests build a qualified request directly. Projection fixtures live in
+    /// `test_support`.
+    struct SettlementServingState {
         finalized: Mutex<Vec<Value>>,
         admitted: Arc<AtomicBool>,
         finalization_failures: AtomicUsize,
         finalization_attempts: AtomicUsize,
     }
 
-    impl FakeServingState {
+    impl SettlementServingState {
         fn new(finalization_failures: usize) -> Self {
             Self {
                 finalized: Mutex::new(Vec::new()),
@@ -1232,7 +1220,7 @@ mod tests {
     }
 
     #[async_trait]
-    impl ServingState for FakeServingState {
+    impl ServingState for SettlementServingState {
         async fn credential(
             &self,
             _digest_hex: &str,
@@ -1459,21 +1447,7 @@ mod tests {
     }
 
     fn config() -> GatewayConfig {
-        GatewayConfig {
-            bind_address: "127.0.0.1:3002".parse().unwrap(),
-            browser_origins: None,
-            generation_timeout_seconds: 300,
-            lease_finalization_margin_seconds: 60,
-            expired_lease_cleanup_grace_seconds: 300,
-            prepaid_organization_concurrency_cap: 50,
-            balance_per_concurrency_slot_nano_usd: 1_000_000_000,
-            settlement_backlog_limit: 100_000,
-            valkey_url: "redis://127.0.0.1:6379".to_owned(),
-            valkey_iam_cache_name: None,
-            valkey_iam_region: None,
-            valkey_iam_user: None,
-            sglang_api_key: None,
-        }
+        GatewayConfig::for_tests()
     }
 
     fn bounded_request() -> BoundedRequest {
@@ -1484,7 +1458,7 @@ mod tests {
         )
         .unwrap();
         let qualified = QualifiedRequest {
-            metadata: RequestMetadata {
+            metadata: crate::RequestMetadata {
                 generation_id,
                 received_at: Utc::now(),
             },
@@ -1540,7 +1514,7 @@ mod tests {
         }
     }
 
-    fn task(state: Arc<FakeServingState>, runtime: Arc<dyn ModelRuntime>) -> GenerationTask {
+    fn task(state: Arc<SettlementServingState>, runtime: Arc<dyn ModelRuntime>) -> GenerationTask {
         let bounded = bounded_request();
         let generation_identity = GenerationIdentity::new(
             None,
@@ -1589,7 +1563,7 @@ mod tests {
 
     #[tokio::test]
     async fn successful_generation_is_finalized_before_its_response_is_returned() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
         let (_cancel, cancellation) = oneshot::channel();
 
@@ -1608,7 +1582,7 @@ mod tests {
 
     #[tokio::test]
     async fn chat_dispatch_does_not_depend_on_local_template_or_context_estimates() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let service = CompletionService::new(
             state,
             Arc::new(FixedRuntime(Ok(successful_completion()))),
@@ -1635,7 +1609,7 @@ mod tests {
     #[tokio::test]
     async fn runtime_usage_overrides_local_input_estimate_for_settlement() {
         for estimated_input in [7, 13] {
-            let state = Arc::new(FakeServingState::new(0));
+            let state = Arc::new(SettlementServingState::new(0));
             let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
             let mut generation = task(state.clone(), runtime);
             generation.bounded.input_tokens = Some(estimated_input);
@@ -1662,7 +1636,7 @@ mod tests {
             (7, 8, 2, "failed"),
             (7, 7, 0, "failed"),
         ] {
-            let state = Arc::new(FakeServingState::new(0));
+            let state = Arc::new(SettlementServingState::new(0));
             let runtime = Arc::new(StreamingRuntime {
                 events: Mutex::new(Some(VecDeque::from([
                     Ok(RuntimeStreamEvent::Chunk(
@@ -1712,7 +1686,7 @@ mod tests {
 
     #[tokio::test]
     async fn unavailable_runtime_retries_one_other_deployment_and_settles_once() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let runtime = Arc::new(SequencedRuntime {
             results: Mutex::new(VecDeque::from([
                 Err(RuntimeFailure::new(RuntimeFailureKind::Unavailable)),
@@ -1748,7 +1722,7 @@ mod tests {
 
     #[tokio::test]
     async fn completion_service_admits_before_dispatching_runtime_work() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let runtime = Arc::new(AdmissionCheckingRuntime {
             admitted: state.admitted.clone(),
         });
@@ -1768,7 +1742,7 @@ mod tests {
 
     #[tokio::test]
     async fn overload_is_finalized_before_the_public_error_is_returned() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let runtime = Arc::new(FixedRuntime(Err(RuntimeFailure::new(
             RuntimeFailureKind::CapacityExceeded,
         ))));
@@ -1787,7 +1761,7 @@ mod tests {
 
     #[tokio::test]
     async fn cancellation_drops_runtime_work_and_finalizes_as_client_owned() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let dropped = Arc::new(AtomicBool::new(false));
         let (started_sender, started) = oneshot::channel();
         let task = task(
@@ -1815,7 +1789,7 @@ mod tests {
 
     #[tokio::test]
     async fn draining_preserves_generation_until_forced_shutdown() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let dropped = Arc::new(AtomicBool::new(false));
         let (started_sender, started) = oneshot::channel();
         let service = CompletionService::new(
@@ -1858,7 +1832,7 @@ mod tests {
 
     #[tokio::test]
     async fn finalization_retries_before_returning_a_successful_response() {
-        let state = Arc::new(FakeServingState::new(2));
+        let state = Arc::new(SettlementServingState::new(2));
         let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
         let (_cancel, cancellation) = oneshot::channel();
 
@@ -1875,7 +1849,7 @@ mod tests {
     async fn unconfirmed_finalization_withholds_the_successful_response() {
         let logs = crate::diagnostics::capture::Logs::default();
         let _guard = logs.start();
-        let state = Arc::new(FakeServingState::new(FINALIZATION_ATTEMPTS));
+        let state = Arc::new(SettlementServingState::new(FINALIZATION_ATTEMPTS));
         let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
         let (_cancel, cancellation) = oneshot::channel();
 
@@ -1902,7 +1876,7 @@ mod tests {
 
     #[tokio::test]
     async fn streaming_finalizes_before_done_and_exposes_only_terminal_usage() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let usage = NormalizedUsage::new(10, 0, 0, 2, 0).unwrap();
         let runtime = Arc::new(StreamingRuntime {
             events: Mutex::new(Some(VecDeque::from([
@@ -1978,7 +1952,7 @@ mod tests {
     async fn logs_incomplete_stream_after_response_start_without_payload() {
         let logs = crate::diagnostics::capture::Logs::default();
         let _guard = logs.start();
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let runtime = Arc::new(StreamingRuntime {
             events: Mutex::new(Some(VecDeque::from([
                 Ok(RuntimeStreamEvent::Chunk(
@@ -2023,7 +1997,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_dropped_streaming_body_finalizes_as_client_cancellation() {
-        let state = Arc::new(FakeServingState::new(0));
+        let state = Arc::new(SettlementServingState::new(0));
         let service = CompletionService::new(
             state.clone(),
             Arc::new(PendingStreamingRuntime),

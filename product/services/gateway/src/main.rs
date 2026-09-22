@@ -3,7 +3,8 @@ use std::{future::IntoFuture, sync::Arc, time::Duration};
 use axum::http::HeaderValue;
 use gradiated_gateway::{
     browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
-    ModelTokenizer, RequestCoordinator, RuntimeTlsConfig, SglangClient, ValkeyServingState,
+    ModelTokenizer, ProviderRelay, RequestCoordinator, RuntimeTlsConfig, SglangClient,
+    ValkeyServingState,
 };
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
@@ -60,10 +61,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into_iter()
         .map(str::parse::<HeaderValue>)
         .collect::<Result<Vec<_>, _>>()?;
+    let relay = ProviderRelay::new(&config.proxy_anthropic_origin, config.proxy_limits())?;
     let app = router(GatewayState::new(
         readiness,
         completions.clone(),
         RequestCoordinator::new(serving_state),
+        relay,
     ));
     let app = if browser_origins.is_empty() {
         app

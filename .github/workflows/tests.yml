@@ -178,8 +178,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
-  runtime-fidelity:
-    name: Real runtime fidelity
+  inference-e2e:
+    name: Inference E2E Tests
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -225,25 +225,25 @@ jobs:
           platforms: linux/amd64
           load: true
           tags: gradiated/kev-cpu:ci
-      - name: Exercise the gateway against real CPU runtimes
+      - name: Run the gateway against real CPU runtimes
         working-directory: product
         env:
           GATEWAY_REAL_RUNTIME: vllm,kev
         run: >-
           pnpm --filter @gradiated/gateway exec vitest run
           --reporter=default --reporter=junit
-          --outputFile.junit=../../../.agents/runtime/runtime-fidelity.xml
-      - name: Upload fidelity results
+          --outputFile.junit=../../../.agents/runtime/inference-e2e.xml
+      - name: Upload inference E2E results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: runtime-fidelity
-          path: .agents/runtime/runtime-fidelity.xml
+          name: inference-e2e
+          path: .agents/runtime/inference-e2e.xml
           if-no-files-found: ignore
           retention-days: 7
 
-  e2e:
-    name: End-to-end tests
+  playwright:
+    name: Playwright tests
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -273,7 +273,7 @@ jobs:
         env:
           DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
         run: pnpm --filter @gradiated/control db:migrate
-      - name: Run end-to-end tests
+      - name: Run Playwright tests
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test
       - name: Show dependency logs on failure

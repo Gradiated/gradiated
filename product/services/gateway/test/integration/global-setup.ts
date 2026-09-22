@@ -124,10 +124,31 @@ interface RuntimeImage {
    */
   readonly model: string;
   readonly ready: string;
+  /**
+   * One throwaway inference after readiness. A runtime answers its catalog or
+   * health route long before it can serve, because the first real request pays
+   * model and kernel warmup; without this the first test pays it instead.
+   */
+  readonly warm: (baseUrl: string, model: string) => Promise<void>;
   /** Extra `docker run` arguments, such as port publishing and resource limits. */
   readonly docker: (port: number) => Promise<string[]>;
   readonly args: (port: number) => string[];
 }
+
+/**
+ * A runtime that refuses a trivial request is broken, and saying so here is far
+ * clearer than the test failure it would otherwise cause. The body is read so the
+ * connection can be reused rather than left dangling.
+ */
+const warmRequest = async (url: string, init: RequestInit): Promise<void> => {
+  const response = await fetch(url, init);
+  const body = await response.text();
+  if (!response.ok) {
+    throw new Error(
+      `warmup rejected with ${response.status}: ${body.slice(0, 300)}`,
+    );
+  }
+};
 
 const CPU_MODEL = "gradiated/cpu-test-model";
 
@@ -147,6 +168,18 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
     image: VLLM_CPU_IMAGE,
     model: process.env.GATEWAY_REAL_RUNTIME_MODEL ?? CPU_MODEL,
     ready: "/v1/models",
+    warm: async (baseUrl, model) => {
+      await warmRequest(`${baseUrl}/v1/chat/completions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: "user", content: "warm" }],
+          max_tokens: 1,
+        }),
+        signal: AbortSignal.timeout(300_000),
+      });
+    },
     docker: async (port) => [
       "-p",
       `127.0.0.1:${port}:8080`,
@@ -158,7 +191,9 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
       // gateway, Valkey and the decision runtime.
       "VLLM_CPU_KVCACHE_SPACE=1",
       "-e",
-      "OMP_NUM_THREADS=2",
+      // Generation is memory-bandwidth bound on a CPU, so starving it of threads
+      // is what makes these tests slow. Enough to finish in seconds, not minutes.
+      "OMP_NUM_THREADS=4",
       "-e",
       // Otherwise a hard kill loses everything the server had not flushed.
       "PYTHONUNBUFFERED=1",
@@ -191,6 +226,19 @@ const REAL_RUNTIMES: Record<RuntimeKind, RuntimeImage> = {
     image: KEV_CPU_IMAGE,
     model: process.env.GATEWAY_REAL_KEV_MODEL ?? "jaredpalmer/kev-0.5b",
     ready: "/health",
+    warm: async (baseUrl, model) => {
+      await warmRequest(`${baseUrl}/v1/systemone`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model,
+          state: "warm",
+          questions: { q: { type: "noul", instructions: "warm?" } },
+          priority: 0,
+        }),
+        signal: AbortSignal.timeout(300_000),
+      });
+    },
     docker: async (port) => ["-p", `127.0.0.1:${port}:8000`],
     args: () => [],
   },
@@ -202,17 +250,25 @@ const RUNTIME_READY_TIMEOUT_MS = 240_000;
 const startRealRuntime = async (
   kind: RuntimeKind,
   owner: string,
-): Promise<{ runtime: RealRuntime; container?: string }> => {
+  register: (container: string) => void,
+): Promise<RealRuntime> => {
   const spec = REAL_RUNTIMES[kind];
   const existing =
     process.env[`GATEWAY_REAL_RUNTIME_URL_${kind.toUpperCase()}`];
   if (existing) {
-    return {
-      runtime: { baseUrl: existing.replace(/\/$/, ""), model: spec.model },
+    const runtime = {
+      baseUrl: existing.replace(/\/$/, ""),
+      model: spec.model,
     };
+    // A runtime the caller already had running still has to be warm.
+    await spec.warm(runtime.baseUrl, runtime.model);
+    return runtime;
   }
   const container = `gateway-runtime-${kind}-${owner.split("-").at(-1)}`;
   const port = await freePort();
+  // Registered before the container exists, so a failure during startup or warmup
+  // still leaves teardown able to remove it rather than stranding it running.
+  register(container);
   await docker(
     "run",
     "-d",
@@ -262,7 +318,10 @@ const startRealRuntime = async (
       `${String(error)}\n--- ${kind} container ${state} ---\n${logs || "(no output)"}`,
     );
   }
-  return { runtime: { baseUrl, model: spec.model }, container };
+  // Readiness only proves the server is listening, so pay warmup here rather
+  // than inside whichever test happens to run first.
+  await spec.warm(baseUrl, spec.model);
+  return { baseUrl, model: spec.model };
 };
 
 const freePort = (): Promise<number> =>
@@ -505,9 +564,9 @@ export default async (project: TestProject) => {
       if (!(kind in REAL_RUNTIMES)) {
         throw new Error(`Unknown real runtime "${kind}"; expected vllm or kev`);
       }
-      const started = await startRealRuntime(kind, name);
-      realRuntimes[kind] = started.runtime;
-      if (started.container) runtimeContainers.push(started.container);
+      realRuntimes[kind] = await startRealRuntime(kind, name, (container) =>
+        runtimeContainers.push(container),
+      );
     }
     const patientGatewayUrl = enabled.length
       ? await (async () => {

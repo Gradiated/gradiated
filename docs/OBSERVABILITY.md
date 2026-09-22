@@ -36,10 +36,24 @@ Service dashboards link to Production Logs with service and time filters. The
 Correlation ID field accepts a request or generation UUID; correlation stays in
 the log body, never a metric or indexed Loki label. API/worker diagnostics use
 structured levels, stable event names, error codes and stack locations; omit raw
-exception messages, request bodies, query strings, headers and identities.
-API logs failures, slow requests (>1s), dependency transitions and lifecycle;
-worker logs loop lifecycle/failures. Their log budget is ten events/second per
-process, with suppressed counts on the next emitted event; metrics remain
+exception messages, request bodies, query strings, headers and customer names/emails.
+API logs authenticated request completions, failed/slow requests (>1s), dependency transitions and lifecycle;
+worker logs loop lifecycle/failures. Tenant correlation uses organization, workspace and non-secret API-key UUIDs.
+Gateway request spans obtain these from verified credentials and propagate them
+through background generation/streaming tasks, including rejection and finalization
+logs. Invalid credentials have no attributed tenant. API request logs carry the
+session user's UUID and requested route resource UUIDs (plus newly created
+workspace/API-key IDs from service results) with
+`context_source=authenticated_session_requested_resource`; those target IDs do
+not assert permission was granted. Infrastructure and batch-level worker events
+have no invented tenant identity. No raw key, credential digest, prompt or response
+body is added. Production Logs has service, organization, workspace, API-key ID,
+and user-ID filters plus request/generation correlation. Resource filters accept
+UUIDs or regex (`.*` means all); Grafana parses JSON fields/spans at query time,
+without adding high-cardinality Loki or Prometheus labels.
+
+API/worker log budgets are ten events/second per severity per process, so normal request volume cannot consume the error budget,
+with suppressed counts on the next emitted event of that severity; metrics remain
 unsampled. Gateway terminal events include generation UUID, token categories,
 outcome and timing, before billing finalization. Finalization errors are separate.
 
@@ -211,7 +225,10 @@ python3 tools/observability/check.py
 This validates panel links and PromQL, and exercises healthy, failed, recovered,
 and missing probes, fast-error thresholds, replica outages, ingestion/settlement
 delays, settlement leadership, and idle/stalled/progressing generations. Worker
-unit tests validate eligibility accounting and leadership cleanup.
+unit tests validate eligibility accounting and leadership cleanup. Kubernetes CI
+also runs `tools/observability/check_logs.py` against disposable localhost Loki
+to verify the actual dashboard filters for flat API JSON, gateway spans,
+unauthenticated events and unstructured logs. Fixtures never go to production.
 
 After a change, run the product, Rust, Kubernetes, Helm, dashboard, PromQL,
 Prometheus rule, Alertmanager, and DevEx checks that apply to the change.

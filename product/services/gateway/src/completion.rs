@@ -7,6 +7,7 @@ use std::{
     },
     time::Duration,
 };
+use tracing::Instrument;
 
 use chrono::Utc;
 use futures_util::stream;
@@ -72,10 +73,13 @@ impl GenerationTasks {
     {
         self.inner.active.fetch_add(1, Ordering::AcqRel);
         let inner = self.inner.clone();
-        tokio::spawn(async move {
-            let _active = ActiveGeneration(inner);
-            future.await
-        })
+        tokio::spawn(
+            async move {
+                let _active = ActiveGeneration(inner);
+                future.await
+            }
+            .in_current_span(),
+        )
     }
 
     fn subscribe(&self) -> watch::Receiver<bool> {
@@ -2060,5 +2064,34 @@ mod tests {
         let finalized = state.finalized.lock().unwrap();
         assert_eq!(finalized[0]["status"], "cancelled");
         assert_eq!(finalized[0]["outcome"]["cancellation_owner"], "client");
+    }
+    #[tokio::test]
+    async fn generation_tasks_keep_request_identity_after_the_handler_returns() {
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        let tasks = GenerationTasks::new();
+        let mut handles = Vec::new();
+        for id in [Uuid::from_u128(1), Uuid::from_u128(2)] {
+            let span = crate::diagnostics::request_span(id);
+            span.record("workspace_id", tracing::field::display(id));
+            handles.push(span.in_scope(|| {
+                tasks.spawn(async move {
+                    tokio::task::yield_now().await;
+                    tracing::info!(event = "test_stream_terminal", "terminal");
+                })
+            }));
+        }
+        for handle in handles {
+            handle.await.unwrap();
+        }
+        let events = logs.events();
+        assert_eq!(events.len(), 2);
+        for event in events {
+            assert_eq!(
+                event["span"]["workspace_id"],
+                event["span"]["generation_id"]
+            );
+            assert!(event["span"]["workspace_id"].is_string());
+        }
     }
 }

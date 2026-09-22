@@ -306,6 +306,7 @@ export function registerWorkspaceRoutes(
         params.organization_id,
         input,
       );
+      context.set("logResourceIds", { workspace_id: workspace.id });
       return context.json(workspaceResponse(workspace), 201);
     } catch (error) {
       return controlError(context, error);
@@ -346,6 +347,7 @@ export function registerWorkspaceRoutes(
           expiresAt: input.expires_at ? new Date(input.expires_at) : null,
         },
       );
+      context.set("logResourceIds", { api_key_id: created.apiKey.id });
       context.header("Cache-Control", "no-store");
       return context.json(
         { api_key: apiKeyResponse(created.apiKey), secret: created.secret },

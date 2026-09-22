@@ -20,6 +20,7 @@ export interface SessionUser {
 export interface ApiEnvironment {
   Variables: {
     requestId: string;
+    logResourceIds?: { workspace_id?: string; api_key_id?: string };
     user: SessionUser | null;
   };
 }

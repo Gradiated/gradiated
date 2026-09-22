@@ -5,7 +5,7 @@ import { requestId } from "hono/request-id";
 
 import { unavailableBillingPaymentsService } from "./billing/stripe.js";
 import { problemResponse } from "./http/problem-response.js";
-import { serviceLog } from "./logging.js";
+import { serviceLog, requestLogFields } from "./logging.js";
 import { ApiMetrics } from "./metrics.js";
 import { registerCatalogBillingRoutes } from "./routes/catalog-billing.js";
 import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
@@ -213,7 +213,7 @@ export const createApp = (overrides: AppOverrides = {}) => {
   app.onError((error, context) => {
     serviceLog("error", "request_failed", {
       error,
-      request_id: context.get("requestId"),
+      ...requestLogFields(context),
       method: context.req.method,
       route: context.req.routePath ?? "unmatched",
       status: 500,

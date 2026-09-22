@@ -109,3 +109,12 @@ pub(crate) mod capture {
         }
     }
 }
+
+/// Identity fields are populated only after credential verification. Never record
+/// headers, credential digests, provider keys or request bodies on this span.
+pub(crate) fn request_span(generation_id: uuid::Uuid) -> tracing::Span {
+    tracing::info_span!("inference_request", service = "gateway", %generation_id,
+        organization_id = tracing::field::Empty,
+        workspace_id = tracing::field::Empty,
+        api_key_id = tracing::field::Empty)
+}

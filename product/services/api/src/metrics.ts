@@ -8,7 +8,7 @@ import {
   Registry,
 } from "prom-client";
 
-import { serviceLog } from "./logging.js";
+import { serviceLog, requestLogFields } from "./logging.js";
 import type { ApiEnvironment } from "./types.js";
 
 const durationBuckets = [
@@ -125,14 +125,25 @@ export class ApiMetrics {
         elapsedSeconds,
       );
       this.httpInFlight.dec({ method });
-      if (!route.startsWith("/health/") && elapsedSeconds > 1) {
-        serviceLog("warn", "slow_request", {
-          request_id: context.get("requestId"),
-          method,
-          route,
-          status: Number(status),
-          duration_ms: Math.round(elapsedSeconds * 1_000),
-        });
+      if (
+        !route.startsWith("/health/") &&
+        (context.get("user") || elapsedSeconds > 1 || Number(status) >= 400)
+      ) {
+        serviceLog(
+          Number(status) >= 500
+            ? "error"
+            : Number(status) >= 400 || elapsedSeconds > 1
+              ? "warn"
+              : "info",
+          "request_completed",
+          {
+            ...requestLogFields(context),
+            method,
+            route,
+            status: Number(status),
+            duration_ms: Math.round(elapsedSeconds * 1_000),
+          },
+        );
       }
 
       const requestSize = parseContentLength(

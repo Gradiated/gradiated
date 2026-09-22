@@ -1,4 +1,5 @@
 use std::{sync::Arc, time::Duration};
+use tracing::Instrument;
 
 use axum::{
     body::{Body, Bytes},
@@ -164,14 +165,18 @@ async fn inference(
 ) -> Response {
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
-    let result = async {
-        let body = body.map_err(body_rejection)?;
+    async {
+        let result = async {
+            let body = body.map_err(body_rejection)?;
 
-        serve(&state, protocol, relay, metadata, &headers, body, kind).await
+            serve(&state, protocol, relay, metadata, &headers, body, kind).await
+        }
+        .await;
+
+        finish(&state, route, protocol, generation_id, result)
     }
-    .await;
-
-    finish(&state, route, protocol, generation_id, result)
+    .instrument(crate::diagnostics::request_span(generation_id))
+    .await
 }
 
 /// Classifies the request once, then either relays it or serves it here. Identity,
@@ -406,40 +411,44 @@ async fn messages_count_tokens(
 ) -> Response {
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
-    let result = async {
-        let body = body.map_err(body_rejection)?;
-        let classified = state
-            .coordinator
-            .classify(
-                &headers,
-                &body,
-                metadata.received_at,
-                Protocol::AnthropicMessages,
-                // Counting tokens has no relay path in this build, so an unresolved
-                // name stays a local error even when a provider key is present.
-                None,
-            )
-            .await?;
-        let RequestRoute::Hosted { hosted, request } = classified else {
-            return Err(GatewayError::ModelNotFound);
-        };
+    async {
+        let result = async {
+            let body = body.map_err(body_rejection)?;
+            let classified = state
+                .coordinator
+                .classify(
+                    &headers,
+                    &body,
+                    metadata.received_at,
+                    Protocol::AnthropicMessages,
+                    // Counting tokens has no relay path in this build, so an unresolved
+                    // name stays a local error even when a provider key is present.
+                    None,
+                )
+                .await?;
+            let RequestRoute::Hosted { hosted, request } = classified else {
+                return Err(GatewayError::ModelNotFound);
+            };
 
-        let translated = Protocol::AnthropicMessages.translate_request(&request)?;
-        let qualified = state
-            .coordinator
-            .qualify(metadata, &headers, *hosted, &translated)?;
-        let count = state.completions.count_tokens(&qualified).await?;
+            let translated = Protocol::AnthropicMessages.translate_request(&request)?;
+            let qualified = state
+                .coordinator
+                .qualify(metadata, &headers, *hosted, &translated)?;
+            let count = state.completions.count_tokens(&qualified).await?;
 
-        Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
+            Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
+        }
+        .await;
+        finish(
+            &state,
+            "messages_count_tokens",
+            Protocol::AnthropicMessages,
+            generation_id,
+            result,
+        )
     }
-    .await;
-    finish(
-        &state,
-        "messages_count_tokens",
-        Protocol::AnthropicMessages,
-        generation_id,
-        result,
-    )
+    .instrument(crate::diagnostics::request_span(generation_id))
+    .await
 }
 
 async fn live() -> Json<HealthResponse> {
@@ -971,6 +980,50 @@ mod tests {
         );
         assert_eq!(translated["messages"][0]["role"], "user");
         assert_eq!(translated["messages"][0]["content"], "hi");
+    }
+    #[tokio::test]
+    async fn rejected_requests_keep_verified_ids_and_never_credentials() {
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        let mut state = TestServingState::ready();
+        state.workspace.as_mut().unwrap().archived_at = Some(Utc::now());
+        for (state, authenticated) in [
+            (state, true),
+            (TestServingState::unknown_credential(), false),
+        ] {
+            let app = router_for(
+                true,
+                Arc::new(state),
+                &GatewayConfig::for_tests().proxy_anthropic_origin,
+            );
+            let response = app.oneshot(Request::builder().method("POST").uri("/v1/messages")
+                .header("content-type", "application/json")
+                .header("x-gradiated-api-key", "grad_DO_NOT_LOG_THIS")
+                .body(Body::from(r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"PRIVATE_PROMPT"}]}"#)).unwrap()).await.unwrap();
+            let events = logs.events();
+            let event = events.last().unwrap();
+            assert_eq!(
+                event["span"]["generation_id"],
+                response.headers()[GENERATION_ID_HEADER].to_str().unwrap()
+            );
+            for (key, id) in [
+                ("organization_id", crate::test_support::ORGANIZATION_ID),
+                ("workspace_id", crate::test_support::WORKSPACE_ID),
+                ("api_key_id", crate::test_support::API_KEY_ID),
+            ] {
+                if authenticated {
+                    assert_eq!(event["span"][key], id.to_string());
+                } else {
+                    assert!(event["span"].get(key).is_none());
+                }
+            }
+            assert!(!serde_json::to_string(&events)
+                .unwrap()
+                .contains("DO_NOT_LOG_THIS"));
+            assert!(!serde_json::to_string(&events)
+                .unwrap()
+                .contains("PRIVATE_PROMPT"));
+        }
     }
 }
 

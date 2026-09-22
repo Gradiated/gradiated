@@ -255,6 +255,17 @@ impl RequestCoordinator {
         let identity = authenticate_credential(credential, received_at)
             .map_err(|_| GatewayError::InvalidApiKey)?;
 
+        tracing::Span::current()
+            .record(
+                "organization_id",
+                tracing::field::display(identity.organization_id),
+            )
+            .record(
+                "workspace_id",
+                tracing::field::display(identity.workspace_id),
+            )
+            .record("api_key_id", tracing::field::display(identity.api_key_id));
+
         let workspace = self
             .serving_state
             .workspace(identity.workspace_id)

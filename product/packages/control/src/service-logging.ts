@@ -1,7 +1,13 @@
 /** Backend diagnostics contain stable codes and stack locations, never raw error
- * messages, request bodies, headers, query strings, or customer identities. */
+ * messages, request bodies, headers, query strings, or customer names/emails.
+ * UUID resource identifiers are allowed. */
 export type ServiceLogFields = {
   request_id?: string;
+  organization_id?: string | undefined;
+  workspace_id?: string | undefined;
+  api_key_id?: string | undefined;
+  user_id?: string | undefined;
+  context_source?: "authenticated_session_requested_resource";
   method?: string;
   route?: string;
   status?: number;
@@ -27,9 +33,12 @@ export const createServiceLogger = (
   write: (line: string) => void = (line) => console.log(line),
   now: () => number = Date.now,
 ) => {
-  let windowStart = now();
-  let emitted = 0;
-  let suppressed = 0;
+  const start = now();
+  const budgets = {
+    info: { windowStart: start, emitted: 0, suppressed: 0 },
+    warn: { windowStart: start, emitted: 0, suppressed: 0 },
+    error: { windowStart: start, emitted: 0, suppressed: 0 },
+  };
 
   return (
     level: "info" | "warn" | "error",
@@ -37,15 +46,16 @@ export const createServiceLogger = (
     fields: ServiceLogFields = {},
   ): void => {
     const timestamp = now();
-    if (timestamp - windowStart >= 1_000) {
-      windowStart = timestamp;
-      emitted = 0;
+    const budget = budgets[level];
+    if (timestamp - budget.windowStart >= 1_000) {
+      budget.windowStart = timestamp;
+      budget.emitted = 0;
     }
-    if (emitted >= 10) {
-      suppressed += 1;
+    if (budget.emitted >= 10) {
+      budget.suppressed += 1;
       return;
     }
-    emitted += 1;
+    budget.emitted += 1;
 
     const safe: Record<string, string | number | string[] | undefined> = {};
     for (const key of [
@@ -66,9 +76,24 @@ export const createServiceLogger = (
     ] as const) {
       if (Number.isFinite(fields[key])) safe[key] = fields[key];
     }
-    if (fields.request_id && /^[0-9a-f-]{36}$/i.test(fields.request_id)) {
-      safe.request_id = fields.request_id;
+    for (const key of [
+      "request_id",
+      "organization_id",
+      "workspace_id",
+      "api_key_id",
+      "user_id",
+    ] as const) {
+      const value = fields[key];
+      if (
+        typeof value === "string" &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          value,
+        )
+      )
+        safe[key] = value;
     }
+    if (fields.context_source === "authenticated_session_requested_resource")
+      safe.context_source = fields.context_source;
     if (fields.error !== undefined) {
       safe.error_type =
         fields.error instanceof Error
@@ -90,9 +115,9 @@ export const createServiceLogger = (
         level,
         event,
         ...safe,
-        suppressed_events: suppressed,
+        suppressed_events: budget.suppressed,
       }),
     );
-    suppressed = 0;
+    budget.suppressed = 0;
   };
 };

@@ -28,6 +28,10 @@ RUN apt-get update \
 
 COPY --from=build /app/target/release/gradiated-gateway /usr/local/bin/gradiated-gateway
 
+# Amazon RDS roots its certificate chain in its own authority, which the system
+# trust store does not hold, so a managed instance cannot be verified without it.
+COPY rds-ca-bundle.pem /etc/gradiated/rds-ca-bundle.pem
+
 USER 65532:65532
 
 ENTRYPOINT ["gradiated-gateway"]

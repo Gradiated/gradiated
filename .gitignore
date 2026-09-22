@@ -5,6 +5,9 @@
 mise.local.toml
 mise.*.local.toml
 *.pem
+# Amazon's published RDS certificate authorities. Public certificates with no
+# private key, and the gateway cannot verify a managed database without them.
+!product/services/gateway/rds-ca-bundle.pem
 *.key
 *.p12
 *.token

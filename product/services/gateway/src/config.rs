@@ -71,6 +71,10 @@ pub struct GatewayConfig {
     pub proxy_max_in_flight: u64,
     /// The authoritative store for identity and the model catalog.
     pub database_url: String,
+    /// Extra certificate authorities to trust for the database connection. Amazon
+    /// RDS roots its chain in its own authority, which no host trust store holds,
+    /// so a managed instance cannot be verified without this.
+    pub database_ca_bundle_path: Option<String>,
     /// How long Valkey may serve a cached identity or catalog record. It bounds the
     /// delay before a revoked key, a suspended organization, an archived workspace
     /// or a catalog change takes effect.
@@ -102,6 +106,7 @@ impl GatewayConfig {
             balance_per_concurrency_slot_nano_usd: default_balance_per_concurrency_slot_nano_usd(),
             settlement_backlog_limit: 100_000,
             database_url: "postgres://127.0.0.1:5432/gradiated".to_owned(),
+            database_ca_bundle_path: None,
             record_cache_ttl_seconds: default_record_cache_ttl_seconds(),
             proxy_anthropic_origin: default_anthropic_origin(),
             proxy_connect_timeout_seconds: default_proxy_connect_timeout_seconds(),

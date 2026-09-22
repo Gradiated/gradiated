@@ -14,7 +14,8 @@ use crate::domain::{GatewayCredential, GatewayModel, GatewayWorkspace};
 const LOCAL_URL: &str = "postgres://gradiated:gradiated@127.0.0.1:5432/gradiated?sslmode=disable";
 
 fn local_reader() -> PostgresReader {
-    PostgresReader::connect(LOCAL_URL).expect("the local connection string should build a pool")
+    PostgresReader::connect(LOCAL_URL, None)
+        .expect("the local connection string should build a pool")
 }
 
 #[tokio::test]
@@ -106,7 +107,7 @@ fn a_verify_full_connection_string_is_accepted() {
         "postgres://u:p@127.0.0.1:5432/gradiated?sslmode=disable",
     ] {
         assert!(
-            PostgresReader::connect(url).is_ok(),
+            PostgresReader::connect(url, None).is_ok(),
             "{url} should build a pool"
         );
     }

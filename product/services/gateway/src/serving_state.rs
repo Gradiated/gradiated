@@ -691,7 +691,7 @@ mod tests {
     async fn local_cluster() -> ValkeyServingState {
         ValkeyServingState::connect(
             "redis://127.0.0.1:6379",
-            PostgresReader::connect("postgres://127.0.0.1:5432/gradiated?sslmode=disable")
+            PostgresReader::connect("postgres://127.0.0.1:5432/gradiated?sslmode=disable", None)
                 .expect("a connection string without a server should build a pool"),
             Duration::from_secs(15),
         )

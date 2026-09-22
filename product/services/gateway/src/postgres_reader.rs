@@ -116,14 +116,14 @@ where organizations.id = $1";
 impl PostgresReader {
     /// Uses TLS unless the connection string opts out, which only a local
     /// PostgreSQL without TLS does.
-    pub fn connect(url: &str) -> Result<Self, PostgresError> {
+    pub fn connect(url: &str, ca_bundle_path: Option<&str>) -> Result<Self, PostgresError> {
         let url = &translated_ssl_mode(url);
         let config = Config::from_str(url)?;
         let manager_config = ManagerConfig {
             recycling_method: RecyclingMethod::Fast,
         };
         let manager = if requires_tls(url) {
-            let tls = MakeRustlsConnect::new(tls_config()?);
+            let tls = MakeRustlsConnect::new(tls_config(ca_bundle_path)?);
             Manager::from_config(config, tls, manager_config)
         } else {
             Manager::from_config(config, NoTls, manager_config)
@@ -263,14 +263,33 @@ fn requires_tls(url: &str) -> bool {
 
 /// Names the provider rather than reading the process-level default, so this does
 /// not depend on something else having installed one first. Rustls verifies the
-/// chain against the host's roots and checks the hostname, which is what the
-/// connection strings' `verify-full` asks for.
-fn tls_config() -> Result<ClientConfig, PostgresError> {
+/// chain against these roots and checks the hostname, which is what the connection
+/// strings' `verify-full` asks for.
+///
+/// Amazon RDS presents a chain that roots in its own certificate authority, which
+/// is not in a host's trust store, so `ca_bundle_path` supplies it. Without it a
+/// managed instance cannot be verified at all, only trusted blindly.
+fn tls_config(ca_bundle_path: Option<&str>) -> Result<ClientConfig, PostgresError> {
     let mut roots = rustls::RootCertStore::empty();
     for certificate in rustls_native_certs::load_native_certs().certs {
         roots
             .add(certificate)
             .map_err(|error| PostgresError::Tls(error.to_string()))?;
+    }
+
+    if let Some(path) = ca_bundle_path {
+        let bundle =
+            std::fs::read(path).map_err(|error| PostgresError::Tls(format!("{path}: {error}")))?;
+        let mut added = 0;
+        for certificate in rustls_pemfile::certs(&mut bundle.as_slice()) {
+            roots
+                .add(certificate.map_err(|error| PostgresError::Tls(error.to_string()))?)
+                .map_err(|error| PostgresError::Tls(error.to_string()))?;
+            added += 1;
+        }
+        if added == 0 {
+            return Err(PostgresError::Tls(format!("{path} holds no certificate")));
+        }
     }
 
     ClientConfig::builder_with_provider(Arc::new(rustls::crypto::aws_lc_rs::default_provider()))

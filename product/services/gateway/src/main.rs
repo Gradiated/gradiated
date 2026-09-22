@@ -27,7 +27,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = GatewayConfig::from_environment()?;
     let natural_drain_timeout =
         Duration::from_secs(config.generation_timeout_seconds).saturating_add(NATURAL_DRAIN_BUFFER);
-    let database = PostgresReader::connect(&config.database_url)?;
+    let database = PostgresReader::connect(
+        &config.database_url,
+        config.database_ca_bundle_path.as_deref(),
+    )?;
     database.ping().await?;
     let record_cache_ttl = config.record_cache_ttl();
     let serving_state = Arc::new(match config.valkey_iam() {

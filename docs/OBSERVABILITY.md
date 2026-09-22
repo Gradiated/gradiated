@@ -12,7 +12,7 @@ prompt, or completion labels.
 | Service        | Signal source                          | Important signals                                                                                                                                                            | Dashboard                      |
 | -------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
 | API            | private `:9464/metrics` Service port   | request rate/status/route, latency, in-flight work, sizes, exceptions, PostgreSQL/Valkey readiness, Node process/GC/event loop                                               | `Gradiated / API`              |
-| Worker         | private `:9464/metrics` PodMonitor     | loop up/ready/failures/restarts/progress, pass latency, ingestion throughput/backlog/age, settlement lag, projected object counts, Node process/GC/event loop                | `Gradiated / Worker`           |
+| Worker         | private `:9464/metrics` PodMonitor     | loop up/ready/failures/restarts/progress, pass latency, ingestion throughput/backlog/age, settlement lag, Node process/GC/event loop                | `Gradiated / Worker`           |
 | Gateway        | private in-cluster `/metrics`          | request outcomes, admission/rejection, active and terminal generations, tokens/charges, dispatch/runtime/TTFT/TPOT/throughput, finalization, Valkey/catalog readiness | `Gradiated / Gateway`          |
 | SGLang runtime | gateway deployment-scoped observations | active work, terminal outcomes, runtime latency, TTFT, TPOT, per-request output throughput                                                                        | `Gradiated / SGLang Runtime`   |
 | Console        | external HTTPS blackbox probe          | end-to-end availability, HTTP status, DNS/TLS/request phases, response size, certificate expiry                                                                              | `Gradiated / Console`          |
@@ -22,6 +22,30 @@ prompt, or completion labels.
 The API and worker metrics listeners are not attached to an HTTPRoute. The
 gateway public route accepts only inference paths. Its health and metrics
 routes remain private even though they share the in-cluster HTTP port.
+
+## Dashboards and diagnostic logs
+
+Gateway and runtime dashboards filter by model and deployment and show input,
+cached-input, cache-write, output and reasoning tokens, token sizes, input cache
+hit ratio, TTFT, latency, throughput and active generations. Cached input is a
+subset of input; reasoning is a subset of output. Do not sum overlapping token
+categories. Range totals use Prometheus counter estimates, not billing records.
+Idle periods show no observation rather than a fabricated successful rate.
+
+Service dashboards link to Production Logs with service and time filters. The
+Correlation ID field accepts a request or generation UUID; correlation stays in
+the log body, never a metric or indexed Loki label. API/worker diagnostics use
+structured levels, stable event names, error codes and stack locations; omit raw
+exception messages, request bodies, query strings, headers and identities.
+API logs failures, slow requests (>1s), dependency transitions and lifecycle;
+worker logs loop lifecycle/failures. Their log budget is ten events/second per
+process, with suppressed counts on the next emitted event; metrics remain
+unsampled. Gateway terminal events include generation UUID, token categories,
+outcome and timing, before billing finalization. Finalization errors are separate.
+
+Loki has verified EKS collection; external Runpod runtime collection is not yet
+connected. The runtime dashboard links to gateway diagnostics and must not be
+interpreted as proof that GPU/engine logs or engine-internal metrics are present.
 
 ## Alert coverage
 
@@ -52,9 +76,10 @@ never enter Git.
 informational alerts, not a service failure. `Watchdog`, `InfoInhibitor`, and
 `info`/`none` severity alerts go to a null receiver. Unknown severities retain
 the incident receiver so a mislabeled failure is not silently discarded.
+Fast API/gateway outage pages suppress their slower service-wide ratio pages.
 Same-alert critical/warning inhibition is scoped to the affected resource. Alert runbook links
 and local alert runbook procedures are omitted. Product and logging alerts carry
-a `dashboard_url` and a `panel_url` linking to the relevant provisioned Grafana
+a `logs_url`, a `dashboard_url` and a `panel_url` linking to the relevant provisioned Grafana
 dashboard and diagnostic chart. Every new alert must include a relevant chart
 on its service dashboard, show its underlying signal and threshold/window, and
 link directly to that panel. Keep missing telemetry distinguishable from health.
@@ -68,7 +93,8 @@ history to refine them.
 
 ## Alert selection
 
-There are 37 custom alerts: 32 service alerts and five logging alerts. Retain
+There are 40 custom alerts: 32 service alerts, five logging alerts and three
+platform-controller warnings. Retain
 alerts for customer impact, lost progress/data, billing integrity, lost telemetry,
 or sustained loss of redundancy. Metabase failures are warnings because they
 impact internal analytics rather than the customer serving path.
@@ -112,11 +138,11 @@ of seconds). Range windows and `for` durations are not interchangeable.
 | Sustained API / gateway / generation errors | >5% / >2% / >5%, for 5m | Persistent partial failure. Minimum rate gates prevent isolated samples from defining a service-wide incident. API health probes are excluded. |
 | Severe API / gateway / generation errors | >=50% and >=5 failures over 2m, for 1m | Fast outage path without paging on one failed request; generation failures evaluated per deployment. |
 | Worker loop down / unready / failing | 2m / 5m / >2 failures in 10m for 1m | Distinguishes outages, startup gates, and repeated supervisor failures. |
-| Worker progress stalled | No successful pass for 3m, then 2m confirmation | Normal ingestion/settlement/projector cycles are 5/10/30 seconds. Settlement checks only the leader. |
+| Worker progress stalled | No successful pass for 3m, then 2m confirmation | Normal ingestion/settlement cycles are 5/10 seconds. Settlement checks only the leader. |
 | No settlement leader | All instrumented workers report no leader for 2m | A live standby is not proof that billing is running. Gate on all workers reporting leadership to avoid false alerts during the initial mixed-version rollout. |
 | Ingestion pending | Oldest pending event >5m for 1m | Far beyond the 30s reclaim interval; roughly 6m to detect a continuously aging pending event. |
 | Eligible settlement backlog | >5m overdue for 2m | Lag excludes the five-minute slot duration and intentional ten-minute settlement delay. Only fully ingested, eligible slots count. Idle/caught-up passes report zero, even when the pass hit its batch limit. |
-| Finalization failure / settlement backpressure | Any observed counter increase; no hold | Billing uncertainty and deliberate admission refusal are actionable immediately. First-sample limitation below remains. |
+| Finalization failure / settlement backpressure | Last event within 5m or observed counter increase; no hold | Billing uncertainty and deliberate admission refusal are actionable immediately. Zero-initialized timestamp gauges detect the first event even without a prior counter scrape. |
 | API latency / first token | p95 >1s / >10s for 10m | Sustained performance warnings, with traffic gates. These are not contractual SLOs. |
 | Generation progress | Active work and no completions in 10m, for 5m, per deployment | Detects loss of terminal progress; not a per-request deadline monitor. |
 | Certificate expiry | <14 days for 1h | Allows time to repair managed certificate renewal. |
@@ -137,11 +163,11 @@ absence of separate vendor-managed notifications outside the inspected systems.
 | --- | --- | --- |
 | Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules | Watchdog is discarded and both servers have one replica. A cluster/monitoring outage can disable its own alarm. Configure an independently hosted heartbeat receiver and verify missing-heartbeat paging and delivery end to end; then assess HA placement. |
 | Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
-| Billing-integrity events — highest priority | Immediate finalization/backpressure rules; leader-aware worker progress and eligible backlog | Gateway error counter families are created lazily. `increase()` can miss an event already present in the first sample. Add a service-wide last-failure timestamp or durable event signal and test first-event/restart behavior. The current alert expression alone does not guarantee single-event detection. |
+| Billing-integrity events | Immediate finalization/backpressure rules with first-event timestamp gauges; leader-aware worker progress and eligible backlog | Timestamp gauges cover first-sample events, but a process that dies before any subsequent scrape can still lose in-memory evidence. Durable billing records remain the accounting authority. |
 | PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has seven-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |
 | ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained seven days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
 | Nomad / GPU runtimes | Three Nomad servers and Kubernetes replica/rollout checks; gateway observes generation outcomes | No Nomad or GPU/runtime scrape target was present. Add leader/quorum, unhealthy allocations, missing clients, GPU errors and runtime readiness per serving deployment. Nomad documentation also leaves snapshot/restore checks, certificate renewal and quorum alerts as follow-up. Pod readiness is not proof of runtime health or spare serving capacity. |
-| Deployment, DNS, load balancers and secrets | Kubernetes defaults catch pod/rollout/node/storage failures; public probes catch eventual impact | No application-level scrape targets for Argo CD, External Secrets, ExternalDNS or the ALB controller. Add prolonged sync failures/degraded applications, failed secret refresh, DNS reconciliation and ALB unhealthy-target/5xx coverage. Running controller pods do not prove successful reconciliation. |
+| Deployment, DNS, load balancers and secrets | Kubernetes defaults, public probes and direct controller scrapes. Three warnings cover Argo degraded/failed automatic reconciliation (15m), External Secret not ready (10m), and DNS last successful sync >10m for 5m. Controller dashboard includes ALB reconciliation failures/latency. | ALB target health and load-balancer-generated errors still need direct AWS telemetry; edge request metrics only see requests that reach the gateway. Manual-sync application drift is intentionally excluded. |
 | Recovery | RDS/Valkey backup retention configured; ClickHouse backup policy in Terraform | Backup policy is not restore proof. Verify backup freshness and perform bounded restore/failover exercises with measured recovery time and data loss. Do not claim these were tested by this alert review. |
 | Internal analytics | Metabase endpoint and replica warnings; its RDS has backups and deletion protection | Metabase RDS and application are single-instance; accept that recovery tradeoff explicitly or add redundancy. |
 

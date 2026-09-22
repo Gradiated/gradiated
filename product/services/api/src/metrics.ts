@@ -8,6 +8,7 @@ import {
   Registry,
 } from "prom-client";
 
+import { serviceLog } from "./logging.js";
 import type { ApiEnvironment } from "./types.js";
 
 const durationBuckets = [
@@ -29,6 +30,7 @@ const parseContentLength = (value: string | null): number | null => {
 export class ApiMetrics {
   readonly registry = new Registry();
 
+  private readonly previousDependencies = new Map<string, string>();
   private readonly dependencyReady: Gauge<"dependency">;
   private readonly httpDuration: Histogram<"method" | "route" | "status_class">;
   private readonly httpExceptions: Counter<"method" | "route">;
@@ -123,6 +125,15 @@ export class ApiMetrics {
         elapsedSeconds,
       );
       this.httpInFlight.dec({ method });
+      if (!route.startsWith("/health/") && elapsedSeconds > 1) {
+        serviceLog("warn", "slow_request", {
+          request_id: context.get("requestId"),
+          method,
+          route,
+          status: Number(status),
+          duration_ms: Math.round(elapsedSeconds * 1_000),
+        });
+      }
 
       const requestSize = parseContentLength(
         context.req.header("content-length") ?? null,
@@ -141,6 +152,18 @@ export class ApiMetrics {
 
   recordDependencies(checks: Record<string, "up" | "down">): void {
     for (const [dependency, status] of Object.entries(checks)) {
+      const previous = this.previousDependencies.get(dependency);
+      if (
+        previous !== status &&
+        (previous !== undefined || status === "down")
+      ) {
+        serviceLog(
+          status === "down" ? "error" : "info",
+          status === "down" ? "dependency_down" : "dependency_recovered",
+          { dependency },
+        );
+      }
+      this.previousDependencies.set(dependency, status);
       this.dependencyReady.set({ dependency }, status === "up" ? 1 : 0);
     }
   }

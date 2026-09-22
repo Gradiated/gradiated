@@ -26,7 +26,7 @@ def main():
         parser.error('promtool is required')
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules']}
     for name, rule in alerts.items():
@@ -39,6 +39,7 @@ def main():
         assert any(p['id'] == panel_id and p.get('targets')
                    for p in dashboard['panels']), name
         assert not annotations.get('runbook_url'), name
+        assert annotations['logs_url'].startswith('https://grafana.gradiated.com/d/gradiated-logs?'), name
 
     # Validate actual chart expressions as recording rules, substituting dashboard variables.
     chart_rules = []
@@ -50,7 +51,7 @@ def main():
                 continue
             for target in panel.get('targets', []):
                 expr = target['expr'].replace('$__rate_interval', '5m')
-                expr = expr.replace('$deployment', '.*')
+                expr = expr.replace('$deployment', '.*').replace('$model', '.*').replace('$__range', '1h')
                 assert '$' not in expr, expr
                 chart_rules.append({'record': f'check:panel_{len(chart_rules)}', 'expr': expr})
 
@@ -178,6 +179,39 @@ def main():
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="leader",loop="settlement"}', 'values': '0+0x30'},
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="standby",loop="settlement"}', 'values': '0+30x30'},
     ], 'GradiatedWorkerLoopStalled', ['GradiatedWorkerLoopStalled'], {'loop': 'settlement'})
+
+    for alert, metric in [
+        ('GradiatedGatewayFinalizationFailure', 'gradiated_gateway_last_finalization_failure_timestamp_seconds'),
+        ('GradiatedSettlementBackpressure', 'gradiated_gateway_last_settlement_backpressure_timestamp_seconds'),
+    ]:
+        for name, values, eval_time, fires in [
+            ('first event before first scrape', '60+0x30', '2m', True),
+            ('no prior event', '0+0x30', '2m', False),
+            ('event ages out', '60+0x30', '8m', False),
+            ('new process has no inherited event', '0+0x30', '8m', False),
+        ]:
+            scenario(alert + ': ' + name, [{'series': metric, 'values': values}],
+                     alert if fires else None, [alert], eval_time=eval_time)
+
+    app_alert = 'GradiatedApplicationReconciliationFailed'
+    for name, health, sync, auto, fires in [
+        ('healthy', 'Healthy', 'Synced', 'true', False),
+        ('degraded', 'Degraded', 'Synced', 'true', True),
+        ('automatic sync stalled', 'Healthy', 'OutOfSync', 'true', True),
+        ('intentional manual drift', 'Healthy', 'OutOfSync', 'false', False),
+    ]:
+        inputs = [{'series': f'argocd_app_info{{name="api",health_status="{health}",sync_status="{sync}",autosync_enabled="{auto}"}}', 'values': '1+0x40'}]
+        scenario('Argo ' + name, inputs, app_alert if fires else None, [app_alert], {'name': 'api'}, '16m')
+    scenario('ordinary deployment converges before warning', [
+        {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="OutOfSync",autosync_enabled="true"}', 'values': '1+0x8 stale'},
+        {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
+    ], None, [app_alert], eval_time='16m')
+    secret_alert = 'GradiatedSecretRefreshFailed'
+    for name, values, fires in [('ready', '1+0x40', False), ('not ready', '0+0x40', True), ('brief refresh error', '1+0x8 0+0x3 1+0x28', False)]:
+        scenario('Secret ' + name, [{'series': 'externalsecret_status_condition{exported_namespace="gradiated",name="api",condition="Ready",status="True"}', 'values': values}], secret_alert if fires else None, [secret_alert], {'exported_namespace': 'gradiated', 'name': 'api'}, '16m')
+    dns_alert = 'GradiatedDnsSyncStalled'
+    for name, values, fires in [('syncing', '0+30x40', False), ('stalled', '0+0x40', True), ('recovered', '0+0x24 750+30x15', False)]:
+        scenario('DNS ' + name, [{'series': 'external_dns_controller_last_sync_timestamp_seconds', 'values': values}], dns_alert if fires else None, [dns_alert], eval_time='16m')
 
     with tempfile.TemporaryDirectory(prefix='observability-check-') as directory:
         temp = Path(directory)

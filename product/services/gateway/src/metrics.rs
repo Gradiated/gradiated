@@ -41,6 +41,8 @@ struct Metrics {
     finalization_retries: CounterFamily<GenerationLabels>,
     finalization_failures: CounterFamily<GenerationLabels>,
     dependency_ready: GaugeFamily<DependencyLabels>,
+    last_finalization_failure_timestamp_seconds: Gauge,
+    last_settlement_backpressure_timestamp_seconds: Gauge,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
@@ -138,6 +140,18 @@ impl GatewayMetrics {
         let finalization_retries = CounterFamily::default();
         let finalization_failures = CounterFamily::default();
         let dependency_ready = GaugeFamily::default();
+        let last_finalization_failure_timestamp_seconds = Gauge::default();
+        let last_settlement_backpressure_timestamp_seconds = Gauge::default();
+        registry.register(
+            "last_finalization_failure_timestamp_seconds",
+            "Unix timestamp of the latest unconfirmed finalization; zero before any failure.",
+            last_finalization_failure_timestamp_seconds.clone(),
+        );
+        registry.register(
+            "last_settlement_backpressure_timestamp_seconds",
+            "Unix timestamp of the latest admission refused for settlement backlog; zero before any refusal.",
+            last_settlement_backpressure_timestamp_seconds.clone(),
+        );
 
         registry.register(
             "http_requests",
@@ -259,6 +273,8 @@ impl GatewayMetrics {
                 finalization_retries,
                 finalization_failures,
                 dependency_ready,
+                last_finalization_failure_timestamp_seconds,
+                last_settlement_backpressure_timestamp_seconds,
             }),
         }
     }
@@ -283,6 +299,11 @@ impl GatewayMetrics {
         service_tier: ServiceTier,
         error: &AdmissionError,
     ) {
+        if matches!(error, AdmissionError::SettlementBacklog) {
+            self.inner
+                .last_settlement_backpressure_timestamp_seconds
+                .set(Utc::now().timestamp());
+        }
         let labels = generation_labels(model, deployment, protocol, stream, service_tier);
         self.inner
             .admission_rejections
@@ -334,6 +355,7 @@ impl AdmittedGenerationMetrics {
     #[allow(clippy::too_many_arguments)]
     pub fn record_terminal(
         &self,
+        generation_id: Uuid,
         status: &'static str,
         error: &'static str,
         cancellation_owner: &'static str,
@@ -344,6 +366,25 @@ impl AdmittedGenerationMetrics {
         first_token_at: Option<DateTime<Utc>>,
         completed_at: DateTime<Utc>,
     ) {
+        tracing::info!(
+            %generation_id,
+            model = %self.labels.model,
+            deployment = %self.labels.deployment,
+            protocol = %self.labels.protocol,
+            stream = %self.labels.stream,
+            service_tier = %self.labels.service_tier,
+            status, error_code = error, cancellation_owner,
+            input_tokens = usage.input_tokens(),
+            cached_input_tokens = usage.cached_input_tokens(),
+            cache_write_tokens = usage.cache_write_tokens(),
+            output_tokens = usage.output_tokens(),
+            reasoning_tokens = usage.reasoning_tokens(),
+            duration_ms = seconds_between(received_at, completed_at) * 1000.0,
+            runtime_ms = seconds_between(started_at, completed_at) * 1000.0,
+            ttft_ms = first_token_at.map(|first| seconds_between(received_at, first) * 1000.0),
+            event = "generation_terminal",
+            "generation reached terminal state; billing finalization follows"
+        );
         self.metrics
             .inner
             .generations
@@ -465,6 +506,10 @@ impl AdmittedGenerationMetrics {
     }
 
     pub fn record_finalization_failure(&self) {
+        self.metrics
+            .inner
+            .last_finalization_failure_timestamp_seconds
+            .set(Utc::now().timestamp());
         self.metrics
             .inner
             .finalization_failures
@@ -596,6 +641,7 @@ mod tests {
         );
         let received_at = Utc.with_ymd_and_hms(2026, 8, 20, 12, 0, 0).unwrap();
         generation.record_terminal(
+            Uuid::from_u128(1),
             "succeeded",
             "none",
             "none",
@@ -625,5 +671,106 @@ mod tests {
         assert!(!body.contains("workspace"));
         assert!(!body.contains("api_key=\""));
         assert!(!body.contains("generation_id=\""));
+    }
+    #[test]
+    fn retains_first_integrity_event_without_a_prior_scrape() {
+        let metrics = GatewayMetrics::new();
+        assert!(metrics
+            .encode()
+            .contains("gradiated_gateway_last_finalization_failure_timestamp_seconds 0"));
+        let generation = metrics.generation_admitted(
+            "test",
+            Uuid::from_u128(1),
+            "openai",
+            false,
+            ServiceTier::Fast,
+        );
+        generation.record_finalization_failure();
+        assert!(
+            metrics
+                .inner
+                .last_finalization_failure_timestamp_seconds
+                .get()
+                > 0
+        );
+        metrics.record_admission_rejection(
+            "test",
+            Uuid::from_u128(1),
+            "openai",
+            false,
+            ServiceTier::Fast,
+            &AdmissionError::SettlementBacklog,
+        );
+        assert!(
+            metrics
+                .inner
+                .last_settlement_backpressure_timestamp_seconds
+                .get()
+                > 0
+        );
+        let restarted = GatewayMetrics::new();
+        assert_eq!(
+            restarted
+                .inner
+                .last_finalization_failure_timestamp_seconds
+                .get(),
+            0
+        );
+    }
+
+    #[test]
+    fn terminal_log_and_metrics_preserve_token_categories_without_payloads() {
+        let logs = crate::diagnostics::capture::Logs::default();
+        let _guard = logs.start();
+        let metrics = GatewayMetrics::new();
+        let generation = metrics.generation_admitted(
+            "model-a",
+            Uuid::from_u128(2),
+            "openai",
+            true,
+            ServiceTier::Fast,
+        );
+        let start = Utc::now();
+        generation.record_terminal(
+            Uuid::from_u128(1),
+            "succeeded",
+            "none",
+            "none",
+            NormalizedUsage::new(100, 20, 7, 10, 3).unwrap(),
+            100,
+            start,
+            start,
+            Some(start + chrono::TimeDelta::milliseconds(100)),
+            start + chrono::TimeDelta::seconds(1),
+        );
+        let events = logs.events();
+        let fields = &events[0]["fields"];
+        assert_eq!(fields["event"], "generation_terminal");
+        assert_eq!(fields["generation_id"], Uuid::from_u128(1).to_string());
+        for (field, expected) in [
+            ("input_tokens", 100),
+            ("cached_input_tokens", 20),
+            ("cache_write_tokens", 7),
+            ("output_tokens", 10),
+            ("reasoning_tokens", 3),
+        ] {
+            assert_eq!(fields[field], expected);
+        }
+        assert!(fields.get("prompt").is_none());
+        assert!(fields.get("completion").is_none());
+        let body = metrics.encode();
+        for (kind, value) in [
+            ("input", 100),
+            ("cached_input", 20),
+            ("cache_write", 7),
+            ("output", 10),
+            ("reasoning", 3),
+        ] {
+            assert!(body
+                .lines()
+                .any(|line| line.starts_with("gradiated_gateway_tokens_total{")
+                    && line.contains(&format!("kind=\"{kind}\""))
+                    && line.ends_with(&format!(" {value}"))));
+        }
     }
 }

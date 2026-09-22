@@ -1073,6 +1073,7 @@ impl GenerationSettlement {
         )
         .map_err(|_| GatewayError::RuntimeUnavailable)?;
         self.metrics.record_terminal(
+            self.generation_id,
             metric_status,
             metric_error,
             metric_cancellation_owner,

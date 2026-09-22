@@ -83,3 +83,8 @@ export {
   type UsageService,
   type UsageSummaryRecord,
 } from "./usage/service.js";
+
+export {
+  createServiceLogger,
+  type ServiceLogFields,
+} from "./service-logging.js";

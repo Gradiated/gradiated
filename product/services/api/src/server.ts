@@ -12,6 +12,7 @@ import {
   createWaitlistService,
   parseClickHouseRuntimeEnvironment,
 } from "@gradiated/control";
+import { serviceLog } from "./logging.js";
 import { createApp } from "./app.js";
 import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createAuthService, resolveAuthTrustedOrigins } from "./auth.js";
@@ -44,7 +45,9 @@ const clickhouse = createClickHouseRuntimeClient(
   parseClickHouseRuntimeEnvironment(process.env),
 );
 const valkey = createValkeyClient(environment);
-valkey.on("error", (error) => console.error("Valkey client error", error));
+valkey.on("error", (error) =>
+  serviceLog("error", "dependency_error", { dependency: "valkey", error }),
+);
 await valkey.connect();
 const catalogBilling = createCatalogBillingService(database);
 const organizations = createOrganizationService(database);
@@ -191,25 +194,16 @@ const privateServer = profilingToken
     })
   : undefined;
 
-console.log(
-  `Gradiated API listening on http://${environment.HOST}:${environment.PORT}`,
-);
-console.log(
-  `Gradiated API metrics listening on http://0.0.0.0:${metricsPort}/metrics`,
-);
-if (privateServer) {
-  console.log(
-    "Runtime telemetry ingestion listening on the private service port",
-  );
-}
+serviceLog("info", "api_started");
+if (privateServer) serviceLog("info", "private_telemetry_started");
 
 const shutdown = (signal: NodeJS.Signals): void => {
-  console.log(`Received ${signal}; shutting down`);
+  serviceLog("info", "api_stopping", { signal });
   metricsServer.close();
   privateServer?.close();
   server.close(async (error) => {
     if (error) {
-      console.error("API shutdown failed", error);
+      serviceLog("error", "api_shutdown_failed", { error });
       process.exitCode = 1;
     }
     if (valkey.isOpen) await valkey.quit();

@@ -1,6 +1,7 @@
 import { COMPANY_SIZES } from "@gradiated/control";
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 
+import { serviceLog } from "../logging.js";
 import type { ApiEnvironment, ApiServices } from "../types.js";
 import type { WaitlistWelcomeSender } from "../waitlist-email.js";
 
@@ -65,9 +66,7 @@ export function registerWaitlistRoutes(
 
     if (outcome.created) {
       void sendWelcome({ email: outcome.email }).catch((error) => {
-        console.error(
-          `[waitlist] welcome email failed for a new signup: ${String(error)}`,
-        );
+        serviceLog("error", "welcome_email_failed", { error });
       });
     }
     return context.json({ status: "ok" as const }, 200);

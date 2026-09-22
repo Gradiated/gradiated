@@ -5,6 +5,7 @@ import { requestId } from "hono/request-id";
 
 import { unavailableBillingPaymentsService } from "./billing/stripe.js";
 import { problemResponse } from "./http/problem-response.js";
+import { serviceLog } from "./logging.js";
 import { ApiMetrics } from "./metrics.js";
 import { registerCatalogBillingRoutes } from "./routes/catalog-billing.js";
 import { registerHealthRoutes, type DependencyCheck } from "./routes/health.js";
@@ -210,9 +211,12 @@ export const createApp = (overrides: AppOverrides = {}) => {
   );
 
   app.onError((error, context) => {
-    console.error("Unhandled API error", {
+    serviceLog("error", "request_failed", {
       error,
       request_id: context.get("requestId"),
+      method: context.req.method,
+      route: context.req.routePath ?? "unmatched",
+      status: 500,
     });
     return problemResponse(context, {
       type: "https://gradiated.com/problems/internal",

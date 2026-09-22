@@ -9,6 +9,7 @@
     "configure:deepseek-v4-flash": "node dist/operations/configure-deepseek-v4-flash.js",
     "configure:gemma4": "node dist/operations/configure-gemma4.js",
     "configure:glm-5-3-flash": "node dist/operations/configure-glm-5-3-flash.js",
+    "configure:kev-9b": "node dist/operations/configure-kev-9b.js",
     "configure:openrouter": "node dist/operations/configure-openrouter.js",
     "dev": "tsx watch src/server.ts",
     "openapi:check": "node --import tsx scripts/generate-openapi.ts --check",

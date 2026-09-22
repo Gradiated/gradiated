@@ -33,6 +33,10 @@ export const servedReleaseDigest = (
   const canonical = {
     schema_version: release.schema_version,
     runtime_revision: release.runtime_revision,
+    // Field order and omission must match the Rust struct exactly: the gateway
+    // hashes its own serialization and reads status under the resulting key, so a
+    // field missing here sends heartbeats to a key nobody reads.
+    ...(release.protocol === undefined ? {} : { protocol: release.protocol }),
     model_path: release.model_path,
     model_revision: release.model_revision,
     ...(release.runtime_model_name === undefined

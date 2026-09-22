@@ -61,13 +61,14 @@ link directly to that panel. Keep missing telemetry distinguishable from health.
 The managed EKS control plane does not expose controller manager or scheduler
 targets. The chart disables alerts that require these targets.
 
-Thresholds are launch defaults, not measured long-term SLOs. Review them after
-the first seven days of representative traffic, retaining failure coverage
-while adjusting only thresholds that have measured evidence.
+Thresholds below are based on failure impact and configured service timing, not
+on current traffic volume. They are operational defaults, not contractual SLOs.
+Validate them with failure scenarios and service deadlines before using traffic
+history to refine them.
 
 ## Alert selection
 
-There are 33 custom alerts: 28 service alerts and five logging alerts. Retain
+There are 37 custom alerts: 32 service alerts and five logging alerts. Retain
 alerts for customer impact, lost progress/data, billing integrity, lost telemetry,
 or sustained loss of redundancy. Metabase failures are warnings because they
 impact internal analytics rather than the customer serving path.
@@ -97,19 +98,60 @@ dropped logs, delivery retries, and propagation latency.
 Healthy deployments do not create incidents; rollout failures and service
 regressions do.
 
-Coverage limits still requiring follow-up:
+## Production thresholds
 
-- Watchdog has no external heartbeat receiver. A complete monitoring/cluster
-  outage cannot report itself through this stack.
-- HTTPS probes run inside the cluster against public URLs; they do not prove
-  reachability from an independent external location or execute real inference.
-- Database, Valkey, ClickHouse, and SGLang failures are detected through service
-  readiness or downstream progress/errors; dedicated capacity and GPU health
-  coverage is not established by these rules.
-- Error-ratio alerts have minimum traffic gates; isolated failures at low
-  traffic may not alert. Per-model regressions can be hidden by aggregate rates.
-- Configuration review does not establish live scrape health or notification
-  delivery. Verify these after reconciliation; AWS SSO access is required.
+Times below exclude scrape/evaluation and notification batching (normally tens
+of seconds). Range windows and `for` durations are not interchangeable.
+
+| Failure | Threshold and confirmation | Reason |
+| --- | --- | --- |
+| Public API/console/Metabase outage | Failed probes continuously for 2m | Detect complete outages promptly while tolerating isolated failed probes. Metabase remains warning. |
+| No serving replicas | Zero available for 2m with desired replicas >0 | A complete service outage should not wait for rollout diagnostics. |
+| Missing service/probe telemetry | No samples for 2m, then 1m confirmation | Roughly 3m of blindness; independent of customer traffic. |
+| Dependency down | 2m | Tolerates brief reconnects without concealing a sustained failure. |
+| Sustained API / gateway / generation errors | >5% / >2% / >5%, for 5m | Persistent partial failure. Minimum rate gates prevent isolated samples from defining a service-wide incident. API health probes are excluded. |
+| Severe API / gateway / generation errors | >=50% and >=5 failures over 2m, for 1m | Fast outage path without paging on one failed request; generation failures evaluated per deployment. |
+| Worker loop down / unready / failing | 2m / 5m / >2 failures in 10m for 1m | Distinguishes outages, startup gates, and repeated supervisor failures. |
+| Worker progress stalled | No successful pass for 3m, then 2m confirmation | Normal ingestion/settlement/projector cycles are 5/10/30 seconds. Settlement checks only the leader. |
+| No settlement leader | All instrumented workers report no leader for 2m | A live standby is not proof that billing is running. Gate on all workers reporting leadership to avoid false alerts during the initial mixed-version rollout. |
+| Ingestion pending | Oldest pending event >5m for 1m | Far beyond the 30s reclaim interval; roughly 6m to detect a continuously aging pending event. |
+| Eligible settlement backlog | >5m overdue for 2m | Lag excludes the five-minute slot duration and intentional ten-minute settlement delay. Only fully ingested, eligible slots count. Idle/caught-up passes report zero, even when the pass hit its batch limit. |
+| Finalization failure / settlement backpressure | Any observed counter increase; no hold | Billing uncertainty and deliberate admission refusal are actionable immediately. First-sample limitation below remains. |
+| API latency / first token | p95 >1s / >10s for 10m | Sustained performance warnings, with traffic gates. These are not contractual SLOs. |
+| Generation progress | Active work and no completions in 10m, for 5m, per deployment | Detects loss of terminal progress; not a per-request deadline monitor. |
+| Certificate expiry | <14 days for 1h | Allows time to repair managed certificate renewal. |
+| Loki / collectors | <2 ready Loki replicas for 5m (critical); unavailable collector for 5m (warning) | Sustained logging availability loss. |
+| Dropped logs / retries / propagation | Any drops (warning); retries for 5m (warning); p95 propagation >30s for 5m (warning) | Ordinary log loss must be investigated, but a single dropped entry is not a customer-serving page. |
+
+## Reliability coverage review
+
+Scope: repository configuration, all loaded Prometheus alert groups and scrape
+jobs, Kubernetes workload state, and read-only AWS RDS, cache, and CloudWatch
+inventory in production/us-east-1. This is not a failover or restore exercise.
+Measured checks found no alert evaluation errors; the monitoring, Kubernetes,
+service and logging rule groups are loaded. No CloudWatch metric or composite
+alarms were configured in this account/region. This does not establish the
+absence of separate vendor-managed notifications outside the inspected systems.
+
+| Area | Existing protection | Important remaining gap and next action |
+| --- | --- | --- |
+| Monitoring and notifications — highest priority | Prometheus/Alertmanager self-monitoring and notification-failure rules | Watchdog is discarded and both servers have one replica. A cluster/monitoring outage can disable its own alarm. Configure an independently hosted heartbeat receiver and verify missing-heartbeat paging and delivery end to end; then assess HA placement. |
+| Customer serving — highest priority | Public API/console probes; gateway request, generation and dependency metrics | Probes originate inside EKS and do not authenticate or run inference. Add an external, bounded exact-model synthetic transaction validating authentication, first token, completion, and usage. It needs an authorized test account, spend limit and external scheduler. |
+| Billing-integrity events — highest priority | Immediate finalization/backpressure rules; leader-aware worker progress and eligible backlog | Gateway error counter families are created lazily. `increase()` can miss an event already present in the first sample. Add a service-wide last-failure timestamp or durable event signal and test first-event/restart behavior. The current alert expression alone does not guarantee single-event detection. |
+| PostgreSQL and Valkey | App dependency checks; primary RDS is Multi-AZ, deletion-protected, has 35-day backups and recent restorable time; cache has seven-day snapshots | No CloudWatch alarms. Add routed alarms for RDS free storage/connections/CPU credits and database availability, plus Valkey throttling, storage usage and failed requests. Cache caps are 10 GB and 5,000 ECPU/s. Dependency health alone provides no capacity lead time. |
+| ClickHouse / ingestion | Worker failures, pending age, eligible settlement backlog; Terraform specifies two replicas and daily backups retained seven days | No direct ClickHouse scrape target was present. Add query/insert failures, storage/resource saturation and backup freshness checks. Unread stream age is not measured; pending-only alerts cannot prove ingestion completeness. |
+| Nomad / GPU runtimes | Three Nomad servers and Kubernetes replica/rollout checks; gateway observes generation outcomes | No Nomad or GPU/runtime scrape target was present. Add leader/quorum, unhealthy allocations, missing clients, GPU errors and runtime readiness per serving deployment. Nomad documentation also leaves snapshot/restore checks, certificate renewal and quorum alerts as follow-up. Pod readiness is not proof of runtime health or spare serving capacity. |
+| Deployment, DNS, load balancers and secrets | Kubernetes defaults catch pod/rollout/node/storage failures; public probes catch eventual impact | No application-level scrape targets for Argo CD, External Secrets, ExternalDNS or the ALB controller. Add prolonged sync failures/degraded applications, failed secret refresh, DNS reconciliation and ALB unhealthy-target/5xx coverage. Running controller pods do not prove successful reconciliation. |
+| Recovery | RDS/Valkey backup retention configured; ClickHouse backup policy in Terraform | Backup policy is not restore proof. Verify backup freshness and perform bounded restore/failover exercises with measured recovery time and data loss. Do not claim these were tested by this alert review. |
+| Internal analytics | Metabase endpoint and replica warnings; its RDS has backups and deletion protection | Metabase RDS and application are single-instance; accept that recovery tradeoff explicitly or add redundancy. |
+
+Traffic gates intentionally ignore sparse individual failures, so the independent
+synthetic transaction is essential even before traffic grows. Aggregate latency
+and sustained-error rules can hide a single model regression; severe generation
+failures are per deployment. The generation-stall rule can miss one stuck request
+while others complete; an oldest-active-request/deadline metric is still needed.
+No automatic external provisioning, test purchases/inference, destructive fault
+injection, restore, or failover was performed during this review.
 
 ## Verification and access
 
@@ -141,7 +183,9 @@ python3 tools/observability/check.py
 ```
 
 This validates panel links and PromQL, and exercises healthy, failed, recovered,
-and missing probes plus idle, stalled, and progressing generations.
+and missing probes, fast-error thresholds, replica outages, ingestion/settlement
+delays, settlement leadership, and idle/stalled/progressing generations. Worker
+unit tests validate eligibility accounting and leadership cleanup.
 
 After a change, run the product, Rust, Kubernetes, Helm, dashboard, PromQL,
 Prometheus rule, Alertmanager, and DevEx checks that apply to the change.

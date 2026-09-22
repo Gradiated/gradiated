@@ -8,6 +8,7 @@ import {
   getUpperEligibleSlotId,
   parseSettlementSlotId,
   processSettlementPass,
+  runGenerationSettlementLoop,
   type SettlementLoopOptions,
 } from "../src/settlement-loop.js";
 
@@ -96,6 +97,7 @@ describe("generation settlement", () => {
     ).resolves.toEqual({
       nextSlotId: "20260815T123500Z-300s-v1",
       processedSlots: 0,
+      eligibleBacklogAgeSeconds: 0,
     });
     expect(reader.getOrganizationSettlements).not.toHaveBeenCalled();
   });
@@ -131,6 +133,7 @@ describe("generation settlement", () => {
     expect(result).toEqual({
       nextSlotId: "20260815T123500Z-300s-v1",
       processedSlots: 1,
+      eligibleBacklogAgeSeconds: 0,
     });
     expect(leader.getBillingOrganizationIds).toHaveBeenCalledWith([
       organizationId,
@@ -218,6 +221,59 @@ describe("generation settlement", () => {
     ).resolves.toEqual({
       nextSlotId: "20260815T123500Z-300s-v1",
       processedSlots: 1,
+      eligibleBacklogAgeSeconds: 1500,
     });
+  });
+  it("does not report backlog when a full batch catches up", async () => {
+    const result = await processSettlementPass(
+      {
+        getEarliestSlot: vi.fn(async () => slotId),
+        getOrganizationSettlements: vi.fn(async () => []),
+      },
+      leadership(),
+      ingestionProgressClient(new Date("2026-08-15T12:35:00Z")),
+      { ...options, maxSlotsPerPass: 1 },
+      new Date("2026-08-15T13:15:00Z"),
+    );
+    expect(result.processedSlots).toBe(1);
+    expect(result.eligibleBacklogAgeSeconds).toBe(0);
+  });
+
+  it("does not treat an idle stream as settlement backlog", async () => {
+    const result = await processSettlementPass(
+      {
+        getEarliestSlot: vi.fn(async () => null),
+        getOrganizationSettlements: vi.fn(async () => []),
+      },
+      leadership(),
+      ingestionProgressClient(new Date("2026-08-15T12:35:00Z")),
+      options,
+      new Date("2026-08-16T13:15:00Z"),
+    );
+    expect(result.eligibleBacklogAgeSeconds).toBe(0);
+  });
+  it("reports leadership and releases it even if readiness fails", async () => {
+    const leader = leadership();
+    const onLeadership = vi.fn();
+    await expect(
+      runGenerationSettlementLoop(
+        {
+          getEarliestSlot: vi.fn(async () => null),
+          getOrganizationSettlements: vi.fn(async () => []),
+        },
+        { tryAcquireLeadership: vi.fn(async () => leader) } as never,
+        ingestionProgressClient(new Date("2026-08-15T12:35:00Z")),
+        {
+          ...options,
+          onLeadership,
+          onReady: async () => {
+            throw new Error("readiness failed");
+          },
+        },
+        new AbortController().signal,
+      ),
+    ).rejects.toThrow("readiness failed");
+    expect(onLeadership.mock.calls).toEqual([[true], [false]]);
+    expect(leader.release).toHaveBeenCalledOnce();
   });
 });

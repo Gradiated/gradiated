@@ -10,7 +10,11 @@ describe("worker metrics", () => {
     metrics.recordIngestedMessages("new", 3);
     metrics.recordIngestionBacklog(2, 4, "0-1");
     metrics.recordOperation("generation_ingestion", "consume_pass", 0.25);
-    metrics.recordSettlementPass({ nextSlotId: null, processedSlots: 2 }, 100);
+    metrics.recordSettlementPass({
+      nextSlotId: null,
+      processedSlots: 2,
+      eligibleBacklogAgeSeconds: 0,
+    });
     metrics.recordProjection({
       accounts: 1,
       balanceTransactions: 2,
@@ -38,19 +42,43 @@ describe("worker metrics", () => {
     expect(body).not.toContain("generation_id");
   });
 
-  it("reports settlement lag only while the pass limit indicates backlog", async () => {
+  it("exports eligible backlog age and clears it when caught up", async () => {
     const metrics = new WorkerMetrics({ collectProcessMetrics: false });
-    const nextSlotId = "20260820T180000Z-300s-v1";
-    const now = new Date("2026-08-20T18:30:00Z");
-
-    metrics.recordSettlementPass({ nextSlotId, processedSlots: 2 }, 100, now);
+    metrics.recordSettlementPass({
+      nextSlotId: "20260820T180000Z-300s-v1",
+      processedSlots: 1,
+      eligibleBacklogAgeSeconds: 900,
+    });
+    expect(await metrics.render()).toContain(
+      'gradiated_worker_settlement_lag_seconds{service="worker"} 900',
+    );
+    metrics.recordSettlementPass({
+      nextSlotId: null,
+      processedSlots: 0,
+      eligibleBacklogAgeSeconds: 0,
+    });
     expect(await metrics.render()).toContain(
       'gradiated_worker_settlement_lag_seconds{service="worker"} 0',
     );
-
-    metrics.recordSettlementPass({ nextSlotId, processedSlots: 100 }, 100, now);
+  });
+  it("clears leader-only lag when leadership is released", async () => {
+    const metrics = new WorkerMetrics({ collectProcessMetrics: false });
+    metrics.setSettlementLeadership(true);
+    metrics.recordSettlementPass({
+      nextSlotId: null,
+      processedSlots: 1,
+      eligibleBacklogAgeSeconds: 600,
+    });
     expect(await metrics.render()).toContain(
-      'gradiated_worker_settlement_lag_seconds{service="worker"} 1800',
+      'gradiated_worker_settlement_leader{service="worker"} 1',
+    );
+    metrics.setSettlementLeadership(false);
+    const body = await metrics.render();
+    expect(body).toContain(
+      'gradiated_worker_settlement_leader{service="worker"} 0',
+    );
+    expect(body).toContain(
+      'gradiated_worker_settlement_lag_seconds{service="worker"} 0',
     );
   });
 });

@@ -147,11 +147,10 @@ try {
               environment.SETTLEMENT_DELAY_SECONDS * 1_000,
             stream: environment.GENERATION_STREAM_KEY,
             onReady: markSettlementReady,
+            onLeadership: (isLeader) =>
+              metrics.setSettlementLeadership(isLeader),
             onPass: (result, duration) => {
-              metrics.recordSettlementPass(
-                result,
-                environment.SETTLEMENT_MAX_SLOTS_PER_PASS,
-              );
+              metrics.recordSettlementPass(result);
               metrics.recordOperation(
                 "settlement",
                 "settlement_pass",

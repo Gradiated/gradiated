@@ -30,6 +30,7 @@ export class WorkerMetrics {
   private readonly loopUp: Gauge<"loop">;
   private readonly projectionObjects: Gauge<"kind">;
   private readonly settlementLag: Gauge;
+  private readonly settlementLeader: Gauge;
   private readonly settlementSlots: Counter;
 
   constructor(options: { collectProcessMetrics?: boolean } = {}) {
@@ -93,9 +94,15 @@ export class WorkerMetrics {
       help: "Five-minute settlement slots processed.",
       registers: [this.registry],
     });
+    this.settlementLeader = new Gauge({
+      name: "gradiated_worker_settlement_leader",
+      help: "Whether this worker currently owns settlement leadership.",
+      registers: [this.registry],
+    });
+    this.settlementLeader.set(0);
     this.settlementLag = new Gauge({
       name: "gradiated_worker_settlement_lag_seconds",
-      help: "Age of the next unsettled five-minute slot.",
+      help: "Age beyond the settlement delay of the oldest eligible unsettled slot.",
       registers: [this.registry],
     });
     this.projectionObjects = new Gauge({
@@ -160,27 +167,16 @@ export class WorkerMetrics {
     this.ingestionLag.set({ kind: "oldest_pending_age_seconds" }, ageSeconds);
   }
 
-  recordSettlementPass(
-    result: SettlementPassResult,
-    maxSlotsPerPass: number,
-    now = new Date(),
-  ): void {
+  setSettlementLeadership(isLeader: boolean): void {
+    this.settlementLeader.set(isLeader ? 1 : 0);
+    if (!isLeader) this.settlementLag.set(0);
+  }
+
+  recordSettlementPass(result: SettlementPassResult): void {
     if (result.processedSlots > 0) {
       this.settlementSlots.inc(result.processedSlots);
     }
-    const nextSlotStart = result.nextSlotId
-      ? Date.parse(
-          result.nextSlotId.replace(
-            /^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z-300s-v1$/,
-            "$1-$2-$3T$4:$5:$6Z",
-          ),
-        )
-      : Number.NaN;
-    this.settlementLag.set(
-      result.processedSlots >= maxSlotsPerPass && Number.isFinite(nextSlotStart)
-        ? Math.max(0, now.getTime() - nextSlotStart) / 1_000
-        : 0,
-    );
+    this.settlementLag.set(result.eligibleBacklogAgeSeconds);
   }
 
   recordProjection(result: ServingProjectionResult): void {

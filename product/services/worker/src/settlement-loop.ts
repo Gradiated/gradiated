@@ -14,6 +14,7 @@ const streamIdPattern = /^(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
 export type SettlementLoopOptions = {
   consumerGroup: string;
   maxSlotsPerPass: number;
+  onLeadership?: ((isLeader: boolean) => void) | undefined;
   onReady?: (() => Promise<void>) | undefined;
   onPass?:
     | ((result: SettlementPassResult, durationSeconds: number) => void)
@@ -25,6 +26,7 @@ export type SettlementLoopOptions = {
 
 export type SettlementPassResult = {
   nextSlotId: string | null;
+  eligibleBacklogAgeSeconds: number;
   processedSlots: number;
 };
 
@@ -128,7 +130,11 @@ export const processSettlementPass = async (
     options,
   );
   if (ingestionBoundary === null) {
-    return { nextSlotId: startSlotId ?? null, processedSlots: 0 };
+    return {
+      nextSlotId: startSlotId ?? null,
+      processedSlots: 0,
+      eligibleBacklogAgeSeconds: 0,
+    };
   }
   const upperSlotId = getUpperEligibleSlotId(
     now,
@@ -136,7 +142,11 @@ export const processSettlementPass = async (
     options.settlementDelayMilliseconds,
   );
   if (!upperSlotId) {
-    return { nextSlotId: startSlotId ?? null, processedSlots: 0 };
+    return {
+      nextSlotId: startSlotId ?? null,
+      processedSlots: 0,
+      eligibleBacklogAgeSeconds: 0,
+    };
   }
 
   let slotId = startSlotId;
@@ -210,6 +220,17 @@ export const processSettlementPass = async (
   return {
     nextSlotId: slotId ?? null,
     processedSlots,
+    // Only fully ingested slots past their settlement delay are overdue.
+    eligibleBacklogAgeSeconds:
+      slotId && slotId <= upperSlotId
+        ? Math.max(
+            0,
+            (now.getTime() -
+              parseSettlementSlotId(slotId).end.getTime() -
+              options.settlementDelayMilliseconds) /
+              1_000,
+          )
+        : 0,
   };
 };
 
@@ -239,12 +260,15 @@ export const runGenerationSettlementLoop = async (
 ): Promise<void> => {
   while (!signal.aborted) {
     const leadership = await store.tryAcquireLeadership();
-    await options.onReady?.();
     if (!leadership) {
+      options.onLeadership?.(false);
+      await options.onReady?.();
       await wait(options.pollMilliseconds, signal);
       continue;
     }
     try {
+      options.onLeadership?.(true);
+      await options.onReady?.();
       let nextSlotId: string | undefined;
       while (!signal.aborted) {
         const started = process.hrtime.bigint();
@@ -264,6 +288,7 @@ export const runGenerationSettlementLoop = async (
         await wait(options.pollMilliseconds, signal);
       }
     } finally {
+      options.onLeadership?.(false);
       await leadership.release();
     }
   }

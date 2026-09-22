@@ -8,7 +8,6 @@ import {
   createOrganizationService,
   createProfilingWriter,
   createUsageService,
-  createValkeyServingProjector,
   createWorkspaceApiKeyService,
   createWaitlistService,
   parseClickHouseRuntimeEnvironment,
@@ -47,9 +46,8 @@ const clickhouse = createClickHouseRuntimeClient(
 const valkey = createValkeyClient(environment);
 valkey.on("error", (error) => console.error("Valkey client error", error));
 await valkey.connect();
-const servingProjector = createValkeyServingProjector(valkey);
-const catalogBilling = createCatalogBillingService(database, servingProjector);
-const organizations = createOrganizationService(database, servingProjector);
+const catalogBilling = createCatalogBillingService(database);
+const organizations = createOrganizationService(database);
 const testMagicLinks = environment.AUTH_TEST_MODE
   ? createTestMagicLinkTransport()
   : undefined;
@@ -147,7 +145,7 @@ const app = createApp({
     catalogBilling,
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),
-    workspaces: createWorkspaceApiKeyService(database, servingProjector),
+    workspaces: createWorkspaceApiKeyService(database),
   },
 });
 if (deploymentStatusTokens.size > 0) {

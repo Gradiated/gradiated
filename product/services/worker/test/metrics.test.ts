@@ -15,13 +15,6 @@ describe("worker metrics", () => {
       processedSlots: 2,
       eligibleBacklogAgeSeconds: 0,
     });
-    metrics.recordProjection({
-      accounts: 1,
-      balanceTransactions: 2,
-      credentials: 3,
-      models: 4,
-      workspaces: 5,
-    });
 
     const body = await metrics.render();
     expect(body).toContain('gradiated_worker_service_info{service="worker"} 1');
@@ -35,9 +28,6 @@ describe("worker metrics", () => {
       'gradiated_worker_ingestion_backlog{kind="pending",service="worker"} 2',
     );
     expect(body).toContain("gradiated_worker_operation_duration_seconds_count");
-    expect(body).toContain(
-      'gradiated_worker_projection_objects{kind="models",service="worker"} 4',
-    );
     expect(body).not.toContain("organization_id");
     expect(body).not.toContain("generation_id");
   });

@@ -10,10 +10,7 @@ import {
   organizations,
   workspaces,
 } from "../db/schema/index.js";
-import type {
-  ServingProjector,
-  WorkspaceRecord,
-} from "../workspaces/service.js";
+import type { WorkspaceRecord } from "../workspaces/service.js";
 
 export interface ConfiguredDistributionChannel {
   organizationId: string;
@@ -23,7 +20,6 @@ export interface ConfiguredDistributionChannel {
 
 export async function configureOpenRouterDistributionChannel(
   database: ControlDatabase,
-  projector: ServingProjector,
   rawApiKey: string,
 ): Promise<ConfiguredDistributionChannel> {
   const digest = createHash("sha256").update(rawApiKey).digest();
@@ -158,31 +154,6 @@ export async function configureOpenRouterDistributionChannel(
     }
 
     return { organization, workspace, apiKey, billingAccount };
-  });
-
-  await projector.initializeAccount({
-    organizationId: result.organization.id,
-    organizationKind: "distribution_channel",
-    organizationStatus: result.organization.status as "active" | "suspended",
-    billingMode: "invoiced",
-    balance: result.billingAccount.balance,
-  });
-  const workspace: WorkspaceRecord = {
-    id: result.workspace.id,
-    organizationId: result.organization.id,
-    name: result.workspace.name,
-    isDefault: result.workspace.isDefault,
-    archivedAt: result.workspace.archivedAt,
-    createdAt: result.workspace.createdAt,
-    updatedAt: result.workspace.updatedAt,
-  };
-  await projector.projectWorkspace(workspace);
-  await projector.projectCredential(digest.toString("hex"), {
-    apiKeyId: result.apiKey.id,
-    organizationId: result.organization.id,
-    workspaceId: result.workspace.id,
-    expiresAt: result.apiKey.expiresAt,
-    revokedAt: null,
   });
 
   return {

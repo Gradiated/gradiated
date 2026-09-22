@@ -3,7 +3,6 @@ import { randomUUID } from "node:crypto";
 import {
   createCatalogBillingService,
   createControlDatabase,
-  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 import { expect, test as base, type BrowserContext } from "@playwright/test";
@@ -116,10 +115,7 @@ export const test = base.extend<{ account: TestAccount }>({
       const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });
       await valkey.connect();
       try {
-        const billingService = createCatalogBillingService(
-          database,
-          createValkeyServingProjector(valkey),
-        );
+        const billingService = createCatalogBillingService(database);
         // New accounts start with the signup credit; top up to an exact
         // $100.00 so billing-page assertions stay stable.
         const targetBalance = 100_000_000_000n;

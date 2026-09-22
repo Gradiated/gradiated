@@ -3,8 +3,8 @@ use std::{future::IntoFuture, sync::Arc, time::Duration};
 use axum::http::HeaderValue;
 use gradiated_gateway::{
     browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
-    ModelTokenizer, ProviderRelay, RequestCoordinator, RuntimeTlsConfig, SglangClient,
-    ValkeyServingState,
+    ModelTokenizer, PostgresReader, ProviderRelay, RequestCoordinator, RuntimeTlsConfig,
+    SglangClient, ValkeyServingState,
 };
 use tracing::{info, warn};
 use tracing_subscriber::EnvFilter;
@@ -27,9 +27,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let config = GatewayConfig::from_environment()?;
     let natural_drain_timeout =
         Duration::from_secs(config.generation_timeout_seconds).saturating_add(NATURAL_DRAIN_BUFFER);
+    let database = PostgresReader::connect(&config.database_url)?;
+    database.ping().await?;
+    let record_cache_ttl = config.record_cache_ttl();
     let serving_state = Arc::new(match config.valkey_iam() {
-        Some(iam) => ValkeyServingState::connect_with_iam(&config.valkey_url, iam).await?,
-        None => ValkeyServingState::connect(&config.valkey_url).await?,
+        Some(iam) => {
+            ValkeyServingState::connect_with_iam(
+                &config.valkey_url,
+                iam,
+                database.clone(),
+                record_cache_ttl,
+            )
+            .await?
+        }
+        None => {
+            ValkeyServingState::connect(&config.valkey_url, database.clone(), record_cache_ttl)
+                .await?
+        }
     });
     let tokenizer = ModelTokenizer::new()?;
     let runtime_tls = RuntimeTlsConfig::from_environment()?;

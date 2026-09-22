@@ -15,15 +15,27 @@ use crate::{
     cache::LazyTtlCache,
     deployment::DeploymentRuntimeStatus,
     domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace},
+    postgres_reader::{AccountRecord, PostgresError, PostgresReader},
     FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties,
 };
 use crate::{valkey_auth::ValkeyIamCredentials, ValkeyIamConfig};
 
 const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
 const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
-const ROUTING_CACHE_TTL: Duration = Duration::from_secs(1);
-/// Model and status keys come from requests, so the contract caps their count.
-const MODEL_CACHE_CAPACITY: usize = 10_000;
+const ENSURE_ACCOUNT_V1: &str = include_str!("scripts/ensure_account_v1.lua");
+const APPLY_BALANCE_TRANSACTIONS_V1: &str =
+    include_str!("scripts/apply_balance_transactions_v1.lua");
+/// One request never applies more than this many ledger entries; the next one
+/// continues from the watermark this batch advanced.
+const BALANCE_TRANSACTION_BATCH: i64 = 500;
+/// The gateway's own fields in the account hash. They record what the seed
+/// included and when metadata was last refreshed, and they are not part of the
+/// account record, which rejects fields it does not declare.
+const ACCOUNT_BOOKKEEPING: [&str; 2] = ["balance_seeded_at", "metadata_refreshed_at"];
+/// Deployment statuses are pushed by the runtimes and expire on their own, so
+/// this only stops one request from reading the same key repeatedly.
+const STATUS_CACHE_TTL: Duration = Duration::from_secs(1);
+/// Status keys come from requests, so the contract caps their count.
 const STATUS_CACHE_CAPACITY: usize = 10_000;
 
 #[async_trait]
@@ -70,20 +82,28 @@ pub struct ValkeyServingState {
     connection: ClusterConnection,
     admission_script: Script,
     finalization_script: Script,
-    model_cache: LazyTtlCache<String, Option<GatewayModel>>,
-    models_cache: LazyTtlCache<(), Vec<GatewayModel>>,
+    ensure_account_script: Script,
+    apply_balance_script: Script,
+    database: PostgresReader,
+    record_cache_ttl: Duration,
     status_cache: LazyTtlCache<String, Vec<DeploymentRuntimeStatus>>,
 }
 
 impl ValkeyServingState {
-    pub async fn connect(url: &str) -> Result<Self, ServingStateError> {
+    pub async fn connect(
+        url: &str,
+        database: PostgresReader,
+        record_cache_ttl: Duration,
+    ) -> Result<Self, ServingStateError> {
         let client = ClusterClient::new(vec![url])?;
-        Self::connect_client(client).await
+        Self::connect_client(client, database, record_cache_ttl).await
     }
 
     pub async fn connect_with_iam(
         url: &str,
         config: ValkeyIamConfig,
+        database: PostgresReader,
+        record_cache_ttl: Duration,
     ) -> Result<Self, ServingStateError> {
         let credentials = ValkeyIamCredentials::start(config)
             .await
@@ -91,19 +111,25 @@ impl ValkeyServingState {
         let client = ClusterClientBuilder::new(vec![url])
             .set_credentials_provider(credentials)
             .build()?;
-        Self::connect_client(client).await
+        Self::connect_client(client, database, record_cache_ttl).await
     }
 
-    async fn connect_client(client: ClusterClient) -> Result<Self, ServingStateError> {
+    async fn connect_client(
+        client: ClusterClient,
+        database: PostgresReader,
+        record_cache_ttl: Duration,
+    ) -> Result<Self, ServingStateError> {
         let connection = client.get_async_connection().await?;
 
         let state = Self {
             connection,
             admission_script: Script::new(ADMIT_GENERATION_V1),
             finalization_script: Script::new(FINALIZE_GENERATION_V1),
-            model_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, MODEL_CACHE_CAPACITY),
-            models_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, 1),
-            status_cache: LazyTtlCache::new(ROUTING_CACHE_TTL, STATUS_CACHE_CAPACITY),
+            ensure_account_script: Script::new(ENSURE_ACCOUNT_V1),
+            apply_balance_script: Script::new(APPLY_BALANCE_TRANSACTIONS_V1),
+            database,
+            record_cache_ttl,
+            status_cache: LazyTtlCache::new(STATUS_CACHE_TTL, STATUS_CACHE_CAPACITY),
         };
         state.ping().await?;
         Ok(state)
@@ -121,71 +147,171 @@ impl ValkeyServingState {
         &self,
         digest_hex: &str,
     ) -> Result<Option<GatewayCredential>, ServingStateError> {
-        let value: Option<String> = self
-            .query(redis::cmd("GET").arg(format!("credential:{digest_hex}")))
-            .await?;
-        value
-            .map(|value| {
-                serde_json::from_str(&value).map_err(|source| ServingStateError::MalformedRecord {
-                    kind: "GatewayCredential",
-                    source,
-                })
-            })
-            .transpose()
+        let digest = hex_bytes(digest_hex).ok_or(ServingStateError::MalformedDigest)?;
+
+        self.read_through(
+            "GatewayCredential",
+            format!("credential:{digest_hex}"),
+            || self.database.credential_json(&digest),
+        )
+        .await
     }
 
     pub async fn workspace(
         &self,
         workspace_id: Uuid,
     ) -> Result<Option<GatewayWorkspace>, ServingStateError> {
-        let value: Option<String> = self
-            .query(redis::cmd("GET").arg(format!("workspace:{workspace_id}")))
-            .await?;
-        value
-            .map(|value| {
-                serde_json::from_str(&value).map_err(|source| ServingStateError::MalformedRecord {
-                    kind: "GatewayWorkspace",
-                    source,
-                })
-            })
-            .transpose()
+        self.read_through(
+            "GatewayWorkspace",
+            format!("workspace:{workspace_id}"),
+            || self.database.workspace_json(workspace_id),
+        )
+        .await
     }
 
+    /// Reads a record from the Valkey cache, then from PostgreSQL. A record that
+    /// PostgreSQL does not have is never cached, so a key or model created a moment
+    /// ago is visible at once and a projection gap cannot invent a missing record.
+    async fn read_through<T, F, Fut>(
+        &self,
+        kind: &'static str,
+        key: String,
+        load: F,
+    ) -> Result<Option<T>, ServingStateError>
+    where
+        T: serde::de::DeserializeOwned,
+        F: FnOnce() -> Fut,
+        Fut: std::future::Future<Output = Result<Option<String>, PostgresError>>,
+    {
+        let cached: Option<String> = self.query(redis::cmd("GET").arg(&key)).await?;
+        if let Some(cached) = cached {
+            return parse_record(kind, &cached).map(Some);
+        }
+
+        let Some(record) = load().await? else {
+            return Ok(None);
+        };
+        let parsed = parse_record(kind, &record)?;
+        // Caching after parsing keeps a record this gateway cannot read out of the
+        // cache, where it would fail every later request for the same key.
+        let _: () = self
+            .query(
+                redis::cmd("SET")
+                    .arg(&key)
+                    .arg(&record)
+                    .arg("EX")
+                    .arg(self.record_cache_ttl.as_secs().max(1)),
+            )
+            .await?;
+
+        Ok(Some(parsed))
+    }
+
+    /// The account hash is operational state, not a cache: it holds the balance
+    /// that settlement moves. It is seeded once from PostgreSQL and never expires;
+    /// only its metadata is refreshed, and only when it has gone stale.
     pub async fn account(
         &self,
         organization_id: Uuid,
     ) -> Result<Option<GatewayAccount>, ServingStateError> {
-        let fields: HashMap<String, String> = self
-            .query(redis::cmd("HGETALL").arg(format!("account:{{settlement-0}}:{organization_id}")))
+        let key = format!("account:{{settlement-0}}:{organization_id}");
+        let fields: HashMap<String, String> = self.query(redis::cmd("HGETALL").arg(&key)).await?;
+        if !fields.is_empty() && self.account_metadata_is_current(&fields) {
+            return account_from_hash(fields).map(Some);
+        }
+
+        let Some(record) = self.database.account(organization_id).await? else {
+            return Ok(None);
+        };
+        self.ensure_account(&key, organization_id, &record).await?;
+        self.apply_balance_transactions(&key, organization_id)
             .await?;
+
+        let fields: HashMap<String, String> = self.query(redis::cmd("HGETALL").arg(&key)).await?;
         if fields.is_empty() {
             return Ok(None);
         }
-        GatewayAccount::from_hash(fields)
-            .map(Some)
-            .map_err(|source| ServingStateError::MalformedAccount { source })
+
+        account_from_hash(fields).map(Some)
+    }
+
+    /// Moves ledger entries created after the seed into the operational balance.
+    /// Nothing else applies them, so a customer's top-up lands on their next
+    /// request, which is the only moment the balance has to be right.
+    async fn apply_balance_transactions(
+        &self,
+        key: &str,
+        organization_id: Uuid,
+    ) -> Result<(), ServingStateError> {
+        let watermark: Option<String> = self
+            .query(redis::cmd("HGET").arg(key).arg("balance_seeded_at"))
+            .await?;
+        let watermark = watermark
+            .and_then(|value| value.parse::<i64>().ok())
+            .and_then(DateTime::from_timestamp_millis)
+            .ok_or(ServingStateError::MissingBalanceWatermark)?;
+
+        let transactions = self
+            .database
+            .balance_transactions_after(organization_id, watermark, BALANCE_TRANSACTION_BATCH)
+            .await?;
+        let Some(highest) = transactions.last().map(|entry| entry.created_at) else {
+            return Ok(());
+        };
+
+        let mut script = self.apply_balance_script.prepare_invoke();
+        script
+            .key(key)
+            .key(format!(
+                "applied-balance-transactions:{{settlement-0}}:{organization_id}"
+            ))
+            .arg(highest.timestamp_millis());
+        for transaction in &transactions {
+            script
+                .arg(transaction.id.to_string())
+                .arg(transaction.amount);
+        }
+        let _: i64 = script.invoke_async(&mut self.connection.clone()).await?;
+
+        Ok(())
+    }
+
+    fn account_metadata_is_current(&self, fields: &HashMap<String, String>) -> bool {
+        let ttl = self.record_cache_ttl.as_millis() as i64;
+        fields
+            .get("metadata_refreshed_at")
+            .and_then(|value| value.parse::<i64>().ok())
+            .is_some_and(|refreshed_at| Utc::now().timestamp_millis() - refreshed_at < ttl)
+    }
+
+    async fn ensure_account(
+        &self,
+        key: &str,
+        organization_id: Uuid,
+        record: &AccountRecord,
+    ) -> Result<(), ServingStateError> {
+        let _: i64 = self
+            .ensure_account_script
+            .key(key)
+            .arg(organization_id.to_string())
+            .arg(&record.organization_kind)
+            .arg(&record.organization_status)
+            .arg(&record.billing_mode)
+            .arg(record.balance)
+            .arg(record.balance_updated_at.timestamp_millis())
+            .arg(Utc::now().timestamp_millis())
+            .invoke_async(&mut self.connection.clone())
+            .await?;
+
+        Ok(())
     }
 
     pub async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
-        self.model_cache
-            .get_or_load(model_id.to_owned(), || self.load_model(model_id))
-            .await
-    }
-
-    async fn load_model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
-        let value: Option<String> = self
-            .query(redis::cmd("GET").arg(format!("model:{model_id}")))
-            .await?;
-        let model = value
-            .map(|value| {
-                serde_json::from_str::<GatewayModel>(&value).map_err(|source| {
-                    ServingStateError::MalformedRecord {
-                        kind: "GatewayModel",
-                        source,
-                    }
-                })
+        let model: Option<GatewayModel> = self
+            .read_through("GatewayModel", format!("model:{model_id}"), || {
+                self.database.model_json(model_id)
             })
-            .transpose()?;
+            .await?;
         if let Some(model) = &model {
             model
                 .properties
@@ -199,16 +325,7 @@ impl ValkeyServingState {
     }
 
     pub async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
-        self.models_cache
-            .get_or_load((), || self.load_models())
-            .await
-    }
-
-    async fn load_models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
-        let mut model_ids: Vec<String> = self
-            .query(redis::cmd("SMEMBERS").arg("gateway-model-ids"))
-            .await?;
-        model_ids.sort();
+        let model_ids = self.database.model_ids().await?;
 
         let mut models = Vec::with_capacity(model_ids.len());
         for model_id in model_ids {
@@ -350,6 +467,38 @@ impl ValkeyServingState {
     {
         command.query_async(&mut self.connection.clone()).await
     }
+}
+
+fn account_from_hash(
+    mut fields: HashMap<String, String>,
+) -> Result<GatewayAccount, ServingStateError> {
+    for field in ACCOUNT_BOOKKEEPING {
+        fields.remove(field);
+    }
+
+    GatewayAccount::from_hash(fields)
+        .map_err(|source| ServingStateError::MalformedAccount { source })
+}
+
+fn parse_record<T>(kind: &'static str, value: &str) -> Result<T, ServingStateError>
+where
+    T: serde::de::DeserializeOwned,
+{
+    serde_json::from_str(value)
+        .map_err(|source| ServingStateError::MalformedRecord { kind, source })
+}
+
+/// The digest reaches this layer as the hexadecimal text that keys the cache; the
+/// column it matches in PostgreSQL is bytes.
+fn hex_bytes(value: &str) -> Option<Vec<u8>> {
+    if !value.len().is_multiple_of(2) {
+        return None;
+    }
+
+    (0..value.len())
+        .step_by(2)
+        .map(|index| u8::from_str_radix(&value[index..index + 2], 16).ok())
+        .collect()
 }
 
 /// One malformed status drops only its own deployment. A rejected document
@@ -494,6 +643,12 @@ pub enum ServingStateError {
     InvalidModelProperties(#[from] crate::model::ModelPropertiesError),
     #[error("Valkey IAM authentication failed: {0}")]
     Iam(String),
+    #[error("credential digest is not hexadecimal")]
+    MalformedDigest,
+    #[error("PostgreSQL read failed: {0}")]
+    Postgres(#[from] PostgresError),
+    #[error("gateway account has no balance watermark")]
+    MissingBalanceWatermark,
 }
 
 impl ServingStateError {
@@ -509,6 +664,9 @@ impl ServingStateError {
             Self::UnsupportedOperation => "unsupported_operation",
             Self::InvalidModelProperties(_) => "invalid_model_properties",
             Self::Iam(_) => "iam",
+            Self::MalformedDigest => "malformed_digest",
+            Self::Postgres(_) => "postgres",
+            Self::MissingBalanceWatermark => "missing_balance_watermark",
         }
     }
 }
@@ -526,6 +684,19 @@ mod tests {
 
     fn config() -> GatewayConfig {
         GatewayConfig::for_tests()
+    }
+
+    /// These tests exercise the Valkey scripts. The record store is built but
+    /// never queried, because none of them read a cached record.
+    async fn local_cluster() -> ValkeyServingState {
+        ValkeyServingState::connect(
+            "redis://127.0.0.1:6379",
+            PostgresReader::connect("postgres://127.0.0.1:5432/gradiated?sslmode=disable")
+                .expect("a connection string without a server should build a pool"),
+            Duration::from_secs(15),
+        )
+        .await
+        .expect("local Valkey cluster should connect")
     }
 
     fn test_keys(organization_id: Uuid) -> GenerationKeys {
@@ -681,9 +852,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn local_cluster_enforces_settlement_hash_tag() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .expect("local Valkey cluster should connect");
+        let state = local_cluster().await;
 
         let tagged: i64 = state
             .query(
@@ -716,9 +885,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn admission_applies_prepaid_limits_and_bypasses_them_for_invoiced_accounts() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let keys = test_keys(organization_id);
         let config = config();
@@ -802,9 +969,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn admission_stops_at_the_backlog_limit_and_cleans_only_old_leases() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let keys = test_keys(organization_id);
         let mut config = config();
@@ -879,9 +1044,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn admission_fails_closed_before_writing_for_invalid_serving_state() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let keys = test_keys(organization_id);
         let config = config();
@@ -952,9 +1115,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn concurrent_admission_never_exceeds_the_funded_limit() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let keys = test_keys(organization_id);
         let config = config();
@@ -1002,9 +1163,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn finalization_consumes_the_lease_debits_once_and_appends_one_event() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let generation_id = Uuid::now_v7();
         let keys = test_keys(organization_id);
@@ -1083,9 +1242,7 @@ mod tests {
     #[tokio::test]
     #[ignore = "requires the local one-node Valkey cluster"]
     async fn finalization_validates_all_state_before_consuming_the_lease() {
-        let state = ValkeyServingState::connect("redis://127.0.0.1:6379")
-            .await
-            .unwrap();
+        let state = local_cluster().await;
         let organization_id = Uuid::now_v7();
         let generation_id = Uuid::now_v7();
         let keys = test_keys(organization_id);

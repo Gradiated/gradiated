@@ -58,12 +58,6 @@ const defaultDependencies: AppDependencies = {
       upsertModelDeployment: async () => {
         throw new Error("Catalog and billing service is not configured");
       },
-      initializeCurrentAccount: async () => {
-        throw new Error("Catalog and billing service is not configured");
-      },
-      projectCurrentAccount: async () => {
-        throw new Error("Catalog and billing service is not configured");
-      },
       applyBalanceTransaction: async () => {
         throw new Error("Catalog and billing service is not configured");
       },

@@ -11,7 +11,6 @@ import {
 } from "../db/schema/index.js";
 import {
   ControlServiceError,
-  type ServingProjector,
   type WorkspaceRecord,
 } from "../workspaces/service.js";
 
@@ -50,7 +49,6 @@ export interface OrganizationService {
 
 export function createOrganizationService(
   database: ControlDatabase,
-  projector: ServingProjector,
 ): OrganizationService {
   const service: OrganizationService = {
     async listForUser(userId) {
@@ -168,39 +166,6 @@ export function createOrganizationService(
         return SIGNUP_CREDIT_NANO_USD;
       },
     );
-
-    try {
-      await projector.initializeAccount({
-        organizationId,
-        organizationKind: "customer",
-        organizationStatus: "active",
-        billingMode: "prepaid",
-        balance: 0n,
-      });
-      const workspace: WorkspaceRecord = {
-        id: workspaceId,
-        organizationId,
-        name: "Default",
-        isDefault: true,
-        archivedAt: null,
-        createdAt: now,
-        updatedAt: now,
-      };
-      await projector.projectWorkspace(workspace);
-      if (signupCreditTransactionId && creditBalanceAfter !== 0n) {
-        await projector.applyBalanceTransaction({
-          organizationId,
-          transactionId: signupCreditTransactionId,
-          amount: creditBalanceAfter,
-        });
-      }
-    } catch (error) {
-      throw new ControlServiceError(
-        "unavailable",
-        "The organization was created, but serving state is not yet available.",
-        error,
-      );
-    }
 
     return {
       id: organizationId,

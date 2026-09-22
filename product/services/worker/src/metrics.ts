@@ -7,11 +7,9 @@ import {
   Registry,
 } from "prom-client";
 
-import type { ServingProjectionResult } from "./serving-projector-loop.js";
 import type { SettlementPassResult } from "./settlement-loop.js";
 
-export type WorkerLoop =
-  "generation_ingestion" | "serving_projector" | "settlement";
+export type WorkerLoop = "generation_ingestion" | "settlement";
 
 const operationBuckets = [
   0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60,
@@ -28,7 +26,6 @@ export class WorkerMetrics {
   private readonly loopReady: Gauge<"loop">;
   private readonly loopRestarts: Counter<"loop">;
   private readonly loopUp: Gauge<"loop">;
-  private readonly projectionObjects: Gauge<"kind">;
   private readonly settlementLag: Gauge;
   private readonly settlementLeader: Gauge;
   private readonly settlementSlots: Counter;
@@ -105,13 +102,6 @@ export class WorkerMetrics {
       help: "Age beyond the settlement delay of the oldest eligible unsettled slot.",
       registers: [this.registry],
     });
-    this.projectionObjects = new Gauge({
-      name: "gradiated_worker_projection_objects",
-      help: "Objects handled by the latest serving-state projection pass.",
-      labelNames: ["kind"],
-      registers: [this.registry],
-    });
-
     if (options.collectProcessMetrics !== false) {
       collectDefaultMetrics({
         prefix: "gradiated_worker_",
@@ -177,12 +167,6 @@ export class WorkerMetrics {
       this.settlementSlots.inc(result.processedSlots);
     }
     this.settlementLag.set(result.eligibleBacklogAgeSeconds);
-  }
-
-  recordProjection(result: ServingProjectionResult): void {
-    for (const [kind, value] of Object.entries(result)) {
-      this.projectionObjects.set({ kind }, value);
-    }
   }
 
   async render(): Promise<string> {

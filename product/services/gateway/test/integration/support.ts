@@ -2,6 +2,7 @@
 // The only runtime substitute is an HTTP server; the gateway is the built binary.
 import { createHash } from "node:crypto";
 
+import { Pool } from "pg";
 import { createClient } from "redis";
 import { afterAll, afterEach, beforeAll, expect, inject } from "vitest";
 
@@ -22,6 +23,8 @@ const BALANCE = 1_000_000_000_000;
 const SETTLEMENT_STREAM = "generation-settled:{settlement-0}";
 
 type Redis = ReturnType<typeof createClient>;
+/** The gateway reads records from here; Valkey only caches them. */
+type Database = Pool;
 
 export const encoded = (value: unknown): string => JSON.stringify(value);
 
@@ -53,6 +56,7 @@ export class Case {
 
   private constructor(
     readonly redis: Redis,
+    readonly database: Database,
     readonly http: Client,
     readonly kind: RuntimeKind,
     model: string,
@@ -151,6 +155,7 @@ export class Case {
 
   static async create(
     redis: Redis,
+    database: Database,
     http: Client,
     token: string,
     kind: RuntimeKind,
@@ -166,27 +171,134 @@ export class Case {
     for (let index = 0; index < replicas; index += 1) {
       runtimes.push(await Runtime.start(kind, runtimeModel, token, upstream));
     }
-    const instance = new Case(redis, http, kind, model, runtimeModel, runtimes);
-    await redis.set(instance.credentialKey, encoded(instance.credentialRecord));
-    await redis.set(
-      `workspace:${instance.workspace}`,
-      encoded(instance.workspaceRecord),
+    const instance = new Case(
+      redis,
+      database,
+      http,
+      kind,
+      model,
+      runtimeModel,
+      runtimes,
     );
-    await redis.hSet(instance.accountKey, {
-      organization_id: instance.organization,
-      organization_kind: "customer",
-      organization_status: "active",
-      billing_mode: "prepaid",
-      balance: String(BALANCE),
-    });
+    // The tenant exists in PostgreSQL. The gateway caches what it reads, so no
+    // test seeds Valkey: that would hide a query this suite is here to exercise.
+    await database.query(
+      `insert into organizations (id, kind, name, status)
+       values ($1, 'customer', $2, 'active')`,
+      [instance.organization, `case-${instance.organization}`],
+    );
+    await database.query(
+      `insert into billing_accounts (organization_id, mode, balance)
+       values ($1, 'prepaid', $2)`,
+      [instance.organization, String(BALANCE)],
+    );
+    await database.query(
+      `insert into workspaces (id, organization_id, name, is_default)
+       values ($1, $2, 'Default', true)`,
+      [instance.workspace, instance.organization],
+    );
+    await database.query(
+      `insert into api_keys (id, organization_id, workspace_id, name, digest)
+       values ($1, $2, $3, 'integration', $4)`,
+      [
+        instance.credential,
+        instance.organization,
+        instance.workspace,
+        createHash("sha256").update(instance.key).digest(),
+      ],
+    );
     await instance.publish();
     await instance.status();
     return instance;
   }
 
+  /**
+   * Changes the tenant's authoritative rows and drops the cached copies, so the
+   * next request sees the change without waiting for a record lifetime to elapse.
+   */
+  async setTenant(changes: {
+    organizationStatus?: "active" | "suspended";
+    billingMode?: "prepaid" | "invoiced";
+    balance?: number;
+    workspaceArchived?: boolean;
+  }): Promise<void> {
+    if (changes.organizationStatus) {
+      await this.database.query(
+        `update organizations set status = $2, updated_at = now() where id = $1`,
+        [this.organization, changes.organizationStatus],
+      );
+    }
+    if (changes.billingMode || changes.balance !== undefined) {
+      await this.database.query(
+        `update billing_accounts
+         set mode = coalesce($2, mode), balance = coalesce($3, balance), updated_at = now()
+         where organization_id = $1`,
+        [
+          this.organization,
+          changes.billingMode ?? null,
+          changes.balance === undefined ? null : String(changes.balance),
+        ],
+      );
+    }
+    if (changes.workspaceArchived !== undefined) {
+      // The schema forbids archiving a default workspace, so it stops being the
+      // default at the same time. The projection this replaced enforced neither.
+      await this.database.query(
+        `update workspaces
+         set archived_at = $2, is_default = $3, updated_at = now()
+         where id = $1`,
+        [
+          this.workspace,
+          changes.workspaceArchived ? new Date() : null,
+          !changes.workspaceArchived,
+        ],
+      );
+    }
+    // The account hash holds the operational balance, so removing it makes the
+    // gateway seed it again from these rows.
+    await this.redis.del(this.accountKey);
+    await this.redis.del(`workspace:${this.workspace}`);
+  }
+
+  /** Writes the catalog row, then drops the cached copy so the change is visible now. */
   async publish(): Promise<void> {
-    await this.redis.set(`model:${this.model}`, encoded(this.record));
-    await this.redis.sAdd("gateway-model-ids", this.model);
+    const properties = this.record.properties as JsonObject;
+    const deployments = this.record.deployments as JsonObject[];
+    await this.database.query(
+      `insert into models (id, name, status, properties)
+       values ($1, $2, $3, $4)
+       on conflict (id) do update
+       set name = excluded.name, status = excluded.status,
+           properties = excluded.properties, updated_at = now()`,
+      [
+        this.model,
+        this.record.name as string,
+        this.record.status as string,
+        JSON.stringify(properties),
+      ],
+    );
+    await this.database.query(
+      `delete from model_deployments where model_id = $1`,
+      [this.model],
+    );
+    for (const deployment of deployments) {
+      await this.database.query(
+        `insert into model_deployments
+           (id, model_id, status, provider, region, fault_domain, service_url, release)
+         values ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          deployment.id as string,
+          this.model,
+          deployment.status as string,
+          deployment.provider as string,
+          deployment.region as string,
+          deployment.fault_domain as string,
+          deployment.service_url as string,
+          JSON.stringify(deployment.release),
+        ],
+      );
+    }
+    await this.redis.del(`model:${this.model}`);
   }
 
   async status(overrides: JsonObject = {}): Promise<void> {
@@ -287,7 +399,13 @@ export class Case {
       new Set(rows.map((row) => row.generation)).size,
       "duplicate settlement",
     ).toBe(rows.length);
-    const balance = Number(await this.redis.hGet(this.accountKey, "balance"));
+    // The gateway creates the account hash when it first reads the account, so an
+    // absent hash means no request ever reached the balance and nothing was charged.
+    const stored = await this.redis.hGet(this.accountKey, "balance");
+    const balance =
+      stored === null || stored === undefined
+        ? this.initialBalance
+        : Number(stored);
     const charged = rows.reduce(
       (total, row) =>
         total + Number((row.properties.usage as JsonObject).charge),
@@ -318,6 +436,7 @@ export type MakeCase = (
 /** Per-file fixture: a redis connection, the gateway client, and cleanup between tests. */
 export const useCases = (): { makeCase: MakeCase; http: () => Client } => {
   let redis: Redis;
+  let database: Database;
   let http: Client;
   let patient: Client | null;
   let token: string;
@@ -330,6 +449,7 @@ export const useCases = (): { makeCase: MakeCase; http: () => Client } => {
       socket: { reconnectStrategy: false },
     });
     await redis.connect();
+    database = new Pool({ connectionString: stack.databaseUrl });
     http = new Client(stack.gatewayUrl);
     patient = stack.patientGatewayUrl
       ? new Client(stack.patientGatewayUrl, 180_000)
@@ -339,6 +459,7 @@ export const useCases = (): { makeCase: MakeCase; http: () => Client } => {
 
   afterAll(async () => {
     if (redis?.isOpen) await redis.close();
+    await database?.end();
   });
 
   afterEach(async () => {
@@ -356,7 +477,14 @@ export const useCases = (): { makeCase: MakeCase; http: () => Client } => {
       // cases rely on, so a proxied case talks to the patient gateway instead.
       const client = options.upstream?.kind === "proxy" ? patient : http;
       if (!client) throw new Error("no patient gateway; enable a real runtime");
-      const instance = await Case.create(redis, client, token, kind, options);
+      const instance = await Case.create(
+        redis,
+        database,
+        client,
+        token,
+        kind,
+        options,
+      );
       created.push(instance);
       return instance;
     },

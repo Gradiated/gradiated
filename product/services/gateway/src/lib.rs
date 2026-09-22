@@ -15,6 +15,7 @@ pub mod http;
 mod json;
 pub mod metrics;
 pub mod model;
+pub mod postgres_reader;
 pub mod protocol;
 pub mod readiness;
 pub mod relay;
@@ -56,6 +57,7 @@ pub use model::{
     ModelQuantization, OutputPriceType, OutputTokenPrice, ParameterValue, SupportedTextInputs,
     TextInputModality, TextOutputModality, TokenMeasure, TokenUnit,
 };
+pub use postgres_reader::{PostgresError, PostgresReader};
 pub use protocol::{Frame, Protocol, StreamItem};
 pub use readiness::DependencyReadiness;
 pub use relay::{ProviderRelay, RelayError, RelayRoute};

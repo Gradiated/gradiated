@@ -4,7 +4,7 @@ import {
   SIGNUP_CREDIT_NANO_USD,
   createOrganizationService,
 } from "@gradiated/control";
-import type { ControlDatabase, ServingProjector } from "@gradiated/control";
+import type { ControlDatabase } from "@gradiated/control";
 
 type CapturedInsert = { table: string; values: Record<string, unknown> };
 type CapturedUpdate = { table: string; set: Record<string, unknown> };
@@ -62,42 +62,10 @@ function recordingDatabase() {
   return { database, inserts, updates };
 }
 
-function recordingProjector() {
-  const calls: string[] = [];
-  const projector: ServingProjector & { calls: string[] } = {
-    initializeAccount: async (account) => {
-      calls.push(`initialize:${account.balance}`);
-    },
-    projectAccount: async () => true,
-    projectWorkspace: async () => {
-      calls.push("workspace");
-    },
-    projectCredential: async () => undefined,
-    projectModel: async () => undefined,
-    applyBalanceTransaction: async (input) => {
-      calls.push(`apply:${input.amount}:${input.transactionId}`);
-    },
-    markBalanceTransactionApplied: async () => undefined,
-    calls,
-  };
-  return projector;
-}
-
-const idleProjector = (): ServingProjector => ({
-  initializeAccount: async () => undefined,
-  projectAccount: async () => true,
-  projectWorkspace: async () => undefined,
-  projectCredential: async () => undefined,
-  projectModel: async () => undefined,
-  applyBalanceTransaction: async () => undefined,
-  markBalanceTransactionApplied: async () => undefined,
-});
-
 describe("organization signup credit", () => {
   it("grants the signup credit when bootstrapping a new user's organization", async () => {
     const { database, inserts, updates } = recordingDatabase();
-    const projector = recordingProjector();
-    const service = createOrganizationService(database, projector);
+    const service = createOrganizationService(database);
 
     await service.ensurePersonalForUser("user-1");
 
@@ -121,18 +89,11 @@ describe("organization signup credit", () => {
       (entry) => entry.table === "billing_accounts",
     );
     expect(balanceUpdate?.set.balance).toBe(SIGNUP_CREDIT_NANO_USD);
-
-    expect(projector.calls).toEqual([
-      "initialize:0",
-      "workspace",
-      `apply:${SIGNUP_CREDIT_NANO_USD}:${String(credit?.values.id)}`,
-    ]);
   });
 
   it("does not grant a credit when the console creates an additional organization", async () => {
     const { database, inserts, updates } = recordingDatabase();
-    const projector = recordingProjector();
-    const service = createOrganizationService(database, projector);
+    const service = createOrganizationService(database);
 
     await service.createForUser("user-1", "Second org");
 
@@ -140,7 +101,6 @@ describe("organization signup credit", () => {
       inserts.find((entry) => entry.table === "balance_transactions"),
     ).toBeUndefined();
     expect(updates).toHaveLength(0);
-    expect(projector.calls).toEqual(["initialize:0", "workspace"]);
   });
 
   it("does not grant a second credit when the user already has an organization", async () => {
@@ -154,7 +114,7 @@ describe("organization signup credit", () => {
     const { database, inserts } = recordingDatabase();
     (database as unknown as { select: () => unknown }).select = () =>
       chainable(() => [existing]);
-    const service = createOrganizationService(database, idleProjector());
+    const service = createOrganizationService(database);
 
     const result = await service.ensurePersonalForUser("user-1");
 

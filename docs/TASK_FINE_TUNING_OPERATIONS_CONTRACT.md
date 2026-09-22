@@ -38,7 +38,7 @@ Every JSON and event variant has a closed versioned schema with lengths, units a
 
 Workspace `proxy_settings.fallback_models` contains nullable `anthropic` and `openai` model IDs. It has a strict described JSON schema and uses the workspace policy revision. Updates project the complete policy before reporting success. Request overrides are transient. Tasks have no fallback field. Provider price metadata is optional analytics data and contains no credentials. GW-05 defines customer-key routing; no external-provider accounting is required.
 
-**Projections.** Every projected resource carries `(bootstrap_epoch, resource_revision)`. The projector writes with a compare-and-set script accepting only a newer pair or identical content at the same pair; different content at the same pair is corruption. Tombstones follow the same order. Deployment heartbeats expire after 6 s; gateway caches last 1 s with no stale-on-error extension. Runtime registration validates actual Nomad allocation ownership and enrollment (FLEET-05). Status binds allocation id, engine boot id, release and base/loader readiness; stale incarnations cannot overwrite current readiness. Nomad running state alone never opens routing.
+**Records.** The gateway reads identity and the catalog from PostgreSQL through a Valkey cache keyed by the record, with a lifetime of `GATEWAY_RECORD_CACHE_TTL_SECONDS`. A record PostgreSQL does not have is never cached, so a created key or model is usable at once and a cache gap cannot hide an existing record. Nothing projects rows, so no resource carries a bootstrap epoch or a projected revision, and losing Valkey costs cache misses rather than availability. Deployment heartbeats are pushed by the runtimes and expire after 6 s; the gateway holds them for 1 s with no stale-on-error extension. Runtime registration validates actual Nomad allocation ownership and enrollment (FLEET-05). Status binds allocation id, engine boot id, release and base/loader readiness; stale incarnations cannot overwrite current readiness. Nomad running state alone never opens routing.
 
 **Restriction barrier.**
 
@@ -49,17 +49,15 @@ sequenceDiagram
   participant W as Projector
   participant VK as Valkey
   participant G as Gateway
-  A->>PG: 1. commit restriction intent (next revision) + denial projection intent
+  A->>PG: 1. commit restriction intent (next revision)
   Note over PG: new grants and first starts blocked from here
-  W->>VK: 2. project denial (CAS on epoch, revision)
-  VK-->>W: acknowledged
-  Note over G: after the 1 s cache window the denial is effective
+  Note over G: after the record cache lifetime the denial is effective
   A->>PG: 3. commit final policy state; complete the operation
 ```
 
 Concurrent intents on one resource are serialised. A projection failure leaves a visible pending restriction that retries; it never reports success or drops the denial. No transaction is held while waiting for Valkey. Reversal needs a newer revision. The projector treats a pending restriction as denial even if the stored boolean reads enabled; ingestion checks intent before accepting capture. Enabling is the inverse: commit and outbox, project, then report enabled. The console shows pending and effective separately. A started run's continuation authorisation is separate from capture permission.
 
-**Valkey restore.** Admission starts closed for private and internal routes and capture. The projection worker installs a new bootstrap epoch, rebuilds every resource including intents and tombstones, reconciles physical leases or waits out their bounds, then declares the projection ready; gateways reject old or incomplete epochs. Billed inference keeps its existing recovery contract.
+**Valkey restore.** Identity and the catalog need no rebuild: they are cache misses that read PostgreSQL. The operational balance does. The gateway seeds an absent account hash from `billing_accounts.balance`, records the source timestamp that seed included, and applies later ledger entries idempotently past that watermark, so a restore recovers the balance on first use. Charges settled in Valkey but not yet posted to PostgreSQL are lost with the stream, as before. Deployment statuses return with the next heartbeat.
 
 ## OPS-02 Retention
 

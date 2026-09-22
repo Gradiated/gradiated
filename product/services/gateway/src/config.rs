@@ -69,6 +69,17 @@ pub struct GatewayConfig {
     #[serde(default = "default_proxy_max_in_flight")]
     #[validate(range(min = 1, max = 1_000_000))]
     pub proxy_max_in_flight: u64,
+    /// The authoritative store for identity and the model catalog.
+    pub database_url: String,
+    /// How long Valkey may serve a cached identity or catalog record. It bounds the
+    /// delay before a revoked key, a suspended organization, an archived workspace
+    /// or a catalog change takes effect.
+    #[serde(
+        rename = "gateway_record_cache_ttl_seconds",
+        default = "default_record_cache_ttl_seconds"
+    )]
+    #[validate(range(min = 1, max = 300))]
+    pub record_cache_ttl_seconds: u64,
     pub valkey_url: String,
     pub valkey_iam_cache_name: Option<String>,
     pub valkey_iam_region: Option<String>,
@@ -90,6 +101,8 @@ impl GatewayConfig {
             prepaid_organization_concurrency_cap: default_prepaid_organization_concurrency_cap(),
             balance_per_concurrency_slot_nano_usd: default_balance_per_concurrency_slot_nano_usd(),
             settlement_backlog_limit: 100_000,
+            database_url: "postgres://127.0.0.1:5432/gradiated".to_owned(),
+            record_cache_ttl_seconds: default_record_cache_ttl_seconds(),
             proxy_anthropic_origin: default_anthropic_origin(),
             proxy_connect_timeout_seconds: default_proxy_connect_timeout_seconds(),
             proxy_response_header_timeout_seconds: default_proxy_response_header_timeout_seconds(),
@@ -146,6 +159,10 @@ impl GatewayConfig {
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .collect()
+    }
+
+    pub fn record_cache_ttl(&self) -> Duration {
+        Duration::from_secs(self.record_cache_ttl_seconds)
     }
 
     pub fn proxy_limits(&self) -> ProxyLimits {
@@ -241,6 +258,10 @@ fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
     1_000_000_000
 }
 
+fn default_record_cache_ttl_seconds() -> u64 {
+    15
+}
+
 fn default_anthropic_origin() -> String {
     "https://api.anthropic.com".to_owned()
 }
@@ -308,9 +329,15 @@ mod tests {
     fn environment_uses_typed_defaults() {
         let config = GatewayConfig::from_variables(variables(&[
             ("VALKEY_URL", "redis://127.0.0.1:6379"),
+            ("DATABASE_URL", "postgres://127.0.0.1:5432/gradiated"),
             ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "100000"),
         ]))
         .expect("minimal environment should parse");
+
+        assert_eq!(
+            config.record_cache_ttl_seconds,
+            default_record_cache_ttl_seconds()
+        );
 
         assert_eq!(config.bind_address, default_bind_address());
         assert!(config.browser_origins().is_empty());
@@ -347,6 +374,8 @@ mod tests {
             ("GATEWAY_PREPAID_ORGANIZATION_CONCURRENCY_CAP", "25"),
             ("GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD", "500000000"),
             ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "50000"),
+            ("GATEWAY_RECORD_CACHE_TTL_SECONDS", "30"),
+            ("DATABASE_URL", "postgres://control.internal:5432/gradiated"),
             ("VALKEY_URL", "rediss://valkey.internal:6379"),
             ("VALKEY_IAM_CACHE_NAME", "gradiated-prod"),
             ("VALKEY_IAM_REGION", "us-east-1"),
@@ -366,6 +395,11 @@ mod tests {
         assert_eq!(config.prepaid_organization_concurrency_cap, 25);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 500_000_000);
         assert_eq!(config.settlement_backlog_limit, 50_000);
+        assert_eq!(config.record_cache_ttl_seconds, 30);
+        assert_eq!(
+            config.database_url,
+            "postgres://control.internal:5432/gradiated"
+        );
         assert_eq!(
             config.valkey_iam(),
             Some(ValkeyIamConfig {

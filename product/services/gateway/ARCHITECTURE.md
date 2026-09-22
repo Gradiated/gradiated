@@ -22,7 +22,7 @@ in Valkey. It is not a general-purpose API gateway or a model-routing platform.
 - expose non-streaming `POST /v1/systemone` for native Kev pointer inference;
 - expose the current provider `GET /v1/models` document for exact configured
   models;
-- authenticate direct and OpenRouter keys through the same Valkey projection;
+- authenticate direct and OpenRouter keys through the same read-through cache;
 - reject invalid, unsupported, or unpaid requests before generation and
   normalize SGLang overload responses;
 - select one healthy deployment with stable rendezvous hashing;
@@ -307,8 +307,10 @@ admission; other omitted parameters retain the pinned runtime/model defaults.
 11. Preserve every qualified, supported JSON value unchanged in the upstream
     body and capture effective pricing and the deployment release digest.
 
-The `GatewayModel` is the complete current PostgreSQL projection of the model
-and its deployments. The launch lookup has no scoring, alias expansion,
+The `GatewayModel` is the complete current PostgreSQL record of the model and its
+deployments, read through Valkey. Nothing projects it: a cache miss reads
+PostgreSQL and caches the row for `GATEWAY_RECORD_CACHE_TTL_SECONDS`, and a model
+PostgreSQL does not have is never cached. The launch lookup has no scoring, alias expansion,
 fallback, provider selection, or network discovery. The descriptor map is the
 public capability list. It does not claim that every model supports the same
 parameters. Adding a parameter normally changes

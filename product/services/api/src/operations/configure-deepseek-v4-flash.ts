@@ -1,7 +1,6 @@
 import {
   createCatalogBillingService,
   createControlDatabase,
-  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient, type ValkeyEnvironment } from "@gradiated/valkey";
 
@@ -44,10 +43,7 @@ const { database, pool } = createControlDatabase(databaseUrl);
 const valkey = createValkeyClient(valkeyEnvironment);
 await valkey.connect();
 try {
-  const catalog = createCatalogBillingService(
-    database,
-    createValkeyServingProjector(valkey),
-  );
+  const catalog = createCatalogBillingService(database);
   await catalog.upsertModel(createDeepseekV4FlashModelConfiguration());
   await catalog.upsertModelDeployment({
     id: deploymentId,

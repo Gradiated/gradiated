@@ -18,10 +18,7 @@ import {
   organizations,
   type ModelPropertiesRecord,
 } from "../db/schema/index.js";
-import {
-  ControlServiceError,
-  type ServingProjector,
-} from "../workspaces/service.js";
+import { ControlServiceError } from "../workspaces/service.js";
 
 export interface ModelRecord {
   id: string;
@@ -108,8 +105,6 @@ export interface CatalogBillingService {
     serviceUrl: string;
     release: ModelDeploymentRelease;
   }): Promise<ModelDeploymentRecord>;
-  initializeCurrentAccount(organizationId: string): Promise<void>;
-  projectCurrentAccount(organizationId: string): Promise<void>;
   applyBalanceTransaction(input: {
     organizationId: string;
     type: BalanceTransactionRecord["type"];
@@ -118,13 +113,11 @@ export interface CatalogBillingService {
     sourceId: string;
     createdBy: string | null;
     stripeCustomerId?: string | null;
-    projectToServing?: boolean;
   }): Promise<BalanceTransactionRecord>;
 }
 
 export const createCatalogBillingService = (
   database: ControlDatabase,
-  projector: ServingProjector,
 ): CatalogBillingService => {
   const deploymentRecord = (
     row: typeof modelDeployments.$inferSelect,
@@ -132,18 +125,6 @@ export const createCatalogBillingService = (
     ...row,
     status: row.status as ModelDeploymentRecord["status"],
   });
-
-  const projectModel = async (model: ModelRecord): Promise<void> => {
-    const deployments = await database
-      .select()
-      .from(modelDeployments)
-      .where(eq(modelDeployments.modelId, model.id))
-      .orderBy(modelDeployments.createdAt, modelDeployments.id);
-    await projector.projectModel({
-      ...model,
-      deployments: deployments.map(deploymentRecord),
-    });
-  };
 
   const loadModel = async (modelId: string): Promise<ModelRecord> => {
     const [model] = await database
@@ -196,38 +177,6 @@ export const createCatalogBillingService = (
         "The current member cannot view billing for this organization.",
       );
     }
-  };
-
-  const loadGatewayAccount = async (organizationId: string) => {
-    const [account] = await database
-      .select({
-        organizationId: organizations.id,
-        organizationKind: organizations.kind,
-        organizationStatus: organizations.status,
-        billingMode: billingAccounts.mode,
-        balance: billingAccounts.balance,
-      })
-      .from(organizations)
-      .innerJoin(
-        billingAccounts,
-        eq(billingAccounts.organizationId, organizations.id),
-      )
-      .where(eq(organizations.id, organizationId))
-      .limit(1);
-
-    if (!account) {
-      throw new ControlServiceError(
-        "not_found",
-        "The billing account was not found.",
-      );
-    }
-    return {
-      ...account,
-      organizationKind: account.organizationKind as
-        "customer" | "distribution_channel",
-      organizationStatus: account.organizationStatus as "active" | "suspended",
-      billingMode: account.billingMode as "prepaid" | "invoiced",
-    };
   };
 
   return {
@@ -301,7 +250,6 @@ export const createCatalogBillingService = (
         ...model,
         status: model.status as ModelRecord["status"],
       };
-      await projectModel(record);
       return record;
     },
 
@@ -346,18 +294,7 @@ export const createCatalogBillingService = (
       if (!deployment)
         throw new Error("The model deployment upsert returned no row.");
       const record = deploymentRecord(deployment);
-      await projectModel(await loadModel(record.modelId));
       return record;
-    },
-
-    async initializeCurrentAccount(organizationId) {
-      await projector.initializeAccount(
-        await loadGatewayAccount(organizationId),
-      );
-    },
-
-    async projectCurrentAccount(organizationId) {
-      await projector.projectAccount(await loadGatewayAccount(organizationId));
     },
 
     async applyBalanceTransaction(input) {
@@ -422,13 +359,6 @@ export const createCatalogBillingService = (
         return { transaction: created, created: true };
       });
 
-      if (input.projectToServing !== false) {
-        await projector.applyBalanceTransaction({
-          organizationId: result.transaction.organizationId,
-          transactionId: result.transaction.id,
-          amount: result.transaction.amount,
-        });
-      }
       return {
         ...result.transaction,
         type: result.transaction.type as BalanceTransactionRecord["type"],

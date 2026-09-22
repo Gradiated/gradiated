@@ -45,32 +45,31 @@ describe.each(["kev", "vllm"] as RuntimeKind[])("%s access control", (kind) => {
     },
   );
 
-  // A blocked tenant is a permanent policy decision, so it is forbidden. An
-  // inconsistent projection is not the caller's fault, so it stays unavailable.
+  // A blocked tenant is a permanent policy decision, so it is forbidden. A cached
+  // record that disagrees with itself is not the caller's fault, so it stays
+  // unavailable. A workspace cannot go missing under a key any more: the foreign
+  // key from api_keys guarantees it exists, so only a corrupt cache can produce it.
   it.each([
     { variant: "archived", expected: 403 },
     { variant: "suspended", expected: 403 },
-    { variant: "missing_workspace", expected: 503 },
+    { variant: "corrupt_cache", expected: 503 },
     { variant: "tenant_mismatch", expected: 503 },
   ])(
     "fails closed for an inconsistent or blocked tenant ($variant)",
     async ({ variant, expected }) => {
       const instance = await makeCase(kind);
       if (variant === "suspended") {
-        await instance.redis.hSet(
-          instance.accountKey,
-          "organization_status",
-          "suspended",
+        await instance.setTenant({ organizationStatus: "suspended" });
+      } else if (variant === "archived") {
+        await instance.setTenant({ workspaceArchived: true });
+      } else if (variant === "corrupt_cache") {
+        await instance.redis.set(
+          `workspace:${instance.workspace}`,
+          "not a workspace record",
         );
-      } else if (variant === "missing_workspace") {
-        await instance.redis.del(`workspace:${instance.workspace}`);
       } else {
-        instance.workspaceRecord[
-          variant === "archived" ? "archived_at" : "organization_id"
-        ] =
-          variant === "archived"
-            ? "2000-01-01T00:00:00Z"
-            : "00000000-0000-4000-8000-000000000001";
+        instance.workspaceRecord.organization_id =
+          "00000000-0000-4000-8000-000000000001";
         await instance.redis.set(
           `workspace:${instance.workspace}`,
           encoded(instance.workspaceRecord),
@@ -92,9 +91,9 @@ describe.each(["kev", "vllm"] as RuntimeKind[])("%s access control", (kind) => {
     async ({ mode, balance, status }) => {
       const instance = await makeCase(kind);
       instance.initialBalance = balance;
-      await instance.redis.hSet(instance.accountKey, {
-        balance: String(balance),
-        billing_mode: mode,
+      await instance.setTenant({
+        billingMode: mode as "prepaid" | "invoiced",
+        balance,
       });
       const response = await instance.post();
       expect(response.status).toBe(status);

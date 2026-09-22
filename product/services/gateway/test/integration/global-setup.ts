@@ -24,6 +24,7 @@ const BINARY = join(
   "product/services/gateway/target/debug/gradiated-gateway",
 );
 const IMAGE = "valkey/valkey:8.1.9-alpine3.24";
+const POSTGRES_IMAGE = "postgres:17.10-alpine3.23";
 
 /**
  * Pin the daemon to this host's own unix socket. Remote contexts are deliberately
@@ -56,6 +57,8 @@ export interface RealRuntime {
 
 export interface Stack {
   readonly redisUrl: string;
+  /** The control database the gateway reads through its Valkey cache. */
+  readonly databaseUrl: string;
   readonly gatewayUrl: string;
   /**
    * A second gateway whose generation deadline is patient enough for real CPU
@@ -384,7 +387,10 @@ export default async (project: TestProject) => {
     );
   }
   const name = `gateway-contract-${crypto.randomUUID().replaceAll("-", "")}`;
+  const postgresName = `${name}-postgres`;
   const redisPort = await clusterPort();
+  const postgresPort = await freePort();
+  const databaseUrl = `postgres://gradiated:gradiated@127.0.0.1:${postgresPort}/gradiated?sslmode=disable`;
   const gatewayPort = await freePort();
   const runtimeToken = crypto.randomUUID().replaceAll("-", "");
   const logDir = await mkdtemp(join(tmpdir(), "gateway-integration-"));
@@ -394,6 +400,7 @@ export default async (project: TestProject) => {
   let gateway: ChildProcess | undefined;
   const gateways: ChildProcess[] = [];
   let created = false;
+  let postgresCreated = false;
   const runtimeContainers: string[] = [];
   const client = createClient({
     url: `redis://127.0.0.1:${redisPort}`,
@@ -423,6 +430,9 @@ export default async (project: TestProject) => {
     }
     if (client.isOpen) await client.close();
     if (created) await removeOwned(name, "gateway-contract", name);
+    if (postgresCreated) {
+      await removeOwned(postgresName, "gateway-contract", name);
+    }
     for (const container of runtimeContainers) {
       await removeOwned(container, "gateway-contract", name);
     }
@@ -430,6 +440,73 @@ export default async (project: TestProject) => {
   };
 
   try {
+    // Its own PostgreSQL on a random port; never attach to a developer's database.
+    await docker(
+      "run",
+      "-d",
+      "--name",
+      postgresName,
+      "--label",
+      `gateway-contract=${name}`,
+      "--network",
+      "host",
+      "--tmpfs",
+      "/var/lib/postgresql/data:rw,nosuid,nodev,size=256m",
+      "-e",
+      "POSTGRES_USER=gradiated",
+      "-e",
+      "POSTGRES_PASSWORD=gradiated",
+      "-e",
+      "POSTGRES_DB=gradiated",
+      POSTGRES_IMAGE,
+      "-c",
+      `port=${postgresPort}`,
+      "-c",
+      "listen_addresses=127.0.0.1",
+      "-c",
+      "fsync=off",
+    );
+    postgresCreated = true;
+
+    await eventually(
+      async () =>
+        (
+          await dockerOutput(
+            "exec",
+            postgresName,
+            "pg_isready",
+            "--username",
+            "gradiated",
+            "--dbname",
+            "gradiated",
+            "--port",
+            String(postgresPort),
+          )
+        ).includes("accepting connections"),
+      30_000,
+      "postgres did not accept connections",
+    );
+
+    // The product's own migrations, so this schema cannot drift from the one the
+    // gateway's queries are written against.
+    await new Promise<void>((resolve, reject) => {
+      const migrate = spawn(
+        "pnpm",
+        ["--filter", "@gradiated/control", "db:migrate"],
+        {
+          cwd: join(import.meta.dirname, "../../../.."),
+          env: { ...process.env, DATABASE_URL: databaseUrl },
+          stdio: "ignore",
+        },
+      );
+      migrate.once("error", reject);
+      migrate.once("exit", (code) =>
+        code === 0
+          ? resolve()
+          : reject(new Error(`control migrations exited with ${String(code)}`)),
+      );
+    });
+
     // Single-node cluster on a random port; never attach to an existing database.
     await docker(
       "run",
@@ -513,6 +590,8 @@ export default async (project: TestProject) => {
         env: {
           PATH: process.env.PATH ?? "",
           VALKEY_URL: `redis://127.0.0.1:${redisPort}`,
+          DATABASE_URL: databaseUrl,
+          GATEWAY_RECORD_CACHE_TTL_SECONDS: "1",
           GATEWAY_BIND_ADDRESS: `127.0.0.1:${port}`,
           GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "10000",
           GATEWAY_GENERATION_TIMEOUT_SECONDS: generationTimeoutSeconds,
@@ -579,6 +658,7 @@ export default async (project: TestProject) => {
     project.provide("realRuntimes", realRuntimes);
     project.provide("stack", {
       redisUrl: `redis://127.0.0.1:${redisPort}`,
+      databaseUrl,
       gatewayUrl,
       patientGatewayUrl,
       runtimeToken,

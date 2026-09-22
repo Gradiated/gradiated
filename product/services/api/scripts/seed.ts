@@ -1,7 +1,6 @@
 import {
   createCatalogBillingService,
   createControlDatabase,
-  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 
@@ -123,10 +122,7 @@ const { database, pool } = createControlDatabase(databaseUrl);
 const valkey = createValkeyClient({ VALKEY_URL: valkeyUrl });
 await valkey.connect();
 try {
-  const catalogBilling = createCatalogBillingService(
-    database,
-    createValkeyServingProjector(valkey),
-  );
+  const catalogBilling = createCatalogBillingService(database);
   await catalogBilling.upsertModel(createDeepseekV41FlashSeedModel());
   await catalogBilling.upsertModel(createGlm53FlashModelConfiguration());
   if (includeLocalQwen) {
@@ -195,7 +191,6 @@ try {
     if (qwen) await catalogBilling.upsertModel({ ...qwen, status: "retired" });
   }
   if (organizationId && createdBy) {
-    await catalogBilling.initializeCurrentAccount(organizationId);
     await catalogBilling.applyBalanceTransaction({
       organizationId,
       type: "credit",

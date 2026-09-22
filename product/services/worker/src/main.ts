@@ -4,15 +4,12 @@ import {
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
-  createServingProjectionReader,
-  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient } from "@gradiated/valkey";
 import { rm, writeFile } from "node:fs/promises";
 import { parseWorkerEnvironment } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
-import { runServingProjectorLoop } from "./serving-projector-loop.js";
 import {
   startWorkerMetricsServer,
   WorkerMetrics,
@@ -26,7 +23,6 @@ const metricsPort = Number(process.env.METRICS_PORT ?? "9464");
 const metricsServer = startWorkerMetricsServer(metrics, "0.0.0.0", metricsPort);
 const ingestionReadinessPath = "/tmp/gradiated-generation-ingestion-ready";
 const settlementReadinessPath = "/tmp/gradiated-settlement-ready";
-const projectorReadinessPath = "/tmp/gradiated-serving-projector-ready";
 
 for (const signal of ["SIGINT", "SIGTERM"] as const) {
   process.once(signal, () => abortController.abort());
@@ -44,8 +40,6 @@ const writer = createGenerationWriter(clickhouse);
 const settlementReader = createGenerationSettlementReader(clickhouse);
 const { database, pool } = createControlDatabase(environment.DATABASE_URL);
 const settlementStore = createGenerationSettlementStore(pool);
-const projectionReader = createServingProjectionReader(database);
-const servingProjector = createValkeyServingProjector(settlementValkey);
 
 const waitForRetry = async (milliseconds: number): Promise<void> => {
   await new Promise<void>((resolve) => {
@@ -161,41 +155,12 @@ try {
           abortController.signal,
         ),
     ),
-    supervise(
-      "Serving projector",
-      "serving_projector",
-      projectorReadinessPath,
-      () =>
-        runServingProjectorLoop(
-          projectionReader,
-          servingProjector,
-          {
-            balanceTransactionBatchSize:
-              environment.PROJECTOR_BALANCE_TRANSACTION_BATCH_SIZE,
-            pollMilliseconds: environment.PROJECTOR_POLL_SECONDS * 1_000,
-            onReady: async () => {
-              await writeFile(projectorReadinessPath, "ready\n", "utf8");
-              metrics.loopReadyNow("serving_projector");
-            },
-            onPass: (result, duration) => {
-              metrics.recordProjection(result);
-              metrics.recordOperation(
-                "serving_projector",
-                "projection_pass",
-                duration,
-              );
-            },
-          },
-          abortController.signal,
-        ),
-    ),
   ]);
 } finally {
   metricsServer.close();
   await Promise.all([
     rm(ingestionReadinessPath, { force: true }),
     rm(settlementReadinessPath, { force: true }),
-    rm(projectorReadinessPath, { force: true }),
   ]);
   await Promise.allSettled([
     clickhouse.close(),

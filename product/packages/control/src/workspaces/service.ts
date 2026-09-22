@@ -48,52 +48,6 @@ export interface GatewayCredential {
   revokedAt: Date | null;
 }
 
-export interface ServingProjector {
-  initializeAccount(account: {
-    organizationId: string;
-    organizationKind: "customer" | "distribution_channel";
-    organizationStatus: "active" | "suspended";
-    billingMode: "prepaid" | "invoiced";
-    balance: bigint;
-  }): Promise<void>;
-  projectAccount(account: {
-    organizationId: string;
-    organizationKind: "customer" | "distribution_channel";
-    organizationStatus: "active" | "suspended";
-    billingMode: "prepaid" | "invoiced";
-    balance: bigint;
-  }): Promise<boolean>;
-  projectWorkspace(workspace: WorkspaceRecord): Promise<void>;
-  projectCredential(
-    digestHex: string,
-    credential: GatewayCredential,
-  ): Promise<void>;
-  projectModel(model: {
-    id: string;
-    name: string;
-    status: "available" | "unavailable" | "retired";
-    properties: ModelPropertiesRecord;
-    deployments: Array<{
-      id: string;
-      status: "available" | "unavailable" | "draining";
-      provider: string;
-      region: string;
-      faultDomain: string;
-      serviceUrl: string;
-      release: ModelDeploymentReleaseRecord;
-    }>;
-  }): Promise<void>;
-  applyBalanceTransaction(input: {
-    organizationId: string;
-    transactionId: string;
-    amount: bigint;
-  }): Promise<void>;
-  markBalanceTransactionApplied(input: {
-    organizationId: string;
-    transactionId: string;
-  }): Promise<void>;
-}
-
 export class ControlServiceError extends Error {
   constructor(
     readonly code: "forbidden" | "not_found" | "unavailable",
@@ -142,7 +96,6 @@ type WorkspaceAccess = WorkspaceRecord & {
 
 export function createWorkspaceApiKeyService(
   database: ControlDatabase,
-  projector: ServingProjector,
 ): WorkspaceApiKeyService {
   async function getWorkspaceAccess(
     userId: string,
@@ -354,37 +307,6 @@ export function createWorkspaceApiKeyService(
 
       await database.insert(apiKeys).values({ ...apiKey, digest });
 
-      try {
-        await projector.projectWorkspace(access);
-        await projector.projectCredential(digest.toString("hex"), {
-          apiKeyId: apiKey.id,
-          organizationId,
-          workspaceId,
-          expiresAt: input.expiresAt,
-          revokedAt: null,
-        });
-      } catch (error) {
-        const revokedAt = new Date();
-        await database
-          .update(apiKeys)
-          .set({ revokedAt, updatedAt: revokedAt })
-          .where(eq(apiKeys.id, apiKey.id));
-        await projector
-          .projectCredential(digest.toString("hex"), {
-            apiKeyId: apiKey.id,
-            organizationId,
-            workspaceId,
-            expiresAt: input.expiresAt,
-            revokedAt,
-          })
-          .catch(() => undefined);
-        throw new ControlServiceError(
-          "unavailable",
-          "The API key could not be activated. No active key was created.",
-          error,
-        );
-      }
-
       return { apiKey, secret };
     },
 
@@ -414,41 +336,14 @@ export function createWorkspaceApiKeyService(
         );
       }
 
-      const revokedAt = apiKey.revokedAt ?? new Date();
-      const digestHex = apiKey.digest.toString("hex");
-      const blocked = {
-        apiKeyId: apiKey.id,
-        organizationId,
-        workspaceId,
-        expiresAt: apiKey.expiresAt,
-        revokedAt,
-      };
-
-      try {
-        await projector.projectCredential(digestHex, blocked);
-      } catch (error) {
-        throw new ControlServiceError(
-          "unavailable",
-          "The key could not be blocked in serving state.",
-          error,
-        );
-      }
-
+      // Revocation is a row update. The gateway stops accepting the key within
+      // its record cache lifetime, so nothing has to be blocked ahead of it.
       if (!apiKey.revokedAt) {
+        const revokedAt = new Date();
         await database
           .update(apiKeys)
           .set({ revokedAt, updatedAt: revokedAt })
           .where(eq(apiKeys.id, apiKey.id));
-      }
-
-      try {
-        await projector.projectCredential(digestHex, blocked);
-      } catch (error) {
-        throw new ControlServiceError(
-          "unavailable",
-          "The key is blocked, but serving state has not converged.",
-          error,
-        );
       }
     },
   };

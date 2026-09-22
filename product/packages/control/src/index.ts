@@ -64,25 +64,15 @@ export {
   type WaitlistService,
   type WaitlistSignupInput,
 } from "./waitlist/service.js";
-export { createValkeyServingProjector } from "./serving/valkey-projector.js";
 export {
   configureOpenRouterDistributionChannel,
   type ConfiguredDistributionChannel,
 } from "./distribution-channels/service.js";
 export {
-  createServingProjectionReader,
-  type BalanceProjectionTransaction,
-  type BalanceTransactionCursor,
-  type CredentialProjection,
-  type ServingProjectionSnapshot,
-  type ServingProjectionReader,
-} from "./serving/projection-reader.js";
-export {
   ControlServiceError,
   createWorkspaceApiKeyService,
   type ApiKeyRecord,
   type CreatedApiKey,
-  type ServingProjector,
   type WorkspaceApiKeyService,
   type WorkspaceRecord,
 } from "./workspaces/service.js";

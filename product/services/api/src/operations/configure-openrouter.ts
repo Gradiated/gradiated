@@ -1,7 +1,6 @@
 import {
   configureOpenRouterDistributionChannel,
   createControlDatabase,
-  createValkeyServingProjector,
 } from "@gradiated/control";
 import { createValkeyClient, type ValkeyEnvironment } from "@gradiated/valkey";
 
@@ -36,7 +35,6 @@ await valkey.connect();
 try {
   const configured = await configureOpenRouterDistributionChannel(
     database,
-    createValkeyServingProjector(valkey),
     rawApiKey,
   );
   console.log(

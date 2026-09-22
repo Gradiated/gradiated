@@ -57,10 +57,13 @@ describe.each(["kev", "vllm"] as RuntimeKind[])(
       const instance = await makeCase(kind);
       const gate = deferred();
       const plan = instance.runtimes[0]!.enqueue({ gate });
-      const account = await instance.redis.hGetAll(instance.accountKey);
+      let restore: Record<string, string> | undefined;
       const request = instance.post();
       try {
         await entered(plan); // Admission already succeeded.
+        // The gateway creates the account hash when it first reads the account,
+        // so capture it only once a request has reached admission.
+        const account = await instance.redis.hGetAll(instance.accountKey);
         // An invalid account cannot be modified by the finalization Lua script.
         await instance.redis.hSet(
           instance.accountKey,
@@ -79,9 +82,10 @@ describe.each(["kev", "vllm"] as RuntimeKind[])(
         expect(await instance.redis.hGet(instance.accountKey, "balance")).toBe(
           "not-an-integer",
         );
+        restore = account;
       } finally {
         gate.resolve();
-        await instance.redis.hSet(instance.accountKey, account);
+        if (restore) await instance.redis.hSet(instance.accountKey, restore);
         // Deliberately failed settlement leaves an expiring lease, by design.
         // Clean up only this test tenant's lease after asserting that behaviour.
         await instance.redis.del(

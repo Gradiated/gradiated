@@ -48,6 +48,7 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
 #[derive(Clone)]
 pub struct GatewayState {
     readiness: Arc<dyn ReadinessCheck>,
+    compliance: Arc<crate::catalog::ProviderCompliance>,
     completions: CompletionService,
     coordinator: RequestCoordinator,
     relay: ProviderRelay,
@@ -60,10 +61,12 @@ impl GatewayState {
         completions: CompletionService,
         coordinator: RequestCoordinator,
         relay: ProviderRelay,
+        compliance: crate::catalog::ProviderCompliance,
     ) -> Self {
         let metrics = completions.metrics();
         Self {
             readiness,
+            compliance: Arc::new(compliance),
             completions,
             coordinator,
             relay,
@@ -324,7 +327,13 @@ async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Respon
         .coordinator
         .list_models(&headers, Utc::now())
         .await
-        .map(|models| Json(ModelCatalogResponse::from_models(&models)).into_response());
+        .map(|models| {
+            let compliance = crate::catalog::ProviderCompliance {
+                zdr: state.compliance.zdr,
+                hipaa: state.compliance.hipaa,
+            };
+            Json(ModelCatalogResponse::from_models(&models, compliance)).into_response()
+        });
     let error = error_code(&result);
     let response = result.unwrap_or_else(IntoResponse::into_response);
     state
@@ -553,6 +562,7 @@ mod tests {
             completions,
             coordinator,
             relay,
+            test_config.compliance(),
         ))
     }
 

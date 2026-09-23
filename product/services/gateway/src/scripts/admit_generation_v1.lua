@@ -107,13 +107,18 @@ end
 
 redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', '(' .. cleanup_cutoff)
 
+-- Concurrency is a capacity limit, not a billing one, so it applies to every
+-- organization. A prepaid balance narrows it further; an invoiced account is
+-- capped by the same ceiling rather than being unbounded, because one tenant
+-- holding unlimited concurrent generations starves the fleet for everyone.
+local active = redis.call('ZCOUNT', KEYS[2], '(' .. now, '+inf')
+local selected_limit = prepaid_cap
 if account[3] == 'prepaid' then
-  local active = redis.call('ZCOUNT', KEYS[2], '(' .. now, '+inf')
   local funded_limit = math.floor((balance - 1) / balance_per_slot) + 1
-  local selected_limit = math.min(prepaid_cap, funded_limit)
-  if active >= selected_limit then
-    return 4
-  end
+  selected_limit = math.min(prepaid_cap, funded_limit)
+end
+if active >= selected_limit then
+  return 4
 end
 
 local added = redis.call('ZADD', KEYS[2], 'NX', lease_expiry, ARGV[1])

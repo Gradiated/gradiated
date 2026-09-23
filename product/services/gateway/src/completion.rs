@@ -1135,6 +1135,23 @@ async fn finalize_with_retry(
             }
             Ok(FinalizationOutcome::AlreadyAbsent) => {
                 metrics.record_finalization_attempt("already_absent");
+                // The lease is the exactly-once token, so it being gone means either
+                // this is a retry whose predecessor already settled, or the lease was
+                // lost and nothing settled at all. On the first attempt it cannot be
+                // our own retry: the charge was never applied and no terminal event
+                // was appended, so the generation is invisible to billing and to
+                // ClickHouse while the customer has its answer. That is silent lost
+                // revenue and it must be loud.
+                if attempt == 0 {
+                    metrics.record_unsettled_generation();
+                    crate::diagnostics::limited_error!(
+                        %generation_id,
+                        %organization_id,
+                        charge_nano_usd = properties.charge(),
+                        "generation lost its admission lease before settlement; \
+                         the charge was not applied and no terminal event was appended"
+                    );
+                }
                 return Ok(());
             }
             Err(error) => {

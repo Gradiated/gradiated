@@ -1,0 +1,113 @@
+{
+  "comment": "The heartbeat key every runtime writes and the gateway reads. Rust and TypeScript compute it independently, so every combination of the optional fields is pinned here and asserted from both sides.",
+  "cases": [
+    {
+      "name": "required fields only",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision"
+      },
+      "digest": "sha256:18822f6c27e6d94b24c1f42d8300f13e3919c485faaebb738b6453126dda153c"
+    },
+    {
+      "name": "tokenizer_mode",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "tokenizer_mode": "deepseek_v41"
+      },
+      "digest": "sha256:71fb18ad50dcb7dd85724d81795570bd80dab970fa3588fd578ff81378d20993"
+    },
+    {
+      "name": "runtime_model_name",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name"
+      },
+      "digest": "sha256:b2d80dba7d493a68ff29ecbd2800103e21b7dde5fcfc19c05650fef7ca0ce23e"
+    },
+    {
+      "name": "runtime_model_name+tokenizer_mode",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41"
+      },
+      "digest": "sha256:6aa418ec3faaa1303f7a02644164cccbbf9b8e44c76d31da730bbfc2f6fe47b1"
+    },
+    {
+      "name": "protocol",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one"
+      },
+      "digest": "sha256:18352ba8ff7bec0aa170975ab71b62a1d2f016ed753821a874e95dc09b77e455"
+    },
+    {
+      "name": "protocol+tokenizer_mode",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "tokenizer_mode": "deepseek_v41"
+      },
+      "digest": "sha256:eb739f8adcea80ba600e7dad4078b60e70daae28f8a8832cd2dc2892a173c6d8"
+    },
+    {
+      "name": "protocol+runtime_model_name",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name"
+      },
+      "digest": "sha256:8227c904b749f630719a86e5e07ad637c6ebf7247d48d52c27b1f3e0e8b63a77"
+    },
+    {
+      "name": "protocol+runtime_model_name+tokenizer_mode",
+      "release": {
+        "schema_version": 1,
+        "runtime_revision": "runtime-revision",
+        "model_path": "vendor/model",
+        "model_revision": "model-revision",
+        "tokenizer_path": "vendor/tokenizer",
+        "tokenizer_revision": "tokenizer-revision",
+        "protocol": "system_one",
+        "runtime_model_name": "vendor/runtime-name",
+        "tokenizer_mode": "deepseek_v41"
+      },
+      "digest": "sha256:915437248d023f2411beba50950df54001b29c68a6b07150fe32387563c6b592"
+    }
+  ]
+}

@@ -9,8 +9,33 @@ use crate::{
 
 const PROVIDER_SCHEMA_VERSION: &str = "2.4";
 const NANO_USD_SCALE: u64 = 1_000_000_000;
-const PROVIDER_ZDR: bool = true;
-const PROVIDER_HIPAA: bool = false;
+/// Region to ISO 3166-1 alpha-2 country. A region this does not name has its
+/// country omitted rather than guessed: publishing the wrong data residency is
+/// worse than publishing none, and customers encode this field into their own
+/// compliance logic.
+const REGION_COUNTRIES: &[(&str, &str)] = &[
+    // RunPod names regions by country; AWS names them by area.
+    ("af-south-1", "ZA"),
+    ("ap-northeast-1", "JP"),
+    ("ap-northeast-2", "KR"),
+    ("ap-south-1", "IN"),
+    ("ap-southeast-1", "SG"),
+    ("ap-southeast-2", "AU"),
+    ("ca-central-1", "CA"),
+    ("eu-central-1", "DE"),
+    ("eu-north-1", "SE"),
+    ("eu-west-1", "IE"),
+    ("eu-west-2", "GB"),
+    ("eu-west-3", "FR"),
+    ("sa-east-1", "BR"),
+    ("us-east-1", "US"),
+    ("us-east-2", "US"),
+    ("us-west-1", "US"),
+    ("us-west-2", "US"),
+    ("ca", "CA"),
+    ("sg", "SG"),
+    ("us", "US"),
+];
 
 #[derive(Debug)]
 pub struct CatalogModel {
@@ -24,11 +49,11 @@ pub struct ModelCatalogResponse<'a> {
 }
 
 impl<'a> ModelCatalogResponse<'a> {
-    pub fn from_models(models: &'a [CatalogModel]) -> Self {
+    pub fn from_models(models: &'a [CatalogModel], compliance: ProviderCompliance) -> Self {
         Self {
             data: models
                 .iter()
-                .filter_map(ProviderModel::from_model)
+                .filter_map(|model| ProviderModel::from_model(model, &compliance))
                 .collect(),
         }
     }
@@ -55,12 +80,13 @@ struct ProviderModel<'a> {
     deprecation_date: Option<&'a DateTime<Utc>>,
     is_ready: bool,
     datacenters: Vec<ProviderDatacenter<'a>>,
-    deployment_region: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    deployment_region: Option<&'static str>,
     compliance: ProviderCompliance,
 }
 
 impl<'a> ProviderModel<'a> {
-    fn from_model(catalog: &'a CatalogModel) -> Option<Self> {
+    fn from_model(catalog: &'a CatalogModel, compliance: &ProviderCompliance) -> Option<Self> {
         let model = &catalog.model;
         let is_ready = match model.status {
             ModelStatus::Available => catalog.healthy_deployments > 0,
@@ -96,9 +122,7 @@ impl<'a> ProviderModel<'a> {
                 region,
             })
             .collect::<Vec<_>>();
-        let deployment_region = datacenters
-            .first()
-            .map_or_else(|| "US".to_owned(), |entry| entry.country_code.clone());
+        let deployment_region = datacenters.first().and_then(|entry| entry.country_code);
 
         let released_at = model.properties.released_at.as_ref()?;
         let input = model.properties.text_input();
@@ -120,17 +144,20 @@ impl<'a> ProviderModel<'a> {
             datacenters,
             deployment_region,
             compliance: ProviderCompliance {
-                zdr: PROVIDER_ZDR,
-                hipaa: PROVIDER_HIPAA,
+                zdr: compliance.zdr,
+                hipaa: compliance.hipaa,
             },
         })
     }
 }
 
 #[derive(Debug, Serialize)]
-struct ProviderCompliance {
-    zdr: bool,
-    hipaa: bool,
+/// What the gateway publishes about itself. These are claims customers encode into
+/// their own compliance decisions, so they are configuration rather than constants
+/// compiled into the binary, and they are not per-model facts today.
+pub struct ProviderCompliance {
+    pub zdr: bool,
+    pub hipaa: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -233,21 +260,20 @@ impl From<&OutputTokenPrice> for ProviderOutputPrice {
 
 #[derive(Debug, Serialize)]
 struct ProviderDatacenter<'a> {
-    country_code: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    country_code: Option<&'static str>,
     region: &'a str,
 }
 
-fn country_code(region: &str) -> String {
-    let candidate = region
-        .split(['-', '_'])
-        .next()
-        .unwrap_or(region)
-        .to_ascii_uppercase();
-    if candidate.len() == 2 && candidate.bytes().all(|byte| byte.is_ascii_alphabetic()) {
-        candidate
-    } else {
-        "US".to_owned()
-    }
+/// A region's country, or nothing when the region is not one this gateway knows.
+/// The previous rule took the region's first segment, so `eu-central-1` published
+/// `EU` and `ap-southeast-1` published `AP` — neither is a country — and anything
+/// else published `US`.
+fn country_code(region: &str) -> Option<&'static str> {
+    REGION_COUNTRIES
+        .iter()
+        .find(|(name, _)| *name == region)
+        .map(|(_, country)| *country)
 }
 
 fn nano_usd(value: u64) -> String {
@@ -338,7 +364,14 @@ mod tests {
             model: model(),
             healthy_deployments: 2,
         }];
-        let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+        let response = serde_json::to_value(ModelCatalogResponse::from_models(
+            &models,
+            ProviderCompliance {
+                zdr: true,
+                hipaa: false,
+            },
+        ))
+        .unwrap();
         let published = &response["data"][0];
 
         assert_eq!(published["id"], "provider/model-a");
@@ -383,7 +416,14 @@ mod tests {
             model: singapore,
             healthy_deployments: 2,
         }];
-        let response = serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+        let response = serde_json::to_value(ModelCatalogResponse::from_models(
+            &models,
+            ProviderCompliance {
+                zdr: true,
+                hipaa: false,
+            },
+        ))
+        .unwrap();
         let published = &response["data"][0];
 
         assert_eq!(
@@ -391,6 +431,34 @@ mod tests {
             serde_json::json!([{ "country_code": "SG", "region": "sg" }])
         );
         assert_eq!(published["deployment_region"], "SG");
+    }
+
+    #[test]
+    /// A region this gateway does not know publishes no country at all. Guessing one
+    /// from the region's first segment produced `EU` and `AP`, which are not
+    /// countries, and `US` for everything else.
+    fn an_unknown_region_publishes_no_country() {
+        let mut unknown = model();
+        unknown.deployments[0].region = "moon-base-1".to_owned();
+        let models = [CatalogModel {
+            model: unknown,
+            healthy_deployments: 1,
+        }];
+        let response = serde_json::to_value(ModelCatalogResponse::from_models(
+            &models,
+            ProviderCompliance {
+                zdr: true,
+                hipaa: false,
+            },
+        ))
+        .unwrap();
+        let published = &response["data"][0];
+
+        assert_eq!(
+            published["datacenters"],
+            serde_json::json!([{ "region": "moon-base-1" }])
+        );
+        assert_eq!(published["deployment_region"], serde_json::Value::Null);
     }
 
     #[test]
@@ -407,8 +475,14 @@ mod tests {
                 model,
                 healthy_deployments: 0,
             }];
-            let response =
-                serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+            let response = serde_json::to_value(ModelCatalogResponse::from_models(
+                &models,
+                ProviderCompliance {
+                    zdr: true,
+                    hipaa: false,
+                },
+            ))
+            .unwrap();
             assert_eq!(response["data"].as_array().unwrap().len(), 0);
         }
     }
@@ -420,8 +494,14 @@ mod tests {
                 model: model(),
                 healthy_deployments,
             }];
-            let response =
-                serde_json::to_value(ModelCatalogResponse::from_models(&models)).unwrap();
+            let response = serde_json::to_value(ModelCatalogResponse::from_models(
+                &models,
+                ProviderCompliance {
+                    zdr: true,
+                    hipaa: false,
+                },
+            ))
+            .unwrap();
             assert_eq!(
                 response["data"][0]["is_ready"], expected,
                 "{healthy_deployments} healthy deployments"

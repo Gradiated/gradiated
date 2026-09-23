@@ -31,7 +31,11 @@ async fn every_query_runs_against_the_local_schema() {
     assert_eq!(reader.model_json("absent/model").await.unwrap(), None);
     assert_eq!(reader.account(Uuid::nil()).await.unwrap(), None);
     assert!(reader
-        .balance_transactions_after(Uuid::nil(), Utc.timestamp_opt(0, 0).unwrap(), 10)
+        .balance_transactions_after(
+            Uuid::nil(),
+            LedgerPosition::after_balance_at(Utc.timestamp_opt(0, 0).unwrap()),
+            10,
+        )
         .await
         .unwrap()
         .is_empty());

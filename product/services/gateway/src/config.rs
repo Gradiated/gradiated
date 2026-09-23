@@ -69,6 +69,13 @@ pub struct GatewayConfig {
     #[serde(default = "default_proxy_max_in_flight")]
     #[validate(range(min = 1, max = 1_000_000))]
     pub proxy_max_in_flight: u64,
+    /// Published on every model in the catalog as a compliance claim. They are not
+    /// per-deployment facts, so a runtime that retains prompts makes `provider_zdr`
+    /// untrue for its models and the claim has to be revisited.
+    #[serde(default = "default_provider_zdr")]
+    pub provider_zdr: bool,
+    #[serde(default)]
+    pub provider_hipaa: bool,
     /// The authoritative store for identity and the model catalog.
     pub database_url: String,
     /// Extra certificate authorities to trust for the database connection. Amazon
@@ -105,6 +112,8 @@ impl GatewayConfig {
             prepaid_organization_concurrency_cap: default_prepaid_organization_concurrency_cap(),
             balance_per_concurrency_slot_nano_usd: default_balance_per_concurrency_slot_nano_usd(),
             settlement_backlog_limit: 100_000,
+            provider_zdr: default_provider_zdr(),
+            provider_hipaa: false,
             database_url: "postgres://127.0.0.1:5432/gradiated".to_owned(),
             database_ca_bundle_path: None,
             record_cache_ttl_seconds: default_record_cache_ttl_seconds(),
@@ -164,6 +173,13 @@ impl GatewayConfig {
             .map(str::trim)
             .filter(|value| !value.is_empty())
             .collect()
+    }
+
+    pub fn compliance(&self) -> crate::catalog::ProviderCompliance {
+        crate::catalog::ProviderCompliance {
+            zdr: self.provider_zdr,
+            hipaa: self.provider_hipaa,
+        }
     }
 
     pub fn record_cache_ttl(&self) -> Duration {
@@ -261,6 +277,10 @@ fn default_prepaid_organization_concurrency_cap() -> u64 {
 
 fn default_balance_per_concurrency_slot_nano_usd() -> u64 {
     1_000_000_000
+}
+
+fn default_provider_zdr() -> bool {
+    true
 }
 
 fn default_record_cache_ttl_seconds() -> u64 {

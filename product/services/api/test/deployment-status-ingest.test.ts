@@ -1,6 +1,10 @@
+import { readFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 
-import type { DeploymentStatusReport } from "@gradiated/contracts";
+import type {
+  DeploymentStatusReport,
+  ModelDeploymentRelease,
+} from "@gradiated/contracts";
 import {
   servedReleaseDigest,
   type DeploymentStatusService,
@@ -24,19 +28,32 @@ const report = (): DeploymentStatusReport => ({
 });
 
 describe("deployment status ingestion", () => {
-  it("uses the same stable release digest as the gateway", () => {
-    expect(
-      servedReleaseDigest({
-        schema_version: 1,
-        runtime_revision: "sglang-local-test-revision",
-        model_path: "mlx-community/Qwen3-0.6B-4bit",
-        model_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
-        tokenizer_path: "mlx-community/Qwen3-0.6B-4bit",
-        tokenizer_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
-      }),
-    ).toBe(
-      "sha256:e4a74e6c4981b6176e08acc9fa391ca5fe5562485b5df96fdf088c48ae406eda",
-    );
+  // The gateway computes this key from ModelDeploymentRelease's serialisation and
+  // reads heartbeats under it. Both sides are pinned to the same fixture so an
+  // added release field cannot silently split them.
+  it("computes the gateway's release digest for every optional field", async () => {
+    const fixture = JSON.parse(
+      await readFile(
+        new URL(
+          "../../gateway/test/fixtures/release-digests.json",
+          import.meta.url,
+        ),
+        "utf8",
+      ),
+    ) as {
+      cases: {
+        name: string;
+        release: ModelDeploymentRelease;
+        digest: string;
+      }[];
+    };
+
+    expect(fixture.cases).toHaveLength(8);
+    for (const testCase of fixture.cases) {
+      expect(servedReleaseDigest(testCase.release), testCase.name).toBe(
+        testCase.digest,
+      );
+    }
   });
 
   it("maps each secret token to one provider", () => {

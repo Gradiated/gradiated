@@ -53,6 +53,20 @@ macro_rules! limited_warn {
 }
 pub(crate) use limited_warn;
 
+// As `limited_warn`, for a condition that should page rather than inform.
+macro_rules! limited_error {
+    ($($fields:tt)*) => {{
+        static BUDGET: std::sync::LazyLock<std::sync::Mutex<$crate::diagnostics::WarningBudget>> =
+            std::sync::LazyLock::new(Default::default);
+        if tracing::enabled!(tracing::Level::ERROR) {
+        if let Some(suppressed_events) = $crate::diagnostics::warning_budget(&BUDGET) {
+            tracing::error!(suppressed_events, $($fields)*);
+        }
+        }
+    }};
+}
+pub(crate) use limited_error;
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -15,7 +15,9 @@ use crate::{
     cache::LazyTtlCache,
     deployment::DeploymentRuntimeStatus,
     domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace},
-    postgres_reader::{AccountRecord, PostgresError, PostgresReader},
+    postgres_reader::{
+        AccountRecord, BalanceTransaction, LedgerPosition, PostgresError, PostgresReader,
+    },
     FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties,
 };
 use crate::{valkey_auth::ValkeyIamCredentials, ValkeyIamConfig};
@@ -28,10 +30,6 @@ const APPLY_BALANCE_TRANSACTIONS_V1: &str =
 /// One request never applies more than this many ledger entries; the next one
 /// continues from the watermark this batch advanced.
 const BALANCE_TRANSACTION_BATCH: i64 = 500;
-/// The gateway's own fields in the account hash. They record what the seed
-/// included and when metadata was last refreshed, and they are not part of the
-/// account record, which rejects fields it does not declare.
-const ACCOUNT_BOOKKEEPING: [&str; 2] = ["balance_seeded_at", "metadata_refreshed_at"];
 /// Deployment statuses are pushed by the runtimes and expire on their own, so
 /// this only stops one request from reading the same key repeatedly.
 const STATUS_CACHE_TTL: Duration = Duration::from_secs(1);
@@ -243,19 +241,31 @@ impl ValkeyServingState {
         key: &str,
         organization_id: Uuid,
     ) -> Result<(), ServingStateError> {
-        let watermark: Option<String> = self
-            .query(redis::cmd("HGET").arg(key).arg("balance_seeded_at"))
-            .await?;
-        let watermark = watermark
-            .and_then(|value| value.parse::<i64>().ok())
-            .and_then(DateTime::from_timestamp_millis)
-            .ok_or(ServingStateError::MissingBalanceWatermark)?;
+        let fields: HashMap<String, String> = self
+            .query(
+                redis::cmd("HMGET")
+                    .arg(key)
+                    .arg("balance_seeded_at")
+                    .arg("balance_seeded_id"),
+            )
+            .await
+            .map(|values: Vec<Option<String>>| {
+                ["balance_seeded_at", "balance_seeded_id"]
+                    .into_iter()
+                    .zip(values)
+                    .filter_map(|(name, value)| value.map(|value| (name.to_owned(), value)))
+                    .collect()
+            })?;
+        let watermark =
+            ledger_position(&fields).ok_or(ServingStateError::MissingBalanceWatermark)?;
 
         let transactions = self
             .database
             .balance_transactions_after(organization_id, watermark, BALANCE_TRANSACTION_BATCH)
             .await?;
-        let Some(highest) = transactions.last().map(|entry| entry.created_at) else {
+        // The cursor is the last entry applied, not the last timestamp seen, so a
+        // batch that ends between two entries sharing a timestamp resumes correctly.
+        let Some(highest) = transactions.last().map(BalanceTransaction::position) else {
             return Ok(());
         };
 
@@ -265,7 +275,8 @@ impl ValkeyServingState {
             .key(format!(
                 "applied-balance-transactions:{{settlement-0}}:{organization_id}"
             ))
-            .arg(highest.timestamp_millis());
+            .arg(highest.created_at.timestamp_millis())
+            .arg(highest.id.to_string());
         for transaction in &transactions {
             script
                 .arg(transaction.id.to_string())
@@ -299,6 +310,11 @@ impl ValkeyServingState {
             .arg(&record.billing_mode)
             .arg(record.balance)
             .arg(record.balance_updated_at.timestamp_millis())
+            .arg(
+                LedgerPosition::after_balance_at(record.balance_updated_at)
+                    .id
+                    .to_string(),
+            )
             .arg(Utc::now().timestamp_millis())
             .invoke_async(&mut self.connection.clone())
             .await?;
@@ -469,13 +485,25 @@ impl ValkeyServingState {
     }
 }
 
-fn account_from_hash(
-    mut fields: HashMap<String, String>,
-) -> Result<GatewayAccount, ServingStateError> {
-    for field in ACCOUNT_BOOKKEEPING {
-        fields.remove(field);
-    }
+/// The ledger position the account hash already includes.
+fn ledger_position(fields: &HashMap<String, String>) -> Option<LedgerPosition> {
+    let created_at = fields
+        .get("balance_seeded_at")?
+        .parse::<i64>()
+        .ok()
+        .and_then(DateTime::from_timestamp_millis)?;
+    let id = fields
+        .get("balance_seeded_id")
+        .and_then(|value| value.parse().ok())
+        .unwrap_or_else(Uuid::max);
 
+    Some(LedgerPosition { created_at, id })
+}
+
+/// The hash also carries the gateway's own bookkeeping, which is not part of the
+/// account record. `GatewayAccount` ignores fields it does not declare, so they
+/// need no removal here.
+fn account_from_hash(fields: HashMap<String, String>) -> Result<GatewayAccount, ServingStateError> {
     GatewayAccount::from_hash(fields)
         .map_err(|source| ServingStateError::MalformedAccount { source })
 }

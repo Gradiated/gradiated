@@ -84,6 +84,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         completions.clone(),
         RequestCoordinator::new(serving_state),
         relay,
+        config.compliance(),
     ));
     let app = if browser_origins.is_empty() {
         app

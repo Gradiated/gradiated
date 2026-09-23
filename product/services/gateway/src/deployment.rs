@@ -7,7 +7,6 @@ use uuid::Uuid;
 use validator::Validate;
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayModelDeployment {
     pub id: Uuid,
     pub status: DeploymentStatus,
@@ -70,6 +69,11 @@ pub enum DeploymentStatus {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
+// This one stays strict on purpose. Its serialisation is the deployment's identity:
+// `served_release_digest` hashes it, and the runtimes write their heartbeats under
+// that hash. Ignoring an unknown field would compute a different digest from the
+// producer's and silently route heartbeats to a key nothing reads, so failing to
+// parse is the safer failure.
 #[serde(deny_unknown_fields)]
 pub struct ModelDeploymentRelease {
     #[validate(range(min = 1, max = 1))]
@@ -184,13 +188,21 @@ mod tests {
     }
 
     #[test]
-    fn unknown_deployment_fields_are_rejected() {
-        let error = serde_json::from_str::<GatewayModelDeployment>(include_str!(
+    /// A deployment written by another gateway version must still parse, but the
+    /// release must not: its serialisation is the heartbeat key, so ignoring a field
+    /// there would silently compute a different digest from the producer's.
+    fn an_unknown_field_is_tolerated_on_the_deployment_and_refused_in_the_release() {
+        let deployment = serde_json::from_str::<GatewayModelDeployment>(include_str!(
             "../test/fixtures/gateway-model-deployment.rejected.json"
         ))
-        .expect_err("unknown field must be rejected");
+        .expect("an unknown deployment field is ignored");
+        assert_eq!(deployment.provider, "local");
 
-        assert!(error.to_string().contains("unexpected_private_option"));
+        let mut value = serde_json::to_value(accepted_deployment()).unwrap();
+        value["release"]["unexpected_release_option"] = serde_json::json!(true);
+        let error = serde_json::from_value::<GatewayModelDeployment>(value)
+            .expect_err("an unknown release field must be rejected");
+        assert!(error.to_string().contains("unexpected_release_option"));
     }
 
     #[test]
@@ -259,5 +271,43 @@ mod tests {
             missing.is_err(),
             "a missing required field must be rejected"
         );
+    }
+}
+
+#[cfg(test)]
+mod digest_fixtures {
+    use super::*;
+
+    /// The heartbeat key is computed independently by the gateway and by the control
+    /// plane, so every combination of the optional release fields is pinned here and
+    /// asserted from both sides. Omitting one silently routes heartbeats to a key the
+    /// gateway never reads.
+    #[test]
+    fn release_digests_match_the_shared_fixture() {
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../test/fixtures/release-digests.json"))
+                .expect("the fixture parses");
+        let cases = fixture["cases"].as_array().expect("cases is an array");
+        assert_eq!(cases.len(), 8, "every optional combination is covered");
+
+        for case in cases {
+            let release: ModelDeploymentRelease =
+                serde_json::from_value(case["release"].clone()).expect("the release parses");
+            let deployment = GatewayModelDeployment {
+                id: uuid::Uuid::nil(),
+                status: DeploymentStatus::Available,
+                provider: "local".to_owned(),
+                region: "local".to_owned(),
+                fault_domain: "local:one".to_owned(),
+                service_url: "http://127.0.0.1:30000".to_owned(),
+                release,
+            };
+            assert_eq!(
+                deployment.served_release_digest().expect("a digest"),
+                case["digest"].as_str().expect("a digest string"),
+                "{}",
+                case["name"]
+            );
+        }
     }
 }

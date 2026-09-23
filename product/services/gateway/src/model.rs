@@ -7,7 +7,6 @@ use thiserror::Error;
 use validator::Validate;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayModelProperties {
     #[validate(range(min = 1, max = 1))]
     pub schema_version: u16,
@@ -86,7 +85,6 @@ pub enum ModelQuantization {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct TextInputModality {
     #[serde(rename = "type")]
     pub kind: TextModalityKind,
@@ -123,7 +121,6 @@ impl TextInputModality {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct SupportedTextInputs {
     #[validate(nested)]
     pub max_context_length: TokenMeasure,
@@ -132,7 +129,6 @@ pub struct SupportedTextInputs {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct TextOutputModality {
     #[serde(rename = "type")]
     pub kind: TextModalityKind,
@@ -179,7 +175,6 @@ impl TextOutputModality {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
-#[serde(deny_unknown_fields)]
 pub struct TokenMeasure {
     #[validate(range(min = 1))]
     pub value: u64,
@@ -199,7 +194,7 @@ pub enum TextModalityKind {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum InputTokenPrice {
     Prompt { unit: TokenUnit, cost: u64 },
     CachedPrompt { unit: TokenUnit, cost: u64 },
@@ -232,7 +227,7 @@ pub enum InputPriceType {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum OutputTokenPrice {
     Completion { unit: TokenUnit, cost: u64 },
     InternalReasoning { unit: TokenUnit, cost: u64 },
@@ -278,7 +273,7 @@ fn require_unique_prices<T: Copy + Eq + std::hash::Hash, const N: usize>(
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum ModelParameterDescriptor {
     Range {
         min: f64,

@@ -40,6 +40,7 @@ struct Metrics {
     finalization_attempts: CounterFamily<FinalizationLabels>,
     finalization_retries: CounterFamily<GenerationLabels>,
     finalization_failures: CounterFamily<GenerationLabels>,
+    unsettled_generations: CounterFamily<GenerationLabels>,
     dependency_ready: GaugeFamily<DependencyLabels>,
     last_finalization_failure_timestamp_seconds: Gauge,
     last_settlement_backpressure_timestamp_seconds: Gauge,
@@ -139,6 +140,7 @@ impl GatewayMetrics {
         let finalization_attempts = CounterFamily::default();
         let finalization_retries = CounterFamily::default();
         let finalization_failures = CounterFamily::default();
+        let unsettled_generations = CounterFamily::default();
         let dependency_ready = GaugeFamily::default();
         let last_finalization_failure_timestamp_seconds = Gauge::default();
         let last_settlement_backpressure_timestamp_seconds = Gauge::default();
@@ -245,6 +247,11 @@ impl GatewayMetrics {
             finalization_failures.clone(),
         );
         registry.register(
+            "unsettled_generations",
+            "Generations served without a charge or a terminal event, their lease lost.",
+            unsettled_generations.clone(),
+        );
+        registry.register(
             "dependency_ready",
             "Whether a dependency passed its latest readiness check.",
             dependency_ready.clone(),
@@ -272,6 +279,7 @@ impl GatewayMetrics {
                 finalization_attempts,
                 finalization_retries,
                 finalization_failures,
+                unsettled_generations,
                 dependency_ready,
                 last_finalization_failure_timestamp_seconds,
                 last_settlement_backpressure_timestamp_seconds,
@@ -481,6 +489,16 @@ impl AdmittedGenerationMetrics {
                 .get_or_create(&self.labels)
                 .observe(usage.output_tokens() as f64 / runtime_seconds);
         }
+    }
+
+    /// A generation that was served but never settled: its lease was gone before
+    /// finalization, so no charge was applied and no terminal event was appended.
+    pub fn record_unsettled_generation(&self) {
+        self.metrics
+            .inner
+            .unsettled_generations
+            .get_or_create(&self.labels)
+            .inc();
     }
 
     pub fn record_finalization_attempt(&self, result: &'static str) {

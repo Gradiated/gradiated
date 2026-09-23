@@ -35,6 +35,35 @@ describe.each(["kev", "vllm"] as RuntimeKind[])(
       expect(await instance.settlements()).toHaveLength(2);
     });
 
+    // Concurrency is a capacity limit, not a billing one. An invoiced account used
+    // to skip the gate entirely, so one tenant could hold unlimited generations and
+    // starve the fleet.
+    it("rejects excess invoiced concurrency without dispatching", async () => {
+      const instance = await makeCase(kind);
+      instance.initialBalance = -1;
+      await instance.setTenant({ billingMode: "invoiced", balance: -1 });
+      const gates = [deferred(), deferred()];
+      const plans = gates.map((gate) =>
+        instance.runtimes[0]!.enqueue({ gate }),
+      );
+      const requests: Promise<Awaited<ReturnType<typeof instance.post>>>[] = [];
+      try {
+        for (const plan of plans) {
+          requests.push(instance.post());
+          await entered(plan);
+        }
+        const response = await instance.post();
+        expect(response.status).toBe(429);
+        expect(response.json().error.code).toBe("concurrency_exceeded");
+        expect(instance.runtimes[0]!.calls).toHaveLength(2);
+      } finally {
+        for (const gate of gates) gate.resolve();
+      }
+      for (const request of requests) {
+        expect((await request).status).toBe(200);
+      }
+    });
+
     it("cancels on the deadline and releases admission", async () => {
       const instance = await makeCase(kind);
       const gate = deferred();

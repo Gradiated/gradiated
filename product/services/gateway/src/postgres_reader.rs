@@ -26,6 +26,34 @@ pub struct BalanceTransaction {
     pub created_at: DateTime<Utc>,
 }
 
+impl BalanceTransaction {
+    pub fn position(&self) -> LedgerPosition {
+        LedgerPosition {
+            created_at: self.created_at,
+            id: self.id,
+        }
+    }
+}
+
+/// A place in the ledger, ordered the way the query orders it.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct LedgerPosition {
+    pub created_at: DateTime<Utc>,
+    pub id: Uuid,
+}
+
+impl LedgerPosition {
+    /// The position a seeded balance starts from. The id is the highest possible
+    /// one, so entries sharing the source balance's timestamp stay excluded, which
+    /// is what the balance already included.
+    pub fn after_balance_at(created_at: DateTime<Utc>) -> Self {
+        Self {
+            created_at,
+            id: Uuid::max(),
+        }
+    }
+}
+
 /// Every field the account hash needs on first write. `balance` and
 /// `balance_updated_at` seed the operational balance exactly once; the worker
 /// replays later transactions on top of that seed.
@@ -93,14 +121,18 @@ const MODEL_IDS_QUERY: &str = "select id from models order by id";
 
 /// Settlement batches are the charges this gateway already applied to the
 /// operational balance, so replaying them would double-count usage.
+/// The cursor is the (created_at, id) pair, not the timestamp alone: entries can
+/// share a timestamp, and a batch that ends between two of them must resume at the
+/// next entry rather than skip the rest of that instant. The
+/// (organization_id, created_at, id) index serves this directly.
 const BALANCE_TRANSACTIONS_QUERY: &str = "\
 select id, amount, created_at
 from balance_transactions
 where organization_id = $1
-  and created_at > $2
+  and (created_at, id) > ($2, $3)
   and source_type <> 'generation_settlement_batch'
 order by created_at, id
-limit $3";
+limit $4";
 
 const ACCOUNT_QUERY: &str = "\
 select
@@ -177,11 +209,11 @@ impl PostgresReader {
         row.map(account_record).transpose()
     }
 
-    /// Ledger entries created after the balance the account hash already holds.
+    /// Ledger entries after the position the account hash already includes.
     pub async fn balance_transactions_after(
         &self,
         organization_id: Uuid,
-        watermark: DateTime<Utc>,
+        watermark: LedgerPosition,
         limit: i64,
     ) -> Result<Vec<BalanceTransaction>, PostgresError> {
         let rows = self
@@ -189,7 +221,12 @@ impl PostgresReader {
             .await?
             .query(
                 BALANCE_TRANSACTIONS_QUERY,
-                &[&organization_id, &watermark, &limit],
+                &[
+                    &organization_id,
+                    &watermark.created_at,
+                    &watermark.id,
+                    &limit,
+                ],
             )
             .await?;
 

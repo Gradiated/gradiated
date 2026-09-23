@@ -30,12 +30,13 @@ export interface DeploymentStatusService {
 export const servedReleaseDigest = (
   release: ModelDeploymentRelease,
 ): string => {
+  // Key order must match ModelDeploymentRelease's field order in the gateway: the
+  // release is serialised and hashed, so a missing or reordered field produces a
+  // heartbeat key the gateway never reads. test/fixtures/release-digests.json pins
+  // every combination of the optional fields from both sides.
   const canonical = {
     schema_version: release.schema_version,
     runtime_revision: release.runtime_revision,
-    // Field order and omission must match the Rust struct exactly: the gateway
-    // hashes its own serialization and reads status under the resulting key, so a
-    // field missing here sends heartbeats to a key nobody reads.
     ...(release.protocol === undefined ? {} : { protocol: release.protocol }),
     model_path: release.model_path,
     model_revision: release.model_revision,

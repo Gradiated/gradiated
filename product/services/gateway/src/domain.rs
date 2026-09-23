@@ -8,8 +8,12 @@ use uuid::Uuid;
 use crate::deployment::{DeploymentStatus, GatewayModelDeployment};
 use crate::model::GatewayModelProperties;
 
+// Records are read from a cache that another, possibly older or newer, gateway
+// wrote. Rejecting a field this binary does not know turns one additive schema
+// change into every request failing for a full record lifetime, fleet-wide, and
+// makes a rollback do the same. Unknown fields are ignored; the domain invariants
+// below are still enforced after parsing.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayCredential {
     pub api_key_id: Uuid,
     pub organization_id: Uuid,
@@ -19,7 +23,6 @@ pub struct GatewayCredential {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayWorkspace {
     pub organization_id: Uuid,
     pub workspace_id: Uuid,
@@ -27,7 +30,6 @@ pub struct GatewayWorkspace {
 }
 
 #[derive(Clone, Debug, Deserialize, PartialEq)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayModel {
     pub id: String,
     pub name: String,
@@ -91,7 +93,6 @@ pub enum BillingMode {
 }
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
-#[serde(deny_unknown_fields)]
 pub struct GatewayAccount {
     pub organization_id: Uuid,
     pub organization_kind: OrganizationKind,
@@ -208,10 +209,20 @@ mod tests {
     }
 
     #[test]
-    fn account_hash_rejects_unknown_fields() {
+    /// The hash carries the gateway's own bookkeeping beside the account, and a
+    /// newer gateway may add more of it. Those fields are not the account's, and
+    /// rejecting them would fail every request for the organization.
+    fn the_account_ignores_fields_that_are_not_its_own() {
         let mut fields = valid_account();
-        fields.insert("unexpected".to_owned(), "value".to_owned());
-        assert!(GatewayAccount::from_hash(fields).is_err());
+        fields.insert("balance_seeded_at".to_owned(), "1790000000000".to_owned());
+        fields.insert(
+            "balance_seeded_id".to_owned(),
+            "ffffffff-ffff-ffff-ffff-ffffffffffff".to_owned(),
+        );
+        fields.insert("a_field_from_a_later_gateway".to_owned(), "1".to_owned());
+
+        let account = GatewayAccount::from_hash(fields).expect("the account parses");
+        assert_eq!(account.balance, 1_000_000_000);
     }
 
     #[test]

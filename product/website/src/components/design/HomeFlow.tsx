@@ -278,8 +278,8 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
   const bits: Bit[] = walls.map(([r, c]) => ({
     mx: c / (MC - 1),
     my: r / (MR - 1),
-    sx: 0.2 + rnd() * 0.6,
-    sy: 0.2 + rnd() * 0.6,
+    sx: 0.06 + rnd() * 0.88,
+    sy: 0.06 + rnd() * 0.88,
     ex: 0,
     ey: 0,
     du: 0,
@@ -450,30 +450,42 @@ export const HomeFlow = (): ReactElement => {
         ctx.fillText(ENGINE_LABELS[c], bx, L.y - 8);
       }
 
-      /* Content rects: a fitted map inside a stage box for normalised
-         coordinates of a given aspect (cols-1 x rows-1). */
-      const fit = (
-        b: { x: number; y: number; w: number; h: number },
-        aspect: number,
-      ): { x: number; y: number; w: number; h: number } => {
-        const iw = b.w - 36;
-        const ih = b.h - 48;
-        const w = Math.min(iw, ih * aspect);
-        const h = w / aspect;
-        return { x: b.x + (b.w - w) / 2, y: b.y + (b.h - h) / 2, w, h };
-      };
-      const traffic = fit(boxes[0], 0.45);
-      const mazeBox = fit(boxes[1], (MC - 1) / (MR - 1));
-      const ER = Math.ceil(ENGINE.bits.length / 7);
-      const evalBox = fit(boxes[2], 6 / (ER - 1));
-      const bit = Math.max(3.5, mazeBox.w / (MC - 1) * 0.62);
+      /* Content rects fill their stage boxes edge to edge — non-square cell
+         spacing is fine for square chips, and empty container is not. */
+      const pad = (b: { x: number; y: number; w: number; h: number }) => ({
+        x: b.x + 16,
+        y: b.y + 20,
+        w: b.w - 32,
+        h: b.h - 40,
+      });
+      const traffic = pad(boxes[0]);
+      const mazeBox = pad(boxes[1]);
+      const evalBox = pad(boxes[2]);
+      const bit = Math.max(3, (mazeBox.w / (MC - 1)) * 0.42);
       const DP = bit * 1.7;
       const dieC: [number, number] = [
         boxes[3].x + boxes[3].w / 2,
-        boxes[3].y + boxes[3].h * 0.4,
+        boxes[3].y + boxes[3].h * 0.28,
       ];
-      const os = bit * 5;
-      const outPt: [number, number] = [dieC[0], boxes[3].y + boxes[3].h - os * 1.4];
+      const os = bit * 4.2;
+
+      /* The model registry: each cycle's die contracts into a labelled
+         model square — MODEL 1, MODEL 1.1, MODEL 1.2 … — stacked under the
+         die. The last three stay visible; older ones shift up and out as a
+         new round arrives. This is the loop made explicit: every model's
+         production traffic seeds the next round. */
+      const cyc = tE < 0 ? 0 : Math.floor(tE / ENGINE_CYCLE_S);
+      /* The stack shifts when the NEW model arrives (not at cycle start),
+         so three models stay visible through the whole cycle. */
+      const startF = cyc < 3 ? 0 : cyc - 3 + clamp01((T - 8.9) / 0.5);
+      const slotPos = (row: number): [number, number] => [
+        boxes[3].x + boxes[3].w * 0.3,
+        boxes[3].y + boxes[3].h * (0.56 + row * 0.14),
+      ];
+      const modelLabel = (k: number): string =>
+        k === 0 ? "MODEL 1" : `MODEL 1.${k}`;
+      const arrivalRow = Math.min(cyc, 2);
+      const outPt = slotPos(arrivalRow);
 
       const at = (
         box: { x: number; y: number; w: number; h: number },
@@ -611,15 +623,26 @@ export const HomeFlow = (): ReactElement => {
         ctx.fillRect(boxes[2].x + 4, scanY, boxes[2].w - 8, 1);
       }
 
-      /* The model chip the weights land in — hardware/software co-design.
-         It pulses as each cycle's weights arrive. */
+      /* The model registry. The arriving one fades in under its converging
+         chips and pulses once; the top one fades out as the list shifts. */
       if (stageA[3] > 0) {
-        const rec = clamp01((T - 8.4) / 0.3) * (1 - clamp01((T - 9.8) / 0.2));
-        const oss = os * (1 + 0.06 * Math.sin(T * 9) * rec);
-        ctx.globalAlpha = engineA * stageA[3] * (0.5 + 0.5 * rec);
-        ctx.strokeRect(outPt[0] - oss / 2, outPt[1] - oss / 2, oss, oss);
-        ctx.globalAlpha = engineA * stageA[3] * (0.35 + 0.65 * rec);
-        ctx.fillRect(outPt[0] - oss / 4, outPt[1] - oss / 4, oss / 2, oss / 2);
+        ctx.font = "9px 'JetBrains Mono', ui-monospace, monospace";
+        for (let m = Math.max(0, cyc - 3); m <= cyc; m++) {
+          const arriving = m === cyc;
+          const aIn = arriving ? clamp01((T - 8.9) / 0.5) : 1;
+          if (aIn <= 0) continue;
+          const rowF = m - startF;
+          const a = engineA * stageA[3] * aIn * clamp01(1 + rowF);
+          if (a <= 0.01) continue;
+          const [mx0, my0] = slotPos(rowF);
+          const oss = os * (arriving ? 1 + 0.1 * Math.max(0, 1 - (T - 8.9) / 0.8) : 1);
+          ctx.globalAlpha = a;
+          ctx.strokeRect(mx0 - oss / 2, my0 - oss / 2, oss, oss);
+          ctx.globalAlpha = a * 0.9;
+          ctx.fillRect(mx0 - oss / 4, my0 - oss / 4, oss / 2, oss / 2);
+          ctx.globalAlpha = a * 0.75;
+          ctx.fillText(modelLabel(m), mx0 + oss / 2 + 10, my0 + 3);
+        }
       }
       ctx.restore();
     };

@@ -129,8 +129,9 @@ jobs:
       - name: Start product dependency stack
         working-directory: product
         run: |
-          docker compose up -d --wait postgres valkey clickhouse
+          docker compose up -d postgres valkey clickhouse
           docker compose run --rm valkey-cluster-init
+          docker compose up -d --wait postgres valkey clickhouse
       - run: pnpm install --frozen-lockfile
         working-directory: product
       - name: Migrate PostgreSQL
@@ -302,8 +303,9 @@ jobs:
       - name: Start product dependency stack
         working-directory: product
         run: |
-          docker compose up -d --wait postgres valkey clickhouse
+          docker compose up -d postgres valkey clickhouse
           docker compose run --rm valkey-cluster-init
+          docker compose up -d --wait postgres valkey clickhouse
       - name: Migrate PostgreSQL
         working-directory: product
         env:

@@ -103,8 +103,9 @@ const setup = async (email = "staff@gradiated.com") => {
       },
       body: new URLSearchParams({ state }),
     });
-    expect(consent.status).toBe(302);
-    const location = new URL(consent.headers.get("location")!);
+    expect(consent.status).toBe(200);
+    const target = /href="([^"]+)"/.exec(await consent.text())![1]!;
+    const location = new URL(target.replaceAll("&amp;", "&"));
     expect(location.origin + location.pathname).toBe(`${issuer}/auth`);
     nonce = location.searchParams.get("nonce")!;
     const callback = await fetch(

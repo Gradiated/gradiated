@@ -16,7 +16,8 @@ strong { color: #171714; font-weight: 500; overflow-wrap: anywhere; }
 .scope h2 { margin: 0; font-size: 14px; line-height: 20px; font-weight: 500; }
 button { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px 12px; border: 1px solid #deddd6; border-radius: 6px; background: #f7f6f2; color: #171714; line-height: 20px; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; box-shadow: 0 1px 2px #0000000d; }
 button:hover { background: #efeee9; }
-button:focus-visible, summary:focus-visible { outline: 3px solid #8f8d8380; outline-offset: 2px; }
+a { color: #171714; text-underline-offset: 3px; }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 3px solid #8f8d8380; outline-offset: 2px; }
 button svg { width: 16px; height: 16px; flex-shrink: 0; }
 .note { text-align: center; font-size: 12px; line-height: 18px; }
 details { margin-top: 24px; border-top: 1px solid #deddd6; padding-top: 16px; color: #686760; font-size: 12px; }
@@ -27,8 +28,7 @@ dd { margin: 4px 0 0; font-family: ui-monospace, monospace; overflow-wrap: anywh
 @media (max-width: 420px) { .card { padding: 24px; } }
 `;
 
-// Browsers also apply form-action to the Dex and Google redirect chain.
-export const pagePolicy = `default-src 'none'; style-src 'sha256-${createHash("sha256").update(styles).digest("base64")}'; img-src 'self'; form-action 'self' https://argocd.gradiated.com https://accounts.google.com; frame-ancestors 'none'; base-uri 'none'`;
+export const pagePolicy = `default-src 'none'; style-src 'sha256-${createHash("sha256").update(styles).digest("base64")}'; img-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'`;
 
 export const escaped = (value: string) =>
   value.replace(
@@ -39,8 +39,8 @@ export const escaped = (value: string) =>
       ]!,
   );
 
-export const authPage = (title: string, content: string) =>
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escaped(title)} · Gradiated</title><style>${styles}</style></head><body><main><div class="shell"><img class="brand" src="/brand/gradiated.svg" alt="Gradiated" width="1258" height="288"><section class="card"><h1>${escaped(title)}</h1>${content}</section></div></main></body></html>`;
+export const authPage = (title: string, content: string, redirect?: string) =>
+  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escaped(title)} · Gradiated</title>${redirect ? `<meta http-equiv="refresh" content="0;url=${escaped(redirect)}">` : ""}<style>${styles}</style></head><body><main><div class="shell"><img class="brand" src="/brand/gradiated.svg" alt="Gradiated" width="1258" height="288"><section class="card"><h1>${escaped(title)}</h1>${content}</section></div></main></body></html>`;
 
 export const consentPage = (
   client: string,

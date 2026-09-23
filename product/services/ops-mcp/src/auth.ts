@@ -15,7 +15,7 @@ import {
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { z } from "zod";
 import { fileURLToPath } from "node:url";
-import { authPage, consentPage, pagePolicy } from "./auth-page.js";
+import { authPage, consentPage, escaped, pagePolicy } from "./auth-page.js";
 
 const ISSUER = "https://argocd.gradiated.com/api/dex";
 const CLIENT = "production-mcp";
@@ -311,7 +311,19 @@ export const createAuth = (options: {
           code_challenge: hash(flow.verifier),
           code_challenge_method: "S256",
         }).toString();
-        res.redirect(url.href);
+        // Finish the form navigation before starting OAuth. An existing Google
+        // session can redirect all the way to the client's loopback callback,
+        // which must not inherit the consent form's same-origin restriction.
+        res
+          .set("Content-Security-Policy", pagePolicy)
+          .type("html")
+          .send(
+            authPage(
+              "Connecting to Google",
+              `<p class="intro">Taking you to Gradiated Google sign-in.</p><p class="intro"><a href="${escaped(url.href)}">Continue to Google</a></p>`,
+              url.href,
+            ),
+          );
       } catch {
         res
           .status(400)

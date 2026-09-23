@@ -494,10 +494,11 @@ export const HomeFlow = (): ReactElement => {
         w: boxes[3].w - 32,
         h: boxes[3].h - dieBox.h - 22 - 20 - 16,
       };
+      /* One separator between the forming area and the model list — the
+         column's own frame already bounds everything else. */
       if (stageA[3] > 0) {
         ctx.globalAlpha = engineA * stageA[3] * 0.35;
-        ctx.strokeRect(dieBox.x, dieBox.y, dieBox.w, dieBox.h);
-        ctx.strokeRect(regBox.x, regBox.y, regBox.w, regBox.h);
+        ctx.fillRect(boxes[3].x, regBox.y - 10, boxes[3].w, 1);
       }
       const dieC: [number, number] = [
         dieBox.x + dieBox.w / 2,

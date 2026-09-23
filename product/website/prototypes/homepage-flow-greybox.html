@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Homepage flow — grey-box</title>
+<style>
+  :root {
+    --bg: #EFEBE4;
+    --ink: #2F2D29;
+    --muted: #6B665D;
+    --glass: 255, 255, 255;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #181713;
+      --ink: #E7E2D8;
+      --muted: #99937F;
+      --glass: 34, 33, 29;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scrollbar-width: thin; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Geist", system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* The page is one long scroll runway; everything visible lives on the
+     fixed stage and is driven by scroll progress. */
+  #runway { height: 900vh; }
+
+  #stage {
+    position: fixed;
+    inset: 0;
+    perspective: 1400px;
+    perspective-origin: 50% 42%;
+  }
+  #field { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+  /* The block: frosted glass in the DOM. Its geometry (position, size,
+     rotation) and its frost (backdrop blur + veil alpha) are set per frame
+     from the scroll timeline. */
+  #blockShadow, #block {
+    position: absolute;
+    left: 0; top: 0;
+    transform-origin: 50% 50%;
+    will-change: transform, width, height;
+  }
+  #blockShadow {
+    background: rgba(0, 0, 0, 0.14);
+    filter: blur(18px);
+    opacity: 0;
+  }
+  #block {
+    background: rgba(var(--glass), 0.8);
+    backdrop-filter: blur(26px);
+    -webkit-backdrop-filter: blur(26px);
+    border: 1px solid rgba(var(--glass), 0.55);
+  }
+  #mark {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 34%; height: 34%;
+    transform: translate(-50%, -50%);
+    background: var(--ink);
+    opacity: 0;
+  }
+
+  /* ---- Text layers ---- */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 26px 5vw;
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    z-index: 10;
+  }
+  nav .logo { font-weight: 700; font-size: 14px; letter-spacing: 0.02em; text-transform: none; }
+  nav .links { display: flex; gap: 26px; }
+  nav .links span, nav .cta span { color: var(--muted); }
+  nav .cta { display: flex; gap: 32px; }
+
+  .overlay {
+    position: fixed;
+    z-index: 5;
+    opacity: 0;
+    will-change: opacity, transform;
+  }
+  #hero {
+    left: 50%; top: 20vh;
+    transform: translateX(-50%);
+    width: min(88vw, 980px);
+    text-align: center;
+  }
+  #hero h1 {
+    font-size: clamp(38px, 6.4vw, 88px);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 600;
+  }
+  #hero p {
+    margin: 26px auto 0;
+    max-width: 560px;
+    font-size: clamp(15px, 1.4vw, 19px);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  #hero .btns { margin-top: 30px; display: flex; gap: 12px; justify-content: center; }
+  #hero .btns span {
+    background: var(--ink); color: var(--bg);
+    padding: 12px 24px; border-radius: 999px; font-size: 14px;
+  }
+
+  .panelCopy { width: min(86vw, 380px); }
+  .panelCopy h2 {
+    font-size: clamp(26px, 3vw, 40px);
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+  }
+  .panelCopy p {
+    margin-top: 18px;
+    font-size: 15px; line-height: 1.55;
+    color: var(--muted);
+  }
+  #engineCopy { left: 7vw; top: 50%; transform: translateY(-50%); }
+  #siliconCopy { right: 7vw; top: 50%; transform: translateY(-50%); }
+
+  /* ---- Physics HUD (toggle with "d") ---- */
+  #hud {
+    position: fixed;
+    left: 14px; bottom: 12px;
+    z-index: 20;
+    font-family: ui-monospace, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    background: rgba(var(--glass), 0.7);
+    padding: 8px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    white-space: pre;
+  }
+
+  @media (max-width: 720px) {
+    nav .links { display: none; }
+    #engineCopy, #siliconCopy { left: 7vw; right: 7vw; top: auto; bottom: 8vh; transform: none; }
+    .panelCopy { width: 86vw; }
+  }
+</style>
+</head>
+<body>
+
+<div id="runway"></div>
+
+<div id="stage">
+  <canvas id="field"></canvas>
+  <div id="blockShadow"></div>
+  <div id="block"><div id="mark"></div></div>
+</div>
+
+<nav>
+  <span class="logo">&#9639; gradiated</span>
+  <div class="links"><span>Product</span><span>Library</span><span>Careers</span><span>Docs</span></div>
+  <div class="cta"><span>Book a call</span><span>Log in</span></div>
+</nav>
+
+<div class="overlay" id="hero">
+  <h1>Fast and cheap inference post-trained on your workload.</h1>
+  <p>We turn your traces into an RL environment, build the evals, and post-train an open model automatically. You just change your base URL.</p>
+  <div class="btns"><span>Get API Key</span><span>View Docs</span></div>
+</div>
+
+<div class="overlay panelCopy" id="engineCopy">
+  <h2>Trained on your production traffic</h2>
+  <p>We rebuild your production traces as an RL environment, derive evals from what actually succeeded in production, and post-train an open model against them.</p>
+  <p>Post-training a model on your own workload is normally a staffing problem. Gradiated removes the need for that part. It's just an API endpoint, and your production traffic.</p>
+</div>
+
+<div class="overlay panelCopy" id="siliconCopy">
+  <h2>All the way down to the silicon</h2>
+  <p>Waste in inference isn't in one place. Where possible, the workload should shape the silicon.</p>
+  <p>We design chips for specific model families and provide the weights we generate.</p>
+</div>
+
+<div id="hud"></div>
+
+<script>
+/* ================================================================
+   TUNABLES — the physics live here.
+   ================================================================ */
+
+/* Master timeline. Each beat is [start, end] in scroll progress 0..1.
+   The runway is 900vh, so 0.1 of progress ≈ 0.9 viewport-heights of
+   scrolling. Rest beats (engineRest, siliconRest) are where copy is
+   read: geometry is parked there. */
+const BEATS = {
+  heroHold:   [0.00, 0.07],  // headline + block peeking below the fold
+  rise:       [0.07, 0.24],  // hero copy exits, block centres and grows
+  clarify:    [0.24, 0.38],  // block fills the frame, frost resolves
+  engineRest: [0.38, 0.56],  // engine visible, left copy readable
+  refrost:    [0.56, 0.70],  // frost returns, block condenses to chip
+  land:       [0.70, 0.84],  // chip tilts to isometric and settles left
+  siliconRest:[0.84, 1.00],  // resting chip + right copy
+};
+
+/* Scroll → geometry smoothing. Time constant of the critically-damped
+   chase, in seconds. Bigger = heavier, floatier object. */
+const DAMPING_TAU = 0.14;
+
+/* Frost dial extremes. */
+const FROST_BLUR_MAX = 26;   // px of backdrop blur when fully frosted
+const FROST_VEIL_MAX = 0.72; // white veil alpha when fully frosted
+
+/* Engine loop period (wall-clock; runs regardless of scroll). */
+const ENGINE_CYCLE_S = 9;
+
+/* Brand gradient seats (from tokens.css / HeroBeam). The travel through
+   them is the identity of the gradient, so the blobs cycle colours. */
+const SEATS = ["#be5e31", "#e9b748", "#5e6043", "#407486", "#c8c1b4"];
+
+/* ================================================================ */
+
+const $ = (id) => document.getElementById(id);
+const stage = $("stage"), block = $("block"), shadow = $("blockShadow"),
+      mark = $("mark"), field = $("field"), hud = $("hud"),
+      hero = $("hero"), engineCopy = $("engineCopy"), siliconCopy = $("siliconCopy");
+const ctx = field.getContext("2d");
+
+const ink = () => getComputedStyle(document.documentElement).getPropertyValue("--ink").trim();
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let W = 0, H = 0, DPR = 1;
+function resize() {
+  W = innerWidth; H = innerHeight;
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  field.width = W * DPR; field.height = H * DPR;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+}
+addEventListener("resize", resize);
+resize();
+
+/* ---- easing / mapping helpers ---- */
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+const seg = (p, [a, b]) => clamp01((p - a) / (b - a));
+const easeIO = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeO = (t) => 1 - Math.pow(1 - t, 3);
+const lerp = (a, b, t) => a + (b - a) * t;
+
+/* ---- keyframe states for the block ----
+   Each is { cx, cy, w, h, r(border-radius), rx(rotateX), rz(rotateZ) }
+   computed fresh each frame so they track the live viewport. */
+function keyStates() {
+  const vm = Math.min(W, H);
+  const inset = Math.max(24, vm * 0.03);
+  return {
+    hero:  { cx: W / 2, cy: H * 1.12, w: Math.min(W * 0.46, 560), h: Math.min(W * 0.46, 560), r: 2, rx: 0, rz: 0 },
+    rise:  { cx: W / 2, cy: H * 0.52, w: vm * 0.64, h: vm * 0.64, r: 2, rx: 0, rz: 0 },
+    full:  { cx: W / 2, cy: H / 2, w: W - inset * 2, h: H - inset * 2, r: 6, rx: 0, rz: 0 },
+    chip:  { cx: W / 2, cy: H * 0.5, w: vm * 0.46, h: vm * 0.46, r: 4, rx: 0, rz: 0 },
+    land:  { cx: W * (W > 720 ? 0.34 : 0.5), cy: H * (W > 720 ? 0.52 : 0.38), w: vm * 0.42, h: vm * 0.42, r: 4, rx: 58, rz: 45 },
+  };
+}
+function mixState(a, b, t) {
+  const o = {};
+  for (const k in a) o[k] = lerp(a[k], b[k], t);
+  return o;
+}
+
+/* ---- per-frame timeline evaluation ----
+   Returns everything the render needs, from smoothed progress g. */
+function evalTimeline(g) {
+  const K = keyStates();
+  let s, frost, markAlpha = 0, shadowAlpha = 0;
+  let heroA = 1, heroY = 0, engineCopyA = 0, siliconCopyA = 0;
+  let engineA = 0;         // how present the engine drawing is
+  let glowMode = "block";  // where the gradient blobs live
+  let beat;
+
+  if (g < BEATS.rise[0]) {
+    beat = "heroHold";
+    s = K.hero; frost = 1;
+  } else if (g < BEATS.rise[1]) {
+    beat = "rise";
+    const t = easeIO(seg(g, BEATS.rise));
+    s = mixState(K.hero, K.rise, t);
+    frost = 1;
+    heroA = 1 - easeO(seg(g, BEATS.rise) * 1.6);
+    heroY = -easeIO(seg(g, BEATS.rise)) * H * 0.4;
+  } else if (g < BEATS.clarify[1]) {
+    beat = "clarify";
+    const t = easeIO(seg(g, BEATS.clarify));
+    s = mixState(K.rise, K.full, t);
+    frost = 1 - t;
+    heroA = 0;
+    engineA = t;
+  } else if (g < BEATS.engineRest[1]) {
+    beat = "engineRest";
+    s = K.full; frost = 0; heroA = 0; engineA = 1;
+    glowMode = "engine";
+    const t = seg(g, BEATS.engineRest);
+    engineCopyA = Math.min(easeO(t * 3), 1 - clamp01((t - 0.82) / 0.18));
+  } else if (g < BEATS.refrost[1]) {
+    beat = "refrost";
+    const t = easeIO(seg(g, BEATS.refrost));
+    s = mixState(K.full, K.chip, t);
+    frost = t;
+    heroA = 0;
+    engineA = 1 - t;
+    glowMode = t < 0.5 ? "engine" : "block";
+  } else if (g < BEATS.land[1]) {
+    beat = "land";
+    const t = easeIO(seg(g, BEATS.land));
+    s = mixState(K.chip, K.land, t);
+    frost = 1;
+    heroA = 0;
+    markAlpha = easeO(clamp01((t - 0.35) / 0.65));
+    shadowAlpha = easeO(clamp01((t - 0.3) / 0.7)) * 0.55;
+    glowMode = "landing";
+  } else {
+    beat = "siliconRest";
+    s = K.land; frost = 1; heroA = 0;
+    markAlpha = 1; shadowAlpha = 0.55;
+    glowMode = "landing";
+    siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
+  }
+  return { s, frost, markAlpha, shadowAlpha, heroA, heroY, engineCopyA, siliconCopyA, engineA, glowMode, beat };
+}
+
+/* ---- gradient blobs (wall-clock drift; scroll only re-homes them) ---- */
+function drawBlobs(t, st, out) {
+  const { s, glowMode, frost } = out;
+  ctx.save();
+  const blobs = 4;
+  for (let i = 0; i < blobs; i++) {
+    let bx, by, rad, alpha;
+    const drift = t * 0.18 + i * 1.7;
+    if (glowMode === "engine") {
+      /* ignited at the post-training column only */
+      const col = engineLayout(s);
+      if (i > 1) continue;
+      bx = col.x + col.colW * 2.5 + Math.sin(drift) * col.colW * 0.18;
+      by = col.y + col.h * (0.5 + Math.cos(drift * 1.3) * 0.14);
+      rad = col.colW * 0.55; alpha = 0.5;
+    } else if (glowMode === "landing") {
+      /* residual heat pooling under the resting chip — wide and low, so
+         it spills past the plate's silhouette instead of hiding behind
+         the white veil */
+      bx = s.cx + Math.sin(drift) * s.w * 0.3;
+      by = s.cy + s.h * 0.85 + Math.cos(drift * 0.8) * s.h * 0.08;
+      rad = s.w * (0.85 + 0.15 * Math.sin(drift * 0.6)); alpha = 0.6;
+    } else {
+      /* breathing inside the frosted block */
+      bx = s.cx + Math.sin(drift) * s.w * 0.22;
+      by = s.cy + Math.cos(drift * 0.77) * s.h * 0.22;
+      rad = s.w * 0.34; alpha = 0.65 * Math.max(frost, 0.2);
+    }
+    const c = SEATS[(i + Math.floor(t * 0.25)) % SEATS.length];
+    const gr = ctx.createRadialGradient(bx, by, 0, bx, by, rad);
+    gr.addColorStop(0, c + "cc");
+    gr.addColorStop(1, c + "00");
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = gr;
+    ctx.fillRect(bx - rad, by - rad, rad * 2, rad * 2);
+  }
+  ctx.restore();
+}
+
+/* ---- grey-box engine ----
+   Four columns inside the block: RL ENV / EVALS / POST-TRAIN / OUTPUT.
+   Pixel-bits stream in from the left, fill the grid, get scanned
+   (failures hollow out), converge into the die, emit a model chip.
+   Runs on wall-clock so it stays alive while the user reads. */
+function engineLayout(s) {
+  const pad = Math.min(s.w, s.h) * 0.12;
+  const x = s.cx - s.w / 2 + pad + (W > 720 ? s.w * 0.32 : 0);
+  const y = s.cy - s.h / 2 + pad * 1.4;
+  const w = s.w - pad * 2 - (W > 720 ? s.w * 0.32 : 0);
+  const h = s.h - pad * 2.4;
+  return { x, y, w, h, colW: w / 4 };
+}
+
+const GRID = 5;              // bits per column side
+const FAIL = [1, 4, 7, 13, 18, 22];  // deterministic "failures"
+
+function drawEngine(t, out) {
+  const { s, engineA } = out;
+  if (engineA <= 0.01) return;
+  const L = engineLayout(s);
+  const T = (t % ENGINE_CYCLE_S) / ENGINE_CYCLE_S;
+  const inkC = ink();
+  ctx.save();
+  ctx.globalAlpha = engineA;
+  ctx.strokeStyle = inkC;
+  ctx.fillStyle = inkC;
+  ctx.lineWidth = 1;
+  ctx.font = "10px ui-monospace, monospace";
+
+  const labels = ["RL ENV", "EVALS", "POST-TRAIN", "OUTPUT"];
+  for (let c = 0; c < 4; c++) {
+    const cx0 = L.x + c * L.colW + 6, cw = L.colW - 12;
+    ctx.globalAlpha = engineA * 0.35;
+    ctx.strokeRect(cx0, L.y, cw, L.h);
+    ctx.globalAlpha = engineA * 0.7;
+    ctx.fillText(labels[c], cx0, L.y - 8);
+  }
+
+  const cell = Math.min((L.colW - 40) / GRID, (L.h - 60) / GRID);
+  const bit = Math.max(4, cell * 0.42);
+  const gridAt = (c, i) => {
+    const gx = L.x + c * L.colW + (L.colW - GRID * cell) / 2;
+    const gy = L.y + (L.h - GRID * cell) / 2;
+    return [gx + (i % GRID) * cell + cell / 2, gy + Math.floor(i / GRID) * cell + cell / 2];
+  };
+  const N = GRID * GRID;
+
+  for (let i = 0; i < N; i++) {
+    const stagger = (i * 7919 % N) / N;
+    let px, py, alpha = 1, hollow = false, size = bit;
+
+    if (T < 0.28) {                       /* stream in from the left edge */
+      const tt = clamp01((T / 0.28 - stagger * 0.7) / 0.3);
+      if (tt <= 0) continue;
+      const [gx, gy] = gridAt(0, i);
+      px = lerp(L.x - 40, gx, easeO(tt));
+      py = lerp(L.y + L.h * stagger, gy, easeO(tt));
+    } else if (T < 0.42) {                /* hop to the evals grid */
+      const tt = easeIO(clamp01((T - 0.28) / 0.14));
+      const [ax, ay] = gridAt(0, i), [bx, by] = gridAt(1, i);
+      px = lerp(ax, bx, tt); py = lerp(ay, by, tt);
+    } else if (T < 0.58) {                /* scan sweeps; failures hollow */
+      const [gx, gy] = gridAt(1, i);
+      px = gx; py = gy;
+      const scanY = L.y + ((T - 0.42) / 0.16) * L.h;
+      if (FAIL.includes(i) && gy < scanY) { hollow = true; alpha = 0.35; }
+    } else if (T < 0.78) {                /* survivors pack into the die */
+      if (FAIL.includes(i)) {
+        const tt = clamp01((T - 0.58) / 0.1);
+        const [gx, gy] = gridAt(1, i);
+        px = gx; py = gy + tt * 24; alpha = 0.35 * (1 - tt); hollow = true;
+        if (alpha < 0.02) continue;
+      } else {
+        const tt = easeIO(clamp01((T - 0.58) / 0.2));
+        const [ax, ay] = gridAt(1, i);
+        const dieC = [L.x + 2.5 * L.colW, L.y + L.h / 2];
+        const k = i % 9;
+        const dx = dieC[0] + ((k % 3) - 1) * bit * 1.6;
+        const dy = dieC[1] + (Math.floor(k / 3) - 1) * bit * 1.6;
+        px = lerp(ax, dx, tt); py = lerp(ay, dy, tt);
+      }
+    } else {                              /* die condenses to the output chip */
+      if (FAIL.includes(i)) continue;
+      const tt = easeIO(clamp01((T - 0.78) / 0.16));
+      const k = i % 9;
+      const dieC = [L.x + 2.5 * L.colW, L.y + L.h / 2];
+      const dx = dieC[0] + ((k % 3) - 1) * bit * 1.6 * (1 - tt);
+      const dy = dieC[1] + (Math.floor(k / 3) - 1) * bit * 1.6 * (1 - tt);
+      const outC = [L.x + 3.5 * L.colW, L.y + L.h / 2];
+      px = lerp(dx, outC[0], tt); py = lerp(dy, outC[1], tt);
+      alpha = 1 - tt * 0.4;
+      size = bit * (1 - tt * 0.4);
+    }
+
+    ctx.globalAlpha = engineA * alpha;
+    if (hollow) ctx.strokeRect(px - size / 2, py - size / 2, size, size);
+    else ctx.fillRect(px - size / 2, py - size / 2, size, size);
+  }
+
+  /* the output chip itself, once bits have converged */
+  if (T >= 0.86) {
+    const tt = clamp01((T - 0.86) / 0.1);
+    const ox = L.x + 3.5 * L.colW, oy = L.y + L.h / 2, os = bit * 4;
+    ctx.globalAlpha = engineA * tt;
+    ctx.strokeRect(ox - os / 2, oy - os / 2, os, os);
+    ctx.fillRect(ox - os / 4, oy - os / 4, os / 2, os / 2);
+  }
+  ctx.restore();
+}
+
+/* ---- main loop ---- */
+let targetP = 0, g = REDUCED ? 1 : 0, lastT = performance.now();
+let hudOn = true;
+addEventListener("scroll", () => {
+  const max = document.body.scrollHeight - innerHeight;
+  targetP = max > 0 ? clamp01(scrollY / max) : 0;
+}, { passive: true });
+addEventListener("keydown", (e) => {
+  if (e.key === "d") { hudOn = !hudOn; hud.style.display = hudOn ? "block" : "none"; }
+});
+
+function frame(now) {
+  /* real elapsed time for the chase (frame-rate independent even when
+     rAF is throttled); clamped copy only for wall-clock animation */
+  const rawDt = (now - lastT) / 1000;
+  const dt = Math.min(rawDt, 0.05);
+  lastT = now;
+  const t = now / 1000;
+
+  /* critically-damped chase: geometry follows scroll with weight */
+  if (!REDUCED) g += (targetP - g) * (1 - Math.exp(-rawDt / DAMPING_TAU));
+  else g = 1;
+
+  const out = evalTimeline(g);
+  const { s } = out;
+
+  /* canvas */
+  ctx.clearRect(0, 0, W, H);
+  drawBlobs(t, null, out);
+  drawEngine(t, out);
+
+  /* block + shadow */
+  const tf = (extra) =>
+    `translate(${s.cx - s.w / 2}px, ${s.cy - s.h / 2}px) ${extra} rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+  block.style.width = s.w + "px"; block.style.height = s.h + "px";
+  block.style.borderRadius = s.r + "px";
+  block.style.transform = tf("");
+  block.style.backdropFilter = block.style.webkitBackdropFilter =
+    `blur(${(out.frost * FROST_BLUR_MAX).toFixed(1)}px)`;
+  block.style.background = `rgba(var(--glass), ${(out.frost * FROST_VEIL_MAX).toFixed(3)})`;
+  block.style.borderColor = `rgba(var(--glass), ${(0.25 + out.frost * 0.35).toFixed(3)})`;
+  mark.style.opacity = out.markAlpha;
+
+  shadow.style.width = s.w + "px"; shadow.style.height = s.h + "px";
+  shadow.style.transform = tf(`translate(${s.w * 0.06}px, ${s.h * 0.14}px)`);
+  shadow.style.opacity = out.shadowAlpha;
+
+  /* overlays */
+  hero.style.opacity = out.heroA;
+  hero.style.transform = `translateX(-50%) translateY(${out.heroY}px)`;
+  engineCopy.style.opacity = out.engineCopyA;
+  siliconCopy.style.opacity = out.siliconCopyA;
+
+  if (hudOn) {
+    hud.textContent =
+      `beat  ${out.beat}\nscroll ${targetP.toFixed(3)}  geom ${g.toFixed(3)}\nfrost ${out.frost.toFixed(2)}`;
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

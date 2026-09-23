@@ -192,6 +192,12 @@ jobs:
           role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
           allowed-account-ids: ${{ env.AWS_ACCOUNT_ID }}
           role-session-name: deploy-wait-${{ github.run_id }}
+      - name: Join the tailnet for the Kubernetes API
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
+          audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
+          tags: tag:ci
       - name: Connect to production cluster
         run: aws eks update-kubeconfig --name gradiated-prod --region "${AWS_REGION}"
       - name: Wait for the recorded release

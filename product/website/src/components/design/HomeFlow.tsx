@@ -187,8 +187,8 @@ const ENGINE_LABELS = ["PRODUCTION TRAFFIC", "RL ENV", "EVALS", "POST-TRAIN"];
    at ~1.6, the eval drop starts at 3.6, the die packs from 6.15. */
 const STAGE_APPEARS = [0.0, 1.2, 3.5, 5.9];
 
-const MR = 21;
-const MC = 11;
+const MR = 31;
+const MC = 15;
 
 type Bit = {
   sx: number; sy: number; /* scatter in the traffic column */
@@ -293,7 +293,7 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
 
   /* Eval grid, ordered by maze position so the drop reads straight; the
      scan sweeps downward, so trigger times follow the row. */
-  const EC = 7;
+  const EC = 9;
   const ER = Math.ceil(bits.length / EC);
   [...bits]
     .sort((a, b) => a.my - b.my || a.mx - b.mx)

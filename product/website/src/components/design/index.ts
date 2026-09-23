@@ -25,6 +25,7 @@
 export { Band, Columns, Module } from "./Module";
 export { Footer } from "./Footer";
 export { HeroBeam } from "./HeroBeam";
+export { HomeFlow } from "./HomeFlow";
 export { FooterBar } from "./FooterBar";
 export { Arrow, ContentsIcon, GridIcon, ListIcon } from "./icons";
 export { ChipStack } from "./ChipStack";

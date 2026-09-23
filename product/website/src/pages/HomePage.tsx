@@ -6,6 +6,7 @@ import {
   Band,
   Footer,
   HeroBeam,
+  HomeFlow,
   Module,
   Nav,
   Reveal,
@@ -78,6 +79,12 @@ export const HomePage = (): ReactElement => (
         </div>
       </Module>
     </Band>
+
+    {/* The scroll-scrubbed flow: the frosted panel rises out of the hero,
+        reveals the post-training engine, and lands as the chip in the
+        silicon section. Full-bleed and self-measuring, so it sits outside
+        the Band/Module pair. */}
+    <HomeFlow />
 
     <Band>
       <Module index={1}>

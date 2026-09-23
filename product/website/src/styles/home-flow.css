@@ -1,0 +1,94 @@
+/* ---------------------------------------------------------------------------
+   The homepage flow — the scroll-scrubbed frosted-panel-to-chip sequence.
+   Geometry, frost and copy opacity are driven per-frame from HomeFlow.tsx;
+   this sheet holds only what does not move.
+   --------------------------------------------------------------------------- */
+
+/* The runway supplies scroll distance; the stage stays pinned inside it.
+   Height is set inline from RUNWAY_VH so the scrub length lives in one
+   place, next to the beats it feeds. */
+.gr-flow {
+  position: relative;
+}
+
+.gr-flow-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  perspective: 1400px;
+  perspective-origin: 50% 42%;
+}
+
+.gr-flow-field {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-flow-block,
+.gr-flow-shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, width, height;
+}
+
+.gr-flow-block {
+  border: 1px solid transparent;
+}
+
+.gr-flow-shadow {
+  background: rgba(0, 0, 0, 0.14);
+  filter: blur(18px);
+  opacity: 0;
+}
+
+.gr-flow-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  transform: translate(-50%, -50%);
+  background: var(--color-text);
+  opacity: 0;
+}
+
+/* The reading rests. Opacity is scrubbed; position is static so the text
+   never competes with the object for motion. */
+.gr-flow-copy {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: min(86vw, 380px);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.gr-flow-copy--engine {
+  left: 7vw;
+}
+
+.gr-flow-copy--silicon {
+  right: 7vw;
+}
+
+.gr-flow-copy p + p {
+  margin-top: 1em;
+}
+
+@media (max-width: 720px) {
+  .gr-flow-copy,
+  .gr-flow-copy--engine,
+  .gr-flow-copy--silicon {
+    left: 7vw;
+    right: 7vw;
+    top: auto;
+    bottom: 8vh;
+    transform: none;
+    width: auto;
+  }
+}

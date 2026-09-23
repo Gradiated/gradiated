@@ -511,9 +511,10 @@ export const HomeFlow = (): ReactElement => {
       const latest = Math.floor((tE - 8.9) / GEN_PERIOD);
       const startF =
         latest < 4 ? 0 : latest - 4 + clamp01((tE - (latest * GEN_PERIOD + 8.9)) / 0.5);
+      /* four slots, centred vertically in the registry area */
       const slotPos = (row: number): [number, number] => [
         regBox.x + regBox.w * 0.24,
-        regBox.y + regBox.h * (0.12 + row * 0.22),
+        regBox.y + regBox.h * (0.5 + (row - 1.5) * 0.22),
       ];
       const modelLabel = (k: number): string =>
         k === 0 ? "MODEL 1" : `MODEL 1.${k}`;

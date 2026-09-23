@@ -17,19 +17,18 @@ import type { ReactElement } from "react";
  *   time regardless of scroll, so the scene stays alive while the user reads.
  * - Copy beats are rests: geometry is parked wherever text is readable.
  *
- * The gradient here is the SAME gradient as the hero beam — the brand seats,
- * cycling — and it means the same thing at each appearance: where the energy
- * is. Frosted breathing in the panel, ignition at the post-training stage,
- * residual heat under the landed chip.
+ * Deliberately monochrome for now: the hero's beam is the page's only
+ * gradient until the rules for reusing it are settled (see the NOTE by the
+ * theme reads below).
  */
 
 /* ---- timeline ----
    Beats in scroll progress 0..1 across the runway. engineRest and
    siliconRest are the reading rests. */
 const BEATS = {
-  rise: [0.0, 0.1],
-  clarify: [0.1, 0.22],
-  engineRest: [0.22, 0.5],
+  rise: [0.0, 0.06],
+  clarify: [0.06, 0.15],
+  engineRest: [0.15, 0.5],
   refrost: [0.5, 0.64],
   land: [0.64, 0.82],
   siliconRest: [0.82, 1.0],
@@ -47,14 +46,10 @@ const FROST_VEIL_MAX = 0.72;
 /** One pipeline run, in wall-clock seconds — the original hero's CYCLE. */
 const ENGINE_CYCLE_S = 10;
 
-/** The brand gradient's seats, in travel order — read from the live theme. */
-const SEAT_TOKENS = [
-  "--color-kiln-500",
-  "--color-kiln-300",
-  "--color-grove-600",
-  "--color-aegean-500",
-  "--color-taupe-400",
-];
+/* NOTE: the canvas gradients (frost breathing, post-train ignition, landing
+   glow) were removed on request — only the hero's beam remains. When the
+   gradient rules are settled they return here, reading the seat tokens from
+   the live theme the way `ink` and `veil` are read below. */
 
 const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
 const seg = (p: number, [a, b]: readonly [number, number]): number =>
@@ -82,7 +77,9 @@ type TimelineOut = {
   engineA: number;
   engineCopyA: number;
   siliconCopyA: number;
-  glowMode: "block" | "engine" | "landing";
+  /* landing beats: the plate is a solid DOM surface (it rotates in 3D,
+     which the canvas panel cannot), so the canvas stops painting it */
+  solid: boolean;
 };
 
 const keyStates = (
@@ -90,7 +87,9 @@ const keyStates = (
   H: number,
 ): Record<"peek" | "rise" | "full" | "chip" | "land", BlockState> => {
   const vm = Math.min(W, H);
-  const inset = Math.max(24, vm * 0.03);
+  /* The expanded panel keeps a generous page border: the user is peering
+     INTO a box sitting on the page, so the page must stay visible. */
+  const inset = Math.max(36, vm * 0.055);
   const wide = W > 720;
   /* Anchored by its TOP edge so the peek height under the hero is stable
      across viewport sizes — pairs with .gr-flow's -34vh overlap. */
@@ -124,7 +123,7 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     engineA: 0,
     engineCopyA: 0,
     siliconCopyA: 0,
-    glowMode: "block",
+    solid: false,
   };
   if (g < BEATS.rise[1]) {
     out.s = mixState(K.peek, K.rise, easeIO(seg(g, BEATS.rise)));
@@ -137,7 +136,6 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     out.s = K.full;
     out.frost = 0;
     out.engineA = 1;
-    out.glowMode = "engine";
     const t = seg(g, BEATS.engineRest);
     out.engineCopyA = Math.min(easeO(t * 3), 1 - clamp01((t - 0.82) / 0.18));
   } else if (g < BEATS.refrost[1]) {
@@ -145,18 +143,17 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     out.s = mixState(K.full, K.chip, t);
     out.frost = t;
     out.engineA = 1 - t;
-    out.glowMode = t < 0.5 ? "engine" : "block";
   } else if (g < BEATS.land[1]) {
     const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);
     out.markAlpha = easeO(clamp01((t - 0.35) / 0.65));
     out.shadowAlpha = easeO(clamp01((t - 0.3) / 0.7)) * 0.55;
-    out.glowMode = "landing";
+    out.solid = true;
   } else {
     out.s = K.land;
     out.markAlpha = 1;
     out.shadowAlpha = 0.55;
-    out.glowMode = "landing";
+    out.solid = true;
     out.siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
   }
   return out;
@@ -369,16 +366,12 @@ export const HomeFlow = (): ReactElement => {
 
     /* Theme colours, re-read when the theme flips (theme.ts sets data-theme
        on the root; the system scheme flips a media query). */
-    let seats: string[] = [];
     let ink = "#2F2D29";
     let veil: [number, number, number] = [255, 255, 255];
     const readTheme = (): void => {
       const cs = getComputedStyle(document.documentElement);
       const at = (name: string, fall: string): string =>
         cs.getPropertyValue(name).trim() || fall;
-      seats = SEAT_TOKENS.map((n, i) =>
-        at(n, ["#be5e31", "#e9b748", "#5e6043", "#407486", "#c8c1b4"][i]),
-      );
       ink = at("--color-text", "#2F2D29");
       const panel = at("--color-panel", "#ffffff");
       const m = /^#([0-9a-f]{6})$/i.exec(panel);
@@ -412,50 +405,21 @@ export const HomeFlow = (): ReactElement => {
     resize();
     addEventListener("resize", resize);
 
-    /* Set each frame before drawing: time within the engine's cycle, so the
-       gradient can ignite WITH post-training rather than idling. */
-    let cycleT = -1;
-
-    const drawBlobs = (t: number, out: TimelineOut): void => {
-      const { s, glowMode, frost } = out;
-      const wide = W > 720;
-      for (let i = 0; i < 4; i++) {
-        let bx: number, by: number, rad: number, alpha: number;
-        const drift = t * 0.18 + i * 1.7;
-        if (glowMode === "engine") {
-          if (i > 1) continue;
-          /* ignition: the glow rises with the die's ripple and dies as the
-             weights leave for the chip */
-          const heat =
-            cycleT < 0
-              ? 0
-              : clamp01((cycleT - 6.9) / 0.7) * (1 - clamp01((cycleT - 9.4) / 0.6));
-          if (heat <= 0.01) continue;
-          const col = engineLayout(s, wide);
-          bx = col.x + col.colW * 3.5 + Math.sin(drift) * col.colW * 0.14;
-          by = col.y + col.h * (0.4 + Math.cos(drift * 1.3) * 0.08);
-          rad = col.colW * 0.6;
-          alpha = 0.55 * heat;
-        } else if (glowMode === "landing") {
-          bx = s.cx + Math.sin(drift) * s.w * 0.3;
-          by = s.cy + s.h * 0.85 + Math.cos(drift * 0.8) * s.h * 0.08;
-          rad = s.w * (0.85 + 0.15 * Math.sin(drift * 0.6));
-          alpha = 0.6;
-        } else {
-          bx = s.cx + Math.sin(drift) * s.w * 0.22;
-          by = s.cy + Math.cos(drift * 0.77) * s.h * 0.22;
-          rad = s.w * 0.34;
-          alpha = 0.65 * Math.max(frost, 0.2);
-        }
-        const c = seats[(i + Math.floor(t * 0.25)) % seats.length];
-        const gr = ctx.createRadialGradient(bx, by, 0, bx, by, rad);
-        gr.addColorStop(0, c + "cc");
-        gr.addColorStop(1, c + "00");
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = gr;
-        ctx.fillRect(bx - rad, by - rad, rad * 2, rad * 2);
-      }
-      ctx.globalAlpha = 1;
+    /* The box itself, painted on the canvas so the engine can sit ON its
+       surface while the page stays visible around it — the user is peering
+       inside a box, not watching the page become one. The DOM element above
+       supplies only the frost (backdrop blur + veil), and becomes the solid
+       plate during the landing beats, where the canvas cannot follow the 3D
+       rotation. */
+    const drawPanel = (out: TimelineOut): void => {
+      if (out.solid) return;
+      const { s } = out;
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(s.cx - s.w / 2, s.cy - s.h / 2, s.w, s.h, s.r);
+      ctx.fillStyle = `rgb(${veil[0]}, ${veil[1]}, ${veil[2]})`;
+      ctx.fill();
+      ctx.restore();
     };
 
     /* T is time within the current cycle, tE is time since the engine's
@@ -518,7 +482,6 @@ export const HomeFlow = (): ReactElement => {
       ): [number, number] => [box.x + nx * box.w, box.y + ny * box.h];
 
       /* The chips. Keyframes are the original hero's, verbatim. */
-      const amber = seats[1];
       for (const b of ENGINE.bits) {
         const d = b.delay;
         const k0 = d;
@@ -607,15 +570,8 @@ export const HomeFlow = (): ReactElement => {
         }
 
         ctx.globalAlpha = engineA * alpha;
-        ctx.fillStyle = ink;
         ctx.fillRect(px - size / 2, py - size / 2, size, size);
-        if (crest > 0.01) {
-          ctx.globalAlpha = engineA * alpha * crest * 0.7;
-          ctx.fillStyle = amber;
-          ctx.fillRect(px - size / 2, py - size / 2, size, size);
-        }
       }
-      ctx.fillStyle = ink;
 
       /* The rollout: one highlighted chip walking the maze, with a trail. */
       const au = (T - 2.3) / 1.4;
@@ -699,10 +655,10 @@ export const HomeFlow = (): ReactElement => {
       if (out.engineA > 0.35 && engineStart < 0) engineStart = t;
       else if (out.engineA < 0.02) engineStart = -1;
       const tE = engineStart >= 0 ? t - engineStart : -1;
-      cycleT = tE < 0 ? -1 : tE % ENGINE_CYCLE_S;
+      const cycleT = tE < 0 ? -1 : tE % ENGINE_CYCLE_S;
 
       ctx.clearRect(0, 0, W, H);
-      drawBlobs(t, out);
+      drawPanel(out);
       drawEngine(cycleT, tE, out);
 
       const place = (el: HTMLElement, extra: string): void => {
@@ -714,10 +670,11 @@ export const HomeFlow = (): ReactElement => {
       };
       place(block, "");
       block.style.borderRadius = `${s.r}px`;
-      const blur = (out.frost * FROST_BLUR_MAX).toFixed(1);
+      const blur = (out.solid ? 0 : out.frost * FROST_BLUR_MAX).toFixed(1);
       block.style.backdropFilter = `blur(${blur}px)`;
       (block.style as CSSStyleDeclaration & { webkitBackdropFilter: string }).webkitBackdropFilter = `blur(${blur}px)`;
-      block.style.background = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${(out.frost * FROST_VEIL_MAX).toFixed(3)})`;
+      const veilA = out.solid ? 1 : out.frost * FROST_VEIL_MAX;
+      block.style.background = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${veilA.toFixed(3)})`;
       block.style.borderColor = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${(0.25 + out.frost * 0.35).toFixed(3)})`;
       mark.style.opacity = `${out.markAlpha}`;
 

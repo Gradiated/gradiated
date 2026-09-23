@@ -17,14 +17,6 @@ fn headers(values: &[(&'static str, &str)]) -> HeaderMap {
     headers
 }
 
-/// A serving state where no name resolves locally.
-fn without_hosted_models() -> TestServingState {
-    let mut state = TestServingState::ready();
-    state.model = None;
-
-    state
-}
-
 #[tokio::test]
 async fn a_hosted_name_serves_locally_even_with_a_provider_key() {
     let state = Arc::new(TestServingState::ready());
@@ -54,7 +46,7 @@ async fn a_hosted_name_serves_locally_even_with_a_provider_key() {
 
 #[tokio::test]
 async fn an_unresolved_name_relays_with_the_matching_provider_key() {
-    let state = Arc::new(without_hosted_models());
+    let state = Arc::new(TestServingState::without_models());
     let headers = headers(&[
         ("x-gradiated-api-key", "grad_test"),
         ("x-api-key", "sk-ant-example"),
@@ -94,7 +86,7 @@ async fn an_unresolved_name_relays_with_the_matching_provider_key() {
 
 #[tokio::test]
 async fn an_unresolved_name_without_a_provider_key_stays_a_local_error() {
-    let state = Arc::new(without_hosted_models());
+    let state = Arc::new(TestServingState::without_models());
     let headers = headers(&[("x-gradiated-api-key", "grad_test")]);
 
     let result = RequestCoordinator::new(state)
@@ -112,7 +104,7 @@ async fn an_unresolved_name_without_a_provider_key_stays_a_local_error() {
 
 #[tokio::test]
 async fn a_route_rejects_another_providers_key() {
-    let state = Arc::new(without_hosted_models());
+    let state = Arc::new(TestServingState::without_models());
     let headers = headers(&[
         ("x-gradiated-api-key", "grad_test"),
         ("authorization", "Bearer sk-openai-example"),
@@ -139,7 +131,7 @@ async fn an_unusable_target_is_rejected_before_any_state_lookup() {
         &br#"{"model":"claude-sonnet-5","model":"model-a"}"#[..],
         &br#"{oops"#[..],
     ] {
-        let state = Arc::new(without_hosted_models());
+        let state = Arc::new(TestServingState::without_models());
         let headers = headers(&[
             ("x-gradiated-api-key", "grad_test"),
             ("x-api-key", "sk-ant-example"),
@@ -169,7 +161,7 @@ async fn an_unusable_target_is_rejected_before_any_state_lookup() {
 
 #[tokio::test]
 async fn an_invalid_workspace_key_is_rejected_before_the_catalog() {
-    let mut state = without_hosted_models();
+    let mut state = TestServingState::without_models();
     state.credential = None;
     let state = Arc::new(state);
     let headers = headers(&[

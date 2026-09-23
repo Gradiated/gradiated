@@ -31,21 +31,12 @@ impl CapturedPricing {
         output: &[OutputTokenPrice],
         service_tier: ServiceTier,
     ) -> Result<Self, CapturedPricingError> {
-        if input
-            .iter()
-            .map(InputTokenPrice::kind)
-            .collect::<HashSet<_>>()
-            .len()
-            != input.len()
-            || output
-                .iter()
-                .map(OutputTokenPrice::kind)
-                .collect::<HashSet<_>>()
-                .len()
-                != output.len()
+        if !distinct(input.iter().map(InputTokenPrice::kind))
+            || !distinct(output.iter().map(OutputTokenPrice::kind))
         {
             return Err(CapturedPricingError::DuplicateComponent);
         }
+
         if input
             .iter()
             .map(InputTokenPrice::cost)
@@ -54,6 +45,7 @@ impl CapturedPricing {
         {
             return Err(CapturedPricingError::UnsafeInteger);
         }
+
         Ok(Self {
             prompt: tier_price(input_price(input, InputPriceType::Prompt)?, service_tier)?,
             cached_prompt: tier_price(
@@ -92,6 +84,60 @@ impl CapturedPricing {
     pub fn internal_reasoning(&self) -> Option<u64> {
         self.internal_reasoning
     }
+
+    /// Each billed token category with its quantity and unit price. Cache writes
+    /// and reasoning are billed on their own only when they carry a price;
+    /// otherwise reasoning is billed as output.
+    fn billed_quantities(&self, usage: NormalizedUsage) -> Vec<(GenerationPriceUnit, u64, u64)> {
+        let mut billed = vec![
+            (
+                GenerationPriceUnit::Input,
+                usage.input_tokens - usage.cached_input_tokens,
+                self.prompt,
+            ),
+            (
+                GenerationPriceUnit::CachedInput,
+                usage.cached_input_tokens,
+                self.cached_prompt,
+            ),
+        ];
+
+        if let Some(unit_price) = self.cache_write {
+            billed.push((
+                GenerationPriceUnit::CacheWrite,
+                usage.cache_write_tokens,
+                unit_price,
+            ));
+        }
+
+        match self.internal_reasoning {
+            Some(unit_price) => {
+                billed.push((
+                    GenerationPriceUnit::Output,
+                    usage.output_tokens - usage.reasoning_tokens,
+                    self.completion,
+                ));
+                billed.push((
+                    GenerationPriceUnit::Reasoning,
+                    usage.reasoning_tokens,
+                    unit_price,
+                ));
+            }
+            None => billed.push((
+                GenerationPriceUnit::Output,
+                usage.output_tokens,
+                self.completion,
+            )),
+        }
+
+        billed
+    }
+}
+
+fn distinct<K: Eq + std::hash::Hash>(kinds: impl ExactSizeIterator<Item = K>) -> bool {
+    let count = kinds.len();
+
+    kinds.collect::<HashSet<_>>().len() == count
 }
 
 fn tier_price(default_price: u64, service_tier: ServiceTier) -> Result<u64, CapturedPricingError> {
@@ -100,6 +146,7 @@ fn tier_price(default_price: u64, service_tier: ServiceTier) -> Result<u64, Capt
         .checked_mul(u128::from(numerator))
         .ok_or(CapturedPricingError::UnsafeInteger)?
         / u128::from(denominator);
+
     u64::try_from(adjusted)
         .ok()
         .filter(|price| *price <= MAX_JSON_SAFE_INTEGER)
@@ -179,6 +226,7 @@ impl NormalizedUsage {
         {
             return Err(UsageError::UnsafeInteger);
         }
+
         Ok(Self {
             input_tokens,
             cached_input_tokens,
@@ -240,49 +288,11 @@ impl PricedUsage {
         prices: &CapturedPricing,
         usage: NormalizedUsage,
     ) -> Result<Self, PricingError> {
-        let mut components = Vec::with_capacity(5);
-        add_component(
-            &mut components,
-            GenerationPriceUnit::Input,
-            usage.input_tokens - usage.cached_input_tokens,
-            prices.prompt(),
-        )?;
-        add_component(
-            &mut components,
-            GenerationPriceUnit::CachedInput,
-            usage.cached_input_tokens,
-            prices.cached_prompt(),
-        )?;
-        if let Some(unit_price) = prices.cache_write() {
-            add_component(
-                &mut components,
-                GenerationPriceUnit::CacheWrite,
-                usage.cache_write_tokens,
-                unit_price,
-            )?;
-        }
-
-        let reasoning_price = prices.internal_reasoning();
-        let visible_output_tokens = if reasoning_price.is_some() {
-            usage.output_tokens - usage.reasoning_tokens
-        } else {
-            usage.output_tokens
-        };
-        add_component(
-            &mut components,
-            GenerationPriceUnit::Output,
-            visible_output_tokens,
-            prices.completion(),
-        )?;
-        if let Some(unit_price) = reasoning_price {
-            add_component(
-                &mut components,
-                GenerationPriceUnit::Reasoning,
-                usage.reasoning_tokens,
-                unit_price,
-            )?;
-        }
-
+        let components = prices
+            .billed_quantities(usage)
+            .into_iter()
+            .map(|(unit, quantity, unit_price)| price_component(unit, quantity, unit_price))
+            .collect::<Result<Vec<_>, _>>()?;
         let charge = components.iter().try_fold(0_u64, |total, component| {
             total
                 .checked_add(component.amount)
@@ -290,7 +300,36 @@ impl PricedUsage {
                 .ok_or(PricingError::ArithmeticOverflow)
         })?;
 
-        Ok(Self {
+        Ok(Self::from_parts(components, charge, usage))
+    }
+
+    pub fn charge(&self) -> u64 {
+        self.usage.charge
+    }
+
+    /// Nothing billed, with the same components a priced generation would carry.
+    pub(crate) fn zero(prices: &CapturedPricing) -> Self {
+        let usage = NormalizedUsage::zero();
+        let components = prices
+            .billed_quantities(usage)
+            .into_iter()
+            .map(|(unit, quantity, unit_price)| GenerationPriceComponent {
+                unit,
+                quantity,
+                unit_price,
+                amount: 0,
+            })
+            .collect();
+
+        Self::from_parts(components, 0, usage)
+    }
+
+    fn from_parts(
+        components: Vec<GenerationPriceComponent>,
+        charge: u64,
+        usage: NormalizedUsage,
+    ) -> Self {
+        Self {
             pricing: GenerationPricing {
                 schema_version: 1,
                 components,
@@ -302,64 +341,6 @@ impl PricedUsage {
                 cache_write_tokens: usage.cache_write_tokens,
                 output_tokens: usage.output_tokens,
                 reasoning_tokens: usage.reasoning_tokens,
-            },
-        })
-    }
-
-    pub fn charge(&self) -> u64 {
-        self.usage.charge
-    }
-
-    pub(crate) fn zero(prices: &CapturedPricing) -> Self {
-        let mut components = vec![
-            GenerationPriceComponent {
-                unit: GenerationPriceUnit::Input,
-                quantity: 0,
-                unit_price: prices.prompt(),
-                amount: 0,
-            },
-            GenerationPriceComponent {
-                unit: GenerationPriceUnit::CachedInput,
-                quantity: 0,
-                unit_price: prices.cached_prompt(),
-                amount: 0,
-            },
-        ];
-        if let Some(unit_price) = prices.cache_write() {
-            components.push(GenerationPriceComponent {
-                unit: GenerationPriceUnit::CacheWrite,
-                quantity: 0,
-                unit_price,
-                amount: 0,
-            });
-        }
-        components.push(GenerationPriceComponent {
-            unit: GenerationPriceUnit::Output,
-            quantity: 0,
-            unit_price: prices.completion(),
-            amount: 0,
-        });
-        if let Some(unit_price) = prices.internal_reasoning() {
-            components.push(GenerationPriceComponent {
-                unit: GenerationPriceUnit::Reasoning,
-                quantity: 0,
-                unit_price,
-                amount: 0,
-            });
-        }
-
-        Self {
-            pricing: GenerationPricing {
-                schema_version: 1,
-                components,
-            },
-            usage: GenerationUsage {
-                charge: 0,
-                input_tokens: 0,
-                cached_input_tokens: 0,
-                cache_write_tokens: 0,
-                output_tokens: 0,
-                reasoning_tokens: 0,
             },
         }
     }
@@ -434,6 +415,7 @@ impl GenerationIdentity {
         if !valid_release_digest(&served_release_digest) {
             return Err(GenerationIdentityError::InvalidReleaseDigest);
         }
+
         Ok(Self {
             external_id,
             organization_id,
@@ -497,6 +479,7 @@ impl TerminalOutcome {
         if cancellation_expected != cancellation_owner.is_some() {
             return Err(TerminalOutcomeError::InvalidCancellationOwner);
         }
+
         Ok(Self {
             status,
             outcome: GenerationOutcome {
@@ -523,6 +506,16 @@ pub enum CancellationOwner {
     Client,
     Server,
     Runtime,
+}
+
+impl CancellationOwner {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Client => "client",
+            Self::Server => "server",
+            Self::Runtime => "runtime",
+        }
+    }
 }
 
 #[derive(Debug, Error)]
@@ -560,6 +553,7 @@ impl GenerationTiming {
         {
             return Err(GenerationTimingError::Inconsistent);
         }
+
         Ok(Self {
             received_at,
             started_at,
@@ -620,26 +614,26 @@ impl GenerationProperties {
     }
 }
 
-fn add_component(
-    components: &mut Vec<GenerationPriceComponent>,
+fn price_component(
     unit: GenerationPriceUnit,
     quantity: u64,
     unit_price: u64,
-) -> Result<(), PricingError> {
+) -> Result<GenerationPriceComponent, PricingError> {
     if unit_price > MAX_JSON_SAFE_INTEGER {
         return Err(PricingError::ArithmeticOverflow);
     }
+
     let amount = quantity
         .checked_mul(unit_price)
         .filter(|amount| *amount <= MAX_JSON_SAFE_INTEGER)
         .ok_or(PricingError::ArithmeticOverflow)?;
-    components.push(GenerationPriceComponent {
+
+    Ok(GenerationPriceComponent {
         unit,
         quantity,
         unit_price,
         amount,
-    });
-    Ok(())
+    })
 }
 
 fn valid_release_digest(digest: &str) -> bool {

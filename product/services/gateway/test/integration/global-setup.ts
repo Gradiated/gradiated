@@ -595,7 +595,7 @@ export default async (project: TestProject) => {
           GATEWAY_BIND_ADDRESS: `127.0.0.1:${port}`,
           GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "10000",
           GATEWAY_GENERATION_TIMEOUT_SECONDS: generationTimeoutSeconds,
-          GATEWAY_PREPAID_ORGANIZATION_CONCURRENCY_CAP: "2",
+          GATEWAY_ORGANIZATION_CONCURRENCY_CAP: "2",
           GATEWAY_BROWSER_ORIGINS: "https://console.example.test",
           SGLANG_API_KEY: runtimeToken,
           RUST_LOG: "warn",

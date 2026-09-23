@@ -1,5 +1,4 @@
 use std::{sync::Arc, time::Duration};
-use tracing::Instrument;
 
 use axum::{
     body::{Body, Bytes},
@@ -19,6 +18,7 @@ use chrono::Utc;
 use futures_util::StreamExt;
 use serde::Serialize;
 use tower_http::cors::{AllowOrigin, CorsLayer};
+use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
@@ -28,7 +28,7 @@ use crate::{
     readiness::ReadinessCheck,
     relay::{upstream_headers, ProviderRelay, RelayRoute},
     CompletionResponse, CompletionService, GatewayError, GatewayMetrics, ModelCatalogResponse,
-    RequestCoordinator, RequestMetadata,
+    RequestCoordinator, RequestKind, RequestMetadata,
 };
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
@@ -48,7 +48,7 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
 #[derive(Clone)]
 pub struct GatewayState {
     readiness: Arc<dyn ReadinessCheck>,
-    compliance: Arc<crate::catalog::ProviderCompliance>,
+    compliance: crate::catalog::ProviderCompliance,
     completions: CompletionService,
     coordinator: RequestCoordinator,
     relay: ProviderRelay,
@@ -64,9 +64,10 @@ impl GatewayState {
         compliance: crate::catalog::ProviderCompliance,
     ) -> Self {
         let metrics = completions.metrics();
+
         Self {
             readiness,
-            compliance: Arc::new(compliance),
+            compliance,
             completions,
             coordinator,
             relay,
@@ -131,6 +132,7 @@ fn finish(
             "inference request rejected before response"
         );
     }
+
     let error = error_code(&result);
     let mut response = result.unwrap_or_else(|error| protocol.error_response(error));
     state
@@ -141,6 +143,45 @@ fn finish(
         .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
     response
 }
+
+/// A public inference route: how its body is read, whether an unresolved model
+/// may be relayed to a provider, and which request kind it carries.
+struct Endpoint {
+    route: &'static str,
+    protocol: Protocol,
+    relay: Option<RelayRoute>,
+    kind: RequestKind,
+}
+
+const CHAT_COMPLETIONS: Endpoint = Endpoint {
+    route: "chat_completions",
+    protocol: Protocol::OpenAiChat,
+    relay: None,
+    kind: RequestKind::Chat,
+};
+
+/// The native decision protocol. It is hosted-only: a decision model always
+/// resolves locally, so classification never offers it a relay route.
+const SYSTEMONE: Endpoint = Endpoint {
+    route: "systemone",
+    protocol: Protocol::OpenAiChat,
+    relay: None,
+    kind: RequestKind::SystemOne,
+};
+
+const MESSAGES: Endpoint = Endpoint {
+    route: "messages",
+    protocol: Protocol::AnthropicMessages,
+    relay: Some(RelayRoute::AnthropicMessages),
+    kind: RequestKind::Chat,
+};
+
+const RESPONSES: Endpoint = Endpoint {
+    route: "responses",
+    protocol: Protocol::OpenAiResponses,
+    relay: None,
+    kind: RequestKind::Chat,
+};
 
 fn request_metadata() -> RequestMetadata {
     RequestMetadata {
@@ -161,41 +202,47 @@ async fn inference(
     state: GatewayState,
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
-    route: &'static str,
-    protocol: Protocol,
-    relay: Option<RelayRoute>,
-    kind: crate::RequestKind,
+    endpoint: &Endpoint,
 ) -> Response {
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
+
     async {
-        let result = async {
-            let body = body.map_err(body_rejection)?;
+        let result = match body.map_err(body_rejection) {
+            Ok(body) => serve(&state, endpoint, metadata, &headers, body).await,
+            Err(error) => Err(error),
+        };
 
-            serve(&state, protocol, relay, metadata, &headers, body, kind).await
-        }
-        .await;
-
-        finish(&state, route, protocol, generation_id, result)
+        finish(
+            &state,
+            endpoint.route,
+            endpoint.protocol,
+            generation_id,
+            result,
+        )
     }
     .instrument(crate::diagnostics::request_span(generation_id))
     .await
 }
 
 /// Classifies the request once, then either relays it or serves it here. Identity,
-/// the model projection and the caller's body are each resolved a single time.
+/// the model record and the caller's body are each resolved a single time.
 async fn serve(
     state: &GatewayState,
-    protocol: Protocol,
-    relay: Option<RelayRoute>,
+    endpoint: &Endpoint,
     metadata: RequestMetadata,
     headers: &HeaderMap,
     body: Bytes,
-    kind: crate::RequestKind,
 ) -> Result<Response, GatewayError> {
     let classified = state
         .coordinator
-        .classify(headers, &body, metadata.received_at, protocol, relay)
+        .classify(
+            headers,
+            &body,
+            metadata.received_at,
+            endpoint.protocol,
+            endpoint.relay,
+        )
         .await?;
 
     match classified {
@@ -213,13 +260,16 @@ async fn serve(
             .await
         }
         RequestRoute::Hosted { hosted, request } => {
-            let translated = protocol.translate_request(&request).map(Bytes::from)?;
-            let qualified =
-                state
-                    .coordinator
-                    .qualify_kind(metadata, headers, *hosted, &translated, kind)?;
+            let translated = endpoint.protocol.translate_request(&request)?;
+            let qualified = state.coordinator.qualify(
+                metadata,
+                headers,
+                *hosted,
+                &translated,
+                endpoint.kind,
+            )?;
 
-            complete_with_protocol(state, protocol, qualified).await
+            complete_with_protocol(state, endpoint.protocol, qualified).await
         }
     }
 }
@@ -229,31 +279,26 @@ async fn complete_with_protocol(
     protocol: Protocol,
     qualified: crate::QualifiedRequest,
 ) -> Result<Response, GatewayError> {
-    match state.completions.complete(qualified).await? {
+    let (mut response, service_tier) = match state.completions.complete(qualified).await? {
         CompletionResponse::NonStreaming {
             result,
             service_tier,
         } => {
-            let mut response =
-                Json(protocol.translate_response(result.into_response())?).into_response();
-            response.headers_mut().insert(
-                SERVICE_TIER_HEADER,
-                HeaderValue::from_static(service_tier.as_str()),
-            );
-            Ok(response)
+            let body = protocol.translate_response(result.into_response())?;
+            (Json(body).into_response(), service_tier)
         }
         CompletionResponse::Streaming {
             result,
             service_tier,
-        } => {
-            let mut response = sse_response(protocol, result.into_stream());
-            response.headers_mut().insert(
-                SERVICE_TIER_HEADER,
-                HeaderValue::from_static(service_tier.as_str()),
-            );
-            Ok(response)
-        }
-    }
+        } => (sse_response(protocol, result.into_stream()), service_tier),
+    };
+
+    response.headers_mut().insert(
+        SERVICE_TIER_HEADER,
+        HeaderValue::from_static(service_tier.as_str()),
+    );
+
+    Ok(response)
 }
 
 /// Returns the provider's status, headers and bytes. Nothing here inspects or
@@ -295,6 +340,7 @@ fn sse_response(
                 .map(Ok::<_, axum::Error>),
         )
     });
+
     let mut response = Sse::new(frames.flatten())
         .keep_alive(
             KeepAlive::new()
@@ -306,6 +352,7 @@ fn sse_response(
         HeaderName::from_static("x-accel-buffering"),
         HeaderValue::from_static("no"),
     );
+
     response
 }
 
@@ -328,12 +375,9 @@ async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Respon
         .list_models(&headers, Utc::now())
         .await
         .map(|models| {
-            let compliance = crate::catalog::ProviderCompliance {
-                zdr: state.compliance.zdr,
-                hipaa: state.compliance.hipaa,
-            };
-            Json(ModelCatalogResponse::from_models(&models, compliance)).into_response()
+            Json(ModelCatalogResponse::from_models(&models, state.compliance)).into_response()
         });
+
     let error = error_code(&result);
     let response = result.unwrap_or_else(IntoResponse::into_response);
     state
@@ -348,35 +392,15 @@ async fn chat_completions(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    inference(
-        state,
-        headers,
-        body,
-        "chat_completions",
-        Protocol::OpenAiChat,
-        None,
-        crate::RequestKind::Chat,
-    )
-    .await
+    inference(state, headers, body, &CHAT_COMPLETIONS).await
 }
 
-/// The native decision protocol. It is hosted-only: a decision model always
-/// resolves locally, so classification never offers it a relay route.
 async fn systemone(
     State(state): State<GatewayState>,
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    inference(
-        state,
-        headers,
-        body,
-        "systemone",
-        Protocol::OpenAiChat,
-        None,
-        crate::RequestKind::SystemOne,
-    )
-    .await
+    inference(state, headers, body, &SYSTEMONE).await
 }
 
 async fn messages(
@@ -384,16 +408,7 @@ async fn messages(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    inference(
-        state,
-        headers,
-        body,
-        "messages",
-        Protocol::AnthropicMessages,
-        Some(RelayRoute::AnthropicMessages),
-        crate::RequestKind::Chat,
-    )
-    .await
+    inference(state, headers, body, &MESSAGES).await
 }
 
 async fn responses(
@@ -401,18 +416,11 @@ async fn responses(
     headers: HeaderMap,
     body: Result<Bytes, BytesRejection>,
 ) -> Response {
-    inference(
-        state,
-        headers,
-        body,
-        "responses",
-        Protocol::OpenAiResponses,
-        None,
-        crate::RequestKind::Chat,
-    )
-    .await
+    inference(state, headers, body, &RESPONSES).await
 }
 
+/// Counting tokens has no relay path, so an unresolved name stays a local error
+/// even when a provider key is present.
 async fn messages_count_tokens(
     State(state): State<GatewayState>,
     headers: HeaderMap,
@@ -420,38 +428,38 @@ async fn messages_count_tokens(
 ) -> Response {
     let metadata = request_metadata();
     let generation_id = metadata.generation_id;
+
     async {
+        let protocol = Protocol::AnthropicMessages;
+
         let result = async {
             let body = body.map_err(body_rejection)?;
             let classified = state
                 .coordinator
-                .classify(
-                    &headers,
-                    &body,
-                    metadata.received_at,
-                    Protocol::AnthropicMessages,
-                    // Counting tokens has no relay path in this build, so an unresolved
-                    // name stays a local error even when a provider key is present.
-                    None,
-                )
+                .classify(&headers, &body, metadata.received_at, protocol, None)
                 .await?;
             let RequestRoute::Hosted { hosted, request } = classified else {
                 return Err(GatewayError::ModelNotFound);
             };
 
-            let translated = Protocol::AnthropicMessages.translate_request(&request)?;
-            let qualified = state
-                .coordinator
-                .qualify(metadata, &headers, *hosted, &translated)?;
+            let translated = protocol.translate_request(&request)?;
+            let qualified = state.coordinator.qualify(
+                metadata,
+                &headers,
+                *hosted,
+                &translated,
+                RequestKind::Chat,
+            )?;
             let count = state.completions.count_tokens(&qualified).await?;
 
             Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
         }
         .await;
+
         finish(
             &state,
             "messages_count_tokens",
-            Protocol::AnthropicMessages,
+            protocol,
             generation_id,
             result,
         )
@@ -467,16 +475,14 @@ async fn live() -> Json<HealthResponse> {
 async fn ready(State(state): State<GatewayState>) -> (StatusCode, Json<HealthResponse>) {
     let ready = !state.completions.is_draining() && state.readiness.is_ready().await;
     state.metrics.set_dependency_ready("gateway", ready);
-    if !ready {
-        (
-            StatusCode::SERVICE_UNAVAILABLE,
-            Json(HealthResponse {
-                status: "not_ready",
-            }),
-        )
+
+    let (status_code, status) = if ready {
+        (StatusCode::OK, "ready")
     } else {
-        (StatusCode::OK, Json(HealthResponse { status: "ready" }))
-    }
+        (StatusCode::SERVICE_UNAVAILABLE, "not_ready")
+    };
+
+    (status_code, Json(HealthResponse { status }))
 }
 
 async fn metrics(State(state): State<GatewayState>) -> Response {
@@ -503,7 +509,7 @@ mod tests {
     use super::*;
     use crate::{
         test_support::TestServingState, GatewayConfig, GatewayModelDeployment, InferenceRequest,
-        ModelRuntime, ModelTokenizer, RuntimeCompletion, RuntimeFailure, RuntimeFailureKind,
+        ModelRuntime, ModelTokenizer, RuntimeCompletion, RuntimeFailure,
     };
 
     pub(super) struct FixedReadiness(pub(super) bool);
@@ -526,7 +532,7 @@ mod tests {
             _effective_output_tokens: u64,
             _request_deadline: chrono::DateTime<chrono::Utc>,
         ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation))
+            Err(RuntimeFailure::protocol_violation())
         }
     }
 
@@ -991,14 +997,16 @@ mod tests {
         assert_eq!(translated["messages"][0]["role"], "user");
         assert_eq!(translated["messages"][0]["content"], "hi");
     }
+
     #[tokio::test]
     async fn rejected_requests_keep_verified_ids_and_never_credentials() {
         let logs = crate::diagnostics::capture::Logs::default();
         let _guard = logs.start();
-        let mut state = TestServingState::ready();
-        state.workspace.as_mut().unwrap().archived_at = Some(Utc::now());
+        let mut archived = TestServingState::ready();
+        archived.workspace.as_mut().unwrap().archived_at = Some(Utc::now());
+
         for (state, authenticated) in [
-            (state, true),
+            (archived, true),
             (TestServingState::unknown_credential(), false),
         ] {
             let app = router_for(
@@ -1006,10 +1014,17 @@ mod tests {
                 Arc::new(state),
                 &GatewayConfig::for_tests().proxy_anthropic_origin,
             );
-            let response = app.oneshot(Request::builder().method("POST").uri("/v1/messages")
+            let request = Request::builder()
+                .method("POST")
+                .uri("/v1/messages")
                 .header("content-type", "application/json")
                 .header("x-gradiated-api-key", "grad_DO_NOT_LOG_THIS")
-                .body(Body::from(r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"PRIVATE_PROMPT"}]}"#)).unwrap()).await.unwrap();
+                .body(Body::from(
+                    r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"PRIVATE_PROMPT"}]}"#,
+                ))
+                .unwrap();
+            let response = app.oneshot(request).await.unwrap();
+
             let events = logs.events();
             let event = events.last().unwrap();
             assert_eq!(
@@ -1027,12 +1042,10 @@ mod tests {
                     assert!(event["span"].get(key).is_none());
                 }
             }
-            assert!(!serde_json::to_string(&events)
-                .unwrap()
-                .contains("DO_NOT_LOG_THIS"));
-            assert!(!serde_json::to_string(&events)
-                .unwrap()
-                .contains("PRIVATE_PROMPT"));
+
+            let logged = serde_json::to_string(&events).unwrap();
+            assert!(!logged.contains("DO_NOT_LOG_THIS"));
+            assert!(!logged.contains("PRIVATE_PROMPT"));
         }
     }
 }

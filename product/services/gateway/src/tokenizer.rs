@@ -55,49 +55,42 @@ impl ModelTokenizer {
 
     pub async fn enforce(
         &self,
-        qualified: QualifiedRequest,
+        mut qualified: QualifiedRequest,
     ) -> Result<BoundedRequest, GatewayError> {
-        let tokenizer = self
-            .tokenizer(&qualified.deployment.release)
-            .await
-            .map_err(|source| {
-                error!(
-                    model_path = %qualified.deployment.release.model_path,
-                    tokenizer_path = %qualified.deployment.release.tokenizer_path,
-                    tokenizer_revision = %qualified.deployment.release.tokenizer_revision,
-                    error = %source,
-                    "model tokenizer is unavailable"
-                );
-                GatewayError::ServingStateUnavailable
-            })?;
-        let input_ids = tokenizer
-            .encode_input(&qualified.request)
-            .map_err(map_request_error)?;
+        let input_ids = self.encode(&qualified).await?;
         let input_tokens =
             u64::try_from(input_ids.len()).map_err(|_| GatewayError::ServingStateUnavailable)?;
-        let mut qualified = qualified;
         qualified.request.encoded_input_ids = Some(input_ids);
+
         enforce_bounds(qualified, input_tokens)
     }
 
     pub async fn count(&self, qualified: &QualifiedRequest) -> Result<u64, GatewayError> {
-        let tokenizer = self
-            .tokenizer(&qualified.deployment.release)
-            .await
-            .map_err(|source| {
-                error!(
-                    model_path = %qualified.deployment.release.model_path,
-                    tokenizer_path = %qualified.deployment.release.tokenizer_path,
-                    tokenizer_revision = %qualified.deployment.release.tokenizer_revision,
-                    error = %source,
-                    "model tokenizer is unavailable"
-                );
-                GatewayError::ServingStateUnavailable
-            })?;
-        let input_ids = tokenizer
-            .encode_input(&qualified.request)
-            .map_err(map_request_error)?;
+        let input_ids = self.encode(qualified).await?;
+
         u64::try_from(input_ids.len()).map_err(|_| GatewayError::ServingStateUnavailable)
+    }
+
+    async fn encode(&self, qualified: &QualifiedRequest) -> Result<Vec<u32>, GatewayError> {
+        let release = &qualified.deployment.release;
+        let tokenizer = self.tokenizer(release).await.map_err(|source| {
+            error!(
+                model_path = %release.model_path,
+                tokenizer_path = %release.tokenizer_path,
+                tokenizer_revision = %release.tokenizer_revision,
+                error = %source,
+                "model tokenizer is unavailable"
+            );
+            GatewayError::ServingStateUnavailable
+        })?;
+
+        // Rendering and tokenizing a long prompt is CPU work that must not hold an
+        // async worker other requests are waiting on.
+        let request = qualified.request.clone();
+        tokio::task::spawn_blocking(move || tokenizer.encode_input(&request))
+            .await
+            .map_err(|_| GatewayError::ServingStateUnavailable)?
+            .map_err(map_request_error)
     }
 
     pub async fn preload(
@@ -107,6 +100,7 @@ impl ModelTokenizer {
         for release in releases {
             self.tokenizer(release).await?;
         }
+
         Ok(())
     }
 
@@ -116,6 +110,7 @@ impl ModelTokenizer {
         token_ids: Vec<u32>,
     ) -> Result<String, ModelTokenizerError> {
         let tokenizer = self.tokenizer(release).await?;
+
         tokio::task::spawn_blocking(move || {
             tokenizer
                 .decode(&token_ids)
@@ -132,6 +127,7 @@ impl ModelTokenizer {
         token_id: u32,
     ) -> Result<(TokenizerDecodeState, Option<String>), ModelTokenizerError> {
         let tokenizer = self.tokenizer(release).await?;
+
         tokio::task::spawn_blocking(move || {
             let chunk = tokenizer
                 .decode_step(&mut state, token_id)
@@ -147,6 +143,7 @@ impl ModelTokenizer {
         release: &ModelDeploymentRelease,
     ) -> Result<Arc<CompiledTokenizer>, ModelTokenizerError> {
         let key = TokenizerRelease::from(release);
+
         let cached = {
             let loaded = self
                 .loaded
@@ -165,6 +162,8 @@ impl ModelTokenizer {
                 .await
                 .map_err(ModelTokenizerError::LoaderTask)??;
         let tokenizer = Arc::new(tokenizer);
+
+        // Two requests can load the same release at once; the first one stored wins.
         let mut loaded = self
             .loaded
             .write()
@@ -255,6 +254,7 @@ impl CompiledTokenizer {
                 None => ChatTemplate::from_tokenizer_config(&config)?,
             })),
         };
+
         Ok(Self {
             tokenizer,
             renderer,
@@ -273,11 +273,13 @@ impl CompiledTokenizer {
             PromptRenderer::DeepseekV4 => render_deepseek_v4(request)?,
             PromptRenderer::DeepseekV41 => deepseek_v41::render(request)?,
         };
+
         // The selected renderer already contains its model's special tokens.
         let encoding = self
             .tokenizer
             .encode(prompt, false)
             .map_err(|error| TokenizerRequestError::Encode(error.to_string()))?;
+
         Ok(encoding.get_ids().to_vec())
     }
 
@@ -320,6 +322,7 @@ impl CompiledTokenizer {
                 PromptRenderer::HuggingFace(Box::new(ChatTemplate::from_tokenizer_config(&config)?))
             }
         };
+
         Ok(Self {
             tokenizer,
             renderer,
@@ -672,6 +675,7 @@ mod tests {
                     tokenizer_mode: None,
                 },
             },
+            model_deployments: Vec::new(),
             served_release_digest: "sha256:test".to_owned(),
             max_context_tokens: 10,
             max_prompt_tokens: 8,

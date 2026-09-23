@@ -83,10 +83,76 @@ pub(crate) struct RouteDiagnostics {
     pub at_capacity: usize,
 }
 
+impl RouteDiagnostics {
+    fn count(&mut self, rejection: Rejection) {
+        let counter = match rejection {
+            Rejection::Unavailable => &mut self.unavailable,
+            Rejection::InvalidDeployment => &mut self.invalid_deployment,
+            Rejection::ReleaseMismatch => &mut self.release_mismatch,
+            Rejection::MissingStatus => &mut self.missing_status,
+            Rejection::InvalidStatus => &mut self.invalid_status,
+            Rejection::RevisionMismatch => &mut self.revision_mismatch,
+            Rejection::StaleStatus => &mut self.stale_status,
+            Rejection::Unhealthy => &mut self.unhealthy,
+        };
+        *counter += 1;
+    }
+}
+
+/// Why a deployment cannot serve a request, in the order the checks run.
+enum Rejection {
+    Unavailable,
+    InvalidDeployment,
+    ReleaseMismatch,
+    MissingStatus,
+    InvalidStatus,
+    RevisionMismatch,
+    StaleStatus,
+    Unhealthy,
+}
+
+/// Returns the fresh, healthy status of a deployment that serves the release.
+fn healthy_status<'a>(
+    deployment: &GatewayModelDeployment,
+    statuses: &HashMap<Uuid, &'a DeploymentRuntimeStatus>,
+    release_digest: &str,
+    now: DateTime<Utc>,
+) -> Result<&'a DeploymentRuntimeStatus, Rejection> {
+    if deployment.status != DeploymentStatus::Available {
+        return Err(Rejection::Unavailable);
+    }
+    if deployment.validate().is_err() {
+        return Err(Rejection::InvalidDeployment);
+    }
+    if deployment.served_release_digest().ok().as_deref() != Some(release_digest) {
+        return Err(Rejection::ReleaseMismatch);
+    }
+
+    let status = *statuses
+        .get(&deployment.id)
+        .ok_or(Rejection::MissingStatus)?;
+    if status.validate().is_err() {
+        return Err(Rejection::InvalidStatus);
+    }
+    if status.runtime_revision != deployment.release.runtime_revision {
+        return Err(Rejection::RevisionMismatch);
+    }
+    if !status.is_fresh_at(now, MAXIMUM_STATUS_AGE) {
+        return Err(Rejection::StaleStatus);
+    }
+    if !status.healthy {
+        return Err(Rejection::Unhealthy);
+    }
+
+    Ok(status)
+}
+
 pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
     order_deployments_diagnosed(input).0
 }
 
+/// Orders the healthy deployments that are accepting requests by rendezvous
+/// hash, so one session or prompt prefix keeps landing on the same runtime.
 pub(crate) fn order_deployments_diagnosed(
     input: RouteInput<'_>,
 ) -> (RouteAvailability, RouteDiagnostics) {
@@ -108,64 +174,36 @@ pub(crate) fn order_deployments_diagnosed(
         candidates: deployments.len(),
         ..Default::default()
     };
+
     let mut healthy = Vec::new();
     for deployment in deployments {
-        let rejection = if deployment.status != DeploymentStatus::Available {
-            Some(&mut diagnostics.unavailable)
-        } else if deployment.validate().is_err() {
-            Some(&mut diagnostics.invalid_deployment)
-        } else if deployment.served_release_digest().ok().as_deref() != Some(release_digest) {
-            Some(&mut diagnostics.release_mismatch)
-        } else {
-            None
-        };
-        if let Some(count) = rejection {
-            *count += 1;
-            continue;
+        match healthy_status(deployment, &statuses, release_digest, now) {
+            Ok(status) => healthy.push((deployment, status.accepting_requests)),
+            Err(rejection) => diagnostics.count(rejection),
         }
-        let Some(status) = statuses.get(&deployment.id) else {
-            diagnostics.missing_status += 1;
-            continue;
-        };
-        let rejection = if status.validate().is_err() {
-            Some(&mut diagnostics.invalid_status)
-        } else if status.runtime_revision != deployment.release.runtime_revision {
-            Some(&mut diagnostics.revision_mismatch)
-        } else if !status.is_fresh_at(now, MAXIMUM_STATUS_AGE) {
-            Some(&mut diagnostics.stale_status)
-        } else if !status.healthy {
-            Some(&mut diagnostics.unhealthy)
-        } else {
-            None
-        };
-        if let Some(count) = rejection {
-            *count += 1;
-            continue;
-        }
-        healthy.push(RoutedDeployment {
-            deployment: deployment.clone(),
-        });
     }
     if healthy.is_empty() {
         return (RouteAvailability::Unavailable, diagnostics);
     }
-    let healthy_count = healthy.len();
-    healthy.retain(|candidate| {
-        statuses
-            .get(&candidate.deployment.id)
-            .is_some_and(|status| status.accepting_requests)
-    });
-    diagnostics.at_capacity = healthy_count - healthy.len();
-    if healthy.is_empty() {
+
+    let mut accepting: Vec<RoutedDeployment> = healthy
+        .iter()
+        .filter(|(_, accepting)| *accepting)
+        .map(|(deployment, _)| RoutedDeployment {
+            deployment: (*deployment).clone(),
+        })
+        .collect();
+    diagnostics.at_capacity = healthy.len() - accepting.len();
+    if accepting.is_empty() {
         return (RouteAvailability::AtCapacity, diagnostics);
     }
 
     let route_key = route_key(workspace_id, model_id, release_digest, session_id, prompt);
-    healthy.sort_by(|left, right| {
-        rendezvous_score(&route_key, right.deployment.id)
-            .cmp(&rendezvous_score(&route_key, left.deployment.id))
+    accepting.sort_by_cached_key(|candidate| {
+        std::cmp::Reverse(rendezvous_score(&route_key, candidate.deployment.id))
     });
-    (RouteAvailability::Ready(healthy), diagnostics)
+
+    (RouteAvailability::Ready(accepting), diagnostics)
 }
 
 fn route_key(

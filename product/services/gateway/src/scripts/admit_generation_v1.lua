@@ -53,7 +53,7 @@ local lease_expiry, expiry_error = safe_integer(ARGV[4], 'lease_expiry', true)
 if expiry_error then return fail(expiry_error) end
 local cleanup_cutoff, cutoff_error = safe_integer(ARGV[5], 'cleanup_cutoff', true)
 if cutoff_error then return fail(cutoff_error) end
-local prepaid_cap, cap_error = safe_integer(ARGV[6], 'prepaid_cap', true)
+local concurrency_cap, cap_error = safe_integer(ARGV[6], 'concurrency_cap', true)
 if cap_error then return fail(cap_error) end
 local balance_per_slot, slot_error = safe_integer(ARGV[7], 'balance_per_slot', true)
 if slot_error then return fail(slot_error) end
@@ -112,10 +112,10 @@ redis.call('ZREMRANGEBYSCORE', KEYS[2], '-inf', '(' .. cleanup_cutoff)
 -- capped by the same ceiling rather than being unbounded, because one tenant
 -- holding unlimited concurrent generations starves the fleet for everyone.
 local active = redis.call('ZCOUNT', KEYS[2], '(' .. now, '+inf')
-local selected_limit = prepaid_cap
+local selected_limit = concurrency_cap
 if account[3] == 'prepaid' then
   local funded_limit = math.floor((balance - 1) / balance_per_slot) + 1
-  selected_limit = math.min(prepaid_cap, funded_limit)
+  selected_limit = math.min(concurrency_cap, funded_limit)
 end
 if active >= selected_limit then
   return 4

@@ -23,7 +23,7 @@ mise.*.local.toml
 **/.venv/
 .agents/runtime/
 .agents/secrets/
-runtime/
+/runtime/
 tasks/active/*.lock/
 .cache/
 tools/browser/.browser-data/

@@ -87,7 +87,7 @@ The local endpoints are:
 | `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `300`                      |
 | `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                       |
 | `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                      |
-| `GATEWAY_PREPAID_ORGANIZATION_CONCURRENCY_CAP`  | no       | `50`                       |
+| `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `50`                       |
 | `GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD` | no       | `1000000000`               |
 | `SGLANG_API_KEY`                                | no       | no upstream authentication |
 

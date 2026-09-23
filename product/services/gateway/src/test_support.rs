@@ -220,7 +220,7 @@ impl TestServingState {
         state
     }
 
-    /// A workspace key that Valkey does not know.
+    /// A workspace key that the serving state does not know.
     pub(crate) fn unknown_credential() -> Self {
         let mut state = Self::ready();
         state.credential = None;

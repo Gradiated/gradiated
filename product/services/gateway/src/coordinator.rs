@@ -15,7 +15,7 @@ use crate::{
     healthy_deployment_count,
     protocol::Protocol,
     relay::{parse_target, RelayRoute},
-    serving_state::ServingState,
+    serving_state::{ServingState, ServingStateError},
     CatalogModel, GatewayError, GatewayModel, GatewayModelDeployment, InferenceRequest,
 };
 
@@ -33,6 +33,8 @@ pub struct QualifiedRequest {
     pub metadata: RequestMetadata,
     pub identity: AuthenticatedIdentity,
     pub deployment: GatewayModelDeployment,
+    /// Every deployment of the model, from which routing picks the one to use.
+    pub model_deployments: Vec<GatewayModelDeployment>,
     pub served_release_digest: String,
     pub max_context_tokens: u64,
     pub max_prompt_tokens: u64,
@@ -114,17 +116,6 @@ impl RequestCoordinator {
         headers: &HeaderMap,
         hosted: HostedRequest,
         body: &[u8],
-    ) -> Result<QualifiedRequest, GatewayError> {
-        self.qualify_kind(metadata, headers, hosted, body, crate::RequestKind::Chat)
-    }
-
-    /// As `qualify`, for a protocol whose body is not an OpenAI chat request.
-    pub fn qualify_kind(
-        &self,
-        metadata: RequestMetadata,
-        headers: &HeaderMap,
-        hosted: HostedRequest,
-        body: &[u8],
         kind: crate::RequestKind,
     ) -> Result<QualifiedRequest, GatewayError> {
         let mut request = InferenceRequest::parse_kind(body, kind)?;
@@ -155,7 +146,7 @@ impl RequestCoordinator {
             .serving_state
             .models()
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+            .map_err(state_unavailable("catalog_read"))?;
         let mut catalog = Vec::with_capacity(models.len());
         for model in models {
             let release_digest = model
@@ -168,7 +159,7 @@ impl RequestCoordinator {
                     .serving_state
                     .deployment_statuses(&digest)
                     .await
-                    .map_err(|_| GatewayError::ServingStateUnavailable)?,
+                    .map_err(state_unavailable("deployment_status_read"))?,
                 None => Vec::new(),
             };
             catalog.push(CatalogModel {
@@ -180,6 +171,7 @@ impl RequestCoordinator {
                 model,
             });
         }
+
         Ok(catalog)
     }
 
@@ -213,7 +205,7 @@ impl RequestCoordinator {
             .serving_state
             .model(&hosted_id)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?;
+            .map_err(state_unavailable("model_read"))?;
 
         if let Some(model) = hosted {
             return Ok(RequestRoute::Hosted {
@@ -250,7 +242,7 @@ impl RequestCoordinator {
             .serving_state
             .credential(&digest)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?
+            .map_err(state_unavailable("credential_read"))?
             .ok_or(GatewayError::InvalidApiKey)?;
         let identity = authenticate_credential(credential, received_at)
             .map_err(|_| GatewayError::InvalidApiKey)?;
@@ -270,13 +262,13 @@ impl RequestCoordinator {
             .serving_state
             .workspace(identity.workspace_id)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?
+            .map_err(state_unavailable("workspace_read"))?
             .ok_or(GatewayError::ServingStateUnavailable)?;
         let account = self
             .serving_state
             .account(identity.organization_id)
             .await
-            .map_err(|_| GatewayError::ServingStateUnavailable)?
+            .map_err(state_unavailable("account_read"))?
             .ok_or(GatewayError::ServingStateUnavailable)?;
         let identity = authorize_access(identity, &workspace, &account)?;
 
@@ -289,7 +281,20 @@ impl RequestCoordinator {
     }
 }
 
-/// A projection that disagrees with its own key, or that cannot serve, is not a
+/// Logs why a serving-state read failed. The public error carries no cause,
+/// and the diagnostic code never contains record data.
+fn state_unavailable(phase: &'static str) -> impl FnOnce(ServingStateError) -> GatewayError {
+    move |error| {
+        crate::diagnostics::limited_warn!(
+            phase,
+            error_code = error.diagnostic_code(),
+            "serving state read failed"
+        );
+        GatewayError::ServingStateUnavailable
+    }
+}
+
+/// A record that disagrees with its own key, or that cannot serve, is not a
 /// missing model: it is inconsistent serving state.
 fn validate_hosted_model(
     model: GatewayModel,
@@ -322,6 +327,7 @@ fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
             return Ok(Some(value.to_owned()));
         }
     }
+
     Ok(None)
 }
 
@@ -337,12 +343,16 @@ fn qualify_model_request(
         .ok_or(GatewayError::ModelUnavailable)?
         .clone();
     let output = model.properties.text_output();
+
     if request.decision.is_some() != deployment.release.is_system_one() {
         return Err(GatewayError::unsupported_parameter("model"));
     }
     if request.stream && !output.streaming {
         return Err(GatewayError::unsupported_parameter("stream"));
     }
+
+    // Parameters the model declares must hold accepted values. Parameters it does
+    // not declare are removed before dispatch.
     for (name, value) in &request.parameters {
         if model
             .properties
@@ -369,6 +379,7 @@ fn qualify_model_request(
             None => output.default_length.value,
         }
     };
+
     let served_release_digest = deployment
         .served_release_digest()
         .map_err(|_| GatewayError::ServingStateUnavailable)?;
@@ -381,6 +392,7 @@ fn qualify_model_request(
         metadata,
         identity,
         deployment,
+        model_deployments: model.deployments,
         served_release_digest,
         max_context_tokens: input.supported_inputs.max_context_length.value,
         max_prompt_tokens: input.supported_inputs.max_prompt_length.value,
@@ -418,7 +430,7 @@ mod tests {
             panic!("no relay route was offered");
         };
 
-        coordinator.qualify(metadata(), headers, *hosted, body)
+        coordinator.qualify(metadata(), headers, *hosted, body, crate::RequestKind::Chat)
     }
 
     /// As `qualify`, for a body the native decision protocol owns.
@@ -440,7 +452,7 @@ mod tests {
             panic!("no relay route was offered");
         };
 
-        coordinator.qualify_kind(
+        coordinator.qualify(
             metadata(),
             headers,
             *hosted,

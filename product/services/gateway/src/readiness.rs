@@ -18,7 +18,7 @@ pub struct DependencyReadiness {
     serving_state: ValkeyServingState,
     metrics: GatewayMetrics,
     valkey_state: DependencyState,
-    catalog_state: DependencyState,
+    postgres_state: DependencyState,
 }
 
 impl DependencyReadiness {
@@ -27,7 +27,7 @@ impl DependencyReadiness {
             serving_state,
             metrics,
             valkey_state: DependencyState::default(),
-            catalog_state: DependencyState::default(),
+            postgres_state: DependencyState::default(),
         }
     }
 }
@@ -35,19 +35,19 @@ impl DependencyReadiness {
 #[async_trait]
 impl ReadinessCheck for DependencyReadiness {
     async fn is_ready(&self) -> bool {
-        let (ping, models) = tokio::join!(
+        let (valkey, postgres) = tokio::join!(
             tokio::time::timeout(DEPENDENCY_TIMEOUT, self.serving_state.ping()),
-            tokio::time::timeout(DEPENDENCY_TIMEOUT, self.serving_state.models()),
+            tokio::time::timeout(DEPENDENCY_TIMEOUT, self.serving_state.ping_database()),
         );
-        let valkey_reason = readiness_error(&ping);
-        let catalog_reason = readiness_error(&models);
+        let valkey_reason = readiness_error(&valkey);
+        let postgres_reason = readiness_error(&postgres);
         self.metrics
             .set_dependency_ready("valkey", valkey_reason.is_none());
         self.metrics
-            .set_dependency_ready("catalog", catalog_reason.is_none());
+            .set_dependency_ready("postgres", postgres_reason.is_none());
         self.valkey_state.record("valkey", valkey_reason);
-        self.catalog_state.record("catalog", catalog_reason);
-        valkey_reason.is_none() && catalog_reason.is_none()
+        self.postgres_state.record("postgres", postgres_reason);
+        valkey_reason.is_none() && postgres_reason.is_none()
     }
 }
 

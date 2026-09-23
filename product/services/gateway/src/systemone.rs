@@ -1,11 +1,10 @@
 //! Native SystemOne wire validation. Call `parse` before admission and
 //! `normalize_response` before exposing answers or settling usage.
 
-use crate::json::strict_json;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::{Map, Value};
 
-use crate::{GatewayError, NormalizedUsage, RuntimeFailure, RuntimeFailureKind, ServiceTier};
+use crate::{json::strict_json, GatewayError, NormalizedUsage, RuntimeFailure, ServiceTier};
 
 const MAX_OPTIONS: usize = 255;
 const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
@@ -32,6 +31,7 @@ impl SystemOneRequest {
         let request: Self =
             serde_json::from_value(value).map_err(|_| GatewayError::invalid_request(None))?;
         request.validate()?;
+
         Ok(request)
     }
 
@@ -63,6 +63,7 @@ impl SystemOneRequest {
         {
             return Err(GatewayError::invalid_request(Some("questions")));
         }
+
         Ok(())
     }
 }
@@ -83,6 +84,7 @@ fn valid_question(value: &Value) -> bool {
     let Some(question) = value.as_object() else {
         return false;
     };
+
     if !question.contains_key("instructions")
         || question
             .keys()
@@ -90,6 +92,7 @@ fn valid_question(value: &Value) -> bool {
     {
         return false;
     }
+
     match question.get("type").and_then(Value::as_str) {
         Some("choice") => question
             .get("criteria")
@@ -111,10 +114,6 @@ fn valid_question(value: &Value) -> bool {
     }
 }
 
-fn protocol_failure() -> RuntimeFailure {
-    RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation)
-}
-
 /// Validate the runtime identity, question correspondence and authoritative
 /// prefill usage. SystemOne generates no model tokens: serialized answer size
 /// must never be accepted as output usage.
@@ -124,51 +123,65 @@ pub fn normalize_response(
     runtime_model: &str,
 ) -> Result<(Value, NormalizedUsage), RuntimeFailure> {
     // The public struct can also be constructed without going through parse.
-    request.validate().map_err(|_| protocol_failure())?;
-    let mut response = strict_json(body).map_err(|_| protocol_failure())?;
-    let object = response.as_object().ok_or_else(protocol_failure)?;
-    if object.get("model").and_then(Value::as_str) != Some(runtime_model) {
-        return Err(protocol_failure());
-    }
+    request
+        .validate()
+        .map_err(|_| RuntimeFailure::protocol_violation())?;
+
+    let mut response = strict_json(body).map_err(|_| RuntimeFailure::protocol_violation())?;
+    let object = response
+        .as_object()
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(object.get("model").and_then(Value::as_str) == Some(runtime_model))?;
+
     let answers = object
         .get("answers")
         .and_then(Value::as_object)
-        .ok_or_else(protocol_failure)?;
-    if answers.len() != request.questions.len() {
-        return Err(protocol_failure());
-    }
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(answers.len() == request.questions.len())?;
     for (id, question) in &request.questions {
         let answer = answers
             .get(id)
             .and_then(Value::as_object)
-            .ok_or_else(protocol_failure)?;
+            .ok_or_else(RuntimeFailure::protocol_violation)?;
         validate_answer(answer, question)?;
     }
-    let usage = object
+
+    let usage = decision_usage(object)?;
+    response["model"] = Value::String(request.model.clone());
+
+    Ok((response, usage))
+}
+
+fn decision_usage(response: &Map<String, Value>) -> Result<NormalizedUsage, RuntimeFailure> {
+    let usage = response
         .get("usage")
         .and_then(Value::as_object)
-        .ok_or_else(protocol_failure)?;
-    if !exact_keys(
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(exact_keys(
         usage,
         &["input_tokens", "cached_input_tokens", "output_tokens"],
-    ) {
-        return Err(protocol_failure());
-    }
+    ))?;
+
     let integer = |key: &str| {
         usage
             .get(key)
             .and_then(Value::as_u64)
             .filter(|value| *value <= MAX_SAFE_INTEGER)
-            .ok_or_else(protocol_failure)
+            .ok_or_else(RuntimeFailure::protocol_violation)
     };
     let input = integer("input_tokens")?;
     let cached = integer("cached_input_tokens")?;
-    if integer("output_tokens")? != 0 || cached > input {
-        return Err(protocol_failure());
+    ensure(integer("output_tokens")? == 0 && cached <= input)?;
+
+    NormalizedUsage::new(input, cached, 0, 0, 0).map_err(|_| RuntimeFailure::protocol_violation())
+}
+
+fn ensure(condition: bool) -> Result<(), RuntimeFailure> {
+    if condition {
+        Ok(())
+    } else {
+        Err(RuntimeFailure::protocol_violation())
     }
-    let usage = NormalizedUsage::new(input, cached, 0, 0, 0).map_err(|_| protocol_failure())?;
-    response["model"] = Value::String(request.model.clone());
-    Ok((response, usage))
 }
 
 fn exact_keys(object: &Map<String, Value>, keys: &[&str]) -> bool {
@@ -182,87 +195,107 @@ fn bounded_number(value: &Value, max: f64) -> bool {
 }
 
 fn validate_answer(answer: &Map<String, Value>, question: &Value) -> Result<(), RuntimeFailure> {
-    if answer.get("type") != question.get("type") {
-        return Err(protocol_failure());
-    }
-    let keys: Vec<String> = match question["type"].as_str() {
+    ensure(answer.get("type") == question.get("type"))?;
+
+    let outcomes = match question["type"].as_str() {
         Some("noul") => {
-            return if exact_keys(answer, &["type", "noul"]) && bounded_number(&answer["noul"], 1.0)
-            {
-                Ok(())
-            } else {
-                Err(protocol_failure())
-            };
+            return ensure(
+                exact_keys(answer, &["type", "noul"]) && bounded_number(&answer["noul"], 1.0),
+            );
         }
-        Some("choice") => {
-            if !exact_keys(answer, &["type", "choice", "confidence", "probabilities"]) {
-                return Err(protocol_failure());
-            }
-            let criteria = question["criteria"]
-                .as_object()
-                .ok_or_else(protocol_failure)?;
-            if !answer["choice"]
-                .as_str()
-                .is_some_and(|choice| criteria.contains_key(choice))
-            {
-                return Err(protocol_failure());
-            }
-            criteria.keys().cloned().collect()
-        }
-        Some("score") => {
-            if !exact_keys(
-                answer,
-                &["type", "score", "legend", "confidence", "probabilities"],
-            ) {
-                return Err(protocol_failure());
-            }
-            let levels = question["criteria"]
-                .as_array()
-                .ok_or_else(protocol_failure)?;
-            if !bounded_number(&answer["score"], (levels.len() - 1) as f64) {
-                return Err(protocol_failure());
-            }
-            let keys: Vec<String> = (0..levels.len()).map(|i| i.to_string()).collect();
-            let legend = answer["legend"].as_object().ok_or_else(protocol_failure)?;
-            if legend.len() != keys.len()
-                || keys
-                    .iter()
-                    .any(|key| !legend.get(key).is_some_and(Value::is_string))
-            {
-                return Err(protocol_failure());
-            }
-            keys
-        }
-        _ => return Err(protocol_failure()),
+        Some("choice") => choice_outcomes(answer, question)?,
+        Some("score") => score_outcomes(answer, question)?,
+        _ => return Err(RuntimeFailure::protocol_violation()),
     };
-    if !bounded_number(&answer["confidence"], 1.0) {
-        return Err(protocol_failure());
-    }
+
+    validate_distribution(answer, &outcomes)
+}
+
+/// A choice answer names one of the question's criteria; its outcomes are the
+/// criteria.
+fn choice_outcomes(
+    answer: &Map<String, Value>,
+    question: &Value,
+) -> Result<Vec<String>, RuntimeFailure> {
+    ensure(exact_keys(
+        answer,
+        &["type", "choice", "confidence", "probabilities"],
+    ))?;
+
+    let criteria = question["criteria"]
+        .as_object()
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(
+        answer["choice"]
+            .as_str()
+            .is_some_and(|choice| criteria.contains_key(choice)),
+    )?;
+
+    Ok(criteria.keys().cloned().collect())
+}
+
+/// A score answer lies within the question's levels and describes each level in
+/// its legend; its outcomes are the level indexes.
+fn score_outcomes(
+    answer: &Map<String, Value>,
+    question: &Value,
+) -> Result<Vec<String>, RuntimeFailure> {
+    ensure(exact_keys(
+        answer,
+        &["type", "score", "legend", "confidence", "probabilities"],
+    ))?;
+
+    let levels = question["criteria"]
+        .as_array()
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(bounded_number(&answer["score"], (levels.len() - 1) as f64))?;
+
+    let outcomes: Vec<String> = (0..levels.len()).map(|i| i.to_string()).collect();
+    let legend = answer["legend"]
+        .as_object()
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(
+        legend.len() == outcomes.len()
+            && outcomes
+                .iter()
+                .all(|key| legend.get(key).is_some_and(Value::is_string)),
+    )?;
+
+    Ok(outcomes)
+}
+
+/// The answer's confidence is a probability, and it gives one probability per
+/// outcome that together sum to one.
+fn validate_distribution(
+    answer: &Map<String, Value>,
+    outcomes: &[String],
+) -> Result<(), RuntimeFailure> {
+    ensure(bounded_number(&answer["confidence"], 1.0))?;
+
     let probabilities = answer["probabilities"]
         .as_object()
-        .ok_or_else(protocol_failure)?;
-    if probabilities.len() != keys.len()
-        || keys.iter().any(|key| {
-            !probabilities
-                .get(key)
-                .is_some_and(|value| bounded_number(value, 1.0))
-        })
-    {
-        return Err(protocol_failure());
-    }
-    let sum: f64 = probabilities.values().filter_map(Value::as_f64).sum();
+        .ok_or_else(RuntimeFailure::protocol_violation)?;
+    ensure(
+        probabilities.len() == outcomes.len()
+            && outcomes.iter().all(|key| {
+                probabilities
+                    .get(key)
+                    .is_some_and(|value| bounded_number(value, 1.0))
+            }),
+    )?;
+
     // Upstream independently rounds each probability to two decimal places.
     // Accumulated rounding error can exceed .02 for larger option sets.
-    let tolerance = 0.02_f64.max(keys.len() as f64 * 0.005) + 1e-12;
-    if (sum - 1.0).abs() > tolerance {
-        return Err(protocol_failure());
-    }
-    Ok(())
+    let sum: f64 = probabilities.values().filter_map(Value::as_f64).sum();
+    let tolerance = 0.02_f64.max(outcomes.len() as f64 * 0.005) + 1e-12;
+
+    ensure((sum - 1.0).abs() <= tolerance)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::RuntimeFailureKind;
     use serde_json::json;
 
     fn request_value() -> Value {

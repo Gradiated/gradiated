@@ -12,6 +12,7 @@ pub struct GatewayConfig {
     pub browser_origins: Option<String>,
     #[serde(rename = "gateway_bind_address", default = "default_bind_address")]
     pub bind_address: SocketAddr,
+
     #[serde(
         rename = "gateway_generation_timeout_seconds",
         default = "default_generation_timeout_seconds"
@@ -31,11 +32,11 @@ pub struct GatewayConfig {
     #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
     pub expired_lease_cleanup_grace_seconds: u64,
     #[serde(
-        rename = "gateway_prepaid_organization_concurrency_cap",
-        default = "default_prepaid_organization_concurrency_cap"
+        rename = "gateway_organization_concurrency_cap",
+        default = "default_organization_concurrency_cap"
     )]
     #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
-    pub prepaid_organization_concurrency_cap: u64,
+    pub organization_concurrency_cap: u64,
     #[serde(
         rename = "gateway_balance_per_concurrency_slot_nano_usd",
         default = "default_balance_per_concurrency_slot_nano_usd"
@@ -45,6 +46,7 @@ pub struct GatewayConfig {
     #[serde(rename = "gateway_settlement_backlog_limit")]
     #[validate(range(min = 1, max = MAX_LUA_SAFE_INTEGER))]
     pub settlement_backlog_limit: u64,
+
     #[serde(default = "default_anthropic_origin")]
     pub proxy_anthropic_origin: String,
     #[serde(default = "default_proxy_connect_timeout_seconds")]
@@ -69,6 +71,7 @@ pub struct GatewayConfig {
     #[serde(default = "default_proxy_max_in_flight")]
     #[validate(range(min = 1, max = 1_000_000))]
     pub proxy_max_in_flight: u64,
+
     /// Published on every model in the catalog as a compliance claim. They are not
     /// per-deployment facts, so a runtime that retains prompts makes `provider_zdr`
     /// untrue for its models and the claim has to be revisited.
@@ -76,6 +79,7 @@ pub struct GatewayConfig {
     pub provider_zdr: bool,
     #[serde(default)]
     pub provider_hipaa: bool,
+
     /// The authoritative store for identity and the model catalog.
     pub database_url: String,
     /// Extra certificate authorities to trust for the database connection. Amazon
@@ -91,10 +95,12 @@ pub struct GatewayConfig {
     )]
     #[validate(range(min = 1, max = 300))]
     pub record_cache_ttl_seconds: u64,
+
     pub valkey_url: String,
     pub valkey_iam_cache_name: Option<String>,
     pub valkey_iam_region: Option<String>,
     pub valkey_iam_user: Option<String>,
+
     pub sglang_api_key: Option<String>,
 }
 
@@ -109,7 +115,7 @@ impl GatewayConfig {
             generation_timeout_seconds: default_generation_timeout_seconds(),
             lease_finalization_margin_seconds: default_lease_finalization_margin_seconds(),
             expired_lease_cleanup_grace_seconds: default_expired_lease_cleanup_grace_seconds(),
-            prepaid_organization_concurrency_cap: default_prepaid_organization_concurrency_cap(),
+            organization_concurrency_cap: default_organization_concurrency_cap(),
             balance_per_concurrency_slot_nano_usd: default_balance_per_concurrency_slot_nano_usd(),
             settlement_backlog_limit: 100_000,
             provider_zdr: default_provider_zdr(),
@@ -145,8 +151,10 @@ impl GatewayConfig {
         config.validate()?;
         config.validate_valkey_auth()?;
         config.validate_proxy()?;
+
         config.browser_origins = config.browser_origins.filter(|value| !value.is_empty());
         config.sglang_api_key = config.sglang_api_key.filter(|value| !value.is_empty());
+
         Ok(config)
     }
 
@@ -271,7 +279,7 @@ fn default_expired_lease_cleanup_grace_seconds() -> u64 {
     300
 }
 
-fn default_prepaid_organization_concurrency_cap() -> u64 {
+fn default_organization_concurrency_cap() -> u64 {
     50
 }
 
@@ -378,7 +386,7 @@ mod tests {
             config.expired_lease_cleanup_grace_seconds,
             default_expired_lease_cleanup_grace_seconds()
         );
-        assert_eq!(config.prepaid_organization_concurrency_cap, 50);
+        assert_eq!(config.organization_concurrency_cap, 50);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 1_000_000_000);
         assert_eq!(config.settlement_backlog_limit, 100_000);
         assert_eq!(config.valkey_iam(), None);
@@ -396,7 +404,7 @@ mod tests {
             ("GATEWAY_GENERATION_TIMEOUT_SECONDS", "120"),
             ("GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS", "30"),
             ("GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS", "240"),
-            ("GATEWAY_PREPAID_ORGANIZATION_CONCURRENCY_CAP", "25"),
+            ("GATEWAY_ORGANIZATION_CONCURRENCY_CAP", "25"),
             ("GATEWAY_BALANCE_PER_CONCURRENCY_SLOT_NANO_USD", "500000000"),
             ("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "50000"),
             ("GATEWAY_RECORD_CACHE_TTL_SECONDS", "30"),
@@ -417,7 +425,7 @@ mod tests {
         assert_eq!(config.generation_timeout_seconds, 120);
         assert_eq!(config.lease_finalization_margin_seconds, 30);
         assert_eq!(config.expired_lease_cleanup_grace_seconds, 240);
-        assert_eq!(config.prepaid_organization_concurrency_cap, 25);
+        assert_eq!(config.organization_concurrency_cap, 25);
         assert_eq!(config.balance_per_concurrency_slot_nano_usd, 500_000_000);
         assert_eq!(config.settlement_backlog_limit, 50_000);
         assert_eq!(config.record_cache_ttl_seconds, 30);

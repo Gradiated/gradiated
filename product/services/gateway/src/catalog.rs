@@ -151,10 +151,10 @@ impl<'a> ProviderModel<'a> {
     }
 }
 
-#[derive(Debug, Serialize)]
 /// What the gateway publishes about itself. These are claims customers encode into
 /// their own compliance decisions, so they are configuration rather than constants
 /// compiled into the binary, and they are not per-model facts today.
+#[derive(Clone, Copy, Debug, Serialize)]
 pub struct ProviderCompliance {
     pub zdr: bool,
     pub hipaa: bool,
@@ -266,9 +266,7 @@ struct ProviderDatacenter<'a> {
 }
 
 /// A region's country, or nothing when the region is not one this gateway knows.
-/// The previous rule took the region's first segment, so `eu-central-1` published
-/// `EU` and `ap-southeast-1` published `AP` — neither is a country — and anything
-/// else published `US`.
+/// A region name's first segment is not a country: `eu-central-1` is in Germany.
 fn country_code(region: &str) -> Option<&'static str> {
     REGION_COUNTRIES
         .iter()

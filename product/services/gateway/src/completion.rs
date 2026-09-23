@@ -5,41 +5,34 @@ use std::{
         atomic::{AtomicBool, AtomicUsize, Ordering},
         Arc,
     },
-    time::Duration,
+    time::{Duration, Instant},
 };
-use tracing::Instrument;
 
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use futures_util::stream;
 use serde_json::Value;
 use tokio::{
     sync::{mpsc, oneshot, watch, Notify},
     task::JoinHandle,
 };
+use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
-    metrics::AdmittedGenerationMetrics, protocol::StreamItem, routing::order_deployments_diagnosed,
-    BoundedRequest, CancellationOwner, FinalizationOutcome, GatewayConfig, GatewayError,
-    GatewayMetrics, GenerationIdentity, GenerationProperties, GenerationStatus, GenerationTiming,
-    ModelRuntime, ModelTokenizer, NormalizedUsage, PricedUsage, QualifiedRequest,
-    RouteAvailability, RouteInput, RoutedDeployment, RuntimeFailure, RuntimeFailureKind,
-    RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
+    metrics::{AdmittedGenerationMetrics, TerminalRecord},
+    protocol::StreamItem,
+    routing::{order_deployments_diagnosed, RoutePrompt},
+    AdmissionLease, BoundedRequest, CancellationOwner, CapturedPricing, FinalizationOutcome,
+    GatewayConfig, GatewayError, GatewayMetrics, GatewayModelDeployment, GenerationIdentity,
+    GenerationProperties, GenerationStatus, GenerationTiming, InferenceRequest, ModelRuntime,
+    ModelTokenizer, NormalizedUsage, PricedUsage, QualifiedRequest, RouteAvailability, RouteInput,
+    RoutedDeployment, RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
+    RuntimeStreamChunk, RuntimeStreamEvent, ServiceTier, ServingState, TerminalOutcome,
 };
 
 const FINALIZATION_ATTEMPTS: usize = 3;
 const FINALIZATION_RETRY_DELAY: Duration = Duration::from_millis(25);
 const STREAM_CHANNEL_CAPACITY: usize = 8;
-
-struct DeploymentRoute {
-    active: Option<RoutedDeployment>,
-    remaining: Vec<RoutedDeployment>,
-}
-
-struct RoutedRequest {
-    bounded: BoundedRequest,
-    route: Option<DeploymentRoute>,
-}
 
 #[derive(Clone)]
 struct GenerationTasks {
@@ -56,6 +49,7 @@ struct GenerationTasksInner {
 impl GenerationTasks {
     fn new() -> Self {
         let (force_shutdown, _) = watch::channel(false);
+
         Self {
             inner: Arc::new(GenerationTasksInner {
                 draining: AtomicBool::new(false),
@@ -73,6 +67,7 @@ impl GenerationTasks {
     {
         self.inner.active.fetch_add(1, Ordering::AcqRel);
         let inner = self.inner.clone();
+
         tokio::spawn(
             async move {
                 let _active = ActiveGeneration(inner);
@@ -105,6 +100,7 @@ impl GenerationTasks {
             if self.inner.active.load(Ordering::Acquire) == 0 {
                 return;
             }
+
             idle.await;
         }
     }
@@ -145,14 +141,13 @@ impl CompletionService {
         tokenizer: ModelTokenizer,
         config: Arc<GatewayConfig>,
     ) -> Self {
-        let metrics = GatewayMetrics::new();
         Self {
             tokenizer,
             serving_state,
             runtime,
             config,
             tasks: GenerationTasks::new(),
-            metrics,
+            metrics: GatewayMetrics::new(),
         }
     }
 
@@ -183,45 +178,24 @@ impl CompletionService {
         if self.tasks.is_draining() {
             return Err(GatewayError::RuntimeUnavailable);
         }
+
         let streaming = qualified.request.stream;
         let service_tier = qualified.request.service_tier;
-        let bounded = self.prepare_request(qualified).await?;
-        let routed = self.route_bounded(bounded).await?;
-        if streaming {
-            self.stream_routed(routed)
-                .await
-                .map(|result| CompletionResponse::Streaming {
-                    result,
-                    service_tier,
-                })
-        } else {
-            self.complete_routed(routed)
-                .await
-                .map(|result| CompletionResponse::NonStreaming {
-                    result,
-                    service_tier,
-                })
-        }
-    }
+        let mut bounded = self.bound(qualified).await?;
+        let fallbacks = self.route(&mut bounded).await?;
+        let generation = self.admit(bounded, fallbacks).await?;
 
-    async fn prepare_request(
-        &self,
-        qualified: crate::QualifiedRequest,
-    ) -> Result<BoundedRequest, GatewayError> {
-        if qualified
-            .deployment
-            .release
-            .runtime_revision
-            .starts_with("native-")
-        {
-            // This transport sends the actual token IDs produced here.
-            self.tokenizer.enforce(qualified).await
+        if streaming {
+            let result = self.stream(generation).await?;
+            Ok(CompletionResponse::Streaming {
+                result,
+                service_tier,
+            })
         } else {
-            // Chat deployments own normalization, tokenization, and context
-            // validation. Local rendering must not veto their requests.
-            Ok(BoundedRequest {
-                qualified,
-                input_tokens: None,
+            let result = self.run(generation).await?;
+            Ok(CompletionResponse::NonStreaming {
+                result,
+                service_tier,
             })
         }
     }
@@ -230,22 +204,27 @@ impl CompletionService {
         self.tokenizer.count(qualified).await
     }
 
-    async fn route_bounded(
+    async fn bound(&self, qualified: QualifiedRequest) -> Result<BoundedRequest, GatewayError> {
+        if qualified.deployment.release.sends_token_ids() {
+            return self.tokenizer.enforce(qualified).await;
+        }
+
+        // Chat deployments own normalization, tokenization, and context
+        // validation. Local rendering must not veto their requests.
+        Ok(BoundedRequest {
+            qualified,
+            input_tokens: None,
+        })
+    }
+
+    /// Selects the deployment to dispatch to and returns the remaining eligible
+    /// candidates, in order, for a retry. The runtime owns admission: when it is
+    /// full it rejects the request and the retry moves to the next candidate.
+    async fn route(
         &self,
-        mut bounded: BoundedRequest,
-    ) -> Result<RoutedRequest, GatewayError> {
+        bounded: &mut BoundedRequest,
+    ) -> Result<Vec<RoutedDeployment>, GatewayError> {
         let request = &bounded.qualified;
-        let model = self
-            .serving_state
-            .model(&request.request.model)
-            .await
-            .map_err(|error| {
-                crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
-                    model_id = %request.request.model, phase = "catalog_read",
-                    error_code = error.diagnostic_code(), "routing dependency failed");
-                GatewayError::ServingStateUnavailable
-            })?
-            .ok_or(GatewayError::RuntimeUnavailable)?;
         let statuses = self
             .serving_state
             .deployment_statuses(&request.served_release_digest)
@@ -256,162 +235,65 @@ impl CompletionService {
                     error_code = error.diagnostic_code(), "routing dependency failed");
                 GatewayError::ServingStateUnavailable
             })?;
-        let prompt = if let Some(decision) = &request.request.decision {
-            crate::routing::RoutePrompt::DecisionState(&decision.state)
-        } else {
-            match request.request.encoded_input_ids.as_deref() {
-                Some(ids) => crate::routing::RoutePrompt::TokenIds(ids),
-                None => crate::routing::RoutePrompt::ChatMessages(&request.request.messages),
-            }
-        };
-        let (candidates, diagnostics) = order_deployments_diagnosed(RouteInput {
+
+        let (availability, diagnostics) = order_deployments_diagnosed(RouteInput {
             workspace_id: request.identity.workspace_id,
             model_id: &request.request.model,
             release_digest: &request.served_release_digest,
             session_id: request.request.session_id.as_deref(),
-            prompt,
-            deployments: &model.deployments,
+            prompt: route_prompt(&request.request),
+            deployments: &request.model_deployments,
             statuses: &statuses,
             now: Utc::now(),
         });
-        let RouteAvailability::Ready(candidates) = candidates else {
-            crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
-                model_id = %request.request.model, phase = "routing",
-                candidates = diagnostics.candidates,
-                unavailable = diagnostics.unavailable,
-                invalid_deployment = diagnostics.invalid_deployment,
-                release_mismatch = diagnostics.release_mismatch,
-                missing_status = diagnostics.missing_status,
-                invalid_status = diagnostics.invalid_status,
-                revision_mismatch = diagnostics.revision_mismatch,
-                stale_status = diagnostics.stale_status,
-                unhealthy = diagnostics.unhealthy,
-                at_capacity = diagnostics.at_capacity,
-                "no eligible runtime deployment");
-            return Err(match candidates {
-                RouteAvailability::AtCapacity => GatewayError::CapacityExceeded,
-                RouteAvailability::Unavailable => GatewayError::RuntimeUnavailable,
-                RouteAvailability::Ready(_) => unreachable!(),
-            });
+
+        let unavailable = match availability {
+            RouteAvailability::Ready(candidates) => {
+                let mut candidates = candidates.into_iter();
+                if let Some(active) = candidates.next() {
+                    bounded.qualified.deployment = active.deployment;
+                    return Ok(candidates.collect());
+                }
+
+                GatewayError::RuntimeUnavailable
+            }
+            RouteAvailability::AtCapacity => GatewayError::CapacityExceeded,
+            RouteAvailability::Unavailable => GatewayError::RuntimeUnavailable,
         };
-        // The engine owns admission. Pick the highest-ranked rendezvous
-        // candidate and dispatch. When the runtime is full it rejects the
-        // request, and the retry path moves to the next candidate.
-        let mut candidates = candidates.into_iter();
-        let active = candidates.next().ok_or_else(|| {
-            crate::diagnostics::limited_warn!(%request.metadata.generation_id,
-                model_id = %request.request.model, phase = "routing",
-                "no eligible runtime deployment after ordering");
-            GatewayError::RuntimeUnavailable
-        })?;
-        bounded.qualified.deployment = active.deployment.clone();
-        Ok(RoutedRequest {
-            bounded,
-            route: Some(DeploymentRoute {
-                active: Some(active),
-                remaining: candidates.collect(),
-            }),
-        })
+
+        crate::diagnostics::limited_warn!(generation_id = %request.metadata.generation_id,
+            model_id = %request.request.model, phase = "routing",
+            candidates = diagnostics.candidates,
+            unavailable = diagnostics.unavailable,
+            invalid_deployment = diagnostics.invalid_deployment,
+            release_mismatch = diagnostics.release_mismatch,
+            missing_status = diagnostics.missing_status,
+            invalid_status = diagnostics.invalid_status,
+            revision_mismatch = diagnostics.revision_mismatch,
+            stale_status = diagnostics.stale_status,
+            unhealthy = diagnostics.unhealthy,
+            at_capacity = diagnostics.at_capacity,
+            "no eligible runtime deployment");
+
+        Err(unavailable)
     }
 
-    #[cfg(test)]
-    async fn complete_bounded(
+    async fn admit(
         &self,
         bounded: BoundedRequest,
-    ) -> Result<CompletionResult, GatewayError> {
-        self.complete_routed(RoutedRequest {
-            bounded,
-            route: None,
-        })
-        .await
-    }
-
-    async fn complete_routed(
-        &self,
-        routed: RoutedRequest,
-    ) -> Result<CompletionResult, GatewayError> {
-        let RoutedRequest { bounded, route } = routed;
-        let generation_identity = match generation_identity(&bounded) {
-            Ok(identity) => identity,
-            Err(error) => {
-                return Err(error);
-            }
-        };
-        let (lease, generation_metrics) = match self.admit_generation(&bounded).await {
-            Ok(admission) => admission,
-            Err(error) => {
-                return Err(error);
-            }
-        };
-        wait_for_generation(
-            GenerationTask {
-                bounded,
-                generation_identity,
-                lease,
-                serving_state: self.serving_state.clone(),
-                runtime: self.runtime.clone(),
-                metrics: generation_metrics,
-                route,
-            },
-            &self.tasks,
-        )
-        .await
-    }
-
-    #[cfg(test)]
-    async fn stream_bounded(
-        &self,
-        bounded: BoundedRequest,
-    ) -> Result<StreamingCompletion, GatewayError> {
-        self.stream_routed(RoutedRequest {
-            bounded,
-            route: None,
-        })
-        .await
-    }
-
-    async fn stream_routed(
-        &self,
-        routed: RoutedRequest,
-    ) -> Result<StreamingCompletion, GatewayError> {
-        let RoutedRequest { bounded, route } = routed;
-        let generation_identity = match generation_identity(&bounded) {
-            Ok(identity) => identity,
-            Err(error) => {
-                return Err(error);
-            }
-        };
-        let (lease, generation_metrics) = match self.admit_generation(&bounded).await {
-            Ok(admission) => admission,
-            Err(error) => {
-                return Err(error);
-            }
-        };
-        let (events, receiver) = mpsc::channel(STREAM_CHANNEL_CAPACITY);
-        let (started, startup) = oneshot::channel();
-        self.tasks.spawn(
-            StreamingGenerationTask {
-                bounded,
-                generation_identity,
-                lease,
-                serving_state: self.serving_state.clone(),
-                runtime: self.runtime.clone(),
-                metrics: generation_metrics,
-                route,
-            }
-            .run(started, events, self.tasks.subscribe()),
-        );
-        startup
-            .await
-            .map_err(|_| GatewayError::FinalizationUnavailable)??;
-        Ok(StreamingCompletion { receiver })
-    }
-
-    async fn admit_generation(
-        &self,
-        bounded: &BoundedRequest,
-    ) -> Result<(crate::AdmissionLease, AdmittedGenerationMetrics), GatewayError> {
+        fallbacks: Vec<RoutedDeployment>,
+    ) -> Result<Generation, GatewayError> {
         let request = &bounded.qualified;
+        let generation_identity = GenerationIdentity::new(
+            None,
+            request.identity.organization_id,
+            request.identity.workspace_id,
+            request.identity.api_key_id,
+            request.request.model.clone(),
+            request.served_release_digest.clone(),
+        )
+        .map_err(|_| GatewayError::ServingStateUnavailable)?;
+
         let admitted_at = cmp::max(Utc::now(), request.metadata.received_at);
         let admission = self
             .serving_state
@@ -423,6 +305,7 @@ impl CompletionService {
                 &self.config,
             )
             .await;
+
         let lease = match admission {
             Ok(lease) => lease,
             Err(error) => {
@@ -437,6 +320,7 @@ impl CompletionService {
                 return Err(error.into());
             }
         };
+
         let metrics = self.metrics.generation_admitted(
             &request.request.model,
             request.deployment.id,
@@ -444,20 +328,75 @@ impl CompletionService {
             request.request.stream,
             request.request.service_tier,
         );
-        Ok((lease, metrics))
+
+        Ok(Generation {
+            bounded,
+            generation_identity,
+            lease,
+            serving_state: self.serving_state.clone(),
+            runtime: self.runtime.clone(),
+            metrics,
+            fallbacks,
+        })
+    }
+
+    /// Runs a buffered generation on its own task, so settlement completes even
+    /// when the caller stops waiting.
+    async fn run(&self, generation: Generation) -> Result<CompletionResult, GatewayError> {
+        // The task reads a dropped sender as cancellation. The sender lives as
+        // long as this future, so a caller that stops waiting cancels the work.
+        let (_waiting, cancellation) = oneshot::channel();
+
+        self.tasks
+            .spawn(generation.complete(cancellation, self.tasks.subscribe()))
+            .await
+            .map_err(|_| GatewayError::FinalizationUnavailable)?
+    }
+
+    /// Opens a streaming generation and returns once the runtime has accepted it
+    /// or the attempt has been settled as a failure.
+    async fn stream(&self, generation: Generation) -> Result<StreamingCompletion, GatewayError> {
+        let (events, receiver) = mpsc::channel(STREAM_CHANNEL_CAPACITY);
+        let (started, startup) = oneshot::channel();
+
+        self.tasks
+            .spawn(generation.stream(started, events, self.tasks.subscribe()));
+
+        startup
+            .await
+            .map_err(|_| GatewayError::FinalizationUnavailable)??;
+
+        Ok(StreamingCompletion { receiver })
+    }
+
+    #[cfg(test)]
+    async fn complete_bounded(
+        &self,
+        bounded: BoundedRequest,
+    ) -> Result<CompletionResult, GatewayError> {
+        let generation = self.admit(bounded, Vec::new()).await?;
+        self.run(generation).await
+    }
+
+    #[cfg(test)]
+    async fn stream_bounded(
+        &self,
+        bounded: BoundedRequest,
+    ) -> Result<StreamingCompletion, GatewayError> {
+        let generation = self.admit(bounded, Vec::new()).await?;
+        self.stream(generation).await
     }
 }
 
-fn generation_identity(bounded: &BoundedRequest) -> Result<GenerationIdentity, GatewayError> {
-    GenerationIdentity::new(
-        None,
-        bounded.qualified.identity.organization_id,
-        bounded.qualified.identity.workspace_id,
-        bounded.qualified.identity.api_key_id,
-        bounded.qualified.request.model.clone(),
-        bounded.qualified.served_release_digest.clone(),
-    )
-    .map_err(|_| GatewayError::ServingStateUnavailable)
+fn route_prompt(request: &InferenceRequest) -> RoutePrompt<'_> {
+    if let Some(decision) = &request.decision {
+        return RoutePrompt::DecisionState(&decision.state);
+    }
+
+    match request.encoded_input_ids.as_deref() {
+        Some(ids) => RoutePrompt::TokenIds(ids),
+        None => RoutePrompt::ChatMessages(&request.messages),
+    }
 }
 
 pub enum CompletionResponse {
@@ -494,484 +433,451 @@ impl CompletionResult {
     }
 }
 
-struct GenerationTask {
+/// An admitted generation. It holds the admission lease, so it must end in
+/// exactly one settlement, whichever way it ends.
+struct Generation {
     bounded: BoundedRequest,
     generation_identity: GenerationIdentity,
-    lease: crate::AdmissionLease,
+    lease: AdmissionLease,
     serving_state: Arc<dyn ServingState>,
     runtime: Arc<dyn ModelRuntime>,
     metrics: AdmittedGenerationMetrics,
-    route: Option<DeploymentRoute>,
+    fallbacks: Vec<RoutedDeployment>,
 }
 
-impl GenerationTask {
-    async fn run(
-        self,
-        mut cancellation: oneshot::Receiver<()>,
-        mut shutdown: watch::Receiver<bool>,
-    ) -> Result<CompletionResult, GatewayError> {
-        let GenerationTask {
-            bounded,
-            generation_identity,
-            lease,
-            serving_state,
-            runtime,
-            metrics,
-            route,
-        } = self;
-        let crate::QualifiedRequest {
+impl Generation {
+    fn start(self, streamed: bool) -> (RuntimeCall, GenerationSettlement) {
+        let QualifiedRequest {
             metadata,
-            identity: authenticated_identity,
-            mut deployment,
+            identity,
+            deployment,
             request,
             effective_output_tokens,
             pricing,
             ..
-        } = bounded.qualified;
-        let generation_id = metadata.generation_id;
-        let organization_id = authenticated_identity.organization_id;
-        let service_tier = request.service_tier;
-        let received_at = metadata.received_at;
-        let started_at = cmp::max(Utc::now(), received_at);
+        } = self.bounded.qualified;
+        let started_at = cmp::max(Utc::now(), metadata.received_at);
+
+        let call = RuntimeCall {
+            runtime: self.runtime,
+            generation_id: metadata.generation_id,
+            request,
+            effective_output_tokens,
+            deadline: self.lease.request_deadline(),
+            deployment,
+            fallbacks: self.fallbacks,
+        };
+
         let settlement = GenerationSettlement {
-            serving_state: serving_state.clone(),
-            generation_id,
-            organization_id,
-            generation_identity,
+            serving_state: self.serving_state,
+            generation_id: metadata.generation_id,
+            organization_id: identity.organization_id,
+            generation_identity: self.generation_identity,
             pricing,
-            service_tier,
-            received_at,
+            service_tier: call.request.service_tier,
+            received_at: metadata.received_at,
             started_at,
-            streamed: false,
-            metrics,
+            streamed,
+            metrics: self.metrics,
         };
 
-        let mut route = route;
-        let mut retry_used = false;
-        let (usage, terminal, response) = loop {
-            let attempt_started = std::time::Instant::now();
-            let attempt = if retry_used { 2 } else { 1 };
-            let attempt_deployment = deployment.clone();
-            let runtime_call = runtime.complete(
-                &attempt_deployment,
-                request.clone(),
-                effective_output_tokens,
-                lease.request_deadline(),
-            );
-            tokio::pin!(runtime_call);
-
-            let result = tokio::select! {
-                result = &mut runtime_call => Some(result),
-                _ = &mut cancellation => None,
-                _ = force_shutdown_requested(&mut shutdown) => {
-                    break (
-                        NormalizedUsage::zero(),
-                        GenerationEnd::Cancelled(CancellationOwner::Server),
-                        None,
-                    );
-                },
-            };
-            let Some(result) = result else {
-                break (
-                    NormalizedUsage::zero(),
-                    GenerationEnd::Cancelled(CancellationOwner::Client),
-                    None,
-                );
-            };
-            match result {
-                Ok(completion) => {
-                    let usage = completion.usage();
-                    break (
-                        usage,
-                        GenerationEnd::Succeeded(completion.finish_reason().to_owned()),
-                        Some(completion.into_response()),
-                    );
-                }
-                Err(failure)
-                    if !retry_used
-                        && failure.usage() == NormalizedUsage::zero()
-                        && retryable(failure.kind()) =>
-                {
-                    retry_used = true;
-                    if let Some(next) = reserve_retry(&mut route, failure.kind()).await {
-                        failure.log_attempt(
-                            generation_id,
-                            &request.model,
-                            deployment.id,
-                            attempt,
-                            attempt_started.elapsed().as_millis() as u64,
-                            true,
-                        );
-                        deployment = next;
-                        continue;
-                    }
-                    failure.log_attempt(
-                        generation_id,
-                        &request.model,
-                        deployment.id,
-                        attempt,
-                        attempt_started.elapsed().as_millis() as u64,
-                        false,
-                    );
-                    break (
-                        failure.usage(),
-                        GenerationEnd::from_runtime_failure(failure.kind()),
-                        None,
-                    );
-                }
-                Err(failure) => {
-                    failure.log_attempt(
-                        generation_id,
-                        &request.model,
-                        deployment.id,
-                        attempt,
-                        attempt_started.elapsed().as_millis() as u64,
-                        false,
-                    );
-                    break (
-                        failure.usage(),
-                        GenerationEnd::from_runtime_failure(failure.kind()),
-                        None,
-                    );
-                }
-            }
-        };
-        let usable_output_delivered = response.is_some();
-        let terminal = settlement
-            .settle(None, usage, usable_output_delivered, terminal)
-            .await?;
-        match (response, terminal.public_error()) {
-            (Some(response), None) => Ok(CompletionResult { response }),
-            (_, Some(error)) => Err(error),
-            _ => Err(GatewayError::RuntimeUnavailable),
-        }
+        (call, settlement)
     }
-}
 
-struct StreamingGenerationTask {
-    bounded: BoundedRequest,
-    generation_identity: GenerationIdentity,
-    lease: crate::AdmissionLease,
-    serving_state: Arc<dyn ServingState>,
-    runtime: Arc<dyn ModelRuntime>,
-    metrics: AdmittedGenerationMetrics,
-    route: Option<DeploymentRoute>,
-}
+    async fn complete(
+        self,
+        mut cancellation: oneshot::Receiver<()>,
+        mut shutdown: watch::Receiver<bool>,
+    ) -> Result<CompletionResult, GatewayError> {
+        let (mut call, settlement) = self.start(false);
 
-impl StreamingGenerationTask {
-    async fn run(
+        let (usage, end, response) = tokio::select! {
+            result = call.complete() => match result {
+                Ok(completion) => (
+                    completion.usage(),
+                    GenerationEnd::Succeeded(completion.finish_reason().to_owned()),
+                    Some(completion.into_response()),
+                ),
+                Err(failure) => (
+                    failure.usage(),
+                    GenerationEnd::from_runtime_failure(failure.kind()),
+                    None,
+                ),
+            },
+            _ = &mut cancellation => (
+                NormalizedUsage::zero(),
+                GenerationEnd::Cancelled(CancellationOwner::Client),
+                None,
+            ),
+            _ = force_shutdown_requested(&mut shutdown) => (
+                NormalizedUsage::zero(),
+                GenerationEnd::Cancelled(CancellationOwner::Server),
+                None,
+            ),
+        };
+
+        let end = settlement
+            .settle(None, usage, response.is_some(), end)
+            .await?;
+
+        if let Some(error) = end.public_error() {
+            return Err(error);
+        }
+
+        response
+            .map(|response| CompletionResult { response })
+            .ok_or(GatewayError::RuntimeUnavailable)
+    }
+
+    async fn stream(
         self,
         started: oneshot::Sender<Result<(), GatewayError>>,
         events: mpsc::Sender<StreamItem>,
         mut shutdown: watch::Receiver<bool>,
     ) {
-        let StreamingGenerationTask {
-            bounded,
-            generation_identity,
-            lease,
-            serving_state,
-            runtime,
-            metrics,
-            route,
-        } = self;
-        let crate::QualifiedRequest {
-            metadata,
-            identity,
-            mut deployment,
-            request,
-            effective_output_tokens,
-            pricing,
-            ..
-        } = bounded.qualified;
-        let generation_id = metadata.generation_id;
-        let received_at = metadata.received_at;
-        let service_tier = request.service_tier;
-        let started_at = cmp::max(Utc::now(), received_at);
-        let settlement = GenerationSettlement {
-            serving_state: serving_state.clone(),
-            generation_id,
-            organization_id: identity.organization_id,
-            generation_identity,
-            pricing,
-            service_tier,
-            received_at,
-            started_at,
-            streamed: true,
-            metrics,
+        let (mut call, settlement) = self.start(true);
+
+        let opened = tokio::select! {
+            result = call.stream() => Some(result),
+            _ = force_shutdown_requested(&mut shutdown) => None,
         };
-        let mut route = route;
-        let mut retry_used = false;
-        let mut runtime_stream = loop {
-            let attempt_started = std::time::Instant::now();
-            let attempt = if retry_used { 2 } else { 1 };
-            let attempt_deployment = deployment.clone();
-            let stream_call = runtime.stream(
-                &attempt_deployment,
-                request.clone(),
-                effective_output_tokens,
-                lease.request_deadline(),
-            );
-            tokio::pin!(stream_call);
-            let result = tokio::select! {
-                result = &mut stream_call => Some(result),
-                _ = force_shutdown_requested(&mut shutdown) => None,
-            };
-            let Some(result) = result else {
-                let result = settlement
-                    .settle(
-                        None,
-                        NormalizedUsage::zero(),
-                        false,
-                        GenerationEnd::Cancelled(CancellationOwner::Server),
-                    )
+
+        let mut runtime_stream = match opened {
+            Some(Ok(runtime_stream)) => runtime_stream,
+            Some(Err(failure)) => {
+                let end = GenerationEnd::from_runtime_failure(failure.kind());
+                let error = settlement
+                    .settle(None, failure.usage(), false, end)
                     .await
-                    .map(|_| GatewayError::RuntimeUnavailable)
-                    .unwrap_or_else(|error| error);
-                let _ = started.send(Err(result));
+                    .map_or_else(|error| error, |_| failure.gateway_error());
+                let _ = started.send(Err(error));
                 return;
-            };
-            match result {
-                Ok(runtime_stream) => break runtime_stream,
-                Err(failure)
-                    if !retry_used
-                        && failure.usage() == NormalizedUsage::zero()
-                        && retryable(failure.kind()) =>
-                {
-                    retry_used = true;
-                    if let Some(next) = reserve_retry(&mut route, failure.kind()).await {
-                        failure.log_attempt(
-                            generation_id,
-                            &request.model,
-                            deployment.id,
-                            attempt,
-                            attempt_started.elapsed().as_millis() as u64,
-                            true,
-                        );
-                        deployment = next;
-                        continue;
-                    }
-                    failure.log_attempt(
-                        generation_id,
-                        &request.model,
-                        deployment.id,
-                        attempt,
-                        attempt_started.elapsed().as_millis() as u64,
-                        false,
-                    );
-                    let public_error = failure.gateway_error();
-                    let result = settlement
-                        .settle(
-                            None,
-                            failure.usage(),
-                            false,
-                            GenerationEnd::from_runtime_failure(failure.kind()),
-                        )
-                        .await
-                        .map(|_| public_error);
-                    let _ = started.send(Err(result.unwrap_or_else(|error| error)));
-                    return;
-                }
-                Err(failure) => {
-                    failure.log_attempt(
-                        generation_id,
-                        &request.model,
-                        deployment.id,
-                        attempt,
-                        attempt_started.elapsed().as_millis() as u64,
-                        false,
-                    );
-                    let public_error = failure.gateway_error();
-                    let result = settlement
-                        .settle(
-                            None,
-                            failure.usage(),
-                            false,
-                            GenerationEnd::from_runtime_failure(failure.kind()),
-                        )
-                        .await
-                        .map(|_| public_error);
-                    let _ = started.send(Err(result.unwrap_or_else(|error| error)));
-                    return;
-                }
+            }
+            None => {
+                let end = GenerationEnd::Cancelled(CancellationOwner::Server);
+                let error = settlement
+                    .settle(None, NormalizedUsage::zero(), false, end)
+                    .await
+                    .map_or_else(|error| error, |_| GatewayError::RuntimeUnavailable);
+                let _ = started.send(Err(error));
+                return;
             }
         };
 
         if started.send(Ok(())).is_err() {
+            let end = GenerationEnd::Cancelled(CancellationOwner::Client);
             let _ = settlement
-                .settle(
-                    None,
-                    NormalizedUsage::zero(),
-                    false,
-                    GenerationEnd::Cancelled(CancellationOwner::Client),
-                )
+                .settle(None, NormalizedUsage::zero(), false, end)
                 .await;
             return;
         }
 
-        let mut latest_usage = NormalizedUsage::zero();
-        let mut finish_reason = None;
-        let mut terminal_usage_seen = false;
-        let mut usable_output_delivered = false;
-        let mut first_token_at = None;
-        let deadline = tokio::time::sleep_until(tokio::time::Instant::from_std(
-            std::time::Instant::now()
-                + lease
-                    .request_deadline()
-                    .signed_duration_since(Utc::now())
-                    .to_std()
-                    .unwrap_or_default(),
-        ));
+        let deadline = tokio::time::sleep_until(tokio_instant(call.deadline));
         tokio::pin!(deadline);
+        let mut progress = StreamProgress::new();
 
-        let mut terminal_reason = "client_disconnect";
-        let mut stream_failure = None;
-        let terminal = loop {
-            tokio::select! {
-                _ = events.closed() => {
-                    break GenerationEnd::Cancelled(CancellationOwner::Client);
+        let stop = loop {
+            let event = tokio::select! {
+                _ = events.closed() => break StreamStop::ClientGone,
+                _ = &mut deadline => break StreamStop::Deadline,
+                _ = force_shutdown_requested(&mut shutdown) => break StreamStop::Shutdown,
+                event = runtime_stream.next_event() => event,
+            };
+
+            let chunk = match event {
+                Ok(Some(RuntimeStreamEvent::Chunk(chunk))) => chunk,
+                Ok(Some(RuntimeStreamEvent::Done)) => break progress.finish(),
+                Ok(None) => break StreamStop::Incomplete,
+                Err(failure) => {
+                    progress.observe_failure(&failure);
+                    break StreamStop::RuntimeFailed(failure);
                 }
-                _ = &mut deadline => {
-                    terminal_reason = "deadline";
-                    break GenerationEnd::Cancelled(CancellationOwner::Server);
-                }
-                _ = force_shutdown_requested(&mut shutdown) => {
-                    terminal_reason = "shutdown";
-                    break GenerationEnd::Cancelled(CancellationOwner::Server);
-                }
-                event = runtime_stream.next_event() => {
-                    match event {
-                        Ok(Some(RuntimeStreamEvent::Chunk(chunk))) => {
-                            if let Some(usage) = chunk.usage() {
-                                if !usage_is_monotonic(latest_usage, usage) {
-                                    terminal_reason = "invalid_usage";
-                                    break GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
-                                }
-                                latest_usage = usage;
-                            }
-                            if let Some(reason) = chunk.finish_reason() {
-                                finish_reason = Some(reason.to_owned());
-                            }
-                            terminal_usage_seen |= chunk.is_terminal_usage();
-                            let usable_output = chunk.has_usable_output();
-                            let item = StreamItem::Chunk(chunk.into_response());
-                            let delivery = tokio::select! {
-                                result = events.send(item) => result
-                                    .map_err(|_| CancellationOwner::Client),
-                                _ = &mut deadline => { terminal_reason = "deadline"; Err(CancellationOwner::Server) },
-                                _ = force_shutdown_requested(&mut shutdown) => {
-                                    terminal_reason = "shutdown";
-                                    Err(CancellationOwner::Server)
-                                },
-                            };
-                            if let Err(owner) = delivery {
-                                break GenerationEnd::Cancelled(owner);
-                            }
-                            if usable_output {
-                                usable_output_delivered = true;
-                                first_token_at.get_or_insert_with(Utc::now);
-                            }
-                        }
-                        Ok(Some(RuntimeStreamEvent::Done))
-                            if terminal_usage_seen && finish_reason.is_some() =>
-                        {
-                            break GenerationEnd::Succeeded(
-                                finish_reason.expect("checked finish reason"),
-                            );
-                        }
-                        Ok(Some(RuntimeStreamEvent::Done) | None) => {
-                            terminal_reason = "incomplete_stream";
-                            break GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
-                        }
-                        Err(failure) => {
-                            let failure_usage = failure.usage();
-                            if failure_usage != NormalizedUsage::zero()
-                                && usage_is_monotonic(latest_usage, failure_usage)
-                            {
-                                latest_usage = failure_usage;
-                            }
-                            terminal_reason = "runtime_failure";
-                            let kind = failure.kind();
-                            stream_failure = Some(failure);
-                            break GenerationEnd::from_runtime_failure(kind);
-                        }
-                    }
-                }
+            };
+
+            if let Err(stop) = progress.observe(&chunk) {
+                break stop;
             }
+
+            let usable_output = chunk.has_usable_output();
+            let delivery = tokio::select! {
+                result = events.send(StreamItem::Chunk(chunk.into_response())) => {
+                    result.map_err(|_| StreamStop::ClientGone)
+                }
+                _ = &mut deadline => Err(StreamStop::Deadline),
+                _ = force_shutdown_requested(&mut shutdown) => Err(StreamStop::Shutdown),
+            };
+            if let Err(stop) = delivery {
+                break stop;
+            }
+
+            progress.delivered(usable_output);
         };
-        if !matches!(
-            terminal,
-            GenerationEnd::Succeeded(_) | GenerationEnd::Cancelled(CancellationOwner::Client)
-        ) {
-            crate::diagnostics::limited_warn!(%generation_id, model_id = %request.model, deployment_id = %deployment.id,
-                phase = "stream", reason = terminal_reason,
-                failure_kind = ?stream_failure.as_ref().map(RuntimeFailure::kind),
-                transport = stream_failure.as_ref().and_then(RuntimeFailure::transport_code),
-                usable_output_delivered,
-                elapsed_ms = (Utc::now() - started_at).num_milliseconds().max(0),
+
+        if stop.is_abnormal() {
+            let failure = stop.failure();
+            crate::diagnostics::limited_warn!(generation_id = %call.generation_id,
+                model_id = %call.request.model, deployment_id = %call.deployment.id,
+                phase = "stream", reason = stop.reason(),
+                failure_kind = ?failure.map(RuntimeFailure::kind),
+                transport = failure.and_then(RuntimeFailure::transport_code),
+                usable_output_delivered = progress.usable_output_delivered,
+                elapsed_ms = (Utc::now() - settlement.started_at).num_milliseconds().max(0),
                 "generation stream terminated abnormally");
         }
         drop(runtime_stream);
 
-        let client_cancelled = matches!(
-            terminal,
-            GenerationEnd::Cancelled(CancellationOwner::Client)
-        );
-        let settlement = settlement
+        let end = stop.into_end();
+        let client_gone = matches!(end, GenerationEnd::Cancelled(CancellationOwner::Client));
+        let settled = settlement
             .settle(
-                first_token_at,
-                latest_usage,
-                usable_output_delivered,
-                terminal,
+                progress.first_token_at,
+                progress.usage,
+                progress.usable_output_delivered,
+                end,
             )
             .await;
-        if client_cancelled {
+
+        if client_gone {
             return;
         }
-        match settlement {
-            Ok(GenerationEnd::Succeeded(_)) => {
-                let _ = events.send(StreamItem::Done).await;
+
+        let last = match settled {
+            Ok(end) => end
+                .public_error()
+                .map_or(StreamItem::Done, StreamItem::Error),
+            Err(error) => StreamItem::Error(error),
+        };
+        let _ = events.send(last).await;
+    }
+}
+
+fn tokio_instant(deadline: DateTime<Utc>) -> tokio::time::Instant {
+    let remaining = deadline
+        .signed_duration_since(Utc::now())
+        .to_std()
+        .unwrap_or_default();
+
+    tokio::time::Instant::now() + remaining
+}
+
+/// One dispatch to the runtime, with at most one retry on another candidate.
+struct RuntimeCall {
+    runtime: Arc<dyn ModelRuntime>,
+    generation_id: Uuid,
+    request: InferenceRequest,
+    effective_output_tokens: u64,
+    deadline: DateTime<Utc>,
+    deployment: GatewayModelDeployment,
+    fallbacks: Vec<RoutedDeployment>,
+}
+
+impl RuntimeCall {
+    async fn complete(&mut self) -> Result<RuntimeCompletion, RuntimeFailure> {
+        let mut attempt = 1;
+        loop {
+            let started = Instant::now();
+            let result = self
+                .runtime
+                .complete(
+                    &self.deployment,
+                    self.request.clone(),
+                    self.effective_output_tokens,
+                    self.deadline,
+                )
+                .await;
+
+            match result {
+                Ok(completion) => return Ok(completion),
+                Err(failure) if self.retry(&failure, attempt, started) => attempt += 1,
+                Err(failure) => return Err(failure),
             }
-            Ok(terminal) => {
-                if let Some(error) = terminal.public_error() {
-                    let _ = events.send(StreamItem::Error(error)).await;
-                }
+        }
+    }
+
+    async fn stream(&mut self) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
+        let mut attempt = 1;
+        loop {
+            let started = Instant::now();
+            let result = self
+                .runtime
+                .stream(
+                    &self.deployment,
+                    self.request.clone(),
+                    self.effective_output_tokens,
+                    self.deadline,
+                )
+                .await;
+
+            match result {
+                Ok(runtime_stream) => return Ok(runtime_stream),
+                Err(failure) if self.retry(&failure, attempt, started) => attempt += 1,
+                Err(failure) => return Err(failure),
             }
-            Err(error) => {
-                let _ = events.send(StreamItem::Error(error)).await;
+        }
+    }
+
+    /// Logs the failed attempt and, when a retry is allowed, moves to the next
+    /// candidate. Only a first attempt that the runtime rejected before doing any
+    /// work may retry, so no generation is ever run twice.
+    fn retry(&mut self, failure: &RuntimeFailure, attempt: u8, started: Instant) -> bool {
+        let retryable = attempt == 1
+            && failure.usage() == NormalizedUsage::zero()
+            && matches!(
+                failure.kind(),
+                RuntimeFailureKind::Unavailable | RuntimeFailureKind::CapacityExceeded
+            );
+        let next = retryable
+            .then(|| self.take_fallback(failure.kind()))
+            .flatten();
+
+        failure.log_attempt(
+            self.generation_id,
+            &self.request.model,
+            self.deployment.id,
+            attempt,
+            started.elapsed().as_millis() as u64,
+            next.is_some(),
+        );
+
+        match next {
+            Some(next) => {
+                self.deployment = next;
+                true
             }
+            None => false,
+        }
+    }
+
+    /// Prefers a candidate in another fault domain and, when the runtime was
+    /// unavailable rather than full, one from another provider.
+    fn take_fallback(&mut self, failure: RuntimeFailureKind) -> Option<GatewayModelDeployment> {
+        let prior = &self.deployment;
+        let (index, _) = self
+            .fallbacks
+            .iter()
+            .enumerate()
+            .min_by_key(|(_, candidate)| {
+                let same_fault_domain = candidate.deployment.fault_domain == prior.fault_domain;
+                let same_provider = candidate.deployment.provider == prior.provider;
+                (
+                    same_fault_domain,
+                    failure == RuntimeFailureKind::Unavailable && same_provider,
+                )
+            })?;
+
+        Some(self.fallbacks.remove(index).deployment)
+    }
+}
+
+/// What a stream has delivered so far, and therefore what settlement records.
+struct StreamProgress {
+    usage: NormalizedUsage,
+    finish_reason: Option<String>,
+    terminal_usage_seen: bool,
+    usable_output_delivered: bool,
+    first_token_at: Option<DateTime<Utc>>,
+}
+
+impl StreamProgress {
+    fn new() -> Self {
+        Self {
+            usage: NormalizedUsage::zero(),
+            finish_reason: None,
+            terminal_usage_seen: false,
+            usable_output_delivered: false,
+            first_token_at: None,
+        }
+    }
+
+    /// Records a chunk's counters. Usage that moves backwards is a runtime fault,
+    /// because billing takes the last value the runtime reported.
+    fn observe(&mut self, chunk: &RuntimeStreamChunk) -> Result<(), StreamStop> {
+        if let Some(usage) = chunk.usage() {
+            if !usage_is_monotonic(self.usage, usage) {
+                return Err(StreamStop::InvalidUsage);
+            }
+
+            self.usage = usage;
+        }
+
+        if let Some(reason) = chunk.finish_reason() {
+            self.finish_reason = Some(reason.to_owned());
+        }
+        self.terminal_usage_seen |= chunk.is_terminal_usage();
+
+        Ok(())
+    }
+
+    /// A failure can still report usage the runtime consumed before it failed.
+    fn observe_failure(&mut self, failure: &RuntimeFailure) {
+        let usage = failure.usage();
+        if usage != NormalizedUsage::zero() && usage_is_monotonic(self.usage, usage) {
+            self.usage = usage;
+        }
+    }
+
+    fn delivered(&mut self, usable_output: bool) {
+        if usable_output {
+            self.usable_output_delivered = true;
+            self.first_token_at.get_or_insert_with(Utc::now);
+        }
+    }
+
+    /// A stream succeeds only if the runtime reported a finish reason and
+    /// terminal usage before it signalled the end.
+    fn finish(&mut self) -> StreamStop {
+        match self.finish_reason.take() {
+            Some(reason) if self.terminal_usage_seen => StreamStop::Finished(reason),
+            _ => StreamStop::Incomplete,
         }
     }
 }
 
-fn retryable(kind: RuntimeFailureKind) -> bool {
-    matches!(
-        kind,
-        RuntimeFailureKind::Unavailable | RuntimeFailureKind::CapacityExceeded
-    )
+enum StreamStop {
+    Finished(String),
+    ClientGone,
+    Deadline,
+    Shutdown,
+    InvalidUsage,
+    Incomplete,
+    RuntimeFailed(RuntimeFailure),
 }
 
-async fn reserve_retry(
-    route: &mut Option<DeploymentRoute>,
-    failure: RuntimeFailureKind,
-) -> Option<crate::GatewayModelDeployment> {
-    let route = route.as_mut()?;
-    let prior = route.active.as_ref()?.deployment.clone();
-    route.active.take()?;
+impl StreamStop {
+    fn is_abnormal(&self) -> bool {
+        !matches!(self, Self::Finished(_) | Self::ClientGone)
+    }
 
-    route.remaining.sort_by_key(|candidate| {
-        let same_fault_domain = candidate.deployment.fault_domain == prior.fault_domain;
-        let same_provider = candidate.deployment.provider == prior.provider;
-        (
-            same_fault_domain,
-            failure == RuntimeFailureKind::Unavailable && same_provider,
-        )
-    });
-    let selected = route.remaining.first()?.clone();
-    route
-        .remaining
-        .retain(|candidate| candidate.deployment.id != selected.deployment.id);
-    route.active = Some(selected.clone());
-    Some(selected.deployment)
+    fn reason(&self) -> &'static str {
+        match self {
+            Self::Finished(_) => "finished",
+            Self::ClientGone => "client_disconnect",
+            Self::Deadline => "deadline",
+            Self::Shutdown => "shutdown",
+            Self::InvalidUsage => "invalid_usage",
+            Self::Incomplete => "incomplete_stream",
+            Self::RuntimeFailed(_) => "runtime_failure",
+        }
+    }
+
+    fn failure(&self) -> Option<&RuntimeFailure> {
+        match self {
+            Self::RuntimeFailed(failure) => Some(failure),
+            _ => None,
+        }
+    }
+
+    fn into_end(self) -> GenerationEnd {
+        match self {
+            Self::Finished(reason) => GenerationEnd::Succeeded(reason),
+            Self::ClientGone => GenerationEnd::Cancelled(CancellationOwner::Client),
+            Self::Deadline | Self::Shutdown => GenerationEnd::Cancelled(CancellationOwner::Server),
+            Self::InvalidUsage | Self::Incomplete => {
+                GenerationEnd::Failed(GatewayError::RuntimeUnavailable)
+            }
+            Self::RuntimeFailed(failure) => GenerationEnd::from_runtime_failure(failure.kind()),
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -997,6 +903,42 @@ impl GenerationEnd {
             Self::Cancelled(_) => Some(GatewayError::RuntimeUnavailable),
         }
     }
+
+    fn error_code(&self) -> Option<&'static str> {
+        match self {
+            Self::Succeeded(_) => None,
+            Self::Failed(error) => Some(error.code()),
+            Self::Cancelled(_) => Some(GatewayError::RuntimeUnavailable.code()),
+        }
+    }
+
+    fn outcome(&self, usable_output_delivered: bool) -> Result<TerminalOutcome, GatewayError> {
+        let (status, finish_reason, cancellation_owner) = match self {
+            Self::Succeeded(reason) => (GenerationStatus::Succeeded, Some(reason.clone()), None),
+            Self::Failed(_) => (GenerationStatus::Failed, None, None),
+            Self::Cancelled(owner) => (GenerationStatus::Cancelled, None, Some(*owner)),
+        };
+
+        TerminalOutcome::new(
+            status,
+            finish_reason,
+            self.error_code().map(str::to_owned),
+            usable_output_delivered,
+            cancellation_owner,
+        )
+        .map_err(|_| GatewayError::RuntimeUnavailable)
+    }
+
+    /// Status, error code and cancellation owner, as metric labels.
+    fn metric_labels(&self) -> (&'static str, &'static str, &'static str) {
+        let error_code = self.error_code().unwrap_or("none");
+
+        match self {
+            Self::Succeeded(_) => ("succeeded", error_code, "none"),
+            Self::Failed(_) => ("failed", error_code, "none"),
+            Self::Cancelled(owner) => ("cancelled", error_code, owner.as_str()),
+        }
+    }
 }
 
 struct GenerationSettlement {
@@ -1004,70 +946,34 @@ struct GenerationSettlement {
     generation_id: Uuid,
     organization_id: Uuid,
     generation_identity: GenerationIdentity,
-    pricing: crate::CapturedPricing,
+    pricing: CapturedPricing,
     service_tier: ServiceTier,
-    received_at: chrono::DateTime<Utc>,
-    started_at: chrono::DateTime<Utc>,
+    received_at: DateTime<Utc>,
+    started_at: DateTime<Utc>,
     streamed: bool,
     metrics: AdmittedGenerationMetrics,
 }
 
 impl GenerationSettlement {
+    /// Charges the usage, records the terminal event and releases the lease.
+    /// Returns the end that was recorded, which is a failure if the usage
+    /// could not be priced.
     async fn settle(
         self,
-        first_token_at: Option<chrono::DateTime<Utc>>,
+        first_token_at: Option<DateTime<Utc>>,
         usage: NormalizedUsage,
         usable_output_delivered: bool,
-        mut terminal: GenerationEnd,
+        mut end: GenerationEnd,
     ) -> Result<GenerationEnd, GatewayError> {
         let priced_usage = match PricedUsage::calculate(&self.pricing, usage) {
             Ok(priced_usage) => priced_usage,
             Err(_) => {
-                terminal = GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
+                end = GenerationEnd::Failed(GatewayError::RuntimeUnavailable);
                 PricedUsage::zero(&self.pricing)
             }
         };
-        let (metric_status, metric_error, metric_cancellation_owner) = match &terminal {
-            GenerationEnd::Succeeded(_) => ("succeeded", "none", "none"),
-            GenerationEnd::Failed(error) => ("failed", error.code(), "none"),
-            GenerationEnd::Cancelled(CancellationOwner::Client) => {
-                ("cancelled", "runtime_unavailable", "client")
-            }
-            GenerationEnd::Cancelled(CancellationOwner::Server) => {
-                ("cancelled", "runtime_unavailable", "server")
-            }
-            GenerationEnd::Cancelled(CancellationOwner::Runtime) => {
-                ("cancelled", "runtime_unavailable", "runtime")
-            }
-        };
-        let (status, finish_reason, error_code, cancellation_owner) = match &terminal {
-            GenerationEnd::Succeeded(reason) => (
-                GenerationStatus::Succeeded,
-                Some(reason.clone()),
-                None,
-                None,
-            ),
-            GenerationEnd::Failed(error) => (
-                GenerationStatus::Failed,
-                None,
-                Some(error.code().to_owned()),
-                None,
-            ),
-            GenerationEnd::Cancelled(owner) => (
-                GenerationStatus::Cancelled,
-                None,
-                Some(GatewayError::RuntimeUnavailable.code().to_owned()),
-                Some(*owner),
-            ),
-        };
-        let outcome = TerminalOutcome::new(
-            status,
-            finish_reason,
-            error_code,
-            usable_output_delivered,
-            cancellation_owner,
-        )
-        .map_err(|_| GatewayError::RuntimeUnavailable)?;
+
+        let outcome = end.outcome(usable_output_delivered)?;
         let completed_at = cmp::max(Utc::now(), self.started_at);
         let timing = GenerationTiming::new(
             self.received_at,
@@ -1076,18 +982,21 @@ impl GenerationSettlement {
             completed_at,
         )
         .map_err(|_| GatewayError::RuntimeUnavailable)?;
-        self.metrics.record_terminal(
-            self.generation_id,
-            metric_status,
-            metric_error,
-            metric_cancellation_owner,
+
+        let (status, error_code, cancellation_owner) = end.metric_labels();
+        self.metrics.record_terminal(&TerminalRecord {
+            generation_id: self.generation_id,
+            status,
+            error: error_code,
+            cancellation_owner,
             usage,
-            priced_usage.charge(),
-            self.received_at,
-            self.started_at,
+            charge_nano_usd: priced_usage.charge(),
+            received_at: self.received_at,
+            started_at: self.started_at,
             first_token_at,
             completed_at,
-        );
+        });
+
         let properties = GenerationProperties::new(
             self.generation_identity,
             self.service_tier,
@@ -1104,7 +1013,8 @@ impl GenerationSettlement {
             &self.metrics,
         )
         .await?;
-        Ok(terminal)
+
+        Ok(end)
     }
 }
 
@@ -1125,10 +1035,11 @@ async fn finalize_with_retry(
 ) -> Result<(), GatewayError> {
     let mut last_error = None;
     for attempt in 0..FINALIZATION_ATTEMPTS {
-        match serving_state
+        let result = serving_state
             .finalize(generation_id, organization_id, properties)
-            .await
-        {
+            .await;
+
+        match result {
             Ok(FinalizationOutcome::Settled) => {
                 metrics.record_finalization_attempt("settled");
                 return Ok(());
@@ -1159,956 +1070,25 @@ async fn finalize_with_retry(
                 last_error = Some(error);
             }
         }
+
         if attempt + 1 < FINALIZATION_ATTEMPTS {
             metrics.record_finalization_retry();
             tokio::time::sleep(FINALIZATION_RETRY_DELAY).await;
         }
     }
+
     metrics.record_finalization_failure();
     tracing::error!(%generation_id, %organization_id, phase = "finalization",
         attempts = FINALIZATION_ATTEMPTS,
         error_code = last_error.as_ref().map(|error| error.diagnostic_code()),
         "generation settlement retries exhausted");
+
     match last_error {
         Some(error) => Err(error.into()),
         None => Err(GatewayError::FinalizationUnavailable),
     }
 }
 
-async fn wait_for_generation(
-    task: GenerationTask,
-    tasks: &GenerationTasks,
-) -> Result<CompletionResult, GatewayError> {
-    let (cancel, cancellation) = oneshot::channel();
-    let generation = tasks.spawn(task.run(cancellation, tasks.subscribe()));
-    let mut cancellation = CancellationOnDrop(Some(cancel));
-    let result = generation
-        .await
-        .map_err(|_| GatewayError::FinalizationUnavailable)?;
-    cancellation.0 = None;
-    result
-}
-
-struct CancellationOnDrop(Option<oneshot::Sender<()>>);
-
-impl Drop for CancellationOnDrop {
-    fn drop(&mut self) {
-        if let Some(cancellation) = self.0.take() {
-            let _ = cancellation.send(());
-        }
-    }
-}
-
 #[cfg(test)]
-mod tests {
-    use std::{
-        collections::VecDeque,
-        sync::{
-            atomic::{AtomicBool, AtomicUsize, Ordering},
-            Mutex,
-        },
-    };
-
-    use async_trait::async_trait;
-    use chrono::{DateTime, TimeDelta, Utc};
-    use futures_util::StreamExt;
-    use serde_json::json;
-
-    use super::*;
-    use crate::{
-        auth::AuthenticatedIdentity,
-        domain::{GatewayAccount, GatewayCredential, GatewayWorkspace},
-        serving_state::ServingStateError,
-        AdmissionError, AdmissionLease, CapturedPricing, DeploymentStatus, FinalizationError,
-        GatewayModel, GatewayModelDeployment, InferenceRequest, InputTokenPrice,
-        ModelDeploymentRelease, OutputTokenPrice, QualifiedRequest, RuntimeCompletion,
-        RuntimeEventStream, RuntimeStreamChunk, TokenUnit,
-    };
-
-    /// Observes admission and settlement. It serves no projections, because these
-    /// tests build a qualified request directly. Projection fixtures live in
-    /// `test_support`.
-    struct SettlementServingState {
-        finalized: Mutex<Vec<Value>>,
-        admitted: Arc<AtomicBool>,
-        finalization_failures: AtomicUsize,
-        finalization_attempts: AtomicUsize,
-    }
-
-    impl SettlementServingState {
-        fn new(finalization_failures: usize) -> Self {
-            Self {
-                finalized: Mutex::new(Vec::new()),
-                admitted: Arc::new(AtomicBool::new(false)),
-                finalization_failures: AtomicUsize::new(finalization_failures),
-                finalization_attempts: AtomicUsize::new(0),
-            }
-        }
-    }
-
-    #[async_trait]
-    impl ServingState for SettlementServingState {
-        async fn credential(
-            &self,
-            _digest_hex: &str,
-        ) -> Result<Option<GatewayCredential>, ServingStateError> {
-            Ok(None)
-        }
-
-        async fn workspace(
-            &self,
-            _workspace_id: Uuid,
-        ) -> Result<Option<GatewayWorkspace>, ServingStateError> {
-            Ok(None)
-        }
-
-        async fn account(
-            &self,
-            _organization_id: Uuid,
-        ) -> Result<Option<GatewayAccount>, ServingStateError> {
-            Ok(None)
-        }
-
-        async fn model(&self, _model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
-            Ok(None)
-        }
-
-        async fn models(&self) -> Result<Vec<GatewayModel>, ServingStateError> {
-            Ok(Vec::new())
-        }
-
-        async fn admit(
-            &self,
-            generation_id: Uuid,
-            _organization_id: Uuid,
-            received_at: DateTime<Utc>,
-            admitted_at: DateTime<Utc>,
-            config: &GatewayConfig,
-        ) -> Result<AdmissionLease, AdmissionError> {
-            self.admitted.store(true, Ordering::SeqCst);
-            AdmissionLease::new(generation_id, received_at, admitted_at, config)
-        }
-
-        async fn finalize(
-            &self,
-            _generation_id: Uuid,
-            _organization_id: Uuid,
-            properties: &GenerationProperties,
-        ) -> Result<FinalizationOutcome, FinalizationError> {
-            self.finalization_attempts.fetch_add(1, Ordering::SeqCst);
-            if self
-                .finalization_failures
-                .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |remaining| {
-                    remaining.checked_sub(1)
-                })
-                .is_ok()
-            {
-                return Err(FinalizationError::UnknownScriptResult(99));
-            }
-            self.finalized
-                .lock()
-                .unwrap()
-                .push(serde_json::to_value(properties).unwrap());
-            Ok(FinalizationOutcome::Settled)
-        }
-    }
-
-    #[derive(Clone)]
-    struct FixedRuntime(Result<RuntimeCompletion, RuntimeFailure>);
-
-    struct SequencedRuntime {
-        results: Mutex<VecDeque<Result<RuntimeCompletion, RuntimeFailure>>>,
-        deployments: Mutex<Vec<Uuid>>,
-    }
-
-    #[async_trait]
-    impl ModelRuntime for FixedRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            self.0.clone()
-        }
-    }
-
-    #[async_trait]
-    impl ModelRuntime for SequencedRuntime {
-        async fn complete(
-            &self,
-            deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            self.deployments.lock().unwrap().push(deployment.id);
-            self.results.lock().unwrap().pop_front().unwrap()
-        }
-    }
-
-    struct PendingRuntime {
-        started: Mutex<Option<oneshot::Sender<()>>>,
-        dropped: Arc<AtomicBool>,
-    }
-
-    struct FixedEventStream {
-        events: VecDeque<Result<RuntimeStreamEvent, RuntimeFailure>>,
-    }
-
-    #[async_trait]
-    impl RuntimeEventStream for FixedEventStream {
-        async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
-            self.events.pop_front().transpose()
-        }
-    }
-
-    struct StreamingRuntime {
-        events: Mutex<Option<VecDeque<Result<RuntimeStreamEvent, RuntimeFailure>>>>,
-    }
-
-    struct PendingEventStream;
-
-    #[async_trait]
-    impl RuntimeEventStream for PendingEventStream {
-        async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
-            std::future::pending().await
-        }
-    }
-
-    struct PendingStreamingRuntime;
-
-    #[async_trait]
-    impl ModelRuntime for PendingStreamingRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            unreachable!("streaming tests do not call complete")
-        }
-
-        async fn stream(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-            Ok(Box::new(PendingEventStream))
-        }
-    }
-
-    #[async_trait]
-    impl ModelRuntime for StreamingRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            unreachable!("streaming tests do not call complete")
-        }
-
-        async fn stream(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-            assert!(request.stream);
-            Ok(Box::new(FixedEventStream {
-                events: self.events.lock().unwrap().take().unwrap(),
-            }))
-        }
-    }
-
-    struct AdmissionCheckingRuntime {
-        admitted: Arc<AtomicBool>,
-    }
-
-    #[async_trait]
-    impl ModelRuntime for AdmissionCheckingRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            if !self.admitted.load(Ordering::SeqCst) {
-                return Err(RuntimeFailure::new(RuntimeFailureKind::ProtocolViolation));
-            }
-            Ok(successful_completion())
-        }
-    }
-
-    #[async_trait]
-    impl ModelRuntime for PendingRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: DateTime<Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            struct DropNotice(Arc<AtomicBool>);
-
-            impl Drop for DropNotice {
-                fn drop(&mut self) {
-                    self.0.store(true, Ordering::SeqCst);
-                }
-            }
-
-            let _notice = DropNotice(self.dropped.clone());
-            if let Some(started) = self.started.lock().unwrap().take() {
-                let _ = started.send(());
-            }
-            std::future::pending().await
-        }
-    }
-
-    fn config() -> GatewayConfig {
-        GatewayConfig::for_tests()
-    }
-
-    fn bounded_request() -> BoundedRequest {
-        let generation_id = Uuid::now_v7();
-        let organization_id = Uuid::now_v7();
-        let request = InferenceRequest::parse(
-            br#"{"model":"model-a","messages":[{"role":"user","content":"hello"}]}"#,
-        )
-        .unwrap();
-        let qualified = QualifiedRequest {
-            metadata: crate::RequestMetadata {
-                generation_id,
-                received_at: Utc::now(),
-            },
-            identity: AuthenticatedIdentity {
-                api_key_id: Uuid::now_v7(),
-                organization_id,
-                workspace_id: Uuid::now_v7(),
-            },
-            deployment: GatewayModelDeployment {
-                id: Uuid::now_v7(),
-                status: DeploymentStatus::Available,
-                provider: "local".to_owned(),
-                region: "local".to_owned(),
-                fault_domain: "local:runtime-1".to_owned(),
-                service_url: "http://127.0.0.1:30000".to_owned(),
-                release: ModelDeploymentRelease {
-                    schema_version: 1,
-                    runtime_revision: "runtime".to_owned(),
-                    protocol: None,
-                    model_path: "model-a".to_owned(),
-                    model_revision: "model-revision".to_owned(),
-                    runtime_model_name: None,
-                    tokenizer_path: "model-a".to_owned(),
-                    tokenizer_revision: "tokenizer-revision".to_owned(),
-                    tokenizer_mode: None,
-                },
-            },
-            served_release_digest: format!("sha256:{}", "a".repeat(64)),
-            max_context_tokens: 8_192,
-            max_prompt_tokens: 7_168,
-            effective_output_tokens: 1_024,
-            pricing: CapturedPricing::new(
-                &[
-                    InputTokenPrice::Prompt {
-                        unit: TokenUnit::Token,
-                        cost: 2,
-                    },
-                    InputTokenPrice::CachedPrompt {
-                        unit: TokenUnit::Token,
-                        cost: 1,
-                    },
-                ],
-                &[OutputTokenPrice::Completion {
-                    unit: TokenUnit::Token,
-                    cost: 3,
-                }],
-            )
-            .unwrap(),
-            request,
-        };
-        BoundedRequest {
-            qualified,
-            input_tokens: Some(10),
-        }
-    }
-
-    fn task(state: Arc<SettlementServingState>, runtime: Arc<dyn ModelRuntime>) -> GenerationTask {
-        let bounded = bounded_request();
-        let generation_identity = GenerationIdentity::new(
-            None,
-            bounded.qualified.identity.organization_id,
-            bounded.qualified.identity.workspace_id,
-            bounded.qualified.identity.api_key_id,
-            bounded.qualified.request.model.clone(),
-            bounded.qualified.served_release_digest.clone(),
-        )
-        .unwrap();
-        let lease = AdmissionLease::new(
-            bounded.qualified.metadata.generation_id,
-            bounded.qualified.metadata.received_at,
-            bounded.qualified.metadata.received_at + TimeDelta::milliseconds(1),
-            &config(),
-        )
-        .unwrap();
-        let metrics = GatewayMetrics::new().generation_admitted(
-            &bounded.qualified.request.model,
-            bounded.qualified.deployment.id,
-            bounded.qualified.deployment.release.protocol_label(),
-            bounded.qualified.request.stream,
-            bounded.qualified.request.service_tier,
-        );
-        GenerationTask {
-            bounded,
-            generation_identity,
-            lease,
-            serving_state: state,
-            runtime,
-            metrics,
-            route: None,
-        }
-    }
-
-    fn successful_completion() -> RuntimeCompletion {
-        RuntimeCompletion::from_normalized_parts(
-            json!({"id": "chatcmpl-1"}),
-            "stop".to_owned(),
-            NormalizedUsage::new(10, 4, 0, 5, 0).unwrap(),
-        )
-    }
-
-    fn running_shutdown() -> watch::Receiver<bool> {
-        watch::channel(false).1
-    }
-
-    #[tokio::test]
-    async fn successful_generation_is_finalized_before_its_response_is_returned() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
-        let (_cancel, cancellation) = oneshot::channel();
-
-        let result = task(state.clone(), runtime)
-            .run(cancellation, running_shutdown())
-            .await
-            .unwrap();
-
-        assert_eq!(result.response["id"], "chatcmpl-1");
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized.len(), 1);
-        assert_eq!(finalized[0]["status"], "succeeded");
-        assert_eq!(finalized[0]["usage"]["charge"], 31);
-        assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
-    }
-
-    #[tokio::test]
-    async fn chat_dispatch_does_not_depend_on_local_template_or_context_estimates() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let service = CompletionService::new(
-            state,
-            Arc::new(FixedRuntime(Ok(successful_completion()))),
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-        let mut qualified = bounded_request().qualified;
-        // Invalid local artifact and absurd projected input bounds would have
-        // blocked dispatch before the chat deployment could validate the request.
-        qualified.deployment.release.tokenizer_path = "missing/local-artifact".to_owned();
-        qualified.max_prompt_tokens = 0;
-        qualified.max_context_tokens = 1;
-        qualified
-            .request
-            .parameters
-            .insert("reasoning_effort".to_owned(), json!("deployment-specific"));
-        let request = qualified.request.clone();
-        let prepared = service.prepare_request(qualified).await.unwrap();
-        assert_eq!(prepared.qualified.request, request);
-        assert_eq!(prepared.input_tokens, None);
-        assert_eq!(prepared.qualified.request.encoded_input_ids, None);
-    }
-
-    #[tokio::test]
-    async fn decision_settlement_bills_input_and_cached_input_without_output() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(FixedRuntime(Ok(RuntimeCompletion::from_normalized_parts(
-            json!({"model":"model-a","answers":{"q":{"type":"noul","noul":0.9}}}),
-            "stop".to_owned(),
-            NormalizedUsage::new(10, 4, 0, 0, 0).unwrap(),
-        ))));
-        let mut generation = task(state.clone(), runtime);
-        generation.bounded.qualified.request = InferenceRequest::parse_kind(
-            br#"{"model":"model-a","state":"x","questions":{"q":{"type":"noul","instructions":"yes?"}}}"#,
-            crate::RequestKind::SystemOne,
-        ).unwrap();
-        generation.bounded.qualified.effective_output_tokens = 0;
-        generation.bounded.qualified.deployment.release.protocol =
-            Some(crate::RuntimeProtocol::SystemOne);
-        let (_cancel, cancellation) = oneshot::channel();
-        generation
-            .run(cancellation, running_shutdown())
-            .await
-            .unwrap();
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized.len(), 1);
-        assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
-        assert_eq!(finalized[0]["usage"]["cached_input_tokens"], 4);
-        assert_eq!(finalized[0]["usage"]["output_tokens"], 0);
-        assert_eq!(finalized[0]["usage"]["charge"], 16);
-    }
-
-    #[tokio::test]
-    async fn runtime_usage_overrides_local_input_estimate_for_settlement() {
-        for estimated_input in [7, 13] {
-            let state = Arc::new(SettlementServingState::new(0));
-            let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
-            let mut generation = task(state.clone(), runtime);
-            generation.bounded.input_tokens = Some(estimated_input);
-            let (_cancel, cancellation) = oneshot::channel();
-            assert!(generation
-                .run(cancellation, running_shutdown())
-                .await
-                .is_ok());
-            let finalized = state.finalized.lock().unwrap();
-            assert_eq!(finalized.len(), 1);
-            assert_eq!(finalized[0]["status"], "succeeded");
-            assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
-            assert_eq!(finalized[0]["usage"]["charge"], 31);
-        }
-    }
-
-    #[tokio::test]
-    async fn streaming_uses_runtime_counts_but_rejects_inconsistent_counters() {
-        // Local admission counted 10. Both higher and lower engine counts are
-        // authoritative, but a changing prompt count or decreasing output is not.
-        for (first_input, last_input, last_output, status) in [
-            (7, 7, 2, "succeeded"),
-            (13, 13, 2, "succeeded"),
-            (7, 8, 2, "failed"),
-            (7, 7, 0, "failed"),
-        ] {
-            let state = Arc::new(SettlementServingState::new(0));
-            let runtime = Arc::new(StreamingRuntime {
-                events: Mutex::new(Some(VecDeque::from([
-                    Ok(RuntimeStreamEvent::Chunk(
-                        RuntimeStreamChunk::from_normalized_parts(
-                            json!({"choices":[{"delta":{"content":"hi"}}]}),
-                            Some(NormalizedUsage::new(first_input, 0, 0, 1, 0).unwrap()),
-                            None,
-                            true,
-                            false,
-                        ),
-                    )),
-                    Ok(RuntimeStreamEvent::Chunk(
-                        RuntimeStreamChunk::from_normalized_parts(
-                            json!({"choices":[], "usage":{"prompt_tokens":last_input,"completion_tokens":last_output,"total_tokens":last_input+last_output}}),
-                            Some(NormalizedUsage::new(last_input, 0, 0, last_output, 0).unwrap()),
-                            Some("stop".to_owned()),
-                            false,
-                            true,
-                        ),
-                    )),
-                    Ok(RuntimeStreamEvent::Done),
-                ]))),
-            });
-            let service = CompletionService::new(
-                state.clone(),
-                runtime,
-                ModelTokenizer::new().unwrap(),
-                Arc::new(config()),
-            );
-            let mut bounded = bounded_request();
-            bounded.qualified.request.stream = true;
-            let stream = service.stream_bounded(bounded).await.unwrap();
-            let _items = stream.into_stream().collect::<Vec<_>>().await;
-            let finalized = state.finalized.lock().unwrap();
-            assert_eq!(finalized.len(), 1);
-            assert_eq!(finalized[0]["status"], status);
-            assert_eq!(finalized[0]["usage"]["input_tokens"], first_input);
-            if status == "succeeded" {
-                assert_eq!(finalized[0]["usage"]["output_tokens"], last_output);
-                assert_eq!(
-                    finalized[0]["usage"]["charge"],
-                    first_input * 2 + last_output * 3
-                );
-            }
-        }
-    }
-
-    #[tokio::test]
-    async fn unavailable_runtime_retries_one_other_deployment_and_settles_once() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(SequencedRuntime {
-            results: Mutex::new(VecDeque::from([
-                Err(RuntimeFailure::new(RuntimeFailureKind::Unavailable)),
-                Ok(successful_completion()),
-            ])),
-            deployments: Mutex::new(Vec::new()),
-        });
-        let mut task = task(state.clone(), runtime.clone());
-        let first = task.bounded.qualified.deployment.clone();
-        let mut second = first.clone();
-        second.id = Uuid::now_v7();
-        second.service_url = "http://127.0.0.1:30001".to_owned();
-        second.fault_domain = "local:runtime-2".to_owned();
-        task.route = Some(DeploymentRoute {
-            active: Some(RoutedDeployment {
-                deployment: first.clone(),
-            }),
-            remaining: vec![RoutedDeployment {
-                deployment: second.clone(),
-            }],
-        });
-        let (_cancel, cancellation) = oneshot::channel();
-
-        let result = task.run(cancellation, running_shutdown()).await.unwrap();
-
-        assert_eq!(result.response["id"], "chatcmpl-1");
-        assert_eq!(
-            *runtime.deployments.lock().unwrap(),
-            vec![first.id, second.id]
-        );
-        assert_eq!(state.finalized.lock().unwrap().len(), 1);
-    }
-
-    #[tokio::test]
-    async fn completion_service_admits_before_dispatching_runtime_work() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(AdmissionCheckingRuntime {
-            admitted: state.admitted.clone(),
-        });
-        let service = CompletionService::new(
-            state.clone(),
-            runtime,
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-
-        let result = service.complete_bounded(bounded_request()).await.unwrap();
-
-        assert_eq!(result.response["id"], "chatcmpl-1");
-        assert!(state.admitted.load(Ordering::SeqCst));
-        assert_eq!(state.finalized.lock().unwrap().len(), 1);
-    }
-
-    #[tokio::test]
-    async fn overload_is_finalized_before_the_public_error_is_returned() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(FixedRuntime(Err(RuntimeFailure::new(
-            RuntimeFailureKind::CapacityExceeded,
-        ))));
-        let (_cancel, cancellation) = oneshot::channel();
-
-        let result = task(state.clone(), runtime)
-            .run(cancellation, running_shutdown())
-            .await;
-
-        assert_eq!(result, Err(GatewayError::CapacityExceeded));
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized[0]["status"], "failed");
-        assert_eq!(finalized[0]["usage"]["charge"], 0);
-        assert_eq!(finalized[0]["outcome"]["error_code"], "capacity_exceeded");
-    }
-
-    #[tokio::test]
-    async fn cancellation_drops_runtime_work_and_finalizes_as_client_owned() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let dropped = Arc::new(AtomicBool::new(false));
-        let (started_sender, started) = oneshot::channel();
-        let task = task(
-            state.clone(),
-            Arc::new(PendingRuntime {
-                started: Mutex::new(Some(started_sender)),
-                dropped: dropped.clone(),
-            }),
-        );
-        let (cancel, cancellation) = oneshot::channel();
-        let running = tokio::spawn(task.run(cancellation, running_shutdown()));
-        started.await.unwrap();
-        cancel.send(()).unwrap();
-
-        assert_eq!(
-            running.await.unwrap(),
-            Err(GatewayError::RuntimeUnavailable)
-        );
-        assert!(dropped.load(Ordering::SeqCst));
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized[0]["status"], "cancelled");
-        assert_eq!(finalized[0]["outcome"]["cancellation_owner"], "client");
-        assert_eq!(finalized[0]["outcome"]["usable_output_delivered"], false);
-    }
-
-    #[tokio::test]
-    async fn draining_preserves_generation_until_forced_shutdown() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let dropped = Arc::new(AtomicBool::new(false));
-        let (started_sender, started) = oneshot::channel();
-        let service = CompletionService::new(
-            state.clone(),
-            Arc::new(PendingRuntime {
-                started: Mutex::new(Some(started_sender)),
-                dropped: dropped.clone(),
-            }),
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-        let running_service = service.clone();
-        let mut running =
-            tokio::spawn(async move { running_service.complete_bounded(bounded_request()).await });
-        started.await.unwrap();
-
-        service.begin_draining();
-        assert!(
-            tokio::time::timeout(Duration::from_millis(25), &mut running)
-                .await
-                .is_err()
-        );
-        assert!(!dropped.load(Ordering::SeqCst));
-        assert!(state.finalized.lock().unwrap().is_empty());
-
-        service.force_shutdown();
-        assert_eq!(
-            running.await.unwrap(),
-            Err(GatewayError::RuntimeUnavailable)
-        );
-        tokio::time::timeout(Duration::from_secs(1), service.wait_for_drain())
-            .await
-            .unwrap();
-
-        assert!(dropped.load(Ordering::SeqCst));
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized[0]["status"], "cancelled");
-        assert_eq!(finalized[0]["outcome"]["cancellation_owner"], "server");
-    }
-
-    #[tokio::test]
-    async fn finalization_retries_before_returning_a_successful_response() {
-        let state = Arc::new(SettlementServingState::new(2));
-        let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
-        let (_cancel, cancellation) = oneshot::channel();
-
-        let result = task(state.clone(), runtime)
-            .run(cancellation, running_shutdown())
-            .await;
-
-        assert!(result.is_ok());
-        assert_eq!(state.finalization_attempts.load(Ordering::SeqCst), 3);
-        assert_eq!(state.finalized.lock().unwrap().len(), 1);
-    }
-
-    #[tokio::test]
-    async fn unconfirmed_finalization_withholds_the_successful_response() {
-        let logs = crate::diagnostics::capture::Logs::default();
-        let _guard = logs.start();
-        let state = Arc::new(SettlementServingState::new(FINALIZATION_ATTEMPTS));
-        let runtime = Arc::new(FixedRuntime(Ok(successful_completion())));
-        let (_cancel, cancellation) = oneshot::channel();
-
-        let result = task(state.clone(), runtime)
-            .run(cancellation, running_shutdown())
-            .await;
-
-        assert_eq!(result, Err(GatewayError::FinalizationUnavailable));
-        assert_eq!(
-            state.finalization_attempts.load(Ordering::SeqCst),
-            FINALIZATION_ATTEMPTS
-        );
-        assert!(state.finalized.lock().unwrap().is_empty());
-        let events = logs.events();
-        let failures = events
-            .iter()
-            .filter(|event| event["fields"]["phase"] == "finalization")
-            .collect::<Vec<_>>();
-        assert_eq!(failures.len(), 1);
-        assert_eq!(failures[0]["level"], "ERROR");
-        assert_eq!(failures[0]["fields"]["attempts"], FINALIZATION_ATTEMPTS);
-        assert!(failures[0]["fields"]["generation_id"].is_string());
-    }
-
-    #[tokio::test]
-    async fn streaming_finalizes_before_done_and_exposes_only_terminal_usage() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let usage = NormalizedUsage::new(10, 0, 0, 2, 0).unwrap();
-        let runtime = Arc::new(StreamingRuntime {
-            events: Mutex::new(Some(VecDeque::from([
-                Ok(RuntimeStreamEvent::Chunk(
-                    RuntimeStreamChunk::from_normalized_parts(
-                        json!({"id":"chunk-1","choices":[{"delta":{"content":"hi"}}]}),
-                        Some(NormalizedUsage::new(10, 0, 0, 1, 0).unwrap()),
-                        None,
-                        true,
-                        false,
-                    ),
-                )),
-                Ok(RuntimeStreamEvent::Chunk(
-                    RuntimeStreamChunk::from_normalized_parts(
-                        json!({"id":"chunk-1","choices":[{"delta":{},"finish_reason":"stop"}]}),
-                        None,
-                        Some("stop".to_owned()),
-                        false,
-                        false,
-                    ),
-                )),
-                Ok(RuntimeStreamEvent::Chunk(
-                    RuntimeStreamChunk::from_normalized_parts(
-                        json!({"id":"chunk-1","choices":[],"usage":{"total_tokens":12}}),
-                        Some(usage),
-                        None,
-                        false,
-                        true,
-                    ),
-                )),
-                Ok(RuntimeStreamEvent::Done),
-            ]))),
-        });
-        let service = CompletionService::new(
-            state.clone(),
-            runtime,
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-        let mut bounded = bounded_request();
-        bounded.qualified.request.stream = true;
-
-        let streaming = service.stream_bounded(bounded).await.unwrap();
-        let mut renderer = crate::protocol::Protocol::OpenAiChat.stream_renderer();
-        let frames = streaming
-            .into_stream()
-            .flat_map(move |item| futures_util::stream::iter(renderer.render(item)))
-            .collect::<Vec<_>>()
-            .await;
-
-        assert_eq!(
-            frames.last().map(|frame| frame.data.as_str()),
-            Some("[DONE]")
-        );
-        assert_eq!(
-            frames
-                .iter()
-                .filter(|frame| frame.data.contains("\"usage\""))
-                .count(),
-            1
-        );
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized.len(), 1);
-        assert_eq!(finalized[0]["status"], "succeeded");
-        assert_eq!(finalized[0]["streamed"], true);
-        assert_eq!(finalized[0]["usage"]["input_tokens"], 10);
-        assert_eq!(finalized[0]["usage"]["output_tokens"], 2);
-        assert_eq!(finalized[0]["outcome"]["usable_output_delivered"], true);
-        assert!(finalized[0]["timing"]["first_token_at"].is_string());
-    }
-
-    #[tokio::test]
-    async fn logs_incomplete_stream_after_response_start_without_payload() {
-        let logs = crate::diagnostics::capture::Logs::default();
-        let _guard = logs.start();
-        let state = Arc::new(SettlementServingState::new(0));
-        let runtime = Arc::new(StreamingRuntime {
-            events: Mutex::new(Some(VecDeque::from([
-                Ok(RuntimeStreamEvent::Chunk(
-                    RuntimeStreamChunk::from_normalized_parts(
-                        json!({"choices":[{"delta":{"content":"private-output-canary"}}]}),
-                        None,
-                        None,
-                        true,
-                        false,
-                    ),
-                )),
-                Ok(RuntimeStreamEvent::Done),
-            ]))),
-        });
-        let service = CompletionService::new(
-            state.clone(),
-            runtime,
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-        let mut bounded = bounded_request();
-        bounded.qualified.request.stream = true;
-        let generation_id = bounded.qualified.metadata.generation_id;
-        let streaming = service.stream_bounded(bounded).await.unwrap();
-        let _items = streaming.into_stream().collect::<Vec<_>>().await;
-        let events = logs.events();
-        let failure = events
-            .iter()
-            .find(|event| event["fields"]["phase"] == "stream")
-            .unwrap();
-        assert_eq!(
-            failure["fields"]["generation_id"],
-            generation_id.to_string()
-        );
-        assert_eq!(failure["fields"]["reason"], "incomplete_stream");
-        assert_eq!(failure["fields"]["usable_output_delivered"], true);
-        assert!(!serde_json::to_string(&events)
-            .unwrap()
-            .contains("private-output-canary"));
-        assert_eq!(state.finalized.lock().unwrap()[0]["status"], "failed");
-    }
-
-    #[tokio::test]
-    async fn a_dropped_streaming_body_finalizes_as_client_cancellation() {
-        let state = Arc::new(SettlementServingState::new(0));
-        let service = CompletionService::new(
-            state.clone(),
-            Arc::new(PendingStreamingRuntime),
-            ModelTokenizer::new().unwrap(),
-            Arc::new(config()),
-        );
-        let mut bounded = bounded_request();
-        bounded.qualified.request.stream = true;
-
-        let streaming = service.stream_bounded(bounded).await.unwrap();
-        drop(streaming);
-        tokio::time::timeout(Duration::from_secs(1), async {
-            loop {
-                if !state.finalized.lock().unwrap().is_empty() {
-                    break;
-                }
-                tokio::task::yield_now().await;
-            }
-        })
-        .await
-        .unwrap();
-
-        let finalized = state.finalized.lock().unwrap();
-        assert_eq!(finalized[0]["status"], "cancelled");
-        assert_eq!(finalized[0]["outcome"]["cancellation_owner"], "client");
-    }
-    #[tokio::test]
-    async fn generation_tasks_keep_request_identity_after_the_handler_returns() {
-        let logs = crate::diagnostics::capture::Logs::default();
-        let _guard = logs.start();
-        let tasks = GenerationTasks::new();
-        let mut handles = Vec::new();
-        for id in [Uuid::from_u128(1), Uuid::from_u128(2)] {
-            let span = crate::diagnostics::request_span(id);
-            span.record("workspace_id", tracing::field::display(id));
-            handles.push(span.in_scope(|| {
-                tasks.spawn(async move {
-                    tokio::task::yield_now().await;
-                    tracing::info!(event = "test_stream_terminal", "terminal");
-                })
-            }));
-        }
-        for handle in handles {
-            handle.await.unwrap();
-        }
-        let events = logs.events();
-        assert_eq!(events.len(), 2);
-        for event in events {
-            assert_eq!(
-                event["span"]["workspace_id"],
-                event["span"]["generation_id"]
-            );
-            assert!(event["span"]["workspace_id"].is_string());
-        }
-    }
-}
+#[path = "completion_tests.rs"]
+mod tests;

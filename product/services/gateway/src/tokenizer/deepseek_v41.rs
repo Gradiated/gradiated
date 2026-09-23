@@ -1,7 +1,10 @@
 //! Text prompt encoding for the pinned vLLM DeepSeek V4.1 release.
 //! Adapted from vLLM's Apache-2.0 deepseek_v41_encoding.py.
-use super::{InferenceRequest, TokenizerRequestError};
+use std::collections::HashMap;
+
 use serde_json::{json, Value};
+
+use super::{InferenceRequest, TokenizerRequestError};
 
 const BOS: &str = "<｜begin▁of▁sentence｜>";
 const EOS: &str = "<｜end▁of▁sentence｜>";
@@ -124,76 +127,128 @@ fn tool_schema(tool: &Value) -> Result<String, TokenizerRequestError> {
     Ok(python_json(&normalized))
 }
 
-pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequestError> {
-    let kwargs = request.parameters.get("chat_template_kwargs");
-    let option = |name: &str| kwargs.and_then(|v| v.get(name));
-    let mut thinking = match (option("thinking"), option("enable_thinking")) {
-        (None, None) => true,
-        (a, b) => {
-            a.and_then(Value::as_bool).unwrap_or(false)
-                || b.and_then(Value::as_bool).unwrap_or(false)
-        }
-    };
-    let (effort, effort_param) = match option("reasoning_effort") {
-        Some(value) => (Some(value), "chat_template_kwargs.reasoning_effort"),
-        None => (
-            request.parameters.get("reasoning_effort"),
-            "reasoning_effort",
-        ),
-    };
-    let budget = match effort {
-        None | Some(Value::Null) => 50,
-        Some(Value::String(s)) => match s.as_str() {
-            "none" => {
-                thinking = false;
-                50
+/// How the prompt treats reasoning, taken from the request's template options.
+struct RenderOptions<'a> {
+    thinking: bool,
+    budget: u64,
+    drop_thinking: bool,
+    tools: Option<&'a Vec<Value>>,
+}
+
+impl<'a> RenderOptions<'a> {
+    fn new(request: &'a InferenceRequest) -> Result<Self, TokenizerRequestError> {
+        let kwargs = request.parameters.get("chat_template_kwargs");
+        let option = |name: &str| kwargs.and_then(|v| v.get(name));
+
+        let mut thinking = match (option("thinking"), option("enable_thinking")) {
+            (None, None) => true,
+            (a, b) => {
+                a.and_then(Value::as_bool).unwrap_or(false)
+                    || b.and_then(Value::as_bool).unwrap_or(false)
             }
-            "low" => 25,
-            "high" => 50,
-            "xhigh" => 75,
-            "max" => 100,
-            _ => return Err(TokenizerRequestError::InvalidParameter(effort_param)),
-        },
-        Some(value) => value
-            .as_u64()
-            .filter(|n| (1..=100).contains(n))
-            .ok_or(TokenizerRequestError::InvalidParameter(effort_param))?,
-    };
-    let tools = request
-        .parameters
-        .get("tools")
-        .and_then(Value::as_array)
-        .filter(|v| !v.is_empty());
-    let drop_thinking = tools.is_none()
-        && option("drop_thinking")
-            .and_then(Value::as_bool)
-            .unwrap_or(true);
+        };
+
+        let (effort, effort_param) = match option("reasoning_effort") {
+            Some(value) => (Some(value), "chat_template_kwargs.reasoning_effort"),
+            None => (
+                request.parameters.get("reasoning_effort"),
+                "reasoning_effort",
+            ),
+        };
+        let budget = match effort {
+            None | Some(Value::Null) => 50,
+            Some(Value::String(s)) => match s.as_str() {
+                "none" => {
+                    thinking = false;
+                    50
+                }
+                "low" => 25,
+                "high" => 50,
+                "xhigh" => 75,
+                "max" => 100,
+                _ => return Err(TokenizerRequestError::InvalidParameter(effort_param)),
+            },
+            Some(value) => value
+                .as_u64()
+                .filter(|n| (1..=100).contains(n))
+                .ok_or(TokenizerRequestError::InvalidParameter(effort_param))?,
+        };
+
+        let tools = request
+            .parameters
+            .get("tools")
+            .and_then(Value::as_array)
+            .filter(|v| !v.is_empty());
+        let drop_thinking = tools.is_none()
+            && option("drop_thinking")
+                .and_then(Value::as_bool)
+                .unwrap_or(true);
+
+        Ok(Self {
+            thinking,
+            budget,
+            drop_thinking,
+            tools,
+        })
+    }
+}
+
+pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequestError> {
+    let options = RenderOptions::new(request)?;
+
     let mut messages = request.messages.clone();
-    for message in &messages {
-        // These are internal encoder controls, not OpenAI message fields.
-        if [
-            "task",
-            "wo_eos",
-            "content_blocks",
-            "response_format",
-            "tools",
-        ]
+    reject_encoder_controls(&messages)?;
+    if let Some(tools) = options.tools {
+        attach_tools(&mut messages, tools);
+    }
+
+    let mut turns = merge_turns(messages)?;
+    if options.thinking && options.drop_thinking {
+        turns = prune_developer_turns(turns);
+    }
+
+    encode(&turns, &options)
+}
+
+/// These are internal encoder controls, not OpenAI message fields.
+fn reject_encoder_controls(messages: &[Value]) -> Result<(), TokenizerRequestError> {
+    const CONTROLS: [&str; 5] = [
+        "task",
+        "wo_eos",
+        "content_blocks",
+        "response_format",
+        "tools",
+    ];
+
+    let controlled = messages
         .iter()
-        .any(|key| message.get(key).is_some())
-        {
-            return Err(TokenizerRequestError::Rejected);
-        }
+        .any(|message| CONTROLS.iter().any(|key| message.get(key).is_some()));
+    if controlled {
+        return Err(TokenizerRequestError::Rejected);
     }
-    if let Some(tools) = tools {
-        if !messages.iter().any(|m| m["role"] == "system") {
-            messages.insert(0, json!({"role":"system", "content":""}));
-        }
-        if let Some(system) = messages.iter_mut().find(|m| m["role"] == "system") {
-            system["tools"] = json!(tools);
-        }
+
+    Ok(())
+}
+
+/// The encoder renders tool definitions inside the system turn, so a request
+/// with tools and no system message gets an empty one.
+fn attach_tools(messages: &mut Vec<Value>, tools: &[Value]) {
+    if !messages.iter().any(|m| m["role"] == "system") {
+        messages.insert(0, json!({"role":"system", "content":""}));
     }
+
+    if let Some(system) = messages.iter_mut().find(|m| m["role"] == "system") {
+        system["tools"] = json!(tools);
+    }
+}
+
+/// Normalizes each message and folds consecutive user and tool messages into
+/// one user turn of blocks. A tool result carries the position of its call in
+/// the preceding assistant turn.
+fn merge_turns(messages: Vec<Value>) -> Result<Vec<Value>, TokenizerRequestError> {
     let mut merged: Vec<Value> = Vec::new();
-    let mut call_order = std::collections::HashMap::new();
+    let mut call_order = HashMap::new();
+
     for mut message in messages {
         let role = message["role"]
             .as_str()
@@ -205,10 +260,12 @@ pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequ
         ) {
             return Err(TokenizerRequestError::Rejected);
         }
+
         message["content"] = json!(content(&message["content"])?);
         if let Some(reasoning) = message.get("reasoning").cloned() {
             message["reasoning_content"] = reasoning;
         }
+
         if role == "assistant" {
             if let Some(calls) = message["tool_calls"].as_array() {
                 call_order.clear();
@@ -219,106 +276,80 @@ pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequ
                 }
             }
         }
-        if role == "user" || role == "tool" {
-            let block = if role == "tool" {
-                json!({"type":"tool_result", "content":message["content"], "order":call_order.get(message["tool_call_id"].as_str().unwrap_or("")).copied().unwrap_or(0)})
-            } else {
-                json!({"type":"text", "content":message["content"]})
-            };
-            if let Some(last) = merged.last_mut().filter(|m| m["role"] == "user") {
-                last["blocks"]
-                    .as_array_mut()
-                    .ok_or(TokenizerRequestError::InvalidInput)?
-                    .push(block);
-            } else {
-                merged.push(json!({"role":"user", "blocks":[block]}));
+
+        let block = match role.as_str() {
+            "tool" => {
+                let call_id = message["tool_call_id"].as_str().unwrap_or("");
+                let order = call_order.get(call_id).copied().unwrap_or(0);
+                json!({"type":"tool_result", "content":message["content"], "order":order})
             }
-        } else {
-            merged.push(message);
+            "user" => json!({"type":"text", "content":message["content"]}),
+            _ => {
+                merged.push(message);
+                continue;
+            }
+        };
+
+        match merged.last_mut().filter(|m| m["role"] == "user") {
+            Some(last) => last["blocks"]
+                .as_array_mut()
+                .ok_or(TokenizerRequestError::InvalidInput)?
+                .push(block),
+            None => merged.push(json!({"role":"user", "blocks":[block]})),
         }
     }
-    let prior_last_user = merged
+
+    Ok(merged)
+}
+
+/// Matches the pinned runtime's history pruning: developer turns before the
+/// last user turn are dropped.
+fn prune_developer_turns(turns: Vec<Value>) -> Vec<Value> {
+    let last_user = last_user_index(&turns);
+
+    turns
+        .into_iter()
+        .enumerate()
+        .filter_map(|(i, m)| {
+            (m["role"] != "developer" || last_user.is_none_or(|last| i >= last)).then_some(m)
+        })
+        .collect()
+}
+
+/// The last user turn, where a later system message also counts as one.
+fn last_user_index(turns: &[Value]) -> Option<usize> {
+    turns
         .iter()
         .enumerate()
         .rfind(|(i, m)| m["role"] == "user" || (*i > 0 && m["role"] == "system"))
-        .map(|(i, _)| i);
-    if thinking && drop_thinking {
-        // Match the pinned runtime's history pruning, including developer turns.
-        merged = merged
-            .into_iter()
-            .enumerate()
-            .filter_map(|(i, m)| {
-                (m["role"] != "developer" || prior_last_user.is_none_or(|last| i >= last))
-                    .then_some(m)
-            })
-            .collect();
-    }
-    let last_user = merged
-        .iter()
-        .enumerate()
-        .rfind(|(i, m)| m["role"] == "user" || (*i > 0 && m["role"] == "system"))
-        .map(|(i, _)| i);
+        .map(|(i, _)| i)
+}
+
+fn encode(turns: &[Value], options: &RenderOptions) -> Result<String, TokenizerRequestError> {
+    let RenderOptions {
+        thinking,
+        budget,
+        drop_thinking,
+        ..
+    } = *options;
+    let last_user = last_user_index(turns);
     let mut prompt = String::from(BOS);
-    for (index, message) in merged.iter().enumerate() {
+
+    for (index, message) in turns.iter().enumerate() {
         let role = message["role"]
             .as_str()
             .ok_or(TokenizerRequestError::InvalidInput)?;
+
         if index == 0 && (thinking || role == "system") {
             prompt.push_str(SYSTEM);
         }
         if index == 0 && thinking {
             prompt.push_str(&format!("Reasoning Effort: {budget} (range 1-100, the higher the value, the more thorough the reasoning)\n\n"));
         }
+
         match role {
-            "system" | "developer" => {
-                if role == "system" && index > 0 {
-                    prompt.push_str(SYSTEM);
-                }
-                if role == "developer" {
-                    prompt.push_str(USER);
-                }
-                let text = content(&message["content"])?;
-                if role == "developer" && text.is_empty() {
-                    return Err(TokenizerRequestError::Rejected);
-                }
-                prompt.push_str(&text);
-                if let Some(tools) = message["tools"].as_array().filter(|v| !v.is_empty()) {
-                    let schemas = tools
-                        .iter()
-                        .map(tool_schema)
-                        .collect::<Result<Vec<_>, _>>()?
-                        .join("\n");
-                    prompt.push_str("\n\n");
-                    prompt.push_str(
-                        &include_str!("deepseek_v41_tools.txt").replace("{tool_schemas}", &schemas),
-                    );
-                }
-            }
-            "user" => {
-                prompt.push_str(USER);
-                let blocks = message["blocks"]
-                    .as_array()
-                    .ok_or(TokenizerRequestError::InvalidInput)?;
-                let mut tool_blocks = blocks
-                    .iter()
-                    .filter(|b| b["type"] == "tool_result")
-                    .collect::<Vec<_>>();
-                tool_blocks.sort_by_key(|b| b["order"].as_u64().unwrap_or(0));
-                let mut results = tool_blocks.into_iter();
-                let mut parts = Vec::new();
-                for block in blocks {
-                    if block["type"] == "tool_result" {
-                        let result = results.next().ok_or(TokenizerRequestError::InvalidInput)?;
-                        parts.push(format!(
-                            "<tool_result>{}</tool_result>",
-                            content(&result["content"])?
-                        ));
-                    } else {
-                        parts.push(content(&block["content"])?);
-                    }
-                }
-                prompt.push_str(&parts.join("\n\n"));
-            }
+            "system" | "developer" => encode_instructions(&mut prompt, message, role, index)?,
+            "user" => encode_user(&mut prompt, message)?,
             "assistant" => {
                 if thinking && (!drop_thinking || last_user.is_none_or(|last| index > last)) {
                     prompt.push_str(&content(&message["reasoning_content"])?);
@@ -330,21 +361,91 @@ pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequ
             }
             _ => return Err(TokenizerRequestError::Rejected),
         }
-        let next = merged.get(index + 1).and_then(|m| m["role"].as_str());
-        if (next.is_none() || next == Some("assistant"))
-            && (role == "user" || role == "developer" || (role == "system" && index > 0))
-        {
+
+        // A turn that expects a reply opens the assistant turn, with reasoning
+        // open only where the runtime keeps it.
+        let next = turns.get(index + 1).and_then(|m| m["role"].as_str());
+        let expects_reply =
+            role == "user" || role == "developer" || (role == "system" && index > 0);
+        if (next.is_none() || next == Some("assistant")) && expects_reply {
+            let reasoning_open =
+                thinking && (!drop_thinking || last_user.is_some_and(|last| index >= last));
             prompt.push_str(ASSISTANT);
-            prompt.push_str(
-                if thinking && (!drop_thinking || last_user.is_some_and(|last| index >= last)) {
-                    "<think>"
-                } else {
-                    "</think>"
-                },
-            );
+            prompt.push_str(if reasoning_open {
+                "<think>"
+            } else {
+                "</think>"
+            });
         }
     }
+
     Ok(prompt)
+}
+
+fn encode_instructions(
+    prompt: &mut String,
+    message: &Value,
+    role: &str,
+    index: usize,
+) -> Result<(), TokenizerRequestError> {
+    if role == "system" && index > 0 {
+        prompt.push_str(SYSTEM);
+    }
+    if role == "developer" {
+        prompt.push_str(USER);
+    }
+
+    let text = content(&message["content"])?;
+    if role == "developer" && text.is_empty() {
+        return Err(TokenizerRequestError::Rejected);
+    }
+    prompt.push_str(&text);
+
+    if let Some(tools) = message["tools"].as_array().filter(|v| !v.is_empty()) {
+        let schemas = tools
+            .iter()
+            .map(tool_schema)
+            .collect::<Result<Vec<_>, _>>()?
+            .join("\n");
+        prompt.push_str("\n\n");
+        prompt
+            .push_str(&include_str!("deepseek_v41_tools.txt").replace("{tool_schemas}", &schemas));
+    }
+
+    Ok(())
+}
+
+/// Tool results are rendered in the order of their calls, in the positions the
+/// tool messages held among the turn's blocks.
+fn encode_user(prompt: &mut String, message: &Value) -> Result<(), TokenizerRequestError> {
+    let blocks = message["blocks"]
+        .as_array()
+        .ok_or(TokenizerRequestError::InvalidInput)?;
+
+    let mut tool_blocks = blocks
+        .iter()
+        .filter(|b| b["type"] == "tool_result")
+        .collect::<Vec<_>>();
+    tool_blocks.sort_by_key(|b| b["order"].as_u64().unwrap_or(0));
+    let mut results = tool_blocks.into_iter();
+
+    let mut parts = Vec::with_capacity(blocks.len());
+    for block in blocks {
+        if block["type"] == "tool_result" {
+            let result = results.next().ok_or(TokenizerRequestError::InvalidInput)?;
+            parts.push(format!(
+                "<tool_result>{}</tool_result>",
+                content(&result["content"])?
+            ));
+        } else {
+            parts.push(content(&block["content"])?);
+        }
+    }
+
+    prompt.push_str(USER);
+    prompt.push_str(&parts.join("\n\n"));
+
+    Ok(())
 }
 
 #[cfg(test)]

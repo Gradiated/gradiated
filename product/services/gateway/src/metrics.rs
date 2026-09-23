@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use prometheus_client::{
     encoding::{text::encode, EncodeLabelSet},
     metrics::{counter::Counter, family::Family, gauge::Gauge, histogram::Histogram},
-    registry::Registry,
+    registry::{Metric, Registry},
 };
 use uuid::Uuid;
 
@@ -53,6 +53,7 @@ struct HttpRequestLabels {
     error: String,
 }
 
+/// Identifies what served a generation. It never names the customer.
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct GenerationLabels {
     model: String,
@@ -64,20 +65,15 @@ struct GenerationLabels {
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct AdmissionRejectionLabels {
-    model: String,
-    deployment: String,
-    protocol: String,
-    stream: String,
-    service_tier: String,
+    #[prometheus(flatten)]
+    generation: GenerationLabels,
     reason: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct GenerationOutcomeLabels {
-    model: String,
-    deployment: String,
-    stream: String,
-    service_tier: String,
+    #[prometheus(flatten)]
+    generation: GenerationLabels,
     status: String,
     error: String,
     cancellation_owner: String,
@@ -85,19 +81,15 @@ struct GenerationOutcomeLabels {
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct TokenLabels {
-    model: String,
-    deployment: String,
-    stream: String,
-    service_tier: String,
+    #[prometheus(flatten)]
+    generation: GenerationLabels,
     kind: String,
 }
 
 #[derive(Clone, Debug, EncodeLabelSet, Eq, Hash, PartialEq)]
 struct FinalizationLabels {
-    model: String,
-    deployment: String,
-    stream: String,
-    service_tier: String,
+    #[prometheus(flatten)]
+    generation: GenerationLabels,
     result: String,
 }
 
@@ -106,184 +98,169 @@ struct DependencyLabels {
     dependency: String,
 }
 
-pub struct AdmittedGenerationMetrics {
-    metrics: GatewayMetrics,
-    labels: GenerationLabels,
+/// Registers a metric and returns the handle the gateway updates.
+fn registered<M: Metric + Clone>(registry: &mut Registry, name: &str, help: &str, metric: M) -> M {
+    registry.register(name, help, metric.clone());
+    metric
 }
 
 impl GatewayMetrics {
     pub fn new() -> Self {
         let mut registry = Registry::with_prefix("gradiated_gateway");
-        let service_info: Gauge = Gauge::default();
+
+        let service_info = Gauge::<i64>::default();
         service_info.set(1);
-        registry.register(
+        registered(
+            &mut registry,
             "service_info",
             "Constant service identity metric used to detect missing gateway telemetry.",
             service_info,
         );
-        let http_requests = CounterFamily::default();
-        let admissions = CounterFamily::default();
-        let admission_rejections = CounterFamily::default();
-        let active_generations = GaugeFamily::default();
-        let generations = CounterFamily::default();
-        let tokens = CounterFamily::default();
-        let calculated_charge_nano_usd = CounterFamily::default();
-        let input_tokens_per_generation = token_histograms();
-        let output_tokens_per_generation = token_histograms();
-        let dispatch_latency_seconds = latency_histograms();
-        let time_to_first_token_seconds = latency_histograms();
-        let runtime_time_to_first_token_seconds = latency_histograms();
-        let runtime_latency_seconds = latency_histograms();
-        let generation_latency_seconds = latency_histograms();
-        let time_per_output_token_seconds = tpot_histograms();
-        let output_tokens_per_second = throughput_histograms();
-        let finalization_attempts = CounterFamily::default();
-        let finalization_retries = CounterFamily::default();
-        let finalization_failures = CounterFamily::default();
-        let unsettled_generations = CounterFamily::default();
-        let dependency_ready = GaugeFamily::default();
-        let last_finalization_failure_timestamp_seconds = Gauge::default();
-        let last_settlement_backpressure_timestamp_seconds = Gauge::default();
-        registry.register(
-            "last_finalization_failure_timestamp_seconds",
-            "Unix timestamp of the latest unconfirmed finalization; zero before any failure.",
-            last_finalization_failure_timestamp_seconds.clone(),
-        );
-        registry.register(
-            "last_settlement_backpressure_timestamp_seconds",
-            "Unix timestamp of the latest admission refused for settlement backlog; zero before any refusal.",
-            last_settlement_backpressure_timestamp_seconds.clone(),
-        );
 
-        registry.register(
-            "http_requests",
-            "HTTP requests completed.",
-            http_requests.clone(),
-        );
-        registry.register(
-            "admissions",
-            "Generations admitted by Valkey.",
-            admissions.clone(),
-        );
-        registry.register(
-            "admission_rejections",
-            "Generation admission attempts rejected before runtime dispatch.",
-            admission_rejections.clone(),
-        );
-        registry.register(
-            "active_generations",
-            "Admitted generations that have not finished settlement.",
-            active_generations.clone(),
-        );
-        registry.register(
-            "generations",
-            "Terminal generation outcomes.",
-            generations.clone(),
-        );
-        registry.register("tokens", "Authoritative generation tokens.", tokens.clone());
-        registry.register(
-            "calculated_charge_nano_usd",
-            "Terminal calculated generation charge in integer nano-USD.",
-            calculated_charge_nano_usd.clone(),
-        );
-        registry.register(
-            "input_tokens_per_generation",
-            "Authoritative input-token distribution per generation.",
-            input_tokens_per_generation.clone(),
-        );
-        registry.register(
-            "output_tokens_per_generation",
-            "Authoritative output-token distribution per generation.",
-            output_tokens_per_generation.clone(),
-        );
-        registry.register(
-            "dispatch_latency_seconds",
-            "Time from gateway receipt until runtime dispatch.",
-            dispatch_latency_seconds.clone(),
-        );
-        registry.register(
-            "time_to_first_token_seconds",
-            "Time from gateway receipt until first usable streamed output.",
-            time_to_first_token_seconds.clone(),
-        );
-        registry.register(
-            "runtime_time_to_first_token_seconds",
-            "Time from runtime dispatch until first usable streamed output.",
-            runtime_time_to_first_token_seconds.clone(),
-        );
-        registry.register(
-            "runtime_latency_seconds",
-            "Time from runtime dispatch until terminal runtime handling.",
-            runtime_latency_seconds.clone(),
-        );
-        registry.register(
-            "generation_latency_seconds",
-            "Time from gateway receipt until terminal runtime handling.",
-            generation_latency_seconds.clone(),
-        );
-        registry.register(
-            "time_per_output_token_seconds",
-            "Inter-token time after the first usable output token.",
-            time_per_output_token_seconds.clone(),
-        );
-        registry.register(
-            "output_tokens_per_second",
-            "Authoritative output tokens divided by runtime latency.",
-            output_tokens_per_second.clone(),
-        );
-        registry.register(
-            "finalization_attempts",
-            "Valkey finalization script attempts by result.",
-            finalization_attempts.clone(),
-        );
-        registry.register(
-            "finalization_retries",
-            "Finalization retries after an unconfirmed attempt.",
-            finalization_retries.clone(),
-        );
-        registry.register(
-            "finalization_failures",
-            "Generations whose finalization remained unconfirmed.",
-            finalization_failures.clone(),
-        );
-        registry.register(
-            "unsettled_generations",
-            "Generations served without a charge or a terminal event, their lease lost.",
-            unsettled_generations.clone(),
-        );
-        registry.register(
-            "dependency_ready",
-            "Whether a dependency passed its latest readiness check.",
-            dependency_ready.clone(),
-        );
+        let metrics = Metrics {
+            http_requests: registered(
+                &mut registry,
+                "http_requests",
+                "HTTP requests completed.",
+                CounterFamily::default(),
+            ),
+            admissions: registered(
+                &mut registry,
+                "admissions",
+                "Generations admitted by Valkey.",
+                CounterFamily::default(),
+            ),
+            admission_rejections: registered(
+                &mut registry,
+                "admission_rejections",
+                "Generation admission attempts rejected before runtime dispatch.",
+                CounterFamily::default(),
+            ),
+            active_generations: registered(
+                &mut registry,
+                "active_generations",
+                "Admitted generations that have not finished settlement.",
+                GaugeFamily::default(),
+            ),
+            generations: registered(
+                &mut registry,
+                "generations",
+                "Terminal generation outcomes.",
+                CounterFamily::default(),
+            ),
+            tokens: registered(
+                &mut registry,
+                "tokens",
+                "Authoritative generation tokens.",
+                CounterFamily::default(),
+            ),
+            calculated_charge_nano_usd: registered(
+                &mut registry,
+                "calculated_charge_nano_usd",
+                "Terminal calculated generation charge in integer nano-USD.",
+                CounterFamily::default(),
+            ),
+            input_tokens_per_generation: registered(
+                &mut registry,
+                "input_tokens_per_generation",
+                "Authoritative input-token distribution per generation.",
+                token_histograms(),
+            ),
+            output_tokens_per_generation: registered(
+                &mut registry,
+                "output_tokens_per_generation",
+                "Authoritative output-token distribution per generation.",
+                token_histograms(),
+            ),
+            dispatch_latency_seconds: registered(
+                &mut registry,
+                "dispatch_latency_seconds",
+                "Time from gateway receipt until runtime dispatch.",
+                latency_histograms(),
+            ),
+            time_to_first_token_seconds: registered(
+                &mut registry,
+                "time_to_first_token_seconds",
+                "Time from gateway receipt until first usable streamed output.",
+                latency_histograms(),
+            ),
+            runtime_time_to_first_token_seconds: registered(
+                &mut registry,
+                "runtime_time_to_first_token_seconds",
+                "Time from runtime dispatch until first usable streamed output.",
+                latency_histograms(),
+            ),
+            runtime_latency_seconds: registered(
+                &mut registry,
+                "runtime_latency_seconds",
+                "Time from runtime dispatch until terminal runtime handling.",
+                latency_histograms(),
+            ),
+            generation_latency_seconds: registered(
+                &mut registry,
+                "generation_latency_seconds",
+                "Time from gateway receipt until terminal runtime handling.",
+                latency_histograms(),
+            ),
+            time_per_output_token_seconds: registered(
+                &mut registry,
+                "time_per_output_token_seconds",
+                "Inter-token time after the first usable output token.",
+                tpot_histograms(),
+            ),
+            output_tokens_per_second: registered(
+                &mut registry,
+                "output_tokens_per_second",
+                "Authoritative output tokens divided by runtime latency.",
+                throughput_histograms(),
+            ),
+            finalization_attempts: registered(
+                &mut registry,
+                "finalization_attempts",
+                "Valkey finalization script attempts by result.",
+                CounterFamily::default(),
+            ),
+            finalization_retries: registered(
+                &mut registry,
+                "finalization_retries",
+                "Finalization retries after an unconfirmed attempt.",
+                CounterFamily::default(),
+            ),
+            finalization_failures: registered(
+                &mut registry,
+                "finalization_failures",
+                "Generations whose finalization remained unconfirmed.",
+                CounterFamily::default(),
+            ),
+            unsettled_generations: registered(
+                &mut registry,
+                "unsettled_generations",
+                "Generations served without a charge or a terminal event, their lease lost.",
+                CounterFamily::default(),
+            ),
+            dependency_ready: registered(
+                &mut registry,
+                "dependency_ready",
+                "Whether a dependency passed its latest readiness check.",
+                GaugeFamily::default(),
+            ),
+            last_finalization_failure_timestamp_seconds: registered(
+                &mut registry,
+                "last_finalization_failure_timestamp_seconds",
+                "Unix timestamp of the latest unconfirmed finalization; zero before any failure.",
+                Gauge::default(),
+            ),
+            last_settlement_backpressure_timestamp_seconds: registered(
+                &mut registry,
+                "last_settlement_backpressure_timestamp_seconds",
+                "Unix timestamp of the latest admission refused for settlement backlog; zero before any refusal.",
+                Gauge::default(),
+            ),
+            registry,
+        };
 
         Self {
-            inner: Arc::new(Metrics {
-                registry,
-                http_requests,
-                admissions,
-                admission_rejections,
-                active_generations,
-                generations,
-                tokens,
-                calculated_charge_nano_usd,
-                input_tokens_per_generation,
-                output_tokens_per_generation,
-                dispatch_latency_seconds,
-                time_to_first_token_seconds,
-                runtime_time_to_first_token_seconds,
-                runtime_latency_seconds,
-                generation_latency_seconds,
-                time_per_output_token_seconds,
-                output_tokens_per_second,
-                finalization_attempts,
-                finalization_retries,
-                finalization_failures,
-                unsettled_generations,
-                dependency_ready,
-                last_finalization_failure_timestamp_seconds,
-                last_settlement_backpressure_timestamp_seconds,
-            }),
+            inner: Arc::new(metrics),
         }
     }
 
@@ -312,15 +289,11 @@ impl GatewayMetrics {
                 .last_settlement_backpressure_timestamp_seconds
                 .set(Utc::now().timestamp());
         }
-        let labels = generation_labels(model, deployment, protocol, stream, service_tier);
+
         self.inner
             .admission_rejections
             .get_or_create(&AdmissionRejectionLabels {
-                model: labels.model,
-                deployment: labels.deployment,
-                protocol: labels.protocol,
-                stream: labels.stream,
-                service_tier: labels.service_tier,
+                generation: generation_labels(model, deployment, protocol, stream, service_tier),
                 reason: admission_reason(error).to_owned(),
             })
             .inc();
@@ -337,6 +310,7 @@ impl GatewayMetrics {
         let labels = generation_labels(model, deployment, protocol, stream, service_tier);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
+
         AdmittedGenerationMetrics {
             metrics: self.clone(),
             labels,
@@ -355,32 +329,62 @@ impl GatewayMetrics {
     pub fn encode(&self) -> String {
         let mut body = String::new();
         encode(&mut body, &self.inner.registry).expect("gateway metrics always encode");
+
         body
     }
 }
 
+impl Default for GatewayMetrics {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// How one generation ended, as the terminal log line and metrics report it.
+pub struct TerminalRecord {
+    pub generation_id: Uuid,
+    pub status: &'static str,
+    pub error: &'static str,
+    pub cancellation_owner: &'static str,
+    pub usage: NormalizedUsage,
+    pub charge_nano_usd: u64,
+    pub received_at: DateTime<Utc>,
+    pub started_at: DateTime<Utc>,
+    pub first_token_at: Option<DateTime<Utc>>,
+    pub completed_at: DateTime<Utc>,
+}
+
+/// The metrics of one admitted generation. Dropping it ends the generation's
+/// place in `active_generations`.
+pub struct AdmittedGenerationMetrics {
+    metrics: GatewayMetrics,
+    labels: GenerationLabels,
+}
+
 impl AdmittedGenerationMetrics {
-    #[allow(clippy::too_many_arguments)]
-    pub fn record_terminal(
-        &self,
-        generation_id: Uuid,
-        status: &'static str,
-        error: &'static str,
-        cancellation_owner: &'static str,
-        usage: NormalizedUsage,
-        charge_nano_usd: u64,
-        received_at: DateTime<Utc>,
-        started_at: DateTime<Utc>,
-        first_token_at: Option<DateTime<Utc>>,
-        completed_at: DateTime<Utc>,
-    ) {
+    pub fn record_terminal(&self, record: &TerminalRecord) {
+        let TerminalRecord {
+            generation_id,
+            status,
+            error,
+            cancellation_owner,
+            usage,
+            charge_nano_usd,
+            received_at,
+            started_at,
+            first_token_at,
+            completed_at,
+        } = *record;
+        let labels = &self.labels;
+        let metrics = &self.metrics.inner;
+
         tracing::info!(
             %generation_id,
-            model = %self.labels.model,
-            deployment = %self.labels.deployment,
-            protocol = %self.labels.protocol,
-            stream = %self.labels.stream,
-            service_tier = %self.labels.service_tier,
+            model = %labels.model,
+            deployment = %labels.deployment,
+            protocol = %labels.protocol,
+            stream = %labels.stream,
+            service_tier = %labels.service_tier,
             status, error_code = error, cancellation_owner,
             input_tokens = usage.input_tokens(),
             cached_input_tokens = usage.cached_input_tokens(),
@@ -393,14 +397,11 @@ impl AdmittedGenerationMetrics {
             event = "generation_terminal",
             "generation reached terminal state; billing finalization follows"
         );
-        self.metrics
-            .inner
+
+        metrics
             .generations
             .get_or_create(&GenerationOutcomeLabels {
-                model: self.labels.model.clone(),
-                deployment: self.labels.deployment.clone(),
-                stream: self.labels.stream.clone(),
-                service_tier: self.labels.service_tier.clone(),
+                generation: labels.clone(),
                 status: status.to_owned(),
                 error: error.to_owned(),
                 cancellation_owner: cancellation_owner.to_owned(),
@@ -413,80 +414,66 @@ impl AdmittedGenerationMetrics {
             ("output", usage.output_tokens()),
             ("reasoning", usage.reasoning_tokens()),
         ] {
-            self.metrics
-                .inner
+            metrics
                 .tokens
                 .get_or_create(&TokenLabels {
-                    model: self.labels.model.clone(),
-                    deployment: self.labels.deployment.clone(),
-                    stream: self.labels.stream.clone(),
-                    service_tier: self.labels.service_tier.clone(),
+                    generation: labels.clone(),
                     kind: kind.to_owned(),
                 })
                 .inc_by(quantity);
         }
-        self.metrics
-            .inner
+        metrics
             .calculated_charge_nano_usd
-            .get_or_create(&self.labels)
+            .get_or_create(labels)
             .inc_by(charge_nano_usd);
-        self.metrics
-            .inner
+        metrics
             .input_tokens_per_generation
-            .get_or_create(&self.labels)
+            .get_or_create(labels)
             .observe(usage.input_tokens() as f64);
-        self.metrics
-            .inner
+        metrics
             .output_tokens_per_generation
-            .get_or_create(&self.labels)
+            .get_or_create(labels)
             .observe(usage.output_tokens() as f64);
 
-        observe_duration(
-            &self.metrics.inner.dispatch_latency_seconds,
-            &self.labels,
-            received_at,
-            started_at,
-        );
-        observe_duration(
-            &self.metrics.inner.runtime_latency_seconds,
-            &self.labels,
-            started_at,
-            completed_at,
-        );
-        observe_duration(
-            &self.metrics.inner.generation_latency_seconds,
-            &self.labels,
+        let observe = |histograms: &HistogramFamily<GenerationLabels>, start, end| {
+            histograms
+                .get_or_create(labels)
+                .observe(seconds_between(start, end));
+        };
+        observe(&metrics.dispatch_latency_seconds, received_at, started_at);
+        observe(&metrics.runtime_latency_seconds, started_at, completed_at);
+        observe(
+            &metrics.generation_latency_seconds,
             received_at,
             completed_at,
         );
+
         if let Some(first_token_at) = first_token_at {
-            observe_duration(
-                &self.metrics.inner.time_to_first_token_seconds,
-                &self.labels,
+            observe(
+                &metrics.time_to_first_token_seconds,
                 received_at,
                 first_token_at,
             );
-            observe_duration(
-                &self.metrics.inner.runtime_time_to_first_token_seconds,
-                &self.labels,
+            observe(
+                &metrics.runtime_time_to_first_token_seconds,
                 started_at,
                 first_token_at,
             );
+
             if usage.output_tokens() > 1 {
                 let generation_seconds = seconds_between(first_token_at, completed_at);
-                self.metrics
-                    .inner
+                metrics
                     .time_per_output_token_seconds
-                    .get_or_create(&self.labels)
+                    .get_or_create(labels)
                     .observe(generation_seconds / (usage.output_tokens() - 1) as f64);
             }
         }
+
         let runtime_seconds = seconds_between(started_at, completed_at);
         if runtime_seconds > 0.0 && usage.output_tokens() > 0 {
-            self.metrics
-                .inner
+            metrics
                 .output_tokens_per_second
-                .get_or_create(&self.labels)
+                .get_or_create(labels)
                 .observe(usage.output_tokens() as f64 / runtime_seconds);
         }
     }
@@ -506,10 +493,7 @@ impl AdmittedGenerationMetrics {
             .inner
             .finalization_attempts
             .get_or_create(&FinalizationLabels {
-                model: self.labels.model.clone(),
-                deployment: self.labels.deployment.clone(),
-                stream: self.labels.stream.clone(),
-                service_tier: self.labels.service_tier.clone(),
+                generation: self.labels.clone(),
                 result: result.to_owned(),
             })
             .inc();
@@ -546,12 +530,6 @@ impl Drop for AdmittedGenerationMetrics {
     }
 }
 
-impl Default for GatewayMetrics {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 fn generation_labels(
     model: &str,
     deployment: Uuid,
@@ -581,17 +559,6 @@ fn admission_reason(error: &AdmissionError) -> &'static str {
     }
 }
 
-fn observe_duration(
-    histograms: &HistogramFamily<GenerationLabels>,
-    labels: &GenerationLabels,
-    start: DateTime<Utc>,
-    end: DateTime<Utc>,
-) {
-    histograms
-        .get_or_create(labels)
-        .observe(seconds_between(start, end));
-}
-
 fn seconds_between(start: DateTime<Utc>, end: DateTime<Utc>) -> f64 {
     end.signed_duration_since(start)
         .num_microseconds()
@@ -600,195 +567,42 @@ fn seconds_between(start: DateTime<Utc>, end: DateTime<Utc>) -> f64 {
         / 1_000_000.0
 }
 
+const LATENCY_BUCKETS: [f64; 15] = [
+    0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0,
+];
+const TPOT_BUCKETS: [f64; 12] = [
+    0.001, 0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0,
+];
+const THROUGHPUT_BUCKETS: [f64; 9] = [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0];
+const TOKEN_BUCKETS: [f64; 10] = [
+    1.0,
+    8.0,
+    32.0,
+    128.0,
+    512.0,
+    2_048.0,
+    8_192.0,
+    32_768.0,
+    131_072.0,
+    1_048_576.0,
+];
+
 fn latency_histograms() -> HistogramFamily<GenerationLabels> {
-    Family::new_with_constructor(|| {
-        Histogram::new([
-            0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0,
-        ])
-    })
+    Family::new_with_constructor(|| Histogram::new(LATENCY_BUCKETS))
 }
 
 fn tpot_histograms() -> HistogramFamily<GenerationLabels> {
-    Family::new_with_constructor(|| {
-        Histogram::new([
-            0.001, 0.0025, 0.005, 0.01, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0,
-        ])
-    })
+    Family::new_with_constructor(|| Histogram::new(TPOT_BUCKETS))
 }
 
 fn throughput_histograms() -> HistogramFamily<GenerationLabels> {
-    Family::new_with_constructor(|| {
-        Histogram::new([1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0, 200.0, 500.0])
-    })
+    Family::new_with_constructor(|| Histogram::new(THROUGHPUT_BUCKETS))
 }
 
 fn token_histograms() -> HistogramFamily<GenerationLabels> {
-    Family::new_with_constructor(|| {
-        Histogram::new([
-            1.0,
-            8.0,
-            32.0,
-            128.0,
-            512.0,
-            2_048.0,
-            8_192.0,
-            32_768.0,
-            131_072.0,
-            1_048_576.0,
-        ])
-    })
+    Family::new_with_constructor(|| Histogram::new(TOKEN_BUCKETS))
 }
 
 #[cfg(test)]
-mod tests {
-    use chrono::TimeZone;
-
-    use super::*;
-
-    #[test]
-    fn exposes_generation_dashboard_metrics_without_identity_labels() {
-        let metrics = GatewayMetrics::new();
-        metrics.record_http("models", 401, "invalid_api_key");
-        metrics.set_dependency_ready("valkey", true);
-        let generation = metrics.generation_admitted(
-            "model-a",
-            Uuid::from_u128(0x0198c36f9b6a70008000000000000001),
-            "openai_chat",
-            true,
-            ServiceTier::Fast,
-        );
-        let received_at = Utc.with_ymd_and_hms(2026, 8, 20, 12, 0, 0).unwrap();
-        generation.record_terminal(
-            Uuid::from_u128(1),
-            "succeeded",
-            "none",
-            "none",
-            NormalizedUsage::new(100, 20, 0, 10, 0).unwrap(),
-            12_000,
-            received_at,
-            received_at + chrono::TimeDelta::milliseconds(10),
-            Some(received_at + chrono::TimeDelta::milliseconds(110)),
-            received_at + chrono::TimeDelta::milliseconds(200),
-        );
-        generation.record_finalization_attempt("settled");
-        drop(generation);
-        let body = metrics.encode();
-
-        assert!(body.contains("model=\"model-a\""));
-        assert!(body.contains("gradiated_gateway_service_info 1"));
-        assert!(body.contains("stream=\"true\""));
-        assert!(body.contains("service_tier=\"fast\""));
-        // Dashboards split ordinary LLM traffic from other protocols on this label.
-        assert!(body.contains("protocol=\"openai_chat\""));
-        assert!(body.contains("gradiated_gateway_time_to_first_token_seconds_count"));
-        assert!(body.contains("gradiated_gateway_time_per_output_token_seconds_count"));
-        assert!(body.contains("gradiated_gateway_output_tokens_per_second_count"));
-        assert!(body.contains("gradiated_gateway_tokens_total"));
-        assert!(body.contains("gradiated_gateway_calculated_charge_nano_usd_total"));
-        assert!(!body.contains("organization"));
-        assert!(!body.contains("workspace"));
-        assert!(!body.contains("api_key=\""));
-        assert!(!body.contains("generation_id=\""));
-    }
-    #[test]
-    fn retains_first_integrity_event_without_a_prior_scrape() {
-        let metrics = GatewayMetrics::new();
-        assert!(metrics
-            .encode()
-            .contains("gradiated_gateway_last_finalization_failure_timestamp_seconds 0"));
-        let generation = metrics.generation_admitted(
-            "test",
-            Uuid::from_u128(1),
-            "openai",
-            false,
-            ServiceTier::Fast,
-        );
-        generation.record_finalization_failure();
-        assert!(
-            metrics
-                .inner
-                .last_finalization_failure_timestamp_seconds
-                .get()
-                > 0
-        );
-        metrics.record_admission_rejection(
-            "test",
-            Uuid::from_u128(1),
-            "openai",
-            false,
-            ServiceTier::Fast,
-            &AdmissionError::SettlementBacklog,
-        );
-        assert!(
-            metrics
-                .inner
-                .last_settlement_backpressure_timestamp_seconds
-                .get()
-                > 0
-        );
-        let restarted = GatewayMetrics::new();
-        assert_eq!(
-            restarted
-                .inner
-                .last_finalization_failure_timestamp_seconds
-                .get(),
-            0
-        );
-    }
-
-    #[test]
-    fn terminal_log_and_metrics_preserve_token_categories_without_payloads() {
-        let logs = crate::diagnostics::capture::Logs::default();
-        let _guard = logs.start();
-        let metrics = GatewayMetrics::new();
-        let generation = metrics.generation_admitted(
-            "model-a",
-            Uuid::from_u128(2),
-            "openai",
-            true,
-            ServiceTier::Fast,
-        );
-        let start = Utc::now();
-        generation.record_terminal(
-            Uuid::from_u128(1),
-            "succeeded",
-            "none",
-            "none",
-            NormalizedUsage::new(100, 20, 7, 10, 3).unwrap(),
-            100,
-            start,
-            start,
-            Some(start + chrono::TimeDelta::milliseconds(100)),
-            start + chrono::TimeDelta::seconds(1),
-        );
-        let events = logs.events();
-        let fields = &events[0]["fields"];
-        assert_eq!(fields["event"], "generation_terminal");
-        assert_eq!(fields["generation_id"], Uuid::from_u128(1).to_string());
-        for (field, expected) in [
-            ("input_tokens", 100),
-            ("cached_input_tokens", 20),
-            ("cache_write_tokens", 7),
-            ("output_tokens", 10),
-            ("reasoning_tokens", 3),
-        ] {
-            assert_eq!(fields[field], expected);
-        }
-        assert!(fields.get("prompt").is_none());
-        assert!(fields.get("completion").is_none());
-        let body = metrics.encode();
-        for (kind, value) in [
-            ("input", 100),
-            ("cached_input", 20),
-            ("cache_write", 7),
-            ("output", 10),
-            ("reasoning", 3),
-        ] {
-            assert!(body
-                .lines()
-                .any(|line| line.starts_with("gradiated_gateway_tokens_total{")
-                    && line.contains(&format!("kind=\"{kind}\""))
-                    && line.ends_with(&format!(" {value}"))));
-        }
-    }
-}
+#[path = "metrics_tests.rs"]
+mod tests;

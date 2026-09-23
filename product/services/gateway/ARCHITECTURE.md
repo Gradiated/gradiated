@@ -402,15 +402,14 @@ stream backlog. It performs the following operations without interleaving:
    safety ceiling, so an admitted request cannot knowingly increase an already
    full backlog.
 8. Remove only leases older than the configured grace cutoff.
-9. For `prepaid`, count leases with scores later than the current time.
-10. For `prepaid`, derive the balance-funded concurrency ceiling as
-    `ceil(balance / balance_per_concurrency_slot)`, using checked positive
-    integer arithmetic, and cap that result at
-    `prepaid_organization_concurrency_cap`. Any positive prepaid balance funds
+9. Count leases with scores later than the current time.
+10. Select `organization_concurrency_cap` as the ceiling. For `prepaid`, lower
+    it to the balance-funded ceiling `ceil(balance / balance_per_concurrency_slot)`,
+    using checked positive integer arithmetic. Any positive prepaid balance funds
     at least one slot; additional balance increases concurrency proportionally.
-11. For `prepaid`, reject at or above the selected ceiling with
-    `429 concurrency_exceeded`. `Invoiced` skips the organization concurrency
-    check.
+11. Reject at or above the selected ceiling with `429 concurrency_exceeded`.
+    The cap applies to `invoiced` accounts too, because it protects shared
+    capacity rather than billing.
 12. Add the new lease with `ZADD NX` and its expiry timestamp.
 13. Return a distinct error if the generated ID already exists.
 

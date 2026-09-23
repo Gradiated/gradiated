@@ -14,6 +14,7 @@ const IMAGE_MANIFESTS = [
   { file: "api.yaml", repository: PRODUCT_REPOSITORY },
   { file: "clickhouse-migrate.yaml", repository: PRODUCT_REPOSITORY },
   { file: "worker.yaml", repository: PRODUCT_REPOSITORY },
+  { file: "../operations/ops-mcp/workload.yaml", repository: PRODUCT_REPOSITORY },
   { file: "gateway.yaml", repository: GATEWAY_REPOSITORY },
 ];
 

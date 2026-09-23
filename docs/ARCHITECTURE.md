@@ -57,6 +57,18 @@ split or scale later: Valkey consumer groups divide ingestion, PostgreSQL
 advisory locking elects settlement, and projection is level-triggered and
 idempotent. Do not create separate projection, ingestion or billing services.
 
+## Internal production diagnostics (activation pending)
+
+`product/services/ops-mcp` implements an independent internal MCP endpoint for
+read-only production alerts, metrics, logs, dashboard links and EKS status. It
+reuses the Gradiated-only Google connector through Dex, with dedicated MCP OAuth
+grants. Its `ops.gradiated.com` endpoint uses ordinary Route53 DNS and an internal
+ALB reached through the existing Tailscale subnet router; MagicDNS is disabled. It has no customer
+API-key authentication, database credentials, shell/exec or production mutations.
+The service is staged under Kubernetes `operations/` pending its dedicated Dex
+secret and immutable image. EKS already uses a private endpoint through the router.
+See the [service README](../product/services/ops-mcp/README.md) for its boundaries.
+
 ## Dependency and authority rules
 
 ### PostgreSQL / RDS

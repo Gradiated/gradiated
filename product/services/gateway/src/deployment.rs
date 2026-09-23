@@ -4,7 +4,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
-use validator::Validate;
+use validator::{Validate, ValidationErrors};
+
+const MAXIMUM_STATUS_CLOCK_SKEW: TimeDelta = TimeDelta::seconds(5);
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 pub struct GatewayModelDeployment {
@@ -41,7 +43,7 @@ pub struct DeploymentRuntimeStatus {
 
 impl DeploymentRuntimeStatus {
     pub fn is_fresh_at(&self, now: DateTime<Utc>, maximum_age: TimeDelta) -> bool {
-        self.received_at <= now + TimeDelta::seconds(5) && self.received_at >= now - maximum_age
+        self.received_at <= now + MAXIMUM_STATUS_CLOCK_SKEW && self.received_at >= now - maximum_age
     }
 }
 
@@ -53,12 +55,12 @@ pub enum DeploymentStatus {
     Draining,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 // This one stays strict on purpose. Its serialisation is the deployment's identity:
 // `served_release_digest` hashes it, and the runtimes write their heartbeats under
 // that hash. Ignoring an unknown field would compute a different digest from the
 // producer's and silently route heartbeats to a key nothing reads, so failing to
 // parse is the safer failure.
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 #[serde(deny_unknown_fields)]
 pub struct ModelDeploymentRelease {
     #[validate(range(min = 1, max = 1))]
@@ -99,7 +101,6 @@ pub enum TokenizerMode {
 }
 
 impl ModelDeploymentRelease {
-    /// Whether this release speaks the native, non-streaming decision protocol.
     pub fn is_system_one(&self) -> bool {
         self.protocol == Some(RuntimeProtocol::SystemOne)
     }
@@ -121,8 +122,8 @@ impl ModelDeploymentRelease {
 
 impl GatewayModelDeployment {
     pub fn validate(&self) -> Result<(), DeploymentError> {
-        <Self as Validate>::validate(self)
-            .map_err(|error| DeploymentError::Invalid(error.to_string()))?;
+        <Self as Validate>::validate(self)?;
+
         self.validate_service_url()
     }
 
@@ -130,14 +131,14 @@ impl GatewayModelDeployment {
         let service_uri = self
             .service_url
             .parse::<Uri>()
-            .map_err(|_| DeploymentError::Invalid("service_url is invalid".to_owned()))?;
+            .map_err(|_| DeploymentError::ServiceUrl)?;
+
         if !matches!(service_uri.scheme_str(), Some("http" | "https"))
             || service_uri.authority().is_none()
         {
-            return Err(DeploymentError::Invalid(
-                "service_url must be an absolute HTTP or HTTPS URL".to_owned(),
-            ));
+            return Err(DeploymentError::ServiceUrl);
         }
+
         Ok(())
     }
 
@@ -147,10 +148,12 @@ impl GatewayModelDeployment {
     }
 }
 
-#[derive(Debug, Error, Eq, PartialEq)]
+#[derive(Debug, Error, PartialEq)]
 pub enum DeploymentError {
-    #[error("{0}")]
-    Invalid(String),
+    #[error("deployment does not match its schema: {0}")]
+    Schema(#[from] ValidationErrors),
+    #[error("service_url must be an absolute HTTP or HTTPS URL")]
+    ServiceUrl,
 }
 
 #[cfg(test)]
@@ -179,9 +182,6 @@ mod tests {
     }
 
     #[test]
-    /// A deployment written by another gateway version must still parse, but the
-    /// release must not: its serialisation is the heartbeat key, so ignoring a field
-    /// there would silently compute a different digest from the producer's.
     fn an_unknown_field_is_tolerated_on_the_deployment_and_refused_in_the_release() {
         let deployment = serde_json::from_str::<GatewayModelDeployment>(include_str!(
             "../test/fixtures/gateway-model-deployment.rejected.json"
@@ -204,7 +204,11 @@ mod tests {
         let error = deployment
             .validate()
             .expect_err("empty release identifiers must be rejected");
-        assert!(error.to_string().contains("runtime_revision"));
+
+        let DeploymentError::Schema(errors) = error else {
+            panic!("an empty identifier is a schema error, not {error}");
+        };
+        assert!(errors.to_string().contains("runtime_revision"));
     }
 
     #[test]
@@ -212,12 +216,7 @@ mod tests {
         let mut deployment = accepted_deployment();
         deployment.service_url = "ftp://runtime.internal/model".to_owned();
 
-        assert_eq!(
-            deployment.validate(),
-            Err(DeploymentError::Invalid(
-                "service_url must be an absolute HTTP or HTTPS URL".to_owned()
-            ))
-        );
+        assert_eq!(deployment.validate(), Err(DeploymentError::ServiceUrl));
     }
 
     #[test]
@@ -247,11 +246,26 @@ mod tests {
             "a missing required field must be rejected"
         );
     }
-}
 
-#[cfg(test)]
-mod digest_fixtures {
-    use super::*;
+    #[test]
+    fn a_status_is_fresh_within_its_age_and_the_clock_skew_bound() {
+        let now = "2026-08-27T12:00:00Z".parse::<DateTime<Utc>>().unwrap();
+        let maximum_age = TimeDelta::seconds(30);
+
+        for (offset, fresh) in [(-30, true), (-31, false), (5, true), (6, false)] {
+            let status = DeploymentRuntimeStatus {
+                schema_version: 1,
+                deployment_id: Uuid::nil(),
+                runtime_revision: "vllm-revision".to_owned(),
+                received_at: now + TimeDelta::seconds(offset),
+                healthy: true,
+                accepting_requests: true,
+                reason_code: None,
+            };
+
+            assert_eq!(status.is_fresh_at(now, maximum_age), fresh, "{offset}s");
+        }
+    }
 
     /// The heartbeat key is computed independently by the gateway and by the control
     /// plane, so every combination of the optional release fields is pinned here and
@@ -269,14 +283,10 @@ mod digest_fixtures {
             let release: ModelDeploymentRelease =
                 serde_json::from_value(case["release"].clone()).expect("the release parses");
             let deployment = GatewayModelDeployment {
-                id: uuid::Uuid::nil(),
-                status: DeploymentStatus::Available,
-                provider: "local".to_owned(),
-                region: "local".to_owned(),
-                fault_domain: "local:one".to_owned(),
-                service_url: "http://127.0.0.1:30000".to_owned(),
                 release,
+                ..accepted_deployment()
             };
+
             assert_eq!(
                 deployment.served_release_digest().expect("a digest"),
                 case["digest"].as_str().expect("a digest string"),

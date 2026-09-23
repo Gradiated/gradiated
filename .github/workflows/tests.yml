@@ -7,7 +7,11 @@ on:
       - ".github/workflows/application-deployment.yml"
       - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
+      - "product/inference/CMakeLists.txt"
+      - "product/inference/desmond/**"
+      - "product/inference/engine/**"
       - "product/inference/runtimes/kev/**"
+      - "product/inference/runtimes/vllm/**"
       - "product/packages/**"
       - "product/scripts/**"
       - "product/services/api/**"
@@ -32,7 +36,11 @@ on:
       - ".github/workflows/application-deployment.yml"
       - ".github/workflows/build-images.yml"
       - ".github/workflows/tests.yml"
+      - "product/inference/CMakeLists.txt"
+      - "product/inference/desmond/**"
+      - "product/inference/engine/**"
       - "product/inference/runtimes/kev/**"
+      - "product/inference/runtimes/vllm/**"
       - "product/packages/**"
       - "product/scripts/**"
       - "product/services/api/**"
@@ -92,9 +100,9 @@ jobs:
             ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile
         working-directory: product
-      - name: Check official TypeSafe SDK wire contract (offline)
+      - name: Test product scripts and the TypeSafe SDK wire contract (offline)
         working-directory: product
-        run: pnpm test:kev-sdk
+        run: pnpm test:scripts
       - name: Run unit tests and static checks
         working-directory: product
         run: |
@@ -124,9 +132,16 @@ jobs:
           docker compose up -d
           docker compose wait valkey-cluster-init
           docker compose up -d --wait postgres valkey clickhouse
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Migrate PostgreSQL
+        working-directory: product
+        env:
+          DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
+        run: pnpm --filter @gradiated/control db:migrate
       - name: Run integration tests
         working-directory: product/services/gateway
-        run: mise exec -- cargo test --locked serving_state::tests -- --ignored
+        run: "mise exec -- cargo test --locked -- --ignored serving_state:: postgres_reader::"
       - name: Show dependency logs on failure
         if: failure()
         working-directory: product
@@ -135,6 +150,29 @@ jobs:
         if: always()
         working-directory: product
         run: docker compose down --volumes
+
+  inference-native:
+    name: Inference native tests
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends cmake g++ libcurl4-openssl-dev python3 openssl
+      - name: Build Desmond and the engine with sanitizers
+        run: |
+          cmake -S product/inference -B build/inference -DCMAKE_BUILD_TYPE=Debug -DDESMOND_ENABLE_SANITIZERS=ON
+          cmake --build build/inference -j "$(nproc)"
+      - name: Run Desmond and engine tests
+        working-directory: build/inference
+        run: ctest --output-on-failure --parallel "$(nproc)"
+      - name: Run vLLM status reporter tests
+        working-directory: product/inference/runtimes/vllm
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python3 -m unittest -v test_report_status
 
   gateway-contract:
     name: Gateway runtime integration
@@ -273,6 +311,20 @@ jobs:
         env:
           DATABASE_URL: postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
         run: pnpm --filter @gradiated/control db:migrate
+      - name: Migrate ClickHouse
+        working-directory: product
+        env:
+          CLICKHOUSE_DATABASE: gradiated
+          CLICKHOUSE_HOST: 127.0.0.1
+          CLICKHOUSE_PORT: "8123"
+          CLICKHOUSE_SECURE: "false"
+          CLICKHOUSE_ADMIN_USERNAME: gradiated
+          CLICKHOUSE_ADMIN_PASSWORD: gradiated
+          CLICKHOUSE_APPLICATION_USERNAME: gradiated
+          CLICKHOUSE_APPLICATION_PASSWORD: gradiated
+          CLICKHOUSE_METABASE_USERNAME: metabase
+          CLICKHOUSE_METABASE_PASSWORD: gradiated
+        run: pnpm --filter @gradiated/control clickhouse:migrate
       - name: Run Playwright tests
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test

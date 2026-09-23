@@ -99,16 +99,22 @@ impl GatewayError {
         match self {
             Self::InvalidApiKey | Self::ProviderKeyRequired => "authentication_error",
             Self::WorkspaceArchived | Self::OrganizationSuspended => "permission_error",
-            Self::ProviderUnavailable | Self::ProviderTimeout | Self::ProxyOverloaded => {
-                "api_error"
-            }
             Self::ConcurrencyExceeded | Self::SettlementBacklog | Self::CapacityExceeded => {
                 "rate_limit_error"
             }
-            Self::ServingStateUnavailable
+            Self::ProviderUnavailable
+            | Self::ProviderTimeout
+            | Self::ProxyOverloaded
+            | Self::ServingStateUnavailable
             | Self::RuntimeUnavailable
             | Self::FinalizationUnavailable => "api_error",
-            _ => "invalid_request_error",
+            Self::InvalidRequest { .. }
+            | Self::UnsupportedParameter { .. }
+            | Self::ContextLengthExceeded { .. }
+            | Self::PayloadTooLarge
+            | Self::InsufficientBalance
+            | Self::ModelNotFound
+            | Self::ModelUnavailable => "invalid_request_error",
         }
     }
 
@@ -150,30 +156,52 @@ impl GatewayError {
             Self::InvalidRequest { param }
             | Self::UnsupportedParameter { param }
             | Self::ContextLengthExceeded { param } => param.as_deref(),
-            Self::PayloadTooLarge => None,
             Self::ModelNotFound | Self::ModelUnavailable => Some("model"),
-            _ => None,
+            Self::PayloadTooLarge
+            | Self::InvalidApiKey
+            | Self::ProviderKeyRequired
+            | Self::WorkspaceArchived
+            | Self::OrganizationSuspended
+            | Self::ProviderUnavailable
+            | Self::ProviderTimeout
+            | Self::ProxyOverloaded
+            | Self::InsufficientBalance
+            | Self::ConcurrencyExceeded
+            | Self::SettlementBacklog
+            | Self::CapacityExceeded
+            | Self::ServingStateUnavailable
+            | Self::RuntimeUnavailable
+            | Self::FinalizationUnavailable => None,
         }
     }
 
     pub(crate) fn envelope(&self) -> ErrorEnvelope<'_> {
-        ErrorEnvelope {
-            error: ErrorBody {
-                message: self.message(),
-                error_type: self.error_type(),
-                param: self.param(),
-                code: self.code(),
-            },
-        }
+        ErrorEnvelope { error: self.body() }
     }
 
     pub(crate) fn anthropic_envelope(&self) -> AnthropicErrorEnvelope<'_> {
-        AnthropicErrorEnvelope::new(ErrorBody {
+        AnthropicErrorEnvelope {
+            kind: "error",
+            error: self.body(),
+        }
+    }
+
+    pub(crate) fn responses_stream_error(&self) -> ResponsesStreamError<'_> {
+        ResponsesStreamError {
+            kind: "error",
+            code: self.code(),
+            message: self.message(),
+            param: self.param(),
+        }
+    }
+
+    fn body(&self) -> ErrorBody<'_> {
+        ErrorBody {
             message: self.message(),
             error_type: self.error_type(),
             param: self.param(),
             code: self.code(),
-        })
+        }
     }
 }
 
@@ -185,9 +213,11 @@ impl IntoResponse for GatewayError {
     }
 }
 
+const MAX_PUBLIC_PARAM_BYTES: usize = 100;
+
 fn bounded_param(param: Option<&str>) -> Option<String> {
     param
-        .filter(|value| value.len() <= 100)
+        .filter(|value| value.len() <= MAX_PUBLIC_PARAM_BYTES)
         .map(ToOwned::to_owned)
 }
 
@@ -203,13 +233,13 @@ pub(crate) struct AnthropicErrorEnvelope<'a> {
     error: ErrorBody<'a>,
 }
 
-impl<'a> AnthropicErrorEnvelope<'a> {
-    fn new(error: ErrorBody<'a>) -> Self {
-        Self {
-            kind: "error",
-            error,
-        }
-    }
+#[derive(Serialize)]
+pub(crate) struct ResponsesStreamError<'a> {
+    #[serde(rename = "type")]
+    kind: &'static str,
+    code: &'a str,
+    message: &'a str,
+    param: Option<&'a str>,
 }
 
 #[derive(Serialize)]
@@ -223,25 +253,229 @@ struct ErrorBody<'a> {
 
 #[cfg(test)]
 mod tests {
-    use axum::{body::to_bytes, response::IntoResponse};
+    use std::collections::HashSet;
+
+    use serde_json::json;
 
     use super::*;
 
-    #[tokio::test]
-    async fn public_error_envelope_is_bounded_and_stable() {
-        let response = GatewayError::unsupported_parameter("temperature").into_response();
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    #[test]
+    fn every_variant_has_a_stable_public_classification() {
+        let table = [
+            (
+                GatewayError::invalid_request(Some("messages")),
+                StatusCode::BAD_REQUEST,
+                "invalid_request",
+                "invalid_request_error",
+                Some("messages"),
+            ),
+            (
+                GatewayError::unsupported_parameter("temperature"),
+                StatusCode::BAD_REQUEST,
+                "unsupported_parameter",
+                "invalid_request_error",
+                Some("temperature"),
+            ),
+            (
+                GatewayError::context_length_exceeded("max_tokens"),
+                StatusCode::BAD_REQUEST,
+                "context_length_exceeded",
+                "invalid_request_error",
+                Some("max_tokens"),
+            ),
+            (
+                GatewayError::PayloadTooLarge,
+                StatusCode::PAYLOAD_TOO_LARGE,
+                "payload_too_large",
+                "invalid_request_error",
+                None,
+            ),
+            (
+                GatewayError::InvalidApiKey,
+                StatusCode::UNAUTHORIZED,
+                "invalid_api_key",
+                "authentication_error",
+                None,
+            ),
+            (
+                GatewayError::ProviderKeyRequired,
+                StatusCode::UNAUTHORIZED,
+                "provider_key_required",
+                "authentication_error",
+                None,
+            ),
+            (
+                GatewayError::WorkspaceArchived,
+                StatusCode::FORBIDDEN,
+                "workspace_archived",
+                "permission_error",
+                None,
+            ),
+            (
+                GatewayError::OrganizationSuspended,
+                StatusCode::FORBIDDEN,
+                "organization_suspended",
+                "permission_error",
+                None,
+            ),
+            (
+                GatewayError::ProviderUnavailable,
+                StatusCode::BAD_GATEWAY,
+                "provider_unavailable",
+                "api_error",
+                None,
+            ),
+            (
+                GatewayError::ProviderTimeout,
+                StatusCode::GATEWAY_TIMEOUT,
+                "provider_timeout",
+                "api_error",
+                None,
+            ),
+            (
+                GatewayError::ProxyOverloaded,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "proxy_overloaded",
+                "api_error",
+                None,
+            ),
+            (
+                GatewayError::InsufficientBalance,
+                StatusCode::PAYMENT_REQUIRED,
+                "insufficient_balance",
+                "invalid_request_error",
+                None,
+            ),
+            (
+                GatewayError::ConcurrencyExceeded,
+                StatusCode::TOO_MANY_REQUESTS,
+                "concurrency_exceeded",
+                "rate_limit_error",
+                None,
+            ),
+            (
+                GatewayError::SettlementBacklog,
+                StatusCode::TOO_MANY_REQUESTS,
+                "settlement_backlog",
+                "rate_limit_error",
+                None,
+            ),
+            (
+                GatewayError::CapacityExceeded,
+                StatusCode::TOO_MANY_REQUESTS,
+                "capacity_exceeded",
+                "rate_limit_error",
+                None,
+            ),
+            (
+                GatewayError::ModelNotFound,
+                StatusCode::NOT_FOUND,
+                "model_not_found",
+                "invalid_request_error",
+                Some("model"),
+            ),
+            (
+                GatewayError::ModelUnavailable,
+                StatusCode::NOT_FOUND,
+                "model_unavailable",
+                "invalid_request_error",
+                Some("model"),
+            ),
+            (
+                GatewayError::ServingStateUnavailable,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "serving_state_unavailable",
+                "api_error",
+                None,
+            ),
+            (
+                GatewayError::RuntimeUnavailable,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "runtime_unavailable",
+                "api_error",
+                None,
+            ),
+            (
+                GatewayError::FinalizationUnavailable,
+                StatusCode::SERVICE_UNAVAILABLE,
+                "finalization_unavailable",
+                "api_error",
+                None,
+            ),
+        ];
 
-        let body = to_bytes(response.into_body(), 1_024).await.unwrap();
-        let value: serde_json::Value = serde_json::from_slice(&body).unwrap();
-        assert_eq!(value["error"]["code"], "unsupported_parameter");
-        assert_eq!(value["error"]["param"], "temperature");
-        assert_eq!(value["error"]["type"], "invalid_request_error");
+        let mut codes = HashSet::new();
+        for (error, status, code, error_type, param) in table {
+            assert_eq!(error.status(), status, "{code}");
+            assert_eq!(error.code(), code);
+            assert_eq!(error.error_type(), error_type, "{code}");
+            assert_eq!(error.param(), param, "{code}");
+            assert!(codes.insert(code), "{code} is not unique");
+        }
+    }
 
-        let unbounded = "x".repeat(101);
+    #[test]
+    fn a_public_param_is_bounded() {
+        let longest = "x".repeat(MAX_PUBLIC_PARAM_BYTES);
+        let oversized = "x".repeat(MAX_PUBLIC_PARAM_BYTES + 1);
+
         assert_eq!(
-            GatewayError::unsupported_parameter(&unbounded),
+            GatewayError::unsupported_parameter(&longest).param(),
+            Some(longest.as_str())
+        );
+        assert_eq!(
+            GatewayError::unsupported_parameter(&oversized),
             GatewayError::UnsupportedParameter { param: None }
+        );
+    }
+
+    #[test]
+    fn the_openai_envelope_is_exact() {
+        let error = GatewayError::unsupported_parameter("temperature");
+
+        assert_eq!(
+            serde_json::to_value(error.envelope()).unwrap(),
+            json!({
+                "error": {
+                    "message": "The requested model does not support this parameter.",
+                    "type": "invalid_request_error",
+                    "param": "temperature",
+                    "code": "unsupported_parameter"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn the_anthropic_envelope_is_exact() {
+        let error = GatewayError::unsupported_parameter("temperature");
+
+        assert_eq!(
+            serde_json::to_value(error.anthropic_envelope()).unwrap(),
+            json!({
+                "type": "error",
+                "error": {
+                    "message": "The requested model does not support this parameter.",
+                    "type": "invalid_request_error",
+                    "param": "temperature",
+                    "code": "unsupported_parameter"
+                }
+            })
+        );
+    }
+
+    #[test]
+    fn the_responses_stream_error_is_exact() {
+        let error = GatewayError::unsupported_parameter("temperature");
+
+        assert_eq!(
+            serde_json::to_value(error.responses_stream_error()).unwrap(),
+            json!({
+                "type": "error",
+                "code": "unsupported_parameter",
+                "message": "The requested model does not support this parameter.",
+                "param": "temperature"
+            })
         );
     }
 }

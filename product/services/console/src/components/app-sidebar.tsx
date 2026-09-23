@@ -1,6 +1,5 @@
 import NiceModal from "@ebay/nice-modal-react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "@tanstack/react-router";
+import { Link, useMatchRoute, type LinkProps } from "@tanstack/react-router";
 import {
   Building2,
   ChartNoAxesCombined,
@@ -12,16 +11,20 @@ import {
   Logs,
   PackageOpen,
   Plus,
-  Settings2,
   WalletCards,
+  type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 
-import type { CurrentUser, Workspace } from "@/api/queries";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CreateOrganizationDialog } from "@/components/create-organization-dialog";
-import { CreateWorkspaceDialog } from "@/components/create-workspace-dialog";
+import {
+  createOrganization,
+  createWorkspace,
+  type CurrentUser,
+  type Workspace,
+} from "@/api/queries";
+import { CreateNameDialog } from "@/components/create-name-dialog";
 import { Logo } from "@/components/logo";
-import { useFeatureFlag } from "@/lib/feature-flags";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,8 +50,37 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useScopeCreation } from "@/hooks/use-product-context";
+import type { SignOutResult } from "@/hooks/use-session";
+import { useFeatureFlag, type FeatureFlag } from "@/lib/feature-flags";
 
-type Organization = CurrentUser["organizations"][number];
+interface NavGroup {
+  label: string;
+  flag?: FeatureFlag;
+  items: {
+    to: NonNullable<LinkProps["to"]>;
+    label: string;
+    icon: LucideIcon;
+  }[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: "Research",
+    flag: "training",
+    items: [{ to: "/tasks", label: "Training", icon: FlaskConical }],
+  },
+  {
+    label: "Inference",
+    items: [
+      { to: "/models", label: "Models", icon: PackageOpen },
+      { to: "/api-keys", label: "API keys", icon: KeyRound },
+      { to: "/usage", label: "Usage", icon: ChartNoAxesCombined },
+      { to: "/logs", label: "Logs", icon: Logs },
+      { to: "/billing", label: "Billing", icon: WalletCards },
+    ],
+  },
+];
 
 export const AppSidebar = ({
   user,
@@ -58,7 +90,6 @@ export const AppSidebar = ({
   onSelectOrganization,
   onSelectWorkspace,
   onSignOut,
-  activePage,
 }: {
   user: CurrentUser | undefined;
   organizationId: string;
@@ -66,45 +97,42 @@ export const AppSidebar = ({
   workspaceId: string;
   onSelectOrganization: (organizationId: string) => void;
   onSelectWorkspace: (workspaceId: string) => void;
-  onSignOut: () => void;
-  activePage: "api-keys" | "billing" | "logs" | "models" | "tasks" | "usage";
+  onSignOut: () => Promise<SignOutResult>;
 }) => {
   const { isMobile } = useSidebar();
-  const trainingConsole = useFeatureFlag("training");
-  const queryClient = useQueryClient();
-  const selectedOrganization =
-    user?.organizations.find(
-      (organization) => organization.id === organizationId,
-    ) ?? user?.organizations[0];
-  const selectedWorkspace =
-    workspaces.find((workspace) => workspace.id === workspaceId) ??
-    workspaces[0];
+  const [signOutFailed, setSignOutFailed] = useState(false);
+  const { organizationCreated, workspaceCreated } = useScopeCreation();
+  const selectedWorkspace = workspaces.find(
+    (workspace) => workspace.id === workspaceId,
+  );
 
-  const organizationCreated = (
-    createdOrganizationId: string,
-    defaultWorkspaceId: string,
-  ) => {
-    onSelectOrganization(createdOrganizationId);
-    onSelectWorkspace(defaultWorkspaceId);
-    void queryClient.invalidateQueries({ queryKey: ["me"] });
-    void queryClient.invalidateQueries({
-      queryKey: ["workspaces", createdOrganizationId],
+  const addWorkspace = () =>
+    void NiceModal.show(CreateNameDialog, {
+      title: "Create a workspace",
+      label: "Workspace name",
+      placeholder: "Production",
+      submitLabel: "Create workspace",
+      emptyMessage: "Enter a workspace name.",
+      submit: async (name) => {
+        workspaceCreated(await createWorkspace(organizationId, { name }));
+      },
     });
+
+  const signOut = async () => {
+    setSignOutFailed((await onSignOut()) === "failed");
   };
 
-  const workspaceCreated = (workspace: Workspace) => {
-    queryClient.setQueryData<{ data: Workspace[]; next_cursor: string | null }>(
-      ["workspaces", workspace.organization_id],
-      (current) => ({
-        data: [
-          ...(current?.data.filter((item) => item.id !== workspace.id) ?? []),
-          workspace,
-        ],
-        next_cursor: current?.next_cursor ?? null,
-      }),
-    );
-    onSelectWorkspace(workspace.id);
-  };
+  const addOrganization = () =>
+    void NiceModal.show(CreateNameDialog, {
+      title: "Create an organization",
+      label: "Organization name",
+      placeholder: "Acme Inc",
+      submitLabel: "Create organization",
+      emptyMessage: "Enter an organization name.",
+      submit: async (name) => {
+        organizationCreated(await createOrganization({ name }));
+      },
+    });
 
   return (
     <Sidebar collapsible="icon">
@@ -137,30 +165,19 @@ export const AppSidebar = ({
                   Workspaces
                 </DropdownMenuLabel>
                 {workspaces.map((workspace) => (
-                  <WorkspaceItem
+                  <SwitcherItem
                     key={workspace.id}
-                    workspace={workspace}
-                    selected={workspace.id === selectedWorkspace?.id}
+                    name={workspace.name}
+                    selected={workspace.id === workspaceId}
                     onSelect={() => onSelectWorkspace(workspace.id)}
                   />
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="gap-2 p-2"
-                  onSelect={() => {
-                    void NiceModal.show(CreateWorkspaceDialog, {
-                      organizationId,
-                      onCreated: workspaceCreated,
-                    });
-                  }}
-                >
-                  <span className="grid size-7 place-items-center rounded-md border bg-background">
-                    <Plus className="size-4" />
-                  </span>
-                  <span className="font-medium text-muted-foreground">
-                    Add workspace
-                  </span>
-                </DropdownMenuItem>
+                <AddItem
+                  label="Add workspace"
+                  disabled={!organizationId}
+                  onSelect={addWorkspace}
+                />
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
@@ -168,94 +185,17 @@ export const AppSidebar = ({
       </SidebarHeader>
 
       <SidebarContent>
-        {trainingConsole === true ? (
-          <SidebarGroup>
-            <SidebarGroupLabel>Research</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activePage === "tasks"}
-                    tooltip="Training"
-                  >
-                    <Link to="/tasks">
-                      <FlaskConical />
-                      <span>Training</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ) : null}
-        <SidebarGroup>
-          <SidebarGroupLabel>Inference</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activePage === "models"}
-                  tooltip="Models"
-                >
-                  <Link to="/models">
-                    <PackageOpen />
-                    <span>Models</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activePage === "api-keys"}
-                  tooltip="API keys"
-                >
-                  <Link to="/api-keys">
-                    <KeyRound />
-                    <span>API keys</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activePage === "usage"}
-                  tooltip="Usage"
-                >
-                  <Link to="/usage">
-                    <ChartNoAxesCombined />
-                    <span>Usage</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activePage === "logs"}
-                  tooltip="Logs"
-                >
-                  <Link to="/logs">
-                    <Logs />
-                    <span>Logs</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={activePage === "billing"}
-                  tooltip="Billing"
-                >
-                  <Link to="/billing">
-                    <WalletCards />
-                    <span>Billing</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {NAV_GROUPS.map((group) =>
+          group.flag ? (
+            <FlaggedNavSection
+              key={group.label}
+              flag={group.flag}
+              group={group}
+            />
+          ) : (
+            <NavSection key={group.label} group={group} />
+          ),
+        )}
       </SidebarContent>
 
       <SidebarFooter>
@@ -307,39 +247,30 @@ export const AppSidebar = ({
                       Organizations
                     </DropdownMenuLabel>
                     {user?.organizations.map((organization) => (
-                      <OrganizationItem
+                      <SwitcherItem
                         key={organization.id}
-                        organization={organization}
-                        selected={organization.id === selectedOrganization?.id}
+                        name={organization.name}
+                        selected={organization.id === organizationId}
                         onSelect={() => onSelectOrganization(organization.id)}
                       />
                     ))}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      className="gap-2 p-2"
-                      onSelect={() => {
-                        void NiceModal.show(CreateOrganizationDialog, {
-                          onCreated: organizationCreated,
-                        });
-                      }}
-                    >
-                      <span className="grid size-7 place-items-center rounded-md border bg-background">
-                        <Plus className="size-4" />
-                      </span>
-                      <span className="font-medium text-muted-foreground">
-                        Add organization
-                      </span>
-                    </DropdownMenuItem>
+                    <AddItem
+                      label="Add organization"
+                      onSelect={addOrganization}
+                    />
                   </DropdownMenuSubContent>
                 </DropdownMenuSub>
-                <DropdownMenuItem disabled>
-                  <Settings2 />
-                  Account settings
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={onSignOut}>
+                <DropdownMenuItem
+                  className={signOutFailed ? "text-destructive" : undefined}
+                  onSelect={(event) => {
+                    event.preventDefault();
+                    void signOut();
+                  }}
+                >
                   <LogOut />
-                  Sign out
+                  {signOutFailed ? "Sign out failed. Retry" : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -351,48 +282,84 @@ export const AppSidebar = ({
   );
 };
 
-const WorkspaceItem = ({
-  workspace,
-  selected,
-  onSelect,
+const FlaggedNavSection = ({
+  flag,
+  group,
 }: {
-  workspace: Workspace;
-  selected: boolean;
-  onSelect: () => void;
-}) => {
+  flag: FeatureFlag;
+  group: NavGroup;
+}) => (useFeatureFlag(flag) === true ? <NavSection group={group} /> : null);
+
+const NavSection = ({ group }: { group: NavGroup }) => {
+  const matchRoute = useMatchRoute();
+
   return (
-    <DropdownMenuItem className="gap-2 p-2" onSelect={onSelect}>
-      <span className="grid size-7 place-items-center rounded-md border bg-background text-xs font-semibold">
-        {workspace.name.slice(0, 1).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1 truncate">{workspace.name}</span>
-      {selected ? <Check className="size-4 text-muted-foreground" /> : null}
-    </DropdownMenuItem>
+    <SidebarGroup>
+      <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {group.items.map(({ to, label, icon: Icon }) => (
+            <SidebarMenuItem key={label}>
+              <SidebarMenuButton
+                asChild
+                isActive={Boolean(matchRoute({ to, fuzzy: true }))}
+                tooltip={label}
+              >
+                <Link to={to}>
+                  <Icon />
+                  <span>{label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   );
 };
 
-const OrganizationItem = ({
-  organization,
+const SwitcherItem = ({
+  name,
   selected,
   onSelect,
 }: {
-  organization: Organization;
+  name: string;
   selected: boolean;
   onSelect: () => void;
-}) => {
-  return (
-    <DropdownMenuItem className="gap-2 p-2" onSelect={onSelect}>
-      <span className="grid size-7 place-items-center rounded-md border bg-background text-xs font-semibold">
-        {organization.name.slice(0, 1).toUpperCase()}
-      </span>
-      <span className="min-w-0 flex-1 truncate">{organization.name}</span>
-      {selected ? <Check className="size-4 text-muted-foreground" /> : null}
-    </DropdownMenuItem>
-  );
-};
+}) => (
+  <DropdownMenuItem className="gap-2 p-2" onSelect={onSelect}>
+    <span className="grid size-7 place-items-center rounded-md border bg-background text-xs font-semibold">
+      {name.slice(0, 1).toUpperCase()}
+    </span>
+    <span className="min-w-0 flex-1 truncate">{name}</span>
+    {selected ? <Check className="size-4 text-muted-foreground" /> : null}
+  </DropdownMenuItem>
+);
+
+const AddItem = ({
+  label,
+  disabled = false,
+  onSelect,
+}: {
+  label: string;
+  disabled?: boolean;
+  onSelect: () => void;
+}) => (
+  <DropdownMenuItem
+    className="gap-2 p-2"
+    disabled={disabled}
+    onSelect={onSelect}
+  >
+    <span className="grid size-7 place-items-center rounded-md border bg-background">
+      <Plus className="size-4" />
+    </span>
+    <span className="font-medium text-muted-foreground">{label}</span>
+  </DropdownMenuItem>
+);
 
 const initials = (name: string | undefined) => {
   if (!name) return "G";
+
   return name
     .split(/\s+/)
     .slice(0, 2)

@@ -4,12 +4,14 @@ import {
   type ProfilingEventBatch,
 } from "@gradiated/contracts";
 
+import { insertDeduplicated } from "./client.js";
+
 export type ProfilingWriter = {
   insertBatch(batch: ProfilingEventBatch): Promise<void>;
 };
 
 export const createProfilingWriter = (
-  client: ClickHouseClient,
+  client: Pick<ClickHouseClient, "insert">,
 ): ProfilingWriter => ({
   async insertBatch(input) {
     const batch = ProfilingEventBatchSchema.parse(input);
@@ -27,22 +29,11 @@ export const createProfilingWriter = (
         },
       },
     }));
-    const result = await client.insert({
+
+    await insertDeduplicated(client, {
       table: "profiling_events",
-      columns: ["id", "properties"],
       values: rows,
-      format: "JSONEachRow",
-      clickhouse_settings: {
-        async_insert: 1,
-        async_insert_deduplicate: 1,
-        insert_deduplication_token: batch.batch_id,
-        wait_for_async_insert: 1,
-      },
+      token: batch.batch_id,
     });
-    if (!result.executed) {
-      throw new Error(
-        `ClickHouse did not execute profiling batch ${batch.batch_id}`,
-      );
-    }
   },
 });

@@ -8,7 +8,8 @@ import {
   Registry,
 } from "prom-client";
 
-import { serviceLog, requestLogFields } from "./logging.js";
+import { requestLogFields, serviceLog } from "./logging.js";
+import type { DependencyChecks, DependencyStatus } from "./readiness.js";
 import type { ApiEnvironment } from "./types.js";
 
 const durationBuckets = [
@@ -18,11 +19,12 @@ const sizeBuckets = [
   128, 512, 2_048, 8_192, 32_768, 131_072, 524_288, 2_097_152,
 ];
 
-const normalizeRoute = (routePath: string | undefined): string =>
-  routePath && routePath.length > 0 ? routePath : "unmatched";
+export const routeLabel = (routePath: string): string =>
+  routePath || "unmatched";
 
 const parseContentLength = (value: string | null): number | null => {
   if (!value) return null;
+
   const parsed = Number(value);
   return Number.isSafeInteger(parsed) && parsed >= 0 ? parsed : null;
 };
@@ -30,7 +32,7 @@ const parseContentLength = (value: string | null): number | null => {
 export class ApiMetrics {
   readonly registry = new Registry();
 
-  private readonly previousDependencies = new Map<string, string>();
+  private readonly previousDependencies = new Map<string, DependencyStatus>();
   private readonly dependencyReady: Gauge<"dependency">;
   private readonly httpDuration: Histogram<"method" | "route" | "status_class">;
   private readonly httpExceptions: Counter<"method" | "route">;
@@ -106,78 +108,79 @@ export class ApiMetrics {
   ) => {
     const method = context.req.method;
     const started = process.hrtime.bigint();
+
     this.httpInFlight.inc({ method });
     try {
       await next();
-    } catch (error) {
-      this.httpExceptions.inc({
-        method,
-        route: normalizeRoute(context.req.routePath),
-      });
-      throw error;
     } finally {
-      const route = normalizeRoute(context.req.routePath);
-      const status = String(context.res.status);
-      const elapsedSeconds = Number(process.hrtime.bigint() - started) / 1e9;
-      this.httpRequests.inc({ method, route, status });
-      this.httpDuration.observe(
-        { method, route, status_class: `${status[0] ?? "0"}xx` },
-        elapsedSeconds,
-      );
       this.httpInFlight.dec({ method });
-      if (
-        !route.startsWith("/health/") &&
-        (context.get("user") || elapsedSeconds > 1 || Number(status) >= 400)
-      ) {
-        serviceLog(
-          Number(status) >= 500
-            ? "error"
-            : Number(status) >= 400 || elapsedSeconds > 1
-              ? "warn"
-              : "info",
-          "request_completed",
-          {
-            ...requestLogFields(context),
-            method,
-            route,
-            status: Number(status),
-            duration_ms: Math.round(elapsedSeconds * 1_000),
-          },
-        );
-      }
+    }
 
-      const requestSize = parseContentLength(
-        context.req.header("content-length") ?? null,
+    const route = routeLabel(context.req.routePath);
+    const status = String(context.res.status);
+    const elapsedSeconds = Number(process.hrtime.bigint() - started) / 1e9;
+
+    this.httpRequests.inc({ method, route, status });
+    this.httpDuration.observe(
+      { method, route, status_class: `${status[0] ?? "0"}xx` },
+      elapsedSeconds,
+    );
+    if (context.error && context.res.status >= 500) {
+      this.httpExceptions.inc({ method, route });
+    }
+
+    const failed = context.res.status >= 400;
+    const slow = elapsedSeconds > 1;
+    if (
+      !route.startsWith("/health/") &&
+      (context.get("sessionUser") || slow || failed)
+    ) {
+      serviceLog(
+        context.res.status >= 500 ? "error" : failed || slow ? "warn" : "info",
+        "request_completed",
+        {
+          ...requestLogFields(context),
+          method,
+          route,
+          status: context.res.status,
+          duration_ms: Math.round(elapsedSeconds * 1_000),
+        },
       );
-      if (requestSize !== null) {
-        this.httpRequestSize.observe({ method, route }, requestSize);
-      }
-      const responseSize = parseContentLength(
-        context.res.headers.get("content-length"),
-      );
-      if (responseSize !== null) {
-        this.httpResponseSize.observe({ method, route }, responseSize);
-      }
+    }
+
+    const requestSize = parseContentLength(
+      context.req.header("content-length") ?? null,
+    );
+    if (requestSize !== null) {
+      this.httpRequestSize.observe({ method, route }, requestSize);
+    }
+
+    const responseSize = parseContentLength(
+      context.res.headers.get("content-length"),
+    );
+    if (responseSize !== null) {
+      this.httpResponseSize.observe({ method, route }, responseSize);
     }
   };
 
-  recordDependencies(checks: Record<string, "up" | "down">): void {
-    for (const [dependency, status] of Object.entries(checks)) {
+  readonly recordDependencies = (checks: DependencyChecks): void => {
+    for (const [dependency, probe] of Object.entries(checks)) {
       const previous = this.previousDependencies.get(dependency);
-      if (
-        previous !== status &&
-        (previous !== undefined || status === "down")
-      ) {
-        serviceLog(
-          status === "down" ? "error" : "info",
-          status === "down" ? "dependency_down" : "dependency_recovered",
-          { dependency },
-        );
+      if (probe.status === "down" && previous !== "down") {
+        serviceLog("error", "dependency_down", {
+          dependency,
+          error: probe.error,
+        });
       }
-      this.previousDependencies.set(dependency, status);
-      this.dependencyReady.set({ dependency }, status === "up" ? 1 : 0);
+
+      if (probe.status === "up" && previous === "down") {
+        serviceLog("info", "dependency_recovered", { dependency });
+      }
+
+      this.previousDependencies.set(dependency, probe.status);
+      this.dependencyReady.set({ dependency }, probe.status === "up" ? 1 : 0);
     }
-  }
+  };
 
   async render(): Promise<string> {
     return this.registry.metrics();
@@ -186,14 +189,15 @@ export class ApiMetrics {
 
 export const startApiMetricsServer = (
   metrics: ApiMetrics,
-  hostname = "0.0.0.0",
-  port = 9_464,
+  hostname: string,
+  port: number,
 ): Server => {
   const server = createServer((request, response) => {
     if (request.method !== "GET" || request.url !== "/metrics") {
       response.writeHead(404).end();
       return;
     }
+
     void metrics.render().then(
       (body) => {
         response.writeHead(200, {
@@ -202,7 +206,10 @@ export const startApiMetricsServer = (
         });
         response.end(body);
       },
-      () => response.writeHead(500).end(),
+      (error: unknown) => {
+        serviceLog("error", "metrics_render_failed", { error });
+        response.writeHead(500).end();
+      },
     );
   });
   server.listen(port, hostname);

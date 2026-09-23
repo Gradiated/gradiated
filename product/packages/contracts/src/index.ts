@@ -16,7 +16,7 @@ export {
   type Organization,
 } from "./organizations.js";
 export { WizardKeyResponseSchema, type WizardKeyResponse } from "./wizard.js";
-export { ProblemSchema, problemContent, type Problem } from "./http/problem.js";
+export { ProblemSchema, problemContent, type Problem } from "./problem.js";
 export {
   ModelListSchema,
   ModelParameterDescriptorSchema,
@@ -44,28 +44,20 @@ export {
   type CreateTopUpCheckout,
 } from "./billing.js";
 export {
-  ChatCompletionRequestSchema,
   DeploymentStatusReportSchema,
-  GatewayAccountSchema,
-  GatewayCredentialSchema,
-  GatewayModelSchema,
   GatewayModelDeploymentSchema,
-  GatewayWorkspaceSchema,
+  ModelDeploymentReleaseSchema,
+  type DeploymentStatusReport,
+  type GatewayModelDeployment,
+  type ModelDeploymentRelease,
+} from "./deployments.js";
+export {
   GenerationPriceComponentSchema,
   GenerationPropertiesSchema,
   GenerationSettledSchema,
-  ModelDeploymentReleaseSchema,
-  type ChatCompletionRequest,
-  type DeploymentStatusReport,
-  type GatewayAccount,
-  type GatewayCredential,
-  type GatewayModel,
-  type GatewayModelDeployment,
-  type GatewayWorkspace,
   type GenerationProperties,
   type GenerationSettled,
-  type ModelDeploymentRelease,
-} from "./gateway.js";
+} from "./generations.js";
 export {
   ApiKeyListSchema,
   ApiKeyPathSchema,

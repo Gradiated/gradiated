@@ -13,35 +13,46 @@ use uuid::Uuid;
 
 use crate::{
     admission::{cleanup_cutoff, AdmissionError, AdmissionLease},
-    cache::LazyTtlCache,
+    cache::{LazyTtlCache, SingleFlight},
     deployment::DeploymentRuntimeStatus,
     domain::{GatewayAccount, GatewayCredential, GatewayModel, GatewayWorkspace},
     postgres_reader::{
         AccountRecord, BalanceTransaction, LedgerPosition, PostgresError, PostgresReader,
     },
-    valkey_auth::ValkeyIamCredentials,
+    valkey_auth::{ValkeyIamCredentials, ValkeyIamError},
     FinalizationError, FinalizationOutcome, GatewayConfig, GenerationProperties, ValkeyIamConfig,
 };
 
-const ADMIT_GENERATION_V1: &str = include_str!("scripts/admit_generation_v1.lua");
-const FINALIZE_GENERATION_V1: &str = include_str!("scripts/finalize_generation_v1.lua");
-const ENSURE_ACCOUNT_V1: &str = include_str!("scripts/ensure_account_v1.lua");
-const APPLY_BALANCE_TRANSACTIONS_V1: &str =
-    include_str!("scripts/apply_balance_transactions_v1.lua");
+const ADMIT_GENERATION_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/admit_generation_v1.lua")
+);
+const FINALIZE_GENERATION_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/finalize_generation_v1.lua")
+);
+const ENSURE_ACCOUNT_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/ensure_account_v1.lua")
+);
+const APPLY_BALANCE_TRANSACTIONS_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/apply_balance_transactions_v1.lua")
+);
+const MARK_ACCOUNT_REFRESHED_V1: &str = concat!(
+    include_str!("scripts/prelude.lua"),
+    include_str!("scripts/mark_account_refreshed_v1.lua")
+);
 
 /// Every settlement key shares this hash tag, so one script can touch them all.
 const SETTLEMENT_HASH_TAG: &str = "settlement-0";
-/// One request never applies more than this many ledger entries; the next one
-/// continues from the watermark this batch advanced.
-const BALANCE_TRANSACTION_BATCH: i64 = 500;
+const BALANCE_TRANSACTION_BATCH: u16 = 500;
 /// Deployment statuses are pushed by the runtimes and expire on their own, so
 /// this only stops one request from reading the same key repeatedly.
 const STATUS_CACHE_TTL: Duration = Duration::from_secs(1);
-/// Status keys come from requests, so the contract caps their count.
+/// Far above the number of live releases; it bounds entries left by retired ones.
 const STATUS_CACHE_CAPACITY: usize = 10_000;
 
-/// The state the gateway serves from: identity and catalog records, runtime
-/// statuses, and the admission and settlement of generations.
 #[async_trait]
 pub trait ServingState: Send + Sync {
     async fn credential(
@@ -92,8 +103,10 @@ pub struct ValkeyServingState {
     finalization_script: Script,
     ensure_account_script: Script,
     apply_balance_script: Script,
+    mark_refreshed_script: Script,
     database: PostgresReader,
     record_cache_ttl: Duration,
+    record_loads: SingleFlight<String>,
     status_cache: LazyTtlCache<String, Vec<DeploymentRuntimeStatus>>,
 }
 
@@ -114,9 +127,7 @@ impl ValkeyServingState {
         database: PostgresReader,
         record_cache_ttl: Duration,
     ) -> Result<Self, ServingStateError> {
-        let credentials = ValkeyIamCredentials::start(config)
-            .await
-            .map_err(|error| ServingStateError::Iam(error.to_string()))?;
+        let credentials = ValkeyIamCredentials::start(config).await?;
         let client = ClusterClientBuilder::new(vec![url])
             .set_credentials_provider(credentials)
             .build()?;
@@ -135,8 +146,10 @@ impl ValkeyServingState {
             finalization_script: Script::new(FINALIZE_GENERATION_V1),
             ensure_account_script: Script::new(ENSURE_ACCOUNT_V1),
             apply_balance_script: Script::new(APPLY_BALANCE_TRANSACTIONS_V1),
+            mark_refreshed_script: Script::new(MARK_ACCOUNT_REFRESHED_V1),
             database,
             record_cache_ttl,
+            record_loads: SingleFlight::default(),
             status_cache: LazyTtlCache::new(STATUS_CACHE_TTL, STATUS_CACHE_CAPACITY),
         };
         state.ping().await?;
@@ -159,7 +172,9 @@ impl ValkeyServingState {
 
     /// Reads a record from the Valkey cache, then from PostgreSQL. A record that
     /// PostgreSQL does not have is never cached, so a key or model created a moment
-    /// ago is visible at once.
+    /// ago is visible at once. Every lookup of an unknown key therefore reaches
+    /// PostgreSQL; caching absence would not bound a flood of distinct random keys,
+    /// so that bound belongs in front of this layer.
     async fn read_through<T, F, Fut>(
         &self,
         kind: &'static str,
@@ -171,11 +186,42 @@ impl ValkeyServingState {
         F: FnOnce() -> Fut,
         Fut: Future<Output = Result<Option<String>, PostgresError>>,
     {
-        let cached: Option<String> = self.query(redis::cmd("GET").arg(&key)).await?;
-        if let Some(cached) = cached {
-            return parse_record(kind, &cached).map(Some);
+        if let Some(cached) = self.cached_record(kind, &key).await? {
+            return Ok(Some(cached));
         }
 
+        self.record_loads
+            .run(key.clone(), || async {
+                if let Some(cached) = self.cached_record(kind, &key).await? {
+                    return Ok(Some(cached));
+                }
+
+                self.load_record(kind, &key, load).await
+            })
+            .await
+    }
+
+    async fn cached_record<T: DeserializeOwned>(
+        &self,
+        kind: &'static str,
+        key: &str,
+    ) -> Result<Option<T>, ServingStateError> {
+        let cached: Option<String> = self.query(redis::cmd("GET").arg(key)).await?;
+
+        cached.map(|cached| parse_record(kind, &cached)).transpose()
+    }
+
+    async fn load_record<T, F, Fut>(
+        &self,
+        kind: &'static str,
+        key: &str,
+        load: F,
+    ) -> Result<Option<T>, ServingStateError>
+    where
+        T: DeserializeOwned,
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = Result<Option<String>, PostgresError>>,
+    {
         let Some(record) = load().await? else {
             return Ok(None);
         };
@@ -187,7 +233,7 @@ impl ValkeyServingState {
         let _: () = self
             .query(
                 redis::cmd("SET")
-                    .arg(&key)
+                    .arg(key)
                     .arg(&record)
                     .arg("EX")
                     .arg(ttl_seconds),
@@ -201,8 +247,37 @@ impl ValkeyServingState {
         Ok(self.query(redis::cmd("HGETALL").arg(key)).await?)
     }
 
+    async fn current_account(
+        &self,
+        keys: &SettlementKeys,
+    ) -> Result<Option<GatewayAccount>, ServingStateError> {
+        let fields = self.account_hash(&keys.account).await?;
+        if !self.account_metadata_is_current(&fields) {
+            return Ok(None);
+        }
+
+        account_from_hash(fields).map(Some)
+    }
+
+    async fn refresh_account(
+        &self,
+        keys: &SettlementKeys,
+        organization_id: Uuid,
+    ) -> Result<Option<GatewayAccount>, ServingStateError> {
+        let Some(record) = self.database.account(organization_id).await? else {
+            return Ok(None);
+        };
+
+        self.ensure_account(keys, organization_id, &record).await?;
+        self.apply_balance_transactions(keys, organization_id)
+            .await?;
+        self.mark_account_refreshed(keys).await?;
+
+        account_from_hash(self.account_hash(&keys.account).await?).map(Some)
+    }
+
     fn account_metadata_is_current(&self, fields: &HashMap<String, String>) -> bool {
-        let ttl = self.record_cache_ttl.as_millis() as i64;
+        let ttl = i64::try_from(self.record_cache_ttl.as_millis()).unwrap_or(i64::MAX);
 
         fields
             .get("metadata_refreshed_at")
@@ -216,17 +291,35 @@ impl ValkeyServingState {
         organization_id: Uuid,
         record: &AccountRecord,
     ) -> Result<(), ServingStateError> {
-        let seeded_at = record.balance_updated_at;
+        let seed = &record.seed;
+        let replayed_ids: Vec<String> = seed
+            .replay_window_entries
+            .iter()
+            .map(Uuid::to_string)
+            .collect();
+
         let _: i64 = self
             .ensure_account_script
             .key(&keys.account)
+            .key(&keys.applied_balance_transactions)
             .arg(organization_id.to_string())
             .arg(&record.organization_kind)
             .arg(&record.organization_status)
             .arg(&record.billing_mode)
-            .arg(record.balance)
-            .arg(seeded_at.timestamp_millis())
-            .arg(LedgerPosition::after_balance_at(seeded_at).id.to_string())
+            .arg(seed.balance)
+            .arg(seed.ledger_head.created_at.timestamp_millis())
+            .arg(seed.ledger_head.id.to_string())
+            .arg(replayed_ids)
+            .invoke_async(&mut self.connection.clone())
+            .await?;
+
+        Ok(())
+    }
+
+    async fn mark_account_refreshed(&self, keys: &SettlementKeys) -> Result<(), ServingStateError> {
+        let _: i64 = self
+            .mark_refreshed_script
+            .key(&keys.account)
             .arg(Utc::now().timestamp_millis())
             .invoke_async(&mut self.connection.clone())
             .await?;
@@ -234,32 +327,60 @@ impl ValkeyServingState {
         Ok(())
     }
 
-    /// Moves ledger entries created after the seed into the operational balance.
-    /// Nothing else applies them, so a customer's top-up lands on their next
-    /// request, which is the only moment the balance has to be right.
+    /// Moves ledger entries created after the watermark into the operational
+    /// balance. Nothing else applies them, and the metadata is marked fresh only
+    /// after this succeeds, so an entry reaches the balance within one
+    /// record-cache TTL.
     async fn apply_balance_transactions(
         &self,
         keys: &SettlementKeys,
         organization_id: Uuid,
     ) -> Result<(), ServingStateError> {
-        let (seeded_at, seeded_id): (Option<String>, Option<String>) = self
-            .query(
+        let mut cursor = self.replay_cursor(keys).await?;
+
+        loop {
+            let transactions = self
+                .database
+                .balance_transactions_after(organization_id, cursor, BALANCE_TRANSACTION_BATCH)
+                .await?;
+            self.apply_ledger_batch(keys, &transactions).await?;
+
+            match transactions.last() {
+                Some(last) if transactions.len() == usize::from(BALANCE_TRANSACTION_BATCH) => {
+                    cursor = last.position();
+                }
+                _ => return Ok(()),
+            }
+        }
+    }
+
+    async fn replay_cursor(
+        &self,
+        keys: &SettlementKeys,
+    ) -> Result<LedgerPosition, ServingStateError> {
+        let (seeded_at, seeded_id, floor_at): (Option<String>, Option<String>, Option<String>) =
+            self.query(
                 redis::cmd("HMGET")
                     .arg(&keys.account)
                     .arg("balance_seeded_at")
-                    .arg("balance_seeded_id"),
+                    .arg("balance_seeded_id")
+                    .arg("balance_replay_floor_at"),
             )
             .await?;
-        let watermark = ledger_position(seeded_at.as_deref(), seeded_id.as_deref())
-            .ok_or(ServingStateError::MissingBalanceWatermark)?;
 
-        let transactions = self
-            .database
-            .balance_transactions_after(organization_id, watermark, BALANCE_TRANSACTION_BATCH)
-            .await?;
+        replay_cursor(
+            seeded_at.as_deref(),
+            seeded_id.as_deref(),
+            floor_at.as_deref(),
+        )
+        .ok_or(ServingStateError::InvalidBalanceWatermark)
+    }
 
-        // The cursor is the last entry applied, not the last timestamp seen, so a
-        // batch that ends between two entries sharing a timestamp resumes correctly.
+    async fn apply_ledger_batch(
+        &self,
+        keys: &SettlementKeys,
+        transactions: &[BalanceTransaction],
+    ) -> Result<(), ServingStateError> {
         let Some(highest) = transactions.last().map(BalanceTransaction::position) else {
             return Ok(());
         };
@@ -270,11 +391,12 @@ impl ValkeyServingState {
             .key(&keys.applied_balance_transactions)
             .arg(highest.created_at.timestamp_millis())
             .arg(highest.id.to_string());
-        for transaction in &transactions {
+        for transaction in transactions {
             script
                 .arg(transaction.id.to_string())
                 .arg(transaction.amount);
         }
+
         let _: i64 = script.invoke_async(&mut self.connection.clone()).await?;
 
         Ok(())
@@ -394,25 +516,19 @@ impl ServingState for ValkeyServingState {
         organization_id: Uuid,
     ) -> Result<Option<GatewayAccount>, ServingStateError> {
         let keys = SettlementKeys::new(organization_id);
-        let fields = self.account_hash(&keys.account).await?;
-        if !fields.is_empty() && self.account_metadata_is_current(&fields) {
-            return account_from_hash(fields).map(Some);
+        if let Some(account) = self.current_account(&keys).await? {
+            return Ok(Some(account));
         }
 
-        let Some(record) = self.database.account(organization_id).await? else {
-            return Ok(None);
-        };
+        self.record_loads
+            .run(keys.account.clone(), || async {
+                if let Some(account) = self.current_account(&keys).await? {
+                    return Ok(Some(account));
+                }
 
-        self.ensure_account(&keys, organization_id, &record).await?;
-        self.apply_balance_transactions(&keys, organization_id)
-            .await?;
-
-        let fields = self.account_hash(&keys.account).await?;
-        if fields.is_empty() {
-            return Ok(None);
-        }
-
-        account_from_hash(fields).map(Some)
+                self.refresh_account(&keys, organization_id).await
+            })
+            .await
     }
 
     async fn model(&self, model_id: &str) -> Result<Option<GatewayModel>, ServingStateError> {
@@ -480,15 +596,26 @@ impl ServingState for ValkeyServingState {
         admitted_at: DateTime<Utc>,
         config: &GatewayConfig,
     ) -> Result<AdmissionLease, AdmissionError> {
-        self.admit_with_keys(
-            generation_id,
-            organization_id,
-            received_at,
-            admitted_at,
-            config,
-            &SettlementKeys::new(organization_id),
-        )
-        .await
+        let result = self
+            .admit_with_keys(
+                generation_id,
+                organization_id,
+                received_at,
+                admitted_at,
+                config,
+                &SettlementKeys::new(organization_id),
+            )
+            .await;
+
+        if let Err(error) = &result {
+            if error.is_serving_state_failure() {
+                crate::diagnostics::limited_warn!(%organization_id, phase = "admission",
+                    error_code = error.diagnostic_code(), redis_code = error.redis_code(),
+                    "admission failed");
+            }
+        }
+
+        result
     }
 
     async fn finalize(
@@ -507,8 +634,7 @@ impl ServingState for ValkeyServingState {
     }
 }
 
-/// The Valkey keys that admission and settlement touch for one organization.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 struct SettlementKeys {
     account: String,
     inflight: String,
@@ -533,19 +659,37 @@ impl SettlementKeys {
     }
 }
 
-/// The ledger position the account hash already includes. A hash seeded before
-/// entry IDs were recorded includes every entry at its timestamp.
 fn ledger_position(seeded_at: Option<&str>, seeded_id: Option<&str>) -> Option<LedgerPosition> {
-    let created_at = DateTime::from_timestamp_millis(seeded_at?.parse().ok()?)?;
-    let id = seeded_id
-        .and_then(|value| value.parse().ok())
-        .unwrap_or_else(Uuid::max);
-
-    Some(LedgerPosition { created_at, id })
+    Some(LedgerPosition {
+        created_at: epoch_millis(seeded_at?)?,
+        id: seeded_id?.parse().ok()?,
+    })
 }
 
-/// The hash also carries the gateway's own bookkeeping, which `GatewayAccount`
-/// ignores because it does not declare those fields.
+/// A replay floor excludes its whole millisecond, which a seed that recorded no
+/// replay window included entirely.
+fn replay_cursor(
+    seeded_at: Option<&str>,
+    seeded_id: Option<&str>,
+    floor_at: Option<&str>,
+) -> Option<LedgerPosition> {
+    let cursor = ledger_position(seeded_at, seeded_id)?.replay_cursor();
+    let Some(floor_at) = floor_at else {
+        return Some(cursor);
+    };
+
+    let floor = LedgerPosition {
+        created_at: epoch_millis(floor_at)?,
+        id: Uuid::max(),
+    };
+
+    Some(cursor.max(floor))
+}
+
+fn epoch_millis(value: &str) -> Option<DateTime<Utc>> {
+    DateTime::from_timestamp_millis(value.parse().ok()?)
+}
+
 fn account_from_hash(fields: HashMap<String, String>) -> Result<GatewayAccount, ServingStateError> {
     GatewayAccount::from_hash(fields)
         .map_err(|source| ServingStateError::MalformedAccount { source })
@@ -611,20 +755,27 @@ pub enum ServingStateError {
     #[error("GatewayModel properties are invalid: {0}")]
     InvalidModelProperties(#[from] crate::model::ModelPropertiesError),
     #[error("Valkey IAM authentication failed: {0}")]
-    Iam(String),
+    Iam(#[from] ValkeyIamError),
     #[error("credential digest is not hexadecimal")]
     MalformedDigest,
     #[error("PostgreSQL read failed: {0}")]
     Postgres(#[from] PostgresError),
-    #[error("gateway account has no balance watermark")]
-    MissingBalanceWatermark,
+    #[error("gateway account balance watermark is missing or malformed")]
+    InvalidBalanceWatermark,
 }
 
 impl ServingStateError {
     /// A bounded classification; the underlying errors can contain private record data.
     pub(crate) fn diagnostic_code(&self) -> &'static str {
         match self {
-            Self::Redis(_) => "redis",
+            Self::Redis(error) => match error.code() {
+                Some(
+                    "ENSURE_ACCOUNT_V1"
+                    | "APPLY_BALANCE_TRANSACTIONS_V1"
+                    | "MARK_ACCOUNT_REFRESHED_V1",
+                ) => "account_script_rejected",
+                _ => "redis",
+            },
             Self::UnexpectedPingResponse => "unexpected_ping",
             Self::MalformedRecord { .. } => "malformed_record",
             Self::MalformedAccount { .. } => "malformed_account",
@@ -633,7 +784,7 @@ impl ServingStateError {
             Self::Iam(_) => "iam",
             Self::MalformedDigest => "malformed_digest",
             Self::Postgres(_) => "postgres",
-            Self::MissingBalanceWatermark => "missing_balance_watermark",
+            Self::InvalidBalanceWatermark => "invalid_balance_watermark",
         }
     }
 

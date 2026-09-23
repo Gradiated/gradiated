@@ -1,6 +1,6 @@
-/** Backend diagnostics contain stable codes and stack locations, never raw error
- * messages, request bodies, headers, query strings, or customer names/emails.
- * UUID resource identifiers are allowed. */
+// Backend diagnostics contain stable codes and stack locations, never raw error
+// messages, request bodies, headers, query strings, or customer names or emails.
+// UUID resource identifiers are allowed.
 export type ServiceLogFields = {
   request_id?: string;
   organization_id?: string | undefined;

@@ -7,16 +7,11 @@
       "outputs": ["dist/**"]
     },
     "api:generate": {
-      "cache": false,
-      "outputs": ["src/api/schema.ts"]
+      "cache": false
     },
     "check": {
       "dependsOn": ["^build", "openapi:check"],
       "outputs": []
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true
     },
     "openapi:check": {
       "dependsOn": ["^build"],

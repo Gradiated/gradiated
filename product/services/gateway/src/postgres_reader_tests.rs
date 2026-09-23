@@ -41,45 +41,144 @@ async fn every_query_runs_against_the_local_schema() {
         .is_empty());
 }
 
+struct Tenant {
+    organization_id: Uuid,
+    workspace_id: Uuid,
+    digest: Vec<u8>,
+    model_id: String,
+}
+
+impl Tenant {
+    async fn insert(reader: &PostgresReader) -> Self {
+        let organization_id = Uuid::now_v7();
+        let workspace_id = Uuid::now_v7();
+        let digest = [*organization_id.as_bytes(), *workspace_id.as_bytes()].concat();
+        let model = crate::test_support::model(true);
+        let record = crate::test_support::model_record(true);
+        let model_id = format!("reader-test/{organization_id}");
+        let deployment = &model.deployments[0];
+        let client = reader.client().await.unwrap();
+
+        client
+            .batch_execute(&format!(
+                "insert into organizations (id, kind, name, status)
+                 values ('{organization_id}', 'customer', 'reader-test', 'active');
+                 insert into billing_accounts (organization_id, mode, balance)
+                 values ('{organization_id}', 'prepaid', 1000);
+                 insert into workspaces (id, organization_id, name, is_default)
+                 values ('{workspace_id}', '{organization_id}', 'Default', true);"
+            ))
+            .await
+            .unwrap();
+        client
+            .execute(
+                "insert into api_keys (id, organization_id, workspace_id, name, digest)
+                 values ($1, $2, $3, 'reader-test', $4)",
+                &[&Uuid::now_v7(), &organization_id, &workspace_id, &digest],
+            )
+            .await
+            .unwrap();
+        client
+            .execute(
+                "insert into models (id, name, status, properties)
+                 values ($1, $2, 'available', $3::text::jsonb)",
+                &[&model_id, &model.name, &record["properties"].to_string()],
+            )
+            .await
+            .unwrap();
+        client
+            .execute(
+                "insert into model_deployments
+                   (id, model_id, status, provider, region, fault_domain, service_url, release)
+                 values ($1, $2, 'available', $3, $4, $5, $6, $7::text::jsonb)",
+                &[
+                    &Uuid::now_v7(),
+                    &model_id,
+                    &deployment.provider,
+                    &deployment.region,
+                    &deployment.fault_domain,
+                    &deployment.service_url,
+                    &serde_json::to_string(&deployment.release).unwrap(),
+                ],
+            )
+            .await
+            .unwrap();
+
+        Self {
+            organization_id,
+            workspace_id,
+            digest,
+            model_id,
+        }
+    }
+
+    async fn remove(self, reader: &PostgresReader) {
+        let client = reader.client().await.unwrap();
+
+        client
+            .execute(
+                "delete from model_deployments where model_id = $1",
+                &[&self.model_id],
+            )
+            .await
+            .unwrap();
+        client
+            .execute("delete from models where id = $1", &[&self.model_id])
+            .await
+            .unwrap();
+        client
+            .batch_execute(&format!(
+                "delete from api_keys where organization_id = '{0}';
+                 delete from workspaces where organization_id = '{0}';
+                 delete from billing_accounts where organization_id = '{0}';
+                 delete from organizations where id = '{0}';",
+                self.organization_id
+            ))
+            .await
+            .unwrap();
+    }
+}
+
 #[tokio::test]
 #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
 async fn a_model_deserializes_into_the_type_the_gateway_serves() {
     let reader = local_reader();
-    let model_ids = reader.model_ids().await.expect("models should list");
-    let model_id = model_ids
-        .first()
-        .expect("the local catalog should hold at least one model");
+    let tenant = Tenant::insert(&reader).await;
 
+    assert!(reader.model_ids().await.unwrap().contains(&tenant.model_id));
     let record = reader
-        .model_json(model_id)
+        .model_json(&tenant.model_id)
         .await
         .unwrap()
-        .expect("the listed model should be readable");
+        .expect("the inserted model should be readable");
     let model: GatewayModel =
         serde_json::from_str(&record).expect("the query should build the served shape");
 
-    assert_eq!(&model.id, model_id);
+    assert_eq!(model.id, tenant.model_id);
+    assert_eq!(model.deployments.len(), 1);
     model
         .properties
         .validate_for_serving()
         .expect("a catalog model should be servable");
+
+    tenant.remove(&reader).await;
 }
 
 #[tokio::test]
 #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
 async fn a_credential_and_its_workspace_deserialize_together() {
     let reader = local_reader();
-    let Some(digest) = reader.any_credential_digest().await.unwrap() else {
-        panic!("the local database should hold at least one API key");
-    };
+    let tenant = Tenant::insert(&reader).await;
 
     let record = reader
-        .credential_json(&digest)
+        .credential_json(&tenant.digest)
         .await
         .unwrap()
         .expect("the digest should match its own row");
     let credential: GatewayCredential =
         serde_json::from_str(&record).expect("the query should build the served shape");
+    assert_eq!(credential.workspace_id, tenant.workspace_id);
+    assert_eq!(credential.organization_id, tenant.organization_id);
 
     let record = reader
         .workspace_json(credential.workspace_id)
@@ -88,16 +187,17 @@ async fn a_credential_and_its_workspace_deserialize_together() {
         .expect("a key's workspace should exist");
     let workspace: GatewayWorkspace =
         serde_json::from_str(&record).expect("the query should build the served shape");
-
-    assert_eq!(workspace.workspace_id, credential.workspace_id);
-    assert_eq!(workspace.organization_id, credential.organization_id);
+    assert_eq!(workspace.workspace_id, tenant.workspace_id);
+    assert_eq!(workspace.organization_id, tenant.organization_id);
 
     let account = reader
-        .account(credential.organization_id)
+        .account(tenant.organization_id)
         .await
         .unwrap()
         .expect("a key's organization should have a billing account");
-    assert!(!account.organization_status.is_empty());
+    assert_eq!(account.organization_status, "active");
+
+    tenant.remove(&reader).await;
 }
 
 /// The repository's connection strings use libpq's `verify-full`, which

@@ -1,49 +1,79 @@
 #include "supervise.h"
 
+#include <unistd.h>
+
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <unistd.h>
+#include <string_view>
 #include <vector>
 
 namespace {
 namespace fs = std::filesystem;
-void require(bool ok, const char *message) {
-  if (!ok) {
-    throw std::runtime_error(message);
-  }
+
+constexpr auto host_base_id_path = "/etc/gradiated/base-id";
+constexpr std::size_t max_base_id_length = 128;
+
+[[noreturn]] void fail(const std::string &message) {
+  throw std::runtime_error(message);
 }
-std::string read_id(const fs::path &path) {
+
+std::string read_base_id(const fs::path &path) {
   std::ifstream file(path);
   std::string value;
   if (!std::getline(file, value)) {
-    throw std::runtime_error("Cannot read base ID: " + path.string());
+    fail("Cannot read base ID: " + path.string());
   }
-  require(!value.empty() && value.size() <= 128, "Invalid base ID");
+
+  if (value.empty() || value.size() > max_base_id_length) {
+    fail("Invalid base ID in " + path.string());
+  }
+
   return value;
+}
+
+std::string verified_entrypoint(const fs::path &root) {
+  const auto bundle_id = read_base_id(root / "base-id");
+  const auto host_id = read_base_id(host_base_id_path);
+  if (bundle_id != host_id) {
+    fail("Bundle base ID " + bundle_id + " does not match host base ID " + host_id);
+  }
+
+  const auto entry = root / "entrypoint";
+  if (!fs::is_regular_file(fs::symlink_status(entry)) || access(entry.c_str(), X_OK) != 0) {
+    fail("Bundle entrypoint must be an executable regular file");
+  }
+
+  return entry.string();
 }
 } // namespace
 
 int main(int argc, char **argv) {
   try {
-    require(argc >= 2, "Usage: runtime-launch RUNTIME_DIRECTORY [-- ARGS...]");
-    require(argc == 2 || std::string(argv[2]) == "--", "Expected -- before runtime arguments");
+    if (argc < 2) {
+      fail("Usage: runtime-launch RUNTIME_DIRECTORY [-- ARGS...]");
+    }
+
+    if (argc > 2 && std::string_view(argv[2]) != "--") {
+      fail("Expected -- before runtime arguments");
+    }
+
     const auto root = fs::canonical(argv[1]);
-    require(read_id(root / "base-id") == read_id("/etc/gradiated/base-id"),
-            "Bundle base ID mismatch");
-    const auto entry = root / "entrypoint";
-    require(fs::is_regular_file(fs::symlink_status(entry)) && access(entry.c_str(), X_OK) == 0,
-            "Bundle entrypoint must be an executable regular file");
-    require(setenv("GRADIATED_RUNTIME_ROOT", root.c_str(), 1) == 0, "Cannot set runtime root");
-    std::vector<char *> args{const_cast<char *>(entry.c_str())};
+    auto entry = verified_entrypoint(root);
+    if (setenv("GRADIATED_RUNTIME_ROOT", root.c_str(), 1) != 0) {
+      fail("Cannot set runtime root");
+    }
+
+    std::vector<char *> args{entry.data()};
     for (int index = 3; index < argc; ++index) {
       args.push_back(argv[index]);
     }
     args.push_back(nullptr);
-    return supervise(args.data());
+
+    return supervise(args.data(), default_shutdown_grace);
   } catch (const std::exception &error) {
     std::cerr << "runtime-launch: " << error.what() << '\n';
     return 1;

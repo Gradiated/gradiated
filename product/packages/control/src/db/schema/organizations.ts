@@ -24,6 +24,44 @@ import type {
 import { users } from "./auth.js";
 import { instances } from "./instances.js";
 
+export const ORGANIZATION_KINDS = ["customer", "distribution_channel"] as const;
+export const ORGANIZATION_STATUSES = ["active", "suspended"] as const;
+export const ORGANIZATION_ROLES = [
+  "owner",
+  "admin",
+  "billing",
+  "member",
+] as const;
+export const MEMBER_STATUSES = ["active", "suspended"] as const;
+export const BILLING_MODES = ["prepaid", "invoiced"] as const;
+export const MODEL_STATUSES = ["available", "unavailable", "retired"] as const;
+export const DEPLOYMENT_STATUSES = [
+  "available",
+  "unavailable",
+  "draining",
+] as const;
+export const BALANCE_TRANSACTION_TYPES = [
+  "topup",
+  "usage",
+  "refund",
+  "chargeback",
+  "credit",
+  "payment",
+  "adjustment",
+] as const;
+export const BALANCE_SOURCE_TYPES = [
+  "stripe_checkout_session",
+  "stripe_refund",
+  "stripe_dispute",
+  "generation_settlement_batch",
+  "openrouter_payment",
+  "operator",
+] as const;
+
+export type OrganizationKind = (typeof ORGANIZATION_KINDS)[number];
+export type OrganizationStatus = (typeof ORGANIZATION_STATUSES)[number];
+export type OrganizationRole = (typeof ORGANIZATION_ROLES)[number];
+
 const bytea = customType<{ data: Buffer }>({
   dataType() {
     return "bytea";
@@ -34,9 +72,9 @@ export const organizations = pgTable(
   "organizations",
   {
     id: uuid("id").primaryKey(),
-    kind: text("kind").notNull(),
+    kind: text("kind", { enum: ORGANIZATION_KINDS }).notNull(),
     name: text("name").notNull(),
-    status: text("status").notNull(),
+    status: text("status", { enum: ORGANIZATION_STATUSES }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -65,8 +103,8 @@ export const organizationMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "restrict" }),
-    role: text("role").notNull(),
-    status: text("status").notNull(),
+    role: text("role", { enum: ORGANIZATION_ROLES }).notNull(),
+    status: text("status", { enum: MEMBER_STATUSES }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -176,7 +214,7 @@ export const billingAccounts = pgTable(
     organizationId: uuid("organization_id")
       .primaryKey()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    mode: text("mode").notNull(),
+    mode: text("mode", { enum: BILLING_MODES }).notNull(),
     stripeCustomerId: text("stripe_customer_id"),
     balance: bigint("balance", { mode: "bigint" }).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -197,15 +235,13 @@ export const billingAccounts = pgTable(
   ],
 );
 
-export type ModelPropertiesRecord = ModelProperties;
-
 export const models = pgTable(
   "models",
   {
     id: text("id").primaryKey(),
     name: text("name").notNull(),
-    status: text("status").notNull(),
-    properties: jsonb("properties").$type<ModelPropertiesRecord>().notNull(),
+    status: text("status", { enum: MODEL_STATUSES }).notNull(),
+    properties: jsonb("properties").$type<ModelProperties>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -229,8 +265,6 @@ export const models = pgTable(
   ],
 );
 
-export type ModelDeploymentReleaseRecord = ModelDeploymentRelease;
-
 export const modelDeployments = pgTable(
   "model_deployments",
   {
@@ -241,12 +275,12 @@ export const modelDeployments = pgTable(
     modelId: text("model_id")
       .notNull()
       .references(() => models.id, { onDelete: "restrict" }),
-    status: text("status").notNull(),
+    status: text("status", { enum: DEPLOYMENT_STATUSES }).notNull(),
     provider: text("provider").notNull(),
     region: text("region").notNull(),
     faultDomain: text("fault_domain").notNull(),
     serviceUrl: text("service_url").notNull(),
-    release: jsonb("release").$type<ModelDeploymentReleaseRecord>().notNull(),
+    release: jsonb("release").$type<ModelDeploymentRelease>().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -294,10 +328,10 @@ export const balanceTransactions = pgTable(
     organizationId: uuid("organization_id")
       .notNull()
       .references(() => organizations.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
+    type: text("type", { enum: BALANCE_TRANSACTION_TYPES }).notNull(),
     amount: bigint("amount", { mode: "bigint" }).notNull(),
     balanceAfter: bigint("balance_after", { mode: "bigint" }).notNull(),
-    sourceType: text("source_type").notNull(),
+    sourceType: text("source_type", { enum: BALANCE_SOURCE_TYPES }).notNull(),
     sourceId: text("source_id").notNull(),
     periodStart: timestamp("period_start", {
       withTimezone: true,

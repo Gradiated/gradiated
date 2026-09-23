@@ -9,7 +9,6 @@ plugin "raw_exec" {
 }
 
 client {
-  # This local test does not use cloud instance metadata.
   options = {
     "fingerprint.denylist" = "env_aws,env_gce,env_azure,env_digitalocean"
   }

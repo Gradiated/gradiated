@@ -12,17 +12,59 @@ export type ValkeyEnvironment = {
   VALKEY_URL: string;
 };
 
+type IamSettings = {
+  cacheName: string;
+  region: string;
+  user: string;
+};
+
+// ElastiCache IAM tokens are valid for at most 15 minutes.
+const IAM_TOKEN_TTL_SECONDS = 900;
+
+const IAM_VARIABLES = [
+  "VALKEY_IAM_CACHE_NAME",
+  "VALKEY_IAM_REGION",
+  "VALKEY_IAM_USER",
+] as const;
+
+type ValkeyConnection =
+  | { kind: "url"; url: string }
+  | { kind: "iam"; endpoint: URL; iam: IamSettings };
+
+const resolveConnection = (
+  environment: ValkeyEnvironment,
+): ValkeyConnection => {
+  const {
+    VALKEY_IAM_CACHE_NAME: cacheName,
+    VALKEY_IAM_REGION: region,
+    VALKEY_IAM_USER: user,
+  } = environment;
+
+  if (!cacheName && !region && !user) {
+    return { kind: "url", url: environment.VALKEY_URL };
+  }
+
+  if (!cacheName || !region || !user) {
+    const missing = IAM_VARIABLES.filter((name) => !environment[name]);
+
+    throw new Error(
+      `Valkey IAM settings are incomplete; missing ${missing.join(", ")}`,
+    );
+  }
+
+  const endpoint = new URL(environment.VALKEY_URL);
+
+  if (endpoint.protocol !== "rediss:") {
+    throw new Error("Valkey IAM authentication requires a rediss:// URL");
+  }
+
+  return { kind: "iam", endpoint, iam: { cacheName, region, user } };
+};
+
 const createIamAuthToken = async (
-  cacheName: string,
-  region: string,
-  user: string,
+  signer: SignatureV4,
+  { cacheName, user }: IamSettings,
 ): Promise<string> => {
-  const signer = new SignatureV4({
-    credentials: defaultProvider(),
-    region,
-    service: "elasticache",
-    sha256: Hash.bind(null, "sha256"),
-  });
   const request = new HttpRequest({
     method: "GET",
     protocol: "http:",
@@ -35,44 +77,41 @@ const createIamAuthToken = async (
       User: user,
     },
   });
+  const presigned = await signer.presign(request, {
+    expiresIn: IAM_TOKEN_TTL_SECONDS,
+  });
 
-  return formatUrl(await signer.presign(request, { expiresIn: 900 })).replace(
-    "http://",
-    "",
-  );
+  return formatUrl(presigned).replace(/^http:\/\//, "");
 };
 
 export const createValkeyClient = (
   environment: ValkeyEnvironment,
 ): RedisClientType => {
-  if (
-    !environment.VALKEY_IAM_CACHE_NAME ||
-    !environment.VALKEY_IAM_REGION ||
-    !environment.VALKEY_IAM_USER
-  ) {
-    return createClient({ url: environment.VALKEY_URL });
+  const connection = resolveConnection(environment);
+
+  if (connection.kind === "url") {
+    return createClient({ url: connection.url });
   }
 
-  const endpoint = new URL(environment.VALKEY_URL);
-  const cacheName = environment.VALKEY_IAM_CACHE_NAME;
-  const region = environment.VALKEY_IAM_REGION;
-  const user = environment.VALKEY_IAM_USER;
-  const socket =
-    endpoint.protocol === "rediss:"
-      ? {
-          host: endpoint.hostname,
-          port: Number(endpoint.port || 6379),
-          tls: true as const,
-        }
-      : { host: endpoint.hostname, port: Number(endpoint.port || 6379) };
+  const { endpoint, iam } = connection;
+  const signer = new SignatureV4({
+    credentials: defaultProvider(),
+    region: iam.region,
+    service: "elasticache",
+    sha256: Hash.bind(null, "sha256"),
+  });
 
   return createClient({
-    socket,
+    socket: {
+      host: endpoint.hostname,
+      port: Number(endpoint.port || 6379),
+      tls: true,
+    },
     credentialsProvider: {
       type: "async-credentials-provider",
       credentials: async () => ({
-        username: user,
-        password: await createIamAuthToken(cacheName, region, user),
+        username: iam.user,
+        password: await createIamAuthToken(signer, iam),
       }),
     },
   });

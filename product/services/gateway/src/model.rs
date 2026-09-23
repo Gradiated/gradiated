@@ -4,7 +4,75 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
-use validator::Validate;
+use validator::{Validate, ValidationErrors};
+
+use crate::deployment::{DeploymentError, DeploymentStatus, GatewayModelDeployment};
+
+/// The largest integer that JSON numbers and Lua doubles hold exactly.
+pub(crate) const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
+
+#[derive(Clone, Debug, Deserialize, PartialEq)]
+pub struct GatewayModel {
+    pub id: String,
+    pub name: String,
+    pub status: ModelStatus,
+    pub properties: GatewayModelProperties,
+    pub deployments: Vec<GatewayModelDeployment>,
+}
+
+impl GatewayModel {
+    pub fn serving_deployment(&self) -> Result<ServingDeployment<'_>, ServingDeploymentError> {
+        let deployment = self
+            .deployments
+            .iter()
+            .find(|deployment| deployment.status == DeploymentStatus::Available)
+            .ok_or(ServingDeploymentError::Missing)?;
+
+        deployment.validate()?;
+        let release_digest = deployment
+            .served_release_digest()
+            .map_err(|_| ServingDeploymentError::ReleaseDigest)?;
+
+        Ok(ServingDeployment {
+            deployment,
+            release_digest,
+        })
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ServingDeployment<'a> {
+    pub deployment: &'a GatewayModelDeployment,
+    pub release_digest: String,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ModelStatus {
+    Available,
+    Unavailable,
+    Retired,
+}
+
+#[derive(Debug, Error, PartialEq)]
+pub enum ServingDeploymentError {
+    #[error("model has no available deployment")]
+    Missing,
+    #[error("model's first available deployment is invalid: {0}")]
+    Invalid(#[from] DeploymentError),
+    #[error("model's serving release cannot be encoded")]
+    ReleaseDigest,
+}
+
+impl ServingDeploymentError {
+    pub fn diagnostic_code(&self) -> &'static str {
+        match self {
+            Self::Missing => "no_serving_deployment",
+            Self::Invalid(_) => "invalid_deployment",
+            Self::ReleaseDigest => "release_digest",
+        }
+    }
+}
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Validate)]
 pub struct GatewayModelProperties {
@@ -26,12 +94,11 @@ pub struct GatewayModelProperties {
 
 impl GatewayModelProperties {
     pub fn validate_for_serving(&self) -> Result<(), ModelPropertiesError> {
-        <Self as Validate>::validate(self)
-            .map_err(|error| ModelPropertiesError::Invalid(error.to_string()))?;
+        <Self as Validate>::validate(self)?;
         self.text_input().validate_semantics()?;
         self.text_output().validate_semantics()?;
-        validate_parameter_map(&self.passthrough_parameters)?;
-        Ok(())
+
+        validate_parameter_map(&self.passthrough_parameters)
     }
 
     pub fn text_input(&self) -> &TextInputModality {
@@ -47,24 +114,6 @@ impl GatewayModelProperties {
             .supported_parameters
             .get(name)
             .or_else(|| self.passthrough_parameters.get(name))
-    }
-
-    pub fn supported_parameter_names(&self) -> Vec<&str> {
-        let output = self.text_output();
-        let mut names = vec!["max_completion_tokens", "max_tokens"];
-        if output.streaming {
-            names.push("stream");
-        }
-        names.extend(
-            output
-                .supported_parameters
-                .keys()
-                .chain(self.passthrough_parameters.keys())
-                .map(String::as_str),
-        );
-        names.sort_unstable();
-        names.dedup();
-        names
     }
 }
 
@@ -96,27 +145,20 @@ pub struct TextInputModality {
 
 impl TextInputModality {
     fn validate_semantics(&self) -> Result<(), ModelPropertiesError> {
-        <Self as Validate>::validate(self)
-            .map_err(|error| ModelPropertiesError::Invalid(error.to_string()))?;
+        <Self as Validate>::validate(self)?;
+
         if self.supported_inputs.max_prompt_length.value
             > self.supported_inputs.max_context_length.value
         {
-            return Err(ModelPropertiesError::Invalid(
-                "max_prompt_length cannot exceed max_context_length".to_owned(),
-            ));
+            return Err(ModelPropertiesError::PromptExceedsContext);
         }
+
+        require_safe_costs(self.pricing.iter().map(InputTokenPrice::cost))?;
+
         require_unique_prices(
             self.pricing.iter().map(InputTokenPrice::kind),
             [InputPriceType::Prompt, InputPriceType::CachedPrompt],
-        )?;
-        Ok(())
-    }
-
-    pub fn price(&self, price_type: InputPriceType) -> Option<u64> {
-        self.pricing
-            .iter()
-            .find(|price| price.kind() == price_type)
-            .map(InputTokenPrice::cost)
+        )
     }
 }
 
@@ -144,29 +186,29 @@ pub struct TextOutputModality {
 
 impl TextOutputModality {
     fn validate_semantics(&self) -> Result<(), ModelPropertiesError> {
-        <Self as Validate>::validate(self)
-            .map_err(|error| ModelPropertiesError::Invalid(error.to_string()))?;
+        <Self as Validate>::validate(self)?;
+
         if self.default_length.value > self.max_length.value {
-            return Err(ModelPropertiesError::Invalid(
-                "default_length cannot exceed max_length".to_owned(),
-            ));
+            return Err(ModelPropertiesError::DefaultExceedsMax);
         }
+
         validate_parameter_map(&self.supported_parameters)?;
+        require_safe_costs(self.pricing.iter().map(OutputTokenPrice::cost))?;
         require_unique_prices(
             self.pricing.iter().map(OutputTokenPrice::kind),
             [OutputPriceType::Completion],
         )?;
+
         if self.supported_parameters.contains_key("reasoning")
             && self.price(OutputPriceType::InternalReasoning).is_none()
         {
-            return Err(ModelPropertiesError::Invalid(
-                "internal_reasoning pricing is required when reasoning is supported".to_owned(),
-            ));
+            return Err(ModelPropertiesError::ReasoningUnpriced);
         }
+
         Ok(())
     }
 
-    pub fn price(&self, price_type: OutputPriceType) -> Option<u64> {
+    fn price(&self, price_type: OutputPriceType) -> Option<u64> {
         self.pricing
             .iter()
             .find(|price| price.kind() == price_type)
@@ -176,7 +218,7 @@ impl TextOutputModality {
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize, Validate)]
 pub struct TokenMeasure {
-    #[validate(range(min = 1))]
+    #[validate(range(min = 1, max = MAX_SAFE_INTEGER))]
     pub value: u64,
     pub unit: TokenUnit,
 }
@@ -219,7 +261,8 @@ impl InputTokenPrice {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum InputPriceType {
     Prompt,
     CachedPrompt,
@@ -248,7 +291,8 @@ impl OutputTokenPrice {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum OutputPriceType {
     Completion,
     InternalReasoning,
@@ -259,16 +303,23 @@ fn require_unique_prices<T: Copy + Eq + std::hash::Hash, const N: usize>(
     required: [T; N],
 ) -> Result<(), ModelPropertiesError> {
     let mut kinds = HashSet::new();
+
     if prices.any(|kind| !kinds.insert(kind)) {
-        return Err(ModelPropertiesError::Invalid(
-            "pricing types must be unique".to_owned(),
-        ));
+        return Err(ModelPropertiesError::DuplicatePrice);
     }
+
     if required.iter().any(|kind| !kinds.contains(kind)) {
-        return Err(ModelPropertiesError::Invalid(
-            "required pricing type is missing".to_owned(),
-        ));
+        return Err(ModelPropertiesError::MissingPrice);
     }
+
+    Ok(())
+}
+
+fn require_safe_costs(mut costs: impl Iterator<Item = u64>) -> Result<(), ModelPropertiesError> {
+    if costs.any(|cost| cost > MAX_SAFE_INTEGER) {
+        return Err(ModelPropertiesError::UnsafePrice);
+    }
+
     Ok(())
 }
 
@@ -310,15 +361,13 @@ impl ModelParameterDescriptor {
 
     fn validate_for_serving(&self) -> Result<(), ModelPropertiesError> {
         match self {
-            Self::Range { min, max } if !min.is_finite() || !max.is_finite() || min > max => Err(
-                ModelPropertiesError::Invalid("range parameter min cannot exceed max".to_owned()),
-            ),
-            Self::Integer { min, max, .. } if min > max => Err(ModelPropertiesError::Invalid(
-                "integer parameter min cannot exceed max".to_owned(),
-            )),
-            Self::Enum { values } if values.is_empty() => Err(ModelPropertiesError::Invalid(
-                "enum parameters require at least one value".to_owned(),
-            )),
+            Self::Range { min, max } if !min.is_finite() || !max.is_finite() || min > max => {
+                Err(ModelPropertiesError::ParameterBounds)
+            }
+            Self::Integer { min, max, .. } if min > max => {
+                Err(ModelPropertiesError::ParameterBounds)
+            }
+            Self::Enum { values } if values.is_empty() => Err(ModelPropertiesError::EmptyEnum),
             _ => Ok(()),
         }
     }
@@ -348,67 +397,77 @@ fn validate_parameter_map(
 ) -> Result<(), ModelPropertiesError> {
     for (name, descriptor) in parameters {
         if name.is_empty() || name.chars().count() > 100 {
-            return Err(ModelPropertiesError::Invalid(
-                "parameter names must contain 1 to 100 characters".to_owned(),
-            ));
+            return Err(ModelPropertiesError::ParameterName);
         }
+
         descriptor.validate_for_serving()?;
     }
+
     Ok(())
 }
 
-#[derive(Debug, Error, Eq, PartialEq)]
+#[derive(Debug, Error, PartialEq)]
 pub enum ModelPropertiesError {
-    #[error("{0}")]
-    Invalid(String),
+    #[error("model properties do not match their schema: {0}")]
+    Schema(#[from] ValidationErrors),
+    #[error("max_prompt_length exceeds max_context_length")]
+    PromptExceedsContext,
+    #[error("default_length exceeds max_length")]
+    DefaultExceedsMax,
+    #[error("a pricing type appears more than once")]
+    DuplicatePrice,
+    #[error("a required pricing type is missing")]
+    MissingPrice,
+    #[error("reasoning is supported without an internal_reasoning price")]
+    ReasoningUnpriced,
+    #[error("a price exceeds the largest exact JSON integer")]
+    UnsafePrice,
+    #[error("a parameter name is empty or longer than 100 characters")]
+    ParameterName,
+    #[error("a parameter bound is not finite or its minimum exceeds its maximum")]
+    ParameterBounds,
+    #[error("an enum parameter has no values")]
+    EmptyEnum,
 }
 
 #[cfg(test)]
 mod tests {
+    use std::mem::discriminant;
+
+    use uuid::Uuid;
+
     use super::*;
+    use crate::test_support;
+
+    type Change = fn(&mut GatewayModelProperties);
 
     fn properties() -> GatewayModelProperties {
-        serde_json::from_value(serde_json::json!({
-            "schema_version": 1,
-            "description": "Local model",
-            "released_at": null,
-            "hugging_face_id": "mlx-community/Qwen3-0.6B-4bit",
-            "quantization": "int4",
-            "tokenizer": "Qwen3",
-            "input_modalities": [{
-                "type": "text",
-                "supported_inputs": {
-                    "max_context_length": {"value": 32768, "unit": "token"},
-                    "max_prompt_length": {"value": 32768, "unit": "token"}
-                },
-                "pricing": [
-                    {"type": "prompt", "unit": "token", "cost": 0},
-                    {"type": "cached_prompt", "unit": "token", "cost": 0}
-                ]
-            }],
-            "output_modalities": [{
-                "type": "text",
-                "max_length": {"value": 4096, "unit": "token"},
-                "default_length": {"value": 1024, "unit": "token"},
-                "streaming": true,
-                "supported_parameters": {
-                    "max_tokens": {"type": "integer", "min": 1, "max": 4096, "unit": "token"},
-                    "temperature": {"type": "range", "min": 0, "max": 2}
-                },
-                "pricing": [{"type": "completion", "unit": "token", "cost": 0}]
-            }],
-            "passthrough_parameters": {
-                "seed": {"type": "integer", "min": 0, "max": 100},
-                "response_format": {"type": "enum", "values": ["text", "json"]}
-            },
-            "deprecation_date": null
-        }))
-        .expect("normalized properties should deserialize")
+        test_support::model(true).properties
+    }
+
+    fn input(properties: &mut GatewayModelProperties) -> &mut TextInputModality {
+        &mut properties.input_modalities[0]
+    }
+
+    fn output(properties: &mut GatewayModelProperties) -> &mut TextOutputModality {
+        &mut properties.output_modalities[0]
+    }
+
+    fn token_price(cost: u64) -> InputTokenPrice {
+        InputTokenPrice::Prompt {
+            unit: TokenUnit::Token,
+            cost,
+        }
+    }
+
+    fn range(min: f64, max: f64) -> ModelParameterDescriptor {
+        ModelParameterDescriptor::Range { min, max }
     }
 
     #[test]
     fn validates_the_normalized_model_contract() {
-        let mut properties = properties();
+        let properties = properties();
+
         properties
             .validate_for_serving()
             .expect("properties should validate");
@@ -418,17 +477,212 @@ mod tests {
                 .supported_inputs
                 .max_context_length
                 .value,
-            32_768
+            8_192
         );
         assert_eq!(properties.text_output().max_length.value, 4_096);
         assert_eq!(properties.text_output().default_length.value, 1_024);
-        assert_eq!(
-            properties.text_input().price(InputPriceType::CachedPrompt),
-            Some(0)
-        );
+        assert!(properties
+            .text_input()
+            .pricing
+            .contains(&InputTokenPrice::CachedPrompt {
+                unit: TokenUnit::Token,
+                cost: 50,
+            }));
+    }
 
-        properties.output_modalities[0].default_length.value = 4_097;
-        assert!(properties.validate_for_serving().is_err());
+    #[test]
+    fn each_serving_rule_rejects_with_its_own_error() {
+        let schema = || ModelPropertiesError::Schema(ValidationErrors::new());
+        let cases: Vec<(&str, Change, ModelPropertiesError)> = vec![
+            (
+                "prompt exceeds context",
+                |properties| input(properties).supported_inputs.max_prompt_length.value = 8_193,
+                ModelPropertiesError::PromptExceedsContext,
+            ),
+            (
+                "default exceeds max",
+                |properties| output(properties).default_length.value = 4_097,
+                ModelPropertiesError::DefaultExceedsMax,
+            ),
+            (
+                "duplicate prompt price",
+                |properties| input(properties).pricing = vec![token_price(1), token_price(2)],
+                ModelPropertiesError::DuplicatePrice,
+            ),
+            (
+                "missing cached prompt price",
+                |properties| {
+                    input(properties).pricing[1] = InputTokenPrice::CacheWrite {
+                        unit: TokenUnit::Token,
+                        cost: 1,
+                    }
+                },
+                ModelPropertiesError::MissingPrice,
+            ),
+            (
+                "missing completion price",
+                |properties| {
+                    output(properties).pricing = vec![OutputTokenPrice::InternalReasoning {
+                        unit: TokenUnit::Token,
+                        cost: 1,
+                    }]
+                },
+                ModelPropertiesError::MissingPrice,
+            ),
+            (
+                "reasoning without a price",
+                |properties| {
+                    output(properties)
+                        .supported_parameters
+                        .insert("reasoning".to_owned(), ModelParameterDescriptor::Boolean);
+                },
+                ModelPropertiesError::ReasoningUnpriced,
+            ),
+            (
+                "unsafe input cost",
+                |properties| input(properties).pricing[0] = token_price(MAX_SAFE_INTEGER + 1),
+                ModelPropertiesError::UnsafePrice,
+            ),
+            (
+                "unsafe output cost",
+                |properties| {
+                    output(properties).pricing[0] = OutputTokenPrice::Completion {
+                        unit: TokenUnit::Token,
+                        cost: MAX_SAFE_INTEGER + 1,
+                    }
+                },
+                ModelPropertiesError::UnsafePrice,
+            ),
+            (
+                "unsafe token measure",
+                |properties| output(properties).max_length.value = MAX_SAFE_INTEGER + 1,
+                schema(),
+            ),
+            (
+                "range minimum above maximum",
+                |properties| {
+                    output(properties)
+                        .supported_parameters
+                        .insert("temperature".to_owned(), range(2.0, 1.0));
+                },
+                ModelPropertiesError::ParameterBounds,
+            ),
+            (
+                "non-finite range",
+                |properties| {
+                    output(properties)
+                        .supported_parameters
+                        .insert("temperature".to_owned(), range(0.0, f64::INFINITY));
+                },
+                ModelPropertiesError::ParameterBounds,
+            ),
+            (
+                "integer minimum above maximum",
+                |properties| {
+                    properties.passthrough_parameters.insert(
+                        "seed".to_owned(),
+                        ModelParameterDescriptor::Integer {
+                            min: 2,
+                            max: 1,
+                            unit: None,
+                        },
+                    );
+                },
+                ModelPropertiesError::ParameterBounds,
+            ),
+            (
+                "empty enum",
+                |properties| {
+                    properties.passthrough_parameters.insert(
+                        "response_format".to_owned(),
+                        ModelParameterDescriptor::Enum { values: Vec::new() },
+                    );
+                },
+                ModelPropertiesError::EmptyEnum,
+            ),
+            (
+                "empty supported parameter name",
+                |properties| {
+                    output(properties)
+                        .supported_parameters
+                        .insert(String::new(), ModelParameterDescriptor::Boolean);
+                },
+                ModelPropertiesError::ParameterName,
+            ),
+            (
+                "long supported parameter name",
+                |properties| {
+                    output(properties)
+                        .supported_parameters
+                        .insert("p".repeat(101), ModelParameterDescriptor::Boolean);
+                },
+                ModelPropertiesError::ParameterName,
+            ),
+            (
+                "empty passthrough parameter name",
+                |properties| {
+                    properties
+                        .passthrough_parameters
+                        .insert(String::new(), ModelParameterDescriptor::Boolean);
+                },
+                ModelPropertiesError::ParameterName,
+            ),
+            (
+                "long passthrough parameter name",
+                |properties| {
+                    properties
+                        .passthrough_parameters
+                        .insert("p".repeat(101), ModelParameterDescriptor::Boolean);
+                },
+                ModelPropertiesError::ParameterName,
+            ),
+            (
+                "schema version",
+                |properties| properties.schema_version = 2,
+                schema(),
+            ),
+            (
+                "long description",
+                |properties| properties.description = "d".repeat(2_001),
+                schema(),
+            ),
+            (
+                "one input price",
+                |properties| input(properties).pricing.truncate(1),
+                schema(),
+            ),
+            (
+                "four input prices",
+                |properties| {
+                    let pricing = &mut input(properties).pricing;
+                    pricing.extend(pricing.clone());
+                },
+                schema(),
+            ),
+        ];
+
+        for (name, change, expected) in cases {
+            let mut properties = properties();
+            change(&mut properties);
+            let error = properties
+                .validate_for_serving()
+                .expect_err("the change breaks a rule");
+
+            assert_eq!(
+                discriminant(&error),
+                discriminant(&expected),
+                "{name}: {error}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_price_at_the_safe_integer_limit_is_accepted() {
+        let mut properties = properties();
+        input(&mut properties).pricing[0] = token_price(MAX_SAFE_INTEGER);
+        output(&mut properties).max_length.value = MAX_SAFE_INTEGER;
+
+        assert_eq!(properties.validate_for_serving(), Ok(()));
     }
 
     #[test]
@@ -440,12 +694,21 @@ mod tests {
             "output_modalities": [],
             "passthrough_parameters": {}
         });
+
         assert!(serde_json::from_value::<GatewayModelProperties>(value).is_err());
     }
 
     #[test]
     fn parameter_descriptors_apply_types_bounds_and_enums() {
-        let properties = properties();
+        let mut properties = properties();
+        properties.passthrough_parameters.insert(
+            "seed".to_owned(),
+            ModelParameterDescriptor::Integer {
+                min: 0,
+                max: 100,
+                unit: None,
+            },
+        );
         let temperature = properties.parameter("temperature").unwrap();
         let seed = properties.parameter("seed").unwrap();
         let response_format = properties.parameter("response_format").unwrap();
@@ -454,7 +717,121 @@ mod tests {
         assert!(!temperature.accepts(&serde_json::json!(3)));
         assert!(seed.accepts(&serde_json::json!(7)));
         assert!(!seed.accepts(&serde_json::json!(101)));
+        assert!(!seed.accepts(&serde_json::json!(7.5)));
         assert!(response_format.accepts(&serde_json::json!("json")));
         assert!(!response_format.accepts(&serde_json::json!("xml")));
+        assert_eq!(properties.parameter("tools"), None);
+    }
+
+    #[test]
+    fn a_supported_parameter_shadows_a_passthrough_one() {
+        let mut properties = properties();
+        properties
+            .passthrough_parameters
+            .insert("temperature".to_owned(), ModelParameterDescriptor::Boolean);
+
+        assert_eq!(properties.parameter("temperature"), Some(&range(0.0, 2.0)));
+    }
+
+    #[test]
+    fn each_price_kind_has_the_wire_name_of_its_price() {
+        let unit = TokenUnit::Token;
+        let input = [
+            InputTokenPrice::Prompt { unit, cost: 1 },
+            InputTokenPrice::CachedPrompt { unit, cost: 1 },
+            InputTokenPrice::CacheWrite { unit, cost: 1 },
+        ];
+        let output = [
+            OutputTokenPrice::Completion { unit, cost: 1 },
+            OutputTokenPrice::InternalReasoning { unit, cost: 1 },
+        ];
+
+        for price in input {
+            let wire = serde_json::to_value(&price).unwrap();
+            assert_eq!(wire["type"], serde_json::to_value(price.kind()).unwrap());
+        }
+
+        for price in output {
+            let wire = serde_json::to_value(&price).unwrap();
+            assert_eq!(wire["type"], serde_json::to_value(price.kind()).unwrap());
+        }
+    }
+
+    fn model_with(statuses: &[DeploymentStatus]) -> GatewayModel {
+        let mut model = test_support::model(true);
+        let template = model.deployments[0].clone();
+        model.deployments = statuses
+            .iter()
+            .zip(1..)
+            .map(|(status, id)| GatewayModelDeployment {
+                id: Uuid::from_u128(id),
+                status: *status,
+                ..template.clone()
+            })
+            .collect();
+
+        model
+    }
+
+    #[test]
+    fn the_serving_deployment_is_the_first_available_one() {
+        let model = model_with(&[
+            DeploymentStatus::Unavailable,
+            DeploymentStatus::Available,
+            DeploymentStatus::Available,
+        ]);
+
+        let serving = model.serving_deployment().expect("a deployment serves");
+        assert_eq!(serving.deployment.id, Uuid::from_u128(2));
+        assert_eq!(
+            serving.release_digest,
+            serving.deployment.served_release_digest().unwrap()
+        );
+    }
+
+    #[test]
+    fn a_model_without_an_available_deployment_has_none_to_serve() {
+        for statuses in [
+            &[][..],
+            &[DeploymentStatus::Unavailable, DeploymentStatus::Draining][..],
+        ] {
+            let error = model_with(statuses).serving_deployment().unwrap_err();
+
+            assert_eq!(error, ServingDeploymentError::Missing, "{statuses:?}");
+            assert_eq!(error.diagnostic_code(), "no_serving_deployment");
+        }
+    }
+
+    #[test]
+    fn an_invalid_first_available_deployment_is_not_skipped() {
+        let mut model = model_with(&[DeploymentStatus::Available, DeploymentStatus::Available]);
+        model.deployments[0].service_url = "ftp://runtime.internal".to_owned();
+
+        let error = model.serving_deployment().unwrap_err();
+        assert_eq!(
+            error,
+            ServingDeploymentError::Invalid(DeploymentError::ServiceUrl)
+        );
+        assert_eq!(error.diagnostic_code(), "invalid_deployment");
+    }
+
+    #[test]
+    fn the_serving_deployment_does_not_depend_on_the_model_status() {
+        for status in [
+            ModelStatus::Available,
+            ModelStatus::Unavailable,
+            ModelStatus::Retired,
+        ] {
+            let mut model = model_with(&[DeploymentStatus::Available]);
+            model.status = status;
+
+            assert_eq!(
+                model
+                    .serving_deployment()
+                    .map(|serving| serving.deployment.id),
+                Ok(Uuid::from_u128(1)),
+                "{status:?}"
+            );
+        }
     }
 }

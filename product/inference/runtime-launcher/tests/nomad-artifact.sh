@@ -1,12 +1,9 @@
 #!/usr/bin/env bash
-# Run in the disposable test container. No production connection or GPU use.
 set -euo pipefail
 test_dir=$(cd "$(dirname "$0")" && pwd)
 # shellcheck source=test-support.sh
 source "$test_dir/test-support.sh"
-
-[[ "${GRADIATED_TEST_CONTAINER:-}" == 1 ]] ||
-  fail "Run this integration test through tests/Dockerfile"
+require_test_container
 
 launcher=${1:?Pass the launcher executable}
 work=$(mktemp -d)
@@ -19,21 +16,15 @@ cleanup() {
     tail -50 "$work/agent.log" >&2
   fi
   if [[ -n "$agent_pid" ]]; then
-    kill "$agent_pid" 2>/dev/null || true
-    wait "$agent_pid" 2>/dev/null || true
+    stop_process "$agent_pid"
   fi
   rm -f /usr/local/bin/s5cmd /etc/gradiated/artifact.env
   rm -rf "$work"
 }
 trap cleanup EXIT
-trap 'exit 143' TERM
-trap 'exit 130' INT
 
 prepare_bundle() {
-  mkdir "$work/bundle"
-  cp "$test_dir/fixtures/entrypoint.sh" "$work/bundle/entrypoint"
-  chmod 755 "$work/bundle/entrypoint"
-  printf 'test-base-v1\n' >"$work/bundle/base-id"
+  make_bundle "$work/bundle" "$test_dir/fixtures/entrypoint.sh"
   tar -czf "$work/bundle.tar.gz" -C "$work/bundle" .
 }
 
@@ -79,16 +70,16 @@ submit_job() {
   wait_until "an allocation for $name" 10 allocation_exists "$name"
 }
 
-task_is_terminal() {
+task_is_dead() {
   nomad alloc status -json "$allocation_id" >"$work/allocation.json"
-  jq -e '.TaskStates.runtime.State == "dead"' "$work/allocation.json" >/dev/null
+  jq -e --arg task "$1" '.TaskStates[$task].State == "dead"' "$work/allocation.json" >/dev/null
 }
 
 test_valid_bundle() {
   local checksum
   checksum=$(sha256sum "$work/bundle.tar.gz" | cut -d' ' -f1)
   submit_job artifact-valid "$checksum"
-  wait_until "successful bundle execution" 15 task_is_terminal
+  wait_until "successful bundle execution" 15 task_is_dead runtime
   jq -e '.TaskStates.runtime.Failed == false' "$work/allocation.json" >/dev/null ||
     fail "The valid runtime failed"
   assert_equal "runtime fixture passed" \
@@ -97,17 +88,12 @@ test_valid_bundle() {
 
 test_invalid_checksum() {
   submit_job artifact-invalid "$(printf '%064d' 0)"
-  wait_until "checksum rejection" 15 download_failed
+  wait_until "checksum rejection" 15 task_is_dead download-runtime
   jq -e '
     .TaskStates["download-runtime"].Failed == true and
     all(.TaskStates.runtime.Events[]; .Type != "Started")
   ' "$work/allocation.json" >/dev/null ||
     fail "The bad checksum did not prevent task startup"
-}
-
-download_failed() {
-  nomad alloc status -json "$allocation_id" >"$work/allocation.json"
-  jq -e '.TaskStates["download-runtime"].State == "dead"' "$work/allocation.json" >/dev/null
 }
 
 prepare_bundle

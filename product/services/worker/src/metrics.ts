@@ -7,9 +7,27 @@ import {
   Registry,
 } from "prom-client";
 
-import type { SettlementPassResult } from "./settlement-loop.js";
+import { serviceLog } from "./logging.js";
 
 export type WorkerLoop = "generation_ingestion" | "settlement";
+
+export type IngestionSource = "new" | "recovered";
+
+export type IngestionBacklog = {
+  pending: number;
+  unread: number | null;
+  oldestPendingMilliseconds: number | null;
+};
+
+export type SettlementPassSummary = {
+  processedSlots: number;
+  eligibleBacklogAgeSeconds: number;
+};
+
+const passOperation: Record<WorkerLoop, string> = {
+  generation_ingestion: "consume_pass",
+  settlement: "settlement_pass",
+};
 
 const operationBuckets = [
   0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60,
@@ -20,6 +38,7 @@ export class WorkerMetrics {
 
   private readonly ingestionLag: Gauge<"kind">;
   private readonly ingestionMessages: Counter<"source">;
+  private readonly ingestionDeletedMessages: Counter;
   private readonly loopFailures: Counter<"loop">;
   private readonly loopLastSuccess: Gauge<"loop">;
   private readonly loopOperationDuration: Histogram<"loop" | "operation">;
@@ -80,6 +99,11 @@ export class WorkerMetrics {
       labelNames: ["source"],
       registers: [this.registry],
     });
+    this.ingestionDeletedMessages = new Counter({
+      name: "gradiated_worker_ingestion_deleted_messages_total",
+      help: "Pending generation messages that left the stream before ClickHouse ingested them.",
+      registers: [this.registry],
+    });
     this.ingestionLag = new Gauge({
       name: "gradiated_worker_ingestion_backlog",
       help: "Valkey generation-ingestion backlog by kind.",
@@ -132,29 +156,39 @@ export class WorkerMetrics {
     this.loopLastSuccess.set({ loop }, Date.now() / 1_000);
   }
 
-  recordOperation(loop: WorkerLoop, operation: string, seconds: number): void {
-    this.loopOperationDuration.observe({ loop, operation }, seconds);
+  recordPass(loop: WorkerLoop, seconds: number): void {
+    this.loopOperationDuration.observe(
+      { loop, operation: passOperation[loop] },
+      seconds,
+    );
     this.loopLastSuccess.set({ loop }, Date.now() / 1_000);
   }
 
-  recordIngestedMessages(source: "new" | "recovered", count: number): void {
+  recordIngestedMessages(source: IngestionSource, count: number): void {
     if (count > 0) this.ingestionMessages.inc({ source }, count);
   }
 
-  recordIngestionBacklog(
-    pending: number,
-    unread: number,
-    oldestPendingId: string | null,
-  ): void {
+  recordDeletedMessages(count: number): void {
+    if (count > 0) this.ingestionDeletedMessages.inc(count);
+  }
+
+  recordIngestionBacklog({
+    pending,
+    unread,
+    oldestPendingMilliseconds,
+  }: IngestionBacklog): void {
+    const oldestPendingAgeSeconds =
+      oldestPendingMilliseconds === null
+        ? 0
+        : Math.max(0, Date.now() - oldestPendingMilliseconds) / 1_000;
+
     this.ingestionLag.set({ kind: "pending" }, pending);
-    this.ingestionLag.set({ kind: "unread" }, unread);
-    const oldestMilliseconds = oldestPendingId
-      ? Number(oldestPendingId.split("-", 1)[0])
-      : Number.NaN;
-    const ageSeconds = Number.isFinite(oldestMilliseconds)
-      ? Math.max(0, Date.now() - oldestMilliseconds) / 1_000
-      : 0;
-    this.ingestionLag.set({ kind: "oldest_pending_age_seconds" }, ageSeconds);
+    if (unread === null) this.ingestionLag.remove({ kind: "unread" });
+    else this.ingestionLag.set({ kind: "unread" }, unread);
+    this.ingestionLag.set(
+      { kind: "oldest_pending_age_seconds" },
+      oldestPendingAgeSeconds,
+    );
   }
 
   setSettlementLeadership(isLeader: boolean): void {
@@ -162,11 +196,13 @@ export class WorkerMetrics {
     if (!isLeader) this.settlementLag.set(0);
   }
 
-  recordSettlementPass(result: SettlementPassResult): void {
-    if (result.processedSlots > 0) {
-      this.settlementSlots.inc(result.processedSlots);
-    }
-    this.settlementLag.set(result.eligibleBacklogAgeSeconds);
+  recordSettlementPass({
+    processedSlots,
+    eligibleBacklogAgeSeconds,
+  }: SettlementPassSummary): void {
+    if (processedSlots > 0) this.settlementSlots.inc(processedSlots);
+
+    this.settlementLag.set(eligibleBacklogAgeSeconds);
   }
 
   async render(): Promise<string> {
@@ -174,16 +210,23 @@ export class WorkerMetrics {
   }
 }
 
+export const stopwatch = (): (() => number) => {
+  const started = process.hrtime.bigint();
+
+  return () => Number(process.hrtime.bigint() - started) / 1e9;
+};
+
 export const startWorkerMetricsServer = (
   metrics: WorkerMetrics,
-  hostname = "0.0.0.0",
-  port = 9_464,
+  hostname: string,
+  port: number,
 ): Server => {
   const server = createServer((request, response) => {
     if (request.method !== "GET" || request.url !== "/metrics") {
       response.writeHead(404).end();
       return;
     }
+
     void metrics.render().then(
       (body) => {
         response.writeHead(200, {
@@ -192,9 +235,14 @@ export const startWorkerMetricsServer = (
         });
         response.end(body);
       },
-      () => response.writeHead(500).end(),
+      (error: unknown) => {
+        serviceLog("error", "metrics_render_failed", { error });
+        response.writeHead(500).end();
+      },
     );
   });
+
   server.listen(port, hostname);
+
   return server;
 };

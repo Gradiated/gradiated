@@ -1,295 +1,323 @@
-import type {
-  GenerationSettlementReader,
-  GenerationSettlementStore,
-  OrganizationSettlement,
-  SettlementLeadership,
+import {
+  BalanceSourceConflictError,
+  SettlementFinancialConflictError,
+  type GenerationSettlementReader,
+  type GenerationSettlementStore,
+  type OrganizationSettlement,
+  type SettlementLeadership,
 } from "@gradiated/control";
-import type { RedisClientType } from "@gradiated/valkey";
-import { DateTime } from "luxon";
 
-const slotMilliseconds = 300_000;
-const slotIdFormat = "yyyyLLdd'T'HHmmss'Z-300s-v1'";
-const streamIdPattern = /^(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
+import { WorkerInvariantError } from "./errors.js";
+import { serviceLog } from "./logging.js";
+import {
+  stopwatch,
+  type SettlementPassSummary,
+  type WorkerMetrics,
+} from "./metrics.js";
+import {
+  lastSlotEndingBy,
+  nextSlot,
+  parseSlot,
+  slotContaining,
+  type SettlementSlot,
+} from "./settlement-slot.js";
+import { sleep } from "./sleep.js";
 
-export type SettlementLoopOptions = {
-  consumerGroup: string;
+export type IngestionBoundary = () => Promise<number | null>;
+
+export type SettlementConfig = {
   maxSlotsPerPass: number;
-  onLeadership?: ((isLeader: boolean) => void) | undefined;
-  onReady?: (() => Promise<void>) | undefined;
-  onPass?:
-    | ((result: SettlementPassResult, durationSeconds: number) => void)
-    | undefined;
   pollMilliseconds: number;
   settlementDelayMilliseconds: number;
-  stream: string;
 };
 
-export type SettlementPassResult = {
-  nextSlotId: string | null;
-  eligibleBacklogAgeSeconds: number;
-  processedSlots: number;
+export type SettlementTelemetry = Pick<
+  WorkerMetrics,
+  "setSettlementLeadership" | "recordSettlementPass" | "recordPass"
+>;
+
+export type SettlementPass = {
+  reader: GenerationSettlementReader;
+  leadership: SettlementLeadership;
+  ingestionBoundary: IngestionBoundary;
+  config: SettlementConfig;
+  now: Date;
+  cursor: SettlementSlot | null;
 };
 
-export const formatSettlementSlotId = (date: Date): string => {
-  const milliseconds = date.getTime();
-  if (!Number.isSafeInteger(milliseconds)) {
-    throw new Error("Settlement slot date is invalid");
-  }
-  const start = Math.floor(milliseconds / slotMilliseconds) * slotMilliseconds;
-  return DateTime.fromMillis(start, { zone: "utc" }).toFormat(slotIdFormat);
+export type SettlementPassResult = SettlementPassSummary & {
+  cursor: SettlementSlot | null;
 };
 
-export const parseSettlementSlotId = (
-  slotId: string,
-): { end: Date; start: Date } => {
-  const start = DateTime.fromFormat(slotId, slotIdFormat, {
-    locale: "en",
-    setZone: true,
-    zone: "utc",
-  });
-  if (
-    !start.isValid ||
-    start.toFormat(slotIdFormat) !== slotId ||
-    start.second !== 0 ||
-    start.minute % 5 !== 0
-  ) {
-    throw new Error(`Invalid settlement slot ID: ${slotId}`);
-  }
-  return {
-    start: start.toJSDate(),
-    end: start.plus({ minutes: 5 }).toJSDate(),
-  };
+export type SettlementLoop = {
+  reader: GenerationSettlementReader;
+  store: GenerationSettlementStore;
+  ingestionBoundary: IngestionBoundary;
+  config: SettlementConfig;
+  telemetry: SettlementTelemetry;
+  onReady: () => Promise<void>;
+  signal: AbortSignal;
 };
 
-const streamMilliseconds = (streamId: string): number => {
-  const match = streamIdPattern.exec(streamId);
-  if (!match?.[1]) throw new Error(`Invalid Valkey Stream ID: ${streamId}`);
-  const milliseconds = Number(match[1]);
-  if (!Number.isSafeInteger(milliseconds)) {
-    throw new Error(
-      `Valkey Stream ID is outside the supported range: ${streamId}`,
-    );
-  }
-  return milliseconds;
-};
-
-export const getUpperEligibleSlotId = (
+export const upperEligibleSlot = (
   now: Date,
   ingestionBoundaryMilliseconds: number,
   settlementDelayMilliseconds: number,
-): string | null => {
-  const boundary = Math.min(
-    ingestionBoundaryMilliseconds,
-    now.getTime() - settlementDelayMilliseconds,
+): SettlementSlot | null =>
+  lastSlotEndingBy(
+    Math.min(
+      ingestionBoundaryMilliseconds,
+      now.getTime() - settlementDelayMilliseconds,
+    ),
   );
-  const slotEnd = Math.floor(boundary / slotMilliseconds) * slotMilliseconds;
-  if (slotEnd < slotMilliseconds) return null;
-  return formatSettlementSlotId(new Date(slotEnd - slotMilliseconds));
+
+const isAtOrBefore = (slot: SettlementSlot, upper: SettlementSlot): boolean =>
+  slot.start.getTime() <= upper.start.getTime();
+
+const eligibleBacklogAgeSeconds = (
+  cursor: SettlementSlot | null,
+  upper: SettlementSlot,
+  { now, config }: SettlementPass,
+): number => {
+  if (!cursor || !isAtOrBefore(cursor, upper)) return 0;
+
+  const overdueMilliseconds =
+    now.getTime() - cursor.end.getTime() - config.settlementDelayMilliseconds;
+
+  return Math.max(0, overdueMilliseconds / 1_000);
 };
 
-// Return the stream time before which ClickHouse ingestion is complete.
-// This function does not consume or acknowledge stream messages.
-const getClickHouseIngestionBoundaryMilliseconds = async (
-  client: Pick<RedisClientType, "xInfoGroups" | "xPending">,
-  options: Pick<SettlementLoopOptions, "consumerGroup" | "stream">,
-): Promise<number | null> => {
-  const [pending, groups] = await Promise.all([
-    client.xPending(options.stream, options.consumerGroup),
-    client.xInfoGroups(options.stream),
-  ]);
-  const group = groups.find(
-    (candidate) => candidate.name === options.consumerGroup,
-  );
-  if (!group) {
-    throw new Error(
-      `Valkey consumer group is missing: ${options.consumerGroup}`,
+const firstUnsettledSlot = async (
+  { reader, leadership }: SettlementPass,
+  upper: SettlementSlot,
+): Promise<SettlementSlot | null> => {
+  const latestPeriodStart = await leadership.getLatestSettlementPeriodStart();
+  if (latestPeriodStart) return slotContaining(latestPeriodStart.getTime());
+
+  const earliestSlotId = await reader.getEarliestSlot(upper.id);
+
+  return earliestSlotId ? parseSlot(earliestSlotId) : null;
+};
+
+const isChargeable = (settlement: OrganizationSettlement): boolean =>
+  settlement.totalCharge > 0n;
+
+const organizationIds = (settlements: readonly OrganizationSettlement[]) =>
+  settlements.map((settlement) => settlement.organizationId);
+
+const readSlotSettlements = async (
+  reader: GenerationSettlementReader,
+  slot: SettlementSlot,
+): Promise<OrganizationSettlement[]> => {
+  try {
+    return await reader.getOrganizationSettlements(slot.id);
+  } catch (error) {
+    if (!(error instanceof SettlementFinancialConflictError)) throw error;
+
+    throw new WorkerInvariantError(
+      "EGENERATION_FINANCIAL_CONFLICT",
+      `A generation has conflicting financial values in slot ${slot.id}`,
+      { cause: error },
     );
   }
-  const oldestUnacknowledgedId = pending.firstId;
-  const lastDeliveredId = String(group["last-delivered-id"]);
-  const ingestionBoundaryId = oldestUnacknowledgedId ?? lastDeliveredId;
-
-  return ingestionBoundaryId === "0-0"
-    ? null
-    : streamMilliseconds(ingestionBoundaryId);
 };
 
-const sourceId = (settlement: OrganizationSettlement): string =>
-  `${settlement.slotId}:${settlement.organizationId}`;
+const validateSlotShape = (
+  slot: SettlementSlot,
+  settlements: readonly OrganizationSettlement[],
+): void => {
+  if (settlements.some((settlement) => settlement.slotId !== slot.id)) {
+    throw new WorkerInvariantError(
+      "ESLOT_MISMATCH",
+      `ClickHouse returned a different settlement slot for ${slot.id}`,
+    );
+  }
+
+  const allOrganizationIds = organizationIds(settlements);
+  if (new Set(allOrganizationIds).size !== allOrganizationIds.length) {
+    throw new WorkerInvariantError(
+      "EDUPLICATE_ORGANIZATION",
+      `ClickHouse returned duplicate organizations for ${slot.id}`,
+    );
+  }
+};
+
+const validateChargeable = (
+  slot: SettlementSlot,
+  chargeable: readonly OrganizationSettlement[],
+  knownOrganizations: ReadonlySet<string>,
+): void => {
+  for (const settlement of chargeable) {
+    if (settlement.generationCount === 0n) {
+      throw new WorkerInvariantError(
+        "ECHARGE_WITHOUT_GENERATIONS",
+        `Chargeable settlement has no generations in slot ${slot.id}`,
+      );
+    }
+
+    if (!knownOrganizations.has(settlement.organizationId)) {
+      throw new WorkerInvariantError(
+        "EMISSING_BILLING_ACCOUNT",
+        `Billing account is missing for a chargeable organization in slot ${slot.id}`,
+      );
+    }
+  }
+};
+
+const postSettlement = async (
+  leadership: SettlementLeadership,
+  slot: SettlementSlot,
+  settlement: OrganizationSettlement,
+): Promise<void> => {
+  try {
+    await leadership.postSettlement({
+      generationCount: settlement.generationCount,
+      organizationId: settlement.organizationId,
+      periodEnd: slot.end,
+      periodStart: slot.start,
+      slotId: slot.id,
+      totalCharge: settlement.totalCharge,
+    });
+  } catch (error) {
+    if (!(error instanceof BalanceSourceConflictError)) throw error;
+
+    throw new WorkerInvariantError(
+      "ESETTLEMENT_CONFLICT",
+      `A posted settlement differs from ClickHouse in slot ${slot.id}`,
+      { cause: error },
+    );
+  }
+};
+
+const settleSlot = async (
+  { reader, leadership }: SettlementPass,
+  slot: SettlementSlot,
+): Promise<void> => {
+  const settlements = await readSlotSettlements(reader, slot);
+
+  validateSlotShape(slot, settlements);
+
+  const chargeable = settlements.filter(isChargeable);
+  const knownOrganizations = await leadership.getBillingOrganizationIds(
+    organizationIds(chargeable),
+  );
+
+  validateChargeable(slot, chargeable, knownOrganizations);
+
+  for (const settlement of chargeable) {
+    await postSettlement(leadership, slot, settlement);
+  }
+};
 
 export const processSettlementPass = async (
-  reader: GenerationSettlementReader,
-  leadership: SettlementLeadership,
-  ingestionProgressClient: Pick<RedisClientType, "xInfoGroups" | "xPending">,
-  options: SettlementLoopOptions,
-  now: Date,
-  startSlotId?: string,
+  pass: SettlementPass,
 ): Promise<SettlementPassResult> => {
-  const ingestionBoundary = await getClickHouseIngestionBoundaryMilliseconds(
-    ingestionProgressClient,
-    options,
-  );
-  if (ingestionBoundary === null) {
-    return {
-      nextSlotId: startSlotId ?? null,
-      processedSlots: 0,
-      eligibleBacklogAgeSeconds: 0,
-    };
-  }
-  const upperSlotId = getUpperEligibleSlotId(
-    now,
-    ingestionBoundary,
-    options.settlementDelayMilliseconds,
-  );
-  if (!upperSlotId) {
-    return {
-      nextSlotId: startSlotId ?? null,
-      processedSlots: 0,
-      eligibleBacklogAgeSeconds: 0,
-    };
-  }
+  const idle = {
+    cursor: pass.cursor,
+    processedSlots: 0,
+    eligibleBacklogAgeSeconds: 0,
+  };
+  const boundary = await pass.ingestionBoundary();
+  if (boundary === null) return idle;
 
-  let slotId = startSlotId;
-  if (slotId === undefined) {
-    const latestPeriodStart = await leadership.getLatestSettlementPeriodStart();
-    slotId = latestPeriodStart
-      ? formatSettlementSlotId(latestPeriodStart)
-      : ((await reader.getEarliestSlot(upperSlotId)) ?? undefined);
-  }
+  const upper = upperEligibleSlot(
+    pass.now,
+    boundary,
+    pass.config.settlementDelayMilliseconds,
+  );
+  if (!upper) return idle;
+
+  let cursor = pass.cursor ?? (await firstUnsettledSlot(pass, upper));
   let processedSlots = 0;
 
   while (
-    slotId &&
-    slotId <= upperSlotId &&
-    processedSlots < options.maxSlotsPerPass
+    cursor &&
+    isAtOrBefore(cursor, upper) &&
+    processedSlots < pass.config.maxSlotsPerPass
   ) {
-    const period = parseSettlementSlotId(slotId);
-    const settlements = await reader.getOrganizationSettlements(slotId);
-    if (settlements.some((settlement) => settlement.slotId !== slotId)) {
-      throw new Error(
-        `ClickHouse returned a different settlement slot for ${slotId}`,
-      );
-    }
-    const allOrganizationIds = settlements.map(
-      (settlement) => settlement.organizationId,
-    );
-    if (new Set(allOrganizationIds).size !== allOrganizationIds.length) {
-      throw new Error(
-        `ClickHouse returned duplicate organizations for ${slotId}`,
-      );
-    }
-    const chargeable = settlements.filter(
-      (settlement) => settlement.totalCharge > 0n,
-    );
-    if (chargeable.some((settlement) => settlement.generationCount === 0n)) {
-      throw new Error(
-        `Chargeable settlement has no generations in slot ${slotId}`,
-      );
-    }
-    const organizationIds = chargeable.map(
-      (settlement) => settlement.organizationId,
-    );
-    const knownOrganizations =
-      await leadership.getBillingOrganizationIds(organizationIds);
-    const missingOrganization = organizationIds.find(
-      (organizationId) => !knownOrganizations.has(organizationId),
-    );
-    if (missingOrganization) {
-      throw new Error(
-        `Billing account is missing for organization ${missingOrganization}`,
-      );
-    }
-    const existingSourceIds = await leadership.getExistingSourceIds(
-      chargeable.map(sourceId),
-    );
-    for (const settlement of chargeable) {
-      if (existingSourceIds.has(sourceId(settlement))) continue;
-      await leadership.postSettlement({
-        generationCount: settlement.generationCount,
-        organizationId: settlement.organizationId,
-        periodEnd: period.end,
-        periodStart: period.start,
-        slotId,
-        totalCharge: settlement.totalCharge,
-      });
-    }
-
+    await settleSlot(pass, cursor);
     processedSlots += 1;
-    slotId = formatSettlementSlotId(period.end);
+    cursor = nextSlot(cursor);
   }
+
   return {
-    nextSlotId: slotId ?? null,
+    cursor,
     processedSlots,
-    // Only fully ingested slots past their settlement delay are overdue.
-    eligibleBacklogAgeSeconds:
-      slotId && slotId <= upperSlotId
-        ? Math.max(
-            0,
-            (now.getTime() -
-              parseSettlementSlotId(slotId).end.getTime() -
-              options.settlementDelayMilliseconds) /
-              1_000,
-          )
-        : 0,
+    eligibleBacklogAgeSeconds: eligibleBacklogAgeSeconds(cursor, upper, pass),
   };
 };
 
-const wait = async (
-  milliseconds: number,
-  signal: AbortSignal,
+const leadSettlement = async (
+  {
+    reader,
+    ingestionBoundary,
+    config,
+    telemetry,
+    onReady,
+    signal,
+  }: SettlementLoop,
+  leadership: SettlementLeadership,
 ): Promise<void> => {
-  await new Promise<void>((resolve) => {
-    const timeout = setTimeout(resolve, milliseconds);
-    signal.addEventListener(
-      "abort",
-      () => {
-        clearTimeout(timeout);
-        resolve();
-      },
-      { once: true },
-    );
-  });
+  telemetry.setSettlementLeadership(true);
+  await onReady();
+
+  let cursor: SettlementSlot | null = null;
+
+  while (!signal.aborted) {
+    const elapsedSeconds = stopwatch();
+    const result = await processSettlementPass({
+      reader,
+      leadership,
+      ingestionBoundary,
+      config,
+      now: new Date(),
+      cursor,
+    });
+
+    cursor = result.cursor;
+    telemetry.recordSettlementPass(result);
+    telemetry.recordPass("settlement", elapsedSeconds());
+    await sleep(config.pollMilliseconds, signal);
+  }
+};
+
+const releaseAfterFailure = async (
+  leadership: SettlementLeadership,
+): Promise<void> => {
+  try {
+    await leadership.release();
+  } catch (error) {
+    serviceLog("error", "settlement_release_failed", {
+      loop: "settlement",
+      dependency: "postgres",
+      error,
+    });
+  }
 };
 
 export const runGenerationSettlementLoop = async (
-  reader: GenerationSettlementReader,
-  store: GenerationSettlementStore,
-  ingestionProgressClient: Pick<RedisClientType, "xInfoGroups" | "xPending">,
-  options: SettlementLoopOptions,
-  signal: AbortSignal,
+  loop: SettlementLoop,
 ): Promise<void> => {
+  const { store, config, telemetry, onReady, signal } = loop;
+
   while (!signal.aborted) {
     const leadership = await store.tryAcquireLeadership();
     if (!leadership) {
-      options.onLeadership?.(false);
-      await options.onReady?.();
-      await wait(options.pollMilliseconds, signal);
+      telemetry.setSettlementLeadership(false);
+      await onReady();
+      await sleep(config.pollMilliseconds, signal);
       continue;
     }
+
     try {
-      options.onLeadership?.(true);
-      await options.onReady?.();
-      let nextSlotId: string | undefined;
-      while (!signal.aborted) {
-        const started = process.hrtime.bigint();
-        const result = await processSettlementPass(
-          reader,
-          leadership,
-          ingestionProgressClient,
-          options,
-          new Date(),
-          nextSlotId,
-        );
-        nextSlotId = result.nextSlotId ?? undefined;
-        options.onPass?.(
-          result,
-          Number(process.hrtime.bigint() - started) / 1e9,
-        );
-        await wait(options.pollMilliseconds, signal);
-      }
-    } finally {
-      options.onLeadership?.(false);
-      await leadership.release();
+      await leadSettlement(loop, leadership);
+    } catch (error) {
+      telemetry.setSettlementLeadership(false);
+      await releaseAfterFailure(leadership);
+      throw error;
     }
+
+    telemetry.setSettlementLeadership(false);
+    await leadership.release();
   }
 };

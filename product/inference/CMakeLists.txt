@@ -11,50 +11,30 @@ option(GRADIATED_ENGINE_ENABLE_CUDA "Build the native Gemma 4 CUDA execution bac
 
 find_package(CURL REQUIRED)
 
-add_library(desmond_core
-  desmond/src/gpu_metrics.cpp
-  desmond/src/http.cpp
-  desmond/src/https.cpp
-  desmond/src/profiling.cpp
-  desmond/src/status.cpp
-  desmond/src/supervisor.cpp
-  desmond/src/trace.cpp
-)
-target_include_directories(desmond_core PUBLIC desmond/include)
-target_compile_options(desmond_core PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
-target_link_libraries(desmond_core PUBLIC dl pthread CURL::libcurl)
-
-if(DESMOND_ENABLE_SANITIZERS)
-  target_compile_options(desmond_core PUBLIC -fsanitize=address,undefined -fno-omit-frame-pointer)
-  target_link_options(desmond_core PUBLIC -fsanitize=address,undefined)
-endif()
-
-add_executable(desmondd desmond/src/main.cpp)
-target_link_libraries(desmondd PRIVATE desmond_core)
-target_compile_options(desmondd PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
-
 include(CTest)
-if(BUILD_TESTING)
-  add_executable(desmond_tests desmond/tests/desmond_tests.cpp)
-  target_link_libraries(desmond_tests PRIVATE desmond_core)
-  target_compile_options(desmond_tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
-  add_test(NAME desmond_tests COMMAND desmond_tests)
-  find_package(Python3 COMPONENTS Interpreter REQUIRED)
-  add_test(NAME desmond_observer COMMAND ${Python3_EXECUTABLE}
-    ${CMAKE_CURRENT_SOURCE_DIR}/desmond/tests/observer.py $<TARGET_FILE:desmondd>)
-  set_tests_properties(desmond_observer PROPERTIES TIMEOUT 60)
-endif()
-
-install(TARGETS desmondd RUNTIME DESTINATION bin)
+add_subdirectory(desmond)
 
 add_library(gradiated_engine_model
   engine/src/json.cpp
   engine/src/gemma4_config.cpp
+  engine/src/gemma4_model.cpp
   engine/src/safetensors.cpp
   engine/src/weight_plan.cpp
 )
 target_include_directories(gradiated_engine_model PUBLIC engine/include)
 target_compile_options(gradiated_engine_model PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
+
+add_library(gradiated_engine_runtime
+  engine/src/runtime/completion_request.cpp
+  engine/src/runtime/completion_response.cpp
+  engine/src/runtime/metrics.cpp
+  engine/src/runtime/settings.cpp
+  engine/src/runtime/slot_policy.cpp
+  engine/src/runtime/speculation.cpp
+)
+target_include_directories(gradiated_engine_runtime PUBLIC engine/src)
+target_link_libraries(gradiated_engine_runtime PRIVATE gradiated_engine_model)
+target_compile_options(gradiated_engine_runtime PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
 
 add_executable(gradiated-engine-inspect engine/src/inspect_main.cpp)
 target_link_libraries(gradiated-engine-inspect PRIVATE gradiated_engine_model)
@@ -200,7 +180,8 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
     CUDA_ARCHITECTURES 90
   )
   add_executable(gradiated-engine-runtime engine/src/native_runtime_main.cpp)
-  target_link_libraries(gradiated-engine-runtime PRIVATE gradiated_engine_cuda desmond_core)
+  target_link_libraries(gradiated-engine-runtime PRIVATE gradiated_engine_cuda gradiated_engine_runtime
+    desmond_core)
   target_compile_options(gradiated-engine-runtime PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
   install(TARGETS gradiated-engine-runtime RUNTIME DESTINATION bin)
   add_executable(gradiated-engine-batch-benchmark engine/src/batch_benchmark.cu)
@@ -220,10 +201,56 @@ if(GRADIATED_ENGINE_ENABLE_CUDA)
 endif()
 
 if(BUILD_TESTING)
-  add_executable(gradiated_engine_model_tests engine/tests/model_tests.cpp)
-  target_link_libraries(gradiated_engine_model_tests PRIVATE gradiated_engine_model)
-  target_compile_options(gradiated_engine_model_tests PRIVATE -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
+  set(GRADIATED_ENGINE_WARNINGS -Wall -Wextra -Wpedantic -Wconversion -Wshadow)
+
+  add_library(gradiated_engine_test_support STATIC engine/tests/support/test_support.cpp)
+  target_include_directories(gradiated_engine_test_support PUBLIC engine/tests)
+  target_compile_options(gradiated_engine_test_support PRIVATE ${GRADIATED_ENGINE_WARNINGS})
+
+  add_library(gradiated_engine_model_fixtures STATIC engine/tests/support/model_fixtures.cpp)
+  target_include_directories(gradiated_engine_model_fixtures PUBLIC engine/tests)
+  target_compile_options(gradiated_engine_model_fixtures PRIVATE ${GRADIATED_ENGINE_WARNINGS})
+
+  add_executable(gradiated_engine_model_tests
+    engine/tests/json_tests.cpp
+    engine/tests/safetensors_tests.cpp
+    engine/tests/gemma4_config_tests.cpp
+    engine/tests/weight_plan_tests.cpp
+  )
+  target_link_libraries(gradiated_engine_model_tests PRIVATE gradiated_engine_model
+    gradiated_engine_model_fixtures gradiated_engine_test_support)
+  target_compile_options(gradiated_engine_model_tests PRIVATE ${GRADIATED_ENGINE_WARNINGS})
   add_test(NAME gradiated_engine_model_tests COMMAND gradiated_engine_model_tests)
+
+  add_executable(gradiated_engine_runtime_tests
+    engine/tests/completion_request_tests.cpp
+    engine/tests/completion_response_tests.cpp
+    engine/tests/runtime_metrics_tests.cpp
+    engine/tests/runtime_settings_tests.cpp
+    engine/tests/slot_policy_tests.cpp
+    engine/tests/speculation_tests.cpp
+  )
+  target_link_libraries(gradiated_engine_runtime_tests PRIVATE gradiated_engine_runtime
+    gradiated_engine_test_support)
+  target_compile_options(gradiated_engine_runtime_tests PRIVATE ${GRADIATED_ENGINE_WARNINGS})
+  add_test(NAME gradiated_engine_runtime_tests COMMAND gradiated_engine_runtime_tests)
+
+  add_executable(gradiated_engine_model_fixtures_writer engine/tests/support/write_model_fixtures_main.cpp)
+  target_link_libraries(gradiated_engine_model_fixtures_writer PRIVATE gradiated_engine_model_fixtures)
+  target_compile_options(gradiated_engine_model_fixtures_writer PRIVATE ${GRADIATED_ENGINE_WARNINGS})
+  add_test(NAME gradiated_engine_inspect_cli COMMAND ${CMAKE_COMMAND}
+    -DFIXTURES=$<TARGET_FILE:gradiated_engine_model_fixtures_writer>
+    -DINSPECT=$<TARGET_FILE:gradiated-engine-inspect>
+    -DWORK_DIRECTORY=${CMAKE_CURRENT_BINARY_DIR}/engine-inspect-cli
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/engine/tests/inspect_cli_test.cmake)
+
+  if(NOT GRADIATED_ENGINE_ENABLE_CUDA)
+    # The CUDA build links the runtime; host builds still compile it against the CUDA-free headers.
+    add_library(gradiated_engine_runtime_host_compile OBJECT engine/src/native_runtime_main.cpp)
+    target_link_libraries(gradiated_engine_runtime_host_compile PRIVATE gradiated_engine_model
+      gradiated_engine_runtime desmond_core)
+    target_compile_options(gradiated_engine_runtime_host_compile PRIVATE ${GRADIATED_ENGINE_WARNINGS})
+  endif()
 endif()
 
 install(TARGETS gradiated-engine-inspect RUNTIME DESTINATION bin)

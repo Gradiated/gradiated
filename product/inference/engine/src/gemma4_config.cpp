@@ -4,6 +4,7 @@
 
 #include <cmath>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 
 namespace gradiated::engine {
@@ -14,7 +15,17 @@ std::uint32_t u32(const Json& value, const char* field) {
   if (parsed > std::numeric_limits<std::uint32_t>::max()) {
     throw std::runtime_error(std::string(field) + " exceeds uint32");
   }
+
   return static_cast<std::uint32_t>(parsed);
+}
+
+int token_id(const Json& value, const char* field) {
+  const std::uint32_t parsed = u32(value, field);
+  if (parsed > static_cast<std::uint32_t>(std::numeric_limits<int>::max())) {
+    throw std::runtime_error(std::string(field) + " exceeds int");
+  }
+
+  return static_cast<int>(parsed);
 }
 
 double number_at(const Json& object, std::string_view field) {
@@ -47,19 +58,24 @@ Gemma4Config Gemma4Config::load(const std::string& config_path) {
   if (root.at("model_type").as_string() != "gemma4") {
     throw std::runtime_error("expected a Gemma 4 model");
   }
+
   const Json& text = root.at("text_config");
   if (text.at("model_type").as_string() != "gemma4_text") {
     throw std::runtime_error("expected Gemma 4 text configuration");
   }
+
   if (!text.at("tie_word_embeddings").as_bool()) {
     throw std::runtime_error("untied Gemma 4 embeddings are not supported");
   }
+
   if (text.at("attention_bias").as_bool()) {
     throw std::runtime_error("attention bias is not supported");
   }
+
   if (u32(text.at("hidden_size_per_layer_input"), "hidden_size_per_layer_input") != 0U) {
     throw std::runtime_error("per-layer input embeddings are not supported");
   }
+
   if (u32(text.at("num_kv_shared_layers"), "num_kv_shared_layers") != 0U) {
     throw std::runtime_error("shared assistant KV layers are not valid for the target engine");
   }
@@ -67,7 +83,6 @@ Gemma4Config Gemma4Config::load(const std::string& config_path) {
   Gemma4Config result{
       .hidden_size = u32(text.at("hidden_size"), "hidden_size"),
       .intermediate_size = u32(text.at("intermediate_size"), "intermediate_size"),
-      .layer_count = u32(text.at("num_hidden_layers"), "num_hidden_layers"),
       .vocabulary_size = u32(text.at("vocab_size"), "vocab_size"),
       .sliding_window = u32(text.at("sliding_window"), "sliding_window"),
       .maximum_positions = u32(text.at("max_position_embeddings"), "max_position_embeddings"),
@@ -78,7 +93,7 @@ Gemma4Config Gemma4Config::load(const std::string& config_path) {
   };
   const Json& eos = root.at("eos_token_id");
   for (const Json& token : eos.as_array()) {
-    result.eos_token_ids.push_back(static_cast<int>(u32(token, "eos_token_id")));
+    result.eos_token_ids.push_back(token_id(token, "eos_token_id"));
   }
   if (result.eos_token_ids.empty()) {
     throw std::runtime_error("eos_token_id must not be empty");
@@ -95,15 +110,17 @@ Gemma4Config Gemma4Config::load(const std::string& config_path) {
   const Json& sliding_rope = ropes.at("sliding_attention");
   const Json& global_rope = ropes.at("full_attention");
   const auto& layer_types = text.at("layer_types").as_array();
-  if (layer_types.size() != result.layer_count) {
+  if (layer_types.size() != u32(text.at("num_hidden_layers"), "num_hidden_layers")) {
     throw std::runtime_error("layer_types length does not match num_hidden_layers");
   }
-  result.layers.reserve(result.layer_count);
+
+  result.layers.reserve(layer_types.size());
   for (const Json& layer_type : layer_types) {
     const bool sliding = layer_type.as_string() == "sliding_attention";
     if (!sliding && layer_type.as_string() != "full_attention") {
       throw std::runtime_error("unsupported Gemma 4 attention type: " + layer_type.as_string());
     }
+
     const Json& rope = sliding ? sliding_rope : global_rope;
     const std::uint32_t head_dimension = sliding ? sliding_head_dimension : global_head_dimension;
     result.layers.push_back({
@@ -150,6 +167,34 @@ std::uint64_t Gemma4Config::resident_sliding_kv_bytes_per_sequence() const {
     }
   }
   return bytes;
+}
+
+void require_native_gemma4_target(const Gemma4Config& config) {
+  for (const Gemma4LayerConfig& layer : config.layers) {
+    const bool sliding = layer.attention == AttentionKind::sliding;
+    const std::string kind = sliding ? "sliding" : "global";
+    const auto require = [&](bool supported, std::string_view field, std::string_view expected, auto actual) {
+      if (supported) return;
+
+      std::ostringstream message;
+      message << "native Gemma 4 kernels require " << kind << ' ' << field << ' ' << expected << ", found "
+              << actual;
+      throw std::runtime_error(message.str());
+    };
+
+    const std::uint32_t head_dimension = sliding ? 256 : 512;
+    const double rope_theta = sliding ? 10000.0 : 1000000.0;
+    const std::uint32_t rotary_dimension = sliding ? layer.head_dimension : layer.head_dimension / 4;
+
+    require(layer.head_dimension == head_dimension, "head_dimension", std::to_string(head_dimension),
+            layer.head_dimension);
+    require(layer.rope_theta == rope_theta, "rope_theta", std::to_string(static_cast<int>(rope_theta)),
+            layer.rope_theta);
+    require(layer.rotary_dimension == rotary_dimension, "rotary_dimension", std::to_string(rotary_dimension),
+            layer.rotary_dimension);
+    require(layer.key_equals_value == !sliding, "key_equals_value", sliding ? "false" : "true",
+            layer.key_equals_value ? "true" : "false");
+  }
 }
 
 }  // namespace gradiated::engine

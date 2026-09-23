@@ -1,6 +1,15 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema, UuidSchema } from "./common.js";
+import {
+  CancellationOwnerSchema,
+  GenerationStatusSchema,
+  ModelIdSchema,
+  pageFields,
+  TimestampSchema,
+  TokenCountSchema,
+  UnsignedIntegerStringSchema,
+  UuidSchema,
+} from "./common.js";
 
 const DateRangeFields = {
   from: TimestampSchema,
@@ -9,12 +18,13 @@ const DateRangeFields = {
 
 const MAX_RANGE_MILLISECONDS = 93 * 24 * 60 * 60 * 1_000;
 
-const validateDateRange = <T extends { from: string; to: string }>(
-  value: T,
+const validateDateRange = (
+  value: { from: string; to: string },
   context: z.RefinementCtx,
 ) => {
   const from = new Date(value.from).getTime();
   const to = new Date(value.to).getTime();
+
   if (from >= to) {
     context.addIssue({
       code: "custom",
@@ -34,28 +44,26 @@ export const UsageQuerySchema = z
   .object(DateRangeFields)
   .superRefine(validateDateRange);
 
+const UsageTotalsFields = {
+  charge: UnsignedIntegerStringSchema,
+  input_tokens: UnsignedIntegerStringSchema,
+  output_tokens: UnsignedIntegerStringSchema,
+  generation_count: UnsignedIntegerStringSchema,
+};
+
 export const UsagePointSchema = z.object({
   date: z.iso.date(),
-  charge: z.string().regex(/^\d+$/),
-  input_tokens: z.string().regex(/^\d+$/),
-  output_tokens: z.string().regex(/^\d+$/),
-  generation_count: z.string().regex(/^\d+$/),
+  ...UsageTotalsFields,
 });
 
 export const UsageModelBreakdownSchema = z.object({
-  model_id: z.string().min(1).max(200),
-  charge: z.string().regex(/^\d+$/),
-  input_tokens: z.string().regex(/^\d+$/),
-  output_tokens: z.string().regex(/^\d+$/),
-  generation_count: z.string().regex(/^\d+$/),
+  model_id: ModelIdSchema,
+  ...UsageTotalsFields,
 });
 
 export const UsageSummarySchema = z.object({
-  charge: z.string().regex(/^\d+$/),
-  input_tokens: z.string().regex(/^\d+$/),
-  output_tokens: z.string().regex(/^\d+$/),
-  generation_count: z.string().regex(/^\d+$/),
-  succeeded_count: z.string().regex(/^\d+$/),
+  ...UsageTotalsFields,
+  succeeded_count: UnsignedIntegerStringSchema,
   daily: z.array(UsagePointSchema),
   models: z.array(UsageModelBreakdownSchema),
 });
@@ -66,41 +74,36 @@ export const GenerationListQuerySchema = z
     cursor: z.string().min(1).max(1_000).optional(),
     limit: z.coerce.number().int().min(1).max(100).default(25),
     api_key_id: UuidSchema.optional(),
-    model: z.string().min(1).max(200).optional(),
+    model: ModelIdSchema.optional(),
     search: z.string().trim().min(1).max(300).optional(),
     sort: z.enum(["newest", "highest_cost"]).default("newest"),
-    status: z
-      .enum(["succeeded", "failed", "cancelled", "abandoned"])
-      .optional(),
+    status: GenerationStatusSchema.optional(),
   })
   .superRefine(validateDateRange);
 
 export const GenerationLogSchema = z.object({
   id: UuidSchema,
   external_id: z.string().nullable(),
-  model_id: z.string().min(1).max(200),
-  status: z.enum(["succeeded", "failed", "cancelled", "abandoned"]),
+  model_id: ModelIdSchema,
+  status: GenerationStatusSchema,
   streamed: z.boolean(),
-  charge: z.string().regex(/^\d+$/),
-  input_tokens: z.number().int().nonnegative(),
-  cached_input_tokens: z.number().int().nonnegative(),
-  cache_write_tokens: z.number().int().nonnegative(),
-  output_tokens: z.number().int().nonnegative(),
-  reasoning_tokens: z.number().int().nonnegative(),
+  charge: UnsignedIntegerStringSchema,
+  input_tokens: TokenCountSchema,
+  cached_input_tokens: TokenCountSchema,
+  cache_write_tokens: TokenCountSchema,
+  output_tokens: TokenCountSchema,
+  reasoning_tokens: TokenCountSchema,
   finish_reason: z.string().nullable(),
   error_code: z.string().nullable(),
   usable_output_delivered: z.boolean(),
-  cancellation_owner: z.enum(["client", "server", "runtime"]).nullable(),
+  cancellation_owner: CancellationOwnerSchema.nullable(),
   received_at: TimestampSchema,
   started_at: TimestampSchema.nullable(),
   first_token_at: TimestampSchema.nullable(),
   completed_at: TimestampSchema,
 });
 
-export const GenerationListSchema = z.object({
-  data: z.array(GenerationLogSchema),
-  next_cursor: z.string().nullable(),
-});
+export const GenerationListSchema = z.object(pageFields(GenerationLogSchema));
 
 export type GenerationList = z.infer<typeof GenerationListSchema>;
 export type GenerationLog = z.infer<typeof GenerationLogSchema>;

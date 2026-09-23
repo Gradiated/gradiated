@@ -1,12 +1,20 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema, UuidSchema } from "./common.js";
+import {
+  ApiKeySecretSchema,
+  NameInputSchema,
+  NameSchema,
+  OrganizationIdParamsSchema,
+  pageFields,
+  TimestampSchema,
+  UuidSchema,
+} from "./common.js";
 
 export const WorkspaceSchema = z
   .object({
     id: UuidSchema,
     organization_id: UuidSchema,
-    name: z.string().min(1).max(200),
+    name: NameSchema,
     is_default: z.boolean(),
     archived_at: TimestampSchema.nullable(),
     created_at: TimestampSchema,
@@ -16,15 +24,12 @@ export const WorkspaceSchema = z
 
 export const CreateWorkspaceSchema = z
   .strictObject({
-    name: z.string().trim().min(1).max(200),
+    name: NameInputSchema,
   })
   .openapi("CreateWorkspace");
 
 export const WorkspaceListSchema = z
-  .object({
-    data: z.array(WorkspaceSchema),
-    next_cursor: z.string().nullable(),
-  })
+  .object(pageFields(WorkspaceSchema))
   .openapi("WorkspaceList");
 
 export const ApiKeySchema = z
@@ -32,7 +37,7 @@ export const ApiKeySchema = z
     id: UuidSchema,
     organization_id: UuidSchema,
     workspace_id: UuidSchema,
-    name: z.string().min(1).max(200),
+    name: NameSchema,
     expires_at: TimestampSchema.nullable(),
     revoked_at: TimestampSchema.nullable(),
     created_by: UuidSchema.nullable(),
@@ -42,15 +47,12 @@ export const ApiKeySchema = z
   .openapi("ApiKey");
 
 export const ApiKeyListSchema = z
-  .object({
-    data: z.array(ApiKeySchema),
-    next_cursor: z.string().nullable(),
-  })
+  .object(pageFields(ApiKeySchema))
   .openapi("ApiKeyList");
 
 export const CreateApiKeySchema = z
   .strictObject({
-    name: z.string().trim().min(1).max(200),
+    name: NameInputSchema,
     expires_at: TimestampSchema.nullable().optional(),
   })
   .openapi("CreateApiKey");
@@ -58,12 +60,11 @@ export const CreateApiKeySchema = z
 export const CreatedApiKeySchema = z
   .object({
     api_key: ApiKeySchema,
-    secret: z.string().regex(/^grad_[A-Za-z0-9_-]{43}$/),
+    secret: ApiKeySecretSchema,
   })
   .openapi("CreatedApiKey");
 
-export const WorkspacePathSchema = z.object({
-  organization_id: UuidSchema,
+export const WorkspacePathSchema = OrganizationIdParamsSchema.extend({
   workspace_id: UuidSchema,
 });
 

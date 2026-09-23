@@ -10,10 +10,8 @@ export {
   type ClickHouseRuntimeEnvironment,
 } from "./clickhouse/client.js";
 export {
-  clickHouseGenerationInsertSchema,
   createGenerationWriter,
   storedGenerationPropertiesSchema,
-  type ClickHouseGenerationInsert,
   type GenerationWriter,
   type StoredGenerationProperties,
 } from "./clickhouse/generation-ingestion.js";
@@ -34,6 +32,7 @@ export {
   type GenerationSettlementReader,
   type OrganizationSettlement,
 } from "./settlement/clickhouse-reader.js";
+export { settlementSourceId } from "./settlement/slot.js";
 export {
   createGenerationSettlementStore,
   type GenerationSettlementStore,
@@ -43,12 +42,23 @@ export {
 export { betterAuthSchema } from "./db/schema/auth.js";
 export {
   createCatalogBillingService,
-  type BalanceTransactionRecord,
-  type BillingAccountRecord,
   type CatalogBillingService,
+} from "./catalog-billing/service.js";
+export {
+  createCatalogService,
+  type CatalogService,
   type ModelDeploymentRecord,
   type ModelRecord,
-} from "./catalog-billing/service.js";
+} from "./catalog/service.js";
+export {
+  createBillingService,
+  type BillingAccountRecord,
+  type BillingService,
+} from "./billing/service.js";
+export {
+  BalanceSourceConflictError,
+  type BalanceTransactionRecord,
+} from "./billing/ledger.js";
 export {
   SIGNUP_CREDIT_NANO_USD,
   createOrganizationService,
@@ -68,8 +78,8 @@ export {
   configureOpenRouterDistributionChannel,
   type ConfiguredDistributionChannel,
 } from "./distribution-channels/service.js";
+export { ControlServiceError } from "./errors.js";
 export {
-  ControlServiceError,
   createWorkspaceApiKeyService,
   type ApiKeyRecord,
   type CreatedApiKey,

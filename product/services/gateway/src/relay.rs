@@ -10,14 +10,16 @@ use axum::{
 };
 use futures_util::Stream;
 use reqwest::{redirect::Policy, Client};
-use serde_json::Value;
 use tokio::sync::{OwnedSemaphorePermit, Semaphore};
 
 use crate::{
-    auth::{Provider, ProviderCredential},
+    auth::{Provider, ProviderCredential, X_API_KEY},
     config::ProxyLimits,
+    diagnostics::limited_warn,
     error::GatewayError,
 };
+
+pub(crate) use crate::request::parse_target;
 
 const HOP_HEADER: HeaderName = HeaderName::from_static("x-gradiated-hop");
 const GRADIATED_HEADER_PREFIX: &str = "x-gradiated-";
@@ -70,50 +72,11 @@ impl RelayRoute {
         }
     }
 
-    /// The upstream path is fixed per route. The caller's own path never selects it.
-    fn path(self) -> &'static str {
-        match self {
-            Self::AnthropicMessages => "/v1/messages",
-        }
-    }
-
     fn credential_header(self) -> HeaderName {
         match self {
-            Self::AnthropicMessages => HeaderName::from_static("x-api-key"),
+            Self::AnthropicMessages => X_API_KEY,
         }
     }
-}
-
-/// A parsed request and the single model it names.
-pub struct RequestTarget {
-    pub request: Value,
-    pub model: String,
-}
-
-/// Requires exactly one non-empty string `model` and rejects duplicate top-level
-/// keys, so a body can never carry a second, ignored target. The parsed request
-/// is returned so a hosted request is never parsed twice.
-pub fn parse_target(body: &[u8]) -> Result<RequestTarget, GatewayError> {
-    // Nested duplicates matter as much as top-level ones: a decision body carries
-    // structured state and instructions where a silent collapse would change meaning.
-    let Value::Object(fields) =
-        crate::json::strict_json(body).map_err(|_| GatewayError::invalid_request(None))?
-    else {
-        return Err(GatewayError::invalid_request(None));
-    };
-
-    let Some(Value::String(model)) = fields.get("model") else {
-        return Err(GatewayError::invalid_request(Some("model")));
-    };
-
-    if model.is_empty() {
-        return Err(GatewayError::invalid_request(Some("model")));
-    }
-
-    Ok(RequestTarget {
-        model: model.clone(),
-        request: Value::Object(fields),
-    })
 }
 
 fn connection_named(headers: &HeaderMap) -> Vec<String> {
@@ -144,6 +107,7 @@ pub fn upstream_headers(
     credential: &ProviderCredential<'_>,
 ) -> Result<UpstreamHeaders, GatewayError> {
     if inbound.contains_key(&HOP_HEADER) {
+        limited_warn!(error_code = "relay_loop", "provider relay refused");
         return Err(GatewayError::invalid_request(None));
     }
 
@@ -155,11 +119,12 @@ pub fn upstream_headers(
         }
     }
 
-    let secret = HeaderValue::from_str(credential.secret)
+    let mut secret = HeaderValue::from_str(credential.secret)
         .map_err(|_| GatewayError::invalid_request(None))?;
+    secret.set_sensitive(true);
     upstream.insert(route.credential_header(), secret);
     upstream.insert(HOP_HEADER, HeaderValue::from_static("1"));
-    // The observer decodes; the caller receives the provider's bytes untouched.
+    // The caller receives the provider's exact bytes, and the edge never re-encodes them.
     upstream.insert(
         HeaderName::from_static("accept-encoding"),
         HeaderValue::from_static("identity"),
@@ -181,7 +146,7 @@ impl UpstreamHeaders {
 
 /// Keeps the provider's own content headers, including `content-encoding`, and
 /// drops everything that describes the provider connection.
-pub fn downstream_headers(upstream: &HeaderMap) -> HeaderMap {
+fn downstream_headers(upstream: &HeaderMap) -> HeaderMap {
     let connection = connection_named(upstream);
     let mut downstream = HeaderMap::new();
     for (name, value) in upstream {
@@ -217,7 +182,7 @@ impl Stream for RelayBody {
         self.inner
             .as_mut()
             .poll_next(context)
-            .map(|chunk| chunk.map(|result| result.map_err(RelayError::from)))
+            .map(|chunk| chunk.map(|result| result.map_err(|error| failed("body", &error))))
     }
 }
 
@@ -238,13 +203,33 @@ pub enum RelayError {
     RequestTooLarge,
 }
 
-impl From<reqwest::Error> for RelayError {
-    fn from(error: reqwest::Error) -> Self {
-        if error.is_timeout() {
-            Self::Timeout
-        } else {
-            Self::Unavailable
-        }
+fn failed(phase: &'static str, error: &reqwest::Error) -> RelayError {
+    limited_warn!(
+        phase,
+        error_code = diagnostic_code(error),
+        "provider relay failed"
+    );
+
+    if error.is_timeout() {
+        RelayError::Timeout
+    } else {
+        RelayError::Unavailable
+    }
+}
+
+fn diagnostic_code(error: &reqwest::Error) -> &'static str {
+    if error.is_connect() {
+        "connect"
+    } else if error.is_timeout() {
+        "timeout"
+    } else if error.is_body() {
+        "body"
+    } else if error.is_decode() {
+        "decode"
+    } else if error.is_request() {
+        "request"
+    } else {
+        "other"
     }
 }
 
@@ -285,12 +270,6 @@ impl ProviderRelay {
         })
     }
 
-    pub fn limits(&self) -> ProxyLimits {
-        self.limits
-    }
-
-    /// Reserves the request's bytes before sending and holds both permits for the
-    /// life of the response body.
     pub async fn send(
         &self,
         route: RelayRoute,
@@ -302,7 +281,7 @@ impl ProviderRelay {
         }
 
         let permits = self.reserve(body.len())?;
-        let url = format!("{}{}", self.anthropic_origin, route.path());
+        let url = self.url(route);
         let request = self
             .client
             .request(reqwest::Method::POST, url)
@@ -313,8 +292,15 @@ impl ProviderRelay {
         // for response headers alone.
         let response = tokio::time::timeout(self.limits.response_header_timeout, request.send())
             .await
-            .map_err(|_| RelayError::Timeout)?
-            .map_err(RelayError::from)?;
+            .map_err(|_| {
+                limited_warn!(
+                    phase = "send",
+                    error_code = "header_timeout",
+                    "provider relay failed"
+                );
+                RelayError::Timeout
+            })?
+            .map_err(|error| failed("send", &error))?;
 
         Ok(RelayResponse {
             status: response.status(),
@@ -324,6 +310,13 @@ impl ProviderRelay {
                 _permits: permits,
             },
         })
+    }
+
+    /// The upstream URL is fixed per route. The caller's own path never selects it.
+    fn url(&self, route: RelayRoute) -> String {
+        match route {
+            RelayRoute::AnthropicMessages => format!("{}/v1/messages", self.anthropic_origin),
+        }
     }
 
     fn reserve(&self, length: usize) -> Result<RelayPermits, RelayError> {
@@ -350,6 +343,10 @@ impl ProviderRelay {
 fn permit_count(configured: u64) -> usize {
     usize::try_from(configured.min(u32::MAX as u64)).unwrap_or(usize::MAX)
 }
+
+#[cfg(test)]
+#[path = "relay_support.rs"]
+pub(crate) mod support;
 
 #[cfg(test)]
 #[path = "relay_tests.rs"]

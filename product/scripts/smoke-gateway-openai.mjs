@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 
 const apiKey = process.env.GRADIATED_API_KEY;
+
 if (!apiKey) {
   throw new Error("GRADIATED_API_KEY is required");
 }
@@ -8,14 +9,16 @@ if (!apiKey) {
 const baseURL = process.env.GRADIATED_BASE_URL ?? "https://api.gradiated.com";
 const requestedModel = process.env.GRADIATED_MODEL;
 const prompt = "Reply with exactly: production-chat-ready";
-const client = new OpenAI({ apiKey, baseURL });
+const client = new OpenAI({ apiKey, baseURL, maxRetries: 0 });
+
+/** @param {OpenAI.Models.Model} model */
+const isReady = (model) => !("is_ready" in model) || model.is_ready !== false;
 
 const models = await client.models.list();
-const availableModels = models.data.filter((model) => model.is_ready !== false);
-const model = requestedModel ?? availableModels[0]?.id ?? models.data[0]?.id;
+const model = requestedModel ?? models.data.find(isReady)?.id;
 
 if (!model) {
-  throw new Error("The gateway returned no models");
+  throw new Error("The gateway advertises no ready model");
 }
 
 const nonStreaming = await client.chat.completions.create({

@@ -1,104 +1,70 @@
-//! The OpenAI chat completions protocol that ordinary SGLang deployments serve.
-
-use std::time::Duration;
-
 use async_trait::async_trait;
 use reqwest::{header, Response};
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use super::{
-    client::{next_message, one_shot_body, open_events, read_bounded_body, send, RuntimeEvents},
-    RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeStreamChunk, RuntimeStreamEvent,
-    SglangClient,
+    client::{
+        next_message, one_shot_body, open_events, read_bounded_body, send, Call, ModelNames,
+        RuntimeEvents,
+    },
+    ChunkUsage, ProtocolViolation, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
+    RuntimeStreamChunk, RuntimeStreamEvent, SglangClient,
 };
-use crate::{GatewayModelDeployment, InferenceRequest, NormalizedUsage};
+use crate::{model::MAX_SAFE_INTEGER, NormalizedUsage};
 
 const CHAT_COMPLETIONS: &str = "v1/chat/completions";
 const MAX_RESPONSE_TEXT_CHARS: usize = 300;
 const MAX_FINISH_REASON_CHARS: usize = 100;
-const MAX_JSON_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
 impl SglangClient {
     pub(super) async fn complete_chat(
         &self,
-        deployment: &GatewayModelDeployment,
-        request: InferenceRequest,
-        effective_output_tokens: u64,
-        response_header_timeout: Duration,
+        call: Call<'_>,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
-        let models = ModelNames::new(deployment, &request);
-        let body = chat_body(request, effective_output_tokens, &models)?;
-
-        let upstream = self
-            .post(deployment, CHAT_COMPLETIONS, one_shot_body(body))
-            .header(header::ACCEPT, "application/json");
-        let response = send(upstream, response_header_timeout).await?;
-        if !response.status().is_success() {
-            return Err(rejected_with_usage(response).await);
-        }
+        let models = ModelNames::new(&call);
+        let response = self.send_chat(call, &models, "application/json").await?;
 
         let body = read_bounded_body(response).await?;
-        normalize_completion(&body, &models.requested, &models.runtime)
+        normalize_completion(&body, &models)
     }
 
     pub(super) async fn stream_chat(
         &self,
-        deployment: &GatewayModelDeployment,
-        request: InferenceRequest,
-        effective_output_tokens: u64,
-        response_header_timeout: Duration,
+        call: Call<'_>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-        let models = ModelNames::new(deployment, &request);
-        let body = chat_body(request, effective_output_tokens, &models)?;
-
-        let upstream = self
-            .post(deployment, CHAT_COMPLETIONS, one_shot_body(body))
-            .header(header::ACCEPT, "text/event-stream");
-        let response = send(upstream, response_header_timeout).await?;
-        if !response.status().is_success() {
-            return Err(rejected_with_usage(response).await);
-        }
+        let models = ModelNames::new(&call);
+        let response = self.send_chat(call, &models, "text/event-stream").await?;
 
         let events = open_events(response)?;
         Ok(Box::new(ChatEventStream {
             events,
-            models,
-            response_id: None,
-            created: None,
-            done: false,
+            normalizer: ChatStreamNormalizer::new(models),
+            phase: Phase::Streaming,
         }))
     }
-}
 
-/// The name the caller asked for and the name the runtime serves. They differ
-/// when a release sets `runtime_model_name`, and responses are renamed back.
-struct ModelNames {
-    requested: String,
-    runtime: String,
-}
+    async fn send_chat(
+        &self,
+        call: Call<'_>,
+        models: &ModelNames,
+        accept: &'static str,
+    ) -> Result<Response, RuntimeFailure> {
+        let body = call
+            .request
+            .into_upstream_body_for_model(call.output_tokens, Some(&models.runtime));
+        let body = serde_json::to_vec(&body).map_err(|_| ProtocolViolation::Json)?;
 
-impl ModelNames {
-    fn new(deployment: &GatewayModelDeployment, request: &InferenceRequest) -> Self {
-        let requested = request.model.clone();
-        let runtime = deployment
-            .release
-            .runtime_model_name
-            .clone()
-            .unwrap_or_else(|| requested.clone());
+        let upstream = self
+            .post(call.deployment, CHAT_COMPLETIONS, one_shot_body(body))
+            .header(header::ACCEPT, accept);
+        let response = send(upstream).await?;
+        if !response.status().is_success() {
+            return Err(rejected_with_usage(response).await);
+        }
 
-        Self { requested, runtime }
+        Ok(response)
     }
-}
-
-fn chat_body(
-    request: InferenceRequest,
-    effective_output_tokens: u64,
-    models: &ModelNames,
-) -> Result<Vec<u8>, RuntimeFailure> {
-    let body = request.into_upstream_body_for_model(effective_output_tokens, Some(&models.runtime));
-
-    serde_json::to_vec(&body).map_err(|_| RuntimeFailure::protocol_violation())
 }
 
 /// A rejected chat request can still report usage the runtime consumed.
@@ -114,54 +80,72 @@ async fn rejected_with_usage(response: Response) -> RuntimeFailure {
 
 struct ChatEventStream {
     events: RuntimeEvents,
-    models: ModelNames,
-    response_id: Option<String>,
-    created: Option<u64>,
-    done: bool,
+    normalizer: ChatStreamNormalizer,
+    phase: Phase,
+}
+
+enum Phase {
+    Streaming,
+    AwaitingDone,
+    Done,
 }
 
 #[async_trait]
 impl RuntimeEventStream for ChatEventStream {
     async fn next_event(&mut self) -> Result<Option<RuntimeStreamEvent>, RuntimeFailure> {
-        if self.done {
+        if matches!(self.phase, Phase::Done) {
             return Ok(None);
         }
 
-        let Some(data) = next_message(&mut self.events).await? else {
-            return Ok(None);
-        };
+        let data = next_message(&mut self.events)
+            .await?
+            .ok_or(ProtocolViolation::FrameOrder)?;
 
-        if data == "[DONE]" {
-            self.done = true;
-            return Ok(Some(RuntimeStreamEvent::Done));
+        match (&self.phase, data == "[DONE]") {
+            (Phase::AwaitingDone, true) => {
+                self.phase = Phase::Done;
+                Ok(Some(RuntimeStreamEvent::Done))
+            }
+            (Phase::Streaming, false) => {
+                let chunk = self.normalizer.normalize(data.as_bytes())?;
+                if chunk.is_terminal_usage() {
+                    self.phase = Phase::AwaitingDone;
+                }
+
+                Ok(Some(RuntimeStreamEvent::Chunk(chunk)))
+            }
+            _ => Err(ProtocolViolation::FrameOrder.into()),
         }
-
-        let chunk = normalize_stream_chunk(
-            data.as_bytes(),
-            &self.models.requested,
-            &self.models.runtime,
-            &mut self.response_id,
-            &mut self.created,
-        )?;
-
-        Ok(Some(RuntimeStreamEvent::Chunk(chunk)))
     }
 }
 
 pub(super) fn normalize_completion(
     body: &[u8],
-    requested_model: &str,
-    runtime_model: &str,
+    models: &ModelNames,
 ) -> Result<RuntimeCompletion, RuntimeFailure> {
     let response: UpstreamCompletion =
-        serde_json::from_slice(body).map_err(|_| RuntimeFailure::protocol_violation())?;
+        serde_json::from_slice(body).map_err(|_| ProtocolViolation::Json)?;
     if response.object != "chat.completion"
         || !valid_response_id(&response.id)
-        || response.model != runtime_model
         || response.choices.is_empty()
-        || response.choices.iter().any(UpstreamChoice::is_invalid)
+        || response
+            .choices
+            .iter()
+            .any(|choice| choice.index > MAX_SAFE_INTEGER)
     {
-        return Err(RuntimeFailure::protocol_violation());
+        return Err(ProtocolViolation::ResponseShape.into());
+    }
+
+    if response.model != models.runtime {
+        return Err(ProtocolViolation::ModelMismatch.into());
+    }
+
+    if response
+        .choices
+        .iter()
+        .any(|choice| !valid_finish_reason(&choice.finish_reason))
+    {
+        return Err(ProtocolViolation::FinishReason.into());
     }
 
     let usage = response.usage.normalize()?;
@@ -170,92 +154,105 @@ pub(super) fn normalize_completion(
         id: response.id,
         object: response.object,
         created: response.created,
-        model: requested_model.to_owned(),
-        choices: response
-            .choices
-            .into_iter()
-            .map(NormalizedChoice::from)
-            .collect(),
+        model: models.requested.clone(),
+        choices: response.choices,
         usage: PublicUsage::from(usage),
     };
 
     Ok(RuntimeCompletion {
-        response: serde_json::to_value(response)
-            .map_err(|_| RuntimeFailure::protocol_violation())?,
+        response: serde_json::to_value(response).map_err(|_| ProtocolViolation::Json)?,
         finish_reason,
         usage,
     })
 }
 
-/// Normalizes one stream chunk. Every chunk of a response must carry the ID and
-/// creation time of the first one.
-pub(super) fn normalize_stream_chunk(
-    body: &[u8],
-    requested_model: &str,
-    runtime_model: &str,
-    response_id: &mut Option<String>,
-    created: &mut Option<u64>,
-) -> Result<RuntimeStreamChunk, RuntimeFailure> {
-    let chunk: UpstreamStreamChunk =
-        serde_json::from_slice(body).map_err(|_| RuntimeFailure::protocol_violation())?;
-    if chunk.object != "chat.completion.chunk"
-        || !valid_response_id(&chunk.id)
-        || chunk.model != runtime_model
-        || chunk.choices.iter().any(UpstreamStreamChoice::is_invalid)
-        || response_id.as_ref().is_some_and(|id| id != &chunk.id)
-        || created.is_some_and(|value| value != chunk.created)
-    {
-        return Err(RuntimeFailure::protocol_violation());
+pub(super) struct ChatStreamNormalizer {
+    models: ModelNames,
+    identity: Option<(String, u64)>,
+}
+
+impl ChatStreamNormalizer {
+    pub(super) fn new(models: ModelNames) -> Self {
+        Self {
+            models,
+            identity: None,
+        }
     }
 
-    response_id.get_or_insert_with(|| chunk.id.clone());
-    created.get_or_insert(chunk.created);
+    pub(super) fn normalize(&mut self, body: &[u8]) -> Result<RuntimeStreamChunk, RuntimeFailure> {
+        let chunk: UpstreamStreamChunk =
+            serde_json::from_slice(body).map_err(|_| ProtocolViolation::Json)?;
+        if chunk.object != "chat.completion.chunk"
+            || !valid_response_id(&chunk.id)
+            || chunk
+                .choices
+                .iter()
+                .any(|choice| choice.index > MAX_SAFE_INTEGER)
+        {
+            return Err(ProtocolViolation::ResponseShape.into());
+        }
 
-    // A chunk without choices is the terminal usage report.
-    let terminal_usage = chunk.choices.is_empty();
-    let usage = chunk.usage.map(UpstreamUsage::normalize).transpose()?;
-    let public_usage = match (terminal_usage, usage) {
-        (true, None) => return Err(RuntimeFailure::protocol_violation()),
-        (true, Some(usage)) => Some(PublicUsage::from(usage)),
-        (false, _) => None,
-    };
+        if chunk.model != self.models.runtime {
+            return Err(ProtocolViolation::ModelMismatch.into());
+        }
 
-    let finish_reason = chunk
-        .choices
-        .iter()
-        .find_map(|choice| choice.finish_reason.clone());
-    let usable_output = chunk
-        .choices
-        .iter()
-        .any(UpstreamStreamChoice::has_usable_output);
-    let response = NormalizedStreamResponse {
-        id: chunk.id,
-        object: chunk.object,
-        created: chunk.created,
-        model: requested_model.to_owned(),
-        choices: chunk
+        if chunk.choices.iter().any(|choice| {
+            choice
+                .finish_reason
+                .as_deref()
+                .is_some_and(|reason| !valid_finish_reason(reason))
+        }) {
+            return Err(ProtocolViolation::FinishReason.into());
+        }
+
+        let (id, created) = self
+            .identity
+            .get_or_insert_with(|| (chunk.id.clone(), chunk.created));
+        if *id != chunk.id || *created != chunk.created {
+            return Err(ProtocolViolation::StreamIdentity.into());
+        }
+
+        // A chunk without choices is the terminal usage report.
+        let usage = if chunk.choices.is_empty() {
+            let usage = chunk.usage.ok_or(ProtocolViolation::Usage)?;
+            Some(ChunkUsage::Terminal(usage.normalize()?))
+        } else {
+            let usage = chunk.usage.map(UpstreamUsage::normalize).transpose()?;
+            usage.map(ChunkUsage::Running)
+        };
+        let public_usage = match usage {
+            Some(ChunkUsage::Terminal(usage)) => Some(PublicUsage::from(usage)),
+            _ => None,
+        };
+
+        let finish_reason = chunk
             .choices
-            .into_iter()
-            .map(NormalizedStreamChoice::from)
-            .collect(),
-        usage: public_usage,
-    };
+            .iter()
+            .find_map(|choice| choice.finish_reason.clone());
+        let usable_output = chunk.choices.iter().any(StreamChoice::has_usable_output);
+        let response = NormalizedStreamResponse {
+            id: chunk.id,
+            object: chunk.object,
+            created: chunk.created,
+            model: self.models.requested.clone(),
+            choices: chunk.choices,
+            usage: public_usage,
+        };
 
-    Ok(RuntimeStreamChunk {
-        response: serde_json::to_value(response)
-            .map_err(|_| RuntimeFailure::protocol_violation())?,
-        usage,
-        finish_reason,
-        usable_output,
-        terminal_usage,
-    })
+        Ok(RuntimeStreamChunk {
+            response: serde_json::to_value(response).map_err(|_| ProtocolViolation::Json)?,
+            finish_reason,
+            usable_output,
+            usage,
+        })
+    }
 }
 
 fn valid_response_id(id: &str) -> bool {
     !id.is_empty() && id.chars().count() <= MAX_RESPONSE_TEXT_CHARS
 }
 
-fn valid_finish_reason(reason: &str) -> bool {
+pub(super) fn valid_finish_reason(reason: &str) -> bool {
     !reason.is_empty() && reason.chars().count() <= MAX_FINISH_REASON_CHARS
 }
 
@@ -278,7 +275,7 @@ struct UpstreamCompletion {
     object: String,
     created: u64,
     model: String,
-    choices: Vec<UpstreamChoice>,
+    choices: Vec<Choice>,
     usage: UpstreamUsage,
 }
 
@@ -289,30 +286,22 @@ struct UpstreamStreamChunk {
     created: u64,
     model: String,
     #[serde(default)]
-    choices: Vec<UpstreamStreamChoice>,
+    choices: Vec<StreamChoice>,
     #[serde(default)]
     usage: Option<UpstreamUsage>,
 }
 
-#[derive(Debug, Deserialize)]
-struct UpstreamStreamChoice {
-    index: u64,
-    delta: Map<String, Value>,
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct StreamChoice {
+    pub(super) index: u64,
+    pub(super) delta: Map<String, Value>,
     #[serde(default)]
-    logprobs: Option<Value>,
+    pub(super) logprobs: Option<Value>,
     #[serde(default)]
-    finish_reason: Option<String>,
+    pub(super) finish_reason: Option<String>,
 }
 
-impl UpstreamStreamChoice {
-    fn is_invalid(&self) -> bool {
-        self.index > MAX_JSON_SAFE_INTEGER
-            || self
-                .finish_reason
-                .as_deref()
-                .is_some_and(|reason| !valid_finish_reason(reason))
-    }
-
+impl StreamChoice {
     /// Text, reasoning or a tool call. Role-only and empty deltas are not output.
     fn has_usable_output(&self) -> bool {
         let text = |name: &str| {
@@ -339,19 +328,13 @@ impl UpstreamStreamChoice {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct UpstreamChoice {
-    index: u64,
-    message: Map<String, Value>,
+#[derive(Debug, Deserialize, Serialize)]
+pub(super) struct Choice {
+    pub(super) index: u64,
+    pub(super) message: Map<String, Value>,
     #[serde(default)]
-    logprobs: Option<Value>,
-    finish_reason: String,
-}
-
-impl UpstreamChoice {
-    fn is_invalid(&self) -> bool {
-        self.index > MAX_JSON_SAFE_INTEGER || !valid_finish_reason(&self.finish_reason)
-    }
+    pub(super) logprobs: Option<Value>,
+    pub(super) finish_reason: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -372,9 +355,9 @@ impl UpstreamUsage {
         let expected_total = self
             .prompt_tokens
             .checked_add(self.completion_tokens)
-            .ok_or_else(RuntimeFailure::protocol_violation)?;
-        if expected_total != self.total_tokens || self.total_tokens > MAX_JSON_SAFE_INTEGER {
-            return Err(RuntimeFailure::protocol_violation());
+            .ok_or(ProtocolViolation::Usage)?;
+        if expected_total != self.total_tokens || self.total_tokens > MAX_SAFE_INTEGER {
+            return Err(ProtocolViolation::Usage.into());
         }
 
         NormalizedUsage::new(
@@ -385,7 +368,7 @@ impl UpstreamUsage {
             self.completion_tokens,
             self.reasoning_tokens.unwrap_or(0),
         )
-        .map_err(|_| RuntimeFailure::protocol_violation())
+        .map_err(|_| ProtocolViolation::Usage.into())
     }
 }
 
@@ -401,7 +384,7 @@ pub(super) struct NormalizedCompletionResponse {
     pub(super) object: String,
     pub(super) created: u64,
     pub(super) model: String,
-    pub(super) choices: Vec<NormalizedChoice>,
+    pub(super) choices: Vec<Choice>,
     pub(super) usage: PublicUsage,
 }
 
@@ -411,47 +394,9 @@ pub(super) struct NormalizedStreamResponse {
     pub(super) object: String,
     pub(super) created: u64,
     pub(super) model: String,
-    pub(super) choices: Vec<NormalizedStreamChoice>,
+    pub(super) choices: Vec<StreamChoice>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(super) usage: Option<PublicUsage>,
-}
-
-#[derive(Serialize)]
-pub(super) struct NormalizedStreamChoice {
-    pub(super) index: u64,
-    pub(super) delta: Map<String, Value>,
-    pub(super) logprobs: Option<Value>,
-    pub(super) finish_reason: Option<String>,
-}
-
-impl From<UpstreamStreamChoice> for NormalizedStreamChoice {
-    fn from(choice: UpstreamStreamChoice) -> Self {
-        Self {
-            index: choice.index,
-            delta: choice.delta,
-            logprobs: choice.logprobs,
-            finish_reason: choice.finish_reason,
-        }
-    }
-}
-
-#[derive(Serialize)]
-pub(super) struct NormalizedChoice {
-    pub(super) index: u64,
-    pub(super) message: Map<String, Value>,
-    pub(super) logprobs: Option<Value>,
-    pub(super) finish_reason: String,
-}
-
-impl From<UpstreamChoice> for NormalizedChoice {
-    fn from(choice: UpstreamChoice) -> Self {
-        Self {
-            index: choice.index,
-            message: choice.message,
-            logprobs: choice.logprobs,
-            finish_reason: choice.finish_reason,
-        }
-    }
 }
 
 #[derive(Serialize)]

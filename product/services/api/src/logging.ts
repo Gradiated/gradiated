@@ -5,9 +5,9 @@ import type { ApiEnvironment } from "./types.js";
 
 export const serviceLog = createServiceLogger("api");
 
-/** Route IDs describe the requested resource, not an authorization decision. */
+// Route IDs describe the requested resource, not an authorization decision.
 export const requestLogFields = (context: Context<ApiEnvironment>) => {
-  const user = context.get("user");
+  const user = context.get("sessionUser");
 
   return {
     request_id: context.get("requestId"),

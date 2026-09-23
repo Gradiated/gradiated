@@ -1,12 +1,14 @@
 ARG SGLANG_IMAGE=docker.io/lmsysorg/sglang@sha256:6113665a292b50fe19c147ffa18fb4b119e66f50a7f6370386f2adaf546fbdc6
 
-FROM ubuntu:24.04 AS desmond-build
+FROM ubuntu:24.04@sha256:224a1869083a311ef3f13648a154ba79832fbef6364d31493642ca03082da254 AS desmond-build
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends cmake libcurl4-openssl-dev ninja-build g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /src
-COPY . /src
+COPY CMakeLists.txt /src/CMakeLists.txt
+COPY desmond/ /src/desmond/
+COPY engine/ /src/engine/
 RUN cmake -S /src -B /build -G Ninja \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_TESTING=OFF \

@@ -8,7 +8,10 @@ use prometheus_client::{
 };
 use uuid::Uuid;
 
-use crate::{AdmissionError, NormalizedUsage, ServiceTier};
+use crate::{
+    AdmissionError, CancellationOwner, GenerationStatus, GenerationTiming, NormalizedUsage,
+    ServiceTier, TerminalOutcome,
+};
 
 type CounterFamily<L> = Family<L, Counter>;
 type GaugeFamily<L> = Family<L, Gauge>;
@@ -98,7 +101,6 @@ struct DependencyLabels {
     dependency: String,
 }
 
-/// Registers a metric and returns the handle the gateway updates.
 fn registered<M: Metric + Clone>(registry: &mut Registry, name: &str, help: &str, metric: M) -> M {
     registry.register(name, help, metric.clone());
     metric
@@ -275,13 +277,9 @@ impl GatewayMetrics {
             .inc();
     }
 
-    pub fn record_admission_rejection(
+    pub(crate) fn record_admission_rejection(
         &self,
-        model: &str,
-        deployment: Uuid,
-        protocol: &str,
-        stream: bool,
-        service_tier: ServiceTier,
+        scope: &GenerationScope<'_>,
         error: &AdmissionError,
     ) {
         if matches!(error, AdmissionError::SettlementBacklog) {
@@ -293,21 +291,17 @@ impl GatewayMetrics {
         self.inner
             .admission_rejections
             .get_or_create(&AdmissionRejectionLabels {
-                generation: generation_labels(model, deployment, protocol, stream, service_tier),
-                reason: admission_reason(error).to_owned(),
+                generation: scope.into(),
+                reason: error.diagnostic_code().to_owned(),
             })
             .inc();
     }
 
-    pub fn generation_admitted(
+    pub(crate) fn generation_admitted(
         &self,
-        model: &str,
-        deployment: Uuid,
-        protocol: &str,
-        stream: bool,
-        service_tier: ServiceTier,
+        scope: &GenerationScope<'_>,
     ) -> AdmittedGenerationMetrics {
-        let labels = generation_labels(model, deployment, protocol, stream, service_tier);
+        let labels = GenerationLabels::from(scope);
         self.inner.admissions.get_or_create(&labels).inc();
         self.inner.active_generations.get_or_create(&labels).inc();
 
@@ -332,6 +326,16 @@ impl GatewayMetrics {
 
         body
     }
+
+    #[cfg(test)]
+    pub(crate) fn sample(&self, name: &str, label: &str) -> Option<i64> {
+        self.encode()
+            .lines()
+            .filter(|line| line.starts_with(&format!("gradiated_gateway_{name}{{")))
+            .filter(|line| line.contains(label))
+            .map(|line| line.rsplit(' ').next().unwrap().parse::<i64>().unwrap())
+            .reduce(|total, value| total + value)
+    }
 }
 
 impl Default for GatewayMetrics {
@@ -340,43 +344,76 @@ impl Default for GatewayMetrics {
     }
 }
 
-/// How one generation ended, as the terminal log line and metrics report it.
-pub struct TerminalRecord {
-    pub generation_id: Uuid,
-    pub status: &'static str,
-    pub error: &'static str,
-    pub cancellation_owner: &'static str,
-    pub usage: NormalizedUsage,
-    pub charge_nano_usd: u64,
-    pub received_at: DateTime<Utc>,
-    pub started_at: DateTime<Utc>,
-    pub first_token_at: Option<DateTime<Utc>>,
-    pub completed_at: DateTime<Utc>,
+pub(crate) struct GenerationScope<'a> {
+    pub model: &'a str,
+    pub deployment: Uuid,
+    pub protocol: &'static str,
+    pub stream: bool,
+    pub service_tier: ServiceTier,
 }
 
-/// The metrics of one admitted generation. Dropping it ends the generation's
-/// place in `active_generations`.
-pub struct AdmittedGenerationMetrics {
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FinalizationAttempt {
+    Settled,
+    AlreadyAbsent,
+    Error,
+}
+
+impl FinalizationAttempt {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Settled => "settled",
+            Self::AlreadyAbsent => "already_absent",
+            Self::Error => "error",
+        }
+    }
+}
+
+pub(crate) struct TerminalRecord<'a> {
+    pub generation_id: Uuid,
+    pub outcome: &'a TerminalOutcome,
+    pub usage: NormalizedUsage,
+    pub charge_nano_usd: u64,
+    pub timing: &'a GenerationTiming,
+}
+
+pub(crate) struct AdmittedGenerationMetrics {
     metrics: GatewayMetrics,
     labels: GenerationLabels,
 }
 
 impl AdmittedGenerationMetrics {
-    pub fn record_terminal(&self, record: &TerminalRecord) {
+    pub(crate) fn served_by(&mut self, deployment: Uuid) {
+        let deployment = deployment.to_string();
+        if self.labels.deployment == deployment {
+            return;
+        }
+
+        let active = &self.metrics.inner.active_generations;
+        active.get_or_create(&self.labels).dec();
+        self.labels.deployment = deployment;
+        active.get_or_create(&self.labels).inc();
+    }
+
+    pub(crate) fn record_terminal(&self, record: &TerminalRecord<'_>) {
         let TerminalRecord {
             generation_id,
-            status,
-            error,
-            cancellation_owner,
+            outcome,
             usage,
             charge_nano_usd,
-            received_at,
-            started_at,
-            first_token_at,
-            completed_at,
+            timing,
         } = *record;
+        let received_at = timing.received_at();
+        let started_at = timing.started_at();
+        let first_token_at = timing.first_token_at();
+        let completed_at = timing.completed_at();
         let labels = &self.labels;
         let metrics = &self.metrics.inner;
+        let status = GenerationStatus::as_str(outcome.status());
+        let error_code = outcome.error_code().unwrap_or("none");
+        let cancellation_owner = outcome
+            .cancellation_owner()
+            .map_or("none", CancellationOwner::as_str);
 
         tracing::info!(
             %generation_id,
@@ -385,7 +422,7 @@ impl AdmittedGenerationMetrics {
             protocol = %labels.protocol,
             stream = %labels.stream,
             service_tier = %labels.service_tier,
-            status, error_code = error, cancellation_owner,
+            status, error_code, cancellation_owner,
             input_tokens = usage.input_tokens(),
             cached_input_tokens = usage.cached_input_tokens(),
             cache_write_tokens = usage.cache_write_tokens(),
@@ -403,7 +440,7 @@ impl AdmittedGenerationMetrics {
             .get_or_create(&GenerationOutcomeLabels {
                 generation: labels.clone(),
                 status: status.to_owned(),
-                error: error.to_owned(),
+                error: error_code.to_owned(),
                 cancellation_owner: cancellation_owner.to_owned(),
             })
             .inc();
@@ -478,9 +515,7 @@ impl AdmittedGenerationMetrics {
         }
     }
 
-    /// A generation that was served but never settled: its lease was gone before
-    /// finalization, so no charge was applied and no terminal event was appended.
-    pub fn record_unsettled_generation(&self) {
+    pub(crate) fn record_unsettled_generation(&self) {
         self.metrics
             .inner
             .unsettled_generations
@@ -488,18 +523,18 @@ impl AdmittedGenerationMetrics {
             .inc();
     }
 
-    pub fn record_finalization_attempt(&self, result: &'static str) {
+    pub(crate) fn record_finalization_attempt(&self, result: FinalizationAttempt) {
         self.metrics
             .inner
             .finalization_attempts
             .get_or_create(&FinalizationLabels {
                 generation: self.labels.clone(),
-                result: result.to_owned(),
+                result: result.as_str().to_owned(),
             })
             .inc();
     }
 
-    pub fn record_finalization_retry(&self) {
+    pub(crate) fn record_finalization_retry(&self) {
         self.metrics
             .inner
             .finalization_retries
@@ -507,7 +542,7 @@ impl AdmittedGenerationMetrics {
             .inc();
     }
 
-    pub fn record_finalization_failure(&self) {
+    pub(crate) fn record_finalization_failure(&self) {
         self.metrics
             .inner
             .last_finalization_failure_timestamp_seconds
@@ -530,32 +565,15 @@ impl Drop for AdmittedGenerationMetrics {
     }
 }
 
-fn generation_labels(
-    model: &str,
-    deployment: Uuid,
-    protocol: &str,
-    stream: bool,
-    service_tier: ServiceTier,
-) -> GenerationLabels {
-    GenerationLabels {
-        model: model.to_owned(),
-        deployment: deployment.to_string(),
-        protocol: protocol.to_owned(),
-        stream: stream.to_string(),
-        service_tier: service_tier.as_str().to_owned(),
-    }
-}
-
-fn admission_reason(error: &AdmissionError) -> &'static str {
-    match error {
-        AdmissionError::InvalidTiming(_) => "invalid_timing",
-        AdmissionError::DeadlineElapsed => "deadline_elapsed",
-        AdmissionError::InsufficientBalance => "insufficient_balance",
-        AdmissionError::ConcurrencyExceeded => "concurrency_exceeded",
-        AdmissionError::SettlementBacklog => "settlement_backlog",
-        AdmissionError::DuplicateGeneration => "duplicate_generation",
-        AdmissionError::UnknownScriptResult(_) => "unknown_script_result",
-        AdmissionError::Redis(_) => "valkey_error",
+impl From<&GenerationScope<'_>> for GenerationLabels {
+    fn from(scope: &GenerationScope<'_>) -> Self {
+        Self {
+            model: scope.model.to_owned(),
+            deployment: scope.deployment.to_string(),
+            protocol: scope.protocol.to_owned(),
+            stream: scope.stream.to_string(),
+            service_tier: scope.service_tier.as_str().to_owned(),
+        }
     }
 }
 

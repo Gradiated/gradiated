@@ -6,7 +6,7 @@ import type { OpenAPIHono } from "@hono/zod-openapi";
 
 import type { ApiEnvironment } from "../types.js";
 
-/** Documentation only. The Rust gateway serves and authenticates this route. */
+// Documentation only. The Rust gateway serves and authenticates this route.
 export const registerSystemOneContract = (app: OpenAPIHono<ApiEnvironment>) => {
   app.openAPIRegistry.registerComponent("securitySchemes", "InferenceBearer", {
     type: "http",

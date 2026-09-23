@@ -1,9 +1,21 @@
-use serde_json::{json, Value};
+use std::sync::LazyLock;
+
+use axum::{
+    response::{IntoResponse, Response},
+    Json,
+};
+use serde::Serialize;
+use serde_json::Value;
 use switchyard_translation::{
-    FormatRegistry, StreamTranslationState, TranslationEngine, TranslationPolicy, WireFormat,
+    StreamTranslationState, TranslationEngine, TranslationError, TranslationPolicy, WireFormat,
 };
 
-use crate::error::GatewayError;
+use crate::{
+    diagnostics::{limited_error, limited_warn},
+    error::GatewayError,
+};
+
+static ENGINE: LazyLock<TranslationEngine> = LazyLock::new(TranslationEngine::default);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Protocol {
@@ -26,17 +38,18 @@ pub struct Frame {
 }
 
 impl Frame {
-    fn json(value: &impl serde::Serialize) -> Self {
+    fn value(event: Option<&str>, value: &Value) -> Self {
         Self {
-            event: None,
-            data: serde_json::to_string(value).expect("protocol values always serialize"),
+            event: event.map(ToOwned::to_owned),
+            data: value.to_string(),
         }
     }
 
-    fn named(event: &str, value: &impl serde::Serialize) -> Self {
+    fn error(event: Option<&str>, envelope: &impl Serialize) -> Self {
         Self {
-            event: Some(event.to_owned()),
-            data: serde_json::to_string(value).expect("protocol values always serialize"),
+            event: event.map(ToOwned::to_owned),
+            data: serde_json::to_string(envelope)
+                .expect("public error envelopes hold only strings"),
         }
     }
 
@@ -49,14 +62,6 @@ impl Frame {
 }
 
 impl Protocol {
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::OpenAiChat => "chat_completions",
-            Self::AnthropicMessages => "messages",
-            Self::OpenAiResponses => "responses",
-        }
-    }
-
     fn wire(self) -> WireFormat {
         match self {
             Self::OpenAiChat => WireFormat::OpenAiChat,
@@ -65,15 +70,13 @@ impl Protocol {
         }
     }
 
-    fn engine() -> TranslationEngine {
-        TranslationEngine::new(FormatRegistry::with_builtins())
-    }
-
     /// Local validation that must run before identity, so an unsupported request
     /// is refused in the caller's own error envelope.
     pub fn validate_request(self, request: &Value) -> Result<(), GatewayError> {
-        if self == Self::OpenAiResponses && responses_use_unsupported_state(request) {
-            return Err(GatewayError::invalid_request(Some("store")));
+        if self == Self::OpenAiResponses {
+            if let Some(field) = unsupported_responses_state(request) {
+                return Err(GatewayError::invalid_request(Some(field)));
+            }
         }
 
         Ok(())
@@ -85,16 +88,22 @@ impl Protocol {
                 serde_json::to_vec(body).map_err(|_| GatewayError::invalid_request(None))
             }
             Self::AnthropicMessages | Self::OpenAiResponses => {
-                let mut output = Self::engine()
-                    .translate_request(self.wire(), WireFormat::OpenAiChat, body, &policy())
-                    .map_err(|_| GatewayError::invalid_request(None))?;
-                if let Some(service_tier) = body.get("service_tier") {
-                    output
-                        .body
-                        .as_object_mut()
-                        .ok_or_else(|| GatewayError::invalid_request(None))?
-                        .insert("service_tier".to_owned(), service_tier.clone());
-                }
+                let output = ENGINE
+                    .translate_request(
+                        self.wire(),
+                        WireFormat::OpenAiChat,
+                        body,
+                        &TranslationPolicy::default(),
+                    )
+                    .map_err(|error| {
+                        limited_warn!(
+                            protocol = ?self,
+                            error_code = error.kind(),
+                            "request translation failed"
+                        );
+                        GatewayError::invalid_request(None)
+                    })?;
+
                 serde_json::to_vec(&output.body).map_err(|_| GatewayError::invalid_request(None))
             }
         }
@@ -103,116 +112,126 @@ impl Protocol {
     pub fn translate_response(self, response: Value) -> Result<Value, GatewayError> {
         match self {
             Self::OpenAiChat => Ok(response),
-            Self::AnthropicMessages | Self::OpenAiResponses => {
-                let output = Self::engine()
-                    .translate_response(WireFormat::OpenAiChat, self.wire(), &response, &policy())
-                    .map_err(|_| GatewayError::RuntimeUnavailable)?;
-                Ok(output.body)
-            }
+            Self::AnthropicMessages | Self::OpenAiResponses => ENGINE
+                .translate_response(
+                    WireFormat::OpenAiChat,
+                    self.wire(),
+                    &response,
+                    &TranslationPolicy::default(),
+                )
+                .map(|output| output.body)
+                .map_err(|error| self.completed_translation_failed(&error)),
         }
     }
 
     pub fn stream_renderer(self) -> StreamRenderer {
-        StreamRenderer {
-            protocol: self,
-            engine: Self::engine(),
-            state: match self {
-                Self::OpenAiChat => None,
-                Self::AnthropicMessages | Self::OpenAiResponses => Some(
-                    StreamTranslationState::new(WireFormat::OpenAiChat, self.wire()),
-                ),
+        match self {
+            Self::OpenAiChat => StreamRenderer::Passthrough,
+            Self::AnthropicMessages | Self::OpenAiResponses => StreamRenderer::Translated {
+                protocol: self,
+                state: Box::new(StreamTranslationState::new(
+                    WireFormat::OpenAiChat,
+                    self.wire(),
+                )),
             },
         }
     }
 
-    pub fn error_response(self, error: GatewayError) -> axum::response::Response {
-        use axum::{response::IntoResponse, Json};
-        let status = error.status();
+    pub fn error_response(self, error: GatewayError) -> Response {
         match self {
-            Self::OpenAiChat | Self::OpenAiResponses => {
-                (status, Json(error.envelope())).into_response()
-            }
-            Self::AnthropicMessages => (status, Json(error.anthropic_envelope())).into_response(),
-        }
-    }
-
-    fn error_frame(&self, error: &GatewayError) -> Frame {
-        match self {
-            Self::OpenAiChat => Frame {
-                event: None,
-                data: serde_json::to_string(&error.envelope())
-                    .expect("the bounded public error envelope always serializes"),
-            },
-            Self::AnthropicMessages => Frame::named("error", &error.anthropic_envelope()),
-            Self::OpenAiResponses => Frame::named(
-                "error",
-                &json!({
-                    "type": "error",
-                    "code": error.code(),
-                    "message": error.message(),
-                    "param": error.param(),
-                }),
-            ),
-        }
-    }
-
-    fn frame(&self, value: &Value) -> Frame {
-        match self {
-            Self::OpenAiChat => Frame::json(value),
-            Self::AnthropicMessages | Self::OpenAiResponses => {
-                let name = value
-                    .get("type")
-                    .and_then(Value::as_str)
-                    .filter(|name| !name.is_empty())
-                    .unwrap_or("message");
-                Frame::named(name, value)
+            Self::OpenAiChat | Self::OpenAiResponses => error.into_response(),
+            Self::AnthropicMessages => {
+                (error.status(), Json(error.anthropic_envelope())).into_response()
             }
         }
     }
+
+    fn completed_translation_failed(self, error: &TranslationError) -> GatewayError {
+        limited_error!(
+            protocol = ?self,
+            error_code = error.kind(),
+            "response translation failed"
+        );
+
+        GatewayError::RuntimeUnavailable
+    }
+
+    fn error_frame(self, error: &GatewayError) -> Frame {
+        match self {
+            Self::OpenAiChat => Frame::error(None, &error.envelope()),
+            Self::AnthropicMessages => Frame::error(Some("error"), &error.anthropic_envelope()),
+            Self::OpenAiResponses => Frame::error(Some("error"), &error.responses_stream_error()),
+        }
+    }
+
+    fn translated_frames(self, events: Result<Vec<Value>, TranslationError>) -> Vec<Frame> {
+        match events {
+            Ok(events) => events.iter().map(|event| self.named_frame(event)).collect(),
+            Err(error) => vec![self.error_frame(&self.completed_translation_failed(&error))],
+        }
+    }
+
+    fn named_frame(self, value: &Value) -> Frame {
+        let name = value
+            .get("type")
+            .and_then(Value::as_str)
+            .filter(|name| !name.is_empty())
+            .unwrap_or("message");
+
+        Frame::value(Some(name), value)
+    }
 }
 
-fn policy() -> TranslationPolicy {
-    TranslationPolicy::default()
-}
-
-pub struct StreamRenderer {
-    protocol: Protocol,
-    engine: TranslationEngine,
-    state: Option<StreamTranslationState>,
+pub enum StreamRenderer {
+    Passthrough,
+    Translated {
+        protocol: Protocol,
+        state: Box<StreamTranslationState>,
+    },
 }
 
 impl StreamRenderer {
     pub fn render(&mut self, item: StreamItem) -> Vec<Frame> {
-        match (&mut self.state, item) {
-            (None, StreamItem::Chunk(value)) => vec![self.protocol.frame(&value)],
-            (None, StreamItem::Error(error)) => vec![self.protocol.error_frame(&error)],
-            (None, StreamItem::Done) => vec![Frame::raw("[DONE]")],
-            (Some(state), StreamItem::Chunk(value)) => self
-                .engine
-                .translate_event(state, WireFormat::OpenAiChat, self.protocol.wire(), &value)
-                .unwrap_or_default()
-                .iter()
-                .map(|event| self.protocol.frame(event))
-                .collect(),
-            (Some(_), StreamItem::Error(error)) => vec![self.protocol.error_frame(&error)],
-            (Some(state), StreamItem::Done) => self
-                .engine
-                .finish_stream(state, self.protocol.wire())
-                .unwrap_or_default()
-                .iter()
-                .map(|event| self.protocol.frame(event))
-                .collect(),
+        match (self, item) {
+            (Self::Passthrough, StreamItem::Chunk(value)) => vec![Frame::value(None, &value)],
+            (Self::Passthrough, StreamItem::Done) => vec![Frame::raw("[DONE]")],
+            (Self::Passthrough, StreamItem::Error(error)) => {
+                vec![Protocol::OpenAiChat.error_frame(&error)]
+            }
+            (Self::Translated { protocol, .. }, StreamItem::Error(error)) => {
+                vec![protocol.error_frame(&error)]
+            }
+            (Self::Translated { protocol, state }, StreamItem::Chunk(value)) => protocol
+                .translated_frames(ENGINE.translate_event(
+                    state,
+                    WireFormat::OpenAiChat,
+                    protocol.wire(),
+                    &value,
+                )),
+            (Self::Translated { protocol, state }, StreamItem::Done) => {
+                protocol.translated_frames(ENGINE.finish_stream(state, protocol.wire()))
+            }
         }
     }
 }
 
-pub fn responses_use_unsupported_state(body: &Value) -> bool {
-    const STATEFUL_FIELDS: [&str; 3] = ["store", "previous_response_id", "conversation"];
-    STATEFUL_FIELDS.iter().any(|field| {
-        matches!(
-            body.get(field),
-            Some(Value::String(_)) | Some(Value::Bool(true))
-        )
+// The translator drops server-side state it cannot represent, so a stateful request
+// would otherwise run without its context.
+fn unsupported_responses_state(body: &Value) -> Option<&'static str> {
+    const REFERENCES: [&str; 3] = ["previous_response_id", "conversation", "prompt"];
+    const FLAGS: [&str; 2] = ["store", "background"];
+
+    let referenced = REFERENCES
+        .into_iter()
+        .find(|field| !matches!(body.get(field), None | Some(Value::Null)));
+
+    referenced.or_else(|| {
+        FLAGS.into_iter().find(|field| {
+            !matches!(
+                body.get(field),
+                None | Some(Value::Null) | Some(Value::Bool(false))
+            )
+        })
     })
 }
 
@@ -407,15 +426,45 @@ mod tests {
 
     #[test]
     fn responses_requests_reject_the_stateful_surface() {
-        assert!(responses_use_unsupported_state(&json!({"store": true})));
-        assert!(responses_use_unsupported_state(
-            &json!({"previous_response_id": "resp_1"})
-        ));
-        assert!(responses_use_unsupported_state(
-            &json!({"conversation": "c_1"})
-        ));
-        assert!(!responses_use_unsupported_state(&json!({"store": false})));
-        assert!(!responses_use_unsupported_state(&json!({"input": "hello"})));
+        for (body, field) in [
+            (json!({"store": true}), Some("store")),
+            (
+                json!({"previous_response_id": "resp_1"}),
+                Some("previous_response_id"),
+            ),
+            (json!({"conversation": "c_1"}), Some("conversation")),
+            (
+                json!({"conversation": {"id": "conv_1"}}),
+                Some("conversation"),
+            ),
+            (json!({"prompt": {"id": "pmpt_1"}}), Some("prompt")),
+            (json!({"background": true}), Some("background")),
+            (json!({"store": "yes"}), Some("store")),
+            (json!({"store": false}), None),
+            (json!({"background": false, "conversation": null}), None),
+            (json!({"input": "hello"}), None),
+        ] {
+            assert_eq!(unsupported_responses_state(&body), field, "{body}");
+        }
+    }
+
+    #[test]
+    fn an_untranslatable_request_is_an_invalid_request() {
+        for protocol in [Protocol::AnthropicMessages, Protocol::OpenAiResponses] {
+            assert_eq!(
+                protocol.translate_request(&json!([])),
+                Err(GatewayError::invalid_request(None)),
+                "{protocol:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_untranslatable_completion_is_a_runtime_failure() {
+        assert_eq!(
+            Protocol::AnthropicMessages.translate_response(json!([])),
+            Err(GatewayError::RuntimeUnavailable)
+        );
     }
 
     #[test]

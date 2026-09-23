@@ -1,155 +1,195 @@
-import { HttpError, request } from "./http.js";
+import { requestFailure, WizardError } from "./errors.js";
+import { isRecord } from "./guards.js";
+import { HttpStatusError, request, type HttpResponse } from "./http.js";
 import * as ui from "./ui.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const CODE_PATTERN = /^\d{6}$/;
+const NANO_USD_PER_USD = 1_000_000_000;
 
-export interface ApiTargets {
+export type AccountMode = "signup" | "login";
+
+interface AuthTarget {
   apiBaseUrl: string;
-  inferenceBaseUrl: string;
+  origin: string;
 }
 
-export interface WizardAccount {
-  apiKey: string;
-  organizationName: string;
-  balanceNanoUsd: number;
+interface KeyResponse {
+  secret: string;
+  balanceNanoUsd: number | null;
 }
 
-export const resolveAccount = async (
-  targets: ApiTargets,
-  choice: "signup" | "login",
-): Promise<WizardAccount> => {
-  return exchange(targets, choice);
+const askTrimmed = async (
+  message: string,
+  pattern: RegExp,
+  hint: string,
+): Promise<string> => {
+  const value = await ui.askText(message, (input) =>
+    pattern.test(input.trim()) ? undefined : hint,
+  );
+
+  return value.trim();
 };
 
-const exchange = async (
-  targets: ApiTargets,
-  choice: "signup" | "login",
-): Promise<WizardAccount> => {
-  // Node fetch sends Fetch Metadata but no Origin; Better Auth requires a
-  // trusted origin for these requests, just as it does for the console.
-  const origin = new URL(targets.apiBaseUrl).origin;
-  const email = await ui.askText("Email:", (value) => {
-    const trimmed = value.trim();
-    if (!EMAIL_PATTERN.test(trimmed)) return "Enter a valid email address.";
-    return undefined;
-  });
+// Node fetch has no cookie jar. The session stays in memory, and only the
+// name/value pairs are forwarded to key creation on the same API.
+const sessionCookie = (response: HttpResponse): string => {
+  // Older Node 18 releases expose several cookies as one combined header.
+  const cookies =
+    typeof response.headers.getSetCookie === "function"
+      ? response.headers.getSetCookie()
+      : (response.headers.get("set-cookie") ?? "").split(/,(?=\s*[^;,=\s]+=)/);
 
-  const send = ui.spinner();
-  send.start("Requesting a verification code");
+  const pairs = cookies
+    .map((cookie) => cookie.split(";")[0]?.trim())
+    .filter(Boolean)
+    .join("; ");
+  if (pairs.length === 0) {
+    throw new WizardError(
+      "Sign-in did not return a session cookie. Run the wizard again.",
+    );
+  }
+
+  return pairs;
+};
+
+const isRejectedCode = (error: unknown): boolean =>
+  error instanceof HttpStatusError &&
+  (error.status === 400 || error.status === 401 || error.status === 422);
+
+const sendCode = async (target: AuthTarget, email: string): Promise<void> => {
   try {
     await request(
-      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/email-otp/send-verification-otp`,
+      `${target.apiBaseUrl}/api/auth/email-otp/send-verification-otp`,
       {
         method: "POST",
-        headers: { "content-type": "application/json", origin },
-        body: JSON.stringify({ email: email.trim(), type: "sign-in" }),
+        headers: { "content-type": "application/json", origin: target.origin },
+        body: JSON.stringify({ email, type: "sign-in" }),
         redirect: "error",
       },
     );
   } catch (error) {
-    send.stop("Could not send the code", 1);
-    throw error;
+    throw requestFailure("Could not send the verification code", error);
   }
-  send.stop("Code sent");
+};
 
-  ui.note(
-    `Check ${email.trim()} for a six-digit code. It expires in 10 minutes.`,
-    "Email sent",
-  );
-
-  const code = await ui.askText("Code:", (value) =>
-    /^\d{6}$/.test(value.trim()) ? undefined : "Enter the six-digit code.",
-  );
-
-  let sessionCookie = "";
-  const session = ui.spinner();
-  session.start("Verifying the code");
+const verifyCode = async (
+  target: AuthTarget,
+  email: string,
+  code: string,
+): Promise<string> => {
+  let response: HttpResponse;
   try {
-    const response = await request(
-      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/auth/sign-in/email-otp`,
+    response = await request(
+      `${target.apiBaseUrl}/api/auth/sign-in/email-otp`,
       {
         method: "POST",
-        headers: { "content-type": "application/json", origin },
-        body: JSON.stringify({ email: email.trim(), otp: code.trim() }),
+        headers: { "content-type": "application/json", origin: target.origin },
+        body: JSON.stringify({ email, otp: code }),
         redirect: "error",
       },
     );
-    // Node fetch has no cookie jar. Keep the session in memory and forward
-    // only name/value pairs to key creation on this same API.
-    // Older Node 18 releases expose multiple cookies as a combined header.
-    const cookies =
-      typeof response.headers.getSetCookie === "function"
-        ? response.headers.getSetCookie()
-        : (response.headers.get("set-cookie") ?? "").split(
-            /,(?=\s*[^;,=\s]+=)/,
-          );
-    sessionCookie = cookies
-      .map((cookie) => cookie.split(";")[0]?.trim())
-      .filter(Boolean)
-      .join("; ");
-    if (!sessionCookie) {
-      throw new Error(
-        "Sign-in did not return a session cookie. Run the wizard again.",
-      );
-    }
   } catch (error) {
-    session.stop("Verification failed", 1);
-    if (
-      error instanceof HttpError &&
-      (error.status === 400 || error.status === 401 || error.status === 422)
-    ) {
-      ui.fail("The code was rejected. Run the wizard and request a new one.");
+    if (!isRejectedCode(error)) {
+      throw requestFailure("Could not verify the code", error);
     }
-    throw error;
-  }
-  session.stop("Verified");
 
-  const mint = ui.spinner();
-  mint.start("Creating your local API key");
-  let body: {
-    secret?: unknown;
-    organization_name?: unknown;
-    balance_nano_usd?: unknown;
-  };
-  try {
-    const response = await request(
-      `${targets.apiBaseUrl.replace(/\/$/, "")}/api/v1/wizard/key`,
-      {
-        method: "POST",
-        headers: { cookie: sessionCookie, origin },
-        redirect: "error",
-      },
-    );
-    body = response.body as typeof body;
-  } catch (error) {
-    mint.stop("Key creation failed", 1);
-    throw error;
-  }
-  mint.stop("Key created");
-
-  if (typeof body.secret !== "string" || body.secret.length === 0) {
-    throw new HttpError(
-      0,
-      "invalid_response",
-      "The key response did not include a secret.",
+    throw new WizardError(
+      "The code was rejected. Run the wizard and request a new one.",
+      { cause: error },
     );
   }
 
-  const balance =
-    typeof body.balance_nano_usd === "number" ? body.balance_nano_usd : 0;
-  if (balance > 0) {
-    ui.success("Account created. Free credit applied.");
-    ui.info(
-      `Current balance: $${(balance / 1_000_000_000).toFixed(2)} (from the API).`,
-    );
-  } else if (choice === "login") {
-    ui.success("Logged in.");
+  return sessionCookie(response);
+};
+
+const parseKeyResponse = (body: unknown): KeyResponse => {
+  if (
+    !isRecord(body) ||
+    typeof body.secret !== "string" ||
+    body.secret.length === 0
+  ) {
+    throw new WizardError("The key response did not include a secret.");
   }
 
   return {
-    apiKey: body.secret,
-    organizationName:
-      typeof body.organization_name === "string" ? body.organization_name : "",
-    balanceNanoUsd: balance,
+    secret: body.secret,
+    balanceNanoUsd:
+      typeof body.balance_nano_usd === "number" ? body.balance_nano_usd : null,
   };
+};
+
+const createKey = async (
+  target: AuthTarget,
+  cookie: string,
+): Promise<KeyResponse> => {
+  let response: HttpResponse;
+  try {
+    response = await request(`${target.apiBaseUrl}/api/v1/wizard/key`, {
+      method: "POST",
+      headers: { cookie, origin: target.origin },
+      redirect: "error",
+    });
+  } catch (error) {
+    throw requestFailure("Could not create an API key", error);
+  }
+
+  return parseKeyResponse(response.body);
+};
+
+const reportAccount = (
+  mode: AccountMode,
+  balanceNanoUsd: number | null,
+): void => {
+  ui.success(mode === "signup" ? "Account ready." : "Logged in.");
+
+  if (balanceNanoUsd !== null && (mode === "signup" || balanceNanoUsd > 0)) {
+    ui.info(
+      `Current balance: $${(balanceNanoUsd / NANO_USD_PER_USD).toFixed(2)} (from the API).`,
+    );
+  }
+};
+
+export const signIn = async (
+  apiBaseUrl: string,
+  mode: AccountMode,
+): Promise<string> => {
+  // Node fetch sends Fetch Metadata but no Origin, and Better Auth requires a
+  // trusted origin for these requests, as it does for the console.
+  const target = { apiBaseUrl, origin: new URL(apiBaseUrl).origin };
+  const email = await askTrimmed(
+    "Email:",
+    EMAIL_PATTERN,
+    "Enter a valid email address.",
+  );
+
+  await ui.step(
+    "Requesting a verification code",
+    () => sendCode(target, email),
+    { done: () => "Code sent", failed: () => "Could not send the code" },
+  );
+  ui.note(
+    `Check ${email} for a six-digit code. It expires in 10 minutes.`,
+    "Email sent",
+  );
+
+  const code = await askTrimmed(
+    "Code:",
+    CODE_PATTERN,
+    "Enter the six-digit code.",
+  );
+  const cookie = await ui.step(
+    "Verifying the code",
+    () => verifyCode(target, email, code),
+    { done: () => "Verified", failed: () => "Verification failed" },
+  );
+  const key = await ui.step(
+    "Creating your local API key",
+    () => createKey(target, cookie),
+    { done: () => "Key created", failed: () => "Key creation failed" },
+  );
+
+  reportAccount(mode, key.balanceNanoUsd);
+
+  return key.secret;
 };

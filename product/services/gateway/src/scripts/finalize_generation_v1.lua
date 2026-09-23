@@ -1,40 +1,19 @@
-local MAX_SAFE_INTEGER = 9007199254740991
+-- Settles a generation: consumes its lease, debits the charge and appends the
+-- settlement event. Every input and key is validated before the first write, and
+-- the ZREM guards the debit, so a generation is charged at most once.
+--
+-- KEYS[1] account hash
+-- KEYS[2] in-flight lease set
+-- KEYS[3] settlement stream
+-- ARGV[1] generation_id
+-- ARGV[2] organization_id
+-- ARGV[3] charge
+-- ARGV[4] generation properties, as a JSON object
+--
+-- Returns 1 settled and 2 when the lease was already absent.
 
 local function fail(message)
-  return redis.error_reply('FINALIZATION_V1 ' .. message)
-end
-
-local function safe_integer(value, name, nonnegative)
-  if type(value) ~= 'string' or value == '' then
-    return nil, name .. ' must be an integer'
-  end
-  local digits = value
-  if string.sub(digits, 1, 1) == '-' then
-    digits = string.sub(digits, 2)
-  end
-  if digits == '' or string.find(digits, '[^0-9]') then
-    return nil, name .. ' must be an integer'
-  end
-  local number = tonumber(value)
-  if not number or number ~= math.floor(number) or math.abs(number) > MAX_SAFE_INTEGER then
-    return nil, name .. ' is outside the safe integer range'
-  end
-  if nonnegative and number < 0 then
-    return nil, name .. ' must be nonnegative'
-  end
-  return number, nil
-end
-
-local function valid_uuid(value)
-  if type(value) ~= 'string' or #value ~= 36 then
-    return false
-  end
-  if string.sub(value, 9, 9) ~= '-' or string.sub(value, 14, 14) ~= '-' or
-      string.sub(value, 19, 19) ~= '-' or string.sub(value, 24, 24) ~= '-' then
-    return false
-  end
-  local compact, separators = string.gsub(value, '-', '')
-  return separators == 4 and #compact == 32 and not string.find(compact, '[^0-9a-f]')
+  return redis.error_reply('FINALIZE_GENERATION_V1 ' .. message)
 end
 
 if #KEYS ~= 3 or #ARGV ~= 4 then
@@ -47,8 +26,9 @@ if not valid_uuid(ARGV[2]) then
   return fail('organization_id must be a lowercase UUID')
 end
 
-local charge, charge_error = safe_integer(ARGV[3], 'charge', true)
+local charge, charge_error = safe_integer(ARGV[3], 'charge')
 if charge_error then return fail(charge_error) end
+if charge < 0 then return fail('charge must be nonnegative') end
 if type(ARGV[4]) ~= 'string' or ARGV[4] == '' then
   return fail('properties must be nonempty JSON')
 end
@@ -74,7 +54,7 @@ local account = redis.call('HMGET', KEYS[1], 'organization_id', 'balance')
 if account[1] ~= ARGV[2] then
   return fail('gateway account organization does not match')
 end
-local balance, balance_error = safe_integer(account[2], 'balance', false)
+local balance, balance_error = safe_integer(account[2], 'balance')
 if balance_error then return fail(balance_error) end
 local updated_balance = balance - charge
 if math.abs(updated_balance) > MAX_SAFE_INTEGER then

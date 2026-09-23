@@ -5,7 +5,10 @@ use serde::Serialize;
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::{InputPriceType, InputTokenPrice, OutputPriceType, OutputTokenPrice, ServiceTier};
+use crate::{
+    auth::AuthenticatedIdentity, GatewayError, InputPriceType, InputTokenPrice, OutputPriceType,
+    OutputTokenPrice, ServiceTier,
+};
 
 const MAX_JSON_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
@@ -19,6 +22,7 @@ pub struct CapturedPricing {
 }
 
 impl CapturedPricing {
+    #[cfg(test)]
     pub fn new(
         input: &[InputTokenPrice],
         output: &[OutputTokenPrice],
@@ -65,37 +69,34 @@ impl CapturedPricing {
         })
     }
 
+    #[cfg(test)]
     pub fn prompt(&self) -> u64 {
         self.prompt
     }
 
+    #[cfg(test)]
     pub fn cached_prompt(&self) -> u64 {
         self.cached_prompt
     }
 
-    pub fn cache_write(&self) -> Option<u64> {
-        self.cache_write
-    }
-
+    #[cfg(test)]
     pub fn completion(&self) -> u64 {
         self.completion
     }
 
-    pub fn internal_reasoning(&self) -> Option<u64> {
-        self.internal_reasoning
-    }
-
-    /// Each billed token category with its quantity and unit price. Cache writes
-    /// and reasoning are billed on their own only when they carry a price;
-    /// otherwise reasoning is billed as output.
-    fn billed_quantities(&self, usage: NormalizedUsage) -> Vec<(GenerationPriceUnit, u64, u64)> {
-        let mut billed = vec![
-            (
+    fn billed_quantities(&self, usage: NormalizedUsage) -> Vec<BilledQuantity> {
+        let billed = |unit, quantity, unit_price| BilledQuantity {
+            unit,
+            quantity,
+            unit_price,
+        };
+        let mut quantities = vec![
+            billed(
                 GenerationPriceUnit::Input,
                 usage.input_tokens - usage.cached_input_tokens,
                 self.prompt,
             ),
-            (
+            billed(
                 GenerationPriceUnit::CachedInput,
                 usage.cached_input_tokens,
                 self.cached_prompt,
@@ -103,7 +104,7 @@ impl CapturedPricing {
         ];
 
         if let Some(unit_price) = self.cache_write {
-            billed.push((
+            quantities.push(billed(
                 GenerationPriceUnit::CacheWrite,
                 usage.cache_write_tokens,
                 unit_price,
@@ -112,25 +113,52 @@ impl CapturedPricing {
 
         match self.internal_reasoning {
             Some(unit_price) => {
-                billed.push((
+                quantities.push(billed(
                     GenerationPriceUnit::Output,
                     usage.output_tokens - usage.reasoning_tokens,
                     self.completion,
                 ));
-                billed.push((
+                quantities.push(billed(
                     GenerationPriceUnit::Reasoning,
                     usage.reasoning_tokens,
                     unit_price,
                 ));
             }
-            None => billed.push((
+            None => quantities.push(billed(
                 GenerationPriceUnit::Output,
                 usage.output_tokens,
                 self.completion,
             )),
         }
 
-        billed
+        quantities
+    }
+}
+
+struct BilledQuantity {
+    unit: GenerationPriceUnit,
+    quantity: u64,
+    unit_price: u64,
+}
+
+impl BilledQuantity {
+    fn priced(self) -> Result<GenerationPriceComponent, PricingError> {
+        let amount = self
+            .quantity
+            .checked_mul(self.unit_price)
+            .filter(|amount| *amount <= MAX_JSON_SAFE_INTEGER)
+            .ok_or(PricingError::ArithmeticOverflow)?;
+
+        Ok(self.with_amount(amount))
+    }
+
+    fn with_amount(self, amount: u64) -> GenerationPriceComponent {
+        GenerationPriceComponent {
+            unit: self.unit,
+            quantity: self.quantity,
+            unit_price: self.unit_price,
+            amount,
+        }
     }
 }
 
@@ -211,9 +239,11 @@ impl NormalizedUsage {
         if cached_input_tokens > input_tokens {
             return Err(UsageError::CachedInputExceedsInput);
         }
+
         if reasoning_tokens > output_tokens {
             return Err(UsageError::ReasoningExceedsOutput);
         }
+
         if [
             input_tokens,
             cached_input_tokens,
@@ -291,7 +321,7 @@ impl PricedUsage {
         let components = prices
             .billed_quantities(usage)
             .into_iter()
-            .map(|(unit, quantity, unit_price)| price_component(unit, quantity, unit_price))
+            .map(BilledQuantity::priced)
             .collect::<Result<Vec<_>, _>>()?;
         let charge = components.iter().try_fold(0_u64, |total, component| {
             total
@@ -307,18 +337,12 @@ impl PricedUsage {
         self.usage.charge
     }
 
-    /// Nothing billed, with the same components a priced generation would carry.
     pub(crate) fn zero(prices: &CapturedPricing) -> Self {
         let usage = NormalizedUsage::zero();
         let components = prices
             .billed_quantities(usage)
             .into_iter()
-            .map(|(unit, quantity, unit_price)| GenerationPriceComponent {
-                unit,
-                quantity,
-                unit_price,
-                amount: 0,
-            })
+            .map(|billed| billed.with_amount(0))
             .collect();
 
         Self::from_parts(components, 0, usage)
@@ -386,7 +410,8 @@ struct GenerationUsage {
 
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct GenerationIdentity {
-    external_id: Option<String>,
+    // The event contract keeps a nullable external ID that the gateway never sets.
+    external_id: (),
     organization_id: Uuid,
     workspace_id: Uuid,
     api_key_id: Uuid,
@@ -395,46 +420,63 @@ pub struct GenerationIdentity {
 }
 
 impl GenerationIdentity {
+    pub fn authenticated(
+        caller: &AuthenticatedIdentity,
+        model_id: String,
+        served_release_digest: String,
+    ) -> Result<Self, GenerationIdentityError> {
+        if model_id.is_empty() || model_id.chars().count() > 200 {
+            return Err(GenerationIdentityError::InvalidModelId);
+        }
+
+        if !valid_release_digest(&served_release_digest) {
+            return Err(GenerationIdentityError::InvalidReleaseDigest);
+        }
+
+        Ok(Self {
+            external_id: (),
+            organization_id: caller.organization_id,
+            workspace_id: caller.workspace_id,
+            api_key_id: caller.api_key_id,
+            model_id,
+            served_release_digest,
+        })
+    }
+
+    #[cfg(test)]
     pub fn new(
-        external_id: Option<String>,
+        _external_id: Option<std::convert::Infallible>,
         organization_id: Uuid,
         workspace_id: Uuid,
         api_key_id: Uuid,
         model_id: String,
         served_release_digest: String,
     ) -> Result<Self, GenerationIdentityError> {
-        if external_id
-            .as_ref()
-            .is_some_and(|id| id.chars().count() > 300)
-        {
-            return Err(GenerationIdentityError::InvalidExternalId);
-        }
-        if model_id.is_empty() || model_id.chars().count() > 200 {
-            return Err(GenerationIdentityError::InvalidModelId);
-        }
-        if !valid_release_digest(&served_release_digest) {
-            return Err(GenerationIdentityError::InvalidReleaseDigest);
-        }
-
-        Ok(Self {
-            external_id,
+        let caller = AuthenticatedIdentity {
+            api_key_id,
             organization_id,
             workspace_id,
-            api_key_id,
-            model_id,
-            served_release_digest,
-        })
+        };
+
+        Self::authenticated(&caller, model_id, served_release_digest)
     }
 }
 
 #[derive(Debug, Error)]
 pub enum GenerationIdentityError {
-    #[error("external generation ID exceeds 300 characters")]
-    InvalidExternalId,
     #[error("model ID must contain between 1 and 200 characters")]
     InvalidModelId,
     #[error("served release digest must be a lowercase SHA-256 digest")]
     InvalidReleaseDigest,
+}
+
+impl GenerationIdentityError {
+    pub fn diagnostic_code(&self) -> &'static str {
+        match self {
+            Self::InvalidModelId => "invalid_model_id",
+            Self::InvalidReleaseDigest => "invalid_release_digest",
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
@@ -443,7 +485,31 @@ pub enum GenerationStatus {
     Succeeded,
     Failed,
     Cancelled,
-    Abandoned,
+}
+
+impl GenerationStatus {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Succeeded => "succeeded",
+            Self::Failed => "failed",
+            Self::Cancelled => "cancelled",
+        }
+    }
+}
+
+const MAX_OUTCOME_CODE_CHARS: usize = 100;
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct FinishReason(String);
+
+impl FinishReason {
+    pub fn parse(reason: String) -> Option<Self> {
+        let length = reason.chars().count();
+
+        (1..=MAX_OUTCOME_CODE_CHARS)
+            .contains(&length)
+            .then_some(Self(reason))
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -453,6 +519,71 @@ pub struct TerminalOutcome {
 }
 
 impl TerminalOutcome {
+    pub fn succeeded(reason: FinishReason, usable_output_delivered: bool) -> Self {
+        Self::from_parts(
+            GenerationStatus::Succeeded,
+            Some(reason.0),
+            None,
+            usable_output_delivered,
+            None,
+        )
+    }
+
+    pub fn failed(error: &GatewayError, usable_output_delivered: bool) -> Self {
+        Self::from_parts(
+            GenerationStatus::Failed,
+            None,
+            Some(error.code()),
+            usable_output_delivered,
+            None,
+        )
+    }
+
+    pub fn cancelled(
+        owner: CancellationOwner,
+        error: &GatewayError,
+        usable_output_delivered: bool,
+    ) -> Self {
+        Self::from_parts(
+            GenerationStatus::Cancelled,
+            None,
+            Some(error.code()),
+            usable_output_delivered,
+            Some(owner),
+        )
+    }
+
+    pub fn status(&self) -> GenerationStatus {
+        self.status
+    }
+
+    pub fn error_code(&self) -> Option<&str> {
+        self.outcome.error_code.as_deref()
+    }
+
+    pub fn cancellation_owner(&self) -> Option<CancellationOwner> {
+        self.outcome.cancellation_owner
+    }
+
+    fn from_parts(
+        status: GenerationStatus,
+        finish_reason: Option<String>,
+        error_code: Option<&'static str>,
+        usable_output_delivered: bool,
+        cancellation_owner: Option<CancellationOwner>,
+    ) -> Self {
+        Self {
+            status,
+            outcome: GenerationOutcome {
+                finish_reason,
+                error_code: error_code.map(str::to_owned),
+                usable_output_delivered,
+                cancellation_owner,
+            },
+        }
+    }
+
+    #[cfg(test)]
     pub fn new(
         status: GenerationStatus,
         finish_reason: Option<String>,
@@ -462,21 +593,19 @@ impl TerminalOutcome {
     ) -> Result<Self, TerminalOutcomeError> {
         if finish_reason
             .as_ref()
-            .is_some_and(|reason| reason.chars().count() > 100)
+            .is_some_and(|reason| reason.chars().count() > MAX_OUTCOME_CODE_CHARS)
         {
             return Err(TerminalOutcomeError::InvalidFinishReason);
         }
+
         if error_code
             .as_ref()
-            .is_some_and(|code| code.chars().count() > 100)
+            .is_some_and(|code| code.chars().count() > MAX_OUTCOME_CODE_CHARS)
         {
             return Err(TerminalOutcomeError::InvalidErrorCode);
         }
-        let cancellation_expected = matches!(
-            status,
-            GenerationStatus::Cancelled | GenerationStatus::Abandoned
-        );
-        if cancellation_expected != cancellation_owner.is_some() {
+
+        if (status == GenerationStatus::Cancelled) != cancellation_owner.is_some() {
             return Err(TerminalOutcomeError::InvalidCancellationOwner);
         }
 
@@ -505,7 +634,6 @@ struct GenerationOutcome {
 pub enum CancellationOwner {
     Client,
     Server,
-    Runtime,
 }
 
 impl CancellationOwner {
@@ -513,11 +641,11 @@ impl CancellationOwner {
         match self {
             Self::Client => "client",
             Self::Server => "server",
-            Self::Runtime => "runtime",
         }
     }
 }
 
+#[cfg(test)]
 #[derive(Debug, Error)]
 pub enum TerminalOutcomeError {
     #[error("finish reason exceeds 100 characters")]
@@ -531,24 +659,62 @@ pub enum TerminalOutcomeError {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize)]
 pub struct GenerationTiming {
     received_at: DateTime<Utc>,
-    started_at: Option<DateTime<Utc>>,
+    started_at: DateTime<Utc>,
     first_token_at: Option<DateTime<Utc>>,
     completed_at: DateTime<Utc>,
 }
 
 impl GenerationTiming {
+    pub fn ordered(
+        received_at: DateTime<Utc>,
+        started_at: DateTime<Utc>,
+        first_token_at: Option<DateTime<Utc>>,
+        now: DateTime<Utc>,
+    ) -> Self {
+        let started_at = started_at.max(received_at);
+        let completed_at = now
+            .max(started_at)
+            .max(first_token_at.unwrap_or(started_at));
+
+        Self {
+            received_at,
+            started_at,
+            first_token_at: first_token_at.map(|first_token_at| first_token_at.max(started_at)),
+            completed_at,
+        }
+    }
+
+    pub fn received_at(&self) -> DateTime<Utc> {
+        self.received_at
+    }
+
+    pub fn started_at(&self) -> DateTime<Utc> {
+        self.started_at
+    }
+
+    pub fn first_token_at(&self) -> Option<DateTime<Utc>> {
+        self.first_token_at
+    }
+
+    pub fn completed_at(&self) -> DateTime<Utc> {
+        self.completed_at
+    }
+
+    #[cfg(test)]
     pub fn new(
         received_at: DateTime<Utc>,
         started_at: Option<DateTime<Utc>>,
         first_token_at: Option<DateTime<Utc>>,
         completed_at: DateTime<Utc>,
     ) -> Result<Self, GenerationTimingError> {
-        if completed_at < received_at
-            || started_at
-                .is_some_and(|started_at| started_at < received_at || started_at > completed_at)
+        let Some(started_at) = started_at else {
+            return Err(GenerationTimingError::Inconsistent);
+        };
+
+        if started_at < received_at
+            || started_at > completed_at
             || first_token_at.is_some_and(|first_token_at| {
-                started_at.is_none_or(|started_at| first_token_at < started_at)
-                    || first_token_at > completed_at
+                first_token_at < started_at || first_token_at > completed_at
             })
         {
             return Err(GenerationTimingError::Inconsistent);
@@ -563,6 +729,7 @@ impl GenerationTiming {
     }
 }
 
+#[cfg(test)]
 #[derive(Debug, Error)]
 pub enum GenerationTimingError {
     #[error("generation timing is inconsistent")]
@@ -614,28 +781,6 @@ impl GenerationProperties {
     }
 }
 
-fn price_component(
-    unit: GenerationPriceUnit,
-    quantity: u64,
-    unit_price: u64,
-) -> Result<GenerationPriceComponent, PricingError> {
-    if unit_price > MAX_JSON_SAFE_INTEGER {
-        return Err(PricingError::ArithmeticOverflow);
-    }
-
-    let amount = quantity
-        .checked_mul(unit_price)
-        .filter(|amount| *amount <= MAX_JSON_SAFE_INTEGER)
-        .ok_or(PricingError::ArithmeticOverflow)?;
-
-    Ok(GenerationPriceComponent {
-        unit,
-        quantity,
-        unit_price,
-        amount,
-    })
-}
-
 fn valid_release_digest(digest: &str) -> bool {
     digest.len() == 71
         && digest.starts_with("sha256:")
@@ -648,6 +793,36 @@ fn valid_release_digest(digest: &str) -> bool {
 pub enum PricingError {
     #[error("generation pricing exceeds the supported integer range")]
     ArithmeticOverflow,
+}
+
+#[cfg(test)]
+pub(crate) mod fixtures {
+    use super::CapturedPricing;
+    use crate::{InputTokenPrice, OutputTokenPrice, TokenUnit};
+
+    pub(crate) fn token_prices(
+        prompt: u64,
+        cached_prompt: u64,
+        completion: u64,
+    ) -> CapturedPricing {
+        CapturedPricing::new(
+            &[
+                InputTokenPrice::Prompt {
+                    unit: TokenUnit::Token,
+                    cost: prompt,
+                },
+                InputTokenPrice::CachedPrompt {
+                    unit: TokenUnit::Token,
+                    cost: cached_prompt,
+                },
+            ],
+            &[OutputTokenPrice::Completion {
+                unit: TokenUnit::Token,
+                cost: completion,
+            }],
+        )
+        .expect("token prices are within range")
+    }
 }
 
 #[cfg(test)]
@@ -688,12 +863,17 @@ mod tests {
         .unwrap()
     }
 
+    fn caller() -> AuthenticatedIdentity {
+        AuthenticatedIdentity {
+            api_key_id: Uuid::from_u128(1),
+            organization_id: Uuid::from_u128(2),
+            workspace_id: Uuid::from_u128(3),
+        }
+    }
+
     fn identity() -> GenerationIdentity {
-        GenerationIdentity::new(
-            None,
-            Uuid::nil(),
-            Uuid::nil(),
-            Uuid::nil(),
+        GenerationIdentity::authenticated(
+            &caller(),
             "model-a".to_owned(),
             format!("sha256:{}", "a".repeat(64)),
         )
@@ -701,13 +881,14 @@ mod tests {
     }
 
     fn timing() -> GenerationTiming {
-        GenerationTiming::new(
-            Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap(),
+        let received_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap();
+
+        GenerationTiming::ordered(
+            received_at,
+            received_at,
             None,
-            None,
-            Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 1).unwrap(),
+            received_at + chrono::TimeDelta::seconds(1),
         )
-        .unwrap()
     }
 
     #[test]
@@ -857,69 +1038,91 @@ mod tests {
 
     #[test]
     fn pricing_rejects_unsafe_money() {
-        let prices = CapturedPricing::new(
-            &[
-                InputTokenPrice::Prompt {
-                    unit: TokenUnit::Token,
-                    cost: MAX_JSON_SAFE_INTEGER,
-                },
-                InputTokenPrice::CachedPrompt {
-                    unit: TokenUnit::Token,
-                    cost: 0,
-                },
-            ],
-            &[OutputTokenPrice::Completion {
-                unit: TokenUnit::Token,
-                cost: 0,
-            }],
-        )
-        .unwrap();
+        let prices = fixtures::token_prices(MAX_JSON_SAFE_INTEGER, 0, 0);
+
         assert!(matches!(
-            PricedUsage::calculate(&prices, NormalizedUsage::new(2, 0, 0, 0, 0).unwrap(),),
+            PricedUsage::calculate(&prices, NormalizedUsage::new(2, 0, 0, 0, 0).unwrap()),
             Err(PricingError::ArithmeticOverflow)
         ));
     }
 
     #[test]
-    fn identity_outcome_and_timing_reject_invalid_state_at_construction() {
+    fn identity_rejects_an_invalid_model_or_release_digest() {
+        let digest = format!("sha256:{}", "a".repeat(64));
+
         assert!(matches!(
-            GenerationIdentity::new(
-                None,
-                Uuid::nil(),
-                Uuid::nil(),
-                Uuid::nil(),
-                String::new(),
-                format!("sha256:{}", "a".repeat(64)),
-            ),
+            GenerationIdentity::authenticated(&caller(), String::new(), digest.clone()),
             Err(GenerationIdentityError::InvalidModelId)
         ));
         assert!(matches!(
-            TerminalOutcome::new(GenerationStatus::Cancelled, None, None, false, None,),
-            Err(TerminalOutcomeError::InvalidCancellationOwner)
+            GenerationIdentity::authenticated(&caller(), "x".repeat(201), digest),
+            Err(GenerationIdentityError::InvalidModelId)
         ));
-        let received_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 1).unwrap();
         assert!(matches!(
-            GenerationTiming::new(
-                received_at,
-                None,
-                None,
-                received_at - chrono::TimeDelta::seconds(1),
+            GenerationIdentity::authenticated(
+                &caller(),
+                "model-a".to_owned(),
+                format!("sha256:{}", "A".repeat(64)),
             ),
-            Err(GenerationTimingError::Inconsistent)
+            Err(GenerationIdentityError::InvalidReleaseDigest)
         ));
+    }
+
+    #[test]
+    fn finish_reasons_hold_one_to_one_hundred_characters() {
+        assert!(FinishReason::parse(String::new()).is_none());
+        assert!(FinishReason::parse("é".repeat(100)).is_some());
+        assert!(FinishReason::parse("x".repeat(101)).is_none());
+    }
+
+    #[test]
+    fn ordered_timing_is_consistent_whatever_the_clock_reports() {
+        let received_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap();
+        let started_at = received_at + chrono::TimeDelta::seconds(1);
+        let now = received_at + chrono::TimeDelta::seconds(2);
+        let consistent = |timing: &GenerationTiming| {
+            let first_token_at = timing.first_token_at.unwrap_or(timing.started_at);
+
+            timing.received_at <= timing.started_at
+                && timing.started_at <= first_token_at
+                && first_token_at <= timing.completed_at
+        };
+
+        let late = GenerationTiming::ordered(
+            received_at,
+            started_at,
+            Some(now + chrono::TimeDelta::seconds(5)),
+            now,
+        );
+        assert!(consistent(&late));
+        assert_eq!(late.completed_at(), now + chrono::TimeDelta::seconds(5));
+
+        let early = GenerationTiming::ordered(received_at, started_at, Some(received_at), now);
+        assert!(consistent(&early));
+        assert_eq!(early.first_token_at(), Some(started_at));
+        assert_eq!(early.completed_at(), now);
+    }
+
+    #[test]
+    fn status_and_cancellation_labels_match_their_serialized_names() {
+        for status in [
+            GenerationStatus::Succeeded,
+            GenerationStatus::Failed,
+            GenerationStatus::Cancelled,
+        ] {
+            assert_eq!(serde_json::to_value(status).unwrap(), status.as_str());
+        }
+
+        for owner in [CancellationOwner::Client, CancellationOwner::Server] {
+            assert_eq!(serde_json::to_value(owner).unwrap(), owner.as_str());
+        }
     }
 
     #[test]
     fn serializes_the_closed_generation_properties_shape() {
         let priced = PricedUsage::calculate(&prices(), NormalizedUsage::zero()).unwrap();
-        let terminal = TerminalOutcome::new(
-            GenerationStatus::Succeeded,
-            Some("stop".to_owned()),
-            None,
-            true,
-            None,
-        )
-        .unwrap();
+        let terminal =
+            TerminalOutcome::succeeded(FinishReason::parse("stop".to_owned()).unwrap(), true);
         let properties = GenerationProperties::new(
             identity(),
             ServiceTier::Fast,
@@ -935,6 +1138,7 @@ mod tests {
         assert_eq!(value["status"], "succeeded");
         assert_eq!(value["pricing"]["schema_version"], 1);
         assert_eq!(value["outcome"]["cancellation_owner"], Value::Null);
+        assert_eq!(value.get("external_id"), Some(&Value::Null));
         assert!(value.get("settlement").is_none());
         assert_eq!(value.as_object().unwrap().len(), 14);
     }

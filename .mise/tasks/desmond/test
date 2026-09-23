@@ -4,28 +4,6 @@ set -euo pipefail
 repo_root=$(git rev-parse --show-toplevel)
 build_dir=${TMPDIR:-/tmp}/gradiated-desmond-build
 
-rm -rf "$build_dir"
-mkdir -p "$build_dir"
-
-sources=(
-  "$repo_root/product/inference/desmond/src/gpu_metrics.cpp"
-  "$repo_root/product/inference/desmond/src/http.cpp"
-  "$repo_root/product/inference/desmond/src/https.cpp"
-  "$repo_root/product/inference/desmond/src/status.cpp"
-  "$repo_root/product/inference/desmond/src/profiling.cpp"
-  "$repo_root/product/inference/desmond/src/supervisor.cpp"
-  "$repo_root/product/inference/desmond/src/trace.cpp"
-)
-
-g++ -std=c++20 -O2 -g -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
-  -I"$repo_root/product/inference/desmond/include" \
-  "${sources[@]}" "$repo_root/product/inference/desmond/tests/desmond_tests.cpp" \
-  -ldl -lcurl -pthread -o "$build_dir/desmond_tests"
-
-"$build_dir/desmond_tests"
-
-g++ -std=c++20 -O2 -g -Wall -Wextra -Wpedantic -Wconversion -Wshadow \
-  -I"$repo_root/product/inference/desmond/include" \
-  "${sources[@]}" "$repo_root/product/inference/desmond/src/main.cpp" \
-  -ldl -lcurl -pthread -o "$build_dir/desmondd"
-python3 "$repo_root/product/inference/desmond/tests/observer.py" "$build_dir/desmondd"
+cmake -S "$repo_root/product/inference" -B "$build_dir" -DCMAKE_BUILD_TYPE=Debug
+cmake --build "$build_dir" --target desmondd desmond_tests -j
+(cd "$build_dir" && ctest -R desmond --output-on-failure)

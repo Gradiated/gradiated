@@ -4,24 +4,39 @@
 // events are accessible only to the owning test process, not via an admin endpoint.
 import {
   createServer,
+  type IncomingHttpHeaders,
   type IncomingMessage,
   type Server,
   type ServerResponse,
 } from "node:http";
-import type { AddressInfo } from "node:net";
+import type { Socket } from "node:net";
 
+import { deferred, within, type Deferred } from "../eventually.js";
+import { object, type JsonObject } from "../json.js";
 import { profile as kevProfile } from "./kev.js";
-import type { JsonObject, RuntimeProfile } from "./profile.js";
+import type { RuntimeProfile, StreamEvents } from "./profile.js";
 import { profile as vllmProfile } from "./vllm.js";
 
 const BODY_LIMIT = 1024 * 1024;
 const GATE_TIMEOUT_MS = 8000;
+const STALL_LIMIT_MS = 5000;
+const DISCONNECT_CODES = new Set([
+  "EPIPE",
+  "ECONNRESET",
+  "ERR_STREAM_DESTROYED",
+  "ERR_STREAM_WRITE_AFTER_END",
+]);
 const PROFILES: Record<RuntimeKind, RuntimeProfile> = {
   kev: kevProfile,
   vllm: vllmProfile,
 };
 
-export type RuntimeKind = "kev" | "vllm";
+export const RUNTIME_KINDS = ["kev", "vllm"] as const;
+
+export type RuntimeKind = (typeof RUNTIME_KINDS)[number];
+
+export const isRuntimeKind = (value: string): value is RuntimeKind =>
+  RUNTIME_KINDS.some((kind) => kind === value);
 
 export type Fault =
   | "ok"
@@ -34,44 +49,25 @@ export type Fault =
   | "stall"
   | "wrong_content_type";
 
-export interface Deferred<T = void> {
-  readonly promise: Promise<T>;
-  readonly resolve: (value: T) => void;
-  readonly settled: () => boolean;
-}
+const BODY_FAULTS: ReadonlySet<Fault> = new Set(["invalid_json", "oversize"]);
+const STREAM_FAULTS: ReadonlySet<Fault> = new Set([
+  "missing_usage",
+  "missing_done",
+  "partial_disconnect",
+  "stall",
+  "wrong_content_type",
+]);
 
-export const deferred = <T = void>(): Deferred<T> => {
-  let resolve!: (value: T) => void;
-  let done = false;
-  const promise = new Promise<T>((settle) => {
-    resolve = (value) => {
-      done = true;
-      settle(value);
-    };
-  });
-  return { promise, resolve, settled: () => done };
-};
-
-const waitFor = async (gate: Deferred, timeoutMs: number): Promise<boolean> => {
-  let timer: NodeJS.Timeout | undefined;
-  const expiry = new Promise<false>((resolve) => {
-    timer = setTimeout(() => resolve(false), timeoutMs);
-  });
-  try {
-    return await Promise.race([gate.promise.then(() => true), expiry]);
-  } finally {
-    clearTimeout(timer);
-  }
-};
-
+// Mutations deliberately break the wire schema, so they see plain JSON rather
+// than the runtime's own types.
 export interface PlanOptions {
   fault?: Fault;
   status?: number;
   cached?: number;
   fragment?: number;
   gate?: Deferred;
-  /** Rewrite the response body or the event list in place, to inject faults. */
-  mutate?: (value: any) => void;
+  mutateBody?: (body: JsonObject) => void;
+  mutateEvents?: (events: StreamEvents) => void;
   errorUsage?: JsonObject;
 }
 
@@ -82,23 +78,73 @@ export interface Plan {
   readonly fragment: number;
   readonly gate: Deferred | undefined;
   readonly entered: Deferred;
-  readonly mutate: ((value: any) => void) | undefined;
+  readonly mutateBody: ((body: JsonObject) => void) | undefined;
+  readonly mutateEvents: ((events: StreamEvents) => void) | undefined;
   readonly errorUsage: JsonObject | undefined;
 }
+
+const plan = (options: PlanOptions = {}): Plan => ({
+  fault: options.fault ?? "ok",
+  status: options.status ?? 200,
+  cached: options.cached ?? 0,
+  fragment: options.fragment ?? 0,
+  gate: options.gate,
+  entered: deferred(),
+  mutateBody: options.mutateBody,
+  mutateEvents: options.mutateEvents,
+  errorUsage: options.errorUsage,
+});
 
 /**
  * Where a runtime's successful responses come from. `synthetic` generates them from
  * the wire profile, which is deterministic and supports every fault. `proxy` forwards
- * to a real inference server, so the gateway sees real bytes; calls are still recorded
- * and faults still apply, but token counts are whatever the real model produced.
+ * to a real inference server that serves only `model`, so the gateway sees real bytes;
+ * calls are still recorded and faults still apply, but token counts are whatever the
+ * real model produced.
  */
 export type Upstream =
-  { kind: "synthetic" } | { kind: "proxy"; baseUrl: string };
+  { kind: "synthetic" } | { kind: "proxy"; baseUrl: string; model: string };
 
 export const SYNTHETIC: Upstream = { kind: "synthetic" };
 
+/**
+ * Names each planned setting the response to this request would ignore, so a
+ * plan that does not fit the request fails the test instead of serving success.
+ */
+const ignoredSettings = (
+  plan: Plan,
+  stream: boolean,
+  upstream: Upstream,
+): string[] => {
+  const disconnects = plan.fault === "disconnect";
+  const answers = !disconnects && plan.status === 200;
+  const synthesizes = answers && upstream.kind === "synthetic";
+  const faultApplies =
+    disconnects ||
+    (stream
+      ? synthesizes && STREAM_FAULTS.has(plan.fault)
+      : answers && BODY_FAULTS.has(plan.fault));
+  const settings: [name: string, set: boolean, used: boolean][] = [
+    [`fault ${plan.fault}`, plan.fault !== "ok", faultApplies],
+    [`status ${plan.status}`, plan.status !== 200, !disconnects],
+    ["errorUsage", plan.errorUsage !== undefined, !disconnects && !answers],
+    ["cached", plan.cached !== 0, synthesizes],
+    ["fragment", plan.fragment !== 0, answers && stream],
+    ["mutateBody", plan.mutateBody !== undefined, answers && !stream],
+    ["mutateEvents", plan.mutateEvents !== undefined, synthesizes && stream],
+  ];
+
+  return settings.filter(([, set, used]) => set && !used).map(([name]) => name);
+};
+
+interface Accepted {
+  readonly body: JsonObject;
+  readonly plan: Plan;
+}
+
 export class Runtime {
   readonly calls: JsonObject[] = [];
+  readonly headers: IncomingHttpHeaders[] = [];
   readonly errors: string[] = [];
   readonly url: string;
 
@@ -108,7 +154,7 @@ export class Runtime {
   readonly #upstream: Upstream;
   readonly #plans: Plan[] = [];
   readonly #server: Server;
-  readonly #sockets = new Set<import("node:net").Socket>();
+  readonly #sockets = new Set<Socket>();
   readonly #stopping = deferred();
 
   private constructor(
@@ -123,8 +169,12 @@ export class Runtime {
     this.#token = token;
     this.#upstream = upstream;
     this.#server = server;
-    const { port } = server.address() as AddressInfo;
-    this.url = `http://127.0.0.1:${port}`;
+
+    const address = server.address();
+    if (address === null || typeof address === "string") {
+      throw new Error("the mock runtime is not listening on a TCP port");
+    }
+    this.url = `http://127.0.0.1:${address.port}`;
   }
 
   static async start(
@@ -149,18 +199,10 @@ export class Runtime {
   }
 
   enqueue(options: PlanOptions = {}): Plan {
-    const plan: Plan = {
-      fault: options.fault ?? "ok",
-      status: options.status ?? 200,
-      cached: options.cached ?? 0,
-      fragment: options.fragment ?? 0,
-      gate: options.gate,
-      entered: deferred(),
-      mutate: options.mutate,
-      errorUsage: options.errorUsage,
-    };
-    this.#plans.push(plan);
-    return plan;
+    const queued = plan(options);
+    this.#plans.push(queued);
+
+    return queued;
   }
 
   async close(): Promise<void> {
@@ -180,64 +222,13 @@ export class Runtime {
         Buffer.from("{}"),
       );
     }
+
     try {
-      if (request.headers.authorization !== `Bearer ${this.#token}`) {
-        return reply(
-          response,
-          401,
-          Buffer.from('{"error":{"message":"unauthorized"}}'),
-        );
-      }
-      if (request.url !== this.#profile.PATH)
-        throw new Error(`unexpected path ${request.url}`);
-      const body = JSON.parse(await readBody(request)) as JsonObject;
-      this.#profile.validate(body, this.#model);
-      this.calls.push(body);
-      const plan = this.#plans.shift() ?? this.enqueueDefault();
-      plan.entered.resolve();
-      if (plan.gate && !(await waitFor(plan.gate, GATE_TIMEOUT_MS))) {
-        if (!this.#stopping.settled())
-          throw new Error("test did not release runtime gate");
-        return;
-      }
-      if (plan.fault === "disconnect") return void request.socket.destroy();
-      if (plan.status !== 200) {
-        const error: JsonObject = {
-          error: { message: "PRIVATE_RUNTIME_DETAIL" },
-        };
-        if (plan.errorUsage !== undefined) error.usage = plan.errorUsage;
-        return reply(
-          response,
-          plan.status,
-          Buffer.from(JSON.stringify(error)),
-          plan.status === 307 ? { Location: "/must-not-follow" } : undefined,
-        );
-      }
-      if (body.stream) return await this.#stream(response, body, plan);
-      const result =
-        this.#upstream.kind === "proxy"
-          ? await this.#forward(body)
-          : this.#profile.response(body, plan.cached);
-      plan.mutate?.(result);
-      if (plan.fault === "invalid_json") {
-        return reply(
-          response,
-          200,
-          Buffer.from("not json PRIVATE_RUNTIME_DETAIL"),
-        );
-      }
-      if (plan.fault === "oversize") {
-        // Declare a body far larger than the gateway's cap, then deliver nothing.
-        response.writeHead(200, {
-          "Content-Type": "application/json",
-          "Content-Length": "8000001",
-        });
-        response.flushHeaders();
-        return void response.socket?.destroy();
-      }
-      reply(response, 200, Buffer.from(JSON.stringify(result)));
+      const accepted = await this.#accept(request, response);
+      if (accepted) await this.#respond(request, response, accepted);
     } catch (error) {
       if (isDisconnect(error)) return; // Deliberate cancellation and fault tests close sockets.
+
       this.errors.push(error instanceof Error ? error.message : String(error));
       try {
         reply(
@@ -251,23 +242,92 @@ export class Runtime {
     }
   }
 
-  private enqueueDefault(): Plan {
-    return {
-      fault: "ok",
-      status: 200,
-      cached: 0,
-      fragment: 0,
-      gate: undefined,
-      entered: deferred(),
-      mutate: undefined,
-      errorUsage: undefined,
-    };
+  /** Validates and records a request, then waits for its plan's gate. */
+  async #accept(
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<Accepted | undefined> {
+    if (request.headers.authorization !== `Bearer ${this.#token}`) {
+      reply(response, 401, Buffer.from('{"error":{"message":"unauthorized"}}'));
+      return undefined;
+    }
+
+    if (request.url !== this.#profile.path) {
+      throw new Error(`unexpected path ${request.url}`);
+    }
+
+    const body = object(JSON.parse(await readBody(request)));
+    this.#profile.validate(body, this.#model);
+    this.calls.push(body);
+    this.headers.push(request.headers);
+
+    const current = this.#plans.shift() ?? plan();
+    current.entered.resolve();
+
+    if (
+      current.gate &&
+      !(await within(current.gate.promise, GATE_TIMEOUT_MS)).settled
+    ) {
+      if (!this.#stopping.settled()) {
+        throw new Error("test did not release runtime gate");
+      }
+
+      return undefined;
+    }
+
+    return { body, plan: current };
   }
 
-  /** One non-streaming round trip to the real runtime, returned to the gateway as-is. */
-  async #forward(body: JsonObject): Promise<JsonObject> {
-    const upstream = this.#upstream as { baseUrl: string };
-    const response = await fetch(`${upstream.baseUrl}${this.#profile.PATH}`, {
+  async #respond(
+    request: IncomingMessage,
+    response: ServerResponse,
+    { body, plan }: Accepted,
+  ): Promise<void> {
+    const ignored = ignoredSettings(plan, Boolean(body.stream), this.#upstream);
+    if (ignored.length > 0) {
+      throw new Error(`the plan does not apply: ${ignored.join(", ")}`);
+    }
+
+    if (plan.fault === "disconnect") return void request.socket.destroy();
+
+    if (plan.status !== 200) return replyFailure(response, plan);
+
+    const upstream = this.#upstream;
+    if (body.stream) {
+      return upstream.kind === "proxy"
+        ? await this.#relay(upstream.baseUrl, response, body, plan)
+        : this.#stream(response, body, plan);
+    }
+
+    const result =
+      upstream.kind === "proxy"
+        ? await this.#forward(upstream.baseUrl, body)
+        : this.#profile.response(body, plan.cached);
+    plan.mutateBody?.(result);
+
+    if (plan.fault === "invalid_json") {
+      return reply(
+        response,
+        200,
+        Buffer.from("not json PRIVATE_RUNTIME_DETAIL"),
+      );
+    }
+
+    if (plan.fault === "oversize") {
+      // Declare a body far larger than the gateway's cap, then deliver nothing.
+      response.writeHead(200, {
+        "Content-Type": "application/json",
+        "Content-Length": "8000001",
+      });
+      response.flushHeaders();
+      return void response.socket?.destroy();
+    }
+
+    reply(response, 200, Buffer.from(JSON.stringify(result)));
+  }
+
+  async #forward(baseUrl: string, body: JsonObject): Promise<JsonObject> {
+    const response = await fetch(`${baseUrl}${this.#profile.path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -279,17 +339,17 @@ export class Runtime {
         `real runtime returned ${response.status}: ${text.slice(0, 400)}`,
       );
     }
-    return JSON.parse(text) as JsonObject;
+    return object(JSON.parse(text));
   }
 
   /** Relay the real runtime's SSE body byte for byte, so framing is the runtime's own. */
   async #relay(
+    baseUrl: string,
     response: ServerResponse,
     body: JsonObject,
     plan: Plan,
   ): Promise<void> {
-    const upstream = this.#upstream as { baseUrl: string };
-    const source = await fetch(`${upstream.baseUrl}${this.#profile.PATH}`, {
+    const source = await fetch(`${baseUrl}${this.#profile.path}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -303,12 +363,13 @@ export class Runtime {
       Connection: "close",
     });
     try {
-      for await (const chunk of source.body as unknown as AsyncIterable<Uint8Array>) {
-        const payload = Buffer.from(chunk);
-        const size = plan.fragment || payload.length;
-        for (let offset = 0; offset < payload.length; offset += size) {
-          await write(response, payload.subarray(offset, offset + size));
-        }
+      const reader = source.body.getReader();
+      for (
+        let read = await reader.read();
+        !read.done;
+        read = await reader.read()
+      ) {
+        await writeFragments(response, Buffer.from(read.value), plan.fragment);
       }
       response.end();
     } catch (error) {
@@ -317,15 +378,9 @@ export class Runtime {
     }
   }
 
-  async #stream(
-    response: ServerResponse,
-    body: JsonObject,
-    plan: Plan,
-  ): Promise<void> {
-    if (this.#upstream.kind === "proxy")
-      return this.#relay(response, body, plan);
+  #stream(response: ServerResponse, body: JsonObject, plan: Plan): void {
     let events = this.#profile.events(body, plan.cached);
-    plan.mutate?.(events);
+    plan.mutateEvents?.(events);
     if (plan.fault === "missing_usage") {
       events = events.filter(
         (event) => typeof event === "string" || !event.usage,
@@ -346,7 +401,7 @@ export class Runtime {
   // one write per `fragment` bytes is what puts frame boundaries at arbitrary offsets.
   async #writeEvents(
     response: ServerResponse,
-    events: (JsonObject | string)[],
+    events: StreamEvents,
     plan: Plan,
   ): Promise<void> {
     try {
@@ -355,15 +410,15 @@ export class Runtime {
           return void response.socket?.destroy();
         }
         if (plan.fault === "stall" && index === 2) {
-          await waitFor(this.#stopping, 5000);
+          await within(this.#stopping.promise, STALL_LIMIT_MS);
           return void response.socket?.destroy();
         }
         const data = typeof event === "string" ? event : JSON.stringify(event);
-        const payload = Buffer.from(`data: ${data}\r\n\r\n`);
-        const size = plan.fragment || payload.length;
-        for (let offset = 0; offset < payload.length; offset += size) {
-          await write(response, payload.subarray(offset, offset + size));
-        }
+        await writeFragments(
+          response,
+          Buffer.from(`data: ${data}\r\n\r\n`),
+          plan.fragment,
+        );
       }
       response.end();
     } catch (error) {
@@ -373,19 +428,40 @@ export class Runtime {
   }
 }
 
+const replyFailure = (response: ServerResponse, plan: Plan): void => {
+  const error: JsonObject = { error: { message: "PRIVATE_RUNTIME_DETAIL" } };
+  if (plan.errorUsage !== undefined) error.usage = plan.errorUsage;
+
+  reply(
+    response,
+    plan.status,
+    Buffer.from(JSON.stringify(error)),
+    plan.status === 307 ? { Location: "/must-not-follow" } : undefined,
+  );
+};
+
 const isDisconnect = (error: unknown): boolean =>
   error instanceof Error &&
-  [
-    "EPIPE",
-    "ECONNRESET",
-    "ERR_STREAM_DESTROYED",
-    "ERR_STREAM_WRITE_AFTER_END",
-  ].includes((error as NodeJS.ErrnoException).code ?? "");
+  "code" in error &&
+  typeof error.code === "string" &&
+  DISCONNECT_CODES.has(error.code);
 
 const write = (response: ServerResponse, chunk: Buffer): Promise<void> =>
   new Promise((resolve, reject) => {
     response.write(chunk, (error) => (error ? reject(error) : resolve()));
   });
+
+/** A fragment of zero writes the payload whole. */
+const writeFragments = async (
+  response: ServerResponse,
+  payload: Buffer,
+  fragment: number,
+): Promise<void> => {
+  const size = fragment || payload.length;
+  for (let offset = 0; offset < payload.length; offset += size) {
+    await write(response, payload.subarray(offset, offset + size));
+  }
+};
 
 const reply = (
   response: ServerResponse,

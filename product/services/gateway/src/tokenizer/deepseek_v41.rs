@@ -2,15 +2,14 @@
 //! Adapted from vLLM's Apache-2.0 deepseek_v41_encoding.py.
 use std::collections::HashMap;
 
-use serde_json::{json, Value};
+use serde_json::{json, Map, Value};
 
-use super::{InferenceRequest, TokenizerRequestError};
+use super::{
+    deepseek::{ASSISTANT, BOS, EOS, USER},
+    InferenceRequest, TokenizerRequestError,
+};
 
-const BOS: &str = "<｜begin▁of▁sentence｜>";
-const EOS: &str = "<｜end▁of▁sentence｜>";
-const USER: &str = "<｜User｜>";
 const SYSTEM: &str = "<｜System｜>";
-const ASSISTANT: &str = "<｜Assistant｜>";
 
 fn content(value: &Value) -> Result<String, TokenizerRequestError> {
     match value {
@@ -22,6 +21,7 @@ fn content(value: &Value) -> Result<String, TokenizerRequestError> {
                 if !matches!(part["type"].as_str(), Some("text")) {
                     return Err(TokenizerRequestError::Rejected);
                 }
+
                 part["text"]
                     .as_str()
                     .map(str::to_owned)
@@ -56,30 +56,46 @@ fn python_json(value: &Value) -> String {
     }
 }
 
-fn calls(value: &Value) -> Result<String, TokenizerRequestError> {
-    let Some(calls) = value.as_array().filter(|v| !v.is_empty()) else {
-        return Ok(String::new());
-    };
-    let mut rendered = Vec::new();
-    for call in calls {
+struct ToolCall<'a> {
+    name: &'a str,
+    arguments: Map<String, Value>,
+}
+
+impl<'a> ToolCall<'a> {
+    fn parse_all(value: &'a Value) -> Result<Vec<Self>, TokenizerRequestError> {
+        match value {
+            Value::Null => Ok(Vec::new()),
+            Value::Array(calls) => calls.iter().map(Self::parse).collect(),
+            _ => Err(TokenizerRequestError::InvalidInput),
+        }
+    }
+
+    fn parse(call: &'a Value) -> Result<Self, TokenizerRequestError> {
         let function = &call["function"];
         let name = function["name"]
             .as_str()
             .ok_or(TokenizerRequestError::InvalidInput)?;
+
         // The chat endpoint runs chat_utils._postprocess_messages before the
         // DeepSeek encoder. It parses arguments once and replaces malformed or
         // non-object history with {} so an incomplete tool call does not poison
         // every later turn. Counting the encoder's raw-string fallback here
         // disagrees with the prompt actually served by vLLM.
-        let args = match &function["arguments"] {
-            Value::Object(args) => args.clone(),
+        let arguments = match &function["arguments"] {
+            Value::Object(arguments) => arguments.clone(),
             Value::String(text) => serde_json::from_str::<Value>(text)
                 .ok()
                 .and_then(|value| value.as_object().cloned())
                 .unwrap_or_default(),
-            _ => Default::default(),
+            _ => Map::new(),
         };
-        let parameters = args
+
+        Ok(Self { name, arguments })
+    }
+
+    fn render(&self) -> String {
+        let parameters = self
+            .arguments
             .iter()
             .map(|(key, value)| {
                 format!(
@@ -93,14 +109,26 @@ fn calls(value: &Value) -> Result<String, TokenizerRequestError> {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        rendered.push(format!(
-            "<｜DSML｜ invoke name=\"{name}\">\n{parameters}\n</｜DSML｜ invoke>"
-        ));
+
+        format!(
+            "<｜DSML｜ invoke name=\"{}\">\n{parameters}\n</｜DSML｜ invoke>",
+            self.name
+        )
     }
-    Ok(format!(
-        "\n\n<｜DSML｜ calls>\n{}\n</｜DSML｜ calls>",
-        rendered.join("\n")
-    ))
+}
+
+fn render_calls(calls: &[ToolCall<'_>]) -> String {
+    if calls.is_empty() {
+        return String::new();
+    }
+
+    let rendered = calls
+        .iter()
+        .map(ToolCall::render)
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    format!("\n\n<｜DSML｜ calls>\n{rendered}\n</｜DSML｜ calls>")
 }
 
 // Match the pinned vLLM FunctionDefinition serializer before prompt encoding.
@@ -114,6 +142,7 @@ fn tool_schema(tool: &Value) -> Result<String, TokenizerRequestError> {
         .get("name")
         .and_then(Value::as_str)
         .ok_or(TokenizerRequestError::InvalidInput)?;
+
     let mut normalized = json!({
         "name": name,
         "description": function.get("description").unwrap_or(&Value::Null),
@@ -124,21 +153,49 @@ fn tool_schema(tool: &Value) -> Result<String, TokenizerRequestError> {
             normalized[key] = value.clone();
         }
     }
+
     Ok(python_json(&normalized))
 }
 
-/// How the prompt treats reasoning, taken from the request's template options.
+enum Turn<'a> {
+    System {
+        content: String,
+        tools: Option<&'a [Value]>,
+    },
+    Developer(String),
+    User(Vec<Block>),
+    Assistant {
+        reasoning: &'a Value,
+        content: String,
+        calls: Vec<ToolCall<'a>>,
+    },
+}
+
+enum Block {
+    Text(String),
+    ToolResult { order: usize, content: String },
+}
+
 struct RenderOptions<'a> {
     thinking: bool,
     budget: u64,
     drop_thinking: bool,
-    tools: Option<&'a Vec<Value>>,
+    tools: Option<&'a [Value]>,
 }
 
 impl<'a> RenderOptions<'a> {
     fn new(request: &'a InferenceRequest) -> Result<Self, TokenizerRequestError> {
         let kwargs = request.parameters.get("chat_template_kwargs");
         let option = |name: &str| kwargs.and_then(|v| v.get(name));
+
+        for (name, param) in [
+            ("thinking", "chat_template_kwargs.thinking"),
+            ("enable_thinking", "chat_template_kwargs.enable_thinking"),
+        ] {
+            if option(name).is_some_and(|value| !value.is_boolean() && !value.is_null()) {
+                return Err(TokenizerRequestError::InvalidParameter(param));
+            }
+        }
 
         let mut thinking = match (option("thinking"), option("enable_thinking")) {
             (None, None) => true,
@@ -178,6 +235,7 @@ impl<'a> RenderOptions<'a> {
             .parameters
             .get("tools")
             .and_then(Value::as_array)
+            .map(Vec::as_slice)
             .filter(|v| !v.is_empty());
         let drop_thinking = tools.is_none()
             && option("drop_thinking")
@@ -196,13 +254,8 @@ impl<'a> RenderOptions<'a> {
 pub(super) fn render(request: &InferenceRequest) -> Result<String, TokenizerRequestError> {
     let options = RenderOptions::new(request)?;
 
-    let mut messages = request.messages.clone();
-    reject_encoder_controls(&messages)?;
-    if let Some(tools) = options.tools {
-        attach_tools(&mut messages, tools);
-    }
-
-    let mut turns = merge_turns(messages)?;
+    reject_encoder_controls(&request.messages)?;
+    let mut turns = parse_turns(&request.messages, options.tools)?;
     if options.thinking && options.drop_thinking {
         turns = prune_developer_turns(turns);
     }
@@ -230,102 +283,112 @@ fn reject_encoder_controls(messages: &[Value]) -> Result<(), TokenizerRequestErr
     Ok(())
 }
 
-/// The encoder renders tool definitions inside the system turn, so a request
+/// Consecutive user and tool messages fold into one user turn. A tool result
+/// carries the position of its call in the preceding assistant turn. The
+/// encoder renders tool definitions inside the first system turn, so a request
 /// with tools and no system message gets an empty one.
-fn attach_tools(messages: &mut Vec<Value>, tools: &[Value]) {
-    if !messages.iter().any(|m| m["role"] == "system") {
-        messages.insert(0, json!({"role":"system", "content":""}));
+fn parse_turns<'a>(
+    messages: &'a [Value],
+    tools: Option<&'a [Value]>,
+) -> Result<Vec<Turn<'a>>, TokenizerRequestError> {
+    let mut turns = Vec::with_capacity(messages.len() + 1);
+    let mut tools = tools;
+    if tools.is_some() && !messages.iter().any(|m| m["role"] == "system") {
+        turns.push(Turn::System {
+            content: String::new(),
+            tools: tools.take(),
+        });
     }
 
-    if let Some(system) = messages.iter_mut().find(|m| m["role"] == "system") {
-        system["tools"] = json!(tools);
-    }
-}
-
-/// Normalizes each message and folds consecutive user and tool messages into
-/// one user turn of blocks. A tool result carries the position of its call in
-/// the preceding assistant turn.
-fn merge_turns(messages: Vec<Value>) -> Result<Vec<Value>, TokenizerRequestError> {
-    let mut merged: Vec<Value> = Vec::new();
     let mut call_order = HashMap::new();
-
-    for mut message in messages {
+    for message in messages {
         let role = message["role"]
             .as_str()
-            .ok_or(TokenizerRequestError::InvalidInput)?
-            .to_owned();
-        if !matches!(
-            role.as_str(),
-            "system" | "developer" | "user" | "assistant" | "tool"
-        ) {
-            return Err(TokenizerRequestError::Rejected);
-        }
+            .ok_or(TokenizerRequestError::InvalidInput)?;
+        let text = || content(&message["content"]);
 
-        message["content"] = json!(content(&message["content"])?);
-        if let Some(reasoning) = message.get("reasoning").cloned() {
-            message["reasoning_content"] = reasoning;
-        }
-
-        if role == "assistant" {
-            if let Some(calls) = message["tool_calls"].as_array() {
-                call_order.clear();
-                for (index, call) in calls.iter().enumerate() {
-                    if let Some(id) = call["id"].as_str() {
-                        call_order.insert(id.to_owned(), index);
-                    }
+        match role {
+            "system" => turns.push(Turn::System {
+                content: text()?,
+                tools: tools.take(),
+            }),
+            "developer" => turns.push(Turn::Developer(text()?)),
+            "assistant" => {
+                let content = text()?;
+                if let Some(calls) = message["tool_calls"].as_array() {
+                    call_order = calls
+                        .iter()
+                        .enumerate()
+                        .filter_map(|(index, call)| Some((call["id"].as_str()?, index)))
+                        .collect();
                 }
-            }
-        }
 
-        let block = match role.as_str() {
+                turns.push(Turn::Assistant {
+                    reasoning: message
+                        .get("reasoning")
+                        .unwrap_or(&message["reasoning_content"]),
+                    content,
+                    calls: ToolCall::parse_all(&message["tool_calls"])?,
+                });
+            }
+            "user" => push_block(&mut turns, Block::Text(text()?)),
             "tool" => {
                 let call_id = message["tool_call_id"].as_str().unwrap_or("");
                 let order = call_order.get(call_id).copied().unwrap_or(0);
-                json!({"type":"tool_result", "content":message["content"], "order":order})
+                push_block(
+                    &mut turns,
+                    Block::ToolResult {
+                        order,
+                        content: text()?,
+                    },
+                );
             }
-            "user" => json!({"type":"text", "content":message["content"]}),
-            _ => {
-                merged.push(message);
-                continue;
-            }
-        };
-
-        match merged.last_mut().filter(|m| m["role"] == "user") {
-            Some(last) => last["blocks"]
-                .as_array_mut()
-                .ok_or(TokenizerRequestError::InvalidInput)?
-                .push(block),
-            None => merged.push(json!({"role":"user", "blocks":[block]})),
+            _ => return Err(TokenizerRequestError::Rejected),
         }
     }
 
-    Ok(merged)
+    Ok(turns)
+}
+
+fn push_block(turns: &mut Vec<Turn<'_>>, block: Block) {
+    if let Some(Turn::User(blocks)) = turns.last_mut() {
+        blocks.push(block);
+        return;
+    }
+
+    turns.push(Turn::User(vec![block]));
 }
 
 /// Matches the pinned runtime's history pruning: developer turns before the
 /// last user turn are dropped.
-fn prune_developer_turns(turns: Vec<Value>) -> Vec<Value> {
+fn prune_developer_turns(turns: Vec<Turn<'_>>) -> Vec<Turn<'_>> {
     let last_user = last_user_index(&turns);
 
     turns
         .into_iter()
         .enumerate()
-        .filter_map(|(i, m)| {
-            (m["role"] != "developer" || last_user.is_none_or(|last| i >= last)).then_some(m)
+        .filter_map(|(index, turn)| {
+            let pruned =
+                matches!(turn, Turn::Developer(_)) && last_user.is_some_and(|last| index < last);
+            (!pruned).then_some(turn)
         })
         .collect()
 }
 
 /// The last user turn, where a later system message also counts as one.
-fn last_user_index(turns: &[Value]) -> Option<usize> {
+fn last_user_index(turns: &[Turn<'_>]) -> Option<usize> {
     turns
         .iter()
         .enumerate()
-        .rfind(|(i, m)| m["role"] == "user" || (*i > 0 && m["role"] == "system"))
-        .map(|(i, _)| i)
+        .rfind(|(index, turn)| match turn {
+            Turn::User(_) => true,
+            Turn::System { .. } => *index > 0,
+            Turn::Developer(_) | Turn::Assistant { .. } => false,
+        })
+        .map(|(index, _)| index)
 }
 
-fn encode(turns: &[Value], options: &RenderOptions) -> Result<String, TokenizerRequestError> {
+fn encode(turns: &[Turn<'_>], options: &RenderOptions) -> Result<String, TokenizerRequestError> {
     let RenderOptions {
         thinking,
         budget,
@@ -335,39 +398,59 @@ fn encode(turns: &[Value], options: &RenderOptions) -> Result<String, TokenizerR
     let last_user = last_user_index(turns);
     let mut prompt = String::from(BOS);
 
-    for (index, message) in turns.iter().enumerate() {
-        let role = message["role"]
-            .as_str()
-            .ok_or(TokenizerRequestError::InvalidInput)?;
-
-        if index == 0 && (thinking || role == "system") {
+    for (index, turn) in turns.iter().enumerate() {
+        if index == 0 && (thinking || matches!(turn, Turn::System { .. })) {
             prompt.push_str(SYSTEM);
         }
+
         if index == 0 && thinking {
             prompt.push_str(&format!("Reasoning Effort: {budget} (range 1-100, the higher the value, the more thorough the reasoning)\n\n"));
         }
 
-        match role {
-            "system" | "developer" => encode_instructions(&mut prompt, message, role, index)?,
-            "user" => encode_user(&mut prompt, message)?,
-            "assistant" => {
+        match turn {
+            Turn::System { content, tools } => {
+                if index > 0 {
+                    prompt.push_str(SYSTEM);
+                }
+
+                encode_instructions(&mut prompt, content, *tools)?;
+            }
+            Turn::Developer(content) => {
+                if content.is_empty() {
+                    return Err(TokenizerRequestError::Rejected);
+                }
+
+                prompt.push_str(USER);
+                encode_instructions(&mut prompt, content, None)?;
+            }
+            Turn::User(blocks) => encode_user(&mut prompt, blocks),
+            Turn::Assistant {
+                reasoning,
+                content: text,
+                calls,
+            } => {
                 if thinking && (!drop_thinking || last_user.is_none_or(|last| index > last)) {
-                    prompt.push_str(&content(&message["reasoning_content"])?);
+                    prompt.push_str(&content(reasoning)?);
                     prompt.push_str("</think>");
                 }
-                prompt.push_str(&content(&message["content"])?);
-                prompt.push_str(&calls(&message["tool_calls"])?);
+
+                prompt.push_str(text);
+                prompt.push_str(&render_calls(calls));
                 prompt.push_str(EOS);
             }
-            _ => return Err(TokenizerRequestError::Rejected),
         }
 
         // A turn that expects a reply opens the assistant turn, with reasoning
         // open only where the runtime keeps it.
-        let next = turns.get(index + 1).and_then(|m| m["role"].as_str());
-        let expects_reply =
-            role == "user" || role == "developer" || (role == "system" && index > 0);
-        if (next.is_none() || next == Some("assistant")) && expects_reply {
+        let expects_reply = match turn {
+            Turn::User(_) | Turn::Developer(_) => true,
+            Turn::System { .. } => index > 0,
+            Turn::Assistant { .. } => false,
+        };
+        let next_is_reply = turns
+            .get(index + 1)
+            .is_none_or(|next| matches!(next, Turn::Assistant { .. }));
+        if expects_reply && next_is_reply {
             let reasoning_open =
                 thinking && (!drop_thinking || last_user.is_some_and(|last| index >= last));
             prompt.push_str(ASSISTANT);
@@ -384,29 +467,18 @@ fn encode(turns: &[Value], options: &RenderOptions) -> Result<String, TokenizerR
 
 fn encode_instructions(
     prompt: &mut String,
-    message: &Value,
-    role: &str,
-    index: usize,
+    content: &str,
+    tools: Option<&[Value]>,
 ) -> Result<(), TokenizerRequestError> {
-    if role == "system" && index > 0 {
-        prompt.push_str(SYSTEM);
-    }
-    if role == "developer" {
-        prompt.push_str(USER);
-    }
+    prompt.push_str(content);
 
-    let text = content(&message["content"])?;
-    if role == "developer" && text.is_empty() {
-        return Err(TokenizerRequestError::Rejected);
-    }
-    prompt.push_str(&text);
-
-    if let Some(tools) = message["tools"].as_array().filter(|v| !v.is_empty()) {
+    if let Some(tools) = tools {
         let schemas = tools
             .iter()
             .map(tool_schema)
             .collect::<Result<Vec<_>, _>>()?
             .join("\n");
+
         prompt.push_str("\n\n");
         prompt
             .push_str(&include_str!("deepseek_v41_tools.txt").replace("{tool_schemas}", &schemas));
@@ -417,40 +489,49 @@ fn encode_instructions(
 
 /// Tool results are rendered in the order of their calls, in the positions the
 /// tool messages held among the turn's blocks.
-fn encode_user(prompt: &mut String, message: &Value) -> Result<(), TokenizerRequestError> {
-    let blocks = message["blocks"]
-        .as_array()
-        .ok_or(TokenizerRequestError::InvalidInput)?;
-
-    let mut tool_blocks = blocks
+fn encode_user(prompt: &mut String, blocks: &[Block]) {
+    let mut results: Vec<(usize, &str)> = blocks
         .iter()
-        .filter(|b| b["type"] == "tool_result")
-        .collect::<Vec<_>>();
-    tool_blocks.sort_by_key(|b| b["order"].as_u64().unwrap_or(0));
-    let mut results = tool_blocks.into_iter();
+        .filter_map(|block| match block {
+            Block::ToolResult { order, content } => Some((*order, content.as_str())),
+            Block::Text(_) => None,
+        })
+        .collect();
+    results.sort_by_key(|(order, _)| *order);
 
-    let mut parts = Vec::with_capacity(blocks.len());
-    for block in blocks {
-        if block["type"] == "tool_result" {
-            let result = results.next().ok_or(TokenizerRequestError::InvalidInput)?;
-            parts.push(format!(
-                "<tool_result>{}</tool_result>",
-                content(&result["content"])?
-            ));
-        } else {
-            parts.push(content(&block["content"])?);
-        }
+    let positions = blocks
+        .iter()
+        .enumerate()
+        .filter(|(_, block)| matches!(block, Block::ToolResult { .. }))
+        .map(|(position, _)| position);
+    let mut parts: Vec<String> = blocks
+        .iter()
+        .map(|block| match block {
+            Block::Text(text) => text.clone(),
+            Block::ToolResult { .. } => String::new(),
+        })
+        .collect();
+    for (position, (_, result)) in positions.zip(results) {
+        parts[position] = format!("<tool_result>{result}</tool_result>");
     }
 
     prompt.push_str(USER);
     prompt.push_str(&parts.join("\n\n"));
-
-    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const THINKING: &str = "<｜begin▁of▁sentence｜><｜System｜>Reasoning Effort: 50 (range 1-100, the higher the value, the more thorough the reasoning)\n\n";
+
+    fn thinking(rest: &str) -> String {
+        format!("{THINKING}{rest}")
+    }
+
+    fn rendered(calls: &Value) -> String {
+        render_calls(&ToolCall::parse_all(calls).unwrap())
+    }
 
     #[test]
     fn incomplete_tool_history_matches_chat_endpoint_normalization() {
@@ -473,14 +554,9 @@ mod tests {
             json!("{}"),
             json!({}),
         ] {
-            assert_eq!(
-                calls(&call(arguments.clone())).unwrap(),
-                expected,
-                "{arguments}"
-            );
+            assert_eq!(rendered(&call(arguments.clone())), expected, "{arguments}");
         }
-        assert!(calls(&call(json!("{\"cmd\":\"ls\"}")))
-            .unwrap()
+        assert!(rendered(&call(json!("{\"cmd\":\"ls\"}")))
             .contains("name=\"cmd\" string=\"true\">ls</"));
     }
 
@@ -502,6 +578,41 @@ mod tests {
                 let request: InferenceRequest = serde_json::from_value(body).unwrap();
                 let error = super::super::map_request_error(render(&request).unwrap_err());
                 assert_eq!(error, crate::GatewayError::invalid_request(Some(param)));
+            }
+        }
+    }
+
+    #[test]
+    fn rejects_malformed_tool_calls_and_thinking_flags() {
+        let request = |message: Value, kwargs: Value| -> InferenceRequest {
+            serde_json::from_value(json!({
+                "model": "test",
+                "chat_template_kwargs": kwargs,
+                "messages": [{"role": "user", "content": "Go"}, message],
+            }))
+            .unwrap()
+        };
+        let assistant = |tool_calls: Value| json!({"role": "assistant", "content": "A", "tool_calls": tool_calls});
+
+        for tool_calls in [json!({"id": "a"}), json!("a"), json!(1)] {
+            assert_eq!(
+                render(&request(assistant(tool_calls.clone()), json!({}))),
+                Err(TokenizerRequestError::InvalidInput),
+                "{tool_calls}"
+            );
+        }
+        assert!(render(&request(assistant(Value::Null), json!({}))).is_ok());
+
+        for (name, param) in [
+            ("thinking", "chat_template_kwargs.thinking"),
+            ("enable_thinking", "chat_template_kwargs.enable_thinking"),
+        ] {
+            for value in [json!("yes"), json!(1)] {
+                assert_eq!(
+                    render(&request(assistant(json!([])), json!({name: value}))),
+                    Err(TokenizerRequestError::InvalidParameter(param)),
+                    "{name}: {value}"
+                );
             }
         }
     }
@@ -548,13 +659,111 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unsupported_effort_and_image_input() {
-        for request in [
-            json!({"model":"test", "messages":[{"role":"user","content":"Hello"}], "reasoning_effort":"medium"}),
-            json!({"model":"test", "messages":[{"role":"user","content":[{"type":"image_url","image_url":{"url":"https://example.com/image.png"}}]}]}),
-        ] {
+    fn rejects_image_input() {
+        let request: InferenceRequest = serde_json::from_value(json!({
+            "model": "test",
+            "messages": [{"role": "user", "content": [{"type": "image_url", "image_url": {"url": "https://example.com/image.png"}}]}],
+        }))
+        .unwrap();
+
+        assert_eq!(render(&request), Err(TokenizerRequestError::Rejected));
+    }
+
+    fn characterization_cases() -> Vec<(&'static str, Value, String)> {
+        let call = |id: &str, name: &str| json!({"id": id, "type": "function", "function": {"name": name, "arguments": "{}"}});
+        vec![
+            ("drop_thinking false keeps earlier reasoning", json!({
+                "model": "test",
+                "chat_template_kwargs": {"drop_thinking": false},
+                "messages": [
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A", "reasoning_content": "think A"},
+                    {"role": "user", "content": "Two"},
+                ],
+            }), thinking("<｜User｜>One<｜Assistant｜><think>think A</think>A<｜end▁of▁sentence｜><｜User｜>Two<｜Assistant｜><think>")),
+            ("reasoning after the last user turn is kept", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A", "reasoning_content": "think A"},
+                    {"role": "user", "content": "Two"},
+                    {"role": "assistant", "content": "B", "reasoning_content": "think B"},
+                ],
+            }), thinking("<｜User｜>One<｜Assistant｜></think>A<｜end▁of▁sentence｜><｜User｜>Two<｜Assistant｜><think>think B</think>B<｜end▁of▁sentence｜>")),
+            ("developer turns before the last user turn are pruned", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "developer", "content": "Early rule"},
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A"},
+                    {"role": "developer", "content": "Late rule"},
+                    {"role": "user", "content": "Two"},
+                ],
+            }), thinking("<｜User｜>One<｜Assistant｜></think>A<｜end▁of▁sentence｜><｜User｜>Two<｜Assistant｜><think>")),
+            ("a later system message counts as a user turn", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "system", "content": "First"},
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A", "reasoning_content": "think A"},
+                    {"role": "system", "content": "Second"},
+                ],
+            }), thinking("First<｜User｜>One<｜Assistant｜></think>A<｜end▁of▁sentence｜><｜System｜>Second<｜Assistant｜><think>")),
+            ("tool results follow call order", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "user", "content": "Go"},
+                    {"role": "assistant", "content": "", "tool_calls": [call("a", "first"), call("b", "second")]},
+                    {"role": "tool", "tool_call_id": "b", "content": "result b"},
+                    {"role": "user", "content": "between"},
+                    {"role": "tool", "tool_call_id": "a", "content": "result a"},
+                ],
+            }), thinking("<｜User｜>Go<｜Assistant｜></think>\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"first\">\n\n</｜DSML｜ invoke>\n<｜DSML｜ invoke name=\"second\">\n\n</｜DSML｜ invoke>\n</｜DSML｜ calls><｜end▁of▁sentence｜><｜User｜><tool_result>result a</tool_result>\n\nbetween\n\n<tool_result>result b</tool_result><｜Assistant｜><think>")),
+            ("an unmatched tool call id sorts first", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "user", "content": "Go"},
+                    {"role": "assistant", "content": "", "tool_calls": [call("a", "first"), call("b", "second")]},
+                    {"role": "tool", "tool_call_id": "b", "content": "result b"},
+                    {"role": "tool", "tool_call_id": "missing", "content": "result missing"},
+                ],
+            }), thinking("<｜User｜>Go<｜Assistant｜></think>\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"first\">\n\n</｜DSML｜ invoke>\n<｜DSML｜ invoke name=\"second\">\n\n</｜DSML｜ invoke>\n</｜DSML｜ calls><｜end▁of▁sentence｜><｜User｜><tool_result>result missing</tool_result>\n\n<tool_result>result b</tool_result><｜Assistant｜><think>")),
+            ("the reasoning alias overrides reasoning_content", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A", "reasoning_content": "old", "reasoning": "new"},
+                ],
+            }), thinking("<｜User｜>One<｜Assistant｜><think>new</think>A<｜end▁of▁sentence｜>")),
+            ("array content joins with a blank line", json!({
+                "model": "test",
+                "messages": [
+                    {"role": "user", "content": [{"type": "text", "text": "first"}, {"type": "text", "text": "second"}]},
+                ],
+            }), thinking("<｜User｜>first\n\nsecond<｜Assistant｜><think>")),
+            ("tools without a system message add an empty system turn", json!({
+                "model": "test",
+                "tools": [{"type": "function", "function": {"name": "weather", "parameters": {"type": "object"}}}],
+                "messages": [{"role": "user", "content": "Weather?"}],
+            }), thinking("\n\n## Tools\n\nYou have access to a set of tools to help answer the user's question. You can invoke tools by writing a \"<｜DSML｜ calls>\" block like the following:\n\n<｜DSML｜ calls>\n<｜DSML｜ invoke name=\"$TOOL_NAME\">\n<｜DSML｜ parameter name=\"$PARAMETER_NAME\" string=\"true|false\">$PARAMETER_VALUE</｜DSML｜ parameter>\n...\n</｜DSML｜ invoke>\n<｜DSML｜ invoke name=\"$TOOL_NAME2\">\n...\n</｜DSML｜ invoke>\n</｜DSML｜ calls>\n\nString parameters should be specified as is and set `string=\"true\"`. For all other types (numbers, booleans, arrays, objects), pass the value in JSON format and set `string=\"false\"`.\n\nIf thinking_mode is enabled (triggered by <think>), you MUST output your complete reasoning inside <think>...</think> BEFORE any tool calls or final response.\n\nOtherwise, output directly after </think> with tool calls or final response.\n\n### Available Tool Schemas\n\n{\"name\": \"weather\", \"description\": null, \"parameters\": {\"type\": \"object\"}}\n\nYou MUST strictly follow the above defined tool name and parameter schemas to invoke tool calls.\n<｜User｜>Weather?<｜Assistant｜><think>")),
+            ("reasoning effort none disables thinking", json!({
+                "model": "test",
+                "reasoning_effort": "none",
+                "messages": [
+                    {"role": "user", "content": "One"},
+                    {"role": "assistant", "content": "A", "reasoning_content": "think A"},
+                    {"role": "user", "content": "Two"},
+                ],
+            }), "<｜begin▁of▁sentence｜><｜User｜>One<｜Assistant｜></think>A<｜end▁of▁sentence｜><｜User｜>Two<｜Assistant｜></think>".to_owned()),
+        ]
+    }
+
+    #[test]
+    fn characterizes_branches_outside_the_pinned_vllm_cases() {
+        for (name, request, expected) in characterization_cases() {
             let request: InferenceRequest = serde_json::from_value(request).unwrap();
-            assert!(render(&request).is_err());
+
+            assert_eq!(render(&request).unwrap(), expected, "{name}");
         }
     }
 }

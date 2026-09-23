@@ -1,4 +1,4 @@
-use std::{future::IntoFuture, sync::Arc, time::Duration};
+use std::{error::Error, future::IntoFuture, process::ExitCode, sync::Arc, time::Duration};
 
 use axum::http::HeaderValue;
 use gradiated_gateway::{
@@ -6,35 +6,93 @@ use gradiated_gateway::{
     ModelTokenizer, PostgresReader, ProviderRelay, RequestCoordinator, RuntimeTlsConfig,
     SglangClient, ValkeyServingState,
 };
-use tracing::{info, warn};
+use tokio::signal::unix::{signal, Signal, SignalKind};
+use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
 const NATURAL_DRAIN_BUFFER: Duration = Duration::from_secs(5);
 const FORCED_DRAIN_TIMEOUT: Duration = Duration::from_secs(15);
 const HTTP_DRAIN_TIMEOUT: Duration = Duration::from_secs(5);
 
-type StartupError = Box<dyn std::error::Error>;
+#[derive(Clone, Copy)]
+enum Stage {
+    Crypto,
+    Config,
+    Signals,
+    Postgres,
+    Valkey,
+    Tokenizer,
+    Runtime,
+    Application,
+    Bind,
+    Serve,
+}
+
+impl Stage {
+    const fn as_str(self) -> &'static str {
+        match self {
+            Self::Crypto => "crypto",
+            Self::Config => "config",
+            Self::Signals => "signals",
+            Self::Postgres => "postgres",
+            Self::Valkey => "valkey",
+            Self::Tokenizer => "tokenizer",
+            Self::Runtime => "runtime",
+            Self::Application => "application",
+            Self::Bind => "bind",
+            Self::Serve => "serve",
+        }
+    }
+}
+
+struct Failure {
+    stage: Stage,
+    error: Box<dyn Error>,
+}
+
+fn at<E: Into<Box<dyn Error>>>(stage: Stage) -> impl FnOnce(E) -> Failure {
+    move |error| Failure {
+        stage,
+        error: error.into(),
+    }
+}
 
 #[tokio::main]
-async fn main() -> Result<(), StartupError> {
-    rustls::crypto::aws_lc_rs::default_provider()
-        .install_default()
-        .expect("AWS-LC must be the gateway's only installed Rustls crypto provider");
-
+async fn main() -> ExitCode {
     tracing_subscriber::fmt()
         .json()
         .with_env_filter(EnvFilter::from_default_env())
         .init();
 
-    let config = GatewayConfig::from_environment()?;
+    match run().await {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(Failure { stage, error }) => {
+            error!(error_code = stage.as_str(), %error, "gateway failed");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+async fn run() -> Result<(), Failure> {
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .map_err(|_| "a Rustls crypto provider other than AWS-LC is already installed")
+        .map_err(at(Stage::Crypto))?;
+
+    let config = GatewayConfig::from_environment().map_err(at(Stage::Config))?;
+    let interrupt = signal(SignalKind::interrupt()).map_err(at(Stage::Signals))?;
+    let terminate = signal(SignalKind::terminate()).map_err(at(Stage::Signals))?;
+
     let serving_state = Arc::new(connect_serving_state(&config).await?);
 
-    let tokenizer = ModelTokenizer::new()?;
+    let tokenizer = ModelTokenizer::new().map_err(at(Stage::Tokenizer))?;
+    let tls = RuntimeTlsConfig::from_environment().map_err(at(Stage::Runtime))?;
     let runtimes = SglangClient::with_tokenizer_and_tls(
         config.sglang_api_key.clone(),
         tokenizer.clone(),
-        RuntimeTlsConfig::from_environment()?.as_ref(),
-    )?;
+        tls.as_ref(),
+    )
+    .map_err(at(Stage::Runtime))?;
     let completions = CompletionService::new(
         serving_state.clone(),
         Arc::new(runtimes),
@@ -42,25 +100,31 @@ async fn main() -> Result<(), StartupError> {
         Arc::new(config.clone()),
     );
 
-    let app = application(&config, serving_state, completions.clone())?;
-    let listener = tokio::net::TcpListener::bind(config.bind_address).await?;
+    let app =
+        application(&config, serving_state, completions.clone()).map_err(at(Stage::Application))?;
+    let listener = tokio::net::TcpListener::bind(config.bind_address)
+        .await
+        .map_err(at(Stage::Bind))?;
     info!(
         bind_address = %config.bind_address,
         generation_timeout_seconds = config.generation_timeout_seconds,
         "gateway listening"
     );
 
+    // The server runs as its own task so it stops accepting connections while
+    // generations drain, not only after they finish.
     let (stop_server, server_stopped) = tokio::sync::oneshot::channel();
-    let server = axum::serve(listener, app)
-        .with_graceful_shutdown(async {
-            let _ = server_stopped.await;
-        })
-        .into_future();
-    tokio::pin!(server);
+    let mut server = tokio::spawn(
+        axum::serve(listener, app)
+            .with_graceful_shutdown(async {
+                let _ = server_stopped.await;
+            })
+            .into_future(),
+    );
 
     tokio::select! {
-        result = &mut server => result?,
-        () = shutdown_signal() => {
+        result = &mut server => result.map_err(at(Stage::Serve))?.map_err(at(Stage::Serve))?,
+        () = shutdown_signal(interrupt, terminate) => {
             // New work stops first; generations in flight then finish and settle
             // before the HTTP server lets their connections go.
             completions.begin_draining();
@@ -71,7 +135,7 @@ async fn main() -> Result<(), StartupError> {
             drain_generations(&completions, natural_drain_timeout).await;
 
             match tokio::time::timeout(HTTP_DRAIN_TIMEOUT, &mut server).await {
-                Ok(result) => result?,
+                Ok(result) => result.map_err(at(Stage::Serve))?.map_err(at(Stage::Serve))?,
                 Err(_) => warn!(
                     timeout_seconds = HTTP_DRAIN_TIMEOUT.as_secs(),
                     "gateway HTTP drain timed out"
@@ -83,12 +147,13 @@ async fn main() -> Result<(), StartupError> {
     Ok(())
 }
 
-async fn connect_serving_state(config: &GatewayConfig) -> Result<ValkeyServingState, StartupError> {
+async fn connect_serving_state(config: &GatewayConfig) -> Result<ValkeyServingState, Failure> {
     let database = PostgresReader::connect(
         &config.database_url,
         config.database_ca_bundle_path.as_deref(),
-    )?;
-    database.ping().await?;
+    )
+    .map_err(at(Stage::Postgres))?;
+    database.ping().await.map_err(at(Stage::Postgres))?;
 
     let record_cache_ttl = config.record_cache_ttl();
     let serving_state = match config.valkey_iam() {
@@ -99,19 +164,19 @@ async fn connect_serving_state(config: &GatewayConfig) -> Result<ValkeyServingSt
                 database,
                 record_cache_ttl,
             )
-            .await?
+            .await
         }
-        None => ValkeyServingState::connect(&config.valkey_url, database, record_cache_ttl).await?,
+        None => ValkeyServingState::connect(&config.valkey_url, database, record_cache_ttl).await,
     };
 
-    Ok(serving_state)
+    serving_state.map_err(at(Stage::Valkey))
 }
 
 fn application(
     config: &GatewayConfig,
     serving_state: Arc<ValkeyServingState>,
     completions: CompletionService,
-) -> Result<axum::Router, StartupError> {
+) -> Result<axum::Router, Box<dyn Error>> {
     let readiness = Arc::new(DependencyReadiness::new(
         (*serving_state).clone(),
         completions.metrics(),
@@ -137,8 +202,6 @@ fn application(
     Ok(app.layer(browser_cors(browser_origins)))
 }
 
-/// Waits for generations to finish on their own, then cancels what remains and
-/// waits a bounded time more for those to settle.
 async fn drain_generations(completions: &CompletionService, natural_drain_timeout: Duration) {
     let drained = tokio::time::timeout(natural_drain_timeout, completions.wait_for_drain()).await;
     if drained.is_ok() {
@@ -160,26 +223,9 @@ async fn drain_generations(completions: &CompletionService, natural_drain_timeou
     }
 }
 
-async fn shutdown_signal() {
-    let interrupt = async {
-        tokio::signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-            .expect("failed to install SIGTERM handler")
-            .recv()
-            .await;
-    };
-
-    #[cfg(not(unix))]
-    let terminate = std::future::pending::<()>();
-
+async fn shutdown_signal(mut interrupt: Signal, mut terminate: Signal) {
     tokio::select! {
-        () = interrupt => {},
-        () = terminate => {},
+        _ = interrupt.recv() => {},
+        _ = terminate.recv() => {},
     }
 }

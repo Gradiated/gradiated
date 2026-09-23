@@ -417,7 +417,7 @@
         "additionalProperties": false
       },
       "ModelParameterDescriptor": {
-        "anyOf": [
+        "oneOf": [
           {
             "type": "object",
             "properties": {

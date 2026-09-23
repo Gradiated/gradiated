@@ -20,8 +20,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { getUsageSummary } from "@/api/queries";
-import { AppShell } from "@/components/app-shell";
+import { usageQuery } from "@/api/queries";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -36,20 +35,27 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useProductContext } from "@/hooks/use-product-context";
 import { formatNanoUsd, formatUsd } from "@/lib/format";
+import { NANO_USD_PER_USD } from "@/lib/money";
+import { ConsolePage, LoadFailed } from "@/pages/console-page";
+import { compactNumber, utcDayLabel } from "@/pages/chart-format";
+import { OptionSelect } from "@/pages/option-select";
+import { SegmentedControl } from "@/pages/segmented-control";
+import {
+  RANGE_OPTIONS,
+  dailyUsageSeries,
+  usageDateRange,
+  type RangeKey,
+} from "@/pages/usage-series";
 
-type RangeKey = "7d" | "30d" | "90d";
-type ChartMetric = "cost" | "requests" | "tokens";
+const METRIC_OPTIONS = [
+  { value: "cost", label: "Cost" },
+  { value: "tokens", label: "Tokens" },
+  { value: "requests", label: "Requests" },
+] as const;
 
-const rangeDays: Record<RangeKey, number> = { "7d": 7, "30d": 30, "90d": 90 };
+type ChartMetric = (typeof METRIC_OPTIONS)[number]["value"];
 
 const chartConfig = {
   cost: { label: "Cost", color: "#171714" },
@@ -61,129 +67,61 @@ const modelChartConfig = {
   cost: { label: "Cost", color: "#171714" },
 } satisfies ChartConfig;
 
-const dateRange = (key: RangeKey) => {
-  const to = new Date();
-  to.setUTCHours(24, 0, 0, 0);
-  const from = new Date(to);
-  from.setUTCDate(from.getUTCDate() - rangeDays[key]);
-  return { from: from.toISOString(), to: to.toISOString() };
-};
-
-const compactNumber = (value: string | number) =>
-  new Intl.NumberFormat(undefined, {
-    notation: "compact",
-    maximumFractionDigits: 2,
-  }).format(Number(value));
-
-const formatDate = (value: string) =>
-  new Intl.DateTimeFormat(undefined, {
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${value}T00:00:00Z`));
-
 export const UsagePage = () => {
   const context = useProductContext();
   const [rangeKey, setRangeKey] = useState<RangeKey>("30d");
   const [metric, setMetric] = useState<ChartMetric>("cost");
-  const range = useMemo(() => dateRange(rangeKey), [rangeKey]);
-  const usage = useQuery({
-    queryKey: ["usage", context.organizationId, context.workspaceId, rangeKey],
-    queryFn: () =>
-      getUsageSummary(context.organizationId, context.workspaceId, range),
-    enabled: Boolean(context.organizationId && context.workspaceId),
-  });
+  const range = useMemo(() => usageDateRange(rangeKey, new Date()), [rangeKey]);
+  const usage = useQuery(
+    usageQuery(context.organizationId, context.workspaceId, range),
+  );
 
-  const chartData = useMemo(() => {
-    const points = new Map(
-      usage.data?.daily.map((point) => [point.date, point]),
-    );
-    const cursor = new Date(range.from);
-    const end = new Date(range.to);
-    const data: Array<{
-      date: string;
-      cost: number;
-      requests: number;
-      tokens: number;
-    }> = [];
-    while (cursor < end) {
-      const date = cursor.toISOString().slice(0, 10);
-      const point = points.get(date);
-      data.push({
-        date,
-        cost: Number(point?.charge ?? 0) / 1_000_000_000,
-        requests: Number(point?.generation_count ?? 0),
-        tokens:
-          Number(point?.input_tokens ?? 0) + Number(point?.output_tokens ?? 0),
-      });
-      cursor.setUTCDate(cursor.getUTCDate() + 1);
-    }
-    return data;
-  }, [range, usage.data?.daily]);
-
+  const chartData = useMemo(
+    () => dailyUsageSeries(usage.data?.daily ?? [], range),
+    [range, usage.data?.daily],
+  );
   const totalTokens =
     BigInt(usage.data?.input_tokens ?? "0") +
     BigInt(usage.data?.output_tokens ?? "0");
-  const successRate = Number(usage.data?.generation_count ?? 0)
-    ? (Number(usage.data?.succeeded_count ?? 0) /
-        Number(usage.data?.generation_count ?? 1)) *
-      100
+  const requestCount = Number(usage.data?.generation_count ?? 0);
+  const successRate = requestCount
+    ? (Number(usage.data?.succeeded_count ?? 0) / requestCount) * 100
     : 0;
 
   return (
-    <AppShell
-      user={context.user}
-      organizationId={context.organizationId}
-      workspaces={context.workspaces}
-      workspaceId={context.workspaceId}
-      onSelectOrganization={context.selectOrganization}
-      onSelectWorkspace={context.selectWorkspace}
-      onSignOut={context.signOut}
-      activePage="usage"
-      pageTitle="Usage"
+    <ConsolePage
+      page="usage"
+      title="Usage"
+      description="Review spend and model activity for the selected workspace."
+      width="wide"
+      actions={
+        <>
+          <OptionSelect
+            value={rangeKey}
+            options={RANGE_OPTIONS}
+            onValueChange={setRangeKey}
+            className="min-w-36 bg-card"
+          />
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Refresh usage"
+            onClick={() => void usage.refetch()}
+          >
+            <RefreshCw className={usage.isFetching ? "animate-spin" : ""} />
+          </Button>
+        </>
+      }
     >
-      <main className="min-w-0 flex-1 px-5 py-8 lg:px-10 lg:py-10">
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="mb-7 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-[-0.035em]">
-                Usage
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                Review spend and model activity for the selected workspace.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select
-                value={rangeKey}
-                onValueChange={(value) => setRangeKey(value as RangeKey)}
-              >
-                <SelectTrigger className="min-w-36 bg-card">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7d">Last 7 days</SelectItem>
-                  <SelectItem value="30d">Last 30 days</SelectItem>
-                  <SelectItem value="90d">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Refresh usage"
-                onClick={() => void usage.refetch()}
-              >
-                <RefreshCw className={usage.isFetching ? "animate-spin" : ""} />
-              </Button>
-            </div>
-          </div>
-
-          {usage.isError ? (
-            <div className="mb-6 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive">
-              {usage.error.message}
-            </div>
-          ) : null}
-
+      {usage.isError ? (
+        <LoadFailed
+          subject="usage"
+          retrying={usage.isFetching}
+          onRetry={() => void usage.refetch()}
+          className="min-h-80 rounded-xl border bg-card"
+        />
+      ) : (
+        <>
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
             <Card className="overflow-hidden shadow-sm">
               <CardHeader className="flex-row items-start justify-between gap-4 border-b p-5">
@@ -195,22 +133,11 @@ export const UsagePage = () => {
                     Daily totals for the selected period.
                   </CardDescription>
                 </div>
-                <div className="flex rounded-md bg-muted p-0.5">
-                  {(["cost", "tokens", "requests"] as const).map((value) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setMetric(value)}
-                      className={`rounded px-2.5 py-1.5 text-xs font-medium capitalize transition-colors ${
-                        metric === value
-                          ? "bg-card text-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {value}
-                    </button>
-                  ))}
-                </div>
+                <SegmentedControl
+                  value={metric}
+                  onChange={setMetric}
+                  options={METRIC_OPTIONS}
+                />
               </CardHeader>
               <CardContent className="p-5">
                 {usage.isLoading ? (
@@ -252,7 +179,7 @@ export const UsagePage = () => {
                         axisLine={false}
                         tickLine={false}
                         minTickGap={32}
-                        tickFormatter={formatDate}
+                        tickFormatter={utcDayLabel}
                       />
                       <YAxis
                         axisLine={false}
@@ -268,7 +195,7 @@ export const UsagePage = () => {
                         content={
                           <ChartTooltipContent
                             labelFormatter={(label) =>
-                              formatDate(String(label))
+                              utcDayLabel(String(label))
                             }
                             valueFormatter={(value) =>
                               metric === "cost"
@@ -307,11 +234,9 @@ export const UsagePage = () => {
               <SummaryMetric
                 icon={<Zap />}
                 label="Requests"
-                value={Number(
-                  usage.data?.generation_count ?? 0,
-                ).toLocaleString()}
+                value={requestCount.toLocaleString()}
                 detail={
-                  Number(usage.data?.generation_count ?? 0)
+                  requestCount
                     ? `${successRate.toFixed(1)}% succeeded`
                     : "No requests in this period"
                 }
@@ -343,7 +268,7 @@ export const UsagePage = () => {
                     <BarChart
                       data={usage.data.models.map((model) => ({
                         model: model.model_id,
-                        cost: Number(model.charge) / 1_000_000_000,
+                        cost: Number(model.charge) / Number(NANO_USD_PER_USD),
                       }))}
                       layout="vertical"
                       margin={{ left: 16, right: 24 }}
@@ -420,9 +345,9 @@ export const UsagePage = () => {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </main>
-    </AppShell>
+        </>
+      )}
+    </ConsolePage>
   );
 };
 
@@ -437,7 +362,7 @@ const SummaryMetric = ({
   value: string;
   detail?: string;
 }) => (
-  <div className="p-5">
+  <div className="p-5" role="group" aria-label={label}>
     <div className="flex items-center gap-2 text-xs text-muted-foreground [&_svg]:size-4">
       {icon}
       {label}

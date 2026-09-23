@@ -5,14 +5,13 @@ import {
   UsageSummarySchema,
   WorkspacePathSchema,
   problemContent,
-  type GenerationLog,
   type UsageSummary,
 } from "@gradiated/contracts";
-import { ControlServiceError } from "@gradiated/control";
+import type { UsageService, UsageSummaryRecord } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { problemDocument } from "../http/problem-response.js";
-import type { ApiEnvironment, ApiServices } from "../types.js";
+import { requireUser } from "../http/problems.js";
+import type { ApiEnvironment } from "../types.js";
 
 const getUsageSummaryRoute = createRoute({
   method: "get",
@@ -66,42 +65,7 @@ const listGenerationsRoute = createRoute({
   },
 });
 
-const unauthenticated = (context: Parameters<typeof problemDocument>[0]) =>
-  context.json(
-    problemDocument(context, {
-      type: "https://gradiated.com/problems/unauthenticated",
-      title: "Authentication required",
-      status: 401,
-      detail: "A valid human session is required for this operation.",
-      code: "unauthenticated",
-    }),
-    401,
-    { "Content-Type": "application/problem+json" },
-  );
-
-const usageError = (
-  context: Parameters<typeof problemDocument>[0],
-  error: unknown,
-) => {
-  if (!(error instanceof ControlServiceError)) throw error;
-  const unavailable = error.code === "unavailable";
-  const status = unavailable ? 503 : 404;
-  return context.json(
-    problemDocument(context, {
-      type: `https://gradiated.com/problems/${unavailable ? "usage-unavailable" : "not-found"}`,
-      title: unavailable ? "Usage unavailable" : "Not found",
-      status,
-      detail: error.message,
-      code: error.code,
-    }),
-    status,
-    { "Content-Type": "application/problem+json" },
-  );
-};
-
-const usageSummaryResponse = (
-  summary: Awaited<ReturnType<ApiServices["usage"]["getSummary"]>>,
-): UsageSummary => ({
+const usageSummaryResponse = (summary: UsageSummaryRecord): UsageSummary => ({
   charge: summary.charge,
   input_tokens: summary.inputTokens,
   output_tokens: summary.outputTokens,
@@ -111,62 +75,48 @@ const usageSummaryResponse = (
   models: summary.models,
 });
 
-const generationResponse = (
-  generation: Awaited<
-    ReturnType<ApiServices["usage"]["listGenerations"]>
-  >["data"][number],
-): GenerationLog => generation;
-
 export const registerUsageRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  services: ApiServices,
+  usage: UsageService,
 ): void => {
   app.openapi(getUsageSummaryRoute, async (context) => {
-    const user = context.get("user");
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
     const query = context.req.valid("query");
-    try {
-      const summary = await services.usage.getSummary({
-        userId: user.id,
-        organizationId: params.organization_id,
-        workspaceId: params.workspace_id,
-        range: { from: new Date(query.from), to: new Date(query.to) },
-      });
-      return context.json(usageSummaryResponse(summary), 200);
-    } catch (error) {
-      return usageError(context, error);
-    }
+    const summary = await usage.getSummary({
+      userId: user.id,
+      organizationId: params.organization_id,
+      workspaceId: params.workspace_id,
+      range: { from: new Date(query.from), to: new Date(query.to) },
+    });
+
+    return context.json(usageSummaryResponse(summary), 200);
   });
 
   app.openapi(listGenerationsRoute, async (context) => {
-    const user = context.get("user");
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
     const query = context.req.valid("query");
-    try {
-      const generations = await services.usage.listGenerations({
-        userId: user.id,
-        organizationId: params.organization_id,
-        workspaceId: params.workspace_id,
-        range: { from: new Date(query.from), to: new Date(query.to) },
-        limit: query.limit,
-        sort: query.sort,
-        ...(query.api_key_id ? { apiKeyId: query.api_key_id } : {}),
-        ...(query.cursor ? { cursor: query.cursor } : {}),
-        ...(query.model ? { model: query.model } : {}),
-        ...(query.search ? { search: query.search } : {}),
-        ...(query.status ? { status: query.status } : {}),
-      });
-      return context.json(
-        {
-          data: generations.data.map(generationResponse),
-          next_cursor: generations.nextCursor,
-        },
-        200,
-      );
-    } catch (error) {
-      return usageError(context, error);
-    }
+    const generations = await usage.listGenerations({
+      userId: user.id,
+      organizationId: params.organization_id,
+      workspaceId: params.workspace_id,
+      range: { from: new Date(query.from), to: new Date(query.to) },
+      limit: query.limit,
+      sort: query.sort,
+      ...(query.api_key_id ? { apiKeyId: query.api_key_id } : {}),
+      ...(query.cursor ? { cursor: query.cursor } : {}),
+      ...(query.model ? { model: query.model } : {}),
+      ...(query.search ? { search: query.search } : {}),
+      ...(query.status ? { status: query.status } : {}),
+    });
+
+    return context.json(
+      {
+        data: generations.data,
+        next_cursor: generations.nextCursor,
+      },
+      200,
+    );
   });
 };

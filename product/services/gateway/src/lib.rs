@@ -1,75 +1,76 @@
-pub mod admission;
+mod admission;
 pub mod auth;
 mod cache;
-pub mod catalog;
-pub mod completion;
-pub mod config;
-pub mod coordinator;
-pub mod deployment;
+mod catalog;
+mod completion;
+mod config;
+mod coordinator;
+mod deployment;
 mod diagnostics;
-pub mod domain;
-pub mod error;
-pub mod finalization;
+mod domain;
+mod error;
+mod finalization;
 pub mod generation;
-pub mod http;
+mod http;
 mod json;
-pub mod metrics;
-pub mod model;
-pub mod postgres_reader;
-pub mod protocol;
-pub mod readiness;
-pub mod relay;
-pub mod request;
+mod metrics;
+mod model;
+mod postgres_reader;
+mod protocol;
+mod readiness;
+mod relay;
+mod request;
 pub mod routing;
 pub mod runtime;
-pub mod service_tier;
-pub mod serving_state;
-pub mod systemone;
+mod service_tier;
+mod serving_state;
+mod systemone;
 #[cfg(test)]
 mod test_support;
-pub mod tokenizer;
+mod tokenizer;
 mod valkey_auth;
 
-pub use admission::{AdmissionError, AdmissionLease};
-pub use catalog::{CatalogModel, ModelCatalogResponse};
-pub use completion::{
-    CompletionResponse, CompletionResult, CompletionService, StreamingCompletion,
-};
-pub use config::{GatewayConfig, ValkeyIamConfig};
-pub use coordinator::{QualifiedRequest, RequestCoordinator, RequestMetadata, RequestRoute};
-pub use deployment::{
-    DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease,
-    RuntimeProtocol, TokenizerMode,
-};
-pub use domain::GatewayModel;
-pub use error::GatewayError;
-pub use finalization::{FinalizationError, FinalizationOutcome};
-pub use generation::{
-    CancellationOwner, CapturedPricing, CapturedPricingError, GenerationIdentity,
-    GenerationIdentityError, GenerationProperties, GenerationStatus, GenerationTiming,
-    GenerationTimingError, NormalizedUsage, PricedUsage, PricingError, TerminalOutcome,
-    TerminalOutcomeError, UsageError,
-};
+pub use completion::CompletionService;
+pub use config::GatewayConfig;
+pub use coordinator::RequestCoordinator;
 pub use http::{browser_cors, router, GatewayState};
-pub use metrics::GatewayMetrics;
-pub use model::{
-    GatewayModelProperties, InputPriceType, InputTokenPrice, ModelParameterDescriptor,
-    ModelQuantization, OutputPriceType, OutputTokenPrice, ParameterValue, SupportedTextInputs,
-    TextInputModality, TextOutputModality, TokenMeasure, TokenUnit,
-};
-pub use postgres_reader::{PostgresError, PostgresReader};
-pub use protocol::{Frame, Protocol, StreamItem};
+pub use postgres_reader::PostgresReader;
 pub use readiness::DependencyReadiness;
-pub use relay::{ProviderRelay, RelayError, RelayRoute};
-pub use request::{InferenceRequest, OutputTokenLimit, RequestKind};
-pub use routing::{
-    healthy_deployment_count, order_deployments, RouteAvailability, RouteInput, RoutePrompt,
-    RoutedDeployment,
+pub use relay::ProviderRelay;
+pub use runtime::{RuntimeTlsConfig, SglangClient};
+pub use serving_state::ValkeyServingState;
+pub use tokenizer::ModelTokenizer;
+
+pub(crate) use admission::{AdmissionError, AdmissionLease};
+pub(crate) use catalog::{CatalogModel, ModelCatalogResponse};
+pub(crate) use completion::CompletionResponse;
+pub(crate) use config::ValkeyIamConfig;
+pub(crate) use coordinator::{QualifiedRequest, RequestMetadata};
+#[cfg(test)]
+pub(crate) use deployment::RuntimeProtocol;
+pub(crate) use deployment::{
+    DeploymentRuntimeStatus, DeploymentStatus, GatewayModelDeployment, ModelDeploymentRelease,
+    TokenizerMode,
 };
-pub use runtime::{
-    ModelRuntime, RuntimeClientError, RuntimeCompletion, RuntimeEventStream, RuntimeFailure,
-    RuntimeFailureKind, RuntimeStreamChunk, RuntimeStreamEvent, RuntimeTlsConfig, SglangClient,
+pub(crate) use domain::GatewayModel;
+pub(crate) use error::GatewayError;
+pub(crate) use finalization::{FinalizationError, FinalizationOutcome};
+pub(crate) use generation::{
+    CancellationOwner, CapturedPricing, GenerationIdentity, GenerationProperties, GenerationStatus,
+    GenerationTiming, NormalizedUsage, PricedUsage, TerminalOutcome,
 };
-pub use service_tier::ServiceTier;
-pub use serving_state::{ServingState, ValkeyServingState};
-pub use tokenizer::{BoundedRequest, ModelTokenizer, ModelTokenizerError};
+pub(crate) use metrics::GatewayMetrics;
+pub(crate) use model::{
+    InputPriceType, InputTokenPrice, ModelParameterDescriptor, ModelQuantization, OutputPriceType,
+    OutputTokenPrice, SupportedTextInputs, TextInputModality, TextOutputModality, TokenMeasure,
+    TokenUnit,
+};
+pub(crate) use request::{InferenceRequest, OutputTokenLimit, RequestKind};
+pub(crate) use routing::{healthy_deployment_count, Route, RouteAvailability, RouteInput};
+pub(crate) use runtime::{
+    ModelRuntime, RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
+    RuntimeStreamChunk, RuntimeStreamEvent,
+};
+pub(crate) use service_tier::ServiceTier;
+pub(crate) use serving_state::ServingState;
+pub(crate) use tokenizer::BoundedRequest;

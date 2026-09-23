@@ -1,34 +1,23 @@
-const DEFAULT_SIGNIFICANT_DIGITS = 3;
+import { NANO_USD_PER_USD } from "@/lib/money";
+
+const SIGNIFICANT_DIGITS = 3;
+const MINIMUM_FRACTION_DIGITS = 2;
 const MAXIMUM_FRACTION_DIGITS = 20;
 
-const fractionDigitsFor = (
-  value: number,
-  minimumFractionDigits: number,
-  significantDigits: number,
-) => {
-  if (!Number.isFinite(value) || value === 0) return minimumFractionDigits;
+const fractionDigitsFor = (value: number) => {
+  if (!Number.isFinite(value) || value === 0) return MINIMUM_FRACTION_DIGITS;
+
   const magnitude = Math.floor(Math.log10(Math.abs(value)));
+
   return Math.min(
     MAXIMUM_FRACTION_DIGITS,
-    Math.max(minimumFractionDigits, significantDigits - magnitude - 1),
+    Math.max(MINIMUM_FRACTION_DIGITS, SIGNIFICANT_DIGITS - magnitude - 1),
   );
 };
 
-export const formatNumber = (
-  value: number,
-  significantDigits = DEFAULT_SIGNIFICANT_DIGITS,
-) =>
-  new Intl.NumberFormat(undefined, {
-    minimumSignificantDigits: significantDigits,
-    maximumSignificantDigits: significantDigits,
-  }).format(value);
-
 export const formatUsd = (value: number) => {
-  const fractionDigits = fractionDigitsFor(
-    value,
-    2,
-    DEFAULT_SIGNIFICANT_DIGITS,
-  );
+  const fractionDigits = fractionDigitsFor(value);
+
   return new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: "USD",
@@ -47,5 +36,43 @@ export const formatUsdShort = (value: number) =>
     maximumFractionDigits: 2,
   }).format(value);
 
-export const formatNanoUsd = (nanoUsd: string) =>
-  formatUsd(Number(nanoUsd) / 1_000_000_000);
+export const formatNanoUsd = (nanoUsd: bigint | string | number) =>
+  formatUsd(Number(nanoUsd) / Number(NANO_USD_PER_USD));
+
+export const formatLatency = (ms: number) =>
+  ms < 1000 ? `${ms} ms` : `${(ms / 1000).toFixed(1)} s`;
+
+export const formatElapsed = (ms: number) => {
+  const seconds = Math.max(1, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds}s`;
+
+  const minutes = Math.round(seconds / 60);
+
+  return minutes < 60 ? `${minutes} min` : `${(minutes / 60).toFixed(1)} h`;
+};
+
+export const formatPercent = (fraction: number) =>
+  `${Math.round(fraction * 100)}%`;
+
+export interface Ratio {
+  tone: "good" | "bad" | "neutral";
+  label: string;
+}
+
+export const formatRatio = (
+  advantage: number,
+  good: string,
+  bad: string,
+): Ratio => {
+  if (!Number.isFinite(advantage) || advantage <= 0) {
+    return { tone: "neutral", label: "n/a" };
+  }
+
+  const isGood = advantage >= 1;
+  const factor = isGood ? advantage : 1 / advantage;
+
+  return {
+    tone: isGood ? "good" : "bad",
+    label: `${factor >= 10 ? Math.round(factor) : factor.toFixed(1)}× ${isGood ? good : bad}`,
+  };
+};

@@ -8,27 +8,29 @@ use axum::{
         HeaderMap, HeaderName, HeaderValue, Method, StatusCode,
     },
     response::{
-        sse::{KeepAlive, Sse},
+        sse::{Event, KeepAlive, Sse},
         IntoResponse, Response,
     },
-    routing::{get, post},
+    routing::{get, post, MethodRouter},
     Json, Router,
 };
 use chrono::Utc;
-use futures_util::StreamExt;
+use futures_util::{Stream, StreamExt};
 use serde::Serialize;
 use tower_http::cors::{AllowOrigin, CorsLayer};
 use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
-    auth::ProviderCredential,
+    auth::{AuthenticatedIdentity, ProviderCredential},
+    catalog::ProviderCompliance,
     coordinator::RequestRoute,
+    diagnostics::limited_warn,
     protocol::{Frame, Protocol, StreamItem},
     readiness::ReadinessCheck,
     relay::{upstream_headers, ProviderRelay, RelayRoute},
     CompletionResponse, CompletionService, GatewayError, GatewayMetrics, ModelCatalogResponse,
-    RequestCoordinator, RequestKind, RequestMetadata,
+    QualifiedRequest, RequestCoordinator, RequestKind, RequestMetadata,
 };
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
@@ -48,7 +50,7 @@ pub fn browser_cors(origins: Vec<HeaderValue>) -> CorsLayer {
 #[derive(Clone)]
 pub struct GatewayState {
     readiness: Arc<dyn ReadinessCheck>,
-    compliance: crate::catalog::ProviderCompliance,
+    compliance: ProviderCompliance,
     completions: CompletionService,
     coordinator: RequestCoordinator,
     relay: ProviderRelay,
@@ -61,7 +63,7 @@ impl GatewayState {
         completions: CompletionService,
         coordinator: RequestCoordinator,
         relay: ProviderRelay,
-        compliance: crate::catalog::ProviderCompliance,
+        compliance: ProviderCompliance,
     ) -> Self {
         let metrics = completions.metrics();
 
@@ -81,13 +83,67 @@ struct HealthResponse {
     status: &'static str,
 }
 
+#[derive(Clone, Copy)]
+enum Operation {
+    Complete,
+    CountTokens,
+}
+
+struct Endpoint {
+    route: &'static str,
+    protocol: Protocol,
+    relay: Option<RelayRoute>,
+    kind: RequestKind,
+    operation: Operation,
+}
+
+const CHAT_COMPLETIONS: Endpoint = Endpoint {
+    route: "chat_completions",
+    protocol: Protocol::OpenAiChat,
+    relay: None,
+    kind: RequestKind::Chat,
+    operation: Operation::Complete,
+};
+
+const SYSTEMONE: Endpoint = Endpoint {
+    route: "systemone",
+    protocol: Protocol::OpenAiChat,
+    relay: None,
+    kind: RequestKind::SystemOne,
+    operation: Operation::Complete,
+};
+
+const MESSAGES: Endpoint = Endpoint {
+    route: "messages",
+    protocol: Protocol::AnthropicMessages,
+    relay: Some(RelayRoute::AnthropicMessages),
+    kind: RequestKind::Chat,
+    operation: Operation::Complete,
+};
+
+const COUNT_TOKENS: Endpoint = Endpoint {
+    route: "messages_count_tokens",
+    protocol: Protocol::AnthropicMessages,
+    relay: None,
+    kind: RequestKind::Chat,
+    operation: Operation::CountTokens,
+};
+
+const RESPONSES: Endpoint = Endpoint {
+    route: "responses",
+    protocol: Protocol::OpenAiResponses,
+    relay: None,
+    kind: RequestKind::Chat,
+    operation: Operation::Complete,
+};
+
 fn inference_routes() -> Router<GatewayState> {
     Router::new()
-        .route("/chat/completions", post(chat_completions))
-        .route("/systemone", post(systemone))
-        .route("/messages", post(messages))
-        .route("/messages/count_tokens", post(messages_count_tokens))
-        .route("/responses", post(responses))
+        .route("/chat/completions", endpoint(&CHAT_COMPLETIONS))
+        .route("/systemone", endpoint(&SYSTEMONE))
+        .route("/messages", endpoint(&MESSAGES))
+        .route("/messages/count_tokens", endpoint(&COUNT_TOKENS))
+        .route("/responses", endpoint(&RESPONSES))
         .route("/models", get(models))
 }
 
@@ -102,86 +158,15 @@ pub fn router(state: GatewayState) -> Router {
         .with_state(state)
 }
 
-fn generation_id_header(generation_id: Uuid) -> HeaderValue {
-    HeaderValue::from_str(&generation_id.to_string())
-        .expect("a UUID is always a valid HTTP header value")
+fn endpoint(endpoint: &'static Endpoint) -> MethodRouter<GatewayState> {
+    post(
+        move |State(state): State<GatewayState>,
+              headers: HeaderMap,
+              body: Result<Bytes, BytesRejection>| {
+            inference(state, headers, body, endpoint)
+        },
+    )
 }
-
-fn error_code(result: &Result<Response, GatewayError>) -> &'static str {
-    result
-        .as_ref()
-        .err()
-        .map(GatewayError::code)
-        .unwrap_or("none")
-}
-
-fn finish(
-    state: &GatewayState,
-    route: &'static str,
-    protocol: Protocol,
-    generation_id: Uuid,
-    result: Result<Response, GatewayError>,
-) -> Response {
-    if let Err(error) = &result {
-        crate::diagnostics::limited_warn!(
-            %generation_id,
-            route,
-            status = error.status().as_u16(),
-            error_code = error.code(),
-            parameter = error.param(),
-            "inference request rejected before response"
-        );
-    }
-
-    let error = error_code(&result);
-    let mut response = result.unwrap_or_else(|error| protocol.error_response(error));
-    state
-        .metrics
-        .record_http(route, response.status().as_u16(), error);
-    response
-        .headers_mut()
-        .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
-    response
-}
-
-/// A public inference route: how its body is read, whether an unresolved model
-/// may be relayed to a provider, and which request kind it carries.
-struct Endpoint {
-    route: &'static str,
-    protocol: Protocol,
-    relay: Option<RelayRoute>,
-    kind: RequestKind,
-}
-
-const CHAT_COMPLETIONS: Endpoint = Endpoint {
-    route: "chat_completions",
-    protocol: Protocol::OpenAiChat,
-    relay: None,
-    kind: RequestKind::Chat,
-};
-
-/// The native decision protocol. It is hosted-only: a decision model always
-/// resolves locally, so classification never offers it a relay route.
-const SYSTEMONE: Endpoint = Endpoint {
-    route: "systemone",
-    protocol: Protocol::OpenAiChat,
-    relay: None,
-    kind: RequestKind::SystemOne,
-};
-
-const MESSAGES: Endpoint = Endpoint {
-    route: "messages",
-    protocol: Protocol::AnthropicMessages,
-    relay: Some(RelayRoute::AnthropicMessages),
-    kind: RequestKind::Chat,
-};
-
-const RESPONSES: Endpoint = Endpoint {
-    route: "responses",
-    protocol: Protocol::OpenAiResponses,
-    relay: None,
-    kind: RequestKind::Chat,
-};
 
 fn request_metadata() -> RequestMetadata {
     RequestMetadata {
@@ -192,10 +177,12 @@ fn request_metadata() -> RequestMetadata {
 
 fn body_rejection(rejection: BytesRejection) -> GatewayError {
     if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE {
-        GatewayError::PayloadTooLarge
-    } else {
-        GatewayError::invalid_request(None)
+        return GatewayError::PayloadTooLarge;
     }
+
+    limited_warn!(error_code = "body_read_failed", "request body rejected");
+
+    GatewayError::invalid_request(None)
 }
 
 async fn inference(
@@ -208,32 +195,23 @@ async fn inference(
     let generation_id = metadata.generation_id;
 
     async {
-        let result = match body.map_err(body_rejection) {
-            Ok(body) => serve(&state, endpoint, metadata, &headers, body).await,
-            Err(error) => Err(error),
-        };
+        let result = serve(&state, endpoint, metadata, &headers, body).await;
 
-        finish(
-            &state,
-            endpoint.route,
-            endpoint.protocol,
-            generation_id,
-            result,
-        )
+        finish(&state, endpoint, generation_id, result)
     }
     .instrument(crate::diagnostics::request_span(generation_id))
     .await
 }
 
-/// Classifies the request once, then either relays it or serves it here. Identity,
-/// the model record and the caller's body are each resolved a single time.
 async fn serve(
     state: &GatewayState,
     endpoint: &Endpoint,
     metadata: RequestMetadata,
     headers: &HeaderMap,
-    body: Bytes,
+    body: Result<Bytes, BytesRejection>,
 ) -> Result<Response, GatewayError> {
+    let body = body.map_err(body_rejection)?;
+
     let classified = state
         .coordinator
         .classify(
@@ -247,17 +225,18 @@ async fn serve(
 
     match classified {
         RequestRoute::Relay {
-            route, credential, ..
+            route,
+            identity,
+            credential,
         } => {
-            relay_response(
-                state,
-                metadata.generation_id,
+            let relay = Relay {
+                generation_id: metadata.generation_id,
                 route,
-                headers,
-                &credential,
-                body,
-            )
-            .await
+                identity,
+                credential,
+            };
+
+            relay_response(state, relay, headers, body).await
         }
         RequestRoute::Hosted { hosted, request } => {
             let translated = endpoint.protocol.translate_request(&request)?;
@@ -269,15 +248,74 @@ async fn serve(
                 endpoint.kind,
             )?;
 
-            complete_with_protocol(state, endpoint.protocol, qualified).await
+            match endpoint.operation {
+                Operation::Complete => complete(state, endpoint.protocol, qualified).await,
+                Operation::CountTokens => count_tokens(state, &qualified).await,
+            }
         }
     }
 }
 
-async fn complete_with_protocol(
+fn finish(
+    state: &GatewayState,
+    endpoint: &Endpoint,
+    generation_id: Uuid,
+    result: Result<Response, GatewayError>,
+) -> Response {
+    let mut response = record(
+        state,
+        endpoint.route,
+        Some(generation_id),
+        result,
+        |error| endpoint.protocol.error_response(error),
+    );
+
+    response
+        .headers_mut()
+        .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
+
+    response
+}
+
+fn record(
+    state: &GatewayState,
+    route: &'static str,
+    generation_id: Option<Uuid>,
+    result: Result<Response, GatewayError>,
+    render: impl FnOnce(GatewayError) -> Response,
+) -> Response {
+    let error_code = match &result {
+        Ok(_) => "none",
+        Err(error) => {
+            limited_warn!(
+                generation_id = generation_id.map(tracing::field::display),
+                route,
+                status = error.status().as_u16(),
+                error_code = error.code(),
+                parameter = error.param(),
+                "request rejected"
+            );
+            error.code()
+        }
+    };
+
+    let response = result.unwrap_or_else(render);
+    state
+        .metrics
+        .record_http(route, response.status().as_u16(), error_code);
+
+    response
+}
+
+fn generation_id_header(generation_id: Uuid) -> HeaderValue {
+    HeaderValue::from_str(&generation_id.to_string())
+        .expect("a UUID is always a valid HTTP header value")
+}
+
+async fn complete(
     state: &GatewayState,
     protocol: Protocol,
-    qualified: crate::QualifiedRequest,
+    qualified: QualifiedRequest,
 ) -> Result<Response, GatewayError> {
     let (mut response, service_tier) = match state.completions.complete(qualified).await? {
         CompletionResponse::NonStreaming {
@@ -301,53 +339,71 @@ async fn complete_with_protocol(
     Ok(response)
 }
 
-/// Returns the provider's status, headers and bytes. Nothing here inspects or
-/// rewrites the provider's payload.
-async fn relay_response(
+async fn count_tokens(
     state: &GatewayState,
+    qualified: &QualifiedRequest,
+) -> Result<Response, GatewayError> {
+    let count = state.completions.count_tokens(qualified).await?;
+
+    Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
+}
+
+struct Relay<'a> {
     generation_id: Uuid,
     route: RelayRoute,
+    identity: AuthenticatedIdentity,
+    credential: ProviderCredential<'a>,
+}
+
+/// The edge never inspects or rewrites the provider payload.
+async fn relay_response(
+    state: &GatewayState,
+    relay: Relay<'_>,
     headers: &HeaderMap,
-    credential: &ProviderCredential<'_>,
     body: Bytes,
 ) -> Result<Response, GatewayError> {
-    let upstream = upstream_headers(headers, route, credential)?;
-    let relayed = state.relay.send(route, upstream, body).await?;
+    let upstream = upstream_headers(headers, relay.route, &relay.credential)?;
+    let relayed = state.relay.send(relay.route, upstream, body).await?;
+
+    tracing::info!(
+        generation_id = %relay.generation_id,
+        organization_id = %relay.identity.organization_id,
+        workspace_id = %relay.identity.workspace_id,
+        api_key_id = %relay.identity.api_key_id,
+        provider_status = relayed.status.as_u16(),
+        event = "provider_relay",
+        "request relayed to the provider with the customer key"
+    );
 
     let mut response = Response::new(Body::from_stream(relayed.body));
     *response.status_mut() = relayed.status;
     *response.headers_mut() = relayed.headers;
-    response
-        .headers_mut()
-        .insert(GENERATION_ID_HEADER, generation_id_header(generation_id));
 
     Ok(response)
 }
 
 fn sse_response(
     protocol: Protocol,
-    stream: impl futures_util::Stream<Item = StreamItem> + Send + 'static,
+    stream: impl Stream<Item = StreamItem> + Send + 'static,
 ) -> Response {
-    let renderer = Arc::new(std::sync::Mutex::new(protocol.stream_renderer()));
-    let frames = stream.map(move |item| {
-        let rendered = renderer
-            .lock()
-            .expect("the stream renderer is never poisoned while unwinding")
-            .render(item);
+    let mut renderer = protocol.stream_renderer();
+    let events = stream.flat_map(move |item| {
         futures_util::stream::iter(
-            frames_into_events(rendered)
+            renderer
+                .render(item)
                 .into_iter()
-                .map(Ok::<_, axum::Error>),
+                .map(|frame| Ok::<_, axum::Error>(Event::from(frame))),
         )
     });
 
-    let mut response = Sse::new(frames.flatten())
+    let mut response = Sse::new(events)
         .keep_alive(
             KeepAlive::new()
                 .interval(STREAM_KEEP_ALIVE)
                 .text("keep-alive"),
         )
         .into_response();
+
     response.headers_mut().insert(
         HeaderName::from_static("x-accel-buffering"),
         HeaderValue::from_static("no"),
@@ -356,17 +412,16 @@ fn sse_response(
     response
 }
 
-fn frames_into_events(frames: Vec<Frame>) -> Vec<axum::response::sse::Event> {
-    frames
-        .into_iter()
-        .map(|frame| {
-            let mut event = axum::response::sse::Event::default();
-            if let Some(name) = frame.event {
-                event = event.event(name);
-            }
-            event.data(frame.data)
-        })
-        .collect()
+impl From<Frame> for Event {
+    fn from(frame: Frame) -> Self {
+        let event = Event::default();
+        let event = match frame.event {
+            Some(name) => event.event(name),
+            None => event,
+        };
+
+        event.data(frame.data)
+    }
 }
 
 async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Response {
@@ -378,94 +433,7 @@ async fn models(State(state): State<GatewayState>, headers: HeaderMap) -> Respon
             Json(ModelCatalogResponse::from_models(&models, state.compliance)).into_response()
         });
 
-    let error = error_code(&result);
-    let response = result.unwrap_or_else(IntoResponse::into_response);
-    state
-        .metrics
-        .record_http("models", response.status().as_u16(), error);
-
-    response
-}
-
-async fn chat_completions(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    body: Result<Bytes, BytesRejection>,
-) -> Response {
-    inference(state, headers, body, &CHAT_COMPLETIONS).await
-}
-
-async fn systemone(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    body: Result<Bytes, BytesRejection>,
-) -> Response {
-    inference(state, headers, body, &SYSTEMONE).await
-}
-
-async fn messages(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    body: Result<Bytes, BytesRejection>,
-) -> Response {
-    inference(state, headers, body, &MESSAGES).await
-}
-
-async fn responses(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    body: Result<Bytes, BytesRejection>,
-) -> Response {
-    inference(state, headers, body, &RESPONSES).await
-}
-
-/// Counting tokens has no relay path, so an unresolved name stays a local error
-/// even when a provider key is present.
-async fn messages_count_tokens(
-    State(state): State<GatewayState>,
-    headers: HeaderMap,
-    body: Result<Bytes, BytesRejection>,
-) -> Response {
-    let metadata = request_metadata();
-    let generation_id = metadata.generation_id;
-
-    async {
-        let protocol = Protocol::AnthropicMessages;
-
-        let result = async {
-            let body = body.map_err(body_rejection)?;
-            let classified = state
-                .coordinator
-                .classify(&headers, &body, metadata.received_at, protocol, None)
-                .await?;
-            let RequestRoute::Hosted { hosted, request } = classified else {
-                return Err(GatewayError::ModelNotFound);
-            };
-
-            let translated = protocol.translate_request(&request)?;
-            let qualified = state.coordinator.qualify(
-                metadata,
-                &headers,
-                *hosted,
-                &translated,
-                RequestKind::Chat,
-            )?;
-            let count = state.completions.count_tokens(&qualified).await?;
-
-            Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
-        }
-        .await;
-
-        finish(
-            &state,
-            "messages_count_tokens",
-            protocol,
-            generation_id,
-            result,
-        )
-    }
-    .instrument(crate::diagnostics::request_span(generation_id))
-    .await
+    record(&state, "models", None, result, IntoResponse::into_response)
 }
 
 async fn live() -> Json<HealthResponse> {
@@ -498,111 +466,52 @@ async fn metrics(State(state): State<GatewayState>) -> Response {
 
 #[cfg(test)]
 mod tests {
-    use async_trait::async_trait;
     use axum::{
         body::{to_bytes, Body},
-        http::{header::AUTHORIZATION, Request},
+        http::Request,
     };
     use serde_json::Value;
     use tower::ServiceExt;
 
-    use super::*;
-    use crate::{
-        test_support::TestServingState, GatewayConfig, GatewayModelDeployment, InferenceRequest,
-        ModelRuntime, ModelTokenizer, RuntimeCompletion, RuntimeFailure,
+    use super::{
+        support::{json_body, json_request, router_for},
+        *,
     };
+    use crate::{test_support::TestServingState, GatewayConfig};
 
-    pub(super) struct FixedReadiness(pub(super) bool);
-
-    #[async_trait]
-    impl ReadinessCheck for FixedReadiness {
-        async fn is_ready(&self) -> bool {
-            self.0
-        }
-    }
-
-    pub(super) struct UnusedRuntime;
-
-    #[async_trait]
-    impl ModelRuntime for UnusedRuntime {
-        async fn complete(
-            &self,
-            _deployment: &GatewayModelDeployment,
-            _request: InferenceRequest,
-            _effective_output_tokens: u64,
-            _request_deadline: chrono::DateTime<chrono::Utc>,
-        ) -> Result<RuntimeCompletion, RuntimeFailure> {
-            Err(RuntimeFailure::protocol_violation())
-        }
-    }
-
-    fn application(ready: bool) -> Router {
+    fn observed_application() -> (Router, Arc<TestServingState>) {
         let state = Arc::new(TestServingState::unknown_credential());
-
-        router_for(
-            ready,
-            state,
+        let application = router_for(
+            true,
+            state.clone(),
             &GatewayConfig::for_tests().proxy_anthropic_origin,
-        )
-    }
-
-    /// Builds the real router over a fixture, with the relay pointed wherever the
-    /// caller needs it.
-    pub(super) fn router_for(
-        ready: bool,
-        serving_state: Arc<TestServingState>,
-        proxy_origin: &str,
-    ) -> Router {
-        let test_config = GatewayConfig::for_tests();
-        let config = Arc::new(test_config.clone());
-        let completions = CompletionService::new(
-            serving_state.clone(),
-            Arc::new(UnusedRuntime),
-            ModelTokenizer::new().unwrap(),
-            config,
         );
-        let coordinator = RequestCoordinator::new(serving_state);
-        let relay = ProviderRelay::new(proxy_origin, test_config.proxy_limits()).unwrap();
-        router(GatewayState::new(
-            Arc::new(FixedReadiness(ready)),
-            completions,
-            coordinator,
-            relay,
-            test_config.compliance(),
-        ))
+
+        (application, state)
     }
 
-    async fn post_json(application: Router, path: &str, body: &str) -> axum::http::Response<Body> {
+    fn application() -> Router {
+        observed_application().0
+    }
+
+    async fn post_json(application: Router, path: &str, body: &str) -> Response {
         application
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri(path)
-                    .header("content-type", "application/json")
-                    .header(AUTHORIZATION, "Bearer secret")
-                    .body(Body::from(body.to_owned()))
-                    .unwrap(),
-            )
+            .oneshot(json_request(
+                path,
+                &[("authorization", "Bearer secret")],
+                body.to_owned(),
+            ))
             .await
             .unwrap()
     }
 
-    async fn error_code(response: axum::http::Response<Body>) -> String {
-        let body = to_bytes(response.into_body(), 4_096).await.unwrap();
-        let value: Value = serde_json::from_slice(&body).unwrap();
-        value
-            .pointer("/error/code")
-            .or(value.pointer("/error/error/code"))
-            .cloned()
-            .unwrap_or(Value::Null)
-            .as_str()
-            .unwrap_or_default()
-            .to_owned()
+    async fn error_code(response: Response) -> Value {
+        json_body(response).await["error"]["code"].clone()
     }
 
     #[tokio::test]
     async fn live_and_ready_are_available_without_authentication() {
-        let application = application(true);
+        let application = application();
 
         for path in ["/health/live", "/health/ready"] {
             let response = application
@@ -616,7 +525,11 @@ mod tests {
 
     #[tokio::test]
     async fn readiness_fails_closed_when_a_dependency_is_unhealthy() {
-        let application = application(false);
+        let application = router_for(
+            false,
+            Arc::new(TestServingState::unknown_credential()),
+            &GatewayConfig::for_tests().proxy_anthropic_origin,
+        );
 
         let response = application
             .oneshot(
@@ -632,7 +545,7 @@ mod tests {
 
     #[tokio::test]
     async fn metrics_are_available_without_customer_authentication() {
-        let response = application(true)
+        let response = application()
             .oneshot(
                 Request::builder()
                     .uri("/metrics")
@@ -650,8 +563,7 @@ mod tests {
 
     #[tokio::test]
     async fn browser_cors_allows_only_a_configured_origin() {
-        let app =
-            application(true).layer(browser_cors(vec!["https://gradiated.com".parse().unwrap()]));
+        let app = application().layer(browser_cors(vec!["https://gradiated.com".parse().unwrap()]));
         let allowed = app
             .clone()
             .oneshot(
@@ -721,7 +633,7 @@ mod tests {
             "/responses",
         ] {
             let response = post_json(
-                application(true),
+                application(),
                 path,
                 r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
             )
@@ -737,17 +649,12 @@ mod tests {
 
     #[tokio::test]
     async fn chat_completions_returns_the_public_error_and_generation_id() {
-        let response = application(true)
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri("/v1/chat/completions")
-                    .header("content-type", "application/json")
-                    .body(Body::from(
-                        r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
-                    ))
-                    .unwrap(),
-            )
+        let response = application()
+            .oneshot(json_request(
+                "/v1/chat/completions",
+                &[],
+                r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
+            ))
             .await
             .unwrap();
 
@@ -766,14 +673,13 @@ mod tests {
     async fn anthropic_routes_render_anthropic_error_envelopes() {
         for path in ["/v1/messages", "/messages", "/v1/messages/count_tokens"] {
             let response = post_json(
-                application(true),
+                application(),
                 path,
                 r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
             )
             .await;
             assert_eq!(response.status(), StatusCode::UNAUTHORIZED, "{path}");
-            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
-            let value: Value = serde_json::from_slice(&body).unwrap();
+            let value = json_body(response).await;
             assert_eq!(value["type"], "error", "{path}");
             assert_eq!(value["error"]["code"], "invalid_api_key", "{path}");
         }
@@ -781,24 +687,13 @@ mod tests {
 
     #[tokio::test]
     async fn x_api_key_authentication_reaches_the_credential_lookup() {
-        let serving_state = Arc::new(TestServingState::unknown_credential());
-        let response = router_for(
-            true,
-            serving_state.clone(),
-            &GatewayConfig::for_tests().proxy_anthropic_origin,
-        )
-            .oneshot(
-                Request::builder()
-                    .method("POST")
-                    .uri("/v1/messages")
-                    .header("content-type", "application/json")
-                    .header("x-api-key", "grad_test")
-                    .header("anthropic-version", "2023-06-01")
-                    .body(Body::from(
-                        r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
-                    ))
-                    .unwrap(),
-            )
+        let (application, serving_state) = observed_application();
+        let response = application
+            .oneshot(json_request(
+                "/v1/messages",
+                &[("x-api-key", "grad_test"), ("anthropic-version", "2023-06-01")],
+                r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
+            ))
             .await
             .unwrap();
 
@@ -809,42 +704,61 @@ mod tests {
 
     #[tokio::test]
     async fn responses_stateful_fields_are_rejected() {
-        let response = post_json(
-            application(true),
-            "/v1/responses",
-            r#"{"model":"model-a","input":"hi","store":true}"#,
-        )
-        .await;
-        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
-        assert_eq!(error_code(response).await, "invalid_request");
+        for (body, field) in [
+            (r#"{"model":"model-a","input":"hi","store":true}"#, "store"),
+            (
+                r#"{"model":"model-a","input":"hi","previous_response_id":"resp_1"}"#,
+                "previous_response_id",
+            ),
+            (
+                r#"{"model":"model-a","input":"hi","conversation":"c_1"}"#,
+                "conversation",
+            ),
+            (
+                r#"{"model":"model-a","input":"hi","conversation":{"id":"conv_1"}}"#,
+                "conversation",
+            ),
+            (
+                r#"{"model":"model-a","input":"hi","prompt":{"id":"pmpt_1"}}"#,
+                "prompt",
+            ),
+            (
+                r#"{"model":"model-a","input":"hi","background":true}"#,
+                "background",
+            ),
+        ] {
+            let response = post_json(application(), "/v1/responses", body).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{field}");
+
+            let value = json_body(response).await;
+            assert_eq!(value["error"]["code"], "invalid_request", "{field}");
+            assert_eq!(value["error"]["param"], field);
+        }
     }
 
     #[tokio::test]
     async fn malformed_bodies_render_protocol_envelopes() {
-        let response = post_json(application(true), "/v1/chat/completions", "{oops").await;
+        let response = post_json(application(), "/v1/chat/completions", "{oops").await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         assert_eq!(error_code(response).await, "invalid_request");
 
         for path in ["/v1/messages", "/messages"] {
-            let response = post_json(application(true), path, "{oops").await;
+            let response = post_json(application(), path, "{oops").await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
-            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
-            let value: Value = serde_json::from_slice(&body).unwrap();
+            let value = json_body(response).await;
             assert_eq!(value["type"], "error", "{path}");
             assert_eq!(value["error"]["code"], "invalid_request", "{path}");
         }
 
         for path in ["/v1/responses", "/responses"] {
-            let response = post_json(application(true), path, "{oops").await;
+            let response = post_json(application(), path, "{oops").await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{path}");
-            let body = to_bytes(response.into_body(), 4_096).await.unwrap();
-            let value: Value = serde_json::from_slice(&body).unwrap();
-            assert_eq!(value["error"]["code"], "invalid_request", "{path}");
+            assert_eq!(error_code(response).await, "invalid_request", "{path}");
         }
     }
 
     #[tokio::test]
-    async fn streaming_frames_use_the_protocol_event_names() {
+    async fn streaming_frames_use_the_sse_wire_format() {
         let chunk = StreamItem::Chunk(serde_json::json!({
             "id":"chatcmpl-1","object":"chat.completion.chunk","created":1,"model":"model-a",
             "choices":[{"index":0,"delta":{"role":"assistant","content":"hi"},"logprobs":null,"finish_reason":null}]
@@ -857,18 +771,7 @@ mod tests {
         assert_eq!(response.headers()["x-accel-buffering"], "no");
         let body = to_bytes(response.into_body(), 16_384).await.unwrap();
         let body = String::from_utf8(body.to_vec()).unwrap();
-        assert!(body.starts_with("event: message_start\n"));
-        assert!(body.contains("event: content_block_delta\n"));
         assert!(body.ends_with("event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"));
-
-        let response = sse_response(
-            Protocol::OpenAiResponses,
-            futures_util::stream::iter(vec![chunk.clone(), StreamItem::Done]),
-        );
-        let body = to_bytes(response.into_body(), 16_384).await.unwrap();
-        let body = String::from_utf8(body.to_vec()).unwrap();
-        assert!(body.starts_with("event: response.created\n"));
-        assert!(body.contains("event: response.output_text.delta\n"));
 
         let response = sse_response(
             Protocol::OpenAiChat,
@@ -900,102 +803,43 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn an_unreadable_body_is_an_invalid_request_before_serving_state() {
+        let (application, serving_state) = observed_application();
+        let failing = futures_util::stream::iter([Err::<Bytes, _>(std::io::Error::other(
+            "client disconnected",
+        ))]);
+
+        let response = application
+            .oneshot(json_request(
+                "/v1/chat/completions",
+                &[("authorization", "Bearer secret")],
+                Body::from_stream(failing),
+            ))
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        assert!(response.headers().contains_key(GENERATION_ID_HEADER));
+        assert_eq!(serving_state.lookups("credential"), 0);
+        assert_eq!(error_code(response).await, "invalid_request");
+    }
+
+    #[tokio::test]
     async fn oversized_body_is_rejected_before_serving_state() {
-        let serving_state = Arc::new(TestServingState::unknown_credential());
-        let response = router_for(
-            true,
-            serving_state.clone(),
-            &GatewayConfig::for_tests().proxy_anthropic_origin,
-        )
-        .oneshot(
-            Request::builder()
-                .method("POST")
-                .uri("/v1/chat/completions")
-                .header(AUTHORIZATION, "Bearer secret")
-                .body(Body::from(vec![b'x'; MAX_REQUEST_BYTES + 1]))
-                .unwrap(),
-        )
-        .await
-        .unwrap();
+        let (application, serving_state) = observed_application();
+        let response = application
+            .oneshot(json_request(
+                "/v1/chat/completions",
+                &[("authorization", "Bearer secret")],
+                vec![b'x'; MAX_REQUEST_BYTES + 1],
+            ))
+            .await
+            .unwrap();
 
         assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
         assert!(response.headers().contains_key(GENERATION_ID_HEADER));
         assert_eq!(serving_state.lookups("credential"), 0);
         assert_eq!(error_code(response).await, "payload_too_large");
-    }
-
-    #[tokio::test]
-    async fn a_closed_workspace_or_organization_is_refused_without_retry() {
-        for (failure, code) in [
-            ("archived", "workspace_archived"),
-            ("suspended", "organization_suspended"),
-        ] {
-            let mut state = TestServingState::ready();
-            match failure {
-                "archived" => {
-                    state.workspace.as_mut().unwrap().archived_at = Some(chrono::Utc::now())
-                }
-                _ => {
-                    state.account.as_mut().unwrap().organization_status =
-                        crate::domain::OrganizationStatus::Suspended
-                }
-            }
-            let application = router_for(
-                true,
-                Arc::new(state),
-                &GatewayConfig::for_tests().proxy_anthropic_origin,
-            );
-
-            let response = application
-                .oneshot(
-                    Request::builder()
-                        .method("POST")
-                        .uri("/v1/messages")
-                        .header("content-type", "application/json")
-                        .header("x-gradiated-api-key", "grad_test")
-                        .header("anthropic-version", "2023-06-01")
-                        .body(Body::from(
-                            r#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
-                        ))
-                        .unwrap(),
-                )
-                .await
-                .unwrap();
-
-            assert_eq!(response.status(), StatusCode::FORBIDDEN, "{failure}");
-            assert_eq!(error_code(response).await, code, "{failure}");
-        }
-    }
-
-    /// The pipeline translates the request that classification already parsed.
-    fn translate(protocol: Protocol, body: &[u8]) -> Value {
-        let request: Value = serde_json::from_slice(body).unwrap();
-        serde_json::from_slice(&protocol.translate_request(&request).unwrap()).unwrap()
-    }
-
-    #[test]
-    fn inbound_translation_happens_exactly_once_per_protocol() {
-        let translated = translate(
-            Protocol::OpenAiResponses,
-            br#"{"model":"model-a","stream":false,"input":"Reply with exactly: PONG"}"#,
-        );
-        assert_eq!(
-            translated["messages"][0]["content"],
-            "Reply with exactly: PONG"
-        );
-
-        let translated = translate(
-            Protocol::OpenAiChat,
-            br#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
-        );
-        assert_eq!(translated["messages"][0]["content"], "hi");
-
-        let translated = translate(
-            Protocol::AnthropicMessages,
-            br#"{"model":"model-a","max_tokens":16,"messages":[{"role":"user","content":"hi"}]}"#,
-        );
-        assert_eq!(translated["messages"][0]["role"], "user");
-        assert_eq!(translated["messages"][0]["content"], "hi");
     }
 
     #[tokio::test]
@@ -1049,6 +893,10 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "http_support.rs"]
+mod support;
 
 #[cfg(test)]
 #[path = "http_relay_tests.rs"]

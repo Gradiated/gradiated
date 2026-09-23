@@ -1,18 +1,20 @@
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi";
 import { problemContent } from "@gradiated/contracts";
 
-import { problemDocument } from "../http/problem-response.js";
+import { problemResponse, problems } from "../http/problems.js";
 import type { ApiEnvironment } from "../types.js";
+import type { DependencyCheck, DependencyChecks } from "../readiness.js";
 
 const HealthStatusSchema = z
-  .object({
-    status: z.enum(["live", "ready", "not_ready"]),
-  })
+  .object({ status: z.literal("live") })
   .openapi("HealthStatus");
 
-const ReadinessSchema = HealthStatusSchema.extend({
-  checks: z.record(z.string(), z.enum(["up", "down"])),
-}).openapi("Readiness");
+const ReadinessSchema = z
+  .object({
+    status: z.literal("ready"),
+    checks: z.record(z.string(), z.enum(["up", "down"])),
+  })
+  .openapi("Readiness");
 
 const livenessRoute = createRoute({
   hide: true,
@@ -46,38 +48,28 @@ const readinessRoute = createRoute({
   },
 });
 
-export type DependencyCheck = () => Promise<Record<string, "up" | "down">>;
-export type DependencyCheckObserver = (
-  checks: Record<string, "up" | "down">,
-) => void;
-
-export function registerHealthRoutes(
+export const registerHealthRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  checkDependencies: DependencyCheck,
-  observeDependencies: DependencyCheckObserver = () => undefined,
-): void {
+  dependencies: {
+    check: DependencyCheck;
+    observe: (checks: DependencyChecks) => void;
+  },
+): void => {
   app.openapi(livenessRoute, (context) =>
     context.json({ status: "live" as const }, 200),
   );
 
   app.openapi(readinessRoute, async (context) => {
-    const checks = await checkDependencies();
-    observeDependencies(checks);
+    const probes = await dependencies.check();
+    dependencies.observe(probes);
+
+    const checks = Object.fromEntries(
+      Object.entries(probes).map(([name, probe]) => [name, probe.status]),
+    );
     if (Object.values(checks).every((status) => status === "up")) {
       return context.json({ status: "ready" as const, checks }, 200);
     }
 
-    return context.json(
-      problemDocument(context, {
-        type: "https://gradiated.com/problems/not-ready",
-        title: "Service not ready",
-        status: 503,
-        detail:
-          "At least one dependency required for product traffic is unavailable.",
-        code: "not_ready",
-      }),
-      503,
-      { "Content-Type": "application/problem+json" },
-    );
+    return problemResponse(context, problems.notReady);
   });
-}
+};

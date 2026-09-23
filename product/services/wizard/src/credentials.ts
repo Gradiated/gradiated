@@ -1,47 +1,28 @@
-import { chmod, mkdir, readFile, writeFile } from "node:fs/promises";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { rm } from "node:fs/promises";
+import { formatJson, readJsonObject, writeIfChanged } from "./files.js";
+import type { WizardPaths } from "./paths.js";
 
-const CREDENTIALS_PATH = join(homedir(), ".gradiated", "credentials.json");
+export const readStoredKey = async (
+  paths: WizardPaths,
+): Promise<string | null> => {
+  const credentials = await readJsonObject(paths.credentials);
+  const apiKey = credentials?.api_key;
 
-export interface StoredCredentials {
-  api_key: string;
-}
+  return typeof apiKey === "string" && apiKey.length > 0 ? apiKey : null;
+};
 
-export function credentialsPath(): string {
-  return process.env.GRADIATED_CREDENTIALS_PATH ?? CREDENTIALS_PATH;
-}
-
-export async function readStoredKey(): Promise<string | null> {
-  try {
-    const raw = await readFile(credentialsPath(), "utf8");
-    const parsed = JSON.parse(raw) as Partial<StoredCredentials>;
-    return typeof parsed.api_key === "string" && parsed.api_key.length > 0
-      ? parsed.api_key
-      : null;
-  } catch {
-    return null;
-  }
-}
-
-export async function storeKey(apiKey: string): Promise<string> {
-  const path = credentialsPath();
-  await mkdir(dirname(path), { recursive: true });
-  const credentials: StoredCredentials = { api_key: apiKey };
-  await writeFile(path, `${JSON.stringify(credentials, null, 2)}\n`, {
+export const storeKey = (
+  paths: WizardPaths,
+  apiKey: string,
+): Promise<boolean> =>
+  writeIfChanged(paths.credentials, formatJson({ api_key: apiKey }), {
     mode: 0o600,
   });
-  await chmod(path, 0o600);
-  return path;
-}
 
-export async function clearStoredKey(): Promise<string | null> {
-  const path = credentialsPath();
-  try {
-    const raw = await readFile(path, "utf8");
-    await writeFile(path, "{}\n", { mode: 0o600 });
-    return JSON.parse(raw).api_key !== undefined ? path : null;
-  } catch {
-    return null;
-  }
-}
+export const removeStoredKey = async (paths: WizardPaths): Promise<boolean> => {
+  if ((await readStoredKey(paths)) === null) return false;
+
+  await rm(paths.credentials, { force: true });
+
+  return true;
+};

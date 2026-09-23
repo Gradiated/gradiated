@@ -52,6 +52,8 @@ upstream source checkout clean at
 `Checkpoint` loads the exact adapter revision
 `2629c06a5aeb0feb3b9783bafed17ed8f39ecf5c` and verifies the base is
 `Qwen/Qwen3.5-9B-Base@68c46c4b3498877f3ef123c856ecfde50c39f404`.
+To serve another release, pass all of `--model`, `--revision`, `--base`,
+`--base-revision` and `--upstream-commit`; startup rejects a partial override.
 It uses explicit BF16 `LoadOptions` with checkpoint calibration and upstream
 defaults; serving environment overrides for temperature, date preprocessing,
 prefix capacity and fallback models do not change this adapter's behavior.
@@ -79,7 +81,7 @@ from the single inference slot.
 ## Verification
 
 CPU-only unit tests use a character tokenizer and in-process probability/cache
-stub. By default, API/encoder doubles in `test_support.py` need only
+stub. By default, API/encoder doubles in `support.py` need only
 the Python standard library. With `KEV_SOURCE=/path/to/kev-source`, the
 same tests exercise its API and pure encoder functions (requires Pydantic,
 included in FastAPI). Encoder functions are loaded from its AST to avoid

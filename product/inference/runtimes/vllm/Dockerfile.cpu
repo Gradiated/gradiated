@@ -6,17 +6,23 @@
 # the gateway against a real OpenAI-compatible server rather than our own mock, and
 # so a run never has to reach Hugging Face to do it.
 #
-# The base is pinned by digest. The weights layer is keyed by the model below, so
-# a rebuild repeats the download only when that changes.
+# The base is pinned by digest and the weights by commit. A download pinned by
+# commit records no refs/main, and the caller serves the weights by name, so the
+# weights layer records it.
 FROM public.ecr.aws/q9t5s3a7/vllm-cpu-release-repo@sha256:ea8b61f8ccab650e1c369105373863ac12a581b53f289b344cea72a09238e131
 
 ARG CPU_WEIGHTS=Qwen/Qwen2.5-0.5B-Instruct
+ARG CPU_WEIGHTS_REVISION=7ae557604adf67be50417f59c2c2f167def9a775
 
 ENV CPU_WEIGHTS=${CPU_WEIGHTS}
 
 RUN python3 -c "\
+from pathlib import Path; \
 from huggingface_hub import snapshot_download; \
-snapshot_download('${CPU_WEIGHTS}')"
+weights = Path(snapshot_download('${CPU_WEIGHTS}', revision='${CPU_WEIGHTS_REVISION}')); \
+ref = weights.parents[1] / 'refs' / 'main'; \
+ref.parent.mkdir(exist_ok=True); \
+ref.write_text(weights.name)"
 
 # Only after the weights are in the image: serving offline is deliberate, so an
 # image that lost them fails loudly instead of quietly downloading them again.

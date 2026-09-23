@@ -1,5 +1,6 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+
 import type { ControlDatabase } from "../db/client.js";
 import { waitlistSignups } from "../db/schema/waitlist.js";
 
@@ -22,17 +23,18 @@ export const waitlistSignupSchema = z.strictObject({
 
 export type WaitlistSignupInput = z.infer<typeof waitlistSignupSchema>;
 
-/**
- * A signup is an upsert keyed on email, split into two steps on purpose:
- * `created` has to be knowable, because the welcome email is sent only for a
- * first signup — a reader resubmitting with a better answer should get their
- * row updated, not a second email.
- */
-export const createWaitlistService = (database: ControlDatabase) => ({
-  join: async (
-    value: unknown,
-  ): Promise<{ created: boolean; email: string }> => {
+export interface WaitlistService {
+  join(value: unknown): Promise<{ created: boolean; email: string }>;
+}
+
+// The welcome email goes only to a first signup, so the insert and the update
+// are separate steps rather than one upsert.
+export const createWaitlistService = (
+  database: ControlDatabase,
+): WaitlistService => ({
+  async join(value) {
     const input = waitlistSignupSchema.parse(value);
+
     const [inserted] = await database
       .insert(waitlistSignups)
       .values(input)
@@ -49,8 +51,7 @@ export const createWaitlistService = (database: ControlDatabase) => ({
         updatedAt: new Date(),
       })
       .where(eq(waitlistSignups.email, input.email));
+
     return { created: false, email: input.email };
   },
 });
-
-export type WaitlistService = ReturnType<typeof createWaitlistService>;

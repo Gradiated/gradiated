@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoaderCircle, MailCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 
 import { authClient } from "@/auth";
@@ -16,13 +16,32 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import {
+  logSignInCallbackFailure,
+  logSignInFailure,
+} from "@/pages/sign-in-failure";
 
 const LoginSchema = z.object({
   email: z.email("Enter a valid email address."),
 });
 
 type LoginValues = z.infer<typeof LoginSchema>;
-type SocialProvider = "github" | "google";
+
+const SOCIAL_PROVIDERS = [
+  { provider: "google", label: "Google", Icon: GoogleIcon },
+  { provider: "github", label: "GitHub", Icon: GitHubIcon },
+] as const;
+
+type SocialProvider = (typeof SOCIAL_PROVIDERS)[number]["provider"];
+
+const callbackUrl = (path: string) =>
+  new URL(path, window.location.origin).toString();
+
+const signInCallbacks = () => ({
+  callbackURL: callbackUrl("/api-keys"),
+  newUserCallbackURL: callbackUrl("/api-keys"),
+  errorCallbackURL: callbackUrl("/login"),
+});
 
 export const LoginPage = () => {
   const callbackError = new URLSearchParams(window.location.search).get(
@@ -37,36 +56,55 @@ export const LoginPage = () => {
     defaultValues: { email: "" },
   });
 
+  useEffect(() => {
+    if (callbackError) logSignInCallbackFailure(callbackError);
+  }, [callbackError]);
+
   const submit = async (values: LoginValues) => {
-    const callbackURL = `${window.location.origin}/api-keys`;
-    const result = await authClient.signIn.magicLink({
-      email: values.email,
-      callbackURL,
-      newUserCallbackURL: callbackURL,
-      errorCallbackURL: `${window.location.origin}/login`,
-    });
-    if (result.error) {
+    const failed = () =>
       form.setError("root", {
         message: "We could not send the sign-in link. Try again.",
       });
-      return;
+
+    try {
+      const result = await authClient.signIn.magicLink({
+        email: values.email,
+        ...signInCallbacks(),
+      });
+      if (result.error) {
+        logSignInFailure("magic_link", result.error);
+        return failed();
+      }
+    } catch (error) {
+      logSignInFailure("magic_link", error);
+      return failed();
     }
+
     setSentTo(values.email);
   };
 
-  const signInWithSocial = async (provider: SocialProvider) => {
-    setSocialPending(provider);
-    const result = await authClient.signIn.social({
-      provider,
-      callbackURL: `${window.location.origin}/api-keys`,
-      errorCallbackURL: `${window.location.origin}/login`,
-      newUserCallbackURL: `${window.location.origin}/api-keys`,
-    });
-    if (result?.error) {
+  const signInWithSocial = async (provider: SocialProvider, label: string) => {
+    const failed = () => {
       setSocialPending(null);
       form.setError("root", {
-        message: `${provider === "google" ? "Google" : "GitHub"} sign-in could not start. Try again.`,
+        message: `${label} sign-in could not start. Try again.`,
       });
+    };
+
+    setSocialPending(provider);
+
+    try {
+      const result = await authClient.signIn.social({
+        provider,
+        ...signInCallbacks(),
+      });
+      if (result?.error) {
+        logSignInFailure(provider, result.error);
+        failed();
+      }
+    } catch (error) {
+      logSignInFailure(provider, error);
+      failed();
     }
   };
 
@@ -87,38 +125,25 @@ export const LoginPage = () => {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <Button
-                    className="w-full gap-2.5"
-                    disabled={
-                      socialPending !== null || form.formState.isSubmitting
-                    }
-                    onClick={() => void signInWithSocial("google")}
-                    type="button"
-                    variant="outline"
-                  >
-                    {socialPending === "google" ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : (
-                      <GoogleIcon className="size-4" />
-                    )}
-                    Continue with Google
-                  </Button>
-                  <Button
-                    className="w-full gap-2.5"
-                    disabled={
-                      socialPending !== null || form.formState.isSubmitting
-                    }
-                    onClick={() => void signInWithSocial("github")}
-                    type="button"
-                    variant="outline"
-                  >
-                    {socialPending === "github" ? (
-                      <LoaderCircle className="size-4 animate-spin" />
-                    ) : (
-                      <GitHubIcon className="size-4" />
-                    )}
-                    Continue with GitHub
-                  </Button>
+                  {SOCIAL_PROVIDERS.map(({ provider, label, Icon }) => (
+                    <Button
+                      key={provider}
+                      className="w-full gap-2.5"
+                      disabled={
+                        socialPending !== null || form.formState.isSubmitting
+                      }
+                      onClick={() => void signInWithSocial(provider, label)}
+                      type="button"
+                      variant="outline"
+                    >
+                      {socialPending === provider ? (
+                        <LoaderCircle className="size-4 animate-spin" />
+                      ) : (
+                        <Icon className="size-4" />
+                      )}
+                      Continue with {label}
+                    </Button>
+                  ))}
                 </div>
                 <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground">
                   <div className="h-px flex-1 bg-border" />

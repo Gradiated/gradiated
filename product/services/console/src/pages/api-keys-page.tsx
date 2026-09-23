@@ -4,8 +4,6 @@ import { Link } from "@tanstack/react-router";
 import { format } from "date-fns";
 import {
   CalendarIcon,
-  Check,
-  Copy,
   KeyRound,
   LoaderCircle,
   MoreHorizontal,
@@ -16,12 +14,12 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
-  createApiKey,
-  listApiKeys,
+  apiKeysQuery,
   revokeApiKey,
+  useCreateApiKey,
   type CreatedApiKey,
 } from "@/api/queries";
-import { AppShell } from "@/components/app-shell";
+import { CopyStateIcon } from "@/components/copy-state-icon";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -48,13 +46,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -62,226 +53,223 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { useProductContext } from "@/hooks/use-product-context";
+import { errorMessage } from "@/lib/errors";
+import {
+  apiKeyExpiresAt,
+  apiKeyStatus,
+  firstSelectableExpiry,
+  type ApiKeyStatus,
+} from "@/pages/api-key-status";
+import { ConsolePage, LoadFailed } from "@/pages/console-page";
+import { OptionSelect } from "@/pages/option-select";
 
-type KeyStatusFilter = "active" | "revoked";
-
-const formatDate = (value: string) => {
-  return new Intl.DateTimeFormat(undefined, {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(value));
+const STATUS_BADGE: Record<
+  ApiKeyStatus,
+  { label: string; className: string; dotClassName: string | null }
+> = {
+  active: {
+    label: "Active",
+    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    dotClassName: "bg-emerald-500",
+  },
+  expired: {
+    label: "Expired",
+    className: "border-amber-200 bg-amber-50 text-amber-800",
+    dotClassName: null,
+  },
+  revoked: {
+    label: "Revoked",
+    className: "text-muted-foreground",
+    dotClassName: null,
+  },
 };
+
+const STATUS_OPTIONS = (["active", "expired", "revoked"] as const).map(
+  (value) => ({ value, label: STATUS_BADGE[value].label }),
+);
+
+const EMPTY_STATE: Record<ApiKeyStatus, { title: string; body: string }> = {
+  active: {
+    title: "No active API keys",
+    body: "Create a key for this workspace when you are ready to send your first inference request.",
+  },
+  expired: {
+    title: "No expired API keys",
+    body: "Keys past their expiry date will appear here.",
+  },
+  revoked: {
+    title: "No revoked API keys",
+    body: "Revoked keys will appear here.",
+  },
+};
+
+const keyDate = new Intl.DateTimeFormat(undefined, {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+});
+
+const formatDate = (value: string) => keyDate.format(new Date(value));
 
 export const ApiKeysPage = () => {
   const queryClient = useQueryClient();
-  const {
-    user,
-    organizationId,
-    workspaceId,
-    selectOrganization,
-    selectWorkspace,
-    signOut,
-    workspaces,
-  } = useProductContext();
+  const { organizationId, workspaceId } = useProductContext();
   const [createOpen, setCreateOpen] = useState(false);
   const [created, setCreated] = useState<CreatedApiKey | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<KeyStatusFilter>("active");
+  const secretCopy = useCopyToClipboard();
+  const [statusFilter, setStatusFilter] = useState<ApiKeyStatus>("active");
 
-  const keys = useQuery({
-    queryKey: ["api-keys", organizationId, workspaceId],
-    queryFn: () => listApiKeys(organizationId, workspaceId),
-    enabled: Boolean(organizationId && workspaceId),
-  });
+  const keysQuery = apiKeysQuery(organizationId, workspaceId);
+  const keys = useQuery(keysQuery);
 
   const revoke = useMutation({
     mutationFn: (apiKeyId: string) =>
       revokeApiKey(organizationId, workspaceId, apiKeyId),
     onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: ["api-keys", organizationId, workspaceId],
-      }),
+      queryClient.invalidateQueries({ queryKey: keysQuery.queryKey }),
   });
 
-  const copySecret = async () => {
-    if (!created) return;
-    await navigator.clipboard.writeText(created.secret);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1_500);
-  };
+  const now = new Date();
+  const filteredKeys = (keys.data?.data ?? []).flatMap((apiKey) => {
+    const status = apiKeyStatus(apiKey, now);
 
-  const filteredKeys =
-    keys.data?.data.filter((apiKey) =>
-      statusFilter === "revoked"
-        ? Boolean(apiKey.revoked_at)
-        : !apiKey.revoked_at,
-    ) ?? [];
+    return status === statusFilter ? [{ apiKey, status }] : [];
+  });
+  const emptyState = EMPTY_STATE[statusFilter];
 
   return (
-    <AppShell
-      user={user}
-      organizationId={organizationId}
-      workspaces={workspaces}
-      workspaceId={workspaceId}
-      onSelectOrganization={selectOrganization}
-      onSelectWorkspace={selectWorkspace}
-      onSignOut={signOut}
-      activePage="api-keys"
-      pageTitle="API keys"
+    <ConsolePage
+      page="api-keys"
+      title="API keys"
+      description="Create an API key to call models from your agents."
+      actions={
+        <>
+          <OptionSelect
+            value={statusFilter}
+            options={STATUS_OPTIONS}
+            onValueChange={setStatusFilter}
+            label="Key status"
+            className="h-9 min-w-32"
+          />
+          <CreateKeyDialog
+            open={createOpen}
+            onOpenChange={setCreateOpen}
+            organizationId={organizationId}
+            workspaceId={workspaceId}
+            disabled={!workspaceId}
+            onCreated={(result) => {
+              setCreated(result);
+              setCreateOpen(false);
+            }}
+          />
+        </>
+      }
     >
-      <main className="min-w-0 flex-1 px-5 py-8 lg:px-10 lg:py-10">
-        <div className="mx-auto max-w-5xl">
-          <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-[-0.035em]">
-                API keys
-              </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                Create an API key to call models from your agents.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Select
-                value={statusFilter}
-                onValueChange={(value) =>
-                  setStatusFilter(value as KeyStatusFilter)
-                }
-              >
-                <SelectTrigger className="h-9 min-w-32" aria-label="Key status">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="revoked">Revoked</SelectItem>
-                </SelectContent>
-              </Select>
-              <CreateKeyDialog
-                open={createOpen}
-                onOpenChange={setCreateOpen}
-                organizationId={organizationId}
-                workspaceId={workspaceId}
-                disabled={!workspaceId}
-                onCreated={(result) => {
-                  setCreated(result);
-                  setCreateOpen(false);
-                  void queryClient.invalidateQueries({
-                    queryKey: ["api-keys", organizationId, workspaceId],
-                  });
-                }}
-              />
-            </div>
-          </div>
-
-          <section className="overflow-hidden rounded-lg border bg-card">
-            {keys.isLoading ? (
-              <div className="grid min-h-48 place-items-center">
-                <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
-              </div>
-            ) : filteredKeys.length ? (
-              <Table>
-                <TableHeader className="bg-muted/40">
-                  <TableRow className="hover:bg-transparent">
-                    <TableHead className="h-11 pl-5">Name</TableHead>
-                    <TableHead className="h-11 px-4">Created</TableHead>
-                    <TableHead className="h-11 px-4">Expires</TableHead>
-                    <TableHead className="h-11 px-4">Status</TableHead>
-                    <TableHead className="h-11 w-14 pr-3 text-right">
-                      <span className="sr-only">Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredKeys.map((apiKey) => (
-                    <TableRow key={apiKey.id}>
-                      <TableCell className="h-16 pl-5 font-medium">
-                        {apiKey.name}
-                      </TableCell>
-                      <TableCell className="px-4 text-muted-foreground">
-                        {formatDate(apiKey.created_at)}
-                      </TableCell>
-                      <TableCell className="px-4 text-muted-foreground">
-                        {apiKey.expires_at
-                          ? formatDate(apiKey.expires_at)
-                          : "Never"}
-                      </TableCell>
-                      <TableCell className="px-4">
-                        <Badge
-                          variant="outline"
-                          className={
-                            apiKey.revoked_at
-                              ? "text-muted-foreground"
-                              : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          }
-                        >
-                          {apiKey.revoked_at ? null : (
-                            <span className="size-1.5 rounded-full bg-emerald-500" />
-                          )}
-                          {apiKey.revoked_at ? "Revoked" : "Active"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="pr-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              aria-label={`Actions for ${apiKey.name}`}
-                            >
-                              <MoreHorizontal />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36">
-                            <DropdownMenuItem asChild>
-                              <Link to="/logs" search={{ apiKeyId: apiKey.id }}>
-                                View logs
-                              </Link>
-                            </DropdownMenuItem>
-                            {!apiKey.revoked_at ? (
-                              <DropdownMenuItem
-                                disabled={revoke.isPending}
-                                className="text-destructive focus:text-destructive"
-                                onSelect={() => {
-                                  if (
-                                    window.confirm(
-                                      `Revoke ${apiKey.name}? This cannot be undone.`,
-                                    )
-                                  ) {
-                                    revoke.mutate(apiKey.id);
-                                  }
-                                }}
-                              >
-                                Revoke
-                              </DropdownMenuItem>
-                            ) : null}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            ) : (
-              <div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
-                <div className="mb-4 grid size-11 place-items-center rounded-lg bg-muted">
-                  <KeyRound className="size-5 text-muted-foreground" />
-                </div>
-                <h3 className="font-medium">
-                  {statusFilter === "revoked"
-                    ? "No revoked API keys"
-                    : "No active API keys"}
-                </h3>
-                <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
-                  {statusFilter === "revoked"
-                    ? "Revoked keys will appear here."
-                    : "Create a key for this workspace when you are ready to send your first inference request."}
-                </p>
-              </div>
-            )}
-          </section>
+      {revoke.isError ? (
+        <div
+          role="alert"
+          className="mb-4 rounded-lg border border-destructive/25 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          {errorMessage(revoke.error, "The API key could not be revoked.")}
         </div>
-      </main>
+      ) : null}
+
+      <section className="overflow-hidden rounded-lg border bg-card">
+        {keys.isLoading ? (
+          <div className="grid min-h-48 place-items-center">
+            <LoaderCircle className="size-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : keys.isError ? (
+          <LoadFailed
+            subject="API keys"
+            retrying={keys.isFetching}
+            onRetry={() => void keys.refetch()}
+          />
+        ) : filteredKeys.length ? (
+          <Table>
+            <TableHeader className="bg-muted/40">
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-11 pl-5">Name</TableHead>
+                <TableHead className="h-11 px-4">Created</TableHead>
+                <TableHead className="h-11 px-4">Expires</TableHead>
+                <TableHead className="h-11 px-4">Status</TableHead>
+                <TableHead className="h-11 w-14 pr-3 text-right">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredKeys.map(({ apiKey, status }) => (
+                <TableRow key={apiKey.id}>
+                  <TableCell className="h-16 pl-5 font-medium">
+                    {apiKey.name}
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">
+                    {formatDate(apiKey.created_at)}
+                  </TableCell>
+                  <TableCell className="px-4 text-muted-foreground">
+                    {apiKey.expires_at
+                      ? formatDate(apiKey.expires_at)
+                      : "Never"}
+                  </TableCell>
+                  <TableCell className="px-4">
+                    <StatusBadge status={status} />
+                  </TableCell>
+                  <TableCell className="pr-3 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          aria-label={`Actions for ${apiKey.name}`}
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-36">
+                        <DropdownMenuItem asChild>
+                          <Link to="/logs" search={{ apiKeyId: apiKey.id }}>
+                            View logs
+                          </Link>
+                        </DropdownMenuItem>
+                        {status !== "revoked" ? (
+                          <DropdownMenuItem
+                            disabled={revoke.isPending}
+                            className="text-destructive focus:text-destructive"
+                            onSelect={() => {
+                              if (
+                                window.confirm(
+                                  `Revoke ${apiKey.name}? This cannot be undone.`,
+                                )
+                              ) {
+                                revoke.mutate(apiKey.id);
+                              }
+                            }}
+                          >
+                            Revoke
+                          </DropdownMenuItem>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
+            <div className="mb-4 grid size-11 place-items-center rounded-lg bg-muted">
+              <KeyRound className="size-5 text-muted-foreground" />
+            </div>
+            <h3 className="font-medium">{emptyState.title}</h3>
+            <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
+              {emptyState.body}
+            </p>
+          </div>
+        )}
+      </section>
 
       <Dialog
         open={Boolean(created)}
@@ -302,19 +290,31 @@ export const ApiKeysPage = () => {
             {created?.secret}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={copySecret}>
-              {copied ? (
-                <Check className="size-4" />
-              ) : (
-                <Copy className="size-4" />
-              )}
-              {copied ? "Copied" : "Copy key"}
+            <Button
+              variant="outline"
+              onClick={() => created && void secretCopy.copy(created.secret)}
+            >
+              <CopyStateIcon state={secretCopy.state} className="size-4" />
+              {copyLabel(secretCopy.state, "Copy key")}
             </Button>
             <Button onClick={() => setCreated(null)}>Done</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </AppShell>
+    </ConsolePage>
+  );
+};
+
+const StatusBadge = ({ status }: { status: ApiKeyStatus }) => {
+  const { label, className, dotClassName } = STATUS_BADGE[status];
+
+  return (
+    <Badge variant="outline" className={className}>
+      {dotClassName ? (
+        <span className={`size-1.5 rounded-full ${dotClassName}`} />
+      ) : null}
+      {label}
+    </Badge>
   );
 };
 
@@ -338,42 +338,25 @@ const CreateKeyDialog = ({
     resolver: zodResolver(CreateKeySchema),
     defaultValues: { name: "", expiresAt: undefined },
   });
-  const mutation = useMutation({
-    mutationFn: (values: CreateKeyValues) =>
-      createApiKey(organizationId, workspaceId, {
-        name: values.name,
-        expires_at: values.expiresAt
-          ? new Date(
-              Date.UTC(
-                values.expiresAt.getFullYear(),
-                values.expiresAt.getMonth(),
-                values.expiresAt.getDate(),
-                23,
-                59,
-                59,
-                999,
-              ),
-            ).toISOString()
-          : null,
-      }),
-    onSuccess: (result) => {
-      form.reset();
-      onCreated(result);
-    },
-  });
+  const mutation = useCreateApiKey(organizationId, workspaceId);
 
-  const submit = async (values: CreateKeyValues) => {
-    try {
-      await mutation.mutateAsync(values);
-    } catch (error) {
-      form.setError("root", {
-        message:
-          error instanceof Error
-            ? error.message
-            : "The API key could not be created.",
-      });
-    }
-  };
+  const submit = (values: CreateKeyValues) =>
+    mutation.mutate(
+      {
+        name: values.name,
+        expires_at: values.expiresAt ? apiKeyExpiresAt(values.expiresAt) : null,
+      },
+      {
+        onSuccess: (result) => {
+          form.reset();
+          onCreated(result);
+        },
+        onError: (error) =>
+          form.setError("root", {
+            message: errorMessage(error, "The API key could not be created."),
+          }),
+      },
+    );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -413,9 +396,7 @@ const CreateKeyDialog = ({
               control={form.control}
               name="expiresAt"
               render={({ field }) => {
-                const tomorrow = new Date();
-                tomorrow.setHours(0, 0, 0, 0);
-                tomorrow.setDate(tomorrow.getDate() + 1);
+                const firstExpiry = firstSelectableExpiry(new Date());
 
                 return (
                   <Popover open={expiryOpen} onOpenChange={setExpiryOpen}>
@@ -440,7 +421,7 @@ const CreateKeyDialog = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        disabled={{ before: tomorrow }}
+                        disabled={{ before: firstExpiry }}
                         onSelect={(date) => {
                           field.onChange(date);
                           if (date) setExpiryOpen(false);
@@ -482,8 +463,8 @@ const CreateKeyDialog = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? (
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? (
                 <LoaderCircle className="size-4 animate-spin" />
               ) : null}
               Create key

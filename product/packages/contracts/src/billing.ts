@@ -1,18 +1,25 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema, UuidSchema } from "./common.js";
+import {
+  MoneySchema,
+  pageFields,
+  TimestampSchema,
+  UuidSchema,
+} from "./common.js";
 
-const MoneySchema = z.string().regex(/^-?\d+$/);
-const NanoUsdPerCent = 10_000_000n;
+const MIN_TOP_UP_NANO_USD = 5_000_000_000n;
+const MAX_TOP_UP_NANO_USD = 10_000_000_000_000n;
+const NANO_USD_PER_CENT = 10_000_000n;
 
 export const CreateTopUpCheckoutSchema = z
   .strictObject({
     amount: MoneySchema.refine((value) => {
       const amount = BigInt(value);
+
       return (
-        amount >= 5_000_000_000n &&
-        amount <= 10_000_000_000_000n &&
-        amount % NanoUsdPerCent === 0n
+        amount >= MIN_TOP_UP_NANO_USD &&
+        amount <= MAX_TOP_UP_NANO_USD &&
+        amount % NANO_USD_PER_CENT === 0n
       );
     }, "Amount must be between $5 and $10,000 in whole cents.").openapi({
       description: "The top-up amount in integer nano-USD.",
@@ -79,10 +86,7 @@ export const BalanceTransactionSchema = z
   .openapi("BalanceTransaction");
 
 export const BalanceTransactionListSchema = z
-  .strictObject({
-    data: z.array(BalanceTransactionSchema),
-    next_cursor: z.string().nullable(),
-  })
+  .strictObject(pageFields(BalanceTransactionSchema))
   .openapi("BalanceTransactionList");
 
 export type BalanceTransaction = z.infer<typeof BalanceTransactionSchema>;

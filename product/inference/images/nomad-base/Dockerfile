@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && install -d /etc/gradiated /opt/gradiated/bin /opt/nomad/plugins /run/sshd \
     && install -d -o runtime -g runtime /workspace/gradiated/model-cache
 COPY --from=hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 /bin/nomad /usr/local/bin/nomad
-COPY --from=launcher /desmond-build/desmondd /opt/gradiated/bin/desmondd
+COPY --from=launcher /desmond-build/desmond/desmondd /opt/gradiated/bin/desmondd
 COPY images/nomad-base/start-desmond.sh /opt/gradiated/bin/start-desmond
 COPY --from=launcher /build/runtime-launch /opt/gradiated/bin/runtime-launch
 COPY --from=launcher /s5cmd/s5cmd /usr/local/bin/s5cmd

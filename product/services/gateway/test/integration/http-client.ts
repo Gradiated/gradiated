@@ -6,7 +6,11 @@ import {
   type OutgoingHttpHeaders,
 } from "node:http";
 
+import { isJsonObject, object, type JsonObject } from "./json.js";
+
 export type Headers = OutgoingHttpHeaders;
+
+type Method = "GET" | "POST" | "OPTIONS";
 
 export interface Options {
   headers?: Headers;
@@ -22,14 +26,40 @@ export class Response {
     readonly text: string,
   ) {}
 
-  json<T = any>(): T {
-    return JSON.parse(this.text) as T;
+  json(): JsonObject {
+    const value: unknown = JSON.parse(this.text);
+    if (!isJsonObject(value)) {
+      throw new Error(`expected a JSON object body: ${this.text}`);
+    }
+
+    return value;
+  }
+
+  /** Both the OpenAI body and the Anthropic `{type: "error"}` envelope carry `error`. */
+  error(): PublicError {
+    const { type, code, message, param = null } = object(this.json().error);
+
+    if (
+      typeof type !== "string" ||
+      typeof code !== "string" ||
+      typeof message !== "string" ||
+      (param !== null && typeof param !== "string")
+    ) {
+      throw new Error(`expected a public error body: ${this.text}`);
+    }
+
+    return { type, code, message, param };
   }
 }
 
-export class StreamResponse {
-  #consumed = false;
+export interface PublicError {
+  readonly type: string;
+  readonly code: string;
+  readonly message: string;
+  readonly param: string | null;
+}
 
+export class StreamResponse {
   constructor(
     readonly status: number,
     readonly headers: Record<string, string>,
@@ -37,10 +67,14 @@ export class StreamResponse {
   ) {}
 
   async *lines(): AsyncGenerator<string> {
-    this.#consumed = true;
+    // Decode across chunks, so a read boundary inside a multibyte character
+    // does not split it.
+    this.message.setEncoding("utf8");
     let buffer = "";
+
     for await (const chunk of this.message) {
-      buffer += (chunk as Buffer).toString();
+      buffer += String(chunk);
+
       let index: number;
       while ((index = buffer.search(/\r\n|\n/)) !== -1) {
         const line = buffer.slice(0, index);
@@ -50,6 +84,7 @@ export class StreamResponse {
         yield line;
       }
     }
+
     if (buffer.length > 0) yield buffer;
   }
 
@@ -59,11 +94,8 @@ export class StreamResponse {
     for await (const line of this.lines()) {
       if (line.startsWith("data:")) frames.push(line.slice(5).trim());
     }
-    return frames;
-  }
 
-  close(): void {
-    if (!this.#consumed) this.message.destroy();
+    return frames;
   }
 }
 
@@ -93,14 +125,15 @@ export class Client {
     return this.request("OPTIONS", path, options);
   }
 
-  async request(
-    method: string,
+  private async request(
+    method: Method,
     path: string,
     options: Options = {},
   ): Promise<Response> {
     const { message } = await this.send(method, path, options);
     const chunks: Buffer[] = [];
-    for await (const chunk of message) chunks.push(chunk as Buffer);
+    for await (const chunk of message) chunks.push(Buffer.from(chunk));
+
     return new Response(
       message.statusCode ?? 0,
       normalize(message),
@@ -108,12 +141,9 @@ export class Client {
     );
   }
 
-  async stream(
-    method: string,
-    path: string,
-    options: Options = {},
-  ): Promise<StreamResponse> {
-    const { message } = await this.send(method, path, options);
+  async stream(path: string, options: Options = {}): Promise<StreamResponse> {
+    const { message } = await this.send("POST", path, options);
+
     return new StreamResponse(
       message.statusCode ?? 0,
       normalize(message),
@@ -122,7 +152,7 @@ export class Client {
   }
 
   private send(
-    method: string,
+    method: Method,
     path: string,
     options: Options,
   ): Promise<{ message: IncomingMessage }> {
@@ -133,10 +163,14 @@ export class Client {
         : options.content !== undefined
           ? Buffer.from(options.content)
           : undefined;
+    const timeoutMs = options.timeoutMs ?? this.defaultTimeoutMs;
+
     const headers: Headers = { ...options.headers };
-    if (options.json !== undefined)
+    if (options.json !== undefined) {
       headers["Content-Type"] = "application/json";
+    }
     if (body) headers["Content-Length"] = String(body.length);
+
     return new Promise((resolve, reject) => {
       const request = httpRequest(
         {
@@ -151,14 +185,11 @@ export class Client {
         },
         (message) => resolve({ message }),
       );
-      request.setTimeout(options.timeoutMs ?? this.defaultTimeoutMs, () => {
-        request.destroy(
-          new Error(
-            `timed out after ${options.timeoutMs ?? this.defaultTimeoutMs}ms`,
-          ),
-        );
+      request.setTimeout(timeoutMs, () => {
+        request.destroy(new Error(`timed out after ${timeoutMs}ms`));
       });
       request.on("error", reject);
+
       if (body) request.write(body);
       request.end();
     });

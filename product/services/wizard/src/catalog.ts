@@ -1,81 +1,72 @@
-import type { HttpResponse } from "./http.js";
-import { HttpError, request } from "./http.js";
+import { WizardError } from "./errors.js";
+import { isRecord } from "./guards.js";
+import { request } from "./http.js";
 
 export interface CatalogModel {
   id: string;
   name: string;
-  contextLength: number | null;
-  outputLength: number | null;
+  limit: { context: number; output: number } | null;
 }
 
-interface RawCatalogModel {
-  id?: unknown;
-  name?: unknown;
-  input_modalities?: unknown;
-  output_modalities?: unknown;
-}
+export type Catalog = readonly [CatalogModel, ...CatalogModel[]];
 
-function tokenMeasure(value: unknown): number | null {
-  if (
-    value !== null &&
-    typeof value === "object" &&
-    typeof (value as { value?: unknown }).value === "number"
-  ) {
-    return (value as { value: number }).value;
+const textModality = (modalities: unknown): Record<string, unknown> => {
+  const text = Array.isArray(modalities)
+    ? modalities.find((entry) => isRecord(entry) && entry.type === "text")
+    : undefined;
+
+  return isRecord(text) ? text : {};
+};
+
+const tokenCount = (measure: unknown): number | null =>
+  isRecord(measure) && typeof measure.value === "number" ? measure.value : null;
+
+const parseLimit = (raw: Record<string, unknown>): CatalogModel["limit"] => {
+  const input = textModality(raw.input_modalities);
+  const output = textModality(raw.output_modalities);
+  const context = tokenCount(
+    isRecord(input.supported_inputs)
+      ? input.supported_inputs.max_context_length
+      : undefined,
+  );
+  const maxOutput = tokenCount(output.max_length);
+
+  return context === null || maxOutput === null
+    ? null
+    : { context, output: maxOutput };
+};
+
+const parseModel = (raw: unknown): CatalogModel | null => {
+  if (!isRecord(raw) || typeof raw.id !== "string" || raw.id.length === 0) {
+    return null;
   }
-  return null;
-}
 
-function parseModel(raw: RawCatalogModel): CatalogModel | null {
-  if (typeof raw.id !== "string" || raw.id.length === 0) return null;
-  const inputModalities = Array.isArray(raw.input_modalities)
-    ? (raw.input_modalities as Record<string, unknown>[])
-    : [];
-  const outputModalities = Array.isArray(raw.output_modalities)
-    ? (raw.output_modalities as Record<string, unknown>[])
-    : [];
-  const textInput = inputModalities.find((entry) => entry.type === "text");
-  const textOutput = outputModalities.find((entry) => entry.type === "text");
-  const contextLength = tokenMeasure(
-    (textInput?.supported_inputs as Record<string, unknown> | undefined)
-      ?.max_context_length,
-  );
-  const outputLength = tokenMeasure(
-    (textOutput as Record<string, unknown> | undefined)?.max_length,
-  );
   return {
     id: raw.id,
     name:
       typeof raw.name === "string" && raw.name.length > 0 ? raw.name : raw.id,
-    contextLength,
-    outputLength,
+    limit: parseLimit(raw),
   };
-}
+};
 
-export async function fetchCatalog(
-  inferenceBaseUrl: string,
+export const fetchCatalog = async (
+  apiBaseUrl: string,
   apiKey: string,
-): Promise<CatalogModel[]> {
-  const response: HttpResponse = await request(`${inferenceBaseUrl}/models`, {
+): Promise<Catalog> => {
+  const { body } = await request(`${apiBaseUrl}/models`, {
     headers: { authorization: `Bearer ${apiKey}` },
   });
-  const data = (response.body as { data?: unknown })?.data;
-  if (!Array.isArray(data)) {
-    throw new HttpError(
-      response.status,
-      "invalid_catalog",
-      "The model catalog response was not understood.",
-    );
+
+  if (!isRecord(body) || !Array.isArray(body.data)) {
+    throw new WizardError("The model catalog response was not understood.");
   }
-  const models = data
-    .map((entry) => parseModel(entry as RawCatalogModel))
-    .filter((model): model is CatalogModel => model !== null);
-  if (models.length === 0) {
-    throw new HttpError(
-      response.status,
-      "empty_catalog",
-      "The model catalog is empty.",
-    );
+
+  const [first, ...rest] = body.data
+    .map(parseModel)
+    .filter((model) => model !== null);
+  if (first === undefined) {
+    throw new WizardError("The model catalog is empty.");
   }
-  return models;
-}
+
+  return [first, ...rest];
+};

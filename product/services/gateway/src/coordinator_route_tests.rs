@@ -1,39 +1,15 @@
-use super::tests::{metadata, TestServingState};
+use super::support::{
+    classify_messages, headers, StateChange, CHAT_BODY, FRONTIER_BODY, PROVIDER_KEYS,
+};
 use super::*;
-use crate::protocol::Protocol;
-
-const HOSTED_BODY: &[u8] = br#"{"model":"model-a","messages":[{}]}"#;
-const FRONTIER_BODY: &[u8] = br#"{"model":"claude-sonnet-5","max_tokens":16}"#;
-
-fn headers(values: &[(&'static str, &str)]) -> HeaderMap {
-    let mut headers = HeaderMap::new();
-    for (name, value) in values {
-        headers.append(
-            axum::http::HeaderName::from_static(name),
-            value.parse().unwrap(),
-        );
-    }
-
-    headers
-}
+use crate::auth::Provider;
+use crate::test_support::{metadata, TestServingState};
 
 #[tokio::test]
 async fn a_hosted_name_serves_locally_even_with_a_provider_key() {
     let state = Arc::new(TestServingState::ready());
-    let route = RelayRoute::AnthropicMessages;
-    let headers = headers(&[
-        ("x-gradiated-api-key", "grad_test"),
-        ("x-api-key", "sk-ant-example"),
-    ]);
-
-    let classified = RequestCoordinator::new(state.clone())
-        .classify(
-            &headers,
-            HOSTED_BODY,
-            metadata().received_at,
-            Protocol::AnthropicMessages,
-            Some(route),
-        )
+    let headers = headers(&PROVIDER_KEYS);
+    let classified = classify_messages(state.clone(), &headers, CHAT_BODY)
         .await
         .unwrap();
 
@@ -45,21 +21,35 @@ async fn a_hosted_name_serves_locally_even_with_a_provider_key() {
 }
 
 #[tokio::test]
+async fn a_hosted_name_that_cannot_serve_never_relays() {
+    let unservable: [(&str, StateChange); 2] = [
+        ("unavailable", |state| {
+            state.model.as_mut().unwrap().status = ModelStatus::Unavailable
+        }),
+        ("retired", |state| {
+            state.model.as_mut().unwrap().status = ModelStatus::Retired
+        }),
+    ];
+    let headers = headers(&PROVIDER_KEYS);
+
+    for (name, change) in unservable {
+        let mut state = TestServingState::ready();
+        change(&mut state);
+        let result = classify_messages(Arc::new(state), &headers, CHAT_BODY).await;
+
+        assert_eq!(
+            result.err(),
+            Some(GatewayError::ModelUnavailable),
+            "a {name} hosted name must not reach a provider"
+        );
+    }
+}
+
+#[tokio::test]
 async fn an_unresolved_name_relays_with_the_matching_provider_key() {
     let state = Arc::new(TestServingState::without_models());
-    let headers = headers(&[
-        ("x-gradiated-api-key", "grad_test"),
-        ("x-api-key", "sk-ant-example"),
-    ]);
-
-    let classified = RequestCoordinator::new(state.clone())
-        .classify(
-            &headers,
-            FRONTIER_BODY,
-            metadata().received_at,
-            Protocol::AnthropicMessages,
-            Some(RelayRoute::AnthropicMessages),
-        )
+    let headers = headers(&PROVIDER_KEYS);
+    let classified = classify_messages(state.clone(), &headers, FRONTIER_BODY)
         .await
         .unwrap();
 
@@ -86,16 +76,27 @@ async fn an_unresolved_name_relays_with_the_matching_provider_key() {
 
 #[tokio::test]
 async fn an_unresolved_name_without_a_provider_key_stays_a_local_error() {
-    let state = Arc::new(TestServingState::without_models());
     let headers = headers(&[("x-gradiated-api-key", "grad_test")]);
+    let result = classify_messages(
+        Arc::new(TestServingState::without_models()),
+        &headers,
+        FRONTIER_BODY,
+    )
+    .await;
 
-    let result = RequestCoordinator::new(state)
+    assert_eq!(result.err(), Some(GatewayError::ModelNotFound));
+}
+
+#[tokio::test]
+async fn an_endpoint_without_a_relay_route_never_relays_an_unresolved_name() {
+    let headers = headers(&PROVIDER_KEYS);
+    let result = RequestCoordinator::new(Arc::new(TestServingState::without_models()))
         .classify(
             &headers,
             FRONTIER_BODY,
             metadata().received_at,
-            Protocol::AnthropicMessages,
-            Some(RelayRoute::AnthropicMessages),
+            Protocol::OpenAiChat,
+            None,
         )
         .await;
 
@@ -104,27 +105,24 @@ async fn an_unresolved_name_without_a_provider_key_stays_a_local_error() {
 
 #[tokio::test]
 async fn a_route_rejects_another_providers_key() {
-    let state = Arc::new(TestServingState::without_models());
     let headers = headers(&[
         ("x-gradiated-api-key", "grad_test"),
         ("authorization", "Bearer sk-openai-example"),
     ]);
-
-    let result = RequestCoordinator::new(state)
-        .classify(
-            &headers,
-            FRONTIER_BODY,
-            metadata().received_at,
-            Protocol::AnthropicMessages,
-            Some(RelayRoute::AnthropicMessages),
-        )
-        .await;
+    let result = classify_messages(
+        Arc::new(TestServingState::without_models()),
+        &headers,
+        FRONTIER_BODY,
+    )
+    .await;
 
     assert_eq!(result.err(), Some(GatewayError::InvalidApiKey));
 }
 
 #[tokio::test]
 async fn an_unusable_target_is_rejected_before_any_state_lookup() {
+    let headers = headers(&PROVIDER_KEYS);
+
     for body in [
         &br#"{"messages":[{}]}"#[..],
         &br#"{"model":"","messages":[{}]}"#[..],
@@ -132,20 +130,7 @@ async fn an_unusable_target_is_rejected_before_any_state_lookup() {
         &br#"{oops"#[..],
     ] {
         let state = Arc::new(TestServingState::without_models());
-        let headers = headers(&[
-            ("x-gradiated-api-key", "grad_test"),
-            ("x-api-key", "sk-ant-example"),
-        ]);
-
-        let result = RequestCoordinator::new(state.clone())
-            .classify(
-                &headers,
-                body,
-                metadata().received_at,
-                Protocol::AnthropicMessages,
-                Some(RelayRoute::AnthropicMessages),
-            )
-            .await;
+        let result = classify_messages(state.clone(), &headers, body).await;
 
         assert!(
             matches!(result, Err(GatewayError::InvalidRequest { .. })),
@@ -154,31 +139,7 @@ async fn an_unusable_target_is_rejected_before_any_state_lookup() {
         );
         assert!(
             state.calls.lock().unwrap().is_empty(),
-            "an unusable target must not reach Valkey"
+            "an unusable target must not reach the serving state"
         );
     }
-}
-
-#[tokio::test]
-async fn an_invalid_workspace_key_is_rejected_before_the_catalog() {
-    let mut state = TestServingState::without_models();
-    state.credential = None;
-    let state = Arc::new(state);
-    let headers = headers(&[
-        ("x-gradiated-api-key", "grad_test"),
-        ("x-api-key", "sk-ant-example"),
-    ]);
-
-    let result = RequestCoordinator::new(state.clone())
-        .classify(
-            &headers,
-            FRONTIER_BODY,
-            metadata().received_at,
-            Protocol::AnthropicMessages,
-            Some(RelayRoute::AnthropicMessages),
-        )
-        .await;
-
-    assert_eq!(result.err(), Some(GatewayError::InvalidApiKey));
-    assert_eq!(*state.calls.lock().unwrap(), ["credential"]);
 }

@@ -1,6 +1,6 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema, UuidSchema } from "./common.js";
+import { NameSchema, TimestampSchema, UuidSchema } from "./common.js";
 
 export const OrganizationRoleSchema = z.enum([
   "owner",
@@ -12,7 +12,7 @@ export const OrganizationRoleSchema = z.enum([
 export const CurrentOrganizationSchema = z
   .object({
     id: UuidSchema,
-    name: z.string().min(1).max(200),
+    name: NameSchema,
     status: z.enum(["active", "suspended"]),
     role: OrganizationRoleSchema,
     default_workspace_id: UuidSchema,
@@ -22,7 +22,7 @@ export const CurrentOrganizationSchema = z
 export const CurrentUserSchema = z
   .object({
     id: UuidSchema,
-    name: z.string().min(1).max(200),
+    name: NameSchema,
     email: z.email(),
     email_verified: z.boolean(),
     image_url: z.url().nullable(),

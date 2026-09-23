@@ -3,10 +3,11 @@ import {
   problemContent,
   type CurrentUser,
 } from "@gradiated/contracts";
+import type { OrganizationService } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { problemDocument } from "../http/problem-response.js";
-import type { ApiEnvironment, ApiServices } from "../types.js";
+import { requireUser } from "../http/problems.js";
+import type { ApiEnvironment } from "../types.js";
 
 const getCurrentUserRoute = createRoute({
   method: "get",
@@ -25,27 +26,13 @@ const getCurrentUserRoute = createRoute({
   },
 });
 
-export function registerMeRoutes(
+export const registerMeRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  services: ApiServices,
-): void {
+  organizations: Pick<OrganizationService, "listForUser">,
+): void => {
   app.openapi(getCurrentUserRoute, async (context) => {
-    const user = context.get("user");
-    if (!user) {
-      return context.json(
-        problemDocument(context, {
-          type: "https://gradiated.com/problems/unauthenticated",
-          title: "Authentication required",
-          status: 401,
-          detail: "A valid human session is required for this operation.",
-          code: "unauthenticated",
-        }),
-        401,
-        { "Content-Type": "application/problem+json" },
-      );
-    }
-
-    const organizations = await services.organizations.listForUser(user.id);
+    const user = await requireUser(context);
+    const memberships = await organizations.listForUser(user.id);
     const response: CurrentUser = {
       id: user.id,
       name: user.name,
@@ -53,7 +40,7 @@ export function registerMeRoutes(
       email_verified: user.emailVerified,
       image_url: user.image,
       created_at: user.createdAt.toISOString(),
-      organizations: organizations.map((organization) => ({
+      organizations: memberships.map((organization) => ({
         id: organization.id,
         name: organization.name,
         status: organization.status,
@@ -64,4 +51,4 @@ export function registerMeRoutes(
 
     return context.json(response, 200);
   });
-}
+};

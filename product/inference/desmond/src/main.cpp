@@ -1,442 +1,385 @@
+#include "desmond/child_process.h"
+#include "desmond/config.h"
+#include "desmond/control_api.h"
+#include "desmond/deployment_status.h"
 #include "desmond/gpu_metrics.h"
 #include "desmond/http.h"
+#include "desmond/http_client.h"
+#include "desmond/json.h"
 #include "desmond/profiling.h"
-#include "desmond/status.h"
-#include "desmond/supervisor.h"
+#include "desmond/profiling_events.h"
+#include "desmond/runtime_health.h"
+#include "desmond/runtime_launch.h"
+#include "desmond/runtime_metrics.h"
+#include "desmond/status_reporter.h"
+#include "desmond/supervised_child.h"
+#include "desmond/supervisor_metrics.h"
 #include "desmond/trace.h"
 
 #include <signal.h>
+#include <unistd.h>
 
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
-#include <fstream>
 #include <iostream>
-#include <limits>
 #include <memory>
-#include <sstream>
+#include <optional>
+#include <span>
 #include <string>
+#include <string_view>
 #include <thread>
-#include <vector>
+#include <variant>
 
-#include <unistd.h>
+extern char **environ;
 
 namespace {
 
+using namespace std::chrono_literals;
+using Clock = std::chrono::steady_clock;
+
+constexpr int exit_usage = 64;
+constexpr int exit_software_error = 70;
+
+constexpr std::size_t trace_ring_capacity = 65'536;
+constexpr std::size_t trace_drain_per_tick = 4'096;
+constexpr std::size_t trace_final_drain = trace_ring_capacity;
+constexpr auto runtime_terminate_grace = 30s;
+constexpr auto status_metrics_timeout = 750ms;
+constexpr auto scrape_metrics_timeout = 2s;
+
+static_assert(std::atomic<bool>::is_always_lock_free,
+              "stop_requested is written from a signal handler");
 std::atomic<bool> stop_requested{false};
 
-void handle_signal(int) { stop_requested.store(true, std::memory_order_relaxed); }
-
-std::string environment(const char* name, const char* fallback) {
-  const char* value = std::getenv(name);
-  return value == nullptr || *value == '\0' ? fallback : value;
+void request_stop(int) {
+  stop_requested.store(true);
 }
 
-std::string token_from_environment(const char *name, const char *file_name) {
-  const auto path = environment(file_name, "");
-  if (path.empty())
-    return environment(name, "");
-  std::ifstream file(path);
-  std::string token;
-  if (!file || !std::getline(file, token) || token.empty() ||
-      token.size() > 4096) {
-    throw std::runtime_error("could not read token file");
-  }
-  if (!token.empty() && token.back() == '\r')
-    token.pop_back();
-  return token;
+void install_stop_handlers() {
+  struct sigaction action {};
+  action.sa_handler = request_stop;
+  sigemptyset(&action.sa_mask);
+  sigaction(SIGTERM, &action, nullptr);
+  sigaction(SIGINT, &action, nullptr);
 }
 
-std::uint16_t environment_port(const char* name, const std::uint16_t fallback) {
-  const char* value = std::getenv(name);
-  if (value == nullptr || *value == '\0') {
-    return fallback;
+std::optional<std::string_view> process_environment(const std::string_view name) {
+  const char *value = std::getenv(std::string(name).c_str());
+  if (value == nullptr) {
+    return std::nullopt;
   }
-  const auto parsed = std::stoul(value);
-  if (parsed == 0 || parsed > 65535) {
-    throw std::runtime_error(std::string("invalid port in ") + name);
-  }
-  return static_cast<std::uint16_t>(parsed);
+
+  return value;
 }
 
-double environment_double(const char* name, const double fallback) {
-  const char* value = std::getenv(name);
-  if (value == nullptr || *value == '\0') return fallback;
-  const auto parsed = std::stod(value);
-  if (parsed <= 0.0 || parsed > 1.0) {
-    throw std::runtime_error(std::string("invalid value in ") + name);
-  }
-  return parsed;
-}
-
+// Containers normally run desmondd as PID 1. Include a per-start nonce so a stale file from an
+// unclean container exit cannot silently disable request-level telemetry on restart.
 std::string unique_trace_path() {
-  const auto start_nonce = std::chrono::steady_clock::now().time_since_epoch().count();
-  return "/dev/shm/desmond-trace-" + std::to_string(getpid()) + '-' +
-         std::to_string(start_nonce);
+  const auto start_nonce = Clock::now().time_since_epoch().count();
+  return "/dev/shm/desmond-trace-" + std::to_string(getpid()) + '-' + std::to_string(start_nonce);
 }
 
-std::string json_escape(const std::string& value) {
-  std::string result;
-  for (const char character : value) {
-    switch (character) {
-      case '\\': result += "\\\\"; break;
-      case '"': result += "\\\""; break;
-      case '\n': result += "\\n"; break;
-      default: result += character;
-    }
-  }
-  return result;
-}
-
-std::string trace_properties(const desmond::TraceEvent& event) {
-  std::ostringstream properties;
-  properties << "{\"monotonic_ns\":" << event.monotonic_ns;
-  if (event.request_id_high != 0 || event.request_id_low != 0) {
-    properties << ",\"request_id_high\":"
-               << desmond::json_string(std::to_string(event.request_id_high))
-               << ",\"request_id_low\":"
-               << desmond::json_string(std::to_string(event.request_id_low));
-  }
-  if (event.batch_id != 0) {
-    properties << ",\"batch_id\":" << desmond::json_string(std::to_string(event.batch_id));
-  }
-  if (event.graph_node_id != 0) properties << ",\"graph_node_id\":" << event.graph_node_id;
-  if (event.device_id != 0) properties << ",\"device_id\":" << event.device_id;
-  switch (event.type) {
-    case desmond::TraceEventType::request_admitted:
-      properties << ",\"input_tokens\":" << event.value0
-                 << ",\"cached_input_tokens\":" << event.value1
-                 << ",\"slot_id\":" << event.stream_id
-                 << ",\"queue_us\":" << event.graph_execution_id;
-      break;
-    case desmond::TraceEventType::request_finished:
-      properties << ",\"output_tokens\":" << event.value0
-                 << ",\"ttft_us\":" << event.value1
-                 << ",\"slot_id\":" << event.stream_id
-                 << ",\"total_us\":" << event.graph_execution_id;
-      break;
-    case desmond::TraceEventType::batch_formed:
-      properties << ",\"batch_row\":" << event.value0
-                 << ",\"batch_shape_value\":" << event.value1
-                 << ",\"request_context_tokens\":" << event.graph_node_id
-                 << ",\"slot_id\":" << event.stream_id;
-      break;
-    case desmond::TraceEventType::request_failed:
-    case desmond::TraceEventType::request_cancelled:
-      if (event.stream_id != std::numeric_limits<std::uint32_t>::max()) {
-        properties << ",\"slot_id\":" << event.stream_id;
-      }
-      break;
-    case desmond::TraceEventType::prefill_batch:
-      properties << ",\"batch_size\":" << event.value0
-                 << ",\"computed_tokens\":" << event.value1
-                 << ",\"duration_us\":" << event.graph_execution_id;
-      if (event.request_id_high != 0 || event.request_id_low != 0) {
-        properties << ",\"slot_id\":" << event.stream_id;
-      } else {
-        properties << ",\"execution_flags\":" << event.stream_id;
-      }
-      break;
-    case desmond::TraceEventType::decode_batch:
-    case desmond::TraceEventType::speculative_batch:
-      properties << ",\"batch_size\":" << event.value0
-                 << ",\"maximum_context_tokens\":" << event.value1
-                 << ",\"duration_us\":" << event.graph_execution_id
-                 << ",\"cache_layout\":"
-                 << desmond::json_string(event.stream_id == 1 ? "contiguous" : "fragmented");
-      break;
-    default:
-      properties << ",\"value0\":" << event.value0 << ",\"value1\":" << event.value1
-                 << ",\"duration_us\":" << event.graph_execution_id;
-      break;
-  }
-  properties << '}';
-  return properties.str();
-}
-
-}  // namespace
-
-int main(int argc, char** argv) {
+std::unique_ptr<desmond::SharedTraceRing> create_trace_ring(const std::string &path) {
   try {
-    const bool observe_only = argc == 2 && std::string(argv[1]) == "--observe";
-    int command_start = observe_only ? argc : 1;
-    if (argc > 1 && std::string(argv[1]) == "--") {
-      command_start = 2;
-    }
-    if (!observe_only && argc <= command_start) {
-      std::cerr << "usage: desmondd --observe | -- <runtime> [arguments...]\n";
-      return 64;
-    }
-    std::vector<std::string> command;
-    for (int index = command_start; index < argc; ++index) {
-      command.emplace_back(argv[index]);
-    }
-    const std::string runtime_api_key = environment("DESMOND_RUNTIME_API_KEY", "");
-    const std::string runtime_api_key_mode = environment("DESMOND_RUNTIME_API_KEY_MODE", "argument");
-    if (!observe_only && !runtime_api_key.empty() &&
-        runtime_api_key_mode == "argument") {
-      command.emplace_back("--api-key");
-      command.push_back(runtime_api_key);
-    } else if (runtime_api_key_mode != "argument" &&
-               runtime_api_key_mode != "environment") {
-      throw std::runtime_error("DESMOND_RUNTIME_API_KEY_MODE must be argument or environment");
+    return desmond::SharedTraceRing::create(path, trace_ring_capacity);
+  } catch (const std::exception &error) {
+    std::cerr << "desmond: shared trace ring unavailable: " << error.what() << '\n';
+    return nullptr;
+  }
+}
+
+int exit_code_for_unexpected(const desmond::ExitStatus &status) {
+  if (const auto *signaled = std::get_if<desmond::Signaled>(&status)) {
+    return 128 + signaled->signal;
+  }
+
+  const int code = std::get<desmond::Exited>(status).code;
+  return code == 0 ? exit_software_error : code;
+}
+
+class Interval {
+public:
+  explicit Interval(const Clock::duration period) : period_(period), next_(Clock::now()) {}
+
+  bool due(const Clock::time_point now) {
+    if (now < next_) {
+      return false;
     }
 
-    const std::string control_host = environment("DESMOND_CONTROL_HOST", "0.0.0.0");
-    const auto control_port = environment_port("DESMOND_CONTROL_PORT", 9090);
-    const std::string runtime_host = environment("DESMOND_RUNTIME_HOST", "127.0.0.1");
-    const auto runtime_port = environment_port("DESMOND_RUNTIME_PORT", 30000);
-    const std::string runtime_health_path = environment("DESMOND_RUNTIME_HEALTH_PATH", "/health");
-    const std::string release = environment("DESMOND_RELEASE", "unknown");
-    const std::string model = environment("DESMOND_MODEL", "unknown");
-    const std::string model_revision = environment("DESMOND_MODEL_REVISION", "unknown");
-    const std::string control_token = token_from_environment(
-        "DESMOND_CONTROL_TOKEN", "DESMOND_CONTROL_TOKEN_FILE");
-    const std::string deployment_id = environment("DESMOND_DEPLOYMENT_ID", "");
+    next_ = now + period_;
+    return true;
+  }
 
-    desmond::ProfilingUploader profiling({
-        .host = environment("DESMOND_PROFILING_HOST", ""),
-        .port = environment_port("DESMOND_PROFILING_PORT", 80),
-        .path = environment("DESMOND_PROFILING_PATH", "/v1/profiling-events"),
-        .token = environment("DESMOND_PROFILING_TOKEN", ""),
-        .deployment_id = deployment_id,
-        .model_id = model,
-        .runtime_revision = release,
-    });
-    const auto kv_usage_limit = environment_double("DESMOND_KV_USAGE_LIMIT", 0.90);
-    desmond::StatusReporter status_reporter({
-        .host = environment("DESMOND_STATUS_HOST", ""),
-        .port = environment_port("DESMOND_STATUS_PORT", 80),
-        .path = environment("DESMOND_STATUS_PATH", "/v1/deployment-status"),
-        .token = token_from_environment("DESMOND_STATUS_TOKEN",
-                                        "DESMOND_STATUS_TOKEN_FILE"),
-        .deployment_id = deployment_id,
-        .runtime_revision = release,
-        .interval = std::chrono::seconds(1),
-        .url = environment("DESMOND_STATUS_URL", ""),
-    });
-    if (observe_only && (!status_reporter.enabled() || release == "unknown" ||
-                         model == "unknown")) {
-      throw std::runtime_error("observer requires deployment identity and "
-                               "status reporting configuration");
+private:
+  Clock::duration period_;
+  Clock::time_point next_;
+};
+
+class Desmond {
+public:
+  explicit Desmond(const desmond::DesmondConfig &config)
+      : config_(config), health_(runtime_url(config_.runtime_health_path), std::cerr),
+        status_metrics_({.url = runtime_url("/metrics"),
+                         .timeout = status_metrics_timeout,
+                         .log_subject = "runtime metrics fetch"},
+                        std::cerr),
+        scrape_metrics_({.url = runtime_url("/metrics"),
+                         .timeout = scrape_metrics_timeout,
+                         .log_subject = "runtime metrics scrape"},
+                        std::cerr),
+        server_(config_.control.host, config_.control.port,
+                [this](const desmond::HttpRequest &request) { return handle(request); }) {
+    if (config_.profiling) {
+      profiling_.emplace(*config_.profiling, std::cerr);
+    } else {
+      std::cerr << "desmond: profiling disabled\n";
+    }
+    if (config_.status) {
+      reporter_.emplace(*config_.status, std::cerr);
+    } else {
+      std::cerr << "desmond: deployment status reporting disabled\n";
+    }
+    if (!gpu_.available()) {
+      std::cerr << "desmond: NVML unavailable at startup: " << gpu_.error() << '\n';
     }
 
-    std::unique_ptr<desmond::SharedTraceRing> trace_ring;
-    // Containers normally run desmondd as PID 1. Include a per-start nonce so a stale file from
-    // an unclean container exit cannot silently disable request-level telemetry on restart.
-    const std::string default_trace_path = unique_trace_path();
-    const std::string trace_path = environment("DESMOND_TRACE_PATH", default_trace_path.c_str());
+    if (const auto *supervised = std::get_if<desmond::SuperviseRuntime>(&config_.runtime)) {
+      start_runtime(*supervised);
+    } else {
+      record("observer.started", "{}");
+    }
+  }
+
+  int run() {
+    std::thread http_thread([this] { server_.run(); });
+
+    int exit_code = exit_software_error;
+    auto final_status = desmond::DeploymentStatus::runtime_unavailable;
     try {
-      if (!observe_only) {
-        trace_ring = desmond::SharedTraceRing::create(trace_path, 65'536);
-        if (setenv("DESMOND_TRACE_PATH", trace_path.c_str(), 1) != 0) {
-          throw std::runtime_error("failed to export DESMOND_TRACE_PATH");
-        }
+      if (const auto runtime_exit = supervise()) {
+        exit_code = exit_code_for_unexpected(*runtime_exit);
+      } else {
+        exit_code = EXIT_SUCCESS;
+        final_status = desmond::DeploymentStatus::draining;
       }
-    } catch (const std::exception& error) {
-      unsetenv("DESMOND_TRACE_PATH");
-      std::cerr << "desmond: shared trace ring unavailable: " << error.what() << '\n';
-      trace_ring.reset();
-    }
-    std::atomic<std::uint64_t> consumed_trace_events{0};
-
-    signal(SIGTERM, handle_signal);
-    signal(SIGINT, handle_signal);
-
-    desmond::GpuMetrics gpu_metrics;
-    if (!gpu_metrics.available()) {
-      std::cerr << "desmond: NVML unavailable at startup: " << gpu_metrics.error() << '\n';
-    }
-    desmond::RuntimeSupervisor supervisor(
-        command, runtime_host, runtime_port, runtime_health_path,
-        std::chrono::seconds(30), observe_only);
-    if (!supervisor.start()) {
-      std::cerr << "desmond: failed to start runtime\n";
-      return 70;
+    } catch (const std::exception &error) {
+      std::cerr << "desmond: fatal: " << error.what() << '\n';
     }
 
-    desmond::HttpServer server(control_host, control_port, [&](const desmond::HttpRequest& request) {
-      const auto status = supervisor.status();
-      const bool ready = status.runtime_ready && !status.draining &&
-                         (!observe_only || status_reporter.recently_uploaded());
-      if (request.method != "GET") {
-        return desmond::HttpResponse{405, "text/plain; charset=utf-8", "method not allowed\n"};
-      }
-      if (request.path == "/health/live") {
-        return desmond::HttpResponse{200, "text/plain; charset=utf-8", "ok\n"};
-      }
-      if (request.path == "/health/ready" || request.path == "/health") {
-        return desmond::HttpResponse{ready ? 200 : 503,
-                                     "text/plain; charset=utf-8",
-                                     ready ? "ready\n" : "not ready\n"};
-      }
-      if (request.path == "/metrics") {
-        std::ostringstream metrics;
-        metrics << "# HELP desmond_runtime_running Whether the supervised runtime process is running.\n"
-                << "# TYPE desmond_runtime_running gauge\n"
-                << "desmond_runtime_running " << (status.child_running ? 1 : 0) << '\n'
-                << "# HELP desmond_runtime_ready Whether the runtime health endpoint is ready.\n"
-                << "# TYPE desmond_runtime_ready gauge\n"
-                << "desmond_runtime_ready " << (status.runtime_ready ? 1 : 0) << '\n'
-                << "desmond_runtime_starts_total " << status.starts << '\n'
-                << "desmond_runtime_unexpected_exits_total " << status.unexpected_exits << '\n'
-                << "desmond_release_info{release=\"" << json_escape(release)
-                << "\",model=\"" << json_escape(model) << "\",model_revision=\""
-                << json_escape(model_revision) << "\"} 1\n"
-                << gpu_metrics.prometheus()
-                << profiling.prometheus()
-                << status_reporter.prometheus()
-                << "desmond_trace_enabled " << (trace_ring ? 1 : 0) << '\n'
-                << "desmond_trace_consumed_events_total "
-                << consumed_trace_events.load(std::memory_order_relaxed) << '\n'
-                << "desmond_trace_dropped_events_total "
-                << (trace_ring ? trace_ring->dropped() : 0) << '\n';
-        const auto upstream = desmond::http_get(runtime_host, runtime_port, "/metrics",
-                                                std::chrono::seconds(2));
-        if (upstream.transport_ok && upstream.status == 200) {
-          metrics << "\n# SGLang runtime metrics\n" << upstream.body;
-        }
-        return desmond::HttpResponse{200, "text/plain; version=0.0.4; charset=utf-8", metrics.str()};
-      }
-      if (request.path == "/v1/desmond/status") {
-        if (!control_token.empty() && request.authorization != "Bearer " + control_token) {
-          return desmond::HttpResponse{401, "application/json", "{\"error\":\"unauthorized\"}\n"};
-        }
-        std::ostringstream body;
-        body << "{\"child_running\":" << (status.child_running ? "true" : "false")
-             << ",\"runtime_ready\":" << (status.runtime_ready ? "true" : "false")
-             << ",\"draining\":" << (status.draining ? "true" : "false")
-             << ",\"pid\":" << status.pid << ",\"starts\":" << status.starts
-             << ",\"unexpected_exits\":" << status.unexpected_exits
-             << ",\"release\":\"" << json_escape(release) << "\",\"model\":\""
-             << json_escape(model) << "\",\"model_revision\":\""
-             << json_escape(model_revision) << "\"}\n";
-        return desmond::HttpResponse{200, "application/json", body.str()};
-      }
-      return desmond::HttpResponse{404, "text/plain; charset=utf-8", "not found\n"};
-    });
-
-    std::thread http_thread([&] {
-      try {
-        server.run();
-      } catch (const std::exception& error) {
-        std::cerr << "desmond: HTTP server failed: " << error.what() << '\n';
-        stop_requested.store(true, std::memory_order_relaxed);
-      }
-    });
-
-    auto next_health = std::chrono::steady_clock::now();
-    auto next_status = std::chrono::steady_clock::now();
-    auto next_gpu_profile = std::chrono::steady_clock::now();
-    auto next_runtime_profile = std::chrono::steady_clock::now();
-    bool prior_ready = false;
-    const auto drain_trace = [&](const std::size_t maximum_events) {
-      if (!trace_ring) return;
-      desmond::TraceEvent event;
-      std::size_t consumed = 0;
-      while (consumed < maximum_events && trace_ring->try_pop(event)) {
-        profiling.enqueue(std::string("runtime.") + desmond::trace_event_type_name(event.type),
-                          trace_properties(event));
-        ++consumed;
-      }
-      consumed_trace_events.fetch_add(consumed, std::memory_order_relaxed);
-    };
-    profiling.enqueue(observe_only ? "observer.started" : "runtime.started",
-                      "{\"pid\":" + std::to_string(supervisor.status().pid) +
-                          "}");
-    while (!stop_requested.load(std::memory_order_relaxed)) {
-      drain_trace(4'096);
-      supervisor.poll();
-      const auto status = supervisor.status();
-      if (!observe_only && !status.child_running) {
-        std::cerr << "desmond: runtime exited with code " << status.last_exit_code << '\n';
-        stop_requested.store(true, std::memory_order_relaxed);
-        break;
-      }
-      if (std::chrono::steady_clock::now() >= next_health) {
-        supervisor.check_health();
-        next_health = std::chrono::steady_clock::now() + std::chrono::seconds(1);
-      }
-      const auto current = supervisor.status();
-      if (current.runtime_ready != prior_ready) {
-        profiling.enqueue("runtime.state", std::string("{\"ready\":") +
-                                               (current.runtime_ready ? "true}" : "false}"));
-        prior_ready = current.runtime_ready;
-      }
-      if (std::chrono::steady_clock::now() >= next_status) {
-        desmond::RuntimePressure pressure;
-        bool metrics_available = false;
-        if (current.runtime_ready) {
-          const auto runtime_metrics = desmond::http_get(
-              runtime_host, runtime_port, "/metrics", std::chrono::milliseconds(750));
-          if (runtime_metrics.transport_ok && runtime_metrics.status == 200) {
-            metrics_available = true;
-            pressure = desmond::parse_runtime_pressure(runtime_metrics.body,
-                                                       kv_usage_limit);
-          }
-        }
-        desmond::DeploymentStatusSnapshot snapshot;
-        snapshot.healthy = current.child_running && current.runtime_ready;
-        snapshot.accepting_requests =
-            snapshot.healthy && !current.draining &&
-            (!observe_only || metrics_available) && !pressure.kv_pressure;
-        if (!snapshot.healthy) {
-          snapshot.reason_code = "runtime_unavailable";
-        } else if (current.draining) {
-          snapshot.reason_code = "draining";
-        } else if (observe_only && !metrics_available) {
-          snapshot.reason_code = "metrics_unavailable";
-        } else if (pressure.kv_pressure) {
-          snapshot.reason_code = "kv_pressure";
-        }
-        status_reporter.update(std::move(snapshot));
-        next_status = std::chrono::steady_clock::now() + std::chrono::seconds(1);
-      }
-      if (std::chrono::steady_clock::now() >= next_gpu_profile) {
-        for (const auto& gpu : gpu_metrics.sample()) {
-          std::ostringstream properties;
-          properties << "{\"gpu_index\":" << gpu.index
-                     << ",\"gpu_uuid\":" << desmond::json_string(gpu.uuid)
-                     << ",\"gpu_utilization_percent\":" << gpu.gpu_utilization_percent
-                     << ",\"memory_utilization_percent\":" << gpu.memory_utilization_percent
-                     << ",\"memory_total_bytes\":" << gpu.memory_total_bytes
-                     << ",\"memory_used_bytes\":" << gpu.memory_used_bytes
-                     << ",\"memory_free_bytes\":" << gpu.memory_free_bytes
-                     << ",\"temperature_celsius\":" << gpu.temperature_celsius
-                     << ",\"power_milliwatts\":" << gpu.power_milliwatts
-                     << ",\"total_energy_millijoules\":" << gpu.total_energy_millijoules
-                     << '}';
-          profiling.enqueue("gpu.sample", properties.str());
-        }
-        next_gpu_profile = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-      }
-      if (current.runtime_ready && std::chrono::steady_clock::now() >= next_runtime_profile) {
-        const auto runtime_metrics = desmond::http_get(runtime_host, runtime_port, "/metrics",
-                                                       std::chrono::seconds(2));
-        if (runtime_metrics.transport_ok && runtime_metrics.status == 200) {
-          profiling.enqueue("runtime.metrics_snapshot",
-                            "{\"prometheus_text\":" +
-                                desmond::json_string(runtime_metrics.body) + "}");
-        }
-        next_runtime_profile = std::chrono::steady_clock::now() + std::chrono::seconds(15);
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-
-    profiling.enqueue(observe_only ? "observer.stopping" : "runtime.stopping",
-                      "{}");
-    supervisor.shutdown();
-    status_reporter.update({.healthy = false,
-                            .accepting_requests = false,
-                            .reason_code = "draining"});
-    drain_trace(65'536);
-    profiling.stop();
-    status_reporter.stop();
-    server.stop();
+    shut_down(final_status);
+    server_.stop();
     http_thread.join();
-    return 0;
-  } catch (const std::exception& error) {
+    return exit_code;
+  }
+
+private:
+  std::string runtime_url(const std::string_view path) const {
+    return desmond::http_url(config_.runtime_endpoint.host, config_.runtime_endpoint.port, path);
+  }
+
+  void start_runtime(const desmond::SuperviseRuntime &runtime) {
+    std::optional<std::string> trace_path;
+    if (profiling_) {
+      trace_path = runtime.trace_path.value_or(unique_trace_path());
+      trace_ring_ = create_trace_ring(*trace_path);
+    }
+    if (!trace_ring_) {
+      trace_path.reset();
+    }
+
+    const auto launch = desmond::runtime_launch(runtime, environ, trace_path);
+    child_.emplace(launch.command, launch.environment);
+    record("runtime.started", desmond::JsonObjectWriter().field("pid", child_->pid()).str());
+  }
+
+  std::optional<desmond::ExitStatus> supervise() {
+    Interval health_check(1s);
+    Interval status_report(1s);
+    Interval gpu_sample(5s);
+    Interval metrics_snapshot(15s);
+    bool prior_ready = false;
+
+    while (!stop_requested.load()) {
+      drain_trace(trace_drain_per_tick);
+      if (auto runtime_exit = reap_unexpected_exit()) {
+        return runtime_exit;
+      }
+
+      const auto now = Clock::now();
+      if (health_check.due(now)) {
+        health_.check();
+      }
+
+      const auto runtime = health_.state();
+      const bool ready = runtime == desmond::RuntimeState::ready;
+      if (ready != prior_ready) {
+        record("runtime.state", desmond::JsonObjectWriter().field("ready", ready).str());
+        prior_ready = ready;
+      }
+
+      if (status_report.due(now)) {
+        const auto metrics = ready ? status_metrics_.fetch() : std::nullopt;
+        if (reporter_) {
+          reporter_->update(desmond::assess_deployment(runtime, config_.mode(), metrics,
+                                                       config_.kv_usage_limit));
+        }
+        if (metrics && metrics_snapshot.due(now)) {
+          record("runtime.metrics_snapshot",
+                 desmond::JsonObjectWriter().field("prometheus_text", *metrics).str());
+        }
+      }
+
+      if (gpu_sample.due(now)) {
+        for (const auto &sample : gpu_.sample()) {
+          record("gpu.sample", desmond::gpu_sample_properties(sample));
+        }
+      }
+
+      std::this_thread::sleep_for(100ms);
+    }
+
+    return std::nullopt;
+  }
+
+  std::optional<desmond::ExitStatus> reap_unexpected_exit() {
+    auto status = child_ ? child_->try_reap() : std::nullopt;
+    if (!status) {
+      return std::nullopt;
+    }
+
+    std::cerr << "desmond: runtime exited unexpectedly with " << desmond::to_string(*status)
+              << '\n';
+    child_state_ = desmond::ChildState::exited_unexpectedly;
+    return status;
+  }
+
+  void shut_down(const desmond::DeploymentStatus final_status) {
+    health_.start_draining();
+    if (reporter_) {
+      reporter_->update(final_status);
+      reporter_->stop();
+    }
+    record(config_.mode() == desmond::Mode::supervise ? "runtime.stopping" : "observer.stopping",
+           "{}");
+
+    if (child_ && child_state_ == desmond::ChildState::running) {
+      const auto status = child_->terminate(runtime_terminate_grace);
+      child_state_ = desmond::ChildState::stopped;
+      std::cerr << "desmond: runtime stopped with " << desmond::to_string(status) << '\n';
+    }
+
+    drain_trace(trace_final_drain);
+    if (profiling_) {
+      profiling_->stop();
+    }
+  }
+
+  void record(std::string event_type, std::string properties) {
+    if (profiling_) {
+      profiling_->enqueue(std::move(event_type), std::move(properties));
+    }
+  }
+
+  void drain_trace(const std::size_t maximum_events) {
+    if (!trace_ring_) {
+      return;
+    }
+
+    desmond::TraceEvent event;
+    std::size_t consumed = 0;
+    while (consumed < maximum_events && trace_ring_->try_pop(event)) {
+      record(std::string("runtime.") + desmond::trace_event_type_name(event.type),
+             desmond::trace_event_properties(event));
+      ++consumed;
+    }
+
+    consumed_trace_events_ += consumed;
+  }
+
+  std::optional<desmond::SupervisedChild> supervised_child() const {
+    if (!child_) {
+      return std::nullopt;
+    }
+
+    return desmond::SupervisedChild{.pid = child_->pid(), .state = child_state_.load()};
+  }
+
+  desmond::HttpResponse handle(const desmond::HttpRequest &request) {
+    return desmond::handle_control_request(
+        request, {
+                     .mode = config_.mode(),
+                     .runtime = health_.state(),
+                     .supervised_child = supervised_child(),
+                     .reporter_fresh = reporter_ && reporter_->recently_uploaded(),
+                     .identity = config_.identity,
+                     .control_token = config_.control_token,
+                     .desmond_metrics = [this] { return desmond_metrics(); },
+                     .runtime_metrics = [this] { return scrape_metrics_.fetch(); },
+                 });
+  }
+
+  std::optional<desmond::TraceCounters> trace_counters() const {
+    if (!trace_ring_) {
+      return std::nullopt;
+    }
+
+    return desmond::TraceCounters{
+        .consumed = consumed_trace_events_.load(),
+        .dropped = trace_ring_->dropped(),
+    };
+  }
+
+  std::string desmond_metrics() const {
+    auto metrics = desmond::supervisor_prometheus({
+        .supervised_child = supervised_child(),
+        .runtime = health_.state(),
+        .identity = config_.identity,
+        .profiling_enabled = profiling_.has_value(),
+        .trace = trace_counters(),
+    });
+
+    metrics += gpu_.prometheus();
+    if (profiling_) {
+      metrics += profiling_->prometheus();
+    }
+    if (reporter_) {
+      metrics += reporter_->prometheus();
+    }
+
+    return metrics;
+  }
+
+  const desmond::DesmondConfig &config_;
+  desmond::RuntimeHealth health_;
+  desmond::RuntimeMetrics status_metrics_;
+  desmond::RuntimeMetrics scrape_metrics_;
+  desmond::GpuMetrics gpu_;
+  desmond::HttpServer server_;
+  std::optional<desmond::ProfilingUploader> profiling_;
+  std::optional<desmond::StatusReporter> reporter_;
+  std::unique_ptr<desmond::SharedTraceRing> trace_ring_;
+  std::optional<desmond::ChildProcess> child_;
+  std::atomic<desmond::ChildState> child_state_{desmond::ChildState::running};
+  std::atomic<std::uint64_t> consumed_trace_events_{0};
+};
+
+} // namespace
+
+int main(const int argc, char **argv) {
+  try {
+    const auto config = desmond::load_config(
+        std::span<const char *const>(argv + 1, static_cast<std::size_t>(argc - 1)),
+        process_environment);
+    install_stop_handlers();
+
+    Desmond desmond(config);
+    return desmond.run();
+  } catch (const desmond::ConfigError &error) {
+    std::cerr << "desmond: " << error.what() << '\n';
+    return exit_usage;
+  } catch (const std::exception &error) {
     std::cerr << "desmond: fatal: " << error.what() << '\n';
-    return 70;
+    return exit_software_error;
   }
 }

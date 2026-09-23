@@ -19,7 +19,6 @@ struct LayerSlicedSuffixPrefillResult {
   std::vector<int> predictions;
 };
 
-// Homogeneous-position batch used to establish the throughput ceiling before ragged scheduling.
 class Gemma4BatchModelRunner {
  public:
   Gemma4BatchModelRunner(const struct Gemma4Config& config, const class DeviceWeightArena& weights,
@@ -32,42 +31,33 @@ class Gemma4BatchModelRunner {
   Gemma4BatchModelRunner& operator=(const Gemma4BatchModelRunner&) = delete;
 
   std::vector<int> append(const std::vector<int>& token_ids);
-  // Prefills one stable slot using the shared prefill workspace and returns its greedy next token.
   int prefill_slot(int slot, const std::vector<int>& token_ids, int chunk_tokens = 1024);
-  // Continues prefill from an exact token prefix already resident in the slot's hybrid KV cache.
+  // The first cached_prefix_tokens of token_ids must already be resident in the slot.
   int prefill_slot_from_prefix(int slot, const std::vector<int>& token_ids,
                                int cached_prefix_tokens, int chunk_tokens = 1024);
-  // Advances a slot's prefill by at most chunk_tokens. Returns the greedy next token only when
-  // the complete prompt is resident, allowing a scheduler to bound interruption of active decode.
+  // Returns the greedy next token only when the complete prompt is resident.
   std::optional<int> prefill_slot_chunk(int slot, const std::vector<int>& token_ids,
                                         int chunk_tokens);
-  // Advances several slots by one bounded chunk in a shared model pass. An entry contains a
-  // prediction only when that request's complete prompt became resident during this pass.
+  // An entry holds a prediction only when that request's complete prompt became resident.
   std::vector<std::optional<int>> prefill_slots_chunks(
       const std::vector<int>& slots,
       const std::vector<const std::vector<int>*>& token_ids,
       int chunk_tokens);
-  // Extends several stable slots to the ends of their prompts with one shared projection batch.
   std::vector<int> prefill_slots_suffix(
       const std::vector<int>& slots,
       const std::vector<const std::vector<int>*>& token_ids);
-  // Runs a full suffix cohort through at most maximum_layers more transformer layers. Dedicated
-  // hidden-state storage survives intervening decode waves, so preemption does not repeat any
-  // model layer or alter the token graph.
+  // Hidden states survive intervening decode waves, so a preempted cohort never repeats a layer.
   LayerSlicedSuffixPrefillResult prefill_slots_suffix_layer_slice(
       const std::vector<int>& slots,
       const std::vector<const std::vector<int>*>& token_ids,
       int maximum_layers);
   void abort_suffix_layer_slices();
   [[nodiscard]] bool has_suffix_layer_slices() const;
-  // Copies the exact hybrid KV state and logical position between stable slots on device.
   std::uint64_t clone_slot(int source_slot, int destination_slot);
-  // Decodes compact active rows while retaining each request's stable cache slot.
   std::vector<int> append_ragged(const std::vector<int>& token_ids,
                                  const std::vector<int>& slots);
-  // Verifies four-token draft continuations in one target pass. Cache positions are committed
-  // only through each accepted prefix; rejected sliding-ring rows are restored exactly and
-  // stale global-cache tail rows remain unreachable.
+  // Commits cache positions only through each accepted prefix. Rejected sliding-ring rows are
+  // restored exactly, and stale global-cache tail rows stay unreachable.
   GreedyVerificationResult verify_greedy_proposals(
       const std::vector<std::vector<int>>& proposals,
       const std::vector<int>& target_first_tokens,
@@ -78,7 +68,8 @@ class Gemma4BatchModelRunner {
       const std::vector<int>& last_tokens, const std::vector<int>& slots,
       const std::vector<int>& forced_first_tokens = {}, int depth = 4);
   void reset_slot(int slot);
-  // Performance harness only: fills every allocated KV page with zero and advances logical time.
+  // Zero-fills every allocated KV page and advances logical time. Benchmarks and the runtime
+  // warmup use it to build decode plans before any request arrives.
   void seed_empty_cache_for_benchmark(int position);
   [[nodiscard]] int batch() const;
   [[nodiscard]] int position() const;

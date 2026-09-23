@@ -1,24 +1,23 @@
-use std::{str::FromStr, sync::Arc};
+use std::{net::IpAddr, str::FromStr, sync::Arc};
 
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use deadpool_postgres::{Manager, ManagerConfig, Pool, RecyclingMethod};
 use rustls::ClientConfig;
 use thiserror::Error;
-use tokio_postgres::{Config, NoTls, Row};
+use tokio_postgres::{
+    config::{Host, SslMode},
+    Config, NoTls, Row,
+};
 use tokio_postgres_rustls::MakeRustlsConnect;
 use uuid::Uuid;
 
-/// Reads the authoritative identity and catalog records. PostgreSQL is the source
-/// of truth and Valkey caches what this returns, never the other way round. Every
-/// record comes back as the JSON the gateway already understands, so the value that
-/// is cached and the value that is deserialized are the same bytes. This type only
-/// ever selects; the role it connects with holds no write privilege.
+/// PostgreSQL is the source of truth and Valkey caches what this returns. The
+/// role this connects with is read-only.
 #[derive(Clone)]
 pub struct PostgresReader {
     pool: Pool,
 }
 
-/// One ledger entry that has not yet reached the operational balance.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct BalanceTransaction {
     pub id: Uuid,
@@ -35,17 +34,22 @@ impl BalanceTransaction {
     }
 }
 
-/// A place in the ledger, ordered the way the query orders it.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+/// Orders as the ledger query does: by `created_at`, then by `id`.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct LedgerPosition {
     pub created_at: DateTime<Utc>,
     pub id: Uuid,
 }
 
 impl LedgerPosition {
-    /// The position a seeded balance starts from. The id is the highest possible
-    /// one, so entries sharing the source balance's timestamp stay excluded, which
-    /// is what the balance already included.
+    pub fn replay_cursor(self) -> Self {
+        Self {
+            created_at: self.created_at - LEDGER_REPLAY_WINDOW,
+            id: Uuid::nil(),
+        }
+    }
+
+    #[cfg(test)]
     pub fn after_balance_at(created_at: DateTime<Utc>) -> Self {
         Self {
             created_at,
@@ -54,17 +58,35 @@ impl LedgerPosition {
     }
 }
 
-/// Every field the account hash needs on first write. `balance` and
-/// `balance_updated_at` seed the operational balance exactly once; the worker
-/// replays later transactions on top of that seed.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AccountRecord {
     pub organization_kind: String,
     pub organization_status: String,
     pub billing_mode: String,
-    pub balance: i64,
-    pub balance_updated_at: DateTime<Utc>,
+    pub seed: BalanceSeed,
 }
+
+/// Seeds the operational balance exactly once; the gateway replays later ledger
+/// entries on top of it.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct BalanceSeed {
+    pub balance: i64,
+    /// The latest ledger entry the balance includes, or the Unix epoch and the nil
+    /// id when the ledger is empty.
+    pub ledger_head: LedgerPosition,
+    /// Entries the balance includes that a replay from the head fetches again.
+    pub replay_window_entries: Vec<Uuid>,
+}
+
+const POOL_SIZE: usize = 16;
+
+/// Ledger writers stamp `created_at` on their own hosts, so under clock skew, or
+/// within one millisecond where UUIDv7 ids order at random, an entry can commit
+/// after one with a later (created_at, id). A replay therefore reaches back this
+/// far behind its watermark, and the applied-transaction set drops what the
+/// balance already holds. The window also covers the watermark, which Valkey keeps
+/// in milliseconds while PostgreSQL keeps microseconds.
+const LEDGER_REPLAY_WINDOW: TimeDelta = TimeDelta::seconds(30);
 
 const CREDENTIAL_QUERY: &str = "\
 select json_build_object(
@@ -86,8 +108,7 @@ select json_build_object(
 from workspaces
 where id = $1";
 
-/// Deployments are ordered exactly as the projector ordered them, so routing sees
-/// the same candidate order it always has.
+/// Routing tries deployments in this order.
 const MODEL_QUERY: &str = "\
 select json_build_object(
     'id', models.id,
@@ -134,38 +155,57 @@ where organization_id = $1
 order by created_at, id
 limit $4";
 
+/// One statement reads the balance and the ledger head, so both come from the
+/// same snapshot. Every ledger writer updates the balance in the transaction that
+/// inserts the entry.
 const ACCOUNT_QUERY: &str = "\
 select
     organizations.kind,
     organizations.status,
     billing_accounts.mode,
     billing_accounts.balance,
-    billing_accounts.updated_at
+    coalesce(head.created_at, 'epoch'),
+    coalesce(head.id, '00000000-0000-0000-0000-000000000000'),
+    coalesce(
+      (
+        select array_agg(replayable.id)
+        from balance_transactions replayable
+        where replayable.organization_id = organizations.id
+          and replayable.created_at
+            >= date_trunc('milliseconds', head.created_at) - make_interval(secs => $2)
+          and replayable.source_type <> 'generation_settlement_batch'
+      ),
+      '{}'
+    )
 from organizations
 join billing_accounts on billing_accounts.organization_id = organizations.id
+left join lateral (
+    select created_at, id
+    from balance_transactions
+    where balance_transactions.organization_id = organizations.id
+    order by created_at desc, id desc
+    limit 1
+  ) head on true
 where organizations.id = $1";
 
 impl PostgresReader {
-    /// Uses TLS unless the connection string opts out, which only a local
-    /// PostgreSQL without TLS does.
     pub fn connect(url: &str, ca_bundle_path: Option<&str>) -> Result<Self, PostgresError> {
-        let url = &translated_ssl_mode(url);
-        let config = Config::from_str(url)?;
+        let config = connection_config(url)?;
         let manager_config = ManagerConfig {
             recycling_method: RecyclingMethod::Fast,
         };
-        let manager = if requires_tls(url) {
+        let manager = if config.get_ssl_mode() == SslMode::Disable {
+            Manager::from_config(config, NoTls, manager_config)
+        } else {
             let tls = MakeRustlsConnect::new(tls_config(ca_bundle_path)?);
             Manager::from_config(config, tls, manager_config)
-        } else {
-            Manager::from_config(config, NoTls, manager_config)
         };
 
         Ok(Self {
             pool: Pool::builder(manager)
                 .max_size(POOL_SIZE)
                 .build()
-                .map_err(|error| PostgresError::Pool(error.to_string()))?,
+                .map_err(PostgresError::PoolBuild)?,
         })
     }
 
@@ -203,18 +243,20 @@ impl PostgresReader {
         let row = self
             .client()
             .await?
-            .query_opt(ACCOUNT_QUERY, &[&organization_id])
+            .query_opt(
+                ACCOUNT_QUERY,
+                &[&organization_id, &LEDGER_REPLAY_WINDOW.as_seconds_f64()],
+            )
             .await?;
 
         row.map(account_record).transpose()
     }
 
-    /// Ledger entries after the position the account hash already includes.
     pub async fn balance_transactions_after(
         &self,
         organization_id: Uuid,
-        watermark: LedgerPosition,
-        limit: i64,
+        cursor: LedgerPosition,
+        limit: u16,
     ) -> Result<Vec<BalanceTransaction>, PostgresError> {
         let rows = self
             .client()
@@ -223,9 +265,9 @@ impl PostgresReader {
                 BALANCE_TRANSACTIONS_QUERY,
                 &[
                     &organization_id,
-                    &watermark.created_at,
-                    &watermark.id,
-                    &limit,
+                    &cursor.created_at,
+                    &cursor.id,
+                    &i64::from(limit),
                 ],
             )
             .await?;
@@ -241,19 +283,6 @@ impl PostgresReader {
             .collect()
     }
 
-    /// Lets the integration tests exercise the digest comparison with a digest the
-    /// database actually holds.
-    #[cfg(test)]
-    pub(crate) async fn any_credential_digest(&self) -> Result<Option<Vec<u8>>, PostgresError> {
-        let row = self
-            .client()
-            .await?
-            .query_opt("select digest from api_keys limit 1", &[])
-            .await?;
-
-        row.map(|row| Ok(row.try_get(0)?)).transpose()
-    }
-
     async fn record(
         &self,
         query: &str,
@@ -265,10 +294,7 @@ impl PostgresReader {
     }
 
     async fn client(&self) -> Result<deadpool_postgres::Object, PostgresError> {
-        self.pool
-            .get()
-            .await
-            .map_err(|error| PostgresError::Pool(error.to_string()))
+        Ok(self.pool.get().await?)
     }
 }
 
@@ -277,25 +303,45 @@ fn account_record(row: Row) -> Result<AccountRecord, PostgresError> {
         organization_kind: row.try_get(0)?,
         organization_status: row.try_get(1)?,
         billing_mode: row.try_get(2)?,
-        balance: row.try_get(3)?,
-        balance_updated_at: row.try_get(4)?,
+        seed: BalanceSeed {
+            balance: row.try_get(3)?,
+            ledger_head: LedgerPosition {
+                created_at: row.try_get(4)?,
+                id: row.try_get(5)?,
+            },
+            replay_window_entries: row.try_get(6)?,
+        },
     })
 }
-
-const POOL_SIZE: usize = 16;
 
 /// `tokio-postgres` accepts only libpq's `disable`, `prefer` and `require`, while
 /// this repository's connection strings ask for `verify-full`. That mode wants the
 /// certificate chain and the hostname checked, and the Rustls configuration below
-/// always checks both, so the mode is translated rather than weakened. Passing it
-/// through unchanged makes the connection string fail to parse at startup.
-fn translated_ssl_mode(url: &str) -> String {
-    url.replace("sslmode=verify-full", "sslmode=require")
-        .replace("sslmode=verify-ca", "sslmode=require")
+/// always checks both, so the mode is translated rather than weakened.
+///
+/// `prefer`, which is also the default, continues in plaintext when the server
+/// declines TLS. That is acceptable only on this machine, where the local
+/// PostgreSQL has no TLS, so a remote server must use it.
+fn connection_config(url: &str) -> Result<Config, PostgresError> {
+    let url = url
+        .replace("sslmode=verify-full", "sslmode=require")
+        .replace("sslmode=verify-ca", "sslmode=require");
+    let mut config = Config::from_str(&url).map_err(PostgresError::Configuration)?;
+
+    if config.get_ssl_mode() == SslMode::Prefer && !config.get_hosts().iter().all(is_loopback) {
+        config.ssl_mode(SslMode::Require);
+    }
+
+    Ok(config)
 }
 
-fn requires_tls(url: &str) -> bool {
-    !url.contains("sslmode=disable")
+fn is_loopback(host: &Host) -> bool {
+    match host {
+        Host::Tcp(name) => {
+            name == "localhost" || name.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback())
+        }
+        Host::Unix(_) => true,
+    }
 }
 
 /// Names the provider rather than reading the process-level default, so this does
@@ -324,6 +370,7 @@ fn tls_config(ca_bundle_path: Option<&str>) -> Result<ClientConfig, PostgresErro
                 .map_err(|error| PostgresError::Tls(error.to_string()))?;
             added += 1;
         }
+
         if added == 0 {
             return Err(PostgresError::Tls(format!("{path} holds no certificate")));
         }
@@ -338,9 +385,13 @@ fn tls_config(ca_bundle_path: Option<&str>) -> Result<ClientConfig, PostgresErro
 #[derive(Debug, Error)]
 pub enum PostgresError {
     #[error("PostgreSQL connection string is invalid: {0}")]
-    Configuration(#[from] tokio_postgres::Error),
-    #[error("PostgreSQL pool is unavailable: {0}")]
-    Pool(String),
+    Configuration(#[source] tokio_postgres::Error),
+    #[error("PostgreSQL query failed: {0}")]
+    Query(#[from] tokio_postgres::Error),
+    #[error("PostgreSQL pool could not be built: {0}")]
+    PoolBuild(#[source] deadpool_postgres::BuildError),
+    #[error("PostgreSQL connection is unavailable: {0}")]
+    Pool(#[from] deadpool_postgres::PoolError),
     #[error("PostgreSQL TLS configuration is invalid: {0}")]
     Tls(String),
 }
@@ -348,3 +399,280 @@ pub enum PostgresError {
 #[cfg(test)]
 #[path = "postgres_reader_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+mod connection_tests {
+    use std::path::PathBuf;
+
+    use super::*;
+
+    const RDS_CA_BUNDLE: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/rds-ca-bundle.pem");
+
+    struct Bundle(PathBuf);
+
+    impl Bundle {
+        fn holding(contents: &str) -> Self {
+            let path = std::env::temp_dir().join(format!("gateway-ca-{}.pem", Uuid::now_v7()));
+            std::fs::write(&path, contents).unwrap();
+
+            Self(path)
+        }
+
+        fn path(&self) -> &str {
+            self.0.to_str().unwrap()
+        }
+    }
+
+    impl Drop for Bundle {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_file(&self.0);
+        }
+    }
+
+    #[test]
+    fn a_remote_server_must_use_tls() {
+        for (url, mode) in [
+            ("postgres://u:p@db.example/gradiated", SslMode::Require),
+            (
+                "postgres://u:p@db.example/gradiated?sslmode=prefer",
+                SslMode::Require,
+            ),
+            (
+                "postgres://u:p@db.example/gradiated?sslmode=verify-full",
+                SslMode::Require,
+            ),
+            (
+                "postgres://u:p@db.example/gradiated?sslmode=verify-ca",
+                SslMode::Require,
+            ),
+            ("postgres://u:p@127.0.0.1/gradiated", SslMode::Prefer),
+            ("postgres://u:p@localhost/gradiated", SslMode::Prefer),
+            (
+                "postgres://u:p@127.0.0.1/gradiated?sslmode=disable",
+                SslMode::Disable,
+            ),
+        ] {
+            assert_eq!(
+                connection_config(url).unwrap().get_ssl_mode(),
+                mode,
+                "{url}"
+            );
+        }
+    }
+
+    #[test]
+    fn an_unparseable_connection_string_is_a_configuration_error() {
+        let result = PostgresReader::connect("postgres://127.0.0.1/gradiated?sslmode=bogus", None);
+
+        assert!(matches!(result, Err(PostgresError::Configuration(_))));
+    }
+
+    #[test]
+    fn the_rds_bundle_builds_a_tls_configuration() {
+        assert!(tls_config(Some(RDS_CA_BUNDLE)).is_ok());
+    }
+
+    #[test]
+    fn an_unreadable_bundle_is_a_tls_error() {
+        let result = tls_config(Some("/nonexistent/rds-ca-bundle.pem"));
+
+        assert!(matches!(result, Err(PostgresError::Tls(_))));
+    }
+
+    #[test]
+    fn a_bundle_without_a_certificate_is_a_tls_error() {
+        let bundle = Bundle::holding("");
+
+        let result = tls_config(Some(bundle.path()));
+
+        assert!(
+            matches!(&result, Err(PostgresError::Tls(message)) if message.ends_with("holds no certificate"))
+        );
+    }
+
+    #[test]
+    fn an_invalid_certificate_entry_is_a_tls_error() {
+        let bundle =
+            Bundle::holding("-----BEGIN CERTIFICATE-----\n!!!\n-----END CERTIFICATE-----\n");
+
+        let result = tls_config(Some(bundle.path()));
+
+        assert!(matches!(result, Err(PostgresError::Tls(_))));
+    }
+}
+
+#[cfg(test)]
+mod account_seed_tests {
+    use chrono::TimeZone;
+
+    use super::*;
+
+    const LOCAL_URL: &str =
+        "postgres://gradiated:gradiated@127.0.0.1:5432/gradiated?sslmode=disable";
+
+    struct Tenant {
+        client: tokio_postgres::Client,
+        organization_id: Uuid,
+    }
+
+    impl Tenant {
+        async fn with_balance(balance: i64) -> Self {
+            let (client, connection) = tokio_postgres::connect(LOCAL_URL, NoTls).await.unwrap();
+            tokio::spawn(connection);
+            let organization_id = Uuid::now_v7();
+
+            client
+                .execute(
+                    "insert into organizations (id, kind, name, status)
+                     values ($1, 'customer', $2, 'active')",
+                    &[&organization_id, &format!("seed-{organization_id}")],
+                )
+                .await
+                .unwrap();
+            client
+                .execute(
+                    "insert into billing_accounts (organization_id, mode, balance)
+                     values ($1, 'prepaid', $2)",
+                    &[&organization_id, &balance],
+                )
+                .await
+                .unwrap();
+
+            Self {
+                client,
+                organization_id,
+            }
+        }
+
+        async fn record_entry(&self, source_type: &str, created_at: &str) -> LedgerPosition {
+            let id = Uuid::now_v7();
+            let row = self
+                .client
+                .query_one(
+                    "insert into balance_transactions
+                       (id, organization_id, type, amount, balance_after, source_type,
+                        source_id, created_at)
+                     values ($1, $2, 'adjustment', 1, 1, $3, $4, $5::text::timestamptz)
+                     returning created_at",
+                    &[
+                        &id,
+                        &self.organization_id,
+                        &source_type,
+                        &id.to_string(),
+                        &created_at,
+                    ],
+                )
+                .await
+                .unwrap();
+
+            LedgerPosition {
+                created_at: row.get(0),
+                id,
+            }
+        }
+
+        fn reader() -> PostgresReader {
+            PostgresReader::connect(LOCAL_URL, None).unwrap()
+        }
+
+        async fn delete(self) {
+            self.client
+                .execute(
+                    "delete from organizations where id = $1",
+                    &[&self.organization_id],
+                )
+                .await
+                .unwrap();
+        }
+
+        async fn read_and_delete(self) -> AccountRecord {
+            let record = Self::reader().account(self.organization_id).await;
+            self.delete().await;
+
+            record.unwrap().unwrap()
+        }
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+    async fn paging_by_position_visits_entries_that_share_a_timestamp_once() {
+        let tenant = Tenant::with_balance(0).await;
+        let mut recorded = Vec::new();
+        for _ in 0..5 {
+            recorded.push(
+                tenant
+                    .record_entry("operator", "2026-09-23 12:00:00.000000+00")
+                    .await,
+            );
+        }
+        recorded.sort();
+
+        let reader = Tenant::reader();
+        let mut cursor = LedgerPosition {
+            created_at: Utc.timestamp_opt(0, 0).unwrap(),
+            id: Uuid::nil(),
+        };
+        let mut visited = Vec::new();
+        loop {
+            let page = reader
+                .balance_transactions_after(tenant.organization_id, cursor, 2)
+                .await
+                .unwrap();
+            let Some(last) = page.last() else {
+                break;
+            };
+
+            cursor = last.position();
+            visited.extend(page.iter().map(BalanceTransaction::position));
+        }
+        tenant.delete().await;
+
+        assert_eq!(visited, recorded);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+    async fn the_seed_names_the_ledger_head_and_the_entries_in_its_replay_window() {
+        let tenant = Tenant::with_balance(3).await;
+        tenant
+            .record_entry("operator", "2026-09-23 11:59:30.122999+00")
+            .await;
+        let within_window = tenant
+            .record_entry("operator", "2026-09-23 11:59:30.123000+00")
+            .await;
+        let same_millisecond = tenant
+            .record_entry("operator", "2026-09-23 12:00:00.123456+00")
+            .await;
+        let head = tenant
+            .record_entry(
+                "generation_settlement_batch",
+                "2026-09-23 12:00:00.123789+00",
+            )
+            .await;
+
+        let seed = tenant.read_and_delete().await.seed;
+
+        assert_eq!(seed.balance, 3);
+        assert_eq!(seed.ledger_head, head);
+        let mut replayed = seed.replay_window_entries;
+        replayed.sort();
+        assert_eq!(replayed, vec![within_window.id, same_millisecond.id]);
+    }
+
+    #[tokio::test]
+    #[ignore = "requires the local Compose PostgreSQL with migrations applied"]
+    async fn an_empty_ledger_seeds_from_the_epoch() {
+        let tenant = Tenant::with_balance(0).await;
+
+        let seed = tenant.read_and_delete().await.seed;
+
+        assert_eq!(
+            seed.ledger_head,
+            LedgerPosition {
+                created_at: Utc.timestamp_opt(0, 0).unwrap(),
+                id: Uuid::nil(),
+            }
+        );
+        assert!(seed.replay_window_entries.is_empty());
+    }
+}

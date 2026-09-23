@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import type { ControlDatabase } from "@gradiated/control";
+import { z } from "@hono/zod-openapi";
 
-import { createAuthService, resolveAuthTrustedOrigins } from "../src/auth.js";
+import {
+  createAuthService,
+  resolveAuthTrustedOrigins,
+} from "../src/auth/service.js";
 
 const createSocialAuth = (
   trustedOrigins: string[] = ["http://localhost:3000"],
@@ -32,6 +36,11 @@ const createSocialAuth = (
       trustedOrigins,
     },
   );
+
+const SocialSignInSchema = z.object({
+  url: z.string(),
+  redirect: z.boolean(),
+});
 
 describe("social authentication providers", () => {
   it("accepts a website docs callback during local development", async () => {
@@ -100,10 +109,7 @@ describe("social authentication providers", () => {
       );
 
       expect(response.status).toBe(200);
-      const body = (await response.json()) as {
-        url: string;
-        redirect: boolean;
-      };
+      const body = SocialSignInSchema.parse(await response.json());
       const authorizationURL = new URL(body.url);
 
       expect(body.redirect).toBe(false);

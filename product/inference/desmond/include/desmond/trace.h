@@ -40,52 +40,32 @@ struct TraceEvent {
   TraceEventType type{};
 };
 
-class TraceRing {
- public:
-  explicit TraceRing(std::size_t capacity);
-  TraceRing(const TraceRing&) = delete;
-  TraceRing& operator=(const TraceRing&) = delete;
-
-  [[nodiscard]] bool try_push(const TraceEvent& event) noexcept;
-  [[nodiscard]] bool try_pop(TraceEvent& event) noexcept;
-  [[nodiscard]] std::size_t capacity() const noexcept;
-  [[nodiscard]] std::uint64_t dropped() const noexcept;
-
- private:
-  std::size_t capacity_;
-  std::unique_ptr<TraceEvent[]> events_;
-  alignas(64) std::atomic<std::uint64_t> head_{0};
-  alignas(64) std::atomic<std::uint64_t> tail_{0};
-  std::atomic<std::uint64_t> dropped_{0};
-};
-
 // Fixed-size single-producer/single-consumer ring shared between desmondd and its
 // supervised runtime. The producer never allocates, locks, or performs I/O on the
 // inference path; a full ring drops the event instead of applying backpressure.
 class SharedTraceRing {
- public:
+public:
   static std::unique_ptr<SharedTraceRing> create(std::string path, std::size_t capacity);
   static std::unique_ptr<SharedTraceRing> open_existing(std::string path);
   ~SharedTraceRing();
-  SharedTraceRing(const SharedTraceRing&) = delete;
-  SharedTraceRing& operator=(const SharedTraceRing&) = delete;
+  SharedTraceRing(const SharedTraceRing &) = delete;
+  SharedTraceRing &operator=(const SharedTraceRing &) = delete;
 
-  [[nodiscard]] bool try_push(const TraceEvent& event) noexcept;
-  [[nodiscard]] bool try_pop(TraceEvent& event) noexcept;
-  [[nodiscard]] std::size_t capacity() const noexcept;
+  [[nodiscard]] bool try_push(const TraceEvent &event) noexcept;
+  [[nodiscard]] bool try_pop(TraceEvent &event) noexcept;
   [[nodiscard]] std::uint64_t dropped() const noexcept;
-  [[nodiscard]] const std::string& path() const noexcept;
 
- private:
-  SharedTraceRing(std::string path, void* mapping, std::size_t mapping_bytes,
-                  bool owner) noexcept;
+private:
+  SharedTraceRing(std::string path, void *mapping, std::size_t mapping_bytes,
+                  std::uint64_t capacity, bool owner) noexcept;
 
   std::string path_;
-  void* mapping_{nullptr};
-  std::size_t mapping_bytes_{0};
-  bool owner_{false};
+  void *mapping_;
+  std::size_t mapping_bytes_;
+  std::uint64_t mask_;
+  bool owner_;
 };
 
-[[nodiscard]] const char* trace_event_type_name(TraceEventType type) noexcept;
+[[nodiscard]] const char *trace_event_type_name(TraceEventType type) noexcept;
 
-}  // namespace desmond
+} // namespace desmond

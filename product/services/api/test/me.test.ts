@@ -1,41 +1,63 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createApp } from "../src/app.js";
-import { authenticated, organizationId, user, workspaceId } from "./support.js";
+import {
+  anonymous,
+  authenticated,
+  captureServiceLogs,
+  createTestApp,
+  expectProblem,
+  organizationId,
+  organizationSummary,
+  sessionStoreDown,
+  unauthenticatedProblem,
+  user,
+  workspaceId,
+} from "./support.js";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("current user route", () => {
   it("rejects requests without a human session", async () => {
-    const response = await createApp().request("/api/v1/me");
+    const response = await createTestApp({ auth: anonymous }).request(
+      "/api/v1/me",
+    );
 
-    expect(response.status).toBe(401);
-    await expect(response.json()).resolves.toMatchObject({
-      code: "unauthenticated",
+    await expectProblem(response, unauthenticatedProblem);
+  });
+
+  it("reports an unreachable session store as unavailable and logs its cause", async () => {
+    const logs = captureServiceLogs();
+
+    const response = await createTestApp({ auth: sessionStoreDown }).request(
+      "/api/v1/me",
+    );
+
+    await expectProblem(response, {
+      status: 503,
+      code: "unavailable",
+      type: "unavailable",
     });
+    expect(logs.events()).toContainEqual(
+      expect.objectContaining({
+        level: "error",
+        event: "request_problem",
+        route: "/api/v1/me",
+        status: 503,
+        error_type: "SessionStoreError",
+      }),
+    );
   });
 
   it("returns the current user and organization summaries", async () => {
-    const app = createApp({
+    const app = createTestApp({
       auth: authenticated,
       services: {
-        organizations: {
-          createForUser: async () => {
-            throw new Error("not used");
-          },
-          ensurePersonalForUser: async () => {
-            throw new Error("not used");
-          },
-          listForUser: async () => [
-            {
-              id: organizationId,
-              name: "Analytical Engines",
-              status: "active",
-              role: "owner",
-              defaultWorkspaceId: workspaceId,
-            },
-          ],
-        },
+        organizations: { listForUser: async () => [organizationSummary] },
       },
     });
+
     const response = await app.request("/api/v1/me");
 
     expect(response.status).toBe(200);
@@ -49,7 +71,7 @@ describe("current user route", () => {
       organizations: [
         {
           id: organizationId,
-          name: "Analytical Engines",
+          name: "Personal",
           status: "active",
           role: "owner",
           default_workspace_id: workspaceId,

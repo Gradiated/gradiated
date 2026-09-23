@@ -1,18 +1,20 @@
-import { Check, Copy, KeyRound } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { KeyRound } from "lucide-react";
 import { useState } from "react";
 
+import { useCreateApiKey } from "@/api/queries";
+import { CopyStateIcon } from "@/components/copy-state-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { useProductContext } from "@/hooks/use-product-context";
 import { connectSnippet, type ConnectClient } from "@/lib/connect-snippets";
+import { errorMessage } from "@/lib/errors";
 import { slugifyTaskInput, taskSlugError } from "@/lib/task-slug";
-import { useMockFineTuning } from "@/store/mock-fine-tuning";
+import { useConnectFlow } from "@/store/connect-flow";
 
-/** Same shape as the docs: a language tab row, then the SDK variant inside the code block. */
-const LANGUAGES: {
-  label: string;
-  variants: { label: string; client: ConnectClient }[];
-}[] = [
+const LANGUAGES = [
   {
     label: "Python",
     variants: [
@@ -34,40 +36,34 @@ const LANGUAGES: {
       { label: "Anthropic", client: "curl-anthropic" },
     ],
   },
-];
+] as const satisfies readonly {
+  label: string;
+  variants: readonly { label: string; client: ConnectClient }[];
+}[];
 
 export const ConnectSnippet = () => {
-  const {
-    connect_api_key,
-    connect_task_slug,
-    createApiKey,
-    setConnectTaskSlug,
-  } = useMockFineTuning();
-  const [language, setLanguage] = useState(LANGUAGES[0]!.label);
-  const [variantIndex, setVariantIndex] = useState(0);
-  const [copied, setCopied] = useState(false);
-  const [keyCopied, setKeyCopied] = useState(false);
+  const taskSlug = useConnectFlow((state) => state.taskSlug);
+  const setTaskSlug = useConnectFlow((state) => state.setTaskSlug);
+  const [client, setClient] = useState<ConnectClient>(
+    LANGUAGES[0].variants[0].client,
+  );
+  const snippetCopy = useCopyToClipboard();
 
-  const lang = LANGUAGES.find((l) => l.label === language) ?? LANGUAGES[0]!;
-  const variant =
-    lang.variants[Math.min(variantIndex, lang.variants.length - 1)]!;
-  const slugError = taskSlugError(connect_task_slug);
-  const code = connectSnippet(variant.client, {
-    gradiatedKey: connect_api_key ?? "grad_…",
-    taskSlug: connect_task_slug || "your-task",
-  });
+  const language =
+    LANGUAGES.find((candidate) =>
+      candidate.variants.some((variant) => variant.client === client),
+    ) ?? LANGUAGES[0];
+  const code = connectSnippet(client, taskSlug || "your-task");
+  const slugError = taskSlugError(taskSlug);
 
-  const copy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+  const selectLanguage = (label: string) => {
+    const next = LANGUAGES.find((candidate) => candidate.label === label);
+    if (next) setClient(next.variants[0].client);
   };
-  const copyKey = async () => {
-    await navigator.clipboard.writeText(
-      `GRADIATED_API_KEY=${connect_api_key ?? ""}`,
-    );
-    setKeyCopied(true);
-    window.setTimeout(() => setKeyCopied(false), 1500);
+
+  const selectClient = (value: string) => {
+    const next = language.variants.find((variant) => variant.client === value);
+    if (next) setClient(next.client);
   };
 
   return (
@@ -78,65 +74,29 @@ export const ConnectSnippet = () => {
         </label>
         <Input
           id="connect-task"
-          value={connect_task_slug}
-          onChange={(e) => setConnectTaskSlug(slugifyTaskInput(e.target.value))}
+          value={taskSlug}
+          onChange={(event) =>
+            setTaskSlug(slugifyTaskInput(event.target.value))
+          }
           placeholder="support-triage"
           className="h-8 max-w-xs font-mono text-xs"
         />
-        {slugError && connect_task_slug ? (
+        {slugError && taskSlug ? (
           <span className="text-xs text-destructive">{slugError}</span>
         ) : null}
       </div>
 
-      {connect_api_key ? (
-        <div>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 truncate rounded-md border bg-muted px-3 py-1.5 font-mono text-xs">
-              GRADIATED_API_KEY={connect_api_key}
-            </code>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label="Copy key"
-              onClick={copyKey}
-            >
-              {keyCopied ? <Check /> : <Copy />}
-            </Button>
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Shown once — set it as an environment variable.
-          </p>
-        </div>
-      ) : (
-        <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={createApiKey}>
-            <KeyRound className="size-4" />
-            Create API key
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            or use an existing key from{" "}
-            <a href="/api-keys" className="underline">
-              API keys
-            </a>
-          </span>
-        </div>
-      )}
+      <ConnectApiKey />
 
-      <Tabs
-        value={language}
-        onValueChange={(v) => {
-          setLanguage(v);
-          setVariantIndex(0);
-        }}
-      >
+      <Tabs value={language.label} onValueChange={selectLanguage}>
         <TabsList className="h-9">
-          {LANGUAGES.map((l) => (
+          {LANGUAGES.map((candidate) => (
             <TabsTrigger
-              key={l.label}
-              value={l.label}
+              key={candidate.label}
+              value={candidate.label}
               className="h-9 px-2.5 text-xs"
             >
-              {l.label}
+              {candidate.label}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -144,37 +104,86 @@ export const ConnectSnippet = () => {
 
       <div className="min-w-0 max-w-full overflow-hidden rounded-lg border bg-muted">
         <div className="flex items-center justify-between border-b px-3">
-          <div role="tablist" className="flex gap-4">
-            {lang.variants.map((v, i) => (
-              <button
-                key={v.label}
-                type="button"
-                role="tab"
-                aria-selected={i === variantIndex}
-                onClick={() => setVariantIndex(i)}
-                className={`-mb-px border-b-2 py-2 font-mono text-[10px] font-medium uppercase tracking-[0.06em] ${
-                  i === variantIndex
-                    ? "border-foreground text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {v.label}
-              </button>
-            ))}
-          </div>
+          <Tabs value={client} onValueChange={selectClient} className="w-auto">
+            <TabsList className="h-auto gap-4 border-b-0">
+              {language.variants.map((variant) => (
+                <TabsTrigger
+                  key={variant.client}
+                  value={variant.client}
+                  className="h-auto px-0 py-2 font-mono text-[10px] uppercase tracking-[0.06em]"
+                >
+                  {variant.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
           <Button
             variant="ghost"
             size="icon-xs"
-            aria-label="Copy snippet"
-            onClick={copy}
+            aria-label={copyLabel(snippetCopy.state, "Copy snippet")}
+            onClick={() => void snippetCopy.copy(code)}
           >
-            {copied ? <Check /> : <Copy />}
+            <CopyStateIcon state={snippetCopy.state} />
           </Button>
         </div>
         <pre className="overflow-x-auto p-3 text-[11px] leading-5">
           <code>{code}</code>
         </pre>
       </div>
+    </div>
+  );
+};
+
+const ConnectApiKey = () => {
+  const { organizationId, workspaceId } = useProductContext();
+  const [secret, setSecret] = useState<string | null>(null);
+  const keyCopy = useCopyToClipboard();
+  const create = useCreateApiKey(organizationId, workspaceId);
+
+  if (secret) {
+    const variable = `GRADIATED_API_KEY=${secret}`;
+
+    return (
+      <div className="flex items-center gap-2">
+        <code className="flex-1 truncate rounded-md border bg-muted px-3 py-1.5 font-mono text-xs">
+          {variable}
+        </code>
+        <Button
+          variant="outline"
+          size="icon-sm"
+          aria-label={copyLabel(keyCopy.state, "Copy key")}
+          onClick={() => void keyCopy.copy(variable)}
+        >
+          <CopyStateIcon state={keyCopy.state} />
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!workspaceId || create.isPending}
+        onClick={() =>
+          create.mutate(
+            { name: "Training" },
+            { onSuccess: (created) => setSecret(created.secret) },
+          )
+        }
+      >
+        <KeyRound className="size-4" />
+        Create API key
+      </Button>
+      <Link to="/api-keys" className="text-xs text-muted-foreground underline">
+        API keys
+      </Link>
+      {create.isError ? (
+        <span role="alert" className="text-xs text-destructive">
+          {errorMessage(create.error, "The API key could not be created.")}
+        </span>
+      ) : null}
     </div>
   );
 };

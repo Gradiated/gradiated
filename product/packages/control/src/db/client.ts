@@ -10,12 +10,13 @@ export interface ControlDatabaseClient {
   pool: Pool;
 }
 
-export function createControlDatabase(
+export const createControlDatabase = (
   connectionString: string,
-): ControlDatabaseClient {
+): ControlDatabaseClient => {
   const pool = new Pool({ connectionString });
+
   return {
     database: drizzle({ client: pool, schema }),
     pool,
   };
-}
+};

@@ -25,7 +25,6 @@ standard library, CA certificates, Nomad, and the qualified GPU device plugin.
 The bundle entrypoint uses `GRADIATED_RUNTIME_ROOT` to find its own files. Use
 its interpreter explicitly rather than a console script with an old absolute
 shebang. The model launch code pins the checkpoint revision and serving flags.
-Keep checkpoint weights in a separate persistent cache.
 
 ```sh
 runtime-launch /path/to/extracted/runtime -- optional-entrypoint-argument
@@ -46,121 +45,119 @@ artifact size and file-count limits do not apply to this pre-start task.
 The job requires `runtime_disk_mb`; include space for the compressed archive,
 extracted runtime, and logs. Measure this for each release.
 
+## Exit status
+
+| Status            | Cause                                                                       |
+| ----------------- | --------------------------------------------------------------------------- |
+| Runtime exit code | The runtime exits normally.                                                 |
+| 128 + N           | The runtime dies from signal N.                                             |
+| 128 + N           | The launcher receives shutdown signal N. This overrides the runtime status. |
+| 127               | The entrypoint cannot be executed. Stderr names the path and the error.     |
+| 126               | The runtime process cannot be prepared.                                     |
+| 1                 | A validation or setup error occurs before the runtime starts.               |
+
+## Signals and cleanup
+
+The launcher is a Linux child subreaper. It starts the entrypoint in a new
+session and adopts orphaned descendants.
+
+- The first SIGTERM, SIGINT, or SIGHUP goes unchanged to direct and adopted
+  children.
+- When the runtime exits, the remaining descendants get SIGTERM.
+- SIGKILL follows after the grace period. `default_shutdown_grace` in
+  `supervise.h` sets it to 25 seconds.
+- The launcher returns only when no descendants remain.
+- The launcher resets inherited ignored shutdown signals and SIGCHLD. It
+  also unblocks the shutdown signals in the runtime.
+
+The supervisor cannot guarantee cleanup in these cases:
+
+- The supervisor itself gets SIGKILL.
+- The Nomad client dies.
+- A process stays in an uninterruptible kernel wait.
+
+Fence the node before you replace it in these cases. This is process lifecycle
+management. It does not isolate hostile code.
+
 ## Nomad integration
 
-The candidate job is `../nomad/jobs/deepseek-v4-1-flash.nomad.hcl`. Its bundle
-URL, checksum, base ID, CPU MHz, memory MiB, and runtime disk MiB are required
-inputs. No resource sizing or release digest is guessed. Set client metadata `runtime_base_id` to
-the ID installed in the provider image. Configure a `loopback` host network.
+The model job is `../nomad/jobs/deepseek-v4-1-flash.nomad.hcl`. The job file
+owns the task layout, resources, and timeouts. The launcher needs these job
+settings:
 
-Before submitting this job, qualify the following on the actual provider:
+- The task `kill_timeout` must be greater than the shutdown grace period.
+- Before live traffic, qualify process cleanup with a real runtime stop and
+  restart. The synthetic process-tree test passes locally and on a live Nomad
+  client.
 
-1. GPU reservation bookkeeping passed a live Runpod test with Nomad 2.0.6
-   and NVIDIA plugin 1.1.0. Two allocations received disjoint GPU pairs.
-   This does not enforce device isolation from other processes.
-2. The bundle entrypoint maps assigned device UUIDs to `CUDA_VISIBLE_DEVICES`.
-   A visibility mask is not device isolation.
-3. The runtime user cannot read the Nomad client key.
-4. Synthetic process-tree cleanup now passes locally and on a live Nomad
-   client. The launcher acts as a Linux child subreaper. On shutdown or runtime
-   exit, it terminates descendants, escalates to SIGKILL after 25 seconds, and
-   reaps them before returning. The live test included detached processes
-   that ignored SIGTERM. A real vLLM stop/restart test remains required.
-5. Set the client's maximum kill timeout to at least 60 seconds.
-6. Confirm checkpoint identity and a small inference request before exposing
-   traffic. The Nomad health check alone does not establish model identity.
+Complete these steps before you submit the job:
 
-Every serving allocation must include the `desmond` task from the job template.
-The base image installs Desmond, its HTTPS transport and a dedicated `desmond`
-Unix user. Desmond runs as a Nomad prestart sidecar in the same task group as the
-model; it observes the runtime without spawning, stopping or restarting it. Nomad
-and `runtime-launch` retain ownership of runtime lifecycle and descendant cleanup.
-The client retains `DAC_OVERRIDE` for garbage collection of downloader/runtime-owned
-directories; task launch drops all inherited and ambient capabilities.
-Reporter crashes are restarted independently; a reporting outage does not restart
-a healthy GPU runtime. Both tasks stop when the allocation is stopped.
-
-Before submission, enrollment must register the deployment ID and runtime revision
-in the control-plane catalog, configure a gateway-reachable secured inference
-endpoint, and install `/etc/gradiated/deployment-status.token` owned by `desmond`
-with mode `0600`. Also install `/etc/gradiated/runtime-access.token` for the
-authenticated control endpoint, with the same ownership/mode. The runtime user must not be able to read that file. Pass the
-matching `deployment_id`, `runtime_revision`, and HTTPS `status_url` as
-non-secret job inputs. Never put the token in HCL or
-Nomad variables visible in job inspection. The job intentionally has one replica;
-create distinct deployment registrations for additional replicas.
-
-The observer refuses to start without reporting identity and credentials. Its
-`/health/ready` requires runtime health and a successful status upload within ten
-seconds; the gateway independently rejects reports older than fifteen seconds.
-Missing runtime metrics make the deployment non-accepting, rather than guessing
-available capacity. `/metrics` combines GPU and runtime metrics with report upload
-counters. Stock vLLM does not emit the native engine's shared-memory trace events;
-observer mode does not create an unused trace ring. Profiling ingestion remains a
-separately configured endpoint; status reporting does not imply trace collection.
-
-Nomad's local service catalog is not the gateway deployment catalog. Register the
-secured inference endpoint and verify fresh reports in Valkey before directing
-traffic to any allocation. This is separate from connecting the GPU Nomad client
-to the EKS Nomad control plane.
-
-The job reserves four B300 devices on one client. No host-loss replacement is
-requested automatically. The localhost service is for health checks; it does
-not register an endpoint with the Gradiated gateway. Cold-start grace is 65
-minutes after the model task starts. Bundle download runs before that task
-starts and has a 20-minute limit; extraction has a 10-minute limit. Tune these
-with measured startup data before deployment.
-
-CI builds a versioned runtime bundle separately from the base image. A future
-release step will update the job's bundle digest and submit it. This prototype
-does not add that release step or change any provider pod.
+1. Set the bundle URL, checksum, base ID, CPU MHz, memory MiB, and runtime
+   disk MiB. The job has no defaults for these inputs.
+2. Set the client metadata `runtime_base_id` to the ID in the provider image.
+   Configure a `loopback` host network.
+3. Register the deployment ID and runtime revision in the control-plane
+   catalog. Give each replica its own registration.
+4. Install `/etc/gradiated/deployment-status.token` and
+   `/etc/gradiated/runtime-access.token`. Make `desmond` the owner and set
+   mode `0600`. Do not put a token in HCL or in Nomad variables.
+5. Confirm that the runtime user cannot read the Nomad client key or the
+   tokens.
+6. Confirm the checkpoint identity with a small inference request. The Nomad
+   health check does not prove model identity.
+7. Make sure that Valkey has fresh reports for the allocation before you send
+   traffic to it.
 
 ## Verification
 
-The Docker test image runs CTest, ShellCheck, clang-format, and shfmt. It also
-checks pre-start ordering, checksum rejection, and download failure cleanup.
-CTest reports each launcher and cleanup case separately. The integration test
-runs only in this disposable container because it creates a local CA and
-starts a temporary Nomad agent.
-
-Run the checks:
+The launcher builds only on Linux. The Docker test image is the supported
+check. It runs CTest, ShellCheck, clang-format, and shfmt. It also checks
+pre-start ordering, checksum rejection, and download failure cleanup.
 
 ```sh
 docker build -f product/inference/runtime-launcher/tests/Dockerfile \
-  product/inference
+  --target tests product/inference
 ```
 
 For a production build, configure CMake with `-DBUILD_TESTING=OFF`.
 The installed launcher has no test-tool dependency.
 
-These tests cover literal launch arguments, missing or mismatched base IDs,
-and invalid entrypoints. Process tests cover ordinary and double-forked
-descendants,
-runtime exit, runtime crash, and children that ignore SIGTERM. They check that
-unrelated processes remain alive and that the runtime exit status is retained.
+CTest reports each case separately:
 
-A local Nomad 2.0.6 fixture checks pre-start ordering and checksum rejection,
-using a local copy in place of S3. It runs without a GPU. Real S3 transfer speed
-and credential isolation require the live provider test.
+- `launcher.*` checks literal launch arguments and the canonical runtime root.
+  It rejects missing, mismatched, blank, or oversized base IDs, invalid
+  entrypoints, and bad arguments. Each rejection test checks the error message.
+  `launcher.bad-interpreter` checks status 127 and its message.
+- `cleanup.*` starts ordinary and double-forked descendants. It covers stop,
+  interrupt, hangup, runtime exit, and runtime crash. Each descendant must
+  receive the forwarded signal. Cleanup must finish in less than five seconds.
+  Unrelated processes must stay alive, and the exit status must be correct.
+- `cleanup.ignored-*` and `cleanup.blocked-stop` start the launcher with
+  inherited ignored or blocked signals. They check the same results.
+- `cleanup.stubborn` runs the supervise adapter with a 2-second grace. A
+  detached child ignores SIGTERM. The test checks that SIGKILL waits for the
+  grace period and that no descendant remains.
+- `nomad.artifact` runs a local Nomad 2.0.6 agent without a GPU. It checks
+  pre-start ordering and checksum rejection with a local copy in place of S3.
+  Real S3 transfer speed and credential isolation require the live provider
+  test.
 
-Live test: run `../nomad/tests/qualify-raw-exec.sh` with this source directory
-as its first argument on the selected Runpod pod, under a 240-second timeout.
-It compiles a test adapter around the same supervisor implementation. It does
-not install the launcher or change the existing serving processes.
+The Nomad test runs only in the disposable container. It replaces
+`/usr/local/bin/s5cmd`, writes `/etc/gradiated/artifact.env`, and starts a
+temporary agent as `nobody`.
 
-The 25-second grace must be shorter than Nomad's task kill timeout. The
-supervisor cannot guarantee cleanup if it is itself killed with SIGKILL, if
-the client dies, or if a process remains stuck in an uninterruptible kernel
-wait. These cases still require node fencing before replacement. This is
-process lifecycle management, not isolation for hostile code.
+Live test: run `../nomad/tests/qualify-raw-exec.sh` on the selected Runpod
+pod, under a 240-second timeout. Give this source directory as its first
+argument. The script compiles `tests/supervise-main.cpp` around the same
+supervisor and uses the default shutdown grace. It does not install the
+launcher or change the serving processes.
 
 ## Why the small supervisor remains
 
-Tini forwards signals to a process group and reaps children. It does not
-terminate a worker that starts a separate session when its main child exits.
-The local comparison used Tini 0.19.0 with `-s -g` and the same
-`tests/process-tree.cpp` fixture in `stop` mode. The detached child remained
-alive after Tini exited. The container was removed after the test.
-The C++ supervisor passes that fixture, including forced cleanup after its
-25-second grace period. Download changes do not affect this process cleanup.
-No third-party C++ libraries are needed.
+Tini forwards signals to a process group and reaps children. It does not stop
+a worker that starts a separate session when the main child of Tini exits.
+A local comparison used Tini 0.19.0 with `-s -g` and the
+`tests/process-tree.cpp` fixture in `stop` mode. The detached child stayed
+alive after Tini exited. The C++ supervisor passes that fixture, and it kills
+stubborn processes after the grace period. The supervisor needs no
+third-party C++ libraries.

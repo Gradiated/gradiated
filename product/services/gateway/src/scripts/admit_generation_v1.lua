@@ -1,40 +1,33 @@
-local MAX_SAFE_INTEGER = 9007199254740991
+-- Admits a generation by adding its lease to the in-flight set.
+--
+-- KEYS[1] account hash
+-- KEYS[2] in-flight lease set
+-- KEYS[3] settlement stream
+-- ARGV[1] generation_id
+-- ARGV[2] organization_id
+-- ARGV[3] now, as epoch milliseconds
+-- ARGV[4] lease expiry, as epoch milliseconds
+-- ARGV[5] cutoff before which expired leases are removed, as epoch milliseconds
+-- ARGV[6] organization concurrency cap
+-- ARGV[7] prepaid balance per concurrency slot
+-- ARGV[8] settlement backlog limit
+--
+-- Returns 1 admitted, 2 insufficient balance, 3 settlement backlog, 4 concurrency
+-- exceeded and 5 duplicate generation.
 
 local function fail(message)
-  return redis.error_reply('ADMISSION_V1 ' .. message)
+  return redis.error_reply('ADMIT_GENERATION_V1 ' .. message)
 end
 
-local function safe_integer(value, name, positive)
-  if type(value) ~= 'string' or value == '' then
-    return nil, name .. ' must be an integer'
+local function positive_integer(value, name)
+  local number, message = safe_integer(value, name)
+  if message then
+    return nil, message
   end
-  local digits = value
-  if string.sub(digits, 1, 1) == '-' then
-    digits = string.sub(digits, 2)
-  end
-  if digits == '' or string.find(digits, '[^0-9]') then
-    return nil, name .. ' must be an integer'
-  end
-  local number = tonumber(value)
-  if not number or number ~= math.floor(number) or math.abs(number) > MAX_SAFE_INTEGER then
-    return nil, name .. ' is outside the safe integer range'
-  end
-  if positive and number <= 0 then
+  if number <= 0 then
     return nil, name .. ' must be positive'
   end
   return number, nil
-end
-
-local function valid_uuid(value)
-  if type(value) ~= 'string' or #value ~= 36 then
-    return false
-  end
-  if string.sub(value, 9, 9) ~= '-' or string.sub(value, 14, 14) ~= '-' or
-      string.sub(value, 19, 19) ~= '-' or string.sub(value, 24, 24) ~= '-' then
-    return false
-  end
-  local compact, separators = string.gsub(value, '-', '')
-  return separators == 4 and #compact == 32 and not string.find(compact, '[^0-9a-f]')
 end
 
 if #KEYS ~= 3 or #ARGV ~= 8 then
@@ -47,17 +40,17 @@ if not valid_uuid(ARGV[2]) then
   return fail('organization_id must be a lowercase UUID')
 end
 
-local now, numeric_error = safe_integer(ARGV[3], 'now', true)
+local now, numeric_error = positive_integer(ARGV[3], 'now')
 if numeric_error then return fail(numeric_error) end
-local lease_expiry, expiry_error = safe_integer(ARGV[4], 'lease_expiry', true)
+local lease_expiry, expiry_error = positive_integer(ARGV[4], 'lease_expiry')
 if expiry_error then return fail(expiry_error) end
-local cleanup_cutoff, cutoff_error = safe_integer(ARGV[5], 'cleanup_cutoff', true)
+local cleanup_cutoff, cutoff_error = positive_integer(ARGV[5], 'cleanup_cutoff')
 if cutoff_error then return fail(cutoff_error) end
-local concurrency_cap, cap_error = safe_integer(ARGV[6], 'concurrency_cap', true)
+local concurrency_cap, cap_error = positive_integer(ARGV[6], 'concurrency_cap')
 if cap_error then return fail(cap_error) end
-local balance_per_slot, slot_error = safe_integer(ARGV[7], 'balance_per_slot', true)
+local balance_per_slot, slot_error = positive_integer(ARGV[7], 'balance_per_slot')
 if slot_error then return fail(slot_error) end
-local backlog_limit, backlog_error = safe_integer(ARGV[8], 'backlog_limit', true)
+local backlog_limit, backlog_error = positive_integer(ARGV[8], 'backlog_limit')
 if backlog_error then return fail(backlog_error) end
 if lease_expiry <= now then
   return fail('lease_expiry must be later than now')
@@ -91,7 +84,7 @@ end
 if account[3] ~= 'prepaid' and account[3] ~= 'invoiced' then
   return fail('billing_mode is invalid')
 end
-local balance, balance_error = safe_integer(account[4], 'balance', false)
+local balance, balance_error = safe_integer(account[4], 'balance')
 if balance_error then return fail(balance_error) end
 
 local backlog = 0

@@ -1,43 +1,40 @@
 import { z } from "@hono/zod-openapi";
 
+import { ModelIdSchema, NameSchema, TokenCountSchema } from "./common.js";
+
 // kev/api.py JSONContent: recursive JSON, including scalar/null descriptions.
-// Runtime depth, token and transport bounds are enforced separately from JSON shape.
 export const SystemOneJsonSchema = z
   .json()
   .describe(
     "JSON content, including nested objects/arrays, finite numbers, booleans and null. The runtime additionally enforces body, nesting-depth and token bounds (currently 1 MiB, 32 levels and 8192 input tokens).",
   )
   .openapi("SystemOneJson", {
-    // JSON itself admits every JSON value. Explicit metadata avoids recursively
-    // expanding z.json() in the OpenAPI generator while runtime validation stays strict.
+    // Explicit metadata stops the OpenAPI generator from expanding z.json() recursively.
     type: ["string", "number", "boolean", "object", "array", "null"],
     additionalProperties: {},
     items: {},
   });
 
-const QuestionNameSchema = z.string().min(1).max(200);
-const ModelSchema = z
-  .string()
-  .min(1)
-  .max(200)
-  .describe(
-    "Exact hosted model ID, required; no default, alias resolution or fallback.",
-  );
+const LevelIndexSchema = z.string().regex(/^(0|[1-9]\d*)$/);
+const HostedModelIdSchema = ModelIdSchema.describe(
+  "Exact hosted model ID, required; no default, alias resolution or fallback.",
+);
 const InstructionsSchema = SystemOneJsonSchema.describe(
   "Required question instructions as JSON, rendered using upstream Kev JSON semantics.",
 );
+
 const boundedMap = <T extends z.ZodType>(
   key: z.ZodString,
   value: T,
-  min: number,
-  max: number,
+  { min, max }: { min: number; max: number },
 ) =>
   z
     .record(key, value)
-    .refine(
-      (map) => Object.keys(map).length >= min && Object.keys(map).length <= max,
-      `Expected ${min}..${max} entries`,
-    )
+    .refine((map) => {
+      const size = Object.keys(map).length;
+
+      return size >= min && size <= max;
+    }, `Expected ${min}..${max} entries`)
     .openapi({ minProperties: min, maxProperties: max });
 
 export const SystemOneQuestionSchema = z
@@ -45,7 +42,10 @@ export const SystemOneQuestionSchema = z
     z.strictObject({
       type: z.literal("choice").describe("Select one named option."),
       instructions: InstructionsSchema,
-      criteria: boundedMap(z.string(), SystemOneJsonSchema, 1, 255).describe(
+      criteria: boundedMap(z.string(), SystemOneJsonSchema, {
+        min: 1,
+        max: 255,
+      }).describe(
         "One to 255 named options with JSON descriptions; null leaves an option undescribed.",
       ),
     }),
@@ -86,7 +86,7 @@ export const SystemOneQuestionSchema = z
 
 export const SystemOneRequestSchema = z
   .strictObject({
-    model: ModelSchema,
+    model: HostedModelIdSchema,
     state: z
       .union([
         z.string(),
@@ -96,12 +96,10 @@ export const SystemOneRequestSchema = z
       .describe(
         "State to evaluate: text, a JSON object or an array. Nested JSON scalars are allowed.",
       ),
-    questions: boundedMap(
-      QuestionNameSchema,
-      SystemOneQuestionSchema,
-      1,
-      64,
-    ).describe("One to 64 named questions; each name is 1..200 characters."),
+    questions: boundedMap(NameSchema, SystemOneQuestionSchema, {
+      min: 1,
+      max: 64,
+    }).describe("One to 64 named questions; each name is 1..200 characters."),
     session_id: z
       .string()
       .min(1)
@@ -127,12 +125,10 @@ const ProbabilitySchema = z
   .min(0)
   .max(1)
   .describe("Probability or confidence in [0, 1].");
-const ProbabilitiesSchema = boundedMap(
-  z.string(),
-  ProbabilitySchema,
-  1,
-  255,
-).describe(
+const ProbabilitiesSchema = boundedMap(z.string(), ProbabilitySchema, {
+  min: 1,
+  max: 255,
+}).describe(
   "Per-option probabilities, rounded independently by Kev; their sum need not be exactly one.",
 );
 
@@ -156,20 +152,16 @@ export const SystemOneAnswerSchema = z
         .max(254)
         .describe("Expected zero-based rubric level, potentially fractional."),
       confidence: ProbabilitySchema,
-      legend: boundedMap(
-        z.string().regex(/^(0|[1-9]\d*)$/),
-        z.string(),
-        2,
-        255,
-      ).describe(
+      legend: boundedMap(LevelIndexSchema, z.string(), {
+        min: 2,
+        max: 255,
+      }).describe(
         "Zero-based level indices mapped to rendered upstream JSON descriptions.",
       ),
-      probabilities: boundedMap(
-        z.string().regex(/^(0|[1-9]\d*)$/),
-        ProbabilitySchema,
-        2,
-        255,
-      ).describe("Probabilities keyed by zero-based level index."),
+      probabilities: boundedMap(LevelIndexSchema, ProbabilitySchema, {
+        min: 2,
+        max: 255,
+      }).describe("Probabilities keyed by zero-based level index."),
     }),
   ])
   .describe("Native inference answer, keyed by the original question name.")
@@ -177,16 +169,12 @@ export const SystemOneAnswerSchema = z
 
 export const SystemOneUsageSchema = z
   .strictObject({
-    input_tokens: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Total input tokens, including cached input."),
-    cached_input_tokens: z
-      .number()
-      .int()
-      .nonnegative()
-      .describe("Cached subset of input_tokens."),
+    input_tokens: TokenCountSchema.describe(
+      "Total input tokens, including cached input.",
+    ),
+    cached_input_tokens: TokenCountSchema.describe(
+      "Cached subset of input_tokens.",
+    ),
     output_tokens: z
       .literal(0)
       .describe("Always zero: pointer inference generates no output tokens."),
@@ -202,13 +190,11 @@ export const SystemOneUsageSchema = z
 
 export const SystemOneResponseSchema = z
   .strictObject({
-    model: ModelSchema,
-    answers: boundedMap(
-      QuestionNameSchema,
-      SystemOneAnswerSchema,
-      1,
-      64,
-    ).describe("Answers keyed by the request question names."),
+    model: HostedModelIdSchema,
+    answers: boundedMap(NameSchema, SystemOneAnswerSchema, {
+      min: 1,
+      max: 64,
+    }).describe("Answers keyed by the request question names."),
     usage: SystemOneUsageSchema,
     latency_ms: z
       .number()

@@ -77,10 +77,8 @@ void quantize_global_decode_qk_fp8(const void* queries, const void* key_cache,
                                    int maximum_slots, int query_heads, int kv_heads,
                                    int head_dimension, int cache_capacity,
                                    cudaStream_t stream);
-// Numerical oracle for a one-byte KV representation. Each physical token/head vector receives
-// an independent symmetric INT8 scale, then is immediately dequantized back into the BF16 cache.
-// This intentionally provides no performance benefit: it isolates representation quality before
-// an optimized INT8 cache layout and tensor-core attention path are allowed into the runtime.
+// Numerical oracle: quantizes each token/head vector to symmetric INT8 and dequantizes it back
+// into the BF16 cache. It measures representation quality only and gives no speedup.
 void roundtrip_global_kv_int8_per_token_bf16(
     void* key_cache, void* value_cache, int heads, int tokens, int head_dimension,
     int cache_capacity, int position_start, cudaStream_t stream,

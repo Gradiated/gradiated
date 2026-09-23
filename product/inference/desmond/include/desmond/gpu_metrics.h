@@ -2,41 +2,51 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace desmond {
 
+struct GpuUtilization {
+  unsigned int gpu_percent{};
+  unsigned int memory_percent{};
+};
+
+struct GpuMemory {
+  std::uint64_t total_bytes{};
+  std::uint64_t used_bytes{};
+  std::uint64_t free_bytes{};
+};
+
 struct GpuSample {
   unsigned int index{};
-  std::string uuid;
-  unsigned int gpu_utilization_percent{};
-  unsigned int memory_utilization_percent{};
-  std::uint64_t memory_total_bytes{};
-  std::uint64_t memory_used_bytes{};
-  std::uint64_t memory_free_bytes{};
-  unsigned int temperature_celsius{};
-  unsigned int power_milliwatts{};
-  std::uint64_t total_energy_millijoules{};
+  std::optional<std::string> uuid;
+  std::optional<GpuUtilization> utilization;
+  std::optional<GpuMemory> memory;
+  std::optional<unsigned int> temperature_celsius;
+  std::optional<unsigned int> power_milliwatts;
+  std::optional<std::uint64_t> total_energy_millijoules;
 };
 
 class GpuMetrics {
- public:
+public:
   GpuMetrics();
   ~GpuMetrics();
-  GpuMetrics(const GpuMetrics&) = delete;
-  GpuMetrics& operator=(const GpuMetrics&) = delete;
-  GpuMetrics(GpuMetrics&&) noexcept;
-  GpuMetrics& operator=(GpuMetrics&&) noexcept;
+  GpuMetrics(const GpuMetrics &) = delete;
+  GpuMetrics &operator=(const GpuMetrics &) = delete;
 
   [[nodiscard]] bool available() const;
-  [[nodiscard]] const std::string& error() const;
+  [[nodiscard]] const std::string &error() const;
   [[nodiscard]] std::vector<GpuSample> sample() const;
   [[nodiscard]] std::string prometheus() const;
 
- private:
+private:
   struct Impl;
   std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace desmond
+[[nodiscard]] std::string gpu_prometheus(bool nvml_available,
+                                         const std::vector<GpuSample> &samples);
+
+} // namespace desmond

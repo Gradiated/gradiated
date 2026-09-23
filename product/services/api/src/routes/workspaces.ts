@@ -11,14 +11,17 @@ import {
   WorkspacePathSchema,
   WorkspaceSchema,
   problemContent,
-  type ApiKey,
   type Workspace,
 } from "@gradiated/contracts";
-import { ControlServiceError } from "@gradiated/control";
+import type {
+  WorkspaceApiKeyService,
+  WorkspaceRecord,
+} from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { problemDocument } from "../http/problem-response.js";
-import type { ApiEnvironment, ApiServices } from "../types.js";
+import { requireUser } from "../http/problems.js";
+import type { ApiEnvironment } from "../types.js";
+import { apiKeyResponse } from "./api-key-response.js";
 
 const listWorkspacesRoute = createRoute({
   method: "get",
@@ -181,114 +184,30 @@ const revokeApiKeyRoute = createRoute({
   },
 });
 
-function workspaceResponse(row: {
-  id: string;
-  organizationId: string;
-  name: string;
-  isDefault: boolean;
-  archivedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): Workspace {
-  return {
-    id: row.id,
-    organization_id: row.organizationId,
-    name: row.name,
-    is_default: row.isDefault,
-    archived_at: row.archivedAt?.toISOString() ?? null,
-    created_at: row.createdAt.toISOString(),
-    updated_at: row.updatedAt.toISOString(),
-  };
-}
+const workspaceResponse = (record: WorkspaceRecord): Workspace => ({
+  id: record.id,
+  organization_id: record.organizationId,
+  name: record.name,
+  is_default: record.isDefault,
+  archived_at: record.archivedAt?.toISOString() ?? null,
+  created_at: record.createdAt.toISOString(),
+  updated_at: record.updatedAt.toISOString(),
+});
 
-function apiKeyResponse(row: {
-  id: string;
-  organizationId: string;
-  workspaceId: string;
-  name: string;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-  createdBy: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): ApiKey {
-  return {
-    id: row.id,
-    organization_id: row.organizationId,
-    workspace_id: row.workspaceId,
-    name: row.name,
-    expires_at: row.expiresAt?.toISOString() ?? null,
-    revoked_at: row.revokedAt?.toISOString() ?? null,
-    created_by: row.createdBy,
-    created_at: row.createdAt.toISOString(),
-    updated_at: row.updatedAt.toISOString(),
-  };
-}
-
-function requireUser(context: {
-  get(key: "user"): ApiEnvironment["Variables"]["user"];
-}) {
-  return context.get("user");
-}
-
-function controlError(
-  context: Parameters<typeof problemDocument>[0],
-  error: unknown,
-) {
-  if (!(error instanceof ControlServiceError)) throw error;
-  if (error.code === "forbidden") {
-    return context.json(
-      problemDocument(context, {
-        type: "https://gradiated.com/problems/forbidden",
-        title: "Forbidden",
-        status: 403,
-        detail: error.message,
-        code: error.code,
-      }),
-      403,
-      { "Content-Type": "application/problem+json" },
-    );
-  }
-  if (error.code === "not_found") {
-    return context.json(
-      problemDocument(context, {
-        type: "https://gradiated.com/problems/not-found",
-        title: "Not found",
-        status: 404,
-        detail: error.message,
-        code: error.code,
-      }),
-      404,
-      { "Content-Type": "application/problem+json" },
-    );
-  }
-  return context.json(
-    problemDocument(context, {
-      type: "https://gradiated.com/problems/unavailable",
-      title: "Serving state unavailable",
-      status: 503,
-      detail: error.message,
-      code: error.code,
-    }),
-    503,
-    { "Content-Type": "application/problem+json" },
-  );
-}
-
-export function registerWorkspaceRoutes(
+export const registerWorkspaceRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  services: ApiServices,
-): void {
+  workspaces: WorkspaceApiKeyService,
+): void => {
   app.openapi(listWorkspacesRoute, async (context) => {
-    const user = requireUser(context);
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
     const query = context.req.valid("query");
-    const rows = await services.workspaces.listWorkspaces(
+    const rows = await workspaces.listWorkspaces(
       user.id,
       params.organization_id,
       query.include_archived === "true",
     );
+
     return context.json(
       { data: rows.map(workspaceResponse), next_cursor: null },
       200,
@@ -296,96 +215,66 @@ export function registerWorkspaceRoutes(
   });
 
   app.openapi(createWorkspaceRoute, async (context) => {
-    const user = requireUser(context);
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
     const input = context.req.valid("json");
-    try {
-      const workspace = await services.workspaces.createWorkspace(
-        user.id,
-        params.organization_id,
-        input,
-      );
-      context.set("logResourceIds", { workspace_id: workspace.id });
-      return context.json(workspaceResponse(workspace), 201);
-    } catch (error) {
-      return controlError(context, error);
-    }
+    const workspace = await workspaces.createWorkspace(
+      user.id,
+      params.organization_id,
+      input,
+    );
+
+    context.set("logResourceIds", { workspace_id: workspace.id });
+    return context.json(workspaceResponse(workspace), 201);
   });
 
   app.openapi(listApiKeysRoute, async (context) => {
-    const user = requireUser(context);
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
-    try {
-      const rows = await services.workspaces.listApiKeys(
-        user.id,
-        params.organization_id,
-        params.workspace_id,
-      );
-      return context.json(
-        { data: rows.map(apiKeyResponse), next_cursor: null },
-        200,
-      );
-    } catch (error) {
-      return controlError(context, error);
-    }
+    const rows = await workspaces.listApiKeys(
+      user.id,
+      params.organization_id,
+      params.workspace_id,
+    );
+
+    return context.json(
+      { data: rows.map(apiKeyResponse), next_cursor: null },
+      200,
+    );
   });
 
   app.openapi(createApiKeyRoute, async (context) => {
-    const user = requireUser(context);
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
     const input = context.req.valid("json");
-    try {
-      const created = await services.workspaces.createApiKey(
-        user.id,
-        params.organization_id,
-        params.workspace_id,
-        {
-          name: input.name,
-          expiresAt: input.expires_at ? new Date(input.expires_at) : null,
-        },
-      );
-      context.set("logResourceIds", { api_key_id: created.apiKey.id });
-      context.header("Cache-Control", "no-store");
-      return context.json(
-        { api_key: apiKeyResponse(created.apiKey), secret: created.secret },
-        201,
-      );
-    } catch (error) {
-      return controlError(context, error);
-    }
+    const created = await workspaces.createApiKey(
+      user.id,
+      params.organization_id,
+      params.workspace_id,
+      {
+        name: input.name,
+        expiresAt: input.expires_at ? new Date(input.expires_at) : null,
+      },
+    );
+
+    context.set("logResourceIds", { api_key_id: created.apiKey.id });
+    context.header("Cache-Control", "no-store");
+    return context.json(
+      { api_key: apiKeyResponse(created.apiKey), secret: created.secret },
+      201,
+    );
   });
 
   app.openapi(revokeApiKeyRoute, async (context) => {
-    const user = requireUser(context);
-    if (!user) return unauthenticated(context);
+    const user = await requireUser(context);
     const params = context.req.valid("param");
-    try {
-      await services.workspaces.revokeApiKey(
-        user.id,
-        params.organization_id,
-        params.workspace_id,
-        params.api_key_id,
-      );
-      return context.body(null, 204);
-    } catch (error) {
-      return controlError(context, error);
-    }
-  });
-}
+    await workspaces.revokeApiKey(
+      user.id,
+      params.organization_id,
+      params.workspace_id,
+      params.api_key_id,
+    );
 
-function unauthenticated(context: Parameters<typeof problemDocument>[0]) {
-  return context.json(
-    problemDocument(context, {
-      type: "https://gradiated.com/problems/unauthenticated",
-      title: "Authentication required",
-      status: 401,
-      detail: "A valid human session is required for this operation.",
-      code: "unauthenticated",
-    }),
-    401,
-    { "Content-Type": "application/problem+json" },
-  );
-}
+    return context.body(null, 204);
+  });
+};

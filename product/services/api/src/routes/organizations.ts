@@ -4,11 +4,11 @@ import {
   problemContent,
   type Organization,
 } from "@gradiated/contracts";
-import { ControlServiceError } from "@gradiated/control";
+import type { OrganizationService } from "@gradiated/control";
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 
-import { problemDocument } from "../http/problem-response.js";
-import type { ApiEnvironment, ApiServices } from "../types.js";
+import { requireUser } from "../http/problems.js";
+import type { ApiEnvironment } from "../types.js";
 
 const createOrganizationRoute = createRoute({
   method: "post",
@@ -42,49 +42,14 @@ const createOrganizationRoute = createRoute({
   },
 });
 
-export function registerOrganizationRoutes(
+export const registerOrganizationRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
-  services: ApiServices,
-): void {
+  organizations: Pick<OrganizationService, "createForUser">,
+): void => {
   app.openapi(createOrganizationRoute, async (context) => {
-    const user = context.get("user");
-    if (!user) {
-      return context.json(
-        problemDocument(context, {
-          type: "https://gradiated.com/problems/unauthenticated",
-          title: "Authentication required",
-          status: 401,
-          detail: "A valid human session is required for this operation.",
-          code: "unauthenticated",
-        }),
-        401,
-        { "Content-Type": "application/problem+json" },
-      );
-    }
-
+    const user = await requireUser(context);
     const input = context.req.valid("json");
-    let created;
-    try {
-      created = await services.organizations.createForUser(user.id, input.name);
-    } catch (error) {
-      if (
-        !(error instanceof ControlServiceError) ||
-        error.code !== "unavailable"
-      ) {
-        throw error;
-      }
-      return context.json(
-        problemDocument(context, {
-          type: "https://gradiated.com/problems/unavailable",
-          title: "Serving state unavailable",
-          status: 503,
-          detail: error.message,
-          code: error.code,
-        }),
-        503,
-        { "Content-Type": "application/problem+json" },
-      );
-    }
+    const created = await organizations.createForUser(user.id, input.name);
     const response: Organization = {
       id: created.id,
       kind: created.kind,
@@ -98,4 +63,4 @@ export function registerOrganizationRoutes(
 
     return context.json(response, 201);
   });
-}
+};

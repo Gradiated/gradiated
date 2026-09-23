@@ -1,13 +1,22 @@
-import type { ClickHouseClient } from "@clickhouse/client";
 import { z } from "zod";
 
-const settlementSlotIdPattern = /^\d{8}T\d{6}Z-300s-v1$/;
-const unsignedIntegerSchema = z
-  .union([z.string().regex(/^\d+$/), z.number().int().nonnegative()])
-  .transform((value) => BigInt(value));
+import { clickHouseUInt64Schema } from "../clickhouse/client.js";
+import { settlementSlotIdSchema } from "./slot.js";
+
+type JsonRowsClient = {
+  query(params: {
+    query: string;
+    query_params: Record<string, unknown>;
+    format: "JSONEachRow";
+  }): Promise<{ json(): Promise<unknown> }>;
+};
+
+const unsignedIntegerSchema = clickHouseUInt64Schema.transform((value) =>
+  BigInt(value),
+);
 
 const settlementRowSchema = z.strictObject({
-  settlement_slot_id: z.string().regex(settlementSlotIdPattern),
+  settlement_slot_id: settlementSlotIdSchema,
   organization_id: z.uuid(),
   total_charge: unsignedIntegerSchema,
   generation_count: unsignedIntegerSchema,
@@ -15,7 +24,7 @@ const settlementRowSchema = z.strictObject({
 });
 
 const earliestSlotRowSchema = z.strictObject({
-  slot_id: z.string().regex(settlementSlotIdPattern).nullable(),
+  slot_id: settlementSlotIdSchema.nullable(),
 });
 
 export type OrganizationSettlement = {
@@ -38,7 +47,7 @@ export class SettlementFinancialConflictError extends Error {
 }
 
 export const createGenerationSettlementReader = (
-  client: ClickHouseClient,
+  client: JsonRowsClient,
 ): GenerationSettlementReader => ({
   async getEarliestSlot(upperSlotId) {
     const result = await client.query({
@@ -51,6 +60,7 @@ export const createGenerationSettlementReader = (
       format: "JSONEachRow",
     });
     const rows = earliestSlotRowSchema.array().parse(await result.json());
+
     return rows[0]?.slot_id ?? null;
   },
 
@@ -84,6 +94,7 @@ export const createGenerationSettlementReader = (
     if (rows.some((row) => row.max_financial_variants !== 1)) {
       throw new SettlementFinancialConflictError(slotId);
     }
+
     return rows.map((row) => ({
       generationCount: row.generation_count,
       organizationId: row.organization_id,

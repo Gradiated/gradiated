@@ -1,127 +1,89 @@
-import {
-  GenerationSettledSchema,
-  type GenerationSettled,
-} from "@gradiated/contracts";
 import type { GenerationWriter } from "@gradiated/control";
 import type { RedisClientType } from "@gradiated/valkey";
 
-type StreamMessage = {
-  id: string;
-  message: Record<string, string>;
-};
+import { readConsumerGroupProgress, trimThreshold } from "./consumer-group.js";
+import {
+  parseGenerationStreamEntry,
+  type GenerationStreamEntry,
+  type StreamMessage,
+} from "./generation-stream-entry.js";
+import { serviceLog } from "./logging.js";
+import { stopwatch, type WorkerMetrics } from "./metrics.js";
 
-export type GenerationIngestionOptions = {
+export type GenerationIngestionConfig = {
+  stream: string;
+  group: string;
+  consumer: string;
   batchSize: number;
   claimIdleMs: number;
-  consumer: string;
-  group: string;
   readBlockMs: number;
-  stream: string;
-  onReady?: (() => Promise<void>) | undefined;
-  onBacklog?:
-    | ((
-        pending: number,
-        unread: number,
-        oldestPendingId: string | null,
-      ) => void)
-    | undefined;
-  onMessagesProcessed?:
-    ((source: "new" | "recovered", count: number) => void) | undefined;
-  onPass?: ((durationSeconds: number) => void) | undefined;
 };
 
-const streamIdPattern = /^(0|[1-9][0-9]*)-(0|[1-9][0-9]*)$/;
-const settlementSlotMilliseconds = 300_000n;
+export type IngestionTelemetry = Pick<
+  WorkerMetrics,
+  | "recordIngestedMessages"
+  | "recordDeletedMessages"
+  | "recordIngestionBacklog"
+  | "recordPass"
+>;
 
-const parseStreamId = (streamId: string): [bigint, bigint] => {
-  const match = streamIdPattern.exec(streamId);
-  if (!match?.[1] || !match[2]) {
-    throw new Error(`Invalid Valkey Stream ID: ${streamId}`);
-  }
-  return [BigInt(match[1]), BigInt(match[2])];
+export type GenerationIngestion = {
+  client: RedisClientType;
+  writer: GenerationWriter;
+  config: GenerationIngestionConfig;
+  telemetry: IngestionTelemetry;
+  onReady: () => Promise<void>;
+  signal: AbortSignal;
 };
 
-export const deriveSettlementSlotId = (streamId: string): string => {
-  const [milliseconds] = parseStreamId(streamId);
-  const slotStart =
-    (milliseconds / settlementSlotMilliseconds) * settlementSlotMilliseconds;
-  if (slotStart > BigInt(Number.MAX_SAFE_INTEGER)) {
-    throw new Error(
-      `Valkey Stream ID is outside the supported date range: ${streamId}`,
-    );
+const parseValidPrefix = (entries: readonly (StreamMessage | null)[]) => {
+  const valid: (GenerationStreamEntry & { id: string })[] = [];
+
+  for (const entry of entries) {
+    if (!entry) continue;
+
+    try {
+      valid.push({ id: entry.id, ...parseGenerationStreamEntry(entry) });
+    } catch (error) {
+      return { valid, poison: error };
+    }
   }
 
-  const iso = new Date(Number(slotStart)).toISOString();
-  const compact = iso.slice(0, 19).replaceAll("-", "").replaceAll(":", "");
-  return `${compact}Z-300s-v1`;
+  return { valid, poison: null };
 };
 
-export const parseGenerationStreamMessage = (
-  entry: StreamMessage,
-): GenerationSettled => {
-  const fields = Object.keys(entry.message).sort();
-  if (
-    fields.length !== 2 ||
-    fields[0] !== "generation_id" ||
-    fields[1] !== "properties"
-  ) {
-    throw new Error(`Invalid generation stream fields at ${entry.id}`);
+// Each insert waits for an async-insert flush, so the batch inserts
+// concurrently to share flushes. Entries behind a poison entry stay pending.
+const consume = async (
+  { client, writer, config }: GenerationIngestion,
+  entries: readonly (StreamMessage | null)[],
+): Promise<number> => {
+  const { valid, poison } = parseValidPrefix(entries);
+
+  const inserts = await Promise.allSettled(
+    valid.map(({ event, slotId }) => writer.insertGeneration(event, slotId)),
+  );
+  const insertedIds = valid
+    .filter((_entry, index) => inserts[index]?.status === "fulfilled")
+    .map(({ id }) => id);
+  const failedInsert = inserts.find((insert) => insert.status === "rejected");
+
+  if (insertedIds.length > 0) {
+    await client.xAck(config.stream, config.group, insertedIds);
   }
 
-  const generationId = entry.message.generation_id;
-  const serializedProperties = entry.message.properties;
-  if (!generationId || !serializedProperties) {
-    throw new Error(`Missing generation stream field at ${entry.id}`);
-  }
+  if (failedInsert) throw failedInsert.reason;
+  if (poison) throw poison;
 
-  let properties: unknown;
+  return insertedIds.length;
+};
+
+const ensureConsumerGroup = async ({
+  client,
+  config,
+}: GenerationIngestion): Promise<void> => {
   try {
-    properties = JSON.parse(serializedProperties);
-  } catch {
-    throw new Error(`Invalid generation properties JSON at ${entry.id}`);
-  }
-
-  const result = GenerationSettledSchema.safeParse({
-    generation_id: generationId,
-    properties,
-  });
-  if (!result.success) {
-    throw new Error(`Invalid generation event at ${entry.id}`);
-  }
-  return result.data;
-};
-
-export const nextStreamId = (streamId: string): string => {
-  const [milliseconds, sequence] = parseStreamId(streamId);
-  return `${milliseconds}-${sequence + 1n}`;
-};
-
-export const getSafeTrimThreshold = (
-  firstPendingId: string | null,
-  lastDeliveredId: string,
-): string | null => {
-  if (firstPendingId) return firstPendingId;
-  if (lastDeliveredId === "0-0") return null;
-  return nextStreamId(lastDeliveredId);
-};
-
-export const processGenerationMessage = async (
-  client: Pick<RedisClientType, "xAck">,
-  writer: GenerationWriter,
-  options: Pick<GenerationIngestionOptions, "group" | "stream">,
-  entry: StreamMessage,
-): Promise<void> => {
-  const event = parseGenerationStreamMessage(entry);
-  await writer.insertGeneration(event, deriveSettlementSlotId(entry.id));
-  await client.xAck(options.stream, options.group, entry.id);
-};
-
-const ensureConsumerGroup = async (
-  client: RedisClientType,
-  options: GenerationIngestionOptions,
-): Promise<void> => {
-  try {
-    await client.xGroupCreate(options.stream, options.group, "0", {
+    await client.xGroupCreate(config.stream, config.group, "0", {
       MKSTREAM: true,
     });
   } catch (error) {
@@ -131,105 +93,87 @@ const ensureConsumerGroup = async (
   }
 };
 
-const processMessages = async (
-  client: RedisClientType,
-  writer: GenerationWriter,
-  options: GenerationIngestionOptions,
-  messages: readonly (StreamMessage | null)[],
-): Promise<number> => {
-  let processed = 0;
-  for (const message of messages) {
-    if (message) {
-      await processGenerationMessage(client, writer, options, message);
-      processed += 1;
-    }
-  }
-  return processed;
+const reportDeleted = (telemetry: IngestionTelemetry, count: number): void => {
+  if (count === 0) return;
+
+  serviceLog("error", "generation_entry_deleted", {
+    loop: "generation_ingestion",
+    dependency: "valkey",
+  });
+  telemetry.recordDeletedMessages(count);
 };
 
-const recoverStaleMessages = async (
-  client: RedisClientType,
-  writer: GenerationWriter,
-  options: GenerationIngestionOptions,
-): Promise<void> => {
+const recoverStale = async (ingestion: GenerationIngestion): Promise<void> => {
+  const { client, config, telemetry } = ingestion;
   let cursor = "0-0";
+
   do {
     const claimed = await client.xAutoClaim(
-      options.stream,
-      options.group,
-      options.consumer,
-      options.claimIdleMs,
+      config.stream,
+      config.group,
+      config.consumer,
+      config.claimIdleMs,
       cursor,
-      { COUNT: options.batchSize },
+      { COUNT: config.batchSize },
     );
-    const processed = await processMessages(
-      client,
-      writer,
-      options,
-      claimed.messages,
-    );
-    options.onMessagesProcessed?.("recovered", processed);
+    const consumed = await consume(ingestion, claimed.messages);
+
+    telemetry.recordIngestedMessages("recovered", consumed);
+    reportDeleted(telemetry, claimed.deletedMessages.length);
     cursor = claimed.nextId;
   } while (cursor !== "0-0");
 };
 
-const trimAcknowledgedMessages = async (
-  client: RedisClientType,
-  options: GenerationIngestionOptions,
-): Promise<void> => {
-  const [pending, groups] = await Promise.all([
-    client.xPending(options.stream, options.group),
-    client.xInfoGroups(options.stream),
-  ]);
-  const group = groups.find((candidate) => candidate.name === options.group);
-  if (!group)
-    throw new Error(`Valkey consumer group is missing: ${options.group}`);
-
-  options.onBacklog?.(
-    Number(pending.pending),
-    Number(group.lag),
-    pending.firstId ? String(pending.firstId) : null,
+const readNew = async (ingestion: GenerationIngestion): Promise<void> => {
+  const { client, config, telemetry } = ingestion;
+  const streams = await client.xReadGroup(
+    config.group,
+    config.consumer,
+    { key: config.stream, id: ">" },
+    { COUNT: config.batchSize, BLOCK: config.readBlockMs },
   );
 
-  const threshold = getSafeTrimThreshold(
-    pending.firstId,
-    String(group["last-delivered-id"]),
-  );
-  if (threshold) {
-    await client.xTrim(options.stream, "MINID", threshold, {
-      strategyModifier: "=",
-    });
+  for (const stream of streams ?? []) {
+    const consumed = await consume(ingestion, stream.messages);
+
+    telemetry.recordIngestedMessages("new", consumed);
   }
 };
 
-export const runGenerationIngestionLoop = async (
-  client: RedisClientType,
-  writer: GenerationWriter,
-  options: GenerationIngestionOptions,
-  signal: AbortSignal,
-): Promise<void> => {
-  await ensureConsumerGroup(client, options);
-  await options.onReady?.();
+const recordBacklogAndTrim = async ({
+  client,
+  config,
+  telemetry,
+}: GenerationIngestion): Promise<void> => {
+  const progress = await readConsumerGroupProgress(client, config);
 
-  while (!signal.aborted) {
-    const started = process.hrtime.bigint();
-    await recoverStaleMessages(client, writer, options);
-    const streams = await client.xReadGroup(
-      options.group,
-      options.consumer,
-      { key: options.stream, id: ">" },
-      { COUNT: options.batchSize, BLOCK: options.readBlockMs },
-    );
-    for (const stream of streams ?? []) {
-      const processed = await processMessages(
-        client,
-        writer,
-        options,
-        stream.messages,
-      );
-      options.onMessagesProcessed?.("new", processed);
-    }
-    await trimAcknowledgedMessages(client, options);
-    options.onPass?.(Number(process.hrtime.bigint() - started) / 1e9);
+  telemetry.recordIngestionBacklog({
+    pending: progress.pending,
+    unread: progress.unread,
+    oldestPendingMilliseconds: progress.oldestPending?.milliseconds ?? null,
+  });
+
+  const threshold = trimThreshold(progress);
+  if (!threshold) return;
+
+  await client.xTrim(config.stream, "MINID", threshold, {
+    strategyModifier: "=",
+  });
+};
+
+export const runGenerationIngestionLoop = async (
+  ingestion: GenerationIngestion,
+): Promise<void> => {
+  await ensureConsumerGroup(ingestion);
+  await ingestion.onReady();
+
+  while (!ingestion.signal.aborted) {
+    const elapsedSeconds = stopwatch();
+
+    await recoverStale(ingestion);
+    await readNew(ingestion);
+    await recordBacklogAndTrim(ingestion);
+
+    ingestion.telemetry.recordPass("generation_ingestion", elapsedSeconds());
   }
 };

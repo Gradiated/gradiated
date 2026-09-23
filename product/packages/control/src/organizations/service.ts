@@ -1,25 +1,24 @@
 import { and, asc, eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
+import { activeCustomerMember } from "../access.js";
+import { postBalanceTransaction } from "../billing/ledger.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
-  balanceTransactions,
   billingAccounts,
   organizationMembers,
   organizations,
   workspaces,
+  type OrganizationRole,
+  type OrganizationStatus,
 } from "../db/schema/index.js";
-import {
-  ControlServiceError,
-  type WorkspaceRecord,
-} from "../workspaces/service.js";
 
-export type OrganizationRole = "owner" | "admin" | "billing" | "member";
+export type { OrganizationRole } from "../db/schema/index.js";
 
 export interface UserOrganization {
   id: string;
   name: string;
-  status: "active" | "suspended";
+  status: OrganizationStatus;
   role: OrganizationRole;
   defaultWorkspaceId: string;
 }
@@ -36,7 +35,15 @@ export interface CreatedOrganization {
 }
 
 export const SIGNUP_CREDIT_NANO_USD = 5_000_000_000n;
-export const SIGNUP_CREDIT_SOURCE_TYPE = "operator";
+
+export const defaultWorkspaceValues = (organizationId: string, now: Date) => ({
+  id: uuidv7(),
+  organizationId,
+  name: "Default",
+  isDefault: true,
+  createdAt: now,
+  updatedAt: now,
+});
 
 export interface OrganizationService {
   listForUser(userId: string): Promise<UserOrganization[]>;
@@ -47,125 +54,55 @@ export interface OrganizationService {
   ): Promise<UserOrganization>;
 }
 
-export function createOrganizationService(
+export const createOrganizationService = (
   database: ControlDatabase,
-): OrganizationService {
-  const service: OrganizationService = {
-    async listForUser(userId) {
-      const rows = await database
-        .select({
-          id: organizations.id,
-          name: organizations.name,
-          status: organizations.status,
-          role: organizationMembers.role,
-          defaultWorkspaceId: workspaces.id,
-        })
-        .from(organizationMembers)
-        .innerJoin(
-          organizations,
-          eq(organizations.id, organizationMembers.organizationId),
-        )
-        .innerJoin(
-          workspaces,
-          and(
-            eq(workspaces.organizationId, organizations.id),
-            eq(workspaces.isDefault, true),
-          ),
-        )
-        .where(
-          and(
-            eq(organizationMembers.userId, userId),
-            eq(organizationMembers.status, "active"),
-            eq(organizations.kind, "customer"),
-          ),
-        )
-        .orderBy(asc(organizations.createdAt), asc(organizations.id));
-
-      return rows.map((row) => ({
-        ...row,
-        status: row.status as UserOrganization["status"],
-        role: row.role as OrganizationRole,
-      }));
-    },
-
-    async createForUser(userId, name) {
-      return createOrganization({ signupCredit: false, userId, name });
-    },
-    async ensurePersonalForUser(userId, name = "Personal") {
-      const existing = await service.listForUser(userId);
-      if (existing[0]) return existing[0];
-      return createOrganization({ signupCredit: true, userId, name });
-    },
-  };
-  return service;
-
-  async function createOrganization(input: {
+): OrganizationService => {
+  const createOrganization = async (input: {
     signupCredit: boolean;
     userId: string;
     name: string;
-  }): Promise<CreatedOrganization> {
+  }): Promise<CreatedOrganization> => {
     const organizationId = uuidv7();
-    const workspaceId = uuidv7();
     const now = new Date();
-    const signupCreditTransactionId = input.signupCredit ? uuidv7() : null;
+    const defaultWorkspace = defaultWorkspaceValues(organizationId, now);
 
-    const creditBalanceAfter = await database.transaction(
-      async (transaction) => {
-        await transaction.insert(organizations).values({
-          id: organizationId,
-          kind: "customer",
-          name: input.name,
-          status: "active",
-          createdAt: now,
-          updatedAt: now,
-        });
-        await transaction.insert(organizationMembers).values({
-          organizationId,
-          userId: input.userId,
-          role: "owner",
-          status: "active",
-          createdAt: now,
-          updatedAt: now,
-        });
-        await transaction.insert(workspaces).values({
-          id: workspaceId,
-          organizationId,
-          name: "Default",
-          isDefault: true,
-          createdAt: now,
-          updatedAt: now,
-        });
-        await transaction.insert(billingAccounts).values({
-          organizationId,
-          mode: "prepaid",
-          balance: 0n,
-          createdAt: now,
-          updatedAt: now,
-        });
-        if (!signupCreditTransactionId) {
-          return 0n;
-        }
-        await transaction.insert(balanceTransactions).values({
-          id: signupCreditTransactionId,
-          organizationId,
-          type: "credit",
-          amount: SIGNUP_CREDIT_NANO_USD,
-          balanceAfter: SIGNUP_CREDIT_NANO_USD,
-          sourceType: SIGNUP_CREDIT_SOURCE_TYPE,
-          sourceId: `signup-grant:${organizationId}`,
-          createdBy: input.userId,
-          createdAt: now,
-        });
-        await transaction
-          .update(billingAccounts)
-          .set({
-            balance: SIGNUP_CREDIT_NANO_USD,
-            updatedAt: now,
-          })
-          .where(eq(billingAccounts.organizationId, organizationId));
-        return SIGNUP_CREDIT_NANO_USD;
-      },
-    );
+    await database.transaction(async (transaction) => {
+      await transaction.insert(organizations).values({
+        id: organizationId,
+        kind: "customer",
+        name: input.name,
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await transaction.insert(organizationMembers).values({
+        organizationId,
+        userId: input.userId,
+        role: "owner",
+        status: "active",
+        createdAt: now,
+        updatedAt: now,
+      });
+      await transaction.insert(workspaces).values(defaultWorkspace);
+      await transaction.insert(billingAccounts).values({
+        organizationId,
+        mode: "prepaid",
+        balance: 0n,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      if (!input.signupCredit) return;
+
+      await postBalanceTransaction(transaction, {
+        organizationId,
+        type: "credit",
+        amount: SIGNUP_CREDIT_NANO_USD,
+        sourceType: "operator",
+        sourceId: `signup-grant:${organizationId}`,
+        createdBy: input.userId,
+      });
+    });
 
     return {
       id: organizationId,
@@ -173,9 +110,48 @@ export function createOrganizationService(
       name: input.name,
       status: "active",
       role: "owner",
-      defaultWorkspaceId: workspaceId,
+      defaultWorkspaceId: defaultWorkspace.id,
       createdAt: now,
       updatedAt: now,
     };
-  }
-}
+  };
+
+  const listForUser = async (userId: string): Promise<UserOrganization[]> =>
+    database
+      .select({
+        id: organizations.id,
+        name: organizations.name,
+        status: organizations.status,
+        role: organizationMembers.role,
+        defaultWorkspaceId: workspaces.id,
+      })
+      .from(organizationMembers)
+      .innerJoin(
+        organizations,
+        eq(organizations.id, organizationMembers.organizationId),
+      )
+      .innerJoin(
+        workspaces,
+        and(
+          eq(workspaces.organizationId, organizations.id),
+          eq(workspaces.isDefault, true),
+        ),
+      )
+      .where(activeCustomerMember({ userId }))
+      .orderBy(asc(organizations.createdAt), asc(organizations.id));
+
+  return {
+    listForUser,
+
+    async createForUser(userId, name) {
+      return createOrganization({ signupCredit: false, userId, name });
+    },
+
+    async ensurePersonalForUser(userId, name = "Personal") {
+      const [existing] = await listForUser(userId);
+      if (existing) return existing;
+
+      return createOrganization({ signupCredit: true, userId, name });
+    },
+  };
+};

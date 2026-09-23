@@ -2,24 +2,21 @@ use std::{
     collections::HashMap,
     future::Future,
     hash::Hash,
-    sync::Arc,
+    sync::{Arc, Mutex, MutexGuard, PoisonError},
     time::{Duration, Instant},
 };
 
-use tokio::sync::Mutex;
-
 /// A bounded, single-flight cache with a fixed entry lifetime.
 ///
-/// Keys can come from a request, so both maps are capped. Reaching the cap drops
-/// elapsed entries first and then the oldest live entry, which stops a caller that
-/// asks for many distinct names from growing the process without limit. Negative
-/// results are stored like any other value and share the same cap.
+/// Elapsed entries are removed only when the map reaches its capacity, so the cap
+/// is what bounds memory as keys come and go. Reaching it drops elapsed entries
+/// first and then the oldest live entry.
 #[derive(Clone)]
 pub struct LazyTtlCache<K, V> {
     ttl: Duration,
     capacity: usize,
     values: Arc<Mutex<HashMap<K, CacheValue<V>>>>,
-    loads: Arc<Mutex<HashMap<K, Arc<Mutex<()>>>>>,
+    loads: SingleFlight<K>,
 }
 
 struct CacheValue<V> {
@@ -37,7 +34,7 @@ where
             ttl,
             capacity: capacity.max(1),
             values: Arc::new(Mutex::new(HashMap::new())),
-            loads: Arc::new(Mutex::new(HashMap::new())),
+            loads: SingleFlight::default(),
         }
     }
 
@@ -46,46 +43,30 @@ where
         F: FnOnce() -> Fut,
         Fut: Future<Output = Result<V, E>>,
     {
-        if let Some(value) = self.get(&key).await {
+        if let Some(value) = self.get(&key) {
             return Ok(value);
         }
 
-        let load_lock = self.load_lock(key.clone()).await;
-        let _load = load_lock.lock().await;
-        if let Some(value) = self.get(&key).await {
-            return Ok(value);
-        }
+        self.loads
+            .run(key.clone(), || async {
+                if let Some(value) = self.get(&key) {
+                    return Ok(value);
+                }
 
-        let value = match load().await {
-            Ok(value) => value,
-            Err(error) => {
-                // A failed load leaves no entry and no lock behind.
-                self.loads.lock().await.remove(&key);
-                return Err(error);
-            }
-        };
-        self.store(key.clone(), value.clone()).await;
-        self.loads.lock().await.remove(&key);
+                let value = load().await?;
+                self.store(key.clone(), value.clone());
 
-        Ok(value)
+                Ok(value)
+            })
+            .await
     }
 
-    async fn load_lock(&self, key: K) -> Arc<Mutex<()>> {
-        let mut loads = self.loads.lock().await;
-        if loads.len() >= self.capacity {
-            // In-flight loads count toward the cap. A lock no other task holds
-            // cannot serialize anything, so it is the one to drop.
-            loads.retain(|_, lock| Arc::strong_count(lock) > 1);
-        }
-
-        loads.entry(key).or_default().clone()
-    }
-
-    async fn store(&self, key: K, value: V) {
-        let mut values = self.values.lock().await;
+    fn store(&self, key: K, value: V) {
+        let mut values = locked(&self.values);
         if values.len() >= self.capacity {
             values.retain(|_, entry| entry.loaded_at.elapsed() < self.ttl);
         }
+
         if values.len() >= self.capacity {
             let oldest = values
                 .iter()
@@ -105,31 +86,113 @@ where
         );
     }
 
-    async fn get(&self, key: &K) -> Option<V> {
-        self.values
-            .lock()
-            .await
+    fn get(&self, key: &K) -> Option<V> {
+        locked(&self.values)
             .get(key)
             .filter(|entry| entry.loaded_at.elapsed() < self.ttl)
             .map(|entry| entry.value.clone())
     }
 
     #[cfg(test)]
-    async fn entries(&self) -> usize {
-        self.values.lock().await.len()
+    fn entries(&self) -> usize {
+        locked(&self.values).len()
     }
 
     #[cfg(test)]
-    async fn in_flight_entries(&self) -> usize {
-        self.loads.lock().await.len()
+    fn in_flight_entries(&self) -> usize {
+        self.loads.in_flight()
     }
+}
+
+/// Runs at most one task per key at a time; the others wait for it and then run
+/// their own, which should first look for what the finished one produced.
+#[derive(Clone)]
+pub struct SingleFlight<K> {
+    locks: Arc<Mutex<HashMap<K, Arc<tokio::sync::Mutex<()>>>>>,
+}
+
+impl<K> SingleFlight<K>
+where
+    K: Clone + Eq + Hash,
+{
+    pub async fn run<T, F, Fut>(&self, key: K, task: F) -> T
+    where
+        F: FnOnce() -> Fut,
+        Fut: Future<Output = T>,
+    {
+        let flight = self.join(key);
+        let _running = flight.lock.lock().await;
+
+        task().await
+    }
+
+    fn join(&self, key: K) -> Flight<'_, K> {
+        let lock = locked(&self.locks).entry(key.clone()).or_default().clone();
+
+        Flight {
+            locks: &self.locks,
+            key,
+            lock,
+        }
+    }
+
+    #[cfg(test)]
+    fn in_flight(&self) -> usize {
+        locked(&self.locks).len()
+    }
+}
+
+impl<K> Default for SingleFlight<K>
+where
+    K: Clone + Eq + Hash,
+{
+    fn default() -> Self {
+        Self {
+            locks: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+}
+
+/// Leaves the lock in the map while another task still holds a clone of it, so a
+/// caller that arrives meanwhile queues behind that task rather than beside it.
+/// Dropping also covers a cancelled task.
+struct Flight<'a, K: Eq + Hash> {
+    locks: &'a Mutex<HashMap<K, Arc<tokio::sync::Mutex<()>>>>,
+    key: K,
+    lock: Arc<tokio::sync::Mutex<()>>,
+}
+
+impl<K: Eq + Hash> Drop for Flight<'_, K> {
+    fn drop(&mut self) {
+        let mut locks = locked(self.locks);
+        let only_this_task = locks
+            .get(&self.key)
+            .is_some_and(|lock| Arc::ptr_eq(lock, &self.lock) && Arc::strong_count(lock) == 2);
+        if only_this_task {
+            locks.remove(&self.key);
+        }
+    }
+}
+
+/// Only for state that every critical section leaves consistent, so that a
+/// poisoned lock is safe to reuse.
+pub(crate) fn locked<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
 #[cfg(test)]
 mod tests {
     use std::sync::atomic::{AtomicUsize, Ordering};
 
+    use tokio::{sync::Notify, task::JoinSet};
+
     use super::*;
+
+    async fn let_waiting_tasks_run() {
+        for _ in 0..32 {
+            tokio::task::yield_now().await;
+        }
+    }
 
     #[tokio::test]
     async fn caches_one_load_for_the_ttl() {
@@ -158,9 +221,9 @@ mod tests {
                 .unwrap();
         }
 
-        assert_eq!(cache.entries().await, 8);
+        assert_eq!(cache.entries(), 8);
         assert_eq!(
-            cache.in_flight_entries().await,
+            cache.in_flight_entries(),
             0,
             "a completed load leaves no lock behind"
         );
@@ -188,7 +251,7 @@ mod tests {
                 .await
                 .unwrap();
         }
-        assert_eq!(cache.entries().await, 4);
+        assert_eq!(cache.entries(), 4);
     }
 
     #[tokio::test]
@@ -207,7 +270,7 @@ mod tests {
         }
 
         assert_eq!(loads.load(Ordering::SeqCst), 2);
-        assert_eq!(cache.entries().await, 1);
+        assert_eq!(cache.entries(), 1);
     }
 
     #[tokio::test]
@@ -216,7 +279,151 @@ mod tests {
         let result: Result<u32, &str> = cache.get_or_load("key", || async { Err("down") }).await;
 
         assert_eq!(result, Err("down"));
-        assert_eq!(cache.entries().await, 0);
-        assert_eq!(cache.in_flight_entries().await, 0);
+        assert_eq!(cache.entries(), 0);
+        assert_eq!(cache.in_flight_entries(), 0);
+    }
+
+    #[tokio::test]
+    async fn concurrent_callers_share_one_load() {
+        let cache = LazyTtlCache::new(Duration::from_secs(60), 4);
+        let loads = Arc::new(AtomicUsize::new(0));
+        let release = Arc::new(Notify::new());
+        let mut callers = JoinSet::new();
+        for _ in 0..16 {
+            let (cache, loads, release) = (cache.clone(), loads.clone(), release.clone());
+            callers.spawn(async move {
+                cache
+                    .get_or_load("key", || async {
+                        loads.fetch_add(1, Ordering::SeqCst);
+                        release.notified().await;
+                        Ok::<_, ()>(42)
+                    })
+                    .await
+            });
+        }
+
+        let_waiting_tasks_run().await;
+        assert_eq!(loads.load(Ordering::SeqCst), 1);
+        release.notify_one();
+
+        let mut values = Vec::new();
+        while let Some(result) = callers.join_next().await {
+            values.push(result.unwrap());
+        }
+        assert_eq!(values, vec![Ok(42); 16]);
+        assert_eq!(loads.load(Ordering::SeqCst), 1);
+        assert_eq!(cache.in_flight_entries(), 0);
+    }
+
+    #[tokio::test]
+    async fn a_waiter_retries_after_a_failed_load() {
+        let cache = LazyTtlCache::new(Duration::from_secs(60), 4);
+        let loads = Arc::new(AtomicUsize::new(0));
+        let release = Arc::new(Notify::new());
+        let first = tokio::spawn({
+            let (cache, loads, release) = (cache.clone(), loads.clone(), release.clone());
+            async move {
+                cache
+                    .get_or_load("key", || async {
+                        loads.fetch_add(1, Ordering::SeqCst);
+                        release.notified().await;
+                        Err("down")
+                    })
+                    .await
+            }
+        });
+        let_waiting_tasks_run().await;
+        let second = tokio::spawn({
+            let (cache, loads) = (cache.clone(), loads.clone());
+            async move {
+                cache
+                    .get_or_load("key", || async {
+                        loads.fetch_add(1, Ordering::SeqCst);
+                        Ok::<_, &str>(7)
+                    })
+                    .await
+            }
+        });
+
+        let_waiting_tasks_run().await;
+        assert_eq!(loads.load(Ordering::SeqCst), 1);
+        release.notify_one();
+
+        assert_eq!(first.await.unwrap(), Err("down"));
+        assert_eq!(second.await.unwrap(), Ok(7));
+        assert_eq!(loads.load(Ordering::SeqCst), 2);
+        assert_eq!(cache.entries(), 1);
+        assert_eq!(cache.in_flight_entries(), 0);
+    }
+
+    #[tokio::test]
+    async fn a_caller_arriving_after_a_failed_load_queues_behind_the_retry() {
+        let cache = LazyTtlCache::new(Duration::from_secs(60), 4);
+        let running = Arc::new(AtomicUsize::new(0));
+        let most_running = Arc::new(AtomicUsize::new(0));
+        let release = Arc::new(Notify::new());
+        let spawn_caller = |result: Result<u32, &'static str>| {
+            let (cache, running, most_running, release) = (
+                cache.clone(),
+                running.clone(),
+                most_running.clone(),
+                release.clone(),
+            );
+            tokio::spawn(async move {
+                cache
+                    .get_or_load("key", || async {
+                        let now_running = running.fetch_add(1, Ordering::SeqCst) + 1;
+                        most_running.fetch_max(now_running, Ordering::SeqCst);
+                        release.notified().await;
+                        running.fetch_sub(1, Ordering::SeqCst);
+                        result
+                    })
+                    .await
+            })
+        };
+
+        let first = spawn_caller(Err("down"));
+        let_waiting_tasks_run().await;
+        let second = spawn_caller(Err("still down"));
+        let_waiting_tasks_run().await;
+        release.notify_one();
+        assert_eq!(first.await.unwrap(), Err("down"));
+
+        let_waiting_tasks_run().await;
+        let third = spawn_caller(Ok(7));
+        let_waiting_tasks_run().await;
+        assert_eq!(running.load(Ordering::SeqCst), 1);
+        release.notify_one();
+        assert_eq!(second.await.unwrap(), Err("still down"));
+        let_waiting_tasks_run().await;
+        release.notify_one();
+
+        assert_eq!(third.await.unwrap(), Ok(7));
+        assert_eq!(most_running.load(Ordering::SeqCst), 1);
+        assert_eq!(cache.in_flight_entries(), 0);
+    }
+
+    #[tokio::test]
+    async fn a_cancelled_load_releases_its_key() {
+        let cache = LazyTtlCache::new(Duration::from_secs(60), 4);
+        let pending = tokio::spawn({
+            let cache = cache.clone();
+            async move {
+                cache
+                    .get_or_load("key", std::future::pending::<Result<u32, ()>>)
+                    .await
+            }
+        });
+        let_waiting_tasks_run().await;
+        assert_eq!(cache.in_flight_entries(), 1);
+
+        pending.abort();
+        let _ = pending.await;
+
+        assert_eq!(cache.in_flight_entries(), 0);
+        assert_eq!(
+            cache.get_or_load("key", || async { Ok::<_, ()>(7) }).await,
+            Ok(7)
+        );
     }
 }

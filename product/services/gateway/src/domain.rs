@@ -1,3 +1,9 @@
+//! Records are read from a cache that another, possibly older or newer, gateway
+//! wrote. Rejecting a field this binary does not know turns one additive schema
+//! change into every request failing for a full record lifetime, fleet-wide, and
+//! makes a rollback do the same. Unknown fields are ignored; the domain invariants
+//! are still enforced after parsing.
+
 use std::collections::HashMap;
 
 use chrono::{DateTime, Utc};
@@ -5,14 +11,8 @@ use serde::{de, de::value::MapDeserializer, Deserialize, Deserializer};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::deployment::{DeploymentStatus, GatewayModelDeployment};
-use crate::model::GatewayModelProperties;
+pub use crate::model::GatewayModel;
 
-// Records are read from a cache that another, possibly older or newer, gateway
-// wrote. Rejecting a field this binary does not know turns one additive schema
-// change into every request failing for a full record lifetime, fleet-wide, and
-// makes a rollback do the same. Unknown fields are ignored; the domain invariants
-// below are still enforced after parsing.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq)]
 pub struct GatewayCredential {
     pub api_key_id: Uuid,
@@ -27,48 +27,6 @@ pub struct GatewayWorkspace {
     pub organization_id: Uuid,
     pub workspace_id: Uuid,
     pub archived_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Clone, Debug, Deserialize, PartialEq)]
-pub struct GatewayModel {
-    pub id: String,
-    pub name: String,
-    pub status: ModelStatus,
-    pub properties: GatewayModelProperties,
-    pub deployments: Vec<GatewayModelDeployment>,
-}
-
-impl GatewayModel {
-    pub fn first_available_deployment(
-        &self,
-    ) -> Result<Option<&GatewayModelDeployment>, ModelRouteError> {
-        if self.status != ModelStatus::Available {
-            return Ok(None);
-        }
-        let deployment = self
-            .deployments
-            .iter()
-            .find(|deployment| deployment.status == DeploymentStatus::Available)
-            .ok_or(ModelRouteError::Missing)?;
-        deployment.validate().map_err(ModelRouteError::Invalid)?;
-        Ok(Some(deployment))
-    }
-}
-
-#[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
-#[serde(rename_all = "snake_case")]
-pub enum ModelStatus {
-    Available,
-    Unavailable,
-    Retired,
-}
-
-#[derive(Debug, Error, Eq, PartialEq)]
-pub enum ModelRouteError {
-    #[error("available model has no available deployment")]
-    Missing,
-    #[error("available model deployment is invalid: {0}")]
-    Invalid(crate::deployment::DeploymentError),
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Eq, PartialEq)]
@@ -103,6 +61,10 @@ pub struct GatewayAccount {
 }
 
 impl GatewayAccount {
+    pub fn funds_hosted_requests(&self) -> bool {
+        self.billing_mode == BillingMode::Invoiced || self.balance > 0
+    }
+
     pub fn from_hash(fields: HashMap<String, String>) -> Result<Self, RecordError> {
         let values = MapDeserializer::<_, de::value::Error>::new(fields.into_iter());
         Self::deserialize(values).map_err(RecordError::from)
@@ -125,7 +87,6 @@ pub struct RecordError(#[from] de::value::Error);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::deployment::ModelDeploymentRelease;
 
     fn valid_account() -> HashMap<String, String> {
         HashMap::from([
@@ -140,69 +101,8 @@ mod tests {
         ])
     }
 
-    fn deployment(id: u128, status: DeploymentStatus) -> GatewayModelDeployment {
-        GatewayModelDeployment {
-            id: Uuid::from_u128(id),
-            status,
-            provider: "local".to_owned(),
-            region: "local".to_owned(),
-            fault_domain: format!("local:{id}"),
-            service_url: "http://127.0.0.1:30000".to_owned(),
-            release: ModelDeploymentRelease {
-                schema_version: 1,
-                runtime_revision: "runtime".to_owned(),
-                protocol: None,
-                model_path: "model".to_owned(),
-                model_revision: "model-revision".to_owned(),
-                runtime_model_name: None,
-                tokenizer_path: "tokenizer".to_owned(),
-                tokenizer_revision: "tokenizer-revision".to_owned(),
-                tokenizer_mode: None,
-            },
-        }
-    }
-
-    fn model(deployments: Vec<GatewayModelDeployment>) -> GatewayModel {
-        GatewayModel {
-            id: "model".to_owned(),
-            name: "Model".to_owned(),
-            status: ModelStatus::Available,
-            properties: serde_json::from_value(serde_json::json!({
-                "schema_version": 1,
-                "description": "Model",
-                "released_at": null,
-                "hugging_face_id": null,
-                "quantization": null,
-                "tokenizer": null,
-                "input_modalities": [{
-                    "type": "text",
-                    "supported_inputs": {
-                        "max_context_length": {"value": 4096, "unit": "token"},
-                        "max_prompt_length": {"value": 4096, "unit": "token"}
-                    },
-                    "pricing": [
-                        {"type": "prompt", "unit": "token", "cost": 0},
-                        {"type": "cached_prompt", "unit": "token", "cost": 0}
-                    ]
-                }],
-                "output_modalities": [{
-                    "type": "text",
-                    "max_length": {"value": 1024, "unit": "token"},
-                    "default_length": {"value": 1024, "unit": "token"},
-                    "streaming": true,
-                    "supported_parameters": {},
-                    "pricing": [{"type": "completion", "unit": "token", "cost": 0}]
-                }],
-                "passthrough_parameters": {},
-                "deprecation_date": null
-            }))
-            .unwrap(),
-            deployments,
-        }
-    }
-
     #[test]
-    fn account_hash_is_strict_and_preserves_integer_money() {
+    fn account_hash_parses_integer_money() {
         let account = GatewayAccount::from_hash(valid_account()).expect("account should parse");
         assert_eq!(account.balance, 1_000_000_000);
         assert_eq!(account.billing_mode, BillingMode::Prepaid);
@@ -226,6 +126,30 @@ mod tests {
     }
 
     #[test]
+    fn only_a_positive_prepaid_balance_or_invoicing_funds_hosted_requests() {
+        let account = GatewayAccount::from_hash(valid_account()).expect("account should parse");
+
+        for (billing_mode, balance, funded) in [
+            (BillingMode::Prepaid, 1, true),
+            (BillingMode::Prepaid, 0, false),
+            (BillingMode::Prepaid, -1, false),
+            (BillingMode::Invoiced, -1, true),
+        ] {
+            let account = GatewayAccount {
+                billing_mode,
+                balance,
+                ..account.clone()
+            };
+
+            assert_eq!(
+                account.funds_hosted_requests(),
+                funded,
+                "{billing_mode:?} {balance}"
+            );
+        }
+    }
+
+    #[test]
     fn account_hash_rejects_missing_or_malformed_fields() {
         let mut missing = valid_account();
         missing.remove("billing_mode");
@@ -234,23 +158,5 @@ mod tests {
         let mut malformed = valid_account();
         malformed.insert("balance".to_owned(), "one dollar".to_owned());
         assert!(GatewayAccount::from_hash(malformed).is_err());
-    }
-
-    #[test]
-    fn available_model_selects_the_first_available_deployment() {
-        let first = deployment(1, DeploymentStatus::Available);
-        let staged = deployment(2, DeploymentStatus::Unavailable);
-        let second = deployment(3, DeploymentStatus::Available);
-        let routed_model = model(vec![first.clone(), staged, second]);
-        let route = routed_model
-            .first_available_deployment()
-            .expect("multiple available deployments are valid")
-            .expect("available model should have a route");
-        assert_eq!(route.id, first.id);
-
-        assert_eq!(
-            model(Vec::new()).first_available_deployment(),
-            Err(ModelRouteError::Missing)
-        );
     }
 }

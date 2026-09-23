@@ -32,29 +32,33 @@ impl ValkeyIamCredentials {
         let provider = sdk_config
             .credentials_provider()
             .ok_or(ValkeyIamError::MissingAwsCredentialsProvider)?;
-        let initial = credentials(&config, &provider.provide_credentials().await?)?;
+        let initial = signed_auth(&config, &provider.provide_credentials().await?)?;
         let (sender, receiver) = watch::channel(initial);
 
         tokio::spawn(async move {
             let mut next_refresh = TOKEN_REFRESH_INTERVAL;
             loop {
-                tokio::time::sleep(next_refresh).await;
-                match provider.provide_credentials().await {
-                    Ok(aws_credentials) => match credentials(&config, &aws_credentials) {
-                        Ok(credentials) => {
-                            sender.send_replace(credentials);
-                            next_refresh = TOKEN_REFRESH_INTERVAL;
-                        }
-                        Err(error) => {
-                            warn!(%error, "failed to refresh Valkey IAM token");
-                            next_refresh = TOKEN_REFRESH_RETRY;
-                        }
-                    },
-                    Err(error) => {
-                        warn!(%error, "failed to refresh AWS credentials for Valkey");
-                        next_refresh = TOKEN_REFRESH_RETRY;
-                    }
+                tokio::select! {
+                    () = tokio::time::sleep(next_refresh) => {}
+                    () = sender.closed() => return,
                 }
+
+                let refreshed = provider
+                    .provide_credentials()
+                    .await
+                    .map_err(ValkeyIamError::from)
+                    .and_then(|aws_credentials| signed_auth(&config, &aws_credentials));
+
+                next_refresh = match refreshed {
+                    Ok(credentials) => {
+                        sender.send_replace(credentials);
+                        TOKEN_REFRESH_INTERVAL
+                    }
+                    Err(error) => {
+                        warn!(%error, "failed to refresh the Valkey IAM token");
+                        TOKEN_REFRESH_RETRY
+                    }
+                };
             }
         });
 
@@ -80,15 +84,16 @@ impl StreamingCredentialsProvider for ValkeyIamCredentials {
     }
 }
 
-fn credentials(
+fn signed_auth(
     config: &ValkeyIamConfig,
-    credentials: &Credentials,
+    aws_credentials: &Credentials,
 ) -> Result<BasicAuth, ValkeyIamError> {
     let unsigned_uri = format!(
         "http://{}/?Action=connect&ResourceType=ServerlessCache&User={}",
         config.cache_name, config.user
     );
-    let identity = credentials.clone().into();
+    let identity = aws_credentials.clone().into();
+
     let mut settings = SigningSettings::default();
     settings.signature_location = SignatureLocation::QueryParams;
     settings.expires_in = Some(TOKEN_LIFETIME);
@@ -101,6 +106,7 @@ fn credentials(
         .build()
         .map_err(|error| ValkeyIamError::Signing(error.to_string()))?
         .into();
+
     let signable_request = SignableRequest::new(
         "GET",
         &unsigned_uri,
@@ -108,11 +114,13 @@ fn credentials(
         SignableBody::Bytes(&[]),
     )?;
     let (instructions, _) = sign(signable_request, &signing_params)?.into_parts();
+
     let mut request = axum::http::Request::builder()
         .uri(&unsigned_uri)
         .body(())
         .map_err(|error| ValkeyIamError::Signing(error.to_string()))?;
     instructions.apply_to_request_http1x(&mut request);
+
     let token = request
         .uri()
         .to_string()
@@ -124,14 +132,14 @@ fn credentials(
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ValkeyIamError {
+pub enum ValkeyIamError {
     #[error("the AWS credentials provider is unavailable")]
     MissingAwsCredentialsProvider,
     #[error("AWS credentials are unavailable: {0}")]
     AwsCredentials(#[from] aws_credential_types::provider::error::CredentialsError),
-    #[error("Valkey IAM token signing failed: {0}")]
+    #[error("Valkey IAM token request could not be built: {0}")]
     Signing(String),
-    #[error("Valkey IAM token signing failed: {0}")]
+    #[error("Valkey IAM token SigV4 signing failed: {0}")]
     SigV4(#[from] aws_sigv4::http_request::SigningError),
 }
 
@@ -154,7 +162,7 @@ mod tests {
             "test",
         );
 
-        let credentials = credentials(&config, &aws_credentials).unwrap();
+        let credentials = signed_auth(&config, &aws_credentials).unwrap();
 
         assert_eq!(credentials.username(), "gradiated-prod-gateway");
         assert!(credentials.password().starts_with("gradiated-prod/?"));

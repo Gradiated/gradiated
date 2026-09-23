@@ -1,191 +1,173 @@
-import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { dirname, join } from "node:path";
+import { rm } from "node:fs/promises";
+import { join } from "node:path";
+import { WizardError } from "../errors.js";
+import {
+  appendManagedBlock,
+  backupFile,
+  hasManagedBlock,
+  prependManagedBlock,
+  readTextIfExists,
+  removeManagedBlock,
+  writeIfChanged,
+  type BlockMarkers,
+} from "../files.js";
+import type { WizardPaths } from "../paths.js";
+import type { AgentIntegration, GatewayModel } from "./agent.js";
 
-const CONFIG_PATH = join(homedir(), ".codex", "config.toml");
-const PROFILE_PATH = join(homedir(), ".codex", "gradiated.config.toml");
-const AUTH_PATH = join(homedir(), ".codex", "auth.json");
-const BLOCK_START = "# --- Gradiated (added by @gradiated/wizard) ---";
-const BLOCK_END = "# --- End Gradiated ---";
+const MARKERS: BlockMarkers = {
+  start: "# --- Gradiated (added by @gradiated/wizard) ---",
+  end: "# --- End Gradiated ---",
+};
 
-const CREDENTIAL_HELPER = [
-  'const fs=require("node:fs")',
-  'const os=require("node:os")',
-  'const path=require("node:path")',
-  'const file=process.env.GRADIATED_CREDENTIALS_PATH||path.join(os.homedir(),".gradiated","credentials.json")',
-  'process.stdout.write(JSON.parse(fs.readFileSync(file,"utf8")).api_key)',
-].join(";");
+const credentialHelper = (credentialsPath: string): string =>
+  `process.stdout.write(JSON.parse(require("node:fs").readFileSync(${JSON.stringify(credentialsPath)},"utf8")).api_key)`;
 
-export const configPath = (): string => CONFIG_PATH;
-export const profilePath = (): string => PROFILE_PATH;
+export const codexFiles = (paths: WizardPaths) => ({
+  config: join(paths.home, ".codex", "config.toml"),
+  profile: join(paths.home, ".codex", "gradiated.config.toml"),
+});
 
-/**
- * Add a custom Responses provider without changing the user's normal Codex
- * provider. The auth command reads the wizard's owner-only credential file.
- */
-export const buildProviderBlock = (baseUrl: string): string =>
+export const buildProviderBlock = (
+  apiBaseUrl: string,
+  paths: WizardPaths,
+): string =>
   [
-    BLOCK_START,
+    MARKERS.start,
     "[model_providers.gradiated]",
     'name = "Gradiated"',
-    `base_url = ${JSON.stringify(`${baseUrl.replace(/\/$/, "")}/v1`)}`,
+    `base_url = ${JSON.stringify(`${apiBaseUrl}/v1`)}`,
     'wire_api = "responses"',
-    `auth = { command = "node", args = ["--eval", ${JSON.stringify(CREDENTIAL_HELPER)}] }`,
-    BLOCK_END,
+    `auth = { command = "node", args = ["--eval", ${JSON.stringify(credentialHelper(paths.credentials))}] }`,
+    MARKERS.end,
   ].join("\n");
 
 export const buildProfileBlock = (modelId: string): string =>
   [
-    BLOCK_START,
+    MARKERS.start,
     'model_provider = "gradiated"',
     `model = ${JSON.stringify(modelId)}`,
-    BLOCK_END,
+    MARKERS.end,
   ].join("\n");
 
-const withoutManagedBlock = (existing: string): string => {
-  const start = existing.indexOf(BLOCK_START);
-  if (start === -1) return existing.trim();
-  const end = existing.indexOf(BLOCK_END, start);
-  const after = end === -1 ? existing.length : end + BLOCK_END.length;
-  return `${existing.slice(0, start)}${existing.slice(after)}`.trim();
-};
+// TOML assigns every key after a table header to that table, so the provider
+// table goes last in config.toml and the profile's root keys go first.
+export const mergeProviderConfig = (existing: string, block: string): string =>
+  appendManagedBlock(existing, block, MARKERS);
 
-/** Keep the provider block last so later root keys do not enter its table. */
-export const mergeProviderConfig = (
-  existing: string,
-  block: string,
-): string => {
-  const preserved = withoutManagedBlock(existing);
-  return `${preserved.length > 0 ? `${preserved}\n\n` : ""}${block}\n`;
-};
-
-/** Keep root-level profile keys before any user-defined TOML tables. */
-export const mergeProfileConfig = (existing: string, block: string): string => {
-  const preserved = withoutManagedBlock(existing);
-  return `${block}${preserved.length > 0 ? `\n\n${preserved}` : ""}\n`;
-};
-
-const backupFile = async (path: string): Promise<string> => {
-  const timestamp = new Date().toISOString().replace(/[-:]/g, "").slice(0, 14);
-  const backup = `${path}.bak.${timestamp}Z`;
-  await copyFile(path, backup);
-  return backup;
-};
+export const mergeProfileConfig = (existing: string, block: string): string =>
+  prependManagedBlock(existing, block, MARKERS);
 
 export const writeConfig = async (
-  baseUrl: string,
-  modelId: string,
-): Promise<{
-  configPath: string;
-  profilePath: string;
-  changed: boolean;
-  backups: string[];
-}> => {
-  const configRaw = existsSync(CONFIG_PATH)
-    ? await readFile(CONFIG_PATH, "utf8")
-    : "";
-  const profileRaw = existsSync(PROFILE_PATH)
-    ? await readFile(PROFILE_PATH, "utf8")
-    : "";
+  paths: WizardPaths,
+  { apiBaseUrl, modelId }: GatewayModel,
+): Promise<{ config: boolean; profile: boolean }> => {
+  const files = codexFiles(paths);
+  const config = (await readTextIfExists(files.config)) ?? "";
+  const profile = (await readTextIfExists(files.profile)) ?? "";
 
-  if (profileRaw.length > 0 && !profileRaw.includes(BLOCK_START)) {
-    throw new Error(
-      `${PROFILE_PATH} already exists and is not managed by the wizard. Move it or use another profile name.`,
+  if (profile.length > 0 && !hasManagedBlock(profile, MARKERS)) {
+    throw new WizardError(
+      `${files.profile} already exists and is not managed by the wizard. Move it or use another profile name.`,
     );
   }
 
-  const nextConfig = mergeProviderConfig(
-    configRaw,
-    buildProviderBlock(baseUrl),
+  const configChanged = await writeIfChanged(
+    files.config,
+    mergeProviderConfig(config, buildProviderBlock(apiBaseUrl, paths)),
+    { backup: true },
   );
-  const nextProfile = mergeProfileConfig(
-    profileRaw,
-    buildProfileBlock(modelId),
+  const profileChanged = await writeIfChanged(
+    files.profile,
+    mergeProfileConfig(profile, buildProfileBlock(modelId)),
+    { backup: true },
   );
-  const configChanged = nextConfig !== configRaw;
-  const profileChanged = nextProfile !== profileRaw;
 
-  const backups: string[] = [];
-  if (configChanged && existsSync(CONFIG_PATH))
-    backups.push(await backupFile(CONFIG_PATH));
-  if (profileChanged && existsSync(PROFILE_PATH))
-    backups.push(await backupFile(PROFILE_PATH));
-
-  await mkdir(dirname(CONFIG_PATH), { recursive: true });
-  if (configChanged) {
-    await writeFile(CONFIG_PATH, nextConfig, { mode: 0o600 });
-  }
-  if (profileChanged) {
-    await writeFile(PROFILE_PATH, nextProfile, { mode: 0o600 });
-  }
-  return {
-    configPath: CONFIG_PATH,
-    profilePath: PROFILE_PATH,
-    changed: configChanged || profileChanged,
-    backups,
-  };
+  return { config: configChanged, profile: profileChanged };
 };
 
-export const isInstalled = async (): Promise<boolean> => {
-  const raw = await readConfigRaw();
+export const isConfigured = async (paths: WizardPaths): Promise<boolean> => {
+  const files = codexFiles(paths);
+  const config = await readTextIfExists(files.config);
+  const profile = await readTextIfExists(files.profile);
+
   return (
-    (raw !== null && raw.includes(BLOCK_START)) || existsSync(PROFILE_PATH)
+    (config !== null && hasManagedBlock(config, MARKERS)) ||
+    (profile !== null && hasManagedBlock(profile, MARKERS))
   );
 };
 
-export const readConfigRaw = async (): Promise<string | null> => {
-  try {
-    return await readFile(CONFIG_PATH, "utf8");
-  } catch {
-    return null;
-  }
+export const uninstallConfig = async (paths: WizardPaths): Promise<boolean> => {
+  const { config } = codexFiles(paths);
+  const text = await readTextIfExists(config);
+  if (text === null || !hasManagedBlock(text, MARKERS)) return false;
+
+  return writeIfChanged(config, removeManagedBlock(text, MARKERS), {
+    backup: true,
+  });
 };
 
-export const readProfileRaw = async (): Promise<string | null> => {
-  try {
-    return await readFile(PROFILE_PATH, "utf8");
-  } catch {
-    return null;
-  }
-};
+export const uninstallProfile = async (
+  paths: WizardPaths,
+): Promise<boolean> => {
+  const { profile } = codexFiles(paths);
+  const text = await readTextIfExists(profile);
+  if (text === null || !hasManagedBlock(text, MARKERS)) return false;
 
-/** Remove the wizard-managed provider block from config.toml. */
-export const uninstallConfig = async (): Promise<boolean> => {
-  const raw = await readConfigRaw();
-  if (raw === null || !raw.includes(BLOCK_START)) return false;
-  await backupFile(CONFIG_PATH);
-  await writeFile(CONFIG_PATH, withoutManagedBlock(raw), { mode: 0o600 });
+  await backupFile(profile);
+  await rm(profile);
+
   return true;
 };
 
-/** Remove the wizard-managed gradiated profile file. */
-export const uninstallProfile = async (): Promise<boolean> => {
-  const raw = await readProfileRaw();
-  if (raw === null || !raw.includes(BLOCK_START)) return false;
-  await backupFile(PROFILE_PATH);
-  const { rm } = await import("node:fs/promises");
-  await rm(PROFILE_PATH);
-  return true;
-};
+export const codex: AgentIntegration = {
+  name: "codex",
+  label: "Codex",
+  uninstallHint: "provider block and gradiated profile",
+  runsWithoutClient: false,
+  isConfigured,
+  preview: (setup, paths) => {
+    const files = codexFiles(paths);
 
-/** Remove the gradiated credential entry from Codex auth.json. */
-export const removeAuth = async (): Promise<boolean> => {
-  if (!existsSync(AUTH_PATH)) return false;
-  try {
-    const document = JSON.parse(await readFile(AUTH_PATH, "utf8")) as Record<
-      string,
-      unknown
-    >;
-    if (document.gradiated === undefined) return false;
-    delete document.gradiated;
-    await writeFile(AUTH_PATH, `${JSON.stringify(document, null, 2)}\n`, {
-      mode: 0o600,
+    return [
+      {
+        title: `Would merge into ${files.config}`,
+        body: buildProviderBlock(setup.apiBaseUrl, paths),
+      },
+      {
+        title: `Would write ${files.profile}`,
+        body: buildProfileBlock(setup.model.id),
+      },
+    ];
+  },
+  install: async (setup, paths) => {
+    const files = codexFiles(paths);
+    const changed = await writeConfig(paths, {
+      apiBaseUrl: setup.apiBaseUrl,
+      modelId: setup.model.id,
     });
-    return true;
-  } catch {
-    return false;
-  }
-};
 
-export const authPath = (): string => AUTH_PATH;
+    return {
+      changes: [
+        ...(changed.config ? [`Codex provider in ${files.config}`] : []),
+        ...(changed.profile ? [`Codex profile in ${files.profile}`] : []),
+      ],
+      nextStep: {
+        action: "run `codex --profile gradiated`",
+        notes: ["add `-m <model-id>` for another Gradiated model"],
+      },
+    };
+  },
+  uninstall: async (paths) => {
+    const files = codexFiles(paths);
+    const configRemoved = await uninstallConfig(paths);
+    const profileRemoved = await uninstallProfile(paths);
+
+    return {
+      removed: [
+        ...(configRemoved ? [`Codex provider (${files.config})`] : []),
+        ...(profileRemoved ? [`Codex profile (${files.profile})`] : []),
+      ],
+      backedUp: configRemoved || profileRemoved,
+    };
+  },
+};

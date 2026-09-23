@@ -9,15 +9,21 @@ destination=${3:?Pass the runtime directory}
   echo 'Invalid bundle digest' >&2
   exit 1
 }
+
 # Accept only immutable release objects, not arbitrary downloader arguments.
 [[ "$url" =~ ^s3::https://([a-z0-9.-]+)\.s3\.us-east-1\.amazonaws\.com/bundles/sha256/$digest\.tar\.gz$ ]] || {
   echo 'Invalid bundle URL' >&2
   exit 1
 }
+
 source_url="s3://${BASH_REMATCH[1]}/bundles/sha256/$digest.tar.gz"
 if [[ -e "$destination" ]]; then
-  [[ -f "$destination/.bundle-sha256" && $(cat "$destination/.bundle-sha256") == "$digest" ]]
-  exit
+  [[ -f "$destination/.bundle-sha256" && $(cat "$destination/.bundle-sha256") == "$digest" ]] || {
+    echo 'Runtime directory holds a different bundle' >&2
+    exit 1
+  }
+
+  exit 0
 fi
 
 work=$(mktemp -d "${destination}.download.XXXXXX")

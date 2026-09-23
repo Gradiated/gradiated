@@ -7,6 +7,7 @@ export PYTHONUNBUFFERED=1
 export HF_XET_HIGH_PERFORMANCE=1
 MODEL=deepseek-ai/DeepSeek-V4.1-Flash
 REVISION=dba1be0a40aa45a94ad051997016db3960a90277
+case "${SPECULATIVE_DECODING:-1}" in 0|1) ;; *) echo 'SPECULATIVE_DECODING must be 0 or 1' >&2; exit 64;; esac
 args=("${VLLM_BIN:-vllm}" serve "$MODEL" --revision "$REVISION" --tokenizer-revision "$REVISION"
   --served-model-name "$MODEL" --host "${RUNTIME_HOST:-127.0.0.1}" --port "${RUNTIME_PORT:-8000}"
   --tensor-parallel-size 4 --language-model-only

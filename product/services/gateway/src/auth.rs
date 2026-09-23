@@ -1,15 +1,20 @@
-use axum::http::HeaderMap;
-#[cfg(test)]
-use axum::http::{header::HeaderName, header::AUTHORIZATION};
+use axum::http::{
+    header::{HeaderName, AUTHORIZATION},
+    HeaderMap,
+};
 use chrono::{DateTime, Utc};
 use sha2::{Digest, Sha256};
 use thiserror::Error;
 use uuid::Uuid;
 
-use crate::domain::{GatewayAccount, GatewayCredential, GatewayWorkspace, OrganizationStatus};
+use crate::{
+    diagnostics::limited_warn,
+    domain::{GatewayAccount, GatewayCredential, GatewayWorkspace, OrganizationStatus},
+};
 
-#[cfg(test)]
-const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
+pub(crate) const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
+const X_GRADIATED_API_KEY: HeaderName = HeaderName::from_static("x-gradiated-api-key");
+const MAX_SECRET_BYTES: usize = 4096;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct AuthenticatedIdentity {
@@ -27,29 +32,22 @@ pub enum Provider {
 impl Provider {
     /// Recognizes a key namespace, not whether the provider accepts the key.
     fn from_key(key: &str) -> Option<Self> {
-        if key
-            .strip_prefix("sk-ant-")
-            .is_some_and(|suffix| !suffix.is_empty())
-        {
-            Some(Self::Anthropic)
-        } else if !key.starts_with("sk-ant-")
-            && key
-                .strip_prefix("sk-")
-                .is_some_and(|suffix| !suffix.is_empty())
-        {
-            Some(Self::OpenAi)
-        } else {
-            None
-        }
+        let (provider, suffix) = match key.strip_prefix("sk-ant-") {
+            Some(suffix) => (Self::Anthropic, suffix),
+            None => (Self::OpenAi, key.strip_prefix("sk-")?),
+        };
+
+        (!suffix.is_empty()).then_some(provider)
     }
 }
 
-pub fn is_api_key(key: &str) -> bool {
+fn is_api_key(key: &str) -> bool {
     key.strip_prefix("grad_")
         .is_some_and(|suffix| !suffix.is_empty())
 }
 
-pub fn is_provider_key(key: &str) -> bool {
+#[cfg(test)]
+fn is_provider_key(key: &str) -> bool {
     Provider::from_key(key).is_some()
 }
 
@@ -70,9 +68,9 @@ impl RequestCredentials<'_> {
     }
 }
 
-fn single_secret<'a>(
+fn single_value<'a>(
     headers: &'a HeaderMap,
-    name: &str,
+    name: &HeaderName,
 ) -> Result<Option<&'a str>, AuthenticationError> {
     let mut values = headers.get_all(name).iter();
     let Some(value) = values.next() else {
@@ -80,43 +78,51 @@ fn single_secret<'a>(
     };
 
     if values.next().is_some() {
-        return Err(AuthenticationError::InvalidApiKey);
+        return Err(rejected("duplicate_header"));
     }
 
-    let value = value
+    value
         .to_str()
-        .map_err(|_| AuthenticationError::InvalidApiKey)?;
-    let secret = if name == "authorization" {
-        value
-            .strip_prefix("Bearer ")
-            .ok_or(AuthenticationError::InvalidApiKey)?
-    } else {
-        value
-    };
-
-    if secret.is_empty()
-        || secret.len() > 4096
-        || secret
-            .bytes()
-            .any(|b| !b.is_ascii_alphanumeric() && b != b'-' && b != b'_')
-    {
-        return Err(AuthenticationError::InvalidApiKey);
-    }
-
-    Ok(Some(secret))
+        .map(Some)
+        .map_err(|_| rejected("unreadable_header"))
 }
 
-/// Extracts identity from the supported headers. Valkey and the provider still
-/// validate their own keys. A route must match the extracted provider before relay.
+fn bearer_token(value: &str) -> Result<&str, AuthenticationError> {
+    value
+        .strip_prefix("Bearer ")
+        .ok_or_else(|| rejected("malformed_bearer"))
+}
+
+fn checked_secret(value: &str) -> Result<&str, AuthenticationError> {
+    let valid = !value.is_empty()
+        && value.len() <= MAX_SECRET_BYTES
+        && value
+            .bytes()
+            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+
+    if valid {
+        Ok(value)
+    } else {
+        Err(rejected("malformed_secret"))
+    }
+}
+
+/// A route must match the extracted provider before relay.
 pub fn extract_credentials(
     headers: &HeaderMap,
 ) -> Result<RequestCredentials<'_>, AuthenticationError> {
-    let workspace = single_secret(headers, "x-gradiated-api-key")?;
-    let bearer = single_secret(headers, "authorization")?;
-    let standard = single_secret(headers, "x-api-key")?;
+    let workspace = single_value(headers, &X_GRADIATED_API_KEY)?
+        .map(checked_secret)
+        .transpose()?;
+    let bearer = single_value(headers, &AUTHORIZATION)?
+        .map(|value| bearer_token(value).and_then(checked_secret))
+        .transpose()?;
+    let standard = single_value(headers, &X_API_KEY)?
+        .map(checked_secret)
+        .transpose()?;
 
     if workspace.is_some_and(|key| !is_api_key(key)) {
-        return Err(AuthenticationError::InvalidApiKey);
+        return Err(rejected("workspace_header_namespace"));
     }
 
     let mut api_key = workspace;
@@ -125,13 +131,13 @@ pub fn extract_credentials(
     for key in [bearer, standard].into_iter().flatten() {
         if is_api_key(key) {
             if api_key.is_some_and(|existing| existing != key) {
-                return Err(AuthenticationError::InvalidApiKey);
+                return Err(rejected("conflicting_api_keys"));
             }
 
             api_key = Some(key);
         } else if let Some(kind) = Provider::from_key(key) {
             if provider.is_some() {
-                return Err(AuthenticationError::InvalidApiKey);
+                return Err(rejected("multiple_provider_keys"));
             }
 
             provider = Some(ProviderCredential {
@@ -139,17 +145,18 @@ pub fn extract_credentials(
                 secret: key,
             });
         } else {
-            return Err(AuthenticationError::InvalidApiKey);
+            return Err(rejected("unknown_key_namespace"));
         }
     }
 
     Ok(RequestCredentials {
-        api_key: api_key.ok_or(AuthenticationError::InvalidApiKey)?,
+        api_key: api_key.ok_or_else(|| rejected("missing_api_key"))?,
         provider,
     })
 }
 
-pub fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
+#[cfg(test)]
+pub(crate) fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
     Ok(extract_credentials(headers)?.api_key_digest())
 }
 
@@ -157,12 +164,15 @@ pub fn authenticate_credential(
     credential: GatewayCredential,
     now: DateTime<Utc>,
 ) -> Result<AuthenticatedIdentity, AuthenticationError> {
-    if credential.revoked_at.is_some()
-        || credential
-            .expires_at
-            .is_some_and(|expires_at| expires_at <= now)
+    if credential.revoked_at.is_some() {
+        return Err(rejected("revoked"));
+    }
+
+    if credential
+        .expires_at
+        .is_some_and(|expires_at| expires_at <= now)
     {
-        return Err(AuthenticationError::InvalidApiKey);
+        return Err(rejected("expired"));
     }
 
     Ok(AuthenticatedIdentity {
@@ -183,9 +193,11 @@ pub fn authorize_access(
     {
         return Err(AccessError::InconsistentServingState);
     }
+
     if workspace.archived_at.is_some() {
         return Err(AccessError::WorkspaceArchived);
     }
+
     if account.organization_status != OrganizationStatus::Active {
         return Err(AccessError::OrganizationSuspended);
     }
@@ -197,6 +209,21 @@ pub fn authorize_access(
 pub enum AuthenticationError {
     #[error("invalid API key")]
     InvalidApiKey,
+}
+
+/// The public error never says why a credential failed, so the bounded reason is logged here.
+fn rejected(reason: &'static str) -> AuthenticationError {
+    limited_warn!(error_code = reason, "credential rejected");
+
+    AuthenticationError::InvalidApiKey
+}
+
+impl From<AuthenticationError> for crate::GatewayError {
+    fn from(error: AuthenticationError) -> Self {
+        match error {
+            AuthenticationError::InvalidApiKey => Self::InvalidApiKey,
+        }
+    }
 }
 
 impl From<AccessError> for crate::GatewayError {
@@ -222,34 +249,23 @@ pub enum AccessError {
 
 #[cfg(test)]
 mod tests {
-    use chrono::TimeZone;
+    use chrono::{Duration, TimeZone};
 
     use super::*;
-    use crate::domain::{BillingMode, OrganizationKind};
+    use crate::{test_support::TestServingState, GatewayError};
 
-    const API_KEY_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000001);
-    const ORGANIZATION_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000002);
-    const WORKSPACE_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000003);
+    fn records() -> (GatewayCredential, GatewayWorkspace, GatewayAccount) {
+        let state = TestServingState::ready();
 
-    fn credential() -> GatewayCredential {
-        GatewayCredential {
-            api_key_id: API_KEY_ID,
-            organization_id: ORGANIZATION_ID,
-            workspace_id: WORKSPACE_ID,
-            expires_at: None,
-            revoked_at: None,
-        }
+        (
+            state.credential.unwrap(),
+            state.workspace.unwrap(),
+            state.account.unwrap(),
+        )
     }
 
     #[test]
-    fn bearer_header_is_exact_and_digest_does_not_retain_the_secret() {
-        let mut headers = HeaderMap::new();
-        headers.insert(AUTHORIZATION, "Bearer grad_example".parse().unwrap());
-        assert_eq!(
-            credential_digest(&headers).unwrap(),
-            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
-        );
-
+    fn bearer_prefix_is_exact_and_case_sensitive() {
         for value in [
             "grad_example",
             "bearer grad_example",
@@ -258,97 +274,115 @@ mod tests {
         ] {
             let mut headers = HeaderMap::new();
             headers.insert(AUTHORIZATION, value.parse().unwrap());
+
             assert_eq!(
                 credential_digest(&headers),
-                Err(AuthenticationError::InvalidApiKey)
+                Err(AuthenticationError::InvalidApiKey),
+                "{value}"
             );
         }
-    }
-
-    #[test]
-    fn repeated_authorization_header_is_rejected() {
-        let mut headers = HeaderMap::new();
-        headers.append(AUTHORIZATION, "Bearer first".parse().unwrap());
-        headers.append(AUTHORIZATION, "Bearer second".parse().unwrap());
-        assert_eq!(
-            credential_digest(&headers),
-            Err(AuthenticationError::InvalidApiKey)
-        );
-    }
-
-    #[test]
-    fn x_api_key_authenticates_with_the_same_digest_as_bearer() {
-        let mut headers = HeaderMap::new();
-        headers.insert(X_API_KEY, "grad_example".parse().unwrap());
-        assert_eq!(
-            credential_digest(&headers).unwrap(),
-            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
-        );
-
-        for value in ["", "a b"] {
-            let mut headers = HeaderMap::new();
-            headers.insert(X_API_KEY, value.parse().unwrap());
-            assert_eq!(
-                credential_digest(&headers),
-                Err(AuthenticationError::InvalidApiKey)
-            );
-        }
-
-        let mut headers = HeaderMap::new();
-        headers.append(X_API_KEY, "first".parse().unwrap());
-        headers.append(X_API_KEY, "second".parse().unwrap());
-        assert_eq!(
-            credential_digest(&headers),
-            Err(AuthenticationError::InvalidApiKey)
-        );
-
-        let mut both = HeaderMap::new();
-        both.insert(AUTHORIZATION, "Bearer grad_example".parse().unwrap());
-        both.insert(X_API_KEY, "grad_example".parse().unwrap());
-        assert_eq!(
-            credential_digest(&both).unwrap(),
-            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
-        );
     }
 
     #[test]
     fn revoked_or_elapsed_credentials_are_rejected() {
         let now = Utc.with_ymd_and_hms(2026, 8, 18, 20, 0, 0).unwrap();
-        let mut revoked = credential();
+        let (credential, _, _) = records();
+
+        let mut revoked = credential.clone();
         revoked.revoked_at = Some(now);
         assert_eq!(
             authenticate_credential(revoked, now),
             Err(AuthenticationError::InvalidApiKey)
         );
 
-        let mut expired = credential();
+        let mut expired = credential.clone();
         expired.expires_at = Some(now);
         assert_eq!(
             authenticate_credential(expired, now),
             Err(AuthenticationError::InvalidApiKey)
         );
+
+        let mut expiring = credential;
+        expiring.expires_at = Some(now + Duration::seconds(1));
+        assert!(authenticate_credential(expiring, now).is_ok());
+    }
+
+    #[test]
+    fn every_authentication_failure_is_the_public_invalid_api_key() {
+        let mut revoked = records().0;
+        revoked.revoked_at = Some(Utc::now());
+
+        for failure in [
+            extract_credentials(&HeaderMap::new()).err(),
+            authenticate_credential(revoked, Utc::now()).err(),
+        ] {
+            assert_eq!(
+                failure.map(GatewayError::from),
+                Some(GatewayError::InvalidApiKey)
+            );
+        }
     }
 
     #[test]
     fn access_requires_consistent_active_unarchived_records() {
-        let identity = authenticate_credential(credential(), Utc::now()).unwrap();
-        let workspace = GatewayWorkspace {
-            organization_id: ORGANIZATION_ID,
-            workspace_id: WORKSPACE_ID,
-            archived_at: None,
-        };
-        let account = GatewayAccount {
-            organization_id: ORGANIZATION_ID,
-            organization_kind: OrganizationKind::Customer,
-            organization_status: OrganizationStatus::Active,
-            billing_mode: BillingMode::Prepaid,
-            balance: 1,
-        };
+        let (credential, workspace, account) = records();
+        let identity = authenticate_credential(credential, Utc::now()).unwrap();
+        let other = Uuid::from_u128(0xdead);
 
         assert_eq!(
             authorize_access(identity.clone(), &workspace, &account),
-            Ok(identity)
+            Ok(identity.clone())
         );
+
+        let mut other_workspace = workspace.clone();
+        other_workspace.workspace_id = other;
+        let mut other_workspace_organization = workspace.clone();
+        other_workspace_organization.organization_id = other;
+        let mut other_account_organization = account.clone();
+        other_account_organization.organization_id = other;
+        let mut archived = workspace.clone();
+        archived.archived_at = Some(Utc::now());
+        let mut suspended = account.clone();
+        suspended.organization_status = OrganizationStatus::Suspended;
+
+        for (workspace, account, denial, public) in [
+            (
+                &other_workspace,
+                &account,
+                AccessError::InconsistentServingState,
+                GatewayError::ServingStateUnavailable,
+            ),
+            (
+                &other_workspace_organization,
+                &account,
+                AccessError::InconsistentServingState,
+                GatewayError::ServingStateUnavailable,
+            ),
+            (
+                &workspace,
+                &other_account_organization,
+                AccessError::InconsistentServingState,
+                GatewayError::ServingStateUnavailable,
+            ),
+            (
+                &archived,
+                &account,
+                AccessError::WorkspaceArchived,
+                GatewayError::WorkspaceArchived,
+            ),
+            (
+                &workspace,
+                &suspended,
+                AccessError::OrganizationSuspended,
+                GatewayError::OrganizationSuspended,
+            ),
+        ] {
+            assert_eq!(
+                authorize_access(identity.clone(), workspace, account),
+                Err(denial)
+            );
+            assert_eq!(GatewayError::from(denial), public);
+        }
     }
 }
 

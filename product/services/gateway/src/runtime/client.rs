@@ -1,4 +1,12 @@
-use std::{convert::Infallible, fs, path::PathBuf, pin::Pin, sync::Arc, time::Duration};
+use std::{
+    convert::Infallible,
+    fs,
+    future::Future,
+    path::{Path, PathBuf},
+    pin::Pin,
+    sync::Arc,
+    time::Duration,
+};
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -8,16 +16,19 @@ use reqwest::{header, redirect::Policy, Certificate, Identity, RequestBuilder, R
 use thiserror::Error;
 
 use super::{
-    ModelRuntime, RuntimeCompletion, RuntimeEventStream, RuntimeFailure, RuntimeFailureKind,
+    FailureCause, ModelRuntime, ProtocolViolation, RuntimeCompletion, RuntimeEventStream,
+    RuntimeFailure,
 };
-use crate::{GatewayModelDeployment, InferenceRequest, ModelTokenizer, NormalizedUsage};
+use crate::{
+    systemone::SystemOneRequest, GatewayModelDeployment, InferenceRequest, ModelDeploymentRelease,
+    ModelTokenizer,
+};
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const RESPONSE_IDLE_TIMEOUT: Duration = Duration::from_secs(30);
 const MAX_RESPONSE_BYTES: usize = 8_000_000;
 const MAX_STREAM_EVENT_BYTES: usize = 1_000_000;
 
-/// Server-sent events from a runtime, bounded to `MAX_RESPONSE_BYTES` in total.
 pub(super) type RuntimeEvents =
     Pin<Box<dyn Stream<Item = Result<Event, EventStreamError<RuntimeFailure>>> + Send>>;
 
@@ -25,7 +36,7 @@ pub(super) type RuntimeEvents =
 pub struct SglangClient {
     client: reqwest::Client,
     api_key: Option<Arc<str>>,
-    tokenizer: Option<ModelTokenizer>,
+    pub(super) tokenizer: ModelTokenizer,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -74,55 +85,18 @@ fn environment_path(name: &str) -> Option<PathBuf> {
 }
 
 impl SglangClient {
-    pub fn new(api_key: Option<String>) -> Result<Self, RuntimeClientError> {
-        Self::new_with_tls(api_key, None)
-    }
-
-    pub fn new_with_tls(
-        api_key: Option<String>,
-        tls: Option<&RuntimeTlsConfig>,
-    ) -> Result<Self, RuntimeClientError> {
-        Ok(Self {
-            client: build_http_client(tls)?,
-            api_key: api_key.map(Arc::from),
-            tokenizer: None,
-        })
-    }
-
-    pub fn with_tokenizer(
-        api_key: Option<String>,
-        tokenizer: ModelTokenizer,
-    ) -> Result<Self, RuntimeClientError> {
-        Self::with_tokenizer_and_tls(api_key, tokenizer, None)
-    }
-
     pub fn with_tokenizer_and_tls(
         api_key: Option<String>,
         tokenizer: ModelTokenizer,
         tls: Option<&RuntimeTlsConfig>,
     ) -> Result<Self, RuntimeClientError> {
-        let mut client = Self::new_with_tls(api_key, tls)?;
-        client.tokenizer = Some(tokenizer);
-
-        Ok(client)
+        Ok(Self {
+            client: build_http_client(tls)?,
+            api_key: api_key.map(Arc::from),
+            tokenizer,
+        })
     }
 
-    pub async fn check_all(
-        &self,
-        deployments: &[GatewayModelDeployment],
-    ) -> Result<(), RuntimeHealthError> {
-        for deployment in deployments {
-            let request = self.authorized(self.client.get(endpoint(deployment, "health")));
-            let response = request.send().await?;
-            if !response.status().is_success() {
-                return Err(RuntimeHealthError::UnhealthyStatus(response.status()));
-            }
-        }
-
-        Ok(())
-    }
-
-    /// A JSON POST to one of the deployment's endpoints.
     pub(super) fn post(
         &self,
         deployment: &GatewayModelDeployment,
@@ -138,138 +112,90 @@ impl SglangClient {
         self.authorized(request)
     }
 
-    /// The tokenizer that native token transport depends on. A client built
-    /// without one cannot serve those releases.
-    pub(super) fn tokenizer(&self) -> Result<&ModelTokenizer, RuntimeFailure> {
-        self.tokenizer
-            .as_ref()
-            .ok_or_else(RuntimeFailure::protocol_violation)
-    }
-
     fn authorized(&self, request: RequestBuilder) -> RequestBuilder {
         match &self.api_key {
             Some(api_key) => request.bearer_auth(api_key),
             None => request,
         }
     }
+}
 
-    /// Each request speaks exactly one protocol. A decision goes to a SystemOne
-    /// release; chat goes to native token transport or to the chat endpoint.
-    async fn dispatch_complete(
-        &self,
-        deployment: &GatewayModelDeployment,
-        request: InferenceRequest,
-        effective_output_tokens: u64,
-        response_header_timeout: Duration,
-    ) -> Result<RuntimeCompletion, RuntimeFailure> {
-        let system_one = deployment.release.is_system_one();
+pub(super) struct Call<'a> {
+    pub(super) deployment: &'a GatewayModelDeployment,
+    pub(super) request: InferenceRequest,
+    pub(super) output_tokens: u64,
+}
 
-        if request.decision.is_some() {
-            if !system_one || request.stream || effective_output_tokens != 0 {
-                return Err(RuntimeFailure::protocol_violation());
+enum Transport {
+    Chat,
+    Native(Vec<u32>),
+    SystemOne(Box<SystemOneRequest>),
+}
+
+impl<'a> Call<'a> {
+    fn route(
+        deployment: &'a GatewayModelDeployment,
+        mut request: InferenceRequest,
+        output_tokens: u64,
+        streaming: bool,
+    ) -> Result<(Transport, Self), RuntimeFailure> {
+        let transport = Transport::select(&deployment.release, &mut request, output_tokens)?;
+        if request.stream != streaming {
+            return Err(ProtocolViolation::Dispatch.into());
+        }
+
+        let call = Self {
+            deployment,
+            request,
+            output_tokens,
+        };
+
+        Ok((transport, call))
+    }
+}
+
+impl Transport {
+    fn select(
+        release: &ModelDeploymentRelease,
+        request: &mut InferenceRequest,
+        output_tokens: u64,
+    ) -> Result<Self, RuntimeFailure> {
+        match request.decision.take() {
+            Some(decision) if release.is_system_one() && output_tokens == 0 => {
+                Ok(Self::SystemOne(Box::new(decision)))
             }
+            None if !release.is_system_one() && output_tokens > 0 => {
+                if !release.sends_token_ids() {
+                    return Ok(Self::Chat);
+                }
 
-            return self
-                .complete_system_one(deployment, request, response_header_timeout)
-                .await;
-        }
-
-        if system_one || request.stream || effective_output_tokens == 0 {
-            return Err(RuntimeFailure::protocol_violation());
-        }
-
-        if deployment.release.sends_token_ids() {
-            self.complete_native(
-                deployment,
-                request,
-                effective_output_tokens,
-                response_header_timeout,
-            )
-            .await
-        } else {
-            self.complete_chat(
-                deployment,
-                request,
-                effective_output_tokens,
-                response_header_timeout,
-            )
-            .await
+                request
+                    .encoded_input_ids
+                    .take()
+                    .map(Self::Native)
+                    .ok_or_else(|| ProtocolViolation::Dispatch.into())
+            }
+            _ => Err(ProtocolViolation::Dispatch.into()),
         }
     }
+}
 
-    async fn dispatch_stream(
-        &self,
-        deployment: &GatewayModelDeployment,
-        request: InferenceRequest,
-        effective_output_tokens: u64,
-        response_header_timeout: Duration,
-    ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-        if request.decision.is_some()
-            || deployment.release.is_system_one()
-            || !request.stream
-            || effective_output_tokens == 0
-        {
-            return Err(RuntimeFailure::protocol_violation());
-        }
+pub(super) struct ModelNames {
+    pub(super) requested: String,
+    pub(super) runtime: String,
+}
 
-        if deployment.release.sends_token_ids() {
-            self.stream_native(
-                deployment,
-                request,
-                effective_output_tokens,
-                response_header_timeout,
-            )
-            .await
-        } else {
-            self.stream_chat(
-                deployment,
-                request,
-                effective_output_tokens,
-                response_header_timeout,
-            )
-            .await
-        }
-    }
-
-    async fn complete_system_one(
-        &self,
-        deployment: &GatewayModelDeployment,
-        request: InferenceRequest,
-        response_header_timeout: Duration,
-    ) -> Result<RuntimeCompletion, RuntimeFailure> {
-        let decision = request
-            .decision
-            .as_ref()
-            .ok_or_else(RuntimeFailure::protocol_violation)?;
-        let runtime_model = deployment
+impl ModelNames {
+    pub(super) fn new(call: &Call<'_>) -> Self {
+        let requested = call.request.model.clone();
+        let runtime = call
+            .deployment
             .release
             .runtime_model_name
-            .as_deref()
-            .unwrap_or(&request.model);
-        let body = serde_json::to_vec(&serde_json::json!({
-            "model": runtime_model,
-            "state": decision.state,
-            "questions": decision.questions,
-            "priority": request.service_tier.runtime_priority(),
-        }))
-        .map_err(|_| RuntimeFailure::protocol_violation())?;
+            .clone()
+            .unwrap_or_else(|| requested.clone());
 
-        let upstream = self.post(deployment, "v1/systemone", body);
-        let response = send(upstream, response_header_timeout).await?;
-        let status = response.status();
-        if !status.is_success() {
-            return Err(RuntimeFailure::rejected(status, NormalizedUsage::zero()));
-        }
-
-        let body = read_bounded_body(response).await?;
-        let (response, usage) =
-            crate::systemone::normalize_response(&body, decision, runtime_model)?;
-
-        Ok(RuntimeCompletion {
-            response,
-            usage,
-            finish_reason: "stop".to_owned(),
-        })
+        Self { requested, runtime }
     }
 }
 
@@ -283,15 +209,19 @@ impl ModelRuntime for SglangClient {
         request_deadline: DateTime<Utc>,
     ) -> Result<RuntimeCompletion, RuntimeFailure> {
         let remaining = remaining_until(request_deadline)?;
-        let dispatch =
-            self.dispatch_complete(deployment, request, effective_output_tokens, remaining);
+        let (transport, call) = Call::route(deployment, request, effective_output_tokens, false)?;
 
-        tokio::time::timeout(remaining, dispatch)
-            .await
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
+        within(remaining, async move {
+            match transport {
+                Transport::Chat => self.complete_chat(call).await,
+                Transport::Native(input_ids) => self.complete_native(call, &input_ids).await,
+                Transport::SystemOne(decision) => self.complete_system_one(call, &decision).await,
+            }
+        })
+        .await
     }
 
-    /// Only opening the stream is bounded here. The caller holds the deadline for
+    /// The deadline bounds only opening the stream. The caller holds it for
     /// the events that follow.
     async fn stream(
         &self,
@@ -301,9 +231,16 @@ impl ModelRuntime for SglangClient {
         request_deadline: DateTime<Utc>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
         let remaining = remaining_until(request_deadline)?;
+        let (transport, call) = Call::route(deployment, request, effective_output_tokens, true)?;
 
-        self.dispatch_stream(deployment, request, effective_output_tokens, remaining)
-            .await
+        within(remaining, async move {
+            match transport {
+                Transport::Chat => self.stream_chat(call).await,
+                Transport::Native(input_ids) => self.stream_native(call, &input_ids).await,
+                Transport::SystemOne(_) => Err(ProtocolViolation::Dispatch.into()),
+            }
+        })
+        .await
     }
 }
 
@@ -311,7 +248,16 @@ fn remaining_until(deadline: DateTime<Utc>) -> Result<Duration, RuntimeFailure> 
     deadline
         .signed_duration_since(Utc::now())
         .to_std()
-        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))
+        .map_err(|_| RuntimeFailure::deadline())
+}
+
+async fn within<T>(
+    remaining: Duration,
+    dispatch: impl Future<Output = Result<T, RuntimeFailure>>,
+) -> Result<T, RuntimeFailure> {
+    tokio::time::timeout(remaining, dispatch)
+        .await
+        .map_err(|_| RuntimeFailure::deadline())?
 }
 
 fn build_http_client(
@@ -341,9 +287,9 @@ fn build_http_client(
     Ok(builder.build()?)
 }
 
-fn read_tls_file(path: &PathBuf) -> Result<Vec<u8>, RuntimeClientError> {
+fn read_tls_file(path: &Path) -> Result<Vec<u8>, RuntimeClientError> {
     fs::read(path).map_err(|source| RuntimeClientError::TlsFile {
-        path: path.clone(),
+        path: path.to_owned(),
         source,
     })
 }
@@ -352,52 +298,42 @@ fn endpoint(deployment: &GatewayModelDeployment, path: &str) -> String {
     format!("{}/{}", deployment.service_url.trim_end_matches('/'), path)
 }
 
-/// Sends a request body as a single chunk without a `Content-Length`, which
-/// SGLang accepts for its chat endpoint.
+/// A streamed body has no bytes the HTTP client could replay, so the client
+/// never sends a prompt twice.
 pub(super) fn one_shot_body(body: Vec<u8>) -> reqwest::Body {
     reqwest::Body::wrap_stream(stream::once(async move {
         Result::<Vec<u8>, Infallible>::Ok(body)
     }))
 }
 
-/// Sends a request and waits at most `timeout` for the response headers.
-pub(super) async fn send(
-    request: RequestBuilder,
-    timeout: Duration,
-) -> Result<Response, RuntimeFailure> {
-    tokio::time::timeout(timeout, request.send())
-        .await
-        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-        .map_err(RuntimeFailure::from_transport)
+pub(super) async fn send(request: RequestBuilder) -> Result<Response, RuntimeFailure> {
+    request.send().await.map_err(RuntimeFailure::from_transport)
 }
 
-/// Reads a whole response body, failing past `MAX_RESPONSE_BYTES` or after
-/// `RESPONSE_IDLE_TIMEOUT` without a chunk.
 pub(super) async fn read_bounded_body(mut response: Response) -> Result<Vec<u8>, RuntimeFailure> {
     let declared = response.content_length();
     if declared.is_some_and(|length| length > MAX_RESPONSE_BYTES as u64) {
-        return Err(RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge));
+        return Err(RuntimeFailure::too_large(FailureCause::DeclaredTooLarge));
     }
 
     let mut body = Vec::with_capacity(declared.unwrap_or(0) as usize);
     loop {
         let chunk = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, response.chunk())
             .await
-            .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?
-            .map_err(RuntimeFailure::from_transport)?;
+            .map_err(|_| RuntimeFailure::idle())?
+            .map_err(RuntimeFailure::interrupted)?;
         let Some(chunk) = chunk else {
             return Ok(body);
         };
 
         if body.len().saturating_add(chunk.len()) > MAX_RESPONSE_BYTES {
-            return Err(RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge));
+            return Err(RuntimeFailure::too_large(FailureCause::StreamedTooLarge));
         }
 
         body.extend_from_slice(&chunk);
     }
 }
 
-/// Turns a successful streaming response into server-sent events.
 pub(super) fn open_events(response: Response) -> Result<RuntimeEvents, RuntimeFailure> {
     let event_stream = response
         .headers()
@@ -405,36 +341,24 @@ pub(super) fn open_events(response: Response) -> Result<RuntimeEvents, RuntimeFa
         .and_then(|value| value.to_str().ok())
         .is_some_and(|value| value.starts_with("text/event-stream"));
     if !event_stream {
-        return Err(RuntimeFailure::protocol_violation());
+        return Err(ProtocolViolation::ContentType.into());
     }
 
     let events = response
         .bytes_stream()
-        .map(|result| result.map_err(RuntimeFailure::from_transport))
-        .scan(0_usize, |total, result| {
-            let result = result.and_then(|bytes| {
-                *total = total.saturating_add(bytes.len());
-                if *total > MAX_RESPONSE_BYTES {
-                    return Err(RuntimeFailure::new(RuntimeFailureKind::ResponseTooLarge));
-                }
-
-                Ok(bytes)
-            });
-            std::future::ready(Some(result))
-        })
+        .map(|result| result.map_err(RuntimeFailure::interrupted))
         .eventsource();
 
     Ok(Box::pin(events))
 }
 
-/// Returns the data of the next event, or `None` when the stream has ended.
 /// Runtimes send only unnamed events without IDs or retry hints.
 pub(super) async fn next_message(
     events: &mut RuntimeEvents,
 ) -> Result<Option<String>, RuntimeFailure> {
     let event = tokio::time::timeout(RESPONSE_IDLE_TIMEOUT, events.next())
         .await
-        .map_err(|_| RuntimeFailure::new(RuntimeFailureKind::TimedOut))?;
+        .map_err(|_| RuntimeFailure::idle())?;
     let Some(event) = event else {
         return Ok(None);
     };
@@ -442,7 +366,7 @@ pub(super) async fn next_message(
     let event = event.map_err(|error| match error {
         EventStreamError::Transport(failure) => failure,
         EventStreamError::Utf8(_) | EventStreamError::Parser(_) => {
-            RuntimeFailure::protocol_violation()
+            ProtocolViolation::SseFraming.into()
         }
     })?;
     if event.event != "message"
@@ -450,7 +374,7 @@ pub(super) async fn next_message(
         || event.retry.is_some()
         || event.data.len() > MAX_STREAM_EVENT_BYTES
     {
-        return Err(RuntimeFailure::protocol_violation());
+        return Err(ProtocolViolation::SseFraming.into());
     }
 
     Ok(Some(event.data))
@@ -470,12 +394,4 @@ pub enum RuntimeClientError {
         #[source]
         source: std::io::Error,
     },
-}
-
-#[derive(Debug, Error)]
-pub enum RuntimeHealthError {
-    #[error("SGLang health request failed: {0}")]
-    Request(#[from] reqwest::Error),
-    #[error("SGLang health endpoint returned {0}")]
-    UnhealthyStatus(reqwest::StatusCode),
 }

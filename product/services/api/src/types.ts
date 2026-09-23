@@ -6,7 +6,7 @@ import type {
   WorkspaceApiKeyService,
 } from "@gradiated/control";
 
-import type { BillingPaymentsService } from "./billing/stripe.js";
+import type { BillingPaymentsService } from "./billing/top-ups.js";
 
 export interface SessionUser {
   id: string;
@@ -20,23 +20,25 @@ export interface SessionUser {
 export interface ApiEnvironment {
   Variables: {
     requestId: string;
+    resolveUser: () => Promise<SessionUser | null>;
+    sessionUser?: SessionUser;
     logResourceIds?: { workspace_id?: string; api_key_id?: string };
-    user: SessionUser | null;
   };
 }
 
 export interface AuthService {
   handler(request: Request): Promise<Response>;
   resolveSession(headers: Headers): Promise<SessionUser | null>;
-  takeTestMagicLink?(email: string): string | null;
-  takeTestOtp?(email: string): string | null;
 }
 
 export interface ApiServices {
-  waitlist: WaitlistService;
+  waitlist: Pick<WaitlistService, "join">;
   billingPayments: BillingPaymentsService;
-  catalogBilling: CatalogBillingService;
-  organizations: OrganizationService;
+  catalogBilling: Pick<
+    CatalogBillingService,
+    "listModels" | "getBillingAccount" | "listBalanceTransactions"
+  >;
+  organizations: Pick<OrganizationService, "listForUser" | "createForUser">;
   usage: UsageService;
   workspaces: WorkspaceApiKeyService;
 }

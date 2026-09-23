@@ -1,13 +1,39 @@
-use std::fmt;
-
-use serde::{
-    de::{self, MapAccess, Visitor},
-    Deserialize, Deserializer,
-};
+use serde::Deserialize;
 use serde_json::{Map, Value};
 use validator::Validate;
 
-use crate::{GatewayError, ServiceTier};
+use crate::{json::strict_json, GatewayError, ServiceTier};
+
+const MAX_SAFE_JSON_INTEGER: u64 = 9_007_199_254_740_991;
+
+fn strict_object(body: &[u8]) -> Result<Map<String, Value>, GatewayError> {
+    match strict_json(body) {
+        Ok(Value::Object(fields)) => Ok(fields),
+        _ => Err(GatewayError::invalid_request(None)),
+    }
+}
+
+pub struct RequestTarget {
+    pub request: Value,
+    pub model: String,
+}
+
+pub fn parse_target(body: &[u8]) -> Result<RequestTarget, GatewayError> {
+    let fields = strict_object(body)?;
+
+    let Some(Value::String(model)) = fields.get("model") else {
+        return Err(GatewayError::invalid_request(Some("model")));
+    };
+
+    if model.is_empty() {
+        return Err(GatewayError::invalid_request(Some("model")));
+    }
+
+    Ok(RequestTarget {
+        model: model.clone(),
+        request: Value::Object(fields),
+    })
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RequestKind {
@@ -27,9 +53,9 @@ pub struct InferenceRequest {
     pub service_tier: ServiceTier,
     #[validate(length(min = 1, max = 256))]
     pub session_id: Option<String>,
-    #[validate(range(min = 1_u64, max = 9_007_199_254_740_991_u64))]
+    #[validate(range(min = 1_u64, max = MAX_SAFE_JSON_INTEGER))]
     pub max_completion_tokens: Option<u64>,
-    #[validate(range(min = 1_u64, max = 9_007_199_254_740_991_u64))]
+    #[validate(range(min = 1_u64, max = MAX_SAFE_JSON_INTEGER))]
     pub max_tokens: Option<u64>,
     #[serde(flatten)]
     pub parameters: Map<String, Value>,
@@ -41,10 +67,15 @@ pub struct InferenceRequest {
 
 impl InferenceRequest {
     pub fn parse_kind(body: &[u8], kind: RequestKind) -> Result<Self, GatewayError> {
-        if kind == RequestKind::Chat {
-            return Self::parse(body);
+        match kind {
+            RequestKind::Chat => Self::parse(body),
+            RequestKind::SystemOne => Self::parse_decision(body),
         }
+    }
+
+    fn parse_decision(body: &[u8]) -> Result<Self, GatewayError> {
         let decision = crate::systemone::SystemOneRequest::parse(body)?;
+
         Ok(Self {
             model: decision.model.clone(),
             messages: Vec::new(),
@@ -58,12 +89,12 @@ impl InferenceRequest {
             decision: Some(decision),
         })
     }
+
     pub fn parse(body: &[u8]) -> Result<Self, GatewayError> {
-        let UniqueJsonObject(fields) =
-            serde_json::from_slice(body).map_err(|_| GatewayError::invalid_request(None))?;
-        let request = Self::deserialize(Value::Object(fields))
+        let request = Self::deserialize(Value::Object(strict_object(body)?))
             .map_err(|_| GatewayError::invalid_request(None))?;
         request.validate_request()?;
+
         Ok(request)
     }
 
@@ -78,14 +109,18 @@ impl InferenceRequest {
         effective_output_tokens: u64,
         runtime_model_name: Option<&str>,
     ) -> Value {
+        let limit_name = self
+            .output_token_limit()
+            .map_or("max_completion_tokens", OutputTokenLimit::parameter_name);
+
         let Self {
             model,
             messages,
             stream,
             service_tier,
             session_id: _,
-            max_completion_tokens,
-            max_tokens,
+            max_completion_tokens: _,
+            max_tokens: _,
             mut parameters,
             encoded_input_ids: _,
             decision: _,
@@ -101,6 +136,7 @@ impl InferenceRequest {
             "priority".to_owned(),
             Value::from(service_tier.runtime_priority()),
         );
+
         if stream {
             parameters.insert(
                 "stream_options".to_owned(),
@@ -110,41 +146,23 @@ impl InferenceRequest {
                 }),
             );
         }
-        match (max_completion_tokens, max_tokens) {
-            (Some(_), None) => {
-                parameters.insert(
-                    "max_completion_tokens".to_owned(),
-                    Value::from(effective_output_tokens),
-                );
-            }
-            (None, Some(_)) => {
-                parameters.insert(
-                    "max_tokens".to_owned(),
-                    Value::from(effective_output_tokens),
-                );
-            }
-            (None, None) => {
-                parameters.insert(
-                    "max_completion_tokens".to_owned(),
-                    Value::from(effective_output_tokens),
-                );
-            }
-            (Some(_), Some(_)) => {
-                debug_assert!(false, "validated requests contain one output-token field");
-            }
-        }
+
+        parameters.insert(limit_name.to_owned(), Value::from(effective_output_tokens));
 
         Value::Object(parameters)
     }
 
     fn validate_request(&self) -> Result<(), GatewayError> {
         <Self as Validate>::validate(self).map_err(|_| GatewayError::invalid_request(None))?;
+
         if self.max_completion_tokens.is_some() && self.max_tokens.is_some() {
             return Err(GatewayError::invalid_request(Some("max_completion_tokens")));
         }
+
         if self.parameters.contains_key("priority") {
             return Err(GatewayError::invalid_request(Some("priority")));
         }
+
         Ok(())
     }
 }
@@ -170,46 +188,32 @@ impl OutputTokenLimit {
     }
 }
 
-pub(crate) struct UniqueJsonObject(pub(crate) Map<String, Value>);
-
-impl<'de> Deserialize<'de> for UniqueJsonObject {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        deserializer.deserialize_map(UniqueJsonObjectVisitor)
-    }
-}
-
-struct UniqueJsonObjectVisitor;
-
-impl<'de> Visitor<'de> for UniqueJsonObjectVisitor {
-    type Value = UniqueJsonObject;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        formatter.write_str("a JSON object with unique top-level fields")
-    }
-
-    fn visit_map<A>(self, mut values: A) -> Result<Self::Value, A::Error>
-    where
-        A: MapAccess<'de>,
-    {
-        let mut fields = Map::new();
-        while let Some((name, value)) = values.next_entry::<String, Value>()? {
-            if fields.contains_key(&name) {
-                return Err(de::Error::custom(format_args!(
-                    "duplicate top-level field `{name}`"
-                )));
-            }
-            fields.insert(name, value);
-        }
-        Ok(UniqueJsonObject(fields))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_target_body_names_exactly_one_model() {
+        let target = parse_target(br#"{"model":"claude-sonnet-5","max_tokens":16}"#).unwrap();
+        assert_eq!(target.model, "claude-sonnet-5");
+        assert_eq!(target.request["max_tokens"], 16);
+
+        for body in [
+            &br#"{"max_tokens":16}"#[..],
+            &br#"{"model":""}"#[..],
+            &br#"{"model":null}"#[..],
+            &br#"{"model":["claude-sonnet-5"]}"#[..],
+            &br#"{"model":"claude-sonnet-5","model":"claude-opus-5"}"#[..],
+            &br#"not json"#[..],
+            &br#"["claude-sonnet-5"]"#[..],
+        ] {
+            assert!(
+                parse_target(body).is_err(),
+                "expected a local rejection for {}",
+                String::from_utf8_lossy(body)
+            );
+        }
+    }
 
     #[test]
     fn parses_the_gateway_owned_fields_and_preserves_other_values() {

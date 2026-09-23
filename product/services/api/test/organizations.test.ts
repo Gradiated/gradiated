@@ -1,53 +1,86 @@
+import { ControlServiceError } from "@gradiated/control";
 import { describe, expect, it } from "vitest";
 
-import { createApp } from "../src/app.js";
 import {
+  anonymous,
   authenticated,
-  now,
-  organizationId,
+  controlServiceProblems,
+  expectProblem,
+  failWith,
+  unauthenticatedProblem,
+  validationProblem,
+  createTestApp,
+  createdOrganization,
+  postJson,
   user,
   workspaceId,
 } from "./support.js";
 
 describe("organization routes", () => {
   it("creates the organization aggregate for the current user", async () => {
-    let received: { userId: string; name: string } | undefined;
-    const app = createApp({
+    const received: unknown[] = [];
+    const app = createTestApp({
       auth: authenticated,
       services: {
         organizations: {
-          listForUser: async () => [],
-          ensurePersonalForUser: async () => {
-            throw new Error("not used");
-          },
           createForUser: async (userId, name) => {
-            received = { userId, name };
-            return {
-              id: organizationId,
-              kind: "customer",
-              name,
-              status: "active",
-              role: "owner",
-              defaultWorkspaceId: workspaceId,
-              createdAt: now,
-              updatedAt: now,
-            };
+            received.push({ userId, name });
+
+            return { ...createdOrganization, name };
           },
         },
       },
     });
-    const response = await app.request("/api/v1/organizations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "  Analytical Engines  " }),
+
+    const response = await postJson(app, "/api/v1/organizations", {
+      name: "  Analytical Engines  ",
     });
 
     expect(response.status).toBe(201);
-    expect(received).toEqual({ userId: user.id, name: "Analytical Engines" });
+    expect(received).toEqual([{ userId: user.id, name: "Analytical Engines" }]);
     await expect(response.json()).resolves.toMatchObject({
       name: "Analytical Engines",
       role: "owner",
       default_workspace_id: workspaceId,
     });
+  });
+
+  it("requires a session", async () => {
+    const response = await postJson(
+      createTestApp({ auth: anonymous }),
+      "/api/v1/organizations",
+      { name: "Analytical Engines" },
+    );
+
+    await expectProblem(response, unauthenticatedProblem);
+  });
+
+  it("rejects an empty name before calling the service", async () => {
+    const response = await postJson(
+      createTestApp({ auth: authenticated }),
+      "/api/v1/organizations",
+      { name: "   " },
+    );
+
+    await expectProblem(response, validationProblem);
+  });
+
+  it.each(controlServiceProblems)("maps $code to $status", async (problem) => {
+    const app = createTestApp({
+      auth: authenticated,
+      services: {
+        organizations: {
+          createForUser: failWith(
+            new ControlServiceError(problem.code, "Rejected."),
+          ),
+        },
+      },
+    });
+
+    const response = await postJson(app, "/api/v1/organizations", {
+      name: "Analytical Engines",
+    });
+
+    await expectProblem(response, problem);
   });
 });

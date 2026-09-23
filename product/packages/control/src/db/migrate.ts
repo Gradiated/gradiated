@@ -9,6 +9,7 @@ const { database, pool } = createControlDatabase(connectionString);
 
 try {
   const deadline = Date.now() + 60_000;
+
   for (;;) {
     try {
       await pool.query("select 1");

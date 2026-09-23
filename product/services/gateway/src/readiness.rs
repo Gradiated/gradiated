@@ -5,7 +5,7 @@ use std::{
 
 use async_trait::async_trait;
 
-use crate::{GatewayMetrics, ValkeyServingState};
+use crate::{cache::locked, serving_state::ServingStateError, GatewayMetrics, ValkeyServingState};
 
 const DEPENDENCY_TIMEOUT: Duration = Duration::from_secs(2);
 
@@ -17,8 +17,8 @@ pub trait ReadinessCheck: Send + Sync {
 pub struct DependencyReadiness {
     serving_state: ValkeyServingState,
     metrics: GatewayMetrics,
-    valkey_state: DependencyState,
-    postgres_state: DependencyState,
+    valkey: DependencyState,
+    postgres: DependencyState,
 }
 
 impl DependencyReadiness {
@@ -26,8 +26,8 @@ impl DependencyReadiness {
         Self {
             serving_state,
             metrics,
-            valkey_state: DependencyState::default(),
-            postgres_state: DependencyState::default(),
+            valkey: DependencyState::new("valkey"),
+            postgres: DependencyState::new("postgres"),
         }
     }
 }
@@ -39,23 +39,18 @@ impl ReadinessCheck for DependencyReadiness {
             tokio::time::timeout(DEPENDENCY_TIMEOUT, self.serving_state.ping()),
             tokio::time::timeout(DEPENDENCY_TIMEOUT, self.serving_state.ping_database()),
         );
-        let valkey_reason = readiness_error(&valkey);
-        let postgres_reason = readiness_error(&postgres);
-        self.metrics
-            .set_dependency_ready("valkey", valkey_reason.is_none());
-        self.metrics
-            .set_dependency_ready("postgres", postgres_reason.is_none());
-        self.valkey_state.record("valkey", valkey_reason);
-        self.postgres_state.record("postgres", postgres_reason);
-        valkey_reason.is_none() && postgres_reason.is_none()
+
+        let valkey_ready = self.valkey.observe(&self.metrics, readiness_error(&valkey));
+        let postgres_ready = self
+            .postgres
+            .observe(&self.metrics, readiness_error(&postgres));
+
+        valkey_ready && postgres_ready
     }
 }
 
 fn readiness_error<T>(
-    result: &Result<
-        Result<T, crate::serving_state::ServingStateError>,
-        tokio::time::error::Elapsed,
-    >,
+    result: &Result<Result<T, ServingStateError>, tokio::time::error::Elapsed>,
 ) -> Option<&'static str> {
     match result {
         Ok(Ok(_)) => None,
@@ -64,23 +59,37 @@ fn readiness_error<T>(
     }
 }
 
-#[derive(Default)]
-struct DependencyState(Mutex<Option<(bool, Instant)>>);
+struct DependencyState {
+    dependency: &'static str,
+    last: Mutex<Option<Observation>>,
+}
+
+#[derive(Clone, Copy)]
+struct Observation {
+    ready: bool,
+    since: Instant,
+}
 
 impl DependencyState {
-    fn record(&self, dependency: &'static str, reason: Option<&'static str>) {
-        let now = Instant::now();
-        let ready = reason.is_none();
-        let mut state = self
-            .0
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        if state
-            .as_ref()
-            .is_some_and(|(previous, _)| *previous == ready)
-        {
-            return;
+    fn new(dependency: &'static str) -> Self {
+        Self {
+            dependency,
+            last: Mutex::new(None),
         }
+    }
+
+    fn observe(&self, metrics: &GatewayMetrics, reason: Option<&'static str>) -> bool {
+        let ready = reason.is_none();
+        metrics.set_dependency_ready(self.dependency, ready);
+
+        let now = Instant::now();
+        let mut last = locked(&self.last);
+        let previous = *last;
+        if previous.is_some_and(|previous| previous.ready == ready) {
+            return ready;
+        }
+
+        let dependency = self.dependency;
         if !ready {
             crate::diagnostics::limited_warn!(
                 dependency,
@@ -88,35 +97,64 @@ impl DependencyState {
                 error_code = reason,
                 "gateway dependency became unavailable"
             );
-        } else if let Some((false, since)) = *state {
+        } else if let Some(outage) = previous {
             tracing::info!(
                 dependency,
                 phase = "readiness",
-                outage_ms = now.duration_since(since).as_millis() as u64,
+                outage_ms = now.duration_since(outage.since).as_millis() as u64,
                 "gateway dependency recovered"
             );
         }
-        *state = Some((ready, now));
+        *last = Some(Observation { ready, since: now });
+
+        ready
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
-    fn logs_failure_and_recovery_but_not_repeated_probes() {
+    fn publishes_every_probe_but_logs_only_transitions() {
         let logs = crate::diagnostics::capture::Logs::default();
         let _guard = logs.start();
-        let state = DependencyState::default();
-        state.record("valkey", None);
-        state.record("valkey", Some("timeout"));
-        state.record("valkey", Some("timeout"));
-        state.record("valkey", None);
-        state.record("valkey", None);
+        let metrics = GatewayMetrics::new();
+        let state = DependencyState::new("valkey");
+        let published = |ready: u8| {
+            metrics.encode().contains(&format!(
+                r#"gradiated_gateway_dependency_ready{{dependency="valkey"}} {ready}"#
+            ))
+        };
+
+        assert!(state.observe(&metrics, None));
+        assert!(!state.observe(&metrics, Some("timeout")));
+        assert!(!state.observe(&metrics, Some("timeout")));
+        assert!(published(0));
+        assert!(state.observe(&metrics, None));
+        assert!(state.observe(&metrics, None));
+        assert!(published(1));
+
         let events = logs.events();
         assert_eq!(events.len(), 2);
         assert_eq!(events[0]["fields"]["error_code"], "timeout");
         assert_eq!(events[1]["level"], "INFO");
         assert!(events[1]["fields"]["outage_ms"].is_number());
+    }
+
+    #[tokio::test]
+    async fn readiness_error_names_a_timeout_and_a_failed_dependency() {
+        let elapsed = tokio::time::timeout(
+            Duration::ZERO,
+            std::future::pending::<Result<(), ServingStateError>>(),
+        )
+        .await;
+        let failed: Result<Result<(), _>, tokio::time::error::Elapsed> =
+            Ok(Err(ServingStateError::UnexpectedPingResponse));
+        let ready: Result<Result<(), ServingStateError>, tokio::time::error::Elapsed> = Ok(Ok(()));
+
+        assert_eq!(readiness_error(&elapsed), Some("timeout"));
+        assert_eq!(readiness_error(&failed), Some("unexpected_ping"));
+        assert_eq!(readiness_error(&ready), None);
     }
 }

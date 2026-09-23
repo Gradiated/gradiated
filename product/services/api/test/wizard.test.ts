@@ -1,141 +1,134 @@
+import { ControlServiceError } from "@gradiated/control";
 import { describe, expect, it } from "vitest";
 
-import type { ApiServices } from "../src/types.js";
-import { createApp } from "../src/app.js";
 import {
-  apiKeyId,
+  anonymous,
+  apiKeyRecord,
+  apiKeySecret,
   authenticated,
-  now,
+  billingAccountRecord,
+  createTestApp,
+  expectProblem,
+  failWith,
+  unauthenticatedProblem,
   organizationId,
+  organizationSummary,
   user,
   workspaceId,
+  type ServiceOverrides,
 } from "./support.js";
 
-const secretPattern = /^grad_[A-Za-z0-9_-]{43}$/;
+const wizardKeyPath = "/api/v1/wizard/key";
 
-function wizardApp() {
-  const services = {
-    organizations: {
-      listForUser: async () => [
-        {
-          id: organizationId,
-          name: "Personal",
-          status: "active" as const,
-          role: "owner" as const,
-          defaultWorkspaceId: workspaceId,
-        },
-      ],
-      createForUser: async () => {
-        throw new Error("not used");
+const wizardServices: ServiceOverrides = {
+  organizations: { listForUser: async () => [organizationSummary] },
+  catalogBilling: {
+    getBillingAccount: async () => ({
+      ...billingAccountRecord,
+      balance: 5_000_000_000n,
+    }),
+  },
+  workspaces: {
+    createApiKey: async (
+      userId,
+      receivedOrganizationId,
+      receivedWorkspaceId,
+      input,
+    ) => ({
+      apiKey: {
+        ...apiKeyRecord,
+        organizationId: receivedOrganizationId,
+        workspaceId: receivedWorkspaceId,
+        name: input.name,
+        expiresAt: input.expiresAt,
+        createdBy: userId,
       },
-      ensurePersonalForUser: async () => {
-        throw new Error("not used");
-      },
-    },
-    catalogBilling: {
-      getBillingAccount: async () => ({
-        organizationId,
-        mode: "prepaid" as const,
-        stripeCustomerId: null,
-        balance: 5_000_000_000n,
-        createdAt: now,
-        updatedAt: now,
-      }),
-    },
-    workspaces: {
-      listWorkspaces: async () => [],
-      createWorkspace: async () => {
-        throw new Error("not used");
-      },
-      listApiKeys: async () => [],
-      createApiKey: async (
-        userId: string,
-        receivedOrganizationId: string,
-        receivedWorkspaceId: string,
-        input: { name: string; expiresAt: Date | null },
-      ) => ({
-        apiKey: {
-          id: apiKeyId,
-          organizationId: receivedOrganizationId,
-          workspaceId: receivedWorkspaceId,
-          name: input.name,
-          expiresAt: input.expiresAt,
-          revokedAt: null,
-          createdBy: userId,
-          createdAt: now,
-          updatedAt: now,
-        },
-        secret: `grad_${"a".repeat(43)}`,
-      }),
-      revokeApiKey: async () => undefined,
-    },
-  } as unknown as ApiServices;
+      secret: apiKeySecret,
+    }),
+  },
+};
 
-  return {
-    app: createApp({ auth: authenticated, services }),
-  };
-}
+const mintKey = (services: ServiceOverrides = wizardServices) =>
+  createTestApp({ auth: authenticated, services }).request(wizardKeyPath, {
+    method: "POST",
+  });
 
 describe("wizard key route", () => {
   it("mints a local key on the default workspace and reports the balance", async () => {
-    const { app } = wizardApp();
-
-    const response = await app.request("/api/v1/wizard/key", {
-      method: "POST",
-    });
+    const response = await mintKey();
 
     expect(response.status).toBe(201);
-    const body = await response.json();
-    expect(body.secret).toMatch(secretPattern);
-    expect(body.api_key.name).toBe("local");
-    expect(body.api_key.created_by).toBe(user.id);
-    expect(body.organization_id).toBe(organizationId);
-    expect(body.workspace_id).toBe(workspaceId);
-    expect(body.organization_name).toBe("Personal");
-    expect(body.balance_nano_usd).toBe(5_000_000_000);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.json()).resolves.toMatchObject({
+      api_key: { name: "local", created_by: user.id, expires_at: null },
+      secret: apiKeySecret,
+      organization_id: organizationId,
+      workspace_id: workspaceId,
+      organization_name: "Personal",
+      balance_nano_usd: 5_000_000_000,
+    });
   });
 
   it("requires a session", async () => {
-    const { app } = wizardApp();
-    const unauthenticatedApp = createApp({
-      auth: {
-        handler: authenticated.handler,
-        resolveSession: async () => null,
-      },
-      services: {},
-    });
+    const response = await createTestApp({ auth: anonymous }).request(
+      wizardKeyPath,
+      { method: "POST" },
+    );
 
-    const response = await unauthenticatedApp.request("/api/v1/wizard/key", {
-      method: "POST",
-    });
-
-    expect(response.status).toBe(401);
+    await expectProblem(response, unauthenticatedProblem);
     expect(response.headers.get("cache-control")).toBeNull();
   });
 
   it("reports 404 when the user has no organization", async () => {
-    const app = createApp({
-      auth: authenticated,
-      services: {
-        organizations: {
-          listForUser: async () => [],
-          createForUser: async () => {
-            throw new Error("not used");
-          },
-          ensurePersonalForUser: async () => {
-            throw new Error("not used");
-          },
-        },
-      },
-    });
-
-    const response = await app.request("/api/v1/wizard/key", {
-      method: "POST",
+    const response = await mintKey({
+      organizations: { listForUser: async () => [] },
     });
 
     expect(response.status).toBe(404);
     await expect(response.json()).resolves.toMatchObject({
+      type: "https://gradiated.com/problems/not-found",
+      title: "No organization",
       code: "not_found",
     });
+  });
+
+  it.each([
+    {
+      name: "a missing billing account",
+      services: {
+        catalogBilling: {
+          getBillingAccount: failWith(
+            new ControlServiceError("not_found", "Rejected."),
+          ),
+        },
+      },
+      problem: { status: 404, code: "not_found", type: "not-found" },
+    },
+    {
+      name: "a forbidden organization",
+      services: {
+        catalogBilling: {
+          getBillingAccount: failWith(
+            new ControlServiceError("forbidden", "Rejected."),
+          ),
+        },
+      },
+      problem: { status: 403, code: "forbidden", type: "forbidden" },
+    },
+    {
+      name: "unavailable key storage",
+      services: {
+        workspaces: {
+          createApiKey: failWith(
+            new ControlServiceError("unavailable", "Rejected."),
+          ),
+        },
+      },
+      problem: { status: 503, code: "unavailable", type: "unavailable" },
+    },
+  ])("reports $name as $problem.status", async ({ services, problem }) => {
+    const response = await mintKey({ ...wizardServices, ...services });
+
+    await expectProblem(response, problem);
   });
 });

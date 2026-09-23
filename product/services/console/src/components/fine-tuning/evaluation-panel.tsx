@@ -1,23 +1,22 @@
 import { Info } from "lucide-react";
 
+import {
+  costAdvantage,
+  costPer1kRequests,
+  outputSpeed,
+  speedAdvantage,
+} from "@/components/fine-tuning/evaluation-ratios";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  NANO,
-  type EvaluationSummary,
-  type JudgeOutcome,
-} from "@/store/mock-fine-tuning";
-
-const pct = (value: number) => `${Math.round(value * 100)}%`;
-/** nano-USD → dollars, three decimals below $1. */
-export const usdFromNano = (nano: number) => {
-  const v = nano / NANO;
-  return v < 1 ? `$${v.toFixed(3)}` : `$${v.toFixed(2)}`;
-};
+import { formatPercent, type Ratio } from "@/lib/format";
+import type {
+  EvaluationSummary,
+  JudgeOutcome,
+} from "@/store/fine-tuning-types";
 
 const SEGMENTS = [
   { key: "win", label: "Better", className: "bg-[#6e7f31] text-white" },
@@ -25,14 +24,34 @@ const SEGMENTS = [
   { key: "loss", label: "Worse", className: "bg-[#e4c880] text-[#5c4710]" },
 ] as const;
 
-/** `value` > 1 is good: "14× cheaper", "1.6× faster". */
-export const ratioLabel = (value: number, good: string, bad: string) => {
-  const isGood = value >= 1;
-  const factor = isGood ? value : 1 / value;
-  return {
-    isGood,
-    label: `${factor >= 10 ? Math.round(factor) : factor.toFixed(1)}× ${isGood ? good : bad}`,
-  };
+const RATIO_TONE_CLASS: Record<Ratio["tone"], string> = {
+  good: "text-[#475617]",
+  bad: "text-amber-800",
+  neutral: "text-muted-foreground",
+};
+
+export const RatioLabel = ({
+  ratio,
+  detail,
+}: {
+  ratio: Ratio;
+  detail?: string;
+}) => {
+  const label = (
+    <span className={`font-medium ${RATIO_TONE_CLASS[ratio.tone]}`}>
+      {ratio.label}
+    </span>
+  );
+  if (!detail) return label;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{label}</TooltipTrigger>
+      <TooltipContent side="top" className="text-xs">
+        {detail}
+      </TooltipContent>
+    </Tooltip>
+  );
 };
 
 const Comparison = ({
@@ -41,21 +60,15 @@ const Comparison = ({
   numbers,
 }: {
   name: string;
-  ratio: { isGood: boolean; label: string };
+  ratio: Ratio;
   numbers: string;
 }) => (
   <span>
-    {name}{" "}
-    <span
-      className={`font-medium ${ratio.isGood ? "text-[#475617]" : "text-amber-800"}`}
-    >
-      {ratio.label}
-    </span>{" "}
+    {name} <RatioLabel ratio={ratio} />{" "}
     <span className="text-muted-foreground">· {numbers}</span>
   </span>
 );
 
-/** Resolved outcomes fill the bar. Report unresolved results separately. */
 export const OutcomeBar = ({
   outcome,
   height = "h-9",
@@ -68,7 +81,7 @@ export const OutcomeBar = ({
   const resolved = outcome.win + outcome.tie + outcome.loss;
   const description =
     resolved > 0
-      ? `Resolved comparisons: ${SEGMENTS.map((segment) => `${segment.label} ${pct(outcome[segment.key] / resolved)}`).join(", ")}. ${pct(outcome.unresolved)} unresolved overall.`
+      ? `Resolved comparisons: ${SEGMENTS.map((segment) => `${segment.label} ${formatPercent(outcome[segment.key] / resolved)}`).join(", ")}. ${formatPercent(outcome.unresolved)} unresolved overall.`
       : "No resolved comparisons.";
 
   return (
@@ -81,16 +94,17 @@ export const OutcomeBar = ({
         SEGMENTS.map((segment) => {
           const value = outcome[segment.key];
           const share = value / resolved;
+
           return (
             <div
               key={segment.key}
               className={`flex min-w-0 items-center justify-center overflow-hidden ${segment.className}`}
               style={{ flex: `${share * 100} 1 0%` }}
-              title={`${segment.label} ${pct(share)} of resolved comparisons`}
+              title={`${segment.label} ${formatPercent(share)} of resolved comparisons`}
             >
               {labels && share >= 0.12 ? (
                 <span className="truncate px-1 text-xs font-medium tabular-nums">
-                  {segment.label} {pct(share)}
+                  {segment.label} {formatPercent(share)}
                 </span>
               ) : null}
             </div>
@@ -105,7 +119,6 @@ export const OutcomeBar = ({
   );
 };
 
-/** Exactly what the console shows of an `EvaluationSummary`: results, never a verdict. */
 export const EvaluationPanel = ({
   summary,
   onViewResults,
@@ -113,9 +126,6 @@ export const EvaluationPanel = ({
   summary: EvaluationSummary;
   onViewResults?: () => void;
 }) => {
-  const cost = summary.cost_per_request_nano_usd;
-  const tps = summary.output_tokens_per_second;
-
   return (
     <div>
       <div className="mb-3 flex items-center justify-between gap-4 text-sm">
@@ -157,31 +167,26 @@ export const EvaluationPanel = ({
 
       <OutcomeBar outcome={summary.vs_comparison} />
       <p className="mt-1.5 text-xs text-muted-foreground">
-        Resolved comparisons · {pct(summary.vs_comparison.unresolved)}{" "}
+        Resolved comparisons · {formatPercent(summary.vs_comparison.unresolved)}{" "}
         unresolved overall
       </p>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-foreground tabular-nums">
         <Comparison
           name="Cost"
-          ratio={ratioLabel(
-            cost.comparison / Math.max(1, cost.fine_tuned),
-            "cheaper",
-            "more expensive",
-          )}
-          numbers={`${usdFromNano(cost.fine_tuned * 1000)} vs ${usdFromNano(cost.comparison * 1000)} per 1k requests`}
+          ratio={costAdvantage(summary)}
+          numbers={costPer1kRequests(summary)}
         />
         <Comparison
           name="Speed"
-          ratio={ratioLabel(
-            tps.fine_tuned / Math.max(1, tps.comparison),
-            "faster",
-            "slower",
-          )}
-          numbers={`${tps.fine_tuned} vs ${tps.comparison} tok/s`}
+          ratio={speedAdvantage(summary)}
+          numbers={outputSpeed(summary)}
         />
         <span>
-          Errors <span className="font-medium">{pct(summary.error_rate)}</span>
+          Errors{" "}
+          <span className="font-medium">
+            {formatPercent(summary.error_rate)}
+          </span>
         </span>
         {onViewResults ? (
           <Button

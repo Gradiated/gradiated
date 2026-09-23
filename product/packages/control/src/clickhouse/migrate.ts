@@ -3,14 +3,16 @@ import { createHash } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { z } from "zod";
 
-const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
+import { clickHouseServerEnvironmentSchema, clickHouseUrl } from "./client.js";
+import {
+  identifierPattern,
+  pendingMigrations,
+  safeIdentifier,
+  selectMigrationFiles,
+  type Migration,
+} from "./migrations.js";
 
-const environmentSchema = z.object({
-  CLICKHOUSE_HOST: z.string().trim().min(1),
-  CLICKHOUSE_PORT: z.coerce.number().int().min(1).max(65_535),
-  CLICKHOUSE_SECURE: z
-    .enum(["true", "false"])
-    .transform((value) => value === "true"),
+const environmentSchema = clickHouseServerEnvironmentSchema.extend({
   CLICKHOUSE_DATABASE: z.string().regex(identifierPattern),
   CLICKHOUSE_ADMIN_USERNAME: z.string().min(1),
   CLICKHOUSE_ADMIN_PASSWORD: z.string().min(1),
@@ -20,12 +22,12 @@ const environmentSchema = z.object({
   CLICKHOUSE_METABASE_PASSWORD: z.string().min(1),
 });
 
-const safeIdentifier = (name: string, value: string): string => {
-  if (!identifierPattern.test(value)) {
-    throw new Error(`${name} must be a ClickHouse identifier`);
-  }
-  return `\`${value}\``;
-};
+const appliedMigrationSchema = z.object({
+  checksum: z.string(),
+  name: z.string(),
+});
+
+type Credentials = { username: string; password: string };
 
 const waitForClickHouse = async (client: ClickHouseClient): Promise<void> => {
   const deadline = Date.now() + 120_000;
@@ -41,30 +43,17 @@ const waitForClickHouse = async (client: ClickHouseClient): Promise<void> => {
   }
 };
 
-type Migration = {
-  checksum: string;
-  name: string;
-  query: string;
-};
-
-type AppliedMigration = {
-  checksum: string;
-  name: string;
-};
-
 const loadMigrations = async (): Promise<Migration[]> => {
   const directory = new URL("../../clickhouse/migrations/", import.meta.url);
   const entries = await readdir(directory, { withFileTypes: true });
-  const names = entries
-    .filter(
-      (entry) => entry.isFile() && /^\d{4}_[a-z0-9_]+\.sql$/.test(entry.name),
-    )
-    .map((entry) => entry.name)
-    .sort();
+  const names = selectMigrationFiles(
+    entries.filter((entry) => entry.isFile()).map((entry) => entry.name),
+  );
 
   return Promise.all(
     names.map(async (name) => {
       const query = await readFile(new URL(name, directory), "utf8");
+
       return {
         checksum: createHash("sha256").update(query).digest("hex"),
         name,
@@ -74,53 +63,58 @@ const loadMigrations = async (): Promise<Migration[]> => {
   );
 };
 
-const bootstrapDatabase = async (
+const ensureUser = async (
   client: ClickHouseClient,
-  database: string,
-  adminUsername: string,
-  applicationUsername: string,
-  applicationPassword: string,
-  metabaseUsername: string,
-  metabasePassword: string,
+  user: Credentials & {
+    database: string;
+    grant: "SELECT, INSERT" | "SELECT";
+    variable: string;
+  },
 ): Promise<void> => {
-  const databaseIdentifier = safeIdentifier("CLICKHOUSE_DATABASE", database);
-  const userIdentifier = safeIdentifier(
-    "CLICKHOUSE_APPLICATION_USERNAME",
-    applicationUsername,
-  );
+  const userIdentifier = safeIdentifier(user.variable, user.username);
+  const identified = `IDENTIFIED WITH sha256_password BY {password:String}`;
+  const queryParams = { password: user.password };
 
   await client.command({
-    query: `CREATE DATABASE IF NOT EXISTS ${databaseIdentifier}`,
+    query: `CREATE USER IF NOT EXISTS ${userIdentifier} ${identified}`,
+    query_params: queryParams,
   });
+  await client.command({
+    query: `ALTER USER ${userIdentifier} ${identified}`,
+    query_params: queryParams,
+  });
+  await client.command({
+    query: `GRANT ${user.grant} ON ${user.database}.* TO ${userIdentifier}`,
+  });
+};
 
-  if (applicationUsername !== adminUsername) {
-    await client.command({
-      query: `CREATE USER IF NOT EXISTS ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
-      query_params: { application_password: applicationPassword },
-    });
-    await client.command({
-      query: `ALTER USER ${userIdentifier} IDENTIFIED WITH sha256_password BY {application_password:String}`,
-      query_params: { application_password: applicationPassword },
-    });
-    await client.command({
-      query: `GRANT SELECT, INSERT ON ${databaseIdentifier}.* TO ${userIdentifier}`,
+const bootstrapDatabase = async (
+  client: ClickHouseClient,
+  options: {
+    database: string;
+    adminUsername: string;
+    application: Credentials;
+    metabase: Credentials;
+  },
+): Promise<void> => {
+  const database = safeIdentifier("CLICKHOUSE_DATABASE", options.database);
+
+  await client.command({ query: `CREATE DATABASE IF NOT EXISTS ${database}` });
+
+  if (options.application.username !== options.adminUsername) {
+    await ensureUser(client, {
+      ...options.application,
+      database,
+      grant: "SELECT, INSERT",
+      variable: "CLICKHOUSE_APPLICATION_USERNAME",
     });
   }
 
-  const metabaseUserIdentifier = safeIdentifier(
-    "CLICKHOUSE_METABASE_USERNAME",
-    metabaseUsername,
-  );
-  await client.command({
-    query: `CREATE USER IF NOT EXISTS ${metabaseUserIdentifier} IDENTIFIED WITH sha256_password BY {metabase_password:String}`,
-    query_params: { metabase_password: metabasePassword },
-  });
-  await client.command({
-    query: `ALTER USER ${metabaseUserIdentifier} IDENTIFIED WITH sha256_password BY {metabase_password:String}`,
-    query_params: { metabase_password: metabasePassword },
-  });
-  await client.command({
-    query: `GRANT SELECT ON ${databaseIdentifier}.* TO ${metabaseUserIdentifier}`,
+  await ensureUser(client, {
+    ...options.metabase,
+    database,
+    grant: "SELECT",
+    variable: "CLICKHOUSE_METABASE_USERNAME",
   });
 };
 
@@ -153,21 +147,20 @@ const getAppliedMigrations = async (
     `,
     format: "JSONEachRow",
   });
-  const rows = await result.json<AppliedMigration>();
+  const rows = appliedMigrationSchema.array().parse(await result.json());
+
   return new Map(rows.map((row) => [row.name, row.checksum]));
 };
 
 const applyMigrations = async (client: ClickHouseClient): Promise<void> => {
   await ensureMigrationTable(client);
-  const applied = await getAppliedMigrations(client);
 
-  for (const migration of await loadMigrations()) {
-    const currentChecksum = applied.get(migration.name);
-    if (currentChecksum && currentChecksum !== migration.checksum) {
-      throw new Error(`Applied migration changed: ${migration.name}`);
-    }
-    if (currentChecksum) continue;
+  const pending = pendingMigrations(
+    await loadMigrations(),
+    await getAppliedMigrations(client),
+  );
 
+  for (const migration of pending) {
     await client.command({ query: migration.query });
     await client.insert({
       table: "gradiated_schema_migrations",
@@ -180,33 +173,35 @@ const applyMigrations = async (client: ClickHouseClient): Promise<void> => {
 
 const main = async (): Promise<void> => {
   const environment = environmentSchema.parse(process.env);
-  const url = `${environment.CLICKHOUSE_SECURE ? "https" : "http"}://${environment.CLICKHOUSE_HOST}:${environment.CLICKHOUSE_PORT}`;
-
-  const adminClient = createClient({
+  const url = clickHouseUrl(environment);
+  const admin = {
     url,
     username: environment.CLICKHOUSE_ADMIN_USERNAME,
     password: environment.CLICKHOUSE_ADMIN_PASSWORD,
-    database: "default",
-  });
+  };
+
+  const adminClient = createClient({ ...admin, database: "default" });
 
   try {
     await waitForClickHouse(adminClient);
-    await bootstrapDatabase(
-      adminClient,
-      environment.CLICKHOUSE_DATABASE,
-      environment.CLICKHOUSE_ADMIN_USERNAME,
-      environment.CLICKHOUSE_APPLICATION_USERNAME,
-      environment.CLICKHOUSE_APPLICATION_PASSWORD,
-      environment.CLICKHOUSE_METABASE_USERNAME,
-      environment.CLICKHOUSE_METABASE_PASSWORD,
-    );
+    await bootstrapDatabase(adminClient, {
+      database: environment.CLICKHOUSE_DATABASE,
+      adminUsername: environment.CLICKHOUSE_ADMIN_USERNAME,
+      application: {
+        username: environment.CLICKHOUSE_APPLICATION_USERNAME,
+        password: environment.CLICKHOUSE_APPLICATION_PASSWORD,
+      },
+      metabase: {
+        username: environment.CLICKHOUSE_METABASE_USERNAME,
+        password: environment.CLICKHOUSE_METABASE_PASSWORD,
+      },
+    });
 
     const migrationClient = createClient({
-      url,
-      username: environment.CLICKHOUSE_ADMIN_USERNAME,
-      password: environment.CLICKHOUSE_ADMIN_PASSWORD,
+      ...admin,
       database: environment.CLICKHOUSE_DATABASE,
     });
+
     try {
       await applyMigrations(migrationClient);
     } finally {

@@ -948,7 +948,6 @@ void Gemma4LayerRunner::run_prefill_chunks(
           static_cast<int>(requests), uniform_tokens, query_heads, head_dimension,
           fp8_projections, stream);
       attention_states = state.queries.get();
-      // Restore destination pointers and logical positions for the ring commit below.
       check(cudaMemcpyAsync(state.prefill_positions.get(), position_starts.data(),
                             requests * sizeof(int), cudaMemcpyHostToDevice, stream),
             "restore speculative logical positions");

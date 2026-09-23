@@ -7,35 +7,41 @@ import { createTopUpCheckout } from "@/api/queries";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { errorMessage } from "@/lib/errors";
 import { formatUsdShort } from "@/lib/format";
+import {
+  MAX_TOP_UP_NANO_USD,
+  MIN_TOP_UP_NANO_USD,
+  NANO_USD_PER_USD,
+  USD_AMOUNT_PATTERN,
+  parseUsdToNanoUsd,
+} from "@/lib/money";
+
+const wholeUsd = (nanoUsd: bigint) =>
+  formatUsdShort(Number(nanoUsd / NANO_USD_PER_USD));
 
 const TopUpFormSchema = z.object({
   amount: z
     .string()
     .trim()
-    .regex(/^\d+(?:\.\d{1,2})?$/, "Enter a valid USD amount.")
-    .refine((value) => {
-      const amount = Number(value);
-      return amount >= 5 && amount <= 10_000;
-    }, "Enter an amount between $5 and $10,000."),
+    .regex(USD_AMOUNT_PATTERN, "Enter a valid USD amount.")
+    .transform(parseUsdToNanoUsd)
+    .refine(
+      (amount) =>
+        amount >= MIN_TOP_UP_NANO_USD && amount <= MAX_TOP_UP_NANO_USD,
+      `Enter an amount between ${wholeUsd(MIN_TOP_UP_NANO_USD)} and ${wholeUsd(MAX_TOP_UP_NANO_USD)}.`,
+    ),
 });
 
-type TopUpFormValues = z.infer<typeof TopUpFormSchema>;
-
-const dollarsToNanoUsd = (value: string) => {
-  const [dollars = "0", cents = ""] = value.split(".");
-  return (
-    BigInt(dollars) * 1_000_000_000n +
-    BigInt(cents.padEnd(2, "0")) * 10_000_000n
-  ).toString();
-};
+type TopUpFormInput = z.input<typeof TopUpFormSchema>;
+type TopUpFormValues = z.output<typeof TopUpFormSchema>;
 
 export const TopUpBalance = ({
   organizationId,
 }: {
   organizationId: string;
 }) => {
-  const form = useForm<TopUpFormValues>({
+  const form = useForm<TopUpFormInput, unknown, TopUpFormValues>({
     resolver: zodResolver(TopUpFormSchema),
     defaultValues: { amount: "50" },
   });
@@ -44,15 +50,12 @@ export const TopUpBalance = ({
     try {
       const checkout = await createTopUpCheckout(
         organizationId,
-        dollarsToNanoUsd(values.amount),
+        values.amount.toString(),
       );
       window.location.assign(checkout.checkout_url);
     } catch (error) {
       form.setError("root", {
-        message:
-          error instanceof Error
-            ? error.message
-            : "Stripe Checkout could not be started.",
+        message: errorMessage(error, "Stripe Checkout could not be started."),
       });
     }
   };
@@ -63,9 +66,7 @@ export const TopUpBalance = ({
         <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground">
           <CreditCard className="size-4" />
         </span>
-        <div>
-          <h2 className="font-medium">Add funds</h2>
-        </div>
+        <h2 className="font-medium">Add funds</h2>
       </div>
       <form className="space-y-4" onSubmit={form.handleSubmit(submit)}>
         <Field data-invalid={Boolean(form.formState.errors.amount)}>
@@ -93,7 +94,11 @@ export const TopUpBalance = ({
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => form.setValue("amount", String(amount))}
+              onClick={() =>
+                form.setValue("amount", String(amount), {
+                  shouldValidate: true,
+                })
+              }
             >
               {formatUsdShort(amount)}
             </Button>

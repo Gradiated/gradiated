@@ -1,9 +1,7 @@
-//! The boundary between the gateway and a model runtime. `SglangClient` is the
-//! production implementation; tests replace it through `ModelRuntime`.
-
 mod chat;
 mod client;
 mod native;
+mod systemone;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -14,7 +12,7 @@ use uuid::Uuid;
 
 use crate::{GatewayError, GatewayModelDeployment, InferenceRequest, NormalizedUsage};
 
-pub use client::{RuntimeClientError, RuntimeHealthError, RuntimeTlsConfig, SglangClient};
+pub use client::{RuntimeClientError, RuntimeTlsConfig, SglangClient};
 
 #[async_trait]
 pub trait ModelRuntime: Send + Sync {
@@ -33,7 +31,7 @@ pub trait ModelRuntime: Send + Sync {
         _effective_output_tokens: u64,
         _request_deadline: DateTime<Utc>,
     ) -> Result<Box<dyn RuntimeEventStream>, RuntimeFailure> {
-        Err(RuntimeFailure::protocol_violation())
+        Err(ProtocolViolation::Dispatch.into())
     }
 }
 
@@ -48,14 +46,18 @@ pub enum RuntimeStreamEvent {
     Done,
 }
 
-/// One normalized chunk and the counters the gateway settles from.
 #[derive(Clone, Debug, PartialEq)]
 pub struct RuntimeStreamChunk {
     response: Value,
-    usage: Option<NormalizedUsage>,
     finish_reason: Option<String>,
     usable_output: bool,
-    terminal_usage: bool,
+    usage: Option<ChunkUsage>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum ChunkUsage {
+    Running(NormalizedUsage),
+    Terminal(NormalizedUsage),
 }
 
 impl RuntimeStreamChunk {
@@ -67,12 +69,17 @@ impl RuntimeStreamChunk {
         usable_output: bool,
         terminal_usage: bool,
     ) -> Self {
+        debug_assert!(usage.is_some() || !terminal_usage);
+
         Self {
             response,
-            usage,
             finish_reason,
             usable_output,
-            terminal_usage,
+            usage: usage.map(if terminal_usage {
+                ChunkUsage::Terminal
+            } else {
+                ChunkUsage::Running
+            }),
         }
     }
 
@@ -81,7 +88,9 @@ impl RuntimeStreamChunk {
     }
 
     pub fn usage(&self) -> Option<NormalizedUsage> {
-        self.usage
+        match self.usage? {
+            ChunkUsage::Running(usage) | ChunkUsage::Terminal(usage) => Some(usage),
+        }
     }
 
     pub fn finish_reason(&self) -> Option<&str> {
@@ -93,7 +102,7 @@ impl RuntimeStreamChunk {
     }
 
     pub fn is_terminal_usage(&self) -> bool {
-        self.terminal_usage
+        matches!(self.usage, Some(ChunkUsage::Terminal(_)))
     }
 }
 
@@ -118,7 +127,8 @@ impl RuntimeCompletion {
         }
     }
 
-    pub fn response(&self) -> &Value {
+    #[cfg(test)]
+    pub(crate) fn response(&self) -> &Value {
         &self.response
     }
 
@@ -143,6 +153,7 @@ pub enum RuntimeFailureKind {
     TimedOut,
     ResponseTooLarge,
     ProtocolViolation,
+    Interrupted,
 }
 
 #[derive(Clone, Debug, Error, Eq, PartialEq)]
@@ -150,58 +161,198 @@ pub enum RuntimeFailureKind {
 pub struct RuntimeFailure {
     kind: RuntimeFailureKind,
     usage: NormalizedUsage,
-    upstream_status: Option<u16>,
-    transport: Option<&'static str>,
+    cause: FailureCause,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum FailureCause {
+    Status(u16),
+    Transport(TransportError),
+    Protocol(ProtocolViolation),
+    Tokenizer,
+    Deadline,
+    IdleTimeout,
+    DeclaredTooLarge,
+    StreamedTooLarge,
+    Parameter(&'static str),
+    #[cfg(test)]
+    Scripted,
+}
+
+impl FailureCause {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Status(_) => "upstream_status",
+            Self::Transport(error) => error.as_str(),
+            Self::Protocol(violation) => violation.as_str(),
+            Self::Tokenizer => "tokenizer",
+            Self::Deadline => "deadline",
+            Self::IdleTimeout => "idle_timeout",
+            Self::DeclaredTooLarge => "declared_too_large",
+            Self::StreamedTooLarge => "streamed_too_large",
+            Self::Parameter(_) => "parameter",
+            #[cfg(test)]
+            Self::Scripted => "scripted",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum TransportError {
+    Timeout,
+    Connect,
+    Body,
+    Decode,
+    Other,
+}
+
+impl TransportError {
+    // Never retain the error: its display/debug representation may include a private URL.
+    fn classify(error: &reqwest::Error) -> Self {
+        if error.is_timeout() {
+            Self::Timeout
+        } else if error.is_connect() {
+            Self::Connect
+        } else if error.is_body() {
+            Self::Body
+        } else if error.is_decode() {
+            Self::Decode
+        } else {
+            Self::Other
+        }
+    }
+
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Timeout => "timeout",
+            Self::Connect => "connect",
+            Self::Body => "body",
+            Self::Decode => "decode",
+            Self::Other => "transport",
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum ProtocolViolation {
+    Json,
+    ResponseShape,
+    ModelMismatch,
+    Usage,
+    StreamIdentity,
+    FinishReason,
+    TokenBounds,
+    FrameOrder,
+    SseFraming,
+    ContentType,
+    Dispatch,
+    DecisionAnswer,
+}
+
+impl ProtocolViolation {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Json => "json",
+            Self::ResponseShape => "response_shape",
+            Self::ModelMismatch => "model_mismatch",
+            Self::Usage => "usage",
+            Self::StreamIdentity => "stream_identity",
+            Self::FinishReason => "finish_reason",
+            Self::TokenBounds => "token_bounds",
+            Self::FrameOrder => "frame_order",
+            Self::SseFraming => "sse_framing",
+            Self::ContentType => "content_type",
+            Self::Dispatch => "dispatch",
+            Self::DecisionAnswer => "decision_answer",
+        }
+    }
+}
+
+impl From<ProtocolViolation> for RuntimeFailure {
+    fn from(violation: ProtocolViolation) -> Self {
+        Self::caused(
+            RuntimeFailureKind::ProtocolViolation,
+            FailureCause::Protocol(violation),
+        )
+    }
 }
 
 impl RuntimeFailure {
-    pub fn new(kind: RuntimeFailureKind) -> Self {
+    #[cfg(test)]
+    pub(crate) fn new(kind: RuntimeFailureKind) -> Self {
+        Self::caused(kind, FailureCause::Scripted)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn protocol_violation() -> Self {
+        ProtocolViolation::Dispatch.into()
+    }
+
+    #[cfg(test)]
+    pub(crate) fn with_usage(kind: RuntimeFailureKind, usage: NormalizedUsage) -> Self {
+        Self::new(kind).or_usage(usage)
+    }
+
+    fn caused(kind: RuntimeFailureKind, cause: FailureCause) -> Self {
         Self {
             kind,
             usage: NormalizedUsage::zero(),
-            upstream_status: None,
-            transport: None,
+            cause,
         }
     }
 
-    /// The runtime answered with something the gateway cannot trust.
-    pub fn protocol_violation() -> Self {
-        Self::new(RuntimeFailureKind::ProtocolViolation)
-    }
-
-    pub(crate) fn with_usage(kind: RuntimeFailureKind, usage: NormalizedUsage) -> Self {
-        Self {
-            usage,
-            ..Self::new(kind)
-        }
-    }
-
-    /// A non-success upstream status, classified by `failure_kind_for_status`.
     fn rejected(status: StatusCode, usage: NormalizedUsage) -> Self {
-        Self {
-            upstream_status: Some(status.as_u16()),
-            ..Self::with_usage(failure_kind_for_status(status), usage)
-        }
+        Self::caused(
+            failure_kind_for_status(status),
+            FailureCause::Status(status.as_u16()),
+        )
+        .or_usage(usage)
     }
 
     fn from_transport(error: reqwest::Error) -> Self {
-        // Never retain the error: its display/debug representation may include a private URL.
-        let transport = if error.is_timeout() {
-            "timeout"
-        } else if error.is_connect() {
-            "connect"
-        } else if error.is_body() {
-            "body"
-        } else if error.is_decode() {
-            "decode"
-        } else {
-            "transport"
-        };
+        Self::transport(RuntimeFailureKind::Unavailable, &error)
+    }
 
-        Self {
-            transport: Some(transport),
-            ..Self::new(RuntimeFailureKind::Unavailable)
+    fn interrupted(error: reqwest::Error) -> Self {
+        Self::transport(RuntimeFailureKind::Interrupted, &error)
+    }
+
+    fn transport(kind: RuntimeFailureKind, error: &reqwest::Error) -> Self {
+        Self::caused(
+            kind,
+            FailureCause::Transport(TransportError::classify(error)),
+        )
+    }
+
+    fn tokenizer(kind: RuntimeFailureKind) -> Self {
+        Self::caused(kind, FailureCause::Tokenizer)
+    }
+
+    fn deadline() -> Self {
+        Self::caused(RuntimeFailureKind::TimedOut, FailureCause::Deadline)
+    }
+
+    fn idle() -> Self {
+        Self::caused(RuntimeFailureKind::TimedOut, FailureCause::IdleTimeout)
+    }
+
+    fn too_large(cause: FailureCause) -> Self {
+        Self::caused(RuntimeFailureKind::ResponseTooLarge, cause)
+    }
+
+    fn invalid_parameter(name: &'static str) -> Self {
+        Self::caused(
+            RuntimeFailureKind::InvalidRequest,
+            FailureCause::Parameter(name),
+        )
+    }
+
+    fn or_usage(mut self, usage: NormalizedUsage) -> Self {
+        if self.usage == NormalizedUsage::zero() {
+            self.usage = usage;
         }
+
+        self
     }
 
     pub(crate) fn log_attempt(
@@ -215,12 +366,33 @@ impl RuntimeFailure {
     ) {
         crate::diagnostics::limited_warn!(%generation_id, model_id, %deployment_id, attempt, phase = "dispatch",
             elapsed_ms, retry_selected, failure_kind = ?self.kind,
-            upstream_status = self.upstream_status, transport = self.transport,
+            upstream_status = self.upstream_status(), diagnostic_code = self.diagnostic_code(),
             "runtime attempt failed");
     }
 
+    pub(crate) fn diagnostic_code(&self) -> &'static str {
+        self.cause.as_str()
+    }
+
     pub(crate) fn transport_code(&self) -> Option<&'static str> {
-        self.transport
+        match self.cause {
+            FailureCause::Transport(error) => Some(error.as_str()),
+            _ => None,
+        }
+    }
+
+    fn parameter(&self) -> Option<&'static str> {
+        match self.cause {
+            FailureCause::Parameter(name) => Some(name),
+            _ => None,
+        }
+    }
+
+    fn upstream_status(&self) -> Option<u16> {
+        match self.cause {
+            FailureCause::Status(status) => Some(status),
+            _ => None,
+        }
     }
 
     pub fn kind(&self) -> RuntimeFailureKind {
@@ -233,18 +405,17 @@ impl RuntimeFailure {
 
     pub fn gateway_error(&self) -> GatewayError {
         match self.kind {
-            RuntimeFailureKind::InvalidRequest => GatewayError::invalid_request(None),
+            RuntimeFailureKind::InvalidRequest => GatewayError::invalid_request(self.parameter()),
             RuntimeFailureKind::CapacityExceeded => GatewayError::CapacityExceeded,
             RuntimeFailureKind::Unavailable
             | RuntimeFailureKind::TimedOut
             | RuntimeFailureKind::ResponseTooLarge
-            | RuntimeFailureKind::ProtocolViolation => GatewayError::RuntimeUnavailable,
+            | RuntimeFailureKind::ProtocolViolation
+            | RuntimeFailureKind::Interrupted => GatewayError::RuntimeUnavailable,
         }
     }
 }
 
-/// Maps an upstream status to a failure kind.
-///
 /// A vLLM `QueueOverflowError` or `MaxQueuedTokensError` rejects with HTTP 503
 /// when the engine queue reaches `max_num_queued_reqs` or `max_num_queued_tokens`.
 /// That rejection is admission backpressure, not an outage, so it must stay

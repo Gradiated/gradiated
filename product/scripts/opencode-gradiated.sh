@@ -45,4 +45,4 @@ OPENCODE_CONFIG_CONTENT="$(jq -cn '{
 export GRADIATED_OPENCODE_KEY OPENCODE_CONFIG_CONTENT
 export OPENCODE_DISABLE_AUTOUPDATE=true
 
-exec opencode --model gradiated/z-ai/glm-5.3-flash "$@"
+exec opencode "$@"

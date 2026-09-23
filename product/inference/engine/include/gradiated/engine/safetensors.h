@@ -2,15 +2,20 @@
 
 #include <cstdint>
 #include <map>
+#include <span>
 #include <string>
 #include <string_view>
 #include <vector>
 
 namespace gradiated::engine {
 
+enum class SafetensorsDtype { boolean, u8, i8, u16, i16, f16, bf16, u32, i32, f32, u64, i64, f64 };
+
+[[nodiscard]] std::uint64_t element_count(std::span<const std::uint64_t> shape);
+
 struct TensorLocation {
   std::string shard_path;
-  std::string dtype;
+  SafetensorsDtype dtype;
   std::vector<std::uint64_t> shape;
   std::uint64_t file_offset;
   std::uint64_t byte_size;
@@ -41,7 +46,5 @@ class ShardedSafetensors {
  private:
   std::map<std::string, TensorLocation, std::less<>> tensors_;
 };
-
-void validate_gemma4_weights(const ShardedSafetensors& weights, const struct Gemma4Config& config);
 
 }  // namespace gradiated::engine

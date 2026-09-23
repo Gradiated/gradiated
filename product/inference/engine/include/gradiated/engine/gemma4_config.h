@@ -25,7 +25,6 @@ struct Gemma4LayerConfig {
 struct Gemma4Config {
   std::uint32_t hidden_size;
   std::uint32_t intermediate_size;
-  std::uint32_t layer_count;
   std::uint32_t vocabulary_size;
   std::uint32_t sliding_window;
   std::uint32_t maximum_positions;
@@ -39,5 +38,9 @@ struct Gemma4Config {
   [[nodiscard]] std::uint64_t full_kv_bytes_per_token() const;
   [[nodiscard]] std::uint64_t resident_sliding_kv_bytes_per_sequence() const;
 };
+
+// The CUDA kernels hard-code these values rather than reading them from the config. The final
+// logit softcap is not checked: greedy argmax is invariant under the monotonic tanh softcap.
+void require_native_gemma4_target(const Gemma4Config& config);
 
 }  // namespace gradiated::engine

@@ -1,6 +1,4 @@
-import { Check, Copy } from "lucide-react";
-import { useState } from "react";
-
+import { CopyStateIcon } from "@/components/copy-state-icon";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,51 +7,42 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import type { VersionView } from "@/store/mock-fine-tuning";
+import { copyLabel, useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
 
-/**
- * "Use" only shows the one-line code change. `modelId` defaults to the exact
- * version id; pass the task name to show the string that resolves to the
- * production version (SERV-03).
- */
+const modelToReplace = (
+  task: TaskRow,
+  version: VersionView,
+  production: VersionView | undefined,
+) =>
+  production && production.model.id !== version.model.id
+    ? production.model.id
+    : task.comparison_model_id;
+
 export const UseModelDialog = ({
+  task,
   version,
-  modelId,
-  currentModel,
-  trigger,
-  open,
-  onOpenChange,
+  production,
+  onClose,
 }: {
+  task: TaskRow;
   version: VersionView;
-  modelId?: string;
-  currentModel: string;
-  trigger?: React.ReactNode;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  production: VersionView | undefined;
+  onClose: () => void;
 }) => {
-  const id = modelId ?? version.model.id;
-  const isTaskName = id !== version.model.id;
-  const [copied, setCopied] = useState(false);
-  const copy = async () => {
-    await navigator.clipboard.writeText(id);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
-  };
+  const id = version.is_production ? task.slug : version.model.id;
+  const currentModel = modelToReplace(task, version, production);
+  const { state: copyState, copy } = useCopyToClipboard();
 
   return (
-    <Dialog
-      {...(open !== undefined ? { open } : {})}
-      {...(onOpenChange ? { onOpenChange } : {})}
-    >
-      {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-mono text-base">{id}</DialogTitle>
           <DialogDescription>
             Change the model string in your code.
-            {isTaskName ? (
+            {version.is_production ? (
               <>
                 {" "}
                 <span className="font-mono">{id}</span> points at the production
@@ -78,13 +67,9 @@ export const UseModelDialog = ({
           </div>
         </pre>
         <DialogFooter>
-          <Button variant="outline" onClick={copy}>
-            {copied ? (
-              <Check className="size-4" />
-            ) : (
-              <Copy className="size-4" />
-            )}
-            {copied ? "Copied" : "Copy model id"}
+          <Button variant="outline" onClick={() => void copy(id)}>
+            <CopyStateIcon state={copyState} className="size-4" />
+            {copyLabel(copyState, "Copy model id")}
           </Button>
         </DialogFooter>
       </DialogContent>

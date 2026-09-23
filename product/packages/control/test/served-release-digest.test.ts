@@ -1,19 +1,41 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
+import { ModelDeploymentReleaseSchema } from "@gradiated/contracts";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 import { servedReleaseDigest } from "../src/deployment-status/service.js";
 
-/**
- * The gateway hashes its own serialization of the release and reads deployment
- * status under that key, so this digest has to agree with the Rust one byte for
- * byte. A field present on one side and not the other sends heartbeats to a key
- * nobody reads, and the gateway then declines to route to a deployment that is
- * in fact healthy — which looks like an outage rather than a mismatch.
- *
- * The release and expectation below are the fixture and value pinned in
- * `product/services/gateway/src/deployment.rs`. Do not regenerate either side to
- * make the other pass; they are two independent implementations of one contract.
- */
+// Both sides compute this key independently, so never regenerate one side to match the other.
+
+const fixtureSchema = z.object({
+  cases: z.array(
+    z.strictObject({
+      name: z.string(),
+      release: ModelDeploymentReleaseSchema,
+      digest: z.string(),
+    }),
+  ),
+});
+
+const { cases } = fixtureSchema.parse(
+  JSON.parse(
+    readFileSync(
+      join(
+        import.meta.dirname,
+        "../../../services/gateway/test/fixtures/release-digests.json",
+      ),
+      "utf8",
+    ),
+  ),
+);
+
 describe("served release digest", () => {
+  it.each(cases)("matches the gateway fixture for $name", (fixture) => {
+    expect(servedReleaseDigest(fixture.release)).toBe(fixture.digest);
+  });
+
   it("matches the digest the Rust gateway pins for a chat release", () => {
     expect(
       servedReleaseDigest({
@@ -44,8 +66,6 @@ describe("served release digest", () => {
     expect(servedReleaseDigest(decision)).toBe(
       "sha256:4805b0811b6b3abfc82777b3e8f34aadd159dff5404f1c63290b11b17e3ac306",
     );
-    // Omitting the protocol must not produce the same key, or the bug this test
-    // exists to catch would go unnoticed.
     expect(servedReleaseDigest(chat)).not.toBe(servedReleaseDigest(decision));
   });
 });

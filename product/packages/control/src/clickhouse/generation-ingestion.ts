@@ -6,13 +6,22 @@ import {
 } from "@gradiated/contracts";
 import { z } from "zod";
 
-export const storedGenerationPropertiesSchema =
-  GenerationPropertiesSchema.extend({
-    settlement: z.strictObject({
-      slot_id: z.string().regex(/^\d{8}T\d{6}Z-300s-v1$/),
-    }),
-  }).superRefine((properties, context) => {
+import { settlementSlotIdSchema } from "../settlement/slot.js";
+import { insertDeduplicated } from "./client.js";
+
+const settlement = {
+  settlement: z.strictObject({ slot_id: settlementSlotIdSchema }),
+};
+const [version1, version2] = GenerationPropertiesSchema.options;
+
+export const storedGenerationPropertiesSchema = z
+  .discriminatedUnion("event_schema_version", [
+    version1.extend(settlement),
+    version2.extend(settlement),
+  ])
+  .superRefine((properties, context) => {
     let calculatedCharge = 0n;
+
     for (const [index, component] of properties.pricing.components.entries()) {
       const calculatedAmount =
         BigInt(component.quantity) * BigInt(component.unit_price);
@@ -25,6 +34,7 @@ export const storedGenerationPropertiesSchema =
       }
       calculatedCharge += BigInt(component.amount);
     }
+
     if (BigInt(properties.usage.charge) !== calculatedCharge) {
       context.addIssue({
         code: "custom",
@@ -34,7 +44,7 @@ export const storedGenerationPropertiesSchema =
     }
   });
 
-export const clickHouseGenerationInsertSchema = z.strictObject({
+const clickHouseGenerationInsertSchema = z.strictObject({
   id: z.uuid(),
   properties: storedGenerationPropertiesSchema,
 });
@@ -43,14 +53,6 @@ export type StoredGenerationProperties = z.infer<
   typeof storedGenerationPropertiesSchema
 >;
 
-export type ClickHouseGenerationInsert = z.infer<
-  typeof clickHouseGenerationInsertSchema
->;
-
-/*
- * This interface uses the transport event because the worker derives the
- * settlement slot from the Valkey Stream ID.
- */
 export type GenerationWriter = {
   insertGeneration(
     event: GenerationSettled,
@@ -59,7 +61,7 @@ export type GenerationWriter = {
 };
 
 export const createGenerationWriter = (
-  client: ClickHouseClient,
+  client: Pick<ClickHouseClient, "insert">,
 ): GenerationWriter => ({
   async insertGeneration(event, settlementSlotId) {
     const validatedEvent = GenerationSettledSchema.parse(event);
@@ -70,23 +72,11 @@ export const createGenerationWriter = (
         settlement: { slot_id: settlementSlotId },
       },
     });
-    const result = await client.insert({
-      table: "generations",
-      columns: ["id", "properties"],
-      values: [row],
-      format: "JSONEachRow",
-      clickhouse_settings: {
-        async_insert: 1,
-        async_insert_deduplicate: 1,
-        insert_deduplication_token: validatedEvent.generation_id,
-        wait_for_async_insert: 1,
-      },
-    });
 
-    if (!result.executed) {
-      throw new Error(
-        `ClickHouse did not execute insert ${validatedEvent.generation_id}`,
-      );
-    }
+    await insertDeduplicated(client, {
+      table: "generations",
+      values: [row],
+      token: validatedEvent.generation_id,
+    });
   },
 });

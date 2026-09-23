@@ -1,33 +1,18 @@
-import type { AgentName } from "../arguments.js";
 import { execFileSync } from "node:child_process";
+import type { AgentName } from "./names.js";
 
-export interface DetectedAgent {
-  name: AgentName;
-  found: boolean;
-  version: string | null;
-}
-
-const AGENTS = ["opencode", "codex", "claude"] as const;
-
-const detectOne = (name: (typeof AGENTS)[number]): DetectedAgent => {
+export const isOnPath = (name: AgentName): boolean => {
   try {
-    const output = execFileSync(name, ["--version"], {
-      encoding: "utf8",
+    execFileSync(name, ["--version"], {
       timeout: 5_000,
-      stdio: ["ignore", "pipe", "ignore"],
+      stdio: "ignore",
       // Windows resolves npm-installed agents to .cmd shims, which
       // execFileSync refuses to run without a shell. The command name is a
       // fixed literal, so this is not an injection vector.
       shell: process.platform === "win32",
-    }).trim();
-    return {
-      name,
-      found: true,
-      version: output.split("\r\n")[0]?.split("\n")[0] ?? null,
-    };
+    });
+    return true;
   } catch {
-    return { name, found: false, version: null };
+    return false;
   }
 };
-
-export const detectAgents = (): DetectedAgent[] => AGENTS.map(detectOne);

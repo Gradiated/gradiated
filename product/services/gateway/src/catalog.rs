@@ -1,41 +1,17 @@
+use std::collections::HashMap;
+
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 use crate::{
-    domain::ModelStatus, GatewayModel, InputTokenPrice, ModelParameterDescriptor,
-    ModelQuantization, OutputTokenPrice, SupportedTextInputs, TextInputModality,
-    TextOutputModality, TokenMeasure, TokenUnit,
+    model::{ModelStatus, TextModalityKind},
+    DeploymentStatus, GatewayModel, InputPriceType, ModelParameterDescriptor, ModelQuantization,
+    OutputPriceType, SupportedTextInputs, TextInputModality, TextOutputModality, TokenMeasure,
+    TokenUnit,
 };
 
 const PROVIDER_SCHEMA_VERSION: &str = "2.4";
 const NANO_USD_SCALE: u64 = 1_000_000_000;
-/// Region to ISO 3166-1 alpha-2 country. A region this does not name has its
-/// country omitted rather than guessed: publishing the wrong data residency is
-/// worse than publishing none, and customers encode this field into their own
-/// compliance logic.
-const REGION_COUNTRIES: &[(&str, &str)] = &[
-    // RunPod names regions by country; AWS names them by area.
-    ("af-south-1", "ZA"),
-    ("ap-northeast-1", "JP"),
-    ("ap-northeast-2", "KR"),
-    ("ap-south-1", "IN"),
-    ("ap-southeast-1", "SG"),
-    ("ap-southeast-2", "AU"),
-    ("ca-central-1", "CA"),
-    ("eu-central-1", "DE"),
-    ("eu-north-1", "SE"),
-    ("eu-west-1", "IE"),
-    ("eu-west-2", "GB"),
-    ("eu-west-3", "FR"),
-    ("sa-east-1", "BR"),
-    ("us-east-1", "US"),
-    ("us-east-2", "US"),
-    ("us-west-1", "US"),
-    ("us-west-2", "US"),
-    ("ca", "CA"),
-    ("sg", "SG"),
-    ("us", "US"),
-];
 
 #[derive(Debug)]
 pub struct CatalogModel {
@@ -53,7 +29,7 @@ impl<'a> ModelCatalogResponse<'a> {
         Self {
             data: models
                 .iter()
-                .filter_map(|model| ProviderModel::from_model(model, &compliance))
+                .filter_map(|model| ProviderModel::from_model(model, compliance))
                 .collect(),
         }
     }
@@ -74,8 +50,8 @@ struct ProviderModel<'a> {
     description: &'a str,
     input_modalities: [ProviderTextInput<'a>; 1],
     output_modalities: [ProviderTextOutput; 1],
-    #[serde(skip_serializing_if = "std::collections::HashMap::is_empty")]
-    passthrough_parameters: &'a std::collections::HashMap<String, ModelParameterDescriptor>,
+    #[serde(skip_serializing_if = "HashMap::is_empty")]
+    passthrough_parameters: &'a HashMap<String, ModelParameterDescriptor>,
     #[serde(skip_serializing_if = "Option::is_none")]
     deprecation_date: Option<&'a DateTime<Utc>>,
     is_ready: bool,
@@ -86,31 +62,29 @@ struct ProviderModel<'a> {
 }
 
 impl<'a> ProviderModel<'a> {
-    fn from_model(catalog: &'a CatalogModel, compliance: &ProviderCompliance) -> Option<Self> {
+    fn from_model(catalog: &'a CatalogModel, compliance: ProviderCompliance) -> Option<Self> {
         let model = &catalog.model;
+        let properties = &model.properties;
+        let released_at = properties.released_at.as_ref()?;
         let is_ready = match model.status {
             ModelStatus::Available => catalog.healthy_deployments > 0,
             ModelStatus::Unavailable => false,
             ModelStatus::Retired => return None,
         };
-        if !model
+
+        let valid_deployments = model
             .deployments
             .iter()
-            .any(|deployment| deployment.validate().is_ok())
-        {
-            return None;
-        }
-        if is_ready && model.first_available_deployment().ok().flatten().is_none() {
+            .filter(|deployment| deployment.validate().is_ok())
+            .collect::<Vec<_>>();
+
+        if valid_deployments.is_empty() {
             return None;
         }
 
-        let mut regions = model
-            .deployments
-            .iter()
-            .filter(|deployment| {
-                deployment.status == crate::DeploymentStatus::Available
-                    && deployment.validate().is_ok()
-            })
+        let mut regions = valid_deployments
+            .into_iter()
+            .filter(|deployment| deployment.status == DeploymentStatus::Available)
             .map(|deployment| deployment.region.as_str())
             .collect::<Vec<_>>();
         regions.sort_unstable();
@@ -122,31 +96,25 @@ impl<'a> ProviderModel<'a> {
                 region,
             })
             .collect::<Vec<_>>();
-        let deployment_region = datacenters.first().and_then(|entry| entry.country_code);
+        let deployment_region = single_country(&datacenters);
 
-        let released_at = model.properties.released_at.as_ref()?;
-        let input = model.properties.text_input();
-        let output = model.properties.text_output();
         Some(Self {
             schema_version: PROVIDER_SCHEMA_VERSION,
             id: &model.id,
             name: &model.name,
-            hugging_face_id: model.properties.hugging_face_id.as_deref(),
+            hugging_face_id: properties.hugging_face_id.as_deref(),
             created: released_at.timestamp(),
-            quantization: model.properties.quantization,
-            tokenizer: model.properties.tokenizer.as_deref(),
-            description: &model.properties.description,
-            input_modalities: [ProviderTextInput::from_model(input)],
-            output_modalities: [ProviderTextOutput::from_model(output)],
-            passthrough_parameters: &model.properties.passthrough_parameters,
-            deprecation_date: model.properties.deprecation_date.as_ref(),
+            quantization: properties.quantization,
+            tokenizer: properties.tokenizer.as_deref(),
+            description: &properties.description,
+            input_modalities: [ProviderTextInput::from_model(properties.text_input())],
+            output_modalities: [ProviderTextOutput::from_model(properties.text_output())?],
+            passthrough_parameters: &properties.passthrough_parameters,
+            deprecation_date: properties.deprecation_date.as_ref(),
             is_ready,
             datacenters,
             deployment_region,
-            compliance: ProviderCompliance {
-                zdr: compliance.zdr,
-                hipaa: compliance.hipaa,
-            },
+            compliance,
         })
     }
 }
@@ -154,7 +122,7 @@ impl<'a> ProviderModel<'a> {
 /// What the gateway publishes about itself. These are claims customers encode into
 /// their own compliance decisions, so they are configuration rather than constants
 /// compiled into the binary, and they are not per-model facts today.
-#[derive(Clone, Copy, Debug, Serialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 pub struct ProviderCompliance {
     pub zdr: bool,
     pub hipaa: bool,
@@ -163,17 +131,21 @@ pub struct ProviderCompliance {
 #[derive(Debug, Serialize)]
 struct ProviderTextInput<'a> {
     #[serde(rename = "type")]
-    kind: &'static str,
+    kind: TextModalityKind,
     supported_inputs: &'a SupportedTextInputs,
-    pricing: Vec<ProviderInputPrice>,
+    pricing: Vec<ProviderPrice<InputPriceType>>,
 }
 
 impl<'a> ProviderTextInput<'a> {
     fn from_model(input: &'a TextInputModality) -> Self {
         Self {
-            kind: "text",
+            kind: input.kind,
             supported_inputs: &input.supported_inputs,
-            pricing: input.pricing.iter().map(ProviderInputPrice::from).collect(),
+            pricing: input
+                .pricing
+                .iter()
+                .map(|price| ProviderPrice::per_token(price.kind(), price.cost()))
+                .collect(),
         }
     }
 }
@@ -181,79 +153,55 @@ impl<'a> ProviderTextInput<'a> {
 #[derive(Debug, Serialize)]
 struct ProviderTextOutput {
     #[serde(rename = "type")]
-    kind: &'static str,
+    kind: TextModalityKind,
     max_length: TokenMeasure,
     streaming: bool,
-    supported_parameters: std::collections::HashMap<String, ModelParameterDescriptor>,
-    pricing: Vec<ProviderOutputPrice>,
+    supported_parameters: HashMap<String, ModelParameterDescriptor>,
+    pricing: Vec<ProviderPrice<OutputPriceType>>,
 }
 
 impl ProviderTextOutput {
-    fn from_model(output: &TextOutputModality) -> Self {
+    fn from_model(output: &TextOutputModality) -> Option<Self> {
+        let max_tokens = i64::try_from(output.max_length.value).ok()?;
+
         let mut supported_parameters = output.supported_parameters.clone();
         supported_parameters.insert(
             "max_tokens".to_owned(),
             ModelParameterDescriptor::Integer {
                 min: 1,
-                max: output.max_length.value as i64,
+                max: max_tokens,
                 unit: Some(TokenUnit::Token),
             },
         );
-        Self {
-            kind: "text",
+
+        Some(Self {
+            kind: output.kind,
             max_length: output.max_length.clone(),
             streaming: output.streaming,
             supported_parameters,
             pricing: output
                 .pricing
                 .iter()
-                .map(ProviderOutputPrice::from)
+                .map(|price| ProviderPrice::per_token(price.kind(), price.cost()))
                 .collect(),
-        }
+        })
     }
 }
 
 #[derive(Debug, Serialize)]
-struct ProviderInputPrice {
+struct ProviderPrice<K> {
     #[serde(rename = "type")]
-    kind: &'static str,
-    unit: &'static str,
+    kind: K,
+    unit: TokenUnit,
     cost_usd: String,
 }
 
-impl From<&InputTokenPrice> for ProviderInputPrice {
-    fn from(price: &InputTokenPrice) -> Self {
-        let kind = match price {
-            InputTokenPrice::Prompt { .. } => "prompt",
-            InputTokenPrice::CachedPrompt { .. } => "cached_prompt",
-            InputTokenPrice::CacheWrite { .. } => "cache_write",
-        };
+impl<K> ProviderPrice<K> {
+    fn per_token(kind: K, cost: u64) -> Self {
         Self {
             kind,
-            unit: "token",
-            cost_usd: nano_usd(price.cost()),
-        }
-    }
-}
-
-#[derive(Debug, Serialize)]
-struct ProviderOutputPrice {
-    #[serde(rename = "type")]
-    kind: &'static str,
-    unit: &'static str,
-    cost_usd: String,
-}
-
-impl From<&OutputTokenPrice> for ProviderOutputPrice {
-    fn from(price: &OutputTokenPrice) -> Self {
-        let kind = match price {
-            OutputTokenPrice::Completion { .. } => "completion",
-            OutputTokenPrice::InternalReasoning { .. } => "internal_reasoning",
-        };
-        Self {
-            kind,
-            unit: "token",
-            cost_usd: nano_usd(price.cost()),
+            unit: TokenUnit::Token,
+            cost_usd: nano_usd(cost),
         }
     }
 }
@@ -265,87 +213,100 @@ struct ProviderDatacenter<'a> {
     region: &'a str,
 }
 
-/// A region's country, or nothing when the region is not one this gateway knows.
-/// A region name's first segment is not a country: `eu-central-1` is in Germany.
+/// Region to ISO 3166-1 alpha-2 country. A region this does not name has its
+/// country omitted rather than guessed: publishing the wrong data residency is
+/// worse than publishing none, and customers encode this field into their own
+/// compliance logic.
 fn country_code(region: &str) -> Option<&'static str> {
-    REGION_COUNTRIES
-        .iter()
-        .find(|(name, _)| *name == region)
-        .map(|(_, country)| *country)
+    let country = match region {
+        "af-south-1" => "ZA",
+        "ap-northeast-1" => "JP",
+        "ap-northeast-2" => "KR",
+        "ap-south-1" => "IN",
+        "ap-southeast-1" | "sg" => "SG",
+        "ap-southeast-2" => "AU",
+        "ca-central-1" | "ca" => "CA",
+        "eu-central-1" => "DE",
+        "eu-north-1" => "SE",
+        "eu-west-1" => "IE",
+        "eu-west-2" => "GB",
+        "eu-west-3" => "FR",
+        "sa-east-1" => "BR",
+        "us-east-1" | "us-east-2" | "us-west-1" | "us-west-2" | "us" => "US",
+        _ => return None,
+    };
+
+    Some(country)
+}
+
+/// A model is published as resident in a country only when every datacenter that
+/// can serve it is known to be in that country.
+fn single_country(datacenters: &[ProviderDatacenter<'_>]) -> Option<&'static str> {
+    let (first, rest) = datacenters.split_first()?;
+    let country = first.country_code?;
+
+    rest.iter()
+        .all(|entry| entry.country_code == Some(country))
+        .then_some(country)
 }
 
 fn nano_usd(value: u64) -> String {
     let whole = value / NANO_USD_SCALE;
     let fractional = value % NANO_USD_SCALE;
+
     if fractional == 0 {
         return whole.to_string();
     }
+
     let fractional = format!("{fractional:09}").trim_end_matches('0').to_owned();
+
     format!("{whole}.{fractional}")
 }
 
 #[cfg(test)]
 mod tests {
+    use chrono::TimeZone;
+    use serde_json::{json, Value};
+
     use super::*;
+    use crate::{test_support, GatewayModelDeployment, InputTokenPrice, OutputTokenPrice};
 
     fn model() -> GatewayModel {
-        serde_json::from_value(serde_json::json!({
-            "id": "provider/model-a",
-            "name": "Model A",
-            "status": "available",
-            "properties": {
-                "schema_version": 1,
-                "description": "Model A",
-                "released_at": "2026-01-02T03:04:05Z",
-                "hugging_face_id": "provider/model-a",
-                "quantization": "fp8",
-                "tokenizer": "ModelA",
-                "input_modalities": [{
-                    "type": "text",
-                    "supported_inputs": {
-                        "max_context_length": {"value": 8192, "unit": "token"},
-                        "max_prompt_length": {"value": 7168, "unit": "token"}
-                    },
-                    "pricing": [
-                        {"type": "prompt", "unit": "token", "cost": 1000},
-                        {"type": "cached_prompt", "unit": "token", "cost": 500}
-                    ]
-                }],
-                "output_modalities": [{
-                    "type": "text",
-                    "max_length": {"value": 1024, "unit": "token"},
-                    "default_length": {"value": 512, "unit": "token"},
-                    "streaming": true,
-                    "supported_parameters": {
-                        "temperature": {"type": "range", "min": 0, "max": 2}
-                    },
-                    "pricing": [
-                        {"type": "completion", "unit": "token", "cost": 2000}
-                    ]
-                }],
-                "passthrough_parameters": {
-                    "response_format": {"type": "unknown"}
-                },
-                "deprecation_date": null
-            },
-            "deployments": [{
-                "id": "0198c36f-9b6a-7000-8000-000000000005",
-                "status": "available",
-                "provider": "local",
-                "region": "us-east-1",
-                "fault_domain": "local:runtime-1",
-                "service_url": "http://private-sglang:30000",
-                "release": {
-                    "schema_version": 1,
-                    "runtime_revision": "runtime",
-                    "model_path": "model",
-                    "model_revision": "model-revision",
-                    "tokenizer_path": "tokenizer",
-                    "tokenizer_revision": "tokenizer-revision"
-                }
-            }]
-        }))
-        .unwrap()
+        let mut model = test_support::model(true);
+        model.properties.released_at = Some(Utc.with_ymd_and_hms(2026, 1, 2, 3, 4, 5).unwrap());
+        model.deployments[0].region = "us-east-1".to_owned();
+
+        model
+    }
+
+    fn with_deployments(regions: &[(&str, DeploymentStatus)]) -> GatewayModel {
+        let mut model = model();
+        let template = model.deployments[0].clone();
+        model.deployments = regions
+            .iter()
+            .map(|(region, status)| GatewayModelDeployment {
+                region: (*region).to_owned(),
+                status: *status,
+                ..template.clone()
+            })
+            .collect();
+
+        model
+    }
+
+    fn publish(model: GatewayModel, healthy_deployments: u64) -> Option<Value> {
+        let models = [CatalogModel {
+            model,
+            healthy_deployments,
+        }];
+        let compliance = ProviderCompliance {
+            zdr: true,
+            hipaa: false,
+        };
+        let response =
+            serde_json::to_value(ModelCatalogResponse::from_models(&models, compliance)).unwrap();
+
+        response["data"].as_array().unwrap().first().cloned()
     }
 
     #[test]
@@ -358,46 +319,38 @@ mod tests {
 
     #[test]
     fn publishes_only_customer_visible_provider_fields() {
-        let models = [CatalogModel {
-            model: model(),
-            healthy_deployments: 2,
-        }];
-        let response = serde_json::to_value(ModelCatalogResponse::from_models(
-            &models,
-            ProviderCompliance {
-                zdr: true,
-                hipaa: false,
-            },
-        ))
-        .unwrap();
-        let published = &response["data"][0];
+        let published = publish(model(), 2).expect("the model is published");
 
-        assert_eq!(published["id"], "provider/model-a");
+        assert_eq!(published["id"], "model-a");
+        assert_eq!(published["created"], 1_767_323_045);
         assert_eq!(published["input_modalities"][0]["type"], "text");
         assert_eq!(
             published["input_modalities"][0]["supported_inputs"]["max_context_length"]["value"],
             8192
         );
         assert_eq!(
-            published["input_modalities"][0]["pricing"][0]["cost_usd"],
-            "0.000001"
+            published["input_modalities"][0]["pricing"],
+            json!([
+                { "type": "prompt", "unit": "token", "cost_usd": "0.0000001" },
+                { "type": "cached_prompt", "unit": "token", "cost_usd": "0.00000005" }
+            ])
         );
         assert_eq!(
-            published["output_modalities"][0]["pricing"][0]["cost_usd"],
-            "0.000002"
+            published["output_modalities"][0]["pricing"],
+            json!([{ "type": "completion", "unit": "token", "cost_usd": "0.0000002" }])
         );
         assert_eq!(
-            published["output_modalities"][0]["supported_parameters"]["max_tokens"]["max"],
-            1024
+            published["output_modalities"][0]["supported_parameters"]["max_tokens"],
+            json!({ "type": "integer", "min": 1, "max": 4096, "unit": "token" })
         );
         assert_eq!(
             published["datacenters"],
-            serde_json::json!([{ "country_code": "US", "region": "us-east-1" }])
+            json!([{ "country_code": "US", "region": "us-east-1" }])
         );
         assert_eq!(published["deployment_region"], "US");
         assert_eq!(
             published["compliance"],
-            serde_json::json!({ "zdr": true, "hipaa": false })
+            json!({ "zdr": true, "hipaa": false })
         );
         assert_eq!(published["is_ready"], true);
         assert!(published.get("capacity").is_none());
@@ -407,56 +360,120 @@ mod tests {
     }
 
     #[test]
-    fn publishes_singapore_deployment_location() {
-        let mut singapore = model();
-        singapore.deployments[0].region = "sg".to_owned();
-        let models = [CatalogModel {
-            model: singapore,
-            healthy_deployments: 2,
-        }];
-        let response = serde_json::to_value(ModelCatalogResponse::from_models(
-            &models,
-            ProviderCompliance {
-                zdr: true,
-                hipaa: false,
-            },
-        ))
-        .unwrap();
-        let published = &response["data"][0];
+    fn optional_fields_without_a_value_are_left_out() {
+        let mut model = model();
+        model.properties.passthrough_parameters.clear();
+        let published = publish(model, 1).expect("the model is published");
 
-        assert_eq!(
-            published["datacenters"],
-            serde_json::json!([{ "country_code": "SG", "region": "sg" }])
-        );
-        assert_eq!(published["deployment_region"], "SG");
+        for field in [
+            "hugging_face_id",
+            "quantization",
+            "tokenizer",
+            "deprecation_date",
+            "passthrough_parameters",
+        ] {
+            assert!(published.get(field).is_none(), "{field}");
+        }
     }
 
     #[test]
-    /// A region this gateway does not know publishes no country at all. Guessing one
-    /// from the region's first segment produced `EU` and `AP`, which are not
-    /// countries, and `US` for everything else.
-    fn an_unknown_region_publishes_no_country() {
-        let mut unknown = model();
-        unknown.deployments[0].region = "moon-base-1".to_owned();
-        let models = [CatalogModel {
-            model: unknown,
-            healthy_deployments: 1,
-        }];
-        let response = serde_json::to_value(ModelCatalogResponse::from_models(
-            &models,
-            ProviderCompliance {
-                zdr: true,
-                hipaa: false,
-            },
-        ))
-        .unwrap();
-        let published = &response["data"][0];
+    fn a_declared_max_tokens_parameter_is_replaced_with_the_model_maximum() {
+        let mut model = model();
+        model.properties.output_modalities[0]
+            .supported_parameters
+            .insert("max_tokens".to_owned(), ModelParameterDescriptor::Boolean);
+        let published = publish(model, 1).expect("the model is published");
+
+        assert_eq!(
+            published["output_modalities"][0]["supported_parameters"]["max_tokens"]["max"],
+            4096
+        );
+    }
+
+    #[test]
+    fn optional_prices_are_published() {
+        let mut model = model();
+        let properties = &mut model.properties;
+        properties.input_modalities[0]
+            .pricing
+            .push(InputTokenPrice::CacheWrite {
+                unit: TokenUnit::Token,
+                cost: 125,
+            });
+        properties.output_modalities[0]
+            .pricing
+            .push(OutputTokenPrice::InternalReasoning {
+                unit: TokenUnit::Token,
+                cost: 1_500_000_000,
+            });
+        let published = publish(model, 1).expect("the model is published");
+
+        assert_eq!(
+            published["input_modalities"][0]["pricing"][2],
+            json!({ "type": "cache_write", "unit": "token", "cost_usd": "0.000000125" })
+        );
+        assert_eq!(
+            published["output_modalities"][0]["pricing"][1],
+            json!({ "type": "internal_reasoning", "unit": "token", "cost_usd": "1.5" })
+        );
+    }
+
+    #[test]
+    fn datacenters_list_each_available_region_once_in_order() {
+        let model = with_deployments(&[
+            ("us-east-1", DeploymentStatus::Available),
+            ("eu-west-1", DeploymentStatus::Draining),
+            ("sg", DeploymentStatus::Available),
+            ("ca", DeploymentStatus::Unavailable),
+            ("sg", DeploymentStatus::Available),
+        ]);
+        let published = publish(model, 2).expect("the model is published");
 
         assert_eq!(
             published["datacenters"],
-            serde_json::json!([{ "region": "moon-base-1" }])
+            json!([
+                { "country_code": "SG", "region": "sg" },
+                { "country_code": "US", "region": "us-east-1" }
+            ])
         );
-        assert_eq!(published["deployment_region"], serde_json::Value::Null);
+    }
+
+    #[test]
+    fn the_deployment_region_is_published_only_for_a_single_known_country() {
+        for (regions, expected) in [
+            (&["us-east-1", "us-west-2"][..], Some("US")),
+            (&["sg", "us-east-1"][..], None),
+            (&["local", "us-east-1"][..], None),
+            (&["us-east-1", "moon-base-1"][..], None),
+        ] {
+            let deployments = regions
+                .iter()
+                .map(|region| (*region, DeploymentStatus::Available))
+                .collect::<Vec<_>>();
+            let published =
+                publish(with_deployments(&deployments), 1).expect("the model is published");
+
+            assert_eq!(
+                published.get("deployment_region").and_then(Value::as_str),
+                expected,
+                "{regions:?}"
+            );
+        }
+    }
+
+    /// Guessing a country from the region's first segment would publish `EU` and
+    /// `AP`, which are not countries.
+    #[test]
+    fn an_unknown_region_publishes_no_country() {
+        let mut unknown = model();
+        unknown.deployments[0].region = "moon-base-1".to_owned();
+        let published = publish(unknown, 1).expect("the model is published");
+
+        assert_eq!(
+            published["datacenters"],
+            json!([{ "region": "moon-base-1" }])
+        );
+        assert!(published.get("deployment_region").is_none());
     }
 
     #[test]
@@ -467,42 +484,44 @@ mod tests {
         missing_release.properties.released_at = None;
         let mut missing_deployment = model();
         missing_deployment.deployments.clear();
+        let mut invalid_deployments = with_deployments(&[
+            ("us-east-1", DeploymentStatus::Available),
+            ("us-west-2", DeploymentStatus::Draining),
+        ]);
+        for deployment in &mut invalid_deployments.deployments {
+            deployment.service_url = "ftp://runtime.internal".to_owned();
+        }
+        let mut unrepresentable_maximum = model();
+        unrepresentable_maximum.properties.output_modalities[0]
+            .max_length
+            .value = u64::MAX;
 
-        for model in [retired, missing_release, missing_deployment] {
-            let models = [CatalogModel {
-                model,
-                healthy_deployments: 0,
-            }];
-            let response = serde_json::to_value(ModelCatalogResponse::from_models(
-                &models,
-                ProviderCompliance {
-                    zdr: true,
-                    hipaa: false,
-                },
-            ))
-            .unwrap();
-            assert_eq!(response["data"].as_array().unwrap().len(), 0);
+        for (name, model) in [
+            ("retired", retired),
+            ("missing release", missing_release),
+            ("missing deployment", missing_deployment),
+            ("invalid deployments", invalid_deployments),
+            ("unrepresentable maximum", unrepresentable_maximum),
+        ] {
+            assert!(publish(model, 1).is_none(), "{name}");
         }
     }
 
     #[test]
-    fn readiness_follows_the_healthy_deployment_count() {
-        for (healthy_deployments, expected) in [(0_u64, false), (1, true), (3, true)] {
-            let models = [CatalogModel {
-                model: model(),
-                healthy_deployments,
-            }];
-            let response = serde_json::to_value(ModelCatalogResponse::from_models(
-                &models,
-                ProviderCompliance {
-                    zdr: true,
-                    hipaa: false,
-                },
-            ))
-            .unwrap();
+    fn readiness_follows_the_status_and_the_healthy_deployment_count() {
+        for (status, healthy_deployments, expected) in [
+            (ModelStatus::Available, 0_u64, false),
+            (ModelStatus::Available, 1, true),
+            (ModelStatus::Available, 3, true),
+            (ModelStatus::Unavailable, 1, false),
+        ] {
+            let mut model = model();
+            model.status = status;
+            let published = publish(model, healthy_deployments).expect("the model is published");
+
             assert_eq!(
-                response["data"][0]["is_ready"], expected,
-                "{healthy_deployments} healthy deployments"
+                published["is_ready"], expected,
+                "{status:?} with {healthy_deployments} healthy deployments"
             );
         }
     }

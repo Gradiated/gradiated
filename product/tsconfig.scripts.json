@@ -1,8 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["ES2023", "DOM", "DOM.AsyncIterable"],
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["scripts/**/*.ts", "scripts/**/*.mts"]
+  "include": ["scripts/**/*.ts", "scripts/**/*.mts", "scripts/**/*.mjs"]
 }

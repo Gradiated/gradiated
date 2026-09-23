@@ -7,63 +7,67 @@ import type {
   ChatCompletionChunk,
 } from "openai/resources/chat/completions";
 
-import type { JsonObject, RuntimeProfile } from "./profile.js";
+import {
+  isJsonObject,
+  text,
+  toJsonObject,
+  type JsonObject,
+  type JsonValue,
+} from "../json.js";
+import type { RuntimeProfile, StreamEvents } from "./profile.js";
 
-export const PATH = "/v1/chat/completions";
+const PATH = "/v1/chat/completions";
 
-const isInteger = (value: unknown): value is number =>
+const PRIORITIES = [-10, 0, 10];
+const OUTPUT_LIMITS = ["max_tokens", "max_completion_tokens"];
+const GATEWAY_OWNED_FIELDS = ["session_id", "service_tier"];
+
+const isInteger = (value: JsonValue | undefined): value is number =>
   typeof value === "number" && Number.isInteger(value);
 
-export const validate = (body: JsonObject, model: string): void => {
-  if (body.model !== model) throw new Error("wrong private model");
-  const messages = body.messages;
-  if (!Array.isArray(messages) || messages.length === 0)
-    throw new Error("messages must be a non-empty list");
+const validateStreamOptions = (options: JsonValue | undefined): void => {
   if (
-    messages.some(
-      (message) =>
-        message === null ||
-        typeof message !== "object" ||
-        Array.isArray(message),
-    )
+    !isJsonObject(options) ||
+    options.include_usage !== true ||
+    options.continuous_usage_stats !== true ||
+    Object.keys(options).length !== 2
   ) {
-    throw new Error("each message must be an object");
-  }
-  if (typeof body.stream !== "boolean")
-    throw new Error("stream must be a boolean");
-  const limits = (["max_tokens", "max_completion_tokens"] as const)
-    .filter((key) => key in body)
-    .map((key) => body[key]);
-  if (
-    limits.length !== 1 ||
-    !isInteger(limits[0]) ||
-    (limits[0] as number) <= 0
-  ) {
-    throw new Error("exactly one positive output limit is required");
-  }
-  if (
-    !isInteger(body.priority) ||
-    ![-10, 0, 10].includes(body.priority as number)
-  ) {
-    throw new Error("priority must be one of -10, 0, 10");
-  }
-  if ("session_id" in body || "service_tier" in body) {
-    throw new Error("gateway-owned fields must not reach the runtime");
-  }
-  if (body.stream) {
-    const options = body.stream_options as JsonObject | undefined;
-    if (
-      !options ||
-      options.include_usage !== true ||
-      options.continuous_usage_stats !== true ||
-      Object.keys(options).length !== 2
-    ) {
-      throw new Error("streaming requires usage stream options");
-    }
+    throw new Error("streaming requires usage stream options");
   }
 };
 
-export const usage = (
+export const validate = (body: JsonObject, model: string): void => {
+  if (body.model !== model) throw new Error("wrong private model");
+
+  const messages = body.messages;
+  if (!Array.isArray(messages) || messages.length === 0) {
+    throw new Error("messages must be a non-empty list");
+  }
+  if (!messages.every(isJsonObject)) {
+    throw new Error("each message must be an object");
+  }
+  if (typeof body.stream !== "boolean") {
+    throw new Error("stream must be a boolean");
+  }
+
+  const [limit, ...extraLimits] = OUTPUT_LIMITS.filter((key) => key in body);
+  const limitValue = limit === undefined ? undefined : body[limit];
+  if (extraLimits.length > 0 || !isInteger(limitValue) || limitValue <= 0) {
+    throw new Error("exactly one positive output limit is required");
+  }
+
+  const priority = body.priority;
+  if (!isInteger(priority) || !PRIORITIES.includes(priority)) {
+    throw new Error("priority must be one of -10, 0, 10");
+  }
+  if (GATEWAY_OWNED_FIELDS.some((field) => field in body)) {
+    throw new Error("gateway-owned fields must not reach the runtime");
+  }
+
+  if (body.stream) validateStreamOptions(body.stream_options);
+};
+
+const usage = (
   cached = 0,
   output = 3,
 ): NonNullable<ChatCompletion["usage"]> => ({
@@ -73,13 +77,22 @@ export const usage = (
   prompt_tokens_details: { cached_tokens: cached },
 });
 
+const hasTools = (body: JsonObject): boolean =>
+  Array.isArray(body.tools) && body.tools.length > 0;
+
 const toolName = (body: JsonObject): string => {
-  const tools = body.tools as JsonObject[];
-  return (tools[0]!.function as JsonObject).name as string;
+  const [tool] = Array.isArray(body.tools) ? body.tools : [];
+  const definition = isJsonObject(tool) ? tool.function : undefined;
+
+  if (!isJsonObject(definition)) {
+    throw new Error("a tool must define a function");
+  }
+
+  return text(definition.name);
 };
 
 export const response = (body: JsonObject, cached = 0): JsonObject => {
-  const tools = Array.isArray(body.tools) && body.tools.length > 0;
+  const tools = hasTools(body);
   const message: ChatCompletion.Choice["message"] = tools
     ? {
         role: "assistant",
@@ -98,7 +111,7 @@ export const response = (body: JsonObject, cached = 0): JsonObject => {
     id: "chatcmpl-synthetic",
     object: "chat.completion",
     created: 1700000000,
-    model: body.model as string,
+    model: text(body.model),
     choices: [
       {
         index: 0,
@@ -109,20 +122,18 @@ export const response = (body: JsonObject, cached = 0): JsonObject => {
     ],
     usage: usage(cached),
   };
-  return completion as unknown as JsonObject;
+
+  return toJsonObject(completion);
 };
 
-export const events = (
-  body: JsonObject,
-  cached = 0,
-): (JsonObject | string)[] => {
+export const events = (body: JsonObject, cached = 0): StreamEvents => {
   const base = {
     id: "chatcmpl-synthetic",
     object: "chat.completion.chunk",
     created: 1700000000,
-    model: body.model as string,
+    model: text(body.model),
   } satisfies Omit<ChatCompletionChunk, "choices">;
-  const tools = Array.isArray(body.tools) && body.tools.length > 0;
+  const tools = hasTools(body);
   const deltas: ChatCompletionChunk.Choice.Delta[] = tools
     ? [
         { role: "assistant", content: null },
@@ -148,6 +159,7 @@ export const events = (
     choices: [{ index: 0, delta, finish_reason: null }],
     usage: null,
   }));
+
   chunks.push({
     ...base,
     choices: [
@@ -156,7 +168,13 @@ export const events = (
     usage: null,
   });
   chunks.push({ ...base, choices: [], usage: usage(cached) });
-  return [...(chunks as unknown as JsonObject[]), "[DONE]"];
+
+  return [...chunks.map(toJsonObject), "[DONE]"];
 };
 
-export const profile: RuntimeProfile = { PATH, validate, response, events };
+export const profile: RuntimeProfile = {
+  path: PATH,
+  validate,
+  response,
+  events,
+};

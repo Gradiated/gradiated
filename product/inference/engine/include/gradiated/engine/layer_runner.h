@@ -17,8 +17,7 @@ class Gemma4LayerRunner {
   Gemma4LayerRunner(const Gemma4LayerRunner&) = delete;
   Gemma4LayerRunner& operator=(const Gemma4LayerRunner&) = delete;
 
-  // Runs one isolated decoder layer for a single sequence and returns the last token.
-  // This parity primitive becomes the decode path once K/V storage is externalized.
+  // Writes only the last token's output.
   void run_last(int layer_index, const void* hidden_states, void* output, int tokens, cudaStream_t stream);
   void run_decode(int layer_index, const void* hidden_state, void* output, int position,
                   void* key_cache, void* value_cache, int cache_capacity, cudaStream_t stream);

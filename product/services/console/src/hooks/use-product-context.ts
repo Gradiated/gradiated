@@ -1,75 +1,97 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 
-import { getCurrentUser, listWorkspaces } from "@/api/queries";
-import { authClient } from "@/auth";
-import { identifyUser, resetUser } from "@/lib/feature-flags";
+import type { components } from "@/api/schema";
+import {
+  listWorkspaces,
+  type Organization,
+  type Workspace,
+} from "@/api/queries";
+import { useSession } from "@/hooks/use-session";
+import { queryKeys } from "@/lib/query-keys";
 import { useWorkspaceSelection } from "@/store/workspace-selection";
 
+export const useWorkspaceList = (organizationId: string) =>
+  useQuery({
+    queryKey: queryKeys.workspaces(organizationId),
+    queryFn: () => listWorkspaces(organizationId),
+    enabled: organizationId !== "",
+  });
+
 export const useProductContext = () => {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const selection = useWorkspaceSelection();
-  const me = useQuery({
-    queryKey: ["me"],
-    queryFn: getCurrentUser,
-    retry: false,
-  });
+  const { user, signOut } = useSession();
+  const savedOrganizationId = useWorkspaceSelection((s) => s.organizationId);
+  const savedWorkspaceId = useWorkspaceSelection((s) => s.workspaceId);
+  const selectOrganization = useWorkspaceSelection((s) => s.selectOrganization);
+  const selectWorkspace = useWorkspaceSelection((s) => s.selectWorkspace);
+
+  const organizations = user?.organizations ?? [];
+  const selectedOrganization =
+    organizations.find(
+      (organization) => organization.id === savedOrganizationId,
+    ) ?? organizations[0];
+  const organizationId = selectedOrganization?.id ?? "";
+
+  const workspaceList = useWorkspaceList(organizationId);
+  const workspaces = workspaceList.data?.data ?? [];
+  const selectedWorkspace =
+    workspaces.find((workspace) => workspace.id === savedWorkspaceId) ??
+    workspaces.find((workspace) => workspace.is_default) ??
+    workspaces[0];
+  const workspaceId = selectedWorkspace?.id ?? "";
 
   useEffect(() => {
-    if (me.error && "status" in me.error && me.error.status === 401) {
-      void navigate({ to: "/login" });
+    if (organizationId && organizationId !== savedOrganizationId) {
+      selectOrganization(organizationId);
     }
-  }, [me.error, navigate]);
+  }, [organizationId, savedOrganizationId, selectOrganization]);
 
   useEffect(() => {
-    if (me.data) identifyUser(me.data);
-  }, [me.data]);
-
-  useEffect(() => {
-    if (!selection.organizationId && me.data?.organizations[0]) {
-      selection.selectOrganization(me.data.organizations[0].id);
+    if (workspaceId && workspaceId !== savedWorkspaceId) {
+      selectWorkspace(workspaceId);
     }
-  }, [me.data, selection]);
-
-  const workspaces = useQuery({
-    queryKey: ["workspaces", selection.organizationId],
-    queryFn: () => listWorkspaces(selection.organizationId),
-    enabled: Boolean(selection.organizationId),
-  });
-
-  useEffect(() => {
-    if (!workspaces.data?.data.length) return;
-    const selectedExists = workspaces.data.data.some(
-      (workspace) => workspace.id === selection.workspaceId,
-    );
-    if (!selectedExists) {
-      const preferred =
-        workspaces.data.data.find((workspace) => workspace.is_default) ??
-        workspaces.data.data[0];
-      if (preferred) selection.selectWorkspace(preferred.id);
-    }
-  }, [selection, workspaces.data]);
-
-  const signOut = async () => {
-    await authClient.signOut();
-    resetUser();
-    queryClient.clear();
-    selection.reset();
-    await navigate({ to: "/login" });
-  };
+  }, [workspaceId, savedWorkspaceId, selectWorkspace]);
 
   return {
-    user: me.data,
-    organizationId: selection.organizationId,
-    workspaceId: selection.workspaceId,
-    workspaces: workspaces.data?.data ?? [],
-    selectedOrganization: me.data?.organizations.find(
-      (organization) => organization.id === selection.organizationId,
-    ),
-    selectOrganization: selection.selectOrganization,
-    selectWorkspace: selection.selectWorkspace,
+    user,
+    organizationId,
+    workspaceId,
+    workspaces,
+    selectedOrganization,
+    selectOrganization,
+    selectWorkspace,
     signOut,
   };
+};
+
+export const useScopeCreation = () => {
+  const queryClient = useQueryClient();
+  const selectOrganization = useWorkspaceSelection((s) => s.selectOrganization);
+  const selectWorkspace = useWorkspaceSelection((s) => s.selectWorkspace);
+
+  const organizationCreated = (organization: Organization) => {
+    selectOrganization(organization.id);
+    selectWorkspace(organization.default_workspace_id);
+
+    void queryClient.invalidateQueries({ queryKey: queryKeys.me });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.workspaces(organization.id),
+    });
+  };
+
+  const workspaceCreated = (workspace: Workspace) => {
+    queryClient.setQueryData<components["schemas"]["WorkspaceList"]>(
+      queryKeys.workspaces(workspace.organization_id),
+      (current) => ({
+        data: [
+          ...(current?.data.filter((item) => item.id !== workspace.id) ?? []),
+          workspace,
+        ],
+        next_cursor: current?.next_cursor ?? null,
+      }),
+    );
+    selectWorkspace(workspace.id);
+  };
+
+  return { organizationCreated, workspaceCreated };
 };

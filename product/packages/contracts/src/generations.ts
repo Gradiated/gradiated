@@ -1,0 +1,84 @@
+import { z } from "@hono/zod-openapi";
+
+import {
+  CancellationOwnerSchema,
+  GenerationStatusSchema,
+  ModelIdSchema,
+  TimestampSchema,
+  TokenCountSchema,
+  UuidSchema,
+} from "./common.js";
+import { ServiceTierSchema } from "./service-tiers.js";
+
+export const GenerationPriceComponentSchema = z.strictObject({
+  unit: z.enum([
+    "request",
+    "input_token",
+    "cached_input_token",
+    "cache_write_token",
+    "output_token",
+    "reasoning_token",
+  ]),
+  quantity: z.number().int().nonnegative(),
+  unit_price: z.number().int().nonnegative(),
+  amount: z.number().int().nonnegative(),
+});
+
+const generationPropertyFields = {
+  external_id: z.string().max(300).nullable(),
+  organization_id: UuidSchema,
+  workspace_id: UuidSchema,
+  api_key_id: UuidSchema,
+  model_id: ModelIdSchema,
+  served_release_digest: z.string().regex(/^sha256:[a-f0-9]{64}$/),
+  status: GenerationStatusSchema,
+  streamed: z.boolean(),
+  pricing: z.strictObject({
+    schema_version: z.literal(1),
+    components: z.array(GenerationPriceComponentSchema),
+  }),
+  usage: z.strictObject({
+    charge: z.number().int().nonnegative(),
+    input_tokens: TokenCountSchema,
+    cached_input_tokens: TokenCountSchema,
+    cache_write_tokens: TokenCountSchema,
+    output_tokens: TokenCountSchema,
+    reasoning_tokens: TokenCountSchema,
+  }),
+  outcome: z.strictObject({
+    finish_reason: z.string().max(100).nullable(),
+    error_code: z.string().max(100).nullable(),
+    usable_output_delivered: z.boolean(),
+    cancellation_owner: CancellationOwnerSchema.nullable(),
+  }),
+  timing: z.strictObject({
+    received_at: TimestampSchema,
+    started_at: TimestampSchema.nullable(),
+    first_token_at: TimestampSchema.nullable(),
+    completed_at: TimestampSchema,
+  }),
+};
+
+export const GenerationPropertiesSchema = z
+  .discriminatedUnion("event_schema_version", [
+    z.strictObject({
+      ...generationPropertyFields,
+      event_schema_version: z.literal(1),
+    }),
+    z.strictObject({
+      ...generationPropertyFields,
+      event_schema_version: z.literal(2),
+      service_tier: ServiceTierSchema,
+    }),
+  ])
+  .openapi("GenerationProperties");
+
+export const GenerationSettledSchema = z
+  .strictObject({
+    generation_id: UuidSchema,
+    properties: GenerationPropertiesSchema,
+  })
+  .openapi("GenerationSettled");
+
+export type GenerationProperties = z.infer<typeof GenerationPropertiesSchema>;
+export type GenerationSettled = z.infer<typeof GenerationSettledSchema>;

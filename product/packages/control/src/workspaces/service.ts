@@ -1,62 +1,27 @@
-import { createHash, randomBytes } from "node:crypto";
-
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
+import {
+  findMembership,
+  requireMembership,
+  requireWorkspaceMembership,
+} from "../access.js";
 import type { ControlDatabase } from "../db/client.js";
 import {
   apiKeys,
-  type ModelDeploymentReleaseRecord,
-  type ModelPropertiesRecord,
-  organizationMembers,
-  organizations,
   workspaces,
+  type OrganizationRole,
 } from "../db/schema/index.js";
+import { ControlServiceError } from "../errors.js";
+import { apiKeyDigest, generateApiKeySecret } from "./api-key-secret.js";
 
-export interface WorkspaceRecord {
-  id: string;
-  organizationId: string;
-  name: string;
-  isDefault: boolean;
-  archivedAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type WorkspaceRecord = typeof workspaces.$inferSelect;
 
-export interface ApiKeyRecord {
-  id: string;
-  organizationId: string;
-  workspaceId: string;
-  name: string;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-  createdBy: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}
+export type ApiKeyRecord = Omit<typeof apiKeys.$inferSelect, "digest">;
 
 export interface CreatedApiKey {
   apiKey: ApiKeyRecord;
   secret: string;
-}
-
-export interface GatewayCredential {
-  apiKeyId: string;
-  organizationId: string;
-  workspaceId: string;
-  expiresAt: Date | null;
-  revokedAt: Date | null;
-}
-
-export class ControlServiceError extends Error {
-  constructor(
-    readonly code: "forbidden" | "not_found" | "unavailable",
-    message: string,
-    override readonly cause?: unknown,
-  ) {
-    super(message);
-    this.name = "ControlServiceError";
-  }
 }
 
 export interface WorkspaceApiKeyService {
@@ -89,146 +54,72 @@ export interface WorkspaceApiKeyService {
   ): Promise<void>;
 }
 
-type WorkspaceAccess = WorkspaceRecord & {
-  organizationStatus: string;
-  role: string;
-};
+const keyManagerRoles: ReadonlySet<OrganizationRole> = new Set([
+  "owner",
+  "admin",
+]);
 
-export function createWorkspaceApiKeyService(
+const { digest: _digest, ...apiKeyColumns } = getTableColumns(apiKeys);
+
+export const createWorkspaceApiKeyService = (
   database: ControlDatabase,
-): WorkspaceApiKeyService {
-  async function getWorkspaceAccess(
+): WorkspaceApiKeyService => {
+  const requireWorkspaceManager = async (
     userId: string,
     organizationId: string,
-    workspaceId: string,
-  ): Promise<WorkspaceAccess> {
-    const [row] = await database
-      .select({
-        id: workspaces.id,
-        organizationId: workspaces.organizationId,
-        name: workspaces.name,
-        isDefault: workspaces.isDefault,
-        archivedAt: workspaces.archivedAt,
-        createdAt: workspaces.createdAt,
-        updatedAt: workspaces.updatedAt,
-        organizationStatus: organizations.status,
-        role: organizationMembers.role,
-      })
-      .from(workspaces)
-      .innerJoin(organizations, eq(organizations.id, workspaces.organizationId))
-      .innerJoin(
-        organizationMembers,
-        and(
-          eq(organizationMembers.organizationId, organizations.id),
-          eq(organizationMembers.userId, userId),
-          eq(organizationMembers.status, "active"),
-        ),
-      )
-      .where(
-        and(
-          eq(workspaces.id, workspaceId),
-          eq(workspaces.organizationId, organizationId),
-          eq(organizations.kind, "customer"),
-        ),
-      )
-      .limit(1);
-
-    if (!row) {
-      throw new ControlServiceError(
-        "not_found",
-        "The workspace does not exist or is not accessible.",
-      );
-    }
-    return row;
-  }
-
-  async function requireWorkspaceManager(
-    userId: string,
-    organizationId: string,
-  ): Promise<void> {
-    const [access] = await database
-      .select({
-        organizationStatus: organizations.status,
-        role: organizationMembers.role,
-      })
-      .from(organizations)
-      .innerJoin(
-        organizationMembers,
-        and(
-          eq(organizationMembers.organizationId, organizations.id),
-          eq(organizationMembers.userId, userId),
-          eq(organizationMembers.status, "active"),
-        ),
-      )
-      .where(
-        and(
-          eq(organizations.id, organizationId),
-          eq(organizations.kind, "customer"),
-        ),
-      )
-      .limit(1);
-
-    if (!access) {
-      throw new ControlServiceError(
-        "not_found",
-        "The organization does not exist or is not accessible.",
-      );
-    }
+  ): Promise<void> => {
+    const membership = await requireMembership(database, {
+      userId,
+      organizationId,
+    });
     if (
-      access.organizationStatus !== "active" ||
-      (access.role !== "owner" && access.role !== "admin")
+      membership.organizationStatus !== "active" ||
+      !keyManagerRoles.has(membership.role)
     ) {
       throw new ControlServiceError(
         "forbidden",
         "Only active organization owners and admins can create workspaces.",
       );
     }
-  }
+  };
 
-  function requireKeyManager(access: WorkspaceAccess): void {
-    if (access.role !== "owner" && access.role !== "admin") {
+  const requireKeyManager = async (
+    userId: string,
+    organizationId: string,
+    workspaceId: string,
+  ): Promise<void> => {
+    const { membership, workspace } = await requireWorkspaceMembership(
+      database,
+      { userId, organizationId, workspaceId },
+    );
+    if (!keyManagerRoles.has(membership.role)) {
       throw new ControlServiceError(
         "forbidden",
         "Only organization owners and admins can manage API keys.",
       );
     }
-    if (access.organizationStatus !== "active" || access.archivedAt) {
+    if (membership.organizationStatus !== "active" || workspace.archivedAt) {
       throw new ControlServiceError(
         "forbidden",
         "API keys cannot be changed for this workspace.",
       );
     }
-  }
+  };
 
   return {
     async listWorkspaces(userId, organizationId, includeArchived) {
+      const membership = await findMembership(database, {
+        userId,
+        organizationId,
+      });
+      if (!membership) return [];
+
       return database
-        .select({
-          id: workspaces.id,
-          organizationId: workspaces.organizationId,
-          name: workspaces.name,
-          isDefault: workspaces.isDefault,
-          archivedAt: workspaces.archivedAt,
-          createdAt: workspaces.createdAt,
-          updatedAt: workspaces.updatedAt,
-        })
+        .select()
         .from(workspaces)
-        .innerJoin(
-          organizations,
-          eq(organizations.id, workspaces.organizationId),
-        )
-        .innerJoin(
-          organizationMembers,
-          and(
-            eq(organizationMembers.organizationId, organizations.id),
-            eq(organizationMembers.userId, userId),
-            eq(organizationMembers.status, "active"),
-          ),
-        )
         .where(
           and(
             eq(workspaces.organizationId, organizationId),
-            eq(organizations.kind, "customer"),
             includeArchived ? undefined : isNull(workspaces.archivedAt),
           ),
         )
@@ -237,6 +128,7 @@ export function createWorkspaceApiKeyService(
 
     async createWorkspace(userId, organizationId, input) {
       await requireWorkspaceManager(userId, organizationId);
+
       const now = new Date();
       const workspace: WorkspaceRecord = {
         id: uuidv7(),
@@ -247,24 +139,21 @@ export function createWorkspaceApiKeyService(
         createdAt: now,
         updatedAt: now,
       };
+
       await database.insert(workspaces).values(workspace);
+
       return workspace;
     },
 
     async listApiKeys(userId, organizationId, workspaceId) {
-      await getWorkspaceAccess(userId, organizationId, workspaceId);
+      await requireWorkspaceMembership(database, {
+        userId,
+        organizationId,
+        workspaceId,
+      });
+
       return database
-        .select({
-          id: apiKeys.id,
-          organizationId: apiKeys.organizationId,
-          workspaceId: apiKeys.workspaceId,
-          name: apiKeys.name,
-          expiresAt: apiKeys.expiresAt,
-          revokedAt: apiKeys.revokedAt,
-          createdBy: apiKeys.createdBy,
-          createdAt: apiKeys.createdAt,
-          updatedAt: apiKeys.updatedAt,
-        })
+        .select(apiKeyColumns)
         .from(apiKeys)
         .where(
           and(
@@ -276,12 +165,7 @@ export function createWorkspaceApiKeyService(
     },
 
     async createApiKey(userId, organizationId, workspaceId, input) {
-      const access = await getWorkspaceAccess(
-        userId,
-        organizationId,
-        workspaceId,
-      );
-      requireKeyManager(access);
+      await requireKeyManager(userId, organizationId, workspaceId);
 
       const now = new Date();
       if (input.expiresAt && input.expiresAt <= now) {
@@ -291,8 +175,7 @@ export function createWorkspaceApiKeyService(
         );
       }
 
-      const secret = `grad_${randomBytes(32).toString("base64url")}`;
-      const digest = createHash("sha256").update(secret).digest();
+      const secret = generateApiKeySecret();
       const apiKey: ApiKeyRecord = {
         id: uuidv7(),
         organizationId,
@@ -305,18 +188,15 @@ export function createWorkspaceApiKeyService(
         updatedAt: now,
       };
 
-      await database.insert(apiKeys).values({ ...apiKey, digest });
+      await database
+        .insert(apiKeys)
+        .values({ ...apiKey, digest: apiKeyDigest(secret) });
 
       return { apiKey, secret };
     },
 
     async revokeApiKey(userId, organizationId, workspaceId, apiKeyId) {
-      const access = await getWorkspaceAccess(
-        userId,
-        organizationId,
-        workspaceId,
-      );
-      requireKeyManager(access);
+      await requireKeyManager(userId, organizationId, workspaceId);
 
       const [apiKey] = await database
         .select()
@@ -347,4 +227,4 @@ export function createWorkspaceApiKeyService(
       }
     },
   };
-}
+};

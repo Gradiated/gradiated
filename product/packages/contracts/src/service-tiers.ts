@@ -11,6 +11,17 @@ export const ServiceTierPricingPolicySchema = z
     price_multiplier_denominator: z.number().int().positive(),
     price_change_percent: z.number().int(),
   })
+  .refine(
+    ({
+      price_change_percent: percent,
+      price_multiplier_numerator: numerator,
+      price_multiplier_denominator: denominator,
+    }) => percent * denominator === (numerator - denominator) * 100,
+    {
+      message: "price_change_percent must match the price multiplier",
+      path: ["price_change_percent"],
+    },
+  )
   .openapi("ServiceTierPricingPolicy");
 
 export const SERVICE_TIER_PRICING_POLICY = [

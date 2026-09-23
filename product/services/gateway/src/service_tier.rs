@@ -34,3 +34,15 @@ impl ServiceTier {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_header_name_matches_the_wire_name() {
+        for tier in [ServiceTier::Flex, ServiceTier::Default, ServiceTier::Fast] {
+            assert_eq!(serde_json::to_value(tier).unwrap(), tier.as_str());
+        }
+    }
+}

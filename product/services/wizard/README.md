@@ -20,7 +20,8 @@ configuration editing, no browser, no card.
 3. Fetches the live model catalog with your key to prove it works.
 4. Merges the Gradiated provider into each selected agent's configuration.
    It preserves your existing defaults and other providers.
-5. Stores the key in `~/.gradiated/credentials.json` (0600).
+5. Stores the key in `~/.gradiated/credentials.json` (0600). The Codex
+   provider and the `claude-gradiated` command read the key from this file.
 
 Both install and uninstall are idempotent: re-running install only rewrites
 files that would change (and skips the backup in that case), and re-running
@@ -28,8 +29,11 @@ uninstall after everything is removed is a clean no-op.
 
 ## Agents
 
-- **OpenCode**: full provider with every catalog model. Pick one with
-  `/models`.
+- **OpenCode**: full provider with every catalog model in
+  `~/.config/opencode`. The selected model becomes the default unless you
+  already chose a model from another provider. Pick another with `/models`.
+  The wizard writes plain JSON, so comments in `opencode.jsonc` stay only in
+  the `.bak` copy.
 - **Codex**: an opt-in `gradiated` provider and profile. Start with
   `codex --profile gradiated`. Your default Codex provider is unchanged.
 - **Claude Code**: a `claude-gradiated` command installed to
@@ -52,10 +56,20 @@ uninstall after everything is removed is a clean no-op.
 --yes               Non-interactive: first model, no extra prompts
 ```
 
+The wizard stops with an error for an unknown option, a missing option value,
+or an extra argument. It also stops when options conflict:
+
+- Use only one of `--key`, `--signup` and `--login`.
+- `--dry-run` does not work with `--signup` or `--login`, because they create
+  an account and a key.
+- `uninstall` accepts only `--agent`, `--dry-run` and `--yes`.
+
 Interactive setup always offers signup, login, and pasting a key alongside any
 detected keys. Key values are never displayed. Explicit `--key`, `--signup`,
-and `--login` bypass this menu. With `--yes`, the environment key is used first,
-then the saved key. OpenCode uses the selected credential saved in its auth store.
+and `--login` bypass this menu. With `--yes`, or when stdin is not a terminal,
+the wizard does not prompt: it uses the environment key first, then the saved
+key. OpenCode uses the selected credential saved in its auth store. A dry run
+does not offer signup or login.
 
 ## Uninstall
 
@@ -64,14 +78,21 @@ npx -y @gradiated/wizard uninstall
 ```
 
 The wizard detects which agents have Gradiated configured and lets you
-multiselect what to remove: the OpenCode provider and credential, the Codex
+select what to remove: the OpenCode provider and credential, the Codex
 provider and profile, the Claude Code wrapper and PATH entry, and the stored
-API key. `--agent <name>` scopes detection and output to one agent, and
-`--dry-run` prints the plan without touching anything. Timestamped backups
-of every changed file are kept. Your other providers are never touched.
+API key. `--agent <name>` limits the run to one agent. `--dry-run` prints the
+plan and changes nothing. With `--yes`, or when stdin is not a terminal,
+uninstall removes everything it finds without a prompt.
+
+Uninstall restores shell profiles and the Codex config to their earlier
+content. It keeps a timestamped `.bak` copy of the OpenCode config and each
+Codex file it changes. It changes the OpenCode `auth.json` in place and makes
+no backup, so that no extra file holds your keys. It deletes the stored key
+file and keeps your own files in `~/.gradiated/bin`. Your other providers are
+never touched.
 
 Your key is stored with owner-only permissions and is never printed. No
-telemetry. Requires Node 18+.
+telemetry. Requires Node 18.3 or later.
 
 ## Links
 
@@ -81,25 +102,11 @@ telemetry. Requires Node 18+.
 
 ## Development verification
 
-From `product/`, run `pnpm --filter @gradiated/wizard check`. The end-to-end
-suite requires OpenCode and Codex on PATH; install Claude Code as well to
-exercise its real launcher. Tests use temporary homes and a local API fixture.
-Account tests exercise HTTP requests and session cookies with mocked terminal
-prompts, including rejected codes and missing sessions.
+From `product/`, run `pnpm --filter @gradiated/wizard check`. The check runs
+unit tests in process against a temporary home and end-to-end tests against
+the built CLI and a local API fixture. The end-to-end tests put stub agent
+commands on `PATH`, so they do not need a coding agent. Install OpenCode, Codex
+or Claude Code to also run the checks against that real client.
 
-Version 1.1.1 fixes email onboarding: it uses the deployed Better Auth endpoints
-(`/api/auth/email-otp/send-verification-otp` and `/api/auth/sign-in/email-otp`)
-and forwards the returned session cookies to `/api/v1/wizard/key`. The session
-stays in memory. Signup/login selection is passed through without a second menu.
-
-Version 1.1.3 sends the API origin on email authentication requests, satisfying
-Better Auth's origin checks for Node clients. Email codes use the same backend
-Resend delivery service as console sign-in. Regression tests run the real Better
-Auth OTP and session flow with origin protection explicitly enabled and an
-in-memory email transport.
-
-Version 1.1.4 lets interactive users retry rejected API keys: the wizard says
-“API key invalid” and asks for another key without restarting setup. Press
-Ctrl+C to cancel. Config and credential writes happen only after validation
-succeeds. With `--yes` or non-interactive input, an invalid key exits with an
-error; network and service failures remain distinct from invalid credentials.
+The publish workflow skips a version that npm already has. Bump `version` in
+`package.json` to ship a change. A merge to `main` publishes that version.

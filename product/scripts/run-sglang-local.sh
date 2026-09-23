@@ -35,6 +35,7 @@ git -C "${source_dir}" checkout --detach --force "${SGLANG_REVISION}"
 if [[ ! -f "${installed_revision_file}" ]] || \
   [[ "$(<"${installed_revision_file}")" != "${SGLANG_REVISION}" ]]; then
   uv venv --clear --python 3.12 "${venv_dir}"
+  # pyproject_other.toml carries SGLang's MPS/MLX dependency set; the default pyproject.toml does not.
   cp "${source_dir}/python/pyproject_other.toml" "${source_dir}/python/pyproject.toml"
   uv pip install --python "${venv_dir}/bin/python" --editable "${source_dir}/python[all_mps]"
   printf '%s\n' "${SGLANG_REVISION}" >"${installed_revision_file}"

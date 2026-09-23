@@ -1,7 +1,15 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema } from "./common.js";
-import { ServiceTierPricingPolicySchema } from "./service-tiers.js";
+import {
+  ModelIdSchema,
+  NameSchema,
+  pageFields,
+  TimestampSchema,
+} from "./common.js";
+import {
+  ServiceTierPricingPolicySchema,
+  ServiceTierSchema,
+} from "./service-tiers.js";
 
 const DEFAULT_OUTPUT_TOKENS = 1_024;
 
@@ -10,15 +18,18 @@ const TokenMeasureSchema = z.strictObject({
   unit: z.literal("token"),
 });
 
+const orderedBounds = [
+  ({ min, max }: { min: number; max: number }) => min <= max,
+  { message: "min cannot exceed max" },
+] as const;
+
 const RangeParameterDescriptorSchema = z
   .strictObject({
     type: z.literal("range"),
     min: z.number(),
     max: z.number(),
   })
-  .refine(({ min, max }) => min <= max, {
-    message: "min cannot exceed max",
-  });
+  .refine(...orderedBounds);
 
 const IntegerParameterDescriptorSchema = z
   .strictObject({
@@ -27,14 +38,12 @@ const IntegerParameterDescriptorSchema = z
     max: z.number().int(),
     unit: z.literal("token").optional(),
   })
-  .refine(({ min, max }) => min <= max, {
-    message: "min cannot exceed max",
-  });
+  .refine(...orderedBounds);
 
 const EnumParameterValueSchema = z.union([z.string(), z.number(), z.boolean()]);
 
 export const ModelParameterDescriptorSchema = z
-  .union([
+  .discriminatedUnion("type", [
     RangeParameterDescriptorSchema,
     IntegerParameterDescriptorSchema,
     z.strictObject({ type: z.literal("boolean") }),
@@ -71,6 +80,12 @@ const uniquePricingTypes = (
   entries: ReadonlyArray<{ type: string }>,
 ): boolean => new Set(entries.map(({ type }) => type)).size === entries.length;
 
+const sortByPricingType = <Entry extends { type: string }>(
+  entries: ReadonlyArray<Entry>,
+  order: ReadonlyArray<Entry["type"]>,
+): Entry[] =>
+  [...entries].sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+
 const TextInputModalitySchema = z
   .strictObject({
     type: z.literal("text"),
@@ -104,27 +119,25 @@ const TextInputModalityInputSchema = z
       max_context_length: TokenMeasureSchema,
       max_prompt_length: TokenMeasureSchema.optional(),
     }),
-    pricing: z
-      .array(InputTokenPricingEntrySchema)
-      .min(1)
-      .max(3)
-      .refine(uniquePricingTypes, { message: "pricing types must be unique" })
-      .refine((entries) => entries.some(({ type }) => type === "prompt"), {
-        message: "prompt pricing is required",
-      }),
+    pricing: z.array(InputTokenPricingEntrySchema),
   })
   .transform((modality) => {
-    const prompt = modality.pricing.find(({ type }) => type === "prompt")!;
-    const cachedPrompt = modality.pricing.find(
+    const prompt = modality.pricing.find(({ type }) => type === "prompt");
+    const hasCachedPrompt = modality.pricing.some(
       ({ type }) => type === "cached_prompt",
-    ) ?? {
-      type: "cached_prompt" as const,
-      unit: "token" as const,
-      cost: prompt.cost,
-    };
-    const cacheWrite = modality.pricing.find(
-      ({ type }) => type === "cache_write",
     );
+    const pricing =
+      prompt && !hasCachedPrompt
+        ? [
+            ...modality.pricing,
+            {
+              type: "cached_prompt" as const,
+              unit: "token" as const,
+              cost: prompt.cost,
+            },
+          ]
+        : modality.pricing;
+
     return {
       ...modality,
       supported_inputs: {
@@ -133,7 +146,10 @@ const TextInputModalityInputSchema = z
           modality.supported_inputs.max_prompt_length ??
           modality.supported_inputs.max_context_length,
       },
-      pricing: [prompt, cachedPrompt, ...(cacheWrite ? [cacheWrite] : [])],
+      pricing: sortByPricingType(
+        pricing,
+        InputTokenPricingEntrySchema.shape.type.options,
+      ),
     };
   })
   .pipe(TextInputModalitySchema);
@@ -176,36 +192,37 @@ const TextOutputModalityInputSchema = z
     default_length: TokenMeasureSchema.optional(),
     streaming: z.boolean().default(true),
     supported_parameters: ParameterMapSchema.default({}),
-    pricing: z
-      .array(OutputTokenPricingEntrySchema)
-      .min(1)
-      .max(2)
-      .refine(uniquePricingTypes, { message: "pricing types must be unique" })
-      .refine((entries) => entries.some(({ type }) => type === "completion"), {
-        message: "completion pricing is required",
-      }),
+    pricing: z.array(OutputTokenPricingEntrySchema),
   })
   .transform((modality) => {
     const completion = modality.pricing.find(
       ({ type }) => type === "completion",
-    )!;
-    const configuredReasoning = modality.pricing.find(
-      ({ type }) => type === "internal_reasoning",
     );
-    const reasoning = Object.hasOwn(modality.supported_parameters, "reasoning")
-      ? (configuredReasoning ?? {
-          type: "internal_reasoning" as const,
-          unit: "token" as const,
-          cost: completion.cost,
-        })
-      : configuredReasoning;
+    const needsReasoningPrice =
+      Object.hasOwn(modality.supported_parameters, "reasoning") &&
+      !modality.pricing.some(({ type }) => type === "internal_reasoning");
+    const pricing =
+      completion && needsReasoningPrice
+        ? [
+            ...modality.pricing,
+            {
+              type: "internal_reasoning" as const,
+              unit: "token" as const,
+              cost: completion.cost,
+            },
+          ]
+        : modality.pricing;
+
     return {
       ...modality,
       default_length: modality.default_length ?? {
         value: Math.min(DEFAULT_OUTPUT_TOKENS, modality.max_length.value),
         unit: "token" as const,
       },
-      pricing: [completion, ...(reasoning ? [reasoning] : [])],
+      pricing: sortByPricingType(
+        pricing,
+        OutputTokenPricingEntrySchema.shape.type.options,
+      ),
     };
   })
   .pipe(TextOutputModalitySchema);
@@ -256,8 +273,8 @@ export const ModelPropertiesInputSchema = z
 
 export const ModelSchema = z
   .strictObject({
-    id: z.string().min(1).max(200),
-    name: z.string().min(1).max(200),
+    id: ModelIdSchema,
+    name: NameSchema,
     status: z.enum(["available", "unavailable"]),
     properties: ModelPropertiesSchema,
     created_at: TimestampSchema,
@@ -267,9 +284,10 @@ export const ModelSchema = z
 
 export const ModelListSchema = z
   .strictObject({
-    data: z.array(ModelSchema),
-    next_cursor: z.string().nullable(),
-    service_tiers: z.array(ServiceTierPricingPolicySchema).length(3),
+    ...pageFields(ModelSchema),
+    service_tiers: z
+      .array(ServiceTierPricingPolicySchema)
+      .length(ServiceTierSchema.options.length),
   })
   .openapi("ModelList");
 

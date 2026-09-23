@@ -7,7 +7,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-COPY . .
+COPY CMakeLists.txt CMakeLists.txt
+COPY desmond/ desmond/
+COPY engine/ engine/
 RUN cmake -S . -B /build \
       -DCMAKE_BUILD_TYPE=Release \
       -DBUILD_TESTING=OFF \
@@ -18,7 +20,7 @@ FROM ${SGLANG_IMAGE}
 RUN apt-get update && apt-get install -y --no-install-recommends libcurl4 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=native-build /build/desmondd /usr/local/bin/desmondd
+COPY --from=native-build /build/desmond/desmondd /usr/local/bin/desmondd
 COPY --from=native-build /build/gradiated-engine-runtime /usr/local/bin/gradiated-engine-runtime
 
 ENV DESMOND_CONTROL_HOST=0.0.0.0 \

@@ -1,71 +1,151 @@
-//! Native SystemOne wire validation. Call `parse` before admission and
-//! `normalize_response` before exposing answers or settling usage.
-
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Deserializer};
 use serde_json::{Map, Value};
 
-use crate::{json::strict_json, GatewayError, NormalizedUsage, RuntimeFailure, ServiceTier};
+use crate::{json::strict_json, GatewayError, ServiceTier};
 
 const MAX_OPTIONS: usize = 255;
-const MAX_SAFE_INTEGER: u64 = 9_007_199_254_740_991;
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SystemOneRequest {
     pub model: String,
     pub state: Value,
-    pub questions: Map<String, Value>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_session_id",
-        skip_serializing_if = "Option::is_none"
-    )]
     pub session_id: Option<String>,
-    #[serde(default)]
     pub service_tier: ServiceTier,
+    questions: Map<String, Value>,
+    shapes: Vec<(String, AnswerShape)>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WireRequest {
+    model: String,
+    state: Value,
+    questions: Map<String, Value>,
+    #[serde(default, deserialize_with = "deserialize_session_id")]
+    session_id: Option<String>,
+    #[serde(default)]
+    service_tier: ServiceTier,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum AnswerShape {
+    Noul,
+    Choice { options: Vec<String> },
+    Score { levels: usize },
+}
+
+impl AnswerShape {
+    fn parse(value: &Value) -> Option<Self> {
+        let question = value.as_object()?;
+        if !question.contains_key("instructions")
+            || question
+                .keys()
+                .any(|key| !matches!(key.as_str(), "type" | "instructions" | "criteria"))
+        {
+            return None;
+        }
+
+        let criteria = question.get("criteria");
+        match question.get("type")?.as_str()? {
+            "choice" => {
+                let options = criteria?.as_object()?;
+                (1..=MAX_OPTIONS)
+                    .contains(&options.len())
+                    .then(|| Self::Choice {
+                        options: options.keys().cloned().collect(),
+                    })
+            }
+            "score" => {
+                let levels = criteria?.as_array()?.len();
+                (2..=MAX_OPTIONS)
+                    .contains(&levels)
+                    .then_some(Self::Score { levels })
+            }
+            "noul" => match criteria {
+                None | Some(Value::Null) => Some(Self::Noul),
+                // Reject unsupported outcomes instead of letting Kev silently drop them.
+                Some(Value::Object(criteria)) => criteria
+                    .keys()
+                    .all(|key| matches!(key.as_str(), "false" | "true"))
+                    .then_some(Self::Noul),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
+    pub(crate) fn type_name(&self) -> &'static str {
+        match self {
+            Self::Noul => "noul",
+            Self::Choice { .. } => "choice",
+            Self::Score { .. } => "score",
+        }
+    }
 }
 
 impl SystemOneRequest {
     pub fn parse(body: &[u8]) -> Result<Self, GatewayError> {
         let value = strict_json(body).map_err(|_| GatewayError::invalid_request(None))?;
-        let request: Self =
+        let wire: WireRequest =
             serde_json::from_value(value).map_err(|_| GatewayError::invalid_request(None))?;
-        request.validate()?;
 
-        Ok(request)
-    }
-
-    fn validate(&self) -> Result<(), GatewayError> {
-        if !bounded_name(&self.model) {
+        if !bounded_name(&wire.model) {
             return Err(GatewayError::invalid_request(Some("model")));
         }
+
         if !matches!(
-            self.state,
+            wire.state,
             Value::String(_) | Value::Object(_) | Value::Array(_)
         ) {
             return Err(GatewayError::invalid_request(Some("state")));
         }
-        if self.service_tier != ServiceTier::Default {
+
+        if wire.service_tier != ServiceTier::Default {
             return Err(GatewayError::unsupported_parameter("service_tier"));
         }
-        if self
+
+        if wire
             .session_id
             .as_ref()
             .is_some_and(|session| !(1..=256).contains(&session.encode_utf16().count()))
         {
             return Err(GatewayError::invalid_request(Some("session_id")));
         }
-        if !(1..=64).contains(&self.questions.len())
-            || self
-                .questions
-                .iter()
-                .any(|(key, question)| !bounded_name(key) || !valid_question(question))
-        {
-            return Err(GatewayError::invalid_request(Some("questions")));
-        }
 
-        Ok(())
+        let shapes = question_shapes(&wire.questions)
+            .ok_or(GatewayError::invalid_request(Some("questions")))?;
+
+        Ok(Self {
+            model: wire.model,
+            state: wire.state,
+            session_id: wire.session_id,
+            service_tier: wire.service_tier,
+            questions: wire.questions,
+            shapes,
+        })
     }
+
+    pub(crate) fn questions(&self) -> &Map<String, Value> {
+        &self.questions
+    }
+
+    pub(crate) fn answer_shapes(&self) -> &[(String, AnswerShape)] {
+        &self.shapes
+    }
+}
+
+fn question_shapes(questions: &Map<String, Value>) -> Option<Vec<(String, AnswerShape)>> {
+    if !(1..=64).contains(&questions.len()) {
+        return None;
+    }
+
+    questions
+        .iter()
+        .map(|(id, question)| {
+            let shape = AnswerShape::parse(question).filter(|_| bounded_name(id))?;
+            Some((id.clone(), shape))
+        })
+        .collect()
 }
 
 fn bounded_name(value: &str) -> bool {
@@ -80,225 +160,13 @@ fn deserialize_session_id<'de, D: Deserializer<'de>>(
     String::deserialize(deserializer).map(Some)
 }
 
-fn valid_question(value: &Value) -> bool {
-    let Some(question) = value.as_object() else {
-        return false;
-    };
-
-    if !question.contains_key("instructions")
-        || question
-            .keys()
-            .any(|key| !matches!(key.as_str(), "type" | "instructions" | "criteria"))
-    {
-        return false;
-    }
-
-    match question.get("type").and_then(Value::as_str) {
-        Some("choice") => question
-            .get("criteria")
-            .and_then(Value::as_object)
-            .is_some_and(|options| (1..=MAX_OPTIONS).contains(&options.len())),
-        Some("score") => question
-            .get("criteria")
-            .and_then(Value::as_array)
-            .is_some_and(|levels| (2..=MAX_OPTIONS).contains(&levels.len())),
-        Some("noul") => match question.get("criteria") {
-            None | Some(Value::Null) => true,
-            // Reject unsupported outcomes instead of letting Kev silently drop them.
-            Some(Value::Object(criteria)) => criteria
-                .keys()
-                .all(|key| matches!(key.as_str(), "false" | "true")),
-            _ => false,
-        },
-        _ => false,
-    }
-}
-
-/// Validate the runtime identity, question correspondence and authoritative
-/// prefill usage. SystemOne generates no model tokens: serialized answer size
-/// must never be accepted as output usage.
-pub fn normalize_response(
-    body: &[u8],
-    request: &SystemOneRequest,
-    runtime_model: &str,
-) -> Result<(Value, NormalizedUsage), RuntimeFailure> {
-    // The public struct can also be constructed without going through parse.
-    request
-        .validate()
-        .map_err(|_| RuntimeFailure::protocol_violation())?;
-
-    let mut response = strict_json(body).map_err(|_| RuntimeFailure::protocol_violation())?;
-    let object = response
-        .as_object()
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(object.get("model").and_then(Value::as_str) == Some(runtime_model))?;
-
-    let answers = object
-        .get("answers")
-        .and_then(Value::as_object)
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(answers.len() == request.questions.len())?;
-    for (id, question) in &request.questions {
-        let answer = answers
-            .get(id)
-            .and_then(Value::as_object)
-            .ok_or_else(RuntimeFailure::protocol_violation)?;
-        validate_answer(answer, question)?;
-    }
-
-    let usage = decision_usage(object)?;
-    response["model"] = Value::String(request.model.clone());
-
-    Ok((response, usage))
-}
-
-fn decision_usage(response: &Map<String, Value>) -> Result<NormalizedUsage, RuntimeFailure> {
-    let usage = response
-        .get("usage")
-        .and_then(Value::as_object)
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(exact_keys(
-        usage,
-        &["input_tokens", "cached_input_tokens", "output_tokens"],
-    ))?;
-
-    let integer = |key: &str| {
-        usage
-            .get(key)
-            .and_then(Value::as_u64)
-            .filter(|value| *value <= MAX_SAFE_INTEGER)
-            .ok_or_else(RuntimeFailure::protocol_violation)
-    };
-    let input = integer("input_tokens")?;
-    let cached = integer("cached_input_tokens")?;
-    ensure(integer("output_tokens")? == 0 && cached <= input)?;
-
-    NormalizedUsage::new(input, cached, 0, 0, 0).map_err(|_| RuntimeFailure::protocol_violation())
-}
-
-fn ensure(condition: bool) -> Result<(), RuntimeFailure> {
-    if condition {
-        Ok(())
-    } else {
-        Err(RuntimeFailure::protocol_violation())
-    }
-}
-
-fn exact_keys(object: &Map<String, Value>, keys: &[&str]) -> bool {
-    object.len() == keys.len() && keys.iter().all(|key| object.contains_key(*key))
-}
-
-fn bounded_number(value: &Value, max: f64) -> bool {
-    value
-        .as_f64()
-        .is_some_and(|n| n.is_finite() && (0.0..=max).contains(&n))
-}
-
-fn validate_answer(answer: &Map<String, Value>, question: &Value) -> Result<(), RuntimeFailure> {
-    ensure(answer.get("type") == question.get("type"))?;
-
-    let outcomes = match question["type"].as_str() {
-        Some("noul") => {
-            return ensure(
-                exact_keys(answer, &["type", "noul"]) && bounded_number(&answer["noul"], 1.0),
-            );
-        }
-        Some("choice") => choice_outcomes(answer, question)?,
-        Some("score") => score_outcomes(answer, question)?,
-        _ => return Err(RuntimeFailure::protocol_violation()),
-    };
-
-    validate_distribution(answer, &outcomes)
-}
-
-/// A choice answer names one of the question's criteria; its outcomes are the
-/// criteria.
-fn choice_outcomes(
-    answer: &Map<String, Value>,
-    question: &Value,
-) -> Result<Vec<String>, RuntimeFailure> {
-    ensure(exact_keys(
-        answer,
-        &["type", "choice", "confidence", "probabilities"],
-    ))?;
-
-    let criteria = question["criteria"]
-        .as_object()
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(
-        answer["choice"]
-            .as_str()
-            .is_some_and(|choice| criteria.contains_key(choice)),
-    )?;
-
-    Ok(criteria.keys().cloned().collect())
-}
-
-/// A score answer lies within the question's levels and describes each level in
-/// its legend; its outcomes are the level indexes.
-fn score_outcomes(
-    answer: &Map<String, Value>,
-    question: &Value,
-) -> Result<Vec<String>, RuntimeFailure> {
-    ensure(exact_keys(
-        answer,
-        &["type", "score", "legend", "confidence", "probabilities"],
-    ))?;
-
-    let levels = question["criteria"]
-        .as_array()
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(bounded_number(&answer["score"], (levels.len() - 1) as f64))?;
-
-    let outcomes: Vec<String> = (0..levels.len()).map(|i| i.to_string()).collect();
-    let legend = answer["legend"]
-        .as_object()
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(
-        legend.len() == outcomes.len()
-            && outcomes
-                .iter()
-                .all(|key| legend.get(key).is_some_and(Value::is_string)),
-    )?;
-
-    Ok(outcomes)
-}
-
-/// The answer's confidence is a probability, and it gives one probability per
-/// outcome that together sum to one.
-fn validate_distribution(
-    answer: &Map<String, Value>,
-    outcomes: &[String],
-) -> Result<(), RuntimeFailure> {
-    ensure(bounded_number(&answer["confidence"], 1.0))?;
-
-    let probabilities = answer["probabilities"]
-        .as_object()
-        .ok_or_else(RuntimeFailure::protocol_violation)?;
-    ensure(
-        probabilities.len() == outcomes.len()
-            && outcomes.iter().all(|key| {
-                probabilities
-                    .get(key)
-                    .is_some_and(|value| bounded_number(value, 1.0))
-            }),
-    )?;
-
-    // Upstream independently rounds each probability to two decimal places.
-    // Accumulated rounding error can exceed .02 for larger option sets.
-    let sum: f64 = probabilities.values().filter_map(Value::as_f64).sum();
-    let tolerance = 0.02_f64.max(outcomes.len() as f64 * 0.005) + 1e-12;
-
-    ensure((sum - 1.0).abs() <= tolerance)
-}
-
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::RuntimeFailureKind;
-    use serde_json::json;
+pub(crate) mod fixtures {
+    use serde_json::{json, Value};
 
-    fn request_value() -> Value {
+    use super::SystemOneRequest;
+
+    pub(crate) fn request_value() -> Value {
         json!({"model":"Exact/Model", "state":{"context":["a", "b"]}, "questions": {
             "pick":{"type":"choice", "instructions":{"task":["pick"]}, "criteria":{"a":null,"b":{"description":"B"}}},
             "yes":{"type":"noul", "instructions":true, "criteria":{"false":[],"true":{}}},
@@ -306,9 +174,19 @@ mod tests {
         }})
     }
 
-    fn request() -> SystemOneRequest {
+    pub(crate) fn request() -> SystemOneRequest {
         SystemOneRequest::parse(&serde_json::to_vec(&request_value()).unwrap()).unwrap()
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::json;
+
+    use super::{
+        fixtures::{request, request_value},
+        *,
+    };
 
     #[test]
     fn shared_typescript_request_fixtures_match() {
@@ -354,8 +232,6 @@ mod tests {
                 accepted
             );
         }
-        let serialized = serde_json::to_value(request()).unwrap();
-        assert!(serialized.get("session_id").is_none());
         for (length, accepted) in [(100, true), (101, false)] {
             let mut body = request_value();
             body["model"] = json!("😀".repeat(length));
@@ -395,35 +271,21 @@ mod tests {
         }
     }
 
-    fn response() -> Value {
-        json!({"model":"runtime-model", "answers":{
-            "pick":{"type":"choice","choice":"b","confidence":0.5,"probabilities":{"a":0.25,"b":0.75}},
-            "yes":{"type":"noul","noul":0.7},
-            "level":{"type":"score","score":0.75,"legend":{"0":"low","1":"label: high"},"confidence":0.75,"probabilities":{"0":0.25,"1":0.75}}
-        },"usage":{"input_tokens":10,"cached_input_tokens":3,"output_tokens":0}, "latency_ms":2.0})
-    }
-
-    fn normalize(value: &Value) -> Result<(Value, NormalizedUsage), RuntimeFailure> {
-        normalize_response(
-            &serde_json::to_vec(value).unwrap(),
-            &request(),
-            "runtime-model",
-        )
-    }
-
     #[test]
-    fn accepts_structured_questions_and_preserves_exact_model() {
+    fn accepts_structured_questions() {
         let request = request();
+
         assert_eq!(request.model, "Exact/Model");
         assert_eq!(request.service_tier, ServiceTier::Default);
         assert_eq!(request.session_id, None);
         assert_eq!(
-            SystemOneRequest::parse(&serde_json::to_vec(&request).unwrap()).unwrap(),
             request
+                .answer_shapes()
+                .iter()
+                .map(|(id, shape)| (id.as_str(), shape.type_name()))
+                .collect::<Vec<_>>(),
+            [("pick", "choice"), ("yes", "noul"), ("level", "score")]
         );
-        let (result, usage) = normalize(&response()).unwrap();
-        assert_eq!(result["model"], request.model);
-        assert_eq!(usage, NormalizedUsage::new(10, 3, 0, 0, 0).unwrap());
     }
 
     #[test]
@@ -511,12 +373,6 @@ mod tests {
             r#"{"questions":{"q":{"instructions":[{"a":1,"a":2}]}}}"#,
         ] {
             assert!(SystemOneRequest::parse(body.as_bytes()).is_err());
-            assert_eq!(
-                normalize_response(body.as_bytes(), &request(), "runtime-model")
-                    .unwrap_err()
-                    .kind(),
-                RuntimeFailureKind::ProtocolViolation
-            );
         }
         let valid = serde_json::to_string(&request_value()).unwrap();
         for (original, duplicate) in [
@@ -535,95 +391,5 @@ mod tests {
             assert_ne!(body, valid);
             assert!(SystemOneRequest::parse(body.as_bytes()).is_err());
         }
-        let duplicate = serde_json::to_string(&response()).unwrap().replace(
-            "\"input_tokens\":10",
-            "\"input_tokens\":10,\"input_tokens\":10",
-        );
-        assert!(normalize_response(duplicate.as_bytes(), &request(), "runtime-model").is_err());
-    }
-
-    #[test]
-    fn rejects_bad_usage_and_requires_zero_generated_tokens() {
-        for usage in [
-            Value::Null,
-            json!({}),
-            json!({"input_tokens":10,"output_tokens":0}),
-            json!({"input_tokens":10,"cached_input_tokens":0,"output_tokens":0,"extra":0}),
-        ] {
-            let mut body = response();
-            body["usage"] = usage;
-            assert!(normalize(&body).is_err());
-        }
-        for key in ["input_tokens", "cached_input_tokens", "output_tokens"] {
-            for value in [
-                json!(-1),
-                json!(1.5),
-                json!("0"),
-                json!(true),
-                Value::Null,
-                json!(MAX_SAFE_INTEGER + 1),
-            ] {
-                let mut body = response();
-                body["usage"][key] = value;
-                assert!(normalize(&body).is_err(), "{key}");
-            }
-        }
-        for (key, value) in [("output_tokens", 1), ("cached_input_tokens", 11)] {
-            let mut body = response();
-            body["usage"][key] = json!(value);
-            assert!(normalize(&body).is_err());
-        }
-        let mut body = response();
-        body["usage"] = json!({"input_tokens":MAX_SAFE_INTEGER,"cached_input_tokens":MAX_SAFE_INTEGER,"output_tokens":0});
-        assert!(normalize(&body).is_ok());
-    }
-
-    #[test]
-    fn rejects_mismatched_models_questions_answer_types_and_distributions() {
-        for (pointer, value) in [
-            ("/model", json!("different")),
-            ("/answers/yes/type", json!("choice")),
-            ("/answers/yes/noul", json!(1.01)),
-            ("/answers/pick/choice", json!("unoffered")),
-            ("/answers/pick/confidence", json!(-0.01)),
-            ("/answers/pick/probabilities", json!({"a":0.5,"other":0.5})),
-            ("/answers/pick/probabilities", json!({"a":0.1,"b":0.1})),
-            ("/answers/pick/probabilities", json!({"a":-0.2,"b":1.2})),
-            ("/answers/pick/probabilities/a", json!("0.25")),
-            ("/answers/level/score", json!(1.01)),
-            ("/answers/level/score", json!(-0.01)),
-            ("/answers/level/legend", json!({"0":"low","2":"high"})),
-            ("/answers/level/legend/0", json!(0)),
-        ] {
-            let mut body = response();
-            *body.pointer_mut(pointer).unwrap() = value;
-            assert_eq!(
-                normalize(&body).unwrap_err().kind(),
-                RuntimeFailureKind::ProtocolViolation,
-                "{pointer}"
-            );
-        }
-        let mut body = response();
-        let answers = body["answers"].as_object_mut().unwrap();
-        let swapped = answers.remove("yes").unwrap();
-        answers.insert("other-question".into(), swapped);
-        assert!(normalize(&body).is_err());
-        let mut body = response();
-        body["answers"]["pick"]["extra"] = json!(0);
-        assert!(normalize(&body).is_err());
-    }
-
-    #[test]
-    fn accepts_independently_rounded_large_distributions() {
-        let mut request = request();
-        request.questions = json!({"q":{"type":"choice","instructions":"","criteria":(0..30).map(|i| (i.to_string(), Value::Null)).collect::<Map<_,_>>()}}).as_object().unwrap().clone();
-        let mut body = response();
-        body["answers"] = json!({"q":{"type":"choice","choice":"0","confidence":0,"probabilities":(0..30).map(|i| (i.to_string(), json!(0.03))).collect::<Map<_,_>>()}});
-        assert!(normalize_response(
-            &serde_json::to_vec(&body).unwrap(),
-            &request,
-            "runtime-model"
-        )
-        .is_ok());
     }
 }

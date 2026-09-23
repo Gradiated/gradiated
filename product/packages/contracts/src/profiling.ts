@@ -1,6 +1,11 @@
 import { z } from "@hono/zod-openapi";
 
-import { TimestampSchema, UuidSchema } from "./common.js";
+import {
+  BoundedIdentifierSchema,
+  ModelIdSchema,
+  TimestampSchema,
+  UuidSchema,
+} from "./common.js";
 
 export const ProfilingEventSchema = z.strictObject({
   id: UuidSchema,
@@ -17,8 +22,8 @@ export const ProfilingEventBatchSchema = z.strictObject({
   schema_version: z.literal(1),
   batch_id: UuidSchema,
   deployment_id: UuidSchema,
-  model_id: z.string().min(1).max(200),
-  runtime_revision: z.string().min(1).max(300),
+  model_id: ModelIdSchema,
+  runtime_revision: BoundedIdentifierSchema,
   events: z.array(ProfilingEventSchema).min(1).max(1_000),
 });
 

@@ -2,6 +2,7 @@
 
 #include <charconv>
 #include <cmath>
+#include <cstdlib>
 #include <fstream>
 #include <limits>
 #include <sstream>
@@ -9,6 +10,8 @@
 
 namespace gradiated::engine {
 namespace {
+
+constexpr std::size_t maximum_depth = 64;
 
 class Parser {
  public:
@@ -32,6 +35,7 @@ class Parser {
     while (position_ < input_.size()) {
       const char c = input_[position_];
       if (c != ' ' && c != '\n' && c != '\r' && c != '\t') break;
+
       ++position_;
     }
   }
@@ -44,6 +48,22 @@ class Parser {
     }
     return false;
   }
+
+  class NestingGuard {
+   public:
+    explicit NestingGuard(Parser& parser) : parser_(parser) {
+      parser_.whitespace();
+      if (parser_.depth_ == maximum_depth) parser_.fail("nesting too deep");
+
+      ++parser_.depth_;
+    }
+    ~NestingGuard() { --parser_.depth_; }
+    NestingGuard(const NestingGuard&) = delete;
+    NestingGuard& operator=(const NestingGuard&) = delete;
+
+   private:
+    Parser& parser_;
+  };
 
   void literal(std::string_view expected) {
     if (input_.substr(position_, expected.size()) != expected) fail("invalid literal");
@@ -64,6 +84,7 @@ class Parser {
         if (input_[position_] == '-' || (input_[position_] >= '0' && input_[position_] <= '9')) {
           return parse_number();
         }
+
         fail("expected value");
     }
   }
@@ -106,6 +127,7 @@ class Parser {
     while (position_ < input_.size()) {
       const char c = input_[position_++];
       if (c == '"') return output;
+
       if (static_cast<unsigned char>(c) < 0x20U) fail("control character in string");
       if (c != '\\') {
         output.push_back(c);
@@ -176,17 +198,21 @@ class Parser {
       if (result.ec != std::errc{}) fail("integer out of range");
       return Json(value);
     }
-    std::string owned(token);
-    std::size_t consumed = 0;
-    const double value = std::stod(owned, &consumed);
-    if (consumed != owned.size() || !std::isfinite(value)) fail("invalid floating-point number");
+    const std::string owned(token);
+    char* end = nullptr;
+    const double value = std::strtod(owned.c_str(), &end);
+    if (end != owned.c_str() + owned.size() || !std::isfinite(value)) {
+      fail("invalid floating-point number");
+    }
     return Json(value);
   }
 
   Json parse_array() {
+    const NestingGuard nesting(*this);
     if (!consume('[')) fail("expected array");
     Json::Array values;
     if (consume(']')) return Json(std::move(values));
+
     do {
       values.push_back(parse_value());
     } while (consume(','));
@@ -195,9 +221,11 @@ class Parser {
   }
 
   Json parse_object() {
+    const NestingGuard nesting(*this);
     if (!consume('{')) fail("expected object");
     Json::Object values;
     if (consume('}')) return Json(std::move(values));
+
     do {
       whitespace();
       std::string key = parse_string();
@@ -210,40 +238,53 @@ class Parser {
 
   std::string_view input_;
   std::size_t position_{0};
+  std::size_t depth_{0};
 };
 
 template <typename T>
 const T& get(const Json::Value& value, const char* expected) {
   const auto* result = std::get_if<T>(&value);
   if (result == nullptr) throw std::runtime_error(std::string("JSON value is not ") + expected);
+
   return *result;
 }
 
 }  // namespace
 
 Json Json::parse(std::string_view input) { return Parser(input).parse_document(); }
+
 bool Json::is_null() const { return std::holds_alternative<std::nullptr_t>(value_); }
+
 bool Json::as_bool() const { return get<bool>(value_, "a boolean"); }
+
 std::int64_t Json::as_i64() const { return get<std::int64_t>(value_, "an integer"); }
+
 std::uint64_t Json::as_u64() const {
   const auto value = as_i64();
   if (value < 0) throw std::runtime_error("JSON integer is negative");
+
   return static_cast<std::uint64_t>(value);
 }
+
 double Json::as_double() const {
   if (const auto* value = std::get_if<double>(&value_)) return *value;
   if (const auto* value = std::get_if<std::int64_t>(&value_)) return static_cast<double>(*value);
+
   throw std::runtime_error("JSON value is not a number");
 }
+
 const std::string& Json::as_string() const { return get<std::string>(value_, "a string"); }
 const Json::Array& Json::as_array() const { return get<Array>(value_, "an array"); }
 const Json::Object& Json::as_object() const { return get<Object>(value_, "an object"); }
+
 const Json& Json::at(std::string_view key) const {
   const auto& object = as_object();
   const auto iterator = object.find(key);
   if (iterator == object.end()) throw std::runtime_error("missing JSON key: " + std::string(key));
+
   return iterator->second;
 }
+
 const Json* Json::find(std::string_view key) const {
   const auto& object = as_object();
   const auto iterator = object.find(key);
@@ -253,9 +294,11 @@ const Json* Json::find(std::string_view key) const {
 std::string read_text_file(const std::string& path) {
   std::ifstream input(path, std::ios::binary);
   if (!input) throw std::runtime_error("cannot open " + path);
+
   std::ostringstream output;
   output << input.rdbuf();
   if (!input.eof() && input.fail()) throw std::runtime_error("cannot read " + path);
+
   return output.str();
 }
 

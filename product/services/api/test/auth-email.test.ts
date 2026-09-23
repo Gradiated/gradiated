@@ -3,8 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   createMagicLinkEmailContent,
   createOtpCodeEmailContent,
-  createTestMagicLinkTransport,
-} from "../src/auth-email.js";
+  createResendMagicLinkSender,
+  createResendOtpSender,
+} from "../src/email/auth-messages.js";
+import { EmailDeliveryError } from "../src/email/resend.js";
 
 describe("magic-link email", () => {
   it("includes a branded sign-in action and a plain-text fallback", () => {
@@ -49,35 +51,8 @@ describe("verification-code email", () => {
   });
 });
 
-describe("test magic-link transport", () => {
-  it("normalizes the email address and consumes each link once", async () => {
-    const transport = createTestMagicLinkTransport();
-
-    await transport.send({
-      email: " User@Example.com ",
-      url: "https://api.example.com/verify?token=secret",
-    });
-
-    expect(transport.take("user@example.com")).toBe(
-      "https://api.example.com/verify?token=secret",
-    );
-    expect(transport.take("user@example.com")).toBeNull();
-  });
-
-  it("keeps only the newest link for an email address", async () => {
-    const transport = createTestMagicLinkTransport();
-
-    await transport.send({ email: "user@example.com", url: "first" });
-    await transport.send({ email: "user@example.com", url: "second" });
-
-    expect(transport.take("user@example.com")).toBe("second");
-  });
-});
-
 describe("Resend transport", () => {
   it("sends both email types with HTML and plain text", async () => {
-    const { createResendMagicLinkSender, createResendOtpSender } =
-      await import("../src/auth-email.js");
     const requests: { url: string; init: RequestInit }[] = [];
     const fetcher: typeof fetch = async (url, init) => {
       requests.push({ url: String(url), init: init! });
@@ -115,25 +90,43 @@ describe("Resend transport", () => {
     expect(JSON.parse(String(requests[1]!.init.body)).text).toContain("123456");
   });
 
-  it("rejects provider and network failures without exposing their content", async () => {
-    const { createResendOtpSender } = await import("../src/auth-email.js");
-    const config = { apiKey: "test-key", from: "auth@mail.gradiated.com" };
-    const failed: typeof fetch = async () =>
-      new Response("private-provider-content", { status: 403 });
-    await expect(
-      createResendOtpSender({ ...config, fetch: failed })({
-        email: "user@example.com",
-        code: "123456",
-      }),
-    ).rejects.toThrow("Email delivery failed (Resend HTTP 403).");
-    const network: typeof fetch = async () => {
-      throw new Error("private-network-content");
-    };
-    await expect(
-      createResendOtpSender({ ...config, fetch: network })({
-        email: "user@example.com",
-        code: "123456",
-      }),
-    ).rejects.toThrow("Email delivery request failed.");
+  it.each([
+    {
+      name: "an HTTP failure",
+      fetch: async () =>
+        new Response("private-provider-content", { status: 403 }),
+      code: "403",
+    },
+    {
+      name: "a network failure",
+      fetch: async () => {
+        throw new Error("private-network-content");
+      },
+      code: "ENETWORK",
+    },
+    {
+      name: "a timeout",
+      fetch: async () => {
+        throw new DOMException("private-timeout-content", "TimeoutError");
+      },
+      code: "ETIMEDOUT",
+    },
+  ])("reports $name with a bounded code only", async ({ fetch, code }) => {
+    const rejection = await createResendOtpSender({
+      apiKey: "test-key",
+      from: "auth@mail.gradiated.com",
+      fetch,
+    })({ email: "user@example.com", code: "123456" }).catch(
+      (error: unknown) => error,
+    );
+
+    expect(rejection).toBeInstanceOf(EmailDeliveryError);
+    expect(rejection).toMatchObject({
+      code,
+      message: expect.not.stringMatching(
+        /test-key|user@example\.com|123456|private/,
+      ),
+    });
+    expect(rejection).not.toHaveProperty("cause");
   });
 });

@@ -18,8 +18,9 @@ export type DeploymentStatusFailure =
   "deployment_not_found" | "provider_mismatch" | "runtime_revision_mismatch";
 
 export class DeploymentStatusError extends Error {
-  constructor(public readonly code: DeploymentStatusFailure) {
+  constructor(readonly code: DeploymentStatusFailure) {
     super(code);
+    this.name = "DeploymentStatusError";
   }
 }
 
@@ -32,8 +33,9 @@ export const servedReleaseDigest = (
 ): string => {
   // Key order must match ModelDeploymentRelease's field order in the gateway: the
   // release is serialised and hashed, so a missing or reordered field produces a
-  // heartbeat key the gateway never reads. test/fixtures/release-digests.json pins
-  // every combination of the optional fields from both sides.
+  // heartbeat key the gateway never reads.
+  // services/gateway/test/fixtures/release-digests.json pins every combination
+  // of the optional fields from both sides.
   const canonical = {
     schema_version: release.schema_version,
     runtime_revision: release.runtime_revision,
@@ -49,6 +51,7 @@ export const servedReleaseDigest = (
       ? {}
       : { tokenizer_mode: release.tokenizer_mode }),
   };
+
   return `sha256:${createHash("sha256")
     .update(JSON.stringify(canonical))
     .digest("hex")}`;

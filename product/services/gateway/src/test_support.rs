@@ -1,6 +1,3 @@
-//! One serving-state fixture for every gateway test module. A test names the
-//! state it needs through a constructor and mutates the fields it cares about.
-
 use std::sync::Mutex;
 
 use async_trait::async_trait;
@@ -13,7 +10,8 @@ use crate::{
         OrganizationKind, OrganizationStatus,
     },
     serving_state::{ServingState, ServingStateError},
-    RequestMetadata,
+    AdmissionError, AdmissionLease, DeploymentRuntimeStatus, FinalizationError,
+    FinalizationOutcome, GatewayConfig, GenerationProperties, RequestMetadata,
 };
 
 pub(crate) const API_KEY_ID: Uuid = Uuid::from_u128(0x0198c36f9b6a70008000000000000001);
@@ -58,6 +56,29 @@ impl TestServingState {
             requested_models: Mutex::new(Vec::new()),
             requested_digests: Mutex::new(Vec::new()),
         }
+    }
+
+    pub(crate) fn without_models() -> Self {
+        let mut state = Self::ready();
+        state.model = None;
+
+        state
+    }
+
+    pub(crate) fn unknown_credential() -> Self {
+        let mut state = Self::ready();
+        state.credential = None;
+
+        state
+    }
+
+    pub(crate) fn lookups(&self, name: &str) -> usize {
+        self.calls
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|call| **call == name)
+            .count()
     }
 
     fn record(&self, call: &'static str) {
@@ -112,12 +133,12 @@ impl ServingState for TestServingState {
     async fn deployment_statuses(
         &self,
         _release_digest: &str,
-    ) -> Result<Vec<crate::DeploymentRuntimeStatus>, ServingStateError> {
+    ) -> Result<Vec<DeploymentRuntimeStatus>, ServingStateError> {
         Ok(self
             .model
             .as_ref()
             .and_then(|model| model.deployments.first())
-            .map(|deployment| crate::DeploymentRuntimeStatus {
+            .map(|deployment| DeploymentRuntimeStatus {
                 schema_version: 1,
                 deployment_id: deployment.id,
                 runtime_revision: deployment.release.runtime_revision.clone(),
@@ -136,8 +157,8 @@ impl ServingState for TestServingState {
         _organization_id: Uuid,
         _received_at: DateTime<Utc>,
         _admitted_at: DateTime<Utc>,
-        _config: &crate::GatewayConfig,
-    ) -> Result<crate::AdmissionLease, crate::AdmissionError> {
+        _config: &GatewayConfig,
+    ) -> Result<AdmissionLease, AdmissionError> {
         unreachable!("serving-state fixtures never admit")
     }
 
@@ -145,14 +166,18 @@ impl ServingState for TestServingState {
         &self,
         _generation_id: Uuid,
         _organization_id: Uuid,
-        _properties: &crate::GenerationProperties,
-    ) -> Result<crate::FinalizationOutcome, crate::FinalizationError> {
+        _properties: &GenerationProperties,
+    ) -> Result<FinalizationOutcome, FinalizationError> {
         unreachable!("serving-state fixtures never finalize")
     }
 }
 
 pub(crate) fn model(streaming: bool) -> GatewayModel {
-    serde_json::from_value(serde_json::json!({
+    serde_json::from_value(model_record(streaming)).unwrap()
+}
+
+pub(crate) fn model_record(streaming: bool) -> serde_json::Value {
+    serde_json::json!({
         "id": "model-a",
         "name": "Model A",
         "status": "available",
@@ -207,35 +232,7 @@ pub(crate) fn model(streaming: bool) -> GatewayModel {
                 "tokenizer_revision": "tokenizer-revision"
             }
         }]
-    }))
-    .unwrap()
-}
-
-impl TestServingState {
-    /// An active workspace whose catalog holds no model, so no name resolves locally.
-    pub(crate) fn without_models() -> Self {
-        let mut state = Self::ready();
-        state.model = None;
-
-        state
-    }
-
-    /// A workspace key that the serving state does not know.
-    pub(crate) fn unknown_credential() -> Self {
-        let mut state = Self::ready();
-        state.credential = None;
-
-        state
-    }
-
-    pub(crate) fn lookups(&self, name: &str) -> usize {
-        self.calls
-            .lock()
-            .unwrap()
-            .iter()
-            .filter(|call| **call == name)
-            .count()
-    }
+    })
 }
 
 pub(crate) fn metadata() -> RequestMetadata {

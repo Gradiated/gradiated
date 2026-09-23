@@ -9,6 +9,11 @@
    place, next to the beats it feeds. */
 .gr-flow {
   position: relative;
+  /* The stage overlaps the hero fold's last third so the panel's top edge
+     peeks out on the first fold — the object exists before it is explained.
+     The peek keystate in HomeFlow.tsx anchors the block's top at 20vh of the
+     stage, which this overlap puts at ~86vh of the first fold. */
+  margin-top: -34vh;
 }
 
 .gr-flow-stage {
@@ -18,6 +23,13 @@
   overflow: hidden;
   perspective: 1400px;
   perspective-origin: 50% 42%;
+  /* The stage overlaps the hero's CTA row before it sticks; nothing on it
+     is interactive, so let the fold keep its clicks. */
+  pointer-events: none;
+}
+
+.gr-flow-copy {
+  pointer-events: auto;
 }
 
 .gr-flow-field {

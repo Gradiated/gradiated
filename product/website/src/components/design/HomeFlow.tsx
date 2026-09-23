@@ -90,8 +90,11 @@ const keyStates = (
   const vm = Math.min(W, H);
   const inset = Math.max(24, vm * 0.03);
   const wide = W > 720;
+  /* Anchored by its TOP edge so the peek height under the hero is stable
+     across viewport sizes — pairs with .gr-flow's -34vh overlap. */
+  const peekSize = Math.min(W * 0.46, 560);
   return {
-    peek: { cx: W / 2, cy: H * 0.66, w: Math.min(W * 0.46, 560), h: Math.min(W * 0.46, 560), r: 2, rx: 0, rz: 0 },
+    peek: { cx: W / 2, cy: H * 0.2 + peekSize / 2, w: peekSize, h: peekSize, r: 2, rx: 0, rz: 0 },
     rise: { cx: W / 2, cy: H * 0.52, w: vm * 0.64, h: vm * 0.64, r: 2, rx: 0, rz: 0 },
     full: { cx: W / 2, cy: H / 2, w: W - inset * 2, h: H - inset * 2, r: 6, rx: 0, rz: 0 },
     chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.46, h: vm * 0.46, r: 4, rx: 0, rz: 0 },

@@ -43,8 +43,15 @@ const DAMPING_TAU = 0.14;
 const FROST_BLUR_MAX = 26;
 const FROST_VEIL_MAX = 0.72;
 
-/** One pipeline run, in wall-clock seconds — the original hero's CYCLE. */
-const ENGINE_CYCLE_S = 10;
+/** One generation's full choreography length, in wall-clock seconds —
+    the original hero's CYCLE, plus the tail of the die's exit. */
+const GEN_LEN = 10.2;
+
+/** A NEW generation launches this often. Shorter than GEN_LEN, so the
+    stages pipeline: while one generation's die is forming its model, the
+    next generation's traces are already landing in the RL environment —
+    production traffic never stops coming in. */
+const GEN_PERIOD = 6.5;
 
 /* NOTE: the canvas gradients (frost breathing, post-train ignition, landing
    glow) were removed on request — only the hero's beam remains. When the
@@ -196,6 +203,8 @@ type Bit = {
   ex: number; ey: number; /* eval grid slot */
   du: number; dv: number; /* die offset, in bit-spacing units */
   delay: number;
+  ta: number;  /* when this trace trickles into the traffic column,
+                  as a fraction of the previous generation's period */
   pass: boolean;
   tv: number;   /* when the scan reaches this chip */
   k6: number;   /* when this chip leaves the die */
@@ -285,6 +294,7 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
     du: 0,
     dv: 0,
     delay: rnd() * 0.9,
+    ta: rnd(),
     pass: rnd() < 0.78,
     tv: 0,
     k6: 0,
@@ -422,11 +432,11 @@ export const HomeFlow = (): ReactElement => {
       ctx.restore();
     };
 
-    /* T is time within the current cycle, tE is time since the engine's
-       reveal (drives the one-time layer build-in). */
-    const drawEngine = (T: number, tE: number, out: TimelineOut): void => {
+    /* tE is time since the engine's reveal: it drives the one-time layer
+       build-in, and every generation's phase is derived from it. */
+    const drawEngine = (tE: number, out: TimelineOut): void => {
       const { s, engineA } = out;
-      if (engineA <= 0.01 || T < 0) return;
+      if (engineA <= 0.01 || tE < 0) return;
       const wide = W > 720;
       const L = engineLayout(s, wide);
       ctx.save();
@@ -474,18 +484,17 @@ export const HomeFlow = (): ReactElement => {
          die. The last three stay visible; older ones shift up and out as a
          new round arrives. This is the loop made explicit: every model's
          production traffic seeds the next round. */
-      const cyc = tE < 0 ? 0 : Math.floor(tE / ENGINE_CYCLE_S);
-      /* The stack shifts when the NEW model arrives (not at cycle start),
-         so three models stay visible through the whole cycle. */
-      const startF = cyc < 3 ? 0 : cyc - 3 + clamp01((T - 8.9) / 0.5);
+      /* Generation g's weights arrive in the registry at g*GEN_PERIOD+8.9.
+         The stack shifts when the newest arrives, keeping three visible. */
+      const latest = Math.floor((tE - 8.9) / GEN_PERIOD);
+      const startF =
+        latest < 3 ? 0 : latest - 3 + clamp01((tE - (latest * GEN_PERIOD + 8.9)) / 0.5);
       const slotPos = (row: number): [number, number] => [
         boxes[3].x + boxes[3].w * 0.3,
         boxes[3].y + boxes[3].h * (0.56 + row * 0.14),
       ];
       const modelLabel = (k: number): string =>
         k === 0 ? "MODEL 1" : `MODEL 1.${k}`;
-      const arrivalRow = Math.min(cyc, 2);
-      const outPt = slotPos(arrivalRow);
 
       const at = (
         box: { x: number; y: number; w: number; h: number },
@@ -493,8 +502,22 @@ export const HomeFlow = (): ReactElement => {
         ny: number,
       ): [number, number] => [box.x + nx * box.w, box.y + ny * box.h];
 
+      /* Every live generation, oldest first. A generation exists from a
+         full period BEFORE its launch — its traces trickle into the
+         traffic column while the previous generation is still mid-flight,
+         so production traffic never stops coming in — until its
+         choreography ends. */
+      const gLo = Math.max(0, Math.ceil((tE - GEN_LEN) / GEN_PERIOD));
+      const gHi = Math.floor(tE / GEN_PERIOD) + 1;
+      for (let g = gLo; g <= gHi; g++) {
+      const T = tE - g * GEN_PERIOD;
+      const outPt = slotPos(Math.min(g, 2));
+
       /* The chips. Keyframes are the original hero's, verbatim. */
       for (const b of ENGINE.bits) {
+        /* trickle-in: this trace only exists once it has been captured */
+        const appear = -GEN_PERIOD * (0.05 + 0.9 * b.ta);
+        if (T < appear) continue;
         const d = b.delay;
         const k0 = d;
         const k1 = d + 1.6;
@@ -514,8 +537,10 @@ export const HomeFlow = (): ReactElement => {
         const [mxp, myp] = at(mazeBox, b.mx, b.my);
 
         if (T < k0) {
-          /* captured traces, waiting at the endpoint */
-          px = sxp; py = syp; alpha = 0.4; size = bit * 0.8;
+          /* captured traces, streaming into the endpoint */
+          px = sxp; py = syp;
+          alpha = 0.4 * clamp01((T - appear) / 0.4);
+          size = bit * 0.8;
         } else if (T < k1) {
           /* flight into the environment */
           const u = (T - k0) / 1.6;
@@ -622,20 +647,21 @@ export const HomeFlow = (): ReactElement => {
         ctx.globalAlpha = engineA * bo;
         ctx.fillRect(boxes[2].x + 4, scanY, boxes[2].w - 8, 1);
       }
+      } /* end of generation loop */
 
       /* The model registry. The arriving one fades in under its converging
          chips and pulses once; the top one fades out as the list shifts. */
-      if (stageA[3] > 0) {
+      if (stageA[3] > 0 && latest >= 0) {
         ctx.font = "9px 'JetBrains Mono', ui-monospace, monospace";
-        for (let m = Math.max(0, cyc - 3); m <= cyc; m++) {
-          const arriving = m === cyc;
-          const aIn = arriving ? clamp01((T - 8.9) / 0.5) : 1;
+        for (let m = Math.max(0, latest - 3); m <= latest; m++) {
+          const since = tE - (m * GEN_PERIOD + 8.9);
+          const aIn = clamp01(since / 0.5);
           if (aIn <= 0) continue;
           const rowF = m - startF;
           const a = engineA * stageA[3] * aIn * clamp01(1 + rowF);
           if (a <= 0.01) continue;
           const [mx0, my0] = slotPos(rowF);
-          const oss = os * (arriving ? 1 + 0.1 * Math.max(0, 1 - (T - 8.9) / 0.8) : 1);
+          const oss = os * (1 + 0.1 * Math.max(0, 1 - since / 0.8));
           ctx.globalAlpha = a;
           ctx.strokeRect(mx0 - oss / 2, my0 - oss / 2, oss, oss);
           ctx.globalAlpha = a * 0.9;
@@ -678,11 +704,10 @@ export const HomeFlow = (): ReactElement => {
       if (out.engineA > 0.35 && engineStart < 0) engineStart = t;
       else if (out.engineA < 0.02) engineStart = -1;
       const tE = engineStart >= 0 ? t - engineStart : -1;
-      const cycleT = tE < 0 ? -1 : tE % ENGINE_CYCLE_S;
 
       ctx.clearRect(0, 0, W, H);
       drawPanel(out);
-      drawEngine(cycleT, tE, out);
+      drawEngine(tE, out);
 
       const place = (el: HTMLElement, extra: string): void => {
         el.style.width = `${s.w}px`;

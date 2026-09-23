@@ -4,7 +4,7 @@ A small Streamable HTTP MCP service for production diagnostics.
 It runs independently of the customer API, using the existing product image.
 The endpoint is `https://ops.gradiated.com/mcp`, served by an internal AWS load balancer. Staff connect through the existing
 Tailscale subnet router. Ordinary Route53 DNS and the Gradiated TLS certificate
-are used; MagicDNS is disabled. The deployment is staged for activation.
+are used; MagicDNS is disabled.
 
 ## Tools
 
@@ -77,7 +77,7 @@ verified staff subject/email, request ID, tool, outcome and duration, never quer
 arguments or results. OAuth endpoints use the SDK's rate limits plus bounded
 login/token stores.
 
-## Deployment status
+## Deployment
 
 The Kustomization is under
 `infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/`. Its internal
@@ -86,13 +86,13 @@ traffic. Tailnet members have TCP 443 access to the VPC; both EKS and MCP still
 require their own authentication. Public clients cannot route to the internal
 load balancer. Do not use tailnet hostnames or enable MagicDNS for this service.
 
-Activation is staged to preserve the existing shared Google login: first create
-and populate the dedicated Secrets Manager secret, then wait for the platform
-ExternalSecret `production-mcp-oidc` to sync in Argo's namespace. Enable the
-`production_mcp_origin` Terraform input only after that secret is ready. Once an
-immutable product image containing the service is available, move the Application
-manifest into Argo's watched `platform/` directory. The release updater tracks
-the product image alongside API and worker.
+Argo watches `platform/ops-mcp.yaml`, which reconciles this Kustomization. The
+release updater tracks its immutable product image alongside API and worker.
+Terraform configures the dedicated Dex client with the fixed
+`https://ops.gradiated.com/oauth/callback` redirect. The platform ExternalSecret
+`production-mcp-oidc` supplies Dex's client secret; the MCP ExternalSecret mounts
+the same value in the service. Provision and sync both secrets before enabling a
+new Dex client, so a missing value cannot disrupt the shared Google login.
 
 Acceptance checks include a real staff login, rejection of a non-staff identity,
 MCP discovery and a real bounded diagnostic query, revoked/expired token rejection,

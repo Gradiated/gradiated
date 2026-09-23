@@ -135,13 +135,21 @@ self-healing enable rescheduling instead.
 
 ## Deploy on merge
 
-`nomad-deployment.yml` validates today and never deploys. It gains:
+A job is deployed when it has a committed `<job>.vars.hcl` beside it; a
+qualification-only job has none and is never submitted. On merge to `main`, the
+`Deploy jobs` workflow job plans and runs each deployable job. An unchanged job
+updates in place without restarting anything.
 
-- On pull requests, `nomad job plan` for each changed job, so review shows what
-  placement and rollout would do.
-- On merge to main, `nomad job run` for each changed job, with its variables
-  rendered from the catalog release it references.
-- A Nomad ACL token that can submit and read jobs and nothing else.
+The workflow reaches the Nomad API through the tailnet and a Kubernetes
+port-forward, and logs in with its GitHub OIDC token. Nomad's JWT auth method
+turns that into a short-lived token with a policy that can submit and read jobs
+and nothing else, bound to the `production` environment on `main`. No Nomad token
+is stored anywhere.
+
+Pull requests validate jobs but do not run `nomad job plan`. Planning needs the
+`submit-job` capability, and a pull request can change its own workflow, so a
+plan-capable token on pull requests would be a submit-capable token. The plan is
+printed in the deploy log before each run instead.
 
 ## Allocation registration and routing
 

@@ -13,6 +13,7 @@ on:
       - product/inference/images/nomad-base/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
+  workflow_dispatch:
   pull_request:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
@@ -26,8 +27,13 @@ on:
       - .github/workflows/nomad-deployment.yml
 
 permissions:
+  actions: read
   contents: read
   id-token: write
+
+concurrency:
+  group: nomad-deployment-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   configuration-checks:
@@ -55,3 +61,75 @@ jobs:
           file: product/inference/runtime-launcher/tests/Dockerfile
           target: tests
           platforms: linux/amd64
+
+  deploy:
+    name: Deploy jobs
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: configuration-checks
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 30
+    env:
+      AWS_REGION: us-east-1
+      NOMAD_ADDR: https://127.0.0.1:4646
+      NOMAD_TLS_SERVER_NAME: server.global.nomad
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Wait for infrastructure changes in this merge
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node tools/models/wait-infrastructure.mjs
+      - uses: aws-actions/configure-aws-credentials@v6.2.3
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
+          allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
+          role-session-name: nomad-deploy-${{ github.run_id }}
+      - name: Join the tailnet for the Kubernetes API
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ vars.TAILSCALE_CI_CLIENT_ID }}
+          audience: ${{ vars.TAILSCALE_CI_AUDIENCE }}
+          tags: tag:ci
+      - uses: jdx/mise-action@v4.2.3
+      - name: Forward the Nomad API
+        run: |
+          aws eks update-kubeconfig --name gradiated-prod --region "$AWS_REGION"
+          kubectl -n nomad port-forward svc/nomad-api 4646:4646 >"$RUNNER_TEMP/port-forward.log" 2>&1 &
+          for _ in $(seq 30); do
+            (exec 3<>/dev/tcp/127.0.0.1/4646) 2>/dev/null && exit 0
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/port-forward.log" >&2
+          exit 1
+      - name: Load the Nomad client certificate
+        run: |
+          tls="$RUNNER_TEMP/nomad-tls"
+          install -d -m 700 "$tls"
+          certificate="$(aws secretsmanager get-secret-value --secret-id gradiated/prod/nomad/deployer-tls \
+            --query SecretString --output text)"
+          for name in ca.pem cert.pem key.pem; do
+            (umask 077; jq -er --arg name "$name" '.[$name]' <<<"$certificate" >"$tls/$name")
+          done
+          chmod 644 "$tls"/*.pem
+          {
+            echo "NOMAD_CACERT=$tls/ca.pem"
+            echo "NOMAD_CLIENT_CERT=$tls/cert.pem"
+            echo "NOMAD_CLIENT_KEY=$tls/key.pem"
+          } >>"$GITHUB_ENV"
+      - name: Log in to Nomad with this workflow's identity
+        run: |
+          jwt="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nomad.gradiated.com" | jq -er .value)"
+          token="$(curl -fsS --cacert "$NOMAD_CACERT" --cert "$NOMAD_CLIENT_CERT" --key "$NOMAD_CLIENT_KEY" \
+            --connect-to "$NOMAD_TLS_SERVER_NAME:4646:127.0.0.1:4646" \
+            -X POST "https://$NOMAD_TLS_SERVER_NAME:4646/v1/acl/login" \
+            -d "$(jq -n --arg token "$jwt" '{AuthMethodName: "github-actions", LoginToken: $token}')" | jq -er .SecretID)"
+          echo "::add-mask::$token"
+          echo "NOMAD_TOKEN=$token" >>"$GITHUB_ENV"
+      - run: bash tools/nomad/deploy-jobs.sh

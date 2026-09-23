@@ -327,6 +327,9 @@ jobs:
           CLICKHOUSE_METABASE_USERNAME: metabase
           CLICKHOUSE_METABASE_PASSWORD: gradiated
         run: pnpm --filter @gradiated/control clickhouse:migrate
+      - name: Verify production MCP browser login
+        working-directory: product
+        run: pnpm --filter @gradiated/ops-mcp exec playwright test
       - name: Run Playwright tests
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test

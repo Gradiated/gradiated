@@ -14,6 +14,8 @@ import {
   UnsupportedGrantTypeError,
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { z } from "zod";
+import { fileURLToPath } from "node:url";
+import { authPage, consentPage, pagePolicy } from "./auth-page.js";
 
 const ISSUER = "https://argocd.gradiated.com/api/dex";
 const CLIENT = "production-mcp";
@@ -23,14 +25,6 @@ const hash = (value: string) =>
   createHash("sha256").update(value).digest("base64url");
 const equal = (a: string, b: string) =>
   timingSafeEqual(Buffer.from(hash(a)), Buffer.from(hash(b)));
-const escaped = (value: string) =>
-  value.replace(
-    /[&<>"']/g,
-    (char) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
-      ]!,
-  );
 export type Identity = { subject: string; email: string };
 
 export const verifyStaff = async (
@@ -192,16 +186,20 @@ export const createAuth = (options: {
       };
       pending.set(state, flow);
       res.cookie(COOKIE, flow.cookie, cookieOptions);
-      res.setHeader(
-        "Content-Security-Policy",
-        "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'",
-      );
+      res.setHeader("Content-Security-Policy", pagePolicy);
       res.setHeader("Cache-Control", "no-store");
-      res.setHeader("Referrer-Policy", "no-referrer");
+      // Preserve Origin on the same-origin consent POST without leaking the
+      // authorization URL to the external identity provider.
+      res.setHeader("Referrer-Policy", "same-origin");
       res
         .type("html")
         .send(
-          `<!doctype html><html><title>Gradiated production access</title><h1>Connect to Gradiated production</h1><p>Allow ${escaped(client.client_name ?? "this agent")} to read production alerts, metrics, logs and workload status for one hour?</p><p>Client ID: ${escaped(client.client_id)}</p><p>Return address: ${escaped(params.redirectUri)}</p><form method="post" action="/oauth/consent"><input type="hidden" name="state" value="${state}"><button type="submit">Continue with Gradiated Google login</button></form></html>`,
+          consentPage(
+            client.client_name ?? "your agent",
+            client.client_id,
+            params.redirectUri,
+            state,
+          ),
         );
     },
     challengeForAuthorizationCode: async (client, code) => {
@@ -275,6 +273,13 @@ export const createAuth = (options: {
     res.setHeader("Referrer-Policy", "no-referrer");
     next();
   });
+  router.get("/brand/gradiated.svg", (_req, res) => {
+    res.sendFile("gradiated-full.svg", {
+      root: fileURLToPath(
+        new URL("../../console/public/brand/", import.meta.url),
+      ),
+    });
+  });
   router.use(
     mcpAuthRouter({
       provider,
@@ -310,7 +315,14 @@ export const createAuth = (options: {
       } catch {
         res
           .status(400)
-          .send("Login expired or invalid. Start again from your MCP client.");
+          .set("Content-Security-Policy", pagePolicy)
+          .type("html")
+          .send(
+            authPage(
+              "Start a new login",
+              '<p class="intro">This sign-in link expired or is invalid. Start login again from your MCP client.</p>',
+            ),
+          );
       }
     },
   );
@@ -360,8 +372,13 @@ export const createAuth = (options: {
     } catch {
       res
         .status(403)
+        .set("Content-Security-Policy", pagePolicy)
+        .type("html")
         .send(
-          "Gradiated staff login failed or expired. Start again from your MCP client.",
+          authPage(
+            "Sign-in unsuccessful",
+            '<p class="intro">Sign in again from your MCP client using your gradiated.com Google account. Your sign-in link may have expired.</p>',
+          ),
         );
     }
   });

@@ -5,5 +5,10 @@
     "types": ["node", "vitest/globals"],
     "exactOptionalPropertyTypes": false
   },
-  "include": ["src/**/*.ts", "test/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "e2e/**/*.ts",
+    "playwright.config.ts"
+  ]
 }

@@ -126,10 +126,15 @@ jobs:
         run: |
           jwt="$(curl -fsS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
             "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=nomad.gradiated.com" | jq -er .value)"
-          token="$(curl -fsS --cacert "$NOMAD_CACERT" --cert "$NOMAD_CLIENT_CERT" --key "$NOMAD_CLIENT_KEY" \
+          response="$(curl -sS -w '\n%{http_code}' --cacert "$NOMAD_CACERT" --cert "$NOMAD_CLIENT_CERT" --key "$NOMAD_CLIENT_KEY" \
             --connect-to "$NOMAD_TLS_SERVER_NAME:4646:127.0.0.1:4646" \
             -X POST "https://$NOMAD_TLS_SERVER_NAME:4646/v1/acl/login" \
-            -d "$(jq -n --arg token "$jwt" '{AuthMethodName: "github-actions", LoginToken: $token}')" | jq -er .SecretID)"
+            -d "$(jq -n --arg token "$jwt" '{AuthMethodName: "github-actions", LoginToken: $token}')")"
+          if [[ "${response##*$'\n'}" != 200 ]]; then
+            echo "Nomad login failed: ${response%$'\n'*}" >&2
+            exit 1
+          fi
+          token="$(jq -er .SecretID <<<"${response%$'\n'*}")"
           echo "::add-mask::$token"
           echo "NOMAD_TOKEN=$token" >>"$GITHUB_ENV"
       - run: bash tools/nomad/deploy-jobs.sh

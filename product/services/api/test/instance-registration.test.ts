@@ -43,6 +43,27 @@ const createAuthority = async (): Promise<NomadCertificateAuthority> => {
   };
 };
 
+// Made with `openssl req -utf8`, which encodes names as UTF8String like the
+// production CA; the library's own encoding would hide an issuer mismatch.
+const opensslAuthority: NomadCertificateAuthority = {
+  certificate: `-----BEGIN CERTIFICATE-----
+MIIBhzCCAS2gAwIBAgIUQGGzFMccTr4736JAO1Vu5HPEfkYwCgYIKoZIzj0EAwIw
+GDEWMBQGA1UEAwwNVGVzdCBOb21hZCBDQTAgFw0yNjA5MjMyMTExMDRaGA8yMTI2
+MDgzMDIxMTEwNFowGDEWMBQGA1UEAwwNVGVzdCBOb21hZCBDQTBZMBMGByqGSM49
+AgEGCCqGSM49AwEHA0IABATWSu5SnmT35HWwlaREhxN7XlVMZzIQdPgItC1sBucp
+PUzf/fWQazg3IYjQS4JDSLSsQG//1TVJ2J0mTTEEOyijUzBRMB0GA1UdDgQWBBTe
+xS6uh0eiZU+gixSgWHUuJwQfuzAfBgNVHSMEGDAWgBTexS6uh0eiZU+gixSgWHUu
+JwQfuzAPBgNVHRMBAf8EBTADAQH/MAoGCCqGSM49BAMCA0gAMEUCIEMOyUILMXm/
+mAEK/TQmuJYD1YOHlKTd6Bqgpyav9hvlAiEAuRO1FVEagaa+1I2LCBZjmaUvlCAz
+zMmx36G18ZK2V+w=
+-----END CERTIFICATE-----`,
+  privateKey: `-----BEGIN PRIVATE KEY-----
+MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg9TUfYllbQtT+Y8un
+bLOTeCcrUi17FqK7A+0BMEVEPy+hRANCAAQE1kruUp5k9+R1sJWkRIcTe15VTGcy
+EHT4CLQtbAbnKT1M3/31kGs4NyGI0EuCQ0i0rEBv/9U1SdidJk0xBDso
+-----END PRIVATE KEY-----`,
+};
+
 describe("Nomad client certificate", () => {
   let authority: NomadCertificateAuthority;
 
@@ -72,6 +93,22 @@ describe("Nomad client certificate", () => {
     expect(
       certificate.checkPrivateKey(createPrivateKey(issued.privateKey)),
     ).toBe(true);
+  });
+
+  it("names its issuer with the CA's exact subject bytes, which Go requires", async () => {
+    const issued = await issueNomadClientCertificate(opensslAuthority);
+
+    expect(
+      Buffer.from(
+        new x509.X509Certificate(issued.certificate).issuerName.toArrayBuffer(),
+      ),
+    ).toEqual(
+      Buffer.from(
+        new x509.X509Certificate(
+          opensslAuthority.certificate,
+        ).subjectName.toArrayBuffer(),
+      ),
+    );
   });
 
   it("uses an ECDSA key, because Nomad rejects Ed25519 client keys", async () => {

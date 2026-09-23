@@ -77,7 +77,8 @@ export const issueNomadClientCertificate = async (
   const certificate = await x509.X509CertificateGenerator.create({
     serialNumber: serial.toString("hex"),
     subject: `CN=${CLIENT_NAME}`,
-    issuer: caCertificate.subject,
+    // Go matches issuer to CA by exact bytes; re-encoding the name from text changes its string type.
+    issuer: caCertificate.subjectName,
     notBefore: new Date(now.getTime() - CLOCK_SKEW_MS),
     notAfter: new Date(expiry),
     signingAlgorithm: ecdsa,

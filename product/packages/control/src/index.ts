@@ -41,6 +41,12 @@ export {
 } from "./settlement/postgres-store.js";
 export { betterAuthSchema } from "./db/schema/auth.js";
 export {
+  createInstanceService,
+  type InstanceRecord,
+  type InstanceRegistration,
+  type InstanceService,
+} from "./instances/service.js";
+export {
   createCatalogBillingService,
   type CatalogBillingService,
 } from "./catalog-billing/service.js";

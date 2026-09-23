@@ -38,6 +38,7 @@ COPY --from=launcher /s5cmd/s5cmd /usr/local/bin/s5cmd
 COPY images/nomad-base/fetch-runtime.sh /opt/gradiated/bin/fetch-runtime
 COPY --from=launcher /plugin/nomad-device-nvidia /opt/nomad/plugins/nomad-device-nvidia
 COPY images/nomad-base/base-id /etc/gradiated/base-id
+COPY nomad/client.hcl /etc/nomad/client.hcl
 COPY images/nomad-base/start-client.sh /opt/gradiated/bin/start-client
 COPY images/nomad-base/start.sh /opt/gradiated/bin/start-node
 COPY images/nomad-base/sshd_config /etc/ssh/sshd_config

@@ -1,4 +1,3 @@
-# Enrollment supplies the node name and runtime_base_id metadata.
 region = "global"
 data_dir = "/var/lib/nomad"
 plugin_dir = "/opt/nomad/plugins"

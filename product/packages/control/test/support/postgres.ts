@@ -208,6 +208,27 @@ export type TestDatabase = ControlDatabaseClient & {
   dispose: () => Promise<void>;
 };
 
+// pool.end() resolves before the server has closed every session, and FORCE
+// terminating one mid-close surfaces as an unhandled error in the test file.
+const waitForSessionsToClose = async (adminUrl: string, database: string) => {
+  const admin = new Client({ connectionString: adminUrl });
+  await admin.connect();
+
+  try {
+    const deadline = Date.now() + 5_000;
+    while (Date.now() < deadline) {
+      const { rows } = await admin.query<{ open: number }>(
+        "select count(*)::int as open from pg_stat_activity where datname = $1",
+        [database],
+      );
+      if (rows[0]?.open === 0) return;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    }
+  } finally {
+    await admin.end();
+  }
+};
+
 export const createTestDatabase = async (): Promise<TestDatabase> => {
   const { adminUrl, template } = inject("controlPostgres");
   const name = `control_test_${randomUUID().replaceAll("-", "")}`;
@@ -220,6 +241,7 @@ export const createTestDatabase = async (): Promise<TestDatabase> => {
     ...client,
     dispose: async () => {
       await client.pool.end();
+      await waitForSessionsToClose(adminUrl, name);
       await runAdmin(
         adminUrl,
         `DROP DATABASE IF EXISTS "${name}" WITH (FORCE)`,

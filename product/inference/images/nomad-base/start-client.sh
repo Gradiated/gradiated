@@ -6,4 +6,4 @@ set -euo pipefail
 exec setpriv --reuid=nomad --regid=nomad --init-groups \
   --inh-caps=+setuid,+setgid,+chown,+kill,+dac_override \
   --ambient-caps=+setuid,+setgid,+chown,+kill,+dac_override \
-  nomad agent -config=/etc/nomad/client.hcl
+  nomad agent -config=/etc/nomad/client.hcl -config=/etc/nomad/node.hcl

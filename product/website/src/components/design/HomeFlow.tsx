@@ -328,7 +328,9 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
   });
   passers.forEach((b) => {
     b.dist /= maxD;
-    b.k6 = 8.25 + 0.55 * b.dist;
+    /* near-uniform exit, so the formed square drops into the registry as
+       one object rather than dissolving */
+    b.k6 = 8.4 + 0.1 * b.dist;
   });
 
   return { bits, path, DS };
@@ -472,26 +474,45 @@ export const HomeFlow = (): ReactElement => {
       const mazeBox = pad(boxes[1]);
       const evalBox = pad(boxes[2]);
       const bit = Math.max(3, (mazeBox.w / (MC - 1)) * 0.42);
-      const DP = bit * 1.7;
-      const dieC: [number, number] = [
-        boxes[3].x + boxes[3].w / 2,
-        boxes[3].y + boxes[3].h * 0.28,
-      ];
       const os = bit * 4.2;
 
-      /* The model registry: each cycle's die contracts into a labelled
-         model square — MODEL 1, MODEL 1.1, MODEL 1.2 … — stacked under the
-         die. The last three stay visible; older ones shift up and out as a
-         new round arrives. This is the loop made explicit: every model's
-         production traffic seeds the next round. */
-      /* Generation g's weights arrive in the registry at g*GEN_PERIOD+8.9.
-         The stack shifts when the newest arrives, keeping three visible. */
+      /* POST-TRAIN is two chambers: a square at the top where the databits
+         collect into the model, and a registry below that the formed model
+         drops into. Four models stay visible; older ones shift up and out
+         as a new one arrives. This is the loop made explicit: every
+         model's production traffic seeds the next round. */
+      const dieSide = Math.min(boxes[3].w - 44, boxes[3].h * 0.3);
+      const dieBox = {
+        x: boxes[3].x + (boxes[3].w - dieSide) / 2,
+        y: boxes[3].y + 22,
+        w: dieSide,
+        h: dieSide,
+      };
+      const regBox = {
+        x: boxes[3].x + 16,
+        y: dieBox.y + dieBox.h + 20,
+        w: boxes[3].w - 32,
+        h: boxes[3].h - dieBox.h - 22 - 20 - 16,
+      };
+      if (stageA[3] > 0) {
+        ctx.globalAlpha = engineA * stageA[3] * 0.35;
+        ctx.strokeRect(dieBox.x, dieBox.y, dieBox.w, dieBox.h);
+        ctx.strokeRect(regBox.x, regBox.y, regBox.w, regBox.h);
+      }
+      const dieC: [number, number] = [
+        dieBox.x + dieBox.w / 2,
+        dieBox.y + dieBox.h / 2,
+      ];
+      /* the packed die fills its chamber */
+      const DP = (dieSide * 0.82) / ENGINE.DS;
+
+      /* Generation g's weights arrive in the registry at g*GEN_PERIOD+8.9. */
       const latest = Math.floor((tE - 8.9) / GEN_PERIOD);
       const startF =
-        latest < 3 ? 0 : latest - 3 + clamp01((tE - (latest * GEN_PERIOD + 8.9)) / 0.5);
+        latest < 4 ? 0 : latest - 4 + clamp01((tE - (latest * GEN_PERIOD + 8.9)) / 0.5);
       const slotPos = (row: number): [number, number] => [
-        boxes[3].x + boxes[3].w * 0.3,
-        boxes[3].y + boxes[3].h * (0.56 + row * 0.14),
+        regBox.x + regBox.w * 0.24,
+        regBox.y + regBox.h * (0.12 + row * 0.22),
       ];
       const modelLabel = (k: number): string =>
         k === 0 ? "MODEL 1" : `MODEL 1.${k}`;
@@ -511,7 +532,7 @@ export const HomeFlow = (): ReactElement => {
       const gHi = Math.floor(tE / GEN_PERIOD) + 1;
       for (let g = gLo; g <= gHi; g++) {
       const T = tE - g * GEN_PERIOD;
-      const outPt = slotPos(Math.min(g, 2));
+      const outPt = slotPos(Math.min(g, 3));
 
       /* The chips. Keyframes are the original hero's, verbatim. */
       for (const b of ENGINE.bits) {
@@ -596,12 +617,14 @@ export const HomeFlow = (): ReactElement => {
           size = bit * (1 + 0.12 * crest);
         } else if (T < k7) {
           /* the trained weights fall into the chip */
+          /* the formed square condenses and drops into the registry as
+             one object */
           const u = (T - k6) / 0.7;
           const e = u * u;
-          px = lerp(dieC[0] + b.du * DP, outPt[0], e);
-          py = lerp(dieC[1] + b.dv * DP, outPt[1], e) - Math.sin(u * Math.PI) * L.h * 0.04;
-          size = bit * (1 - e * 0.85);
-          alpha = 1 - e * 0.3;
+          px = lerp(dieC[0] + b.du * DP, outPt[0] + b.du * DP * 0.1, e);
+          py = lerp(dieC[1] + b.dv * DP, outPt[1] + b.dv * DP * 0.1, e);
+          size = bit * (1 - e * 0.7);
+          alpha = 1 - e * 0.4;
         } else {
           continue;
         }
@@ -653,7 +676,7 @@ export const HomeFlow = (): ReactElement => {
          chips and pulses once; the top one fades out as the list shifts. */
       if (stageA[3] > 0 && latest >= 0) {
         ctx.font = "9px 'JetBrains Mono', ui-monospace, monospace";
-        for (let m = Math.max(0, latest - 3); m <= latest; m++) {
+        for (let m = Math.max(0, latest - 4); m <= latest; m++) {
           const since = tE - (m * GEN_PERIOD + 8.9);
           const aIn = clamp01(since / 0.5);
           if (aIn <= 0) continue;

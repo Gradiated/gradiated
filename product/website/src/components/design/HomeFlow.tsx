@@ -61,7 +61,8 @@ const GEN_PERIOD = 6.5;
 
 /* GRADIENT RULE (from the user, 24 Sep): the hero's seat combo appears in
    exactly two places — the hero beam itself, and the dynamic glow around
-   the chip during the dark reveal. Nowhere else. */
+   the chip in the ISOMETRIC view. The frontal dark stage is lit by one
+   source only: the sweep that crosses plate and wafers together. */
 const SEAT_TOKENS = [
   "--color-kiln-500",
   "--color-kiln-300",
@@ -540,30 +541,33 @@ uniform vec2  uRes;    /* canvas size, device px */
 uniform vec2  uC;      /* chip centre, device px */
 uniform float uSize;   /* chip width, device px */
 uniform float uTime;
-uniform float uRip;    /* seconds since the lights went off */
+uniform float uBand;   /* the ONE light: sweep coordinate, -1.3 .. 1.3 */
 uniform float uOn;
 void main() {
   vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec2 d = p - uC;
-  float cell = uSize / 44.0;
+  float cell = uSize / 26.0;
   vec2 gpos = d / cell;
   vec2 id = floor(gpos + 0.5);
   vec2 lp = gpos - id;
-  float dn = length(id) * cell / (uSize * 1.45);
+  float dn = length(id) * cell / (uSize * 1.9);
   if (dn > 1.0) discard;
-  /* tiny dots, high density */
-  float m = 1.0 - smoothstep(0.10, 0.16, length(lp));
+  /* square wafer chips, not dots */
+  float q = max(abs(lp.x), abs(lp.y));
+  float m = 1.0 - smoothstep(0.26, 0.30, q);
   if (m <= 0.0) discard;
-  /* ONE ripple: a gaussian wavefront travelling outward, then gone */
-  float front = uRip * 0.5;
-  float wave = exp(-pow((dn - front) * 9.0, 2.0)) * (1.0 - smoothstep(1.2, 1.5, front));
-  /* holographic thin-film palette, keyed to radius + angle, drifting slowly */
-  float ang = atan(d.y, d.x);
-  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (dn * 2.0 + uTime * 0.02) + ang * 0.7 + vec3(0.0, 2.094, 4.188));
-  /* mostly silver; the colour blooms as the ripple's wavefront passes */
-  vec3 col = mix(vec3(0.86), iri, 0.24 + 0.4 * wave);
+  /* THE light: the same band that sweeps the chip's face. Wafers light up
+     as it passes over them, exactly when it passes over them. */
+  vec2 axis = vec2(0.906, 0.423); /* the sheen's 115deg travel direction */
+  float sc = dot(d, axis) / (uSize * 1.6);
+  float band = exp(-pow((sc - uBand) * 2.6, 2.0));
+  /* holographic response: silver at rest; under the light, a thin-film
+     tint that varies chip to chip, the way a real wafer catches colour */
+  float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
+  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (sc * 0.8 + grain * 0.25 + uTime * 0.008) + vec3(0.0, 2.094, 4.188));
+  vec3 col = mix(vec3(0.88), iri, 0.12 + 0.62 * band);
   float feather = 1.0 - dn * dn;
-  float a = m * feather * (0.11 + 0.5 * wave) * uOn;
+  float a = m * feather * (0.17 + 0.6 * band) * uOn;
   gl_FragColor = vec4(col, a);
 }`;
       const sh = (type: number, src: string): WebGLShader | null => {
@@ -601,7 +605,7 @@ void main() {
           c: gl.getUniformLocation(prog, "uC"),
           size: gl.getUniformLocation(prog, "uSize"),
           time: gl.getUniformLocation(prog, "uTime"),
-          rip: gl.getUniformLocation(prog, "uRip"),
+          band: gl.getUniformLocation(prog, "uBand"),
           on: gl.getUniformLocation(prog, "uOn"),
         },
       };
@@ -624,7 +628,10 @@ void main() {
       gl.uniform2f(u.c, out.s.cx * dpr, out.s.cy * dpr);
       gl.uniform1f(u.size, out.s.w * dpr);
       gl.uniform1f(u.time, t);
-      gl.uniform1f(u.rip, t - darkAt);
+      /* the SAME pass of light that crosses the plate: scrubbed from the
+         hold beat, eased identically to the sheen */
+      const stE = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
+      gl.uniform1f(u.band, -1.3 + 2.6 * stE);
       gl.uniform1f(u.on, on);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };

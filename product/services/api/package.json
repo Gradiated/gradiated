@@ -34,5 +34,8 @@
     "reflect-metadata": "0.2.2",
     "stripe": "22.5.0",
     "uuid": "14.0.1"
+  },
+  "devDependencies": {
+    "yaml": "2.9.0"
   }
 }

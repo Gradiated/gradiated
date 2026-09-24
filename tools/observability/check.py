@@ -241,6 +241,18 @@ def main():
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
 
+    alb_errors = 'PublicLoadBalancerErrors'
+    alb_series = 'aws_applicationelb_httpcode_elb_5_xx_count_sum{load_balancer="app/gradiated-prod-public-api/abc"}'
+    for name, values, eval_time, fires in [
+        ('sustained ALB 5xx', '6+0x20', '3m', True),
+        ('below threshold', '4+0x20', '3m', False),
+        ('one-minute spike', '6 6 stale', '3m', False),
+        ('no errors reported', None, '3m', False),
+    ]:
+        inputs = [] if values is None else [{'series': alb_series, 'values': values}]
+        scenario('public load balancer: ' + name, inputs, alb_errors if fires else None,
+                 [alb_errors], eval_time=eval_time)
+
     proxy_errors = 'ProxyHighErrorRate'
     for name, failed, ok, destination, fires in [
         ('3% gateway failures', 9, 291, 'gateway', True),

@@ -152,6 +152,10 @@ importers:
       uuid:
         specifier: 14.0.1
         version: 14.0.1
+    devDependencies:
+      yaml:
+        specifier: 2.9.0
+        version: 2.9.0
 
   services/console:
     dependencies:

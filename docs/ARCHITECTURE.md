@@ -62,17 +62,31 @@ split or scale later: Valkey consumer groups divide ingestion, PostgreSQL
 advisory locking elects settlement, and projection is level-triggered and
 idempotent. Do not create separate projection, ingestion or billing services.
 
-## Internal production diagnostics
+## Agent access to production
 
-`product/services/ops-mcp` implements an independent internal MCP endpoint for
-read-only production alerts, metrics, logs, dashboard links and EKS status. It
-reuses the Gradiated-only Google connector through Dex, with dedicated MCP OAuth
-grants. Its `ops.gradiated.com` endpoint uses ordinary Route53 DNS and an internal
-ALB reached through the existing Tailscale subnet router; MagicDNS is disabled. It has no customer
-API-key authentication, database credentials, shell/exec or production mutations.
-Argo reconciles the service under Kubernetes `operations/` through the
-`platform/ops-mcp.yaml` Application. EKS uses a private endpoint through the router.
-See the [service README](../product/services/ops-mcp/README.md) for its boundaries.
+`product/services/ops-mcp` is the managed MCP interface for agents accessing
+Gradiated operations. Its HTTPS endpoint, `https://ops.gradiated.com/mcp`,
+requires Gradiated Google login through Dex and scoped MCP OAuth tokens. The authenticated service supports a public ingress; the currently deployed
+private ingress remains until the new auth image is released and verified.
+The subsequent public cutover removes Tailscale as an MCP client requirement;
+the Kubernetes API remains private. Claude Tag,
+Cursor and OpenAI clients share the same Streamable HTTP transport and OAuth
+boundary, with exact hosted callback allowlists and loopback support for local agents.
+
+Current tools read alerts, metrics, bounded service logs, dashboard links and EKS
+status across tenants. They expose no shell, exec, arbitrary HTTP, database access
+or production mutations. Kubernetes permissions remain limited to pod/node listing.
+OAuth registration is stateless; hashed token families persist on a single-writer
+PVC with refresh rotation, revocation and a fixed 30-day authorization lifetime.
+Argo reconciles the service under `operations/` through `platform/ops-mcp.yaml`.
+
+Future administrative operations belong here as individually scoped tools, rather
+than a generic admin UI or command executor. Reads require no server-side action
+confirmation. Writes must enforce authorization and, when required by the action,
+a human approval bound to the exact proposed operation before execution. MCP
+annotations and agent instructions describe this policy but cannot enforce it.
+The [service README](../product/services/ops-mcp/README.md) defines the approval
+contract, client installation and public rollout sequence.
 
 ## Dependency and authority rules
 

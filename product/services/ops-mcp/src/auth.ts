@@ -1,7 +1,15 @@
-import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  timingSafeEqual,
+} from "node:crypto";
 import express, { type Response } from "express";
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
-import { mcpAuthRouter } from "@modelcontextprotocol/sdk/server/auth/router.js";
+import {
+  mcpAuthRouter,
+  createOAuthMetadata,
+} from "@modelcontextprotocol/sdk/server/auth/router.js";
 import type {
   OAuthServerProvider,
   AuthorizationParams,
@@ -11,10 +19,10 @@ import {
   InvalidGrantError,
   InvalidRequestError,
   InvalidTokenError,
-  UnsupportedGrantTypeError,
 } from "@modelcontextprotocol/sdk/server/auth/errors.js";
 import { z } from "zod";
 import { fileURLToPath } from "node:url";
+import { createSessions, type Session } from "./sessions.js";
 import { authPage, consentPage, escaped, pagePolicy } from "./auth-page.js";
 
 const ISSUER = "https://argocd.gradiated.com/api/dex";
@@ -66,7 +74,6 @@ type Code = {
   identity: Identity;
   expires: number;
 };
-type Access = { client: string; identity: Identity; expires: number };
 const cookieOptions = {
   secure: true,
   httpOnly: true,
@@ -82,6 +89,9 @@ export const createAuth = (options: {
   fetch?: typeof fetch;
   keys?: JWTVerifyGetKey;
   now?: () => number;
+  sessionFile?: string;
+  deniedEmails?: string[];
+  audit?: (event: Record<string, unknown>) => void;
 }): {
   router: express.Router;
   provider: OAuthServerProvider;
@@ -101,18 +111,33 @@ export const createAuth = (options: {
     throw new Error("Configured remote OAuth callbacks must use HTTPS");
   const origin = new URL(options.origin).origin;
   const resource = `${origin}/mcp`;
+  const issuer = new URL(origin).href;
   const callback = `${origin}/oauth/callback`;
   const now = options.now ?? Date.now;
   const fetcher = options.fetch ?? fetch;
   const keys =
     options.keys ??
     createRemoteJWKSet(new URL(`${ISSUER}/keys`), { timeoutDuration: 5000 });
-  const clients = new Map<string, OAuthClientInformationFull>();
+  const signClient = (data: string) =>
+    createHmac("sha256", options.clientSecret)
+      .update(`ops-mcp-client-v1:${data}`)
+      .digest("base64url");
+  const sessions = createSessions(
+    signClient("session-key"),
+    options.sessionFile,
+  );
+  const denied = new Set(
+    options.deniedEmails?.map((email) => email.toLowerCase()),
+  );
+  const allowedIdentity = (identity: Identity) => !denied.has(identity.email);
+  const clientMetadata = z.object({
+    redirect_uris: z.array(z.string().url().max(512)).min(1).max(5),
+    client_name: z.string().max(128).optional(),
+  });
   const pending = new Map<string, Pending>();
   const codes = new Map<string, Code>();
-  const access = new Map<string, Access>();
   const prune = () => {
-    for (const map of [pending, codes, access]) {
+    for (const map of [pending, codes]) {
       for (const [key, value] of map)
         if (value.expires <= now()) map.delete(key);
     }
@@ -140,28 +165,94 @@ export const createAuth = (options: {
       throw new InvalidRequestError("Invalid login");
     return flow;
   };
+  // The client ID carries signed public metadata, not a credential. Registration
+  // allocates no server-side state, so anonymous callers cannot fill a client table.
+  const getClient = (id: string): OAuthClientInformationFull | undefined => {
+    if (id.length > 4096) return undefined;
+    const parts = id.split(".");
+    if (parts.length !== 2 || !equal(signClient(parts[0]!), parts[1]!))
+      return undefined;
+    try {
+      const metadata = clientMetadata.parse(
+        JSON.parse(Buffer.from(parts[0]!, "base64url").toString()),
+      );
+      if (!metadata.redirect_uris.every(allowedRedirect)) return undefined;
+      return {
+        ...metadata,
+        client_id: id,
+        token_endpoint_auth_method: "none",
+        grant_types: ["authorization_code", "refresh_token"],
+        response_types: ["code"],
+      };
+    } catch {
+      return undefined;
+    }
+  };
+  const issue = (
+    id: string,
+    grant: Omit<Session, "accessHash" | "accessExpires" | "refreshHash">,
+  ) => {
+    const token = `${id}.${random()}`;
+    const refresh = `${id}.${random()}`;
+    const accessExpires = Math.min(now() + 3_600_000, grant.expires);
+    sessions.put(id, {
+      ...grant,
+      accessHash: hash(token),
+      accessExpires,
+      refreshHash: hash(refresh),
+    });
+    return {
+      access_token: token,
+      refresh_token: refresh,
+      token_type: "Bearer",
+      expires_in: Math.floor((accessExpires - now()) / 1000),
+      scope: "production:read",
+    };
+  };
+  const tokenSession = (token: string) => {
+    if (token.length > 256) return undefined;
+    const id = token.split(".")[0]!;
+    const session = sessions.get(id);
+    if (!session) return undefined;
+    if (
+      session.expires <= now() ||
+      !allowedIdentity(session.identity) ||
+      !getClient(session.client)
+    ) {
+      sessions.remove(id);
+      return undefined;
+    }
+    return { id, session };
+  };
+  const audit = (event: string, session: Pick<Session, "identity">) =>
+    options.audit?.({
+      service: "ops-mcp",
+      event,
+      principal: session.identity.subject,
+      email: session.identity.email,
+    });
   const provider: OAuthServerProvider = {
     clientsStore: {
-      getClient: (id) => clients.get(id),
+      getClient,
       registerClient: async (input) => {
         if (
-          clients.size >= 1000 ||
           JSON.stringify(input).length > 4096 ||
-          input.redirect_uris.length > 5 ||
-          !input.redirect_uris.every(allowedRedirect) ||
           (input.token_endpoint_auth_method &&
             input.token_endpoint_auth_method !== "none")
         )
           throw new InvalidRequestError("Unsupported client registration");
-        const client = {
-          ...input,
-          client_id: random(),
-          client_id_issued_at: Math.floor(now() / 1000),
-          token_endpoint_auth_method: "none" as const,
-          grant_types: ["authorization_code"],
-          response_types: ["code"],
-        };
-        clients.set(client.client_id, client);
+        const parsed = clientMetadata.safeParse(input);
+        if (
+          !parsed.success ||
+          !parsed.data.redirect_uris.every(allowedRedirect)
+        )
+          throw new InvalidRequestError("Unsupported client registration");
+        const data = Buffer.from(JSON.stringify(parsed.data)).toString(
+          "base64url",
+        );
+        const client = getClient(`${data}.${signClient(data)}`);
+        if (!client)
+          throw new InvalidRequestError("Unsupported client registration");
         return client;
       },
     },
@@ -227,44 +318,77 @@ export const createAuth = (options: {
       )
         throw new InvalidGrantError("Invalid code");
       codes.delete(hash(code));
-      if (access.size >= 1000)
-        throw new InvalidGrantError("Session capacity reached");
-      const token = random();
-      access.set(hash(token), {
+      if (!allowedIdentity(grant.identity))
+        throw new InvalidGrantError("Access revoked");
+      sessions.prune(now());
+      const tokens = issue(random(), {
         client: client.client_id,
         identity: grant.identity,
-        expires: now() + 3_600_000,
+        expires: now() + 30 * 24 * 3_600_000,
+        usedRefreshHashes: [],
       });
-      return {
-        access_token: token,
-        token_type: "Bearer",
-        expires_in: 3600,
-        scope: "production:read",
-      };
+      audit("oauth_session_created", grant);
+      return tokens;
     },
-    exchangeRefreshToken: async () => {
-      throw new UnsupportedGrantTypeError(
-        "Sign in again to renew production access",
-      );
+    exchangeRefreshToken: async (client, token, scopes, requestedResource) => {
+      if (
+        (requestedResource && requestedResource.href !== resource) ||
+        scopes?.some((scope) => scope !== "production:read")
+      )
+        throw new InvalidGrantError("Invalid refresh resource or scope");
+      const found = tokenSession(token);
+      if (!found || found.session.client !== client.client_id)
+        throw new InvalidGrantError("Invalid refresh token");
+      const { id, session } = found;
+      const digest = hash(token);
+      if (session.usedRefreshHashes.includes(digest)) {
+        sessions.remove(id);
+        audit("oauth_refresh_replay", session);
+        throw new InvalidGrantError("Refresh token replay; sign in again");
+      }
+      if (!equal(digest, session.refreshHash))
+        throw new InvalidGrantError("Invalid refresh token");
+      if (session.usedRefreshHashes.length >= 1024) {
+        sessions.remove(id);
+        throw new InvalidGrantError("Sign in again to renew production access");
+      }
+      const tokens = issue(id, {
+        ...session,
+        usedRefreshHashes: [...session.usedRefreshHashes, digest],
+      });
+      audit("oauth_session_refreshed", session);
+      return tokens;
     },
     verifyAccessToken: async (token) => {
-      prune();
-      const grant = access.get(hash(token));
-      if (!grant)
+      const found = tokenSession(token);
+      if (
+        !found ||
+        found.session.accessExpires <= now() ||
+        !equal(hash(token), found.session.accessHash)
+      )
         throw new InvalidTokenError("Sign in with Gradiated Google login");
+      const grant = found.session;
       return {
         token,
         clientId: grant.client,
         scopes: ["production:read"],
-        expiresAt: Math.floor(grant.expires / 1000),
+        expiresAt: Math.floor(grant.accessExpires / 1000),
         resource: new URL(resource),
         extra: grant.identity,
       };
     },
     revokeToken: async (client, request) => {
-      const grant = access.get(hash(request.token));
-      if (grant?.client === client.client_id)
-        access.delete(hash(request.token));
+      const found = tokenSession(request.token);
+      if (!found || found.session.client !== client.client_id) return;
+      const digest = hash(request.token);
+      if (
+        equal(digest, found.session.accessHash) ||
+        equal(digest, found.session.refreshHash) ||
+        found.session.usedRefreshHashes.includes(digest)
+      ) {
+        sessions.remove(found.id);
+        audit("oauth_session_revoked", found.session);
+      }
     },
   };
   const router = express.Router();
@@ -280,15 +404,38 @@ export const createAuth = (options: {
       ),
     });
   });
+  // Apply small body limits before the SDK's parsers on public OAuth endpoints.
+  router.use("/register", express.json({ limit: "4kb" }));
   router.use(
-    mcpAuthRouter({
-      provider,
-      issuerUrl: new URL(origin),
-      resourceServerUrl: new URL(resource),
-      scopesSupported: ["production:read"],
-      resourceName: "Gradiated production",
-    }),
+    ["/token", "/revoke", "/authorize"],
+    express.urlencoded({ extended: false, limit: "8kb" }),
   );
+  const oauthOptions = {
+    provider,
+    issuerUrl: new URL(origin),
+    resourceServerUrl: new URL(resource),
+    scopesSupported: ["production:read"],
+    resourceName: "Gradiated production",
+  };
+  router.get("/.well-known/oauth-authorization-server", (_req, res) => {
+    res.json({
+      ...createOAuthMetadata(oauthOptions),
+      authorization_response_iss_parameter_supported: true,
+      token_endpoint_auth_methods_supported: ["none"],
+      revocation_endpoint_auth_methods_supported: ["none"],
+    });
+  });
+  // SDK-validated error redirects must carry the same RFC 9207 issuer as success.
+  router.use("/authorize", (_req, res, next) => {
+    const location = res.location.bind(res);
+    res.location = (url: string) => {
+      const target = new URL(url);
+      target.searchParams.set("iss", issuer);
+      return location(target.href);
+    };
+    next();
+  });
+  router.use(mcpAuthRouter(oauthOptions));
   router.post(
     "/oauth/consent",
     express.urlencoded({ extended: false, limit: "4kb" }),
@@ -368,6 +515,11 @@ export const createAuth = (options: {
         .object({ id_token: z.string().max(16_384) })
         .parse(await response.json());
       const identity = await verifyStaff(tokens.id_token, flow.nonce, keys);
+      if (!allowedIdentity(identity))
+        throw new InvalidGrantError("Access revoked");
+      prune();
+      if (codes.size >= 100)
+        throw new InvalidGrantError("Login capacity reached");
       const code = random();
       codes.set(hash(code), {
         client: flow.client,
@@ -378,6 +530,7 @@ export const createAuth = (options: {
       res.clearCookie(COOKIE, cookieOptions);
       const target = new URL(flow.params.redirectUri);
       target.searchParams.set("code", code);
+      target.searchParams.set("iss", issuer);
       if (flow.params.state)
         target.searchParams.set("state", flow.params.state);
       res.redirect(target.href);

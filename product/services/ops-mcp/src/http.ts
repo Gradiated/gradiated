@@ -42,7 +42,16 @@ export const createHttp = (options: {
 
   const app = express();
   app.disable("x-powered-by");
+  // The only ingress hop is the ALB, which appends the actual caller to XFF.
+  // Trust only that last hop, never the caller-supplied leftmost address.
+  app.set("trust proxy", 1);
   app.use((request, response, next) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("Strict-Transport-Security", "max-age=31536000");
+    if (request.url.length > 8192) {
+      response.status(414).end();
+      return;
+    }
     if (request.url === "/healthz") {
       next();
       return;

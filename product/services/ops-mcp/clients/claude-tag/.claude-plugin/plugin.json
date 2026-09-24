@@ -1,0 +1,5 @@
+{
+  "name": "gradiated-ops",
+  "version": "0.1.0",
+  "description": "Authenticated Gradiated production diagnostics: alerts, metrics, logs and workload status."
+}

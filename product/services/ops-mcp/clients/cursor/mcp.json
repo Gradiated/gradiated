@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "gradiated-ops": {
+      "type": "http",
+      "url": "https://ops.gradiated.com/mcp"
+    }
+  }
+}

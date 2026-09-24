@@ -63,6 +63,10 @@ job "glm-5-3-flash" {
         static       = 8000
         host_network = "loopback"
       }
+      port "warmup" {
+        static       = 8010
+        host_network = "loopback"
+      }
     }
     # Starts with the allocation and is restarted by Nomad independently of vLLM.
     # A separate Unix user keeps the reporting credential out of the runtime.
@@ -89,7 +93,7 @@ job "glm-5-3-flash" {
         DESMOND_MODEL              = "z-ai/glm-5.3-flash"
         DESMOND_MODEL_REVISION     = "84c6a6aa9497188e15a635ba793b0f95a79b1033"
         DESMOND_RUNTIME_HOST       = "127.0.0.1"
-        DESMOND_RUNTIME_PORT       = "8000"
+        DESMOND_RUNTIME_PORT       = "8010"
         DESMOND_CONTROL_HOST       = "127.0.0.1"
         DESMOND_CONTROL_PORT       = "9090"
         DESMOND_STATUS_URL         = var.status_url
@@ -171,7 +175,7 @@ job "glm-5-3-flash" {
         name     = "glm-5-3-flash-runtime"
         provider = "nomad"
         address  = "127.0.0.1"
-        port     = "runtime"
+        port     = "warmup"
         check {
           name     = "runtime-health"
           type     = "http"

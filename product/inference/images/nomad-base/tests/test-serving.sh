@@ -14,7 +14,7 @@ done
 status=0
 GRADIATED_RUNTIME_ACCESS_TOKEN='invalid"token' bash /opt/gradiated/bin/configure-serving 2>/dev/null || status=$?
 [[ $status == 64 ]]
-runuser -u desmond -- nginx -c /etc/gradiated/runtime-proxy.conf -g 'daemon off;' &
+runuser -u desmond -- bash -c 'ulimit -S -n 1024; exec nginx -c /etc/gradiated/runtime-proxy.conf -g "daemon off;"' &
 proxy=$!
 trap 'kill -TERM "$proxy" 2>/dev/null || true; wait "$proxy" 2>/dev/null || true' EXIT
 
@@ -35,4 +35,11 @@ done
 [[ $(request wrong-token) == *' 401 '* ]]
 # No model runs in this test: an authenticated request must reach the absent upstream.
 [[ $(request "$GRADIATED_RUNTIME_ACCESS_TOKEN") == *' 502 '* ]]
-echo 'Serving proxy authentication and credential isolation passed'
+master=$(cat /tmp/gradiated-runtime-proxy.pid)
+workers=$(cat "/proc/$master/task/$master/children")
+[[ -n "$workers" ]]
+for worker in $workers; do
+  limit=$(awk '$1 == "Max" && $2 == "open" && $3 == "files" { print $4 }' "/proc/$worker/limits")
+  [[ "$limit" == unlimited || "$limit" -ge 8192 ]]
+done
+echo 'Serving proxy authentication, credential isolation and file limits passed'

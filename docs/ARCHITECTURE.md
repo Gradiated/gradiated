@@ -23,13 +23,11 @@ worker (TypeScript/Node) ---> PostgreSQL / Valkey / ClickHouse
 direct API key or OpenRouter key (`api.gradiated.com`)
   |
   v
-public ALB path rule ---> gateway (Rust, EKS) ---> private/restricted TLS
-                    |                              |
-                    v
-                  Valkey
-                                                   v
-                                    selected SGLang model runtime
-                                    external provider cluster
+public ALB ---> proxy ---> gateway (Rust, EKS) ---> private/restricted TLS
+                             |                         |
+                             v                         v
+                           Valkey          selected SGLang model runtime
+                                           external provider cluster
 ```
 
 There is no general gateway, provider router, model alias layer, fallback
@@ -178,9 +176,10 @@ secret API-key material after the one-time creation response.
 
 Production hosts the console at `console.gradiated.com` and all public API
 traffic at `api.gradiated.com`. Local development runs Vite on port 3000 and
-proxies API requests to port 3001. On the public ALB, the inference paths route
-to the Rust gateway. The gateway also keeps the legacy `/openai/v1/*` route.
-All other paths route to the TypeScript API service. The console does not proxy
+proxies API requests to port 3001. On the public ALB, `/api`, `/health` and
+`/docs` route to the TypeScript API service. Every other path, including the
+legacy `/openai/v1/*` route, goes to the Rust proxy, which forwards hosted
+requests to the gateway inside the cluster. The console does not proxy
 inference requests through the API service. The static host must return
 `index.html` for console routes so browser refreshes preserve client-side
 routing.
@@ -371,7 +370,7 @@ are independent candidates for the exact model.
 | external Kubernetes provider  | `sglang-runtime`             | dedicated GPU capacity                                                 | provider-owned cluster/node pool; separate from EKS                                                    |
 | ECR                           | CI/Argo                      | immutable api/worker and gateway images                                | image digest deployment only                                                                           |
 | Secrets Manager               | EKS and deployment bootstrap | database, channel, upstream and remote-cluster credentials             | secrets are injected at runtime, never committed                                                       |
-| Route 53 / ACM / ALB          | `api`, `gateway`, `metabase` | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service       |
+| Route 53 / ACM / ALB          | `api`, `proxy`, `metabase`   | DNS, wildcard TLS and Gateway API routing                              | AWS Load Balancer Controller owns one public ALB; host and path routes select the target service       |
 | S3 / CloudFront               | `console`                    | static console hosting and SPA fallback                                | no application API or inference proxy                                                                  |
 
 Production delivery follows [DEPLOYMENT.md](DEPLOYMENT.md). GitHub Actions

@@ -393,23 +393,21 @@ training inputs and evaluation references.
 ## Rollout
 
 1. **Local and CI.** Unit tests and the end-to-end suite pass.
-2. **Deploy dark.** Deploy the proxy with no public route. Run synthetic hosted
-   requests through it inside the cluster and compare with direct gateway
-   results.
-3. **Relay canary.** Send one design-partner workspace's relay traffic through
-   the proxy with a bounded, customer-approved provider spend cap. Check stream
-   bytes, errors, cancellation and latency.
-4. **Weighted shift.** Move the public inference route from the gateway target
-   group to the proxy target group with ALB weights: 1%, 10%, 50%, 100%. Hold
-   each step long enough to see the error-budget burn rate. The rollback is the
-   weight change.
-5. **Gateway internal.** Remove the public route to the gateway and remove its
-   relay code.
-6. **Fallback.** Enable fallback for one workspace, then for every workspace with
+2. **Deploy dark.** Deploy the proxy with no public route. Check that the pods
+   are ready and that hosted and relay requests work inside the cluster.
+3. **Public route.** Send every `api.gradiated.com` path except `/api`,
+   `/health` and `/docs` to the proxy, and remove the gateway's public route.
+   From then on, each merge rolls the proxy out like any other service. The
+   rollback is to revert the route change.
+4. **Gateway relay removal.** Remove the gateway's relay code.
+5. **Fallback.** Enable fallback for one workspace, then for every workspace with
    a fallback model.
+
+Canary and weighted deploys come later.
 
 Before real provider tests, define exact models, the customer-key spend cap,
 request count, timeout and cleanup.
+
 ## Workspace settings and request override
 
 Add a described, strict Zod schema for `workspaces.proxy_settings` JSONB:
@@ -581,10 +579,9 @@ changes. It must not claim that a task owns that baseline.
    and gateway binaries against PostgreSQL, Valkey, a mock runtime and a mock
    provider.
 2. **Deployment.** Proxy workload, service account, database role, secret,
-   node group, disruption budget, target group and the weighted route in
-   Terraform and Argo manifests. Dashboards and burn-rate alerts. Rollout steps
-   2 to 4.
-3. **Gateway internal.** Remove the gateway's relay code and public route.
+   disruption budget, target group and the public route in Terraform and Argo
+   manifests. Dashboards and burn-rate alerts. Rollout steps 2 and 3.
+3. **Gateway internal.** Remove the gateway's relay code.
 4. **Relay usage record.** Exempt generation events from the proxy through the
    existing ingestion path. Verify zero debits, deduplication, unknown usage and
    unchanged hosted billing.

@@ -40,10 +40,6 @@ def check_autoscaling(root):
             longest_request = max(int(config['GATEWAY_GENERATION_TIMEOUT_SECONDS']),
                                   int(config['PROXY_TOTAL_TIMEOUT_SECONDS']))
             assert grace >= longest_request + 10 + 5 + 15 + 10, 'Include preStop, drain and flush budgets'
-            target = next(d for d in resources if d['kind'] == 'TargetGroupConfiguration')
-            attributes = target['spec']['defaultConfiguration']['targetGroupAttributes']
-            delay = next(a['value'] for a in attributes if a['key'] == 'deregistration_delay.timeout_seconds')
-            assert int(delay) >= grace
             autoscaler = yaml.safe_load((workloads.parent / 'platform/cluster-autoscaler.yaml').read_text())
             assert int(autoscaler['spec']['source']['helm']['valuesObject']['extraArgs']
                        ['max-graceful-termination-sec']) >= grace

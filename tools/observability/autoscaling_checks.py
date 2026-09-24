@@ -6,6 +6,19 @@ def check_autoscaling(root):
     workloads = root / 'infra/environments/prod/us-east-1/kubernetes/workloads'
     applications = {d['metadata']['name']: d for d in yaml.safe_load_all(
         (workloads.parent / 'platform/workloads.yaml').read_text())}
+    namespace = yaml.safe_load((workloads / 'namespace.yaml').read_text())
+    assert namespace['metadata']['labels']['elbv2.k8s.aws/pod-readiness-gate-inject'] == 'enabled'
+    alb = yaml.safe_load((workloads.parent / 'platform/aws-load-balancer-controller.yaml').read_text())['spec']
+    values = alb['source']['helm']['valuesObject']
+    assert values['enablePodReadinessGateInject'] is True
+    assert values['podMutatorWebhookConfig']['failurePolicy'] == 'Fail'
+    assert 'RespectIgnoreDifferences=true' in alb['syncPolicy']['syncOptions']
+    ignored = {r['kind']: r for r in alb['ignoreDifferences']}
+    assert ignored['Secret']['name'] == 'aws-load-balancer-tls'
+    assert ignored['Secret']['jsonPointers'] == ['/data']
+    for kind in ('MutatingWebhookConfiguration', 'ValidatingWebhookConfiguration'):
+        assert ignored[kind]['name'] == 'aws-load-balancer-webhook'
+        assert ignored[kind]['jqPathExpressions'] == ['.webhooks[].clientConfig.caBundle']
     check_headroom(workloads)
     tests = []
     for service in ('api', 'gateway', 'worker'):
@@ -21,6 +34,7 @@ def check_autoscaling(root):
         resources = list(yaml.safe_load_all((workloads / f'{service}.yaml').read_text()))
         deployment = next(d for d in resources if d['kind'] == 'Deployment')
         budget = next(d for d in resources if d['kind'] == 'PodDisruptionBudget')
+        assert deployment['spec']['strategy']['rollingUpdate']['maxUnavailable'] == 0
         if service == 'gateway':
             config = next(d for d in resources if d['kind'] == 'ConfigMap')['data']
             grace = deployment['spec']['template']['spec']['terminationGracePeriodSeconds']

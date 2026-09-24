@@ -91,9 +91,16 @@ def main():
                  'ScalingHeadroomDepleted' if fires else None,
                  ['ScalingHeadroomDepleted'], labels, duration)
 
-    for desired, limited, fires in [(2, 1, False), (20, 0, False), (20, 1, True)]:
-        labels = {'namespace': 'gradiated', 'horizontalpodautoscaler': 'keda-hpa-api'}
-        selector = 'namespace="gradiated",horizontalpodautoscaler="keda-hpa-api"'
+    for hpa, alert, eval_time, desired, limited, fires in [
+        ('keda-hpa-api', 'AutoscalingLimited', '10m', 2, 1, False),
+        ('keda-hpa-api', 'AutoscalingLimited', '10m', 20, 0, False),
+        ('keda-hpa-api', 'AutoscalingLimited', '10m', 20, 1, True),
+        ('keda-hpa-proxy', 'RequestPathAutoscalingLimited', '3m', 20, 1, True),
+        ('keda-hpa-proxy', 'RequestPathAutoscalingLimited', '1m', 20, 1, False),
+        ('keda-hpa-gateway', 'RequestPathAutoscalingLimited', '3m', 2, 1, False),
+    ]:
+        labels = {'namespace': 'gradiated', 'horizontalpodautoscaler': hpa}
+        selector = f'namespace="gradiated",horizontalpodautoscaler="{hpa}"'
         inputs = [
             {'series': 'kube_horizontalpodautoscaler_status_desired_replicas{' + selector + '}',
              'values': f'{desired}+0x30'},
@@ -102,10 +109,9 @@ def main():
             {'series': 'kube_horizontalpodautoscaler_status_condition{' + selector +
              ',condition="ScalingLimited",status="true"}', 'values': f'{limited}+0x30'},
         ]
-        scenario(f'autoscaling cap desired={desired} limited={limited}', inputs,
-                 'AutoscalingLimited' if fires else None,
-                 ['AutoscalingLimited'],
-                 {**labels, 'condition': 'ScalingLimited', 'status': 'true'}, '10m')
+        scenario(f'autoscaling cap {hpa} desired={desired} limited={limited} at {eval_time}', inputs,
+                 alert if fires else None, [alert],
+                 {**labels, 'condition': 'ScalingLimited', 'status': 'true'}, eval_time)
 
     controllers = [('keda', 'keda-operator'), ('keda', 'keda-operator-metrics-apiserver'),
                    ('kube-system', 'metrics-server'), ('kube-system', 'cluster-autoscaler')]
@@ -249,6 +255,51 @@ def main():
                   {'series': 'gradiated_proxy_requests_total{destination="gateway",status="200"}',
                    'values': f'0+{ok}x30'}]
         scenario('proxy errors: ' + name, inputs, proxy_errors if fires else None, [proxy_errors], eval_time='5m')
+
+    proxy_4xx = 'ProxyHigh4xxRate'
+    for name, refused, ok, destination, fires in [
+        ('15% proxy 4xx', 45, 255, 'local', True),
+        ('5% proxy 4xx', 15, 285, 'local', False),
+        ('gateway 4xx are excluded', 150, 150, 'gateway', False),
+        ('low traffic stays quiet', 1, 0, 'local', False),
+    ]:
+        inputs = [{'series': f'gradiated_proxy_requests_total{{destination="{destination}",status="401"}}',
+                   'values': f'0+{refused}x30'},
+                  {'series': 'gradiated_proxy_requests_total{destination="gateway",status="200"}',
+                   'values': f'0+{ok}x30'}]
+        scenario('proxy 4xx: ' + name, inputs, proxy_4xx if fires else None, [proxy_4xx], eval_time='12m')
+
+    capacity = 'ProxyNearCapacity'
+    for name, in_flight, fires in [('above 80%', 3300, True), ('below 80%', 3000, False)]:
+        inputs = [{'series': f'gradiated_proxy_in_flight{{pod="proxy-a",destination="{destination}"}}',
+                   'values': f'{in_flight // 2}+0x30'} for destination in ('gateway', 'anthropic')]
+        scenario('proxy capacity: ' + name, inputs, capacity if fires else None, [capacity],
+                 {'pod': 'proxy-a'}, '5m')
+
+    oom = 'ContainerOOMKilled'
+    container = 'namespace="gradiated",pod="proxy-a",container="proxy"'
+    for name, reason, fires in [('out-of-memory restart', 'OOMKilled', True),
+                                ('restart without out-of-memory kill', 'Error', False)]:
+        inputs = [{'series': 'kube_pod_container_status_last_terminated_reason{' + container + f',reason="{reason}"}}',
+                   'values': '1+0x20'},
+                  {'series': 'kube_pod_container_status_restarts_total{' + container + '}',
+                   'values': '0+0x5 1+0x14'}]
+        scenario('OOM: ' + name, inputs, oom if fires else None, [oom],
+                 {'namespace': 'gradiated', 'pod': 'proxy-a', 'container': 'proxy', 'reason': 'OOMKilled'}, '4m')
+    scenario('OOM: old kill without a recent restart', [
+        {'series': 'kube_pod_container_status_last_terminated_reason{' + container + ',reason="OOMKilled"}',
+         'values': '1+0x40'},
+        {'series': 'kube_pod_container_status_restarts_total{' + container + '}', 'values': '1+0x40'},
+    ], None, [oom], eval_time='15m')
+
+    memory = 'ContainerMemoryHigh'
+    for name, used, fires in [('above 85%', 900, True), ('below 85%', 700, False)]:
+        inputs = [{'series': 'container_memory_working_set_bytes{' + container + ',image="proxy"}',
+                   'values': f'{used}+0x30'},
+                  {'series': 'kube_pod_container_resource_limits{' + container + ',resource="memory"}',
+                   'values': '1000+0x30'}]
+        scenario('memory: ' + name, inputs, memory if fires else None, [memory],
+                 {'namespace': 'gradiated', 'pod': 'proxy-a', 'container': 'proxy'}, '8m')
 
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:

@@ -11,8 +11,6 @@ struct Snapshot {
     refreshed_at: Instant,
 }
 
-/// The set of hosted model IDs. A failed refresh keeps the last good set, so a
-/// database outage never changes where requests go.
 #[derive(Clone)]
 pub struct HostedCatalog {
     snapshot: Arc<RwLock<Option<Arc<Snapshot>>>>,
@@ -33,7 +31,6 @@ impl HostedCatalog {
         self.current().is_some()
     }
 
-    /// Matches the gateway, which looks hosted models up by their lowercase name.
     pub fn is_hosted(&self, model: &str) -> bool {
         self.current()
             .is_some_and(|snapshot| snapshot.models.contains(&model.to_ascii_lowercase()))
@@ -44,8 +41,6 @@ impl HostedCatalog {
             .map(|snapshot| snapshot.refreshed_at.elapsed())
     }
 
-    /// The snapshot is as old as the moment its query started, not when it finished,
-    /// so a slow query never makes the catalog look fresher than its data.
     pub async fn refresh(&self) -> bool {
         let started = Instant::now();
         let Ok(models) = self.directory.hosted_models().await else {

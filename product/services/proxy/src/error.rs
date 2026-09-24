@@ -13,8 +13,6 @@ pub enum Protocol {
     OpenAi,
 }
 
-/// Errors the proxy answers itself. Every other error comes from the gateway or
-/// the provider and crosses unchanged. Codes match the gateway's where both exist.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ProxyError {
     InvalidRequest,

@@ -53,9 +53,6 @@ struct Entry {
     record: IdentityRecord,
 }
 
-/// Authenticates Gradiated keys for relays. A fresh entry answers at once. When
-/// the directory fails, an entry younger than the stale grace still answers, so a
-/// database outage does not stop relays for keys the proxy has already seen.
 #[derive(Clone)]
 pub struct IdentityCache {
     directory: Arc<dyn Directory>,
@@ -124,10 +121,6 @@ impl IdentityCache {
             .map(|entry| entry.record.clone())
     }
 
-    /// Concurrent requests for one key share a single query. A saturated load
-    /// budget counts as an unavailable directory, so a flood of unknown keys
-    /// cannot exhaust the database pool. The query runs in its own task, so it
-    /// finishes and releases its permit even when every waiting client disconnects.
     async fn load(&self, digest: Digest) -> Result<Option<IdentityRecord>, DirectoryUnavailable> {
         let load = locked(&self.loads)
             .entry(digest)
@@ -137,6 +130,7 @@ impl IdentityCache {
                 let metrics = self.metrics.clone();
                 let loads = self.loads.clone();
 
+                // Spawned so an abandoned load still finishes and releases its permit.
                 let task = tokio::spawn(async move {
                     let result = match permits.try_acquire_owned() {
                         Ok(_permit) => {

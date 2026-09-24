@@ -1,10 +1,10 @@
 # Proxy feature: implementation plan
 
-Status: step 1 is implemented in `product/services/proxy` and is not deployed.
-The proxy relays any request that carries a customer provider key and does not
-name a hosted model, and forwards every other request to the gateway. Its unit and end-to-end suites pass. Fallback,
-the relay usage record, capture and reporting are not implemented. The gateway
-still contains the earlier Anthropic relay; step 3 removes it.
+Status: steps 1 to 3 are done. The proxy serves all public inference traffic on
+`api.gradiated.com`: it relays any request that carries a customer provider key
+and does not name a hosted model, and forwards every other request to the
+gateway, which no longer relays. Fallback, capture and reporting are not
+implemented.
 
 This plan owns proxy scope, topology and build order. It supersedes earlier
 proposals for platform-funded provider calls, task-owned fallback settings and
@@ -22,7 +22,7 @@ a relay inside the gateway. Supporting transport rules are in
 | Identity on relay | The Gradiated key is required. The proxy reads PostgreSQL through an in-process cache with a stale grace window. |
 | Fallback trigger | A gateway failure that is ours, before the first response byte reaches the customer. |
 | Balance and rate-limit errors | Pass through. They are policy, not failure. |
-| Traces | A `traces` table apart from `generations`, joined by `generation_id`. |
+| Traces | Generation contents in regional S3 batches, keyed by `generation_id`; no database table. See [TRACES_PLAN.md](TRACES_PLAN.md). |
 
 Proposed values that need measurement before release are marked as proposed.
 
@@ -184,8 +184,8 @@ the gateway reporting queue and cold-load failures as statuses.
 LLM inference has no side effects, so a hosted attempt followed by a provider
 call can cost money twice but cannot produce a wrong result. The gateway
 finalizes a replaced hosted generation as failed with zero charge. The proxy
-records the fallback, its reason and the served model in the relay usage record,
-and returns `x-gradiated-served-model` and `x-gradiated-fallback-reason` headers.
+records the fallback, its reason and the served model in the generation's
+contents, and returns `x-gradiated-served-model` and `x-gradiated-fallback-reason` headers.
 
 Fallback uses the original provider-protocol request. The proxy replaces only
 the top-level `model` value with a bounded token-span replacement and keeps
@@ -371,26 +371,11 @@ alerting target.
 
 ## Capture and traces
 
-Capture is opt-in for each workspace. The proxy copies request and response
-bytes into a bounded, non-blocking queue that sends them to a separate collector
-service. When the queue is full, the proxy drops the copy, never the request.
-The collector owns parsing, schema, storage and retention.
-
-The proxy creates the `generation_id` at the front door and passes it to the
-gateway, so `generations` and `traces` join without guessing.
-
-| Table | Holds | Rows |
-| --- | --- | --- |
-| `generations` | Facts about a call: identity, model, route, status, usage, charge, latency, fallback reason | Exactly one for each call the proxy or gateway sees. Always written. |
-| `traces` | Content: messages, response, tools, and training metadata | One for each captured call, plus uploaded and imported traces. `generation_id` is nullable, and `source` is `proxy`, `hosted`, `upload` or `import`. |
-
-Billing, usage and reporting read `generations` only. Training reads `traces`
-only. The two tables have different lifecycles: billing records are immutable,
-and content must expire and be deletable on request.
-
-OpenAI and Anthropic outputs cannot be training targets. A trace from a frontier
-call carries `trainable = false` for its response. Its prompt can still supply
-training inputs and evaluation references.
+[TRACES_PLAN.md](TRACES_PLAN.md) owns capture, storage and training input. In
+short: the proxy mints `generation_id` for every request and passes it to the
+gateway; generation contents are stored in regional S3 batches; the
+`generations` table holds hosted usage and billing only, and relays have no
+`generations` row. OpenAI and Anthropic outputs are never training targets.
 
 ## Rollout
 
@@ -584,17 +569,13 @@ changes. It must not claim that a task owns that baseline.
    disruption budget, target group and the public route in Terraform and Argo
    manifests. Dashboards and alerts. Rollout steps 2 and 3.
 3. **Gateway internal.** Remove the gateway's relay code.
-4. **Relay usage record.** Exempt generation events from the proxy through the
-   existing ingestion path. Verify zero debits, deduplication, unknown usage and
-   unchanged hosted billing.
-5. **Fallback.** Gradiated extensions as headers, the gateway fallback header
+4. **Fallback.** Gradiated extensions as headers, the gateway fallback header
    and first-token commit, the model swap, the circuit breaker, workspace
    settings and the request override. End-to-end tests for each row of the
    fallback table. Portable reasoning output from the gateway, held by the
    real-provider thread continuity suite.
-6. **Capture.** The byte-copy queue, the collector, the `traces` table and the
-   workspace opt-in.
-7. **Task integration and reporting.** Task production targets, price
+5. **Capture.** See the build sequence in [TRACES_PLAN.md](TRACES_PLAN.md).
+6. **Task integration and reporting.** Task production targets, price
    snapshots, the estimator, API fields and console views.
 
 Each step ends with focused tests and a local demonstration. No per-workspace

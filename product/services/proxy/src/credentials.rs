@@ -14,10 +14,7 @@ pub enum Provider {
     OpenAi,
 }
 
-/// Every provider key format the proxy relays. Anthropic owns the whole `sk-ant-`
-/// namespace. OpenAI shares `sk-` with other providers (DeepSeek, OpenRouter's
-/// `sk-or-`), so only its own formats count; anything else is refused rather than
-/// sent to the wrong provider. Add a row when OpenAI introduces a new format.
+/// OpenAI shares `sk-` with other providers, so only its own formats count.
 const KEY_FORMATS: &[(&str, Provider)] = &[
     ("sk-ant-", Provider::Anthropic),
     ("sk-proj-", Provider::OpenAi),
@@ -37,7 +34,6 @@ fn is_legacy_openai_key(key: &str) -> bool {
 }
 
 impl Provider {
-    /// Recognizes a key format, not whether the provider accepts the key.
     fn from_key(key: &str) -> Option<Self> {
         let known = KEY_FORMATS.iter().find_map(|(prefix, provider)| {
             key.strip_prefix(prefix)
@@ -75,8 +71,6 @@ impl ApiKey<'_> {
 
 pub struct ProviderKey {
     pub provider: Provider,
-    /// Relays keep the key where the client sent it: an OAuth token must stay in
-    /// `Authorization` and an API key in `x-api-key`.
     pub header: HeaderName,
 }
 
@@ -89,10 +83,6 @@ pub struct Credentials<'a> {
 #[error("invalid API key")]
 pub struct InvalidCredentials;
 
-/// Reads the Gradiated key and an optional provider key from the standard
-/// headers. The format of each value decides what it is; header position does not.
-/// A provider key need only be a visible-ASCII token, so a new provider alphabet
-/// still relays; Gradiated keys keep their own strict format.
 pub fn extract(headers: &HeaderMap) -> Result<Credentials<'_>, InvalidCredentials> {
     let workspace = single_value(headers, &X_GRADIATED_API_KEY)?
         .map(checked_secret)
@@ -165,7 +155,6 @@ fn single_value<'a>(
         .map_err(|_| rejected("unreadable_header"))
 }
 
-/// The auth scheme is case-insensitive (RFC 9110 section 11.1).
 pub fn bearer_token(value: &str) -> Option<&str> {
     let (scheme, token) = value.split_once(' ')?;
 
@@ -186,7 +175,6 @@ fn checked_secret(value: &str) -> Result<&str, InvalidCredentials> {
     }
 }
 
-/// The public error never says why a credential failed; the reason is logged at debug level.
 fn rejected(reason: &'static str) -> InvalidCredentials {
     tracing::debug!(error_code = reason, "credential rejected");
 
@@ -248,8 +236,6 @@ mod tests {
         assert_eq!(provider_of(&[("authorization", "Bearer grad_a")]), None);
     }
 
-    /// Other providers share the `sk-` namespace; sending their keys to OpenAI or
-    /// Anthropic would leak them to the wrong company.
     #[test]
     fn a_key_in_no_known_format_is_refused() {
         for key in [

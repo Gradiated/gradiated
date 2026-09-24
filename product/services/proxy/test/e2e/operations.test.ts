@@ -160,3 +160,53 @@ describe("telemetry", () => {
     }
   });
 });
+
+describe("generation identifiers", () => {
+  const UUID_V7 =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it("mints the hosted generation's identifier and ignores one from the client", async () => {
+    const instance = await fixture.hostedCase();
+    const supplied = "0190a8f2-7c3e-7d4a-8b1c-2e3f4a5b6c7d";
+
+    const response = await fixture.proxy.client.post(CHAT.path, {
+      headers: { ...instance.headers, "x-gradiated-generation-id": supplied },
+      json: CHAT.body(instance.model),
+    });
+
+    expect(response.status, response.text).toBe(200);
+    const id = response.headers["x-generation-id"];
+    expect(id).toMatch(UUID_V7);
+    expect(id).not.toBe(supplied);
+    await instance.settled(response);
+  });
+
+  it("gives every kind of response its own identifier", async () => {
+    const instance = await fixture.hostedCase();
+    const responses = await Promise.all([
+      fixture.proxy.client.post(CHAT.path, {
+        headers: instance.headers,
+        json: CHAT.body(instance.model),
+      }),
+      fixture.proxy.client.post(MESSAGES.path, {
+        headers: relayHeaders(instance, "anthropic"),
+        json: MESSAGES.body(providerModel("anthropic")),
+      }),
+      fixture.proxy.client.post(CHAT.path, {
+        headers: { authorization: "Bearer sk-or-v1-0123456789abcdef" },
+        json: CHAT.body(instance.model),
+      }),
+      fixture.proxy.client.get("/metrics"),
+    ]);
+
+    expect(responses.map((response) => response.status)).toEqual([
+      200, 200, 401, 404,
+    ]);
+    const ids = responses.map(
+      (response) => response.headers["x-generation-id"],
+    );
+    for (const id of ids) expect(id).toMatch(UUID_V7);
+    expect(new Set(ids).size).toBe(ids.length);
+    await instance.settled(responses[0]!);
+  });
+});

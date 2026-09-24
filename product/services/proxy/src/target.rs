@@ -5,9 +5,6 @@ use serde::{
     Deserializer,
 };
 
-/// Reads the top-level `model` string without building the rest of the document.
-/// Returns `None` for anything the gateway must judge instead: a body that is not
-/// a JSON object, a missing, empty or non-string `model`, or a duplicate `model`.
 pub fn model(body: &[u8]) -> Option<String> {
     let mut deserializer = serde_json::Deserializer::from_slice(body);
     let model = deserializer.deserialize_map(ModelVisitor).ok()?;

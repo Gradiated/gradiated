@@ -30,8 +30,6 @@ pub struct Limits {
     pub provider: Deadlines,
 }
 
-/// `headers` bounds the wait for the response head, `idle` the gap between body
-/// chunks, and `total` the whole exchange.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Deadlines {
     pub connect: Duration,
@@ -91,18 +89,13 @@ struct Environment {
 
     #[serde(default = "default_gateway_connect_seconds")]
     proxy_gateway_connect_seconds: u64,
-    /// A non-streaming hosted response arrives only when its generation ends, so
-    /// by default this covers the gateway's whole generation deadline.
     proxy_gateway_header_seconds: Option<u64>,
     #[serde(default = "default_provider_connect_seconds")]
     proxy_provider_connect_seconds: u64,
-    /// Providers publish no response deadline of their own, so a relay waits as
-    /// long as the whole exchange may run unless these are set lower.
     proxy_provider_header_seconds: Option<u64>,
     proxy_idle_seconds: Option<u64>,
     #[serde(default = "default_total_seconds")]
     proxy_total_seconds: u64,
-    /// A slow upload holds an in-flight slot, so the body has its own short deadline.
     #[serde(default = "default_body_read_seconds")]
     proxy_body_read_seconds: u64,
 }
@@ -267,8 +260,6 @@ impl TryFrom<Environment> for ProxyConfig {
     }
 }
 
-/// Providers are reached over HTTPS. Plain HTTP is accepted only for loopback,
-/// which is where local test providers listen. The gateway is inside the cluster.
 fn bare_origin(name: &'static str, origin: String, provider: bool) -> Result<String, ConfigError> {
     let uri = origin
         .parse::<Uri>()
@@ -363,8 +354,7 @@ fn default_body_read_seconds() -> u64 {
     60
 }
 
-/// The official SDKs time out after 600 seconds, and the pod drain window is
-/// sized from this total, so raising it slows every rollout.
+/// The official SDKs time out after 600 seconds.
 fn default_total_seconds() -> u64 {
     630
 }

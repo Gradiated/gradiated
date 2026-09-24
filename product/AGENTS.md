@@ -32,12 +32,29 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
 - Do not add a blank line after every statement. Use spacing to show logical
   groups. Formatters do not replace this readability check.
 - Do not edit generated code or imported upstream code only to change spacing.
-- Add comments only when the code does not make the necessary information
-  clear. Explain a constraint, reason, or non-obvious behavior; do not restate
-  the code.
-- Write comments about the code as it stands. Make each comment useful without
-  the current conversation. Do not refer to session discussions, user requests,
-  or the history of an edit.
+
+## Comments
+
+The default is no comment. Names, types and small functions carry the meaning.
+
+- Write a comment only when a reader cannot tell what the code does, or would
+  get it wrong, without it. Examples: a vendor or wire-format quirk, a magic
+  value, or a workaround that looks like a mistake.
+- Do not write doc comments that restate a name, explain why a function exists,
+  describe how components fit together, or narrate the next lines. The code and
+  the plans in `docs/` already say that.
+- Keep each comment to one or two lines, next to the line it explains.
+- Before you finish a change, reread every comment you added and delete each
+  one that the code already makes clear.
+- Write comments about the code as it stands. Do not refer to conversations,
+  requests or the history of an edit.
+
+Example of a comment to delete:
+
+```rust
+/// Every request gets its generation identifier here, whatever serves it, so one
+/// value names the billing row, the stored contents and the client's reference.
+```
 
 ## Local contract
 

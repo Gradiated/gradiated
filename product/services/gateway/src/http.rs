@@ -33,6 +33,7 @@ use crate::{
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
+const PROXY_GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 
@@ -157,9 +158,16 @@ fn endpoint(endpoint: &'static Endpoint) -> MethodRouter<GatewayState> {
     )
 }
 
-fn request_metadata() -> RequestMetadata {
+fn request_metadata(headers: &HeaderMap) -> RequestMetadata {
+    let generation_id = headers
+        .get(&PROXY_GENERATION_ID_HEADER)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| Uuid::parse_str(value).ok())
+        .filter(|id| id.get_version_num() == 7)
+        .unwrap_or_else(Uuid::now_v7);
+
     RequestMetadata {
-        generation_id: Uuid::now_v7(),
+        generation_id,
         received_at: Utc::now(),
     }
 }
@@ -180,7 +188,7 @@ async fn inference(
     body: Result<Bytes, BytesRejection>,
     endpoint: &Endpoint,
 ) -> Response {
-    let metadata = request_metadata();
+    let metadata = request_metadata(&headers);
     let generation_id = metadata.generation_id;
 
     async {
@@ -563,6 +571,31 @@ mod tests {
                 "unexpected status for {path}"
             );
             assert_eq!(error_code(response).await, "invalid_api_key");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_proxy_generation_id_is_used_when_it_is_a_uuid_v7() {
+        let minted = uuid::Uuid::now_v7().to_string();
+        let v4 = "123e4567-e89b-42d3-a456-426614174000";
+
+        for (supplied, kept) in [(minted.as_str(), true), (v4, false), ("not-a-uuid", false)] {
+            let response = application()
+                .oneshot(json_request(
+                    "/v1/chat/completions",
+                    &[("x-gradiated-generation-id", supplied)],
+                    r#"{"model":"model-a","messages":[{"role":"user","content":"hi"}]}"#,
+                ))
+                .await
+                .unwrap();
+
+            let returned = response.headers()[GENERATION_ID_HEADER].to_str().unwrap();
+            assert_eq!(returned == supplied, kept, "{supplied}");
+            assert_eq!(
+                uuid::Uuid::parse_str(returned).unwrap().get_version_num(),
+                7,
+                "{supplied}"
+            );
         }
     }
 

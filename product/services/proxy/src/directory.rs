@@ -26,7 +26,6 @@ pub struct IdentityRecord {
 #[error("the directory is unavailable")]
 pub struct DirectoryUnavailable;
 
-/// The control-plane records the proxy reads. PostgreSQL is the source of truth.
 #[async_trait]
 pub trait Directory: Send + Sync + 'static {
     async fn identity(
@@ -56,7 +55,6 @@ where api_keys.digest = $1";
 const HOSTED_MODELS_QUERY: &str = "select id from models";
 
 const POOL_SIZE: usize = 8;
-/// A slow database must turn into a stale-cache answer quickly, never a hung request.
 const QUERY_TIMEOUT: Duration = Duration::from_secs(2);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(2);
 
@@ -172,10 +170,7 @@ pub enum DirectoryError {
     Tls(String),
 }
 
-/// A local database, as in development and tests, has no TLS. Any other database
-/// must use TLS whatever the URL asks for. `tokio-postgres` cannot parse the
-/// `verify-*` modes, and `tls_config` always verifies the chain and the hostname,
-/// so they are read as `require`.
+/// `tokio-postgres` cannot parse the `verify-*` modes; `tls_config` always verifies.
 fn connection_config(url: &str) -> Result<Config, DirectoryError> {
     let url = url
         .replace("sslmode=verify-full", "sslmode=require")

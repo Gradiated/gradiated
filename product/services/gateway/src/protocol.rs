@@ -227,10 +227,8 @@ impl StreamRenderer {
     }
 }
 
-/// Anthropic and OpenAI reject reasoning they did not produce, and clients send
-/// back what they receive, so a thread could not move to a provider model after a
-/// hosted turn. Reasoning therefore reaches Chat Completions clients only. Usage,
-/// including reasoning tokens, is unaffected.
+/// Anthropic and OpenAI reject reasoning they did not produce, so reasoning goes
+/// only to Chat Completions clients. Otherwise a thread cannot move to a provider.
 fn without_reasoning(response: &mut Value) {
     let Some(choices) = response.get_mut("choices").and_then(Value::as_array_mut) else {
         return;
@@ -246,9 +244,7 @@ fn without_reasoning(response: &mut Value) {
     }
 }
 
-/// The translator turns null content into an empty text block, which Anthropic
-/// rejects when a client sends the turn back. Anthropic itself returns an empty
-/// content array when a turn has no output.
+/// Anthropic rejects empty text blocks when a client sends the turn back.
 fn without_empty_text(body: &mut Value) {
     let Some(content) = body.get_mut("content").and_then(Value::as_array_mut) else {
         return;

@@ -60,7 +60,6 @@ fn single_value<'a>(
         .map_err(|_| rejected("unreadable_header"))
 }
 
-/// The auth scheme is case-insensitive (RFC 9110 section 11.1).
 fn bearer_token(value: &str) -> Result<&str, AuthenticationError> {
     value
         .split_once(' ')
@@ -81,8 +80,6 @@ fn checked_secret(value: &str) -> Result<&str, AuthenticationError> {
     }
 }
 
-/// The proxy removes every other credential before it forwards a request, so any
-/// value that is not a Gradiated key is refused.
 pub fn extract_api_key(headers: &HeaderMap) -> Result<ApiKey<'_>, AuthenticationError> {
     let workspace = single_value(headers, &X_GRADIATED_API_KEY)?
         .map(checked_secret)

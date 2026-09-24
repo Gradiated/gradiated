@@ -66,8 +66,6 @@ struct IdentityLabels {
     result: IdentityResult,
 }
 
-/// Labels are fixed enums and status codes. Keys, workspaces and model names
-/// never become labels.
 #[derive(Clone)]
 pub struct Metrics {
     registry: Arc<Mutex<Registry>>,
@@ -208,7 +206,6 @@ impl Metrics {
     }
 }
 
-/// Decrements the in-flight gauge when the response body finishes or is dropped.
 pub struct InFlight(Gauge);
 
 impl Drop for InFlight {

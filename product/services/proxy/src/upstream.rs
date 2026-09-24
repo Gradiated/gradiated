@@ -25,7 +25,6 @@ use crate::{
 
 const HOP_HEADER: HeaderName = HeaderName::from_static("x-gradiated-hop");
 
-/// Hop-by-hop and transport headers never cross a proxy boundary.
 const HOP_BY_HOP: &[&str] = &[
     "connection",
     "content-length",
@@ -40,7 +39,6 @@ const HOP_BY_HOP: &[&str] = &[
     "upgrade",
 ];
 
-/// Credentials, cookies and Gradiated or edge metadata that must not reach a provider.
 const PROVIDER_PRIVATE: &[&str] = &[
     "authorization",
     "cookie",
@@ -50,7 +48,6 @@ const PROVIDER_PRIVATE: &[&str] = &[
 ];
 const PROVIDER_PRIVATE_PREFIXES: &[&str] = &["x-gradiated-", "x-forwarded-", "x-amzn-"];
 
-/// A provider's cookies and protocol hints describe its own edge, not ours.
 const PROVIDER_RESPONSE_PRIVATE: &[&str] = &["alt-svc", "set-cookie"];
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, thiserror::Error)]
@@ -65,8 +62,6 @@ pub enum UpstreamError {
     Loop,
 }
 
-/// Holds an in-flight slot and the body's share of the byte budget until the
-/// response finishes or the customer disconnects.
 pub struct Admission {
     admitted: Instant,
     budget: Arc<Semaphore>,
@@ -75,7 +70,6 @@ pub struct Admission {
 }
 
 impl Admission {
-    /// Called for each body chunk, so buffered bytes never exceed the budget.
     pub fn reserve(&mut self, length: usize) -> Result<(), UpstreamError> {
         let permits = u32::try_from(length).map_err(|_| overloaded("body_budget"))?;
         let permit = self
@@ -92,8 +86,6 @@ impl Admission {
         Ok(())
     }
 
-    /// The total deadline counts from admission, so it covers the body upload and
-    /// the drain window sized from it holds.
     fn remaining(&self, total: Duration) -> Duration {
         total.saturating_sub(self.admitted.elapsed())
     }
@@ -193,7 +185,6 @@ impl Upstreams {
         .await
     }
 
-    /// The origin is fixed per provider; only the path and query come from the request.
     pub async fn to_provider(
         &self,
         provider: Provider,
@@ -304,8 +295,6 @@ fn failed(destination: Destination, phase: &'static str, error: &reqwest::Error)
     }
 }
 
-/// The response body keeps the request's slot and byte budget, and fails the
-/// stream when the upstream stays silent for longer than the idle deadline.
 pub struct UpstreamBody {
     inner: Pin<Box<dyn Stream<Item = reqwest::Result<Bytes>> + Send>>,
     idle: Duration,
@@ -374,8 +363,6 @@ fn response_headers(upstream: &HeaderMap) -> HeaderMap {
     copy_headers(upstream, |_| true)
 }
 
-/// The gateway receives the customer's request as sent, minus any credential that
-/// is not a Gradiated key. The gateway never needs a provider key, so it never holds one.
 pub fn gateway_headers(inbound: &HeaderMap) -> HeaderMap {
     let mut outbound = copy_headers(inbound, |_| true);
 
@@ -402,7 +389,6 @@ pub fn gateway_headers(inbound: &HeaderMap) -> HeaderMap {
     outbound
 }
 
-/// The customer's provider key is the only credential that reaches a provider.
 pub fn provider_headers(
     inbound: &HeaderMap,
     key: &ProviderKey,

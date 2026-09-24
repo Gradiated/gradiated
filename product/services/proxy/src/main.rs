@@ -50,7 +50,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
         config.database_ca_bundle_path.as_deref(),
     )?);
 
-    // The pod stays unready until the first load succeeds; the loop keeps trying.
     let catalog = HostedCatalog::new(directory.clone(), metrics.clone());
     tokio::spawn(catalog.clone().run(config.catalog_refresh));
 
@@ -97,8 +96,6 @@ async fn run() -> Result<(), Box<dyn Error>> {
         _ = terminate.recv() => {},
     }
 
-    // Readiness fails first; the listener then closes and open streams run to
-    // their own deadline.
     state.draining.store(true, Ordering::SeqCst);
     let _ = stop.send(());
 

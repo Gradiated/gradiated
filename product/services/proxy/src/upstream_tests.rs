@@ -178,8 +178,6 @@ const CUSTOMER_HEADERS: &[(&str, &str)] = &[
     ("x-hop-named", "1"),
 ];
 
-/// Where the client put the key is where the provider gets it, with the exact bytes
-/// the client sent. An OAuth token only works in `Authorization`.
 #[test]
 fn a_provider_receives_only_the_customer_key_and_content_headers() {
     for (header, value, other) in [

@@ -22,8 +22,9 @@ research, alias and third-party-provider concepts.
 - PostgreSQL owns the global hosted-model catalog, pricing, availability and
   durable model-deployment registry. Git owns the infrastructure declarations
   that create the corresponding SGLang workloads, not a second routing record.
-- The launch has universal zero prompt/response retention and no trace tables.
-  Configurable retention requires a later explicit product decision.
+- Prompts and responses are kept only when a workspace enables trace capture,
+  as generation contents in regional S3 batches with 30-day retention. No
+  database table holds them. See [TRACES_PLAN.md](TRACES_PLAN.md).
 - Organization membership is the human authorization boundary. Workspaces are
   policy and cost-attribution boundaries available to all active members.
 - Prepaid and invoiced organizations share the same account, lease,
@@ -711,7 +712,6 @@ The following existed in older plans and are not part of the data model:
 - `organization_deletions`
 - `workspace_members`
 - `workspace_models`
-- `traces`
 - `recommendations`
 - `evaluations`
 - `capacity_sources`

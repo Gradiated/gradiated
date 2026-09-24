@@ -38,7 +38,6 @@ async fn graceful_shutdown_preserves_an_untracked_stream_beyond_five_seconds() {
             .is_ok()
     });
 
-    // No CompletionService generation exists, so only the HTTP drain holds it.
     tokio::time::sleep(Duration::from_secs(6)).await;
     assert!(!draining.is_finished());
     release.send(()).unwrap();

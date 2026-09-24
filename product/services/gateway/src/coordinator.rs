@@ -43,7 +43,6 @@ pub struct QualifiedRequest {
     pub request: InferenceRequest,
 }
 
-/// A request whose model is hosted here, with the parsed body it arrived with.
 pub struct ClassifiedRequest {
     pub hosted: HostedRequest,
     pub request: Value,
@@ -204,8 +203,6 @@ impl RequestCoordinator {
         Ok(catalog)
     }
 
-    /// Resolves the model before admission or translation, so an unknown name is a
-    /// local error however the caller is funded.
     pub async fn classify(
         &self,
         headers: &HeaderMap,

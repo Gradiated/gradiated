@@ -28,6 +28,8 @@ use crate::{
 };
 
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
+const GATEWAY_GENERATION_ID_HEADER: HeaderName =
+    HeaderName::from_static("x-gradiated-generation-id");
 
 #[derive(Clone)]
 pub struct AppState {
@@ -39,9 +41,6 @@ pub struct AppState {
     pub draining: Arc<AtomicBool>,
 }
 
-/// Every path takes the same route, so a new endpoint, audio, images or files need
-/// no proxy change. A request relays when it carries a provider key and does not
-/// name a hosted model; everything else goes to the gateway.
 pub fn public_router(state: AppState) -> Router {
     Router::new()
         .fallback(|State(state): State<AppState>, request: Request| proxy(state, request))
@@ -62,8 +61,6 @@ pub fn admin_router(state: AppState) -> Router {
         .with_state(state)
 }
 
-/// A database outage does not make a pod unready once the catalog has loaded,
-/// so it can never remove every pod from the load balancer.
 async fn ready(State(state): State<AppState>) -> StatusCode {
     if state.catalog.is_loaded() && !state.draining.load(Ordering::SeqCst) {
         StatusCode::OK
@@ -90,8 +87,6 @@ enum Decision<'a> {
     Provider { credentials: Credentials<'a> },
 }
 
-/// The proxy's own errors use the envelope of the key's provider. Clients act on
-/// the status, which is the same either way.
 fn protocol(parts: &Parts) -> Protocol {
     let anthropic_key = credentials::extract(&parts.headers)
         .ok()
@@ -108,14 +103,15 @@ fn protocol(parts: &Parts) -> Protocol {
 async fn proxy(state: AppState, request: Request) -> Response {
     let (parts, body) = request.into_parts();
     let protocol = protocol(&parts);
+    let generation_id = Uuid::now_v7();
 
     let (destination, result) = if gateway_private(parts.uri.path()) {
         (Destination::Local, Err(ProxyError::NotFound))
     } else {
-        serve(&state, &parts, body).await
+        serve(&state, &parts, body, generation_id).await
     };
 
-    let response = match result {
+    let mut response = match result {
         Ok(upstream) => {
             let mut response = Response::new(Body::from_stream(upstream.body));
             *response.status_mut() = upstream.status;
@@ -125,6 +121,9 @@ async fn proxy(state: AppState, request: Request) -> Response {
         Err(error) => error.render(protocol),
     };
 
+    response
+        .headers_mut()
+        .insert(GENERATION_ID_HEADER, id_header(generation_id));
     state
         .metrics
         .record_response(destination, response.status().as_u16());
@@ -132,10 +131,15 @@ async fn proxy(state: AppState, request: Request) -> Response {
     response
 }
 
+fn id_header(generation_id: Uuid) -> HeaderValue {
+    HeaderValue::from_str(&generation_id.to_string()).expect("a UUID is a valid header value")
+}
+
 async fn serve(
     state: &AppState,
     parts: &Parts,
     body: Body,
+    generation_id: Uuid,
 ) -> (Destination, Result<UpstreamResponse, ProxyError>) {
     let local = |error| (Destination::Local, Err(error));
 
@@ -159,7 +163,7 @@ async fn serve(
 
     match decide(state, credentials, &body) {
         Decision::Gateway => {
-            let result = forward(state, parts, body, admission).await;
+            let result = forward(state, parts, body, admission, generation_id).await;
             (Destination::Gateway, result)
         }
         Decision::Provider { credentials } => {
@@ -167,7 +171,7 @@ async fn serve(
                 Some(Provider::Anthropic) => Destination::Anthropic,
                 _ => Destination::OpenAi,
             };
-            let result = relay(state, parts, credentials, body, admission).await;
+            let result = relay(state, parts, credentials, body, admission, generation_id).await;
             let destination = if result.is_err() {
                 Destination::Local
             } else {
@@ -211,8 +215,6 @@ async fn read_body(
         .map_err(|_| ProxyError::RequestTimeout)?
 }
 
-/// A request relays to its key's provider unless its body names a model we host.
-/// Without a provider key it goes to the gateway, which owns every local error.
 fn decide<'a>(state: &AppState, credentials: Option<Credentials<'a>>, body: &[u8]) -> Decision<'a> {
     let Some(credentials) = credentials.filter(|credentials| credentials.provider.is_some()) else {
         return Decision::Gateway;
@@ -225,8 +227,6 @@ fn decide<'a>(state: &AppState, credentials: Option<Credentials<'a>>, body: &[u8
     Decision::Provider { credentials }
 }
 
-/// Providers serve everything under `/v1`; the gateway also accepts its routes
-/// without the prefix, so those gain it on the way to a provider.
 fn provider_path(parts: &Parts) -> String {
     let path_and_query = parts.uri.path_and_query().map_or("/", |path| path.as_str());
 
@@ -242,15 +242,18 @@ async fn forward(
     parts: &Parts,
     body: Bytes,
     admission: Admission,
+    generation_id: Uuid,
 ) -> Result<UpstreamResponse, ProxyError> {
     let path_and_query = parts.uri.path_and_query().map_or("/", |path| path.as_str());
+    let mut headers = gateway_headers(&parts.headers);
+    headers.insert(GATEWAY_GENERATION_ID_HEADER, id_header(generation_id));
 
     state
         .upstreams
         .to_gateway(
             parts.method.clone(),
             path_and_query,
-            gateway_headers(&parts.headers),
+            headers,
             body,
             admission,
         )
@@ -264,6 +267,7 @@ async fn relay(
     credentials: Credentials<'_>,
     body: Bytes,
     admission: Admission,
+    generation_id: Uuid,
 ) -> Result<UpstreamResponse, ProxyError> {
     let (Some(api_key), Some(provider_key)) = (credentials.api_key, credentials.provider) else {
         return Err(ProxyError::InvalidApiKey);
@@ -273,7 +277,7 @@ async fn relay(
     let headers = provider_headers(&parts.headers, &provider_key)
         .map_err(|error| ProxyError::from_upstream(error, false))?;
 
-    let mut response = state
+    let response = state
         .upstreams
         .to_provider(
             provider_key.provider,
@@ -286,7 +290,6 @@ async fn relay(
         .await
         .map_err(|error| ProxyError::from_upstream(error, false))?;
 
-    let generation_id = Uuid::now_v7();
     tracing::info!(
         %generation_id,
         organization_id = %identity.organization_id,
@@ -296,12 +299,6 @@ async fn relay(
         provider_status = response.status.as_u16(),
         event = "provider_relay",
         "request relayed to the provider with the customer key"
-    );
-
-    response.headers.insert(
-        GENERATION_ID_HEADER,
-        HeaderValue::from_str(&generation_id.to_string())
-            .expect("a UUID is always a valid header value"),
     );
 
     Ok(response)

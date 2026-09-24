@@ -6,8 +6,7 @@ use validator::Validate;
 
 use crate::{catalog::ProviderCompliance, model::MAX_SAFE_INTEGER};
 
-/// The official SDKs time out after 600 seconds; the drain windows in the
-/// deployment are sized from this ceiling.
+/// The official SDKs time out after 600 seconds.
 const MAX_REQUEST_SECONDS: u64 = 630;
 
 #[cfg(test)]

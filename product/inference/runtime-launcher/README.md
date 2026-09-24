@@ -108,6 +108,21 @@ Complete these steps before you submit the job:
 7. Make sure that Valkey has fresh reports for the allocation before you send
    traffic to it.
 
+For the single-allocation RunPod pilot, enrollment accepts
+`GRADIATED_RUNTIME_ACCESS_TOKEN` and `GRADIATED_DEPLOYMENT_STATUS_TOKEN` together
+in the operator environment. Both must be 32-256 base64url characters. The provider
+retains them across container resets; the base entrypoint writes files readable
+only by `desmond` and removes the variables before starting Nomad. Obtain the
+runtime token from the gateway's configured runtime credential and the reporting
+token from the API's RunPod provider credential; never put either in job variables.
+
+The job's `inference-proxy` task runs unprivileged nginx on port 8888. Publish that
+HTTP port through RunPod's HTTPS proxy and register its URL as the deployment
+endpoint. Every request requires the runtime bearer token; nginx strips that
+token before forwarding to vLLM on loopback. The proxy disables response buffering
+and allows 330 seconds between upstream reads. This is one replica per host;
+allocation-aware routing for multiple replicas is not provided by this pilot.
+
 ## Verification
 
 The launcher builds only on Linux. The Docker test image is the supported

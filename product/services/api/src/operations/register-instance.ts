@@ -44,6 +44,20 @@ const [authority, artifact] = await Promise.all([
   ),
 ]);
 const instance = await provider.describe(providerInstanceId);
+const servingEnvironment: Record<string, string> = {};
+const servingVariables = [
+  "GRADIATED_RUNTIME_ACCESS_TOKEN",
+  "GRADIATED_DEPLOYMENT_STATUS_TOKEN",
+] as const;
+if (servingVariables.some((name) => process.env[name])) {
+  for (const name of servingVariables) {
+    const value = requiredEnv(name);
+    if (!/^[A-Za-z0-9_-]{32,256}$/.test(value)) {
+      throw new Error(`${name} must contain 32-256 base64url characters`);
+    }
+    servingEnvironment[name] = value;
+  }
+}
 const tls = await issueNomadClientCertificate({
   certificate: authority["ca.pem"],
   privateKey: authority["ca-key.pem"],
@@ -61,10 +75,8 @@ console.log(
   `Recorded instance ${record.id} (${record.sku}); registering Nomad node ${name}`,
 );
 
-await provider.bootstrap(
-  instance,
-  image,
-  hostBootstrapEnvironment({
+await provider.bootstrap(instance, image, {
+  ...hostBootstrapEnvironment({
     instanceId: record.id,
     nodeName: name,
     ...identity,
@@ -75,7 +87,8 @@ await provider.bootstrap(
       secretAccessKey: artifact.SecretAccessKey,
     },
   }),
-);
+  ...servingEnvironment,
+});
 console.log(
   `Booting ${image.reference}; waiting for Nomad node ${identity.nomadNodeId}`,
 );

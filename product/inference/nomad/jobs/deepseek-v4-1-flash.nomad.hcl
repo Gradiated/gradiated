@@ -54,6 +54,9 @@ job "deepseek-v4-1-flash" {
     }
     network {
       mode = "host"
+      port "inference" {
+        static = 8888
+      }
       port "desmond" {
         static       = 9090
         host_network = "loopback"
@@ -134,6 +137,24 @@ job "deepseek-v4-1-flash" {
           # Do not restart a healthy runtime during an ingest outage.
           # Nomad still restarts Desmond when its process exits.
         }
+      }
+    }
+    task "inference-proxy" {
+      driver = "raw_exec"
+      user = "desmond"
+      kill_signal = "SIGQUIT"
+      kill_timeout = "60s"
+      config {
+        command = "/usr/bin/setpriv"
+        args = [
+          "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
+          "/usr/sbin/nginx", "-c", "/etc/gradiated/runtime-proxy.conf",
+          "-g", "daemon off;",
+        ]
+      }
+      resources {
+        cpu = 250
+        memory = 128
       }
     }
     task "vllm" {

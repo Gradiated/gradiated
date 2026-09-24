@@ -63,6 +63,11 @@ if [[ -n "${GRADIATED_NOMAD_NODE_ID:-}" ]]; then
 fi
 unset "${bootstrap[@]}"
 
+if [[ -n "${GRADIATED_RUNTIME_ACCESS_TOKEN:-}${GRADIATED_DEPLOYMENT_STATUS_TOKEN:-}" ]]; then
+  bash /opt/gradiated/bin/configure-serving
+fi
+unset GRADIATED_RUNTIME_ACCESS_TOKEN GRADIATED_DEPLOYMENT_STATUS_TOKEN
+
 if [[ -n "${PUBLIC_KEY:-}" ]]; then
   install -d -m 700 /root/.ssh
   printf '%s\n' "$PUBLIC_KEY" >/root/.ssh/authorized_keys

@@ -66,3 +66,15 @@ test("plans all enabled images against the actual repository tree", () => {
     result.include[2],
   );
 });
+
+test("Nomad serving bootstrap and proxy edits invalidate the base image", () => {
+  for (const path of [
+    "product/inference/images/nomad-base/configure-serving.sh",
+    "product/inference/images/nomad-base/runtime-proxy.conf.template",
+  ]) {
+    assert.notEqual(
+      fingerprint("nomad-base", [entry(path)]),
+      fingerprint("nomad-base", [entry(path, "100644 blob bbb")]),
+    );
+  }
+});

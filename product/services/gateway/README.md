@@ -84,7 +84,7 @@ The local endpoints are:
 | `VALKEY_URL`                                    | yes      | none                       |
 | `GATEWAY_SETTLEMENT_BACKLOG_LIMIT`              | yes      | none                       |
 | `GATEWAY_BIND_ADDRESS`                          | no       | `127.0.0.1:3002`           |
-| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `300`                      |
+| `GATEWAY_GENERATION_TIMEOUT_SECONDS`            | no       | `630`                      |
 | `GATEWAY_LEASE_FINALIZATION_MARGIN_SECONDS`     | no       | `60`                       |
 | `GATEWAY_EXPIRED_LEASE_CLEANUP_GRACE_SECONDS`   | no       | `300`                      |
 | `GATEWAY_ORGANIZATION_CONCURRENCY_CAP`          | no       | `50`                       |

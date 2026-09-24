@@ -109,19 +109,28 @@ impl Protocol {
         }
     }
 
-    pub fn translate_response(self, response: Value) -> Result<Value, GatewayError> {
-        match self {
-            Self::OpenAiChat => Ok(response),
-            Self::AnthropicMessages | Self::OpenAiResponses => ENGINE
-                .translate_response(
-                    WireFormat::OpenAiChat,
-                    self.wire(),
-                    &response,
-                    &TranslationPolicy::default(),
-                )
-                .map(|output| output.body)
-                .map_err(|error| self.completed_translation_failed(&error)),
+    pub fn translate_response(self, mut response: Value) -> Result<Value, GatewayError> {
+        if self == Self::OpenAiChat {
+            return Ok(response);
         }
+
+        without_reasoning(&mut response);
+
+        let mut body = ENGINE
+            .translate_response(
+                WireFormat::OpenAiChat,
+                self.wire(),
+                &response,
+                &TranslationPolicy::default(),
+            )
+            .map(|output| output.body)
+            .map_err(|error| self.completed_translation_failed(&error))?;
+
+        if self == Self::AnthropicMessages {
+            without_empty_text(&mut body);
+        }
+
+        Ok(body)
     }
 
     pub fn stream_renderer(self) -> StreamRenderer {
@@ -201,18 +210,51 @@ impl StreamRenderer {
             (Self::Translated { protocol, .. }, StreamItem::Error(error)) => {
                 vec![protocol.error_frame(&error)]
             }
-            (Self::Translated { protocol, state }, StreamItem::Chunk(value)) => protocol
-                .translated_frames(ENGINE.translate_event(
+            (Self::Translated { protocol, state }, StreamItem::Chunk(mut value)) => {
+                without_reasoning(&mut value);
+
+                protocol.translated_frames(ENGINE.translate_event(
                     state,
                     WireFormat::OpenAiChat,
                     protocol.wire(),
                     &value,
-                )),
+                ))
+            }
             (Self::Translated { protocol, state }, StreamItem::Done) => {
                 protocol.translated_frames(ENGINE.finish_stream(state, protocol.wire()))
             }
         }
     }
+}
+
+/// Anthropic and OpenAI reject reasoning they did not produce, and clients send
+/// back what they receive, so a thread could not move to a provider model after a
+/// hosted turn. Reasoning therefore reaches Chat Completions clients only. Usage,
+/// including reasoning tokens, is unaffected.
+fn without_reasoning(response: &mut Value) {
+    let Some(choices) = response.get_mut("choices").and_then(Value::as_array_mut) else {
+        return;
+    };
+
+    for choice in choices {
+        for part in ["message", "delta"] {
+            if let Some(fields) = choice.get_mut(part).and_then(Value::as_object_mut) {
+                fields.remove("reasoning_content");
+                fields.remove("reasoning");
+            }
+        }
+    }
+}
+
+/// The translator turns null content into an empty text block, which Anthropic
+/// rejects when a client sends the turn back. Anthropic itself returns an empty
+/// content array when a turn has no output.
+fn without_empty_text(body: &mut Value) {
+    let Some(content) = body.get_mut("content").and_then(Value::as_array_mut) else {
+        return;
+    };
+
+    content.retain(|block| !(block["type"] == "text" && block["text"] == ""));
 }
 
 // The translator drops server-side state it cannot represent, so a stateful request
@@ -494,5 +536,137 @@ mod tests {
         assert_eq!(responses["output"][0]["content"][0]["type"], "output_text");
         assert_eq!(responses["output"][0]["content"][0]["text"], "hi");
         assert_eq!(responses["usage"]["input_tokens"], 10);
+    }
+
+    const REASONING: &str = "private chain of thought";
+
+    fn tool_call_with_reasoning() -> Value {
+        json!({
+            "id": "chatcmpl-1", "object": "chat.completion", "created": 1, "model": "model-a",
+            "choices": [{"index": 0, "logprobs": null, "finish_reason": "tool_calls", "message": {
+                "role": "assistant", "content": null, "reasoning_content": REASONING, "reasoning": REASONING,
+                "tool_calls": [{"id": "call_1", "type": "function", "function": {"name": "read_file", "arguments": "{}"}}]
+            }}],
+            "usage": {"prompt_tokens": 10, "completion_tokens": 7, "total_tokens": 17,
+                "completion_tokens_details": {"reasoning_tokens": 5}}
+        })
+    }
+
+    fn streamed_tool_call_with_reasoning() -> Vec<StreamItem> {
+        let chunk = |delta: Value, finish: Value| {
+            StreamItem::Chunk(json!({
+                "id": "chatcmpl-1", "object": "chat.completion.chunk", "created": 1, "model": "model-a",
+                "choices": [{"index": 0, "delta": delta, "logprobs": null, "finish_reason": finish}]
+            }))
+        };
+
+        vec![
+            chunk(json!({"role": "assistant", "content": null}), Value::Null),
+            chunk(json!({"reasoning_content": REASONING}), Value::Null),
+            chunk(json!({"reasoning": REASONING}), Value::Null),
+            chunk(
+                json!({"tool_calls": [{"index": 0, "id": "call_1", "type": "function",
+                    "function": {"name": "read_file", "arguments": "{}"}}]}),
+                Value::Null,
+            ),
+            chunk(json!({}), json!("tool_calls")),
+            StreamItem::Done,
+        ]
+    }
+
+    fn streamed(protocol: Protocol) -> String {
+        let mut renderer = protocol.stream_renderer();
+
+        streamed_tool_call_with_reasoning()
+            .into_iter()
+            .flat_map(|item| renderer.render(item))
+            .map(|frame| frame.data)
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+
+    #[test]
+    fn reasoning_never_reaches_messages_or_responses_clients() {
+        for protocol in [Protocol::AnthropicMessages, Protocol::OpenAiResponses] {
+            let buffered = protocol
+                .translate_response(tool_call_with_reasoning())
+                .unwrap()
+                .to_string();
+
+            for output in [buffered, streamed(protocol)] {
+                assert!(!output.contains(REASONING), "{protocol:?}: {output}");
+                assert!(!output.contains(r#""thinking""#), "{protocol:?}: {output}");
+                assert!(!output.contains(r#""reasoning""#), "{protocol:?}: {output}");
+                assert!(output.contains("read_file"), "{protocol:?}: {output}");
+            }
+        }
+    }
+
+    #[test]
+    fn chat_clients_keep_reasoning_content() {
+        let response = Protocol::OpenAiChat
+            .translate_response(tool_call_with_reasoning())
+            .unwrap();
+
+        assert_eq!(
+            response["choices"][0]["message"]["reasoning_content"],
+            REASONING
+        );
+        assert!(streamed(Protocol::OpenAiChat).contains(REASONING));
+    }
+
+    #[test]
+    fn a_messages_tool_call_carries_no_empty_text_block() {
+        let response = Protocol::AnthropicMessages
+            .translate_response(tool_call_with_reasoning())
+            .unwrap();
+
+        assert_eq!(
+            response["content"],
+            json!([{"type": "tool_use", "id": "call_1", "name": "read_file", "input": {}}])
+        );
+        assert_eq!(response["stop_reason"], "tool_use");
+    }
+
+    #[test]
+    fn a_messages_turn_with_only_reasoning_has_empty_content() {
+        let mut completion = tool_call_with_reasoning();
+        completion["choices"][0]["message"]["tool_calls"] = Value::Null;
+        completion["choices"][0]["finish_reason"] = json!("length");
+
+        let response = Protocol::AnthropicMessages
+            .translate_response(completion)
+            .unwrap();
+
+        assert_eq!(response["content"], json!([]));
+    }
+
+    #[test]
+    fn messages_text_beside_a_tool_call_is_kept() {
+        let mut completion = tool_call_with_reasoning();
+        completion["choices"][0]["message"]["content"] = json!("Reading it now.");
+
+        let response = Protocol::AnthropicMessages
+            .translate_response(completion)
+            .unwrap();
+
+        assert_eq!(
+            response["content"][0],
+            json!({"type": "text", "text": "Reading it now."})
+        );
+        assert_eq!(response["content"][1]["type"], "tool_use");
+    }
+
+    #[test]
+    fn reasoning_tokens_still_count_in_usage() {
+        let response = Protocol::OpenAiResponses
+            .translate_response(tool_call_with_reasoning())
+            .unwrap();
+
+        assert_eq!(response["usage"]["output_tokens"], 7);
+        assert_eq!(
+            response["usage"]["output_tokens_details"]["reasoning_tokens"],
+            5
+        );
     }
 }

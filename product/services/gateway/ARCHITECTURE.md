@@ -436,7 +436,7 @@ Initial operational defaults and requirements are:
 | ---------------------------------------- | ---------------------------: |
 | request-body ceiling                     |     32 MB (32,000,000 bytes) |
 | normalized output `default_length`       | 1,024 capped by `max_length` |
-| total-generation timeout                 |                  300 seconds |
+| total-generation timeout                 |                  630 seconds |
 | lease finalization margin                |                   60 seconds |
 | expired-lease cleanup grace              |                    5 minutes |
 | maximum prepaid organization concurrency |                           50 |
@@ -559,6 +559,14 @@ the error. It never tries another deployment.
 If finalization cannot be confirmed after bounded retry, the request returns
 `503 finalization_unavailable`, gateway readiness becomes unhealthy, and a
 high-severity metric is emitted. No alternate ledger is written.
+
+Anthropic Messages and OpenAI Responses clients receive no reasoning, streamed
+or not, and a Messages tool call carries no empty text block. Both providers
+reject reasoning they did not produce, and clients send back what they receive,
+so this keeps a thread able to fall back to a provider model. Chat Completions
+clients keep `reasoning_content`. Usage still counts reasoning tokens. The
+[proxy feature plan](../../../docs/PROXY_FEATURE_PLAN.md#thread-continuity)
+records the measurements.
 
 ### 12. Streaming response
 

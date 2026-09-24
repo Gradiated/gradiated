@@ -429,7 +429,7 @@ release in PostgreSQL only after the endpoint is ready, and marks the old row
 `draining` before removal. Secret values and secret-location indirection never
 appear in this table; the gateway reads the optional upstream credential from
 the fixed `SGLANG_API_KEY` process secret. One gateway-wide hard generation
-timeout applies to every model and defaults to 300 seconds at launch.
+timeout applies to every model and defaults to 630 seconds.
 
 Chat deployments support all three service tiers. Native SystemOne currently
 supports only `default`; requests for `fast` or `flex` are rejected because

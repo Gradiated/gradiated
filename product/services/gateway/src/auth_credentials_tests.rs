@@ -126,14 +126,15 @@ fn rejects_missing_conflicting_or_unknown_identity() {
 }
 
 #[test]
-fn rejects_duplicates_and_malformed_headers() {
+fn rejects_conflicting_duplicates_and_malformed_headers() {
     for name in ["authorization", "x-api-key", "x-gradiated-api-key"] {
-        let value = if name == "authorization" {
-            "Bearer grad_example"
+        let (value, other) = if name == "authorization" {
+            ("Bearer grad_example", "Bearer grad_other")
         } else {
-            "grad_example"
+            ("grad_example", "grad_other")
         };
-        assert!(extract_credentials(&headers(&[(name, value), (name, value)])).is_err());
+        assert!(extract_credentials(&headers(&[(name, value), (name, value)])).is_ok());
+        assert!(extract_credentials(&headers(&[(name, value), (name, other)])).is_err());
         for malformed in [
             "",
             "grad_example,grad_other",

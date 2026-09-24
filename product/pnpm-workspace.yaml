@@ -2,3 +2,6 @@ packages:
   - "packages/*"
   - "services/*"
   - "website"
+
+# A version must be published for 7 days (in minutes) before it can be installed.
+minimumReleaseAge: 10080

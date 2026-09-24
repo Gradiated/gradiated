@@ -7,6 +7,10 @@ use validator::Validate;
 
 use crate::{catalog::ProviderCompliance, model::MAX_SAFE_INTEGER};
 
+/// The official SDKs time out after 600 seconds; the drain windows in the
+/// deployment are sized from this ceiling.
+const MAX_REQUEST_SECONDS: u64 = 630;
+
 #[cfg(test)]
 const MINIMAL_ENVIRONMENT: [(&str, &str); 3] = [
     ("VALKEY_URL", "redis://127.0.0.1:6379"),
@@ -185,7 +189,7 @@ struct Environment {
         rename = "gateway_generation_timeout_seconds",
         default = "default_generation_timeout_seconds"
     )]
-    #[validate(range(min = 1, max = 300))]
+    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
     generation_timeout_seconds: u64,
     #[serde(
         rename = "gateway_lease_finalization_margin_seconds",
@@ -221,14 +225,14 @@ struct Environment {
     #[validate(range(min = 1, max = 120))]
     proxy_connect_timeout_seconds: u64,
     #[serde(default = "default_proxy_response_header_timeout_seconds")]
-    #[validate(range(min = 1, max = 900))]
+    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
     proxy_response_header_timeout_seconds: u64,
     #[serde(default = "default_proxy_idle_timeout_seconds")]
-    #[validate(range(min = 1, max = 900))]
+    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
     proxy_idle_timeout_seconds: u64,
     /// The total deadline starts before body buffering, so it bounds the whole relay.
     #[serde(default = "default_proxy_total_timeout_seconds")]
-    #[validate(range(min = 1, max = 300))]
+    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
     proxy_total_timeout_seconds: u64,
     #[serde(default = "default_proxy_max_request_bytes")]
     #[validate(range(min = 1024, max = 33_554_432))]
@@ -362,7 +366,7 @@ fn default_bind_address() -> SocketAddr {
 }
 
 fn default_generation_timeout_seconds() -> u64 {
-    300
+    MAX_REQUEST_SECONDS
 }
 
 fn default_lease_finalization_margin_seconds() -> u64 {
@@ -398,15 +402,15 @@ fn default_proxy_connect_timeout_seconds() -> u64 {
 }
 
 fn default_proxy_response_header_timeout_seconds() -> u64 {
-    120
+    MAX_REQUEST_SECONDS
 }
 
 fn default_proxy_idle_timeout_seconds() -> u64 {
-    120
+    MAX_REQUEST_SECONDS
 }
 
 fn default_proxy_total_timeout_seconds() -> u64 {
-    300
+    MAX_REQUEST_SECONDS
 }
 
 fn default_proxy_max_request_bytes() -> u64 {
@@ -493,9 +497,9 @@ mod tests {
             config.proxy_limits(),
             ProxyLimits {
                 connect_timeout: Duration::from_secs(10),
-                response_header_timeout: Duration::from_secs(120),
-                idle_timeout: Duration::from_secs(120),
-                total_timeout: Duration::from_secs(300),
+                response_header_timeout: Duration::from_secs(630),
+                idle_timeout: Duration::from_secs(630),
+                total_timeout: Duration::from_secs(630),
                 max_request_bytes: 8 * 1024 * 1024,
                 request_buffer_bytes: 64 * 1024 * 1024,
                 max_in_flight: 2_000,
@@ -611,13 +615,13 @@ mod tests {
     }
 
     #[test]
-    fn request_deadlines_cannot_exceed_five_minutes() {
+    fn request_deadlines_cannot_exceed_the_sdk_timeout_and_margin() {
         for key in [
             "GATEWAY_GENERATION_TIMEOUT_SECONDS",
             "PROXY_TOTAL_TIMEOUT_SECONDS",
         ] {
-            assert!(minimal_with(&[(key, "300")]).is_ok());
-            assert!(minimal_with(&[(key, "301")]).is_err());
+            assert!(minimal_with(&[(key, "630")]).is_ok());
+            assert!(minimal_with(&[(key, "631")]).is_err());
         }
     }
 

@@ -39,10 +39,17 @@ procs:
     env:
       DATABASE_URL: *database_url
       GATEWAY_BIND_ADDRESS: 127.0.0.1:3002
-      GATEWAY_GENERATION_TIMEOUT_SECONDS: "300"
+      GATEWAY_GENERATION_TIMEOUT_SECONDS: "630"
       GATEWAY_BROWSER_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
       GATEWAY_SETTLEMENT_BACKLOG_LIMIT: "100000"
       VALKEY_URL: *valkey_url
+  proxy:
+    shell: "mise exec -- cargo run --manifest-path services/proxy/Cargo.toml --locked"
+    env:
+      DATABASE_URL: *database_url
+      PROXY_BIND_ADDRESS: 127.0.0.1:3003
+      PROXY_ADMIN_ADDRESS: 127.0.0.1:9003
+      PROXY_GATEWAY_ORIGIN: http://127.0.0.1:3002
   sglang:
     shell: "mise run sglang-local"
     autostart: false

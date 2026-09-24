@@ -9,7 +9,10 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "esbuild"
-    ]
+    ],
+    "overrides": {
+      "zod": "4.6.5"
+    }
   },
   "scripts": {
     "build": "turbo run build",

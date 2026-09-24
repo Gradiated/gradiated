@@ -42,8 +42,12 @@ impl Provider {
 }
 
 fn is_api_key(key: &str) -> bool {
-    key.strip_prefix("grad_")
-        .is_some_and(|suffix| !suffix.is_empty())
+    key.strip_prefix("grad_").is_some_and(|suffix| {
+        !suffix.is_empty()
+            && suffix
+                .bytes()
+                .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_')
+    })
 }
 
 #[cfg(test)]
@@ -77,8 +81,8 @@ fn single_value<'a>(
         return Ok(None);
     };
 
-    if values.next().is_some() {
-        return Err(rejected("duplicate_header"));
+    if values.any(|other| other != value) {
+        return Err(rejected("conflicting_duplicate_header"));
     }
 
     value
@@ -87,18 +91,19 @@ fn single_value<'a>(
         .map_err(|_| rejected("unreadable_header"))
 }
 
+/// The auth scheme is case-insensitive (RFC 9110 section 11.1).
 fn bearer_token(value: &str) -> Result<&str, AuthenticationError> {
     value
-        .strip_prefix("Bearer ")
+        .split_once(' ')
+        .filter(|(scheme, _)| scheme.eq_ignore_ascii_case("bearer"))
+        .map(|(_, token)| token.trim_matches(' '))
         .ok_or_else(|| rejected("malformed_bearer"))
 }
 
 fn checked_secret(value: &str) -> Result<&str, AuthenticationError> {
     let valid = !value.is_empty()
         && value.len() <= MAX_SECRET_BYTES
-        && value
-            .bytes()
-            .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-' || byte == b'_');
+        && value.bytes().all(|byte| byte.is_ascii_graphic());
 
     if valid {
         Ok(value)
@@ -265,12 +270,30 @@ mod tests {
     }
 
     #[test]
-    fn bearer_prefix_is_exact_and_case_sensitive() {
+    fn the_bearer_scheme_is_case_insensitive() {
+        let expected = format!("{:x}", Sha256::digest(b"grad_example"));
+
+        for value in [
+            "Bearer grad_example",
+            "bearer grad_example",
+            "BEARER grad_example",
+            "Bearer  grad_example",
+        ] {
+            let mut headers = HeaderMap::new();
+            headers.insert(AUTHORIZATION, value.parse().unwrap());
+
+            assert_eq!(credential_digest(&headers), Ok(expected.clone()), "{value}");
+        }
+    }
+
+    #[test]
+    fn malformed_bearer_values_are_rejected() {
         for value in [
             "grad_example",
-            "bearer grad_example",
+            "Basic grad_example",
             "Bearer ",
             "Bearer a b",
+            "Bearer grad_a!b",
         ] {
             let mut headers = HeaderMap::new();
             headers.insert(AUTHORIZATION, value.parse().unwrap());

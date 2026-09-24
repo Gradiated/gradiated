@@ -17,6 +17,7 @@ on:
       - "product/services/api/**"
       - "product/services/console/**"
       - "product/services/gateway/**"
+      - "product/services/proxy/**"
       - "product/services/worker/**"
       - "product/services/ops-mcp/**"
       - "product/.dockerignore"
@@ -47,6 +48,7 @@ on:
       - "product/services/api/**"
       - "product/services/console/**"
       - "product/services/gateway/**"
+      - "product/services/proxy/**"
       - "product/services/worker/**"
       - "product/services/ops-mcp/**"
       - "product/.dockerignore"
@@ -97,7 +99,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             product/services/gateway/target
-          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock') }}
+            product/services/proxy/target
+          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile
@@ -215,6 +218,52 @@ jobs:
         with:
           name: gateway-runtime-integration
           path: .agents/runtime/gateway-integration.xml
+          if-no-files-found: ignore
+          retention-days: 7
+
+  proxy-e2e:
+    name: Proxy E2E
+    runs-on: depot-ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v4.2.3
+      - name: Restore Rust build cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            product/services/gateway/target
+            product/services/proxy/target
+          key: ${{ runner.os }}-proxy-e2e-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-proxy-e2e-
+            ${{ runner.os }}-gateway-contract-
+      - run: pnpm install --frozen-lockfile
+        working-directory: product
+      - name: Build the proxy and gateway binaries
+        run: |
+          cargo build --locked --manifest-path product/services/gateway/Cargo.toml
+          cargo build --locked --manifest-path product/services/proxy/Cargo.toml
+      - name: Pull disposable serving-state image
+        run: docker pull valkey/valkey:8.1.9-alpine3.24
+      - name: Exercise the proxy in front of the gateway
+        working-directory: product
+        run: >-
+          pnpm --filter @gradiated/proxy exec vitest run
+          --reporter=default --reporter=junit
+          --outputFile.junit=../../../.agents/runtime/proxy-e2e.xml
+      - name: Upload end-to-end results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proxy-e2e
+          path: |
+            .agents/runtime/proxy-e2e.xml
+            .agents/runtime/proxy-e2e/
           if-no-files-found: ignore
           retention-days: 7
 

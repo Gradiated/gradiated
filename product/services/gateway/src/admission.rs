@@ -180,11 +180,11 @@ mod tests {
 
         assert_eq!(
             lease.request_deadline(),
-            received_at + TimeDelta::seconds(300)
+            received_at + TimeDelta::seconds(630)
         );
         assert_eq!(
             lease.lease_expires_at(),
-            received_at + TimeDelta::seconds(360)
+            received_at + TimeDelta::seconds(690)
         );
         assert_eq!(
             cleanup_cutoff(admitted_at, &config).unwrap(),
@@ -257,7 +257,7 @@ mod tests {
     #[test]
     fn rejects_admission_at_the_deadline_and_admits_just_before_it() {
         let received_at = Utc.with_ymd_and_hms(2026, 8, 19, 12, 0, 0).unwrap();
-        let deadline = received_at + TimeDelta::seconds(300);
+        let deadline = received_at + TimeDelta::seconds(630);
 
         let at_deadline = AdmissionLease::new(Uuid::nil(), received_at, deadline, &config());
         let just_before = AdmissionLease::new(

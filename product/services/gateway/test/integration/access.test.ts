@@ -48,12 +48,9 @@ describe.each(RUNTIME_KINDS)("%s access control", (kind) => {
       headers: async () => ({ Authorization: "Basic synthetic" }),
     },
     {
-      variant: "duplicate",
+      variant: "conflicting duplicate",
       headers: async (instance) => ({
-        Authorization: [
-          instance.headers.Authorization,
-          instance.headers.Authorization,
-        ],
+        Authorization: [instance.headers.Authorization, "Bearer grad_other"],
       }),
     },
     {

@@ -24,7 +24,7 @@
     "react-hook-form": "7.86.0",
     "react-router-dom": "7.18.2",
     "yaml": "2.9.0",
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@mdx-js/rollup": "^3.1.1",

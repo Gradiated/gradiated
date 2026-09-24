@@ -7,7 +7,7 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
 - TypeScript/Node owns the browser product, HTTP API, PostgreSQL and billing workflows.
 - Rust owns everything in the inference hot path: authentication, admission, exact model selection, streaming, cancellation, usage and SGLang dispatch.
 - Direct customers and OpenRouter use the same Rust gateway.
-- Requests name an exact hosted model. Do not add provider routing, fallback, branded aliases or silent parameter dropping.
+- Requests name an exact hosted model. Do not add provider routing, fallback, branded aliases or silent parameter dropping. The customer-key proxy in `services/proxy` is the only exception, and [PROXY_FEATURE_PLAN.md](../docs/PROXY_FEATURE_PLAN.md) bounds it.
 - Every HTTP API is authored with described Zod schemas and route metadata, then generates OpenAPI 3.1, docs, the browser client and Rust fixtures.
 - The browser uses only the generated API client.
 - Turborepo orchestrates deployables under `services/` and shared TypeScript

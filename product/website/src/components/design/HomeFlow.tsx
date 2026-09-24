@@ -432,6 +432,18 @@ export const HomeFlow = (): ReactElement => {
     let forcedDark = false;
     let prevTheme: string | undefined;
     let darkAt = 0;
+    /* The flip is an EVENT, but the paint eases: arm a transition class
+       just before the theme changes, disarm once the glide is over so
+       normal interactions are never slowed. */
+    let easeTimer = 0;
+    const easeThemeFlip = (): void => {
+      rootEl.classList.add("gr-theme-ease");
+      clearTimeout(easeTimer);
+      easeTimer = window.setTimeout(
+        () => rootEl.classList.remove("gr-theme-ease"),
+        550,
+      );
+    };
     const readTheme = (): void => {
       const cs = getComputedStyle(rootEl);
       const at = (name: string, fall: string): string =>
@@ -917,10 +929,12 @@ void main() {
          the scroll retreats past it */
       if (out.dark && !forcedDark) {
         prevTheme = rootEl.dataset.theme;
+        easeThemeFlip();
         rootEl.dataset.theme = "dark";
         forcedDark = true;
         darkAt = t;
       } else if (!out.dark && forcedDark) {
+        easeThemeFlip();
         if (prevTheme === undefined) delete rootEl.dataset.theme;
         else rootEl.dataset.theme = prevTheme;
         forcedDark = false;
@@ -993,6 +1007,8 @@ void main() {
         if (prevTheme === undefined) delete rootEl.dataset.theme;
         else rootEl.dataset.theme = prevTheme;
       }
+      clearTimeout(easeTimer);
+      rootEl.classList.remove("gr-theme-ease");
     };
   }, []);
 

@@ -4,6 +4,22 @@
    this sheet holds only what does not move.
    --------------------------------------------------------------------------- */
 
+/* Armed for ~half a second around the lights-off/on flip: every
+   token-driven colour glides instead of snapping. Removed right after,
+   so nothing else on the page is ever slowed by it. */
+.gr-theme-ease,
+.gr-theme-ease *,
+.gr-theme-ease *::before,
+.gr-theme-ease *::after {
+  transition:
+    background-color 0.45s ease,
+    color 0.45s ease,
+    border-color 0.45s ease,
+    box-shadow 0.45s ease,
+    fill 0.45s ease,
+    stroke 0.45s ease !important;
+}
+
 /* The runway supplies scroll distance; the stage stays pinned inside it.
    Height is set inline from RUNWAY_VH so the scrub length lives in one
    place, next to the beats it feeds. */

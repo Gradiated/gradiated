@@ -235,20 +235,20 @@ def main():
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
 
-    fast, slow = 'ProxyErrorBudgetFastBurn', 'ProxyErrorBudgetSlowBurn'
-    for name, failed, ok, destination, expected, eval_time in [
-        ('1% gateway failures page quickly', 3, 297, 'gateway', fast, '10m'),
-        ('0.1% gateway failures warn slowly', 3, 2997, 'gateway', slow, '20m'),
-        ('0.1% failures do not page', 3, 2997, 'gateway', None, '10m'),
-        ('healthy', 0, 3000, 'gateway', None, '20m'),
-        ('provider failures on relays are excluded', 300, 3000, 'anthropic', None, '20m'),
-        ('low traffic stays quiet', 1, 0, 'local', None, '20m'),
+    proxy_errors = 'ProxyHighErrorRate'
+    for name, failed, ok, destination, fires in [
+        ('3% gateway failures', 9, 291, 'gateway', True),
+        ('3% proxy failures', 9, 291, 'local', True),
+        ('1% gateway failures', 3, 297, 'gateway', False),
+        ('healthy', 0, 3000, 'gateway', False),
+        ('provider failures on relays are excluded', 300, 3000, 'anthropic', False),
+        ('low traffic stays quiet', 1, 0, 'local', False),
     ]:
         inputs = [{'series': f'gradiated_proxy_requests_total{{destination="{destination}",status="500"}}',
-                   'values': f'0+{failed}x80'},
+                   'values': f'0+{failed}x30'},
                   {'series': 'gradiated_proxy_requests_total{destination="gateway",status="200"}',
-                   'values': f'0+{ok}x80'}]
-        scenario('proxy error budget: ' + name, inputs, expected, [fast, slow], eval_time=eval_time)
+                   'values': f'0+{ok}x30'}]
+        scenario('proxy errors: ' + name, inputs, proxy_errors if fires else None, [proxy_errors], eval_time='5m')
 
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:

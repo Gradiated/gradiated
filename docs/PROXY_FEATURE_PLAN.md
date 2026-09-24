@@ -365,7 +365,9 @@ separate project.
 Monitor request outcomes by destination, gateway and provider error rates,
 added latency, in-flight requests, identity cache stale serves, catalog age and
 circuit state. Do not put keys or arbitrary model names in metric labels.
-Alert on the error-budget burn rate and on catalog age.
+Alert within about two minutes when more than 2% of requests fail with a proxy
+or gateway 5xx, when the public probe fails, and on catalog age. The 99.99% figure is a goal, not an
+alerting target.
 
 ## Capture and traces
 
@@ -580,7 +582,7 @@ changes. It must not claim that a task owns that baseline.
    provider.
 2. **Deployment.** Proxy workload, service account, database role, secret,
    disruption budget, target group and the public route in Terraform and Argo
-   manifests. Dashboards and burn-rate alerts. Rollout steps 2 and 3.
+   manifests. Dashboards and alerts. Rollout steps 2 and 3.
 3. **Gateway internal.** Remove the gateway's relay code.
 4. **Relay usage record.** Exempt generation events from the proxy through the
    existing ingestion path. Verify zero debits, deduplication, unknown usage and

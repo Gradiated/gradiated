@@ -1,0 +1,36 @@
+name: Dependency age
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/dependency-age.yml"
+      - ".cargo/config.toml"
+      - "**/Cargo.lock"
+      - "**/Cargo.toml"
+      - "tools/dependencies/**"
+  pull_request:
+    paths:
+      - ".github/workflows/dependency-age.yml"
+      - ".cargo/config.toml"
+      - "**/Cargo.lock"
+      - "**/Cargo.toml"
+      - "tools/dependencies/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-age-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo:
+    name: Cargo dependency age
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: node --test tools/dependencies/*.test.mjs
+      - run: node tools/dependencies/cargo-age.mjs

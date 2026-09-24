@@ -4,4 +4,5 @@ packages:
   - "website"
 
 # A version must be published for 7 days (in minutes) before it can be installed.
+# The repository-root .cargo/config.toml applies the same rule to Rust crates.
 minimumReleaseAge: 10080

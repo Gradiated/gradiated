@@ -1,0 +1,5 @@
+[registry]
+# A crates.io version must be published for 7 days before Cargo resolves it.
+# Cargo reads this key from Rust 1.100; tools/dependencies/cargo-age.mjs
+# enforces the same rule in CI until then.
+global-min-publish-age = "7 days"

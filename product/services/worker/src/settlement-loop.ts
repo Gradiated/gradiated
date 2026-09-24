@@ -43,6 +43,7 @@ export type SettlementPass = {
   config: SettlementConfig;
   now: Date;
   cursor: SettlementSlot | null;
+  signal?: AbortSignal;
 };
 
 export type SettlementPassResult = SettlementPassSummary & {
@@ -231,6 +232,7 @@ export const processSettlementPass = async (
   let processedSlots = 0;
 
   while (
+    !pass.signal?.aborted &&
     cursor &&
     isAtOrBefore(cursor, upper) &&
     processedSlots < pass.config.maxSlotsPerPass
@@ -272,6 +274,7 @@ const leadSettlement = async (
       config,
       now: new Date(),
       cursor,
+      signal,
     });
 
     cursor = result.cursor;

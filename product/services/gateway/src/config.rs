@@ -185,7 +185,7 @@ struct Environment {
         rename = "gateway_generation_timeout_seconds",
         default = "default_generation_timeout_seconds"
     )]
-    #[validate(range(min = 1, max = 3_600))]
+    #[validate(range(min = 1, max = 300))]
     generation_timeout_seconds: u64,
     #[serde(
         rename = "gateway_lease_finalization_margin_seconds",
@@ -228,7 +228,7 @@ struct Environment {
     proxy_idle_timeout_seconds: u64,
     /// The total deadline starts before body buffering, so it bounds the whole relay.
     #[serde(default = "default_proxy_total_timeout_seconds")]
-    #[validate(range(min = 1, max = 3600))]
+    #[validate(range(min = 1, max = 300))]
     proxy_total_timeout_seconds: u64,
     #[serde(default = "default_proxy_max_request_bytes")]
     #[validate(range(min = 1024, max = 33_554_432))]
@@ -406,7 +406,7 @@ fn default_proxy_idle_timeout_seconds() -> u64 {
 }
 
 fn default_proxy_total_timeout_seconds() -> u64 {
-    900
+    300
 }
 
 fn default_proxy_max_request_bytes() -> u64 {
@@ -495,7 +495,7 @@ mod tests {
                 connect_timeout: Duration::from_secs(10),
                 response_header_timeout: Duration::from_secs(120),
                 idle_timeout: Duration::from_secs(120),
-                total_timeout: Duration::from_secs(900),
+                total_timeout: Duration::from_secs(300),
                 max_request_bytes: 8 * 1024 * 1024,
                 request_buffer_bytes: 64 * 1024 * 1024,
                 max_in_flight: 2_000,
@@ -533,7 +533,7 @@ mod tests {
             ("PROXY_CONNECT_TIMEOUT_SECONDS", "5"),
             ("PROXY_RESPONSE_HEADER_TIMEOUT_SECONDS", "60"),
             ("PROXY_IDLE_TIMEOUT_SECONDS", "90"),
-            ("PROXY_TOTAL_TIMEOUT_SECONDS", "600"),
+            ("PROXY_TOTAL_TIMEOUT_SECONDS", "240"),
             ("PROXY_MAX_REQUEST_BYTES", "2048"),
             ("PROXY_REQUEST_BUFFER_BYTES", "2097152"),
             ("PROXY_MAX_IN_FLIGHT", "10"),
@@ -581,7 +581,7 @@ mod tests {
                 connect_timeout: Duration::from_secs(5),
                 response_header_timeout: Duration::from_secs(60),
                 idle_timeout: Duration::from_secs(90),
-                total_timeout: Duration::from_secs(600),
+                total_timeout: Duration::from_secs(240),
                 max_request_bytes: 2_048,
                 request_buffer_bytes: 2_097_152,
                 max_in_flight: 10,
@@ -607,6 +607,17 @@ mod tests {
 
         for secret in ["db-secret", "valkey-secret", "runtime-secret"] {
             assert!(!debug.contains(secret), "{secret} leaked into {debug}");
+        }
+    }
+
+    #[test]
+    fn request_deadlines_cannot_exceed_five_minutes() {
+        for key in [
+            "GATEWAY_GENERATION_TIMEOUT_SECONDS",
+            "PROXY_TOTAL_TIMEOUT_SECONDS",
+        ] {
+            assert!(minimal_with(&[(key, "300")]).is_ok());
+            assert!(minimal_with(&[(key, "301")]).is_err());
         }
     }
 

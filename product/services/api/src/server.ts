@@ -42,7 +42,8 @@ import { ApiMetrics, startApiMetricsServer } from "./metrics.js";
 import { createReadinessCheck } from "./readiness.js";
 
 const environment = parseApiEnvironment(process.env);
-const { database, pool } = createControlDatabase(environment.DATABASE_URL);
+// Keep the API within 100 database connections at its 20-pod ceiling.
+const { database, pool } = createControlDatabase(environment.DATABASE_URL, 5);
 const clickhouse = createClickHouseRuntimeClient(
   parseClickHouseRuntimeEnvironment(process.env),
 );

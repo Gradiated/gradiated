@@ -121,7 +121,7 @@ const recoverStale = async (ingestion: GenerationIngestion): Promise<void> => {
     telemetry.recordIngestedMessages("recovered", consumed);
     reportDeleted(telemetry, claimed.deletedMessages.length);
     cursor = claimed.nextId;
-  } while (cursor !== "0-0");
+  } while (cursor !== "0-0" && !ingestion.signal.aborted);
 };
 
 const readNew = async (ingestion: GenerationIngestion): Promise<void> => {
@@ -171,7 +171,7 @@ export const runGenerationIngestionLoop = async (
     const elapsedSeconds = stopwatch();
 
     await recoverStale(ingestion);
-    await readNew(ingestion);
+    if (!ingestion.signal.aborted) await readNew(ingestion);
     await recordBacklogAndTrim(ingestion);
 
     ingestion.telemetry.recordPass("generation_ingestion", elapsedSeconds());

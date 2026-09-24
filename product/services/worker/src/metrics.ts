@@ -36,6 +36,8 @@ const operationBuckets = [
 export class WorkerMetrics {
   readonly registry = new Registry();
 
+  private readonly ingestionDemand: Gauge;
+  private readonly ingestionObservation: Gauge;
   private readonly ingestionLag: Gauge<"kind">;
   private readonly ingestionMessages: Counter<"source">;
   private readonly ingestionDeletedMessages: Counter;
@@ -102,6 +104,16 @@ export class WorkerMetrics {
     this.ingestionDeletedMessages = new Counter({
       name: "gradiated_worker_ingestion_deleted_messages_total",
       help: "Pending generation messages that left the stream before ClickHouse ingested them.",
+      registers: [this.registry],
+    });
+    this.ingestionDemand = new Gauge({
+      name: "gradiated_worker_ingestion_outstanding_messages",
+      help: "Shared unread plus pending messages from one consumer-group snapshot.",
+      registers: [this.registry],
+    });
+    this.ingestionObservation = new Gauge({
+      name: "gradiated_worker_ingestion_observed_timestamp_seconds",
+      help: "Latest valid backlog observation; zero means unknown or unobserved.",
       registers: [this.registry],
     });
     this.ingestionLag = new Gauge({
@@ -182,6 +194,9 @@ export class WorkerMetrics {
         ? 0
         : Math.max(0, Date.now() - oldestPendingMilliseconds) / 1_000;
 
+    // Unknown lag must invalidate autoscaling, rather than look like an empty queue.
+    this.ingestionDemand.set(unread === null ? 0 : pending + unread);
+    this.ingestionObservation.set(unread === null ? 0 : Date.now() / 1_000);
     this.ingestionLag.set({ kind: "pending" }, pending);
     if (unread === null) this.ingestionLag.remove({ kind: "unread" });
     else this.ingestionLag.set({ kind: "unread" }, unread);

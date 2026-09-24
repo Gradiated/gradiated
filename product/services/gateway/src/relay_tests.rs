@@ -312,7 +312,9 @@ async fn the_byte_budget_is_released_when_the_response_is_dropped() {
         let response = send(&relay, br#"{"model":"claude-sonnet-5"}"#)
             .await
             .expect("each relay reuses the released slot");
+        assert_eq!(relay.active_requests(), 1);
         collect(response.body).await.unwrap();
+        assert_eq!(relay.active_requests(), 0);
     }
 
     assert_eq!(relay.slots.available_permits(), 1);
@@ -371,4 +373,20 @@ async fn a_stream_that_stalls_mid_response_times_out() {
         collect(response.body).await.err(),
         Some(RelayError::Timeout)
     );
+}
+
+#[tokio::test]
+async fn the_total_deadline_bounds_a_relay_body_before_the_idle_timeout() {
+    let (address, _) = start_provider(TestReply::StallAfterFirstChunk).await;
+    let mut configured = limits();
+    configured.total_timeout = Duration::from_millis(100);
+    configured.idle_timeout = Duration::from_secs(10);
+    let relay = relay_for(address, configured);
+    let response = send(&relay, b"{}").await.unwrap();
+
+    let result = tokio::time::timeout(Duration::from_secs(1), collect(response.body))
+        .await
+        .expect("the total deadline must expire before the idle timeout");
+    assert_eq!(result.err(), Some(RelayError::Timeout));
+    assert_eq!(relay.active_requests(), 0);
 }

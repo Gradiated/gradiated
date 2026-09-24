@@ -454,6 +454,10 @@ async fn ready(State(state): State<GatewayState>) -> (StatusCode, Json<HealthRes
 }
 
 async fn metrics(State(state): State<GatewayState>) -> Response {
+    state
+        .metrics
+        .set_active_relays(state.relay.active_requests());
+
     (
         [(
             CONTENT_TYPE,

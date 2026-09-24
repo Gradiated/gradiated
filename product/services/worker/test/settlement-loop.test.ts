@@ -463,6 +463,26 @@ describe("settlement loop", () => {
     expect(leader.release).toHaveBeenCalledOnce();
   });
 
+  it("finishes the current slot and releases leadership without starting another on shutdown", async () => {
+    const controller = new AbortController();
+    const reader = readerWithSlots({
+      [slot1230]: [organizationSettlement({ slotId: slot1230 })],
+      [slot1235]: [organizationSettlement({ slotId: slot1235 })],
+    });
+    const leader = leadership();
+    vi.mocked(leader.postSettlement).mockImplementation(async () => {
+      controller.abort();
+      expect(leader.release).not.toHaveBeenCalled();
+      return true;
+    });
+
+    await runLoop({ reader, store: store(leader), signal: controller.signal });
+
+    expect(reader.queriedSlots).toEqual([slot1230]);
+    expect(leader.postSettlement).toHaveBeenCalledOnce();
+    expect(leader.release).toHaveBeenCalledOnce();
+  });
+
   it("stops promptly when aborted during a pass", async () => {
     const controller = new AbortController();
     const leader = leadership();

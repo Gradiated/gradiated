@@ -270,6 +270,10 @@ impl ProviderRelay {
         })
     }
 
+    pub(crate) fn active_requests(&self) -> usize {
+        permit_count(self.limits.max_in_flight) - self.slots.available_permits()
+    }
+
     pub async fn send(
         &self,
         route: RelayRoute,

@@ -40,6 +40,40 @@ describe("worker metrics", () => {
     expect(body).not.toContain("generation_id");
   });
 
+  it("exports a consistent outstanding count and invalidates unknown lag", async () => {
+    const metrics = createMetrics();
+    vi.useFakeTimers({ now: 120_000 });
+
+    try {
+      metrics.recordIngestionBacklog({
+        pending: 7,
+        unread: 100,
+        oldestPendingMilliseconds: null,
+      });
+      expect(await metrics.render()).toContain(
+        'gradiated_worker_ingestion_outstanding_messages{service="worker"} 107',
+      );
+      expect(await metrics.render()).toContain(
+        'gradiated_worker_ingestion_observed_timestamp_seconds{service="worker"} 120',
+      );
+
+      vi.setSystemTime(180_000);
+      expect(await metrics.render()).toContain(
+        'gradiated_worker_ingestion_observed_timestamp_seconds{service="worker"} 120',
+      );
+      metrics.recordIngestionBacklog({
+        pending: 7,
+        unread: null,
+        oldestPendingMilliseconds: null,
+      });
+      expect(await metrics.render()).toContain(
+        'gradiated_worker_ingestion_observed_timestamp_seconds{service="worker"} 0',
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("keeps the pass operation labels that dashboards query", async () => {
     const metrics = createMetrics();
 

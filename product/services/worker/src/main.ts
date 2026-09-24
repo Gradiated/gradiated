@@ -48,7 +48,8 @@ for (const client of [ingestionValkey, settlementValkey]) {
 }
 
 const clickhouse = createClickHouseRuntimeClient(environment);
-const { pool } = createControlDatabase(environment.DATABASE_URL);
+// Settlement needs one held leader connection; cap all 20 workers at 40 connections.
+const { pool } = createControlDatabase(environment.DATABASE_URL, 2);
 pool.on("error", (error) =>
   serviceLog("error", "dependency_error", { dependency: "postgres", error }),
 );

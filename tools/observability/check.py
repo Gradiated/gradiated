@@ -26,9 +26,9 @@ def main():
         parser.error('promtool is required')
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
-    alerts = {rule['alert']: rule for group in groups for rule in group['rules']}
+    alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
         annotations = rule['annotations']
         url = urlparse(annotations['panel_url'])
@@ -55,7 +55,9 @@ def main():
                 assert '$' not in expr, expr
                 chart_rules.append({'record': f'check:panel_{len(chart_rules)}', 'expr': expr})
 
-    tests = []
+    from autoscaling_checks import check_autoscaling
+
+    tests = check_autoscaling(ROOT)
     def scenario(name, inputs, expected, checks, labels=None, eval_time="8m"):
         cases = []
         for alert in checks:
@@ -71,6 +73,75 @@ def main():
                             'exp_annotations': annotations}] if alert == expected else []})
         tests.append({'name': name, 'interval': '30s', 'input_series': inputs,
                       'alert_rule_test': cases})
+
+    for name, available, desired, fires, duration in [
+        ('full', 3, 3, False, '10m'),
+        ('refilling', 1, 3, False, '5m'),
+        ('depleted', 1, 3, True, '10m'),
+        ('disabled intentionally', 0, 0, False, '10m'),
+        ('missing deployment', None, None, True, '10m'),
+    ]:
+        labels = {'namespace': 'gradiated', 'deployment': 'scaling-headroom'}
+        inputs = [] if available is None else [
+            {'series': metric + '{namespace="gradiated",deployment="scaling-headroom"}',
+             'values': f'{value}+0x30'} for metric, value in [
+                 ('kube_deployment_status_replicas_available', available),
+                 ('kube_deployment_spec_replicas', desired)]]
+        scenario('headroom ' + name, inputs,
+                 'GradiatedScalingHeadroomDepleted' if fires else None,
+                 ['GradiatedScalingHeadroomDepleted'], labels, duration)
+
+    for desired, limited, fires in [(2, 1, False), (20, 0, False), (20, 1, True)]:
+        labels = {'namespace': 'gradiated', 'horizontalpodautoscaler': 'keda-hpa-api'}
+        selector = 'namespace="gradiated",horizontalpodautoscaler="keda-hpa-api"'
+        inputs = [
+            {'series': 'kube_horizontalpodautoscaler_status_desired_replicas{' + selector + '}',
+             'values': f'{desired}+0x30'},
+            {'series': 'kube_horizontalpodautoscaler_spec_max_replicas{' + selector + '}',
+             'values': '20+0x30'},
+            {'series': 'kube_horizontalpodautoscaler_status_condition{' + selector +
+             ',condition="ScalingLimited",status="true"}', 'values': f'{limited}+0x30'},
+        ]
+        scenario(f'autoscaling cap desired={desired} limited={limited}', inputs,
+                 'GradiatedAutoscalingLimited' if fires else None,
+                 ['GradiatedAutoscalingLimited'],
+                 {**labels, 'condition': 'ScalingLimited', 'status': 'true'}, '10m')
+
+    controllers = [('keda', 'keda-operator'), ('keda', 'keda-operator-metrics-apiserver'),
+                   ('kube-system', 'metrics-server'), ('kube-system', 'cluster-autoscaler')]
+    for namespace, deployment in controllers:
+        for available, duration, fires in [(None, '2m', True), (0, '2m', True),
+                                           (0, '1m', False), (1, '2m', False)]:
+            inputs = []
+            for ns, name in controllers:
+                value = available if (ns, name) == (namespace, deployment) else 2
+                if value is not None:
+                    inputs.append({'series': 'kube_deployment_status_replicas_available'
+                                   + f'{{namespace="{ns}",deployment="{name}"}}',
+                                   'values': f'{value}+0x8'})
+            alert = 'GradiatedAutoscalingControllerUnavailable'
+            scenario(f'controller {deployment} available={available} duration={duration}', inputs,
+                     alert if fires else None, [alert],
+                     {'namespace': namespace, 'deployment': deployment}, duration)
+
+    for missing in (None, 'api', 'gateway', 'worker'):
+        inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
+                   + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
+                   'values': '20+0x8'} for service in ('api', 'gateway', 'worker') if service != missing]
+        alert = 'GradiatedAutoscalerMissing'
+        scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
+                 {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')
+
+    for condition in ('ScalingActive', 'AbleToScale'):
+        for status, duration, fires in [('false', '2m', True), ('false', '1m', False), ('true', '2m', False)]:
+            labels = {'namespace': 'gradiated', 'horizontalpodautoscaler': 'keda-hpa-gateway',
+                      'condition': condition, 'status': status}
+            selector = ','.join(f'{k}="{v}"' for k, v in labels.items())
+            inputs = [{'series': 'kube_horizontalpodautoscaler_status_condition{' + selector + '}',
+                       'values': '1+0x8'}]
+            alert = 'GradiatedAutoscalingUnavailable'
+            scenario(f'HPA {condition}={status} duration={duration}', inputs,
+                     alert if fires else None, [alert], labels, duration)
 
     for service, title, down in [('api', 'Api', 'GradiatedApiPublicUnavailable'),
                                  ('console', 'Console', 'GradiatedConsoleUnavailable'),

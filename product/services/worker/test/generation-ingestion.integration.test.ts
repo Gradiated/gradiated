@@ -304,6 +304,34 @@ describe("generation ingestion loop against Valkey", () => {
     },
   );
 
+  it("acknowledges the recovered batch but leaves new work unread on shutdown", async () => {
+    const controller = new AbortController();
+    const options = { ...streamConfig(), claimIdleMs: 0 };
+    const telemetry = ingestionTelemetry();
+    const clickHouse = recordingClickHouse();
+    await leavePendingWithDeadConsumer(options, `${slotMilliseconds}-1`);
+    await addGeneration(options.stream, `${slotMilliseconds}-2`, 2);
+    vi.mocked(telemetry.recordIngestedMessages).mockImplementation(() =>
+      controller.abort(),
+    );
+
+    await runGenerationIngestionLoop({
+      client,
+      writer: clickHouse.writer,
+      config: options,
+      telemetry,
+      onReady: async () => undefined,
+      signal: controller.signal,
+    });
+
+    expect(clickHouse.inserted).toHaveLength(1);
+    expect(await pendingCount(options)).toBe(0);
+    expect(telemetry.recordIngestedMessages).not.toHaveBeenCalledWith(
+      "new",
+      expect.anything(),
+    );
+  });
+
   it("stops after the current blocking read when aborted", async () => {
     const controller = new AbortController();
     const telemetry = ingestionTelemetry();

@@ -12,7 +12,7 @@ use tracing_subscriber::EnvFilter;
 
 const NATURAL_DRAIN_BUFFER: Duration = Duration::from_secs(5);
 const FORCED_DRAIN_TIMEOUT: Duration = Duration::from_secs(15);
-const HTTP_DRAIN_TIMEOUT: Duration = Duration::from_secs(5);
+const HTTP_DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
 
 #[derive(Clone, Copy)]
 enum Stage {
@@ -132,15 +132,16 @@ async fn run() -> Result<(), Failure> {
 
             let natural_drain_timeout = Duration::from_secs(config.generation_timeout_seconds)
                 .saturating_add(NATURAL_DRAIN_BUFFER);
+            // Relay streams are not CompletionService generations. Keep their
+            // HTTP connections alive for the full proxy deadline as well.
+            let http_drain_timeout = natural_drain_timeout
+                .max(config.proxy_limits().total_timeout + NATURAL_DRAIN_BUFFER)
+                + FORCED_DRAIN_TIMEOUT
+                + HTTP_DRAIN_TIMEOUT;
+            let http_deadline = tokio::time::Instant::now() + http_drain_timeout;
             drain_generations(&completions, natural_drain_timeout).await;
 
-            match tokio::time::timeout(HTTP_DRAIN_TIMEOUT, &mut server).await {
-                Ok(result) => result.map_err(at(Stage::Serve))?.map_err(at(Stage::Serve))?,
-                Err(_) => warn!(
-                    timeout_seconds = HTTP_DRAIN_TIMEOUT.as_secs(),
-                    "gateway HTTP drain timed out"
-                ),
-            }
+            finish_http_shutdown(&mut server, http_deadline).await?;
         }
     }
 
@@ -229,3 +230,23 @@ async fn shutdown_signal(mut interrupt: Signal, mut terminate: Signal) {
         _ = terminate.recv() => {},
     }
 }
+
+async fn finish_http_shutdown(
+    server: &mut tokio::task::JoinHandle<std::io::Result<()>>,
+    deadline: tokio::time::Instant,
+) -> Result<(), Failure> {
+    match tokio::time::timeout_at(deadline, &mut *server).await {
+        Ok(result) => result
+            .map_err(at(Stage::Serve))?
+            .map_err(at(Stage::Serve))?,
+        Err(_) => {
+            warn!("gateway HTTP drain timed out");
+            server.abort();
+        }
+    }
+
+    Ok(())
+}
+
+#[cfg(test)]
+mod shutdown_tests;

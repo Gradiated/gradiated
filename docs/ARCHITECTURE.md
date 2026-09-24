@@ -487,7 +487,7 @@ protocol integration, not production model equivalence.
   overload to `429`. Do not queue. Retry once before usable output.
 - Keep PostgreSQL, Valkey and ClickHouse as separate authorities with no hidden
   cross-store source of truth.
-- Do not add Kafka, CDC, an outbox, a service mesh, Temporal, KEDA, Karpenter,
+- Do not add Kafka, CDC, an outbox, a service mesh, Temporal, Karpenter,
   RDS Proxy or a custom operator at launch.
 - Add a second model through model and deployment rows, an SGLang deployment,
   capacity measurement and conformance fixtures.
@@ -495,6 +495,23 @@ protocol integration, not production model equivalence.
   gateway.
 - Introduce more workers or services only when a measured SLO, throughput,
   isolation or recovery requirement cannot be met within the existing service.
+
+The approved production scaling decision is to use KEDA for API, worker and
+gateway replica counts, and Cluster Autoscaler for CPU node capacity. This
+explicitly supersedes the launch restriction for these two controllers. The
+initial demand targets are operating defaults, not measured throughput limits;
+production burst/recovery calibration remains an operational follow-up.
+
+KEDA manages API, worker and gateway replica counts using application demand plus
+CPU and memory triggers. Argo owns the ScaledObjects; the generated HPAs own live
+replica counts. Cluster Autoscaler adjusts the managed CPU node group between
+3 and 20 nodes; Terraform owns those bounds and the initial count, while the
+autoscaler owns subsequent desired capacity. Each service scales from 3 to 20
+pods. Three low-priority placeholder pods reserve 4.05 CPU cores and 4,224 MiB
+for fast scale-out; service pods preempt them and Cluster Autoscaler replenishes
+the reservation within the node ceiling. See the
+[workload operations](../infra/environments/prod/us-east-1/kubernetes/workloads/README.md)
+for thresholds, failure handling and rollback.
 
 The architecture is intentionally narrow until production evidence requires
 another boundary.

@@ -48,7 +48,11 @@ scope and authorization lifetime. The callback verifies the Dex signature,
 issuer, audience, expiry, nonce, verified email and exact `gradiated.com` email
 domain. Google/Dex tokens are never accepted as MCP bearer tokens or forwarded to
 telemetry backends. Single-use authorization codes require S256 PKCE, matching
-client, redirect and resource. The only permitted scope is `production:read`.
+client, redirect and resource. Omitted OAuth `resource` parameters default only to
+`https://ops.gradiated.com/mcp`, the server's single resource; explicitly different
+resources are rejected at authorization, exchange and refresh. This follows
+[RFC 8707 default-resource semantics](https://www.rfc-editor.org/rfc/rfc8707.html#section-2.1).
+The only permitted scope is `production:read`.
 RFC 9207 issuer identification uses the exact issuer `https://ops.gradiated.com/`
 in discovery and authorization redirects, including SDK-generated error redirects.
 

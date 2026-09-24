@@ -259,7 +259,7 @@ export const createAuth = (options: {
     authorize: async (client, params, res: Response) => {
       prune();
       if (
-        params.resource?.href !== resource ||
+        (params.resource?.href ?? resource) !== resource ||
         !params.codeChallenge ||
         params.scopes?.some((scope) => scope !== "production:read") ||
         pending.size >= 100
@@ -268,7 +268,7 @@ export const createAuth = (options: {
       const state = random();
       const flow: Pending = {
         client: client.client_id,
-        params,
+        params: { ...params, resource: new URL(resource) },
         cookie: random(),
         nonce: random(),
         verifier: random(),
@@ -314,7 +314,7 @@ export const createAuth = (options: {
         !grant ||
         grant.client !== client.client_id ||
         redirectUri !== grant.params.redirectUri ||
-        requestedResource?.href !== resource
+        (requestedResource?.href ?? resource) !== resource
       )
         throw new InvalidGrantError("Invalid code");
       codes.delete(hash(code));

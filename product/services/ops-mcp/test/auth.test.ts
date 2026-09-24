@@ -44,6 +44,7 @@ afterEach(async () => {
 const setup = async (
   email = "staff@gradiated.com",
   options: Partial<Parameters<typeof createAuth>[0]> = {},
+  omitResource = false,
 ) => {
   const redirectUri =
     options.redirectUris?.[0] ?? "http://127.0.0.1:4567/callback";
@@ -94,7 +95,7 @@ const setup = async (
       code_challenge_method: "S256",
       code_challenge: challenge,
       scope: "production:read",
-      resource,
+      ...(omitResource ? {} : { resource }),
     });
     return fetch(`${base}/authorize?${params}`, { redirect: "manual" });
   };
@@ -136,7 +137,7 @@ const setup = async (
         code,
         code_verifier: verifier,
         redirect_uri: redirectUri,
-        resource: `${origin}/mcp`,
+        ...(omitResource ? {} : { resource: `${origin}/mcp` }),
         ...changes,
       }),
     });
@@ -231,6 +232,37 @@ describe("MCP OAuth login", () => {
     advance();
     expect(await auth.authenticate(tokens.access_token)).toBeUndefined();
   });
+  it("defaults omitted resource to this MCP only and retains PKCE and audience checks", async () => {
+    const app = await setup(
+      undefined,
+      {
+        redirectUris: ["https://us.posthog.com/api/mcp_store/oauth_redirect/"],
+      },
+      true,
+    );
+    const { callback } = await app.login();
+    const code = new URL(callback.headers.get("location")!).searchParams.get(
+      "code",
+    )!;
+
+    expect(
+      (await app.exchange(code, { resource: "https://another.test/mcp" }))
+        .status,
+    ).toBe(400);
+    expect(
+      (await app.exchange(code, { code_verifier: "b".repeat(43) })).status,
+    ).toBe(400);
+    const response = await app.exchange(code);
+    expect(response.status).toBe(200);
+    const tokens = (await response.json()) as { access_token: string };
+    const grant = await app.auth.provider.verifyAccessToken(
+      tokens.access_token,
+    );
+    expect(grant.resource?.href).toBe(`${origin}/mcp`);
+    expect(grant.scopes).toEqual(["production:read"]);
+    expect((await app.exchange(code)).status).toBe(400);
+  });
+
   it("rejects wrong PKCE, redirect and resource during token exchange", async () => {
     const { login, exchange } = await setup();
     const { callback } = await login();

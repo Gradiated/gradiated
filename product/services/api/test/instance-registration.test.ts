@@ -249,6 +249,7 @@ const rtxPod = {
   machineId: "machine1",
   gpuCount: 2,
   vcpuCount: 32,
+  desiredStatus: "EXITED",
   env: { PUBLIC_KEY: "ssh-ed25519 debug" },
   machine: {
     dataCenterId: "US-NE-1",
@@ -257,6 +258,30 @@ const rtxPod = {
 };
 
 describe("RunPod provider", () => {
+  it.each(["RUNNING", "CREATED", undefined])(
+    "refuses reset at status %s before any provider mutation",
+    async (desiredStatus) => {
+      const runpod = fakeRunPod({ ...rtxPod, desiredStatus });
+      const provider = createRunPodProvider({
+        apiKey: "key",
+        fetch: runpod.fetch,
+      });
+      const instance = await provider.describe("pod1");
+
+      await expect(
+        provider.bootstrap(
+          instance,
+          {
+            reference: "registry.example/nomad-base@sha256:abc",
+            registry: { username: "AWS", password: "token" },
+          },
+          {},
+        ),
+      ).rejects.toThrow("Refusing to reset");
+      expect(runpod.calls.every((call) => call.method === "GET")).toBe(true);
+    },
+  );
+
   it("describes a pod as the instance row records it", async () => {
     const runpod = fakeRunPod(rtxPod);
     const provider = createRunPodProvider({

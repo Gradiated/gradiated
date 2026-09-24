@@ -11,3 +11,12 @@ docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
   -var=runtime_revision=test-release -var=status_url=https://api.example.test/v1/deployment-status \
   -var=base_id=test-base-v1 -var=cpu_mhz=1000 -var=memory_mb=1024 -var=runtime_disk_mb=1024 \
   /jobs/deepseek-v4-1-flash.nomad.hcl
+
+# Validate committed configurations for every deployable job as well.
+shopt -s nullglob
+for vars in "$root/jobs"/*.vars.hcl; do
+  name=$(basename "$vars" .vars.hcl)
+  docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
+    hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
+    job validate -var-file="/jobs/$name.vars.hcl" "/jobs/$name.nomad.hcl"
+done

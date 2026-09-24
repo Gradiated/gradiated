@@ -23,6 +23,7 @@ This repository is the complete project state for the research and product-build
 - Put decision-relevant browser captures and research outputs in the relevant `research/<workstream>/docs/` or `research/<workstream>/evidence/` directory.
 - Use `.env.example` for variable names and external secret storage for values.
 - Log in to AWS with `mise run aws:login` when an AWS, Terraform or Terragrunt command reports missing or expired credentials. The task opens an SSO login for the `gradiated-admin` profile.
+- Preserve existing on-demand GPU reservations. Repurpose running pods by changing processes over SSH, not by stopping, restarting, resetting, terminating, or changing provider image/environment settings. Those actions require explicit authorization to risk losing capacity; a file backup does not preserve the reservation.
 - Do not make issue trackers, Notion, Drive, Jira, or Slack a required source of truth. The repository owns code, research, prompts, and artifacts.
 - Harness-launched `$research-director`, `$researcher`, and `$research-supervisor` turns are already claimed by their lab and project assignment. They update the lab/project logs directly and do not create a GitHub issue for every internal turn.
 

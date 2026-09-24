@@ -16,6 +16,7 @@ const podSchema = z.object({
   machineId: z.string(),
   gpuCount: z.number().int().nonnegative(),
   vcpuCount: z.number().int().positive(),
+  desiredStatus: z.string().optional(),
   env: z.record(z.string(), z.string()).nullish(),
   machine: z.object({
     dataCenterId: z.string().nullish(),
@@ -120,6 +121,14 @@ export const createRunPodProvider = ({
 
     async bootstrap(instance, image, environment) {
       const current = await pod(instance.providerInstanceId);
+      if (current.desiredStatus !== "EXITED") {
+        throw new Error(
+          "Refusing to reset a RunPod pod that is running or has unknown status: " +
+            "an image or environment update can stop it and release scarce GPU capacity. " +
+            "Install Nomad over SSH inside the existing container instead.",
+        );
+      }
+
       const auth = image.registry
         ? await registryAuth(current.id, image.registry)
         : null;

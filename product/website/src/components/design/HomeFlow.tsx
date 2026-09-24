@@ -18,9 +18,11 @@ import { Logo } from "./Logo";
  *   time regardless of scroll, so the scene stays alive while the user reads.
  * - Copy beats are rests: geometry is parked wherever text is readable.
  *
- * Deliberately monochrome for now: the hero's beam is the page's only
- * gradient until the rules for reusing it are settled (see the NOTE by the
- * theme reads below).
+ * Mostly monochrome, by rule: the pipeline plays in ink on the panel, and
+ * the hero's gradient combo appears only around the chip in the dark
+ * reveal (see GRADIENT RULE below). The wafer field behind the chip is a
+ * fragment shader — silver dots with a holographic tint that blooms once,
+ * when the lights-off ripple passes through.
  */
 
 /* ---- timeline ----
@@ -29,10 +31,13 @@ import { Logo } from "./Logo";
 const BEATS = {
   rise: [0.0, 0.06],
   clarify: [0.06, 0.15],
-  engineRest: [0.15, 0.5],
-  refrost: [0.5, 0.64],
-  land: [0.64, 0.82],
-  siliconRest: [0.82, 1.0],
+  engineRest: [0.15, 0.46],
+  refrost: [0.46, 0.58],
+  /* frontal hold: the lights snap off the moment the square forms, the G
+     lights up, and the sheen makes its pass while the chip is straight on */
+  chipHold: [0.58, 0.7],
+  land: [0.7, 0.85],
+  siliconRest: [0.85, 1.0],
 } as const;
 
 /** Runway height in viewport-heights; the scrub's total scroll distance. */
@@ -94,10 +99,12 @@ type TimelineOut = {
   /* landing beats: the plate is a solid DOM surface (it rotates in 3D,
      which the canvas panel cannot), so the canvas stops painting it */
   solid: boolean;
-  /* the showstopper: 0..1 lights-off as the chip comes to the fore */
-  dark: number;
-  /* raw progress through the land beat — drives the cinematic sheen */
-  landT: number;
+  /* the showstopper: lights hard-off from the moment the square forms */
+  dark: boolean;
+  /* progress of the sheen's single pass, during the frontal hold */
+  sheenT: number;
+  /* the gradient glow belongs to the isometric view only */
+  glowA: number;
 };
 
 const keyStates = (
@@ -142,8 +149,9 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     engineCopyA: 0,
     siliconCopyA: 0,
     solid: false,
-    dark: 0,
-    landT: 0,
+    dark: false,
+    sheenT: 0,
+    glowA: 0,
   };
   if (g < BEATS.rise[1]) {
     out.s = mixState(K.peek, K.rise, easeIO(seg(g, BEATS.rise)));
@@ -163,22 +171,29 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     out.s = mixState(K.full, K.chip, t);
     out.frost = t;
     out.engineA = 1 - t;
+  } else if (g < BEATS.chipHold[1]) {
+    out.s = K.chip;
+    out.solid = true;
+    out.dark = true;
+    out.markAlpha = 1;
+    out.sheenT = seg(g, BEATS.chipHold);
   } else if (g < BEATS.land[1]) {
-    const tr = seg(g, BEATS.land);
-    const t = easeIO(tr);
+    const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);
-    out.markAlpha = easeO(clamp01((tr - 0.15) / 0.5));
+    out.markAlpha = 1;
     out.shadowAlpha = easeO(clamp01((t - 0.3) / 0.7)) * 0.55;
     out.solid = true;
-    out.dark = clamp01(tr * 3);
-    out.landT = tr;
+    out.dark = true;
+    out.sheenT = 1;
+    out.glowA = easeIO(t);
   } else {
     out.s = K.land;
     out.markAlpha = 1;
     out.shadowAlpha = 0.55;
     out.solid = true;
-    out.dark = 1;
-    out.landT = 1;
+    out.dark = true;
+    out.sheenT = 1;
+    out.glowA = 1;
     out.siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
   }
   return out;
@@ -377,6 +392,10 @@ export const HomeFlow = (): ReactElement => {
   const shadowRef = useRef<HTMLDivElement>(null);
   const markRef = useRef<HTMLDivElement>(null);
   const sheenRef = useRef<HTMLDivElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
+  const faceSRef = useRef<HTMLDivElement>(null);
+  const faceERef = useRef<HTMLDivElement>(null);
+  const glRef = useRef<HTMLCanvasElement>(null);
   const engineCopyRef = useRef<HTMLDivElement>(null);
   const siliconCopyRef = useRef<HTMLDivElement>(null);
 
@@ -387,9 +406,13 @@ export const HomeFlow = (): ReactElement => {
     const shadowEl = shadowRef.current;
     const mark = markRef.current;
     const sheen = sheenRef.current;
+    const top = topRef.current;
+    const faceS = faceSRef.current;
+    const faceE = faceERef.current;
+    const glCanvas = glRef.current;
     const engineCopy = engineCopyRef.current;
     const siliconCopy = siliconCopyRef.current;
-    if (!runway || !canvas || !block || !shadowEl || !mark || !engineCopy || !siliconCopy)
+    if (!runway || !canvas || !block || !shadowEl || !mark || !sheen || !top || !faceS || !faceE || !glCanvas || !engineCopy || !siliconCopy)
       return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -402,15 +425,13 @@ export const HomeFlow = (): ReactElement => {
        attribute lives there too — so that element, not documentElement, is
        what we read from, watch, and flip. */
     const rootEl = (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
-    const navEl = document.querySelector<HTMLElement>(".gr-nav");
 
     let ink = "#2F2D29";
     let veil: [number, number, number] = [255, 255, 255];
     let seats: string[] = [];
-    let washLight = "#EFEBE4";
-    let washDark = "#222222";
     let forcedDark = false;
     let prevTheme: string | undefined;
+    let darkAt = 0;
     const readTheme = (): void => {
       const cs = getComputedStyle(rootEl);
       const at = (name: string, fall: string): string =>
@@ -418,10 +439,6 @@ export const HomeFlow = (): ReactElement => {
       seats = SEAT_TOKENS.map((n, i) =>
         at(n, ["#be5e31", "#e9b748", "#5e6043", "#407486", "#c8c1b4"][i]),
       );
-      /* capture the light substrate only while it IS light, so the wash
-         can fade it out after the flip */
-      if (!forcedDark) washLight = at("--color-substrate", "#EFEBE4");
-      washDark = at("--color-dark-100", "#222222");
       ink = at("--color-text", "#2F2D29");
       const panel = at("--color-panel", "#ffffff");
       const m = /^#([0-9a-f]{6})$/i.exec(panel);
@@ -472,69 +489,132 @@ export const HomeFlow = (): ReactElement => {
       ctx.restore();
     };
 
-    /* ---- the dark reveal ----
-       The lights go out as the chip comes to the fore. The wash makes the
-       flip gradual: before the theme flips it darkens the light page, after
-       it the captured light substrate fades away over the dark one. */
-    const drawWash = (out: TimelineOut): void => {
-      if (out.dark <= 0.001) return;
-      ctx.save();
-      ctx.globalAlpha = forcedDark ? 1 - out.dark : out.dark;
-      ctx.fillStyle = forcedDark ? washLight : washDark;
-      ctx.fillRect(0, 0, W, H);
-      ctx.restore();
-    };
-
-    /* The hero's gradient combo, orbiting the chip as a dynamic glow. */
+    /* The hero's gradient combo around the chip — isometric view only,
+       tight and restrained, drawn over the wafer layer so it visibly
+       shines onto the dots below. */
     const drawGlow = (t: number, out: TimelineOut): void => {
-      if (out.dark <= 0.01) return;
+      if (out.glowA <= 0.01) return;
       const { s } = out;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
       for (let i = 0; i < 4; i++) {
-        const a = t * 0.32 + i * 1.57;
-        const bx = s.cx + Math.cos(a) * s.w * 0.62;
-        const by = s.cy + Math.sin(a) * s.h * 0.5;
-        const rad = s.w * (0.62 + 0.1 * Math.sin(t * 0.9 + i * 2.1));
+        const a = t * 0.26 + i * 1.57;
+        const bx = s.cx + Math.cos(a) * s.w * 0.42;
+        const by = s.cy + s.h * 0.12 + Math.sin(a) * s.h * 0.34;
+        const rad = s.w * (0.36 + 0.05 * Math.sin(t * 0.8 + i * 2.1));
         const gr = ctx.createRadialGradient(bx, by, 0, bx, by, rad);
-        gr.addColorStop(0, seats[i % seats.length] + "66");
+        gr.addColorStop(0, seats[i % seats.length] + "55");
         gr.addColorStop(1, seats[i % seats.length] + "00");
-        ctx.globalAlpha = 0.55 * out.dark;
+        ctx.globalAlpha = 0.32 * out.glowA;
         ctx.fillStyle = gr;
         ctx.fillRect(bx - rad, by - rad, rad * 2, rad * 2);
       }
       ctx.restore();
     };
 
-    /* The die's ripple, echoed behind the chip — just about visible,
-       feathered out radially so it has no edge. */
-    const drawEcho = (t: number, out: TimelineOut): void => {
-      if (out.dark <= 0.01) return;
-      const { s } = out;
-      const G = 24;
-      const ext = s.w * 2.4;
-      const sp = ext / G;
-      const sq = sp * 0.3;
-      ctx.save();
-      ctx.fillStyle = ink;
-      for (let gy = 0; gy < G; gy++) {
-        for (let gx = 0; gx < G; gx++) {
-          const dx = gx - (G - 1) / 2;
-          const dy = gy - (G - 1) / 2;
-          const dn = Math.hypot(dx, dy) / ((G - 1) / 2);
-          if (dn > 1) continue;
-          const w = Math.sin(t * 7 - dn * 9);
-          const feather = (1 - dn * dn) * (0.55 + 0.45 * Math.max(0, w));
-          ctx.globalAlpha = out.dark * 0.09 * feather;
-          ctx.fillRect(
-            s.cx + dx * sp - sq / 2,
-            s.cy + dy * sp + w * sp * 0.22 - sq / 2,
-            sq,
-            sq,
-          );
+    /* ---- the wafer field ----
+       A dense field of tiny dots behind the chip, with a holographic
+       (thin-film) sheen — a fragment shader, because the iridescence is a
+       per-pixel palette keyed to radius and angle. When the lights go off
+       a single ripple runs outward through it, once, then the field rests
+       with only the slow holographic drift. */
+    const glOK = (() => {
+      const gl = glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false });
+      if (!gl) return null;
+      const vsrc = "attribute vec2 aP; void main(){ gl_Position = vec4(aP, 0.0, 1.0); }";
+      const fsrc = `
+precision mediump float;
+uniform vec2  uRes;    /* canvas size, device px */
+uniform vec2  uC;      /* chip centre, device px */
+uniform float uSize;   /* chip width, device px */
+uniform float uTime;
+uniform float uRip;    /* seconds since the lights went off */
+uniform float uOn;
+void main() {
+  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+  vec2 d = p - uC;
+  float cell = uSize / 44.0;
+  vec2 gpos = d / cell;
+  vec2 id = floor(gpos + 0.5);
+  vec2 lp = gpos - id;
+  float dn = length(id) * cell / (uSize * 1.45);
+  if (dn > 1.0) discard;
+  /* tiny dots, high density */
+  float m = 1.0 - smoothstep(0.10, 0.16, length(lp));
+  if (m <= 0.0) discard;
+  /* ONE ripple: a gaussian wavefront travelling outward, then gone */
+  float front = uRip * 0.5;
+  float wave = exp(-pow((dn - front) * 9.0, 2.0)) * (1.0 - smoothstep(1.2, 1.5, front));
+  /* holographic thin-film palette, keyed to radius + angle, drifting slowly */
+  float ang = atan(d.y, d.x);
+  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (dn * 2.0 + uTime * 0.02) + ang * 0.7 + vec3(0.0, 2.094, 4.188));
+  /* mostly silver; the colour blooms as the ripple's wavefront passes */
+  vec3 col = mix(vec3(0.86), iri, 0.24 + 0.4 * wave);
+  float feather = 1.0 - dn * dn;
+  float a = m * feather * (0.11 + 0.5 * wave) * uOn;
+  gl_FragColor = vec4(col, a);
+}`;
+      const sh = (type: number, src: string): WebGLShader | null => {
+        const s = gl.createShader(type);
+        if (!s) return null;
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.warn("[HomeFlow] wafer shader:", gl.getShaderInfoLog(s));
+          return null;
         }
+        return s;
+      };
+      const vs = sh(gl.VERTEX_SHADER, vsrc);
+      const fs = sh(gl.FRAGMENT_SHADER, fsrc);
+      const prog = gl.createProgram();
+      if (!vs || !fs || !prog) return null;
+      gl.attachShader(prog, vs);
+      gl.attachShader(prog, fs);
+      gl.linkProgram(prog);
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
+      gl.useProgram(prog);
+      const buf = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+      const aP = gl.getAttribLocation(prog, "aP");
+      gl.enableVertexAttribArray(aP);
+      gl.vertexAttribPointer(aP, 2, gl.FLOAT, false, 0, 0);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+      return {
+        gl,
+        u: {
+          res: gl.getUniformLocation(prog, "uRes"),
+          c: gl.getUniformLocation(prog, "uC"),
+          size: gl.getUniformLocation(prog, "uSize"),
+          time: gl.getUniformLocation(prog, "uTime"),
+          rip: gl.getUniformLocation(prog, "uRip"),
+          on: gl.getUniformLocation(prog, "uOn"),
+        },
+      };
+    })();
+
+    const drawWafers = (t: number, out: TimelineOut, darkAt: number): void => {
+      if (!glOK) return;
+      const { gl, u } = glOK;
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      if (glCanvas.width !== W * dpr || glCanvas.height !== H * dpr) {
+        glCanvas.width = W * dpr;
+        glCanvas.height = H * dpr;
       }
-      ctx.restore();
+      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      const on = out.dark ? clamp01((t - darkAt) / 0.2) : 0;
+      if (on <= 0.001) return;
+      gl.uniform2f(u.res, glCanvas.width, glCanvas.height);
+      gl.uniform2f(u.c, out.s.cx * dpr, out.s.cy * dpr);
+      gl.uniform1f(u.size, out.s.w * dpr);
+      gl.uniform1f(u.time, t);
+      gl.uniform1f(u.rip, t - darkAt);
+      gl.uniform1f(u.on, on);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
 
     /* tE is time since the engine's reveal: it drives the one-time layer
@@ -833,26 +913,24 @@ export const HomeFlow = (): ReactElement => {
       else if (out.engineA < 0.02) engineStart = -1;
       const tE = engineStart >= 0 ? t - engineStart : -1;
 
-      /* lights off / lights back on — flipped under cover of the wash,
-         with hysteresis so the boundary never flickers */
-      if (out.dark > 0.6 && !forcedDark) {
+      /* lights hard-off the moment the square forms; back on the moment
+         the scroll retreats past it */
+      if (out.dark && !forcedDark) {
         prevTheme = rootEl.dataset.theme;
         rootEl.dataset.theme = "dark";
         forcedDark = true;
-      } else if (out.dark < 0.4 && forcedDark) {
+        darkAt = t;
+      } else if (!out.dark && forcedDark) {
         if (prevTheme === undefined) delete rootEl.dataset.theme;
         else rootEl.dataset.theme = prevTheme;
         forcedDark = false;
       }
-      /* the nav dims out mid-transition and returns in the new theme */
-      if (navEl) navEl.style.opacity = `${1 - Math.sin(clamp01(out.dark) * Math.PI)}`;
 
+      drawWafers(t, out, darkAt);
       ctx.clearRect(0, 0, W, H);
-      drawWash(out);
-      drawGlow(t, out);
-      drawEcho(t, out);
       drawPanel(out);
       drawEngine(tE, out);
+      drawGlow(t, out);
 
       const place = (el: HTMLElement, extra: string): void => {
         el.style.width = `${s.w}px`;
@@ -862,34 +940,39 @@ export const HomeFlow = (): ReactElement => {
           `rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
       };
       place(block, "");
-      block.style.borderRadius = `${s.r}px`;
+      top.style.borderRadius = `${s.r}px`;
       const blur = (out.solid ? 0 : out.frost * FROST_BLUR_MAX).toFixed(1);
-      block.style.backdropFilter = `blur(${blur}px)`;
-      (block.style as CSSStyleDeclaration & { webkitBackdropFilter: string }).webkitBackdropFilter = `blur(${blur}px)`;
+      top.style.backdropFilter = `blur(${blur}px)`;
+      (top.style as CSSStyleDeclaration & { webkitBackdropFilter: string }).webkitBackdropFilter = `blur(${blur}px)`;
       /* on the landing beats the plate becomes the silicon chip — its
          material lives in CSS (.gr-flow-block--chip), so the inline veil
          is cleared rather than fought */
       block.classList.toggle("gr-flow-block--chip", out.solid);
       if (out.solid) {
-        block.style.background = "";
-        block.style.borderColor = "";
+        top.style.background = "";
+        top.style.borderColor = "";
       } else {
         const veilA = out.frost * FROST_VEIL_MAX;
-        block.style.background = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${veilA.toFixed(3)})`;
-        block.style.borderColor = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${(0.25 + out.frost * 0.35).toFixed(3)})`;
+        top.style.background = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${veilA.toFixed(3)})`;
+        top.style.borderColor = `rgba(${veil[0]}, ${veil[1]}, ${veil[2]}, ${(0.25 + out.frost * 0.35).toFixed(3)})`;
       }
-      mark.style.opacity = `${out.markAlpha}`;
+      /* the chip's thickness: two side faces folded under the plate,
+         edge-on (invisible) while it is frontal */
+      const depth = Math.max(10, s.w * 0.045);
+      faceS.style.height = `${depth}px`;
+      faceE.style.width = `${depth}px`;
 
-      /* the cinematic sweep: one pass of light across the chip while it
-         tilts toward its resting view */
-      if (sheen) {
-        const st = clamp01((out.landT - 0.25) / 0.55);
-        sheen.style.opacity = `${(out.dark * Math.sin(st * Math.PI)).toFixed(3)}`;
-        sheen.style.transform = `translateX(${(-130 + 260 * easeIO(st)).toFixed(1)}%)`;
-      }
+      /* the G lights up the moment the lights go off */
+      mark.style.opacity = `${out.markAlpha * (out.dark ? clamp01((t - darkAt) / 0.25) : 0)}`;
+
+      /* the cinematic sweep: ONE pass of light across the chip while it
+         is straight on, before the tilt begins */
+      const st = clamp01((out.sheenT - 0.12) / 0.72);
+      sheen.style.opacity = `${(out.dark && st < 1 ? Math.sin(st * Math.PI) : 0).toFixed(3)}`;
+      sheen.style.transform = `translateX(${(-130 + 260 * easeIO(st)).toFixed(1)}%)`;
 
       place(shadowEl, `translate(${s.w * 0.06}px, ${s.h * 0.14}px)`);
-      shadowEl.style.opacity = `${out.shadowAlpha * (1 - out.dark * 0.55)}`;
+      shadowEl.style.opacity = `${out.shadowAlpha * (out.dark ? 0.5 : 1)}`;
 
       engineCopy.style.opacity = `${out.engineCopyA}`;
       engineCopy.style.visibility = out.engineCopyA > 0.01 ? "visible" : "hidden";
@@ -910,20 +993,24 @@ export const HomeFlow = (): ReactElement => {
         if (prevTheme === undefined) delete rootEl.dataset.theme;
         else rootEl.dataset.theme = prevTheme;
       }
-      if (navEl) navEl.style.opacity = "";
     };
   }, []);
 
   return (
     <div className="gr-flow" ref={runwayRef} style={{ height: `${RUNWAY_VH}vh` }}>
       <div className="gr-flow-stage">
+        <canvas className="gr-flow-wafers" ref={glRef} />
         <canvas className="gr-flow-field" ref={canvasRef} />
         <div className="gr-flow-shadow" ref={shadowRef} />
         <div className="gr-flow-block" ref={blockRef}>
-          <div className="gr-flow-mark" ref={markRef}>
-            <Logo mark />
+          <div className="gr-flow-top" ref={topRef}>
+            <div className="gr-flow-mark" ref={markRef}>
+              <Logo mark />
+            </div>
+            <div className="gr-flow-sheen" ref={sheenRef} />
           </div>
-          <div className="gr-flow-sheen" ref={sheenRef} />
+          <div className="gr-flow-face gr-flow-face--s" ref={faceSRef} />
+          <div className="gr-flow-face gr-flow-face--e" ref={faceERef} />
         </div>
 
         <div className="gr-flow-copy gr-flow-copy--engine" ref={engineCopyRef}>

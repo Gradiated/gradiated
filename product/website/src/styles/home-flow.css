@@ -32,7 +32,8 @@
   pointer-events: auto;
 }
 
-.gr-flow-field {
+.gr-flow-field,
+.gr-flow-wafers {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -48,14 +49,23 @@
   will-change: transform, width, height;
 }
 
+/* The block is a thin 3D body: the top face carries every surface (frost,
+   then silicon), and two side faces fold under it to give the chip real
+   thickness once it tilts. Edge-on at frontal, they cost nothing there. */
 .gr-flow-block {
+  transform-style: preserve-3d;
+}
+
+.gr-flow-top {
+  position: absolute;
+  inset: 0;
   border: 1px solid transparent;
   overflow: hidden;
 }
 
-/* The plate as silicon: brushed-metal ground for the landing beats, when
-   the lights are off and the sheen sweeps across it. */
-.gr-flow-block--chip {
+/* The plate as silicon: brushed-metal ground with a bevelled edge — the
+   inset lighting is what says "this object has depth" while frontal. */
+.gr-flow-block--chip .gr-flow-top {
   background: linear-gradient(
     145deg,
     #4c4a46 0%,
@@ -63,8 +73,42 @@
     #1b1917 62%,
     #383530 100%
   );
-  border-color: rgba(255, 255, 255, 0.14);
-  transition: background 0.4s ease;
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 1px 0 0 rgba(255, 255, 255, 0.07),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.55),
+    inset -2px 0 5px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.28);
+}
+
+.gr-flow-face {
+  position: absolute;
+  visibility: hidden;
+}
+
+.gr-flow-block--chip .gr-flow-face {
+  visibility: visible;
+}
+
+/* south edge: folds under from the bottom of the plate */
+.gr-flow-face--s {
+  left: 0;
+  top: 100%;
+  width: 100%;
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  background: linear-gradient(90deg, #131110, #211f1c 55%, #161412);
+}
+
+/* east edge: folds under from the right of the plate */
+.gr-flow-face--e {
+  left: 100%;
+  top: 0;
+  height: 100%;
+  transform-origin: 0 50%;
+  transform: rotateY(90deg);
+  background: linear-gradient(180deg, #1c1a18, #100f0d);
 }
 
 /* One pass of light across the chip — the cinematic reveal. Opacity and

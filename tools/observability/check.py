@@ -88,8 +88,8 @@ def main():
                  ('kube_deployment_status_replicas_available', available),
                  ('kube_deployment_spec_replicas', desired)]]
         scenario('headroom ' + name, inputs,
-                 'GradiatedScalingHeadroomDepleted' if fires else None,
-                 ['GradiatedScalingHeadroomDepleted'], labels, duration)
+                 'ScalingHeadroomDepleted' if fires else None,
+                 ['ScalingHeadroomDepleted'], labels, duration)
 
     for desired, limited, fires in [(2, 1, False), (20, 0, False), (20, 1, True)]:
         labels = {'namespace': 'gradiated', 'horizontalpodautoscaler': 'keda-hpa-api'}
@@ -103,8 +103,8 @@ def main():
              ',condition="ScalingLimited",status="true"}', 'values': f'{limited}+0x30'},
         ]
         scenario(f'autoscaling cap desired={desired} limited={limited}', inputs,
-                 'GradiatedAutoscalingLimited' if fires else None,
-                 ['GradiatedAutoscalingLimited'],
+                 'AutoscalingLimited' if fires else None,
+                 ['AutoscalingLimited'],
                  {**labels, 'condition': 'ScalingLimited', 'status': 'true'}, '10m')
 
     controllers = [('keda', 'keda-operator'), ('keda', 'keda-operator-metrics-apiserver'),
@@ -119,7 +119,7 @@ def main():
                     inputs.append({'series': 'kube_deployment_status_replicas_available'
                                    + f'{{namespace="{ns}",deployment="{name}"}}',
                                    'values': f'{value}+0x8'})
-            alert = 'GradiatedAutoscalingControllerUnavailable'
+            alert = 'AutoscalingControllerUnavailable'
             scenario(f'controller {deployment} available={available} duration={duration}', inputs,
                      alert if fires else None, [alert],
                      {'namespace': namespace, 'deployment': deployment}, duration)
@@ -128,7 +128,7 @@ def main():
         inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
                    + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
                    'values': '20+0x8'} for service in ('api', 'gateway', 'worker') if service != missing]
-        alert = 'GradiatedAutoscalerMissing'
+        alert = 'AutoscalerMissing'
         scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
                  {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')
 
@@ -139,14 +139,14 @@ def main():
             selector = ','.join(f'{k}="{v}"' for k, v in labels.items())
             inputs = [{'series': 'kube_horizontalpodautoscaler_status_condition{' + selector + '}',
                        'values': '1+0x8'}]
-            alert = 'GradiatedAutoscalingUnavailable'
+            alert = 'AutoscalingUnavailable'
             scenario(f'HPA {condition}={status} duration={duration}', inputs,
                      alert if fires else None, [alert], labels, duration)
 
-    for service, title, down in [('api', 'Api', 'GradiatedApiPublicUnavailable'),
-                                 ('console', 'Console', 'GradiatedConsoleUnavailable'),
-                                 ('metabase', 'Metabase', 'GradiatedMetabaseUnavailable')]:
-        missing = f'Gradiated{title}ProbeMissing'
+    for service, title, down in [('api', 'Api', 'ApiPublicUnavailable'),
+                                 ('console', 'Console', 'ConsoleUnavailable'),
+                                 ('metabase', 'Metabase', 'MetabaseUnavailable')]:
+        missing = f'{title}ProbeMissing'
         for case, values, expected in [('healthy', '1+0x30', None),
                                        ('transient', '1+0x5 0 1+0x24', None),
                                        ('down', '0+0x30', down),
@@ -156,7 +156,7 @@ def main():
                 {'series': f'probe_success{{service="{service}"}}', 'values': values}]
             scenario(f'{service}: {case}', inputs, expected, [down, missing])
 
-    stall = 'GradiatedGatewayGenerationsStuck'
+    stall = 'GatewayGenerationsStuck'
     active = {'series': 'gradiated_gateway_active_generations{deployment="stalled"}',
               'values': '1+0x30'}
     for name, inputs, fires in [
@@ -175,7 +175,7 @@ def main():
     ]:
         scenario(name, inputs, stall if fires else None, [stall], {'deployment': 'stalled'})
 
-    replica_alert = 'GradiatedDeploymentUnavailable'
+    replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [
         ('complete service outage', 0, 2, True),
         ('partial rollout retains capacity', 1, 2, False),
@@ -189,20 +189,20 @@ def main():
         scenario(name, inputs, replica_alert if fires else None, [replica_alert],
                  {'namespace': 'gradiated', 'deployment': 'api'})
 
-    for service, alert in [('api', 'GradiatedApiPublicUnavailable'),
-                           ('console', 'GradiatedConsoleUnavailable')]:
+    for service, alert in [('api', 'ApiPublicUnavailable'),
+                           ('console', 'ConsoleUnavailable')]:
         inputs = [{'series': f'probe_success{{service="{service}"}}',
                    'values': '1+0x5 0+0x30'}]
         scenario(f'{service} brief outage stays quiet', inputs, None, [alert], eval_time='4m')
         scenario(f'{service} outage fires after two minutes', inputs, alert, [alert], eval_time='5m')
 
     for alert, metric, threshold, hold, labels in [
-        ('GradiatedGenerationIngestionStuck',
+        ('GenerationIngestionStuck',
          'gradiated_worker_ingestion_backlog{kind="oldest_pending_age_seconds"}', 300, '1m', {}),
-        ('GradiatedSettlementLagging', 'gradiated_worker_settlement_lag_seconds', 300, '2m', {}),
+        ('SettlementLagging', 'gradiated_worker_settlement_lag_seconds', 300, '2m', {}),
     ]:
         leader_input = ([{'series': 'gradiated_worker_settlement_leader', 'values': '1+0x30'}]
-                        if alert == 'GradiatedSettlementLagging' else [])
+                        if alert == 'SettlementLagging' else [])
         scenario(alert + ' threshold stays quiet', [{'series': metric, 'values': f'{threshold}+0x30'}] + leader_input,
                  None, [alert], labels)
         inputs = [{'series': metric, 'values': f'{threshold+1}+0x30'}] + leader_input
@@ -210,11 +210,11 @@ def main():
         scenario(alert + ' fires at promised duration', inputs, alert, [alert], labels, hold)
 
     for alert, metric, failure_labels, success_labels, labels in [
-        ('GradiatedApiSevereErrors', 'gradiated_api_http_requests_total',
+        ('ApiSevereErrors', 'gradiated_api_http_requests_total',
          'route="/v1/test",status="500"', 'route="/v1/test",status="200"', {}),
-        ('GradiatedGatewaySevereErrors', 'gradiated_gateway_http_requests_total',
+        ('GatewaySevereErrors', 'gradiated_gateway_http_requests_total',
          'status="500"', 'status="200"', {}),
-        ('GradiatedGatewaySevereGenerationFailures', 'gradiated_gateway_generations_total',
+        ('GatewaySevereGenerationFailures', 'gradiated_gateway_generations_total',
          'deployment="bad",status="failed"', 'deployment="bad",status="succeeded"', {'deployment': 'bad'}),
     ]:
         for name, failed_values, ok_values, fires in [
@@ -233,7 +233,7 @@ def main():
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
 
-    leader_alert = 'GradiatedSettlementLeaderMissing'
+    leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:
         scenario(name, [
             {'series': 'gradiated_worker_service_info{instance="a"}', 'values': '1+0x30'},
@@ -249,11 +249,11 @@ def main():
         {'series': 'gradiated_worker_settlement_leader{instance="standby"}', 'values': '0+0x30'},
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="leader",loop="settlement"}', 'values': '0+0x30'},
         {'series': 'gradiated_worker_loop_last_success_timestamp_seconds{instance="standby",loop="settlement"}', 'values': '0+30x30'},
-    ], 'GradiatedWorkerLoopStalled', ['GradiatedWorkerLoopStalled'], {'loop': 'settlement'})
+    ], 'WorkerLoopStalled', ['WorkerLoopStalled'], {'loop': 'settlement'})
 
     for alert, metric in [
-        ('GradiatedGatewayFinalizationFailure', 'gradiated_gateway_last_finalization_failure_timestamp_seconds'),
-        ('GradiatedSettlementBackpressure', 'gradiated_gateway_last_settlement_backpressure_timestamp_seconds'),
+        ('GatewayFinalizationFailure', 'gradiated_gateway_last_finalization_failure_timestamp_seconds'),
+        ('SettlementBackpressure', 'gradiated_gateway_last_settlement_backpressure_timestamp_seconds'),
     ]:
         for name, values, eval_time, fires in [
             ('first event before first scrape', '60+0x30', '2m', True),
@@ -264,7 +264,7 @@ def main():
             scenario(alert + ': ' + name, [{'series': metric, 'values': values}],
                      alert if fires else None, [alert], eval_time=eval_time)
 
-    app_alert = 'GradiatedApplicationReconciliationFailed'
+    app_alert = 'ApplicationReconciliationFailed'
     for name, health, sync, auto, fires in [
         ('healthy', 'Healthy', 'Synced', 'true', False),
         ('degraded', 'Degraded', 'Synced', 'true', True),
@@ -277,10 +277,10 @@ def main():
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="OutOfSync",autosync_enabled="true"}', 'values': '1+0x8 stale'},
         {'series': 'argocd_app_info{name="api",health_status="Healthy",sync_status="Synced",autosync_enabled="true"}', 'values': '_ _ _ _ _ _ _ _ _ 1+0x31'},
     ], None, [app_alert], eval_time='16m')
-    secret_alert = 'GradiatedSecretRefreshFailed'
+    secret_alert = 'SecretRefreshFailed'
     for name, values, fires in [('ready', '1+0x40', False), ('not ready', '0+0x40', True), ('brief refresh error', '1+0x8 0+0x3 1+0x28', False)]:
         scenario('Secret ' + name, [{'series': 'externalsecret_status_condition{exported_namespace="gradiated",name="api",condition="Ready",status="True"}', 'values': values}], secret_alert if fires else None, [secret_alert], {'exported_namespace': 'gradiated', 'name': 'api'}, '16m')
-    dns_alert = 'GradiatedDnsSyncStalled'
+    dns_alert = 'DnsSyncStalled'
     for name, values, fires in [('syncing', '0+30x40', False), ('stalled', '0+0x40', True), ('recovered', '0+0x24 750+30x15', False)]:
         scenario('DNS ' + name, [{'series': 'external_dns_controller_last_sync_timestamp_seconds', 'values': values}], dns_alert if fires else None, [dns_alert], eval_time='16m')
 

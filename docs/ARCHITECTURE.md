@@ -176,8 +176,9 @@ secret API-key material after the one-time creation response.
 
 Production hosts the console at `console.gradiated.com` and all public API
 traffic at `api.gradiated.com`. Local development runs Vite on port 3000 and
-proxies API requests to port 3001. On the public ALB, `/api`, `/health` and
-`/docs` route to the TypeScript API service. Every other path, including the
+proxies API requests to port 3001. On the public ALB, `/api`, `/health`, `/docs`
+and the runtime ingest paths `/v1/deployment-status` and `/v1/profiling-events`
+route to the TypeScript API service. Every other path, including the
 legacy `/openai/v1/*` route, goes to the Rust proxy, which forwards hosted
 requests to the gateway inside the cluster. The console does not proxy
 inference requests through the API service. The static host must return

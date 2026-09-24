@@ -144,6 +144,7 @@ Production explicitly allows these hosted callbacks:
 - `https://www.cursor.com/agents/mcp/oauth/callback`
 - `https://www.cursor.com/bot/mcp/oauth/callback` (also sent in Cursor registration)
 - `https://chatgpt.com/connector_platform_oauth_redirect`
+- `https://us.posthog.com/api/mcp_store/oauth_redirect/` (PostHog US)
 
 Local clients can register loopback HTTP callbacks on ephemeral ports. Other
 HTTPS callbacks require an exact entry in `MCP_REDIRECT_URIS`; never allow wildcard
@@ -153,7 +154,14 @@ callback instead, add that exact URL. The client owns the token store and refres
 flow. Protocol tests cover these callback families, but real account installation
 and end-to-end Slack behavior must still be verified separately per provider.
 
-References: [Cursor MCP](https://cursor.com/docs/mcp),
+PostHog US can connect this URL using OAuth dynamic registration; leave client ID
+and client secret blank. Its exact callback above is allowed; other PostHog regions
+require a separate explicit callback entry. A rejected registration is not fixed by
+providing the internal Dex client secret.
+
+References: [PostHog OAuth registration](https://github.com/PostHog/posthog/blob/master/products/mcp_store/backend/oauth.py),
+[PostHog callback](https://github.com/PostHog/posthog/blob/master/products/mcp_store/backend/presentation/views.py),
+[Cursor MCP](https://cursor.com/docs/mcp),
 [Cursor Slack](https://cursor.com/docs/integrations/slack),
 [OpenAI MCP authentication](https://developers.openai.com/plugins/build/auth),
 [Codex Slack](https://learn.chatgpt.com/docs/third-party/slack).

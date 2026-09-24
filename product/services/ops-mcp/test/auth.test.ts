@@ -522,10 +522,17 @@ describe("public client registration", () => {
     "https://claude.ai/api/mcp/auth_callback",
     "https://www.cursor.com/agents/mcp/oauth/callback",
     "https://chatgpt.com/connector_platform_oauth_redirect",
+    "https://us.posthog.com/api/mcp_store/oauth_redirect/",
+    "https://eu.posthog.com/api/mcp_store/oauth_redirect/",
   ])("allows the exact configured hosted callback %s", async (redirect) => {
     const app = await setup(undefined, { redirectUris: [redirect] });
     const client = await app.auth.provider.clientsStore.registerClient!({
+      client_name: "MCP Store by PostHog",
       redirect_uris: [redirect],
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      token_endpoint_auth_method: "none",
+      scope: "production:read",
     });
     expect(client.redirect_uris).toEqual([redirect]);
     const tokens = await connect(app);

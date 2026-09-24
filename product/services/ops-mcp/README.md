@@ -2,7 +2,7 @@
 
 The managed interface for agents to access Gradiated operations. The Streamable
 HTTP endpoint is `https://ops.gradiated.com/mcp`, protected by Gradiated Google
-login and MCP OAuth. The staged public ALB cutover removes the MCP client's Tailscale requirement;
+login and MCP OAuth. The public ALB removes the MCP client's Tailscale requirement;
 Kubernetes itself remains private. This service runs independently of the customer
 API using the existing product image.
 
@@ -97,7 +97,7 @@ refresh, replay and revocation; never token values, query arguments or results.
 
 ## Claude Tag installation
 
-After the public rollout below, an organization Owner can configure this on a
+An organization Owner can configure this on a
 Claude Team/Enterprise account:
 
 1. In Claude Tag, create an Access bundle attached only to the intended private
@@ -199,12 +199,12 @@ proposal/approval contract can serve Claude, Cursor and OpenAI agents.
 
 Argo watches `platform/ops-mcp.yaml`, reconciling
 `infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/`.
-The follow-up public ingress change names the Gateway `ops-mcp-public` with a new internet-facing ALB;
+The public ingress names the Gateway `ops-mcp-public` with an internet-facing ALB;
 changing the scheme of the existing ALB in place is not the rollout strategy.
 Ordinary Route53 DNS and the existing Gradiated certificate are retained.
 
-This authentication release retains the private ingress. Apply the separate public
-ingress change only after the new image is running. Roll out in this order:
+The authentication image must be released and verified before merging the public
+ingress change. The initial rollout order is:
 
 1. Build/release the updated product image and pin its immutable digest in the
    deployment using the existing release workflow. Deploy the PVC, auth configuration
@@ -212,9 +212,9 @@ ingress change only after the new image is running. Roll out in this order:
    persistence, storage permissions and renewable login. Do not expose the old image
    publicly by applying the ingress change ahead of the image release.
 2. Reconcile the public Gateway/route and let ExternalDNS update `ops.gradiated.com`.
-   Check Gateway conditions and ALB target health. Retire the old private Gateway
-   through Argo pruning after the new path works. No tailnet ACL or Kubernetes
-   endpoint change is required.
+   Check Gateway conditions and ALB target health. Argo prunes the old private
+   Gateway as part of the cutover; DNS and ALB provisioning can cause a brief
+   interruption. No tailnet ACL or Kubernetes endpoint change is required.
 3. From outside Tailscale, check `/healthz`, OAuth discovery and unauthenticated
    `/mcp` rejection (401 with resource metadata). Complete a real Gradiated login
    through the hosted client, query diagnostics, and reject a non-staff login.

@@ -66,10 +66,9 @@ idempotent. Do not create separate projection, ingestion or billing services.
 
 `product/services/ops-mcp` is the managed MCP interface for agents accessing
 Gradiated operations. Its HTTPS endpoint, `https://ops.gradiated.com/mcp`,
-requires Gradiated Google login through Dex and scoped MCP OAuth tokens. The authenticated service supports a public ingress; the currently deployed
-private ingress remains until the new auth image is released and verified.
-The subsequent public cutover removes Tailscale as an MCP client requirement;
-the Kubernetes API remains private. Claude Tag,
+requires Gradiated Google login through Dex and scoped MCP OAuth tokens. The
+public HTTPS ingress removes Tailscale as an MCP client requirement; the
+Kubernetes API remains private. Claude Tag,
 Cursor and OpenAI clients share the same Streamable HTTP transport and OAuth
 boundary, with exact hosted callback allowlists and loopback support for local agents.
 

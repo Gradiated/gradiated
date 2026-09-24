@@ -10,13 +10,9 @@ use crate::{
 };
 
 pub(super) const WORKSPACE_KEY: [(&str, &str); 1] = [("authorization", "Bearer grad_test")];
-pub(super) const PROVIDER_KEYS: [(&str, &str); 2] = [
-    ("x-gradiated-api-key", "grad_test"),
-    ("x-api-key", "sk-ant-example"),
-];
 
 pub(super) const CHAT_BODY: &[u8] = br#"{"model":"model-a","messages":[{}]}"#;
-pub(super) const FRONTIER_BODY: &[u8] = br#"{"model":"claude-sonnet-5","max_tokens":16}"#;
+pub(super) const UNHOSTED_BODY: &[u8] = br#"{"model":"claude-sonnet-5","max_tokens":16}"#;
 
 pub(super) type StateChange = fn(&mut TestServingState);
 
@@ -37,19 +33,10 @@ pub(super) async fn qualify(
 ) -> Result<QualifiedRequest, GatewayError> {
     let coordinator = RequestCoordinator::new(state);
     let classified = coordinator
-        .classify(
-            headers,
-            body,
-            metadata().received_at,
-            Protocol::OpenAiChat,
-            None,
-        )
+        .classify(headers, body, metadata().received_at, Protocol::OpenAiChat)
         .await?;
-    let RequestRoute::Hosted { hosted, .. } = classified else {
-        panic!("no relay route was offered");
-    };
 
-    coordinator.qualify(metadata(), headers, *hosted, body, kind)
+    coordinator.qualify(metadata(), headers, classified.hosted, body, kind)
 }
 
 pub(super) async fn qualify_chat(
@@ -59,18 +46,17 @@ pub(super) async fn qualify_chat(
     qualify(state, &headers(&WORKSPACE_KEY), body, RequestKind::Chat).await
 }
 
-pub(super) async fn classify_messages<'a>(
+pub(super) async fn classify_messages(
     state: Arc<dyn ServingState>,
-    headers: &'a HeaderMap,
+    headers: &HeaderMap,
     body: &[u8],
-) -> Result<RequestRoute<'a>, GatewayError> {
+) -> Result<ClassifiedRequest, GatewayError> {
     RequestCoordinator::new(state)
         .classify(
             headers,
             body,
             metadata().received_at,
             Protocol::AnthropicMessages,
-            Some(RelayRoute::AnthropicMessages),
         )
         .await
 }

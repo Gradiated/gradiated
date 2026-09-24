@@ -1,6 +1,5 @@
 use std::{env, fmt, net::SocketAddr, time::Duration};
 
-use axum::http::Uri;
 use serde::Deserialize;
 use thiserror::Error;
 use validator::Validate;
@@ -30,8 +29,6 @@ pub struct GatewayConfig {
     pub balance_per_concurrency_slot_nano_usd: u64,
     pub settlement_backlog_limit: u64,
 
-    pub proxy_anthropic_origin: String,
-    proxy_limits: ProxyLimits,
     compliance: ProviderCompliance,
 
     pub database_url: String,
@@ -82,10 +79,6 @@ impl GatewayConfig {
     pub fn record_cache_ttl(&self) -> Duration {
         self.record_cache_ttl
     }
-
-    pub fn proxy_limits(&self) -> ProxyLimits {
-        self.proxy_limits
-    }
 }
 
 /// Connection URLs can embed passwords, so they are redacted with the API key.
@@ -118,8 +111,6 @@ impl fmt::Debug for GatewayConfig {
                 &self.balance_per_concurrency_slot_nano_usd,
             )
             .field("settlement_backlog_limit", &self.settlement_backlog_limit)
-            .field("proxy_anthropic_origin", &self.proxy_anthropic_origin)
-            .field("proxy_limits", &self.proxy_limits)
             .field("compliance", &self.compliance)
             .field("database_url", &REDACTED)
             .field("database_ca_bundle_path", &self.database_ca_bundle_path)
@@ -138,9 +129,6 @@ impl TryFrom<Environment> for GatewayConfig {
     type Error = ConfigError;
 
     fn try_from(environment: Environment) -> Result<Self, ConfigError> {
-        require_bare_https_origin(&environment.proxy_anthropic_origin)?;
-
-        let proxy_limits = environment.proxy_limits()?;
         let valkey_iam = environment.valkey_iam()?;
         let browser_origins = environment
             .browser_origins
@@ -162,8 +150,6 @@ impl TryFrom<Environment> for GatewayConfig {
             balance_per_concurrency_slot_nano_usd: environment
                 .balance_per_concurrency_slot_nano_usd,
             settlement_backlog_limit: environment.settlement_backlog_limit,
-            proxy_anthropic_origin: environment.proxy_anthropic_origin,
-            proxy_limits,
             compliance: ProviderCompliance {
                 zdr: environment.provider_zdr,
                 hipaa: environment.provider_hipaa,
@@ -219,31 +205,6 @@ struct Environment {
     #[validate(range(min = 1, max = MAX_SAFE_INTEGER))]
     settlement_backlog_limit: u64,
 
-    #[serde(default = "default_anthropic_origin")]
-    proxy_anthropic_origin: String,
-    #[serde(default = "default_proxy_connect_timeout_seconds")]
-    #[validate(range(min = 1, max = 120))]
-    proxy_connect_timeout_seconds: u64,
-    #[serde(default = "default_proxy_response_header_timeout_seconds")]
-    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
-    proxy_response_header_timeout_seconds: u64,
-    #[serde(default = "default_proxy_idle_timeout_seconds")]
-    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
-    proxy_idle_timeout_seconds: u64,
-    /// The total deadline starts before body buffering, so it bounds the whole relay.
-    #[serde(default = "default_proxy_total_timeout_seconds")]
-    #[validate(range(min = 1, max = MAX_REQUEST_SECONDS))]
-    proxy_total_timeout_seconds: u64,
-    #[serde(default = "default_proxy_max_request_bytes")]
-    #[validate(range(min = 1024, max = 33_554_432))]
-    proxy_max_request_bytes: u64,
-    #[serde(default = "default_proxy_request_buffer_bytes")]
-    #[validate(range(min = 1_048_576, max = MAX_SAFE_INTEGER))]
-    proxy_request_buffer_bytes: u64,
-    #[serde(default = "default_proxy_max_in_flight")]
-    #[validate(range(min = 1, max = 1_000_000))]
-    proxy_max_in_flight: u64,
-
     /// A runtime that retains prompts makes `provider_zdr` untrue for every model.
     #[serde(default = "default_provider_zdr")]
     provider_zdr: bool,
@@ -274,24 +235,6 @@ struct Environment {
 }
 
 impl Environment {
-    fn proxy_limits(&self) -> Result<ProxyLimits, ConfigError> {
-        if self.proxy_request_buffer_bytes < self.proxy_max_request_bytes {
-            return Err(ConfigError::ProxyBufferBelowRequestCap);
-        }
-
-        Ok(ProxyLimits {
-            connect_timeout: Duration::from_secs(self.proxy_connect_timeout_seconds),
-            response_header_timeout: Duration::from_secs(
-                self.proxy_response_header_timeout_seconds,
-            ),
-            idle_timeout: Duration::from_secs(self.proxy_idle_timeout_seconds),
-            total_timeout: Duration::from_secs(self.proxy_total_timeout_seconds),
-            max_request_bytes: self.proxy_max_request_bytes,
-            request_buffer_bytes: self.proxy_request_buffer_bytes,
-            max_in_flight: self.proxy_max_in_flight,
-        })
-    }
-
     fn valkey_iam(&self) -> Result<Option<ValkeyIamConfig>, ConfigError> {
         let (cache_name, region, user) = match (
             &self.valkey_iam_cache_name,
@@ -316,42 +259,6 @@ impl Environment {
             user: user.clone(),
         }))
     }
-}
-
-fn require_bare_https_origin(origin: &str) -> Result<(), ConfigError> {
-    let uri = origin
-        .parse::<Uri>()
-        .map_err(|_| ConfigError::ProviderOriginNotBare)?;
-
-    if uri.scheme_str() != Some("https") {
-        return Err(ConfigError::InsecureProviderOrigin);
-    }
-
-    let Some(authority) = uri
-        .authority()
-        .filter(|authority| !authority.as_str().contains('@'))
-    else {
-        return Err(ConfigError::ProviderOriginNotBare);
-    };
-
-    if origin != format!("https://{authority}") {
-        return Err(ConfigError::ProviderOriginNotBare);
-    }
-
-    Ok(())
-}
-
-/// Relay limits from the gateway contract. A single request can always fit the
-/// process buffer, so a well-formed request never fails on the byte budget alone.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct ProxyLimits {
-    pub connect_timeout: Duration,
-    pub response_header_timeout: Duration,
-    pub idle_timeout: Duration,
-    pub total_timeout: Duration,
-    pub max_request_bytes: u64,
-    pub request_buffer_bytes: u64,
-    pub max_in_flight: u64,
 }
 
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -393,38 +300,6 @@ fn default_record_cache_ttl_seconds() -> u64 {
     15
 }
 
-fn default_anthropic_origin() -> String {
-    "https://api.anthropic.com".to_owned()
-}
-
-fn default_proxy_connect_timeout_seconds() -> u64 {
-    10
-}
-
-fn default_proxy_response_header_timeout_seconds() -> u64 {
-    MAX_REQUEST_SECONDS
-}
-
-fn default_proxy_idle_timeout_seconds() -> u64 {
-    MAX_REQUEST_SECONDS
-}
-
-fn default_proxy_total_timeout_seconds() -> u64 {
-    MAX_REQUEST_SECONDS
-}
-
-fn default_proxy_max_request_bytes() -> u64 {
-    8 * 1024 * 1024
-}
-
-fn default_proxy_request_buffer_bytes() -> u64 {
-    64 * 1024 * 1024
-}
-
-fn default_proxy_max_in_flight() -> u64 {
-    2_000
-}
-
 #[derive(Debug, Error)]
 pub enum ConfigError {
     #[error("gateway environment is invalid: {0}")]
@@ -437,12 +312,6 @@ pub enum ConfigError {
     IncompleteValkeyIam,
     #[error("Valkey IAM configuration values must not be empty")]
     EmptyValkeyIam,
-    #[error("PROXY_ANTHROPIC_ORIGIN must use https")]
-    InsecureProviderOrigin,
-    #[error("PROXY_ANTHROPIC_ORIGIN must be https://host[:port] with no userinfo, path, query or fragment")]
-    ProviderOriginNotBare,
-    #[error("PROXY_REQUEST_BUFFER_BYTES must be at least PROXY_MAX_REQUEST_BYTES")]
-    ProxyBufferBelowRequestCap,
 }
 
 #[cfg(test)]
@@ -492,19 +361,6 @@ mod tests {
         assert_eq!(config.valkey_iam(), None);
         assert_eq!(config.sglang_api_key, None);
         assert_eq!(config.database_ca_bundle_path, None);
-        assert_eq!(config.proxy_anthropic_origin, "https://api.anthropic.com");
-        assert_eq!(
-            config.proxy_limits(),
-            ProxyLimits {
-                connect_timeout: Duration::from_secs(10),
-                response_header_timeout: Duration::from_secs(630),
-                idle_timeout: Duration::from_secs(630),
-                total_timeout: Duration::from_secs(630),
-                max_request_bytes: 8 * 1024 * 1024,
-                request_buffer_bytes: 64 * 1024 * 1024,
-                max_in_flight: 2_000,
-            }
-        );
         assert!(config.compliance().zdr);
         assert!(!config.compliance().hipaa);
     }
@@ -533,14 +389,6 @@ mod tests {
             ("SGLANG_API_KEY", "runtime-secret"),
             ("PROVIDER_ZDR", "false"),
             ("PROVIDER_HIPAA", "true"),
-            ("PROXY_ANTHROPIC_ORIGIN", "https://anthropic.internal:8443"),
-            ("PROXY_CONNECT_TIMEOUT_SECONDS", "5"),
-            ("PROXY_RESPONSE_HEADER_TIMEOUT_SECONDS", "60"),
-            ("PROXY_IDLE_TIMEOUT_SECONDS", "90"),
-            ("PROXY_TOTAL_TIMEOUT_SECONDS", "240"),
-            ("PROXY_MAX_REQUEST_BYTES", "2048"),
-            ("PROXY_REQUEST_BUFFER_BYTES", "2097152"),
-            ("PROXY_MAX_IN_FLIGHT", "10"),
         ]))
         .expect("complete environment should parse");
 
@@ -575,22 +423,6 @@ mod tests {
         assert_eq!(config.sglang_api_key.as_deref(), Some("runtime-secret"));
         assert!(!config.compliance().zdr);
         assert!(config.compliance().hipaa);
-        assert_eq!(
-            config.proxy_anthropic_origin,
-            "https://anthropic.internal:8443"
-        );
-        assert_eq!(
-            config.proxy_limits(),
-            ProxyLimits {
-                connect_timeout: Duration::from_secs(5),
-                response_header_timeout: Duration::from_secs(60),
-                idle_timeout: Duration::from_secs(90),
-                total_timeout: Duration::from_secs(240),
-                max_request_bytes: 2_048,
-                request_buffer_bytes: 2_097_152,
-                max_in_flight: 10,
-            }
-        );
     }
 
     #[test]
@@ -615,14 +447,11 @@ mod tests {
     }
 
     #[test]
-    fn request_deadlines_cannot_exceed_the_sdk_timeout_and_margin() {
-        for key in [
-            "GATEWAY_GENERATION_TIMEOUT_SECONDS",
-            "PROXY_TOTAL_TIMEOUT_SECONDS",
-        ] {
-            assert!(minimal_with(&[(key, "630")]).is_ok());
-            assert!(minimal_with(&[(key, "631")]).is_err());
-        }
+    fn the_generation_deadline_cannot_exceed_the_sdk_timeout_and_margin() {
+        let key = "GATEWAY_GENERATION_TIMEOUT_SECONDS";
+
+        assert!(minimal_with(&[(key, "630")]).is_ok());
+        assert!(minimal_with(&[(key, "631")]).is_err());
     }
 
     #[test]
@@ -655,10 +484,6 @@ mod tests {
         let validation: Expected = |error| matches!(error, ConfigError::Validation(_));
         let incomplete_iam: Expected = |error| matches!(error, ConfigError::IncompleteValkeyIam);
         let empty_iam: Expected = |error| matches!(error, ConfigError::EmptyValkeyIam);
-        let insecure: Expected = |error| matches!(error, ConfigError::InsecureProviderOrigin);
-        let not_bare: Expected = |error| matches!(error, ConfigError::ProviderOriginNotBare);
-        let small_buffer: Expected =
-            |error| matches!(error, ConfigError::ProxyBufferBelowRequestCap);
 
         let cases: &[(&[(&str, &str)], Expected)] = &[
             (&[("GATEWAY_GENERATION_TIMEOUT_SECONDS", "0")], validation),
@@ -685,7 +510,6 @@ mod tests {
             (&[("GATEWAY_SETTLEMENT_BACKLOG_LIMIT", "0")], validation),
             (&[("GATEWAY_RECORD_CACHE_TTL_SECONDS", "0")], validation),
             (&[("GATEWAY_RECORD_CACHE_TTL_SECONDS", "301")], validation),
-            (&[("PROXY_MAX_REQUEST_BYTES", "1023")], validation),
             (
                 &[("VALKEY_IAM_USER", "gradiated-prod-gateway")],
                 incomplete_iam,
@@ -702,38 +526,6 @@ mod tests {
                     ("VALKEY_IAM_USER", "gradiated-prod-gateway"),
                 ],
                 empty_iam,
-            ),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "http://api.anthropic.com")],
-                insecure,
-            ),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "https://api.anthropic.com/v1")],
-                not_bare,
-            ),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "https://api.anthropic.com?x=1")],
-                not_bare,
-            ),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "https://api.anthropic.com/")],
-                not_bare,
-            ),
-            (&[("PROXY_ANTHROPIC_ORIGIN", "https://")], not_bare),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "https://user@api.anthropic.com")],
-                not_bare,
-            ),
-            (
-                &[("PROXY_ANTHROPIC_ORIGIN", "https://api.anthropic.com#f")],
-                not_bare,
-            ),
-            (
-                &[
-                    ("PROXY_MAX_REQUEST_BYTES", "4194304"),
-                    ("PROXY_REQUEST_BUFFER_BYTES", "2097152"),
-                ],
-                small_buffer,
             ),
         ];
 

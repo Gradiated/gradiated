@@ -37,8 +37,7 @@ def check_autoscaling(root):
         if service == 'gateway':
             config = next(d for d in resources if d['kind'] == 'ConfigMap')['data']
             grace = deployment['spec']['template']['spec']['terminationGracePeriodSeconds']
-            longest_request = max(int(config['GATEWAY_GENERATION_TIMEOUT_SECONDS']),
-                                  int(config['PROXY_TOTAL_TIMEOUT_SECONDS']))
+            longest_request = int(config['GATEWAY_GENERATION_TIMEOUT_SECONDS'])
             assert grace >= longest_request + 10 + 5 + 15 + 10, 'Include preStop, drain and flush budgets'
             autoscaler = yaml.safe_load((workloads.parent / 'platform/cluster-autoscaler.yaml').read_text())
             assert int(autoscaler['spec']['source']['helm']['valuesObject']['extraArgs']
@@ -133,11 +132,6 @@ def check_autoscaling(root):
                 case('sum active generations across pods', inputs() + [
                     series('gradiated_gateway_active_generations', '40+0x8', 'a'),
                     series('gradiated_gateway_active_generations', '60+0x8', 'b')], 100)
-                case('relay-only traffic scales the gateway', inputs() + [
-                    series('gradiated_gateway_active_relays', '75+0x8', 'a')], 75)
-                case('hosted and relay concurrency add together', inputs() + [
-                    series('gradiated_gateway_active_generations', '40+0x8', 'a'),
-                    series('gradiated_gateway_active_relays', '60+0x8', 'b')], 100)
             else:
                 case('sum request rates excluding health traffic', inputs() + [
                     series('gradiated_api_http_requests_total', '0+300x8', 'a', route='/v1/models'),

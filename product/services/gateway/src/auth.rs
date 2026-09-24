@@ -23,24 +23,6 @@ pub struct AuthenticatedIdentity {
     pub workspace_id: Uuid,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Provider {
-    OpenAi,
-    Anthropic,
-}
-
-impl Provider {
-    /// Recognizes a key namespace, not whether the provider accepts the key.
-    fn from_key(key: &str) -> Option<Self> {
-        let (provider, suffix) = match key.strip_prefix("sk-ant-") {
-            Some(suffix) => (Self::Anthropic, suffix),
-            None => (Self::OpenAi, key.strip_prefix("sk-")?),
-        };
-
-        (!suffix.is_empty()).then_some(provider)
-    }
-}
-
 fn is_api_key(key: &str) -> bool {
     key.strip_prefix("grad_").is_some_and(|suffix| {
         !suffix.is_empty()
@@ -50,25 +32,12 @@ fn is_api_key(key: &str) -> bool {
     })
 }
 
-#[cfg(test)]
-fn is_provider_key(key: &str) -> bool {
-    Provider::from_key(key).is_some()
-}
-
 // Secrets deliberately have no Debug or serialization implementation.
-pub struct ProviderCredential<'a> {
-    pub provider: Provider,
-    pub secret: &'a str,
-}
+pub struct ApiKey<'a>(&'a str);
 
-pub struct RequestCredentials<'a> {
-    pub api_key: &'a str,
-    pub provider: Option<ProviderCredential<'a>>,
-}
-
-impl RequestCredentials<'_> {
-    pub fn api_key_digest(&self) -> String {
-        format!("{:x}", Sha256::digest(self.api_key.as_bytes()))
+impl ApiKey<'_> {
+    pub fn digest(&self) -> String {
+        format!("{:x}", Sha256::digest(self.0.as_bytes()))
     }
 }
 
@@ -112,10 +81,9 @@ fn checked_secret(value: &str) -> Result<&str, AuthenticationError> {
     }
 }
 
-/// A route must match the extracted provider before relay.
-pub fn extract_credentials(
-    headers: &HeaderMap,
-) -> Result<RequestCredentials<'_>, AuthenticationError> {
+/// The proxy removes every other credential before it forwards a request, so any
+/// value that is not a Gradiated key is refused.
+pub fn extract_api_key(headers: &HeaderMap) -> Result<ApiKey<'_>, AuthenticationError> {
     let workspace = single_value(headers, &X_GRADIATED_API_KEY)?
         .map(checked_secret)
         .transpose()?;
@@ -126,43 +94,28 @@ pub fn extract_credentials(
         .map(checked_secret)
         .transpose()?;
 
-    if workspace.is_some_and(|key| !is_api_key(key)) {
-        return Err(rejected("workspace_header_namespace"));
-    }
+    let mut api_key = None;
 
-    let mut api_key = workspace;
-    let mut provider = None;
-
-    for key in [bearer, standard].into_iter().flatten() {
-        if is_api_key(key) {
-            if api_key.is_some_and(|existing| existing != key) {
-                return Err(rejected("conflicting_api_keys"));
-            }
-
-            api_key = Some(key);
-        } else if let Some(kind) = Provider::from_key(key) {
-            if provider.is_some() {
-                return Err(rejected("multiple_provider_keys"));
-            }
-
-            provider = Some(ProviderCredential {
-                provider: kind,
-                secret: key,
-            });
-        } else {
+    for key in [workspace, bearer, standard].into_iter().flatten() {
+        if !is_api_key(key) {
             return Err(rejected("unknown_key_namespace"));
         }
+
+        if api_key.is_some_and(|existing| existing != key) {
+            return Err(rejected("conflicting_api_keys"));
+        }
+
+        api_key = Some(key);
     }
 
-    Ok(RequestCredentials {
-        api_key: api_key.ok_or_else(|| rejected("missing_api_key"))?,
-        provider,
-    })
+    api_key
+        .map(ApiKey)
+        .ok_or_else(|| rejected("missing_api_key"))
 }
 
 #[cfg(test)]
 pub(crate) fn credential_digest(headers: &HeaderMap) -> Result<String, AuthenticationError> {
-    Ok(extract_credentials(headers)?.api_key_digest())
+    Ok(extract_api_key(headers)?.digest())
 }
 
 pub fn authenticate_credential(
@@ -336,7 +289,7 @@ mod tests {
         revoked.revoked_at = Some(Utc::now());
 
         for failure in [
-            extract_credentials(&HeaderMap::new()).err(),
+            extract_api_key(&HeaderMap::new()).err(),
             authenticate_credential(revoked, Utc::now()).err(),
         ] {
             assert_eq!(

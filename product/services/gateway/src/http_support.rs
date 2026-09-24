@@ -12,8 +12,8 @@ use serde_json::Value;
 use super::{router, GatewayState};
 use crate::{
     readiness::ReadinessCheck, test_support::TestServingState, CompletionService, GatewayConfig,
-    GatewayModelDeployment, InferenceRequest, ModelRuntime, ModelTokenizer, ProviderRelay,
-    RequestCoordinator, RuntimeCompletion, RuntimeFailure,
+    GatewayModelDeployment, InferenceRequest, ModelRuntime, ModelTokenizer, RequestCoordinator,
+    RuntimeCompletion, RuntimeFailure,
 };
 
 struct FixedReadiness(bool);
@@ -40,11 +40,7 @@ impl ModelRuntime for UnusedRuntime {
     }
 }
 
-pub(super) fn router_for(
-    ready: bool,
-    serving_state: Arc<TestServingState>,
-    proxy_origin: &str,
-) -> Router {
+pub(super) fn router_for(ready: bool, serving_state: Arc<TestServingState>) -> Router {
     let test_config = GatewayConfig::for_tests();
     let config = Arc::new(test_config.clone());
     let completions = CompletionService::new(
@@ -54,13 +50,11 @@ pub(super) fn router_for(
         config,
     );
     let coordinator = RequestCoordinator::new(serving_state);
-    let relay = ProviderRelay::new(proxy_origin, test_config.proxy_limits()).unwrap();
 
     router(GatewayState::new(
         Arc::new(FixedReadiness(ready)),
         completions,
         coordinator,
-        relay,
         test_config.compliance(),
     ))
 }

@@ -1,57 +1,19 @@
 use super::support::{
-    classify_messages, headers, qualify, qualify_chat, FailingState, StateChange, StateRead,
-    CHAT_BODY, FRONTIER_BODY, PROVIDER_KEYS, WORKSPACE_KEY,
+    headers, qualify, qualify_chat, FailingState, StateChange, StateRead, CHAT_BODY, WORKSPACE_KEY,
 };
 use super::*;
 use crate::domain::{BillingMode, OrganizationStatus};
 use crate::test_support::{metadata, TestServingState};
 
 #[tokio::test]
-async fn a_relay_looks_up_only_the_workspace_key_digest() {
-    let state = Arc::new(TestServingState::without_models());
-    let provider_headers = headers(&PROVIDER_KEYS);
-    let classified = classify_messages(state.clone(), &provider_headers, FRONTIER_BODY).await;
+async fn the_credential_is_looked_up_by_its_digest() {
+    let state = Arc::new(TestServingState::ready());
+    qualify_chat(state.clone(), CHAT_BODY).await.unwrap();
 
-    assert!(matches!(classified, Ok(RequestRoute::Relay { .. })));
-    assert_eq!(
-        *state.calls.lock().unwrap(),
-        ["credential", "workspace", "account", "model"]
-    );
     assert_eq!(
         *state.requested_digests.lock().unwrap(),
         [crate::auth::credential_digest(&headers(&WORKSPACE_KEY)).unwrap()]
     );
-}
-
-#[tokio::test]
-async fn provider_credentials_do_not_bypass_hosted_balance_checks() {
-    for balance in [0, -100] {
-        let unfunded = |mut state: TestServingState| {
-            state.account.as_mut().unwrap().balance = balance;
-            Arc::new(state)
-        };
-        let headers = headers(&PROVIDER_KEYS);
-
-        let relayed = classify_messages(
-            unfunded(TestServingState::without_models()),
-            &headers,
-            FRONTIER_BODY,
-        )
-        .await;
-        assert!(
-            matches!(relayed, Ok(RequestRoute::Relay { .. })),
-            "a relay is paid by the provider key at balance {balance}"
-        );
-
-        let hosted = qualify(
-            unfunded(TestServingState::ready()),
-            &headers,
-            CHAT_BODY,
-            RequestKind::Chat,
-        )
-        .await;
-        assert_eq!(hosted.err(), Some(GatewayError::InsufficientBalance));
-    }
 }
 
 #[tokio::test]
@@ -80,26 +42,6 @@ async fn invoiced_accounts_are_not_gated_by_their_balance() {
     let request = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
 
     assert_eq!(request.effective_output_tokens, 1_024);
-}
-
-#[tokio::test]
-async fn hosted_requests_accept_combined_identity_and_discard_provider_secrets() {
-    let state = Arc::new(TestServingState::ready());
-    let request = qualify(
-        state.clone(),
-        &headers(&PROVIDER_KEYS),
-        CHAT_BODY,
-        RequestKind::Chat,
-    )
-    .await
-    .unwrap();
-
-    assert_eq!(request.request.model, "model-a");
-    assert!(!format!("{request:?}").contains("sk-ant-example"));
-    assert_eq!(
-        *state.calls.lock().unwrap(),
-        ["credential", "workspace", "account", "model"]
-    );
 }
 
 #[tokio::test]
@@ -183,7 +125,7 @@ async fn rejects_missing_inactive_and_cross_tenant_state_before_the_model() {
 #[tokio::test]
 async fn rejects_malformed_identity_without_a_state_lookup() {
     let state = Arc::new(TestServingState::ready());
-    let mut headers = headers(&PROVIDER_KEYS);
+    let mut headers = headers(&WORKSPACE_KEY);
     headers.append("x-gradiated-api-key", "grad_other".parse().unwrap());
     let result = qualify(state.clone(), &headers, CHAT_BODY, RequestKind::Chat).await;
 

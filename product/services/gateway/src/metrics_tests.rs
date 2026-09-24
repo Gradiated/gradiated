@@ -234,7 +234,6 @@ fn encodes_the_registered_metric_contract() {
             "gauge",
             ["dependency"].map(str::to_owned).into(),
         ),
-        ("active_relays", "gauge", none.clone()),
         (
             "last_finalization_failure_timestamp_seconds",
             "gauge",
@@ -255,7 +254,7 @@ fn encodes_the_registered_metric_contract() {
     })
     .collect();
 
-    assert_eq!(expected.len(), 25);
+    assert_eq!(expected.len(), 24);
     assert_eq!(encoded_families(&metrics.encode()), expected);
 }
 

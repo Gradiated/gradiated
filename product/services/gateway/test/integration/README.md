@@ -25,8 +25,6 @@ PostgreSQL   Valkey cluster
 - One Valkey container as a one-node cluster that holds all slots.
 - Mock Kev and vLLM runtimes as HTTP servers on loopback ports. Each case starts
   its own runtimes.
-- A closed loopback port as the Anthropic relay origin. A relayed request fails
-  on the host and no test traffic leaves the host.
 
 Each container has a random port, tmpfs storage and a `gateway-contract` label
 with the run's owner name. Teardown removes only the containers whose label
@@ -158,10 +156,6 @@ When a real runtime is enabled, global setup also starts a second gateway with a
   test for each incompatibility that you find.
 
 ## What a green run does not prove
-
-The relay origin must use HTTPS, so no local mock can stand in for the
-provider. The suite tests a relay only as a refused connection. It does not
-test provider error statuses or cut provider streams.
 
 A green run does not test production registration, health publishing, TLS,
 ingress, IAM, settlement workers, Valkey failover, races between gateways,

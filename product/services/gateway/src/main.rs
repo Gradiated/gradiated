@@ -3,8 +3,8 @@ use std::{error::Error, future::IntoFuture, process::ExitCode, sync::Arc, time::
 use axum::http::HeaderValue;
 use gradiated_gateway::{
     browser_cors, router, CompletionService, DependencyReadiness, GatewayConfig, GatewayState,
-    ModelTokenizer, PostgresReader, ProviderRelay, RequestCoordinator, RuntimeTlsConfig,
-    SglangClient, ValkeyServingState,
+    ModelTokenizer, PostgresReader, RequestCoordinator, RuntimeTlsConfig, SglangClient,
+    ValkeyServingState,
 };
 use tokio::signal::unix::{signal, Signal, SignalKind};
 use tracing::{error, info, warn};
@@ -132,12 +132,8 @@ async fn run() -> Result<(), Failure> {
 
             let natural_drain_timeout = Duration::from_secs(config.generation_timeout_seconds)
                 .saturating_add(NATURAL_DRAIN_BUFFER);
-            // Relay streams are not CompletionService generations. Keep their
-            // HTTP connections alive for the full proxy deadline as well.
-            let http_drain_timeout = natural_drain_timeout
-                .max(config.proxy_limits().total_timeout + NATURAL_DRAIN_BUFFER)
-                + FORCED_DRAIN_TIMEOUT
-                + HTTP_DRAIN_TIMEOUT;
+            let http_drain_timeout =
+                natural_drain_timeout + FORCED_DRAIN_TIMEOUT + HTTP_DRAIN_TIMEOUT;
             let http_deadline = tokio::time::Instant::now() + http_drain_timeout;
             drain_generations(&completions, natural_drain_timeout).await;
 
@@ -182,12 +178,10 @@ fn application(
         (*serving_state).clone(),
         completions.metrics(),
     ));
-    let relay = ProviderRelay::new(&config.proxy_anthropic_origin, config.proxy_limits())?;
     let app = router(GatewayState::new(
         readiness,
         completions,
         RequestCoordinator::new(serving_state),
-        relay,
         config.compliance(),
     ));
 

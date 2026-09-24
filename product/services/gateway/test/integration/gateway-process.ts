@@ -74,9 +74,6 @@ export class GatewayProcess {
           ORGANIZATION_CONCURRENCY_CAP,
         ),
         GATEWAY_BROWSER_ORIGINS: BROWSER_ORIGIN,
-        // Nothing listens on port 9 of the loopback, so a relayed request fails
-        // locally instead of reaching a real provider.
-        PROXY_ANTHROPIC_ORIGIN: "https://127.0.0.1:9",
         SGLANG_API_KEY: options.runtimeToken,
         RUST_LOG: "warn",
         AWS_EC2_METADATA_DISABLED: "true",

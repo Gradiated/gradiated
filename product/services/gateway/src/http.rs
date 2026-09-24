@@ -1,7 +1,7 @@
 use std::{sync::Arc, time::Duration};
 
 use axum::{
-    body::{Body, Bytes},
+    body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, State},
     http::{
         header::{AUTHORIZATION, CONTENT_TYPE},
@@ -22,13 +22,11 @@ use tracing::Instrument;
 use uuid::Uuid;
 
 use crate::{
-    auth::{AuthenticatedIdentity, ProviderCredential},
     catalog::ProviderCompliance,
-    coordinator::RequestRoute,
+    coordinator::ClassifiedRequest,
     diagnostics::limited_warn,
     protocol::{Frame, Protocol, StreamItem},
     readiness::ReadinessCheck,
-    relay::{upstream_headers, ProviderRelay, RelayRoute},
     CompletionResponse, CompletionService, GatewayError, GatewayMetrics, ModelCatalogResponse,
     QualifiedRequest, RequestCoordinator, RequestKind, RequestMetadata,
 };
@@ -53,7 +51,6 @@ pub struct GatewayState {
     compliance: ProviderCompliance,
     completions: CompletionService,
     coordinator: RequestCoordinator,
-    relay: ProviderRelay,
     metrics: GatewayMetrics,
 }
 
@@ -62,7 +59,6 @@ impl GatewayState {
         readiness: Arc<dyn ReadinessCheck>,
         completions: CompletionService,
         coordinator: RequestCoordinator,
-        relay: ProviderRelay,
         compliance: ProviderCompliance,
     ) -> Self {
         let metrics = completions.metrics();
@@ -72,7 +68,6 @@ impl GatewayState {
             compliance,
             completions,
             coordinator,
-            relay,
             metrics,
         }
     }
@@ -92,7 +87,6 @@ enum Operation {
 struct Endpoint {
     route: &'static str,
     protocol: Protocol,
-    relay: Option<RelayRoute>,
     kind: RequestKind,
     operation: Operation,
 }
@@ -100,7 +94,6 @@ struct Endpoint {
 const CHAT_COMPLETIONS: Endpoint = Endpoint {
     route: "chat_completions",
     protocol: Protocol::OpenAiChat,
-    relay: None,
     kind: RequestKind::Chat,
     operation: Operation::Complete,
 };
@@ -108,7 +101,6 @@ const CHAT_COMPLETIONS: Endpoint = Endpoint {
 const SYSTEMONE: Endpoint = Endpoint {
     route: "systemone",
     protocol: Protocol::OpenAiChat,
-    relay: None,
     kind: RequestKind::SystemOne,
     operation: Operation::Complete,
 };
@@ -116,7 +108,6 @@ const SYSTEMONE: Endpoint = Endpoint {
 const MESSAGES: Endpoint = Endpoint {
     route: "messages",
     protocol: Protocol::AnthropicMessages,
-    relay: Some(RelayRoute::AnthropicMessages),
     kind: RequestKind::Chat,
     operation: Operation::Complete,
 };
@@ -124,7 +115,6 @@ const MESSAGES: Endpoint = Endpoint {
 const COUNT_TOKENS: Endpoint = Endpoint {
     route: "messages_count_tokens",
     protocol: Protocol::AnthropicMessages,
-    relay: None,
     kind: RequestKind::Chat,
     operation: Operation::CountTokens,
 };
@@ -132,7 +122,6 @@ const COUNT_TOKENS: Endpoint = Endpoint {
 const RESPONSES: Endpoint = Endpoint {
     route: "responses",
     protocol: Protocol::OpenAiResponses,
-    relay: None,
     kind: RequestKind::Chat,
     operation: Operation::Complete,
 };
@@ -212,47 +201,19 @@ async fn serve(
 ) -> Result<Response, GatewayError> {
     let body = body.map_err(body_rejection)?;
 
-    let classified = state
+    let ClassifiedRequest { hosted, request } = state
         .coordinator
-        .classify(
-            headers,
-            &body,
-            metadata.received_at,
-            endpoint.protocol,
-            endpoint.relay,
-        )
+        .classify(headers, &body, metadata.received_at, endpoint.protocol)
         .await?;
+    let translated = endpoint.protocol.translate_request(&request)?;
+    let qualified =
+        state
+            .coordinator
+            .qualify(metadata, headers, hosted, &translated, endpoint.kind)?;
 
-    match classified {
-        RequestRoute::Relay {
-            route,
-            identity,
-            credential,
-        } => {
-            let relay = Relay {
-                generation_id: metadata.generation_id,
-                route,
-                identity,
-                credential,
-            };
-
-            relay_response(state, relay, headers, body).await
-        }
-        RequestRoute::Hosted { hosted, request } => {
-            let translated = endpoint.protocol.translate_request(&request)?;
-            let qualified = state.coordinator.qualify(
-                metadata,
-                headers,
-                *hosted,
-                &translated,
-                endpoint.kind,
-            )?;
-
-            match endpoint.operation {
-                Operation::Complete => complete(state, endpoint.protocol, qualified).await,
-                Operation::CountTokens => count_tokens(state, &qualified).await,
-            }
-        }
+    match endpoint.operation {
+        Operation::Complete => complete(state, endpoint.protocol, qualified).await,
+        Operation::CountTokens => count_tokens(state, &qualified).await,
     }
 }
 
@@ -348,40 +309,6 @@ async fn count_tokens(
     Ok(Json(serde_json::json!({ "input_tokens": count })).into_response())
 }
 
-struct Relay<'a> {
-    generation_id: Uuid,
-    route: RelayRoute,
-    identity: AuthenticatedIdentity,
-    credential: ProviderCredential<'a>,
-}
-
-/// The edge never inspects or rewrites the provider payload.
-async fn relay_response(
-    state: &GatewayState,
-    relay: Relay<'_>,
-    headers: &HeaderMap,
-    body: Bytes,
-) -> Result<Response, GatewayError> {
-    let upstream = upstream_headers(headers, relay.route, &relay.credential)?;
-    let relayed = state.relay.send(relay.route, upstream, body).await?;
-
-    tracing::info!(
-        generation_id = %relay.generation_id,
-        organization_id = %relay.identity.organization_id,
-        workspace_id = %relay.identity.workspace_id,
-        api_key_id = %relay.identity.api_key_id,
-        provider_status = relayed.status.as_u16(),
-        event = "provider_relay",
-        "request relayed to the provider with the customer key"
-    );
-
-    let mut response = Response::new(Body::from_stream(relayed.body));
-    *response.status_mut() = relayed.status;
-    *response.headers_mut() = relayed.headers;
-
-    Ok(response)
-}
-
 fn sse_response(
     protocol: Protocol,
     stream: impl Stream<Item = StreamItem> + Send + 'static,
@@ -454,10 +381,6 @@ async fn ready(State(state): State<GatewayState>) -> (StatusCode, Json<HealthRes
 }
 
 async fn metrics(State(state): State<GatewayState>) -> Response {
-    state
-        .metrics
-        .set_active_relays(state.relay.active_requests());
-
     (
         [(
             CONTENT_TYPE,
@@ -481,15 +404,11 @@ mod tests {
         support::{json_body, json_request, router_for},
         *,
     };
-    use crate::{test_support::TestServingState, GatewayConfig};
+    use crate::test_support::TestServingState;
 
     fn observed_application() -> (Router, Arc<TestServingState>) {
         let state = Arc::new(TestServingState::unknown_credential());
-        let application = router_for(
-            true,
-            state.clone(),
-            &GatewayConfig::for_tests().proxy_anthropic_origin,
-        );
+        let application = router_for(true, state.clone());
 
         (application, state)
     }
@@ -529,11 +448,7 @@ mod tests {
 
     #[tokio::test]
     async fn readiness_fails_closed_when_a_dependency_is_unhealthy() {
-        let application = router_for(
-            false,
-            Arc::new(TestServingState::unknown_credential()),
-            &GatewayConfig::for_tests().proxy_anthropic_origin,
-        );
+        let application = router_for(false, Arc::new(TestServingState::unknown_credential()));
 
         let response = application
             .oneshot(
@@ -857,11 +772,7 @@ mod tests {
             (archived, true),
             (TestServingState::unknown_credential(), false),
         ] {
-            let app = router_for(
-                true,
-                Arc::new(state),
-                &GatewayConfig::for_tests().proxy_anthropic_origin,
-            );
+            let app = router_for(true, Arc::new(state));
             let request = Request::builder()
                 .method("POST")
                 .uri("/v1/messages")
@@ -901,7 +812,3 @@ mod tests {
 #[cfg(test)]
 #[path = "http_support.rs"]
 mod support;
-
-#[cfg(test)]
-#[path = "http_relay_tests.rs"]
-mod relay_route_tests;

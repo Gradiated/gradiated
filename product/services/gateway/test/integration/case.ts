@@ -65,8 +65,6 @@ export class Case {
   readonly organization = crypto.randomUUID();
   readonly workspace = crypto.randomUUID();
   readonly credential = crypto.randomUUID();
-  // Gradiated keys are recognised by their prefix; without it the gateway
-  // treats the secret as a provider credential and looks for a relay route.
   readonly key = `grad_${crypto.randomUUID().replaceAll("-", "")}`;
   readonly keyDigest = createHash("sha256").update(this.key).digest();
   readonly credentialKey = `credential:${this.keyDigest.toString("hex")}`;

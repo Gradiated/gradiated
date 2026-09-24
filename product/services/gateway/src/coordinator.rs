@@ -7,14 +7,14 @@ use uuid::Uuid;
 
 use crate::{
     auth::{
-        authenticate_credential, authorize_access, extract_credentials, AccessError,
-        AuthenticatedIdentity, ProviderCredential,
+        authenticate_credential, authorize_access, extract_api_key, AccessError,
+        AuthenticatedIdentity,
     },
     generation::{CapturedPricing, CapturedPricingError},
     healthy_deployment_count,
     model::{ModelStatus, ServingDeployment, ServingDeploymentError, TextOutputModality},
     protocol::Protocol,
-    relay::{parse_target, RelayRoute},
+    request::parse_target,
     serving_state::{ServingState, ServingStateError},
     CatalogModel, GatewayError, GatewayModel, GatewayModelDeployment, InferenceRequest,
     RequestKind,
@@ -43,19 +43,10 @@ pub struct QualifiedRequest {
     pub request: InferenceRequest,
 }
 
-/// The selected execution path for one generation. Each arm carries everything
-/// the path needs, so nothing downstream repeats authorization or model loading.
-pub enum RequestRoute<'a> {
-    Hosted {
-        // Boxed so a hosted model projection does not enlarge every classification.
-        hosted: Box<HostedRequest>,
-        request: Value,
-    },
-    Relay {
-        route: RelayRoute,
-        identity: AuthenticatedIdentity,
-        credential: ProviderCredential<'a>,
-    },
+/// A request whose model is hosted here, with the parsed body it arrived with.
+pub struct ClassifiedRequest {
+    pub hosted: HostedRequest,
+    pub request: Value,
 }
 
 pub struct HostedRequest {
@@ -138,13 +129,12 @@ impl HostedRequest {
     }
 }
 
-struct Authorization<'a> {
+struct Authorization {
     identity: AuthenticatedIdentity,
-    provider: Option<ProviderCredential<'a>>,
     funds_hosted: bool,
 }
 
-impl Authorization<'_> {
+impl Authorization {
     fn into_hosted_identity(self) -> Result<AuthenticatedIdentity, GatewayError> {
         if !self.funds_hosted {
             return Err(GatewayError::InsufficientBalance);
@@ -214,17 +204,15 @@ impl RequestCoordinator {
         Ok(catalog)
     }
 
-    /// Decides between hosted serving and customer-key relay before any hosted
-    /// admission or translation. Local names always resolve first, so an unknown
-    /// task or private version never reaches a provider.
-    pub async fn classify<'a>(
+    /// Resolves the model before admission or translation, so an unknown name is a
+    /// local error however the caller is funded.
+    pub async fn classify(
         &self,
-        headers: &'a HeaderMap,
+        headers: &HeaderMap,
         body: &[u8],
         received_at: DateTime<Utc>,
         protocol: Protocol,
-        relay: Option<RelayRoute>,
-    ) -> Result<RequestRoute<'a>, GatewayError> {
+    ) -> Result<ClassifiedRequest, GatewayError> {
         // A malformed or unsupported request is a local error on every route, so it
         // is rejected before identity.
         if headers.contains_key(RUNTIME_PRIORITY_HEADER) {
@@ -236,53 +224,32 @@ impl RequestCoordinator {
 
         let authorization = self.authorize(headers, received_at).await?;
 
-        // Hosted names match without regard to case; a relayed body keeps the
-        // caller's own spelling because its bytes are never rewritten.
-        let mut hosted_id = target.model;
-        hosted_id.make_ascii_lowercase();
-        let hosted = self
+        let mut model_id = target.model;
+        model_id.make_ascii_lowercase();
+        let model = self
             .serving_state
-            .model(&hosted_id)
+            .model(&model_id)
             .await
-            .map_err(state_unavailable("model_read"))?;
+            .map_err(state_unavailable("model_read"))?
+            .ok_or(GatewayError::ModelNotFound)?;
+        let identity = authorization.into_hosted_identity()?;
 
-        if let Some(model) = hosted {
-            let identity = authorization.into_hosted_identity()?;
-
-            if model.status != ModelStatus::Available {
-                return Err(GatewayError::ModelUnavailable);
-            }
-
-            return Ok(RequestRoute::Hosted {
-                hosted: Box::new(HostedRequest { identity, model }),
-                request: target.request,
-            });
+        if model.status != ModelStatus::Available {
+            return Err(GatewayError::ModelUnavailable);
         }
 
-        // The provider is authoritative for its own model names. Without a relay
-        // route or its key there is nothing to ask, so the name stays a local error.
-        let (Some(route), Some(credential)) = (relay, authorization.provider) else {
-            return Err(GatewayError::ModelNotFound);
-        };
-
-        if credential.provider != route.provider() {
-            return Err(GatewayError::InvalidApiKey);
-        }
-
-        Ok(RequestRoute::Relay {
-            route,
-            identity: authorization.identity,
-            credential,
+        Ok(ClassifiedRequest {
+            hosted: HostedRequest { identity, model },
+            request: target.request,
         })
     }
 
-    async fn authorize<'a>(
+    async fn authorize(
         &self,
-        headers: &'a HeaderMap,
+        headers: &HeaderMap,
         received_at: DateTime<Utc>,
-    ) -> Result<Authorization<'a>, GatewayError> {
-        let credentials = extract_credentials(headers)?;
-        let digest = credentials.api_key_digest();
+    ) -> Result<Authorization, GatewayError> {
+        let digest = extract_api_key(headers)?.digest();
         let credential = self
             .serving_state
             .credential(&digest)
@@ -322,7 +289,6 @@ impl RequestCoordinator {
 
         Ok(Authorization {
             identity,
-            provider: credentials.provider,
             funds_hosted: account.funds_hosted_requests(),
         })
     }

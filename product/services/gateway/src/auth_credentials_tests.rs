@@ -12,72 +12,24 @@ fn headers(pairs: &[(&str, &str)]) -> HeaderMap {
 }
 
 #[test]
-fn extracts_supported_identity_combinations() {
-    let cases = vec![
-        (vec![("authorization", "Bearer grad_example")], None),
-        (vec![("x-api-key", "grad_example")], None),
-        (vec![("x-gradiated-api-key", "grad_example")], None),
-        (
-            vec![
-                ("x-gradiated-api-key", "grad_example"),
-                ("authorization", "Bearer sk-proj-example"),
-            ],
-            Some((Provider::OpenAi, "sk-proj-example")),
-        ),
-        (
-            vec![
-                ("x-gradiated-api-key", "grad_example"),
-                ("x-api-key", "sk-ant-example"),
-            ],
-            Some((Provider::Anthropic, "sk-ant-example")),
-        ),
-        (
-            vec![
-                ("authorization", "Bearer grad_example"),
-                ("x-api-key", "sk-ant-example"),
-            ],
-            Some((Provider::Anthropic, "sk-ant-example")),
-        ),
-        (
-            vec![
-                ("authorization", "Bearer sk-example"),
-                ("x-api-key", "grad_example"),
-            ],
-            Some((Provider::OpenAi, "sk-example")),
-        ),
-        (
-            vec![
-                ("x-gradiated-api-key", "grad_example"),
-                ("authorization", "Bearer sk-ant-example"),
-            ],
-            Some((Provider::Anthropic, "sk-ant-example")),
-        ),
-        (
-            vec![
-                ("x-gradiated-api-key", "grad_example"),
-                ("authorization", "Bearer grad_example"),
-            ],
-            None,
-        ),
-        (
-            vec![
-                ("authorization", "Bearer grad_example"),
-                ("x-api-key", "grad_example"),
-            ],
-            None,
-        ),
-    ];
-    for (pairs, expected) in cases {
-        let headers = headers(&pairs);
-        let credentials = extract_credentials(&headers).unwrap();
-        assert_eq!(credentials.api_key, "grad_example");
+fn accepts_the_gradiated_key_in_any_standard_header() {
+    for pairs in [
+        vec![("authorization", "Bearer grad_example")],
+        vec![("x-api-key", "grad_example")],
+        vec![("x-gradiated-api-key", "grad_example")],
+        vec![
+            ("x-gradiated-api-key", "grad_example"),
+            ("authorization", "Bearer grad_example"),
+        ],
+        vec![
+            ("authorization", "Bearer grad_example"),
+            ("x-api-key", "grad_example"),
+        ],
+    ] {
         assert_eq!(
-            credentials.provider.map(|key| (key.provider, key.secret)),
-            expected
-        );
-        assert_eq!(
-            credential_digest(&headers).unwrap(),
-            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3"
+            credential_digest(&headers(&pairs)).unwrap(),
+            "8c56ca6429a5b2f63cfc1fb8708a52a5b5d61b199680507e42a17de2c2deada3",
+            "{pairs:?}"
         );
     }
 }
@@ -87,6 +39,14 @@ fn rejects_missing_conflicting_or_unknown_identity() {
     let cases = vec![
         vec![],
         vec![("authorization", "Bearer sk-example")],
+        vec![
+            ("x-gradiated-api-key", "grad_example"),
+            ("authorization", "Bearer sk-proj-example"),
+        ],
+        vec![
+            ("x-gradiated-api-key", "grad_example"),
+            ("x-api-key", "sk-ant-example"),
+        ],
         vec![("x-gradiated-api-key", "sk-example")],
         vec![("authorization", "Bearer unknown")],
         vec![("authorization", "Bearer grad_")],
@@ -119,7 +79,7 @@ fn rejects_missing_conflicting_or_unknown_identity() {
     ];
     for pairs in cases {
         assert!(matches!(
-            extract_credentials(&headers(&pairs)),
+            extract_api_key(&headers(&pairs)),
             Err(AuthenticationError::InvalidApiKey)
         ));
     }
@@ -133,29 +93,25 @@ fn rejects_conflicting_duplicates_and_malformed_headers() {
         } else {
             ("grad_example", "grad_other")
         };
-        assert!(extract_credentials(&headers(&[(name, value), (name, value)])).is_ok());
-        assert!(extract_credentials(&headers(&[(name, value), (name, other)])).is_err());
+        assert!(extract_api_key(&headers(&[(name, value), (name, value)])).is_ok());
+        assert!(extract_api_key(&headers(&[(name, value), (name, other)])).is_err());
         for malformed in [
             "",
             "grad_example,grad_other",
             "grad_ex ample",
             "grad_example\t",
         ] {
-            assert!(extract_credentials(&headers(&[(name, malformed)])).is_err());
+            assert!(extract_api_key(&headers(&[(name, malformed)])).is_err());
         }
     }
     let oversized = format!("grad_{}", "a".repeat(4096));
-    assert!(extract_credentials(&headers(&[("x-gradiated-api-key", &oversized)])).is_err());
+    assert!(extract_api_key(&headers(&[("x-gradiated-api-key", &oversized)])).is_err());
 }
 
 #[test]
-fn distinguishes_provider_namespaces() {
+fn only_the_gradiated_namespace_is_an_api_key() {
     assert!(is_api_key("grad_example"));
+    assert!(!is_api_key("grad_"));
     assert!(!is_api_key("sk-example"));
-    assert!(is_provider_key("sk-example"));
-    assert!(is_provider_key("sk-proj-example"));
-    assert!(is_provider_key("sk-ant-example"));
-    assert!(!is_provider_key("grad_example"));
-    assert!(!is_provider_key("eyJ.token.signature"));
-    assert!(!is_provider_key("sk-ant-"));
+    assert!(!is_api_key("grad_a!b"));
 }

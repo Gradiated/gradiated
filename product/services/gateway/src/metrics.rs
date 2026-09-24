@@ -28,7 +28,6 @@ struct Metrics {
     admissions: CounterFamily<GenerationLabels>,
     admission_rejections: CounterFamily<AdmissionRejectionLabels>,
     active_generations: GaugeFamily<GenerationLabels>,
-    active_relays: Gauge,
     generations: CounterFamily<GenerationOutcomeLabels>,
     tokens: CounterFamily<TokenLabels>,
     calculated_charge_nano_usd: CounterFamily<GenerationLabels>,
@@ -138,12 +137,6 @@ impl GatewayMetrics {
                 "admission_rejections",
                 "Generation admission attempts rejected before runtime dispatch.",
                 CounterFamily::default(),
-            ),
-            active_relays: registered(
-                &mut registry,
-                "active_relays",
-                "Provider requests in flight, including response bodies still streaming.",
-                Gauge::default(),
             ),
             active_generations: registered(
                 &mut registry,
@@ -302,10 +295,6 @@ impl GatewayMetrics {
                 reason: error.diagnostic_code().to_owned(),
             })
             .inc();
-    }
-
-    pub(crate) fn set_active_relays(&self, count: usize) {
-        self.inner.active_relays.set(count as i64);
     }
 
     pub(crate) fn generation_admitted(

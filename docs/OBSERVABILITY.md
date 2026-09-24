@@ -14,6 +14,7 @@ prompt, or completion labels.
 | API            | private `:9464/metrics` Service port   | request rate/status/route, latency, in-flight work, sizes, exceptions, PostgreSQL/Valkey readiness, Node process/GC/event loop                                               | `Gradiated / API`              |
 | Worker         | private `:9464/metrics` PodMonitor     | loop up/ready/failures/restarts/progress, pass latency, ingestion throughput/backlog/age, settlement lag, Node process/GC/event loop                | `Gradiated / Worker`           |
 | Gateway        | private in-cluster `/metrics`          | request outcomes, admission/rejection, active and terminal generations, tokens/charges, dispatch/runtime/TTFT/TPOT/throughput, finalization, Valkey/catalog readiness | `Gradiated / Gateway`          |
+| Proxy          | private admin `:9003/metrics`          | responses by destination and status, upstream header latency, in-flight requests, identity lookups (fresh, loaded, stale, unavailable), database queries, hosted catalog age and refresh failures | `Gradiated / Proxy`            |
 | SGLang runtime | gateway deployment-scoped observations | active work, terminal outcomes, runtime latency, TTFT, TPOT, per-request output throughput                                                                        | `Gradiated / SGLang Runtime`   |
 | Console        | external HTTPS blackbox probe          | end-to-end availability, HTTP status, DNS/TLS/request phases, response size, certificate expiry                                                                              | `Gradiated / Console`          |
 | Metabase       | private metrics plus HTTPS probe       | end-to-end availability, replica state, restarts, CPU, memory, JVM heap and application metrics                                                                               | `Gradiated / Metabase`         |
@@ -21,7 +22,9 @@ prompt, or completion labels.
 
 The API and worker metrics listeners are not attached to an HTTPRoute. The
 gateway public route accepts only inference paths. Its health and metrics
-routes remain private even though they share the in-cluster HTTP port.
+routes remain private even though they share the in-cluster HTTP port. The proxy
+serves health, readiness and metrics on a separate admin port, which no route
+reaches.
 
 ## Dashboards and diagnostic logs
 

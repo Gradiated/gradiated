@@ -9,6 +9,8 @@ import { updateRelease } from "./update-release.mjs";
 const SOURCE_SHA = "a".repeat(40);
 const PRODUCT_DIGEST = `sha256:${"b".repeat(64)}`;
 const GATEWAY_DIGEST = `sha256:${"c".repeat(64)}`;
+const PROXY_DIGEST = `sha256:${"e".repeat(64)}`;
+const DIGESTS = { product: PRODUCT_DIGEST, gateway: GATEWAY_DIGEST, proxy: PROXY_DIGEST };
 
 async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), "gradiated-release-"));
@@ -26,7 +28,7 @@ async function fixture() {
   );
   await writeFile(
     path.join(workloads, "release-metadata.yaml"),
-    'data:\n  sourceRevision: "unreleased"\n  consoleRevision: "unreleased"\n  productImage: "unreleased"\n  gatewayImage: "unreleased"\n',
+    'data:\n  sourceRevision: "unreleased"\n  consoleRevision: "unreleased"\n  productImage: "unreleased"\n  gatewayImage: "unreleased"\n  proxyImage: "unreleased"\n',
   );
   await writeFile(
     path.join(workloads, "api.yaml"),
@@ -44,17 +46,16 @@ async function fixture() {
     path.join(workloads, "gateway.yaml"),
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway:old\n`,
   );
+  await writeFile(
+    path.join(workloads, "proxy.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/proxy@sha256:${"0".repeat(64)}\n`,
+  );
   return { root, workloads };
 }
 
 test("updates one complete production release", async () => {
   const { root, workloads } = await fixture();
-  await updateRelease({
-    root,
-    sourceSha: SOURCE_SHA,
-    productDigest: PRODUCT_DIGEST,
-    gatewayDigest: GATEWAY_DIGEST,
-  });
+  await updateRelease({ root, sourceSha: SOURCE_SHA, digests: DIGESTS });
 
   const kustomization = await readFile(
     path.join(workloads, "kustomization.yaml"),
@@ -74,18 +75,22 @@ test("updates one complete production release", async () => {
     path.join(workloads, "gateway.yaml"),
     "utf8",
   );
+  const proxy = await readFile(path.join(workloads, "proxy.yaml"), "utf8");
   assert.match(kustomization, new RegExp(`digest: ${PRODUCT_DIGEST}`));
   assert.match(kustomization, new RegExp(`digest: ${GATEWAY_DIGEST}`));
+  assert.match(kustomization, new RegExp(`prod/proxy\\n    digest: ${PROXY_DIGEST}`));
   assert.match(api, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(clickhouseMigrate, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(worker, new RegExp(`product@${PRODUCT_DIGEST}`));
   const ops = await readFile(path.join(workloads, "../operations/ops-mcp/workload.yaml"), "utf8");
   assert.match(ops, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(gateway, new RegExp(`gateway@${GATEWAY_DIGEST}`));
+  assert.match(proxy, new RegExp(`proxy@${PROXY_DIGEST}`));
   assert.match(metadata, new RegExp(`sourceRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`consoleRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`productImage: ".*@${PRODUCT_DIGEST}"`));
   assert.match(metadata, new RegExp(`gatewayImage: ".*@${GATEWAY_DIGEST}"`));
+  assert.match(metadata, new RegExp(`proxyImage: ".*@${PROXY_DIGEST}"`));
 });
 
 test("rejects a non-immutable image reference", async () => {
@@ -94,9 +99,18 @@ test("rejects a non-immutable image reference", async () => {
     updateRelease({
       root,
       sourceSha: SOURCE_SHA,
-      productDigest: "latest",
-      gatewayDigest: GATEWAY_DIGEST,
+      digests: { ...DIGESTS, product: "latest" },
     }),
     /Invalid product digest/,
+  );
+});
+
+test("refuses a release without every image", async () => {
+  const { root } = await fixture();
+  const { proxy: _, ...withoutProxy } = DIGESTS;
+
+  await assert.rejects(
+    updateRelease({ root, sourceSha: SOURCE_SHA, digests: withoutProxy }),
+    /Invalid proxy digest/,
   );
 });

@@ -10,7 +10,7 @@ returns their exact digests. It does not deploy workloads.
 | `nomad-deployment.yml` | Server configuration tests | Argo owns manifests; first sync is manual |
 | `model-deployment.yml` | Launch checks, Nomad base image, verified runtime bundle and release record | Artifact publication; GPU qualification and serving rollout remain pending |
 
-The application requires `product` and `gateway`. Nomad uses the pinned upstream image; it needs no custom image.
+The application requires `product`, `gateway` and `proxy`. The gateway and the proxy build from the shared `product/services/rust-service.Dockerfile`, which pins its builder and distroless runtime images by digest; each service selects its final stage with `target`. Nomad uses the pinned upstream image; it needs no custom image.
 The model workflow publishes the Nomad base and DeepSeek runtime bundle.
 See `tools/models/README.md` for the build order and release contract. GLM is listed in the catalog
 but cannot build until its qualified base image digest is recorded. A disabled

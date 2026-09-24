@@ -43,7 +43,7 @@ describe("database outage", () => {
       const instance = await makeCase("vllm");
       expect((await relay(instance)).status).toBe(200);
       const staleBefore = await fixture.proxy.count(
-        "proxy_identity_lookups_total",
+        "gradiated_proxy_identity_lookups_total",
         'result="stale"',
       );
 
@@ -57,7 +57,7 @@ describe("database outage", () => {
           expect(elapsed).toBeLessThan(OUTAGE_ANSWER_MS);
           return (
             (await fixture.proxy.count(
-              "proxy_identity_lookups_total",
+              "gradiated_proxy_identity_lookups_total",
               'result="stale"',
             )) > staleBefore
           );
@@ -134,14 +134,15 @@ describe("database outage", () => {
   it("keeps routing hosted models to the gateway after a failed catalog refresh", async () => {
     const instance = await fixture.hostedCase();
     const failures = await fixture.proxy.count(
-      "proxy_catalog_refresh_failures_total",
+      "gradiated_proxy_catalog_refresh_failures_total",
     );
 
     fixture.database.set("refusing");
     await eventually(
       async () =>
-        (await fixture.proxy.count("proxy_catalog_refresh_failures_total")) >
-        failures,
+        (await fixture.proxy.count(
+          "gradiated_proxy_catalog_refresh_failures_total",
+        )) > failures,
       5000,
       "no catalog refresh failed",
     );
@@ -165,7 +166,8 @@ describe("database outage", () => {
 
     await eventually(
       async () =>
-        (await proxy.count("proxy_catalog_refresh_failures_total")) >= 2,
+        (await proxy.count("gradiated_proxy_catalog_refresh_failures_total")) >=
+        2,
       8000,
     );
     expect(await proxy.readiness()).toBe(503);

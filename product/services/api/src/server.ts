@@ -157,8 +157,8 @@ const server = serve({
   fetch: app.fetch,
   hostname: environment.HOST,
   port: environment.PORT,
-  // Keep backend connections open beyond the public ALB's 360-second idle timeout.
-  serverOptions: { keepAliveTimeout: 370_000 },
+  // Keep backend connections open beyond the public ALB's 660-second idle timeout.
+  serverOptions: { keepAliveTimeout: 670_000 },
 });
 const metricsServer = startApiMetricsServer(
   metrics,

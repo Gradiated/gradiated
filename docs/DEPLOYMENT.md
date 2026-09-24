@@ -10,6 +10,7 @@ The deployment has one source revision and three parallel build outputs:
 
 - one product image for the API, worker, and migration commands;
 - one gateway image;
+- one proxy image;
 - one static console build.
 
 The workflow tags ECR images with `git-<source-sha>`. ECR tag immutability makes
@@ -17,7 +18,7 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 
 ## Deployment order
 
-1. Build the product image, gateway image, and console in parallel.
+1. Build the product image, gateway image, proxy image, and console in parallel.
 2. Push the images to ECR.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.
@@ -31,13 +32,13 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
    readiness.
 
 The release commit uses the repository `GITHUB_TOKEN`. GitHub does not start a
-new push workflow for that commit. The workflow updates only
-`kustomization.yaml` and `release-metadata.yaml`.
+new push workflow for that commit. The workflow updates `kustomization.yaml`,
+`release-metadata.yaml` and the image digest in each workload manifest that runs a
+released image.
 
-The gateway image is built and recorded now. The production gateway Deployment
-must remain disabled until the binary implements its documented inference HTTP
-surface and the selected SGLang runtime is qualified. When the gateway manifest
-uses the existing ECR repository name, Kustomize will apply the recorded digest.
+The proxy manifest carries an all-zero placeholder digest until the first release
+after its merge records a real one. Until then its pods cannot pull an image; the
+proxy has no public route, so no customer traffic depends on it.
 
 ## Console cache behavior
 

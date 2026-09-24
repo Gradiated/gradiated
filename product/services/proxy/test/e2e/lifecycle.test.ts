@@ -47,7 +47,7 @@ const readAll = async (response: StreamResponse): Promise<string> => {
 };
 
 const inFlight = (proxy: ProxyProcess, destination: string): Promise<number> =>
-  proxy.count("proxy_in_flight", `destination="${destination}"`);
+  proxy.count("gradiated_proxy_in_flight", `destination="${destination}"`);
 
 const refusesConnections = async (proxy: ProxyProcess): Promise<boolean> => {
   try {

@@ -85,18 +85,19 @@ are not supported.
 
 ## Metrics
 
-The admin port serves Prometheus metrics with the `proxy_` prefix. Labels are
+The admin port serves Prometheus metrics with the `gradiated_proxy_` prefix. Labels are
 fixed values; keys, tenants and model names never appear.
 
-| Metric                                 | Labels                                                              |
-| -------------------------------------- | ------------------------------------------------------------------- |
-| `proxy_requests_total`                 | `destination` (`gateway`, `anthropic`, `openai`, `local`), `status` |
-| `proxy_upstream_header_seconds`        | `destination`                                                       |
-| `proxy_in_flight`                      | `destination`                                                       |
-| `proxy_identity_lookups_total`         | `result` (`fresh`, `loaded`, `stale`, `not_found`, `unavailable`)   |
-| `proxy_identity_queries_total`         |                                                                     |
-| `proxy_catalog_age_seconds`            |                                                                     |
-| `proxy_catalog_refresh_failures_total` |                                                                     |
+| Metric                                           | Labels                                                              |
+| ------------------------------------------------ | ------------------------------------------------------------------- |
+| `gradiated_proxy_service_info`                   |                                                                     |
+| `gradiated_proxy_requests_total`                 | `destination` (`gateway`, `anthropic`, `openai`, `local`), `status` |
+| `gradiated_proxy_upstream_header_seconds`        | `destination`                                                       |
+| `gradiated_proxy_in_flight`                      | `destination`                                                       |
+| `gradiated_proxy_identity_lookups_total`         | `result` (`fresh`, `loaded`, `stale`, `not_found`, `unavailable`)   |
+| `gradiated_proxy_identity_queries_total`         |                                                                     |
+| `gradiated_proxy_catalog_age_seconds`            |                                                                     |
+| `gradiated_proxy_catalog_refresh_failures_total` |                                                                     |
 
 ## Tests
 

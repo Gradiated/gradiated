@@ -82,7 +82,7 @@ pub struct Metrics {
 
 impl Default for Metrics {
     fn default() -> Self {
-        let mut registry = Registry::with_prefix("proxy");
+        let mut registry = Registry::with_prefix("gradiated_proxy");
         let requests = Family::<RequestLabels, Counter>::default();
         let upstream_headers = Family::<DestinationLabels, Histogram>::new_with_constructor(|| {
             Histogram::new([
@@ -94,7 +94,14 @@ impl Default for Metrics {
         let identity_queries = Counter::default();
         let catalog_age = Gauge::<f64, std::sync::atomic::AtomicU64>::default();
         let catalog_refresh_failures = Counter::default();
+        let service_info = Gauge::<i64>::default();
+        service_info.set(1);
 
+        registry.register(
+            "service_info",
+            "Constant 1 while the proxy process is running",
+            service_info,
+        );
         registry.register(
             "requests",
             "Completed response heads by destination and status",

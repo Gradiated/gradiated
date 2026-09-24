@@ -106,7 +106,7 @@ describe("relay authorization", () => {
   it("shares one database lookup across a burst for one key", async () => {
     const instance = await makeCase("vllm");
     const queriesBefore = await fixture.proxy.count(
-      "proxy_identity_queries_total",
+      "gradiated_proxy_identity_queries_total",
     );
 
     const responses = await Promise.all(
@@ -116,8 +116,8 @@ describe("relay authorization", () => {
     expect(responses.map((response) => response.status)).toEqual(
       Array(20).fill(200),
     );
-    expect(await fixture.proxy.count("proxy_identity_queries_total")).toBe(
-      queriesBefore + 1,
-    );
+    expect(
+      await fixture.proxy.count("gradiated_proxy_identity_queries_total"),
+    ).toBe(queriesBefore + 1);
   });
 });

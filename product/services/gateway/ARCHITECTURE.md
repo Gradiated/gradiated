@@ -1062,12 +1062,12 @@ tests with a fake `ServingState`.
 - bounded metric label cardinality;
 - assertions that logs and metrics contain no secret or request content;
 - shutdown immediately closes readiness and admission while allowing owned
-  generations to finish naturally for the configured 300-second request
+  generations to finish naturally for the configured 630-second request
   window; only generations still active after that bounded drain are cancelled
   and finalized as server-owned cancellations;
 - rolling deployment conformance with two replicas, zero unavailable pods, a
-  360-second ALB deregistration delay, a short pre-stop propagation pause, and
-  a 360-second Kubernetes termination grace period.
+  670-second ALB deregistration delay, a short pre-stop propagation pause, and
+  a 670-second Kubernetes termination grace period.
 
 ### End-to-end checks
 

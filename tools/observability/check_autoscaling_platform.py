@@ -37,7 +37,7 @@ def main():
                 assert pod['serviceAccountName'] == 'cluster-autoscaler'
                 container = pod['containers'][0]
                 assert container['image'].endswith(':v1.36.1')
-                assert '--max-graceful-termination-sec=600' in container['command']
+                assert '--max-graceful-termination-sec=700' in container['command']
                 assert '--expendable-pods-priority-cutoff=-10' in container['command']
                 assert any('node-group-auto-discovery=asg:tag=' in arg and 'gradiated-prod' in arg
                            for arg in container['command'])
@@ -48,10 +48,10 @@ def main():
         schema = next(v['schema']['openAPIV3Schema'] for v in crd['spec']['versions']
                       if v['name'] == 'v1alpha1')
         validator = Draft7Validator(schema)
-        for service in ('api', 'worker', 'gateway'):
+        for service in ('api', 'worker', 'gateway', 'proxy'):
             obj = yaml.safe_load((KUBERNETES / 'workloads' / f'{service}-autoscaling.yaml').read_text())
             validator.validate(obj)
-        print('Validated all three ScaledObjects against the pinned KEDA CRD')
+        print('Validated every service ScaledObject against the pinned KEDA CRD')
 
 
 if __name__ == '__main__':

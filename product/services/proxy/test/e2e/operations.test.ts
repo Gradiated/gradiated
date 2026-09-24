@@ -94,7 +94,7 @@ describe("telemetry", () => {
     const instance = await fixture.hostedCase();
     const series = (destination: string, status: number) =>
       fixture.proxy.count(
-        "proxy_requests_total",
+        "gradiated_proxy_requests_total",
         `destination="${destination}",status="${status}"`,
       );
     const before = await Promise.all([

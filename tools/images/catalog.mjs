@@ -18,9 +18,17 @@ export const catalog = {
   },
   gateway: {
     context: "product/services/gateway",
+    dockerfile: "product/services/rust-service.Dockerfile",
     repository: "gradiated/prod/gateway",
-    target: "",
-    paths: ["product/services/gateway/"],
+    target: "gateway",
+    paths: ["product/services/gateway/", "product/services/rust-service.Dockerfile"],
+  },
+  proxy: {
+    context: "product/services/proxy",
+    dockerfile: "product/services/rust-service.Dockerfile",
+    repository: "gradiated/prod/proxy",
+    target: "proxy",
+    paths: ["product/services/proxy/", "product/services/rust-service.Dockerfile"],
   },
   "nomad-base": {
     context: "product/inference",

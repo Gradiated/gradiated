@@ -14,12 +14,14 @@ on:
       images:
         description: JSON array of catalog image names required by this caller.
         type: string
-        default: '["product","gateway"]'
+        default: '["product","gateway","proxy"]'
     outputs:
       product_digest:
         value: ${{ jobs.resolve.outputs.product_digest }}
       gateway_digest:
         value: ${{ jobs.resolve.outputs.gateway_digest }}
+      proxy_digest:
+        value: ${{ jobs.resolve.outputs.proxy_digest }}
       images:
         description: JSON map of exact image digests and source revisions.
         value: ${{ jobs.resolve.outputs.images }}
@@ -107,6 +109,7 @@ jobs:
       images: ${{ steps.collect.outputs.images }}
       product_digest: ${{ steps.collect.outputs.product_digest }}
       gateway_digest: ${{ steps.collect.outputs.gateway_digest }}
+      proxy_digest: ${{ steps.collect.outputs.proxy_digest }}
     steps:
       - uses: actions/checkout@v7
         with:

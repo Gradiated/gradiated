@@ -133,6 +133,7 @@ const main = () => {
     emit("images", JSON.stringify(results));
     emit("product_digest", results.product?.digest ?? "");
     emit("gateway_digest", results.gateway?.digest ?? "");
+    emit("proxy_digest", results.proxy?.digest ?? "");
   } else throw new Error("Unknown image command");
 };
 if (import.meta.url === pathToFileURL(process.argv[1]).href) main();

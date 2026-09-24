@@ -21,14 +21,13 @@ def check_autoscaling(root):
         assert ignored[kind]['jqPathExpressions'] == ['.webhooks[].clientConfig.caBundle']
     check_headroom(workloads)
     tests = []
-    for service in ('api', 'gateway', 'worker'):
+    for service in ('api', 'gateway', 'proxy', 'worker'):
         owners = [name for name, app in applications.items()
                   if f'{service}-autoscaling.yaml' in
                   app['spec']['source'].get('directory', {}).get('include', '')]
         assert owners == [service], (service, owners)
 
-
-    for service in ('api', 'gateway', 'worker'):
+    for service in ('api', 'gateway', 'proxy', 'worker'):
         spec = yaml.safe_load((workloads / f'{service}-autoscaling.yaml').read_text())['spec']
         assert spec['scaleTargetRef']['name'] == service
         resources = list(yaml.safe_load_all((workloads / f'{service}.yaml').read_text()))
@@ -48,6 +47,22 @@ def check_autoscaling(root):
             autoscaler = yaml.safe_load((workloads.parent / 'platform/cluster-autoscaler.yaml').read_text())
             assert int(autoscaler['spec']['source']['helm']['valuesObject']['extraArgs']
                        ['max-graceful-termination-sec']) >= grace
+        if service == 'proxy':
+            config = next(d for d in resources if d['kind'] == 'ConfigMap')['data']
+            grace = deployment['spec']['template']['spec']['terminationGracePeriodSeconds']
+            assert grace >= int(config['PROXY_TOTAL_SECONDS']) + 10 + 5 + 15, 'Include preStop and drain budgets'
+            target = next(d for d in resources if d['kind'] == 'TargetGroupConfiguration')
+            attributes = target['spec']['defaultConfiguration']['targetGroupAttributes']
+            delay = int(next(a['value'] for a in attributes if a['key'] == 'deregistration_delay.timeout_seconds'))
+            assert grace <= delay <= 3600, 'The ALB drains a target for at most 3600 s'
+            autoscaler = yaml.safe_load((workloads.parent / 'platform/cluster-autoscaler.yaml').read_text())
+            assert int(autoscaler['spec']['source']['helm']['valuesObject']['extraArgs']
+                       ['max-graceful-termination-sec']) >= grace
+        pod = deployment['spec']['template']['spec']
+        zones = next(c for c in pod['topologySpreadConstraints'] if c['topologyKey'] == 'topology.kubernetes.io/zone')
+        if service in ('gateway', 'proxy'):
+            assert pod['priorityClassName'] == 'gradiated-critical'
+            assert zones['whenUnsatisfiable'] == 'DoNotSchedule' and zones['maxSkew'] == 1
         assert deployment['spec']['replicas'] == spec['minReplicaCount']
         assert budget['spec']['minAvailable'] == 2
         assert spec['minReplicaCount'] == 3 and spec['maxReplicaCount'] == 20
@@ -114,7 +129,11 @@ def check_autoscaling(root):
             data = inputs()
             data[2]['values'] = '0+0x8'
             case('failed scrape cannot masquerade as idle', data, None)
-            if service == 'gateway':
+            if service == 'proxy':
+                case('sum in-flight requests across pods', inputs() + [
+                    series('gradiated_proxy_in_flight', '300+0x8', 'a', destination='gateway'),
+                    series('gradiated_proxy_in_flight', '200+0x8', 'b', destination='anthropic')], 500)
+            elif service == 'gateway':
                 case('sum active generations across pods', inputs() + [
                     series('gradiated_gateway_active_generations', '40+0x8', 'a'),
                     series('gradiated_gateway_active_generations', '60+0x8', 'b')], 100)
@@ -153,21 +172,26 @@ def check_headroom(workloads):
         return int(req['cpu'].removesuffix('m')), int(req['memory'].removesuffix('Mi'))
 
     expected_cpu = expected_memory = 0
-    for service in ('api', 'worker', 'gateway'):
+    critical = next(d for d in yaml.safe_load_all((workloads / 'priority-classes.yaml').read_text())
+                    if d['metadata']['name'] == 'gradiated-critical')
+    assert critical['value'] > 0 and critical['globalDefault'] is False
+    assert critical['preemptionPolicy'] == 'PreemptLowerPriority'
+    for service in ('api', 'worker', 'gateway', 'proxy'):
         deployment = next(d for d in yaml.safe_load_all((workloads / f'{service}.yaml').read_text())
                           if d['kind'] == 'Deployment')
         service_pod = deployment['spec']['template']['spec']
-        assert 'priorityClassName' not in service_pod
+        on_request_path = service in ('gateway', 'proxy')
+        assert service_pod.get('priorityClassName') == ('gradiated-critical' if on_request_path else None)
         assert service_pod.get('preemptionPolicy', 'PreemptLowerPriority') == 'PreemptLowerPriority'
         cpu, memory = requests(service_pod['containers'][0])
         baseline = yaml.safe_load((workloads / f'{service}-autoscaling.yaml').read_text())['spec']['minReplicaCount']
-        growth = 2 if service == "gateway" else 1
+        growth = 2 if on_request_path else 1
         expected_cpu += growth * baseline * cpu
         expected_memory += growth * baseline * memory
     cpu, memory = requests(pod['containers'][0])
     replicas = reserve['spec']['replicas']
     assert (replicas * cpu, replicas * memory) == (expected_cpu, expected_memory), \
-        'Buffer must reserve enough requested resources to triple gateway and double API/worker minima'
+        'Buffer must reserve enough requested resources to triple gateway and proxy and double API/worker minima'
     app = yaml.safe_load((workloads.parent / 'platform/scaling-headroom.yaml').read_text())
     assert app['spec']['source']['directory']['include'] == 'scaling-headroom.yaml'
     assert 'scaling-headroom.yaml' in yaml.safe_load((workloads / 'kustomization.yaml').read_text())['resources']

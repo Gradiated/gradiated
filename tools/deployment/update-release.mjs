@@ -4,19 +4,26 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 
-const PRODUCT_REPOSITORY =
-  "873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/product";
-const GATEWAY_REPOSITORY =
-  "873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/gateway";
+const REGISTRY = "873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod";
 const IMAGES_START = "# deployment-images:start";
 const IMAGES_END = "# deployment-images:end";
-const IMAGE_MANIFESTS = [
-  { file: "api.yaml", repository: PRODUCT_REPOSITORY },
-  { file: "clickhouse-migrate.yaml", repository: PRODUCT_REPOSITORY },
-  { file: "worker.yaml", repository: PRODUCT_REPOSITORY },
-  { file: "../operations/ops-mcp/workload.yaml", repository: PRODUCT_REPOSITORY },
-  { file: "gateway.yaml", repository: GATEWAY_REPOSITORY },
+// Each released image: the metadata key that records it and the manifests that run it.
+const IMAGES = [
+  {
+    name: "product",
+    metadataKey: "productImage",
+    manifests: [
+      "api.yaml",
+      "clickhouse-migrate.yaml",
+      "worker.yaml",
+      "../operations/ops-mcp/workload.yaml",
+    ],
+  },
+  { name: "gateway", metadataKey: "gatewayImage", manifests: ["gateway.yaml"] },
+  { name: "proxy", metadataKey: "proxyImage", manifests: ["proxy.yaml"] },
 ];
+
+const repository = (name) => `${REGISTRY}/${name}`;
 
 function parseArguments(values) {
   const result = { root: process.cwd() };
@@ -64,15 +71,11 @@ export async function updateRelease(options) {
     options.sourceSha,
     /^[0-9a-f]{40}$/,
   );
-  const productDigest = requireMatch(
-    "product digest",
-    options.productDigest,
-    /^sha256:[0-9a-f]{64}$/,
-  );
-  const gatewayDigest = requireMatch(
-    "gateway digest",
-    options.gatewayDigest,
-    /^sha256:[0-9a-f]{64}$/,
+  const digests = Object.fromEntries(
+    IMAGES.map(({ name }) => [
+      name,
+      requireMatch(`${name} digest`, options.digests?.[name], /^sha256:[0-9a-f]{64}$/),
+    ]),
   );
   const root = path.resolve(options.root);
   const workloads = path.join(
@@ -88,33 +91,33 @@ export async function updateRelease(options) {
   if (start < 0 || end < start) {
     throw new Error("Missing deployment image markers");
   }
-  const imageBlock = `${IMAGES_START}\nimages:\n  - name: ${PRODUCT_REPOSITORY}\n    newName: ${PRODUCT_REPOSITORY}\n    digest: ${productDigest}\n  - name: ${GATEWAY_REPOSITORY}\n    newName: ${GATEWAY_REPOSITORY}\n    digest: ${gatewayDigest}\n${IMAGES_END}`;
+  const entries = IMAGES.map(
+    ({ name }) =>
+      `  - name: ${repository(name)}\n    newName: ${repository(name)}\n    digest: ${digests[name]}\n`,
+  ).join("");
+  const imageBlock = `${IMAGES_START}\nimages:\n${entries}${IMAGES_END}`;
   kustomization = `${kustomization.slice(0, start)}${imageBlock}${kustomization.slice(end + IMAGES_END.length)}`;
 
   let metadata = await readFile(metadataPath, "utf8");
   metadata = replaceMetadataValue(metadata, "sourceRevision", sourceSha);
   metadata = replaceMetadataValue(metadata, "consoleRevision", sourceSha);
-  metadata = replaceMetadataValue(
-    metadata,
-    "productImage",
-    `${PRODUCT_REPOSITORY}@${productDigest}`,
-  );
-  metadata = replaceMetadataValue(
-    metadata,
-    "gatewayImage",
-    `${GATEWAY_REPOSITORY}@${gatewayDigest}`,
-  );
-
-  for (const { file, repository } of IMAGE_MANIFESTS) {
-    const manifestPath = path.join(workloads, file);
-    let manifest = await readFile(manifestPath, "utf8");
-    manifest = replaceImageReference(
-      manifest,
-      repository,
-      repository === PRODUCT_REPOSITORY ? productDigest : gatewayDigest,
-      file,
+  for (const { name, metadataKey } of IMAGES) {
+    metadata = replaceMetadataValue(
+      metadata,
+      metadataKey,
+      `${repository(name)}@${digests[name]}`,
     );
-    await writeFile(manifestPath, manifest);
+  }
+
+  for (const { name, manifests } of IMAGES) {
+    for (const file of manifests) {
+      const manifestPath = path.join(workloads, file);
+      const manifest = await readFile(manifestPath, "utf8");
+      await writeFile(
+        manifestPath,
+        replaceImageReference(manifest, repository(name), digests[name], file),
+      );
+    }
   }
 
   await writeFile(kustomizationPath, kustomization);
@@ -126,7 +129,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   await updateRelease({
     root: argumentsByName.root,
     sourceSha: argumentsByName["source-sha"],
-    productDigest: argumentsByName["product-digest"],
-    gatewayDigest: argumentsByName["gateway-digest"],
+    digests: Object.fromEntries(
+      IMAGES.map(({ name }) => [name, argumentsByName[`${name}-digest`]]),
+    ),
   });
 }

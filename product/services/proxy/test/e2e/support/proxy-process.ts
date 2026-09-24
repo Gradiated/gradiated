@@ -146,14 +146,19 @@ export class ProxyProcess {
   responses(
     destination: "gateway" | "anthropic" | "openai" | "local",
   ): Promise<number> {
-    return this.count("proxy_requests_total", `destination="${destination}"`);
+    return this.count(
+      "gradiated_proxy_requests_total",
+      `destination="${destination}"`,
+    );
   }
 
   /** Waits for a hosted catalog load that started after `since`, a `Date.now()` value. */
   async catalogRefreshedAfter(since: number): Promise<void> {
     await eventually(
       async () => {
-        const age = (await this.metrics()).get("proxy_catalog_age_seconds");
+        const age = (await this.metrics()).get(
+          "gradiated_proxy_catalog_age_seconds",
+        );
         return age !== undefined && Date.now() - age * 1000 > since;
       },
       CATALOG_REFRESH_SECONDS * 1000 + 5000,

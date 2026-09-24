@@ -124,10 +124,10 @@ def main():
                      alert if fires else None, [alert],
                      {'namespace': namespace, 'deployment': deployment}, duration)
 
-    for missing in (None, 'api', 'gateway', 'worker'):
+    for missing in (None, 'api', 'gateway', 'proxy', 'worker'):
         inputs = [{'series': 'kube_horizontalpodautoscaler_spec_max_replicas'
                    + f'{{namespace="gradiated",horizontalpodautoscaler="keda-hpa-{service}"}}',
-                   'values': '20+0x8'} for service in ('api', 'gateway', 'worker') if service != missing]
+                   'values': '20+0x8'} for service in ('api', 'gateway', 'proxy', 'worker') if service != missing]
         alert = 'AutoscalerMissing'
         scenario(f'missing HPA {missing}', inputs, alert if missing else None, [alert],
                  {'namespace': 'gradiated', 'horizontalpodautoscaler': f'keda-hpa-{missing}'}, '2m')
@@ -145,7 +145,8 @@ def main():
 
     for service, title, down in [('api', 'Api', 'ApiPublicUnavailable'),
                                  ('console', 'Console', 'ConsoleUnavailable'),
-                                 ('metabase', 'Metabase', 'MetabaseUnavailable')]:
+                                 ('metabase', 'Metabase', 'MetabaseUnavailable'),
+                                 ('proxy', 'Proxy', 'ProxyPublicUnavailable')]:
         missing = f'{title}ProbeMissing'
         for case, values, expected in [('healthy', '1+0x30', None),
                                        ('transient', '1+0x5 0 1+0x24', None),
@@ -190,7 +191,8 @@ def main():
                  {'namespace': 'gradiated', 'deployment': 'api'})
 
     for service, alert in [('api', 'ApiPublicUnavailable'),
-                           ('console', 'ConsoleUnavailable')]:
+                           ('console', 'ConsoleUnavailable'),
+                           ('proxy', 'ProxyPublicUnavailable')]:
         inputs = [{'series': f'probe_success{{service="{service}"}}',
                    'values': '1+0x5 0+0x30'}]
         scenario(f'{service} brief outage stays quiet', inputs, None, [alert], eval_time='4m')
@@ -232,6 +234,21 @@ def main():
                 inputs.append({'series': metric + '{deployment="healthy",status="succeeded"}',
                                'values': '0+100x30'})
             scenario(alert + ': ' + name, inputs, alert if fires else None, [alert], labels, '3m')
+
+    fast, slow = 'ProxyErrorBudgetFastBurn', 'ProxyErrorBudgetSlowBurn'
+    for name, failed, ok, destination, expected, eval_time in [
+        ('1% gateway failures page quickly', 3, 297, 'gateway', fast, '10m'),
+        ('0.1% gateway failures warn slowly', 3, 2997, 'gateway', slow, '20m'),
+        ('0.1% failures do not page', 3, 2997, 'gateway', None, '10m'),
+        ('healthy', 0, 3000, 'gateway', None, '20m'),
+        ('provider failures on relays are excluded', 300, 3000, 'anthropic', None, '20m'),
+        ('low traffic stays quiet', 1, 0, 'local', None, '20m'),
+    ]:
+        inputs = [{'series': f'gradiated_proxy_requests_total{{destination="{destination}",status="500"}}',
+                   'values': f'0+{failed}x80'},
+                  {'series': 'gradiated_proxy_requests_total{destination="gateway",status="200"}',
+                   'values': f'0+{ok}x80'}]
+        scenario('proxy error budget: ' + name, inputs, expected, [fast, slow], eval_time=eval_time)
 
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:

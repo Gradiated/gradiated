@@ -29,6 +29,7 @@ env:
   CONSOLE_DOMAIN: console.gradiated.com
   PRODUCT_REPOSITORY: gradiated/prod/product
   GATEWAY_REPOSITORY: gradiated/prod/gateway
+  PROXY_REPOSITORY: gradiated/prod/proxy
 
 jobs:
   resolve:
@@ -146,12 +147,14 @@ jobs:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
+          PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
         run: |
           git pull --ff-only origin main
           node tools/deployment/update-release.mjs \
             --source-sha "${SOURCE_SHA}" \
             --product-digest "${PRODUCT_DIGEST}" \
-            --gateway-digest "${GATEWAY_DIGEST}"
+            --gateway-digest "${GATEWAY_DIGEST}" \
+            --proxy-digest "${PROXY_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
         name: Commit one production release record
@@ -165,6 +168,7 @@ jobs:
             infra/environments/prod/us-east-1/kubernetes/workloads/api.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/clickhouse-migrate.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
             infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml
           )
@@ -206,17 +210,20 @@ jobs:
           SOURCE_SHA: ${{ needs.resolve.outputs.source_sha }}
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
+          PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
         shell: bash
         run: |
           product_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PRODUCT_REPOSITORY}@${PRODUCT_DIGEST}"
           gateway_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${GATEWAY_REPOSITORY}@${GATEWAY_DIGEST}"
+          proxy_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROXY_REPOSITORY}@${PROXY_DIGEST}"
           deadline=$((SECONDS + 900))
           while (( SECONDS < deadline )); do
             api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
             worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
             gateway_image_actual="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
+            proxy_image_actual="$(kubectl -n gradiated get deployment proxy -o jsonpath='{.spec.template.spec.containers[?(@.name=="proxy")].image}' 2>/dev/null || true)"
             source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
-            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
+            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
               break
             fi
             sleep 10
@@ -228,6 +235,7 @@ jobs:
           kubectl -n gradiated rollout status deployment/api --timeout=10m
           kubectl -n gradiated rollout status deployment/worker --timeout=10m
           kubectl -n gradiated rollout status deployment/gateway --timeout=10m
+          kubectl -n gradiated rollout status deployment/proxy --timeout=10m
 
   publish-console:
     name: Publish console and verify production

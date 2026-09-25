@@ -30,6 +30,7 @@ env:
   PRODUCT_REPOSITORY: gradiated/prod/product
   GATEWAY_REPOSITORY: gradiated/prod/gateway
   PROXY_REPOSITORY: gradiated/prod/proxy
+  COLLECTOR_REPOSITORY: gradiated/prod/collector
 
 jobs:
   resolve:
@@ -38,6 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       source_sha: ${{ steps.source.outputs.source_sha }}
+      collector_source_sha: ${{ steps.collector-source.outputs.source_sha }}
     steps:
       - id: source
         name: Select source commit
@@ -60,6 +62,32 @@ jobs:
             exit 1
           fi
           echo "source_sha=${source_sha}" >> "${GITHUB_OUTPUT}"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.source.outputs.source_sha }}
+      - id: collector-source
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.source_sha }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          if node --input-type=module -e 'import { catalog } from "./tools/images/catalog.mjs"; process.exit(catalog.collector ? 0 : 1)'; then
+            echo "source_sha=${SOURCE_SHA}" >> "${GITHUB_OUTPUT}"
+          else
+            echo "source_sha=${WORKFLOW_SHA}" >> "${GITHUB_OUTPUT}"
+          fi
+
+  build-collector:
+    name: Build collector image
+    needs: resolve
+    uses: ./.github/workflows/build-images.yml
+    with:
+      source_sha: ${{ needs.resolve.outputs.collector_source_sha }}
+      artifact_prefix: collector
+      images: '["collector"]'
+    permissions:
+      contents: read
+      id-token: write
 
   build-images:
     name: Build required application images
@@ -132,7 +160,7 @@ jobs:
 
   record-release:
     name: Record immutable release
-    needs: [resolve, build-images, build-console]
+    needs: [resolve, build-images, build-collector, build-console]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -148,13 +176,15 @@ jobs:
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
           PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
+          COLLECTOR_DIGEST: ${{ needs.build-collector.outputs.collector_digest }}
         run: |
           git pull --ff-only origin main
           node tools/deployment/update-release.mjs \
             --source-sha "${SOURCE_SHA}" \
             --product-digest "${PRODUCT_DIGEST}" \
             --gateway-digest "${GATEWAY_DIGEST}" \
-            --proxy-digest "${PROXY_DIGEST}"
+            --proxy-digest "${PROXY_DIGEST}" \
+            --collector-digest "${COLLECTOR_DIGEST}"
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/workloads >/dev/null
       - id: commit
         name: Commit one production release record
@@ -169,6 +199,7 @@ jobs:
             infra/environments/prod/us-east-1/kubernetes/workloads/clickhouse-migrate.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/gateway.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml
+            infra/environments/prod/us-east-1/kubernetes/workloads/collector.yaml
             infra/environments/prod/us-east-1/kubernetes/workloads/worker.yaml
             infra/environments/prod/us-east-1/kubernetes/operations/ops-mcp/workload.yaml
           )
@@ -185,7 +216,7 @@ jobs:
 
   wait-for-argo:
     name: Wait for Argo rollout
-    needs: [resolve, build-images, record-release]
+    needs: [resolve, build-images, build-collector, record-release]
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 25
@@ -211,19 +242,22 @@ jobs:
           PRODUCT_DIGEST: ${{ needs.build-images.outputs.product_digest }}
           GATEWAY_DIGEST: ${{ needs.build-images.outputs.gateway_digest }}
           PROXY_DIGEST: ${{ needs.build-images.outputs.proxy_digest }}
+          COLLECTOR_DIGEST: ${{ needs.build-collector.outputs.collector_digest }}
         shell: bash
         run: |
           product_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PRODUCT_REPOSITORY}@${PRODUCT_DIGEST}"
           gateway_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${GATEWAY_REPOSITORY}@${GATEWAY_DIGEST}"
           proxy_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROXY_REPOSITORY}@${PROXY_DIGEST}"
+          collector_image="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${COLLECTOR_REPOSITORY}@${COLLECTOR_DIGEST}"
           deadline=$((SECONDS + 900))
           while (( SECONDS < deadline )); do
             api_image="$(kubectl -n gradiated get deployment api -o jsonpath='{.spec.template.spec.containers[?(@.name=="api")].image}' 2>/dev/null || true)"
             worker_image="$(kubectl -n gradiated get deployment worker -o jsonpath='{.spec.template.spec.containers[?(@.name=="worker")].image}' 2>/dev/null || true)"
             gateway_image_actual="$(kubectl -n gradiated get deployment gateway -o jsonpath='{.spec.template.spec.containers[?(@.name=="gateway")].image}' 2>/dev/null || true)"
             proxy_image_actual="$(kubectl -n gradiated get deployment proxy -o jsonpath='{.spec.template.spec.containers[?(@.name=="proxy")].image}' 2>/dev/null || true)"
+            collector_image_actual="$(kubectl -n gradiated get deployment collector -o jsonpath='{.spec.template.spec.containers[?(@.name=="collector")].image}' 2>/dev/null || true)"
             source_revision="$(kubectl -n gradiated get configmap gradiated-release -o jsonpath='{.data.sourceRevision}' 2>/dev/null || true)"
-            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
+            if [[ "${api_image}" == "${product_image}" && "${worker_image}" == "${product_image}" && "${gateway_image_actual}" == "${gateway_image}" && "${proxy_image_actual}" == "${proxy_image}" && "${collector_image_actual}" == "${collector_image}" && "${source_revision}" == "${SOURCE_SHA}" ]]; then
               break
             fi
             sleep 10
@@ -236,6 +270,7 @@ jobs:
           kubectl -n gradiated rollout status deployment/worker --timeout=10m
           kubectl -n gradiated rollout status deployment/gateway --timeout=10m
           kubectl -n gradiated rollout status deployment/proxy --timeout=10m
+          kubectl -n gradiated rollout status deployment/collector --timeout=10m
 
   publish-console:
     name: Publish console and verify production

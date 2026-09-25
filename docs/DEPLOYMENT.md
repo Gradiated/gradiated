@@ -6,11 +6,12 @@
 starts `Production deployment`. A manual run can deploy an explicit 40-character
 source commit.
 
-The deployment has one source revision and three parallel build outputs:
+The deployment has one source revision and these parallel build outputs:
 
 - one product image for the API, worker, and migration commands;
 - one gateway image;
 - one proxy image;
+- one collector image;
 - one static console build.
 
 The workflow tags ECR images with `git-<source-sha>`. ECR tag immutability makes
@@ -18,7 +19,8 @@ the build idempotent. Kubernetes uses only resolved `sha256` image digests.
 
 ## Deployment order
 
-1. Build the product image, gateway image, proxy image, and console in parallel.
+1. Build the product image, gateway image, proxy image, collector image, and
+   console in parallel.
 2. Push the images to ECR.
 3. Upload hashed console assets to the private S3 bucket. Do not upload the live
    `index.html` file.

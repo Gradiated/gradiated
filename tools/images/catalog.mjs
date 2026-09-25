@@ -30,6 +30,13 @@ export const catalog = {
     target: "proxy",
     paths: ["product/services/proxy/", "product/services/rust-service.Dockerfile"],
   },
+  collector: {
+    context: "product/services/collector",
+    dockerfile: "product/services/rust-service.Dockerfile",
+    repository: "gradiated/prod/collector",
+    target: "collector",
+    paths: ["product/services/collector/", "product/services/rust-service.Dockerfile"],
+  },
   "nomad-base": {
     context: "product/inference",
     dockerfile: "product/inference/images/nomad-base/Dockerfile",

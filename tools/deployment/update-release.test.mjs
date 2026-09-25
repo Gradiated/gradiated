@@ -10,7 +10,13 @@ const SOURCE_SHA = "a".repeat(40);
 const PRODUCT_DIGEST = `sha256:${"b".repeat(64)}`;
 const GATEWAY_DIGEST = `sha256:${"c".repeat(64)}`;
 const PROXY_DIGEST = `sha256:${"e".repeat(64)}`;
-const DIGESTS = { product: PRODUCT_DIGEST, gateway: GATEWAY_DIGEST, proxy: PROXY_DIGEST };
+const COLLECTOR_DIGEST = `sha256:${"f".repeat(64)}`;
+const DIGESTS = {
+  product: PRODUCT_DIGEST,
+  gateway: GATEWAY_DIGEST,
+  proxy: PROXY_DIGEST,
+  collector: COLLECTOR_DIGEST,
+};
 
 async function fixture() {
   const root = await mkdtemp(path.join(os.tmpdir(), "gradiated-release-"));
@@ -28,7 +34,7 @@ async function fixture() {
   );
   await writeFile(
     path.join(workloads, "release-metadata.yaml"),
-    'data:\n  sourceRevision: "unreleased"\n  consoleRevision: "unreleased"\n  productImage: "unreleased"\n  gatewayImage: "unreleased"\n  proxyImage: "unreleased"\n',
+    'data:\n  sourceRevision: "unreleased"\n  consoleRevision: "unreleased"\n  productImage: "unreleased"\n  gatewayImage: "unreleased"\n  proxyImage: "unreleased"\n  collectorImage: "unreleased"\n',
   );
   await writeFile(
     path.join(workloads, "api.yaml"),
@@ -49,6 +55,10 @@ async function fixture() {
   await writeFile(
     path.join(workloads, "proxy.yaml"),
     `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/proxy@sha256:${"0".repeat(64)}\n`,
+  );
+  await writeFile(
+    path.join(workloads, "collector.yaml"),
+    `image: 873716897517.dkr.ecr.us-east-1.amazonaws.com/gradiated/prod/collector@sha256:${"0".repeat(64)}\n`,
   );
   return { root, workloads };
 }
@@ -76,6 +86,7 @@ test("updates one complete production release", async () => {
     "utf8",
   );
   const proxy = await readFile(path.join(workloads, "proxy.yaml"), "utf8");
+  const collector = await readFile(path.join(workloads, "collector.yaml"), "utf8");
   assert.match(kustomization, new RegExp(`digest: ${PRODUCT_DIGEST}`));
   assert.match(kustomization, new RegExp(`digest: ${GATEWAY_DIGEST}`));
   assert.match(kustomization, new RegExp(`prod/proxy\\n    digest: ${PROXY_DIGEST}`));
@@ -86,11 +97,14 @@ test("updates one complete production release", async () => {
   assert.match(ops, new RegExp(`product@${PRODUCT_DIGEST}`));
   assert.match(gateway, new RegExp(`gateway@${GATEWAY_DIGEST}`));
   assert.match(proxy, new RegExp(`proxy@${PROXY_DIGEST}`));
+  assert.match(collector, new RegExp(`collector@${COLLECTOR_DIGEST}`));
+  assert.match(kustomization, new RegExp(`prod/collector\\n    digest: ${COLLECTOR_DIGEST}`));
   assert.match(metadata, new RegExp(`sourceRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`consoleRevision: "${SOURCE_SHA}"`));
   assert.match(metadata, new RegExp(`productImage: ".*@${PRODUCT_DIGEST}"`));
   assert.match(metadata, new RegExp(`gatewayImage: ".*@${GATEWAY_DIGEST}"`));
   assert.match(metadata, new RegExp(`proxyImage: ".*@${PROXY_DIGEST}"`));
+  assert.match(metadata, new RegExp(`collectorImage: ".*@${COLLECTOR_DIGEST}"`));
 });
 
 test("rejects a non-immutable image reference", async () => {

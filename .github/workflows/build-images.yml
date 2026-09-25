@@ -22,6 +22,8 @@ on:
         value: ${{ jobs.resolve.outputs.gateway_digest }}
       proxy_digest:
         value: ${{ jobs.resolve.outputs.proxy_digest }}
+      collector_digest:
+        value: ${{ jobs.resolve.outputs.collector_digest }}
       images:
         description: JSON map of exact image digests and source revisions.
         value: ${{ jobs.resolve.outputs.images }}
@@ -110,6 +112,7 @@ jobs:
       product_digest: ${{ steps.collect.outputs.product_digest }}
       gateway_digest: ${{ steps.collect.outputs.gateway_digest }}
       proxy_digest: ${{ steps.collect.outputs.proxy_digest }}
+      collector_digest: ${{ steps.collect.outputs.collector_digest }}
     steps:
       - uses: actions/checkout@v7
         with:

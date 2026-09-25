@@ -313,6 +313,37 @@ def main():
         scenario('memory: ' + name, inputs, memory if fires else None, [memory],
                  {'namespace': 'gradiated', 'pod': 'proxy-a', 'container': 'proxy'}, '8m')
 
+    collector_telemetry = 'CollectorTelemetryMissing'
+    scenario('collector telemetry present', [{'series': 'gradiated_collector_service_info{pod="collector-0"}', 'values': '1+0x30'}],
+             None, [collector_telemetry], eval_time='5m')
+    scenario('collector telemetry missing', [{'series': 'gradiated_worker_service_info{instance="a"}', 'values': '1+0x30'}],
+             collector_telemetry, [collector_telemetry], eval_time='5m')
+
+    collector_ready = 'CollectorUnavailable'
+    for name, ready, fires in [('no ready replica', 0, True), ('one ready replica', 1, False)]:
+        scenario('collector ' + name, [
+            {'series': 'kube_deployment_status_replicas_available{namespace="gradiated",deployment="collector"}',
+             'values': f'{ready}+0x30'}], collector_ready if fires else None, [collector_ready], eval_time='8m')
+
+    uploads = 'CollectorUploadsFailing'
+    for name, values, fires in [('failing for five minutes', '0+2x30', True), ('no failures', '0+0x30', False),
+                                ('one failure then recovery', '0 1+0x29', False)]:
+        scenario('collector uploads ' + name, [
+            {'series': 'gradiated_collector_upload_failures_total{pod="collector-0"}', 'values': values}],
+            uploads if fires else None, [uploads], eval_time='12m')
+
+    disk = 'CollectorDiskHigh'
+    for name, used, fires in [('above 80%', 2_600_000_000, True), ('below 80%', 2_500_000_000, False)]:
+        scenario('collector disk ' + name, [
+            {'series': 'gradiated_collector_disk_bytes{pod="collector-0"}', 'values': f'{used}+0x30'}],
+            disk if fires else None, [disk], eval_time='8m')
+
+    rejecting = 'CollectorRejectingContents'
+    for name, reason, fires in [('disk full', 'disk_full', True), ('invalid records only', 'invalid', False)]:
+        scenario('collector rejecting ' + name, [
+            {'series': f'gradiated_collector_contents_rejected_total{{pod="collector-0",reason="{reason}"}}',
+             'values': '0+5x30'}], rejecting if fires else None, [rejecting], eval_time='12m')
+
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:
         scenario(name, [

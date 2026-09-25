@@ -21,6 +21,7 @@ const IMAGES = [
   },
   { name: "gateway", metadataKey: "gatewayImage", manifests: ["gateway.yaml"] },
   { name: "proxy", metadataKey: "proxyImage", manifests: ["proxy.yaml"] },
+  { name: "collector", metadataKey: "collectorImage", manifests: ["collector.yaml"] },
 ];
 
 const repository = (name) => `${REGISTRY}/${name}`;

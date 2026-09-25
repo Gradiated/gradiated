@@ -18,6 +18,7 @@ on:
       - "product/services/console/**"
       - "product/services/gateway/**"
       - "product/services/proxy/**"
+      - "product/services/collector/**"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml"
       - "product/services/rust-service.Dockerfile"
@@ -52,6 +53,7 @@ on:
       - "product/services/console/**"
       - "product/services/gateway/**"
       - "product/services/proxy/**"
+      - "product/services/collector/**"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml"
       - "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml"
       - "product/services/rust-service.Dockerfile"
@@ -106,7 +108,8 @@ jobs:
             ~/.cargo/git
             product/services/gateway/target
             product/services/proxy/target
-          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock') }}
+            product/services/collector/target
+          key: ${{ runner.os }}-gateway-unit-${{ hashFiles('product/services/gateway/Cargo.lock', 'product/services/proxy/Cargo.lock', 'product/services/collector/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-gateway-unit-
       - run: pnpm install --frozen-lockfile

@@ -12,50 +12,66 @@ storage sections of the task fine-tuning contracts and of
 | --- | --- |
 | Generation | One model call. Every call gets a `generation_id`: hosted, relayed or imported. |
 | `generations` table | ClickHouse usage and billing rows for hosted calls only. It never holds content. |
-| Contents | The request, response and reasoning of one generation. Stored only in S3. |
+| Generation content | The request, response and reasoning of one generation. Stored only in S3. |
 | Trace | Generations that share a `trace_id`. A grouping, not a stored object. |
 | Session | Traces that share a `session_id`. A grouping, not a stored object. |
-| Storage | Regional S3 buckets. Batches per workspace and task, one zstd frame per generation, one manifest per batch. No ClickHouse index. |
-| Retention | 30 days by S3 lifecycle rule. Per-workspace retention later, by object tag. |
-| Loss | Best effort, but a crash must not lose accepted contents. Open batches live on disk and upload after a restart. |
-| Relays | No `generations` row and no billing. Their contents are stored like any other generation. |
+| Storage | One S3 bucket in `us-east-1`. Batches per workspace, task, hour, retention and trainability; one zstd frame per generation; one manifest per batch. No ClickHouse index. Other regions come later. |
+| Retention | A workspace setting of 30, 90 or 180 days. Each object carries a `retention` tag, and a lifecycle rule for each tag deletes it. |
+| Trainability | The collector decides it from the source: hosted generations are trainable, relayed ones are not. Each object carries a `trainable` tag. |
+| Loss | Best effort, kept simple. Open batches live on local disk and upload after a process restart. Losing a pod or node can lose up to one flush window. |
+| Relays | No `generations` row and no billing. Their content is stored like any other generation. |
 | Training | Closed-provider outputs are never training targets. Their prompts can be RL inputs and their outputs can be evaluation references. |
 
 ## Terms
 
 - **Generation**: one request to one model and its response.
-- **Contents**: everything needed to show or replay one generation. The word
-  is also the S3 prefix and the Rust and TypeScript type name
-  (`GenerationContents`).
+- **Generation content**: everything needed to show or replay one generation.
+  The Rust and TypeScript type is `GenerationContent`.
 - **Trace**: one unit of customer work, such as one agent run. Customers set
   `x-gradiated-trace-id`. Without it, the trace is the single generation, and
   `trace_id` equals `generation_id`.
 - **Session**: a group of traces, such as one conversation. Customers set
   `x-gradiated-session-id`. It is optional.
 - **Task**: the customer's label for a kind of work, from `x-gradiated-task`.
+  It is nullable. A generation without a task is not stored.
+
+Every header that Gradiated defines uses the `x-gradiated-` prefix, with one
+name in every direction.
 
 ## Identifiers
 
-- The proxy mints `generation_id` as a UUIDv7 for every request at the front
-  door and returns it in `x-gradiated-generation-id`.
-- For hosted requests the proxy sends the identifier to the gateway in the same
-  header. The gateway uses it as the generation's identifier. The proxy always
-  replaces a value that a client sends.
+- The proxy mints `generation_id` as a UUIDv7 for every request and returns it
+  in `x-gradiated-generation-id`.
+- For hosted requests the proxy sends the same header to the gateway, which
+  uses it as the generation's identifier. The proxy always replaces a value that
+  a client sends.
 - Imports get new UUIDv7 identifiers. The customer's original identifier is
   kept as `external_id`.
 - A UUIDv7 carries its creation time. Point lookups use that time to find the
   batch hour, so no index is necessary.
 
-## Contents record
+## Workspace settings
+
+| Setting | Values | Default |
+| --- | --- | --- |
+| `trace_capture_enabled` | `true`, `false` | `false` |
+| `trace_retention_days` | 30, 90, 180 | 30 |
+
+The proxy and the gateway read both settings with the workspace they already
+load, and put `retention_days` in each record. A new retention applies to new
+batches. When a workspace shortens its retention, a job deletes that
+workspace's objects that are older than the new period.
+
+## Generation content record
 
 One JSON object per generation. Keys are sorted. Strings keep their bytes.
 
 ```json
 {
-  "schema": "gradiated.contents/1",
+  "schema": "gradiated.generation-content/1",
   "generation_id": "0199…",
   "workspace_id": "…",
-  "task": "support-triage",
+  "task": "support-triage | null",
   "trace_id": "…",
   "session_id": null,
   "external_id": null,
@@ -69,7 +85,8 @@ One JSON object per generation. Keys are sorted. Strings keep their bytes.
   "outcome": "complete | error | cancelled | truncated",
   "streamed": true,
   "usage": { "input": 0, "output": 0, "reasoning": 0, "cache_read": 0 },
-  "trainable": false,
+  "trainable": true,
+  "retention_days": 30,
   "raw": { "request": {}, "response": {} },
   "canonical": {
     "version": 1,
@@ -87,9 +104,11 @@ One JSON object per generation. Keys are sorted. Strings keep their bytes.
 - `canonical` uses OpenAI Chat message and tool shapes, which RL frameworks and
   chat templates accept. For hosted generations it is the exact request the
   gateway sent to the runtime, with reasoning. It can be rebuilt from `raw`
-  when the normaliser changes; `version` records the normaliser.
-- `trainable` is false for relays and for imports that contain closed-provider
-  outputs.
+  when the normaliser changes; `version` records the normaliser. It can be
+  `null` until the normaliser for a protocol exists.
+- `trainable` must be `true` for `hosted` and `false` for `relay`; the
+  collector refuses a record that disagrees. An import is trainable only when
+  the customer confirms that the outputs are their own.
 - Images, audio and files are recorded as metadata only in version 1.
 - Credentials and headers are never stored. The record keeps only the fields
   above.
@@ -98,106 +117,129 @@ One JSON object per generation. Keys are sorted. Strings keep their bytes.
 
 | Source | Writer | Why |
 | --- | --- | --- |
-| Hosted | Gateway | It has the runtime request and the reasoning that clients do not receive. |
+| Hosted | Gateway | It has the runtime request and the reasoning that Messages and Responses clients do not receive. |
 | Relay | Proxy | It is the only component that sees the provider exchange. It sends raw bodies; the collector builds `canonical`. |
-| Import | API | Customers upload JSONL. |
+| Import | API | Customers upload files. |
 
-Capture happens only when the workspace enables it and the request has a task
-label. Each writer copies bytes into a bounded, non-blocking queue after the
-response finishes. A full queue drops the newest item and counts it. Capture
-never delays or fails a customer request. On SIGTERM each writer drains its
-queue within its drain window.
+Capture happens only when the workspace enables it and the request has a task.
+Senders do not send generations without a task; if one arrives, the collector
+drops it with 204 and counts it as skipped. Each writer copies bytes
+into a bounded, non-blocking queue after the response finishes. A full queue or
+a refusal from the collector drops the item and counts it. Capture never delays
+or fails a customer request. On SIGTERM each writer drains its queue within its
+drain window.
 
 ## Collector
 
-A Rust service, `product/services/collector`, receives contents over HTTP from
-the proxy, the gateway and the API.
+A Rust service, `product/services/collector`, receives generation content over
+HTTP from the proxy, the gateway and the API.
 
-- **Streams**: one open batch per region, workspace, task and UTC hour of the
-  generation identifier. A generation always lands in its own hour's prefix.
-- **Write-ahead**: each accepted generation is compressed as one zstd frame
-  and appended to the stream's segment file on local disk before the collector
-  acknowledges it. The segment file is the batch.
-- **Flush**: when a segment reaches 64 MB or its oldest frame is 60 s old, the
-  collector uploads the segment and its manifest, then deletes the local files.
-  Quiet streams can use a longer interval to save requests.
-- **Recovery**: at startup the collector uploads every segment left on disk.
-  A torn final frame is cut off at the last complete frame.
-- **Storage**: a StatefulSet with one EBS volume per replica, so segments
-  survive pod restarts and rescheduling in the same zone.
-- **Memory**: bounded by the intake queue and one small header per open
-  stream. Frame bytes go to disk, not to memory buffers. When total disk use
-  reaches its cap, the collector flushes the largest open segment early. When
-  it cannot flush, it refuses new contents with 503 and the writers drop them.
+- **Streams**: one open batch per workspace, task, UTC hour of the generation
+  identifier, retention and trainability. A generation always lands in its own
+  hour's prefix, and a batch has one retention and one trainability.
+- **Batches**: each accepted generation is compressed as one zstd frame and
+  appended to the stream's open batch, a file on local disk, before the
+  collector returns 202. The same bytes become the uploaded batch. An hour
+  folder holds many batches.
+- **Flush**: when a batch reaches 16 MB or its oldest frame is 60 s old, the
+  collector uploads the batch, then its manifest, then deletes the local
+  file. A manifest therefore always means its batch is complete. Uploads retry
+  with backoff from 1 s to 60 s.
+- **Recovery**: at startup the collector cuts a torn final frame and uploads
+  every batch left on disk. On SIGTERM it seals every open batch and
+  uploads for up to 60 s; what remains uploads at the next start.
+- **Storage**: a Deployment with an `emptyDir` volume. The volume survives a
+  container restart, so a process crash loses nothing that was accepted. A lost
+  pod or node can lose up to one flush window.
+- **Limits**: at most 8 requests are handled at once and a record is at most
+  32 MiB, which bounds memory; at most 256 batches are open, and the oldest is
+  sealed early when a new one is needed; at most 1024 sealed batches wait to
+  upload; batch bytes on disk have a cap. At a cap the collector returns 503
+  and the sender drops the record.
 - **Replicas**: each replica writes its own batches; the replica name is part
   of the batch name. Replicas do not coordinate.
-- **Idempotency**: a writer that retries sends the same `generation_id`.
-  Readers keep the first frame for an identifier.
+- **Idempotency**: an upload retry writes the same object key, so a batch is
+  never stored twice. A sender retry can store a generation twice; its
+  `generation_id` is unique, so every reader keeps the first frame for an
+  identifier.
 
 ## S3 layout
 
 ```text
-s3://gradiated-<env>-contents-<region>/v1/ws=<workspace_id>/task=<task_key>/dt=<YYYY-MM-DD>/hr=<HH>/<replica>-<batch_id>.jsonl.zst
-                                                                                      .../<replica>-<batch_id>.manifest.json
+s3://gradiated-prod-contents-us-east-1-<account>/v1/ws=<workspace_id>/task=<task_key>/dt=<YYYY-MM-DD>/hr=<HH>/<replica>-<batch_id>.jsonl.zst
+                                                                                          .../<replica>-<batch_id>.manifest.json
 ```
 
 - `task_key` is the task label when it matches `[a-z0-9_-]{1,64}`, otherwise a
   hash of it.
-- The manifest lists, for each generation: `generation_id`, `trace_id`,
-  `session_id`, `model`, `provider`, `source`, `trainable`, `started_at`,
-  `completed_at`, `usage`, `offset` and `length`.
-- Buckets are encrypted with a KMS key per region, block public access, and
-  have a lifecycle rule that deletes objects after 30 days.
-- The Hive-style keys let DuckDB, Athena, Spark and Hugging Face `datasets`
-  read the data without an index.
+- The manifest (`gradiated.generation-content-manifest/1`) lists, for each
+  generation, the record's metadata fields (everything except `raw` and
+  `canonical`) with the frame's `offset` and `length`.
+- Every batch and manifest has two tags: `retention=30d|90d|180d` and
+  `trainable=true|false`.
+- The bucket has its own KMS key, blocks public access, and refuses requests
+  without TLS. One lifecycle rule for each retention tag deletes objects after
+  30, 90 or 180 days. A backstop rule deletes any object after 180 days.
+- The keys are Hive-style: each `name=value` level becomes a column in DuckDB,
+  Athena, Spark and Hugging Face `datasets`, and filters on those columns skip
+  the folders that cannot match.
 
 ## Read paths
 
 - **Traces list**: the console reads the newest manifests for a workspace and
   task, groups rows by `trace_id`, and pages back in time. It does not sort or
-  filter across all 30 days.
-- **One generation**: `generation_id` gives the exact hour. The API reads that hour's
-  manifests for the workspace, then fetches the frame with a range GET.
+  filter across the whole retention period.
+- **One generation**: `generation_id` gives the exact hour. The API reads that
+  hour's manifests for the workspace, then fetches the frame with a range GET.
 - **One trace**: the API reads the manifests around the trace's first
   generation and merges rows from adjacent batches.
 - **Export**: one JSONL line per trace, with its generations in order. The same
   format is accepted by import.
 - **Training**: the dataset builder reads prefixes and manifests, freezes the
   input manifest for a run, and writes Parquet under `runs/<run_id>/dataset/`.
+  Only objects tagged `trainable=true` supply training targets.
+- **Analysis**: DuckDB reads batches directly, for example
+  `read_json('s3://…/v1/ws=*/task=*/dt=*/hr=*/*.jsonl.zst', hive_partitioning = true)`.
+  The manifests are smaller and hold the metadata columns.
+
+Each reader gets its own role that can read the bucket and decrypt with its
+key. The collector's role can only write.
 
 ## Import
 
-- Accepted formats: the export format above, and OpenAI chat fine-tuning JSONL
-  (`{"messages": [], "tools": []}`).
-- Imported generations have `source = "import"` and `trainable = false` unless
-  the customer confirms that the outputs are their own.
+- Each source format has one mapping into the record: `canonical` from the
+  source's messages, `raw` as the source row, `source = "import"` and
+  `protocol` naming the format.
+- First formats: the export format above, OpenAI chat JSONL
+  (`{"messages": [], "tools": []}`), and CSV with a column mapping.
 - The API validates each line and sends it to the collector, which writes it
   like any other generation.
 
 ## Deletion and residency
 
-- Workspace deletion removes the workspace prefix in each regional bucket.
-- A workspace's region selects its bucket. Version 1 has one region,
-  `us-east-1`; EU storage adds a bucket and a region field on the workspace.
-- ClickHouse holds no contents, so it does not change residency.
+- Workspace deletion removes the workspace prefix.
+- Version 1 has one bucket, in `us-east-1`. Other regions add a bucket, a
+  collector deployment per region, and a region field on the workspace that
+  selects them.
+- ClickHouse holds no generation content, so it does not change residency.
 
 ## Observability
 
-Metrics: generations accepted, dropped (by reason) and flushed; segment bytes on
-disk; flush latency; upload failures; recovery uploads at startup. Alerts:
-upload failures for 5 minutes, disk above 80% of its cap, and a writer drop rate
-above 1% for 10 minutes.
+Collector metrics: generations accepted and rejected (by reason), batches and
+bytes uploaded, upload failures, batches recovered at startup, open streams and
+batch bytes on disk. Collector alerts: telemetry missing, unavailable, uploads
+failing for 5 minutes, disk above 80% of its cap, and rejections. Writers add a
+dropped-capture counter and an alert when drops exceed 1% for 10 minutes.
 
 ## Build sequence
 
-1. **Collector**: HTTP intake, segment write-ahead, flush, recovery, manifests,
-   S3 upload, metrics. Terraform for the buckets and the IAM role. Tests with a
-   local S3 double and forced crashes.
-2. **Proxy capture**: identifier forwarding, capture queue for relays, raw
-   bodies to the collector, `canonical` built in the collector for Chat,
+1. **Collector**: HTTP intake, batches, flush, recovery, manifests, tagged S3
+   upload, metrics. Terraform for the bucket and the IAM role. The Deployment,
+   alerts and dashboard.
+2. **Proxy capture**: the workspace settings, the capture queue for relays, raw
+   bodies to the collector, and `canonical` built in the collector for Chat,
    Responses and Messages.
-3. **Gateway capture**: the proxy's identifier, hosted contents with the runtime
-   request and reasoning.
+3. **Gateway capture**: hosted content with the runtime request and reasoning.
 4. **Read API and console**: traces list, trace detail and generation lookup
    from manifests.
 5. **Import and export**.
@@ -209,7 +251,7 @@ above 1% for 10 minutes.
   [TASK_FINE_TUNING_FROM_TRACES_PLAN.md](TASK_FINE_TUNING_FROM_TRACES_PLAN.md),
   [TASK_FINE_TUNING_GATEWAY_CONTRACT.md](TASK_FINE_TUNING_GATEWAY_CONTRACT.md)
   and [TASK_FINE_TUNING_OPERATIONS_CONTRACT.md](TASK_FINE_TUNING_OPERATIONS_CONTRACT.md):
-  contents live in S3 and no table holds them.
+  generation content lives in S3 and no table holds it.
 - Relay generation rows and the relay usage record (build step 4 of the proxy
   plan): relays have no `generations` row.
 - The rejection of S3 and batched storage for traces.
@@ -218,10 +260,12 @@ above 1% for 10 minutes.
 
 ## Open questions
 
-- The per-workspace setting for capture, and whether it also enables automatic
-  training.
-- Retention per customer, and its price.
-- Whether the collector should infer traces for clients that do not send
-  `x-gradiated-trace-id`, by matching a request's messages to an earlier
-  generation's messages and output.
+- Whether `trace_capture_enabled` also enables automatic training.
+- The price of 90-day and 180-day retention.
+- Trace detection for clients that do not send `x-gradiated-trace-id`: the
+  W3C `traceparent` header and other known client headers first, then
+  inference by matching a request's messages to an earlier generation's
+  messages and output. A `trace_source` field can record which method set the
+  trace.
+- Regions other than `us-east-1`.
 - Provider list prices for the cost column of relayed generations.

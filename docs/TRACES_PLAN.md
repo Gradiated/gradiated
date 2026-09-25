@@ -57,8 +57,11 @@ name in every direction.
 | `trace_capture_enabled` | `true`, `false` | `false` |
 | `trace_retention_days` | 30, 90, 180 | 30 |
 
-The proxy and the gateway read both settings with the workspace they already
-load, and put `retention_days` in each record. A new retention applies to new
+Migration `0007` adds both workspace settings. The proxy reads them with its
+identity query and caches them for 15 seconds. Capture requires both
+`trace_capture_enabled=true` and a non-empty `x-gradiated-task`. Enabling capture
+does not enable automatic training. The gateway will read these settings when
+hosted capture is implemented. Writers put `retention_days` in each record. A new retention applies to new
 batches. When a workspace shortens its retention, a job deletes that
 workspace's objects that are older than the new period.
 
@@ -163,6 +166,62 @@ HTTP from the proxy, the gateway and the API.
   `generation_id` is unique, so every reader keeps the first frame for an
   identifier.
 
+## Relay wire contract
+
+The proxy sends `application/x-ndjson` to `POST /v1/contents`. Each non-empty
+line is either a `GenerationContent` record or the following relay envelope:
+
+```json
+{
+  "schema": "gradiated.relay/1",
+  "generation_id": "UUIDv7",
+  "workspace_id": "UUID",
+  "task": "support-triage",
+  "trace_id": null,
+  "session_id": null,
+  "provider": "anthropic",
+  "path": "/v1/messages",
+  "retention_days": 30,
+  "status": 200,
+  "outcome": "complete",
+  "completed_at": "2026-09-25T12:00:00Z",
+  "request": "{\"model\":\"synthetic-model\",\"messages\":[]}",
+  "response_content_type": "application/json",
+  "response": "{\"content\":[],\"usage\":{\"input_tokens\":0,\"output_tokens\":0}}"
+}
+```
+
+The proxy copies unencoded UTF-8 request and response text and never parses
+provider protocols. Encoded responses or invalid UTF-8 bodies are skipped and
+counted as `unsupported`; the client receives the original bytes. The envelope
+contains no credentials or header collections. `outcome` is `complete`, `error`,
+`cancelled` or `truncated`. The collector derives `started_at` from UUIDv7,
+`model` from the request, and `protocol` from provider and path. A missing trace
+identifier defaults to the generation identifier. Relay records always have
+`source=relay`, `trainable=false` and `canonical=null`.
+
+For JSON responses, `raw.request` and `raw.response` contain parsed JSON. For
+SSE, the collector rebuilds Anthropic Messages, OpenAI Chat and OpenAI Responses
+into their non-streaming JSON shapes. Text, reasoning and tool arguments are
+assembled; Responses terminal events supply the authoritative response snapshot.
+Supported interrupted streams retain the assembled partial response and the
+sender's outcome. A malformed stream, incomplete Anthropic tool JSON or an
+unsupported partial event is rejected as an invalid line instead of storing a
+misleading complete response. Provider usage remains in `raw.response`; the
+record's usage maps input, output, reasoning and cached input tokens, with null
+for unavailable counts. Canonical messages are deferred to a later change.
+
+The request body is capped at 32 MiB, as for single-record intake. Each line is
+validated and appended independently. Invalid lines are dropped and counted;
+records without a task are skipped and counted. A processed batch returns 202,
+even if every line was dropped. A spool refusal returns 503 for the batch;
+earlier lines can already be stored, so readers deduplicate by `generation_id`.
+Authentication and request-size errors still return 401 and 413. Single JSON
+intake keeps its 202, 204 and 400 behavior.
+
+Protocol references: [Anthropic streaming](https://platform.claude.com/docs/en/build-with-claude/streaming)
+and [OpenAI Responses streaming](https://platform.openai.com/docs/api-reference/responses-streaming).
+
 ## S3 layout
 
 ```text
@@ -230,8 +289,8 @@ key. The collector's role can only write.
 Collector metrics: generations accepted and rejected (by reason), batches and
 bytes uploaded, upload failures, batches recovered at startup, open streams and
 batch bytes on disk. Collector alerts: telemetry missing, unavailable, uploads
-failing for 5 minutes, disk above 80% of its cap, and rejections. Writers add a
-dropped-capture counter and an alert when drops exceed 1% for 10 minutes.
+failing for about 2 minutes, disk above 80% of its cap, and rejections. Writers add a
+dropped-capture counter and a simple threshold alert for sustained drops.
 
 ## Build sequence
 
@@ -239,8 +298,8 @@ dropped-capture counter and an alert when drops exceed 1% for 10 minutes.
    upload, metrics. Terraform for the bucket and the IAM role. The Deployment,
    alerts and dashboard.
 2. **Proxy capture**: the workspace settings, the capture queue for relays, raw
-   bodies to the collector, and `canonical` built in the collector for Chat,
-   Responses and Messages.
+   bodies to the collector, and raw response reconstruction for Chat, Responses
+   and Messages. Canonical normalization follows separately.
 3. **Gateway capture**: hosted content with the runtime request and reasoning.
 4. **Read API and console**: traces list, trace detail and generation lookup
    from manifests.
@@ -262,7 +321,6 @@ dropped-capture counter and an alert when drops exceed 1% for 10 minutes.
 
 ## Open questions
 
-- Whether `trace_capture_enabled` also enables automatic training.
 - The price of 90-day and 180-day retention.
 - Trace detection for clients that do not send `x-gradiated-trace-id`: the
   W3C `traceparent` header and other known client headers first, then

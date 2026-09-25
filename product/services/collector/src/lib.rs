@@ -3,11 +3,15 @@ mod config;
 mod http;
 mod metrics;
 mod record;
+mod relay;
+mod relay_stream;
 mod spool;
 mod upload;
 
 #[cfg(test)]
 mod collector_tests;
+#[cfg(test)]
+mod relay_tests;
 #[cfg(test)]
 mod test_support;
 

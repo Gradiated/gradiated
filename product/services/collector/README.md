@@ -71,3 +71,10 @@ and `length` of its frame, so one generation can be read with a range request.
 COLLECTOR_DATA_DIR=/tmp/collector COLLECTOR_LOCAL_STORE_DIR=/tmp/contents \
 COLLECTOR_TOKEN=local-development-token-0123456789 cargo run
 ```
+
+The intake also accepts `application/x-ndjson` containing generation content or
+`gradiated.relay/1` lines. Invalid lines are counted and dropped independently;
+a spool write refusal returns 503, so retrying senders may duplicate earlier
+lines. Readers deduplicate by generation ID. Relay parsing and SSE reconstruction
+live here; the proxy sends raw text. See the relay wire contract in
+[TRACES_PLAN.md](../../../docs/TRACES_PLAN.md).

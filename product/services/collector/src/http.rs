@@ -3,7 +3,10 @@ use std::sync::Arc;
 use axum::{
     body::Bytes,
     extract::{rejection::BytesRejection, DefaultBodyLimit, Request, State},
-    http::{header::AUTHORIZATION, HeaderMap, StatusCode},
+    http::{
+        header::{AUTHORIZATION, CONTENT_TYPE},
+        HeaderMap, StatusCode,
+    },
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -57,7 +60,11 @@ async fn authorize(State(state): State<AppState>, request: Request, next: Next) 
     }
 }
 
-async fn accept(State(state): State<AppState>, body: Result<Bytes, BytesRejection>) -> Response {
+async fn accept(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    body: Result<Bytes, BytesRejection>,
+) -> Response {
     let body = match body {
         Ok(body) => body,
         Err(rejection) if rejection.status() == StatusCode::PAYLOAD_TOO_LARGE => {
@@ -66,9 +73,19 @@ async fn accept(State(state): State<AppState>, body: Result<Bytes, BytesRejectio
         Err(_) => return refuse(&state, StatusCode::BAD_REQUEST, "unreadable_body"),
     };
 
-    let content = match GenerationContent::parse(&body) {
-        Ok(content) => content,
-        Err(error) => {
+    let ndjson = headers
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+        .is_some_and(|value| {
+            value
+                .split(';')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .eq_ignore_ascii_case("application/x-ndjson")
+        });
+    if !ndjson {
+        if let Err(error) = GenerationContent::parse(&body) {
             state.metrics.rejected("invalid");
             return (
                 StatusCode::BAD_REQUEST,
@@ -76,24 +93,37 @@ async fn accept(State(state): State<AppState>, body: Result<Bytes, BytesRejectio
             )
                 .into_response();
         }
-    };
+    }
 
-    let Some(key) = content.stream_key() else {
-        state.metrics.skipped();
-        return StatusCode::NO_CONTENT.into_response();
-    };
-    let spool = state.spool.clone();
-    let written = tokio::task::spawn_blocking(move || {
-        let frame = batch::compress(&body).map_err(|error| WriteError::Io(error.to_string()))?;
-        spool.append(&key, &frame)
+    let worker_state = state.clone();
+    let result = tokio::task::spawn_blocking(move || {
+        if ndjson {
+            for line in body
+                .split(|byte| *byte == b'\n')
+                .filter(|line| !line.iter().all(u8::is_ascii_whitespace))
+            {
+                let normalized = match crate::relay::normalize(line) {
+                    Ok(record) => record,
+                    Err(_) => {
+                        worker_state.metrics.rejected("invalid");
+                        continue;
+                    }
+                };
+                if normalized.len() > worker_state.max_record_bytes {
+                    worker_state.metrics.rejected("too_large");
+                    continue;
+                }
+                write(&worker_state, &normalized)?;
+            }
+            Ok(StatusCode::ACCEPTED)
+        } else {
+            write(&worker_state, &body)
+        }
     })
     .await;
 
-    match written {
-        Ok(Ok(())) => {
-            state.metrics.accepted();
-            StatusCode::ACCEPTED.into_response()
-        }
+    match result {
+        Ok(Ok(status)) => status.into_response(),
         Ok(Err(WriteError::Full)) => refuse(&state, StatusCode::SERVICE_UNAVAILABLE, "disk_full"),
         Ok(Err(WriteError::Closed)) => {
             refuse(&state, StatusCode::SERVICE_UNAVAILABLE, "shutting_down")
@@ -104,6 +134,19 @@ async fn accept(State(state): State<AppState>, body: Result<Bytes, BytesRejectio
         }
         Err(_) => refuse(&state, StatusCode::INTERNAL_SERVER_ERROR, "write_panicked"),
     }
+}
+
+fn write(state: &AppState, body: &[u8]) -> Result<StatusCode, WriteError> {
+    let content = GenerationContent::parse(body).expect("record was validated before writing");
+    let Some(key) = content.stream_key() else {
+        state.metrics.skipped();
+        return Ok(StatusCode::NO_CONTENT);
+    };
+    let frame = batch::compress(body).map_err(|error| WriteError::Io(error.to_string()))?;
+    state.spool.append(&key, &frame)?;
+    state.metrics.accepted();
+
+    Ok(StatusCode::ACCEPTED)
 }
 
 fn refuse(state: &AppState, status: StatusCode, reason: &'static str) -> Response {

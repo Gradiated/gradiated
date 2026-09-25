@@ -491,3 +491,120 @@ async fn too_many_batches_waiting_to_upload_refuses_new_batches() {
     assert_eq!(send("second").await, StatusCode::SERVICE_UNAVAILABLE);
     fs::set_permissions(store_dir.path(), fs::Permissions::from_mode(0o700)).unwrap();
 }
+
+async fn post_ndjson(running: &Running, body: Vec<u8>) -> StatusCode {
+    let request = Request::post("/v1/contents")
+        .header("authorization", format!("Bearer {TOKEN}"))
+        .header("content-type", "application/x-ndjson; charset=utf-8")
+        .body(Body::from(body))
+        .unwrap();
+
+    public_router(running.collector.state.clone())
+        .oneshot(request)
+        .await
+        .unwrap()
+        .status()
+}
+
+#[tokio::test]
+async fn ndjson_stores_valid_lines_around_invalid_lines_and_skips_no_task() {
+    let running = start(limits());
+    let hosted = record(Uuid::now_v7(), "hosted-test");
+    let relay = crate::relay_tests::relay(
+        "{\"usage\":{\"input_tokens\":7,\"output_tokens\":2},\"output\":[]}",
+        "openai",
+        "/v1/responses",
+        "application/json",
+    );
+    let mut body = hosted.clone();
+    body.extend_from_slice(b"\nnot json\n\n");
+    body.extend_from_slice(&with_fields(&hosted, serde_json::json!({"task":null})));
+    body.push(b'\n');
+    body.extend_from_slice(&serde_json::to_vec(&relay).unwrap());
+    assert_eq!(post_ndjson(&running, body).await, StatusCode::ACCEPTED);
+
+    let manifests = manifests(&running, 2).await;
+    assert_eq!(manifests.len(), 2);
+    for (base, manifest) in manifests {
+        let rows = manifest["generations"].as_array().unwrap();
+        assert_eq!(rows.len(), 1);
+        let bytes = read_generation(&running, &base, &rows[0]).await;
+        let content: Value = serde_json::from_slice(&bytes).unwrap();
+        if content["source"] == "relay" {
+            assert_eq!(content["trainable"], false);
+            assert_eq!(rows[0]["status"], 200);
+            assert_eq!(rows[0]["outcome"], "complete");
+            assert_eq!(rows[0]["protocol"], "openai.responses");
+            assert_eq!(rows[0]["streamed"], false);
+            assert_eq!(content["raw"]["response"]["output"], serde_json::json!([]));
+            assert_eq!(content["usage"]["input"], 7);
+            assert_eq!(content["generation_id"], relay["generation_id"]);
+        } else {
+            assert_eq!(bytes, hosted);
+        }
+    }
+    let metrics = running.collector.state.metrics.encode();
+    assert!(metrics.contains("gradiated_collector_contents_accepted_total 2"));
+    assert!(metrics.contains("gradiated_collector_contents_skipped_total 1"));
+    assert!(metrics.contains("gradiated_collector_contents_rejected_total{reason=\"invalid\"} 1"));
+}
+
+#[tokio::test]
+async fn invalid_ndjson_does_not_fail_the_batch_but_spool_refusal_does() {
+    let mut tiny = limits();
+    tiny.disk_cap_bytes = 1;
+    let running = start(tiny);
+    assert_eq!(
+        post_ndjson(&running, b"bad\n{}\n".to_vec()).await,
+        StatusCode::ACCEPTED
+    );
+    assert_eq!(
+        post_ndjson(&running, record(Uuid::now_v7(), "t")).await,
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+}
+
+#[tokio::test]
+async fn a_batch_refusal_keeps_earlier_accepted_lines() {
+    let body = record(Uuid::now_v7(), "partial-batch");
+    let mut bounded = limits();
+    bounded.disk_cap_bytes = batch::compress(&body).unwrap().len() as u64;
+    bounded.max_batch_age = Duration::from_secs(3600);
+    let running = start(bounded);
+    let batch = [body.as_slice(), b"\n", body.as_slice()].concat();
+
+    assert_eq!(
+        post_ndjson(&running, batch).await,
+        StatusCode::SERVICE_UNAVAILABLE
+    );
+    assert!(running
+        .collector
+        .state
+        .metrics
+        .encode()
+        .contains("gradiated_collector_contents_accepted_total 1"));
+    let Running {
+        collector,
+        store,
+        data_dir,
+    } = running;
+    collector.shutdown(Duration::from_secs(5)).await;
+    let objects: Vec<_> = store.list(None).try_collect().await.unwrap();
+    assert_eq!(objects.len(), 2);
+    let manifest = objects
+        .iter()
+        .find(|object| object.location.to_string().ends_with(".manifest.json"))
+        .unwrap();
+    let value: Value = serde_json::from_slice(
+        &store
+            .get(&manifest.location)
+            .await
+            .unwrap()
+            .bytes()
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(value["generations"].as_array().unwrap().len(), 1);
+    assert_eq!(fs::read_dir(data_dir.path()).unwrap().count(), 0);
+}

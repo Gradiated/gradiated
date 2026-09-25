@@ -157,10 +157,11 @@
   height: 34%;
   transform: translate(-50%, -50%);
   opacity: 0;
-  /* the G reads as etched silicon: darker than the plate, lifted by a
-     hairline of light along its top edge */
-  color: #0f0e0c;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.09));
+  /* THE light source: the chip emits, it is not lit. The G glows white
+     and everything else in the dark stage is illuminated by its falloff. */
+  color: #f7f4ec;
+  filter: drop-shadow(0 0 10px rgba(255, 250, 238, 0.85))
+    drop-shadow(0 0 34px rgba(255, 244, 224, 0.4));
 }
 
 .gr-flow-mark svg {

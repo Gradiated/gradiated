@@ -540,9 +540,14 @@ precision mediump float;
 uniform vec2  uRes;    /* canvas size, device px */
 uniform vec2  uC;      /* chip centre, device px */
 uniform float uSize;   /* chip width, device px */
-uniform float uTime;
-uniform float uBand;   /* the ONE light: sweep coordinate, -1.3 .. 1.3 */
+uniform float uRing;   /* the reveal: perimeter wavefront progress 0..1 */
+uniform float uPulse;  /* the chip light's slow breath */
 uniform float uOn;
+/* rounded-rect distance, so the wave carries the chip's own geometry */
+float sdBox(vec2 q, vec2 b, float r) {
+  vec2 dq = abs(q) - b;
+  return length(max(dq, vec2(0.0))) + min(max(dq.x, dq.y), 0.0) - r;
+}
 void main() {
   vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec2 d = p - uC;
@@ -550,33 +555,34 @@ void main() {
   vec2 gpos = d / cell;
   vec2 id = floor(gpos + 0.5);
   vec2 lp = gpos - id;
-  float dn = length(id) * cell / (uSize * 1.9);
+  /* distance outward from the plate's edge, normalised */
+  vec2 cc = (id * cell);
+  float dr = sdBox(cc, vec2(uSize * 0.5), uSize * 0.02);
+  float dn = dr / (uSize * 1.35);
   if (dn > 1.0) discard;
   /* square wafer chips, not dots */
   float q = max(abs(lp.x), abs(lp.y));
   float m = 1.0 - smoothstep(0.26, 0.30, q);
   if (m <= 0.0) discard;
-  /* THE light: the same band that sweeps the chip's face. Wafers light up
-     as it passes over them, exactly when it passes over them. */
-  vec2 axis = vec2(0.906, 0.423); /* the sheen's 115deg travel direction */
-  float sc = dot(d, axis) / (uSize * 1.6);
-  float x = (sc - uBand) * 2.6;
-  float band = exp(-x * x);
-  /* REAL thin-film interference. Each chip carries an oxide film of its
-     own thickness (the grain); the sweeping light's incidence angle at a
-     chip follows from a source at fixed height passing over it, so the
-     constructive wavelength SHIFTS as the band approaches and leaves --
-     Newton-series colours in motion, not a hue wheel. */
+  /* THE light is the chip. Its pool of light falls off from the plate
+     edge; the reveal is a wavefront in the plate's geometry expanding
+     outward, and the field only exists where light has reached. */
+  float front = uRing * 1.25;
+  float x = (dn - front) * 3.4;
+  float band = exp(-x * x * 4.0);
+  float wake = smoothstep(front, front - 0.3, dn);
+  float pool = exp(-max(dn, 0.0) * 2.4) * uPulse;
+  /* REAL thin-film interference on the wavefront: per-chip oxide
+     thickness, incidence angle from the passing light's geometry --
+     Newton colours that shift as the front crosses each die. */
   float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
   float dfilm = 300.0 + 250.0 * grain;            /* nm */
-  float cosT = inversesqrt(1.0 + x * x * 0.35);   /* light height ~ band width */
-  float opd = 2.0 * 1.46 * dfilm * cosT;          /* optical path, n(SiO2)=1.46 */
+  float cosT = inversesqrt(1.0 + x * x * 0.35);
+  float opd = 2.0 * 1.46 * dfilm * cosT;          /* n(SiO2)=1.46 */
   vec3 lambda = vec3(630.0, 532.0, 465.0);
   vec3 film = 0.5 - 0.5 * cos(6.2831 * opd / lambda);
-  /* iridescence lives INSIDE the reflection; off the light it is silicon */
-  vec3 col = mix(vec3(0.55), film * 1.15, band) + 0.33 * band;
-  float feather = 1.0 - dn * dn;
-  float a = m * feather * (0.17 + 0.6 * band) * uOn;
+  vec3 col = mix(vec3(0.72), film * 1.15 + 0.3, band);
+  float a = m * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
   gl_FragColor = vec4(col, a);
 }`;
       const sh = (type: number, src: string): WebGLShader | null => {
@@ -613,12 +619,48 @@ void main() {
           res: gl.getUniformLocation(prog, "uRes"),
           c: gl.getUniformLocation(prog, "uC"),
           size: gl.getUniformLocation(prog, "uSize"),
-          time: gl.getUniformLocation(prog, "uTime"),
-          band: gl.getUniformLocation(prog, "uBand"),
+          ring: gl.getUniformLocation(prog, "uRing"),
+          pulse: gl.getUniformLocation(prog, "uPulse"),
           on: gl.getUniformLocation(prog, "uOn"),
         },
       };
     })();
+
+    /* ---- the solar flare ----
+       As the reveal launches, light bursts from behind the plate: a core
+       bloom plus chromatically split streaks along the horizontal — drawn
+       additively UNDER the plate, so it reads as light escaping its edges. */
+    const drawFlare = (out: TimelineOut): void => {
+      if (!out.dark) return;
+      const st = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
+      const fi = Math.exp(-Math.pow((st - 0.28) * 3.4, 2)) * (1 - out.glowA);
+      if (fi <= 0.015) return;
+      const { s } = out;
+      ctx.save();
+      ctx.globalCompositeOperation = "lighter";
+      const core = ctx.createRadialGradient(s.cx, s.cy, 0, s.cx, s.cy, s.w * 0.95);
+      core.addColorStop(0, `rgba(255, 250, 240, ${(0.45 * fi).toFixed(3)})`);
+      core.addColorStop(1, "rgba(255, 250, 240, 0)");
+      ctx.fillStyle = core;
+      ctx.fillRect(s.cx - s.w, s.cy - s.w, s.w * 2, s.w * 2);
+      /* streaks: warm above, white centre, cool below — the split */
+      const streak = (tint: string, dy: number, lenF: number, thF: number, a: number): void => {
+        ctx.save();
+        ctx.translate(s.cx, s.cy + dy);
+        ctx.scale(s.w * lenF, s.w * thF);
+        const g2 = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
+        g2.addColorStop(0, tint.replace("$A", (a * fi).toFixed(3)));
+        g2.addColorStop(1, tint.replace("$A", "0"));
+        ctx.fillStyle = g2;
+        ctx.fillRect(-1, -1, 2, 2);
+        ctx.restore();
+      };
+      streak("rgba(255, 208, 156, $A)", -2, 1.55, 0.028, 0.55);
+      streak("rgba(255, 252, 246, $A)", 0, 1.8, 0.016, 0.9);
+      streak("rgba(158, 198, 255, $A)", 2, 1.55, 0.028, 0.5);
+      streak("rgba(255, 252, 246, $A)", 0, 0.55, 0.11, 0.35);
+      ctx.restore();
+    };
 
     const drawWafers = (t: number, out: TimelineOut, darkAt: number): void => {
       if (!glOK) return;
@@ -636,11 +678,11 @@ void main() {
       gl.uniform2f(u.res, glCanvas.width, glCanvas.height);
       gl.uniform2f(u.c, out.s.cx * dpr, out.s.cy * dpr);
       gl.uniform1f(u.size, out.s.w * dpr);
-      gl.uniform1f(u.time, t);
-      /* the SAME pass of light that crosses the plate: scrubbed from the
-         hold beat, eased identically to the sheen */
+      /* the reveal wavefront: scrubbed from the hold beat, eased
+         identically to the plate's sheen — one light, one event */
       const stE = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
-      gl.uniform1f(u.band, -1.3 + 2.6 * stE);
+      gl.uniform1f(u.ring, stE);
+      gl.uniform1f(u.pulse, 0.88 + 0.12 * Math.sin(t * 1.1));
       gl.uniform1f(u.on, on);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
@@ -960,6 +1002,7 @@ void main() {
       ctx.clearRect(0, 0, W, H);
       drawPanel(out);
       drawEngine(tE, out);
+      drawFlare(out);
       drawGlow(t, out);
 
       const place = (el: HTMLElement, extra: string): void => {

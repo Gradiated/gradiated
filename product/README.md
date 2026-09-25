@@ -11,9 +11,11 @@ The product side is deliberately small:
 - TypeScript/Node API plus one background worker from the same image;
 - PostgreSQL for product and financial authority;
 - generated OpenAPI 3.1 contracts and clients;
-- direct exact-model endpoints backed by the Rust gateway.
+- customer-key provider relay through the Rust proxy;
+- exact-model hosted inference through the Rust gateway;
+- captured generation content through the Rust collector into S3.
 
-The customer product still includes users, organizations, workspaces, memberships, API keys, model access, usage and billing. There is no general gateway, provider router, model alias layer or separate inference-router service.
+The customer product still includes users, organizations, workspaces, memberships, API keys, model access, usage and billing. Provider relay is scoped by [PROXY_FEATURE_PLAN.md](../docs/PROXY_FEATURE_PLAN.md); stored content follows [TRACES_PLAN.md](../docs/TRACES_PLAN.md).
 
 ## Repository shape
 
@@ -23,6 +25,8 @@ Turborepo orchestrates the deployable `services/` and shared `packages/`:
 - `services/worker`: TypeScript background loops;
 - `services/console`: Vite/React/shadcn customer console;
 - `services/gateway`: Rust inference data plane;
+- `services/proxy`: public inference front door and customer-key relay;
+- `services/collector`: asynchronous generation-content batching and S3 uploads;
 - `packages/contracts`: Zod API and cross-process contracts;
 - `packages/control`: shared control-plane business logic and datastore adapters;
 - `packages/config`: strict runtime configuration.
@@ -44,29 +48,78 @@ blueprints; extend the focused contract when a behavior is ready to be decided.
 ## API development
 
 Use the pinned Node 22 release through nvm. Install dependencies once, then run
-the complete development stack through mprocs:
+the complete development stack through mprocs. The launcher requires `lsof`
+(`apt-get install lsof` on Debian/Ubuntu):
 
 ```sh
 nvm use
 corepack enable
 pnpm install
+pnpm exec turbo run build --filter=@gradiated/api --filter=@gradiated/worker
 pnpm dev
 ```
 
-`pnpm dev` first stops stale listeners on the console, API, gateway, and SGLang
-ports (3000, 3001, 3002, and 30000), then launches mprocs. Prefer it over
+`pnpm dev` first stops stale application listeners (3000–3004, 9003–9004,
+9464–9465, and 30000), then launches mprocs. It leaves datastore ports alone. Prefer it over
 invoking `mprocs` directly so a process left behind by an earlier crash cannot
 block startup.
 
-Mprocs starts PostgreSQL, Valkey and ClickHouse through Docker Compose. It also
-starts the API, worker, console, Rust gateway, and pinned SGLang/MLX runtime as
-native processes. The worker runs generation ingestion, generation settlement,
-and serving-state projection concurrently. Datastores stay containerized.
-Application services run on the host for fast reloads. The first SGLang start
-creates an ignored Python 3.12 environment and downloads the pinned
-`mlx-community/Qwen3-0.6B-4bit` model. Later starts reuse both caches. The
-checked-in Dockerfile builds the production API image but is not part of the
-normal local loop.
+Mprocs starts PostgreSQL, Valkey, ClickHouse and SeaweedFS through Docker
+Compose. The API, worker, console, Rust gateway, proxy and collector run as native
+processes. SGLang is optional: select its pane and press `s` on Apple Silicon to
+start the pinned SGLang/MLX runtime. Its first start creates an ignored Python
+3.12 environment and downloads `mlx-community/Qwen3-0.6B-4bit`; later starts
+reuse both caches. Provider relay and capture do not require a GPU or SGLang.
+
+Local inference clients use `http://127.0.0.1:3003/v1` (the proxy). The proxy
+forwards hosted calls to the gateway on 3002 and customer-key calls to the
+provider. Management requests still go to the API on 3001.
+
+| Service                      | Local endpoint                      |
+| ---------------------------- | ----------------------------------- |
+| Console                      | `http://localhost:3000`             |
+| Management API               | `http://127.0.0.1:3001`             |
+| Gateway (internal inference) | `http://127.0.0.1:3002`             |
+| Proxy (client inference)     | `http://127.0.0.1:3003`             |
+| Proxy health/metrics         | `http://127.0.0.1:9003`             |
+| Collector intake             | `http://127.0.0.1:3004/v1/contents` |
+| Collector health/metrics     | `http://127.0.0.1:9004`             |
+| SeaweedFS S3                 | `http://127.0.0.1:8333`             |
+
+SeaweedFS [mini](https://github.com/seaweedfs/seaweedfs/wiki/Quick-Start-with-weed-mini)
+is pinned to 4.47. It creates `gradiated-local-contents` idempotently and persists
+objects in the `seaweedfs-data` Compose volume. Only its S3 port is published,
+on loopback. The collector uses the real S3 client with `AWS_ENDPOINT_URL_S3`
+and local-only credentials from `mprocs.yaml`, rather than the filesystem store.
+API and worker receive the same S3 settings for trace reads and workspace cleanup
+when those features are available. The API's root-env loader preserves these
+local storage settings. No AWS account or production credentials are needed.
+
+The collector spool survives process restarts under `.agents/runtime/collector/`.
+Local batches flush after two seconds. Stopping the stack preserves both the
+spool and S3 volume; `docker compose down --volumes` intentionally removes the
+object store along with the other local datastores. Clear the collector spool
+as well if intentionally resetting captured content.
+
+Capture stays opt-in per workspace and requires `x-gradiated-task`. Use the
+trace settings UI/API when available; enabling capture does not enable training.
+Hosted gateway capture is not implemented yet. The local object store exercises
+S3 uploads, tags, listing and range reads; it does not reproduce AWS IAM or KMS.
+
+With `pnpm dev` running and PostgreSQL migrated, verify the local path without
+provider credentials, external requests or a model download:
+
+```sh
+pnpm smoke:capture
+```
+
+The smoke checks the running proxy's gateway catalog forwarding, then starts a
+temporary proxy with the checked-in dev capture settings and a loopback synthetic
+streaming provider. It verifies the native collector's S3 batch/manifest uploads,
+retention/trainability tags, and range reads with zstd decompression. It removes
+its temporary database records, S3 objects and processes. Ports and storage settings
+are read from `mprocs.yaml`; the normal dev proxy keeps its provider endpoints.
+The pinned AWS CLI is run through mise.
 
 The `migrate-postgres` and `migrate-clickhouse` panes do not start
 automatically. Select each pane and press `s` after a new datastore starts or

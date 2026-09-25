@@ -59,7 +59,7 @@ Example of a comment to delete:
 ## Local contract
 
 `pnpm dev`/mprocs is the canonical local path. Docker Compose runs only the
-stateful dependencies; the TypeScript services, Rust gateway and SGLang run as
+stateful dependencies; the TypeScript services, Rust gateway, proxy, collector and SGLang run as
 native host processes for fast feedback and access to host acceleration.
 The supported Apple Silicon inference profile runs a pinned SGLang/MLX build
 and a pinned small local model. Focused gateway tests may replace the runtime

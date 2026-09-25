@@ -43,6 +43,14 @@ way to a provider. Relayed bodies are buffered, so the request byte limit also
 applies to provider uploads. WebSocket upgrades, such as OpenAI's Realtime API,
 are not supported.
 
+## Local development
+
+`pnpm dev` in `product/` starts the proxy on `127.0.0.1:3003`, the gateway on
+3002 and the collector on 3004. Use `http://127.0.0.1:3003/v1` as the local SDK
+base URL. Capture is wired to the local collector and SeaweedFS bucket; it still
+requires the workspace capture switch and a task header. `pnpm smoke:capture`
+checks the chain without real provider calls. See [Product](../../README.md).
+
 ## Capture
 
 The proxy sends relayed generations to the collector when the workspace has

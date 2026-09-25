@@ -18,7 +18,7 @@
     "build": "turbo run build",
     "check": "turbo run check && pnpm check:scripts && pnpm format:check",
     "check:scripts": "tsc --noEmit -p tsconfig.scripts.json",
-    "dev": "node scripts/free-dev-ports.mjs 3000 3001 3002 30000 && mprocs",
+    "dev": "node scripts/free-dev-ports.mjs 3000 3001 3002 3003 3004 9003 9004 9464 9465 30000 && mprocs",
     "dev:forward": "node scripts/dev-forward.mjs",
     "dev:services": "turbo run dev",
     "e2e:kev": "node scripts/run-kev-gateway-e2e.mjs",
@@ -27,7 +27,8 @@
     "openapi:generate": "turbo run openapi:generate && turbo run api:generate",
     "smoke:gateway": "tsx scripts/smoke-gateway-local.mts",
     "smoke:gateway:openai": "node scripts/smoke-gateway-openai.mjs",
-    "test:scripts": "vitest run --config scripts/vitest.config.mts"
+    "test:scripts": "vitest run --config scripts/vitest.config.mts",
+    "smoke:capture": "tsx scripts/smoke-capture-local.mts"
   },
   "devDependencies": {
     "@types/node": "^20.17.0",
@@ -36,11 +37,13 @@
     "drizzle-kit": "0.31.10",
     "mprocs": "0.9.6",
     "openai": "^7.5.0",
+    "pg": "8.23.0",
     "prettier": "^3.6.0",
     "redis": "5.8.2",
     "tsx": "4.23.12",
     "turbo": "2.10.10",
     "typescript": "5.9.3",
-    "vitest": "4.1.10"
+    "vitest": "4.1.10",
+    "yaml": "2.9.0"
   }
 }

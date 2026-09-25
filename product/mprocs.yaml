@@ -5,8 +5,15 @@ procs:
       send-keys: ["<C-c>"]
   api:
     # The repository .env may carry deployed auth origins; local sign-in keeps these.
-    shell: "scripts/with-root-env.sh BETTER_AUTH_URL TRUSTED_ORIGINS -- mise exec -- pnpm --filter @gradiated/api dev"
+    shell: "scripts/with-root-env.sh BETTER_AUTH_URL TRUSTED_ORIGINS DATABASE_URL VALKEY_URL CONTENTS_BUCKET AWS_ENDPOINT_URL_S3 AWS_REGION AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN -- mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/api dev"
     env:
+      <<: &contents_env
+        CONTENTS_BUCKET: gradiated-local-contents
+        AWS_ENDPOINT_URL_S3: http://127.0.0.1:8333
+        AWS_REGION: us-east-1
+        AWS_ACCESS_KEY_ID: gradiated-local
+        AWS_SECRET_ACCESS_KEY: gradiated-local-secret
+        AWS_SESSION_TOKEN: ""
       DATABASE_URL: &database_url postgresql://gradiated:gradiated@127.0.0.1:5432/gradiated
       AUTH_TEST_MODE: "true"
       BETTER_AUTH_URL: http://localhost:3000
@@ -22,8 +29,9 @@ procs:
       CLICKHOUSE_SECURE: &clickhouse_secure "false"
       CLICKHOUSE_USERNAME: gradiated
   worker:
-    shell: "mise exec -- pnpm --filter @gradiated/worker dev"
+    shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE pnpm --filter @gradiated/worker dev"
     env:
+      <<: *contents_env
       CLICKHOUSE_DATABASE: *clickhouse_database
       CLICKHOUSE_HOST: *clickhouse_host
       CLICKHOUSE_PASSWORD: gradiated
@@ -50,6 +58,20 @@ procs:
       PROXY_BIND_ADDRESS: 127.0.0.1:3003
       PROXY_ADMIN_ADDRESS: 127.0.0.1:9003
       PROXY_GATEWAY_ORIGIN: http://127.0.0.1:3002
+      PROXY_COLLECTOR_URL: http://127.0.0.1:3004/v1/contents
+      PROXY_COLLECTOR_TOKEN: &collector_token local-development-token-0123456789
+  collector:
+    shell: "mise exec -- env -u AWS_PROFILE -u AWS_DEFAULT_PROFILE cargo run --manifest-path services/collector/Cargo.toml --locked"
+    env:
+      <<: *contents_env
+      COLLECTOR_BIND_ADDRESS: 127.0.0.1:3004
+      COLLECTOR_ADMIN_ADDRESS: 127.0.0.1:9004
+      COLLECTOR_BUCKET: gradiated-local-contents
+      COLLECTOR_DATA_DIR: ../.agents/runtime/collector
+      COLLECTOR_TOKEN: *collector_token
+      COLLECTOR_REPLICA: local
+      COLLECTOR_MAX_BATCH_SECONDS: "2"
+      AWS_ALLOW_HTTP: "true"
   sglang:
     shell: "mise run sglang-local"
     autostart: false

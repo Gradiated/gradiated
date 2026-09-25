@@ -437,23 +437,14 @@ export const HomeFlow = (): ReactElement => {
     const rootEl = (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
 
     let ink = "#2F2D29";
+    let inkV: [number, number, number] = [0.18, 0.18, 0.16];
     let veil: [number, number, number] = [255, 255, 255];
     let seats: string[] = [];
-    let forcedDark = false;
-    let prevTheme: string | undefined;
+    /* `dark` is now just the chip-formed beat flag: the page stays in its
+       own theme throughout (the raw drawing needs no lights-off). darkAt
+       still timestamps the beat for the G and field fade-ins. */
+    let wasDark = false;
     let darkAt = 0;
-    /* The flip is an EVENT, but the paint eases: arm a transition class
-       just before the theme changes, disarm once the glide is over so
-       normal interactions are never slowed. */
-    let easeTimer = 0;
-    const easeThemeFlip = (): void => {
-      rootEl.classList.add("gr-theme-ease");
-      clearTimeout(easeTimer);
-      easeTimer = window.setTimeout(
-        () => rootEl.classList.remove("gr-theme-ease"),
-        550,
-      );
-    };
     const readTheme = (): void => {
       const cs = getComputedStyle(rootEl);
       const at = (name: string, fall: string): string =>
@@ -462,6 +453,13 @@ export const HomeFlow = (): ReactElement => {
         at(n, ["#be5e31", "#e9b748", "#5e6043", "#407486", "#c8c1b4"][i]),
       );
       ink = at("--color-text", "#2F2D29");
+      const im = /^#([0-9a-f]{6})$/i.exec(ink);
+      if (im)
+        inkV = [
+          parseInt(im[1].slice(0, 2), 16) / 255,
+          parseInt(im[1].slice(2, 4), 16) / 255,
+          parseInt(im[1].slice(4, 6), 16) / 255,
+        ];
       const panel = at("--color-panel", "#ffffff");
       const m = /^#([0-9a-f]{6})$/i.exec(panel);
       if (m) {
@@ -556,6 +554,7 @@ uniform float uCell;   /* wafer grid pitch, device px — sized so the dies
                           match the engine's data-bits exactly */
 uniform float uRing;   /* the reveal: perimeter wavefront progress 0..1 */
 uniform float uPulse;  /* the chip light's slow breath */
+uniform vec3  uInk;    /* the page's ink — the field draws in it */
 uniform float uOn;
 /* rounded-rect distance, so the wave carries the chip's own geometry */
 float sdBox(vec2 q, vec2 b, float r) {
@@ -599,7 +598,7 @@ void main() {
   vec3 lambda = vec3(630.0, 532.0, 465.0);
   vec3 film = 0.5 - 0.5 * cos(6.2831 * opd / lambda);
   vec3 col = mix(vec3(0.72), film * 1.15 + 0.3, band);
-  ${RAW_STYLE ? "col = vec3(0.92); /* raw: light is brightness only */" : ""}
+  ${RAW_STYLE ? "col = uInk; /* raw: the field draws in the page's ink */" : ""}
   float refl = 0.9 + 0.2 * grain;                 /* die-to-die brightness */
   float a = m * refl * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
   gl_FragColor = vec4(col, a);
@@ -641,6 +640,7 @@ void main() {
           cell: gl.getUniformLocation(prog, "uCell"),
           ring: gl.getUniformLocation(prog, "uRing"),
           pulse: gl.getUniformLocation(prog, "uPulse"),
+          ink: gl.getUniformLocation(prog, "uInk"),
           on: gl.getUniformLocation(prog, "uOn"),
         },
       };
@@ -755,6 +755,7 @@ void main() {
       const stE = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
       gl.uniform1f(u.ring, stE);
       gl.uniform1f(u.pulse, 0.88 + 0.12 * Math.sin(t * 1.1));
+      gl.uniform3f(u.ink, inkV[0], inkV[1], inkV[2]);
       gl.uniform1f(u.on, on);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
     };
@@ -1056,20 +1057,11 @@ void main() {
       else if (out.engineA < 0.02) engineStart = -1;
       const tE = engineStart >= 0 ? t - engineStart : -1;
 
-      /* lights hard-off the moment the square forms; back on the moment
-         the scroll retreats past it */
-      if (out.dark && !forcedDark) {
-        prevTheme = rootEl.dataset.theme;
-        easeThemeFlip();
-        rootEl.dataset.theme = "dark";
-        forcedDark = true;
+      /* the chip-formed beat: timestamp its arrival for the fade-ins */
+      if (out.dark && !wasDark) {
+        wasDark = true;
         darkAt = t;
-      } else if (!out.dark && forcedDark) {
-        easeThemeFlip();
-        if (prevTheme === undefined) delete rootEl.dataset.theme;
-        else rootEl.dataset.theme = prevTheme;
-        forcedDark = false;
-      }
+      } else if (!out.dark) wasDark = false;
 
       drawWafers(t, out, darkAt);
       ctx.clearRect(0, 0, W, H);
@@ -1138,13 +1130,6 @@ void main() {
       removeEventListener("resize", resize);
       themeWatch.disconnect();
       scheme.removeEventListener("change", readTheme);
-      /* never leave the reader in a theme they did not choose */
-      if (forcedDark) {
-        if (prevTheme === undefined) delete rootEl.dataset.theme;
-        else rootEl.dataset.theme = prevTheme;
-      }
-      clearTimeout(easeTimer);
-      rootEl.classList.remove("gr-theme-ease");
     };
   }, []);
 

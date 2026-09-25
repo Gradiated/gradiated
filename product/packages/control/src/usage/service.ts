@@ -81,13 +81,11 @@ export type UsageSummaryRecord = {
 export interface UsageService {
   getSummary(input: {
     userId: string;
-    organizationId: string;
     workspaceId: string;
     range: UsageRange;
   }): Promise<UsageSummaryRecord>;
   listGenerations(input: {
     userId: string;
-    organizationId: string;
     workspaceId: string;
     range: UsageRange;
     cursor?: string;
@@ -113,7 +111,6 @@ export const createUsageService = (
 ): UsageService => {
   const requireWorkspaceAccess = async (input: {
     userId: string;
-    organizationId: string;
     workspaceId: string;
   }) => {
     const { workspace } = await requireWorkspaceMembership(database, input);
@@ -123,13 +120,18 @@ export const createUsageService = (
         "The workspace does not exist or is not accessible.",
       );
     }
+
+    return workspace;
   };
 
   return {
     async getSummary(input) {
-      await requireWorkspaceAccess(input);
+      const workspace = await requireWorkspaceAccess(input);
 
-      const range = rangeFilter(input);
+      const range = rangeFilter({
+        ...input,
+        organizationId: workspace.organizationId,
+      });
       const where = range.where.join("\n          AND ");
       const selectRows = async (sql: string) =>
         (
@@ -180,13 +182,16 @@ export const createUsageService = (
     },
 
     async listGenerations(input) {
-      await requireWorkspaceAccess(input);
+      const workspace = await requireWorkspaceAccess(input);
 
       const cursor = input.cursor
         ? decodeCursor(input.cursor, input.sort)
         : undefined;
 
-      const filter = generationFilter(input, cursor);
+      const filter = generationFilter(
+        { ...input, organizationId: workspace.organizationId },
+        cursor,
+      );
       const orderBy =
         input.sort === "highest_cost"
           ? "g.charge DESC, g.completed_at DESC, g.id DESC"

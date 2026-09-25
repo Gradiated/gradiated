@@ -57,7 +57,7 @@ describe("API contract", () => {
       "/api/v1/organizations/{organization_id}/workspaces",
     );
     expect(document.paths).toHaveProperty(
-      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
+      "/api/v1/workspaces/{workspace_id}/api-keys",
     );
   });
 

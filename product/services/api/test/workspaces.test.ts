@@ -1,5 +1,5 @@
 import { ControlServiceError } from "@gradiated/control";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import {
   anonymous,
@@ -21,6 +21,41 @@ import {
 const workspacesPath = `/api/v1/organizations/${organizationId}/workspaces`;
 
 describe("workspace routes", () => {
+  it("patches workspace capture fields and rejects invalid updates", async () => {
+    const updateWorkspace = vi.fn(async () => workspaceRecord);
+    const app = createTestApp({
+      auth: authenticated,
+      services: { workspaces: { updateWorkspace } },
+    });
+    for (const [body, status] of [
+      [{ trace_capture_enabled: true }, 200],
+      [{ trace_retention_days: 90 }, 200],
+      [{ trace_retention_days: 7 }, 422],
+      [{}, 422],
+      [{ is_default: true }, 422],
+    ] as const) {
+      const response = await app.request(`/api/v1/workspaces/${workspaceId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      expect(response.status).toBe(status);
+      if (status === 200)
+        expect(await response.json()).toMatchObject({ id: workspaceId });
+    }
+    expect(updateWorkspace).toHaveBeenCalledTimes(2);
+    expect(updateWorkspace).toHaveBeenLastCalledWith(user.id, workspaceId, {
+      trace_retention_days: 90,
+    });
+    expect(
+      (
+        await app.request(`/api/v1/workspaces/${workspaceId}/trace-settings`, {
+          method: "PATCH",
+        })
+      ).status,
+    ).toBe(404);
+  });
+
   it("lists workspaces explicitly for the selected organization", async () => {
     const app = createTestApp({
       auth: authenticated,
@@ -39,6 +74,8 @@ describe("workspace routes", () => {
           organization_id: organizationId,
           name: "Default",
           is_default: true,
+          trace_capture_enabled: false,
+          trace_retention_days: 30,
           archived_at: null,
           created_at: now.toISOString(),
           updated_at: now.toISOString(),

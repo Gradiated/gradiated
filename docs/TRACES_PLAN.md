@@ -61,9 +61,11 @@ Migration `0007` adds both workspace settings. The proxy reads them with its
 identity query and caches them for 15 seconds. Capture requires both
 `trace_capture_enabled=true` and a non-empty `x-gradiated-task`. Enabling capture
 does not enable automatic training. The gateway will read these settings when
-hosted capture is implemented. Writers put `retention_days` in each record. A new retention applies to new
-batches. When a workspace shortens its retention, a job deletes that
-workspace's objects that are older than the new period.
+hosted capture is implemented. Writers put `retention_days` in each record. Retention changes apply to new captures only. Existing content keeps the retention
+recorded when it was captured. Reads enforce each record's retention; S3 lifecycle
+expires batches using their retention tags. The existing worker deletes archived
+or deleted workspace prefixes, retries failures and revisits prefixes to catch
+buffered collector writes after deletion.
 
 ## Generation content record
 
@@ -247,13 +249,30 @@ s3://gradiated-prod-contents-us-east-1-<account>/v1/ws=<workspace_id>/task=<task
   Athena, Spark and Hugging Face `datasets`, and filters on those columns skip
   the folders that cannot match.
 
+Workspace capture and retention fields are updated through
+`PATCH /api/v1/workspaces/{workspace_id}`.
+Only supplied fields change; the response is the updated workspace. Workspace
+archival uses `DELETE` on the same resource.
+
 ## Read paths
 
-- **Traces list**: the console reads the newest manifests for a workspace and
-  task, groups rows by `trace_id`, and pages back in time. It does not sort or
-  filter across the whole retention period.
-- **One generation**: `generation_id` gives the exact hour. The API reads that
-  hour's manifests for the workspace, then fetches the frame with a range GET.
+- **Traces list**: the Management API authorizes workspace membership and reads
+  manifests for an exact task, newest hour first. Pages contain at most 100
+  manifest rows, with cursors within a manifest and across hours. Empty pages may
+  have a continuation after a bounded scan of up to 24 empty pages. The console deduplicates generation IDs across loaded
+  pages and groups them by `trace_id`; trace counts describe loaded content only.
+  The task Data tab reads `GET .../workspaces/{workspace_id}/generations?task_id=...`.
+  `task_id` is the URL-encoded exact capture-header value. There is no separate
+  task-discovery endpoint. Date-range filters on the same collection retain the
+  hosted usage-log view; task filters return captured metadata. Mixing those
+  filter sets is rejected, rather than silently ignoring a filter.
+  Other training, model and evaluation UI remains mocked until those features ship.
+- **One generation**: `GET .../generations/{generation_id}?content_ref=...`
+  uses the opaque manifest reference returned by the list. The API
+  checks workspace membership, the reference's workspace prefix, the manifest
+  row's workspace and generation ID, and retention before a range GET of the
+  compressed frame. Decoded content is checked again and responses use no-store.
+  Only the selected generation is downloaded when opening a trace.
 - **One trace**: the API reads the manifests around the trace's first
   generation and merges rows from adjacent batches.
 - **Export**: one JSONL line per trace, with its generations in order. The same
@@ -280,7 +299,11 @@ key. The collector's role can only write.
 
 ## Deletion and residency
 
-- Workspace deletion removes the workspace prefix.
+- Deleting a non-default workspace archives it and disables capture immediately.
+  Content reads are denied at once. The existing worker removes the workspace
+  prefix asynchronously, retries partial failures, and catches late flushes.
+  The API role reads/decrypts content; the worker can list/delete but cannot read
+  or decrypt it. Capture/retention changes and deletion require owner/admin access.
 - Version 1 has one bucket, in `us-east-1`. Other regions add a bucket, a
   collector deployment per region, and a region field on the workspace that
   selects them.

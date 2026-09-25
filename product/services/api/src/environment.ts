@@ -37,6 +37,7 @@ const DeploymentStatusTokensSchema = z
   );
 
 const ApiOnlyEnvironmentSchema = z.object({
+  CONTENTS_BUCKET: z.string().min(1).optional(),
   METRICS_PORT: PortSchema.default(9_464),
   PROFILING_INGEST_TOKEN: z.string().min(32).optional(),
   PROFILING_HOST: z.string().min(1).default("0.0.0.0"),

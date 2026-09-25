@@ -29,17 +29,13 @@ export const listApiKeys = (
   workspaceId: string,
 ): Promise<components["schemas"]["ApiKeyList"]> =>
   requireData<components["schemas"]["ApiKeyList"]>(
-    api.GET(
-      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
-      {
-        params: {
-          path: {
-            organization_id: organizationId,
-            workspace_id: workspaceId,
-          },
+    api.GET("/api/v1/workspaces/{workspace_id}/api-keys", {
+      params: {
+        path: {
+          workspace_id: workspaceId,
         },
       },
-    ),
+    }),
   );
 
 export const createApiKey = (
@@ -47,16 +43,12 @@ export const createApiKey = (
   workspaceId: string,
 ): Promise<CreatedApiKey> =>
   requireData<CreatedApiKey>(
-    api.POST(
-      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
-      {
-        params: {
-          path: {
-            organization_id: organizationId,
-            workspace_id: workspaceId,
-          },
+    api.POST("/api/v1/workspaces/{workspace_id}/api-keys", {
+      params: {
+        path: {
+          workspace_id: workspaceId,
         },
-        body: { name: "Quickstart" },
       },
-    ),
+      body: { name: "Quickstart" },
+    }),
   );

@@ -2,6 +2,7 @@ import { clickHouseRuntimeEnvironmentSchema } from "@gradiated/control";
 import { z } from "zod";
 
 const environmentSchema = clickHouseRuntimeEnvironmentSchema.extend({
+  CONTENTS_BUCKET: z.string().min(1).optional(),
   DATABASE_URL: z.url(),
   VALKEY_URL: z.url(),
   VALKEY_IAM_CACHE_NAME: z.string().trim().min(1).optional(),

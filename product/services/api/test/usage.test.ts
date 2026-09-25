@@ -73,7 +73,7 @@ const generationLog: GenerationLogRecord = {
   completed_at: "2026-08-20T12:34:18.384Z",
 };
 
-const workspacePath = `/api/v1/organizations/${organizationId}/workspaces/${workspaceId}`;
+const workspacePath = `/api/v1/workspaces/${workspaceId}`;
 const range = `from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`;
 
 const usageEndpoints = [
@@ -103,7 +103,6 @@ describe("usage routes", () => {
     expect(received).toEqual([
       {
         userId: user.id,
-        organizationId,
         workspaceId,
         range: { from: new Date(from), to: new Date(to) },
       },
@@ -138,7 +137,6 @@ describe("usage routes", () => {
     expect(received).toEqual([
       {
         userId: user.id,
-        organizationId,
         workspaceId,
         range: { from: new Date(from), to: new Date(to) },
         apiKeyId,

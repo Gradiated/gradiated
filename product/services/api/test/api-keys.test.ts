@@ -21,7 +21,7 @@ import {
   type TestApp,
 } from "./support.js";
 
-const apiKeysPath = `/api/v1/organizations/${organizationId}/workspaces/${workspaceId}/api-keys`;
+const apiKeysPath = `/api/v1/workspaces/${workspaceId}/api-keys`;
 const apiKeyPath = `${apiKeysPath}/${apiKeyId}`;
 
 const operations: {
@@ -95,7 +95,6 @@ describe("API-key routes", () => {
     expect(received).toEqual([
       [
         user.id,
-        organizationId,
         workspaceId,
         { name: "Production", expiresAt: new Date(expiresAt) },
       ],
@@ -146,9 +145,7 @@ describe("API-key routes", () => {
 
     expect(response.status).toBe(204);
     await expect(response.text()).resolves.toBe("");
-    expect(received).toEqual([
-      [user.id, organizationId, workspaceId, apiKeyId],
-    ]);
+    expect(received).toEqual([[user.id, workspaceId, apiKeyId]]);
   });
 
   it.each(

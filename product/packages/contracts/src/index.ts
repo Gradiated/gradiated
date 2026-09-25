@@ -64,6 +64,7 @@ export {
   ApiKeySchema,
   CreateApiKeySchema,
   CreateWorkspaceSchema,
+  UpdateWorkspaceSchema,
   CreatedApiKeySchema,
   WorkspaceListQuerySchema,
   WorkspaceListSchema,
@@ -72,6 +73,7 @@ export {
   type ApiKey,
   type CreatedApiKeyResponse,
   type CreateWorkspace,
+  type UpdateWorkspace,
   type Workspace,
 } from "./workspaces.js";
 export {
@@ -112,3 +114,9 @@ export {
   type ServiceTier,
   type ServiceTierPricingPolicy,
 } from "./service-tiers.js";
+export * from "./traces.js";
+
+export {
+  GenerationsQuerySchema,
+  GenerationsListSchema,
+} from "./generations.js";

@@ -21,7 +21,7 @@ import {
   SettingsCard,
 } from "@/components/fine-tuning/settings-card";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { TraceCaptureSettings } from "@/components/fine-tuning/trace-capture-settings";
 import {
   Table,
   TableBody,
@@ -77,7 +77,6 @@ const TasksPageBody = () => {
   const { empty } = useSearch({ from: "/tasks" });
   const allTasks = useMockFineTuning((state) => state.tasks);
   const workspace = useMockFineTuning((state) => state.workspace);
-  const setTraceCapture = useMockFineTuning((state) => state.setTraceCapture);
   const setEvaluationJudge = useMockFineTuning(
     (state) => state.setEvaluationJudge,
   );
@@ -188,16 +187,7 @@ const TasksPageBody = () => {
                 onChange={setEvaluationJudge}
               />
             </SettingRow>
-            <SettingRow
-              title="Trace capture"
-              description="Models are fine-tuned and evaluated on these. They are kept for 30 days and then deleted."
-            >
-              <Switch
-                checked={workspace.trace_capture_enabled}
-                onCheckedChange={setTraceCapture}
-                aria-label="Trace capture"
-              />
-            </SettingRow>
+            <TraceCaptureSettings />
           </SettingsCard>
         </TabsContent>
       </OptionTabs>

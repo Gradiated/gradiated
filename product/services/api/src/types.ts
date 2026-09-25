@@ -2,6 +2,7 @@ import type {
   CatalogBillingService,
   OrganizationService,
   UsageService,
+  TraceService,
   WaitlistService,
   WorkspaceApiKeyService,
 } from "@gradiated/control";
@@ -40,5 +41,6 @@ export interface ApiServices {
   >;
   organizations: Pick<OrganizationService, "listForUser" | "createForUser">;
   usage: UsageService;
+  traces: TraceService;
   workspaces: WorkspaceApiKeyService;
 }

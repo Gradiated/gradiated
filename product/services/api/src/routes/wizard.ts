@@ -77,7 +77,6 @@ export const registerWizardRoutes = (
     );
     const created = await apiKeys.createApiKey(
       user.id,
-      organization.id,
       organization.defaultWorkspaceId,
       { name: "local", expiresAt: null },
     );

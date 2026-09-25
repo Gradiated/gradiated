@@ -190,6 +190,7 @@ export const createTestApp = ({
       catalogBilling: service("catalogBilling"),
       organizations: service("organizations"),
       usage: service("usage"),
+      traces: service("traces"),
       workspaces: service("workspaces"),
     },
   });

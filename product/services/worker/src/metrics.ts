@@ -9,7 +9,8 @@ import {
 
 import { serviceLog } from "./logging.js";
 
-export type WorkerLoop = "generation_ingestion" | "settlement";
+export type WorkerLoop =
+  "generation_ingestion" | "settlement" | "trace_cleanup";
 
 export type IngestionSource = "new" | "recovered";
 
@@ -27,6 +28,7 @@ export type SettlementPassSummary = {
 const passOperation: Record<WorkerLoop, string> = {
   generation_ingestion: "consume_pass",
   settlement: "settlement_pass",
+  trace_cleanup: "cleanup_pass",
 };
 
 const operationBuckets = [

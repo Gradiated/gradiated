@@ -62,12 +62,10 @@ test("a failed revoke shows the problem and keeps the key active", async ({
   const keyName = `Playwright ${Date.now()}`;
   const row = await createKey(page, keyName);
 
-  await page.route(
-    "**/api/v1/organizations/*/workspaces/*/api-keys/*",
-    (route) =>
-      route.request().method() === "DELETE"
-        ? fulfillProblem(route, 500, "The key store is unavailable.")
-        : route.fallback(),
+  await page.route("**/api/v1/workspaces/*/api-keys/*", (route) =>
+    route.request().method() === "DELETE"
+      ? fulfillProblem(route, 500, "The key store is unavailable.")
+      : route.fallback(),
   );
   await revoke(page, keyName);
 

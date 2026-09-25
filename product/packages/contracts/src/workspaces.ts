@@ -4,7 +4,6 @@ import {
   ApiKeySecretSchema,
   NameInputSchema,
   NameSchema,
-  OrganizationIdParamsSchema,
   pageFields,
   TimestampSchema,
   UuidSchema,
@@ -16,6 +15,14 @@ export const WorkspaceSchema = z
     organization_id: UuidSchema,
     name: NameSchema,
     is_default: z.boolean(),
+    trace_capture_enabled: z
+      .boolean()
+      .describe("Whether task-labelled requests are captured."),
+    trace_retention_days: z.union([
+      z.literal(30),
+      z.literal(90),
+      z.literal(180),
+    ]),
     archived_at: TimestampSchema.nullable(),
     created_at: TimestampSchema,
     updated_at: TimestampSchema,
@@ -27,6 +34,19 @@ export const CreateWorkspaceSchema = z
     name: NameInputSchema,
   })
   .openapi("CreateWorkspace");
+
+export const UpdateWorkspaceSchema = WorkspaceSchema.pick({
+  trace_capture_enabled: true,
+  trace_retention_days: true,
+})
+  .partial()
+  .strict()
+  .refine(
+    (input) => Object.keys(input).length > 0,
+    "Provide at least one workspace field.",
+  )
+  .openapi("UpdateWorkspace");
+export type UpdateWorkspace = z.infer<typeof UpdateWorkspaceSchema>;
 
 export const WorkspaceListSchema = z
   .object(pageFields(WorkspaceSchema))
@@ -64,7 +84,7 @@ export const CreatedApiKeySchema = z
   })
   .openapi("CreatedApiKey");
 
-export const WorkspacePathSchema = OrganizationIdParamsSchema.extend({
+export const WorkspacePathSchema = z.object({
   workspace_id: UuidSchema,
 });
 

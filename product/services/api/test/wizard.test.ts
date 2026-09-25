@@ -29,15 +29,10 @@ const wizardServices: ServiceOverrides = {
     }),
   },
   workspaces: {
-    createApiKey: async (
-      userId,
-      receivedOrganizationId,
-      receivedWorkspaceId,
-      input,
-    ) => ({
+    createApiKey: async (userId, receivedWorkspaceId, input) => ({
       apiKey: {
         ...apiKeyRecord,
-        organizationId: receivedOrganizationId,
+        organizationId,
         workspaceId: receivedWorkspaceId,
         name: input.name,
         expiresAt: input.expiresAt,

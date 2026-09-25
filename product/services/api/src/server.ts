@@ -3,6 +3,8 @@ import {
   createCatalogBillingService,
   createClickHouseRuntimeClient,
   createControlDatabase,
+  createContentStore,
+  createTraceService,
   createDeploymentStatusService,
   createOrganizationService,
   createProfilingWriter,
@@ -140,6 +142,10 @@ const app = createApp({
     usage: createUsageService(database, clickhouse),
     waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database),
+    traces: createTraceService(
+      database,
+      createContentStore(environment.CONTENTS_BUCKET ?? "unconfigured"),
+    ),
   },
 });
 

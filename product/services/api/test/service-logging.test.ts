@@ -13,7 +13,7 @@ import {
   workspaceId,
 } from "./support.js";
 
-const apiKeysPath = `/api/v1/organizations/${organizationId}/workspaces/${workspaceId}/api-keys`;
+const apiKeysPath = `/api/v1/workspaces/${workspaceId}/api-keys`;
 const apiKeyPath = `${apiKeysPath}/${apiKeyId}`;
 
 const completedRequest = (logs: ReturnType<typeof captureServiceLogs>) =>
@@ -33,7 +33,6 @@ describe("request logs", () => {
     });
 
     expect(completedRequest(logs)).toMatchObject({
-      organization_id: organizationId,
       workspace_id: workspaceId,
       api_key_id: apiKeyId,
       context_source: "authenticated_session_requested_resource",

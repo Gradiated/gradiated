@@ -172,6 +172,8 @@ There is at most one pending invitation per organization and normalized email.
 | `name`            | text        | no   | Unique per organization, case-insensitively             |
 | `is_default`      | boolean     | no   | Exactly one default workspace per organization          |
 | `archived_at`     | timestamptz | yes  | Null while usable; archived workspaces cannot serve API |
+| `trace_capture_enabled` | boolean | no | Opt-in content capture; defaults to false |
+| `trace_retention_days` | smallint | no | 30, 90 or 180; defaults to 30 |
 | `created_at`      | timestamptz | no   | Creation time                                           |
 | `updated_at`      | timestamptz | no   | Last mutation time                                      |
 
@@ -179,7 +181,9 @@ In addition to the primary key, `workspaces` has a unique `(organization_id, id)
 
 A workspace is a policy and cost-attribution boundary, not an authorization boundary. Active organization members can access every workspace in their organization. Each organization is created with one default workspace; the product can hide workspace selection while only that workspace exists.
 
-At launch, workspaces group API keys and usage only. Every unarchived workspace can access every active hosted model, with no workspace spend, rate or concurrency limits. Future model allowlists and per-model limits belong in a workspace-model policy table rather than on API keys. Launch behavior is zero retention for all inference payloads.
+Workspaces group API keys, usage and captured generation content. Every unarchived workspace can access every active hosted model, with no workspace spend, rate or concurrency limits. Future model allowlists and per-model limits belong in a workspace-model policy table rather than on API keys.
+
+Content capture is disabled by default. Organization owners and admins can enable relay capture and choose retention. Retention changes apply only to new captures. Content reads enforce the retention recorded on each generation; S3 lifecycle expires batches by their retention tags. Archiving disables capture and blocks reads immediately. The worker deletes archived or deleted workspace content asynchronously, including late collector writes. See [TRACES_PLAN.md](TRACES_PLAN.md) for the storage and capture contract.
 
 ### 9. `api_keys`
 

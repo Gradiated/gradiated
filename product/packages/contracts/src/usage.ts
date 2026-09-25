@@ -79,6 +79,7 @@ export const GenerationListQuerySchema = z
     sort: z.enum(["newest", "highest_cost"]).default("newest"),
     status: GenerationStatusSchema.optional(),
   })
+  .strict()
   .superRefine(validateDateRange);
 
 export const GenerationLogSchema = z.object({

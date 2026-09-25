@@ -1,6 +1,8 @@
 import {
   createClickHouseRuntimeClient,
   createControlDatabase,
+  createContentStore,
+  createTraceCleanup,
   createGenerationSettlementReader,
   createGenerationSettlementStore,
   createGenerationWriter,
@@ -16,6 +18,7 @@ import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
 import { serviceLog } from "./logging.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
+import { sleep } from "./sleep.js";
 import { supervise } from "./supervisor.js";
 
 const environment = parseWorkerEnvironment(process.env);
@@ -49,7 +52,7 @@ for (const client of [ingestionValkey, settlementValkey]) {
 
 const clickhouse = createClickHouseRuntimeClient(environment);
 // Settlement needs one held leader connection; cap all 20 workers at 40 connections.
-const { pool } = createControlDatabase(environment.DATABASE_URL, 2);
+const { database, pool } = createControlDatabase(environment.DATABASE_URL, 2);
 pool.on("error", (error) =>
   serviceLog("error", "dependency_error", { dependency: "postgres", error }),
 );
@@ -114,6 +117,33 @@ const supervisors = [
       }),
   }),
 ];
+
+if (environment.CONTENTS_BUCKET) {
+  const cleanup = createTraceCleanup(
+    database,
+    createContentStore(environment.CONTENTS_BUCKET),
+  );
+  supervisors.push(
+    supervise({
+      loop: "trace_cleanup",
+      readinessPath: "/tmp/gradiated-trace-cleanup-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        while (!signal.aborted) {
+          const start = performance.now();
+          await cleanup();
+          metrics.recordPass(
+            "trace_cleanup",
+            (performance.now() - start) / 1000,
+          );
+          await markReady();
+          await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
 
 try {
   await Promise.all(supervisors);

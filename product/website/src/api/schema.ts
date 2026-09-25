@@ -100,7 +100,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage": {
+  "/api/v1/workspaces/{workspace_id}/usage": {
     parameters: {
       query?: never;
       header?: never;
@@ -116,20 +116,20 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations": {
+  "/api/v1/workspaces/{workspace_id}": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["listGenerations"];
+    get?: never;
     put?: never;
     post?: never;
-    delete?: never;
+    delete: operations["deleteWorkspace"];
     options?: never;
     head?: never;
-    patch?: never;
+    patch: operations["updateWorkspace"];
     trace?: never;
   };
   "/api/v1/organizations/{organization_id}/workspaces": {
@@ -148,7 +148,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys": {
+  "/api/v1/workspaces/{workspace_id}/api-keys": {
     parameters: {
       query?: never;
       header?: never;
@@ -164,7 +164,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys/{api_key_id}": {
+  "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}": {
     parameters: {
       query?: never;
       header?: never;
@@ -175,6 +175,38 @@ export interface paths {
     put?: never;
     post?: never;
     delete: operations["revokeApiKey"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/generations": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["listGenerations"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/api/v1/workspaces/{workspace_id}/generations/{generation_id}": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getGeneration"];
+    put?: never;
+    post?: never;
+    delete?: never;
     options?: never;
     head?: never;
     patch?: never;
@@ -510,10 +542,6 @@ export interface components {
     CreateOrganization: {
       name: string;
     };
-    WorkspaceList: {
-      data: components["schemas"]["Workspace"][];
-      next_cursor: string | null;
-    };
     Workspace: {
       /**
        * Format: uuid
@@ -527,6 +555,9 @@ export interface components {
       organization_id: string;
       name: string;
       is_default: boolean;
+      /** @description Whether task-labelled requests are captured. */
+      trace_capture_enabled: boolean;
+      trace_retention_days: 30 | 90 | 180;
       /**
        * Format: date-time
        * @example 2026-08-16T12:00:00.000Z
@@ -542,6 +573,15 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       updated_at: string;
+    };
+    UpdateWorkspace: {
+      /** @description Whether task-labelled requests are captured. */
+      trace_capture_enabled?: boolean;
+      trace_retention_days?: 30 | 90 | 180;
+    };
+    WorkspaceList: {
+      data: components["schemas"]["Workspace"][];
+      next_cursor: string | null;
     };
     CreateWorkspace: {
       name: string;
@@ -604,6 +644,51 @@ export interface components {
        * @example 2026-08-16T12:00:00.000Z
        */
       expires_at?: string | null;
+    };
+    TraceGenerationList: {
+      data: components["schemas"]["TraceGeneration"][];
+      next_cursor: string | null;
+    };
+    TraceGeneration: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      generation_id: string;
+      trace_id: string;
+      task: string;
+      model: string;
+      /** @enum {string} */
+      source: "relay" | "hosted" | "import";
+      trainable: boolean;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      started_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      completed_at: string | null;
+      status: number | null;
+      outcome: string | null;
+      usage: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Opaque reference for fetching this generation's content. */
+      content_ref: string;
+    };
+    TraceContent: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      generation_id: string;
+      raw: {
+        [key: string]: unknown;
+      } | null;
+      canonical?: unknown;
     };
     /** @description Completed native SystemOne inference response. */
     SystemOneResponse: {
@@ -1024,7 +1109,6 @@ export interface operations {
       };
       header?: never;
       path: {
-        organization_id: string;
         workspace_id: string;
       };
       cookie?: never;
@@ -1099,83 +1183,25 @@ export interface operations {
       };
     };
   };
-  listGenerations: {
+  deleteWorkspace: {
     parameters: {
-      query: {
-        from: string;
-        to: string;
-        cursor?: string;
-        limit?: number;
-        api_key_id?: string;
-        model?: string;
-        search?: string;
-        sort?: "newest" | "highest_cost";
-        status?: "succeeded" | "failed" | "cancelled" | "abandoned";
-      };
+      query?: never;
       header?: never;
       path: {
-        organization_id: string;
         workspace_id: string;
       };
       cookie?: never;
     };
     requestBody?: never;
     responses: {
-      /** @description Terminal generations for the selected workspace. */
-      200: {
+      /** @description Workspace archived. Content deletion will be retried until complete. */
+      202: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          "application/json": {
-            data: {
-              /**
-               * Format: uuid
-               * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-               */
-              id: string;
-              external_id: string | null;
-              model_id: string;
-              /** @enum {string} */
-              status: "succeeded" | "failed" | "cancelled" | "abandoned";
-              streamed: boolean;
-              charge: string;
-              input_tokens: number;
-              cached_input_tokens: number;
-              cache_write_tokens: number;
-              output_tokens: number;
-              reasoning_tokens: number;
-              finish_reason: string | null;
-              error_code: string | null;
-              usable_output_delivered: boolean;
-              /** @enum {string|null} */
-              cancellation_owner: "client" | "server" | "runtime" | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              received_at: string;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              started_at: string | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              first_token_at: string | null;
-              /**
-               * Format: date-time
-               * @example 2026-08-16T12:00:00.000Z
-               */
-              completed_at: string;
-            }[];
-            next_cursor: string | null;
-          };
-        };
+        content?: never;
       };
-      /** @description Authentication is required. */
+      /** @description Authentication required. */
       401: {
         headers: {
           [name: string]: unknown;
@@ -1184,7 +1210,16 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The workspace was not found. */
+      /** @description Workspace management denied. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Workspace not found. */
       404: {
         headers: {
           [name: string]: unknown;
@@ -1193,7 +1228,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description The filters are invalid. */
+      /** @description Invalid workspace update. */
       422: {
         headers: {
           [name: string]: unknown;
@@ -1202,8 +1237,61 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Generation logs are unavailable. */
-      503: {
+    };
+  };
+  updateWorkspace: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateWorkspace"];
+      };
+    };
+    responses: {
+      /** @description Updated workspace capture settings. Retention applies to new captures. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["Workspace"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Workspace management denied. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Workspace not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid workspace update. */
+      422: {
         headers: {
           [name: string]: unknown;
         };
@@ -1322,7 +1410,6 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        organization_id: string;
         workspace_id: string;
       };
       cookie?: never;
@@ -1381,7 +1468,6 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        organization_id: string;
         workspace_id: string;
       };
       cookie?: never;
@@ -1455,7 +1541,6 @@ export interface operations {
       query?: never;
       header?: never;
       path: {
-        organization_id: string;
         workspace_id: string;
         api_key_id: string;
       };
@@ -1498,6 +1583,184 @@ export interface operations {
         };
       };
       /** @description Serving state is unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  listGenerations: {
+    parameters: {
+      query?: {
+        from?: string;
+        to?: string;
+        cursor?: string;
+        limit?: number;
+        api_key_id?: string;
+        model?: string;
+        search?: string;
+        sort?: "newest" | "highest_cost";
+        status?: "succeeded" | "failed" | "cancelled" | "abandoned";
+        /** @description Exact task identifier supplied in the capture header. */
+        task_id?: string;
+      };
+      header?: never;
+      path: {
+        workspace_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Workspace generations. With task_id, returns captured metadata from S3; date-range queries return hosted usage logs. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json":
+            | components["schemas"]["TraceGenerationList"]
+            | {
+                data: {
+                  /**
+                   * Format: uuid
+                   * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+                   */
+                  id: string;
+                  external_id: string | null;
+                  model_id: string;
+                  /** @enum {string} */
+                  status: "succeeded" | "failed" | "cancelled" | "abandoned";
+                  streamed: boolean;
+                  charge: string;
+                  input_tokens: number;
+                  cached_input_tokens: number;
+                  cache_write_tokens: number;
+                  output_tokens: number;
+                  reasoning_tokens: number;
+                  finish_reason: string | null;
+                  error_code: string | null;
+                  usable_output_delivered: boolean;
+                  /** @enum {string|null} */
+                  cancellation_owner: "client" | "server" | "runtime" | null;
+                  /**
+                   * Format: date-time
+                   * @example 2026-08-16T12:00:00.000Z
+                   */
+                  received_at: string;
+                  /**
+                   * Format: date-time
+                   * @example 2026-08-16T12:00:00.000Z
+                   */
+                  started_at: string | null;
+                  /**
+                   * Format: date-time
+                   * @example 2026-08-16T12:00:00.000Z
+                   */
+                  first_token_at: string | null;
+                  /**
+                   * Format: date-time
+                   * @example 2026-08-16T12:00:00.000Z
+                   */
+                  completed_at: string;
+                }[];
+                next_cursor: string | null;
+              };
+        };
+      };
+      /** @description Authentication is required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The workspace was not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description The filters are invalid. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Generation logs are unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getGeneration: {
+    parameters: {
+      query: {
+        content_ref: string;
+      };
+      header?: never;
+      path: {
+        workspace_id: string;
+        generation_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Stored generation request and response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["TraceContent"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Generation not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid generation reference. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Generation content unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

@@ -971,27 +971,6 @@
         ],
         "additionalProperties": false
       },
-      "WorkspaceList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Workspace"
-            }
-          },
-          "next_cursor": {
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "data",
-          "next_cursor"
-        ]
-      },
       "Workspace": {
         "type": "object",
         "properties": {
@@ -1012,6 +991,32 @@
           },
           "is_default": {
             "type": "boolean"
+          },
+          "trace_capture_enabled": {
+            "type": "boolean",
+            "description": "Whether task-labelled requests are captured."
+          },
+          "trace_retention_days": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  30
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  90
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  180
+                ]
+              }
+            ]
           },
           "archived_at": {
             "type": [
@@ -1037,9 +1042,64 @@
           "organization_id",
           "name",
           "is_default",
+          "trace_capture_enabled",
+          "trace_retention_days",
           "archived_at",
           "created_at",
           "updated_at"
+        ]
+      },
+      "UpdateWorkspace": {
+        "type": "object",
+        "properties": {
+          "trace_capture_enabled": {
+            "type": "boolean",
+            "description": "Whether task-labelled requests are captured."
+          },
+          "trace_retention_days": {
+            "anyOf": [
+              {
+                "type": "number",
+                "enum": [
+                  30
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  90
+                ]
+              },
+              {
+                "type": "number",
+                "enum": [
+                  180
+                ]
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "WorkspaceList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Workspace"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
         ]
       },
       "CreateWorkspace": {
@@ -1184,6 +1244,129 @@
           "name"
         ],
         "additionalProperties": false
+      },
+      "TraceGenerationList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceGeneration"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "next_cursor"
+        ]
+      },
+      "TraceGeneration": {
+        "type": "object",
+        "properties": {
+          "generation_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "trace_id": {
+            "type": "string"
+          },
+          "task": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "relay",
+              "hosted",
+              "import"
+            ]
+          },
+          "trainable": {
+            "type": "boolean"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "completed_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "status": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "outcome": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "usage": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "content_ref": {
+            "type": "string",
+            "description": "Opaque reference for fetching this generation's content."
+          }
+        },
+        "required": [
+          "generation_id",
+          "trace_id",
+          "task",
+          "model",
+          "source",
+          "trainable",
+          "started_at",
+          "completed_at",
+          "status",
+          "outcome",
+          "usage",
+          "content_ref"
+        ]
+      },
+      "TraceContent": {
+        "type": "object",
+        "properties": {
+          "generation_id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "raw": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": {}
+          },
+          "canonical": {}
+        },
+        "required": [
+          "generation_id",
+          "raw"
+        ]
       },
       "SystemOneResponse": {
         "type": "object",
@@ -1916,23 +2099,13 @@
         }
       }
     },
-    "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage": {
+    "/api/v1/workspaces/{workspace_id}/usage": {
       "get": {
         "operationId": "getUsageSummary",
         "tags": [
           "Usage"
         ],
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
-            "name": "organization_id",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -2120,11 +2293,11 @@
         }
       }
     },
-    "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations": {
-      "get": {
-        "operationId": "listGenerations",
+    "/api/v1/workspaces/{workspace_id}": {
+      "patch": {
+        "operationId": "updateWorkspace",
         "tags": [
-          "Usage"
+          "Workspaces"
         ],
         "parameters": [
           {
@@ -2134,277 +2307,43 @@
               "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
             },
             "required": true,
-            "name": "organization_id",
-            "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
             "name": "workspace_id",
             "in": "path"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
-            },
-            "required": true,
-            "name": "from",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "example": "2026-08-16T12:00:00.000Z"
-            },
-            "required": true,
-            "name": "to",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 1000
-            },
-            "required": false,
-            "name": "cursor",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 25
-            },
-            "required": false,
-            "name": "limit",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": false,
-            "name": "api_key_id",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 200
-            },
-            "required": false,
-            "name": "model",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "maxLength": 300
-            },
-            "required": false,
-            "name": "search",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "newest",
-                "highest_cost"
-              ],
-              "default": "newest"
-            },
-            "required": false,
-            "name": "sort",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "enum": [
-                "succeeded",
-                "failed",
-                "cancelled",
-                "abandoned"
-              ]
-            },
-            "required": false,
-            "name": "status",
-            "in": "query"
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspace"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": "Terminal generations for the selected workspace.",
+            "description": "Updated workspace capture settings. Retention applies to new captures.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-                          },
-                          "external_id": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "model_id": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 200
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "succeeded",
-                              "failed",
-                              "cancelled",
-                              "abandoned"
-                            ]
-                          },
-                          "streamed": {
-                            "type": "boolean"
-                          },
-                          "charge": {
-                            "type": "string",
-                            "pattern": "^\\d+$"
-                          },
-                          "input_tokens": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "cached_input_tokens": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "cache_write_tokens": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "output_tokens": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "reasoning_tokens": {
-                            "type": "integer",
-                            "minimum": 0
-                          },
-                          "finish_reason": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "error_code": {
-                            "type": [
-                              "string",
-                              "null"
-                            ]
-                          },
-                          "usable_output_delivered": {
-                            "type": "boolean"
-                          },
-                          "cancellation_owner": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "enum": [
-                              "client",
-                              "server",
-                              "runtime",
-                              null
-                            ]
-                          },
-                          "received_at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": "2026-08-16T12:00:00.000Z"
-                          },
-                          "started_at": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "example": "2026-08-16T12:00:00.000Z"
-                          },
-                          "first_token_at": {
-                            "type": [
-                              "string",
-                              "null"
-                            ],
-                            "format": "date-time",
-                            "example": "2026-08-16T12:00:00.000Z"
-                          },
-                          "completed_at": {
-                            "type": "string",
-                            "format": "date-time",
-                            "example": "2026-08-16T12:00:00.000Z"
-                          }
-                        },
-                        "required": [
-                          "id",
-                          "external_id",
-                          "model_id",
-                          "status",
-                          "streamed",
-                          "charge",
-                          "input_tokens",
-                          "cached_input_tokens",
-                          "cache_write_tokens",
-                          "output_tokens",
-                          "reasoning_tokens",
-                          "finish_reason",
-                          "error_code",
-                          "usable_output_delivered",
-                          "cancellation_owner",
-                          "received_at",
-                          "started_at",
-                          "first_token_at",
-                          "completed_at"
-                        ]
-                      }
-                    },
-                    "next_cursor": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "data",
-                    "next_cursor"
-                  ]
+                  "$ref": "#/components/schemas/Workspace"
                 }
               }
             }
           },
           "401": {
-            "description": "Authentication is required.",
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Workspace management denied.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2414,7 +2353,7 @@
             }
           },
           "404": {
-            "description": "The workspace was not found.",
+            "description": "Workspace not found.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2424,7 +2363,40 @@
             }
           },
           "422": {
-            "description": "The filters are invalid.",
+            "description": "Invalid workspace update.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteWorkspace",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Workspace archived. Content deletion will be retried until complete."
+          },
+          "401": {
+            "description": "Authentication required.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2433,8 +2405,28 @@
               }
             }
           },
-          "503": {
-            "description": "Generation logs are unavailable.",
+          "403": {
+            "description": "Workspace management denied.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid workspace update.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -2590,23 +2582,13 @@
         }
       }
     },
-    "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys": {
+    "/api/v1/workspaces/{workspace_id}/api-keys": {
       "get": {
         "operationId": "listApiKeys",
         "tags": [
           "API keys"
         ],
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
-            "name": "organization_id",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -2677,16 +2659,6 @@
           "API keys"
         ],
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
-            "name": "organization_id",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -2780,23 +2752,13 @@
         }
       }
     },
-    "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys/{api_key_id}": {
+    "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}": {
       "delete": {
         "operationId": "revokeApiKey",
         "tags": [
           "API keys"
         ],
         "parameters": [
-          {
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-            },
-            "required": true,
-            "name": "organization_id",
-            "in": "path"
-          },
           {
             "schema": {
               "type": "string",
@@ -2854,6 +2816,431 @@
           },
           "503": {
             "description": "Serving state is unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/generations": {
+      "get": {
+        "operationId": "listGenerations",
+        "tags": [
+          "Generations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-08-16T12:00:00.000Z"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "example": "2026-08-16T12:00:00.000Z"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            },
+            "required": false,
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": false,
+            "name": "api_key_id",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "required": false,
+            "name": "model",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            },
+            "required": false,
+            "name": "search",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "newest",
+                "highest_cost"
+              ]
+            },
+            "required": false,
+            "name": "sort",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "succeeded",
+                "failed",
+                "cancelled",
+                "abandoned"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256,
+              "description": "Exact task identifier supplied in the capture header."
+            },
+            "required": false,
+            "description": "Exact task identifier supplied in the capture header.",
+            "name": "task_id",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace generations. With task_id, returns captured metadata from S3; date-range queries return hosted usage logs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TraceGenerationList"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+                              },
+                              "external_id": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "model_id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 200
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "succeeded",
+                                  "failed",
+                                  "cancelled",
+                                  "abandoned"
+                                ]
+                              },
+                              "streamed": {
+                                "type": "boolean"
+                              },
+                              "charge": {
+                                "type": "string",
+                                "pattern": "^\\d+$"
+                              },
+                              "input_tokens": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "cached_input_tokens": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "cache_write_tokens": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "output_tokens": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "reasoning_tokens": {
+                                "type": "integer",
+                                "minimum": 0
+                              },
+                              "finish_reason": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "error_code": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "usable_output_delivered": {
+                                "type": "boolean"
+                              },
+                              "cancellation_owner": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "enum": [
+                                  "client",
+                                  "server",
+                                  "runtime",
+                                  null
+                                ]
+                              },
+                              "received_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-08-16T12:00:00.000Z"
+                              },
+                              "started_at": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time",
+                                "example": "2026-08-16T12:00:00.000Z"
+                              },
+                              "first_token_at": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ],
+                                "format": "date-time",
+                                "example": "2026-08-16T12:00:00.000Z"
+                              },
+                              "completed_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-08-16T12:00:00.000Z"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "external_id",
+                              "model_id",
+                              "status",
+                              "streamed",
+                              "charge",
+                              "input_tokens",
+                              "cached_input_tokens",
+                              "cache_write_tokens",
+                              "output_tokens",
+                              "reasoning_tokens",
+                              "finish_reason",
+                              "error_code",
+                              "usable_output_delivered",
+                              "cancellation_owner",
+                              "received_at",
+                              "started_at",
+                              "first_token_at",
+                              "completed_at"
+                            ]
+                          }
+                        },
+                        "next_cursor": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "data",
+                        "next_cursor"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication is required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The workspace was not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "The filters are invalid.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Generation logs are unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/generations/{generation_id}": {
+      "get": {
+        "operationId": "getGeneration",
+        "tags": [
+          "Generations"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "generation_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "required": true,
+            "name": "content_ref",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stored generation request and response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceContent"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Generation not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid generation reference.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Generation content unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

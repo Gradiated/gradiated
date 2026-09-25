@@ -131,22 +131,16 @@ describe("workspaces and API keys", () => {
       const otherWorkspace = await seedWorkspace(testDatabase.database, {
         organizationId,
       });
-      const { apiKey } = await service.createApiKey(
-        userId,
-        organizationId,
-        workspaceId,
-        { name: "Listed", expiresAt: null },
-      );
-      await service.createApiKey(userId, organizationId, otherWorkspace, {
+      const { apiKey } = await service.createApiKey(userId, workspaceId, {
+        name: "Listed",
+        expiresAt: null,
+      });
+      await service.createApiKey(userId, otherWorkspace, {
         name: "Elsewhere",
         expiresAt: null,
       });
 
-      const keys = await service.listApiKeys(
-        userId,
-        organizationId,
-        workspaceId,
-      );
+      const keys = await service.listApiKeys(userId, workspaceId);
 
       expect(keys).toEqual([apiKey]);
       expect(keys[0]).not.toHaveProperty("digest");
@@ -157,7 +151,7 @@ describe("workspaces and API keys", () => {
       const outsider = await seedUser(testDatabase.database);
 
       await expect(
-        service.listApiKeys(outsider, organizationId, workspaceId),
+        service.listApiKeys(outsider, workspaceId),
       ).rejects.toMatchObject({ code: "not_found" });
     });
   });
@@ -169,12 +163,11 @@ describe("workspaces and API keys", () => {
       workspaceId: string,
     ) => [
       () =>
-        service.createApiKey(userId, organizationId, workspaceId, {
+        service.createApiKey(userId, workspaceId, {
           name: "Denied",
           expiresAt: null,
         }),
-      () =>
-        service.revokeApiKey(userId, organizationId, workspaceId, randomUUID()),
+      () => service.revokeApiKey(userId, workspaceId, randomUUID()),
     ];
 
     it.each<OrganizationRole>(["billing", "member"])(
@@ -204,7 +197,6 @@ describe("workspaces and API keys", () => {
 
       const { apiKey, secret } = await service.createApiKey(
         userId,
-        organizationId,
         workspaceId,
         { name: "CI", expiresAt: null },
       );
@@ -215,14 +207,19 @@ describe("workspaces and API keys", () => {
         createHash("sha256").update(secret).digest(),
       );
       expect(Object.values(stored ?? {})).not.toContain(secret);
-      expect(apiKey).toMatchObject({ createdBy: userId, revokedAt: null });
+      expect(apiKey).toMatchObject({
+        organizationId,
+        workspaceId,
+        createdBy: userId,
+        revokedAt: null,
+      });
     });
 
     it("rejects an expiry in the past", async () => {
       const { userId, organizationId, workspaceId } = await membership("owner");
 
       await expect(
-        service.createApiKey(userId, organizationId, workspaceId, {
+        service.createApiKey(userId, workspaceId, {
           name: "Expired",
           expiresAt: new Date(Date.now() - 1_000),
         }),
@@ -234,7 +231,7 @@ describe("workspaces and API keys", () => {
       await archive(workspaceId);
 
       await expect(
-        service.createApiKey(userId, organizationId, workspaceId, {
+        service.createApiKey(userId, workspaceId, {
           name: "Archived",
           expiresAt: null,
         }),
@@ -247,7 +244,6 @@ describe("workspaces and API keys", () => {
       const access = await membership("owner");
       const { apiKey } = await service.createApiKey(
         access.userId,
-        access.organizationId,
         access.workspaceId,
         { name: "Revocable", expiresAt: null },
       );
@@ -259,9 +255,9 @@ describe("workspaces and API keys", () => {
       const { userId, organizationId, workspaceId, apiKeyId } =
         await createKey();
 
-      await service.revokeApiKey(userId, organizationId, workspaceId, apiKeyId);
+      await service.revokeApiKey(userId, workspaceId, apiKeyId);
       const firstRevokedAt = (await storedKey(apiKeyId))?.revokedAt;
-      await service.revokeApiKey(userId, organizationId, workspaceId, apiKeyId);
+      await service.revokeApiKey(userId, workspaceId, apiKeyId);
 
       expect(firstRevokedAt).toBeInstanceOf(Date);
       expect((await storedKey(apiKeyId))?.revokedAt).toEqual(firstRevokedAt);
@@ -274,15 +270,10 @@ describe("workspaces and API keys", () => {
       });
 
       await expect(
-        service.revokeApiKey(userId, organizationId, otherWorkspace, apiKeyId),
+        service.revokeApiKey(userId, otherWorkspace, apiKeyId),
       ).rejects.toMatchObject({ code: "not_found" });
       await expect(
-        service.revokeApiKey(
-          userId,
-          organizationId,
-          otherWorkspace,
-          randomUUID(),
-        ),
+        service.revokeApiKey(userId, otherWorkspace, randomUUID()),
       ).rejects.toMatchObject({ code: "not_found" });
     });
 
@@ -292,7 +283,7 @@ describe("workspaces and API keys", () => {
       await archive(workspaceId);
 
       await expect(
-        service.revokeApiKey(userId, organizationId, workspaceId, apiKeyId),
+        service.revokeApiKey(userId, workspaceId, apiKeyId),
       ).rejects.toMatchObject({ code: "forbidden" });
       expect((await storedKey(apiKeyId))?.revokedAt).toBeNull();
     });

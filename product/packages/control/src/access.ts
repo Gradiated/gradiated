@@ -72,7 +72,11 @@ export const requireMembership = async (
 
 export const requireWorkspaceMembership = async (
   database: ControlDatabase,
-  key: MembershipKey & { workspaceId: string },
+  key: {
+    userId: string;
+    workspaceId: string;
+    organizationId?: string | undefined;
+  },
 ): Promise<{
   membership: Membership;
   workspace: typeof workspaces.$inferSelect;

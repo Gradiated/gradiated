@@ -227,6 +227,20 @@ Its HTTP API owns:
 - prepaid top-ups, invoiced credit adjustments and billing views;
 - usage and account views queried from ClickHouse and PostgreSQL.
 
+Management routes follow resource-oriented REST. Existing workspace resources
+use `/api/v1/workspaces/{workspace_id}` for updates, deletion, API keys, usage
+and generations. The server resolves organization ownership from the workspace
+and verifies membership; clients do not supply an organization ID for these
+operations. Workspace creation and listing remain organization collections at
+`/api/v1/organizations/{organization_id}/workspaces`, alongside organization
+billing and balance transactions. The shared model catalog and current-user
+resource are outside workspace scope.
+
+Use query parameters for collection filters, such as `generations?task_id=...`,
+and `PATCH` on a resource to change its fields. Feature-specific routes are
+reserved for intentional workflows such as wizard onboarding, or protocol
+boundaries such as authentication, webhooks, health probes and inference.
+
 Every route starts from a Zod schema and route manifest. OpenAPI 3.1,
 Scalar/reference docs, `llms.txt`, the browser client and Rust contract
 fixtures are generated outputs. CI regenerates and rejects drift.

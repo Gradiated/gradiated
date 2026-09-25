@@ -1,8 +1,9 @@
 # Worker
 
-This TypeScript deployment runs two supervised loops. Generation ingestion
+This TypeScript deployment runs supervised loops. Generation ingestion
 moves terminal generation events from Valkey to ClickHouse. Settlement posts
-ClickHouse usage to the PostgreSQL ledger.
+ClickHouse usage to the PostgreSQL ledger. When `CONTENTS_BUCKET` is configured,
+trace cleanup removes archived or deleted workspace content from S3.
 
 ## Generation ingestion
 
@@ -38,6 +39,14 @@ source ID `<slot>:<organization>` makes each posting idempotent. When the
 leader restarts, it posts the latest posted slot again. The ledger replays a
 posting with the same amount. A posting with a different amount stops
 settlement at that slot with `ESETTLEMENT_CONFLICT`.
+
+## Trace cleanup
+
+Every five seconds, the loop checks one page of at most 1,000 objects against
+the workspace's archive state and deletes content only for archived or deleted
+workspaces. Active workspaces are skipped. S3 lifecycle handles normal expiry
+using each batch's retention tag. Changing workspace retention affects new
+captures only. Cleanup retries failures and revisits prefixes for late writes.
 
 ## Failures
 

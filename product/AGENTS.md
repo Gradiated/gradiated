@@ -8,6 +8,7 @@ Read the root [AGENTS.md](../AGENTS.md), [ARCHITECTURE.md](../docs/ARCHITECTURE.
 - Rust owns everything in the inference hot path: authentication, admission, exact model selection, streaming, cancellation, usage and SGLang dispatch.
 - Direct customers and OpenRouter use the same Rust gateway.
 - Requests name an exact hosted model. Do not add provider routing, fallback, branded aliases or silent parameter dropping. The customer-key proxy in `services/proxy` is the only exception, and [PROXY_FEATURE_PLAN.md](../docs/PROXY_FEATURE_PLAN.md) bounds it.
+- Prefer resource-oriented REST: plural resource nouns in paths, workspace-owned resources rooted at `/api/v1/workspaces/{workspace_id}` without an organization prefix, organization-owned resources under `/api/v1/organizations/{organization_id}`, and standard HTTP methods for CRUD. Use collection query parameters for filters (for example, `generations?task_id=...`) instead of feature-specific data paths. Update resource fields with `PATCH` on the resource itself; add dedicated action endpoints only when the operation does not fit CRUD. The wizard onboarding flow is an intentional orchestration endpoint.
 - Every HTTP API is authored with described Zod schemas and route metadata, then generates OpenAPI 3.1, docs, the browser client and Rust fixtures.
 - The browser uses only the generated API client.
 - Turborepo orchestrates deployables under `services/` and shared TypeScript

@@ -31,11 +31,17 @@ export const unservedDependencies = (): AppDependencies => ({
       listForUser: unserved("organizations.listForUser"),
       createForUser: unserved("organizations.createForUser"),
     },
+    traces: {
+      list: unserved("traces.list"),
+      content: unserved("traces.content"),
+    },
     usage: {
       getSummary: unserved("usage.getSummary"),
       listGenerations: unserved("usage.listGenerations"),
     },
     workspaces: {
+      updateWorkspace: unserved("workspaces.updateWorkspace"),
+      archiveWorkspace: unserved("workspaces.archiveWorkspace"),
       listWorkspaces: unserved("workspaces.listWorkspaces"),
       createWorkspace: unserved("workspaces.createWorkspace"),
       listApiKeys: unserved("workspaces.listApiKeys"),

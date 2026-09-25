@@ -103,7 +103,7 @@ describe("OpenRouter distribution channel", () => {
     const workspaceId = await seedWorkspace(database, { organizationId });
     const { secret } = await createWorkspaceApiKeyService(
       database,
-    ).createApiKey(userId, organizationId, workspaceId, {
+    ).createApiKey(userId, workspaceId, {
       name: "Customer",
       expiresAt: null,
     });

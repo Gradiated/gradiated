@@ -19,11 +19,14 @@ export type BalanceTransaction = components["schemas"]["BalanceTransaction"];
 export type UsageRange = operations["getUsageSummary"]["parameters"]["query"];
 export type UsageSummary =
   operations["getUsageSummary"]["responses"][200]["content"]["application/json"];
-export type GenerationLogQuery = NonNullable<
-  operations["listGenerations"]["parameters"]["query"]
+export type GenerationLogQuery = Omit<
+  NonNullable<operations["listGenerations"]["parameters"]["query"]>,
+  "task_id"
+> & { from: string; to: string };
+export type GenerationLog = Extract<
+  operations["listGenerations"]["responses"][200]["content"]["application/json"]["data"][number],
+  { id: string }
 >;
-export type GenerationLog =
-  operations["listGenerations"]["responses"][200]["content"]["application/json"]["data"][number];
 
 export const getCurrentUser = () => requireData(api.GET("/api/v1/me"));
 
@@ -35,6 +38,21 @@ export const listWorkspaces = (organizationId: string) =>
   requireData(
     api.GET("/api/v1/organizations/{organization_id}/workspaces", {
       params: { path: { organization_id: organizationId } },
+    }),
+  );
+
+export type UpdateWorkspace = components["schemas"]["UpdateWorkspace"];
+export const updateWorkspace = (
+  organization: string,
+  workspace: string,
+  body: UpdateWorkspace,
+) =>
+  requireData(
+    api.PATCH("/api/v1/workspaces/{workspace_id}", {
+      params: {
+        path: { workspace_id: workspace },
+      },
+      body,
     }),
   );
 
@@ -63,15 +81,12 @@ const createApiKey = (
   body: components["schemas"]["CreateApiKey"],
 ) =>
   requireData(
-    api.POST(
-      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
-      {
-        params: {
-          path: { organization_id: organizationId, workspace_id: workspaceId },
-        },
-        body,
+    api.POST("/api/v1/workspaces/{workspace_id}/api-keys", {
+      params: {
+        path: { workspace_id: workspaceId },
       },
-    ),
+      body,
+    }),
   );
 
 export const revokeApiKey = (
@@ -80,18 +95,14 @@ export const revokeApiKey = (
   apiKeyId: string,
 ) =>
   requireOk(
-    api.DELETE(
-      "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys/{api_key_id}",
-      {
-        params: {
-          path: {
-            organization_id: organizationId,
-            workspace_id: workspaceId,
-            api_key_id: apiKeyId,
-          },
+    api.DELETE("/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}", {
+      params: {
+        path: {
+          workspace_id: workspaceId,
+          api_key_id: apiKeyId,
         },
       },
-    ),
+    }),
   );
 
 export const modelsQuery = () =>
@@ -105,17 +116,13 @@ export const apiKeysQuery = (organizationId: string, workspaceId: string) =>
     queryKey: ["api-keys", organizationId, workspaceId],
     queryFn: () =>
       requireData(
-        api.GET(
-          "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
-          {
-            params: {
-              path: {
-                organization_id: organizationId,
-                workspace_id: workspaceId,
-              },
+        api.GET("/api/v1/workspaces/{workspace_id}/api-keys", {
+          params: {
+            path: {
+              workspace_id: workspaceId,
             },
           },
-        ),
+        }),
       ),
     enabled: Boolean(organizationId && workspaceId),
   });
@@ -154,18 +161,14 @@ export const usageQuery = (
     queryKey: ["usage", organizationId, workspaceId, range],
     queryFn: () =>
       requireData(
-        api.GET(
-          "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/usage",
-          {
-            params: {
-              path: {
-                organization_id: organizationId,
-                workspace_id: workspaceId,
-              },
-              query: range,
+        api.GET("/api/v1/workspaces/{workspace_id}/usage", {
+          params: {
+            path: {
+              workspace_id: workspaceId,
             },
+            query: range,
           },
-        ),
+        }),
       ),
     enabled: Boolean(organizationId && workspaceId),
   });
@@ -179,19 +182,22 @@ export const generationLogsQuery = (
     queryKey: ["generation-logs", organizationId, workspaceId, params],
     queryFn: () =>
       requireData(
-        api.GET(
-          "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/generations",
-          {
-            params: {
-              path: {
-                organization_id: organizationId,
-                workspace_id: workspaceId,
-              },
-              query: params,
+        api.GET("/api/v1/workspaces/{workspace_id}/generations", {
+          params: {
+            path: {
+              workspace_id: workspaceId,
             },
+            query: params,
           },
-        ),
-      ),
+        }),
+      ).then((page) => ({
+        ...page,
+        data: page.data.map((row) => {
+          if (!("id" in row))
+            throw new Error("Expected hosted generation metadata.");
+          return row;
+        }),
+      })),
     enabled: Boolean(organizationId && workspaceId),
   });
 

@@ -4,6 +4,7 @@ import {
   ApiKeySchema,
   CreateApiKeySchema,
   CreateWorkspaceSchema,
+  UpdateWorkspaceSchema,
   CreatedApiKeySchema,
   OrganizationIdParamsSchema,
   WorkspaceListQuerySchema,
@@ -23,6 +24,53 @@ import { requireUser } from "../http/problems.js";
 import type { ApiEnvironment } from "../types.js";
 import { apiKeyResponse } from "./api-key-response.js";
 
+const updateWorkspaceRoute = createRoute({
+  method: "patch",
+  path: "/api/v1/workspaces/{workspace_id}",
+  operationId: "updateWorkspace",
+  tags: ["Workspaces"],
+  request: {
+    params: WorkspacePathSchema,
+    body: {
+      required: true,
+      content: { "application/json": { schema: UpdateWorkspaceSchema } },
+    },
+  },
+  responses: {
+    200: {
+      description:
+        "Updated workspace capture settings. Retention applies to new captures.",
+      content: { "application/json": { schema: WorkspaceSchema } },
+    },
+    401: { description: "Authentication required.", content: problemContent },
+    403: {
+      description: "Workspace management denied.",
+      content: problemContent,
+    },
+    404: { description: "Workspace not found.", content: problemContent },
+    422: { description: "Invalid workspace update.", content: problemContent },
+  },
+});
+const archiveWorkspaceRoute = createRoute({
+  method: "delete",
+  path: "/api/v1/workspaces/{workspace_id}",
+  operationId: "deleteWorkspace",
+  tags: ["Workspaces"],
+  request: { params: WorkspacePathSchema },
+  responses: {
+    202: {
+      description:
+        "Workspace archived. Content deletion will be retried until complete.",
+    },
+    401: { description: "Authentication required.", content: problemContent },
+    403: {
+      description: "Workspace management denied.",
+      content: problemContent,
+    },
+    404: { description: "Workspace not found.", content: problemContent },
+    422: { description: "Invalid workspace update.", content: problemContent },
+  },
+});
 const listWorkspacesRoute = createRoute({
   method: "get",
   path: "/api/v1/organizations/{organization_id}/workspaces",
@@ -86,7 +134,7 @@ const createWorkspaceRoute = createRoute({
 
 const listApiKeysRoute = createRoute({
   method: "get",
-  path: "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
+  path: "/api/v1/workspaces/{workspace_id}/api-keys",
   operationId: "listApiKeys",
   tags: ["API keys"],
   request: { params: WorkspacePathSchema },
@@ -116,7 +164,7 @@ const listApiKeysRoute = createRoute({
 
 const createApiKeyRoute = createRoute({
   method: "post",
-  path: "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys",
+  path: "/api/v1/workspaces/{workspace_id}/api-keys",
   operationId: "createApiKey",
   tags: ["API keys"],
   request: {
@@ -162,7 +210,7 @@ const createApiKeyRoute = createRoute({
 
 const revokeApiKeyRoute = createRoute({
   method: "delete",
-  path: "/api/v1/organizations/{organization_id}/workspaces/{workspace_id}/api-keys/{api_key_id}",
+  path: "/api/v1/workspaces/{workspace_id}/api-keys/{api_key_id}",
   operationId: "revokeApiKey",
   tags: ["API keys"],
   request: { params: ApiKeyPathSchema },
@@ -189,6 +237,8 @@ const workspaceResponse = (record: WorkspaceRecord): Workspace => ({
   organization_id: record.organizationId,
   name: record.name,
   is_default: record.isDefault,
+  trace_capture_enabled: record.traceCaptureEnabled,
+  trace_retention_days: record.traceRetentionDays as 30 | 90 | 180,
   archived_at: record.archivedAt?.toISOString() ?? null,
   created_at: record.createdAt.toISOString(),
   updated_at: record.updatedAt.toISOString(),
@@ -198,6 +248,22 @@ export const registerWorkspaceRoutes = (
   app: OpenAPIHono<ApiEnvironment>,
   workspaces: WorkspaceApiKeyService,
 ): void => {
+  app.openapi(updateWorkspaceRoute, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const workspace = await workspaces.updateWorkspace(
+      user.id,
+      p.workspace_id,
+      c.req.valid("json"),
+    );
+    return c.json(workspaceResponse(workspace), 200);
+  });
+  app.openapi(archiveWorkspaceRoute, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    await workspaces.archiveWorkspace(user.id, p.workspace_id);
+    return c.body(null, 202);
+  });
   app.openapi(listWorkspacesRoute, async (context) => {
     const user = await requireUser(context);
     const params = context.req.valid("param");
@@ -231,11 +297,7 @@ export const registerWorkspaceRoutes = (
   app.openapi(listApiKeysRoute, async (context) => {
     const user = await requireUser(context);
     const params = context.req.valid("param");
-    const rows = await workspaces.listApiKeys(
-      user.id,
-      params.organization_id,
-      params.workspace_id,
-    );
+    const rows = await workspaces.listApiKeys(user.id, params.workspace_id);
 
     return context.json(
       { data: rows.map(apiKeyResponse), next_cursor: null },
@@ -249,7 +311,6 @@ export const registerWorkspaceRoutes = (
     const input = context.req.valid("json");
     const created = await workspaces.createApiKey(
       user.id,
-      params.organization_id,
       params.workspace_id,
       {
         name: input.name,
@@ -270,7 +331,6 @@ export const registerWorkspaceRoutes = (
     const params = context.req.valid("param");
     await workspaces.revokeApiKey(
       user.id,
-      params.organization_id,
       params.workspace_id,
       params.api_key_id,
     );

@@ -104,3 +104,6 @@ export {
   createServiceLogger,
   type ServiceLogFields,
 } from "./service-logging.js";
+export { createContentStore, type ContentStore } from "./traces/storage.js";
+export { createTraceService, type TraceService } from "./traces/service.js";
+export { createTraceCleanup } from "./traces/cleanup.js";

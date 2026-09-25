@@ -45,7 +45,6 @@ describe("usage service", () => {
   ) =>
     createUsageService(testDatabase.database, client).listGenerations({
       userId,
-      organizationId,
       workspaceId,
       range,
       limit: 2,
@@ -179,7 +178,7 @@ describe("usage service", () => {
     const summary = await createUsageService(
       testDatabase.database,
       clickhouse.client,
-    ).getSummary({ userId, organizationId, workspaceId, range });
+    ).getSummary({ userId, workspaceId, range });
 
     expect(summary).toEqual({
       charge: "30",
@@ -198,7 +197,6 @@ describe("usage service", () => {
     await expect(
       createUsageService(testDatabase.database, clickhouse.client).getSummary({
         userId,
-        organizationId,
         workspaceId,
         range,
       }),

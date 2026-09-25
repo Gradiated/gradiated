@@ -20,6 +20,7 @@ import { registerSystemOneContract } from "./routes/systemone-contract.js";
 import { registerUsageRoutes } from "./routes/usage.js";
 import { registerWaitlistRoutes } from "./routes/waitlist.js";
 import { registerWizardRoutes } from "./routes/wizard.js";
+import { registerGenerationRoutes } from "./routes/generations.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import type {
   ApiEnvironment,
@@ -121,6 +122,7 @@ export const createApp = ({
     apiKeys: services.workspaces,
   });
   registerWorkspaceRoutes(app, services.workspaces);
+  registerGenerationRoutes(app, services.usage, services.traces);
   registerSystemOneContract(app);
 
   app.doc31("/api/openapi.json", openApiDocument);

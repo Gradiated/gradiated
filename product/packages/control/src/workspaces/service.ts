@@ -1,3 +1,4 @@
+import type { UpdateWorkspace } from "@gradiated/contracts";
 import { and, asc, eq, getTableColumns, isNull } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
 
@@ -35,20 +36,20 @@ export interface WorkspaceApiKeyService {
     organizationId: string,
     input: { name: string },
   ): Promise<WorkspaceRecord>;
-  listApiKeys(
+  updateWorkspace(
     userId: string,
-    organizationId: string,
     workspaceId: string,
-  ): Promise<ApiKeyRecord[]>;
+    input: UpdateWorkspace,
+  ): Promise<WorkspaceRecord>;
+  archiveWorkspace(userId: string, workspaceId: string): Promise<void>;
+  listApiKeys(userId: string, workspaceId: string): Promise<ApiKeyRecord[]>;
   createApiKey(
     userId: string,
-    organizationId: string,
     workspaceId: string,
     input: { name: string; expiresAt: Date | null },
   ): Promise<CreatedApiKey>;
   revokeApiKey(
     userId: string,
-    organizationId: string,
     workspaceId: string,
     apiKeyId: string,
   ): Promise<void>;
@@ -83,27 +84,28 @@ export const createWorkspaceApiKeyService = (
     }
   };
 
-  const requireKeyManager = async (
+  const requireWorkspaceEditor = async (
     userId: string,
-    organizationId: string,
     workspaceId: string,
-  ): Promise<void> => {
+  ): Promise<WorkspaceRecord> => {
     const { membership, workspace } = await requireWorkspaceMembership(
       database,
-      { userId, organizationId, workspaceId },
+      { userId, workspaceId },
     );
     if (!keyManagerRoles.has(membership.role)) {
       throw new ControlServiceError(
         "forbidden",
-        "Only organization owners and admins can manage API keys.",
+        "Only organization owners and admins can manage this workspace.",
       );
     }
     if (membership.organizationStatus !== "active" || workspace.archivedAt) {
       throw new ControlServiceError(
         "forbidden",
-        "API keys cannot be changed for this workspace.",
+        "This workspace cannot be changed.",
       );
     }
+
+    return workspace;
   };
 
   return {
@@ -147,27 +149,54 @@ export const createWorkspaceApiKeyService = (
       return workspace;
     },
 
-    async listApiKeys(userId, organizationId, workspaceId) {
+    async updateWorkspace(userId, workspaceId, input) {
+      await requireWorkspaceEditor(userId, workspaceId);
+
+      const [workspace] = await database
+        .update(workspaces)
+        .set({
+          traceCaptureEnabled: input.trace_capture_enabled,
+          traceRetentionDays: input.trace_retention_days,
+          updatedAt: new Date(),
+        })
+        .where(eq(workspaces.id, workspaceId))
+        .returning();
+
+      return workspace!;
+    },
+    async archiveWorkspace(userId, workspaceId) {
+      const workspace = await requireWorkspaceEditor(userId, workspaceId);
+      if (workspace.isDefault)
+        throw new ControlServiceError(
+          "forbidden",
+          "The default workspace cannot be deleted.",
+        );
+
+      await database
+        .update(workspaces)
+        .set({
+          archivedAt: new Date(),
+          traceCaptureEnabled: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(workspaces.id, workspaceId));
+    },
+
+    async listApiKeys(userId, workspaceId) {
       await requireWorkspaceMembership(database, {
         userId,
-        organizationId,
         workspaceId,
       });
 
       return database
         .select(apiKeyColumns)
         .from(apiKeys)
-        .where(
-          and(
-            eq(apiKeys.organizationId, organizationId),
-            eq(apiKeys.workspaceId, workspaceId),
-          ),
-        )
+        .where(eq(apiKeys.workspaceId, workspaceId))
         .orderBy(asc(apiKeys.createdAt), asc(apiKeys.id));
     },
 
-    async createApiKey(userId, organizationId, workspaceId, input) {
-      await requireKeyManager(userId, organizationId, workspaceId);
+    async createApiKey(userId, workspaceId, input) {
+      const workspace = await requireWorkspaceEditor(userId, workspaceId);
 
       const now = new Date();
       if (input.expiresAt && input.expiresAt <= now) {
@@ -180,7 +209,7 @@ export const createWorkspaceApiKeyService = (
       const secret = generateApiKeySecret();
       const apiKey: ApiKeyRecord = {
         id: uuidv7(),
-        organizationId,
+        organizationId: workspace.organizationId,
         workspaceId,
         name: input.name,
         expiresAt: input.expiresAt,
@@ -197,18 +226,14 @@ export const createWorkspaceApiKeyService = (
       return { apiKey, secret };
     },
 
-    async revokeApiKey(userId, organizationId, workspaceId, apiKeyId) {
-      await requireKeyManager(userId, organizationId, workspaceId);
+    async revokeApiKey(userId, workspaceId, apiKeyId) {
+      await requireWorkspaceEditor(userId, workspaceId);
 
       const [apiKey] = await database
         .select()
         .from(apiKeys)
         .where(
-          and(
-            eq(apiKeys.id, apiKeyId),
-            eq(apiKeys.organizationId, organizationId),
-            eq(apiKeys.workspaceId, workspaceId),
-          ),
+          and(eq(apiKeys.id, apiKeyId), eq(apiKeys.workspaceId, workspaceId)),
         )
         .limit(1);
       if (!apiKey) {

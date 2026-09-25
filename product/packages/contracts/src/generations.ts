@@ -1,3 +1,9 @@
+import { GenerationListQuerySchema, GenerationListSchema } from "./usage.js";
+import {
+  TaskGenerationQuerySchema,
+  TraceGenerationListSchema,
+} from "./traces.js";
+
 import { z } from "@hono/zod-openapi";
 
 import {
@@ -82,3 +88,32 @@ export const GenerationSettledSchema = z
 
 export type GenerationProperties = z.infer<typeof GenerationPropertiesSchema>;
 export type GenerationSettled = z.infer<typeof GenerationSettledSchema>;
+
+export const GenerationsQuerySchema = z
+  .strictObject({
+    ...GenerationListQuerySchema.shape,
+    from: GenerationListQuerySchema.shape.from.optional(),
+    to: GenerationListQuerySchema.shape.to.optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+    sort: z.enum(["newest", "highest_cost"]).optional(),
+    task_id: TaskGenerationQuerySchema.shape.task_id.optional(),
+    cursor: z.string().min(1).max(4096).optional(),
+  })
+  .superRefine((query, context) => {
+    const result = (
+      query.task_id === undefined
+        ? GenerationListQuerySchema
+        : TaskGenerationQuerySchema
+    ).safeParse(query);
+    if (!result.success)
+      for (const issue of result.error.issues)
+        context.addIssue({
+          code: "custom",
+          message: issue.message,
+          path: issue.path,
+        });
+  });
+export const GenerationsListSchema = z.union([
+  TraceGenerationListSchema,
+  GenerationListSchema,
+]);

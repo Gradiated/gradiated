@@ -242,8 +242,8 @@
 }
 
 .gr-flow-block--raw .gr-flow-mark--filled svg path {
-  fill: currentColor;
-  stroke: none;
+  /* the fill is the bits layer below; the hairline outline remains */
+  fill: none;
 }
 
 /* The inner die perimeter, with screw spots on its four corners. */
@@ -264,4 +264,70 @@
 
 .gr-flow-block--raw.gr-flow-block--chip .gr-flow-die {
   opacity: 0.55;
+}
+
+/* The overlay canvas: the emission draws here, ABOVE the plate, so the
+   stream visibly leaves the G's surface instead of rising from behind. */
+.gr-flow-over {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* RAW thickness: ten rounded copies stepping down in Z. Their stacked
+   silhouette follows the corner radius — a curved side wall for free. */
+.gr-flow-slice {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--plate-r, 12px);
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-substrate));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-slice {
+  visibility: visible;
+}
+
+.gr-flow-slice--last {
+  border: 1px solid color-mix(in srgb, var(--color-text) 35%, transparent);
+}
+
+/* raw mode uses the slice extrusion; the flat faces are the cinematic
+   version's and cannot follow rounded corners */
+.gr-flow-block--raw .gr-flow-face {
+  display: none;
+}
+
+/* The G's fill is DATA-BITS. Two nested masks: the outer layer is cut to
+   the mark itself (the REAL mark path inlined — the G is the tile's
+   counterform, so bits tile the lid and the G stays void), and its inner
+   layer is cut to a square grid, so the fill is made of the same bits the
+   emission then carries away. Eases in at the resting point. */
+.gr-flow-mark-bits {
+  position: absolute;
+  inset: 4%;
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31.7539 31.7539'%3E%3Cpath d='M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z' fill='black'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31.7539 31.7539'%3E%3Cpath d='M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z' fill='black'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+
+.gr-flow-mark-bits::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect x='2' y='2' width='6' height='6' fill='black'/%3E%3C/svg%3E")
+    0 0 / calc(var(--bit, 5px) * 1.7) calc(var(--bit, 5px) * 1.7) repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect x='2' y='2' width='6' height='6' fill='black'/%3E%3C/svg%3E")
+    0 0 / calc(var(--bit, 5px) * 1.7) calc(var(--bit, 5px) * 1.7) repeat;
+}
+
+.gr-flow-mark--filled .gr-flow-mark-bits {
+  opacity: 1;
 }

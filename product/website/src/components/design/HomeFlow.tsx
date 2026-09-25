@@ -403,6 +403,7 @@ export const HomeFlow = (): ReactElement => {
   const faceSRef = useRef<HTMLDivElement>(null);
   const faceERef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
+  const overRef = useRef<HTMLCanvasElement>(null);
   const engineCopyRef = useRef<HTMLDivElement>(null);
   const siliconCopyRef = useRef<HTMLDivElement>(null);
 
@@ -417,12 +418,14 @@ export const HomeFlow = (): ReactElement => {
     const faceS = faceSRef.current;
     const faceE = faceERef.current;
     const glCanvas = glRef.current;
+    const overCanvas = overRef.current;
     const engineCopy = engineCopyRef.current;
     const siliconCopy = siliconCopyRef.current;
-    if (!runway || !canvas || !block || !shadowEl || !mark || !sheen || !top || !faceS || !faceE || !glCanvas || !engineCopy || !siliconCopy)
+    if (!runway || !canvas || !block || !shadowEl || !mark || !sheen || !top || !faceS || !faceE || !glCanvas || !overCanvas || !engineCopy || !siliconCopy)
       return;
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const ctx2 = overCanvas.getContext("2d");
+    if (!ctx || !ctx2) return;
 
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -487,6 +490,9 @@ export const HomeFlow = (): ReactElement => {
       canvas.width = W * dpr;
       canvas.height = H * dpr;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      overCanvas.width = W * dpr;
+      overCanvas.height = H * dpr;
+      ctx2.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
     resize();
     addEventListener("resize", resize);
@@ -644,12 +650,13 @@ void main() {
        out of the chip in the isometric rest. Species by intensity, exactly
        the hero's ladder, so the two ends of the page speak one language. */
     const drawEmission = (t: number, out: TimelineOut): void => {
+      ctx2.clearRect(0, 0, W, H);
       if (!RAW_STYLE || out.glowA <= 0.01) return;
       const { s } = out;
-      ctx.save();
-      ctx.strokeStyle = ink;
-      ctx.fillStyle = ink;
-      ctx.lineWidth = 1;
+      ctx2.save();
+      ctx2.strokeStyle = ink;
+      ctx2.fillStyle = ink;
+      ctx2.lineWidth = 1;
       const N = 42;
       const len = s.h * 1.2;
       /* the stream pours from the G itself: its PROJECTED position, since
@@ -665,23 +672,23 @@ void main() {
         const y = oy - ph * len;
         const inten = (1 - ph) * out.glowA;
         if (inten < 0.05) continue;
-        ctx.globalAlpha = Math.min(1, inten * 1.2) * 0.8;
-        if (inten < 0.2) ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
-        else if (inten < 0.35) ctx.fillRect(x - 3, y - 0.75, 6, 1.5);
-        else if (inten < 0.5) ctx.strokeRect(x - 2.5, y - 2.5, 5, 5);
+        ctx2.globalAlpha = Math.min(1, inten * 1.2) * 0.8;
+        if (inten < 0.2) ctx2.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+        else if (inten < 0.35) ctx2.fillRect(x - 3, y - 0.75, 6, 1.5);
+        else if (inten < 0.5) ctx2.strokeRect(x - 2.5, y - 2.5, 5, 5);
         else if (inten < 0.68) {
-          ctx.beginPath();
-          ctx.moveTo(x - 3, y - 3);
-          ctx.lineTo(x + 3, y + 3);
-          ctx.moveTo(x + 3, y - 3);
-          ctx.lineTo(x - 3, y + 3);
-          ctx.stroke();
+          ctx2.beginPath();
+          ctx2.moveTo(x - 3, y - 3);
+          ctx2.lineTo(x + 3, y + 3);
+          ctx2.moveTo(x + 3, y - 3);
+          ctx2.lineTo(x - 3, y + 3);
+          ctx2.stroke();
         } else if (inten < 0.85) {
-          ctx.strokeRect(x - 3.5, y - 3.5, 7, 7);
-          ctx.fillRect(x - 1, y - 1, 2, 2);
-        } else ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
+          ctx2.strokeRect(x - 3.5, y - 3.5, 7, 7);
+          ctx2.fillRect(x - 1, y - 1, 2, 2);
+        } else ctx2.fillRect(x - 2.5, y - 2.5, 5, 5);
       }
-      ctx.restore();
+      ctx2.restore();
     };
 
     /* ---- the solar flare ----
@@ -742,6 +749,7 @@ void main() {
       const LF = engineLayout(KF, W > 720);
       const bitF = Math.max(3, ((LF.colW - 44) / (MC - 1)) * 0.42);
       gl.uniform1f(u.cell, (bitF / 0.56) * dpr);
+      block.style.setProperty("--bit", `${bitF.toFixed(1)}px`);
       /* the reveal wavefront: scrubbed from the hold beat, eased
          identically to the plate's sheen — one light, one event */
       const stE = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
@@ -1104,7 +1112,8 @@ void main() {
       /* the G lights up the moment the lights go off — outline while the
          chip is frontal, filled once it turns to the isometric view */
       mark.style.opacity = `${out.markAlpha * (out.dark ? clamp01((t - darkAt) / 0.25) : 0)}`;
-      mark.classList.toggle("gr-flow-mark--filled", out.glowA > 0.01);
+      mark.classList.toggle("gr-flow-mark--filled", out.glowA > 0.999);
+      block.style.setProperty("--plate-r", `${s.r}px`);
 
       /* the cinematic sweep: ONE pass of light across the chip while it
          is straight on, before the tilt begins */
@@ -1150,12 +1159,23 @@ void main() {
             <div className="gr-flow-die" />
             <div className="gr-flow-mark" ref={markRef}>
               <Logo mark />
+              <div className="gr-flow-mark-bits" />
             </div>
             <div className="gr-flow-sheen" ref={sheenRef} />
           </div>
           <div className="gr-flow-face gr-flow-face--s" ref={faceSRef} />
           <div className="gr-flow-face gr-flow-face--e" ref={faceERef} />
+          {/* RAW thickness: a stacked extrusion that FOLLOWS the rounded
+              corners, unlike flat side faces */}
+          {Array.from({ length: 10 }, (_, i) => (
+            <div
+              className={`gr-flow-slice${i === 9 ? " gr-flow-slice--last" : ""}`}
+              key={i}
+              style={{ transform: `translateZ(${(-2.2 * (i + 1)).toFixed(1)}px)` }}
+            />
+          ))}
         </div>
+        <canvas className="gr-flow-over" ref={overRef} />
 
         <div className="gr-flow-copy gr-flow-copy--engine" ref={engineCopyRef}>
           <h2 className="gr-heading">Trained on your production traffic</h2>

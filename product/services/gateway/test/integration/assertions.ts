@@ -66,7 +66,7 @@ export const expectRejected = (
   rejection: Rejection,
 ): void => {
   expectPublicError(response, rejection);
-  expect(response.headers["x-generation-id"]).toBeTruthy();
+  expect(response.headers["x-gradiated-generation-id"]).toBeTruthy();
 };
 
 /**

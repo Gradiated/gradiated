@@ -111,7 +111,7 @@ Global catalog ids must not use the task/version format. Task creation and catal
 
 **Headers.** Remove hop-by-hop headers and anything named in `Connection`; `host`; content-length; proxy credentials; cookies; platform headers; edge forwarding headers. Reject an inbound `x-gradiated-hop`; add it upstream. Never follow redirects. Never retry a provider inference request.
 
-**Responses.** Ask for identity encoding, disable automatic decompression, pass the provider's bytes and `content-encoding` through untouched, decode only in the observer. Strip hop headers, content-length, cookies and `alt-svc`. Add `x-generation-id`, the route identity and, for hosted requests, the resolved version. A provider failure before headers returns the caller's 502 or 504 envelope. A failure after partial output closes the stream and records the failure; no terminal success frame is invented. A client disconnect cancels upstream work. Unknown usage is null.
+**Responses.** Ask for identity encoding, disable automatic decompression, pass the provider's bytes and `content-encoding` through untouched, decode only in the observer. Strip hop headers, content-length, cookies and `alt-svc`. Add `x-gradiated-generation-id`, the route identity and, for hosted requests, the resolved version. A provider failure before headers returns the caller's 502 or 504 envelope. A failure after partial output closes the stream and records the failure; no terminal success frame is invented. A client disconnect cancels upstream work. Unknown usage is null.
 
 **Limits.**
 

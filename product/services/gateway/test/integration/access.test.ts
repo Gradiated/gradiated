@@ -222,20 +222,17 @@ describe.each(RUNTIME_KINDS)("%s access control", (kind) => {
       send: (instance) => postWith(instance, { "x-vllm-priority": "-100" }),
       rejection: { code: "invalid_request", param: "priority" },
     },
-    ...["x-gradiated-session-id", "x-session-id"].flatMap(
-      (header): RejectedRequest[] => [
-        {
-          request: `an empty ${header} header`,
-          send: (instance) => postWith(instance, { [header]: "" }),
-          rejection: { code: "invalid_request", param: "session_id" },
-        },
-        {
-          request: `a ${header} header over 256 bytes`,
-          send: (instance) => postWith(instance, { [header]: "s".repeat(257) }),
-          rejection: { code: "invalid_request", param: "session_id" },
-        },
-      ],
-    ),
+    {
+      request: "an empty x-gradiated-session-id header",
+      send: (instance) => postWith(instance, { "x-gradiated-session-id": "" }),
+      rejection: { code: "invalid_request", param: "session_id" },
+    },
+    {
+      request: "an x-gradiated-session-id header over 256 bytes",
+      send: (instance) =>
+        postWith(instance, { "x-gradiated-session-id": "s".repeat(257) }),
+      rejection: { code: "invalid_request", param: "session_id" },
+    },
     {
       request: "duplicate request fields",
       send: (instance) =>

@@ -139,7 +139,7 @@ describe("telemetry", () => {
       ),
     );
     const ids = responses.map(
-      (response) => response.headers["x-generation-id"],
+      (response) => response.headers["x-gradiated-generation-id"],
     );
 
     expect(new Set(ids).size).toBe(2);
@@ -175,7 +175,7 @@ describe("generation identifiers", () => {
     });
 
     expect(response.status, response.text).toBe(200);
-    const id = response.headers["x-generation-id"];
+    const id = response.headers["x-gradiated-generation-id"];
     expect(id).toMatch(UUID_V7);
     expect(id).not.toBe(supplied);
     await instance.settled(response);
@@ -203,7 +203,7 @@ describe("generation identifiers", () => {
       200, 200, 401, 404,
     ]);
     const ids = responses.map(
-      (response) => response.headers["x-generation-id"],
+      (response) => response.headers["x-gradiated-generation-id"],
     );
     for (const id of ids) expect(id).toMatch(UUID_V7);
     expect(new Set(ids).size).toBe(ids.length);

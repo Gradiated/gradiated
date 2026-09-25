@@ -87,7 +87,7 @@ its own per-test deadline through vitest's `testTimeout`.
 
 The launcher runs vitest in a child process with a setup file
 (`product/scripts/kev-e2e-ledger.ts`) that wraps the global `fetch`. Successful
-POST responses at the local SystemOne endpoint record only `x-generation-id` into
+POST responses at the local SystemOne endpoint record only `x-gradiated-generation-id` into
 a temporary JSON-lines ledger. This requires no harness edits, and the setup file
 is inert unless `KEV_E2E_RESPONSE_LEDGER` is set, so the harness runs unchanged on
 its own. No request bodies or API keys are written to the ledger.

@@ -32,8 +32,7 @@ use crate::{
 };
 
 const MAX_REQUEST_BYTES: usize = 32_000_000;
-const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
-const PROXY_GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
+const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 const SERVICE_TIER_HEADER: HeaderName = HeaderName::from_static("x-gradiated-service-tier");
 const STREAM_KEEP_ALIVE: Duration = Duration::from_secs(10);
 
@@ -160,7 +159,7 @@ fn endpoint(endpoint: &'static Endpoint) -> MethodRouter<GatewayState> {
 
 fn request_metadata(headers: &HeaderMap) -> RequestMetadata {
     let generation_id = headers
-        .get(&PROXY_GENERATION_ID_HEADER)
+        .get(&GENERATION_ID_HEADER)
         .and_then(|value| value.to_str().ok())
         .and_then(|value| Uuid::parse_str(value).ok())
         .filter(|id| id.get_version_num() == 7)
@@ -531,7 +530,7 @@ mod tests {
         let exposed_headers = exposed.headers()["access-control-expose-headers"]
             .to_str()
             .unwrap();
-        assert!(exposed_headers.contains("x-generation-id"));
+        assert!(exposed_headers.contains("x-gradiated-generation-id"));
         assert!(exposed_headers.contains("x-gradiated-service-tier"));
 
         let denied = app

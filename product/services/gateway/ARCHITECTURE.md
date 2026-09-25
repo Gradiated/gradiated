@@ -554,7 +554,7 @@ the error. It never tries another deployment.
 7. Atomically finalize in Valkey.
 8. Return the normalized response only after finalization succeeds.
 9. Include authoritative input, output, and total token usage plus
-   `X-Generation-Id`.
+   `x-gradiated-generation-id`.
 
 If finalization cannot be confirmed after bounded retry, the request returns
 `503 finalization_unavailable`, gateway readiness becomes unhealthy, and a
@@ -598,7 +598,7 @@ The `GenerationTask` is the only upstream reader and follows these rules:
 11. Finalize the generation.
 12. Send `[DONE]` only after finalization is confirmed.
 
-The gateway returns `X-Generation-Id` with the initial streaming response
+The gateway returns `x-gradiated-generation-id` with the initial streaming response
 headers. The final streaming chunk and non-streaming response expose the same
 normalized usage semantics.
 
@@ -889,7 +889,7 @@ Request-failure warnings, including the HTTP rejection summary, are limited to t
 per second per call site per gateway process. The next emitted event reports the
 number suppressed at that site; no payloads or per-customer maps are retained.
 Metrics remain unsampled. Under this limit, use `generation_id` (also returned as
-`x-generation-id`) to correlate the HTTP summary with the detailed lifecycle event.
+`x-gradiated-generation-id`) to correlate the HTTP summary with the detailed lifecycle event.
 During an outage a sampled generation may have only one of those events. These
 logs do not create ClickHouse generation rows for pre-admission rejections.
 
@@ -1033,7 +1033,7 @@ tests with a fake `ServingState`.
 
 - official OpenAI clients calling streaming and non-streaming routes;
 - final input, output, and total usage;
-- `X-Generation-Id` on both response modes;
+- `x-gradiated-generation-id` on both response modes;
 - slow-token keep-alives;
 - bounded streaming backpressure;
 - client disconnect cancelling the upstream request, with conformance proving

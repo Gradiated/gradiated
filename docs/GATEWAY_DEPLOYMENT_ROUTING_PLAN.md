@@ -251,7 +251,7 @@ the number of reservation attempts. Start with three.
 Accept:
 
 - the top-level request field `session_id`;
-- the header `x-session-id`;
+- the header `x-gradiated-session-id`;
 - confirmed trusted aliases from distribution channels.
 
 The body field wins. Limit it to 256 characters. Hash it before use. Do not log,

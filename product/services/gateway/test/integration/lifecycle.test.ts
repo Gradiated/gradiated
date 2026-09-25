@@ -90,7 +90,7 @@ describe.each(RUNTIME_KINDS)("%s request lifecycle", (kind) => {
       expectRejected(response, { code: "finalization_unavailable" });
       expect(await instance.settlements()).toEqual([]);
       expect(await instance.redis.zRange(instance.inflightKey, 0, -1)).toEqual([
-        response.headers["x-generation-id"],
+        response.headers["x-gradiated-generation-id"],
       ]);
       expect(await instance.redis.hGet(instance.accountKey, "balance")).toBe(
         "not-an-integer",

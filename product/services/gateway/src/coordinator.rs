@@ -341,20 +341,18 @@ fn listed_release_digest(model: &GatewayModel) -> Option<String> {
 }
 
 fn session_header(headers: &HeaderMap) -> Result<Option<String>, GatewayError> {
-    for name in ["x-gradiated-session-id", "x-session-id"] {
-        if let Some(value) = headers.get(name) {
-            let value = value
-                .to_str()
-                .map_err(|_| GatewayError::invalid_request(Some("session_id")))?;
-            if value.is_empty() || value.len() > 256 {
-                return Err(GatewayError::invalid_request(Some("session_id")));
-            }
+    let Some(value) = headers.get("x-gradiated-session-id") else {
+        return Ok(None);
+    };
 
-            return Ok(Some(value.to_owned()));
-        }
+    let value = value
+        .to_str()
+        .map_err(|_| GatewayError::invalid_request(Some("session_id")))?;
+    if value.is_empty() || value.len() > 256 {
+        return Err(GatewayError::invalid_request(Some("session_id")));
     }
 
-    Ok(None)
+    Ok(Some(value.to_owned()))
 }
 
 fn effective_output_tokens(

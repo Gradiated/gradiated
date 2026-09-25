@@ -37,10 +37,10 @@ storage sections of the task fine-tuning contracts and of
 ## Identifiers
 
 - The proxy mints `generation_id` as a UUIDv7 for every request at the front
-  door and returns it in `x-generation-id`.
-- For hosted requests the proxy sends the identifier to the gateway in
-  `x-gradiated-generation-id`. The gateway uses it as the generation's
-  identifier. The proxy always replaces a value that a client sends.
+  door and returns it in `x-gradiated-generation-id`.
+- For hosted requests the proxy sends the identifier to the gateway in the same
+  header. The gateway uses it as the generation's identifier. The proxy always
+  replaces a value that a client sends.
 - Imports get new UUIDv7 identifiers. The customer's original identifier is
   kept as `external_id`.
 - A UUIDv7 carries its creation time. Point lookups use that time to find the

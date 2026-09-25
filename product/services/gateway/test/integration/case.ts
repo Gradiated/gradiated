@@ -375,8 +375,11 @@ export class Case {
       charge,
     }: { status?: SettlementStatus; charge?: number } = {},
   ): Promise<JsonObject> {
-    const generation = response.headers["x-generation-id"];
-    expect(generation, "response has no x-generation-id").toBeTruthy();
+    const generation = response.headers["x-gradiated-generation-id"];
+    expect(
+      generation,
+      "response has no x-gradiated-generation-id",
+    ).toBeTruthy();
 
     const rows = await eventually(
       async () => {

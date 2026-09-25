@@ -27,9 +27,7 @@ use crate::{
     upstream::{gateway_headers, provider_headers, Admission, UpstreamResponse, Upstreams},
 };
 
-const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-generation-id");
-const GATEWAY_GENERATION_ID_HEADER: HeaderName =
-    HeaderName::from_static("x-gradiated-generation-id");
+const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
 
 #[derive(Clone)]
 pub struct AppState {
@@ -246,7 +244,7 @@ async fn forward(
 ) -> Result<UpstreamResponse, ProxyError> {
     let path_and_query = parts.uri.path_and_query().map_or("/", |path| path.as_str());
     let mut headers = gateway_headers(&parts.headers);
-    headers.insert(GATEWAY_GENERATION_ID_HEADER, id_header(generation_id));
+    headers.insert(GENERATION_ID_HEADER, id_header(generation_id));
 
     state
         .upstreams

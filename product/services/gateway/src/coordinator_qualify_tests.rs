@@ -135,13 +135,9 @@ async fn a_body_session_id_wins_over_the_headers() {
 }
 
 #[tokio::test]
-async fn the_gradiated_session_header_wins_over_the_generic_one() {
+async fn only_the_gradiated_session_header_is_read() {
     let mut headers = headers(&WORKSPACE_KEY);
     headers.insert("x-session-id", HeaderValue::from_static("generic"));
-    headers.insert(
-        "x-gradiated-session-id",
-        HeaderValue::from_static("gradiated"),
-    );
     let request = qualify(
         Arc::new(TestServingState::ready()),
         &headers,
@@ -151,7 +147,7 @@ async fn the_gradiated_session_header_wins_over_the_generic_one() {
     .await
     .unwrap();
 
-    assert_eq!(request.request.session_id.as_deref(), Some("gradiated"));
+    assert_eq!(request.request.session_id, None);
 }
 
 #[tokio::test]
@@ -159,7 +155,7 @@ async fn a_session_header_must_be_visible_ascii_of_at_most_256_bytes() {
     let longest = "s".repeat(256);
     let accepted = HeaderValue::from_str(&longest).unwrap();
     let mut headers = headers(&WORKSPACE_KEY);
-    headers.insert("x-session-id", accepted);
+    headers.insert("x-gradiated-session-id", accepted);
     let request = qualify(
         Arc::new(TestServingState::ready()),
         &headers,
@@ -176,7 +172,7 @@ async fn a_session_header_must_be_visible_ascii_of_at_most_256_bytes() {
         HeaderValue::from_str(&"s".repeat(257)).unwrap(),
     ] {
         let mut headers = headers.clone();
-        headers.insert("x-session-id", rejected.clone());
+        headers.insert("x-gradiated-session-id", rejected.clone());
         let result = qualify(
             Arc::new(TestServingState::ready()),
             &headers,

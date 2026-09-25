@@ -186,7 +186,9 @@ describe("response fidelity", () => {
         "anthropic-ratelimit-requests-remaining": "9",
         "content-type": "application/json",
       });
-      expect(response.headers["x-generation-id"]).toMatch(/^[0-9a-f-]{36}$/);
+      expect(response.headers["x-gradiated-generation-id"]).toMatch(
+        /^[0-9a-f-]{36}$/,
+      );
       await instance.expectNotDispatched();
     },
   );

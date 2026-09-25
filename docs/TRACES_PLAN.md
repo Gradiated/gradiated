@@ -178,8 +178,10 @@ s3://gradiated-prod-contents-us-east-1-<account>/v1/ws=<workspace_id>/task=<task
 - Every batch and manifest has two tags: `retention=30d|90d|180d` and
   `trainable=true|false`.
 - The bucket has its own KMS key, blocks public access, and refuses requests
-  without TLS. One lifecycle rule for each retention tag deletes objects after
-  30, 90 or 180 days. A backstop rule deletes any object after 180 days.
+  without TLS. The bucket has a lifecycle rule for each of 7, 14, 30, 60, 90,
+  180 and 365 days, matched by the object's `retention` tag; the product offers
+  30, 90 and 180 today, and can change within that set without an
+  infrastructure change. A backstop rule deletes any object after 365 days.
 - The keys are Hive-style: each `name=value` level becomes a column in DuckDB,
   Athena, Spark and Hugging Face `datasets`, and filters on those columns skip
   the folders that cannot match.

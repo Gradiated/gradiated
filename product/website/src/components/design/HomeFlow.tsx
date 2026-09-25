@@ -130,8 +130,8 @@ const keyStates = (
     peek: { cx: W / 2, cy: H * 0.2 + peekSize / 2, w: peekSize, h: peekSize, r: 2, rx: 0, rz: 0 },
     rise: { cx: W / 2, cy: H * 0.52, w: vm * 0.64, h: vm * 0.64, r: 2, rx: 0, rz: 0 },
     full: { cx: W / 2, cy: H / 2, w: W - inset * 2, h: H - inset * 2, r: 6, rx: 0, rz: 0 },
-    chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.46, h: vm * 0.46, r: 4, rx: 0, rz: 0 },
-    land: { cx: W * (wide ? 0.34 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.42, h: vm * 0.42, r: 4, rx: 58, rz: 45 },
+    chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.46, h: vm * 0.46, r: 12, rx: 0, rz: 0 },
+    land: { cx: W * (wide ? 0.34 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.42, h: vm * 0.42, r: 12, rx: 58, rz: 45 },
   };
 };
 
@@ -637,6 +637,45 @@ void main() {
       };
     })();
 
+    /* RAW: the G emits — a fading stream of the hero field's glyphs rising
+       out of the chip in the isometric rest. Species by intensity, exactly
+       the hero's ladder, so the two ends of the page speak one language. */
+    const drawEmission = (t: number, out: TimelineOut): void => {
+      if (!RAW_STYLE || out.glowA <= 0.01) return;
+      const { s } = out;
+      ctx.save();
+      ctx.strokeStyle = ink;
+      ctx.fillStyle = ink;
+      ctx.lineWidth = 1;
+      const N = 42;
+      const len = s.h * 1.2;
+      for (let i = 0; i < N; i++) {
+        const lane = i % 3;
+        const ph = (t * 0.14 + i / N) % 1;
+        const x =
+          s.cx + (lane - 1) * s.w * 0.09 + Math.sin(ph * 5 + i * 2.4) * s.w * 0.06 * ph;
+        const y = s.cy - ph * len;
+        const inten = (1 - ph) * out.glowA;
+        if (inten < 0.05) continue;
+        ctx.globalAlpha = Math.min(1, inten * 1.2) * 0.8;
+        if (inten < 0.2) ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+        else if (inten < 0.35) ctx.fillRect(x - 3, y - 0.75, 6, 1.5);
+        else if (inten < 0.5) ctx.strokeRect(x - 2.5, y - 2.5, 5, 5);
+        else if (inten < 0.68) {
+          ctx.beginPath();
+          ctx.moveTo(x - 3, y - 3);
+          ctx.lineTo(x + 3, y + 3);
+          ctx.moveTo(x + 3, y - 3);
+          ctx.lineTo(x - 3, y + 3);
+          ctx.stroke();
+        } else if (inten < 0.85) {
+          ctx.strokeRect(x - 3.5, y - 3.5, 7, 7);
+          ctx.fillRect(x - 1, y - 1, 2, 2);
+        } else ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
+      }
+      ctx.restore();
+    };
+
     /* ---- the solar flare ----
        As the reveal launches, light bursts from behind the plate: a core
        bloom plus chromatically split streaks along the horizontal — drawn
@@ -1016,6 +1055,7 @@ void main() {
       drawEngine(tE, out);
       drawFlare(out);
       drawGlow(t, out);
+      drawEmission(t, out);
 
       const place = (el: HTMLElement, extra: string): void => {
         el.style.width = `${s.w}px`;
@@ -1047,8 +1087,10 @@ void main() {
       faceS.style.height = `${depth}px`;
       faceE.style.width = `${depth}px`;
 
-      /* the G lights up the moment the lights go off */
+      /* the G lights up the moment the lights go off — outline while the
+         chip is frontal, filled once it turns to the isometric view */
       mark.style.opacity = `${out.markAlpha * (out.dark ? clamp01((t - darkAt) / 0.25) : 0)}`;
+      mark.classList.toggle("gr-flow-mark--filled", out.glowA > 0.01);
 
       /* the cinematic sweep: ONE pass of light across the chip while it
          is straight on, before the tilt begins */
@@ -1091,6 +1133,7 @@ void main() {
         <div className="gr-flow-shadow" ref={shadowRef} />
         <div className="gr-flow-block" ref={blockRef}>
           <div className="gr-flow-top" ref={topRef}>
+            <div className="gr-flow-die" />
             <div className="gr-flow-mark" ref={markRef}>
               <Logo mark />
             </div>

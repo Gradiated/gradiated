@@ -229,3 +229,35 @@
   background: var(--color-substrate);
   border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
 }
+
+/* Outline G while frontal; the fill arrives with the isometric view. */
+.gr-flow-block--raw .gr-flow-mark svg path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+}
+
+.gr-flow-block--raw .gr-flow-mark--filled svg path {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* The inner die perimeter, with screw spots on its four corners. */
+.gr-flow-die {
+  position: absolute;
+  inset: 9%;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 8px;
+  color: var(--color-text);
+  opacity: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 11px 11px, transparent 2px, currentColor 2.4px, currentColor 3.2px, transparent 3.7px),
+    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2px, currentColor 2.4px, currentColor 3.2px, transparent 3.7px),
+    radial-gradient(circle at 11px calc(100% - 11px), transparent 2px, currentColor 2.4px, currentColor 3.2px, transparent 3.7px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2px, currentColor 2.4px, currentColor 3.2px, transparent 3.7px);
+}
+
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-die {
+  opacity: 0.55;
+}

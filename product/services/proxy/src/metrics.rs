@@ -50,6 +50,34 @@ impl EncodeLabelValue for IdentityResult {
     }
 }
 
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum CaptureResult {
+    Sent,
+    Full,
+    TooLarge,
+    Closed,
+    Collector,
+    Unsupported,
+}
+
+impl EncodeLabelValue for CaptureResult {
+    fn encode(&self, encoder: &mut LabelValueEncoder) -> std::fmt::Result {
+        encoder.write_str(match self {
+            Self::Sent => "sent",
+            Self::Full => "full",
+            Self::TooLarge => "too_large",
+            Self::Closed => "closed",
+            Self::Collector => "collector",
+            Self::Unsupported => "unsupported",
+        })
+    }
+}
+
+#[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
+struct CaptureLabels {
+    result: CaptureResult,
+}
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq, EncodeLabelSet)]
 struct RequestLabels {
     destination: Destination,
@@ -76,6 +104,7 @@ pub struct Metrics {
     identity_queries: Counter,
     catalog_age: Gauge<f64, std::sync::atomic::AtomicU64>,
     catalog_refresh_failures: Counter,
+    captures: Family<CaptureLabels, Counter>,
 }
 
 impl Default for Metrics {
@@ -92,6 +121,7 @@ impl Default for Metrics {
         let identity_queries = Counter::default();
         let catalog_age = Gauge::<f64, std::sync::atomic::AtomicU64>::default();
         let catalog_refresh_failures = Counter::default();
+        let captures = Family::<CaptureLabels, Counter>::default();
         let service_info = Gauge::<i64>::default();
         service_info.set(1);
 
@@ -135,6 +165,11 @@ impl Default for Metrics {
             "Hosted catalog refreshes that failed",
             catalog_refresh_failures.clone(),
         );
+        registry.register(
+            "captures",
+            "Relayed generations sent to the collector or dropped, by result",
+            captures.clone(),
+        );
 
         Self {
             registry: Arc::new(Mutex::new(registry)),
@@ -145,6 +180,7 @@ impl Default for Metrics {
             identity_queries,
             catalog_age,
             catalog_refresh_failures,
+            captures,
         }
     }
 }
@@ -192,6 +228,12 @@ impl Metrics {
 
     pub fn record_catalog_refresh_failure(&self) {
         self.catalog_refresh_failures.inc();
+    }
+
+    pub fn record_captures(&self, result: CaptureResult, count: u64) {
+        self.captures
+            .get_or_create(&CaptureLabels { result })
+            .inc_by(count);
     }
 
     pub fn encode(&self) -> String {

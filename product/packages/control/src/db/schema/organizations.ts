@@ -9,6 +9,7 @@ import {
   jsonb,
   pgTable,
   primaryKey,
+  smallint,
   text,
   timestamp,
   unique,
@@ -136,6 +137,10 @@ export const workspaces = pgTable(
     name: text("name").notNull(),
     isDefault: boolean("is_default").notNull(),
     archivedAt: timestamp("archived_at", { withTimezone: true, mode: "date" }),
+    traceCaptureEnabled: boolean("trace_capture_enabled")
+      .notNull()
+      .default(false),
+    traceRetentionDays: smallint("trace_retention_days").notNull().default(30),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .defaultNow()
       .notNull(),
@@ -144,6 +149,10 @@ export const workspaces = pgTable(
       .notNull(),
   },
   (table) => [
+    check(
+      "workspaces_trace_retention_days_check",
+      sql`${table.traceRetentionDays} in (30, 90, 180)`,
+    ),
     unique("workspaces_organization_id_id_unique").on(
       table.organizationId,
       table.id,

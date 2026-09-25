@@ -7,7 +7,7 @@ use std::{
 };
 
 use gradiated_proxy::{
-    admin_router, public_router, AppState, HostedCatalog, IdentityCache, Metrics, Origins,
+    admin_router, public_router, AppState, Capture, HostedCatalog, IdentityCache, Metrics, Origins,
     PostgresDirectory, ProxyConfig, Upstreams,
 };
 use tokio::{
@@ -18,6 +18,7 @@ use tracing::{error, info, warn};
 use tracing_subscriber::EnvFilter;
 
 const DRAIN_BUFFER: Duration = Duration::from_secs(5);
+const CAPTURE_DRAIN: Duration = Duration::from_secs(15);
 
 #[tokio::main]
 async fn main() -> ExitCode {
@@ -50,6 +51,14 @@ async fn run() -> Result<(), Box<dyn Error>> {
         config.database_ca_bundle_path.as_deref(),
     )?);
 
+    let (capture, capture_sender) = match config.capture.clone() {
+        Some(settings) => {
+            let (capture, sender) = Capture::start(settings, metrics.clone())?;
+            (capture, Some(sender))
+        }
+        None => (Capture::default(), None),
+    };
+
     let catalog = HostedCatalog::new(directory.clone(), metrics.clone());
     tokio::spawn(catalog.clone().run(config.catalog_refresh));
 
@@ -66,6 +75,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
             metrics.clone(),
         )?,
         metrics,
+        capture,
         relay_enabled: config.relay_enabled,
         draining: Arc::new(AtomicBool::new(false)),
     };
@@ -76,6 +86,7 @@ async fn run() -> Result<(), Box<dyn Error>> {
         bind_address = %config.bind_address,
         admin_address = %config.admin_address,
         relay_enabled = config.relay_enabled,
+        capture_enabled = capture_sender.is_some(),
         "proxy listening"
     );
 
@@ -110,6 +121,15 @@ async fn run() -> Result<(), Box<dyn Error>> {
         Err(_) => {
             warn!(timeout_seconds = drain.as_secs(), "proxy drain timed out");
             server.abort();
+        }
+    }
+
+    if let Some(sender) = capture_sender {
+        if !sender.drain(CAPTURE_DRAIN).await {
+            warn!(
+                timeout_seconds = CAPTURE_DRAIN.as_secs(),
+                "capture drain timed out"
+            );
         }
     }
 

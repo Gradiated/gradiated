@@ -1,3 +1,4 @@
+mod capture;
 mod catalog;
 mod config;
 mod credentials;
@@ -9,6 +10,7 @@ mod metrics;
 mod target;
 mod upstream;
 
+pub use capture::{Capture, CaptureSettings, Sender as CaptureSender};
 pub use catalog::HostedCatalog;
 pub use config::{ConfigError, ProxyConfig};
 pub use directory::{Directory, DirectoryUnavailable, IdentityRecord, PostgresDirectory};

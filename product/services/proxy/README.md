@@ -43,6 +43,27 @@ way to a provider. Relayed bodies are buffered, so the request byte limit also
 applies to provider uploads. WebSocket upgrades, such as OpenAI's Realtime API,
 are not supported.
 
+## Capture
+
+The proxy sends relayed generations to the collector when the workspace has
+`trace_capture_enabled` and the request has a non-empty `x-gradiated-task`
+header. Only unencoded UTF-8 JSON and event-stream responses are captured. Encoded or invalid UTF-8 bodies are skipped and counted as `unsupported`; the client still receives the original bytes. The proxy does not
+parse the bodies: each line of the `application/x-ndjson` batch holds the raw
+request and response text with the generation's identifiers, and the collector
+does the parsing. See the [traces plan](../../../docs/TRACES_PLAN.md).
+
+- The response is copied as it streams, and the generation is queued when the
+  stream completes, fails or is cancelled.
+- One byte budget (`PROXY_CAPTURE_BUFFER_BYTES`) covers generations that are
+  being recorded, queued or sent. A generation that does not fit, or that is
+  larger than 16 MiB, is dropped.
+- One background task sends a batch at 1 MiB or after 100 ms. Each post has a
+  5-second timeout. A failed post is retried once, then dropped.
+- On SIGTERM, queued generations are sent after the open streams finish, for at
+  most 15 seconds.
+
+Capture never delays or fails a customer request.
+
 ## Failure behavior
 
 | Failure                     | Behavior                                                                                                                                    |
@@ -54,6 +75,7 @@ are not supported.
 | Upstream stream goes silent | The stream fails at the idle deadline and the upstream connection closes.                                                                   |
 | Customer disconnects        | The upstream connection closes, which cancels the provider call or the hosted generation.                                                   |
 | SIGTERM                     | Readiness fails, the listener closes, and open streams run to the total deadline.                                                           |
+| Collector unavailable       | Captured generations are dropped and counted. Customer requests are not affected.                                                           |
 
 ## Configuration
 
@@ -82,22 +104,28 @@ are not supported.
 | `PROXY_IDLE_SECONDS`                  | total                       | Largest gap between response chunks                   |
 | `PROXY_TOTAL_SECONDS`                 | `630`                       | Whole exchange, and the drain window                  |
 | `PROXY_BODY_READ_SECONDS`             | `60`                        | Time allowed to receive the request body              |
+| `PROXY_COLLECTOR_URL`                 | unset                       | Collector intake URL; unset turns capture off         |
+| `PROXY_COLLECTOR_TOKEN`               | unset                       | Collector bearer token; required with the URL         |
+| `PROXY_CAPTURE_BUFFER_BYTES`          | `268435456`                 | Bytes held across all captured generations            |
+
+The collector secret must be provisioned before deploying a proxy with capture configured. The capture byte budget includes queued record overhead and task, trace, session, path and content-type strings.
 
 ## Metrics
 
 The admin port serves Prometheus metrics with the `gradiated_proxy_` prefix. Labels are
 fixed values; keys, tenants and model names never appear.
 
-| Metric                                           | Labels                                                              |
-| ------------------------------------------------ | ------------------------------------------------------------------- |
-| `gradiated_proxy_service_info`                   |                                                                     |
-| `gradiated_proxy_requests_total`                 | `destination` (`gateway`, `anthropic`, `openai`, `local`), `status` |
-| `gradiated_proxy_upstream_header_seconds`        | `destination`                                                       |
-| `gradiated_proxy_in_flight`                      | `destination`                                                       |
-| `gradiated_proxy_identity_lookups_total`         | `result` (`fresh`, `loaded`, `stale`, `not_found`, `unavailable`)   |
-| `gradiated_proxy_identity_queries_total`         |                                                                     |
-| `gradiated_proxy_catalog_age_seconds`            |                                                                     |
-| `gradiated_proxy_catalog_refresh_failures_total` |                                                                     |
+| Metric                                           | Labels                                                                       |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `gradiated_proxy_service_info`                   |                                                                              |
+| `gradiated_proxy_requests_total`                 | `destination` (`gateway`, `anthropic`, `openai`, `local`), `status`          |
+| `gradiated_proxy_upstream_header_seconds`        | `destination`                                                                |
+| `gradiated_proxy_in_flight`                      | `destination`                                                                |
+| `gradiated_proxy_identity_lookups_total`         | `result` (`fresh`, `loaded`, `stale`, `not_found`, `unavailable`)            |
+| `gradiated_proxy_identity_queries_total`         |                                                                              |
+| `gradiated_proxy_catalog_age_seconds`            |                                                                              |
+| `gradiated_proxy_catalog_refresh_failures_total` |                                                                              |
+| `gradiated_proxy_captures_total`                 | `result` (`sent`, `full`, `too_large`, `closed`, `collector`, `unsupported`) |
 
 ## Tests
 
@@ -124,8 +152,9 @@ connection failures.
 | `test/e2e/capacity.test.ts`          | In-flight cap, body limit and byte budget                                    |
 | `test/e2e/lifecycle.test.ts`         | Cancellation through both hops and draining on SIGTERM                       |
 | `test/e2e/operations.test.ts`        | Kill switch, metrics and logs                                                |
+| `test/e2e/capture.test.ts`           | Relayed generations reaching the collector, a hung collector, SIGTERM drain  |
 | `test/e2e/thread-continuity.test.ts` | What our model returns, and provider history arriving at our model           |
 | `test/e2e/sdk/*.test.ts`             | One file for each official SDK, with only the base URL changed               |
-| `test/e2e/support/`                  | Mock provider, TCP link, proxy process, fixtures and wire bodies             |
+| `test/e2e/support/`                  | Mock provider and collector, TCP link, proxy process, fixtures, wire bodies  |
 
 Proxy logs are written to `<repository>/.agents/runtime/proxy-e2e/`.

@@ -27,7 +27,7 @@ tokio-postgres = { version = "0.7.15", features = ["with-uuid-1", "with-chrono-0
 tokio-postgres-rustls = { version = "0.14.0", default-features = false, features = ["aws-lc-rs"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "json"] }
-uuid = { version = "1.16.0", features = ["v7"] }
+uuid = { version = "1.16.0", features = ["serde", "v7"] }
 
 [dev-dependencies]
 tower = { version = "0.5.2", features = ["util"] }

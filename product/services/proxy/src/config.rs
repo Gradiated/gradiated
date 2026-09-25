@@ -3,7 +3,7 @@ use std::{net::IpAddr, net::SocketAddr, time::Duration};
 use axum::http::Uri;
 use serde::Deserialize;
 
-use crate::identity::IdentitySettings;
+use crate::{capture::CaptureSettings, identity::IdentitySettings};
 
 #[derive(Clone, Debug)]
 pub struct ProxyConfig {
@@ -18,6 +18,7 @@ pub struct ProxyConfig {
     pub identity: IdentitySettings,
     pub catalog_refresh: Duration,
     pub limits: Limits,
+    pub capture: Option<CaptureSettings>,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -50,6 +51,10 @@ pub enum ConfigError {
     Zero(&'static str),
     #[error("{0} must not exceed {1}")]
     Exceeds(&'static str, &'static str),
+    #[error("PROXY_COLLECTOR_URL and PROXY_COLLECTOR_TOKEN must be set together")]
+    CollectorPair,
+    #[error("PROXY_COLLECTOR_URL must be an HTTP or HTTPS URL")]
+    CollectorUrl,
 }
 
 #[derive(Deserialize)]
@@ -98,6 +103,11 @@ struct Environment {
     proxy_total_seconds: u64,
     #[serde(default = "default_body_read_seconds")]
     proxy_body_read_seconds: u64,
+
+    proxy_collector_url: Option<String>,
+    proxy_collector_token: Option<String>,
+    #[serde(default = "default_capture_buffer_bytes")]
+    proxy_capture_buffer_bytes: usize,
 }
 
 impl ProxyConfig {
@@ -187,6 +197,10 @@ impl TryFrom<Environment> for ProxyConfig {
                 environment.proxy_max_request_bytes,
             ),
             ("PROXY_MAX_IN_FLIGHT", environment.proxy_max_in_flight),
+            (
+                "PROXY_CAPTURE_BUFFER_BYTES",
+                environment.proxy_capture_buffer_bytes,
+            ),
         ] {
             if value == 0 {
                 return Err(ConfigError::Zero(name));
@@ -200,13 +214,44 @@ impl TryFrom<Environment> for ProxyConfig {
             ));
         }
 
-        // The semaphore that enforces the buffer counts bytes as permits.
-        if environment.proxy_request_buffer_bytes > tokio::sync::Semaphore::MAX_PERMITS {
-            return Err(ConfigError::Exceeds(
+        // The semaphores that enforce these buffers count bytes as permits.
+        for (name, value) in [
+            (
                 "PROXY_REQUEST_BUFFER_BYTES",
-                "the semaphore permit limit",
-            ));
+                environment.proxy_request_buffer_bytes,
+            ),
+            (
+                "PROXY_CAPTURE_BUFFER_BYTES",
+                environment.proxy_capture_buffer_bytes,
+            ),
+        ] {
+            if value > tokio::sync::Semaphore::MAX_PERMITS {
+                return Err(ConfigError::Exceeds(name, "the semaphore permit limit"));
+            }
         }
+
+        let capture = match (
+            environment.proxy_collector_url,
+            environment.proxy_collector_token,
+        ) {
+            (None, None) => None,
+            (Some(collector_url), Some(collector_token)) => {
+                let scheme = collector_url
+                    .parse::<Uri>()
+                    .ok()
+                    .and_then(|uri| uri.scheme_str().map(str::to_owned));
+                if !matches!(scheme.as_deref(), Some("http" | "https")) {
+                    return Err(ConfigError::CollectorUrl);
+                }
+
+                Some(CaptureSettings {
+                    collector_url,
+                    collector_token,
+                    buffer_bytes: environment.proxy_capture_buffer_bytes,
+                })
+            }
+            _ => return Err(ConfigError::CollectorPair),
+        };
 
         for (name, value) in [
             ("PROXY_GATEWAY_HEADER_SECONDS", gateway_header_seconds),
@@ -256,6 +301,7 @@ impl TryFrom<Environment> for ProxyConfig {
                     total,
                 },
             },
+            capture,
         })
     }
 }
@@ -342,6 +388,10 @@ fn default_max_in_flight() -> usize {
     4_000
 }
 
+fn default_capture_buffer_bytes() -> usize {
+    256 * 1024 * 1024
+}
+
 fn default_gateway_connect_seconds() -> u64 {
     2
 }
@@ -399,6 +449,26 @@ mod tests {
         assert_eq!(config.limits.gateway.headers, Duration::from_secs(630));
         assert_eq!(config.limits.max_request_bytes, 32_000_000);
         assert_eq!(config.limits.body_read, Duration::from_secs(60));
+        assert!(config.capture.is_none());
+    }
+
+    #[test]
+    fn capture_needs_a_collector_url_and_token() {
+        let url = ("PROXY_COLLECTOR_URL", "http://collector:3004/v1/contents");
+        let token = ("PROXY_COLLECTOR_TOKEN", "secret");
+
+        let capture = config(&[url, token]).unwrap().capture.unwrap();
+        assert_eq!(capture.collector_url, url.1);
+        assert_eq!(capture.buffer_bytes, 256 * 1024 * 1024);
+
+        for overrides in [
+            &[url][..],
+            &[token][..],
+            &[("PROXY_COLLECTOR_URL", "collector:3004"), token][..],
+            &[url, token, ("PROXY_CAPTURE_BUFFER_BYTES", "0")][..],
+        ] {
+            assert!(config(overrides).is_err(), "{overrides:?}");
+        }
     }
 
     #[test]

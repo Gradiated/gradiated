@@ -135,6 +135,8 @@ export const createWorkspaceApiKeyService = (
         organizationId,
         name: input.name,
         isDefault: false,
+        traceCaptureEnabled: false,
+        traceRetentionDays: 30,
         archivedAt: null,
         createdAt: now,
         updatedAt: now,

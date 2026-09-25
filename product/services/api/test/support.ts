@@ -54,6 +54,8 @@ export const workspaceRecord: WorkspaceRecord = {
   organizationId,
   name: "Default",
   isDefault: true,
+  traceCaptureEnabled: false,
+  traceRetentionDays: 30,
   archivedAt: null,
   createdAt: now,
   updatedAt: now,

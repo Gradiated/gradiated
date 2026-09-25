@@ -23,6 +23,8 @@ pub struct Identity {
     pub api_key_id: Uuid,
     pub organization_id: Uuid,
     pub workspace_id: Uuid,
+    pub trace_capture_enabled: bool,
+    pub trace_retention_days: i16,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, thiserror::Error)]
@@ -196,6 +198,8 @@ fn evaluate(record: IdentityRecord, now: DateTime<Utc>) -> Result<Identity, Deni
         api_key_id: record.api_key_id,
         organization_id: record.organization_id,
         workspace_id: record.workspace_id,
+        trace_capture_enabled: record.trace_capture_enabled,
+        trace_retention_days: record.trace_retention_days,
     })
 }
 
@@ -253,6 +257,8 @@ mod tests {
             revoked_at: None,
             workspace_archived: false,
             organization_active: true,
+            trace_capture_enabled: false,
+            trace_retention_days: 30,
         }
     }
 

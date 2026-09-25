@@ -104,20 +104,28 @@ describe("relay authorization", () => {
   });
 
   it("shares one database lookup across a burst for one key", async () => {
+    const proxy = await fixture.startProxy({
+      PROXY_IDENTITY_FRESH_SECONDS: "60",
+    });
     const instance = await makeCase("vllm");
-    const queriesBefore = await fixture.proxy.count(
+    const queriesBefore = await proxy.count(
       "gradiated_proxy_identity_queries_total",
     );
 
     const responses = await Promise.all(
-      Array.from({ length: 20 }, () => relay(instance)),
+      Array.from({ length: 20 }, () =>
+        proxy.client.post(MESSAGES.path, {
+          headers: relayHeaders(instance, "anthropic"),
+          json: MESSAGES.body(providerModel("anthropic")),
+        }),
+      ),
     );
 
     expect(responses.map((response) => response.status)).toEqual(
       Array(20).fill(200),
     );
-    expect(
-      await fixture.proxy.count("gradiated_proxy_identity_queries_total"),
-    ).toBe(queriesBefore + 1);
+    expect(await proxy.count("gradiated_proxy_identity_queries_total")).toBe(
+      queriesBefore + 1,
+    );
   });
 });

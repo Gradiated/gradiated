@@ -50,6 +50,13 @@
       "when": 1789484432763,
       "tag": "0006_typical_ricochet",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790334936005,
+      "tag": "0007_misty_toro",
+      "breakpoints": true
     }
   ]
 }

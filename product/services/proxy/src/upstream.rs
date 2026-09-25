@@ -18,6 +18,7 @@ use tokio::{
 };
 
 use crate::{
+    capture::{Outcome, Recording},
     config::{Deadlines, Limits},
     credentials::{self, Provider, ProviderKey, X_API_KEY},
     metrics::{Destination, InFlight, Metrics},
@@ -254,6 +255,7 @@ impl Upstreams {
                 idle: deadlines.idle,
                 idle_timer: Box::pin(tokio::time::sleep(deadlines.idle)),
                 destination,
+                recording: None,
                 _admission: admission,
                 _in_flight: in_flight,
             },
@@ -300,8 +302,21 @@ pub struct UpstreamBody {
     idle: Duration,
     idle_timer: Pin<Box<Sleep>>,
     destination: Destination,
+    recording: Option<Recording>,
     _admission: Admission,
     _in_flight: InFlight,
+}
+
+impl UpstreamBody {
+    pub fn record(&mut self, recording: Recording) {
+        self.recording = Some(recording);
+    }
+
+    fn finish(&mut self, outcome: Outcome) {
+        if let Some(recording) = &mut self.recording {
+            recording.finish(outcome);
+        }
+    }
 }
 
 impl Stream for UpstreamBody {
@@ -312,12 +327,19 @@ impl Stream for UpstreamBody {
             Poll::Ready(Some(Ok(chunk))) => {
                 let deadline = tokio::time::Instant::now() + self.idle;
                 self.idle_timer.as_mut().reset(deadline);
+                if let Some(recording) = &mut self.recording {
+                    recording.observe(&chunk);
+                }
                 Poll::Ready(Some(Ok(chunk)))
             }
             Poll::Ready(Some(Err(error))) => {
+                self.finish(Outcome::Error);
                 Poll::Ready(Some(Err(failed(self.destination, "body", &error))))
             }
-            Poll::Ready(None) => Poll::Ready(None),
+            Poll::Ready(None) => {
+                self.finish(Outcome::Complete);
+                Poll::Ready(None)
+            }
             Poll::Pending => match self.idle_timer.as_mut().poll(context) {
                 Poll::Ready(()) => {
                     tracing::debug!(
@@ -325,6 +347,7 @@ impl Stream for UpstreamBody {
                         error_code = "idle_timeout",
                         "upstream failed"
                     );
+                    self.finish(Outcome::Error);
                     Poll::Ready(Some(Err(UpstreamError::Timeout)))
                 }
                 Poll::Pending => Poll::Pending,

@@ -20,6 +20,8 @@ pub struct IdentityRecord {
     pub revoked_at: Option<DateTime<Utc>>,
     pub workspace_archived: bool,
     pub organization_active: bool,
+    pub trace_capture_enabled: bool,
+    pub trace_retention_days: i16,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, thiserror::Error)]
@@ -44,7 +46,9 @@ select
     api_keys.expires_at,
     api_keys.revoked_at,
     workspaces.archived_at is not null,
-    organizations.status = 'active'
+    organizations.status = 'active',
+    workspaces.trace_capture_enabled,
+    workspaces.trace_retention_days
 from api_keys
 join workspaces
   on workspaces.organization_id = api_keys.organization_id
@@ -143,6 +147,8 @@ impl Directory for PostgresDirectory {
                 revoked_at: row.try_get(4)?,
                 workspace_archived: row.try_get(5)?,
                 organization_active: row.try_get(6)?,
+                trace_capture_enabled: row.try_get(7)?,
+                trace_retention_days: row.try_get(8)?,
             })
         })()
         .map_err(|error| {

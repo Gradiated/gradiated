@@ -17,17 +17,21 @@ use http_body_util::BodyExt;
 use uuid::Uuid;
 
 use crate::{
+    capture::{Capture, Relay},
     catalog::HostedCatalog,
     config::Limits,
     credentials::{self, Credentials, Provider},
     error::{Protocol, ProxyError},
-    identity::IdentityCache,
+    identity::{Identity, IdentityCache},
     metrics::{Destination, Metrics},
     target,
     upstream::{gateway_headers, provider_headers, Admission, UpstreamResponse, Upstreams},
 };
 
 const GENERATION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-generation-id");
+const TASK_HEADER: HeaderName = HeaderName::from_static("x-gradiated-task");
+const TRACE_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-trace-id");
+const SESSION_ID_HEADER: HeaderName = HeaderName::from_static("x-gradiated-session-id");
 
 #[derive(Clone)]
 pub struct AppState {
@@ -35,6 +39,7 @@ pub struct AppState {
     pub identity: IdentityCache,
     pub upstreams: Upstreams,
     pub metrics: Metrics,
+    pub capture: Capture,
     pub relay_enabled: bool,
     pub draining: Arc<AtomicBool>,
 }
@@ -275,18 +280,37 @@ async fn relay(
     let headers = provider_headers(&parts.headers, &provider_key)
         .map_err(|error| ProxyError::from_upstream(error, false))?;
 
-    let response = state
+    let path = provider_path(parts);
+
+    let mut response = state
         .upstreams
         .to_provider(
             provider_key.provider,
             parts.method.clone(),
-            &provider_path(parts),
+            &path,
             headers,
-            body,
+            body.clone(),
             admission,
         )
         .await
         .map_err(|error| ProxyError::from_upstream(error, false))?;
+
+    if let Some(relay) = captured(
+        &identity,
+        parts,
+        generation_id,
+        provider_key.provider,
+        path,
+        body,
+    ) {
+        if let Some(recording) =
+            state
+                .capture
+                .record(relay, response.status.as_u16(), &response.headers)
+        {
+            response.body.record(recording);
+        }
+    }
 
     tracing::info!(
         %generation_id,
@@ -300,4 +324,38 @@ async fn relay(
     );
 
     Ok(response)
+}
+
+fn captured(
+    identity: &Identity,
+    parts: &Parts,
+    generation_id: Uuid,
+    provider: Provider,
+    path: String,
+    request: Bytes,
+) -> Option<Relay> {
+    if !identity.trace_capture_enabled {
+        return None;
+    }
+
+    let header = |name: &HeaderName| {
+        parts
+            .headers
+            .get(name)
+            .and_then(|value| value.to_str().ok())
+            .filter(|value| !value.is_empty())
+            .map(str::to_owned)
+    };
+
+    Some(Relay {
+        generation_id,
+        workspace_id: identity.workspace_id,
+        task: header(&TASK_HEADER)?,
+        trace_id: header(&TRACE_ID_HEADER),
+        session_id: header(&SESSION_ID_HEADER),
+        provider,
+        path,
+        retention_days: identity.trace_retention_days,
+        request,
+    })
 }

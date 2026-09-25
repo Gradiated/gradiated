@@ -253,6 +253,16 @@ def main():
         scenario('public load balancer: ' + name, inputs, alb_errors if fires else None,
                  [alb_errors], eval_time=eval_time)
 
+    for result in ['full', 'too_large', 'closed', 'collector', 'unsupported', 'sent']:
+        alert = 'ProxyCaptureDrops'
+        inputs = [{'series': f'gradiated_proxy_captures_total{{result="{result}"}}',
+                   'values': '0+1x30'}]
+        scenario('capture drops: ' + result, inputs, alert if result != 'sent' else None,
+                 [alert], eval_time='2m')
+    scenario('capture drops: isolated event',
+             [{'series': 'gradiated_proxy_captures_total{result="collector"}',
+               'values': '0+0x5 1+0x25'}], None, ['ProxyCaptureDrops'], eval_time='5m')
+
     proxy_errors = 'ProxyHighErrorRate'
     for name, failed, ok, destination, fires in [
         ('3% gateway failures', 9, 291, 'gateway', True),

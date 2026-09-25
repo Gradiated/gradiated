@@ -140,6 +140,8 @@ HTTP from the proxy, the gateway and the API.
 - **Streams**: one open batch per workspace, task, UTC hour of the generation
   identifier, retention and trainability. A generation always lands in its own
   hour's prefix, and a batch has one retention and one trainability.
+- **Manifest bounds**: metadata is capped at 64 KiB per generation. A batch also
+  seals before its manifest reaches 8 MiB, even when its records compress well.
 - **Batches**: each accepted generation is compressed as one zstd frame and
   appended to the stream's open batch, a file on local disk, before the
   collector returns 202. The same bytes become the uploaded batch. An hour

@@ -608,3 +608,41 @@ async fn a_batch_refusal_keeps_earlier_accepted_lines() {
     assert_eq!(value["generations"].as_array().unwrap().len(), 1);
     assert_eq!(fs::read_dir(data_dir.path()).unwrap().count(), 0);
 }
+
+#[tokio::test]
+async fn compressible_metadata_seals_before_manifests_exceed_the_read_budget() {
+    let mut config = limits();
+    config.max_batch_age = Duration::from_secs(60);
+    config.max_batch_bytes = 16 * 1024 * 1024;
+    let running = start(config);
+    for _ in 0..150 {
+        let body = with_fields(
+            &record(Uuid::now_v7(), "metadata"),
+            serde_json::json!({"session_id": "x".repeat(60_000)}),
+        );
+        assert_eq!(post(&running, TOKEN, body).await, StatusCode::ACCEPTED);
+    }
+    running.collector.state.spool.close();
+    let found = manifests(&running, 2).await;
+    assert_eq!(found.len(), 2);
+    assert_eq!(
+        found
+            .iter()
+            .map(|(_, manifest)| manifest["generations"].as_array().unwrap().len())
+            .sum::<usize>(),
+        150
+    );
+    for (_, manifest) in found {
+        assert!(serde_json::to_vec(&manifest).unwrap().len() <= 8 * 1024 * 1024);
+    }
+}
+
+#[tokio::test]
+async fn oversized_metadata_is_rejected_without_spooling() {
+    let running = start(limits());
+    let body = with_fields(
+        &record(Uuid::now_v7(), "metadata"),
+        serde_json::json!({"session_id": "x".repeat(65_536)}),
+    );
+    assert_eq!(post(&running, TOKEN, body).await, StatusCode::BAD_REQUEST);
+}

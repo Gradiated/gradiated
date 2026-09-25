@@ -24,6 +24,8 @@ pub enum RecordError {
     Source,
     #[error("hosted generations are trainable and relayed generations are not")]
     Trainable,
+    #[error("generation metadata must be at most 64 KiB")]
+    Metadata,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -91,11 +93,22 @@ impl GenerationContent {
             return Err(RecordError::Retention);
         }
 
+        if header.manifest_bytes() > 65_536 {
+            return Err(RecordError::Metadata);
+        }
+
         match (header.source.as_str(), header.trainable) {
             ("hosted", true) | ("relay", false) | ("import", _) => Ok(header),
             ("hosted" | "relay", _) => Err(RecordError::Trainable),
             _ => Err(RecordError::Source),
         }
+    }
+
+    pub fn manifest_bytes(&self) -> usize {
+        serde_json::to_vec(self)
+            .expect("generation metadata is JSON")
+            .len()
+            + 64
     }
 
     pub fn stream_key(&self) -> Option<StreamKey> {

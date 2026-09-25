@@ -20,6 +20,11 @@ be 30, 90 or 180, and `trainable` must be `true` for `hosted` and `false` for
 | 413    | The body is larger than `COLLECTOR_MAX_RECORD_BYTES`.                                   |
 | 503    | The disk budget is full or the collector is shutting down. The sender drops the record. |
 
+Generation metadata (all fields copied into manifests) is capped at 64 KiB per
+record. Batches also seal before their manifest reaches 8 MiB, independently of
+compressed batch size. This bounds uploader memory and keeps manifest reads
+within the API budget. Raw request/response bodies retain the existing limit.
+
 The admin port serves `/health/live`, `/health/ready` and `/metrics`.
 
 ## Storage

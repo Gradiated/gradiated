@@ -143,7 +143,7 @@ fn write(state: &AppState, body: &[u8]) -> Result<StatusCode, WriteError> {
         return Ok(StatusCode::NO_CONTENT);
     };
     let frame = batch::compress(body).map_err(|error| WriteError::Io(error.to_string()))?;
-    state.spool.append(&key, &frame)?;
+    state.spool.append(&key, &frame, content.manifest_bytes())?;
     state.metrics.accepted();
 
     Ok(StatusCode::ACCEPTED)

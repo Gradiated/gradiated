@@ -16,6 +16,7 @@ const HOUR_FORMAT: &str = "%Y%m%d%H";
 pub struct Batch {
     pub path: PathBuf,
     pub bytes: u64,
+    pub manifest_bytes: usize,
     pub opened: Instant,
     file: File,
 }
@@ -31,6 +32,7 @@ impl Batch {
         Ok(Self {
             path,
             bytes: 0,
+            manifest_bytes: 0,
             opened: Instant::now(),
             file,
         })

@@ -109,7 +109,12 @@ impl Spool {
         Ok((spool, recovered))
     }
 
-    pub fn append(&self, key: &StreamKey, frame: &[u8]) -> Result<(), WriteError> {
+    pub fn append(
+        &self,
+        key: &StreamKey,
+        frame: &[u8],
+        manifest_bytes: usize,
+    ) -> Result<(), WriteError> {
         let length = frame.len() as u64;
         let mut open = self.lock();
 
@@ -122,7 +127,9 @@ impl Spool {
         }
 
         let full = open.streams.get(key).is_some_and(|batch| {
-            batch.bytes > 0 && batch.bytes + length > self.limits.max_batch_bytes
+            batch.bytes > 0
+                && (batch.bytes + length > self.limits.max_batch_bytes
+                    || batch.manifest_bytes + manifest_bytes > 8 * 1024 * 1024 - 128)
         });
         if full {
             self.seal(&mut open, key.clone());
@@ -149,11 +156,14 @@ impl Spool {
             open.streams.insert(key.clone(), batch);
         }
 
-        open.streams
+        let batch = open
+            .streams
             .get_mut(key)
-            .expect("the batch was just opened")
+            .expect("the batch was just opened");
+        batch
             .append(frame)
             .map_err(|error| WriteError::Io(error.to_string()))?;
+        batch.manifest_bytes += manifest_bytes;
         self.backlog.bytes.fetch_add(length, Ordering::AcqRel);
         self.metrics.set_open_streams(open.streams.len());
 

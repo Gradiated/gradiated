@@ -131,13 +131,6 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
   const about = job.foundingContext
     ? [...aboutGradiated.slice(0, -1), job.foundingContext]
     : aboutGradiated;
-  const rolePayAndEquity =
-    job.salaryMin && job.salaryMax
-      ? [
-          `The base salary is £${job.salaryMin.toLocaleString("en-GB")}-£${job.salaryMax.toLocaleString("en-GB")}, with significant equity on top of that.`,
-          ...payAndEquity.slice(1),
-        ]
-      : payAndEquity;
   const sections = [
     { items: about, title: "About Gradiated" },
     { items: job.purpose, title: "Why this role exists" },
@@ -146,7 +139,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
     { items: job.requirements, title: "What we are looking for" },
     { items: job.notFor, title: "This role is not for you if" },
     { items: job.howWeWork ?? howWeWork, title: "How we work" },
-    { items: rolePayAndEquity, title: "Pay and equity" },
+    { items: payAndEquity, title: "Pay and equity" },
     {
       items: job.interviewSteps ?? interviewSteps,
       numbered: true,
@@ -208,7 +201,7 @@ export const JobDetailPage = ({ job }: { job: Job }): ReactElement => {
               </div>
               <div>
                 <dt className="gr-label gr-muted">Compensation</dt>
-                <dd>{job.compensation ?? COMPENSATION}</dd>
+                <dd>{COMPENSATION}</dd>
               </div>
             </dl>
           </div>

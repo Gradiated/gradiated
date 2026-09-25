@@ -1,9 +1,6 @@
 export type Job = {
   slug: string;
   datePosted?: string;
-  compensation?: string;
-  salaryMin?: number;
-  salaryMax?: number;
   foundingContext?: string;
   officeDays?: string;
   howWeWork?: string[];
@@ -23,9 +20,6 @@ export const jobs: Job[] = [
   {
     slug: "engineer-journalist",
     datePosted: "2026-09-11",
-    compensation: "£130,000-£160,000 base + significant equity",
-    salaryMin: 130000,
-    salaryMax: 160000,
     foundingContext:
       "We are early. Be the founding content and marketing person in the company.",
     officeDays: "Several days a week",

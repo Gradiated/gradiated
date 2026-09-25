@@ -20,7 +20,7 @@ export const howWeWork = [
 ];
 
 export const payAndEquity = [
-  "The base salary is £240,000-£420,000, with significant equity on top of that.",
+  "We offer top-of-market compensation, with significant equity.",
   "We pay at the top of the market because talent density is what allows us to build the most efficient inference. We want a small team of exceptional people who have fun solving hard problems together.",
 ];
 
@@ -32,7 +32,7 @@ export const interviewSteps = [
 ];
 
 /** The facts every posting states, in the order the page states them. */
-export const COMPENSATION = "£240,000-£420,000 base + significant equity";
+export const COMPENSATION = "Top-of-market compensation + significant equity";
 export const OFFICE_DAYS = "Mon, Wed, Fri";
 
 export const applyHrefFor = (title: string): string =>

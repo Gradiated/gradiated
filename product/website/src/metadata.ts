@@ -325,16 +325,6 @@ export const getStructuredData = (pathname: string): object[] => {
           addressLocality: city.trim(),
         },
       })),
-      baseSalary: {
-        "@type": "MonetaryAmount",
-        currency: "GBP",
-        value: {
-          "@type": "QuantitativeValue",
-          minValue: job.salaryMin ?? 240000,
-          maxValue: job.salaryMax ?? 420000,
-          unitText: "YEAR",
-        },
-      },
       url,
     });
     return data;

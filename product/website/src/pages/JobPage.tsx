@@ -4,6 +4,7 @@ import type { ReactElement, ReactNode } from "react";
 import type { Job } from "../careers";
 import {
   aboutGradiated,
+  COMPENSATION,
   applyHrefFor,
   howWeWork,
   interviewSteps,
@@ -84,7 +85,7 @@ export const JobPage = ({ job }: JobPageProps): ReactElement => {
           <div className="py-6 pl-7 max-site:py-5 max-site:pl-0">
             <dt className="eyebrow">Compensation</dt>
             <dd className="mb-0 ml-0 mt-3 text-[15px] leading-[1.5]">
-              £240,000-£420,000 base + significant equity
+              {COMPENSATION}
             </dd>
           </div>
         </dl>

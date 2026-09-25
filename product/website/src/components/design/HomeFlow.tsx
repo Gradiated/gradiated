@@ -560,12 +560,21 @@ void main() {
      as it passes over them, exactly when it passes over them. */
   vec2 axis = vec2(0.906, 0.423); /* the sheen's 115deg travel direction */
   float sc = dot(d, axis) / (uSize * 1.6);
-  float band = exp(-pow((sc - uBand) * 2.6, 2.0));
-  /* holographic response: silver at rest; under the light, a thin-film
-     tint that varies chip to chip, the way a real wafer catches colour */
+  float x = (sc - uBand) * 2.6;
+  float band = exp(-x * x);
+  /* REAL thin-film interference. Each chip carries an oxide film of its
+     own thickness (the grain); the sweeping light's incidence angle at a
+     chip follows from a source at fixed height passing over it, so the
+     constructive wavelength SHIFTS as the band approaches and leaves --
+     Newton-series colours in motion, not a hue wheel. */
   float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
-  vec3 iri = 0.5 + 0.5 * cos(6.2831 * (sc * 0.8 + grain * 0.25 + uTime * 0.008) + vec3(0.0, 2.094, 4.188));
-  vec3 col = mix(vec3(0.88), iri, 0.12 + 0.62 * band);
+  float dfilm = 300.0 + 250.0 * grain;            /* nm */
+  float cosT = inversesqrt(1.0 + x * x * 0.35);   /* light height ~ band width */
+  float opd = 2.0 * 1.46 * dfilm * cosT;          /* optical path, n(SiO2)=1.46 */
+  vec3 lambda = vec3(630.0, 532.0, 465.0);
+  vec3 film = 0.5 - 0.5 * cos(6.2831 * opd / lambda);
+  /* iridescence lives INSIDE the reflection; off the light it is silicon */
+  vec3 col = mix(vec3(0.55), film * 1.15, band) + 0.33 * band;
   float feather = 1.0 - dn * dn;
   float a = m * feather * (0.17 + 0.6 * band) * uOn;
   gl_FragColor = vec4(col, a);

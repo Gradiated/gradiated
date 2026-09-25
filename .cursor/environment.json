@@ -1,0 +1,14 @@
+{
+  "name": "Gradiated product stack",
+  "user": "ubuntu",
+  "snapshot": "snapshot-20260924-d556b951-f66f-4980-90c7-731eb822dac3",
+  "install": "bash .cursor/cloud-install.sh",
+  "start": "bash .cursor/cloud-start.sh",
+  "terminals": [
+    { "name": "api", "command": "bash .cursor/cloud-service.sh api" },
+    { "name": "worker", "command": "bash .cursor/cloud-service.sh worker" },
+    { "name": "gateway", "command": "bash .cursor/cloud-service.sh gateway" },
+    { "name": "console", "command": "bash .cursor/cloud-service.sh console" },
+    { "name": "seed", "command": "bash .cursor/cloud-service.sh seed" }
+  ]
+}

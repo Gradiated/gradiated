@@ -572,17 +572,21 @@ void main() {
   float band = exp(-x * x * 4.0);
   float wake = smoothstep(front, front - 0.3, dn);
   float pool = exp(-max(dn, 0.0) * 2.4) * uPulse;
-  /* REAL thin-film interference on the wavefront: per-chip oxide
-     thickness, incidence angle from the passing light's geometry --
-     Newton colours that shift as the front crosses each die. */
+  /* REAL thin-film interference on the wavefront. The film is a MATERIAL
+     property: near-uniform thickness with only a slow drift across the
+     wafer (never per-die), so the colour is spatially coherent -- smooth
+     Newton-ring contours around the passing light, neighbours sharing
+     hue. Per-die randomness touches brightness only (die reflectivity),
+     never colour: colour is the light's doing, not the chip's. */
   float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
-  float dfilm = 300.0 + 250.0 * grain;            /* nm */
+  float dfilm = 430.0 + 45.0 * sin(cc.x * 0.0011 + cc.y * 0.0007);  /* nm */
   float cosT = inversesqrt(1.0 + x * x * 0.35);
   float opd = 2.0 * 1.46 * dfilm * cosT;          /* n(SiO2)=1.46 */
   vec3 lambda = vec3(630.0, 532.0, 465.0);
   vec3 film = 0.5 - 0.5 * cos(6.2831 * opd / lambda);
   vec3 col = mix(vec3(0.72), film * 1.15 + 0.3, band);
-  float a = m * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
+  float refl = 0.9 + 0.2 * grain;                 /* die-to-die brightness */
+  float a = m * refl * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
   gl_FragColor = vec4(col, a);
 }`;
       const sh = (type: number, src: string): WebGLShader | null => {

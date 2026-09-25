@@ -7,11 +7,13 @@ import {
   Footer,
   HeroBeamRaw,
   HomeFlow,
+  LoopSection,
   Module,
   Nav,
   Reveal,
   StoryRow,
   Substrate,
+  ValueFold,
 } from "../components/design";
 import { libraryStories } from "../library-stories";
 import "../styles/index.css";
@@ -63,11 +65,6 @@ export const HomePage = (): ReactElement => (
               </Reveal>
             </span>
           </h1>
-          <p className="gr-lede gr-muted gr-home-lede">
-            We turn your traces into an RL environment, build the evals, and
-            post-train an open model automatically. You just change your base
-            URL.
-          </p>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
               Get API Key
@@ -82,10 +79,12 @@ export const HomePage = (): ReactElement => (
       </Module>
     </Band>
 
-    {/* The scroll-scrubbed flow: the frosted panel rises out of the hero,
-        reveals the post-training engine, and lands as the chip in the
-        silicon section. Full-bleed and self-measuring, so it sits outside
-        the Band/Module pair. */}
+    {/* new-homepage-layout: the value proposition streams in on its own
+        fold, the loop fold shows the machine as a live diagram, and the
+        chip fold lands it. All full-bleed and self-measuring, so they sit
+        outside the Band/Module pair. */}
+    <ValueFold />
+    <LoopSection />
     <HomeFlow />
 
     <Band>

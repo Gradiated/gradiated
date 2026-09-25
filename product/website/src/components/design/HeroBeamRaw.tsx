@@ -80,7 +80,7 @@ export const HeroBeamRaw = (): ReactElement => {
 
     /* one glyph per cell, species by intensity */
     const glyph = (x: number, y: number, i: number): void => {
-      ctx.globalAlpha = Math.min(1, i * 1.15);
+      ctx.globalAlpha = Math.min(1, i * 1.15) * 0.5;
       if (i < 0.16) {
         ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5); // dot
       } else if (i < 0.3) {

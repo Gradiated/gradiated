@@ -27,6 +27,8 @@ export { Footer } from "./Footer";
 export { HeroBeam } from "./HeroBeam";
 export { HeroBeamRaw } from "./HeroBeamRaw";
 export { HomeFlow } from "./HomeFlow";
+export { LoopSection } from "./LoopSection";
+export { ValueFold } from "./ValueFold";
 export { FooterBar } from "./FooterBar";
 export { Arrow, ContentsIcon, GridIcon, ListIcon } from "./icons";
 export { ChipStack } from "./ChipStack";

@@ -546,6 +546,8 @@ precision mediump float;
 uniform vec2  uRes;    /* canvas size, device px */
 uniform vec2  uC;      /* chip centre, device px */
 uniform float uSize;   /* chip width, device px */
+uniform float uCell;   /* wafer grid pitch, device px — sized so the dies
+                          match the engine's data-bits exactly */
 uniform float uRing;   /* the reveal: perimeter wavefront progress 0..1 */
 uniform float uPulse;  /* the chip light's slow breath */
 uniform float uOn;
@@ -557,7 +559,7 @@ float sdBox(vec2 q, vec2 b, float r) {
 void main() {
   vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
   vec2 d = p - uC;
-  float cell = uSize / 26.0;
+  float cell = uCell;
   vec2 gpos = d / cell;
   vec2 id = floor(gpos + 0.5);
   vec2 lp = gpos - id;
@@ -630,6 +632,7 @@ void main() {
           res: gl.getUniformLocation(prog, "uRes"),
           c: gl.getUniformLocation(prog, "uC"),
           size: gl.getUniformLocation(prog, "uSize"),
+          cell: gl.getUniformLocation(prog, "uCell"),
           ring: gl.getUniformLocation(prog, "uRing"),
           pulse: gl.getUniformLocation(prog, "uPulse"),
           on: gl.getUniformLocation(prog, "uOn"),
@@ -649,12 +652,17 @@ void main() {
       ctx.lineWidth = 1;
       const N = 42;
       const len = s.h * 1.2;
+      /* the stream pours from the G itself: its PROJECTED position, since
+         the plate is tilted in 3D and the geometric centre is elsewhere */
+      const mb = mark.getBoundingClientRect();
+      const ox = mb.left + mb.width / 2;
+      const oy = mb.top + mb.height / 2;
       for (let i = 0; i < N; i++) {
         const lane = i % 3;
         const ph = (t * 0.14 + i / N) % 1;
         const x =
-          s.cx + (lane - 1) * s.w * 0.09 + Math.sin(ph * 5 + i * 2.4) * s.w * 0.06 * ph;
-        const y = s.cy - ph * len;
+          ox + (lane - 1) * mb.width * 0.28 + Math.sin(ph * 5 + i * 2.4) * s.w * 0.06 * ph;
+        const y = oy - ph * len;
         const inten = (1 - ph) * out.glowA;
         if (inten < 0.05) continue;
         ctx.globalAlpha = Math.min(1, inten * 1.2) * 0.8;
@@ -728,6 +736,12 @@ void main() {
       gl.uniform2f(u.res, glCanvas.width, glCanvas.height);
       gl.uniform2f(u.c, out.s.cx * dpr, out.s.cy * dpr);
       gl.uniform1f(u.size, out.s.w * dpr);
+      /* the engine's bit size, replicated from drawEngine's layout math,
+         so wafer dies and pipeline data-bits are the same chip */
+      const KF = keyStates(W, H).full;
+      const LF = engineLayout(KF, W > 720);
+      const bitF = Math.max(3, ((LF.colW - 44) / (MC - 1)) * 0.42);
+      gl.uniform1f(u.cell, (bitF / 0.56) * dpr);
       /* the reveal wavefront: scrubbed from the hold beat, eased
          identically to the plate's sheen — one light, one event */
       const stE = easeIO(clamp01((out.sheenT - 0.12) / 0.72));

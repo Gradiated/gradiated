@@ -107,11 +107,13 @@
   visibility: visible;
 }
 
-/* south edge: folds under from the bottom of the plate */
+/* south edge: folds under from the bottom of the plate. Inset by the
+   plate's corner radius so the slab spans BETWEEN the rounded corners
+   instead of poking past them. */
 .gr-flow-face--s {
-  left: 0;
+  left: 12px;
   top: 100%;
-  width: 100%;
+  width: calc(100% - 24px);
   transform-origin: 50% 0;
   transform: rotateX(-90deg);
   background: linear-gradient(90deg, #131110, #211f1c 55%, #161412);
@@ -120,8 +122,8 @@
 /* east edge: folds under from the right of the plate */
 .gr-flow-face--e {
   left: 100%;
-  top: 0;
-  height: 100%;
+  top: 12px;
+  height: calc(100% - 24px);
   transform-origin: 0 50%;
   transform: rotateY(90deg);
   background: linear-gradient(180deg, #1c1a18, #100f0d);
@@ -234,7 +236,9 @@
 .gr-flow-block--raw .gr-flow-mark svg path {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.4;
+  /* hairline at SCREEN scale — the viewBox would otherwise multiply it */
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
 }
 
 .gr-flow-block--raw .gr-flow-mark--filled svg path {

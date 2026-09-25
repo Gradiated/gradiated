@@ -205,3 +205,27 @@
     width: auto;
   }
 }
+
+/* ---- RAW-STYLE EXPLORATION ----
+   The chip in the engine's own language: flat ground, ink outline, mono
+   G, no metal, no sheen. Remove with the RAW_STYLE flag in HomeFlow.tsx. */
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-top {
+  background: var(--color-substrate) !important;
+  border-color: color-mix(in srgb, var(--color-text) 70%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.gr-flow-block--raw .gr-flow-mark {
+  color: var(--color-text);
+  filter: none;
+}
+
+.gr-flow-block--raw .gr-flow-sheen {
+  display: none;
+}
+
+.gr-flow-block--raw .gr-flow-face--s,
+.gr-flow-block--raw .gr-flow-face--e {
+  background: var(--color-substrate);
+  border: 1px solid color-mix(in srgb, var(--color-text) 40%, transparent);
+}

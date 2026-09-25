@@ -46,6 +46,12 @@ export const RUNWAY_VH = 700;
 /** Time constant of the damped chase (seconds). The object's weight. */
 const DAMPING_TAU = 0.14;
 
+/** RAW-STYLE EXPLORATION (25 Sep): one aesthetic for the whole page — the
+    engine's ink technical-drawing language. True = flat monochrome dark
+    stage (no metal, no flare, no gradient glow, no interference colour).
+    Flip to false to restore the cinematic rendering. */
+const RAW_STYLE = true;
+
 const FROST_BLUR_MAX = 26;
 const FROST_VEIL_MAX = 0.72;
 
@@ -506,7 +512,7 @@ export const HomeFlow = (): ReactElement => {
        tight and restrained, drawn over the wafer layer so it visibly
        shines onto the dots below. */
     const drawGlow = (t: number, out: TimelineOut): void => {
-      if (out.glowA <= 0.01) return;
+      if (RAW_STYLE || out.glowA <= 0.01) return;
       const { s } = out;
       ctx.save();
       ctx.globalCompositeOperation = "lighter";
@@ -585,6 +591,7 @@ void main() {
   vec3 lambda = vec3(630.0, 532.0, 465.0);
   vec3 film = 0.5 - 0.5 * cos(6.2831 * opd / lambda);
   vec3 col = mix(vec3(0.72), film * 1.15 + 0.3, band);
+  ${RAW_STYLE ? "col = vec3(0.92); /* raw: light is brightness only */" : ""}
   float refl = 0.9 + 0.2 * grain;                 /* die-to-die brightness */
   float a = m * refl * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
   gl_FragColor = vec4(col, a);
@@ -635,7 +642,7 @@ void main() {
        bloom plus chromatically split streaks along the horizontal — drawn
        additively UNDER the plate, so it reads as light escaping its edges. */
     const drawFlare = (out: TimelineOut): void => {
-      if (!out.dark) return;
+      if (RAW_STYLE || !out.dark) return;
       const st = easeIO(clamp01((out.sheenT - 0.12) / 0.72));
       const fi = Math.exp(-Math.pow((st - 0.28) * 3.4, 2)) * (1 - out.glowA);
       if (fi <= 0.015) return;
@@ -960,6 +967,7 @@ void main() {
     let g = reduced ? 1 : 0;
     let lastT = performance.now();
     let raf = 0;
+    block.classList.toggle("gr-flow-block--raw", RAW_STYLE);
     /* Wall-clock moment the engine became visible; the cycle counts from
        here, so a reveal always opens on the capture phase and the layers
        build in order. Cleared when the engine frosts away again. */

@@ -5,7 +5,7 @@ import {
   Arrow,
   Band,
   Footer,
-  HeroBeam,
+  HeroBeamRaw,
   HomeFlow,
   Module,
   Nav,
@@ -44,7 +44,9 @@ export const HomePage = (): ReactElement => (
 
     <Band>
       <Module bleed className="gr-module--fold" index={0}>
-        <HeroBeam />
+        {/* RAW-STYLE EXPLORATION: the colour beam, asciified into the
+            engine's glyph language. Swap back to <HeroBeam /> to restore. */}
+        <HeroBeamRaw />
         <div className="gr-fold-centred">
           {/* `from` carries the word stagger across the two fixed lines — each
               Reveal counts from zero on its own, which would otherwise animate

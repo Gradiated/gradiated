@@ -68,7 +68,10 @@ const keyStates = (
   const vm = Math.min(W, H);
   const wide = W > 720;
   return {
-    chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.34, h: vm * 0.34, r: 10, rx: 0, rz: 0 },
+    /* narrow: the chip rides higher so the board's top edge meets the
+       fold's start — centred, the blueprint began ~200px down the stage
+       and read as dead space after the marquee */
+    chip: { cx: W / 2, cy: H * (wide ? 0.5 : 0.34), w: vm * 0.34, h: vm * 0.34, r: 10, rx: 0, rz: 0 },
     land: { cx: W * (wide ? 0.25 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.32, h: vm * 0.32, r: 10, rx: 58, rz: 45 },
   };
 };

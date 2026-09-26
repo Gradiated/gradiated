@@ -652,7 +652,10 @@
 
 .gr-loop-stack {
   border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
-  border-radius: 4px;
+  /* the page's own radius: the stack's outer corners (top of Production
+     traces, bottom of Post-training) match the cards around it */
+  border-radius: var(--radius);
+  /* no overflow:hidden — the rotated row labels hang outside the left wall */
 }
 
 .gr-loop-row {

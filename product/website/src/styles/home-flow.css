@@ -730,7 +730,7 @@
 
 /* ---- the models marquee ------------------------------------------------ */
 .gr-marquee {
-  padding: 16vh 0 10vh;
+  padding: 16vh 0 22vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -747,7 +747,7 @@
   line-height: 1.2;
   letter-spacing: -0.01em;
   font-weight: 500;
-  margin: 0 auto 48px;
+  margin: 0 auto 84px;
 }
 
 .gr-marquee-lane {

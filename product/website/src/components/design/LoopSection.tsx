@@ -449,6 +449,9 @@ export const LoopSection = (): ReactElement => {
       const dzW = rowLast.x + rowLast.w - 18 - dzX;
       const dieSide = Math.min(R[3].h, dzW) * 0.72;
       const DP = (dieSide * 0.85) / ENGINE.DS;
+      /* the packed square's chip size: at most 55% of the pitch, so the
+         formation reads as a grid of chips, never a fused blob */
+      const dieBit = Math.min(bit, DP * 0.55);
       const dieC: [number, number] = [dzX + dzW / 2, R[3].y + R[3].h / 2];
 
       /* a model icon is CREATED by its arriving data */
@@ -601,13 +604,16 @@ export const LoopSection = (): ReactElement => {
             const [exp_, eyp] = at(R[2], b.ex, b.ey);
             px = lerp(exp_, dieC[0] + b.du * DP, e);
             py = lerp(eyp, dieC[1] + b.dv * DP, e);
+            /* shrink toward the die bit on the way in, so the packed square
+               keeps daylight between its chips instead of fusing to a blob */
+            size = lerp(bit, dieBit, e);
           } else if (T < k6) {
             px = dieC[0] + b.du * DP;
             py = dieC[1] + b.dv * DP;
             const ramp = clamp01((T - k5) / 0.4);
             const w = Math.sin(T * 7 - b.dist * 9);
-            py += w * bit * 0.45 * ramp;
-            size = bit * (1 + 0.12 * Math.max(0, w) * ramp);
+            py += w * dieBit * 0.45 * ramp;
+            size = dieBit * (1 + 0.12 * Math.max(0, w) * ramp);
           } else if (T < k7) {
             /* the formed square crosses the divider and condenses into
                the model icon — the same formation as ever */
@@ -616,7 +622,7 @@ export const LoopSection = (): ReactElement => {
             const e = u * u;
             px = lerp(dieC[0] + b.du * DP, outPt[0] + b.du * DP * 0.14, e);
             py = lerp(dieC[1] + b.dv * DP, outPt[1] + b.dv * DP * 0.14, e);
-            size = bit * (1 - e * 0.6);
+            size = dieBit * (1 - e * 0.6);
             alpha = 1 - e * 0.35;
           } else {
             continue;

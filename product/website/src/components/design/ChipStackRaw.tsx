@@ -174,6 +174,29 @@ const CasingArt = (): ReactElement => {
           <circle {...line} cx={sx} cy={sy} r={3.2} />
         </g>
       ))}
+      {/* the G filled with data bits, as on the homepage chip: a gapped
+          grid of engine bits clipped to the real mark path */}
+      <clipPath id="gr-chipiso-g">
+        <path
+          d={MARK_PATH}
+          transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}
+        />
+      </clipPath>
+      <g clipPath="url(#gr-chipiso-g)">
+        {range(15).map((r) =>
+          range(15).map((c) => (
+            <rect
+              fill="currentColor"
+              fillOpacity={0.9}
+              height={4.5}
+              key={`${r}-${c}`}
+              width={4.5}
+              x={S / 2 - 60 + c * 8}
+              y={S / 2 - 60 + r * 8}
+            />
+          )),
+        )}
+      </g>
       <g transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}>
         <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.9} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       </g>

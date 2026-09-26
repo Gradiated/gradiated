@@ -67,7 +67,7 @@ const keyStates = (
   const wide = W > 720;
   return {
     chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.34, h: vm * 0.34, r: 10, rx: 0, rz: 0 },
-    land: { cx: W * (wide ? 0.34 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.32, h: vm * 0.32, r: 10, rx: 58, rz: 45 },
+    land: { cx: W * (wide ? 0.25 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.32, h: vm * 0.32, r: 10, rx: 58, rz: 45 },
   };
 };
 

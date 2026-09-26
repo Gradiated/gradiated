@@ -4500,9 +4500,9 @@
     aspect-ratio: 1 / 1;
     /* one inset, all four sides */
     padding: 24px;
-    /* title and button gather toward the centre rather than hugging the
-       card's edges */
-    justify-content: space-around;
+    /* one centred cluster: the pair sits together mid-card */
+    justify-content: center;
+    gap: 28px;
   }
 
   .gr-home-cta-br {

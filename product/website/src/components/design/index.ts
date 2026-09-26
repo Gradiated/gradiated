@@ -28,6 +28,7 @@ export { HeroBeam } from "./HeroBeam";
 export { HeroBeamRaw } from "./HeroBeamRaw";
 export { HomeFlow } from "./HomeFlow";
 export { LoopSection } from "./LoopSection";
+export { ModelMarquee } from "./ModelMarquee";
 export { ValueFold } from "./ValueFold";
 export { FooterBar } from "./FooterBar";
 export { Arrow, ContentsIcon, GridIcon, ListIcon } from "./icons";

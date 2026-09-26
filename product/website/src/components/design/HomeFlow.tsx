@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
+import { Link } from "react-router-dom";
+import { Arrow } from "./icons";
 import { Logo } from "./Logo";
 
 /**
@@ -711,6 +713,10 @@ export const HomeFlow = (): ReactElement => {
             be the most efficient, configurable, and reliable place to run
             inference for those base model families.
           </p>
+          <Link className="gr-button gr-button--main gr-flow-cta" to="/careers/">
+            Build with us
+            <Arrow />
+          </Link>
         </div>
       </div>
     </div>

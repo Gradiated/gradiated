@@ -448,6 +448,10 @@
   margin-top: 1em;
 }
 
+.gr-flow-cta {
+  margin-top: 36px;
+}
+
 .gr-loop-modelzone {
   position: absolute;
   left: 0;
@@ -722,4 +726,84 @@
   will-change: transform, clip-path, opacity;
   pointer-events: none;
   opacity: 0;
+}
+
+/* ---- the models marquee ------------------------------------------------ */
+.gr-marquee {
+  padding: 16vh 0 10vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gr-marquee-lane {
+  width: 100%;
+}
+
+.gr-marquee-title {
+  text-align: center;
+  font-size: clamp(18px, 1.6vw, 24px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  margin: 0 auto 48px;
+}
+
+.gr-marquee-lane {
+  /* the tiles dissolve at both ends of the lane */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+}
+
+.gr-marquee-track {
+  display: flex;
+  gap: 42px;
+  width: max-content;
+  padding-left: 42px;
+  /* left -> right: start shifted back one copy and walk forward */
+  animation: gr-marquee-drift 46s linear infinite;
+}
+
+@keyframes gr-marquee-drift {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-marquee-track {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* the pillow: a white app-icon squircle */
+.gr-marquee-tile {
+  flex: none;
+  width: 104px;
+  height: 104px;
+  border-radius: 26px;
+  background: var(--color-panel);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 6px 18px -6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gr-marquee-tile span {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.gr-marquee-tile img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
 }

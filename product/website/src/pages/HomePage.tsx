@@ -8,6 +8,7 @@ import {
   HeroBeamRaw,
   HomeFlow,
   LoopSection,
+  ModelMarquee,
   Module,
   Nav,
   Reveal,
@@ -85,6 +86,7 @@ export const HomePage = (): ReactElement => (
         outside the Band/Module pair. */}
     <ValueFold />
     <LoopSection />
+    <ModelMarquee />
     <HomeFlow />
 
     <Band>

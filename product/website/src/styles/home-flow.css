@@ -416,17 +416,26 @@
   margin-top: 1em;
 }
 
-.gr-loop-models {
-  margin-top: auto;
-  position: relative;
+.gr-loop-modelzone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 42%;
+  border-right: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  padding: 14px 20px;
 }
 
 .gr-loop-slots {
-  position: relative;
+  position: absolute;
+  left: 20px;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-42%);
   height: 56px;
   /* older models slide left into the fade */
-  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 130px);
-  mask-image: linear-gradient(to right, transparent 0, #000 130px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 110px);
+  mask-image: linear-gradient(to right, transparent 0, #000 110px);
 }
 
 .gr-loop-slot {
@@ -467,11 +476,6 @@
 }
 
 .gr-loop-models-caption {
-  /* lives in the log's fade zone, clear of icons, wires and version tags */
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
   margin: 0;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;

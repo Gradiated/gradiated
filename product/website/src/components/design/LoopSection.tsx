@@ -226,7 +226,7 @@ export const LoopSection = (): ReactElement => {
   const fieldRef = useRef<HTMLDivElement>(null);
   const urlRef = useRef<HTMLSpanElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
-  const modelsRef = useRef<HTMLDivElement>(null);
+  const modelZoneRef = useRef<HTMLDivElement>(null);
   const slotsWrapRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -237,10 +237,10 @@ export const LoopSection = (): ReactElement => {
     const fieldEl = fieldRef.current;
     const urlEl = urlRef.current;
     const startEl = startRef.current;
-    const modelsEl = modelsRef.current;
+    const modelZone = modelZoneRef.current;
     const slotsWrap = slotsWrapRef.current;
     const rows = rowRefs.current;
-    if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelsEl || !slotsWrap) return;
+    if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelZone || !slotsWrap) return;
     if (rows.some((r) => !r)) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -363,7 +363,10 @@ export const LoopSection = (): ReactElement => {
       const R = rows.map((r) => inset(rel(r as HTMLDivElement), 18, 12));
       const mock = rel(mockEl);
       const field = rel(fieldEl);
-      const models = rel(modelsEl);
+      /* the last row is chambered: models left of the divider, the die in
+         the open right section */
+      const mz = rel(modelZone);
+      const rowLast = rel(rows[3] as HTMLDivElement);
 
       ctx.clearRect(0, 0, W, H);
       ctx.strokeStyle = ink;
@@ -395,9 +398,11 @@ export const LoopSection = (): ReactElement => {
         ny: number,
       ): [number, number] => [r.x + nx * r.w, r.y + ny * r.h];
 
-      const dieSide = Math.min(R[3].h * 0.8, R[3].w * 0.4);
+      const dzX = mz.x + mz.w + 22;
+      const dzW = rowLast.x + rowLast.w - 18 - dzX;
+      const dieSide = Math.min(R[3].h * 0.8, dzW * 0.55);
       const DP = (dieSide * 0.85) / ENGINE.DS;
-      const dieC: [number, number] = [R[3].x + R[3].w / 2, R[3].y + R[3].h / 2];
+      const dieC: [number, number] = [dzX + dzW / 2, R[3].y + R[3].h / 2];
 
       /* a model icon is CREATED by its arriving data */
       const latest = Math.floor((tE - 9.4) / GEN_PERIOD);
@@ -415,31 +420,25 @@ export const LoopSection = (): ReactElement => {
          single file from the models back through the product, into the
          endpoint, and down into production traces — continuously */
       const sA = clamp01((tE - 9.6) / 1.2);
+      const retY = rowLast.y + rowLast.h / 2;
       {
-        /* the return leg: the LIVE model's traffic feeds the product.
+        /* the return leg: model traffic feeds the product. It connects to
+           the LEFT SIDE of the last box and runs up the product's spine.
            Drawn as a static wire always, ridden by bits once shipped. */
-        const wrapR = rel(slotsWrap);
-        const nsx = wrapR.x + wrapR.w - 28;
-        const wy = wrapR.y + wrapR.h + 26;
         ctx.save();
         ctx.globalAlpha = 0.3;
         ctx.beginPath();
-        ctx.moveTo(nsx, wrapR.y + wrapR.h + 6);
-        ctx.lineTo(nsx, wy);
-        ctx.lineTo(mx, wy);
+        ctx.moveTo(rowLast.x, retY);
+        ctx.lineTo(mx, retY);
         ctx.lineTo(mx, mock.y + mock.h);
         ctx.stroke();
         ctx.restore();
       }
       if (sA > 0.01) {
-        const wrapR = rel(slotsWrap);
-        const nsx = wrapR.x + wrapR.w - 28;
-        const wy = wrapR.y + wrapR.h + 26;
         const wires: [number, number][][] = [
           [
-            [nsx, wrapR.y + wrapR.h + 6],
-            [nsx, wy],
-            [mx, wy],
+            [rowLast.x, retY],
+            [mx, retY],
             [mx, mock.y + mock.h],
           ],
         ];
@@ -564,10 +563,9 @@ export const LoopSection = (): ReactElement => {
             if (u >= 1) continue;
             const wire: [number, number][] = [
               [dieC[0] + b.du * DP, dieC[1] + b.dv * DP],
-              [dieC[0] - dieSide * 0.75, dieC[1]],
-              [outPt[0] + 110, dieC[1]],
-              [outPt[0] + 110, outPt[1]],
-              [outPt[0] + 26, outPt[1]],
+              [dieC[0] - dieSide * 0.7, dieC[1]],
+              [outPt[0] + 30, outPt[1]],
+              [outPt[0] + 8, outPt[1]],
             ];
             [px, py] = alongPath(wire, easeIO(u) * 0.2 + u * 0.8);
             size = bit * (1 - u * 0.25);
@@ -653,10 +651,6 @@ export const LoopSection = (): ReactElement => {
               and your production traffic.
             </p>
           </div>
-          <div className="gr-loop-models" ref={modelsRef}>
-            <div className="gr-loop-slots" ref={slotsWrapRef} />
-            <p className="gr-loop-models-caption">Your Gradiated models</p>
-          </div>
         </div>
 
         <div className="gr-loop-right">
@@ -682,6 +676,14 @@ export const LoopSection = (): ReactElement => {
                 }}
               >
                 <span className="gr-loop-rowlabel">{label}</span>
+                {i === 3 && (
+                  <div className="gr-loop-modelzone" ref={modelZoneRef}>
+                    <p className="gr-loop-models-caption">
+                      Your Gradiated models
+                    </p>
+                    <div className="gr-loop-slots" ref={slotsWrapRef} />
+                  </div>
+                )}
               </div>
             ))}
           </div>

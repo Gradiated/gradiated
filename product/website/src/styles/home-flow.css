@@ -675,6 +675,18 @@
   border-top: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
 }
 
+/* Match the chip blueprint's stroke WEIGHT, not just its paint: the board
+   draws at exactly one device pixel, and a CSS 1px border is two of them
+   on a 2x display — twice the ink, which is what reads as jarring in
+   dark. Hairline borders bring the diagrams onto the same pen. */
+@media (min-resolution: 1.5dppx) {
+  .gr-loop-stack,
+  .gr-loop-row + .gr-loop-row,
+  .gr-loop-modelzone {
+    border-width: 0.5px;
+  }
+}
+
 
 .gr-loop-rowlabel {
   position: absolute;

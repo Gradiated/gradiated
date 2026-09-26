@@ -444,3 +444,16 @@
   color: var(--color-text-muted);
   max-width: 62ch;
 }
+
+/* The chip as a copy control: the button keeps the li's stacked layout,
+   and the only cue is the cursor — the label says "copied" when it lands. */
+.gr-chip-copy {
+  display: grid;
+  justify-items: center;
+  gap: calc(0.25 * var(--u));
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}

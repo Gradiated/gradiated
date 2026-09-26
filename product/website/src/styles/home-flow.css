@@ -951,7 +951,13 @@
   top: 1%;
   bottom: 1.15%;
   border-radius: 34px;
-  background: #f6f6f8;
+  /* an iOS-wallpaper wash: three soft colour pools breathing through a
+     near-white ground — quiet enough that the bubbles carry the contrast */
+  background:
+    radial-gradient(120% 90% at 12% 6%, #dbe7ff 0%, transparent 55%),
+    radial-gradient(110% 85% at 92% 16%, #f1e2fd 0%, transparent 55%),
+    radial-gradient(140% 100% at 50% 108%, #dcf2ec 0%, transparent 60%),
+    #f8f9fc;
   overflow: hidden;
   /* the phone's own type: the app speaks iOS, not the site */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",

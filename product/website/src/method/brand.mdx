@@ -1,6 +1,6 @@
 Everything is considered.
 
-Socrates tested claims by questioning their assumptions. We apply the same standard to the brand. Every word, line, color, and interaction should have a reason to exist.
+Every word, line, colour, and interaction should have a reason to exist. The living reference is [the style page](/style/) — components, tokens, and copyable values. This page records the reasoning behind it; where the two disagree, the style page is right.
 
 ## Principles
 
@@ -10,7 +10,7 @@ Lead with the thing that is true or useful. Context follows. Do not hide a preci
 
 ### Go down the stack
 
-Show the reasoning beneath the result. The visual system should suggest depth, construction, revision, and relationships between layers.
+Show the reasoning beneath the result. The visual system should suggest depth, construction, revision, and relationships between layers — all the way down to the silicon.
 
 ### Remove what cannot answer for itself
 
@@ -20,52 +20,38 @@ Decoration needs a purpose. If a word, rule, image, or interaction does not impr
 
 Specifics are more persuasive than superlatives. Use examples, constraints, measurements, and trade-offs wherever possible.
 
-## Color
+## The metaphor
 
-The palette refers to the setting of Plato's Academy without attempting to recreate antiquity. The school stood beside a sacred olive grove and its surviving site is marked by dry earth, pale limestone, paths, and fragments—not monumental white marble. The result is deliberately limited: stone, ink, olive, and earth.
+The language is silicon. The page is a substrate; sections are dies placed on it; hairlines are the traces between them. Diagrams are drawn the way an engineer draws — one pen, exact widths, mono captions — because the product's argument is engineering.
 
-### Academy stone `#E8E2D5`
+## Colour
 
-The principal light ground. Its warmth refers to limestone and sunlit earth, while retaining the quiet character of uncoated paper.
+Colour lives in three layers, and the order matters. The literals — the ramps you can copy from the style page — are written in one place only. Above them sit functional families for universal meanings. Above both sit the roles (`--color-substrate`, `--color-text`, `--color-panel`, …), which are what components actually reference and what themes rebind. A component never names a literal.
 
-### Carbon ink `#1C1B18`
+### The families
 
-The principal text color and dark ground. Near-black is easier on the eye than absolute black and ties the visual system to writing and argument.
+**Taupe** is the ground: warm, papery, unhurried — the substrate everything sits on. **Kiln** is ember and gold, the expressive accent. **Grove** is the deep green of considered growth. **Aegean** is a working blue. **Plum** takes the occasional editorial moment. Two neutral runs — light and dark — carry text, panels, and rules.
 
-### Weathered olive `#72745A`
+### Themes
 
-The principal interaction color, drawn from the olive grove in which the Academy was set. Use it for links, controls, and active states—not decoration.
+Two ship: **Taupe**, the default, and **Dark**. A theme is one construct — `data-theme` on the root themes the page; on a section it themes that section. A reader's choice is stored and respected.
 
-### Attic earth `#9A7449`
+### Gradients
 
-A restrained expressive color drawn from the dry, ochre ground of the Academy site. Use it for diagrams, circuit nodes, numeric output, and selected text.
+Two-stop pairs declared with their angle — Terrace, Ember, Tide, Shallows — one bound per theme. On the homepage, colour gradients are rationed deliberately: the hero's beam carries one, and everything else speaks in ink.
 
-### Pale limestone `#F0ECE2`
+## The drawn line
 
-The principal light color in dark mode. It carries the warmth of the stone ground rather than introducing a clinical white.
-
-### Cut stone `#C9C1B2`
-
-Rules, borders, and inactive controls. It separates information without competing with it.
-
-In dark mode, olive is raised to `#A6A887`, earth to `#C09A68`, and cut stone deepens to `#49463E` to preserve contrast. Supporting surfaces and muted text are derived from the same stone and ink tones.
-
-## Use
-
-Color should communicate state, hierarchy, or interaction. Olive indicates interaction; earth adds emphasis to diagrams and output. Neither should become decoration. Error colors may depart from the palette where convention requires it, but they are functional rather than expressive.
+Diagrams and technical surfaces share one pen: the page's ink at 30%, one device pixel wide. Coincident lines are drawn once. Solid ink is reserved for data — bits, values, marks — so that what the system computes always reads darker than what merely frames it.
 
 ## Typography
 
-Newsreader carries propositions, titles, and moments that need reflection. Libre Franklin carries explanation, navigation, labels, and interfaces. Large type may be quiet; small type must be exact. Avoid unnecessary weights, ornamental italics, and artificial hierarchy.
+**Instrument Sans** carries titles: geometric structure with open letterforms, presence without heaviness. **Barlow** carries body, navigation, and interface: a slightly narrow, low-contrast grotesk balancing warmth and clarity. **JetBrains Mono** carries code and captions: tall x-height, consistent widths, precise alignment. Large type may be quiet; small type must be exact. Avoid unnecessary weights, ornamental italics, and artificial hierarchy.
 
 ## Voice
 
 Write plainly, specifically, and with intellectual confidence. Ask a question only when the product or the next sentence can help answer it. Avoid grand claims, vague philosophy, inflated metaphors, and language that sounds profound without saying anything.
 
-## Artwork
+## Motion
 
-Artwork draws from the Academy as a place of inquiry, not from mythology. Use architecture, human scale, measured construction, worn fresco, vellum, stone, carbon, and evidence of revision. Figures are ordinary thinkers, never gods or heroes. Color remains mineral and sparse: stone and ink first, olive and earth second.
-
-## Interaction
-
-Motion should reveal structure or state. Circuit paths expose the system beneath the surface; hover treatments clarify what can be opened; the theme switch records a considered choice. Interactions should never exist solely to demonstrate cleverness.
+Motion reveals structure or state; it never exists to demonstrate cleverness. Scroll-driven scenes are scrubbed, damped, and reversible — the reader owns the clock, and scrolling back plays the scene backwards. Entrances share one gesture: rise a little, sharpen from blur, settle. Ambient life runs on the wall clock, quietly, so a page at rest is never dead.

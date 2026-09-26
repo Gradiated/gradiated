@@ -400,7 +400,7 @@ export const LoopSection = (): ReactElement => {
 
       const dzX = mz.x + mz.w + 22;
       const dzW = rowLast.x + rowLast.w - 18 - dzX;
-      const dieSide = Math.min(R[3].h * 0.8, dzW * 0.55);
+      const dieSide = Math.min(R[3].h, dzW) * 0.72;
       const DP = (dieSide * 0.85) / ENGINE.DS;
       const dieC: [number, number] = [dzX + dzW / 2, R[3].y + R[3].h / 2];
 

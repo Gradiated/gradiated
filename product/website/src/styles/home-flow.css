@@ -421,7 +421,8 @@
   left: 0;
   top: 0;
   bottom: 0;
-  width: 42%;
+  /* the die chamber is a SQUARE (row-height wide); the models get the rest */
+  width: calc(100% - 168px);
   border-right: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
   padding: 14px 20px;
 }

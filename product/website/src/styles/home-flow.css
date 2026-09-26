@@ -977,7 +977,7 @@
 /* AFTER the base rule in source order, or the base padding wins the tie */
 @media (max-width: 900px) {
   .gr-marquee {
-    padding: 4vh 0 5vh;
+    padding: 4vh 0 2vh;
   }
 }
 

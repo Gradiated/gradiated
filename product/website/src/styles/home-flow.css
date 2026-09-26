@@ -943,13 +943,14 @@
 
 .gr-phone-screen {
   /* measured off the render: screen pixels (26,19)-(1091,2280) of 1122x2303;
-     slightly inset so the image's black screen edge reads as the bezel gap */
+     slightly inset so the image's black screen edge reads as the bezel gap;
+     radius = the render's corner circle (r~175px) at this scale */
   position: absolute;
   left: 2.6%;
   right: 2.9%;
   top: 1%;
   bottom: 1.15%;
-  border-radius: 24px;
+  border-radius: 34px;
   background: #f6f6f8;
   overflow: hidden;
   /* the phone's own type: the app speaks iOS, not the site */

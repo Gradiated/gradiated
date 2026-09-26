@@ -126,7 +126,10 @@ const method: Story[] = methodPages.map((page) => ({
   art: METHOD_ART[page.slug],
   cover: METHOD_COVERS[page.slug],
   excerpt: excerptFor(page.slug),
-  href: `/library/method/${page.slug}/`,
+  /* Brand leads to the living reference, not prose about it: the style
+     page IS the brand documentation. The MDX page stays routed but
+     unlisted (parked). */
+  href: page.slug === "brand" ? "/style/" : `/library/method/${page.slug}/`,
   kind: "method" as const,
   lede: page.indexDescription,
   title: page.title,

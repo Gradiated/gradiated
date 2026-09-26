@@ -43,6 +43,18 @@
   pointer-events: auto;
 }
 
+/* The board bleeds off the stage's bottom edge, which read as a hard cut
+   where the section hands over to Latest News. Feather the last stretch
+   into the page ground so the iso frame dissolves instead of ending. */
+.gr-flow-stage::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 18vh;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--color-substrate));
+}
+
 .gr-flow-field,
 .gr-flow-wafers {
   position: absolute;

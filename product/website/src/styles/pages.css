@@ -4541,8 +4541,50 @@
   }
 }
 
-/* The drawn chip stack is a FLAT diagram: occlusion says which layer is on
-   top, so the photographic version's drop shadows come off. */
-.gr-chipstack--raw .gr-chipstack-layer {
-  filter: none;
+/* -- the isometric chip stack ---------------------------------------------
+   The hardware hero's package, drawn and exploded in the homepage chip
+   fold's own view: rotateX(58) rotateZ(45) on a perspective stage. Each
+   layer is a flat SVG plate; opening separates them along the stack axis,
+   so every layer shows whole rather than as a band. No shadows: it is a
+   diagram, and occlusion plus the explode carry the depth.               */
+.gr-chipiso {
+  width: fit-content;
+  margin-inline: auto;
+  perspective: 1400px;
+  /* room for the projected, exploded stack */
+  padding: 40px 30px 90px;
+}
+
+.gr-chipiso-stage {
+  position: relative;
+  width: min(58vw, 470px);
+  aspect-ratio: 1;
+  transform: rotateX(58deg) rotateZ(45deg);
+  transform-style: preserve-3d;
+}
+
+.gr-chipiso-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text);
+  /* closed: a shallow stack (enough separation that nothing z-fights) */
+  transform: translateZ(calc(var(--z) * 5px));
+  transition: transform 1100ms var(--ease-assemble);
+  /* the chip arrives before it opens (same wait as the photo stack) */
+  transition-delay: calc(
+    var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms +
+      var(--z) * 110ms
+  );
+}
+
+.gr-chipiso--open .gr-chipiso-layer {
+  transform: translateZ(calc(var(--z) * 58px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-chipiso-layer {
+    transition: none;
+  }
 }

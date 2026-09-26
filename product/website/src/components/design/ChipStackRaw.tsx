@@ -149,48 +149,42 @@ const Underfill = (): ReactElement => (
   </g>
 );
 
-/** The lid: plate, die perimeter, corner screws, the G. */
-const Casing = (): ReactElement => {
-  /* the casing plate, centred in the old photo's 900x887 box */
+/** The lid: plate, die perimeter, corner screws, the G. On the layers'
+ * own square box, slightly larger than their plates, so the stack aligns
+ * in the shared isometric stage. */
+const CasingArt = (): ReactElement => {
   const CW = 560;
-  const cx0 = (900 - CW) / 2;
-  const cy0 = (887 - CW) / 2;
+  const c0 = (S - CW) / 2;
   return (
-    <svg
-      aria-label="A Gradiated inference package, drawn as a blueprint."
-      className="gr-chipstack-casing"
-      height={887}
-      role="img"
-      style={{ maxWidth: "100%", height: "auto", color: "var(--color-text)" }}
-      viewBox="0 0 900 887"
-      width={900}
-    >
-      <rect {...plate} height={CW} rx={56} width={CW} x={cx0} y={cy0} />
-      <rect {...line} height={CW - 128} rx={16} width={CW - 128} x={cx0 + 64} y={cy0 + 64} />
+    <g>
+      <rect {...plate} height={CW} rx={56} width={CW} x={c0} y={c0} />
+      <rect {...line} height={CW - 128} rx={16} width={CW - 128} x={c0 + 64} y={c0 + 64} />
       {[
-        [cx0 + 88, cy0 + 88],
-        [cx0 + CW - 88, cy0 + 88],
-        [cx0 + 88, cy0 + CW - 88],
-        [cx0 + CW - 88, cy0 + CW - 88],
+        [c0 + 88, c0 + 88],
+        [c0 + CW - 88, c0 + 88],
+        [c0 + 88, c0 + CW - 88],
+        [c0 + CW - 88, c0 + CW - 88],
       ].map(([sx, sy]) => (
         <g key={`${sx}-${sy}`}>
           <circle {...line} cx={sx} cy={sy} r={9} />
           <circle {...line} cx={sx} cy={sy} r={3.2} />
         </g>
       ))}
-      <g transform={`translate(${450 - 60} ${443.5 - 60}) scale(${120 / 31.7539})`}>
+      <g transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}>
         <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       </g>
-    </svg>
+    </g>
   );
 };
 
+/* bottom of the package first; --z is height in the stack (0 = deepest) */
 const LAYERS = [
   { Art: SolderBalls, name: "solder-balls" },
   { Art: Substrate, name: "substrate" },
   { Art: SiliconDie, name: "silicon-die" },
   { Art: MetalLayer, name: "metal-layer" },
   { Art: Underfill, name: "underfill" },
+  { Art: CasingArt, name: "casing" },
 ] as const;
 
 export const ChipStackRaw = (): ReactElement => {
@@ -206,25 +200,20 @@ export const ChipStackRaw = (): ReactElement => {
   }, []);
 
   return (
-    <div
-      className={`gr-chipstack gr-chipstack--raw${open ? " gr-chipstack--open" : ""}`}
-    >
-      <div className="gr-chipstack-frame">
-        <Casing />
+    <div className={`gr-chipiso${open ? " gr-chipiso--open" : ""}`}>
+      <div className="gr-chipiso-stage">
         {LAYERS.map((layer, index) => (
           <svg
-            aria-hidden
-            className="gr-chipstack-layer"
-            height={S}
-            key={layer.name}
-            style={
-              {
-                "--layer": LAYERS.length - index,
-                color: "var(--color-text)",
-              } as CSSProperties
+            aria-hidden={layer.name !== "casing"}
+            aria-label={
+              layer.name === "casing"
+                ? "A Gradiated inference package, drawn as an exploded blueprint."
+                : undefined
             }
+            className="gr-chipiso-layer"
+            key={layer.name}
+            style={{ "--z": index } as CSSProperties}
             viewBox={`0 0 ${S} ${S}`}
-            width={S}
           >
             <layer.Art />
           </svg>

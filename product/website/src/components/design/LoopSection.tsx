@@ -408,7 +408,7 @@ export const LoopSection = (): ReactElement => {
       const latest = Math.floor((tE - 9.2) / GEN_PERIOD);
       if (latest > filled && latest >= 0) {
         filled = latest;
-        createSlot(latest === 0 ? "1" : `1.${latest}`);
+        createSlot(latest === 0 ? "v1" : `v1.${latest}`);
       }
       /* the newest icon's berth: at the right edge of the log, data
          entering from its right side */

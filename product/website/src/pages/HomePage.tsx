@@ -114,7 +114,7 @@ export const HomePage = (): ReactElement => (
             in restated now the page has made its case. */}
         <div className="gr-home-cta">
           <h2 className="gr-heading gr-home-cta-title">
-            Get your own
+            Get your own{" "}
             <br className="gr-home-cta-br" />
             models today
           </h2>

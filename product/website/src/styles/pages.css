@@ -4242,8 +4242,11 @@
 }
 
 /* The closing card: full width under the news grid, a white panel on the
-   beige page, restating the hero's two ways in. */
+   beige page, restating the hero's two ways in. Drawn as a CHIP: the same
+   inner die perimeter and corner screws the plate in the chip fold wears,
+   in the one 30% ink. */
 .gr-home-cta {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -4252,6 +4255,29 @@
   margin-block-start: calc(2 * var(--u));
   border-radius: var(--radius);
   background-color: var(--color-panel);
+}
+
+.gr-home-cta::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  border-radius: calc(var(--radius) - 6px);
+  color: var(--color-text);
+  opacity: 0.55;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 11px 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at 11px calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px);
+}
+
+/* the same pen as the blueprint: one device pixel on dense displays */
+@media (min-resolution: 1.5dppx) {
+  .gr-home-cta::before {
+    border-width: 0.5px;
+  }
 }
 
 .gr-home-cta-title {

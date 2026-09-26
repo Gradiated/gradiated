@@ -114,7 +114,9 @@ export const HomePage = (): ReactElement => (
             in restated now the page has made its case. */}
         <div className="gr-home-cta">
           <h2 className="gr-heading gr-home-cta-title">
-            Get your own models today
+            Get your own
+            <br className="gr-home-cta-br" />
+            models today
           </h2>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>

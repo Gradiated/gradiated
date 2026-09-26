@@ -645,11 +645,6 @@
 }
 
 /* A link that is moving is a link you have to chase. */
-.gr-marquee:hover .gr-marquee-track,
-.gr-marquee:focus-within .gr-marquee-track {
-  animation-play-state: paused;
-}
-
 .gr-marquee-card {
   width: calc(9 * var(--u));
   flex: none;

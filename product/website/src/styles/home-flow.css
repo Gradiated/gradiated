@@ -449,7 +449,7 @@
 
 .gr-loop-mock {
   position: relative;
-  background: var(--color-panel);
+  background: linear-gradient(#eae1cc, #c2d0d4);
   border-radius: 14px;
   min-height: 400px;
   /* the phone is oversize on purpose; the card crops its lower third */
@@ -460,6 +460,11 @@
   color: var(--color-text-muted);
   font-size: 14px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* dark theme keeps the warm top; the lower stop goes deep teal */
+.gr-root[data-theme="dark"] .gr-loop-mock {
+  background: linear-gradient(#eae1cc, #1a5e6f);
 }
 
 .gr-loop-copy {

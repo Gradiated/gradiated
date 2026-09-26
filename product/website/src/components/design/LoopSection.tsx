@@ -162,9 +162,9 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: 
   passers.forEach((b, rank) => {
     b.dist /= maxD;
     b.rank = rank;
-    /* single file: bits leave the die one after another, forming a
-       continuous line down the wire to the model slot */
-    b.k6 = 8.1 + (rank / Math.max(1, passers.length - 1)) * 0.9;
+    /* near-uniform exit: the die crosses the divider and CONDENSES into
+       the model icon as one object — the data forms the model */
+    b.k6 = 8.4 + 0.1 * b.dist;
   });
 
   return { bits, path, DS, passN: passers.length };
@@ -405,7 +405,7 @@ export const LoopSection = (): ReactElement => {
       const dieC: [number, number] = [dzX + dzW / 2, R[3].y + R[3].h / 2];
 
       /* a model icon is CREATED by its arriving data */
-      const latest = Math.floor((tE - 9.4) / GEN_PERIOD);
+      const latest = Math.floor((tE - 9.2) / GEN_PERIOD);
       if (latest > filled && latest >= 0) {
         filled = latest;
         createSlot(latest === 0 ? "1" : `1.${latest}`);
@@ -471,7 +471,7 @@ export const LoopSection = (): ReactElement => {
           const k4 = 6.15 + 0.2 * d;
           const k5 = 7.0 + 0.2 * d;
           const k6 = b.k6;
-          const k7 = k6 + 1.1;
+          const k7 = k6 + 0.7;
           let px: number;
           let py: number;
           let alpha = 1;
@@ -558,18 +558,15 @@ export const LoopSection = (): ReactElement => {
             py += w * bit * 0.45 * ramp;
             size = bit * (1 + 0.12 * Math.max(0, w) * ramp);
           } else if (T < k7) {
-            /* single file down the wire: die -> join point -> slot */
-            const u = (T - k6) / 1.1;
+            /* the formed square crosses the divider and condenses into
+               the model icon — the same formation as ever */
+            const u = (T - k6) / 0.7;
             if (u >= 1) continue;
-            const wire: [number, number][] = [
-              [dieC[0] + b.du * DP, dieC[1] + b.dv * DP],
-              [dieC[0] - dieSide * 0.7, dieC[1]],
-              [outPt[0] + 30, outPt[1]],
-              [outPt[0] + 8, outPt[1]],
-            ];
-            [px, py] = alongPath(wire, easeIO(u) * 0.2 + u * 0.8);
-            size = bit * (1 - u * 0.25);
-            alpha = 1 - u * 0.2;
+            const e = u * u;
+            px = lerp(dieC[0] + b.du * DP, outPt[0] + b.du * DP * 0.14, e);
+            py = lerp(dieC[1] + b.dv * DP, outPt[1] + b.dv * DP * 0.14, e);
+            size = bit * (1 - e * 0.6);
+            alpha = 1 - e * 0.35;
           } else {
             continue;
           }

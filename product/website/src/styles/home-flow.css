@@ -389,7 +389,6 @@
 .gr-loop-left {
   display: flex;
   flex-direction: column;
-  gap: 48px;
 }
 
 .gr-loop-mock {
@@ -406,10 +405,12 @@
 }
 
 .gr-loop-copy {
-  max-width: 400px;
-  margin-left: clamp(24px, 6%, 90px);
-  font-size: 15px;
-  line-height: 1.55;
+  max-width: 440px;
+  /* centred in the negative space between the product mock and the
+     bottom of the fold */
+  margin: auto 0 auto clamp(24px, 6%, 90px);
+  font-size: 17px;
+  line-height: 1.6;
   color: var(--color-text-muted);
 }
 

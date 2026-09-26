@@ -19,9 +19,10 @@ import { Logo } from "./Logo";
 
 const BEATS = {
   intro: [0.0, 0.16],
-  hold: [0.16, 0.44],
-  land: [0.44, 0.74],
-  siliconRest: [0.74, 1.0],
+  /* just long enough for the reveal wavefront - then straight to iso */
+  hold: [0.16, 0.34],
+  land: [0.34, 0.68],
+  siliconRest: [0.68, 1.0],
 } as const;
 
 /** Runway height in viewport-heights; the scrub's total scroll distance. */
@@ -292,7 +293,7 @@ void main() {
       gl.uniform1f(u.size, out.s.w * dpr);
       gl.uniform1f(u.cell, (bit / 0.56) * dpr);
       gl.uniform1f(u.ring, easeIO(out.holdT));
-      gl.uniform1f(u.pulse, 0.88 + 0.12 * Math.sin(t * 1.1));
+      gl.uniform1f(u.pulse, 1.0); /* no pulse - the field rests still */
       gl.uniform3f(u.ink, inkV[0], inkV[1], inkV[2]);
       gl.uniform1f(u.on, on * out.blockA);
       gl.drawArrays(gl.TRIANGLES, 0, 3);

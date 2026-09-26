@@ -430,6 +430,24 @@
 .gr-flow-copy--silicon {
   width: min(86vw, 480px);
   right: max(4vw, calc((100vw - 1240px) / 2));
+  /* keep the feather's negative z-index inside this block, not behind the
+     board canvas */
+  isolation: isolate;
+}
+
+/* A wash of the page ground behind the copy, feathered well past its edges,
+   so the blueprint fades out under the text instead of running through it. */
+.gr-flow-copy--silicon::before {
+  content: "";
+  position: absolute;
+  inset: -110px -140px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse closest-side,
+    var(--color-substrate) 45%,
+    transparent 100%
+  );
 }
 
 .gr-flow-copy--silicon .gr-heading {

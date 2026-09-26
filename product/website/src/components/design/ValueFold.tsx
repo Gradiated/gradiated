@@ -5,9 +5,8 @@ import type { ReactElement } from "react";
  * The value proposition, on its own fold (new-homepage-layout, fold 2).
  *
  * The hero states the claim; this fold explains the mechanism, and the
- * explanation STREAMS in — each word sharpens from a blur as the reader
- * scrolls, so the sentence is read at the pace it is revealed. Scrubbed,
- * not timed: scrolling back re-blurs it.
+ * explanation STREAMS in — each word sharpens from a blur, autoplaying
+ * once the fold enters view. The base-URL line stands alone at the end.
  */
 
 const SENTENCES = [
@@ -27,21 +26,25 @@ export const ValueFold = (): ReactElement => {
       words.forEach((w) => w.classList.add("gr-value-word--on"));
       return;
     }
-    let raf = 0;
-    const frame = (): void => {
-      raf = requestAnimationFrame(frame);
-      const rect = host.getBoundingClientRect();
-      const span = rect.height - innerHeight;
-      const p = span > 0 ? Math.max(0, Math.min(1, -rect.top / span)) : 1;
-      const n = words.length;
-      words.forEach((w, i) => {
-        /* each word turns on slightly after the previous; the tail of the
-           runway holds the finished sentence */
-        w.classList.toggle("gr-value-word--on", p * (n + 2) > i + 0.5);
-      });
+    let played = false;
+    const timers: number[] = [];
+    const seen = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting || played) return;
+        played = true;
+        words.forEach((w, i) => {
+          timers.push(
+            window.setTimeout(() => w.classList.add("gr-value-word--on"), 300 + i * 85),
+          );
+        });
+      },
+      { threshold: 0.55 },
+    );
+    seen.observe(host);
+    return () => {
+      seen.disconnect();
+      timers.forEach(clearTimeout);
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
   }, []);
 
   return (

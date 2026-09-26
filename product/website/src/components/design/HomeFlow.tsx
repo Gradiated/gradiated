@@ -229,11 +229,10 @@ void main() {
   float pool = exp(-max(dn, 0.0) * 2.4) * uPulse;
   float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
   float refl = 0.9 + 0.2 * grain;
-  /* gold wafer: a deep bronze shadow tone at rest, the bright kiln gold
-     where the light lives */
-  vec3 deep = uGold * vec3(0.62, 0.5, 0.34);
-  vec3 col = mix(deep, uGold * 1.05, 0.3 + 0.55 * band + 0.15 * grain);
-  float a = m * refl * (0.12 + 0.55 * band + wake * pool * 0.65) * uOn;
+  /* gold wafer, quiet: pale gilt at rest, warming where the light lives */
+  vec3 deep = uGold * vec3(0.82, 0.74, 0.6);
+  vec3 col = mix(deep, uGold, 0.25 + 0.55 * band + 0.1 * grain);
+  float a = m * refl * (0.06 + 0.4 * band + wake * pool * 0.38) * uOn;
   gl_FragColor = vec4(col, a);
 }`;
       const sh = (type: number, src: string): WebGLShader | null => {

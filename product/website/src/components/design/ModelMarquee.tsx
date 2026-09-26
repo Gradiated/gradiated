@@ -8,14 +8,14 @@ import type { ReactElement } from "react";
  */
 
 const MODELS: { name: string; src?: string }[] = [
-  { name: "Llama" },
-  { name: "Qwen" },
-  { name: "DeepSeek" },
-  { name: "Mistral" },
-  { name: "Gemma" },
-  { name: "Kimi" },
-  { name: "GLM" },
-  { name: "Phi" },
+  { name: "Llama", src: "/assets/models/meta-color.svg" },
+  { name: "Qwen", src: "/assets/models/qwen-color.svg" },
+  { name: "DeepSeek", src: "/assets/models/deepseek-color.svg" },
+  { name: "Mistral", src: "/assets/models/mistral-color.svg" },
+  { name: "Gemma", src: "/assets/models/gemma-color.svg" },
+  { name: "Kimi", src: "/assets/models/kimi.svg" },
+  { name: "GLM", src: "/assets/models/zhipu-color.svg" },
+  { name: "Phi", src: "/assets/models/microsoft-color.svg" },
 ];
 
 const Tiles = (): ReactElement => (

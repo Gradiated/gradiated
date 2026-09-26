@@ -750,6 +750,16 @@
   margin: 0 auto 84px;
 }
 
+/* the system's heading rules outrank a single class: restate at matching
+   specificity (same fix as the loop controls) */
+.gr-root .gr-marquee-title {
+  margin: 0 auto 84px;
+}
+
+.gr-root .gr-marquee-title + .gr-marquee-lane {
+  margin-top: 0;
+}
+
 .gr-marquee-lane {
   /* the tiles dissolve at both ends of the lane */
   -webkit-mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);

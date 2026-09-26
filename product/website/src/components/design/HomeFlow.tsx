@@ -237,7 +237,10 @@ export const HomeFlow = (): ReactElement => {
       };
       const text = (t: string, x: number, y: number, size = F): void => {
         bctx.globalAlpha = A_TEXT;
-        bctx.font = `${size}px "JetBrains Mono", ui-monospace, monospace`;
+        /* one global type scale: every label shrinks together (0.66 of the
+           drawn sizes), so the hierarchy holds while the board reads as a
+           finer instrument */
+        bctx.font = `${size * 0.66}px "JetBrains Mono", ui-monospace, monospace`;
         bctx.fillText(t, x, y);
       };
       const dot = (x: number, y: number, s2 = 1.1): void => {

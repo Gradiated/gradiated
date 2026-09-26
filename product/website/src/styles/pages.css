@@ -4551,18 +4551,31 @@
   width: fit-content;
   margin-inline: auto;
   perspective: 1400px;
-  /* room for the projected, exploded stack */
-  padding: 40px 30px 90px;
+  /* room below for the layers to splay down into */
+  padding: 12px 0 170px;
+  /* the whole gesture waits out the module's entrance, like the photo
+     stack did */
+  --chip-wait: calc(var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms);
 }
 
+/* the camera: arrives FRONTAL (a flat top-down drawing), then pans to the
+   homepage chip fold's isometric view */
 .gr-chipiso-stage {
   position: relative;
-  width: min(58vw, 470px);
+  width: min(52vw, 440px);
   aspect-ratio: 1;
-  transform: rotateX(58deg) rotateZ(45deg);
+  transform: rotateX(0deg) rotateZ(0deg);
   transform-style: preserve-3d;
+  transition: transform 950ms var(--ease-assemble);
+  transition-delay: var(--chip-wait);
 }
 
+.gr-chipiso--open .gr-chipiso-stage {
+  transform: rotateX(58deg) rotateZ(45deg);
+}
+
+/* the layers: the casing (--z: 5) IS the anchor and never moves; the rest
+   splay DOWNWARDS out of it once the camera has landed */
 .gr-chipiso-layer {
   position: absolute;
   inset: 0;
@@ -4570,20 +4583,18 @@
   height: 100%;
   color: var(--color-text);
   /* closed: a shallow stack (enough separation that nothing z-fights) */
-  transform: translateZ(calc(var(--z) * 5px));
+  transform: translateZ(calc((var(--z) - 5) * 5px));
   transition: transform 1100ms var(--ease-assemble);
-  /* the chip arrives before it opens (same wait as the photo stack) */
-  transition-delay: calc(
-    var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms +
-      var(--z) * 110ms
-  );
+  /* after the pan; deepest first, so the stack opens from the bottom out */
+  transition-delay: calc(var(--chip-wait) + 820ms + (5 - var(--z)) * 120ms);
 }
 
 .gr-chipiso--open .gr-chipiso-layer {
-  transform: translateZ(calc(var(--z) * 58px));
+  transform: translateZ(calc((var(--z) - 5) * 58px));
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .gr-chipiso-stage,
   .gr-chipiso-layer {
     transition: none;
   }

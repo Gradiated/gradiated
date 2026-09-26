@@ -46,8 +46,10 @@ const plate = {
 
 const range = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
 
+const PLATE_R = 36; /* ONE corner radius for the casing and every layer */
+
 const Plate = (): ReactElement => (
-  <rect {...plate} height={PW} rx={14} width={PW} x={P0} y={P0} />
+  <rect {...plate} height={PW} rx={PLATE_R} width={PW} x={P0} y={P0} />
 );
 
 /** BGA array: the underside, a field of ball outlines. */
@@ -157,7 +159,7 @@ const CasingArt = (): ReactElement => {
   const c0 = (S - CW) / 2;
   return (
     <g>
-      <rect {...plate} height={CW} rx={56} width={CW} x={c0} y={c0} />
+      <rect {...plate} height={CW} rx={PLATE_R} width={CW} x={c0} y={c0} />
       <rect {...line} height={CW - 128} rx={16} width={CW - 128} x={c0 + 64} y={c0 + 64} />
       {[
         [c0 + 88, c0 + 88],

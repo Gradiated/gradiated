@@ -96,8 +96,12 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
   };
   out.blockA = 1;
   out.markAlpha = 1;
+  /* reverse ken-burns: one slow push-in across the whole fold — the camera
+     drifts toward the socket for as long as the board is on stage, through
+     the landing and the rest, instead of backing off and stopping */
+  out.zoom = 1 + 0.07 * g;
   if (g < BEATS.settle[1]) {
-    out.zoom = 1.07 - 0.07 * easeIO(seg(g, BEATS.settle));
+    /* frontal arrival: nothing beyond the push-in */
   } else if (g < BEATS.land[1]) {
     const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);

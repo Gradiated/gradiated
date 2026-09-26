@@ -452,6 +452,8 @@
   background: var(--color-panel);
   border-radius: 14px;
   min-height: 400px;
+  /* the phone is oversize on purpose; the card crops its lower third */
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -905,9 +907,17 @@
 
 .gr-phone {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 34px 0;
+  padding-top: 52px;
+}
+
+/* zoomed in: the device renders half again as large, anchored by its top,
+   and the card's overflow crop takes the bottom third — about two thirds
+   of the phone shows */
+.gr-phone-frame {
+  transform: scale(1.5);
+  transform-origin: 50% 0;
 }
 
 .gr-phone-frame {

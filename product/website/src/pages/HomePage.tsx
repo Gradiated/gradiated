@@ -5,6 +5,7 @@ import {
   Arrow,
   Band,
   Footer,
+  HeroBeam,
   HeroBeamRaw,
   HomeFlow,
   LoopSection,
@@ -47,8 +48,10 @@ export const HomePage = (): ReactElement => (
 
     <Band>
       <Module bleed className="gr-module--fold" index={0}>
-        {/* RAW-STYLE EXPLORATION: the colour beam, asciified into the
-            engine's glyph language. Swap back to <HeroBeam /> to restore. */}
+        {/* Both beams, layered: the colour field breathes underneath and the
+            glyph field is inked over it — the engine's language drawn on the
+            hero's light. Same wrapper, same cone, so they register. */}
+        <HeroBeam />
         <HeroBeamRaw />
         <div className="gr-fold-centred">
           {/* `from` carries the word stagger across the two fixed lines — each

@@ -18,11 +18,12 @@ import { Logo } from "./Logo";
  */
 
 const BEATS = {
-  intro: [0.0, 0.16],
-  /* just long enough for the reveal wavefront - then straight to iso */
-  hold: [0.16, 0.34],
-  land: [0.34, 0.68],
-  siliconRest: [0.68, 1.0],
+  /* the board slides in from the right, the chip fills its socket,
+     then the view drops to isometric */
+  boardIn: [0.0, 0.24],
+  chipIn: [0.24, 0.44],
+  land: [0.44, 0.72],
+  siliconRest: [0.72, 1.0],
 } as const;
 
 /** Runway height in viewport-heights; the scrub's total scroll distance. */
@@ -54,8 +55,7 @@ type TimelineOut = {
   blockA: number;   /* the chip's arrival */
   markAlpha: number;
   shadowAlpha: number;
-  on: boolean;      /* the chip exists — timestamps the field's fade-in */
-  holdT: number;    /* progress through the frontal hold — the reveal */
+  boardT: number;   /* the board's slide-in from the right */
   glowA: number;    /* progress into the isometric view */
   siliconCopyA: number;
 };
@@ -67,8 +67,8 @@ const keyStates = (
   const vm = Math.min(W, H);
   const wide = W > 720;
   return {
-    chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.46, h: vm * 0.46, r: 12, rx: 0, rz: 0 },
-    land: { cx: W * (wide ? 0.34 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.42, h: vm * 0.42, r: 12, rx: 58, rz: 45 },
+    chip: { cx: W / 2, cy: H * 0.5, w: vm * 0.34, h: vm * 0.34, r: 10, rx: 0, rz: 0 },
+    land: { cx: W * (wide ? 0.34 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.32, h: vm * 0.32, r: 10, rx: 58, rz: 45 },
   };
 };
 
@@ -89,36 +89,35 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     blockA: 0,
     markAlpha: 0,
     shadowAlpha: 0,
-    on: g > 0.02,
-    holdT: 0,
+    boardT: 0,
     glowA: 0,
     siliconCopyA: 0,
   };
-  if (g < BEATS.intro[1]) {
-    const t = easeO(seg(g, BEATS.intro));
-    const small = { ...K.chip, w: K.chip.w * 0.88, h: K.chip.h * 0.88, cy: K.chip.cy + H * 0.04 };
-    out.s = mixState(small, K.chip, t);
-    out.blockA = easeO(clamp01(t * 1.5));
-    out.markAlpha = clamp01((t - 0.4) / 0.6);
-  } else if (g < BEATS.hold[1]) {
-    out.s = K.chip;
-    out.blockA = 1;
-    out.markAlpha = 1;
-    out.holdT = seg(g, BEATS.hold);
+  if (g < BEATS.boardIn[1]) {
+    out.boardT = easeIO(seg(g, BEATS.boardIn));
+  } else if (g < BEATS.chipIn[1]) {
+    /* the chip fills into its socket: from above and slightly large,
+       settling flat */
+    const t = easeO(seg(g, BEATS.chipIn));
+    const high = { ...K.chip, w: K.chip.w * 1.16, h: K.chip.h * 1.16, cy: K.chip.cy - H * 0.05 };
+    out.s = mixState(high, K.chip, t);
+    out.blockA = easeO(clamp01(t * 1.7));
+    out.markAlpha = clamp01((t - 0.35) / 0.65);
+    out.boardT = 1;
   } else if (g < BEATS.land[1]) {
     const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);
     out.blockA = 1;
     out.markAlpha = 1;
     out.shadowAlpha = easeO(clamp01((t - 0.3) / 0.7)) * 0.55;
-    out.holdT = 1;
+    out.boardT = 1;
     out.glowA = easeIO(t);
   } else {
     out.s = K.land;
     out.blockA = 1;
     out.markAlpha = 1;
     out.shadowAlpha = 0.55;
-    out.holdT = 1;
+    out.boardT = 1;
     out.glowA = 1;
     out.siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
   }
@@ -582,8 +581,6 @@ export const HomeFlow = (): ReactElement => {
     let g = reduced ? 1 : 0;
     let lastT = performance.now();
     let raf = 0;
-    let wasOn = false;
-    let chipAt = 0;
 
     const readScroll = (): void => {
       const rect = runway.getBoundingClientRect();
@@ -603,29 +600,23 @@ export const HomeFlow = (): ReactElement => {
       const out = evalTimeline(g, W, H);
       const { s } = out;
 
-      if (out.on && !wasOn) {
-        wasOn = true;
-        chipAt = t;
-      } else if (!out.on) wasOn = false;
-
       /* the board: drawn in mm at scale k, anchored so the chip sits on
          U1, rotating about the socket, revealed as a circle from it */
-      const k = Math.min((s.w * 1.12) / SOCK.w, 6.2);
+      const k = Math.min((s.w * 1.0) / SOCK.w, 6.2);
       if (k > 0.5 && Math.abs(k - boardK) > 0.01) {
         boardK = k;
         drawBoardArt(k);
       }
       const ocx = (BM + SOCK.cx) * k;
       const ocy = (BM + SOCK.cy) * k;
+      /* slide in from the right, no masking */
+      const slide = (1 - out.boardT) * W * 0.6;
       glCanvas.style.width = `${((BW + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.height = `${((BH + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.transformOrigin = `${ocx.toFixed(1)}px ${ocy.toFixed(1)}px`;
       glCanvas.style.transform =
-        `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
-      const maxR = (Math.hypot(150, 235) + BM) * k;
-      const rev = lerp(s.w * 0.6, maxR, easeIO(out.holdT));
-      glCanvas.style.clipPath = `circle(${rev.toFixed(0)}px at ${ocx.toFixed(1)}px ${ocy.toFixed(1)}px)`;
-      glCanvas.style.opacity = `${(out.blockA * clamp01((t - chipAt) / 0.4) * (out.on ? 1 : 0)).toFixed(3)}`;
+        `translate(${(s.cx - ocx + slide).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+      glCanvas.style.opacity = `${Math.min(1, out.boardT * 1.5).toFixed(3)}`;
       block.style.setProperty("--bit", `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`);
 
       drawEmission(t, out);

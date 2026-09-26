@@ -51,7 +51,9 @@
   grid-template-rows: auto auto;
   justify-content: center;
   align-content: center;
-  column-gap: calc(5 * var(--u));
+  /* wide gutter: the iso projection overhangs its layout box to the
+     right, so the track gap has to carry both air and overhang */
+  column-gap: calc(9 * var(--u));
   row-gap: calc(1.2 * var(--u));
 }
 
@@ -59,6 +61,14 @@
    reserve makes centred feel low */
 .gr-fold:has(.gr-chipiso) .gr-page-hero {
   translate: 0 -44px;
+}
+
+/* The diagram's optical placement, by the vertex rule: splayed open, the
+   casing's top-left vertex sits a touch above the R of "Runs" — the
+   diagram's real height (casing top vertex to solder bottom vertex) then
+   hangs centred against the text column instead of sagging below it. */
+.gr-chipiso {
+  translate: 0 -63px;
 }
 
 .gr-page-hero--beside .gr-page-hero-media {
@@ -3880,6 +3890,14 @@
    reserve makes centred feel low */
 .gr-fold:has(.gr-chipiso) .gr-page-hero {
   translate: 0 -44px;
+}
+
+/* The diagram's optical placement, by the vertex rule: splayed open, the
+   casing's top-left vertex sits a touch above the R of "Runs" — the
+   diagram's real height (casing top vertex to solder bottom vertex) then
+   hangs centred against the text column instead of sagging below it. */
+.gr-chipiso {
+  translate: 0 -63px;
 }
 
 .gr-page-hero--beside .gr-page-hero-media {

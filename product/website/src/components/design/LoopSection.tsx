@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CSSProperties, ReactElement } from "react";
+import { PhoneFlow } from "./PhoneFlow";
 
 /**
  * The loop fold (new-homepage-layout, fold 3).
@@ -707,7 +708,7 @@ export const LoopSection = (): ReactElement => {
               </button>
               <div className="gr-loop-selector-menu" ref={selMenuRef} />
             </div>
-            <span>Product Mocks</span>
+            <PhoneFlow />
           </div>
           <div
             className="gr-loop-copy gr-enter"

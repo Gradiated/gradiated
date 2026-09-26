@@ -706,14 +706,47 @@
 }
 
 @media (max-width: 900px) {
+  /* single column, in reading order: title, product, endpoint, stack,
+     copy. The two halves dissolve (display: contents) so their children
+     can be ordered as one list. */
   .gr-loop-grid {
-    grid-template-columns: 1fr;
-    row-gap: 56px;
+    display: flex;
+    flex-direction: column;
+    row-gap: 40px;
   }
 
+  .gr-loop-left,
+  .gr-loop-right {
+    display: contents;
+  }
+
+  .gr-loop-title { order: 1; }
+  .gr-loop-mock { order: 2; }
+  .gr-loop-controls { order: 3; }
+  .gr-loop-stack { order: 4; }
+  .gr-loop-copy { order: 5; }
+
+  /* desktop spacing assumed the two-column geometry */
+  .gr-loop-controls,
+  .gr-root .gr-loop-title + .gr-loop-controls {
+    margin: 0;
+  }
+
+  .gr-loop-copy {
+    margin: 0;
+    translate: none;
+    max-width: none;
+  }
+
+  /* horizontal captions in each row's corner: the rotated rails cram
+     together at this width */
   .gr-loop-rowlabel {
-    left: 10px;
-    transform: translate(0, -50%);
+    left: 12px;
+    top: 8px;
+    bottom: auto;
+    writing-mode: horizontal-tb;
+    rotate: none;
+    transform: none;
   }
 }
 

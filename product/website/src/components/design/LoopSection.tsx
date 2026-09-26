@@ -408,6 +408,10 @@ export const LoopSection = (): ReactElement => {
       if (swapDone(t) && engineStart < 0 && !reduced) begin(t + 0.6);
       startEl.classList.toggle("gr-loop-start--ready", swapDone(t));
 
+      /* single-column layout: the cross-layout wires (product -> endpoint,
+         endpoint -> stack, and the return loop) assume the two-column
+         geometry and are overkill on mobile — the column IS the flow */
+      const narrow = matchMedia("(max-width: 900px)").matches;
       const R = rows.map((r) => inset(rel(r as HTMLDivElement), 18, 12));
       const mock = rel(mockEl);
       const field = rel(fieldEl);
@@ -425,15 +429,17 @@ export const LoopSection = (): ReactElement => {
       const fcy = field.y + field.h / 2;
       const fcx = field.x + field.w / 2;
       const mx = mock.x + 24;
-      ctx.save();
-      ctx.globalAlpha = 0.3;
-      ctx.beginPath();
-      ctx.moveTo(mock.x + mock.w, fcy);
-      ctx.lineTo(field.x, fcy);
-      ctx.moveTo(fcx, field.y + field.h);
-      ctx.lineTo(fcx, R[0].y - 12);
-      ctx.stroke();
-      ctx.restore();
+      if (!narrow) {
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(mock.x + mock.w, fcy);
+        ctx.lineTo(field.x, fcy);
+        ctx.moveTo(fcx, field.y + field.h);
+        ctx.lineTo(fcx, R[0].y - 12);
+        ctx.stroke();
+        ctx.restore();
+      }
 
       const tE = engineStart >= 0 ? t - engineStart : -1;
       if (tE < 0) return;
@@ -476,7 +482,7 @@ export const LoopSection = (): ReactElement => {
          endpoint, and down into production traces — continuously */
       const sA = clamp01((tE - 9.6) / 1.2);
       const retY = rowLast.y + rowLast.h / 2;
-      {
+      if (!narrow) {
         /* the return leg: model traffic feeds the product. It connects to
            the LEFT SIDE of the last box and runs up the product's spine.
            Drawn as a static wire always, ridden by bits once shipped. */
@@ -489,7 +495,7 @@ export const LoopSection = (): ReactElement => {
         ctx.stroke();
         ctx.restore();
       }
-      if (sA > 0.01) {
+      if (!narrow && sA > 0.01) {
         const wires: [number, number][][] = [
           [
             [rowLast.x, retY],
@@ -541,6 +547,7 @@ export const LoopSection = (): ReactElement => {
                stage — then it waits its turn */
             const u = (T - appear) / 1.5;
             if (u < 1) {
+              if (narrow) continue; /* no cross-layout ride on mobile */
               if (u < 0.42) {
                 [px, py] = alongPath(
                   [

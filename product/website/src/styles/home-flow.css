@@ -692,19 +692,28 @@
 
 .gr-loop-rowlabel {
   position: absolute;
-  left: -30px;
-  top: 0;
-  bottom: 0;
-  display: flex;
-  align-items: center;
-  writing-mode: vertical-rl;
-  rotate: 180deg;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--color-text-muted);
   white-space: nowrap;
+}
+
+/* The rotated rail exists ONLY at desktop widths. Scoping the rotation
+   here (instead of un-rotating it on mobile) sidesteps engines that
+   mishandle `rotate: none` as an override — the labels were rendering
+   upside down on phones. */
+@media (min-width: 901px) {
+  .gr-loop-rowlabel {
+    left: -30px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    writing-mode: vertical-rl;
+    rotate: 180deg;
+  }
 }
 
 @media (max-width: 900px) {
@@ -763,15 +772,10 @@
     max-width: none;
   }
 
-  /* horizontal captions in each row's corner: the rotated rails cram
-     together at this width */
+  /* horizontal captions in each row's corner */
   .gr-loop-rowlabel {
     left: 12px;
     top: 8px;
-    bottom: auto;
-    writing-mode: horizontal-tb;
-    rotate: none;
-    transform: none;
   }
 }
 

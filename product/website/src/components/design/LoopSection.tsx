@@ -41,6 +41,7 @@ type Bit = {
   tv: number;
   k6: number;
   dist: number;
+  rank: number;
 };
 
 const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
@@ -49,7 +50,7 @@ const easeIO = (t: number): number =>
 const easeO = (t: number): number => 1 - Math.pow(1 - t, 3);
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
-const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
+const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: number } => {
   let seedState = 11;
   const rnd = (): number => {
     seedState = (seedState * 16807) % 2147483647;
@@ -133,6 +134,7 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
     tv: 0,
     k6: 0,
     dist: 0,
+    rank: 0,
   }));
 
   /* eval grid: wide, ordered by maze x so the drop reads straight; the
@@ -157,13 +159,46 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number } => {
     b.dist = Math.hypot(b.du, b.dv);
     maxD = Math.max(maxD, b.dist);
   });
-  passers.forEach((b) => {
+  passers.forEach((b, rank) => {
     b.dist /= maxD;
-    b.k6 = 8.4 + 0.1 * b.dist;
+    b.rank = rank;
+    /* single file: bits leave the die one after another, forming a
+       continuous line down the wire to the model slot */
+    b.k6 = 8.1 + (rank / Math.max(1, passers.length - 1)) * 0.9;
   });
 
-  return { bits, path, DS };
+  return { bits, path, DS, passN: passers.length };
 })();
+
+/* a polyline walker for the loop's wires: point at distance u*total */
+const alongPath = (pts: [number, number][], u: number): [number, number] => {
+  const segs: number[] = [];
+  let total = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    segs.push(l);
+    total += l;
+  }
+  let d = clamp01(u) * total;
+  for (let i = 0; i < segs.length; i++) {
+    if (d <= segs[i] || i === segs.length - 1) {
+      const f = segs[i] > 0 ? d / segs[i] : 0;
+      return [
+        lerp(pts[i][0], pts[i + 1][0], f),
+        lerp(pts[i][1], pts[i + 1][1], f),
+      ];
+    }
+    d -= segs[i];
+  }
+  return pts[pts.length - 1];
+};
+
+const pathLen = (pts: [number, number][]): number => {
+  let total = 0;
+  for (let i = 1; i < pts.length; i++)
+    total += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  return total;
+};
 
 const bez2 = (
   ax: number, ay: number, bx: number, by: number,
@@ -325,7 +360,9 @@ export const LoopSection = (): ReactElement => {
       ctx.moveTo(mx, mock.y + mock.h);
       ctx.lineTo(mx, models.y + models.h / 2);
       ctx.lineTo(models.x - 12, models.y + models.h / 2);
-      const mcy = models.y + models.h * 0.35;
+      /* drawn at the die row's centre, the same height the model stream
+         actually travels */
+      const mcy = R[3].y + R[3].h / 2;
       ctx.moveTo(models.x + models.w + 12, mcy);
       ctx.lineTo(R[3].x - 18, mcy);
       ctx.stroke();
@@ -347,7 +384,7 @@ export const LoopSection = (): ReactElement => {
       const dieC: [number, number] = [R[3].x + R[3].w / 2, R[3].y + R[3].h / 2];
 
       /* the newest arrival fills its slot */
-      const latest = Math.floor((tE - 8.9) / GEN_PERIOD);
+      const latest = Math.floor((tE - 9.4) / GEN_PERIOD);
       if (latest > filled) {
         filled = latest;
         const sl = slots[((latest % 4) + 4) % 4];
@@ -361,6 +398,44 @@ export const LoopSection = (): ReactElement => {
         const r = sl ? rel(sl) : models;
         return [r.x + r.w / 2, r.y + r.h / 2];
       };
+
+      /* once the first model has shipped, the loop is CLOSED: bits stream
+         single file from the models back through the product, into the
+         endpoint, and down into production traces — continuously */
+      const sA = clamp01((tE - 9.6) / 1.2);
+      if (sA > 0.01) {
+        const mcyS = models.y + models.h / 2;
+        const wires: [number, number][][] = [
+          [
+            [models.x + models.w * 0.5, models.y],
+            [mx, mcyS - models.h * 0.5 - 0 + (models.y - (mock.y + mock.h)) * 0],
+          ],
+          [
+            [mock.x + mock.w, fcy],
+            [field.x, fcy],
+          ],
+          [
+            [fcx, field.y + field.h],
+            [fcx, R[0].y - 2],
+          ],
+        ];
+        /* models -> mock runs up the mock's spine */
+        wires[0] = [
+          [models.x - 12, mcyS],
+          [mx, mcyS],
+          [mx, mock.y + mock.h],
+        ];
+        for (const wire of wires) {
+          const len = pathLen(wire);
+          const n = Math.max(3, Math.floor(len / 30));
+          for (let j = 0; j < n; j++) {
+            const ph = ((t * 80) / len + j / n) % 1;
+            const [wx, wy] = alongPath(wire, ph);
+            ctx.globalAlpha = sA * 0.55 * Math.min(1, ph * 6) * Math.min(1, (1 - ph) * 6);
+            ctx.fillRect(wx - bit / 2, wy - bit / 2, bit, bit);
+          }
+        }
+      }
 
       const gLo = Math.max(0, Math.ceil((tE - GEN_LEN) / GEN_PERIOD));
       const gHi = Math.floor(tE / GEN_PERIOD) + 1;
@@ -379,7 +454,7 @@ export const LoopSection = (): ReactElement => {
           const k4 = 6.15 + 0.2 * d;
           const k5 = 7.0 + 0.2 * d;
           const k6 = b.k6;
-          const k7 = k6 + 0.7;
+          const k7 = k6 + 1.1;
           let px: number;
           let py: number;
           let alpha = 1;
@@ -392,7 +467,6 @@ export const LoopSection = (): ReactElement => {
             px = sxp;
             py = syp;
             alpha = 0.4 * clamp01((T - appear) / 0.4);
-            size = bit * 0.8;
           } else if (T < k1) {
             const u = (T - k0) / 1.6;
             const e = easeIO(u);
@@ -438,12 +512,18 @@ export const LoopSection = (): ReactElement => {
             py += w * bit * 0.45 * ramp;
             size = bit * (1 + 0.12 * Math.max(0, w) * ramp);
           } else if (T < k7) {
-            const u = (T - k6) / 0.7;
-            const e = u * u;
-            px = lerp(dieC[0] + b.du * DP, outPt[0] + b.du * DP * 0.12, e);
-            py = lerp(dieC[1] + b.dv * DP, outPt[1] + b.dv * DP * 0.12, e);
-            size = bit * (1 - e * 0.7);
-            alpha = 1 - e * 0.4;
+            /* single file down the wire: die -> join point -> slot */
+            const u = (T - k6) / 1.1;
+            if (u >= 1) continue;
+            const wire: [number, number][] = [
+              [dieC[0] + b.du * DP, dieC[1] + b.dv * DP],
+              [dieC[0] - dieSide * 0.75, dieC[1]],
+              [outPt[0], dieC[1]],
+              [outPt[0], outPt[1]],
+            ];
+            [px, py] = alongPath(wire, easeIO(u) * 0.2 + u * 0.8);
+            size = bit * (1 - u * 0.25);
+            alpha = 1 - u * 0.2;
           } else {
             continue;
           }

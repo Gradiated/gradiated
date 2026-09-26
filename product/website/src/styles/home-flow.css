@@ -460,21 +460,25 @@
 }
 
 .gr-loop-models-caption {
-  margin-top: 34px;
+  margin-top: 52px;
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text);
 }
 
 .gr-loop-title {
-  max-width: 380px;
+  max-width: 480px;
+  /* 58px at the 1512 design width */
+  font-size: clamp(32px, 3.84vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
 }
 
 .gr-loop-controls {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin: 40px 0 44px;
+  margin: 72px 0 88px;
 }
 
 .gr-loop-field {
@@ -530,16 +534,13 @@
 
 .gr-loop-row {
   position: relative;
-  height: 148px;
+  height: 168px;
 }
 
 .gr-loop-row + .gr-loop-row {
   border-top: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
 }
 
-.gr-loop-row:last-child {
-  height: 210px;
-}
 
 .gr-loop-rowlabel {
   position: absolute;

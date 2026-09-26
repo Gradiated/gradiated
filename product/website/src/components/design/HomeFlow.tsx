@@ -186,122 +186,154 @@ export const HomeFlow = (): ReactElement => {
     resize();
     addEventListener("resize", resize);
 
-    /* ---- the wafer field (fragment shader) ----
-       Square dies in the page's ink; the reveal is a wavefront in the
-       plate's own rounded-rect geometry, and the resting field is pool-lit
-       from the plate with a slow breath. */
-    const glOK = (() => {
-      const gl = glCanvas.getContext("webgl", { alpha: true, premultipliedAlpha: false });
-      if (!gl) return null;
-      const vsrc = "attribute vec2 aP; void main(){ gl_Position = vec4(aP, 0.0, 1.0); }";
-      const fsrc = `
-precision mediump float;
-uniform vec2  uRes;
-uniform vec2  uC;
-uniform float uSize;
-uniform float uCell;
-uniform float uRing;
-uniform float uPulse;
-uniform vec3  uGold;
-uniform float uOn;
-float sdBox(vec2 q, vec2 b, float r) {
-  vec2 dq = abs(q) - b;
-  return length(max(dq, vec2(0.0))) + min(max(dq.x, dq.y), 0.0) - r;
-}
-void main() {
-  vec2 p = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
-  vec2 d = p - uC;
-  float cell = uCell;
-  vec2 gpos = d / cell;
-  vec2 id = floor(gpos + 0.5);
-  vec2 lp = gpos - id;
-  vec2 cc = (id * cell);
-  float dr = sdBox(cc, vec2(uSize * 0.5), uSize * 0.02);
-  float dn = dr / (uSize * 1.35);
-  if (dn > 1.0) discard;
-  float q = max(abs(lp.x), abs(lp.y));
-  float m = 1.0 - smoothstep(0.26, 0.30, q);
-  if (m <= 0.0) discard;
-  float front = uRing * 1.25;
-  float x = (dn - front) * 3.4;
-  float band = exp(-x * x * 4.0);
-  float wake = smoothstep(front, front - 0.3, dn);
-  float pool = exp(-max(dn, 0.0) * 2.4) * uPulse;
-  float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
-  float refl = 0.9 + 0.2 * grain;
-  /* gold wafer, quiet: pale gilt at rest, warming where the light lives */
-  vec3 deep = uGold * vec3(0.82, 0.74, 0.6);
-  vec3 col = mix(deep, uGold, 0.25 + 0.55 * band + 0.1 * grain);
-  float a = m * refl * (0.06 + 0.4 * band + wake * pool * 0.38) * uOn;
-  gl_FragColor = vec4(col, a);
-}`;
-      const sh = (type: number, src: string): WebGLShader | null => {
-        const s = gl.createShader(type);
-        if (!s) return null;
-        gl.shaderSource(s, src);
-        gl.compileShader(s);
-        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-          console.warn("[HomeFlow] wafer shader:", gl.getShaderInfoLog(s));
-          return null;
-        }
-        return s;
-      };
-      const vs = sh(gl.VERTEX_SHADER, vsrc);
-      const fs = sh(gl.FRAGMENT_SHADER, fsrc);
-      const prog = gl.createProgram();
-      if (!vs || !fs || !prog) return null;
-      gl.attachShader(prog, vs);
-      gl.attachShader(prog, fs);
-      gl.linkProgram(prog);
-      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return null;
-      gl.useProgram(prog);
-      const buf = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-      const aP = gl.getAttribLocation(prog, "aP");
-      gl.enableVertexAttribArray(aP);
-      gl.vertexAttribPointer(aP, 2, gl.FLOAT, false, 0, 0);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      return {
-        gl,
-        u: {
-          res: gl.getUniformLocation(prog, "uRes"),
-          c: gl.getUniformLocation(prog, "uC"),
-          size: gl.getUniformLocation(prog, "uSize"),
-          cell: gl.getUniformLocation(prog, "uCell"),
-          ring: gl.getUniformLocation(prog, "uRing"),
-          pulse: gl.getUniformLocation(prog, "uPulse"),
-          gold: gl.getUniformLocation(prog, "uGold"),
-          on: gl.getUniformLocation(prog, "uOn"),
-        },
-      };
-    })();
+    /* ---- the motherboard ----
+       A technical illustration of the board the chip sits on, drawn once
+       per size into its own canvas. The canvas shares the plate's 3D
+       transform, so the board lies flat under the frontal chip and tilts
+       with it into the isometric view. Seeded, so it never redraws
+       differently. */
+    const bctx = glCanvas.getContext("2d");
+    if (!bctx) return;
+    let boardPx = 0;
 
-    const drawWafers = (t: number, out: TimelineOut, chipAt: number): void => {
-      if (!glOK) return;
-      const { gl, u } = glOK;
+    const drawBoardArt = (S: number): void => {
       const dpr = Math.min(devicePixelRatio || 1, 2);
-      if (glCanvas.width !== W * dpr || glCanvas.height !== H * dpr) {
-        glCanvas.width = W * dpr;
-        glCanvas.height = H * dpr;
+      glCanvas.width = S * dpr;
+      glCanvas.height = S * dpr;
+      bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      bctx.clearRect(0, 0, S, S);
+
+      let seed = 7;
+      const rnd = (): number => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      const c = S / 2;
+      const u = S / 2.7; /* the plate's width at this scale */
+      const gold = getComputedStyle(rootEl).getPropertyValue("--color-kiln-300").trim() || "#e9b748";
+
+      bctx.strokeStyle = ink;
+      bctx.lineWidth = 1;
+
+      const rr = (x: number, y: number, w: number, h: number, r: number): void => {
+        bctx.beginPath();
+        bctx.roundRect(x, y, w, h, r);
+        bctx.stroke();
+      };
+
+      /* board edge + mounting holes */
+      bctx.globalAlpha = 0.32;
+      rr(6, 6, S - 12, S - 12, 18);
+      for (const [hx, hy] of [[26, 26], [S - 26, 26], [26, S - 26], [S - 26, S - 26]] as const) {
+        bctx.globalAlpha = 0.35;
+        bctx.beginPath();
+        bctx.arc(hx, hy, 7, 0, Math.PI * 2);
+        bctx.stroke();
+        bctx.beginPath();
+        bctx.arc(hx, hy, 2.4, 0, Math.PI * 2);
+        bctx.stroke();
       }
-      gl.viewport(0, 0, glCanvas.width, glCanvas.height);
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      const on = out.on ? clamp01((t - chipAt) / 0.3) : 0;
-      if (on <= 0.001) return;
-      const bit = Math.max(3.5, out.s.w * 0.013);
-      gl.uniform2f(u.res, glCanvas.width, glCanvas.height);
-      gl.uniform2f(u.c, out.s.cx * dpr, out.s.cy * dpr);
-      gl.uniform1f(u.size, out.s.w * dpr);
-      gl.uniform1f(u.cell, (bit / 0.56) * dpr);
-      gl.uniform1f(u.ring, easeIO(out.holdT));
-      gl.uniform1f(u.pulse, 1.0); /* no pulse - the field rests still */
-      gl.uniform3f(u.gold, goldV[0], goldV[1], goldV[2]);
-      gl.uniform1f(u.on, on * out.blockA);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      block.style.setProperty("--bit", `${bit.toFixed(1)}px`);
+
+      /* the socket the chip seats into, with its keepout */
+      const sk = u * 0.62;
+      bctx.globalAlpha = 0.4;
+      rr(c - sk, c - sk, sk * 2, sk * 2, 10);
+      bctx.globalAlpha = 0.18;
+      bctx.setLineDash([2, 5]);
+      rr(c - sk - 14, c - sk - 14, (sk + 14) * 2, (sk + 14) * 2, 14);
+      bctx.setLineDash([]);
+
+      /* trace bundles: out of each socket side, one 45-degree dogleg,
+         ending on a gilt pad */
+      const pad = (x: number, y: number): void => {
+        bctx.save();
+        bctx.globalAlpha = 0.55;
+        bctx.fillStyle = gold;
+        bctx.fillRect(x - 2.2, y - 2.2, 4.4, 4.4);
+        bctx.restore();
+      };
+      const bundle = (side: number): void => {
+        const n = 7 + Math.floor(rnd() * 3);
+        for (let i = 0; i < n; i++) {
+          const f = (i + 0.5) / n;
+          const a = c + (f - 0.5) * sk * 1.7;      /* along the socket edge */
+          const run1 = 22 + rnd() * (S / 2 - sk - 70);
+          const dog = (rnd() < 0.5 ? -1 : 1) * (8 + rnd() * 26);
+          const run2 = 12 + rnd() * (S / 2 - sk - run1 - 40);
+          bctx.globalAlpha = 0.2 + rnd() * 0.08;
+          bctx.beginPath();
+          let x = 0;
+          let y = 0;
+          if (side === 0) { /* right */
+            x = c + sk; y = a;
+            bctx.moveTo(x, y); x += run1; bctx.lineTo(x, y);
+            x += Math.abs(dog); y += dog; bctx.lineTo(x, y);
+            x += run2; bctx.lineTo(x, y);
+          } else if (side === 1) { /* left */
+            x = c - sk; y = a;
+            bctx.moveTo(x, y); x -= run1; bctx.lineTo(x, y);
+            x -= Math.abs(dog); y += dog; bctx.lineTo(x, y);
+            x -= run2; bctx.lineTo(x, y);
+          } else if (side === 2) { /* down */
+            x = a; y = c + sk;
+            bctx.moveTo(x, y); y += run1; bctx.lineTo(x, y);
+            y += Math.abs(dog); x += dog; bctx.lineTo(x, y);
+            y += run2; bctx.lineTo(x, y);
+          } else { /* up */
+            x = a; y = c - sk;
+            bctx.moveTo(x, y); y -= run1; bctx.lineTo(x, y);
+            y -= Math.abs(dog); x += dog; bctx.lineTo(x, y);
+            y -= run2; bctx.lineTo(x, y);
+          }
+          bctx.stroke();
+          pad(x, y);
+        }
+      };
+      bundle(0);
+      bundle(1);
+      bundle(2);
+      bundle(3);
+
+      /* component footprints, sparse */
+      bctx.globalAlpha = 0.3;
+      /* an SOIC top-right, pin stubs on both long sides */
+      const sx = c + sk + 30;
+      const sy = c - sk - 58;
+      rr(sx, sy, 52, 24, 3);
+      for (let i = 0; i < 6; i++) {
+        const px = sx + 7 + i * 8;
+        bctx.beginPath();
+        bctx.moveTo(px, sy - 4); bctx.lineTo(px, sy);
+        bctx.moveTo(px, sy + 24); bctx.lineTo(px, sy + 28);
+        bctx.stroke();
+      }
+      /* capacitor pair, left */
+      for (let i = 0; i < 2; i++) {
+        bctx.beginPath();
+        bctx.arc(c - sk - 52, c - 20 + i * 40, 8, 0, Math.PI * 2);
+        bctx.stroke();
+        bctx.beginPath();
+        bctx.moveTo(c - sk - 56, c - 20 + i * 40);
+        bctx.lineTo(c - sk - 48, c - 20 + i * 40);
+        bctx.stroke();
+      }
+      /* a DIMM-ish slot along the bottom, with its notch */
+      const dw = u * 1.3;
+      rr(c - dw / 2, S - 54, dw, 13, 2);
+      bctx.beginPath();
+      bctx.moveTo(c - dw / 6, S - 54);
+      bctx.lineTo(c - dw / 6, S - 41);
+      bctx.stroke();
+      /* passives: little resistor pairs scattered off the corners */
+      for (let i = 0; i < 10; i++) {
+        const qx = c + (rnd() - 0.5) * (S - 130);
+        const qy = c + (rnd() - 0.5) * (S - 130);
+        if (Math.abs(qx - c) < sk + 26 && Math.abs(qy - c) < sk + 26) continue;
+        bctx.globalAlpha = 0.24;
+        bctx.strokeRect(qx, qy, 5, 8);
+        bctx.strokeRect(qx + 8, qy, 5, 8);
+      }
+      bctx.globalAlpha = 1;
     };
 
     /* the G emits — a fading stream of the hero field's glyphs, from the
@@ -377,7 +409,22 @@ void main() {
         chipAt = t;
       } else if (!out.on) wasOn = false;
 
-      drawWafers(t, out, chipAt);
+      /* the board: shares the plate's transform, revealed by an expanding
+         clip during the hold */
+      const bs = Math.round(s.w * 2.7);
+      if (bs > 10 && bs !== boardPx) {
+        boardPx = bs;
+        drawBoardArt(bs);
+      }
+      glCanvas.style.width = `${bs}px`;
+      glCanvas.style.height = `${bs}px`;
+      glCanvas.style.transform =
+        `translate(${s.cx - bs / 2}px, ${s.cy - bs / 2}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+      const reveal = (1 - easeIO(out.holdT)) * 32;
+      glCanvas.style.clipPath = `inset(${reveal.toFixed(2)}% round 26px)`;
+      glCanvas.style.opacity = `${(out.blockA * clamp01((t - chipAt) / 0.4) * (out.on ? 1 : 0)).toFixed(3)}`;
+      block.style.setProperty("--bit", `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`);
+
       drawEmission(t, out);
 
       block.style.width = `${s.w}px`;
@@ -415,7 +462,7 @@ void main() {
   return (
     <div className="gr-flow" ref={runwayRef} style={{ height: `${RUNWAY_VH}vh` }}>
       <div className="gr-flow-stage">
-        <canvas className="gr-flow-wafers" ref={glRef} />
+        <canvas className="gr-flow-board" ref={glRef} />
         <div className="gr-flow-shadow" ref={shadowRef} />
         <div className="gr-flow-block gr-flow-block--raw gr-flow-block--chip" ref={blockRef}>
           <div className="gr-flow-top" ref={topRef}>

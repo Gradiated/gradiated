@@ -710,3 +710,15 @@
 .gr-loop-selector-item:hover {
   background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }
+
+/* The motherboard the chip sits on: shares the plate's 3D transform, so
+   it tilts with the chip into the isometric view. */
+.gr-flow-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, clip-path, opacity;
+  pointer-events: none;
+  opacity: 0;
+}

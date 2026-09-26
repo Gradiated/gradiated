@@ -36,21 +36,29 @@ export const PhoneFlow = (): ReactElement => (
         <div className="gr-phone-app">
           <div className="gr-phone-head">
             <span className="gr-phone-avatar" />
-            <span className="gr-phone-appname">Atlas</span>
+            <span className="gr-phone-appname">Sable</span>
           </div>
 
           <div className="gr-phone-chat">
             <div className="gr-phone-greet">
               <p className="gr-phone-hello">Good morning, Maya</p>
+              <div className="gr-phone-bankcard">
+                <span className="gr-phone-bankcard-name">Sable</span>
+                <span className="gr-phone-bankcard-chip" />
+                <span className="gr-phone-bankcard-balance">
+                  <i>Checking</i>$8,214.60
+                </span>
+                <span className="gr-phone-bankcard-num">•••• 4021</span>
+              </div>
               <div className="gr-phone-chips">
-                <span>Plan my day</span>
-                <span>Standup recap</span>
-                <span>Inbox brief</span>
+                <span>Spending recap</span>
+                <span>Pay rent</span>
+                <span>Move to savings</span>
               </div>
             </div>
 
             <div className="gr-phone-msg gr-phone-msg--user">
-              Summarize today&apos;s standup
+              How&apos;s my spending this month?
             </div>
 
             <div className="gr-phone-typing">
@@ -61,26 +69,26 @@ export const PhoneFlow = (): ReactElement => (
 
             <div className="gr-phone-msg gr-phone-msg--bot">
               <span className="gr-phone-line gr-phone-line--a">
-                Shipping is on track for Friday.
+                You&apos;ve spent $2,340 so far — 12% under last month&apos;s
+                pace.
               </span>
               <span className="gr-phone-line gr-phone-line--b">
-                Two blockers cleared this morning — payments retries and the
-                iOS build.
+                Dining is up $85; travel is down $210.
               </span>
               <span className="gr-phone-line gr-phone-line--c">
-                One open item needs your call on pricing.
+                At this rate you&apos;ll clear about $600 spare this month.
               </span>
             </div>
 
             <div className="gr-phone-card">
               <span className="gr-phone-card-dot" />
-              <span>3 action items</span>
-              <span className="gr-phone-card-go">View</span>
+              <span>Move $500 to savings</span>
+              <span className="gr-phone-card-go">Review</span>
             </div>
           </div>
 
           <div className="gr-phone-input">
-            <span>Message</span>
+            <span>Ask about your money</span>
             <span className="gr-phone-mic" />
           </div>
         </div>

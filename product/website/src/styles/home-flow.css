@@ -954,10 +954,10 @@
   /* an iOS-wallpaper wash: three soft colour pools breathing through a
      near-white ground — quiet enough that the bubbles carry the contrast */
   background:
-    radial-gradient(120% 90% at 12% 6%, #dbe7ff 0%, transparent 55%),
-    radial-gradient(110% 85% at 92% 16%, #f1e2fd 0%, transparent 55%),
-    radial-gradient(140% 100% at 50% 108%, #dcf2ec 0%, transparent 60%),
-    #f8f9fc;
+    radial-gradient(120% 90% at 12% 6%, #d9efe4 0%, transparent 55%),
+    radial-gradient(110% 85% at 92% 16%, #e4ecfb 0%, transparent 55%),
+    radial-gradient(140% 100% at 50% 108%, #f4ecd9 0%, transparent 60%),
+    #f8faf9;
   overflow: hidden;
   /* the phone's own type: the app speaks iOS, not the site */
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter",
@@ -1073,7 +1073,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: conic-gradient(from 210deg, #0a84ff, #64d2ff, #0a84ff);
+  background: conic-gradient(from 210deg, #0a6847, #34c78f, #0a6847);
 }
 
 .gr-phone-appname {
@@ -1104,6 +1104,71 @@
   font-weight: 650;
   letter-spacing: -0.015em;
   color: #111;
+}
+
+/* the debit card: the greeting leads with the account, as a card */
+.gr-phone-bankcard {
+  position: relative;
+  height: 108px;
+  border-radius: 14px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  background:
+    radial-gradient(120% 160% at 85% -20%, rgba(94, 214, 168, 0.35) 0%, transparent 55%),
+    linear-gradient(135deg, #0c4a34 0%, #072e21 60%, #0a3d2c 100%);
+  color: #f2faf6;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 10px 22px -10px rgba(7, 46, 33, 0.55);
+}
+
+.gr-phone-bankcard-name {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.gr-phone-bankcard-chip {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 22px;
+  height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #e8cf8f, #c9a75a);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+}
+
+.gr-phone-bankcard-balance {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-phone-bankcard-balance i {
+  display: block;
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(242, 250, 246, 0.6);
+  margin-bottom: 2px;
+}
+
+.gr-phone-bankcard-num {
+  position: absolute;
+  right: 14px;
+  /* its own row under the chip, clear of the label and the figure */
+  top: 34px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(242, 250, 246, 0.75);
+  font-variant-numeric: tabular-nums;
 }
 
 .gr-phone-chips {

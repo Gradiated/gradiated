@@ -43,6 +43,40 @@
   pointer-events: auto;
 }
 
+/* ---- entrances -----------------------------------------------------------
+   The page's one entrance gesture, shared by the loop fold's content: the
+   ValueFold's sharpen-from-blur, as a block — each piece rises a little,
+   settles, and comes into focus, staggered by --enter-delay. The section
+   flips it once, by adding gr-loop--seen to the host.                       */
+.gr-enter {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s ease var(--enter-delay, 0s),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0s),
+    filter 0.9s ease var(--enter-delay, 0s);
+}
+
+.gr-loop--seen .gr-enter {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-enter {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .gr-flow-copy {
+    filter: none;
+  }
+}
+
 /* The board bleeds off the stage's bottom edge, which read as a hard cut
    where the section hands over to Latest News. Feather the last stretch
    into the page ground so the iso frame dissolves instead of ending. */
@@ -184,7 +218,10 @@
 .gr-flow-copy {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%);
+  /* --enter is driven per-frame from HomeFlow (0 → 1 over the rest beat):
+     the copy rises out of a 28px offset and sharpens as it arrives */
+  transform: translateY(calc(-50% + (1 - var(--enter, 1)) * 28px));
+  filter: blur(calc((1 - var(--enter, 1)) * 6px));
   width: min(86vw, 380px);
   opacity: 0;
   visibility: hidden;
@@ -210,7 +247,8 @@
     right: 7vw;
     top: auto;
     bottom: 8vh;
-    transform: none;
+    /* no centring transform down here, but keep the entrance rise */
+    transform: translateY(calc((1 - var(--enter, 1)) * 28px));
     width: auto;
   }
 }

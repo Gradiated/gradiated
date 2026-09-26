@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 /**
  * The loop fold (new-homepage-layout, fold 3).
@@ -345,6 +345,9 @@ export const LoopSection = (): ReactElement => {
     const seen = new IntersectionObserver(
       ([e]) => {
         visible = e.isIntersecting;
+        /* the content's entrance and the diagram's first beat share this
+           moment — the blocks settle in while the URL swap winds up */
+        if (visible) host.classList.add("gr-loop--seen");
         if (visible && sequenceAt < 0) sequenceAt = performance.now() / 1000 + 0.5;
       },
       { threshold: 0.35 },
@@ -681,7 +684,11 @@ export const LoopSection = (): ReactElement => {
       <canvas className="gr-loop-canvas" ref={canvasRef} />
       <div className="gr-loop-grid">
         <div className="gr-loop-left">
-          <div className="gr-loop-mock" ref={mockRef}>
+          <div
+            className="gr-loop-mock gr-enter"
+            ref={mockRef}
+            style={{ "--enter-delay": "0.1s" } as CSSProperties}
+          >
             <div className="gr-loop-selector" ref={selectorRef}>
               <button
                 className="gr-loop-selector-btn"
@@ -696,7 +703,10 @@ export const LoopSection = (): ReactElement => {
             </div>
             <span>Product Mocks</span>
           </div>
-          <div className="gr-loop-copy">
+          <div
+            className="gr-loop-copy gr-enter"
+            style={{ "--enter-delay": "0.3s" } as CSSProperties}
+          >
             <p>
               We rebuild your production traces as an RL environment, derive
               evals from what actually succeeded in production, and post-train
@@ -713,10 +723,13 @@ export const LoopSection = (): ReactElement => {
         </div>
 
         <div className="gr-loop-right">
-          <h2 className="gr-heading gr-loop-title">
+          <h2 className="gr-heading gr-loop-title gr-enter">
             Trained on your production traffic
           </h2>
-          <div className="gr-loop-controls">
+          <div
+            className="gr-loop-controls gr-enter"
+            style={{ "--enter-delay": "0.2s" } as CSSProperties}
+          >
             <div className="gr-loop-field" ref={fieldRef}>
               <span ref={urlRef}>{OLD_URL}</span>
               <span className="gr-loop-caret" />
@@ -725,7 +738,10 @@ export const LoopSection = (): ReactElement => {
               Start
             </button>
           </div>
-          <div className="gr-loop-stack">
+          <div
+            className="gr-loop-stack gr-enter"
+            style={{ "--enter-delay": "0.35s" } as CSSProperties}
+          >
             {STAGE_LABELS.map((label, i) => (
               <div
                 className="gr-loop-row"

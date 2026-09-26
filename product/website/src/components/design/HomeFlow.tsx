@@ -111,7 +111,9 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     out.markAlpha = 1;
     out.shadowAlpha = 0.55;
     out.glowA = 1;
-    out.siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
+    /* a slower ramp than the old *3 pop — the copy rises, sharpens and
+     settles over the first half of the rest beat (see --enter in the CSS) */
+  out.siliconCopyA = easeO(Math.min(1, seg(g, BEATS.siliconRest) * 1.8));
   }
   return out;
 };
@@ -663,6 +665,8 @@ export const HomeFlow = (): ReactElement => {
 
       siliconCopy.style.opacity = `${out.siliconCopyA}`;
       siliconCopy.style.visibility = out.siliconCopyA > 0.01 ? "visible" : "hidden";
+      /* the CSS turns this into rise + blur, so the entrance is one value */
+      siliconCopy.style.setProperty("--enter", out.siliconCopyA.toFixed(3));
 
       raf = requestAnimationFrame(frame);
     };

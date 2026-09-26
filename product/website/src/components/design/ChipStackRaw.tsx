@@ -26,10 +26,12 @@ const P0 = 78;
 const PW = 530;
 const P1 = P0 + PW;
 
+/* the hero's pen: this drawing IS the page's subject, so it speaks at
+   90% ink where the homepage's backdrop blueprint whispers at 30% */
 const line = {
   fill: "none",
   stroke: "currentColor",
-  strokeOpacity: 0.3,
+  strokeOpacity: 0.9,
   strokeWidth: 1,
   vectorEffect: "non-scaling-stroke",
 } as const;
@@ -39,7 +41,7 @@ const line = {
 const plate = {
   fill: "var(--color-substrate)",
   stroke: "currentColor",
-  strokeOpacity: 0.3,
+  strokeOpacity: 0.9,
   strokeWidth: 1,
   vectorEffect: "non-scaling-stroke",
 } as const;
@@ -76,10 +78,10 @@ const Substrate = (): ReactElement => (
     <Plate />
     {range(12).map((i) => (
       <g key={i}>
-        <rect fill="currentColor" fillOpacity={0.3} height={6} width={14} x={P0 + 38 + i * 40} y={P0 + 16} />
-        <rect fill="currentColor" fillOpacity={0.3} height={6} width={14} x={P0 + 38 + i * 40} y={P1 - 22} />
-        <rect fill="currentColor" fillOpacity={0.3} height={14} width={6} x={P0 + 16} y={P0 + 38 + i * 40} />
-        <rect fill="currentColor" fillOpacity={0.3} height={14} width={6} x={P1 - 22} y={P0 + 38 + i * 40} />
+        <rect fill="currentColor" fillOpacity={0.7} height={6} width={14} x={P0 + 38 + i * 40} y={P0 + 16} />
+        <rect fill="currentColor" fillOpacity={0.7} height={6} width={14} x={P0 + 38 + i * 40} y={P1 - 22} />
+        <rect fill="currentColor" fillOpacity={0.7} height={14} width={6} x={P0 + 16} y={P0 + 38 + i * 40} />
+        <rect fill="currentColor" fillOpacity={0.7} height={14} width={6} x={P1 - 22} y={P0 + 38 + i * 40} />
       </g>
     ))}
     <rect {...line} height={210} rx={6} width={210} x={P0 + 160} y={P0 + 160} />
@@ -103,7 +105,7 @@ const SiliconDie = (): ReactElement => (
         (r * 7 + c * 13) % 5 === 0 ? null : (
           <rect
             fill="currentColor"
-            fillOpacity={0.55}
+            fillOpacity={0.9}
             height={6}
             key={`${r}-${c}`}
             width={6}
@@ -173,7 +175,7 @@ const CasingArt = (): ReactElement => {
         </g>
       ))}
       <g transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}>
-        <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.9} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       </g>
     </g>
   );

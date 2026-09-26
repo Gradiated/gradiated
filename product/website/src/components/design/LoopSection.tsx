@@ -675,9 +675,6 @@ export const LoopSection = (): ReactElement => {
                 <span className="gr-loop-rowlabel">{label}</span>
                 {i === 3 && (
                   <div className="gr-loop-modelzone" ref={modelZoneRef}>
-                    <p className="gr-loop-models-caption">
-                      Your Gradiated models
-                    </p>
                     <div className="gr-loop-slots" ref={slotsWrapRef} />
                   </div>
                 )}

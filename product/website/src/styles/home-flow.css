@@ -432,7 +432,7 @@
   left: 20px;
   right: 26px;
   top: 50%;
-  transform: translateY(-46%);
+  transform: translateY(-50%);
   /* tall enough to OWN the version tags below the icons — the fade mask
      clips paint to this box, so the tags must live inside it */
   height: 84px;
@@ -478,14 +478,6 @@
   color: var(--color-text-muted);
 }
 
-.gr-loop-models-caption {
-  margin: 0;
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
 
 .gr-loop-title {
   max-width: 480px;

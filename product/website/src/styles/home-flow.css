@@ -913,7 +913,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 72px;
+  padding-top: 44px;
   /* the well is shorter than the render: the card's overflow crops the
      device's lower stretch, so the container doesn't grow to fit it */
   height: 460px;

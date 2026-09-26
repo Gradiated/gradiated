@@ -57,12 +57,6 @@
   row-gap: calc(1.2 * var(--u));
 }
 
-/* the hardware fold rides higher than dead centre: the exploded stack's
-   reserve makes centred feel low */
-.gr-fold:has(.gr-chipiso) .gr-page-hero {
-  translate: 0 -44px;
-}
-
 /* The diagram's optical placement, by the vertex rule: splayed open, the
    casing's top-left vertex sits a touch above the R of "Runs" — the
    diagram's real height (casing top vertex to solder bottom vertex) then
@@ -3886,13 +3880,7 @@
 
 /* Back to spanning its row, and capped so a tall object cannot take the whole
    screen before the sentence that explains it. */
-.gr-root:not([data-tier="wide"]) /* the hardware fold rides higher than dead centre: the exploded stack's
-   reserve makes centred feel low */
-.gr-fold:has(.gr-chipiso) .gr-page-hero {
-  translate: 0 -44px;
-}
-
-/* The diagram's optical placement, by the vertex rule: splayed open, the
+.gr-root:not([data-tier="wide"]) /* The diagram's optical placement, by the vertex rule: splayed open, the
    casing's top-left vertex sits a touch above the R of "Runs" — the
    diagram's real height (casing top vertex to solder bottom vertex) then
    hangs centred against the text column instead of sagging below it. */

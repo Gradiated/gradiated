@@ -424,6 +424,29 @@
   margin-top: 1em;
 }
 
+/* The silicon fold speaks in the loop fold's voice: same title scale,
+   same body, and the block sits on the page's own content margin. */
+.gr-flow-copy--silicon {
+  width: min(86vw, 480px);
+  right: max(4vw, calc((100vw - 1240px) / 2));
+}
+
+.gr-flow-copy--silicon .gr-heading {
+  font-size: clamp(32px, 3.84vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+.gr-flow-copy--silicon p {
+  margin-top: 28px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.gr-flow-copy--silicon p + p {
+  margin-top: 1em;
+}
+
 .gr-loop-modelzone {
   position: absolute;
   left: 0;

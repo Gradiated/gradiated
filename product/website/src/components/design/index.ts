@@ -23,6 +23,7 @@
  */
 
 export { Band, Columns, Module } from "./Module";
+export { BottomHaze } from "./BottomHaze";
 export { Footer } from "./Footer";
 export { HeroBeam } from "./HeroBeam";
 export { HeroBeamRaw } from "./HeroBeamRaw";

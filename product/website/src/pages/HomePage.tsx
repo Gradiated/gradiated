@@ -4,6 +4,7 @@ import type { ReactElement } from "react";
 import {
   Arrow,
   Band,
+  BottomHaze,
   Footer,
   HeroBeam,
   HeroBeamRaw,
@@ -133,7 +134,8 @@ export const HomePage = (): ReactElement => (
       <Footer index={2} />
     </Band>
 
-    {/* Figma 509:645 — the fixed haze over the viewport's bottom edge */}
-    <div aria-hidden="true" className="gr-bottom-haze" />
+    {/* Figma 509:645 — the fixed haze over the viewport's bottom edge;
+        it sits out the hero and fades in past the first fold */}
+    <BottomHaze />
   </Substrate>
 );

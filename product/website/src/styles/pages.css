@@ -4396,3 +4396,28 @@
 .gr-nav-note-thumb {
   background-size: cover;
 }
+
+/* -- the bottom haze -------------------------------------------------------
+   Figma 509:645: a fixed banner over the bottom of the viewport (257px of
+   the 1124 frame ~ 23vh) that blurs whatever scrolls beneath it and washes
+   it toward the page ground — content dissolves off the bottom edge instead
+   of being cut by it. The mask fades the blur in, so there is no hard line
+   where the effect starts. Pointer-events off: it is purely atmospheric. */
+.gr-bottom-haze {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 23vh;
+  pointer-events: none;
+  z-index: 40;
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  background: linear-gradient(
+    to bottom,
+    rgb(from var(--color-substrate) r g b / 0),
+    rgb(from var(--color-substrate) r g b / 0.8) 63.6%
+  );
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+  mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+}

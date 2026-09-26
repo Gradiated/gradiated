@@ -132,5 +132,8 @@ export const HomePage = (): ReactElement => (
     <Band>
       <Footer index={2} />
     </Band>
+
+    {/* Figma 509:645 — the fixed haze over the viewport's bottom edge */}
+    <div aria-hidden="true" className="gr-bottom-haze" />
   </Substrate>
 );

@@ -409,7 +409,7 @@
   /* centred in the negative space between the product mock and the
      bottom of the fold, nudged up and right by eye */
   margin: auto 0 auto clamp(24px, 6%, 90px);
-  translate: 88px -56px;
+  translate: 88px -48px;
   font-size: 17px;
   line-height: 1.6;
   color: var(--color-text-muted);

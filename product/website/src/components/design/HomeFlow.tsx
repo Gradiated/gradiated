@@ -18,12 +18,11 @@ import { Logo } from "./Logo";
  */
 
 const BEATS = {
-  /* the board slides in from the right, the chip fills its socket,
-     then the view drops to isometric */
-  boardIn: [0.0, 0.24],
-  chipIn: [0.24, 0.44],
-  land: [0.44, 0.72],
-  siliconRest: [0.72, 1.0],
+  /* the blueprint draws itself in (chip already seated), then the view
+     drops straight to isometric */
+  draw: [0.0, 0.3],
+  land: [0.3, 0.66],
+  siliconRest: [0.66, 1.0],
 } as const;
 
 /** Runway height in viewport-heights; the scrub's total scroll distance. */
@@ -93,17 +92,10 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     glowA: 0,
     siliconCopyA: 0,
   };
-  if (g < BEATS.boardIn[1]) {
-    out.boardT = easeIO(seg(g, BEATS.boardIn));
-  } else if (g < BEATS.chipIn[1]) {
-    /* the chip fills into its socket: from above and slightly large,
-       settling flat */
-    const t = easeO(seg(g, BEATS.chipIn));
-    const high = { ...K.chip, w: K.chip.w * 1.16, h: K.chip.h * 1.16, cy: K.chip.cy - H * 0.05 };
-    out.s = mixState(high, K.chip, t);
-    out.blockA = easeO(clamp01(t * 1.7));
-    out.markAlpha = clamp01((t - 0.35) / 0.65);
-    out.boardT = 1;
+  out.blockA = 1;
+  out.markAlpha = 1;
+  if (g < BEATS.draw[1]) {
+    out.boardT = seg(g, BEATS.draw);
   } else if (g < BEATS.land[1]) {
     const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);
@@ -194,64 +186,76 @@ export const HomeFlow = (): ReactElement => {
     const bctx = glCanvas.getContext("2d");
     if (!bctx) return;
     let boardK = 0;
+    let boardBuilt = -1;
 
     const BW = 244;
     const BH = 305;
     const BM = 18; /* margin for the dimension chrome */
     const SOCK = { x: 64, y: 40, w: 60, h: 60, cx: 94, cy: 70 };
 
-    const drawBoardArt = (k: number): void => {
-      const dpr = 1.5;
-      glCanvas.width = Math.round((BW + 2 * BM) * k * dpr);
-      glCanvas.height = Math.round((BH + 2 * BM) * k * dpr);
+    /* STROKE DISCIPLINE: every line is exactly one device pixel, in ONE
+       shared paint — the loop fold's hairline (ink @ 30%). Solid ink is
+       reserved for data (pin dots, text sits between). Coincident lines
+       are drawn once. */
+    const A_LINE = 0.3;
+    const A_TEXT = 0.45;
+    const TOTAL = 110; /* sum of the gate weights below */
+
+    const drawBoardArt = (k: number, T: number): void => {
+      const dpr = Math.min(devicePixelRatio || 1, 2);
+      const pw = Math.round((BW + 2 * BM) * k * dpr);
+      if (glCanvas.width !== pw) {
+        glCanvas.width = pw;
+        glCanvas.height = Math.round((BH + 2 * BM) * k * dpr);
+      }
       bctx.setTransform(k * dpr, 0, 0, k * dpr, BM * k * dpr, BM * k * dpr);
       bctx.clearRect(-BM, -BM, BW + 2 * BM, BH + 2 * BM);
-      const hair = 1 / (k * dpr);
       bctx.strokeStyle = ink;
       bctx.fillStyle = ink;
-      bctx.lineWidth = hair * 1.5;
-      bctx.lineJoin = "miter";
-      const F = 3.4; /* label size, mm */
-      const font = (size: number): void => {
-        bctx.font = `${size}px "JetBrains Mono", ui-monospace, monospace`;
+      bctx.lineWidth = 1 / (k * dpr); /* exactly one device pixel */
+      const F = 3.4;
+
+      /* the plotter's budget: elements appear in draw order */
+      const budget = T * TOTAL;
+      let used = 0;
+      const gate = (w: number): boolean => {
+        used += w;
+        return used <= budget + 1e-4;
       };
 
-      const rect = (x: number, y: number, w: number, h: number, r = 0.6, a = 0.55): void => {
-        bctx.globalAlpha = a;
+      const rect = (x: number, y: number, w: number, h: number, r = 0.6): void => {
+        bctx.globalAlpha = A_LINE;
         bctx.beginPath();
         bctx.roundRect(x, y, w, h, r);
         bctx.stroke();
       };
-      const text = (t: string, x: number, y: number, a = 0.55, size = F): void => {
-        bctx.globalAlpha = a;
-        font(size);
+      const text = (t: string, x: number, y: number, size = F): void => {
+        bctx.globalAlpha = A_TEXT;
+        bctx.font = `${size}px "JetBrains Mono", ui-monospace, monospace`;
         bctx.fillText(t, x, y);
       };
       const dot = (x: number, y: number, s2 = 1.1): void => {
         bctx.fillRect(x - s2 / 2, y - s2 / 2, s2, s2);
       };
-      const dotRow = (x: number, y: number, n: number, dx: number, a = 0.45): void => {
-        bctx.globalAlpha = a;
+      const dotRow = (x: number, y: number, n: number, dx: number): void => {
+        bctx.globalAlpha = A_LINE;
         for (let i = 0; i < n; i++) dot(x + i * dx, y);
       };
-      /* small 4-dot power block, the reference's recurring atom */
       const block4 = (x: number, y: number, w = 12, h = 12): void => {
-        rect(x, y, w, h, 0.6, 0.55);
-        bctx.globalAlpha = 0.5;
+        rect(x, y, w, h, 0.6);
+        bctx.globalAlpha = A_LINE;
         dot(x + w * 0.3, y + h * 0.3);
         dot(x + w * 0.7, y + h * 0.3);
         dot(x + w * 0.3, y + h * 0.7);
         dot(x + w * 0.7, y + h * 0.7);
       };
-      const ticks = (t: string, x: number, y: number): void => text(t, x, y, 0.4, 2.8);
-      /* an edge-contact slot: outer shell, hatched contact strips, notch */
       const slot = (x: number, y: number, w: number, h: number, notch: number): void => {
-        rect(x, y, w, h, 0.8, 0.55);
+        rect(x, y, w, h, 0.8);
         const ix = x + 2;
         const iw = w - 4;
         const iy = y + h / 2 - 1.6;
-        rect(ix, iy, iw, 3.2, 0.4, 0.4);
-        bctx.globalAlpha = 0.32;
+        rect(ix, iy, iw, 3.2, 0.4);
+        bctx.globalAlpha = A_LINE;
         const nx = x + w * notch;
         for (let hx = ix + 1.2; hx < ix + iw - 0.8; hx += 1.55) {
           if (Math.abs(hx - nx) < 1.6) continue;
@@ -260,277 +264,298 @@ export const HomeFlow = (): ReactElement => {
           bctx.lineTo(hx, iy + 2.7);
           bctx.stroke();
         }
-        bctx.globalAlpha = 0.55;
         bctx.beginPath();
         bctx.moveTo(nx, y);
         bctx.lineTo(nx, y + h);
         bctx.stroke();
       };
       const mount = (x: number, y: number): void => {
-        bctx.globalAlpha = 0.55;
+        bctx.globalAlpha = A_LINE;
         bctx.beginPath();
         bctx.arc(x, y, 2, 0, Math.PI * 2);
         bctx.stroke();
-        bctx.globalAlpha = 0.4;
         bctx.beginPath();
         bctx.arc(x, y, 4.4, 0, Math.PI * 2);
         bctx.stroke();
       };
 
-      /* ---- dimension chrome ---- */
-      bctx.setLineDash([2.2, 2.6]);
-      bctx.globalAlpha = 0.35;
-      bctx.beginPath();
-      bctx.moveTo(0, -BM + 4); bctx.lineTo(0, BH + BM - 4);
-      bctx.moveTo(BW, -BM + 4); bctx.lineTo(BW, BH + BM - 4);
-      bctx.moveTo(-BM + 4, 0); bctx.lineTo(BW + BM - 4, 0);
-      bctx.moveTo(-BM + 4, BH); bctx.lineTo(BW + BM - 4, BH);
-      bctx.stroke();
-      bctx.setLineDash([]);
-      /* the top extent arrow */
-      bctx.globalAlpha = 0.45;
-      bctx.beginPath();
-      bctx.moveTo(2, -9); bctx.lineTo(BW - 2, -9);
-      bctx.moveTo(2, -9); bctx.lineTo(5.4, -10.6);
-      bctx.moveTo(2, -9); bctx.lineTo(5.4, -7.4);
-      bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -10.6);
-      bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -7.4);
-      bctx.stroke();
-      text("x=0", 0, -12.5, 0.5);
-      text("x=244mm", BW - 26, -12.5, 0.5);
-      text("y=0", BW + 5, 1, 0.5);
-      text("y=305mm", BW + 5, BH + 1, 0.5);
-
-      /* ---- board outline, stepped top-right corner ---- */
-      bctx.globalAlpha = 0.6;
-      bctx.beginPath();
-      bctx.moveTo(6, 2);
-      bctx.lineTo(220, 2);
-      bctx.lineTo(224, 6);
-      bctx.lineTo(224, 26);
-      bctx.lineTo(238, 26);
-      bctx.lineTo(242, 30);
-      bctx.lineTo(242, 299);
-      bctx.arcTo(242, 303, 238, 303, 4);
-      bctx.lineTo(6, 303);
-      bctx.arcTo(2, 303, 2, 299, 4);
-      bctx.lineTo(2, 6);
-      bctx.arcTo(2, 2, 6, 2, 4);
-      bctx.closePath();
-      bctx.stroke();
-      mount(11, 11);
-      mount(233, 37);
-      mount(11, 294);
-      mount(233, 294);
-
-      /* ---- top-left: EPS power ---- */
-      text("[EPS1][EPS2]", 21, 10);
-      rect(20, 12, 46, 10, 1, 0.55);
-      rect(22, 14, 42, 6, 0.6, 0.35);
-      dotRow(25, 17, 13, 3.1, 0.45);
-      rect(36, 26, 13, 12, 0.8, 0.5);
-      bctx.globalAlpha = 0.45;
-      for (let i = 0; i < 3; i++) {
-        dot(39 + i * 3.6, 29.5);
-        dot(39 + i * 3.6, 34);
-      }
-
-      /* ---- rear I/O, left edge ---- */
-      text("[RJ45]", 5, 36);
-      rect(4, 38, 14, 15, 1, 0.55);
-      rect(6.5, 41, 9, 9.5, 0.5, 0.4);
-      bctx.globalAlpha = 0.4;
-      for (let i = 0; i < 6; i++) {
+      /* 1. board outline (8) */
+      if (gate(8)) {
+        bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(7.5 + i * 1.4, 41);
-        bctx.lineTo(7.5 + i * 1.4, 44);
+        bctx.moveTo(6, 2);
+        bctx.lineTo(220, 2);
+        bctx.lineTo(224, 6);
+        bctx.lineTo(224, 26);
+        bctx.lineTo(238, 26);
+        bctx.lineTo(242, 30);
+        bctx.lineTo(242, 299);
+        bctx.arcTo(242, 303, 238, 303, 4);
+        bctx.lineTo(6, 303);
+        bctx.arcTo(2, 303, 2, 299, 4);
+        bctx.lineTo(2, 6);
+        bctx.arcTo(2, 2, 6, 2, 4);
+        bctx.closePath();
         bctx.stroke();
       }
-      text("[USB]", 5, 60);
-      rect(4, 62, 12, 18, 2, 0.55);
-      rect(7, 66, 6, 10, 1, 0.4);
-      text("[rear]", 5, 87);
-      rect(4, 89, 11, 14, 2, 0.55);
-      rect(6.8, 92, 5.4, 8, 2.4, 0.4);
-      text("[HDMI]", 5, 110);
-      bctx.globalAlpha = 0.55;
-      bctx.beginPath();
-      bctx.moveTo(4, 112); bctx.lineTo(20, 112); bctx.lineTo(20, 121);
-      bctx.lineTo(17, 124); bctx.lineTo(7, 124); bctx.lineTo(4, 121);
-      bctx.closePath();
-      bctx.stroke();
-      rect(6.5, 114.5, 11, 6, 2.6, 0.38);
-      text("|DP|", 5, 131);
-      bctx.globalAlpha = 0.55;
-      bctx.beginPath();
-      bctx.moveTo(4, 133); bctx.lineTo(18, 133); bctx.lineTo(20, 135.5);
-      bctx.lineTo(20, 143); bctx.lineTo(4, 143);
-      bctx.closePath();
-      bctx.stroke();
-      rect(6.5, 135.5, 11, 5, 2.2, 0.38);
-      text("[AUD]", 5, 155);
-      rect(4, 157, 13, 14, 1.4, 0.55);
-      bctx.globalAlpha = 0.5;
-      bctx.beginPath();
-      bctx.arc(10.5, 164, 3.1, 0, Math.PI * 2);
-      bctx.stroke();
-
-      /* ---- VRM column + PWM + WiFi ---- */
-      text("|V|", 39, 60);
-      block4(38, 62);
-      text("|M|", 39, 84);
-      block4(38, 86);
-      text("|A|", 39, 106);
-      block4(38, 108);
-      block4(38, 128);
-      text("[U2 PWM]", 36, 144.5);
-      rect(36, 146.5, 27, 7, 0.8, 0.55);
-      dotRow(39, 150, 8, 3, 0.45);
-      text("|WiFi|", 36, 160.5);
-      rect(36, 162.5, 21, 8, 0.8, 0.55);
-      dotRow(39, 166.5, 5, 3.4, 0.45);
-
-      /* ---- VRM_B comb + FAN_CPU ---- */
-      text("VRM_B", 90, 17.5);
-      rect(62, 20, 72, 8.6, 1, 0.55);
-      rect(64, 22, 68, 4.6, 0.5, 0.35);
-      bctx.globalAlpha = 0.4;
-      for (let i = 0; i < 27; i++) {
+      /* 2. mounting holes (4) */
+      if (gate(4)) {
+        mount(11, 11);
+        mount(233, 37);
+        mount(11, 294);
+        mount(233, 294);
+      }
+      /* 3. dimension chrome (2) */
+      if (gate(2)) {
+        bctx.setLineDash([2.2, 2.6]);
+        bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(65.5 + i * 2.5, 22.6);
-        bctx.lineTo(65.5 + i * 2.5, 26);
+        bctx.moveTo(0, -BM + 4); bctx.lineTo(0, BH + BM - 4);
+        bctx.moveTo(BW, -BM + 4); bctx.lineTo(BW, BH + BM - 4);
+        bctx.moveTo(-BM + 4, 0); bctx.lineTo(BW + BM - 4, 0);
+        bctx.moveTo(-BM + 4, BH); bctx.lineTo(BW + BM - 4, BH);
+        bctx.stroke();
+        bctx.setLineDash([]);
+        bctx.beginPath();
+        bctx.moveTo(2, -9); bctx.lineTo(BW - 2, -9);
+        bctx.moveTo(2, -9); bctx.lineTo(5.4, -10.6);
+        bctx.moveTo(2, -9); bctx.lineTo(5.4, -7.4);
+        bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -10.6);
+        bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -7.4);
+        bctx.stroke();
+        text("x=0", 0, -12.5);
+        text("x=244mm", BW - 26, -12.5);
+        text("y=0", BW + 5, 1);
+        text("y=305mm", BW + 5, BH + 1);
+      }
+      /* 4. the socket the chip is already seated on (8) */
+      if (gate(8)) {
+        bctx.setLineDash([2, 2.6]);
+        rect(SOCK.x - 7, SOCK.y - 7, SOCK.w + 14, SOCK.h + 14, 1);
+        bctx.setLineDash([]);
+        const sx = SOCK.x;
+        const sy = SOCK.y;
+        const sw = SOCK.w;
+        const ch = 7;
+        bctx.globalAlpha = A_LINE;
+        bctx.beginPath();
+        bctx.moveTo(sx + ch, sy);
+        bctx.lineTo(sx + sw - ch, sy);
+        bctx.lineTo(sx + sw, sy + ch);
+        bctx.lineTo(sx + sw, sy + sw - ch);
+        bctx.lineTo(sx + sw - ch, sy + sw);
+        bctx.lineTo(sx + ch, sy + sw);
+        bctx.lineTo(sx, sy + sw - ch);
+        bctx.lineTo(sx, sy + ch);
+        bctx.closePath();
+        bctx.stroke();
+        for (const [mx2, my2] of [
+          [sx + 6, sy + 6], [sx + sw - 6, sy + 6],
+          [sx + 6, sy + sw - 6], [sx + sw - 6, sy + sw - 6],
+        ] as const) {
+          bctx.beginPath();
+          bctx.arc(mx2, my2, 1.8, 0, Math.PI * 2);
+          bctx.stroke();
+        }
+      }
+      /* 5. VRM column (8) */
+      if (gate(8)) {
+        text("|V|", 39, 60);
+        block4(38, 62);
+        text("|M|", 39, 84);
+        block4(38, 86);
+        text("|A|", 39, 106);
+        block4(38, 108);
+        block4(38, 128);
+      }
+      /* 6. EPS power (6) */
+      if (gate(6)) {
+        text("[EPS1][EPS2]", 21, 10);
+        rect(20, 12, 46, 10, 1);
+        rect(22, 14, 42, 6, 0.6);
+        dotRow(25, 17, 13, 3.1);
+        rect(36, 26, 13, 12, 0.8);
+        bctx.globalAlpha = A_LINE;
+        for (let i = 0; i < 3; i++) {
+          dot(39 + i * 3.6, 29.5);
+          dot(39 + i * 3.6, 34);
+        }
+      }
+      /* 7. VRM_B comb (5) */
+      if (gate(5)) {
+        text("VRM_B", 90, 17.5);
+        rect(62, 20, 72, 8.6, 1);
+        rect(64, 22, 68, 4.6, 0.5);
+        bctx.globalAlpha = A_LINE;
+        for (let i = 0; i < 27; i++) {
+          bctx.beginPath();
+          bctx.moveTo(65.5 + i * 2.5, 22.6);
+          bctx.lineTo(65.5 + i * 2.5, 26);
+          bctx.stroke();
+        }
+      }
+      /* 8. FAN_CPU (3) */
+      if (gate(3)) {
+        text("[FAN_CPU]", 148, 10);
+        rect(138, 12, 48, 11, 1);
+        for (let i = 0; i < 4; i++) rect(143 + i * 11, 15, 5, 5, 0.4);
+      }
+      /* 9. DIMMs (12) */
+      if (gate(12)) {
+        const dimmX = [144, 156, 168, 180];
+        ["A1", "A2", "B1", "B2"].forEach((t2, i) => text(t2, dimmX[i] + 0.6, 24));
+        dimmX.forEach((dx) => {
+          rect(dx, 26, 7, 100, 1);
+          rect(dx + 1.8, 29, 3.4, 44, 0.4);
+          rect(dx + 1.8, 79, 3.4, 44, 0.4);
+          bctx.globalAlpha = A_LINE;
+          bctx.beginPath();
+          bctx.moveTo(dx, 76);
+          bctx.lineTo(dx + 7, 76);
+          bctx.stroke();
+        });
+        text("DDR5 DIMMs", 148, 133);
+      }
+      /* 10. the ATX24 stack (8) */
+      if (gate(8)) {
+        text("+ - +", 196, 41, 2.8);
+        block4(196, 44, 13, 13);
+        text("[24]", 212, 53);
+        text("|pn|", 197, 64);
+        block4(196, 66, 13, 13);
+        text("|AT|", 197, 86);
+        block4(196, 88, 13, 13);
+        text("|X|", 198, 108);
+        block4(196, 110, 13, 13);
+        text("+ - +", 196, 128, 2.8);
+      }
+      /* 11. rear I/O (14) */
+      if (gate(14)) {
+        text("[RJ45]", 5, 36);
+        rect(4, 38, 14, 15, 1);
+        rect(6.5, 41, 9, 9.5, 0.5);
+        bctx.globalAlpha = A_LINE;
+        for (let i = 0; i < 6; i++) {
+          bctx.beginPath();
+          bctx.moveTo(7.5 + i * 1.4, 41);
+          bctx.lineTo(7.5 + i * 1.4, 44);
+          bctx.stroke();
+        }
+        text("[USB]", 5, 60);
+        rect(4, 62, 12, 18, 2);
+        rect(7, 66, 6, 10, 1);
+        text("[rear]", 5, 87);
+        rect(4, 89, 11, 14, 2);
+        rect(6.8, 92, 5.4, 8, 2.4);
+        text("[HDMI]", 5, 110);
+        bctx.globalAlpha = A_LINE;
+        bctx.beginPath();
+        bctx.moveTo(4, 112); bctx.lineTo(20, 112); bctx.lineTo(20, 121);
+        bctx.lineTo(17, 124); bctx.lineTo(7, 124); bctx.lineTo(4, 121);
+        bctx.closePath();
+        bctx.stroke();
+        rect(6.5, 114.5, 11, 6, 2.6);
+        text("|DP|", 5, 131);
+        bctx.globalAlpha = A_LINE;
+        bctx.beginPath();
+        bctx.moveTo(4, 133); bctx.lineTo(18, 133); bctx.lineTo(20, 135.5);
+        bctx.lineTo(20, 143); bctx.lineTo(4, 143);
+        bctx.closePath();
+        bctx.stroke();
+        rect(6.5, 135.5, 11, 5, 2.2);
+        text("[AUD]", 5, 155);
+        rect(4, 157, 13, 14, 1.4);
+        bctx.globalAlpha = A_LINE;
+        bctx.beginPath();
+        bctx.arc(10.5, 164, 3.1, 0, Math.PI * 2);
         bctx.stroke();
       }
-      text("[FAN_CPU]", 148, 10);
-      rect(138, 12, 48, 11, 1, 0.55);
-      bctx.globalAlpha = 0.5;
-      for (let i = 0; i < 4; i++) rect(143 + i * 11, 15, 5, 5, 0.4, 0.45);
-
-      /* ---- U1: keepout + socket ---- */
-      bctx.setLineDash([2, 2.6]);
-      rect(SOCK.x - 7, SOCK.y - 7, SOCK.w + 14, SOCK.h + 14, 1, 0.4);
-      bctx.setLineDash([]);
-      bctx.globalAlpha = 0.6;
-      const sx = SOCK.x;
-      const sy = SOCK.y;
-      const sw = SOCK.w;
-      const ch = 7; /* chamfer */
-      bctx.beginPath();
-      bctx.moveTo(sx + ch, sy);
-      bctx.lineTo(sx + sw - ch, sy);
-      bctx.lineTo(sx + sw, sy + ch);
-      bctx.lineTo(sx + sw, sy + sw - ch);
-      bctx.lineTo(sx + sw - ch, sy + sw);
-      bctx.lineTo(sx + ch, sy + sw);
-      bctx.lineTo(sx, sy + sw - ch);
-      bctx.lineTo(sx, sy + ch);
-      bctx.closePath();
-      bctx.stroke();
-      for (const [mx2, my2] of [
-        [sx + 6, sy + 6], [sx + sw - 6, sy + 6],
-        [sx + 6, sy + sw - 6], [sx + sw - 6, sy + sw - 6],
-      ] as const) {
-        bctx.globalAlpha = 0.5;
-        bctx.beginPath();
-        bctx.arc(mx2, my2, 1.8, 0, Math.PI * 2);
-        bctx.stroke();
+      /* 12. PWM + WiFi (4) */
+      if (gate(4)) {
+        text("[U2 PWM]", 36, 144.5);
+        rect(36, 146.5, 27, 7, 0.8);
+        dotRow(39, 150, 8, 3);
+        text("|WiFi|", 36, 160.5);
+        rect(36, 162.5, 21, 8, 0.8);
+        dotRow(39, 166.5, 5, 3.4);
       }
-      text("U1 CPU", SOCK.cx - 10, SOCK.cy - 2, 0.6);
-      text("LGA1700", SOCK.cx - 12, SOCK.cy + 3.5, 0.6);
-
-      /* ---- DIMMs ---- */
-      const dimmX = [144, 156, 168, 180];
-      ["A1", "A2", "B1", "B2"].forEach((t, i) => text(t, dimmX[i] + 0.6, 24, 0.5));
-      dimmX.forEach((dx) => {
-        rect(dx, 26, 7, 100, 1, 0.55);
-        rect(dx + 1.8, 29, 3.4, 44, 0.4, 0.4);
-        rect(dx + 1.8, 79, 3.4, 44, 0.4, 0.4);
-        bctx.globalAlpha = 0.55;
+      /* 13. FANS / USB_F (3) */
+      if (gate(3)) {
+        text("[FANS]", 188, 136);
+        rect(186, 138, 27, 8, 0.8);
+        dotRow(189, 141, 8, 3);
+        dotRow(189, 143.6, 8, 3);
+        text("[USB_F]", 188, 151);
+        rect(188, 153, 19, 6.4, 0.8);
+        dotRow(190.5, 156.2, 5, 3.2);
+      }
+      /* 14. PCIE1 + clock (6) */
+      if (gate(6)) {
+        text("[", 60, 143);
+        text("PCIE1  PCIe 5.0 x16", 88, 143);
+        text("]", 168, 143);
+        slot(60, 146, 112, 10, 0.72);
+        text("[U9 CLK][Y1]", 128, 162.5);
+        rect(130, 164, 24, 6.4, 0.8);
+        dotRow(132.8, 167.2, 7, 2.8);
+      }
+      /* 15. M2 + PCIE2 (6) */
+      if (gate(6)) {
+        text("[", 40, 173.5);
+        text("M2_2 Gen4   (PCH)", 62, 173.5);
+        text("]", 128, 173.5);
+        slot(40, 176, 90, 9, 0.8);
+        text("[=====", 40, 191.5);
+        text("PCIE2  PCIe 4.0 x4", 62, 191.5);
+        text("=====]", 116, 191.5);
+        slot(40, 194, 90, 9, 0.8);
+      }
+      /* 16. PCIE3 (2) */
+      if (gate(2)) {
+        text("[= PCIE3 x1 =]", 48, 213.5);
+        slot(48, 216, 28, 7, 0.7);
+      }
+      /* 17. PCH cluster (6) */
+      if (gate(6)) {
+        rect(146, 176, 16, 16, 1);
+        dotRow(149, 180, 4, 3.2);
+        dotRow(149, 184, 4, 3.2);
+        dotRow(149, 188, 4, 3.2);
+        text("|U3 |", 146, 197);
+        text("|PCH|", 146, 201.5);
+        text("+ - +", 146, 173.5, 2.8);
+        text("[BIOS]", 170, 173.5);
+        rect(168, 176, 22, 8, 0.8);
+        dotRow(171, 180, 6, 3.1);
+        text("+ - +", 204, 173.5, 2.8);
+        block4(202, 176, 13, 13);
+        text("|SA|", 217, 183);
+        text("|TA|", 217, 188);
+        text("[SuperIO/EC]", 168, 205.5);
+        rect(198, 207, 20, 7, 0.8);
+        dotRow(200.6, 210.5, 5, 3.2);
+      }
+      /* 18. battery, audio island, bottom headers (5) */
+      if (gate(5)) {
+        bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(dx, 76); bctx.lineTo(dx + 7, 76);
+        bctx.arc(134, 220, 9.5, 0, Math.PI * 2);
         bctx.stroke();
-      });
-      text("DDR5 DIMMs", 148, 133, 0.5);
-
-      /* ---- right column: the ATX24 stack ---- */
-      ticks("+ - +", 196, 41);
-      block4(196, 44, 13, 13);
-      text("[24]", 212, 53);
-      text("|pn|", 197, 64);
-      block4(196, 66, 13, 13);
-      text("|AT|", 197, 86);
-      block4(196, 88, 13, 13);
-      text("|X|", 198, 108);
-      block4(196, 110, 13, 13);
-      ticks("+ - +", 196, 128);
-
-      /* ---- FANS / USB_F ---- */
-      text("[FANS]", 188, 136);
-      rect(186, 138, 27, 8, 0.8, 0.55);
-      dotRow(189, 141, 8, 3, 0.45);
-      dotRow(189, 143.6, 8, 3, 0.3);
-      text("[USB_F]", 188, 151);
-      rect(188, 153, 19, 6.4, 0.8, 0.55);
-      dotRow(190.5, 156.2, 5, 3.2, 0.45);
-
-      /* ---- expansion ---- */
-      text("[", 60, 143);
-      text("PCIE1  PCIe 5.0 x16", 88, 143);
-      text("]", 168, 143);
-      slot(60, 146, 112, 10, 0.72);
-      text("[U9 CLK][Y1]", 128, 162.5);
-      rect(130, 164, 24, 6.4, 0.8, 0.55);
-      dotRow(132.8, 167.2, 7, 2.8, 0.45);
-      text("[", 40, 173.5);
-      text("M2_2 Gen4   (PCH)", 62, 173.5);
-      text("]", 128, 173.5);
-      slot(40, 176, 90, 9, 0.8);
-      text("[=====", 40, 191.5);
-      text("PCIE2  PCIe 4.0 x4", 62, 191.5);
-      text("=====]", 116, 191.5);
-      slot(40, 194, 90, 9, 0.8);
-      text("[= PCIE3 x1 =]", 48, 213.5);
-      slot(48, 216, 28, 7, 0.7);
-
-      /* ---- PCH cluster ---- */
-      rect(146, 176, 16, 16, 1, 0.55);
-      bctx.globalAlpha = 0.45;
-      dotRow(149, 180, 4, 3.2, 0.45);
-      dotRow(149, 184, 4, 3.2, 0.45);
-      dotRow(149, 188, 4, 3.2, 0.45);
-      text("|U3 |", 146, 197);
-      text("|PCH|", 146, 201.5);
-      ticks("+ - +", 146, 173.5);
-      text("[BIOS]", 170, 173.5);
-      rect(168, 176, 22, 8, 0.8, 0.55);
-      dotRow(171, 180, 6, 3.1, 0.45);
-      ticks("+ - +", 204, 173.5);
-      block4(202, 176, 13, 13);
-      text("|SA|", 217, 183);
-      text("|TA|", 217, 188);
-      text("[SuperIO/EC]", 168, 205.5);
-      rect(198, 207, 20, 7, 0.8, 0.55);
-      dotRow(200.6, 210.5, 5, 3.2, 0.45);
-
-      /* ---- battery, audio island, bottom headers ---- */
-      bctx.globalAlpha = 0.55;
-      bctx.beginPath();
-      bctx.arc(134, 220, 9.5, 0, Math.PI * 2);
-      bctx.stroke();
-      text("( BT1 )", 124, 221.5, 0.5);
-      bctx.setLineDash([2, 2.4]);
-      rect(13, 203, 27, 28, 0.8, 0.42);
-      bctx.setLineDash([]);
-      text("U8", 17, 211, 0.5);
-      text("AUDIO", 17, 216.5, 0.5);
-      text("island", 17, 222, 0.5);
-      text("[HDA]", 16, 238);
-      rect(15, 240, 30, 8, 0.8, 0.55);
-      dotRow(18, 244, 9, 3, 0.45);
-      text("[FP]", 180, 238);
-      rect(176, 240, 30, 8, 0.8, 0.55);
-      dotRow(179, 243, 9, 3, 0.45);
-      dotRow(179, 245.6, 9, 3, 0.3);
+        text("( BT1 )", 124, 221.5);
+        bctx.setLineDash([2, 2.4]);
+        rect(13, 203, 27, 28, 0.8);
+        bctx.setLineDash([]);
+        text("U8", 17, 211);
+        text("AUDIO", 17, 216.5);
+        text("island", 17, 222);
+        text("[HDA]", 16, 238);
+        rect(15, 240, 30, 8, 0.8);
+        dotRow(18, 244, 9, 3);
+        text("[FP]", 180, 238);
+        rect(176, 240, 30, 8, 0.8);
+        dotRow(179, 243, 9, 3);
+        dotRow(179, 245.6, 9, 3);
+      }
       bctx.globalAlpha = 1;
     };
 
@@ -603,20 +628,19 @@ export const HomeFlow = (): ReactElement => {
       /* the board: drawn in mm at scale k, anchored so the chip sits on
          U1, rotating about the socket, revealed as a circle from it */
       const k = Math.min((s.w * 1.0) / SOCK.w, 6.2);
-      if (k > 0.5 && Math.abs(k - boardK) > 0.01) {
+      if (k > 0.5 && (Math.abs(k - boardK) > 0.01 || Math.abs(out.boardT - boardBuilt) > 0.002)) {
         boardK = k;
-        drawBoardArt(k);
+        boardBuilt = out.boardT;
+        drawBoardArt(k, out.boardT);
       }
       const ocx = (BM + SOCK.cx) * k;
       const ocy = (BM + SOCK.cy) * k;
-      /* slide in from the right, no masking */
-      const slide = (1 - out.boardT) * W * 0.6;
       glCanvas.style.width = `${((BW + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.height = `${((BH + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.transformOrigin = `${ocx.toFixed(1)}px ${ocy.toFixed(1)}px`;
       glCanvas.style.transform =
-        `translate(${(s.cx - ocx + slide).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
-      glCanvas.style.opacity = `${Math.min(1, out.boardT * 1.5).toFixed(3)}`;
+        `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+      glCanvas.style.opacity = "1";
       block.style.setProperty("--bit", `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`);
 
       drawEmission(t, out);

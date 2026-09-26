@@ -123,10 +123,6 @@ export const HomePage = (): ReactElement => (
               Get API Key
               <Arrow />
             </a>
-            <Link className="gr-button gr-button--secondary" to="/docs/">
-              View Docs
-              <Arrow />
-            </Link>
           </div>
         </div>
       </Module>

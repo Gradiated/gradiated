@@ -4498,7 +4498,8 @@
      title holding the top and the buttons the bottom */
   .gr-home-cta {
     aspect-ratio: 1 / 1;
-    padding: 28px 20px;
+    /* one inset, all four sides */
+    padding: 24px;
     justify-content: space-between;
   }
 

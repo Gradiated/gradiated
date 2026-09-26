@@ -552,7 +552,8 @@
   width: 56px;
   height: 56px;
   border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--color-text) 70%, transparent);
+  /* the one stroke paint: same 30% hairline as the stack and the board */
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
   background: var(--color-panel);
   transition: transform 0.55s ease, opacity 0.4s ease, scale 0.4s ease;
 }

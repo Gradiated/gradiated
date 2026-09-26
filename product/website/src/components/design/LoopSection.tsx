@@ -738,7 +738,7 @@ export const LoopSection = (): ReactElement => {
 
         <div className="gr-loop-right">
           <h2 className="gr-heading gr-loop-title gr-enter">
-            Trained on your production traffic
+            Trained on your production traffic
           </h2>
           <div
             className="gr-loop-controls gr-enter"

@@ -4207,6 +4207,12 @@
   height: 100%;
 }
 
+/* The hero fold ends with the viewport, not a seam: the module's closing
+   rule read as a stray <hr> floating between the folds. */
+.gr-module--fold:last-child::after {
+  display: none;
+}
+
 /* The fold's content sits above it: both are in the same stacking context, so
    without this the canvas paints over the title. */
 .gr-fold-centred {

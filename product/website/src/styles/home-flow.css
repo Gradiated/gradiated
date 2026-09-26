@@ -246,7 +246,7 @@
     left: 7vw;
     right: 7vw;
     top: auto;
-    bottom: 8vh;
+    bottom: 4vh;
     /* no centring transform down here, but keep the entrance rise */
     transform: translateY(calc((1 - var(--enter, 1)) * 28px));
     width: auto;
@@ -711,16 +711,25 @@
   /* tighter vertical rhythm: phone folds sit closer together */
   .gr-value,
   .gr-value-stage {
-    height: 56vh;
+    height: 44vh;
+  }
+
+  /* the statement starts at the fold's top edge, not adrift in its middle */
+  .gr-value-stage {
+    align-items: flex-start;
+    padding-top: 16px;
+  }
+
+  /* air between the mechanism and the base-URL line: the pause is the
+     impact */
+  .gr-value-sentence + .gr-value-sentence {
+    margin-top: 0.7em;
   }
 
   .gr-loop {
-    padding: 4vh 0 8vh;
+    padding: 4vh 0 4vh;
   }
 
-  .gr-marquee {
-    padding: 8vh 0 10vh;
-  }
 
   /* single column, in reading order: title, product, endpoint, stack,
      copy. The two halves dissolve (display: contents) so their children
@@ -963,6 +972,13 @@
   width: 62%;
   height: 62%;
   object-fit: contain;
+}
+
+/* AFTER the base rule in source order, or the base padding wins the tie */
+@media (max-width: 900px) {
+  .gr-marquee {
+    padding: 4vh 0 5vh;
+  }
 }
 
 /* ---- the product mock's phone -------------------------------------------

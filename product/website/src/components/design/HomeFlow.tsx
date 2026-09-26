@@ -711,7 +711,11 @@ export const HomeFlow = (): ReactElement => {
         <canvas className="gr-flow-over" ref={overRef} />
 
         <div className="gr-flow-copy gr-flow-copy--silicon" ref={siliconCopyRef}>
-          <h2 className="gr-heading">All the way down to the silicon</h2>
+          <h2 className="gr-heading">
+            All the way down
+            <br />
+            to the silicon
+          </h2>
           <p className="gr-muted">
             Waste in inference isn&apos;t in one place. It comes from model
             architectures that thrash memory, kernels that leave chips

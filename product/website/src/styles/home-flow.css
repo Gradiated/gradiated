@@ -916,7 +916,9 @@
    and the card's overflow crop takes the bottom third — about two thirds
    of the phone shows */
 .gr-phone-frame {
-  transform: scale(1.5);
+  /* the 10% translate rides inside the scale, so it moves the phone by
+     a tenth of its RENDERED height */
+  transform: translateY(10%) scale(1.5);
   transform-origin: 50% 0;
 }
 

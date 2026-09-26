@@ -19,6 +19,10 @@ import type { ReactElement } from "react";
 export const PhoneFlow = (): ReactElement => (
   <div aria-hidden="true" className="gr-phone">
     <div className="gr-phone-frame">
+      {/* the hardware is a supplied render (burgundy iPhone 18 Pro); the
+          app screen is overlaid into its screen cutout, and the image's
+          own black screen shows as the bezel gap at the corners */}
+      <img alt="" className="gr-phone-hw" src="/assets/iphone-18-pro-burgundy.png" />
       <div className="gr-phone-screen">
         <div className="gr-phone-status">
           <span className="gr-phone-time">9:41</span>

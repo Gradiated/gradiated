@@ -18,11 +18,11 @@ import { Logo } from "./Logo";
  */
 
 const BEATS = {
-  /* the blueprint draws itself in (chip already seated), then the view
-     drops straight to isometric */
-  draw: [0.0, 0.3],
-  land: [0.3, 0.66],
-  siliconRest: [0.66, 1.0],
+  /* the complete diagram is there from the first frame; a slight
+     ken-burns settle on scroll, then straight to isometric */
+  settle: [0.0, 0.26],
+  land: [0.26, 0.64],
+  siliconRest: [0.64, 1.0],
 } as const;
 
 /** Runway height in viewport-heights; the scrub's total scroll distance. */
@@ -54,7 +54,7 @@ type TimelineOut = {
   blockA: number;   /* the chip's arrival */
   markAlpha: number;
   shadowAlpha: number;
-  boardT: number;   /* the board's slide-in from the right */
+  zoom: number;     /* the ken-burns settle */
   glowA: number;    /* progress into the isometric view */
   siliconCopyA: number;
 };
@@ -88,28 +88,26 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     blockA: 0,
     markAlpha: 0,
     shadowAlpha: 0,
-    boardT: 0,
+    zoom: 1,
     glowA: 0,
     siliconCopyA: 0,
   };
   out.blockA = 1;
   out.markAlpha = 1;
-  if (g < BEATS.draw[1]) {
-    out.boardT = seg(g, BEATS.draw);
+  if (g < BEATS.settle[1]) {
+    out.zoom = 1.07 - 0.07 * easeIO(seg(g, BEATS.settle));
   } else if (g < BEATS.land[1]) {
     const t = easeIO(seg(g, BEATS.land));
     out.s = mixState(K.chip, K.land, t);
     out.blockA = 1;
     out.markAlpha = 1;
     out.shadowAlpha = easeO(clamp01((t - 0.3) / 0.7)) * 0.55;
-    out.boardT = 1;
     out.glowA = easeIO(t);
   } else {
     out.s = K.land;
     out.blockA = 1;
     out.markAlpha = 1;
     out.shadowAlpha = 0.55;
-    out.boardT = 1;
     out.glowA = 1;
     out.siliconCopyA = easeO(seg(g, BEATS.siliconRest) * 3);
   }
@@ -628,10 +626,9 @@ export const HomeFlow = (): ReactElement => {
       /* the board: drawn in mm at scale k, anchored so the chip sits on
          U1, rotating about the socket, revealed as a circle from it */
       const k = Math.min((s.w * 1.0) / SOCK.w, 6.2);
-      if (k > 0.5 && (Math.abs(k - boardK) > 0.01 || Math.abs(out.boardT - boardBuilt) > 0.002)) {
+      if (k > 0.5 && Math.abs(k - boardK) > 0.01) {
         boardK = k;
-        boardBuilt = out.boardT;
-        drawBoardArt(k, out.boardT);
+        drawBoardArt(k, 1);
       }
       const ocx = (BM + SOCK.cx) * k;
       const ocy = (BM + SOCK.cy) * k;
@@ -639,7 +636,7 @@ export const HomeFlow = (): ReactElement => {
       glCanvas.style.height = `${((BH + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.transformOrigin = `${ocx.toFixed(1)}px ${ocy.toFixed(1)}px`;
       glCanvas.style.transform =
-        `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+        `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
       glCanvas.style.opacity = "1";
       block.style.setProperty("--bit", `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`);
 
@@ -649,7 +646,7 @@ export const HomeFlow = (): ReactElement => {
       block.style.height = `${s.h}px`;
       block.style.opacity = `${out.blockA.toFixed(3)}`;
       block.style.transform =
-        `translate(${s.cx - s.w / 2}px, ${s.cy - s.h / 2}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+        `translate(${s.cx - s.w / 2}px, ${s.cy - s.h / 2}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
       block.style.setProperty("--plate-r", `${s.r}px`);
       top.style.borderRadius = `${s.r}px`;
 

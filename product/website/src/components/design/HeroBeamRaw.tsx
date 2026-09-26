@@ -152,9 +152,10 @@ export const HeroBeamRaw = (): ReactElement => {
     };
   }, []);
 
-  /* Same wrapper as HeroBeam, so placement, overhang and mask carry over. */
+  /* Same wrapper as HeroBeam, so placement, overhang and mask carry over;
+     the --raw modifier multiplies the ink into the colour field below. */
   return (
-    <div className="gr-beam" ref={hostRef}>
+    <div className="gr-beam gr-beam--raw" ref={hostRef}>
       <canvas className="gr-beam-canvas" ref={canvasRef} />
     </div>
   );

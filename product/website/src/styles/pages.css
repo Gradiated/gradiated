@@ -4191,6 +4191,14 @@
   mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
 }
 
+/* The glyph field prints INTO the colour beam beneath it rather than sitting
+   on top: multiply keeps the ink one even fabric while letting every glyph
+   pick up the hue it lands on. (color-burn was tried — richer over saturated
+   colour, but patchy, and it disappears on pale ground.) */
+.gr-beam--raw {
+  mix-blend-mode: multiply;
+}
+
 /* Stretched from a smaller buffer — see RESOLUTION in HeroBeam.tsx. The field
    has no detail to lose, and the browser's own filtering does the smoothing
    that a blur would otherwise be paying for. */

@@ -227,6 +227,10 @@ export const LoopSection = (): ReactElement => {
   const urlRef = useRef<HTMLSpanElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
   const modelZoneRef = useRef<HTMLDivElement>(null);
+  const selectorRef = useRef<HTMLDivElement>(null);
+  const selBtnRef = useRef<HTMLButtonElement>(null);
+  const selLabelRef = useRef<HTMLSpanElement>(null);
+  const selMenuRef = useRef<HTMLDivElement>(null);
   const slotsWrapRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -239,8 +243,13 @@ export const LoopSection = (): ReactElement => {
     const startEl = startRef.current;
     const modelZone = modelZoneRef.current;
     const slotsWrap = slotsWrapRef.current;
+    const selector = selectorRef.current;
+    const selBtn = selBtnRef.current;
+    const selLabel = selLabelRef.current;
+    const selMenu = selMenuRef.current;
     const rows = rowRefs.current;
     if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelZone || !slotsWrap) return;
+    if (!selector || !selBtn || !selLabel || !selMenu) return;
     if (rows.some((r) => !r)) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -279,6 +288,39 @@ export const LoopSection = (): ReactElement => {
        model pushes the older ones left, into the fade. */
     const slotEls: HTMLDivElement[] = [];
     const SLOT_STEP = 70;
+
+    /* the product's model selector: provider model until the first
+       Gradiated model ships, then the newest version is LIVE */
+    const versions: string[] = [];
+    const renderSelector = (): void => {
+      const live = versions.length > 0;
+      selector.classList.toggle("gr-loop-selector--live", live);
+      selLabel.textContent = live ? versions[0] : "gpt-4o";
+      selMenu.innerHTML = "";
+      const list = live ? versions : ["gpt-4o"];
+      list.forEach((v, i) => {
+        const item = document.createElement("div");
+        item.className =
+          "gr-loop-selector-item" +
+          (i === 0 ? " gr-loop-selector-item--live" : "");
+        if (i === 0) {
+          const dot = document.createElement("span");
+          dot.className = "gr-loop-livedot";
+          item.appendChild(dot);
+        }
+        item.appendChild(document.createTextNode(v));
+        selMenu.appendChild(item);
+      });
+    };
+    renderSelector();
+    const onSelToggle = (e: MouseEvent): void => {
+      e.stopPropagation();
+      selector.classList.toggle("gr-loop-selector--open");
+    };
+    const onDocClick = (): void =>
+      selector.classList.remove("gr-loop-selector--open");
+    selBtn.addEventListener("click", onSelToggle);
+    document.addEventListener("click", onDocClick);
     const placeSlots = (): void => {
       slotEls.forEach((el, age) => {
         el.style.transform = `translateX(${-age * SLOT_STEP}px)`;
@@ -329,6 +371,8 @@ export const LoopSection = (): ReactElement => {
       filled = -1;
       slotEls.length = 0;
       slotsWrap.innerHTML = "";
+      versions.length = 0;
+      renderSelector();
     };
     const onStart = (): void => {
       const t = performance.now() / 1000;
@@ -408,7 +452,11 @@ export const LoopSection = (): ReactElement => {
       const latest = Math.floor((tE - 9.2) / GEN_PERIOD);
       if (latest > filled && latest >= 0) {
         filled = latest;
-        createSlot(latest === 0 ? "v1" : `v1.${latest}`);
+        const version = latest === 0 ? "v1" : `v1.${latest}`;
+        createSlot(version);
+        versions.unshift(version);
+        if (versions.length > 6) versions.pop();
+        renderSelector();
       }
       /* the newest icon's berth: at the right edge of the log, data
          entering from its right side */
@@ -623,6 +671,8 @@ export const LoopSection = (): ReactElement => {
       seen.disconnect();
       themed.disconnect();
       startEl.removeEventListener("click", onStart);
+      selBtn.removeEventListener("click", onSelToggle);
+      document.removeEventListener("click", onDocClick);
     };
   }, []);
 
@@ -632,6 +682,18 @@ export const LoopSection = (): ReactElement => {
       <div className="gr-loop-grid">
         <div className="gr-loop-left">
           <div className="gr-loop-mock" ref={mockRef}>
+            <div className="gr-loop-selector" ref={selectorRef}>
+              <button
+                className="gr-loop-selector-btn"
+                ref={selBtnRef}
+                type="button"
+              >
+                <span className="gr-loop-livedot" />
+                <span ref={selLabelRef}>gpt-4o</span>
+                <span className="gr-loop-selector-chev">&#9662;</span>
+              </button>
+              <div className="gr-loop-selector-menu" ref={selMenuRef} />
+            </div>
             <span>Product Mocks</span>
           </div>
           <div className="gr-loop-copy">

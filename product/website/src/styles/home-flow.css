@@ -393,6 +393,7 @@
 }
 
 .gr-loop-mock {
+  position: relative;
   background: var(--color-panel);
   border-radius: 14px;
   min-height: 400px;
@@ -582,4 +583,94 @@
     left: 10px;
     transform: translate(0, -50%);
   }
+}
+
+/* ---- the product's model selector ----
+   Provider model until the first Gradiated model ships; then the newest
+   version is live, marked by the blinking green dot. */
+.gr-loop-selector {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.gr-loop-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 22%, transparent);
+  background: var(--color-panel);
+  color: inherit;
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.gr-loop-selector-chev {
+  font-size: 9px;
+  color: var(--color-text-muted);
+}
+
+.gr-loop-livedot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text) 30%, transparent);
+  flex: none;
+}
+
+.gr-loop-selector--live .gr-loop-livedot {
+  background: var(--color-interactive-fill);
+  animation: gr-live-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes gr-live-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-interactive-fill) 45%, transparent);
+  }
+  50% {
+    opacity: 0.35;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-interactive-fill) 0%, transparent);
+  }
+}
+
+.gr-loop-selector-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 132px;
+  background: var(--color-panel);
+  border: 1px solid color-mix(in srgb, var(--color-text) 22%, transparent);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.gr-loop-selector--open .gr-loop-selector-menu {
+  display: block;
+}
+
+.gr-loop-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: var(--color-text-muted);
+}
+
+.gr-loop-selector-item--live {
+  color: var(--color-text);
+}
+
+.gr-loop-selector-item:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
 }

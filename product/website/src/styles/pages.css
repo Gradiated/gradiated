@@ -4555,8 +4555,9 @@
   width: fit-content;
   margin-inline: auto;
   perspective: 1400px;
-  /* room below for the layers to splay down into */
-  padding: 12px 0 170px;
+  /* the reserve is balanced around the drawing, so the media box's centre
+     is the STACK's centre and the text column lines up with it */
+  padding: 70px 0 130px;
   /* the whole gesture waits out the module's entrance, like the photo
      stack did */
   --chip-wait: calc(var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms);

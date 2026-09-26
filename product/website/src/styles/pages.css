@@ -4228,8 +4228,8 @@
   display: none;
 }
 
-/* The closing card: full width under the news grid, on the same tint the
-   card media wells use, restating the hero's two ways in. */
+/* The closing card: full width under the news grid, a white panel on the
+   beige page, restating the hero's two ways in. */
 .gr-home-cta {
   display: flex;
   flex-direction: column;
@@ -4238,11 +4238,7 @@
   padding: clamp(64px, 8vw, 120px) var(--u);
   margin-block-start: calc(2 * var(--u));
   border-radius: var(--radius);
-  background-color: color-mix(
-    in srgb,
-    var(--color-text) 7%,
-    var(--color-overlay)
-  );
+  background-color: var(--color-panel);
 }
 
 .gr-home-cta-title {

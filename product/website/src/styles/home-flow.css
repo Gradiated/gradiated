@@ -380,14 +380,16 @@
 
 /* ---- fold 2: the value proposition streams in ------------------------- */
 .gr-value {
-  height: 100vh;
+  /* shorter than a full viewport: the statement doesn't need a fold of
+     air after it before the loop fold takes over */
+  height: 72vh;
   position: relative;
 }
 
 .gr-value-stage {
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 72vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -424,7 +426,7 @@
   position: relative;
   max-width: min(92vw, 1240px);
   margin: 0 auto;
-  padding: 12vh 0 14vh;
+  padding: 6vh 0 14vh;
 }
 
 .gr-loop-canvas {
@@ -706,6 +708,20 @@
 }
 
 @media (max-width: 900px) {
+  /* tighter vertical rhythm: phone folds sit closer together */
+  .gr-value,
+  .gr-value-stage {
+    height: 56vh;
+  }
+
+  .gr-loop {
+    padding: 4vh 0 8vh;
+  }
+
+  .gr-marquee {
+    padding: 8vh 0 10vh;
+  }
+
   /* single column, in reading order: title, product, endpoint, stack,
      copy. The two halves dissolve (display: contents) so their children
      can be ordered as one list. */

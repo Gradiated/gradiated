@@ -69,6 +69,10 @@
 
 .gr-page-hero--beside .gr-page-hero-say {
   grid-area: say;
+  /* the media column is tall and spans both rows; without this the say
+     block inherits last-baseline alignment and sinks down its row, opening
+     a gulf under the title */
+  align-self: start;
 }
 
 .gr-page-hero--beside .gr-page-hero-lede {
@@ -4585,8 +4589,10 @@
   /* closed: a shallow stack (enough separation that nothing z-fights) */
   transform: translateZ(calc((var(--z) - 5) * 5px));
   transition: transform 1100ms var(--ease-assemble);
-  /* after the pan; deepest first, so the stack opens from the bottom out */
-  transition-delay: calc(var(--chip-wait) + 820ms + (5 - var(--z)) * 120ms);
+  /* after the pan; DEEPEST FIRST — each layer starts before the one above
+     it, so a moving layer can never dive past a still-resting one and the
+     fan opens strictly in stack order */
+  transition-delay: calc(var(--chip-wait) + 820ms + var(--z) * 120ms);
 }
 
 .gr-chipiso--open .gr-chipiso-layer {

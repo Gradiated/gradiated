@@ -55,6 +55,12 @@
   row-gap: calc(1.2 * var(--u));
 }
 
+/* the hardware fold rides higher than dead centre: the exploded stack's
+   reserve makes centred feel low */
+.gr-fold:has(.gr-chipiso) .gr-page-hero {
+  translate: 0 -44px;
+}
+
 .gr-page-hero--beside .gr-page-hero-media {
   grid-area: media;
   /* Its own column now, so it neither spans the band nor centres on it. */
@@ -3870,7 +3876,13 @@
 
 /* Back to spanning its row, and capped so a tall object cannot take the whole
    screen before the sentence that explains it. */
-.gr-root:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-media {
+.gr-root:not([data-tier="wide"]) /* the hardware fold rides higher than dead centre: the exploded stack's
+   reserve makes centred feel low */
+.gr-fold:has(.gr-chipiso) .gr-page-hero {
+  translate: 0 -44px;
+}
+
+.gr-page-hero--beside .gr-page-hero-media {
   justify-self: center;
   max-width: min(100%, calc(14 * var(--u)));
   margin-block-end: var(--u);

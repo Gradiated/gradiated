@@ -432,8 +432,10 @@
   left: 20px;
   right: 26px;
   top: 50%;
-  transform: translateY(-42%);
-  height: 56px;
+  transform: translateY(-46%);
+  /* tall enough to OWN the version tags below the icons — the fade mask
+     clips paint to this box, so the tags must live inside it */
+  height: 84px;
   /* older models slide left into the fade */
   -webkit-mask-image: linear-gradient(to right, transparent 0, #000 110px);
   mask-image: linear-gradient(to right, transparent 0, #000 110px);

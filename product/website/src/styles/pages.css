@@ -4228,6 +4228,36 @@
   display: none;
 }
 
+/* The closing card: full width under the news grid, on the same tint the
+   card media wells use, restating the hero's two ways in. */
+.gr-home-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(64px, 8vw, 120px) var(--u);
+  margin-block-start: calc(2 * var(--u));
+  border-radius: var(--radius);
+  background-color: color-mix(
+    in srgb,
+    var(--color-text) 7%,
+    var(--color-overlay)
+  );
+}
+
+.gr-home-cta-title {
+  /* the loop fold's title scale — the card is a statement, not a section
+     label */
+  font-size: clamp(32px, 3.84vw, 58px);
+  line-height: 1.06;
+}
+
+/* the system's heading-spacing rule (.gr-root .gr-heading + *) would
+   otherwise pin the buttons to 8px below the title */
+.gr-root .gr-home-cta-title + .gr-home-actions {
+  margin-block-start: calc(2 * var(--u));
+}
+
 .gr-bench-cost-tick {
   position: absolute;
   bottom: calc(0.5 * var(--u));

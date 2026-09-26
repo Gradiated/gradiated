@@ -106,6 +106,23 @@ export const HomePage = (): ReactElement => (
             stories={libraryStories.slice(0, 3)}
           />
         </div>
+        {/* The closing card: one full-width invitation, the hero's two ways
+            in restated now the page has made its case. */}
+        <div className="gr-home-cta">
+          <h2 className="gr-heading gr-home-cta-title">
+            Train your own models today
+          </h2>
+          <div className="gr-home-actions">
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Get API Key
+              <Arrow />
+            </a>
+            <Link className="gr-button gr-button--secondary" to="/docs/">
+              View Docs
+              <Arrow />
+            </Link>
+          </div>
+        </div>
       </Module>
     </Band>
 

@@ -913,7 +913,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 44px;
+  padding-top: 72px;
   /* the well is shorter than the render: the card's overflow crops the
      device's lower stretch, so the container doesn't grow to fit it */
   height: 460px;
@@ -922,6 +922,19 @@
 .gr-phone-render {
   display: block;
   width: 330px;
+}
+
+/* the device travels further than the fold's 16px on entry — a longer
+   rise reads as the phone being lifted into place */
+.gr-phone-render.gr-enter {
+  transform: translateY(48px);
+}
+
+.gr-loop--seen .gr-phone-render.gr-enter {
+  transform: none;
+}
+
+.gr-phone-render {
   filter: drop-shadow(0 24px 48px rgba(20, 18, 12, 0.35))
     drop-shadow(0 4px 12px rgba(20, 18, 12, 0.12));
 }

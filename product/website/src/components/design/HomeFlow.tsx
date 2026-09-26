@@ -153,16 +153,18 @@ export const HomeFlow = (): ReactElement => {
     const rootEl = (block.closest(".gr-root") as HTMLElement) ?? document.documentElement;
 
     let ink = "#2F2D29";
-    let inkV: [number, number, number] = [0.18, 0.18, 0.16];
+    let goldV: [number, number, number] = [0.75, 0.6, 0.28];
     const readTheme = (): void => {
       const cs = getComputedStyle(rootEl);
       ink = cs.getPropertyValue("--color-text").trim() || "#2F2D29";
-      const im = /^#([0-9a-f]{6})$/i.exec(ink);
-      if (im)
-        inkV = [
-          parseInt(im[1].slice(0, 2), 16) / 255,
-          parseInt(im[1].slice(2, 4), 16) / 255,
-          parseInt(im[1].slice(4, 6), 16) / 255,
+      /* the wafer field is GOLD — the brand's kiln amber */
+      const gold = cs.getPropertyValue("--color-kiln-300").trim() || "#e9b748";
+      const gm = /^#([0-9a-f]{6})$/i.exec(gold);
+      if (gm)
+        goldV = [
+          parseInt(gm[1].slice(0, 2), 16) / 255,
+          parseInt(gm[1].slice(2, 4), 16) / 255,
+          parseInt(gm[1].slice(4, 6), 16) / 255,
         ];
     };
     readTheme();
@@ -200,7 +202,7 @@ uniform float uSize;
 uniform float uCell;
 uniform float uRing;
 uniform float uPulse;
-uniform vec3  uInk;
+uniform vec3  uGold;
 uniform float uOn;
 float sdBox(vec2 q, vec2 b, float r) {
   vec2 dq = abs(q) - b;
@@ -227,8 +229,11 @@ void main() {
   float pool = exp(-max(dn, 0.0) * 2.4) * uPulse;
   float grain = fract(sin(dot(id, vec2(12.9898, 78.233))) * 43758.5453);
   float refl = 0.9 + 0.2 * grain;
-  vec3 col = uInk;
-  float a = m * refl * (0.04 + 0.55 * band + wake * pool * 0.6) * uOn;
+  /* gold wafer: a deep bronze shadow tone at rest, the bright kiln gold
+     where the light lives */
+  vec3 deep = uGold * vec3(0.62, 0.5, 0.34);
+  vec3 col = mix(deep, uGold * 1.05, 0.3 + 0.55 * band + 0.15 * grain);
+  float a = m * refl * (0.12 + 0.55 * band + wake * pool * 0.65) * uOn;
   gl_FragColor = vec4(col, a);
 }`;
       const sh = (type: number, src: string): WebGLShader | null => {
@@ -268,7 +273,7 @@ void main() {
           cell: gl.getUniformLocation(prog, "uCell"),
           ring: gl.getUniformLocation(prog, "uRing"),
           pulse: gl.getUniformLocation(prog, "uPulse"),
-          ink: gl.getUniformLocation(prog, "uInk"),
+          gold: gl.getUniformLocation(prog, "uGold"),
           on: gl.getUniformLocation(prog, "uOn"),
         },
       };
@@ -294,7 +299,7 @@ void main() {
       gl.uniform1f(u.cell, (bit / 0.56) * dpr);
       gl.uniform1f(u.ring, easeIO(out.holdT));
       gl.uniform1f(u.pulse, 1.0); /* no pulse - the field rests still */
-      gl.uniform3f(u.ink, inkV[0], inkV[1], inkV[2]);
+      gl.uniform3f(u.gold, goldV[0], goldV[1], goldV[2]);
       gl.uniform1f(u.on, on * out.blockA);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       block.style.setProperty("--bit", `${bit.toFixed(1)}px`);

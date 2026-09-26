@@ -4473,7 +4473,7 @@
   background: linear-gradient(
     to bottom,
     rgb(from var(--color-substrate) r g b / 0),
-    rgb(from var(--color-substrate) r g b / 0.8) 63.6%
+    var(--color-substrate) 63.6%
   );
 }
 

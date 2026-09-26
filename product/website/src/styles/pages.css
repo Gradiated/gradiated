@@ -4540,3 +4540,9 @@
     margin: 0;
   }
 }
+
+/* The drawn chip stack is a FLAT diagram: occlusion says which layer is on
+   top, so the photographic version's drop shadows come off. */
+.gr-chipstack--raw .gr-chipstack-layer {
+  filter: none;
+}

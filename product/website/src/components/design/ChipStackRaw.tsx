@@ -10,17 +10,22 @@ import type { CSSProperties, ReactElement } from "react";
  * hardware page speaks the same pen as the chip fold's blueprint. Inline,
  * not files, so the ink follows the theme through currentColor.
  *
- * The splay is untouched: these render under the same gr-chipstack classes
- * the photographic version used, and the CSS owns the motion.
+ * The drawing sits INSET in its box the way the photographs did (they
+ * carried transparent margins), so the object reads at the same size the
+ * photo version did. Flat diagram: no drop shadows — occlusion alone says
+ * which layer is on top (the --raw modifier strips the photo shadows).
  */
 
 /** The real mark, on its own 31.75-unit square viewBox (see Logo.tsx). */
 const MARK_PATH =
   "M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z";
 
-const S = 686; /* the layers' shared square, matching the exports' box */
+const S = 686; /* the layers' shared square, matching the old exports' box */
+/* the layer plate, centred in that box */
+const P0 = 78;
+const PW = 530;
+const P1 = P0 + PW;
 
-/* one pen for every line */
 const line = {
   fill: "none",
   stroke: "currentColor",
@@ -30,8 +35,7 @@ const line = {
 } as const;
 
 /* a plate occludes whatever sits beneath it — the splay reads as bands of
-   each layer, exactly as the photographic stack did — so its ground is the
-   page's own colour with the hairline on top */
+   each layer — so its ground is the page's own colour, hairline on top */
 const plate = {
   fill: "var(--color-substrate)",
   stroke: "currentColor",
@@ -42,42 +46,45 @@ const plate = {
 
 const range = (n: number): number[] => Array.from({ length: n }, (_, i) => i);
 
+const Plate = (): ReactElement => (
+  <rect {...plate} height={PW} rx={14} width={PW} x={P0} y={P0} />
+);
+
 /** BGA array: the underside, a field of ball outlines. */
 const SolderBalls = (): ReactElement => (
   <g>
-    <rect {...plate} height={S - 12} rx={18} width={S - 12} x={6} y={6} />
-    {range(12).map((r) =>
-      range(12).map((c) => (
+    <Plate />
+    {range(10).map((r) =>
+      range(10).map((c) => (
         <circle
           {...line}
-          cx={73 + c * 49}
-          cy={73 + r * 49}
+          cx={P0 + 42 + c * 50}
+          cy={P0 + 42 + r * 50}
           key={`${r}-${c}`}
-          r={13}
+          r={11}
         />
       )),
     )}
   </g>
 );
 
-/** Substrate: perimeter pads and a few escape routes. */
+/** Substrate: perimeter pads and an inner cavity. */
 const Substrate = (): ReactElement => (
   <g>
-    <rect {...plate} height={S - 12} rx={18} width={S - 12} x={6} y={6} />
-    {range(16).map((i) => (
+    <Plate />
+    {range(12).map((i) => (
       <g key={i}>
-        <rect fill="currentColor" fillOpacity={0.3} height={8} width={18} x={48 + i * 38} y={30} />
-        <rect fill="currentColor" fillOpacity={0.3} height={8} width={18} x={48 + i * 38} y={S - 38} />
-        <rect fill="currentColor" fillOpacity={0.3} height={18} width={8} x={30} y={48 + i * 38} />
-        <rect fill="currentColor" fillOpacity={0.3} height={18} width={8} x={S - 38} y={48 + i * 38} />
+        <rect fill="currentColor" fillOpacity={0.3} height={6} width={14} x={P0 + 38 + i * 40} y={P0 + 16} />
+        <rect fill="currentColor" fillOpacity={0.3} height={6} width={14} x={P0 + 38 + i * 40} y={P1 - 22} />
+        <rect fill="currentColor" fillOpacity={0.3} height={14} width={6} x={P0 + 16} y={P0 + 38 + i * 40} />
+        <rect fill="currentColor" fillOpacity={0.3} height={14} width={6} x={P1 - 22} y={P0 + 38 + i * 40} />
       </g>
     ))}
-    <rect {...line} height={306} rx={8} width={306} x={190} y={190} />
-    {/* escape routing: four corner fans */}
-    {range(5).map((i) => (
+    <rect {...line} height={210} rx={6} width={210} x={P0 + 160} y={P0 + 160} />
+    {range(4).map((i) => (
       <g key={i}>
-        <path {...line} d={`M${206 + i * 20} 190 L${160 + i * 26} ${120 - i * 14} L60 ${120 - i * 14}`} />
-        <path {...line} d={`M${480 - i * 20} ${S - 190} L${526 - i * 26} ${S - 120 + i * 14} L${S - 60} ${S - 120 + i * 14}`} />
+        <path {...line} d={`M${P0 + 176 + i * 18} ${P0 + 160} L${P0 + 140 + i * 22} ${P0 + 92 - i * 12} L${P0 + 44} ${P0 + 92 - i * 12}`} />
+        <path {...line} d={`M${P1 - 176 - i * 18} ${P1 - 160} L${P1 - 140 - i * 22} ${P1 - 92 + i * 12} L${P1 - 44} ${P1 - 92 + i * 12}`} />
       </g>
     ))}
   </g>
@@ -86,19 +93,20 @@ const Substrate = (): ReactElement => (
 /** The die: a dense matrix of data bits. */
 const SiliconDie = (): ReactElement => (
   <g>
-    <rect {...plate} height={S - 12} rx={18} width={S - 12} x={6} y={6} />
-    <rect {...line} height={430} rx={6} width={430} x={128} y={128} />
-    {range(14).map((r) =>
-      range(14).map((c) =>
+    <Plate />
+    {/* bits run to the plate's edges so the exposed band below the stack
+        shows the die's texture, not blank plate */}
+    {range(18).map((r) =>
+      range(18).map((c) =>
         (r * 7 + c * 13) % 5 === 0 ? null : (
           <rect
             fill="currentColor"
             fillOpacity={0.55}
-            height={7}
+            height={6}
             key={`${r}-${c}`}
-            width={7}
-            x={152 + c * 28}
-            y={152 + r * 28}
+            width={6}
+            x={P0 + 26 + c * 28}
+            y={P0 + 26 + r * 28}
           />
         ),
       ),
@@ -109,62 +117,73 @@ const SiliconDie = (): ReactElement => (
 /** Metal layer: the routing grid. */
 const MetalLayer = (): ReactElement => (
   <g>
-    <rect {...plate} height={S - 12} rx={18} width={S - 12} x={6} y={6} />
-    {range(15).map((i) => (
+    <Plate />
+    {range(12).map((i) => (
       <g key={i}>
-        <line {...line} x1={44 + i * 43} x2={44 + i * 43} y1={44} y2={S - 44} />
-        <line {...line} x1={44} x2={S - 44} y1={44 + i * 43} y2={44 + i * 43} />
+        <line {...line} x1={P0 + 24 + i * 44} x2={P0 + 24 + i * 44} y1={P0 + 24} y2={P1 - 24} />
+        <line {...line} x1={P0 + 24} x2={P1 - 24} y1={P0 + 24 + i * 44} y2={P0 + 24 + i * 44} />
       </g>
     ))}
   </g>
 );
 
-/** Underfill: a sparse 45-degree hatch. */
+/** Underfill: a sparse 45-degree hatch, clipped to the plate. */
 const Underfill = (): ReactElement => (
   <g>
-    <rect {...plate} height={S - 12} rx={18} width={S - 12} x={6} y={6} />
-    {range(16).map((i) => (
-      <line
-        {...line}
-        key={i}
-        x1={Math.max(20, i * 84 - S + 40)}
-        x2={Math.min(S - 20, 40 + i * 84)}
-        y1={Math.min(S - 20, 40 + i * 84)}
-        y2={Math.max(20, i * 84 - S + 40)}
-      />
-    ))}
+    <clipPath id="gr-underfill-clip">
+      <rect height={PW - 8} rx={12} width={PW - 8} x={P0 + 4} y={P0 + 4} />
+    </clipPath>
+    <Plate />
+    <g clipPath="url(#gr-underfill-clip)">
+      {range(16).map((i) => (
+        <line
+          {...line}
+          key={i}
+          x1={P0 - PW + i * 66}
+          x2={P0 + i * 66}
+          y1={P0 + PW}
+          y2={P0}
+        />
+      ))}
+    </g>
   </g>
 );
 
 /** The lid: plate, die perimeter, corner screws, the G. */
-const Casing = (): ReactElement => (
-  <svg
-    aria-label="A Gradiated inference package, drawn as a blueprint."
-    className="gr-chipstack-casing"
-    height={887}
-    role="img"
-    style={{ maxWidth: "100%", height: "auto", color: "var(--color-text)" }}
-    viewBox="0 0 900 887"
-    width={900}
-  >
-    <rect {...plate} height={863} rx={96} width={876} x={12} y={12} />
-    <rect {...line} height={663} rx={24} width={676} x={112} y={112} />
-    {[
-      [146, 146],
-      [754, 146],
-      [146, 741],
-      [754, 741],
-    ].map(([cx, cy]) => (
-      <g key={`${cx}-${cy}`}>
-        <circle {...line} cx={cx} cy={cy} r={11} />
-        <circle {...line} cx={cx} cy={cy} r={4} />
+const Casing = (): ReactElement => {
+  /* the casing plate, centred in the old photo's 900x887 box */
+  const CW = 560;
+  const cx0 = (900 - CW) / 2;
+  const cy0 = (887 - CW) / 2;
+  return (
+    <svg
+      aria-label="A Gradiated inference package, drawn as a blueprint."
+      className="gr-chipstack-casing"
+      height={887}
+      role="img"
+      style={{ maxWidth: "100%", height: "auto", color: "var(--color-text)" }}
+      viewBox="0 0 900 887"
+      width={900}
+    >
+      <rect {...plate} height={CW} rx={56} width={CW} x={cx0} y={cy0} />
+      <rect {...line} height={CW - 128} rx={16} width={CW - 128} x={cx0 + 64} y={cy0 + 64} />
+      {[
+        [cx0 + 88, cy0 + 88],
+        [cx0 + CW - 88, cy0 + 88],
+        [cx0 + 88, cy0 + CW - 88],
+        [cx0 + CW - 88, cy0 + CW - 88],
+      ].map(([sx, sy]) => (
+        <g key={`${sx}-${sy}`}>
+          <circle {...line} cx={sx} cy={sy} r={9} />
+          <circle {...line} cx={sx} cy={sy} r={3.2} />
+        </g>
+      ))}
+      <g transform={`translate(${450 - 60} ${443.5 - 60}) scale(${120 / 31.7539})`}>
+        <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
       </g>
-    ))}
-    <g transform={`translate(${450 - 80} ${443.5 - 80}) scale(${160 / 31.7539})`}>
-      <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.3} strokeWidth={1} vectorEffect="non-scaling-stroke" />
-    </g>
-  </svg>
-);
+    </svg>
+  );
+};
 
 const LAYERS = [
   { Art: SolderBalls, name: "solder-balls" },
@@ -187,7 +206,9 @@ export const ChipStackRaw = (): ReactElement => {
   }, []);
 
   return (
-    <div className={`gr-chipstack${open ? " gr-chipstack--open" : ""}`}>
+    <div
+      className={`gr-chipstack gr-chipstack--raw${open ? " gr-chipstack--open" : ""}`}
+    >
       <div className="gr-chipstack-frame">
         <Casing />
         {LAYERS.map((layer, index) => (

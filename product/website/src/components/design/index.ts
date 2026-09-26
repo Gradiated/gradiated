@@ -35,6 +35,7 @@ export { ValueFold } from "./ValueFold";
 export { FooterBar } from "./FooterBar";
 export { Arrow, ContentsIcon, GridIcon, ListIcon } from "./icons";
 export { ChipStack } from "./ChipStack";
+export { ChipStackRaw } from "./ChipStackRaw";
 export { Benchmark } from "./Benchmark";
 export { CodeBlock } from "./CodeBlock";
 export { CostStory } from "./CostStory";

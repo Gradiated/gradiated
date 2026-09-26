@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import {
   Band,
-  ChipStack,
+  ChipStackRaw,
   Fold,
   Footer,
   Module,
@@ -38,7 +38,7 @@ export const HardwarePage = (): ReactElement => (
             "The chip design is based on your requirements. Our first chip is based on efficiency, not speed. It's designed for specific open source models, to suit ultra intense, long running cloud workloads at the lowest cost imaginable.",
             "We are hiring our founding silicon and hardware engineers. We'd love to talk to you if this is something you could build.",
           ]}
-          media={<ChipStack />}
+          media={<ChipStackRaw />}
           title={["Runs models.", "Not bills."]}
         />
       </Module>

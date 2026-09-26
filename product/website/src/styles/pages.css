@@ -51,8 +51,18 @@
   grid-template-rows: auto auto;
   justify-content: center;
   align-content: center;
-  column-gap: calc(5 * var(--u));
+  /* wide gutter: the iso projection overhangs its layout box to the
+     right, so the track gap has to carry both air and overhang */
+  column-gap: calc(9 * var(--u));
   row-gap: calc(1.2 * var(--u));
+}
+
+/* The diagram's optical placement, by the vertex rule: splayed open, the
+   casing's top-left vertex sits a touch above the R of "Runs" — the
+   diagram's real height (casing top vertex to solder bottom vertex) then
+   hangs centred against the text column instead of sagging below it. */
+.gr-chipiso {
+  translate: 0 -63px;
 }
 
 .gr-page-hero--beside .gr-page-hero-media {
@@ -69,6 +79,10 @@
 
 .gr-page-hero--beside .gr-page-hero-say {
   grid-area: say;
+  /* the media column is tall and spans both rows; without this the say
+     block inherits last-baseline alignment and sinks down its row, opening
+     a gulf under the title */
+  align-self: start;
 }
 
 .gr-page-hero--beside .gr-page-hero-lede {
@@ -631,11 +645,6 @@
 }
 
 /* A link that is moving is a link you have to chase. */
-.gr-marquee:hover .gr-marquee-track,
-.gr-marquee:focus-within .gr-marquee-track {
-  animation-play-state: paused;
-}
-
 .gr-marquee-card {
   width: calc(9 * var(--u));
   flex: none;
@@ -3866,7 +3875,15 @@
 
 /* Back to spanning its row, and capped so a tall object cannot take the whole
    screen before the sentence that explains it. */
-.gr-root:not([data-tier="wide"]) .gr-page-hero--beside .gr-page-hero-media {
+.gr-root:not([data-tier="wide"]) /* The diagram's optical placement, by the vertex rule: splayed open, the
+   casing's top-left vertex sits a touch above the R of "Runs" — the
+   diagram's real height (casing top vertex to solder bottom vertex) then
+   hangs centred against the text column instead of sagging below it. */
+.gr-chipiso {
+  translate: 0 -63px;
+}
+
+.gr-page-hero--beside .gr-page-hero-media {
   justify-self: center;
   max-width: min(100%, calc(14 * var(--u)));
   margin-block-end: var(--u);
@@ -4191,6 +4208,13 @@
   mask-image: linear-gradient(to bottom, #000 62%, transparent 98%);
 }
 
+/* The glyph field blends with the colour beam beneath it rather than
+   sitting on top: screen lifts the ink toward the light, so the glyphs
+   read as part of the beam's glow instead of print over it. */
+.gr-beam--raw {
+  mix-blend-mode: screen;
+}
+
 /* Stretched from a smaller buffer — see RESOLUTION in HeroBeam.tsx. The field
    has no detail to lose, and the browser's own filtering does the smoothing
    that a blur would otherwise be paying for. */
@@ -4198,6 +4222,12 @@
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* The hero fold ends with the viewport, not a seam: the module's closing
+   rule read as a stray <hr> floating between the folds. */
+.gr-module--fold:last-child::after {
+  display: none;
 }
 
 /* The fold's content sits above it: both are in the same stacking context, so
@@ -4226,6 +4256,57 @@
 .gr-news .gr-story-lede,
 .gr-news .gr-story-excerpt {
   display: none;
+}
+
+/* The closing card: full width under the news grid, a white panel on the
+   beige page, restating the hero's two ways in. Drawn as a CHIP: the same
+   inner die perimeter and corner screws the plate in the chip fold wears,
+   in the one 30% ink. */
+.gr-home-cta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: clamp(64px, 8vw, 120px) var(--u);
+  margin-block-start: calc(2 * var(--u));
+  border-radius: var(--radius);
+  background-color: var(--color-panel);
+}
+
+.gr-home-cta::before {
+  content: "";
+  position: absolute;
+  inset: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  border-radius: calc(var(--radius) - 6px);
+  color: var(--color-text);
+  opacity: 0.55;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 11px 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at 11px calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px);
+}
+
+/* the same pen as the blueprint: one device pixel on dense displays */
+@media (min-resolution: 1.5dppx) {
+  .gr-home-cta::before {
+    border-width: 0.5px;
+  }
+}
+
+.gr-home-cta-title {
+  /* a step below the loop fold's title scale — an invitation, not a claim */
+  font-size: clamp(28px, 3.2vw, 48px);
+  line-height: 1.06;
+}
+
+/* the system's heading-spacing rule (.gr-root .gr-heading + *) would
+   otherwise pin the buttons to 8px below the title */
+.gr-root .gr-home-cta-title + .gr-home-actions {
+  margin-block-start: calc(2 * var(--u));
 }
 
 .gr-bench-cost-tick {
@@ -4363,4 +4444,178 @@
 
 .gr-nav-note-thumb {
   background-size: cover;
+}
+
+/* -- the bottom haze -------------------------------------------------------
+   Figma 509:645: a fixed banner over the bottom of the viewport (257px of
+   the 1124 frame ~ 23vh) that blurs whatever scrolls beneath it and washes
+   it toward the page ground — content dissolves off the bottom edge instead
+   of being cut by it. The mask fades the blur in, so there is no hard line
+   where the effect starts. Pointer-events off: it is purely atmospheric. */
+.gr-bottom-haze {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* taller than the Figma rect so the blur has real runway: the frame's
+     257px read as a rim; a third of the viewport actually dissolves */
+  height: 34vh;
+  pointer-events: none;
+  z-index: 40;
+  /* held back on the hero; BottomHaze flips it on past the first fold,
+     and off again when the footer arrives underneath it */
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  /* the master fade-in of the whole effect */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+  mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+}
+
+/* PROGRESSIVE blur: one backdrop-filter cannot ramp, so five layers do —
+   blur doubling per band, each masked to its own overlapping strip, so
+   content sharp at the top edge melts smoothly to 24px at the bottom. */
+.gr-bottom-haze i {
+  position: absolute;
+  inset: 0;
+}
+
+.gr-bottom-haze i:nth-child(1) {
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
+}
+
+.gr-bottom-haze i:nth-child(2) {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
+  mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
+}
+
+.gr-bottom-haze i:nth-child(3) {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
+  mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
+}
+
+.gr-bottom-haze i:nth-child(4) {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
+  mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
+}
+
+.gr-bottom-haze i:nth-child(5) {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000 85%);
+  mask-image: linear-gradient(to bottom, transparent 65%, #000 85%);
+}
+
+/* the colour wash rides ON TOP of the blur layers */
+.gr-bottom-haze::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgb(from var(--color-substrate) r g b / 0),
+    var(--color-substrate) 63.6%
+  );
+}
+
+/* AFTER the base rule: same specificity, so order decides */
+.gr-bottom-haze--on {
+  opacity: 1;
+}
+
+/* the CTA title's authored break exists only on phones */
+.gr-home-cta-br {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  /* the closing card takes the news-card image's shape: square, with the
+     title holding the top and the buttons the bottom */
+  .gr-home-cta {
+    aspect-ratio: 1 / 1;
+    /* one inset, all four sides */
+    padding: 24px;
+    /* one centred cluster: the pair sits together mid-card */
+    justify-content: center;
+    gap: 28px;
+  }
+
+  .gr-home-cta-br {
+    display: inline;
+  }
+
+  .gr-home-cta .gr-home-actions,
+  .gr-root .gr-home-cta-title + .gr-home-actions {
+    margin: 0;
+  }
+}
+
+/* -- the isometric chip stack ---------------------------------------------
+   The hardware hero's package, drawn and exploded in the homepage chip
+   fold's own view: rotateX(58) rotateZ(45) on a perspective stage. Each
+   layer is a flat SVG plate; opening separates them along the stack axis,
+   so every layer shows whole rather than as a band. No shadows: it is a
+   diagram, and occlusion plus the explode carry the depth.               */
+.gr-chipiso {
+  width: fit-content;
+  margin-inline: auto;
+  perspective: 1400px;
+  /* the reserve is balanced around the drawing, so the media box's centre
+     is the STACK's centre and the text column lines up with it */
+  padding: 70px 0 130px;
+  /* the whole gesture waits out the module's entrance, like the photo
+     stack did */
+  --chip-wait: calc(var(--module-delay, 0ms) + var(--dur-showpiece) + 220ms);
+}
+
+/* the camera: arrives FRONTAL (a flat top-down drawing), then pans to the
+   homepage chip fold's isometric view */
+.gr-chipiso-stage {
+  position: relative;
+  width: min(52vw, 440px);
+  aspect-ratio: 1;
+  transform: rotateX(0deg) rotateZ(0deg);
+  transform-style: preserve-3d;
+  transition: transform 950ms var(--ease-assemble);
+  transition-delay: var(--chip-wait);
+}
+
+.gr-chipiso--open .gr-chipiso-stage {
+  transform: rotateX(58deg) rotateZ(45deg);
+}
+
+/* the layers: the casing (--z: 5) IS the anchor and never moves; the rest
+   splay DOWNWARDS out of it once the camera has landed */
+.gr-chipiso-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--color-text);
+  /* closed: a shallow stack (enough separation that nothing z-fights) */
+  transform: translateZ(calc((var(--z) - 5) * 5px));
+  transition: transform 1100ms var(--ease-assemble);
+  /* after the pan; DEEPEST FIRST — each layer starts before the one above
+     it, so a moving layer can never dive past a still-resting one and the
+     fan opens strictly in stack order */
+  transition-delay: calc(var(--chip-wait) + 820ms + var(--z) * 120ms);
+}
+
+.gr-chipiso--open .gr-chipiso-layer {
+  transform: translateZ(calc((var(--z) - 5) * 58px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-chipiso-stage,
+  .gr-chipiso-layer {
+    transition: none;
+  }
 }

@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import type { ReactElement } from "react";
 import {
   Arrow,
@@ -19,6 +20,60 @@ import {
 } from "../components/design";
 import type { Group } from "../components/design";
 import "../styles/index.css";
+
+/** A ramp chip that hands over its hex on click. The literal lives in the
+ * stylesheet, so the value is read off the painted chip itself — no second
+ * copy of the palette to fall out of date. */
+const ColourChip = ({
+  prefix,
+  step,
+}: {
+  prefix: string;
+  step: string;
+}): ReactElement => {
+  const chipRef = useRef<HTMLSpanElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copy = async (): Promise<void> => {
+    const chip = chipRef.current;
+    if (!chip) return;
+    const parts = getComputedStyle(chip).backgroundColor.match(/[\d.]+/g);
+    if (!parts) return;
+    const hex =
+      "#" +
+      parts
+        .slice(0, 3)
+        .map((v) => Math.round(Number(v)).toString(16).padStart(2, "0"))
+        .join("")
+        .toUpperCase();
+    try {
+      await navigator.clipboard.writeText(hex);
+    } catch {
+      return; // clipboard blocked: no false "copied"
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1200);
+  };
+
+  return (
+    <li>
+      <button
+        aria-label={`Copy ${prefix}-${step} hex`}
+        className="gr-chip-copy"
+        onClick={copy}
+        type="button"
+      >
+        <span
+          aria-hidden
+          className="gr-chip"
+          ref={chipRef}
+          style={{ background: `var(--color-${prefix}-${step})` }}
+        />
+        <span className="gr-chip-label">{copied ? "copied" : step}</span>
+      </button>
+    </li>
+  );
+};
 
 /** The ramp: every colour literal in the system, by family. */
 const families = [
@@ -206,16 +261,7 @@ export const StylePage = (): ReactElement => (
                 <p className="gr-label">{family.name}</p>
                 <ul className="gr-chips">
                   {family.steps.map((step) => (
-                    <li key={step}>
-                      <span
-                        aria-hidden
-                        className="gr-chip"
-                        style={{
-                          background: `var(--color-${family.prefix}-${step})`,
-                        }}
-                      />
-                      <span className="gr-chip-label">{step}</span>
-                    </li>
+                    <ColourChip key={step} prefix={family.prefix} step={step} />
                   ))}
                 </ul>
               </div>

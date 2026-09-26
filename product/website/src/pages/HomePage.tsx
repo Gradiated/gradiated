@@ -4,13 +4,19 @@ import type { ReactElement } from "react";
 import {
   Arrow,
   Band,
+  BottomHaze,
   Footer,
   HeroBeam,
+  HeroBeamRaw,
+  HomeFlow,
+  LoopSection,
+  ModelMarquee,
   Module,
   Nav,
   Reveal,
   StoryRow,
   Substrate,
+  ValueFold,
 } from "../components/design";
 import { libraryStories } from "../library-stories";
 import "../styles/index.css";
@@ -43,7 +49,11 @@ export const HomePage = (): ReactElement => (
 
     <Band>
       <Module bleed className="gr-module--fold" index={0}>
+        {/* Both beams, layered: the colour field breathes underneath and the
+            glyph field is inked over it — the engine's language drawn on the
+            hero's light. Same wrapper, same cone, so they register. */}
         <HeroBeam />
+        <HeroBeamRaw />
         <div className="gr-fold-centred">
           {/* `from` carries the word stagger across the two fixed lines — each
               Reveal counts from zero on its own, which would otherwise animate
@@ -60,11 +70,6 @@ export const HomePage = (): ReactElement => (
               </Reveal>
             </span>
           </h1>
-          <p className="gr-lede gr-muted gr-home-lede">
-            We turn your traces into an RL environment, build the evals, and
-            post-train an open model automatically. You just change your base
-            URL.
-          </p>
           <div className="gr-home-actions">
             <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
               Get API Key
@@ -78,6 +83,15 @@ export const HomePage = (): ReactElement => (
         </div>
       </Module>
     </Band>
+
+    {/* new-homepage-layout: the value proposition streams in on its own
+        fold, the loop fold shows the machine as a live diagram, and the
+        chip fold lands it. All full-bleed and self-measuring, so they sit
+        outside the Band/Module pair. */}
+    <ValueFold />
+    <LoopSection />
+    <ModelMarquee />
+    <HomeFlow />
 
     <Band>
       <Module index={1}>
@@ -96,11 +110,30 @@ export const HomePage = (): ReactElement => (
             stories={libraryStories.slice(0, 3)}
           />
         </div>
+        {/* The closing card: one full-width invitation, the hero's two ways
+            in restated now the page has made its case. */}
+        <div className="gr-home-cta">
+          <h2 className="gr-heading gr-home-cta-title">
+            Get your own{" "}
+            <br className="gr-home-cta-br" />
+            models today
+          </h2>
+          <div className="gr-home-actions">
+            <a className="gr-button gr-button--main" href={CONSOLE_BASE_URL}>
+              Get API Key
+              <Arrow />
+            </a>
+          </div>
+        </div>
       </Module>
     </Band>
 
     <Band>
       <Footer index={2} />
     </Band>
+
+    {/* Figma 509:645 — the fixed haze over the viewport's bottom edge;
+        it sits out the hero and fades in past the first fold */}
+    <BottomHaze />
   </Substrate>
 );

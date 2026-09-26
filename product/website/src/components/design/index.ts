@@ -23,11 +23,19 @@
  */
 
 export { Band, Columns, Module } from "./Module";
+export { BottomHaze } from "./BottomHaze";
 export { Footer } from "./Footer";
 export { HeroBeam } from "./HeroBeam";
+export { HeroBeamRaw } from "./HeroBeamRaw";
+export { HomeFlow } from "./HomeFlow";
+export { LoopSection } from "./LoopSection";
+export { ModelMarquee } from "./ModelMarquee";
+export { PhoneFlow } from "./PhoneFlow";
+export { ValueFold } from "./ValueFold";
 export { FooterBar } from "./FooterBar";
 export { Arrow, ContentsIcon, GridIcon, ListIcon } from "./icons";
 export { ChipStack } from "./ChipStack";
+export { ChipStackRaw } from "./ChipStackRaw";
 export { Benchmark } from "./Benchmark";
 export { CodeBlock } from "./CodeBlock";
 export { CostStory } from "./CostStory";

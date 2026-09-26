@@ -1,0 +1,1021 @@
+/* ---------------------------------------------------------------------------
+   The homepage flow — the scroll-scrubbed frosted-panel-to-chip sequence.
+   Geometry, frost and copy opacity are driven per-frame from HomeFlow.tsx;
+   this sheet holds only what does not move.
+   --------------------------------------------------------------------------- */
+
+/* Armed for ~half a second around the lights-off/on flip: every
+   token-driven colour glides instead of snapping. Removed right after,
+   so nothing else on the page is ever slowed by it. */
+.gr-theme-ease,
+.gr-theme-ease *,
+.gr-theme-ease *::before,
+.gr-theme-ease *::after {
+  transition:
+    background-color 0.45s ease,
+    color 0.45s ease,
+    border-color 0.45s ease,
+    box-shadow 0.45s ease,
+    fill 0.45s ease,
+    stroke 0.45s ease !important;
+}
+
+/* The runway supplies scroll distance; the stage stays pinned inside it.
+   Height is set inline from RUNWAY_VH so the scrub length lives in one
+   place, next to the beats it feeds. */
+.gr-flow {
+  position: relative;
+}
+
+.gr-flow-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  perspective: 1400px;
+  perspective-origin: 50% 42%;
+  /* The stage overlaps the hero's CTA row before it sticks; nothing on it
+     is interactive, so let the fold keep its clicks. */
+  pointer-events: none;
+}
+
+.gr-flow-copy {
+  pointer-events: auto;
+}
+
+/* ---- entrances -----------------------------------------------------------
+   The page's one entrance gesture, shared by the loop fold's content: the
+   ValueFold's sharpen-from-blur, as a block — each piece rises a little,
+   settles, and comes into focus, staggered by --enter-delay. The section
+   flips it once, by adding gr-loop--seen to the host.                       */
+.gr-enter {
+  opacity: 0;
+  transform: translateY(16px);
+  filter: blur(6px);
+  transition:
+    opacity 0.9s ease var(--enter-delay, 0s),
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) var(--enter-delay, 0s),
+    filter 0.9s ease var(--enter-delay, 0s);
+}
+
+.gr-loop--seen .gr-enter {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-enter {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .gr-flow-copy {
+    filter: none;
+  }
+}
+
+/* The board bleeds off the stage's bottom edge, which read as a hard cut
+   where the section hands over to Latest News. Feather the last stretch
+   into the page ground so the iso frame dissolves instead of ending. */
+.gr-flow-stage::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 18vh;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--color-substrate));
+}
+
+.gr-flow-field,
+.gr-flow-wafers {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.gr-flow-block,
+.gr-flow-shadow {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, width, height;
+}
+
+/* The block is a thin 3D body: the top face carries every surface (frost,
+   then silicon), and two side faces fold under it to give the chip real
+   thickness once it tilts. Edge-on at frontal, they cost nothing there. */
+.gr-flow-block {
+  transform-style: preserve-3d;
+}
+
+.gr-flow-top {
+  position: absolute;
+  inset: 0;
+  border: 1px solid transparent;
+  overflow: hidden;
+}
+
+/* The plate as silicon: brushed-metal ground with a bevelled edge — the
+   inset lighting is what says "this object has depth" while frontal. */
+.gr-flow-block--chip .gr-flow-top {
+  background: linear-gradient(
+    145deg,
+    #4c4a46 0%,
+    #2a2825 38%,
+    #1b1917 62%,
+    #383530 100%
+  );
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 1px 0 0 rgba(255, 255, 255, 0.07),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.55),
+    inset -2px 0 5px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 3px rgba(0, 0, 0, 0.28);
+}
+
+.gr-flow-face {
+  position: absolute;
+  visibility: hidden;
+}
+
+.gr-flow-block--chip .gr-flow-face {
+  visibility: visible;
+}
+
+/* south edge: folds under from the bottom of the plate. Inset by the
+   plate's corner radius so the slab spans BETWEEN the rounded corners
+   instead of poking past them. */
+.gr-flow-face--s {
+  left: 12px;
+  top: 100%;
+  width: calc(100% - 24px);
+  transform-origin: 50% 0;
+  transform: rotateX(-90deg);
+  background: linear-gradient(90deg, #131110, #211f1c 55%, #161412);
+}
+
+/* east edge: folds under from the right of the plate */
+.gr-flow-face--e {
+  left: 100%;
+  top: 12px;
+  height: calc(100% - 24px);
+  transform-origin: 0 50%;
+  transform: rotateY(90deg);
+  background: linear-gradient(180deg, #1c1a18, #100f0d);
+}
+
+/* One pass of light across the chip — the cinematic reveal. Opacity and
+   position are scrubbed from HomeFlow.tsx. */
+.gr-flow-sheen {
+  position: absolute;
+  inset: -25%;
+  background: linear-gradient(
+    115deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+.gr-flow-shadow {
+  background: rgba(0, 0, 0, 0.14);
+  filter: blur(18px);
+  opacity: 0;
+}
+
+.gr-flow-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 34%;
+  height: 34%;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  /* THE light source: the chip emits, it is not lit. The G glows white
+     and everything else in the dark stage is illuminated by its falloff. */
+  color: #f7f4ec;
+  filter: drop-shadow(0 0 10px rgba(255, 250, 238, 0.85))
+    drop-shadow(0 0 34px rgba(255, 244, 224, 0.4));
+}
+
+.gr-flow-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The reading rests. Opacity is scrubbed; position is static so the text
+   never competes with the object for motion. */
+.gr-flow-copy {
+  position: absolute;
+  top: 50%;
+  /* --enter is driven per-frame from HomeFlow (0 → 1 over the rest beat):
+     the copy rises out of a 28px offset and sharpens as it arrives */
+  transform: translateY(calc(-50% + (1 - var(--enter, 1)) * 28px));
+  filter: blur(calc((1 - var(--enter, 1)) * 6px));
+  width: min(86vw, 380px);
+  opacity: 0;
+  visibility: hidden;
+}
+
+.gr-flow-copy--engine {
+  left: 7vw;
+}
+
+.gr-flow-copy--silicon {
+  right: 7vw;
+}
+
+.gr-flow-copy p + p {
+  margin-top: 1em;
+}
+
+@media (max-width: 720px) {
+  .gr-flow-copy,
+  .gr-flow-copy--engine,
+  .gr-flow-copy--silicon {
+    left: 7vw;
+    right: 7vw;
+    top: auto;
+    bottom: 4vh;
+    /* no centring transform down here, but keep the entrance rise */
+    transform: translateY(calc((1 - var(--enter, 1)) * 28px));
+    width: auto;
+  }
+}
+
+/* ---- RAW-STYLE EXPLORATION ----
+   The chip in the engine's own language: flat ground, ink outline, mono
+   G, no metal, no sheen. Remove with the RAW_STYLE flag in HomeFlow.tsx. */
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-top {
+  background: var(--color-substrate) !important;
+  /* one stroke, one paint: the same 30% hairline as everything drawn */
+  border-color: color-mix(in srgb, var(--color-text) 30%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.gr-flow-block--raw .gr-flow-mark {
+  color: var(--color-text);
+  filter: none;
+}
+
+.gr-flow-block--raw .gr-flow-sheen {
+  display: none;
+}
+
+.gr-flow-block--raw .gr-flow-face--s,
+.gr-flow-block--raw .gr-flow-face--e {
+  background: var(--color-substrate);
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+
+/* Outline G while frontal; the fill arrives with the isometric view. */
+.gr-flow-block--raw .gr-flow-mark svg path {
+  fill: none;
+  stroke: color-mix(in srgb, currentColor 30%, transparent);
+  /* hairline at SCREEN scale — the viewBox would otherwise multiply it */
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.gr-flow-block--raw .gr-flow-mark--filled svg path {
+  /* the fill is the bits layer below; the hairline outline remains */
+  fill: none;
+}
+
+/* The inner die perimeter, with screw spots on its four corners. */
+.gr-flow-die {
+  position: absolute;
+  inset: 9%;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 8px;
+  color: var(--color-text);
+  opacity: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 11px 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at 11px calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px);
+}
+
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-die {
+  opacity: 0.55;
+}
+
+/* The overlay canvas: the emission draws here, ABOVE the plate, so the
+   stream visibly leaves the G's surface instead of rising from behind. */
+.gr-flow-over {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* RAW thickness: ten rounded copies stepping down in Z. Their stacked
+   silhouette follows the corner radius — a curved side wall for free. */
+.gr-flow-slice {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--plate-r, 12px);
+  background: color-mix(in srgb, var(--color-text) 8%, var(--color-substrate));
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.gr-flow-block--raw.gr-flow-block--chip .gr-flow-slice {
+  visibility: visible;
+}
+
+.gr-flow-slice--last {
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+
+/* raw mode uses the slice extrusion; the flat faces are the cinematic
+   version's and cannot follow rounded corners */
+.gr-flow-block--raw .gr-flow-face {
+  display: none;
+}
+
+/* The G's fill is DATA-BITS. Two nested masks: the outer layer is cut to
+   the mark itself (the REAL mark path inlined — the G is the tile's
+   counterform, so bits tile the lid and the G stays void), and its inner
+   layer is cut to a square grid, so the fill is made of the same bits the
+   emission then carries away. Eases in at the resting point. */
+.gr-flow-mark-bits {
+  position: absolute;
+  inset: 4%;
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31.7539 31.7539'%3E%3Cpath d='M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z' fill='black'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31.7539 31.7539'%3E%3Cpath d='M31.7539 31.7539H0V0H31.7539V31.7539ZM6.70605 11.8359V20.9824H12.2314V25.4375H18.332L25.0469 18.7227V14.9004L20.8887 14.8945L16.1523 19.9023H12.2314V11.8359H25.0469V6.31445H12.2314L6.70605 11.8359Z' fill='black'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+  pointer-events: none;
+}
+
+.gr-flow-mark-bits::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect x='2' y='2' width='6' height='6' fill='black'/%3E%3C/svg%3E")
+    0 0 / calc(var(--bit, 5px) * 1.7) calc(var(--bit, 5px) * 1.7) repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Crect x='2' y='2' width='6' height='6' fill='black'/%3E%3C/svg%3E")
+    0 0 / calc(var(--bit, 5px) * 1.7) calc(var(--bit, 5px) * 1.7) repeat;
+}
+
+.gr-flow-mark--filled .gr-flow-mark-bits {
+  opacity: 1;
+}
+
+/* ---- fold 2: the value proposition streams in ------------------------- */
+.gr-value {
+  /* shorter than a full viewport: the statement doesn't need a fold of
+     air after it before the loop fold takes over */
+  height: 72vh;
+  position: relative;
+}
+
+.gr-value-stage {
+  position: sticky;
+  top: 0;
+  height: 72vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gr-value-text {
+  max-width: min(88vw, 1020px);
+  text-align: center;
+  font-size: clamp(24px, 3.2vw, 42px);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  font-weight: 400;
+  color: var(--color-text);
+}
+
+/* the base-URL sentence stands alone as the final line */
+.gr-value-sentence {
+  display: block;
+}
+
+.gr-value-word {
+  opacity: 0.1;
+  filter: blur(5px);
+  transition: opacity 0.4s ease, filter 0.4s ease;
+}
+
+.gr-value-word--on {
+  opacity: 1;
+  filter: blur(0);
+}
+
+/* ---- fold 3: the loop -------------------------------------------------- */
+.gr-loop {
+  position: relative;
+  max-width: min(92vw, 1240px);
+  margin: 0 auto;
+  padding: 6vh 0 14vh;
+}
+
+.gr-loop-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.gr-loop-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  column-gap: clamp(32px, 6vw, 96px);
+}
+
+.gr-loop-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.gr-loop-mock {
+  position: relative;
+  background: linear-gradient(#eae1cc, #c2d0d4);
+  border-radius: 14px;
+  min-height: 400px;
+  /* the phone is oversize on purpose; the card crops its lower third */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* dark theme keeps the warm top; the lower stop goes deep teal */
+.gr-root[data-theme="dark"] .gr-loop-mock {
+  background: linear-gradient(#eae1cc, #1a5e6f);
+}
+
+.gr-loop-copy {
+  max-width: 440px;
+  /* centred in the negative space between the product mock and the
+     bottom of the fold, nudged up and right by eye */
+  margin: auto 0 auto clamp(24px, 6%, 90px);
+  translate: 88px -48px;
+  font-size: 17px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.gr-loop-copy p + p {
+  margin-top: 1em;
+}
+
+/* The silicon fold speaks in the loop fold's voice: same title scale,
+   same body, and the block sits on the page's own content margin. */
+.gr-flow-copy--silicon {
+  width: min(86vw, 480px);
+  right: max(4vw, calc((100vw - 1240px) / 2));
+  /* keep the feather's negative z-index inside this block, not behind the
+     board canvas */
+  isolation: isolate;
+}
+
+/* A wash of the page ground behind the copy, feathered well past its edges,
+   so the blueprint fades out under the text instead of running through it. */
+.gr-flow-copy--silicon::before {
+  content: "";
+  position: absolute;
+  inset: -110px -140px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse closest-side,
+    var(--color-substrate) 45%,
+    transparent 100%
+  );
+}
+
+.gr-flow-copy--silicon .gr-heading {
+  font-size: clamp(32px, 3.84vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+.gr-flow-copy--silicon p {
+  margin-top: 28px;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.gr-flow-copy--silicon p + p {
+  margin-top: 1em;
+}
+
+.gr-flow-cta {
+  margin-top: 24px;
+}
+
+.gr-loop-modelzone {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  /* the die chamber is a SQUARE (row-height wide); the models get the rest */
+  width: calc(100% - 168px);
+  border-right: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  padding: 14px 20px;
+}
+
+.gr-loop-slots {
+  position: absolute;
+  left: 20px;
+  right: 26px;
+  top: 50%;
+  transform: translateY(-50%);
+  /* tall enough to OWN the version tags below the icons — the fade mask
+     clips paint to this box, so the tags must live inside it */
+  height: 84px;
+  /* older models slide left into the fade */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 110px);
+  mask-image: linear-gradient(to right, transparent 0, #000 110px);
+}
+
+.gr-loop-slot {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  /* the one stroke paint: same 30% hairline as the stack and the board */
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  background: var(--color-panel);
+  transition: transform 0.55s ease, opacity 0.4s ease, scale 0.4s ease;
+}
+
+.gr-loop-slot--new {
+  opacity: 0;
+  scale: 0.85;
+}
+
+.gr-loop-slot--filled::before {
+  content: "";
+  position: absolute;
+  inset: 30%;
+  background: var(--color-text);
+  border-radius: 3px;
+}
+
+.gr-loop-slot--filled::after {
+  content: attr(data-v);
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  text-align: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  color: var(--color-text-muted);
+}
+
+
+.gr-loop-title {
+  max-width: 480px;
+  /* 58px at the 1512 design width */
+  font-size: clamp(32px, 3.84vw, 58px);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+.gr-loop-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 84px 0;
+}
+
+/* the system's heading-spacing rule (.gr-root .gr-heading + *) would
+   otherwise pin this to 8px below the title */
+.gr-root .gr-loop-title + .gr-loop-controls {
+  margin-top: 84px;
+}
+
+.gr-loop-field {
+  flex: 1;
+  background: var(--color-panel);
+  border-radius: 10px;
+  padding: 14px 18px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.gr-loop-caret {
+  display: inline-block;
+  width: 7px;
+  height: 13px;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: var(--color-text);
+  animation: gr-loop-caret 1.05s steps(1) infinite;
+}
+
+@keyframes gr-loop-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.gr-loop-start {
+  border: 0;
+  background: var(--color-button-main);
+  color: var(--color-button-main-ink);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  padding: 14px 30px;
+  border-radius: 999px;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.3s ease;
+}
+
+.gr-loop-start--ready {
+  opacity: 1;
+}
+
+.gr-loop-stack {
+  border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+  /* the page's own radius: the stack's outer corners (top of Production
+     traces, bottom of Post-training) match the cards around it */
+  border-radius: var(--radius);
+  /* no overflow:hidden — the rotated row labels hang outside the left wall */
+}
+
+.gr-loop-row {
+  position: relative;
+  height: 168px;
+}
+
+.gr-loop-row + .gr-loop-row {
+  border-top: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
+}
+
+/* Match the chip blueprint's stroke WEIGHT, not just its paint: the board
+   draws at exactly one device pixel, and a CSS 1px border is two of them
+   on a 2x display — twice the ink, which is what reads as jarring in
+   dark. Hairline borders bring the diagrams onto the same pen. */
+@media (min-resolution: 1.5dppx) {
+  .gr-loop-stack,
+  .gr-loop-row + .gr-loop-row,
+  .gr-loop-modelzone {
+    border-width: 0.5px;
+  }
+}
+
+
+.gr-loop-rowlabel {
+  position: absolute;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* The rotated rail exists ONLY at desktop widths. Scoping the rotation
+   here (instead of un-rotating it on mobile) sidesteps engines that
+   mishandle `rotate: none` as an override — the labels were rendering
+   upside down on phones. */
+@media (min-width: 901px) {
+  .gr-loop-rowlabel {
+    left: -30px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    writing-mode: vertical-rl;
+    rotate: 180deg;
+  }
+}
+
+@media (max-width: 900px) {
+  /* tighter vertical rhythm: phone folds sit closer together */
+  .gr-value,
+  .gr-value-stage {
+    height: 44vh;
+  }
+
+  /* the statement starts at the fold's top edge, not adrift in its middle */
+  .gr-value-stage {
+    align-items: flex-start;
+    padding-top: 16px;
+  }
+
+  /* air between the mechanism and the base-URL line: the pause is the
+     impact */
+  .gr-value-sentence + .gr-value-sentence {
+    margin-top: 0.7em;
+  }
+
+  .gr-loop {
+    padding: 4vh 0 4vh;
+  }
+
+
+  /* single column, in reading order: title, product, endpoint, stack,
+     copy. The two halves dissolve (display: contents) so their children
+     can be ordered as one list. */
+  .gr-loop-grid {
+    display: flex;
+    flex-direction: column;
+    row-gap: 40px;
+  }
+
+  .gr-loop-left,
+  .gr-loop-right {
+    display: contents;
+  }
+
+  .gr-loop-title { order: 1; }
+  .gr-loop-mock { order: 2; }
+  .gr-loop-controls { order: 3; }
+  .gr-loop-stack { order: 4; }
+  .gr-loop-copy { order: 5; }
+
+  /* desktop spacing assumed the two-column geometry */
+  .gr-loop-controls,
+  .gr-root .gr-loop-title + .gr-loop-controls {
+    margin: 0;
+  }
+
+  .gr-loop-copy {
+    margin: 0;
+    translate: none;
+    max-width: none;
+  }
+
+  /* horizontal captions in each row's corner */
+  .gr-loop-rowlabel {
+    left: 12px;
+    top: 8px;
+  }
+}
+
+/* ---- the product's model selector ----
+   Provider model until the first Gradiated model ships; then the newest
+   version is live, marked by the blinking green dot. */
+.gr-loop-selector {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--color-text);
+}
+
+.gr-loop-selector-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-text) 22%, transparent);
+  background: var(--color-panel);
+  color: inherit;
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.gr-loop-selector-chev {
+  font-size: 9px;
+  color: var(--color-text-muted);
+}
+
+.gr-loop-livedot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-text) 30%, transparent);
+  flex: none;
+}
+
+.gr-loop-selector--live .gr-loop-livedot {
+  background: var(--color-interactive-fill);
+  animation: gr-live-blink 1.6s ease-in-out infinite;
+}
+
+@keyframes gr-live-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-interactive-fill) 45%, transparent);
+  }
+  50% {
+    opacity: 0.35;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-interactive-fill) 0%, transparent);
+  }
+}
+
+.gr-loop-selector-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 132px;
+  background: var(--color-panel);
+  border: 1px solid color-mix(in srgb, var(--color-text) 22%, transparent);
+  border-radius: 8px;
+  padding: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.gr-loop-selector--open .gr-loop-selector-menu {
+  display: block;
+}
+
+.gr-loop-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  color: var(--color-text-muted);
+}
+
+.gr-loop-selector-item--live {
+  color: var(--color-text);
+}
+
+.gr-loop-selector-item:hover {
+  background: color-mix(in srgb, var(--color-text) 6%, transparent);
+}
+
+/* The motherboard the chip sits on: shares the plate's 3D transform, so
+   it tilts with the chip into the isometric view. */
+.gr-flow-board {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 50% 50%;
+  will-change: transform, clip-path, opacity;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ---- the models marquee ------------------------------------------------ */
+.gr-marquee {
+  padding: 16vh 0 22vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gr-marquee-lane {
+  width: 100%;
+}
+
+.gr-marquee-title {
+  text-align: center;
+  font-size: clamp(18px, 1.6vw, 24px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  margin: 0 auto 56px;
+}
+
+/* the system's heading rules outrank a single class: restate at matching
+   specificity (same fix as the loop controls) */
+.gr-root .gr-marquee-title {
+  margin: 0 auto 56px;
+}
+
+.gr-root .gr-marquee-title + .gr-marquee-lane {
+  margin-top: 0;
+}
+
+.gr-marquee-lane {
+  /* wide dissolves: roughly six tiles hold the centre and the rest live
+     inside the fades */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
+  /* the mask clips paint to the lane's box, and the tile shadows fall
+     18px below the tiles — give the box room so nothing gets shaved */
+  padding: 8px 0 28px;
+}
+
+.gr-marquee-track {
+  display: flex;
+  gap: 42px;
+  width: max-content;
+  padding-left: 42px;
+  /* left -> right: start shifted back one copy and walk forward */
+  animation: gr-marquee-drift 46s linear infinite;
+  /* keep the drift on the compositor: without a layer of its own it
+     freezes whenever the canvases jank the main thread */
+  will-change: transform;
+}
+
+@keyframes gr-marquee-drift {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gr-marquee-track {
+    animation: none;
+    transform: none;
+  }
+}
+
+/* the pillow: a white app-icon squircle */
+.gr-marquee-tile {
+  flex: none;
+  width: 104px;
+  height: 104px;
+  border-radius: 26px;
+  background: var(--color-panel);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05),
+    0 6px 18px -6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gr-marquee-tile span {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.gr-marquee-tile img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+/* AFTER the base rule in source order, or the base padding wins the tie */
+@media (max-width: 900px) {
+  .gr-marquee {
+    padding: 4vh 0 2vh;
+  }
+}
+
+/* ---- the product mock's phone -------------------------------------------
+   A supplied full-device render (Apple-Card-style wallet screen in its own
+   frame). It arrives with the page's entrance gesture — rise, sharpen from
+   blur — via gr-enter, a beat after the card that holds it.               */
+
+.gr-phone {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 72px;
+  /* the well is shorter than the render: the card's overflow crops the
+     device's lower stretch, so the container doesn't grow to fit it */
+  height: 460px;
+}
+
+.gr-phone-render {
+  display: block;
+  width: 330px;
+}
+
+/* the device travels further than the fold's 16px on entry — a longer
+   rise reads as the phone being lifted into place */
+.gr-phone-render.gr-enter {
+  transform: translateY(48px);
+}
+
+.gr-loop--seen .gr-phone-render.gr-enter {
+  transform: none;
+}
+
+.gr-phone-render {
+  filter: drop-shadow(0 24px 48px rgba(20, 18, 12, 0.35))
+    drop-shadow(0 4px 12px rgba(20, 18, 12, 0.12));
+}

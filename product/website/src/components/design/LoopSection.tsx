@@ -227,8 +227,8 @@ export const LoopSection = (): ReactElement => {
   const urlRef = useRef<HTMLSpanElement>(null);
   const startRef = useRef<HTMLButtonElement>(null);
   const modelsRef = useRef<HTMLDivElement>(null);
+  const slotsWrapRef = useRef<HTMLDivElement>(null);
   const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const slotRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -238,10 +238,10 @@ export const LoopSection = (): ReactElement => {
     const urlEl = urlRef.current;
     const startEl = startRef.current;
     const modelsEl = modelsRef.current;
+    const slotsWrap = slotsWrapRef.current;
     const rows = rowRefs.current;
-    const slots = slotRefs.current;
-    if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelsEl) return;
-    if (rows.some((r) => !r) || slots.some((sl) => !sl)) return;
+    if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelsEl || !slotsWrap) return;
+    if (rows.some((r) => !r)) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -274,6 +274,32 @@ export const LoopSection = (): ReactElement => {
     let engineStart = -1;
     let filled = -1; // newest generation shown in the slots
 
+    /* The model log: an icon EXISTS only once post-training has produced
+       it. The newest sits at the right, where its data arrives; each new
+       model pushes the older ones left, into the fade. */
+    const slotEls: HTMLDivElement[] = [];
+    const SLOT_STEP = 70;
+    const placeSlots = (): void => {
+      slotEls.forEach((el, age) => {
+        el.style.transform = `translateX(${-age * SLOT_STEP}px)`;
+      });
+      while (slotEls.length > 7) {
+        const el = slotEls.pop();
+        el?.remove();
+      }
+    };
+    const createSlot = (version: string): void => {
+      const el = document.createElement("div");
+      el.className = "gr-loop-slot gr-loop-slot--filled gr-loop-slot--new";
+      el.dataset.v = version;
+      slotsWrap.appendChild(el);
+      slotEls.unshift(el);
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => el.classList.remove("gr-loop-slot--new")),
+      );
+      placeSlots();
+    };
+
     const seen = new IntersectionObserver(
       ([e]) => {
         visible = e.isIntersecting;
@@ -301,10 +327,8 @@ export const LoopSection = (): ReactElement => {
     const begin = (t: number): void => {
       engineStart = t;
       filled = -1;
-      slots.forEach((sl) => {
-        sl?.classList.remove("gr-loop-slot--filled");
-        if (sl) delete sl.dataset.v;
-      });
+      slotEls.length = 0;
+      slotsWrap.innerHTML = "";
     };
     const onStart = (): void => {
       const t = performance.now() / 1000;
@@ -347,24 +371,16 @@ export const LoopSection = (): ReactElement => {
       ctx.lineWidth = 1;
 
       /* ---- connectors: the circuit the loop runs on ---- */
+      const fcy = field.y + field.h / 2;
+      const fcx = field.x + field.w / 2;
+      const mx = mock.x + 24;
       ctx.save();
       ctx.globalAlpha = 0.3;
       ctx.beginPath();
-      const fcy = field.y + field.h / 2;
       ctx.moveTo(mock.x + mock.w, fcy);
       ctx.lineTo(field.x, fcy);
-      const fcx = field.x + field.w / 2;
       ctx.moveTo(fcx, field.y + field.h);
       ctx.lineTo(fcx, R[0].y - 12);
-      const mx = mock.x + 24;
-      ctx.moveTo(mx, mock.y + mock.h);
-      ctx.lineTo(mx, models.y + models.h / 2);
-      ctx.lineTo(models.x - 12, models.y + models.h / 2);
-      /* drawn at the die row's centre, the same height the model stream
-         actually travels */
-      const mcy = R[3].y + R[3].h / 2;
-      ctx.moveTo(models.x + models.w + 12, mcy);
-      ctx.lineTo(R[3].x - 18, mcy);
       ctx.stroke();
       ctx.restore();
 
@@ -383,47 +399,49 @@ export const LoopSection = (): ReactElement => {
       const DP = (dieSide * 0.85) / ENGINE.DS;
       const dieC: [number, number] = [R[3].x + R[3].w / 2, R[3].y + R[3].h / 2];
 
-      /* the newest arrival fills its slot */
+      /* a model icon is CREATED by its arriving data */
       const latest = Math.floor((tE - 9.4) / GEN_PERIOD);
-      if (latest > filled) {
+      if (latest > filled && latest >= 0) {
         filled = latest;
-        const sl = slots[((latest % 4) + 4) % 4];
-        if (sl && latest >= 0) {
-          sl.classList.add("gr-loop-slot--filled");
-          sl.dataset.v = latest === 0 ? "1" : `1.${latest}`;
-        }
+        createSlot(latest === 0 ? "1" : `1.${latest}`);
       }
-      const slotTarget = (g: number): [number, number] => {
-        const sl = slots[((g % 4) + 4) % 4];
-        const r = sl ? rel(sl) : models;
-        return [r.x + r.w / 2, r.y + r.h / 2];
-      };
+      /* the newest icon's berth: at the right edge of the log, data
+         entering from its right side */
+      const wrap = rel(slotsWrap);
+      const slotCx = wrap.x + wrap.w - 28;
+      const slotCy = wrap.y + 28;
 
       /* once the first model has shipped, the loop is CLOSED: bits stream
          single file from the models back through the product, into the
          endpoint, and down into production traces — continuously */
       const sA = clamp01((tE - 9.6) / 1.2);
+      {
+        /* the return leg: the LIVE model's traffic feeds the product.
+           Drawn as a static wire always, ridden by bits once shipped. */
+        const wrapR = rel(slotsWrap);
+        const nsx = wrapR.x + wrapR.w - 28;
+        const wy = wrapR.y + wrapR.h + 26;
+        ctx.save();
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        ctx.moveTo(nsx, wrapR.y + wrapR.h + 6);
+        ctx.lineTo(nsx, wy);
+        ctx.lineTo(mx, wy);
+        ctx.lineTo(mx, mock.y + mock.h);
+        ctx.stroke();
+        ctx.restore();
+      }
       if (sA > 0.01) {
-        const mcyS = models.y + models.h / 2;
+        const wrapR = rel(slotsWrap);
+        const nsx = wrapR.x + wrapR.w - 28;
+        const wy = wrapR.y + wrapR.h + 26;
         const wires: [number, number][][] = [
           [
-            [models.x + models.w * 0.5, models.y],
-            [mx, mcyS - models.h * 0.5 - 0 + (models.y - (mock.y + mock.h)) * 0],
+            [nsx, wrapR.y + wrapR.h + 6],
+            [nsx, wy],
+            [mx, wy],
+            [mx, mock.y + mock.h],
           ],
-          [
-            [mock.x + mock.w, fcy],
-            [field.x, fcy],
-          ],
-          [
-            [fcx, field.y + field.h],
-            [fcx, R[0].y - 2],
-          ],
-        ];
-        /* models -> mock runs up the mock's spine */
-        wires[0] = [
-          [models.x - 12, mcyS],
-          [mx, mcyS],
-          [mx, mock.y + mock.h],
         ];
         for (const wire of wires) {
           const len = pathLen(wire);
@@ -441,7 +459,7 @@ export const LoopSection = (): ReactElement => {
       const gHi = Math.floor(tE / GEN_PERIOD) + 1;
       for (let g = gLo; g <= gHi; g++) {
         const T = tE - g * GEN_PERIOD;
-        const outPt = slotTarget(g);
+        const outPt: [number, number] = [slotCx, slotCy];
 
         for (const b of ENGINE.bits) {
           const appear = -GEN_PERIOD * (0.05 + 0.9 * b.ta);
@@ -464,9 +482,38 @@ export const LoopSection = (): ReactElement => {
           const [mxp, myp] = at(R[1], b.mx, b.my);
 
           if (T < k0) {
-            px = sxp;
-            py = syp;
-            alpha = 0.4 * clamp01((T - appear) / 0.4);
+            /* the trace EMANATES from the product: out of the mock, into
+               the endpoint, out of its underside, down into the traces
+               stage — then it waits its turn */
+            const u = (T - appear) / 1.5;
+            if (u < 1) {
+              if (u < 0.42) {
+                [px, py] = alongPath(
+                  [
+                    [mock.x + mock.w, fcy],
+                    [field.x - 4, fcy],
+                  ],
+                  u / 0.42,
+                );
+                alpha = 0.55 * clamp01(u * 10);
+              } else if (u < 0.52) {
+                continue; /* inside the endpoint */
+              } else {
+                [px, py] = alongPath(
+                  [
+                    [fcx, field.y + field.h],
+                    [fcx, R[0].y + 10],
+                    [sxp, syp],
+                  ],
+                  (u - 0.52) / 0.48,
+                );
+                alpha = 0.55;
+              }
+            } else {
+              px = sxp;
+              py = syp;
+              alpha = 0.4;
+            }
           } else if (T < k1) {
             const u = (T - k0) / 1.6;
             const e = easeIO(u);
@@ -518,8 +565,9 @@ export const LoopSection = (): ReactElement => {
             const wire: [number, number][] = [
               [dieC[0] + b.du * DP, dieC[1] + b.dv * DP],
               [dieC[0] - dieSide * 0.75, dieC[1]],
-              [outPt[0], dieC[1]],
-              [outPt[0], outPt[1]],
+              [outPt[0] + 110, dieC[1]],
+              [outPt[0] + 110, outPt[1]],
+              [outPt[0] + 26, outPt[1]],
             ];
             [px, py] = alongPath(wire, easeIO(u) * 0.2 + u * 0.8);
             size = bit * (1 - u * 0.25);
@@ -606,17 +654,7 @@ export const LoopSection = (): ReactElement => {
             </p>
           </div>
           <div className="gr-loop-models" ref={modelsRef}>
-            <div className="gr-loop-slots">
-              {Array.from({ length: 4 }, (_, i) => (
-                <div
-                  className="gr-loop-slot"
-                  key={i}
-                  ref={(el) => {
-                    slotRefs.current[i] = el;
-                  }}
-                />
-              ))}
-            </div>
+            <div className="gr-loop-slots" ref={slotsWrapRef} />
             <p className="gr-loop-models-caption">Your Gradiated models</p>
           </div>
         </div>

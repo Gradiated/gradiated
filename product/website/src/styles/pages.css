@@ -4242,9 +4242,8 @@
 }
 
 .gr-home-cta-title {
-  /* the loop fold's title scale — the card is a statement, not a section
-     label */
-  font-size: clamp(32px, 3.84vw, 58px);
+  /* a step below the loop fold's title scale — an invitation, not a claim */
+  font-size: clamp(28px, 3.2vw, 48px);
   line-height: 1.06;
 }
 

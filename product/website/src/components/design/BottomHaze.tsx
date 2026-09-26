@@ -7,7 +7,12 @@ import type { ReactElement } from "react";
  * being cut by it.
  *
  * It holds back on the hero — the first fold owns its own atmosphere —
- * and fades in once the reader has scrolled past most of it.
+ * fades in once the reader has scrolled past most of it, and steps aside
+ * again when the footer rises underneath (a fixed veil over the footer
+ * would blur links the reader is about to click).
+ *
+ * The five <i> layers are the progressive blur: backdrop-filter cannot
+ * ramp within one element, so successive bands double the radius.
  */
 
 export const BottomHaze = (): ReactElement => {
@@ -17,9 +22,15 @@ export const BottomHaze = (): ReactElement => {
     const host = hostRef.current;
     if (!host) return;
     let raf = 0;
+    const footer = document.querySelector(".gr-footer");
     const check = (): void => {
       raf = 0;
-      host.classList.toggle("gr-bottom-haze--on", scrollY > innerHeight * 0.8);
+      const pastHero = scrollY > innerHeight * 0.8;
+      /* off once the footer's top clears the haze's own top edge */
+      const footerUnder =
+        footer !== null &&
+        footer.getBoundingClientRect().top < innerHeight * 0.9;
+      host.classList.toggle("gr-bottom-haze--on", pastHero && !footerUnder);
     };
     const onScroll = (): void => {
       if (!raf) raf = requestAnimationFrame(check);
@@ -32,5 +43,13 @@ export const BottomHaze = (): ReactElement => {
     };
   }, []);
 
-  return <div aria-hidden="true" className="gr-bottom-haze" ref={hostRef} />;
+  return (
+    <div aria-hidden="true" className="gr-bottom-haze" ref={hostRef}>
+      <i />
+      <i />
+      <i />
+      <i />
+      <i />
+    </div>
+  );
 };

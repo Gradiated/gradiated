@@ -4413,18 +4413,68 @@
   height: 34vh;
   pointer-events: none;
   z-index: 40;
-  /* held back on the hero; BottomHaze flips it on past the first fold */
+  /* held back on the hero; BottomHaze flips it on past the first fold,
+     and off again when the footer arrives underneath it */
   opacity: 0;
   transition: opacity 0.8s ease;
-  backdrop-filter: blur(26px);
-  -webkit-backdrop-filter: blur(26px);
+  /* the master fade-in of the whole effect */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+  mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
+}
+
+/* PROGRESSIVE blur: one backdrop-filter cannot ramp, so five layers do —
+   blur doubling per band, each masked to its own overlapping strip, so
+   content sharp at the top edge melts smoothly to 24px at the bottom. */
+.gr-bottom-haze i {
+  position: absolute;
+  inset: 0;
+}
+
+.gr-bottom-haze i:nth-child(1) {
+  backdrop-filter: blur(1.5px);
+  -webkit-backdrop-filter: blur(1.5px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
+}
+
+.gr-bottom-haze i:nth-child(2) {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
+  mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
+}
+
+.gr-bottom-haze i:nth-child(3) {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
+  mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
+}
+
+.gr-bottom-haze i:nth-child(4) {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
+  mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
+}
+
+.gr-bottom-haze i:nth-child(5) {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 65%, #000 85%);
+  mask-image: linear-gradient(to bottom, transparent 65%, #000 85%);
+}
+
+/* the colour wash rides ON TOP of the blur layers */
+.gr-bottom-haze::after {
+  content: "";
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     to bottom,
     rgb(from var(--color-substrate) r g b / 0),
     rgb(from var(--color-substrate) r g b / 0.8) 63.6%
   );
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
-  mask-image: linear-gradient(to bottom, transparent, #000 63.6%);
 }
 
 /* AFTER the base rule: same specificity, so order decides */

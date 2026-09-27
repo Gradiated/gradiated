@@ -89,6 +89,9 @@ const METHOD_ART: Partial<Record<MethodSlug, StoryArt>> = {
     tall: "/brand/library/sequencing.webp",
     wide: "/brand/library/sequencing-wide.webp",
   },
+  "in-person": {
+    tall: "/brand/library/in-person.webp",
+  },
 };
 
 const NOTE_COVERS: Record<string, StoryCover> = {

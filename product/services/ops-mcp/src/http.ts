@@ -14,12 +14,14 @@ import {
 } from "prom-client";
 import { createTools } from "./tools.js";
 import type { Backend } from "./backend.js";
+import type { Registrations } from "./instances/registration.js";
 
 export const createHttp = (options: {
   host: string;
   authenticate: (token: string) => Promise<Identity | undefined>;
   authRouter?: RequestHandler;
   backend: Backend;
+  registrations?: Registrations;
   audit: (event: Record<string, unknown>) => void;
 }) => {
   const registry = new Registry();
@@ -141,20 +143,28 @@ export const createHttp = (options: {
         return;
       }
 
-      mcp = createTools(options.backend, (tool, success, elapsed) => {
-        calls.inc({ tool, outcome: success ? "success" : "error" });
-        duration.observe({ tool }, elapsed / 1000);
-        options.audit({
-          service: "ops-mcp",
-          event: "tool_completed",
-          principal,
-          email: identity?.email,
-          request_id: requestId,
-          tool,
-          outcome: success ? "success" : "error",
-          duration_ms: elapsed,
-        });
-      });
+      const operations =
+        options.registrations && identity
+          ? { registrations: options.registrations, caller: identity.email }
+          : undefined;
+      mcp = createTools(
+        options.backend,
+        (tool, success, elapsed) => {
+          calls.inc({ tool, outcome: success ? "success" : "error" });
+          duration.observe({ tool }, elapsed / 1000);
+          options.audit({
+            service: "ops-mcp",
+            event: "tool_completed",
+            principal,
+            email: identity?.email,
+            request_id: requestId,
+            tool,
+            outcome: success ? "success" : "error",
+            duration_ms: elapsed,
+          });
+        },
+        operations,
+      );
       const transport = new StreamableHTTPServerTransport({
         enableJsonResponse: true,
       });

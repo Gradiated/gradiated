@@ -8,35 +8,41 @@ API using the existing product image.
 
 ## Tools and authority
 
-| Tool                    | Data                                                                                  |
-| ----------------------- | ------------------------------------------------------------------------------------- |
-| `active_alerts`         | Prometheus firing/pending alerts and dashboard links                                  |
-| `query_metrics`         | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
-| `query_metric_history`  | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                   |
-| `metric_metadata`       | Metric names, types, help text and units, searched by regular expression              |
-| `prometheus_targets`    | Scrape target health, last scrape and last error                                      |
-| `prometheus_rules`      | Alerting and recording rules with expressions, health and active alerts               |
-| `label_names`           | Label names for metrics or logs, optionally for a selector and period                 |
-| `label_values`          | Values of one label for metrics or logs, including `__name__`                         |
-| `series`                | Full label sets of matching series or log streams                                     |
-| `query_logs`            | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                    |
-| `log_fields`            | Fields Loki detects in matching log lines, with type, cardinality and parser          |
-| `alertmanager_alerts`   | Alerts after routing, with silenced, inhibited and receiver state                     |
-| `alertmanager_silences` | Silences with matchers, state, author and comment                                     |
-| `workload_status`       | Pod health, restarts, last termination, resources and node placement in one namespace |
-| `rollouts`              | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images       |
-| `argocd_applications`   | Argo CD sync and health, deployed revision, deploy history and drifted resources      |
-| `node_status`           | EKS node conditions and available resources                                           |
-| `nomad`                 | Nomad jobs, allocations, deployments, evaluations, nodes and node pools (list stubs)  |
-| `dashboards`            | Existing Grafana dashboard links                                                      |
+| Tool                           | Data                                                                                  |
+| ------------------------------ | ------------------------------------------------------------------------------------- |
+| `active_alerts`                | Prometheus firing/pending alerts and dashboard links                                  |
+| `query_metrics`                | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
+| `query_metric_history`         | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                   |
+| `metric_metadata`              | Metric names, types, help text and units, searched by regular expression              |
+| `prometheus_targets`           | Scrape target health, last scrape and last error                                      |
+| `prometheus_rules`             | Alerting and recording rules with expressions, health and active alerts               |
+| `label_names`                  | Label names for metrics or logs, optionally for a selector and period                 |
+| `label_values`                 | Values of one label for metrics or logs, including `__name__`                         |
+| `series`                       | Full label sets of matching series or log streams                                     |
+| `query_logs`                   | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                    |
+| `log_fields`                   | Fields Loki detects in matching log lines, with type, cardinality and parser          |
+| `alertmanager_alerts`          | Alerts after routing, with silenced, inhibited and receiver state                     |
+| `alertmanager_silences`        | Silences with matchers, state, author and comment                                     |
+| `workload_status`              | Pod health, restarts, last termination, resources and node placement in one namespace |
+| `rollouts`                     | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images       |
+| `argocd_applications`          | Argo CD sync and health, deployed revision, deploy history and drifted resources      |
+| `node_status`                  | EKS node conditions and available resources                                           |
+| `nomad`                        | Nomad jobs, allocations, deployments, evaluations, nodes and node pools (list stubs)  |
+| `dashboards`                   | Existing Grafana dashboard links                                                      |
+| `register_instance`            | Enrols a GPU machine into Nomad (the only write tool, destructive)                    |
+| `instance_registration_status` | Progress of registrations since the last restart                                      |
 
-All current tools have `readOnlyHint: true`, `destructiveHint: false` and
-`idempotentHint: true`. The server does not ask for per-read confirmation; client
-administrators may configure these tools to run automatically. OAuth consent is
+Every tool except `register_instance` has `readOnlyHint: true`,
+`destructiveHint: false` and `idempotentHint: true`; client administrators may run
+those automatically. `register_instance` is `destructiveHint: true`. It resets
+the machine it enrols, refuses a running machine unless `reset_running_pod` is true
+and `confirm_instance_id` repeats the id, and audit-logs each phase with the
+requesting employee. See `docs/INSTANCE_SETUP_PLAN.md`, "Running it". OAuth consent is
 still required when connecting or renewing the 30-day authorization.
 
-There is no shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP fetch,
-database access or mutation tool. The service account may list nodes, and pods
+There is no shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP fetch
+or general database access. Registration is the only mutation; its credentials
+reach no other tool. The service account may list nodes, and pods
 and apps workloads in selected namespaces, and read Argo CD Applications; it may
 not read Secrets or create exec sessions. Pod output omits specs, environment,
 arguments, annotations and status messages. Workload output keeps only images,

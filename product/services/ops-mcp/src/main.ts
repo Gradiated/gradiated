@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createBackend } from "./backend.js";
 import { createHttp } from "./http.js";
 import { createAuth } from "./auth.js";
+import { productionRegistrations } from "./instances/production.js";
 
 const config = z
   .object({
@@ -16,7 +17,9 @@ const config = z
     LOKI_TENANTS: z.string().min(1),
     ALERTMANAGER_URL: z.url(),
     NOMAD_URL: z.url(),
-    NOMAD_CREDENTIALS_DIRECTORY: z.string().min(1),
+    CREDENTIALS_DIRECTORY: z.string().min(1),
+    NOMAD_BASE_IMAGE: z.string().min(1),
+    NOMAD_CA_KMS_KEY: z.string().min(1),
   })
   .parse(process.env);
 const audit = (event: Record<string, unknown>) =>
@@ -38,23 +41,33 @@ const auth = createAuth({
   deniedEmails: z.array(z.email()).parse(JSON.parse(config.MCP_DENIED_EMAILS)),
   redirectUris: z.array(z.url()).parse(JSON.parse(config.MCP_REDIRECT_URIS)),
 });
+const backend = createBackend({
+  prometheus: config.PROMETHEUS_URL,
+  loki: config.LOKI_URL,
+  lokiTenant: config.LOKI_TENANTS,
+  alertmanager: config.ALERTMANAGER_URL,
+  nomad: {
+    url: config.NOMAD_URL,
+    caFile: `${config.CREDENTIALS_DIRECTORY}/nomad-ca`,
+    certFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
+    keyFile: `${config.CREDENTIALS_DIRECTORY}/nomad-key`,
+    tokenFile: `${config.CREDENTIALS_DIRECTORY}/nomad-token`,
+  },
+});
 const { server, metrics } = createHttp({
   host: config.MCP_HOST,
   authenticate: auth.authenticate,
   authRouter: auth.router,
-  backend: createBackend({
-    prometheus: config.PROMETHEUS_URL,
-    loki: config.LOKI_URL,
-    lokiTenant: config.LOKI_TENANTS,
-    alertmanager: config.ALERTMANAGER_URL,
-    nomad: {
-      url: config.NOMAD_URL,
-      caFile: `${config.NOMAD_CREDENTIALS_DIRECTORY}/nomad-ca`,
-      certFile: `${config.NOMAD_CREDENTIALS_DIRECTORY}/nomad-cert`,
-      keyFile: `${config.NOMAD_CREDENTIALS_DIRECTORY}/nomad-key`,
-      tokenFile: `${config.NOMAD_CREDENTIALS_DIRECTORY}/nomad-token`,
+  backend,
+  registrations: productionRegistrations(
+    {
+      credentialsDirectory: config.CREDENTIALS_DIRECTORY,
+      hostImage: config.NOMAD_BASE_IMAGE,
+      caKeyId: config.NOMAD_CA_KMS_KEY,
     },
-  }),
+    backend,
+    (event) => audit({ service: "ops-mcp", ...event }),
+  ),
   audit,
 });
 server.listen(3003, "0.0.0.0");

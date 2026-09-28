@@ -24,6 +24,12 @@ export type BackendConfig = {
   };
 };
 
+export class UpstreamError extends Error {
+  constructor(readonly status: number | undefined) {
+    super("upstream_failed");
+  }
+}
+
 const MAX_BYTES = 8_000_000;
 const TIMEOUT_MS = 10_000;
 const KUBERNETES_URL = "https://kubernetes.default.svc";
@@ -74,7 +80,7 @@ const getHttps = (
       response.on("error", reject);
       response.on("end", () => {
         if (response.statusCode !== 200) {
-          reject(new Error("upstream_failed"));
+          reject(new UpstreamError(response.statusCode));
           return;
         }
 
@@ -105,7 +111,7 @@ const getHttp = async (
   });
   if (!response.ok || !response.body) {
     await response.body?.cancel();
-    throw new Error("upstream_failed");
+    throw new UpstreamError(response.status);
   }
 
   const reader = response.body.getReader();

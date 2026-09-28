@@ -9,6 +9,7 @@ import {
   hostProfile,
   issueCertificate,
   kmsSigner,
+  serialNumber,
   serverProfile,
   type CertificateSigner,
 } from "../src/certificates.js";
@@ -125,19 +126,19 @@ describe("certificate profiles", () => {
   });
 });
 
-it("encodes every random serial number as valid DER", async () => {
-  for (let attempt = 0; attempt < 600; attempt++) {
-    const issued = await issueCertificate(
-      testCa.certificate,
-      localSigner,
-      cliProfile,
-    );
+it.each([
+  [0x00, 0x01],
+  [0x80, 0x01],
+  [0xff, 0x7f],
+  [0x42, 0x43],
+])(
+  "makes a serial starting 0x%s a positive, minimal DER integer",
+  (first, expected) => {
+    const serial = serialNumber(new Uint8Array([first, 0xaa]));
 
-    expect(new X509Certificate(issued.certificate).serialNumber).toMatch(
-      /^[0-7][0-9A-F]{31}$/,
-    );
-  }
-});
+    expect([...serial]).toEqual([expected, 0xaa]);
+  },
+);
 
 describe("KMS signer", () => {
   it("asks KMS to hash and sign the certificate with ECDSA SHA-256", async () => {

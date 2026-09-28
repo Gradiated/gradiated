@@ -73,6 +73,8 @@ def main():
     ])
     for name in policies:
         cases.extend([
+            (name, "kms:UpdateAlias", f"arn:aws:kms:us-east-1:{account}:alias/gradiated-terraform-state", False, []),
+            (name, "kms:DeleteAlias", f"arn:aws:kms:us-east-1:{account}:alias/gradiated-terraform-state", False, []),
             (name, "sts:AssumeRole", role + "Administrator", False, []),
             (name, "sso:CreateAccountAssignment", "*", False, []),
             (name, "cloudformation:ExecuteChangeSet", "*", False, []),

@@ -12,6 +12,7 @@
   "dependencies": {
     "@gradiated/contracts": "workspace:*",
     "@gradiated/control": "workspace:*",
+    "@gradiated/nomad-pki": "workspace:*",
     "@gradiated/valkey": "workspace:*",
     "luxon": "^3.7.2",
     "prom-client": "15.1.3",

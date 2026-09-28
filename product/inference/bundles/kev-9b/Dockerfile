@@ -8,8 +8,7 @@ RUN uv python install 3.12.13 \
 ARG KEV_COMMIT=f0ae8fb9af5762254974dcdba8c82cbf48587b2e
 RUN git clone --quiet --filter=blob:none https://github.com/jaredpalmer/kev /kev \
     && git -C /kev checkout --quiet --detach "$KEV_COMMIT"
-# The qualified pod ran upstream's frozen lock plus FLA and a newer Triton for the
-# DeltaNet layers; the cutoff keeps their resolution to what it resolved then.
+# FLA and Triton sit outside upstream's lock; the cutoff pins what they resolve to.
 RUN cd /kev \
     && uv export --frozen --extra serve --no-dev --no-emit-project -o /tmp/requirements.txt \
     && uv pip install --python /bundle/python/bin/python3 --break-system-packages \

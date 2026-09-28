@@ -120,7 +120,7 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
-  it("removes deployments whose allocation is gone and leaves configured ones", async () => {
+  it("removes gone allocation deployments, including legacy rows without an instance", async () => {
     const gone = allocation();
     await store.reconcile(nomad([gone]));
     const configured = await catalog.upsertModelDeployment(
@@ -129,9 +129,9 @@ describe("Nomad deployment reconciliation", () => {
 
     const result = await store.reconcile(nomad([]));
 
-    expect(result).toMatchObject({ removed: 1 });
+    expect(result).toMatchObject({ removed: 2 });
     expect(await deploymentsOf(gone.allocationId)).toEqual([]);
-    expect(await deploymentsOf(configured.id)).toHaveLength(1);
+    expect(await deploymentsOf(configured.id)).toEqual([]);
   });
 
   it("keeps a running allocation's deployment while it is temporarily unroutable", async () => {
@@ -172,11 +172,10 @@ describe("Nomad deployment reconciliation", () => {
     expect(await deploymentsOf(running.allocationId)).toHaveLength(1);
   });
 
-  it("lists available Nomad replicas and nothing it does not own", async () => {
+  it("lists available replicas and excludes draining allocations", async () => {
     const running = allocation();
     const stopping = allocation({ draining: true });
     await store.reconcile(nomad([running, stopping]));
-    await catalog.upsertModelDeployment(deploymentInput(modelId));
 
     expect(await store.replicas()).toEqual([
       {

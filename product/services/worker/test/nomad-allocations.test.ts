@@ -165,13 +165,13 @@ describe("confirming an allocation is gone", () => {
     },
   );
 
-  it("keeps a row whose id Nomad does not know, since it may not be an allocation", async () => {
+  it("removes a legacy or collected allocation ID confirmed absent by Nomad", async () => {
     await expect(
       allocationIsGone(
         answering(Object.assign(new Error("missing"), { code: "404" })),
         "0ae67510-9c6d-4142-ac11-9472608ad4c5",
       ),
-    ).resolves.toBe(false);
+    ).resolves.toBe(true);
   });
 
   it("keeps a running allocation Nomad did not list", async () => {

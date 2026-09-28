@@ -3,7 +3,6 @@ import {
   and,
   eq,
   inArray,
-  isNotNull,
   isNull,
   notInArray,
   sql,
@@ -67,7 +66,6 @@ const hostProxyUrl = (instance: Instance): string | null => {
   }
 };
 
-// Owns only deployments bound to an instance; configured deployments have none.
 export const createNomadDeploymentStore = (
   database: ControlDatabase,
 ): NomadDeploymentStore => ({
@@ -79,12 +77,7 @@ export const createNomadDeploymentStore = (
         release: modelDeployments.release,
       })
       .from(modelDeployments)
-      .where(
-        and(
-          isNotNull(modelDeployments.instanceId),
-          eq(modelDeployments.status, "available"),
-        ),
-      ),
+      .where(eq(modelDeployments.status, "available")),
 
   reconcile: (nomad) =>
     database.transaction(async (tx) => {
@@ -190,10 +183,7 @@ export const createNomadDeploymentStore = (
         .select({ id: modelDeployments.id })
         .from(modelDeployments)
         .where(
-          and(
-            isNotNull(modelDeployments.instanceId),
-            listed.length ? notInArray(modelDeployments.id, listed) : undefined,
-          ),
+          listed.length ? notInArray(modelDeployments.id, listed) : undefined,
         );
       const removed: string[] = [];
       for (const { id } of unlisted) {

@@ -3,6 +3,10 @@
     "gradiated-ops": {
       "type": "http",
       "url": "https://ops.gradiated.com/mcp"
+    },
+    "incident-io": {
+      "type": "http",
+      "url": "https://mcp.incident.io/mcp"
     }
   }
 }

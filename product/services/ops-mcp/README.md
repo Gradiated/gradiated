@@ -160,9 +160,10 @@ flow; configuring a Slack app alone does not connect its agent to MCP.
 
 | Client                      | Configuration                                                                                                                                                                                 |
 | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cursor desktop              | Merge [`clients/cursor/mcp.json`](clients/cursor/mcp.json) into the user's MCP configuration and complete OAuth                                                                               |
+| Claude Code                 | The repository [`.mcp.json`](../../../.mcp.json) configures it; approve the project servers, then sign in from `/mcp`                                                                         |
+| Cursor desktop              | The repository [`.cursor/mcp.json`](../../../.cursor/mcp.json) configures it; complete OAuth                                                                                                  |
 | Cursor Cloud / Slack        | Add the remote server in `cursor.com/agents`, connect OAuth, then invoke the configured agent with `@Cursor`                                                                                  |
-| Codex CLI                   | Merge [`clients/codex/config.toml`](clients/codex/config.toml) into the user's config, then `codex mcp login gradiated-ops`                                                                   |
+| Codex CLI                   | The repository [`.codex/config.toml`](../../../.codex/config.toml) configures it; run `codex mcp login gradiated-ops`                                                                         |
 | OpenAI hosted MCP / ChatGPT | Add this remote MCP using OAuth/DCR; the stable hosted callback is allowlisted                                                                                                                |
 | Codex in Slack              | OpenAI provides `@Codex` for cloud coding work. Configure MCP in the actual cloud runtime/available connector surface; local CLI configuration does not automatically transfer to Slack tasks |
 

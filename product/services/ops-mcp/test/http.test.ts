@@ -1,55 +1,11 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
-import type { AddressInfo } from "node:net";
 import { request as httpRequest } from "node:http";
-import { createHttp } from "../src/http.js";
-import { projectPods } from "../src/tools.js";
+import { projectPods } from "../src/kubernetes-tools.js";
+import { closeServers, range, setup, token } from "./support/mcp.js";
 
-const token = "test-only-credential-0123456789abcdef";
-const range = {
-  start: "2026-09-26T21:00:00Z",
-  end: "2026-09-26T21:30:00Z",
-};
-const open: ReturnType<typeof createHttp>[] = [];
-afterEach(async () => {
-  for (const app of open.splice(0)) {
-    app.server.closeAllConnections();
-    await new Promise<void>((resolve) => app.server.close(() => resolve()));
-  }
-});
-const setup = async () => {
-  const backend = vi.fn(async (): Promise<unknown> => ({
-    status: "success",
-    data: [],
-  }));
-  const audit = vi.fn();
-  const options = {
-    host: "ops.gradiated.com",
-    authenticate: async (supplied: string) =>
-      supplied === token
-        ? { subject: "test-coder", email: "tester@gradiated.com" }
-        : undefined,
-    backend,
-    audit,
-  };
-  const app = createHttp(options);
-  open.push(app);
-  await new Promise<void>((resolve) =>
-    app.server.listen(0, "127.0.0.1", resolve),
-  );
-  const url = new URL(
-    `http://127.0.0.1:${(app.server.address() as AddressInfo).port}/mcp`,
-  );
-  options.host = url.host;
-  const headers = {
-    host: url.host,
-    authorization: `Bearer ${token}`,
-    "content-type": "application/json",
-    accept: "application/json, text/event-stream",
-  };
-  return { app, url, backend, audit, headers };
-};
+afterEach(closeServers);
 
 describe("production MCP boundary", () => {
   it("supports SDK initialization, discovery and queries, audits caller without token or arguments", async () => {
@@ -59,7 +15,7 @@ describe("production MCP boundary", () => {
       new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
     );
     const list = await client.listTools();
-    expect(list.tools).toHaveLength(7);
+    expect(list.tools).toHaveLength(19);
     expect(list.tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
     const result = await client.callTool({
       name: "query_logs",
@@ -314,10 +270,18 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
         },
         spec: {
           nodeName: "node-1",
-          containers: [{ env: [{ value: "PRIVATE" }], args: ["PRIVATE"] }],
+          containers: [
+            {
+              name: "gateway",
+              env: [{ value: "PRIVATE" }],
+              args: ["PRIVATE"],
+              resources: { limits: { memory: "256Mi" } },
+            },
+          ],
         },
         status: {
           phase: "Running",
+          message: "PRIVATE",
           containerStatuses: [
             {
               name: "gateway",
@@ -327,6 +291,9 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
               state: {
                 waiting: { reason: "CrashLoopBackOff", message: "PRIVATE" },
               },
+              lastState: {
+                terminated: { reason: "OOMKilled", exitCode: 137 },
+              },
             },
           ],
         },
@@ -335,4 +302,6 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
   });
   expect(JSON.stringify(result)).not.toContain("PRIVATE");
   expect(JSON.stringify(result)).toContain("CrashLoopBackOff");
+  expect(JSON.stringify(result)).toContain("OOMKilled");
+  expect(JSON.stringify(result)).toContain("256Mi");
 });

@@ -8,15 +8,27 @@ API using the existing product image.
 
 ## Tools and authority
 
-| Tool                   | Data                                                                     |
-| ---------------------- | ------------------------------------------------------------------------ |
-| `active_alerts`        | Prometheus firing/pending alerts and dashboard links                     |
-| `query_metrics`        | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series |
-| `query_metric_history` | PromQL between RFC 3339 `start` and `end`, optional step, 50 series      |
-| `query_logs`           | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines       |
-| `workload_status`      | Selected namespace pod health, restarts, images and node placement       |
-| `node_status`          | EKS node conditions and available resources                              |
-| `dashboards`           | Existing Grafana dashboard links                                         |
+| Tool                    | Data                                                                                  |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| `active_alerts`         | Prometheus firing/pending alerts and dashboard links                                  |
+| `query_metrics`         | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
+| `query_metric_history`  | PromQL between RFC 3339 `start` and `end`, optional step, 50 series                   |
+| `metric_metadata`       | Metric names, types, help text and units, searched by regular expression              |
+| `prometheus_targets`    | Scrape target health, last scrape and last error                                      |
+| `prometheus_rules`      | Alerting and recording rules with expressions, health and active alerts               |
+| `label_names`           | Label names for metrics or logs, optionally for a selector and period                 |
+| `label_values`          | Values of one label for metrics or logs, including `__name__`                         |
+| `series`                | Full label sets of matching series or log streams                                     |
+| `query_logs`            | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines                    |
+| `log_fields`            | Fields Loki detects in matching log lines, with type, cardinality and parser          |
+| `alertmanager_alerts`   | Alerts after routing, with silenced, inhibited and receiver state                     |
+| `alertmanager_silences` | Silences with matchers, state, author and comment                                     |
+| `workload_status`       | Pod health, restarts, last termination, resources and node placement in one namespace |
+| `rollouts`              | Deployments, StatefulSets, DaemonSets and ReplicaSets with revisions and images       |
+| `argocd_applications`   | Argo CD sync and health, deployed revision, deploy history and drifted resources      |
+| `node_status`           | EKS node conditions and available resources                                           |
+| `nomad`                 | Nomad jobs, allocations, deployments, evaluations, nodes and node pools (list stubs)  |
+| `dashboards`            | Existing Grafana dashboard links                                                      |
 
 All current tools have `readOnlyHint: true`, `destructiveHint: false` and
 `idempotentHint: true`. The server does not ask for per-read confirmation; client
@@ -24,10 +36,16 @@ administrators may configure these tools to run automatically. OAuth consent is
 still required when connecting or renewing the 30-day authorization.
 
 There is no shell, SSH, Kubernetes exec, secret reader, arbitrary HTTP fetch,
-database access or mutation tool. The service account may list nodes and pods in
-selected namespaces, not read Secrets or create exec sessions. Pod output omits
-specs, environment, arguments and annotations. External Runpod hosts are not EKS
-nodes. Grafana links retain Grafana's own browser authentication.
+database access or mutation tool. The service account may list nodes, and pods
+and apps workloads in selected namespaces, and read Argo CD Applications; it may
+not read Secrets or create exec sessions. Pod output omits specs, environment,
+arguments, annotations and status messages. Workload output keeps only images,
+replicas, revision and status. Argo CD output omits Helm values and manifests.
+Grafana links retain Grafana's own browser authentication.
+
+Loki queries use the tenants `eks-prod|model-nebius-prod`, so GPU host logs are
+visible next to EKS logs. The `nomad` tool reads list endpoints only; they never
+include job specifications, environment or templates.
 
 Authorized identities can read telemetry across tenants. Metric and log tools
 take raw PromQL and LogQL, so any label, line filter or parser works; queries
@@ -250,3 +268,19 @@ The service disables TypeScript's exact optional-property check locally because
 the SDK transport interface includes explicit undefined callback values; the
 remaining strict checks stay enabled. Cluster-only port 9090 exposes metrics;
 the existing dashboard and Kubernetes availability alerts cover the deployment.
+
+## Nomad access
+
+The `nomad` tool calls `https://nomad-api.nomad.svc.cluster.local:4646` with
+mutual TLS and a Nomad ACL token. The files come from the `nomad-ca`,
+`nomad-cert`, `nomad-key` and `nomad-token` properties of
+`gradiated/prod/platform/ops-mcp`. The ExternalSecret extracts every property, so
+the tool returns an error, and nothing else fails, until they exist.
+
+1. Issue a dedicated 90-day HTTPS client certificate from the Nomad CA with CN
+   `cli.global.nomad` and `extendedKeyUsage=clientAuth`. Do not reuse the UI,
+   operator or server keys.
+2. Through an authenticated private API port-forward, create a **client** token
+   with only the `ui-viewer` policy. Retain its AccessorID for revocation.
+3. Add the CA, certificate, key and token SecretID to the secret as the four
+   properties above. Never put their values in Git, arguments or console output.

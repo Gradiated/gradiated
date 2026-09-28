@@ -1365,6 +1365,7 @@ dependencies = [
  "futures-util",
  "hf-chat-template",
  "hf-hub",
+ "hyper",
  "prometheus-client",
  "redis",
  "reqwest",

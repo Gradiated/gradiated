@@ -203,6 +203,12 @@ enum TransportError {
     Connect,
     Body,
     Decode,
+    Builder,
+    IncompleteResponse,
+    InvalidResponse,
+    ConnectionClosed,
+    ConnectionReset,
+    Canceled,
     Other,
 }
 
@@ -217,9 +223,44 @@ impl TransportError {
             Self::Body
         } else if error.is_decode() {
             Self::Decode
+        } else if error.is_builder() {
+            Self::Builder
         } else {
-            Self::Other
+            Self::classify_source(error)
         }
+    }
+
+    fn classify_source(error: &(dyn std::error::Error + 'static)) -> Self {
+        let mut source = error.source();
+        while let Some(error) = source {
+            if let Some(error) = error.downcast_ref::<hyper::Error>() {
+                if error.is_incomplete_message() {
+                    return Self::IncompleteResponse;
+                }
+                if error.is_parse() {
+                    return Self::InvalidResponse;
+                }
+                if error.is_canceled() {
+                    return Self::Canceled;
+                }
+                if error.is_closed() {
+                    return Self::ConnectionClosed;
+                }
+            }
+            if let Some(error) = error.downcast_ref::<std::io::Error>() {
+                match error.kind() {
+                    std::io::ErrorKind::ConnectionReset => return Self::ConnectionReset,
+                    std::io::ErrorKind::BrokenPipe | std::io::ErrorKind::UnexpectedEof => {
+                        return Self::ConnectionClosed;
+                    }
+                    _ => {}
+                }
+            }
+
+            source = error.source();
+        }
+
+        Self::Other
     }
 
     fn as_str(self) -> &'static str {
@@ -228,6 +269,12 @@ impl TransportError {
             Self::Connect => "connect",
             Self::Body => "body",
             Self::Decode => "decode",
+            Self::Builder => "request_build",
+            Self::IncompleteResponse => "incomplete_response",
+            Self::InvalidResponse => "invalid_http_response",
+            Self::ConnectionClosed => "connection_closed",
+            Self::ConnectionReset => "connection_reset",
+            Self::Canceled => "transport_canceled",
             Self::Other => "transport",
         }
     }

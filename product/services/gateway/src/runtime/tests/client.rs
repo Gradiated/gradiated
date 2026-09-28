@@ -633,3 +633,35 @@ fn request_body_is_not_replayable() {
         .as_bytes()
         .is_none());
 }
+
+#[tokio::test]
+async fn broken_http_responses_have_safe_specific_diagnostics() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    for (response, expected) in [
+        ("HTTP/1.1 200 OK\r\nContent-Length:", "incomplete_response"),
+        ("private-invalid-status\r\n\r\n", "invalid_http_response"),
+    ] {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        let server = tokio::spawn(async move {
+            let (mut socket, _) = listener.accept().await.unwrap();
+            let mut request = [0; 4096];
+            socket.read(&mut request).await.unwrap();
+            socket.write_all(response.as_bytes()).await.unwrap();
+            socket.shutdown().await.unwrap();
+        });
+        let error = reqwest::Client::new()
+            .get(format!("http://{address}/private-path"))
+            .timeout(Duration::from_secs(5))
+            .send()
+            .await
+            .unwrap_err();
+        server.await.unwrap();
+        let failure = RuntimeFailure::from_transport(error);
+
+        assert_eq!(failure.diagnostic_code(), expected);
+        assert!(!logged_attempt(&failure).to_string().contains("private"));
+        assert!(!format!("{failure:?}").contains("private"));
+    }
+}

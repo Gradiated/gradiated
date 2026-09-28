@@ -191,15 +191,14 @@ impl RequestCoordinator {
             return Ok(model);
         }
 
+        let mut selected = None;
+        let mut most_ready = 0;
         for (index, digest) in releases.into_iter().rev() {
-            let statuses: Vec<_> = self
+            let statuses = self
                 .serving_state
                 .deployment_statuses(&digest)
                 .await
-                .map_err(state_unavailable("deployment_status_read"))?
-                .into_iter()
-                .filter(|status| status.accepting_requests)
-                .collect();
+                .map_err(state_unavailable("deployment_status_read"))?;
             let candidates: Vec<_> = model
                 .deployments
                 .iter()
@@ -208,10 +207,19 @@ impl RequestCoordinator {
                 })
                 .cloned()
                 .collect();
-            if healthy_deployment_count(&candidates, &statuses, now) > 0 {
-                model.deployments[..=index].rotate_right(1);
-                break;
+            let ready = healthy_deployment_count(&candidates, &statuses, now);
+            let accepting: Vec<_> = statuses
+                .into_iter()
+                .filter(|status| status.accepting_requests)
+                .collect();
+            if ready > most_ready && healthy_deployment_count(&candidates, &accepting, now) > 0 {
+                most_ready = ready;
+                selected = Some(index);
             }
+        }
+
+        if let Some(index) = selected {
+            model.deployments[..=index].rotate_right(1);
         }
 
         Ok(model)

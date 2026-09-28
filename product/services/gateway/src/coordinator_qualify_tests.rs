@@ -375,3 +375,59 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
         assert_eq!(qualified.request.model, "model-a");
     }
 }
+
+#[tokio::test]
+async fn a_partial_replacement_does_not_reduce_the_serving_pool() {
+    use crate::test_support::metadata;
+    use crate::DeploymentRuntimeStatus;
+
+    for (new_ready, old_accepting, new_accepting, expected_revision) in [
+        (1, 2, 1, "old"),
+        (1, 1, 1, "old"),
+        (2, 2, 2, "new"),
+        (2, 2, 1, "new"),
+        (2, 2, 0, "old"),
+        (1, 0, 1, "new"),
+    ] {
+        let mut state = TestServingState::ready();
+        let model = state.model.as_mut().unwrap();
+        let template = model.deployments[0].clone();
+        model.deployments = (0..4)
+            .map(|index| {
+                let mut deployment = template.clone();
+                deployment.id = Uuid::from_u128(100 + index);
+                deployment.release.runtime_revision =
+                    if index < 2 { "old" } else { "new" }.to_owned();
+                deployment
+            })
+            .collect();
+        state.statuses = Some(
+            model
+                .deployments
+                .iter()
+                .enumerate()
+                .map(|(index, deployment)| {
+                    let old = index < 2;
+                    DeploymentRuntimeStatus {
+                        schema_version: 1,
+                        deployment_id: deployment.id,
+                        runtime_revision: deployment.release.runtime_revision.clone(),
+                        received_at: metadata().received_at,
+                        healthy: old || index - 2 < new_ready,
+                        accepting_requests: if old {
+                            index < old_accepting
+                        } else {
+                            index - 2 < new_accepting
+                        },
+                        reason_code: None,
+                    }
+                })
+                .collect(),
+        );
+        let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
+        assert_eq!(
+            qualified.deployment.release.runtime_revision,
+            expected_revision
+        );
+    }
+}

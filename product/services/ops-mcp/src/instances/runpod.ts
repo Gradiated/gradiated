@@ -108,6 +108,10 @@ export const createRunPodProvider = ({
         env: { ...current.env, ...environment },
         ports: [...new Set([...(current.ports ?? []), SERVING_PORT])],
       });
+      // Updating a stopped pod only changes its configuration; it stays stopped.
+      if (current.desiredStatus === "EXITED") {
+        await call("POST", `/pods/${current.id}/start`);
+      }
     },
   };
 };

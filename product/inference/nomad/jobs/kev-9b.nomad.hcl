@@ -110,7 +110,6 @@ job "kev-9b" {
       }
     }
 
-    # A separate Unix user keeps the reporting credential out of the runtime.
     task "desmond" {
       driver         = "raw_exec"
       user           = "desmond"

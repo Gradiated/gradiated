@@ -277,9 +277,8 @@ mutual TLS and a Nomad ACL token. The files come from the `nomad-ca`,
 `gradiated/prod/platform/ops-mcp`. The ExternalSecret extracts every property, so
 the tool returns an error, and nothing else fails, until they exist.
 
-1. Issue a dedicated 90-day HTTPS client certificate from the Nomad CA with CN
-   `cli.global.nomad` and `extendedKeyUsage=clientAuth`. Do not reuse the UI,
-   operator or server keys.
+1. Issue a dedicated `cli` certificate with `nomad:certificate`, as in the Nomad
+   README's "Certificate renewal". Do not reuse the UI, operator or server keys.
 2. Through an authenticated private API port-forward, create a **client** token
    with only the `ui-viewer` policy. Retain its AccessorID for revocation.
 3. Add the CA, certificate, key and token SecretID to the secret as the four

@@ -25,7 +25,9 @@ const config = z
     ALERTMANAGER_URL: z.url(),
     NOMAD_URL: z.url(),
     CREDENTIALS_DIRECTORY: z.string().min(1),
-    NOMAD_BASE_IMAGE: z.string().min(1),
+    NOMAD_BASE_IMAGE: z
+      .string()
+      .regex(/^[a-z0-9.-]+\/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$/),
     NOMAD_CA_KMS_KEY: z.string().min(1),
   })
   .parse(process.env);

@@ -13,7 +13,7 @@ export interface InstanceProvider {
   isStopped(providerInstanceId: string): Promise<boolean>;
   bootstrap(
     instance: ProviderInstance,
-    image: HostImage,
+    image: string,
     environment: Readonly<Record<string, string>>,
     options?: { readonly allowReset?: boolean },
   ): Promise<void>;

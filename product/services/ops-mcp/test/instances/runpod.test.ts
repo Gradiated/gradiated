@@ -17,10 +17,7 @@ describe("RunPod provider", () => {
       await expect(
         provider.bootstrap(
           instance,
-          {
-            reference: "registry.example/nomad-base@sha256:abc",
-            registry: { username: "AWS", password: "token" },
-          },
+          "registry.example/nomad-base@sha256:abc",
           {},
         ),
       ).rejects.toThrow("Refusing to reset");
@@ -39,7 +36,7 @@ describe("RunPod provider", () => {
 
       await provider.bootstrap(
         await provider.describe("pod1"),
-        { reference: "registry.example/nomad-base@sha256:abc", registry: null },
+        "registry.example/nomad-base@sha256:abc",
         {},
         { allowReset: true },
       );
@@ -57,7 +54,7 @@ describe("RunPod provider", () => {
 
     await provider.bootstrap(
       await provider.describe("pod1"),
-      { reference: "registry.example/nomad-base@sha256:abc", registry: null },
+      "registry.example/nomad-base@sha256:abc",
       {},
     );
 
@@ -116,24 +113,15 @@ describe("RunPod provider", () => {
     const provider = createRunPodProvider({
       apiKey: "key",
       fetch: runpod.fetch,
-      now: () => new Date(2),
     });
     const instance = await provider.describe("pod1");
 
     await provider.bootstrap(
       instance,
-      {
-        reference: "registry.example/nomad-base@sha256:abc",
-        registry: { username: "AWS", password: "token" },
-      },
+      "registry.example/nomad-base@sha256:abc",
       { GRADIATED_NODE_NAME: "runpod-pod1" },
     );
 
-    expect(runpod.calls.find((call) => call.method === "POST")?.body).toEqual({
-      name: "gradiated-host-pod1-2",
-      username: "AWS",
-      password: "token",
-    });
     expect(runpod.calls.find((call) => call.method === "PATCH")?.body).toEqual({
       imageName: "registry.example/nomad-base@sha256:abc",
       env: {
@@ -141,12 +129,34 @@ describe("RunPod provider", () => {
         GRADIATED_NODE_NAME: "runpod-pod1",
       },
       ports: ["22/tcp", "8888/http"],
-      containerRegistryAuthId: "new",
     });
-    expect(runpod.auths().map((auth) => auth.id)).toEqual(["other", "new"]);
   });
 
-  it("keeps the old pull credentials when the pod update fails", async () => {
+  it("pulls through the ECR delegation instead of a registry login", async () => {
+    const runpod = fakeRunPod(rtxPod);
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+    });
+
+    await provider.bootstrap(
+      await provider.describe("pod1"),
+      "registry.example/nomad-base@sha256:abc",
+      {},
+    );
+
+    expect(
+      runpod.calls.map(
+        (call) => `${call.method} ${new URL(call.url).pathname}`,
+      ),
+    ).toEqual([
+      "GET /v1/pods/pod1",
+      "GET /v1/pods/pod1",
+      "PATCH /v1/pods/pod1",
+    ]);
+  });
+
+  it("reports a failed pod update", async () => {
     const runpod = fakeRunPod(rtxPod);
     const failing = (async (input, init) =>
       init?.method === "PATCH"
@@ -157,13 +167,9 @@ describe("RunPod provider", () => {
     await expect(
       provider.bootstrap(
         await provider.describe("pod1"),
-        {
-          reference: "r/i@sha256:abc",
-          registry: { username: "u", password: "p" },
-        },
+        "registry.example/nomad-base@sha256:abc",
         {},
       ),
     ).rejects.toThrow("RunPod PATCH /pods/pod1 failed: 500");
-    expect(runpod.auths().map((auth) => auth.id)).toContain("old");
   });
 });

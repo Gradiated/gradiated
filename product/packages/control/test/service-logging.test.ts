@@ -60,6 +60,22 @@ describe("service logging", () => {
     });
   });
 
+  it("reports the database code of a wrapped query error", () => {
+    const { log, entries } = recordingLogger();
+    const cause = Object.assign(
+      new Error("permission denied for table instances"),
+      {
+        code: "42501",
+      },
+    );
+
+    log("error", "worker_loop_failed", {
+      error: new Error("Failed query", { cause }),
+    });
+
+    expect(entries()[0]).toMatchObject({ error_code: "42501" });
+  });
+
   it("drops a request ID that is not a UUID", () => {
     const { log, entries } = recordingLogger();
 

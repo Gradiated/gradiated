@@ -46,7 +46,7 @@ Nomad. Everything after that is Nomad's job. Registration:
 2. Issues the instance's own Nomad client certificate, signed through KMS by the
    private CA, whose key never leaves KMS (ECDSA — the client rejects Ed25519). Credentials are per instance, never per GPU
    or per provider.
-3. Reuses the bound node's id and secret from the machine's current configuration,
+3. Reuses the node id and secret the machine already carries for this instance,
    so a renewed machine returns to Nomad as the same node, or generates new ones.
    It then calls `bootstrap`, which sets the
    machine's image to a pinned `nomad-base` and passes that node identity, certificate, key and the runtime bundle read key
@@ -88,14 +88,25 @@ authorized for that machine, call again with `reset_running_pod: true` and the
 same id in `confirm_instance_id`. Every phase is audit-logged with the requesting
 employee, provider, machine and reset flag.
 
-The ops MCP holds everything registration needs. `kms:Sign` on the Nomad CA key,
-the host runtime reader secret and an ECR pull token come from its pod identity
-role. Its `ops-mcp` secret carries the RunPod API key, a database URL for the
-`gradiated_ops_mcp` role (which may only write `instances`), its Nomad client
-credentials, and copies of the gateway runtime token and the RunPod deployment
-status token. `NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
-The status list lives in memory: a registration interrupted by a restart is not
-listed, and registering the machine again is safe.
+The ops MCP holds everything registration needs. `kms:Sign` on the Nomad CA key
+and the host runtime reader secret come from its pod identity role. Its `ops-mcp`
+secret carries the RunPod API key, a database URL for the `gradiated_ops_mcp`
+role (which may only write `instances`), the Nomad CA certificate and token, and
+copies of the gateway runtime token and the RunPod deployment status token.
+`NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
+
+RunPod pulls `nomad-base` from `gradiated/prod/inference` through an ECR
+delegation, not a stored registry login, so there is no ECR password to expire.
+The repository policy (`registry-secrets`, `runpod_pull_repositories`) lets
+RunPod's two fixed deployment roles pull, and the delegation is registered once
+on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations`
+and the repository ARN. RunPod's v1 pod update also ignores
+`containerRegistryAuthId`, so a stored login would never reach the pod.
+The status list lives in memory, so a restart forgets it. Registering the machine
+again finishes the job: a running machine that carries this instance's
+bootstrap but whose node is not yet bound is resumed without a reset, and
+registration waits for its node and binds it. A machine that is already
+registered is refused, because renewing it needs `reset_running_pod`.
 
 RunPod is the first provider. Setting the image resets the pod and also declares
 the host proxy port, 8888; model weights belong on a volume. Registration adopts
@@ -195,6 +206,14 @@ port is reached (RunPod's HTTPS proxy, or TLS on a public or private IP).
 Hosts enrolled by `register_instance` carry `serving_ingress = "host-proxy"`.
 Hosts enrolled by hand before the proxy keep their own ingress on 8888 until
 migrated.
+
+## Catalog
+
+Model definitions (identity, limits and prices) live in
+`product/packages/control/src/catalog/models/`. The worker applies them on start and
+every minute, so a merged change reaches production with the next release and a
+direct database edit is put back. A retired model is removed from the catalog; its
+row stays retired. There are no `configure-*` commands.
 
 ## Kev on Nomad
 

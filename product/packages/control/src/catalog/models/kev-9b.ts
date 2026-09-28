@@ -1,4 +1,4 @@
-import type { CatalogModelInput } from "./catalog-operation.js";
+import type { CatalogModelInput } from "../service.js";
 
 export const kev9bModelId = "jaredpalmer/kev-9b";
 export const kev9bArtifactModelPath = "jaredpalmer/kev-9b";

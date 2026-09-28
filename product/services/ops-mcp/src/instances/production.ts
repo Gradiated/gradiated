@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import type { Backend } from "../backend.js";
 import { kmsSigner } from "@gradiated/nomad-pki";
-import { hostImage, readSecret } from "./aws.js";
+import { readSecret } from "./aws.js";
 import { nomadNodeReader } from "./nomad-node.js";
 import { createRegistrations } from "./registration.js";
 import { createRunPodProvider } from "./runpod.js";
@@ -57,7 +57,7 @@ export const productionRegistrations = (
       (instances ??= createInstanceService(
         createControlDatabase(await credential("database-url"), 2).database,
       )),
-    hostImage: () => hostImage(settings.hostImage),
+    hostImage: settings.hostImage,
     caCertificate: () => credential("nomad-ca"),
     signer: kmsSigner(settings.caKeyId),
     runtimeReader: async () => {

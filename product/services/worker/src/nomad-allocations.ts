@@ -97,7 +97,9 @@ export const allocationIsGone = async (
     );
     return TERMINAL_STATUSES.has(allocation.ClientStatus);
   } catch (error) {
-    if ((error as { code?: unknown }).code === "404") return true;
+    // A row whose id Nomad does not know may not be an allocation at all, such as
+    // a deployment configured by hand, so only a terminal allocation removes one.
+    if ((error as { code?: unknown }).code === "404") return false;
     throw error;
   }
 };

@@ -25,6 +25,7 @@ const setup = ({
   stopped = true,
   boundNodeId = null as string | null,
   machineEnvironment = {} as Record<string, string>,
+  nodeAlreadyJoined = false,
   nodeStatus = "ready",
 } = {}) => {
   const bootstraps: {
@@ -56,10 +57,7 @@ const setup = ({
     providers: { runpod: async () => provider },
     instances: async () =>
       ({ register, bindNomadNode }) as unknown as InstanceService,
-    hostImage: async () => ({
-      reference: "registry.example/nomad-base@sha256:abc",
-      registry: null,
-    }),
+    hostImage: "registry.example/nomad-base@sha256:abc",
     caCertificate: async () => testCa.certificate,
     signer: kmsSigner("alias/test-nomad-ca", fakeKms().client),
     runtimeReader: async () => ARTIFACT,
@@ -68,7 +66,7 @@ const setup = ({
       deploymentStatus: STATUS_TOKEN,
     }),
     readNode: async (nodeId) =>
-      bootstraps.length === 0
+      bootstraps.length === 0 && !nodeAlreadyJoined
         ? null
         : {
             ID: nodeId,
@@ -87,6 +85,12 @@ const setup = ({
     bindNomadNode,
     audit,
   };
+};
+
+const carriedEnvironment = {
+  GRADIATED_INSTANCE_ID: INSTANCE_ID,
+  GRADIATED_NOMAD_NODE_ID: BOUND_NODE,
+  GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
 };
 
 const request = {
@@ -182,10 +186,7 @@ describe("instance registration", () => {
   it("returns a bound machine to Nomad as the same node", async () => {
     const test = setup({
       boundNodeId: BOUND_NODE,
-      machineEnvironment: {
-        GRADIATED_NOMAD_NODE_ID: BOUND_NODE,
-        GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
-      },
+      machineEnvironment: carriedEnvironment,
     });
 
     await settled(
@@ -196,6 +197,89 @@ describe("instance registration", () => {
     expect(test.bootstraps[0]!.environment).toMatchObject({
       GRADIATED_NOMAD_NODE_ID: BOUND_NODE,
       GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
+    });
+  });
+
+  it("resumes a running machine that carries this instance's bootstrap without resetting it", async () => {
+    const test = setup({
+      stopped: false,
+      machineEnvironment: carriedEnvironment,
+      nodeAlreadyJoined: true,
+    });
+
+    const started = await test.registrations.start(request);
+    const finished = await settled(test.registrations, started.id);
+
+    expect(started.resuming).toBe(true);
+    expect(finished).toMatchObject({ phase: "bound", nomadNodeId: BOUND_NODE });
+    expect(test.bootstraps).toEqual([]);
+    expect(test.bindNomadNode).toHaveBeenCalledWith(INSTANCE_ID, BOUND_NODE);
+    expect(test.audit.mock.calls.map(([event]) => event.phase)).toEqual([
+      "recording",
+      "waiting_for_node",
+      "bound",
+    ]);
+  });
+
+  it("refuses to pretend an already registered machine was renewed", async () => {
+    const test = setup({
+      stopped: false,
+      boundNodeId: BOUND_NODE,
+      machineEnvironment: carriedEnvironment,
+      nodeAlreadyJoined: true,
+    });
+
+    const finished = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(finished).toMatchObject({
+      phase: "failed",
+      error: expect.stringContaining("is already registered"),
+    });
+    expect(test.bootstraps).toEqual([]);
+    expect(test.bindNomadNode).not.toHaveBeenCalled();
+  });
+
+  it("will not resume a machine carrying another instance's bootstrap", async () => {
+    const test = setup({
+      stopped: false,
+      machineEnvironment: {
+        ...carriedEnvironment,
+        GRADIATED_INSTANCE_ID: "019d5a4a-0000-7000-8000-000000000002",
+      },
+    });
+
+    const finished = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(finished).toMatchObject({
+      phase: "failed",
+      error: expect.stringContaining("carries the bootstrap of instance"),
+    });
+    expect(test.bootstraps).toEqual([]);
+    expect(test.bindNomadNode).not.toHaveBeenCalled();
+  });
+
+  it("resets a bootstrapped machine only when asked, keeping its node", async () => {
+    const test = setup({
+      stopped: false,
+      machineEnvironment: carriedEnvironment,
+    });
+
+    const started = await test.registrations.start({
+      ...request,
+      resetRunningPod: true,
+    });
+    await settled(test.registrations, started.id);
+
+    expect(started.resuming).toBe(false);
+    expect(test.bootstraps[0]).toMatchObject({
+      environment: { GRADIATED_NOMAD_NODE_ID: BOUND_NODE },
+      options: { allowReset: true },
     });
   });
 

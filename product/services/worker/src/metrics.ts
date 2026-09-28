@@ -13,7 +13,8 @@ export type WorkerLoop =
   | "generation_ingestion"
   | "settlement"
   | "trace_cleanup"
-  | "deployment_reconciliation";
+  | "deployment_reconciliation"
+  | "catalog_apply";
 
 export type IngestionSource = "new" | "recovered";
 
@@ -33,6 +34,7 @@ const passOperation: Record<WorkerLoop, string> = {
   settlement: "settlement_pass",
   trace_cleanup: "cleanup_pass",
   deployment_reconciliation: "reconcile_pass",
+  catalog_apply: "apply_pass",
 };
 
 const operationBuckets = [

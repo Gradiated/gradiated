@@ -4,12 +4,21 @@ target "base" {
   platforms  = ["linux/amd64"]
 }
 
-target "verify" {
-  context    = "product/inference"
-  dockerfile = "bundles/deepseek-v4-1-flash/Dockerfile"
-  target     = "verify"
-  platforms  = ["linux/amd64"]
+target "bundle" {
+  context   = "product/inference"
+  target    = "verify"
+  platforms = ["linux/amd64"]
   contexts = {
     runtime-base = "target:base"
   }
+}
+
+target "verify-deepseek-v4-1-flash" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/deepseek-v4-1-flash/Dockerfile"
+}
+
+target "verify-kev-9b" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/kev-9b/Dockerfile"
 }

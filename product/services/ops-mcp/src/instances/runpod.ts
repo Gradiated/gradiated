@@ -1,13 +1,8 @@
 import { z } from "zod";
 
-import type {
-  HostImage,
-  InstanceProvider,
-  ProviderInstance,
-} from "./provider.js";
+import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
 const API = "https://rest.runpod.io/v1";
-const REGISTRY_AUTH_PREFIX = "gradiated-host-";
 const REQUEST_TIMEOUT_MS = 30_000;
 // The host proxy's port; RunPod only reaches ports declared on the pod.
 const SERVING_PORT = "8888/http";
@@ -27,18 +22,14 @@ const podSchema = z.object({
   }),
 });
 
-const registryAuthSchema = z.object({ id: z.string(), name: z.string() });
-
 export interface RunPodOptions {
   readonly apiKey: string;
   readonly fetch?: typeof fetch;
-  readonly now?: () => Date;
 }
 
 export const createRunPodProvider = ({
   apiKey,
   fetch: request = fetch,
-  now = () => new Date(),
 }: RunPodOptions): InstanceProvider => {
   const call = async (
     method: string,
@@ -73,32 +64,6 @@ export const createRunPodProvider = ({
         `/pods/${encodeURIComponent(podId)}?includeMachine=true`,
       ),
     );
-
-  const registryAuth = async (
-    podId: string,
-    registry: NonNullable<HostImage["registry"]>,
-  ) => {
-    const prefix = `${REGISTRY_AUTH_PREFIX}${podId}-`;
-    const created = registryAuthSchema.parse(
-      await call("POST", "/containerregistryauth", {
-        name: `${prefix}${now().getTime()}`,
-        username: registry.username,
-        password: registry.password,
-      }),
-    );
-    const replaced = async () => {
-      const existing = z
-        .array(registryAuthSchema)
-        .parse((await call("GET", "/containerregistryauth")) ?? []);
-      for (const auth of existing) {
-        if (auth.name.startsWith(prefix) && auth.id !== created.id) {
-          await call("DELETE", `/containerregistryauth/${auth.id}`);
-        }
-      }
-    };
-
-    return { id: created.id, removeReplaced: replaced };
-  };
 
   return {
     async describe(podId) {
@@ -136,18 +101,13 @@ export const createRunPodProvider = ({
         );
       }
 
-      const auth = image.registry
-        ? await registryAuth(current.id, image.registry)
-        : null;
-
-      // Any PATCH resets the pod and wipes its container filesystem.
+      // Any PATCH resets the pod and wipes its container filesystem. The image
+      // pulls through the account's ECR delegation, so no registry login is set.
       await call("PATCH", `/pods/${current.id}`, {
-        imageName: image.reference,
+        imageName: image,
         env: { ...current.env, ...environment },
         ports: [...new Set([...(current.ports ?? []), SERVING_PORT])],
-        ...(auth ? { containerRegistryAuthId: auth.id } : {}),
       });
-      await auth?.removeReplaced();
     },
   };
 };

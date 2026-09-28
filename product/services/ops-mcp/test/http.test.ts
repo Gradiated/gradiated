@@ -260,6 +260,7 @@ describe("production MCP boundary", () => {
       { query: '{workload="worker"}', start: range.end, end: range.start },
       { query: '{workload="worker"}', start: range.start, end: range.start },
       { query: '{workload="worker"}', ...range, step_seconds: 0 },
+      { query: '{workload="worker"}', ...range, step_seconds: 0.1 },
     ]) {
       const result = await client.callTool({
         name: "query_logs",

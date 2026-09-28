@@ -2,6 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Backend } from "./backend.js";
 
+const MAX_POINTS = 11_000;
+
 const timeRange = {
   start: z.iso.datetime({ offset: true }),
   end: z.iso.datetime({ offset: true }),
@@ -18,11 +20,13 @@ const rangeParameters = ({
   if (startMilliseconds >= endMilliseconds) throw new Error("empty_range");
 
   const seconds = (endMilliseconds - startMilliseconds) / 1_000;
+  const step = step_seconds ?? Math.max(15, Math.ceil(seconds / 120));
+  if (seconds / step > MAX_POINTS) throw new Error("too_many_points");
 
   return {
     start: new Date(startMilliseconds).toISOString(),
     end: new Date(endMilliseconds).toISOString(),
-    step: String(step_seconds ?? Math.max(15, Math.ceil(seconds / 120))),
+    step: String(step),
   };
 };
 

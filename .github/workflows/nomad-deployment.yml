@@ -6,6 +6,7 @@ on:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - infra/environments/prod/runpod/glm-5-3-flash/**
+      - product/inference/runtimes/glm/**
       - product/inference/nomad/**
       - product/inference/desmond/**
       - product/inference/CMakeLists.txt
@@ -14,6 +15,10 @@ on:
       - product/inference/images/nomad-base/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
+  workflow_run:
+    workflows: [Model deployment]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
   pull_request:
 
@@ -46,7 +51,7 @@ jobs:
 
   configuration-checks:
     needs: changes
-    if: needs.changes.outputs.relevant == 'true'
+    if: needs.changes.outputs.relevant == 'true' && github.event_name != 'workflow_run'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -58,7 +63,7 @@ jobs:
           sudo apt-get install -y cmake g++ libcurl4-openssl-dev python3 openssl
           bash .mise/tasks/desmond/test
       - name: Test GLM startup qualification
-        run: python3 -m unittest discover -s infra/environments/prod/runpod/glm-5-3-flash -p 'test_warmup*.py'
+        run: python3 -m unittest discover -s product/inference/runtimes/glm -p 'test_warmup*.py'
       - run: |
           kubectl kustomize infra/environments/prod/us-east-1/kubernetes/nomad >/dev/null
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
@@ -77,13 +82,17 @@ jobs:
 
   deploy:
     name: Deploy jobs
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: >-
+      !cancelled() && needs.configuration-checks.result != 'failure' &&
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     needs: configuration-checks
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
     env:
       AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       NOMAD_ADDR: https://127.0.0.1:4646
       NOMAD_TLS_SERVER_NAME: server.global.nomad
     steps:
@@ -120,16 +129,13 @@ jobs:
           done
           cat "$RUNNER_TEMP/port-forward.log" >&2
           exit 1
-      - name: Load the Nomad client certificate
+      - name: Issue a Nomad client certificate for this deployment
         run: |
           tls="$RUNNER_TEMP/nomad-tls"
-          install -d -m 700 "$tls"
-          certificate="$(aws secretsmanager get-secret-value --secret-id gradiated/prod/nomad/deployer-tls \
-            --query SecretString --output text)"
-          for name in ca.pem cert.pem key.pem; do
-            (umask 077; jq -er --arg name "$name" '.[$name]' <<<"$certificate" >"$tls/$name")
-          done
-          chmod 644 "$tls"/*.pem
+          pnpm --dir product install --frozen-lockfile --filter @gradiated/nomad-pki
+          pnpm --dir product --filter @gradiated/nomad-pki certificate \
+            --role cli --ca "$GITHUB_WORKSPACE/infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt" --out "$tls"
+          cp infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt "$tls/ca.pem"
           {
             echo "NOMAD_CACERT=$tls/ca.pem"
             echo "NOMAD_CLIENT_CERT=$tls/cert.pem"

@@ -8,6 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { pathToFileURL } from "node:url";
+import { awsDigest, plan } from "../images/images.mjs";
 
 const shared = [
   "product/inference/bundles/package.sh",
@@ -15,6 +16,8 @@ const shared = [
   "tools/models/release.mjs",
 ];
 export const bundles = {
+  "glm-5-3-flash": ["product/inference/bundles/glm-5-3-flash", "product/inference/runtimes/glm"],
+  "host-tools": ["product/inference/bundles/host-tools"],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",
@@ -56,12 +59,7 @@ const fileDigest = async (file) => {
   return hash.digest("hex");
 };
 
-const main = async () => {
-  const [command, bundle, source, baseImage, bucket] = process.argv.slice(2);
-  if (command === "list") {
-    console.log(JSON.stringify(Object.keys(bundles)));
-    return;
-  }
+const releaseKey = (bundle, source, baseImage) => {
   if (!Object.hasOwn(bundles, bundle)) throw new Error(`Unknown bundle ${bundle}`);
   if (!/^[0-9a-f]{40}$/.test(source))
     throw new Error("Invalid source revision");
@@ -70,30 +68,44 @@ const main = async () => {
     ["ls-tree", "-r", source, "--", ...shared, ...bundles[bundle]],
     { encoding: "utf8" },
   );
-  const identity = inputDigest(baseImage, tree);
-  const key = `releases/${bundle}/${identity}.json`;
-  mkdirSync("model-release", { recursive: true });
-  if (command === "lookup") {
-    const result = spawnSync(
-      "aws",
-      ["s3api", "head-object", "--bucket", bucket, "--key", key],
-      { encoding: "utf8" },
-    );
-    if (result.error) throw result.error;
-    if (result.status !== 0 && !/\(404\)|Not Found/.test(result.stderr)) {
-      throw new Error(`Artifact lookup failed: ${result.stderr}`);
-    }
-    output("exists", String(result.status === 0));
-    if (result.status === 0) {
-      aws(
-        "s3",
-        "cp",
-        `s3://${bucket}/${key}`,
-        "model-release/release.json",
-        "--only-show-errors",
-      );
+  return `releases/${bundle}/${inputDigest(baseImage, tree)}.json`;
+};
+const readRelease = (bucket, key) => {
+  const result = spawnSync("aws", ["s3", "cp", `s3://${bucket}/${key}`, "-"], {
+    encoding: "utf8",
+  });
+  if (result.error) throw result.error;
+  if (result.status === 0) return result.stdout;
+  if (/\(404\)|Not Found|does not exist/.test(result.stderr)) return null;
+  throw new Error(`Release lookup failed: ${result.stderr}`);
+};
+const publishedBase = (source, account) => {
+  if (!/^[0-9]{12}$/.test(account)) throw new Error("Invalid AWS account");
+  const [{ repository, tag }] = plan(["nomad-base"], source).include;
+  const digest = awsDigest(repository, tag);
+  return digest && `${account}.dkr.ecr.us-east-1.amazonaws.com/${repository}@${digest}`;
+};
+
+const main = async () => {
+  const [command, bundle, source, ...rest] = process.argv.slice(2);
+  if (command === "list") {
+    console.log(JSON.stringify(Object.keys(bundles)));
+  } else if (command === "resolve") {
+    const [bucket, account] = rest;
+    const baseImage = publishedBase(source, account);
+    const release = baseImage && readRelease(bucket, releaseKey(bundle, source, baseImage));
+    if (release) process.stdout.write(JSON.stringify(JSON.parse(release)));
+  } else if (command === "lookup") {
+    const [baseImage, bucket] = rest;
+    const release = readRelease(bucket, releaseKey(bundle, source, baseImage));
+    output("exists", String(release !== null));
+    if (release) {
+      mkdirSync("model-release", { recursive: true });
+      writeFileSync("model-release/release.json", release);
     }
   } else if (command === "publish") {
+    const [baseImage, bucket] = rest;
+    const key = releaseKey(bundle, source, baseImage);
     const digest = await fileDigest("model-release/runtime.tar.gz");
     const release = manifest({
       source,
@@ -125,7 +137,7 @@ const main = async () => {
       "--only-show-errors",
     );
   } else {
-    throw new Error("Expected list, lookup or publish");
+    throw new Error("Expected list, resolve, lookup or publish");
   }
 };
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();

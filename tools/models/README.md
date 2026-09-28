@@ -105,10 +105,10 @@ pre-start job; older bases lack the downloader user and tools.
 
 ## GPU rollout
 
-Publication and job submission are separate. This workflow does not submit
-a serving job before the first GPU qualification. The release record supplies
-`bundle_url`, `bundle_sha256`, and `base_id` for that submission. CPU, memory,
-and runtime disk reservations must come from the measured deployment.
+A successful publication triggers the Nomad deployment, which gives each job
+named after a bundle the `bundle_url`, `bundle_sha256` and `base_id` from its
+release record for that commit. A job without a vars file is never submitted.
+CPU, memory, and runtime disk reservations must come from the measured deployment.
 
 A changed bundle digest triggers a destructive allocation update when the
 new job is submitted. The job uses `max_parallel = 1` and health checks to

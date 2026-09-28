@@ -93,7 +93,8 @@ and the host runtime reader secret come from its pod identity role. Its `ops-mcp
 secret carries the RunPod API key, a database URL for the `gradiated_ops_mcp`
 role (which may only write `instances`), the Nomad CA certificate and token, and
 copies of the gateway runtime token and the RunPod deployment status token.
-`NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
+`NOMAD_BASE_IMAGE` in its manifest pins the host image by tag. The repository's
+tags are immutable and named from a content hash, so the tag pins one image.
 
 RunPod pulls `nomad-base` from `gradiated/prod/inference` through an ECR
 delegation, not a stored registry login, so there is no ECR password to expire.
@@ -102,6 +103,12 @@ RunPod's two fixed deployment roles pull, and the delegation is registered once
 on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations`
 and the repository ARN. RunPod's v1 pod update also ignores
 `containerRegistryAuthId`, so a stored login would never reach the pod.
+RunPod applies the delegation only to tagged references: it pulls a
+digest-only reference without credentials and refuses to create a pod from
+`name:tag@digest`.
+The immutable tagged index is retained by the untagged-only ECR lifecycle policy.
+ECR also [protects child manifests referenced by a retained index](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html),
+so the 14-day cleanup cannot remove that base image indirectly.
 The status list lives in memory, so a restart forgets it. Registering the machine
 again finishes the job: a running machine that carries this instance's
 bootstrap but whose node is not yet bound is resumed without a reset, and
@@ -126,9 +133,17 @@ it out. Two things stay outside it:
 - The host image. The Nomad binary, device plugin and launcher are baked into
   `nomad-base`, so updating them is a provider image change and a reset. Moving
   more into job artifacts shrinks this.
-- Certificate renewal. Nomad does not renew client certificates, so registering
-  the machine again is the renewal path until a dedicated one exists. That resets
-  the machine.
+- Host certificate renewal. Host certificates last 365 days. A dedicated issuer
+  must authenticate the host, bind each CSR to its registered instance, refuse
+  retired instances, and support replacement plus SIGHUP without resetting GPU
+  hosts. Re-registration is not an acceptable steady-state renewal mechanism.
+
+The control-plane certificates are automated: servers and UI use native renewal
+sidecars, ops MCP and workers renew in memory, and deployment workflows and
+`mise run nomad:admin` issue fresh client certificates for each invocation.
+The worker and UI still use static read-only Nomad ACL tokens; Kubernetes
+service-account JWT login is the remaining credential automation step for them.
+RunPod REST v1 retires on 2026-11-15; registration must migrate to v2 before then.
 
 ## A job is a model deployment
 
@@ -138,7 +153,7 @@ its health checks and its rollout policy. Git is the desired state. There is no
 placement table.
 
 Each replica requests GPUs by type through Nomad's device plugin, which is how the
-DeepSeek job already asks for four B300s:
+DeepSeek job asks for four B200s:
 
 ```hcl
 device "nvidia/gpu" {
@@ -157,9 +172,9 @@ runs both on a two-GPU node, or on two of a four-GPU node's GPUs, leaving the re
 free for other jobs. Adding a node adds capacity without touching any job, and a job
 whose replicas cannot all be placed waits until capacity appears.
 
-The DeepSeek job is deliberately conservative: `distinct_hosts`, no rescheduling,
-no replacement on disconnect, because it had no spare capacity. Jobs that want
-self-healing enable rescheduling instead.
+Model jobs automatically reschedule failed allocations with bounded exponential
+backoff. A one-hour disconnect grace preserves a running allocation through
+control-plane outages; replacement still requires sufficient enrolled GPU capacity.
 
 ## Deploy on merge
 
@@ -219,10 +234,11 @@ row stays retired. There are no `configure-*` commands.
 
 - A Kev runtime bundle: pinned upstream source, its environment, and the adapter.
 - `kev-9b.nomad.hcl`: two replicas, one RTX PRO 6000 each.
-- A decision-runtime probe in Desmond, which today only understands vLLM.
+- Desmond already probes any runtime's `/health`; the adapter adds `/metrics`,
+  without which Desmond reports the replica as not accepting requests.
 - Remove the hand-managed Kev pod setup from #91 — its supervisor programs, nginx
   proxy, `launch.sh` and `report_status.py`, which duplicates Desmond. The catalog
-  entry, pricing and release digest stay.
+  entry and pricing stay; the release now comes from the job.
 
 ## Order
 

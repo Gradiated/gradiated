@@ -9,6 +9,7 @@ import {
   needsRenewal,
   renewFilesIfDue,
   renewingCertificate,
+  renewingFiles,
 } from "../src/renewal.js";
 import { cliProfile, issueCertificate } from "../src/certificates.js";
 import { localSigner, testCa } from "../src/testing.js";
@@ -21,6 +22,34 @@ const renewal = {
   signer: localSigner,
   profile: cliProfile,
 };
+
+describe("consumer certificate reload", () => {
+  it("retries a failed signal without waiting for another certificate renewal", async () => {
+    const renew = vi.fn().mockResolvedValueOnce(true).mockResolvedValue(false);
+    const reload = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("signal failed"))
+      .mockResolvedValue(true);
+    const check = renewingFiles(renew, reload);
+
+    await expect(check()).rejects.toThrow("signal failed");
+    await check();
+    await check();
+
+    expect(reload).toHaveBeenCalledTimes(2);
+  });
+
+  it("waits for the consumer after native sidecar startup and reloads existing files", async () => {
+    const reload = vi.fn().mockResolvedValueOnce(false).mockResolvedValue(true);
+    const check = renewingFiles(async () => false, reload);
+
+    await expect(check()).rejects.toThrow("consumer is not running");
+    await check();
+    await check();
+
+    expect(reload).toHaveBeenCalledTimes(2);
+  });
+});
 
 describe("when a certificate is due", () => {
   it.each([

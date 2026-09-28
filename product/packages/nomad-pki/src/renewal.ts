@@ -84,3 +84,19 @@ export const renewFilesIfDue = async (
 
   return true;
 };
+
+export const renewingFiles = (
+  renew: () => Promise<boolean>,
+  reload: () => Promise<boolean>,
+) => {
+  let reloadPending = true;
+
+  return async () => {
+    if (await renew()) reloadPending = true;
+    if (!reloadPending) return;
+
+    if (!(await reload()))
+      throw new Error("Certificate consumer is not running");
+    reloadPending = false;
+  };
+};

@@ -24,7 +24,10 @@ docker run -d --privileged --cgroupns=host --name "$container" \
     chmod 600 /etc/gradiated/runtime-proxy-auth.conf
     cat >/tmp/agent.hcl <<CONFIG
 acl { enabled = true }
-client { meta { serving_ingress = "host-proxy" } }
+client {
+  meta { serving_ingress = "host-proxy" }
+  options { "fingerprint.denylist" = "env_aws,env_azure,env_digitalocean,env_gce" }
+}
 plugin "raw_exec" { config { enabled = true } }
 CONFIG
     exec nomad agent -dev -config /tmp/agent.hcl' >/dev/null

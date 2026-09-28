@@ -56,13 +56,21 @@ const nomadEnvironmentSchema = z.object({
   NOMAD_ADDR: z.url(),
   NOMAD_TOKEN: z.string().min(1),
   NOMAD_CA_PEM: z.string().min(1),
-  NOMAD_CLIENT_CERT_PEM: z.string().min(1),
-  NOMAD_CLIENT_KEY_PEM: z.string().min(1),
+  NOMAD_CLIENT_CERT_PEM: z.string().min(1).optional(),
+  NOMAD_CLIENT_KEY_PEM: z.string().min(1).optional(),
+  NOMAD_CA_KMS_KEY: z.string().min(1).optional(),
 });
+
+const nomadCredentialsSchema = nomadEnvironmentSchema.refine(
+  (value) =>
+    value.NOMAD_CA_KMS_KEY ||
+    (value.NOMAD_CLIENT_CERT_PEM && value.NOMAD_CLIENT_KEY_PEM),
+  "Nomad needs a CA signing key or a client certificate and private key",
+);
 
 export type NomadEnvironment = z.infer<typeof nomadEnvironmentSchema>;
 
 export const parseNomadEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): NomadEnvironment | null =>
-  environment.NOMAD_ADDR ? nomadEnvironmentSchema.parse(environment) : null;
+  environment.NOMAD_ADDR ? nomadCredentialsSchema.parse(environment) : null;

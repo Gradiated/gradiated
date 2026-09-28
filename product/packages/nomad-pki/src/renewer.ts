@@ -1,11 +1,12 @@
 import { readdir, readFile } from "node:fs/promises";
+import { createPrivateKey, X509Certificate } from "node:crypto";
 import { createServer } from "node:http";
 import path from "node:path";
 
 import { Gauge, Registry } from "prom-client";
 import { z } from "zod";
 
-import { expiryTimestamp, renewFilesIfDue } from "./renewal.js";
+import { expiryTimestamp, renewFilesIfDue, renewingFiles } from "./renewal.js";
 import { cliProfile, kmsSigner, serverProfile } from "./certificates.js";
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
@@ -47,17 +48,23 @@ const renewal = {
 // Signal the process whose command line starts with RELOAD_COMMAND, found
 // through the pod's shared process namespace.
 const reload = async () => {
+  let found = false;
   for (const pid of await readdir("/proc")) {
     if (!/^\d+$/.test(pid)) continue;
 
     const commandLine = await readFile(`/proc/${pid}/cmdline`, "utf8")
       .then((raw) => raw.replaceAll("\0", " ").trim())
       .catch(() => "");
-    if (commandLine.startsWith(config.RELOAD_COMMAND)) {
+    if (
+      commandLine === config.RELOAD_COMMAND ||
+      commandLine.startsWith(`${config.RELOAD_COMMAND} `)
+    ) {
       process.kill(Number(pid), "SIGHUP");
+      found = true;
       console.log(JSON.stringify({ event: "certificate_reloaded", name, pid }));
     }
   }
+  return found;
 };
 
 const registry = new Registry();
@@ -78,6 +85,25 @@ new Gauge({
   },
 });
 createServer(async (request, response) => {
+  if (request.url === "/ready") {
+    try {
+      const certificate = new X509Certificate(await readFile(certificateFile));
+      const key = createPrivateKey(
+        await readFile(path.join(config.TLS_DIRECTORY, "key.pem")),
+      );
+      response
+        .writeHead(
+          certificate.checkPrivateKey(key) &&
+            Date.parse(certificate.validTo) > Date.now()
+            ? 200
+            : 503,
+        )
+        .end();
+    } catch {
+      response.writeHead(503).end();
+    }
+    return;
+  }
   if (request.url !== "/metrics") {
     response.writeHead(404).end();
     return;
@@ -87,14 +113,18 @@ createServer(async (request, response) => {
   response.end(await registry.metrics());
 }).listen(config.METRICS_PORT, "0.0.0.0");
 
+const renewAndReload = renewingFiles(async () => {
+  const renewed = await renewFilesIfDue(config.TLS_DIRECTORY, renewal);
+  if (renewed)
+    console.log(JSON.stringify({ event: "certificate_renewed", name }));
+  return renewed;
+}, reload);
+
 for (;;) {
   let wait = CHECK_INTERVAL_MS;
 
   try {
-    if (await renewFilesIfDue(config.TLS_DIRECTORY, renewal)) {
-      console.log(JSON.stringify({ event: "certificate_renewed", name }));
-      await reload();
-    }
+    await renewAndReload();
   } catch (error) {
     wait = RETRY_INTERVAL_MS;
     console.error(

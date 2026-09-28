@@ -3,6 +3,14 @@ import { Agent, request } from "node:https";
 import { ModelDeploymentReleaseSchema } from "@gradiated/contracts";
 import type { NomadAllocation } from "@gradiated/control";
 import { z } from "zod";
+import {
+  cliProfile,
+  expiryTimestamp,
+  issueCertificate,
+  kmsSigner,
+  renewingCertificate,
+  type CertificateSigner,
+} from "@gradiated/nomad-pki";
 
 import type { NomadEnvironment } from "./environment.js";
 
@@ -104,21 +112,41 @@ export const allocationIsGone = async (
   }
 };
 
-export const createNomadGet = (nomad: NomadEnvironment): NomadGet => {
+export const createNomadGet = (
+  nomad: NomadEnvironment,
+  options: {
+    signer?: CertificateSigner;
+    onCertificate?: (expires: number) => void;
+  } = {},
+): NomadGet => {
+  const signingKey = nomad.NOMAD_CA_KMS_KEY;
+  const certificate = signingKey
+    ? renewingCertificate(async () => {
+        const issued = await issueCertificate(
+          nomad.NOMAD_CA_PEM,
+          options.signer ?? kmsSigner(signingKey),
+          cliProfile,
+        );
+        options.onCertificate?.(expiryTimestamp(issued.certificate));
+        return issued;
+      })
+    : undefined;
   const agent = new Agent({
     keepAlive: true,
     ca: nomad.NOMAD_CA_PEM,
-    cert: nomad.NOMAD_CLIENT_CERT_PEM,
-    key: nomad.NOMAD_CLIENT_KEY_PEM,
+    timeout: 30_000,
     servername: SERVER_NAME,
   });
 
-  return (path) =>
-    new Promise((resolve, reject) => {
+  return async (path) => {
+    const issued = await certificate?.get();
+    return new Promise((resolve, reject) => {
       const outgoing = request(
         new URL(path, nomad.NOMAD_ADDR),
         {
           agent,
+          cert: issued?.certificate ?? nomad.NOMAD_CLIENT_CERT_PEM,
+          key: issued?.privateKey ?? nomad.NOMAD_CLIENT_KEY_PEM,
           headers: { "x-nomad-token": nomad.NOMAD_TOKEN },
           signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         },
@@ -163,4 +191,5 @@ export const createNomadGet = (nomad: NomadEnvironment): NomadGet => {
       );
       outgoing.end();
     });
+  };
 };

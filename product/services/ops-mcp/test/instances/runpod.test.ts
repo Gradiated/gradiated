@@ -17,7 +17,7 @@ describe("RunPod provider", () => {
       await expect(
         provider.bootstrap(
           instance,
-          "registry.example/nomad-base@sha256:abc",
+          "registry.example/nomad-base:inputs-abc",
           {},
         ),
       ).rejects.toThrow("Refusing to reset");
@@ -36,7 +36,7 @@ describe("RunPod provider", () => {
 
       await provider.bootstrap(
         await provider.describe("pod1"),
-        "registry.example/nomad-base@sha256:abc",
+        "registry.example/nomad-base:inputs-abc",
         {},
         { allowReset: true },
       );
@@ -54,7 +54,7 @@ describe("RunPod provider", () => {
 
     await provider.bootstrap(
       await provider.describe("pod1"),
-      "registry.example/nomad-base@sha256:abc",
+      "registry.example/nomad-base:inputs-abc",
       {},
     );
 
@@ -118,12 +118,12 @@ describe("RunPod provider", () => {
 
     await provider.bootstrap(
       instance,
-      "registry.example/nomad-base@sha256:abc",
+      "registry.example/nomad-base:inputs-abc",
       { GRADIATED_NODE_NAME: "runpod-pod1" },
     );
 
     expect(runpod.calls.find((call) => call.method === "PATCH")?.body).toEqual({
-      imageName: "registry.example/nomad-base@sha256:abc",
+      imageName: "registry.example/nomad-base:inputs-abc",
       env: {
         PUBLIC_KEY: "ssh-ed25519 debug",
         GRADIATED_NODE_NAME: "runpod-pod1",
@@ -141,7 +141,7 @@ describe("RunPod provider", () => {
 
     await provider.bootstrap(
       await provider.describe("pod1"),
-      "registry.example/nomad-base@sha256:abc",
+      "registry.example/nomad-base:inputs-abc",
       {},
     );
 
@@ -153,7 +153,27 @@ describe("RunPod provider", () => {
       "GET /v1/pods/pod1",
       "GET /v1/pods/pod1",
       "PATCH /v1/pods/pod1",
+      "POST /v1/pods/pod1/start",
     ]);
+  });
+
+  it("leaves starting to the reset when the pod was already running", async () => {
+    const runpod = fakeRunPod({ ...rtxPod, desiredStatus: "RUNNING" });
+    const provider = createRunPodProvider({
+      apiKey: "key",
+      fetch: runpod.fetch,
+    });
+
+    await provider.bootstrap(
+      await provider.describe("pod1"),
+      "registry.example/nomad-base:inputs-abc",
+      {},
+      { allowReset: true },
+    );
+
+    expect(runpod.calls.some((call) => call.url.endsWith("/start"))).toBe(
+      false,
+    );
   });
 
   it("reports a failed pod update", async () => {
@@ -167,7 +187,7 @@ describe("RunPod provider", () => {
     await expect(
       provider.bootstrap(
         await provider.describe("pod1"),
-        "registry.example/nomad-base@sha256:abc",
+        "registry.example/nomad-base:inputs-abc",
         {},
       ),
     ).rejects.toThrow("RunPod PATCH /pods/pod1 failed: 500");

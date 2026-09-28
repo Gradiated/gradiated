@@ -33,3 +33,7 @@ run = [
 description = "Run the pinned Apple Silicon SGLang development model"
 dir = "product"
 run = "./scripts/run-sglang-local.sh"
+
+[tasks."nomad:admin"]
+description = "Run the Nomad CLI with a fresh KMS-issued client certificate"
+run = "node tools/nomad/admin.mjs"

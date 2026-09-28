@@ -1,8 +1,8 @@
 # Isolated Kev gateway E2E
 
 Prerequisites: Rust, Node and pnpm, Docker on a local unix socket, and two
-running Kev gateway-protocol adapters. Start the adapters using the
-[runtime instructions](README.md), on remote loopback ports 8009 and 8010. The
+running Kev gateway-protocol adapters, such as the two allocations of the
+`kev-9b` Nomad job. The
 separately maintained `product/scripts/test-kev-gateway.test.ts` must be present.
 Remote Docker contexts are refused; the launcher resolves this host's own socket.
 
@@ -13,17 +13,17 @@ cargo build --locked --manifest-path product/services/gateway/Cargo.toml \
   --bin gradiated-gateway
 ```
 
-Use the current SSH host, port, and authorized key described in the
-[deployment README](../../../../infra/environments/prod/runpod/kev-9b/README.md#access-and-verification).
-Set `KEV_SSH_HOST`, `KEV_SSH_PORT`, and `KEV_SSH_KEY` to those connection details,
-then keep this tunnel running in a separate terminal:
+Set `KEV_SSH_HOST`, `KEV_SSH_PORT`, and `KEV_SSH_KEY` to the pod's current SSH
+connection, and `KEV_PORT_0` and `KEV_PORT_1` to the two allocations' `runtime`
+ports from `nomad alloc status`, then keep this tunnel running in a separate
+terminal:
 
 ```sh
 ssh -i "${KEV_SSH_KEY:?Set the authorized SSH key path}" \
   -p "${KEV_SSH_PORT:?Set the current pod SSH port}" \
   -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 \
-  -L 127.0.0.1:18009:127.0.0.1:8009 \
-  -L 127.0.0.1:18010:127.0.0.1:8010 \
+  -L "127.0.0.1:18009:127.0.0.1:${KEV_PORT_0:?}" \
+  -L "127.0.0.1:18010:127.0.0.1:${KEV_PORT_1:?}" \
   -N "root@${KEV_SSH_HOST:?Set the current pod SSH host}"
 ```
 
@@ -60,10 +60,10 @@ There is no configurable external Redis URL and no flush operation.
 
 The model is exactly `jaredpalmer/kev-9b`. Release metadata declares
 `protocol: "system_one"`, runtime revision
-`kev-f0ae8fb9-systemone-v1`, adapter revision
+`kev-f0ae8fb9-systemone-v1` (production derives it from the bundle digest), adapter revision
 `2629c06a5aeb0feb3b9783bafed17ed8f39ecf5c`, and tokenizer
 `Qwen/Qwen3.5-9B-Base@68c46c4b3498877f3ef123c856ecfde50c39f404`, as pinned in
-`infra/environments/prod/runpod/kev-9b/README.md`. Release JSON preserves the Rust
+`product/inference/nomad/jobs/kev-9b.nomad.hcl`. Release JSON preserves the Rust
 `ModelDeploymentRelease` field order and omits absent `runtime_model_name` and
 `tokenizer_mode` before SHA-256 hashing. Local deployment status timestamps are
 refreshed every second; these are synthetic availability declarations, not a

@@ -27,7 +27,8 @@ const config = z
     CREDENTIALS_DIRECTORY: z.string().min(1),
     NOMAD_BASE_IMAGE: z
       .string()
-      .regex(/^[a-z0-9.-]+\/[a-z0-9._/-]+@sha256:[0-9a-f]{64}$/),
+      // RunPod applies its ECR delegation only to tagged references and rejects tag@digest.
+      .regex(/^[a-z0-9.-]+\/[a-z0-9._/-]+:[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$/),
     NOMAD_CA_KMS_KEY: z.string().min(1),
   })
   .parse(process.env);

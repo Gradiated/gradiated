@@ -22,3 +22,13 @@ target "verify-kev-9b" {
   inherits   = ["bundle"]
   dockerfile = "bundles/kev-9b/Dockerfile"
 }
+
+target "verify-host-tools" {
+  inherits   = ["bundle"]
+  dockerfile = "bundles/host-tools/Dockerfile"
+}
+
+target "verify-glm-5-3-flash" {
+  inherits = ["bundle"]
+  dockerfile = "bundles/glm-5-3-flash/Dockerfile"
+}

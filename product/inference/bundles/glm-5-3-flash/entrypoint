@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+root="${GRADIATED_RUNTIME_ROOT:?}"
+export CUDA_HOME="$root/python/lib/python3.12/site-packages/nvidia/cu13"
+export CUDA_PATH="$CUDA_HOME"
+export PATH="$root/python/bin:$CUDA_HOME/bin:$PATH"
+export LD_LIBRARY_PATH="$CUDA_HOME/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export VLLM_DEEP_GEMM_WARMUP=relax
+unset PYTHONPATH VLLM_ALLOW_INSECURE_SERIALIZATION VLLM_SERVER_DEV_MODE
+export RUNTIME_URL="http://127.0.0.1:${RUNTIME_PORT:?}"
+: "${WARMUP_PORT:?}"
+exec "$root/python/bin/python3" "$root/warmup-supervisor.py" \
+  "$root/python/bin/python3" -m vllm.entrypoints.cli.main serve zai-org/GLM-5.3-Flash \
+  --revision 84c6a6aa9497188e15a635ba793b0f95a79b1033 \
+  --host 127.0.0.1 --port "${RUNTIME_PORT:?}" --served-model-name zai-org/GLM-5.3-Flash \
+  --tensor-parallel-size 2 --max-model-len 1048576 --max-num-seqs 16 \
+  --gpu-memory-utilization 0.90 --kv-cache-dtype fp8 --block-size 128 \
+  --tool-call-parser glm47 --reasoning-parser glm45 --enable-auto-tool-choice \
+  --enable-prompt-tokens-details --safetensors-load-strategy prefetch \
+  --safetensors-prefetch-num-threads 8 --scheduling-policy priority

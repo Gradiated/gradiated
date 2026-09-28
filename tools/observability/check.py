@@ -182,6 +182,21 @@ def main():
     ]:
         scenario(name, inputs, stall if fires else None, [stall], {'deployment': 'stalled'})
 
+    renewal = 'NomadCertificateRenewalStalled'
+    for name, days_left, fires in [('renewing on schedule', 20, False),
+                                   ('renewal stalled', 5, True)]:
+        inputs = [{'series': 'nomad_certificate_expiry_timestamp_seconds'
+                   '{certificate="server-0",pod="nomad-0"}',
+                   'values': f'{days_left * 86400}+0x30'}]
+        scenario(f'nomad certificate {name}', inputs, renewal if fires else None,
+                 [renewal], {'certificate': 'server-0'})
+
+    renewer = 'NomadCertificateRenewerMissing'
+    certificate = {'series': 'nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}',
+                   'values': '2000000+0x200'}
+    scenario('ops MCP holds a Nomad certificate', [certificate], None, [renewer], eval_time='70m')
+    scenario('ops MCP has no Nomad certificate', [], renewer, [renewer], eval_time='70m')
+
     replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [
         ('complete service outage', 0, 2, True),

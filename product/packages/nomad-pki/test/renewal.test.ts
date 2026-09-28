@@ -9,9 +9,9 @@ import {
   needsRenewal,
   renewFilesIfDue,
   renewingCertificate,
-} from "../src/certificate-renewal.js";
-import { cliProfile, issueCertificate } from "../src/nomad-certificates.js";
-import { localSigner, testCa } from "./support/nomad-ca.js";
+} from "../src/renewal.js";
+import { cliProfile, issueCertificate } from "../src/certificates.js";
+import { localSigner, testCa } from "../src/testing.js";
 
 const issuedAt = new Date("2026-09-28T00:00:00Z");
 const day = (days: number) =>

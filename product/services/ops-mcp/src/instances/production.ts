@@ -8,7 +8,7 @@ import {
 import { z } from "zod";
 
 import type { Backend } from "../backend.js";
-import { kmsSigner } from "../nomad-certificates.js";
+import { kmsSigner } from "@gradiated/nomad-pki";
 import { hostImage, readSecret } from "./aws.js";
 import { nomadNodeReader } from "./nomad-node.js";
 import { createRegistrations } from "./registration.js";

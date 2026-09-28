@@ -11,8 +11,8 @@ import {
   kmsSigner,
   serverProfile,
   type CertificateSigner,
-} from "../src/nomad-certificates.js";
-import { fakeKms, localSigner, testCa } from "./support/nomad-ca.js";
+} from "../src/certificates.js";
+import { fakeKms, localSigner, testCa } from "../src/testing.js";
 
 const signers: [string, () => CertificateSigner][] = [
   ["a local key", () => localSigner],

@@ -9,8 +9,8 @@ import {
   type Registration,
   type RegistrationDependencies,
 } from "../../src/instances/registration.js";
-import { kmsSigner } from "../../src/nomad-certificates.js";
-import { fakeKms, testCa } from "../support/nomad-ca.js";
+import { kmsSigner } from "@gradiated/nomad-pki";
+import { fakeKms, testCa } from "@gradiated/nomad-pki/testing";
 
 const INSTANCE_ID = "019d5a4a-0000-7000-8000-000000000001";
 const BOUND_NODE = "3f1e5a52-8d4b-4c1e-9a55-111111111111";

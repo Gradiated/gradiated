@@ -6,7 +6,7 @@ import {
   issueCertificate,
   type CertificateProfile,
   type CertificateSigner,
-} from "./nomad-certificates.js";
+} from "./certificates.js";
 
 export type IssuedCertificate = { certificate: string; privateKey: string };
 

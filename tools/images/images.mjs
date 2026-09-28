@@ -68,7 +68,7 @@ export const plan = (names, revision) => {
 };
 const emit = (name, value) =>
   appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
-const awsDigest = (repository, tag) => {
+export const awsDigest = (repository, tag) => {
   const result = spawnSync(
     "aws",
     [

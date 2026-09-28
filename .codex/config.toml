@@ -1,2 +1,5 @@
 [mcp_servers.gradiated-ops]
 url = "https://ops.gradiated.com/mcp"
+
+[mcp_servers.incident-io]
+url = "https://mcp.incident.io/mcp"

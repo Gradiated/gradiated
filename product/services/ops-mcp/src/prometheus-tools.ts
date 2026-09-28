@@ -90,7 +90,7 @@ export const registerPrometheusTools = (
 
   register(
     "query_metric_history",
-    "PromQL range query between two RFC 3339 datetimes; returns at most 50 series. step_seconds defaults to about 121 points across the range; choose a larger step for long ranges and a smaller one to find exact onset times. Use the same conventions as query_metrics. Aggregate with sum by (...) to stay under the series limit.",
+    "PromQL range query between two RFC 3339 datetimes; returns at most 50 series. step_seconds defaults to about 121 points across the range; choose a larger step for long ranges and a smaller one to find exact onset times. Make range windows at least as long as the step, for example increase(x[30m]) with step_seconds 1800, or events between points are missed. Use the same conventions as query_metrics. Aggregate with sum by (...) to stay under the series limit.",
     { query: promql, ...timeRange },
     ({ query, ...range }) =>
       backend("prometheus", "/api/v1/query_range", {

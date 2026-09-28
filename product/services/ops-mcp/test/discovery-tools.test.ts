@@ -61,6 +61,35 @@ describe("discovery tools", () => {
     });
   });
 
+  it.each([
+    ["label_names", { source: "metrics" }],
+    ["label_values", { source: "metrics", name: "job" }],
+    ["series", { source: "metrics", selector: "up" }],
+  ])(
+    "limits %s on metrics to the hour before end when start is omitted",
+    async (name, args) => {
+      const { backend } = await callTool(name, {
+        ...args,
+        end: "2026-09-26T21:30:00Z",
+      });
+
+      expect(backend).toHaveBeenCalledWith(
+        "prometheus",
+        expect.any(String),
+        expect.objectContaining({
+          start: "2026-09-26T20:30:00.000Z",
+          end: "2026-09-26T21:30:00.000Z",
+        }),
+      );
+    },
+  );
+
+  it("leaves the log default window to Loki", async () => {
+    const { backend } = await callTool("label_names", { source: "logs" });
+
+    expect(backend).toHaveBeenCalledWith("loki", "/loki/api/v1/labels", {});
+  });
+
   it("truncates long value lists and reports the total", async () => {
     const { body } = await callTool(
       "label_values",

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { callTool, closeServers, range } from "./support/mcp.js";
+import { callTool, closeServers, lokiStreams, range } from "./support/mcp.js";
 
 afterEach(closeServers);
 
@@ -21,5 +21,21 @@ describe("loki tools", () => {
         line_limit: "1000",
       },
     );
+  });
+
+  it("returns log streams without Loki's query statistics", async () => {
+    const { body } = await callTool(
+      "query_logs",
+      { query: '{workload="worker"}', ...range },
+      lokiStreams,
+    );
+
+    expect(body).toEqual({
+      status: "success",
+      data: {
+        resultType: "streams",
+        result: lokiStreams.data.result,
+      },
+    });
   });
 });

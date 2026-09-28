@@ -6,6 +6,15 @@ import { vi } from "vitest";
 import { createHttp } from "../../src/http.js";
 
 export const token = "test-only-credential-0123456789abcdef";
+export const lokiStreams = {
+  status: "success",
+  data: {
+    resultType: "streams",
+    result: [{ stream: { workload: "worker" }, values: [["1", "line"]] }],
+    stats: { summary: { execTime: 0.01 } },
+  },
+};
+
 export const range = {
   start: "2026-09-26T21:00:00Z",
   end: "2026-09-26T21:30:00Z",

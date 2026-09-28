@@ -3,7 +3,13 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { request as httpRequest } from "node:http";
 import { projectPods } from "../src/kubernetes-tools.js";
-import { closeServers, range, setup, token } from "./support/mcp.js";
+import {
+  closeServers,
+  lokiStreams,
+  range,
+  setup,
+  token,
+} from "./support/mcp.js";
 
 afterEach(closeServers);
 
@@ -14,6 +20,7 @@ describe("production MCP boundary", () => {
     await client.connect(
       new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
     );
+    backend.mockResolvedValue(lokiStreams);
     const list = await client.listTools();
     expect(list.tools).toHaveLength(19);
     expect(list.tools.every((t) => t.annotations?.readOnlyHint)).toBe(true);
@@ -119,6 +126,7 @@ describe("production MCP boundary", () => {
     ["query_metric_history", { query: "up", ...range }],
   ])("passes an agent-chosen range of any age to %s", async (name, args) => {
     const { url, headers, backend } = await setup();
+    backend.mockResolvedValue(lokiStreams);
     const client = new Client({ name: "test", version: "1" });
     await client.connect(
       new StreamableHTTPClientTransport(url, { requestInit: { headers } }),

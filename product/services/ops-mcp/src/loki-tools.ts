@@ -5,6 +5,10 @@ import { rangeParameters, timeRange } from "./time-range.js";
 import type { RegisterReadTool } from "./tools.js";
 
 const logql = z.string().min(1).max(2000);
+const queryResult = z.object({
+  status: z.string(),
+  data: z.object({ resultType: z.string(), result: z.array(z.unknown()) }),
+});
 
 export const registerLokiTools = (
   register: RegisterReadTool,
@@ -24,13 +28,15 @@ export const registerLokiTools = (
       ...timeRange,
       limit: z.number().int().min(1).max(200).default(100),
     },
-    ({ query, limit, ...range }) =>
-      backend("loki", "/loki/api/v1/query_range", {
-        query,
-        ...rangeParameters(range),
-        limit: String(limit),
-        direction: "backward",
-      }),
+    async ({ query, limit, ...range }) =>
+      queryResult.parse(
+        await backend("loki", "/loki/api/v1/query_range", {
+          query,
+          ...rangeParameters(range),
+          limit: String(limit),
+          direction: "backward",
+        }),
+      ),
   );
 
   register(

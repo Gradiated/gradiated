@@ -1,6 +1,6 @@
 import { configureOpenRouterDistributionChannel } from "@gradiated/control";
 
-import { requiredEnv, withControlDatabase } from "./catalog-operation.js";
+import { requiredEnv, withControlDatabase } from "./database.js";
 
 const rawApiKey = requiredEnv("OPENROUTER_API_KEY");
 if (!/^grad_[A-Za-z0-9_-]{43}$/.test(rawApiKey)) {

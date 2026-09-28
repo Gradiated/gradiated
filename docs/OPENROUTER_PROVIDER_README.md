@@ -12,8 +12,7 @@ status and evidence after each change. Do not submit the provider application
 until all blocker items are complete.
 
 GLM-5.3 Flash is the launch model for the first provider application. The
-application lists only GLM-5.3 Flash; Gemma 4 remains a direct-catalog model
-and is not submitted to OpenRouter. Complete the shared provider work in this
+application lists only GLM-5.3 Flash; Gemma 4 is retired. Complete the shared provider work in this
 document before submitting.
 
 ## Target outcome

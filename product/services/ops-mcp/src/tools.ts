@@ -2,74 +2,28 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { Backend } from "./backend.js";
 
-const service = z.enum([
-  "api",
-  "gateway",
-  "worker",
-  "argocd-server",
-  "argocd-application-controller",
-  "ops-mcp",
-  "kubernetes-events",
-  "external-secrets",
-  "external-dns",
-  "aws-load-balancer-controller",
-]);
-const uuid = z.uuid().optional();
 const timeRange = {
   start: z.iso.datetime({ offset: true }),
   end: z.iso.datetime({ offset: true }),
+  step_seconds: z.number().positive().optional(),
 };
-const logSchema = z.object({
-  service,
-  level: z.enum(["error", "warn", "info", "debug"]).optional(),
-  ...timeRange,
-  limit: z.number().int().min(1).max(200).default(100),
-  organization_id: uuid,
-  workspace_id: uuid,
-  api_key_id: uuid,
-  user_id: uuid,
-  generation_id: uuid,
-  request_id: uuid,
-});
 
-const rangeBounds = ({ start, end }: { start: string; end: string }) => {
+const rangeParameters = ({
+  start,
+  end,
+  step_seconds,
+}: z.output<z.ZodObject<typeof timeRange>>) => {
   const startMilliseconds = Date.parse(start);
   const endMilliseconds = Date.parse(end);
   if (startMilliseconds >= endMilliseconds) throw new Error("empty_range");
 
+  const seconds = (endMilliseconds - startMilliseconds) / 1_000;
+
   return {
     start: new Date(startMilliseconds).toISOString(),
     end: new Date(endMilliseconds).toISOString(),
-    seconds: (endMilliseconds - startMilliseconds) / 1_000,
+    step: String(step_seconds ?? Math.max(15, Math.ceil(seconds / 120))),
   };
-};
-
-export const logQuery = (input: z.infer<typeof logSchema>): string => {
-  let query = `{environment="prod",workload=${JSON.stringify(input.service)}}`;
-  if (input.level) {
-    const levels = {
-      error: "error|fatal",
-      warn: "warn|warning",
-      info: "info",
-      debug: "debug|trace",
-    };
-    query = query.slice(0, -1) + `,level=~"(?i)${levels[input.level]}"}`;
-  }
-  const fields = [
-    "organization_id",
-    "workspace_id",
-    "api_key_id",
-    "user_id",
-    "generation_id",
-    "request_id",
-  ] as const;
-  for (const field of fields) {
-    if (!input[field]) continue;
-    query += ` | json root_${field}="${field}", span_${field}="span.${field}", fields_${field}="fields.${field}"`;
-    query += ` | label_format filter_${field}="{{or .root_${field} .span_${field} .fields_${field}}}" | filter_${field}=${JSON.stringify(input[field])}`;
-  }
-
-  return query;
 };
 
 // Return a deliberately small status projection. Pod specs include literal environment
@@ -200,36 +154,31 @@ export const createTools = (
   );
   registerReadTool(
     "query_metric_history",
-    "PromQL history between two RFC 3339 datetimes, with at most 121 timestamps and 50 series.",
+    "PromQL history between two RFC 3339 datetimes, at most 50 series. step_seconds defaults to about 121 timestamps across the range.",
     { query: z.string().min(1).max(2000), ...timeRange },
-    ({ query, ...range }) => {
-      const { start, end, seconds } = rangeBounds(range);
-
-      return backend("prometheus", "/api/v1/query_range", {
+    ({ query, ...range }) =>
+      backend("prometheus", "/api/v1/query_range", {
         query,
-        start,
-        end,
-        step: String(Math.max(15, Math.ceil(seconds / 120))),
+        ...rangeParameters(range),
         timeout: "5s",
         limit: "50",
-      });
-    },
+      }),
   );
   registerReadTool(
     "query_logs",
-    "Production logs for one service between two RFC 3339 datetimes, newest first, optionally filtered by opaque tenant/key/user/request/generation UUID. Results may be truncated at the requested limit; never include actual credentials in tool arguments.",
-    logSchema.shape,
-    (input) => {
-      const { start, end } = rangeBounds(input);
-
-      return backend("loki", "/loki/api/v1/query_range", {
-        query: logQuery(input),
-        start,
-        end,
-        limit: String(input.limit),
-        direction: "backward",
-      });
+    'Raw LogQL over production logs between two RFC 3339 datetimes, newest first. Stream labels include environment, cluster, namespace, workload, container, job and level, for example {environment="prod",workload="worker"} |= "worker_loop_failed" or | json | request_id="<uuid>". Metric queries such as count_over_time also work. Results may be truncated at the limit; never include actual credentials in queries.',
+    {
+      query: z.string().min(1).max(2000),
+      ...timeRange,
+      limit: z.number().int().min(1).max(200).default(100),
     },
+    ({ query, limit, ...range }) =>
+      backend("loki", "/loki/api/v1/query_range", {
+        query,
+        ...rangeParameters(range),
+        limit: String(limit),
+        direction: "backward",
+      }),
   );
   registerReadTool(
     "workload_status",

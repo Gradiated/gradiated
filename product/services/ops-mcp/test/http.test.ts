@@ -4,7 +4,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import type { AddressInfo } from "node:net";
 import { request as httpRequest } from "node:http";
 import { createHttp } from "../src/http.js";
-import { logQuery, projectPods } from "../src/tools.js";
+import { projectPods } from "../src/tools.js";
 
 const token = "test-only-credential-0123456789abcdef";
 const range = {
@@ -64,20 +64,21 @@ describe("production MCP boundary", () => {
     const result = await client.callTool({
       name: "query_logs",
       arguments: {
-        service: "gateway",
-        workspace_id: "c6390e68-499d-4f28-8243-05e5bbdf224f",
+        query:
+          '{workload="gateway"} | json | workspace_id="c6390e68-499d-4f28-8243-05e5bbdf224f"',
         ...range,
       },
     });
     expect(result.isError).not.toBe(true);
-    expect(backend).toHaveBeenCalledWith(
-      "loki",
-      "/loki/api/v1/query_range",
-      expect.objectContaining({
-        limit: "100",
-        query: expect.stringContaining('workload="gateway"'),
-      }),
-    );
+    expect(backend).toHaveBeenCalledWith("loki", "/loki/api/v1/query_range", {
+      query:
+        '{workload="gateway"} | json | workspace_id="c6390e68-499d-4f28-8243-05e5bbdf224f"',
+      start: "2026-09-26T21:00:00.000Z",
+      end: "2026-09-26T21:30:00.000Z",
+      step: "15",
+      limit: "100",
+      direction: "backward",
+    });
     expect(audit).toHaveBeenCalledWith(
       expect.objectContaining({
         principal: "test-coder",
@@ -158,7 +159,7 @@ describe("production MCP boundary", () => {
     expect(backend).not.toHaveBeenCalled();
   });
   it.each([
-    ["query_logs", { service: "worker", ...range }],
+    ["query_logs", { query: '{workload="worker"}', ...range }],
     ["query_metric_history", { query: "up", ...range }],
   ])("passes an agent-chosen range of any age to %s", async (name, args) => {
     const { url, headers, backend } = await setup();
@@ -226,19 +227,39 @@ describe("production MCP boundary", () => {
     );
     await client.close();
   });
-  it("rejects injected log selectors, secrets disguised as IDs and invalid time ranges", async () => {
+  it.each(["query_logs", "query_metric_history"])(
+    "uses an agent-chosen step for %s",
+    async (name) => {
+      const { url, headers, backend } = await setup();
+      const client = new Client({ name: "test", version: "1" });
+      await client.connect(
+        new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
+      );
+      await client.callTool({
+        name,
+        arguments: { query: "sum(up)", ...range, step_seconds: 300 },
+      });
+      expect(backend).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.stringContaining("query_range"),
+        expect.objectContaining({ step: "300" }),
+      );
+      await client.close();
+    },
+  );
+  it("rejects empty log queries and invalid time ranges", async () => {
     const { url, headers, backend } = await setup();
     const client = new Client({ name: "test", version: "1" });
     await client.connect(
       new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
     );
     for (const args of [
-      { service: 'gateway"} |= "secret', ...range },
-      { service: "api", api_key_id: "secret-key", ...range },
-      { service: "worker" },
-      { service: "worker", start: "yesterday", end: range.end },
-      { service: "worker", start: range.end, end: range.start },
-      { service: "worker", start: range.start, end: range.start },
+      { query: "", ...range },
+      { query: '{workload="worker"}' },
+      { query: '{workload="worker"}', start: "yesterday", end: range.end },
+      { query: '{workload="worker"}', start: range.end, end: range.start },
+      { query: '{workload="worker"}', start: range.start, end: range.start },
+      { query: '{workload="worker"}', ...range, step_seconds: 0 },
     ]) {
       const result = await client.callTool({
         name: "query_logs",
@@ -313,21 +334,4 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
   });
   expect(JSON.stringify(result)).not.toContain("PRIVATE");
   expect(JSON.stringify(result)).toContain("CrashLoopBackOff");
-});
-it("filters both flat and nested correlation IDs", () => {
-  const query = logQuery({
-    service: "gateway",
-    limit: 10,
-    ...range,
-    generation_id: "c6390e68-499d-4f28-8243-05e5bbdf224f",
-  });
-  expect(query).toContain(
-    ".root_generation_id .span_generation_id .fields_generation_id",
-  );
-});
-
-it("uses a bounded severity selector for warning aliases", () => {
-  expect(
-    logQuery({ service: "api", level: "warn", limit: 10, ...range }),
-  ).toContain('level=~"(?i)warn|warning"');
 });

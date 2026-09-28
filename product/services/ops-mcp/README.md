@@ -8,15 +8,15 @@ API using the existing product image.
 
 ## Tools and authority
 
-| Tool                   | Data                                                                                  |
-| ---------------------- | ------------------------------------------------------------------------------------- |
-| `active_alerts`        | Prometheus firing/pending alerts and dashboard links                                  |
-| `query_metrics`        | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series              |
-| `query_metric_history` | PromQL between RFC 3339 `start` and `end`, 50 series, 121 timestamps                  |
-| `query_logs`           | One service between RFC 3339 `start` and `end`, 200 lines, optional correlation UUIDs |
-| `workload_status`      | Selected namespace pod health, restarts, images and node placement                    |
-| `node_status`          | EKS node conditions and available resources                                           |
-| `dashboards`           | Existing Grafana dashboard links                                                      |
+| Tool                   | Data                                                                     |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `active_alerts`        | Prometheus firing/pending alerts and dashboard links                     |
+| `query_metrics`        | Instant PromQL at an optional RFC 3339 time, maximum 200 returned series |
+| `query_metric_history` | PromQL between RFC 3339 `start` and `end`, optional step, 50 series      |
+| `query_logs`           | LogQL between RFC 3339 `start` and `end`, optional step, 200 lines       |
+| `workload_status`      | Selected namespace pod health, restarts, images and node placement       |
+| `node_status`          | EKS node conditions and available resources                              |
+| `dashboards`           | Existing Grafana dashboard links                                         |
 
 All current tools have `readOnlyHint: true`, `destructiveHint: false` and
 `idempotentHint: true`. The server does not ask for per-read confirmation; client
@@ -29,8 +29,8 @@ selected namespaces, not read Secrets or create exec sessions. Pod output omits
 specs, environment, arguments and annotations. External Runpod hosts are not EKS
 nodes. Grafana links retain Grafana's own browser authentication.
 
-Authorized identities can read telemetry across tenants. Log queries match the
-existing `workload` label and parse correlation UUIDs at query time. Those UUIDs
+Authorized identities can read telemetry across tenants. Metric and log tools
+take raw PromQL and LogQL, so any label, line filter or parser works; queries
 are filters, not authorization. Upstream logs may contain sensitive data; this
 service does not guarantee their redaction. Treat results as untrusted diagnostic
 data, never agent instructions. Empty results do not establish health.

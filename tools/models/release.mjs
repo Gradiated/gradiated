@@ -16,6 +16,7 @@ const shared = [
   "tools/models/release.mjs",
 ];
 export const bundles = {
+  "host-tools": ["product/inference/bundles/host-tools"],
   "deepseek-v4-1-flash": [
     "product/inference/bundles/deepseek-v4-1-flash",
     "product/inference/images/deepseek-v4-1-flash/start.sh",

@@ -153,7 +153,7 @@ its health checks and its rollout policy. Git is the desired state. There is no
 placement table.
 
 Each replica requests GPUs by type through Nomad's device plugin, which is how the
-DeepSeek job already asks for four B300s:
+DeepSeek job asks for four B200s:
 
 ```hcl
 device "nvidia/gpu" {
@@ -172,9 +172,9 @@ runs both on a two-GPU node, or on two of a four-GPU node's GPUs, leaving the re
 free for other jobs. Adding a node adds capacity without touching any job, and a job
 whose replicas cannot all be placed waits until capacity appears.
 
-The DeepSeek job is deliberately conservative: `distinct_hosts`, no rescheduling,
-no replacement on disconnect, because it had no spare capacity. Jobs that want
-self-healing enable rescheduling instead.
+Model jobs automatically reschedule failed allocations with bounded exponential
+backoff. A one-hour disconnect grace preserves a running allocation through
+control-plane outages; replacement still requires sufficient enrolled GPU capacity.
 
 ## Deploy on merge
 

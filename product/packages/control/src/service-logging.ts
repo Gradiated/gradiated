@@ -17,6 +17,9 @@ export type ServiceLogFields = {
   attempt?: number;
   retry_ms?: number;
   signal?: string;
+  allocation_id?: string;
+  model_id?: string;
+  reason?: string;
   error?: unknown;
 };
 
@@ -64,6 +67,8 @@ export const createServiceLogger = (
       "loop",
       "dependency",
       "signal",
+      "reason",
+      "model_id",
     ] as const) {
       if (typeof fields[key] === "string")
         safe[key] = fields[key].slice(0, 256);
@@ -82,6 +87,7 @@ export const createServiceLogger = (
       "workspace_id",
       "api_key_id",
       "user_id",
+      "allocation_id",
     ] as const) {
       const value = fields[key];
       if (

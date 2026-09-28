@@ -2,6 +2,7 @@ import {
   createClickHouseRuntimeClient,
   createControlDatabase,
   createContentStore,
+  createNomadDeploymentStore,
   createTraceCleanup,
   createGenerationSettlementReader,
   createGenerationSettlementStore,
@@ -13,8 +14,13 @@ import {
   ingestionBoundaryMilliseconds,
   readConsumerGroupProgress,
 } from "./consumer-group.js";
-import { parseWorkerEnvironment } from "./environment.js";
+import {
+  parseNomadEnvironment,
+  parseWorkerEnvironment,
+} from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
+import { reconcileDeployments } from "./deployment-reconciliation.js";
+import { createNomadGet } from "./nomad-allocations.js";
 import { serviceLog } from "./logging.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
 import { runGenerationSettlementLoop } from "./settlement-loop.js";
@@ -135,6 +141,32 @@ if (environment.CONTENTS_BUCKET) {
           await cleanup();
           metrics.recordPass(
             "trace_cleanup",
+            (performance.now() - start) / 1000,
+          );
+          await markReady();
+          await sleep(5_000, signal);
+        }
+      },
+    }),
+  );
+}
+
+const nomad = parseNomadEnvironment(process.env);
+if (nomad) {
+  const store = createNomadDeploymentStore(database);
+  const get = createNomadGet(nomad);
+  supervisors.push(
+    supervise({
+      loop: "deployment_reconciliation",
+      readinessPath: "/tmp/gradiated-deployment-reconciliation-ready",
+      metrics,
+      signal,
+      run: async (markReady) => {
+        while (!signal.aborted) {
+          const start = performance.now();
+          await reconcileDeployments({ store, get, metrics });
+          metrics.recordPass(
+            "deployment_reconciliation",
             (performance.now() - start) / 1000,
           );
           await markReady();

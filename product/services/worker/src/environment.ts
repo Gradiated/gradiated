@@ -51,3 +51,18 @@ export type WorkerEnvironment = z.infer<typeof environmentSchema>;
 export const parseWorkerEnvironment = (
   environment: NodeJS.ProcessEnv,
 ): WorkerEnvironment => environmentSchema.parse(environment);
+
+const nomadEnvironmentSchema = z.object({
+  NOMAD_ADDR: z.url(),
+  NOMAD_TOKEN: z.string().min(1),
+  NOMAD_CA_PEM: z.string().min(1),
+  NOMAD_CLIENT_CERT_PEM: z.string().min(1),
+  NOMAD_CLIENT_KEY_PEM: z.string().min(1),
+});
+
+export type NomadEnvironment = z.infer<typeof nomadEnvironmentSchema>;
+
+export const parseNomadEnvironment = (
+  environment: NodeJS.ProcessEnv,
+): NomadEnvironment | null =>
+  environment.NOMAD_ADDR ? nomadEnvironmentSchema.parse(environment) : null;

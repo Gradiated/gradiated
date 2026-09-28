@@ -40,6 +40,22 @@ describe("worker metrics", () => {
     expect(body).not.toContain("generation_id");
   });
 
+  it("reports routed deployments and the last pass's unrouted allocations by reason", async () => {
+    const metrics = createMetrics();
+
+    metrics.recordReconciliation(2, { node_not_registered: 1 });
+    metrics.recordReconciliation(3, { model_not_in_catalog: 2 });
+    const body = await metrics.render();
+
+    expect(body).toContain(
+      'gradiated_worker_routed_deployments{service="worker"} 3',
+    );
+    expect(body).toContain(
+      'gradiated_worker_unrouted_allocations{reason="model_not_in_catalog",service="worker"} 2',
+    );
+    expect(body).not.toContain('reason="node_not_registered"');
+  });
+
   it("exports a consistent outstanding count and invalidates unknown lag", async () => {
     const metrics = createMetrics();
     vi.useFakeTimers({ now: 120_000 });

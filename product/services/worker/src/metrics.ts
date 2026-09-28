@@ -10,7 +10,10 @@ import {
 import { serviceLog } from "./logging.js";
 
 export type WorkerLoop =
-  "generation_ingestion" | "settlement" | "trace_cleanup";
+  | "generation_ingestion"
+  | "settlement"
+  | "trace_cleanup"
+  | "deployment_reconciliation";
 
 export type IngestionSource = "new" | "recovered";
 
@@ -29,6 +32,7 @@ const passOperation: Record<WorkerLoop, string> = {
   generation_ingestion: "consume_pass",
   settlement: "settlement_pass",
   trace_cleanup: "cleanup_pass",
+  deployment_reconciliation: "reconcile_pass",
 };
 
 const operationBuckets = [
@@ -43,6 +47,8 @@ export class WorkerMetrics {
   private readonly ingestionLag: Gauge<"kind">;
   private readonly ingestionMessages: Counter<"source">;
   private readonly ingestionDeletedMessages: Counter;
+  private readonly routedDeployments: Gauge;
+  private readonly unroutedAllocations: Gauge<"reason">;
   private readonly loopFailures: Counter<"loop">;
   private readonly loopLastSuccess: Gauge<"loop">;
   private readonly loopOperationDuration: Histogram<"loop" | "operation">;
@@ -124,6 +130,17 @@ export class WorkerMetrics {
       labelNames: ["kind"],
       registers: [this.registry],
     });
+    this.routedDeployments = new Gauge({
+      name: "gradiated_worker_routed_deployments",
+      help: "Model deployments the last reconciliation pass derived from Nomad allocations.",
+      registers: [this.registry],
+    });
+    this.unroutedAllocations = new Gauge({
+      name: "gradiated_worker_unrouted_allocations",
+      help: "Running model allocations the last reconciliation pass could not route, by reason.",
+      labelNames: ["reason"],
+      registers: [this.registry],
+    });
     this.settlementSlots = new Counter({
       name: "gradiated_worker_settlement_slots_total",
       help: "Five-minute settlement slots processed.",
@@ -176,6 +193,17 @@ export class WorkerMetrics {
       seconds,
     );
     this.loopLastSuccess.set({ loop }, Date.now() / 1_000);
+  }
+
+  recordReconciliation(
+    routed: number,
+    unrouted: Readonly<Record<string, number>>,
+  ): void {
+    this.routedDeployments.set(routed);
+    this.unroutedAllocations.reset();
+    for (const [reason, count] of Object.entries(unrouted)) {
+      this.unroutedAllocations.set({ reason }, count);
+    }
   }
 
   recordIngestedMessages(source: IngestionSource, count: number): void {

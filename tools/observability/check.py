@@ -354,6 +354,11 @@ def main():
             {'series': f'gradiated_collector_contents_rejected_total{{pod="collector-0",reason="{reason}"}}',
              'values': '0+5x30'}], rejecting if fires else None, [rejecting], eval_time='12m')
 
+    for name, value, fires in [('an allocation stays unrouted', 1, True), ('everything is routed', 0, False)]:
+        scenario(f'unrouted model allocations: {name}', [
+            {'series': 'gradiated_worker_unrouted_allocations{instance="a",reason="node_not_registered"}', 'values': f'{value}+0x30'},
+        ], 'ModelAllocationsUnrouted' if fires else None, ['ModelAllocationsUnrouted'], {'reason': 'node_not_registered'}, eval_time='12m')
+
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:
         scenario(name, [

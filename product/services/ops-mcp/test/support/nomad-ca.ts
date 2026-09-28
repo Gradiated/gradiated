@@ -1,16 +1,11 @@
-import "reflect-metadata";
-
-import { createPrivateKey, webcrypto } from "node:crypto";
+import { sign } from "node:crypto";
 
 import type { KMSClient } from "@aws-sdk/client-kms";
-import * as x509 from "@peculiar/x509";
 
 import type { CertificateSigner } from "../../src/nomad-certificates.js";
 
-const ecdsa = { name: "ECDSA", namedCurve: "P-256", hash: "SHA-256" };
-
 // Made with `openssl req -utf8`, which encodes names as UTF8String like the
-// production CA; the library's own encoding would hide an issuer mismatch.
+// production CA, so an issuer that is re-encoded rather than copied shows up.
 export const testCa = {
   certificate: `-----BEGIN CERTIFICATE-----
 MIIBhzCCAS2gAwIBAgIUQGGzFMccTr4736JAO1Vu5HPEfkYwCgYIKoZIzj0EAwIw
@@ -30,20 +25,8 @@ EHT4CLQtbAbnKT1M3/31kGs4NyGI0EuCQ0i0rEBv/9U1SdidJk0xBDso
 -----END PRIVATE KEY-----`,
 };
 
-const caKey = () =>
-  webcrypto.subtle.importKey(
-    "pkcs8",
-    createPrivateKey(testCa.privateKey).export({
-      type: "pkcs8",
-      format: "der",
-    }),
-    ecdsa,
-    false,
-    ["sign"],
-  );
-
-export const localSigner: CertificateSigner = async (data) =>
-  webcrypto.subtle.sign(ecdsa, await caKey(), data);
+export const localSigner: CertificateSigner = async (message) =>
+  sign("sha256", message, { key: testCa.privateKey, dsaEncoding: "der" });
 
 export const fakeKms = () => {
   const requests: {
@@ -62,13 +45,8 @@ export const fakeKms = () => {
     }) => {
       const { Message, ...request } = command.input;
       requests.push(request);
-      const raw = await localSigner(new Uint8Array(Message!).slice().buffer);
 
-      return {
-        Signature: new Uint8Array(
-          new x509.AsnEcSignatureFormatter().toAsnSignature(ecdsa, raw)!,
-        ),
-      };
+      return { Signature: await localSigner(Message!) };
     },
   } as unknown as KMSClient;
 

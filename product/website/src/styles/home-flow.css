@@ -64,6 +64,15 @@
   filter: none;
 }
 
+/* phones get the same gesture at half the wait: the column reveals as
+   you arrive, and a 0.9s+stagger entrance reads as lag at thumb speed */
+@media (max-width: 900px) {
+  .gr-enter {
+    transition-duration: 0.55s;
+    transition-delay: calc(var(--enter-delay, 0s) / 2);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gr-enter {
     opacity: 1;

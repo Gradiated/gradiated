@@ -103,9 +103,10 @@ on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations
 and the repository ARN. RunPod's v1 pod update also ignores
 `containerRegistryAuthId`, so a stored login would never reach the pod.
 The status list lives in memory, so a restart forgets it. Registering the machine
-again finishes the job: a running machine that already carries this instance's
-bootstrap is resumed without a reset, and registration waits for its node and
-binds it.
+again finishes the job: a running machine that carries this instance's
+bootstrap but whose node is not yet bound is resumed without a reset, and
+registration waits for its node and binds it. A machine that is already
+registered is refused, because renewing it needs `reset_running_pod`.
 
 RunPod is the first provider. Setting the image resets the pod and also declares
 the host proxy port, 8888; model weights belong on a volume. Registration adopts

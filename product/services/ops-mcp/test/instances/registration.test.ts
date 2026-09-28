@@ -221,6 +221,27 @@ describe("instance registration", () => {
     ]);
   });
 
+  it("refuses to pretend an already registered machine was renewed", async () => {
+    const test = setup({
+      stopped: false,
+      boundNodeId: BOUND_NODE,
+      machineEnvironment: carriedEnvironment,
+      nodeAlreadyJoined: true,
+    });
+
+    const finished = await settled(
+      test.registrations,
+      (await test.registrations.start(request)).id,
+    );
+
+    expect(finished).toMatchObject({
+      phase: "failed",
+      error: expect.stringContaining("is already registered"),
+    });
+    expect(test.bootstraps).toEqual([]);
+    expect(test.bindNomadNode).not.toHaveBeenCalled();
+  });
+
   it("will not resume a machine carrying another instance's bootstrap", async () => {
     const test = setup({
       stopped: false,

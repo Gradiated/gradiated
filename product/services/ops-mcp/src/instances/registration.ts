@@ -130,6 +130,12 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
             "register it again with an authorized reset",
         );
       }
+      if (record.nomadNodeId === carried.nomadNodeId) {
+        throw new Error(
+          `${registration.providerInstanceId} is already registered as node ${carried.nomadNodeId}; ` +
+            "renewing its certificate or image needs reset_running_pod",
+        );
+      }
 
       advance(registration, "waiting_for_node", {
         instanceId: record.id,

@@ -18,6 +18,7 @@ export type ServiceLogFields = {
   retry_ms?: number;
   signal?: string;
   allocation_id?: string;
+  deployment_id?: string;
   model_id?: string;
   reason?: string;
   error?: unknown;
@@ -88,6 +89,7 @@ export const createServiceLogger = (
       "api_key_id",
       "user_id",
       "allocation_id",
+      "deployment_id",
     ] as const) {
       const value = fields[key];
       if (

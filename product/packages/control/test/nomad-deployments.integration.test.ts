@@ -172,6 +172,21 @@ describe("Nomad deployment reconciliation", () => {
     expect(await deploymentsOf(running.allocationId)).toHaveLength(1);
   });
 
+  it("lists available Nomad replicas and nothing it does not own", async () => {
+    const running = allocation();
+    const stopping = allocation({ draining: true });
+    await store.reconcile(nomad([running, stopping]));
+    await catalog.upsertModelDeployment(deploymentInput(modelId));
+
+    expect(await store.replicas()).toEqual([
+      {
+        id: running.allocationId,
+        modelId,
+        release: running.release,
+      },
+    ]);
+  });
+
   it("reports allocations it cannot route instead of failing the pass", async () => {
     const unregistered = allocation({ nodeId: randomUUID() });
     const uncatalogued = allocation({ modelId: `test/${randomUUID()}` });

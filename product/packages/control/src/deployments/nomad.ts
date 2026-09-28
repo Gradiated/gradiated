@@ -1,5 +1,13 @@
 import type { ModelDeploymentRelease } from "@gradiated/contracts";
-import { and, inArray, isNotNull, isNull, notInArray, sql } from "drizzle-orm";
+import {
+  and,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  notInArray,
+  sql,
+} from "drizzle-orm";
 
 import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";
@@ -32,9 +40,16 @@ export interface NomadView {
   isGone(allocationId: string): Promise<boolean>;
 }
 
+export interface NomadReplica {
+  readonly id: string;
+  readonly modelId: string;
+  readonly release: ModelDeploymentRelease;
+}
+
 export interface NomadDeploymentStore {
   /** Returns null when another worker is running the pass. */
   reconcile(nomad: NomadView): Promise<ReconcileResult | null>;
+  replicas(): Promise<NomadReplica[]>;
 }
 
 const PASS_LOCK = "gradiated-nomad-deployments-v1";
@@ -56,6 +71,21 @@ const hostProxyUrl = (instance: Instance): string | null => {
 export const createNomadDeploymentStore = (
   database: ControlDatabase,
 ): NomadDeploymentStore => ({
+  replicas: () =>
+    database
+      .select({
+        id: modelDeployments.id,
+        modelId: modelDeployments.modelId,
+        release: modelDeployments.release,
+      })
+      .from(modelDeployments)
+      .where(
+        and(
+          isNotNull(modelDeployments.instanceId),
+          eq(modelDeployments.status, "available"),
+        ),
+      ),
+
   reconcile: (nomad) =>
     database.transaction(async (tx) => {
       const {

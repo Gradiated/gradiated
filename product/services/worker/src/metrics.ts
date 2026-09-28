@@ -49,6 +49,8 @@ export class WorkerMetrics {
   private readonly ingestionDeletedMessages: Counter;
   private readonly routedDeployments: Gauge;
   private readonly unroutedAllocations: Gauge<"reason">;
+  private readonly modelReplicas: Gauge<"model">;
+  private readonly modelReadyReplicas: Gauge<"model">;
   private readonly loopFailures: Counter<"loop">;
   private readonly loopLastSuccess: Gauge<"loop">;
   private readonly loopOperationDuration: Histogram<"loop" | "operation">;
@@ -141,6 +143,18 @@ export class WorkerMetrics {
       labelNames: ["reason"],
       registers: [this.registry],
     });
+    this.modelReplicas = new Gauge({
+      name: "gradiated_worker_model_replicas",
+      help: "Available Nomad-managed replicas per model.",
+      labelNames: ["model"],
+      registers: [this.registry],
+    });
+    this.modelReadyReplicas = new Gauge({
+      name: "gradiated_worker_model_ready_replicas",
+      help: "Nomad-managed replicas per model with a fresh, healthy status for their release.",
+      labelNames: ["model"],
+      registers: [this.registry],
+    });
     this.settlementSlots = new Counter({
       name: "gradiated_worker_settlement_slots_total",
       help: "Five-minute settlement slots processed.",
@@ -203,6 +217,17 @@ export class WorkerMetrics {
     this.unroutedAllocations.reset();
     for (const [reason, count] of Object.entries(unrouted)) {
       this.unroutedAllocations.set({ reason }, count);
+    }
+  }
+
+  recordReplicaReadiness(
+    byModel: Readonly<Record<string, { replicas: number; ready: number }>>,
+  ): void {
+    this.modelReplicas.reset();
+    this.modelReadyReplicas.reset();
+    for (const [model, { replicas, ready }] of Object.entries(byModel)) {
+      this.modelReplicas.set({ model }, replicas);
+      this.modelReadyReplicas.set({ model }, ready);
     }
   }
 

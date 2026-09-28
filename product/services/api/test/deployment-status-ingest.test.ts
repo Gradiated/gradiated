@@ -126,18 +126,30 @@ describe("deployment status ingestion", () => {
     { code: "deployment_not_found", status: 404 },
     { code: "provider_mismatch", status: 403 },
     { code: "runtime_revision_mismatch", status: 403 },
-  ] as const)("maps $code to $status", async ({ code, status }) => {
-    const app = createIngestApp({
-      report: async () => {
-        throw new DeploymentStatusError(code);
-      },
-    });
+  ] as const)(
+    "maps $code to $status and logs why",
+    async ({ code, status }) => {
+      const logs = captureServiceLogs();
+      const payload = report();
+      const app = createIngestApp({
+        report: async () => {
+          throw new DeploymentStatusError(code);
+        },
+      });
 
-    const response = await send(app, JSON.stringify(report()));
+      const response = await send(app, JSON.stringify(payload));
 
-    expect(response.status).toBe(status);
-    await expect(response.json()).resolves.toEqual({ error: code });
-  });
+      expect(response.status).toBe(status);
+      await expect(response.json()).resolves.toEqual({ error: code });
+      expect(logs.events()).toEqual([
+        expect.objectContaining({
+          event: "deployment_status_rejected",
+          deployment_id: payload.deployment_id,
+          reason: code,
+        }),
+      ]);
+    },
+  );
 
   it("logs an unexpected service failure and returns a bounded error", async () => {
     const logs = captureServiceLogs();

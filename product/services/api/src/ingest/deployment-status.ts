@@ -13,6 +13,7 @@ import {
   readJsonBody,
   tokenMatches,
 } from "./http.js";
+import { serviceLog } from "../logging.js";
 
 interface DeploymentStatusIngestDependencies {
   tokens: ReadonlyMap<string, string>;
@@ -68,6 +69,10 @@ export const createDeploymentStatusIngestApp = ({
       } catch (error) {
         if (!(error instanceof DeploymentStatusError)) throw error;
 
+        serviceLog("warn", "deployment_status_rejected", {
+          deployment_id: parsed.data.deployment_id,
+          reason: error.code,
+        });
         return context.json({ error: error.code }, failureStatus[error.code]);
       }
 

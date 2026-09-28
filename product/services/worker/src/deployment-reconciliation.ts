@@ -2,6 +2,7 @@ import type { NomadDeploymentStore } from "@gradiated/control";
 
 import { serviceLog } from "./logging.js";
 import type { WorkerMetrics } from "./metrics.js";
+import { countReadyReplicas } from "./replica-readiness.js";
 import {
   allocationIsGone,
   readModelAllocations,
@@ -13,6 +14,26 @@ export interface DeploymentReconciliation {
   readonly get: NomadGet;
   readonly metrics: Pick<WorkerMetrics, "recordReconciliation">;
 }
+
+export interface ReplicaReadiness {
+  readonly store: Pick<NomadDeploymentStore, "replicas">;
+  readonly valkey: {
+    hGetAll(key: string): Promise<Record<string, string>>;
+  };
+  readonly metrics: Pick<WorkerMetrics, "recordReplicaReadiness">;
+}
+
+export const observeReplicaReadiness = async ({
+  store,
+  valkey,
+  metrics,
+}: ReplicaReadiness): Promise<void> => {
+  metrics.recordReplicaReadiness(
+    await countReadyReplicas(await store.replicas(), (digest) =>
+      valkey.hGetAll(`deployment-status:{${digest}}`),
+    ),
+  );
+};
 
 export const reconcileDeployments = async ({
   store,

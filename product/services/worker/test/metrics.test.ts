@@ -56,6 +56,22 @@ describe("worker metrics", () => {
     expect(body).not.toContain('reason="node_not_registered"');
   });
 
+  it("reports replicas and ready replicas per model and drops models that are gone", async () => {
+    const metrics = createMetrics();
+
+    metrics.recordReplicaReadiness({ "vendor/old": { replicas: 1, ready: 1 } });
+    metrics.recordReplicaReadiness({ "kev/kev-9b": { replicas: 2, ready: 0 } });
+    const body = await metrics.render();
+
+    expect(body).toContain(
+      'gradiated_worker_model_replicas{model="kev/kev-9b",service="worker"} 2',
+    );
+    expect(body).toContain(
+      'gradiated_worker_model_ready_replicas{model="kev/kev-9b",service="worker"} 0',
+    );
+    expect(body).not.toContain("vendor/old");
+  });
+
   it("exports a consistent outstanding count and invalidates unknown lag", async () => {
     const metrics = createMetrics();
     vi.useFakeTimers({ now: 120_000 });

@@ -359,6 +359,21 @@ def main():
             {'series': 'gradiated_worker_unrouted_allocations{instance="a",reason="node_not_registered"}', 'values': f'{value}+0x30'},
         ], 'ModelAllocationsUnrouted' if fires else None, ['ModelAllocationsUnrouted'], {'reason': 'node_not_registered'}, eval_time='12m')
 
+    for name, ready, fires in [('none ready', 0, True), ('one ready', 1, False)]:
+        scenario(f'model replicas: {name}', [
+            {'series': 'gradiated_worker_model_replicas{instance="a",model="kev/kev-9b"}', 'values': '2+0x80'},
+            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': f'{ready}+0x80'},
+        ], 'ModelReplicasNeverReady' if fires else None, ['ModelReplicasNeverReady'], {'model': 'kev/kev-9b'}, eval_time='35m')
+
+    route = 'route="/v1/deployment-status"'
+    for name, values, fires in [
+        ('continuous rejections', '0+60x30', True),
+        ('a short burst while a new replica registers', '0+5x2 10+0x28', False),
+    ]:
+        scenario(f'status reports rejected: {name}', [
+            {'series': f'gradiated_api_http_requests_total{{instance="a",method="POST",{route},status="404"}}', 'values': values},
+        ], 'DeploymentStatusRejected' if fires else None, ['DeploymentStatusRejected'], {'status': '404'}, eval_time='14m')
+
     leader_alert = 'SettlementLeaderMissing'
     for name, leader_value, fires in [('no leader', 0, True), ('leader exists', 1, False)]:
         scenario(name, [

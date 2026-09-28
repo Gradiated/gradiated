@@ -111,6 +111,7 @@ export {
   createNomadDeploymentStore,
   type NomadAllocation,
   type NomadDeploymentStore,
+  type NomadReplica,
   type NomadView,
   type ReconcileResult,
 } from "./deployments/nomad.js";

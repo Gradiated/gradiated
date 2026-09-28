@@ -19,7 +19,10 @@ import {
   parseWorkerEnvironment,
 } from "./environment.js";
 import { runGenerationIngestionLoop } from "./generation-ingestion-loop.js";
-import { reconcileDeployments } from "./deployment-reconciliation.js";
+import {
+  observeReplicaReadiness,
+  reconcileDeployments,
+} from "./deployment-reconciliation.js";
 import { createNomadGet } from "./nomad-allocations.js";
 import { serviceLog } from "./logging.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
@@ -165,6 +168,11 @@ if (nomad) {
         while (!signal.aborted) {
           const start = performance.now();
           await reconcileDeployments({ store, get, metrics });
+          await observeReplicaReadiness({
+            store,
+            valkey: settlementValkey,
+            metrics,
+          });
           metrics.recordPass(
             "deployment_reconciliation",
             (performance.now() - start) / 1000,

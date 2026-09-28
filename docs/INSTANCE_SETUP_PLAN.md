@@ -260,3 +260,22 @@ Each step is its own pull request.
 - Whether RunPod machines should move under Terraform. Until then the instance row
   is the record.
 - Rescheduling and disconnect policy per job, once a node has spare GPUs.
+
+### Replica availability alerts
+
+Git's committed Nomad jobs also define the expected serving capacity, independent
+of allocations and worker observations. After changing model jobs or replica
+counts, run `node tools/nomad/model-replica-rules.mjs` and commit the generated
+PrometheusRule with the job. Nomad validation rejects stale generated rules.
+Argo deploys the rules; the worker dashboard shows desired, routed and ready counts.
+
+`ModelNoReadyReplicas` is critical after five minutes with no fresh ready replica,
+including missing jobs, unschedulable allocations and absent readiness metrics.
+`ModelUnderReplicated` warns after ten minutes with some capacity but fewer ready
+replicas than Git requires. An intentionally disabled model has zero replicas in
+Git; keeping a catalog entry does not require a serving job. A queued deployment
+with a positive desired count remains an actionable capacity deficit.
+
+Cold starts longer than five minutes will alert when no existing replica serves.
+Preserve healthy capacity through rollouts; do not silence readiness failures by
+changing desired counts. Worker telemetry and loop alerts diagnose missing data.

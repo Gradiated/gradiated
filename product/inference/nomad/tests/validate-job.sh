@@ -33,3 +33,5 @@ for vars in "$root/jobs"/*.vars.hcl; do
     exit 1
   }
 done
+
+node "$root/../../../tools/nomad/model-replica-rules.mjs" --check

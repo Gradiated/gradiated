@@ -26,7 +26,7 @@ def main():
         parser.error('promtool is required')
     dashboards = {d['uid']: d for p in OBS.glob('*.json')
                   if (d := json.loads(p.read_text()))}
-    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml')
+    groups = [g for name in ('prometheus-rules.yaml', 'logging-prometheus-rules.yaml', 'controller-prometheus-rules.yaml', 'autoscaling-prometheus-rules.yaml', 'model-replica-rules.yaml')
               for g in yaml.safe_load((OBS / name).read_text())['spec']['groups']]
     alerts = {rule['alert']: rule for group in groups for rule in group['rules'] if 'alert' in rule}
     for name, rule in alerts.items():
@@ -384,11 +384,21 @@ def main():
             {'series': 'gradiated_worker_unrouted_allocations{instance="a",reason="node_not_registered"}', 'values': f'{value}+0x30'},
         ], 'ModelAllocationsUnrouted' if fires else None, ['ModelAllocationsUnrouted'], {'reason': 'node_not_registered'}, eval_time='12m')
 
-    for name, ready, fires in [('none ready', 0, True), ('one ready', 1, False)]:
-        scenario(f'model replicas: {name}', [
-            {'series': 'gradiated_worker_model_replicas{instance="a",model="kev/kev-9b"}', 'values': '2+0x80'},
-            {'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': f'{ready}+0x80'},
-        ], 'ModelReplicasNeverReady' if fires else None, ['ModelReplicasNeverReady'], {'model': 'kev/kev-9b'}, eval_time='35m')
+    for name, desired, ready, expected, duration in [
+        ('healthy', 2, '2+0x80', None, '15m'),
+        ('zero allocations and no readiness series', 2, None, 'ModelNoReadyReplicas', '6m'),
+        ('running but not ready', 2, '0+0x80', 'ModelNoReadyReplicas', '6m'),
+        ('missing job after serving', 2, '2+0x4 stale', 'ModelNoReadyReplicas', '10m'),
+        ('partial capacity', 2, '1+0x80', 'ModelUnderReplicated', '11m'),
+        ('brief restart', 2, '2+0x4 0+0x4 2+0x70', None, '15m'),
+        ('recovered', 2, '0+0x20 2+0x60', None, '15m'),
+        ('disabled in Git', 0, None, None, '15m'),
+    ]:
+        inputs = [{'series': 'gradiated_model_desired_replicas{model="kev/kev-9b",nomad_job="kev"}', 'values': f'{desired}+0x80'}]
+        if ready is not None:
+            inputs.append({'series': 'gradiated_worker_model_ready_replicas{instance="a",model="kev/kev-9b"}', 'values': ready})
+        scenario('model replicas: ' + name, inputs, expected,
+                 ['ModelNoReadyReplicas', 'ModelUnderReplicated'], {'model': 'kev/kev-9b'}, duration)
 
     route = 'route="/v1/deployment-status"'
     for name, values, fires in [
@@ -455,8 +465,9 @@ def main():
         (temp / 'rules.yaml').write_text(yaml.safe_dump({'groups': groups}))
         (temp / 'charts.yaml').write_text(yaml.safe_dump({
             'groups': [{'name': 'dashboard_syntax', 'rules': chart_rules}]}))
+        (temp / 'test-rules.yaml').write_text(yaml.safe_dump({'groups': [g for g in groups if g['name'] != 'gradiated.models.desired']}))
         (temp / 'tests.yaml').write_text(yaml.safe_dump({
-            'rule_files': ['rules.yaml'], 'evaluation_interval': '30s', 'tests': tests}))
+            'rule_files': ['test-rules.yaml'], 'evaluation_interval': '30s', 'tests': tests}))
         subprocess.run([args.promtool, 'check', 'rules', str(temp / 'rules.yaml'),
                         str(temp / 'charts.yaml')], check=True)
         subprocess.run([args.promtool, 'test', 'rules', str(temp / 'tests.yaml')], check=True)

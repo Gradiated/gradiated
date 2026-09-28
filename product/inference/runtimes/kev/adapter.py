@@ -6,6 +6,7 @@ import asyncio
 import dataclasses
 import hashlib
 import hmac
+import importlib.metadata
 import importlib.util
 import json
 import logging
@@ -195,6 +196,7 @@ class App:
         self.token_digest = hashlib.sha256(token).digest() if token is not None else None
         self.slot = threading.Lock()
         self.tasks = set()
+        self.busy_rejections = 0
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "lifespan":
@@ -210,11 +212,14 @@ class App:
             return await respond_json(send, 200, {"status": "ok", "model": self.engine.model})
         if path == "/v1/models" and method == "GET":
             return await respond_json(send, 200, {"models": [{"id": self.engine.model}]})
+        if path == "/metrics" and method == "GET":
+            return await respond_text(send, 200, self._metrics())
         if path != "/v1/systemone":
             return await respond_error(send, 404, "not found")
         if method != "POST":
             return await respond_error(send, 405, "method not allowed")
         if not self.slot.acquire(blocking=False):
+            self.busy_rejections += 1
             return await respond_error(send, 429, "runtime busy")
 
         transferred = False
@@ -239,6 +244,14 @@ class App:
                     await asyncio.gather(*self.tasks, return_exceptions=True)
                 await send({"type": "lifespan.shutdown.complete"})
                 return
+
+    def _metrics(self):
+        return (
+            "# TYPE kev_busy gauge\n"
+            f"kev_busy {int(self.slot.locked())}\n"
+            "# TYPE kev_busy_rejections_total counter\n"
+            f"kev_busy_rejections_total {self.busy_rejections}\n"
+        )
 
     def _authorized(self, headers):
         if self.token_digest is None:
@@ -326,23 +339,40 @@ async def respond_json(send, status, payload):
     await send({"type": "http.response.body", "body": body})
 
 
+async def respond_text(send, status, text):
+    body = text.encode()
+    headers = [(b"content-type", b"text/plain; version=0.0.4"), (b"content-length", str(len(body)).encode())]
+    await send({"type": "http.response.start", "status": status, "headers": headers})
+    await send({"type": "http.response.body", "body": body})
+
+
 async def respond_error(send, status, message):
     await respond_json(send, status, {"error": {"message": message}})
 
 
-def verify_source(root, commit, allow_unpinned):
-    """Verify the checkout matches the pinned upstream commit and is clean.
+def installed_commit():
+    """The commit pip records (PEP 610) when Kev is installed from Git."""
+    try:
+        recorded = importlib.metadata.distribution("kev").read_text("direct_url.json")
+    except importlib.metadata.PackageNotFoundError:
+        return None
 
-    An installed copy has no checkout to verify, so the pin has to be enforced where
-    the image is built instead. That is a real weakening, so it must be asked for.
+    return json.loads(recorded or "{}").get("vcs_info", {}).get("commit_id")
+
+
+def verify_source(root, commit, allow_unpinned, installed=None):
+    """Verify Kev is the pinned upstream commit: a clean checkout, or installed from Git.
+
+    Any other installed copy has nothing to verify, so accepting one is a real
+    weakening that must be asked for.
     """
     if not (root / ".git").is_dir():
-        if not allow_unpinned:
-            raise RuntimeError(
-                "no Kev source checkout to verify; the caller must pin the source at "
-                "build time and pass --allow-unpinned-source"
-            )
-        return
+        if installed == commit or allow_unpinned:
+            return
+        raise RuntimeError(
+            "Kev is neither a checkout nor installed from Git at the pinned commit; "
+            "pin the source at build time and pass --allow-unpinned-source"
+        )
     head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
     dirty = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain", "--", "kev"], text=True)
     if head != commit or dirty:
@@ -355,7 +385,8 @@ def load_engine(release=None):
     if spec is None or spec.origin is None:
         raise RuntimeError("Kev is not importable")
 
-    verify_source(Path(spec.origin).resolve().parent.parent, release.upstream_commit, release.allow_unpinned)
+    verify_source(Path(spec.origin).resolve().parent.parent, release.upstream_commit,
+                  release.allow_unpinned, installed_commit())
     import torch
     from kev import api
     from kev.checkpoint import Checkpoint, LoadOptions

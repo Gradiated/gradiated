@@ -9,17 +9,21 @@ import {
 } from "node:fs";
 import { pathToFileURL } from "node:url";
 
-export const bundleInputs = [
-  "product/inference/bundles/deepseek-v4-1-flash/Dockerfile",
-  "product/inference/bundles/deepseek-v4-1-flash/package.sh",
-  "product/inference/bundles/deepseek-v4-1-flash/extract-dependencies.sh",
-  "product/inference/bundles/deepseek-v4-1-flash/entrypoint",
-  "product/inference/bundles/deepseek-v4-1-flash/vllm",
-  "product/inference/images/deepseek-v4-1-flash/start.sh",
+const shared = [
+  "product/inference/bundles/package.sh",
   "product/inference/images/nomad-base/base-id",
-  "product/inference/.dockerignore",
   "tools/models/release.mjs",
 ];
+export const bundles = {
+  "deepseek-v4-1-flash": [
+    "product/inference/bundles/deepseek-v4-1-flash",
+    "product/inference/images/deepseek-v4-1-flash/start.sh",
+  ],
+  "kev-9b": [
+    "product/inference/bundles/kev-9b",
+    "product/inference/runtimes/kev/adapter.py",
+  ],
+};
 export const inputDigest = (baseImage, tree) => {
   if (!/@sha256:[0-9a-f]{64}$/.test(baseImage))
     throw new Error("A pinned base image is required");
@@ -53,16 +57,21 @@ const fileDigest = async (file) => {
 };
 
 const main = async () => {
-  const [command, source, baseImage, bucket] = process.argv.slice(2);
+  const [command, bundle, source, baseImage, bucket] = process.argv.slice(2);
+  if (command === "list") {
+    console.log(JSON.stringify(Object.keys(bundles)));
+    return;
+  }
+  if (!Object.hasOwn(bundles, bundle)) throw new Error(`Unknown bundle ${bundle}`);
   if (!/^[0-9a-f]{40}$/.test(source))
     throw new Error("Invalid source revision");
   const tree = execFileSync(
     "git",
-    ["ls-tree", "-r", source, "--", ...bundleInputs],
+    ["ls-tree", "-r", source, "--", ...shared, ...bundles[bundle]],
     { encoding: "utf8" },
   );
   const identity = inputDigest(baseImage, tree);
-  const key = `releases/deepseek-v4-1-flash/${identity}.json`;
+  const key = `releases/${bundle}/${identity}.json`;
   mkdirSync("model-release", { recursive: true });
   if (command === "lookup") {
     const result = spawnSync(
@@ -116,7 +125,7 @@ const main = async () => {
       "--only-show-errors",
     );
   } else {
-    throw new Error("Expected lookup or publish");
+    throw new Error("Expected list, lookup or publish");
   }
 };
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();

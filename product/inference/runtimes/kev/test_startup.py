@@ -116,11 +116,31 @@ class SourceVerificationTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "clean pinned"):
             adapter.verify_source(self.root, commit, False)
 
+    def test_git_install_at_the_pinned_commit_passes(self):
+        adapter.verify_source(self.root, "a" * 40, False, installed="a" * 40)
+
+    def test_git_install_at_another_commit_fails(self):
+        with self.assertRaisesRegex(RuntimeError, "pinned commit"):
+            adapter.verify_source(self.root, "a" * 40, False, installed="b" * 40)
+
     def test_missing_checkout_requires_an_explicit_weakening(self):
         with self.assertRaisesRegex(RuntimeError, "--allow-unpinned-source"):
             adapter.verify_source(self.root, "0" * 40, False)
 
         adapter.verify_source(self.root, "0" * 40, True)
+
+    def test_installed_commit_is_read_from_the_git_install_record(self):
+        record = '{"url": "https://github.com/jaredpalmer/kev", "vcs_info": {"vcs": "git", "commit_id": "%s"}}'
+        distribution = mock.Mock(read_text=mock.Mock(return_value=record % ("a" * 40)))
+
+        with mock.patch("importlib.metadata.distribution", return_value=distribution):
+            self.assertEqual(adapter.installed_commit(), "a" * 40)
+
+    def test_installed_commit_is_absent_without_a_git_install(self):
+        distribution = mock.Mock(read_text=mock.Mock(return_value=None))
+
+        with mock.patch("importlib.metadata.distribution", return_value=distribution):
+            self.assertIsNone(adapter.installed_commit())
 
     def test_missing_kev_package_fails_before_any_kev_code_runs(self):
         with mock.patch("importlib.util.find_spec", return_value=None):
@@ -135,5 +155,5 @@ class SourceVerificationTests(unittest.TestCase):
         isolated = mock.patch.dict(sys.modules, modules, clear=True)
         on_path = mock.patch.object(sys, "path", [str(self.root), *sys.path])
 
-        with isolated, on_path, self.assertRaisesRegex(RuntimeError, "no Kev source checkout"):
+        with isolated, on_path, self.assertRaisesRegex(RuntimeError, "neither a checkout"):
             adapter.load_engine()

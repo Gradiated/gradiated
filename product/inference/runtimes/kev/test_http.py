@@ -33,7 +33,7 @@ class AuthTests(unittest.IsolatedAsyncioTestCase):
         self.app = adapter.App(engine(), TOKEN)
 
     async def test_missing_token_is_rejected_on_every_route(self):
-        for path, method in (("/health", "GET"), ("/v1/models", "GET"), ("/v1/systemone", "POST")):
+        for path, method in (("/health", "GET"), ("/v1/models", "GET"), ("/metrics", "GET"), ("/v1/systemone", "POST")):
             with self.subTest(path):
                 status, body = await call(self.app, request(), path=path, method=method, headers=[JSON])
                 self.assertEqual((status, body), (401, {"error": {"message": "unauthorized"}}))
@@ -68,6 +68,13 @@ class RouteTests(unittest.IsolatedAsyncioTestCase):
         response = await call(self.app, path="/v1/models", method="GET")
 
         self.assertEqual(response, (200, {"models": [{"id": adapter.MODEL}]}))
+
+    async def test_metrics_report_an_idle_runtime(self):
+        sent = await exchange(self.app, path="/metrics", method="GET")
+
+        self.assertEqual(sent[0]["status"], 200)
+        self.assertIn(b"kev_busy 0\n", sent[1]["body"])
+        self.assertIn(b"kev_busy_rejections_total 0\n", sent[1]["body"])
 
     async def test_unknown_path_is_not_found(self):
         self.assertEqual((await call(self.app, request(), path="/v1/chat/completions"))[0], 404)
@@ -182,6 +189,13 @@ class AdmissionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_health_stays_responsive_while_busy(self):
         self.assertEqual((await call(self.app, path="/health", method="GET"))[0], 200)
+
+    async def test_metrics_report_the_busy_slot_and_rejections(self):
+        await exchange(self.app, request())
+
+        body = (await exchange(self.app, path="/metrics", method="GET"))[1]["body"]
+        self.assertIn(b"kev_busy 1\n", body)
+        self.assertIn(b"kev_busy_rejections_total 1\n", body)
 
 
 class InferenceErrorTests(unittest.IsolatedAsyncioTestCase):

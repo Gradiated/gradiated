@@ -192,11 +192,14 @@ impl RequestCoordinator {
         }
 
         for (index, digest) in releases.into_iter().rev() {
-            let statuses = self
+            let statuses: Vec<_> = self
                 .serving_state
                 .deployment_statuses(&digest)
                 .await
-                .map_err(state_unavailable("deployment_status_read"))?;
+                .map_err(state_unavailable("deployment_status_read"))?
+                .into_iter()
+                .filter(|status| status.accepting_requests)
+                .collect();
             let candidates: Vec<_> = model
                 .deployments
                 .iter()

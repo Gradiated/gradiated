@@ -331,10 +331,11 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
     use crate::test_support::metadata;
     use crate::{DeploymentRuntimeStatus, DeploymentStatus};
 
-    for (old_ready, new_ready, expected_revision) in [
-        (true, false, "old"),
-        (true, true, "new"),
-        (false, true, "new"),
+    for (old_ready, new_ready, new_accepting, expected_revision) in [
+        (true, false, false, "old"),
+        (true, true, true, "new"),
+        (true, true, false, "old"),
+        (false, true, true, "new"),
     ] {
         let mut state = TestServingState::ready();
         let model = state.model.as_mut().unwrap();
@@ -355,7 +356,8 @@ async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
                     runtime_revision: deployment.release.runtime_revision.clone(),
                     received_at: metadata().received_at,
                     healthy: ready,
-                    accepting_requests: ready,
+                    accepting_requests: ready
+                        && (deployment.release.runtime_revision == "old" || new_accepting),
                     reason_code: None,
                 })
                 .collect(),

@@ -12,6 +12,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.js
 COPY packages/config/package.json ./packages/config/package.json
 COPY packages/contracts/package.json ./packages/contracts/package.json
 COPY packages/control/package.json ./packages/control/package.json
+COPY packages/nomad-pki/package.json ./packages/nomad-pki/package.json
 COPY packages/valkey/package.json ./packages/valkey/package.json
 COPY services/api/package.json ./services/api/package.json
 COPY services/console/package.json ./services/console/package.json

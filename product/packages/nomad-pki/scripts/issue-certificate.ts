@@ -9,7 +9,7 @@ import {
   kmsSigner,
   serverProfile,
   type CertificateProfile,
-} from "../src/nomad-certificates.js";
+} from "../src/certificates.js";
 
 const profiles: Record<string, CertificateProfile> = {
   host: hostProfile,
@@ -30,7 +30,7 @@ const { values } = parseArgs({
 const profile = profiles[values.role ?? ""];
 if (!profile || !values.ca || !values.out) {
   throw new Error(
-    `Usage: nomad:certificate --role <${Object.keys(profiles).join("|")}> ` +
+    `Usage: certificate --role <${Object.keys(profiles).join("|")}> ` +
       "--ca <ca.pem> --out <new directory> [--kms-key <key id or alias>]",
   );
 }

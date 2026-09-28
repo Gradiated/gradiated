@@ -6,7 +6,7 @@ import {
   hostProfile,
   issueCertificate,
   type CertificateSigner,
-} from "../nomad-certificates.js";
+} from "@gradiated/nomad-pki";
 import {
   hostBootstrapEnvironment,
   nodeName,

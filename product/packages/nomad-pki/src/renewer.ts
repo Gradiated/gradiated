@@ -5,8 +5,8 @@ import path from "node:path";
 import { Gauge, Registry } from "prom-client";
 import { z } from "zod";
 
-import { expiryTimestamp, renewFilesIfDue } from "./certificate-renewal.js";
-import { cliProfile, kmsSigner, serverProfile } from "./nomad-certificates.js";
+import { expiryTimestamp, renewFilesIfDue } from "./renewal.js";
+import { cliProfile, kmsSigner, serverProfile } from "./certificates.js";
 
 const CHECK_INTERVAL_MS = 15 * 60 * 1000;
 const RETRY_INTERVAL_MS = 60 * 1000;

@@ -110,10 +110,16 @@ done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 
 in_container nomad alloc stop -detach "${allocs[0]}" >/dev/null
+consecutive_removed=0
 for _ in {1..60}; do
-  [[ $(request "/alloc/${allocs[0]}/v1/models" "$token") == *" 404" ]] && break
+  if [[ $(request "/alloc/${allocs[0]}/v1/models" "$token") == *" 404" ]]; then
+    consecutive_removed=$((consecutive_removed + 1))
+  else
+    consecutive_removed=0
+  fi
+  ((consecutive_removed >= 3)) && break
   sleep 1
 done
-[[ $(request "/alloc/${allocs[0]}/v1/models" "$token") == *" 404" ]] || fail "a stopped allocation kept its route"
+((consecutive_removed >= 3)) || fail "a stopped allocation kept its route"
 
 echo 'Host proxy authentication, allocation routing and route removal passed'

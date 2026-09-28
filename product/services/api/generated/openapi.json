@@ -3,7 +3,7 @@
   "info": {
     "title": "Gradiated Management API",
     "version": "0.1.0",
-    "description": "Use the Management API to manage workspaces, billing limits, workspace members and model availability."
+    "description": "Use the Management API to manage workspaces, billing limits, workspace members and model availability. Request bodies are limited to 1 MiB (413 if exceeded). Per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits."
   },
   "servers": [
     {

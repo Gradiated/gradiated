@@ -159,6 +159,18 @@ The console listens on port 3000 and proxies `/api` and `/health`
 to the API process on port 3001. The generated OpenAPI schema is available at
 `http://localhost:3000/api/openapi.json`; interactive reference is at `/docs`.
 
+The management API uses `hono-rate-limiter` with in-memory, per-process limits:
+300 requests/minute per IP, with 10/minute for waitlist signups. Excess requests
+return 429 with `Retry-After`. Stripe's signed webhook is excluded from these
+quotas. Hono's built-in body limiter caps management bodies at 1 MiB; inference
+and telemetry retain their separate limits. Counters reset on restart and are
+not shared between replicas.
+
+Production traffic reaches the API through one ALB in X-Forwarded-For append
+mode, without client ports. The limiter uses its final appended IP, ignoring
+client-supplied prefixes; direct local requests fall back to the socket address.
+Revisit that trust rule before adding another proxy or exposing the API directly.
+
 To view a cloud sandbox through `gradiated-dev.test`, map the hostname to
 `127.0.0.1` in `/etc/hosts`, then start the SSH profile:
 

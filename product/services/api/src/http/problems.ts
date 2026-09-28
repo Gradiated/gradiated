@@ -6,7 +6,7 @@ import { HTTPException } from "hono/http-exception";
 import { BillingPaymentsError } from "../billing/top-ups.js";
 import type { ApiEnvironment, SessionUser } from "../types.js";
 
-type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 422 | 500 | 503;
+type ProblemStatus = 400 | 401 | 403 | 404 | 409 | 413 | 422 | 429 | 500 | 503;
 
 export type ProblemBody = Omit<Problem, "request_id" | "status"> & {
   status: ProblemStatus;
@@ -15,6 +15,20 @@ export type ProblemBody = Omit<Problem, "request_id" | "status"> & {
 const problemType = (slug: string) => `https://gradiated.com/problems/${slug}`;
 
 export const problems = {
+  payloadTooLarge: {
+    type: problemType("payload-too-large"),
+    title: "Payload too large",
+    status: 413,
+    detail: "Management API request bodies must not exceed 1 MiB.",
+    code: "payload_too_large",
+  },
+  tooManyRequests: {
+    type: problemType("too-many-requests"),
+    title: "Too many requests",
+    status: 429,
+    detail: "Too many requests. Please retry after the indicated delay.",
+    code: "rate_limited",
+  },
   unauthenticated: {
     type: problemType("unauthenticated"),
     title: "Authentication required",

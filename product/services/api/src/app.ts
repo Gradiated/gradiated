@@ -1,5 +1,6 @@
 import { apiReference } from "@scalar/hono-api-reference";
 import { OpenAPIHono } from "@hono/zod-openapi";
+import { bodyLimit } from "hono/body-limit";
 import { cors } from "hono/cors";
 import { requestId } from "hono/request-id";
 
@@ -8,6 +9,7 @@ import {
   type AuthTestMailbox,
 } from "./auth/test-routes.js";
 import { problemResponse, problems, toApiProblem } from "./http/problems.js";
+import { apiRateLimit } from "./http/request-limits.js";
 import { requestLogFields, serviceLog } from "./logging.js";
 import { routeLabel, type ApiMetrics } from "./metrics.js";
 import type { DependencyCheck } from "./readiness.js";
@@ -72,7 +74,7 @@ export const createApp = ({
     cors({
       origin: allowedOrigins,
       credentials: true,
-      exposeHeaders: ["X-Request-Id"],
+      exposeHeaders: ["X-Request-Id", "Retry-After", "RateLimit-Remaining"],
     }),
   );
 
@@ -80,6 +82,16 @@ export const createApp = ({
     await next();
     context.header("X-Request-Id", context.get("requestId"));
   });
+
+  app.use("/api/*", apiRateLimit());
+  app.use("/api/v1/waitlist", apiRateLimit(10));
+  app.use(
+    "/api/*",
+    bodyLimit({
+      maxSize: 1024 * 1024,
+      onError: (context) => problemResponse(context, problems.payloadTooLarge),
+    }),
+  );
 
   app.use("*", async (context, next) => {
     let session: Promise<SessionUser | null> | undefined;
@@ -173,7 +185,7 @@ export const openApiDocument = {
     title: "Gradiated Management API",
     version: "0.1.0",
     description:
-      "Use the Management API to manage workspaces, billing limits, workspace members and model availability.",
+      "Use the Management API to manage workspaces, billing limits, workspace members and model availability. Request bodies are limited to 1 MiB (413 if exceeded). Per-IP limits are 300 requests/minute, or 10/minute for waitlist signups, per API process. Rate-limited requests return 429 with Retry-After. Stripe webhooks are excluded from the IP rate limits.",
   },
   servers: [{ url: "/", description: "Current origin" }],
   tags: [

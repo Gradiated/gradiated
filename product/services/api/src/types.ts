@@ -1,3 +1,5 @@
+import type { HttpBindings } from "@hono/node-server";
+
 import type {
   CatalogBillingService,
   OrganizationService,
@@ -19,6 +21,7 @@ export interface SessionUser {
 }
 
 export interface ApiEnvironment {
+  Bindings: Partial<HttpBindings>;
   Variables: {
     requestId: string;
     resolveUser: () => Promise<SessionUser | null>;

@@ -3,7 +3,7 @@ import { z } from "@hono/zod-openapi";
 import {
   BoundedIdentifierSchema,
   SnakeCaseCodeSchema,
-  UuidSchema,
+  DeploymentIdSchema,
 } from "./common.js";
 
 export const ModelDeploymentReleaseSchema = z
@@ -27,7 +27,7 @@ export const ModelDeploymentReleaseSchema = z
 
 export const GatewayModelDeploymentSchema = z
   .strictObject({
-    id: UuidSchema,
+    id: DeploymentIdSchema,
     status: z.enum(["available", "unavailable", "draining"]),
     provider: z
       .string()
@@ -46,7 +46,7 @@ export const GatewayModelDeploymentSchema = z
 export const DeploymentStatusReportSchema = z
   .object({
     schema_version: z.literal(1),
-    deployment_id: UuidSchema,
+    deployment_id: DeploymentIdSchema,
     runtime_revision: BoundedIdentifierSchema,
     healthy: z.boolean(),
     accepting_requests: z.boolean(),

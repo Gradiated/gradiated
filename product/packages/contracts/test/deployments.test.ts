@@ -77,3 +77,10 @@ describe("GatewayModelDeploymentSchema", () => {
     ).toBe(false);
   });
 });
+
+it("accepts Nomad allocation IDs in status and gateway deployments", () => {
+  const id = "a4d51466-8782-bf13-3b97-b8a07ad79c26";
+  expect(DeploymentStatusReportSchema.safeParse({ ...statusReport, deployment_id: id }).success).toBe(true);
+  expect(GatewayModelDeploymentSchema.safeParse({ ...deployment, id }).success).toBe(true);
+  expect(DeploymentStatusReportSchema.safeParse({ ...statusReport, deployment_id: "not-an-id" }).success).toBe(false);
+});

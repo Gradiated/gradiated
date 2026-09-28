@@ -42,6 +42,20 @@ describe("nomad tool", () => {
     });
   });
 
+  it("passes the next token back to Nomad", async () => {
+    const { backend, body } = await callTool(
+      "nomad",
+      { resource: "allocations", next_token: "1234.abcd" },
+      { data: [], next_token: "5678.efgh" },
+    );
+
+    expect(backend).toHaveBeenCalledWith("nomad", "/v1/allocations", {
+      ...defaults,
+      next_token: "1234.abcd",
+    });
+    expect(body).toEqual({ data: [], next_token: "5678.efgh" });
+  });
+
   it.each([
     { resource: "jobs/example" },
     { resource: "jobs", prefix: "../agent/self" },

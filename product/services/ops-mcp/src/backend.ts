@@ -47,11 +47,16 @@ const parseBody = (chunks: Uint8Array[]): unknown => {
   }
 };
 
+type HttpsResponse = {
+  body: unknown;
+  headers: Record<string, string | string[] | undefined>;
+};
+
 const getHttps = (
   url: URL,
   agent: https.Agent,
   headers: Record<string, string>,
-): Promise<unknown> =>
+): Promise<HttpsResponse> =>
   new Promise((resolve, reject) => {
     const request = https.get(url, { agent, headers }, (response) => {
       const chunks: Buffer[] = [];
@@ -74,7 +79,7 @@ const getHttps = (
         }
 
         try {
-          resolve(parseBody(chunks));
+          resolve({ body: parseBody(chunks), headers: response.headers });
         } catch (error) {
           reject(error);
         }
@@ -137,9 +142,11 @@ export const createBackend = (config: BackendConfig): Backend => {
       });
       const token = readFileSync(`${SERVICE_ACCOUNT}/token`, "utf8").trim();
 
-      return getHttps(url, kubernetesAgent, {
+      const { body } = await getHttps(url, kubernetesAgent, {
         authorization: `Bearer ${token}`,
       });
+
+      return body;
     }
 
     if (system === "nomad") {
@@ -153,7 +160,11 @@ export const createBackend = (config: BackendConfig): Backend => {
       });
       const token = readFileSync(nomad.tokenFile, "utf8").trim();
 
-      return getHttps(url, nomadAgent, { "x-nomad-token": token });
+      const { body, headers } = await getHttps(url, nomadAgent, {
+        "x-nomad-token": token,
+      });
+
+      return { data: body, next_token: headers["x-nomad-nexttoken"] ?? null };
     }
 
     const url = new URL(path, config[system]);

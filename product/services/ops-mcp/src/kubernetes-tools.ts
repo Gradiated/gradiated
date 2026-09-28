@@ -17,6 +17,19 @@ const resourceName = z
   .regex(/^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$/)
   .max(253);
 const status = z.record(z.string(), z.unknown()).optional();
+const conditions = z
+  .array(
+    z.object({
+      type: z.string(),
+      status: z.string().optional(),
+      reason: z.string().optional(),
+      message: z.string().optional(),
+      lastTransitionTime: z.string().optional(),
+    }),
+  )
+  .optional();
+const continue_token = z.string().min(1).max(4096).optional();
+const listMetadata = z.object({ continue: z.string().optional() }).optional();
 
 const containerState = z
   .object({
@@ -34,6 +47,7 @@ const containerState = z
   .optional();
 
 const podList = z.object({
+  metadata: listMetadata,
   items: z.array(
     z.object({
       metadata: z.object({
@@ -57,7 +71,7 @@ const podList = z.object({
         phase: z.string().optional(),
         reason: z.string().optional(),
         startTime: z.string().optional(),
-        conditions: z.array(z.record(z.string(), z.unknown())).optional(),
+        conditions,
         containerStatuses: z
           .array(
             z.object({
@@ -76,6 +90,7 @@ const podList = z.object({
 });
 
 const workloadList = z.object({
+  metadata: listMetadata,
   items: z.array(
     z.object({
       metadata: z.object({
@@ -135,9 +150,21 @@ const application = z.object({
   status: z
     .object({
       reconciledAt: z.string().optional(),
-      sync: z.record(z.string(), z.unknown()).optional(),
-      health: z.record(z.string(), z.unknown()).optional(),
-      conditions: z.array(z.record(z.string(), z.unknown())).optional(),
+      sync: z
+        .object({
+          status: z.string().optional(),
+          revision: z.string().optional(),
+          revisions: z.array(z.string()).optional(),
+        })
+        .optional(),
+      health: z
+        .object({
+          status: z.string().optional(),
+          message: z.string().optional(),
+          lastTransitionTime: z.string().optional(),
+        })
+        .optional(),
+      conditions,
       operationState: z
         .object({
           phase: z.string().optional(),
@@ -195,29 +222,40 @@ const WORKLOAD_KINDS = [
 
 // Pod specs carry literal environment variables and command arguments, and
 // status messages can quote them, so only named diagnostic fields leave.
-export const projectPods = (data: unknown) => ({
-  pods: podList.parse(data).items.map(({ metadata, spec, status }) => ({
-    ...metadata,
-    node: spec.nodeName,
-    resources: spec.containers.map(({ name, resources }) => ({
-      name,
-      resources,
-    })),
-    ...status,
-  })),
-});
+export const projectPods = (data: unknown) => {
+  const { metadata, items } = podList.parse(data);
 
-export const projectWorkloads = (data: unknown) =>
-  workloadList.parse(data).items.map(({ metadata, spec, status }) => ({
-    name: metadata.name,
-    createdAt: metadata.creationTimestamp,
-    generation: metadata.generation,
-    revision: metadata.annotations?.[REVISION],
-    owner: metadata.ownerReferences?.[0],
-    replicas: spec.replicas,
-    images: spec.template?.spec.containers,
-    status,
-  }));
+  return {
+    pods: items.map(({ metadata, spec, status }) => ({
+      ...metadata,
+      node: spec.nodeName,
+      resources: spec.containers.map(({ name, resources }) => ({
+        name,
+        resources,
+      })),
+      ...status,
+    })),
+    continue_token: metadata?.continue || undefined,
+  };
+};
+
+export const projectWorkloads = (data: unknown) => {
+  const { metadata, items } = workloadList.parse(data);
+
+  return {
+    items: items.map(({ metadata, spec, status }) => ({
+      name: metadata.name,
+      createdAt: metadata.creationTimestamp,
+      generation: metadata.generation,
+      revision: metadata.annotations?.[REVISION],
+      owner: metadata.ownerReferences?.[0],
+      replicas: spec.replicas,
+      images: spec.template?.spec.containers,
+      status,
+    })),
+    continue_token: metadata?.continue || undefined,
+  };
+};
 
 type ApplicationStatus = NonNullable<z.output<typeof application>["status"]>;
 type OperationState = NonNullable<ApplicationStatus["operationState"]>;
@@ -258,33 +296,46 @@ export const registerKubernetesTools = (
 ) => {
   register(
     "workload_status",
-    'Pods in one EKS namespace: phase, conditions, start time, owner, labels, node, container images, readiness, restart counts, current state and lastState (the previous termination reason such as OOMKilled or Error, exit code and times), and resource requests and limits. Environment, arguments and annotations are never returned. label_selector (for example app.kubernetes.io/name=worker) and field_selector (for example status.phase!=Running) narrow the list. For Kubernetes events, query_logs {workload="kubernetes-events"}.',
+    'Pods in one EKS namespace: phase, conditions, start time, owner, labels, node, container images, readiness, restart counts, current state and lastState (the previous termination reason such as OOMKilled or Error, exit code and times), and resource requests and limits. Environment, arguments and annotations are never returned. label_selector (for example app.kubernetes.io/name=worker) and field_selector (for example status.phase!=Running) narrow the list. When continue_token is returned, more pods exist; pass it back to read the next page. For Kubernetes events, query_logs {workload="kubernetes-events"}.',
     {
       namespace,
       label_selector: selector,
       field_selector: selector,
       limit: z.number().int().min(1).max(500).default(100),
+      continue_token,
     },
-    async ({ namespace, label_selector, field_selector, limit }) =>
+    async ({
+      namespace,
+      label_selector,
+      field_selector,
+      limit,
+      continue_token,
+    }) =>
       projectPods(
         await backend("kubernetes", `/api/v1/namespaces/${namespace}/pods`, {
           limit: String(limit),
           ...(label_selector && { labelSelector: label_selector }),
           ...(field_selector && { fieldSelector: field_selector }),
+          ...(continue_token && { continue: continue_token }),
         }),
       ),
   );
 
   register(
     "rollouts",
-    "Deployments, StatefulSets, DaemonSets and ReplicaSets in one EKS namespace: images, desired replicas, generation, full status (ready, updated and available replicas, conditions such as ProgressDeadlineExceeded, current and update revisions) and creation times. ReplicaSets carry the Deployment revision and owner, so they form the rollout history: which image each revision ran and when it was created. Use it to answer what changed and when; use argocd_applications for the Git revision behind it.",
+    "Deployments, StatefulSets, DaemonSets and ReplicaSets in one EKS namespace: images, desired replicas, generation, full status (ready, updated and available replicas, conditions such as ProgressDeadlineExceeded, current and update revisions) and creation times. ReplicaSets carry the Deployment revision and owner, so they form the rollout history: which image each revision ran and when it was created. Each kind returns up to 500 items; a continue_token means more exist, so read the next page with that one kind and the token. Use it to answer what changed and when; use argocd_applications for the Git revision behind it.",
     {
       namespace,
       kinds: z.array(z.enum(WORKLOAD_KINDS)).min(1).optional(),
       label_selector: selector,
+      continue_token,
     },
-    async ({ namespace, kinds, label_selector }) => {
+    async ({ namespace, kinds, label_selector, continue_token }) => {
       const selected = kinds ?? WORKLOAD_KINDS;
+      if (continue_token && selected.length !== 1) {
+        throw new Error("continue_token_needs_one_kind");
+      }
+
       const lists = await Promise.all(
         selected.map(async (kind) =>
           projectWorkloads(
@@ -294,6 +345,7 @@ export const registerKubernetesTools = (
               {
                 limit: "500",
                 ...(label_selector && { labelSelector: label_selector }),
+                ...(continue_token && { continue: continue_token }),
               },
             ),
           ),
@@ -308,12 +360,13 @@ export const registerKubernetesTools = (
 
   register(
     "argocd_applications",
-    "Argo CD applications: source repository, path and target revision, destination, whether sync is automated, sync status and deployed Git revision, health, conditions (sync and comparison errors), the last sync operation (phase, message, times, who started it), recent deployment history (revision and deployedAt, newest first) and the resources that are out of sync or unhealthy. Helm values are never returned. Use it to line up an incident with a deploy: compare deployedAt with the onset time, then read the revision in Git.",
+    "Argo CD applications: source repository, path and target revision, destination, whether sync is automated, sync status and deployed Git revision, health, conditions (sync and comparison errors), the last sync operation (phase, message, times, who started it), recent deployment history (revision and deployedAt, newest first) and the resources that are out of sync or unhealthy. Helm values are never returned. A continue_token means more applications exist; pass it back for the next page. Use it to line up an incident with a deploy: compare deployedAt with the onset time, then read the revision in Git.",
     {
       name: resourceName.optional(),
       history_limit: z.number().int().min(1).max(50).default(5),
+      continue_token,
     },
-    async ({ name, history_limit }) => {
+    async ({ name, history_limit, continue_token }) => {
       const path = "/apis/argoproj.io/v1alpha1/namespaces/argocd/applications";
 
       if (name) {
@@ -323,14 +376,20 @@ export const registerKubernetesTools = (
         );
       }
 
-      const { items } = z
-        .object({ items: z.array(z.unknown()) })
-        .parse(await backend("kubernetes", path, { limit: "500" }));
+      const { metadata, items } = z
+        .object({ metadata: listMetadata, items: z.array(z.unknown()) })
+        .parse(
+          await backend("kubernetes", path, {
+            limit: "500",
+            ...(continue_token && { continue: continue_token }),
+          }),
+        );
 
       return {
         applications: items.map((item) =>
           projectApplication(item, history_limit),
         ),
+        continue_token: metadata?.continue || undefined,
       };
     },
   );

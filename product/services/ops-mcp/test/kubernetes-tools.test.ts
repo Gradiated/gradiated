@@ -45,7 +45,13 @@ const application = {
     syncPolicy: { automated: { prune: true } },
   },
   status: {
-    sync: { status: "Synced", revision: "c9143de5" },
+    sync: {
+      status: "Synced",
+      revision: "c9143de5",
+      comparedTo: {
+        source: { helm: { valuesObject: { password: "PRIVATE" } } },
+      },
+    },
     health: { status: "Degraded" },
     operationState: {
       phase: "Succeeded",
@@ -95,17 +101,19 @@ describe("kubernetes tools", () => {
     );
     expect(JSON.stringify(body)).not.toContain("PRIVATE");
     expect(body).toEqual({
-      replicasets: [
-        {
-          name: "worker-8cc69bc97",
-          createdAt: "2026-09-25T21:10:00Z",
-          revision: "42",
-          owner: { kind: "Deployment", name: "worker" },
-          replicas: 3,
-          images: [{ name: "worker", image: "product@sha256:abc" }],
-          status: { replicas: 3, readyReplicas: 3 },
-        },
-      ],
+      replicasets: {
+        items: [
+          {
+            name: "worker-8cc69bc97",
+            createdAt: "2026-09-25T21:10:00Z",
+            revision: "42",
+            owner: { kind: "Deployment", name: "worker" },
+            replicas: 3,
+            images: [{ name: "worker", image: "product@sha256:abc" }],
+            status: { replicas: 3, readyReplicas: 3 },
+          },
+        ],
+      },
     });
   });
 
@@ -136,6 +144,7 @@ describe("kubernetes tools", () => {
       "/apis/argoproj.io/v1alpha1/namespaces/argocd/applications/workloads",
     );
     expect(JSON.stringify(body)).not.toContain("PRIVATE");
+    expect(JSON.stringify(body)).not.toContain("comparedTo");
     expect(body).toMatchObject({
       name: "workloads",
       automated: true,
@@ -158,19 +167,64 @@ describe("kubernetes tools", () => {
     });
   });
 
-  it("lists every application when no name is given", async () => {
-    const { body } = await callTool(
+  it("lists every application when no name is given and pages with the continue token", async () => {
+    const { backend, body } = await callTool(
       "argocd_applications",
-      {},
-      { items: [application] },
+      { continue_token: "page-1" },
+      { metadata: { continue: "page-2" }, items: [application] },
     );
 
-    expect(body).toMatchObject({ applications: [{ name: "workloads" }] });
+    expect(backend).toHaveBeenCalledWith(
+      "kubernetes",
+      "/apis/argoproj.io/v1alpha1/namespaces/argocd/applications",
+      { limit: "500", continue: "page-1" },
+    );
+    expect(body).toMatchObject({
+      applications: [{ name: "workloads" }],
+      continue_token: "page-2",
+    });
+  });
+
+  it("returns the pod continue token and passes it back", async () => {
+    const { backend, body } = await callTool(
+      "workload_status",
+      { namespace: "gradiated", limit: 1, continue_token: "page-1" },
+      { metadata: { continue: "page-2" }, items: [] },
+    );
+
+    expect(backend).toHaveBeenCalledWith(
+      "kubernetes",
+      "/api/v1/namespaces/gradiated/pods",
+      { limit: "1", continue: "page-1" },
+    );
+    expect(body).toEqual({ pods: [], continue_token: "page-2" });
+  });
+
+  it("pages one workload kind at a time", async () => {
+    const { backend, body } = await callTool(
+      "rollouts",
+      {
+        namespace: "gradiated",
+        kinds: ["replicasets"],
+        continue_token: "page-1",
+      },
+      { metadata: { continue: "page-2" }, items: [] },
+    );
+
+    expect(backend).toHaveBeenCalledWith(
+      "kubernetes",
+      "/apis/apps/v1/namespaces/gradiated/replicasets",
+      { limit: "500", continue: "page-1" },
+    );
+    expect(body).toEqual({
+      replicasets: { items: [], continue_token: "page-2" },
+    });
   });
 
   it.each([
     ["argocd_applications", { name: "../secrets" }],
     ["rollouts", { namespace: "default" }],
+    ["rollouts", { namespace: "gradiated", continue_token: "page-1" }],
     ["workload_status", { namespace: "kube-public" }],
   ])("rejects %s with %o", async (name, args) => {
     const { backend, isError } = await callTool(name, args);

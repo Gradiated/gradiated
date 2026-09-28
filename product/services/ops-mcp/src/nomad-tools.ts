@@ -24,7 +24,7 @@ export const registerNomadTools = (
       "Read the Nomad cluster that runs the GPU inference fleet (GPU hosts are not EKS nodes).",
       "resource: jobs (status, type, version, submit time and per-task-group summary of running, failed and lost allocations); allocations (job, task group, node, client and desired status, times, and task states with restarts and recent events such as Terminated, Restarting, Driver Failure, with exit codes and messages); deployments (job version rollout status per task group); evaluations (scheduling decisions, blocked or failed placements); nodes (status, drain, eligibility, node pool, datacenter, class; include_resources adds capacity); node_pools.",
       'filter is a Nomad filter expression evaluated on the returned fields, for example ClientStatus == "failed", JobID contains "sglang", Status != "ready" or NodeName == "<name>". prefix matches the ID prefix. Times are Unix nanoseconds (CreateTime, ModifyTime, SubmitTime).',
-      "reverse returns newest first where Nomad supports it. Job specifications and environment are never returned.",
+      "Results come back as data plus next_token; a non-null next_token means more entries exist, so pass it back to read the next page. reverse returns newest first where Nomad supports it. Job specifications and environment are never returned.",
     ].join(" "),
     {
       resource: z.enum(Object.keys(RESOURCES) as [keyof typeof RESOURCES]),
@@ -42,6 +42,7 @@ export const registerNomadTools = (
       per_page: z.number().int().min(1).max(500).default(100),
       reverse: z.boolean().default(true),
       include_resources: z.boolean().default(false),
+      next_token: z.string().min(1).max(512).optional(),
     },
     ({
       resource,
@@ -51,6 +52,7 @@ export const registerNomadTools = (
       per_page,
       reverse,
       include_resources,
+      next_token,
     }) =>
       backend("nomad", RESOURCES[resource], {
         namespace,
@@ -59,6 +61,7 @@ export const registerNomadTools = (
         ...(filter && { filter }),
         ...(prefix && { prefix }),
         ...(include_resources && { resources: "true" }),
+        ...(next_token && { next_token }),
       }),
   );
 };

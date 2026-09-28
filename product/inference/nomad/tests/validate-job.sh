@@ -18,4 +18,18 @@ for vars in "$root/jobs"/*.vars.hcl; do
   docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
     hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
     job validate ${release[@]+"${release[@]}"} -var-file="/jobs/$name.vars.hcl" "/jobs/$name.nomad.hcl"
+  job=$(docker run --rm --network none --entrypoint nomad -v "$root/jobs:/jobs:ro" \
+    hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4cdd2af18b331c9 \
+    job run -output ${release[@]+"${release[@]}"} -var-file="/jobs/$name.vars.hcl" "/jobs/$name.nomad.hcl")
+  jq -e '
+    .Job.Meta as $meta |
+    if $meta.gradiated_model_id then
+      ($meta.gradiated_release | fromjson) as $release |
+      ($release.model_path == $meta.gradiated_model_id) or
+        (($release.runtime_model_name // "") | length > 0)
+    else true end
+  ' <<<"$job" >/dev/null || {
+    echo "$name must declare runtime_model_name when its artifact and public model IDs differ" >&2
+    exit 1
+  }
 done

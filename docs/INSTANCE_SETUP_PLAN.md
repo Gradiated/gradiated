@@ -181,7 +181,11 @@ control-plane outages; replacement still requires sufficient enrolled GPU capaci
 A job is deployed when it has a committed `<job>.vars.hcl` beside it; a
 qualification-only job has none and is never submitted. On merge to `main`, the
 `Deploy jobs` workflow job plans and runs each deployable job. An unchanged job
-updates in place without restarting anything.
+updates in place without restarting anything. Changing job metadata changes
+Nomad task environments and can replace allocations, so release-metadata
+corrections must budget for model warmup too. Jobs whose public catalog ID differs
+from their artifact name declare `runtime_model_name` explicitly; validation
+rejects a missing mapping before deployment.
 
 The workflow reaches the Nomad API through the tailnet and a Kubernetes
 port-forward, and logs in with its GitHub OIDC token. Nomad's JWT auth method

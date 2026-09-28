@@ -78,17 +78,51 @@ const Substrate = (): ReactElement => (
     <Plate />
     {range(12).map((i) => (
       <g key={i}>
-        <rect fill="currentColor" fillOpacity={0.7} height={6} width={14} x={P0 + 38 + i * 40} y={P0 + 16} />
-        <rect fill="currentColor" fillOpacity={0.7} height={6} width={14} x={P0 + 38 + i * 40} y={P1 - 22} />
-        <rect fill="currentColor" fillOpacity={0.7} height={14} width={6} x={P0 + 16} y={P0 + 38 + i * 40} />
-        <rect fill="currentColor" fillOpacity={0.7} height={14} width={6} x={P1 - 22} y={P0 + 38 + i * 40} />
+        <rect
+          fill="currentColor"
+          fillOpacity={0.7}
+          height={6}
+          width={14}
+          x={P0 + 38 + i * 40}
+          y={P0 + 16}
+        />
+        <rect
+          fill="currentColor"
+          fillOpacity={0.7}
+          height={6}
+          width={14}
+          x={P0 + 38 + i * 40}
+          y={P1 - 22}
+        />
+        <rect
+          fill="currentColor"
+          fillOpacity={0.7}
+          height={14}
+          width={6}
+          x={P0 + 16}
+          y={P0 + 38 + i * 40}
+        />
+        <rect
+          fill="currentColor"
+          fillOpacity={0.7}
+          height={14}
+          width={6}
+          x={P1 - 22}
+          y={P0 + 38 + i * 40}
+        />
       </g>
     ))}
     <rect {...line} height={210} rx={6} width={210} x={P0 + 160} y={P0 + 160} />
     {range(4).map((i) => (
       <g key={i}>
-        <path {...line} d={`M${P0 + 176 + i * 18} ${P0 + 160} L${P0 + 140 + i * 22} ${P0 + 92 - i * 12} L${P0 + 44} ${P0 + 92 - i * 12}`} />
-        <path {...line} d={`M${P1 - 176 - i * 18} ${P1 - 160} L${P1 - 140 - i * 22} ${P1 - 92 + i * 12} L${P1 - 44} ${P1 - 92 + i * 12}`} />
+        <path
+          {...line}
+          d={`M${P0 + 176 + i * 18} ${P0 + 160} L${P0 + 140 + i * 22} ${P0 + 92 - i * 12} L${P0 + 44} ${P0 + 92 - i * 12}`}
+        />
+        <path
+          {...line}
+          d={`M${P1 - 176 - i * 18} ${P1 - 160} L${P1 - 140 - i * 22} ${P1 - 92 + i * 12} L${P1 - 44} ${P1 - 92 + i * 12}`}
+        />
       </g>
     ))}
   </g>
@@ -124,8 +158,20 @@ const MetalLayer = (): ReactElement => (
     <Plate />
     {range(12).map((i) => (
       <g key={i}>
-        <line {...line} x1={P0 + 24 + i * 44} x2={P0 + 24 + i * 44} y1={P0 + 24} y2={P1 - 24} />
-        <line {...line} x1={P0 + 24} x2={P1 - 24} y1={P0 + 24 + i * 44} y2={P0 + 24 + i * 44} />
+        <line
+          {...line}
+          x1={P0 + 24 + i * 44}
+          x2={P0 + 24 + i * 44}
+          y1={P0 + 24}
+          y2={P1 - 24}
+        />
+        <line
+          {...line}
+          x1={P0 + 24}
+          x2={P1 - 24}
+          y1={P0 + 24 + i * 44}
+          y2={P0 + 24 + i * 44}
+        />
       </g>
     ))}
   </g>
@@ -162,7 +208,14 @@ const CasingArt = (): ReactElement => {
   return (
     <g>
       <rect {...plate} height={CW} rx={PLATE_R} width={CW} x={c0} y={c0} />
-      <rect {...line} height={CW - 128} rx={16} width={CW - 128} x={c0 + 64} y={c0 + 64} />
+      <rect
+        {...line}
+        height={CW - 128}
+        rx={16}
+        width={CW - 128}
+        x={c0 + 64}
+        y={c0 + 64}
+      />
       {[
         [c0 + 88, c0 + 88],
         [c0 + CW - 88, c0 + 88],
@@ -197,8 +250,17 @@ const CasingArt = (): ReactElement => {
           )),
         )}
       </g>
-      <g transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}>
-        <path d={MARK_PATH} fill="none" stroke="currentColor" strokeOpacity={0.9} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+      <g
+        transform={`translate(${S / 2 - 60} ${S / 2 - 60}) scale(${120 / 31.7539})`}
+      >
+        <path
+          d={MARK_PATH}
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity={0.9}
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
       </g>
     </g>
   );

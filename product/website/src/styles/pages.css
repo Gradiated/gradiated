@@ -4284,10 +4284,34 @@
   opacity: 0.55;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 11px 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at 11px calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px);
+    radial-gradient(
+      circle at 11px 11px,
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at calc(100% - 11px) 11px,
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at 11px calc(100% - 11px),
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at calc(100% - 11px) calc(100% - 11px),
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    );
 }
 
 /* the same pen as the blueprint: one device pixel on dense displays */
@@ -4482,29 +4506,77 @@
 .gr-bottom-haze i:nth-child(1) {
   backdrop-filter: blur(1.5px);
   -webkit-backdrop-filter: blur(1.5px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
-  mask-image: linear-gradient(to bottom, transparent 0%, #000 15%, #000 35%, transparent 50%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 15%,
+    #000 35%,
+    transparent 50%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 15%,
+    #000 35%,
+    transparent 50%
+  );
 }
 
 .gr-bottom-haze i:nth-child(2) {
   backdrop-filter: blur(3px);
   -webkit-backdrop-filter: blur(3px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
-  mask-image: linear-gradient(to bottom, transparent 15%, #000 35%, #000 50%, transparent 65%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 15%,
+    #000 35%,
+    #000 50%,
+    transparent 65%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 15%,
+    #000 35%,
+    #000 50%,
+    transparent 65%
+  );
 }
 
 .gr-bottom-haze i:nth-child(3) {
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
-  mask-image: linear-gradient(to bottom, transparent 35%, #000 50%, #000 65%, transparent 80%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 35%,
+    #000 50%,
+    #000 65%,
+    transparent 80%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 35%,
+    #000 50%,
+    #000 65%,
+    transparent 80%
+  );
 }
 
 .gr-bottom-haze i:nth-child(4) {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
-  mask-image: linear-gradient(to bottom, transparent 50%, #000 65%, #000 80%, transparent 95%);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 50%,
+    #000 65%,
+    #000 80%,
+    transparent 95%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 50%,
+    #000 65%,
+    #000 80%,
+    transparent 95%
+  );
 }
 
 .gr-bottom-haze i:nth-child(5) {

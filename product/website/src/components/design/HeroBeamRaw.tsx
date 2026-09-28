@@ -31,13 +31,19 @@ export const HeroBeamRaw = (): ReactElement => {
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     let ink = "#2F2D29";
-    const rootEl = (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
+    const rootEl =
+      (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
     const readInk = (): void => {
-      ink = getComputedStyle(rootEl).getPropertyValue("--color-text").trim() || "#2F2D29";
+      ink =
+        getComputedStyle(rootEl).getPropertyValue("--color-text").trim() ||
+        "#2F2D29";
     };
     readInk();
     const themed = new MutationObserver(readInk);
-    themed.observe(rootEl, { attributes: true, attributeFilter: ["data-theme"] });
+    themed.observe(rootEl, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
 
     let W = 0;
     let H = 0;

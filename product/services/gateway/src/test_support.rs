@@ -24,6 +24,7 @@ pub(crate) struct TestServingState {
     pub(crate) workspace: Option<GatewayWorkspace>,
     pub(crate) account: Option<GatewayAccount>,
     pub(crate) model: Option<GatewayModel>,
+    pub(crate) statuses: Option<Vec<DeploymentRuntimeStatus>>,
     pub(crate) calls: Mutex<Vec<&'static str>>,
     pub(crate) requested_models: Mutex<Vec<String>>,
     pub(crate) requested_digests: Mutex<Vec<String>>,
@@ -52,6 +53,7 @@ impl TestServingState {
                 balance: 1,
             }),
             model: Some(model(true)),
+            statuses: None,
             calls: Mutex::new(Vec::new()),
             requested_models: Mutex::new(Vec::new()),
             requested_digests: Mutex::new(Vec::new()),
@@ -134,6 +136,10 @@ impl ServingState for TestServingState {
         &self,
         _release_digest: &str,
     ) -> Result<Vec<DeploymentRuntimeStatus>, ServingStateError> {
+        if let Some(statuses) = &self.statuses {
+            return Ok(statuses.clone());
+        }
+
         Ok(self
             .model
             .as_ref()

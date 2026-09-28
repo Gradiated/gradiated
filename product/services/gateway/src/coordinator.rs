@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use axum::http::HeaderMap;
 use chrono::{DateTime, Utc};
@@ -164,6 +164,56 @@ impl RequestCoordinator {
         hosted.qualify(metadata, headers, body, kind)
     }
 
+    async fn prefer_ready_release(
+        &self,
+        mut model: GatewayModel,
+        now: DateTime<Utc>,
+    ) -> Result<GatewayModel, GatewayError> {
+        if model.serving_deployment().is_err() {
+            return Ok(model);
+        }
+
+        let mut seen = HashSet::new();
+        let releases: Vec<_> = model
+            .deployments
+            .iter()
+            .enumerate()
+            .filter(|(_, deployment)| deployment.status == crate::DeploymentStatus::Available)
+            .filter_map(|(index, deployment)| {
+                deployment
+                    .served_release_digest()
+                    .ok()
+                    .map(|digest| (index, digest))
+            })
+            .filter(|(_, digest)| seen.insert(digest.clone()))
+            .collect();
+        if releases.len() < 2 {
+            return Ok(model);
+        }
+
+        for (index, digest) in releases.into_iter().rev() {
+            let statuses = self
+                .serving_state
+                .deployment_statuses(&digest)
+                .await
+                .map_err(state_unavailable("deployment_status_read"))?;
+            let candidates: Vec<_> = model
+                .deployments
+                .iter()
+                .filter(|deployment| {
+                    deployment.served_release_digest().ok().as_ref() == Some(&digest)
+                })
+                .cloned()
+                .collect();
+            if healthy_deployment_count(&candidates, &statuses, now) > 0 {
+                model.deployments[..=index].rotate_right(1);
+                break;
+            }
+        }
+
+        Ok(model)
+    }
+
     pub async fn list_models(
         &self,
         headers: &HeaderMap,
@@ -181,6 +231,7 @@ impl RequestCoordinator {
 
         let mut catalog = Vec::with_capacity(models.len());
         for model in models {
+            let model = self.prefer_ready_release(model, requested_at).await?;
             let statuses = match listed_release_digest(&model) {
                 Some(digest) => self
                     .serving_state
@@ -234,6 +285,8 @@ impl RequestCoordinator {
         if model.status != ModelStatus::Available {
             return Err(GatewayError::ModelUnavailable);
         }
+
+        let model = self.prefer_ready_release(model, received_at).await?;
 
         Ok(ClassifiedRequest {
             hosted: HostedRequest { identity, model },

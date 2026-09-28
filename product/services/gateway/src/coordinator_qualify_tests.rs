@@ -325,3 +325,51 @@ async fn an_output_limit_equal_to_the_model_maximum_is_accepted() {
 
     assert_eq!(request.effective_output_tokens, 4_096);
 }
+
+#[tokio::test]
+async fn a_rollout_keeps_a_healthy_release_until_its_replacement_is_ready() {
+    use crate::test_support::metadata;
+    use crate::{DeploymentRuntimeStatus, DeploymentStatus};
+
+    for (old_ready, new_ready, expected_revision) in [
+        (true, false, "old"),
+        (true, true, "new"),
+        (false, true, "new"),
+    ] {
+        let mut state = TestServingState::ready();
+        let model = state.model.as_mut().unwrap();
+        model.deployments[0].release.runtime_revision = "old".to_owned();
+        let mut next = model.deployments[0].clone();
+        next.id = Uuid::from_u128(98765);
+        next.release.runtime_revision = "new".to_owned();
+        next.status = DeploymentStatus::Available;
+        model.deployments.push(next);
+        state.statuses = Some(
+            model
+                .deployments
+                .iter()
+                .zip([old_ready, new_ready])
+                .map(|(deployment, ready)| DeploymentRuntimeStatus {
+                    schema_version: 1,
+                    deployment_id: deployment.id,
+                    runtime_revision: deployment.release.runtime_revision.clone(),
+                    received_at: metadata().received_at,
+                    healthy: ready,
+                    accepting_requests: ready,
+                    reason_code: None,
+                })
+                .collect(),
+        );
+
+        let qualified = qualify_chat(Arc::new(state), CHAT_BODY).await.unwrap();
+        assert_eq!(
+            qualified.deployment.release.runtime_revision,
+            expected_revision
+        );
+        assert_eq!(
+            qualified.served_release_digest,
+            qualified.deployment.served_release_digest().unwrap()
+        );
+        assert_eq!(qualified.request.model, "model-a");
+    }
+}

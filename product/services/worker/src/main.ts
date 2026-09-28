@@ -8,6 +8,7 @@ import {
   createGenerationSettlementStore,
   createGenerationWriter,
 } from "@gradiated/control";
+import { Gauge } from "prom-client";
 import { createValkeyClient } from "@gradiated/valkey";
 
 import {
@@ -177,7 +178,18 @@ supervisors.push(
 const nomad = parseNomadEnvironment(process.env);
 if (nomad) {
   const store = createNomadDeploymentStore(database);
-  const get = createNomadGet(nomad);
+  const certificateExpiry = nomad.NOMAD_CA_KMS_KEY
+    ? new Gauge({
+        name: "nomad_certificate_expiry_timestamp_seconds",
+        help: "Expiry of the worker's current Nomad client certificate.",
+        labelNames: ["certificate"],
+        registers: [metrics.registry],
+      })
+    : undefined;
+  const get = createNomadGet(nomad, {
+    onCertificate: (expires) =>
+      certificateExpiry?.set({ certificate: "worker" }, expires),
+  });
   supervisors.push(
     supervise({
       loop: "deployment_reconciliation",

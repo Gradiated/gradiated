@@ -14,4 +14,26 @@ describe("Nomad environment", () => {
       }),
     ).toThrow();
   });
+
+  it("accepts automatic issuance without a stored client key", () => {
+    expect(
+      parseNomadEnvironment({
+        NOMAD_ADDR: "https://nomad-api.nomad.svc.cluster.local:4646",
+        NOMAD_TOKEN: "test-token",
+        NOMAD_CA_PEM: "test-ca",
+        NOMAD_CA_KMS_KEY: "alias/test-ca",
+      })?.NOMAD_CA_KMS_KEY,
+    ).toBe("alias/test-ca");
+  });
+
+  it("rejects a client certificate without its key or an issuer", () => {
+    expect(() =>
+      parseNomadEnvironment({
+        NOMAD_ADDR: "https://nomad-api.nomad.svc.cluster.local:4646",
+        NOMAD_TOKEN: "test-token",
+        NOMAD_CA_PEM: "test-ca",
+        NOMAD_CLIENT_CERT_PEM: "test-certificate",
+      }),
+    ).toThrow();
+  });
 });

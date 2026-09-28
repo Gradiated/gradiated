@@ -1,22 +1,20 @@
-import type { CatalogModelInput } from "./catalog-operation.js";
+import type { CatalogModelInput } from "../service.js";
 
-export const deepseekV41FlashModelId = "deepseek/deepseek-v4.1-flash";
-export const deepseekV41FlashArtifactModelPath =
-  "deepseek-ai/DeepSeek-V4.1-Flash";
+export const glm53FlashModelId = "z-ai/glm-5.3-flash";
+export const glm53FlashArtifactModelPath = "zai-org/GLM-5.3-Flash";
 
-// OpenRouter's most common provider prices on 2026-09-14, in nano-USD per token.
-export const createDeepseekV41FlashModelConfiguration = () =>
+export const createGlm53FlashModelConfiguration = () =>
   ({
-    id: deepseekV41FlashModelId,
-    name: "DeepSeek V4.1 Flash",
+    id: glm53FlashModelId,
+    name: "GLM-5.3 Flash",
     status: "available",
     properties: {
       description:
-        "DeepSeek V4.1 Flash with TP4 and DSpark speculative decoding.",
-      released_at: "2026-09-10T00:00:00.000Z",
-      hugging_face_id: deepseekV41FlashArtifactModelPath,
-      quantization: "fp4",
-      tokenizer: "DeepSeek V4.1",
+        "GLM-5.3 Flash is a fast reasoning and tool-use model from Z.AI",
+      released_at: "2026-08-27T00:00:00.000Z",
+      hugging_face_id: glm53FlashArtifactModelPath,
+      quantization: "fp8",
+      tokenizer: "GLM",
       input_modalities: [
         {
           type: "text",
@@ -24,8 +22,12 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             max_context_length: { value: 1_048_576, unit: "token" },
           },
           pricing: [
-            { type: "prompt", unit: "token", cost: 300 },
-            { type: "cached_prompt", unit: "token", cost: 6 },
+            { type: "prompt", unit: "token", cost: 75 },
+            {
+              type: "cached_prompt",
+              unit: "token",
+              cost: 15,
+            },
           ],
         },
       ],
@@ -49,15 +51,15 @@ export const createDeepseekV41FlashModelConfiguration = () =>
             tools: { type: "unknown" },
             tool_choice: { type: "unknown" },
             parallel_tool_calls: { type: "boolean" },
-            reasoning_effort: { type: "unknown" },
-            chat_template_kwargs: { type: "unknown" },
+            reasoning: { type: "unknown" },
+            response_format: { type: "unknown" },
           },
           pricing: [
-            { type: "completion", unit: "token", cost: 1_200 },
+            { type: "completion", unit: "token", cost: 250 },
             {
               type: "internal_reasoning",
               unit: "token",
-              cost: 1_200,
+              cost: 250,
             },
           ],
         },

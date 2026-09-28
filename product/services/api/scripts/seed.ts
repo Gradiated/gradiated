@@ -1,13 +1,21 @@
 import { CurrentUserSchema, OrganizationSchema } from "@gradiated/contracts";
 import { z } from "@hono/zod-openapi";
 
+import type { ModelDeploymentRelease } from "@gradiated/contracts";
 import {
-  upsertModelDeployments,
-  withControlDatabase,
-  type ModelDeploymentsConfiguration,
-} from "../src/operations/catalog-operation.js";
-import { createDeepseekV41FlashModelConfiguration } from "../src/operations/deepseek-v4-1-flash-model.js";
-import { createGlm53FlashModelConfiguration } from "../src/operations/glm-5-3-flash-model.js";
+  applyCatalog,
+  catalogModels,
+  type CatalogModelInput,
+} from "@gradiated/control";
+
+import { withControlDatabase } from "../src/operations/database.js";
+
+interface LocalDeployments {
+  model: CatalogModelInput;
+  deployments: readonly { id: string; serviceUrl: string }[];
+  placement: { provider: string; region: string; faultDomain: string };
+  release: ModelDeploymentRelease;
+}
 
 const includeLocalQwen = process.env.SEED_LOCAL_QWEN === "1";
 
@@ -149,12 +157,7 @@ const localQwen = {
     tokenizer_path: "mlx-community/Qwen3-0.6B-4bit",
     tokenizer_revision: "73e3e38d981303bc594367cd910ea6eb48349da8",
   },
-} satisfies ModelDeploymentsConfiguration;
-
-const seededModels = [
-  createDeepseekV41FlashModelConfiguration(),
-  createGlm53FlashModelConfiguration(),
-];
+} satisfies LocalDeployments;
 
 const catalogOnly = process.env.SEED_CATALOG_ONLY === "1";
 
@@ -198,11 +201,20 @@ const seedAccount = async (): Promise<CreditTarget> => {
 
 const creditTarget = catalogOnly ? undefined : await seedAccount();
 
-await withControlDatabase(async ({ catalog }) => {
-  for (const model of seededModels) await catalog.upsertModel(model);
+await withControlDatabase(async ({ database, catalog }) => {
+  await applyCatalog(database);
 
   if (includeLocalQwen) {
-    await upsertModelDeployments(catalog, localQwen);
+    await catalog.upsertModel(localQwen.model);
+    for (const deployment of localQwen.deployments) {
+      await catalog.upsertModelDeployment({
+        ...deployment,
+        modelId: localQwen.model.id,
+        status: "available",
+        ...localQwen.placement,
+        release: localQwen.release,
+      });
+    }
   } else {
     const qwen = (await catalog.listModels()).find(
       (model) => model.id === localQwen.model.id,
@@ -221,7 +233,7 @@ await withControlDatabase(async ({ catalog }) => {
   }
 }, databaseUrl);
 
-const seededModelNames = seededModels.map((model) => model.name).join(", ");
+const seededModelNames = catalogModels.map((model) => model.name).join(", ");
 console.log(
   creditTarget
     ? `Seed data ready for ${email}: ${organizationName}, ${seededModelNames} and $100.00 credit`

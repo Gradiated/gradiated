@@ -23,6 +23,7 @@ import {
   observeReplicaReadiness,
   reconcileDeployments,
 } from "./deployment-reconciliation.js";
+import { createCatalogApply } from "./catalog-apply.js";
 import { createNomadGet } from "./nomad-allocations.js";
 import { serviceLog } from "./logging.js";
 import { startWorkerMetricsServer, WorkerMetrics } from "./metrics.js";
@@ -153,6 +154,25 @@ if (environment.CONTENTS_BUCKET) {
     }),
   );
 }
+
+const applyCatalog = createCatalogApply(database);
+supervisors.push(
+  supervise({
+    loop: "catalog_apply",
+    readinessPath: "/tmp/gradiated-catalog-apply-ready",
+    metrics,
+    signal,
+    run: async (markReady) => {
+      while (!signal.aborted) {
+        const start = performance.now();
+        await applyCatalog();
+        metrics.recordPass("catalog_apply", (performance.now() - start) / 1000);
+        await markReady();
+        await sleep(60_000, signal);
+      }
+    },
+  }),
+);
 
 const nomad = parseNomadEnvironment(process.env);
 if (nomad) {

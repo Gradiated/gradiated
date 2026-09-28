@@ -13,6 +13,8 @@ import { requireRow } from "../require-row.js";
 
 export type ModelRecord = typeof models.$inferSelect;
 
+export type CatalogModelInput = Parameters<CatalogService["upsertModel"]>[0];
+
 const { instanceId: _instanceId, ...deploymentColumns } =
   getTableColumns(modelDeployments);
 

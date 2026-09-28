@@ -196,6 +196,14 @@ Hosts enrolled by `register_instance` carry `serving_ingress = "host-proxy"`.
 Hosts enrolled by hand before the proxy keep their own ingress on 8888 until
 migrated.
 
+## Catalog
+
+Model definitions (identity, limits and prices) live in
+`product/packages/control/src/catalog/models/`. The worker applies them on start and
+every minute, so a merged change reaches production with the next release and a
+direct database edit is put back. A retired model is removed from the catalog; its
+row stays retired. There are no `configure-*` commands.
+
 ## Kev on Nomad
 
 - A Kev runtime bundle: pinned upstream source, its environment, and the adapter.

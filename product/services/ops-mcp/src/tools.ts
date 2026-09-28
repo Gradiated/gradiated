@@ -15,10 +15,14 @@ const service = z.enum([
   "aws-load-balancer-controller",
 ]);
 const uuid = z.uuid().optional();
+const timeRange = {
+  start: z.iso.datetime({ offset: true }),
+  end: z.iso.datetime({ offset: true }),
+};
 const logSchema = z.object({
   service,
   level: z.enum(["error", "warn", "info", "debug"]).optional(),
-  minutes: z.number().int().min(1).max(360).default(15),
+  ...timeRange,
   limit: z.number().int().min(1).max(200).default(100),
   organization_id: uuid,
   workspace_id: uuid,
@@ -27,6 +31,18 @@ const logSchema = z.object({
   generation_id: uuid,
   request_id: uuid,
 });
+
+const rangeBounds = ({ start, end }: { start: string; end: string }) => {
+  const startMilliseconds = Date.parse(start);
+  const endMilliseconds = Date.parse(end);
+  if (startMilliseconds >= endMilliseconds) throw new Error("empty_range");
+
+  return {
+    start: new Date(startMilliseconds).toISOString(),
+    end: new Date(endMilliseconds).toISOString(),
+    seconds: (endMilliseconds - startMilliseconds) / 1_000,
+  };
+};
 
 export const logQuery = (input: z.infer<typeof logSchema>): string => {
   let query = `{environment="prod",workload=${JSON.stringify(input.service)}}`;
@@ -169,29 +185,31 @@ export const createTools = (
   );
   registerReadTool(
     "query_metrics",
-    "Bounded PromQL instant query. No data does not imply healthy. Use service/deployment selectors to keep queries narrow.",
-    { query: z.string().min(1).max(2000) },
-    ({ query }) =>
+    "Bounded PromQL instant query at an optional RFC 3339 datetime, now by default. No data does not imply healthy. Use service/deployment selectors to keep queries narrow.",
+    {
+      query: z.string().min(1).max(2000),
+      time: z.iso.datetime({ offset: true }).optional(),
+    },
+    ({ query, time }) =>
       backend("prometheus", "/api/v1/query", {
         query,
+        ...(time && { time: new Date(time).toISOString() }),
         timeout: "5s",
         limit: "200",
       }),
   );
   registerReadTool(
     "query_metric_history",
-    "PromQL history over the last 1–360 minutes, with at most 121 timestamps and 50 series.",
-    {
-      query: z.string().min(1).max(2000),
-      minutes: z.number().int().min(1).max(360).default(60),
-    },
-    ({ query, minutes }) => {
-      const end = Math.floor(Date.now() / 1000);
+    "PromQL history between two RFC 3339 datetimes, with at most 121 timestamps and 50 series.",
+    { query: z.string().min(1).max(2000), ...timeRange },
+    ({ query, ...range }) => {
+      const { start, end, seconds } = rangeBounds(range);
+
       return backend("prometheus", "/api/v1/query_range", {
         query,
-        start: String(end - minutes * 60),
-        end: String(end),
-        step: String(Math.max(15, Math.ceil((minutes * 60) / 120))),
+        start,
+        end,
+        step: String(Math.max(15, Math.ceil(seconds / 120))),
         timeout: "5s",
         limit: "50",
       });
@@ -199,14 +217,15 @@ export const createTools = (
   );
   registerReadTool(
     "query_logs",
-    "Recent production logs for one service, optionally filtered by opaque tenant/key/user/request/generation UUID. Results may be truncated at the requested limit; never include actual credentials in tool arguments.",
+    "Production logs for one service between two RFC 3339 datetimes, newest first, optionally filtered by opaque tenant/key/user/request/generation UUID. Results may be truncated at the requested limit; never include actual credentials in tool arguments.",
     logSchema.shape,
     (input) => {
-      const end = Date.now();
+      const { start, end } = rangeBounds(input);
+
       return backend("loki", "/loki/api/v1/query_range", {
         query: logQuery(input),
-        start: String((end - input.minutes * 60_000) * 1_000_000),
-        end: String(end * 1_000_000),
+        start,
+        end,
         limit: String(input.limit),
         direction: "backward",
       });

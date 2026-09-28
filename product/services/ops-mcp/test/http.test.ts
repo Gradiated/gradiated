@@ -7,6 +7,10 @@ import { createHttp } from "../src/http.js";
 import { logQuery, projectPods } from "../src/tools.js";
 
 const token = "test-only-credential-0123456789abcdef";
+const range = {
+  start: "2026-09-26T21:00:00Z",
+  end: "2026-09-26T21:30:00Z",
+};
 const open: ReturnType<typeof createHttp>[] = [];
 afterEach(async () => {
   for (const app of open.splice(0)) {
@@ -62,6 +66,7 @@ describe("production MCP boundary", () => {
       arguments: {
         service: "gateway",
         workspace_id: "c6390e68-499d-4f28-8243-05e5bbdf224f",
+        ...range,
       },
     });
     expect(result.isError).not.toBe(true);
@@ -152,16 +157,88 @@ describe("production MCP boundary", () => {
     ).toBe(413);
     expect(backend).not.toHaveBeenCalled();
   });
-  it("rejects injected log selectors, secrets disguised as IDs and unbounded time windows", async () => {
+  it.each([
+    ["query_logs", { service: "worker", ...range }],
+    ["query_metric_history", { query: "up", ...range }],
+  ])("passes an agent-chosen range of any age to %s", async (name, args) => {
+    const { url, headers, backend } = await setup();
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(
+      new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
+    );
+    const result = await client.callTool({
+      name,
+      arguments: { ...args, start: "2026-03-01T00:00:00+02:00" },
+    });
+    expect(result.isError).not.toBe(true);
+    expect(backend).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.stringContaining("query_range"),
+      expect.objectContaining({
+        start: "2026-02-28T22:00:00.000Z",
+        end: "2026-09-26T21:30:00.000Z",
+      }),
+    );
+    await client.close();
+  });
+  it("evaluates an instant query at an agent-chosen time", async () => {
+    const { url, headers, backend } = await setup();
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(
+      new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
+    );
+    await client.callTool({
+      name: "query_metrics",
+      arguments: { query: "up", time: "2026-03-01T00:00:00+02:00" },
+    });
+    await client.callTool({
+      name: "query_metrics",
+      arguments: { query: "up" },
+    });
+    expect(backend).toHaveBeenNthCalledWith(
+      1,
+      "prometheus",
+      "/api/v1/query",
+      expect.objectContaining({ time: "2026-02-28T22:00:00.000Z" }),
+    );
+    expect(backend).toHaveBeenNthCalledWith(
+      2,
+      "prometheus",
+      "/api/v1/query",
+      expect.not.objectContaining({ time: expect.anything() }),
+    );
+    await client.close();
+  });
+  it("spreads metric history over at most 121 timestamps", async () => {
+    const { url, headers, backend } = await setup();
+    const client = new Client({ name: "test", version: "1" });
+    await client.connect(
+      new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
+    );
+    await client.callTool({
+      name: "query_metric_history",
+      arguments: { query: "up", ...range },
+    });
+    expect(backend).toHaveBeenCalledWith(
+      "prometheus",
+      "/api/v1/query_range",
+      expect.objectContaining({ step: "15" }),
+    );
+    await client.close();
+  });
+  it("rejects injected log selectors, secrets disguised as IDs and invalid time ranges", async () => {
     const { url, headers, backend } = await setup();
     const client = new Client({ name: "test", version: "1" });
     await client.connect(
       new StreamableHTTPClientTransport(url, { requestInit: { headers } }),
     );
     for (const args of [
-      { service: 'gateway"} |= "secret' },
-      { service: "api", api_key_id: "secret-key" },
-      { service: "worker", minutes: 99999 },
+      { service: 'gateway"} |= "secret', ...range },
+      { service: "api", api_key_id: "secret-key", ...range },
+      { service: "worker" },
+      { service: "worker", start: "yesterday", end: range.end },
+      { service: "worker", start: range.end, end: range.start },
+      { service: "worker", start: range.start, end: range.start },
     ]) {
       const result = await client.callTool({
         name: "query_logs",
@@ -241,7 +318,7 @@ it("filters both flat and nested correlation IDs", () => {
   const query = logQuery({
     service: "gateway",
     limit: 10,
-    minutes: 5,
+    ...range,
     generation_id: "c6390e68-499d-4f28-8243-05e5bbdf224f",
   });
   expect(query).toContain(
@@ -251,6 +328,6 @@ it("filters both flat and nested correlation IDs", () => {
 
 it("uses a bounded severity selector for warning aliases", () => {
   expect(
-    logQuery({ service: "api", level: "warn", minutes: 1, limit: 10 }),
+    logQuery({ service: "api", level: "warn", limit: 10, ...range }),
   ).toContain('level=~"(?i)warn|warning"');
 });

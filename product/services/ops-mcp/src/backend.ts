@@ -131,7 +131,7 @@ const getHttp = async (
 
 export const createBackend = (config: BackendConfig): Backend => {
   let kubernetesAgent: https.Agent | undefined;
-  let nomadAgent: https.Agent | undefined;
+  let nomadTls: { material: string; agent: https.Agent } | undefined;
 
   return async (system, path, params = {}) => {
     if (system === "kubernetes") {
@@ -153,14 +153,16 @@ export const createBackend = (config: BackendConfig): Backend => {
       const { nomad } = config;
       const url = new URL(path, nomad.url);
       url.search = searchParams(params);
-      nomadAgent ??= new https.Agent({
-        ca: readFileSync(nomad.caFile),
-        cert: readFileSync(nomad.certFile),
-        key: readFileSync(nomad.keyFile),
-      });
+      const [ca, cert, key] = [nomad.caFile, nomad.certFile, nomad.keyFile].map(
+        (file) => readFileSync(file, "utf8"),
+      );
+      const material = `${ca}\n${cert}\n${key}`;
+      if (nomadTls?.material !== material) {
+        nomadTls = { material, agent: new https.Agent({ ca, cert, key }) };
+      }
       const token = readFileSync(nomad.tokenFile, "utf8").trim();
 
-      const { body, headers } = await getHttps(url, nomadAgent, {
+      const { body, headers } = await getHttps(url, nomadTls.agent, {
         "x-nomad-token": token,
       });
 

@@ -63,7 +63,7 @@ it("rejects failing and malformed upstream responses", async () => {
   await expect(backend("prometheus", "/api/v1/alerts")).rejects.toThrow();
 });
 
-it("sends the Nomad token and returns Nomad's next page token", async () => {
+it("sends the Nomad token, returns Nomad's next page token and reloads rotated TLS files", async () => {
   const directory = mkdtempSync(join(tmpdir(), "ops-mcp-nomad-"));
   for (const name of ["ca", "cert", "key"]) {
     writeFileSync(join(directory, name), "test-only-pem");
@@ -112,4 +112,14 @@ it("sends the Nomad token and returns Nomad's next page token", async () => {
     "https://nomad.invalid:4646/v1/allocations?filter=ClientStatus+%3D%3D+%22failed%22",
   );
   expect(options.headers).toEqual({ "x-nomad-token": "test-only-token" });
+
+  await nomad("nomad", "/v1/jobs");
+  writeFileSync(join(directory, "cert"), "rotated-test-only-pem");
+  await nomad("nomad", "/v1/jobs");
+
+  const agents = get.mock.calls.map(
+    (call) => (call as unknown as [URL, https.RequestOptions])[1].agent,
+  );
+  expect(agents[1]).toBe(agents[0]);
+  expect(agents[2]).not.toBe(agents[1]);
 });

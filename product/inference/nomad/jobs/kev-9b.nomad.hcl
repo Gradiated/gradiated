@@ -49,6 +49,7 @@ job "kev-9b" {
     }
 
     disconnect {
+      lost_after = "1h"
       replace   = true
       reconcile = "keep_original"
     }

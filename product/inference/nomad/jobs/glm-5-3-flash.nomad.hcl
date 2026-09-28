@@ -48,6 +48,7 @@ job "glm-5-3-flash" {
     }
 
     disconnect {
+      lost_after = "1h"
       replace   = true
       reconcile = "keep_original"
     }

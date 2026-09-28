@@ -35,7 +35,8 @@ select dispatch.
   concurrent requests immediately receive **429** with `Retry-After: 1`.
   HTTP cancellation does not release admission until the worker and GPU finish.
   Health remains responsive. Shutdown drains outstanding inference.
-- `GET /health`: 200 after model loading; `GET /v1/models` returns
+- `GET /health`: 200 after model loading and successful uncached and cached
+  inference warmup; `GET /v1/models` returns
   `{"models":[{"id":"jaredpalmer/kev-9b"}]}` (runtime metadata, not the SDK
   catalog schema). Optional bearer authentication applies to **all** routes.
   Token comparisons use constant-time fixed-length SHA-256 digest comparison.

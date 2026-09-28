@@ -129,8 +129,13 @@ job "deepseek-v4-1-flash" {
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
-          "${NOMAD_ALLOC_DIR}/runtime/desmondd", "--observe",
+          "/bin/bash", "${NOMAD_TASK_DIR}/observe-runtime.sh",
         ]
+      }
+
+      template {
+        destination = "local/observe-runtime.sh"
+        data        = file("/jobs/observe-runtime.sh")
       }
 
       env {
@@ -180,8 +185,13 @@ job "deepseek-v4-1-flash" {
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
-          "${NOMAD_ALLOC_DIR}/runtime/runtime-launch", "${NOMAD_ALLOC_DIR}/runtime",
+          "/bin/bash", "${NOMAD_TASK_DIR}/claim-gpus.sh", "${NOMAD_ALLOC_DIR}/runtime",
         ]
+      }
+
+      template {
+        destination = "local/claim-gpus.sh"
+        data        = file("/jobs/claim-gpus.sh")
       }
 
       env {

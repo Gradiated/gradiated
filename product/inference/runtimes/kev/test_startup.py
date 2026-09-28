@@ -8,9 +8,31 @@ import unittest
 from unittest import mock
 
 import adapter
+from support import engine
 
 EXPLICIT = ["--model", "org/small", "--revision", "r1", "--base", "org/base",
             "--base-revision", "b1", "--upstream-commit", "c1"]
+
+
+class WarmupTests(unittest.TestCase):
+    def test_warmup_exercises_uncached_and_cached_paths_and_releases_the_cache(self):
+        runtime = engine()
+        adapter.warm_engine(runtime)
+
+        self.assertEqual(runtime.server.model.calls, ["plain", "miss", "hit"])
+        self.assertFalse(runtime.server.prefix_cache)
+
+    def test_failed_warmup_prevents_http_startup(self):
+        runtime = engine()
+        runtime.server.model.fail = True
+        server = mock.Mock()
+        with mock.patch.dict(sys.modules, {"uvicorn": server}), \
+                mock.patch.object(adapter, "parse_options", return_value=adapter.Options(adapter.Release(), None, "127.0.0.1", 8009)), \
+                mock.patch.object(adapter, "load_engine", return_value=runtime):
+            with self.assertRaises(RuntimeError):
+                adapter.main()
+
+        server.run.assert_not_called()
 
 
 def parse(*argv):

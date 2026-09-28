@@ -70,6 +70,7 @@ jobs:
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
           node --check tools/nomad/create-bootstrap-secrets.mjs
           bash product/inference/nomad/tests/validate-job.sh
+          node --test product/inference/nomad/tests/claim-gpus.test.mjs
           timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
           node --test tools/nomad/*.test.mjs
       - uses: depot/setup-action@v1

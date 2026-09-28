@@ -27,10 +27,8 @@ ssh -i "${KEV_SSH_KEY:?Set the authorized SSH key path}" \
   -N "root@${KEV_SSH_HOST:?Set the current pod SSH host}"
 ```
 
-Warm both adapters with a successful inference smoke request before running the
-suite. `/health` alone does not trigger model/kernel warmup, and the suite's
-10-second HTTP phase timeout is intended for already warm replicas.
-Then run from the repository root:
+Both adapters warm their uncached and cached inference paths before opening the
+HTTP listener. Wait for readiness, then run from the repository root:
 
 ```sh
 KEV_GATEWAY_EXECUTABLE="$PWD/product/services/gateway/target/debug/gradiated-gateway" \
@@ -107,9 +105,8 @@ After the suite passes, the launcher checks `generation-settled:{settlement-0}`:
 
 Before creating Valkey or starting the gateway, each forwarded replica must return
 HTTP 200 from `/health` within 60 seconds (each attempt has a 2-second timeout).
-This checks adapter readiness, not model warmup. Warm both replicas with
-an inference smoke run before launching the suite, whose HTTP phase timeout is 10 seconds;
-the launcher does not issue additional inference requests during preflight.
+Readiness includes startup inference warmup. The suite's HTTP phase timeout is
+10 seconds; the launcher does not issue additional inference requests during preflight.
 
 Gateway readiness and cluster initialization each have a 60-second deadline; finalization
 has 30 seconds. Success, failure, timeout, SIGINT and SIGTERM stop the child process

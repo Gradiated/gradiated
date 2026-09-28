@@ -286,11 +286,20 @@ Desmond probes the authenticated host-proxy allocation route before reporting
 readiness, and starts only after the bundle downloader finishes. Runtime tasks
 wait eleven minutes before shutdown: the gateway allows 630-second
 requests, with additional room for its cached deployment view to expire.
+
 The host proxy's health check restarts its task after three failures, including a
 process that stays alive but stops answering. Its restart policy keeps retrying
 after repeated failures rather than exhausting a terminal retry budget.
 Model readiness follows the local
 ingress route, so another host can serve while that proxy recovers.
+
+Before starting a runtime, the job acquires host-local locks for every assigned
+GPU in a consistent order and waits for existing GPU processes to exit. The
+launcher guardian retains those locks through descendant cleanup. This prevents
+a replacement from loading onto memory still occupied by a draining allocation,
+including placements that were already queued when the drain began. Device
+inspection errors fail startup. Kev performs uncached and cached inference before
+opening its HTTP listener, so readiness does not require a manual warmup request.
 
 Runtime bundles carry their own launcher. Publish the bundle before changing the
 job to use it; the content-addressed release resolver prevents submission while

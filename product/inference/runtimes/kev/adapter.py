@@ -406,6 +406,23 @@ def load_engine(release=None):
     return Engine(Server(checkpoint, tokenizer, model, release.device), api, sync, release.model)
 
 
+def warm_engine(engine):
+    started = time.perf_counter()
+    cached_state = "ok " * (PREFIX_CACHE_MIN_TOKENS + 1)
+    questions = {
+        "state": {"type": "choice", "instructions": "Choose the state.",
+                  "criteria": {"ready": "Ready", "error": "Error"}},
+        "ready": {"type": "noul", "instructions": "Is the state ready?"},
+        "quality": {"type": "score", "instructions": "Rate readiness.",
+                    "criteria": ["Not ready", "Ready"]},
+    }
+    for state in ("Ready", cached_state, cached_state):
+        engine.answer({"model": engine.model, "state": state, "questions": questions})
+
+    engine.server.prefix_cache.clear()
+    log.info("Runtime warmup completed in %.3fs", time.perf_counter() - started)
+
+
 @dataclasses.dataclass(frozen=True)
 class Options:
     release: Release
@@ -462,7 +479,9 @@ def main():
     options = parse_options()
     logging.basicConfig(stream=sys.stderr, level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
     import uvicorn
-    uvicorn.run(App(load_engine(options.release), options.token),
+    engine = load_engine(options.release)
+    warm_engine(engine)
+    uvicorn.run(App(engine, options.token),
                 host=options.host, port=options.port,
                 workers=1, limit_concurrency=64, timeout_keep_alive=5, access_log=False)
 

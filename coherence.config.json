@@ -1,0 +1,49 @@
+{
+  "name": "gradiated",
+  "language": "typescript",
+  "wellKnown": [
+    "Nomad",
+    "Valkey",
+    "SGLang",
+    "ClickHouse",
+    "OpenRouter",
+    "Stripe",
+    "Terragrunt",
+    "Drizzle",
+    "GPU",
+    "Argo",
+    "Better Auth",
+    "Dex",
+    "Zod",
+    "Metabase",
+    "Loki",
+    "Alertmanager",
+    "Tailscale",
+    "RunPod",
+    "Gemma",
+    "Qwen",
+    "Kimi",
+    "Lua",
+    "Resend",
+    "Kustomize"
+  ],
+  "ignore": [
+    "node_modules",
+    "research",
+    ".agents",
+    "tools/browser",
+    "product/services/api/generated",
+    "product/website/public",
+    "fixtures"
+  ],
+  "typecheck": [
+    "pnpm",
+    "--dir",
+    "product",
+    "run",
+    "check"
+  ],
+  "test": "pnpm --dir product exec vitest run --config vitest.projects.mts --testNamePattern {filter}",
+  "testMatch": "Tests +[1-9][0-9]* passed",
+  "testJson": "pnpm --dir product exec vitest run --config vitest.projects.mts --reporter=json --outputFile={out} --testNamePattern {filter}"
+}

@@ -113,3 +113,8 @@ research/**/experiments/gemma4_31b/research_lab/projects/sglang_gemma4_exact_pre
 # Built application artifacts
 dist/
 product/inference/build/
+
+.coherence/*
+!.coherence/journal/
+!.coherence/runs/
+!.coherence/work/

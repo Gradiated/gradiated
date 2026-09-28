@@ -93,7 +93,8 @@ and the host runtime reader secret come from its pod identity role. Its `ops-mcp
 secret carries the RunPod API key, a database URL for the `gradiated_ops_mcp`
 role (which may only write `instances`), the Nomad CA certificate and token, and
 copies of the gateway runtime token and the RunPod deployment status token.
-`NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
+`NOMAD_BASE_IMAGE` in its manifest pins the host image by tag. The repository's
+tags are immutable and named from a content hash, so the tag pins one image.
 
 RunPod pulls `nomad-base` from `gradiated/prod/inference` through an ECR
 delegation, not a stored registry login, so there is no ECR password to expire.
@@ -102,6 +103,9 @@ RunPod's two fixed deployment roles pull, and the delegation is registered once
 on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations`
 and the repository ARN. RunPod's v1 pod update also ignores
 `containerRegistryAuthId`, so a stored login would never reach the pod.
+RunPod applies the delegation only to tagged references: it pulls a
+digest-only reference without credentials and refuses to create a pod from
+`name:tag@digest`.
 The status list lives in memory, so a restart forgets it. Registering the machine
 again finishes the job: a running machine that carries this instance's
 bootstrap but whose node is not yet bound is resumed without a reset, and

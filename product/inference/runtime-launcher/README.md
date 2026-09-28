@@ -86,47 +86,30 @@ management. It does not isolate hostile code.
 
 ## Nomad integration
 
-The model job is `../nomad/jobs/deepseek-v4-1-flash.nomad.hcl`. The job file
-owns the task layout, resources, and timeouts. The launcher needs these job
-settings:
+The model jobs in `../nomad/jobs/` own task layout, resources, health checks,
+canaries and shutdown timing. A pre-start task verifies and extracts the runtime
+bundle. The serving task runs that bundle's launcher with the allocation's
+runtime directory. The task `kill_timeout` must exceed the supervisor's 25-second
+shutdown grace. Its eleven-minute `shutdown_delay` lets existing requests finish
+after deregistration and before the supervisor receives SIGTERM.
 
-- The task `kill_timeout` must be greater than the shutdown grace period.
-- Before live traffic, qualify process cleanup with a real runtime stop and
-  restart. The synthetic process-tree test passes locally and on a live Nomad
-  client.
+Git pins each job and its runtime inputs. The deployment workflow resolves the
+published content-addressed release, supplies its URL, checksum and compatible
+base ID, and waits for the resulting Nomad deployment. Publish new bundle
+capabilities before a job starts using them. Missing compatible canary capacity
+leaves the previous allocations serving until placement succeeds or the
+rollout's deadline causes rollback.
 
-Complete these steps before you submit the job:
+Initial instance registration installs the client certificate, artifact reader
+and private Desmond credentials. Serving tasks cannot read those credentials.
+The `host-proxy` system job publishes allocation-aware routes through the host's
+port 8888; it authenticates requests and strips the bearer token before forwarding
+them to loopback runtimes. The worker derives deployment rows from Nomad, and
+Desmond reports readiness. Do not create deployment rows by hand.
 
-1. Set the bundle URL, checksum, base ID, CPU MHz, memory MiB, and runtime
-   disk MiB. The job has no defaults for these inputs.
-2. Set the client metadata `runtime_base_id` to the ID in the provider image.
-   Configure a `loopback` host network.
-3. Register the deployment ID and runtime revision in the control-plane
-   catalog. Give each replica its own registration.
-4. Install `/etc/gradiated/deployment-status.token` and
-   `/etc/gradiated/runtime-access.token`. Make `desmond` the owner and set
-   mode `0600`. Do not put a token in HCL or in Nomad variables.
-5. Confirm that the runtime user cannot read the Nomad client key or the
-   tokens.
-6. Confirm the checkpoint identity with a small inference request. The Nomad
-   health check does not prove model identity.
-7. Make sure that Valkey has fresh reports for the allocation before you send
-   traffic to it.
-
-For the single-allocation RunPod pilot, enrollment accepts
-`GRADIATED_RUNTIME_ACCESS_TOKEN` and `GRADIATED_DEPLOYMENT_STATUS_TOKEN` together
-in the operator environment. Both must be 32-256 base64url characters. The provider
-retains them across container resets; the base entrypoint writes files readable
-only by `desmond` and removes the variables before starting Nomad. Obtain the
-runtime token from the gateway's configured runtime credential and the reporting
-token from the API's RunPod provider credential; never put either in job variables.
-
-The job's `inference-proxy` task runs unprivileged nginx on port 8888. Publish that
-HTTP port through RunPod's HTTPS proxy and register its URL as the deployment
-endpoint. Every request requires the runtime bearer token; nginx strips that
-token before forwarding to vLLM on loopback. The proxy disables response buffering
-and allows 330 seconds between upstream reads. This is one replica per host;
-allocation-aware routing for multiple replicas is not provided by this pilot.
+Qualify process cleanup with real runtime crashes and restarts, then check a
+real SDK inference request through the gateway. A passing runtime health check
+alone does not prove model identity or end-to-end routing.
 
 ## Ingress readiness
 

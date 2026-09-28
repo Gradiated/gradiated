@@ -30,7 +30,7 @@ permissions:
 
 concurrency:
   group: nomad-deployment-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   changes:

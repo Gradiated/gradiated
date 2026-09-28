@@ -39,6 +39,8 @@ for _ in {1..30}; do
 done
 [[ -n ${boot:-} ]] || { docker logs "$container" | tail -20 >&2; exit 1; }
 
+in_container dd if=/dev/zero of=/tmp/slow-response bs=1024 count=64 status=none
+
 in_container sh -c 'cat >/tmp/fake-runtime.nomad.hcl' <<'EOF'
 job "fake-runtime" {
   group "replicas" {
@@ -53,7 +55,7 @@ job "fake-runtime" {
       progress_deadline = "30s"
     }
     restart {
-      attempts = 1
+      attempts = 3
       interval = "1m"
       delay = "1s"
       mode = "fail"
@@ -65,15 +67,21 @@ job "fake-runtime" {
       name     = "gradiated-runtime"
       provider = "nomad"
       port     = "runtime"
+      task     = "echo"
       check {
         type = "http"
         path = "/health"
         interval = "1s"
         timeout = "1s"
+        check_restart {
+          limit = 1
+          grace = "2s"
+        }
       }
     }
     task "echo" {
       driver = "raw_exec"
+      shutdown_delay = "20s"
       config {
         command = "/usr/sbin/nginx"
         args    = ["-c", "${NOMAD_TASK_DIR}/nginx.conf", "-g", "daemon off;"]
@@ -93,6 +101,11 @@ job "fake-runtime" {
               scgi_temp_path {{ env "NOMAD_TASK_DIR" }}/scgi;
               server {
                   listen {{ env "NOMAD_PORT_runtime" }};
+                  location = /health {
+                    if (-f /tmp/unhealthy-{{ env "NOMAD_ALLOC_ID" }}) { return 503; }
+                    return 200 "healthy";
+                  }
+                  location /slow { alias /tmp/slow-response; limit_rate 4k; }
                   location / { return 200 "{{ env "NOMAD_ALLOC_ID" }} $request_uri auth=[$http_authorization]\n"; }
               }
           }
@@ -131,12 +144,31 @@ done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 
 if [[ ${1:-} == --recovery ]]; then
+  restart_started=$SECONDS
+  in_container touch "/tmp/unhealthy-${allocs[0]}"
+  health_restarted=false
+  for _ in {1..15}; do
+    [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "healthy replica stopped serving during health-check recovery"
+    restarts=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo.Restarts')
+    if ((restarts >= 1)); then
+      in_container rm -f "/tmp/unhealthy-${allocs[0]}"
+      if [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
+        health_restarted=true
+        break
+      fi
+    fi
+    sleep 1
+  done
+  $health_restarted || fail "health-check restart waited for allocation shutdown_delay"
+  ((SECONDS - restart_started < 20)) || fail "health-check restart consumed the drain delay"
+  echo 'Health-check failure restarted the task without allocation drain delay; the peer stayed available'
+
   in_container nomad alloc signal -s SIGKILL -task echo "${allocs[0]}" >/dev/null
   restarted=false
   for _ in {1..60}; do
     [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "healthy replica stopped serving during task recovery"
     restarts=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo.Restarts')
-    if ((restarts >= 1)) && [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
+    if ((restarts >= 2)) && [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
       restarted=true
       break
     fi
@@ -173,8 +205,65 @@ await assert.rejects(waitForEvaluation(process.argv[3], "", {
 }), /Deployment .* is failed/);
 JS
   echo 'Bad canary reverted without interrupting either healthy replica; deployment gate rejected it'
+
+  in_container sh -s <<'SH'
+sed -e 's/auto_promote = true/auto_promote = false/' \
+    -e 's/canary = 1/canary = 2/' \
+    -e '/driver = "raw_exec"/a\      env { RELEASE = "next" }' \
+    /tmp/good.nomad.hcl >/tmp/next.nomad.hcl
+SH
+  in_container nomad job run -detach /tmp/next.nomad.hcl >/dev/null
+  canaries='[]'
+  for _ in {1..60}; do
+    for alloc in "${allocs[@]}"; do
+      [[ $(request "/alloc/$alloc/health" "$token") == *" 200" ]] || fail "healthy canary warmup interrupted the old release"
+    done
+    canaries=$(in_container nomad job allocs -json fake-runtime | jq '[.[] | select(.DesiredStatus == "run" and .DeploymentStatus.Canary == true)]')
+    jq -e 'length == 2 and all(.[]; .DeploymentStatus.Healthy == true)' <<<"$canaries" >/dev/null && break
+    sleep 1
+  done
+  jq -e 'length == 2 and all(.[]; .DeploymentStatus.Healthy == true)' <<<"$canaries" >/dev/null || fail "replacement set did not become healthy"
+  read -ra canary_ids <<<"$(jq -r 'map(.ID) | join(" ")' <<<"$canaries")"
+  for alloc in "${canary_ids[@]}"; do
+    routed=false
+    for _ in {1..30}; do
+      if [[ $(request "/alloc/$alloc/health" "$token") == *" 200" ]]; then
+        routed=true
+        break
+      fi
+      sleep 1
+    done
+    $routed || fail "a healthy canary did not get an ingress route"
+  done
+  deployment=$(in_container nomad job deployments -json fake-runtime | jq -r 'max_by(.CreateIndex).ID')
+  in_container nomad deployment promote "$deployment" >/dev/null
+  promoted=false
+  for _ in {1..60}; do
+    for alloc in "${canary_ids[@]}"; do
+      [[ $(request "/alloc/$alloc/health" "$token") == *" 200" ]] || fail "promotion interrupted a replacement route"
+    done
+    if in_container nomad deployment status -json "$deployment" | jq -e '.Status == "successful"' >/dev/null; then
+      promoted=true
+      break
+    fi
+    sleep 1
+  done
+  $promoted || fail "healthy replacement set did not promote"
+  promoted_allocations=$(in_container nomad job allocs -json fake-runtime | jq '[.[] | select(.DesiredStatus == "run" and .ClientStatus == "running")]')
+  jq -e 'length == 2 and all(.[]; .DeploymentStatus.Canary == false)' <<<"$promoted_allocations" >/dev/null || fail "promotion did not clear Canary on the replacement set"
+  read -ra allocs <<<"$(jq -r 'map(.ID) | join(" ")' <<<"$promoted_allocations")"
+  echo 'Both replacement replicas warmed before promotion; promoted allocations cleared their Canary flag'
 fi
 
+in_container curl --fail --silent --show-error --max-time 45 \
+  -H "Authorization: Bearer $token" \
+  "http://127.0.0.1:8888/alloc/${allocs[0]}/slow" -o /tmp/draining-response &
+slow_request=$!
+for _ in {1..10}; do
+  in_container test -s /tmp/draining-response && break
+  sleep 1
+done
+in_container test -s /tmp/draining-response || fail "slow response did not start"
 in_container nomad alloc stop -detach "${allocs[0]}" >/dev/null
 consecutive_removed=0
 for _ in {1..60}; do
@@ -187,6 +276,10 @@ for _ in {1..60}; do
   sleep 1
 done
 ((consecutive_removed >= 3)) || fail "a stopped allocation kept its route"
+wait "$slow_request" || fail "an in-flight response was interrupted while draining"
+response_bytes=$(in_container wc -c </dev/null /tmp/draining-response | awk '{print $1}')
+[[ $response_bytes == 65536 ]] || fail "draining response was truncated: $response_bytes bytes"
+echo 'In-flight response completed while its allocation was deregistered and stopped'
 
 replacement=""
 for _ in {1..60}; do

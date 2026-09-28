@@ -263,11 +263,15 @@ Each step is its own pull request.
 
 ### Safe model rollouts
 
-Model updates launch one extra canary while existing replicas continue serving.
-Nomad promotes it automatically only after all runtime and reporting checks stay
+Model updates warm a full replacement set while existing replicas continue serving.
+The gateway keeps using the larger healthy pool while the replacement warms;
+once healthy capacity matches, it prefers the newer accepting release. Nomad promotes the new set automatically only after all runtime and reporting checks stay
 healthy, and reverts a failed deployment to its last stable job. Reserve enough
-compatible GPU capacity for one extra replica; insufficient canary capacity must
-leave the old service running rather than turn a rollout into an outage.
+compatible GPU capacity for the replacement set; insufficient canary capacity must
+leave the old service running rather than turn a rollout into an outage. Kev
+requires distinct Nomad hosts for its two replicas, avoiding a shared host-proxy
+failure. Use separate provider machines when enrolling them; separate pod IDs
+on the same physical machine do not provide hardware redundancy.
 
 The Nomad deployment workflow follows each registration evaluation and waits for
 new deployments to become healthy. Failure or rollback fails the release; queued
@@ -275,7 +279,19 @@ capacity and warmup have a bounded deadline. An unchanged deployment is not a ne
 release. The disposable recovery check is
 `timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery`.
 It exercises task crashes, failed canary rollback, uninterrupted peer routes and
-allocation replacement using the pinned Nomad binary and real host proxy.
+allocation replacement using the pinned Nomad binary and real host proxy. A slow
+response must finish even after its allocation is removed from new-request routing.
+Desmond probes the authenticated host-proxy allocation route before reporting
+readiness, and starts only after the bundle downloader finishes. Runtime tasks
+wait eleven minutes before shutdown: the gateway allows 630-second
+requests, with additional room for its cached deployment view to expire.
+
+Runtime bundles carry their own launcher. Publish the bundle before changing the
+job to use it; the content-addressed release resolver prevents submission while
+that source release is missing. A newer Git deployment supersedes an older
+workflow wait, so an unrelated model waiting for GPUs cannot hold up the next
+release. Already-running Nomad deployments continue under Nomad supervision.
+
 ### Replica availability alerts
 
 Git's committed Nomad jobs also define the expected serving capacity, independent
@@ -294,3 +310,9 @@ with a positive desired count remains an actionable capacity deficit.
 Cold starts longer than five minutes will alert when no existing replica serves.
 Preserve healthy capacity through rollouts; do not silence readiness failures by
 changing desired counts. Worker telemetry and loop alerts diagnose missing data.
+
+Tagged base images remain available under the inference repository's lifecycle
+policy, which expires only untagged images after fourteen days. ECR also protects
+child manifests while their tagged manifest list remains present; see the
+[AWS lifecycle evaluation rules](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html).
+Keep the immutable input-hash tag attached to every base referenced by enrollment.

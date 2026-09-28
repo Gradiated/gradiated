@@ -70,12 +70,12 @@ job "deepseek-v4-1-flash" {
 
     update {
       max_parallel      = 1
-      canary            = 1
+      canary            = var.replicas
       min_healthy_time  = "30s"
       healthy_deadline  = "70m"
       progress_deadline = "90m"
       auto_revert       = true
-      auto_promote      = true
+      auto_promote      = var.replicas > 0
     }
 
     network {
@@ -121,7 +121,7 @@ job "deepseek-v4-1-flash" {
       shutdown_delay = "5s"
 
       lifecycle {
-        hook    = "prestart"
+        hook    = "poststart"
         sidecar = true
       }
 
@@ -129,7 +129,7 @@ job "deepseek-v4-1-flash" {
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
-          "/bin/bash", "/opt/gradiated/bin/start-desmond",
+          "${NOMAD_ALLOC_DIR}/runtime/desmondd", "--observe",
         ]
       }
 
@@ -138,6 +138,7 @@ job "deepseek-v4-1-flash" {
         DESMOND_RELEASE            = local.release.runtime_revision
         DESMOND_MODEL              = local.model_id
         DESMOND_MODEL_REVISION     = local.model_revision
+        DESMOND_INGRESS_PORT       = "8888"
         DESMOND_RUNTIME_HOST       = "127.0.0.1"
         DESMOND_RUNTIME_PORT       = "${NOMAD_PORT_runtime}"
         DESMOND_CONTROL_HOST       = "127.0.0.1"
@@ -171,7 +172,7 @@ job "deepseek-v4-1-flash" {
     task "vllm" {
       driver         = "raw_exec"
       user           = "runtime"
-      shutdown_delay = "10s"
+      shutdown_delay = "11m"
       kill_signal    = "SIGTERM"
       kill_timeout   = "60s"
 
@@ -179,7 +180,7 @@ job "deepseek-v4-1-flash" {
         command = "/usr/bin/setpriv"
         args = [
           "--inh-caps=-all", "--ambient-caps=-all", "--no-new-privs",
-          "/opt/gradiated/bin/runtime-launch", "${NOMAD_ALLOC_DIR}/runtime",
+          "${NOMAD_ALLOC_DIR}/runtime/runtime-launch", "${NOMAD_ALLOC_DIR}/runtime",
         ]
       }
 

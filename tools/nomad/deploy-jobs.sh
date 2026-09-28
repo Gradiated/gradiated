@@ -46,7 +46,7 @@ deploy() {
   fi
   before=""
   if jq -e --arg name "$name" '.[] | select(.ID == $name)' <<<"$known_jobs" >/dev/null; then
-    before=$(nomad job deployments -json "$name" | jq -r 'sort_by(.CreateIndex) | last | .ID // ""')
+    before=$(nomad job deployments -json "$name" | jq -r '(. // []) | sort_by(.CreateIndex) | last | .ID // ""')
   fi
   # Plan exits 1 when allocations would change, which is the normal case for a rollout.
   nomad job plan "${args[@]}" "/jobs/$name.nomad.hcl" || status=$?

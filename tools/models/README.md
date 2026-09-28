@@ -3,14 +3,16 @@
 On relevant merges, `model-deployment.yml` publishes:
 
 1. The shared Nomad base image to the existing inference ECR repository.
-2. A DeepSeek runtime archive to private S3 storage.
-3. A release record with the source revision, base image digest, base ID,
-   bundle URL, and SHA-256 digest.
+2. One runtime archive per bundle in `release.mjs` to private S3 storage.
+3. A release record per bundle with the source revision, base image digest,
+   base ID, bundle URL, and SHA-256 digest.
 
 The base contains CUDA, system libraries, Nomad, its NVIDIA device plugin,
 the C++ launcher, SSH, and an unprivileged runtime account. It contains no
-model weights. The runtime archive contains Python, the packages from the
-pinned vLLM distribution, and the model launch scripts.
+model weights. A runtime archive contains its own Python, the model's pinned
+packages, and its launch scripts: DeepSeek extracts them from the pinned vLLM
+distribution, and Kev installs upstream's frozen lock with the source pinned by
+commit.
 
 PR checks build the base and verify Python, runtime, and CLI module imports. Merges
 publish the base first, then build and verify the bundle against that exact
@@ -57,8 +59,8 @@ and [Depot runners](https://depot.dev/docs/github-actions/overview).
 
 ## Change detection
 
-Pull requests run the full runtime build when base inputs, runtime packaging,
-or the DeepSeek launch script change. Documentation, test-only changes, and
+Pull requests build and verify only the bundles whose inputs changed; base and
+shared packaging changes verify every bundle. Documentation, test-only changes, and
 unrelated release tooling run the quick checks without rebuilding the runtime.
 The comparison covers the full pull request. New pushes cancel older PR runs;
 production releases are not cancelled. Depot keeps the Docker build layers between runs.

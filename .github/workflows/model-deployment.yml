@@ -6,6 +6,7 @@ on:
     paths:
       - product/inference/images/**
       - product/inference/bundles/**
+      - product/inference/runtimes/kev/adapter.py
       - product/inference/runtime-launcher/**
       - tools/images/**
       - tools/models/**
@@ -45,6 +46,8 @@ jobs:
     if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 90
+    outputs:
+      bundles: ${{ steps.bundles.outputs.bundles }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -57,6 +60,8 @@ jobs:
       - run: |
           node --test tools/images/*.test.mjs tools/models/*.test.mjs
           bash product/inference/images/tests/test_launch.sh
+      - id: bundles
+        run: echo "bundles=$(node tools/models/release.mjs list)" >> "$GITHUB_OUTPUT"
       - uses: depot/setup-action@v1
         if: steps.verification.outputs.required == 'true'
       - name: Verify the complete runtime on pull requests
@@ -65,7 +70,7 @@ jobs:
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           files: product/inference/bundles/build.hcl
-          targets: verify
+          targets: ${{ steps.verification.outputs.targets }}
 
   images:
     needs: checks
@@ -77,11 +82,16 @@ jobs:
       artifact_prefix: models
 
   runtime:
-    needs: images
+    needs: [checks, images]
     runs-on: depot-ubuntu-24.04
     environment: production
     timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        bundle: ${{ fromJSON(needs.checks.outputs.bundles) }}
     env:
+      BUNDLE: ${{ matrix.bundle }}
       SOURCE_SHA: ${{ github.sha }}
       AWS_REGION: us-east-1
       ARTIFACT_BUCKET: gradiated-prod-model-artifacts-${{ vars.AWS_ACCOUNT_ID }}
@@ -101,7 +111,7 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/gradiated-prod-deployment
           allowed-account-ids: ${{ vars.AWS_ACCOUNT_ID }}
       - id: existing
-        run: node tools/models/release.mjs lookup "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
+        run: node tools/models/release.mjs lookup "$BUNDLE" "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
       - if: steps.existing.outputs.exists != 'true'
         uses: aws-actions/amazon-ecr-login@v2
       - if: steps.existing.outputs.exists != 'true'
@@ -112,16 +122,16 @@ jobs:
         with:
           project: ${{ vars.DEPOT_PROJECT_ID }}
           context: product/inference
-          file: product/inference/bundles/deepseek-v4-1-flash/Dockerfile
+          file: product/inference/bundles/${{ matrix.bundle }}/Dockerfile
           platforms: linux/amd64
           build-contexts: runtime-base=docker-image://${{ env.BASE_IMAGE }}
           target: artifact
           outputs: type=local,dest=model-release
       - if: steps.existing.outputs.exists != 'true'
-        run: node tools/models/release.mjs publish "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
+        run: node tools/models/release.mjs publish "$BUNDLE" "$SOURCE_SHA" "$BASE_IMAGE" "$ARTIFACT_BUCKET"
       - uses: actions/upload-artifact@v4
         with:
-          name: deepseek-runtime-release
+          name: ${{ matrix.bundle }}-runtime-release
           path: model-release/release.json
           retention-days: 30
 

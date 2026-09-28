@@ -1,9 +1,16 @@
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { createBackend } from "./backend.js";
+import { renewingCertificate } from "./certificate-renewal.js";
 import { createHttp } from "./http.js";
 import { createAuth } from "./auth.js";
 import { productionRegistrations } from "./instances/production.js";
+import {
+  cliProfile,
+  issueCertificate,
+  kmsSigner,
+} from "./nomad-certificates.js";
 
 const config = z
   .object({
@@ -41,6 +48,14 @@ const auth = createAuth({
   deniedEmails: z.array(z.email()).parse(JSON.parse(config.MCP_DENIED_EMAILS)),
   redirectUris: z.array(z.url()).parse(JSON.parse(config.MCP_REDIRECT_URIS)),
 });
+const nomadCaFile = `${config.CREDENTIALS_DIRECTORY}/nomad-ca`;
+const nomadCertificate = renewingCertificate(async () =>
+  issueCertificate(
+    await readFile(nomadCaFile, "utf8"),
+    kmsSigner(config.NOMAD_CA_KMS_KEY),
+    cliProfile,
+  ),
+);
 const backend = createBackend({
   prometheus: config.PROMETHEUS_URL,
   loki: config.LOKI_URL,
@@ -48,10 +63,9 @@ const backend = createBackend({
   alertmanager: config.ALERTMANAGER_URL,
   nomad: {
     url: config.NOMAD_URL,
-    caFile: `${config.CREDENTIALS_DIRECTORY}/nomad-ca`,
-    certFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
-    keyFile: `${config.CREDENTIALS_DIRECTORY}/nomad-key`,
+    caFile: nomadCaFile,
     tokenFile: `${config.CREDENTIALS_DIRECTORY}/nomad-token`,
+    clientCertificate: nomadCertificate.get,
   },
 });
 const { server, metrics } = createHttp({
@@ -59,7 +73,7 @@ const { server, metrics } = createHttp({
   authenticate: auth.authenticate,
   authRouter: auth.router,
   backend,
-  nomadCertificateFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
+  nomadCertificateExpiry: nomadCertificate.expiry,
   registrations: productionRegistrations(
     {
       credentialsDirectory: config.CREDENTIALS_DIRECTORY,

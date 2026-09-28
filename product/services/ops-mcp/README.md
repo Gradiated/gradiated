@@ -278,14 +278,14 @@ the existing dashboard and Kubernetes availability alerts cover the deployment.
 ## Nomad access
 
 The `nomad` tool calls `https://nomad-api.nomad.svc.cluster.local:4646` with
-mutual TLS and a Nomad ACL token. The files come from the `nomad-ca`,
-`nomad-cert`, `nomad-key` and `nomad-token` properties of
-`gradiated/prod/platform/ops-mcp`. The ExternalSecret extracts every property, so
-the tool returns an error, and nothing else fails, until they exist.
+mutual TLS and a Nomad ACL token. The ops MCP issues its own `cli` client
+certificate through `kms:Sign` when it first needs one and reissues it in memory
+once two thirds of its 30-day lifetime has passed; it reports the expiry as
+`nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}`. The CA
+certificate and token come from the `nomad-ca` and `nomad-token` properties of
+`gradiated/prod/platform/ops-mcp`. The ExternalSecret extracts every property,
+so the tool returns an error, and nothing else fails, until they exist.
 
-1. Issue a dedicated `cli` certificate with `nomad:certificate`, as in the Nomad
-   README's "Certificate renewal". Do not reuse the UI, operator or server keys.
-2. Through an authenticated private API port-forward, create a **client** token
-   with only the `ui-viewer` policy. Retain its AccessorID for revocation.
-3. Add the CA, certificate, key and token SecretID to the secret as the four
-   properties above. Never put their values in Git, arguments or console output.
+To create the token, use an authenticated private API port-forward to create a
+**client** token with only the `ui-viewer` policy. Retain its AccessorID for
+revocation. Never put its value in Git, arguments or console output.

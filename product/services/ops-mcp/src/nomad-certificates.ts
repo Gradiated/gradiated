@@ -69,7 +69,7 @@ export const cliProfile: CertificateProfile = {
   dnsNames: ["cli.global.nomad"],
   ipAddresses: [],
   extendedKeyUsages: [id_kp_clientAuth],
-  days: 90,
+  days: 30,
 };
 
 export const serverProfile = (ordinal: number): CertificateProfile => ({
@@ -83,7 +83,7 @@ export const serverProfile = (ordinal: number): CertificateProfile => ({
   ],
   ipAddresses: ["127.0.0.1"],
   extendedKeyUsages: [id_kp_serverAuth, id_kp_clientAuth],
-  days: 90,
+  days: 30,
 });
 
 const extension = (extnID: string, critical: boolean, value: object) =>

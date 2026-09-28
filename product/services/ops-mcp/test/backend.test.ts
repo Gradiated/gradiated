@@ -15,9 +15,8 @@ const backend = createBackend({
   nomad: {
     url: "https://nomad.invalid",
     caFile: "/nonexistent/ca",
-    certFile: "/nonexistent/cert",
-    keyFile: "/nonexistent/key",
     tokenFile: "/nonexistent/token",
+    clientCertificate: async () => ({ certificate: "", privateKey: "" }),
   },
 });
 afterEach(() => {
@@ -63,9 +62,9 @@ it("rejects failing and malformed upstream responses", async () => {
   await expect(backend("prometheus", "/api/v1/alerts")).rejects.toThrow();
 });
 
-it("sends the Nomad token, returns Nomad's next page token and reloads rotated TLS files", async () => {
+it("sends the Nomad token, returns Nomad's next page token and uses the renewed client certificate", async () => {
   const directory = mkdtempSync(join(tmpdir(), "ops-mcp-nomad-"));
-  for (const name of ["ca", "cert", "key"]) {
+  for (const name of ["ca"]) {
     writeFileSync(join(directory, name), "test-only-pem");
   }
   writeFileSync(join(directory, "token"), "test-only-token\n");
@@ -86,6 +85,7 @@ it("sends the Nomad token, returns Nomad's next page token and reloads rotated T
 
     return Object.assign(new EventEmitter(), { destroy: vi.fn() });
   }) as unknown as typeof https.get);
+  let client = { certificate: "test-only-pem", privateKey: "test-only-key" };
   const nomad = createBackend({
     prometheus: "http://prometheus.invalid",
     loki: "http://loki.invalid",
@@ -94,9 +94,8 @@ it("sends the Nomad token, returns Nomad's next page token and reloads rotated T
     nomad: {
       url: "https://nomad.invalid:4646",
       caFile: join(directory, "ca"),
-      certFile: join(directory, "cert"),
-      keyFile: join(directory, "key"),
       tokenFile: join(directory, "token"),
+      clientCertificate: async () => client,
     },
   });
 
@@ -114,7 +113,10 @@ it("sends the Nomad token, returns Nomad's next page token and reloads rotated T
   expect(options.headers).toEqual({ "x-nomad-token": "test-only-token" });
 
   await nomad("nomad", "/v1/jobs");
-  writeFileSync(join(directory, "cert"), "rotated-test-only-pem");
+  client = {
+    certificate: "renewed-test-only-pem",
+    privateKey: "test-only-key",
+  };
   await nomad("nomad", "/v1/jobs");
 
   const agents = get.mock.calls.map(

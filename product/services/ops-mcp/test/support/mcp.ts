@@ -31,7 +31,10 @@ export const closeServers = async () => {
 };
 
 export const setup = async (
-  extra: { registrations?: Registrations; nomadCertificateFile?: string } = {},
+  extra: {
+    registrations?: Registrations;
+    nomadCertificateExpiry?: () => number | undefined;
+  } = {},
 ) => {
   const backend = vi.fn(async (): Promise<unknown> => ({
     status: "success",

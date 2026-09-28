@@ -97,7 +97,7 @@ describe("certificate profiles", () => {
 
   it.each([
     [hostProfile, "2027-09-23T00:00:00.000Z"],
-    [cliProfile, "2026-12-22T00:00:00.000Z"],
+    [cliProfile, "2026-10-23T00:00:00.000Z"],
   ])("lasts the profile's days", async (profile, validTo) => {
     const issued = await issueCertificate(
       testCa.certificate,

@@ -1,5 +1,8 @@
 import type { GenerationWriter } from "@gradiated/control";
-import type { RedisClientType } from "@gradiated/valkey";
+import {
+  SocketClosedUnexpectedlyError,
+  type RedisClientType,
+} from "@gradiated/valkey";
 
 import { readConsumerGroupProgress, trimThreshold } from "./consumer-group.js";
 import {
@@ -124,14 +127,26 @@ const recoverStale = async (ingestion: GenerationIngestion): Promise<void> => {
   } while (cursor !== "0-0" && !ingestion.signal.aborted);
 };
 
+// ElastiCache closes IAM-authenticated connections after 12 hours, usually
+// during this blocking read. The client reconnects on its own.
+const readGroup = async ({ client, config }: GenerationIngestion) => {
+  try {
+    return await client.xReadGroup(
+      config.group,
+      config.consumer,
+      { key: config.stream, id: ">" },
+      { COUNT: config.batchSize, BLOCK: config.readBlockMs },
+    );
+  } catch (error) {
+    if (error instanceof SocketClosedUnexpectedlyError) return null;
+
+    throw error;
+  }
+};
+
 const readNew = async (ingestion: GenerationIngestion): Promise<void> => {
-  const { client, config, telemetry } = ingestion;
-  const streams = await client.xReadGroup(
-    config.group,
-    config.consumer,
-    { key: config.stream, id: ">" },
-    { COUNT: config.batchSize, BLOCK: config.readBlockMs },
-  );
+  const { telemetry } = ingestion;
+  const streams = await readGroup(ingestion);
 
   for (const stream of streams ?? []) {
     const consumed = await consume(ingestion, stream.messages);

@@ -43,6 +43,21 @@ in_container sh -c 'cat >/tmp/fake-runtime.nomad.hcl' <<'EOF'
 job "fake-runtime" {
   group "replicas" {
     count = 2
+    update {
+      max_parallel = 1
+      canary = 1
+      auto_promote = true
+      auto_revert = true
+      min_healthy_time = "2s"
+      healthy_deadline = "20s"
+      progress_deadline = "30s"
+    }
+    restart {
+      attempts = 1
+      interval = "1m"
+      delay = "1s"
+      mode = "fail"
+    }
     network {
       port "runtime" {}
     }
@@ -50,6 +65,12 @@ job "fake-runtime" {
       name     = "gradiated-runtime"
       provider = "nomad"
       port     = "runtime"
+      check {
+        type = "http"
+        path = "/health"
+        interval = "1s"
+        timeout = "1s"
+      }
     }
     task "echo" {
       driver = "raw_exec"
@@ -109,6 +130,51 @@ for alloc in "${allocs[@]}"; do
 done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 
+if [[ ${1:-} == --recovery ]]; then
+  in_container nomad alloc signal -s SIGKILL -task echo "${allocs[0]}" >/dev/null
+  restarted=false
+  for _ in {1..60}; do
+    [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "healthy replica stopped serving during task recovery"
+    restarts=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo.Restarts')
+    if ((restarts >= 1)) && [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
+      restarted=true
+      break
+    fi
+    sleep 1
+  done
+  $restarted || fail "Nomad did not restart the crashed task"
+  echo 'Crashed task restarted; the other replica stayed available'
+
+  in_container sh -c 'cp /tmp/fake-runtime.nomad.hcl /tmp/good.nomad.hcl; sed -i "s|command = \"/usr/sbin/nginx\"|command = \"/bin/false\"|" /tmp/fake-runtime.nomad.hcl'
+  registration=$(in_container nomad job run -detach /tmp/fake-runtime.nomad.hcl)
+  evaluation=$(awk '/^Evaluation ID:/ {print $3}' <<<"$registration")
+  [[ $evaluation =~ ^[0-9a-f-]{36}$ ]] || fail "job registration did not return its evaluation ID"
+  reverted=false
+  for _ in {1..90}; do
+    for alloc in "${allocs[@]}"; do
+      [[ $(request "/alloc/$alloc/health" "$token") == *" 200" ]] || fail "bad canary interrupted a healthy replica"
+    done
+    job=$(in_container nomad job inspect fake-runtime)
+    if jq -e '(.Job // .) | .Version >= 2 and .TaskGroups[0].Tasks[0].Config.command == "/usr/sbin/nginx"' <<<"$job" >/dev/null; then
+      reverted=true
+      break
+    fi
+    sleep 1
+  done
+  $reverted || fail "bad canary did not automatically revert"
+  NOMAD_TOKEN="$boot" NOMAD_TEST_CONTAINER="$container" node --input-type=module - "$root/../../../tools/nomad/wait-deployments.mjs" "$evaluation" <<'JS'
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import assert from "node:assert/strict";
+const { waitForEvaluation } = await import(pathToFileURL(process.argv[2]));
+await assert.rejects(waitForEvaluation(process.argv[3], "", {
+  signal: AbortSignal.timeout(30_000),
+  get: async (path) => JSON.parse(execFileSync("docker", ["exec", "-e", "NOMAD_TOKEN", process.env.NOMAD_TEST_CONTAINER, "nomad", "operator", "api", path], { encoding: "utf8" })),
+}), /Deployment .* is failed/);
+JS
+  echo 'Bad canary reverted without interrupting either healthy replica; deployment gate rejected it'
+fi
+
 in_container nomad alloc stop -detach "${allocs[0]}" >/dev/null
 consecutive_removed=0
 for _ in {1..60}; do
@@ -122,4 +188,14 @@ for _ in {1..60}; do
 done
 ((consecutive_removed >= 3)) || fail "a stopped allocation kept its route"
 
-echo 'Host proxy authentication, allocation routing and route removal passed'
+replacement=""
+for _ in {1..60}; do
+  replacement=$(in_container nomad job allocs -json fake-runtime | jq -r --arg old "${allocs[0]}" --arg other "${allocs[1]}" '.[] | select(.ClientStatus == "running" and .DesiredStatus == "run" and .ID != $old and .ID != $other) | .ID' | head -1)
+  if [[ -n $replacement ]] && [[ $(request "/alloc/$replacement/health" "$token") == *" 200" ]]; then
+    break
+  fi
+  sleep 1
+done
+[[ -n $replacement ]] && [[ $(request "/alloc/$replacement/health" "$token") == *" 200" ]] || fail "stopped allocation was not replaced and routed"
+[[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "surviving replica lost its route"
+echo 'Host proxy authentication, allocation routing, removal and replacement passed'

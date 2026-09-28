@@ -14,6 +14,7 @@ on:
       - product/inference/runtime-launcher/**
       - product/inference/images/nomad-base/**
       - tools/nomad/**
+      - infra/environments/prod/us-east-1/kubernetes/workloads/observability/model-replica-rules.yaml
       - .github/workflows/nomad-deployment.yml
   workflow_run:
     workflows: [Model deployment]
@@ -69,7 +70,8 @@ jobs:
           bash infra/environments/prod/us-east-1/kubernetes/nomad/tests/validate-servers.sh
           node --check tools/nomad/create-bootstrap-secrets.mjs
           bash product/inference/nomad/tests/validate-job.sh
-          bash product/inference/nomad/tests/test-host-proxy.sh
+          timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
+          node --test tools/nomad/wait-deployments.test.mjs
       - uses: depot/setup-action@v1
       - name: Build and test the runtime launcher
         uses: depot/build-push-action@v1
@@ -89,7 +91,7 @@ jobs:
     needs: configuration-checks
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 30
+    timeout-minutes: 125
     env:
       AWS_REGION: us-east-1
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}

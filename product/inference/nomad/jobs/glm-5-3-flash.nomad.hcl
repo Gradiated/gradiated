@@ -70,11 +70,12 @@ job "glm-5-3-flash" {
 
     update {
       max_parallel      = 1
-      canary            = 0
+      canary            = 1
       min_healthy_time  = "30s"
       healthy_deadline  = "70m"
       progress_deadline = "90m"
-      auto_revert       = false
+      auto_revert       = true
+      auto_promote      = true
     }
 
     network {

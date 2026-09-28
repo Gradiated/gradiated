@@ -261,6 +261,21 @@ Each step is its own pull request.
   is the record.
 - Rescheduling and disconnect policy per job, once a node has spare GPUs.
 
+### Safe model rollouts
+
+Model updates launch one extra canary while existing replicas continue serving.
+Nomad promotes it automatically only after all runtime and reporting checks stay
+healthy, and reverts a failed deployment to its last stable job. Reserve enough
+compatible GPU capacity for one extra replica; insufficient canary capacity must
+leave the old service running rather than turn a rollout into an outage.
+
+The Nomad deployment workflow follows each registration evaluation and waits for
+new deployments to become healthy. Failure or rollback fails the release; queued
+capacity and warmup have a bounded deadline. An unchanged deployment is not a new
+release. The disposable recovery check is
+`timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery`.
+It exercises task crashes, failed canary rollback, uninterrupted peer routes and
+allocation replacement using the pinned Nomad binary and real host proxy.
 ### Replica availability alerts
 
 Git's committed Nomad jobs also define the expected serving capacity, independent

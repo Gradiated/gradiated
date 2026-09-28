@@ -15,6 +15,9 @@ image=hashicorp/nomad@sha256:b964829b94c5493f3b543bb409b60c335a9ca03f21d9fac8b4c
 tls=$(dirname "$NOMAD_CACERT")
 bucket="gradiated-prod-model-artifacts-${AWS_ACCOUNT_ID:?}"
 bundles=$(node "$repo/tools/models/release.mjs" list)
+waiting=$(mktemp)
+trap 'rm -f "$waiting"' EXIT
+printf '[]\n' >"$waiting"
 
 nomad() {
   docker run --rm --network host \
@@ -27,7 +30,7 @@ nomad() {
 }
 
 deploy() {
-  local name=$1 release status=0
+  local name=$1 release before registration evaluation next status=0
   local args=(-var-file="/jobs/$name.vars.hcl")
   if jq -e --arg name "$name" 'index($name)' <<<"$bundles" >/dev/null; then
     release=$(node "$repo/tools/models/release.mjs" resolve "$name" "$source_sha" "$bucket" "$AWS_ACCOUNT_ID")
@@ -41,10 +44,20 @@ deploy() {
       -var "base_id=$(jq -er .baseId <<<"$release")"
     )
   fi
+  before=""
+  if jq -e --arg name "$name" '.[] | select(.ID == $name)' <<<"$known_jobs" >/dev/null; then
+    before=$(nomad job deployments -json "$name" | jq -r 'sort_by(.CreateIndex) | last | .ID // ""')
+  fi
   # Plan exits 1 when allocations would change, which is the normal case for a rollout.
   nomad job plan "${args[@]}" "/jobs/$name.nomad.hcl" || status=$?
   ((status <= 1)) || exit "$status"
-  nomad job run -detach "${args[@]}" "/jobs/$name.nomad.hcl"
+  registration=$(nomad job run -detach "${args[@]}" "/jobs/$name.nomad.hcl")
+  printf '%s\n' "$registration"
+  evaluation=$(awk '/^Evaluation ID:/ {print $3}' <<<"$registration")
+  [[ $evaluation =~ ^[0-9a-f-]{36}$ ]] || { echo "Missing evaluation ID for $name" >&2; exit 1; }
+  next=$(jq --arg job "$name" --arg evaluation "$evaluation" --arg previous "$before" \
+    '. + [{job: $job, evaluation: $evaluation, previous: $previous}]' "$waiting")
+  printf '%s\n' "$next" >"$waiting"
 }
 
 shopt -s nullglob
@@ -54,6 +67,7 @@ if ((${#deployable[@]} == 0)); then
   exit 1
 fi
 
+known_jobs=$(nomad operator api /v1/jobs)
 for vars in "${deployable[@]}"; do
   name=$(basename "$vars" .vars.hcl)
   [[ -f "$repo/$jobs/$name.nomad.hcl" ]] || {
@@ -72,3 +86,5 @@ for name in $running; do
     nomad job stop -detach "$name"
   fi
 done
+
+node "$repo/tools/nomad/wait-deployments.mjs" "$waiting"

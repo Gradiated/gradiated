@@ -1,4 +1,4 @@
-import { z } from "@hono/zod-openapi";
+import { z } from "zod";
 
 import type {
   HostImage,
@@ -9,6 +9,8 @@ import type {
 const API = "https://rest.runpod.io/v1";
 const REGISTRY_AUTH_PREFIX = "gradiated-host-";
 const REQUEST_TIMEOUT_MS = 30_000;
+// The host proxy's port; RunPod only reaches ports declared on the pod.
+const SERVING_PORT = "8888/http";
 
 const podSchema = z.object({
   id: z.string(),
@@ -17,6 +19,7 @@ const podSchema = z.object({
   gpuCount: z.number().int().nonnegative(),
   vcpuCount: z.number().int().positive(),
   desiredStatus: z.string().optional(),
+  ports: z.array(z.string()).nullish(),
   env: z.record(z.string(), z.string()).nullish(),
   machine: z.object({
     dataCenterId: z.string().nullish(),
@@ -48,7 +51,7 @@ export const createRunPodProvider = ({
         authorization: `Bearer ${apiKey}`,
         "content-type": "application/json",
         // RunPod's edge rejects requests without a client identity.
-        "user-agent": "gradiated-instance-register",
+        "user-agent": "gradiated-ops-mcp",
       },
       body: body === undefined ? null : JSON.stringify(body),
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -119,13 +122,17 @@ export const createRunPodProvider = ({
       return (await pod(podId)).env ?? {};
     },
 
-    async bootstrap(instance, image, environment) {
+    async isStopped(podId) {
+      return (await pod(podId)).desiredStatus === "EXITED";
+    },
+
+    async bootstrap(instance, image, environment, options) {
       const current = await pod(instance.providerInstanceId);
-      if (current.desiredStatus !== "EXITED") {
+      if (current.desiredStatus !== "EXITED" && !options?.allowReset) {
         throw new Error(
           "Refusing to reset a RunPod pod that is running or has unknown status: " +
             "an image or environment update can stop it and release scarce GPU capacity. " +
-            "Install Nomad over SSH inside the existing container instead.",
+            "Reset it only when that is explicitly authorized.",
         );
       }
 
@@ -137,6 +144,7 @@ export const createRunPodProvider = ({
       await call("PATCH", `/pods/${current.id}`, {
         imageName: image.reference,
         env: { ...current.env, ...environment },
+        ports: [...new Set([...(current.ports ?? []), SERVING_PORT])],
         ...(auth ? { containerRegistryAuthId: auth.id } : {}),
       });
       await auth?.removeReplaced();

@@ -109,7 +109,8 @@ for (let ordinal = 0; ordinal < 3; ordinal++) {
   servers[`${name}-key.pem`] = read(`${name}-key.pem`);
 }
 issue("operator", "cli.global.nomad", ["DNS:cli.global.nomad"]);
-json("ca.json", { "ca.pem": read("ca.pem"), "ca-key.pem": read("ca-key.pem") });
+// The CA key goes into KMS (Nomad README, "Secrets and trust"), never Secrets Manager.
+json("ca.json", { "ca.pem": read("ca.pem") });
 json("server-tls.json", servers);
 json("operator.json", {
   "ca.pem": read("ca.pem"),
@@ -122,5 +123,6 @@ json("gossip.json", {
   }),
 });
 console.log(
-  "Created bootstrap secret files. CA: 10 years; leaf certificates: 90 days. No values printed.",
+  "Created bootstrap secret files. CA: 10 years; leaf certificates: 90 days. No values printed. " +
+    "Import ca-key.pem into alias/gradiated-prod-nomad-ca, then delete this directory.",
 );

@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { vi } from "vitest";
 
 import { createHttp } from "../../src/http.js";
+import type { Registrations } from "../../src/instances/registration.js";
 
 export const token = "test-only-credential-0123456789abcdef";
 export const lokiStreams = {
@@ -29,7 +30,9 @@ export const closeServers = async () => {
   }
 };
 
-export const setup = async () => {
+export const setup = async (
+  extra: { registrations?: Registrations; nomadCertificateFile?: string } = {},
+) => {
   const backend = vi.fn(async (): Promise<unknown> => ({
     status: "success",
     data: [],
@@ -43,6 +46,7 @@ export const setup = async () => {
         : undefined,
     backend,
     audit,
+    ...extra,
   };
   const app = createHttp(options);
   open.push(app);
@@ -68,8 +72,9 @@ export const callTool = async (
   name: string,
   args: Record<string, unknown>,
   response: unknown = { status: "success", data: [] },
+  extra: { registrations?: Registrations } = {},
 ) => {
-  const { url, headers, backend } = await setup();
+  const { url, headers, backend, audit } = await setup(extra);
   backend.mockResolvedValue(response);
   const client = new Client({ name: "test", version: "1" });
   await client.connect(
@@ -80,9 +85,15 @@ export const callTool = async (
   await client.close();
 
   const content = result.content as { text: string }[];
-  const body = result.isError
-    ? undefined
-    : (JSON.parse(content[0]?.text ?? "{}") as { result: unknown }).result;
+  const text = content[0]?.text ?? "{}";
+  const parsed = ((): { result?: unknown; error?: string } => {
+    try {
+      return JSON.parse(text) as { result?: unknown };
+    } catch {
+      return { error: text };
+    }
+  })();
+  const body = result.isError ? parsed : (parsed.result ?? parsed);
 
-  return { backend, isError: result.isError === true, body };
+  return { backend, audit, isError: result.isError === true, body };
 };

@@ -10,9 +10,11 @@ export interface HostImage {
 export interface InstanceProvider {
   describe(providerInstanceId: string): Promise<ProviderInstance>;
   environment(providerInstanceId: string): Promise<Record<string, string>>;
+  isStopped(providerInstanceId: string): Promise<boolean>;
   bootstrap(
     instance: ProviderInstance,
     image: HostImage,
     environment: Readonly<Record<string, string>>,
+    options?: { readonly allowReset?: boolean },
   ): Promise<void>;
 }

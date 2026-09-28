@@ -16,6 +16,8 @@ The archive contains:
 - `base-id`: one line matching `/etc/gradiated/base-id` in the provider image.
 - `entrypoint`: an executable regular file.
 - The runtime environment and its model-specific launch code.
+- `runtime-launch`, built from the same pinned base, so supervisor fixes roll
+  out with the model without replacing or manually updating a GPU host.
 
 The base ID identifies the system dependency contract, including OS, CPU
 architecture, Python ABI, and required system libraries. Assign a new ID for
@@ -58,8 +60,11 @@ extracted runtime, and logs. Measure this for each release.
 
 ## Signals and cleanup
 
-The launcher is a Linux child subreaper. It starts the entrypoint in a new
-session and adopts orphaned descendants.
+The launcher starts a guardian that is a Linux child subreaper. The guardian
+starts the entrypoint in a new session and adopts orphaned descendants. Normal
+shutdown signals pass through the launcher to the guardian. If the launcher
+is killed, a kernel parent-death notification makes the guardian immediately
+kill and reap the remaining runtime tree, including detached workers.
 
 - The first SIGTERM, SIGINT, or SIGHUP goes unchanged to direct and adopted
   children.
@@ -72,7 +77,7 @@ session and adopts orphaned descendants.
 
 The supervisor cannot guarantee cleanup in these cases:
 
-- The supervisor itself gets SIGKILL.
+- The guardian itself gets SIGKILL, or the entire process tree is killed.
 - The Nomad client dies.
 - A process stays in an uninterruptible kernel wait.
 
@@ -149,6 +154,9 @@ CTest reports each case separately:
   Unrelated processes must stay alive, and the exit status must be correct.
 - `cleanup.ignored-*` and `cleanup.blocked-stop` start the launcher with
   inherited ignored or blocked signals. They check the same results.
+- `cleanup.launcher-killed` kills the launcher with SIGKILL while ordinary and
+  detached workers are alive, including a worker that ignores SIGTERM. It
+  requires every descendant to disappear within five seconds.
 - `cleanup.stubborn` runs the supervise adapter with a 2-second grace. A
   detached child ignores SIGTERM. The test checks that SIGKILL waits for the
   grace period and that no descendant remains.

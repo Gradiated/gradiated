@@ -32,7 +32,7 @@ if(BUILD_TESTING)
     set_tests_properties(launcher.${case} PROPERTIES TIMEOUT 10)
   endforeach()
 
-  foreach(mode stop interrupt hangup exit crash ignored-stop ignored-exit blocked-stop)
+  foreach(mode stop interrupt hangup exit crash ignored-stop ignored-exit blocked-stop launcher-killed launcher-killed-during-stop)
     add_test(NAME cleanup.${mode}
       COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/process-cleanup.sh
               ${mode} $<TARGET_FILE:runtime-launch> $<TARGET_FILE:process-tree-fixture>)

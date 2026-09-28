@@ -8,6 +8,7 @@ COPY bundles/deepseek-v4-1-flash/extract-dependencies.sh /extract-dependencies.s
 RUN bash /extract-dependencies.sh
 
 FROM dependencies AS package
+COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
 COPY bundles/package.sh /package.sh
 COPY images/deepseek-v4-1-flash/start.sh /bundle/start.sh
 COPY --chmod=755 bundles/deepseek-v4-1-flash/entrypoint /bundle/entrypoint

@@ -9,6 +9,7 @@ mode=${1:?Pass the process mode}
 supervisor=${2:?Pass the launcher, or the supervise adapter for the stubborn mode}
 fixture=${3:?Pass the process fixture executable}
 fixture_mode=${mode#*-}
+[[ "$mode" != launcher-killed* ]] || fixture_mode=stubborn
 work=$(mktemp -d)
 supervisor_pid=
 unrelated_pid=
@@ -35,6 +36,8 @@ cleanup() {
   rm -rf "$work"
 }
 trap cleanup EXIT
+
+[[ "$mode" != launcher-killed* ]] || { sent_signal=9 expected_status=137; }
 
 stubborn_grace_seconds=2
 
@@ -77,6 +80,10 @@ supervisor_pid=$!
 
 wait_until "the process fixture" 5 test -s "$work/ready"
 started=$(now_ms)
+if [[ "$mode" == launcher-killed-during-stop ]]; then
+  kill -TERM "$supervisor_pid"
+  sleep 1
+fi
 if [[ -n "$sent_signal" ]]; then
   kill -"$sent_signal" "$supervisor_pid"
 fi
@@ -92,6 +99,17 @@ supervisor_pid=
 elapsed_ms=$(($(now_ms) - started))
 assert_equal "$expected_status" "$actual_status" "Supervisor exit status"
 
+process_exited() {
+  ! kill -0 "$1" 2>/dev/null
+}
+
+if [[ "$mode" == launcher-killed* ]]; then
+  for process in leader ordinary detached; do
+    pid=$(cat "$work/$process")
+    wait_until "$process cleanup after launcher SIGKILL" 5 process_exited "$pid"
+  done
+fi
+
 for process in leader ordinary detached; do
   pid=$(cat "$work/$process")
   if kill -0 "$pid" 2>/dev/null; then
@@ -105,6 +123,7 @@ case "$fixture_mode" in
   exit | crash) signaled=(ordinary detached) forwarded=15 ;;
   stubborn) signaled=(leader ordinary) forwarded=$sent_signal ;;
 esac
+[[ "$mode" != launcher-killed* ]] || signaled=()
 for process in "${signaled[@]}"; do
   assert_equal "$forwarded" "$(cat "$work/$process.signal")" "Signal received by the $process process"
 done

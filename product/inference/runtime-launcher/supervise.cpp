@@ -20,6 +20,7 @@
 
 namespace {
 constexpr std::array shutdown_signals{SIGTERM, SIGINT, SIGHUP};
+constexpr int parent_death_signal = SIGUSR1;
 constexpr auto children_path = "/proc/thread-self/children";
 constexpr timespec reap_interval{.tv_sec = 0, .tv_nsec = 50'000'000};
 
@@ -46,6 +47,7 @@ sigset_t supervisor_signals() {
   sigset_t signals;
   sigemptyset(&signals);
   sigaddset(&signals, SIGCHLD);
+  sigaddset(&signals, parent_death_signal);
   for (int signal : shutdown_signals) {
     sigaddset(&signals, signal);
   }
@@ -68,6 +70,7 @@ void reset_disposition(int signal) {
 // status. The runtime inherits the reset dispositions.
 sigset_t block_supervisor_signals(const sigset_t &signals) {
   reset_disposition(SIGCHLD);
+  reset_disposition(parent_death_signal);
   for (int signal : shutdown_signals) {
     reset_disposition(signal);
   }
@@ -81,6 +84,7 @@ sigset_t block_supervisor_signals(const sigset_t &signals) {
 }
 
 sigset_t runtime_signal_mask(sigset_t inherited) {
+  sigdelset(&inherited, parent_death_signal);
   for (int signal : shutdown_signals) {
     sigdelset(&inherited, signal);
   }
@@ -177,15 +181,15 @@ std::optional<int> wait_for_shutdown_signal(const sigset_t &signals, bool shutti
   const int signal = shutting_down ? sigtimedwait(&signals, nullptr, &reap_interval)
                                    : sigwaitinfo(&signals, nullptr);
 
-  if (std::ranges::find(shutdown_signals, signal) == shutdown_signals.end()) {
+  if (signal != parent_death_signal &&
+      std::ranges::find(shutdown_signals, signal) == shutdown_signals.end()) {
     return std::nullopt;
   }
 
   return signal;
 }
-} // namespace
 
-int supervise(char *const argv[], std::chrono::seconds grace) {
+int supervise_runtime(char *const argv[], std::chrono::seconds grace, const sigset_t &inherited) {
   if (prctl(PR_SET_CHILD_SUBREAPER, 1) != 0) {
     system_failure("Cannot enable child subreaper");
   }
@@ -193,7 +197,7 @@ int supervise(char *const argv[], std::chrono::seconds grace) {
   require_child_list();
 
   const sigset_t signals = supervisor_signals();
-  const sigset_t inherited = block_supervisor_signals(signals);
+  block_supervisor_signals(signals);
   const pid_t leader = start_runtime(argv, runtime_signal_mask(inherited));
 
   std::optional<int> leader_status;
@@ -226,13 +230,59 @@ int supervise(char *const argv[], std::chrono::seconds grace) {
       shutdown = Shutdown{.deadline = std::chrono::steady_clock::now() + grace};
     }
 
+    if (received_signal == parent_death_signal) {
+      shutdown->deadline = std::chrono::steady_clock::now();
+    }
+
     if (shutdown) {
       signal_children(*shutdown, received_signal.value_or(SIGTERM));
     }
 
     const auto signal = wait_for_shutdown_signal(signals, shutdown.has_value());
-    if (signal && !received_signal) {
+    if (signal && (!received_signal || *signal == parent_death_signal)) {
       received_signal = signal;
+    }
+  }
+}
+
+} // namespace
+
+int supervise(char *const argv[], std::chrono::seconds grace) {
+  const sigset_t signals = supervisor_signals();
+  const sigset_t inherited = block_supervisor_signals(signals);
+  const pid_t parent = getpid();
+  const pid_t guardian = fork();
+  if (guardian < 0) {
+    system_failure("Cannot start runtime guardian");
+  }
+
+  if (guardian == 0) {
+    // Nomad targets the launcher PID. Keep the reaper alive after its SIGKILL
+    // so detached runtime workers cannot retain GPU memory and listening ports.
+    if (prctl(PR_SET_PDEATHSIG, parent_death_signal) != 0) {
+      _exit(126);
+    }
+    if (getppid() != parent) {
+      _exit(137);
+    }
+
+    try {
+      _exit(supervise_runtime(argv, grace, inherited));
+    } catch (const std::exception &error) {
+      std::cerr << "runtime-launch: " << error.what() << '\n';
+      _exit(1);
+    }
+  }
+
+  for (;;) {
+    int status = 0;
+    const pid_t waited = waitpid(guardian, &status, WNOHANG);
+    if (waited == guardian) {
+      return exit_code(status);
+    }
+    const int signal = sigwaitinfo(&signals, nullptr);
+    if (std::ranges::find(shutdown_signals, signal) != shutdown_signals.end()) {
+      kill(guardian, signal);
     }
   }
 }

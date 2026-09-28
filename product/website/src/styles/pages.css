@@ -4531,6 +4531,13 @@
   opacity: 1;
 }
 
+/* phones: real estate is precious — the haze takes a fifth, not a third */
+@media (max-width: 900px) {
+  .gr-bottom-haze {
+    height: 20vh;
+  }
+}
+
 /* the CTA title's authored break exists only on phones */
 .gr-home-cta-br {
   display: none;

@@ -99,10 +99,8 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
   };
   out.blockA = 1;
   out.markAlpha = 1;
-  /* reverse ken-burns: one slow push-in across the whole fold — the camera
-     drifts toward the socket for as long as the board is on stage, through
-     the landing and the rest, instead of backing off and stopping */
-  out.zoom = 1 + 0.07 * g;
+  /* no ken-burns: the slow push-in read as an error rather than a camera,
+     so the board holds its scale and the rotation carries the fold */
   if (g < BEATS.settle[1]) {
     /* frontal arrival: nothing beyond the push-in */
   } else if (g < BEATS.land[1]) {
@@ -153,10 +151,15 @@ export const HomeFlow = (): ReactElement => {
     const rootEl = (block.closest(".gr-root") as HTMLElement) ?? document.documentElement;
 
     let ink = "#2F2D29";
+    /* the board canvas is only repainted when its scale changes; a theme
+       flip must force one, or the blueprint keeps the old ink until the
+       next zoom step (visible as a stale-colour board in dark mode) */
+    let inkDirty = false;
     let goldV: [number, number, number] = [0.75, 0.6, 0.28];
     const readTheme = (): void => {
       const cs = getComputedStyle(rootEl);
       ink = cs.getPropertyValue("--color-text").trim() || "#2F2D29";
+      inkDirty = true;
       /* the wafer field is GOLD — the brand's kiln amber */
       const gold = cs.getPropertyValue("--color-kiln-300").trim() || "#e9b748";
       const gm = /^#([0-9a-f]{6})$/i.exec(gold);
@@ -640,8 +643,9 @@ export const HomeFlow = (): ReactElement => {
       /* the board: drawn in mm at scale k, anchored so the chip sits on
          U1, rotating about the socket, revealed as a circle from it */
       const k = Math.min((s.w * 1.0) / SOCK.w, 6.2);
-      if (k > 0.5 && Math.abs(k - boardK) > 0.01) {
+      if (k > 0.5 && (Math.abs(k - boardK) > 0.01 || inkDirty)) {
         boardK = k;
+        inkDirty = false;
         drawBoardArt(k, 1);
       }
       const ocx = (BM + SOCK.cx) * k;

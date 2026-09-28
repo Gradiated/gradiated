@@ -128,16 +128,13 @@ jobs:
           done
           cat "$RUNNER_TEMP/port-forward.log" >&2
           exit 1
-      - name: Load the Nomad client certificate
+      - name: Issue a Nomad client certificate for this deployment
         run: |
           tls="$RUNNER_TEMP/nomad-tls"
-          install -d -m 700 "$tls"
-          certificate="$(aws secretsmanager get-secret-value --secret-id gradiated/prod/nomad/deployer-tls \
-            --query SecretString --output text)"
-          for name in ca.pem cert.pem key.pem; do
-            (umask 077; jq -er --arg name "$name" '.[$name]' <<<"$certificate" >"$tls/$name")
-          done
-          chmod 644 "$tls"/*.pem
+          pnpm --dir product install --frozen-lockfile --filter @gradiated/nomad-pki
+          pnpm --dir product --filter @gradiated/nomad-pki certificate \
+            --role cli --ca infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt --out "$tls"
+          cp infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt "$tls/ca.pem"
           {
             echo "NOMAD_CACERT=$tls/ca.pem"
             echo "NOMAD_CLIENT_CERT=$tls/cert.pem"

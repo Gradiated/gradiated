@@ -15,17 +15,6 @@ on:
       - "product/turbo.json"
       - "mise.toml"
   pull_request:
-    paths:
-      - "product/services/wizard/**"
-      - ".github/workflows/wizard-publish.yml"
-      - "product/.nvmrc"
-      - "product/package.json"
-      - "product/pnpm-lock.yaml"
-      - "product/pnpm-workspace.yaml"
-      - "product/prettier.config.mjs"
-      - "product/tsconfig.base.json"
-      - "product/turbo.json"
-      - "mise.toml"
   workflow_dispatch:
 
 permissions:
@@ -37,9 +26,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/wizard-publish.yml
+
   publish:
     name: Publish @gradiated/wizard
-    if: github.event_name != 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true' && (github.event_name != 'pull_request')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -66,6 +73,8 @@ jobs:
 
   e2e:
     name: Wizard e2e (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -98,3 +107,13 @@ jobs:
         if: runner.os == 'Linux'
         working-directory: product
         run: pnpm exec prettier --check services/wizard
+
+  passed:
+    name: Wizard publish passed
+    if: always()
+    needs: [changes, publish, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

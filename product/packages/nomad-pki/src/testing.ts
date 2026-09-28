@@ -2,7 +2,7 @@ import { sign } from "node:crypto";
 
 import type { KMSClient } from "@aws-sdk/client-kms";
 
-import type { CertificateSigner } from "../../src/nomad-certificates.js";
+import type { CertificateSigner } from "./certificates.js";
 
 // Made with `openssl req -utf8`, which encodes names as UTF8String like the
 // production CA, so an issuer that is re-encoded rather than copied shows up.

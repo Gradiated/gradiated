@@ -1,6 +1,5 @@
 import { createServer } from "node:http";
-import { randomUUID, X509Certificate } from "node:crypto";
-import { readFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import express, {
   type RequestHandler,
   type ErrorRequestHandler,
@@ -24,7 +23,7 @@ export const createHttp = (options: {
   authRouter?: RequestHandler;
   backend: Backend;
   registrations?: Registrations;
-  nomadCertificateFile?: string;
+  nomadCertificateExpiry?: () => number | undefined;
   audit: (event: Record<string, unknown>) => void;
 }) => {
   const registry = new Registry();
@@ -42,22 +41,17 @@ export const createHttp = (options: {
     buckets: [0.1, 0.5, 1, 3, 5, 10, 15],
     registers: [registry],
   });
-  const certificateFile = options.nomadCertificateFile;
-  if (certificateFile) {
+  const certificateExpiry = options.nomadCertificateExpiry;
+  if (certificateExpiry) {
     new Gauge({
-      name: "ops_mcp_nomad_certificate_expiry_timestamp_seconds",
-      help: "Expiry of the client certificate the ops MCP presents to Nomad",
+      name: "nomad_certificate_expiry_timestamp_seconds",
+      help: "Expiry of a Nomad certificate that renews itself",
       labelNames: ["certificate"],
       registers: [registry],
       collect() {
-        try {
-          const { validTo } = new X509Certificate(
-            readFileSync(certificateFile),
-          );
-          this.set({ certificate: "ops-mcp" }, Date.parse(validTo) / 1000);
-        } catch {
-          this.reset();
-        }
+        const expiry = certificateExpiry();
+        if (expiry === undefined) this.reset();
+        else this.set({ certificate: "ops-mcp" }, expiry);
       },
     });
   }

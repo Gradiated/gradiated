@@ -1,9 +1,16 @@
 import { readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { z } from "zod";
 import { createBackend } from "./backend.js";
 import { createHttp } from "./http.js";
 import { createAuth } from "./auth.js";
 import { productionRegistrations } from "./instances/production.js";
+import {
+  cliProfile,
+  issueCertificate,
+  kmsSigner,
+  renewingCertificate,
+} from "@gradiated/nomad-pki";
 
 const config = z
   .object({
@@ -41,6 +48,29 @@ const auth = createAuth({
   deniedEmails: z.array(z.email()).parse(JSON.parse(config.MCP_DENIED_EMAILS)),
   redirectUris: z.array(z.url()).parse(JSON.parse(config.MCP_REDIRECT_URIS)),
 });
+const nomadCaFile = `${config.CREDENTIALS_DIRECTORY}/nomad-ca`;
+const nomadCertificate = renewingCertificate(async () => {
+  const issued = await issueCertificate(
+    await readFile(nomadCaFile, "utf8"),
+    kmsSigner(config.NOMAD_CA_KMS_KEY),
+    cliProfile,
+  );
+  audit({ service: "ops-mcp", event: "certificate_renewed", name: "ops-mcp" });
+
+  return issued;
+});
+const keepNomadCertificateFresh = () =>
+  nomadCertificate.get().catch((error: unknown) =>
+    audit({
+      service: "ops-mcp",
+      level: "error",
+      event: "certificate_renewal_failed",
+      name: "ops-mcp",
+      error: error instanceof Error ? error.message : String(error),
+    }),
+  );
+void keepNomadCertificateFresh();
+setInterval(keepNomadCertificateFresh, 60 * 60 * 1000).unref();
 const backend = createBackend({
   prometheus: config.PROMETHEUS_URL,
   loki: config.LOKI_URL,
@@ -48,10 +78,9 @@ const backend = createBackend({
   alertmanager: config.ALERTMANAGER_URL,
   nomad: {
     url: config.NOMAD_URL,
-    caFile: `${config.CREDENTIALS_DIRECTORY}/nomad-ca`,
-    certFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
-    keyFile: `${config.CREDENTIALS_DIRECTORY}/nomad-key`,
+    caFile: nomadCaFile,
     tokenFile: `${config.CREDENTIALS_DIRECTORY}/nomad-token`,
+    clientCertificate: nomadCertificate.get,
   },
 });
 const { server, metrics } = createHttp({
@@ -59,7 +88,7 @@ const { server, metrics } = createHttp({
   authenticate: auth.authenticate,
   authRouter: auth.router,
   backend,
-  nomadCertificateFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
+  nomadCertificateExpiry: nomadCertificate.expiry,
   registrations: productionRegistrations(
     {
       credentialsDirectory: config.CREDENTIALS_DIRECTORY,

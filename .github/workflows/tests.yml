@@ -39,41 +39,6 @@ on:
       - "mise.toml"
       - "tools/images/**"
   pull_request:
-    paths:
-      - ".github/workflows/application-deployment.yml"
-      - ".github/workflows/build-images.yml"
-      - ".github/workflows/tests.yml"
-      - "product/inference/CMakeLists.txt"
-      - "product/inference/desmond/**"
-      - "product/inference/engine/**"
-      - "product/inference/runtimes/kev/**"
-      - "product/inference/runtimes/vllm/**"
-      - "product/packages/**"
-      - "product/scripts/**"
-      - "product/services/api/**"
-      - "product/services/console/**"
-      - "product/services/gateway/**"
-      - "product/services/proxy/**"
-      - "product/services/collector/**"
-      - "infra/environments/prod/us-east-1/kubernetes/workloads/proxy.yaml"
-      - "infra/environments/prod/us-east-1/kubernetes/workloads/public-api.yaml"
-      - "product/services/rust-service.Dockerfile"
-      - "product/services/worker/**"
-      - "product/services/ops-mcp/**"
-      - "product/.dockerignore"
-      - "product/.nvmrc"
-      - "product/.prettierignore"
-      - "product/Dockerfile"
-      - "product/docker-compose.yml"
-      - "product/mprocs.yaml"
-      - "product/package.json"
-      - "product/pnpm-lock.yaml"
-      - "product/pnpm-workspace.yaml"
-      - "product/prettier.config.mjs"
-      - "product/tsconfig.base.json"
-      - "product/turbo.json"
-      - "mise.toml"
-      - "tools/images/**"
   workflow_dispatch:
 
 permissions:
@@ -85,8 +50,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/tests.yml
+
   unit:
     name: Unit tests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -127,6 +111,8 @@ jobs:
 
   integration:
     name: Integration tests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -169,6 +155,8 @@ jobs:
 
   inference-native:
     name: Inference native tests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -192,6 +180,8 @@ jobs:
 
   gateway-contract:
     name: Gateway runtime integration
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -234,6 +224,8 @@ jobs:
 
   proxy-e2e:
     name: Proxy E2E
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -280,6 +272,8 @@ jobs:
 
   inference-e2e:
     name: Inference E2E Tests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     permissions:
@@ -344,6 +338,8 @@ jobs:
 
   playwright:
     name: Playwright tests
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -406,3 +402,13 @@ jobs:
         if: always()
         working-directory: product
         run: docker compose down --volumes
+
+  passed:
+    name: Product tests passed
+    if: always()
+    needs: [changes, unit, integration, inference-native, gateway-contract, proxy-e2e, inference-e2e, playwright]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

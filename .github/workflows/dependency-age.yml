@@ -10,12 +10,6 @@ on:
       - "**/Cargo.toml"
       - "tools/dependencies/**"
   pull_request:
-    paths:
-      - ".github/workflows/dependency-age.yml"
-      - ".cargo/config.toml"
-      - "**/Cargo.lock"
-      - "**/Cargo.toml"
-      - "tools/dependencies/**"
   workflow_dispatch:
 
 permissions:
@@ -26,11 +20,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/dependency-age.yml
+
   cargo:
     name: Cargo dependency age
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
       - run: node --test tools/dependencies/*.test.mjs
       - run: node tools/dependencies/cargo-age.mjs
+
+  passed:
+    name: Dependency age passed
+    if: always()
+    needs: [changes, cargo]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

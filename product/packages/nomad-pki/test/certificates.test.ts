@@ -9,10 +9,11 @@ import {
   hostProfile,
   issueCertificate,
   kmsSigner,
+  serialNumber,
   serverProfile,
   type CertificateSigner,
-} from "../src/nomad-certificates.js";
-import { fakeKms, localSigner, testCa } from "./support/nomad-ca.js";
+} from "../src/certificates.js";
+import { fakeKms, localSigner, testCa } from "../src/testing.js";
 
 const signers: [string, () => CertificateSigner][] = [
   ["a local key", () => localSigner],
@@ -97,7 +98,7 @@ describe("certificate profiles", () => {
 
   it.each([
     [hostProfile, "2027-09-23T00:00:00.000Z"],
-    [cliProfile, "2026-12-22T00:00:00.000Z"],
+    [cliProfile, "2026-10-23T00:00:00.000Z"],
   ])("lasts the profile's days", async (profile, validTo) => {
     const issued = await issueCertificate(
       testCa.certificate,
@@ -125,19 +126,19 @@ describe("certificate profiles", () => {
   });
 });
 
-it("encodes every random serial number as valid DER", async () => {
-  for (let attempt = 0; attempt < 600; attempt++) {
-    const issued = await issueCertificate(
-      testCa.certificate,
-      localSigner,
-      cliProfile,
-    );
+it.each([
+  [0x00, 0x01],
+  [0x80, 0x01],
+  [0xff, 0x7f],
+  [0x42, 0x43],
+])(
+  "makes a serial starting 0x%s a positive, minimal DER integer",
+  (first, expected) => {
+    const serial = serialNumber(new Uint8Array([first, 0xaa]));
 
-    expect(new X509Certificate(issued.certificate).serialNumber).toMatch(
-      /^[0-7][0-9A-F]{31}$/,
-    );
-  }
-});
+    expect([...serial]).toEqual([expected, 0xaa]);
+  },
+);
 
 describe("KMS signer", () => {
   it("asks KMS to hash and sign the certificate with ECDSA SHA-256", async () => {

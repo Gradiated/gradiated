@@ -8,10 +8,6 @@ on:
       - "research/lab/**"
       - "mise.toml"
   pull_request:
-    paths:
-      - ".github/workflows/research-lab.yml"
-      - "research/lab/**"
-      - "mise.toml"
   workflow_dispatch:
 
 permissions:
@@ -22,8 +18,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/research-lab.yml
+
   rust:
     name: Rust (research/lab)
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -43,3 +58,13 @@ jobs:
         working-directory: research/lab
       - run: cargo test --workspace
         working-directory: research/lab
+
+  passed:
+    name: Research lab passed
+    if: always()
+    needs: [changes, rust]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

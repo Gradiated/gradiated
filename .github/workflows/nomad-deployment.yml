@@ -16,17 +16,6 @@ on:
       - .github/workflows/nomad-deployment.yml
   workflow_dispatch:
   pull_request:
-    paths:
-      - infra/environments/prod/us-east-1/kubernetes/nomad/**
-      - infra/environments/prod/runpod/glm-5-3-flash/**
-      - product/inference/nomad/**
-      - product/inference/desmond/**
-      - product/inference/CMakeLists.txt
-      - .mise/tasks/desmond/test
-      - product/inference/runtime-launcher/**
-      - product/inference/images/nomad-base/**
-      - tools/nomad/**
-      - .github/workflows/nomad-deployment.yml
 
 permissions:
   actions: read
@@ -38,7 +27,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/nomad-deployment.yml
+
   configuration-checks:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -143,3 +151,13 @@ jobs:
           echo "::add-mask::$token"
           echo "NOMAD_TOKEN=$token" >>"$GITHUB_ENV"
       - run: bash tools/nomad/deploy-jobs.sh
+
+  passed:
+    name: Nomad deployment passed
+    if: always()
+    needs: [changes, configuration-checks, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

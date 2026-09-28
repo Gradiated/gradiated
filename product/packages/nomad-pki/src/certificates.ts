@@ -69,7 +69,7 @@ export const cliProfile: CertificateProfile = {
   dnsNames: ["cli.global.nomad"],
   ipAddresses: [],
   extendedKeyUsages: [id_kp_clientAuth],
-  days: 90,
+  days: 30,
 };
 
 export const serverProfile = (ordinal: number): CertificateProfile => ({
@@ -83,8 +83,16 @@ export const serverProfile = (ordinal: number): CertificateProfile => ({
   ],
   ipAddresses: ["127.0.0.1"],
   extendedKeyUsages: [id_kp_serverAuth, id_kp_clientAuth],
-  days: 90,
+  days: 30,
 });
+
+// A DER integer is positive and minimal only if its first byte is 0x01-0x7f.
+export const serialNumber = (random: Uint8Array) => {
+  const serial = new Uint8Array(random);
+  serial[0] = (serial[0]! & 0x7f) | 0x01;
+
+  return serial;
+};
 
 const extension = (extnID: string, critical: boolean, value: object) =>
   new Extension({
@@ -122,15 +130,12 @@ export const issueCertificate = async (
     keys.publicKey.export({ type: "spki", format: "der" }),
     SubjectPublicKeyInfo,
   );
-  const serialNumber = new Uint8Array(randomBytes(16));
-  // DER integers are positive and minimal only if the first byte is 0x01-0x7f.
-  serialNumber[0] = (serialNumber[0]! & 0x7f) | 0x01;
   const caExpiry = ca.validity.notAfter.getTime().getTime();
   const algorithm = new AlgorithmIdentifier({ algorithm: ECDSA_WITH_SHA256 });
 
   const tbsCertificate = new TBSCertificate({
     version: Version.v3,
-    serialNumber: serialNumber.buffer,
+    serialNumber: serialNumber(randomBytes(16)).buffer,
     signature: algorithm,
     // Go matches a certificate to its issuer by these exact bytes.
     issuer: ca.subject,

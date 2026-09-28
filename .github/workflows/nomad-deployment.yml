@@ -134,7 +134,7 @@ jobs:
           tls="$RUNNER_TEMP/nomad-tls"
           pnpm --dir product install --frozen-lockfile --filter @gradiated/nomad-pki
           pnpm --dir product --filter @gradiated/nomad-pki certificate \
-            --role cli --ca infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt --out "$tls"
+            --role cli --ca "$GITHUB_WORKSPACE/infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt" --out "$tls"
           cp infra/environments/prod/us-east-1/kubernetes/nomad/ca.crt "$tls/ca.pem"
           {
             echo "NOMAD_CACERT=$tls/ca.pem"

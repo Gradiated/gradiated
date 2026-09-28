@@ -132,7 +132,7 @@ const SiteHeader = (): ReactElement => {
             Book a call
           </a>
           <WaitlistButton className="border border-ink px-4 pb-[9px] pt-[10px] leading-[11px] text-ink transition-colors hover:bg-ink hover:text-paper max-[1100px]:hidden">
-            Join the waitlist
+            Request beta access
           </WaitlistButton>
           <button
             aria-controls="mobile-site-menu"
@@ -183,7 +183,7 @@ const SiteHeader = (): ReactElement => {
             Book a demo
           </a>
           <WaitlistButton className={mobileMenuLinkClass}>
-            Join the waitlist
+            Request beta access
           </WaitlistButton>
         </nav>
       )}

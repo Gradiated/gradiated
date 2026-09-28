@@ -470,7 +470,7 @@ export const Nav = (): ReactElement => {
             Book a call
           </a>
           <WaitlistButton className="gr-link gr-nav-action">
-            Join the waitlist
+            Request beta access
             <Arrow />
           </WaitlistButton>
         </div>
@@ -635,7 +635,7 @@ export const Nav = (): ReactElement => {
                     closeSheet();
                   }}
                 >
-                  Join the waitlist
+                  Request beta access
                 </button>
               </div>
             </div>

@@ -132,7 +132,7 @@ export const WaitlistDrawer = ({
     <dialog
       className={`gr-waitlist-drawer${closing ? " gr-waitlist-drawer--closing" : ""}${handoff ? " gr-waitlist-drawer--handoff" : ""}${returning ? " gr-waitlist-drawer--returning" : ""}`}
       ref={dialogRef}
-      aria-label="Join the Gradiated waitlist"
+      aria-label="Request Gradiated beta access"
       onKeyDown={(event) => event.stopPropagation()}
       onCancel={(event) => {
         event.preventDefault();
@@ -172,7 +172,7 @@ export const WaitlistDrawer = ({
         ) : null}
         {phase === "done" ? (
           <div className="gr-waitlist-done" role="status">
-            <h2 className="gr-heading">You&rsquo;re on the list.</h2>
+            <h2 className="gr-heading">Request received.</h2>
             <p className="gr-body gr-muted">
               Thanks — a confirmation is on its way to <strong>{email}</strong>.
               Your beta invitation will land at the same address.
@@ -188,10 +188,10 @@ export const WaitlistDrawer = ({
         ) : (
           <>
             <header className="gr-waitlist-head">
-              <h2 className="gr-heading">Join the beta</h2>
+              <h2 className="gr-heading">Request beta access</h2>
               <p className="gr-body gr-muted">
                 Tell us about your company, and we&rsquo;ll be in touch with
-                early access details.
+                beta access details.
               </p>
             </header>
 
@@ -261,7 +261,7 @@ export const WaitlistDrawer = ({
                 type="submit"
                 disabled={phase === "submitting"}
               >
-                {phase === "submitting" ? "Joining…" : "Join the waitlist"}
+                {phase === "submitting" ? "Requesting…" : "Request beta access"}
               </button>
             </form>
           </>
@@ -278,7 +278,7 @@ export const WaitlistDrawer = ({
  *  outside itself. */
 export const WaitlistButton = ({
   className,
-  children = "Join the waitlist",
+  children = "Request beta access",
 }: {
   className?: string;
   children?: ReactNode;

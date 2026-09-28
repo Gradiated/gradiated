@@ -53,11 +53,11 @@ type BlockState = {
 
 type TimelineOut = {
   s: BlockState;
-  blockA: number;   /* the chip's arrival */
+  blockA: number; /* the chip's arrival */
   markAlpha: number;
   shadowAlpha: number;
-  zoom: number;     /* the ken-burns settle */
-  glowA: number;    /* progress into the isometric view */
+  zoom: number; /* the ken-burns settle */
+  glowA: number; /* progress into the isometric view */
   siliconCopyA: number;
 };
 
@@ -71,8 +71,24 @@ const keyStates = (
     /* narrow: the chip rides higher so the board's top edge meets the
        fold's start — centred, the blueprint began ~200px down the stage
        and read as dead space after the marquee */
-    chip: { cx: W / 2, cy: H * (wide ? 0.5 : 0.34), w: vm * 0.34, h: vm * 0.34, r: 10, rx: 0, rz: 0 },
-    land: { cx: W * (wide ? 0.25 : 0.5), cy: H * (wide ? 0.52 : 0.38), w: vm * 0.32, h: vm * 0.32, r: 10, rx: 58, rz: 45 },
+    chip: {
+      cx: W / 2,
+      cy: H * (wide ? 0.5 : 0.34),
+      w: vm * 0.34,
+      h: vm * 0.34,
+      r: 10,
+      rx: 0,
+      rz: 0,
+    },
+    land: {
+      cx: W * (wide ? 0.25 : 0.5),
+      cy: H * (wide ? 0.52 : 0.38),
+      w: vm * 0.32,
+      h: vm * 0.32,
+      r: 10,
+      rx: 58,
+      rz: 45,
+    },
   };
 };
 
@@ -118,7 +134,7 @@ const evalTimeline = (g: number, W: number, H: number): TimelineOut => {
     out.glowA = 1;
     /* a slower ramp than the old *3 pop — the copy rises, sharpens and
      settles over the first half of the rest beat (see --enter in the CSS) */
-  out.siliconCopyA = easeO(Math.min(1, seg(g, BEATS.siliconRest) * 1.8));
+    out.siliconCopyA = easeO(Math.min(1, seg(g, BEATS.siliconRest) * 1.8));
   }
   return out;
 };
@@ -142,13 +158,23 @@ export const HomeFlow = (): ReactElement => {
     const glCanvas = glRef.current;
     const overCanvas = overRef.current;
     const siliconCopy = siliconCopyRef.current;
-    if (!runway || !block || !shadowEl || !mark || !top || !glCanvas || !overCanvas || !siliconCopy)
+    if (
+      !runway ||
+      !block ||
+      !shadowEl ||
+      !mark ||
+      !top ||
+      !glCanvas ||
+      !overCanvas ||
+      !siliconCopy
+    )
       return;
     const ctx2 = overCanvas.getContext("2d");
     if (!ctx2) return;
 
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const rootEl = (block.closest(".gr-root") as HTMLElement) ?? document.documentElement;
+    const rootEl =
+      (block.closest(".gr-root") as HTMLElement) ?? document.documentElement;
 
     let ink = "#2F2D29";
     /* the board canvas is only repainted when its scale changes; a theme
@@ -172,7 +198,10 @@ export const HomeFlow = (): ReactElement => {
     };
     readTheme();
     const themeWatch = new MutationObserver(readTheme);
-    themeWatch.observe(rootEl, { attributes: true, attributeFilter: ["data-theme"] });
+    themeWatch.observe(rootEl, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
     const scheme = matchMedia("(prefers-color-scheme: dark)");
     scheme.addEventListener("change", readTheme);
 
@@ -235,7 +264,13 @@ export const HomeFlow = (): ReactElement => {
         return used <= budget + 1e-4;
       };
 
-      const rect = (x: number, y: number, w: number, h: number, r = 0.6): void => {
+      const rect = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        r = 0.6,
+      ): void => {
         bctx.globalAlpha = A_LINE;
         bctx.beginPath();
         bctx.roundRect(x, y, w, h, r);
@@ -264,7 +299,13 @@ export const HomeFlow = (): ReactElement => {
         dot(x + w * 0.3, y + h * 0.7);
         dot(x + w * 0.7, y + h * 0.7);
       };
-      const slot = (x: number, y: number, w: number, h: number, notch: number): void => {
+      const slot = (
+        x: number,
+        y: number,
+        w: number,
+        h: number,
+        notch: number,
+      ): void => {
         rect(x, y, w, h, 0.8);
         const ix = x + 2;
         const iw = w - 4;
@@ -325,18 +366,27 @@ export const HomeFlow = (): ReactElement => {
         bctx.setLineDash([2.2, 2.6]);
         bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(0, -BM + 4); bctx.lineTo(0, BH + BM - 4);
-        bctx.moveTo(BW, -BM + 4); bctx.lineTo(BW, BH + BM - 4);
-        bctx.moveTo(-BM + 4, 0); bctx.lineTo(BW + BM - 4, 0);
-        bctx.moveTo(-BM + 4, BH); bctx.lineTo(BW + BM - 4, BH);
+        bctx.moveTo(0, -BM + 4);
+        bctx.lineTo(0, BH + BM - 4);
+        bctx.moveTo(BW, -BM + 4);
+        bctx.lineTo(BW, BH + BM - 4);
+        bctx.moveTo(-BM + 4, 0);
+        bctx.lineTo(BW + BM - 4, 0);
+        bctx.moveTo(-BM + 4, BH);
+        bctx.lineTo(BW + BM - 4, BH);
         bctx.stroke();
         bctx.setLineDash([]);
         bctx.beginPath();
-        bctx.moveTo(2, -9); bctx.lineTo(BW - 2, -9);
-        bctx.moveTo(2, -9); bctx.lineTo(5.4, -10.6);
-        bctx.moveTo(2, -9); bctx.lineTo(5.4, -7.4);
-        bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -10.6);
-        bctx.moveTo(BW - 2, -9); bctx.lineTo(BW - 5.4, -7.4);
+        bctx.moveTo(2, -9);
+        bctx.lineTo(BW - 2, -9);
+        bctx.moveTo(2, -9);
+        bctx.lineTo(5.4, -10.6);
+        bctx.moveTo(2, -9);
+        bctx.lineTo(5.4, -7.4);
+        bctx.moveTo(BW - 2, -9);
+        bctx.lineTo(BW - 5.4, -10.6);
+        bctx.moveTo(BW - 2, -9);
+        bctx.lineTo(BW - 5.4, -7.4);
         bctx.stroke();
         text("x=0", 0, -12.5);
         text("x=244mm", BW - 26, -12.5);
@@ -365,8 +415,10 @@ export const HomeFlow = (): ReactElement => {
         bctx.closePath();
         bctx.stroke();
         for (const [mx2, my2] of [
-          [sx + 6, sy + 6], [sx + sw - 6, sy + 6],
-          [sx + 6, sy + sw - 6], [sx + sw - 6, sy + sw - 6],
+          [sx + 6, sy + 6],
+          [sx + sw - 6, sy + 6],
+          [sx + 6, sy + sw - 6],
+          [sx + sw - 6, sy + sw - 6],
         ] as const) {
           bctx.beginPath();
           bctx.arc(mx2, my2, 1.8, 0, Math.PI * 2);
@@ -418,7 +470,9 @@ export const HomeFlow = (): ReactElement => {
       /* 9. DIMMs (12) */
       if (gate(12)) {
         const dimmX = [144, 156, 168, 180];
-        ["A1", "A2", "B1", "B2"].forEach((t2, i) => text(t2, dimmX[i] + 0.6, 24));
+        ["A1", "A2", "B1", "B2"].forEach((t2, i) =>
+          text(t2, dimmX[i] + 0.6, 24),
+        );
         dimmX.forEach((dx) => {
           rect(dx, 26, 7, 100, 1);
           rect(dx + 1.8, 29, 3.4, 44, 0.4);
@@ -465,16 +519,23 @@ export const HomeFlow = (): ReactElement => {
         text("[HDMI]", 5, 110);
         bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(4, 112); bctx.lineTo(20, 112); bctx.lineTo(20, 121);
-        bctx.lineTo(17, 124); bctx.lineTo(7, 124); bctx.lineTo(4, 121);
+        bctx.moveTo(4, 112);
+        bctx.lineTo(20, 112);
+        bctx.lineTo(20, 121);
+        bctx.lineTo(17, 124);
+        bctx.lineTo(7, 124);
+        bctx.lineTo(4, 121);
         bctx.closePath();
         bctx.stroke();
         rect(6.5, 114.5, 11, 6, 2.6);
         text("|DP|", 5, 131);
         bctx.globalAlpha = A_LINE;
         bctx.beginPath();
-        bctx.moveTo(4, 133); bctx.lineTo(18, 133); bctx.lineTo(20, 135.5);
-        bctx.lineTo(20, 143); bctx.lineTo(4, 143);
+        bctx.moveTo(4, 133);
+        bctx.lineTo(18, 133);
+        bctx.lineTo(20, 135.5);
+        bctx.lineTo(20, 143);
+        bctx.lineTo(4, 143);
         bctx.closePath();
         bctx.stroke();
         rect(6.5, 135.5, 11, 5, 2.2);
@@ -593,7 +654,9 @@ export const HomeFlow = (): ReactElement => {
         const lane = i % 3;
         const ph = (t * 0.14 + i / N) % 1;
         const x =
-          ox + (lane - 1) * mb.width * 0.28 + Math.sin(ph * 5 + i * 2.4) * s.w * 0.06 * ph;
+          ox +
+          (lane - 1) * mb.width * 0.28 +
+          Math.sin(ph * 5 + i * 2.4) * s.w * 0.06 * ph;
         const y = oy - ph * len;
         const inten = (1 - ph) * out.glowA;
         if (inten < 0.05) continue;
@@ -653,18 +716,19 @@ export const HomeFlow = (): ReactElement => {
       glCanvas.style.width = `${((BW + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.height = `${((BH + 2 * BM) * k).toFixed(1)}px`;
       glCanvas.style.transformOrigin = `${ocx.toFixed(1)}px ${ocy.toFixed(1)}px`;
-      glCanvas.style.transform =
-        `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
+      glCanvas.style.transform = `translate(${(s.cx - ocx).toFixed(1)}px, ${(s.cy - ocy).toFixed(1)}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
       glCanvas.style.opacity = "1";
-      block.style.setProperty("--bit", `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`);
+      block.style.setProperty(
+        "--bit",
+        `${Math.max(3.5, s.w * 0.013).toFixed(1)}px`,
+      );
 
       drawEmission(t, out);
 
       block.style.width = `${s.w}px`;
       block.style.height = `${s.h}px`;
       block.style.opacity = `${out.blockA.toFixed(3)}`;
-      block.style.transform =
-        `translate(${s.cx - s.w / 2}px, ${s.cy - s.h / 2}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
+      block.style.transform = `translate(${s.cx - s.w / 2}px, ${s.cy - s.h / 2}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg) scale(${out.zoom.toFixed(4)})`;
       block.style.setProperty("--plate-r", `${s.r}px`);
       top.style.borderRadius = `${s.r}px`;
 
@@ -673,12 +737,12 @@ export const HomeFlow = (): ReactElement => {
 
       shadowEl.style.width = `${s.w}px`;
       shadowEl.style.height = `${s.h}px`;
-      shadowEl.style.transform =
-        `translate(${s.cx - s.w / 2 + s.w * 0.06}px, ${s.cy - s.h / 2 + s.h * 0.14}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
+      shadowEl.style.transform = `translate(${s.cx - s.w / 2 + s.w * 0.06}px, ${s.cy - s.h / 2 + s.h * 0.14}px) rotateX(${s.rx}deg) rotateZ(${s.rz}deg)`;
       shadowEl.style.opacity = `${out.shadowAlpha * 0.6}`;
 
       siliconCopy.style.opacity = `${out.siliconCopyA}`;
-      siliconCopy.style.visibility = out.siliconCopyA > 0.01 ? "visible" : "hidden";
+      siliconCopy.style.visibility =
+        out.siliconCopyA > 0.01 ? "visible" : "hidden";
       /* the CSS turns this into rise + blur, so the entrance is one value */
       siliconCopy.style.setProperty("--enter", out.siliconCopyA.toFixed(3));
 
@@ -695,11 +759,18 @@ export const HomeFlow = (): ReactElement => {
   }, []);
 
   return (
-    <div className="gr-flow" ref={runwayRef} style={{ height: `${RUNWAY_VH}vh` }}>
+    <div
+      className="gr-flow"
+      ref={runwayRef}
+      style={{ height: `${RUNWAY_VH}vh` }}
+    >
       <div className="gr-flow-stage">
         <canvas className="gr-flow-board" ref={glRef} />
         <div className="gr-flow-shadow" ref={shadowRef} />
-        <div className="gr-flow-block gr-flow-block--raw gr-flow-block--chip" ref={blockRef}>
+        <div
+          className="gr-flow-block gr-flow-block--raw gr-flow-block--chip"
+          ref={blockRef}
+        >
           <div className="gr-flow-top" ref={topRef}>
             <div className="gr-flow-die" />
             <div className="gr-flow-mark" ref={markRef}>
@@ -711,13 +782,18 @@ export const HomeFlow = (): ReactElement => {
             <div
               className={`gr-flow-slice${i === 9 ? " gr-flow-slice--last" : ""}`}
               key={i}
-              style={{ transform: `translateZ(${(-2.2 * (i + 1)).toFixed(1)}px)` }}
+              style={{
+                transform: `translateZ(${(-2.2 * (i + 1)).toFixed(1)}px)`,
+              }}
             />
           ))}
         </div>
         <canvas className="gr-flow-over" ref={overRef} />
 
-        <div className="gr-flow-copy gr-flow-copy--silicon" ref={siliconCopyRef}>
+        <div
+          className="gr-flow-copy gr-flow-copy--silicon"
+          ref={siliconCopyRef}
+        >
           <h2 className="gr-heading">
             All the way down
             <br />
@@ -730,12 +806,15 @@ export const HomeFlow = (): ReactElement => {
             Where possible, the workload should shape the silicon.
           </p>
           <p className="gr-muted">
-            We design chips for specific model families and provide the
-            weights we generate. Through hardware optimization, our goal is to
-            be the most efficient, configurable, and reliable place to run
-            inference for those base model families.
+            We design chips for specific model families and provide the weights
+            we generate. Through hardware optimization, our goal is to be the
+            most efficient, configurable, and reliable place to run inference
+            for those base model families.
           </p>
-          <Link className="gr-button gr-button--main gr-flow-cta" to="/careers/">
+          <Link
+            className="gr-button gr-button--main gr-flow-cta"
+            to="/careers/"
+          >
             Build with us
             <Arrow />
           </Link>

@@ -32,10 +32,14 @@ const NEW_URL = "https://api.gradiated.com";
 const URL_KEEP = "https://api.".length;
 
 type Bit = {
-  sx: number; sy: number;
-  mx: number; my: number;
-  ex: number; ey: number;
-  du: number; dv: number;
+  sx: number;
+  sy: number;
+  mx: number;
+  my: number;
+  ex: number;
+  ey: number;
+  du: number;
+  dv: number;
   delay: number;
   ta: number;
   pass: boolean;
@@ -51,7 +55,12 @@ const easeIO = (t: number): number =>
 const easeO = (t: number): number => 1 - Math.pow(1 - t, 3);
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
-const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: number } => {
+const ENGINE = ((): {
+  bits: Bit[];
+  path: [number, number][];
+  DS: number;
+  passN: number;
+} => {
   let seedState = 11;
   const rnd = (): number => {
     seedState = (seedState * 16807) % 2147483647;
@@ -62,7 +71,12 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: 
   maze[1][1] = 0;
   while (stack.length) {
     const [r, c] = stack[stack.length - 1];
-    const dirs: [number, number][] = [[0, 2], [0, -2], [2, 0], [-2, 0]];
+    const dirs: [number, number][] = [
+      [0, 2],
+      [0, -2],
+      [2, 0],
+      [-2, 0],
+    ];
     for (let i = dirs.length - 1; i > 0; i--) {
       const j = Math.floor(rnd() * (i + 1));
       [dirs[i], dirs[j]] = [dirs[j], dirs[i]];
@@ -71,7 +85,13 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: 
     for (const [dr, dc] of dirs) {
       const nr = r + dr;
       const nc = c + dc;
-      if (nr > 0 && nr < MR - 1 && nc > 0 && nc < MC - 1 && maze[nr][nc] === 1) {
+      if (
+        nr > 0 &&
+        nr < MR - 1 &&
+        nc > 0 &&
+        nc < MC - 1 &&
+        maze[nr][nc] === 1
+      ) {
         maze[r + dr / 2][c + dc / 2] = 0;
         maze[nr][nc] = 0;
         stack.push([nr, nc]);
@@ -101,10 +121,22 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: 
   while (q.length) {
     const [r, c] = q.shift() as [number, number];
     if (r === MR - 2 && c === MC - 1) break;
-    for (const [dr, dc] of [[0, 1], [1, 0], [0, -1], [-1, 0]]) {
+    for (const [dr, dc] of [
+      [0, 1],
+      [1, 0],
+      [0, -1],
+      [-1, 0],
+    ]) {
       const nr = r + dr;
       const nc = c + dc;
-      if (nr < 0 || nc < 0 || nr >= MR || nc >= MC || maze[nr][nc] || prev.has(key(nr, nc)))
+      if (
+        nr < 0 ||
+        nc < 0 ||
+        nr >= MR ||
+        nc >= MC ||
+        maze[nr][nc] ||
+        prev.has(key(nr, nc))
+      )
         continue;
       prev.set(key(nr, nc), [r, c]);
       q.push([nr, nc]);
@@ -151,7 +183,9 @@ const ENGINE = ((): { bits: Bit[]; path: [number, number][]; DS: number; passN: 
       b.tv = 4.8 + b.ex * 1.0;
     });
 
-  const passers = bits.filter((b) => b.pass).sort((a, b) => a.ex - b.ex || a.ey - b.ey);
+  const passers = bits
+    .filter((b) => b.pass)
+    .sort((a, b) => a.ex - b.ex || a.ey - b.ey);
   const DS = Math.ceil(Math.sqrt(passers.length));
   let maxD = 0.0001;
   passers.forEach((b, rank) => {
@@ -202,8 +236,14 @@ const pathLen = (pts: [number, number][]): number => {
 };
 
 const bez2 = (
-  ax: number, ay: number, bx: number, by: number,
-  cx: number, cy: number, dx: number, dy: number,
+  ax: number,
+  ay: number,
+  bx: number,
+  by: number,
+  cx: number,
+  cy: number,
+  dx: number,
+  dy: number,
   u: number,
 ): [number, number] => {
   const v = 1 - u;
@@ -249,21 +289,37 @@ export const LoopSection = (): ReactElement => {
     const selLabel = selLabelRef.current;
     const selMenu = selMenuRef.current;
     const rows = rowRefs.current;
-    if (!host || !canvas || !mockEl || !fieldEl || !urlEl || !startEl || !modelZone || !slotsWrap) return;
+    if (
+      !host ||
+      !canvas ||
+      !mockEl ||
+      !fieldEl ||
+      !urlEl ||
+      !startEl ||
+      !modelZone ||
+      !slotsWrap
+    )
+      return;
     if (!selector || !selBtn || !selLabel || !selMenu) return;
     if (rows.some((r) => !r)) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const rootEl = (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
+    const rootEl =
+      (canvas.closest(".gr-root") as HTMLElement) ?? document.documentElement;
     let ink = "#2F2D29";
     const readInk = (): void => {
-      ink = getComputedStyle(rootEl).getPropertyValue("--color-text").trim() || "#2F2D29";
+      ink =
+        getComputedStyle(rootEl).getPropertyValue("--color-text").trim() ||
+        "#2F2D29";
     };
     readInk();
     const themed = new MutationObserver(readInk);
-    themed.observe(rootEl, { attributes: true, attributeFilter: ["data-theme"] });
+    themed.observe(rootEl, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
 
     let W = 0;
     let H = 0;
@@ -349,7 +405,8 @@ export const LoopSection = (): ReactElement => {
         /* the content's entrance and the diagram's first beat share this
            moment — the blocks settle in while the URL swap winds up */
         if (visible) host.classList.add("gr-loop--seen");
-        if (visible && sequenceAt < 0) sequenceAt = performance.now() / 1000 + 0.5;
+        if (visible && sequenceAt < 0)
+          sequenceAt = performance.now() / 1000 + 0.5;
       },
       { threshold: 0.35 },
     );
@@ -360,7 +417,8 @@ export const LoopSection = (): ReactElement => {
       if (sequenceAt < 0 || t < sequenceAt) return OLD_URL;
       const e = t - sequenceAt;
       const erase = (OLD_URL.length - URL_KEEP) * 0.045;
-      if (e < erase) return OLD_URL.slice(0, OLD_URL.length - Math.floor(e / 0.045));
+      if (e < erase)
+        return OLD_URL.slice(0, OLD_URL.length - Math.floor(e / 0.045));
       const typed = Math.floor((e - erase - 0.25) / 0.06);
       if (typed < 0) return OLD_URL.slice(0, URL_KEEP);
       return NEW_URL.slice(0, Math.min(NEW_URL.length, URL_KEEP + typed));
@@ -368,7 +426,11 @@ export const LoopSection = (): ReactElement => {
     const swapDone = (t: number): boolean =>
       reduced ||
       (sequenceAt >= 0 &&
-        t > sequenceAt + (OLD_URL.length - URL_KEEP) * 0.045 + 0.25 + (NEW_URL.length - URL_KEEP) * 0.06);
+        t >
+          sequenceAt +
+            (OLD_URL.length - URL_KEEP) * 0.045 +
+            0.25 +
+            (NEW_URL.length - URL_KEEP) * 0.06);
 
     const begin = (t: number): void => {
       engineStart = t;
@@ -386,12 +448,23 @@ export const LoopSection = (): ReactElement => {
     startEl.addEventListener("click", onStart);
 
     /* section-relative rectangle of a DOM node */
-    const rel = (el: Element): { x: number; y: number; w: number; h: number } => {
+    const rel = (
+      el: Element,
+    ): { x: number; y: number; w: number; h: number } => {
       const hb = host.getBoundingClientRect();
       const b = el.getBoundingClientRect();
-      return { x: b.left - hb.left, y: b.top - hb.top, w: b.width, h: b.height };
+      return {
+        x: b.left - hb.left,
+        y: b.top - hb.top,
+        w: b.width,
+        h: b.height,
+      };
     };
-    const inset = (r: { x: number; y: number; w: number; h: number }, px: number, py: number) => ({
+    const inset = (
+      r: { x: number; y: number; w: number; h: number },
+      px: number,
+      py: number,
+    ) => ({
       x: r.x + px,
       y: r.y + py,
       w: r.w - 2 * px,
@@ -445,7 +518,10 @@ export const LoopSection = (): ReactElement => {
       if (tE < 0) return;
 
       const mazeCellW = R[1].w / (MC - 1);
-      const bit = Math.max(3, Math.min(mazeCellW * 0.42, (R[1].h / (MR - 1)) * 0.5));
+      const bit = Math.max(
+        3,
+        Math.min(mazeCellW * 0.42, (R[1].h / (MR - 1)) * 0.5),
+      );
       const at = (
         r: { x: number; y: number; w: number; h: number },
         nx: number,
@@ -509,7 +585,8 @@ export const LoopSection = (): ReactElement => {
           for (let j = 0; j < n; j++) {
             const ph = ((t * 80) / len + j / n) % 1;
             const [wx, wy] = alongPath(wire, ph);
-            ctx.globalAlpha = sA * 0.55 * Math.min(1, ph * 6) * Math.min(1, (1 - ph) * 6);
+            ctx.globalAlpha =
+              sA * 0.55 * Math.min(1, ph * 6) * Math.min(1, (1 - ph) * 6);
             ctx.fillRect(wx - bit / 2, wy - bit / 2, bit, bit);
           }
         }
@@ -579,15 +656,22 @@ export const LoopSection = (): ReactElement => {
             const u = (T - k0) / 1.6;
             const e = easeIO(u);
             [px, py] = bez2(
-              sxp, syp,
-              sxp, syp + (myp - syp) * 0.4,
-              mxp, myp - (myp - syp) * 0.3,
-              mxp, myp, e,
+              sxp,
+              syp,
+              sxp,
+              syp + (myp - syp) * 0.4,
+              mxp,
+              myp - (myp - syp) * 0.3,
+              mxp,
+              myp,
+              e,
             );
             alpha = Math.min(1, 0.4 + u * 3);
           } else if (T < k2) {
             px = mxp;
-            py = myp - Math.max(0, Math.sin(clamp01((T - k1) / 0.35) * Math.PI)) * 3;
+            py =
+              myp -
+              Math.max(0, Math.sin(clamp01((T - k1) / 0.35) * Math.PI)) * 3;
           } else if (T < k3) {
             const e = easeIO((T - k2) / (k3 - k2));
             const [exp_, eyp] = at(R[2], b.ex, b.ey);
@@ -604,7 +688,8 @@ export const LoopSection = (): ReactElement => {
             const [exp_, eyp] = at(R[2], b.ex, b.ey);
             px = exp_;
             py = eyp;
-            if (T > b.tv) py -= Math.sin(clamp01((T - b.tv) / 0.5) * Math.PI) * 4;
+            if (T > b.tv)
+              py -= Math.sin(clamp01((T - b.tv) / 0.5) * Math.PI) * 4;
           } else if (!b.pass) {
             continue;
           } else if (T < k5) {
@@ -642,7 +727,8 @@ export const LoopSection = (): ReactElement => {
 
         /* the rollout, left to right through the environment */
         const au = (T - 2.3) / 1.4;
-        const trailA = au > 0 && au < 1.5 ? Math.min(1, au < 1 ? 1 : (1.5 - au) / 0.5) : 0;
+        const trailA =
+          au > 0 && au < 1.5 ? Math.min(1, au < 1 ? 1 : (1.5 - au) / 0.5) : 0;
         if (trailA > 0 && ENGINE.path.length > 1) {
           const f = clamp01(au) * (ENGINE.path.length - 1);
           const i0 = Math.floor(f);
@@ -669,7 +755,10 @@ export const LoopSection = (): ReactElement => {
 
         /* the scan, sweeping across the evals row */
         const bu = (T - 4.8) / 1.0;
-        const bo = bu > -0.1 && bu < 1.1 ? Math.min(1, (bu + 0.1) * 5, (1.1 - bu) * 5) : 0;
+        const bo =
+          bu > -0.1 && bu < 1.1
+            ? Math.min(1, (bu + 0.1) * 5, (1.1 - bu) * 5)
+            : 0;
         if (bo > 0) {
           const scanX = R[2].x + R[2].w * clamp01(bu);
           ctx.globalAlpha = bo * 0.08;
@@ -728,8 +817,8 @@ export const LoopSection = (): ReactElement => {
             </p>
             <p>
               Post-training a model on your own workload is normally a staffing
-              problem. You need people who do RL for a living, and a cluster
-              you pay for whether or not it&apos;s busy. Gradiated completely
+              problem. You need people who do RL for a living, and a cluster you
+              pay for whether or not it&apos;s busy. Gradiated completely
               removes the need for that part. It&apos;s just an API endpoint,
               and your production traffic.
             </p>

@@ -268,7 +268,11 @@
 .gr-flow-block--raw.gr-flow-block--chip .gr-flow-top {
   background: var(--color-substrate) !important;
   /* one stroke, one paint: the same 30% hairline as everything drawn */
-  border-color: color-mix(in srgb, var(--color-text) 30%, transparent) !important;
+  border-color: color-mix(
+    in srgb,
+    var(--color-text) 30%,
+    transparent
+  ) !important;
   box-shadow: none !important;
 }
 
@@ -311,10 +315,34 @@
   opacity: 0;
   pointer-events: none;
   background-image:
-    radial-gradient(circle at 11px 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at calc(100% - 11px) 11px, transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at 11px calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px),
-    radial-gradient(circle at calc(100% - 11px) calc(100% - 11px), transparent 2.2px, color-mix(in srgb, currentColor 30%, transparent) 2.5px, color-mix(in srgb, currentColor 30%, transparent) 3.2px, transparent 3.6px);
+    radial-gradient(
+      circle at 11px 11px,
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at calc(100% - 11px) 11px,
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at 11px calc(100% - 11px),
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    ),
+    radial-gradient(
+      circle at calc(100% - 11px) calc(100% - 11px),
+      transparent 2.2px,
+      color-mix(in srgb, currentColor 30%, transparent) 2.5px,
+      color-mix(in srgb, currentColor 30%, transparent) 3.2px,
+      transparent 3.6px
+    );
 }
 
 .gr-flow-block--raw.gr-flow-block--chip .gr-flow-die {
@@ -422,7 +450,9 @@
 .gr-value-word {
   opacity: 0.1;
   filter: blur(5px);
-  transition: opacity 0.4s ease, filter 0.4s ease;
+  transition:
+    opacity 0.4s ease,
+    filter 0.4s ease;
 }
 
 .gr-value-word--on {
@@ -573,7 +603,10 @@
   /* the one stroke paint: same 30% hairline as the stack and the board */
   border: 1px solid color-mix(in srgb, var(--color-text) 30%, transparent);
   background: var(--color-panel);
-  transition: transform 0.55s ease, opacity 0.4s ease, scale 0.4s ease;
+  transition:
+    transform 0.55s ease,
+    opacity 0.4s ease,
+    scale 0.4s ease;
 }
 
 .gr-loop-slot--new {
@@ -600,7 +633,6 @@
   font-size: 10px;
   color: var(--color-text-muted);
 }
-
 
 .gr-loop-title {
   max-width: 480px;
@@ -698,7 +730,6 @@
   }
 }
 
-
 .gr-loop-rowlabel {
   position: absolute;
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -748,7 +779,6 @@
     padding: 4vh 0 4vh;
   }
 
-
   /* single column, in reading order: title, product, endpoint, stack,
      copy. The two halves dissolve (display: contents) so their children
      can be ordered as one list. */
@@ -763,11 +793,21 @@
     display: contents;
   }
 
-  .gr-loop-title { order: 1; }
-  .gr-loop-mock { order: 2; }
-  .gr-loop-controls { order: 3; }
-  .gr-loop-stack { order: 4; }
-  .gr-loop-copy { order: 5; }
+  .gr-loop-title {
+    order: 1;
+  }
+  .gr-loop-mock {
+    order: 2;
+  }
+  .gr-loop-controls {
+    order: 3;
+  }
+  .gr-loop-stack {
+    order: 4;
+  }
+  .gr-loop-copy {
+    order: 5;
+  }
 
   /* desktop spacing assumed the two-column geometry */
   .gr-loop-controls,
@@ -836,11 +876,13 @@
   0%,
   100% {
     opacity: 1;
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-interactive-fill) 45%, transparent);
+    box-shadow: 0 0 0 0
+      color-mix(in srgb, var(--color-interactive-fill) 45%, transparent);
   }
   50% {
     opacity: 0.35;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-interactive-fill) 0%, transparent);
+    box-shadow: 0 0 0 4px
+      color-mix(in srgb, var(--color-interactive-fill) 0%, transparent);
   }
 }
 
@@ -925,8 +967,20 @@
 .gr-marquee-lane {
   /* wide dissolves: roughly six tiles hold the centre and the rest live
      inside the fades */
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
-  mask-image: linear-gradient(to right, transparent, #000 30%, #000 70%, transparent);
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 30%,
+    #000 70%,
+    transparent
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 30%,
+    #000 70%,
+    transparent
+  );
   /* the mask clips paint to the lane's box, and the tile shadows fall
      18px below the tiles — give the box room so nothing gets shaved */
   padding: 8px 0 28px;

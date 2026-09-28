@@ -350,6 +350,44 @@ describe("generation ingestion loop against Valkey", () => {
     expect(telemetry.recordPass).toHaveBeenCalledOnce();
   });
 
+  it("keeps consuming when Valkey closes the connection during a blocking read", async () => {
+    const controller = new AbortController();
+    const options = { ...streamConfig(), readBlockMs: 5_000 };
+    const telemetry = ingestionTelemetry();
+    const clickHouse = recordingClickHouse();
+    const loopClient = await connectTestValkey();
+    const loopClientId = await loopClient.clientId();
+    loopClient.on("error", () => undefined);
+    vi.mocked(telemetry.recordIngestedMessages).mockImplementation(
+      (_source, count) => {
+        if (count > 0) controller.abort();
+      },
+    );
+
+    await runGenerationIngestionLoop({
+      client: loopClient,
+      writer: clickHouse.writer,
+      config: options,
+      telemetry,
+      onReady: async () => {
+        setTimeout(async () => {
+          await client.sendCommand([
+            "CLIENT",
+            "KILL",
+            "ID",
+            String(loopClientId),
+          ]);
+          await addGeneration(options.stream, `${slotMilliseconds}-1`, 1);
+        }, 50);
+      },
+      signal: controller.signal,
+    });
+
+    expect(clickHouse.inserted).toEqual([{ id: generationId(1), slotId }]);
+    expect(await pendingCount(options)).toBe(0);
+    await loopClient.close();
+  });
+
   it("reports the entry that another consumer still holds as backlog", async () => {
     const options = streamConfig();
     const telemetry = ingestionTelemetry();

@@ -20,7 +20,9 @@ export const ValueFold = (): ReactElement => {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    const words = Array.from(host.querySelectorAll<HTMLElement>(".gr-value-word"));
+    const words = Array.from(
+      host.querySelectorAll<HTMLElement>(".gr-value-word"),
+    );
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
       words.forEach((w) => w.classList.add("gr-value-word--on"));
@@ -34,7 +36,10 @@ export const ValueFold = (): ReactElement => {
         played = true;
         words.forEach((w, i) => {
           timers.push(
-            window.setTimeout(() => w.classList.add("gr-value-word--on"), 300 + i * 85),
+            window.setTimeout(
+              () => w.classList.add("gr-value-word--on"),
+              300 + i * 85,
+            ),
           );
         });
       },

@@ -15,6 +15,7 @@ locals {
     runtime_revision   = "deepseek-${substr(var.bundle_sha256, 0, 12)}"
     model_path         = "deepseek-ai/DeepSeek-V4.1-Flash"
     model_revision     = local.model_revision
+    runtime_model_name = "deepseek-ai/DeepSeek-V4.1-Flash"
     tokenizer_path     = "deepseek-ai/DeepSeek-V4.1-Flash"
     tokenizer_revision = local.model_revision
   }

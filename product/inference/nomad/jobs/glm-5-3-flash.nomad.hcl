@@ -15,6 +15,7 @@ locals {
     runtime_revision   = "glm-${substr(var.bundle_sha256, 0, 12)}"
     model_path         = "zai-org/GLM-5.3-Flash"
     model_revision     = local.model_revision
+    runtime_model_name = "zai-org/GLM-5.3-Flash"
     tokenizer_path     = "zai-org/GLM-5.3-Flash"
     tokenizer_revision = local.model_revision
   }
@@ -49,8 +50,8 @@ job "glm-5-3-flash" {
 
     disconnect {
       lost_after = "1h"
-      replace   = true
-      reconcile = "keep_original"
+      replace    = true
+      reconcile  = "keep_original"
     }
 
     reschedule {
@@ -185,13 +186,13 @@ job "glm-5-3-flash" {
       }
 
       env {
-        HOME           = "/home/runtime"
-        XDG_CACHE_HOME = "/home/runtime/.cache"
+        HOME                    = "/home/runtime"
+        XDG_CACHE_HOME          = "/home/runtime/.cache"
         TORCHINDUCTOR_CACHE_DIR = "/home/runtime/.cache/torchinductor"
-        TRITON_CACHE_DIR = "/home/runtime/.cache/triton"
-        HF_HOME        = "/workspace/gradiated/model-cache"
-        RUNTIME_PORT   = "${NOMAD_PORT_runtime}"
-        WARMUP_PORT    = "${NOMAD_PORT_warmup}"
+        TRITON_CACHE_DIR        = "/home/runtime/.cache/triton"
+        HF_HOME                 = "/workspace/gradiated/model-cache"
+        RUNTIME_PORT            = "${NOMAD_PORT_runtime}"
+        WARMUP_PORT             = "${NOMAD_PORT_warmup}"
       }
 
       resources {

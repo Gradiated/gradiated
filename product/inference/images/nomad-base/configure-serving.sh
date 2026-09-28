@@ -15,5 +15,7 @@ printf '%s\n' "$GRADIATED_DEPLOYMENT_STATUS_TOKEN" >/etc/gradiated/deployment-st
 template=$(cat /etc/gradiated/runtime-proxy.conf.template)
 printf '%s\n' "${template//__RUNTIME_TOKEN__/$GRADIATED_RUNTIME_ACCESS_TOKEN}" \
   >/etc/gradiated/runtime-proxy.conf
-chown desmond:desmond /etc/gradiated/{runtime-access.token,deployment-status.token,runtime-proxy.conf}
-chmod 600 /etc/gradiated/{runtime-access.token,deployment-status.token,runtime-proxy.conf}
+# The host-proxy job renders its routes from Nomad and includes this map entry.
+printf '"Bearer %s" 1;\n' "$GRADIATED_RUNTIME_ACCESS_TOKEN" >/etc/gradiated/runtime-proxy-auth.conf
+chown desmond:desmond /etc/gradiated/{runtime-access.token,deployment-status.token,runtime-proxy.conf,runtime-proxy-auth.conf}
+chmod 600 /etc/gradiated/{runtime-access.token,deployment-status.token,runtime-proxy.conf,runtime-proxy-auth.conf}

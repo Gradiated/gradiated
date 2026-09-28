@@ -151,22 +151,33 @@ Pull requests validate jobs but do not run `nomad job plan`. Planning needs the
 plan-capable token on pull requests would be a submit-capable token. The plan is
 printed in the deploy log before each run instead.
 
-## Allocation registration and routing
+## Deployments and routing
 
-Today `configure-*` operations write deployment rows with hardcoded service URLs.
-Under Nomad, allocations come and go, so each one registers itself:
+Nomad is the source of truth for which replicas exist; Desmond decides which are
+routable.
 
-1. Desmond starts with its allocation and registers the allocation, node, engine
-   boot, release and endpoint with the control API.
-2. The API checks that against Nomad and the node's instance before accepting it,
-   and owns the resulting deployment row.
-3. Status is bound to that registration. Status from an old allocation or boot is
-   rejected, so a replaced replica cannot keep a dead route alive.
-4. `configure-*` operations become catalog-only: model identity and pricing.
+- A replica's deployment id is its Nomad allocation id: model jobs set
+  `DESMOND_DEPLOYMENT_ID = ${NOMAD_ALLOC_ID}`. A replacement allocation is a new
+  deployment, so a dead replica's status can never keep its successor routable.
+- A worker reconciler reads running allocations of model jobs and creates or
+  retires the matching `model_deployments` rows. Desmond's reports are rejected
+  until the row exists and stop mattering once it is gone.
+- The gateway still picks the replica: readiness, capacity and affinity routing
+  are unchanged.
 
-The gateway reaches allocations through one authenticated proxy in `nomad-base`,
-on the single published port a provider exposes, routing by allocation. RunPod only
-publishes HTTP ports through its own proxy, which rules out a port per replica.
+Every host runs one authenticated ingress, the `host-proxy` system job, on the
+single port the provider publishes (8888). It checks the gateway's bearer token
+and forwards `/alloc/<allocation id>/` to that allocation's loopback runtime port,
+which it learns from the Nomad service every model job registers as
+`gradiated-runtime`.
+Runtimes are never published and their ports can be dynamic, so any number of
+allocations can share a host. A deployment's `service_url` is the host's
+published address plus `/alloc/<allocation id>`; each provider supplies how that
+port is reached (RunPod's HTTPS proxy, or TLS on a public or private IP).
+
+Hosts enrolled by `instance:register` carry `serving_ingress = "host-proxy"`.
+Hosts enrolled by hand before the proxy keep their own ingress on 8888 until
+migrated.
 
 ## Kev on Nomad
 
@@ -183,7 +194,7 @@ Each step is its own pull request.
 
 1. `instance:register` with the RunPod provider, and `nomad-base` reading its bootstrap from the environment.
 2. Deploy on merge.
-3. Allocation registration and the host proxy.
+3. The host proxy, the deployment reconciler and catalog apply.
 4. Kev on Nomad, removing the hand-managed setup.
 5. Run `instance:register` on the RTX 6000 pod, merge the Kev job, list the model, and
    verify a real decision through the SDK.

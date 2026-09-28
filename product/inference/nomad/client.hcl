@@ -12,6 +12,14 @@ client {
     "user.denylist" = "root,nomad"
   }
   max_kill_timeout = "60s"
+  # Keep rendered templates, such as the host proxy's routes, while servers are
+  # unreachable instead of killing the task after the default twelve attempts.
+  template {
+    nomad_retry {
+      attempts    = 0
+      max_backoff = "1m"
+    }
+  }
   artifact {
     http_read_timeout = "10m"
     s3_timeout = "10m"

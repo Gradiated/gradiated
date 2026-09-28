@@ -48,6 +48,7 @@ name = "$GRADIATED_NODE_NAME"
 client {
   meta {
     gradiated_instance_id = "$GRADIATED_INSTANCE_ID"
+    serving_ingress = "host-proxy"
     runtime_base_id = "$(cat /etc/gradiated/base-id)"
   }
 }

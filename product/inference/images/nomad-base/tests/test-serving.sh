@@ -4,7 +4,7 @@ set -euo pipefail
 export GRADIATED_RUNTIME_ACCESS_TOKEN=synthetic_runtime_token_0000000000000000
 export GRADIATED_DEPLOYMENT_STATUS_TOKEN=synthetic_status_token_00000000000000000
 bash /opt/gradiated/bin/configure-serving
-for file in runtime-access.token deployment-status.token runtime-proxy.conf; do
+for file in runtime-access.token deployment-status.token runtime-proxy.conf runtime-proxy-auth.conf; do
   runuser -u desmond -- test -r "/etc/gradiated/$file"
   if runuser -u runtime -- test -r "/etc/gradiated/$file"; then
     echo "runtime can read $file" >&2

@@ -1,8 +1,7 @@
-import "reflect-metadata";
-
 import { createPrivateKey, X509Certificate } from "node:crypto";
 
-import * as x509 from "@peculiar/x509";
+import { AsnConvert } from "@peculiar/asn1-schema";
+import { Certificate } from "@peculiar/asn1-x509";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -62,17 +61,16 @@ describe.each(signers)("certificates signed with %s", (_name, signer) => {
       signer(),
       hostProfile,
     );
+    const nameBytes = (pem: string, field: "issuer" | "subject") =>
+      Buffer.from(
+        AsnConvert.serialize(
+          AsnConvert.parse(new X509Certificate(pem).raw, Certificate)
+            .tbsCertificate[field],
+        ),
+      );
 
-    expect(
-      Buffer.from(
-        new x509.X509Certificate(issued.certificate).issuerName.toArrayBuffer(),
-      ),
-    ).toEqual(
-      Buffer.from(
-        new x509.X509Certificate(
-          testCa.certificate,
-        ).subjectName.toArrayBuffer(),
-      ),
+    expect(nameBytes(issued.certificate, "issuer")).toEqual(
+      nameBytes(testCa.certificate, "subject"),
     );
   });
 });
@@ -125,6 +123,20 @@ describe("certificate profiles", () => {
       new Date(new X509Certificate(testCa.certificate).validTo),
     );
   });
+});
+
+it("encodes every random serial number as valid DER", async () => {
+  for (let attempt = 0; attempt < 600; attempt++) {
+    const issued = await issueCertificate(
+      testCa.certificate,
+      localSigner,
+      cliProfile,
+    );
+
+    expect(new X509Certificate(issued.certificate).serialNumber).toMatch(
+      /^[0-7][0-9A-F]{31}$/,
+    );
+  }
 });
 
 describe("KMS signer", () => {

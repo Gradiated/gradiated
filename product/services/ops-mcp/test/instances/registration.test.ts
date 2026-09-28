@@ -1,5 +1,3 @@
-import "reflect-metadata";
-
 import { X509Certificate } from "node:crypto";
 
 import type { InstanceRecord, InstanceService } from "@gradiated/control";

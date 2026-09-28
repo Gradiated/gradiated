@@ -195,7 +195,17 @@ def main():
     certificate = {'series': 'nomad_certificate_expiry_timestamp_seconds{certificate="ops-mcp"}',
                    'values': '2000000+0x200'}
     scenario('ops MCP holds a Nomad certificate', [certificate], None, [renewer], eval_time='70m')
-    scenario('ops MCP has no Nomad certificate', [], renewer, [renewer], eval_time='70m')
+    scenario('ops MCP has no Nomad certificate', [], renewer, [renewer],
+             {'certificate': 'ops-mcp'}, eval_time='70m')
+    sidecar = {'series': 'kube_pod_init_container_info{namespace="nomad",pod="nomad-0",'
+               'container="certificate-renewer"}', 'values': '1+0x200'}
+    scenario('server renewer has no certificate', [certificate, sidecar], renewer,
+             [renewer], {'namespace': 'nomad', 'pod': 'nomad-0',
+                         'container': 'certificate-renewer'}, eval_time='70m')
+    issued = {'series': 'nomad_certificate_expiry_timestamp_seconds{namespace="nomad",'
+              'pod="nomad-0",certificate="server-0"}', 'values': '2000000+0x200'}
+    scenario('server renewer holds a certificate', [certificate, sidecar, issued],
+             None, [renewer], eval_time='70m')
 
     replica_alert = 'DeploymentUnavailable'
     for name, available, desired, fires in [

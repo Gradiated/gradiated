@@ -20,6 +20,7 @@ RUN cd /bundle/python/lib/python3.12/site-packages/nvidia/cu13 \
 
 FROM dependencies AS package
 COPY --from=runtime-base /opt/gradiated/bin/runtime-launch /bundle/runtime-launch
+COPY --from=runtime-base /opt/gradiated/bin/desmondd /bundle/desmondd
 COPY bundles/package.sh /package.sh
 COPY --chmod=755 bundles/glm-5-3-flash/entrypoint /bundle/entrypoint
 COPY runtimes/glm/warmup-supervisor.py /bundle/warmup-supervisor.py

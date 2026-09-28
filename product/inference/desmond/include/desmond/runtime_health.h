@@ -12,14 +12,14 @@ enum class RuntimeState { unready, ready, draining };
 
 class RuntimeHealth {
 public:
-  RuntimeHealth(std::string health_url, std::ostream &log);
+  RuntimeHealth(HttpRequestSpec request, std::ostream &log);
 
   void check();
   void start_draining();
   [[nodiscard]] RuntimeState state() const;
 
 private:
-  std::string health_url_;
+  HttpRequestSpec request_;
   HttpFailureLog failure_log_;
   mutable std::mutex mutex_;
   RuntimeState state_{RuntimeState::unready};

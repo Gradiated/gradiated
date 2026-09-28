@@ -16,8 +16,8 @@ The archive contains:
 - `base-id`: one line matching `/etc/gradiated/base-id` in the provider image.
 - `entrypoint`: an executable regular file.
 - The runtime environment and its model-specific launch code.
-- `runtime-launch`, built from the same pinned base, so supervisor fixes roll
-  out with the model without replacing or manually updating a GPU host.
+- `runtime-launch` and `desmondd`, built from the same pinned base, so supervisor
+  and readiness fixes roll out with the model without updating a GPU host.
 
 The base ID identifies the system dependency contract, including OS, CPU
 architecture, Python ABI, and required system libraries. Assign a new ID for
@@ -127,6 +127,19 @@ endpoint. Every request requires the runtime bearer token; nginx strips that
 token before forwarding to vLLM on loopback. The proxy disables response buffering
 and allows 330 seconds between upstream reads. This is one replica per host;
 allocation-aware routing for multiple replicas is not provided by this pilot.
+
+## Ingress readiness
+
+For Nomad host-proxy jobs, set `DESMOND_INGRESS_PORT=8888` on the bundled
+Desmond observer. It checks `/alloc/<deployment-id>/health` on loopback through
+the host proxy, using the private runtime access token. Readiness therefore
+requires both a healthy runtime and an installed allocation route. Metrics still
+come directly from the runtime. The bearer token is never included in logs.
+
+Start this observer as a post-start sidecar: the pre-start downloader must finish
+before the bundle's executable is available. The observer does not restart the
+runtime if ingress or status ingestion becomes unavailable. Publish bundles with
+this capability before switching jobs to the new executable and environment value.
 
 ## Verification
 

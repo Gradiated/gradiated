@@ -14,7 +14,7 @@ using desmond::testing::RecordingServer;
 DESMOND_TEST(runtime_is_ready_only_while_the_health_endpoint_succeeds) {
   RecordingServer runtime;
   std::ostringstream log;
-  desmond::RuntimeHealth health(local_url(runtime.port(), "/health"), log);
+  desmond::RuntimeHealth health({.url = local_url(runtime.port(), "/health")}, log);
 
   health.check();
   const auto healthy = health.state();
@@ -25,11 +25,30 @@ DESMOND_TEST(runtime_is_ready_only_while_the_health_endpoint_succeeds) {
   CHECK(health.state() == RuntimeState::unready);
 }
 
+DESMOND_TEST(ingress_readiness_requires_an_authenticated_allocation_route) {
+  RecordingServer ingress;
+  ingress.respond_in_sequence({404, 200, 404});
+  std::ostringstream log;
+  desmond::RuntimeHealth health({.url = local_url(ingress.port(), "/alloc/test/health"),
+                                 .authorization = "Bearer synthetic-runtime-token"},
+                                log);
+  health.check();
+  CHECK(health.state() == RuntimeState::unready);
+  health.check();
+  CHECK(health.state() == RuntimeState::ready);
+  health.check();
+  CHECK(health.state() == RuntimeState::unready);
+  const auto requests = ingress.log().requests();
+  CHECK(requests.size() == 3);
+  CHECK(requests[0].authorization == "Bearer synthetic-runtime-token");
+  CHECK(log.str().find("synthetic-runtime-token") == std::string::npos);
+}
+
 DESMOND_TEST(runtime_health_logs_each_transition_with_its_cause) {
   RecordingServer runtime;
   runtime.respond_in_sequence({503, 503, 200});
   std::ostringstream log;
-  desmond::RuntimeHealth health(local_url(runtime.port(), "/health"), log);
+  desmond::RuntimeHealth health({.url = local_url(runtime.port(), "/health")}, log);
 
   for (int check = 0; check < 3; ++check) {
     health.check();
@@ -41,7 +60,7 @@ DESMOND_TEST(runtime_health_logs_each_transition_with_its_cause) {
 
 DESMOND_TEST(unreachable_health_endpoint_is_not_ready_and_logs_connect) {
   std::ostringstream log;
-  desmond::RuntimeHealth health(local_url(closed_port(), "/health"), log);
+  desmond::RuntimeHealth health({.url = local_url(closed_port(), "/health")}, log);
 
   health.check();
 
@@ -52,7 +71,7 @@ DESMOND_TEST(unreachable_health_endpoint_is_not_ready_and_logs_connect) {
 DESMOND_TEST(draining_runtime_is_never_ready) {
   RecordingServer runtime;
   std::ostringstream log;
-  desmond::RuntimeHealth health(local_url(runtime.port(), "/health"), log);
+  desmond::RuntimeHealth health({.url = local_url(runtime.port(), "/health")}, log);
   health.check();
 
   health.start_draining();

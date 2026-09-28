@@ -74,6 +74,20 @@ DESMOND_TEST(config_defaults) {
   CHECK(!runtime.api_key && !runtime.trace_path);
 }
 
+DESMOND_TEST(ingress_health_uses_the_local_allocation_route_and_private_token) {
+  auto variables = observer_variables();
+  variables["DESMOND_INGRESS_PORT"] = "8888";
+  CHECK(contains(config_error({"--observe"}, variables), "control token"));
+  variables["DESMOND_CONTROL_TOKEN"] = "synthetic-runtime-token";
+  const auto config = load({"--observe"}, variables);
+  const auto request = config.health_request();
+  CHECK(request.url == "http://127.0.0.1:8888/alloc/00000000-0000-4000-8000-000000000001/health");
+  CHECK(request.authorization == "Bearer synthetic-runtime-token");
+  CHECK(config.runtime_endpoint.port == 30000);
+  variables["DESMOND_INGRESS_PORT"] = "0";
+  CHECK(contains(config_error({"--observe"}, variables), "DESMOND_INGRESS_PORT"));
+}
+
 DESMOND_TEST(config_treats_empty_variables_as_unset) {
   const auto config = load(supervise_sleep, {{"DESMOND_CONTROL_PORT", ""}, {"DESMOND_MODEL", ""}});
 
@@ -189,8 +203,8 @@ DESMOND_TEST(config_rejects_url_paths_without_a_leading_slash) {
     auto invalid = variables;
     invalid[name] = "health";
 
-    CHECK(contains(config_error(supervise_sleep, invalid),
-                   std::string(name) + " must start with /"));
+    CHECK(
+        contains(config_error(supervise_sleep, invalid), std::string(name) + " must start with /"));
   }
 }
 

@@ -240,6 +240,15 @@ Mode DesmondConfig::mode() const {
   return std::holds_alternative<ObserveRuntime>(runtime) ? Mode::observe : Mode::supervise;
 }
 
+HttpRequestSpec DesmondConfig::health_request() const {
+  if (ingress_port) {
+    return {.url = http_url("127.0.0.1", *ingress_port,
+                            "/alloc/" + status->deployment_id + runtime_health_path),
+            .authorization = "Bearer " + control_token};
+  }
+  return {.url = http_url(runtime_endpoint.host, runtime_endpoint.port, runtime_health_path)};
+}
+
 DesmondConfig load_config(const std::span<const char *const> arguments,
                           const Environment &environment) {
   DesmondConfig config{
@@ -267,6 +276,14 @@ DesmondConfig load_config(const std::span<const char *const> arguments,
     if (!value_of(environment, "DESMOND_MODEL")) {
       throw ConfigError("--observe requires DESMOND_MODEL");
     }
+  }
+
+  if (value_of(environment, "DESMOND_INGRESS_PORT")) {
+    if (config.mode() != Mode::observe || !config.status || config.control_token.empty()) {
+      throw ConfigError(
+          "DESMOND_INGRESS_PORT requires observe mode, status reporting and a control token");
+    }
+    config.ingress_port = port(environment, "DESMOND_INGRESS_PORT", 8888);
   }
 
   return config;

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "desmond/http_client.h"
 #include "desmond/mode.h"
 #include "desmond/profiling.h"
 #include "desmond/runtime_identity.h"
@@ -55,7 +56,10 @@ struct DesmondConfig {
   std::optional<StatusReporterConfig> status;
   std::optional<ProfilingUploaderConfig> profiling;
 
+  std::optional<std::uint16_t> ingress_port;
+
   [[nodiscard]] Mode mode() const;
+  [[nodiscard]] HttpRequestSpec health_request() const;
 };
 
 [[nodiscard]] DesmondConfig load_config(std::span<const char *const> arguments,

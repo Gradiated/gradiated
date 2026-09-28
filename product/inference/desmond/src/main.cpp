@@ -119,7 +119,7 @@ private:
 class Desmond {
 public:
   explicit Desmond(const desmond::DesmondConfig &config)
-      : config_(config), health_(runtime_url(config_.runtime_health_path), std::cerr),
+      : config_(config), health_(config_.health_request(), std::cerr),
         status_metrics_({.url = runtime_url("/metrics"),
                          .timeout = status_metrics_timeout,
                          .log_subject = "runtime metrics fetch"},
@@ -221,8 +221,8 @@ private:
       if (status_report.due(now)) {
         const auto metrics = ready ? status_metrics_.fetch() : std::nullopt;
         if (reporter_) {
-          reporter_->update(desmond::assess_deployment(runtime, config_.mode(), metrics,
-                                                       config_.kv_usage_limit));
+          reporter_->update(
+              desmond::assess_deployment(runtime, config_.mode(), metrics, config_.kv_usage_limit));
         }
         if (metrics && metrics_snapshot.due(now)) {
           record("runtime.metrics_snapshot",

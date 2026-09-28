@@ -4,11 +4,11 @@
 
 namespace desmond {
 
-RuntimeHealth::RuntimeHealth(std::string health_url, std::ostream &log)
-    : health_url_(std::move(health_url)), failure_log_("runtime health check", log) {}
+RuntimeHealth::RuntimeHealth(HttpRequestSpec request, std::ostream &log)
+    : request_(std::move(request)), failure_log_("runtime health check", log) {}
 
 void RuntimeHealth::check() {
-  const auto result = http_request({.url = health_url_});
+  const auto result = http_request(request_);
   failure_log_.record(result);
 
   std::lock_guard lock(mutex_);

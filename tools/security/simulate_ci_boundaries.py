@@ -66,13 +66,18 @@ def main():
          [{"ContextKeyName": "iam:PassedToService", "ContextKeyType": "string", "ContextKeyValues": ["ec2.amazonaws.com"]}]),
         ("ci_boundary", "iam:PassRole", role + "Administrator", False,
          [{"ContextKeyName": "iam:PassedToService", "ContextKeyType": "string", "ContextKeyValues": ["ec2.amazonaws.com"]}]),
-        ("ci_boundary", "iam:PassRole", role + "gradiated-prod-api", False,
+        ("ci_boundary", "iam:PassRole", role + "gradiated-prod-api", True,
          [{"ContextKeyName": "iam:PassedToService", "ContextKeyType": "string", "ContextKeyValues": ["cloudformation.amazonaws.com"]}]),
         ("workload_boundary", "iam:CreateServiceLinkedRole", "*", True,
          [{"ContextKeyName": "iam:AWSServiceName", "ContextKeyType": "string", "ContextKeyValues": ["elasticloadbalancing.amazonaws.com"]}]),
     ])
+    for service in ["sagemaker.amazonaws.com", "batch.amazonaws.com", "lambda.amazonaws.com"]:
+        cases.append(("ci_boundary", "iam:PassRole", role + "gradiated-prod-inference", True,
+                      [{"ContextKeyName": "iam:PassedToService", "ContextKeyType": "string", "ContextKeyValues": [service]}]))
     for name in policies:
         cases.extend([
+            (name, "sts:AssumeRole", role + "gradiated-prod-inference", True, []),
+            (name, "sts:AssumeRole", "arn:aws:iam::111122223333:role/gradiated-prod-inference", False, []),
             (name, "kms:UpdateAlias", f"arn:aws:kms:us-east-1:{account}:alias/gradiated-terraform-state", False, []),
             (name, "kms:DeleteAlias", f"arn:aws:kms:us-east-1:{account}:alias/gradiated-terraform-state", False, []),
             (name, "sts:AssumeRole", role + "Administrator", False, []),

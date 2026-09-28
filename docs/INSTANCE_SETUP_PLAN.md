@@ -278,13 +278,19 @@ new deployments to become healthy. Failure or rollback fails the release; queued
 capacity and warmup have a bounded deadline. An unchanged deployment is not a new
 release. The disposable recovery check is
 `timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery`.
-It exercises task crashes, failed canary rollback, uninterrupted peer routes and
+It exercises host-proxy crashes and hangs, task health-check restarts, failed
+canary rollback, uninterrupted peer routes and
 allocation replacement using the pinned Nomad binary and real host proxy. A slow
 response must finish even after its allocation is removed from new-request routing.
 Desmond probes the authenticated host-proxy allocation route before reporting
 readiness, and starts only after the bundle downloader finishes. Runtime tasks
 wait eleven minutes before shutdown: the gateway allows 630-second
 requests, with additional room for its cached deployment view to expire.
+The host proxy's health check restarts its task after three failures, including a
+process that stays alive but stops answering. Its restart policy keeps retrying
+after repeated failures rather than exhausting a terminal retry budget.
+Model readiness follows the local
+ingress route, so another host can serve while that proxy recovers.
 
 Runtime bundles carry their own launcher. Publish the bundle before changing the
 job to use it; the content-addressed release resolver prevents submission while

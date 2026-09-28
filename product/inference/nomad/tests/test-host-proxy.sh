@@ -118,7 +118,7 @@ EOF
 in_container nomad job run -detach /jobs/host-proxy.nomad.hcl >/dev/null
 in_container nomad job run /tmp/fake-runtime.nomad.hcl >/dev/null
 
-request() { in_container curl -s -o /dev/stdout -w ' %{http_code}' ${2:+-H "Authorization: Bearer $2"} "http://127.0.0.1:8888$1"; }
+request() { in_container curl -s --max-time 3 -o /dev/stdout -w ' %{http_code}' ${2:+-H "Authorization: Bearer $2"} "http://127.0.0.1:8888$1"; }
 read -ra allocs <<<"$(in_container nomad job allocs -json fake-runtime | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | tr '\n' ' ')"
 [[ ${#allocs[@]} == 2 ]] || { echo "expected two runtime allocations, got ${#allocs[@]}" >&2; exit 1; }
 
@@ -144,6 +144,34 @@ done
 [[ $(request "/alloc/00000000-0000-4000-8000-000000000000/v1/models" "$token") == *" 404" ]] || fail "an unknown allocation was not rejected"
 
 if [[ ${1:-} == --recovery ]]; then
+  proxy_alloc=$(in_container nomad job allocs -json host-proxy | jq -r '.[] | select(.ClientStatus == "running") | .ID')
+  for fault in crash hang crash crash crash; do
+    restarts_before=$(in_container nomad alloc status -json "$proxy_alloc" | jq '.TaskStates.nginx.Restarts')
+    if [[ $fault == crash ]]; then
+      in_container nomad alloc signal -s SIGKILL -task nginx "$proxy_alloc" >/dev/null
+    else
+      in_container sh -s <<'SH'
+for status in /proc/[0-9]*/status; do
+  if grep -q '^Name:.*nginx' "$status" && grep -q '^Uid:[[:space:]]*10004' "$status"; then
+    pid=${status#/proc/}
+    kill -STOP "${pid%/status}"
+  fi
+done
+SH
+    fi
+    recovered=false
+    for _ in {1..90}; do
+      restarts=$(in_container nomad alloc status -json "$proxy_alloc" | jq '.TaskStates.nginx.Restarts')
+      if ((restarts > restarts_before)) && [[ $(request "/alloc/${allocs[0]}/health" "$token" || true) == *" 200" ]]; then
+        recovered=true
+        break
+      fi
+      sleep 1
+    done
+    $recovered || fail "host proxy did not recover from $fault"
+    echo "Host proxy recovered from $fault and restored the allocation route"
+  done
+
   restart_started=$SECONDS
   in_container touch "/tmp/unhealthy-${allocs[0]}"
   health_restarted=false

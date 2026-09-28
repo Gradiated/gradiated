@@ -13,6 +13,13 @@ job "host-proxy" {
   }
 
   group "proxy" {
+    restart {
+      attempts = 3
+      interval = "1m"
+      delay    = "5s"
+      mode     = "delay"
+    }
+
     network {
       port "inference" {
         static = 8888
@@ -23,11 +30,16 @@ job "host-proxy" {
       name     = "host-proxy"
       provider = "nomad"
       port     = "inference"
+      task     = "nginx"
       check {
         type     = "http"
         path     = "/healthz"
         interval = "10s"
         timeout  = "2s"
+        check_restart {
+          limit = 3
+          grace = "15s"
+        }
       }
     }
 

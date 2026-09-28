@@ -44,7 +44,7 @@ deploy() {
   # Plan exits 1 when allocations would change, which is the normal case for a rollout.
   nomad job plan "${args[@]}" "/jobs/$name.nomad.hcl" || status=$?
   ((status <= 1)) || exit "$status"
-  nomad job run "${args[@]}" "/jobs/$name.nomad.hcl"
+  nomad job run -detach "${args[@]}" "/jobs/$name.nomad.hcl"
 }
 
 shopt -s nullglob

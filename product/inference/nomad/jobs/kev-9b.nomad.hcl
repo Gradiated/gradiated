@@ -48,15 +48,16 @@ job "kev-9b" {
       size = var.runtime_disk_mb
     }
 
-    # No spare capacity: require an operator decision after host loss.
     disconnect {
-      replace   = false
+      replace   = true
       reconcile = "keep_original"
     }
 
     reschedule {
-      attempts  = 0
-      unlimited = false
+      unlimited      = true
+      delay          = "30s"
+      delay_function = "exponential"
+      max_delay      = "5m"
     }
 
     restart {

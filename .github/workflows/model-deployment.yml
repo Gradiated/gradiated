@@ -12,14 +12,6 @@ on:
       - .github/workflows/model-deployment.yml
       - .github/workflows/build-images.yml
   pull_request:
-    paths:
-      - product/inference/images/**
-      - product/inference/bundles/**
-      - product/inference/runtime-launcher/**
-      - tools/images/**
-      - tools/models/**
-      - .github/workflows/model-deployment.yml
-      - .github/workflows/build-images.yml
 
 permissions:
   actions: read
@@ -31,7 +23,26 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/model-deployment.yml
+
   checks:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 90
     steps:
@@ -116,3 +127,13 @@ jobs:
 
   # Submission is enabled only after runtime-user, GPU, and recovery qualification.
   # A published base image does not replace a provider pod.
+
+  passed:
+    name: Model deployment passed
+    if: always()
+    needs: [changes, checks, images, runtime]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

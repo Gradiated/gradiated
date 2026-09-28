@@ -1,0 +1,22 @@
+name: Relevant changes
+description: Reports whether a pull request touches the calling workflow's push paths.
+inputs:
+  workflow:
+    description: Path of the calling workflow file.
+    required: true
+outputs:
+  relevant:
+    description: "true when the workflow's jobs should run."
+    value: ${{ steps.match.outputs.relevant }}
+runs:
+  using: composite
+  steps:
+    - id: match
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        EVENT: ${{ github.event_name }}
+        PULL_REQUEST: ${{ github.event.pull_request.number }}
+        REPOSITORY: ${{ github.repository }}
+        WORKFLOW: ${{ inputs.workflow }}
+      run: bash "$GITHUB_ACTION_PATH/relevant.sh"

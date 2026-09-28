@@ -58,6 +58,17 @@ healthy. S3 versioning keeps previous entry points for recovery.
   contents.
 - Branch rules must allow `github-actions[bot]` to push the two generated release
   files, or provide an equivalent narrowly scoped ruleset bypass.
+- The `main` ruleset requires one gate per workflow: `Product tests passed`,
+  `Kubernetes passed`, `Nomad deployment passed`, `Terraform passed`,
+  `Model deployment passed`, `Wizard publish passed`, `Agent quality passed`,
+  `Dependency age passed` and `Research lab passed`. The GitHub Actions app
+  bypasses it so release commits can still be pushed.
+
+Every workflow runs on every pull request. Its `changes` job
+(`.github/actions/relevant`) compares the pull request's files with the
+workflow's own `push.paths` and skips the other jobs when nothing relevant
+changed; the `passed` gate treats skipped jobs as passing. A new job must be
+listed in its workflow's `passed.needs`; the `changes` job fails otherwise.
 
 Before observability reconciliation, populate the externally managed
 `gradiated/prod/platform/alertmanager-notifications` secret with a

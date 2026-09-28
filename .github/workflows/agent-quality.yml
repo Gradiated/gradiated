@@ -11,13 +11,6 @@ on:
       - "Makefile"
       - "README.md"
   pull_request:
-    paths:
-      - ".agents/**"
-      - ".github/workflows/agent-quality.yml"
-      - "tools/devex/**"
-      - "AGENTS.md"
-      - "Makefile"
-      - "README.md"
   workflow_dispatch:
 
 permissions:
@@ -28,8 +21,27 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Relevant changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      relevant: ${{ steps.relevant.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: .github
+      - id: relevant
+        uses: ./.github/actions/relevant
+        with:
+          workflow: .github/workflows/agent-quality.yml
+
   devex:
     name: Repo DevEx
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,3 +50,13 @@ jobs:
           python-version: "3.13"
       - run: python3 tools/devex/check.py
       - run: python3 -m py_compile tools/devex/*.py
+
+  passed:
+    name: Agent quality passed
+    if: always()
+    needs: [changes, devex]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a required job failed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1

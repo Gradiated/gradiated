@@ -25,7 +25,7 @@ done
 
 while true; do
   active=$(timeout --kill-after=1s 10s nvidia-smi --id="$devices" --query-compute-apps=pid --format=csv,noheader)
-  [[ -z $active ]] && break
+  [[ -z $active || $active == "No running processes found" ]] && break
   ((SECONDS < deadline)) || {
     echo 'Timed out waiting for existing GPU processes to finish' >&2
     exit 1

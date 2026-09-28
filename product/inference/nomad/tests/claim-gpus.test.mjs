@@ -21,7 +21,7 @@ const fixture = (t) => {
   mkdirSync(join(dir, "bundle"));
   writeFileSync(
     join(dir, "bin", "nvidia-smi"),
-    '#!/bin/sh\n[ ! -f "$HOME/query-fails" ] || exit 1\nif [ -f "$HOME/busy" ]; then echo 123; fi\n',
+    '#!/bin/sh\n[ ! -f "$HOME/query-fails" ] || exit 1\nif [ -f "$HOME/busy" ]; then echo 123; elif [ -f "$HOME/idle-message" ]; then echo "No running processes found"; fi\n',
     { mode: 0o755 },
   );
   writeFileSync(
@@ -159,5 +159,16 @@ test(
     writeFileSync(join(allocation, "runtime-starting"), "");
     assert.equal(await finished, 0);
     assert.equal(existsSync(join(allocation, "observer-started")), true);
+  },
+);
+
+test(
+  "a driver reporting no running processes permits startup",
+  { timeout: 10000 },
+  async (t) => {
+    const { dir, start, waitFor } = fixture(t);
+    writeFileSync(join(dir, "idle-message"), "");
+    start("idle");
+    await waitFor("idle");
   },
 );

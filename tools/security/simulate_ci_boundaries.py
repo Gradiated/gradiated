@@ -75,7 +75,13 @@ def main():
         cases.append(("ci_boundary", "iam:PassRole", role + "gradiated-prod-inference", True,
                       [{"ContextKeyName": "iam:PassedToService", "ContextKeyType": "string", "ContextKeyValues": [service]}]))
     for name in policies:
+        for action in ["DeleteStack", "ContinueUpdateRollback", "RollbackStack", "CancelUpdateStack", "SignalResource"]:
+            cases.append((name, "cloudformation:" + action, f"arn:aws:cloudformation:us-east-1:{account}:stack/example/id", False, []))
         cases.extend([
+            (name, "iam:CreateServiceLinkedRole", "*", True,
+             [{"ContextKeyName": "iam:AWSServiceName", "ContextKeyType": "string", "ContextKeyValues": ["batch.amazonaws.com"]}]),
+            (name, "iam:DeleteServiceLinkedRole", role + "aws-service-role/guardduty.amazonaws.com/AWSServiceRoleForAmazonGuardDuty", False, []),
+            (name, "cloudformation:DescribeStacks", f"arn:aws:cloudformation:us-east-1:{account}:stack/example/id", True, []),
             (name, "sts:AssumeRole", role + "gradiated-prod-inference", True, []),
             (name, "sts:AssumeRole", "arn:aws:iam::111122223333:role/gradiated-prod-inference", False, []),
             (name, "kms:UpdateAlias", f"arn:aws:kms:us-east-1:{account}:alias/gradiated-terraform-state", False, []),

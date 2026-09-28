@@ -205,6 +205,29 @@ await assert.rejects(waitForEvaluation(process.argv[3], "", {
 }), /Deployment .* is failed/);
 JS
   echo 'Bad canary reverted without interrupting either healthy replica; deployment gate rejected it'
+  NOMAD_TOKEN="$boot" NOMAD_TEST_CONTAINER="$container" node --input-type=module - "$root/../../../tools/nomad/submit-jobs.mjs" <<'JS'
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import assert from "node:assert/strict";
+const { submitJob } = await import(pathToFileURL(process.argv[2]));
+const cli = (args, input) => JSON.parse(execFileSync("docker", ["exec", "-i", "-e", "NOMAD_TOKEN", process.env.NOMAD_TEST_CONTAINER, "nomad", ...args], { input, encoding: "utf8" }));
+const get = (path) => cli(["operator", "api", "-X", "GET", path]);
+const job = cli(["job", "run", "-output", "/tmp/good.nomad.hcl"]).Job;
+const result = await submitJob(job, {
+  get,
+  post: (path, body) => {
+    assert.notEqual(path, "/v1/jobs");
+    return cli(["operator", "api", "-X", "POST", path], JSON.stringify(body));
+  },
+  signal: AbortSignal.timeout(30_000),
+});
+if (result.deployment) {
+  assert.notEqual(get(`/v1/deployment/${result.deployment}`).Status, "failed");
+  const { waitForDeployment } = await import(new URL("./wait-deployments.mjs", pathToFileURL(process.argv[2])));
+  await waitForDeployment(result.deployment, { get, signal: AbortSignal.timeout(60_000) });
+}
+JS
+  echo 'A Git revert matching the restored job did not follow the failed canary deployment'
 
   in_container sh -s <<'SH'
 sed -e 's/auto_promote = true/auto_promote = false/' \
@@ -236,6 +259,27 @@ SH
     $routed || fail "a healthy canary did not get an ingress route"
   done
   deployment=$(in_container nomad job deployments -json fake-runtime | jq -r 'max_by(.CreateIndex).ID')
+  NOMAD_TOKEN="$boot" NOMAD_TEST_CONTAINER="$container" node --input-type=module - "$root/../../../tools/nomad/submit-jobs.mjs" "$deployment" <<'JS'
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import assert from "node:assert/strict";
+const { submitJob } = await import(pathToFileURL(process.argv[2]));
+const cli = (args, input) => JSON.parse(execFileSync("docker", ["exec", "-i", "-e", "NOMAD_TOKEN", process.env.NOMAD_TEST_CONTAINER, "nomad", ...args], { input, encoding: "utf8" }));
+const get = (path) => cli(["operator", "api", "-X", "GET", path]);
+const post = (path, body) => cli(["operator", "api", "-X", "POST", path], JSON.stringify(body));
+const job = cli(["job", "run", "-output", "/tmp/next.nomad.hcl"]).Job;
+const before = get("/v1/job/fake-runtime").Version;
+const result = await submitJob(job, { get, post, signal: AbortSignal.timeout(30_000) });
+assert.deepEqual(result, { deployment: process.argv[3] });
+assert.equal(get("/v1/job/fake-runtime").Version, before);
+assert.equal(get(`/v1/deployment/${process.argv[3]}`).Status, "running");
+job.ID = job.Name = "submission-fixture";
+job.TaskGroups[0].Count = 0;
+job.TaskGroups[0].Update.Canary = 0;
+const created = await submitJob(job, { get, post, signal: AbortSignal.timeout(30_000) });
+assert.match(created.evaluation, /^[0-9a-f-]{36}$/);
+JS
+  echo 'Unchanged submission preserved the active canaries and job version; new job submission returned its evaluation'
   in_container nomad deployment promote "$deployment" >/dev/null
   promoted=false
   for _ in {1..60}; do
@@ -265,6 +309,31 @@ for _ in {1..10}; do
 done
 in_container test -s /tmp/draining-response || fail "slow response did not start"
 in_container nomad alloc stop -detach "${allocs[0]}" >/dev/null
+if [[ ${1:-} == --recovery ]]; then
+  NOMAD_TOKEN="$boot" NOMAD_TEST_CONTAINER="$container" node --input-type=module - "$root/../../../tools/nomad/submit-jobs.mjs" <<'JS'
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import assert from "node:assert/strict";
+const { submitJob } = await import(pathToFileURL(process.argv[2]));
+const cli = (args, input) => JSON.parse(execFileSync("docker", ["exec", "-i", "-e", "NOMAD_TOKEN", process.env.NOMAD_TEST_CONTAINER, "nomad", ...args], { input, encoding: "utf8" }));
+const get = (path) => cli(["operator", "api", "-X", "GET", path]);
+const job = cli(["job", "run", "-output", "/tmp/next.nomad.hcl"]).Job;
+job.ID = job.Name = "drain-probe";
+job.TaskGroups[0].Count = 0;
+job.TaskGroups[0].Update.Canary = 0;
+const controller = new AbortController();
+await assert.rejects(submitJob(job, {
+  get,
+  post: (path, body) => {
+    assert.notEqual(path, "/v1/jobs", "registration must wait until draining processes release memory");
+    return cli(["operator", "api", "-X", "POST", path], JSON.stringify(body));
+  },
+  signal: controller.signal,
+  pause: async () => controller.abort(),
+}), /deadline/);
+JS
+  echo 'A new job waited while another allocation drained instead of reclaiming its GPU resources'
+fi
 consecutive_removed=0
 for _ in {1..60}; do
   if [[ $(request "/alloc/${allocs[0]}/v1/models" "$token") == *" 404" ]]; then

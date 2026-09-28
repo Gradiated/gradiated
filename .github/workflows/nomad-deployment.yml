@@ -71,7 +71,7 @@ jobs:
           node --check tools/nomad/create-bootstrap-secrets.mjs
           bash product/inference/nomad/tests/validate-job.sh
           timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
-          node --test tools/nomad/wait-deployments.test.mjs
+          node --test tools/nomad/*.test.mjs
       - uses: depot/setup-action@v1
       - name: Build and test the runtime launcher
         uses: depot/build-push-action@v1
@@ -91,7 +91,7 @@ jobs:
     needs: configuration-checks
     runs-on: ubuntu-latest
     environment: production
-    timeout-minutes: 215
+    timeout-minutes: 325
     env:
       AWS_REGION: us-east-1
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}

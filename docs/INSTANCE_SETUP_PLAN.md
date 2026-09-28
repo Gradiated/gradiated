@@ -291,6 +291,12 @@ job to use it; the content-addressed release resolver prevents submission while
 that source release is missing. A newer Git deployment supersedes an older
 workflow wait, so an unrelated model waiting for GPUs cannot hold up the next
 release. Already-running Nomad deployments continue under Nomad supervision.
+An unchanged job follows its existing deployment without registering another job
+version. Changed jobs wait for their previous deployment to finish and for stopped
+allocations to terminate before registration; a shutdown delay still consumes real
+GPU memory even when the scheduler considers the allocation stopped. Jobs advance
+independently, so one model waiting for capacity does not prevent another from
+deploying. Registrations enforce the planned job modify index.
 
 ### Replica availability alerts
 

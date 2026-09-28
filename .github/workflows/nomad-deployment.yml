@@ -14,6 +14,10 @@ on:
       - product/inference/images/nomad-base/**
       - tools/nomad/**
       - .github/workflows/nomad-deployment.yml
+  workflow_run:
+    workflows: [Model deployment]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
   pull_request:
 
@@ -46,7 +50,7 @@ jobs:
 
   configuration-checks:
     needs: changes
-    if: needs.changes.outputs.relevant == 'true'
+    if: needs.changes.outputs.relevant == 'true' && github.event_name != 'workflow_run'
     runs-on: depot-ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -77,13 +81,17 @@ jobs:
 
   deploy:
     name: Deploy jobs
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: >-
+      !cancelled() && needs.configuration-checks.result != 'failure' &&
+      github.ref == 'refs/heads/main' && github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
     needs: configuration-checks
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 30
     env:
       AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       NOMAD_ADDR: https://127.0.0.1:4646
       NOMAD_TLS_SERVER_NAME: server.global.nomad
     steps:

@@ -2,31 +2,16 @@ export type Call = { method: string; url: string; body: unknown };
 
 export const fakeRunPod = (pod: Record<string, unknown>) => {
   const calls: Call[] = [];
-  let auths = [
-    { id: "old", name: "gradiated-host-pod1-1" },
-    { id: "other", name: "someone-else" },
-  ];
   const fetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = String(input);
     const method = init?.method ?? "GET";
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
     calls.push({ method, url, body });
-    const json = (value: unknown) => new Response(JSON.stringify(value));
 
-    if (url.includes("/pods/")) return method === "GET" ? json(pod) : json({});
-    if (method === "POST") {
-      const created = { id: "new", name: body.name };
-      auths = [...auths, created];
-      return json(created);
-    }
-    if (method === "DELETE") {
-      auths = auths.filter((auth) => !url.endsWith(`/${auth.id}`));
-      return new Response("");
-    }
-    return json(auths);
+    return new Response(JSON.stringify(method === "GET" ? pod : {}));
   };
 
-  return { calls, fetch: fetch as typeof globalThis.fetch, auths: () => auths };
+  return { calls, fetch: fetch as typeof globalThis.fetch };
 };
 
 export const rtxPod = {

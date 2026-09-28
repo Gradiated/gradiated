@@ -15,11 +15,7 @@ import {
   type ArtifactCredentials,
 } from "./host-bootstrap.js";
 import { waitForNomadNode, type ReadNomadNode } from "./nomad-node.js";
-import type {
-  HostImage,
-  InstanceProvider,
-  ProviderInstance,
-} from "./provider.js";
+import type { InstanceProvider, ProviderInstance } from "./provider.js";
 
 const NODE_READY_TIMEOUT_MS = 30 * 60 * 1000;
 const RETAINED_REGISTRATIONS = 50;
@@ -58,7 +54,7 @@ export type RegistrationRequest = {
 export type RegistrationDependencies = {
   readonly providers: Readonly<Record<string, () => Promise<InstanceProvider>>>;
   readonly instances: () => Promise<InstanceService>;
-  readonly hostImage: () => Promise<HostImage>;
+  readonly hostImage: string;
   readonly caCertificate: () => Promise<string>;
   readonly signer: CertificateSigner;
   readonly runtimeReader: () => Promise<ArtifactCredentials>;
@@ -108,8 +104,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     provider: InstanceProvider,
     instance: ProviderInstance,
   ) => {
-    const [image, ca, artifact, tokens] = await Promise.all([
-      dependencies.hostImage(),
+    const [ca, artifact, tokens] = await Promise.all([
       dependencies.caCertificate(),
       dependencies.runtimeReader(),
       dependencies.servingTokens(registration.provider),
@@ -132,7 +127,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
 
     await provider.bootstrap(
       instance,
-      image,
+      dependencies.hostImage,
       {
         ...hostBootstrapEnvironment({
           instanceId: record.id,

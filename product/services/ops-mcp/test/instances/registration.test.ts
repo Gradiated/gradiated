@@ -56,10 +56,7 @@ const setup = ({
     providers: { runpod: async () => provider },
     instances: async () =>
       ({ register, bindNomadNode }) as unknown as InstanceService,
-    hostImage: async () => ({
-      reference: "registry.example/nomad-base@sha256:abc",
-      registry: null,
-    }),
+    hostImage: "registry.example/nomad-base@sha256:abc",
     caCertificate: async () => testCa.certificate,
     signer: kmsSigner("alias/test-nomad-ca", fakeKms().client),
     runtimeReader: async () => ARTIFACT,

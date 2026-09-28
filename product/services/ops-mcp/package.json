@@ -10,7 +10,6 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "@aws-sdk/client-ecr": "3.1135.0",
     "@aws-sdk/client-secrets-manager": "3.1135.0",
     "@gradiated/control": "workspace:*",
     "@gradiated/nomad-pki": "workspace:*",

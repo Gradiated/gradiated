@@ -88,12 +88,20 @@ authorized for that machine, call again with `reset_running_pod: true` and the
 same id in `confirm_instance_id`. Every phase is audit-logged with the requesting
 employee, provider, machine and reset flag.
 
-The ops MCP holds everything registration needs. `kms:Sign` on the Nomad CA key,
-the host runtime reader secret and an ECR pull token come from its pod identity
-role. Its `ops-mcp` secret carries the RunPod API key, a database URL for the
-`gradiated_ops_mcp` role (which may only write `instances`), its Nomad client
-credentials, and copies of the gateway runtime token and the RunPod deployment
-status token. `NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
+The ops MCP holds everything registration needs. `kms:Sign` on the Nomad CA key
+and the host runtime reader secret come from its pod identity role. Its `ops-mcp`
+secret carries the RunPod API key, a database URL for the `gradiated_ops_mcp`
+role (which may only write `instances`), the Nomad CA certificate and token, and
+copies of the gateway runtime token and the RunPod deployment status token.
+`NOMAD_BASE_IMAGE` in its manifest pins the host image by digest.
+
+RunPod pulls `nomad-base` from `gradiated/prod/inference` through an ECR
+delegation, not a stored registry login, so there is no ECR password to expire.
+The repository policy (`registry-secrets`, `runpod_pull_repositories`) lets
+RunPod's two fixed deployment roles pull, and the delegation is registered once
+on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations`
+and the repository ARN. RunPod's v1 pod update also ignores
+`containerRegistryAuthId`, so a stored login would never reach the pod.
 The status list lives in memory: a registration interrupted by a restart is not
 listed, and registering the machine again is safe.
 

@@ -1,7 +1,7 @@
 # The Kev decision runtime on CPU, for the gateway's real-runtime fidelity tests.
 #
-# This is NOT the production image: production serves kev-9b on GPU through the
-# RunPod scripts in infra/environments/prod/runpod/kev-9b. It exists so CI can run
+# This is NOT the production image: production serves kev-9b on GPU from the
+# bundle in product/inference/bundles/kev-9b. It exists so CI can run
 # the adapter we actually deploy against a small checkpoint, rather than upstream's
 # own server, whose usage shape the gateway deliberately rejects.
 #

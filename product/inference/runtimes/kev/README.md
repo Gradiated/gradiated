@@ -43,12 +43,22 @@ select dispatch.
   exceptions or model payloads. Invalid inputs are 422, body overflow 413,
   missing/wrong content type 415, authentication failure 401.
 
-## Start on the existing prepared GPU environment
+## Production
 
-Requires Python 3.12+, the existing frozen upstream serving dependencies and
-Uvicorn. No install or process restart is performed by these files. Keep the
-upstream source checkout clean at
-`f0ae8fb9af5762254974dcdba8c82cbf48587b2e`; startup verifies its Git commit.
+The [`kev-9b` bundle](../../bundles/kev-9b) packages this adapter with its own
+Python, upstream's frozen lock plus FLA and Triton, and Kev installed from Git at
+`f0ae8fb9af5762254974dcdba8c82cbf48587b2e`. The
+[`kev-9b` Nomad job](../../nomad/jobs/kev-9b.nomad.hcl) runs one allocation per
+RTX PRO 6000 on a dynamic loopback port behind the host proxy, with Desmond
+reporting readiness; the worker turns each allocation into a deployment. Its
+release declares `protocol: "system_one"`, without which the gateway treats the
+deployment as a chat model and every request fails closed. `GET /metrics`
+exposes whether the slot is busy, which Desmond needs to report the replica as
+accepting requests.
+
+Startup verifies upstream Kev is the pinned commit: from pip's install record for
+a Git install, or with Git for a clean checkout. Any other install needs
+`--allow-unpinned-source`, which only the CPU test image uses.
 `Checkpoint` loads the exact adapter revision
 `2629c06a5aeb0feb3b9783bafed17ed8f39ecf5c` and verifies the base is
 `Qwen/Qwen3.5-9B-Base@68c46c4b3498877f3ef123c856ecfde50c39f404`.
@@ -60,16 +70,7 @@ prefix capacity and fallback models do not change this adapter's behavior.
 
 Launch **one process per GPU**, never multiple Uvicorn workers. GPU isolation
 is the launcher's responsibility; startup requires exactly one visible GPU.
-From the repository root, using the existing Kev environment's Python:
-
-```sh
-CUDA_VISIBLE_DEVICES=0 /workspace/kev/.venv/bin/python \
-  product/inference/runtimes/kev/adapter.py --port 8009 \
-  --token-file /run/secrets/kev-runtime-token
-```
-
-Use `CUDA_VISIBLE_DEVICES=1 --port 8010` for the second replica (same command,
-with those two values changed). Bind defaults to `127.0.0.1`; `--host` is an
+Bind defaults to `127.0.0.1`; `--host` is an
 explicit override. The token file is optional, external to version control,
 and read at startup; it must contain 16–4096 printable non-space ASCII bytes
 with an optional final newline. Gateway sends `Authorization: Bearer <token>`.

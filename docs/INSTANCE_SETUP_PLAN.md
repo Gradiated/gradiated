@@ -219,10 +219,11 @@ row stays retired. There are no `configure-*` commands.
 
 - A Kev runtime bundle: pinned upstream source, its environment, and the adapter.
 - `kev-9b.nomad.hcl`: two replicas, one RTX PRO 6000 each.
-- A decision-runtime probe in Desmond, which today only understands vLLM.
+- Desmond already probes any runtime's `/health`; the adapter adds `/metrics`,
+  without which Desmond reports the replica as not accepting requests.
 - Remove the hand-managed Kev pod setup from #91 — its supervisor programs, nginx
   proxy, `launch.sh` and `report_status.py`, which duplicates Desmond. The catalog
-  entry, pricing and release digest stay.
+  entry and pricing stay; the release now comes from the job.
 
 ## Order
 

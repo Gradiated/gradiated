@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { randomUUID, X509Certificate } from "node:crypto";
+import { readFileSync } from "node:fs";
 import express, {
   type RequestHandler,
   type ErrorRequestHandler,
@@ -8,6 +9,7 @@ import type { Identity } from "./auth.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {
   Counter,
+  Gauge,
   Histogram,
   Registry,
   collectDefaultMetrics,
@@ -22,6 +24,7 @@ export const createHttp = (options: {
   authRouter?: RequestHandler;
   backend: Backend;
   registrations?: Registrations;
+  nomadCertificateFile?: string;
   audit: (event: Record<string, unknown>) => void;
 }) => {
   const registry = new Registry();
@@ -39,6 +42,25 @@ export const createHttp = (options: {
     buckets: [0.1, 0.5, 1, 3, 5, 10, 15],
     registers: [registry],
   });
+  const certificateFile = options.nomadCertificateFile;
+  if (certificateFile) {
+    new Gauge({
+      name: "ops_mcp_nomad_certificate_expiry_timestamp_seconds",
+      help: "Expiry of the client certificate the ops MCP presents to Nomad",
+      labelNames: ["certificate"],
+      registers: [registry],
+      collect() {
+        try {
+          const { validTo } = new X509Certificate(
+            readFileSync(certificateFile),
+          );
+          this.set({ certificate: "ops-mcp" }, Date.parse(validTo) / 1000);
+        } catch {
+          this.reset();
+        }
+      },
+    });
+  }
   let active = 0;
   const budgets = new Map<string, { window: number; count: number }>();
 

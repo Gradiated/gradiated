@@ -78,6 +78,7 @@ const isActive = ({ phase }: Registration) =>
 
 export const createRegistrations = (dependencies: RegistrationDependencies) => {
   const registrations = new Map<string, Registration>();
+  const checking = new Set<string>();
 
   const advance = (
     registration: Registration,
@@ -158,6 +159,27 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
     advance(registration, "bound");
   };
 
+  const preflight = async (
+    createProvider: () => Promise<InstanceProvider>,
+    request: RegistrationRequest,
+  ) => {
+    const provider = await createProvider();
+    const instance = await provider.describe(request.providerInstanceId);
+    if (
+      !request.resetRunningPod &&
+      !(await provider.isStopped(request.providerInstanceId))
+    ) {
+      throw new Error(
+        `${instance.sku} ${request.providerInstanceId} is running or has an unknown status. ` +
+          "Registering it resets the machine, which can release scarce GPU capacity. " +
+          "Only when that reset is explicitly authorized, call again with " +
+          "reset_running_pod true and the same id in confirm_instance_id.",
+      );
+    }
+
+    return { provider, instance };
+  };
+
   const retain = (registration: Registration) => {
     registrations.set(registration.id, registration);
 
@@ -174,6 +196,7 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
         throw new Error(`Unknown provider ${request.provider}`);
       }
 
+      const machine = `${request.provider}/${request.providerInstanceId}`;
       const running = [...registrations.values()].find(
         (registration) =>
           isActive(registration) &&
@@ -185,43 +208,38 @@ export const createRegistrations = (dependencies: RegistrationDependencies) => {
           `Registration ${running.id} for this machine is still ${running.phase}`,
         );
       }
-
-      const provider = await createProvider();
-      const instance = await provider.describe(request.providerInstanceId);
-      if (
-        !request.resetRunningPod &&
-        !(await provider.isStopped(request.providerInstanceId))
-      ) {
-        throw new Error(
-          `${instance.sku} ${request.providerInstanceId} is running or has an unknown status. ` +
-            "Registering it resets the machine, which can release scarce GPU capacity. " +
-            "Only when that reset is explicitly authorized, call again with " +
-            "reset_running_pod true and the same id in confirm_instance_id.",
-        );
+      if (checking.has(machine)) {
+        throw new Error("Another registration for this machine is starting");
       }
 
-      const now = new Date().toISOString();
-      const registration: Registration = {
-        id: randomUUID(),
-        provider: request.provider,
-        providerInstanceId: request.providerInstanceId,
-        sku: instance.sku,
-        requestedBy: request.requestedBy,
-        resetRunningPod: request.resetRunningPod,
-        startedAt: now,
-        updatedAt: now,
-        phase: "recording",
-      };
-      retain(registration);
-      advance(registration, "recording");
+      checking.add(machine);
+      try {
+        const { provider, instance } = await preflight(createProvider, request);
+        const now = new Date().toISOString();
+        const registration: Registration = {
+          id: randomUUID(),
+          provider: request.provider,
+          providerInstanceId: request.providerInstanceId,
+          sku: instance.sku,
+          requestedBy: request.requestedBy,
+          resetRunningPod: request.resetRunningPod,
+          startedAt: now,
+          updatedAt: now,
+          phase: "recording",
+        };
+        retain(registration);
+        advance(registration, "recording");
 
-      void run(registration, provider, instance).catch((error: unknown) =>
-        advance(registration, "failed", {
-          error: error instanceof Error ? error.message : String(error),
-        }),
-      );
+        void run(registration, provider, instance).catch((error: unknown) =>
+          advance(registration, "failed", {
+            error: error instanceof Error ? error.message : String(error),
+          }),
+        );
 
-      return { ...registration };
+        return { ...registration };
+      } finally {
+        checking.delete(machine);
+      }
     },
 
     get: (id: string) => {

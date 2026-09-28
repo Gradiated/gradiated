@@ -59,6 +59,7 @@ const { server, metrics } = createHttp({
   authenticate: auth.authenticate,
   authRouter: auth.router,
   backend,
+  nomadCertificateFile: `${config.CREDENTIALS_DIRECTORY}/nomad-cert`,
   registrations: productionRegistrations(
     {
       credentialsDirectory: config.CREDENTIALS_DIRECTORY,

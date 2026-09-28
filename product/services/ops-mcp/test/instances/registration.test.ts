@@ -239,6 +239,39 @@ describe("instance registration", () => {
     await settled(test.registrations, first.id);
   });
 
+  it("lets only one of two simultaneous requests for a machine start", async () => {
+    const test = setup();
+
+    const results = await Promise.allSettled([
+      test.registrations.start(request),
+      test.registrations.start(request),
+    ]);
+
+    expect(results.map((result) => result.status).sort()).toEqual([
+      "fulfilled",
+      "rejected",
+    ]);
+    expect(
+      results.find((result) => result.status === "rejected"),
+    ).toMatchObject({
+      reason: new Error("Another registration for this machine is starting"),
+    });
+    await settled(test.registrations, test.registrations.list()[0]!.id);
+    expect(test.bootstraps).toHaveLength(1);
+  });
+
+  it("releases the machine when a request is refused", async () => {
+    const test = setup({ stopped: false });
+
+    await expect(test.registrations.start(request)).rejects.toThrow(
+      "reset_running_pod",
+    );
+
+    await expect(
+      test.registrations.start({ ...request, resetRunningPod: true }),
+    ).resolves.toMatchObject({ phase: "recording" });
+  });
+
   it("fails without binding when the node never becomes ready", async () => {
     const test = setup({ nodeStatus: "initializing" });
 

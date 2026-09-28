@@ -17,17 +17,12 @@ const resourceName = z
   .regex(/^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$/)
   .max(253);
 const status = z.record(z.string(), z.unknown()).optional();
-const conditions = z
-  .array(
-    z.object({
-      type: z.string(),
-      status: z.string().optional(),
-      reason: z.string().optional(),
-      message: z.string().optional(),
-      lastTransitionTime: z.string().optional(),
-    }),
-  )
-  .optional();
+const condition = z.object({
+  type: z.string(),
+  status: z.string().optional(),
+  reason: z.string().optional(),
+  lastTransitionTime: z.string().optional(),
+});
 const continue_token = z.string().min(1).max(4096).optional();
 const listMetadata = z.object({ continue: z.string().optional() }).optional();
 
@@ -71,7 +66,7 @@ const podList = z.object({
         phase: z.string().optional(),
         reason: z.string().optional(),
         startTime: z.string().optional(),
-        conditions,
+        conditions: z.array(condition).optional(),
         containerStatuses: z
           .array(
             z.object({
@@ -164,7 +159,9 @@ const application = z.object({
           lastTransitionTime: z.string().optional(),
         })
         .optional(),
-      conditions,
+      conditions: z
+        .array(condition.extend({ message: z.string().optional() }))
+        .optional(),
       operationState: z
         .object({
           phase: z.string().optional(),

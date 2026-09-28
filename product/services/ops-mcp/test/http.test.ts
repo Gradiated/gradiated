@@ -282,6 +282,14 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
         status: {
           phase: "Running",
           message: "PRIVATE",
+          conditions: [
+            {
+              type: "PodScheduled",
+              status: "False",
+              reason: "Unschedulable",
+              message: "PRIVATE",
+            },
+          ],
           containerStatuses: [
             {
               name: "gateway",
@@ -303,5 +311,6 @@ it("preserves diagnostic fields but strips pod environment, messages, annotation
   expect(JSON.stringify(result)).not.toContain("PRIVATE");
   expect(JSON.stringify(result)).toContain("CrashLoopBackOff");
   expect(JSON.stringify(result)).toContain("OOMKilled");
+  expect(JSON.stringify(result)).toContain("Unschedulable");
   expect(JSON.stringify(result)).toContain("256Mi");
 });

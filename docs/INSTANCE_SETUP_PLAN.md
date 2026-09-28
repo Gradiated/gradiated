@@ -106,6 +106,9 @@ and the repository ARN. RunPod's v1 pod update also ignores
 RunPod applies the delegation only to tagged references: it pulls a
 digest-only reference without credentials and refuses to create a pod from
 `name:tag@digest`.
+The immutable tagged index is retained by the untagged-only ECR lifecycle policy.
+ECR also [protects child manifests referenced by a retained index](https://docs.aws.amazon.com/AmazonECR/latest/userguide/LifecyclePolicies.html),
+so the 14-day cleanup cannot remove that base image indirectly.
 The status list lives in memory, so a restart forgets it. Registering the machine
 again finishes the job: a running machine that carries this instance's
 bootstrap but whose node is not yet bound is resumed without a reset, and
@@ -130,9 +133,17 @@ it out. Two things stay outside it:
 - The host image. The Nomad binary, device plugin and launcher are baked into
   `nomad-base`, so updating them is a provider image change and a reset. Moving
   more into job artifacts shrinks this.
-- Certificate renewal. Nomad does not renew client certificates, so registering
-  the machine again is the renewal path until a dedicated one exists. That resets
-  the machine.
+- Host certificate renewal. Host certificates last 365 days. A dedicated issuer
+  must authenticate the host, bind each CSR to its registered instance, refuse
+  retired instances, and support replacement plus SIGHUP without resetting GPU
+  hosts. Re-registration is not an acceptable steady-state renewal mechanism.
+
+The control-plane certificates are automated: servers and UI use native renewal
+sidecars, ops MCP and workers renew in memory, and deployment workflows and
+`mise run nomad:admin` issue fresh client certificates for each invocation.
+The worker and UI still use static read-only Nomad ACL tokens; Kubernetes
+service-account JWT login is the remaining credential automation step for them.
+RunPod REST v1 retires on 2026-11-15; registration must migrate to v2 before then.
 
 ## A job is a model deployment
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  carriedBootstrap,
   hostBootstrapEnvironment,
   nodeName,
   nomadNodeIdentity,
@@ -57,34 +58,48 @@ describe("host bootstrap environment", () => {
 });
 
 describe("Nomad node identity", () => {
-  const bound = "3f1e5a52-8d4b-4c1e-9a55-111111111111";
-  const environment = {
+  const instanceId = "019d5a4a-0000-7000-8000-000000000001";
+  const carried = {
     PUBLIC_KEY: "ssh-ed25519 debug",
-    GRADIATED_NOMAD_NODE_ID: bound,
+    GRADIATED_INSTANCE_ID: instanceId,
+    GRADIATED_NOMAD_NODE_ID: "3f1e5a52-8d4b-4c1e-9a55-111111111111",
     GRADIATED_NOMAD_NODE_SECRET: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
   };
 
-  it("keeps the bound node's identity so Nomad sees the same node return", () => {
-    expect(nomadNodeIdentity(bound, environment)).toEqual({
-      nomadNodeId: bound,
-      nomadNodeSecret: "3f1e5a52-8d4b-4c1e-9a55-222222222222",
+  it("reads the bootstrap a machine carries", () => {
+    expect(carriedBootstrap(carried)).toEqual({
+      instanceId,
+      nomadNodeId: carried.GRADIATED_NOMAD_NODE_ID,
+      nomadNodeSecret: carried.GRADIATED_NOMAD_NODE_SECRET,
+    });
+    expect(carriedBootstrap({ PUBLIC_KEY: "ssh-ed25519 debug" })).toBeNull();
+    expect(
+      carriedBootstrap({ ...carried, GRADIATED_NOMAD_NODE_SECRET: "" }),
+    ).toBeNull();
+  });
+
+  it("keeps the node a machine carries for this instance, bound or not", () => {
+    expect(nomadNodeIdentity(instanceId, carried)).toEqual({
+      nomadNodeId: carried.GRADIATED_NOMAD_NODE_ID,
+      nomadNodeSecret: carried.GRADIATED_NOMAD_NODE_SECRET,
     });
   });
 
   it.each([
-    ["the machine has never been registered", null, {}],
-    ["the machine carries a node that was never bound", null, environment],
+    ["the machine has never been registered", {}],
     [
-      "the machine carries another node",
-      "3f1e5a52-8d4b-4c1e-9a55-333333333333",
-      environment,
+      "the machine carries another instance's node",
+      {
+        ...carried,
+        GRADIATED_INSTANCE_ID: "019d5a4a-0000-7000-8000-000000000002",
+      },
     ],
-  ])("starts a new node when %s", (_, boundNodeId, current) => {
-    const identity = nomadNodeIdentity(boundNodeId, current);
+  ])("starts a new node when %s", (_, environment) => {
+    const identity = nomadNodeIdentity(instanceId, environment);
 
-    expect(identity.nomadNodeId).not.toBe(bound);
+    expect(identity.nomadNodeId).not.toBe(carried.GRADIATED_NOMAD_NODE_ID);
     expect(identity.nomadNodeSecret).not.toBe(
-      environment.GRADIATED_NOMAD_NODE_SECRET,
+      carried.GRADIATED_NOMAD_NODE_SECRET,
     );
   });
 });

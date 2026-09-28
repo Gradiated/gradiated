@@ -27,6 +27,7 @@ export const registerRegistrationTools = (
       description: [
         "Enrol a GPU machine into Nomad. This changes production: it records the instance, issues a Nomad client certificate, and replaces the machine's image and environment with nomad-base, which resets the machine.",
         "A running machine is refused unless reset_running_pod is true and confirm_instance_id repeats instance_id. Only do that when a person has explicitly authorized resetting that exact machine: a reset stops everything on it and can release scarce GPU capacity.",
+        "A running machine that already carries this instance's bootstrap, for example after an interrupted registration, is resumed without a reset: registration waits for its node and binds it. Registering again is always safe.",
         "Returns a registration id at once; registration then takes up to 30 minutes. Follow it with instance_registration_status.",
       ].join(" "),
       inputSchema: schema,

@@ -25,19 +25,38 @@ export const nodeName = (provider: string, providerInstanceId: string) => {
   return name;
 };
 
-// Nomad refuses a known node id presented with a different secret, so a returning
-// node reuses both from the bootstrap the machine already carries.
+export type CarriedBootstrap = {
+  readonly instanceId: string;
+  readonly nomadNodeId: string;
+  readonly nomadNodeSecret: string;
+};
+
+export const carriedBootstrap = (
+  environment: Readonly<Record<string, string>>,
+): CarriedBootstrap | null => {
+  const {
+    GRADIATED_INSTANCE_ID: instanceId,
+    GRADIATED_NOMAD_NODE_ID: nomadNodeId,
+    GRADIATED_NOMAD_NODE_SECRET: nomadNodeSecret,
+  } = environment;
+
+  return instanceId && nomadNodeId && nomadNodeSecret
+    ? { instanceId, nomadNodeId, nomadNodeSecret }
+    : null;
+};
+
+// Nomad refuses a known node id presented with a different secret, so a machine
+// already bootstrapped for this instance keeps the node it carries.
 export const nomadNodeIdentity = (
-  boundNodeId: string | null,
+  instanceId: string,
   environment: Readonly<Record<string, string>>,
 ) => {
-  const secret = environment.GRADIATED_NOMAD_NODE_SECRET;
-  if (
-    boundNodeId &&
-    environment.GRADIATED_NOMAD_NODE_ID === boundNodeId &&
-    secret
-  ) {
-    return { nomadNodeId: boundNodeId, nomadNodeSecret: secret };
+  const carried = carriedBootstrap(environment);
+  if (carried?.instanceId === instanceId) {
+    return {
+      nomadNodeId: carried.nomadNodeId,
+      nomadNodeSecret: carried.nomadNodeSecret,
+    };
   }
 
   return { nomadNodeId: randomUUID(), nomadNodeSecret: randomUUID() };

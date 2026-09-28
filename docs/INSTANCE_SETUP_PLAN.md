@@ -46,7 +46,7 @@ Nomad. Everything after that is Nomad's job. Registration:
 2. Issues the instance's own Nomad client certificate, signed through KMS by the
    private CA, whose key never leaves KMS (ECDSA — the client rejects Ed25519). Credentials are per instance, never per GPU
    or per provider.
-3. Reuses the bound node's id and secret from the machine's current configuration,
+3. Reuses the node id and secret the machine already carries for this instance,
    so a renewed machine returns to Nomad as the same node, or generates new ones.
    It then calls `bootstrap`, which sets the
    machine's image to a pinned `nomad-base` and passes that node identity, certificate, key and the runtime bundle read key
@@ -102,8 +102,10 @@ RunPod's two fixed deployment roles pull, and the delegation is registered once
 on the RunPod account with `POST https://api.runpod.io/v2/registries/delegations`
 and the repository ARN. RunPod's v1 pod update also ignores
 `containerRegistryAuthId`, so a stored login would never reach the pod.
-The status list lives in memory: a registration interrupted by a restart is not
-listed, and registering the machine again is safe.
+The status list lives in memory, so a restart forgets it. Registering the machine
+again finishes the job: a running machine that already carries this instance's
+bootstrap is resumed without a reset, and registration waits for its node and
+binds it.
 
 RunPod is the first provider. Setting the image resets the pod and also declares
 the host proxy port, 8888; model weights belong on a volume. Registration adopts

@@ -17,6 +17,7 @@ const registration: Registration = {
   sku: "1x NVIDIA RTX PRO 6000",
   requestedBy: "tester@gradiated.com",
   resetRunningPod: false,
+  resuming: false,
   startedAt: "2026-09-28T10:00:00.000Z",
   updatedAt: "2026-09-28T10:00:00.000Z",
   phase: "recording",

@@ -6,6 +6,7 @@ on:
     paths:
       - infra/environments/prod/us-east-1/kubernetes/nomad/**
       - infra/environments/prod/runpod/glm-5-3-flash/**
+      - product/inference/runtimes/glm/**
       - product/inference/nomad/**
       - product/inference/desmond/**
       - product/inference/CMakeLists.txt

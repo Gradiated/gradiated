@@ -107,7 +107,12 @@ export const createServiceLogger = (
         fields.error instanceof Error
           ? fields.error.constructor.name
           : "UnknownError";
-      safe.error_code = diagnosticCode(fields.error);
+      // Query builders wrap the database error, whose code is the useful one.
+      safe.error_code =
+        diagnosticCode(fields.error) ??
+        (fields.error instanceof Error
+          ? diagnosticCode(fields.error.cause)
+          : undefined);
       if (fields.error instanceof Error) {
         safe.error_frames = fields.error.stack
           ?.split("\n")

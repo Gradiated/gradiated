@@ -183,8 +183,6 @@ fn healthy_status<'a>(
     }
 }
 
-/// Orders the healthy deployments that are accepting requests by rendezvous
-/// hash, so one session or prompt prefix keeps landing on the same runtime.
 pub fn order_deployments(input: RouteInput<'_>) -> RouteAvailability {
     let RouteInput {
         workspace_id,

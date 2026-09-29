@@ -26,7 +26,7 @@ in Valkey. It is not a general-purpose API gateway or a model-routing platform.
 - reject invalid, unsupported, or unpaid requests before generation and
   normalize SGLang overload responses;
 - select one healthy deployment with stable rendezvous hashing;
-- enforce shared deployment concurrency and retry one safe failed attempt;
+- leave deployment admission to the engine and retry one safe failed attempt;
 - preserve streaming backpressure and stop upstream work on cancellation;
 - calculate charges from authoritative usage and admission-time prices;
 - atomically consume the in-flight lease, debit the operational balance, and
@@ -133,7 +133,7 @@ components:
 | `CompletionService`       | concrete struct             | Coordinates the complete Chat Completions lifecycle. It is the only business-service object.                  |
 | `ValkeyServingState`      | concrete adapter            | Reads gateway records and executes admission and finalization Lua scripts.                                    |
 | `GatewayModel`            | typed Valkey record         | Carries the exact model policy and durable deployment candidates.                                             |
-| `DeploymentRuntimeStatus` | typed Valkey record         | Carries current health, admission status, and installed concurrency.                                          |
+| `DeploymentRuntimeStatus` | typed Valkey record         | Carries current health and whether the runtime accepts requests.                                              |
 | `ModelTokenizer`          | concrete struct             | Renders chat input and tokenizes it locally from the selected deployment's pinned tokenizer artifact.         |
 | `SglangClient`            | concrete adapter            | Calls health and Chat Completions on the selected SGLang deployment.                                          |
 | `GenerationTask`          | request-owned state machine | Owns all post-admission work and guarantees one terminal finalization path.                                   |

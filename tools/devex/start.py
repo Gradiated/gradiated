@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--workstream", choices=("sol", "fable"))
+    parser.add_argument("--workstream", choices=("sol",))
     args = parser.parse_args()
 
     context = [sys.executable, "tools/devex/context.py"]
@@ -26,7 +26,7 @@ def main() -> int:
         if result.returncode:
             return result.returncode
 
-    print("agent startup checks passed; continue with the GitHub issue workflow")
+    print("agent startup checks passed")
     return 0
 
 

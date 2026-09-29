@@ -5,7 +5,9 @@ export const UuidSchema = z
   .openapi({ example: "0198ae50-94d8-7d4d-a8be-9f9b44b8c774" });
 export const DeploymentIdSchema = z
   .guid()
-  .describe("Deployment identifier, including unversioned Nomad allocation UUIDs.")
+  .describe(
+    "Deployment identifier, including unversioned Nomad allocation UUIDs.",
+  )
   .openapi({ example: "a4d51466-8782-bf13-3b97-b8a07ad79c26" });
 
 export const TimestampSchema = z.iso.datetime({ offset: true }).openapi({

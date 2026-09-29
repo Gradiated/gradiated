@@ -67,8 +67,6 @@ and a pinned small local model. Focused gateway tests may replace the runtime
 through the `ModelRuntime` test boundary, but there is no separately deployed
 fake-SGLang service.
 
-There are no detailed product blueprints yet. Author them in small, reviewed documents when implementation starts; do not reconstruct the deleted gateway/distribution plans.
-
 ## Verification
 
 Run the narrowest relevant checks, python3 tools/devex/check.py, and git diff --check. Preserve unrelated worktree changes and never commit credentials or customer/model payloads.

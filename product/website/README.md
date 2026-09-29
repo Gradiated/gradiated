@@ -114,15 +114,6 @@ From `product/`, run the registry tests with:
 mise exec -- pnpm exec tsx --test website/scripts/article-metadata.test.ts
 ```
 
-The Carat publication date is 2 September 2026, as requested. Build verification
-must include the public article HTML, not only the development preview.
-
-Publication checks passed for Carat and Thesis: shared headings/dates, canonical
-URLs, Article JSON-LD, library entries, and production interactions. A temporary
-draft fixture loaded in development with `noindex` and had no production route,
-static HTML, library entry, or sitemap entry. The fixture was then removed.
-The registry and diagram tests pass. The existing bundle-size warning remains.
-
 ## Article footnotes
 
 Use standard footnote syntax in an MDX article:
@@ -164,17 +155,11 @@ styles. The prose table rules in `src/styles/pages.css` exclude
 `data-model-table` to preserve cell padding and alignment. The catalog uses
 cards when its container is less than 700px wide.
 
-The September 2026 layout fix passed DevEx checks, the production build, and
-browser checks at 390, 768, 1024, and 1440px with synthetic catalog data.
-Desktop and mobile screenshots were reviewed. Live API data was not checked.
-
 Docs tab rules stop at the tab labels. The language tab header has no full-width
 rule. SDK variant rules also use the width of their labels. These styles are
-in `src/styles/pages.css`. The production build and browser checks for tab
-width and tab switching passed.
+in `src/styles/pages.css`.
 The outer tab panel uses the same top margin for SDK variants and plain code
-blocks. Browser checks confirmed equal gaps for Python, Node, and cURL at
-390px and 1440px.
+blocks.
 
 The training page shows one evaluation named `Support resolution` in
 `src/components/design/Benchmark.tsx`. The user supplied source scores of 55% for Base GLM-5.3-Flash, 75% for
@@ -190,10 +175,6 @@ base and $0.052 for Sol. Post-trained cost is an explicit estimate of 20%
 above base ($0.00204), pending measured data. The horizontal axis uses a
 logarithmic USD scale from $0.0005 to $0.15. The
 score scale is 0–100%. The previous example scores and judge metadata are removed.
-
-The evaluation card uses a larger title, a compact plot, and one legend row
-per model. The title has no score summary. Desktop and mobile layouts were
-reviewed. The website build passed.
 
 The chart displays cost per 100 tasks: $0.17 base, $0.204 post-trained, and
 $5.20 Sol. The log scale remains. The visible assumption note and estimate
@@ -219,42 +200,13 @@ the whole line, spend meter, and hover values when Gradiated is enabled. The
 transition settles within about one second. Token traffic is unchanged.
 Reduced-motion mode updates the cost immediately without moving the traffic.
 
-The cost line maps zero cost to 94% of the canvas height, so the reduced
-cost sits near the bottom of the chart.
-
-The traffic bars fade inside the canvas. The cost line stays fully opaque
-and uses a 3px stroke so it remains visible near the chart floor.
-
-The inference page reuses `DocsModelCatalog` for live model prices and copy-ID
-actions. It replaces the placeholder model cards. Model requests link to
-`team@gradiated.com`. The video reel and its captions are removed from the
-inference page. The catalog uses the full section width.
-
-The inference catalog uses the `site` variant. It keeps the bordered docs
-table layout, with website font, color, and radius tokens. The docs variant
-keeps its existing styling.
+The inference page reuses the `site` variant of `DocsModelCatalog` for live
+model prices and copy-ID actions, with the website's font, color, and radius
+tokens. Model requests link to `team@gradiated.com`.
 
 Console links use `CONSOLE_BASE_URL` from `src/urls.ts`. Vite development uses
 `http://localhost:3000`; production builds use `https://console.gradiated.com`.
 Set `VITE_CONSOLE_BASE_URL` at build time to override this destination.
-
-The navigation’s Latest writing thumbnails use the library artwork presets
-and the shared `WaferArtwork` animation. Hover or keyboard focus on an article
-row starts the same animation as a library card. Reduced motion is respected.
-
-Artwork hover transitions retain one scatter path and the current progress.
-A repeated hover fades and disperses from the current frame, then assembles
-the artwork again. It does not reset chip positions or restart at full opacity.
-
-Reading pages hide the unused opening lattice from the first paint. Its old
-animation was removed, but its static lines otherwise remain until the four-second
-entrance timer removes them. This prevents temporary lines on mobile articles.
-
-Gemma article diagrams use the website's surface, radius, typography, and color
-tokens. The comparison controls use outlined and filled brand buttons. Attention heads
-retain eight distinct brand colors, with lighter variants in dark themes.
-Diagram content, geometry, measurements, controls, and animation timing are
-unchanged. Styles remain scoped to the Gemma figures.
 
 ## Waitlist access
 
@@ -266,8 +218,5 @@ link if the embedded form cannot load. Submissions are handled by Typeform.
 This website change does not disable authentication on the separate console
 or API services.
 
-Verified with the production build and SEO checks (37 routes), DevEx, and
-Chromium at 1440px and 390px: full viewport sizing, close/reopen, Escape,
-focus restoration, scroll restoration after closing the mobile menu, and
-removal of docs sign-in controls. Escape events stay inside the modal so
-navigation menu handlers cannot leave the page scroll-locked.
+Escape events stay inside the modal so navigation menu handlers cannot leave
+the page scroll-locked.

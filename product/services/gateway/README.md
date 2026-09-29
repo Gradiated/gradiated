@@ -5,18 +5,19 @@ requests through Valkey, calls a deployment of the exact requested model, and
 settles terminal usage. Its implementation authority is
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Current slice
+## Request handling
 
-The runnable service currently provides:
+The service provides:
 
 - strict Valkey-projected model and deployment records;
 - an immutable served-release digest;
 - an always cluster-aware Valkey connection;
 - dependency-aware liveness and readiness routes;
-- an 8 MB request-body ceiling;
+- a 32 MB (32,000,000-byte) request-body ceiling;
 - structured JSON startup logging and graceful shutdown;
 - one atomic Valkey admission script with funded prepaid concurrency,
-  uncapped invoiced admission, settlement-backlog protection, and fixed leases;
+  the organization concurrency cap for invoiced admission, settlement-backlog
+  protection, and fixed leases;
 - closed terminal generation properties, checked nano-USD pricing, and one
   atomic finalization script that consumes a lease, debits the balance once,
   and appends the terminal stream event.
@@ -44,6 +45,42 @@ do not affect this state affinity. The runtime reports authoritative prefill
 input and cached-input usage with exactly zero output tokens; serialized
 answers are not generated tokens. The gateway validates answers and runtime
 model identity before returning the requested public model ID.
+
+## Deployment routing
+
+The gateway selects an exact served release, then ranks its healthy, accepting
+deployments by rendezvous hash. Session affinity takes precedence; otherwise
+routing uses the opening prompt. Keys include workspace, model, and release
+identity. Routing stores no affinity records or per-deployment concurrency leases.
+
+Desmond sends `POST /v1/deployment-status` every second. The API checks provider
+ownership and runtime revision, timestamps the report, and writes the release's
+Valkey status hash. Reports older than 15 seconds are unusable; the hash expires
+after 30 seconds. The gateway caches models and status for one second and fails
+closed on a refresh failure. See [DeploymentRuntimeStatus](../../../docs/DATA_MODEL.md#20-deploymentruntimestatus)
+for the wire fields and timing bounds.
+
+Having no healthy deployment returns `503`; healthy deployments that are all refusing
+new work return `429`. The engine owns admission. Runtime overload (`429` or
+`503`) becomes `capacity_exceeded`. There is no gateway queue.
+
+A request can retry once on another deployment of the same release after an
+unavailable or capacity failure, before output begins and with no reported
+usage. It prefers a different fault domain and, for unavailability, a different
+provider. Both attempts share one generation ID, deadline, service tier, price
+snapshot, organization lease, and settlement. Invalid requests, protocol errors,
+timeouts, and started streams are not retried.
+
+For the DeepSeek vLLM runtime, the launch script bounds admission with
+`--max-num-queued-reqs` and `--max-num-queued-tokens`. Size these for the deployment's
+batch capacity and prefill throughput; a token bound below one full-context
+prompt rejects work the engine could otherwise accept. Do not substitute
+`num_requests_running` for the engine's admission limits.
+
+OpenRouter's catalog omits a fixed `capacity` declaration: safe concurrency
+varies with prompt length. Temporary saturation returns `429`; it does not
+change the operator-controlled `is_ready` setting. A stale healthy report can
+keep a stopped runtime eligible for up to 15 seconds.
 
 ## Run locally
 

@@ -53,7 +53,10 @@ afterEach(() => {
 describe("deployment status ingestion", () => {
   it("accepts a valid status for the token's provider", async () => {
     const reports: Array<[string, DeploymentStatusReport]> = [];
-    const payload = { ...report(), deployment_id: "a4d51466-8782-bf13-3b97-b8a07ad79c26" };
+    const payload = {
+      ...report(),
+      deployment_id: "a4d51466-8782-bf13-3b97-b8a07ad79c26",
+    };
     const app = createIngestApp({
       report: async (provider, value) => {
         reports.push([provider, value]);

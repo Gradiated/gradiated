@@ -109,8 +109,6 @@ impl RuntimeCall {
         );
     }
 
-    /// Prefers a candidate in another fault domain and, when the runtime was
-    /// unavailable rather than full, one from another provider.
     pub(super) fn take_fallback(
         &mut self,
         failure: RuntimeFailureKind,

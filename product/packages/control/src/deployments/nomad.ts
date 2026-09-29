@@ -1,12 +1,5 @@
 import type { ModelDeploymentRelease } from "@gradiated/contracts";
-import {
-  and,
-  eq,
-  inArray,
-  isNull,
-  notInArray,
-  sql,
-} from "drizzle-orm";
+import { and, eq, inArray, isNull, notInArray, sql } from "drizzle-orm";
 
 import type { ControlDatabase } from "../db/client.js";
 import { instances, modelDeployments, models } from "../db/schema/index.js";

@@ -308,6 +308,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["getAdapterDownload"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/api/v1/workspaces/{workspace_id}/tasks/{task}/production": {
     parameters: {
       query?: never;
@@ -938,73 +954,14 @@ export interface components {
       canonical?: unknown;
     };
     TaskList: {
-      data: components["schemas"]["Task"][];
+      data: components["schemas"]["TaskListItem"][];
     };
-    Task: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      id: string;
-      name: string;
-      base_model_id: string | null;
-      comparison_model_id: string | null;
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      production_version_id: string | null;
-    };
-    UpdateTask: {
-      base_model_id?: string;
-      comparison_model_id?: string;
-    };
-    TrainingRunList: {
-      data: components["schemas"]["TrainingRun"][];
-    };
-    TrainingRun: {
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      id: string;
-      task: string;
-      /** @enum {string} */
-      trigger: "automation" | "manual";
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      requested_by: string | null;
-      stage: components["schemas"]["RunStage"];
-      base_model_id: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      input_cutoff: string;
-      dataset: components["schemas"]["RunDatasetSummary"];
-      evaluation: components["schemas"]["RunEvaluation"];
-      /**
-       * Format: uuid
-       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
-       */
-      version_id: string | null;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      cancel_requested_at: string | null;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      created_at: string;
-      /**
-       * Format: date-time
-       * @example 2026-08-16T12:00:00.000Z
-       */
-      finished_at: string | null;
+    TaskListItem: components["schemas"]["Task"] & {
+      /** @description Latest training run by creation time, with its own recorded evaluation and published version name. */
+      latest_run: components["schemas"]["TrainingRun"] &
+        ({
+          version_name: string | null;
+        } | null);
     };
     /** @enum {string} */
     RunStage:
@@ -1059,6 +1016,72 @@ export interface components {
       };
       error_rate: number;
     } | null;
+    TrainingRun: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      task: string;
+      /** @enum {string} */
+      trigger: "automation" | "manual";
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      requested_by: string | null;
+      stage: components["schemas"]["RunStage"];
+      base_model_id: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      input_cutoff: string;
+      dataset: components["schemas"]["RunDatasetSummary"];
+      evaluation: components["schemas"]["RunEvaluation"];
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      version_id: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      cancel_requested_at: string | null;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      created_at: string;
+      /**
+       * Format: date-time
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      finished_at: string | null;
+    };
+    Task: {
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      id: string;
+      name: string;
+      base_model_id: string | null;
+      comparison_model_id: string | null;
+      /**
+       * Format: uuid
+       * @example 0198ae50-94d8-7d4d-a8be-9f9b44b8c774
+       */
+      production_version_id: string | null;
+    };
+    UpdateTask: {
+      base_model_id?: string;
+      comparison_model_id?: string;
+    };
+    TrainingRunList: {
+      data: components["schemas"]["TrainingRun"][];
+    };
     TrainingRunEventList: {
       data: components["schemas"]["TrainingRunEvent"][];
       next_cursor: string | null;
@@ -1284,6 +1307,19 @@ export interface components {
       sha256: string;
       size_bytes: number;
       rank: number;
+    };
+    AdapterDownload: {
+      /**
+       * Format: uri
+       * @description Short-lived signed URL for the adapter archive.
+       */
+      url: string;
+      /**
+       * Format: date-time
+       * @description Latest expiry of the download URL; temporary storage credentials may expire sooner.
+       * @example 2026-08-16T12:00:00.000Z
+       */
+      expires_at: string;
     };
     PromoteVersion: {
       /**
@@ -2943,7 +2979,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3011,7 +3047,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3083,7 +3119,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3153,7 +3189,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3221,7 +3257,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3292,7 +3328,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3360,7 +3396,76 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+    };
+  };
+  getAdapterDownload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        workspace_id: string;
+        task: string;
+        version_id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A short-lived adapter archive download link. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["AdapterDownload"];
+        };
+      };
+      /** @description Authentication required. */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not allowed. */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Not found. */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Invalid request parameters or body. */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/problem+json": components["schemas"]["Problem"];
+        };
+      };
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;
@@ -3432,7 +3537,7 @@ export interface operations {
           "application/problem+json": components["schemas"]["Problem"];
         };
       };
-      /** @description Trace storage unavailable. */
+      /** @description Storage unavailable. */
       503: {
         headers: {
           [name: string]: unknown;

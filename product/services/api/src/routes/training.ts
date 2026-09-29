@@ -1,6 +1,8 @@
 import { createRoute, type OpenAPIHono } from "@hono/zod-openapi";
 import {
   PromoteVersionSchema,
+  TaskVersionPathSchema,
+  AdapterDownloadSchema,
   TaskListSchema,
   TaskPathSchema,
   TaskSchema,
@@ -36,7 +38,7 @@ const errors = {
     description: "Invalid request parameters or body.",
     content: problemContent,
   },
-  503: { description: "Trace storage unavailable.", content: problemContent },
+  503: { description: "Storage unavailable.", content: problemContent },
 };
 const json = <Schema>(schema: Schema, description: string) => ({
   description,
@@ -117,6 +119,20 @@ const listVersions = createRoute({
     ...errors,
   },
 });
+const downloadAdapter = createRoute({
+  method: "get",
+  path: `${base}/tasks/{task}/versions/{version_id}/adapter`,
+  operationId: "getAdapterDownload",
+  tags: ["Training"],
+  request: { params: TaskVersionPathSchema },
+  responses: {
+    200: json(
+      AdapterDownloadSchema,
+      "A short-lived adapter archive download link.",
+    ),
+    ...errors,
+  },
+});
 const promote = createRoute({
   method: "put",
   path: `${base}/tasks/{task}/production`,
@@ -179,7 +195,20 @@ export const registerTrainingRoutes = (
     const user = await requireUser(c);
     const { workspace_id } = c.req.valid("param");
     const tasks = await training.listTasks(user.id, workspace_id);
-    return c.json({ data: tasks.map(taskResponse) }, 200);
+    return c.json(
+      {
+        data: tasks.map((task) => ({
+          ...taskResponse(task),
+          latest_run: task.latestRun
+            ? {
+                ...runResponse(task.latestRun),
+                version_name: task.latestRun.versionName,
+              }
+            : null,
+        })),
+      },
+      200,
+    );
   });
   app.openapi(getTask, async (c) => {
     const user = await requireUser(c);
@@ -255,6 +284,18 @@ export const registerTrainingRoutes = (
       { data: versions.map((version) => versionResponse(task, version)) },
       200,
     );
+  });
+  app.openapi(downloadAdapter, async (c) => {
+    const user = await requireUser(c);
+    const p = c.req.valid("param");
+    const download = await training.downloadAdapter(
+      user.id,
+      p.workspace_id,
+      p.task,
+      p.version_id,
+    );
+    c.header("Cache-Control", "no-store");
+    return c.json(download, 200);
   });
   app.openapi(promote, async (c) => {
     const user = await requireUser(c);

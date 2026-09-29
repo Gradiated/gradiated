@@ -1,4 +1,7 @@
-import { ControlServiceError } from "@gradiated/control";
+import {
+  ControlServiceError,
+  type TrainingRunRecord,
+} from "@gradiated/control";
 import { describe, expect, it, vi } from "vitest";
 import { authenticated, createTestApp, workspaceId } from "./support.js";
 
@@ -35,6 +38,73 @@ const request = (
   );
 
 describe("training routes", () => {
+  it("returns uncached adapter links only to authenticated requests", async () => {
+    const result = {
+      url: "https://storage.example/adapter.tar.gz",
+      expires_at: at.toISOString(),
+    };
+    const downloadAdapter = vi.fn(async () => result);
+    const url = `${path}/tasks/Billing%20Questions/versions/${runId}/adapter`;
+    const anonymous = createTestApp({
+      services: { training: { downloadAdapter } },
+    });
+    expect((await anonymous.request(url)).status).toBe(401);
+    expect(downloadAdapter).not.toHaveBeenCalled();
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { downloadAdapter } },
+    });
+    const response = await app.request(url);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(await response.json()).toEqual(result);
+    expect(downloadAdapter).toHaveBeenCalledWith(
+      expect.any(String),
+      workspaceId,
+      "Billing Questions",
+      runId,
+    );
+  });
+
+  it("serializes task collection run summaries without additional history reads", async () => {
+    const latestRun: TrainingRunRecord & { versionName: string } = {
+      id: runId,
+      task: task.name,
+      taskId: task.id,
+      trigger: "manual",
+      requestedBy: null,
+      stage: "succeeded",
+      baseModelId: task.baseModelId,
+      inputCutoff: at,
+      dataset: null,
+      evaluation: null,
+      versionId: runId,
+      versionName: "billing-v1",
+      updatedAt: at,
+      cancelRequestedAt: null,
+      createdAt: at,
+      finishedAt: at,
+    };
+    const listTasks = vi.fn(async () => [
+      { ...task, latestRun },
+      { ...task, id: "0198ae50-94d8-7d4d-a8be-9f9b44b8c775", latestRun: null },
+    ]);
+    const app = createTestApp({
+      auth: authenticated,
+      services: { training: { listTasks } },
+    });
+    const response = await app.request(`${path}/tasks`);
+    expect(response.status).toBe(200);
+    const result = await response.json();
+    expect(result.data[0].latest_run).toMatchObject({
+      id: runId,
+      version_name: "billing-v1",
+      finished_at: at.toISOString(),
+      evaluation: null,
+    });
+    expect(result.data[1].latest_run).toBeNull();
+  });
+
   it("requires a session", async () => {
     const listTasks = vi.fn();
     const app = createTestApp({ services: { training: { listTasks } } });

@@ -1,8 +1,10 @@
+import { TrafficChart } from "./traffic-chart";
 import { ChevronDown, FlaskConical, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 
-import { UntrainedTaskState } from "@/components/fine-tuning/threshold-progress";
-import { TrafficChart } from "@/components/fine-tuning/traffic-chart";
+import { UntrainedTaskState } from "@/components/fine-tuning/untrained-task-state";
+import { useTaskHistory } from "@/hooks/use-training";
+import { QueryState } from "./query-state";
 import {
   VersionActionButtons,
   VersionEvaluation,
@@ -23,11 +25,6 @@ import {
   type VersionView,
 } from "@/store/fine-tuning-types";
 import { currentVersion } from "@/store/fine-tuning-views";
-import {
-  useTaskRuns,
-  useTaskStats,
-  useTaskVersions,
-} from "@/store/mock-fine-tuning";
 
 const VERSIONS_PAGE = 5;
 
@@ -35,20 +32,19 @@ const VERSION_MENU = [
   { kind: "promote", label: "Promote to production" },
   { kind: "use", label: "Use this version" },
   { kind: "download", label: "Download adapter" },
-  { kind: "results", label: "View test results" },
 ] as const satisfies readonly { kind: VersionAction["kind"]; label: string }[];
 
 const VersionMeta = ({ version }: { version: VersionView }) => (
   <>
     based on{" "}
     <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-      {version.model.base_model_id}
+      {version.base_model_id}
     </code>{" "}
     ·{" "}
-    {new Date(version.model.created_at).toLocaleDateString(undefined, {
+    {new Date(version.created_at).toLocaleDateString(undefined, {
       dateStyle: "medium",
     })}{" "}
-    · {version.run.dataset?.eligible_examples.toLocaleString() ?? "—"} traces
+    · {version.run?.dataset?.train.toLocaleString() ?? "—"} training examples
   </>
 );
 
@@ -75,9 +71,7 @@ const VersionRow = ({
           className={`size-4 shrink-0 text-muted-foreground transition-transform ${open ? "" : "-rotate-90"}`}
         />
         <div className="min-w-0">
-          <span className="font-mono text-sm font-medium">
-            {version.model.id}
-          </span>
+          <span className="font-mono text-sm font-medium">{version.name}</span>
           <p className="mt-0.5 text-xs text-muted-foreground">
             <VersionMeta version={version} />
           </p>
@@ -89,7 +83,7 @@ const VersionRow = ({
             variant="ghost"
             size="icon"
             className="size-8 shrink-0"
-            aria-label={`Actions for ${version.model.id}`}
+            aria-label={`Actions for ${version.name}`}
           >
             <MoreHorizontal className="size-4" />
           </Button>
@@ -98,19 +92,24 @@ const VersionRow = ({
           {VERSION_MENU.map((item) => (
             <DropdownMenuItem
               key={item.kind}
+              disabled={
+                (item.kind === "use" || item.kind === "promote") &&
+                version.status !== "available"
+              }
               onSelect={() =>
-                onAction({ kind: item.kind, versionId: version.model.id })
+                onAction({ kind: item.kind, versionId: version.id })
               }
             >
               {item.label}
             </DropdownMenuItem>
           ))}
+          <DropdownMenuItem disabled>View test results</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
     {open ? (
       <div className="border-t px-5 py-5">
-        <VersionEvaluation version={version} onAction={onAction} />
+        <VersionEvaluation version={version} />
       </div>
     ) : null}
   </div>
@@ -130,7 +129,7 @@ const CurrentVersion = ({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="font-mono text-lg font-semibold tracking-[-0.02em]">
-            {version.is_production ? task.slug : version.model.id}
+            {version.is_production ? task.name : version.name}
           </h2>
           {version.is_production ? (
             <Badge className="bg-[#6e7f31] text-white hover:bg-[#6e7f31]">
@@ -146,7 +145,7 @@ const CurrentVersion = ({
           {version.is_production ? (
             <>
               <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em]">
-                {version.model.id}
+                {version.name}
               </code>{" "}
               ·{" "}
             </>
@@ -159,9 +158,8 @@ const CurrentVersion = ({
           <Button
             size="sm"
             variant="outline"
-            onClick={() =>
-              onAction({ kind: "promote", versionId: version.model.id })
-            }
+            disabled={version.status !== "available"}
+            onClick={() => onAction({ kind: "promote", versionId: version.id })}
           >
             Promote to production
           </Button>
@@ -170,7 +168,7 @@ const CurrentVersion = ({
       </div>
     </div>
     <div className="border-t px-5 py-5">
-      <VersionEvaluation version={version} onAction={onAction} />
+      <VersionEvaluation version={version} />
     </div>
   </section>
 );
@@ -184,11 +182,9 @@ export const TaskModelTab = ({
   onVersionAction: (action: VersionAction) => void;
   onShowRuns: () => void;
 }) => {
-  const versions = useTaskVersions(task.id);
-  const runs = useTaskRuns(task.id);
-  const { usable_traces_since_last_run: usableSinceLastRun } = useTaskStats(
-    task.id,
-  );
+  const query = useTaskHistory(task);
+  const versions = query.data?.versions ?? [];
+  const runs = query.data?.runs ?? [];
   const [openVersionId, setOpenVersionId] = useState<string | null>(null);
   const [versionsShown, setVersionsShown] = useState(VERSIONS_PAGE);
 
@@ -196,6 +192,8 @@ export const TaskModelTab = ({
   const otherVersions = versions.filter((version) => version !== current);
   const activeRun = runs.find((run) => !isTerminalStage(run.stage));
   const hiddenVersions = otherVersions.length - versionsShown;
+
+  if (query.isPending || query.error) return <QueryState query={query} />;
 
   return (
     <div className="space-y-5">
@@ -212,12 +210,12 @@ export const TaskModelTab = ({
               <div className="overflow-hidden rounded-lg border bg-card">
                 {otherVersions.slice(0, versionsShown).map((version) => (
                   <VersionRow
-                    key={version.model.id}
+                    key={version.id}
                     version={version}
-                    open={openVersionId === version.model.id}
+                    open={openVersionId === version.id}
                     onToggle={() =>
                       setOpenVersionId((open) =>
-                        open === version.model.id ? null : version.model.id,
+                        open === version.id ? null : version.id,
                       )
                     }
                     onAction={onVersionAction}
@@ -243,7 +241,6 @@ export const TaskModelTab = ({
         <UntrainedTaskState
           title="No model yet"
           icon={<FlaskConical className="size-5 text-muted-foreground" />}
-          usableTraces={usableSinceLastRun}
           action={
             activeRun ? (
               <Button
@@ -259,7 +256,7 @@ export const TaskModelTab = ({
           }
         />
       )}
-      <TrafficChart task={task} />
+      <TrafficChart />
     </div>
   );
 };

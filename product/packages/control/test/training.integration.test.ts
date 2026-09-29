@@ -1,7 +1,15 @@
 import { TrainingRunEventPayloadSchema } from "@gradiated/contracts";
 import { eq } from "drizzle-orm";
 import { v7 as uuidv7 } from "uuid";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { createCatalogService } from "../src/catalog/service.js";
 import {
@@ -118,6 +126,98 @@ describe("training service", () => {
       .returning();
     return { run, version: version! };
   };
+
+  it("includes only the latest run per task in workspace task summaries", async () => {
+    const owner = await seedMember(db.database, { role: "owner" });
+    const other = await seedMember(db.database, { role: "owner" });
+    const task = await seedTask(owner.workspaceId);
+    const empty = await seedTask(owner.workspaceId, "empty");
+    const foreign = await seedTask(other.workspaceId);
+    const { run, version } = await seedVersion(task);
+    await seedVersion(foreign);
+    expect(
+      (await service().listTasks(owner.userId, owner.workspaceId)).find(
+        (row) => row.id === task.id,
+      )?.latestRun,
+    ).toMatchObject({
+      id: run.id,
+      versionId: version.id,
+      versionName: version.name,
+    });
+    const latest = await seedRun(task.id, false);
+    const rows = await service().listTasks(owner.userId, owner.workspaceId);
+    expect(rows).toHaveLength(2);
+    expect(rows.find((row) => row.id === empty.id)?.latestRun).toBeNull();
+    expect(rows.find((row) => row.id === task.id)?.latestRun).toMatchObject({
+      id: latest.id,
+      stage: "training",
+      versionId: null,
+      evaluation: null,
+    });
+  });
+
+  it("authorizes adapter downloads by workspace and task, independently of serving status", async () => {
+    const owner = await seedMember(db.database, { role: "owner" });
+    const outsider = await seedMember(db.database, { role: "owner" });
+    const task = await seedTask(owner.workspaceId);
+    const otherTask = await seedTask(owner.workspaceId, "another-task");
+    const { version } = await seedVersion(task, "unavailable");
+    const sign = vi.fn(async () => ({
+      url: "https://storage.example/adapter",
+      expires_at: new Date().toISOString(),
+    }));
+    const training = createTrainingService(db.database, store, { sign });
+    await training.downloadAdapter(
+      owner.userId,
+      owner.workspaceId,
+      task.name,
+      version.id,
+    );
+    expect(sign).toHaveBeenCalledWith(
+      version.adapter.artifact_uri,
+      version.trainingRunId,
+      version.adapter.size_bytes,
+      version.adapter.sha256,
+    );
+    sign.mockClear();
+    await expect(
+      training.downloadAdapter(
+        outsider.userId,
+        owner.workspaceId,
+        task.name,
+        version.id,
+      ),
+    ).rejects.toThrow();
+    await expect(
+      training.downloadAdapter(
+        owner.userId,
+        owner.workspaceId,
+        otherTask.name,
+        version.id,
+      ),
+    ).rejects.toThrow();
+    await expect(
+      training.downloadAdapter(
+        owner.userId,
+        owner.workspaceId,
+        task.name,
+        uuidv7(),
+      ),
+    ).rejects.toThrow();
+    await db.database
+      .update(workspaces)
+      .set({ archivedAt: new Date() })
+      .where(eq(workspaces.id, owner.workspaceId));
+    await expect(
+      training.downloadAdapter(
+        owner.userId,
+        owner.workspaceId,
+        task.name,
+        version.id,
+      ),
+    ).rejects.toThrow();
+    expect(sign).not.toHaveBeenCalled();
+  });
 
   it("rejects all training reads from archived workspaces before accessing traces", async () => {
     const owner = await seedMember(db.database, { role: "owner" });

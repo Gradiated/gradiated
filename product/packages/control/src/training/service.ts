@@ -19,6 +19,8 @@ import {
 import { ControlServiceError } from "../errors.js";
 import type { ContentStore } from "../traces/storage.js";
 
+import type { AdapterDownloads } from "./downloads.js";
+
 export type TrainingService = ReturnType<typeof createTrainingService>;
 export type TaskRecord = typeof tasks.$inferSelect;
 export type TaskVersionRecord = typeof taskVersions.$inferSelect;
@@ -33,6 +35,7 @@ const notFound = (thing: string) =>
 export const createTrainingService = (
   database: ControlDatabase,
   store: ContentStore,
+  downloads?: AdapterDownloads,
 ) => {
   const member = async (userId: string, workspaceId: string) => {
     const result = await requireWorkspaceMembership(database, {
@@ -105,11 +108,38 @@ export const createTrainingService = (
           )
           .onConflictDoNothing();
 
-      return database
+      const rows = await database
         .select()
         .from(tasks)
         .where(eq(tasks.workspaceId, workspaceId))
         .orderBy(asc(tasks.name));
+      const latest = await database
+        .selectDistinctOn([trainingRuns.taskId], {
+          run: trainingRuns,
+          task: tasks.name,
+          versionId: taskVersions.id,
+          versionName: taskVersions.name,
+        })
+        .from(trainingRuns)
+        .innerJoin(tasks, eq(tasks.id, trainingRuns.taskId))
+        .leftJoin(taskVersions, eq(taskVersions.trainingRunId, trainingRuns.id))
+        .where(eq(tasks.workspaceId, workspaceId))
+        .orderBy(
+          asc(trainingRuns.taskId),
+          desc(trainingRuns.createdAt),
+          desc(trainingRuns.id),
+        );
+      const byTask = new Map(
+        latest.map((row) => [
+          row.run.taskId,
+          { ...flattenRun(row), versionName: row.versionName },
+        ]),
+      );
+
+      return rows.map((task) => ({
+        ...task,
+        latestRun: byTask.get(task.id) ?? null,
+      }));
     },
 
     async getTask(userId: string, workspaceId: string, name: string) {
@@ -212,6 +242,35 @@ export const createTrainingService = (
         .orderBy(desc(taskVersions.createdAt));
 
       return { task, versions };
+    },
+
+    async downloadAdapter(
+      userId: string,
+      workspaceId: string,
+      name: string,
+      versionId: string,
+    ) {
+      await member(userId, workspaceId);
+      const task = await findTask(workspaceId, name);
+      const [version] = await database
+        .select()
+        .from(taskVersions)
+        .where(
+          and(eq(taskVersions.id, versionId), eq(taskVersions.taskId, task.id)),
+        );
+      if (!version) throw notFound("version");
+      if (!downloads)
+        throw new ControlServiceError(
+          "unavailable",
+          "Adapter storage is not configured.",
+        );
+
+      return downloads.sign(
+        version.adapter.artifact_uri,
+        version.trainingRunId,
+        version.adapter.size_bytes,
+        version.adapter.sha256,
+      );
     },
 
     async promote(

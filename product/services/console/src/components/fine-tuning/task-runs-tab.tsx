@@ -1,10 +1,8 @@
+import { ThresholdProgress } from "./threshold-progress";
 import { useState } from "react";
 
 import { StageTimeline } from "@/components/fine-tuning/stage-timeline";
-import {
-  ThresholdProgress,
-  UntrainedTaskState,
-} from "@/components/fine-tuning/threshold-progress";
+import { UntrainedTaskState } from "@/components/fine-tuning/untrained-task-state";
 import {
   VersionActionButtons,
   VersionEvaluation,
@@ -20,12 +18,9 @@ import {
   type TrainingRunRow,
   type VersionView,
 } from "@/store/fine-tuning-types";
-import {
-  useMockFineTuning,
-  useTaskRuns,
-  useTaskStats,
-  useTaskVersions,
-} from "@/store/mock-fine-tuning";
+import { useTaskHistory, useRunEvents } from "@/hooks/use-training";
+import { QueryState } from "./query-state";
+import { Button } from "@/components/ui/button";
 
 const STAGE_BADGE_CLASS: Partial<Record<RunStage, string>> = {
   succeeded: "border-[#cadb87] bg-[#f2f7d9] text-[#475617]",
@@ -72,11 +67,13 @@ const RunListItem = ({
     <p className="mt-1 text-xs text-muted-foreground">
       {version ? (
         <code className="rounded bg-muted px-1 py-0.5 font-mono text-[0.9em] text-foreground">
-          {version.model.id}
+          {version.name}
         </code>
       ) : null}
       {version && run.dataset ? " · " : null}
-      {run.dataset ? `${run.dataset.eligible_examples.toLocaleString()} traces` : null}
+      {run.dataset
+        ? `${run.dataset.train.toLocaleString()} training examples`
+        : null}
     </p>
   </button>
 );
@@ -88,29 +85,24 @@ export const TaskRunsTab = ({
   task: TaskRow;
   onVersionAction: (action: VersionAction) => void;
 }) => {
-  const runs = useTaskRuns(task.id);
-  const versions = useTaskVersions(task.id);
-  const runLogs = useMockFineTuning((state) => state.run_logs);
-  const cancelRun = useMockFineTuning((state) => state.cancelRun);
-  const { usable_traces_since_last_run: usableSinceLastRun } = useTaskStats(
-    task.id,
-  );
+  const query = useTaskHistory(task);
+  const runs = query.data?.runs ?? [];
+  const versions = query.data?.versions ?? [];
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
 
   const activeRun = runs.find((run) => !isTerminalStage(run.stage));
   const selectedRun =
     runs.find((run) => run.id === selectedRunId) ?? activeRun ?? runs[0];
   const versionOf = (run: TrainingRunRow) =>
-    versions.find((version) => version.run.id === run.id);
+    versions.find((version) => version.training_run_id === run.id);
   const selectedVersion = selectedRun ? versionOf(selectedRun) : undefined;
 
+  const events = useRunEvents(selectedRun?.id);
+
+  if (query.isPending || query.error) return <QueryState query={query} />;
+
   if (!selectedRun) {
-    return (
-      <UntrainedTaskState
-        title="No training runs yet"
-        usableTraces={usableSinceLastRun}
-      />
-    );
+    return <UntrainedTaskState title="No training runs yet" />;
   }
 
   return (
@@ -118,11 +110,7 @@ export const TaskRunsTab = ({
       <section className="self-start overflow-hidden rounded-lg border bg-card">
         {!activeRun ? (
           <div className="border-b border-dashed p-4">
-            <ThresholdProgress
-              label="Next re-train"
-              value={usableSinceLastRun}
-              compact
-            />
+            <ThresholdProgress label="Next re-train" compact />
           </div>
         ) : null}
         {runs.map((run) => (
@@ -141,7 +129,7 @@ export const TaskRunsTab = ({
             <div className="mb-6 border-b pb-5">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span className="font-mono text-sm font-semibold">
-                  {selectedVersion.model.id}
+                  {selectedVersion.name}
                 </span>
                 <div className="flex items-center gap-2">
                   <VersionActionButtons
@@ -150,17 +138,30 @@ export const TaskRunsTab = ({
                   />
                 </div>
               </div>
-              <VersionEvaluation
-                version={selectedVersion}
-                onAction={onVersionAction}
-              />
+              <VersionEvaluation version={selectedVersion} />
             </div>
           ) : null}
-          <StageTimeline
-            run={selectedRun}
-            events={runLogs[selectedRun.id] ?? []}
-            onCancel={() => cancelRun(selectedRun.id)}
-          />
+          <QueryState query={events} />
+          {events.hasNextPage ? (
+            <p className="mb-2 text-xs text-muted-foreground">
+              Showing loaded events. Load more for later stages and progress.
+            </p>
+          ) : null}
+          {events.hasNextPage ? (
+            <Button
+              variant="outline"
+              disabled={events.isFetchingNextPage}
+              onClick={() => void events.fetchNextPage()}
+            >
+              Load more events
+            </Button>
+          ) : null}
+          {!events.isPending && !events.error ? (
+            <StageTimeline
+              run={selectedRun}
+              events={events.data?.pages.flatMap((page) => page.data) ?? []}
+            />
+          ) : null}
         </CardContent>
       </Card>
     </div>

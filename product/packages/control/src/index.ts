@@ -125,3 +125,8 @@ export {
   type TrainingRunRecord,
   type TrainingService,
 } from "./training/service.js";
+
+export {
+  createAdapterDownloads,
+  type AdapterDownloads,
+} from "./training/downloads.js";

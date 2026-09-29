@@ -58,9 +58,6 @@ const modelsRoute = createRoute({
 const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/tasks",
-  validateSearch: (search: Record<string, unknown>) => ({
-    ...(search.empty ? { empty: true } : {}),
-  }),
   component: lazyRouteComponent(
     () => import("@/pages/tasks-page"),
     "TasksPage",

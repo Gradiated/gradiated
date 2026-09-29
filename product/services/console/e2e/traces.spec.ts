@@ -5,6 +5,27 @@ test.skip(
   process.env.VITE_FEATURE_FLAGS !== "training",
   "Run the trace suite with the training feature enabled.",
 );
+test.beforeEach(async ({ page }) => {
+  const task = {
+    name: "support-triage",
+    base_model_id: null,
+    comparison_model_id: null,
+    production_version_id: null,
+  };
+  await page.route(apiPathEndsWith("/tasks"), (route) =>
+    fulfillJson(route, { data: [task] }),
+  );
+  await page.route(apiPathEndsWith("/tasks/support-triage"), (route) =>
+    fulfillJson(route, task),
+  );
+  for (const resource of ["runs", "versions"]) {
+    await page.route(
+      apiPathEndsWith(`/tasks/support-triage/${resource}`),
+      (route) => fulfillJson(route, { data: [] }),
+    );
+  }
+});
+
 const id = "0198ae50-94d8-7d4d-a8be-000000000001";
 const generation = {
   generation_id: id,

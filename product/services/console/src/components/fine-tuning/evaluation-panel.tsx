@@ -188,16 +188,16 @@ export const EvaluationPanel = ({
             {formatPercent(summary.error_rate)}
           </span>
         </span>
-        {onViewResults ? (
-          <Button
-            variant="link"
-            size="sm"
-            className="ml-auto h-auto p-0 text-xs"
-            onClick={onViewResults}
-          >
-            View test results →
-          </Button>
-        ) : null}
+
+        <Button
+          variant="link"
+          size="sm"
+          className="ml-auto h-auto p-0 text-xs"
+          onClick={onViewResults}
+          disabled={!onViewResults}
+        >
+          View test results →
+        </Button>
       </div>
     </div>
   );

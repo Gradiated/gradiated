@@ -1,7 +1,5 @@
 import type { ReactNode } from "react";
 
-import { OptionSelect } from "@/pages/option-select";
-
 export const SettingsCard = ({ children }: { children: ReactNode }) => (
   <div className="max-w-2xl divide-y rounded-lg border bg-card">{children}</div>
 );
@@ -24,25 +22,4 @@ export const SettingRow = ({
     </div>
     {children}
   </div>
-);
-
-export const ModelSelect = <Value extends string>({
-  label,
-  value,
-  models,
-  onChange,
-}: {
-  label: string;
-  value: Value;
-  models: readonly Value[];
-  onChange: (value: Value) => void;
-}) => (
-  <OptionSelect
-    value={value}
-    options={models.map((model) => ({ value: model, label: model }))}
-    onValueChange={onChange}
-    label={label}
-    className="w-64 font-mono text-xs"
-    itemClassName="font-mono text-xs"
-  />
 );

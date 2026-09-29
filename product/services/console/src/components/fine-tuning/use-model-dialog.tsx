@@ -16,8 +16,8 @@ const modelToReplace = (
   version: VersionView,
   production: VersionView | undefined,
 ) =>
-  production && production.model.id !== version.model.id
-    ? production.model.id
+  production && production.name !== version.name
+    ? production.name
     : task.comparison_model_id;
 
 export const UseModelDialog = ({
@@ -31,7 +31,7 @@ export const UseModelDialog = ({
   production: VersionView | undefined;
   onClose: () => void;
 }) => {
-  const id = version.is_production ? task.slug : version.model.id;
+  const id = version.is_production ? task.name : version.name;
   const currentModel = modelToReplace(task, version, production);
   const { state: copyState, copy } = useCopyToClipboard();
 
@@ -47,7 +47,7 @@ export const UseModelDialog = ({
                 {" "}
                 <span className="font-mono">{id}</span> points at the production
                 version, currently{" "}
-                <span className="font-mono">{version.model.id}</span>.
+                <span className="font-mono">{version.name}</span>.
               </>
             ) : (
               <>

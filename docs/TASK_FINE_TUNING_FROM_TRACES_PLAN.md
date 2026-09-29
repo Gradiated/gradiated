@@ -1,6 +1,10 @@
 # Fine-tuning from traces: launch plan
 
-Status: implementation plan for the backend. A gated console prototype exists; it does not prove the backend contracts are implemented or qualified. Each section states what must be true before its part can be enabled for customers.
+Status: implementation plan for the backend. The console behind the training feature flag reads tasks, runs, paged run events and versions from the Management API. Task model settings, the workspace judge and manual promotion persist through that API. The Data tab reads captured traces from S3. Train and Cancel remain unavailable until the workflow is connected.
+
+The console reads tasks, versions and runs from the API. The task table retains Model, Replaces, Cost, Speed, Quality and Trained, populated from each task's latest run in the collection response; missing results use placeholders. Train/Re-train, Cancel and per-example test-result controls remain visible but disabled until their endpoints are connected. Traffic and trace-threshold sections remain in the layout with unknown values rather than simulated measurements. Published versions remain visible while evaluation is pending. Adapter downloads use workspace-authorized storage links. The run contract's superseded-decisions table takes precedence over older orchestration and storage decisions below.
+
+Published adapter downloads use `GET /api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter`. The API checks workspace membership and version ownership, then returns an uncached, five-minute signed archive URL. Serving eligibility does not restrict downloads. The API needs `TRAINING_ARTIFACTS_BUCKET` and `s3:GetObject` / `s3:GetObjectVersion` on that bucket's `runs/*` prefix; production configuration and the API role policy declare both. The archive must belong to the version's training run and match its recorded size and SHA-256. Signed links pin the verified S3 object version. Archives without an S3 full-object SHA-256 are streamed through the API for hashing before signing. No standalone manifest is published by the current trainer, so the console offers the archive only.
 
 The detailed contracts define the architecture. The [remaining simplification proposals](TASK_FINE_TUNING_SIMPLIFICATION_OPPORTUNITIES.md) do not change those requirements unless accepted into the owning contract.
 

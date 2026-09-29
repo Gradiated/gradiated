@@ -11,33 +11,22 @@ export const runTimeline = (
   events: readonly TrainingRunEvent[],
 ): { stage: RunStage; entered_at: string }[] =>
   events.flatMap((event) =>
-    event.type === "stage_entered"
-      ? [{ stage: event.stage, entered_at: event.at }]
+    event.payload.type === "stage_entered"
+      ? [{ stage: event.payload.stage, entered_at: event.at }]
       : [],
   );
 
 export const runProgress = (
   events: readonly TrainingRunEvent[],
 ): RunProgress | null => {
-  const latest = events.findLast((event) => event.type === "trainer_progress");
-  if (latest?.type !== "trainer_progress") return null;
+  const latest = events.findLast(
+    (event) => event.payload.type === "trainer_progress",
+  );
+  if (latest?.payload.type !== "trainer_progress") return null;
 
-  const {
-    step,
-    total_steps,
-    train_loss,
-    tokens_per_second,
-    eta_seconds,
-    metrics,
-  } = latest;
-  return {
-    step,
-    total_steps,
-    train_loss,
-    tokens_per_second,
-    eta_seconds,
-    metrics,
-  };
+  const { type: _type, ...progress } = latest.payload;
+
+  return progress;
 };
 
 export const runLogByStage = (
@@ -47,13 +36,13 @@ export const runLogByStage = (
   let current: RunStage = "queued";
 
   for (const event of events) {
-    if (event.type === "stage_entered") current = event.stage;
+    if (event.payload.type === "stage_entered") current = event.payload.stage;
 
     // Training progress can arrive after the workflow has entered a later stage.
-    const bucket = event.type.startsWith("trainer_")
+    const bucket = event.payload.type.startsWith("trainer_")
       ? "training"
-      : event.type === "evaluation_progress" ||
-          event.type === "evaluation_completed"
+      : event.payload.type === "evaluation_progress" ||
+          event.payload.type === "evaluation_completed"
         ? "evaluating"
         : current;
     (byStage[bucket] ??= []).push(event);
@@ -75,7 +64,7 @@ const formatMetrics = (metrics: Record<string, number> | undefined) =>
 
 const percent = (fraction: number) => Math.round(fraction * 100);
 
-export const describeEvent = (event: TrainingRunEvent): string => {
+export const describeEvent = ({ payload: event }: TrainingRunEvent): string => {
   switch (event.type) {
     case "run_created":
       return `run created (${event.trigger}) on ${event.base_model_id}`;
@@ -89,8 +78,6 @@ export const describeEvent = (event: TrainingRunEvent): string => {
       return `job ${event.provider_job_id} registered on ${event.host_id} via ${event.runner}`;
     case "job_status":
       return `job ${event.state}${event.message ? `: ${event.message}` : ""}`;
-    case "model_reserved":
-      return `model id reserved: ${event.model_id}`;
     case "artifact_verified":
       return `artifact verified: ${megabytes(event.size_bytes)} MB sha256=${shortDigest(event.sha256)} loads and matches reference outputs`;
     case "adapter_loaded":
@@ -100,7 +87,7 @@ export const describeEvent = (event: TrainingRunEvent): string => {
     case "evaluation_completed":
       return `evaluation over ${event.groups} sessions: win ${percent(event.win)}% · tie ${percent(event.tie)}% · loss ${percent(event.loss)}% · unresolved ${percent(event.unresolved)}% (judge ${event.judge})`;
     case "published":
-      return `published ${event.model_id}; callable by exact id`;
+      return `published ${event.name}`;
     case "cancel_requested":
       return `cancel requested by ${event.requested_by}`;
     case "run_finished":

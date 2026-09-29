@@ -35,7 +35,6 @@ const everyPayload = {
     type: "run_created",
     trigger: "manual",
     requested_by: "member@example.com",
-    task_id: "task",
     base_model_id: "base",
   },
   stage_entered: { type: "stage_entered", stage: "training" },
@@ -58,10 +57,9 @@ const everyPayload = {
     gpu,
   },
   job_status: { type: "job_status", state: "running", message: "ok" },
-  model_reserved: { type: "model_reserved", model_id: "model-1" },
   artifact_verified: {
     type: "artifact_verified",
-    model_id: "model-1",
+    version_id: "version-1",
     sha256: digest,
     size_bytes: 1_048_576,
   },
@@ -76,7 +74,11 @@ const everyPayload = {
     loss: 0.2,
     unresolved: 0.1,
   },
-  published: { type: "published", model_id: "model-1" },
+  published: {
+    type: "published",
+    version_id: "version-1",
+    name: "task-20260901",
+  },
   cancel_requested: { type: "cancel_requested", requested_by: "member" },
   run_finished: {
     type: "run_finished",

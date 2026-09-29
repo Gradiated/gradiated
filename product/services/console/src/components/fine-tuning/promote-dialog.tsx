@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { TaskRow, VersionView } from "@/store/fine-tuning-types";
-import { useMockFineTuning } from "@/store/mock-fine-tuning";
+import { useTrainingMutation } from "@/hooks/use-training";
 
 export const PromoteDialog = ({
   task,
@@ -21,7 +21,7 @@ export const PromoteDialog = ({
   production: VersionView | undefined;
   onClose: () => void;
 }) => {
-  const promote = useMockFineTuning((state) => state.promote);
+  const { promote, canEdit } = useTrainingMutation(task.name);
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
@@ -29,27 +29,32 @@ export const PromoteDialog = ({
         <DialogHeader>
           <DialogTitle>Promote to production</DialogTitle>
           <DialogDescription>
-            <span className="font-mono">{task.slug}</span> will point at{" "}
-            <span className="font-mono">{version.model.id}</span>. Requests
-            using the task name switch once it is loaded.
+            <span className="font-mono">{task.name}</span> will point at{" "}
+            <span className="font-mono">{version.name}</span>. Requests using
+            the task name switch once it is loaded.
             {production ? (
               <>
                 {" "}
-                <span className="font-mono">{production.model.id}</span> stays
+                <span className="font-mono">{production.name}</span> stays
                 callable by its exact id.
               </>
             ) : null}
           </DialogDescription>
         </DialogHeader>
+        {promote.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {promote.error.message}
+          </p>
+        ) : null}
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              promote(task.id, version.model.id);
-              onClose();
-            }}
+            disabled={
+              !canEdit || promote.isPending || version.status !== "available"
+            }
+            onClick={() => promote.mutate(version.id, { onSuccess: onClose })}
           >
             Promote
           </Button>

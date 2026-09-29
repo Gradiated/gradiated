@@ -324,8 +324,15 @@ export const TrainingRunEventsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(1_000).default(500),
 });
 
+export const TaskListItemSchema = TaskSchema.extend({
+  latest_run: TrainingRunSchema.extend({ version_name: z.string().nullable() })
+    .nullable()
+    .describe(
+      "Latest training run by creation time, with its own recorded evaluation and published version name.",
+    ),
+}).openapi("TaskListItem");
 export const TaskListSchema = z
-  .object({ data: z.array(TaskSchema) })
+  .object({ data: z.array(TaskListItemSchema) })
   .openapi("TaskList");
 export const TrainingRunListSchema = z
   .object({ data: z.array(TrainingRunSchema) })
@@ -336,3 +343,15 @@ export const TaskVersionListSchema = z
 export const TrainingRunEventListSchema = z
   .object(pageFields(TrainingRunEventSchema))
   .openapi("TrainingRunEventList");
+
+export const TaskVersionPathSchema = TaskPathSchema.extend({
+  version_id: UuidSchema,
+});
+export const AdapterDownloadSchema = z
+  .object({
+    url: z.url().describe("Short-lived signed URL for the adapter archive."),
+    expires_at: TimestampSchema.describe(
+      "Latest expiry of the download URL; temporary storage credentials may expire sooner.",
+    ),
+  })
+  .openapi("AdapterDownload");

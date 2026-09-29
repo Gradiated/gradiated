@@ -23,14 +23,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export const TaskTracesTab = ({ task }: { task: { slug: string } }) => {
+export const TaskTracesTab = ({ task }: { task: { name: string } }) => {
   const { organizationId, workspaceId } = useProductContext();
   return (
     <StoredTraces
-      key={`${organizationId}:${workspaceId}:${task.slug}`}
+      key={`${organizationId}:${workspaceId}:${task.name}`}
       organization={organizationId}
       workspace={workspaceId}
-      task={task.slug}
+      task={task.name}
     />
   );
 };

@@ -392,11 +392,11 @@ jobs:
       - name: Run Playwright tests
         working-directory: product
         run: pnpm --filter @gradiated/console exec playwright test
-      - name: Verify live trace data UI
+      - name: Verify training and live trace data UI
         working-directory: product
         env:
           VITE_FEATURE_FLAGS: training
-        run: pnpm --filter @gradiated/console exec playwright test traces.spec.ts
+        run: pnpm --filter @gradiated/console exec playwright test traces.spec.ts training.spec.ts
       - name: Show dependency logs on failure
         if: failure()
         working-directory: product

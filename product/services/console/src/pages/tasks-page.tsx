@@ -1,10 +1,4 @@
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { Check, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
-
-import { TrainingGate } from "@/components/fine-tuning/training-gate";
-import { ConnectDialog } from "@/components/fine-tuning/connect-dialog";
-import { ConnectSnippet } from "@/components/fine-tuning/connect-snippet";
+import { Loader2 } from "lucide-react";
 import {
   OutcomeBar,
   RatioLabel,
@@ -16,10 +10,20 @@ import {
   speedAdvantage,
 } from "@/components/fine-tuning/evaluation-ratios";
 import {
-  ModelSelect,
-  SettingRow,
-  SettingsCard,
-} from "@/components/fine-tuning/settings-card";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { formatPercent } from "@/lib/format";
+import type { components } from "@/api/schema";
+import { STAGE_LABEL, type JudgeOutcome } from "@/store/fine-tuning-types";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+
+import { TrainingGate } from "@/components/fine-tuning/training-gate";
+import { ConnectDialog } from "@/components/fine-tuning/connect-dialog";
+import { ConnectSnippet } from "@/components/fine-tuning/connect-snippet";
+import { SettingsCard } from "@/components/fine-tuning/settings-card";
 import { Button } from "@/components/ui/button";
 import { TraceCaptureSettings } from "@/components/fine-tuning/trace-capture-settings";
 import {
@@ -31,71 +35,36 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TabsContent } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { formatPercent } from "@/lib/format";
 import { ConsolePage } from "@/pages/console-page";
 import { OptionTabs, type Option } from "@/pages/option-select";
-import { useConnectFlow } from "@/store/connect-flow";
-import {
-  EVALUATION_JUDGE_ALLOWLIST,
-  TRAINING_TRACE_THRESHOLD,
-  type JudgeOutcome,
-  type TaskRow,
-} from "@/store/fine-tuning-types";
-import { currentVersion } from "@/store/fine-tuning-views";
-import {
-  useLiveRunTicker,
-  useMockFineTuning,
-  useTaskStats,
-  useTaskVersions,
-} from "@/store/mock-fine-tuning";
+import { useProductContext } from "@/hooks/use-product-context";
+import { useTasks } from "@/hooks/use-training";
+import { QueryState } from "@/components/fine-tuning/query-state";
+import { JudgeSettings } from "@/components/fine-tuning/judge-settings";
 
 const TABS = [
   { value: "tasks", label: "Models" },
   { value: "settings", label: "Settings" },
 ] as const satisfies readonly Option<string>[];
 
-const FIRST_REQUEST_DELAY_MS = 6_000;
-
-const trainedDate = new Intl.DateTimeFormat(undefined, {
-  day: "numeric",
-  month: "short",
-});
-
 export const TasksPage = () => (
   <TrainingGate>
-    <TasksPageBody />
+    <ScopedTasksPage />
   </TrainingGate>
 );
 
+const ScopedTasksPage = () => {
+  const { workspaceId } = useProductContext();
+
+  return <TasksPageBody key={workspaceId} />;
+};
+
 const TasksPageBody = () => {
   const navigate = useNavigate();
-  const { empty } = useSearch({ from: "/tasks" });
-  const allTasks = useMockFineTuning((state) => state.tasks);
-  const workspace = useMockFineTuning((state) => state.workspace);
-  const setEvaluationJudge = useMockFineTuning(
-    (state) => state.setEvaluationJudge,
-  );
-  const connectionStatus = useConnectFlow((state) => state.status);
-  const connectTaskSlug = useConnectFlow((state) => state.taskSlug);
-  const markConnected = useConnectFlow((state) => state.markConnected);
-  const tasks = empty ? [] : allTasks;
+  const query = useTasks();
+  const tasks = query.data?.data ?? [];
   const [tab, setTab] = useState<(typeof TABS)[number]["value"]>("tasks");
   const [connectOpen, setConnectOpen] = useState(false);
-
-  useLiveRunTicker();
-
-  useEffect(() => {
-    if (!empty || connectionStatus === "connected") return;
-
-    const timeout = window.setTimeout(markConnected, FIRST_REQUEST_DELAY_MS);
-
-    return () => window.clearTimeout(timeout);
-  }, [empty, connectionStatus, markConnected]);
 
   return (
     <ConsolePage
@@ -111,7 +80,9 @@ const TasksPageBody = () => {
     >
       <OptionTabs value={tab} options={TABS} onValueChange={setTab}>
         <TabsContent value="tasks">
-          {tasks.length ? (
+          {query.isPending || query.error ? (
+            <QueryState query={query} />
+          ) : tasks.length ? (
             <section className="overflow-hidden rounded-lg border bg-card">
               <Table>
                 <TableHeader className="bg-muted/40">
@@ -128,12 +99,12 @@ const TasksPageBody = () => {
                 <TableBody>
                   {tasks.map((task) => (
                     <TaskRowView
-                      key={task.id}
+                      key={task.name}
                       task={task}
                       onOpen={() =>
                         void navigate({
                           to: "/tasks/$taskId",
-                          params: { taskId: task.id },
+                          params: { taskId: task.name },
                         })
                       }
                     />
@@ -151,24 +122,10 @@ const TasksPageBody = () => {
               </p>
               <ConnectSnippet />
               <div className="mt-5 flex items-center gap-2 border-t pt-4 text-sm">
-                {connectionStatus === "connected" ? (
-                  <>
-                    <Check className="size-4 text-[#475617]" />
-                    <span>
-                      First request received ·{" "}
-                      <span className="font-mono text-xs">
-                        {connectTaskSlug}
-                      </span>
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
-                    <span className="text-muted-foreground">
-                      Waiting for your first request…
-                    </span>
-                  </>
-                )}
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  Waiting for your first request…
+                </span>
               </div>
             </div>
           )}
@@ -176,17 +133,7 @@ const TasksPageBody = () => {
 
         <TabsContent value="settings">
           <SettingsCard>
-            <SettingRow
-              title="Judge model"
-              description="This is the model used to compare fine-tuned models vs existing models to decide which is better."
-            >
-              <ModelSelect
-                label="Judge model"
-                value={workspace.evaluation_judge}
-                models={EVALUATION_JUDGE_ALLOWLIST}
-                onChange={setEvaluationJudge}
-              />
-            </SettingRow>
+            <JudgeSettings />
             <TraceCaptureSettings />
           </SettingsCard>
         </TabsContent>
@@ -197,82 +144,88 @@ const TasksPageBody = () => {
   );
 };
 
+const trainedDate = new Intl.DateTimeFormat(undefined, {
+  day: "numeric",
+  month: "short",
+});
+
 const TaskRowView = ({
   task,
   onOpen,
 }: {
-  task: TaskRow;
+  task: components["schemas"]["TaskListItem"];
   onOpen: () => void;
 }) => {
-  const version = currentVersion(useTaskVersions(task.id));
-  const { usable_traces_since_last_run: usableSinceLastRun } = useTaskStats(
-    task.id,
-  );
+  const run = task.latest_run;
+  const summary = run?.evaluation;
+  const version = run?.version_name;
 
   return (
     <TableRow className="cursor-pointer" onClick={onOpen}>
       <TableCell className="h-14 pl-5 font-medium">
         <Link
           to="/tasks/$taskId"
-          params={{ taskId: task.id }}
+          params={{ taskId: task.name }}
           onClick={(event) => event.stopPropagation()}
           className="rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          {task.slug}
+          {task.name}
         </Link>
       </TableCell>
       <TableCell className="px-4">
         {version ? (
           <span className="flex flex-wrap items-center gap-1.5">
             <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-              {version.model.id}
+              {version}
             </code>
-            {!version.is_production ? (
+            {run?.version_id !== task.production_version_id ? (
               <span className="text-xs text-muted-foreground">
                 not promoted
               </span>
             ) : null}
           </span>
         ) : (
-          <span className="text-muted-foreground">No model yet</span>
+          <span className="text-muted-foreground">
+            {run ? STAGE_LABEL[run.stage] : "No model yet"}
+          </span>
         )}
       </TableCell>
       <TableCell className="px-4">
         <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-muted-foreground">
-          {task.comparison_model_id}
+          {summary?.comparison_model_id ?? task.comparison_model_id ?? "—"}
         </code>
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {version ? (
+        {summary ? (
           <RatioLabel
-            ratio={costAdvantage(version.summary)}
-            detail={costPer1kRequests(version.summary)}
+            ratio={costAdvantage(summary)}
+            detail={costPer1kRequests(summary)}
           />
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
       <TableCell className="px-4 tabular-nums">
-        {version ? (
+        {summary ? (
           <RatioLabel
-            ratio={speedAdvantage(version.summary)}
-            detail={outputSpeed(version.summary)}
+            ratio={speedAdvantage(summary)}
+            detail={outputSpeed(summary)}
           />
         ) : (
           <span className="text-muted-foreground">—</span>
         )}
       </TableCell>
       <TableCell className="px-4">
-        {version ? (
-          <QualityBar result={version.summary.vs_comparison} />
+        {summary ? (
+          <QualityBar result={summary.vs_comparison} />
         ) : (
-          <span className="text-muted-foreground tabular-nums">
-            {usableSinceLastRun} / {TRAINING_TRACE_THRESHOLD} traces
-          </span>
+          <span className="text-muted-foreground tabular-nums">—</span>
         )}
       </TableCell>
       <TableCell className="pr-5 text-muted-foreground">
-        {version ? trainedDate.format(new Date(version.model.created_at)) : "—"}
+        {version && run?.finished_at
+          ? trainedDate.format(new Date(run.finished_at))
+          : "—"}
       </TableCell>
     </TableRow>
   );

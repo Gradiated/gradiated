@@ -1407,7 +1407,7 @@
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Task"
+              "$ref": "#/components/schemas/TaskListItem"
             }
           }
         },
@@ -1415,169 +1415,44 @@
           "data"
         ]
       },
-      "Task": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+      "TaskListItem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Task"
           },
-          "name": {
-            "type": "string"
-          },
-          "base_model_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "comparison_model_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "production_version_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "base_model_id",
-          "comparison_model_id",
-          "production_version_id"
-        ]
-      },
-      "UpdateTask": {
-        "type": "object",
-        "properties": {
-          "base_model_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "comparison_model_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          }
-        },
-        "additionalProperties": false
-      },
-      "TrainingRunList": {
-        "type": "object",
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/TrainingRun"
-            }
-          }
-        },
-        "required": [
-          "data"
-        ]
-      },
-      "TrainingRun": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "task": {
-            "type": "string"
-          },
-          "trigger": {
-            "type": "string",
-            "enum": [
-              "automation",
-              "manual"
+          {
+            "type": "object",
+            "properties": {
+              "latest_run": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/TrainingRun"
+                  },
+                  {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "version_name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "version_name"
+                    ]
+                  }
+                ],
+                "description": "Latest training run by creation time, with its own recorded evaluation and published version name."
+              }
+            },
+            "required": [
+              "latest_run"
             ]
-          },
-          "requested_by": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "stage": {
-            "$ref": "#/components/schemas/RunStage"
-          },
-          "base_model_id": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 200
-          },
-          "input_cutoff": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "dataset": {
-            "$ref": "#/components/schemas/RunDatasetSummary"
-          },
-          "evaluation": {
-            "$ref": "#/components/schemas/RunEvaluation"
-          },
-          "version_id": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "uuid",
-            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
-          },
-          "cancel_requested_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
-          },
-          "finished_at": {
-            "type": [
-              "string",
-              "null"
-            ],
-            "format": "date-time",
-            "example": "2026-08-16T12:00:00.000Z"
           }
-        },
-        "required": [
-          "id",
-          "task",
-          "trigger",
-          "requested_by",
-          "stage",
-          "base_model_id",
-          "input_cutoff",
-          "dataset",
-          "evaluation",
-          "version_id",
-          "cancel_requested_at",
-          "created_at",
-          "finished_at"
         ]
       },
       "RunStage": {
@@ -1753,6 +1628,171 @@
           "cost_per_request_nano_usd",
           "output_tokens_per_second",
           "error_rate"
+        ]
+      },
+      "TrainingRun": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "task": {
+            "type": "string"
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "automation",
+              "manual"
+            ]
+          },
+          "requested_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "stage": {
+            "$ref": "#/components/schemas/RunStage"
+          },
+          "base_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "input_cutoff": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/RunDatasetSummary"
+          },
+          "evaluation": {
+            "$ref": "#/components/schemas/RunEvaluation"
+          },
+          "version_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "cancel_requested_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          },
+          "finished_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "task",
+          "trigger",
+          "requested_by",
+          "stage",
+          "base_model_id",
+          "input_cutoff",
+          "dataset",
+          "evaluation",
+          "version_id",
+          "cancel_requested_at",
+          "created_at",
+          "finished_at"
+        ]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          },
+          "name": {
+            "type": "string"
+          },
+          "base_model_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "comparison_model_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "production_version_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "base_model_id",
+          "comparison_model_id",
+          "production_version_id"
+        ]
+      },
+      "UpdateTask": {
+        "type": "object",
+        "properties": {
+          "base_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "comparison_model_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "TrainingRunList": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrainingRun"
+            }
+          }
+        },
+        "required": [
+          "data"
         ]
       },
       "TrainingRunEventList": {
@@ -2477,6 +2517,26 @@
           "sha256",
           "size_bytes",
           "rank"
+        ]
+      },
+      "AdapterDownload": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Short-lived signed URL for the adapter archive."
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-08-16T12:00:00.000Z",
+            "description": "Latest expiry of the download URL; temporary storage credentials may expire sooner."
+          }
+        },
+        "required": [
+          "url",
+          "expires_at"
         ]
       },
       "PromoteVersion": {
@@ -5685,7 +5745,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5777,7 +5837,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5876,7 +5936,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -5970,7 +6030,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6062,7 +6122,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6177,7 +6237,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6269,7 +6329,109 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks/{task}/versions/{version_id}/adapter": {
+      "get": {
+        "operationId": "getAdapterDownload",
+        "tags": [
+          "Training"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "workspace_id",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            },
+            "required": true,
+            "name": "task",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "0198ae50-94d8-7d4d-a8be-9f9b44b8c774"
+            },
+            "required": true,
+            "name": "version_id",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A short-lived adapter archive download link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdapterDownload"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not allowed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Invalid request parameters or body.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Problem"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -6370,7 +6532,7 @@
             }
           },
           "503": {
-            "description": "Trace storage unavailable.",
+            "description": "Storage unavailable.",
             "content": {
               "application/problem+json": {
                 "schema": {

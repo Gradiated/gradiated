@@ -6,6 +6,7 @@ import {
   createContentStore,
   createTraceService,
   createTrainingService,
+  createAdapterDownloads,
   createDeploymentStatusService,
   createOrganizationService,
   createProfilingWriter,
@@ -147,7 +148,11 @@ const app = createApp({
     waitlist: createWaitlistService(database),
     workspaces: createWorkspaceApiKeyService(database),
     traces: createTraceService(database, contents),
-    training: createTrainingService(database, contents),
+    training: createTrainingService(
+      database,
+      contents,
+      createAdapterDownloads(environment.TRAINING_ARTIFACTS_BUCKET),
+    ),
   },
 });
 

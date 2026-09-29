@@ -196,8 +196,14 @@ export const StageTimeline = ({
           );
         })}
       </ol>
-      {!isTerminal && run.stage !== "cancelling" && onCancel ? (
-        <Button variant="outline" size="sm" className="mt-3" onClick={onCancel}>
+      {!isTerminal && run.stage !== "cancelling" ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={onCancel}
+          disabled={!onCancel}
+        >
           Cancel run
         </Button>
       ) : null}

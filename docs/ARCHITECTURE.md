@@ -521,8 +521,11 @@ protocol integration, not production model equivalence.
   overload to `429`. Do not queue. Retry once before usable output.
 - Keep PostgreSQL, Valkey and ClickHouse as separate authorities with no hidden
   cross-store source of truth.
-- Do not add Kafka, CDC, an outbox, a service mesh, Temporal, Karpenter,
-  RDS Proxy or a custom operator at launch.
+- Do not add Kafka, CDC, an outbox, a service mesh, Karpenter, RDS Proxy or a
+  custom operator at launch.
+- Run multi-step training as Temporal Cloud workflows in the worker, so a failed
+  step retries without repeating completed steps. Encrypt every payload and
+  failure in the worker before it reaches Temporal Cloud.
 - Add a second model through model and deployment rows, an SGLang deployment,
   capacity measurement and conformance fixtures.
 - Keep provider deployments simple. Put global placement and retry logic in the

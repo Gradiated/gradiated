@@ -32,6 +32,7 @@ const wait = async (predicate) => {
   while (!(await predicate())) await delay(500, undefined, { signal });
 };
 const verifyRoute = async (id) => {
+  let consecutiveReady = 0;
   await wait(async () => {
     const { stdout } = await execute(
       "docker",
@@ -42,32 +43,20 @@ const verifyRoute = async (id) => {
         "-sS",
         "--max-time",
         "3",
-        "-o",
-        "/dev/null",
         "-w",
-        "%{http_code}",
+        " %{http_code}",
         "-H",
         "Authorization: Bearer synthetic_runtime_token_0000000000000000",
-        `http://127.0.0.1:8888/alloc/${id}/health`,
+        `http://127.0.0.1:8888/alloc/${id}/ready`,
       ],
       { signal },
     );
-    return stdout === "200";
+    consecutiveReady =
+      stdout.startsWith(id) && stdout.endsWith(" 200")
+        ? consecutiveReady + 1
+        : 0;
+    return consecutiveReady >= 3;
   });
-  const { stdout } = await execute(
-    "docker",
-    [
-      "exec",
-      process.env.TEST_CONTAINER,
-      "curl",
-      "-fsS",
-      "-H",
-      "Authorization: Bearer synthetic_runtime_token_0000000000000000",
-      `http://127.0.0.1:8888/alloc/${id}/ready`,
-    ],
-    { signal },
-  );
-  assert.ok(stdout.startsWith(id));
 };
 const allocations = () => call("/v1/job/fake-runtime/allocations");
 const original = (await allocations())
@@ -191,7 +180,13 @@ console.log(
   "A rejected replacement failed its deployment while the verified release kept serving",
 );
 
-const initialJob = { ...job, ID: "initial-runtime", Name: "initial-runtime" };
+const initialJob = {
+  ...structuredClone(job),
+  ID: "initial-runtime",
+  Name: "initial-runtime",
+};
+initialJob.TaskGroups[0].Count = 1;
+initialJob.TaskGroups[0].Update.Canary = 1;
 const initial = await call("/v1/jobs", { Job: initialJob });
 let initialDeployment;
 await wait(async () => {
@@ -213,9 +208,39 @@ await waitForDeployment(initialDeployment, {
       }
   },
 });
-assert.equal(initialVerified.size, 2);
+assert.equal(initialVerified.size, 1);
 console.log(
-  "Initial deployment also required verification of both allocation identities",
+  "Initial deployment also required verification of its allocation identity",
+);
+
+const scaledJob = await call("/v1/job/initial-runtime");
+scaledJob.TaskGroups[0].Count = 2;
+scaledJob.TaskGroups[0].Update.Canary = 2;
+const scaled = await call("/v1/jobs", { Job: scaledJob });
+let scaledDeployment;
+await wait(async () => {
+  scaledDeployment = (await call(`/v1/evaluation/${scaled.EvalID}`))
+    .DeploymentID;
+  return scaledDeployment;
+});
+const scaledVerified = new Set();
+await waitForDeployment(scaledDeployment, {
+  get: (path) => call(path),
+  post: call,
+  signal,
+  pause: () => delay(500, undefined, { signal }),
+  verify: async (input) => {
+    if (input.stage === "canary")
+      for (const id of input.deploymentIds) {
+        await verifyRoute(id);
+        scaledVerified.add(id);
+      }
+  },
+});
+assert.equal(scaledVerified.size, 2);
+assert.ok([...initialVerified].every((id) => scaledVerified.has(id)));
+console.log(
+  "Scaling one replica to two qualified the new and reused allocations",
 );
 
 const blockedJob = await call("/v1/job/initial-runtime");
@@ -250,7 +275,7 @@ const replacementEvaluation = await submitJob(blockedJob, {
 assert.ok(replacementEvaluation.evaluation);
 const serving = await call("/v1/job/initial-runtime/allocations");
 assert.ok(
-  [...initialVerified].every((id) =>
+  [...scaledVerified].every((id) =>
     serving.some(
       (allocation) =>
         allocation.ID === id &&

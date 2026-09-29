@@ -129,6 +129,7 @@ done
 
 fail() {
   echo "$1" >&2
+  in_container nomad job allocs fake-runtime >&2 || true
   proxy_alloc=$(in_container nomad job allocs -json host-proxy | grep -o '"ID": *"[0-9a-f-]\{36\}"' | grep -o '[0-9a-f-]\{36\}' | head -1)
   in_container nomad alloc status "$proxy_alloc" >&2 || true
   in_container nomad alloc logs -stderr "$proxy_alloc" >&2 || true
@@ -417,13 +418,21 @@ response_bytes=$(in_container wc -c </dev/null /tmp/draining-response | awk '{pr
 echo 'In-flight response completed while its allocation was deregistered and stopped'
 
 replacement=""
+consecutive_ready=0
 for _ in {1..60}; do
-  replacement=$(in_container nomad job allocs -json fake-runtime | jq -r --arg old "${allocs[0]}" --arg other "${allocs[1]}" '.[] | select(.ClientStatus == "running" and .DesiredStatus == "run" and .ID != $old and .ID != $other) | .ID' | head -1)
-  if [[ -n $replacement ]] && [[ $(request "/alloc/$replacement/health" "$token") == *" 200" ]]; then
-    break
+  candidate=$(in_container nomad job allocs -json fake-runtime | jq -r --arg old "${allocs[0]}" --arg other "${allocs[1]}" '.[] | select(.ClientStatus == "running" and .DesiredStatus == "run" and .ID != $old and .ID != $other) | .ID' | head -1)
+  [[ $candidate == "$replacement" ]] || consecutive_ready=0
+  replacement=$candidate
+  response=$(request "/alloc/$replacement/health" "$token" || true)
+  if [[ -n $replacement && $response == *" 200" ]]; then
+    consecutive_ready=$((consecutive_ready + 1))
+  else
+    consecutive_ready=0
   fi
+  # Nginx briefly serves both old and new routes while reload workers overlap.
+  ((consecutive_ready >= 3)) && break
   sleep 1
 done
-[[ -n $replacement ]] && [[ $(request "/alloc/$replacement/health" "$token") == *" 200" ]] || fail "stopped allocation was not replaced and routed"
+((consecutive_ready >= 3)) || fail "stopped allocation was not replaced and routed: $replacement, $response"
 [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "surviving replica lost its route"
 echo 'Host proxy authentication, allocation routing, removal and replacement passed'

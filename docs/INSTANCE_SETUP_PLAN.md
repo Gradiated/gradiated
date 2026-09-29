@@ -309,7 +309,10 @@ release. Already-running Nomad deployments continue under Nomad supervision.
 An unchanged job follows its existing deployment without registering another job
 version. Changed jobs wait for their previous deployment to finish and for stopped
 allocations to terminate before registration; a shutdown delay still consumes real
-GPU memory even when the scheduler considers the allocation stopped. Jobs advance
+GPU memory even when the scheduler considers the allocation stopped. Disconnected
+allocations with `unknown` client status cannot confirm a drain and do not block
+releases on healthy hosts. The host-local GPU claim still prevents overlap if a
+disconnected client returns while an old process remains. Jobs advance
 independently, so one model waiting for capacity does not prevent another from
 deploying. Registrations enforce the planned job modify index.
 

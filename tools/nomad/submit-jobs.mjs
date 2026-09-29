@@ -45,7 +45,9 @@ export const submitJob = async (
         allocations.some(
           (allocation) =>
             allocation.DesiredStatus === "stop" &&
-            !["complete", "failed", "lost"].includes(allocation.ClientStatus),
+            !["complete", "failed", "lost", "unknown"].includes(
+              allocation.ClientStatus,
+            ),
         )
       ) {
         await pause(10_000);

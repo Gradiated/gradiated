@@ -125,3 +125,28 @@ test("a failed previous deployment permits a replacement once drains finish", as
   });
   assert.equal(result.evaluation, "fixed");
 });
+
+test("an unreachable stopped allocation cannot block releases on healthy hosts", async () => {
+  const result = await submitJob(job, {
+    signal: signal(),
+    pause: async () => {
+      assert.fail("An unknown allocation cannot confirm its drain");
+    },
+    get: async (path) =>
+      path.endsWith("deployments")
+        ? [{ ID: "previous", Status: "successful" }]
+        : [
+            {
+              JobID: "another-model",
+              DesiredStatus: "stop",
+              ClientStatus: "unknown",
+            },
+          ],
+    post: async (path) =>
+      path.endsWith("plan")
+        ? { Diff: { Type: "Edited" }, JobModifyIndex: 12 }
+        : { EvalID: "replacement" },
+  });
+
+  assert.equal(result.evaluation, "replacement");
+});

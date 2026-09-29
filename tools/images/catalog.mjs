@@ -48,6 +48,7 @@ export const catalog = {
       "product/inference/desmond/",
       "product/inference/engine/",
       "product/inference/.dockerignore",
+      "product/inference/nomad/client.hcl",
       "product/inference/runtime-launcher/CMakeLists.txt",
       "product/inference/runtime-launcher/main.cpp",
       "product/inference/runtime-launcher/supervise.cpp",

@@ -647,7 +647,7 @@ async fn broken_http_responses_have_safe_specific_diagnostics() {
         let server = tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.unwrap();
             let mut request = [0; 4096];
-            socket.read(&mut request).await.unwrap();
+            assert!(socket.read(&mut request).await.unwrap() > 0);
             socket.write_all(response.as_bytes()).await.unwrap();
             socket.shutdown().await.unwrap();
         });
@@ -701,7 +701,7 @@ async fn a_truncated_body_preserves_its_connection_diagnostic() {
     let server = tokio::spawn(async move {
         let (mut socket, _) = listener.accept().await.unwrap();
         let mut request = [0; 4096];
-        socket.read(&mut request).await.unwrap();
+        assert!(socket.read(&mut request).await.unwrap() > 0);
         socket
             .write_all(b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\n\r\nprivate")
             .await

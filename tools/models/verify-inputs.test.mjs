@@ -9,6 +9,7 @@ const every = Object.keys(bundles);
 test("base and shared packaging changes verify every bundle", () => {
   for (const path of [
     "product/inference/images/nomad-base/start-client.sh",
+    "product/inference/nomad/client.hcl",
     "product/inference/runtime-launcher/supervise.cpp",
     "product/inference/bundles/package.sh",
     "product/inference/bundles/build.hcl",

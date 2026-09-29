@@ -1,8 +1,31 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { fingerprint, plan } from "./images.mjs";
+import { readFileSync } from "node:fs";
+import { catalog } from "./catalog.mjs";
+import { fingerprint, matches, plan } from "./images.mjs";
 const entry = (path, meta = "100644 blob aaa") => ({ path, meta });
+
+test("every local base-image COPY source participates in its identity", () => {
+  const image = catalog["nomad-base"];
+  const dockerfile = readFileSync(image.dockerfile, "utf8");
+  for (const line of dockerfile
+    .split("\n")
+    .filter((line) => /^COPY\s/.test(line))) {
+    const args = line.trim().split(/\s+/).slice(1);
+    if (args.some((arg) => arg.startsWith("--from="))) continue;
+    assert.ok(
+      !line.includes("[") && !line.endsWith("\\"),
+      "Extend COPY coverage for new Dockerfile syntax",
+    );
+    for (const source of args
+      .filter((arg) => !arg.startsWith("--"))
+      .slice(0, -1)) {
+      const path = `${image.context}/${source}`;
+      assert.ok(matches(path, image.paths), `Missing image input: ${path}`);
+    }
+  }
+});
 test("unrelated changes reuse the same image identity", () => {
   const base = [entry("product/services/gateway/Dockerfile")];
   assert.equal(
@@ -71,6 +94,7 @@ test("Nomad serving bootstrap and proxy edits invalidate the base image", () => 
   for (const path of [
     "product/inference/images/nomad-base/configure-serving.sh",
     "product/inference/images/nomad-base/runtime-proxy.conf.template",
+    "product/inference/nomad/client.hcl",
   ]) {
     assert.notEqual(
       fingerprint("nomad-base", [entry(path)]),

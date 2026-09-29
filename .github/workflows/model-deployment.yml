@@ -5,6 +5,11 @@ on:
     branches: [main]
     paths:
       - product/inference/images/**
+      - product/inference/CMakeLists.txt
+      - product/inference/desmond/**
+      - product/inference/engine/**
+      - product/inference/.dockerignore
+      - product/inference/nomad/client.hcl
       - product/inference/bundles/**
       - product/inference/runtimes/kev/adapter.py
       - product/inference/runtimes/glm/**

@@ -318,6 +318,12 @@ deploying. A failed model does not cancel supervision of the other models; the
 workflow reports all failures once their bounded deployment checks finish.
 Registrations enforce the planned job modify index.
 
+Before changing jobs, the workflow refreshes main and verifies that its model
+deployment inputs still match. Rerunning an old workflow cannot restore obsolete
+job or bundle inputs. Unrelated commits do not block a release; intentional
+rollbacks use a new Git revert. The model publication trigger covers every base
+image and bundle input, including the Nomad client configuration in the base image.
+
 ### Replica availability alerts
 
 Git's committed Nomad jobs also define the expected serving capacity, independent

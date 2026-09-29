@@ -1,4 +1,4 @@
-replicas        = 1
+replicas        = 2
 cpu_mhz         = 16000
 memory_mb       = 49152
 runtime_disk_mb = 16384

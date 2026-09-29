@@ -52,8 +52,8 @@ try {
         (row) =>
           row.id === id &&
           row.revision === input.runtimeRevision &&
-          row.status ===
-            (input.stage === "canary" ? "unavailable" : "available"),
+          (row.status === "available" ||
+            (input.stage === "canary" && row.status === "unavailable")),
       ),
     );
     const promoted =

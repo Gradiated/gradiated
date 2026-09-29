@@ -120,6 +120,55 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
+  it("keeps a qualified replica serving while a scale-up is verified", async () => {
+    const existing = allocation();
+    const added = allocation({ verificationPending: true });
+    await store.reconcile(nomad([existing]));
+
+    await store.reconcile(
+      nomad([{ ...existing, verificationPending: true }, added]),
+    );
+
+    expect(await deploymentsOf(existing.allocationId)).toMatchObject([
+      { status: "available" },
+    ]);
+    expect(await deploymentsOf(added.allocationId)).toMatchObject([
+      { status: "unavailable" },
+    ]);
+
+    await store.reconcile(
+      nomad([
+        { ...existing, verificationPending: true, draining: true },
+        added,
+      ]),
+    );
+    expect(await deploymentsOf(existing.allocationId)).toMatchObject([
+      { status: "draining" },
+    ]);
+  });
+
+  it("does not carry qualification to changed release contents on the same allocation", async () => {
+    const existing = allocation();
+    await store.reconcile(nomad([existing]));
+
+    await store.reconcile(
+      nomad([
+        {
+          ...existing,
+          verificationPending: true,
+          release: {
+            ...existing.release,
+            runtime_revision: "unverified-revision",
+          },
+        },
+      ]),
+    );
+
+    expect(await deploymentsOf(existing.allocationId)).toMatchObject([
+      { status: "unavailable" },
+    ]);
+  });
+
   it("follows a new release on the same allocation", async () => {
     const running = allocation();
     await store.reconcile(nomad([running]));

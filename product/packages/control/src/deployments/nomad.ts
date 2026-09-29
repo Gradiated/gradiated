@@ -161,7 +161,13 @@ export const createNomadDeploymentStore = (
             set: {
               instanceId: row.instanceId,
               modelId: row.modelId,
-              status: row.status,
+              // Scaling can attach an unchanged allocation to a new unverified job version.
+              status: sql`case when ${row.status} = 'unavailable'
+                and ${modelDeployments.status} = 'available'
+                and ${modelDeployments.modelId} = ${row.modelId}
+                and ${modelDeployments.instanceId} = ${row.instanceId}
+                and ${modelDeployments.release} = ${JSON.stringify(row.release)}::jsonb
+                then 'available' else ${row.status} end`,
               provider: row.provider,
               region: row.region,
               faultDomain: row.faultDomain,

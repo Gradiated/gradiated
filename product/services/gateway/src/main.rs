@@ -181,7 +181,8 @@ fn application(
     let app = router(GatewayState::new(
         readiness,
         completions,
-        RequestCoordinator::new(serving_state),
+        RequestCoordinator::new(serving_state)
+            .with_verification_workspace(config.verification_workspace_id),
         config.compliance(),
     ));
 

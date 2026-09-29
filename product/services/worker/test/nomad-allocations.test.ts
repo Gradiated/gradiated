@@ -42,6 +42,82 @@ const kevVersions = {
 };
 
 describe("reading model allocations from Nomad", () => {
+  it.each([true, false])(
+    "marks only opted-in unpromoted canaries as pending verification (%s)",
+    async (canary) => {
+      const allocations = await readModelAllocations(
+        nomad({
+          "/v1/jobs?meta=true": [
+            { ID: "kev-9b", Meta: { gradiated_model_id: "kev/kev-9b" } },
+          ],
+          "/v1/job/kev-9b/deployments": [],
+          "/v1/job/kev-9b/allocations": [
+            {
+              ID: "a1",
+              NodeID: "n1",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: canary },
+            },
+          ],
+          "/v1/job/kev-9b/versions": {
+            Versions: [
+              {
+                ...kevVersions.Versions[0],
+                Meta: {
+                  ...kevVersions.Versions[0]!.Meta,
+                  gradiated_sdk_verification: "true",
+                },
+              },
+            ],
+          },
+        }),
+        () => {},
+      );
+      expect(allocations[0]?.verificationPending ?? false).toBe(canary);
+    },
+  );
+
+  it.each(["pending", "running", "paused", "successful", "failed"])(
+    "keeps unverified deployments unrouted and allows recovery only after success (%s)",
+    async (status) => {
+      const allocations = await readModelAllocations(
+        nomad({
+          "/v1/jobs?meta=true": [
+            { ID: "kev-9b", Meta: { gradiated_model_id: "kev/kev-9b" } },
+          ],
+          "/v1/job/kev-9b/deployments": [{ JobVersion: 1, Status: status }],
+          "/v1/job/kev-9b/allocations": [
+            {
+              ID: "a1",
+              NodeID: "n1",
+              ClientStatus: "running",
+              DesiredStatus: "run",
+              JobVersion: 1,
+              DeploymentStatus: { Canary: false },
+            },
+          ],
+          "/v1/job/kev-9b/versions": {
+            Versions: [
+              {
+                ...kevVersions.Versions[0],
+                Meta: {
+                  ...kevVersions.Versions[0]!.Meta,
+                  gradiated_sdk_verification: "true",
+                },
+              },
+            ],
+          },
+        }),
+        () => {},
+      );
+      expect(allocations[0]?.verificationPending ?? false).toBe(
+        status !== "successful",
+      );
+    },
+  );
+
   it("returns running allocations of model jobs with their own version's release", async () => {
     const allocations = await readModelAllocations(
       nomad({

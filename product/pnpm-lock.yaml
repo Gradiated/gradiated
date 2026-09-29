@@ -395,9 +395,15 @@ importers:
       '@gradiated/valkey':
         specifier: workspace:*
         version: link:../../packages/valkey
+      '@typesafe-ai/sdk':
+        specifier: 0.6.0
+        version: 0.6.0
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
+      openai:
+        specifier: 7.5.0
+        version: 7.5.0(@aws-sdk/credential-provider-node@3.972.83)(@smithy/hash-node@4.5.2)(@smithy/signature-v4@5.7.2)(zod@4.6.5)
       prom-client:
         specifier: 15.1.3
         version: 15.1.3

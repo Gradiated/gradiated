@@ -108,6 +108,18 @@ describe("Nomad deployment reconciliation", () => {
     ]);
   });
 
+  it("keeps an unverified canary out of customer routing until promotion", async () => {
+    const canary = allocation({ verificationPending: true });
+    await store.reconcile(nomad([canary]));
+    expect(await deploymentsOf(canary.allocationId)).toMatchObject([
+      { status: "unavailable" },
+    ]);
+    await store.reconcile(nomad([{ ...canary, verificationPending: false }]));
+    expect(await deploymentsOf(canary.allocationId)).toMatchObject([
+      { status: "available" },
+    ]);
+  });
+
   it("follows a new release on the same allocation", async () => {
     const running = allocation();
     await store.reconcile(nomad([running]));

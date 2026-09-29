@@ -28,6 +28,7 @@ const allocationsSchema = z.array(
     ClientStatus: z.string(),
     DesiredStatus: z.string(),
     JobVersion: z.number().int(),
+    DeploymentStatus: z.object({ Canary: z.boolean().optional() }).nullish(),
   }),
 );
 const versionsSchema = z.object({
@@ -65,6 +66,22 @@ export const readModelAllocations = async (
         versions.Versions.map((version) => [version.Version, version.Meta]),
       );
 
+      const gated = versions.Versions.some(
+        (version) => version.Meta?.gradiated_sdk_verification === "true",
+      );
+      const deployments = gated
+        ? z
+            .array(
+              z.object({ JobVersion: z.number().int(), Status: z.string() }),
+            )
+            .parse((await get(`${path}/deployments`)) ?? [])
+        : [];
+      const unverified = new Set(
+        deployments
+          .filter((deployment) => deployment.Status !== "successful")
+          .map((deployment) => deployment.JobVersion),
+      );
+
       return allocations
         .filter((allocation) => allocation.ClientStatus === "running")
         .flatMap((allocation) => {
@@ -83,6 +100,11 @@ export const readModelAllocations = async (
               modelId,
               release: release.data,
               draining: allocation.DesiredStatus !== "run",
+              ...(versionMeta?.gradiated_sdk_verification === "true" &&
+              (allocation.DeploymentStatus?.Canary ||
+                unverified.has(allocation.JobVersion))
+                ? { verificationPending: true }
+                : {}),
             },
           ];
         });

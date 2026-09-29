@@ -146,11 +146,20 @@ impl Authorization {
 #[derive(Clone)]
 pub struct RequestCoordinator {
     serving_state: Arc<dyn ServingState>,
+    verification_workspace_id: Option<Uuid>,
 }
 
 impl RequestCoordinator {
     pub fn new(serving_state: Arc<dyn ServingState>) -> Self {
-        Self { serving_state }
+        Self {
+            serving_state,
+            verification_workspace_id: None,
+        }
+    }
+
+    pub fn with_verification_workspace(mut self, workspace_id: Option<Uuid>) -> Self {
+        self.verification_workspace_id = workspace_id;
+        self
     }
 
     pub fn qualify(
@@ -285,7 +294,7 @@ impl RequestCoordinator {
 
         let mut model_id = target.model;
         model_id.make_ascii_lowercase();
-        let model = self
+        let mut model = self
             .serving_state
             .model(&model_id)
             .await
@@ -295,6 +304,28 @@ impl RequestCoordinator {
 
         if model.status != ModelStatus::Available {
             return Err(GatewayError::ModelUnavailable);
+        }
+
+        let header = "x-gradiated-verification-deployment";
+        if headers.contains_key(header) {
+            if self.verification_workspace_id != Some(identity.workspace_id)
+                || headers.get_all(header).iter().count() != 1
+            {
+                return Err(GatewayError::invalid_request(Some(header)));
+            }
+            let id = headers
+                .get(header)
+                .and_then(|value| value.to_str().ok())
+                .and_then(|value| Uuid::parse_str(value).ok())
+                .ok_or_else(|| GatewayError::invalid_request(Some(header)))?;
+            model.deployments.retain(|deployment| {
+                deployment.id == id && deployment.status != crate::DeploymentStatus::Draining
+            });
+            let deployment = model
+                .deployments
+                .first_mut()
+                .ok_or(GatewayError::ModelUnavailable)?;
+            deployment.status = crate::DeploymentStatus::Available;
         }
 
         let model = self.prefer_ready_release(model, received_at).await?;
@@ -455,3 +486,7 @@ mod authorization_tests;
 #[cfg(test)]
 #[path = "coordinator_route_tests.rs"]
 mod route_tests;
+
+#[cfg(test)]
+#[path = "coordinator_verification_tests.rs"]
+mod verification_tests;

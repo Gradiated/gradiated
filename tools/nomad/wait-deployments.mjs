@@ -1,21 +1,35 @@
+import { createVerificationGate } from "./verification.mjs";
 import { readFileSync } from "node:fs";
 import { createNomadClient } from "./api.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
 
-export const waitForDeployment = async (
-  id,
-  { get, signal, pause = (ms) => delay(ms, undefined, { signal }) },
-) => {
+export const waitForDeployment = async (id, options) => {
+  const {
+    get,
+    signal,
+    verify,
+    pause = (ms) => delay(ms, undefined, { signal }),
+  } = options;
+  let gate;
+  let initialized = false;
   while (!signal.aborted) {
     const deployment = await get(
       `/v1/deployment/${encodeURIComponent(id)}`,
       signal,
     );
-    if (deployment.Status === "successful") return;
+    if (verify && !initialized) {
+      gate = await createVerificationGate(deployment, options);
+      initialized = true;
+    }
+    if (deployment.Status === "successful") {
+      await gate?.finish();
+      return;
+    }
     if (["failed", "cancelled", "blocked"].includes(deployment.Status)) {
       throw new Error(`Deployment ${id} is ${deployment.Status}`);
     }
+    await gate?.qualify();
     await pause(10_000);
   }
   throw new Error(

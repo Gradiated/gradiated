@@ -38,6 +38,7 @@ pub struct GatewayConfig {
     valkey_iam: Option<ValkeyIamConfig>,
 
     pub sglang_api_key: Option<String>,
+    pub verification_workspace_id: Option<uuid::Uuid>,
 }
 
 impl GatewayConfig {
@@ -159,12 +160,14 @@ impl TryFrom<Environment> for GatewayConfig {
             valkey_url: environment.valkey_url,
             valkey_iam,
             sglang_api_key: environment.sglang_api_key.filter(|value| !value.is_empty()),
+            verification_workspace_id: environment.gateway_verification_workspace_id,
         })
     }
 }
 
 #[derive(Deserialize, Validate)]
 struct Environment {
+    gateway_verification_workspace_id: Option<uuid::Uuid>,
     #[serde(rename = "gateway_browser_origins")]
     browser_origins: Option<String>,
     #[serde(rename = "gateway_bind_address", default = "default_bind_address")]
@@ -330,6 +333,19 @@ mod tests {
         values.extend(variables(overrides));
 
         GatewayConfig::from_variables(values)
+    }
+
+    #[test]
+    fn verification_requires_an_explicit_valid_workspace() {
+        assert_eq!(minimal_with(&[]).unwrap().verification_workspace_id, None);
+        let workspace = "00000000-0000-4000-8000-000000000001";
+        assert_eq!(
+            minimal_with(&[("GATEWAY_VERIFICATION_WORKSPACE_ID", workspace)])
+                .unwrap()
+                .verification_workspace_id,
+            Some(uuid::Uuid::parse_str(workspace).unwrap())
+        );
+        assert!(minimal_with(&[("GATEWAY_VERIFICATION_WORKSPACE_ID", "invalid")]).is_err());
     }
 
     #[test]

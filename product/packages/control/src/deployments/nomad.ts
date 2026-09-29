@@ -10,6 +10,7 @@ export interface NomadAllocation {
   readonly modelId: string;
   readonly release: ModelDeploymentRelease;
   readonly draining: boolean;
+  readonly verificationPending?: boolean;
 }
 
 export type UnplacedReason =
@@ -124,7 +125,9 @@ export const createNomadDeploymentStore = (
           modelId: allocation.modelId,
           status: allocation.draining
             ? ("draining" as const)
-            : ("available" as const),
+            : allocation.verificationPending
+              ? ("unavailable" as const)
+              : ("available" as const),
           provider: host.provider,
           region: host.region ?? "unknown",
           faultDomain:

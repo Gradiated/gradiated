@@ -1,3 +1,4 @@
+import { verifyInProduction } from "./verification.mjs";
 import { readFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
@@ -12,7 +13,13 @@ const latestDeployment = async (job, get) => {
 
 export const submitJob = async (
   job,
-  { get, post, signal, pause = (ms) => delay(ms, undefined, { signal }) },
+  {
+    get,
+    post,
+    signal,
+    verify,
+    pause = (ms) => delay(ms, undefined, { signal }),
+  },
 ) => {
   const path = `/v1/job/${encodeURIComponent(job.ID)}`;
   while (!signal.aborted) {
@@ -36,7 +43,9 @@ export const submitJob = async (
     }
 
     if (prior && ["pending", "running", "paused"].includes(prior.Status)) {
-      await pause(10_000);
+      if (verify)
+        await waitForDeployment(prior.ID, { get, post, signal, verify, pause });
+      else await pause(10_000);
       continue;
     }
     {
@@ -93,6 +102,7 @@ const main = async () => {
       );
       const registration = await submitJob(job, {
         ...client,
+        verify: verifyInProduction,
         signal: AbortSignal.any([
           controller.signal,
           AbortSignal.timeout(110 * 60_000),
@@ -100,6 +110,7 @@ const main = async () => {
       });
       const options = {
         ...client,
+        verify: verifyInProduction,
         signal: AbortSignal.any([
           controller.signal,
           AbortSignal.timeout(110 * 60_000),

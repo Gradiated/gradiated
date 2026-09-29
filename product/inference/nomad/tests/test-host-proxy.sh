@@ -172,6 +172,11 @@ if [[ ${1:-} == --proxy-drain ]]; then
   exit 0
 fi
 
+if [[ ${1:-} == --sdk-gate ]]; then
+  TEST_CONTAINER="$container" TEST_NOMAD_TOKEN="$boot" node "$root/tests/sdk-gate.mjs"
+  exit 0
+fi
+
 if [[ ${1:-} == --recovery ]]; then
   proxy_alloc=$(in_container nomad job allocs -json host-proxy | jq -r '.[] | select(.ClientStatus == "running") | .ID')
   for fault in crash hang crash crash crash; do

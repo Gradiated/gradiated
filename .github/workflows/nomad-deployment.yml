@@ -75,6 +75,7 @@ jobs:
           node --test product/inference/nomad/tests/claim-gpus.test.mjs
           timeout 600 bash product/inference/nomad/tests/test-host-proxy.sh --recovery
           timeout 180 bash product/inference/nomad/tests/test-host-proxy.sh --proxy-drain
+          timeout 240 bash product/inference/nomad/tests/test-host-proxy.sh --sdk-gate
           node --test tools/nomad/*.test.mjs
       - uses: depot/setup-action@v1
       - name: Build and test the runtime launcher

@@ -314,7 +314,9 @@ allocations with `unknown` client status cannot confirm a drain and do not block
 releases on healthy hosts. The host-local GPU claim still prevents overlap if a
 disconnected client returns while an old process remains. Jobs advance
 independently, so one model waiting for capacity does not prevent another from
-deploying. Registrations enforce the planned job modify index.
+deploying. A failed model does not cancel supervision of the other models; the
+workflow reports all failures once their bounded deployment checks finish.
+Registrations enforce the planned job modify index.
 
 ### Replica availability alerts
 

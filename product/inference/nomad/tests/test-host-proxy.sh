@@ -173,14 +173,16 @@ SH
   done
 
   restart_started=$SECONDS
+  before=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo')
   in_container touch "/tmp/unhealthy-${allocs[0]}"
   health_restarted=false
   for _ in {1..15}; do
     [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "healthy replica stopped serving during health-check recovery"
-    restarts=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo.Restarts')
-    if ((restarts >= 1)); then
+    state=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo')
+    if jq -e --argjson before "$before" '.Restarts > $before.Restarts' <<<"$state" >/dev/null; then
       in_container rm -f "/tmp/unhealthy-${allocs[0]}"
-      if [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
+      if jq -e --argjson before "$before" '.State == "running" and .StartedAt != $before.StartedAt' <<<"$state" >/dev/null &&
+        [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
         health_restarted=true
         break
       fi
@@ -191,12 +193,14 @@ SH
   ((SECONDS - restart_started < 20)) || fail "health-check restart consumed the drain delay"
   echo 'Health-check failure restarted the task without allocation drain delay; the peer stayed available'
 
+  before=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo')
   in_container nomad alloc signal -s SIGKILL -task echo "${allocs[0]}" >/dev/null
   restarted=false
   for _ in {1..60}; do
     [[ $(request "/alloc/${allocs[1]}/health" "$token") == *" 200" ]] || fail "healthy replica stopped serving during task recovery"
-    restarts=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo.Restarts')
-    if ((restarts >= 2)) && [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
+    state=$(in_container nomad alloc status -json "${allocs[0]}" | jq '.TaskStates.echo')
+    if jq -e --argjson before "$before" '.Restarts > $before.Restarts and .State == "running" and .StartedAt != $before.StartedAt' <<<"$state" >/dev/null &&
+      [[ $(request "/alloc/${allocs[0]}/health" "$token") == *" 200" ]]; then
       restarted=true
       break
     fi

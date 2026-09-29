@@ -1,9 +1,42 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { submitJob } from "./submit-jobs.mjs";
+import { deployJobs, submitJob } from "./submit-jobs.mjs";
 
 const job = { ID: "model" };
 const signal = () => new AbortController().signal;
+
+test("a failed model does not abort supervision of another model's rollout", async () => {
+  let finishHealthy;
+  let settled = false;
+  const healthy = new Promise((resolve) => {
+    finishHealthy = resolve;
+  });
+  const result = deployJobs(
+    [{ ID: "failed" }, { ID: "healthy" }],
+    async ({ ID }) => {
+      if (ID === "failed") throw new Error("canary failed");
+      await healthy;
+    },
+  );
+  const checked = assert.rejects(result, /failed: canary failed/);
+  void result.catch(() => {
+    settled = true;
+  });
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(settled, false);
+  finishHealthy();
+  await checked;
+});
+
+test("independent deployment failures are all reported", async () => {
+  await assert.rejects(
+    deployJobs([{ ID: "a" }, { ID: "b" }], async ({ ID }) => {
+      throw new Error(`${ID} failed`);
+    }),
+    { message: "a: a failed\nb: b failed" },
+  );
+  await deployJobs([{ ID: "healthy" }], async () => {});
+});
 
 test("an unchanged reverted job does not follow the failed deployment it replaced", async () => {
   const result = await submitJob(job, {

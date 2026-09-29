@@ -69,48 +69,59 @@ export const submitJob = async (
   );
 };
 
+export const deployJobs = async (jobs, deploy) => {
+  const results = await Promise.allSettled(
+    jobs.map(async (job) => deploy(job)),
+  );
+  const failures = results.flatMap((result, index) =>
+    result.status === "rejected"
+      ? [`${jobs[index].ID}: ${result.reason?.message ?? "deployment failed"}`]
+      : [],
+  );
+
+  if (failures.length) throw new Error(failures.join("\n"));
+};
+
 const main = async () => {
   const jobs = JSON.parse(readFileSync(process.argv[2], "utf8"));
   const controller = new AbortController();
   const client = createNomadClient(controller.signal);
   try {
-    await Promise.all(
-      jobs.map(async (job) => {
+    await deployJobs(jobs, async (job) => {
+      console.log(
+        `${job.ID}: planning without interrupting existing canaries or draining requests`,
+      );
+      const registration = await submitJob(job, {
+        ...client,
+        signal: AbortSignal.any([
+          controller.signal,
+          AbortSignal.timeout(110 * 60_000),
+        ]),
+      });
+      const options = {
+        ...client,
+        signal: AbortSignal.any([
+          controller.signal,
+          AbortSignal.timeout(110 * 60_000),
+        ]),
+      };
+      if (registration.deployment) {
         console.log(
-          `${job.ID}: planning without interrupting existing canaries or draining requests`,
+          `${job.ID}: unchanged; following deployment ${registration.deployment}`,
         );
-        const registration = await submitJob(job, {
-          ...client,
-          signal: AbortSignal.any([
-            controller.signal,
-            AbortSignal.timeout(110 * 60_000),
-          ]),
-        });
-        const options = {
-          ...client,
-          signal: AbortSignal.any([
-            controller.signal,
-            AbortSignal.timeout(110 * 60_000),
-          ]),
-        };
-        if (registration.deployment) {
-          console.log(
-            `${job.ID}: unchanged; following deployment ${registration.deployment}`,
-          );
-          await waitForDeployment(registration.deployment, options);
-        } else if (registration.evaluation) {
-          console.log(
-            `${job.ID}: following evaluation ${registration.evaluation}`,
-          );
-          await waitForEvaluation(
-            registration.evaluation,
-            registration.previous,
-            options,
-          );
-        }
-        console.log(`${job.ID}: deployment healthy or no deployment required`);
-      }),
-    );
+        await waitForDeployment(registration.deployment, options);
+      } else if (registration.evaluation) {
+        console.log(
+          `${job.ID}: following evaluation ${registration.evaluation}`,
+        );
+        await waitForEvaluation(
+          registration.evaluation,
+          registration.previous,
+          options,
+        );
+      }
+      console.log(`${job.ID}: deployment healthy or no deployment required`);
+    });
   } finally {
     controller.abort();
   }
